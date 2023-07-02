@@ -1,4 +1,4 @@
-# Mobile app for church on React Native based on Feature Sliced Design
+# React Native app for church based on Feature Sliced Design
 
 🍰 [Architecture design guidelines](https://feature-sliced.design/)
 
