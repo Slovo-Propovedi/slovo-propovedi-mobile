@@ -1,3 +1,3 @@
 // ./ui
-export * from './ui/search-input';
-export * from './ui/sermon-item';
+export * from './search-input';
+export * from './sermon-item';
