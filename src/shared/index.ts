@@ -7,6 +7,10 @@ export * from './ui/input';
 export * from './ui/button';
 export * from './ui/search-button';
 
+// ./config
+export * from './config';
+export * from './themed';
+
 // ./api
 export * from './api';
 
@@ -15,3 +19,6 @@ export * from './lib';
 
 // misc
 export * from './routes';
+
+// types
+export * from './types';

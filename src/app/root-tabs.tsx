@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
-import { RootTabName, RootTabsParamList } from 'shared/root-tabs';
+import { RootTabName, RootTabsParamList } from 'shared';
 import { InfoRouting, MainRouting } from './routes';
 
 const Tab = createBottomTabNavigator<RootTabsParamList>();

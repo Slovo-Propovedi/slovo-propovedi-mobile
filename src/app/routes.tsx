@@ -2,8 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { FC } from 'react';
 import { HomeScreen } from 'pages/home';
 import { Info } from 'pages/info';
-import { InfoStackParamList, MainStackParamList } from 'shared';
-import { RootTabName, RootTabsScreenProps } from 'shared/root-tabs';
+import { InfoStackParamList, MainStackParamList, RootTabName, RootTabsScreenProps } from 'shared';
 
 const MainStack = createNativeStackNavigator<MainStackParamList>();
 

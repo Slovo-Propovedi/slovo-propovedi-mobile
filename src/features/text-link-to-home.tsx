@@ -1,8 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { MainStackNavProp } from 'shared';
-import { COLORS, SIZES } from 'shared/config';
+import { MainStackNavProp, COLORS, SIZES } from 'shared';
 
 export const TextLinkToHome = () => {
   const { navigate } = useNavigation<MainStackNavProp<'Home'>>();

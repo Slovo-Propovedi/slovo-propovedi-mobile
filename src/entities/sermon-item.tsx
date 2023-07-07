@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Button } from 'shared';
-import { COLORS, SIZES } from 'shared/config';
+import { Button, COLORS, SIZES } from 'shared';
 
 type SermonItemProps = {
   title: string;

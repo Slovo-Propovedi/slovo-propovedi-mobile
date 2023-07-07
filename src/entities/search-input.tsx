@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { StyleSheet, TextInputProps, View, ViewStyle } from 'react-native';
-import { Input, SearchButton, SearchButtonProps } from 'shared';
-import { COLORS } from 'shared/config';
+import { Input, SearchButton, SearchButtonProps, COLORS } from 'shared';
 
 type SearchInputProps = Pick<TextInputProps & SearchButtonProps, 'placeholder' | 'onPress'> & {
   style?: ViewStyle;
