@@ -1,7 +1,7 @@
 import React from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
 import { SearchOnSite, TextLinkToHome } from 'features';
-import { TOP_BACK_IMAGE } from 'shared/config';
+import { TOP_BACK_IMAGE } from 'shared';
 
 export const AppHeader = () => (
   <ImageBackground style={styles.image} source={{ uri: TOP_BACK_IMAGE }}>

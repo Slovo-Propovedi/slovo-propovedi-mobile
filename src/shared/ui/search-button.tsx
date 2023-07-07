@@ -1,5 +1,5 @@
 import { ButtonProps, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { SEARCH_ICON } from '../config';
+import { SEARCH_ICON } from 'shared/images';
 import { COLORS } from '../themed';
 
 export type SearchButtonProps = Omit<ButtonProps, 'title' | 'color'>;

@@ -7,9 +7,8 @@ export * from './ui/input';
 export * from './ui/button';
 export * from './ui/search-button';
 
-// ./config
-export * from './config';
 export * from './themed';
+export * from './images';
 
 // ./api
 export * from './api';
