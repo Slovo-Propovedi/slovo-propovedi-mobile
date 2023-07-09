@@ -3,8 +3,12 @@ import type {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 
+export enum LibraryStackParamName {
+  Home = 'Home',
+}
+
 export type LibraryStackParamList = {
-  Home: undefined;
+  [LibraryStackParamName.Home]: undefined;
 };
 
 export type LibraryStackScreenProps<Screen extends keyof LibraryStackParamList> =

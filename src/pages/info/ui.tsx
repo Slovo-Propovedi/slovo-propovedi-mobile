@@ -1,34 +1,13 @@
-import React, { useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TabView } from 'react-native-tab-view';
-import { InfoStackScreenProps } from 'routing';
-import { renderScene } from './scene';
+import { InfoStackParamName, InfoStackScreenProps } from 'routing';
 
-export const Info: React.FC<InfoStackScreenProps<'Home'>> = () => {
-  const layout = useWindowDimensions();
-
-  const [index, setIndex] = useState(0);
-
-  const routes = useMemo(
-    () => [
-      { key: 'first', title: 'First' },
-      { key: 'second', title: 'Second' },
-    ],
-    [],
-  );
-
-  return (
-    <SafeAreaView style={styles.info}>
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndex}
-        initialLayout={{ width: layout.width }}
-      />
-    </SafeAreaView>
-  );
-};
+export const Info: React.FC<InfoStackScreenProps<InfoStackParamName.Home>> = () => (
+  <SafeAreaView style={styles.info}>
+    <View style={{ flex: 1, backgroundColor: 'gray' }} />
+  </SafeAreaView>
+);
 
 const styles = StyleSheet.create({
   info: {

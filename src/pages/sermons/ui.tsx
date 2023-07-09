@@ -1,19 +1,18 @@
-import React, { useState } from 'react';
+import { FC, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TabView } from 'react-native-tab-view';
-import { BibleSchoolStackParamName, BibleSchoolStackScreenProps } from 'routing';
+import { SermonsStackParamName, SermonsStackScreenProps } from 'routing';
 import { getRenderTabBar } from 'shared';
 import { renderScene } from './scene';
 
-export const BibleSchool: React.FC<
-  BibleSchoolStackScreenProps<BibleSchoolStackParamName.Home>
-> = () => {
+export const HomeScreen: FC<SermonsStackScreenProps<SermonsStackParamName.Home>> = () => {
   const [index, setIndex] = useState(0);
 
   const routes = [
-    { key: 'first', title: 'Богословие' },
-    { key: 'second', title: 'Душепопечение' },
+    { key: 'first', title: 'Новые' },
+    { key: 'second', title: 'По Библии' },
+    { key: 'third', title: 'Тематические' },
   ];
 
   const renderTabBar = getRenderTabBar({

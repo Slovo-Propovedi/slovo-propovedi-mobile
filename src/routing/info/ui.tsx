@@ -2,17 +2,17 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { FC } from 'react';
 import { Info } from 'pages/info';
 import { RootTabsScreenProps, RootTabName } from 'shared';
-import { InfoStackParamList } from './types';
+import { InfoStackParamList, InfoStackParamName } from './types';
 
 const InfoStack = createNativeStackNavigator<InfoStackParamList>();
 
 export const InfoRouting: FC<RootTabsScreenProps<RootTabName.Info>> = () => (
   <InfoStack.Navigator
-    initialRouteName='Home'
+    initialRouteName={InfoStackParamName.Home}
     screenOptions={{
       headerShown: false,
     }}
   >
-    <InfoStack.Screen name='Home' component={Info} />
+    <InfoStack.Screen name={InfoStackParamName.Home} component={Info} />
   </InfoStack.Navigator>
 );

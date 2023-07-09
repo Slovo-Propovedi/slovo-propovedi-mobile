@@ -39,16 +39,8 @@ const App = () => (
         headerShown: false,
       })}
     >
-      <Tab.Screen
-        name={RootTabName.Sermons}
-        component={MainRouting}
-        // options={{ tabBarBadge: 3,  }}
-      />
-      <Tab.Screen
-        name={RootTabName.Library}
-        component={LibraryRouting}
-        // options={{ tabBarBadge: 3 }}
-      />
+      <Tab.Screen name={RootTabName.Sermons} component={MainRouting} />
+      <Tab.Screen name={RootTabName.Library} component={LibraryRouting} />
       <Tab.Screen
         name={RootTabName.BibleSchool}
         component={BibleSchoolRouting}

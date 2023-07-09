@@ -3,8 +3,12 @@ import type {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 
+export enum InfoStackParamName {
+  Home = 'Home',
+}
+
 export type InfoStackParamList = {
-  Home: undefined;
+  [InfoStackParamName.Home]: undefined;
 };
 
 export type InfoStackScreenProps<Screen extends keyof InfoStackParamList> = NativeStackScreenProps<

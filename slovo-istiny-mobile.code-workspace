@@ -33,7 +33,9 @@
       "path": "src/shared"
     }
   ],
-  "settings": {},
+  "settings": {
+    "cSpell.words": ["Душепопечение"]
+  },
   "extensions": {
     "recommendations": [
       "dbaeumer.vscode-eslint",

@@ -3,8 +3,12 @@ import type {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 
+export enum BibleSchoolStackParamName {
+  Home = 'Home',
+}
+
 export type BibleSchoolStackParamList = {
-  Home: undefined;
+  [BibleSchoolStackParamName.Home]: undefined;
 };
 
 export type BibleSchoolStackScreenProps<Screen extends keyof BibleSchoolStackParamList> =
