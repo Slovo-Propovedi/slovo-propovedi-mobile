@@ -1,6 +1,6 @@
 import { sermonsAPI } from './sermons';
 
-export { Sermon } from './db';
+export * from './db';
 
 export * from './sermons';
 

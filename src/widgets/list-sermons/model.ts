@@ -1,14 +1,13 @@
 import { create } from 'zustand';
-import { Sermon, sermonsAPI } from 'shared';
+import { Sermons, sermonsAPI } from 'shared';
 
 interface SermonsState {
-  sermons: Sermon[];
-  getSermons: () => Promise<Sermon[]>;
+  sermons: Sermons | null;
+  getSermons: () => Promise<Sermons>;
 }
 
 export const useSermonsStore = create<SermonsState>((set) => ({
-  sermons: [],
-
+  sermons: null,
   getSermons: async () => {
     const sermons = await sermonsAPI.getSermons();
 

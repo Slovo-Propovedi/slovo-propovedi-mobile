@@ -15,8 +15,8 @@ export const ListSermons = () => {
 
   return (
     <View style={styles.list}>
-      {sermons.map(({ id, title, url }) => (
-        <SermonItem key={`sermon-${id}`} title={title} url={url} />
+      {sermons?.onBible.map(({ title, list }, index) => (
+        <SermonItem key={`sermon-${index}`} title={title} url={'sdsfbgsfd'} />
       ))}
     </View>
   );
