@@ -2,8 +2,8 @@ import { FC, useState } from 'react';
 import { Animated, StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationState, SceneRendererProps, TabView } from 'react-native-tab-view';
+import { MainStackScreenProps } from 'routing';
 import { AppHeader } from 'widgets/app-header';
-import { MainStackScreenProps } from 'shared';
 import { renderScene } from './scene';
 
 export const HomeScreen: FC<MainStackScreenProps<'Home'>> = () => {

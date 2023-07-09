@@ -17,7 +17,4 @@ export * from './api';
 export * from './lib';
 
 // misc
-export * from './routes';
-
-// types
-export * from './types';
+export * from './root-tabs';

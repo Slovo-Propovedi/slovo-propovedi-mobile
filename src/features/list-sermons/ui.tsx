@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SermonItem } from 'entities';
 import { useSermonsStore } from './model';
 
 export const ListSermons = () => {
-  const sermons = useSermonsStore((state) => state.sermons);
+  const { sermons, getSermons } = useSermonsStore((state) => ({
+    sermons: state.sermons,
+    getSermons: state.getSermons,
+  }));
+
+  useEffect(() => {
+    getSermons();
+  }, []);
 
   return (
     <View style={styles.list}>

@@ -1,14 +1,12 @@
-import ky from 'ky';
-import { API_URL } from 'shared/config';
-
-export type Sermon = { id: number; title: string; url: string };
+import { Sermon } from './db';
+import { localDB } from './localBD';
 
 const getSermons = async (): Promise<Sermon[]> => {
-  const sermons = await ky.get('sermons', { prefixUrl: API_URL }).json<Sermon[]>();
+  const db = localDB.getDB();
 
-  return sermons;
+  return db.sermons;
 };
 
-export const sermons = {
+export const sermonsAPI = {
   getSermons,
 };

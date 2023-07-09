@@ -1,7 +1,9 @@
-import { sermons } from './sermons';
+import { sermonsAPI } from './sermons';
+
+export { Sermon } from './db';
 
 export * from './sermons';
 
 export const API = {
-  sermons,
+  sermons: sermonsAPI,
 };

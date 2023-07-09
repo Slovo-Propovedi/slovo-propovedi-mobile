@@ -1,0 +1,18 @@
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { FC } from 'react';
+import { BibleSchool } from 'pages';
+import { RootTabName, RootTabsScreenProps } from 'shared';
+import { BibleSchoolStackParamList } from './types';
+
+const BibleSchoolStack = createNativeStackNavigator<BibleSchoolStackParamList>();
+
+export const BibleSchoolRouting: FC<RootTabsScreenProps<RootTabName.BibleSchool>> = () => (
+  <BibleSchoolStack.Navigator
+    initialRouteName='Home'
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <BibleSchoolStack.Screen name='Home' component={BibleSchool} />
+  </BibleSchoolStack.Navigator>
+);

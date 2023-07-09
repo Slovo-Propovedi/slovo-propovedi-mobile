@@ -2,10 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TabView } from 'react-native-tab-view';
-import { InfoStackScreenProps } from 'routing';
+import { BibleSchoolStackScreenProps } from 'routing';
 import { renderScene } from './scene';
 
-export const Info: React.FC<InfoStackScreenProps<'Home'>> = () => {
+export const BibleSchool: React.FC<BibleSchoolStackScreenProps<'Home'>> = () => {
   const layout = useWindowDimensions();
 
   const [index, setIndex] = useState(0);
@@ -19,7 +19,7 @@ export const Info: React.FC<InfoStackScreenProps<'Home'>> = () => {
   );
 
   return (
-    <SafeAreaView style={styles.info}>
+    <SafeAreaView style={styles.BibleSchool}>
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
@@ -31,7 +31,7 @@ export const Info: React.FC<InfoStackScreenProps<'Home'>> = () => {
 };
 
 const styles = StyleSheet.create({
-  info: {
+  BibleSchool: {
     flex: 1,
   },
 });

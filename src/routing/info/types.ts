@@ -3,20 +3,6 @@ import type {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 
-export type MainStackParamList = {
-  Home: undefined;
-};
-
-export type MainStackScreenProps<Screen extends keyof MainStackParamList> = NativeStackScreenProps<
-  MainStackParamList,
-  Screen
->;
-
-export type MainStackNavProp<Screen extends keyof MainStackParamList> = NativeStackNavigationProp<
-  MainStackParamList,
-  Screen
->;
-
 export type InfoStackParamList = {
   Home: undefined;
 };

@@ -9,6 +9,10 @@
       "path": "src/app"
     },
     {
+      "name": "routing",
+      "path": "src/routing"
+    },
+    {
       "name": "pages",
       "path": "src/pages"
     },
