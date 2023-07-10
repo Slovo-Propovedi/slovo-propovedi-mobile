@@ -9,14 +9,17 @@ export * from './ui/search-button';
 export * from './ui/list-group';
 export * from './ui/list-item';
 
-export * from './themed';
-export * from './images';
-
 // ./api
 export * from './api';
 
 // ./lib
 export * from './lib';
 
+// ./hooks
+export * from './hooks';
+
 // misc
 export * from './root-tabs';
+export * from './themed';
+export * from './images';
+export * from './types';
