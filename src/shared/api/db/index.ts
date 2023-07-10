@@ -1,4 +1,4 @@
-export { DB, Sermons, BookWithSermons, GroupListItem } from './types';
+export * from './types';
 
 import db from './db.json';
 

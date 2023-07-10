@@ -1,160 +1,166 @@
 {
-  "sermons": {
-    "onBible": [
-      {
-        "title": "Матфея",
-        "description": "",
-        "list": [
-          {
-            "title": "Глава 1",
-            "list": [
-              {
-                "id": 1,
-                "title": "Проповедь 1",
-                "youtube": "http: //placeholder.com"
-              },
-              {
-                "id": 2,
-                "title": "Проповедь 2",
-                "youtube": "http: //placeholder.com"
-              }
-            ]
-          },
-          {
-            "title": "Глава 2",
-            "list": [
-              {
-                "id": 1,
-                "title": "Проповедь 1",
-                "youtube": "http: //placeholder.com"
-              },
-              {
-                "id": 2,
-                "title": "Проповедь 2",
-                "youtube": "http: //placeholder.com"
-              }
-            ]
-          },
-          {
-            "title": "Глава 3",
-            "list": [
-              {
-                "id": 1,
-                "title": "Проповедь 1",
-                "youtube": "http: //placeholder.com"
-              },
-              {
-                "id": 2,
-                "title": "Проповедь 2",
-                "youtube": "http: //placeholder.com"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "title": "Луки",
-        "description": "",
-        "list": [
-          {
-            "title": "Глава 1",
-            "list": [
-              {
-                "id": 1,
-                "title": "Проповедь 1",
-                "youtube": "http: //placeholder.com"
-              },
-              {
-                "id": 2,
-                "title": "Проповедь 2",
-                "youtube": "http: //placeholder.com"
-              }
-            ]
-          },
-          {
-            "title": "Глава 2",
-            "list": [
-              {
-                "id": 1,
-                "title": "Проповедь 1",
-                "youtube": "http: //placeholder.com"
-              },
-              {
-                "id": 2,
-                "title": "Проповедь 2",
-                "youtube": "http: //placeholder.com"
-              }
-            ]
-          },
-          {
-            "title": "Глава 3",
-            "list": [
-              {
-                "id": 1,
-                "title": "Проповедь 1",
-                "youtube": "http: //placeholder.com"
-              },
-              {
-                "id": 2,
-                "title": "Проповедь 2",
-                "youtube": "http: //placeholder.com"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "title": "Иоанна",
-        "description": "",
-        "list": [
-          {
-            "title": "Глава 1",
-            "list": [
-              {
-                "id": 1,
-                "title": "Проповедь 1",
-                "youtube": "http: //placeholder.com"
-              },
-              {
-                "id": 2,
-                "title": "Проповедь 2",
-                "youtube": "http: //placeholder.com"
-              }
-            ]
-          },
-          {
-            "title": "Глава 2",
-            "list": [
-              {
-                "id": 1,
-                "title": "Проповедь 1",
-                "youtube": "http: //placeholder.com"
-              },
-              {
-                "id": 2,
-                "title": "Проповедь 2",
-                "youtube": "http: //placeholder.com"
-              }
-            ]
-          },
-          {
-            "title": "Глава 3",
-            "list": [
-              {
-                "id": 1,
-                "title": "Проповедь 1",
-                "youtube": "http: //placeholder.com"
-              },
-              {
-                "id": 2,
-                "title": "Проповедь 2",
-                "youtube": "http: //placeholder.com"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "topical": []
-  }
+  "sermons": [
+    {
+      "groupName": "onBible",
+      "booksList": [
+        {
+          "title": "Матфея",
+          "description": "",
+          "list": [
+            {
+              "title": "Глава 1",
+              "list": [
+                {
+                  "id": 1,
+                  "title": "Проповедь 1",
+                  "youtube": "http: //placeholder.com"
+                },
+                {
+                  "id": 2,
+                  "title": "Проповедь 2",
+                  "youtube": "http: //placeholder.com"
+                }
+              ]
+            },
+            {
+              "title": "Глава 2",
+              "list": [
+                {
+                  "id": 1,
+                  "title": "Проповедь 1",
+                  "youtube": "http: //placeholder.com"
+                },
+                {
+                  "id": 2,
+                  "title": "Проповедь 2",
+                  "youtube": "http: //placeholder.com"
+                }
+              ]
+            },
+            {
+              "title": "Глава 3",
+              "list": [
+                {
+                  "id": 1,
+                  "title": "Проповедь 1",
+                  "youtube": "http: //placeholder.com"
+                },
+                {
+                  "id": 2,
+                  "title": "Проповедь 2",
+                  "youtube": "http: //placeholder.com"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Луки",
+          "description": "",
+          "list": [
+            {
+              "title": "Глава 1",
+              "list": [
+                {
+                  "id": 1,
+                  "title": "Проповедь 1",
+                  "youtube": "http: //placeholder.com"
+                },
+                {
+                  "id": 2,
+                  "title": "Проповедь 2",
+                  "youtube": "http: //placeholder.com"
+                }
+              ]
+            },
+            {
+              "title": "Глава 2",
+              "list": [
+                {
+                  "id": 1,
+                  "title": "Проповедь 1",
+                  "youtube": "http: //placeholder.com"
+                },
+                {
+                  "id": 2,
+                  "title": "Проповедь 2",
+                  "youtube": "http: //placeholder.com"
+                }
+              ]
+            },
+            {
+              "title": "Глава 3",
+              "list": [
+                {
+                  "id": 1,
+                  "title": "Проповедь 1",
+                  "youtube": "http: //placeholder.com"
+                },
+                {
+                  "id": 2,
+                  "title": "Проповедь 2",
+                  "youtube": "http: //placeholder.com"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Иоанна",
+          "description": "",
+          "list": [
+            {
+              "title": "Глава 1",
+              "list": [
+                {
+                  "id": 1,
+                  "title": "Проповедь 1",
+                  "youtube": "http: //placeholder.com"
+                },
+                {
+                  "id": 2,
+                  "title": "Проповедь 2",
+                  "youtube": "http: //placeholder.com"
+                }
+              ]
+            },
+            {
+              "title": "Глава 2",
+              "list": [
+                {
+                  "id": 1,
+                  "title": "Проповедь 1",
+                  "youtube": "http: //placeholder.com"
+                },
+                {
+                  "id": 2,
+                  "title": "Проповедь 2",
+                  "youtube": "http: //placeholder.com"
+                }
+              ]
+            },
+            {
+              "title": "Глава 3",
+              "list": [
+                {
+                  "id": 1,
+                  "title": "Проповедь 1",
+                  "youtube": "http: //placeholder.com"
+                },
+                {
+                  "id": 2,
+                  "title": "Проповедь 2",
+                  "youtube": "http: //placeholder.com"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "groupName": "topical",
+      "topicalList": []
+    }
+  ]
 }

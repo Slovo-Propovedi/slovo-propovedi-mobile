@@ -1,4 +1,4 @@
-import { BookWithSermons } from './db';
+import { BookWithSermons, SermonGroupName } from './db';
 import { localDB } from './localBD';
 
 const getSermons = () => {
@@ -7,14 +7,23 @@ const getSermons = () => {
   return db.sermons;
 };
 
-const getBookByName = ({ book }: { book: string }): BookWithSermons | null => {
+const getSermonsTabContent = (tabName: SermonGroupName) => {
   const sermons = getSermons();
-  const sermonsList = sermons.onBible.find((el) => el.title === book);
+  const content = sermons.find((el) => el.groupName === tabName);
+
+  return content ?? null;
+};
+
+const getBookByName = ({ book }: { book: string }): BookWithSermons | null => {
+  const sermonsList = getSermonsTabContent(SermonGroupName.OnBible)?.booksList?.find(
+    (el) => el.title === book,
+  );
 
   return sermonsList ?? null;
 };
 
 export const sermonsAPI = {
   getSermons,
+  getSermonsTabContent,
   getBookByName,
 };

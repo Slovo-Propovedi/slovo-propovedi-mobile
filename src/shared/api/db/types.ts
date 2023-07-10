@@ -1,10 +1,8 @@
-export interface DB {
-  sermons: Sermons;
-}
+export type SermonData = { id: number; title: string; youtube: string };
 
-export interface Sermons {
-  onBible: BookWithSermons[];
-  topical: unknown[];
+export interface GroupListItem {
+  title: string;
+  list: SermonData[];
 }
 
 export interface BookWithSermons {
@@ -13,9 +11,21 @@ export interface BookWithSermons {
   list: GroupListItem[];
 }
 
-export interface GroupListItem {
-  title: string;
-  list: Sermon[];
+export enum SermonGroupName {
+  OnBible = 'onBible',
+  Topical = 'topical',
 }
 
-export type Sermon = { id: number; title: string; youtube: string };
+export type SermonItem =
+  | {
+      groupName: SermonGroupName.OnBible;
+      topicalList: unknown[];
+    }
+  | {
+      groupName: SermonGroupName.Topical;
+      booksList: BookWithSermons[];
+    };
+
+export interface DB {
+  sermons: SermonItem[];
+}
