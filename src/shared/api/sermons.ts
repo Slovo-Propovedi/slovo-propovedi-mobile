@@ -1,21 +1,15 @@
-import { BookWithSermons, SermonGroupName } from './db';
+import { Playlist, TabContentName } from './db';
 import { localDB } from './localBD';
 
-const getSermons = () => {
-  const db = localDB.getDB();
-
-  return db.sermons;
-};
-
-const getSermonsTabContent = (tabName: SermonGroupName) => {
-  const sermons = getSermons();
-  const content = sermons.find((el) => el.groupName === tabName);
+const getSermonsTabContent = (tabName: TabContentName) => {
+  const sermons = localDB.getSermons();
+  const content = sermons.find((el) => el.tabName === tabName);
 
   return content ?? null;
 };
 
-const getBookByName = ({ book }: { book: string }): BookWithSermons | null => {
-  const sermonsList = getSermonsTabContent(SermonGroupName.OnBible)?.booksList?.find(
+const getBookByName = ({ book }: { book: string }): Playlist | null => {
+  const sermonsList = getSermonsTabContent(TabContentName.OnBible)?.playlists?.find(
     (el) => el.title === book,
   );
 
@@ -23,7 +17,6 @@ const getBookByName = ({ book }: { book: string }): BookWithSermons | null => {
 };
 
 export const sermonsAPI = {
-  getSermons,
   getSermonsTabContent,
   getBookByName,
 };

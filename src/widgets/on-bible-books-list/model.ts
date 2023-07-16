@@ -1,16 +1,16 @@
 import { create } from 'zustand';
-import { SermonGroupName, sermonsAPI } from 'shared';
-import { BookWithSermons } from 'shared';
+import { TabContentName, sermonsAPI } from 'shared';
+import { Playlist } from 'shared';
 
 interface OnBibleBooksListState {
-  onBibleBooksList: BookWithSermons[];
-  getOnBibleBookList: () => BookWithSermons[];
+  onBibleBooksList: Playlist[];
+  getOnBibleBookList: () => Playlist[];
 }
 
 export const useOnBibleBooksListStore = create<OnBibleBooksListState>((set) => ({
   onBibleBooksList: [],
   getOnBibleBookList: () => {
-    const booksList = sermonsAPI.getSermonsTabContent(SermonGroupName.OnBible)?.booksList ?? [];
+    const booksList = sermonsAPI.getSermonsTabContent(TabContentName.OnBible)?.playlists ?? [];
 
     set((state) => ({
       ...state,

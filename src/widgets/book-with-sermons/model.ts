@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { sermonsAPI } from 'shared';
-import { BookWithSermons } from 'shared';
+import { Playlist } from 'shared';
 
 interface BookWithSermonsState {
-  bookWithSermons: BookWithSermons | null;
-  getBookWithSermonsByName: (book: string) => BookWithSermons | null;
+  bookWithSermons: Playlist | null;
+  getBookWithSermonsByName: (book: string) => Playlist | null;
 }
 
 export const useBookWithSermonsStore = create<BookWithSermonsState>((set) => ({

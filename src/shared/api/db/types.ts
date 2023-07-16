@@ -5,27 +5,22 @@ export interface GroupListItem {
   list: SermonData[];
 }
 
-export interface BookWithSermons {
+export interface Playlist {
   title: string;
-  description: string;
+  description?: string;
   list: GroupListItem[];
 }
 
-export enum SermonGroupName {
+export enum TabContentName {
   OnBible = 'onBible',
   Topical = 'topical',
 }
 
-export type SermonItem =
-  | {
-      groupName: SermonGroupName.OnBible;
-      topicalList: unknown[];
-    }
-  | {
-      groupName: SermonGroupName.Topical;
-      booksList: BookWithSermons[];
-    };
+export type TabContent = {
+  tabName: TabContentName;
+  playlists: Playlist[];
+};
 
 export interface DB {
-  sermons: SermonItem[];
+  sermons: TabContent[];
 }

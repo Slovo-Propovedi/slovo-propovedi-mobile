@@ -1,8 +1,8 @@
 {
   "sermons": [
     {
-      "groupName": "onBible",
-      "booksList": [
+      "tabName": "onBible",
+      "playlists": [
         {
           "title": "Матфея",
           "description": "",
@@ -159,8 +159,8 @@
       ]
     },
     {
-      "groupName": "topical",
-      "topicalList": []
+      "tabName": "topical",
+      "playlists": []
     }
   ]
 }

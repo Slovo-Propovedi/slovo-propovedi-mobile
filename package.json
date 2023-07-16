@@ -45,6 +45,7 @@
     "@feature-sliced/eslint-config": "^0.1.0-beta.6",
     "@testing-library/jest-native": "^5.4.2",
     "@testing-library/react-native": "^12.1.2",
+    "@total-typescript/ts-reset": "^0.4.2",
     "@types/jest": "^29.5.2",
     "@types/react": "~18.0.27",
     "@types/react-test-renderer": "^18.0.0",
