@@ -3,6 +3,7 @@ export type SermonData = {
   description?: string;
   youtubeUrl?: string;
   audioUrl?: string;
+  textFileUrl?: string;
 };
 
 export interface GroupListItem {
