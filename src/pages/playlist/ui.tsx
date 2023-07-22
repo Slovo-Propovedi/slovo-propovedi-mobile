@@ -1,17 +1,15 @@
-import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { SermonsStackScreenProps, SermonsStackParamName, SermonsStackNavProp } from 'routing';
+import { SermonsStackScreenProps, SermonsStackParamName } from 'routing';
 import { ListGroupList, Playlist } from 'features';
 import { OnPressListItemGroup } from 'entities';
 import { SermonData } from 'shared';
 
 export const PlaylistScreen: React.FC<SermonsStackScreenProps<SermonsStackParamName.Playlist>> = ({
   route,
+  navigation: { navigate },
 }) => {
   const { title, list, previewUrl, description } = route.params;
-
-  const { navigate } = useNavigation<SermonsStackNavProp<SermonsStackParamName.Playlist>>();
 
   const getOnPressPlaylistItem: OnPressListItemGroup<SermonData> = (options) => {
     navigate(SermonsStackParamName.SermonCard, options);
