@@ -1,2 +1,1 @@
-export * from './book-with-sermons';
-export * from './on-bible-books-list';
+export * from './books-list-on-bible';

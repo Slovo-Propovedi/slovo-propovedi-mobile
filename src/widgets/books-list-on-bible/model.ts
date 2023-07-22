@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { TabContentName, sermonsAPI } from 'shared';
+import { SermonsTabName, sermonsAPI } from 'shared';
 import { Playlist } from 'shared';
 
 interface OnBibleBooksListState {
@@ -10,7 +10,7 @@ interface OnBibleBooksListState {
 export const useOnBibleBooksListStore = create<OnBibleBooksListState>((set) => ({
   onBibleBooksList: [],
   getOnBibleBookList: () => {
-    const booksList = sermonsAPI.getSermonsTabContent(TabContentName.OnBible)?.playlists ?? [];
+    const booksList = sermonsAPI.getSermonsTabContent(SermonsTabName.OnBible)?.playlists ?? [];
 
     set((state) => ({
       ...state,

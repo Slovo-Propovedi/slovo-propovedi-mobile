@@ -1,22 +1,28 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SceneMap } from 'react-native-tab-view';
-import { OnBibleBooksList } from 'widgets';
+import { BooksListOnBible } from 'widgets';
 
-const FirstRoute = () => <View style={{ flex: 1, backgroundColor: '#673ab7' }} />;
+const NewRoute = () => <View style={{ flex: 1, backgroundColor: '#673ab7' }} />;
 
-const SecondRoute = () => (
+const OnBibleRoute = () => (
   <ScrollView style={styles.scroll}>
-    <OnBibleBooksList />
+    <BooksListOnBible />
   </ScrollView>
 );
 
-const ThirdRoute = () => <View style={{ flex: 1, backgroundColor: '#673ab7' }} />;
+const TopicalRoute = () => <View style={{ flex: 1, backgroundColor: 'blueviolet' }} />;
+
+export enum SermonsRoute {
+  New = 'New',
+  OnBible = 'OnBible',
+  Topical = 'Topical',
+}
 
 export const renderScene = SceneMap({
-  first: FirstRoute,
-  second: SecondRoute,
-  third: ThirdRoute,
+  [SermonsRoute.New]: NewRoute,
+  [SermonsRoute.OnBible]: OnBibleRoute,
+  [SermonsRoute.Topical]: TopicalRoute,
 });
 
 const styles = StyleSheet.create({

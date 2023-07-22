@@ -2,13 +2,18 @@ import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
+import { Playlist } from 'shared';
 
 export enum SermonsStackParamName {
-  Home = 'Home',
+  Sermons = 'Sermons',
+  Playlist = 'Playlist',
+  Sermon = 'Sermon',
 }
 
 export type SermonsStackParamList = {
-  [SermonsStackParamName.Home]: undefined;
+  [SermonsStackParamName.Sermons]: undefined;
+  [SermonsStackParamName.Playlist]: Playlist;
+  [SermonsStackParamName.Sermon]: undefined;
 };
 
 export type SermonsStackScreenProps<Screen extends keyof SermonsStackParamList> =

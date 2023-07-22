@@ -16,7 +16,7 @@ export const SermonItem: FC<SermonItemProps> = ({ title, url }) => (
 );
 
 const styles = StyleSheet.create({
-  item: { margin: 10, padding: 10, backgroundColor: COLORS.Gray, borderRadius: 10 },
+  item: { margin: 10, padding: 10, backgroundColor: COLORS.Black, borderRadius: 10 },
   title: { fontSize: SIZES.h2, marginBottom: 30, color: COLORS.OnPrimary },
   url: { color: COLORS.Primary },
   button: { backgroundColor: COLORS.OnPrimary },

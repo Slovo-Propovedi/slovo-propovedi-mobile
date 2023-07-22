@@ -1,18 +1,28 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { FC } from 'react';
-import { HomeScreen } from 'pages';
+import { PlaylistScreen, SermonsScreen } from 'pages';
 import { RootTabName, RootTabsScreenProps } from 'shared';
 import { SermonsStackParamList, SermonsStackParamName } from './types';
 
 const SermonsStack = createNativeStackNavigator<SermonsStackParamList>();
 
-export const MainRouting: FC<RootTabsScreenProps<RootTabName.Sermons>> = () => (
+export const SermonsRouting: FC<RootTabsScreenProps<RootTabName.Sermons>> = () => (
   <SermonsStack.Navigator
-    initialRouteName={SermonsStackParamName.Home}
-    screenOptions={{
-      headerShown: false,
+    initialRouteName={SermonsStackParamName.Sermons}
+    screenOptions={(params) => {
+      const { name: routeName, params: routeParams } = params.route;
+
+      const title =
+        routeName === SermonsStackParamName.Playlist ? routeParams?.title || '' : 'Главная';
+
+      return {
+        headerShown: routeName !== SermonsStackParamName.Sermons,
+        title,
+        headerBackButtonMenuEnabled: false,
+      };
     }}
   >
-    <SermonsStack.Screen name={SermonsStackParamName.Home} component={HomeScreen} />
+    <SermonsStack.Screen name={SermonsStackParamName.Sermons} component={SermonsScreen} />
+    <SermonsStack.Screen name={SermonsStackParamName.Playlist} component={PlaylistScreen} />
   </SermonsStack.Navigator>
 );

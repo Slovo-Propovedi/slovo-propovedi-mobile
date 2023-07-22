@@ -7,7 +7,7 @@ export * from './ui/input';
 export * from './ui/button';
 export * from './ui/search-button';
 export * from './ui/list-group';
-export * from './ui/list-item';
+export * from './ui/touchable-item';
 
 // ./api
 export * from './api';

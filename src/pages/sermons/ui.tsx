@@ -4,19 +4,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { TabView } from 'react-native-tab-view';
 import { SermonsStackParamName, SermonsStackScreenProps } from 'routing';
 import { getRenderTabBar } from 'shared';
-import { renderScene } from './scene';
+import { SermonsRoute, renderScene } from './scene';
 
-export const HomeScreen: FC<SermonsStackScreenProps<SermonsStackParamName.Home>> = () => {
-  const [index, setIndex] = useState(0);
+export const SermonsScreen: FC<SermonsStackScreenProps<SermonsStackParamName.Sermons>> = () => {
+  const [activeTabIndexIndex, setActiveTabIndexIndex] = useState(0);
 
   const routes = [
-    { key: 'first', title: 'Новые' },
-    { key: 'second', title: 'По Библии' },
-    { key: 'third', title: 'Тематические' },
+    { key: SermonsRoute.New, title: 'Новые' },
+    { key: SermonsRoute.OnBible, title: 'По Библии' },
+    { key: SermonsRoute.Topical, title: 'Тематические' },
   ];
 
   const renderTabBar = getRenderTabBar({
-    setActiveTabIndex: setIndex,
+    setActiveTabIndex: setActiveTabIndexIndex,
   });
 
   return (
@@ -24,9 +24,9 @@ export const HomeScreen: FC<SermonsStackScreenProps<SermonsStackParamName.Home>>
       <View style={{ flex: 1 }}>
         <TabView
           renderTabBar={renderTabBar}
-          navigationState={{ index, routes }}
+          navigationState={{ index: activeTabIndexIndex, routes }}
           renderScene={renderScene}
-          onIndexChange={setIndex}
+          onIndexChange={setActiveTabIndexIndex}
         />
       </View>
     </SafeAreaView>

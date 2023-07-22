@@ -1,7 +1,7 @@
 export const COLORS = {
   OnPrimary: '#fff',
   Primary: '#ff602a',
-  Gray: 'gray',
+  Black: 'black',
 } as const;
 
 export const SIZES = {

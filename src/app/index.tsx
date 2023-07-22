@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
-import { MainRouting, LibraryRouting, BibleSchoolRouting, InfoRouting } from 'routing';
+import { SermonsRouting, LibraryRouting, BibleSchoolRouting, InfoRouting } from 'routing';
 import { RootTabsParamList, RootTabName } from 'shared';
 
 const Tab = createBottomTabNavigator<RootTabsParamList>();
@@ -39,7 +39,7 @@ const App = () => (
         headerShown: false,
       })}
     >
-      <Tab.Screen name={RootTabName.Sermons} component={MainRouting} />
+      <Tab.Screen name={RootTabName.Sermons} component={SermonsRouting} />
       <Tab.Screen name={RootTabName.Library} component={LibraryRouting} />
       <Tab.Screen
         name={RootTabName.BibleSchool}
