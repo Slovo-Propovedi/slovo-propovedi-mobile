@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { FC } from 'react';
 import { PlaylistScreen, SermonsScreen } from 'pages';
+import { SermonCardScreen } from 'pages';
 import { RootTabName, RootTabsScreenProps } from 'shared';
 import { SermonsStackParamList, SermonsStackParamName } from './types';
 
@@ -12,8 +13,20 @@ export const SermonsRouting: FC<RootTabsScreenProps<RootTabName.Sermons>> = () =
     screenOptions={(params) => {
       const { name: routeName, params: routeParams } = params.route;
 
-      const title =
-        routeName === SermonsStackParamName.Playlist ? routeParams?.title || '' : 'Главная';
+      const title = (() => {
+        if (!routeParams) {
+          return routeName;
+        }
+
+        if (
+          routeName === SermonsStackParamName.Playlist ||
+          routeName === SermonsStackParamName.SermonCard
+        ) {
+          return routeParams.title;
+        }
+
+        return routeName;
+      })();
 
       return {
         headerShown: routeName !== SermonsStackParamName.Sermons,
@@ -24,5 +37,6 @@ export const SermonsRouting: FC<RootTabsScreenProps<RootTabName.Sermons>> = () =
   >
     <SermonsStack.Screen name={SermonsStackParamName.Sermons} component={SermonsScreen} />
     <SermonsStack.Screen name={SermonsStackParamName.Playlist} component={PlaylistScreen} />
+    <SermonsStack.Screen name={SermonsStackParamName.SermonCard} component={SermonCardScreen} />
   </SermonsStack.Navigator>
 );

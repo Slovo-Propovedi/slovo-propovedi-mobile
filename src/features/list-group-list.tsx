@@ -1,22 +1,34 @@
 import React from 'react';
-import { GestureResponderEvent, StyleSheet, View, ViewStyle } from 'react-native';
-import { ListItemGroup, ListItemGroupProps } from 'entities';
+import { StyleSheet, View, ViewStyle } from 'react-native';
+import { ListItemGroup, ListItemGroupProps, OnPressListItemGroup } from 'entities';
 
-type GroupListProps = Omit<ListItemGroupProps, 'onPressListItemGroup'>;
+type GroupListProps<T extends { title: string }> = Omit<
+  ListItemGroupProps<T>,
+  'onPressListItemGroup' | 'style'
+>;
 
-interface ListGroupListProps {
-  groupList: GroupListProps[];
-  onPressListItemGroup: (event: GestureResponderEvent) => void;
+interface ListGroupListProps<T extends { title: string }> {
+  groupList: GroupListProps<T>[];
+  onPressListItemGroup: OnPressListItemGroup<T>;
   style?: ViewStyle;
 }
 
-export const ListGroupList = ({ groupList, onPressListItemGroup, style }: ListGroupListProps) => (
+type ListGroupListComponent = <T extends { title: string }>(
+  props: ListGroupListProps<T>,
+) => JSX.Element;
+
+export const ListGroupList: ListGroupListComponent = ({
+  groupList,
+  onPressListItemGroup,
+  style,
+}) => (
   <View style={{ ...styles.container, ...style }}>
-    {groupList.map((props, index) => (
+    {groupList.map(({ list, title }, index) => (
       <ListItemGroup
         key={`ListGroupListItem-${index}`}
         style={styles.listItem}
-        {...props}
+        title={title}
+        list={list}
         onPressListItemGroup={onPressListItemGroup}
       />
     ))}

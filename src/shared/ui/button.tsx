@@ -6,7 +6,7 @@ export const Button = ({
   disabled,
   style,
   ...rest
-}: ButtonProps & { style: ViewStyle }) => (
+}: ButtonProps & { style?: ViewStyle }) => (
   <TouchableOpacity
     style={{
       ...(disabled ? { ...styles.button, backgroundColor: 'gray' } : styles.button),

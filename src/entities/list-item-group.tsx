@@ -2,21 +2,38 @@ import React from 'react';
 import { GestureResponderEvent, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { ListGroup, TouchableItem } from 'shared';
 
-export interface ListItemGroupProps {
+export type OnPressListItemGroup<T extends { title: string }> = (
+  options: T,
+  event: GestureResponderEvent,
+) => void;
+
+export interface ListItemGroupProps<T extends { title: string }> {
   title: string;
-  list: { title: string }[];
-  onPressListItemGroup: (event: GestureResponderEvent) => void;
+  list: T[];
+  onPressListItemGroup: OnPressListItemGroup<T>;
   style?: ViewStyle;
 }
 
-export const ListItemGroup = ({ title, list, onPressListItemGroup, style }: ListItemGroupProps) => (
+type ListItemGroupComponent = <T extends { title: string }>({
+  title,
+  list,
+  onPressListItemGroup,
+  style,
+}: ListItemGroupProps<T>) => JSX.Element;
+
+export const ListItemGroup: ListItemGroupComponent = ({
+  title,
+  list,
+  onPressListItemGroup,
+  style,
+}) => (
   <ListGroup title={title} style={{ ...styles.group, ...style }}>
     <View style={styles.list}>
       {list.map((item, index) => (
         <TouchableItem
           key={`TouchableItem-${index}`}
           style={styles.listItem}
-          onPress={onPressListItemGroup}
+          onPress={(event) => onPressListItemGroup(item, event)}
         >
           <Text>{item.title}</Text>
         </TouchableItem>
