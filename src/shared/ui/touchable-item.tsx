@@ -1,11 +1,18 @@
 import React from 'react';
-import { GestureResponderEvent, StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
+import {
+  GestureResponderEvent,
+  StyleProp,
+  StyleSheet,
+  TouchableOpacity,
+  ViewStyle,
+} from 'react-native';
+import { COLORS } from 'shared/themed';
 
-interface TouchableItemProps {
+export interface TouchableItemProps {
   children: React.ReactElement;
   disabled?: boolean;
   onPress: (event: GestureResponderEvent) => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const TouchableItem = ({
@@ -13,22 +20,24 @@ export const TouchableItem = ({
   disabled = false,
   style,
   onPress,
-}: TouchableItemProps) => (
-  <TouchableOpacity
-    style={{
-      ...(disabled ? { ...styles.item, backgroundColor: 'gray' } : styles.item),
-      ...style,
-    }}
-    disabled={disabled}
-    onPress={onPress}
-  >
-    <View style={styles.children}>{children}</View>
-  </TouchableOpacity>
-);
+}: TouchableItemProps) => {
+  const buttonStyles: StyleProp<ViewStyle>[] = [styles.item];
+
+  if (disabled) {
+    buttonStyles.push({ backgroundColor: COLORS.disabled });
+  }
+
+  buttonStyles.push(style);
+
+  return (
+    <TouchableOpacity style={buttonStyles} disabled={disabled} onPress={onPress}>
+      {children}
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
   item: {
     width: '100%',
   },
-  children: {},
 });

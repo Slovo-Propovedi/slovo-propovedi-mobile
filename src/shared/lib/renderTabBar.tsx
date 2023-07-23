@@ -1,5 +1,6 @@
 import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { NavigationState, SceneRendererProps } from 'react-native-tab-view';
+import { INDENTS } from 'shared/themed';
 
 type RenderTabBar = (
   props: SceneRendererProps & {
@@ -48,6 +49,6 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    padding: 16,
+    padding: INDENTS.main,
   },
 });

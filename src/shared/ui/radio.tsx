@@ -1,7 +1,7 @@
-import { FC, PropsWithChildren } from 'react';
+import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
-type RadioButtonGroupProps = PropsWithChildren<object>;
+type RadioButtonGroupProps = React.PropsWithChildren<object>;
 
 type RadioButtonProps = {
   selected: boolean;
@@ -10,7 +10,7 @@ type RadioButtonProps = {
   onValueChange?: (selected: boolean) => void;
 };
 
-export const RadioButtonGroup: FC<RadioButtonGroupProps> = ({ children }) => (
+export const RadioButtonGroup: React.FC<RadioButtonGroupProps> = ({ children }) => (
   <View>{children}</View>
 );
 

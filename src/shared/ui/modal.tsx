@@ -1,7 +1,7 @@
-import { PropsWithChildren } from 'react';
+import React from 'react';
 import { Pressable, View } from 'react-native';
 
-type Props = PropsWithChildren<{
+type Props = React.PropsWithChildren<{
   onBackdropPress: () => void;
 }>;
 

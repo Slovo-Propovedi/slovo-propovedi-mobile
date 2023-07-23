@@ -1,33 +1,49 @@
-import { ButtonProps, StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native';
+import {
+  ButtonProps,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  ViewStyle,
+} from 'react-native';
+import { COLORS, INDENTS, FONT_SIZES } from 'shared/themed';
+
+type CustomButtonProps = ButtonProps & { style?: ViewStyle; titleStyle?: TextStyle };
 
 export const Button = ({
   title,
   color,
   disabled,
   style,
+  titleStyle,
   ...rest
-}: ButtonProps & { style?: ViewStyle }) => (
-  <TouchableOpacity
-    style={{
-      ...(disabled ? { ...styles.button, backgroundColor: 'gray' } : styles.button),
-      ...style,
-    }}
-    disabled={disabled}
-    {...rest}
-  >
-    <Text style={{ ...styles.text, color }}>{title}</Text>
-  </TouchableOpacity>
-);
+}: CustomButtonProps) => {
+  const buttonStyles: StyleProp<ViewStyle>[] = [styles.button];
+
+  if (disabled) {
+    buttonStyles.push({ backgroundColor: COLORS.disabled });
+  }
+
+  buttonStyles.push(style);
+
+  return (
+    <TouchableOpacity style={buttonStyles} disabled={disabled} {...rest}>
+      <Text style={[styles.text, titleStyle, { color }]}>{title}</Text>
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
   button: {
-    padding: 2.5,
+    padding: INDENTS.low,
     borderRadius: 10,
-    backgroundColor: 'blue',
+    backgroundColor: COLORS.blue,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
-    fontSize: 10,
+    fontSize: FONT_SIZES.h5,
     textTransform: 'uppercase',
-    textAlign: 'center',
   },
 });

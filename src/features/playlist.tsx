@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { INDENTS, FONT_SIZES } from 'shared';
 
 interface PlaylistProps {
   title: string;
@@ -10,7 +11,7 @@ interface PlaylistProps {
 }
 
 export const Playlist = ({ title, children, previewUrl, description, style }: PlaylistProps) => (
-  <ScrollView style={{ ...styles.container, ...style }}>
+  <ScrollView style={[styles.container, style]}>
     <Text style={styles.title}>{title}</Text>
     {previewUrl && <Image style={styles.preview} source={{ uri: previewUrl }} />}
 
@@ -21,12 +22,18 @@ export const Playlist = ({ title, children, previewUrl, description, style }: Pl
 );
 
 const styles = StyleSheet.create({
-  container: {},
-  title: {},
+  container: { padding: INDENTS.main },
+  title: {
+    fontSize: FONT_SIZES.h1,
+    paddingBottom: INDENTS.main,
+  },
   preview: {
     width: '100%',
     height: 300,
   },
-  description: {},
+  description: {
+    fontSize: FONT_SIZES.h4,
+    padding: INDENTS.main,
+  },
   content: {},
 });

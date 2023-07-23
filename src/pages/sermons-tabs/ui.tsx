@@ -1,18 +1,20 @@
-import { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TabView } from 'react-native-tab-view';
 import { SermonsStackParamName, SermonsStackScreenProps } from 'routing';
 import { getRenderTabBar } from 'shared';
-import { SermonsRoute, renderScene } from './scene';
+import { SermonsTab, renderScene } from './scene';
 
-export const SermonsScreen: FC<SermonsStackScreenProps<SermonsStackParamName.Sermons>> = () => {
+export const SermonsTabsScreen: React.FC<
+  SermonsStackScreenProps<SermonsStackParamName.SermonsTabs>
+> = () => {
   const [activeTabIndexIndex, setActiveTabIndexIndex] = useState(0);
 
   const routes = [
-    { key: SermonsRoute.New, title: 'Новые' },
-    { key: SermonsRoute.OnBible, title: 'По Библии' },
-    { key: SermonsRoute.Topical, title: 'Тематические' },
+    { key: SermonsTab.New, title: 'Новые' },
+    { key: SermonsTab.OnBible, title: 'По Библии' },
+    { key: SermonsTab.Topical, title: 'Тематические' },
   ];
 
   const renderTabBar = getRenderTabBar({

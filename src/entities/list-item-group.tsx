@@ -1,6 +1,6 @@
 import React from 'react';
 import { GestureResponderEvent, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { ListGroup, TouchableItem } from 'shared';
+import { ListGroup, INDENTS, FONT_SIZES, TouchableItem } from 'shared';
 
 export type OnPressListItemGroup<T extends { title: string }> = (
   options: T,
@@ -27,7 +27,7 @@ export const ListItemGroup: ListItemGroupComponent = ({
   onPressListItemGroup,
   style,
 }) => (
-  <ListGroup title={title} style={{ ...styles.group, ...style }}>
+  <ListGroup title={title} style={[styles.group, style]}>
     <View style={styles.list}>
       {list.map((item, index) => (
         <TouchableItem
@@ -35,11 +35,23 @@ export const ListItemGroup: ListItemGroupComponent = ({
           style={styles.listItem}
           onPress={(event) => onPressListItemGroup(item, event)}
         >
-          <Text>{item.title}</Text>
+          <Text style={styles.listItemTitle}>{item.title}</Text>
         </TouchableItem>
       ))}
     </View>
   </ListGroup>
 );
 
-const styles = StyleSheet.create({ group: {}, list: {}, listItem: {} });
+const styles = StyleSheet.create({
+  group: {},
+  list: { paddingLeft: INDENTS.main },
+  listItem: {
+    minHeight: 50,
+    marginBottom: INDENTS.main,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  listItemTitle: {
+    fontSize: FONT_SIZES.h3,
+  },
+});

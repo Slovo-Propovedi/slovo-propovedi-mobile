@@ -3,4 +3,4 @@ export * from './info';
 export * from './library';
 export * from './playlist';
 export * from './sermon-card';
-export * from './sermons';
+export * from './sermons-tabs';

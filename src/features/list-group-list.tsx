@@ -22,7 +22,7 @@ export const ListGroupList: ListGroupListComponent = ({
   onPressListItemGroup,
   style,
 }) => (
-  <View style={{ ...styles.container, ...style }}>
+  <View style={[styles.container, style]}>
     {groupList.map(({ list, title }, index) => (
       <ListItemGroup
         key={`ListGroupListItem-${index}`}

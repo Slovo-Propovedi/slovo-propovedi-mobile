@@ -1,11 +1,11 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { StyleSheet } from 'react-native';
 import { SermonsStackScreenProps, SermonsStackParamName } from 'routing';
 import { SermonCard } from 'features';
 
-export const SermonCardScreen: FC<SermonsStackScreenProps<SermonsStackParamName.SermonCard>> = ({
-  route,
-}) => {
+export const SermonCardScreen: React.FC<
+  SermonsStackScreenProps<SermonsStackParamName.SermonCard>
+> = ({ route }) => {
   const { title, audioUrl, description, textFileUrl, youtubeUrl } = route.params;
 
   return (

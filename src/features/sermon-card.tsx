@@ -1,6 +1,6 @@
 import React from 'react';
 import { Linking, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { Button, SermonData } from 'shared';
+import { Button, COLORS, FONT_SIZES, INDENTS, SermonData } from 'shared';
 
 type SermonCardProps = SermonData & { style?: ViewStyle };
 
@@ -12,37 +12,65 @@ export const SermonCard = ({
   textFileUrl,
   youtubeUrl,
 }: SermonCardProps) => (
-  <View style={style}>
+  <View style={[styles.container, style]}>
     <Text style={styles.title}>{title}</Text>
     {description && <Text style={styles.description}>{description}</Text>}
-    <Button
-      style={styles.listenLink}
-      title='Слушать'
-      onPress={() => {
-        console.log('audioUrl: ', audioUrl);
-      }}
-    />
-    <Button
-      style={styles.textFileLink}
-      title='Читать'
-      onPress={() => {
-        console.log('textFileUrl: ', textFileUrl);
-      }}
-    />
-    <Button
-      style={styles.watchLink}
-      title='Смотреть'
-      onPress={() => {
-        youtubeUrl && Linking.openURL(youtubeUrl);
-      }}
-    />
+    <View style={styles.buttonsGroup}>
+      <Button
+        style={styles.listenLink}
+        color={COLORS.onPrimary}
+        title='Слушать'
+        onPress={() => {
+          audioUrl && Linking.openURL(audioUrl);
+        }}
+        titleStyle={styles.listenLinkTitle}
+      />
+      <Button
+        style={styles.textFileLink}
+        color={COLORS.onPrimary}
+        title='Читать'
+        onPress={() => {
+          textFileUrl && Linking.openURL(textFileUrl);
+        }}
+      />
+      <Button
+        style={styles.watchLink}
+        color={COLORS.onPrimary}
+        title='Смотреть'
+        onPress={() => {
+          youtubeUrl && Linking.openURL(youtubeUrl);
+        }}
+      />
+    </View>
   </View>
 );
 
 const styles = StyleSheet.create({
-  title: {},
-  description: {},
-  listenLink: {},
-  watchLink: {},
-  textFileLink: {},
+  container: { padding: INDENTS.main },
+  title: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.h2,
+    paddingVertical: INDENTS.main,
+  },
+
+  description: {
+    fontSize: FONT_SIZES.h4,
+    padding: INDENTS.main,
+  },
+  buttonsGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  listenLink: {
+    backgroundColor: COLORS.primary,
+  },
+  listenLinkTitle: {
+    fontSize: FONT_SIZES.h4,
+  },
+  watchLink: {
+    backgroundColor: COLORS.primary,
+  },
+  textFileLink: {
+    backgroundColor: COLORS.primary,
+  },
 });

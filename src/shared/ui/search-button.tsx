@@ -1,18 +1,29 @@
-import { ButtonProps, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import {
+  ButtonProps,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { SEARCH_ICON } from 'shared/images';
-import { COLORS } from '../themed';
+import { COLORS } from 'shared/themed';
 
 export type SearchButtonProps = Omit<ButtonProps, 'title' | 'color'>;
 
-export const SearchButton = ({ disabled, ...rest }: SearchButtonProps) => (
-  <TouchableOpacity
-    style={disabled ? { ...styles.button, backgroundColor: 'gray' } : styles.button}
-    disabled={disabled}
-    {...rest}
-  >
-    <Image source={{ uri: SEARCH_ICON }} style={styles.image} />
-  </TouchableOpacity>
-);
+export const SearchButton = ({ disabled, ...rest }: SearchButtonProps) => {
+  const buttonStyles: StyleProp<ViewStyle>[] = [styles.button];
+
+  if (disabled) {
+    buttonStyles.push({ backgroundColor: COLORS.disabled });
+  }
+
+  return (
+    <TouchableOpacity style={buttonStyles} disabled={disabled} {...rest}>
+      <Image source={{ uri: SEARCH_ICON }} style={styles.image} />
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
   button: {
@@ -20,7 +31,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderTopRightRadius: 15,
     borderBottomRightRadius: 15,
-    backgroundColor: COLORS.Primary,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },

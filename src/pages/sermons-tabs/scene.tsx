@@ -3,26 +3,26 @@ import { View, ScrollView, StyleSheet } from 'react-native';
 import { SceneMap } from 'react-native-tab-view';
 import { BooksListOnBible } from 'widgets';
 
-const NewRoute = () => <View style={{ flex: 1, backgroundColor: '#673ab7' }} />;
+const NewTab = () => <View style={{ flex: 1, backgroundColor: '#673ab7' }} />;
 
-const OnBibleRoute = () => (
+const OnBibleTab = () => (
   <ScrollView style={styles.scroll}>
     <BooksListOnBible />
   </ScrollView>
 );
 
-const TopicalRoute = () => <View style={{ flex: 1, backgroundColor: 'blueviolet' }} />;
+const TopicalTab = () => <View style={{ flex: 1, backgroundColor: 'blueviolet' }} />;
 
-export enum SermonsRoute {
+export enum SermonsTab {
   New = 'New',
   OnBible = 'OnBible',
   Topical = 'Topical',
 }
 
 export const renderScene = SceneMap({
-  [SermonsRoute.New]: NewRoute,
-  [SermonsRoute.OnBible]: OnBibleRoute,
-  [SermonsRoute.Topical]: TopicalRoute,
+  [SermonsTab.New]: NewTab,
+  [SermonsTab.OnBible]: OnBibleTab,
+  [SermonsTab.Topical]: TopicalTab,
 });
 
 const styles = StyleSheet.create({

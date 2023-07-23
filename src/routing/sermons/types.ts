@@ -5,13 +5,13 @@ import type {
 import { Playlist, SermonData } from 'shared';
 
 export enum SermonsStackParamName {
-  Sermons = 'Sermons',
+  SermonsTabs = 'SermonsTabs',
   Playlist = 'Playlist',
   SermonCard = 'SermonCard',
 }
 
 export type SermonsStackParamList = {
-  [SermonsStackParamName.Sermons]: undefined;
+  [SermonsStackParamName.SermonsTabs]: undefined;
   [SermonsStackParamName.Playlist]: Playlist;
   [SermonsStackParamName.SermonCard]: SermonData;
 };
