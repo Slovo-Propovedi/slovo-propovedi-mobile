@@ -5324,6 +5324,13 @@ expo-constants@~14.2.0, expo-constants@~14.2.1:
     "@expo/config" "~8.0.0"
     uuid "^3.3.2"
 
+expo-file-system@^15.4.2:
+  version "15.4.2"
+  resolved "https://registry.yarnpkg.com/expo-file-system/-/expo-file-system-15.4.2.tgz#f18e9d84f06a50eb4084b4a34ca7ca9c5a42f92e"
+  integrity sha512-WFaEWuFEuUpETiq85YlhKYJgedccWTjtCMnYGAgyNfCfvnIgfMCVH7dWudGuxhfAcTZqh36OcqtSckbtbhOtyg==
+  dependencies:
+    uuid "^3.4.0"
+
 expo-file-system@~15.2.0, expo-file-system@~15.2.2:
   version "15.2.2"
   resolved "https://registry.yarnpkg.com/expo-file-system/-/expo-file-system-15.2.2.tgz#a1ddf8aabf794f93888a146c4f5187e2004683a3"
@@ -5337,6 +5344,11 @@ expo-font@~11.1.1:
   integrity sha512-X+aICqYY69hiiDDtcNrjq8KutHrH2TrHuMqk0Rfq0P7hF6hMd+YefwLBNkvIrqrgmTAuqiLjMUwj2rHLqmgluw==
   dependencies:
     fontfaceobserver "^2.1.0"
+
+expo-intent-launcher@^10.7.0:
+  version "10.7.0"
+  resolved "https://registry.yarnpkg.com/expo-intent-launcher/-/expo-intent-launcher-10.7.0.tgz#a2e0e866ac19fe2103b6c6adf2aeb749ef767a7e"
+  integrity sha512-vzZQMpfwa+CtiStkppcvV8lcMgVj13Hej6ENcaSFM7ZHluCA3vjjhpoDMP6I/FAF2SwsEscxhkT2CWVP0VNdTw==
 
 expo-keep-awake@~12.0.1:
   version "12.0.1"

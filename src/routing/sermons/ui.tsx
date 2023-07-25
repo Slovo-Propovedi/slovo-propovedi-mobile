@@ -7,35 +7,37 @@ import { SermonsStackParamList, SermonsStackParamName } from './types';
 const SermonsStack = createNativeStackNavigator<SermonsStackParamList>();
 
 export const SermonsRouting: React.FC<RootTabsScreenProps<RootTabName.Sermons>> = () => (
-  <SermonsStack.Navigator
-    initialRouteName={SermonsStackParamName.SermonsTabs}
-    screenOptions={({ route }) => {
-      const { name: routeName, params: routeParams } = route;
+  <SermonsStack.Navigator initialRouteName={SermonsStackParamName.SermonsTabs}>
+    <SermonsStack.Screen
+      name={SermonsStackParamName.SermonsTabs}
+      component={SermonsTabsScreen}
+      options={({ route }) => {
+        const { name: routeName } = route;
 
-      const title = (() => {
-        if (!routeParams) {
-          return routeName;
-        }
-
-        if (
-          routeName === SermonsStackParamName.Playlist ||
-          routeName === SermonsStackParamName.SermonCard
-        ) {
-          return routeParams.title;
-        }
-
-        return routeName;
-      })();
-
-      return {
-        headerShown: routeName !== SermonsStackParamName.SermonsTabs,
-        title,
+        return {
+          headerShown: false,
+          title: routeName,
+          // headerTintColor: COLORS.primary,
+        };
+      }}
+    />
+    <SermonsStack.Screen
+      name={SermonsStackParamName.Playlist}
+      component={PlaylistScreen}
+      options={({ route: { params } }) => ({
+        headerShown: true,
+        title: params.title,
         // headerTintColor: COLORS.primary,
-      };
-    }}
-  >
-    <SermonsStack.Screen name={SermonsStackParamName.SermonsTabs} component={SermonsTabsScreen} />
-    <SermonsStack.Screen name={SermonsStackParamName.Playlist} component={PlaylistScreen} />
-    <SermonsStack.Screen name={SermonsStackParamName.SermonCard} component={SermonCardScreen} />
+      })}
+    />
+    <SermonsStack.Screen
+      name={SermonsStackParamName.SermonCard}
+      component={SermonCardScreen}
+      options={({ route: { params } }) => ({
+        headerShown: true,
+        title: params.title,
+        // headerTintColor: COLORS.primary,
+      })}
+    />
   </SermonsStack.Navigator>
 );

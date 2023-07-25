@@ -1,6 +1,7 @@
 import React from 'react';
 import { Linking, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Button, COLORS, FONT_SIZES, INDENTS, SermonData } from 'shared';
+import { getYoutubeVideoData } from 'shared/lib';
 
 type SermonCardProps = SermonData & { style?: ViewStyle };
 
@@ -11,39 +12,50 @@ export const SermonCard = ({
   description,
   textFileUrl,
   youtubeUrl,
-}: SermonCardProps) => (
-  <View style={[styles.container, style]}>
-    <Text style={styles.title}>{title}</Text>
-    {description && <Text style={styles.description}>{description}</Text>}
-    <View style={styles.buttonsGroup}>
-      <Button
-        style={styles.listenLink}
-        color={COLORS.onPrimary}
-        title='Слушать'
-        onPress={() => {
-          audioUrl && Linking.openURL(audioUrl);
-        }}
-        titleStyle={styles.listenLinkTitle}
-      />
-      <Button
-        style={styles.textFileLink}
-        color={COLORS.onPrimary}
-        title='Читать'
-        onPress={() => {
-          textFileUrl && Linking.openURL(textFileUrl);
-        }}
-      />
-      <Button
-        style={styles.watchLink}
-        color={COLORS.onPrimary}
-        title='Смотреть'
-        onPress={() => {
-          youtubeUrl && Linking.openURL(youtubeUrl);
-        }}
-      />
+}: SermonCardProps) => {
+  const videoData = (youtubeUrl && getYoutubeVideoData(youtubeUrl)) || null;
+  videoData?.then((result) => {
+    console.log('result: ', result);
+  });
+
+  return (
+    <View style={[styles.container, style]}>
+      <Text style={styles.title}>{title}</Text>
+      {description && <Text style={styles.description}>{description}</Text>}
+      <View style={styles.buttonsGroup}>
+        <Button
+          style={styles.listenLink}
+          color={COLORS.onPrimary}
+          title='Слушать'
+          onPress={() => {
+            audioUrl && Linking.openURL(audioUrl);
+          }}
+          titleStyle={styles.listenLinkTitle}
+        />
+        <Button
+          style={styles.textFileLink}
+          color={COLORS.onPrimary}
+          title='Читать'
+          onPress={() => {
+            textFileUrl && Linking.openURL(textFileUrl);
+          }}
+        />
+        <Button
+          style={styles.listenLink}
+          color={COLORS.onPrimary}
+          title='Скачать аудио'
+          onPress={() => {
+            audioUrl && Linking.openURL(audioUrl);
+
+            // audioUrl &&
+            //   downloadFile({ url: audioUrl, filename: 'test', mimeType: 'application/pdf' });
+          }}
+          titleStyle={styles.listenLinkTitle}
+        />
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   container: { padding: INDENTS.main },
@@ -65,7 +77,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   listenLinkTitle: {
-    fontSize: FONT_SIZES.h4,
+    // fontSize: FONT_SIZES.h4,
   },
   watchLink: {
     backgroundColor: COLORS.primary,

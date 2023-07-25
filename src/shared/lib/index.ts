@@ -1,5 +1,6 @@
 export * from './capitalizeString';
 export * from './debounce';
+export * from './downloadFile';
 export * from './getFileOnUrl';
 export * from './getFilePath';
 export * from './isEmptyObject';
@@ -8,3 +9,4 @@ export * from './parseJSONToObject';
 export * from './processRequest';
 export * from './randomIntFromInterval';
 export * from './renderTabBar';
+export * from './getYoutubeVideoData';
