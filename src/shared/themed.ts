@@ -18,4 +18,4 @@ export const FONT_SIZES = {
 export const INDENTS = {
   main: 20,
   low: 10,
-};
+} as const;

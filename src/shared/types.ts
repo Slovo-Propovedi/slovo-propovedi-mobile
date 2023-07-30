@@ -68,6 +68,7 @@ export type MimeType =
   | 'audio/wav'
   | 'audio/webm'
   | 'audio/x-midi'
+  | 'audio/mp3'
   | 'font/otf'
   | 'font/ttf'
   | 'font/woff'

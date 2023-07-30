@@ -1,33 +1,72 @@
 import * as FileSystem from 'expo-file-system';
-import { ActivityAction, startActivityAsync } from 'expo-intent-launcher';
-import { Linking, Platform } from 'react-native';
+import { Linking, Platform, Share } from 'react-native';
 import { MimeType } from 'shared/types';
+import { processRequest } from './processRequest';
 
 type DownloadFileArgs = {
   url: string;
-  filename: string;
+  fileName: string;
   mimeType: MimeType;
 };
 
-export const downloadFile = async ({ url, filename, mimeType }: DownloadFileArgs) => {
+export const downloadFile = async ({ url, fileName, mimeType }: DownloadFileArgs) => {
   // Скачивание пока не работает
 
-  if (Platform.OS === 'android') {
-    try {
-      const fileUri = FileSystem.documentDirectory + filename;
-      const { uri: downloadedFileUri } = await FileSystem.downloadAsync(url, fileUri);
-      console.log('downloadedFileUri: ', downloadedFileUri);
-      if (downloadedFileUri) {
-        //открываем загруженный файл
-        await startActivityAsync(ActivityAction.APPLICATION_DETAILS_SETTINGS, {
-          data: downloadedFileUri,
-          type: mimeType,
-        });
-      }
-    } catch (error) {
-      console.error('Ошибка при скачивании файла:', error);
-    }
-  } else {
-    await Linking.openURL(url);
+  // const share = async (url: string) => {
+  //   console.log('url: ', url);
+  //   try {
+  //     const result = await Share.share({
+  //       url,
+  //     });
+
+  //     if (result.action === Share.sharedAction) {
+  //       if (result.activityType) {
+  //         console.log('result: ', result);
+  //         // shared with activity type of result.activityType
+  //       } else {
+  //         console.log('result: ', result);
+  //         // shared
+  //       }
+  //     } else if (result.action === Share.dismissedAction) {
+  //       // dismissed
+  //       console.log('result: ', result);
+  //     }
+  //   } catch (error) {
+  //     alert((error as Error).message);
+  //   }
+  // };
+
+  const { data } = await processRequest(
+    FileSystem.downloadAsync(url, `${FileSystem.documentDirectory}${fileName}`),
+  );
+
+  if (!data) {
+    return;
   }
+
+  if (data.status === 200) {
+    if (Platform.OS === 'android') {
+      const permissions =
+        await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+      if (!permissions.granted) {
+        return;
+      }
+
+      processRequest(
+        FileSystem.StorageAccessFramework.createFileAsync(
+          permissions.directoryUri,
+          fileName,
+          mimeType,
+        ),
+      );
+    }
+  }
+
+  const { uri } = data;
+
+  Linking.openURL(uri);
+
+  console.log('Finished downloading to ', uri);
+  // share(uri);
 };

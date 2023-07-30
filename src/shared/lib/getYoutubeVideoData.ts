@@ -15,11 +15,8 @@ export const getYoutubeVideoData = async (videoUrl: string) => {
     const json = await response.json();
 
     if (json && typeof json === 'object') {
-      // Получаем данные о видео из ответа
-      const videoData = (json as GetYoutubeVideosResponse).items[0].snippet;
-
       //Возвращаем данные о видео
-      return videoData;
+      return (json as GetYoutubeVideosResponse).items[0];
     }
 
     return null;

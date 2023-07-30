@@ -1,7 +1,18 @@
-import React from 'react';
-import { Linking, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { Button, COLORS, FONT_SIZES, INDENTS, SermonData } from 'shared';
-import { getYoutubeVideoData } from 'shared/lib';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, Linking, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { YoutubePreview } from 'entities';
+import {
+  Button,
+  COLORS,
+  FONT_SIZES,
+  GetYoutubeVideosResponseItem,
+  INDENTS,
+  SermonData,
+  downloadFile,
+  getYoutubeVideoData,
+} from 'shared';
+
+const windowHeight = Dimensions.get('window').height;
 
 type SermonCardProps = SermonData & { style?: ViewStyle };
 
@@ -13,15 +24,35 @@ export const SermonCard = ({
   textFileUrl,
   youtubeUrl,
 }: SermonCardProps) => {
-  const videoData = (youtubeUrl && getYoutubeVideoData(youtubeUrl)) || null;
-  videoData?.then((result) => {
-    console.log('result: ', result);
-  });
+  const [videoData, setVideoData] = useState<GetYoutubeVideosResponseItem | null>(null);
+  console.log('videoData: ', videoData);
+
+  useEffect(() => {
+    (async () => {
+      if (youtubeUrl) {
+        const response = await getYoutubeVideoData(youtubeUrl);
+
+        if (response) {
+          setVideoData(response);
+        }
+      }
+    })();
+  }, []);
 
   return (
     <View style={[styles.container, style]}>
       <Text style={styles.title}>{title}</Text>
+
       {description && <Text style={styles.description}>{description}</Text>}
+
+      {youtubeUrl && videoData && (
+        <YoutubePreview
+          previewSrc={videoData.snippet.thumbnails.medium.url}
+          url={youtubeUrl}
+          style={styles.youtubePreview}
+        />
+      )}
+
       <View style={styles.buttonsGroup}>
         <Button
           style={styles.listenLink}
@@ -33,24 +64,25 @@ export const SermonCard = ({
           titleStyle={styles.listenLinkTitle}
         />
         <Button
+          style={styles.listenLink}
+          color={COLORS.onPrimary}
+          title='Скачать аудио'
+          onPress={() => {
+            // audioUrl && Linking.openURL(audioUrl);
+
+            audioUrl &&
+              downloadFile({ url: audioUrl, fileName: 'test.mp3', mimeType: 'audio/mp3' });
+          }}
+          titleStyle={styles.listenLinkTitle}
+        />
+        <Button
           style={styles.textFileLink}
+          titleStyle={styles.listenLinkTitle}
           color={COLORS.onPrimary}
           title='Читать'
           onPress={() => {
             textFileUrl && Linking.openURL(textFileUrl);
           }}
-        />
-        <Button
-          style={styles.listenLink}
-          color={COLORS.onPrimary}
-          title='Скачать аудио'
-          onPress={() => {
-            audioUrl && Linking.openURL(audioUrl);
-
-            // audioUrl &&
-            //   downloadFile({ url: audioUrl, filename: 'test', mimeType: 'application/pdf' });
-          }}
-          titleStyle={styles.listenLinkTitle}
         />
       </View>
     </View>
@@ -69,6 +101,14 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.h4,
     padding: INDENTS.main,
   },
+
+  youtubePreview: {
+    height: windowHeight * 0.24,
+    width: '100%',
+    resizeMode: 'contain',
+    marginBottom: INDENTS.main,
+  },
+
   buttonsGroup: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -77,7 +117,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   listenLinkTitle: {
-    // fontSize: FONT_SIZES.h4,
+    fontSize: FONT_SIZES.h4,
   },
   watchLink: {
     backgroundColor: COLORS.primary,
