@@ -25,7 +25,6 @@ export const SermonCard = ({
   youtubeUrl,
 }: SermonCardProps) => {
   const [videoData, setVideoData] = useState<GetYoutubeVideosResponseItem | null>(null);
-  console.log('videoData: ', videoData);
 
   useEffect(() => {
     (async () => {
