@@ -1,6 +1,8 @@
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Dimensions, Image, ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { INDENTS, FONT_SIZES } from 'shared';
+
+const windowHeight = Dimensions.get('window').height;
 
 interface PlaylistProps {
   title: string;
@@ -29,7 +31,7 @@ const styles = StyleSheet.create({
   },
   preview: {
     width: '100%',
-    height: 300,
+    height: windowHeight * 0.6,
   },
   description: {
     fontSize: FONT_SIZES.h4,
