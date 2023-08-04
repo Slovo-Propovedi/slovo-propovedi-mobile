@@ -53,36 +53,42 @@ export const SermonCard = ({
       )}
 
       <View style={styles.buttonsGroup}>
-        <Button
-          style={styles.listenLink}
-          color={COLORS.onPrimary}
-          title='Слушать'
-          onPress={() => {
-            audioUrl && Linking.openURL(audioUrl);
-          }}
-          titleStyle={styles.listenLinkTitle}
-        />
-        <Button
-          style={styles.listenLink}
-          color={COLORS.onPrimary}
-          title='Скачать аудио'
-          onPress={() => {
-            // audioUrl && Linking.openURL(audioUrl);
+        {audioUrl && (
+          <>
+            <Button
+              style={styles.listenLink}
+              color={COLORS.onPrimary}
+              title='Слушать'
+              onPress={() => {
+                audioUrl && Linking.openURL(audioUrl);
+              }}
+              titleStyle={styles.listenLinkTitle}
+            />
+            <Button
+              style={styles.listenLink}
+              color={COLORS.onPrimary}
+              title='Скачать аудио'
+              onPress={() => {
+                // audioUrl && Linking.openURL(audioUrl);
 
-            audioUrl &&
-              downloadFile({ url: audioUrl, fileName: 'test.mp3', mimeType: 'audio/mp3' });
-          }}
-          titleStyle={styles.listenLinkTitle}
-        />
-        <Button
-          style={styles.textFileLink}
-          titleStyle={styles.listenLinkTitle}
-          color={COLORS.onPrimary}
-          title='Читать'
-          onPress={() => {
-            textFileUrl && Linking.openURL(textFileUrl);
-          }}
-        />
+                audioUrl &&
+                  downloadFile({ url: audioUrl, fileName: 'test.mp3', mimeType: 'audio/mp3' });
+              }}
+              titleStyle={styles.listenLinkTitle}
+            />
+          </>
+        )}
+        {textFileUrl && (
+          <Button
+            style={styles.textFileLink}
+            titleStyle={styles.listenLinkTitle}
+            color={COLORS.onPrimary}
+            title='Читать'
+            onPress={() => {
+              textFileUrl && Linking.openURL(textFileUrl);
+            }}
+          />
+        )}
       </View>
     </View>
   );
