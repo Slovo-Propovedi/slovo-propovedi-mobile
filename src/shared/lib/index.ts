@@ -10,3 +10,4 @@ export * from './processRequest';
 export * from './randomIntFromInterval';
 export * from './renderTabBar';
 export * from './getYoutubeVideoData';
+export * from './getBookLinkAsString';

@@ -6,16 +6,16 @@ import { SermonCard } from 'features';
 export const SermonCardScreen: React.FC<
   SermonsStackScreenProps<SermonsStackParamName.SermonCard>
 > = ({ route }) => {
-  const { title, audioUrl, description, textFileUrl, youtubeUrl } = route.params;
+  const { title, fragments, verse, chapter, description } = route.params;
 
   return (
     <SermonCard
       style={styles.card}
       title={title}
-      audioUrl={audioUrl}
+      fragments={fragments}
+      verse={verse}
+      chapter={chapter}
       description={description}
-      textFileUrl={textFileUrl}
-      youtubeUrl={youtubeUrl}
     />
   );
 };

@@ -1,18 +1,20 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SermonsStackScreenProps, SermonsStackParamName } from 'routing';
-import { ListGroupList, Playlist } from 'features';
-import { OnPressListItemGroup } from 'entities';
-import { SermonData } from 'shared';
+import { Playlist } from 'features';
+import { OnPressPlaylistItem, PlaylistItem } from 'entities';
+import { COLORS, FONT_SIZES, INDENTS } from 'shared';
 
 export const PlaylistScreen: React.FC<SermonsStackScreenProps<SermonsStackParamName.Playlist>> = ({
   route,
   navigation: { navigate },
 }) => {
+  let currentChapter = 0;
+
   const { title, list, previewUrl, description } = route.params;
 
-  const getOnPressPlaylistItem: OnPressListItemGroup<SermonData> = (options) => {
-    navigate(SermonsStackParamName.SermonCard, options);
+  const getOnPressPlaylistItem: OnPressPlaylistItem = (sermon) => {
+    navigate(SermonsStackParamName.SermonCard, sermon);
   };
 
   return (
@@ -22,13 +24,41 @@ export const PlaylistScreen: React.FC<SermonsStackScreenProps<SermonsStackParamN
       previewUrl={previewUrl}
       description={description}
     >
-      <ListGroupList
-        style={styles.list}
-        groupList={list}
-        onPressListItemGroup={getOnPressPlaylistItem}
-      />
+      {list.map((sermon, index) => {
+        if (currentChapter !== sermon.chapter) {
+          currentChapter = sermon.chapter || 0;
+
+          return (
+            <View key={`TouchableItem-${index}`}>
+              <Text style={styles.title}>Глава {currentChapter}</Text>
+              <PlaylistItem
+                index={index}
+                sermon={sermon}
+                onPressPlaylistItem={getOnPressPlaylistItem}
+              />
+            </View>
+          );
+        }
+
+        return (
+          <PlaylistItem
+            key={`TouchableItem-${index}`}
+            index={index}
+            sermon={sermon}
+            onPressPlaylistItem={getOnPressPlaylistItem}
+          />
+        );
+      })}
     </Playlist>
   );
 };
 
-const styles = StyleSheet.create({ container: {}, list: {} });
+const styles = StyleSheet.create({
+  container: {},
+  title: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.h2,
+    paddingVertical: INDENTS.main,
+  },
+  list: { paddingLeft: INDENTS.main },
+});

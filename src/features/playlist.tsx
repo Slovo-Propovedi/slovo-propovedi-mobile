@@ -6,7 +6,7 @@ const windowHeight = Dimensions.get('window').height;
 
 interface PlaylistProps {
   title: string;
-  children: React.ReactElement;
+  children: React.ReactElement | React.ReactElement[];
   previewUrl?: string;
   description?: string;
   style?: ViewStyle;
