@@ -29,6 +29,10 @@ export const useDelayedState: UseDelayedState = ({ delay, initialValue }) => {
 
   useEffect(() => {
     timer.current = debounceCallback(value);
+
+    return () => {
+      timer.current && clearTimeout(timer.current);
+    };
   }, [debounceCallback, value]);
 
   return [debouncedValue, setValue, { resetStates }];

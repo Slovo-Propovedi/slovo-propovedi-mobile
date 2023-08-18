@@ -1,14 +1,16 @@
 import { capitalizeString } from 'shared/lib';
 
-describe('capitalizeString', () => {
-  test('return type is string', () => {
-    const str = 'word';
+let str = '';
 
-    expect(typeof capitalizeString(str)).toBe('string');
+describe('capitalizeString', () => {
+  beforeEach(() => {
+    str = 'word';
+  });
+
+  test('return type is string', () => {
+    expect(typeof capitalizeString(str)).toEqual('string');
   });
   test('first letter is uppercase', () => {
-    const str = 'word';
-
-    expect(capitalizeString(str)).toBe('Word');
+    expect(capitalizeString(str)).toEqual('Word');
   });
 });
