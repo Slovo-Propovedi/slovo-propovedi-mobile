@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SceneMap } from 'react-native-tab-view';
-import { BooksListOnBible } from 'widgets';
+import { BooksListOnBible } from 'features';
 
 const NewTab = () => <View style={{ flex: 1, backgroundColor: '#673ab7' }} />;
 

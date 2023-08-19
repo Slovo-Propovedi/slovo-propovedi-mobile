@@ -1,6 +1,6 @@
 import { SermonData } from '../types';
 
-export const markBooks: SermonData[] = [
+export const markBook: SermonData[] = [
   {
     chapter: 1,
     verse: [1, 3],

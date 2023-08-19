@@ -1,6 +1,6 @@
 import { BibleBookName } from '../types';
-import { markBooks } from './markBooks';
+import { markBook } from './markBook';
 
 export const sermonsDB = {
-  [BibleBookName.Mark]: markBooks,
+  [BibleBookName.Mark]: markBook,
 };

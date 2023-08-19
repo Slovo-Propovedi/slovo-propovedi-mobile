@@ -14,6 +14,8 @@ import {
   titusPlaylist,
   philemonPlaylist,
   revelationPlaylist,
+  unionWithChristPlaylist,
+  isThereAnUnforgivableSinPlaylist,
 } from './playlists';
 import { DB, SermonsTabName } from './types';
 
@@ -41,7 +43,7 @@ export const db: DB = {
     },
     {
       tabName: SermonsTabName.Topical,
-      playlists: [],
+      playlists: [unionWithChristPlaylist, isThereAnUnforgivableSinPlaylist],
     },
   ],
 };

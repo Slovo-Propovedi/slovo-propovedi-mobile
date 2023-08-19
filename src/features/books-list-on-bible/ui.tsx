@@ -2,8 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SermonsStackNavProp, SermonsStackParamName } from 'routing';
-import { TouchableTextItem } from 'entities';
-import { Playlist } from 'shared';
+import { Playlist, TouchableTextItem } from 'shared';
 import { useOnBibleBooksListStore } from './model';
 
 export const BooksListOnBible = () => {

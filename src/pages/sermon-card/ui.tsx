@@ -1,7 +1,7 @@
+import { SermonCard } from 'entities';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { SermonsStackScreenProps, SermonsStackParamName } from 'routing';
-import { SermonCard } from 'features';
 
 export const SermonCardScreen: React.FC<
   SermonsStackScreenProps<SermonsStackParamName.SermonCard>

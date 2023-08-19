@@ -1,5 +1,5 @@
-import { sermonsDB } from '../sermons';
-import { Playlist, BibleBookName } from '../types';
+import { sermonsDB } from "../../sermons";
+import { Playlist, BibleBookName } from "../../types";
 
 export const markPlaylist: Playlist = {
   title: 'Евангелие от Марка',

@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { INDENTS, FONT_SIZES, TouchableItem, TouchableItemProps } from 'shared';
+import { INDENTS, FONT_SIZES } from 'shared/themed';
+import { TouchableItemProps, TouchableItem } from 'shared/ui/touchable-item';
 
 type TouchableTextItemProps = Omit<TouchableItemProps, 'children'> & { title: string };
 

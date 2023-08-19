@@ -1,4 +1,4 @@
-import { Playlist } from '../types';
+import { Playlist } from '../../types';
 
 export const actsPlaylist: Playlist = {
   title: 'Деяния Апостолов',

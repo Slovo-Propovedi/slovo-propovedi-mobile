@@ -1,2 +1,3 @@
+export * from './books-list-on-bible';
 export * from './playlist';
-export * from './sermon-card';
+export * from './search-input';
