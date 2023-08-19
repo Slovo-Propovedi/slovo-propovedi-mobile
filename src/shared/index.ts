@@ -7,8 +7,8 @@ export * from './ui/input';
 export * from './ui/button';
 export * from './ui/search-button';
 export * from './ui/touchable-item';
-export * from './ui/youtube-preview';
 export * from './ui/touchable-text-item';
+export * from './ui/touchable-image-background';
 
 // ./api
 export * from './api';

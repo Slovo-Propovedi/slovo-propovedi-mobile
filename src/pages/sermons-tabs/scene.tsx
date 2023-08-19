@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SceneMap } from 'react-native-tab-view';
-import { BooksListOnBible } from 'features';
+import { BooksListOnBible, TopicalList } from 'widgets';
 
 const NewTab = () => <View style={{ flex: 1, backgroundColor: '#673ab7' }} />;
 
@@ -11,7 +11,11 @@ const OnBibleTab = () => (
   </ScrollView>
 );
 
-const TopicalTab = () => <View style={{ flex: 1, backgroundColor: 'blueviolet' }} />;
+const TopicalTab = () => (
+  <ScrollView style={styles.scroll}>
+    <TopicalList />
+  </ScrollView>
+);
 
 export enum SermonsTab {
   New = 'New',

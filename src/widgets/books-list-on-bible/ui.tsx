@@ -8,6 +8,11 @@ import { useOnBibleBooksListStore } from './model';
 export const BooksListOnBible = () => {
   const { navigate } = useNavigation<SermonsStackNavProp<SermonsStackParamName.SermonsTabs>>();
 
+  const { onBibleBooksList, getOnBibleBookList } = useOnBibleBooksListStore((state) => ({
+    onBibleBooksList: state.onBibleBooksList,
+    getOnBibleBookList: state.getOnBibleBookList,
+  }));
+
   const getOnBibleBooksListItemPress = (params: Playlist) => () => {
     // Почему-то это вызывает ошибку:
     // Require cycle: src/routing/index.ts -> src/routing/bible-school/index.ts ->
@@ -20,11 +25,6 @@ export const BooksListOnBible = () => {
     navigate(SermonsStackParamName.Playlist, params);
   };
 
-  const { onBibleBooksList, getOnBibleBookList } = useOnBibleBooksListStore((state) => ({
-    onBibleBooksList: state.onBibleBooksList,
-    getOnBibleBookList: state.getOnBibleBookList,
-  }));
-
   useEffect(() => {
     getOnBibleBookList();
   }, []);
@@ -35,10 +35,9 @@ export const BooksListOnBible = () => {
 
   return (
     <View style={styles.list}>
-      {onBibleBooksList.map((element, index) => (
+      {onBibleBooksList.map((element) => (
         <TouchableTextItem
-          key={`onBibleBooksListItem-${index}`}
-          style={styles.item}
+          key={element.title}
           onPress={getOnBibleBooksListItemPress(element)}
           title={element.title}
         />
@@ -51,6 +50,4 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
-  item: {},
-  itemTitle: {},
 });

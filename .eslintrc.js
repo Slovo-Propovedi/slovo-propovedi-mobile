@@ -13,7 +13,7 @@ module.exports = {
   env: {
     jest: true,
   },
-  globals: true,
+  globals: { global: true },
   settings: {
     'import/resolver': {
       typescript: {
