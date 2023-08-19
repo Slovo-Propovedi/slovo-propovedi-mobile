@@ -9,6 +9,11 @@ module.exports = {
     '@feature-sliced',
   ],
   parser: '@typescript-eslint/parser',
+  plugins: ['jest'],
+  env: {
+    jest: true,
+  },
+  globals: true,
   settings: {
     'import/resolver': {
       typescript: {
