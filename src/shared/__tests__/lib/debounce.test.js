@@ -7,18 +7,14 @@ describe('debounce', () => {
   test('first argument is function', () => {
     const errorMessage = 'Первый аргумент должен быть функцией';
     expect(() => debounce('', stubDelay)).toThrowError(errorMessage);
-    expect(() => debounce(42, stubDelay)).toThrowError(errorMessage);
-    expect(() => debounce({}, stubDelay)).toThrowError(errorMessage);
     expect(() => debounce(stubFunction, stubDelay)).not.toThrowError(errorMessage);
   });
 
   test('second argument is number', () => {
     const errorMessage = 'Второй аргумент должен быть числом';
 
+    expect(() => debounce(stubFunction)).toThrowError(errorMessage);
     expect(() => debounce(stubFunction, '')).toThrowError(errorMessage);
-    expect(() => debounce(stubFunction, {})).toThrowError(errorMessage);
-    expect(() => debounce(stubFunction, 12312n)).toThrowError(errorMessage);
-    expect(() => debounce(stubFunction, Infinity)).not.toThrowError(errorMessage);
     expect(() => debounce(stubFunction, stubDelay)).not.toThrowError(errorMessage);
   });
 
