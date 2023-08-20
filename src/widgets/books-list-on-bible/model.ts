@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { FetchedPlaylist } from 'features';
-import { FetchedSermonsTabName, sermonsAPI } from 'shared';
+import { FetchedPlaylist, FetchedSermonsTabName, sermonsAPI } from 'shared';
 
 interface OnBibleBooksListState {
   onBibleBooksList: FetchedPlaylist[];
