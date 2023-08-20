@@ -1,6 +1,7 @@
 import React from 'react';
 import { GestureResponderEvent, StyleSheet, Text } from 'react-native';
-import { FONT_SIZES, INDENTS, SermonData, TouchableItem, getBookLinkAsString } from 'shared';
+import { SermonData } from 'entities';
+import { FONT_SIZES, INDENTS, TouchableItem, getBookLinkAsString } from 'shared';
 
 export type OnPressPlaylistItem = (sermon: SermonData, event: GestureResponderEvent) => void;
 

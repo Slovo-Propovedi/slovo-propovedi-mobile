@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
 import React from 'react';
 import { Button, Text, TextInput, View } from 'react-native';
-import App from 'app';
+import App from './index';
 
 // function Example() {
 //   const [name, setUser] = React.useState('');

@@ -1,16 +1,16 @@
 import { create } from 'zustand';
-import { SermonsTabName, sermonsAPI } from 'shared';
-import { Playlist } from 'shared';
+import { FetchedPlaylist } from 'features';
+import { FetchedSermonsTabName, sermonsAPI } from 'shared';
 
 interface TopicalListState {
-  topicalList: Playlist[];
-  getTopicalList: () => Promise<Playlist[]>;
+  topicalList: FetchedPlaylist[];
+  getTopicalList: () => Promise<FetchedPlaylist[]>;
 }
 
 export const useTopicalListStore = create<TopicalListState>((set) => ({
   topicalList: [],
   getTopicalList: async () => {
-    const response = await sermonsAPI.getSermonsTabContent(SermonsTabName.Topical);
+    const response = await sermonsAPI.getSermonsTabContent(FetchedSermonsTabName.Topical);
 
     const booksList = response?.playlists ?? [];
 

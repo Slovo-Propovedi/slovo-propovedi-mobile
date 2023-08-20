@@ -17,12 +17,12 @@ import {
   unionWithChristPlaylist,
   isThereAnUnforgivableSinPlaylist,
 } from './playlists';
-import { DB, SermonsTabName } from './types';
+import { DB, FetchedSermonsTabName } from './types';
 
 export const db: DB = {
   sermons: [
     {
-      tabName: SermonsTabName.OnBible,
+      tabName: FetchedSermonsTabName.OnBible,
       playlists: [
         markPlaylist,
         lukePlaylist,
@@ -42,7 +42,7 @@ export const db: DB = {
       ],
     },
     {
-      tabName: SermonsTabName.Topical,
+      tabName: FetchedSermonsTabName.Topical,
       playlists: [unionWithChristPlaylist, isThereAnUnforgivableSinPlaylist],
     },
   ],

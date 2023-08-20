@@ -2,7 +2,8 @@ import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { Playlist, SermonData } from 'shared';
+import { PlaylistData } from 'widgets';
+import { SermonData } from 'entities';
 
 export enum SermonsStackParamName {
   SermonsTabs = 'SermonsTabs',
@@ -12,7 +13,7 @@ export enum SermonsStackParamName {
 
 export type SermonsStackParamList = {
   [SermonsStackParamName.SermonsTabs]: undefined;
-  [SermonsStackParamName.Playlist]: Playlist;
+  [SermonsStackParamName.Playlist]: PlaylistData;
   [SermonsStackParamName.SermonCard]: SermonData;
 };
 

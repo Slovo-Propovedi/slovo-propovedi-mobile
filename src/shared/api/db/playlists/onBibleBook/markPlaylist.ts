@@ -1,7 +1,8 @@
-import { sermonsDB } from "../../sermons";
-import { Playlist, BibleBookName } from "../../types";
 
-export const markPlaylist: Playlist = {
+import { sermonsDB } from '../../sermons';
+import { FetchedPlaylist, BibleBookName } from '../../types';
+
+export const markPlaylist: FetchedPlaylist = {
   title: 'Евангелие от Марка',
   description: 'Эта книга - Евангелие от Марка',
   previewUrl: 'https://slovo-istini.com/image/categories/22/marka_(1).jpg',

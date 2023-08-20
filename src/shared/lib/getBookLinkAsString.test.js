@@ -1,4 +1,4 @@
-import { getBookLinkAsString } from 'shared/lib';
+import { getBookLinkAsString } from './getBookLinkAsString';
 
 let stubBookLink = {
   title: 'Title',

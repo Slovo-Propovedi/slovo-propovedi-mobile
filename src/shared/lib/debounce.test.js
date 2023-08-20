@@ -1,4 +1,4 @@
-import { debounce } from 'shared/lib';
+import { debounce } from './debounce';
 
 const stubFunction = () => null;
 const stubDelay = 2;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SermonsStackScreenProps, SermonsStackParamName } from 'routing';
-import { Playlist } from 'features';
-import { OnPressPlaylistItem, PlaylistItem } from 'entities';
+import { Playlist } from 'widgets';
+import { OnPressPlaylistItem, PlaylistItem } from 'features';
 import { COLORS, FONT_SIZES, INDENTS } from 'shared';
 
 export const PlaylistScreen: React.FC<SermonsStackScreenProps<SermonsStackParamName.Playlist>> = ({

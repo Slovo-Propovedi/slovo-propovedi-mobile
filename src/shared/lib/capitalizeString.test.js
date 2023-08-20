@@ -1,4 +1,4 @@
-import { capitalizeString } from 'shared/lib';
+import { capitalizeString } from './capitalizeString';
 
 let str = '';
 

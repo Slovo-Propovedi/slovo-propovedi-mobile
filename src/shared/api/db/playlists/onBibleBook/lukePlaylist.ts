@@ -1,6 +1,6 @@
-import { Playlist } from '../types';
+import { FetchedPlaylist } from '../../types';
 
-export const lukePlaylist: Playlist = {
+export const lukePlaylist: FetchedPlaylist = {
   title: 'Евангелие от Луки',
   previewUrl:
     'https://slovo-istini.com/image/categories/78/whatsapp_image_2022-02-15_at_11.20.06.jpeg',

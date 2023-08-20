@@ -1,1 +1,2 @@
-export * from './playlist-item';
+export * from './bible-book';
+export * from './sermon';

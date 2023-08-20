@@ -1,6 +1,6 @@
-import { SermonData } from '../types';
+import { FetchedSermonData } from '../types';
 
-export const markBook: SermonData[] = [
+export const markBook: FetchedSermonData[] = [
   {
     chapter: 1,
     verse: [1, 3],

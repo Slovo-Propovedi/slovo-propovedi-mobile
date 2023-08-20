@@ -1,4 +1,4 @@
-import { BibleBookName } from '../types';
+import { BibleBookName } from 'entities';
 import { markBook } from './markBook';
 
 export const sermonsDB = {

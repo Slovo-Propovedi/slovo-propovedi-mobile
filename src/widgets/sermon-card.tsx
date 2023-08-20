@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Dimensions, Linking, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { YoutubePreview } from 'features';
+import { SermonData } from 'entities';
 import {
   Button,
   COLORS,
   FONT_SIZES,
   GetYoutubeVideosResponseItem,
   INDENTS,
-  SermonData,
   downloadFile,
   getBookLinkAsString,
   getYoutubeVideoData,
