@@ -6,15 +6,15 @@ const stubDelay = 2;
 describe('debounce', () => {
   test('first argument is function', () => {
     const errorMessage = 'Первый аргумент должен быть функцией';
-    expect(() => debounce('', stubDelay)).toThrowError(errorMessage);
+    expect(() => debounce('' as never, stubDelay)).toThrowError(errorMessage);
     expect(() => debounce(stubFunction, stubDelay)).not.toThrowError(errorMessage);
   });
 
   test('second argument is number', () => {
     const errorMessage = 'Второй аргумент должен быть числом';
 
-    expect(() => debounce(stubFunction)).toThrowError(errorMessage);
-    expect(() => debounce(stubFunction, '')).toThrowError(errorMessage);
+    expect(() => debounce(stubFunction, undefined as never)).toThrowError(errorMessage);
+    expect(() => debounce(stubFunction, '' as never)).toThrowError(errorMessage);
     expect(() => debounce(stubFunction, stubDelay)).not.toThrowError(errorMessage);
   });
 
@@ -24,7 +24,7 @@ describe('debounce', () => {
   });
 
   test('debounced function dont called inside function', () => {
-    let mockFunction = jest.fn();
+    const mockFunction = jest.fn();
 
     debounce(mockFunction, stubDelay);
 
