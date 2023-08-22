@@ -13,6 +13,7 @@ interface TouchableImageBackgroundProps {
   previewSrc: string;
   style?: StyleProp<ViewStyle>;
   children: ReactNode;
+  testID?: string;
 }
 
 export const TouchableImageBackground = ({
@@ -20,8 +21,9 @@ export const TouchableImageBackground = ({
   previewSrc,
   style,
   children,
+  testID,
 }: TouchableImageBackgroundProps) => (
-  <TouchableOpacity onPress={onPress}>
+  <TouchableOpacity onPress={onPress} testID={testID}>
     <ImageBackground
       source={{ uri: previewSrc }}
       style={[styles.item, style]}

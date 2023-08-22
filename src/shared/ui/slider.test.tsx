@@ -30,12 +30,6 @@ describe('<Slider/>', () => {
 
     const tree = screen.toJSON();
     expect(tree).toBeNull();
-
-    if (!tree || Array.isArray(tree)) {
-      return;
-    }
-
-    expect(tree.props).toHaveProperty('items');
   });
 
   test('return null, if items length === 0', () => {
