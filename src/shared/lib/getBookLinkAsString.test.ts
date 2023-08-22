@@ -12,14 +12,16 @@ describe('getBookLinkAsString', () => {
   });
 
   test('argument type is object with required prop - title', () => {
-    expect(() => getBookLinkAsString(undefined as never)).toThrowError(
-      'Аргумент должен быть объектом',
-    );
-    expect(() => getBookLinkAsString('a' as never)).toThrowError('Аргумент должен быть объектом');
-    expect(() => getBookLinkAsString({} as never)).toThrowError(
+    //@ts-expect-error - undefined is a not a valid object
+    expect(() => getBookLinkAsString(undefined)).toThrowError('Аргумент должен быть объектом');
+    //@ts-expect-error - 'a' is a not a valid object
+    expect(() => getBookLinkAsString('a')).toThrowError('Аргумент должен быть объектом');
+    //@ts-expect-error - {} is a not a valid object
+    expect(() => getBookLinkAsString({})).toThrowError(
       'Аргумент должен быть объектом с обязательным полем title',
     );
-    expect(() => getBookLinkAsString({ chapter: 1, verse: [1, 5] } as never)).toThrowError(
+    //@ts-expect-error - { chapter: 1, verse: [1, 5] } is a not a valid object
+    expect(() => getBookLinkAsString({ chapter: 1, verse: [1, 5] })).toThrowError(
       'Аргумент должен быть объектом с обязательным полем title',
     );
 

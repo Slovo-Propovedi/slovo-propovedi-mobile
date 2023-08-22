@@ -6,15 +6,17 @@ const stubDelay = 2;
 describe('debounce', () => {
   test('first argument is function', () => {
     const errorMessage = 'Первый аргумент должен быть функцией';
-    expect(() => debounce('' as never, stubDelay)).toThrowError(errorMessage);
+    //@ts-expect-error - '' is a not a valid debounced function
+    expect(() => debounce('', stubDelay)).toThrowError(errorMessage);
     expect(() => debounce(stubFunction, stubDelay)).not.toThrowError(errorMessage);
   });
 
   test('second argument is number', () => {
     const errorMessage = 'Второй аргумент должен быть числом';
-
-    expect(() => debounce(stubFunction, undefined as never)).toThrowError(errorMessage);
-    expect(() => debounce(stubFunction, '' as never)).toThrowError(errorMessage);
+    //@ts-expect-error - undefined is a not a valid delay
+    expect(() => debounce(stubFunction, undefined)).toThrowError(errorMessage);
+    //@ts-expect-error - '' is a not a valid delay
+    expect(() => debounce(stubFunction, '')).toThrowError(errorMessage);
     expect(() => debounce(stubFunction, stubDelay)).not.toThrowError(errorMessage);
   });
 

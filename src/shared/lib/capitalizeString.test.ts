@@ -8,10 +8,12 @@ describe('capitalizeString', () => {
   });
 
   test('argument is string', () => {
-    expect(() => capitalizeString([] as never)).toThrowError(
+    //@ts-expect-error - [] is a not a string
+    expect(() => capitalizeString([])).toThrowError(
       'В функцию capitalizeString можно передать только строку',
     );
-    expect(() => capitalizeString(0 as never)).toThrowError(
+    //@ts-expect-error - 0 is a not a string
+    expect(() => capitalizeString(0)).toThrowError(
       'В функцию capitalizeString можно передать только строку',
     );
   });

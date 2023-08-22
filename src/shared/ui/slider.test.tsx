@@ -25,7 +25,8 @@ import { Slider } from './slider';
 
 describe('<Slider/>', () => {
   test('return null if items prop is undefined', () => {
-    render(<Slider items={undefined as never} />);
+    //@ts-expect-error - undefined is a not a valid items
+    render(<Slider items={undefined} />);
 
     const tree = screen.toJSON();
     expect(tree).toBeNull();
