@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SermonsStackNavProp, SermonsStackParamName } from 'routing';
-import { Playlist, TouchableTextItem } from 'shared';
+import { FetchedPlaylist, TouchableTextItem } from 'shared';
 import { useTopicalListStore } from './model';
 
 export const TopicalList = () => {
@@ -13,7 +13,7 @@ export const TopicalList = () => {
     getTopicalList: state.getTopicalList,
   }));
 
-  const getOnBibleBooksListItemPress = (params: Playlist) => () => {
+  const getOnBibleBooksListItemPress = (params: FetchedPlaylist) => () => {
     navigate(SermonsStackParamName.Playlist, params);
   };
 

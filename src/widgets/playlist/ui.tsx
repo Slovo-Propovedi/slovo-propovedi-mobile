@@ -1,6 +1,14 @@
 import React from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { INDENTS, FONT_SIZES } from 'shared';
+import {
+  Dimensions,
+  ImageBackground,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
+import { INDENTS, FONT_SIZES, COLORS } from 'shared';
 
 const windowHeight = Dimensions.get('window').height;
 
@@ -14,28 +22,38 @@ interface PlaylistProps {
 
 export const Playlist = ({ title, children, previewUrl, description, style }: PlaylistProps) => (
   <ScrollView style={[styles.container, style]}>
-    <Text style={styles.title}>{title}</Text>
-    {previewUrl && <Image style={styles.preview} source={{ uri: previewUrl }} />}
+    {previewUrl && (
+      <ImageBackground style={styles.preview} source={{ uri: previewUrl }}>
+        <Text style={styles.title}>{title}</Text>
 
-    {description && <Text style={styles.description}>{description}</Text>}
+        {description && <Text style={styles.description}>{description}</Text>}
+      </ImageBackground>
+    )}
 
     <View style={styles.content}>{children}</View>
   </ScrollView>
 );
 
 const styles = StyleSheet.create({
-  container: { padding: INDENTS.main },
+  container: {},
   title: {
     fontSize: FONT_SIZES.h1,
     paddingBottom: INDENTS.main,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    marginTop: '50%',
+    color: COLORS.primary,
   },
   preview: {
     width: '100%',
     height: windowHeight * 0.6,
   },
   description: {
-    fontSize: FONT_SIZES.h4,
+    fontSize: FONT_SIZES.h3,
     padding: INDENTS.main,
+    marginTop: 'auto',
+    maxHeight: '20%',
+    color: COLORS.white,
   },
-  content: {},
+  content: { padding: INDENTS.low },
 });

@@ -9,12 +9,10 @@ export const PlaylistScreen: React.FC<SermonsStackScreenProps<SermonsStackParamN
   route,
   navigation: { navigate },
 }) => {
-  let currentChapter = 0;
-
   const { title, list, previewUrl, description } = route.params;
 
   const getOnPressPlaylistItem: OnPressPlaylistItem = (sermon) => {
-    navigate(SermonsStackParamName.SermonCard, sermon);
+    console.log('sermon: ', sermon);
   };
 
   return (
@@ -24,31 +22,14 @@ export const PlaylistScreen: React.FC<SermonsStackScreenProps<SermonsStackParamN
       previewUrl={previewUrl}
       description={description}
     >
-      {list.map((sermon, index) => {
-        if (currentChapter !== sermon.chapter) {
-          currentChapter = sermon.chapter || 0;
-
-          return (
-            <View key={`TouchableItem-${index}`}>
-              <Text style={styles.title}>Глава {currentChapter}</Text>
-              <PlaylistItem
-                index={index}
-                sermon={sermon}
-                onPressPlaylistItem={getOnPressPlaylistItem}
-              />
-            </View>
-          );
-        }
-
-        return (
-          <PlaylistItem
-            key={`TouchableItem-${index}`}
-            index={index}
-            sermon={sermon}
-            onPressPlaylistItem={getOnPressPlaylistItem}
-          />
-        );
-      })}
+      {list.map((sermon, index) => (
+        <PlaylistItem
+          key={`TouchableItem-${index}`}
+          index={index}
+          sermon={sermon}
+          onPressPlaylistItem={getOnPressPlaylistItem}
+        />
+      ))}
     </Playlist>
   );
 };

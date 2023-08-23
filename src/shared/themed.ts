@@ -5,6 +5,7 @@ export const COLORS = {
   lightGray: 'lightgray',
   blue: 'blue',
   disabled: 'gray',
+  white: 'white',
 } as const;
 
 export const FONT_SIZES = {

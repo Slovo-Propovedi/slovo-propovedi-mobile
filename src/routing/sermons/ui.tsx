@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { PlaylistScreen, SermonsTabsScreen, SermonCardScreen } from 'pages';
+import { PlaylistScreen, SermonsTabsScreen } from 'pages';
 import { RootTabName, RootTabsScreenProps } from 'shared';
 import { SermonsStackParamList, SermonsStackParamName } from './types';
 
@@ -24,15 +24,6 @@ export const SermonsRouting: React.FC<RootTabsScreenProps<RootTabName.Sermons>> 
     <SermonsStack.Screen
       name={SermonsStackParamName.Playlist}
       component={PlaylistScreen}
-      options={({ route: { params } }) => ({
-        headerShown: true,
-        title: params.title,
-        // headerTintColor: COLORS.primary,
-      })}
-    />
-    <SermonsStack.Screen
-      name={SermonsStackParamName.SermonCard}
-      component={SermonCardScreen}
       options={({ route: { params } }) => ({
         headerShown: true,
         title: params.title,

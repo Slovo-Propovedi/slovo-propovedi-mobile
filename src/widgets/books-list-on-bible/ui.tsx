@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SermonsStackNavProp, SermonsStackParamName } from 'routing';
-import { Playlist, TouchableTextItem } from 'shared';
+import { FetchedPlaylist, TouchableTextItem } from 'shared';
 import { useOnBibleBooksListStore } from './model';
 
 export const BooksListOnBible = () => {
@@ -13,7 +13,7 @@ export const BooksListOnBible = () => {
     getOnBibleBookList: state.getOnBibleBookList,
   }));
 
-  const getOnBibleBooksListItemPress = (params: Playlist) => () => {
+  const getOnBibleBooksListItemPress = (params: FetchedPlaylist) => () => {
     // Почему-то это вызывает ошибку:
     // Require cycle: src/routing/index.ts -> src/routing/bible-school/index.ts ->
     // src/routing/bible-school/ui.tsx -> src/pages/index.ts -> src/pages/sermons/index.ts ->
