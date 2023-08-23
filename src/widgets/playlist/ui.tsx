@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   },
   preview: {
     width: '100%',
-    height: windowHeight * 0.6,
+    height: windowHeight * 0.5,
   },
   description: {
     fontSize: FONT_SIZES.h3,

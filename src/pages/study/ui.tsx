@@ -2,13 +2,11 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TabView } from 'react-native-tab-view';
-import { BibleSchoolStackParamName, BibleSchoolStackScreenProps } from 'routing';
+import { StudyStackParamName, StudyStackScreenProps } from 'routing';
 import { getRenderTabBar } from 'shared';
 import { renderScene } from './scene';
 
-export const BibleSchool: React.FC<
-  BibleSchoolStackScreenProps<BibleSchoolStackParamName.Home>
-> = () => {
+export const StudyScreen: React.FC<StudyStackScreenProps<StudyStackParamName.Home>> = () => {
   const [index, setIndex] = useState(0);
 
   const routes = [

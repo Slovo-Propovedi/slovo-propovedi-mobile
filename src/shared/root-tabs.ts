@@ -1,16 +1,16 @@
 import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 export enum RootTabName {
-  Sermons = 'Проповеди',
-  Library = 'Библиотека',
-  BibleSchool = 'Библейская школа',
+  Listen = 'Слушать',
+  Read = 'Читать',
+  Study = 'Учиться',
   Info = 'О служении',
 }
 
 export type RootTabsParamList = {
-  [RootTabName.Sermons]: undefined;
-  [RootTabName.Library]: undefined;
-  [RootTabName.BibleSchool]: undefined;
+  [RootTabName.Listen]: undefined;
+  [RootTabName.Read]: undefined;
+  [RootTabName.Study]: undefined;
   [RootTabName.Info]: { id: number };
 };
 

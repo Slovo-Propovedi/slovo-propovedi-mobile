@@ -1,8 +1,9 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
-import { SermonsRouting, LibraryRouting, BibleSchoolRouting, InfoRouting } from 'routing';
+import { ListenRouting, ReadRouting, StudyRouting } from 'routing';
+import { Info } from 'pages';
 import { RootTabsParamList, RootTabName } from 'shared';
 
 const Tab = createBottomTabNavigator<RootTabsParamList>();
@@ -12,7 +13,7 @@ const App = () => (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          if (route.name === RootTabName.BibleSchool) {
+          if (route.name === RootTabName.Study) {
             return (
               <MaterialCommunityIcons
                 name={focused ? 'notebook-edit' : 'notebook-edit-outline'}
@@ -22,14 +23,16 @@ const App = () => (
             );
           }
 
+          if (route.name === RootTabName.Listen) {
+            return <AntDesign name={focused ? 'play' : 'playcircleo'} size={size} color={color} />;
+          }
+
           const iconName = (() => {
-            if (route.name === RootTabName.Sermons) {
-              return focused ? 'ios-book' : 'ios-book-outline';
-            } else if (route.name === RootTabName.Info) {
+            if (route.name === RootTabName.Info) {
               return focused ? 'information' : 'information-outline';
-            } else if (route.name === RootTabName.Library) {
-              return focused ? 'library' : 'library-outline';
             }
+
+            return focused ? 'book' : 'book-outline';
           })();
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -39,14 +42,14 @@ const App = () => (
         headerShown: false,
       })}
     >
-      <Tab.Screen name={RootTabName.Sermons} component={SermonsRouting} />
-      <Tab.Screen name={RootTabName.Library} component={LibraryRouting} />
+      <Tab.Screen name={RootTabName.Listen} component={ListenRouting} />
+      <Tab.Screen name={RootTabName.Read} component={ReadRouting} />
       <Tab.Screen
-        name={RootTabName.BibleSchool}
-        component={BibleSchoolRouting}
+        name={RootTabName.Study}
+        component={StudyRouting}
         // options={{ tabBarBadge: 3 }}
       />
-      <Tab.Screen name={RootTabName.Info} component={InfoRouting} />
+      <Tab.Screen name={RootTabName.Info} component={Info} />
     </Tab.Navigator>
   </NavigationContainer>
 );

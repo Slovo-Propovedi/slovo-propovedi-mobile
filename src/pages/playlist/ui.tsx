@@ -1,11 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { SermonsStackScreenProps, SermonsStackParamName } from 'routing';
+import { ListenStackScreenProps, ListenStackParamName } from 'routing';
 import { Playlist } from 'widgets';
 import { OnPressPlaylistItem, PlaylistItem } from 'features';
 import { COLORS, FONT_SIZES, INDENTS } from 'shared';
 
-export const PlaylistScreen: React.FC<SermonsStackScreenProps<SermonsStackParamName.Playlist>> = ({
+export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamName.Playlist>> = ({
   route,
   navigation: { navigate },
 }) => {

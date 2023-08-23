@@ -1,16 +1,16 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { PlaylistScreen, SermonsTabsScreen } from 'pages';
+import { PlaylistScreen, ListenScreen } from 'pages';
 import { RootTabName, RootTabsScreenProps } from 'shared';
-import { SermonsStackParamList, SermonsStackParamName } from './types';
+import { ListenStackParamList, ListenStackParamName } from './types';
 
-const SermonsStack = createNativeStackNavigator<SermonsStackParamList>();
+const ListenStack = createNativeStackNavigator<ListenStackParamList>();
 
-export const SermonsRouting: React.FC<RootTabsScreenProps<RootTabName.Sermons>> = () => (
-  <SermonsStack.Navigator initialRouteName={SermonsStackParamName.SermonsTabs}>
-    <SermonsStack.Screen
-      name={SermonsStackParamName.SermonsTabs}
-      component={SermonsTabsScreen}
+export const ListenRouting: React.FC<RootTabsScreenProps<RootTabName.Listen>> = () => (
+  <ListenStack.Navigator initialRouteName={ListenStackParamName.ListenHome}>
+    <ListenStack.Screen
+      name={ListenStackParamName.ListenHome}
+      component={ListenScreen}
       options={({ route }) => {
         const { name: routeName } = route;
 
@@ -21,8 +21,8 @@ export const SermonsRouting: React.FC<RootTabsScreenProps<RootTabName.Sermons>> 
         };
       }}
     />
-    <SermonsStack.Screen
-      name={SermonsStackParamName.Playlist}
+    <ListenStack.Screen
+      name={ListenStackParamName.Playlist}
       component={PlaylistScreen}
       options={({ route: { params } }) => ({
         headerShown: true,
@@ -30,5 +30,5 @@ export const SermonsRouting: React.FC<RootTabsScreenProps<RootTabName.Sermons>> 
         // headerTintColor: COLORS.primary,
       })}
     />
-  </SermonsStack.Navigator>
+  </ListenStack.Navigator>
 );

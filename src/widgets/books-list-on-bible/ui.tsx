@@ -1,12 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SermonsStackNavProp, SermonsStackParamName } from 'routing';
+import { ListenStackNavProp, ListenStackParamName } from 'routing';
 import { FetchedPlaylist, TouchableTextItem } from 'shared';
 import { useOnBibleBooksListStore } from './model';
 
 export const BooksListOnBible = () => {
-  const { navigate } = useNavigation<SermonsStackNavProp<SermonsStackParamName.SermonsTabs>>();
+  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
   const { onBibleBooksList, getOnBibleBookList } = useOnBibleBooksListStore((state) => ({
     onBibleBooksList: state.onBibleBooksList,
@@ -22,7 +22,7 @@ export const BooksListOnBible = () => {
 
     // Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
 
-    navigate(SermonsStackParamName.Playlist, params);
+    navigate(ListenStackParamName.Playlist, params);
   };
 
   useEffect(() => {

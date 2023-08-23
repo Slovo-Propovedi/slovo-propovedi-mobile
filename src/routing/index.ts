@@ -1,4 +1,4 @@
-export * from './bible-school';
+export * from './study';
 export * from './info';
-export * from './library';
-export * from './sermons';
+export * from './read';
+export * from './listen';

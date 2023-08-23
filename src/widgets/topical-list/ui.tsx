@@ -1,12 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SermonsStackNavProp, SermonsStackParamName } from 'routing';
+import { ListenStackNavProp, ListenStackParamName } from 'routing';
 import { FetchedPlaylist, TouchableTextItem } from 'shared';
 import { useTopicalListStore } from './model';
 
 export const TopicalList = () => {
-  const { navigate } = useNavigation<SermonsStackNavProp<SermonsStackParamName.SermonsTabs>>();
+  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
   const { topicalList, getTopicalList } = useTopicalListStore((state) => ({
     topicalList: state.topicalList,
@@ -14,7 +14,7 @@ export const TopicalList = () => {
   }));
 
   const getOnBibleBooksListItemPress = (params: FetchedPlaylist) => () => {
-    navigate(SermonsStackParamName.Playlist, params);
+    navigate(ListenStackParamName.Playlist, params);
   };
 
   useEffect(() => {
