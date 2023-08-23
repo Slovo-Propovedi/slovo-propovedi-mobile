@@ -9,6 +9,8 @@ export * from './ui/search-button';
 export * from './ui/touchable-item';
 export * from './ui/touchable-text-item';
 export * from './ui/touchable-image-background';
+export * from './ui/slider';
+export * from './ui/slider-item';
 
 // ./api
 export * from './api';
