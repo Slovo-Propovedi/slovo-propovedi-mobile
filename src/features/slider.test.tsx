@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Slider } from './slider';
+
+const itemStub = { previewURL: 'https//:vk.com', data: {} };
 
 describe('<Slider/>', () => {
   test('return null if items prop is undefined', () => {
@@ -16,40 +18,56 @@ describe('<Slider/>', () => {
     const tree = screen.toJSON();
     expect(tree).toBeNull();
   });
+
+  test('return ScrollView, if items length > 0', () => {
+    render(<Slider items={[itemStub]} />);
+
+    const tree = screen.toJSON();
+    expect(tree).toBeDefined();
+
+    expect(Array.isArray(tree)).toEqual(false);
+
+    if (!tree || Array.isArray(tree)) {
+      return;
+    }
+    expect(tree.type).toEqual('RCTScrollView');
+  });
+
+  test('return 2 children, if items length === 2', () => {
+    render(<Slider items={[itemStub, itemStub]} />);
+
+    const tree = screen.toJSON();
+
+    if (!tree || Array.isArray(tree)) {
+      return;
+    }
+
+    const sliderItems = screen.getAllByTestId('slider-item');
+
+    expect(sliderItems.length).toEqual(2);
+  });
+
+  test('onPressItem called on press item', () => {
+    let mockValue: string | null = null;
+
+    render(
+      <Slider
+        items={[itemStub]}
+        onPressItem={() => {
+          mockValue = 'done';
+        }}
+      />,
+    );
+
+    const tree = screen.toJSON();
+
+    if (!tree || Array.isArray(tree)) {
+      return;
+    }
+
+    const sliderItems = screen.getAllByTestId('slider-item');
+    fireEvent.press(sliderItems[0]);
+
+    expect(mockValue).not.toBeNull();
+  });
 });
-
-// function Example() {
-//   const [name, setUser] = React.useState('');
-//   const [show, setShow] = React.useState(false);
-
-//   return (
-//     <View>
-//       <TextInput value={name} onChangeText={setUser} testID='input' />
-//       <Button
-//         title='Print Username'
-//         onPress={() => {
-//           // let's pretend this is making a server request, so it's async
-//           // (you'd want to mock this imaginary request in your unit tests)...
-//           setTimeout(() => {
-//             setShow(true);
-//           }, Math.floor(Math.random() * 200));
-//         }}
-//       />
-//       {show && <Text testID='printed-username'>{name}</Text>}
-//     </View>
-//   );
-// }
-
-// test('examples of some things', async () => {
-//   const expectedUsername = 'Ada Lovelace';
-
-//   render(<Example />);
-
-//   fireEvent.changeText(screen.getByTestId('input'), expectedUsername);
-//   fireEvent.press(screen.getByText('Print Username'));
-
-//   // Using `findBy` query to wait for asynchronous operation to finish
-//   const usernameOutput = await screen.findByTestId('printed-username');
-
-//   // expect(screen.toJSON()).toMatchSnapshot();
-// });

@@ -1,19 +1,34 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
+import { SliderItem, SliderItemProps } from 'shared';
 
-interface SliderProps {
-  items: [];
+type SliderItemsElement<D extends object> = Omit<SliderItemProps, 'onPress'> & { data: D };
+
+interface SliderProps<D extends object> {
+  items: SliderItemsElement<D>[];
+  onPressItem?: (data: D) => void;
 }
 
-export const Slider = ({ items }: SliderProps) => {
+export const Slider = <D extends object>({ items, onPressItem }: SliderProps<D>) => {
   if (!items || !items.length) {
     return null;
   }
 
   return (
-    <View>
-      <Text>slider</Text>
-    </View>
+    <ScrollView>
+      {items.map(({ previewURL, description, size, data }, index) => (
+        <SliderItem
+          key={index}
+          testID='slider-item'
+          previewURL={previewURL}
+          description={description}
+          size={size}
+          onPress={() => {
+            onPressItem?.(data);
+          }}
+        />
+      ))}
+    </ScrollView>
   );
 };
 
