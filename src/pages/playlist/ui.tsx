@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { ListenStackScreenProps, ListenStackParamName } from 'routing';
 import { Playlist } from 'widgets';
 import { OnPressPlaylistItem, PlaylistItem } from 'features';
@@ -11,8 +11,9 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
 }) => {
   const { title, list, previewUrl, description } = route.params;
 
-  const getOnPressPlaylistItem: OnPressPlaylistItem = (sermon) => {
-    console.log('sermon: ', sermon);
+  const onPressPlaylistItem: OnPressPlaylistItem = (sermon) => {
+    console.log('onPressPlaylistItem: ');
+    navigate;
   };
 
   return (
@@ -27,7 +28,7 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
           key={`TouchableItem-${index}`}
           index={index}
           sermon={sermon}
-          onPressPlaylistItem={getOnPressPlaylistItem}
+          onPressPlaylistItem={onPressPlaylistItem}
         />
       ))}
     </Playlist>

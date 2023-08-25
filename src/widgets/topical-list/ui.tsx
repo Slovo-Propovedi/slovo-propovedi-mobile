@@ -1,8 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { ListenStackNavProp, ListenStackParamName } from 'routing';
-import { FetchedPlaylist, TouchableTextItem } from 'shared';
+import { PlaylistData } from 'widgets/playlist';
+import { Slider } from 'features';
+import { INDENTS, SliderItemSize } from 'shared';
 import { useTopicalListStore } from './model';
 
 export const TopicalList = () => {
@@ -13,7 +15,7 @@ export const TopicalList = () => {
     getTopicalList: state.getTopicalList,
   }));
 
-  const getOnBibleBooksListItemPress = (params: FetchedPlaylist) => () => {
+  const onItemPress = (params: PlaylistData) => {
     navigate(ListenStackParamName.Playlist, params);
   };
 
@@ -23,20 +25,30 @@ export const TopicalList = () => {
 
   // TODO здесь должен быть не список заголовков, а плитки с превью
   return (
-    <View style={styles.list}>
-      {topicalList.map((element) => (
-        <TouchableTextItem
-          key={element.title}
-          onPress={getOnBibleBooksListItemPress(element)}
-          title={element.title}
-        />
-      ))}
-    </View>
+    <>
+      <Slider
+        style={styles.slider}
+        itemsSize={SliderItemSize.Middle}
+        title='По Библии'
+        items={topicalList.map((item) => ({
+          data: item,
+          description: item.title,
+          previewURL: item.previewUrl || '',
+        }))}
+        onPressItem={(data) => {
+          onItemPress(data);
+        }}
+        onPressTitle={() => {
+          console.log('press on title');
+        }}
+      />
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  list: {
-    flex: 1,
+  slider: {
+    paddingHorizontal: INDENTS.low,
+    borderRadius: 10,
   },
 });

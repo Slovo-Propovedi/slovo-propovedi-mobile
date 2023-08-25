@@ -1,4 +1,4 @@
-import { SermonData } from 'entities/sermon';
+import { SermonData } from 'entities';
 
 export interface PlaylistData {
   title: string;

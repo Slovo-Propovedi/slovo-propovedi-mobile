@@ -1,17 +1,17 @@
 import { create } from 'zustand';
-import { PlaylistData } from 'widgets/playlist';
+import { PlaylistData } from 'widgets';
 import { SermonData } from 'entities';
 import { FetchedSermonsTabName, getBookLinkAsString, sermonsAPI } from 'shared';
 
-interface TopicalListState {
-  topicalList: PlaylistData[];
-  getTopicalList: () => Promise<PlaylistData[]>;
+interface OnBibleBooksListState {
+  onBibleBooksList: PlaylistData[];
+  getOnBibleBookList: () => Promise<PlaylistData[]>;
 }
 
-export const useTopicalListStore = create<TopicalListState>((set) => ({
-  topicalList: [],
-  getTopicalList: async () => {
-    const response = await sermonsAPI.getSermonsTabContent(FetchedSermonsTabName.Topical);
+export const useOnBibleBooksListStore = create<OnBibleBooksListState>((set) => ({
+  onBibleBooksList: [],
+  getOnBibleBookList: async () => {
+    const response = await sermonsAPI.getSermonsTabContent(FetchedSermonsTabName.OnBible);
 
     const booksList = response?.playlists ?? [];
 
@@ -46,7 +46,7 @@ export const useTopicalListStore = create<TopicalListState>((set) => ({
 
     set((state) => ({
       ...state,
-      topicalList: mappedBookList,
+      onBibleBooksList: mappedBookList,
     }));
 
     return mappedBookList;

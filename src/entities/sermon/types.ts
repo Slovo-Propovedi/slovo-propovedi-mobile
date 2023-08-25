@@ -1,14 +1,4 @@
-import { BibleBookName } from 'entities/bible-book';
-
-export interface SermonDataLink {
-  bookName?: BibleBookName;
-
-  chapter?: number;
-
-  verse?: number | [from: number, to: number];
-}
-
-export interface SermonDataFragment extends SermonDataLink {
+export interface SermonDataFragment {
   title?: string;
 
   description?: string;
@@ -20,7 +10,7 @@ export interface SermonDataFragment extends SermonDataLink {
   textFileUrl?: string;
 }
 
-export interface SermonData extends SermonDataLink {
+export interface SermonData {
   title: string;
 
   description?: string;

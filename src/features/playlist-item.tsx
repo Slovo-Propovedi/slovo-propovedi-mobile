@@ -1,7 +1,7 @@
 import React from 'react';
 import { GestureResponderEvent, StyleSheet, Text } from 'react-native';
 import { SermonData } from 'entities';
-import { FONT_SIZES, INDENTS, TouchableItem, getBookLinkAsString } from 'shared';
+import { FONT_SIZES, INDENTS, TouchableItem } from 'shared';
 
 export type OnPressPlaylistItem = (sermon: SermonData, event: GestureResponderEvent) => void;
 
@@ -13,13 +13,7 @@ interface PlaylistItemProps {
 
 export const PlaylistItem = ({ index, sermon, onPressPlaylistItem }: PlaylistItemProps) => (
   <TouchableItem style={styles.listItem} onPress={(event) => onPressPlaylistItem(sermon, event)}>
-    <Text style={styles.listItemTitle}>
-      {`${index + 1}. ${getBookLinkAsString({
-        title: sermon.title,
-        verse: sermon.verse,
-        chapter: sermon.chapter,
-      })}`}
-    </Text>
+    <Text style={styles.listItemTitle}>{`${index + 1}. ${sermon.title}`}</Text>
   </TouchableItem>
 );
 

@@ -1,11 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { ListenStackNavProp, ListenStackParamName } from 'routing';
-import { FetchedPlaylist, TouchableTextItem } from 'shared';
+import { PlaylistData } from 'widgets';
+import { Slider } from 'features';
+import { INDENTS, SliderItemSize } from 'shared';
 import { useOnBibleBooksListStore } from './model';
 
-export const BooksListOnBible = () => {
+export const SermonsOnBibleSlider = () => {
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
   const { onBibleBooksList, getOnBibleBookList } = useOnBibleBooksListStore((state) => ({
@@ -13,7 +15,7 @@ export const BooksListOnBible = () => {
     getOnBibleBookList: state.getOnBibleBookList,
   }));
 
-  const getOnBibleBooksListItemPress = (params: FetchedPlaylist) => () => {
+  const onItemPress = (params: PlaylistData) => {
     // Почему-то это вызывает ошибку:
     // Require cycle: src/routing/index.ts -> src/routing/bible-school/index.ts ->
     // src/routing/bible-school/ui.tsx -> src/pages/index.ts -> src/pages/sermons/index.ts ->
@@ -22,6 +24,8 @@ export const BooksListOnBible = () => {
 
     // Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
 
+    console.log('navigate: ');
+
     navigate(ListenStackParamName.Playlist, params);
   };
 
@@ -29,25 +33,29 @@ export const BooksListOnBible = () => {
     getOnBibleBookList();
   }, []);
 
-  if (!onBibleBooksList.length) {
-    return <></>;
-  }
-
   return (
-    <View style={styles.list}>
-      {onBibleBooksList.map((element) => (
-        <TouchableTextItem
-          key={element.title}
-          onPress={getOnBibleBooksListItemPress(element)}
-          title={element.title}
-        />
-      ))}
-    </View>
+    <Slider
+      style={styles.slider}
+      itemsSize={SliderItemSize.Middle}
+      title='По Библии'
+      items={onBibleBooksList.map((item) => ({
+        data: item,
+        description: item.title,
+        previewURL: item.previewUrl || '',
+      }))}
+      onPressItem={(data) => {
+        onItemPress(data);
+      }}
+      onPressTitle={() => {
+        console.log('press on title');
+      }}
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  list: {
-    flex: 1,
+  slider: {
+    paddingHorizontal: INDENTS.low,
+    borderRadius: 10,
   },
 });
