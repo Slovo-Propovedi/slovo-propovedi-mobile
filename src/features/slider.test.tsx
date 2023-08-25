@@ -1,9 +1,19 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Slider } from './slider';
+// eslint-disable-next-line import/no-internal-modules
+import '@testing-library/jest-native/extend-expect';
 
 const itemStub = { previewURL: 'https//:vk.com', data: {} };
 
+const sliderStub = { title: 'title', items: [itemStub] };
+
+const mockData: { text: string | null } = { text: null };
+
 describe('<Slider/>', () => {
+  beforeEach(() => {
+    mockData.text = null;
+  });
+
   test('return null if items prop is undefined', () => {
     //@ts-expect-error - undefined is a not a valid items
     render(<Slider items={undefined} />);
@@ -19,8 +29,8 @@ describe('<Slider/>', () => {
     expect(tree).toBeNull();
   });
 
-  test('return ScrollView, if items length > 0', () => {
-    render(<Slider items={[itemStub]} />);
+  test('return View, if items length > 0', () => {
+    render(<Slider items={sliderStub.items} />);
 
     const tree = screen.toJSON();
     expect(tree).toBeDefined();
@@ -30,10 +40,10 @@ describe('<Slider/>', () => {
     if (!tree || Array.isArray(tree)) {
       return;
     }
-    expect(tree.type).toEqual('RCTScrollView');
+    expect(tree.type).toEqual('View');
   });
 
-  test('return 2 children, if items length === 2', () => {
+  test('return 2 slider items, if items length === 2', () => {
     render(<Slider items={[itemStub, itemStub]} />);
 
     const tree = screen.toJSON();
@@ -48,13 +58,11 @@ describe('<Slider/>', () => {
   });
 
   test('onPressItem called on press item', () => {
-    let mockValue: string | null = null;
-
     render(
       <Slider
-        items={[itemStub]}
+        items={sliderStub.items}
         onPressItem={() => {
-          mockValue = 'done';
+          mockData.text = 'done';
         }}
       />,
     );
@@ -68,6 +76,57 @@ describe('<Slider/>', () => {
     const sliderItems = screen.getAllByTestId('slider-item');
     fireEvent.press(sliderItems[0]);
 
-    expect(mockValue).not.toBeNull();
+    expect(mockData.text).not.toBeNull();
+  });
+
+  test('has Text element, if title is defined', () => {
+    render(<Slider items={sliderStub.items} title={sliderStub.title} />);
+
+    const titleElement = screen.queryByTestId('title');
+
+    expect(titleElement).not.toBeNull();
+  });
+
+  test('content in the Text element equals to title prop', () => {
+    render(<Slider items={sliderStub.items} title={sliderStub.title} />);
+
+    const titleElement = screen.queryByTestId('title');
+
+    expect(titleElement).toHaveTextContent(sliderStub.title);
+  });
+
+  test('call onPressTitle callback, when press on tittle element', () => {
+    render(
+      <Slider
+        items={sliderStub.items}
+        title={sliderStub.title}
+        onPressTitle={() => {
+          mockData.text = 'new value';
+        }}
+      />,
+    );
+
+    const titleElement = screen.getByTestId('title');
+
+    fireEvent.press(titleElement);
+
+    expect(mockData.text).toEqual('new value');
+  });
+
+  test('do not call onPressTitle callback if prop tittle not defined', () => {
+    render(
+      <Slider
+        items={sliderStub.items}
+        onPressTitle={() => {
+          mockData.text = 'new value';
+        }}
+      />,
+    );
+
+    const titleElement = screen.getByTestId('title');
+
+    fireEvent.press(titleElement);
+
+    expect(mockData.text).toBeNull;
   });
 });
