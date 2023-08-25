@@ -3,6 +3,7 @@ import {
   Dimensions,
   ImageBackground,
   ScrollView,
+  StyleProp,
   StyleSheet,
   Text,
   View,
@@ -18,10 +19,18 @@ interface PlaylistProps {
   previewUrl?: string;
   description?: string;
   style?: ViewStyle;
+  contentContainerStyle?: StyleProp<ViewStyle>;
 }
 
-export const Playlist = ({ title, children, previewUrl, description, style }: PlaylistProps) => (
-  <ScrollView style={[styles.container, style]}>
+export const Playlist = ({
+  title,
+  children,
+  previewUrl,
+  description,
+  style,
+  contentContainerStyle,
+}: PlaylistProps) => (
+  <ScrollView style={style} contentContainerStyle={contentContainerStyle}>
     {previewUrl && (
       <ImageBackground style={styles.preview} source={{ uri: previewUrl }}>
         <Text style={styles.title}>{title}</Text>
@@ -35,7 +44,6 @@ export const Playlist = ({ title, children, previewUrl, description, style }: Pl
 );
 
 const styles = StyleSheet.create({
-  container: {},
   title: {
     fontSize: FONT_SIZES.h1,
     paddingBottom: INDENTS.main,

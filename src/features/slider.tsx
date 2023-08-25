@@ -1,30 +1,46 @@
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-import { SliderItem, SliderItemProps } from 'shared';
+import { GestureResponderEvent, ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import { SliderItem, SliderItemSize } from 'shared';
 
-type SliderItemsElement<D extends object> = Omit<SliderItemProps, 'onPress'> & { data: D };
+type SliderItemsElement<D extends object> = {
+  previewURL: string;
+  description: string;
+  data: D;
+};
 
 interface SliderProps<D extends object> {
+  style?: StyleProp<ViewStyle>;
   items: SliderItemsElement<D>[];
-  onPressItem?: (data: D) => void;
+  onPressItem?: (data: D, event: GestureResponderEvent) => void;
+  itemsSize?: SliderItemSize;
 }
 
-export const Slider = <D extends object>({ items, onPressItem }: SliderProps<D>) => {
+export const Slider = <D extends object>({
+  style,
+  items,
+  onPressItem,
+  itemsSize,
+}: SliderProps<D>) => {
   if (!items || !items.length) {
     return null;
   }
 
   return (
-    <ScrollView>
-      {items.map(({ previewURL, description, size, data }, index) => (
+    <ScrollView
+      style={style}
+      contentContainerStyle={styles.contentContainer}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+    >
+      {items.map(({ previewURL, description, data }, index) => (
         <SliderItem
           key={index}
           testID='slider-item'
           previewURL={previewURL}
           description={description}
-          size={size}
-          onPress={() => {
-            onPressItem?.(data);
+          size={itemsSize}
+          onPress={(event) => {
+            onPressItem?.(data, event);
           }}
         />
       ))}
@@ -32,4 +48,8 @@ export const Slider = <D extends object>({ items, onPressItem }: SliderProps<D>)
   );
 };
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  contentContainer: {
+    gap: 10,
+  },
+});

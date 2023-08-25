@@ -1,5 +1,13 @@
 import React from 'react';
-import { Dimensions, GestureResponderEvent, StyleSheet, Text, View } from 'react-native';
+import {
+  Dimensions,
+  GestureResponderEvent,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { COLORS, FONT_SIZES } from 'shared/themed';
 import { TouchableImageBackground } from 'shared/ui/touchable-image-background';
 
@@ -12,6 +20,7 @@ export enum SliderItemSize {
 }
 
 export interface SliderItemProps {
+  style?: StyleProp<ViewStyle>;
   previewURL: string;
   description?: string;
   size?: SliderItemSize;
@@ -20,6 +29,7 @@ export interface SliderItemProps {
 }
 
 export const SliderItem = ({
+  style,
   previewURL,
   description,
   size = SliderItemSize.Small,
@@ -40,6 +50,7 @@ export const SliderItem = ({
           [SliderItemSize.Middle]: styles.componentMiddle,
           [SliderItemSize.Large]: styles.componentLarge,
         }[size],
+        style,
       ]}
       imageStyle={styles.image}
       previewSrc={previewURL}
