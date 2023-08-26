@@ -2,9 +2,10 @@ import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { ListenRouting, ReadRouting, StudyRouting } from 'routing';
 import { Info } from 'pages';
-import { RootTabsParamList, RootTabName } from 'shared';
+import { RootTabsParamList, RootTabName, COLORS } from 'shared';
 
 const Tab = createBottomTabNavigator<RootTabsParamList>();
 
@@ -37,9 +38,11 @@ const App = () => (
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: 'tomato',
+        tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: 'gray',
         headerShown: false,
+        tabBarStyle: styles.tabBar,
+        lazy: route.name !== RootTabName.Study,
       })}
     >
       <Tab.Screen name={RootTabName.Listen} component={ListenRouting} />
@@ -53,5 +56,12 @@ const App = () => (
     </Tab.Navigator>
   </NavigationContainer>
 );
+
+const styles = StyleSheet.create({
+  tabBar: {
+    borderTopWidth: 1,
+    shadowColor: 'transparent',
+  },
+});
 
 export default App;

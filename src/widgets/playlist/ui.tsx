@@ -18,7 +18,7 @@ interface PlaylistProps {
   children: React.ReactElement | React.ReactElement[];
   previewUrl?: string;
   description?: string;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
 }
 
