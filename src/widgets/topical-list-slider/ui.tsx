@@ -7,7 +7,7 @@ import { Slider } from 'features';
 import { INDENTS, SliderItemSize } from 'shared';
 import { useTopicalListStore } from './model';
 
-export const TopicalList = () => {
+export const TopicalListSlider = () => {
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
   const { topicalList, getTopicalList } = useTopicalListStore((state) => ({
@@ -28,7 +28,7 @@ export const TopicalList = () => {
     <>
       <Slider
         style={styles.slider}
-        itemsSize={SliderItemSize.Middle}
+        itemsSize={SliderItemSize.Large}
         title='Тематические'
         items={topicalList.map((item) => ({
           data: item,
@@ -49,6 +49,5 @@ export const TopicalList = () => {
 const styles = StyleSheet.create({
   slider: {
     paddingHorizontal: INDENTS.low,
-    borderRadius: 10,
   },
 });

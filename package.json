@@ -19,6 +19,8 @@
     "build:ios": "eas build --platform ios",
     "build:all": "eas build --platform all",
     "build-preview:android": "eas build -p android --profile preview",
+    "build-preview:ios": "eas build -p ios --profile preview",
+    "build-preview:all": "eas build -p all --profile preview",
     "build:list": "eas build:list"
   },
   "dependencies": {
