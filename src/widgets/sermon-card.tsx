@@ -9,7 +9,6 @@ import {
   GetYoutubeVideosResponseItem,
   INDENTS,
   downloadFile,
-  getBookLinkAsString,
   getYoutubeVideoData,
 } from 'shared';
 
@@ -21,12 +20,10 @@ export const SermonCard = ({
   style,
   title,
   description,
-  fragments,
-  verse,
-  chapter,
+  audioUrl,
+  textFileUrl,
+  youtubeUrl,
 }: SermonCardProps) => {
-  const { audioUrl, textFileUrl, youtubeUrl } = fragments[0];
-
   const [videoData, setVideoData] = useState<GetYoutubeVideosResponseItem | null>(null);
 
   useEffect(() => {
@@ -43,7 +40,7 @@ export const SermonCard = ({
 
   return (
     <View style={[styles.container, style]}>
-      <Text style={styles.title}>{getBookLinkAsString({ title, verse, chapter })}</Text>
+      <Text style={styles.title}>{title}</Text>
 
       {description && <Text style={styles.description}>{description}</Text>}
 

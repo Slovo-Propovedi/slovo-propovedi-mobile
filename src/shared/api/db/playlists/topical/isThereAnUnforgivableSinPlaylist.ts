@@ -9,14 +9,9 @@ export const isThereAnUnforgivableSinPlaylist: FetchedPlaylist = {
   list: [
     {
       title: 'Существует ли непростительный грех?',
-      fragments: [
-        {
-          title: 'Союз со Христом',
-          audioUrl:
-            'https://slovo-istini.com/image/pages/1161/sushchestvuet_li_neprostitelnyy_greh.mp3',
-          youtubeUrl: 'https://youtu.be/piFqGlbNJSI',
-        },
-      ],
+      audioUrl:
+        'https://slovo-istini.com/image/pages/1161/sushchestvuet_li_neprostitelnyy_greh.mp3',
+      youtubeUrl: 'https://youtu.be/piFqGlbNJSI',
     },
   ],
 };
