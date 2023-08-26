@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { PlaylistData } from 'widgets';
 import { SermonData } from 'entities';
-import { FetchedSermonsTabName, getBookLinkAsString, sermonsAPI } from 'shared';
+import { FetchedSermonsGroupName, getBookLinkAsString, sermonsAPI } from 'shared';
 
 interface OnBibleBooksListState {
   onBibleBooksList: PlaylistData[];
@@ -11,44 +11,24 @@ interface OnBibleBooksListState {
 export const useOnBibleBooksListStore = create<OnBibleBooksListState>((set) => ({
   onBibleBooksList: [],
   getOnBibleBookList: async () => {
-    const response = await sermonsAPI.getSermonsTabContent(FetchedSermonsTabName.OnBible);
+    const list = await sermonsAPI.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible);
 
-    const booksList = response?.playlists ?? [];
-
-    const mappedBookList = booksList.map<PlaylistData>((playlist) => {
-      const mappedList = playlist.list.map<SermonData>((el) => ({
-        title: getBookLinkAsString({
-          title: el.title,
-          verse: el.verse,
-          chapter: el.chapter,
-        }),
+    const mappedList = list?.map<PlaylistData>((playlist) => ({
+      ...playlist,
+      list: playlist.list.map<SermonData>((el) => ({
+        title: getBookLinkAsString(el),
         description: el.description,
-        fragments: el.fragments.map((fragment) => ({
-          audioUrl: fragment.audioUrl,
-          description: fragment.description,
-          textFileUrl: fragment.textFileUrl,
-          title: fragment.title
-            ? getBookLinkAsString({
-                title: fragment.title,
-                verse: fragment.verse,
-                chapter: fragment.chapter,
-              })
-            : undefined,
-          youtubeUrl: fragment.youtubeUrl,
-        })),
-      }));
-
-      return {
-        ...playlist,
-        list: mappedList,
-      };
-    });
+        audioUrl: el.audioUrl,
+        textFileUrl: el.textFileUrl,
+        youtubeUrl: el.youtubeUrl,
+      })),
+    }));
 
     set((state) => ({
       ...state,
-      onBibleBooksList: mappedBookList,
+      onBibleBooksList: mappedList || [],
     }));
 
-    return mappedBookList;
+    return mappedList || [];
   },
 }));

@@ -1,9 +1,10 @@
 type GetBookLinkAsString = (arg: {
-  title: string;
+  title?: string;
   chapter?: number | undefined;
   verse?: number | [from: number, to: number] | undefined;
 }) => string;
 
+// TODO Переделать. Убрать исключения
 export const getBookLinkAsString: GetBookLinkAsString = (props) => {
   if (typeof props !== 'object') {
     throw new Error('Аргумент должен быть объектом');

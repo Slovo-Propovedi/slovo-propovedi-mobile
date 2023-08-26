@@ -29,7 +29,7 @@ export const TopicalList = () => {
       <Slider
         style={styles.slider}
         itemsSize={SliderItemSize.Middle}
-        title='По Библии'
+        title='Тематические'
         items={topicalList.map((item) => ({
           data: item,
           description: item.title,

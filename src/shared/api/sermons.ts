@@ -1,13 +1,13 @@
-import { FetchedSermonsTabName } from './db';
+import { FetchedSermonsGroupName } from './db';
 import { localDB } from './localBD';
 
-const getSermonsTabContent = async (tabName: FetchedSermonsTabName) => {
+const getPlaylistsOnSermonsGroup = async (tabName: FetchedSermonsGroupName) => {
   const sermons = localDB.getSermons();
-  const content = sermons.find((el) => el.tabName === tabName);
+  const content = sermons.find((el) => el.groupName === tabName);
 
-  return content ?? null;
+  return content?.playlists ?? null;
 };
 
 export const sermonsAPI = {
-  getSermonsTabContent,
+  getPlaylistsOnSermonsGroup,
 };

@@ -1,5 +1,5 @@
-export interface SermonDataFragment {
-  title?: string;
+export interface SermonData {
+  title: string;
 
   description?: string;
 
@@ -8,12 +8,4 @@ export interface SermonDataFragment {
   audioUrl?: string;
 
   textFileUrl?: string;
-}
-
-export interface SermonData {
-  title: string;
-
-  description?: string;
-
-  fragments: SermonDataFragment[];
 }

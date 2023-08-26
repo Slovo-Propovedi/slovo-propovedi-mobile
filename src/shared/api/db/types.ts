@@ -28,16 +28,14 @@ export enum BibleBookName {
   Revelation = 'Откровение',
 }
 
-export interface FetchedSermonDataLink {
+export interface FetchedSermonData {
+  title: string;
+
   bookName?: BibleBookName;
 
   chapter?: number;
 
   verse?: number | [from: number, to: number];
-}
-
-export interface FetchedSermonDataFragment extends FetchedSermonDataLink {
-  title?: string;
 
   description?: string;
 
@@ -48,15 +46,7 @@ export interface FetchedSermonDataFragment extends FetchedSermonDataLink {
   textFileUrl?: string;
 }
 
-export interface FetchedSermonData extends FetchedSermonDataLink {
-  title: string;
-
-  description?: string;
-
-  fragments: FetchedSermonDataFragment[];
-}
-
-export enum FetchedSermonsTabName {
+export enum FetchedSermonsGroupName {
   OnBible = 'onBible',
   Topical = 'topical',
 }
@@ -68,11 +58,11 @@ export interface FetchedPlaylist {
   previewUrl?: string;
 }
 
-export type FetchedSermonsTab = {
-  tabName: FetchedSermonsTabName;
+export type FetchedSermonsGroup = {
+  groupName: FetchedSermonsGroupName;
   playlists: FetchedPlaylist[];
 };
 
 export interface DB {
-  sermons: FetchedSermonsTab[];
+  sermons: FetchedSermonsGroup[];
 }
