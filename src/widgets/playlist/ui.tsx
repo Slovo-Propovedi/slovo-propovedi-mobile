@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dimensions,
   ImageBackground,
+  LayoutChangeEvent,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -9,7 +10,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { INDENTS, FONT_SIZES, COLORS } from 'shared';
+import { INDENTS, FONT_SIZES, COLORS, IMAGE_PLACEHOLDER } from 'shared';
 
 const windowHeight = Dimensions.get('window').height;
 
@@ -29,19 +30,30 @@ export const Playlist = ({
   description,
   style,
   contentContainerStyle,
-}: PlaylistProps) => (
-  <ScrollView style={style} contentContainerStyle={contentContainerStyle}>
-    {previewUrl && (
-      <ImageBackground style={styles.preview} source={{ uri: previewUrl }}>
-        <Text style={styles.title}>{title}</Text>
+}: PlaylistProps) => {
+  const [previewLayout, setPreviewLayout] = useState({ width: 0, height: 0 });
+
+  const handleLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setPreviewLayout({ width, height });
+  };
+
+  return (
+    <ScrollView style={style} contentContainerStyle={contentContainerStyle}>
+      <ImageBackground
+        style={styles.preview}
+        source={{ uri: previewUrl || IMAGE_PLACEHOLDER }}
+        onLayout={handleLayout}
+      >
+        <Text style={[styles.title, { marginTop: previewLayout.height / 3 }]}>{title}</Text>
 
         {description && <Text style={styles.description}>{description}</Text>}
       </ImageBackground>
-    )}
 
-    <View style={styles.content}>{children}</View>
-  </ScrollView>
-);
+      <View style={styles.content}>{children}</View>
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
   title: {
@@ -49,19 +61,21 @@ const styles = StyleSheet.create({
     paddingBottom: INDENTS.main,
     marginLeft: 'auto',
     marginRight: 'auto',
-    marginTop: '50%',
     color: COLORS.primary,
   },
+
   preview: {
     width: '100%',
-    height: windowHeight * 0.5,
+    height: windowHeight * 0.7,
   },
+
   description: {
-    fontSize: FONT_SIZES.h3,
     padding: INDENTS.main,
     marginTop: 'auto',
     maxHeight: '20%',
+    fontSize: FONT_SIZES.h3,
     color: COLORS.white,
   },
-  content: { padding: INDENTS.low },
+
+  content: { padding: INDENTS.low, paddingRight: 0 },
 });

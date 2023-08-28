@@ -1,7 +1,7 @@
 import React from 'react';
 import { GestureResponderEvent, StyleSheet, Text } from 'react-native';
 import { SermonData } from 'entities';
-import { FONT_SIZES, INDENTS, TouchableItem } from 'shared';
+import { COLORS, FONT_SIZES, INDENTS, TouchableItem } from 'shared';
 
 export type OnPressPlaylistItem = (sermon: SermonData, event: GestureResponderEvent) => void;
 
@@ -23,7 +23,9 @@ const styles = StyleSheet.create({
     marginBottom: INDENTS.main,
     alignItems: 'center',
     flexDirection: 'row',
-    paddingLeft: INDENTS.main,
+    padding: INDENTS.low,
+    borderBottomColor: COLORS.lightGray,
+    borderBottomWidth: 1,
   },
   listItemTitle: {
     fontSize: FONT_SIZES.h3,

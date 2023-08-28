@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ListenStackScreenProps, ListenStackParamName } from 'routing';
 import { Playlist } from 'widgets';
 import { OnPressPlaylistItem, PlaylistItem } from 'features';
@@ -12,29 +11,27 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
 }) => {
   const { title, list, previewUrl, description } = route.params;
 
-  const onPressPlaylistItem: OnPressPlaylistItem = (sermon) => {
+  const onPressPlaylistItem: OnPressPlaylistItem = () => {
     console.log('onPressPlaylistItem: ');
     navigate;
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Playlist
-        style={styles.content}
-        title={title}
-        previewUrl={previewUrl}
-        description={description}
-      >
-        {list.map((sermon, index) => (
-          <PlaylistItem
-            key={`TouchableItem-${index}`}
-            index={index}
-            sermon={sermon}
-            onPressPlaylistItem={onPressPlaylistItem}
-          />
-        ))}
-      </Playlist>
-    </SafeAreaView>
+    <Playlist
+      style={styles.content}
+      title={title}
+      previewUrl={previewUrl}
+      description={description}
+    >
+      {list.map((sermon, index) => (
+        <PlaylistItem
+          key={`TouchableItem-${index}`}
+          index={index}
+          sermon={sermon}
+          onPressPlaylistItem={onPressPlaylistItem}
+        />
+      ))}
+    </Playlist>
   );
 };
 
