@@ -25,8 +25,6 @@ export const SermonsOnBibleSlider = () => {
     // Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
 
     navigate(ListenStackParamName.Playlist, params);
-
-    // comment
   };
 
   useEffect(() => {
