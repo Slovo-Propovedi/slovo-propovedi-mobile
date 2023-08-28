@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleProp, StyleSheet, TextInputProps, View, ViewStyle } from 'react-native';
-import { Input, SearchButton, SearchButtonProps, COLORS, INDENTS } from 'shared';
+import { Input, SearchButton, SearchButtonProps, COLORS, INDENTS, RADIUSES } from 'shared';
 
 type SearchInputProps = Pick<TextInputProps & SearchButtonProps, 'placeholder' | 'onPress'> & {
   style?: StyleProp<ViewStyle>;
@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flexDirection: 'row',
     height: 39,
-    borderRadius: 15,
+    borderRadius: RADIUSES.middle,
     borderWidth: 1,
     borderColor: COLORS.onPrimary,
     borderStyle: 'solid',

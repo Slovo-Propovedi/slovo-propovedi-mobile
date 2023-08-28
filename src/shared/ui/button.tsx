@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from 'react-native';
-import { COLORS, INDENTS, FONT_SIZES } from 'shared/themed';
+import { COLORS, INDENTS, FONT_SIZES, RADIUSES } from 'shared/themed';
 
 type CustomButtonProps = ButtonProps & { style?: ViewStyle; titleStyle?: TextStyle };
 
@@ -37,7 +37,7 @@ export const Button = ({
 const styles = StyleSheet.create({
   button: {
     padding: INDENTS.low,
-    borderRadius: 10,
+    borderRadius: RADIUSES.low,
     backgroundColor: COLORS.blue,
     justifyContent: 'center',
     alignItems: 'center',

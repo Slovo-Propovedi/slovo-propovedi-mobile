@@ -20,3 +20,9 @@ export const INDENTS = {
   main: 20,
   low: 10,
 } as const;
+
+export const RADIUSES = {
+  low: 10,
+  middle: 15,
+  large: 20,
+} as const;

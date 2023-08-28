@@ -8,7 +8,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { COLORS, FONT_SIZES } from 'shared/themed';
+import { COLORS, FONT_SIZES, RADIUSES } from 'shared/themed';
 import { TouchableImageBackground } from 'shared/ui/touchable-image-background';
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
@@ -72,7 +72,7 @@ const componentLargeSize = windowWidth > windowHeight ? windowHeight - 50 : wind
 const styles = StyleSheet.create({
   component: {
     justifyContent: 'flex-end',
-    borderRadius: 20,
+    borderRadius: RADIUSES.large,
   },
   componentSmall: {
     width: 150,
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     height: componentLargeSize,
   },
   image: {
-    borderRadius: 20,
+    borderRadius: RADIUSES.large,
   },
 
   description: {

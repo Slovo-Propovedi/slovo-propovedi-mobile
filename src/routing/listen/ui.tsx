@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { PlaylistScreen, ListenScreen } from 'pages';
+import { PlaylistListScreen } from 'pages/playlist-list';
 import { COLORS, RootTabName, RootTabsScreenProps } from 'shared';
 import { ListenStackParamList, ListenStackParamName } from './types';
 
@@ -19,6 +20,9 @@ export const ListenRouting: React.FC<RootTabsScreenProps<RootTabName.Listen>> = 
           <AntDesign name='leftcircle' size={24} color={tintColor} />
         </TouchableOpacity>
       ),
+      headerTransparent: true,
+      headerTintColor: COLORS.primary,
+      headerTitle: '',
     }}
   >
     <ListenStack.Screen
@@ -26,17 +30,9 @@ export const ListenRouting: React.FC<RootTabsScreenProps<RootTabName.Listen>> = 
       component={ListenScreen}
       options={() => ({
         headerShown: false,
-        // headerTintColor: COLORS.primary,
       })}
     />
-    <ListenStack.Screen
-      name={ListenStackParamName.Playlist}
-      component={PlaylistScreen}
-      options={() => ({
-        headerTransparent: true,
-        headerTintColor: COLORS.primary,
-        headerTitle: '',
-      })}
-    />
+    <ListenStack.Screen name={ListenStackParamName.PlaylistList} component={PlaylistListScreen} />
+    <ListenStack.Screen name={ListenStackParamName.Playlist} component={PlaylistScreen} />
   </ListenStack.Navigator>
 );

@@ -9,7 +9,7 @@ import {
 import { COLORS } from 'shared/themed';
 
 export interface TouchableItemProps {
-  children: React.ReactElement;
+  children: React.ReactNode;
   disabled?: boolean;
   onPress: (event: GestureResponderEvent) => void;
   style?: StyleProp<ViewStyle>;

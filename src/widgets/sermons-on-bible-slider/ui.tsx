@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native';
 import { ListenStackNavProp, ListenStackParamName } from 'routing';
 import { PlaylistData } from 'widgets';
 import { Slider } from 'features';
-import { INDENTS, SliderItemSize } from 'shared';
+import { INDENTS, RADIUSES, SliderItemSize } from 'shared';
 import { useOnBibleBooksListStore } from './model';
 
 export const SermonsOnBibleSlider = () => {
@@ -54,6 +54,6 @@ export const SermonsOnBibleSlider = () => {
 const styles = StyleSheet.create({
   slider: {
     paddingHorizontal: INDENTS.low,
-    borderRadius: 10,
+    borderRadius: RADIUSES.low,
   },
 });

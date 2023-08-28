@@ -2,7 +2,8 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { ListenStackScreenProps, ListenStackParamName } from 'routing';
 import { Playlist } from 'widgets';
-import { OnPressPlaylistItem, PlaylistItem } from 'features';
+import { OnPressTouchableListItem, TouchableListItem } from 'features';
+import { SermonData } from 'entities';
 import { COLORS, FONT_SIZES, INDENTS } from 'shared';
 
 export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamName.Playlist>> = ({
@@ -11,7 +12,7 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
 }) => {
   const { title, list, previewUrl, description } = route.params;
 
-  const onPressPlaylistItem: OnPressPlaylistItem = () => {
+  const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = () => {
     console.log('onPressPlaylistItem: ');
     navigate;
   };
@@ -24,11 +25,11 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
       description={description}
     >
       {list.map((sermon, index) => (
-        <PlaylistItem
+        <TouchableListItem
           key={`TouchableItem-${index}`}
           index={index}
-          sermon={sermon}
-          onPressPlaylistItem={onPressPlaylistItem}
+          data={sermon}
+          onPress={onPressPlaylistItem}
         />
       ))}
     </Playlist>
