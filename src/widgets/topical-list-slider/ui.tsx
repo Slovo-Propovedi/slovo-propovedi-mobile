@@ -19,6 +19,10 @@ export const TopicalListSlider = () => {
     navigate(ListenStackParamName.Playlist, params);
   };
 
+  const onPressTitle = (params: PlaylistData[]) => {
+    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'Тематические' });
+  };
+
   useEffect(() => {
     getTopicalList();
   }, []);
@@ -35,11 +39,9 @@ export const TopicalListSlider = () => {
           description: item.title,
           previewURL: item.previewUrl || '',
         }))}
-        onPressItem={(data) => {
-          onItemPress(data);
-        }}
+        onPressItem={onItemPress}
         onPressTitle={() => {
-          console.log('press on title');
+          onPressTitle(topicalList);
         }}
       />
     </>

@@ -27,6 +27,10 @@ export const SermonsOnBibleSlider = () => {
     navigate(ListenStackParamName.Playlist, params);
   };
 
+  const onPressTitle = (params: PlaylistData[]) => {
+    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'По Библии' });
+  };
+
   useEffect(() => {
     getOnBibleBookList();
   }, []);
@@ -41,11 +45,9 @@ export const SermonsOnBibleSlider = () => {
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
-      onPressItem={(data) => {
-        onItemPress(data);
-      }}
+      onPressItem={onItemPress}
       onPressTitle={() => {
-        console.log('press on title');
+        onPressTitle(onBibleBooksList);
       }}
     />
   );

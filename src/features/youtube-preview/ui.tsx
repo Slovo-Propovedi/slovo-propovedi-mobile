@@ -18,7 +18,7 @@ export const YoutubePreview = ({ url, previewSrc, style }: YoutubePreviewProps) 
   >
     <Image
       //eslint-disable-next-line import/no-internal-modules
-      source={require('../../assets/youtube-logo-png-2069.png')}
+      source={require('./assets/youtube-logo-png-2069.png')}
       style={[styles.youtubeButton]}
     />
   </TouchableImageBackground>

@@ -13,7 +13,7 @@ export enum ListenStackParamName {
 export type ListenStackParamList = {
   [ListenStackParamName.ListenHome]: undefined;
   [ListenStackParamName.Playlist]: PlaylistData;
-  [ListenStackParamName.PlaylistList]: PlaylistData[];
+  [ListenStackParamName.PlaylistList]: { playlists: PlaylistData[]; title: string };
 };
 
 export type ListenStackScreenProps<Screen extends keyof ListenStackParamList> =
