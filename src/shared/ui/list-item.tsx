@@ -3,9 +3,10 @@ import { Image, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-nativ
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed';
 
 interface ListItemProps<T> {
+  data: T;
+  testID?: string;
   style?: StyleProp<ViewStyle>;
   previewPlaceholderText?: string;
-  data: T;
 }
 
 type ListItemComponent = <T extends { title: string; previewUrl?: string }>(
@@ -13,11 +14,12 @@ type ListItemComponent = <T extends { title: string; previewUrl?: string }>(
 ) => JSX.Element | null;
 
 export const ListItem: ListItemComponent = ({
+  data: { title, previewUrl },
+  testID,
   style,
   previewPlaceholderText = '',
-  data: { title, previewUrl },
 }) => (
-  <View style={[styles.listItem, style]}>
+  <View testID={testID} style={[styles.listItem, style]}>
     <View testID='preview-or-counter' style={styles.previewOrCounter}>
       {previewUrl ? (
         <Image testID='preview' style={styles.preview} source={{ uri: previewUrl }} />

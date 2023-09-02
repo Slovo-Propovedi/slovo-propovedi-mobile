@@ -10,16 +10,18 @@ import { COLORS } from 'shared/themed';
 
 export interface TouchableItemProps {
   children: React.ReactNode;
-  disabled?: boolean;
   onPress: (event: GestureResponderEvent) => void;
+  disabled?: boolean;
+  testID?: string;
   style?: StyleProp<ViewStyle>;
 }
 
 export const TouchableItem = ({
   children,
-  disabled = false,
-  style,
   onPress,
+  disabled = false,
+  testID,
+  style,
 }: TouchableItemProps) => {
   const buttonStyles: StyleProp<ViewStyle>[] = [styles.item];
 
@@ -30,7 +32,7 @@ export const TouchableItem = ({
   buttonStyles.push(style);
 
   return (
-    <TouchableOpacity style={buttonStyles} disabled={disabled} onPress={onPress}>
+    <TouchableOpacity testID={testID} style={buttonStyles} disabled={disabled} onPress={onPress}>
       {children}
     </TouchableOpacity>
   );
