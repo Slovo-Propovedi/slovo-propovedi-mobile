@@ -1,15 +1,18 @@
+import { isNonNullable } from './isNonNullable';
+
 type GetBookLinkAsString = (
-  arg:
+  arg: {
+    title: string;
+  } & (
     | {
-        title: string;
         chapter?: undefined;
         verse?: undefined;
       }
     | {
-        title: string;
         chapter: number;
-        verse: number | [from: number, to: number];
-      },
+        verse?: number | [from: number, to: number];
+      }
+  ),
 ) => string;
 
 export const getBookLinkAsString: GetBookLinkAsString = (props) => {
@@ -27,7 +30,8 @@ export const getBookLinkAsString: GetBookLinkAsString = (props) => {
 
   const { title, chapter, verse } = props;
 
-  return `${title}. ${chapter || -1}:${
-    Array.isArray(verse) ? `${verse[0]}-${verse[1]}` : verse || -1
-  }`;
+  const verseAsString =
+    (isNonNullable(verse) && Array.isArray(verse) ? `${verse[0]}-${verse[1]}` : verse) || '';
+
+  return `${title}. ${chapter}${verseAsString ? `:${verseAsString}` : ''}`;
 };

@@ -22,3 +22,20 @@
 <img title="eslint" alt="eslint" height=48 src="https://eslint.org/favicon.ico"/>
 <img title="feature-sliced" alt="feature-sliced" height=48 src="https://avatars.githubusercontent.com/u/60469024?s=200&v=4"/>
 </div>
+
+### Pre-commit hook
+
+We've set up a pre-commit hook to automatically check our code for type errors using TypeScript. This helps maintain consistent code quality and catch issues early in the development process.
+
+#### Installation
+
+To set up the pre-commit hook you'll need to:
+
+- Open up a terminal and navigate to the root directory of the project
+
+- Run the following command to make the setup script executable:
+  `chmod +x install.sh`
+
+- Run the setup script to create the pre-commit hook and perform other setup tasks
+  `./install.sh`
+  

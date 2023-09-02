@@ -27,7 +27,7 @@ export const PlaylistListScreen: React.FC<
         {playlists.map((playlist, index) => (
           <TouchableListItem
             key={`TouchableItem-${index}`}
-            index={index}
+            previewPlaceholderText={`${index + 1}`}
             data={playlist}
             onPress={onPressListItem}
           />

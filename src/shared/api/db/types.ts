@@ -28,14 +28,8 @@ export enum BibleBookName {
   Revelation = 'Откровение',
 }
 
-export interface FetchedSermonData {
+export type FetchedSermonData = {
   title: string;
-
-  bookName?: BibleBookName;
-
-  chapter?: number;
-
-  verse?: number | [from: number, to: number];
 
   description?: string;
 
@@ -44,7 +38,18 @@ export interface FetchedSermonData {
   audioUrl?: string;
 
   textFileUrl?: string;
-}
+} & (
+  | {
+      chapter?: undefined;
+
+      verse?: undefined;
+    }
+  | {
+      chapter: number;
+
+      verse?: number | [from: number, to: number];
+    }
+);
 
 export enum FetchedSermonsGroupName {
   OnBible = 'onBible',
