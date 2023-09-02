@@ -1,21 +1,19 @@
 import { isNonNullable } from './isNonNullable';
 
-type GetBookLinkAsString = (
-  arg: {
-    title: string;
-  } & (
-    | {
-        chapter?: undefined;
-        verse?: undefined;
-      }
-    | {
-        chapter: number;
-        verse?: number | [from: number, to: number];
-      }
-  ),
-) => string;
+type GetBookLinkAsStringProps = {
+  title: string;
+} & (
+  | {
+      chapter?: undefined;
+      verse?: undefined;
+    }
+  | {
+      chapter: number;
+      verse?: number | [from: number, to: number];
+    }
+);
 
-export const getBookLinkAsString: GetBookLinkAsString = (props) => {
+export const getBookLinkAsString = (props: GetBookLinkAsStringProps) => {
   if (typeof props !== 'object') {
     throw new Error('Аргумент должен быть объектом');
   }

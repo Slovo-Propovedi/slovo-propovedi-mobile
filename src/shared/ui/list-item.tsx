@@ -18,14 +18,16 @@ export const ListItem: ListItemComponent = ({
   data: { title, previewUrl },
 }) => (
   <View style={[styles.listItem, style]}>
-    <View style={styles.previewOrCounter}>
+    <View testID='preview-or-counter' style={styles.previewOrCounter}>
       {previewUrl ? (
-        <Image style={styles.preview} source={{ uri: previewUrl }} />
+        <Image testID='preview' style={styles.preview} source={{ uri: previewUrl }} />
       ) : (
         <Text style={styles.counter}>{previewPlaceholderText}</Text>
       )}
     </View>
-    <Text style={styles.listItemTitle}>{title}</Text>
+    <Text testID='title' style={styles.listItemTitle}>
+      {title}
+    </Text>
   </View>
 );
 
