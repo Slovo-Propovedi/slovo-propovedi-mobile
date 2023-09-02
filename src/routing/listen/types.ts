@@ -8,12 +8,14 @@ export enum ListenStackParamName {
   ListenHome = 'ListenHome',
   Playlist = 'Playlist',
   PlaylistList = 'PlaylistList',
+  AudioPlayer = 'AudioPlayer',
 }
 
 export type ListenStackParamList = {
   [ListenStackParamName.ListenHome]: undefined;
   [ListenStackParamName.Playlist]: PlaylistData;
   [ListenStackParamName.PlaylistList]: { playlists: PlaylistData[]; title: string };
+  [ListenStackParamName.AudioPlayer]: { audioUrl: string };
 };
 
 export type ListenStackScreenProps<Screen extends keyof ListenStackParamList> =

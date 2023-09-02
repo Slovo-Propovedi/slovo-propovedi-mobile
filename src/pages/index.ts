@@ -1,3 +1,4 @@
+export * from './audio-player';
 export * from './info';
 export * from './listen';
 export * from './playlist-list';
