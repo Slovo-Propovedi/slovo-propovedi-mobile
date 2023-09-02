@@ -1,20 +1,22 @@
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ListenStackParamName, ListenStackScreenProps } from 'routing';
 import { SermonsOnBibleSlider, TopicalListSlider, NewSermonsSlider } from 'widgets';
 
 export const ListenScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.ListenHome>
-> = () => (
-  <SafeAreaView style={styles.container}>
-    <ScrollView style={styles.content}>
+> = () => {
+  const { top } = useSafeAreaInsets();
+
+  return (
+    <ScrollView style={[styles.content, { top }]}>
       <NewSermonsSlider />
       <SermonsOnBibleSlider />
       <TopicalListSlider />
     </ScrollView>
-  </SafeAreaView>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
