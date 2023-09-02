@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ListenStackScreenProps, ListenStackParamName } from 'routing';
 import { PlaylistData } from 'widgets';
 import { OnPressTouchableListItem, TouchableListItem } from 'features';
@@ -13,13 +14,15 @@ export const PlaylistListScreen: React.FC<
   },
   navigation: { navigate },
 }) => {
+  const { top } = useSafeAreaInsets();
+
   const onPressListItem: OnPressTouchableListItem<PlaylistData> = (params) => {
     navigate(ListenStackParamName.Playlist, params);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.titleContainer}>
+    <ScrollView style={styles.container}>
+      <View style={[styles.titleContainer, { top }]}>
         <Text style={styles.title}>{title}</Text>
       </View>
 
@@ -33,7 +36,7 @@ export const PlaylistListScreen: React.FC<
           />
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -42,7 +45,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   titleContainer: {
-    padding: INDENTS.main,
+    paddingBottom: INDENTS.main,
     alignItems: 'center',
   },
   title: {
