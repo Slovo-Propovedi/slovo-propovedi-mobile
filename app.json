@@ -14,16 +14,14 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.egoreast.slovoistinymobile",
-      "safeAreaEnabled": false
+      "bundleIdentifier": "com.egoreast.slovoistinymobile"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.egoreast.slovoistinymobile",
-      "safeAreaEnabled": false
+      "package": "com.egoreast.slovoistinymobile"
     },
     "web": {
       "favicon": "./assets/favicon.jpg"
