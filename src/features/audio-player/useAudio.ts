@@ -108,5 +108,16 @@ export const useAudio = ({ audioUrl }: UseAudioParams) => {
     return () => interval && clearInterval(interval);
   }, [audioUrl, currentSoundUrl]);
 
-  return { play, pause, stop, unload, changeProgressPosition, position, duration, isPlaying };
+  return {
+    play,
+    pause,
+    stop,
+    unload,
+    changeProgressPosition,
+    recreateSound,
+    getPlaybackStatus,
+    position,
+    duration,
+    isPlaying,
+  };
 };

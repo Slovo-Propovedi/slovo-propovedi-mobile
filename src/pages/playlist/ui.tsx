@@ -12,12 +12,12 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
 }) => {
   const { title, list, previewUrl, description } = route.params;
 
-  const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = ({ audioUrl }) => {
+  const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = ({ audioUrl, ...other }) => {
     if (!audioUrl) {
       return;
     }
 
-    navigate(ListenStackParamName.AudioPlayer, { audioUrl: audioUrl });
+    navigate(ListenStackParamName.AudioPlayer, { ...other, audioUrl, previewUrl });
   };
 
   return (
