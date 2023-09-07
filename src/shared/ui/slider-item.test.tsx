@@ -44,7 +44,12 @@ describe('<SliderItem/>', () => {
     expect(tree.type).toEqual('View');
 
     expect(tree.children).not.toBeNull();
-    expect(tree.children?.length).toEqual(1);
+
+    if (!Array.isArray(tree.children)) {
+      return;
+    }
+
+    expect(tree.children.length).toEqual(1);
   });
 
   test('description visible, if description prop defined', () => {

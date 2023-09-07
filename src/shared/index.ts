@@ -11,6 +11,7 @@ export * from './ui/slider-item';
 export * from './ui/touchable-image-background';
 export * from './ui/touchable-item';
 export * from './ui/touchable-text-item';
+export * from './ui/progress';
 
 // ./api
 export * from './api';

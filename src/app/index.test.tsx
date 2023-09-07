@@ -11,7 +11,7 @@ describe('<App />', () => {
     const tree = screen.toJSON();
 
     if (tree) {
-      if (!Array.isArray(tree) && tree.children) {
+      if (!Array.isArray(tree) && tree.children && Array.isArray(tree.children)) {
         expect(tree.children.length).toBe(2);
       }
     }

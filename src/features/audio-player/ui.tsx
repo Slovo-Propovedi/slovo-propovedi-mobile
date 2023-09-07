@@ -8,12 +8,10 @@ import {
   Dimensions,
 } from 'react-native';
 import { SermonData } from 'entities';
-import { INDENTS } from 'shared';
+import { INDENTS, Progress } from 'shared';
 import { useAudio } from './useAudio';
 
 const windowWidth = Dimensions.get('window').width;
-
-// const useWindowDimensions()
 
 // Не тестируется также из-за ошибки в библиотеке expo-av
 
@@ -49,20 +47,22 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ data: { audioUrl, prev
         />
       )}
 
+      <Progress progress={(position * 100) / duration} />
+
       <TouchableOpacity onPress={togglePlay}>
         <Text>{isPlaying ? 'Pause' : 'Play'}</Text>
-        <Text>{duration}</Text>
-        <Text>{position}</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
+const previewSize = windowWidth - INDENTS.main * 2;
+
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: INDENTS.main },
   preview: {
-    width: windowWidth - INDENTS.main,
-    height: windowWidth - INDENTS.main,
+    width: previewSize,
+    height: previewSize,
   },
 
   previewImage: { height: '100%', width: '100%' },
