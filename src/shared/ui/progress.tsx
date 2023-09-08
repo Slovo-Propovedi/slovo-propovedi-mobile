@@ -3,16 +3,18 @@ import { Animated, StyleSheet, View } from 'react-native';
 import { COLORS } from 'shared/themed';
 
 export const Progress = ({
+  total,
   progress,
   loaderValue: loaderValueInitial,
 }: {
+  total: number;
   progress: number;
   loaderValue?: Animated.Value;
 }) => {
   const loaderValue = useRef(loaderValueInitial || new Animated.Value(0)).current;
 
   const width = loaderValue.interpolate({
-    inputRange: [0, 100],
+    inputRange: [0, total],
     outputRange: ['0%', '100%'],
     extrapolate: 'clamp',
   });

@@ -47,7 +47,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ data: { audioUrl, prev
         />
       )}
 
-      <Progress progress={(position * 100) / duration} />
+      <Progress total={duration} progress={position} />
 
       <TouchableOpacity onPress={togglePlay}>
         <Text>{isPlaying ? 'Pause' : 'Play'}</Text>
