@@ -28,6 +28,7 @@ export const TouchableImageBackground = ({
 }: TouchableImageBackgroundProps) => (
   <TouchableOpacity onPress={onPress} testID={testID} activeOpacity={0.8}>
     <ImageBackground
+      testID='image-background'
       source={{ uri: previewSrc }}
       style={[styles.item, style]}
       imageStyle={[styles.backgroundImage, imageStyle]}

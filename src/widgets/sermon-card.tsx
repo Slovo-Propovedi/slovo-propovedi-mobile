@@ -8,6 +8,7 @@ import {
   FONT_SIZES,
   GetYoutubeVideosResponseItem,
   INDENTS,
+  MimeType,
   downloadFile,
   getYoutubeVideoData,
 } from 'shared';
@@ -72,7 +73,7 @@ export const SermonCard = ({
                 // audioUrl && Linking.openURL(audioUrl);
 
                 audioUrl &&
-                  downloadFile({ url: audioUrl, fileName: 'test.mp3', mimeType: 'audio/mp3' });
+                  downloadFile({ url: audioUrl, fileName: 'test.mp3', mimeType: MimeType.mp3 });
               }}
               titleStyle={styles.listenLinkTitle}
             />

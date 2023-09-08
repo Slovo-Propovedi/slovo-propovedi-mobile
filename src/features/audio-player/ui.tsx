@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ImageBackground,
-  StyleSheet,
-  Dimensions,
-} from 'react-native';
+import { View, ImageBackground, StyleSheet, Dimensions, Text } from 'react-native';
 import { SermonData } from 'entities';
-import { INDENTS, Progress } from 'shared';
+import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, PlayerControlButton, Progress } from 'shared';
 import { useAudio } from './useAudio';
 
 const windowWidth = Dimensions.get('window').width;
@@ -24,10 +17,14 @@ interface AudioPlayerProps {
   data: AudioPlayerData;
 }
 
-export const AudioPlayer: React.FC<AudioPlayerProps> = ({ data: { audioUrl, previewUrl } }) => {
+export const AudioPlayer: React.FC<AudioPlayerProps> = ({
+  data: { audioUrl, previewUrl, title },
+}) => {
   const { play, pause, duration, position, isPlaying } = useAudio({
     audioUrl,
   });
+
+  const size = 35;
 
   const togglePlay = async () => {
     if (isPlaying) {
@@ -39,19 +36,28 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ data: { audioUrl, prev
 
   return (
     <View style={styles.container}>
-      {previewUrl && (
-        <ImageBackground
-          style={styles.preview}
-          imageStyle={styles.previewImage}
-          source={{ uri: previewUrl }}
-        />
-      )}
+      <ImageBackground
+        style={styles.preview}
+        imageStyle={styles.previewImage}
+        source={{ uri: previewUrl || IMAGE_PLACEHOLDER }}
+      />
 
-      <Progress total={duration} progress={position} />
+      <View style={styles.bottomContent}>
+        <Text style={styles.title}>{title}</Text>
 
-      <TouchableOpacity onPress={togglePlay}>
-        <Text>{isPlaying ? 'Pause' : 'Play'}</Text>
-      </TouchableOpacity>
+        <Progress total={duration} progress={position} />
+        <View style={styles.controlsContainer}>
+          <PlayerControlButton type='prev' size={size} />
+          <PlayerControlButton type='backward' size={size} />
+          <PlayerControlButton
+            onPress={togglePlay}
+            type={isPlaying ? 'pause' : 'play'}
+            size={size * 2}
+          />
+          <PlayerControlButton type='forward' size={size} />
+          <PlayerControlButton type='next' size={size} />
+        </View>
+      </View>
     </View>
   );
 };
@@ -61,9 +67,28 @@ const previewSize = windowWidth - INDENTS.main * 2;
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: INDENTS.main },
   preview: {
+    marginTop: -(previewSize / 2),
     width: previewSize,
     height: previewSize,
   },
 
   previewImage: { height: '100%', width: '100%' },
+
+  bottomContent: {
+    position: 'absolute',
+    bottom: 0,
+  },
+
+  title: {
+    fontSize: FONT_SIZES.h3,
+    marginVertical: INDENTS.main,
+  },
+
+  controlsContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginVertical: INDENTS.main,
+  },
 });

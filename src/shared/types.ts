@@ -20,80 +20,83 @@ export type HOC<
   injector: InjectedKeys extends keyof ProvidedProps ? Pick<ProvidedProps, InjectedKeys> : void,
 ) => React.FC<RequiredProps & Props>;
 
-export type MimeType =
-  | 'application/epub+zip'
-  | 'application/gzip'
-  | 'application/java-archive'
-  | 'application/json'
-  | 'application/ld+json'
-  | 'application/msword'
-  | 'application/octet-stream'
-  | 'application/ogg'
-  | 'application/pdf'
-  | 'application/rtf'
-  | 'application/vnd.amazon.ebook'
-  | 'application/vnd.apple.installer+xml'
-  | 'application/vnd.mozilla.xul+xml'
-  | 'application/vnd.ms-excel'
-  | 'application/vnd.ms-fontobject'
-  | 'application/vnd.ms-powerpoint'
-  | 'application/vnd.oasis.opendocument.presentation'
-  | 'application/vnd.oasis.opendocument.spreadsheet'
-  | 'application/vnd.oasis.opendocument.text'
-  | 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-  | 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  | 'application/vnd.rar'
-  | 'application/vnd.visio'
-  | 'application/x-7z-compressed'
-  | 'application/x-abiword'
-  | 'application/x-bzip'
-  | 'application/x-bzip2'
-  | 'application/x-cdf'
-  | 'application/x-csh'
-  | 'application/x-freearc'
-  | 'application/x-httpd-php'
-  | 'application/x-sh'
-  | 'application/x-tar'
-  | 'application/xhtml+xml'
-  | 'application/xml'
-  | 'application/zip'
-  | 'audio/3gpp'
-  | 'audio/3gpp2'
-  | 'audio/aac'
-  | 'audio/midi'
-  | 'audio/mpeg'
-  | 'audio/ogg'
-  | 'audio/opus'
-  | 'audio/wav'
-  | 'audio/webm'
-  | 'audio/x-midi'
-  | 'audio/mp3'
-  | 'font/otf'
-  | 'font/ttf'
-  | 'font/woff'
-  | 'font/woff2'
-  | 'image/avif'
-  | 'image/bmp'
-  | 'image/gif'
-  | 'image/jpeg'
-  | 'image/png'
-  | 'image/svg+xml'
-  | 'image/tiff'
-  | 'image/vnd.microsoft.icon'
-  | 'image/webp'
-  | 'text/calendar'
-  | 'text/css'
-  | 'text/csv'
-  | 'text/html'
-  | 'text/javascript'
-  | 'text/javascript'
-  | 'text/plain'
-  | 'video/3gpp'
-  | 'video/3gpp2'
-  | 'video/mp2t'
-  | 'video/mp4'
-  | 'video/mpeg'
-  | 'video/ogg'
-  | 'video/webm'
-  | 'video/x-msvideo';
+export enum MimeType {
+  epub = 'application/epub+zip',
+  gz = 'application/gzip',
+  jar = 'application/java-archive',
+  json = 'application/json',
+  jsonld = 'application/ld+json',
+  doc = 'application/msword',
+  bin = 'application/octet-stream',
+  ogg = 'application/ogg',
+  pdf = 'application/pdf',
+  rtf = 'application/rtf',
+  azw = 'application/vnd.amazon.ebook',
+  mpkg = 'application/vnd.apple.installer+xml',
+  xul = 'application/vnd.mozilla.xul+xml',
+  xls = 'application/vnd.ms-excel',
+  eot = 'application/vnd.ms-fontobject',
+  ppt = 'application/vnd.ms-powerpoint',
+  odp = 'application/vnd.oasis.opendocument.presentation',
+  ods = 'application/vnd.oasis.opendocument.spreadsheet',
+  odt = 'application/vnd.oasis.opendocument.text',
+  pptx = 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  rar = 'application/vnd.rar',
+  vsd = 'application/vnd.visio',
+  '7z' = 'application/x-7z-compressed',
+  abw = 'application/x-abiword',
+  bz = 'application/x-bzip',
+  bz2 = 'application/x-bzip2',
+  cda = 'application/x-cdf',
+  csh = 'application/x-csh',
+  arc = 'application/x-freearc',
+  php = 'application/x-httpd-php',
+  sh = 'application/x-sh',
+  tar = 'application/x-tar',
+  xhtml = 'application/xhtml+xml',
+  xml = 'application/xml',
+  zip = 'application/zip',
+  '3gp-audio' = 'audio/3gpp',
+  '3gp2-audio' = 'audio/3gpp2',
+  aac = 'audio/aac',
+  mkv = 'video/x-matroska',
+  mka = 'audio/x-matroska',
+  mid = 'audio/midi',
+  mp3 = 'audio/mpeg',
+  oga = 'audio/ogg',
+  opus = 'audio/opus',
+  wav = 'audio/wav',
+  'webm-audio' = 'audio/webm',
+  midi = 'audio/x-midi',
+  otf = 'font/otf',
+  ttf = 'font/ttf',
+  woff = 'font/woff',
+  woff2 = 'font/woff2',
+  avif = 'image/avif',
+  bmp = 'image/bmp',
+  gif = 'image/gif',
+  jpg = 'image/jpeg',
+  png = 'image/png',
+  svg = 'image/svg+xml',
+  tiff = 'image/tiff',
+  ico = 'image/vnd.microsoft.icon',
+  webp = 'image/webp',
+  ics = 'text/calendar',
+  css = 'text/css',
+  csv = 'text/csv',
+  html = 'text/html',
+  js = 'text/javascript',
+  mjs = 'text/javascript',
+  txt = 'text/plain',
+  '3gp-video' = 'video/3gpp',
+  '3gp2-video' = 'video/3gpp2',
+  ts = 'video/mp2t',
+  mp4 = 'video/mp4',
+  mpeg = 'video/mpeg',
+  ogv = 'video/ogg',
+  mov = 'video/quicktime',
+  'webm-video' = 'video/webm',
+  avi = 'video/x-msvideo',
+}
