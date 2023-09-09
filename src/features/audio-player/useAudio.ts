@@ -1,4 +1,4 @@
-import { Audio } from 'expo-av';
+import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useState, useEffect, useRef } from 'react';
 import { useSoundStore } from './model';
 
@@ -65,6 +65,23 @@ export const useAudio = ({ audioUrl }: UseAudioParams) => {
       await currentSound.stopAsync();
       await currentSound.unloadAsync();
     }
+
+    await Audio.setAudioModeAsync({
+      // Определяет, поддерживает ли устройство запись аудио
+      allowsRecordingIOS: false,
+      // Определяет реакцию приложения на внешние прерывания в iOS
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      // Определяет, будет ли воспроизведение продолжаться, если на устройстве задействован "тихий" режим (с заглушенным звуком) на iOS-устройствах.
+      playsInSilentModeIOS: true,
+      // Определяет реакцию приложения на внешние прерывания на Android-устройствах
+      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+      // Определяет, будет ли звук снижаться в громкости при получении прерываний на устройствах Android
+      shouldDuckAndroid: true,
+      // Определяет, должно ли приложение оставаться активным в фоновом режиме. Если установлено значение `true`, то аудио воспроизводится в фоновом режиме
+      staysActiveInBackground: true,
+      // Определяет, будет ли звук воспроизводиться через динамик телефона при звуковом сигнале, а не через динамики громкой связи на Android-устройствах
+      playThroughEarpieceAndroid: false,
+    });
 
     const { sound: newSound } = await Audio.Sound.createAsync({ uri: audioUrl });
 

@@ -40,6 +40,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         style={styles.preview}
         imageStyle={styles.previewImage}
         source={{ uri: previewUrl || IMAGE_PLACEHOLDER }}
+        alt='Sermon poster'
       />
 
       <View style={styles.bottomContent}>
@@ -69,10 +70,10 @@ const styles = StyleSheet.create({
   preview: {
     marginTop: -(previewSize / 2),
     width: previewSize,
-    height: previewSize,
+    height: previewSize * 1.2,
   },
 
-  previewImage: { height: '100%', width: '100%' },
+  previewImage: { height: '100%', width: '100%', borderRadius: 20 },
 
   bottomContent: {
     position: 'absolute',
