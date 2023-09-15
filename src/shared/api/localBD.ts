@@ -1,12 +1,6 @@
-import { DB, db } from './db';
+import { db } from './db';
 
-const getDB = () => db as DB;
-
-const getSermons = () => {
-  const db = getDB();
-
-  return db.sermons;
-};
+const getSermons = () => db.sermons;
 
 export const localDB = {
   getSermons,

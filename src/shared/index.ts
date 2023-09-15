@@ -13,6 +13,7 @@ export * from './ui/slider-item';
 export * from './ui/touchable-image-background';
 export * from './ui/touchable-item';
 export * from './ui/touchable-text-item';
+export * from './ui/touchable-list-item';
 
 // ./api
 export * from './api';

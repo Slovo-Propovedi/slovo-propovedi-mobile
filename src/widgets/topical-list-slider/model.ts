@@ -15,13 +15,18 @@ export const useTopicalListStore = create<TopicalListState>((set) => ({
 
     const mappedList = list?.map<PlaylistData>((playlist) => ({
       ...playlist,
-      list: playlist.list.map<SermonData>((el) => ({
-        title: getBookLinkAsString(el),
-        description: el.description,
-        audioUrl: el.audioUrl,
-        textFileUrl: el.textFileUrl,
-        youtubeUrl: el.youtubeUrl,
-      })),
+      list: playlist.list.map<SermonData>((el) => {
+        const { id, description, audioUrl, textFileUrl, youtubeUrl } = el;
+
+        return {
+          id,
+          title: getBookLinkAsString(el),
+          description,
+          audioUrl,
+          textFileUrl,
+          youtubeUrl,
+        };
+      }),
     }));
 
     set((state) => ({

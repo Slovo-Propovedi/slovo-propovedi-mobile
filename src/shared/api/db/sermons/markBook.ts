@@ -2,6 +2,7 @@ import { FetchedSermonData } from '../types';
 
 export const markBook: FetchedSermonData[] = [
   {
+    id: '1',
     chapter: 1,
     verse: [1, 3],
     title: 'Свидетельства о пришествии Мессии (Часть 1)',
@@ -14,6 +15,7 @@ export const markBook: FetchedSermonData[] = [
       'https://slovo-istini.com/image/pages/134/1._svidetelstva_o_prishestvii_messii__chast_pervaya_(1_1-3).pdf',
   },
   {
+    id: '2',
     chapter: 1,
     verse: [4, 8],
     title: 'Свидетельства о пришествии Мессии (Часть 2)',
@@ -27,6 +29,7 @@ export const markBook: FetchedSermonData[] = [
       'https://slovo-istini.com/image/pages/133/2._svidetelstva_o_prishestvii_messii_chast_vtoraya_(1_4-8).pdf',
   },
   {
+    id: '3',
     chapter: 1,
     verse: [9, 15],
     title: 'Подготовка к великому служению',
@@ -39,6 +42,7 @@ export const markBook: FetchedSermonData[] = [
       'https://slovo-istini.com/image/pages/132/3._podgotovka_k_velikomu_slujeniyu_(1_9-15).pdf',
   },
   {
+    id: '4',
     chapter: 1,
     verse: [16, 20],
     title: 'Призыв к благовестию',
@@ -50,6 +54,7 @@ export const markBook: FetchedSermonData[] = [
     textFileUrl: 'https://slovo-istini.com/image/pages/131/4._prizyv_k_blagovestiyu_(1_16-20).pdf',
   },
   {
+    id: '5',
     chapter: 1,
     verse: [21, 28],
     title: 'Противостояние темным силам',
@@ -62,6 +67,7 @@ export const markBook: FetchedSermonData[] = [
       'https://slovo-istini.com/image/pages/130/protivostoyanie_temnym_silam._marka_1_21-28.pdf',
   },
   {
+    id: '6',
     chapter: 1,
     verse: [29, 31],
     title: 'Власть над болезнями',
@@ -72,6 +78,7 @@ export const markBook: FetchedSermonData[] = [
     textFileUrl: 'https://slovo-istini.com/image/pages/129/vlast_nad_boleznyami._marka_1_29-31.pdf',
   },
   {
+    id: '7',
     chapter: 1,
     verse: [32, 39],
     title: 'Как поступать при возрастающей популярности служения',
@@ -84,6 +91,7 @@ export const markBook: FetchedSermonData[] = [
       'https://slovo-istini.com/image/pages/128/kak_postupat_pri_vozrastayushchey_populyarnosti_slujeniya._marka_1_32-39.pdf',
   },
   {
+    id: '8',
     chapter: 1,
     verse: [40, 45],
     title: 'Особое милосердие Господа',

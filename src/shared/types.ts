@@ -8,9 +8,6 @@ export type Unpacked<T> = T extends (infer U)[]
   ? U
   : T;
 
-export type Diff<T, U> = T extends U ? never : T; // Remove types from T that are assignable to U
-export type Filter<T, U> = T extends U ? T : never; // Remove types from T that are not assignable to U
-
 export type HOC<
   RequiredProps extends object,
   ProvidedProps extends RequiredProps = RequiredProps,

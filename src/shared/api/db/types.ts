@@ -29,6 +29,7 @@ export enum BibleBookName {
 }
 
 export type FetchedSermonData = {
+  id: string;
   title: string;
 
   description?: string;

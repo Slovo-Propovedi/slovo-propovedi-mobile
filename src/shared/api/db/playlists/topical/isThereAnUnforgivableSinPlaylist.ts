@@ -8,6 +8,7 @@ export const isThereAnUnforgivableSinPlaylist: FetchedPlaylist = {
     'https://slovo-istini.com/image/cache/image/pages/1161/whatsapp_image_2022-12-12_at_22.34.13_701x1000.jpeg',
   list: [
     {
+      id: '11111',
       title: 'Существует ли непростительный грех?',
       audioUrl:
         'https://slovo-istini.com/image/pages/1161/sushchestvuet_li_neprostitelnyy_greh.mp3',

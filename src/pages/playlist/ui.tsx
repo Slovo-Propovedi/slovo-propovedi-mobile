@@ -1,23 +1,54 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { ListenStackScreenProps, ListenStackParamName } from 'routing';
+import { useAudio, usePlayerStore } from 'pages';
 import { Playlist } from 'widgets';
-import { OnPressTouchableListItem, TouchableListItem } from 'features';
 import { SermonData } from 'entities';
-import { COLORS, FONT_SIZES, INDENTS } from 'shared';
+import { COLORS, FONT_SIZES, INDENTS, OnPressTouchableListItem, TouchableListItem } from 'shared';
 
 export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamName.Playlist>> = ({
-  route,
+  route: {
+    params: { title, list, previewUrl, description },
+    params: playlist,
+  },
   navigation: { navigate },
 }) => {
-  const { title, list, previewUrl, description } = route.params;
+  const { setCurrentPlaylist, setCurrentAudio, setCurrentSound, currentAudio } = usePlayerStore(
+    ({ setCurrentPlaylist, setCurrentAudio, setCurrentSound, currentAudio }) => ({
+      setCurrentPlaylist,
+      setCurrentAudio,
+      setCurrentSound,
+      currentAudio,
+    }),
+  );
 
-  const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = ({ audioUrl, ...other }) => {
+  const { play, getPlaybackStatus, recreateSound } = useAudio();
+
+  const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = async ({
+    audioUrl,
+    id,
+    ...other
+  }) => {
     if (!audioUrl) {
       return;
     }
 
-    navigate(ListenStackParamName.AudioPlayer, { ...other, audioUrl, previewUrl });
+    const newAudio = { ...other, id, audioUrl, previewUrl };
+
+    setCurrentAudio(newAudio);
+    setCurrentPlaylist(playlist);
+
+    navigate(ListenStackParamName.AudioPlayer);
+
+    let newSound;
+
+    if (currentAudio?.id !== id) {
+      newSound = await recreateSound(newAudio);
+    }
+
+    newSound && setCurrentSound(newSound);
+    await play(newSound);
+    await getPlaybackStatus(newSound);
   };
 
   return (
