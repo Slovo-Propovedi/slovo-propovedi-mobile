@@ -9,6 +9,7 @@ import {
   PlayerControlButton,
   Progress,
   isNonNullable,
+  millisToMinutesAndSeconds,
 } from 'shared';
 import { useAudio } from './hooks';
 import { usePlayerStore } from './model';
@@ -57,7 +58,9 @@ export const AudioPlayerScreen: React.FC<
   const indexOfCurrentAudioInPlaylist =
     currentAudio && currentPlaylist?.list.findIndex(({ id }) => currentAudio.id === id);
 
-  const changeValue = 1000;
+  const changeValue = 15000;
+
+  const audioTwistDelay = 300;
 
   const size = 35;
 
@@ -80,22 +83,28 @@ export const AudioPlayerScreen: React.FC<
     rewindTimerRef.current && clearInterval(rewindTimerRef.current);
   };
 
-  const fastForwardAudio = () => {
-    clearRewindInterval();
+  const audioTwist = async (dir: 'next' | 'prev') => {
+    let updatedPosition = position;
+
+    await pause();
 
     rewindTimerRef.current = setInterval(() => {
-      switchTrackForward();
-      // fastForwardAudio();
-    }, 100);
+      if (dir === 'next') {
+        updatedPosition += changeValue;
+      } else {
+        updatedPosition -= changeValue;
+      }
+
+      changeProgressPosition(updatedPosition);
+    }, audioTwistDelay);
   };
 
-  const rewindAudio = () => {
-    clearRewindInterval();
+  const fastForwardAudio = async () => {
+    await audioTwist('next');
+  };
 
-    rewindTimerRef.current = setInterval(() => {
-      switchTrackBackward();
-      // fastForwardAudio();
-    }, 100);
+  const rewindAudio = async () => {
+    await audioTwist('prev');
   };
 
   const toggleTrack = async (dir: 'next' | 'prev') => {
@@ -131,6 +140,12 @@ export const AudioPlayerScreen: React.FC<
     await toggleTrack('prev');
   };
 
+  const onPressOutAudioTwistButton = async () => {
+    await play();
+
+    clearRewindInterval();
+  };
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -144,16 +159,26 @@ export const AudioPlayerScreen: React.FC<
         <Text style={styles.title}>{currentAudio?.title || 'Title'}</Text>
 
         <Progress total={duration} progress={position} />
+
+        <View style={styles.progressTextsContainer}>
+          <Text>{millisToMinutesAndSeconds(position)}</Text>
+          <Text>{millisToMinutesAndSeconds(duration)}</Text>
+        </View>
+
         <View style={styles.controlsContainer}>
           <PlayerControlButton
             onPress={switchToPreviousTrack}
-            onLongPress={rewindAudio}
-            onPressOut={clearRewindInterval}
             type='prev'
             size={size}
             isDisabled={indexOfCurrentAudioInPlaylist === 0}
           />
-          <PlayerControlButton onPress={switchTrackBackward} type='backward' size={size} />
+          <PlayerControlButton
+            onPress={switchTrackBackward}
+            onLongPress={rewindAudio}
+            onPressOut={onPressOutAudioTwistButton}
+            type='backward'
+            size={size}
+          />
           <PlayerControlButton
             onPress={togglePlay}
             type={isPlayingCurrentAudio ? 'pause' : 'play'}
@@ -162,7 +187,7 @@ export const AudioPlayerScreen: React.FC<
           <PlayerControlButton
             onPress={switchTrackForward}
             onLongPress={fastForwardAudio}
-            onPressOut={clearRewindInterval}
+            onPressOut={onPressOutAudioTwistButton}
             type='forward'
             size={size}
           />
@@ -200,6 +225,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FONT_SIZES.h3,
     marginVertical: INDENTS.main,
+  },
+
+  progressTextsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 
   controlsContainer: {

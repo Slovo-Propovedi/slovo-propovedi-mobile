@@ -158,6 +158,8 @@ export const useAudio = () => {
     setCurrentSoundPosition(positionMillis);
     setCurrentSoundDuration(durationMillis || 0);
     setIsPlayingCurrentAudio(isPlaying);
+
+    return { durationMillis, positionMillis, isPlaying };
   };
 
   useEffect(
