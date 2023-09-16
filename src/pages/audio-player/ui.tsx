@@ -25,14 +25,25 @@ export type AudioPlayerData = Omit<SermonData, 'audioUrl'> & {
 export const AudioPlayerScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.AudioPlayer>
 > = () => {
-  const { setCurrentAudio, currentAudio, currentPlaylist, isPlayingCurrentAudio } = usePlayerStore(
-    ({ setCurrentAudio, currentAudio, currentPlaylist, isPlayingCurrentAudio }) => ({
-      setCurrentAudio,
-      currentAudio,
-      currentPlaylist,
-      isPlayingCurrentAudio,
-    }),
-  );
+  const { setCurrentAudio, setCurrentSound, currentAudio, currentPlaylist, isPlayingCurrentAudio } =
+    usePlayerStore(
+      ({
+        setCurrentAudio,
+        setCurrentSound,
+        currentAudio,
+        currentPlaylist,
+        isPlayingCurrentAudio,
+      }) => ({
+        setCurrentAudio,
+        setCurrentSound,
+        currentAudio,
+        currentPlaylist,
+        isPlayingCurrentAudio,
+      }),
+    );
+
+  const indexOfCurrentAudioInPlaylist =
+    currentAudio && currentPlaylist?.list.findIndex(({ id }) => currentAudio.id === id);
 
   const { play, pause, recreateSound, getPlaybackStatus, duration, position } = useAudio();
 
@@ -54,9 +65,6 @@ export const AudioPlayerScreen: React.FC<
   };
 
   const toggleTrack = async (dir: 'next' | 'prev') => {
-    const indexOfCurrentAudioInPlaylist =
-      currentAudio && currentPlaylist?.list.findIndex(({ id }) => currentAudio.id === id);
-
     if (!isNonNullable(indexOfCurrentAudioInPlaylist) || !currentPlaylist) {
       return;
     }
@@ -75,6 +83,8 @@ export const AudioPlayerScreen: React.FC<
     setCurrentAudio(newAudio);
 
     const newSound = await recreateSound(newAudio);
+    newSound && setCurrentSound(newSound);
+
     await play(newSound);
     await getPlaybackStatus(newSound);
   };
@@ -107,7 +117,12 @@ export const AudioPlayerScreen: React.FC<
 
         <Progress total={duration} progress={position} />
         <View style={styles.controlsContainer}>
-          <PlayerControlButton onPress={switchToPreviousTrack} type='prev' size={size} />
+          <PlayerControlButton
+            onPress={switchToPreviousTrack}
+            type='prev'
+            size={size}
+            isDisabled={indexOfCurrentAudioInPlaylist === 0}
+          />
           <PlayerControlButton onPress={switchTrackBackward} type='backward' size={size} />
           <PlayerControlButton
             onPress={togglePlay}
@@ -115,7 +130,14 @@ export const AudioPlayerScreen: React.FC<
             size={size * 2}
           />
           <PlayerControlButton onPress={switchTrackForward} type='forward' size={size} />
-          <PlayerControlButton onPress={switchToNextTrack} type='next' size={size} />
+          <PlayerControlButton
+            onPress={switchToNextTrack}
+            type='next'
+            size={size}
+            isDisabled={
+              currentPlaylist && indexOfCurrentAudioInPlaylist === currentPlaylist.list.length - 1
+            }
+          />
         </View>
       </View>
     </View>
