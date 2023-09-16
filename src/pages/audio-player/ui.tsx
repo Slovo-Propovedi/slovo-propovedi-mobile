@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, ImageBackground, StyleSheet, Dimensions, Text } from 'react-native';
 import { ListenStackParamName, ListenStackScreenProps } from 'routing';
 import { SermonData } from 'entities';
@@ -25,6 +25,16 @@ export type AudioPlayerData = Omit<SermonData, 'audioUrl'> & {
 export const AudioPlayerScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.AudioPlayer>
 > = () => {
+  const {
+    play,
+    pause,
+    recreateSound,
+    getPlaybackStatus,
+    changeProgressPosition,
+    duration,
+    position,
+  } = useAudio();
+
   const { setCurrentAudio, setCurrentSound, currentAudio, currentPlaylist, isPlayingCurrentAudio } =
     usePlayerStore(
       ({
@@ -42,26 +52,50 @@ export const AudioPlayerScreen: React.FC<
       }),
     );
 
+  const rewindTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const indexOfCurrentAudioInPlaylist =
     currentAudio && currentPlaylist?.list.findIndex(({ id }) => currentAudio.id === id);
 
-  const { play, pause, recreateSound, getPlaybackStatus, duration, position } = useAudio();
+  const changeValue = 1000;
 
   const size = 35;
 
   const togglePlay = async () => {
     if (isPlayingCurrentAudio) {
-      await pause();
-    } else {
-      await play();
+      return await pause();
     }
+
+    return await play();
   };
 
-  const switchTrackForward = () => {
-    //
+  const switchTrackForward = async () => {
+    await changeProgressPosition(position + changeValue);
   };
-  const switchTrackBackward = () => {
-    //
+  const switchTrackBackward = async () => {
+    await changeProgressPosition(position - changeValue);
+  };
+
+  const clearRewindInterval = () => {
+    rewindTimerRef.current && clearInterval(rewindTimerRef.current);
+  };
+
+  const fastForwardAudio = () => {
+    clearRewindInterval();
+
+    rewindTimerRef.current = setInterval(() => {
+      switchTrackForward();
+      // fastForwardAudio();
+    }, 100);
+  };
+
+  const rewindAudio = () => {
+    clearRewindInterval();
+
+    rewindTimerRef.current = setInterval(() => {
+      switchTrackBackward();
+      // fastForwardAudio();
+    }, 100);
   };
 
   const toggleTrack = async (dir: 'next' | 'prev') => {
@@ -97,28 +131,24 @@ export const AudioPlayerScreen: React.FC<
     await toggleTrack('prev');
   };
 
-  if (!currentAudio) {
-    return null;
-  }
-
-  const { title, previewUrl } = currentAudio;
-
   return (
     <View style={styles.container}>
       <ImageBackground
         style={styles.preview}
         imageStyle={styles.previewImage}
-        source={{ uri: previewUrl || IMAGE_PLACEHOLDER }}
+        source={{ uri: currentAudio?.previewUrl || IMAGE_PLACEHOLDER }}
         alt='Sermon poster'
       />
 
       <View style={styles.bottomContent}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>{currentAudio?.title || 'Title'}</Text>
 
         <Progress total={duration} progress={position} />
         <View style={styles.controlsContainer}>
           <PlayerControlButton
             onPress={switchToPreviousTrack}
+            onLongPress={rewindAudio}
+            onPressOut={clearRewindInterval}
             type='prev'
             size={size}
             isDisabled={indexOfCurrentAudioInPlaylist === 0}
@@ -129,7 +159,13 @@ export const AudioPlayerScreen: React.FC<
             type={isPlayingCurrentAudio ? 'pause' : 'play'}
             size={size * 2}
           />
-          <PlayerControlButton onPress={switchTrackForward} type='forward' size={size} />
+          <PlayerControlButton
+            onPress={switchTrackForward}
+            onLongPress={fastForwardAudio}
+            onPressOut={clearRewindInterval}
+            type='forward'
+            size={size}
+          />
           <PlayerControlButton
             onPress={switchToNextTrack}
             type='next'

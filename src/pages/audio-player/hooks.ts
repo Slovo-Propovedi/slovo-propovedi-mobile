@@ -1,26 +1,48 @@
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { usePlayerStore } from './model';
 import { AudioPlayerData } from './ui';
 
 // Не тестируется из-за ошибки в библиотеке expo-av
 
 export const useAudio = () => {
-  const { currentSound, setIsPlayingCurrentAudio } = usePlayerStore(
-    ({ currentSound, currentAudio, setIsPlayingCurrentAudio }) => ({
+  const {
+    currentSound,
+    currentSoundPosition,
+    currentSoundDuration,
+    playbackStatusInterval,
+    setIsPlayingCurrentAudio,
+    setPlaybackStatusInterval,
+    setCurrentSoundPosition,
+    setCurrentSoundDuration,
+  } = usePlayerStore(
+    ({
       currentSound,
-      currentAudio,
+      currentSoundPosition,
+      currentSoundDuration,
+      playbackStatusInterval,
       setIsPlayingCurrentAudio,
+      setPlaybackStatusInterval,
+      setCurrentSoundPosition,
+      setCurrentSoundDuration,
+    }) => ({
+      currentSound,
+      currentSoundPosition,
+      currentSoundDuration,
+      playbackStatusInterval,
+      setIsPlayingCurrentAudio,
+      setPlaybackStatusInterval,
+      setCurrentSoundPosition,
+      setCurrentSoundDuration,
     }),
   );
 
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const resetInterval = () => {
+    playbackStatusInterval && clearInterval(playbackStatusInterval);
+  };
 
   const play = async (newSound?: Audio.Sound) => {
-    intervalRef.current && clearInterval(intervalRef.current);
+    resetInterval();
 
     const sound = newSound || currentSound;
 
@@ -30,11 +52,11 @@ export const useAudio = () => {
 
     await sound.playAsync();
     setIsPlayingCurrentAudio(true);
-    intervalRef.current = setInterval(getPlaybackStatus, 1000);
+    setPlaybackStatusInterval(setInterval(() => getPlaybackStatus(sound), 1000));
   };
 
   const pause = async (newSound?: Audio.Sound) => {
-    intervalRef.current && clearInterval(intervalRef.current);
+    resetInterval();
 
     const sound = newSound || currentSound;
 
@@ -47,7 +69,7 @@ export const useAudio = () => {
   };
 
   const stop = async (newSound?: Audio.Sound) => {
-    intervalRef.current && clearInterval(intervalRef.current);
+    resetInterval();
 
     const sound = newSound || currentSound;
 
@@ -60,7 +82,7 @@ export const useAudio = () => {
   };
 
   const unload = async (newSound?: Audio.Sound) => {
-    intervalRef.current && clearInterval(intervalRef.current);
+    resetInterval();
 
     const sound = newSound || currentSound;
 
@@ -101,8 +123,8 @@ export const useAudio = () => {
 
     const { sound: newSound } = await Audio.Sound.createAsync({ uri: newAudio.audioUrl });
 
-    setPosition(0);
-    setDuration(0);
+    setCurrentSoundPosition(0);
+    setCurrentSoundDuration(0);
 
     return newSound;
   };
@@ -115,7 +137,7 @@ export const useAudio = () => {
     }
 
     await sound.setPositionAsync(value);
-    setPosition(value);
+    setCurrentSoundPosition(value);
   };
 
   const getPlaybackStatus = async (newSound?: Audio.Sound) => {
@@ -133,16 +155,17 @@ export const useAudio = () => {
 
     const { durationMillis, positionMillis, isPlaying } = status;
 
-    setPosition(positionMillis);
-    setDuration(durationMillis || 0);
+    setCurrentSoundPosition(positionMillis);
+    setCurrentSoundDuration(durationMillis || 0);
     setIsPlayingCurrentAudio(isPlaying);
   };
 
-  useEffect(() => {
-    const interval = intervalRef.current;
-
-    return () => interval && clearInterval(interval);
-  }, []);
+  useEffect(
+    () => () => {
+      playbackStatusInterval && clearInterval(playbackStatusInterval);
+    },
+    [],
+  );
 
   return {
     play,
@@ -152,7 +175,7 @@ export const useAudio = () => {
     changeProgressPosition,
     recreateSound,
     getPlaybackStatus,
-    position,
-    duration,
+    position: currentSoundPosition,
+    duration: currentSoundDuration,
   };
 };

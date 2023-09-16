@@ -47,8 +47,8 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
     }
 
     newSound && setCurrentSound(newSound);
-    await play(newSound);
     await getPlaybackStatus(newSound);
+    await play(newSound);
   };
 
   return (

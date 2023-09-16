@@ -14,6 +14,8 @@ import { COLORS } from 'shared/themed';
 interface PlayerControlButtonProps {
   type: 'play' | 'pause' | 'next' | 'prev' | 'forward' | 'backward';
   onPress?: (event: GestureResponderEvent) => void;
+  onLongPress?: (event: GestureResponderEvent) => void;
+  onPressOut?: (event: GestureResponderEvent) => void;
   color?: string | OpaqueColorValue;
   size?: number;
   style?: StyleProp<ViewStyle>;
@@ -23,6 +25,8 @@ interface PlayerControlButtonProps {
 export const PlayerControlButton = ({
   type,
   onPress,
+  onLongPress,
+  onPressOut,
   color,
   size = 24,
   style,
@@ -57,7 +61,13 @@ export const PlayerControlButton = ({
   })();
 
   return (
-    <TouchableOpacity style={style} onPress={onPress} disabled={Boolean(isDisabled)}>
+    <TouchableOpacity
+      style={style}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      onPressOut={onPressOut}
+      disabled={Boolean(isDisabled)}
+    >
       <Text>
         {name && (
           <Entypo
