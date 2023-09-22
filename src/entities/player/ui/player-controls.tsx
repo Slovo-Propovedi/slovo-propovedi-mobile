@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { PlaylistData } from 'widgets';
 import { usePlayer, usePlayerStore } from 'entities/player';
@@ -24,8 +24,15 @@ export const PlayerControls = ({
   currentPlaylist,
   setCurrentAudio,
 }: PlayerControlsProps) => {
-  const { play, pause, recreateSound, getPlaybackStatus, changeProgressPosition, position } =
-    usePlayer();
+  const {
+    play,
+    pause,
+    recreateSound,
+    getPlaybackStatus,
+    changeProgressPosition,
+    position,
+    duration,
+  } = usePlayer();
 
   const { setCurrentSound, isPlayingCurrentAudio } = usePlayerStore(
     ({ setCurrentSound, isPlayingCurrentAudio }) => ({
@@ -44,6 +51,9 @@ export const PlayerControls = ({
   const audioTwistDelay = 300;
 
   const size = 35;
+
+  const isNotAvailableNext =
+    currentPlaylist && indexOfCurrentAudioInPlaylist === currentPlaylist.list.length - 1;
 
   const togglePlay = async () => {
     if (isPlayingCurrentAudio) {
@@ -72,8 +82,22 @@ export const PlayerControls = ({
     rewindTimerRef.current = setInterval(() => {
       if (dir === 'next') {
         updatedPosition += changeValue;
+
+        if (updatedPosition >= duration) {
+          clearRewindInterval();
+        }
       } else {
         updatedPosition -= changeValue;
+
+        if (updatedPosition <= 0) {
+          clearRewindInterval();
+        }
+      }
+
+      if (updatedPosition <= 0) {
+        updatedPosition = 0;
+      } else if (updatedPosition > duration) {
+        updatedPosition = duration;
       }
 
       changeProgressPosition(updatedPosition);
@@ -127,6 +151,13 @@ export const PlayerControls = ({
     clearRewindInterval();
   };
 
+  useEffect(() => {
+    if (position >= duration && !isNotAvailableNext) {
+      // TODO исправить ошибку переключения между всеми проповедями подряд и без остановки
+      switchToNextTrack();
+    }
+  }, [position, duration, isNotAvailableNext]);
+
   return (
     <View style={styles.controlsContainer}>
       <PlayerControlButton
@@ -141,6 +172,7 @@ export const PlayerControls = ({
         onPressOut={onPressOutAudioTwistButton}
         type='backward'
         size={size}
+        isDisabled={position <= 0}
       />
       <PlayerControlButton
         onPress={togglePlay}
@@ -153,14 +185,13 @@ export const PlayerControls = ({
         onPressOut={onPressOutAudioTwistButton}
         type='forward'
         size={size}
+        isDisabled={position >= duration}
       />
       <PlayerControlButton
         onPress={switchToNextTrack}
         type='next'
         size={size}
-        isDisabled={
-          currentPlaylist && indexOfCurrentAudioInPlaylist === currentPlaylist.list.length - 1
-        }
+        isDisabled={isNotAvailableNext}
       />
     </View>
   );
