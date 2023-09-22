@@ -1,6 +1,8 @@
 import React from 'react';
 import { StyleProp, StyleSheet, TextInputProps, View, ViewStyle } from 'react-native';
-import { Input, SearchButton, SearchButtonProps, COLORS, INDENTS, RADIUSES } from 'shared';
+import { COLORS, RADIUSES, INDENTS } from 'shared/themed';
+import { Input } from './input';
+import { SearchButtonProps, SearchButton } from './search-button';
 
 type SearchInputProps = Pick<TextInputProps & SearchButtonProps, 'placeholder' | 'onPress'> & {
   style?: StyleProp<ViewStyle>;

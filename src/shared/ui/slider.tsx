@@ -9,7 +9,8 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { FONT_SIZES, INDENTS, SliderItem, SliderItemSize } from 'shared';
+import { FONT_SIZES, INDENTS } from 'shared/themed';
+import { SliderItemSize, SliderItem } from './slider-item';
 
 type SliderItemsElement<D extends object> = {
   previewURL: string;

@@ -1,9 +1,10 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { ListenStackScreenProps, ListenStackParamName } from 'routing';
-import { useAudio, usePlayerStore } from 'pages';
 import { Playlist } from 'widgets';
-import { SermonData } from 'entities';
+import { useManagingSermonPlayerStore } from 'features/managing-sermon-player';
+import { usePlayer, usePlayerStore } from 'entities/player';
+import { SermonData } from 'entities/sermon';
 import { COLORS, FONT_SIZES, INDENTS, OnPressTouchableListItem, TouchableListItem } from 'shared';
 
 export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamName.Playlist>> = ({
@@ -13,16 +14,18 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
   },
   navigation: { navigate },
 }) => {
-  const { setCurrentPlaylist, setCurrentAudio, setCurrentSound, currentAudio } = usePlayerStore(
-    ({ setCurrentPlaylist, setCurrentAudio, setCurrentSound, currentAudio }) => ({
+  const { play, getPlaybackStatus, recreateSound } = usePlayer();
+
+  const { setCurrentPlaylist, setCurrentAudio, currentAudio } = useManagingSermonPlayerStore(
+    ({ setCurrentPlaylist, setCurrentAudio, currentAudio }) => ({
       setCurrentPlaylist,
       setCurrentAudio,
-      setCurrentSound,
       currentAudio,
     }),
   );
-
-  const { play, getPlaybackStatus, recreateSound } = useAudio();
+  const { setCurrentSound } = usePlayerStore(({ setCurrentSound }) => ({
+    setCurrentSound,
+  }));
 
   const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = async ({
     audioUrl,
@@ -43,7 +46,7 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
     let newSound;
 
     if (currentAudio?.id !== id) {
-      newSound = await recreateSound(newAudio);
+      newSound = await recreateSound(newAudio.audioUrl);
     }
 
     newSound && setCurrentSound(newSound);

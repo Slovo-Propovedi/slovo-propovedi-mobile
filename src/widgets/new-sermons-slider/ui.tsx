@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { Slider } from 'features';
-import { INDENTS, SliderItemSize } from 'shared';
+import { INDENTS, SliderItemSize, Slider } from 'shared';
 
 export const NewSermonsSlider = () => {
   const items = [

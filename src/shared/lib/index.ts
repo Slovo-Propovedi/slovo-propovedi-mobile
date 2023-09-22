@@ -1,7 +1,6 @@
 export * from './capitalizeString';
 export * from './debounce';
 export * from './downloadFile';
-export * from './getBookLinkAsString';
 export * from './getFileOnUrl';
 export * from './getFilePath';
 export * from './getYoutubeVideoData';

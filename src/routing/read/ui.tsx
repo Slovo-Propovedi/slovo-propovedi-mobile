@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { ReadScreen } from 'pages';
+import { ReadScreen } from 'pages/read';
 import { RootTabsScreenProps, RootTabName } from 'shared';
 import { ReadStackParamList, ReadStackParamName } from './types';
 

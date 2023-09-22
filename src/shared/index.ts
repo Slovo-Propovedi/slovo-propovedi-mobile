@@ -10,10 +10,12 @@ export * from './ui/progress';
 export * from './ui/radio';
 export * from './ui/search-button';
 export * from './ui/slider-item';
+export * from './ui/slider';
 export * from './ui/touchable-image-background';
 export * from './ui/touchable-item';
-export * from './ui/touchable-text-item';
 export * from './ui/touchable-list-item';
+export * from './ui/touchable-text-item';
+export * from './ui/search-input';
 
 // ./api
 export * from './api';

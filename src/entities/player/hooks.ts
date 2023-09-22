@@ -1,11 +1,10 @@
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
 import { usePlayerStore } from './model';
-import { AudioPlayerData } from './ui';
 
 // Не тестируется из-за ошибки в библиотеке expo-av
 
-export const useAudio = () => {
+export const usePlayer = () => {
   const {
     currentSound,
     currentSoundPosition,
@@ -94,7 +93,7 @@ export const useAudio = () => {
     setIsPlayingCurrentAudio(false);
   };
 
-  const recreateSound = async (newAudio: AudioPlayerData) => {
+  const recreateSound = async (newAudioUrl: string) => {
     if (currentSound) {
       await currentSound.stopAsync();
       await currentSound.unloadAsync();
@@ -117,11 +116,7 @@ export const useAudio = () => {
       playThroughEarpieceAndroid: false,
     });
 
-    if (!newAudio) {
-      return;
-    }
-
-    const { sound: newSound } = await Audio.Sound.createAsync({ uri: newAudio.audioUrl });
+    const { sound: newSound } = await Audio.Sound.createAsync({ uri: newAudioUrl });
 
     setCurrentSoundPosition(0);
     setCurrentSoundDuration(0);

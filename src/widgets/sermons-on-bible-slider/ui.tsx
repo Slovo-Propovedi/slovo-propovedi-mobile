@@ -3,8 +3,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { ListenStackNavProp, ListenStackParamName } from 'routing';
 import { PlaylistData } from 'widgets';
-import { Slider } from 'features';
-import { INDENTS, RADIUSES, SliderItemSize } from 'shared';
+import { INDENTS, RADIUSES, SliderItemSize, Slider } from 'shared';
 import { useOnBibleBooksListStore } from './model';
 
 export const SermonsOnBibleSlider = () => {

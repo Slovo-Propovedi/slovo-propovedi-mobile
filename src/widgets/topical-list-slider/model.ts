@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { PlaylistData } from 'widgets/playlist';
-import { SermonData } from 'entities';
-import { FetchedSermonsGroupName, getBookLinkAsString, sermonsAPI } from 'shared';
+import { bibleBookLib } from 'entities/bible-book';
+import { SermonData } from 'entities/sermon';
+import { FetchedSermonsGroupName, sermonsAPI } from 'shared';
 
 interface TopicalListState {
   topicalList: PlaylistData[];
@@ -20,7 +21,7 @@ export const useTopicalListStore = create<TopicalListState>((set) => ({
 
         return {
           id,
-          title: getBookLinkAsString(el),
+          title: bibleBookLib.getBookLinkAsString(el),
           description,
           audioUrl,
           textFileUrl,

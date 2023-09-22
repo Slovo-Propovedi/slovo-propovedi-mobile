@@ -3,8 +3,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { ListenStackNavProp, ListenStackParamName } from 'routing';
 import { PlaylistData } from 'widgets/playlist';
-import { Slider } from 'features';
-import { INDENTS, SliderItemSize } from 'shared';
+import { INDENTS, SliderItemSize, Slider } from 'shared';
 import { useTopicalListStore } from './model';
 
 export const TopicalListSlider = () => {
