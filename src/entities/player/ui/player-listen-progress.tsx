@@ -4,7 +4,7 @@ import { Progress, millisToMinutesAndSeconds } from 'shared';
 import { usePlayer } from '../hooks';
 
 export const PlayerListenProgress = () => {
-  const { duration, position } = usePlayer();
+  const { duration, position } = usePlayer({});
 
   return (
     <View style={styles.container}>

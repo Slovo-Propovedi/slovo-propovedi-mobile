@@ -14,7 +14,7 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
   },
   navigation: { navigate },
 }) => {
-  const { play, getPlaybackStatus, recreateSound } = usePlayer();
+  const { play, getPlaybackStatus, recreateSound } = usePlayer({});
 
   const { setCurrentPlaylist, setCurrentAudio, currentAudio } = useSermonPlayerControlsStore(
     ({ setCurrentPlaylist, setCurrentAudio, currentAudio }) => ({

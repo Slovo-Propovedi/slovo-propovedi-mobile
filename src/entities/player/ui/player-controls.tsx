@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { PlaylistData } from 'entities/playlist';
 import { SermonData } from 'entities/sermon';
@@ -33,7 +33,13 @@ export const PlayerControls = ({
     changeProgressPosition,
     position,
     duration,
-  } = usePlayer();
+  } = usePlayer({
+    onGetPlaybackStatus: (position, duration) => {
+      if (position >= duration && !isNotAvailableNext) {
+        switchToNextTrack();
+      }
+    },
+  });
 
   const { setCurrentSound, isPlayingCurrentAudio } = usePlayerStore(
     ({ setCurrentSound, isPlayingCurrentAudio }) => ({
@@ -151,13 +157,6 @@ export const PlayerControls = ({
 
     clearRewindInterval();
   };
-
-  useEffect(() => {
-    if (position >= duration && !isNotAvailableNext) {
-      // TODO исправить ошибку переключения между всеми проповедями подряд и без остановки
-      switchToNextTrack();
-    }
-  }, [position, duration, isNotAvailableNext]);
 
   return (
     <View testID='controls-container' style={[styles.controlsContainer, style]}>

@@ -2,7 +2,11 @@ import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
 import { usePlayerStore } from './model';
 
-export const usePlayer = () => {
+export const usePlayer = ({
+  onGetPlaybackStatus,
+}: {
+  onGetPlaybackStatus?: (position: number, duration: number) => void;
+}) => {
   const {
     currentSound,
     currentSoundPosition,
@@ -154,6 +158,8 @@ export const usePlayer = () => {
     setCurrentSoundPosition(positionMillis);
     setCurrentSoundDuration(durationMillis || 0);
     setIsPlayingCurrentAudio(isPlaying);
+
+    onGetPlaybackStatus?.(positionMillis, durationMillis || 0);
 
     return { durationMillis, positionMillis, isPlaying };
   };
