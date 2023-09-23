@@ -20,6 +20,7 @@ interface PlayerControlButtonProps {
   size?: number;
   style?: StyleProp<ViewStyle>;
   isDisabled?: boolean | null;
+  testID?: string;
 }
 
 export const PlayerControlButton = ({
@@ -31,6 +32,7 @@ export const PlayerControlButton = ({
   size = 24,
   style,
   isDisabled,
+  testID,
 }: PlayerControlButtonProps) => {
   const name = (() => {
     if (type === 'play') {
@@ -62,6 +64,7 @@ export const PlayerControlButton = ({
 
   return (
     <TouchableOpacity
+      testID={testID}
       style={style}
       onPress={onPress}
       onLongPress={onLongPress}

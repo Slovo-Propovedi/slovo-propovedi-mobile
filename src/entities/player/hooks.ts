@@ -2,14 +2,13 @@ import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
 import { usePlayerStore } from './model';
 
-// Не тестируется из-за ошибки в библиотеке expo-av
-
 export const usePlayer = () => {
   const {
     currentSound,
     currentSoundPosition,
     currentSoundDuration,
     playbackStatusInterval,
+    isPlayingCurrentAudio,
     setIsPlayingCurrentAudio,
     setPlaybackStatusInterval,
     setCurrentSoundPosition,
@@ -20,6 +19,7 @@ export const usePlayer = () => {
       currentSoundPosition,
       currentSoundDuration,
       playbackStatusInterval,
+      isPlayingCurrentAudio,
       setIsPlayingCurrentAudio,
       setPlaybackStatusInterval,
       setCurrentSoundPosition,
@@ -29,6 +29,7 @@ export const usePlayer = () => {
       currentSoundPosition,
       currentSoundDuration,
       playbackStatusInterval,
+      isPlayingCurrentAudio,
       setIsPlayingCurrentAudio,
       setPlaybackStatusInterval,
       setCurrentSoundPosition,
@@ -165,6 +166,7 @@ export const usePlayer = () => {
   );
 
   return {
+    isPlaying: isPlayingCurrentAudio,
     play,
     pause,
     stop,

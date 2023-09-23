@@ -2,11 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { PlaylistData } from 'entities/playlist';
 import { SermonData } from 'entities/sermon';
-import { PlayerControlButton, isNonNullable } from 'shared';
+import { isNonNullable } from 'shared';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
-
-// Не тестируется также из-за ошибки в библиотеке expo-av
+import { PlayerControlButton } from './player-control-button';
+import '@testing-library/jest-native/extend-expect';
 
 export type AudioPlayerData = Omit<SermonData, 'audioUrl'> & {
   audioUrl: string;
@@ -24,6 +24,7 @@ export const PlayerControls = ({
   currentAudio,
   currentPlaylist,
   setCurrentAudio,
+  style,
 }: PlayerControlsProps) => {
   const {
     play,
@@ -160,14 +161,16 @@ export const PlayerControls = ({
   }, [position, duration, isNotAvailableNext]);
 
   return (
-    <View style={styles.controlsContainer}>
+    <View testID='controls-container' style={[styles.controlsContainer, style]}>
       <PlayerControlButton
+        testID='prev-button'
         onPress={switchToPreviousTrack}
         type='prev'
         size={size}
         isDisabled={indexOfCurrentAudioInPlaylist === 0}
       />
       <PlayerControlButton
+        testID='backward-button'
         onPress={switchTrackBackward}
         onLongPress={rewindAudio}
         onPressOut={onPressOutAudioTwistButton}
@@ -176,11 +179,13 @@ export const PlayerControls = ({
         isDisabled={position <= 0}
       />
       <PlayerControlButton
+        testID='play-button'
         onPress={togglePlay}
         type={isPlayingCurrentAudio ? 'pause' : 'play'}
         size={size * 2}
       />
       <PlayerControlButton
+        testID='forward-button'
         onPress={switchTrackForward}
         onLongPress={fastForwardAudio}
         onPressOut={onPressOutAudioTwistButton}

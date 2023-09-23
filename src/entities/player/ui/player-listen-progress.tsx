@@ -3,8 +3,6 @@ import { View, StyleSheet, Text } from 'react-native';
 import { Progress, millisToMinutesAndSeconds } from 'shared';
 import { usePlayer } from '../hooks';
 
-// Не тестируется также из-за ошибки в библиотеке expo-av
-
 export const PlayerListenProgress = () => {
   const { duration, position } = usePlayer();
 

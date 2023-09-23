@@ -10,8 +10,6 @@ import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS } from 'shared';
 
 const windowWidth = Dimensions.get('window').width;
 
-// Не тестируется также из-за ошибки в библиотеке expo-av
-
 export const AudioPlayerScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.AudioPlayer>
 > = () => {
