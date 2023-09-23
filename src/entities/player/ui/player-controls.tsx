@@ -6,7 +6,6 @@ import { isNonNullable } from 'shared';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
 import { PlayerControlButton } from './player-control-button';
-import '@testing-library/jest-native/extend-expect';
 
 export type AudioPlayerData = Omit<SermonData, 'audioUrl'> & {
   audioUrl: string;
