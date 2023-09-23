@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { PlaylistData } from 'widgets';
 import { AudioPlayerData } from 'entities/player';
+import { PlaylistData } from 'entities/playlist';
 
-interface ManagingSermonPlayerStore {
+interface SermonPlayerControlsStore {
   currentAudio: AudioPlayerData | null;
   currentPlaylist: PlaylistData | null;
 
@@ -13,7 +13,7 @@ interface ManagingSermonPlayerStore {
   resetCurrentPlaylist: () => void;
 }
 
-export const useManagingSermonPlayerStore = create<ManagingSermonPlayerStore>((set) => ({
+export const useSermonPlayerControlsStore = create<SermonPlayerControlsStore>((set) => ({
   currentAudio: null,
   currentPlaylist: null,
 

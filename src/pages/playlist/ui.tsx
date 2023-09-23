@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { ListenStackScreenProps, ListenStackParamName } from 'routing';
-import { Playlist } from 'widgets';
-import { useManagingSermonPlayerStore } from 'features/managing-sermon-player';
+import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
 import { usePlayer, usePlayerStore } from 'entities/player';
+import { Playlist } from 'entities/playlist';
 import { SermonData } from 'entities/sermon';
 import { COLORS, FONT_SIZES, INDENTS, OnPressTouchableListItem, TouchableListItem } from 'shared';
 
@@ -16,7 +16,7 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
 }) => {
   const { play, getPlaybackStatus, recreateSound } = usePlayer();
 
-  const { setCurrentPlaylist, setCurrentAudio, currentAudio } = useManagingSermonPlayerStore(
+  const { setCurrentPlaylist, setCurrentAudio, currentAudio } = useSermonPlayerControlsStore(
     ({ setCurrentPlaylist, setCurrentAudio, currentAudio }) => ({
       setCurrentPlaylist,
       setCurrentAudio,

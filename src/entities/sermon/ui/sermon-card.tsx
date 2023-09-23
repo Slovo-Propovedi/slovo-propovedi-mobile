@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Dimensions, Linking, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { YoutubePreview } from 'features';
 import {
   Button,
   COLORS,
@@ -8,6 +7,7 @@ import {
   GetYoutubeVideosResponseItem,
   INDENTS,
   MimeType,
+  YoutubePreview,
   downloadFile,
   getYoutubeVideoData,
 } from 'shared';

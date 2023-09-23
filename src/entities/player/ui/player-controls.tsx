@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { PlaylistData } from 'widgets';
-import { usePlayer, usePlayerStore } from 'entities/player';
+import { PlaylistData } from 'entities/playlist';
 import { SermonData } from 'entities/sermon';
 import { PlayerControlButton, isNonNullable } from 'shared';
+import { usePlayer } from '../hooks';
+import { usePlayerStore } from '../model';
 
 // Не тестируется также из-за ошибки в библиотеке expo-av
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { PlaylistData } from 'widgets/playlist';
 import { bibleBookLib } from 'entities/bible-book';
+import { PlaylistData } from 'entities/playlist';
 import { SermonData } from 'entities/sermon';
 import { FetchedSermonsGroupName, sermonsAPI } from 'shared';
 

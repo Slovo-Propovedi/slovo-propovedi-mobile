@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ListenStackScreenProps, ListenStackParamName } from 'routing';
-import { PlaylistData } from 'widgets';
+import { PlaylistData } from 'entities/playlist';
 import { COLORS, FONT_SIZES, INDENTS, OnPressTouchableListItem, TouchableListItem } from 'shared';
 
 export const PlaylistListScreen: React.FC<

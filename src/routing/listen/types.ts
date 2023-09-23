@@ -2,7 +2,7 @@ import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { PlaylistData } from 'widgets';
+import { PlaylistData } from 'entities/playlist';
 
 export enum ListenStackParamName {
   ListenHome = 'ListenHome',

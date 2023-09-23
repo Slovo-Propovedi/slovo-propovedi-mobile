@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { ListenStackNavProp, ListenStackParamName } from 'routing';
-import { PlaylistData } from 'widgets';
+import { PlaylistData } from 'entities/playlist';
 import { INDENTS, RADIUSES, SliderItemSize, Slider } from 'shared';
 import { useOnBibleBooksListStore } from './model';
 

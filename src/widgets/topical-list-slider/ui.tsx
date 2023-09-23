@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { ListenStackNavProp, ListenStackParamName } from 'routing';
-import { PlaylistData } from 'widgets/playlist';
+import { PlaylistData } from 'entities/playlist';
 import { INDENTS, SliderItemSize, Slider } from 'shared';
 import { useTopicalListStore } from './model';
 
