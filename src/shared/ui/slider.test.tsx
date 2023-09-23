@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Slider } from './slider';
-// eslint-disable-next-line import/no-internal-modules
 import '@testing-library/jest-native/extend-expect';
 
 const itemStub = { previewURL: 'https//:vk.com', data: {} };

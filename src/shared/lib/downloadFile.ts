@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system';
-import { Linking, Platform, Share } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { MimeType } from 'shared/types';
 import { processRequest } from './processRequest';
 

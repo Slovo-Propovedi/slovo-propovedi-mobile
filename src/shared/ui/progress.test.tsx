@@ -2,7 +2,6 @@ import { render } from '@testing-library/react-native';
 import React from 'react';
 import { COLORS } from 'shared/themed';
 import { Progress } from './progress';
-// eslint-disable-next-line import/no-internal-modules
 import '@testing-library/jest-native/extend-expect';
 
 const total = 100;

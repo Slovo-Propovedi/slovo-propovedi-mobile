@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react-native';
 import { SliderItem } from './slider-item';
-// eslint-disable-next-line import/no-internal-modules
 import '@testing-library/jest-native/extend-expect';
 
 const propsStub = {

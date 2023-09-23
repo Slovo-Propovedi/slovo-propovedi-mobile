@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
-// eslint-disable-next-line import/no-internal-modules
 import '@testing-library/jest-native/extend-expect';
 import App from './index';
 

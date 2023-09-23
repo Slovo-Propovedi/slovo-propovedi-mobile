@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react-native';
 import { ListItem } from './list-item';
-// eslint-disable-next-line import/no-internal-modules
 import '@testing-library/jest-native/extend-expect';
 
 const previewPlaceholderTextStub = '1';

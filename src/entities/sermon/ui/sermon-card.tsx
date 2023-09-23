@@ -11,9 +11,22 @@ import {
   downloadFile,
   getYoutubeVideoData,
 } from 'shared';
-import { SermonData } from '../types';
 
 const windowHeight = Dimensions.get('window').height;
+
+export interface SermonData {
+  id: string;
+
+  title: string;
+
+  description?: string;
+
+  youtubeUrl?: string;
+
+  audioUrl?: string;
+
+  textFileUrl?: string;
+}
 
 type SermonCardProps = SermonData & { style?: ViewStyle };
 

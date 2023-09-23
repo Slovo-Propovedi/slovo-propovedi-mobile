@@ -35,6 +35,7 @@ module.exports = {
           'shared/*',
           'zustand/*',
           'zustand/**',
+          '@testing-library/jest-native/extend-expect',
         ],
       },
     ],

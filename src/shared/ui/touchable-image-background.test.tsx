@@ -1,7 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { TouchableImageBackground } from './touchable-image-background';
-// eslint-disable-next-line import/no-internal-modules
 import '@testing-library/jest-native/extend-expect';
 
 describe('<TouchableImageBackground/>', () => {
