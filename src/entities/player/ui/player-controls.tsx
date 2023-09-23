@@ -71,10 +71,22 @@ export const PlayerControls = ({
   };
 
   const switchTrackForward = async () => {
-    await changeProgressPosition(position + changeValue);
+    let updatedPosition = position + changeValue;
+
+    if (updatedPosition <= 0) {
+      updatedPosition = 0;
+    }
+
+    await changeProgressPosition(updatedPosition);
   };
   const switchTrackBackward = async () => {
-    await changeProgressPosition(position - changeValue);
+    let updatedPosition = position - changeValue;
+
+    if (updatedPosition > duration) {
+      updatedPosition = duration;
+    }
+
+    await changeProgressPosition(updatedPosition);
   };
 
   const clearRewindInterval = () => {
