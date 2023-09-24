@@ -1,6 +1,9 @@
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { PlaylistData } from 'entities/playlist';
+import { isNonNullable } from 'shared';
 import { usePlayerStore } from './model';
+import { AudioPlayerData } from './ui/controls';
 
 export const usePlayer = ({
   onGetPlaybackStatus,
@@ -183,4 +186,129 @@ export const usePlayer = ({
     position: currentSoundPosition,
     duration: currentSoundDuration,
   };
+};
+
+interface UseToggleTrackProps {
+  currentAudio: AudioPlayerData | null;
+  currentPlaylist: PlaylistData | null;
+  setCurrentAudio: (audio: AudioPlayerData) => void;
+  play: (newSound?: Audio.Sound) => Promise<void>;
+  recreateSound: (newAudioUrl: string) => Promise<Audio.Sound>;
+  getPlaybackStatus: (newSound?: Audio.Sound) => Promise<
+    | {
+        durationMillis: number | undefined;
+        positionMillis: number;
+        isPlaying: boolean;
+      }
+    | undefined
+  >;
+}
+export const useToggleTrack = ({
+  currentAudio,
+  currentPlaylist,
+  setCurrentAudio,
+  play,
+  recreateSound,
+  getPlaybackStatus,
+}: UseToggleTrackProps) => {
+  const { setCurrentSound } = usePlayerStore(({ setCurrentSound }) => ({
+    setCurrentSound,
+  }));
+
+  const indexOfCurrentAudioInPlaylist =
+    currentAudio && currentPlaylist?.list.findIndex(({ id }) => currentAudio.id === id);
+
+  const toggleTrack = async (dir: 'next' | 'prev') => {
+    if (!isNonNullable(indexOfCurrentAudioInPlaylist) || !currentPlaylist) {
+      return;
+    }
+
+    const { audioUrl, ...otherProps } =
+      currentPlaylist.list[
+        dir === 'next' ? indexOfCurrentAudioInPlaylist + 1 : indexOfCurrentAudioInPlaylist - 1
+      ];
+
+    if (!audioUrl) {
+      return;
+    }
+
+    const newAudio = { ...otherProps, audioUrl, previewUrl: currentPlaylist.previewUrl };
+
+    setCurrentAudio(newAudio);
+
+    const newSound = await recreateSound(newAudio.audioUrl);
+    newSound && setCurrentSound(newSound);
+
+    await play(newSound);
+    await getPlaybackStatus(newSound);
+  };
+
+  return toggleTrack;
+};
+
+interface UseScrollAudioProps {
+  position: number;
+  duration: number;
+  changeValue: number;
+  pause: (newSound?: Audio.Sound) => Promise<void>;
+  changeProgressPosition: (value: number, newSound?: Audio.Sound) => Promise<void>;
+}
+export const useScrollAudio = ({
+  position,
+  duration,
+  changeValue,
+  pause,
+  changeProgressPosition,
+}: UseScrollAudioProps) => {
+  const rewindTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const audioTwistDelay = 300;
+
+  const clearRewindInterval = () => {
+    rewindTimerRef.current && clearInterval(rewindTimerRef.current);
+  };
+
+  const scrollAudio = async ({
+    dir,
+    updatedPositionInitial,
+  }: {
+    dir: 'forward' | 'backward';
+    updatedPositionInitial?: number;
+  }) => {
+    let updatedPosition = updatedPositionInitial || position;
+
+    if (dir === 'forward') {
+      updatedPosition += changeValue;
+    } else {
+      updatedPosition -= changeValue;
+    }
+
+    if (updatedPosition <= 0) {
+      updatedPosition = 0;
+    } else if (updatedPosition > duration) {
+      updatedPosition = duration;
+    }
+
+    await changeProgressPosition(updatedPosition);
+
+    return updatedPosition;
+  };
+
+  const scrollAudioOnInterval = async (dir: 'forward' | 'backward') => {
+    let updatedPosition = position;
+
+    await pause();
+
+    rewindTimerRef.current = setInterval(async () => {
+      const newPosition = await scrollAudio({ dir, updatedPositionInitial: updatedPosition });
+
+      updatedPosition = newPosition;
+
+      if (updatedPosition >= duration || updatedPosition <= 0) {
+        clearRewindInterval();
+      }
+    }, audioTwistDelay);
+  };
+
+  return { scrollAudio, scrollAudioOnInterval, clearRewindInterval };
 };

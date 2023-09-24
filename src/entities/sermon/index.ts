@@ -1,1 +1,1 @@
-export * from './ui/sermon-card';
+export * from './ui/card';

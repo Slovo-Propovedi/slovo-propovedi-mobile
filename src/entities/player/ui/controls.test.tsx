@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
-import { PlayerControls } from './player-controls';
+import { PlayerControls } from './controls';
 import '@testing-library/jest-native/extend-expect';
 
 const changeValue = 15000;
