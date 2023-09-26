@@ -4,11 +4,19 @@ import { Progress, millisToMinutesAndSeconds } from 'shared';
 import { usePlayer } from '../hooks';
 
 export const PlayerListenProgress = () => {
-  const { duration, position } = usePlayer({});
+  const { duration, position, changeProgressPosition } = usePlayer({});
+
+  const onChangeProgressValue = (newProgressValue: number) => {
+    changeProgressPosition((duration * newProgressValue) / 100);
+  };
 
   return (
     <View style={styles.container}>
-      <Progress total={duration} progress={position} />
+      <Progress
+        total={duration}
+        progress={position}
+        onChangeProgressValue={onChangeProgressValue}
+      />
 
       <View style={styles.progressTextsContainer}>
         <Text>{millisToMinutesAndSeconds(position)}</Text>
