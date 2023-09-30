@@ -2,11 +2,13 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { ListenStackNavProp, ListenStackParamName } from 'routing';
-import { PlaylistData } from 'entities/playlist';
+import { PlaylistData, usePlaySermon } from 'entities/playlist';
 import { INDENTS, SliderItemSize, Slider } from 'shared';
 import { useTopicalListStore } from './model';
 
 export const TopicalListSlider = () => {
+  const playSermon = usePlaySermon();
+
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
   const { topicalList, getTopicalList } = useTopicalListStore((state) => ({
@@ -14,8 +16,16 @@ export const TopicalListSlider = () => {
     getTopicalList: state.getTopicalList,
   }));
 
-  const onItemPress = (params: PlaylistData) => {
-    navigate(ListenStackParamName.Playlist, params);
+  const onItemPress = async (playlist: PlaylistData) => {
+    const sermons = playlist.list;
+
+    if (sermons.length && sermons.length < 2) {
+      await playSermon({ playlist, sermon: sermons[0] });
+
+      return;
+    }
+
+    navigate(ListenStackParamName.Playlist, playlist);
   };
 
   const onPressTitle = (params: PlaylistData[]) => {
