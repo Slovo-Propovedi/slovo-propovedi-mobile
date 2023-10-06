@@ -22,6 +22,17 @@ import { DB, FetchedSermonsGroupName } from './types';
 export const db: DB = {
   sermons: [
     {
+      groupName: FetchedSermonsGroupName.New,
+      playlists: [
+        unionWithChristPlaylist,
+        isThereAnUnforgivableSinPlaylist,
+        firstAndSecondThessaloniansPlaylist,
+        titusPlaylist,
+        philemonPlaylist,
+        revelationPlaylist,
+      ],
+    },
+    {
       groupName: FetchedSermonsGroupName.OnBible,
       playlists: [
         markPlaylist,

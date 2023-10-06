@@ -36,24 +36,21 @@ export const TopicalListSlider = () => {
     getTopicalList();
   }, []);
 
-  // TODO здесь должен быть не список заголовков, а плитки с превью
   return (
-    <>
-      <Slider
-        style={styles.slider}
-        itemsSize={SliderItemSize.Large}
-        title='Тематические'
-        items={topicalList.map((item) => ({
-          data: item,
-          description: item.title,
-          previewURL: item.previewUrl || '',
-        }))}
-        onPressItem={onItemPress}
-        onPressTitle={() => {
-          onPressTitle(topicalList);
-        }}
-      />
-    </>
+    <Slider
+      style={styles.slider}
+      itemsSize={SliderItemSize.Large}
+      title='Тематические'
+      items={topicalList.map((item) => ({
+        data: item,
+        description: item.title,
+        previewURL: item.previewUrl || '',
+      }))}
+      onPressItem={onItemPress}
+      onPressTitle={() => {
+        onPressTitle(topicalList);
+      }}
+    />
   );
 };
 

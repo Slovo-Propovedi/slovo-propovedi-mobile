@@ -9,12 +9,10 @@ import { useOnBibleBooksListStore } from './model';
 export const SermonsOnBibleSlider = () => {
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { onBibleBooksList, getOnBibleBookList } = useOnBibleBooksListStore(
-    ({ onBibleBooksList, getOnBibleBookList }) => ({
-      onBibleBooksList,
-      getOnBibleBookList,
-    }),
-  );
+  const { onBibleBooksList, getOnBibleBookList } = useOnBibleBooksListStore((state) => ({
+    onBibleBooksList: state.onBibleBooksList,
+    getOnBibleBookList: state.getOnBibleBookList,
+  }));
 
   const onItemPress = (params: PlaylistData) => {
     // Почему-то это вызывает ошибку:

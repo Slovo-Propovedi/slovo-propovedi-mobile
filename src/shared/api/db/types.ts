@@ -55,6 +55,7 @@ export type FetchedSermonData = {
 export enum FetchedSermonsGroupName {
   OnBible = 'onBible',
   Topical = 'topical',
+  New = 'new',
 }
 
 export interface FetchedPlaylist {

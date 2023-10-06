@@ -31,3 +31,6 @@ export * from './root-tabs';
 export * from './themed';
 export * from './images';
 export * from './types';
+
+// model
+export * from './model';

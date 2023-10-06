@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, ImageBackground, StyleSheet, Dimensions, Text } from 'react-native';
 import { ListenStackParamName, ListenStackScreenProps } from 'routing';
 import {
@@ -6,16 +6,28 @@ import {
   useSermonPlayerControlsStore,
 } from 'features/sermon-player-controls';
 import { PlayerListenProgress } from 'entities/player';
-import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS } from 'shared';
+import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, useAppStore } from 'shared';
 
 const windowWidth = Dimensions.get('window').width;
 
 export const AudioPlayerScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.AudioPlayer>
 > = () => {
-  const { currentAudio } = useSermonPlayerControlsStore(({ currentAudio }) => ({
-    currentAudio,
+  const { currentAudio } = useSermonPlayerControlsStore((state) => ({
+    currentAudio: state.currentAudio,
   }));
+
+  const { setIsAudioPlayerMounted } = useAppStore((state) => ({
+    setIsAudioPlayerMounted: state.setIsAudioPlayerMounted,
+  }));
+
+  useEffect(() => {
+    setIsAudioPlayerMounted(true);
+
+    return () => {
+      setIsAudioPlayerMounted(false);
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
