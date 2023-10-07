@@ -40,6 +40,17 @@
         {
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/adaptive-icon.png",
+          "color": "#ff602a"
+          // "sounds": [
+          //   "./local/assets/notification-sound.wav",
+          //   "./local/assets/notification-sound-other.wav"
+          // ]
+        }
       ]
     ]
   }

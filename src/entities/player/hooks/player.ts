@@ -1,16 +1,16 @@
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
-import { useKeepAwake } from 'expo-keep-awake';
-import * as Notifications from 'expo-notifications';
 import { useEffect } from 'react';
-import { usePlayerStore } from './model';
-
-const NOTIFICATION_ID = 'audio-player-notification';
+import { usePlayerStore } from '../model';
+import { cancelScheduledNotificationAsync, schedulePushNotification } from '../utils';
+import { useLocalNotification } from './push';
 
 export const usePlayer = ({
   onGetPlaybackStatus,
 }: {
   onGetPlaybackStatus?: (position: number, duration: number) => void;
 }) => {
+  useLocalNotification();
+
   const {
     currentSound,
     currentSoundPosition,
@@ -61,6 +61,7 @@ export const usePlayer = ({
     await sound.playAsync();
     setIsPlayingCurrentAudio(true);
     setPlaybackStatusInterval(setInterval(() => getPlaybackStatus(sound), 1000));
+
     await sendNotification();
   };
 
@@ -173,93 +174,18 @@ export const usePlayer = ({
     return { durationMillis, positionMillis, isPlaying };
   };
 
-  ////
-  ////
-  ////
-  //// FIXME пробую работать с уведомлениями
-
-  useKeepAwake(); // Prevent screen from sleeping while audio is playing
-
-  const buildNotificationContent = () => {
-    const playbackSeconds = currentSoundPosition.toFixed(0);
-    const durationSeconds = currentSoundDuration.toFixed(0);
-    const playbackPercent = Math.trunc((currentSoundPosition / currentSoundDuration) * 100);
-    const playbackTime = `${playbackSeconds} / ${durationSeconds}`;
-    const content = {
-      id: NOTIFICATION_ID,
-      title: 'Audio Player',
-      subtitle: isPlayingCurrentAudio ? 'Playing' : 'Paused',
-      data: { notificationType: 'audioPlayer' },
-      actions: [
-        {
-          title: 'Pause',
-          identifier: 'pause',
-        },
-        {
-          title: 'Play',
-          identifier: 'play',
-        },
-      ],
-      // Custom component for notification body
-      content: {
-        body: {
-          layout: 'horizontal',
-          spacing: 'center',
-          children: [
-            {
-              elementType: isPlayingCurrentAudio ? 'MaterialIcons' : 'MaterialCommunityIcons', // Icon for play or pause button
-              elementProps: {
-                name: isPlayingCurrentAudio ? 'pause' : 'play',
-                size: 32,
-                color: 'white',
-              },
-              onPress: isPlayingCurrentAudio ? pause : play,
-            },
-            {
-              elementType: 'ProgressBar', // Playback progress bar
-              elementProps: {
-                color: 'dodgerblue',
-                progress: playbackPercent,
-                style: { width: '50%' },
-              },
-            },
-            {
-              elementType: 'Text', // Playback time indicator
-              elementProps: {
-                children: playbackTime,
-                style: { color: 'white' },
-              },
-            },
-          ],
-        },
-      },
-    };
-    return content;
-  };
-
-  // Send notification with player
   const sendNotification = async () => {
-    Notifications.setNotificationHandler({
-      // Handle user interaction with notification
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-      }),
+    await schedulePushNotification({
+      title: 'Проповедь',
+      subtitle: 'Проповедует Андрей Вовк',
+      body: 'Очень хорошая проповедь',
     });
-    const content = buildNotificationContent();
-    await Notifications.presentNotificationAsync(content);
   };
 
   // Remove notification with player
   const removeNotification = async () => {
-    await Notifications.dismissNotificationAsync(NOTIFICATION_ID);
+    await cancelScheduledNotificationAsync();
   };
-
-  ////
-  ////
-  ////
-  //// FIXME пробую работать с уведомлениями
 
   useEffect(
     () => () => {
