@@ -101,6 +101,8 @@ export const usePlayer = ({
       return;
     }
 
+    await sound.stopAsync();
+
     await sound.unloadAsync();
     setIsPlayingCurrentAudio(false);
   };

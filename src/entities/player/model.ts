@@ -18,6 +18,8 @@ interface PlayerStore {
 
   setPlaybackStatusInterval: (timeout: NodeJS.Timeout | null) => void;
   resetPlaybackStatusInterval: () => void;
+
+  resetStates: () => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
@@ -67,6 +69,21 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
   resetPlaybackStatusInterval: () => {
     set((state) => ({
       ...state,
+      playbackStatusInterval: null,
+    }));
+  },
+
+  resetStates: () => {
+    set((state) => ({
+      ...state,
+      currentSound: null,
+      currentSoundPosition: 0,
+      currentSoundDuration: 0,
+
+      currentAudio: null,
+
+      isPlayingCurrentAudio: false,
+
       playbackStatusInterval: null,
     }));
   },

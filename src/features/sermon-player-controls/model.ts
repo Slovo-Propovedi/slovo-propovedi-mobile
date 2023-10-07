@@ -11,6 +11,8 @@ interface SermonPlayerControlsStore {
 
   setCurrentPlaylist: (playlist: PlaylistData) => void;
   resetCurrentPlaylist: () => void;
+
+  resetStates: () => void;
 }
 
 export const useSermonPlayerControlsStore = create<SermonPlayerControlsStore>((set) => ({
@@ -39,6 +41,14 @@ export const useSermonPlayerControlsStore = create<SermonPlayerControlsStore>((s
   resetCurrentPlaylist: () => {
     set((state) => ({
       ...state,
+      currentPlaylist: null,
+    }));
+  },
+
+  resetStates: () => {
+    set((state) => ({
+      ...state,
+      currentAudio: null,
       currentPlaylist: null,
     }));
   },

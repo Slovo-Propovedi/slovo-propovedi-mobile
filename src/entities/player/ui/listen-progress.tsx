@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, StyleProp, ViewStyle } from 'react-native';
 import { Progress, millisToMinutesAndSeconds } from 'shared';
 import { usePlayer } from '../hooks';
 
-export const PlayerListenProgress = () => {
+export const PlayerListenProgress = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { duration, position, changeProgressPosition } = usePlayer({});
 
   const onChangeProgressValue = (newProgressValue: number) => {
@@ -11,7 +11,7 @@ export const PlayerListenProgress = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Progress
         total={duration}
         progress={position}
