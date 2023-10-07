@@ -42,10 +42,12 @@ export const AudioPlayerScreen: React.FC<
         imageStyle={styles.previewImage}
         source={{ uri: currentAudio?.previewUrl || IMAGE_PLACEHOLDER }}
         alt='Sermon poster'
-      />
+      >
+        {!currentAudio && <Text style={{ fontSize: FONT_SIZES.h1 }}>Проповедь не выбрана</Text>}
+      </ImageBackground>
 
       <View style={styles.bottomContent}>
-        <Text style={styles.title}>{currentAudio?.title || 'Title'}</Text>
+        <Text style={styles.title}>{currentAudio?.title || 'Проповедь не выбрана'}</Text>
 
         <PlayerListenProgress />
 
@@ -63,6 +65,9 @@ const styles = StyleSheet.create({
     marginTop: -(previewSize / 2),
     width: previewSize,
     height: previewSize * 1.2,
+
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   previewImage: { height: '100%', width: '100%', borderRadius: 20 },

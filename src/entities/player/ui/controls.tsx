@@ -177,7 +177,7 @@ export const PlayerControls = ({
         onPress={switchToPreviousTrack}
         type='prev'
         size={size}
-        isDisabled={indexOfCurrentAudioInPlaylist === 0}
+        isDisabled={indexOfCurrentAudioInPlaylist === 0 || !currentAudio}
       />
       <PlayerControlButton
         testID='backward-button'
@@ -186,13 +186,14 @@ export const PlayerControls = ({
         onPressOut={onPressOutAudioTwistButton}
         type='backward'
         size={size}
-        isDisabled={position <= 0}
+        isDisabled={position <= 0 || !currentAudio}
       />
       <PlayerControlButton
         testID='play-button'
         onPress={togglePlay}
         type={isPlayingCurrentAudio ? 'pause' : 'play'}
         size={size * 2}
+        isDisabled={!currentAudio}
       />
       <PlayerControlButton
         testID='forward-button'
@@ -201,13 +202,13 @@ export const PlayerControls = ({
         onPressOut={onPressOutAudioTwistButton}
         type='forward'
         size={size}
-        isDisabled={position >= duration}
+        isDisabled={position >= duration || !currentAudio}
       />
       <PlayerControlButton
         onPress={switchToNextTrack}
         type='next'
         size={size}
-        isDisabled={isNotAvailableNext}
+        isDisabled={isNotAvailableNext || !currentAudio}
       />
     </View>
   );
