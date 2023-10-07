@@ -2,7 +2,27 @@ import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { PlaylistData } from 'entities/playlist';
+
+export interface PlaylistList {
+  id: string;
+
+  title: string;
+
+  description?: string;
+
+  youtubeUrl?: string;
+
+  audioUrl?: string;
+
+  textFileUrl?: string;
+}
+
+export interface PlaylistProps {
+  title: string;
+  list: PlaylistList[];
+  description?: string;
+  previewUrl?: string;
+}
 
 export enum ListenStackParamName {
   ListenHome = 'ListenHome',
@@ -13,8 +33,8 @@ export enum ListenStackParamName {
 
 export type ListenStackParamList = {
   [ListenStackParamName.ListenHome]: undefined;
-  [ListenStackParamName.Playlist]: PlaylistData;
-  [ListenStackParamName.PlaylistList]: { playlists: PlaylistData[]; title: string };
+  [ListenStackParamName.Playlist]: PlaylistProps;
+  [ListenStackParamName.PlaylistList]: { playlists: PlaylistProps[]; title: string };
   [ListenStackParamName.AudioPlayer]: undefined;
 };
 

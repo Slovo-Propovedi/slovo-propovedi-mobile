@@ -1,12 +1,18 @@
 import React, { useEffect } from 'react';
 import { View, ImageBackground, StyleSheet, Dimensions, Text } from 'react-native';
-import { ListenStackParamName, ListenStackScreenProps } from 'routing';
 import {
   SermonPlayerControls,
   useSermonPlayerControlsStore,
 } from 'features/sermon-player-controls';
 import { PlayerListenProgress } from 'entities/player';
-import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, useAppStore } from 'shared';
+import {
+  FONT_SIZES,
+  IMAGE_PLACEHOLDER,
+  INDENTS,
+  ListenStackParamName,
+  ListenStackScreenProps,
+  useAppStore,
+} from 'shared';
 
 const windowWidth = Dimensions.get('window').width;
 

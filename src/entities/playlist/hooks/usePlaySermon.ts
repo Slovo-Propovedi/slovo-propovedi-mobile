@@ -1,8 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
-import { ListenStackNavProp, ListenStackParamName } from 'routing';
 import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
 import { usePlayer, usePlayerStore } from 'entities/player';
 import { SermonData } from 'entities/sermon';
+import { ListenStackNavProp, ListenStackParamName } from 'shared';
 import { PlaylistData } from '../types';
 
 export const usePlaySermon = () => {

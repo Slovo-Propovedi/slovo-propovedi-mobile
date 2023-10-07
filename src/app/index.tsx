@@ -1,6 +1,6 @@
 import React from 'react';
-import { Routing } from './routes';
+import { RootTabs } from './routing';
 
-const App = () => <Routing />;
+const App = () => <RootTabs />;
 
 export default App;

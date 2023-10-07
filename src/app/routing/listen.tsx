@@ -6,8 +6,13 @@ import { AudioPlayerScreen } from 'pages/audio-player';
 import { ListenScreen } from 'pages/listen';
 import { PlaylistScreen } from 'pages/playlist';
 import { PlaylistListScreen } from 'pages/playlist-list';
-import { COLORS, RootTabName, RootTabsScreenProps } from 'shared';
-import { ListenStackParamList, ListenStackParamName } from './types';
+import {
+  COLORS,
+  ListenStackParamList,
+  ListenStackParamName,
+  RootTabName,
+  RootTabsScreenProps,
+} from 'shared';
 
 const ListenStack = createNativeStackNavigator<ListenStackParamList>();
 

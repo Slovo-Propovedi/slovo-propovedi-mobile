@@ -2,14 +2,16 @@ import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
-import { ListenRouting, ReadRouting, StudyRouting } from 'routing';
 import { Info } from 'pages/info';
-import { CustomTabBar } from 'widgets';
 import { RootTabsParamList, RootTabName, COLORS } from 'shared';
+import { CustomTabBar } from '../ui/custom-tab-bar';
+import { ListenRouting } from './listen';
+import { ReadRouting } from './read';
+import { StudyRouting } from './study';
 
 const Tab = createBottomTabNavigator<RootTabsParamList>();
 
-export const Routing = () => (
+export const RootTabs = () => (
   <NavigationContainer>
     <Tab.Navigator
       screenOptions={({ route }) => ({

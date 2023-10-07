@@ -1,9 +1,16 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ListenStackScreenProps, ListenStackParamName } from 'routing';
 import { PlaylistData } from 'entities/playlist';
-import { COLORS, FONT_SIZES, INDENTS, OnPressTouchableListItem, TouchableListItem } from 'shared';
+import {
+  COLORS,
+  FONT_SIZES,
+  INDENTS,
+  OnPressTouchableListItem,
+  TouchableListItem,
+  ListenStackScreenProps,
+  ListenStackParamName,
+} from 'shared';
 
 export const PlaylistListScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.PlaylistList>

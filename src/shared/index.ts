@@ -27,7 +27,7 @@ export * from './lib';
 export * from './hooks';
 
 // misc
-export * from './root-tabs';
+export * from './routing';
 export * from './themed';
 export * from './images';
 export * from './types';

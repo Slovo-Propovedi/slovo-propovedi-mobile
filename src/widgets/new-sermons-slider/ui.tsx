@@ -1,9 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { ListenStackNavProp, ListenStackParamName } from 'routing';
 import { usePlaySermon, PlaylistData } from 'entities/playlist';
-import { INDENTS, SliderItemSize, Slider } from 'shared';
+import { INDENTS, SliderItemSize, Slider, ListenStackParamName, ListenStackNavProp } from 'shared';
 import { useNewSermonsStore } from './model';
 
 export const NewSermonsSlider = () => {

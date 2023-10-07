@@ -1,9 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { ListenStackNavProp, ListenStackParamName } from 'routing';
 import { PlaylistData, usePlaySermon } from 'entities/playlist';
-import { INDENTS, SliderItemSize, Slider } from 'shared';
+import { INDENTS, SliderItemSize, Slider, ListenStackNavProp, ListenStackParamName } from 'shared';
 import { useTopicalListStore } from './model';
 
 export const TopicalListSlider = () => {

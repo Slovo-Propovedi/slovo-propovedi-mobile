@@ -1,8 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { StudyScreen } from 'pages/study';
-import { RootTabName, RootTabsScreenProps } from 'shared';
-import { StudyStackParamList, StudyStackParamName } from './types';
+import { RootTabName, RootTabsScreenProps, StudyStackParamList, StudyStackParamName } from 'shared';
 
 const StudyStack = createNativeStackNavigator<StudyStackParamList>();
 

@@ -27,7 +27,6 @@ module.exports = {
       {
         allow: [
           '**/ui/*',
-          'routing/*',
           'pages/*',
           'widgets/*',
           'features/*',
