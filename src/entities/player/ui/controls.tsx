@@ -5,6 +5,7 @@ import { SermonData } from 'entities/sermon';
 import { isNonNullable } from 'shared';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
+import { schedulePushNotification } from '../utils';
 import { PlayerControlButton } from './control-button';
 
 export type AudioPlayerData = Omit<SermonData, 'audioUrl'> & {
@@ -152,6 +153,11 @@ export const PlayerControls = ({
     const newSound = await recreateSound(newAudio.audioUrl);
     newSound && setCurrentSound(newSound);
 
+    await schedulePushNotification({
+      title: newAudio.title,
+      subtitle: currentPlaylist.title || 'Проповедует Андрей Вовк',
+      body: newAudio.description || '',
+    });
     await play(newSound);
     await getPlaybackStatus(newSound);
   };

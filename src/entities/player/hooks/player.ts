@@ -1,7 +1,7 @@
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
 import { usePlayerStore } from '../model';
-import { cancelScheduledNotificationAsync, schedulePushNotification } from '../utils';
+import { cancelScheduledNotificationAsync } from '../utils';
 import { useLocalNotification } from './push';
 
 export const usePlayer = ({
@@ -61,8 +61,6 @@ export const usePlayer = ({
     await sound.playAsync();
     setIsPlayingCurrentAudio(true);
     setPlaybackStatusInterval(setInterval(() => getPlaybackStatus(sound), 1000));
-
-    await sendNotification();
   };
 
   const pause = async (newSound?: Audio.Sound) => {
@@ -172,14 +170,6 @@ export const usePlayer = ({
     onGetPlaybackStatus?.(positionMillis, durationMillis || 0);
 
     return { durationMillis, positionMillis, isPlaying };
-  };
-
-  const sendNotification = async () => {
-    await schedulePushNotification({
-      title: 'Проповедь',
-      subtitle: 'Проповедует Андрей Вовк',
-      body: 'Очень хорошая проповедь',
-    });
   };
 
   // Remove notification with player

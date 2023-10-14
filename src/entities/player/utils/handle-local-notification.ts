@@ -61,8 +61,8 @@ export const schedulePushNotification = async <D extends object>({
   data,
 }: {
   title: string;
-  subtitle: string;
-  body: string;
+  subtitle?: string | null;
+  body?: string | null;
   data?: D;
 }) => {
   await Notifications.scheduleNotificationAsync({

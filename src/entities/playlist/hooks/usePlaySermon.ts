@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
-import { usePlayer, usePlayerStore } from 'entities/player';
+import { usePlayer, usePlayerStore, schedulePushNotification } from 'entities/player';
 import { SermonData } from 'entities/sermon';
 import { ListenStackNavProp, ListenStackParamName } from 'shared';
 import { PlaylistData } from '../types';
@@ -49,6 +49,11 @@ export const usePlaySermon = () => {
     newSound && setCurrentSound(newSound);
     await getPlaybackStatus(newSound);
     await play(newSound);
+    await schedulePushNotification({
+      title: newAudio.title,
+      subtitle: playlist.title,
+      body: newAudio.description || '',
+    });
   };
 
   return playSermon;
