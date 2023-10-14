@@ -9,15 +9,15 @@ export const usePlaySermon = () => {
   const { play, getPlaybackStatus, recreateSound } = usePlayer({});
 
   const { setCurrentPlaylist, setCurrentAudio, currentAudio } = useSermonPlayerControlsStore(
-    ({ setCurrentPlaylist, setCurrentAudio, currentAudio }) => ({
-      setCurrentPlaylist,
-      setCurrentAudio,
-      currentAudio,
+    (store) => ({
+      setCurrentPlaylist: store.setCurrentPlaylist,
+      setCurrentAudio: store.setCurrentAudio,
+      currentAudio: store.currentAudio,
     }),
   );
 
-  const { setCurrentSound } = usePlayerStore(({ setCurrentSound }) => ({
-    setCurrentSound,
+  const { setCurrentSound } = usePlayerStore((store) => ({
+    setCurrentSound: store.setCurrentSound,
   }));
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();

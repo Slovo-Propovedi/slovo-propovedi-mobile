@@ -42,12 +42,10 @@ export const PlayerControls = ({
     },
   });
 
-  const { setCurrentSound, isPlayingCurrentAudio } = usePlayerStore(
-    ({ setCurrentSound, isPlayingCurrentAudio }) => ({
-      setCurrentSound,
-      isPlayingCurrentAudio,
-    }),
-  );
+  const { setCurrentSound, isPlayingCurrentAudio } = usePlayerStore((store) => ({
+    setCurrentSound: store.setCurrentSound,
+    isPlayingCurrentAudio: store.isPlayingCurrentAudio,
+  }));
 
   const rewindTimerRef = useRef<NodeJS.Timeout | null>(null);
 

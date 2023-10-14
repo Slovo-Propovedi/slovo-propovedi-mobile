@@ -14,8 +14,8 @@ export const CustomTabBar = (props: BottomTabBarProps) => {
 
   const currentTab = state.routes[state.index];
 
-  const { isAudioPlayerMounted } = useAppStore(({ isAudioPlayerMounted }) => ({
-    isAudioPlayerMounted,
+  const { isAudioPlayerMounted } = useAppStore((store) => ({
+    isAudioPlayerMounted: store.isAudioPlayerMounted,
   }));
 
   return (

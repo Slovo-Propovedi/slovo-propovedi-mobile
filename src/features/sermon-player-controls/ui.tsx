@@ -5,10 +5,10 @@ import { useSermonPlayerControlsStore } from './model';
 
 export const SermonPlayerControls = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { setCurrentAudio, currentAudio, currentPlaylist } = useSermonPlayerControlsStore(
-    ({ setCurrentAudio, currentAudio, currentPlaylist }) => ({
-      setCurrentAudio,
-      currentAudio,
-      currentPlaylist,
+    (store) => ({
+      setCurrentAudio: store.setCurrentAudio,
+      currentAudio: store.currentAudio,
+      currentPlaylist: store.currentPlaylist,
     }),
   );
 

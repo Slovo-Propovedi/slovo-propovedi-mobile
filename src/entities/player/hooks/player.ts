@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
 import { usePlayerStore } from '../model';
@@ -21,29 +22,17 @@ export const usePlayer = ({
     setPlaybackStatusInterval,
     setCurrentSoundPosition,
     setCurrentSoundDuration,
-  } = usePlayerStore(
-    ({
-      currentSound,
-      currentSoundPosition,
-      currentSoundDuration,
-      playbackStatusInterval,
-      isPlayingCurrentAudio,
-      setIsPlayingCurrentAudio,
-      setPlaybackStatusInterval,
-      setCurrentSoundPosition,
-      setCurrentSoundDuration,
-    }) => ({
-      currentSound,
-      currentSoundPosition,
-      currentSoundDuration,
-      playbackStatusInterval,
-      isPlayingCurrentAudio,
-      setIsPlayingCurrentAudio,
-      setPlaybackStatusInterval,
-      setCurrentSoundPosition,
-      setCurrentSoundDuration,
-    }),
-  );
+  } = usePlayerStore((state) => ({
+    currentSound: state.currentSound,
+    currentSoundPosition: state.currentSoundPosition,
+    currentSoundDuration: state.currentSoundDuration,
+    playbackStatusInterval: state.playbackStatusInterval,
+    isPlayingCurrentAudio: state.isPlayingCurrentAudio,
+    setIsPlayingCurrentAudio: state.setIsPlayingCurrentAudio,
+    setPlaybackStatusInterval: state.setPlaybackStatusInterval,
+    setCurrentSoundPosition: state.setCurrentSoundPosition,
+    setCurrentSoundDuration: state.setCurrentSoundDuration,
+  }));
 
   const resetInterval = () => {
     playbackStatusInterval && clearInterval(playbackStatusInterval);
@@ -131,8 +120,17 @@ export const usePlayer = ({
 
     const { sound: newSound } = await Audio.Sound.createAsync({ uri: newAudioUrl });
 
-    setCurrentSoundPosition(0);
-    setCurrentSoundDuration(0);
+    // TODO Скорее всего нужно вынести отсюда
+    const lastSoundPosition = await AsyncStorage.getItem('lastSoundPosition');
+    const lastSoundDuration = await AsyncStorage.getItem('lastSoundDuration');
+
+    const position = lastSoundPosition ? Number(lastSoundPosition) : 0;
+    const duration = lastSoundDuration ? Number(lastSoundDuration) : 0;
+
+    setCurrentSoundPosition(position);
+    setCurrentSoundDuration(duration);
+
+    await newSound.setPositionAsync(position);
 
     return newSound;
   };
@@ -156,13 +154,18 @@ export const usePlayer = ({
     }
 
     const status = await sound.getStatusAsync();
-
     if (!status.isLoaded) {
       return;
     }
 
     const { durationMillis, positionMillis, isPlaying } = status;
 
+    await AsyncStorage.multiSet([
+      ['lastSoundPosition', `${positionMillis}`],
+      ['lastSoundDuration', `${durationMillis || 0}`],
+    ]);
+
+    // TODO Скорее всего нужно вынести отсюда
     setCurrentSoundPosition(positionMillis);
     setCurrentSoundDuration(durationMillis || 0);
     setIsPlayingCurrentAudio(isPlaying);
