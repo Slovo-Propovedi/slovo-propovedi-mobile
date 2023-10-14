@@ -2,12 +2,7 @@
 const process = require('process');
 
 module.exports = {
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/eslint-recommended',
-    'plugin:@typescript-eslint/recommended',
-    '@feature-sliced',
-  ],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/eslint-recommended', 'plugin:@typescript-eslint/recommended', '@feature-sliced', 'plugin:storybook/recommended'],
   parser: '@typescript-eslint/parser',
   plugins: ['jest'],
   env: {
