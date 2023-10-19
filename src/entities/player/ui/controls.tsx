@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import type { PlaylistData, SermonData } from 'shared';
@@ -42,9 +43,16 @@ export const PlayerControls = ({
     },
   });
 
-  const { isPlayingCurrentAudio, setCurrentSound } = usePlayerStore((store) => ({
+  const {
+    isPlayingCurrentAudio,
+    setCurrentSound,
+    setCurrentSoundDuration,
+    setCurrentSoundPosition,
+  } = usePlayerStore((store) => ({
     isPlayingCurrentAudio: store.isPlayingCurrentAudio,
     setCurrentSound: store.setCurrentSound,
+    setCurrentSoundDuration: store.setCurrentSoundDuration,
+    setCurrentSoundPosition: store.setCurrentSoundPosition,
   }));
 
   const rewindTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -173,6 +181,18 @@ export const PlayerControls = ({
 
     clearRewindInterval();
   };
+
+  useEffect(() => {
+    (async () => {
+      const [lastSoundPosition, lastSoundDuration] = await Promise.all([
+        AsyncStorage.getItem('lastSoundPosition'),
+        AsyncStorage.getItem('lastSoundDuration'),
+      ]);
+
+      setCurrentSoundPosition(Number(lastSoundPosition));
+      setCurrentSoundDuration(Number(lastSoundDuration));
+    })();
+  }, []);
 
   return (
     <View style={[styles.controlsContainer, style]} testID='controls-container'>

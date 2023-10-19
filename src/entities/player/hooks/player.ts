@@ -64,7 +64,7 @@ export const usePlayer = ({
     await sound.pauseAsync();
     setIsPlayingCurrentAudio(false);
 
-    await removeNotification();
+    await cancelScheduledNotificationAsync();
   };
 
   const stop = async (newSound?: Audio.Sound) => {
@@ -120,17 +120,15 @@ export const usePlayer = ({
 
     const { sound: newSound } = await Audio.Sound.createAsync({ uri: newAudioUrl });
 
-    // TODO Скорее всего нужно вынести отсюда
-    const lastSoundPosition = await AsyncStorage.getItem('lastSoundPosition');
-    const lastSoundDuration = await AsyncStorage.getItem('lastSoundDuration');
+    await AsyncStorage.multiSet([
+      ['lastSoundPosition', '0'],
+      ['lastSoundDuration', '0'],
+    ]);
 
-    const position = lastSoundPosition ? Number(lastSoundPosition) : 0;
-    const duration = lastSoundDuration ? Number(lastSoundDuration) : 0;
+    setCurrentSoundPosition(0);
+    setCurrentSoundDuration(0);
 
-    setCurrentSoundPosition(position);
-    setCurrentSoundDuration(duration);
-
-    await newSound.setPositionAsync(position);
+    await newSound.setPositionAsync(0);
 
     return newSound;
   };
@@ -173,11 +171,6 @@ export const usePlayer = ({
     onGetPlaybackStatus?.(positionMillis, durationMillis || 0);
 
     return { durationMillis, isPlaying, positionMillis };
-  };
-
-  // Remove notification with player
-  const removeNotification = async () => {
-    await cancelScheduledNotificationAsync();
   };
 
   useEffect(

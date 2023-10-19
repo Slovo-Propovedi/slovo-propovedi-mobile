@@ -1,7 +1,7 @@
 import type { Audio } from 'expo-av';
 import { create } from 'zustand';
 
-interface PlayerStore {
+interface PlayerStoreStates {
   currentSound: Audio.Sound | null;
   currentSoundDuration: number;
   currentSoundPosition: number;
@@ -9,7 +9,9 @@ interface PlayerStore {
   isPlayingCurrentAudio: boolean;
 
   playbackStatusInterval: NodeJS.Timeout | null;
+}
 
+interface PlayerStore extends PlayerStoreStates {
   resetPlaybackStatusInterval: () => void;
   resetStates: () => void;
   setCurrentSound: (sound: Audio.Sound | null) => void;
@@ -22,8 +24,7 @@ interface PlayerStore {
   setPlaybackStatusInterval: (timeout: NodeJS.Timeout | null) => void;
 }
 
-export const usePlayerStore = create<PlayerStore>((set) => ({
-  currentAudio: null,
+const initialState: PlayerStoreStates = {
   currentSound: null,
   currentSoundDuration: 0,
 
@@ -32,6 +33,10 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
   isPlayingCurrentAudio: false,
 
   playbackStatusInterval: null,
+};
+
+export const usePlayerStore = create<PlayerStore>((set) => ({
+  ...initialState,
 
   resetPlaybackStatusInterval: () => {
     set((state) => ({
@@ -42,15 +47,7 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
   resetStates: () => {
     set((state) => ({
       ...state,
-      currentAudio: null,
-      currentSound: null,
-      currentSoundDuration: 0,
-
-      currentSoundPosition: 0,
-
-      isPlayingCurrentAudio: false,
-
-      playbackStatusInterval: null,
+      ...initialState,
     }));
   },
   setCurrentSound: (Sound) => {
