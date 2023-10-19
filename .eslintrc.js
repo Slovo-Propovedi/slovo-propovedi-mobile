@@ -2,9 +2,16 @@
 const process = require('process');
 
 module.exports = {
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/eslint-recommended', 'plugin:@typescript-eslint/recommended', '@feature-sliced', 'plugin:storybook/recommended'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/eslint-recommended',
+    'plugin:@typescript-eslint/recommended',
+    '@feature-sliced',
+    'plugin:storybook/recommended',
+    'plugin:perfectionist/recommended-natural',
+  ],
   parser: '@typescript-eslint/parser',
-  plugins: ['jest'],
+  plugins: ['jest', '@typescript-eslint', 'perfectionist'],
   env: {
     jest: true,
   },
@@ -38,5 +45,18 @@ module.exports = {
     semi: ['error', 'always'],
     curly: ['error', 'all'],
     'arrow-body-style': ['error', 'as-needed'],
+    'perfectionist/sort-imports': 'off',
+    '@typescript-eslint/consistent-type-imports': [
+      'error',
+      {
+        prefer: 'type-imports',
+      },
+    ],
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: ['../../'],
+      },
+    ],
   },
 };

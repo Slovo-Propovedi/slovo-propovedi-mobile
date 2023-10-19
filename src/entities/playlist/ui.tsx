@@ -1,49 +1,40 @@
 import React, { useState } from 'react';
-import {
-  Dimensions,
-  ImageBackground,
-  LayoutChangeEvent,
-  ScrollView,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
-import { INDENTS, FONT_SIZES, COLORS, IMAGE_PLACEHOLDER } from 'shared';
+import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
+import { Dimensions, ImageBackground, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { COLORS, FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS } from 'shared';
 
 const windowHeight = Dimensions.get('window').height;
 
 interface PlaylistProps {
-  title: string;
   children: React.ReactElement | React.ReactElement[];
-  previewUrl?: string;
-  description?: string;
-  style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  description?: string;
+  previewUrl?: string;
+  style?: StyleProp<ViewStyle>;
+  title: string;
 }
 
 export const Playlist = ({
-  title,
   children,
-  previewUrl,
-  description,
-  style,
   contentContainerStyle,
+  description,
+  previewUrl,
+  style,
+  title,
 }: PlaylistProps) => {
-  const [previewLayout, setPreviewLayout] = useState({ width: 0, height: 0 });
+  const [previewLayout, setPreviewLayout] = useState({ height: 0, width: 0 });
 
   const handleLayout = (event: LayoutChangeEvent) => {
-    const { width, height } = event.nativeEvent.layout;
-    setPreviewLayout({ width, height });
+    const { height, width } = event.nativeEvent.layout;
+    setPreviewLayout({ height, width });
   };
 
   return (
-    <ScrollView style={style} contentContainerStyle={contentContainerStyle}>
+    <ScrollView contentContainerStyle={contentContainerStyle} style={style}>
       <ImageBackground
-        style={styles.preview}
-        source={{ uri: previewUrl || IMAGE_PLACEHOLDER }}
         onLayout={handleLayout}
+        source={{ uri: previewUrl || IMAGE_PLACEHOLDER }}
+        style={styles.preview}
       >
         <Text style={[styles.title, { marginTop: previewLayout.height / 3 }]}>{title}</Text>
 
@@ -56,26 +47,26 @@ export const Playlist = ({
 };
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: FONT_SIZES.h1,
-    paddingBottom: INDENTS.main,
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    color: COLORS.primary,
+  content: { padding: INDENTS.low, paddingRight: 0 },
+
+  description: {
+    color: COLORS.white,
+    fontSize: FONT_SIZES.h3,
+    marginTop: 'auto',
+    maxHeight: '20%',
+    padding: INDENTS.main,
   },
 
   preview: {
-    width: '100%',
     height: windowHeight * 0.7,
+    width: '100%',
   },
 
-  description: {
-    padding: INDENTS.main,
-    marginTop: 'auto',
-    maxHeight: '20%',
-    fontSize: FONT_SIZES.h3,
-    color: COLORS.white,
+  title: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.h1,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    paddingBottom: INDENTS.main,
   },
-
-  content: { padding: INDENTS.low, paddingRight: 0 },
 });

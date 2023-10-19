@@ -1,5 +1,5 @@
 export const getFilePath = (file: File) =>
-  new Promise<string | null>((resolve, reject) => {
+  new Promise<null | string>((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onloadend = () => {

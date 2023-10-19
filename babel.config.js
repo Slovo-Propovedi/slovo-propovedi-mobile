@@ -2,23 +2,22 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ['babel-preset-expo'],
     plugins: [
       [
         'module-resolver',
         {
-          root: ['./src/'],
           alias: {
             app: './src/app',
-            routing: './src/routing',
-            pages: './src/pages',
-            widgets: './src/widgets',
-            features: './src/features',
             entities: './src/entities',
+            features: './src/features',
+            pages: './src/pages',
             shared: './src/shared',
+            widgets: './src/widgets',
           },
+          root: ['./src/'],
         },
       ],
     ],
+    presets: ['babel-preset-expo'],
   };
 };

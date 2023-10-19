@@ -1,7 +1,7 @@
-import { FetchedPlaylist } from '../../types';
+import type { FetchedPlaylist } from 'shared/types';
 
 export const revelationPlaylist: FetchedPlaylist = {
-  title: 'Откровение',
-  previewUrl: 'https://slovo-istini.com/image/categories/66/otkrovenie_.jpg',
   list: [],
+  previewUrl: 'https://slovo-istini.com/image/categories/66/otkrovenie_.jpg',
+  title: 'Откровение',
 };

@@ -1,69 +1,70 @@
 import React from 'react';
-import { Image, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed';
 
 interface ListItemProps<T> {
   data: T;
-  testID?: string;
-  style?: StyleProp<ViewStyle>;
   previewPlaceholderText?: string;
+  style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
-type ListItemComponent = <T extends { title: string; previewUrl?: string }>(
+type ListItemComponent = <T extends { previewUrl?: string; title: string }>(
   props: ListItemProps<T>,
 ) => JSX.Element | null;
 
 export const ListItem: ListItemComponent = ({
-  data: { title, previewUrl },
-  testID,
-  style,
+  data: { previewUrl, title },
   previewPlaceholderText = '',
+  style,
+  testID,
 }) => (
-  <View testID={testID} style={[styles.listItem, style]}>
-    <View testID='preview-or-counter' style={styles.previewOrCounter}>
+  <View style={[styles.listItem, style]} testID={testID}>
+    <View style={styles.previewOrCounter} testID='preview-or-counter'>
       {previewUrl ? (
-        <Image testID='preview' style={styles.preview} source={{ uri: previewUrl }} />
+        <Image source={{ uri: previewUrl }} style={styles.preview} testID='preview' />
       ) : (
         <Text style={styles.counter}>{previewPlaceholderText}</Text>
       )}
     </View>
-    <Text testID='title' style={styles.listItemTitle}>
+    <Text style={styles.listItemTitle} testID='title'>
       {title}
     </Text>
   </View>
 );
 
 const styles = StyleSheet.create({
-  listItem: {
-    minHeight: 60,
-    maxHeight: 100,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  listItemTitle: {
-    fontSize: FONT_SIZES.h3,
-    borderBottomWidth: 1,
-    padding: INDENTS.low,
-    borderBottomColor: COLORS.lightGray,
-    flex: 1,
-  },
-  previewOrCounter: {
-    height: 40,
-    width: 40,
-    borderRadius: RADIUSES.low,
-  },
   counter: {
     backgroundColor: COLORS.lightGray,
-    height: '100%',
-
-    textAlign: 'center',
-    textAlignVertical: 'center',
-
     borderRadius: RADIUSES.low,
+
+    height: '100%',
+    textAlign: 'center',
+
+    textAlignVertical: 'center',
+  },
+  listItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    maxHeight: 100,
+    minHeight: 60,
+  },
+  listItemTitle: {
+    borderBottomColor: COLORS.lightGray,
+    borderBottomWidth: 1,
+    flex: 1,
+    fontSize: FONT_SIZES.h3,
+    padding: INDENTS.low,
   },
   preview: {
-    height: '100%',
     borderRadius: RADIUSES.low,
+    height: '100%',
+  },
+  previewOrCounter: {
+    borderRadius: RADIUSES.low,
+    height: 40,
+    width: 40,
   },
 });

@@ -1,18 +1,17 @@
 import { useNavigation } from '@react-navigation/native';
 import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
-import { usePlayer, usePlayerStore, schedulePushNotification } from 'entities/player';
-import { SermonData } from 'entities/sermon';
-import { ListenStackNavProp, ListenStackParamName } from 'shared';
-import { PlaylistData } from '../types';
+import { schedulePushNotification, usePlayer, usePlayerStore } from 'entities/player';
+import { ListenStackParamName } from 'shared';
+import type { ListenStackNavProp, PlaylistData, SermonData } from 'shared';
 
 export const usePlaySermon = () => {
-  const { play, getPlaybackStatus, recreateSound } = usePlayer({});
+  const { getPlaybackStatus, play, recreateSound } = usePlayer({});
 
-  const { setCurrentPlaylist, setCurrentAudio, currentAudio } = useSermonPlayerControlsStore(
+  const { currentAudio, setCurrentAudio, setCurrentPlaylist } = useSermonPlayerControlsStore(
     (store) => ({
-      setCurrentPlaylist: store.setCurrentPlaylist,
-      setCurrentAudio: store.setCurrentAudio,
       currentAudio: store.currentAudio,
+      setCurrentAudio: store.setCurrentAudio,
+      setCurrentPlaylist: store.setCurrentPlaylist,
     }),
   );
 
@@ -23,17 +22,17 @@ export const usePlaySermon = () => {
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
   const playSermon = async ({
-    sermon: { audioUrl, id, ...other },
     playlist,
+    sermon: { audioUrl, id, ...other },
   }: {
-    sermon: SermonData;
     playlist: PlaylistData;
+    sermon: SermonData;
   }) => {
     if (!audioUrl) {
       return;
     }
 
-    const newAudio = { ...other, id, audioUrl, previewUrl: playlist.previewUrl };
+    const newAudio = { ...other, audioUrl, id, previewUrl: playlist.previewUrl };
 
     setCurrentAudio(newAudio);
     setCurrentPlaylist(playlist);
@@ -50,9 +49,9 @@ export const usePlaySermon = () => {
     await getPlaybackStatus(newSound);
     await play(newSound);
     await schedulePushNotification({
-      title: newAudio.title,
-      subtitle: playlist.title,
       body: newAudio.description || '',
+      subtitle: playlist.title,
+      title: newAudio.title,
     });
   };
 

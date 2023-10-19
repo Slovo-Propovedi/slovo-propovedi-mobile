@@ -4,12 +4,12 @@ type GetBookLinkAsStringProps = {
   title: string;
 } & (
   | {
-      chapter?: undefined;
-      verse?: undefined;
+      chapter: number;
+      verse?: [from: number, to: number] | number;
     }
   | {
-      chapter: number;
-      verse?: number | [from: number, to: number];
+      chapter?: undefined;
+      verse?: undefined;
     }
 );
 
@@ -26,7 +26,7 @@ export const getBookLinkAsString = (props: GetBookLinkAsStringProps) => {
     return props.title;
   }
 
-  const { title, chapter, verse } = props;
+  const { chapter, title, verse } = props;
 
   const verseAsString =
     (isNonNullable(verse) && Array.isArray(verse) ? `${verse[0]}-${verse[1]}` : verse) || '';

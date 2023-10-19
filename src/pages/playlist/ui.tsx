@@ -1,20 +1,18 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { Playlist, usePlaySermon } from 'entities/playlist';
-import { SermonData } from 'entities/sermon';
-import {
-  COLORS,
-  FONT_SIZES,
-  INDENTS,
-  OnPressTouchableListItem,
-  TouchableListItem,
-  ListenStackScreenProps,
+import { usePlaySermon } from 'features/sermon-player-controls';
+import { Playlist } from 'entities/playlist';
+import type {
   ListenStackParamName,
+  ListenStackScreenProps,
+  OnPressTouchableListItem,
+  SermonData,
 } from 'shared';
+import { COLORS, FONT_SIZES, INDENTS, TouchableListItem } from 'shared';
 
 export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamName.Playlist>> = ({
   route: {
-    params: { title, list, previewUrl, description },
+    params: { description, list, previewUrl, title },
     params: playlist,
   },
 }) => {
@@ -25,17 +23,17 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
 
   return (
     <Playlist
+      description={description}
+      previewUrl={previewUrl}
       style={styles.content}
       title={title}
-      previewUrl={previewUrl}
-      description={description}
     >
       {list.map((sermon, index) => (
         <TouchableListItem
-          key={`TouchableItem-${index}`}
-          previewPlaceholderText={`${index + 1}`}
           data={sermon}
+          key={`TouchableItem-${index}`}
           onPress={onPressPlaylistItem}
+          previewPlaceholderText={`${index + 1}`}
         />
       ))}
     </Playlist>
@@ -47,13 +45,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
     backgroundColor: 'white',
+    flex: 1,
   },
+  list: { paddingLeft: INDENTS.main },
   title: {
     color: COLORS.primary,
     fontSize: FONT_SIZES.h2,
     paddingVertical: INDENTS.main,
   },
-  list: { paddingLeft: INDENTS.main },
 });

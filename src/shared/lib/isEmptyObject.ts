@@ -1,4 +1,4 @@
-export const isEmptyObject = <T extends object | undefined | null>(obj: T) => {
+export const isEmptyObject = <T extends null | object | undefined>(obj: T) => {
   for (const key in obj) {
     return false;
   }

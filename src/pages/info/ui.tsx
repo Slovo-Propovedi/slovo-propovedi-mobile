@@ -1,11 +1,12 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, RootTabName, RootTabsScreenProps } from 'shared';
+import type { RootTabName, RootTabsScreenProps } from 'shared';
+import { COLORS } from 'shared';
 
 export const Info: React.FC<RootTabsScreenProps<RootTabName.Info>> = () => (
   <SafeAreaView style={styles.info}>
-    <View style={{ flex: 1, backgroundColor: COLORS.disabled }} />
+    <View style={{ backgroundColor: COLORS.disabled, flex: 1 }} />
   </SafeAreaView>
 );
 

@@ -1,18 +1,12 @@
 import React, { useEffect } from 'react';
-import { View, ImageBackground, StyleSheet, Dimensions, Text } from 'react-native';
+import { Dimensions, ImageBackground, StyleSheet, Text, View } from 'react-native';
 import {
   SermonPlayerControls,
   useSermonPlayerControlsStore,
 } from 'features/sermon-player-controls';
 import { PlayerListenProgress } from 'entities/player';
-import {
-  FONT_SIZES,
-  IMAGE_PLACEHOLDER,
-  INDENTS,
-  ListenStackParamName,
-  ListenStackScreenProps,
-  useAppStore,
-} from 'shared';
+import type { ListenStackParamName, ListenStackScreenProps } from 'shared';
+import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, useAppStore } from 'shared';
 
 const windowWidth = Dimensions.get('window').width;
 
@@ -38,10 +32,10 @@ export const AudioPlayerScreen: React.FC<
   return (
     <View style={styles.container}>
       <ImageBackground
-        style={styles.preview}
+        alt='Sermon poster'
         imageStyle={styles.previewImage}
         source={{ uri: currentAudio?.previewUrl || IMAGE_PLACEHOLDER }}
-        alt='Sermon poster'
+        style={styles.preview}
       >
         {!currentAudio && <Text style={{ fontSize: FONT_SIZES.h1 }}>Проповедь не выбрана</Text>}
       </ImageBackground>
@@ -60,29 +54,29 @@ export const AudioPlayerScreen: React.FC<
 const previewSize = windowWidth - INDENTS.main * 2;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: INDENTS.main },
-  preview: {
-    marginTop: -(previewSize / 2),
-    width: previewSize,
-    height: previewSize * 1.2,
-
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  previewImage: { height: '100%', width: '100%', borderRadius: 20 },
-
   bottomContent: {
-    position: 'absolute',
     bottom: 0,
+    position: 'absolute',
   },
+  container: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: INDENTS.main },
 
-  title: {
-    fontSize: FONT_SIZES.h3,
+  controlsContainer: {
     marginVertical: INDENTS.main,
   },
 
-  controlsContainer: {
+  preview: {
+    alignItems: 'center',
+    height: previewSize * 1.2,
+    justifyContent: 'center',
+
+    marginTop: -(previewSize / 2),
+    width: previewSize,
+  },
+
+  previewImage: { borderRadius: 20, height: '100%', width: '100%' },
+
+  title: {
+    fontSize: FONT_SIZES.h3,
     marginVertical: INDENTS.main,
   },
 });

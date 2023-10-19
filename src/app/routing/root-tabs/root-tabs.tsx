@@ -1,13 +1,14 @@
-import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
+import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
 import { Info } from 'pages/info';
-import { RootTabsParamList, RootTabName, COLORS } from 'shared';
-import { CustomTabBar } from '../ui/custom-tab-bar';
-import { ListenRouting } from './listen';
-import { ReadRouting } from './read';
-import { StudyRouting } from './study';
+import type { RootTabsParamList } from 'shared';
+import { COLORS, RootTabName } from 'shared';
+import { ListenRouting } from '../listen';
+import { ReadRouting } from '../read';
+import { StudyRouting } from '../study';
+import { CustomTabBar } from './custom-tab-bar';
 
 const Tab = createBottomTabNavigator<RootTabsParamList>();
 
@@ -15,19 +16,23 @@ export const RootTabs = () => (
   <NavigationContainer>
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        headerShown: false,
+
+        lazy: route.name !== RootTabName.Study,
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarIcon: ({ color, focused, size }) => {
           if (route.name === RootTabName.Study) {
             return (
               <MaterialCommunityIcons
+                color={color}
                 name={focused ? 'notebook-edit' : 'notebook-edit-outline'}
                 size={size}
-                color={color}
               />
             );
           }
 
           if (route.name === RootTabName.Listen) {
-            return <AntDesign name={focused ? 'play' : 'playcircleo'} size={size} color={color} />;
+            return <AntDesign color={color} name={focused ? 'play' : 'playcircleo'} size={size} />;
           }
 
           const iconName = (() => {
@@ -38,24 +43,20 @@ export const RootTabs = () => (
             return focused ? 'book' : 'book-outline';
           })();
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Ionicons color={color} name={iconName} size={size} />;
         },
-
-        tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: 'gray',
-        headerShown: false,
-        lazy: route.name !== RootTabName.Study,
       })}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
-      <Tab.Screen name={RootTabName.Listen} component={ListenRouting} />
-      <Tab.Screen name={RootTabName.Read} component={ReadRouting} />
+      <Tab.Screen component={ListenRouting} name={RootTabName.Listen} />
+      <Tab.Screen component={ReadRouting} name={RootTabName.Read} />
       <Tab.Screen
-        name={RootTabName.Study}
         component={StudyRouting}
+        name={RootTabName.Study}
         // options={{ tabBarBadge: 3 }}
       />
-      <Tab.Screen name={RootTabName.Info} component={Info} />
+      <Tab.Screen component={Info} name={RootTabName.Info} />
     </Tab.Navigator>
   </NavigationContainer>
 );

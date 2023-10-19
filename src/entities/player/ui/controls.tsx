@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { PlaylistData } from 'entities/playlist';
-import { SermonData } from 'entities/sermon';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import type { PlaylistData, SermonData } from 'shared';
 import { isNonNullable } from 'shared';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
@@ -27,13 +27,13 @@ export const PlayerControls = ({
   style,
 }: PlayerControlsProps) => {
   const {
-    play,
-    pause,
-    recreateSound,
-    getPlaybackStatus,
     changeProgressPosition,
-    position,
     duration,
+    getPlaybackStatus,
+    pause,
+    play,
+    position,
+    recreateSound,
   } = usePlayer({
     onGetPlaybackStatus: (position, duration) => {
       if (position >= duration && !isNotAvailableNext) {
@@ -42,9 +42,9 @@ export const PlayerControls = ({
     },
   });
 
-  const { setCurrentSound, isPlayingCurrentAudio } = usePlayerStore((store) => ({
-    setCurrentSound: store.setCurrentSound,
+  const { isPlayingCurrentAudio, setCurrentSound } = usePlayerStore((store) => ({
     isPlayingCurrentAudio: store.isPlayingCurrentAudio,
+    setCurrentSound: store.setCurrentSound,
   }));
 
   const rewindTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -152,9 +152,9 @@ export const PlayerControls = ({
     newSound && setCurrentSound(newSound);
 
     await schedulePushNotification({
-      title: newAudio.title,
-      subtitle: currentPlaylist.title || 'Проповедует Андрей Вовк',
       body: newAudio.description || '',
+      subtitle: currentPlaylist.title || 'Проповедует Андрей Вовк',
+      title: newAudio.title,
     });
     await play(newSound);
     await getPlaybackStatus(newSound);
@@ -175,44 +175,44 @@ export const PlayerControls = ({
   };
 
   return (
-    <View testID='controls-container' style={[styles.controlsContainer, style]}>
+    <View style={[styles.controlsContainer, style]} testID='controls-container'>
       <PlayerControlButton
-        testID='prev-button'
-        onPress={switchToPreviousTrack}
-        type='prev'
-        size={size}
         isDisabled={indexOfCurrentAudioInPlaylist === 0 || !currentAudio}
+        onPress={switchToPreviousTrack}
+        size={size}
+        testID='prev-button'
+        type='prev'
       />
       <PlayerControlButton
-        testID='backward-button'
-        onPress={switchTrackBackward}
-        onLongPress={rewindAudio}
-        onPressOut={onPressOutAudioTwistButton}
-        type='backward'
-        size={size}
         isDisabled={position <= 0 || !currentAudio}
-      />
-      <PlayerControlButton
-        testID='play-button'
-        onPress={togglePlay}
-        type={isPlayingCurrentAudio ? 'pause' : 'play'}
-        size={size * 2}
-        isDisabled={!currentAudio}
-      />
-      <PlayerControlButton
-        testID='forward-button'
-        onPress={switchTrackForward}
-        onLongPress={fastForwardAudio}
+        onLongPress={rewindAudio}
+        onPress={switchTrackBackward}
         onPressOut={onPressOutAudioTwistButton}
-        type='forward'
         size={size}
-        isDisabled={position >= duration || !currentAudio}
+        testID='backward-button'
+        type='backward'
       />
       <PlayerControlButton
-        onPress={switchToNextTrack}
-        type='next'
+        isDisabled={!currentAudio}
+        onPress={togglePlay}
+        size={size * 2}
+        testID='play-button'
+        type={isPlayingCurrentAudio ? 'pause' : 'play'}
+      />
+      <PlayerControlButton
+        isDisabled={position >= duration || !currentAudio}
+        onLongPress={fastForwardAudio}
+        onPress={switchTrackForward}
+        onPressOut={onPressOutAudioTwistButton}
         size={size}
+        testID='forward-button'
+        type='forward'
+      />
+      <PlayerControlButton
         isDisabled={isNotAvailableNext || !currentAudio}
+        onPress={switchToNextTrack}
+        size={size}
+        type='next'
       />
     </View>
   );
@@ -220,9 +220,9 @@ export const PlayerControls = ({
 
 const styles = StyleSheet.create({
   controlsContainer: {
-    width: '100%',
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-evenly',
-    alignItems: 'center',
+    width: '100%',
   },
 });

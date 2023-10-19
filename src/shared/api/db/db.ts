@@ -1,23 +1,24 @@
+import type { DB } from 'shared/types';
+import { FetchedSermonsGroupName } from 'shared/types';
 import {
-  markPlaylist,
-  lukePlaylist,
-  johnPlaylist,
   actsPlaylist,
-  jacobPlaylist,
-  firstPetePlaylist,
-  secondPetePlaylist,
-  firstCorinthiansPlaylist,
-  secondCorinthiansPlaylist,
   ephesiansPlaylist,
-  philippiansPlaylist,
   firstAndSecondThessaloniansPlaylist,
-  titusPlaylist,
-  philemonPlaylist,
-  revelationPlaylist,
-  unionWithChristPlaylist,
+  firstCorinthiansPlaylist,
+  firstPetePlaylist,
   isThereAnUnforgivableSinPlaylist,
+  jacobPlaylist,
+  johnPlaylist,
+  lukePlaylist,
+  markPlaylist,
+  philemonPlaylist,
+  philippiansPlaylist,
+  revelationPlaylist,
+  secondCorinthiansPlaylist,
+  secondPetePlaylist,
+  titusPlaylist,
+  unionWithChristPlaylist,
 } from './playlists';
-import { DB, FetchedSermonsGroupName } from './types';
 
 export const db: DB = {
   sermons: [

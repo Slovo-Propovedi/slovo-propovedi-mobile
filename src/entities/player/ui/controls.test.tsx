@@ -18,38 +18,38 @@ let mockedUsePlayerStore = usePlayerStore as jest.MockedFunction<typeof usePlaye
 let mockedUsePlayer = usePlayer as jest.MockedFunction<typeof usePlayer>;
 
 const getNewMockUsePlayerReturnValue = ({
+  durationInitial = 0,
   isPlayingInitial = false,
   positionInitial = 3000,
-  durationInitial = 0,
 }: {
+  durationInitial?: number;
   isPlayingInitial?: boolean;
   positionInitial?: number;
-  durationInitial?: number;
 }) => {
   let position = positionInitial;
 
   return {
-    isPlaying: isPlayingInitial,
-    play: jest.fn(),
-    pause: jest.fn(),
-    position,
-    stop: jest.fn(),
-    unload: jest.fn(),
-    // Как и предполагал - не сработало
     // TODO доделать правильно
     changeProgressPosition: jest.fn(async () => {
       position += changeValue;
     }),
-    recreateSound: jest.fn(),
-    getPlaybackStatus: jest.fn(),
     duration: durationInitial,
+    getPlaybackStatus: jest.fn(),
+    isPlaying: isPlayingInitial,
+    pause: jest.fn(),
+    play: jest.fn(),
+    // Как и предполагал - не сработало
+    position,
+    recreateSound: jest.fn(),
+    stop: jest.fn(),
+    unload: jest.fn(),
   };
 };
 
 const getNewMockUsePlayerStoreValue = () => ({
+  goToNextTrack: jest.fn(),
   isPlayingCurrentAudio: false,
   setCurrentAudio: jest.fn(),
-  goToNextTrack: jest.fn(),
 });
 
 let mockUsePlayerReturnValue = getNewMockUsePlayerReturnValue({});
@@ -58,28 +58,28 @@ let mockUsePlayerStoreValue = getNewMockUsePlayerStoreValue();
 
 const currentPlaylist = {
   id: '1',
-  title: 'Playlist 1',
-  previewUrl: 'https://test.com/preview1.mp3',
   list: [
     {
+      audioUrl: 'https://test.com/audio1.mp3',
+      description: 'Description 1',
       id: '1',
       title: 'Title 1',
-      description: 'Description 1',
-      audioUrl: 'https://test.com/audio1.mp3',
     },
     {
+      audioUrl: 'https://test.com/audio2.mp3',
+      description: 'Description 2',
       id: '2',
       title: 'Title 2',
-      description: 'Description 2',
-      audioUrl: 'https://test.com/audio2.mp3',
     },
     {
+      audioUrl: 'https://test.com/audio3.mp3',
+      description: 'Description 3',
       id: '3',
       title: 'Title 3',
-      description: 'Description 3',
-      audioUrl: 'https://test.com/audio3.mp3',
     },
   ],
+  previewUrl: 'https://test.com/preview1.mp3',
+  title: 'Playlist 1',
 };
 
 const getMockPlayerControlsProps = () => ({

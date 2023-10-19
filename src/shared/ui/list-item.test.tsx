@@ -31,7 +31,7 @@ describe('<TouchableListItem>', () => {
 
   test('displayed placeholder text if previewUrl in data not defined', () => {
     render(
-      <ListItem previewPlaceholderText={previewPlaceholderTextStub} data={{ title: titleStub }} />,
+      <ListItem data={{ title: titleStub }} previewPlaceholderText={previewPlaceholderTextStub} />,
     );
 
     const previewOrCounter = screen.getByTestId('preview-or-counter');
@@ -44,8 +44,8 @@ describe('<TouchableListItem>', () => {
   test('displayed preview if previewUrl in data is defined', () => {
     render(
       <ListItem
+        data={{ previewUrl: previewUrlStub, title: titleStub }}
         previewPlaceholderText={previewPlaceholderTextStub}
-        data={{ title: titleStub, previewUrl: previewUrlStub }}
       />,
     );
 

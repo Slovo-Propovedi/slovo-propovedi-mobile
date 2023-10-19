@@ -1,10 +1,10 @@
-import { FetchedPlaylist } from '../../types';
+import type { FetchedPlaylist } from 'shared/types';
 
 export const lukePlaylist: FetchedPlaylist = {
-  title: 'Евангелие от Луки',
+  list: [],
   previewUrl:
     'https://slovo-istini.com/image/categories/78/whatsapp_image_2022-02-15_at_11.20.06.jpeg',
-  list: [],
+  title: 'Евангелие от Луки',
   // list: [
   //   {
   //     title: 'Глава 1',

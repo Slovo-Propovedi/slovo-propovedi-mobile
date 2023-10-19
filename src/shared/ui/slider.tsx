@@ -1,39 +1,33 @@
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
-import {
-  GestureResponderEvent,
-  ScrollView,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
+import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FONT_SIZES, INDENTS } from 'shared/themed';
-import { SliderItemSize, SliderItem } from './slider-item';
+import type { SliderItemSize } from './slider-item';
+import { SliderItem } from './slider-item';
 
 type SliderItemsElement<D extends object> = {
-  previewURL: string;
-  description?: string;
   data: D;
+  description?: string;
+  previewURL: string;
 };
 
 interface SliderProps<D extends object> {
-  title?: string;
   items: SliderItemsElement<D>[];
-  onPressTitle?: (event: GestureResponderEvent) => void;
-  onPressItem?: (data: D, event: GestureResponderEvent) => void;
   itemsSize?: SliderItemSize;
+  onPressItem?: (data: D, event: GestureResponderEvent) => void;
+  onPressTitle?: (event: GestureResponderEvent) => void;
   style?: StyleProp<ViewStyle>;
+  title?: string;
 }
 
 export const Slider = <D extends object>({
-  title,
   items,
-  onPressTitle,
-  onPressItem,
   itemsSize,
+  onPressItem,
+  onPressTitle,
   style,
+  title,
 }: SliderProps<D>) => {
   if (!items || !items.length) {
     return null;
@@ -41,25 +35,25 @@ export const Slider = <D extends object>({
 
   return (
     <View style={style}>
-      <Text testID='title' style={styles.title} onPress={onPressTitle}>
+      <Text onPress={onPressTitle} style={styles.title} testID='title'>
         {title}
-        <FontAwesome name='chevron-right' size={20} color='black' />
+        <FontAwesome color='black' name='chevron-right' size={20} />
       </Text>
       <ScrollView
         contentContainerStyle={styles.contentContainer}
         horizontal
         showsHorizontalScrollIndicator={false}
       >
-        {items.map(({ previewURL, description, data }, index) => (
+        {items.map(({ data, description, previewURL }, index) => (
           <SliderItem
-            key={index}
-            testID='slider-item'
-            previewURL={previewURL}
             description={description}
-            size={itemsSize}
+            key={index}
             onPress={(event) => {
               onPressItem?.(data, event);
             }}
+            previewURL={previewURL}
+            size={itemsSize}
+            testID='slider-item'
           />
         ))}
       </ScrollView>
@@ -68,11 +62,11 @@ export const Slider = <D extends object>({
 };
 
 const styles = StyleSheet.create({
+  contentContainer: {
+    gap: INDENTS.low,
+  },
   title: {
     fontSize: FONT_SIZES.h2,
     fontWeight: 'bold',
-  },
-  contentContainer: {
-    gap: INDENTS.low,
   },
 });

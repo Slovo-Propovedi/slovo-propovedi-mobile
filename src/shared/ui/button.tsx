@@ -1,21 +1,14 @@
-import {
-  ButtonProps,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TextStyle,
-  TouchableOpacity,
-  ViewStyle,
-} from 'react-native';
-import { COLORS, INDENTS, FONT_SIZES, RADIUSES } from 'shared/themed';
+import type { ButtonProps, StyleProp, TextStyle, ViewStyle } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed';
 
 type CustomButtonProps = ButtonProps & { style?: ViewStyle; titleStyle?: TextStyle };
 
 export const Button = ({
-  title,
   color,
   disabled,
   style,
+  title,
   titleStyle,
   ...rest
 }: CustomButtonProps) => {
@@ -28,7 +21,7 @@ export const Button = ({
   buttonStyles.push(style);
 
   return (
-    <TouchableOpacity style={buttonStyles} disabled={disabled} {...rest}>
+    <TouchableOpacity disabled={disabled} style={buttonStyles} {...rest}>
       <Text style={[styles.text, titleStyle, { color }]}>{title}</Text>
     </TouchableOpacity>
   );
@@ -36,11 +29,11 @@ export const Button = ({
 
 const styles = StyleSheet.create({
   button: {
-    padding: INDENTS.low,
-    borderRadius: RADIUSES.low,
-    backgroundColor: COLORS.blue,
-    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: COLORS.blue,
+    borderRadius: RADIUSES.low,
+    justifyContent: 'center',
+    padding: INDENTS.low,
   },
   text: {
     fontSize: FONT_SIZES.h5,

@@ -1,15 +1,15 @@
 import * as FileSystem from 'expo-file-system';
 import { Linking, Platform } from 'react-native';
-import { MimeType } from 'shared/types';
+import type { MimeType } from 'shared/types';
 import { processRequest } from './processRequest';
 
 type DownloadFileArgs = {
-  url: string;
   fileName: string;
   mimeType: MimeType;
+  url: string;
 };
 
-export const downloadFile = async ({ url, fileName, mimeType }: DownloadFileArgs) => {
+export const downloadFile = async ({ fileName, mimeType, url }: DownloadFileArgs) => {
   // Скачивание пока не работает
 
   // const share = async (url: string) => {

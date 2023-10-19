@@ -1,37 +1,31 @@
-import React, { ReactNode } from 'react';
-import {
-  GestureResponderEvent,
-  ImageBackground,
-  ImageStyle,
-  StyleProp,
-  StyleSheet,
-  TouchableOpacity,
-  ViewStyle,
-} from 'react-native';
+import type { ReactNode } from 'react';
+import React from 'react';
+import type { GestureResponderEvent, ImageStyle, StyleProp, ViewStyle } from 'react-native';
+import { ImageBackground, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface TouchableImageBackgroundProps {
+  children: ReactNode;
+  imageStyle?: StyleProp<ImageStyle>;
   onPress?: (event: GestureResponderEvent) => void;
   previewSrc: string;
   style?: StyleProp<ViewStyle>;
-  imageStyle?: StyleProp<ImageStyle>;
-  children: ReactNode;
   testID?: string;
 }
 
 export const TouchableImageBackground = ({
+  children,
+  imageStyle,
   onPress,
   previewSrc,
   style,
-  imageStyle,
-  children,
   testID,
 }: TouchableImageBackgroundProps) => (
-  <TouchableOpacity onPress={onPress} testID={testID} activeOpacity={0.8}>
+  <TouchableOpacity activeOpacity={0.8} onPress={onPress} testID={testID}>
     <ImageBackground
-      testID='image-background'
+      imageStyle={[styles.backgroundImage, imageStyle]}
       source={{ uri: previewSrc }}
       style={[styles.item, style]}
-      imageStyle={[styles.backgroundImage, imageStyle]}
+      testID='image-background'
     >
       {children}
     </ImageBackground>
@@ -39,8 +33,8 @@ export const TouchableImageBackground = ({
 );
 
 const styles = StyleSheet.create({
-  item: { minHeight: 50, minWidth: 50 },
   backgroundImage: {
     resizeMode: 'cover',
   },
+  item: { minHeight: 50, minWidth: 50 },
 });

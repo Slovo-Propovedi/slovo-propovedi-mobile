@@ -1,8 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { usePlaySermon, PlaylistData } from 'entities/playlist';
-import { INDENTS, SliderItemSize, Slider, ListenStackParamName, ListenStackNavProp } from 'shared';
+import { usePlaySermon } from 'features/sermon-player-controls';
+import type { ListenStackNavProp, PlaylistData } from 'shared';
+import { INDENTS, ListenStackParamName, Slider, SliderItemSize } from 'shared';
 import { useNewSermonsStore } from './model';
 
 export const NewSermonsSlider = () => {
@@ -12,9 +13,9 @@ export const NewSermonsSlider = () => {
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { newSermons, getNewSermons } = useNewSermonsStore((state) => ({
-    newSermons: state.newSermons,
+  const { getNewSermons, newSermons } = useNewSermonsStore((state) => ({
     getNewSermons: state.getNewSermons,
+    newSermons: state.newSermons,
   }));
 
   const onItemPress = async (playlist: PlaylistData) => {
@@ -39,18 +40,18 @@ export const NewSermonsSlider = () => {
 
   return (
     <Slider
-      style={styles.slider}
-      itemsSize={SliderItemSize.Small}
-      title='Новые'
       items={newSermons.map((item) => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
+      itemsSize={SliderItemSize.Small}
       onPressItem={onItemPress}
       onPressTitle={() => {
         onPressTitle(newSermons);
       }}
+      style={styles.slider}
+      title='Новые'
     />
   );
 };

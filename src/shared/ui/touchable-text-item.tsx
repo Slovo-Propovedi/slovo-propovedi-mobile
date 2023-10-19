@@ -1,22 +1,23 @@
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { INDENTS, FONT_SIZES } from 'shared/themed';
-import { TouchableItemProps, TouchableItem } from 'shared/ui/touchable-item';
+import { FONT_SIZES, INDENTS } from 'shared/themed';
+import type { TouchableItemProps } from 'shared/ui/touchable-item';
+import { TouchableItem } from 'shared/ui/touchable-item';
 
 type TouchableTextItemProps = Omit<TouchableItemProps, 'children'> & { title: string };
 
-export const TouchableTextItem = ({ title, onPress, disabled, style }: TouchableTextItemProps) => (
-  <TouchableItem style={[style, styles.component]} onPress={onPress} disabled={disabled}>
+export const TouchableTextItem = ({ disabled, onPress, style, title }: TouchableTextItemProps) => (
+  <TouchableItem disabled={disabled} onPress={onPress} style={[style, styles.component]}>
     <Text style={styles.text}>{title}</Text>
   </TouchableItem>
 );
 
 const styles = StyleSheet.create({
   component: {
-    minHeight: 50,
-    padding: INDENTS.main,
     alignItems: 'center',
     flexDirection: 'row',
+    minHeight: 50,
+    padding: INDENTS.main,
   },
   text: {
     fontSize: FONT_SIZES.h3,

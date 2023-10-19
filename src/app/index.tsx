@@ -4,11 +4,11 @@ import { RootTabs } from './routing';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
     allowAnnouncements: true,
     priority: Notifications.AndroidNotificationPriority.HIGH,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowAlert: true,
   }),
 });
 

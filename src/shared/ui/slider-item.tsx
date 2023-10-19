@@ -1,39 +1,32 @@
 import React from 'react';
-import {
-  Dimensions,
-  GestureResponderEvent,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
+import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { COLORS, FONT_SIZES, RADIUSES } from 'shared/themed';
 import { TouchableImageBackground } from 'shared/ui/touchable-image-background';
 
-const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
+const { height: windowHeight, width: windowWidth } = Dimensions.get('window');
 
 export enum SliderItemSize {
-  Small = 'small',
-  Middle = 'middle',
   Large = 'large',
+  Middle = 'middle',
+  Small = 'small',
 }
 
 export interface SliderItemProps {
-  style?: StyleProp<ViewStyle>;
-  previewURL: string;
   description?: string;
-  size?: SliderItemSize;
   onPress?: (event: GestureResponderEvent) => void;
+  previewURL: string;
+  size?: SliderItemSize;
+  style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
 export const SliderItem = ({
-  style,
-  previewURL,
   description,
-  size = SliderItemSize.Small,
   onPress,
+  previewURL,
+  size = SliderItemSize.Small,
+  style,
   testID,
 }: SliderItemProps) => {
   if (!previewURL) {
@@ -42,19 +35,19 @@ export const SliderItem = ({
 
   return (
     <TouchableImageBackground
-      testID={testID}
+      imageStyle={styles.image}
+      onPress={onPress}
+      previewSrc={previewURL}
       style={[
         styles.component,
         {
-          [SliderItemSize.Small]: styles.componentSmall,
-          [SliderItemSize.Middle]: styles.componentMiddle,
           [SliderItemSize.Large]: styles.componentLarge,
+          [SliderItemSize.Middle]: styles.componentMiddle,
+          [SliderItemSize.Small]: styles.componentSmall,
         }[size],
         style,
       ]}
-      imageStyle={styles.image}
-      previewSrc={previewURL}
-      onPress={onPress}
+      testID={testID}
     >
       {description && (
         <View style={styles.description} testID='slider-item-description'>
@@ -71,32 +64,32 @@ const componentLargeSize = windowWidth > windowHeight ? windowHeight - 50 : wind
 
 const styles = StyleSheet.create({
   component: {
-    justifyContent: 'flex-end',
     borderRadius: RADIUSES.large,
+    justifyContent: 'flex-end',
   },
-  componentSmall: {
-    width: 150,
-    height: 150,
-  },
-  componentMiddle: { width: 250, height: 250 },
   componentLarge: {
-    width: componentLargeSize,
     height: componentLargeSize,
+    width: componentLargeSize,
+  },
+  componentMiddle: { height: 250, width: 250 },
+  componentSmall: {
+    height: 150,
+    width: 150,
+  },
+  description: {
+    backgroundColor: COLORS.black,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    maxHeight: '30%',
+    opacity: 0.7,
+    padding: 10,
+  },
+
+  descriptionText: {
+    color: 'white',
+    fontSize: FONT_SIZES.h3,
   },
   image: {
     borderRadius: RADIUSES.large,
-  },
-
-  description: {
-    padding: 10,
-    backgroundColor: COLORS.black,
-    opacity: 0.7,
-    maxHeight: '30%',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  descriptionText: {
-    fontSize: FONT_SIZES.h3,
-    color: 'white',
   },
 });

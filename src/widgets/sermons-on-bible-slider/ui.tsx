@@ -1,23 +1,16 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { PlaylistData } from 'entities/playlist';
-import {
-  INDENTS,
-  RADIUSES,
-  SliderItemSize,
-  Slider,
-  ListenStackNavProp,
-  ListenStackParamName,
-} from 'shared';
+import type { ListenStackNavProp, PlaylistData } from 'shared';
+import { INDENTS, ListenStackParamName, RADIUSES, Slider, SliderItemSize } from 'shared';
 import { useOnBibleBooksListStore } from './model';
 
 export const SermonsOnBibleSlider = () => {
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { onBibleBooksList, getOnBibleBookList } = useOnBibleBooksListStore((state) => ({
-    onBibleBooksList: state.onBibleBooksList,
+  const { getOnBibleBookList, onBibleBooksList } = useOnBibleBooksListStore((state) => ({
     getOnBibleBookList: state.getOnBibleBookList,
+    onBibleBooksList: state.onBibleBooksList,
   }));
 
   const onItemPress = (params: PlaylistData) => {
@@ -44,25 +37,25 @@ export const SermonsOnBibleSlider = () => {
 
   return (
     <Slider
-      style={styles.slider}
-      itemsSize={SliderItemSize.Middle}
-      title='По Библии'
       items={onBibleBooksList.map((item) => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
+      itemsSize={SliderItemSize.Middle}
       onPressItem={onItemPress}
       onPressTitle={() => {
         onPressTitle(onBibleBooksList);
       }}
+      style={styles.slider}
+      title='По Библии'
     />
   );
 };
 
 const styles = StyleSheet.create({
   slider: {
-    paddingHorizontal: INDENTS.low,
     borderRadius: RADIUSES.low,
+    paddingHorizontal: INDENTS.low,
   },
 });

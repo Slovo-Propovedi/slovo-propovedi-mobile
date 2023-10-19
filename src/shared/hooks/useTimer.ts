@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export const useTimer = (startValue: number, timeout = 1000) => {
   const [countdownValue, setCountdownValue] = useState(startValue);

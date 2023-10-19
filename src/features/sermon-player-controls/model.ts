@@ -1,41 +1,28 @@
 import { create } from 'zustand';
-import { AudioPlayerData } from 'entities/player';
-import { PlaylistData } from 'entities/playlist';
+import type { AudioPlayerData } from 'entities/player';
+import type { PlaylistData } from 'shared';
 
 interface SermonPlayerControlsStore {
   currentAudio: AudioPlayerData | null;
   currentPlaylist: PlaylistData | null;
 
-  setCurrentAudio: (audio: AudioPlayerData) => void;
   resetCurrentAudio: () => void;
-
-  setCurrentPlaylist: (playlist: PlaylistData) => void;
   resetCurrentPlaylist: () => void;
 
   resetStates: () => void;
+  setCurrentAudio: (audio: AudioPlayerData) => void;
+
+  setCurrentPlaylist: (playlist: PlaylistData) => void;
 }
 
 export const useSermonPlayerControlsStore = create<SermonPlayerControlsStore>((set) => ({
   currentAudio: null,
   currentPlaylist: null,
 
-  setCurrentAudio: (audio) => {
-    set((state) => ({
-      ...state,
-      currentAudio: audio,
-    }));
-  },
   resetCurrentAudio: () => {
     set((state) => ({
       ...state,
       currentAudio: null,
-    }));
-  },
-
-  setCurrentPlaylist: (playlist) => {
-    set((state) => ({
-      ...state,
-      currentPlaylist: playlist,
     }));
   },
   resetCurrentPlaylist: () => {
@@ -50,6 +37,19 @@ export const useSermonPlayerControlsStore = create<SermonPlayerControlsStore>((s
       ...state,
       currentAudio: null,
       currentPlaylist: null,
+    }));
+  },
+  setCurrentAudio: (audio) => {
+    set((state) => ({
+      ...state,
+      currentAudio: audio,
+    }));
+  },
+
+  setCurrentPlaylist: (playlist) => {
+    set((state) => ({
+      ...state,
+      currentPlaylist: playlist,
     }));
   },
 }));

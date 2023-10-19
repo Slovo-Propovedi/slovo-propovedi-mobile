@@ -1,19 +1,20 @@
 import React from 'react';
-import { Image, Linking, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Image, Linking, StyleSheet } from 'react-native';
 import { TouchableImageBackground } from 'shared';
 
 interface YoutubePreviewProps {
-  url: string;
   previewSrc: string;
   style?: StyleProp<ViewStyle>;
+  url: string;
 }
 
-export const YoutubePreview = ({ url, previewSrc, style }: YoutubePreviewProps) => (
+export const YoutubePreview = ({ previewSrc, style, url }: YoutubePreviewProps) => (
   <TouchableImageBackground
-    previewSrc={previewSrc}
     onPress={() => {
       Linking.openURL(url);
     }}
+    previewSrc={previewSrc}
     style={[styles.item, style]}
   >
     <Image
@@ -25,13 +26,13 @@ export const YoutubePreview = ({ url, previewSrc, style }: YoutubePreviewProps) 
 );
 
 const styles = StyleSheet.create({
-  item: { minHeight: 50, minWidth: 50 },
   backgroundImage: {
     resizeMode: 'contain',
   },
+  item: { minHeight: 50, minWidth: 50 },
   youtubeButton: {
-    width: '100%',
     height: '100%',
     resizeMode: 'contain',
+    width: '100%',
   },
 });

@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { TouchableListItem } from './touchable-list-item';
 
 const dataStub = {
-  title: 'test',
   previewUrl: 'google.com',
+  title: 'test',
 };
 
 const mockFunction = jest.fn();

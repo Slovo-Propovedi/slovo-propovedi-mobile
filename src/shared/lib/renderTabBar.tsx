@@ -1,5 +1,5 @@
 import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { NavigationState, SceneRendererProps } from 'react-native-tab-view';
+import type { NavigationState, SceneRendererProps } from 'react-native-tab-view';
 import { INDENTS } from 'shared/themed';
 
 type RenderTabBar = (
@@ -31,8 +31,8 @@ export const getRenderTabBar: GetRenderTabBar =
           return (
             <TouchableOpacity
               key={`tab-bar-item-${route.key}`}
-              style={styles.tabItem}
               onPress={onPress}
+              style={styles.tabItem}
             >
               <Animated.Text style={{ opacity }}>{route.title}</Animated.Text>
             </TouchableOpacity>
@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   tabItem: {
-    flex: 1,
     alignItems: 'center',
+    flex: 1,
     padding: INDENTS.main,
   },
 });

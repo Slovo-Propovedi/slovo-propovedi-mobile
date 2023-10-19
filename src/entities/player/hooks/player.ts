@@ -14,24 +14,24 @@ export const usePlayer = ({
 
   const {
     currentSound,
-    currentSoundPosition,
     currentSoundDuration,
-    playbackStatusInterval,
+    currentSoundPosition,
     isPlayingCurrentAudio,
+    playbackStatusInterval,
+    setCurrentSoundDuration,
+    setCurrentSoundPosition,
     setIsPlayingCurrentAudio,
     setPlaybackStatusInterval,
-    setCurrentSoundPosition,
-    setCurrentSoundDuration,
   } = usePlayerStore((state) => ({
     currentSound: state.currentSound,
-    currentSoundPosition: state.currentSoundPosition,
     currentSoundDuration: state.currentSoundDuration,
-    playbackStatusInterval: state.playbackStatusInterval,
+    currentSoundPosition: state.currentSoundPosition,
     isPlayingCurrentAudio: state.isPlayingCurrentAudio,
+    playbackStatusInterval: state.playbackStatusInterval,
+    setCurrentSoundDuration: state.setCurrentSoundDuration,
+    setCurrentSoundPosition: state.setCurrentSoundPosition,
     setIsPlayingCurrentAudio: state.setIsPlayingCurrentAudio,
     setPlaybackStatusInterval: state.setPlaybackStatusInterval,
-    setCurrentSoundPosition: state.setCurrentSoundPosition,
-    setCurrentSoundDuration: state.setCurrentSoundDuration,
   }));
 
   const resetInterval = () => {
@@ -104,18 +104,18 @@ export const usePlayer = ({
     await Audio.setAudioModeAsync({
       // Определяет, поддерживает ли устройство запись аудио
       allowsRecordingIOS: false,
-      // Определяет реакцию приложения на внешние прерывания в iOS
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-      // Определяет, будет ли воспроизведение продолжаться, если на устройстве задействован "тихий" режим (с заглушенным звуком) на iOS-устройствах.
-      playsInSilentModeIOS: true,
       // Определяет реакцию приложения на внешние прерывания на Android-устройствах
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+      // Определяет реакцию приложения на внешние прерывания в iOS
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      // Определяет, будет ли звук воспроизводиться через динамик телефона при звуковом сигнале, а не через динамики громкой связи на Android-устройствах
+      playThroughEarpieceAndroid: false,
+      // Определяет, будет ли воспроизведение продолжаться, если на устройстве задействован "тихий" режим (с заглушенным звуком) на iOS-устройствах.
+      playsInSilentModeIOS: true,
       // Определяет, будет ли звук снижаться в громкости при получении прерываний на устройствах Android
       shouldDuckAndroid: true,
       // Определяет, должно ли приложение оставаться активным в фоновом режиме. Если установлено значение `true`, то аудио воспроизводится в фоновом режиме
       staysActiveInBackground: true,
-      // Определяет, будет ли звук воспроизводиться через динамик телефона при звуковом сигнале, а не через динамики громкой связи на Android-устройствах
-      playThroughEarpieceAndroid: false,
     });
 
     const { sound: newSound } = await Audio.Sound.createAsync({ uri: newAudioUrl });
@@ -158,7 +158,7 @@ export const usePlayer = ({
       return;
     }
 
-    const { durationMillis, positionMillis, isPlaying } = status;
+    const { durationMillis, isPlaying, positionMillis } = status;
 
     await AsyncStorage.multiSet([
       ['lastSoundPosition', `${positionMillis}`],
@@ -172,7 +172,7 @@ export const usePlayer = ({
 
     onGetPlaybackStatus?.(positionMillis, durationMillis || 0);
 
-    return { durationMillis, positionMillis, isPlaying };
+    return { durationMillis, isPlaying, positionMillis };
   };
 
   // Remove notification with player
@@ -188,15 +188,15 @@ export const usePlayer = ({
   );
 
   return {
+    changeProgressPosition,
+    duration: currentSoundDuration,
+    getPlaybackStatus,
     isPlaying: isPlayingCurrentAudio,
-    play,
     pause,
+    play,
+    position: currentSoundPosition,
+    recreateSound,
     stop,
     unload,
-    changeProgressPosition,
-    recreateSound,
-    getPlaybackStatus,
-    position: currentSoundPosition,
-    duration: currentSoundDuration,
   };
 };

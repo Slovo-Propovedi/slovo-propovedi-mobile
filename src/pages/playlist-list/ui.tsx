@@ -1,24 +1,16 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PlaylistData } from 'entities/playlist';
-import {
-  COLORS,
-  FONT_SIZES,
-  INDENTS,
-  OnPressTouchableListItem,
-  TouchableListItem,
-  ListenStackScreenProps,
-  ListenStackParamName,
-} from 'shared';
+import type { ListenStackScreenProps, OnPressTouchableListItem, PlaylistData } from 'shared';
+import { COLORS, FONT_SIZES, INDENTS, ListenStackParamName, TouchableListItem } from 'shared';
 
 export const PlaylistListScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.PlaylistList>
 > = ({
+  navigation: { navigate },
   route: {
     params: { playlists, title },
   },
-  navigation: { navigate },
 }) => {
   const { top } = useSafeAreaInsets();
 
@@ -35,10 +27,10 @@ export const PlaylistListScreen: React.FC<
       <View style={styles.list}>
         {playlists.map((playlist, index) => (
           <TouchableListItem
-            key={`TouchableItem-${index}`}
-            previewPlaceholderText={`${index + 1}`}
             data={playlist}
+            key={`TouchableItem-${index}`}
             onPress={onPressListItem}
+            previewPlaceholderText={`${index + 1}`}
           />
         ))}
       </View>
@@ -50,14 +42,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  titleContainer: {
-    paddingBottom: INDENTS.main,
-    alignItems: 'center',
-  },
+  list: { paddingLeft: INDENTS.main },
   title: {
     color: COLORS.primary,
     fontSize: FONT_SIZES.h1,
     paddingVertical: INDENTS.main,
   },
-  list: { paddingLeft: INDENTS.main },
+  titleContainer: {
+    alignItems: 'center',
+    paddingBottom: INDENTS.main,
+  },
 });

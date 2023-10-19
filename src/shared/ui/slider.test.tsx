@@ -2,11 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Slider } from './slider';
 import '@testing-library/jest-native/extend-expect';
 
-const itemStub = { previewURL: 'https//:vk.com', data: {} };
+const itemStub = { data: {}, previewURL: 'https//:vk.com' };
 
-const sliderStub = { title: 'title', items: [itemStub] };
+const sliderStub = { items: [itemStub], title: 'title' };
 
-const mockData: { text: string | null } = { text: null };
+const mockData: { text: null | string } = { text: null };
 
 describe('<Slider/>', () => {
   beforeEach(() => {
@@ -98,10 +98,10 @@ describe('<Slider/>', () => {
     render(
       <Slider
         items={sliderStub.items}
-        title={sliderStub.title}
         onPressTitle={() => {
           mockData.text = 'new value';
         }}
+        title={sliderStub.title}
       />,
     );
 

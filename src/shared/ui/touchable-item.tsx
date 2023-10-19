@@ -1,27 +1,22 @@
 import React from 'react';
-import {
-  GestureResponderEvent,
-  StyleProp,
-  StyleSheet,
-  TouchableOpacity,
-  ViewStyle,
-} from 'react-native';
+import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS } from 'shared/themed';
 
 export interface TouchableItemProps {
   children: React.ReactNode;
-  onPress: (event: GestureResponderEvent) => void;
   disabled?: boolean;
-  testID?: string;
+  onPress: (event: GestureResponderEvent) => void;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 export const TouchableItem = ({
   children,
-  onPress,
   disabled = false,
-  testID,
+  onPress,
   style,
+  testID,
 }: TouchableItemProps) => {
   const buttonStyles: StyleProp<ViewStyle>[] = [styles.item];
 
@@ -32,7 +27,7 @@ export const TouchableItem = ({
   buttonStyles.push(style);
 
   return (
-    <TouchableOpacity testID={testID} style={buttonStyles} disabled={disabled} onPress={onPress}>
+    <TouchableOpacity disabled={disabled} onPress={onPress} style={buttonStyles} testID={testID}>
       {children}
     </TouchableOpacity>
   );

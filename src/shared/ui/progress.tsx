@@ -4,26 +4,26 @@ import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-
 import { COLORS } from 'shared/themed';
 
 type ProgressProps = {
-  total: number;
-  progress: number;
   loaderValue?: Animated.Value;
   onChangeProgressValue?: (newProgressValue: number) => void;
+  progress: number;
+  total: number;
 };
 
 export const Progress = ({
-  total,
-  progress,
   loaderValue: loaderValueInitial,
   onChangeProgressValue,
+  progress,
+  total,
 }: ProgressProps) => {
   const loaderValue = useRef(loaderValueInitial || new Animated.Value(0)).current;
 
   const viewElementRef = useRef<View>(null);
 
   const width = loaderValue.interpolate({
+    extrapolate: 'clamp',
     inputRange: [0, total],
     outputRange: ['0%', '100%'],
-    extrapolate: 'clamp',
   });
 
   const calculateAndCallChangeProgressValue = (coordinateX: number) =>
@@ -57,8 +57,8 @@ export const Progress = ({
         >
           <View ref={viewElementRef} style={styles.progressBar} testID='progress-bar'>
             <Animated.View
-              testID='progress-bar-inner'
               style={[StyleSheet.absoluteFill, { backgroundColor: COLORS.primary, width: width }]}
+              testID='progress-bar-inner'
             />
           </View>
         </PanGestureHandler>
@@ -69,8 +69,8 @@ export const Progress = ({
 
 const styles = StyleSheet.create({
   progressBar: {
+    backgroundColor: 'white',
     height: 10,
     width: '100%',
-    backgroundColor: 'white',
   },
 });

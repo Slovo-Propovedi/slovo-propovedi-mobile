@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Dimensions, Linking, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { Dimensions, Linking, StyleSheet, Text, View } from 'react-native';
+import type { GetYoutubeVideosResponseItem, SermonData } from 'shared';
 import {
   Button,
   COLORS,
   FONT_SIZES,
-  GetYoutubeVideosResponseItem,
   INDENTS,
   MimeType,
   YoutubePreview,
@@ -14,28 +15,14 @@ import {
 
 const windowHeight = Dimensions.get('window').height;
 
-export interface SermonData {
-  id: string;
-
-  title: string;
-
-  description?: string;
-
-  youtubeUrl?: string;
-
-  audioUrl?: string;
-
-  textFileUrl?: string;
-}
-
 type SermonCardProps = SermonData & { style?: ViewStyle };
 
 export const SermonCard = ({
-  style,
-  title,
-  description,
   audioUrl,
+  description,
+  style,
   textFileUrl,
+  title,
   youtubeUrl,
 }: SermonCardProps) => {
   const [videoData, setVideoData] = useState<GetYoutubeVideosResponseItem | null>(null);
@@ -61,8 +48,8 @@ export const SermonCard = ({
       {youtubeUrl && videoData && (
         <YoutubePreview
           previewSrc={videoData.snippet.thumbnails.medium.url}
-          url={youtubeUrl}
           style={styles.youtubePreview}
+          url={youtubeUrl}
         />
       )}
 
@@ -70,37 +57,37 @@ export const SermonCard = ({
         {audioUrl && (
           <>
             <Button
-              style={styles.listenLink}
               color={COLORS.onPrimary}
-              title='Слушать'
               onPress={() => {
                 audioUrl && Linking.openURL(audioUrl);
               }}
+              style={styles.listenLink}
+              title='Слушать'
               titleStyle={styles.listenLinkTitle}
             />
             <Button
-              style={styles.listenLink}
               color={COLORS.onPrimary}
-              title='Скачать аудио'
               onPress={() => {
                 // audioUrl && Linking.openURL(audioUrl);
 
                 audioUrl &&
-                  downloadFile({ url: audioUrl, fileName: 'test.mp3', mimeType: MimeType.mp3 });
+                  downloadFile({ fileName: 'test.mp3', mimeType: MimeType.mp3, url: audioUrl });
               }}
+              style={styles.listenLink}
+              title='Скачать аудио'
               titleStyle={styles.listenLinkTitle}
             />
           </>
         )}
         {textFileUrl && (
           <Button
-            style={styles.textFileLink}
-            titleStyle={styles.listenLinkTitle}
             color={COLORS.onPrimary}
-            title='Читать'
             onPress={() => {
               textFileUrl && Linking.openURL(textFileUrl);
             }}
+            style={styles.textFileLink}
+            title='Читать'
+            titleStyle={styles.listenLinkTitle}
           />
         )}
       </View>
@@ -109,39 +96,39 @@ export const SermonCard = ({
 };
 
 const styles = StyleSheet.create({
-  container: { padding: INDENTS.main },
-  title: {
-    color: COLORS.primary,
-    fontSize: FONT_SIZES.h2,
-    paddingVertical: INDENTS.main,
+  buttonsGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
+  container: { padding: INDENTS.main },
 
   description: {
     fontSize: FONT_SIZES.h4,
     padding: INDENTS.main,
   },
 
-  youtubePreview: {
-    height: windowHeight * 0.24,
-    width: '100%',
-    resizeMode: 'contain',
-    marginBottom: INDENTS.main,
-  },
-
-  buttonsGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
   listenLink: {
     backgroundColor: COLORS.primary,
   },
+
   listenLinkTitle: {
     fontSize: FONT_SIZES.h4,
+  },
+  textFileLink: {
+    backgroundColor: COLORS.primary,
+  },
+  title: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.h2,
+    paddingVertical: INDENTS.main,
   },
   watchLink: {
     backgroundColor: COLORS.primary,
   },
-  textFileLink: {
-    backgroundColor: COLORS.primary,
+  youtubePreview: {
+    height: windowHeight * 0.24,
+    marginBottom: INDENTS.main,
+    resizeMode: 'contain',
+    width: '100%',
   },
 });

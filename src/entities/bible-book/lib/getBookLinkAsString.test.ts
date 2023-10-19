@@ -33,10 +33,10 @@ describe('getBookLinkAsString', () => {
   });
 
   test('if chapter and verse defined - returned string as <{title}. {chapter}:{verse}>', () => {
-    expect(getBookLinkAsString({ title: stubBookLink.title, chapter: 1, verse: 1 })).toEqual(
+    expect(getBookLinkAsString({ chapter: 1, title: stubBookLink.title, verse: 1 })).toEqual(
       `${stubBookLink.title}. 1:1`,
     );
-    expect(getBookLinkAsString({ title: stubBookLink.title, chapter: 1, verse: [1, 3] })).toEqual(
+    expect(getBookLinkAsString({ chapter: 1, title: stubBookLink.title, verse: [1, 3] })).toEqual(
       `${stubBookLink.title}. 1:1-3`,
     );
   });

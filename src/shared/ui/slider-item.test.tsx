@@ -3,8 +3,8 @@ import { SliderItem } from './slider-item';
 import '@testing-library/jest-native/extend-expect';
 
 const propsStub = {
-  previewURL: 'https://traveltimes.ru/wp-content/uploads/2021/07/image-4-2048x1366.jpg',
   description: 'Hello',
+  previewURL: 'https://traveltimes.ru/wp-content/uploads/2021/07/image-4-2048x1366.jpg',
 };
 
 describe('<SliderItem/>', () => {
@@ -52,7 +52,7 @@ describe('<SliderItem/>', () => {
   });
 
   test('description visible, if description prop defined', () => {
-    render(<SliderItem previewURL={propsStub.previewURL} description={propsStub.description} />);
+    render(<SliderItem description={propsStub.description} previewURL={propsStub.previewURL} />);
 
     const tree = screen.toJSON();
 
@@ -65,7 +65,7 @@ describe('<SliderItem/>', () => {
     expect(sliderItemDescription).not.toBeFalsy();
   });
   test('description component type is View', () => {
-    render(<SliderItem previewURL={propsStub.previewURL} description={propsStub.description} />);
+    render(<SliderItem description={propsStub.description} previewURL={propsStub.previewURL} />);
 
     const tree = screen.toJSON();
 
@@ -78,7 +78,7 @@ describe('<SliderItem/>', () => {
     expect(sliderItemDescription?.type).toEqual('View');
   });
   test('description child component type is Text in View', () => {
-    render(<SliderItem previewURL={propsStub.previewURL} description={propsStub.description} />);
+    render(<SliderItem description={propsStub.description} previewURL={propsStub.previewURL} />);
 
     const sliderItemDescription = screen.getByTestId('slider-item-description');
     const sliderItemDescriptionText = screen.getByTestId('slider-item-description-text');
@@ -90,7 +90,7 @@ describe('<SliderItem/>', () => {
   });
 
   test('text in description field equals to description prop', () => {
-    render(<SliderItem previewURL={propsStub.previewURL} description={propsStub.description} />);
+    render(<SliderItem description={propsStub.description} previewURL={propsStub.previewURL} />);
 
     const sliderItemDescriptionText = screen.getByTestId('slider-item-description-text');
 

@@ -38,10 +38,10 @@ describe('<TouchableImageBackground/>', () => {
   test('applies style and imageStyle props correctly', () => {
     const { getByTestId } = render(
       <TouchableImageBackground
+        imageStyle={{ opacity: 0.5 }}
         onPress={mockOnPress}
         previewSrc={testPreviewSrc}
         style={{ backgroundColor: 'red' }}
-        imageStyle={{ opacity: 0.5 }}
       >
         <Text>Test Child</Text>
       </TouchableImageBackground>,

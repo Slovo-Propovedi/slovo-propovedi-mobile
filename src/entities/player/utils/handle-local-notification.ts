@@ -8,10 +8,10 @@ export const registerForPushNotificationsAsync = async () => {
 
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('new-emails', {
-      name: 'default',
       importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
       lightColor: '#FF231F7C',
+      name: 'default',
+      vibrationPattern: [0, 250, 250, 250],
     });
   }
 
@@ -55,27 +55,27 @@ export const registerForPushNotificationsAsync = async () => {
 const NOTIFICATION_ID = 'audio-player-notification';
 
 export const schedulePushNotification = async <D extends object>({
-  title,
-  subtitle,
   body,
   data,
+  subtitle,
+  title,
 }: {
-  title: string;
-  subtitle?: string | null;
-  body?: string | null;
+  body?: null | string;
   data?: D;
+  subtitle?: null | string;
+  title: string;
 }) => {
   await Notifications.scheduleNotificationAsync({
-    identifier: NOTIFICATION_ID,
     content: {
-      title,
-      subtitle,
       body,
       data,
-      sticky: true,
       sound: true,
+      sticky: true,
+      subtitle,
+      title,
     },
-    trigger: { seconds: 1, channelId: 'new-emails' },
+    identifier: NOTIFICATION_ID,
+    trigger: { channelId: 'new-emails', seconds: 1 },
   });
 };
 

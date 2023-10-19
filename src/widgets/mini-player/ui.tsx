@@ -20,14 +20,14 @@ export const MiniPlayer = () => {
   return (
     <View style={styles.container}>
       <AntDesign
-        name='close'
-        size={30}
         color='black'
+        name='close'
         onPress={() => {
           unload();
           resetPlayerStore();
           resetSermonPlayerControlsStore();
         }}
+        size={30}
       />
       <PlayerListenProgress style={styles.progress} />
       <SermonPlayerControls />

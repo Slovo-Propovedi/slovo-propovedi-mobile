@@ -1,7 +1,7 @@
-import { FetchedPlaylist } from '../../types';
+import type { FetchedPlaylist } from 'shared/types';
 
 export const secondCorinthiansPlaylist: FetchedPlaylist = {
-  title: 'Второе послание к коринфянам',
-  previewUrl: 'https://slovo-istini.com/image/categories/67/2_korinfyanam.jpg',
   list: [],
+  previewUrl: 'https://slovo-istini.com/image/categories/67/2_korinfyanam.jpg',
+  title: 'Второе послание к коринфянам',
 };

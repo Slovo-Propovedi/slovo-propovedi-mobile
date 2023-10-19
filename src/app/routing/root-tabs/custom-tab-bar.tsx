@@ -1,4 +1,5 @@
-import { BottomTabBar, BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { BottomTabBar } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { View } from 'react-native';
 import { MiniPlayer } from 'widgets';

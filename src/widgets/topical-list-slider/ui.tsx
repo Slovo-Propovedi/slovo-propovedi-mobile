@@ -1,8 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { PlaylistData, usePlaySermon } from 'entities/playlist';
-import { INDENTS, SliderItemSize, Slider, ListenStackNavProp, ListenStackParamName } from 'shared';
+import { usePlaySermon } from 'features/sermon-player-controls';
+import type { ListenStackNavProp, PlaylistData } from 'shared';
+import { INDENTS, ListenStackParamName, Slider, SliderItemSize } from 'shared';
 import { useTopicalListStore } from './model';
 
 export const TopicalListSlider = () => {
@@ -10,9 +11,9 @@ export const TopicalListSlider = () => {
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { topicalList, getTopicalList } = useTopicalListStore((state) => ({
-    topicalList: state.topicalList,
+  const { getTopicalList, topicalList } = useTopicalListStore((state) => ({
     getTopicalList: state.getTopicalList,
+    topicalList: state.topicalList,
   }));
 
   const onItemPress = async (playlist: PlaylistData) => {
@@ -37,18 +38,18 @@ export const TopicalListSlider = () => {
 
   return (
     <Slider
-      style={styles.slider}
-      itemsSize={SliderItemSize.Large}
-      title='Тематические'
       items={topicalList.map((item) => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
+      itemsSize={SliderItemSize.Large}
       onPressItem={onItemPress}
       onPressTitle={() => {
         onPressTitle(topicalList);
       }}
+      style={styles.slider}
+      title='Тематические'
     />
   );
 };

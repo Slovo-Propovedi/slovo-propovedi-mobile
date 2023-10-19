@@ -1,38 +1,31 @@
 import { Entypo } from '@expo/vector-icons';
 import React from 'react';
-import {
-  GestureResponderEvent,
-  OpaqueColorValue,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  ViewStyle,
-} from 'react-native';
+import type { GestureResponderEvent, OpaqueColorValue, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { COLORS } from 'shared/themed';
 
 interface PlayerControlButtonProps {
-  type: 'play' | 'pause' | 'next' | 'prev' | 'forward' | 'backward';
-  onPress?: (event: GestureResponderEvent) => void;
+  color?: OpaqueColorValue | string;
+  isDisabled?: boolean | null;
   onLongPress?: (event: GestureResponderEvent) => void;
+  onPress?: (event: GestureResponderEvent) => void;
   onPressOut?: (event: GestureResponderEvent) => void;
-  color?: string | OpaqueColorValue;
   size?: number;
   style?: StyleProp<ViewStyle>;
-  isDisabled?: boolean | null;
   testID?: string;
+  type: 'backward' | 'forward' | 'next' | 'pause' | 'play' | 'prev';
 }
 
 export const PlayerControlButton = ({
-  type,
-  onPress,
-  onLongPress,
-  onPressOut,
   color,
+  isDisabled,
+  onLongPress,
+  onPress,
+  onPressOut,
   size = 24,
   style,
-  isDisabled,
   testID,
+  type,
 }: PlayerControlButtonProps) => {
   const name = (() => {
     if (type === 'play') {
@@ -64,12 +57,12 @@ export const PlayerControlButton = ({
 
   return (
     <TouchableOpacity
-      testID={testID}
-      style={style}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      onPressOut={onPressOut}
       disabled={Boolean(isDisabled)}
+      onLongPress={onLongPress}
+      onPress={onPress}
+      onPressOut={onPressOut}
+      style={style}
+      testID={testID}
     >
       <Text>
         {name && (

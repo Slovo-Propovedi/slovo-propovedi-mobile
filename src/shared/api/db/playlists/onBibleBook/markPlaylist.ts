@@ -1,12 +1,12 @@
-
-import { sermonsDB } from '../../sermons';
-import { FetchedPlaylist, BibleBookName } from '../../types';
+// eslint-disable-next-line import/no-internal-modules
+import { sermonsDB } from 'shared/api/db/sermons';
+import { BibleBookName, type FetchedPlaylist } from 'shared/types';
 
 export const markPlaylist: FetchedPlaylist = {
-  title: 'Евангелие от Марка',
   description: 'Эта книга - Евангелие от Марка',
-  previewUrl: 'https://slovo-istini.com/image/categories/22/marka_(1).jpg',
   list: sermonsDB[BibleBookName.Mark],
+  previewUrl: 'https://slovo-istini.com/image/categories/22/marka_(1).jpg',
+  title: 'Евангелие от Марка',
   // [
   //   {
   //     title: 'Глава 1',

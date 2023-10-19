@@ -1,4 +1,4 @@
-import { FetchedSermonsGroupName } from './db';
+import type { FetchedSermonsGroupName } from 'shared/types';
 import { localDB } from './localBD';
 
 const getPlaylistsOnSermonsGroup = async (tabName: FetchedSermonsGroupName) => {

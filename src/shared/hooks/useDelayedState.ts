@@ -1,4 +1,5 @@
-import { Dispatch, SetStateAction, useState, useRef, useMemo, useEffect } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { debounce } from '../lib';
 
 interface UseDelayedStateProps<T> {

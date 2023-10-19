@@ -19,49 +19,49 @@ describe('<Progress/>', () => {
   });
 
   it('renders correctly with progress 0', () => {
-    const { getByTestId } = render(<Progress total={total} progress={0} />);
+    const { getByTestId } = render(<Progress progress={0} total={total} />);
 
     expect(getByTestId('progress-bar-inner')).toHaveStyle({ width: '0%' });
   });
 
   it('renders correctly with progress 50', () => {
     const { getByTestId } = render(
-      <Progress total={total} progress={progress} loaderValue={loaderValue} />,
+      <Progress loaderValue={loaderValue} progress={progress} total={total} />,
     );
     expect(getByTestId('progress-bar-inner')).toHaveStyle({ width: '50%' });
   });
 
   it('renders correctly with progress 100', () => {
     const { getByTestId } = render(
-      <Progress total={total} progress={total} loaderValue={new Animated.Value(100)} />,
+      <Progress loaderValue={new Animated.Value(100)} progress={total} total={total} />,
     );
     expect(getByTestId('progress-bar-inner')).toHaveStyle({ width: '100%' });
   });
 
   it('updates width when progress prop changes', async () => {
-    const { rerender, getByTestId } = render(
-      <Progress total={total} progress={progress} loaderValue={loaderValue} />,
+    const { getByTestId, rerender } = render(
+      <Progress loaderValue={loaderValue} progress={progress} total={total} />,
     );
     expect(getByTestId('progress-bar-inner')).toHaveStyle({ width: '50%' });
     act(() => {
       loaderValue.setValue(75);
     });
     await waitFor(() => {
-      rerender(<Progress total={total} progress={75} loaderValue={loaderValue} />);
+      rerender(<Progress loaderValue={loaderValue} progress={75} total={total} />);
     });
     expect(getByTestId('progress-bar-inner')).toHaveStyle({ width: '75%' });
   });
 
   it('renders a white background progress bar', () => {
     const { getByTestId } = render(
-      <Progress total={total} progress={progress} loaderValue={loaderValue} />,
+      <Progress loaderValue={loaderValue} progress={progress} total={total} />,
     );
     expect(getByTestId('progress-bar')).toHaveStyle({ backgroundColor: 'white' });
   });
 
   it('renders a primary colored progress bar', () => {
     const { getByTestId } = render(
-      <Progress total={total} progress={progress} loaderValue={loaderValue} />,
+      <Progress loaderValue={loaderValue} progress={progress} total={total} />,
     );
     expect(getByTestId('progress-bar-inner')).toHaveStyle({ backgroundColor: COLORS.primary });
   });

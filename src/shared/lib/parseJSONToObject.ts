@@ -1,4 +1,4 @@
-export const parseJSONToObject = <T>(value: string | null, onError?: (error: Error) => void) => {
+export const parseJSONToObject = <T>(value: null | string, onError?: (error: Error) => void) => {
   try {
     if (value) {
       return JSON.parse(value) as T;

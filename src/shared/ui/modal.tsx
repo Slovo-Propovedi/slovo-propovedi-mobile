@@ -5,7 +5,7 @@ type Props = React.PropsWithChildren<{
   onBackdropPress: () => void;
 }>;
 
-export const Modal = ({ onBackdropPress, children }: Props) => (
+export const Modal = ({ children, onBackdropPress }: Props) => (
   <View>
     <Pressable onPress={onBackdropPress} />
     <View>{children}</View>
