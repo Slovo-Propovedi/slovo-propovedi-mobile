@@ -16,6 +16,7 @@
     "lint:fix": "eslint . --fix",
     "check-types": "tsc -p tsconfig.json",
     "prettier:write": "npx prettier --write **/*.{js,jsx,ts,tsx,json} && npx prettier --write *.{js,jsx,ts,tsx,json}",
+    "check-project-rules": "yarn check-types && yarn prettier:write && yarn lint:fix",
     "build:android": "eas build --platform android",
     "build:ios": "eas build --platform ios",
     "build:all": "eas build --platform all",
