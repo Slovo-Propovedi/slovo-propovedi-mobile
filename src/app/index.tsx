@@ -4,14 +4,20 @@ import React, { useEffect } from 'react';
 import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
 import { type AudioPlayerData, usePlayer, usePlayerStore } from 'entities/player';
 import type { PlaylistData } from 'shared';
-import { CURRENT_AUDIO, CURRENT_PLAYLIST, parseJSONToObject } from 'shared';
+import {
+  CURRENT_AUDIO,
+  CURRENT_PLAYLIST,
+  CURRENT_SOUND_DURATION,
+  CURRENT_SOUND_POSITION,
+  parseJSONToObject,
+} from 'shared';
 import { RootTabs } from './routing';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     allowAnnouncements: true,
     priority: Notifications.AndroidNotificationPriority.HIGH,
-    shouldPlaySound: true,
+    shouldPlaySound: false,
     shouldSetBadge: true,
     shouldShowAlert: true,
   }),
@@ -22,33 +28,55 @@ const App = () => {
     setCurrentAudio: state.setCurrentAudio,
     setCurrentPlaylist: state.setCurrentPlaylist,
   }));
-  const { recreateSound } = usePlayer({});
-  const { setCurrentSound } = usePlayerStore((store) => ({
-    setCurrentSound: store.setCurrentSound,
-  }));
+  const { recreateSound, unload } = usePlayer({});
+  const { setCurrentSound, setCurrentSoundDuration, setCurrentSoundPosition } = usePlayerStore(
+    (store) => ({
+      setCurrentSound: store.setCurrentSound,
+      setCurrentSoundDuration: store.setCurrentSoundDuration,
+      setCurrentSoundPosition: store.setCurrentSoundPosition,
+    }),
+  );
 
   useEffect(() => {
     (async () => {
-      const [[, storedCurrentAudio], [, storedCurrentPlaylist]] = await AsyncStorage.multiGet([
+      const [
+        [, storedCurrentAudio],
+        [, storedCurrentPlaylist],
+        [, currentSoundPosition],
+        [, currentSoundDuration],
+      ] = await AsyncStorage.multiGet([
         CURRENT_AUDIO,
         CURRENT_PLAYLIST,
+        CURRENT_SOUND_POSITION,
+        CURRENT_SOUND_DURATION,
       ]);
+
+      setCurrentSoundPosition(Number(currentSoundPosition));
+      setCurrentSoundDuration(Number(currentSoundDuration));
+
+      if (storedCurrentPlaylist) {
+        const currentPlaylist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist);
+
+        currentPlaylist && setCurrentPlaylist(currentPlaylist);
+      }
 
       if (storedCurrentAudio) {
         const currentAudio = parseJSONToObject<AudioPlayerData>(storedCurrentAudio);
         if (currentAudio) {
           setCurrentAudio(currentAudio);
 
-          const currentSound = await recreateSound(currentAudio.audioUrl);
+          const currentSound = await recreateSound(
+            currentAudio.audioUrl,
+            Number(currentSoundPosition),
+          );
           setCurrentSound(currentSound);
         }
       }
-      if (storedCurrentPlaylist) {
-        const currentPlaylist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist);
-
-        currentPlaylist && setCurrentPlaylist(currentPlaylist);
-      }
     })();
+
+    return () => {
+      unload();
+    };
   }, []);
 
   return <RootTabs />;

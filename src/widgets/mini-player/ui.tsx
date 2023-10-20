@@ -34,9 +34,11 @@ export const MiniPlayer = () => {
           <Text numberOfLines={1} style={styles.audioTitle}>
             {currentAudio?.title || ''}
           </Text>
-          <Text numberOfLines={1} style={styles.playlistTitle}>
-            {currentPlaylist?.title || ''}
-          </Text>
+          {currentAudio && currentPlaylist && currentAudio.title !== currentPlaylist.title && (
+            <Text numberOfLines={1} style={styles.playlistTitle}>
+              {currentPlaylist.title}
+            </Text>
+          )}
         </View>
       </TouchableOpacity>
 
@@ -84,6 +86,7 @@ const styles = StyleSheet.create({
   titles: {
     flex: 1,
     flexWrap: 'wrap',
+    justifyContent: 'center',
     overflow: 'hidden',
     paddingHorizontal: INDENTS.low,
   },

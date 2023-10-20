@@ -6,7 +6,7 @@ import { CURRENT_AUDIO, CURRENT_PLAYLIST, ListenStackParamName } from 'shared';
 import type { ListenStackNavProp, PlaylistData, SermonData } from 'shared';
 
 export const usePlayNewSermon = () => {
-  const { getPlaybackStatus, play, recreateSound } = usePlayer({});
+  const { play, recreateSound } = usePlayer({});
 
   const { currentAudio, setCurrentAudio, setCurrentPlaylist } = useSermonPlayerControlsStore(
     (store) => ({
@@ -52,7 +52,6 @@ export const usePlayNewSermon = () => {
     }
 
     newSound && setCurrentSound(newSound);
-    await getPlaybackStatus(newSound);
     await play(newSound);
     await schedulePushNotification({
       body: newAudio.description || '',

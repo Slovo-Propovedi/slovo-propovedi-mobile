@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
-import { LAST_SOUND_DURATION, LAST_SOUND_POSITION } from 'shared';
+import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared';
 import { usePlayerStore } from '../model';
 import { cancelScheduledNotificationAsync } from '../utils';
 import { useLocalNotification } from './push';
@@ -96,7 +96,7 @@ export const usePlayer = ({
     setIsPlayingCurrentAudio(false);
   };
 
-  const recreateSound = async (newAudioUrl: string) => {
+  const recreateSound = async (newAudioUrl: string, initialPosition?: number) => {
     if (currentSound) {
       await currentSound.stopAsync();
       await currentSound.unloadAsync();
@@ -119,17 +119,21 @@ export const usePlayer = ({
       staysActiveInBackground: true,
     });
 
-    const { sound: newSound } = await Audio.Sound.createAsync({ uri: newAudioUrl });
+    const { sound: newSound, status } = await Audio.Sound.createAsync(
+      { uri: newAudioUrl },
+      { positionMillis: initialPosition || 0 },
+    );
+
+    const position = (status.isLoaded && status.positionMillis) || 0;
+    const duration = (status.isLoaded && status.durationMillis) || 0;
 
     await AsyncStorage.multiSet([
-      [LAST_SOUND_POSITION, '0'],
-      [LAST_SOUND_DURATION, '0'],
+      [CURRENT_SOUND_POSITION, `${position}`],
+      [CURRENT_SOUND_DURATION, `${duration}`],
     ]);
 
-    setCurrentSoundPosition(0);
-    setCurrentSoundDuration(0);
-
-    await newSound.setPositionAsync(0);
+    setCurrentSoundPosition(position);
+    setCurrentSoundDuration(duration);
 
     return newSound;
   };
@@ -160,11 +164,10 @@ export const usePlayer = ({
     const { durationMillis, isPlaying, positionMillis } = status;
 
     await AsyncStorage.multiSet([
-      [LAST_SOUND_POSITION, `${positionMillis}`],
-      [LAST_SOUND_DURATION, `${durationMillis || 0}`],
+      [CURRENT_SOUND_POSITION, `${positionMillis}`],
+      [CURRENT_SOUND_DURATION, `${durationMillis || 0}`],
     ]);
 
-    // TODO Скорее всего нужно вынести отсюда
     setCurrentSoundPosition(positionMillis);
     setCurrentSoundDuration(durationMillis || 0);
     setIsPlayingCurrentAudio(isPlaying);

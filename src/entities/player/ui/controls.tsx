@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import type { PlaylistData, SermonData } from 'shared';
-import { CURRENT_AUDIO, LAST_SOUND_DURATION, LAST_SOUND_POSITION, isNonNullable } from 'shared';
+import { CURRENT_AUDIO, isNonNullable } from 'shared';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
 import { schedulePushNotification } from '../utils';
@@ -38,15 +38,7 @@ export const PlayerControls = ({
   size = PlayerControlsSize.Large,
   style,
 }: PlayerControlsProps) => {
-  const {
-    changeProgressPosition,
-    duration,
-    getPlaybackStatus,
-    pause,
-    play,
-    position,
-    recreateSound,
-  } = usePlayer({
+  const { changeProgressPosition, duration, pause, play, position, recreateSound } = usePlayer({
     onGetPlaybackStatus: (position, duration) => {
       if (position >= duration && !isNotAvailableNext) {
         switchToNextTrack();
@@ -54,12 +46,7 @@ export const PlayerControls = ({
     },
   });
 
-  const {
-    isPlayingCurrentAudio,
-    setCurrentSound,
-    setCurrentSoundDuration,
-    setCurrentSoundPosition,
-  } = usePlayerStore((store) => ({
+  const { isPlayingCurrentAudio, setCurrentSound } = usePlayerStore((store) => ({
     isPlayingCurrentAudio: store.isPlayingCurrentAudio,
     setCurrentSound: store.setCurrentSound,
     setCurrentSoundDuration: store.setCurrentSoundDuration,
@@ -186,7 +173,6 @@ export const PlayerControls = ({
       title: newAudio.title,
     });
     await play(newSound);
-    await getPlaybackStatus(newSound);
   };
 
   const switchToNextTrack = async () => {
@@ -202,18 +188,6 @@ export const PlayerControls = ({
 
     clearRewindInterval();
   };
-
-  useEffect(() => {
-    (async () => {
-      const [[, lastSoundPosition], [, lastSoundDuration]] = await AsyncStorage.multiGet([
-        LAST_SOUND_POSITION,
-        LAST_SOUND_DURATION,
-      ]);
-
-      setCurrentSoundPosition(Number(lastSoundPosition));
-      setCurrentSoundDuration(Number(lastSoundDuration));
-    })();
-  }, []);
 
   return (
     <View style={[styles.controlsContainer, style]} testID='controls-container'>
