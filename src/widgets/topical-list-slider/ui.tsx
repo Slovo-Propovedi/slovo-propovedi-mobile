@@ -1,13 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { usePlaySermon } from 'features/sermon-player-controls';
+import { usePlayNewSermon } from 'features/sermon-player-controls';
 import type { ListenStackNavProp, PlaylistData } from 'shared';
 import { INDENTS, ListenStackParamName, Slider, SliderItemSize } from 'shared';
 import { useTopicalListStore } from './model';
 
 export const TopicalListSlider = () => {
-  const playSermon = usePlaySermon();
+  const playNewSermon = usePlayNewSermon();
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
@@ -20,7 +20,7 @@ export const TopicalListSlider = () => {
     const sermons = playlist.list;
 
     if (sermons.length && sermons.length < 2) {
-      await playSermon({ playlist, sermon: sermons[0] });
+      await playNewSermon({ playlist, sermon: sermons[0] });
 
       return;
     }

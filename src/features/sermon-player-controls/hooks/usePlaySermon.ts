@@ -1,10 +1,11 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
 import { schedulePushNotification, usePlayer, usePlayerStore } from 'entities/player';
-import { ListenStackParamName } from 'shared';
+import { CURRENT_AUDIO, CURRENT_PLAYLIST, ListenStackParamName } from 'shared';
 import type { ListenStackNavProp, PlaylistData, SermonData } from 'shared';
 
-export const usePlaySermon = () => {
+export const usePlayNewSermon = () => {
   const { getPlaybackStatus, play, recreateSound } = usePlayer({});
 
   const { currentAudio, setCurrentAudio, setCurrentPlaylist } = useSermonPlayerControlsStore(
@@ -21,7 +22,7 @@ export const usePlaySermon = () => {
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const playSermon = async ({
+  const playNewSermon = async ({
     playlist,
     sermon: { audioUrl, id, ...other },
   }: {
@@ -36,6 +37,11 @@ export const usePlaySermon = () => {
 
     setCurrentAudio(newAudio);
     setCurrentPlaylist(playlist);
+
+    await AsyncStorage.multiSet([
+      [CURRENT_AUDIO, JSON.stringify(newAudio)],
+      [CURRENT_PLAYLIST, JSON.stringify(playlist)],
+    ]);
 
     navigate(ListenStackParamName.AudioPlayer);
 
@@ -55,5 +61,5 @@ export const usePlaySermon = () => {
     });
   };
 
-  return playSermon;
+  return playNewSermon;
 };

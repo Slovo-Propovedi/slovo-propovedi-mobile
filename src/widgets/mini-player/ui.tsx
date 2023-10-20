@@ -1,45 +1,94 @@
-import { AntDesign } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import type { StyleProp, TextStyle } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
   SermonPlayerControls,
   useSermonPlayerControlsStore,
 } from 'features/sermon-player-controls';
-import { PlayerListenProgress, usePlayer, usePlayerStore } from 'entities/player';
+import { PlayerControlsSize } from 'entities/player';
+import type { ListenStackNavProp } from 'shared';
+import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, ListenStackParamName, RADIUSES } from 'shared';
 
 export const MiniPlayer = () => {
-  const { unload } = usePlayer({});
-  const { resetPlayerStore } = usePlayerStore((state) => ({
-    resetPlayerStore: state.resetStates,
-  }));
+  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { resetSermonPlayerControlsStore } = useSermonPlayerControlsStore((state) => ({
-    resetSermonPlayerControlsStore: state.resetStates,
+  const { currentAudio, currentPlaylist } = useSermonPlayerControlsStore((state) => ({
+    currentAudio: state.currentAudio,
+    currentPlaylist: state.currentPlaylist,
   }));
 
   return (
     <View style={styles.container}>
-      <AntDesign
-        color='black'
-        name='close'
-        onPress={() => {
-          unload();
-          resetPlayerStore();
-          resetSermonPlayerControlsStore();
-        }}
-        size={30}
-      />
-      <PlayerListenProgress style={styles.progress} />
-      <SermonPlayerControls />
+      <TouchableOpacity
+        onPress={() => navigate(ListenStackParamName.AudioPlayer)}
+        style={styles.touchableElements}
+      >
+        <Image
+          alt='Sermon poster'
+          source={{ uri: currentAudio?.previewUrl || IMAGE_PLACEHOLDER }}
+          style={styles.preview}
+        />
+
+        <View style={styles.titles}>
+          <Text numberOfLines={1} style={styles.audioTitle}>
+            {currentAudio?.title || ''}
+          </Text>
+          <Text numberOfLines={1} style={styles.playlistTitle}>
+            {currentPlaylist?.title || ''}
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      <View style={styles.controlsContainer}>
+        <SermonPlayerControls
+          excludeButtons={['backward', 'prev', 'prev', 'forward']}
+          size={PlayerControlsSize.Small}
+          style={styles.controls}
+        />
+      </View>
     </View>
   );
 };
 
+const titleGeneralStyle: StyleProp<TextStyle> = {
+  flexWrap: 'wrap',
+  maxWidth: '100%',
+  overflow: 'hidden',
+};
+
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'flex-end',
+  audioTitle: {
+    fontSize: FONT_SIZES.h3,
+    ...titleGeneralStyle,
   },
-  progress: {
-    width: '100%',
+  container: {
+    flexDirection: 'row',
+    padding: INDENTS.low,
+  },
+  controls: {
+    width: 'auto',
+  },
+  controlsContainer: {
+    justifyContent: 'center',
+    marginLeft: 'auto',
+  },
+  playlistTitle: {
+    ...titleGeneralStyle,
+  },
+  preview: {
+    borderRadius: RADIUSES.low,
+    height: 50,
+    width: 50,
+  },
+  titles: {
+    flex: 1,
+    flexWrap: 'wrap',
+    overflow: 'hidden',
+    paddingHorizontal: INDENTS.low,
+  },
+  touchableElements: {
+    flex: 1,
+    flexDirection: 'row',
   },
 });

@@ -31,6 +31,7 @@ export * from './routing';
 export * from './themed';
 export * from './images';
 export * from './types';
+export * from './constants';
 
 // model
 export * from './model';

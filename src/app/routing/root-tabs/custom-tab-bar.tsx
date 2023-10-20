@@ -3,14 +3,9 @@ import { BottomTabBar } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { View } from 'react-native';
 import { MiniPlayer } from 'widgets';
-import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
 import { RootTabName, useAppStore } from 'shared';
 
 export const CustomTabBar = (props: BottomTabBarProps) => {
-  const { currentAudio } = useSermonPlayerControlsStore(({ currentAudio }) => ({
-    currentAudio,
-  }));
-
   const { /* descriptors, navigation, */ state } = props;
 
   const currentTab = state.routes[state.index];
@@ -21,9 +16,7 @@ export const CustomTabBar = (props: BottomTabBarProps) => {
 
   return (
     <View>
-      {currentAudio && (currentTab.name === RootTabName.Listen ? !isAudioPlayerMounted : true) && (
-        <MiniPlayer />
-      )}
+      {!(currentTab.name === RootTabName.Listen && isAudioPlayerMounted) && <MiniPlayer />}
       <BottomTabBar {...props} />
 
       {/* <View

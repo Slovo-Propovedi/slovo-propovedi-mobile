@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { usePlaySermon } from 'features/sermon-player-controls';
+import { usePlayNewSermon } from 'features/sermon-player-controls';
 import { Playlist } from 'entities/playlist';
 import type {
   ListenStackParamName,
@@ -16,10 +16,10 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
     params: playlist,
   },
 }) => {
-  const playSermon = usePlaySermon();
+  const playNewSermon = usePlayNewSermon();
 
   const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = async (sermon) =>
-    await playSermon({ playlist, sermon });
+    await playNewSermon({ playlist, sermon });
 
   return (
     <Playlist

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
+import { LAST_SOUND_DURATION, LAST_SOUND_POSITION } from 'shared';
 import { usePlayerStore } from '../model';
 import { cancelScheduledNotificationAsync } from '../utils';
 import { useLocalNotification } from './push';
@@ -121,8 +122,8 @@ export const usePlayer = ({
     const { sound: newSound } = await Audio.Sound.createAsync({ uri: newAudioUrl });
 
     await AsyncStorage.multiSet([
-      ['lastSoundPosition', '0'],
-      ['lastSoundDuration', '0'],
+      [LAST_SOUND_POSITION, '0'],
+      [LAST_SOUND_DURATION, '0'],
     ]);
 
     setCurrentSoundPosition(0);
@@ -159,8 +160,8 @@ export const usePlayer = ({
     const { durationMillis, isPlaying, positionMillis } = status;
 
     await AsyncStorage.multiSet([
-      ['lastSoundPosition', `${positionMillis}`],
-      ['lastSoundDuration', `${durationMillis || 0}`],
+      [LAST_SOUND_POSITION, `${positionMillis}`],
+      [LAST_SOUND_DURATION, `${durationMillis || 0}`],
     ]);
 
     // TODO Скорее всего нужно вынести отсюда

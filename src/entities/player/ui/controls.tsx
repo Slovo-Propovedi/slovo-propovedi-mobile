@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import type { PlaylistData, SermonData } from 'shared';
-import { isNonNullable } from 'shared';
+import { CURRENT_AUDIO, LAST_SOUND_DURATION, LAST_SOUND_POSITION, isNonNullable } from 'shared';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
 import { schedulePushNotification } from '../utils';
@@ -14,17 +14,28 @@ export type AudioPlayerData = Omit<SermonData, 'audioUrl'> & {
   previewUrl?: string;
 };
 
+export enum PlayerControlsSize {
+  Large = 35,
+  Small = 20,
+}
+
+export type ControlsNames = 'backward' | 'forward' | 'next' | 'play' | 'prev';
+
 interface PlayerControlsProps {
   currentAudio: AudioPlayerData | null;
   currentPlaylist: PlaylistData | null;
+  excludeButtons?: ControlsNames[];
   setCurrentAudio: (audio: AudioPlayerData) => void;
+  size?: PlayerControlsSize;
   style?: StyleProp<ViewStyle>;
 }
 
 export const PlayerControls = ({
   currentAudio,
   currentPlaylist,
+  excludeButtons,
   setCurrentAudio,
+  size = PlayerControlsSize.Large,
   style,
 }: PlayerControlsProps) => {
   const {
@@ -57,14 +68,23 @@ export const PlayerControls = ({
 
   const rewindTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const {
+    backward: isBackwardExcluded,
+    forward: isForwardExcluded,
+    next: isNextExcluded,
+    play: isPlayExcluded,
+    prev: isPrevExcluded,
+  } = excludeButtons?.reduce<Partial<Record<ControlsNames, true>>>(
+    (acc, currentValue) => ({ ...acc, [currentValue]: true }),
+    {},
+  ) || {};
+
   const indexOfCurrentAudioInPlaylist =
     currentAudio && currentPlaylist?.list.findIndex(({ id }) => currentAudio.id === id);
 
   const changeValue = 15000;
 
   const audioTwistDelay = 300;
-
-  const size = 35;
 
   const isNotAvailableNext =
     currentPlaylist && indexOfCurrentAudioInPlaylist === currentPlaylist.list.length - 1;
@@ -155,6 +175,7 @@ export const PlayerControls = ({
     const newAudio = { ...otherProps, audioUrl, previewUrl: currentPlaylist.previewUrl };
 
     setCurrentAudio(newAudio);
+    await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(newAudio));
 
     const newSound = await recreateSound(newAudio.audioUrl);
     newSound && setCurrentSound(newSound);
@@ -184,9 +205,9 @@ export const PlayerControls = ({
 
   useEffect(() => {
     (async () => {
-      const [lastSoundPosition, lastSoundDuration] = await Promise.all([
-        AsyncStorage.getItem('lastSoundPosition'),
-        AsyncStorage.getItem('lastSoundDuration'),
+      const [[, lastSoundPosition], [, lastSoundDuration]] = await AsyncStorage.multiGet([
+        LAST_SOUND_POSITION,
+        LAST_SOUND_DURATION,
       ]);
 
       setCurrentSoundPosition(Number(lastSoundPosition));
@@ -196,44 +217,54 @@ export const PlayerControls = ({
 
   return (
     <View style={[styles.controlsContainer, style]} testID='controls-container'>
-      <PlayerControlButton
-        isDisabled={indexOfCurrentAudioInPlaylist === 0 || !currentAudio}
-        onPress={switchToPreviousTrack}
-        size={size}
-        testID='prev-button'
-        type='prev'
-      />
-      <PlayerControlButton
-        isDisabled={position <= 0 || !currentAudio}
-        onLongPress={rewindAudio}
-        onPress={switchTrackBackward}
-        onPressOut={onPressOutAudioTwistButton}
-        size={size}
-        testID='backward-button'
-        type='backward'
-      />
-      <PlayerControlButton
-        isDisabled={!currentAudio}
-        onPress={togglePlay}
-        size={size * 2}
-        testID='play-button'
-        type={isPlayingCurrentAudio ? 'pause' : 'play'}
-      />
-      <PlayerControlButton
-        isDisabled={position >= duration || !currentAudio}
-        onLongPress={fastForwardAudio}
-        onPress={switchTrackForward}
-        onPressOut={onPressOutAudioTwistButton}
-        size={size}
-        testID='forward-button'
-        type='forward'
-      />
-      <PlayerControlButton
-        isDisabled={isNotAvailableNext || !currentAudio}
-        onPress={switchToNextTrack}
-        size={size}
-        type='next'
-      />
+      {!isPrevExcluded && (
+        <PlayerControlButton
+          isDisabled={indexOfCurrentAudioInPlaylist === 0 || !currentAudio}
+          onPress={switchToPreviousTrack}
+          size={size}
+          testID='prev-button'
+          type='prev'
+        />
+      )}
+      {!isBackwardExcluded && (
+        <PlayerControlButton
+          isDisabled={position <= 0 || !currentAudio}
+          onLongPress={rewindAudio}
+          onPress={switchTrackBackward}
+          onPressOut={onPressOutAudioTwistButton}
+          size={size}
+          testID='backward-button'
+          type='backward'
+        />
+      )}
+      {!isPlayExcluded && (
+        <PlayerControlButton
+          isDisabled={!currentAudio}
+          onPress={togglePlay}
+          size={size * 2}
+          testID='play-button'
+          type={isPlayingCurrentAudio ? 'pause' : 'play'}
+        />
+      )}
+      {!isForwardExcluded && (
+        <PlayerControlButton
+          isDisabled={position >= duration || !currentAudio}
+          onLongPress={fastForwardAudio}
+          onPress={switchTrackForward}
+          onPressOut={onPressOutAudioTwistButton}
+          size={size}
+          testID='forward-button'
+          type='forward'
+        />
+      )}
+      {!isNextExcluded && (
+        <PlayerControlButton
+          isDisabled={isNotAvailableNext || !currentAudio}
+          onPress={switchToNextTrack}
+          size={size}
+          type='next'
+        />
+      )}
     </View>
   );
 };
