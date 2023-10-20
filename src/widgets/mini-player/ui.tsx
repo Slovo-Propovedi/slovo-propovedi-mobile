@@ -32,7 +32,7 @@ export const MiniPlayer = () => {
 
         <View style={styles.titles}>
           <Text numberOfLines={1} style={styles.audioTitle}>
-            {currentAudio?.title || ''}
+            {currentAudio?.title || 'Проповедь не выбрана'}
           </Text>
           {currentAudio && currentPlaylist && currentAudio.title !== currentPlaylist.title && (
             <Text numberOfLines={1} style={styles.playlistTitle}>

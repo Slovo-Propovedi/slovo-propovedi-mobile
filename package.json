@@ -25,7 +25,8 @@
     "build-preview:all": "eas build -p all --profile preview",
     "build:list": "eas build:list",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "emulator-run-builds": "eas build:run -p android"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.18.2",
