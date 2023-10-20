@@ -1,7 +1,12 @@
 import React from 'react';
 import { ScrollView, StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NewSermonsSlider, SermonsOnBibleSlider, TopicalListSlider } from 'widgets';
+import {
+  ListenEveryDaySlider,
+  NewSermonsSlider,
+  SermonsOnBibleSlider,
+  TopicalListSlider,
+} from 'widgets';
 import type { ListenStackParamName, ListenStackScreenProps } from 'shared';
 
 export const ListenScreen: React.FC<
@@ -14,6 +19,7 @@ export const ListenScreen: React.FC<
       <NewSermonsSlider />
       <SermonsOnBibleSlider />
       <TopicalListSlider />
+      <ListenEveryDaySlider />
     </ScrollView>
   </SafeAreaView>
 );

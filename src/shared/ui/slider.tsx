@@ -13,7 +13,9 @@ type SliderItemsElement<D extends object> = {
 };
 
 interface SliderProps<D extends object> {
+  isShort?: boolean;
   items: SliderItemsElement<D>[];
+  itemsRows?: number;
   itemsSize?: SliderItemSize;
   onPressItem?: (data: D, event: GestureResponderEvent) => void;
   onPressTitle?: (event: GestureResponderEvent) => void;
@@ -22,7 +24,9 @@ interface SliderProps<D extends object> {
 }
 
 export const Slider = <D extends object>({
+  isShort,
   items,
+  itemsRows = 1,
   itemsSize,
   onPressItem,
   onPressTitle,
@@ -32,6 +36,25 @@ export const Slider = <D extends object>({
   if (!items || !items.length) {
     return null;
   }
+
+  let rowIndex = 0;
+  const itemsByRows = items.reduce<SliderItemsElement<D>[][]>((accumulator, currentItem) => {
+    rowIndex++;
+
+    if (rowIndex == itemsRows) {
+      rowIndex = 0;
+    }
+
+    if (accumulator[rowIndex]) {
+      accumulator[rowIndex].push(currentItem);
+
+      return accumulator;
+    }
+
+    accumulator[rowIndex] = [currentItem];
+
+    return accumulator;
+  }, []);
 
   return (
     <View style={style}>
@@ -44,17 +67,22 @@ export const Slider = <D extends object>({
         horizontal
         showsHorizontalScrollIndicator={false}
       >
-        {items.map(({ data, description, previewURL }, index) => (
-          <SliderItem
-            description={description}
-            key={index}
-            onPress={(event) => {
-              onPressItem?.(data, event);
-            }}
-            previewURL={previewURL}
-            size={itemsSize}
-            testID='slider-item'
-          />
+        {itemsByRows.map((row, index) => (
+          <View key={`row-${index}`} style={styles.row}>
+            {row.map(({ data, description, previewURL }, index) => (
+              <SliderItem
+                description={description}
+                isShort={isShort}
+                key={index}
+                onPress={(event) => {
+                  onPressItem?.(data, event);
+                }}
+                previewURL={previewURL}
+                size={itemsSize}
+                testID='slider-item'
+              />
+            ))}
+          </View>
         ))}
       </ScrollView>
     </View>
@@ -63,6 +91,11 @@ export const Slider = <D extends object>({
 
 const styles = StyleSheet.create({
   contentContainer: {
+    flexDirection: 'column-reverse',
+    gap: INDENTS.low,
+  },
+  row: {
+    flexDirection: 'row',
     gap: INDENTS.low,
   },
   title: {

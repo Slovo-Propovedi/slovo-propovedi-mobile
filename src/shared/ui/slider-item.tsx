@@ -1,7 +1,7 @@
 import React from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
-import { COLORS, FONT_SIZES, RADIUSES } from 'shared/themed';
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed';
 import { TouchableImageBackground } from 'shared/ui/touchable-image-background';
 
 const { height: windowHeight, width: windowWidth } = Dimensions.get('window');
@@ -14,6 +14,7 @@ export enum SliderItemSize {
 
 export interface SliderItemProps {
   description?: string;
+  isShort?: boolean;
   onPress?: (event: GestureResponderEvent) => void;
   previewURL: string;
   size?: SliderItemSize;
@@ -23,6 +24,7 @@ export interface SliderItemProps {
 
 export const SliderItem = ({
   description,
+  isShort,
   onPress,
   previewURL,
   size = SliderItemSize.Small,
@@ -33,6 +35,12 @@ export const SliderItem = ({
     return null;
   }
 
+  const conditionStyle = {
+    [SliderItemSize.Large]: styles.componentLarge,
+    [SliderItemSize.Middle]: styles.componentMiddle,
+    [SliderItemSize.Small]: styles.componentSmall,
+  }[size];
+
   return (
     <TouchableImageBackground
       imageStyle={styles.image}
@@ -40,18 +48,21 @@ export const SliderItem = ({
       previewSrc={previewURL}
       style={[
         styles.component,
-        {
-          [SliderItemSize.Large]: styles.componentLarge,
-          [SliderItemSize.Middle]: styles.componentMiddle,
-          [SliderItemSize.Small]: styles.componentSmall,
-        }[size],
+        { ...conditionStyle, ...(isShort && { height: conditionStyle.height / 2 }) },
         style,
       ]}
       testID={testID}
     >
       {description && (
         <View style={styles.description} testID='slider-item-description'>
-          <Text style={styles.descriptionText} testID='slider-item-description-text'>
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.descriptionText,
+              { ...(isShort && size !== SliderItemSize.Large && { fontSize: FONT_SIZES.h4 }) },
+            ]}
+            testID='slider-item-description-text'
+          >
             {description}
           </Text>
         </View>
@@ -80,9 +91,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.black,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    maxHeight: '30%',
     opacity: 0.7,
-    padding: 10,
+    padding: INDENTS.low,
   },
 
   descriptionText: {
