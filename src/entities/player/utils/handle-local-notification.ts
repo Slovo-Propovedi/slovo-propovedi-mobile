@@ -25,7 +25,7 @@ export const registerForPushNotificationsAsync = async () => {
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
-      alert('Failed to get push token for push notification!');
+      console.log('Failed to get push token for push notification!');
       return;
     }
 
@@ -46,7 +46,7 @@ export const registerForPushNotificationsAsync = async () => {
     //   }),
     // });
   } else {
-    alert('Must use physical device for Push Notifications');
+    console.log('Must use physical device for Push Notifications');
   }
 
   return token;

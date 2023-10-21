@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import React from 'react';
 import type { GestureResponderEvent, ImageStyle, StyleProp, ViewStyle } from 'react-native';
 import { ImageBackground, StyleSheet, TouchableOpacity } from 'react-native';
+import { IMAGE_PLACEHOLDER } from 'shared/images';
 
 interface TouchableImageBackgroundProps {
   children: ReactNode;
@@ -23,7 +24,7 @@ export const TouchableImageBackground = ({
   <TouchableOpacity activeOpacity={0.8} onPress={onPress} testID={testID}>
     <ImageBackground
       imageStyle={[styles.backgroundImage, imageStyle]}
-      source={{ uri: previewSrc }}
+      source={{ uri: previewSrc || IMAGE_PLACEHOLDER }}
       style={[styles.item, style]}
       testID='image-background'
     >

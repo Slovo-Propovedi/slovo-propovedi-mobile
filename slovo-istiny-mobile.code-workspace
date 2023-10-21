@@ -30,7 +30,15 @@
     }
   ],
   "settings": {
-    "cSpell.words": ["Душепопечение", "zustand"]
+    "cSpell.words": ["Душепопечение", "zustand"],
+    "explorer.fileNesting.patterns": {
+      "*.ts": "${capture}.js, ${basename}.*.${extname}",
+      "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts, ${basename}.*.${extname}",
+      "*.jsx": "${capture}.js, ${basename}.*.jsx",
+      "*.tsx": "${capture}.js, ${basename}.*.tsx, ${basename}.*.ts",
+      "tsconfig.json": "tsconfig.*.json",
+      "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml"
+    }
   },
   "extensions": {
     "recommendations": [
@@ -54,7 +62,8 @@
       "yoavbls.pretty-ts-errors",
       "Gruntfuggly.todo-tree",
       "BriteSnow.vscode-toggle-quotes",
-      "pflannery.vscode-versionlens"
+      "pflannery.vscode-versionlens",
+      "unifiedjs.vscode-mdx"
     ]
   }
 }

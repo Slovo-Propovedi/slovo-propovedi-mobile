@@ -48,7 +48,8 @@ export const SliderItem = ({
       previewSrc={previewURL}
       style={[
         styles.component,
-        { ...conditionStyle, ...(isShort && { height: conditionStyle.height / 2 }) },
+        conditionStyle,
+        isShort && { height: conditionStyle.height / 2 },
         style,
       ]}
       testID={testID}
@@ -59,7 +60,7 @@ export const SliderItem = ({
             numberOfLines={1}
             style={[
               styles.descriptionText,
-              { ...(isShort && size !== SliderItemSize.Large && { fontSize: FONT_SIZES.h4 }) },
+              isShort && size !== SliderItemSize.Large && { fontSize: FONT_SIZES.h4 },
             ]}
             testID='slider-item-description-text'
           >
