@@ -7,7 +7,7 @@ const meta = {
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
   args: {
-    previewURL: 'https://i.pinimg.com/236x/0e/bd/26/0ebd262c4b7f69f7ec915dbd8509328f.jpg',
+    previewURL: 'https://slovo-istini.com/images/logo.jpg',
   },
   component: SliderItem,
   parameters: {
@@ -38,5 +38,17 @@ export const Middle: Story = {
 export const Large: Story = {
   args: {
     size: SliderItemSize.Large,
+  },
+};
+
+export const Short: Story = {
+  args: {
+    isShort: true,
+  },
+};
+export const ShortWithDescription: Story = {
+  args: {
+    description: 'Desc',
+    isShort: true,
   },
 };
