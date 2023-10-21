@@ -128,4 +128,28 @@ describe('<Slider/>', () => {
 
     expect(mockData.text).toBeNull;
   });
+
+  test('length of rows elements is equal to itemsRows props', () => {
+    const { update } = render(<Slider items={[itemStub, itemStub, itemStub, itemStub]} />);
+
+    let sliderRowElement = screen.getAllByTestId('slider-row');
+
+    expect(sliderRowElement.length).toEqual(1);
+
+    let itemsRows = 2;
+
+    update(<Slider items={[itemStub, itemStub, itemStub, itemStub]} itemsRows={itemsRows} />);
+
+    sliderRowElement = screen.getAllByTestId('slider-row');
+
+    expect(sliderRowElement.length).toEqual(itemsRows);
+
+    itemsRows++;
+
+    update(<Slider items={[itemStub, itemStub, itemStub, itemStub]} itemsRows={itemsRows} />);
+
+    sliderRowElement = screen.getAllByTestId('slider-row');
+
+    expect(sliderRowElement.length).toEqual(itemsRows);
+  });
 });

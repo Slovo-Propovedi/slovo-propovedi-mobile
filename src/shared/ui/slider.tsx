@@ -68,7 +68,7 @@ export const Slider = <D extends object>({
         showsHorizontalScrollIndicator={false}
       >
         {itemsByRows.map((row, index) => (
-          <View key={`row-${index}`} style={styles.row}>
+          <View key={`row-${index}`} style={styles.row} testID='slider-row'>
             {row.map(({ data, description, previewURL }, index) => (
               <SliderItem
                 description={description}
