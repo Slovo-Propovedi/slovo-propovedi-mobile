@@ -1,4 +1,3 @@
-import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -57,10 +56,10 @@ export const Slider = <D extends object>({
   }, []);
 
   return (
-    <View style={style}>
+    <View style={[styles.slider, style]}>
       <Text onPress={onPressTitle} style={styles.title} testID='title'>
         {title}
-        <FontAwesome color='black' name='chevron-right' size={20} />
+        <Text>{'>'}</Text>
       </Text>
       <ScrollView
         contentContainerStyle={styles.contentContainer}
@@ -97,7 +96,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: INDENTS.low,
+    maxWidth: '100%',
+    width: '100%',
   },
+  slider: { maxWidth: '100%' },
   title: {
     fontSize: FONT_SIZES.h2,
     fontWeight: 'bold',
