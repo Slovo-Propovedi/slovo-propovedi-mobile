@@ -24,7 +24,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ff602a"
       },
-      "package": "com.egoreast.slovoistinymobile"
+      "package": "com.egoreast.slovoistinymobile",
+      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"]
     },
     "web": {
       "favicon": "./assets/favicon.jpg"
@@ -51,7 +52,19 @@
           //   "./local/assets/notification-sound-other.wav"
           // ]
         }
+      ],
+      [
+        "expo-updates",
+        {
+          "username": "egoreast"
+        }
       ]
-    ]
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ddf9e2dd-b431-490b-afed-1340eed6137a"
+    }
   }
 }
