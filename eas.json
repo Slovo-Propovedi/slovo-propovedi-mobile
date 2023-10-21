@@ -10,14 +10,18 @@
       "channel": "development"
     },
     "preview": {
-      "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
       "autoIncrement": true,
+      "distribution": "internal",
       "channel": "preview"
     },
     "production": {
+      "android": {
+        // Такой тип нужен для публикации в плей маркет
+        "buildType": "app-bundle"
+      },
       "autoIncrement": true,
       "channel": "production"
     }
