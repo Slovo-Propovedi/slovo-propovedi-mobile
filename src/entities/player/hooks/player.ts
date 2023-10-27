@@ -1,3 +1,4 @@
+import { Asset } from 'expo-asset';
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
 import { usePlayerStore } from '../model';
@@ -117,18 +118,22 @@ export const usePlayer = ({
       staysActiveInBackground: true,
     });
 
-    const { sound: newSound, status } = await Audio.Sound.createAsync(
-      { uri: newAudioUrl },
-      { positionMillis: initialPosition || 0 },
-    );
+    const audioAsset = Asset.fromURI(newAudioUrl);
+    await audioAsset.downloadAsync();
 
-    const position = (status.isLoaded && status.positionMillis) || 0;
+    const audio = new Audio.Sound();
+
+    const position = initialPosition || 0;
+
+    const status = await audio.loadAsync(audioAsset);
+    await audio.setPositionAsync(position);
+
     const duration = (status.isLoaded && status.durationMillis) || 0;
 
     await setCurrentSoundPosition(position);
     await setCurrentSoundDuration(duration);
 
-    return newSound;
+    return audio;
   };
 
   const changeProgressPosition = async (value: number, newSound?: Audio.Sound) => {

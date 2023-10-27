@@ -5,13 +5,7 @@ import React, { useEffect } from 'react';
 import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
 import { type AudioPlayerData, usePlayer, usePlayerStore } from 'entities/player';
 import type { PlaylistData } from 'shared';
-import {
-  CURRENT_AUDIO,
-  CURRENT_PLAYLIST,
-  CURRENT_SOUND_DURATION,
-  CURRENT_SOUND_POSITION,
-  parseJSONToObject,
-} from 'shared';
+import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION, parseJSONToObject } from 'shared';
 import { RootTabs } from './routing';
 
 Notifications.setNotificationHandler({
@@ -30,13 +24,9 @@ const App = () => {
     setCurrentPlaylist: state.setCurrentPlaylist,
   }));
   const { recreateSound, unload } = usePlayer({});
-  const { setCurrentSound, setCurrentSoundDuration, setCurrentSoundPosition } = usePlayerStore(
-    (store) => ({
-      setCurrentSound: store.setCurrentSound,
-      setCurrentSoundDuration: store.setCurrentSoundDuration,
-      setCurrentSoundPosition: store.setCurrentSoundPosition,
-    }),
-  );
+  const { setCurrentSound } = usePlayerStore((store) => ({
+    setCurrentSound: store.setCurrentSound,
+  }));
 
   const onFetchUpdateAsync = async () => {
     try {
@@ -51,42 +41,50 @@ const App = () => {
     }
   };
 
+  const initCurrentAudioAndSound = async ({
+    storedCurrentAudio,
+    storedSoundPosition,
+  }: {
+    storedCurrentAudio: null | string;
+    storedSoundPosition: null | string;
+  }) => {
+    if (!storedCurrentAudio) {
+      return;
+    }
+
+    const currentAudio = parseJSONToObject<AudioPlayerData>(storedCurrentAudio);
+
+    if (!currentAudio) {
+      return;
+    }
+
+    await setCurrentAudio(currentAudio);
+
+    const currentSound = await recreateSound(currentAudio.audioUrl, Number(storedSoundPosition));
+    setCurrentSound(currentSound);
+  };
+
+  const initCurrentPlaylist = async (storedCurrentPlaylist: null | string) => {
+    if (!storedCurrentPlaylist) {
+      return;
+    }
+
+    const currentPlaylist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist);
+
+    if (!currentPlaylist) {
+      return;
+    }
+
+    await setCurrentPlaylist(currentPlaylist);
+  };
+
   const initPlayerData = async () => {
-    const [
-      [, storedCurrentAudio],
-      [, storedCurrentPlaylist],
-      [, currentSoundPosition],
-      [, currentSoundDuration],
-    ] = await AsyncStorage.multiGet([
-      CURRENT_AUDIO,
-      CURRENT_PLAYLIST,
-      CURRENT_SOUND_POSITION,
-      CURRENT_SOUND_DURATION,
-    ]);
+    const [[, storedCurrentAudio], [, storedCurrentPlaylist], [, storedSoundPosition]] =
+      await AsyncStorage.multiGet([CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION]);
 
-    await setCurrentSoundPosition(Number(currentSoundPosition));
-    await setCurrentSoundDuration(Number(currentSoundDuration));
+    initCurrentAudioAndSound({ storedCurrentAudio, storedSoundPosition });
 
-    if (storedCurrentPlaylist) {
-      const currentPlaylist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist);
-
-      if (currentPlaylist) {
-        await setCurrentPlaylist(currentPlaylist);
-      }
-    }
-
-    if (storedCurrentAudio) {
-      const currentAudio = parseJSONToObject<AudioPlayerData>(storedCurrentAudio);
-      if (currentAudio) {
-        setCurrentAudio(currentAudio);
-
-        const currentSound = await recreateSound(
-          currentAudio.audioUrl,
-          Number(currentSoundPosition),
-        );
-        setCurrentSound(currentSound);
-      }
-    }
+    initCurrentPlaylist(storedCurrentPlaylist);
   };
 
   useEffect(() => {
