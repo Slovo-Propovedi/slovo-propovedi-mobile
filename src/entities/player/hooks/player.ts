@@ -18,7 +18,13 @@ const downloadAndCacheAudio = async ({
   }
 };
 
-const loadCashedSoundData = async (remoteUri: string) => {
+const loadCashedSoundData = async ({
+  initialPosition,
+  remoteUri,
+}: {
+  initialPosition: number;
+  remoteUri: string;
+}) => {
   // const remoteUri = 'https://example.com/myAudio.mp3';
   const fileName = remoteUri.split('/').at(-1);
 
@@ -26,12 +32,12 @@ const loadCashedSoundData = async (remoteUri: string) => {
     return;
   }
 
-  const fileUri = FileSystem.documentDirectory + fileName;
+  const fileUri = FileSystem.cacheDirectory + fileName;
 
   await downloadAndCacheAudio({ fileUri, remoteUri });
   const { uri } = await FileSystem.getInfoAsync(fileUri);
   const audio = new Audio.Sound();
-  const status = await audio.loadAsync({ uri });
+  const status = await audio.loadAsync({ uri }, { positionMillis: initialPosition });
 
   return { audio, status };
 };
@@ -149,20 +155,15 @@ export const usePlayer = ({
       staysActiveInBackground: true,
     });
 
-    const data = await loadCashedSoundData(newAudioUrl);
+    const position = initialPosition || 0;
+
+    const data = await loadCashedSoundData({ initialPosition: position, remoteUri: newAudioUrl });
 
     if (!data) {
       return;
     }
 
     const { audio, status } = data;
-
-    // const { sound, status } = await Audio.Sound.createAsync(
-    //   { uri: newAudioUrl },
-    //   { positionMillis: initialPosition || 0 },
-    // );
-
-    const position = initialPosition || 0;
 
     const duration = (status.isLoaded && status.durationMillis) || 0;
 
