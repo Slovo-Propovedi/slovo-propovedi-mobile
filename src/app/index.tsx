@@ -61,6 +61,11 @@ const App = () => {
     await setCurrentAudio(currentAudio);
 
     const currentSound = await recreateSound(currentAudio.audioUrl, Number(storedSoundPosition));
+
+    if (!currentSound) {
+      return;
+    }
+
     setCurrentSound(currentSound);
   };
 

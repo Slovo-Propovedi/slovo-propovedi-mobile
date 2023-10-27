@@ -1,9 +1,40 @@
-import { Asset } from 'expo-asset';
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
 import { useEffect } from 'react';
 import { usePlayerStore } from '../model';
 import { cancelScheduledNotificationAsync } from '../utils';
 import { useLocalNotification } from './push';
+
+const downloadAndCacheAudio = async ({
+  fileUri,
+  remoteUri,
+}: {
+  fileUri: string;
+  remoteUri: string;
+}) => {
+  const { exists } = await FileSystem.getInfoAsync(fileUri);
+  if (!exists) {
+    await FileSystem.downloadAsync(remoteUri, fileUri);
+  }
+};
+
+const loadCashedSoundData = async (remoteUri: string) => {
+  // const remoteUri = 'https://example.com/myAudio.mp3';
+  const fileName = remoteUri.split('/').at(-1);
+
+  if (!fileName) {
+    return;
+  }
+
+  const fileUri = FileSystem.documentDirectory + fileName;
+
+  await downloadAndCacheAudio({ fileUri, remoteUri });
+  const { uri } = await FileSystem.getInfoAsync(fileUri);
+  const audio = new Audio.Sound();
+  const status = await audio.loadAsync({ uri });
+
+  return { audio, status };
+};
 
 export const usePlayer = ({
   onGetPlaybackStatus,
@@ -118,15 +149,20 @@ export const usePlayer = ({
       staysActiveInBackground: true,
     });
 
-    const audioAsset = Asset.fromURI(newAudioUrl);
-    await audioAsset.downloadAsync();
+    const data = await loadCashedSoundData(newAudioUrl);
 
-    const audio = new Audio.Sound();
+    if (!data) {
+      return;
+    }
+
+    const { audio, status } = data;
+
+    // const { sound, status } = await Audio.Sound.createAsync(
+    //   { uri: newAudioUrl },
+    //   { positionMillis: initialPosition || 0 },
+    // );
 
     const position = initialPosition || 0;
-
-    const status = await audio.loadAsync(audioAsset);
-    await audio.setPositionAsync(position);
 
     const duration = (status.isLoaded && status.durationMillis) || 0;
 
