@@ -1,9 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import type { PlaylistData, SermonData } from 'shared';
-import { CURRENT_AUDIO, isNonNullable } from 'shared';
+import { isNonNullable } from 'shared';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
 import { schedulePushNotification } from '../utils';
@@ -25,7 +24,7 @@ interface PlayerControlsProps {
   currentAudio: AudioPlayerData | null;
   currentPlaylist: PlaylistData | null;
   excludeButtons?: ControlsNames[];
-  setCurrentAudio: (audio: AudioPlayerData) => void;
+  setCurrentAudio: (audio: AudioPlayerData) => Promise<void>;
   size?: PlayerControlsSize;
   style?: StyleProp<ViewStyle>;
 }
@@ -161,11 +160,13 @@ export const PlayerControls = ({
 
     const newAudio = { ...otherProps, audioUrl, previewUrl: currentPlaylist.previewUrl };
 
-    setCurrentAudio(newAudio);
-    await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(newAudio));
+    await setCurrentAudio(newAudio);
 
     const newSound = await recreateSound(newAudio.audioUrl);
-    newSound && setCurrentSound(newSound);
+
+    if (newSound) {
+      setCurrentSound(newSound);
+    }
 
     await schedulePushNotification({
       body: newAudio.description || '',

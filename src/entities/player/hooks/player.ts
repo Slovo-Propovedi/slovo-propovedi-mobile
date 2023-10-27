@@ -1,7 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
-import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared';
 import { usePlayerStore } from '../model';
 import { cancelScheduledNotificationAsync } from '../utils';
 import { useLocalNotification } from './push';
@@ -127,13 +125,8 @@ export const usePlayer = ({
     const position = (status.isLoaded && status.positionMillis) || 0;
     const duration = (status.isLoaded && status.durationMillis) || 0;
 
-    await AsyncStorage.multiSet([
-      [CURRENT_SOUND_POSITION, `${position}`],
-      [CURRENT_SOUND_DURATION, `${duration}`],
-    ]);
-
-    setCurrentSoundPosition(position);
-    setCurrentSoundDuration(duration);
+    await setCurrentSoundPosition(position);
+    await setCurrentSoundDuration(duration);
 
     return newSound;
   };
@@ -146,7 +139,7 @@ export const usePlayer = ({
     }
 
     await sound.setPositionAsync(value);
-    setCurrentSoundPosition(value);
+    await setCurrentSoundPosition(value);
   };
 
   const getPlaybackStatus = async (newSound?: Audio.Sound) => {
@@ -163,13 +156,8 @@ export const usePlayer = ({
 
     const { durationMillis, isPlaying, positionMillis } = status;
 
-    await AsyncStorage.multiSet([
-      [CURRENT_SOUND_POSITION, `${positionMillis}`],
-      [CURRENT_SOUND_DURATION, `${durationMillis || 0}`],
-    ]);
-
-    setCurrentSoundPosition(positionMillis);
-    setCurrentSoundDuration(durationMillis || 0);
+    await setCurrentSoundPosition(positionMillis);
+    await setCurrentSoundDuration(durationMillis || 0);
     setIsPlayingCurrentAudio(isPlaying);
 
     onGetPlaybackStatus?.(positionMillis, durationMillis || 0);

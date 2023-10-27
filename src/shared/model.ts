@@ -9,10 +9,9 @@ interface AppStore {
 export const useAppStore = create<AppStore>((set) => ({
   isAudioPlayerMounted: false,
 
-  setIsAudioPlayerMounted: (value) => {
+  setIsAudioPlayerMounted: (value) =>
     set((state) => ({
       ...state,
       isAudioPlayerMounted: value,
-    }));
-  },
+    })),
 }));

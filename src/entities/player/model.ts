@@ -1,5 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Audio } from 'expo-av';
 import { create } from 'zustand';
+import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared';
 
 interface PlayerStoreStates {
   currentSound: Audio.Sound | null;
@@ -16,9 +18,9 @@ interface PlayerStore extends PlayerStoreStates {
   resetStates: () => void;
   setCurrentSound: (sound: Audio.Sound | null) => void;
 
-  setCurrentSoundDuration: (duration: number) => void;
+  setCurrentSoundDuration: (duration: number) => Promise<void>;
 
-  setCurrentSoundPosition: (position: number) => void;
+  setCurrentSoundPosition: (position: number) => Promise<void>;
   setIsPlayingCurrentAudio: (value: boolean) => void;
 
   setPlaybackStatusInterval: (timeout: NodeJS.Timeout | null) => void;
@@ -38,50 +40,45 @@ const initialState: PlayerStoreStates = {
 export const usePlayerStore = create<PlayerStore>((set) => ({
   ...initialState,
 
-  resetPlaybackStatusInterval: () => {
+  resetPlaybackStatusInterval: () =>
     set((state) => ({
       ...state,
       playbackStatusInterval: null,
-    }));
-  },
-  resetStates: () => {
+    })),
+  resetStates: () =>
     set((state) => ({
       ...state,
       ...initialState,
-    }));
-  },
-  setCurrentSound: (Sound) => {
+    })),
+
+  setCurrentSound: (sound) =>
     set((state) => ({
       ...state,
-      currentSound: Sound,
-    }));
-  },
-
-  setCurrentSoundDuration: (duration) => {
+      currentSound: sound,
+    })),
+  setCurrentSoundDuration: async (duration) => {
+    await AsyncStorage.setItem(CURRENT_SOUND_DURATION, `${duration}`);
     set((state) => ({
       ...state,
       currentSoundDuration: duration,
     }));
   },
-
-  setCurrentSoundPosition: (position) => {
+  setCurrentSoundPosition: async (position) => {
+    await AsyncStorage.setItem(CURRENT_SOUND_POSITION, `${position}`);
     set((state) => ({
       ...state,
       currentSoundPosition: position,
     }));
   },
 
-  setIsPlayingCurrentAudio: (value) => {
+  setIsPlayingCurrentAudio: (value) =>
     set((state) => ({
       ...state,
       isPlayingCurrentAudio: value,
-    }));
-  },
-
-  setPlaybackStatusInterval: (timeout) => {
+    })),
+  setPlaybackStatusInterval: (timeout) =>
     set((state) => ({
       ...state,
       playbackStatusInterval: timeout,
-    }));
-  },
+    })),
 }));

@@ -64,13 +64,15 @@ const App = () => {
       CURRENT_SOUND_DURATION,
     ]);
 
-    setCurrentSoundPosition(Number(currentSoundPosition));
-    setCurrentSoundDuration(Number(currentSoundDuration));
+    await setCurrentSoundPosition(Number(currentSoundPosition));
+    await setCurrentSoundDuration(Number(currentSoundDuration));
 
     if (storedCurrentPlaylist) {
       const currentPlaylist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist);
 
-      currentPlaylist && setCurrentPlaylist(currentPlaylist);
+      if (currentPlaylist) {
+        await setCurrentPlaylist(currentPlaylist);
+      }
     }
 
     if (storedCurrentAudio) {
