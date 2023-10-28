@@ -1,46 +1,8 @@
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
 import { useEffect } from 'react';
 import { usePlayerStore } from '../model';
-import { cancelScheduledNotificationAsync } from '../utils';
+import { cancelScheduledNotificationAsync, loadCashedSoundData } from '../utils';
 import { useLocalNotification } from './push';
-
-const downloadAndCacheAudio = async ({
-  fileUri,
-  remoteUri,
-}: {
-  fileUri: string;
-  remoteUri: string;
-}) => {
-  const { exists } = await FileSystem.getInfoAsync(fileUri);
-  if (!exists) {
-    await FileSystem.downloadAsync(remoteUri, fileUri);
-  }
-};
-
-const loadCashedSoundData = async ({
-  initialPosition,
-  remoteUri,
-}: {
-  initialPosition: number;
-  remoteUri: string;
-}) => {
-  // const remoteUri = 'https://example.com/myAudio.mp3';
-  const fileName = remoteUri.split('/').at(-1);
-
-  if (!fileName) {
-    return;
-  }
-
-  const fileUri = FileSystem.cacheDirectory + fileName;
-
-  await downloadAndCacheAudio({ fileUri, remoteUri });
-  const { uri } = await FileSystem.getInfoAsync(fileUri);
-  const audio = new Audio.Sound();
-  const status = await audio.loadAsync({ uri }, { positionMillis: initialPosition });
-
-  return { audio, status };
-};
 
 export const usePlayer = ({
   onGetPlaybackStatus,
@@ -55,6 +17,7 @@ export const usePlayer = ({
     currentSoundPosition,
     isPlayingCurrentAudio,
     playbackStatusInterval,
+    setCurrentSoundDownloadingProgress,
     setCurrentSoundDuration,
     setCurrentSoundPosition,
     setIsPlayingCurrentAudio,
@@ -65,6 +28,7 @@ export const usePlayer = ({
     currentSoundPosition: state.currentSoundPosition,
     isPlayingCurrentAudio: state.isPlayingCurrentAudio,
     playbackStatusInterval: state.playbackStatusInterval,
+    setCurrentSoundDownloadingProgress: state.setCurrentSoundDownloadingProgress,
     setCurrentSoundDuration: state.setCurrentSoundDuration,
     setCurrentSoundPosition: state.setCurrentSoundPosition,
     setIsPlayingCurrentAudio: state.setIsPlayingCurrentAudio,
@@ -157,7 +121,11 @@ export const usePlayer = ({
 
     const position = initialPosition || 0;
 
-    const data = await loadCashedSoundData({ initialPosition: position, remoteUri: newAudioUrl });
+    const data = await loadCashedSoundData({
+      initialPosition: position,
+      onProgress: setCurrentSoundDownloadingProgress,
+      remoteUri: newAudioUrl,
+    });
 
     if (!data) {
       return;
