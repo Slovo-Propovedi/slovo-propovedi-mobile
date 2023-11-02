@@ -1,7 +1,7 @@
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { useEffect } from 'react';
 import { usePlayerStore } from '../model';
-import { cancelScheduledNotificationAsync, loadCashedSoundData } from '../utils';
+import { cancelScheduledNotificationAsync, loadCachedSoundData } from '../utils';
 import { useLocalNotification } from './push';
 
 export const usePlayer = ({
@@ -17,7 +17,6 @@ export const usePlayer = ({
     currentSoundPosition,
     isPlayingCurrentAudio,
     playbackStatusInterval,
-    setCurrentSoundDownloadingProgress,
     setCurrentSoundDuration,
     setCurrentSoundPosition,
     setIsPlayingCurrentAudio,
@@ -28,13 +27,11 @@ export const usePlayer = ({
     currentSoundPosition: state.currentSoundPosition,
     isPlayingCurrentAudio: state.isPlayingCurrentAudio,
     playbackStatusInterval: state.playbackStatusInterval,
-    setCurrentSoundDownloadingProgress: state.setCurrentSoundDownloadingProgress,
     setCurrentSoundDuration: state.setCurrentSoundDuration,
     setCurrentSoundPosition: state.setCurrentSoundPosition,
     setIsPlayingCurrentAudio: state.setIsPlayingCurrentAudio,
     setPlaybackStatusInterval: state.setPlaybackStatusInterval,
   }));
-
   const resetInterval = () => {
     playbackStatusInterval && clearInterval(playbackStatusInterval);
   };
@@ -121,9 +118,8 @@ export const usePlayer = ({
 
     const position = initialPosition || 0;
 
-    const data = await loadCashedSoundData({
+    const data = await loadCachedSoundData({
       initialPosition: position,
-      onProgress: setCurrentSoundDownloadingProgress,
       remoteUri: newAudioUrl,
     });
 

@@ -5,7 +5,6 @@ import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared';
 
 interface PlayerStoreStates {
   currentSound: Audio.Sound | null;
-  currentSoundDownloadingProgress: number;
   currentSoundDuration: number;
 
   currentSoundPosition: number;
@@ -20,7 +19,6 @@ interface PlayerStore extends PlayerStoreStates {
   resetStates: () => void;
 
   setCurrentSound: (sound: Audio.Sound | null) => void;
-  setCurrentSoundDownloadingProgress: (progress: number) => void;
 
   setCurrentSoundDuration: (duration: number) => Promise<void>;
 
@@ -32,7 +30,6 @@ interface PlayerStore extends PlayerStoreStates {
 
 const initialState: PlayerStoreStates = {
   currentSound: null,
-  currentSoundDownloadingProgress: 100,
   currentSoundDuration: 0,
 
   currentSoundPosition: 0,
@@ -62,11 +59,6 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
       currentSound: sound,
     })),
 
-  setCurrentSoundDownloadingProgress: (progress) =>
-    set((state) => ({
-      ...state,
-      currentSoundDownloadingProgress: progress,
-    })),
   setCurrentSoundDuration: async (duration) => {
     await AsyncStorage.setItem(CURRENT_SOUND_DURATION, `${duration}`);
     set((state) => ({

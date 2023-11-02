@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { PlaylistData, SermonData } from 'shared';
-import { COLORS, FONT_SIZES, isNonNullable } from 'shared';
+import { FONT_SIZES, isNonNullable } from 'shared';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
 import { schedulePushNotification } from '../utils';
@@ -45,14 +45,12 @@ export const PlayerControls = ({
     },
   });
 
-  const { currentSoundDownloadingProgress, isPlayingCurrentAudio, setCurrentSound } =
-    usePlayerStore((store) => ({
-      currentSoundDownloadingProgress: store.currentSoundDownloadingProgress,
-      isPlayingCurrentAudio: store.isPlayingCurrentAudio,
-      setCurrentSound: store.setCurrentSound,
-      setCurrentSoundDuration: store.setCurrentSoundDuration,
-      setCurrentSoundPosition: store.setCurrentSoundPosition,
-    }));
+  const { isPlayingCurrentAudio, setCurrentSound } = usePlayerStore((store) => ({
+    isPlayingCurrentAudio: store.isPlayingCurrentAudio,
+    setCurrentSound: store.setCurrentSound,
+    setCurrentSoundDuration: store.setCurrentSoundDuration,
+    setCurrentSoundPosition: store.setCurrentSoundPosition,
+  }));
 
   const rewindTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -214,24 +212,15 @@ export const PlayerControls = ({
           type='backward'
         />
       )}
-      {!isPlayExcluded &&
-        (currentSoundDownloadingProgress >= 100 ? (
-          <PlayerControlButton
-            isDisabled={!currentAudio}
-            onPress={togglePlay}
-            size={size * 2}
-            testID='play-button'
-            type={isPlayingCurrentAudio ? 'pause' : 'play'}
-          />
-        ) : (
-          <View>
-            <ActivityIndicator
-              color={COLORS.primary}
-              size={size * 2 - styles.bufferingText.fontSize}
-            />
-            <Text style={styles.bufferingText}>Буферизация {currentSoundDownloadingProgress}%</Text>
-          </View>
-        ))}
+      {!isPlayExcluded && (
+        <PlayerControlButton
+          isDisabled={!currentAudio}
+          onPress={togglePlay}
+          size={size * 2}
+          testID='play-button'
+          type={isPlayingCurrentAudio ? 'pause' : 'play'}
+        />
+      )}
       {!isForwardExcluded && (
         <PlayerControlButton
           isDisabled={position >= duration || !currentAudio}

@@ -3,43 +3,32 @@ import * as FileSystem from 'expo-file-system';
 
 interface DownloadAndCacheAudioProps {
   fileUri: string;
-  onProgress?: (progress: number) => void;
   remoteUri: string;
 }
 
-const downloadAndCacheAudio = async ({
-  fileUri,
-  onProgress,
-  remoteUri,
-}: DownloadAndCacheAudioProps) => {
-  const { exists } = await FileSystem.getInfoAsync(fileUri);
+const downloadAndCacheAudio = async ({ fileUri, remoteUri }: DownloadAndCacheAudioProps) => {
+  const fileName = remoteUri.split('/').at(-1);
 
-  if (exists) {
+  if (!fileName) {
     return;
   }
 
-  const downloadResumable = FileSystem.createDownloadResumable(
-    remoteUri,
-    fileUri,
-    {},
-    ({ totalBytesExpectedToWrite, totalBytesWritten }) =>
-      onProgress?.(Math.floor((totalBytesWritten / totalBytesExpectedToWrite) * 100)),
-  );
+  const tempUri = await FileSystem.downloadAsync(remoteUri, fileUri, {
+    sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
+  });
 
   try {
-    await downloadResumable.downloadAsync();
-  } catch (e) {
-    console.error(e);
+    await FileSystem.copyAsync({ from: tempUri.uri, to: fileUri });
+  } catch (error) {
+    console.log('Error copying file to cache directory:', error);
   }
 };
 
-export const loadCashedSoundData = async ({
+export const loadCachedSoundData = async ({
   initialPosition,
-  onProgress,
   remoteUri,
 }: {
   initialPosition: number;
-  onProgress?: (progress: number) => void;
   remoteUri: string;
 }) => {
   const fileName = remoteUri.split('/').at(-1);
@@ -50,10 +39,18 @@ export const loadCashedSoundData = async ({
 
   const fileUri = FileSystem.cacheDirectory + fileName;
 
-  await downloadAndCacheAudio({ fileUri, onProgress, remoteUri });
-  const { uri } = await FileSystem.getInfoAsync(fileUri);
+  const { exists, uri } = await FileSystem.getInfoAsync(fileUri);
+
+  if (!exists) {
+    downloadAndCacheAudio({ fileUri, remoteUri });
+  }
+
   const audio = new Audio.Sound();
-  const status = await audio.loadAsync({ uri }, { positionMillis: initialPosition });
+  const status = await audio.loadAsync(
+    { uri: uri || fileUri },
+    { positionMillis: initialPosition },
+    false,
+  );
 
   return { audio, status };
 };
