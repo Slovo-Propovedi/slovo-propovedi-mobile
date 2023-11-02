@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import type { PlaylistData, SermonData } from 'shared';
-import { FONT_SIZES, isNonNullable } from 'shared';
+import { COLORS, FONT_SIZES, isNonNullable } from 'shared';
 import { usePlayer } from '../hooks';
 import { usePlayerStore } from '../model';
 import { schedulePushNotification } from '../utils';
@@ -45,12 +45,13 @@ export const PlayerControls = ({
     },
   });
 
-  const { isPlayingCurrentAudio, setCurrentSound } = usePlayerStore((store) => ({
-    isPlayingCurrentAudio: store.isPlayingCurrentAudio,
-    setCurrentSound: store.setCurrentSound,
-    setCurrentSoundDuration: store.setCurrentSoundDuration,
-    setCurrentSoundPosition: store.setCurrentSoundPosition,
-  }));
+  const { isCurrentSoundBuffering, isPlayingCurrentAudio, setCurrentSound } = usePlayerStore(
+    (store) => ({
+      isCurrentSoundBuffering: store.isCurrentSoundBuffering,
+      isPlayingCurrentAudio: store.isPlayingCurrentAudio,
+      setCurrentSound: store.setCurrentSound,
+    }),
+  );
 
   const rewindTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -212,15 +213,23 @@ export const PlayerControls = ({
           type='backward'
         />
       )}
-      {!isPlayExcluded && (
-        <PlayerControlButton
-          isDisabled={!currentAudio}
-          onPress={togglePlay}
-          size={size * 2}
-          testID='play-button'
-          type={isPlayingCurrentAudio ? 'pause' : 'play'}
-        />
-      )}
+      {!isPlayExcluded &&
+        (isCurrentSoundBuffering ? (
+          <View>
+            <ActivityIndicator
+              color={COLORS.primary}
+              size={size * 2 - styles.bufferingText.fontSize}
+            />
+          </View>
+        ) : (
+          <PlayerControlButton
+            isDisabled={!currentAudio}
+            onPress={togglePlay}
+            size={size * 2}
+            testID='play-button'
+            type={isPlayingCurrentAudio ? 'pause' : 'play'}
+          />
+        ))}
       {!isForwardExcluded && (
         <PlayerControlButton
           isDisabled={position >= duration || !currentAudio}

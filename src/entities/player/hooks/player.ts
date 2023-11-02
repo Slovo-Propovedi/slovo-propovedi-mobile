@@ -19,6 +19,7 @@ export const usePlayer = ({
     playbackStatusInterval,
     setCurrentSoundDuration,
     setCurrentSoundPosition,
+    setIsCurrentSoundBuffering,
     setIsPlayingCurrentAudio,
     setPlaybackStatusInterval,
   } = usePlayerStore((state) => ({
@@ -29,6 +30,7 @@ export const usePlayer = ({
     playbackStatusInterval: state.playbackStatusInterval,
     setCurrentSoundDuration: state.setCurrentSoundDuration,
     setCurrentSoundPosition: state.setCurrentSoundPosition,
+    setIsCurrentSoundBuffering: state.setIsCurrentSoundBuffering,
     setIsPlayingCurrentAudio: state.setIsPlayingCurrentAudio,
     setPlaybackStatusInterval: state.setPlaybackStatusInterval,
   }));
@@ -120,6 +122,7 @@ export const usePlayer = ({
 
     const data = await loadCachedSoundData({
       initialPosition: position,
+      onBuffering: setIsCurrentSoundBuffering,
       remoteUri: newAudioUrl,
     });
 

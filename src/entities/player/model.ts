@@ -9,6 +9,8 @@ interface PlayerStoreStates {
 
   currentSoundPosition: number;
 
+  isCurrentSoundBuffering: boolean;
+
   isPlayingCurrentAudio: boolean;
 
   playbackStatusInterval: NodeJS.Timeout | null;
@@ -23,6 +25,7 @@ interface PlayerStore extends PlayerStoreStates {
   setCurrentSoundDuration: (duration: number) => Promise<void>;
 
   setCurrentSoundPosition: (position: number) => Promise<void>;
+  setIsCurrentSoundBuffering: (value: boolean) => void;
   setIsPlayingCurrentAudio: (value: boolean) => void;
 
   setPlaybackStatusInterval: (timeout: NodeJS.Timeout | null) => void;
@@ -33,6 +36,8 @@ const initialState: PlayerStoreStates = {
   currentSoundDuration: 0,
 
   currentSoundPosition: 0,
+
+  isCurrentSoundBuffering: false,
 
   isPlayingCurrentAudio: false,
 
@@ -74,6 +79,11 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
     }));
   },
 
+  setIsCurrentSoundBuffering: (value) =>
+    set((state) => ({
+      ...state,
+      isCurrentSoundBuffering: value,
+    })),
   setIsPlayingCurrentAudio: (value) =>
     set((state) => ({
       ...state,

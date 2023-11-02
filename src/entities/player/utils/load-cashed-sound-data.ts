@@ -7,28 +7,24 @@ interface DownloadAndCacheAudioProps {
 }
 
 const downloadAndCacheAudio = async ({ fileUri, remoteUri }: DownloadAndCacheAudioProps) => {
-  const fileName = remoteUri.split('/').at(-1);
+  const { exists } = await FileSystem.getInfoAsync(fileUri);
 
-  if (!fileName) {
+  if (exists) {
     return;
   }
 
-  const tempUri = await FileSystem.downloadAsync(remoteUri, fileUri, {
+  await FileSystem.downloadAsync(remoteUri, fileUri, {
     sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
   });
-
-  try {
-    await FileSystem.copyAsync({ from: tempUri.uri, to: fileUri });
-  } catch (error) {
-    console.log('Error copying file to cache directory:', error);
-  }
 };
 
 export const loadCachedSoundData = async ({
   initialPosition,
+  onBuffering,
   remoteUri,
 }: {
   initialPosition: number;
+  onBuffering?: (isBuffering: boolean) => void;
   remoteUri: string;
 }) => {
   const fileName = remoteUri.split('/').at(-1);
@@ -37,20 +33,40 @@ export const loadCachedSoundData = async ({
     return;
   }
 
-  const fileUri = FileSystem.cacheDirectory + fileName;
+  const audiosDir = `${FileSystem.cacheDirectory}Audios/`;
+  const audiosDirInfo = await FileSystem.getInfoAsync(audiosDir);
 
-  const { exists, uri } = await FileSystem.getInfoAsync(fileUri);
+  if (!audiosDirInfo.exists) {
+    await FileSystem.makeDirectoryAsync(audiosDir);
+  } else {
+    const audiosInCache = await FileSystem.readDirectoryAsync(audiosDir);
 
-  if (!exists) {
-    downloadAndCacheAudio({ fileUri, remoteUri });
+    for (const fileNameInCache of audiosInCache) {
+      if (fileName !== fileNameInCache) {
+        await FileSystem.deleteAsync(`${audiosDir}${fileNameInCache}`, { idempotent: true });
+      }
+    }
   }
+
+  const fileUri = `${audiosDir}${fileName}`;
+
+  await downloadAndCacheAudio({ fileUri, remoteUri });
 
   const audio = new Audio.Sound();
   const status = await audio.loadAsync(
-    { uri: uri || fileUri },
+    { uri: fileUri },
     { positionMillis: initialPosition },
     false,
   );
+
+  audio.setOnPlaybackStatusUpdate((status) => {
+    if (!status.isLoaded) {
+      return;
+    }
+    const { isBuffering } = status;
+
+    onBuffering?.(isBuffering);
+  });
 
   return { audio, status };
 };
