@@ -20,7 +20,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({ onPress, placeholder, 
 const styles = StyleSheet.create({
   input: {
     flex: 1,
-    padding: INDENTS.low,
+    padding: INDENTS.middle,
   },
 
   searchInput: {

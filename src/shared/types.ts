@@ -17,6 +17,15 @@ export type HOC<
   injector: InjectedKeys extends keyof ProvidedProps ? Pick<ProvidedProps, InjectedKeys> : void,
 ) => React.FC<RequiredProps & Props>;
 
+// Принимает тип (потенциально со всеми необязательными полями) и требует от него хотя бы одно поле.
+export type RequireAtLeastOne<Obj extends object, ExcludeKeys extends keyof Obj = keyof Obj> = Pick<
+  Obj,
+  Exclude<keyof Obj, ExcludeKeys>
+> &
+  {
+    [K in ExcludeKeys]-?: Required<Pick<Obj, K>> & Partial<Pick<Obj, Exclude<keyof Obj, K>>>;
+  }[ExcludeKeys];
+
 export enum MimeType {
   '3gp-audio' = 'audio/3gpp',
   '3gp-video' = 'video/3gpp',

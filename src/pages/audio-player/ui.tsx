@@ -51,17 +51,17 @@ export const AudioPlayerScreen: React.FC<
   );
 };
 
-const previewSize = windowWidth - INDENTS.main * 2;
+const previewSize = windowWidth - INDENTS.high * 2;
 
 const styles = StyleSheet.create({
   bottomContent: {
     bottom: 0,
     position: 'absolute',
   },
-  container: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: INDENTS.main },
+  container: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: INDENTS.high },
 
   controlsContainer: {
-    marginVertical: INDENTS.main,
+    marginVertical: INDENTS.high,
   },
 
   preview: {
@@ -77,6 +77,6 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: FONT_SIZES.h3,
-    marginVertical: INDENTS.main,
+    marginVertical: INDENTS.high,
   },
 });

@@ -16,6 +16,7 @@ import {
   revelationPlaylist,
   secondCorinthiansPlaylist,
   secondPetePlaylist,
+  stephensSpeechBeforeSanhedrin,
   titusPlaylist,
   unionWithChristPlaylist,
 } from './playlists';
@@ -55,7 +56,11 @@ export const db: DB = {
     },
     {
       groupName: FetchedSermonsGroupName.Topical,
-      playlists: [unionWithChristPlaylist, isThereAnUnforgivableSinPlaylist],
+      playlists: [
+        unionWithChristPlaylist,
+        isThereAnUnforgivableSinPlaylist,
+        stephensSpeechBeforeSanhedrin,
+      ],
     },
   ],
 };

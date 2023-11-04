@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flex: 1,
     fontSize: FONT_SIZES.h3,
-    padding: INDENTS.low,
+    padding: INDENTS.middle,
   },
   preview: {
     borderRadius: RADIUSES.low,

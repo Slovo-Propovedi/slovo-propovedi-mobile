@@ -40,6 +40,7 @@ export const NewSermonsSlider = () => {
 
   return (
     <Slider
+      displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
       items={newSermons.map((item) => ({
         data: item,
         description: item.title,
@@ -58,6 +59,6 @@ export const NewSermonsSlider = () => {
 
 const styles = StyleSheet.create({
   slider: {
-    paddingHorizontal: INDENTS.low,
+    paddingHorizontal: INDENTS.middle,
   },
 });

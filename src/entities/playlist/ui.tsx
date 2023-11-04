@@ -47,14 +47,14 @@ export const Playlist = ({
 };
 
 const styles = StyleSheet.create({
-  content: { padding: INDENTS.low, paddingRight: 0 },
+  content: { padding: INDENTS.middle, paddingRight: 0 },
 
   description: {
     color: COLORS.white,
     fontSize: FONT_SIZES.h3,
     marginTop: 'auto',
     maxHeight: '20%',
-    padding: INDENTS.main,
+    padding: INDENTS.high,
   },
 
   preview: {
@@ -67,6 +67,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.h1,
     marginLeft: 'auto',
     marginRight: 'auto',
-    paddingBottom: INDENTS.main,
+    paddingBottom: INDENTS.high,
   },
 });

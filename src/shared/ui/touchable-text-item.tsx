@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     minHeight: 50,
-    padding: INDENTS.main,
+    padding: INDENTS.high,
   },
   text: {
     fontSize: FONT_SIZES.h3,

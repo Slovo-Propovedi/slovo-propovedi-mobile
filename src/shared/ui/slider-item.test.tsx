@@ -9,22 +9,32 @@ const propsStub = {
 
 describe('<SliderItem/>', () => {
   test('return null if previewURL prop is undefined', () => {
-    // @ts-expect-error - undefined is a not a valid previewURL
-    render(<SliderItem previewURL={undefined} />);
+    render(
+      <SliderItem
+        displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
+        // @ts-expect-error - undefined is a not a valid previewURL
+        previewURL={undefined}
+      />,
+    );
 
     const tree = screen.toJSON();
     expect(tree).toBeNull();
   });
 
   test('return null, if previewURL === ""', () => {
-    render(<SliderItem previewURL='' />);
+    render(<SliderItem displayingTitleInSlide={{ isSlideTitleUnderSlide: true }} previewURL='' />);
 
     const tree = screen.toJSON();
     expect(tree).toBeNull();
   });
 
   test('not return null or array, if previewURL is valid', () => {
-    render(<SliderItem previewURL={propsStub.previewURL} />);
+    render(
+      <SliderItem
+        displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
+        previewURL={propsStub.previewURL}
+      />,
+    );
 
     const tree = screen.toJSON();
     expect(tree).not.toBeNull();
@@ -32,7 +42,12 @@ describe('<SliderItem/>', () => {
   });
 
   test('return TouchableImageBackground, if previewURL is valid', () => {
-    render(<SliderItem previewURL={propsStub.previewURL} />);
+    render(
+      <SliderItem
+        displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
+        previewURL={propsStub.previewURL}
+      />,
+    );
 
     const tree = screen.toJSON();
 
@@ -52,7 +67,13 @@ describe('<SliderItem/>', () => {
   });
 
   test('description visible, if description prop defined', () => {
-    render(<SliderItem description={propsStub.description} previewURL={propsStub.previewURL} />);
+    render(
+      <SliderItem
+        description={propsStub.description}
+        displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
+        previewURL={propsStub.previewURL}
+      />,
+    );
 
     const tree = screen.toJSON();
 
@@ -65,7 +86,13 @@ describe('<SliderItem/>', () => {
     expect(sliderItemDescription).not.toBeFalsy();
   });
   test('description component type is View', () => {
-    render(<SliderItem description={propsStub.description} previewURL={propsStub.previewURL} />);
+    render(
+      <SliderItem
+        description={propsStub.description}
+        displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
+        previewURL={propsStub.previewURL}
+      />,
+    );
 
     const tree = screen.toJSON();
 
@@ -78,7 +105,13 @@ describe('<SliderItem/>', () => {
     expect(sliderItemDescription?.type).toEqual('View');
   });
   test('description child component type is Text in View', () => {
-    render(<SliderItem description={propsStub.description} previewURL={propsStub.previewURL} />);
+    render(
+      <SliderItem
+        description={propsStub.description}
+        displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
+        previewURL={propsStub.previewURL}
+      />,
+    );
 
     const sliderItemDescription = screen.getByTestId('slider-item-description');
     const sliderItemDescriptionText = screen.getByTestId('slider-item-description-text');
@@ -90,7 +123,13 @@ describe('<SliderItem/>', () => {
   });
 
   test('text in description field equals to description prop', () => {
-    render(<SliderItem description={propsStub.description} previewURL={propsStub.previewURL} />);
+    render(
+      <SliderItem
+        description={propsStub.description}
+        displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
+        previewURL={propsStub.previewURL}
+      />,
+    );
 
     const sliderItemDescriptionText = screen.getByTestId('slider-item-description-text');
 

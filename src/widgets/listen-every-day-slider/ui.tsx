@@ -38,13 +38,14 @@ export const ListenEveryDaySlider = () => {
 
   return (
     <Slider
+      displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
       isShort
       items={listenEveryDay.map((item) => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
-      itemsRows={2}
+      itemsRows={1}
       itemsSize={SliderItemSize.Middle}
       onPressItem={onItemPress}
       onPressTitle={() => {
@@ -58,6 +59,6 @@ export const ListenEveryDaySlider = () => {
 
 const styles = StyleSheet.create({
   slider: {
-    paddingHorizontal: INDENTS.low,
+    paddingHorizontal: INDENTS.middle,
   },
 });

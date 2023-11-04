@@ -37,6 +37,7 @@ export const SermonsOnBibleSlider = () => {
 
   return (
     <Slider
+      displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
       items={onBibleBooksList.map((item) => ({
         data: item,
         description: item.title,
@@ -56,6 +57,6 @@ export const SermonsOnBibleSlider = () => {
 const styles = StyleSheet.create({
   slider: {
     borderRadius: RADIUSES.low,
-    paddingHorizontal: INDENTS.low,
+    paddingHorizontal: INDENTS.middle,
   },
 });

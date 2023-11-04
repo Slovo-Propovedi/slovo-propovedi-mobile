@@ -100,11 +100,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
-  container: { padding: INDENTS.main },
+  container: { padding: INDENTS.high },
 
   description: {
     fontSize: FONT_SIZES.h4,
-    padding: INDENTS.main,
+    padding: INDENTS.high,
   },
 
   listenLink: {
@@ -120,14 +120,14 @@ const styles = StyleSheet.create({
   title: {
     color: COLORS.primary,
     fontSize: FONT_SIZES.h2,
-    paddingVertical: INDENTS.main,
+    paddingVertical: INDENTS.high,
   },
   watchLink: {
     backgroundColor: COLORS.primary,
   },
   youtubePreview: {
     height: windowHeight * 0.24,
-    marginBottom: INDENTS.main,
+    marginBottom: INDENTS.high,
     resizeMode: 'contain',
     width: '100%',
   },

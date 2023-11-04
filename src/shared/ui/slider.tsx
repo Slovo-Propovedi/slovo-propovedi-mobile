@@ -2,7 +2,8 @@ import React from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FONT_SIZES, INDENTS } from 'shared/themed';
-import type { SliderItemSize } from './slider-item';
+import type { DisplayingTitleInSlide } from './slider-item';
+import { SliderItemSize } from './slider-item';
 import { SliderItem } from './slider-item';
 
 type SliderItemsElement<D extends object> = {
@@ -12,6 +13,7 @@ type SliderItemsElement<D extends object> = {
 };
 
 interface SliderProps<D extends object> {
+  displayingTitleInSlide: DisplayingTitleInSlide;
   isShort?: boolean;
   items: SliderItemsElement<D>[];
   itemsRows?: number;
@@ -23,10 +25,11 @@ interface SliderProps<D extends object> {
 }
 
 export const Slider = <D extends object>({
+  displayingTitleInSlide,
   isShort,
   items,
   itemsRows = 1,
-  itemsSize,
+  itemsSize = SliderItemSize.Small,
   onPressItem,
   onPressTitle,
   style,
@@ -55,11 +58,22 @@ export const Slider = <D extends object>({
     return accumulator;
   }, []);
 
+  const titleFontSize = FONT_SIZES.h2;
+
+  const marginBottom = {
+    [SliderItemSize.Large]: { marginBottom: titleFontSize * 2 },
+    [SliderItemSize.Middle]: { marginBottom: titleFontSize },
+    [SliderItemSize.Small]: { marginBottom: titleFontSize },
+  }[itemsSize];
+
   return (
-    <View style={[styles.slider, style]}>
-      <Text onPress={onPressTitle} style={styles.title} testID='title'>
-        {title}
-        <Text>{'>'}</Text>
+    <View style={[styles.slider, { marginTop: titleFontSize / 2 }, marginBottom, style]}>
+      <Text
+        onPress={onPressTitle}
+        style={[styles.title, { fontSize: titleFontSize }]}
+        testID='title'
+      >
+        {`${title}>`}
       </Text>
       <ScrollView
         contentContainerStyle={styles.contentContainer}
@@ -71,6 +85,7 @@ export const Slider = <D extends object>({
             {row.map(({ data, description, previewURL }, index) => (
               <SliderItem
                 description={description}
+                displayingTitleInSlide={displayingTitleInSlide}
                 isShort={isShort}
                 key={index}
                 onPress={(event) => {
@@ -91,17 +106,18 @@ export const Slider = <D extends object>({
 const styles = StyleSheet.create({
   contentContainer: {
     flexDirection: 'column-reverse',
-    gap: INDENTS.low,
+    gap: INDENTS.middle,
   },
   row: {
     flexDirection: 'row',
-    gap: INDENTS.low,
+    gap: INDENTS.middle,
     maxWidth: '100%',
     width: '100%',
   },
   slider: { maxWidth: '100%' },
   title: {
-    fontSize: FONT_SIZES.h2,
     fontWeight: 'bold',
+    paddingBottom: INDENTS.middle,
+    paddingLeft: INDENTS.low,
   },
 });

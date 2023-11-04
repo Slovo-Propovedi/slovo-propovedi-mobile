@@ -48,10 +48,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     flex: 1,
   },
-  list: { paddingLeft: INDENTS.main },
+  list: { paddingLeft: INDENTS.high },
   title: {
     color: COLORS.primary,
     fontSize: FONT_SIZES.h2,
-    paddingVertical: INDENTS.main,
+    paddingVertical: INDENTS.high,
   },
 });

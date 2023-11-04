@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.blue,
     borderRadius: RADIUSES.low,
     justifyContent: 'center',
-    padding: INDENTS.low,
+    padding: INDENTS.middle,
   },
   text: {
     fontSize: FONT_SIZES.h5,

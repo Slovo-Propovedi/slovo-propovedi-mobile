@@ -49,6 +49,6 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: 'center',
     flex: 1,
-    padding: INDENTS.main,
+    padding: INDENTS.high,
   },
 });

@@ -38,6 +38,7 @@ export const TopicalListSlider = () => {
 
   return (
     <Slider
+      displayingTitleInSlide={{ isSlideTitleOnSlide: true, isSlideTitleUnderSlide: true }}
       items={topicalList.map((item) => ({
         data: item,
         description: item.title,
@@ -56,6 +57,6 @@ export const TopicalListSlider = () => {
 
 const styles = StyleSheet.create({
   slider: {
-    paddingHorizontal: INDENTS.low,
+    paddingHorizontal: INDENTS.middle,
   },
 });

@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: 'row',
-    padding: INDENTS.low,
+    padding: INDENTS.middle,
   },
   controls: {
     width: 'auto',
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     overflow: 'hidden',
-    paddingHorizontal: INDENTS.low,
+    paddingHorizontal: INDENTS.middle,
   },
   touchableElements: {
     flex: 1,

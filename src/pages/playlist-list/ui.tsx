@@ -42,14 +42,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  list: { paddingLeft: INDENTS.main },
+  list: { paddingLeft: INDENTS.high },
   title: {
     color: COLORS.primary,
     fontSize: FONT_SIZES.h1,
-    paddingVertical: INDENTS.main,
+    paddingVertical: INDENTS.high,
   },
   titleContainer: {
     alignItems: 'center',
-    paddingBottom: INDENTS.main,
+    paddingBottom: INDENTS.high,
   },
 });
