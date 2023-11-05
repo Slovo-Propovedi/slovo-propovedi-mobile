@@ -40,7 +40,6 @@ export const NewSermonsSlider = () => {
 
   return (
     <Slider
-      displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
       items={newSermons.map((item) => ({
         data: item,
         description: item.title,

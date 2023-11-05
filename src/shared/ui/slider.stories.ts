@@ -7,7 +7,6 @@ const meta = {
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
   args: {
-    displayingTitleInSlide: { isSlideTitleUnderSlide: true },
     items: [
       { data: {}, previewURL: 'https://slovo-istini.com/images/logo.jpg' },
       {

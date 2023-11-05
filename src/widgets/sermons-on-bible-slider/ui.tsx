@@ -37,7 +37,6 @@ export const SermonsOnBibleSlider = () => {
 
   return (
     <Slider
-      displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
       items={onBibleBooksList.map((item) => ({
         data: item,
         description: item.title,

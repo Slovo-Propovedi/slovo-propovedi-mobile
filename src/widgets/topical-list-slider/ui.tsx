@@ -3,7 +3,13 @@ import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { usePlayNewSermon } from 'features/sermon-player-controls';
 import type { ListenStackNavProp, PlaylistData } from 'shared';
-import { INDENTS, ListenStackParamName, Slider, SliderItemSize } from 'shared';
+import {
+  INDENTS,
+  ListenStackParamName,
+  Slider,
+  SliderItemSize,
+  WhereIsSlideTitleLocated,
+} from 'shared';
 import { useTopicalListStore } from './model';
 
 export const TopicalListSlider = () => {
@@ -38,7 +44,6 @@ export const TopicalListSlider = () => {
 
   return (
     <Slider
-      displayingTitleInSlide={{ isSlideTitleOnSlide: true, isSlideTitleUnderSlide: true }}
       items={topicalList.map((item) => ({
         data: item,
         description: item.title,
@@ -51,6 +56,7 @@ export const TopicalListSlider = () => {
       }}
       style={styles.slider}
       title='Тематические'
+      whereIsSlideTitleLocated={WhereIsSlideTitleLocated.BothOnAndUnder}
     />
   );
 };

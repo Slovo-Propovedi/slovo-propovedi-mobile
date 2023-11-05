@@ -38,7 +38,6 @@ export const ListenEveryDaySlider = () => {
 
   return (
     <Slider
-      displayingTitleInSlide={{ isSlideTitleUnderSlide: true }}
       isShort
       items={listenEveryDay.map((item) => ({
         data: item,

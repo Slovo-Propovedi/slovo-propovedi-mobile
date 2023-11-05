@@ -8,8 +8,6 @@ const sliderStub = { items: [itemStub], title: 'title' };
 
 const mockData: { text: null | string } = { text: null };
 
-const displayingTitleInSlide = { isSlideTitleUnderSlide: true };
-
 describe('<Slider/>', () => {
   beforeEach(() => {
     mockData.text = null;
@@ -24,14 +22,14 @@ describe('<Slider/>', () => {
   });
 
   test('return null, if items length === 0', () => {
-    render(<Slider displayingTitleInSlide={displayingTitleInSlide} items={[]} />);
+    render(<Slider items={[]} />);
 
     const tree = screen.toJSON();
     expect(tree).toBeNull();
   });
 
   test('return View, if items length > 0', () => {
-    render(<Slider displayingTitleInSlide={displayingTitleInSlide} items={sliderStub.items} />);
+    render(<Slider items={sliderStub.items} />);
 
     const tree = screen.toJSON();
     expect(tree).toBeDefined();
@@ -45,7 +43,7 @@ describe('<Slider/>', () => {
   });
 
   test('return 2 slider items, if items length === 2', () => {
-    render(<Slider displayingTitleInSlide={displayingTitleInSlide} items={[itemStub, itemStub]} />);
+    render(<Slider items={[itemStub, itemStub]} />);
 
     const tree = screen.toJSON();
 
@@ -61,7 +59,6 @@ describe('<Slider/>', () => {
   test('onPressItem called on press item', () => {
     render(
       <Slider
-        displayingTitleInSlide={displayingTitleInSlide}
         items={sliderStub.items}
         onPressItem={() => {
           mockData.text = 'done';
@@ -82,13 +79,7 @@ describe('<Slider/>', () => {
   });
 
   test('has Text element, if title is defined', () => {
-    render(
-      <Slider
-        displayingTitleInSlide={displayingTitleInSlide}
-        items={sliderStub.items}
-        title={sliderStub.title}
-      />,
-    );
+    render(<Slider items={sliderStub.items} title={sliderStub.title} />);
 
     const titleElement = screen.queryByTestId('title');
 
@@ -96,13 +87,7 @@ describe('<Slider/>', () => {
   });
 
   test('content in the Text element equals to title prop', () => {
-    render(
-      <Slider
-        displayingTitleInSlide={displayingTitleInSlide}
-        items={sliderStub.items}
-        title={sliderStub.title}
-      />,
-    );
+    render(<Slider items={sliderStub.items} title={sliderStub.title} />);
 
     const titleElement = screen.queryByTestId('title');
 
@@ -112,7 +97,6 @@ describe('<Slider/>', () => {
   test('call onPressTitle callback, when press on tittle element', () => {
     render(
       <Slider
-        displayingTitleInSlide={displayingTitleInSlide}
         items={sliderStub.items}
         onPressTitle={() => {
           mockData.text = 'new value';
@@ -131,7 +115,6 @@ describe('<Slider/>', () => {
   test('do not call onPressTitle callback if prop tittle not defined', () => {
     render(
       <Slider
-        displayingTitleInSlide={displayingTitleInSlide}
         items={sliderStub.items}
         onPressTitle={() => {
           mockData.text = 'new value';
@@ -147,12 +130,7 @@ describe('<Slider/>', () => {
   });
 
   test('length of rows elements is equal to itemsRows props', () => {
-    const { update } = render(
-      <Slider
-        displayingTitleInSlide={displayingTitleInSlide}
-        items={[itemStub, itemStub, itemStub, itemStub]}
-      />,
-    );
+    const { update } = render(<Slider items={[itemStub, itemStub, itemStub, itemStub]} />);
 
     let sliderRowElement = screen.getAllByTestId('slider-row');
 
@@ -160,13 +138,7 @@ describe('<Slider/>', () => {
 
     let itemsRows = 2;
 
-    update(
-      <Slider
-        displayingTitleInSlide={displayingTitleInSlide}
-        items={[itemStub, itemStub, itemStub, itemStub]}
-        itemsRows={itemsRows}
-      />,
-    );
+    update(<Slider items={[itemStub, itemStub, itemStub, itemStub]} itemsRows={itemsRows} />);
 
     sliderRowElement = screen.getAllByTestId('slider-row');
 
@@ -174,13 +146,7 @@ describe('<Slider/>', () => {
 
     itemsRows++;
 
-    update(
-      <Slider
-        displayingTitleInSlide={displayingTitleInSlide}
-        items={[itemStub, itemStub, itemStub, itemStub]}
-        itemsRows={itemsRows}
-      />,
-    );
+    update(<Slider items={[itemStub, itemStub, itemStub, itemStub]} itemsRows={itemsRows} />);
 
     sliderRowElement = screen.getAllByTestId('slider-row');
 

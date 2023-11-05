@@ -2,7 +2,7 @@ import React from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FONT_SIZES, INDENTS } from 'shared/themed';
-import type { DisplayingTitleInSlide } from './slider-item';
+import { WhereIsSlideTitleLocated } from './slider-item';
 import { SliderItemSize } from './slider-item';
 import { SliderItem } from './slider-item';
 
@@ -13,7 +13,6 @@ type SliderItemsElement<D extends object> = {
 };
 
 interface SliderProps<D extends object> {
-  displayingTitleInSlide: DisplayingTitleInSlide;
   isShort?: boolean;
   items: SliderItemsElement<D>[];
   itemsRows?: number;
@@ -22,10 +21,10 @@ interface SliderProps<D extends object> {
   onPressTitle?: (event: GestureResponderEvent) => void;
   style?: StyleProp<ViewStyle>;
   title?: string;
+  whereIsSlideTitleLocated?: WhereIsSlideTitleLocated;
 }
 
 export const Slider = <D extends object>({
-  displayingTitleInSlide,
   isShort,
   items,
   itemsRows = 1,
@@ -34,6 +33,7 @@ export const Slider = <D extends object>({
   onPressTitle,
   style,
   title,
+  whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderProps<D>) => {
   if (!items || !items.length) {
     return null;
@@ -84,8 +84,7 @@ export const Slider = <D extends object>({
           <View key={`row-${index}`} style={styles.row} testID='slider-row'>
             {row.map(({ data, description, previewURL }, index) => (
               <SliderItem
-                description={description}
-                displayingTitleInSlide={displayingTitleInSlide}
+                descriptionTitle={description}
                 isShort={isShort}
                 key={index}
                 onPress={(event) => {
@@ -94,6 +93,7 @@ export const Slider = <D extends object>({
                 previewURL={previewURL}
                 size={itemsSize}
                 testID='slider-item'
+                whereIsSlideTitleLocated={whereIsSlideTitleLocated}
               />
             ))}
           </View>

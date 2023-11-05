@@ -1,16 +1,9 @@
 import React from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
-import {
-  Dimensions,
-  ImageBackground,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Dimensions, ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { IMAGE_PLACEHOLDER } from 'shared/images';
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed';
-import type { RequireAtLeastOne } from 'shared/types';
+import { FONT_SIZES, RADIUSES } from 'shared/themed';
+import { SliderItemDescription } from './slider-item-description';
 
 const { height: windowHeight, width: windowWidth } = Dimensions.get('window');
 
@@ -20,20 +13,21 @@ export enum SliderItemSize {
   Small = 'small',
 }
 
-export type DisplayingTitleInSlide = RequireAtLeastOne<{
-  isSlideTitleOnSlide: boolean;
-  isSlideTitleUnderSlide: boolean;
-}>;
+export enum WhereIsSlideTitleLocated {
+  BothOnAndUnder = 'bothOnAndUnder',
+  On = 'on',
+  Under = 'under',
+}
 
 export type SliderItemProps = {
-  description?: string;
-  displayingTitleInSlide: DisplayingTitleInSlide;
+  descriptionTitle?: string;
   isShort?: boolean;
   onPress?: (event: GestureResponderEvent) => void;
   previewURL: string;
   size?: SliderItemSize;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  whereIsSlideTitleLocated?: WhereIsSlideTitleLocated;
 };
 
 const componentLargeSize = windowWidth > windowHeight ? windowHeight - 50 : windowWidth - 50;
@@ -41,14 +35,14 @@ const componentMiddleSize = 250;
 const componentSmallSize = 150;
 
 export const SliderItem = ({
-  description,
-  displayingTitleInSlide: { isSlideTitleOnSlide, isSlideTitleUnderSlide },
+  descriptionTitle,
   isShort,
   onPress,
   previewURL,
   size = SliderItemSize.Small,
   style,
   testID,
+  whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderItemProps) => {
   if (!previewURL) {
     return null;
@@ -60,8 +54,14 @@ export const SliderItem = ({
     [SliderItemSize.Small]: componentSmallSize,
   }[size];
 
-  const descriptionTextSize =
-    isShort && size !== SliderItemSize.Large ? FONT_SIZES.h4 : FONT_SIZES.h3;
+  const isVisibleDescriptionOnSlide =
+    (whereIsSlideTitleLocated === WhereIsSlideTitleLocated.On ||
+      whereIsSlideTitleLocated === WhereIsSlideTitleLocated.BothOnAndUnder) &&
+    descriptionTitle;
+  const isVisibleDescriptionUnderSlide =
+    (whereIsSlideTitleLocated === WhereIsSlideTitleLocated.Under ||
+      whereIsSlideTitleLocated === WhereIsSlideTitleLocated.BothOnAndUnder) &&
+    descriptionTitle;
 
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} testID={testID}>
@@ -74,31 +74,19 @@ export const SliderItem = ({
             { height: isShort ? conditionSize / 2 : conditionSize },
           ]}
         >
-          {isSlideTitleOnSlide && description && (
-            <View style={styles.descriptionOnSlide} testID='slider-item-description-on-slide'>
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.descriptionText,
-                  { fontSize: descriptionTextSize * 2, fontWeight: 'bold' },
-                ]}
-                testID='slider-item-description-text'
-              >
-                {description}
-              </Text>
-            </View>
+          {isVisibleDescriptionOnSlide && (
+            <SliderItemDescription
+              testID='slider-item-description-on-slide'
+              title={descriptionTitle}
+              titleStyle={{ fontSize: FONT_SIZES.h3 * 2, fontWeight: 'bold' }}
+            />
           )}
         </ImageBackground>
-        {isSlideTitleUnderSlide && description && (
-          <View style={styles.description} testID='slider-item-description'>
-            <Text
-              numberOfLines={1}
-              style={[styles.descriptionText, { fontSize: descriptionTextSize }]}
-              testID='slider-item-description-text'
-            >
-              {description}
-            </Text>
-          </View>
+        {isVisibleDescriptionUnderSlide && (
+          <SliderItemDescription
+            testID='slider-item-description-under-slide'
+            title={descriptionTitle}
+          />
         )}
       </View>
     </TouchableOpacity>
@@ -115,14 +103,6 @@ const styles = StyleSheet.create({
     minHeight: 50,
     minWidth: 50,
   },
-  description: {
-    padding: INDENTS.middle,
-  },
-  descriptionOnSlide: {
-    padding: INDENTS.middle,
-  },
-  descriptionText: {
-    color: COLORS.black,
-  },
+
   imageBackgroundComponent: { justifyContent: 'flex-end', width: '100%' },
 });

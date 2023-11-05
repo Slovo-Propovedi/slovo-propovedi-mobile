@@ -1,13 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { SliderItem, SliderItemSize } from './slider-item';
+import { SliderItem, SliderItemSize, WhereIsSlideTitleLocated } from './slider-item';
 
 // More on how to set up stories at: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 const meta = {
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
   args: {
-    displayingTitleInSlide: { isSlideTitleUnderSlide: true },
     previewURL: 'https://slovo-istini.com/images/logo.jpg',
   },
   component: SliderItem,
@@ -25,7 +24,7 @@ type Story = StoryObj<typeof meta>;
 
 export const WithDescription: Story = {
   args: {
-    description: 'Desc',
+    descriptionTitle: 'Desc',
   },
 };
 
@@ -47,9 +46,28 @@ export const Short: Story = {
     isShort: true,
   },
 };
-export const ShortWithDescription: Story = {
+export const ShortWithDescriptionUnderSlide: Story = {
   args: {
-    description: 'Desc',
+    descriptionTitle: 'Title',
     isShort: true,
+  },
+};
+export const ShortWithDescriptionOnSlide: Story = {
+  args: {
+    descriptionTitle: 'Title',
+    isShort: true,
+    whereIsSlideTitleLocated: WhereIsSlideTitleLocated.On,
+  },
+};
+export const WithDescriptionOnSlide: Story = {
+  args: {
+    descriptionTitle: 'Title',
+    whereIsSlideTitleLocated: WhereIsSlideTitleLocated.On,
+  },
+};
+export const WithDescriptionBothOnAndUnderSlide: Story = {
+  args: {
+    descriptionTitle: 'Title',
+    whereIsSlideTitleLocated: WhereIsSlideTitleLocated.BothOnAndUnder,
   },
 };
