@@ -4,7 +4,7 @@ export const COLORS = {
   disabled: 'gray',
   lightGray: 'lightgray',
   onPrimary: '#fff',
-  primary: '#ff602a',
+  primary: '#f16031',
   white: 'white',
 } as const;
 
