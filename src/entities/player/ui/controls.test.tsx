@@ -34,7 +34,6 @@ const getNewMockUsePlayerReturnValue = ({
       position += changeValue;
     }),
     duration: durationInitial,
-    getPlaybackStatus: jest.fn(),
     isPlaying: isPlayingInitial,
     pause: jest.fn(),
     play: jest.fn(),

@@ -1,13 +1,12 @@
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
-import { useEffect } from 'react';
 import { usePlayerStore } from '../model';
 import { cancelScheduledNotificationAsync, loadCachedSoundData } from '../utils';
 import { useLocalNotification } from './push';
 
 export const usePlayer = ({
-  onGetPlaybackStatus,
+  onPlaybackStatusUpdated,
 }: {
-  onGetPlaybackStatus?: (position: number, duration: number) => void;
+  onPlaybackStatusUpdated?: (position: number, duration: number) => void;
 }) => {
   useLocalNotification();
 
@@ -16,31 +15,22 @@ export const usePlayer = ({
     currentSoundDuration,
     currentSoundPosition,
     isPlayingCurrentAudio,
-    playbackStatusInterval,
     setCurrentSoundDuration,
     setCurrentSoundPosition,
     setIsCurrentSoundBuffering,
     setIsPlayingCurrentAudio,
-    setPlaybackStatusInterval,
   } = usePlayerStore((state) => ({
     currentSound: state.currentSound,
     currentSoundDuration: state.currentSoundDuration,
     currentSoundPosition: state.currentSoundPosition,
     isPlayingCurrentAudio: state.isPlayingCurrentAudio,
-    playbackStatusInterval: state.playbackStatusInterval,
     setCurrentSoundDuration: state.setCurrentSoundDuration,
     setCurrentSoundPosition: state.setCurrentSoundPosition,
     setIsCurrentSoundBuffering: state.setIsCurrentSoundBuffering,
     setIsPlayingCurrentAudio: state.setIsPlayingCurrentAudio,
-    setPlaybackStatusInterval: state.setPlaybackStatusInterval,
   }));
-  const resetInterval = () => {
-    playbackStatusInterval && clearInterval(playbackStatusInterval);
-  };
 
   const play = async (newSound?: Audio.Sound) => {
-    resetInterval();
-
     const sound = newSound || currentSound;
 
     if (!sound) {
@@ -48,13 +38,9 @@ export const usePlayer = ({
     }
 
     await sound.playAsync();
-    setIsPlayingCurrentAudio(true);
-    setPlaybackStatusInterval(setInterval(() => getPlaybackStatus(sound), 1000));
   };
 
   const pause = async (newSound?: Audio.Sound) => {
-    resetInterval();
-
     const sound = newSound || currentSound;
 
     if (!sound) {
@@ -62,14 +48,11 @@ export const usePlayer = ({
     }
 
     await sound.pauseAsync();
-    setIsPlayingCurrentAudio(false);
 
     await cancelScheduledNotificationAsync();
   };
 
   const stop = async (newSound?: Audio.Sound) => {
-    resetInterval();
-
     const sound = newSound || currentSound;
 
     if (!sound) {
@@ -77,12 +60,9 @@ export const usePlayer = ({
     }
 
     await sound.stopAsync();
-    setIsPlayingCurrentAudio(false);
   };
 
   const unload = async (newSound?: Audio.Sound) => {
-    resetInterval();
-
     const sound = newSound || currentSound;
 
     if (!sound) {
@@ -92,7 +72,6 @@ export const usePlayer = ({
     await sound.stopAsync();
 
     await sound.unloadAsync();
-    setIsPlayingCurrentAudio(false);
   };
 
   const recreateSound = async (newAudioUrl: string, initialPosition?: number) => {
@@ -132,10 +111,37 @@ export const usePlayer = ({
 
     const { audio, status } = data;
 
-    const duration = (status.isLoaded && status.durationMillis) || 0;
+    const durationMillis = (status.isLoaded && status.durationMillis) || 0;
 
-    await setCurrentSoundPosition(position);
-    await setCurrentSoundDuration(duration);
+    await setCurrentSoundDuration(durationMillis);
+
+    let prevPositionSecond: number | undefined;
+    let prevIsPlaying: boolean | undefined;
+
+    audio.setOnPlaybackStatusUpdate(async (status) => {
+      if (!status.isLoaded) {
+        return;
+      }
+
+      const { isPlaying, positionMillis } = status;
+
+      if (prevIsPlaying !== isPlaying) {
+        setIsPlayingCurrentAudio(isPlaying);
+
+        prevIsPlaying = isPlaying;
+      }
+
+      const currentSecond = Math.round(positionMillis / 1000);
+
+      // Сравниваем текущую секунду с предыдущей
+      if (currentSecond !== prevPositionSecond) {
+        onPlaybackStatusUpdated?.(positionMillis, durationMillis || 0);
+        await setCurrentSoundPosition(positionMillis);
+
+        // Обновляем значение prevSecond до текущей секунды
+        prevPositionSecond = currentSecond;
+      }
+    });
 
     return audio;
   };
@@ -148,43 +154,11 @@ export const usePlayer = ({
     }
 
     await sound.setPositionAsync(value);
-    await setCurrentSoundPosition(value);
   };
-
-  const getPlaybackStatus = async (newSound?: Audio.Sound) => {
-    const sound = newSound || currentSound;
-
-    if (!sound) {
-      return;
-    }
-
-    const status = await sound.getStatusAsync();
-    if (!status.isLoaded) {
-      return;
-    }
-
-    const { durationMillis, isPlaying, positionMillis } = status;
-
-    await setCurrentSoundPosition(positionMillis);
-    await setCurrentSoundDuration(durationMillis || 0);
-    setIsPlayingCurrentAudio(isPlaying);
-
-    onGetPlaybackStatus?.(positionMillis, durationMillis || 0);
-
-    return { durationMillis, isPlaying, positionMillis };
-  };
-
-  useEffect(
-    () => () => {
-      playbackStatusInterval && clearInterval(playbackStatusInterval);
-    },
-    [],
-  );
 
   return {
     changeProgressPosition,
     duration: currentSoundDuration,
-    getPlaybackStatus,
     isPlaying: isPlayingCurrentAudio,
     pause,
     play,

@@ -55,7 +55,7 @@ export const loadCachedSoundData = async ({
   const audio = new Audio.Sound();
   const status = await audio.loadAsync(
     { uri: fileUri },
-    { positionMillis: initialPosition },
+    { positionMillis: initialPosition, progressUpdateIntervalMillis: 1000 },
     false,
   );
 

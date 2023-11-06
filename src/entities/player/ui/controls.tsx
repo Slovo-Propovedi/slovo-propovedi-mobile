@@ -38,7 +38,7 @@ export const PlayerControls = ({
   style,
 }: PlayerControlsProps) => {
   const { changeProgressPosition, duration, pause, play, position, recreateSound } = usePlayer({
-    onGetPlaybackStatus: (position, duration) => {
+    onPlaybackStatusUpdated: (position, duration) => {
       if (position >= duration && !isNotAvailableNext) {
         switchToNextTrack();
       }
@@ -112,6 +112,7 @@ export const PlayerControls = ({
 
     await pause();
 
+    //FIXME перекрутка аудио работает некорректно из-за нового подхода к получению статуса воспроизведения
     rewindTimerRef.current = setInterval(() => {
       if (dir === 'next') {
         updatedPosition += changeValue;

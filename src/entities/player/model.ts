@@ -12,12 +12,9 @@ interface PlayerStoreStates {
   isCurrentSoundBuffering: boolean;
 
   isPlayingCurrentAudio: boolean;
-
-  playbackStatusInterval: NodeJS.Timeout | null;
 }
 
 interface PlayerStore extends PlayerStoreStates {
-  resetPlaybackStatusInterval: () => void;
   resetStates: () => void;
 
   setCurrentSound: (sound: Audio.Sound | null) => void;
@@ -27,8 +24,6 @@ interface PlayerStore extends PlayerStoreStates {
   setCurrentSoundPosition: (position: number) => Promise<void>;
   setIsCurrentSoundBuffering: (value: boolean) => void;
   setIsPlayingCurrentAudio: (value: boolean) => void;
-
-  setPlaybackStatusInterval: (timeout: NodeJS.Timeout | null) => void;
 }
 
 const initialState: PlayerStoreStates = {
@@ -40,18 +35,10 @@ const initialState: PlayerStoreStates = {
   isCurrentSoundBuffering: false,
 
   isPlayingCurrentAudio: false,
-
-  playbackStatusInterval: null,
 };
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
   ...initialState,
-
-  resetPlaybackStatusInterval: () =>
-    set((state) => ({
-      ...state,
-      playbackStatusInterval: null,
-    })),
 
   resetStates: () =>
     set((state) => ({
@@ -65,18 +52,18 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
     })),
 
   setCurrentSoundDuration: async (duration) => {
-    await AsyncStorage.setItem(CURRENT_SOUND_DURATION, `${duration}`);
     set((state) => ({
       ...state,
       currentSoundDuration: duration,
     }));
+    await AsyncStorage.setItem(CURRENT_SOUND_DURATION, `${duration}`);
   },
   setCurrentSoundPosition: async (position) => {
-    await AsyncStorage.setItem(CURRENT_SOUND_POSITION, `${position}`);
     set((state) => ({
       ...state,
       currentSoundPosition: position,
     }));
+    await AsyncStorage.setItem(CURRENT_SOUND_POSITION, `${position}`);
   },
 
   setIsCurrentSoundBuffering: (value) =>
@@ -88,10 +75,5 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
     set((state) => ({
       ...state,
       isPlayingCurrentAudio: value,
-    })),
-  setPlaybackStatusInterval: (timeout) =>
-    set((state) => ({
-      ...state,
-      playbackStatusInterval: timeout,
     })),
 }));
