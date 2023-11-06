@@ -23,7 +23,7 @@ const App = () => {
     setCurrentAudio: state.setCurrentAudio,
     setCurrentPlaylist: state.setCurrentPlaylist,
   }));
-  const { recreateSound, unload } = usePlayer({});
+  const { recreateSound, unload } = usePlayer();
   const { setCurrentSound } = usePlayerStore((store) => ({
     setCurrentSound: store.setCurrentSound,
   }));

@@ -8,6 +8,7 @@ import {
 } from 'features/sermon-player-controls';
 import { PlayerControlsSize } from 'entities/player';
 import type { ListenStackNavProp } from 'shared';
+import { PlayerControlButtonType } from 'shared';
 import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, ListenStackParamName, RADIUSES } from 'shared';
 
 export const MiniPlayer = () => {
@@ -44,7 +45,7 @@ export const MiniPlayer = () => {
 
       <View style={styles.controlsContainer}>
         <SermonPlayerControls
-          excludeButtons={['backward', 'prev', 'prev', 'forward']}
+          excludeButtons={[PlayerControlButtonType.Prev]}
           size={PlayerControlsSize.Small}
           style={styles.controls}
         />

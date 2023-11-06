@@ -5,7 +5,7 @@ import { ListenStackParamName } from 'shared';
 import type { ListenStackNavProp, PlaylistData, SermonData } from 'shared';
 
 export const usePlayNewSermon = () => {
-  const { play, recreateSound } = usePlayer({});
+  const { play, recreateSound } = usePlayer();
 
   const { currentAudio, setCurrentAudio, setCurrentPlaylist } = useSermonPlayerControlsStore(
     (store) => ({

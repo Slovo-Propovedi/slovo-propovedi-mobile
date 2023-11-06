@@ -1,3 +1,4 @@
+import { Entypo } from '@expo/vector-icons';
 import React from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -73,7 +74,8 @@ export const Slider = <D extends object>({
         style={[styles.title, { fontSize: titleFontSize }]}
         testID='title'
       >
-        {`${title}>`}
+        {`${title}`}
+        <Entypo color='black' name='chevron-right' size={titleFontSize} />
       </Text>
       <ScrollView
         contentContainerStyle={styles.contentContainer}

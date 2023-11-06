@@ -3,11 +3,7 @@ import { usePlayerStore } from '../model';
 import { cancelScheduledNotificationAsync, loadCachedSoundData } from '../utils';
 import { useLocalNotification } from './push';
 
-export const usePlayer = ({
-  onPlaybackStatusUpdated,
-}: {
-  onPlaybackStatusUpdated?: (position: number, duration: number) => void;
-}) => {
+export const usePlayer = () => {
   useLocalNotification();
 
   const {
@@ -99,9 +95,10 @@ export const usePlayer = ({
 
     const position = initialPosition || 0;
 
+    setIsCurrentSoundBuffering(true);
+
     const data = await loadCachedSoundData({
       initialPosition: position,
-      onBuffering: setIsCurrentSoundBuffering,
       remoteUri: newAudioUrl,
     });
 
@@ -111,9 +108,10 @@ export const usePlayer = ({
 
     const { audio, status } = data;
 
-    const durationMillis = (status.isLoaded && status.durationMillis) || 0;
-
-    await setCurrentSoundDuration(durationMillis);
+    if (status.isLoaded) {
+      await setCurrentSoundDuration(status.durationMillis || 0);
+      setIsCurrentSoundBuffering(false);
+    }
 
     let prevPositionSecond: number | undefined;
     let prevIsPlaying: boolean | undefined;
@@ -135,7 +133,6 @@ export const usePlayer = ({
 
       // Сравниваем текущую секунду с предыдущей
       if (currentSecond !== prevPositionSecond) {
-        onPlaybackStatusUpdated?.(positionMillis, durationMillis || 0);
         await setCurrentSoundPosition(positionMillis);
 
         // Обновляем значение prevSecond до текущей секунды

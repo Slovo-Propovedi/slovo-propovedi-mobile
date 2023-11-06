@@ -20,11 +20,9 @@ const downloadAndCacheAudio = async ({ fileUri, remoteUri }: DownloadAndCacheAud
 
 export const loadCachedSoundData = async ({
   initialPosition,
-  onBuffering,
   remoteUri,
 }: {
   initialPosition: number;
-  onBuffering?: (isBuffering: boolean) => void;
   remoteUri: string;
 }) => {
   const fileName = remoteUri.split('/').at(-1);
@@ -58,15 +56,6 @@ export const loadCachedSoundData = async ({
     { positionMillis: initialPosition, progressUpdateIntervalMillis: 1000 },
     false,
   );
-
-  audio.setOnPlaybackStatusUpdate((status) => {
-    if (!status.isLoaded) {
-      return;
-    }
-    const { isBuffering } = status;
-
-    onBuffering?.(isBuffering);
-  });
 
   return { audio, status };
 };
