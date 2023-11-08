@@ -2,7 +2,14 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ListenStackScreenProps, OnPressTouchableListItem, PlaylistData } from 'shared';
-import { COLORS, FONT_SIZES, INDENTS, ListenStackParamName, TouchableListItem } from 'shared';
+import {
+  COLORS,
+  FONT_SIZES,
+  INDENTS,
+  ListItemSize,
+  ListenStackParamName,
+  TouchableListItem,
+} from 'shared';
 
 export const PlaylistListScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.PlaylistList>
@@ -31,6 +38,7 @@ export const PlaylistListScreen: React.FC<
             key={`TouchableItem-${index}`}
             onPress={onPressListItem}
             previewPlaceholderText={`${index + 1}`}
+            size={ListItemSize.Middle}
           />
         ))}
       </View>

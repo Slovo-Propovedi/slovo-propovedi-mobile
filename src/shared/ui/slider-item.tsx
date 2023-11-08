@@ -1,11 +1,10 @@
 import React from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
-import { Dimensions, ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/constants';
 import { IMAGE_PLACEHOLDER } from 'shared/images';
 import { FONT_SIZES, RADIUSES } from 'shared/themed';
 import { SliderItemDescription } from './slider-item-description';
-
-const { height: windowHeight, width: windowWidth } = Dimensions.get('window');
 
 export enum SliderItemSize {
   Large = 'large',
@@ -30,7 +29,7 @@ export type SliderItemProps = {
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated;
 };
 
-const componentLargeSize = windowWidth > windowHeight ? windowHeight - 50 : windowWidth - 50;
+const componentLargeSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN - 50;
 const componentMiddleSize = 250;
 const componentSmallSize = 150;
 

@@ -1,14 +1,18 @@
 import React, { useEffect } from 'react';
-import { Dimensions, ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 import {
   SermonPlayerControls,
   useSermonPlayerControlsStore,
 } from 'features/sermon-player-controls';
 import { PlayerListenProgress } from 'entities/player';
 import type { ListenStackParamName, ListenStackScreenProps } from 'shared';
-import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, useAppStore } from 'shared';
-
-const windowWidth = Dimensions.get('window').width;
+import {
+  FONT_SIZES,
+  IMAGE_PLACEHOLDER,
+  INDENTS,
+  SIZE_OF_MINIMUM_SIDE_OF_SCREEN,
+  useAppStore,
+} from 'shared';
 
 export const AudioPlayerScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.AudioPlayer>
@@ -51,7 +55,7 @@ export const AudioPlayerScreen: React.FC<
   );
 };
 
-const previewSize = windowWidth - INDENTS.high * 2;
+const previewSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN - INDENTS.high * 2;
 
 const styles = StyleSheet.create({
   bottomContent: {
