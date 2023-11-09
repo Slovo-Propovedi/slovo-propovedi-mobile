@@ -29,9 +29,9 @@ export type SliderItemProps = {
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated;
 };
 
-const componentLargeSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN - 50;
-const componentMiddleSize = 250;
-const componentSmallSize = 150;
+const componentLargeSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.9;
+const componentMiddleSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.44;
+const componentSmallSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.285;
 
 export const SliderItem = ({
   descriptionTitle,
