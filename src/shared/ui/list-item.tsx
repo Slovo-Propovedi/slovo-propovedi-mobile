@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     minHeight: 60,
   },
   counter: {
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.disabled,
     borderRadius: RADIUSES.low,
 
     height: '100%',
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   textsContainer: {
-    borderBottomColor: COLORS.lightGray,
+    borderBottomColor: COLORS.disabled,
     borderBottomWidth: 1,
     flex: 1,
     height: '100%',

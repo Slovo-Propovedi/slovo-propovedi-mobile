@@ -7,7 +7,7 @@ import {
   SermonsOnBibleSlider,
   TopicalListSlider,
 } from 'widgets';
-import type { ListenStackParamName, ListenStackScreenProps } from 'shared';
+import { COLORS, type ListenStackParamName, type ListenStackScreenProps } from 'shared';
 
 export const ListenScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.ListenHome>
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     // backgroundColor: COLORS.primary,
   },
   content: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.white,
     flex: 1,
   },
 });

@@ -69,7 +69,7 @@ export const Progress = ({
 
 const styles = StyleSheet.create({
   progressBar: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.white,
     height: 10,
     width: '100%',
   },

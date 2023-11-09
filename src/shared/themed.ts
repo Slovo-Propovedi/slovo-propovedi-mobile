@@ -1,11 +1,10 @@
 export const COLORS = {
-  black: 'black',
+  black: '#000',
   blue: 'blue',
-  disabled: 'gray',
-  lightGray: 'lightgray',
+  disabled: '#d3d3d3',
   onPrimary: '#fff',
   primary: '#f16031',
-  white: 'white',
+  white: '#fff',
 } as const;
 
 export const FONT_SIZES = {

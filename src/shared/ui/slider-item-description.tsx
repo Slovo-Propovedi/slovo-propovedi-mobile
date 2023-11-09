@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
 
   subTitle: {
-    color: COLORS.lightGray,
+    color: COLORS.disabled,
     fontSize: FONT_SIZES.h3,
   },
   title: {

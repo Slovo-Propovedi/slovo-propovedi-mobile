@@ -64,6 +64,6 @@ const styles = StyleSheet.create({
     color: COLORS.black,
   },
   iconDisabled: {
-    color: COLORS.lightGray,
+    color: COLORS.disabled,
   },
 });

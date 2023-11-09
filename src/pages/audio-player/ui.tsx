@@ -1,15 +1,19 @@
+import { Feather } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import { ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
   SermonPlayerControls,
   useSermonPlayerControlsStore,
 } from 'features/sermon-player-controls';
 import { PlayerListenProgress } from 'entities/player';
-import type { ListenStackParamName, ListenStackScreenProps } from 'shared';
+import type { ListenStackNavProp, ListenStackScreenProps } from 'shared';
 import {
+  COLORS,
   FONT_SIZES,
   IMAGE_PLACEHOLDER,
   INDENTS,
+  ListenStackParamName,
   SIZE_OF_MINIMUM_SIDE_OF_SCREEN,
   useAppStore,
 } from 'shared';
@@ -17,13 +21,26 @@ import {
 export const AudioPlayerScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.AudioPlayer>
 > = () => {
-  const { currentAudio } = useSermonPlayerControlsStore((state) => ({
+  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
+
+  const { currentAudio, currentPlaylist } = useSermonPlayerControlsStore((state) => ({
     currentAudio: state.currentAudio,
+    currentPlaylist: state.currentPlaylist,
   }));
 
   const { setIsAudioPlayerMounted } = useAppStore((state) => ({
     setIsAudioPlayerMounted: state.setIsAudioPlayerMounted,
   }));
+
+  const isDisabledShowPlaylistButton = !currentPlaylist || currentPlaylist.list.length < 2;
+
+  const onPressListItem = () => {
+    if (!currentPlaylist) {
+      return;
+    }
+
+    navigate(ListenStackParamName.Playlist, currentPlaylist);
+  };
 
   useEffect(() => {
     setIsAudioPlayerMounted(true);
@@ -50,6 +67,16 @@ export const AudioPlayerScreen: React.FC<
         <PlayerListenProgress />
 
         <SermonPlayerControls style={styles.controlsContainer} />
+
+        <View style={styles.mediaButtons}>
+          <TouchableOpacity disabled={isDisabledShowPlaylistButton} onPress={onPressListItem}>
+            <Feather
+              color={isDisabledShowPlaylistButton ? COLORS.disabled : COLORS.black}
+              name='list'
+              size={35}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -66,6 +93,11 @@ const styles = StyleSheet.create({
 
   controlsContainer: {
     marginVertical: INDENTS.high,
+  },
+  mediaButtons: {
+    alignItems: 'center',
+    marginVertical: INDENTS.high,
+    width: '100%',
   },
 
   preview: {

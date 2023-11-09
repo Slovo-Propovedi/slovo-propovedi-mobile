@@ -2,7 +2,7 @@ import { Entypo } from '@expo/vector-icons';
 import React from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { FONT_SIZES, INDENTS } from 'shared/themed';
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed';
 import { WhereIsSlideTitleLocated } from './slider-item';
 import { SliderItemSize } from './slider-item';
 import { SliderItem } from './slider-item';
@@ -75,7 +75,7 @@ export const Slider = <D extends object>({
         testID='title'
       >
         {`${title}`}
-        <Entypo color='black' name='chevron-right' size={titleFontSize} />
+        <Entypo color={COLORS.black} name='chevron-right' size={titleFontSize} />
       </Text>
       <ScrollView
         contentContainerStyle={styles.contentContainer}
