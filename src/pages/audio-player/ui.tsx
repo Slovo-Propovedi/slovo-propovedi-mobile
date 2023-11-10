@@ -68,6 +68,7 @@ export const AudioPlayerScreen: React.FC<
 
         <SermonPlayerControls style={styles.controlsContainer} />
 
+        {/* <PlayerSoundVolume /> */}
         <View style={styles.mediaButtons}>
           <TouchableOpacity disabled={isDisabledShowPlaylistButton} onPress={onPressListItem}>
             <Feather

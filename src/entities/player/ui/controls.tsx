@@ -120,6 +120,10 @@ export const PlayerControls = ({
   };
 
   useEffect(() => {
+    if (!currentSoundDuration) {
+      return;
+    }
+
     if (currentSoundPosition >= currentSoundDuration && !isNotAvailableNext) {
       switchToNextTrack();
     }
