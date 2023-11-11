@@ -1,17 +1,30 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { ReadStackParamName, ReadStackScreenProps } from 'shared';
-import { COLORS } from 'shared';
+import {
+  NotesForPreachersBooksSlider,
+  TopicalAndThematicBooksSlider,
+  VerseByVerseBooksSlider,
+} from 'widgets';
+import { COLORS, type ReadStackParamName, type ReadStackScreenProps } from 'shared';
 
 export const ReadScreen: React.FC<ReadStackScreenProps<ReadStackParamName.Home>> = () => (
-  <SafeAreaView style={styles.Library}>
-    <View style={{ backgroundColor: COLORS.blue, flex: 1 }} />
+  <SafeAreaView style={styles.container}>
+    <StatusBar backgroundColor='transparent' barStyle='dark-content' translucent />
+    <ScrollView style={styles.content}>
+      <NotesForPreachersBooksSlider />
+      <VerseByVerseBooksSlider />
+      <TopicalAndThematicBooksSlider />
+    </ScrollView>
   </SafeAreaView>
 );
 
 const styles = StyleSheet.create({
-  Library: {
+  container: {
+    flex: 1,
+  },
+  content: {
+    backgroundColor: COLORS.white,
     flex: 1,
   },
 });

@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import { bibleBookLib } from 'entities/bible-book';
 import type { PlaylistData, SermonData } from 'shared';
-import { FetchedSermonsGroupName, sermonsAPI } from 'shared';
+import { API, FetchedSermonsGroupName, getBookLinkAsString } from 'shared';
 
 interface OnBibleBooksListState {
   getOnBibleBookList: () => Promise<PlaylistData[]>;
@@ -10,7 +9,7 @@ interface OnBibleBooksListState {
 
 export const useOnBibleBooksListStore = create<OnBibleBooksListState>((set) => ({
   getOnBibleBookList: async () => {
-    const list = await sermonsAPI.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible);
+    const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible);
 
     const mappedList = list?.map<PlaylistData>((playlist) => ({
       ...playlist,
@@ -22,7 +21,7 @@ export const useOnBibleBooksListStore = create<OnBibleBooksListState>((set) => (
           description,
           id,
           textFileUrl,
-          title: bibleBookLib.getBookLinkAsString(el),
+          title: getBookLinkAsString(el),
           youtubeUrl,
         };
       }),

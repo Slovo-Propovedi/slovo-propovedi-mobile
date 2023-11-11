@@ -1,4 +1,5 @@
 export * from './capitalizeString';
+export * from './getBookLinkAsString';
 export * from './debounce';
 export * from './downloadFile';
 export * from './getFileOnUrl';

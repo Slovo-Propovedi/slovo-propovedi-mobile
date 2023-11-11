@@ -1,5 +1,19 @@
 import type { DB } from 'shared/types';
-import { FetchedSermonsGroupName } from 'shared/types';
+import { FetchedBooksGroupName, FetchedSermonsGroupName } from 'shared/types';
+import {
+  actsBookList,
+  ephesiansBookList,
+  firstAndSecondThessaloniansBookList,
+  firstCorinthiansBookList,
+  firstPeteBookList,
+  isThereAnUnforgivableSinBookList,
+  jacobBookList,
+  johnBookList,
+  lukeBookList,
+  markBookList,
+  stephensSpeechBeforeSanhedrinBookList,
+  unionWithChristBookList,
+} from './bookLists';
 import {
   actsPlaylist,
   ephesiansPlaylist,
@@ -22,6 +36,34 @@ import {
 } from './playlists';
 
 export const db: DB = {
+  books: [
+    {
+      bookList: [actsBookList, markBookList, johnBookList, lukeBookList],
+      groupName: FetchedBooksGroupName.NotesForPreachers,
+    },
+    {
+      bookList: [
+        markBookList,
+        lukeBookList,
+        johnBookList,
+        actsBookList,
+        jacobBookList,
+        firstPeteBookList,
+        firstCorinthiansBookList,
+        ephesiansBookList,
+        firstAndSecondThessaloniansBookList,
+      ],
+      groupName: FetchedBooksGroupName.VerseByVerse,
+    },
+    {
+      bookList: [
+        unionWithChristBookList,
+        isThereAnUnforgivableSinBookList,
+        stephensSpeechBeforeSanhedrinBookList,
+      ],
+      groupName: FetchedBooksGroupName.TopicalAndThematic,
+    },
+  ],
   sermons: [
     {
       groupName: FetchedSermonsGroupName.New,

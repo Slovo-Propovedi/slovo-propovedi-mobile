@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import { bibleBookLib } from 'entities/bible-book';
 import type { PlaylistData, SermonData } from 'shared';
-import { FetchedSermonsGroupName, sermonsAPI } from 'shared';
+import { API, FetchedSermonsGroupName, getBookLinkAsString } from 'shared';
 
 interface TopicalListState {
   getTopicalList: () => Promise<PlaylistData[]>;
@@ -10,7 +9,7 @@ interface TopicalListState {
 
 export const useTopicalListStore = create<TopicalListState>((set) => ({
   getTopicalList: async () => {
-    const list = await sermonsAPI.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.Topical);
+    const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.Topical);
 
     const mappedList = list?.map<PlaylistData>((playlist) => ({
       ...playlist,
@@ -22,7 +21,7 @@ export const useTopicalListStore = create<TopicalListState>((set) => ({
           description,
           id,
           textFileUrl,
-          title: bibleBookLib.getBookLinkAsString(el),
+          title: getBookLinkAsString(el),
           youtubeUrl,
         };
       }),

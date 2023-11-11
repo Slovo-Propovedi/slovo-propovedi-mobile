@@ -1,4 +1,4 @@
-import { isNonNullable } from 'shared';
+import { isNonNullable } from './';
 
 type GetBookLinkAsStringProps = {
   title: string;

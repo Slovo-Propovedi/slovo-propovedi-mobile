@@ -160,15 +160,47 @@ export type FetchedSermonData = {
     }
 );
 
+export type FetchedBookData = {
+  description?: string;
+
+  id: string;
+
+  textFileUrl?: string;
+
+  title: string;
+} & (
+  | {
+      chapter: number;
+
+      verse?: [from: number, to: number] | number;
+    }
+  | {
+      chapter?: undefined;
+
+      verse?: undefined;
+    }
+);
+
 export enum FetchedSermonsGroupName {
   New = 'new',
   OnBible = 'onBible',
   Topical = 'topical',
 }
+export enum FetchedBooksGroupName {
+  NotesForPreachers = 'notesForPreachers',
+  TopicalAndThematic = 'topicalAndThematic',
+  VerseByVerse = 'verseByVerse',
+}
 
 export interface FetchedPlaylist {
   description?: string;
   list: FetchedSermonData[];
+  previewUrl?: string;
+  title: string;
+}
+export interface FetchedBookList {
+  description?: string;
+  list: FetchedBookData[];
   previewUrl?: string;
   title: string;
 }
@@ -178,7 +210,13 @@ export type FetchedSermonsGroup = {
   playlists: FetchedPlaylist[];
 };
 
+export type FetchedBooksGroup = {
+  bookList: FetchedBookList[];
+  groupName: FetchedBooksGroupName;
+};
+
 export interface DB {
+  books: FetchedBooksGroup[];
   sermons: FetchedSermonsGroup[];
 }
 
@@ -199,6 +237,23 @@ export interface SermonData {
 export interface PlaylistData {
   description?: string;
   list: SermonData[];
+  previewUrl?: string;
+  title: string;
+}
+
+export interface BookData {
+  description?: string;
+
+  id: string;
+
+  textFileUrl?: string;
+
+  title: string;
+}
+
+export interface BookListData {
+  description?: string;
+  list: BookData[];
   previewUrl?: string;
   title: string;
 }
