@@ -7,7 +7,6 @@ module.exports = {
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     '@feature-sliced',
-    'plugin:storybook/recommended',
     'plugin:perfectionist/recommended-natural',
   ],
   parser: '@typescript-eslint/parser',
