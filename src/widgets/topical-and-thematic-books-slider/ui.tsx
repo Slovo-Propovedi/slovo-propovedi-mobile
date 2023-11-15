@@ -6,7 +6,9 @@ import {
   INDENTS,
   ListenStackParamName,
   Slider,
+  SliderItemDescriptionBackgroundStyle,
   SliderItemSize,
+  SliderItemTransform,
   WhereIsSlideTitleLocated,
 } from 'shared';
 import { useTopicalAndThematicBooksStore } from './model';
@@ -46,6 +48,8 @@ export const TopicalAndThematicBooksSlider = () => {
 
   return (
     <Slider
+      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      descriptionTitleTextAlign='center'
       items={topicalAndThematicBooks.map((item) => ({
         data: item,
         description: item.title,
@@ -58,6 +62,7 @@ export const TopicalAndThematicBooksSlider = () => {
       }}
       style={styles.slider}
       title={title}
+      transform={SliderItemTransform.High}
       whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
     />
   );

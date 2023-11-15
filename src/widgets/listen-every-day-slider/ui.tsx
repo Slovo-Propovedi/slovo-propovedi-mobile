@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { usePlayNewSermon } from 'features/sermon-player-controls';
 import type { ListenStackNavProp, PlaylistData } from 'shared';
-import { INDENTS, ListenStackParamName, Slider, SliderItemSize } from 'shared';
+import { INDENTS, ListenStackParamName, Slider, SliderItemSize, SliderItemTransform } from 'shared';
 import { useListenEveryDayStore } from './model';
 
 export const ListenEveryDaySlider = () => {
@@ -38,7 +38,6 @@ export const ListenEveryDaySlider = () => {
 
   return (
     <Slider
-      isShort
       items={listenEveryDay.map((item) => ({
         data: item,
         description: item.title,
@@ -52,6 +51,7 @@ export const ListenEveryDaySlider = () => {
       }}
       style={styles.slider}
       title='Слушай каждый день'
+      transform={SliderItemTransform.Short}
     />
   );
 };

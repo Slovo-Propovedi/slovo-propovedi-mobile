@@ -3,7 +3,11 @@ import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/constants';
 import { IMAGE_PLACEHOLDER } from 'shared/images';
-import { FONT_SIZES, RADIUSES } from 'shared/themed';
+import { RADIUSES } from 'shared/themed';
+import type {
+  SliderItemDescriptionBackgroundStyle,
+  SliderItemDescriptionTextAlign,
+} from './slider-item-description';
 import { SliderItemDescription } from './slider-item-description';
 
 export enum SliderItemSize {
@@ -18,14 +22,24 @@ export enum WhereIsSlideTitleLocated {
   Under = 'under',
 }
 
+export enum SliderItemTransform {
+  High = 'high',
+  Short = 'short',
+}
+
 export type SliderItemProps = {
+  descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle;
+  descriptionSubTitle?: string;
+  descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign;
   descriptionTitle?: string;
-  isShort?: boolean;
+  descriptionTitleTextAlign?: SliderItemDescriptionTextAlign;
+  isDescriptionTitleOnSlideLarge?: boolean;
   onPress?: (event: GestureResponderEvent) => void;
   previewURL: string;
   size?: SliderItemSize;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  transform?: SliderItemTransform;
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated;
 };
 
@@ -34,13 +48,18 @@ const componentMiddleSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.44;
 const componentSmallSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.285;
 
 export const SliderItem = ({
+  descriptionBackgroundStyle,
+  descriptionSubTitle,
+  descriptionSubTitleTextAlign,
   descriptionTitle,
-  isShort,
+  descriptionTitleTextAlign,
+  isDescriptionTitleOnSlideLarge,
   onPress,
   previewURL,
   size = SliderItemSize.Small,
   style,
   testID,
+  transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderItemProps) => {
   if (!previewURL) {
@@ -62,29 +81,42 @@ export const SliderItem = ({
       whereIsSlideTitleLocated === WhereIsSlideTitleLocated.BothOnAndUnder) &&
     descriptionTitle;
 
+  const imageHeight =
+    (transform &&
+      {
+        [SliderItemTransform.High]: conditionSize * 1.3,
+        [SliderItemTransform.Short]: conditionSize / 2,
+      }[transform]) ||
+    conditionSize;
+
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} testID={testID}>
       <View style={[styles.component, { width: conditionSize }, style]}>
         <ImageBackground
           imageStyle={[styles.backgroundImage]}
           source={{ uri: previewURL || IMAGE_PLACEHOLDER }}
-          style={[
-            styles.imageBackgroundComponent,
-            { height: isShort ? conditionSize / 2 : conditionSize },
-          ]}
+          style={[styles.imageBackgroundComponent, { height: imageHeight }]}
         >
           {isVisibleDescriptionOnSlide && (
             <SliderItemDescription
+              backgroundStyle={descriptionBackgroundStyle}
+              isTitleLarge={isDescriptionTitleOnSlideLarge}
+              subTitle={descriptionSubTitle}
+              subTitleTextAlign={descriptionSubTitleTextAlign}
               testID='slider-item-description-on-slide'
               title={descriptionTitle}
-              titleStyle={{ fontSize: FONT_SIZES.h3 * 2, fontWeight: 'bold' }}
+              titleTextAlign={descriptionTitleTextAlign}
             />
           )}
         </ImageBackground>
         {isVisibleDescriptionUnderSlide && (
           <SliderItemDescription
+            backgroundStyle={descriptionBackgroundStyle}
+            subTitle={descriptionSubTitle}
+            subTitleTextAlign={descriptionSubTitleTextAlign}
             testID='slider-item-description-under-slide'
             title={descriptionTitle}
+            titleTextAlign={descriptionTitleTextAlign}
           />
         )}
       </View>

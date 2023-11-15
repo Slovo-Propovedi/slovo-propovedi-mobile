@@ -44,6 +44,7 @@ export const TopicalListSlider = () => {
 
   return (
     <Slider
+      isDescriptionTitleOnSlideLarge
       items={topicalList.map((item) => ({
         data: item,
         description: item.title,

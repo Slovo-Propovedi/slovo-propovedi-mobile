@@ -3,9 +3,12 @@ import React from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed';
-import { WhereIsSlideTitleLocated } from './slider-item';
-import { SliderItemSize } from './slider-item';
-import { SliderItem } from './slider-item';
+import { SliderItem, SliderItemSize, WhereIsSlideTitleLocated } from './slider-item';
+import type { SliderItemTransform } from './slider-item';
+import type {
+  SliderItemDescriptionBackgroundStyle,
+  SliderItemDescriptionTextAlign,
+} from './slider-item-description';
 
 type SliderItemsElement<D extends object> = {
   data: D;
@@ -14,7 +17,10 @@ type SliderItemsElement<D extends object> = {
 };
 
 interface SliderProps<D extends object> {
-  isShort?: boolean;
+  descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle;
+  descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign;
+  descriptionTitleTextAlign?: SliderItemDescriptionTextAlign;
+  isDescriptionTitleOnSlideLarge?: boolean;
   items: SliderItemsElement<D>[];
   itemsRows?: number;
   itemsSize?: SliderItemSize;
@@ -22,11 +28,16 @@ interface SliderProps<D extends object> {
   onPressTitle?: (event: GestureResponderEvent) => void;
   style?: StyleProp<ViewStyle>;
   title?: string;
+  titleFontSize?: typeof FONT_SIZES;
+  transform?: SliderItemTransform;
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated;
 }
 
 export const Slider = <D extends object>({
-  isShort,
+  descriptionBackgroundStyle,
+  descriptionSubTitleTextAlign,
+  descriptionTitleTextAlign,
+  isDescriptionTitleOnSlideLarge,
   items,
   itemsRows = 1,
   itemsSize = SliderItemSize.Small,
@@ -34,6 +45,7 @@ export const Slider = <D extends object>({
   onPressTitle,
   style,
   title,
+  transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderProps<D>) => {
   if (!items || !items.length) {
@@ -86,8 +98,11 @@ export const Slider = <D extends object>({
           <View key={`row-${index}`} style={styles.row} testID='slider-row'>
             {row.map(({ data, description, previewURL }, index) => (
               <SliderItem
+                descriptionBackgroundStyle={descriptionBackgroundStyle}
+                descriptionSubTitleTextAlign={descriptionSubTitleTextAlign}
                 descriptionTitle={description}
-                isShort={isShort}
+                descriptionTitleTextAlign={descriptionTitleTextAlign}
+                isDescriptionTitleOnSlideLarge={isDescriptionTitleOnSlideLarge}
                 key={index}
                 onPress={(event) => {
                   onPressItem?.(data, event);
@@ -95,6 +110,7 @@ export const Slider = <D extends object>({
                 previewURL={previewURL}
                 size={itemsSize}
                 testID='slider-item'
+                transform={transform}
                 whereIsSlideTitleLocated={whereIsSlideTitleLocated}
               />
             ))}

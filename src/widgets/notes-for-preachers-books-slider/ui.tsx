@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import type { BookListData, ListenStackNavProp } from 'shared';
+import { SliderItemDescriptionBackgroundStyle, SliderItemTransform } from 'shared';
 import { WhereIsSlideTitleLocated } from 'shared';
 import { INDENTS, ListenStackParamName, Slider, SliderItemSize } from 'shared';
 import { useNotesForPreachersBooksStore } from './model';
@@ -41,6 +42,8 @@ export const NotesForPreachersBooksSlider = () => {
 
   return (
     <Slider
+      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      descriptionTitleTextAlign='center'
       items={notesForPreachersBooks.map((item) => ({
         data: item,
         description: item.title,
@@ -53,6 +56,7 @@ export const NotesForPreachersBooksSlider = () => {
       }}
       style={styles.slider}
       title={title}
+      transform={SliderItemTransform.High}
       whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
     />
   );

@@ -12,3 +12,4 @@ export * from './touchable-item';
 export * from './touchable-list-item';
 export * from './touchable-text-item';
 export * from './youtube-preview';
+export * from './slider-item-description';

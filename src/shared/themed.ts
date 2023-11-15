@@ -1,5 +1,6 @@
 export const COLORS = {
   black: '#000',
+  black70: '#000000b3',
   blue: 'blue',
   disabled: '#d3d3d3',
   onPrimary: '#fff',

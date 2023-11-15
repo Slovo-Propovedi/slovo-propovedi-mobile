@@ -6,7 +6,9 @@ import {
   INDENTS,
   ListenStackParamName,
   Slider,
+  SliderItemDescriptionBackgroundStyle,
   SliderItemSize,
+  SliderItemTransform,
   WhereIsSlideTitleLocated,
 } from 'shared';
 import { useVerseByVerseBooksStore } from './model';
@@ -44,6 +46,8 @@ export const VerseByVerseBooksSlider = () => {
 
   return (
     <Slider
+      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      descriptionTitleTextAlign='center'
       items={notesVerseByVerseBooks.map((item) => ({
         data: item,
         description: item.title,
@@ -56,6 +60,7 @@ export const VerseByVerseBooksSlider = () => {
       }}
       style={styles.slider}
       title={title}
+      transform={SliderItemTransform.High}
       whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
     />
   );
