@@ -20,8 +20,7 @@
     "build-preview:android": "eas build -p android --profile preview",
     "build-preview:ios": "eas build -p ios --profile preview",
     "build-preview:all": "eas build -p all --profile preview",
-    "build:list": "eas build:list",
-    "setup-pre-commit-hook": "sh pre-commit.sh"
+    "build:list": "eas build:list"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.18.2",
