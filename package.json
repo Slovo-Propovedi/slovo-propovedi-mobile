@@ -20,7 +20,8 @@
     "build-preview:android": "eas build -p android --profile preview",
     "build-preview:ios": "eas build -p ios --profile preview",
     "build-preview:all": "eas build -p all --profile preview",
-    "build:list": "eas build:list"
+    "build:list": "eas build:list",
+    "setup-pre-commit-hook": "sh pre-commit.sh"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.18.2",
@@ -32,7 +33,7 @@
     "expo-checkbox": "~2.4.0",
     "expo-constants": "~14.4.2",
     "expo-device": "~5.4.0",
-    "expo-file-system": "~15.4.4",
+    "expo-file-system": "~15.4.5",
     "expo-intent-launcher": "~10.7.0",
     "expo-notifications": "~0.20.1",
     "expo-status-bar": "~1.6.0",
