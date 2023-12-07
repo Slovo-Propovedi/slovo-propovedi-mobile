@@ -70,6 +70,8 @@ export const AudioPlayerScreen: React.FC<
 
         {/* <PlayerSoundVolume /> */}
         <View style={styles.mediaButtons}>
+          <View />
+          <View />
           <TouchableOpacity disabled={isDisabledShowPlaylistButton} onPress={onPressListItem}>
             <Feather
               color={isDisabledShowPlaylistButton ? COLORS.disabled : COLORS.black}
@@ -97,6 +99,8 @@ const styles = StyleSheet.create({
   },
   mediaButtons: {
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
     marginVertical: INDENTS.high,
     width: '100%',
   },

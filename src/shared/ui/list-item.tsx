@@ -96,7 +96,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flex: 1,
     height: '100%',
-    marginHorizontal: INDENTS.high,
+    marginLeft: INDENTS.high,
+    paddingRight: INDENTS.high,
     paddingVertical: INDENTS.high,
   },
 });
