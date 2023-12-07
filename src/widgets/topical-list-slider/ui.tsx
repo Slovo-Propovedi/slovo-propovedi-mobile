@@ -50,7 +50,7 @@ export const TopicalListSlider = () => {
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
-      itemsSize={SliderItemSize.Large}
+      itemsSize={SliderItemSize.XLarge}
       onPressItem={onItemPress}
       onPressTitle={() => {
         onPressTitle(topicalList);

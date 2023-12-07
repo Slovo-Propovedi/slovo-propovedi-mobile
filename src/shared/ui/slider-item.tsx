@@ -14,6 +14,7 @@ export enum SliderItemSize {
   Large = 'large',
   Middle = 'middle',
   Small = 'small',
+  XLarge = 'xLarge',
 }
 
 export enum WhereIsSlideTitleLocated {
@@ -43,7 +44,8 @@ export type SliderItemProps = {
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated;
 };
 
-const componentLargeSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.9;
+const componentXLargeSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.9;
+const componentLargeSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.62;
 const componentMiddleSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.44;
 const componentSmallSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.285;
 
@@ -70,6 +72,7 @@ export const SliderItem = ({
     [SliderItemSize.Large]: componentLargeSize,
     [SliderItemSize.Middle]: componentMiddleSize,
     [SliderItemSize.Small]: componentSmallSize,
+    [SliderItemSize.XLarge]: componentXLargeSize,
   }[size];
 
   const isVisibleDescriptionOnSlide =

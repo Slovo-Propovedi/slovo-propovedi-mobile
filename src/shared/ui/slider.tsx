@@ -74,13 +74,14 @@ export const Slider = <D extends object>({
   const titleFontSize = FONT_SIZES.h2;
 
   const marginBottom = {
-    [SliderItemSize.Large]: { marginBottom: titleFontSize * 2 },
-    [SliderItemSize.Middle]: { marginBottom: titleFontSize },
-    [SliderItemSize.Small]: { marginBottom: titleFontSize },
+    [SliderItemSize.Large]: titleFontSize * 2,
+    [SliderItemSize.Middle]: titleFontSize,
+    [SliderItemSize.Small]: titleFontSize,
+    [SliderItemSize.XLarge]: titleFontSize * 2,
   }[itemsSize];
 
   return (
-    <View style={[styles.slider, { marginTop: titleFontSize / 2 }, marginBottom, style]}>
+    <View style={[styles.slider, { marginTop: titleFontSize / 2 }, { marginBottom }, style]}>
       <Text
         onPress={onPressTitle}
         style={[styles.title, { fontSize: titleFontSize }]}
