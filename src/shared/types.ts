@@ -3,10 +3,10 @@ export type KeyofAny = number | string | symbol;
 export type Unpacked<T> = T extends (infer U)[]
   ? U
   : T extends (...args: unknown[]) => infer U
-  ? U
-  : T extends Promise<infer U>
-  ? U
-  : T;
+    ? U
+    : T extends Promise<infer U>
+      ? U
+      : T;
 
 export type HOC<
   RequiredProps extends object,
