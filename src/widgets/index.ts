@@ -6,3 +6,4 @@ export * from './sermons-on-bible-slider';
 export * from './topical-and-thematic-books-slider';
 export * from './topical-list-slider';
 export * from './verse-by-verse-books-slider';
+export * from './book-reader';
