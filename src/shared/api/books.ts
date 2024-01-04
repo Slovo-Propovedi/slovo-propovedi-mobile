@@ -1,13 +1,13 @@
 import type { FetchedBooksGroupName } from 'shared/types';
 import { localDB } from './localBD';
 
-const getBookListsOnBooksGroup = async (tabName: FetchedBooksGroupName) => {
+const getBooksOnBooksGroup = async (tabName: FetchedBooksGroupName) => {
   const sermons = localDB.getBooks();
   const content = sermons.find((el) => el.groupName === tabName);
 
-  return content?.bookList ?? null;
+  return content?.books ?? null;
 };
 
 export const booksAPI = {
-  getBookListsOnBooksGroup,
+  getBooksOnBooksGroup,
 };

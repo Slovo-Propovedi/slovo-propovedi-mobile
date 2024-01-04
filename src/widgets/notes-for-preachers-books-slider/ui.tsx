@@ -1,16 +1,22 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import type { BookListData, ListenStackNavProp } from 'shared';
-import { SliderItemDescriptionBackgroundStyle, SliderItemTransform } from 'shared';
-import { WhereIsSlideTitleLocated } from 'shared';
-import { INDENTS, ListenStackParamName, Slider, SliderItemSize } from 'shared';
+import type { BookData, ReadStackNavProp } from 'shared';
+import {
+  INDENTS,
+  ReadStackParamName,
+  Slider,
+  SliderItemDescriptionBackgroundStyle,
+  SliderItemSize,
+  SliderItemTransform,
+  WhereIsSlideTitleLocated,
+} from 'shared';
 import { useNotesForPreachersBooksStore } from './model';
 
 export const NotesForPreachersBooksSlider = () => {
   const title = 'Конспекты для проповедников';
 
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
+  const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>();
 
   const { getNotesForPreachersBooks, notesForPreachersBooks } = useNotesForPreachersBooksStore(
     (state) => ({
@@ -19,21 +25,12 @@ export const NotesForPreachersBooksSlider = () => {
     }),
   );
 
-  const onItemPress = async (bookList: BookListData) => {
-    console.log('bookList: ', bookList);
-    // const sermons = bookList.list;
-
-    // if (sermons.length && sermons.length < 2) {
-    //   await playNewSermon({ playlist: bookList, sermon: sermons[0] });
-
-    //   return;
-    // }
-
-    // navigate(ListenStackParamName.Playlist, bookList);
+  const onItemPress = async (bookList: BookData) => {
+    navigate(ReadStackParamName.BookReader, bookList);
   };
 
-  const onPressTitle = (params: BookListData[]) => {
-    navigate(ListenStackParamName.PlaylistList, { playlists: params, title });
+  const onPressTitle = (params: BookData[]) => {
+    navigate(ReadStackParamName.BooksList, { books: params, title });
   };
 
   useEffect(() => {

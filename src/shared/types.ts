@@ -165,6 +165,8 @@ export type FetchedBookData = {
 
   id: string;
 
+  previewUrl?: string;
+
   textFileUrl?: string;
 
   title: string;
@@ -198,12 +200,6 @@ export interface FetchedPlaylist {
   previewUrl?: string;
   title: string;
 }
-export interface FetchedBookList {
-  description?: string;
-  list: FetchedBookData[];
-  previewUrl?: string;
-  title: string;
-}
 
 export type FetchedSermonsGroup = {
   groupName: FetchedSermonsGroupName;
@@ -211,7 +207,7 @@ export type FetchedSermonsGroup = {
 };
 
 export type FetchedBooksGroup = {
-  bookList: FetchedBookList[];
+  books: FetchedBookData[];
   groupName: FetchedBooksGroupName;
 };
 
@@ -246,14 +242,9 @@ export interface BookData {
 
   id: string;
 
+  previewUrl?: string;
+
   textFileUrl?: string;
 
-  title: string;
-}
-
-export interface BookListData {
-  description?: string;
-  list: BookData[];
-  previewUrl?: string;
   title: string;
 }

@@ -1,29 +1,27 @@
 import { create } from 'zustand';
-import type { BookListData, SermonData } from 'shared';
+import type { BookData } from 'shared';
 import { API, FetchedBooksGroupName, getBookLinkAsString } from 'shared';
 
 interface VerseByVerseBooksSliderState {
-  getVerseByVerseBooks: () => Promise<BookListData[]>;
-  verseByVerseBooks: BookListData[];
+  getVerseByVerseBooks: () => Promise<BookData[]>;
+  verseByVerseBooks: BookData[];
 }
 
 export const useVerseByVerseBooksStore = create<VerseByVerseBooksSliderState>((set) => ({
   getVerseByVerseBooks: async () => {
-    const list = await API.books.getBookListsOnBooksGroup(FetchedBooksGroupName.VerseByVerse);
+    const books = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.VerseByVerse);
 
-    const mappedList = list?.map<BookListData>((playlist) => ({
-      ...playlist,
-      list: playlist.list.map<SermonData>((el) => {
-        const { description, id, textFileUrl } = el;
+    const mappedList = books?.map<BookData>((book) => {
+      const { description, id, previewUrl, textFileUrl } = book;
 
-        return {
-          description,
-          id,
-          textFileUrl,
-          title: getBookLinkAsString(el),
-        };
-      }),
-    }));
+      return {
+        description,
+        id,
+        previewUrl,
+        textFileUrl,
+        title: getBookLinkAsString(book),
+      };
+    });
 
     set((state) => ({
       ...state,

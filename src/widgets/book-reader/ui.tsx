@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { parseFb2BookToObject } from 'shared/lib';
 import { testFb2String } from 'shared/testFiles/testFb2';
 
@@ -14,6 +14,9 @@ export const BookReader = () => {
   return (
     <View style={styles.container}>
       <Text>BookReader</Text>
+      <ScrollView>
+        <Text>{JSON.stringify(element)}</Text>
+      </ScrollView>
     </View>
   );
 };

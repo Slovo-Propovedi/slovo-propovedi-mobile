@@ -6,7 +6,7 @@ import {
   firstAndSecondThessaloniansBookList,
   firstCorinthiansBookList,
   firstPeteBookList,
-  isThereAnUnforgivableSinBookList,
+  isThereAnUnforgivableSinBooks,
   jacobBookList,
   johnBookList,
   lukeBookList,
@@ -38,28 +38,28 @@ import {
 export const db: DB = {
   books: [
     {
-      bookList: [actsBookList, markBookList, johnBookList, lukeBookList],
+      books: [...actsBookList, ...markBookList, ...johnBookList, ...lukeBookList],
       groupName: FetchedBooksGroupName.NotesForPreachers,
     },
     {
-      bookList: [
-        markBookList,
-        lukeBookList,
-        johnBookList,
-        actsBookList,
-        jacobBookList,
-        firstPeteBookList,
-        firstCorinthiansBookList,
-        ephesiansBookList,
-        firstAndSecondThessaloniansBookList,
+      books: [
+        ...markBookList,
+        ...lukeBookList,
+        ...johnBookList,
+        ...actsBookList,
+        ...jacobBookList,
+        ...firstPeteBookList,
+        ...firstCorinthiansBookList,
+        ...ephesiansBookList,
+        ...firstAndSecondThessaloniansBookList,
       ],
       groupName: FetchedBooksGroupName.VerseByVerse,
     },
     {
-      bookList: [
-        unionWithChristBookList,
-        isThereAnUnforgivableSinBookList,
-        stephensSpeechBeforeSanhedrinBookList,
+      books: [
+        ...unionWithChristBookList,
+        ...isThereAnUnforgivableSinBooks,
+        ...stephensSpeechBeforeSanhedrinBookList,
       ],
       groupName: FetchedBooksGroupName.TopicalAndThematic,
     },
