@@ -7,7 +7,6 @@ export * from './getFilePath';
 export * from './getYoutubeVideoData';
 export * from './isEmptyObject';
 export * from './isNonNullable';
-export * from './parseFb2BookToObject';
 export * from './parseJSONToObject';
 export * from './processRequest';
 export * from './randomIntFromInterval';
