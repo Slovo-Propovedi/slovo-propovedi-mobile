@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BookReader } from 'widgets';
 import { COLORS, type ReadStackParamName, type ReadStackScreenProps } from 'shared';
@@ -8,14 +8,17 @@ export const BookReaderScreen: React.FC<ReadStackScreenProps<ReadStackParamName.
   route: {
     params: { description, previewUrl, title },
   },
-}) => (
-  <SafeAreaView style={styles.container}>
-    <Image source={{ uri: previewUrl }} style={{ height: 100, width: 100 }} />
-    <Text>{title}</Text>
-    <Text>{description}</Text>
-    <BookReader />
-  </SafeAreaView>
-);
+}) => {
+  console.log('title: ', title);
+  console.log('previewUrl: ', previewUrl);
+  console.log('description: ', description);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <BookReader />
+    </SafeAreaView>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
