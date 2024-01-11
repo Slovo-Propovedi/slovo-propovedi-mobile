@@ -9,15 +9,15 @@ export const useLocalNotification = () => {
   const responseListener = useRef<Notifications.Subscription | undefined>();
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then((token) => {
+    registerForPushNotificationsAsync().then(token => {
       token && setExpoPushToken(token);
     });
 
-    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
       setNotification(notification);
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       setNotification(response.notification);
     });
 

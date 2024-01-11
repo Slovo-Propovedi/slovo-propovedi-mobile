@@ -15,7 +15,7 @@ export const usePlayer = () => {
     setCurrentSoundPosition,
     setIsCurrentSoundBuffering,
     setIsPlayingCurrentAudio,
-  } = usePlayerStore((state) => ({
+  } = usePlayerStore(state => ({
     currentSound: state.currentSound,
     currentSoundDuration: state.currentSoundDuration,
     currentSoundPosition: state.currentSoundPosition,
@@ -29,9 +29,7 @@ export const usePlayer = () => {
   const play = async (newSound?: Audio.Sound) => {
     const sound = newSound || currentSound;
 
-    if (!sound) {
-      return;
-    }
+    if (!sound) return;
 
     await sound.playAsync();
   };
@@ -39,9 +37,7 @@ export const usePlayer = () => {
   const pause = async (newSound?: Audio.Sound) => {
     const sound = newSound || currentSound;
 
-    if (!sound) {
-      return;
-    }
+    if (!sound) return;
 
     await sound.pauseAsync();
 
@@ -51,9 +47,7 @@ export const usePlayer = () => {
   const stop = async (newSound?: Audio.Sound) => {
     const sound = newSound || currentSound;
 
-    if (!sound) {
-      return;
-    }
+    if (!sound) return;
 
     await sound.stopAsync();
   };
@@ -61,9 +55,7 @@ export const usePlayer = () => {
   const unload = async (newSound?: Audio.Sound) => {
     const sound = newSound || currentSound;
 
-    if (!sound) {
-      return;
-    }
+    if (!sound) return;
 
     await sound.stopAsync();
 
@@ -102,9 +94,7 @@ export const usePlayer = () => {
       remoteUri: newAudioUrl,
     });
 
-    if (!data) {
-      return;
-    }
+    if (!data) return;
 
     const { audio, status } = data;
 
@@ -116,10 +106,8 @@ export const usePlayer = () => {
     let prevPositionSecond: number | undefined;
     let prevIsPlaying: boolean | undefined;
 
-    audio.setOnPlaybackStatusUpdate(async (status) => {
-      if (!status.isLoaded) {
-        return;
-      }
+    audio.setOnPlaybackStatusUpdate(async status => {
+      if (!status.isLoaded) return;
 
       const { isPlaying, positionMillis } = status;
 
@@ -146,9 +134,7 @@ export const usePlayer = () => {
   const changeProgressPosition = async (value: number, newSound?: Audio.Sound) => {
     const sound = newSound || currentSound;
 
-    if (!sound) {
-      return;
-    }
+    if (!sound) return;
 
     await sound.setPositionAsync(value);
   };

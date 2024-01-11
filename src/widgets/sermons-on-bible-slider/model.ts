@@ -7,13 +7,13 @@ interface OnBibleBooksListState {
   onBibleBooksList: PlaylistData[];
 }
 
-export const useOnBibleBooksListStore = create<OnBibleBooksListState>((set) => ({
+export const useOnBibleBooksListStore = create<OnBibleBooksListState>(set => ({
   getOnBibleBookList: async () => {
     const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible);
 
-    const mappedList = list?.map<PlaylistData>((playlist) => ({
+    const mappedList = list?.map<PlaylistData>(playlist => ({
       ...playlist,
-      list: playlist.list.map<SermonData>((el) => {
+      list: playlist.list.map<SermonData>(el => {
         const { audioUrl, description, id, textFileUrl, youtubeUrl } = el;
 
         return {
@@ -27,7 +27,7 @@ export const useOnBibleBooksListStore = create<OnBibleBooksListState>((set) => (
       }),
     }));
 
-    set((state) => ({
+    set(state => ({
       ...state,
       onBibleBooksList: mappedList || [],
     }));

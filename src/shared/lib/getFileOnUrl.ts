@@ -19,9 +19,7 @@ export const getFileOnUrl: GetFileOnUrl = async ({ name, path, type }) => {
       return new File([data], name, metadata);
     }
 
-    if (responseError) {
-      console.error('Getting local file error: ', responseError);
-    }
+    if (responseError) console.error('Getting local file error: ', responseError);
   }
 
   return null;

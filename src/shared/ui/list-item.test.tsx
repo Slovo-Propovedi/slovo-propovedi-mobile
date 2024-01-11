@@ -14,9 +14,7 @@ describe('<TouchableListItem>', () => {
 
     const tree = screen.toJSON();
 
-    if (!tree || Array.isArray(tree)) {
-      return;
-    }
+    if (!tree || Array.isArray(tree)) return;
 
     expect(tree.type).toEqual('View');
   });

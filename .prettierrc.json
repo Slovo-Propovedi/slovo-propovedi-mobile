@@ -5,9 +5,10 @@
   "tabWidth": 2,
   "trailingComma": "all",
   "bracketSpacing": true,
-  "arrowParens": "always",
+  "arrowParens": "avoid",
   "singleQuote": true,
   "useTabs": false,
+  "jsxBracketSameLine": false,
   "jsxSingleQuote": true,
   "embeddedLanguageFormatting": "auto",
   "htmlWhitespaceSensitivity": "css"

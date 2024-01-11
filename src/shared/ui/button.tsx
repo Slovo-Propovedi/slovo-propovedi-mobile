@@ -14,9 +14,7 @@ export const Button = ({
 }: CustomButtonProps) => {
   const buttonStyles: StyleProp<ViewStyle>[] = [styles.button];
 
-  if (disabled) {
-    buttonStyles.push({ backgroundColor: COLORS.disabled });
-  }
+  if (disabled) buttonStyles.push({ backgroundColor: COLORS.disabled });
 
   buttonStyles.push(style);
 

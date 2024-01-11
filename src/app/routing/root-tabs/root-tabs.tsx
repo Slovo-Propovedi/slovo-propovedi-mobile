@@ -21,7 +21,7 @@ export const RootTabs = () => (
         lazy: route.name !== RootTabName.Study,
         tabBarActiveTintColor: COLORS.primary,
         tabBarIcon: ({ color, focused, size }) => {
-          if (route.name === RootTabName.Study) {
+          if (route.name === RootTabName.Study)
             return (
               <MaterialCommunityIcons
                 color={color}
@@ -29,16 +29,13 @@ export const RootTabs = () => (
                 size={size}
               />
             );
-          }
 
-          if (route.name === RootTabName.Listen) {
+          if (route.name === RootTabName.Listen)
             return <AntDesign color={color} name={focused ? 'play' : 'playcircleo'} size={size} />;
-          }
 
           const iconName = (() => {
-            if (route.name === RootTabName.Info) {
+            if (route.name === RootTabName.Info)
               return focused ? 'information' : 'information-outline';
-            }
 
             return focused ? 'book' : 'book-outline';
           })();
@@ -47,7 +44,7 @@ export const RootTabs = () => (
         },
         tabBarInactiveTintColor: 'gray',
       })}
-      tabBar={(props) => <CustomTabBar {...props} />}
+      tabBar={props => <CustomTabBar {...props} />}
     >
       <Tab.Screen component={ListenRouting} name={RootTabName.Listen} />
       <Tab.Screen component={ReadRouting} name={RootTabName.Read} />

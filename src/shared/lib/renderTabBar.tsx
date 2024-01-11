@@ -23,7 +23,7 @@ export const getRenderTabBar: GetRenderTabBar =
         {navigationState.routes.map((route, i) => {
           const opacity = position.interpolate({
             inputRange,
-            outputRange: inputRange.map((inputIndex) => (inputIndex === i ? 1 : 0.5)),
+            outputRange: inputRange.map(inputIndex => (inputIndex === i ? 1 : 0.5)),
           });
 
           const onPress = () => setActiveTabIndex(i);

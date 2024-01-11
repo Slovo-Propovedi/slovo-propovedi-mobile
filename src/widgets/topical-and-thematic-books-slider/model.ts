@@ -7,11 +7,11 @@ interface TopicalAndThematicBooksState {
   topicalAndThematicBooks: BookData[];
 }
 
-export const useTopicalAndThematicBooksStore = create<TopicalAndThematicBooksState>((set) => ({
+export const useTopicalAndThematicBooksStore = create<TopicalAndThematicBooksState>(set => ({
   getTopicalAndThematicBooks: async () => {
     const books = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.TopicalAndThematic);
 
-    const mappedList = books?.map<BookData>((book) => {
+    const mappedList = books?.map<BookData>(book => {
       const { description, id, previewUrl, textFileUrl } = book;
 
       return {
@@ -23,7 +23,7 @@ export const useTopicalAndThematicBooksStore = create<TopicalAndThematicBooksSta
       };
     });
 
-    set((state) => ({
+    set(state => ({
       ...state,
       topicalAndThematicBooks: mappedList || [],
     }));

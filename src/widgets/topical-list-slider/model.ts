@@ -7,13 +7,13 @@ interface TopicalListState {
   topicalList: PlaylistData[];
 }
 
-export const useTopicalListStore = create<TopicalListState>((set) => ({
+export const useTopicalListStore = create<TopicalListState>(set => ({
   getTopicalList: async () => {
     const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.Topical);
 
-    const mappedList = list?.map<PlaylistData>((playlist) => ({
+    const mappedList = list?.map<PlaylistData>(playlist => ({
       ...playlist,
-      list: playlist.list.map<SermonData>((el) => {
+      list: playlist.list.map<SermonData>(el => {
         const { audioUrl, description, id, textFileUrl, youtubeUrl } = el;
 
         return {
@@ -27,7 +27,7 @@ export const useTopicalListStore = create<TopicalListState>((set) => ({
       }),
     }));
 
-    set((state) => ({
+    set(state => ({
       ...state,
       topicalList: mappedList || [],
     }));

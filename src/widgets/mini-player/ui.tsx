@@ -14,7 +14,7 @@ import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, ListenStackParamName, RADIUSES 
 export const MiniPlayer = () => {
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { currentAudio, currentPlaylist } = useSermonPlayerControlsStore((state) => ({
+  const { currentAudio, currentPlaylist } = useSermonPlayerControlsStore(state => ({
     currentAudio: state.currentAudio,
     currentPlaylist: state.currentPlaylist,
   }));

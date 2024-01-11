@@ -18,7 +18,7 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
 }) => {
   const playNewSermon = usePlayNewSermon();
 
-  const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = async (sermon) =>
+  const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = async sermon =>
     await playNewSermon({ playlist, sermon });
 
   return (

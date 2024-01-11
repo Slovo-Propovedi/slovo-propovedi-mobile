@@ -19,7 +19,7 @@ export const NotesForPreachersBooksSlider = () => {
   const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>();
 
   const { getNotesForPreachersBooks, notesForPreachersBooks } = useNotesForPreachersBooksStore(
-    (state) => ({
+    state => ({
       getNotesForPreachersBooks: state.getNotesForPreachersBooks,
       notesForPreachersBooks: state.notesForPreachersBooks,
     }),
@@ -41,7 +41,7 @@ export const NotesForPreachersBooksSlider = () => {
     <Slider
       descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
       descriptionTitleTextAlign='center'
-      items={notesForPreachersBooks.map((item) => ({
+      items={notesForPreachersBooks.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',

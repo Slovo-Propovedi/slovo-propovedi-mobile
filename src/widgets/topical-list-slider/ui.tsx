@@ -17,7 +17,7 @@ export const TopicalListSlider = () => {
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { getTopicalList, topicalList } = useTopicalListStore((state) => ({
+  const { getTopicalList, topicalList } = useTopicalListStore(state => ({
     getTopicalList: state.getTopicalList,
     topicalList: state.topicalList,
   }));
@@ -45,7 +45,7 @@ export const TopicalListSlider = () => {
   return (
     <Slider
       isDescriptionTitleOnSlideLarge
-      items={topicalList.map((item) => ({
+      items={topicalList.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',

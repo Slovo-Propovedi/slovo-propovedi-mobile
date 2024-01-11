@@ -14,17 +14,11 @@ type GetBookLinkAsStringProps = {
 );
 
 export const getBookLinkAsString = (props: GetBookLinkAsStringProps) => {
-  if (typeof props !== 'object') {
-    throw new Error('Аргумент должен быть объектом');
-  }
+  if (typeof props !== 'object') throw new Error('Аргумент должен быть объектом');
 
-  if (!props.title) {
-    return '';
-  }
+  if (!props.title) return '';
 
-  if (!('chapter' in props) || !props.chapter) {
-    return props.title;
-  }
+  if (!('chapter' in props) || !props.chapter) return props.title;
 
   const { chapter, title, verse } = props;
 

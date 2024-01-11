@@ -25,7 +25,7 @@ export const TouchableListItem: TouchableListItemComponent = ({
   size,
   style,
 }) => (
-  <TouchableItem onPress={(event) => onPress(data, event)} testID='container'>
+  <TouchableItem onPress={event => onPress(data, event)} testID='container'>
     <ListItem
       data={data}
       previewPlaceholderText={previewPlaceholderText}

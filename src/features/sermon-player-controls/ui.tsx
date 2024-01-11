@@ -16,7 +16,7 @@ export const SermonPlayerControls = ({
   style,
 }: SermonPlayerControlsProps) => {
   const { currentAudio, currentPlaylist, setCurrentAudio } = useSermonPlayerControlsStore(
-    (store) => ({
+    store => ({
       currentAudio: store.currentAudio,
       currentPlaylist: store.currentPlaylist,
       setCurrentAudio: store.setCurrentAudio,

@@ -19,12 +19,12 @@ Notifications.setNotificationHandler({
 });
 
 const App = () => {
-  const { setCurrentAudio, setCurrentPlaylist } = useSermonPlayerControlsStore((state) => ({
+  const { setCurrentAudio, setCurrentPlaylist } = useSermonPlayerControlsStore(state => ({
     setCurrentAudio: state.setCurrentAudio,
     setCurrentPlaylist: state.setCurrentPlaylist,
   }));
   const { recreateSound, unload } = usePlayer();
-  const { setCurrentSound } = usePlayerStore((store) => ({
+  const { setCurrentSound } = usePlayerStore(store => ({
     setCurrentSound: store.setCurrentSound,
   }));
 
@@ -48,37 +48,27 @@ const App = () => {
     storedCurrentAudio: null | string;
     storedSoundPosition: null | string;
   }) => {
-    if (!storedCurrentAudio) {
-      return;
-    }
+    if (!storedCurrentAudio) return;
 
     const currentAudio = parseJSONToObject<AudioPlayerData>(storedCurrentAudio);
 
-    if (!currentAudio) {
-      return;
-    }
+    if (!currentAudio) return;
 
     await setCurrentAudio(currentAudio);
 
     const currentSound = await recreateSound(currentAudio.audioUrl, Number(storedSoundPosition));
 
-    if (!currentSound) {
-      return;
-    }
+    if (!currentSound) return;
 
     setCurrentSound(currentSound);
   };
 
   const initCurrentPlaylist = async (storedCurrentPlaylist: null | string) => {
-    if (!storedCurrentPlaylist) {
-      return;
-    }
+    if (!storedCurrentPlaylist) return;
 
     const currentPlaylist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist);
 
-    if (!currentPlaylist) {
-      return;
-    }
+    if (!currentPlaylist) return;
 
     await setCurrentPlaylist(currentPlaylist);
   };

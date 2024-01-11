@@ -43,9 +43,16 @@ module.exports = {
     'linebreak-style': ['error', process.platform === 'win32' ? 'windows' : 'unix'],
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
-    curly: ['error', 'all'],
+    curly: ['error', 'multi'],
+    'arrow-parens': ['error', 'as-needed'],
     'arrow-body-style': ['error', 'as-needed'],
+    'react/prop-types': 'off',
+    'react/no-unknown-property': 'off',
+    'react/react-in-jsx-scope': 'off',
+    'react/display-name': 'off',
+    'react-hooks/exhaustive-deps': 'off',
     'perfectionist/sort-imports': 'off',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
     '@typescript-eslint/consistent-type-imports': [
       'error',
       {

@@ -11,7 +11,7 @@ export const ListenEveryDaySlider = () => {
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { getListenEveryDay, listenEveryDay } = useListenEveryDayStore((state) => ({
+  const { getListenEveryDay, listenEveryDay } = useListenEveryDayStore(state => ({
     getListenEveryDay: state.getListenEveryDay,
     listenEveryDay: state.listenEveryDay,
   }));
@@ -38,7 +38,7 @@ export const ListenEveryDaySlider = () => {
 
   return (
     <Slider
-      items={listenEveryDay.map((item) => ({
+      items={listenEveryDay.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',

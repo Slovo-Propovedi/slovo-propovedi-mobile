@@ -48,17 +48,13 @@ export const Slider = <D extends object>({
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderProps<D>) => {
-  if (!items || !items.length) {
-    return null;
-  }
+  if (!items || !items.length) return null;
 
   let rowIndex = 0;
   const itemsByRows = items.reduce<SliderItemsElement<D>[][]>((accumulator, currentItem) => {
     rowIndex++;
 
-    if (rowIndex == itemsRows) {
-      rowIndex = 0;
-    }
+    if (rowIndex == itemsRows) rowIndex = 0;
 
     if (accumulator[rowIndex]) {
       accumulator[rowIndex].push(currentItem);
@@ -105,7 +101,7 @@ export const Slider = <D extends object>({
                 descriptionTitleTextAlign={descriptionTitleTextAlign}
                 isDescriptionTitleOnSlideLarge={isDescriptionTitleOnSlideLarge}
                 key={index}
-                onPress={(event) => {
+                onPress={event => {
                   onPressItem?.(data, event);
                 }}
                 previewURL={previewURL}
@@ -137,6 +133,6 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: 'bold',
     paddingBottom: INDENTS.middle,
-    paddingLeft: INDENTS.low,
+    paddingLeft: INDENTS.lowest,
   },
 });

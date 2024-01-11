@@ -19,7 +19,7 @@ export const TopicalAndThematicBooksSlider = () => {
   const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>();
 
   const { getTopicalAndThematicBooks, topicalAndThematicBooks } = useTopicalAndThematicBooksStore(
-    (state) => ({
+    state => ({
       getTopicalAndThematicBooks: state.getTopicalAndThematicBooks,
       topicalAndThematicBooks: state.topicalAndThematicBooks,
     }),
@@ -41,7 +41,7 @@ export const TopicalAndThematicBooksSlider = () => {
     <Slider
       descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
       descriptionTitleTextAlign='center'
-      items={topicalAndThematicBooks.map((item) => ({
+      items={topicalAndThematicBooks.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',

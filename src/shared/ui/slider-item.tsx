@@ -64,9 +64,7 @@ export const SliderItem = ({
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderItemProps) => {
-  if (!previewURL) {
-    return null;
-  }
+  if (!previewURL) return null;
 
   const conditionSize = {
     [SliderItemSize.Large]: componentLargeSize,

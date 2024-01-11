@@ -8,7 +8,7 @@ import { useOnBibleBooksListStore } from './model';
 export const SermonsOnBibleSlider = () => {
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { getOnBibleBookList, onBibleBooksList } = useOnBibleBooksListStore((state) => ({
+  const { getOnBibleBookList, onBibleBooksList } = useOnBibleBooksListStore(state => ({
     getOnBibleBookList: state.getOnBibleBookList,
     onBibleBooksList: state.onBibleBooksList,
   }));
@@ -37,7 +37,7 @@ export const SermonsOnBibleSlider = () => {
 
   return (
     <Slider
-      items={onBibleBooksList.map((item) => ({
+      items={onBibleBooksList.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',

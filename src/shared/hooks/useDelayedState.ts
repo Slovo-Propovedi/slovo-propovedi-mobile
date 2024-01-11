@@ -17,7 +17,7 @@ export const useDelayedState: UseDelayedState = ({ delay, initialValue }) => {
   const timer = useRef<NodeJS.Timeout | null>(null);
 
   const debounceCallback = useMemo(
-    () => debounce<typeof value>((debounceValue) => setDebouncedValue(debounceValue), delay),
+    () => debounce<typeof value>(debounceValue => setDebouncedValue(debounceValue), delay),
     [delay],
   );
 

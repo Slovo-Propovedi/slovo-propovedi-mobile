@@ -37,42 +37,42 @@ const initialState: PlayerStoreStates = {
   isPlayingCurrentAudio: false,
 };
 
-export const usePlayerStore = create<PlayerStore>((set) => ({
+export const usePlayerStore = create<PlayerStore>(set => ({
   ...initialState,
 
   resetStates: () =>
-    set((state) => ({
+    set(state => ({
       ...state,
       ...initialState,
     })),
-  setCurrentSound: (sound) =>
-    set((state) => ({
+  setCurrentSound: sound =>
+    set(state => ({
       ...state,
       currentSound: sound,
     })),
 
-  setCurrentSoundDuration: async (duration) => {
-    set((state) => ({
+  setCurrentSoundDuration: async duration => {
+    set(state => ({
       ...state,
       currentSoundDuration: duration,
     }));
     await AsyncStorage.setItem(CURRENT_SOUND_DURATION, `${duration}`);
   },
-  setCurrentSoundPosition: async (position) => {
-    set((state) => ({
+  setCurrentSoundPosition: async position => {
+    set(state => ({
       ...state,
       currentSoundPosition: position,
     }));
     await AsyncStorage.setItem(CURRENT_SOUND_POSITION, `${position}`);
   },
 
-  setIsCurrentSoundBuffering: (value) =>
-    set((state) => ({
+  setIsCurrentSoundBuffering: value =>
+    set(state => ({
       ...state,
       isCurrentSoundBuffering: value,
     })),
-  setIsPlayingCurrentAudio: (value) =>
-    set((state) => ({
+  setIsPlayingCurrentAudio: value =>
+    set(state => ({
       ...state,
       isPlayingCurrentAudio: value,
     })),

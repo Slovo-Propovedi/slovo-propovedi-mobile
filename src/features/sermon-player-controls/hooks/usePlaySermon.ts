@@ -8,14 +8,14 @@ export const usePlayNewSermon = () => {
   const { play, recreateSound } = usePlayer();
 
   const { currentAudio, setCurrentAudio, setCurrentPlaylist } = useSermonPlayerControlsStore(
-    (store) => ({
+    store => ({
       currentAudio: store.currentAudio,
       setCurrentAudio: store.setCurrentAudio,
       setCurrentPlaylist: store.setCurrentPlaylist,
     }),
   );
 
-  const { setCurrentSound } = usePlayerStore((store) => ({
+  const { setCurrentSound } = usePlayerStore(store => ({
     setCurrentSound: store.setCurrentSound,
   }));
 
@@ -28,9 +28,7 @@ export const usePlayNewSermon = () => {
     playlist: PlaylistData;
     sermon: SermonData;
   }) => {
-    if (!audioUrl) {
-      return;
-    }
+    if (!audioUrl) return;
 
     const newAudio = { ...other, audioUrl, id, previewUrl: playlist.previewUrl };
 
@@ -41,13 +39,9 @@ export const usePlayNewSermon = () => {
 
     let newSound;
 
-    if (currentAudio?.id !== id) {
-      newSound = await recreateSound(newAudio.audioUrl);
-    }
+    if (currentAudio?.id !== id) newSound = await recreateSound(newAudio.audioUrl);
 
-    if (newSound) {
-      setCurrentSound(newSound);
-    }
+    if (newSound) setCurrentSound(newSound);
 
     await play(newSound);
     await schedulePushNotification({

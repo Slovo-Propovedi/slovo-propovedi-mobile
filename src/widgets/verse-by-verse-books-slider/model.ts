@@ -7,11 +7,11 @@ interface VerseByVerseBooksSliderState {
   verseByVerseBooks: BookData[];
 }
 
-export const useVerseByVerseBooksStore = create<VerseByVerseBooksSliderState>((set) => ({
+export const useVerseByVerseBooksStore = create<VerseByVerseBooksSliderState>(set => ({
   getVerseByVerseBooks: async () => {
     const books = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.VerseByVerse);
 
-    const mappedList = books?.map<BookData>((book) => {
+    const mappedList = books?.map<BookData>(book => {
       const { description, id, previewUrl, textFileUrl } = book;
 
       return {
@@ -23,7 +23,7 @@ export const useVerseByVerseBooksStore = create<VerseByVerseBooksSliderState>((s
       };
     });
 
-    set((state) => ({
+    set(state => ({
       ...state,
       verseByVerseBooks: mappedList || [],
     }));

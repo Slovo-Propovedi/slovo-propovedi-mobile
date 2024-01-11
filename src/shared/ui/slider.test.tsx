@@ -36,9 +36,8 @@ describe('<Slider/>', () => {
 
     expect(Array.isArray(tree)).toEqual(false);
 
-    if (!tree || Array.isArray(tree)) {
-      return;
-    }
+    if (!tree || Array.isArray(tree)) return;
+
     expect(tree.type).toEqual('View');
   });
 
@@ -47,9 +46,7 @@ describe('<Slider/>', () => {
 
     const tree = screen.toJSON();
 
-    if (!tree || Array.isArray(tree)) {
-      return;
-    }
+    if (!tree || Array.isArray(tree)) return;
 
     const sliderItems = screen.getAllByTestId('slider-item');
 
@@ -68,9 +65,7 @@ describe('<Slider/>', () => {
 
     const tree = screen.toJSON();
 
-    if (!tree || Array.isArray(tree)) {
-      return;
-    }
+    if (!tree || Array.isArray(tree)) return;
 
     const sliderItems = screen.getAllByTestId('slider-item');
     fireEvent.press(sliderItems[0]);

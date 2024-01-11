@@ -40,17 +40,13 @@ describe('<SliderItemDescription/>', () => {
 
     const tree = screen.toJSON();
 
-    if (!tree || Array.isArray(tree)) {
-      return;
-    }
+    if (!tree || Array.isArray(tree)) return;
 
     expect(tree.type).toEqual('View');
 
     expect(tree.children).not.toBeNull();
 
-    if (!Array.isArray(tree.children)) {
-      return;
-    }
+    if (!Array.isArray(tree.children)) return;
 
     expect(tree.children.length).toEqual(1);
   });
@@ -60,9 +56,7 @@ describe('<SliderItemDescription/>', () => {
 
     const tree = screen.toJSON();
 
-    if (!tree || Array.isArray(tree)) {
-      return;
-    }
+    if (!tree || Array.isArray(tree)) return;
 
     const sliderItemDescription = screen.getByTestId('slider-item-description-title');
 

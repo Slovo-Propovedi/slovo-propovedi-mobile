@@ -7,11 +7,8 @@ export const useTimer = (startValue: number, timeout = 1000) => {
 
   const createTimer = () => {
     intervalHandleRef.current = setInterval(() => {
-      if (countdownValue <= 0) {
-        clearInterval(intervalHandleRef.current);
-      } else {
-        setCountdownValue(countdownValue - 1);
-      }
+      if (countdownValue <= 0) clearInterval(intervalHandleRef.current);
+      else setCountdownValue(countdownValue - 1);
     }, timeout);
   };
 

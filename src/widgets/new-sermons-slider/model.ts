@@ -7,13 +7,13 @@ interface NewSermonsState {
   newSermons: PlaylistData[];
 }
 
-export const useNewSermonsStore = create<NewSermonsState>((set) => ({
+export const useNewSermonsStore = create<NewSermonsState>(set => ({
   getNewSermons: async () => {
     const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.New);
 
-    const mappedList = list?.map<PlaylistData>((playlist) => ({
+    const mappedList = list?.map<PlaylistData>(playlist => ({
       ...playlist,
-      list: playlist.list.map<SermonData>((el) => {
+      list: playlist.list.map<SermonData>(el => {
         const { audioUrl, description, id, textFileUrl, youtubeUrl } = el;
 
         return {
@@ -27,7 +27,7 @@ export const useNewSermonsStore = create<NewSermonsState>((set) => ({
       }),
     }));
 
-    set((state) => ({
+    set(state => ({
       ...state,
       newSermons: mappedList || [],
     }));

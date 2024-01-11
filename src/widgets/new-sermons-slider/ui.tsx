@@ -13,7 +13,7 @@ export const NewSermonsSlider = () => {
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { getNewSermons, newSermons } = useNewSermonsStore((state) => ({
+  const { getNewSermons, newSermons } = useNewSermonsStore(state => ({
     getNewSermons: state.getNewSermons,
     newSermons: state.newSermons,
   }));
@@ -40,7 +40,7 @@ export const NewSermonsSlider = () => {
 
   return (
     <Slider
-      items={newSermons.map((item) => ({
+      items={newSermons.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',

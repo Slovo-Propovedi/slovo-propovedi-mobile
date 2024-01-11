@@ -18,7 +18,7 @@ export const VerseByVerseBooksSlider = () => {
 
   const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>();
 
-  const { getVerseByVerseBooks, notesVerseByVerseBooks } = useVerseByVerseBooksStore((state) => ({
+  const { getVerseByVerseBooks, notesVerseByVerseBooks } = useVerseByVerseBooksStore(state => ({
     getVerseByVerseBooks: state.getVerseByVerseBooks,
     notesVerseByVerseBooks: state.verseByVerseBooks,
   }));
@@ -39,7 +39,7 @@ export const VerseByVerseBooksSlider = () => {
     <Slider
       descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
       descriptionTitleTextAlign='center'
-      items={notesVerseByVerseBooks.map((item) => ({
+      items={notesVerseByVerseBooks.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',

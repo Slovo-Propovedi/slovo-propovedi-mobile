@@ -34,9 +34,7 @@ export const SliderItemDescription = ({
   titleStyle,
   titleTextAlign = 'left',
 }: SliderItemDescriptionProps) => {
-  if (!title) {
-    return null;
-  }
+  if (!title) return null;
 
   const isDarkBackground = backgroundStyle === SliderItemDescriptionBackgroundStyle.Dark;
   const isDarkBlurBackground = backgroundStyle === SliderItemDescriptionBackgroundStyle.DarkBlur;

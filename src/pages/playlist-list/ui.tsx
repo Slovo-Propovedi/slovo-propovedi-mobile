@@ -21,7 +21,7 @@ export const PlaylistListScreen: React.FC<
 }) => {
   const { top } = useSafeAreaInsets();
 
-  const onPressListItem: OnPressTouchableListItem<PlaylistData> = (params) => {
+  const onPressListItem: OnPressTouchableListItem<PlaylistData> = params => {
     navigate(ListenStackParamName.Playlist, params);
   };
 

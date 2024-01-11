@@ -9,9 +9,7 @@ interface DownloadAndCacheAudioProps {
 const downloadAndCacheAudio = async ({ fileUri, remoteUri }: DownloadAndCacheAudioProps) => {
   const { exists } = await FileSystem.getInfoAsync(fileUri);
 
-  if (exists) {
-    return;
-  }
+  if (exists) return;
 
   await FileSystem.downloadAsync(remoteUri, fileUri, {
     sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
@@ -27,23 +25,18 @@ export const loadCachedSoundData = async ({
 }) => {
   const fileName = remoteUri.split('/').at(-1);
 
-  if (!fileName) {
-    return;
-  }
+  if (!fileName) return;
 
   const audiosDir = `${FileSystem.cacheDirectory}Audios/`;
   const audiosDirInfo = await FileSystem.getInfoAsync(audiosDir);
 
-  if (!audiosDirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(audiosDir);
-  } else {
+  if (!audiosDirInfo.exists) await FileSystem.makeDirectoryAsync(audiosDir);
+  else {
     const audiosInCache = await FileSystem.readDirectoryAsync(audiosDir);
 
-    for (const fileNameInCache of audiosInCache) {
-      if (fileName !== fileNameInCache) {
+    for (const fileNameInCache of audiosInCache)
+      if (fileName !== fileNameInCache)
         await FileSystem.deleteAsync(`${audiosDir}${fileNameInCache}`, { idempotent: true });
-      }
-    }
   }
 
   const fileUri = `${audiosDir}${fileName}`;

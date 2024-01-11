@@ -40,18 +40,14 @@ export const downloadFile = async ({ fileName, mimeType, url }: DownloadFileArgs
     FileSystem.downloadAsync(url, `${FileSystem.documentDirectory}${fileName}`),
   );
 
-  if (!data) {
-    return;
-  }
+  if (!data) return;
 
-  if (data.status === 200) {
+  if (data.status === 200)
     if (Platform.OS === 'android') {
       const permissions =
         await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
-      if (!permissions.granted) {
-        return;
-      }
+      if (!permissions.granted) return;
 
       processRequest(
         FileSystem.StorageAccessFramework.createFileAsync(
@@ -61,7 +57,6 @@ export const downloadFile = async ({ fileName, mimeType, url }: DownloadFileArgs
         ),
       );
     }
-  }
 
   const { uri } = data;
 

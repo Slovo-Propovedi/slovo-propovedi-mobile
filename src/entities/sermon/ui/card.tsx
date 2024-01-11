@@ -32,9 +32,7 @@ export const SermonCard = ({
       if (youtubeUrl) {
         const response = await getYoutubeVideoData(youtubeUrl);
 
-        if (response) {
-          setVideoData(response);
-        }
+        if (response) setVideoData(response);
       }
     })();
   }, []);

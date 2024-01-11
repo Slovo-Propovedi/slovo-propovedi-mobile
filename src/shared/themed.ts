@@ -18,7 +18,8 @@ export const FONT_SIZES = {
 
 export const INDENTS = {
   high: 35,
-  low: 2,
+  low: 7,
+  lowest: 2,
   middle: 10,
 } as const;
 

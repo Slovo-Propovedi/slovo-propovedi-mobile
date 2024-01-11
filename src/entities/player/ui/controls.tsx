@@ -48,7 +48,7 @@ export const PlayerControls = ({
     isCurrentSoundBuffering,
     isPlayingCurrentAudio,
     setCurrentSound,
-  } = usePlayerStore((store) => ({
+  } = usePlayerStore(store => ({
     currentSoundDuration: store.currentSoundDuration,
     currentSoundPosition: store.currentSoundPosition,
     isCurrentSoundBuffering: store.isCurrentSoundBuffering,
@@ -72,26 +72,20 @@ export const PlayerControls = ({
     currentPlaylist && indexOfCurrentAudioInPlaylist === currentPlaylist.list.length - 1;
 
   const togglePlay = async () => {
-    if (isPlayingCurrentAudio) {
-      return await pause();
-    }
+    if (isPlayingCurrentAudio) return await pause();
 
     return await play();
   };
 
   const toggleTrack = async (dir: 'next' | 'prev') => {
-    if (!isNonNullable(indexOfCurrentAudioInPlaylist) || !currentPlaylist) {
-      return;
-    }
+    if (!isNonNullable(indexOfCurrentAudioInPlaylist) || !currentPlaylist) return;
 
     const { audioUrl, ...otherProps } =
       currentPlaylist.list[
         dir === 'next' ? indexOfCurrentAudioInPlaylist + 1 : indexOfCurrentAudioInPlaylist - 1
       ];
 
-    if (!audioUrl) {
-      return;
-    }
+    if (!audioUrl) return;
 
     const newAudio = { ...otherProps, audioUrl, previewUrl: currentPlaylist.previewUrl };
 
@@ -99,9 +93,7 @@ export const PlayerControls = ({
 
     const newSound = await recreateSound(newAudio.audioUrl);
 
-    if (newSound) {
-      setCurrentSound(newSound);
-    }
+    if (newSound) setCurrentSound(newSound);
 
     await schedulePushNotification({
       body: newAudio.description || '',
@@ -120,13 +112,9 @@ export const PlayerControls = ({
   };
 
   useEffect(() => {
-    if (!currentSoundDuration) {
-      return;
-    }
+    if (!currentSoundDuration) return;
 
-    if (currentSoundPosition >= currentSoundDuration && !isNotAvailableNext) {
-      switchToNextTrack();
-    }
+    if (currentSoundPosition >= currentSoundDuration && !isNotAvailableNext) switchToNextTrack();
   }, [currentSoundDuration, currentSoundPosition, isNotAvailableNext]);
 
   return (

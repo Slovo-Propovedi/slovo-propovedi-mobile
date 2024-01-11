@@ -16,39 +16,39 @@ interface SermonPlayerControlsStore {
   setCurrentPlaylist: (playlist: PlaylistData) => Promise<void>;
 }
 
-export const useSermonPlayerControlsStore = create<SermonPlayerControlsStore>((set) => ({
+export const useSermonPlayerControlsStore = create<SermonPlayerControlsStore>(set => ({
   currentAudio: null,
   currentPlaylist: null,
 
   resetCurrentAudio: () =>
-    set((state) => ({
+    set(state => ({
       ...state,
       currentAudio: null,
     })),
   resetCurrentPlaylist: () =>
-    set((state) => ({
+    set(state => ({
       ...state,
       currentPlaylist: null,
     })),
   resetStates: () =>
-    set((state) => ({
+    set(state => ({
       ...state,
       currentAudio: null,
       currentPlaylist: null,
     })),
 
-  setCurrentAudio: async (audio) => {
+  setCurrentAudio: async audio => {
     await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(audio));
 
-    set((state) => ({
+    set(state => ({
       ...state,
       currentAudio: audio,
     }));
   },
-  setCurrentPlaylist: async (playlist) => {
+  setCurrentPlaylist: async playlist => {
     await AsyncStorage.setItem(CURRENT_PLAYLIST, JSON.stringify(playlist));
 
-    set((state) => ({
+    set(state => ({
       ...state,
       currentPlaylist: playlist,
     }));

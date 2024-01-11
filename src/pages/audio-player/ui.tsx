@@ -23,21 +23,19 @@ export const AudioPlayerScreen: React.FC<
 > = () => {
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const { currentAudio, currentPlaylist } = useSermonPlayerControlsStore((state) => ({
+  const { currentAudio, currentPlaylist } = useSermonPlayerControlsStore(state => ({
     currentAudio: state.currentAudio,
     currentPlaylist: state.currentPlaylist,
   }));
 
-  const { setIsAudioPlayerMounted } = useAppStore((state) => ({
+  const { setIsAudioPlayerMounted } = useAppStore(state => ({
     setIsAudioPlayerMounted: state.setIsAudioPlayerMounted,
   }));
 
   const isDisabledShowPlaylistButton = !currentPlaylist || currentPlaylist.list.length < 2;
 
   const onPressListItem = () => {
-    if (!currentPlaylist) {
-      return;
-    }
+    if (!currentPlaylist) return;
 
     navigate(ListenStackParamName.Playlist, currentPlaylist);
   };

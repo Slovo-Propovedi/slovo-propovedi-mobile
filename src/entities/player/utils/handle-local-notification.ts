@@ -6,14 +6,13 @@ import { Platform } from 'react-native';
 export const registerForPushNotificationsAsync = async () => {
   let token;
 
-  if (Platform.OS === 'android') {
+  if (Platform.OS === 'android')
     await Notifications.setNotificationChannelAsync('new-emails', {
       importance: Notifications.AndroidImportance.MAX,
       lightColor: '#FF231F7C',
       name: 'default',
       vibrationPattern: [0, 250, 250, 250],
     });
-  }
 
   if (Device.isDevice) {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -45,9 +44,7 @@ export const registerForPushNotificationsAsync = async () => {
     //     expoPushToken: token,
     //   }),
     // });
-  } else {
-    console.log('Must use physical device for Push Notifications');
-  }
+  } else console.log('Must use physical device for Push Notifications');
 
   return token;
 };

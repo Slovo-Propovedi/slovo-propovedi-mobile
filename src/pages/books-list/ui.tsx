@@ -19,7 +19,7 @@ export const BooksListScreen: React.FC<ReadStackScreenProps<ReadStackParamName.B
 }) => {
   const { top } = useSafeAreaInsets();
 
-  const onPressListItem: OnPressTouchableListItem<BookData> = (data) => {
+  const onPressListItem: OnPressTouchableListItem<BookData> = data => {
     navigate(ReadStackParamName.BookReader, data);
   };
 

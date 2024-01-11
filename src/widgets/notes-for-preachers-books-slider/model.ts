@@ -7,11 +7,11 @@ interface NotesForPreachersBooksState {
   notesForPreachersBooks: BookData[];
 }
 
-export const useNotesForPreachersBooksStore = create<NotesForPreachersBooksState>((set) => ({
+export const useNotesForPreachersBooksStore = create<NotesForPreachersBooksState>(set => ({
   getNotesForPreachersBooks: async () => {
     const books = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.NotesForPreachers);
 
-    const mappedList = books?.map<BookData>((book) => {
+    const mappedList = books?.map<BookData>(book => {
       const { description, id, previewUrl, textFileUrl } = book;
 
       return {
@@ -23,7 +23,7 @@ export const useNotesForPreachersBooksStore = create<NotesForPreachersBooksState
       };
     });
 
-    set((state) => ({
+    set(state => ({
       ...state,
       notesForPreachersBooks: mappedList || [],
     }));
