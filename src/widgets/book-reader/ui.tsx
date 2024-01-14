@@ -11,10 +11,7 @@ export const BookReader = () => {
   if (!book) return null;
 
   const { elements } = book;
-  // const description = elements.find(
-  //   ({ name, type }) =>
-  //     type === XMLElementType.Element && name === DescriptionXMLElementName.Description,
-  // );
+
   const body = elements.find(
     ({ name, type }) => type === XMLElementType.Element && name === BodyXMLElementName.Body,
   );

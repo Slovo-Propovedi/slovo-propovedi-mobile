@@ -24,7 +24,7 @@ export const registerForPushNotificationsAsync = async () => {
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
+      console.error('Failed to get push token for push notification!');
       return;
     }
 
@@ -34,17 +34,19 @@ export const registerForPushNotificationsAsync = async () => {
 
     token = data;
 
-    // await fetch('https://example.com/', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     userId,
-    //     expoPushToken: token,
-    //   }),
-    // });
-  } else console.log('Must use physical device for Push Notifications');
+    /*
+     * await fetch('https://example.com/', {
+     *   method: 'POST',
+     *   headers: {
+     *     'Content-Type': 'application/json',
+     *   },
+     *   body: JSON.stringify({
+     *     userId,
+     *     expoPushToken: token,
+     *   }),
+     * });
+     */
+  } else console.error('Must use physical device for Push Notifications');
 
   return token;
 };

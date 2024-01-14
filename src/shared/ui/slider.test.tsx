@@ -8,6 +8,8 @@ const sliderStub = { items: [itemStub], title: 'title' };
 
 const mockData: { text: null | string } = { text: null };
 
+const sliderRowId = 'slider-row';
+
 describe('<Slider/>', () => {
   beforeEach(() => {
     mockData.text = null;
@@ -127,7 +129,7 @@ describe('<Slider/>', () => {
   test('length of rows elements is equal to itemsRows props', () => {
     const { update } = render(<Slider items={[itemStub, itemStub, itemStub, itemStub]} />);
 
-    let sliderRowElement = screen.getAllByTestId('slider-row');
+    let sliderRowElement = screen.getAllByTestId(sliderRowId);
 
     expect(sliderRowElement.length).toEqual(1);
 
@@ -135,7 +137,7 @@ describe('<Slider/>', () => {
 
     update(<Slider items={[itemStub, itemStub, itemStub, itemStub]} itemsRows={itemsRows} />);
 
-    sliderRowElement = screen.getAllByTestId('slider-row');
+    sliderRowElement = screen.getAllByTestId(sliderRowId);
 
     expect(sliderRowElement.length).toEqual(itemsRows);
 
@@ -143,7 +145,7 @@ describe('<Slider/>', () => {
 
     update(<Slider items={[itemStub, itemStub, itemStub, itemStub]} itemsRows={itemsRows} />);
 
-    sliderRowElement = screen.getAllByTestId('slider-row');
+    sliderRowElement = screen.getAllByTestId(sliderRowId);
 
     expect(sliderRowElement.length).toEqual(itemsRows);
   });

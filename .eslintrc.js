@@ -1,4 +1,3 @@
-/* eslint-disable */
 const process = require('process');
 
 module.exports = {
@@ -8,9 +7,10 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     '@feature-sliced',
     'plugin:perfectionist/recommended-natural',
+    'plugin:sonarjs/recommended',
   ],
   parser: '@typescript-eslint/parser',
-  plugins: ['jest', '@typescript-eslint', 'perfectionist'],
+  plugins: ['jest', '@typescript-eslint', 'perfectionist', 'sonarjs'],
   env: {
     jest: true,
   },
@@ -65,5 +65,6 @@ module.exports = {
         patterns: ['../../'],
       },
     ],
+    'sonarjs/cognitive-complexity': 'warn',
   },
 };

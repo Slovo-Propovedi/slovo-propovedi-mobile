@@ -7,6 +7,8 @@ const propsStub = {
   previewURL: 'https://traveltimes.ru/wp-content/uploads/2021/07/image-4-2048x1366.jpg',
 };
 
+const sliderItemDescriptionUnderSlideId = 'slider-item-description-under-slide';
+
 describe('<SliderItem/>', () => {
   test('return null if previewURL prop is undefined', () => {
     render(
@@ -63,9 +65,7 @@ describe('<SliderItem/>', () => {
 
     if (!tree || Array.isArray(tree)) return;
 
-    const sliderItemDescriptionUnderSlide = screen.getByTestId(
-      'slider-item-description-under-slide',
-    );
+    const sliderItemDescriptionUnderSlide = screen.getByTestId(sliderItemDescriptionUnderSlideId);
 
     expect(sliderItemDescriptionUnderSlide).not.toBeFalsy();
   });
@@ -81,9 +81,7 @@ describe('<SliderItem/>', () => {
 
     if (!tree || Array.isArray(tree)) return;
 
-    const sliderItemDescriptionUnderSlide = screen.getByTestId(
-      'slider-item-description-under-slide',
-    );
+    const sliderItemDescriptionUnderSlide = screen.getByTestId(sliderItemDescriptionUnderSlideId);
 
     expect(sliderItemDescriptionUnderSlide?.type).toEqual('View');
   });
@@ -101,9 +99,7 @@ describe('<SliderItem/>', () => {
     if (!tree || Array.isArray(tree)) return;
 
     const sliderItemDescriptionOnSlide = screen.queryByTestId('slider-item-description-on-slide');
-    const sliderItemDescriptionUnderSlide = screen.queryByTestId(
-      'slider-item-description-under-slide',
-    );
+    const sliderItemDescriptionUnderSlide = screen.queryByTestId(sliderItemDescriptionUnderSlideId);
 
     expect(sliderItemDescriptionOnSlide).not.toBeFalsy();
     expect(sliderItemDescriptionUnderSlide).toBeFalsy();
@@ -122,9 +118,7 @@ describe('<SliderItem/>', () => {
     if (!tree || Array.isArray(tree)) return;
 
     const sliderItemDescriptionOnSlide = screen.queryByTestId('slider-item-description-on-slide');
-    const sliderItemDescriptionUnderSlide = screen.queryByTestId(
-      'slider-item-description-under-slide',
-    );
+    const sliderItemDescriptionUnderSlide = screen.queryByTestId(sliderItemDescriptionUnderSlideId);
 
     expect(sliderItemDescriptionOnSlide).not.toBeFalsy();
     expect(sliderItemDescriptionUnderSlide).not.toBeFalsy();

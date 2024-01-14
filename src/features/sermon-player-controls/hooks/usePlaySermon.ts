@@ -21,13 +21,12 @@ export const usePlayNewSermon = () => {
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
 
-  const playNewSermon = async ({
-    playlist,
-    sermon: { audioUrl, id, ...other },
-  }: {
+  interface PlayNewSermonProps {
     playlist: PlaylistData;
     sermon: SermonData;
-  }) => {
+  }
+
+  return async ({ playlist, sermon: { audioUrl, id, ...other } }: PlayNewSermonProps) => {
     if (!audioUrl) return;
 
     const newAudio = { ...other, audioUrl, id, previewUrl: playlist.previewUrl };
@@ -50,6 +49,4 @@ export const usePlayNewSermon = () => {
       title: newAudio.title,
     });
   };
-
-  return playNewSermon;
 };

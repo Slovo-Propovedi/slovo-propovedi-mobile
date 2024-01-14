@@ -42,26 +42,27 @@ export const downloadFile = async ({ fileName, mimeType, url }: DownloadFileArgs
 
   if (!data) return;
 
-  if (data.status === 200)
-    if (Platform.OS === 'android') {
-      const permissions =
-        await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+  if (data.status === 200 && Platform.OS === 'android') {
+    const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
-      if (!permissions.granted) return;
+    if (!permissions.granted) return;
 
-      processRequest(
-        FileSystem.StorageAccessFramework.createFileAsync(
-          permissions.directoryUri,
-          fileName,
-          mimeType,
-        ),
-      );
-    }
+    processRequest(
+      FileSystem.StorageAccessFramework.createFileAsync(
+        permissions.directoryUri,
+        fileName,
+        mimeType,
+      ),
+    );
+  }
 
   const { uri } = data;
 
   Linking.openURL(uri);
 
+  // eslint-disable-next-line no-console
   console.log('Finished downloading to ', uri);
-  // share(uri);
+  /*
+   * share(uri);
+   */
 };

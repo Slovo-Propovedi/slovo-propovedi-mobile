@@ -61,7 +61,8 @@
       "Gruntfuggly.todo-tree",
       "BriteSnow.vscode-toggle-quotes",
       "pflannery.vscode-versionlens",
-      "unifiedjs.vscode-mdx"
+      "unifiedjs.vscode-mdx",
+      "SonarSource.sonarlint-vscode"
     ]
   }
 }

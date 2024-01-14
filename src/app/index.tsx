@@ -37,7 +37,7 @@ const App = () => {
         await Updates.reloadAsync();
       }
     } catch (error) {
-      console.log(`Error fetching latest Expo update: ${error}`);
+      console.error(`Error fetching latest Expo update: ${error}`);
     }
   };
 

@@ -7,6 +7,8 @@ const propsStub = {
   title: 'Hello',
 };
 
+const sliderItemDescriptionTitleId = 'slider-item-description-title';
+
 describe('<SliderItemDescription/>', () => {
   test('return null if title prop is undefined', () => {
     render(
@@ -58,14 +60,14 @@ describe('<SliderItemDescription/>', () => {
 
     if (!tree || Array.isArray(tree)) return;
 
-    const sliderItemDescription = screen.getByTestId('slider-item-description-title');
+    const sliderItemDescription = screen.getByTestId(sliderItemDescriptionTitleId);
 
     expect(sliderItemDescription).not.toBeFalsy();
   });
   test('title is Text in View', () => {
     const { root } = render(<SliderItemDescription title={propsStub.title} />);
 
-    const sliderItemDescriptionTitle = screen.getByTestId('slider-item-description-title');
+    const sliderItemDescriptionTitle = screen.getByTestId(sliderItemDescriptionTitleId);
 
     expect(root.children.length).toEqual(1);
 
@@ -76,7 +78,7 @@ describe('<SliderItemDescription/>', () => {
   test('text in title field equals to title prop', () => {
     render(<SliderItemDescription title={propsStub.title} />);
 
-    const sliderItemDescriptionTitle = screen.getByTestId('slider-item-description-title');
+    const sliderItemDescriptionTitle = screen.getByTestId(sliderItemDescriptionTitleId);
 
     expect(sliderItemDescriptionTitle).toHaveTextContent(propsStub.title);
   });
