@@ -1,1 +1,1 @@
-export * from './drawText';
+export * from './parseObjectToStylizedElements';

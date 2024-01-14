@@ -37,6 +37,7 @@ export interface XMLElementElement {
   text?: undefined;
   type: XMLElementType.Element;
 }
+
 export interface XMLElementText {
   elements?: undefined;
   name?: undefined;

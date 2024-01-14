@@ -28,9 +28,7 @@ describe('getBookLinkAsString', () => {
     //@ts-expect-error - { chapter: 1, verse: [1, 5] } is a not a valid object
     expect(getBookLinkAsString({ chapter: 1, verse: [1, 5] })).toEqual('');
 
-    //@ts-expect-error - stubBookLink is a not a valid object
     expect(() => getBookLinkAsString(stubBookLink)).not.toThrow();
-    //@ts-expect-error - stubBookLink is a not a valid object
     expect(getBookLinkAsString(stubBookLink)).toEqual(stubBookLink.title);
   });
 

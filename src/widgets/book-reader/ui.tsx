@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { BodyXMLElementName, XMLElementType, parseFb2BookToObject } from 'entities/book-reader';
 import { INDENTS } from 'shared';
-import { drawText } from './lib';
+import { parseObjectToStylizedElements } from './lib';
 import { testFb2String } from './testFiles/testFb2';
 
 export const BookReader = () => {
@@ -20,7 +20,7 @@ export const BookReader = () => {
     <View style={styles.container}>
       <ScrollView>
         {/* <Text>{JSON.stringify(description?.elements, null, 2)}</Text> */}
-        {body && drawText({ element: body })}
+        {body && parseObjectToStylizedElements({ element: body })}
       </ScrollView>
     </View>
   );

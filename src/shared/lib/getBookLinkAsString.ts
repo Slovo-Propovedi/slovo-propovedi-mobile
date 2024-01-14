@@ -8,8 +8,8 @@ type GetBookLinkAsStringProps = {
       verse?: [from: number, to: number] | number;
     }
   | {
-      chapter: undefined;
-      verse: undefined;
+      chapter?: undefined;
+      verse?: undefined;
     }
 );
 
