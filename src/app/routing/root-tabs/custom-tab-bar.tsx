@@ -5,11 +5,15 @@ import { View } from 'react-native';
 import { MiniPlayer } from 'widgets';
 import { RootTabName, useAppStore } from 'shared';
 
-export const CustomTabBar = (props: BottomTabBarProps) => {
-  const { /* descriptors, navigation, */ state } = props;
-
-  const currentTab = state.routes[state.index];
-
+export const CustomTabBar = ({
+  descriptors,
+  insets,
+  navigation,
+  state,
+  state: {
+    routes: { [state.index]: currentTab },
+  },
+}: BottomTabBarProps) => {
   const { isAudioPlayerMounted } = useAppStore(store => ({
     isAudioPlayerMounted: store.isAudioPlayerMounted,
   }));
@@ -17,8 +21,12 @@ export const CustomTabBar = (props: BottomTabBarProps) => {
   return (
     <View>
       {!(currentTab.name === RootTabName.Listen && isAudioPlayerMounted) && <MiniPlayer />}
-      <BottomTabBar {...props} />
-
+      <BottomTabBar
+        descriptors={descriptors}
+        insets={insets}
+        navigation={navigation}
+        state={state}
+      />
       {/* <View
         style={{
           flexDirection: 'row',

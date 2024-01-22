@@ -30,7 +30,7 @@
     }
   ],
   "settings": {
-    "cSpell.words": ["Душепопечение", "zustand"],
+    "cSpell.words": ["Душепопечение", "Ionicons", "playcircleo", "zustand"],
     "explorer.fileNesting.patterns": {
       "*.ts": "${capture}.js, ${basename}.*.${extname}",
       "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts, ${basename}.*.${extname}",
