@@ -7,8 +7,6 @@ import { INDENTS, ListenStackParamName, Slider, SliderItemSize } from 'shared';
 import { useNewSermonsStore } from './model';
 
 export const NewSermonsSlider = () => {
-  useNewSermonsStore;
-
   const playNewSermon = usePlayNewSermon();
 
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
@@ -21,11 +19,8 @@ export const NewSermonsSlider = () => {
   const onItemPress = async (playlist: PlaylistData) => {
     const sermons = playlist.list;
 
-    if (sermons.length && sermons.length < 2) {
-      await playNewSermon({ playlist, sermon: sermons[0] });
-
-      return;
-    }
+    if (sermons.length && sermons.length < 2)
+      return await playNewSermon({ playlist, sermon: sermons[0] });
 
     navigate(ListenStackParamName.Playlist, playlist);
   };

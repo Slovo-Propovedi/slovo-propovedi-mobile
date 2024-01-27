@@ -35,7 +35,7 @@ export const PlaylistListScreen: React.FC<
         {playlists.map((playlist, index) => (
           <TouchableListItem
             data={playlist}
-            key={`TouchableItem-${index}`}
+            key={playlist.title}
             onPress={onPressListItem}
             previewPlaceholderText={`${index + 1}`}
             size={ListItemSize.Middle}

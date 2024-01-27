@@ -33,7 +33,7 @@ export const BooksListScreen: React.FC<ReadStackScreenProps<ReadStackParamName.B
         {books.map((book, index) => (
           <TouchableListItem
             data={book}
-            key={`TouchableItem-${index}`}
+            key={book.id}
             onPress={onPressListItem}
             previewPlaceholderText={`${index + 1}`}
             size={ListItemSize.Middle}
