@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { XMLElementElement } from 'entities/book-reader';
 import { BodyXMLElementName, XMLElementType, parseFb2BookToObject } from 'entities/book-reader';
 import { INDENTS, type ReadStackParamName, type ReadStackScreenProps } from 'shared';
 import { parseObjectToStylizedElements } from './lib';
@@ -24,7 +25,7 @@ export const BookReaderScreen: React.FC<
       <View style={styles.content}>
         <ScrollView>
           {/* <Text>{JSON.stringify(description?.elements, null, 2)}</Text> */}
-          {body && parseObjectToStylizedElements({ element: body })}
+          {body && parseObjectToStylizedElements({ element: body as XMLElementElement })}
         </ScrollView>
       </View>
     </SafeAreaView>

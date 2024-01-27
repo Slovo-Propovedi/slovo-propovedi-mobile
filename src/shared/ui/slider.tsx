@@ -48,7 +48,7 @@ export const Slider = <D extends object>({
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderProps<D>) => {
-  if (!items || !items.length) return null;
+  if (!items?.length) return null;
 
   let rowIndex = 0;
   const itemsByRows = items.reduce<SliderItemsElement<D>[][]>((accumulator, currentItem) => {

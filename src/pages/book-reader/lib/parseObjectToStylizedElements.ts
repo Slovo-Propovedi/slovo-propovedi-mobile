@@ -1,45 +1,47 @@
 import type { StyleProp, TextStyle } from 'react-native';
-import { BodyXMLElementName, XMLElementType } from 'entities/book-reader';
-import type { XMLElement } from 'entities/book-reader';
+import { BodyXMLElementName } from 'entities/book-reader';
+import type { XMLElementElement, XMLElementText } from 'entities/book-reader';
 import { getBlockElement } from './getBlockElement';
+import { getElementKey } from './getElementKey';
 import { getParagraphElement } from './getParagraphElement';
-import { getTextElementsInInlineElement } from './getTextElementsInInlineElement';
+import { getTextElement } from './getTextElement';
 import { getTextElementStyles } from './getTextElementStyles';
 
 interface ParseObjectToStylizedElementsProps {
-  element: XMLElement;
+  element: XMLElementElement;
   expandedTextStyle?: StyleProp<TextStyle>;
   parentKey?: string;
 }
 
 export const parseObjectToStylizedElements = ({
-  element: {
-    elements,
-    // странно, но ts ругается, что name может быть undefined ниже условия "type === XMLElementType.Text"
-    name = BodyXMLElementName.P,
-    text = '',
-    type,
-  },
+  element: { elements, name },
   expandedTextStyle,
   parentKey = '',
 }: ParseObjectToStylizedElementsProps): React.ReactNode => {
-  if (type === XMLElementType.Text)
-    return typeof text === 'string' ? text.replace(/((\n)|(\s))+/g, ' ') : text;
-
   if (!elements?.length) return null;
 
   const { style, textStyle } = getTextElementStyles(name);
 
   const composedTextStyle: StyleProp<TextStyle> = [textStyle, expandedTextStyle];
 
+  if (name === BodyXMLElementName.Emphasis || name === BodyXMLElementName.Strong)
+    return elements.map((element, index) =>
+      getTextElement({
+        // не хочет воспринимать как текст без as
+        element: element as XMLElementText,
+        elementKey: getElementKey({
+          endWith: index,
+          name: '',
+          startWith: parentKey,
+        }),
+        style: composedTextStyle,
+      }),
+    );
+
   const elementGeneralProps = {
     elements,
     parentKey,
   };
-
-  if (name === BodyXMLElementName.Emphasis || name === BodyXMLElementName.Strong)
-    return getTextElementsInInlineElement({ style: composedTextStyle, ...elementGeneralProps });
-
   const blockElementGeneralProps = {
     childrenStyle: composedTextStyle,
     style,

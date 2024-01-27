@@ -31,12 +31,25 @@ export enum XMLElementType {
   Text = 'text',
 }
 
-export interface XMLElementElement {
-  elements: XMLElement[];
-  name: XMLElementName;
-  text?: undefined;
-  type: XMLElementType.Element;
-}
+export type XMLElementElement =
+  | {
+      elements: XMLElementElement[];
+      name:
+        | BodyXMLElementName.Body
+        | BodyXMLElementName.P
+        | BodyXMLElementName.Section
+        | BodyXMLElementName.Subtitle
+        | BodyXMLElementName.Title
+        | DescriptionXMLElementName;
+      text?: undefined;
+      type: XMLElementType.Element;
+    }
+  | {
+      elements: XMLElementText[];
+      name: BodyXMLElementName.Emphasis | BodyXMLElementName.Strong;
+      text?: undefined;
+      type: XMLElementType.Element;
+    };
 
 export interface XMLElementText {
   elements?: undefined;
