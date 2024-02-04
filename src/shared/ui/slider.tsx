@@ -16,6 +16,8 @@ type SliderItemsElement<D extends object> = {
   previewURL: string;
 };
 
+type FontSizes = typeof FONT_SIZES;
+
 interface SliderProps<D extends object> {
   descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle;
   descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign;
@@ -28,7 +30,7 @@ interface SliderProps<D extends object> {
   onPressTitle?: (event: GestureResponderEvent) => void;
   style?: StyleProp<ViewStyle>;
   title?: string;
-  titleFontSize?: typeof FONT_SIZES;
+  titleFontSize?: FontSizes[keyof FontSizes];
   transform?: SliderItemTransform;
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated;
 }
@@ -45,6 +47,7 @@ export const Slider = <D extends object>({
   onPressTitle,
   style,
   title,
+  titleFontSize = FONT_SIZES.h2,
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderProps<D>) => {
@@ -52,22 +55,15 @@ export const Slider = <D extends object>({
 
   let rowIndex = 0;
   const itemsByRows = items.reduce<SliderItemsElement<D>[][]>((accumulator, currentItem) => {
+    if (!accumulator[rowIndex]) accumulator[rowIndex] = [];
+
+    accumulator[rowIndex].push(currentItem);
+
     rowIndex++;
-
-    if (rowIndex == itemsRows) rowIndex = 0;
-
-    if (accumulator[rowIndex]) {
-      accumulator[rowIndex].push(currentItem);
-
-      return accumulator;
-    }
-
-    accumulator[rowIndex] = [currentItem];
+    if (rowIndex >= itemsRows) rowIndex = 0;
 
     return accumulator;
   }, []);
-
-  const titleFontSize = FONT_SIZES.h2;
 
   const marginBottom = {
     [SliderItemSize.Large]: titleFontSize * 2,
@@ -91,8 +87,8 @@ export const Slider = <D extends object>({
         horizontal
         showsHorizontalScrollIndicator={false}
       >
-        {itemsByRows.map((row, index) => (
-          <View key={`row-${index}`} style={styles.row} testID='slider-row'>
+        {itemsByRows.map((row, i) => (
+          <View key={`row-${i}`} style={styles.row} testID='slider-row'>
             {row.map(({ data, description, previewURL }, index) => (
               <SliderItem
                 descriptionBackgroundStyle={descriptionBackgroundStyle}
