@@ -1,1 +1,1 @@
-yarn check-types && yarn lint:fix && yarn prettier:write
+yarn check-types && yarn lint:fix && yarn prettier:write && git add .

@@ -1,0 +1,7 @@
+{
+  "*.js": ["npm run prettier:write", "npx eslint --fix"],
+  "*.jsx": ["npm run prettier:write", "npx eslint --fix"],
+  "*.ts": ["npm run prettier:write", "npx eslint --fix", "tsc -p tsconfig.json"],
+  "*.tsx": ["npm run prettier:write", "npx eslint --fix", "tsc -p tsconfig.json"],
+  "*.json": ["npm run prettier:write"]
+}
