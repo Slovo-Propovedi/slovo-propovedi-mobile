@@ -29,13 +29,5 @@ We've set up a pre-commit hook to automatically check our code for type errors u
 
 #### Installation
 
-To set up the pre-commit hook you'll need to:
-
-- Open up a terminal and navigate to the root directory of the project
-
-- Run the following command to make the setup script executable:
-  `chmod +x install.sh`
-
-- Run the setup script to create the pre-commit hook and perform other setup tasks
-  `./install.sh`
+run command `npm run prepare`
   
