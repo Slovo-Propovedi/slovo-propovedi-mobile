@@ -11,7 +11,7 @@ import type { ListenStackParamName, ListenStackScreenProps } from 'shared/routin
 export const ListenScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.ListenHome>
 > = () => (
-  <SafeAreaView style={styles.container}>
+  <SafeAreaView style={styles.listen}>
     <StatusBar translucent barStyle='dark-content' backgroundColor='transparent' />
 
     <ScrollView style={styles.content}>
@@ -24,11 +24,12 @@ export const ListenScreen: React.FC<
 )
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    // backgroundColor: COLORS.primary,
-  },
   content: {
+    backgroundColor: COLORS.white,
+    flex: 1,
+    paddingBottom: 100,
+  },
+  listen: {
     backgroundColor: COLORS.white,
     flex: 1,
   },

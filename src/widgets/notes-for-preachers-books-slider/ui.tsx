@@ -13,14 +13,14 @@ import {
 } from 'shared/ui'
 import type { ReadStackNavProp } from 'shared/routing'
 import type { BookData } from 'shared/types'
-import { getNotesForPreachersBooksSlider, NotesForPreachersBooksSliderAtom } from './model'
+import { getNotesForPreachersBooksSlider, notesForPreachersBooksSliderAtom } from './model'
 
 export const NotesForPreachersBooksSlider = () => {
   const title = 'Конспекты для проповедников'
 
   const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>()
 
-  const notesForPreachersBooks = useAtom(NotesForPreachersBooksSliderAtom)[0]
+  const notesForPreachersBooks = useAtom(notesForPreachersBooksSliderAtom)[0]
   const fetchNotesForPreachersBooks = useAction(getNotesForPreachersBooksSlider)
 
   const onItemPress = async (bookList: BookData) => {

@@ -3,13 +3,17 @@ import { API } from 'shared/api'
 import { FetchedBooksGroupName } from 'shared/types'
 import type { BookData } from 'shared/types'
 
-export const TopicalAndThematicBooksSliderAtom = atom<BookData[]>(
+export const topicalAndThematicBooksSliderAtomt = atom<BookData[]>(
   [],
   'topical-and-thematic-books-sliderAtom',
 )
 
-export const getTopicalAndThematicBooksSlider = action(async () => {
+export const getTopicalAndThematicBooksSlider = action(async ctx => {
   const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.TopicalAndThematic)
 
-  return list || []
+  const result = list || []
+
+  await ctx.schedule(() => {
+    topicalAndThematicBooksSliderAtomt(ctx, result)
+  })
 }, 'getTopicalAndThematicBooksSlider')

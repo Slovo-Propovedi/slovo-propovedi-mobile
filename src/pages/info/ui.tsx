@@ -6,12 +6,8 @@ import type { RootTabName, RootTabsScreenProps } from 'shared/routing'
 
 export const Info: React.FC<RootTabsScreenProps<RootTabName.Info>> = () => (
   <SafeAreaView style={styles.info}>
-    <View style={{ backgroundColor: COLORS.disabled, flex: 1 }} />
+    <View style={{ backgroundColor: COLORS.disabled, flex: 1, paddingBottom: 100 }} />
   </SafeAreaView>
 )
 
-const styles = StyleSheet.create({
-  info: {
-    flex: 1,
-  },
-})
+const styles = StyleSheet.create({ info: { backgroundColor: COLORS.white, flex: 1 } })

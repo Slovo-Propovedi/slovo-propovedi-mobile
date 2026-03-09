@@ -5,8 +5,12 @@ import type { BookData } from 'shared/types'
 
 export const VerseByVerseBooksSliderAtom = atom<BookData[]>([], 'verse-by-verse-books-sliderAtom')
 
-export const getVerseByVerseBooksSlider = action(async () => {
+export const getVerseByVerseBooksSlider = action(async ctx => {
   const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.VerseByVerse)
 
-  return list || []
+  const result = list || []
+
+  await ctx.schedule(() => {
+    VerseByVerseBooksSliderAtom(ctx, result)
+  })
 }, 'getVerseByVerseBooksSlider')

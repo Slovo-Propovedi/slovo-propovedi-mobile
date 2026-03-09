@@ -1,5 +1,6 @@
 import { Audio } from 'expo-av'
 import * as FileSystem from 'expo-file-system/legacy'
+import { Platform } from 'react-native'
 
 interface DownloadAndCacheAudioProps {
   fileUri: string
@@ -23,6 +24,17 @@ export const loadCachedSoundData = async ({
   initialPosition: number
   remoteUri: string
 }) => {
+  if (Platform.OS === 'web') {
+    const audio = new Audio.Sound()
+    const status = await audio.loadAsync(
+      { uri: remoteUri },
+      { positionMillis: initialPosition, progressUpdateIntervalMillis: 1000 },
+      false,
+    )
+
+    return { audio, status }
+  }
+
   const fileName = remoteUri.split('/').at(-1)
 
   if (!fileName) return

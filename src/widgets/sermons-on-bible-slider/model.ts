@@ -3,11 +3,10 @@ import { API } from 'shared/api'
 import { getBookLinkAsString } from 'shared/lib'
 import { FetchedSermonsGroupName, type PlaylistData, type SermonData } from 'shared/types'
 
-export const SermonsOnBibleSliderAtom = atom<PlaylistData[]>([], 'sermons-on-bible-sliderAtom')
+export const sermonsOnBibleSliderAtom = atom<PlaylistData[]>([], 'sermons-on-bible-sliderAtom')
 
-export const getSermonsOnBibleSlider = action(async () => {
+export const getSermonsOnBibleSlider = action(async ctx => {
   const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible)
-
   const mappedList = list?.map<PlaylistData>(playlist => ({
     ...playlist,
     list: playlist.list.map<SermonData>(el => {
@@ -24,5 +23,9 @@ export const getSermonsOnBibleSlider = action(async () => {
     }),
   }))
 
-  return mappedList || []
+  const result = mappedList || []
+
+  await ctx.schedule(() => {
+    sermonsOnBibleSliderAtom(ctx, result)
+  })
 }, 'getSermonsOnBibleSlider')

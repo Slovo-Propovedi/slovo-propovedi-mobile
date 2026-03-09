@@ -7,12 +7,12 @@ import { INDENTS, RADIUSES } from 'shared/themed'
 import { Slider, SliderItemSize } from 'shared/ui'
 import type { ListenStackNavProp } from 'shared/routing'
 import type { PlaylistData } from 'shared/types'
-import { getSermonsOnBibleSlider, SermonsOnBibleSliderAtom } from './model'
+import { getSermonsOnBibleSlider, sermonsOnBibleSliderAtom } from './model'
 
 export const SermonsOnBibleSlider = () => {
   const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
 
-  const onBibleBooksList = useAtom(SermonsOnBibleSliderAtom)[0]
+  const onBibleBooksList = useAtom(sermonsOnBibleSliderAtom)[0]
   const fetchOnBibleBooksList = useAction(getSermonsOnBibleSlider)
 
   const onItemPress = (params: PlaylistData) => {

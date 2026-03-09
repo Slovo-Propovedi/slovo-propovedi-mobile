@@ -5,8 +5,8 @@ import { FetchedSermonsGroupName, type PlaylistData, type SermonData } from 'sha
 
 export const TopicalListSliderAtom = atom<PlaylistData[]>([], 'topical-list-sliderAtom')
 
-export const getTopicalListSlider = action(async () => {
-  const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible)
+export const getTopicalListSlider = action(async ctx => {
+  const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.Topical)
 
   const mappedList = list?.map<PlaylistData>(playlist => ({
     ...playlist,
@@ -24,5 +24,9 @@ export const getTopicalListSlider = action(async () => {
     }),
   }))
 
-  return mappedList || []
+  const result = mappedList || []
+
+  await ctx.schedule(() => {
+    TopicalListSliderAtom(ctx, result)
+  })
 }, 'getTopicalListSlider')

@@ -33,7 +33,7 @@ export const NewSermonsSlider = () => {
 
   useEffect(() => {
     void fetchNewSermons()
-  }, [])
+  }, [fetchNewSermons])
 
   return (
     <Slider

@@ -19,11 +19,6 @@ export const ReadScreen: React.FC<ReadStackScreenProps<ReadStackParamName.Home>>
 )
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    backgroundColor: COLORS.white,
-    flex: 1,
-  },
+  container: { backgroundColor: COLORS.white, flex: 1 },
+  content: { backgroundColor: COLORS.white, flex: 1, paddingBottom: 100 },
 })

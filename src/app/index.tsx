@@ -3,6 +3,7 @@ import { createCtx } from '@reatom/framework'
 import { reatomContext, useAction } from '@reatom/npm-react'
 import * as Notifications from 'expo-notifications'
 import React, { useEffect } from 'react'
+import { Platform } from 'react-native'
 import {
   setCurrentAudio as setCurrentAudioAction,
   setCurrentPlaylist as setCurrentPlaylistAction,
@@ -16,6 +17,18 @@ import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION } from 'shared/
 import { parseJSONToObject } from 'shared/lib'
 import type { PlaylistData } from 'shared/types'
 import { RootTabs } from './routing'
+
+if (Platform.OS === 'web') {
+  const style = document.createElement('style')
+  style.textContent = `
+    html, body, #root {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  `
+  document.head?.appendChild(style)
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

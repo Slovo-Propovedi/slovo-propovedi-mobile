@@ -6,8 +6,8 @@ import type { PlaylistData, SermonData } from 'shared/types'
 
 export const newSermonsAtom = atom<PlaylistData[]>([], 'newSermonsAtom')
 
-export const getNewSermons = action(async () => {
-  const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible)
+export const getNewSermons = action(async ctx => {
+  const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.New)
 
   const mappedList = list?.map<PlaylistData>(playlist => ({
     ...playlist,
@@ -25,5 +25,8 @@ export const getNewSermons = action(async () => {
     }),
   }))
 
-  return mappedList || []
+  const result = mappedList || []
+  await ctx.schedule(() => {
+    newSermonsAtom(ctx, result)
+  })
 }, 'getNewSermons')

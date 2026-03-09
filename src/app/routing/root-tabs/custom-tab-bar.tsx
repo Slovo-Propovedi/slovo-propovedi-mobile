@@ -1,4 +1,4 @@
-import { BottomTabBar, type BottomTabBarProps } from '@react-navigation/bottom-tabs'
+import { type BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { useAtom } from '@reatom/npm-react'
 import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
@@ -8,7 +8,6 @@ import { RootTabName } from 'shared/routing'
 
 export const CustomTabBar = ({
   descriptors,
-  insets,
   navigation,
   state,
   state: {
@@ -18,14 +17,8 @@ export const CustomTabBar = ({
   const [isAudioPlayerMounted] = useAtom(isAudioPlayerMountedAtom)
 
   return (
-    <View>
+    <View style={{ bottom: 0, left: 0, position: 'absolute', right: 0 }}>
       {!(currentTab.name === RootTabName.Listen && isAudioPlayerMounted) && <MiniPlayer />}
-      <BottomTabBar
-        state={state}
-        insets={insets}
-        navigation={navigation}
-        descriptors={descriptors}
-      />
       <View
         style={{
           borderTopWidth: 1,
