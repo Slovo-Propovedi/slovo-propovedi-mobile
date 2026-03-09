@@ -1,12 +1,20 @@
-import { type BottomTabBarProps } from '@react-navigation/bottom-tabs'
+import {
+  type BottomTabBarProps,
+  type BottomTabNavigationEventMap,
+} from '@react-navigation/bottom-tabs'
+import { type NavigationHelpers } from '@react-navigation/native'
 import { useAtom } from '@reatom/npm-react'
 import { BlurView } from 'expo-blur'
-import React, { useEffect, useRef, useState } from 'react'
-import { Animated, Text, TouchableOpacity, View } from 'react-native'
+import React from 'react'
+import { View } from 'react-native'
 import { AnimatedPlayer } from 'widgets/animated-player'
 import { isAudioPlayerMountedAtom } from 'shared/model'
-import { RootTabName } from 'shared/routing'
+import { RootTabName, type RootTabsParamList } from 'shared/routing'
 import { styles } from './custom-tab-bar.styles'
+import { useTabIndicator } from './model/useTabIndicator'
+import { useTabNavigation } from './model/useTabNavigation'
+import { TabButton } from './ui/TabButton'
+import { TabIndicator } from './ui/TabIndicator'
 
 export const CustomTabBar = ({
   descriptors,
@@ -17,89 +25,41 @@ export const CustomTabBar = ({
   },
 }: BottomTabBarProps) => {
   const [isAudioPlayerMounted] = useAtom(isAudioPlayerMountedAtom)
-
   const showMiniPlayer = !(currentTab.name === RootTabName.Listen && isAudioPlayerMounted)
 
-  const [tabLayouts, setTabLayouts] = useState<{ [key: string]: { width: number; x: number } }>({})
-  const indicatorPosition = useRef(new Animated.Value(0)).current
-  const indicatorWidth = useRef(new Animated.Value(0)).current
-  const indicatorOpacity = useRef(new Animated.Value(0)).current
+  const handleTabPress = useTabNavigation({
+    navigation: navigation as NavigationHelpers<RootTabsParamList, BottomTabNavigationEventMap>,
+  })
 
-  useEffect(() => {
-    const currentKey = state.routes[state.index].key
-    const layout = tabLayouts[currentKey]
-
-    if (layout) {
-      Animated.parallel([
-        Animated.spring(indicatorPosition, {
-          friction: 30,
-          tension: 300,
-          toValue: layout.x,
-          useNativeDriver: false,
-        }),
-        Animated.spring(indicatorWidth, {
-          friction: 30,
-          tension: 300,
-          toValue: layout.width,
-          useNativeDriver: false,
-        }),
-      ]).start()
-
-      Animated.timing(indicatorOpacity, {
-        duration: 150,
-        toValue: 1,
-        useNativeDriver: false,
-      }).start()
-    }
-  }, [state.index, tabLayouts, indicatorPosition, indicatorWidth, indicatorOpacity, state.routes])
+  const { indicatorOpacity, indicatorPosition, indicatorWidth, setTabLayout } = useTabIndicator({
+    currentIndex: state.index,
+    routes: state.routes,
+  })
 
   return (
     <>
       <View style={styles.floatingContainer}>
         <BlurView tint='light' intensity={40} style={styles.floatingIsland}>
           <View style={styles.tabBar}>
-            <Animated.View
-              style={[
-                styles.indicator,
-                {
-                  opacity: indicatorOpacity,
-                  transform: [{ translateX: indicatorPosition }],
-                  width: indicatorWidth,
-                },
-              ]}
+            <TabIndicator
+              width={indicatorWidth}
+              opacity={indicatorOpacity}
+              position={indicatorPosition}
             />
             {state.routes.map(({ key, name, params }) => {
+              const typedName = name as RootTabName
               const { options } = descriptors[key]
-              const { tabBarActiveTintColor, tabBarIcon, tabBarInactiveTintColor } = options
-
               const isActive = key === currentTab.key
 
-              const color = (isActive ? tabBarActiveTintColor : tabBarInactiveTintColor) || 'gray'
-
               return (
-                <TouchableOpacity
+                <TabButton
                   key={key}
-                  style={styles.tabButton}
-                  onPress={() => navigation.navigate(name, params)}
-                  onLayout={e => {
-                    setTabLayouts(prev => ({
-                      ...prev,
-                      [key]: {
-                        width: e.nativeEvent.layout.width,
-                        x: e.nativeEvent.layout.x,
-                      },
-                    }))
-                  }}
-                >
-                  <View style={styles.tabItem}>
-                    {tabBarIcon?.({
-                      color: color,
-                      focused: isActive,
-                      size: 22,
-                    })}
-                    {isActive && <Text style={[styles.tabText, { color: color }]}>{name}</Text>}
-                  </View>
-                </TouchableOpacity>
+                  name={typedName}
+                  options={options}
+                  isActive={isActive}
+                  onPress={() => handleTabPress(typedName, params, isActive)}
+                  onLayout={(layout: { width: number; x: number }) => setTabLayout(key, layout)}
+                />
               )
             })}
           </View>
