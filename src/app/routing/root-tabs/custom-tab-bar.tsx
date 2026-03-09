@@ -21,11 +21,11 @@ export const CustomTabBar = ({
       {!(currentTab.name === RootTabName.Listen && isAudioPlayerMounted) && <MiniPlayer />}
       <View
         style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
           borderTopWidth: 1,
           flexDirection: 'row',
           justifyContent: 'space-between',
           padding: 10,
-          shadowColor: 'transparent',
         }}
       >
         {state.routes.map(({ key, name, params }) => {

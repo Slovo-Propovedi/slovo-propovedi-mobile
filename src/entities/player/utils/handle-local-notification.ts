@@ -67,6 +67,8 @@ export const schedulePushNotification = async <D extends Record<string, unknown>
   subtitle?: null | string
   title: string
 }) => {
+  if (Platform.OS === 'web') return
+
   await Notifications.scheduleNotificationAsync({
     content: {
       body,
@@ -82,6 +84,8 @@ export const schedulePushNotification = async <D extends Record<string, unknown>
 }
 
 export const cancelScheduledNotificationAsync = async () => {
+  if (Platform.OS === 'web') return
+
   await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_ID)
   await Notifications.cancelAllScheduledNotificationsAsync()
 }

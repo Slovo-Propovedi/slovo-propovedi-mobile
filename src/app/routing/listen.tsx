@@ -1,4 +1,5 @@
 import { AntDesign } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import React from 'react'
 import { TouchableOpacity } from 'react-native'
@@ -16,16 +17,24 @@ import { COLORS } from 'shared/themed'
 
 const ListenStack = createNativeStackNavigator<ListenStackParamList>()
 
-export const ListenRouting: React.FC<RootTabsScreenProps<RootTabName.Listen>> = ({
-  navigation: { goBack },
-}) => (
+const HeaderBackButton = ({ canGoBack, tintColor }: { canGoBack: boolean; tintColor: string }) => {
+  const navigation = useNavigation()
+
+  if (!canGoBack) return null
+
+  return (
+    <TouchableOpacity onPress={() => navigation.goBack()}>
+      <AntDesign size={24} color={tintColor} name='left-circle' />
+    </TouchableOpacity>
+  )
+}
+
+export const ListenRouting: React.FC<RootTabsScreenProps<RootTabName.Listen>> = () => (
   <ListenStack.Navigator
     initialRouteName={ListenStackParamName.ListenHome}
     screenOptions={{
       headerLeft: ({ canGoBack, tintColor }) => (
-        <TouchableOpacity onPress={() => canGoBack && goBack()}>
-          <AntDesign size={24} color={tintColor} name='left-circle' />
-        </TouchableOpacity>
+        <HeaderBackButton canGoBack={canGoBack ?? false} tintColor={tintColor ?? COLORS.primary} />
       ),
       headerTintColor: COLORS.primary,
       headerTitle: '',

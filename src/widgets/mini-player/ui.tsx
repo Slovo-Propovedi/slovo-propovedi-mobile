@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
     ...titleGeneralStyle,
   },
   container: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     flexDirection: 'row',
     padding: INDENTS.middle,
   },
