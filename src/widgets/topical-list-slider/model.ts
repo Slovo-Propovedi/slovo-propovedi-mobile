@@ -29,4 +29,6 @@ export const getTopicalListSlider = action(async ctx => {
   await ctx.schedule(() => {
     TopicalListSliderAtom(ctx, result)
   })
+
+  return result
 }, 'getTopicalListSlider')

@@ -33,9 +33,9 @@ export const AudioPlayerScreen: React.FC<
   }
 
   useEffect(() => {
-    setIsAudioPlayerMounted(true)
+    void setIsAudioPlayerMounted(true)
     return () => {
-      setIsAudioPlayerMounted(false)
+      void setIsAudioPlayerMounted(false)
     }
   }, [])
 

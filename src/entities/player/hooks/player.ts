@@ -58,7 +58,7 @@ export const usePlayer = () => {
     await setAudioMode()
 
     const position = initialPosition || 0
-    setIsCurrentSoundBuffering(true)
+    void setIsCurrentSoundBuffering(true)
 
     const data = await loadCachedSoundData({
       initialPosition: position,
@@ -71,7 +71,7 @@ export const usePlayer = () => {
 
     if (status.isLoaded) {
       await setCurrentSoundDuration(status.durationMillis || 0)
-      setIsCurrentSoundBuffering(false)
+      void setIsCurrentSoundBuffering(false)
     }
 
     let prevIsPlaying: boolean | undefined
@@ -82,7 +82,7 @@ export const usePlayer = () => {
       const { isPlaying, positionMillis } = playbackStatus
 
       if (prevIsPlaying !== isPlaying) {
-        setIsPlayingCurrentAudio(isPlaying)
+        void setIsPlayingCurrentAudio(isPlaying)
         prevIsPlaying = isPlaying
       }
 
@@ -90,7 +90,7 @@ export const usePlayer = () => {
         void setCurrentSoundPosition(positionMillis)
     })
 
-    setCurrentSound(audio)
+    void setCurrentSound(audio)
 
     return audio
   }

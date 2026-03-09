@@ -69,7 +69,7 @@ export const PlayerControls = ({
     const newAudio = { ...otherProps, audioUrl, previewUrl: currentPlaylist.previewUrl }
     await setCurrentAudio(newAudio)
     const newSound = await recreateSound(newAudio.audioUrl)
-    if (newSound) setCurrentSound(newSound)
+    if (newSound) void setCurrentSound(newSound)
     await schedulePushNotification({
       body: newAudio.description || '',
       subtitle: currentPlaylist.title || 'Проповедует Андрей Вовк',

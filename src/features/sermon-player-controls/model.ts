@@ -7,11 +7,18 @@ import type { PlaylistData } from 'shared/types'
 export const currentAudioAtom = atom<AudioPlayerData | null>(null, 'currentAudioAtom')
 export const currentPlaylistAtom = atom<null | PlaylistData>(null, 'currentPlaylistAtom')
 
-export const setCurrentAudio = action(async (_ctx, audio: AudioPlayerData) => {
+export const setCurrentAudio = action(async (ctx, audio: AudioPlayerData) => {
   await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(audio))
+  await ctx.schedule(() => {
+    currentAudioAtom(ctx, audio)
+  })
   return audio
 }, 'setCurrentAudio')
-export const setCurrentPlaylist = action(async (_ctx, playlist: PlaylistData) => {
+
+export const setCurrentPlaylist = action(async (ctx, playlist: PlaylistData) => {
   await AsyncStorage.setItem(CURRENT_PLAYLIST, JSON.stringify(playlist))
+  await ctx.schedule(() => {
+    currentPlaylistAtom(ctx, playlist)
+  })
   return playlist
 }, 'setCurrentPlaylist')

@@ -43,7 +43,7 @@ export const usePlayNewSermon = () => {
 
     if (currentAudio?.id !== id) newSound = await recreateSound(newAudio.audioUrl)
 
-    if (newSound) setCurrentSound(newSound)
+    if (newSound) void setCurrentSound(newSound)
 
     await play(newSound)
     await schedulePushNotification({
