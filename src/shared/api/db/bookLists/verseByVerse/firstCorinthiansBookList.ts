@@ -1,4 +1,4 @@
-import type { FetchedBookData } from 'shared/types';
+import type { FetchedBookData } from 'shared/types'
 
 export const firstCorinthiansBookList: FetchedBookData[] = [
   {
@@ -6,4 +6,4 @@ export const firstCorinthiansBookList: FetchedBookData[] = [
     previewUrl: 'https://slovo-istini.com/image/categories/65/1_korin_(1).jpg',
     title: 'Первое послание к коринфянам',
   },
-];
+]

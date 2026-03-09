@@ -1,4 +1,4 @@
-import type { FetchedBookData } from 'shared/types';
+import type { FetchedBookData } from 'shared/types'
 
 export const johnBookList: FetchedBookData[] = [
   {
@@ -6,4 +6,4 @@ export const johnBookList: FetchedBookData[] = [
     previewUrl: 'https://slovo-istini.com/image/categories/21/ioanna_(1).jpg',
     title: 'Евангелие от Иоанна',
   },
-];
+]

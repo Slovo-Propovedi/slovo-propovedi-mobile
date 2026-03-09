@@ -1,2 +1,2 @@
-export * from './onBibleBook';
-export * from './topical';
+export * from './onBibleBook'
+export * from './topical'

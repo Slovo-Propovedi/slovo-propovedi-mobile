@@ -1,15 +1,20 @@
-import { AntDesign } from '@expo/vector-icons';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
-import { TouchableOpacity } from 'react-native';
-import { AudioPlayerScreen } from 'pages/audio-player';
-import { ListenScreen } from 'pages/listen';
-import { PlaylistScreen } from 'pages/playlist';
-import { PlaylistListScreen } from 'pages/playlist-list';
-import type { ListenStackParamList, RootTabName, RootTabsScreenProps } from 'shared';
-import { COLORS, ListenStackParamName } from 'shared';
+import { AntDesign } from '@expo/vector-icons'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react'
+import { TouchableOpacity } from 'react-native'
+import { AudioPlayerScreen } from 'pages/audio-player'
+import { ListenScreen } from 'pages/listen'
+import { PlaylistScreen } from 'pages/playlist'
+import { PlaylistListScreen } from 'pages/playlist-list'
+import {
+  type ListenStackParamList,
+  ListenStackParamName,
+  type RootTabName,
+  type RootTabsScreenProps,
+} from 'shared/routing'
+import { COLORS } from 'shared/themed'
 
-const ListenStack = createNativeStackNavigator<ListenStackParamList>();
+const ListenStack = createNativeStackNavigator<ListenStackParamList>()
 
 export const ListenRouting: React.FC<RootTabsScreenProps<RootTabName.Listen>> = ({
   navigation: { goBack },
@@ -19,7 +24,7 @@ export const ListenRouting: React.FC<RootTabsScreenProps<RootTabName.Listen>> = 
     screenOptions={{
       headerLeft: ({ canGoBack, tintColor }) => (
         <TouchableOpacity onPress={() => canGoBack && goBack()}>
-          <AntDesign color={tintColor} name='leftcircle' size={24} />
+          <AntDesign size={24} color={tintColor} name='left-circle' />
         </TouchableOpacity>
       ),
       headerTintColor: COLORS.primary,
@@ -38,4 +43,4 @@ export const ListenRouting: React.FC<RootTabsScreenProps<RootTabName.Listen>> = 
     <ListenStack.Screen component={PlaylistScreen} name={ListenStackParamName.Playlist} />
     <ListenStack.Screen component={AudioPlayerScreen} name={ListenStackParamName.AudioPlayer} />
   </ListenStack.Navigator>
-);
+)

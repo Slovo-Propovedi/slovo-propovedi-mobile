@@ -1,34 +1,15 @@
-import { create } from 'zustand';
-import type { BookData } from 'shared';
-import { API, FetchedBooksGroupName, getBookLinkAsString } from 'shared';
+import { action, atom } from '@reatom/framework'
+import { API } from 'shared/api'
+import { FetchedBooksGroupName } from 'shared/types'
+import type { BookData } from 'shared/types'
 
-interface TopicalAndThematicBooksState {
-  getTopicalAndThematicBooks: () => Promise<BookData[]>;
-  topicalAndThematicBooks: BookData[];
-}
+export const TopicalAndThematicBooksSliderAtom = atom<BookData[]>(
+  [],
+  'topical-and-thematic-books-sliderAtom',
+)
 
-export const useTopicalAndThematicBooksStore = create<TopicalAndThematicBooksState>(set => ({
-  getTopicalAndThematicBooks: async () => {
-    const books = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.TopicalAndThematic);
+export const getTopicalAndThematicBooksSlider = action(async () => {
+  const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.TopicalAndThematic)
 
-    const mappedList = books?.map<BookData>(book => {
-      const { description, id, previewUrl, textFileUrl } = book;
-
-      return {
-        description,
-        id,
-        previewUrl,
-        textFileUrl,
-        title: getBookLinkAsString(book),
-      };
-    });
-
-    set(state => ({
-      ...state,
-      topicalAndThematicBooks: mappedList || [],
-    }));
-
-    return mappedList || [];
-  },
-  topicalAndThematicBooks: [],
-}));
+  return list || []
+}, 'getTopicalAndThematicBooksSlider')

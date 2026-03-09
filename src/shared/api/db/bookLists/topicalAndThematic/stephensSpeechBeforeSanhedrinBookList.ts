@@ -1,4 +1,4 @@
-import type { FetchedBookData } from 'shared/types';
+import type { FetchedBookData } from 'shared/types'
 
 export const stephensSpeechBeforeSanhedrinBookList: FetchedBookData[] = [
   {
@@ -17,4 +17,4 @@ export const stephensSpeechBeforeSanhedrinBookList: FetchedBookData[] = [
     title: 'Малоизвестный признак посланника Бога. Деяния',
     verse: [9, 16],
   },
-];
+]

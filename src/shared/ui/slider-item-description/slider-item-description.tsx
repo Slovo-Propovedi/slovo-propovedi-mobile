@@ -1,26 +1,22 @@
-import React from 'react';
-import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
-import { StyleSheet, Text, View } from 'react-native';
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed';
-
-export type SliderItemDescriptionTextAlign = 'auto' | 'center' | 'justify' | 'left' | 'right';
-
-export enum SliderItemDescriptionBackgroundStyle {
-  Dark = 'dark',
-  DarkBlur = 'darkBlur',
-  Transparent = 'transparent',
-}
+import React from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native'
+import {
+  SliderItemDescriptionBackgroundStyle,
+  type SliderItemDescriptionTextAlign,
+} from './slider-item-description.types'
 
 interface SliderItemDescriptionProps {
-  backgroundStyle?: SliderItemDescriptionBackgroundStyle;
-  isTitleLarge?: boolean;
-  style?: StyleProp<ViewStyle>;
-  subTitle?: string;
-  subTitleTextAlign?: SliderItemDescriptionTextAlign;
-  testID?: string;
-  title: string;
-  titleStyle?: StyleProp<TextStyle>;
-  titleTextAlign?: SliderItemDescriptionTextAlign;
+  backgroundStyle?: SliderItemDescriptionBackgroundStyle
+  isTitleLarge?: boolean
+  style?: StyleProp<ViewStyle>
+  subTitle?: string
+  subTitleTextAlign?: SliderItemDescriptionTextAlign
+  testID?: string
+  title: string
+  titleStyle?: StyleProp<TextStyle>
+  titleTextAlign?: SliderItemDescriptionTextAlign
 }
 
 export const SliderItemDescription = ({
@@ -34,23 +30,24 @@ export const SliderItemDescription = ({
   titleStyle,
   titleTextAlign = 'left',
 }: SliderItemDescriptionProps) => {
-  if (!title) return null;
+  if (!title) return null
 
-  const isDarkBackground = backgroundStyle === SliderItemDescriptionBackgroundStyle.Dark;
-  const isDarkBlurBackground = backgroundStyle === SliderItemDescriptionBackgroundStyle.DarkBlur;
+  const isDarkBackground = backgroundStyle === SliderItemDescriptionBackgroundStyle.Dark
+  const isDarkBlurBackground = backgroundStyle === SliderItemDescriptionBackgroundStyle.DarkBlur
 
   return (
     <View
+      testID={testID}
       style={[
         styles.component,
         isDarkBackground && styles.darkBackground,
         isDarkBlurBackground && styles.blurBackground,
         style,
       ]}
-      testID={testID}
     >
       <Text
         numberOfLines={1}
+        testID='slider-item-description-title'
         style={[
           styles.title,
           (isDarkBackground || isDarkBlurBackground) && styles.titleColorOnDark,
@@ -58,27 +55,26 @@ export const SliderItemDescription = ({
           { textAlign: titleTextAlign },
           titleStyle,
         ]}
-        testID='slider-item-description-title'
       >
         {title}
       </Text>
       {subTitle && (
         <Text
           numberOfLines={2}
+          testID='slider-item-description-sub-title'
           style={[
             styles.subTitle,
             (isDarkBackground || isDarkBlurBackground) && styles.subTitleColorOnDark,
             { textAlign: subTitleTextAlign },
             titleStyle,
           ]}
-          testID='slider-item-description-sub-title'
         >
           {subTitle}
         </Text>
       )}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   blurBackground: { backgroundColor: COLORS.black70 },
@@ -107,4 +103,4 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   titleLarge: { fontSize: FONT_SIZES.h3 * 2, fontWeight: 'bold' },
-});
+})

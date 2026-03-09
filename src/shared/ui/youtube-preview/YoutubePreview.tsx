@@ -1,29 +1,29 @@
-import React from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
-import { Image, Linking, StyleSheet } from 'react-native';
-import { TouchableImageBackground } from 'shared';
+import React from 'react'
+import { Image, Linking, StyleSheet } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
+import { TouchableImageBackground } from '../touchable-image-background'
 
 interface YoutubePreviewProps {
-  previewSrc: string;
-  style?: StyleProp<ViewStyle>;
-  url: string;
+  previewSrc: string
+  style?: StyleProp<ViewStyle>
+  url: string
 }
 
 export const YoutubePreview = ({ previewSrc, style, url }: YoutubePreviewProps) => (
   <TouchableImageBackground
-    onPress={() => {
-      Linking.openURL(url);
-    }}
     previewSrc={previewSrc}
     style={[styles.item, style]}
+    onPress={() => {
+      void Linking.openURL(url)
+    }}
   >
     <Image
-      //eslint-disable-next-line import/no-internal-modules
-      source={require('./assets/youtube-logo-png-2069.png')}
       style={[styles.youtubeButton]}
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Static asset import
+      source={require('./assets/youtube-logo-png-2069.png')}
     />
   </TouchableImageBackground>
-);
+)
 
 const styles = StyleSheet.create({
   backgroundImage: {
@@ -35,4 +35,4 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     width: '100%',
   },
-});
+})

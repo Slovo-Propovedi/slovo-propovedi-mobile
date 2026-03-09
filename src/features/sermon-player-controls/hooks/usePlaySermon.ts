@@ -1,52 +1,55 @@
-import { useNavigation } from '@react-navigation/native';
-import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
-import { schedulePushNotification, usePlayer, usePlayerStore } from 'entities/player';
-import { ListenStackParamName } from 'shared';
-import type { ListenStackNavProp, PlaylistData, SermonData } from 'shared';
+import { useNavigation } from '@react-navigation/native'
+import { useAction, useAtom } from '@reatom/npm-react'
+import {
+  schedulePushNotification,
+  setCurrentSound as setCurrentSoundAction,
+  usePlayer,
+} from 'entities/player'
+import { ListenStackParamName } from 'shared/routing'
+import type { ListenStackNavProp } from 'shared/routing'
+import type { PlaylistData, SermonData } from 'shared/types'
+import {
+  currentAudioAtom,
+  setCurrentAudio as setCurrentAudioAction,
+  setCurrentPlaylist as setCurrentPlaylistAction,
+} from '../model'
 
 export const usePlayNewSermon = () => {
-  const { play, recreateSound } = usePlayer();
+  const { play, recreateSound } = usePlayer()
 
-  const { currentAudio, setCurrentAudio, setCurrentPlaylist } = useSermonPlayerControlsStore(
-    store => ({
-      currentAudio: store.currentAudio,
-      setCurrentAudio: store.setCurrentAudio,
-      setCurrentPlaylist: store.setCurrentPlaylist,
-    }),
-  );
+  const currentAudio = useAtom(currentAudioAtom)[0]
+  const setCurrentAudio = useAction(setCurrentAudioAction)
+  const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
+  const setCurrentSound = useAction(setCurrentSoundAction)
 
-  const { setCurrentSound } = usePlayerStore(store => ({
-    setCurrentSound: store.setCurrentSound,
-  }));
-
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
+  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
 
   interface PlayNewSermonProps {
-    playlist: PlaylistData;
-    sermon: SermonData;
+    playlist: PlaylistData
+    sermon: SermonData
   }
 
   return async ({ playlist, sermon: { audioUrl, id, ...other } }: PlayNewSermonProps) => {
-    if (!audioUrl) return;
+    if (!audioUrl) return
 
-    const newAudio = { ...other, audioUrl, id, previewUrl: playlist.previewUrl };
+    const newAudio = { ...other, audioUrl, id, previewUrl: playlist.previewUrl }
 
-    await setCurrentAudio(newAudio);
-    await setCurrentPlaylist(playlist);
+    await setCurrentAudio(newAudio)
+    await setCurrentPlaylist(playlist)
 
-    navigate(ListenStackParamName.AudioPlayer);
+    navigate(ListenStackParamName.AudioPlayer)
 
-    let newSound;
+    let newSound
 
-    if (currentAudio?.id !== id) newSound = await recreateSound(newAudio.audioUrl);
+    if (currentAudio?.id !== id) newSound = await recreateSound(newAudio.audioUrl)
 
-    if (newSound) setCurrentSound(newSound);
+    if (newSound) setCurrentSound(newSound)
 
-    await play(newSound);
+    await play(newSound)
     await schedulePushNotification({
       body: newAudio.description || '',
       subtitle: playlist.title,
       title: newAudio.title,
-    });
-  };
-};
+    })
+  }
+}

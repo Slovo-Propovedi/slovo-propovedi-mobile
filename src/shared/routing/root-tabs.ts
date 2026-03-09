@@ -1,4 +1,5 @@
-import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs'
+import { type BaseParamList } from './base'
 
 export enum RootTabName {
   Info = 'О служении',
@@ -7,19 +8,19 @@ export enum RootTabName {
   Study = 'Учиться',
 }
 
-export type RootTabsParamList = {
-  [RootTabName.Info]: { id: number };
-  [RootTabName.Listen]: undefined;
-  [RootTabName.Read]: undefined;
-  [RootTabName.Study]: undefined;
-};
+export type RootTabsNavProp<Screen extends keyof RootTabsParamList> = BottomTabNavigationProp<
+  RootTabsParamList,
+  Screen
+>
+
+export type RootTabsParamList = BaseParamList<{
+  [RootTabName.Info]: { id: number }
+  [RootTabName.Listen]: undefined
+  [RootTabName.Read]: undefined
+  [RootTabName.Study]: undefined
+}>
 
 export type RootTabsScreenProps<Screen extends keyof RootTabsParamList> = BottomTabScreenProps<
   RootTabsParamList,
   Screen
->;
-
-export type RootTabsNavProp<Screen extends keyof RootTabsParamList> = BottomTabNavigationProp<
-  RootTabsParamList,
-  Screen
->;
+>

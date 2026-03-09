@@ -1,1 +1,1 @@
-export * from './parseObjectToStylizedElements';
+export * from './parseObjectToStylizedElements'

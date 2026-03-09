@@ -1,39 +1,60 @@
-import { Entypo } from '@expo/vector-icons';
-import React from 'react';
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed';
-import { SliderItem, SliderItemSize, WhereIsSlideTitleLocated } from './slider-item';
-import type { SliderItemTransform } from './slider-item';
+import { Entypo } from '@expo/vector-icons'
+import React from 'react'
+import { ScrollView, Text, View } from 'react-native'
+import { COLORS, FONT_SIZES } from 'shared/themed'
+import type { SliderItemTransform } from './slider-item/slider-item.types'
 import type {
   SliderItemDescriptionBackgroundStyle,
   SliderItemDescriptionTextAlign,
-} from './slider-item-description';
+} from './slider-item-description/slider-item-description.types'
+import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
+import { SliderItem } from './slider-item/slider-item'
+import { SliderItemSize, WhereIsSlideTitleLocated } from './slider-item/slider-item.types'
+import { sliderStyles as styles } from './slider.styles'
 
-type SliderItemsElement<D extends object> = {
-  data: D;
-  description?: string;
-  previewURL: string;
-};
+type FontSizes = typeof FONT_SIZES
 
-type FontSizes = typeof FONT_SIZES;
+interface SliderItemsElement<D extends object> {
+  data: D
+  description?: string
+  previewURL: string
+}
 
 interface SliderProps<D extends object> {
-  descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle;
-  descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign;
-  descriptionTitleTextAlign?: SliderItemDescriptionTextAlign;
-  isDescriptionTitleOnSlideLarge?: boolean;
-  items: SliderItemsElement<D>[];
-  itemsRows?: number;
-  itemsSize?: SliderItemSize;
-  onPressItem?: (data: D, event: GestureResponderEvent) => void;
-  onPressTitle?: (event: GestureResponderEvent) => void;
-  style?: StyleProp<ViewStyle>;
-  title?: string;
-  titleFontSize?: FontSizes[keyof FontSizes];
-  transform?: SliderItemTransform;
-  whereIsSlideTitleLocated?: WhereIsSlideTitleLocated;
+  descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle
+  descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign
+  descriptionTitleTextAlign?: SliderItemDescriptionTextAlign
+  isDescriptionTitleOnSlideLarge?: boolean
+  items: SliderItemsElement<D>[]
+  itemsRows?: number
+  itemsSize?: SliderItemSize
+  onPressItem?: (data: D, event: GestureResponderEvent) => void
+  onPressTitle?: (event: GestureResponderEvent) => void
+  style?: StyleProp<ViewStyle>
+  title?: string
+  titleFontSize?: FontSizes[keyof FontSizes]
+  transform?: SliderItemTransform
+  whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
 }
+
+const getItemsByRows = <D extends object>(items: SliderItemsElement<D>[], itemsRows: number) => {
+  let rowIndex = 0
+  return items.reduce<SliderItemsElement<D>[][]>((acc, item) => {
+    if (!acc[rowIndex]) acc[rowIndex] = []
+    acc[rowIndex].push(item)
+    rowIndex++
+    if (rowIndex >= itemsRows) rowIndex = 0
+    return acc
+  }, [])
+}
+
+const getMarginBottom = (itemsSize: SliderItemSize, titleFontSize: number): number =>
+  ({
+    [SliderItemSize.Large]: titleFontSize * 2,
+    [SliderItemSize.Middle]: titleFontSize,
+    [SliderItemSize.Small]: titleFontSize,
+    [SliderItemSize.XLarge]: titleFontSize * 2,
+  })[itemsSize]
 
 export const Slider = <D extends object>({
   descriptionBackgroundStyle,
@@ -51,84 +72,47 @@ export const Slider = <D extends object>({
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderProps<D>) => {
-  if (!items?.length) return null;
+  if (!items?.length) return null
 
-  let rowIndex = 0;
-  const itemsByRows = items.reduce<SliderItemsElement<D>[][]>((accumulator, currentItem) => {
-    if (!accumulator[rowIndex]) accumulator[rowIndex] = [];
-
-    accumulator[rowIndex].push(currentItem);
-
-    rowIndex++;
-    if (rowIndex >= itemsRows) rowIndex = 0;
-
-    return accumulator;
-  }, []);
-
-  const marginBottom = {
-    [SliderItemSize.Large]: titleFontSize * 2,
-    [SliderItemSize.Middle]: titleFontSize,
-    [SliderItemSize.Small]: titleFontSize,
-    [SliderItemSize.XLarge]: titleFontSize * 2,
-  }[itemsSize];
+  const itemsByRows = getItemsByRows(items, itemsRows)
+  const marginBottom = getMarginBottom(itemsSize, titleFontSize)
 
   return (
     <View style={[styles.slider, { marginTop: titleFontSize / 2 }, { marginBottom }, style]}>
       <Text
+        testID='title'
         onPress={onPressTitle}
         style={[styles.title, { fontSize: titleFontSize }]}
-        testID='title'
       >
         {`${title}`}
         <Entypo color={COLORS.black} name='chevron-right' size={titleFontSize} />
       </Text>
       <ScrollView
-        contentContainerStyle={styles.contentContainer}
         horizontal
         showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.contentContainer}
       >
         {itemsByRows.map((row, i) => (
           <View key={`row-${i}`} style={styles.row} testID='slider-row'>
             {row.map(({ data, description, previewURL }, index) => (
               <SliderItem
-                descriptionBackgroundStyle={descriptionBackgroundStyle}
-                descriptionSubTitleTextAlign={descriptionSubTitleTextAlign}
-                descriptionTitle={description}
-                descriptionTitleTextAlign={descriptionTitleTextAlign}
-                isDescriptionTitleOnSlideLarge={isDescriptionTitleOnSlideLarge}
                 key={index}
-                onPress={event => {
-                  onPressItem?.(data, event);
-                }}
-                previewURL={previewURL}
                 size={itemsSize}
                 testID='slider-item'
                 transform={transform}
+                previewURL={previewURL}
+                descriptionTitle={description}
+                onPress={event => onPressItem?.(data, event)}
                 whereIsSlideTitleLocated={whereIsSlideTitleLocated}
+                descriptionTitleTextAlign={descriptionTitleTextAlign}
+                descriptionBackgroundStyle={descriptionBackgroundStyle}
+                descriptionSubTitleTextAlign={descriptionSubTitleTextAlign}
+                isDescriptionTitleOnSlideLarge={isDescriptionTitleOnSlideLarge}
               />
             ))}
           </View>
         ))}
       </ScrollView>
     </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  contentContainer: {
-    flexDirection: 'column-reverse',
-    gap: INDENTS.middle,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: INDENTS.middle,
-    maxWidth: '100%',
-    width: '100%',
-  },
-  slider: { maxWidth: '100%' },
-  title: {
-    fontWeight: 'bold',
-    paddingBottom: INDENTS.middle,
-    paddingLeft: INDENTS.lowest,
-  },
-});
+  )
+}

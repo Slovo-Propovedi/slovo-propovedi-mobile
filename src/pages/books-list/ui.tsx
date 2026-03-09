@@ -1,15 +1,12 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { BookData, OnPressTouchableListItem, ReadStackScreenProps } from 'shared';
-import {
-  COLORS,
-  FONT_SIZES,
-  INDENTS,
-  ListItemSize,
-  ReadStackParamName,
-  TouchableListItem,
-} from 'shared';
+import React from 'react'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ReadStackParamName } from 'shared/routing'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
+import { ListItemSize, TouchableListItem } from 'shared/ui'
+import type { ReadStackScreenProps } from 'shared/routing'
+import type { BookData } from 'shared/types'
+import type { OnPressTouchableListItem } from 'shared/ui'
 
 export const BooksListScreen: React.FC<ReadStackScreenProps<ReadStackParamName.BooksList>> = ({
   navigation: { navigate },
@@ -17,11 +14,11 @@ export const BooksListScreen: React.FC<ReadStackScreenProps<ReadStackParamName.B
     params: { books, title },
   },
 }) => {
-  const { top } = useSafeAreaInsets();
+  const { top } = useSafeAreaInsets()
 
   const onPressListItem: OnPressTouchableListItem<BookData> = data => {
-    navigate(ReadStackParamName.BookReader, data);
-  };
+    navigate(ReadStackParamName.BookReader, data)
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -35,14 +32,14 @@ export const BooksListScreen: React.FC<ReadStackScreenProps<ReadStackParamName.B
             data={book}
             key={book.id}
             onPress={onPressListItem}
-            previewPlaceholderText={`${index + 1}`}
             size={ListItemSize.Middle}
+            previewPlaceholderText={`${index + 1}`}
           />
         ))}
       </View>
     </ScrollView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -58,4 +55,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: INDENTS.high,
   },
-});
+})

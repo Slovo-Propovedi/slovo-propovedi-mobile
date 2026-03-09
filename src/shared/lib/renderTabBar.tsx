@@ -1,22 +1,22 @@
-import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
-import type { NavigationState, SceneRendererProps } from 'react-native-tab-view';
-import { INDENTS } from 'shared/themed';
+import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { INDENTS } from 'shared/themed'
+import type { NavigationState, SceneRendererProps } from 'react-native-tab-view'
+
+type GetRenderTabBar = (props: { setActiveTabIndex: (index: number) => void }) => RenderTabBar
 
 type RenderTabBar = (
-  props: SceneRendererProps & {
+  props: {
     navigationState: NavigationState<{
-      key: string;
-      title: string;
-    }>;
-  },
-) => React.ReactNode;
-
-type GetRenderTabBar = (props: { setActiveTabIndex: (index: number) => void }) => RenderTabBar;
+      key: string
+      title: string
+    }>
+  } & SceneRendererProps,
+) => React.ReactNode
 
 export const getRenderTabBar: GetRenderTabBar =
   ({ setActiveTabIndex }) =>
   ({ navigationState, position }) => {
-    const inputRange = navigationState.routes.map((x, i) => i);
+    const inputRange = navigationState.routes.map((_, i) => i)
 
     return (
       <View style={styles.tabBar}>
@@ -24,23 +24,23 @@ export const getRenderTabBar: GetRenderTabBar =
           const opacity = position.interpolate({
             inputRange,
             outputRange: inputRange.map(inputIndex => (inputIndex === i ? 1 : 0.5)),
-          });
+          })
 
-          const onPress = () => setActiveTabIndex(i);
+          const onPress = () => setActiveTabIndex(i)
 
           return (
             <TouchableOpacity
-              key={`tab-bar-item-${route.key}`}
               onPress={onPress}
               style={styles.tabItem}
+              key={`tab-bar-item-${route.key}`}
             >
               <Animated.Text style={{ opacity }}>{route.title}</Animated.Text>
             </TouchableOpacity>
-          );
+          )
         })}
       </View>
-    );
-  };
+    )
+  }
 
 const styles = StyleSheet.create({
   tabBar: {
@@ -51,4 +51,4 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: INDENTS.high,
   },
-});
+})

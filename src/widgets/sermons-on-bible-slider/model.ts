@@ -1,38 +1,28 @@
-import { create } from 'zustand';
-import type { PlaylistData, SermonData } from 'shared';
-import { API, FetchedSermonsGroupName, getBookLinkAsString } from 'shared';
+import { action, atom } from '@reatom/framework'
+import { API } from 'shared/api'
+import { getBookLinkAsString } from 'shared/lib'
+import { FetchedSermonsGroupName, type PlaylistData, type SermonData } from 'shared/types'
 
-interface OnBibleBooksListState {
-  getOnBibleBookList: () => Promise<PlaylistData[]>;
-  onBibleBooksList: PlaylistData[];
-}
+export const SermonsOnBibleSliderAtom = atom<PlaylistData[]>([], 'sermons-on-bible-sliderAtom')
 
-export const useOnBibleBooksListStore = create<OnBibleBooksListState>(set => ({
-  getOnBibleBookList: async () => {
-    const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible);
+export const getSermonsOnBibleSlider = action(async () => {
+  const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible)
 
-    const mappedList = list?.map<PlaylistData>(playlist => ({
-      ...playlist,
-      list: playlist.list.map<SermonData>(el => {
-        const { audioUrl, description, id, textFileUrl, youtubeUrl } = el;
+  const mappedList = list?.map<PlaylistData>(playlist => ({
+    ...playlist,
+    list: playlist.list.map<SermonData>(el => {
+      const { audioUrl, description, id, textFileUrl, youtubeUrl } = el
 
-        return {
-          audioUrl,
-          description,
-          id,
-          textFileUrl,
-          title: getBookLinkAsString(el),
-          youtubeUrl,
-        };
-      }),
-    }));
+      return {
+        audioUrl,
+        description,
+        id,
+        textFileUrl,
+        title: getBookLinkAsString(el),
+        youtubeUrl,
+      }
+    }),
+  }))
 
-    set(state => ({
-      ...state,
-      onBibleBooksList: mappedList || [],
-    }));
-
-    return mappedList || [];
-  },
-  onBibleBooksList: [],
-}));
+  return mappedList || []
+}, 'getSermonsOnBibleSlider')

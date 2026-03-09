@@ -1,5 +1,5 @@
-import { xml2js } from 'xml-js';
-import type { XMLElementElement } from '../types';
+import { xml2js } from 'xml-js'
+import type { XMLElementElement } from '../types'
 
 export const parseFb2BookToObject = (xml: string) =>
   xml2js(xml, {
@@ -10,4 +10,4 @@ export const parseFb2BookToObject = (xml: string) =>
     ignoreDoctype: true,
     ignoreInstruction: true,
     nativeType: true,
-  }).elements?.at(0) as XMLElementElement;
+  }).elements?.at(0) as XMLElementElement

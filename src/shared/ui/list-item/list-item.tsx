@@ -1,25 +1,21 @@
-import React from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
-import { Image, StyleSheet, Text, View } from 'react-native';
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/constants';
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed';
-
-export enum ListItemSize {
-  Middle = 'middle',
-  Small = 'small',
-}
-
-interface ListItemProps<T> {
-  data: T;
-  previewPlaceholderText?: string;
-  size?: ListItemSize;
-  style?: StyleProp<ViewStyle>;
-  testID?: string;
-}
+import React from 'react'
+import { Image, StyleSheet, Text, View } from 'react-native'
+import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/constants'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed'
+import type { StyleProp, ViewStyle } from 'react-native'
+import { ListItemSize } from './list-item.types'
 
 type ListItemComponent = <T extends { previewUrl?: string; title: string }>(
   props: ListItemProps<T>,
-) => JSX.Element | null;
+) => null | React.JSX.Element
+
+interface ListItemProps<T> {
+  data: T
+  previewPlaceholderText?: string
+  size?: ListItemSize
+  style?: StyleProp<ViewStyle>
+  testID?: string
+}
 
 export const ListItem: ListItemComponent = ({
   data: { previewUrl, title },
@@ -28,8 +24,9 @@ export const ListItem: ListItemComponent = ({
   style,
   testID,
 }) => (
-  <View style={[styles.component, style]} testID={testID}>
+  <View testID={testID} style={[styles.component, style]}>
     <View
+      testID='preview-or-counter'
       style={[
         styles.previewOrCounter,
         {
@@ -37,23 +34,22 @@ export const ListItem: ListItemComponent = ({
           [ListItemSize.Small]: styles.previewOrCounterSmall,
         }[size],
       ]}
-      testID='preview-or-counter'
     >
       {previewUrl ? (
-        <Image source={{ uri: previewUrl }} style={styles.preview} testID='preview' />
+        <Image testID='preview' style={styles.preview} source={{ uri: previewUrl }} />
       ) : (
         <Text style={styles.counter}>{previewPlaceholderText}</Text>
       )}
     </View>
     <View style={styles.textsContainer}>
-      <Text style={styles.listItemTitle} testID='title'>
+      <Text testID='title' style={styles.listItemTitle}>
         {title}
       </Text>
     </View>
   </View>
-);
+)
 
-const previewOrCounterSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25; /* 25% */
+const previewOrCounterSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25
 
 const styles = StyleSheet.create({
   component: {
@@ -100,4 +96,4 @@ const styles = StyleSheet.create({
     paddingRight: INDENTS.high,
     paddingVertical: INDENTS.high,
   },
-});
+})

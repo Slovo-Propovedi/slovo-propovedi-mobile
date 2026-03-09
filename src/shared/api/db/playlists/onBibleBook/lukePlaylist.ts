@@ -1,4 +1,5 @@
-import type { FetchedPlaylist } from 'shared/types';
+/* eslint-disable max-lines -- correct for mocks */
+import type { FetchedPlaylist } from 'shared/types'
 
 export const lukePlaylist: FetchedPlaylist = {
   list: [],
@@ -403,4 +404,4 @@ export const lukePlaylist: FetchedPlaylist = {
   //     ],
   //   },
   // ],
-};
+}

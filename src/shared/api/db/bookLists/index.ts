@@ -1,2 +1,2 @@
-export * from './topicalAndThematic';
-export * from './verseByVerse';
+export * from './topicalAndThematic'
+export * from './verseByVerse'

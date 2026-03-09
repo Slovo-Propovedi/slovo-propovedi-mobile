@@ -1,8 +1,9 @@
 import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
-} from '@react-navigation/native-stack';
-import type { BookData } from 'shared/types';
+} from '@react-navigation/native-stack'
+import type { BookData } from 'shared/types'
+import { type BaseParamList } from './base'
 
 export enum ReadStackParamName {
   BookReader = 'BookReader',
@@ -10,18 +11,18 @@ export enum ReadStackParamName {
   Home = 'Home',
 }
 
-export type ReadStackParamList = {
-  [ReadStackParamName.BookReader]: BookData;
-  [ReadStackParamName.BooksList]: { books: BookData[]; title: string };
-  [ReadStackParamName.Home]: undefined;
-};
+export type ReadStackNavProp<Screen extends keyof ReadStackParamList> = NativeStackNavigationProp<
+  ReadStackParamList,
+  Screen
+>
+
+export type ReadStackParamList = BaseParamList<{
+  [ReadStackParamName.BookReader]: BookData
+  [ReadStackParamName.BooksList]: { books: BookData[]; title: string }
+  [ReadStackParamName.Home]: undefined
+}>
 
 export type ReadStackScreenProps<Screen extends keyof ReadStackParamList> = NativeStackScreenProps<
   ReadStackParamList,
   Screen
->;
-
-export type ReadStackNavProp<Screen extends keyof ReadStackParamList> = NativeStackNavigationProp<
-  ReadStackParamList,
-  Screen
->;
+>

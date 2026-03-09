@@ -1,6 +1,6 @@
-import type { FetchedBookData } from 'shared/types';
+import type { FetchedBookData } from 'shared/types'
 
-const markBookPreviewUrl = 'https://slovo-istini.com/image/categories/22/marka_(1).jpg';
+const markBookPreviewUrl = 'https://slovo-istini.com/image/categories/22/marka_(1).jpg'
 
 export const markBook: FetchedBookData[] = [
   {
@@ -90,4 +90,4 @@ export const markBook: FetchedBookData[] = [
     title: 'Особое милосердие Господа',
     verse: [40, 45],
   },
-];
+]

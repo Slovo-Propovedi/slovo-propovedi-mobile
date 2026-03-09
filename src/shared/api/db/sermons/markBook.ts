@@ -1,4 +1,4 @@
-import type { FetchedSermonData } from 'shared/types';
+import type { FetchedSermonData } from 'shared/types'
 
 export const markBook: FetchedSermonData[] = [
   {
@@ -103,4 +103,4 @@ export const markBook: FetchedSermonData[] = [
     verse: [40, 45],
     youtubeUrl: 'https://youtu.be/FsBGfcgGFSY',
   },
-];
+]

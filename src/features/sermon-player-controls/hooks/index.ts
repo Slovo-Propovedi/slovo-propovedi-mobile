@@ -1,1 +1,1 @@
-export * from './usePlaySermon';
+export * from './usePlaySermon'

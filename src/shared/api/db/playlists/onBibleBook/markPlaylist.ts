@@ -1,6 +1,6 @@
-// eslint-disable-next-line import/no-internal-modules
-import { sermonsDB } from 'shared/api/db/sermons';
-import { BibleBookName, type FetchedPlaylist } from 'shared/types';
+/* eslint-disable max-lines -- correct for mocks */
+import { sermonsDB } from 'shared/api/db/sermons'
+import { BibleBookName, type FetchedPlaylist } from 'shared/types'
 
 export const markPlaylist: FetchedPlaylist = {
   description: 'Эта книга - Евангелие от Марка',
@@ -1037,4 +1037,4 @@ export const markPlaylist: FetchedPlaylist = {
   //   ],
   // },
   // ],
-};
+}

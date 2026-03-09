@@ -1,22 +1,23 @@
-import React from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
-import { StyleSheet, Text, View } from 'react-native';
-import { Progress, millisToMinutesAndSeconds } from 'shared';
-import { usePlayer } from '../hooks';
+import React from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import { millisToMinutesAndSeconds } from 'shared/lib'
+import { Progress } from 'shared/ui'
+import type { StyleProp, ViewStyle } from 'react-native'
+import { usePlayer } from '../hooks'
 
 export const PlayerListenProgress = ({ style }: { style?: StyleProp<ViewStyle> }) => {
-  const { changeProgressPosition, duration, position } = usePlayer();
+  const { changeProgressPosition, duration, position } = usePlayer()
 
   const onChangeProgressValue = (newProgressValue: number) => {
-    changeProgressPosition((duration * newProgressValue) / 100);
-  };
+    void changeProgressPosition((duration * newProgressValue) / 100)
+  }
 
   return (
     <View style={[styles.container, style]}>
       <Progress
-        onChangeProgressValue={onChangeProgressValue}
-        progress={position}
         total={duration}
+        progress={position}
+        onChangeProgressValue={onChangeProgressValue}
       />
 
       <View style={styles.progressTextsContainer}>
@@ -24,8 +25,8 @@ export const PlayerListenProgress = ({ style }: { style?: StyleProp<ViewStyle> }
         <Text>{millisToMinutesAndSeconds(duration)}</Text>
       </View>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {},
@@ -34,4 +35,4 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-});
+})

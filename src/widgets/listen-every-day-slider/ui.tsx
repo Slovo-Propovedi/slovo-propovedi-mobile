@@ -1,63 +1,65 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
-import { usePlayNewSermon } from 'features/sermon-player-controls';
-import type { ListenStackNavProp, PlaylistData } from 'shared';
-import { INDENTS, ListenStackParamName, Slider, SliderItemSize, SliderItemTransform } from 'shared';
-import { useListenEveryDayStore } from './model';
+import { useNavigation } from '@react-navigation/native'
+import { useAction, useAtom } from '@reatom/npm-react'
+import React, { useEffect } from 'react'
+import { StyleSheet } from 'react-native'
+import { usePlayNewSermon } from 'features/sermon-player-controls'
+import { ListenStackParamName } from 'shared/routing'
+import { INDENTS } from 'shared/themed'
+import { Slider, SliderItemSize, SliderItemTransform } from 'shared/ui'
+import type { ListenStackNavProp } from 'shared/routing'
+import type { PlaylistData } from 'shared/types'
+import { getListenEveryDay, listenEveryDayAtom } from './model'
 
 export const ListenEveryDaySlider = () => {
-  const playNewSermon = usePlayNewSermon();
+  const playNewSermon = usePlayNewSermon()
 
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
+  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
 
-  const { getListenEveryDay, listenEveryDay } = useListenEveryDayStore(state => ({
-    getListenEveryDay: state.getListenEveryDay,
-    listenEveryDay: state.listenEveryDay,
-  }));
+  const listenEveryDay = useAtom(listenEveryDayAtom)[0]
+  const fetchListenEveryDay = useAction(getListenEveryDay)
 
   const onItemPress = async (playlist: PlaylistData) => {
-    const sermons = playlist.list;
+    const sermons = playlist.list
 
     if (sermons.length && sermons.length < 2) {
-      await playNewSermon({ playlist, sermon: sermons[0] });
+      await playNewSermon({ playlist, sermon: sermons[0] })
 
-      return;
+      return
     }
 
-    navigate(ListenStackParamName.Playlist, playlist);
-  };
+    navigate(ListenStackParamName.Playlist, playlist)
+  }
 
   const onPressTitle = (params: PlaylistData[]) => {
-    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'Слушай каждый день' });
-  };
+    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'Слушай каждый день' })
+  }
 
   useEffect(() => {
-    getListenEveryDay();
-  }, []);
+    void fetchListenEveryDay()
+  }, [])
 
   return (
     <Slider
+      itemsRows={1}
+      style={styles.slider}
+      onPressItem={onItemPress}
+      title='Слушай каждый день'
+      itemsSize={SliderItemSize.Middle}
+      transform={SliderItemTransform.Short}
+      onPressTitle={() => {
+        onPressTitle(listenEveryDay)
+      }}
       items={listenEveryDay.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
-      itemsRows={1}
-      itemsSize={SliderItemSize.Middle}
-      onPressItem={onItemPress}
-      onPressTitle={() => {
-        onPressTitle(listenEveryDay);
-      }}
-      style={styles.slider}
-      title='Слушай каждый день'
-      transform={SliderItemTransform.Short}
     />
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   slider: {
     paddingHorizontal: INDENTS.middle,
   },
-});
+})

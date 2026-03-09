@@ -1,1 +1,1 @@
-export * from './root-tabs';
+export * from './root-tabs'

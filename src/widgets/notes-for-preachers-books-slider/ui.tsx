@@ -1,66 +1,64 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
-import type { BookData, ReadStackNavProp } from 'shared';
+import { useNavigation } from '@react-navigation/native'
+import { useAction, useAtom } from '@reatom/npm-react'
+import React, { useEffect } from 'react'
+import { StyleSheet } from 'react-native'
+import { ReadStackParamName } from 'shared/routing'
+import { INDENTS } from 'shared/themed'
 import {
-  INDENTS,
-  ReadStackParamName,
   Slider,
   SliderItemDescriptionBackgroundStyle,
   SliderItemSize,
   SliderItemTransform,
   WhereIsSlideTitleLocated,
-} from 'shared';
-import { useNotesForPreachersBooksStore } from './model';
+} from 'shared/ui'
+import type { ReadStackNavProp } from 'shared/routing'
+import type { BookData } from 'shared/types'
+import { getNotesForPreachersBooksSlider, NotesForPreachersBooksSliderAtom } from './model'
 
 export const NotesForPreachersBooksSlider = () => {
-  const title = 'Конспекты для проповедников';
+  const title = 'Конспекты для проповедников'
 
-  const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>();
+  const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>()
 
-  const { getNotesForPreachersBooks, notesForPreachersBooks } = useNotesForPreachersBooksStore(
-    state => ({
-      getNotesForPreachersBooks: state.getNotesForPreachersBooks,
-      notesForPreachersBooks: state.notesForPreachersBooks,
-    }),
-  );
+  const notesForPreachersBooks = useAtom(NotesForPreachersBooksSliderAtom)[0]
+  const fetchNotesForPreachersBooks = useAction(getNotesForPreachersBooksSlider)
 
   const onItemPress = async (bookList: BookData) => {
-    navigate(ReadStackParamName.BookReader, bookList);
-  };
+    navigate(ReadStackParamName.BookReader, bookList)
+  }
 
   const onPressTitle = (params: BookData[]) => {
-    navigate(ReadStackParamName.BooksList, { books: params, title });
-  };
+    navigate(ReadStackParamName.BooksList, { books: params, title })
+  }
 
   useEffect(() => {
-    getNotesForPreachersBooks();
-  }, []);
+    void fetchNotesForPreachersBooks()
+  }, [])
 
   return (
     <Slider
-      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      title={title}
+      style={styles.slider}
+      onPressItem={onItemPress}
+      itemsSize={SliderItemSize.Large}
       descriptionTitleTextAlign='center'
+      transform={SliderItemTransform.High}
+      whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
+      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      onPressTitle={() => {
+        onPressTitle(notesForPreachersBooks)
+      }}
       items={notesForPreachersBooks.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
-      itemsSize={SliderItemSize.Large}
-      onPressItem={onItemPress}
-      onPressTitle={() => {
-        onPressTitle(notesForPreachersBooks);
-      }}
-      style={styles.slider}
-      title={title}
-      transform={SliderItemTransform.High}
-      whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
     />
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   slider: {
     paddingHorizontal: INDENTS.middle,
   },
-});
+})

@@ -1,13 +1,18 @@
-import React from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
-import type { ControlsNames, PlayerControlsSize } from 'entities/player';
-import { PlayerControls } from 'entities/player';
-import { useSermonPlayerControlsStore } from './model';
+import { useAction, useAtom } from '@reatom/npm-react'
+import React from 'react'
+import { PlayerControls } from 'entities/player'
+import type { ControlsNames, PlayerControlsSize } from 'entities/player'
+import type { StyleProp, ViewStyle } from 'react-native'
+import {
+  currentAudioAtom,
+  currentPlaylistAtom,
+  setCurrentAudio as setCurrentAudioAction,
+} from './model'
 
 interface SermonPlayerControlsProps {
-  excludeButtons?: ControlsNames[];
-  size?: PlayerControlsSize;
-  style?: StyleProp<ViewStyle>;
+  excludeButtons?: ControlsNames[]
+  size?: PlayerControlsSize
+  style?: StyleProp<ViewStyle>
 }
 
 export const SermonPlayerControls = ({
@@ -15,22 +20,18 @@ export const SermonPlayerControls = ({
   size,
   style,
 }: SermonPlayerControlsProps) => {
-  const { currentAudio, currentPlaylist, setCurrentAudio } = useSermonPlayerControlsStore(
-    store => ({
-      currentAudio: store.currentAudio,
-      currentPlaylist: store.currentPlaylist,
-      setCurrentAudio: store.setCurrentAudio,
-    }),
-  );
+  const currentAudio = useAtom(currentAudioAtom)[0]
+  const currentPlaylist = useAtom(currentPlaylistAtom)[0]
+  const setCurrentAudio = useAction(setCurrentAudioAction)
 
   return (
     <PlayerControls
-      currentAudio={currentAudio}
-      currentPlaylist={currentPlaylist}
-      excludeButtons={excludeButtons}
-      setCurrentAudio={setCurrentAudio}
       size={size}
       style={style}
+      currentAudio={currentAudio}
+      excludeButtons={excludeButtons}
+      currentPlaylist={currentPlaylist}
+      setCurrentAudio={setCurrentAudio}
     />
-  );
-};
+  )
+}

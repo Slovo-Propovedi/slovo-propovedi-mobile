@@ -1,143 +1,106 @@
-import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
-import { usePlayerStore } from '../model';
-import { cancelScheduledNotificationAsync, loadCachedSoundData } from '../utils';
-import { useLocalNotification } from './push';
+import { useAction, useAtom } from '@reatom/npm-react'
+import type { Audio } from 'expo-av'
+import {
+  currentSoundAtom,
+  currentSoundDurationAtom,
+  currentSoundPositionAtom,
+  isPlayingCurrentAudioAtom,
+  setCurrentSound as setCurrentSoundAction,
+  setCurrentSoundDuration as setCurrentSoundDurationAction,
+  setCurrentSoundPosition as setCurrentSoundPositionAction,
+  setIsCurrentSoundBuffering as setIsCurrentSoundBufferingAction,
+  setIsPlayingCurrentAudio as setIsPlayingCurrentAudioAction,
+} from '../model'
+import { cancelScheduledNotificationAsync, loadCachedSoundData } from '../utils'
+import { useLocalNotification } from './push'
+import { pauseSound, playSound, setAudioMode, stopSound, unloadSound } from './sound-utils'
 
 export const usePlayer = () => {
-  useLocalNotification();
+  useLocalNotification()
 
-  const {
-    currentSound,
-    currentSoundDuration,
-    currentSoundPosition,
-    isPlayingCurrentAudio,
-    setCurrentSoundDuration,
-    setCurrentSoundPosition,
-    setIsCurrentSoundBuffering,
-    setIsPlayingCurrentAudio,
-  } = usePlayerStore(state => ({
-    currentSound: state.currentSound,
-    currentSoundDuration: state.currentSoundDuration,
-    currentSoundPosition: state.currentSoundPosition,
-    isPlayingCurrentAudio: state.isPlayingCurrentAudio,
-    setCurrentSoundDuration: state.setCurrentSoundDuration,
-    setCurrentSoundPosition: state.setCurrentSoundPosition,
-    setIsCurrentSoundBuffering: state.setIsCurrentSoundBuffering,
-    setIsPlayingCurrentAudio: state.setIsPlayingCurrentAudio,
-  }));
+  const currentSound = useAtom(currentSoundAtom)[0]
+  const currentSoundDuration = useAtom(currentSoundDurationAtom)[0]
+  const currentSoundPosition = useAtom(currentSoundPositionAtom)[0]
+  const isPlayingCurrentAudio = useAtom(isPlayingCurrentAudioAtom)[0]
+  const setCurrentSound = useAction(setCurrentSoundAction)
+  const setCurrentSoundDuration = useAction(setCurrentSoundDurationAction)
+  const setCurrentSoundPosition = useAction(setCurrentSoundPositionAction)
+  const setIsCurrentSoundBuffering = useAction(setIsCurrentSoundBufferingAction)
+  const setIsPlayingCurrentAudio = useAction(setIsPlayingCurrentAudioAction)
 
   const play = async (newSound?: Audio.Sound) => {
-    const sound = newSound || currentSound;
-
-    if (!sound) return;
-
-    await sound.playAsync();
-  };
+    const sound = newSound || currentSound
+    await playSound(sound)
+  }
 
   const pause = async (newSound?: Audio.Sound) => {
-    const sound = newSound || currentSound;
-
-    if (!sound) return;
-
-    await sound.pauseAsync();
-
-    await cancelScheduledNotificationAsync();
-  };
+    const sound = newSound || currentSound
+    await pauseSound(sound)
+    await cancelScheduledNotificationAsync()
+  }
 
   const stop = async (newSound?: Audio.Sound) => {
-    const sound = newSound || currentSound;
-
-    if (!sound) return;
-
-    await sound.stopAsync();
-  };
+    const sound = newSound || currentSound
+    await stopSound(sound)
+  }
 
   const unload = async (newSound?: Audio.Sound) => {
-    const sound = newSound || currentSound;
-
-    if (!sound) return;
-
-    await sound.stopAsync();
-
-    await sound.unloadAsync();
-  };
+    const sound = newSound || currentSound
+    await unloadSound(sound)
+  }
 
   const recreateSound = async (newAudioUrl: string, initialPosition?: number) => {
     if (currentSound) {
-      await currentSound.stopAsync();
-      await currentSound.unloadAsync();
+      await stopSound(currentSound)
+      await unloadSound(currentSound)
     }
 
-    await Audio.setAudioModeAsync({
-      // Определяет, поддерживает ли устройство запись аудио
-      allowsRecordingIOS: false,
-      // Определяет реакцию приложения на внешние прерывания на Android-устройствах
-      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      // Определяет реакцию приложения на внешние прерывания в iOS
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-      // Определяет, будет ли звук воспроизводиться через динамик телефона при звуковом сигнале, а не через динамики громкой связи на Android-устройствах
-      playThroughEarpieceAndroid: false,
-      // Определяет, будет ли воспроизведение продолжаться, если на устройстве задействован "тихий" режим (с заглушенным звуком) на iOS-устройствах.
-      playsInSilentModeIOS: true,
-      // Определяет, будет ли звук снижаться в громкости при получении прерываний на устройствах Android
-      shouldDuckAndroid: true,
-      // Определяет, должно ли приложение оставаться активным в фоновом режиме. Если установлено значение `true`, то аудио воспроизводится в фоновом режиме
-      staysActiveInBackground: true,
-    });
+    await setAudioMode()
 
-    const position = initialPosition || 0;
-
-    setIsCurrentSoundBuffering(true);
+    const position = initialPosition || 0
+    setIsCurrentSoundBuffering(true)
 
     const data = await loadCachedSoundData({
       initialPosition: position,
       remoteUri: newAudioUrl,
-    });
+    })
 
-    if (!data) return;
+    if (!data) return
 
-    const { audio, status } = data;
+    const { audio, status } = data
 
     if (status.isLoaded) {
-      await setCurrentSoundDuration(status.durationMillis || 0);
-      setIsCurrentSoundBuffering(false);
+      await setCurrentSoundDuration(status.durationMillis || 0)
+      setIsCurrentSoundBuffering(false)
     }
 
-    let prevPositionSecond: number | undefined;
-    let prevIsPlaying: boolean | undefined;
+    let prevIsPlaying: boolean | undefined
 
-    audio.setOnPlaybackStatusUpdate(async status => {
-      if (!status.isLoaded) return;
+    audio.setOnPlaybackStatusUpdate(async playbackStatus => {
+      if (!playbackStatus.isLoaded) return
 
-      const { isPlaying, positionMillis } = status;
+      const { isPlaying, positionMillis } = playbackStatus
 
       if (prevIsPlaying !== isPlaying) {
-        setIsPlayingCurrentAudio(isPlaying);
-
-        prevIsPlaying = isPlaying;
+        setIsPlayingCurrentAudio(isPlaying)
+        prevIsPlaying = isPlaying
       }
 
-      const currentSecond = Math.round(positionMillis / 1000);
+      if (positionMillis && positionMillis !== currentSoundPosition)
+        void setCurrentSoundPosition(positionMillis)
+    })
 
-      // Сравниваем текущую секунду с предыдущей
-      if (currentSecond !== prevPositionSecond) {
-        await setCurrentSoundPosition(positionMillis);
+    setCurrentSound(audio)
 
-        // Обновляем значение prevSecond до текущей секунды
-        prevPositionSecond = currentSecond;
-      }
-    });
+    return audio
+  }
 
-    return audio;
-  };
+  const changeProgressPosition = async (newPosition: number) => {
+    if (!currentSound) return
 
-  const changeProgressPosition = async (value: number, newSound?: Audio.Sound) => {
-    const sound = newSound || currentSound;
-
-    if (!sound) return;
-
-    await sound.setPositionAsync(value);
-  };
+    await currentSound.setPositionAsync(newPosition)
+    void setCurrentSoundPosition(newPosition)
+  }
 
   return {
     changeProgressPosition,
@@ -149,5 +112,5 @@ export const usePlayer = () => {
     recreateSound,
     stop,
     unload,
-  };
-};
+  }
+}

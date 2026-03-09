@@ -1,23 +1,22 @@
-import React from 'react';
-import { ScrollView, StatusBar, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  NotesForPreachersBooksSlider,
-  TopicalAndThematicBooksSlider,
-  VerseByVerseBooksSlider,
-} from 'widgets';
-import { COLORS, type ReadStackParamName, type ReadStackScreenProps } from 'shared';
+import React from 'react'
+import { ScrollView, StatusBar, StyleSheet } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { NotesForPreachersBooksSlider } from 'widgets/notes-for-preachers-books-slider'
+import { TopicalAndThematicBooksSlider } from 'widgets/topical-and-thematic-books-slider'
+import { VerseByVerseBooksSlider } from 'widgets/verse-by-verse-books-slider'
+import { COLORS } from 'shared/themed'
+import type { ReadStackParamName, ReadStackScreenProps } from 'shared/routing'
 
 export const ReadScreen: React.FC<ReadStackScreenProps<ReadStackParamName.Home>> = () => (
   <SafeAreaView style={styles.container}>
-    <StatusBar backgroundColor='transparent' barStyle='dark-content' translucent />
+    <StatusBar translucent barStyle='dark-content' backgroundColor='transparent' />
     <ScrollView style={styles.content}>
       <NotesForPreachersBooksSlider />
       <VerseByVerseBooksSlider />
       <TopicalAndThematicBooksSlider />
     </ScrollView>
   </SafeAreaView>
-);
+)
 
 const styles = StyleSheet.create({
   container: {
@@ -27,4 +26,4 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     flex: 1,
   },
-});
+})

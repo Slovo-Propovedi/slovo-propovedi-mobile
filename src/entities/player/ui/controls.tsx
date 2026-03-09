@@ -1,35 +1,36 @@
-import React, { useEffect } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import type { PlaylistData, SermonData } from 'shared';
-import { COLORS, FONT_SIZES, isNonNullable } from 'shared';
-import { PlayerControlButton, PlayerControlButtonType } from 'shared';
-import { usePlayer } from '../hooks';
-import { usePlayerStore } from '../model';
-import { schedulePushNotification } from '../utils';
-
-export type AudioPlayerData = Omit<SermonData, 'audioUrl'> & {
-  audioUrl: string;
-  previewUrl?: string;
-};
-
-export enum PlayerControlsSize {
-  Large = 35,
-  Small = 20,
-}
-
-export type ControlsNames =
-  | PlayerControlButtonType.Next
-  | PlayerControlButtonType.Play
-  | PlayerControlButtonType.Prev;
+import { useAction, useAtom } from '@reatom/npm-react'
+import React, { useEffect } from 'react'
+import { ActivityIndicator, View } from 'react-native'
+import { isNonNullable } from 'shared/lib'
+import { COLORS } from 'shared/themed'
+import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
+import type { AudioPlayerData, ControlsNames } from './controls.types'
+import type { StyleProp, ViewStyle } from 'react-native'
+import type { PlaylistData } from 'shared/types'
+import { usePlayer } from '../hooks'
+import {
+  currentSoundDurationAtom,
+  currentSoundPositionAtom,
+  isCurrentSoundBufferingAtom,
+  isPlayingCurrentAudioAtom,
+  setCurrentSound as setCurrentSoundAction,
+} from '../model'
+import { schedulePushNotification } from '../utils'
+import { playerControlsStyles as styles } from './controls.styles'
+import { PlayerControlsSize } from './controls.types'
+import {
+  getExcludedButtons,
+  getIndexOfCurrentAudioInPlaylist,
+  getIsNotAvailableNext,
+} from './controls.utils'
 
 interface PlayerControlsProps {
-  currentAudio: AudioPlayerData | null;
-  currentPlaylist: PlaylistData | null;
-  excludeButtons?: ControlsNames[];
-  setCurrentAudio: (audio: AudioPlayerData) => Promise<void>;
-  size?: PlayerControlsSize;
-  style?: StyleProp<ViewStyle>;
+  currentAudio: AudioPlayerData | null
+  currentPlaylist: null | PlaylistData
+  excludeButtons?: ControlsNames[]
+  setCurrentAudio: (audio: AudioPlayerData) => Promise<unknown>
+  size?: PlayerControlsSize
+  style?: StyleProp<ViewStyle>
 }
 
 export const PlayerControls = ({
@@ -40,96 +41,64 @@ export const PlayerControls = ({
   size = PlayerControlsSize.Large,
   style,
 }: PlayerControlsProps) => {
-  const { pause, play, recreateSound } = usePlayer();
-
-  const {
-    currentSoundDuration,
-    currentSoundPosition,
-    isCurrentSoundBuffering,
-    isPlayingCurrentAudio,
-    setCurrentSound,
-  } = usePlayerStore(store => ({
-    currentSoundDuration: store.currentSoundDuration,
-    currentSoundPosition: store.currentSoundPosition,
-    isCurrentSoundBuffering: store.isCurrentSoundBuffering,
-    isPlayingCurrentAudio: store.isPlayingCurrentAudio,
-    setCurrentSound: store.setCurrentSound,
-  }));
-
-  const {
-    next: isNextExcluded,
-    play: isPlayExcluded,
-    prev: isPrevExcluded,
-  } = excludeButtons?.reduce<Partial<Record<ControlsNames, true>>>(
-    (acc, currentValue) => ({ ...acc, [currentValue]: true }),
-    {},
-  ) || {};
-
-  const indexOfCurrentAudioInPlaylist =
-    currentAudio && currentPlaylist?.list.findIndex(({ id }) => currentAudio.id === id);
-
-  const isNotAvailableNext =
-    currentPlaylist && indexOfCurrentAudioInPlaylist === currentPlaylist.list.length - 1;
+  const { pause, play, recreateSound } = usePlayer()
+  const currentSoundDuration = useAtom(currentSoundDurationAtom)[0]
+  const currentSoundPosition = useAtom(currentSoundPositionAtom)[0]
+  const isCurrentSoundBuffering = useAtom(isCurrentSoundBufferingAtom)[0]
+  const isPlayingCurrentAudio = useAtom(isPlayingCurrentAudioAtom)[0]
+  const setCurrentSound = useAction(setCurrentSoundAction)
+  const excludedButtons = getExcludedButtons(excludeButtons)
+  const indexOfCurrentAudioInPlaylist = getIndexOfCurrentAudioInPlaylist(
+    currentAudio,
+    currentPlaylist,
+  )
+  const isNotAvailableNext = getIsNotAvailableNext(currentPlaylist, indexOfCurrentAudioInPlaylist)
 
   const togglePlay = async () => {
-    if (isPlayingCurrentAudio) return await pause();
-
-    return await play();
-  };
+    if (isPlayingCurrentAudio) return await pause()
+    return await play()
+  }
 
   const toggleTrack = async (dir: 'next' | 'prev') => {
-    if (!isNonNullable(indexOfCurrentAudioInPlaylist) || !currentPlaylist) return;
-
+    if (!isNonNullable(indexOfCurrentAudioInPlaylist) || !currentPlaylist) return
     const { audioUrl, ...otherProps } =
       currentPlaylist.list[
         dir === 'next' ? indexOfCurrentAudioInPlaylist + 1 : indexOfCurrentAudioInPlaylist - 1
-      ];
-
-    if (!audioUrl) return;
-
-    const newAudio = { ...otherProps, audioUrl, previewUrl: currentPlaylist.previewUrl };
-
-    await setCurrentAudio(newAudio);
-
-    const newSound = await recreateSound(newAudio.audioUrl);
-
-    if (newSound) setCurrentSound(newSound);
-
+      ]
+    if (!audioUrl) return
+    const newAudio = { ...otherProps, audioUrl, previewUrl: currentPlaylist.previewUrl }
+    await setCurrentAudio(newAudio)
+    const newSound = await recreateSound(newAudio.audioUrl)
+    if (newSound) setCurrentSound(newSound)
     await schedulePushNotification({
       body: newAudio.description || '',
       subtitle: currentPlaylist.title || 'Проповедует Андрей Вовк',
       title: newAudio.title,
-    });
-    await play(newSound);
-  };
-
-  const switchToNextTrack = async () => {
-    await toggleTrack('next');
-  };
-
-  const switchToPreviousTrack = async () => {
-    await toggleTrack('prev');
-  };
+    })
+    await play(newSound)
+  }
 
   useEffect(() => {
-    if (!currentSoundDuration) return;
+    if (!currentSoundDuration) return
+    if (currentSoundPosition >= currentSoundDuration && !isNotAvailableNext)
+      void toggleTrack('next')
+  }, [currentSoundDuration, currentSoundPosition, isNotAvailableNext])
 
-    if (currentSoundPosition >= currentSoundDuration && !isNotAvailableNext) switchToNextTrack();
-  }, [currentSoundDuration, currentSoundPosition, isNotAvailableNext]);
+  const isPrevDisabled = indexOfCurrentAudioInPlaylist === 0 || !currentAudio
+  const isNextDisabled = isNotAvailableNext || !currentAudio
 
   return (
-    <View style={[styles.controlsContainer, style]} testID='controls-container'>
-      {!isPrevExcluded && (
+    <View testID='controls-container' style={[styles.controlsContainer, style]}>
+      {!excludedButtons[PlayerControlButtonType.Prev] && (
         <PlayerControlButton
-          isDisabled={indexOfCurrentAudioInPlaylist === 0 || !currentAudio}
-          onPress={switchToPreviousTrack}
           size={size}
           testID='prev-button'
+          isDisabled={isPrevDisabled}
           type={PlayerControlButtonType.Prev}
+          onPress={() => void toggleTrack('prev')}
         />
       )}
-
-      {!isPlayExcluded &&
+      {!excludedButtons[PlayerControlButtonType.Play] &&
         (isCurrentSoundBuffering ? (
           <View>
             <ActivityIndicator
@@ -139,37 +108,23 @@ export const PlayerControls = ({
           </View>
         ) : (
           <PlayerControlButton
-            isDisabled={!currentAudio}
-            onPress={togglePlay}
             size={size * 2}
+            onPress={togglePlay}
             testID='play-button'
+            isDisabled={!currentAudio}
             type={
               isPlayingCurrentAudio ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play
             }
           />
         ))}
-
-      {!isNextExcluded && (
+      {!excludedButtons[PlayerControlButtonType.Next] && (
         <PlayerControlButton
-          isDisabled={isNotAvailableNext || !currentAudio}
-          onPress={switchToNextTrack}
           size={size}
+          isDisabled={isNextDisabled}
           type={PlayerControlButtonType.Next}
+          onPress={() => void toggleTrack('next')}
         />
       )}
     </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  bufferingText: {
-    alignItems: 'center',
-    fontSize: FONT_SIZES.h5,
-  },
-  controlsContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    width: '100%',
-  },
-});
+  )
+}

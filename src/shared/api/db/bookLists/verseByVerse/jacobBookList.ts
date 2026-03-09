@@ -1,4 +1,4 @@
-import type { FetchedBookData } from 'shared/types';
+import type { FetchedBookData } from 'shared/types'
 
 export const jacobBookList: FetchedBookData[] = [
   {
@@ -7,4 +7,4 @@ export const jacobBookList: FetchedBookData[] = [
       'https://slovo-istini.com/image/categories/23/whatsapp_image_2022-11-11_at_17.11.51.jpeg',
     title: 'Послание Иакова',
   },
-];
+]

@@ -1,10 +1,13 @@
-import * as Constants from 'expo-constants';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import * as Constants from 'expo-constants'
+import * as Device from 'expo-device'
+import * as Notifications from 'expo-notifications'
+import { Platform } from 'react-native'
 
 export const registerForPushNotificationsAsync = async () => {
-  let token;
+  let token
+
+  // Skip notifications on web platform
+  if (Platform.OS === 'web') return
 
   if (Platform.OS === 'android')
     await Notifications.setNotificationChannelAsync('new-emails', {
@@ -12,27 +15,27 @@ export const registerForPushNotificationsAsync = async () => {
       lightColor: '#FF231F7C',
       name: 'default',
       vibrationPattern: [0, 250, 250, 250],
-    });
+    })
 
   if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    const { status: existingStatus } = await Notifications.getPermissionsAsync()
 
-    let finalStatus = existingStatus;
+    let finalStatus = existingStatus
 
     if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+      const { status } = await Notifications.requestPermissionsAsync()
+      finalStatus = status
     }
     if (finalStatus !== 'granted') {
-      console.error('Failed to get push token for push notification!');
-      return;
+      console.error('Failed to get push token for push notification!')
+      return
     }
 
     const { data } = await Notifications.getExpoPushTokenAsync({
       projectId: Constants.default.easConfig?.projectId,
-    });
+    })
 
-    token = data;
+    token = data
 
     /*
      * await fetch('https://example.com/', {
@@ -46,23 +49,23 @@ export const registerForPushNotificationsAsync = async () => {
      *   }),
      * });
      */
-  } else console.error('Must use physical device for Push Notifications');
+  } else console.error('Must use physical device for Push Notifications')
 
-  return token;
-};
+  return token
+}
 
-const NOTIFICATION_ID = 'audio-player-notification';
+const NOTIFICATION_ID = 'audio-player-notification'
 
-export const schedulePushNotification = async <D extends object>({
+export const schedulePushNotification = async <D extends Record<string, unknown>>({
   body,
   data,
   subtitle,
   title,
 }: {
-  body?: null | string;
-  data?: D;
-  subtitle?: null | string;
-  title: string;
+  body?: null | string
+  data?: D
+  subtitle?: null | string
+  title: string
 }) => {
   await Notifications.scheduleNotificationAsync({
     content: {
@@ -75,10 +78,10 @@ export const schedulePushNotification = async <D extends object>({
     },
     identifier: NOTIFICATION_ID,
     trigger: { channelId: 'new-emails', seconds: 1 },
-  });
-};
+  })
+}
 
 export const cancelScheduledNotificationAsync = async () => {
-  await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_ID);
-  await Notifications.cancelAllScheduledNotificationsAsync();
-};
+  await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_ID)
+  await Notifications.cancelAllScheduledNotificationsAsync()
+}

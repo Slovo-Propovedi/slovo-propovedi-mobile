@@ -1,79 +1,31 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Audio } from 'expo-av';
-import { create } from 'zustand';
-import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { action, atom } from '@reatom/framework'
+import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/constants'
+import type { Audio } from 'expo-av'
 
-interface PlayerStoreStates {
-  currentSound: Audio.Sound | null;
-  currentSoundDuration: number;
+export const currentSoundAtom = atom<Audio.Sound | null>(null, 'currentSoundAtom')
+export const currentSoundDurationAtom = atom(0, 'currentSoundDurationAtom')
+export const currentSoundPositionAtom = atom(0, 'currentSoundPositionAtom')
+export const isCurrentSoundBufferingAtom = atom(false, 'isCurrentSoundBufferingAtom')
+export const isPlayingCurrentAudioAtom = atom(false, 'isPlayingCurrentAudioAtom')
 
-  currentSoundPosition: number;
+export const setCurrentSound = action((_ctx, sound: Audio.Sound | null) => sound, 'setCurrentSound')
 
-  isCurrentSoundBuffering: boolean;
+export const setCurrentSoundDuration = action(async (_ctx, duration: number) => {
+  await AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(duration))
+  return duration
+}, 'setCurrentSoundDuration')
 
-  isPlayingCurrentAudio: boolean;
-}
+export const setCurrentSoundPosition = action(async (_ctx, position: number) => {
+  await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(position))
+  return position
+}, 'setCurrentSoundPosition')
 
-interface PlayerStore extends PlayerStoreStates {
-  resetStates: () => void;
-
-  setCurrentSound: (sound: Audio.Sound | null) => void;
-
-  setCurrentSoundDuration: (duration: number) => Promise<void>;
-
-  setCurrentSoundPosition: (position: number) => Promise<void>;
-  setIsCurrentSoundBuffering: (value: boolean) => void;
-  setIsPlayingCurrentAudio: (value: boolean) => void;
-}
-
-const initialState: PlayerStoreStates = {
-  currentSound: null,
-  currentSoundDuration: 0,
-
-  currentSoundPosition: 0,
-
-  isCurrentSoundBuffering: false,
-
-  isPlayingCurrentAudio: false,
-};
-
-export const usePlayerStore = create<PlayerStore>(set => ({
-  ...initialState,
-
-  resetStates: () =>
-    set(state => ({
-      ...state,
-      ...initialState,
-    })),
-  setCurrentSound: sound =>
-    set(state => ({
-      ...state,
-      currentSound: sound,
-    })),
-
-  setCurrentSoundDuration: async duration => {
-    set(state => ({
-      ...state,
-      currentSoundDuration: duration,
-    }));
-    await AsyncStorage.setItem(CURRENT_SOUND_DURATION, `${duration}`);
-  },
-  setCurrentSoundPosition: async position => {
-    set(state => ({
-      ...state,
-      currentSoundPosition: position,
-    }));
-    await AsyncStorage.setItem(CURRENT_SOUND_POSITION, `${position}`);
-  },
-
-  setIsCurrentSoundBuffering: value =>
-    set(state => ({
-      ...state,
-      isCurrentSoundBuffering: value,
-    })),
-  setIsPlayingCurrentAudio: value =>
-    set(state => ({
-      ...state,
-      isPlayingCurrentAudio: value,
-    })),
-}));
+export const setIsCurrentSoundBuffering = action(
+  (_ctx, value: boolean) => value,
+  'setIsCurrentSoundBuffering',
+)
+export const setIsPlayingCurrentAudio = action(
+  (_ctx, value: boolean) => value,
+  'setIsPlayingCurrentAudio',
+)

@@ -1,66 +1,64 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
-import type { BookData, ReadStackNavProp } from 'shared';
+import { useNavigation } from '@react-navigation/native'
+import { useAction, useAtom } from '@reatom/npm-react'
+import React, { useEffect } from 'react'
+import { StyleSheet } from 'react-native'
+import { ReadStackParamName } from 'shared/routing'
+import { INDENTS } from 'shared/themed'
 import {
-  INDENTS,
-  ReadStackParamName,
   Slider,
   SliderItemDescriptionBackgroundStyle,
   SliderItemSize,
   SliderItemTransform,
   WhereIsSlideTitleLocated,
-} from 'shared';
-import { useTopicalAndThematicBooksStore } from './model';
+} from 'shared/ui'
+import type { ReadStackNavProp } from 'shared/routing'
+import type { BookData } from 'shared/types'
+import { getTopicalAndThematicBooksSlider, TopicalAndThematicBooksSliderAtom } from './model'
 
 export const TopicalAndThematicBooksSlider = () => {
-  const title = 'Актуальные и тематические';
+  const title = 'Актуальные и тематические'
 
-  const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>();
+  const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>()
 
-  const { getTopicalAndThematicBooks, topicalAndThematicBooks } = useTopicalAndThematicBooksStore(
-    state => ({
-      getTopicalAndThematicBooks: state.getTopicalAndThematicBooks,
-      topicalAndThematicBooks: state.topicalAndThematicBooks,
-    }),
-  );
+  const topicalAndThematicBooks = useAtom(TopicalAndThematicBooksSliderAtom)[0]
+  const fetchTopicalAndThematicBooks = useAction(getTopicalAndThematicBooksSlider)
 
   const onItemPress = async (bookList: BookData) => {
-    navigate(ReadStackParamName.BookReader, bookList);
-  };
+    navigate(ReadStackParamName.BookReader, bookList)
+  }
 
   const onPressTitle = (params: BookData[]) => {
-    navigate(ReadStackParamName.BooksList, { books: params, title });
-  };
+    navigate(ReadStackParamName.BooksList, { books: params, title })
+  }
 
   useEffect(() => {
-    getTopicalAndThematicBooks();
-  }, []);
+    void fetchTopicalAndThematicBooks()
+  }, [])
 
   return (
     <Slider
-      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      title={title}
+      style={styles.slider}
+      onPressItem={onItemPress}
+      itemsSize={SliderItemSize.Large}
       descriptionTitleTextAlign='center'
+      transform={SliderItemTransform.High}
+      whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
+      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      onPressTitle={() => {
+        onPressTitle(topicalAndThematicBooks)
+      }}
       items={topicalAndThematicBooks.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
-      itemsSize={SliderItemSize.Large}
-      onPressItem={onItemPress}
-      onPressTitle={() => {
-        onPressTitle(topicalAndThematicBooks);
-      }}
-      style={styles.slider}
-      title={title}
-      transform={SliderItemTransform.High}
-      whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
     />
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   slider: {
     paddingHorizontal: INDENTS.middle,
   },
-});
+})

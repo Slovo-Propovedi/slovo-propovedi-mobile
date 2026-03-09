@@ -30,11 +30,6 @@
     "web": {
       "favicon": "./assets/favicon.jpg"
     },
-    "extra": {
-      "eas": {
-        "projectId": "ddf9e2dd-b431-490b-afed-1340eed6137a"
-      }
-    },
     "plugins": [
       [
         "expo-av",
@@ -47,24 +42,11 @@
         {
           "icon": "./assets/adaptive-icon.png",
           "color": "#ff602a"
-          // "sounds": [
-          //   "./local/assets/notification-sound.wav",
-          //   "./local/assets/notification-sound-other.wav"
-          // ]
-        }
-      ],
-      [
-        "expo-updates",
-        {
-          "username": "egoreast"
         }
       ]
     ],
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
     "updates": {
-      "url": "https://u.expo.dev/ddf9e2dd-b431-490b-afed-1340eed6137a"
+      "enabled": false
     }
   }
 }

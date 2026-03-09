@@ -1,21 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import type { ViewStyle } from 'react-native';
-import { Dimensions, Linking, StyleSheet, Text, View } from 'react-native';
-import type { GetYoutubeVideosResponseItem, SermonData } from 'shared';
-import {
-  Button,
-  COLORS,
-  FONT_SIZES,
-  INDENTS,
-  MimeType,
-  YoutubePreview,
-  downloadFile,
-  getYoutubeVideoData,
-} from 'shared';
+import React, { useEffect, useState } from 'react'
+import { Dimensions, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { downloadFile, getYoutubeVideoData } from 'shared/lib'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
+import { MimeType } from 'shared/types'
+import { YoutubePreview } from 'shared/ui'
+import type { ViewStyle } from 'react-native'
+import type { GetYoutubeVideosResponseItem } from 'shared/lib'
+import type { SermonData } from 'shared/types'
 
-const windowHeight = Dimensions.get('window').height;
+const windowHeight = Dimensions.get('window').height
 
-type SermonCardProps = SermonData & { style?: ViewStyle };
+type SermonCardProps = { style?: ViewStyle } & SermonData
 
 export const SermonCard = ({
   audioUrl,
@@ -25,17 +20,17 @@ export const SermonCard = ({
   title,
   youtubeUrl,
 }: SermonCardProps) => {
-  const [videoData, setVideoData] = useState<GetYoutubeVideosResponseItem | null>(null);
+  const [videoData, setVideoData] = useState<GetYoutubeVideosResponseItem | null>(null)
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       if (youtubeUrl) {
-        const response = await getYoutubeVideoData(youtubeUrl);
+        const response = await getYoutubeVideoData(youtubeUrl)
 
-        if (response) setVideoData(response);
+        if (response) setVideoData(response)
       }
-    })();
-  }, []);
+    })()
+  }, [])
 
   return (
     <View style={[styles.container, style]}>
@@ -45,58 +40,57 @@ export const SermonCard = ({
 
       {youtubeUrl && videoData && (
         <YoutubePreview
-          previewSrc={videoData.snippet.thumbnails.medium.url}
-          style={styles.youtubePreview}
           url={youtubeUrl}
+          style={styles.youtubePreview}
+          previewSrc={videoData.snippet.thumbnails.medium.url}
         />
       )}
 
       <View style={styles.buttonsGroup}>
         {audioUrl && (
           <>
-            <Button
-              color={COLORS.onPrimary}
-              onPress={() => {
-                audioUrl && Linking.openURL(audioUrl);
-              }}
+            <TouchableOpacity
               style={styles.listenLink}
-              title='Слушать'
-              titleStyle={styles.listenLinkTitle}
-            />
-            <Button
-              color={COLORS.onPrimary}
               onPress={() => {
-                // audioUrl && Linking.openURL(audioUrl);
-
-                audioUrl &&
-                  downloadFile({ fileName: 'test.mp3', mimeType: MimeType.mp3, url: audioUrl });
+                if (audioUrl) void Linking.openURL(audioUrl)
               }}
+            >
+              <Text style={styles.buttonText}>Слушать</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.listenLink}
-              title='Скачать аудио'
-              titleStyle={styles.listenLinkTitle}
-            />
+              onPress={() => {
+                if (audioUrl)
+                  void downloadFile({ fileName: 'test.mp3', mimeType: MimeType.mp3, url: audioUrl })
+              }}
+            >
+              <Text style={styles.buttonText}>Скачать аудио</Text>
+            </TouchableOpacity>
           </>
         )}
         {textFileUrl && (
-          <Button
-            color={COLORS.onPrimary}
-            onPress={() => {
-              textFileUrl && Linking.openURL(textFileUrl);
-            }}
+          <TouchableOpacity
             style={styles.textFileLink}
-            title='Читать'
-            titleStyle={styles.listenLinkTitle}
-          />
+            onPress={() => {
+              if (textFileUrl) void Linking.openURL(textFileUrl)
+            }}
+          >
+            <Text style={styles.buttonText}>Читать</Text>
+          </TouchableOpacity>
         )}
       </View>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   buttonsGroup: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+  },
+  buttonText: {
+    color: COLORS.onPrimary,
+    fontSize: FONT_SIZES.h4,
   },
   container: { padding: INDENTS.high },
 
@@ -107,21 +101,19 @@ const styles = StyleSheet.create({
 
   listenLink: {
     backgroundColor: COLORS.primary,
+    borderRadius: 5,
+    padding: INDENTS.middle,
   },
 
-  listenLinkTitle: {
-    fontSize: FONT_SIZES.h4,
-  },
   textFileLink: {
     backgroundColor: COLORS.primary,
+    borderRadius: 5,
+    padding: INDENTS.middle,
   },
   title: {
     color: COLORS.primary,
     fontSize: FONT_SIZES.h2,
     paddingVertical: INDENTS.high,
-  },
-  watchLink: {
-    backgroundColor: COLORS.primary,
   },
   youtubePreview: {
     height: windowHeight * 0.24,
@@ -129,4 +121,4 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     width: '100%',
   },
-});
+})

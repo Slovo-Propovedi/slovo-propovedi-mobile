@@ -1,15 +1,12 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { ListenStackScreenProps, OnPressTouchableListItem, PlaylistData } from 'shared';
-import {
-  COLORS,
-  FONT_SIZES,
-  INDENTS,
-  ListItemSize,
-  ListenStackParamName,
-  TouchableListItem,
-} from 'shared';
+import React from 'react'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ListenStackParamName } from 'shared/routing'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
+import { ListItemSize, TouchableListItem } from 'shared/ui'
+import type { ListenStackScreenProps } from 'shared/routing'
+import type { PlaylistData } from 'shared/types'
+import type { OnPressTouchableListItem } from 'shared/ui'
 
 export const PlaylistListScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.PlaylistList>
@@ -19,11 +16,11 @@ export const PlaylistListScreen: React.FC<
     params: { playlists, title },
   },
 }) => {
-  const { top } = useSafeAreaInsets();
+  const { top } = useSafeAreaInsets()
 
   const onPressListItem: OnPressTouchableListItem<PlaylistData> = params => {
-    navigate(ListenStackParamName.Playlist, params);
-  };
+    navigate(ListenStackParamName.Playlist, params)
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -37,14 +34,14 @@ export const PlaylistListScreen: React.FC<
             data={playlist}
             key={playlist.title}
             onPress={onPressListItem}
-            previewPlaceholderText={`${index + 1}`}
             size={ListItemSize.Middle}
+            previewPlaceholderText={`${index + 1}`}
           />
         ))}
       </View>
     </ScrollView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -60,4 +57,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: INDENTS.high,
   },
-});
+})

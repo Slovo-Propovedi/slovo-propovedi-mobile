@@ -1,17 +1,8 @@
-import { create } from 'zustand';
+import { action, atom } from '@reatom/framework'
 
-interface AppStore {
-  isAudioPlayerMounted: boolean;
+export const isAudioPlayerMountedAtom = atom(false, 'isAudioPlayerMountedAtom')
 
-  setIsAudioPlayerMounted: (value: boolean) => void;
-}
-
-export const useAppStore = create<AppStore>(set => ({
-  isAudioPlayerMounted: false,
-
-  setIsAudioPlayerMounted: value =>
-    set(state => ({
-      ...state,
-      isAudioPlayerMounted: value,
-    })),
-}));
+export const setIsAudioPlayerMounted = action(
+  (_ctx, value: boolean) => value,
+  'setIsAudioPlayerMounted',
+)

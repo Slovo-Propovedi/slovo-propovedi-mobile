@@ -1,17 +1,19 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
-import type { ListenStackNavProp, PlaylistData } from 'shared';
-import { INDENTS, ListenStackParamName, RADIUSES, Slider, SliderItemSize } from 'shared';
-import { useOnBibleBooksListStore } from './model';
+import { useNavigation } from '@react-navigation/native'
+import { useAction, useAtom } from '@reatom/npm-react'
+import React, { useEffect } from 'react'
+import { StyleSheet } from 'react-native'
+import { ListenStackParamName } from 'shared/routing'
+import { INDENTS, RADIUSES } from 'shared/themed'
+import { Slider, SliderItemSize } from 'shared/ui'
+import type { ListenStackNavProp } from 'shared/routing'
+import type { PlaylistData } from 'shared/types'
+import { getSermonsOnBibleSlider, SermonsOnBibleSliderAtom } from './model'
 
 export const SermonsOnBibleSlider = () => {
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
+  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
 
-  const { getOnBibleBookList, onBibleBooksList } = useOnBibleBooksListStore(state => ({
-    getOnBibleBookList: state.getOnBibleBookList,
-    onBibleBooksList: state.onBibleBooksList,
-  }));
+  const onBibleBooksList = useAtom(SermonsOnBibleSliderAtom)[0]
+  const fetchOnBibleBooksList = useAction(getSermonsOnBibleSlider)
 
   const onItemPress = (params: PlaylistData) => {
     // Почему-то это вызывает ошибку:
@@ -22,40 +24,38 @@ export const SermonsOnBibleSlider = () => {
 
     // Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
 
-    navigate(ListenStackParamName.Playlist, params);
-  };
+    navigate(ListenStackParamName.Playlist, params)
+  }
 
   const onPressTitle = (params: PlaylistData[]) => {
-    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'По Библии' });
-  };
+    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'По Библии' })
+  }
 
   useEffect(() => {
-    (async () => {
-      await getOnBibleBookList();
-    })();
-  }, []);
+    void fetchOnBibleBooksList()
+  }, [])
 
   return (
     <Slider
+      title='По Библии'
+      style={styles.slider}
+      onPressItem={onItemPress}
+      itemsSize={SliderItemSize.Middle}
+      onPressTitle={() => {
+        onPressTitle(onBibleBooksList)
+      }}
       items={onBibleBooksList.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
-      itemsSize={SliderItemSize.Middle}
-      onPressItem={onItemPress}
-      onPressTitle={() => {
-        onPressTitle(onBibleBooksList);
-      }}
-      style={styles.slider}
-      title='По Библии'
     />
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   slider: {
     borderRadius: RADIUSES.low,
     paddingHorizontal: INDENTS.middle,
   },
-});
+})

@@ -1,12 +1,12 @@
-import { booksAPI } from './books';
-import { sermonsAPI } from './sermons';
+import { booksAPI } from './books'
+import { sermonsAPI } from './sermons'
 
-export * from './db';
+export * from './db'
 
-export * from './sermons';
-export * from './youtube';
+export * from './sermons'
+export * from './youtube'
 
 export const API = {
   books: booksAPI,
   sermons: sermonsAPI,
-};
+}

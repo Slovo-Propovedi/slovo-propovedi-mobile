@@ -1,64 +1,64 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
-import type { BookData, ReadStackNavProp } from 'shared';
+import { useNavigation } from '@react-navigation/native'
+import { useAction, useAtom } from '@reatom/npm-react'
+import React, { useEffect } from 'react'
+import { StyleSheet } from 'react-native'
+import { ReadStackParamName } from 'shared/routing'
+import { INDENTS } from 'shared/themed'
 import {
-  INDENTS,
-  ReadStackParamName,
   Slider,
   SliderItemDescriptionBackgroundStyle,
   SliderItemSize,
   SliderItemTransform,
   WhereIsSlideTitleLocated,
-} from 'shared';
-import { useVerseByVerseBooksStore } from './model';
+} from 'shared/ui'
+import type { ReadStackNavProp } from 'shared/routing'
+import type { BookData } from 'shared/types'
+import { getVerseByVerseBooksSlider, VerseByVerseBooksSliderAtom } from './model'
 
 export const VerseByVerseBooksSlider = () => {
-  const title = 'По библии. Стих за стихом';
+  const title = 'По библии. Стих за стихом'
 
-  const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>();
+  const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>()
 
-  const { getVerseByVerseBooks, notesVerseByVerseBooks } = useVerseByVerseBooksStore(state => ({
-    getVerseByVerseBooks: state.getVerseByVerseBooks,
-    notesVerseByVerseBooks: state.verseByVerseBooks,
-  }));
+  const verseByVerseBooks = useAtom(VerseByVerseBooksSliderAtom)[0]
+  const fetchVerseByVerseBooks = useAction(getVerseByVerseBooksSlider)
 
   const onItemPress = async (bookList: BookData) => {
-    navigate(ReadStackParamName.BookReader, bookList);
-  };
+    navigate(ReadStackParamName.BookReader, bookList)
+  }
 
   const onPressTitle = (params: BookData[]) => {
-    navigate(ReadStackParamName.BooksList, { books: params, title });
-  };
+    navigate(ReadStackParamName.BooksList, { books: params, title })
+  }
 
   useEffect(() => {
-    getVerseByVerseBooks();
-  }, []);
+    void fetchVerseByVerseBooks()
+  }, [])
 
   return (
     <Slider
-      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      title={title}
+      style={styles.slider}
+      onPressItem={onItemPress}
+      itemsSize={SliderItemSize.Large}
       descriptionTitleTextAlign='center'
-      items={notesVerseByVerseBooks.map(item => ({
+      transform={SliderItemTransform.High}
+      whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
+      onPressTitle={() => {
+        onPressTitle(verseByVerseBooks)
+      }}
+      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      items={verseByVerseBooks.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
-      itemsSize={SliderItemSize.Large}
-      onPressItem={onItemPress}
-      onPressTitle={() => {
-        onPressTitle(notesVerseByVerseBooks);
-      }}
-      style={styles.slider}
-      title={title}
-      transform={SliderItemTransform.High}
-      whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
     />
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   slider: {
     paddingHorizontal: INDENTS.middle,
   },
-});
+})

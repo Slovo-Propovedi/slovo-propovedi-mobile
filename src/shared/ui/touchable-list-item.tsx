@@ -1,22 +1,22 @@
-import React from 'react';
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
-import type { ListItemSize } from './list-item';
-import { ListItem } from './list-item';
-import { TouchableItem } from './touchable-item';
+import React from 'react'
+import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
+import { ListItem } from './list-item/list-item'
+import { type ListItemSize } from './list-item/list-item.types'
+import { TouchableItem } from './touchable-item'
 
-export type OnPressTouchableListItem<T> = (data: T, event: GestureResponderEvent) => void;
-
-interface TouchableListItemProps<T> {
-  data: T;
-  onPress: OnPressTouchableListItem<T>;
-  previewPlaceholderText?: string;
-  size?: ListItemSize;
-  style?: StyleProp<ViewStyle>;
-}
+export type OnPressTouchableListItem<T> = (data: T, event: GestureResponderEvent) => void
 
 type TouchableListItemComponent = <T extends { previewUrl?: string; title: string }>(
   props: TouchableListItemProps<T>,
-) => JSX.Element;
+) => React.JSX.Element
+
+interface TouchableListItemProps<T> {
+  data: T
+  onPress: OnPressTouchableListItem<T>
+  previewPlaceholderText?: string
+  size?: ListItemSize
+  style?: StyleProp<ViewStyle>
+}
 
 export const TouchableListItem: TouchableListItemComponent = ({
   data,
@@ -25,13 +25,13 @@ export const TouchableListItem: TouchableListItemComponent = ({
   size,
   style,
 }) => (
-  <TouchableItem onPress={event => onPress(data, event)} testID='container'>
+  <TouchableItem testID='container' onPress={event => onPress(data, event)}>
     <ListItem
       data={data}
-      previewPlaceholderText={previewPlaceholderText}
       size={size}
       style={style}
       testID='list-item'
+      previewPlaceholderText={previewPlaceholderText}
     />
   </TouchableItem>
-);
+)

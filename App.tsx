@@ -1,6 +1,6 @@
-import App from 'app';
-import '@total-typescript/ts-reset';
+import App from 'app'
+import '@total-typescript/ts-reset'
 
-const Bootstrap = () => <App />;
+const Bootstrap = () => <App />
 
-export default Bootstrap;
+export default Bootstrap

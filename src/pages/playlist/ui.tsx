@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
-import type { LayoutChangeEvent } from 'react-native';
-import { Dimensions, ImageBackground, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { usePlayNewSermon } from 'features/sermon-player-controls';
-import type {
-  ListenStackParamName,
-  ListenStackScreenProps,
-  OnPressTouchableListItem,
-  SermonData,
-} from 'shared';
-import { COLORS, FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, TouchableListItem } from 'shared';
+import React, { useState } from 'react'
+import { Dimensions, ImageBackground, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { usePlayNewSermon } from 'features/sermon-player-controls'
+import { IMAGE_PLACEHOLDER } from 'shared/images'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
+import { TouchableListItem } from 'shared/ui'
+import type { LayoutChangeEvent } from 'react-native'
+import type { ListenStackParamName, ListenStackScreenProps } from 'shared/routing'
+import type { SermonData } from 'shared/types'
+import type { OnPressTouchableListItem } from 'shared/ui'
 
-const windowHeight = Dimensions.get('window').height;
+const windowHeight = Dimensions.get('window').height
 
 export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamName.Playlist>> = ({
   route: {
@@ -18,24 +17,24 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
     params: playlist,
   },
 }) => {
-  const [previewLayout, setPreviewLayout] = useState({ height: 0, width: 0 });
+  const [previewLayout, setPreviewLayout] = useState({ height: 0, width: 0 })
 
-  const playNewSermon = usePlayNewSermon();
+  const playNewSermon = usePlayNewSermon()
 
   const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = async sermon =>
-    await playNewSermon({ playlist, sermon });
+    await playNewSermon({ playlist, sermon })
 
   const handleLayout = (event: LayoutChangeEvent) => {
-    const { height, width } = event.nativeEvent.layout;
-    setPreviewLayout({ height, width });
-  };
+    const { height, width } = event.nativeEvent.layout
+    setPreviewLayout({ height, width })
+  }
 
   return (
     <ScrollView style={styles.container}>
       <ImageBackground
+        style={styles.preview}
         onLayout={handleLayout}
         source={{ uri: previewUrl || IMAGE_PLACEHOLDER }}
-        style={styles.preview}
       >
         <Text style={[styles.title, { marginTop: previewLayout.height / 3 }]}>{title}</Text>
 
@@ -53,8 +52,8 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
         ))}
       </View>
     </ScrollView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -83,4 +82,4 @@ const styles = StyleSheet.create({
     marginRight: 'auto',
     paddingBottom: INDENTS.high,
   },
-});
+})

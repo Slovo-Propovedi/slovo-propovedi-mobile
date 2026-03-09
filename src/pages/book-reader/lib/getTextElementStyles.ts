@@ -1,11 +1,11 @@
-import { type StyleProp, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
-import type { XMLElementName } from 'entities/book-reader';
-import { BodyXMLElementName } from 'entities/book-reader';
-import { FONT_SIZES, INDENTS } from 'shared';
+import { type StyleProp, StyleSheet, type TextStyle, type ViewStyle } from 'react-native'
+import { BodyXMLElementName } from 'entities/book-reader'
+import { FONT_SIZES, INDENTS } from 'shared/themed'
+import type { XMLElementName } from 'entities/book-reader'
 
 interface GetTextElementStylesReturnType {
-  style?: StyleProp<ViewStyle>;
-  textStyle?: StyleProp<TextStyle>;
+  style?: StyleProp<ViewStyle>
+  textStyle?: StyleProp<TextStyle>
 }
 
 export const getTextElementStyles = (name: XMLElementName): GetTextElementStylesReturnType =>
@@ -20,7 +20,7 @@ export const getTextElementStyles = (name: XMLElementName): GetTextElementStyles
     [BodyXMLElementName.Strong]: { textStyle: styles.strongText },
     [BodyXMLElementName.Subtitle]: { style: styles.subtitle, textStyle: styles.subtitleText },
     [BodyXMLElementName.Title]: { style: styles.title, textStyle: styles.titleText },
-  })[name as BodyXMLElementName];
+  })[name as BodyXMLElementName]
 
 const styles = StyleSheet.create({
   emphasisText: { fontStyle: 'italic' },
@@ -43,4 +43,4 @@ const styles = StyleSheet.create({
     marginVertical: INDENTS.middle,
   },
   titleText: { fontSize: FONT_SIZES.h1 },
-});
+})

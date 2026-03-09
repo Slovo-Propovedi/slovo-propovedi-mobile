@@ -1,38 +1,28 @@
-import { create } from 'zustand';
-import type { PlaylistData, SermonData } from 'shared';
-import { API, FetchedSermonsGroupName, getBookLinkAsString } from 'shared';
+import { action, atom } from '@reatom/framework'
+import { API } from 'shared/api'
+import { getBookLinkAsString } from 'shared/lib'
+import { FetchedSermonsGroupName, type PlaylistData, type SermonData } from 'shared/types'
 
-interface TopicalListState {
-  getTopicalList: () => Promise<PlaylistData[]>;
-  topicalList: PlaylistData[];
-}
+export const TopicalListSliderAtom = atom<PlaylistData[]>([], 'topical-list-sliderAtom')
 
-export const useTopicalListStore = create<TopicalListState>(set => ({
-  getTopicalList: async () => {
-    const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.Topical);
+export const getTopicalListSlider = action(async () => {
+  const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible)
 
-    const mappedList = list?.map<PlaylistData>(playlist => ({
-      ...playlist,
-      list: playlist.list.map<SermonData>(el => {
-        const { audioUrl, description, id, textFileUrl, youtubeUrl } = el;
+  const mappedList = list?.map<PlaylistData>(playlist => ({
+    ...playlist,
+    list: playlist.list.map<SermonData>(el => {
+      const { audioUrl, description, id, textFileUrl, youtubeUrl } = el
 
-        return {
-          audioUrl,
-          description,
-          id,
-          textFileUrl,
-          title: getBookLinkAsString(el),
-          youtubeUrl,
-        };
-      }),
-    }));
+      return {
+        audioUrl,
+        description,
+        id,
+        textFileUrl,
+        title: getBookLinkAsString(el),
+        youtubeUrl,
+      }
+    }),
+  }))
 
-    set(state => ({
-      ...state,
-      topicalList: mappedList || [],
-    }));
-
-    return mappedList || [];
-  },
-  topicalList: [],
-}));
+  return mappedList || []
+}, 'getTopicalListSlider')

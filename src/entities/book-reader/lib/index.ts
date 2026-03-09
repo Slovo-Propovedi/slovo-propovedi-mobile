@@ -1,1 +1,1 @@
-export * from './parseFb2BookToObject';
+export * from './parseFb2BookToObject'

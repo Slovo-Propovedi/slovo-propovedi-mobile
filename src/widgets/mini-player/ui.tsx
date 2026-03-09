@@ -1,34 +1,36 @@
-import { useNavigation } from '@react-navigation/native';
-import React from 'react';
-import type { StyleProp, TextStyle } from 'react-native';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native'
+import { useAtom } from '@reatom/npm-react'
+import React from 'react'
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import {
+  currentAudioAtom,
+  currentPlaylistAtom,
   SermonPlayerControls,
-  useSermonPlayerControlsStore,
-} from 'features/sermon-player-controls';
-import { PlayerControlsSize } from 'entities/player';
-import type { ListenStackNavProp } from 'shared';
-import { PlayerControlButtonType } from 'shared';
-import { FONT_SIZES, IMAGE_PLACEHOLDER, INDENTS, ListenStackParamName, RADIUSES } from 'shared';
+} from 'features/sermon-player-controls'
+import { PlayerControlsSize } from 'entities/player'
+import { IMAGE_PLACEHOLDER } from 'shared/images'
+import { ListenStackParamName } from 'shared/routing'
+import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed'
+import { PlayerControlButtonType } from 'shared/ui'
+import type { StyleProp, TextStyle } from 'react-native'
+import type { ListenStackNavProp } from 'shared/routing'
 
 export const MiniPlayer = () => {
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
+  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
 
-  const { currentAudio, currentPlaylist } = useSermonPlayerControlsStore(state => ({
-    currentAudio: state.currentAudio,
-    currentPlaylist: state.currentPlaylist,
-  }));
+  const currentAudio = useAtom(currentAudioAtom)[0]
+  const currentPlaylist = useAtom(currentPlaylistAtom)[0]
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        onPress={() => navigate(ListenStackParamName.AudioPlayer)}
         style={styles.touchableElements}
+        onPress={() => navigate(ListenStackParamName.AudioPlayer)}
       >
         <Image
           alt='Sermon poster'
-          source={{ uri: currentAudio?.previewUrl || IMAGE_PLACEHOLDER }}
           style={styles.preview}
+          source={{ uri: currentAudio?.previewUrl || IMAGE_PLACEHOLDER }}
         />
 
         <View style={styles.titles}>
@@ -45,20 +47,20 @@ export const MiniPlayer = () => {
 
       <View style={styles.controlsContainer}>
         <SermonPlayerControls
-          excludeButtons={[PlayerControlButtonType.Prev]}
-          size={PlayerControlsSize.Small}
           style={styles.controls}
+          size={PlayerControlsSize.Small}
+          excludeButtons={[PlayerControlButtonType.Prev]}
         />
       </View>
     </View>
-  );
-};
+  )
+}
 
 const titleGeneralStyle: StyleProp<TextStyle> = {
   flexWrap: 'wrap',
   maxWidth: '100%',
   overflow: 'hidden',
-};
+}
 
 const styles = StyleSheet.create({
   audioTitle: {
@@ -95,4 +97,4 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
   },
-});
+})

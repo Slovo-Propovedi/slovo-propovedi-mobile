@@ -1,12 +1,21 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
-import * as Updates from 'expo-updates';
-import React, { useEffect } from 'react';
-import { useSermonPlayerControlsStore } from 'features/sermon-player-controls';
-import { type AudioPlayerData, usePlayer, usePlayerStore } from 'entities/player';
-import type { PlaylistData } from 'shared';
-import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION, parseJSONToObject } from 'shared';
-import { RootTabs } from './routing';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { createCtx } from '@reatom/framework'
+import { reatomContext, useAction } from '@reatom/npm-react'
+import * as Notifications from 'expo-notifications'
+import React, { useEffect } from 'react'
+import {
+  setCurrentAudio as setCurrentAudioAction,
+  setCurrentPlaylist as setCurrentPlaylistAction,
+} from 'features/sermon-player-controls'
+import {
+  type AudioPlayerData,
+  setCurrentSound as setCurrentSoundAction,
+  usePlayer,
+} from 'entities/player'
+import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION } from 'shared/constants'
+import { parseJSONToObject } from 'shared/lib'
+import type { PlaylistData } from 'shared/types'
+import { RootTabs } from './routing'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -15,83 +24,57 @@ Notifications.setNotificationHandler({
     shouldPlaySound: false,
     shouldSetBadge: true,
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
-});
+})
+
+const ctx = createCtx()
 
 const App = () => {
-  const { setCurrentAudio, setCurrentPlaylist } = useSermonPlayerControlsStore(state => ({
-    setCurrentAudio: state.setCurrentAudio,
-    setCurrentPlaylist: state.setCurrentPlaylist,
-  }));
-  const { recreateSound, unload } = usePlayer();
-  const { setCurrentSound } = usePlayerStore(store => ({
-    setCurrentSound: store.setCurrentSound,
-  }));
-
-  const onFetchUpdateAsync = async () => {
-    try {
-      const update = await Updates.checkForUpdateAsync();
-
-      if (update.isAvailable) {
-        await Updates.fetchUpdateAsync();
-        await Updates.reloadAsync();
-      }
-    } catch (error) {
-      console.error(`Error fetching latest Expo update: ${error}`);
-    }
-  };
-
-  const initCurrentAudioAndSound = async ({
-    storedCurrentAudio,
-    storedSoundPosition,
-  }: {
-    storedCurrentAudio: null | string;
-    storedSoundPosition: null | string;
-  }) => {
-    if (!storedCurrentAudio) return;
-
-    const currentAudio = parseJSONToObject<AudioPlayerData>(storedCurrentAudio);
-
-    if (!currentAudio) return;
-
-    await setCurrentAudio(currentAudio);
-
-    const currentSound = await recreateSound(currentAudio.audioUrl, Number(storedSoundPosition));
-
-    if (!currentSound) return;
-
-    setCurrentSound(currentSound);
-  };
-
-  const initCurrentPlaylist = async (storedCurrentPlaylist: null | string) => {
-    if (!storedCurrentPlaylist) return;
-
-    const currentPlaylist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist);
-
-    if (!currentPlaylist) return;
-
-    await setCurrentPlaylist(currentPlaylist);
-  };
-
-  const initPlayerData = async () => {
-    const [[, storedCurrentAudio], [, storedCurrentPlaylist], [, storedSoundPosition]] =
-      await AsyncStorage.multiGet([CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION]);
-
-    initCurrentAudioAndSound({ storedCurrentAudio, storedSoundPosition });
-
-    initCurrentPlaylist(storedCurrentPlaylist);
-  };
+  const setCurrentAudio = useAction(setCurrentAudioAction)
+  const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
+  const setCurrentSound = useAction(setCurrentSoundAction)
+  const { recreateSound, unload } = usePlayer()
 
   useEffect(() => {
-    onFetchUpdateAsync();
-    initPlayerData();
+    const initPlayerData = async () => {
+      try {
+        const [[, storedCurrentAudio], [, storedCurrentPlaylist], [, storedSoundPosition]] =
+          await AsyncStorage.multiGet([CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION])
+
+        if (storedCurrentAudio) {
+          const audio = parseJSONToObject<AudioPlayerData>(storedCurrentAudio)
+          if (audio) {
+            await setCurrentAudio(audio)
+            const sound = await recreateSound(audio.audioUrl, Number(storedSoundPosition) || 0)
+            if (sound) await setCurrentSound(sound)
+          }
+        }
+
+        if (storedCurrentPlaylist) {
+          const playlist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist)
+          if (playlist) await setCurrentPlaylist(playlist)
+        }
+      } catch (error) {
+        console.error('Error initializing player data:', error)
+      }
+    }
+
+    void initPlayerData()
 
     return () => {
-      unload();
-    };
-  }, []);
+      void unload()
+    }
+  }, [])
 
-  return <RootTabs />;
-};
+  return <RootTabs />
+}
 
-export default App;
+const AppWithProvider = () => (
+  <reatomContext.Provider value={ctx}>
+    <App />
+  </reatomContext.Provider>
+)
+
+export default AppWithProvider

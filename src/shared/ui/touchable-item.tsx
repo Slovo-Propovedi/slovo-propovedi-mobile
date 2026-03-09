@@ -1,14 +1,14 @@
-import React from 'react';
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity } from 'react-native';
-import { COLORS } from 'shared/themed';
+import React from 'react'
+import { StyleSheet, TouchableOpacity } from 'react-native'
+import { COLORS } from 'shared/themed'
+import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 
 export interface TouchableItemProps {
-  children: React.ReactNode;
-  disabled?: boolean;
-  onPress: (event: GestureResponderEvent) => void;
-  style?: StyleProp<ViewStyle>;
-  testID?: string;
+  children: React.ReactNode
+  disabled?: boolean
+  onPress: (event: GestureResponderEvent) => void
+  style?: StyleProp<ViewStyle>
+  testID?: string
 }
 
 export const TouchableItem = ({
@@ -18,21 +18,21 @@ export const TouchableItem = ({
   style,
   testID,
 }: TouchableItemProps) => {
-  const buttonStyles: StyleProp<ViewStyle>[] = [styles.item];
+  const buttonStyles: StyleProp<ViewStyle>[] = [styles.item]
 
-  if (disabled) buttonStyles.push({ backgroundColor: COLORS.disabled });
+  if (disabled) buttonStyles.push({ backgroundColor: COLORS.disabled })
 
-  buttonStyles.push(style);
+  buttonStyles.push(style)
 
   return (
-    <TouchableOpacity disabled={disabled} onPress={onPress} style={buttonStyles} testID={testID}>
+    <TouchableOpacity testID={testID} onPress={onPress} disabled={disabled} style={buttonStyles}>
       {children}
     </TouchableOpacity>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   item: {
     width: '100%',
   },
-});
+})

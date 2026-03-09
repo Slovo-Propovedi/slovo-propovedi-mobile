@@ -1,69 +1,64 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
-import { usePlayNewSermon } from 'features/sermon-player-controls';
-import type { ListenStackNavProp, PlaylistData } from 'shared';
-import {
-  INDENTS,
-  ListenStackParamName,
-  Slider,
-  SliderItemSize,
-  WhereIsSlideTitleLocated,
-} from 'shared';
-import { useTopicalListStore } from './model';
+import { useNavigation } from '@react-navigation/native'
+import { useAction, useAtom } from '@reatom/npm-react'
+import React, { useEffect } from 'react'
+import { StyleSheet } from 'react-native'
+import { usePlayNewSermon } from 'features/sermon-player-controls'
+import { type ListenStackNavProp, ListenStackParamName } from 'shared/routing'
+import { INDENTS } from 'shared/themed'
+import { type PlaylistData } from 'shared/types'
+import { Slider, SliderItemSize, WhereIsSlideTitleLocated } from 'shared/ui'
+import { getTopicalListSlider, TopicalListSliderAtom } from './model'
 
 export const TopicalListSlider = () => {
-  const playNewSermon = usePlayNewSermon();
+  const playNewSermon = usePlayNewSermon()
 
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>();
+  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
 
-  const { getTopicalList, topicalList } = useTopicalListStore(state => ({
-    getTopicalList: state.getTopicalList,
-    topicalList: state.topicalList,
-  }));
+  const topicalList = useAtom(TopicalListSliderAtom)[0]
+  const fetchTopicalList = useAction(getTopicalListSlider)
 
   const onItemPress = async (playlist: PlaylistData) => {
-    const sermons = playlist.list;
+    const sermons = playlist.list
 
     if (sermons.length && sermons.length < 2) {
-      await playNewSermon({ playlist, sermon: sermons[0] });
+      await playNewSermon({ playlist, sermon: sermons[0] })
 
-      return;
+      return
     }
 
-    navigate(ListenStackParamName.Playlist, playlist);
-  };
+    navigate(ListenStackParamName.Playlist, playlist)
+  }
 
   const onPressTitle = (params: PlaylistData[]) => {
-    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'Тематические' });
-  };
+    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'Тематические' })
+  }
 
   useEffect(() => {
-    getTopicalList();
-  }, []);
+    void fetchTopicalList()
+  }, [])
 
   return (
     <Slider
+      title='Тематические'
+      style={styles.slider}
+      onPressItem={onItemPress}
       isDescriptionTitleOnSlideLarge
+      itemsSize={SliderItemSize.XLarge}
+      onPressTitle={() => {
+        onPressTitle(topicalList)
+      }}
+      whereIsSlideTitleLocated={WhereIsSlideTitleLocated.BothOnAndUnder}
       items={topicalList.map(item => ({
         data: item,
         description: item.title,
         previewURL: item.previewUrl || '',
       }))}
-      itemsSize={SliderItemSize.XLarge}
-      onPressItem={onItemPress}
-      onPressTitle={() => {
-        onPressTitle(topicalList);
-      }}
-      style={styles.slider}
-      title='Тематические'
-      whereIsSlideTitleLocated={WhereIsSlideTitleLocated.BothOnAndUnder}
     />
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   slider: {
     paddingHorizontal: INDENTS.middle,
   },
-});
+})

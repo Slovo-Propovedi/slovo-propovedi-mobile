@@ -1,5 +1,5 @@
-import type { DB } from 'shared/types';
-import { FetchedBooksGroupName, FetchedSermonsGroupName } from 'shared/types';
+import { FetchedBooksGroupName, FetchedSermonsGroupName } from 'shared/types'
+import type { DB } from 'shared/types'
 import {
   actsBookList,
   ephesiansBookList,
@@ -13,7 +13,7 @@ import {
   markBookList,
   stephensSpeechBeforeSanhedrinBookList,
   unionWithChristBookList,
-} from './bookLists';
+} from './bookLists'
 import {
   actsPlaylist,
   ephesiansPlaylist,
@@ -33,7 +33,7 @@ import {
   stephensSpeechBeforeSanhedrin,
   titusPlaylist,
   unionWithChristPlaylist,
-} from './playlists';
+} from './playlists'
 
 export const db: DB = {
   books: [
@@ -105,4 +105,4 @@ export const db: DB = {
       ],
     },
   ],
-};
+}

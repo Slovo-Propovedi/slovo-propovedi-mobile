@@ -1,10 +1,10 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
-import { StudyScreen } from 'pages/study';
-import type { RootTabName, RootTabsScreenProps, StudyStackParamList } from 'shared';
-import { StudyStackParamName } from 'shared';
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import React from 'react'
+import { StudyScreen } from 'pages/study'
+import { StudyStackParamName } from 'shared/routing'
+import type { RootTabName, RootTabsScreenProps, StudyStackParamList } from 'shared/routing'
 
-const StudyStack = createNativeStackNavigator<StudyStackParamList>();
+const StudyStack = createNativeStackNavigator<StudyStackParamList>()
 
 export const StudyRouting: React.FC<RootTabsScreenProps<RootTabName.Study>> = () => (
   <StudyStack.Navigator
@@ -15,4 +15,4 @@ export const StudyRouting: React.FC<RootTabsScreenProps<RootTabName.Study>> = ()
   >
     <StudyStack.Screen component={StudyScreen} name={StudyStackParamName.Home} />
   </StudyStack.Navigator>
-);
+)

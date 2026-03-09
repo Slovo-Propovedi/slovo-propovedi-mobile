@@ -1,19 +1,18 @@
-import React from 'react';
-import { ScrollView, StatusBar, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ListenEveryDaySlider,
-  NewSermonsSlider,
-  SermonsOnBibleSlider,
-  TopicalListSlider,
-} from 'widgets';
-import { COLORS, type ListenStackParamName, type ListenStackScreenProps } from 'shared';
+import React from 'react'
+import { ScrollView, StatusBar, StyleSheet } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { ListenEveryDaySlider } from 'widgets/listen-every-day-slider'
+import { NewSermonsSlider } from 'widgets/new-sermons-slider'
+import { SermonsOnBibleSlider } from 'widgets/sermons-on-bible-slider'
+import { TopicalListSlider } from 'widgets/topical-list-slider'
+import { COLORS } from 'shared/themed'
+import type { ListenStackParamName, ListenStackScreenProps } from 'shared/routing'
 
 export const ListenScreen: React.FC<
   ListenStackScreenProps<ListenStackParamName.ListenHome>
 > = () => (
   <SafeAreaView style={styles.container}>
-    <StatusBar backgroundColor='transparent' barStyle='dark-content' translucent />
+    <StatusBar translucent barStyle='dark-content' backgroundColor='transparent' />
 
     <ScrollView style={styles.content}>
       <NewSermonsSlider />
@@ -22,7 +21,7 @@ export const ListenScreen: React.FC<
       <ListenEveryDaySlider />
     </ScrollView>
   </SafeAreaView>
-);
+)
 
 const styles = StyleSheet.create({
   container: {
@@ -33,4 +32,4 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     flex: 1,
   },
-});
+})

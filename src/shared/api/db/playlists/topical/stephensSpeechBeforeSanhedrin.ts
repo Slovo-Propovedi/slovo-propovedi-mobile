@@ -1,4 +1,4 @@
-import type { FetchedPlaylist } from 'shared/types';
+import type { FetchedPlaylist } from 'shared/types'
 
 export const stephensSpeechBeforeSanhedrin: FetchedPlaylist = {
   list: [
@@ -23,4 +23,4 @@ export const stephensSpeechBeforeSanhedrin: FetchedPlaylist = {
   previewUrl:
     'https://slovo-istini.com/image/cache/image/pages/1221/image-19-08-23-02-50_700x1000.png',
   title: 'Речь Стефана перед синедрионом',
-};
+}

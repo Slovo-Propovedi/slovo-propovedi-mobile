@@ -1,4 +1,4 @@
-import type { FetchedBookData } from 'shared/types';
+import type { FetchedBookData } from 'shared/types'
 
 export const ephesiansBookList: FetchedBookData[] = [
   {
@@ -7,4 +7,4 @@ export const ephesiansBookList: FetchedBookData[] = [
       'https://slovo-istini.com/image/categories/20/whatsapp_image_2022-11-11_at_17.09.38.jpeg',
     title: 'Послание к ефесянам',
   },
-];
+]

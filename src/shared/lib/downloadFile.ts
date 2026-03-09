@@ -1,13 +1,13 @@
-import * as FileSystem from 'expo-file-system';
-import { Linking, Platform } from 'react-native';
-import type { MimeType } from 'shared/types';
-import { processRequest } from './processRequest';
+import * as FileSystem from 'expo-file-system/legacy'
+import { Linking, Platform } from 'react-native'
+import type { MimeType } from 'shared/types'
+import { processRequest } from './processRequest'
 
-type DownloadFileArgs = {
-  fileName: string;
-  mimeType: MimeType;
-  url: string;
-};
+interface DownloadFileArgs {
+  fileName: string
+  mimeType: MimeType
+  url: string
+}
 
 export const downloadFile = async ({ fileName, mimeType, url }: DownloadFileArgs) => {
   // Скачивание пока не работает
@@ -36,33 +36,35 @@ export const downloadFile = async ({ fileName, mimeType, url }: DownloadFileArgs
   //   }
   // };
 
-  const { data } = await processRequest(
+  const result = await processRequest(
     FileSystem.downloadAsync(url, `${FileSystem.documentDirectory}${fileName}`),
-  );
+  )
 
-  if (!data) return;
+  const data = result.data
+
+  if (!data) return
 
   if (data.status === 200 && Platform.OS === 'android') {
-    const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+    const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync()
 
-    if (!permissions.granted) return;
+    if (!permissions.granted) return
 
-    processRequest(
+    void processRequest(
       FileSystem.StorageAccessFramework.createFileAsync(
         permissions.directoryUri,
         fileName,
         mimeType,
       ),
-    );
+    )
   }
 
-  const { uri } = data;
+  const { uri } = data
 
-  Linking.openURL(uri);
+  void Linking.openURL(uri)
 
-  // eslint-disable-next-line no-console
-  console.log('Finished downloading to ', uri);
+  // eslint-disable-next-line no-console -- Debug output for download completion
+  console.log('Finished downloading to ', uri)
   /*
    * share(uri);
    */
-};
+}

@@ -1,31 +1,31 @@
-import { isNonNullable } from './';
+import { isNonNullable } from './'
 
-type GetBookLinkAsStringProps = {
-  title: string;
-} & (
+type GetBookLinkAsStringProps = (
   | {
-      chapter: number;
-      verse?: [from: number, to: number] | number;
+      chapter: number
+      verse?: [from: number, to: number] | number
     }
   | {
-      chapter?: undefined;
-      verse?: undefined;
+      chapter?: undefined
+      verse?: undefined
     }
-);
+) & {
+  title: string
+}
 
 export const getBookLinkAsString = (props: GetBookLinkAsStringProps) => {
-  if (typeof props !== 'object') throw new Error('Аргумент должен быть объектом');
+  if (typeof props !== 'object') throw new Error('Аргумент должен быть объектом')
 
-  if (!props.title) return '';
+  if (!props.title) return ''
 
-  if (!('chapter' in props) || !props.chapter) return props.title;
+  if (!('chapter' in props) || !props.chapter) return props.title
 
-  const { chapter, title, verse } = props;
+  const { chapter, title, verse } = props
 
   const collectedVerse =
-    (isNonNullable(verse) && Array.isArray(verse) ? `${verse[0]}-${verse[1]}` : verse) || '';
+    (isNonNullable(verse) && Array.isArray(verse) ? `${verse[0]}-${verse[1]}` : verse) || ''
 
-  const verseString = collectedVerse ? `:${collectedVerse}` : '';
+  const verseString = collectedVerse ? `:${collectedVerse}` : ''
 
-  return `${title}. ${chapter}${verseString}`;
-};
+  return `${title}. ${chapter}${verseString}`
+}
