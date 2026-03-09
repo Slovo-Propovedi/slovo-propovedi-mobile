@@ -2,7 +2,7 @@ import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navig
 import { type BaseParamList } from './base'
 
 export enum RootTabName {
-  Info = 'О служении',
+  Info = 'Информация',
   Listen = 'Слушать',
   Read = 'Читать',
   Study = 'Учиться',

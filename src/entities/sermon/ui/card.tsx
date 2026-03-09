@@ -118,7 +118,6 @@ const styles = StyleSheet.create({
   youtubePreview: {
     height: windowHeight * 0.24,
     marginBottom: INDENTS.high,
-    resizeMode: 'contain',
     width: '100%',
   },
 })

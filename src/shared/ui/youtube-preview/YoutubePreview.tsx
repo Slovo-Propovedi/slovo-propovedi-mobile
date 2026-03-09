@@ -18,7 +18,8 @@ export const YoutubePreview = ({ previewSrc, style, url }: YoutubePreviewProps) 
     }}
   >
     <Image
-      style={[styles.youtubeButton]}
+      resizeMode='contain'
+      style={styles.youtubeButton}
       // eslint-disable-next-line @typescript-eslint/no-require-imports -- Static asset import
       source={require('./assets/youtube-logo-png-2069.png')}
     />
@@ -26,13 +27,6 @@ export const YoutubePreview = ({ previewSrc, style, url }: YoutubePreviewProps) 
 )
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    resizeMode: 'contain',
-  },
   item: { minHeight: 50, minWidth: 50 },
-  youtubeButton: {
-    height: '100%',
-    resizeMode: 'contain',
-    width: '100%',
-  },
+  youtubeButton: { height: '100%', width: '100%' },
 })

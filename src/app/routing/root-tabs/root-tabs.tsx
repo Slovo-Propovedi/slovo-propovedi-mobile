@@ -52,9 +52,9 @@ const screenOptions = ({ route }: { route: RouteType }) =>
   ({
     headerShown: false,
     lazy: route.name !== RootTabName.Study,
-    tabBarActiveTintColor: COLORS.primary,
+    tabBarActiveTintColor: COLORS.black,
     tabBarIcon: getTabBarIcon(route),
-    tabBarInactiveTintColor: 'gray',
+    tabBarInactiveTintColor: '#555',
   }) satisfies BottomTabNavigationOptions
 
 export const RootTabs = () => (

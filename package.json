@@ -38,6 +38,7 @@
     "@reatom/npm-react": "^3.10.6",
     "expo": "~55.0.4",
     "expo-av": "~16.0.8",
+    "expo-blur": "~55.0.8",
     "expo-checkbox": "~55.0.3",
     "expo-constants": "~55.0.7",
     "expo-device": "~55.0.9",

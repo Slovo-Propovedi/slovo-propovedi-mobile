@@ -3,7 +3,6 @@ import { useNavigation } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import React from 'react'
 import { TouchableOpacity } from 'react-native'
-import { AudioPlayerScreen } from 'pages/audio-player'
 import { ListenScreen } from 'pages/listen'
 import { PlaylistScreen } from 'pages/playlist'
 import { PlaylistListScreen } from 'pages/playlist-list'
@@ -50,6 +49,5 @@ export const ListenRouting: React.FC<RootTabsScreenProps<RootTabName.Listen>> = 
     />
     <ListenStack.Screen component={PlaylistListScreen} name={ListenStackParamName.PlaylistList} />
     <ListenStack.Screen component={PlaylistScreen} name={ListenStackParamName.Playlist} />
-    <ListenStack.Screen component={AudioPlayerScreen} name={ListenStackParamName.AudioPlayer} />
   </ListenStack.Navigator>
 )

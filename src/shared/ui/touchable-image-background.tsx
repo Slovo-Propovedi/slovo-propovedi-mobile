@@ -23,9 +23,10 @@ export const TouchableImageBackground = ({
 }: TouchableImageBackgroundProps) => (
   <TouchableOpacity testID={testID} onPress={onPress} activeOpacity={0.8}>
     <ImageBackground
+      resizeMode='cover'
+      imageStyle={imageStyle}
       testID='image-background'
       style={[styles.item, style]}
-      imageStyle={[styles.backgroundImage, imageStyle]}
       source={{ uri: previewSrc || IMAGE_PLACEHOLDER }}
     >
       {children}
@@ -33,9 +34,4 @@ export const TouchableImageBackground = ({
   </TouchableOpacity>
 )
 
-const styles = StyleSheet.create({
-  backgroundImage: {
-    resizeMode: 'cover',
-  },
-  item: { minHeight: 50, minWidth: 50 },
-})
+const styles = StyleSheet.create({ item: { minHeight: 50, minWidth: 50 } })

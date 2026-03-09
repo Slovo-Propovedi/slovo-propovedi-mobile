@@ -61,6 +61,7 @@ export const SliderItem = ({
     <TouchableOpacity testID={testID} onPress={onPress} activeOpacity={0.8}>
       <View style={[styles.component, { width: conditionSize }, style]}>
         <ImageBackground
+          resizeMode='cover'
           imageStyle={[styles.backgroundImage]}
           source={{ uri: previewURL || IMAGE_PLACEHOLDER }}
           style={[styles.imageBackgroundComponent, { height: imageHeight }]}
@@ -93,15 +94,7 @@ export const SliderItem = ({
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    borderRadius: RADIUSES.large,
-    resizeMode: 'cover',
-  },
-  component: {
-    borderRadius: RADIUSES.large,
-    minHeight: 50,
-    minWidth: 50,
-  },
-
+  backgroundImage: { borderRadius: RADIUSES.large },
+  component: { borderRadius: RADIUSES.large, minHeight: 50, minWidth: 50 },
   imageBackgroundComponent: { justifyContent: 'flex-end', width: '100%' },
 })

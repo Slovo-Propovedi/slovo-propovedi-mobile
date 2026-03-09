@@ -1,12 +1,10 @@
-import { useNavigation } from '@react-navigation/native'
 import { useAction, useAtom } from '@reatom/npm-react'
 import {
   schedulePushNotification,
   setCurrentSound as setCurrentSoundAction,
   usePlayer,
 } from 'entities/player'
-import { ListenStackParamName } from 'shared/routing'
-import type { ListenStackNavProp } from 'shared/routing'
+import { setPlayerFullscreen } from 'shared/model'
 import type { PlaylistData, SermonData } from 'shared/types'
 import {
   currentAudioAtom,
@@ -21,8 +19,7 @@ export const usePlayNewSermon = () => {
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
   const setCurrentSound = useAction(setCurrentSoundAction)
-
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
+  const openPlayerFullscreen = useAction(setPlayerFullscreen)
 
   interface PlayNewSermonProps {
     playlist: PlaylistData
@@ -37,7 +34,7 @@ export const usePlayNewSermon = () => {
     await setCurrentAudio(newAudio)
     await setCurrentPlaylist(playlist)
 
-    navigate(ListenStackParamName.AudioPlayer)
+    void openPlayerFullscreen(true)
 
     let newSound
 
