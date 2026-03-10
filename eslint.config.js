@@ -49,11 +49,7 @@ export default tseslint.config(
     ],
   },
   {
-    settings: {
-      react: {
-        version: 'detect',
-      },
-    },
+    settings: { react: { version: 'detect' } },
     languageOptions: {
       ecmaVersion: 'latest',
       globals: {
@@ -105,13 +101,7 @@ export default tseslint.config(
         },
       ],
       'prefer-const': 'error',
-      'func-style': [
-        'error',
-        'declaration',
-        {
-          allowArrowFunctions: true,
-        },
-      ],
+      'func-style': ['error', 'declaration', { allowArrowFunctions: true }],
       camelcase: 'error',
       'max-lines': ['error', 130],
       'perfectionist/sort-classes': 'off',
@@ -160,10 +150,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/consistent-type-imports': [
         'error',
-        {
-          prefer: 'type-imports',
-          fixStyle: 'inline-type-imports',
-        },
+        { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
       '@typescript-eslint/no-empty-object-type': 'off',
 
@@ -172,10 +159,7 @@ export default tseslint.config(
       'import/order': [
         'error',
         {
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
+          alphabetize: { order: 'asc', caseInsensitive: true },
           'newlines-between': 'never',
           pathGroups: LAYERS.map(layer => ({
             pattern: `${layer}{,/**}`,
@@ -198,12 +182,7 @@ export default tseslint.config(
       'sonarjs/no-duplicate-string': ['warn', { threshold: 3 }],
       'sonarjs/cognitive-complexity': 'error',
 
-      'jsdoc/require-description-complete-sentence': [
-        'error',
-        {
-          tags: ['see', 'copyright'],
-        },
-      ],
+      'jsdoc/require-description-complete-sentence': ['error', { tags: ['see', 'copyright'] }],
       'jsdoc/require-param': [
         'error',
         {
