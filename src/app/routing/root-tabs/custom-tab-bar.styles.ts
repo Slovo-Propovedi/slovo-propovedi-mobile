@@ -1,4 +1,4 @@
-import { Platform, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
 
 const BORDER_RADIUS = 30
 
@@ -7,7 +7,6 @@ export const styles = StyleSheet.create({
     bottom: 10,
     elevation: 12,
     left: 10,
-    marginHorizontal: Platform.OS === 'web' ? 0 : 10,
     position: 'absolute',
     right: 10,
     zIndex: 10,
