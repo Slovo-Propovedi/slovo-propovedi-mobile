@@ -3,6 +3,7 @@ export const COLORS = {
   black70: '#000000b3',
   blue: 'blue',
   disabled: '#d3d3d3',
+  gray: '#808080',
   onPrimary: '#fff',
   primary: '#f16031',
   white: '#fff',

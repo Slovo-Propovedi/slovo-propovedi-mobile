@@ -23,9 +23,11 @@ export const Progress = ({
 
   const viewElementRef = useRef<View>(null)
 
+  const safeTotal = Math.max(total, 1)
+
   const width = loaderValue.interpolate({
     extrapolate: 'clamp',
-    inputRange: [0, total],
+    inputRange: [0, safeTotal],
     outputRange: ['0%', '100%'],
   })
 
@@ -33,12 +35,6 @@ export const Progress = ({
     viewElementRef.current?.measure((...args) => {
       const [, , elementWidth] = args
       onChangeProgressValue?.(coordinateX > 0 ? (coordinateX * 100) / elementWidth : 0)
-      //   // Если нужно будет с задержкой показывать. Нужно будет заменить на это еще в useEffect
-      //   // Animated.timing(loaderValue, {
-      //   //   toValue: newProgressValue,
-      //   //   duration: 250,
-      //   //   useNativeDriver: false,
-      //   // }).start();
     })
 
   useEffect(() => {
@@ -72,7 +68,7 @@ export const Progress = ({
 
 const styles = StyleSheet.create({
   progressBar: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.gray,
     height: 10,
     width: '100%',
   },

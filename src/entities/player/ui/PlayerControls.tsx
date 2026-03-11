@@ -1,28 +1,17 @@
-import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { isNonNullable } from 'shared/lib'
 import { COLORS } from 'shared/themed'
 import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
-import type { AudioPlayerData, ControlsNames } from './controls.types'
+import type { AudioPlayerData, ControlsNames } from './PlayerControls.types'
 import type { StyleProp, ViewStyle } from 'react-native'
 import type { PlaylistData } from 'shared/types'
-import { usePlayer } from '../hooks'
-import {
-  currentSoundDurationAtom,
-  currentSoundPositionAtom,
-  isCurrentSoundBufferingAtom,
-  isPlayingCurrentAudioAtom,
-  setCurrentSound as setCurrentSoundAction,
-} from '../model'
-import { schedulePushNotification } from '../utils'
-import { playerControlsStyles as styles } from './controls.styles'
-import { PlayerControlsSize } from './controls.types'
-import {
-  getExcludedButtons,
-  getIndexOfCurrentAudioInPlaylist,
-  getIsNotAvailableNext,
-} from './controls.utils'
+import { usePlayer } from '../lib/usePlayer'
+import { usePlayerState } from '../lib/usePlayerState'
+import { getExcludedButtons } from './getExcludedButtons'
+import { getIndexOfCurrentAudioInPlaylist } from './getIndexOfCurrentAudioInPlaylist'
+import { playerControlsStyles as styles } from './PlayerControls.styles'
+import { PlayerControlsSize } from './PlayerControls.types'
 
 interface PlayerControlsProps {
   currentAudio: AudioPlayerData | null
@@ -41,51 +30,50 @@ export const PlayerControls = ({
   size = PlayerControlsSize.Large,
   style,
 }: PlayerControlsProps) => {
-  const { pause, play, recreateSound } = usePlayer()
-  const currentSoundDuration = useAtom(currentSoundDurationAtom)[0]
-  const currentSoundPosition = useAtom(currentSoundPositionAtom)[0]
-  const isCurrentSoundBuffering = useAtom(isCurrentSoundBufferingAtom)[0]
-  const isPlayingCurrentAudio = useAtom(isPlayingCurrentAudioAtom)[0]
-  const setCurrentSound = useAction(setCurrentSoundAction)
+  const { loadAudio, pause, play } = usePlayer()
+  const { duration, isBuffering, isPlaying, position } = usePlayerState()
   const excludedButtons = getExcludedButtons(excludeButtons)
   const indexOfCurrentAudioInPlaylist = getIndexOfCurrentAudioInPlaylist(
     currentAudio,
     currentPlaylist,
   )
-  const isNotAvailableNext = getIsNotAvailableNext(currentPlaylist, indexOfCurrentAudioInPlaylist)
+
+  const hasValidPlaylist =
+    isNonNullable(currentPlaylist) && isNonNullable(indexOfCurrentAudioInPlaylist)
+  const isLastTrack = hasValidPlaylist
+    ? indexOfCurrentAudioInPlaylist === currentPlaylist.list.length - 1
+    : false
+  const isFirstTrack = hasValidPlaylist ? indexOfCurrentAudioInPlaylist === 0 : false
 
   const togglePlay = async () => {
-    if (isPlayingCurrentAudio) return await pause()
+    if (isPlaying) return await pause()
     return await play()
   }
 
   const toggleTrack = async (dir: 'next' | 'prev') => {
-    if (!isNonNullable(indexOfCurrentAudioInPlaylist) || !currentPlaylist) return
-    const { audioUrl, ...otherProps } =
-      currentPlaylist.list[
-        dir === 'next' ? indexOfCurrentAudioInPlaylist + 1 : indexOfCurrentAudioInPlaylist - 1
-      ]
-    if (!audioUrl) return
+    if (!hasValidPlaylist || !currentPlaylist) return
+
+    const newIndex =
+      dir === 'next' ? indexOfCurrentAudioInPlaylist + 1 : indexOfCurrentAudioInPlaylist - 1
+    const track = currentPlaylist.list[newIndex]
+
+    if (!track?.audioUrl) return
+
+    const { audioUrl, ...otherProps } = track
     const newAudio = { ...otherProps, audioUrl, previewUrl: currentPlaylist.previewUrl }
+
     await setCurrentAudio(newAudio)
-    const newSound = await recreateSound(newAudio.audioUrl)
-    if (newSound) void setCurrentSound(newSound)
-    await schedulePushNotification({
-      body: newAudio.description || '',
-      subtitle: currentPlaylist.title || 'Проповедует Андрей Вовк',
-      title: newAudio.title,
-    })
-    await play(newSound)
+    await loadAudio(newAudio.audioUrl)
+    await play()
   }
 
   useEffect(() => {
-    if (!currentSoundDuration) return
-    if (currentSoundPosition >= currentSoundDuration && !isNotAvailableNext)
-      void toggleTrack('next')
-  }, [currentSoundDuration, currentSoundPosition, isNotAvailableNext])
+    if (!duration || !hasValidPlaylist || isLastTrack) return
+    if (position >= duration) void toggleTrack('next')
+  }, [duration, position, hasValidPlaylist, isLastTrack])
 
-  const isPrevDisabled = indexOfCurrentAudioInPlaylist === 0 || !currentAudio
-  const isNextDisabled = isNotAvailableNext || !currentAudio
+  const isPrevDisabled = !hasValidPlaylist || isFirstTrack || !currentAudio
+  const isNextDisabled = !hasValidPlaylist || isLastTrack || !currentAudio
 
   return (
     <View testID='controls-container' style={[styles.controlsContainer, style]}>
@@ -99,7 +87,7 @@ export const PlayerControls = ({
         />
       )}
       {!excludedButtons[PlayerControlButtonType.Play] &&
-        (isCurrentSoundBuffering ? (
+        (isBuffering ? (
           <View>
             <ActivityIndicator
               color={COLORS.primary}
@@ -112,9 +100,7 @@ export const PlayerControls = ({
             onPress={togglePlay}
             testID='play-button'
             isDisabled={!currentAudio}
-            type={
-              isPlayingCurrentAudio ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play
-            }
+            type={isPlaying ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
           />
         ))}
       {!excludedButtons[PlayerControlButtonType.Next] && (

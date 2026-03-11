@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
 import { currentAudioAtom, currentPlaylistAtom } from 'features/sermon-player-controls'
-import { usePlayer } from 'entities/player'
+import { usePlayer, usePlayerState } from 'entities/player'
 import { isPlayerFullscreenAtom, setPlayerFullscreen } from 'shared/model'
 import { ListenStackParamName } from 'shared/routing'
 import type { ListenStackNavProp } from 'shared/routing'
@@ -14,7 +14,8 @@ export const AnimatedPlayer = () => {
   const navigation = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
   const [currentAudio] = useAtom(currentAudioAtom)
   const [currentPlaylist] = useAtom(currentPlaylistAtom)
-  const { isPlaying, pause, play } = usePlayer()
+  const { pause, play } = usePlayer()
+  const { isPlaying } = usePlayerState()
 
   const [isFullscreen] = useAtom(isPlayerFullscreenAtom)
   const setFullscreen = useAction(setPlayerFullscreen)

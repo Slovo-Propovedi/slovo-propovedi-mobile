@@ -4252,11 +4252,6 @@ babel-preset-jest@^29.6.3:
     babel-plugin-jest-hoist "^29.6.3"
     babel-preset-current-node-syntax "^1.0.0"
 
-badgin@^1.1.5:
-  version "1.2.3"
-  resolved "https://registry.npmjs.org/badgin/-/badgin-1.2.3.tgz"
-  integrity sha512-NQGA7LcfCpSzIbGRbkgjgdWkjy7HI+Th5VLxTJfW5EeaAf3fnS+xWQaQOCYiny+q6QSvxqoSO04vCx+4u++EJw==
-
 balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz"
@@ -6165,11 +6160,6 @@ expect@^29.0.0, expect@^29.7.0:
     jest-message-util "^29.7.0"
     jest-util "^29.7.0"
 
-expo-application@~55.0.8:
-  version "55.0.8"
-  resolved "https://registry.npmjs.org/expo-application/-/expo-application-55.0.8.tgz"
-  integrity sha512-PeZk4Zj8LlzRcRtK3J4ouSPBoi9lroYsRbbz/0HEvx+uB6HIaM1qfzgpcctvjkdJJfnidBQNyieW5BVO/qUQ6w==
-
 expo-asset@~55.0.8:
   version "55.0.8"
   resolved "https://registry.npmjs.org/expo-asset/-/expo-asset-55.0.8.tgz"
@@ -6178,15 +6168,15 @@ expo-asset@~55.0.8:
     "@expo/image-utils" "^0.8.12"
     expo-constants "~55.0.7"
 
-expo-av@~16.0.8:
-  version "16.0.8"
-  resolved "https://registry.npmjs.org/expo-av/-/expo-av-16.0.8.tgz"
-  integrity sha512-cmVPftGR/ca7XBgs7R6ky36lF3OC0/MM/lpgX/yXqfv0jASTsh7AYX9JxHCwFmF+Z6JEB1vne9FDx4GiLcGreQ==
-
-expo-blur@~55.0.8:
+expo-audio@~55.0.8:
   version "55.0.8"
-  resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-55.0.8.tgz#809eb3b155b542697bbb47bf52972609ddd0f3dc"
-  integrity sha512-hmYhQiYFMTpHNzFaCF63jTABgnsozB5+wSEV8rCNBfNEHTdRVNFPkF+TZpbIqJpkhHfGLsKptRmR/wyZmAqREA==
+  resolved "https://registry.yarnpkg.com/expo-audio/-/expo-audio-55.0.8.tgz#a8c487b407a1f8a457c83340977ec793a6a0d353"
+  integrity sha512-X61pQSikE2rsP2ZTMFUMThOmgGyYEHcmZpGVMrKJgcYtRCFKuctB/z69dFQPoumL+zTz8qlBoGohjkHVvA9P8A==
+
+expo-blur@~55.0.9:
+  version "55.0.9"
+  resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-55.0.9.tgz#ee577ced2336c404bb40d68287f60ddffabfa060"
+  integrity sha512-ud9YfRocdUs70H8qmQ5PdGpo+0mElFD3r9iCFLjNwRl+pATalXR+5uRsVEcxRAuSLN4RmaqXE3n0Ic0hpTsTIQ==
 
 expo-checkbox@~55.0.3:
   version "55.0.3"
@@ -6246,17 +6236,6 @@ expo-modules-core@55.0.14:
   integrity sha512-eAerOnnhbZitUAKbY7B61kIudiabAz/m/oMGINms2+GeY1DRhdvrm5aAkhkHHmykPrg58PPryXtmF14YAYWViw==
   dependencies:
     invariant "^2.2.4"
-
-expo-notifications@~55.0.11:
-  version "55.0.11"
-  resolved "https://registry.npmjs.org/expo-notifications/-/expo-notifications-55.0.11.tgz"
-  integrity sha512-nx9OIx0qJh6HWKW2Jq8uF365q56eDFcAnDMMKOpA3eEFhBy6IzTJNrq9AGdOoylWI4OeVW0Z6wxEXPZOan+9VA==
-  dependencies:
-    "@expo/image-utils" "^0.8.12"
-    abort-controller "^3.0.0"
-    badgin "^1.1.5"
-    expo-application "~55.0.8"
-    expo-constants "~55.0.7"
 
 expo-pwa@0.0.127:
   version "0.0.127"

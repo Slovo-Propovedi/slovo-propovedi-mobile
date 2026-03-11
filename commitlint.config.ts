@@ -23,8 +23,7 @@ const Configuration: UserConfig = {
         'test', // Adding missing tests or correcting existing tests
       ],
     ],
-    // добавил еще 15 так как номер тикета занимает тоже символы
-    'header-max-length': [RuleConfigSeverity.Error, 'always', 115],
+    'header-max-length': [RuleConfigSeverity.Error, 'always', 100],
   },
 }
 

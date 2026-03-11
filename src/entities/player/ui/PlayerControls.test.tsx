@@ -1,11 +1,9 @@
 import { render } from '@testing-library/react-native'
-import { usePlayer } from '../hooks'
-import { PlayerControls } from './controls'
+import { usePlayer } from '../lib/usePlayer'
+import { PlayerControls } from './PlayerControls'
 import '@testing-library/jest-native/extend-expect'
 
-const changeValue = 15000
-
-jest.mock('../hooks', () => ({
+jest.mock('../lib/usePlayer', () => ({
   usePlayer: jest.fn(),
 }))
 
@@ -23,15 +21,16 @@ const getNewMockUsePlayerReturnValue = ({
   let position = positionInitial
 
   return {
-    changeProgressPosition: jest.fn(async () => {
-      position += changeValue
-    }),
     duration: durationInitial,
+    isBuffering: false,
     isPlaying: isPlayingInitial,
+    loadAudio: jest.fn(),
     pause: jest.fn(),
     play: jest.fn(),
     position,
-    recreateSound: jest.fn(),
+    seekTo: jest.fn(async (newPos: number) => {
+      position = newPos
+    }),
     stop: jest.fn(),
     unload: jest.fn(),
   }
@@ -75,10 +74,6 @@ let mockPlayerControlsProps = getMockPlayerControlsProps()
 
 describe('<PlayerControls>', () => {
   beforeEach(() => {
-    jest.mock('../hooks', () => ({
-      usePlayer: jest.fn(),
-    }))
-
     mockUsePlayerReturnValue = getNewMockUsePlayerReturnValue({})
     mockPlayerControlsProps = getMockPlayerControlsProps()
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { debounce } from '.'
+import { debounce } from './debounce'
 
 type UseDelayedState = <T>(
   props: UseDelayedStateProps<T>,

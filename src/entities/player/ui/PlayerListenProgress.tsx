@@ -3,13 +3,14 @@ import { StyleSheet, Text, View } from 'react-native'
 import { millisToMinutesAndSeconds } from 'shared/lib'
 import { Progress } from 'shared/ui'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { usePlayer } from '../hooks'
+import { usePlayer, usePlayerState } from '../lib/usePlayer'
 
 export const PlayerListenProgress = ({ style }: { style?: StyleProp<ViewStyle> }) => {
-  const { changeProgressPosition, duration, position } = usePlayer()
+  const { seekTo } = usePlayer()
+  const { duration, position } = usePlayerState()
 
   const onChangeProgressValue = (newProgressValue: number) => {
-    void changeProgressPosition((duration * newProgressValue) / 100)
+    void seekTo((duration * newProgressValue) / 100)
   }
 
   return (

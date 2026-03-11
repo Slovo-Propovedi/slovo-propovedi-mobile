@@ -1,4 +1,4 @@
-import { isNonNullable } from './'
+import { isNonNullable } from './isNonNullable'
 
 type GetBookLinkAsStringProps = (
   | {

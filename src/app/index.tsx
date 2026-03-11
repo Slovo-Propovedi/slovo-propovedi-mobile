@@ -1,18 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { reatomContext, useAction } from '@reatom/npm-react'
-import * as Notifications from 'expo-notifications'
 import React, { useEffect } from 'react'
 import { Platform } from 'react-native'
 import {
   setCurrentAudio as setCurrentAudioAction,
   setCurrentPlaylist as setCurrentPlaylistAction,
 } from 'features/sermon-player-controls'
-import {
-  type AudioPlayerData,
-  setCurrentSound as setCurrentSoundAction,
-  usePlayer,
-} from 'entities/player'
+import { type AudioPlayerData, usePlayer } from 'entities/player'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION } from 'shared/constants'
 import { parseJSONToObject } from 'shared/lib'
 import type { PlaylistData } from 'shared/types'
@@ -30,25 +25,12 @@ if (Platform.OS === 'web') {
   document.head?.appendChild(style)
 }
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    allowAnnouncements: true,
-    priority: Notifications.AndroidNotificationPriority.HIGH,
-    shouldPlaySound: false,
-    shouldSetBadge: true,
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-})
-
 const ctx = createCtx()
 
 const App = () => {
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
-  const setCurrentSound = useAction(setCurrentSoundAction)
-  const { recreateSound, unload } = usePlayer()
+  const { loadAudio, unload } = usePlayer()
 
   useEffect(() => {
     const initPlayerData = async () => {
@@ -60,8 +42,7 @@ const App = () => {
           const audio = parseJSONToObject<AudioPlayerData>(storedCurrentAudio)
           if (audio) {
             await setCurrentAudio(audio)
-            const sound = await recreateSound(audio.audioUrl, Number(storedSoundPosition) || 0)
-            if (sound) await setCurrentSound(sound)
+            await loadAudio(audio.audioUrl, Number(storedSoundPosition) || 0)
           }
         }
 

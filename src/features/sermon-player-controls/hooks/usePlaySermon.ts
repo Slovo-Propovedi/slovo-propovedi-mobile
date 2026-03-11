@@ -1,9 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import {
-  schedulePushNotification,
-  setCurrentSound as setCurrentSoundAction,
-  usePlayer,
-} from 'entities/player'
+import { usePlayer } from 'entities/player'
 import { setPlayerFullscreen } from 'shared/model'
 import type { PlaylistData, SermonData } from 'shared/types'
 import {
@@ -13,12 +9,11 @@ import {
 } from '../model'
 
 export const usePlayNewSermon = () => {
-  const { play, recreateSound } = usePlayer()
+  const { loadAudio, play } = usePlayer()
 
   const currentAudio = useAtom(currentAudioAtom)[0]
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
-  const setCurrentSound = useAction(setCurrentSoundAction)
   const openPlayerFullscreen = useAction(setPlayerFullscreen)
 
   interface PlayNewSermonProps {
@@ -36,17 +31,8 @@ export const usePlayNewSermon = () => {
 
     void openPlayerFullscreen(true)
 
-    let newSound
+    if (currentAudio?.id !== id) await loadAudio(newAudio.audioUrl)
 
-    if (currentAudio?.id !== id) newSound = await recreateSound(newAudio.audioUrl)
-
-    if (newSound) void setCurrentSound(newSound)
-
-    await play(newSound)
-    await schedulePushNotification({
-      body: newAudio.description || '',
-      subtitle: playlist.title,
-      title: newAudio.title,
-    })
+    await play()
   }
 }
