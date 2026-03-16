@@ -1,0 +1,62 @@
+const BORDER_RADIUS = 30
+
+export const styles = {
+  floatingContainer: {
+    bottom: 10,
+    elevation: 12,
+    left: 10,
+    position: 'absolute' as const,
+    right: 10,
+    zIndex: 10,
+  },
+  floatingIsland: {
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: BORDER_RADIUS,
+    borderWidth: 1,
+    overflow: 'hidden' as const,
+  },
+  indicator: {
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.6)',
+    borderBottomWidth: 1,
+    borderRadius: 20,
+    borderRightColor: 'rgba(255, 255, 255, 0.4)',
+    borderRightWidth: 1,
+    bottom: 12,
+    left: 0,
+    position: 'absolute' as const,
+    shadowColor: '#000',
+    shadowOffset: { height: -2, width: -1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    top: 12,
+  },
+  tabBar: {
+    backgroundColor: 'transparent',
+    borderBottomLeftRadius: BORDER_RADIUS,
+    borderBottomRightRadius: BORDER_RADIUS,
+    borderTopColor: 'rgba(255, 255, 255, 0.5)',
+    borderTopLeftRadius: BORDER_RADIUS,
+    borderTopRightRadius: BORDER_RADIUS,
+    borderTopWidth: 1,
+    flexDirection: 'row' as const,
+    gap: 8,
+    justifyContent: 'space-around' as const,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  tabButton: {
+    flex: 1,
+  },
+  tabItem: {
+    alignItems: 'center' as const,
+    borderRadius: 20,
+    flex: 1,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 16,
+  },
+  tabText: {
+    fontSize: 11,
+    marginTop: 4,
+  },
+}
