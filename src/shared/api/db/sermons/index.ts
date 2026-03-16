@@ -1,4 +1,4 @@
-import { BibleBookName } from 'shared/types'
+import { BibleBookName } from 'shared/model'
 import { markBook } from './markBook'
 
 export const sermonsDB = {

@@ -4,13 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { BodyXMLElementName, parseFb2BookToObject, XMLElementType } from 'entities/book-reader'
 import { INDENTS } from 'shared/themed'
 import type { XMLElementElement } from 'entities/book-reader'
-import type { ReadStackParamName, ReadStackScreenProps } from 'shared/routing'
 import { parseObjectToStylizedElements } from './lib'
 import { testFb2String } from './testFiles/testFb2'
 
-export const BookReaderScreen: React.FC<
-  ReadStackScreenProps<ReadStackParamName.BookReader>
-> = () => {
+export const BookReaderScreen = () => {
   const book = parseFb2BookToObject(testFb2String)
 
   if (!book) return null
@@ -25,7 +22,6 @@ export const BookReaderScreen: React.FC<
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <ScrollView>
-          {/* <Text>{JSON.stringify(description?.elements, null, 2)}</Text> */}
           {body && parseObjectToStylizedElements({ element: body as XMLElementElement })}
         </ScrollView>
       </View>

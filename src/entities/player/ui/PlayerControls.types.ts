@@ -1,4 +1,4 @@
-import type { SermonData } from 'shared/types'
+import type { SermonData } from 'shared/model'
 import type { PlayerControlButtonType } from 'shared/ui'
 
 export enum PlayerControlsSize {

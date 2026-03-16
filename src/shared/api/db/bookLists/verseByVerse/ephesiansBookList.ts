@@ -1,4 +1,4 @@
-import type { FetchedBookData } from 'shared/types'
+import type { FetchedBookData } from 'shared/model'
 
 export const ephesiansBookList: FetchedBookData[] = [
   {

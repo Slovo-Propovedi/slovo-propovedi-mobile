@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "scheme": "slovo-istiny",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -27,9 +28,10 @@
       "permissions": ["android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"]
     },
     "web": {
-      "favicon": "./assets/favicon.jpg"
+      "favicon": "./assets/favicon.jpg",
+      "bundler": "metro"
     },
-    "plugins": ["expo-audio", "expo-asset"],
+    "plugins": ["expo-audio", "expo-asset", "expo-router"],
     "updates": {
       "enabled": false
     }

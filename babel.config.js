@@ -1,13 +1,12 @@
 // eslint-disable-next-line no-undef
 module.exports = function (api) {
-  api.cache(true);
+  api.cache(true)
   return {
     plugins: [
       [
         'module-resolver',
         {
           alias: {
-            app: './src/app',
             entities: './src/entities',
             features: './src/features',
             pages: './src/pages',
@@ -19,5 +18,5 @@ module.exports = function (api) {
       ],
     ],
     presets: ['babel-preset-expo'],
-  };
-};
+  }
+}

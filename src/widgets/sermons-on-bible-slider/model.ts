@@ -1,7 +1,7 @@
 import { action, atom } from '@reatom/framework'
 import { API } from 'shared/api'
-import { getBookLinkAsString } from 'shared/lib'
-import { FetchedSermonsGroupName, type PlaylistData, type SermonData } from 'shared/types'
+import { getBookLinkAsString } from 'shared/lib/string'
+import { FetchedSermonsGroupName, type PlaylistData, type SermonData } from 'shared/model'
 
 export const sermonsOnBibleSliderAtom = atom<PlaylistData[]>([], 'sermons-on-bible-sliderAtom')
 

@@ -1,23 +1,25 @@
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import React from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ReadStackParamName } from 'shared/routing'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
 import { ListItemSize, TouchableListItem } from 'shared/ui'
-import type { ReadStackScreenProps } from 'shared/routing'
-import type { BookData } from 'shared/types'
+import type { BookData } from 'shared/model'
 import type { OnPressTouchableListItem } from 'shared/ui'
 
-export const BooksListScreen: React.FC<ReadStackScreenProps<ReadStackParamName.BooksList>> = ({
-  navigation: { navigate },
-  route: {
-    params: { books, title },
-  },
-}) => {
+export const BooksListScreen = () => {
   const { top } = useSafeAreaInsets()
+  const router = useRouter()
+  const params = useLocalSearchParams<{ books: string; title: string }>()
+
+  const books = params.books ? (JSON.parse(params.books as string) as BookData[]) : []
+  const title = params.title || ''
 
   const onPressListItem: OnPressTouchableListItem<BookData> = data => {
-    navigate(ReadStackParamName.BookReader, data)
+    router.push({
+      params: { book: JSON.stringify(data) },
+      pathname: '/read/book-reader',
+    })
   }
 
   return (

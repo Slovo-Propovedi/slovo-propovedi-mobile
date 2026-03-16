@@ -1,4 +1,4 @@
-import type { FetchedSermonData } from 'shared/types'
+import type { FetchedSermonData } from 'shared/model'
 
 export const markBook: FetchedSermonData[] = [
   {

@@ -6,14 +6,10 @@ import { NewSermonsSlider } from 'widgets/new-sermons-slider'
 import { SermonsOnBibleSlider } from 'widgets/sermons-on-bible-slider'
 import { TopicalListSlider } from 'widgets/topical-list-slider'
 import { COLORS } from 'shared/themed'
-import type { ListenStackParamName, ListenStackScreenProps } from 'shared/routing'
 
-export const ListenScreen: React.FC<
-  ListenStackScreenProps<ListenStackParamName.ListenHome>
-> = () => (
+export const ListenScreen = () => (
   <SafeAreaView style={styles.listen}>
     <StatusBar translucent barStyle='dark-content' backgroundColor='transparent' />
-
     <ScrollView style={styles.content}>
       <NewSermonsSlider />
       <SermonsOnBibleSlider />

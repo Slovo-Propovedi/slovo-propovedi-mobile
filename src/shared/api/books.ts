@@ -1,4 +1,4 @@
-import type { FetchedBooksGroupName } from 'shared/types'
+import type { FetchedBooksGroupName } from 'shared/model'
 import { localDB } from './localBD'
 
 const getBooksOnBooksGroup = async (tabName: FetchedBooksGroupName) => {

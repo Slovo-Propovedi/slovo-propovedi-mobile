@@ -1,4 +1,4 @@
-import type { FetchedPlaylist } from 'shared/types'
+import type { FetchedPlaylist } from 'shared/model'
 
 export const firstCorinthiansPlaylist: FetchedPlaylist = {
   list: [],

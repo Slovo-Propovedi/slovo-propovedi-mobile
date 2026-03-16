@@ -2,7 +2,7 @@ import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack'
-import type { BookData } from 'shared/types'
+import type { BookData } from 'shared/model'
 import { type BaseParamList } from './base'
 
 export enum ReadStackParamName {

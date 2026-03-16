@@ -1,7 +1,7 @@
 /* eslint-disable max-lines -- FIXME: refactor */
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio'
-import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/constants'
+import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/config'
 
 type StateListener = () => void
 

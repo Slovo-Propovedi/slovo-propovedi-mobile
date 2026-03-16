@@ -1,4 +1,4 @@
-import type { PlaylistData } from 'shared/types'
+import type { PlaylistData } from 'shared/model'
 
 export const getIsNotAvailableNext = (
   currentPlaylist: null | PlaylistData,

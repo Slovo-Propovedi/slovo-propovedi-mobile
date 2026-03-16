@@ -1,17 +1,15 @@
-import { useNavigation } from '@react-navigation/native'
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
 import { currentAudioAtom, currentPlaylistAtom } from 'features/sermon-player-controls'
 import { usePlayer, usePlayerState } from 'entities/player'
 import { isPlayerFullscreenAtom, setPlayerFullscreen } from 'shared/model'
-import { ListenStackParamName } from 'shared/routing'
-import type { ListenStackNavProp } from 'shared/routing'
+import { useListenNavigation } from 'shared/routing'
 import { usePlayerAnimation } from '../model/usePlayerAnimation'
 import { FullscreenPlayer } from './FullscreenPlayer'
 import { MiniPlayer } from './MiniPlayer'
 
 export const AnimatedPlayer = () => {
-  const navigation = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
+  const { navigateToPlaylist } = useListenNavigation()
   const [currentAudio] = useAtom(currentAudioAtom)
   const [currentPlaylist] = useAtom(currentPlaylistAtom)
   const { pause, play } = usePlayer()
@@ -47,9 +45,9 @@ export const AnimatedPlayer = () => {
     if (!currentPlaylist) return
     void setFullscreen(false)
     setTimeout(() => {
-      navigation.navigate(ListenStackParamName.Playlist, currentPlaylist)
+      navigateToPlaylist(currentPlaylist)
     }, 400)
-  }, [currentPlaylist, navigation, setFullscreen])
+  }, [currentPlaylist, navigateToPlaylist, setFullscreen])
 
   const togglePlay = useCallback(async () => {
     if (isPlaying) await pause()

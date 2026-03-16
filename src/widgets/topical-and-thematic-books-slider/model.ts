@@ -1,7 +1,7 @@
 import { action, atom } from '@reatom/framework'
 import { API } from 'shared/api'
-import { FetchedBooksGroupName } from 'shared/types'
-import type { BookData } from 'shared/types'
+import { FetchedBooksGroupName } from 'shared/model'
+import type { BookData } from 'shared/model'
 
 export const topicalAndThematicBooksSliderAtomt = atom<BookData[]>(
   [],

@@ -1,25 +1,27 @@
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import React from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ListenStackParamName } from 'shared/routing'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
 import { ListItemSize, TouchableListItem } from 'shared/ui'
-import type { ListenStackScreenProps } from 'shared/routing'
-import type { PlaylistData } from 'shared/types'
+import type { PlaylistData } from 'shared/model'
 import type { OnPressTouchableListItem } from 'shared/ui'
 
-export const PlaylistListScreen: React.FC<
-  ListenStackScreenProps<ListenStackParamName.PlaylistList>
-> = ({
-  navigation: { navigate },
-  route: {
-    params: { playlists, title },
-  },
-}) => {
+export const PlaylistListScreen = () => {
   const { top } = useSafeAreaInsets()
+  const router = useRouter()
+  const params = useLocalSearchParams<{ playlists: string; title: string }>()
 
-  const onPressListItem: OnPressTouchableListItem<PlaylistData> = params => {
-    navigate(ListenStackParamName.Playlist, params)
+  const playlists = params.playlists
+    ? (JSON.parse(params.playlists as string) as PlaylistData[])
+    : []
+  const title = params.title || ''
+
+  const onPressListItem: OnPressTouchableListItem<PlaylistData> = playlist => {
+    router.push({
+      params: { playlist: JSON.stringify(playlist) },
+      pathname: '/listen/playlist',
+    })
   }
 
   return (

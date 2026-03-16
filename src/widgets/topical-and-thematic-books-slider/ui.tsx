@@ -1,8 +1,7 @@
-import { useNavigation } from '@react-navigation/native'
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
-import { ReadStackParamName } from 'shared/routing'
+import { useReadNavigation } from 'shared/routing'
 import { INDENTS } from 'shared/themed'
 import {
   Slider,
@@ -11,24 +10,23 @@ import {
   SliderItemTransform,
   WhereIsSlideTitleLocated,
 } from 'shared/ui'
-import type { ReadStackNavProp } from 'shared/routing'
-import type { BookData } from 'shared/types'
+import type { BookData } from 'shared/model'
 import { getTopicalAndThematicBooksSlider, topicalAndThematicBooksSliderAtomt } from './model'
 
 export const TopicalAndThematicBooksSlider = () => {
   const title = 'Актуальные и тематические'
 
-  const { navigate } = useNavigation<ReadStackNavProp<ReadStackParamName.Home>>()
+  const { navigateToBookReader, navigateToBooksList } = useReadNavigation()
 
   const topicalAndThematicBooks = useAtom(topicalAndThematicBooksSliderAtomt)[0]
   const fetchTopicalAndThematicBooks = useAction(getTopicalAndThematicBooksSlider)
 
   const onItemPress = async (bookList: BookData) => {
-    navigate(ReadStackParamName.BookReader, bookList)
+    navigateToBookReader(bookList)
   }
 
   const onPressTitle = (params: BookData[]) => {
-    navigate(ReadStackParamName.BooksList, { books: params, title })
+    navigateToBooksList(params, title)
   }
 
   useEffect(() => {

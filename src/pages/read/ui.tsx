@@ -5,9 +5,8 @@ import { NotesForPreachersBooksSlider } from 'widgets/notes-for-preachers-books-
 import { TopicalAndThematicBooksSlider } from 'widgets/topical-and-thematic-books-slider'
 import { VerseByVerseBooksSlider } from 'widgets/verse-by-verse-books-slider'
 import { COLORS } from 'shared/themed'
-import type { ReadStackParamName, ReadStackScreenProps } from 'shared/routing'
 
-export const ReadScreen: React.FC<ReadStackScreenProps<ReadStackParamName.Home>> = () => (
+export const ReadScreen = () => (
   <SafeAreaView style={styles.container}>
     <StatusBar translucent barStyle='dark-content' backgroundColor='transparent' />
     <ScrollView style={styles.content}>

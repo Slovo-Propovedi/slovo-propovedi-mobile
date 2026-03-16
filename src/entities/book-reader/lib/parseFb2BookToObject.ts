@@ -1,5 +1,5 @@
 import { xml2js } from 'xml-js'
-import type { XMLElementElement } from '../types'
+import type { XMLElementElement } from '../model'
 
 export const parseFb2BookToObject = (xml: string) =>
   xml2js(xml, {

@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router'
 import React, { useState } from 'react'
 import { Dimensions, ImageBackground, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { usePlayNewSermon } from 'features/sermon-player-controls'
@@ -5,18 +6,19 @@ import { IMAGE_PLACEHOLDER } from 'shared/images'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
 import { TouchableListItem } from 'shared/ui'
 import type { LayoutChangeEvent } from 'react-native'
-import type { ListenStackParamName, ListenStackScreenProps } from 'shared/routing'
-import type { SermonData } from 'shared/types'
+import type { PlaylistData, SermonData } from 'shared/model'
 import type { OnPressTouchableListItem } from 'shared/ui'
 
 const windowHeight = Dimensions.get('window').height
 
-export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamName.Playlist>> = ({
-  route: {
-    params: { description, list, previewUrl, title },
-    params: playlist,
-  },
-}) => {
+export const PlaylistScreen = () => {
+  const params = useLocalSearchParams<{ playlist: string }>()
+  const playlist = params.playlist
+    ? (JSON.parse(params.playlist as string) as PlaylistData)
+    : { list: [], title: '' }
+
+  const { description, list, previewUrl, title } = playlist
+
   const [previewLayout, setPreviewLayout] = useState({ height: 0, width: 0 })
 
   const playNewSermon = usePlayNewSermon()
@@ -37,7 +39,6 @@ export const PlaylistScreen: React.FC<ListenStackScreenProps<ListenStackParamNam
         source={{ uri: previewUrl || IMAGE_PLACEHOLDER }}
       >
         <Text style={[styles.title, { marginTop: previewLayout.height / 3 }]}>{title}</Text>
-
         {description && <Text style={styles.description}>{description}</Text>}
       </ImageBackground>
 
@@ -61,7 +62,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: { padding: INDENTS.middle, paddingRight: 0 },
-
   description: {
     color: COLORS.white,
     fontSize: FONT_SIZES.h3,
@@ -69,12 +69,10 @@ const styles = StyleSheet.create({
     maxHeight: '20%',
     padding: INDENTS.high,
   },
-
   preview: {
     height: windowHeight * 0.7,
     width: '100%',
   },
-
   title: {
     color: COLORS.primary,
     fontSize: FONT_SIZES.h1,

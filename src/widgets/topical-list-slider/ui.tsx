@@ -1,18 +1,16 @@
-import { useNavigation } from '@react-navigation/native'
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import { usePlayNewSermon } from 'features/sermon-player-controls'
-import { type ListenStackNavProp, ListenStackParamName } from 'shared/routing'
+import { type PlaylistData } from 'shared/model'
+import { useListenNavigation } from 'shared/routing'
 import { INDENTS } from 'shared/themed'
-import { type PlaylistData } from 'shared/types'
 import { Slider, SliderItemSize, WhereIsSlideTitleLocated } from 'shared/ui'
 import { getTopicalListSlider, TopicalListSliderAtom } from './model'
 
 export const TopicalListSlider = () => {
   const playNewSermon = usePlayNewSermon()
-
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
+  const { navigateToPlaylist, navigateToPlaylistList } = useListenNavigation()
 
   const topicalList = useAtom(TopicalListSliderAtom)[0]
   const fetchTopicalList = useAction(getTopicalListSlider)
@@ -26,11 +24,11 @@ export const TopicalListSlider = () => {
       return
     }
 
-    navigate(ListenStackParamName.Playlist, playlist)
+    navigateToPlaylist(playlist)
   }
 
   const onPressTitle = (params: PlaylistData[]) => {
-    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'Тематические' })
+    navigateToPlaylistList(params, 'Тематические')
   }
 
   useEffect(() => {

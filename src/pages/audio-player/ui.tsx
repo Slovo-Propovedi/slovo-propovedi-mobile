@@ -1,5 +1,4 @@
 import { Feather } from '@expo/vector-icons'
-import { useNavigation } from '@react-navigation/native'
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
@@ -9,17 +8,14 @@ import {
   SermonPlayerControls,
 } from 'features/sermon-player-controls'
 import { PlayerListenProgress } from 'entities/player'
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/constants'
+import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
 import { IMAGE_PLACEHOLDER } from 'shared/images'
 import { setIsAudioPlayerMounted as setIsAudioPlayerMountedAction } from 'shared/model'
-import { ListenStackParamName } from 'shared/routing'
+import { useListenNavigation } from 'shared/routing'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
-import type { ListenStackNavProp, ListenStackScreenProps } from 'shared/routing'
 
-export const AudioPlayerScreen: React.FC<
-  ListenStackScreenProps<ListenStackParamName.AudioPlayer>
-> = () => {
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
+export const AudioPlayerScreen = () => {
+  const { navigateToPlaylist } = useListenNavigation()
 
   const currentAudio = useAtom(currentAudioAtom)[0]
   const currentPlaylist = useAtom(currentPlaylistAtom)[0]
@@ -29,7 +25,7 @@ export const AudioPlayerScreen: React.FC<
 
   const onPressListItem = () => {
     if (!currentPlaylist) return
-    navigate(ListenStackParamName.Playlist, currentPlaylist)
+    navigateToPlaylist(currentPlaylist)
   }
 
   useEffect(() => {

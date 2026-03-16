@@ -1,6 +1,6 @@
 import React from 'react'
 import { ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native'
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/constants'
+import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
 import { IMAGE_PLACEHOLDER } from 'shared/images'
 import { RADIUSES } from 'shared/themed'
 import { SliderItemDescription } from '../slider-item-description/slider-item-description'

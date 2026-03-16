@@ -1,5 +1,5 @@
-import { FetchedBooksGroupName, FetchedSermonsGroupName } from 'shared/types'
-import type { DB } from 'shared/types'
+import { FetchedBooksGroupName, FetchedSermonsGroupName } from 'shared/model'
+import type { DB } from 'shared/model'
 import {
   actsBookList,
   ephesiansBookList,

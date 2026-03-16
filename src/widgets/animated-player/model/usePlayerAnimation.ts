@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Animated } from 'react-native'
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from 'shared/constants'
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from 'shared/config'
 
 interface PlayerAnimationValues {
   animValue: Animated.Value

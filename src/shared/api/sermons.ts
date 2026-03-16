@@ -1,4 +1,4 @@
-import type { FetchedSermonsGroupName } from 'shared/types'
+import type { FetchedSermonsGroupName } from 'shared/model'
 import { localDB } from './localBD'
 
 const getPlaylistsOnSermonsGroup = async (tabName: FetchedSermonsGroupName) => {

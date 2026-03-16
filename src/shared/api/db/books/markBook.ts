@@ -1,4 +1,4 @@
-import type { FetchedBookData } from 'shared/types'
+import type { FetchedBookData } from 'shared/model'
 
 const markBookPreviewUrl = 'https://slovo-istini.com/image/categories/22/marka_(1).jpg'
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { millisToMinutesAndSeconds } from 'shared/lib'
+import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { Progress } from 'shared/ui'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { usePlayer, usePlayerState } from '../lib/usePlayer'

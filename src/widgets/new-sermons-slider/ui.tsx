@@ -1,19 +1,16 @@
-import { useNavigation } from '@react-navigation/native'
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import { usePlayNewSermon } from 'features/sermon-player-controls'
-import { ListenStackParamName } from 'shared/routing'
+import { useListenNavigation } from 'shared/routing'
 import { INDENTS } from 'shared/themed'
 import { Slider, SliderItemSize } from 'shared/ui'
-import type { ListenStackNavProp } from 'shared/routing'
-import type { PlaylistData } from 'shared/types'
+import type { PlaylistData } from 'shared/model'
 import { getNewSermons, newSermonsAtom } from './model'
 
 export const NewSermonsSlider = () => {
   const playNewSermon = usePlayNewSermon()
-
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
+  const { navigateToPlaylist, navigateToPlaylistList } = useListenNavigation()
 
   const newSermons = useAtom(newSermonsAtom)[0]
   const fetchNewSermons = useAction(getNewSermons)
@@ -24,11 +21,11 @@ export const NewSermonsSlider = () => {
     if (sermons.length && sermons.length < 2)
       return await playNewSermon({ playlist, sermon: sermons[0] })
 
-    navigate(ListenStackParamName.Playlist, playlist)
+    navigateToPlaylist(playlist)
   }
 
   const onPressTitle = (params: PlaylistData[]) => {
-    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'Тематические' })
+    navigateToPlaylistList(params, 'Тематические')
   }
 
   useEffect(() => {

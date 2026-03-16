@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- correct for mocks */
 import { sermonsDB } from 'shared/api/db/sermons'
-import { BibleBookName, type FetchedPlaylist } from 'shared/types'
+import { BibleBookName, type FetchedPlaylist } from 'shared/model'
 
 export const markPlaylist: FetchedPlaylist = {
   description: 'Эта книга - Евангелие от Марка',

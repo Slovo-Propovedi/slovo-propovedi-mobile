@@ -1,19 +1,16 @@
-import { useNavigation } from '@react-navigation/native'
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import { usePlayNewSermon } from 'features/sermon-player-controls'
-import { ListenStackParamName } from 'shared/routing'
+import { useListenNavigation } from 'shared/routing'
 import { INDENTS } from 'shared/themed'
 import { Slider, SliderItemSize, SliderItemTransform } from 'shared/ui'
-import type { ListenStackNavProp } from 'shared/routing'
-import type { PlaylistData } from 'shared/types'
+import type { PlaylistData } from 'shared/model'
 import { getListenEveryDay, listenEveryDayAtom } from './model'
 
 export const ListenEveryDaySlider = () => {
   const playNewSermon = usePlayNewSermon()
-
-  const { navigate } = useNavigation<ListenStackNavProp<ListenStackParamName.ListenHome>>()
+  const { navigateToPlaylist, navigateToPlaylistList } = useListenNavigation()
 
   const listenEveryDay = useAtom(listenEveryDayAtom)[0]
   const fetchListenEveryDay = useAction(getListenEveryDay)
@@ -27,11 +24,11 @@ export const ListenEveryDaySlider = () => {
       return
     }
 
-    navigate(ListenStackParamName.Playlist, playlist)
+    navigateToPlaylist(playlist)
   }
 
   const onPressTitle = (params: PlaylistData[]) => {
-    navigate(ListenStackParamName.PlaylistList, { playlists: params, title: 'Слушай каждый день' })
+    navigateToPlaylistList(params, 'Слушай каждый день')
   }
 
   useEffect(() => {
