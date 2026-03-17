@@ -1,5 +1,8 @@
-import { BodyXMLElementName } from 'entities/book-reader'
-import type { XMLElementElement, XMLElementText } from 'entities/book-reader'
+import {
+  BodyXMLElementName,
+  type XMLElementElement,
+  type XMLElementText,
+} from 'entities/book-reader'
 import type { StyleProp, TextStyle } from 'react-native'
 import { getBlockElement } from './getBlockElement'
 import { getElementKey } from './getElementKey'

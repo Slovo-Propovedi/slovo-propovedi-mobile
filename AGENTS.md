@@ -359,7 +359,7 @@ Max header length: 100 characters
 
 ## Key Dependencies
 
-- **Navigation:** expo-router, @react-navigation/*
+- **Navigation:** expo-router, @react-navigation/\*
 - **State:** @reatom/core, @reatom/npm-react, @reatom/framework
 - **Audio:** expo-audio
 - **HTTP:** ky
@@ -388,6 +388,17 @@ The project uses i18next. ESLint warns on literal strings (should use translatio
 // Use
 <Text>{t('greeting')}</Text>
 ```
+
+## Package Manager
+
+**IMPORTANT:** This project uses **yarn** as the package manager. Always use yarn instead of npm for all operations:
+
+- Install dependencies: `yarn` or `yarn install`
+- Add packages: `yarn add <package>`
+- Add dev packages: `yarn add -D <package>`
+- Run scripts: `yarn <script>`
+- Run CLI tools: `yarn <tool>` (e.g., `yarn jest`)
+  Do NOT use npm or npx commands.
 
 ## Gotchas
 

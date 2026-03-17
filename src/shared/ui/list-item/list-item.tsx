@@ -62,13 +62,13 @@ const styles = StyleSheet.create({
   counter: {
     backgroundColor: COLORS.disabled,
     borderRadius: RADIUSES.low,
-
+    color: COLORS.text,
     height: '100%',
     textAlign: 'center',
-
     textAlignVertical: 'center',
   },
   listItemTitle: {
+    color: COLORS.text,
     fontSize: FONT_SIZES.h2,
   },
   preview: {

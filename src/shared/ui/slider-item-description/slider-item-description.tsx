@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   darkBackground: { backgroundColor: COLORS.black },
 
   subTitle: {
-    color: COLORS.disabled,
+    color: COLORS.textMuted,
     fontSize: FONT_SIZES.h3,
   },
   subTitleColorOnDark: {
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: COLORS.black,
+    color: COLORS.text,
     fontSize: FONT_SIZES.h3,
   },
   titleColorOnDark: {

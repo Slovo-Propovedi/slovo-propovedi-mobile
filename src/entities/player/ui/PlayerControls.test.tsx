@@ -1,42 +1,24 @@
 import { render } from '@testing-library/react-native'
-import { usePlayer } from '../lib/usePlayer'
 import { PlayerControls } from './PlayerControls'
 import '@testing-library/jest-native/extend-expect'
 
-jest.mock('../lib/usePlayer', () => ({
-  usePlayer: jest.fn(),
-}))
-
-let mockedUsePlayer = usePlayer as jest.MockedFunction<typeof usePlayer>
-
-const getNewMockUsePlayerReturnValue = ({
-  durationInitial = 0,
-  isPlayingInitial = false,
-  positionInitial = 3000,
-}: {
-  durationInitial?: number
-  isPlayingInitial?: boolean
-  positionInitial?: number
-}) => {
-  let position = positionInitial
-
-  return {
-    duration: durationInitial,
-    isBuffering: false,
-    isPlaying: isPlayingInitial,
+jest.mock('../lib/PlayerService', () => ({
+  playerService: {
+    getState: jest.fn(() => ({
+      duration: 0,
+      isBuffering: false,
+      isPlaying: false,
+      position: 0,
+    })),
     loadAudio: jest.fn(),
     pause: jest.fn(),
     play: jest.fn(),
-    position,
-    seekTo: jest.fn(async (newPos: number) => {
-      position = newPos
-    }),
+    seekTo: jest.fn(),
     stop: jest.fn(),
+    subscribe: jest.fn(() => jest.fn()),
     unload: jest.fn(),
-  }
-}
-
-let mockUsePlayerReturnValue = getNewMockUsePlayerReturnValue({})
+  },
+}))
 
 const currentPlaylist = {
   id: '1',
@@ -74,12 +56,8 @@ let mockPlayerControlsProps = getMockPlayerControlsProps()
 
 describe('<PlayerControls>', () => {
   beforeEach(() => {
-    mockUsePlayerReturnValue = getNewMockUsePlayerReturnValue({})
     mockPlayerControlsProps = getMockPlayerControlsProps()
-
-    mockedUsePlayer = usePlayer as jest.MockedFunction<typeof usePlayer>
-
-    mockedUsePlayer.mockReturnValue(mockUsePlayerReturnValue)
+    jest.clearAllMocks()
   })
 
   test('PlayerControls renders correctly', () => {

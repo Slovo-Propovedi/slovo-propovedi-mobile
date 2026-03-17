@@ -1,0 +1,98 @@
+import { StyleSheet } from 'react-native'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed'
+
+export const TRACK_LIST_ITEM_SIZES = {
+  albumArtSize: 50,
+  leftOffset: 60,
+} as const
+
+export const tracksListStyles = StyleSheet.create({
+  albumArt: {
+    borderRadius: RADIUSES.low,
+    height: TRACK_LIST_ITEM_SIZES.albumArtSize,
+    width: TRACK_LIST_ITEM_SIZES.albumArtSize,
+  },
+  albumArtContainer: {
+    marginRight: INDENTS.middle,
+    position: 'relative',
+  },
+  albumArtPlaying: {
+    opacity: 0.6,
+  },
+  artist: {
+    color: COLORS.textMuted,
+    fontSize: FONT_SIZES.base,
+    marginTop: INDENTS.lowest,
+  },
+  container: {
+    backgroundColor: COLORS.background,
+    flex: 1,
+  },
+  divider: {
+    backgroundColor: COLORS.surface,
+    height: 1,
+    marginLeft: TRACK_LIST_ITEM_SIZES.leftOffset,
+    marginVertical: INDENTS.low,
+  },
+  dotsButton: {
+    padding: INDENTS.low,
+  },
+  itemContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: INDENTS.middle,
+    paddingVertical: INDENTS.middle,
+  },
+  playingIndicator: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  title: {
+    color: COLORS.text,
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+  },
+  titlePlaying: {
+    color: COLORS.primary,
+  },
+  titleWrapper: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+  },
+})
+
+export const queueControlsStyles = StyleSheet.create({
+  button: {
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUSES.round,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginRight: INDENTS.middle,
+    paddingHorizontal: INDENTS.high,
+    paddingVertical: INDENTS.middle,
+  },
+  buttonText: {
+    color: COLORS.onPrimary,
+    fontSize: FONT_SIZES.base,
+    fontWeight: '600',
+    marginLeft: INDENTS.low,
+  },
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    paddingHorizontal: INDENTS.middle,
+    paddingVertical: INDENTS.middle,
+  },
+  icon: {
+    tintColor: COLORS.onPrimary,
+  },
+})

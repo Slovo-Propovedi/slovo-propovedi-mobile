@@ -1,13 +1,10 @@
 TN:
-SF:.eslintrc.js
+SF:lint-staged.config.js
 FNF:0
 FNH:0
-DA:1,0
-DA:3,0
-LF:2
+DA:2,0
+LF:1
 LH:0
-BRDA:43,0,0,0
-BRDA:43,0,1,0
-BRF:2
+BRF:0
 BRH:0
 end_of_record

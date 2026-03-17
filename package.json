@@ -3,7 +3,8 @@
   "version": "1.0.5",
   "main": "expo-router/entry",
   "scripts": {
-    "api:generate": "npm run delete-generated-api-files && orval",
+    "postinstall": "patch-package",
+    "api:generate": "yarn delete-generated-api-files && orval",
     "build-preview:all": "eas build -p all --profile preview",
     "build-preview:android": "eas build -p android --profile preview",
     "build-preview:ios": "eas build -p ios --profile preview",
@@ -37,6 +38,7 @@
     "visualize-deps": "npx fsd-cruise"
   },
   "dependencies": {
+    "@gorhom/bottom-sheet": "^5.2.8",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/native": "^7.1.33",
@@ -65,9 +67,13 @@
     "react-native": "0.83.2",
     "react-native-gesture-handler": "~2.30.0",
     "react-native-pager-view": "8.0.0",
+    "react-native-reanimated": "^4.2.2",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
     "react-native-tab-view": "^4.2.2",
+    "react-native-text-ticker": "^1.15.0",
+    "react-native-worklets": "^0.7.4",
+    "ts-pattern": "^5.9.0",
     "xml-js": "^1.6.11"
   },
   "devDependencies": {
@@ -104,6 +110,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.3.2",
     "orval": "^7.11.2",
+    "patch-package": "^8.0.1",
     "prettier": "^3.8.1",
     "react-dom": "19.2.0",
     "react-native-web": "^0.21.0",

@@ -7,6 +7,8 @@ export enum PlayerControlsSize {
 }
 
 export type AudioPlayerData = {
+  artist?: string
+  artwork?: string
   audioUrl: string
   previewUrl?: string
 } & Omit<SermonData, 'audioUrl'>

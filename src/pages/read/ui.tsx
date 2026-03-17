@@ -8,7 +8,7 @@ import { COLORS } from 'shared/themed'
 
 export const ReadScreen = () => (
   <SafeAreaView style={styles.container}>
-    <StatusBar translucent barStyle='dark-content' backgroundColor='transparent' />
+    <StatusBar translucent barStyle='light-content' backgroundColor='transparent' />
     <ScrollView style={styles.content}>
       <NotesForPreachersBooksSlider />
       <VerseByVerseBooksSlider />
@@ -18,6 +18,6 @@ export const ReadScreen = () => (
 )
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: COLORS.white, flex: 1 },
-  content: { backgroundColor: COLORS.white, flex: 1, paddingBottom: 100 },
+  container: { backgroundColor: COLORS.background, flex: 1 },
+  content: { backgroundColor: COLORS.background, flex: 1, paddingBottom: 100 },
 })

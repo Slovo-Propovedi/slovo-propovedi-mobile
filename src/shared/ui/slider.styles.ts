@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { INDENTS } from 'shared/themed'
+import { COLORS, INDENTS } from 'shared/themed'
 
 export const sliderStyles = StyleSheet.create({
   contentContainer: {
@@ -14,6 +14,7 @@ export const sliderStyles = StyleSheet.create({
   },
   slider: { maxWidth: '100%' },
   title: {
+    color: COLORS.text,
     fontWeight: 'bold',
     paddingBottom: INDENTS.middle,
     paddingLeft: INDENTS.lowest,

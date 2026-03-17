@@ -11,6 +11,7 @@ class PlayerService {
     isBuffering: this.isBuffering,
     isPlaying: this.isPlaying,
     position: this.position,
+    volume: this.volume,
   })
 
   public subscribe = (listener: StateListener) => {
@@ -114,6 +115,15 @@ class PlayerService {
     }
   }
 
+  public getVolume = () => this.volume
+
+  public setVolume = async (newVolume: number) => {
+    this.volume = Math.max(0, Math.min(1, newVolume))
+    if (this.playerInstance?.isLoaded) this.playerInstance.volume = this.volume
+
+    this.notify()
+  }
+
   public loadAudio = async (audioUrl: string, initialPositionMs = 0) => {
     this.setIsBuffering(true)
     this.stopStatusTracking()
@@ -171,6 +181,7 @@ class PlayerService {
 
   private duration = 0
   private position = 0
+  private volume = 1
   private isBuffering = false
   private isPlaying = false
   private listeners: Set<StateListener> = new Set()

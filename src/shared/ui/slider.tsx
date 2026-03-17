@@ -85,7 +85,7 @@ export const Slider = <D extends object>({
         style={[styles.title, { fontSize: titleFontSize }]}
       >
         {`${title}`}
-        <Entypo color={COLORS.black} name='chevron-right' size={titleFontSize} />
+        <Entypo color={COLORS.text} name='chevron-right' size={titleFontSize} />
       </Text>
       <ScrollView
         horizontal

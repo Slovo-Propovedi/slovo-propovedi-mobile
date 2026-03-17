@@ -5,8 +5,8 @@ import { COLORS } from 'shared/themed'
 
 export const InfoScreen = () => (
   <SafeAreaView style={styles.info}>
-    <View style={{ backgroundColor: COLORS.disabled, flex: 1, paddingBottom: 100 }} />
+    <View style={{ backgroundColor: COLORS.background, flex: 1, paddingBottom: 100 }} />
   </SafeAreaView>
 )
 
-const styles = StyleSheet.create({ info: { backgroundColor: COLORS.white, flex: 1 } })
+const styles = StyleSheet.create({ info: { backgroundColor: COLORS.background, flex: 1 } })

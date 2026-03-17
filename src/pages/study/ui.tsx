@@ -19,8 +19,8 @@ export const StudyScreen = () => {
   })
 
   return (
-    <SafeAreaView style={{ backgroundColor: COLORS.white, flex: 1 }}>
-      <View style={{ flex: 1, paddingBottom: 100 }}>
+    <SafeAreaView style={{ backgroundColor: COLORS.background, flex: 1 }}>
+      <View style={{ backgroundColor: COLORS.background, flex: 1, paddingBottom: 100 }}>
         <TabView
           onIndexChange={setIndex}
           renderScene={renderScene}

@@ -1,13 +1,14 @@
+import { useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams } from 'expo-router'
 import React, { useState } from 'react'
-import { Dimensions, ImageBackground, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Dimensions, ImageBackground, StyleSheet, Text, View } from 'react-native'
+import { TracksList } from 'widgets/track-list'
 import { usePlayNewSermon } from 'features/sermon-player-controls'
+import { currentAudioAtom, isPlayingAtom } from 'features/sermon-player-controls/model'
 import { IMAGE_PLACEHOLDER } from 'shared/images'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
-import { TouchableListItem } from 'shared/ui'
 import type { LayoutChangeEvent } from 'react-native'
 import type { PlaylistData, SermonData } from 'shared/model'
-import type { OnPressTouchableListItem } from 'shared/ui'
 
 const windowHeight = Dimensions.get('window').height
 
@@ -22,17 +23,37 @@ export const PlaylistScreen = () => {
   const [previewLayout, setPreviewLayout] = useState({ height: 0, width: 0 })
 
   const playNewSermon = usePlayNewSermon()
-
-  const onPressPlaylistItem: OnPressTouchableListItem<SermonData> = async sermon =>
-    await playNewSermon({ playlist, sermon })
+  const [currentAudio] = useAtom(currentAudioAtom)
+  const [isPlaying] = useAtom(isPlayingAtom)
 
   const handleLayout = (event: LayoutChangeEvent) => {
     const { height, width } = event.nativeEvent.layout
     setPreviewLayout({ height, width })
   }
 
+  const handlePressItem = async (index: number) => {
+    const sermon = list[index]
+    if (!sermon.audioUrl) return
+
+    await playNewSermon({ playlist, sermon })
+  }
+
+  const handlePressPlayAll = async () => {
+    if (list.length === 0) return
+    const firstSermon = list.find((s: SermonData) => s.audioUrl)
+    if (firstSermon) await playNewSermon({ playlist, sermon: firstSermon })
+  }
+
+  const tracksListData = list.map((sermon: SermonData) => ({
+    artist: 'Слово Истины',
+    artwork: previewUrl,
+    id: sermon.id,
+    title: sermon.title,
+    url: sermon.audioUrl,
+  }))
+
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <ImageBackground
         style={styles.preview}
         onLayout={handleLayout}
@@ -42,35 +63,32 @@ export const PlaylistScreen = () => {
         {description && <Text style={styles.description}>{description}</Text>}
       </ImageBackground>
 
-      <View style={styles.content}>
-        {list.map((sermon, index) => (
-          <TouchableListItem
-            data={sermon}
-            key={sermon.id}
-            onPress={onPressPlaylistItem}
-            previewPlaceholderText={`${index + 1}`}
-          />
-        ))}
-      </View>
-    </ScrollView>
+      <TracksList
+        data={tracksListData}
+        isPlaying={isPlaying}
+        onPressItem={handlePressItem}
+        playingTrackId={currentAudio?.id}
+        onPressPlayAll={handlePressPlayAll}
+      />
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.background,
     flex: 1,
   },
   content: { padding: INDENTS.middle, paddingRight: 0 },
   description: {
-    color: COLORS.white,
+    color: COLORS.text,
     fontSize: FONT_SIZES.h3,
     marginTop: 'auto',
     maxHeight: '20%',
     padding: INDENTS.high,
   },
   preview: {
-    height: windowHeight * 0.7,
+    height: windowHeight * 0.5,
     width: '100%',
   },
   title: {
@@ -81,3 +99,5 @@ const styles = StyleSheet.create({
     paddingBottom: INDENTS.high,
   },
 })
+
+export default PlaylistScreen

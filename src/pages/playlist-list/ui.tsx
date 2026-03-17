@@ -47,11 +47,12 @@ export const PlaylistListScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: COLORS.background,
     flex: 1,
   },
   list: { paddingLeft: INDENTS.high },
   title: {
-    color: COLORS.primary,
+    color: COLORS.text,
     fontSize: FONT_SIZES.h1,
     paddingVertical: INDENTS.high,
   },

@@ -24,7 +24,13 @@ export const usePlayNewSermon = () => {
   return async ({ playlist, sermon: { audioUrl, id, ...other } }: PlayNewSermonProps) => {
     if (!audioUrl) return
 
-    const newAudio = { ...other, audioUrl, id, previewUrl: playlist.previewUrl }
+    const newAudio = {
+      ...other,
+      artwork: playlist.previewUrl,
+      audioUrl,
+      id,
+      previewUrl: playlist.previewUrl,
+    }
 
     await setCurrentAudio(newAudio)
     await setCurrentPlaylist(playlist)

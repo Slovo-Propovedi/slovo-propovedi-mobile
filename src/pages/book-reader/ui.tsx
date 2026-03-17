@@ -2,7 +2,7 @@ import React from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { BodyXMLElementName, parseFb2BookToObject, XMLElementType } from 'entities/book-reader'
-import { INDENTS } from 'shared/themed'
+import { COLORS, INDENTS } from 'shared/themed'
 import type { XMLElementElement } from 'entities/book-reader'
 import { parseObjectToStylizedElements } from './lib'
 import { testFb2String } from './testFiles/testFb2'
@@ -31,6 +31,7 @@ export const BookReaderScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: COLORS.background,
     flex: 1,
   },
   content: {

@@ -1,32 +1,97 @@
-import React from 'react'
-import { ScrollView, StatusBar, StyleSheet } from 'react-native'
+import { useAtom } from '@reatom/npm-react'
+import React, { useCallback } from 'react'
+import { FlatList, StatusBar, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ListenEveryDaySlider } from 'widgets/listen-every-day-slider'
 import { NewSermonsSlider } from 'widgets/new-sermons-slider'
 import { SermonsOnBibleSlider } from 'widgets/sermons-on-bible-slider'
 import { TopicalListSlider } from 'widgets/topical-list-slider'
+import { QueueControls } from 'widgets/track-list/ui/QueueControls'
+import { TracksListItem } from 'widgets/track-list/ui/TracksListItem'
+import { useQueueManagement } from 'features/sermon-player-controls'
+import { currentAudioAtom, isPlayingAtom } from 'features/sermon-player-controls/model'
+import { mockNewSermons, mockSermons } from 'shared/lib/mockData/sermons'
 import { COLORS } from 'shared/themed'
+import type { AudioPlayerData } from 'entities/player'
 
-export const ListenScreen = () => (
-  <SafeAreaView style={styles.listen}>
-    <StatusBar translucent barStyle='dark-content' backgroundColor='transparent' />
-    <ScrollView style={styles.content}>
-      <NewSermonsSlider />
-      <SermonsOnBibleSlider />
-      <TopicalListSlider />
-      <ListenEveryDaySlider />
-    </ScrollView>
-  </SafeAreaView>
-)
+const SLIDER_COMPONENTS = [
+  { component: <NewSermonsSlider />, key: 'newSermons' },
+  { component: <SermonsOnBibleSlider />, key: 'sermonsOnBible' },
+  { component: <TopicalListSlider />, key: 'topicalList' },
+  { component: <ListenEveryDaySlider />, key: 'listenEveryDay' },
+]
+
+export const ListenScreen = () => {
+  const { playPlaylist, shufflePlaylist } = useQueueManagement()
+  const [currentAudio] = useAtom(currentAudioAtom)
+  const [isPlaying] = useAtom(isPlayingAtom)
+
+  const handlePlayAll = useCallback(() => {
+    void playPlaylist(mockSermons, 0)
+  }, [playPlaylist])
+
+  const handleShuffle = useCallback(() => {
+    void shufflePlaylist(mockSermons)
+  }, [shufflePlaylist])
+
+  const handlePressItem = useCallback(
+    (index: number) => {
+      void playPlaylist(mockSermons, index)
+    },
+    [playPlaylist],
+  )
+
+  const ListHeaderComponent = useCallback(
+    () => (
+      <View>
+        {SLIDER_COMPONENTS.map(item => (
+          <View key={item.key} style={styles.sliderSection}>
+            {item.component}
+          </View>
+        ))}
+        <QueueControls onPressPlayAll={handlePlayAll} onPressShuffle={handleShuffle} />
+      </View>
+    ),
+    [handlePlayAll, handleShuffle],
+  )
+
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: AudioPlayerData }) => (
+      <TracksListItem
+        title={item.title}
+        artist={item.artist}
+        artwork={item.artwork}
+        onPress={() => handlePressItem(index)}
+        isPlaying={isPlaying && currentAudio?.id === item.id}
+      />
+    ),
+    [isPlaying, currentAudio, handlePressItem],
+  )
+
+  return (
+    <SafeAreaView style={styles.listen}>
+      <StatusBar translucent barStyle='light-content' backgroundColor='transparent' />
+      <FlatList
+        data={mockNewSermons}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={ListHeaderComponent}
+      />
+    </SafeAreaView>
+  )
+}
 
 const styles = StyleSheet.create({
   content: {
-    backgroundColor: COLORS.white,
-    flex: 1,
-    paddingBottom: 100,
+    backgroundColor: COLORS.background,
+    paddingBottom: 100, // Keep padding for mini player
   },
   listen: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
     flex: 1,
+  },
+  sliderSection: {
+    marginBottom: 16,
   },
 })

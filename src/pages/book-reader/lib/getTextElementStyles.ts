@@ -1,6 +1,6 @@
 import { type StyleProp, StyleSheet, type TextStyle, type ViewStyle } from 'react-native'
 import { BodyXMLElementName } from 'entities/book-reader'
-import { FONT_SIZES, INDENTS } from 'shared/themed'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
 import type { XMLElementName } from 'entities/book-reader'
 
 interface GetTextElementStylesReturnType {
@@ -23,24 +23,25 @@ export const getTextElementStyles = (name: XMLElementName): GetTextElementStyles
   })[name as BodyXMLElementName]
 
 const styles = StyleSheet.create({
-  emphasisText: { fontStyle: 'italic' },
+  emphasisText: { color: COLORS.text, fontStyle: 'italic' },
 
   paragraph: {
     marginVertical: INDENTS.lowest,
   },
   paragraphText: {
+    color: COLORS.text,
     fontSize: FONT_SIZES.h4,
   },
 
-  strongText: { fontWeight: 'bold' },
+  strongText: { color: COLORS.text, fontWeight: 'bold' },
 
   subtitle: {
     marginVertical: INDENTS.low,
   },
-  subtitleText: { fontSize: FONT_SIZES.h2 },
+  subtitleText: { color: COLORS.text, fontSize: FONT_SIZES.h2 },
 
   title: {
     marginVertical: INDENTS.middle,
   },
-  titleText: { fontSize: FONT_SIZES.h1 },
+  titleText: { color: COLORS.text, fontSize: FONT_SIZES.h1 },
 })

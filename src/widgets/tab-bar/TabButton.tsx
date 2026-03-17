@@ -4,15 +4,15 @@ import { COLORS } from 'shared/themed'
 import { styles } from './styles'
 
 interface TabButtonProps {
+  isActive: boolean
+  onLayout: (layout: { width: number; x: number }) => void
+  onPress: () => void
   routeKey: string
   routeName: string
-  isActive: boolean
-  onPress: () => void
-  onLayout: (layout: { width: number; x: number }) => void
 }
 
-export const TabButton = ({ routeKey, routeName, isActive, onPress, onLayout }: TabButtonProps) => {
-  const color = isActive ? COLORS.black : '#555'
+export const TabButton = ({ isActive, onLayout, onPress, routeKey, routeName }: TabButtonProps) => {
+  const color = isActive ? COLORS.tabBarActive : COLORS.tabBarInactive
 
   const getIcon = () => {
     if (routeName === 'study')
@@ -41,7 +41,7 @@ export const TabButton = ({ routeKey, routeName, isActive, onPress, onLayout }: 
         ? 'Читать'
         : routeName === 'study'
           ? 'Учиться'
-          : 'Информация'
+          : 'Инфо.'
 
   return (
     <TouchableOpacity
@@ -57,7 +57,7 @@ export const TabButton = ({ routeKey, routeName, isActive, onPress, onLayout }: 
     >
       <View style={styles.tabItem}>
         {getIcon()}
-        {isActive && <Text style={[styles.tabText, { color }]}>{displayName}</Text>}
+        <Text style={[styles.tabText, { color }]}>{displayName}</Text>
       </View>
     </TouchableOpacity>
   )

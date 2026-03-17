@@ -3,28 +3,85 @@ import { createCtx } from '@reatom/framework'
 import { reatomContext, useAction } from '@reatom/npm-react'
 import { Stack } from 'expo-router'
 import React, { useEffect } from 'react'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import {
   setCurrentAudio as setCurrentAudioAction,
   setCurrentPlaylist as setCurrentPlaylistAction,
+  setDuration,
+  setIsBuffering,
+  setIsPlaying,
+  setPosition,
 } from 'features/sermon-player-controls'
 import { type AudioPlayerData, usePlayer } from 'entities/player'
-import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION } from 'shared/config'
+import { playerService } from 'entities/player/lib/PlayerService'
+import {
+  CURRENT_AUDIO,
+  CURRENT_PLAYLIST,
+  CURRENT_SOUND_POSITION,
+  CURRENT_SOUND_VOLUME,
+} from 'shared/config'
 import { parseJSONToObject } from 'shared/lib/utils'
 import type { PlaylistData } from 'shared/model'
 
 const ctx = createCtx()
 
+const PlaybackStateSync = () => {
+  const updateIsPlaying = useAction(setIsPlaying)
+  const updatePosition = useAction(setPosition)
+  const updateDuration = useAction(setDuration)
+  const updateIsBuffering = useAction(setIsBuffering)
+
+  useEffect(() => {
+    const unsubscribe = playerService.subscribe(() => {
+      const state = playerService.getState()
+      void updateIsPlaying(state.isPlaying)
+      void updatePosition(state.position)
+      void updateDuration(state.duration)
+      void updateIsBuffering(state.isBuffering)
+    })
+    return () => {
+      unsubscribe()
+    }
+  }, [updateIsPlaying, updatePosition, updateDuration, updateIsBuffering])
+
+  useEffect(() => {
+    const savePosition = async () => {
+      const state = playerService.getState()
+      if (!state.isPlaying)
+        await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(state.position))
+    }
+    const interval = setInterval(savePosition, 5000)
+    return () => {
+      clearInterval(interval)
+    }
+  }, [])
+
+  return null
+}
+
 const RootLayout = () => {
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
-  const { loadAudio, unload } = usePlayer()
+  const { loadAudio, setVolume, unload } = usePlayer()
 
   useEffect(() => {
     const initPlayerData = async () => {
       try {
-        const [[, storedCurrentAudio], [, storedCurrentPlaylist], [, storedSoundPosition]] =
-          await AsyncStorage.multiGet([CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION])
-
+        const [
+          [, storedCurrentAudio],
+          [, storedCurrentPlaylist],
+          [, storedSoundPosition],
+          [, storedVolume],
+        ] = await AsyncStorage.multiGet([
+          CURRENT_AUDIO,
+          CURRENT_PLAYLIST,
+          CURRENT_SOUND_POSITION,
+          CURRENT_SOUND_VOLUME,
+        ])
+        if (storedVolume) {
+          const volume = Number(storedVolume)
+          if (!isNaN(volume)) await setVolume(volume)
+        }
         if (storedCurrentAudio) {
           const audio = parseJSONToObject<AudioPlayerData>(storedCurrentAudio)
           if (audio) {
@@ -32,7 +89,6 @@ const RootLayout = () => {
             await loadAudio(audio.audioUrl, Number(storedSoundPosition) || 0)
           }
         }
-
         if (storedCurrentPlaylist) {
           const playlist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist)
           if (playlist) await setCurrentPlaylist(playlist)
@@ -41,24 +97,27 @@ const RootLayout = () => {
         console.error('Error initializing player data:', error)
       }
     }
-
     void initPlayerData()
-
     return () => {
       void unload()
     }
   }, [])
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-    </Stack>
+    <>
+      <PlaybackStateSync />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+      </Stack>
+    </>
   )
 }
 
 const RootLayoutWithProvider = () => (
   <reatomContext.Provider value={ctx}>
-    <RootLayout />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <RootLayout />
+    </GestureHandlerRootView>
   </reatomContext.Provider>
 )
 

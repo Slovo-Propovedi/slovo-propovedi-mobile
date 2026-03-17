@@ -3,7 +3,7 @@ import { useAtom } from '@reatom/npm-react'
 import { BlurView } from 'expo-blur'
 import React from 'react'
 import { View } from 'react-native'
-import { AnimatedPlayer } from 'widgets/animated-player'
+import { FloatingPlayer } from 'widgets/floating-player'
 import { isAudioPlayerMountedAtom } from 'shared/model'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
@@ -51,8 +51,9 @@ export const CustomTabBar = ({
 
   return (
     <>
+      {showMiniPlayer && <FloatingPlayer />}
       <View style={styles.floatingContainer}>
-        <BlurView tint='light' intensity={40} style={styles.floatingIsland}>
+        <BlurView tint='dark' intensity={70} style={styles.floatingIsland}>
           <View style={styles.tabBar}>
             <TabIndicator
               width={indicatorWidth}
@@ -89,7 +90,6 @@ export const CustomTabBar = ({
           </View>
         </BlurView>
       </View>
-      {showMiniPlayer && <AnimatedPlayer />}
     </>
   )
 }
