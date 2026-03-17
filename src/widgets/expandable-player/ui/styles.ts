@@ -10,7 +10,6 @@ export const styles = StyleSheet.create({
     marginTop: INDENTS.low,
     textAlign: 'center',
   },
-
   backdrop: {
     backgroundColor: COLORS.black,
     height: SCREEN_HEIGHT,
@@ -21,15 +20,18 @@ export const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     zIndex: 150,
   },
-
+  backgroundContainer: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
+    height: SCREEN_HEIGHT,
+    width: SCREEN_WIDTH,
   },
-
   blurOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
-
   closeButton: {
     alignItems: 'center',
     height: 40,
@@ -43,18 +45,15 @@ export const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: FONT_SIZES.lg,
   },
-
   container: {
     backgroundColor: COLORS.surface,
     overflow: 'hidden',
     position: 'absolute',
     zIndex: 200,
   },
-
   controlsContainer: {
     marginVertical: INDENTS.high,
   },
-
   fullContainer: {
     bottom: 0,
     left: 0,
@@ -62,7 +61,6 @@ export const styles = StyleSheet.create({
     right: 0,
     top: 0,
   },
-
   miniContainer: {
     alignItems: 'center',
     flex: 1,
@@ -78,6 +76,11 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUSES.low,
     height: 40,
     width: 40,
+  },
+  miniOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUSES.middle,
   },
   miniPlaylistName: {
     color: COLORS.textMuted,
@@ -95,17 +98,14 @@ export const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: FONT_SIZES.base,
   },
-
   progressContainer: {
     marginTop: INDENTS.highest,
     paddingHorizontal: INDENTS.high,
   },
-
   repeatContainer: {
     alignItems: 'center',
     marginBottom: INDENTS.high,
   },
-
   trackInfoContainer: {
     alignItems: 'center',
   },
@@ -115,7 +115,6 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-
   volumeContainer: {
     marginTop: INDENTS.high,
     paddingHorizontal: INDENTS.high,
