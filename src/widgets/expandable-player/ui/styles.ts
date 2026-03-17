@@ -21,13 +21,10 @@ export const styles = StyleSheet.create({
     zIndex: 150,
   },
   backgroundContainer: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...StyleSheet.absoluteFillObject,
   },
   backgroundImage: {
-    height: SCREEN_HEIGHT,
-    width: SCREEN_WIDTH,
+    ...StyleSheet.absoluteFillObject,
   },
   blurOverlay: {
     ...StyleSheet.absoluteFill,
@@ -43,7 +40,7 @@ export const styles = StyleSheet.create({
   },
   closeIcon: {
     color: COLORS.textMuted,
-    fontSize: FONT_SIZES.lg,
+    fontSize: 32,
   },
   container: {
     backgroundColor: COLORS.surface,

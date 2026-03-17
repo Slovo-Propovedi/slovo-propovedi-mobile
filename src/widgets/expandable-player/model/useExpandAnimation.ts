@@ -7,13 +7,6 @@ import type { SharedValue } from 'react-native-reanimated'
 const MINI_H = PLAYER_SIZES.miniPlayerHeight
 const TAB_H = PLAYER_SIZES.tabBarHeight
 const MINI_BOTTOM = TAB_H + INDENTS.low
-const MINI_COVER_SIZE = PLAYER_SIZES.albumArtMini
-
-// Mini cover center position (relative to container when collapsed)
-const MINI_COVER_CENTER_X = INDENTS.low + MINI_COVER_SIZE / 2
-const MINI_COVER_CENTER_Y = MINI_H / 2
-const SCREEN_CENTER_X = SCREEN_WIDTH / 2
-const SCREEN_CENTER_Y = SCREEN_HEIGHT / 2
 
 interface UseExpandAnimationResult {
   backdropStyle: ReturnType<typeof useAnimatedStyle>
@@ -33,7 +26,7 @@ export const useExpandAnimation = (expanded: boolean): UseExpandAnimationResult 
   // Gesture controls progress during drag; this syncs on external state changes
   useEffect(() => {
     progress.value = withTiming(expanded ? 1 : 0, { duration: expanded ? 300 : 250 })
-  }, [expanded, progress])
+  }, [expanded])
 
   const containerStyle = useAnimatedStyle(() => ({
     borderBottomLeftRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
@@ -46,33 +39,10 @@ export const useExpandAnimation = (expanded: boolean): UseExpandAnimationResult 
     width: interpolate(progress.value, [0, 1], [SCREEN_WIDTH - INDENTS.low * 2, SCREEN_WIDTH]),
   }))
 
-  // Background image animation: grows from mini cover position to fullscreen
-  const backgroundImageStyle = useAnimatedStyle(() => {
-    const progressValue = progress.value
-
-    // Scale: from small (MINI_COVER_SIZE / SCREEN_WIDTH) to fullscreen (1)
-    const scale = interpolate(progressValue, [0, 1], [MINI_COVER_SIZE / SCREEN_WIDTH, 1])
-
-    // Position: translate from mini cover center to screen center
-    const translateX = interpolate(
-      progressValue,
-      [0, 1],
-      [MINI_COVER_CENTER_X - SCREEN_CENTER_X, 0],
-    )
-    const translateY = interpolate(
-      progressValue,
-      [0, 1],
-      [MINI_COVER_CENTER_Y - SCREEN_CENTER_Y, 0],
-    )
-
-    // Opacity: start invisible, fade in as it expands
-    const opacity = interpolate(progressValue, [0, 0.1, 1], [0, 0.3, 1])
-
-    return {
-      opacity,
-      transform: [{ translateX }, { translateY }, { scale }],
-    }
-  })
+  // Background image animation: fullscreen, just fades in/out
+  const backgroundImageStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.3], [0, 1]),
+  }))
 
   // Dark overlay for mini player - fades out as it expands
   const miniOverlayStyle = useAnimatedStyle(() => ({
