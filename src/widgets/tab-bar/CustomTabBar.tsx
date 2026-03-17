@@ -1,10 +1,7 @@
 import { type BottomTabBarProps } from '@react-navigation/bottom-tabs'
-import { useAtom } from '@reatom/npm-react'
 import { BlurView } from 'expo-blur'
 import React from 'react'
 import { View } from 'react-native'
-import { FloatingPlayer } from 'widgets/floating-player'
-import { isAudioPlayerMountedAtom } from 'shared/model'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabIndicator } from './TabIndicator'
@@ -24,6 +21,7 @@ const ROUTES = [
 
 interface CustomTabBarProps extends BottomTabBarProps {
   currentIndex: number
+  hideFloatingPlayer?: boolean
   setCurrentIndex: (index: number) => void
   setTabLayout: (key: string, layout: TabLayout) => void
   tabLayouts: Record<string, TabLayout>
@@ -32,14 +30,13 @@ interface CustomTabBarProps extends BottomTabBarProps {
 export const CustomTabBar = ({
   currentIndex,
   descriptors,
+  hideFloatingPlayer: _,
   navigation,
   setCurrentIndex,
   setTabLayout,
   state,
   tabLayouts,
 }: CustomTabBarProps) => {
-  const [isAudioPlayerMounted] = useAtom(isAudioPlayerMountedAtom)
-
   const currentKey = ROUTES[currentIndex]?.key
   const { indicatorOpacity, indicatorPosition, indicatorWidth } = useTabIndicator(
     currentIndex,
@@ -47,49 +44,44 @@ export const CustomTabBar = ({
     currentKey,
   )
 
-  const showMiniPlayer = !(currentKey === 'listen' && isAudioPlayerMounted)
-
   return (
-    <>
-      {showMiniPlayer && <FloatingPlayer />}
-      <View style={styles.floatingContainer}>
-        <BlurView tint='dark' intensity={70} style={styles.floatingIsland}>
-          <View style={styles.tabBar}>
-            <TabIndicator
-              width={indicatorWidth}
-              opacity={indicatorOpacity}
-              position={indicatorPosition}
-            />
-            {state.routes.map((route, index: number) => {
-              const { options: _ } = descriptors[route.key]
-              const isActive = index === state.index
+    <View style={styles.floatingContainer}>
+      <BlurView tint='dark' intensity={70} style={styles.floatingIsland}>
+        <View style={styles.tabBar}>
+          <TabIndicator
+            width={indicatorWidth}
+            opacity={indicatorOpacity}
+            position={indicatorPosition}
+          />
+          {state.routes.map((route, index: number) => {
+            const { options: _options } = descriptors[route.key]
+            const isActive = index === state.index
 
-              const onPress = () => {
-                const event = navigation.emit({
-                  canPreventDefault: true,
-                  target: route.key,
-                  type: 'tabPress',
-                })
+            const onPress = () => {
+              const event = navigation.emit({
+                canPreventDefault: true,
+                target: route.key,
+                type: 'tabPress',
+              })
 
-                if (!isActive && !event.defaultPrevented) navigation.navigate(route.name)
+              if (!isActive && !event.defaultPrevented) navigation.navigate(route.name)
 
-                setCurrentIndex(index)
-              }
+              setCurrentIndex(index)
+            }
 
-              return (
-                <TabButton
-                  key={route.key}
-                  onPress={onPress}
-                  isActive={isActive}
-                  routeKey={route.key}
-                  routeName={route.name}
-                  onLayout={layout => setTabLayout(route.key, layout)}
-                />
-              )
-            })}
-          </View>
-        </BlurView>
-      </View>
-    </>
+            return (
+              <TabButton
+                key={route.key}
+                onPress={onPress}
+                isActive={isActive}
+                routeKey={route.key}
+                routeName={route.name}
+                onLayout={layout => setTabLayout(route.key, layout)}
+              />
+            )
+          })}
+        </View>
+      </BlurView>
+    </View>
   )
 }

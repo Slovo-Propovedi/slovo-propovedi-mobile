@@ -1,10 +1,10 @@
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
+import { useAtom } from '@reatom/npm-react'
 import { Tabs } from 'expo-router'
 import { useState } from 'react'
 import { View } from 'react-native'
-import { FloatingPlayer } from 'widgets/floating-player'
-import { PlayerSheet } from 'widgets/player-sheet'
+import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
+import { isPlayerExpandedAtom } from 'features/sermon-player-controls'
 
 interface TabLayout {
   width: number
@@ -14,37 +14,36 @@ interface TabLayout {
 const Layout = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [tabLayouts, setTabLayoutsState] = useState<Record<string, TabLayout>>({})
+  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
 
   const setTabLayout = (key: string, layout: TabLayout) => {
     setTabLayoutsState(prev => ({ ...prev, [key]: layout }))
   }
 
   return (
-    <BottomSheetModalProvider>
-      <View style={{ flex: 1 }}>
-        <Tabs
-          screenOptions={{
-            headerShown: false,
-          }}
-          tabBar={props => (
-            <CustomTabBar
-              {...props}
-              tabLayouts={tabLayouts}
-              currentIndex={currentIndex}
-              setTabLayout={setTabLayout}
-              setCurrentIndex={setCurrentIndex}
-            />
-          )}
-        >
-          <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
-          <Tabs.Screen name='read' options={{ title: 'Читать' }} />
-          <Tabs.Screen name='study' options={{ title: 'Учиться' }} />
-          <Tabs.Screen name='info' options={{ title: 'Информация' }} />
-        </Tabs>
-        <FloatingPlayer />
-        <PlayerSheet />
-      </View>
-    </BottomSheetModalProvider>
+    <View style={{ flex: 1 }}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+        }}
+        tabBar={props => (
+          <CustomTabBar
+            {...props}
+            tabLayouts={tabLayouts}
+            currentIndex={currentIndex}
+            setTabLayout={setTabLayout}
+            setCurrentIndex={setCurrentIndex}
+            hideFloatingPlayer={isPlayerExpanded}
+          />
+        )}
+      >
+        <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
+        <Tabs.Screen name='read' options={{ title: 'Читать' }} />
+        <Tabs.Screen name='study' options={{ title: 'Учаться' }} />
+        <Tabs.Screen name='info' options={{ title: 'Информация' }} />
+      </Tabs>
+      <ExpandablePlayer />
+    </View>
   )
 }
 export default Layout

@@ -24,18 +24,21 @@ export const isBufferingAtom = atom(false, 'isBufferingAtom')
 export type RepeatMode = 'off' | 'queue' | 'track'
 export const repeatModeAtom = atom<RepeatMode>('off', 'repeatModeAtom')
 
-// Bottom sheet player visibility
-export const isPlayerSheetOpenAtom = atom(false, 'isPlayerSheetOpenAtom')
+// Player expanded state (for expandable player)
+export const isPlayerExpandedAtom = atom(false, 'isPlayerExpandedAtom')
+
+// Legacy alias for backward compatibility
+export const isPlayerSheetOpenAtom = isPlayerExpandedAtom
 
 export const openPlayerSheet = action(async ctx => {
   await ctx.schedule(() => {
-    isPlayerSheetOpenAtom(ctx, true)
+    isPlayerExpandedAtom(ctx, true)
   })
 }, 'openPlayerSheet')
 
 export const closePlayerSheet = action(async ctx => {
   await ctx.schedule(() => {
-    isPlayerSheetOpenAtom(ctx, false)
+    isPlayerExpandedAtom(ctx, false)
   })
 }, 'closePlayerSheet')
 
