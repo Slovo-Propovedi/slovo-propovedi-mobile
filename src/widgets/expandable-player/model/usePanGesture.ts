@@ -25,7 +25,7 @@ export const usePanGesture = ({ progress }: UsePanGestureParams) => {
   const startProgress = useSharedValue(0)
 
   return Gesture.Pan()
-    .activeOffsetY([-10, 10]) // Require 10px vertical movement in either direction to activate (allows taps to pass through)
+    .activeOffsetY([-10, 10]) // Require 10px vertical movement to activate (allows taps to pass through)
     .onStart(() => {
       'worklet'
       startProgress.value = progress.value
@@ -41,11 +41,23 @@ export const usePanGesture = ({ progress }: UsePanGestureParams) => {
       'worklet'
       const velocity = e.velocityY
 
-      if (velocity > VELOCITY_THRESHOLD)
-        progress.value = withTiming(0, { duration: CLOSE_DURATION })
-      else if (velocity < -VELOCITY_THRESHOLD)
-        progress.value = withTiming(1, { duration: OPEN_DURATION })
-      else if (progress.value >= 0.5) progress.value = withTiming(1, { duration: OPEN_DURATION })
-      else progress.value = withTiming(0, { duration: CLOSE_DURATION })
+      let targetProgress: number
+      let duration: number
+
+      if (velocity > VELOCITY_THRESHOLD) {
+        targetProgress = 0
+        duration = CLOSE_DURATION
+      } else if (velocity < -VELOCITY_THRESHOLD) {
+        targetProgress = 1
+        duration = OPEN_DURATION
+      } else if (progress.value >= 0.5) {
+        targetProgress = 1
+        duration = OPEN_DURATION
+      } else {
+        targetProgress = 0
+        duration = CLOSE_DURATION
+      }
+
+      progress.value = withTiming(targetProgress, { duration })
     })
 }

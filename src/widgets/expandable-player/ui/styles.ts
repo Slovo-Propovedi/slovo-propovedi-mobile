@@ -1,5 +1,5 @@
 import { Dimensions, StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed'
+import { COLORS, FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/themed'
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -60,9 +60,14 @@ export const styles = StyleSheet.create({
   },
   miniContainer: {
     alignItems: 'center',
-    flex: 1,
+    bottom: PLAYER_SIZES.tabBarHeight + INDENTS.low,
     flexDirection: 'row',
+    height: PLAYER_SIZES.miniPlayerHeight,
+    left: INDENTS.low,
     paddingHorizontal: INDENTS.low,
+    position: 'absolute',
+    right: INDENTS.low,
+    zIndex: 300,
   },
   miniControls: {
     alignItems: 'center',
