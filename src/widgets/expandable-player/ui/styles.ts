@@ -1,6 +1,5 @@
 import { Dimensions, StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/themed'
-
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export const styles = StyleSheet.create({
@@ -29,6 +28,10 @@ export const styles = StyleSheet.create({
   blurOverlay: {
     ...StyleSheet.absoluteFill,
   },
+  bottomContentContainer: {
+    paddingBottom: INDENTS.high * 2,
+    paddingHorizontal: INDENTS.medium,
+  },
   closeButton: {
     alignItems: 'center',
     height: 40,
@@ -39,7 +42,7 @@ export const styles = StyleSheet.create({
     zIndex: 100,
   },
   closeIcon: {
-    color: COLORS.textMuted,
+    color: COLORS.white,
     fontSize: 32,
   },
   container: {
@@ -48,77 +51,66 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 200,
   },
-  controlsContainer: {
-    marginVertical: INDENTS.high,
+  controlIcon: {
+    color: COLORS.white,
+    fontSize: FONT_SIZES.xl,
+  },
+  controlsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   fullContainer: {
     bottom: 0,
+    flex: 1,
     left: 0,
     position: 'absolute',
     right: 0,
     top: 0,
   },
-  miniContainer: {
+  menuButton: {
+    padding: INDENTS.low,
+  },
+  menuIcon: {
+    color: COLORS.textMuted,
+    fontSize: FONT_SIZES.xl,
+  },
+  progressBarContainer: {
+    flex: 1,
+    marginHorizontal: INDENTS.low,
+  },
+  progressRow: {
     alignItems: 'center',
-    bottom: PLAYER_SIZES.tabBarHeight + INDENTS.low,
     flexDirection: 'row',
-    height: PLAYER_SIZES.miniPlayerHeight,
-    left: INDENTS.low,
-    paddingHorizontal: INDENTS.low,
-    position: 'absolute',
-    right: INDENTS.low,
-    zIndex: 300,
+    marginBottom: INDENTS.low,
   },
-  miniControls: {
+  sideControl: {
     alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
+    padding: INDENTS.low,
+    width: 50,
   },
-  miniCover: {
-    borderRadius: RADIUSES.low,
-    height: 40,
-    width: 40,
+  spacer: {
+    flex: 1,
   },
-  miniOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUSES.middle,
-  },
-  miniPlaylistName: {
+  timeText: {
     color: COLORS.textMuted,
     fontSize: FONT_SIZES.sm,
-    marginTop: 2,
+    textAlign: 'center',
+    width: 50,
   },
-  miniTextContainer: {
+  trackInfoRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: INDENTS.medium,
+  },
+  trackInfoTextContainer: {
+    alignItems: 'center',
     flex: 1,
-    justifyContent: 'center',
-    marginLeft: INDENTS.low,
-    marginRight: INDENTS.low,
-    overflow: 'hidden',
-  },
-  miniTrackTitle: {
-    color: COLORS.text,
-    fontSize: FONT_SIZES.base,
-  },
-  progressContainer: {
-    marginTop: INDENTS.highest,
-    paddingHorizontal: INDENTS.high,
-  },
-  repeatContainer: {
-    alignItems: 'center',
-    marginBottom: INDENTS.high,
-  },
-  trackInfoContainer: {
-    alignItems: 'center',
   },
   trackTitle: {
     color: COLORS.text,
     fontSize: FONT_SIZES.xxl,
     fontWeight: 'bold',
     textAlign: 'center',
-  },
-  volumeContainer: {
-    marginTop: INDENTS.high,
-    paddingHorizontal: INDENTS.high,
   },
 })

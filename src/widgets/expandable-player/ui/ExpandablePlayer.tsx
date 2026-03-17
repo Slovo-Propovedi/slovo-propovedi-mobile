@@ -1,17 +1,8 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { BlurView } from 'expo-blur'
 import React, { useCallback } from 'react'
-import {
-  Image,
-  Pressable,
-  type StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  type ViewStyle,
-} from 'react-native'
+import { Image, Pressable, type StyleProp, Text, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
-import Animated, { runOnUI, withTiming } from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   closePlayerSheet,
@@ -30,6 +21,7 @@ import { useExpandAnimation } from '../model/useExpandAnimation'
 import { useMiniPanGesture } from '../model/useMiniPanGesture'
 import { usePanGesture } from '../model/usePanGesture'
 import { FullscreenContent } from './FullscreenContent'
+import { miniPlayerStyles } from './miniPlayerStyles'
 import { styles } from './styles'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -46,7 +38,6 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
   const {
     backdropStyle,
     backgroundImageStyle,
-    blurStyle,
     containerStyle,
     fullStyle,
     miniOverlayStyle,
@@ -54,21 +45,21 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     progress,
   } = useExpandAnimation(expanded)
 
-  const pan = usePanGesture({ progress })
-  const miniPan = useMiniPanGesture({ progress })
-  const onPlayPause = async () => (playing ? pause() : play())
-
   const handleMiniTap = useCallback(() => {
-    'worklet'
-    runOnUI(() => (progress.value = withTiming(1, { duration: 300 })))()
     if (!expanded) void open()
-  }, [expanded, open, progress])
+  }, [expanded, open])
 
   const handleCloseFullscreen = useCallback(() => {
-    'worklet'
-    runOnUI(() => (progress.value = withTiming(0, { duration: 250 })))()
     if (expanded) void close()
-  }, [close, expanded, progress])
+  }, [close, expanded])
+
+  const pan = usePanGesture({
+    onClose: handleCloseFullscreen,
+    onOpen: open,
+    progress,
+  })
+  const miniPan = useMiniPanGesture({ progress })
+  const onPlayPause = async () => (playing ? pause() : play())
 
   if (!audio) return null
 
@@ -78,45 +69,43 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
         style={[styles.backdrop, backdropStyle]}
         pointerEvents={expanded ? 'auto' : 'none'}
       />
-
-      {/* Mini player - swipe-up only gesture, taps pass to onPress */}
-      <GestureDetector gesture={miniPan}>
-        <AnimatedPressable onPress={handleMiniTap} style={[styles.miniContainer, miniStyle]}>
-          <Image style={styles.miniCover} source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }} />
-          <View style={styles.miniTextContainer}>
-            <MovingText text={audio.title || ''} style={styles.miniTrackTitle} />
-            <Text numberOfLines={1} style={styles.miniPlaylistName}>
-              {playlist?.title || 'Слово Истины'}
-            </Text>
-          </View>
-          <View style={styles.miniControls}>
-            <PlayerControlButton
-              size={36}
-              color={COLORS.white}
-              onPress={onPlayPause}
-              type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
+      {!expanded && (
+        <GestureDetector gesture={miniPan}>
+          <AnimatedPressable
+            onPress={handleMiniTap}
+            style={[miniPlayerStyles.miniContainer, miniStyle]}
+          >
+            <Image
+              style={miniPlayerStyles.miniCover}
+              source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }}
             />
-          </View>
-        </AnimatedPressable>
-      </GestureDetector>
-      {/* Container with background and fullscreen content */}
+            <View style={miniPlayerStyles.miniTextContainer}>
+              <MovingText text={audio.title || ''} style={miniPlayerStyles.miniTrackTitle} />
+              <Text numberOfLines={1} style={miniPlayerStyles.miniPlaylistName}>
+                {playlist?.title || 'Слово Истины'}
+              </Text>
+            </View>
+            <View style={miniPlayerStyles.miniControls}>
+              <PlayerControlButton
+                size={36}
+                color={COLORS.white}
+                onPress={onPlayPause}
+                type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
+              />
+            </View>
+          </AnimatedPressable>
+        </GestureDetector>
+      )}
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.container, containerStyle, style]}>
-          {/* Background */}
           <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
             <Image
               resizeMode='cover'
               style={styles.backgroundImage}
               source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }}
             />
-            <Animated.View style={[styles.blurOverlay, blurStyle]}>
-              <BlurView intensity={80} style={StyleSheet.absoluteFill} />
-            </Animated.View>
           </Animated.View>
-
-          <Animated.View style={[styles.miniOverlay, miniOverlayStyle]} />
-
-          {/* Fullscreen content for swipe-to-close */}
+          <Animated.View style={[miniPlayerStyles.miniOverlay, miniOverlayStyle]} />
           <FullscreenContent
             expanded={expanded}
             fullStyle={fullStyle}

@@ -14,6 +14,7 @@ import { COLORS, FONT_SIZES } from 'shared/themed'
 
 interface PlayerProgressBarProps {
   duration: number
+  hideTime?: boolean
   onSeek?: (position: number) => void
   position: number
   style?: StyleProp<ViewStyle>
@@ -21,6 +22,7 @@ interface PlayerProgressBarProps {
 
 export const PlayerProgressBar = ({
   duration,
+  hideTime = false,
   onSeek,
   position,
   style,
@@ -69,10 +71,12 @@ export const PlayerProgressBar = ({
         />
       </Pressable>
 
-      <View style={styles.timeContainer}>
-        <Text style={styles.timeText}>{millisToMinutesAndSeconds(position)}</Text>
-        <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>
-      </View>
+      {!hideTime && (
+        <View style={styles.timeContainer}>
+          <Text style={styles.timeText}>{millisToMinutesAndSeconds(position)}</Text>
+          <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>
+        </View>
+      )}
     </View>
   )
 }

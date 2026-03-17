@@ -74,6 +74,8 @@ export const FullscreenPlayer = ({
           source={{ uri: audio.previewUrl || IMAGE_PLACEHOLDER }}
         />
 
+        <View style={styles.spacer} />
+
         <View style={styles.fullscreenBottomContent}>
           <Text style={styles.fullscreenTitle}>{audio.title}</Text>
           <PlayerListenProgress />

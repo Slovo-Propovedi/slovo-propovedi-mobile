@@ -1,5 +1,5 @@
 import { Gesture } from 'react-native-gesture-handler'
-import { useSharedValue, withTiming } from 'react-native-reanimated'
+import { runOnJS, useSharedValue, withTiming } from 'react-native-reanimated'
 import { SCREEN_HEIGHT } from 'shared/config'
 import { INDENTS, PLAYER_SIZES } from 'shared/themed'
 import type { SharedValue } from 'react-native-reanimated'
@@ -18,10 +18,12 @@ const OPEN_DURATION = 300
 const CLOSE_DURATION = 250
 
 interface UsePanGestureParams {
+  onClose?: () => void
+  onOpen?: () => void
   progress: SharedValue<number>
 }
 
-export const usePanGesture = ({ progress }: UsePanGestureParams) => {
+export const usePanGesture = ({ onClose, onOpen, progress }: UsePanGestureParams) => {
   const startProgress = useSharedValue(0)
 
   return Gesture.Pan()
@@ -59,5 +61,9 @@ export const usePanGesture = ({ progress }: UsePanGestureParams) => {
       }
 
       progress.value = withTiming(targetProgress, { duration })
+
+      // Call callbacks to update atom state
+      if (targetProgress === 0 && onClose) runOnJS(onClose)()
+      else if (targetProgress === 1 && onOpen) runOnJS(onOpen)()
     })
 }

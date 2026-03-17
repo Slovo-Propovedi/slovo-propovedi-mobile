@@ -8,22 +8,33 @@ import {
   isBufferingAtom,
   isPlayingAtom,
 } from 'features/sermon-player-controls/model'
-import { COLORS, PLAYER_SIZES } from 'shared/themed'
+import { COLORS, INDENTS, PLAYER_SIZES } from 'shared/themed'
 import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { usePlayer } from '../lib/usePlayer'
 
 interface FullscreenPlayerControlsProps {
+  compact?: boolean
   style?: StyleProp<ViewStyle>
 }
 
-export const FullscreenPlayerControls = ({ style }: FullscreenPlayerControlsProps) => {
+export const FullscreenPlayerControls = ({
+  compact = false,
+  style,
+}: FullscreenPlayerControlsProps) => {
   const [isPlaying] = useAtom(isPlayingAtom)
   const [isBuffering] = useAtom(isBufferingAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
   const [currentPlaylist] = useAtom(currentPlaylistAtom)
   const { pause, play } = usePlayer()
   const playNewSermon = usePlayNewSermon()
+
+  const buttonSize = compact
+    ? PLAYER_SIZES.controlButtonSize * 0.75
+    : PLAYER_SIZES.controlButtonSize
+  const playButtonSize = compact
+    ? PLAYER_SIZES.controlButtonSize * 1.5
+    : PLAYER_SIZES.controlButtonSize * 2
 
   const handlePlayPause = useCallback(async () => {
     if (isPlaying) await pause()
@@ -50,39 +61,39 @@ export const FullscreenPlayerControls = ({ style }: FullscreenPlayerControlsProp
   return (
     <View style={[styles.container, style]}>
       {/* Previous button - invisible but takes space if no previous */}
-      <View style={styles.buttonWrapper}>
+      <View style={[styles.buttonWrapper, { height: buttonSize, width: buttonSize }]}>
         {hasPrevious && (
           <PlayerControlButton
+            size={buttonSize}
             color={COLORS.white}
             onPress={handlePrevious}
             type={PlayerControlButtonType.Prev}
-            size={PLAYER_SIZES.controlButtonSize}
           />
         )}
       </View>
 
       {/* Play/Pause button */}
-      {isBuffering ? (
-        <View style={styles.playButtonWrapper}>
+      <View style={[styles.playButtonWrapper, { height: playButtonSize, width: playButtonSize }]}>
+        {isBuffering ? (
           <ActivityIndicator size='large' color={COLORS.white} />
-        </View>
-      ) : (
-        <PlayerControlButton
-          color={COLORS.white}
-          onPress={handlePlayPause}
-          size={PLAYER_SIZES.controlButtonSize * 2}
-          type={isPlaying ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
-        />
-      )}
-
-      {/* Next button - invisible but takes space if no next */}
-      <View style={styles.buttonWrapper}>
-        {hasNext && (
+        ) : (
           <PlayerControlButton
             color={COLORS.white}
+            size={playButtonSize}
+            onPress={handlePlayPause}
+            type={isPlaying ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
+          />
+        )}
+      </View>
+
+      {/* Next button - invisible but takes space if no next */}
+      <View style={[styles.buttonWrapper, { height: buttonSize, width: buttonSize }]}>
+        {hasNext && (
+          <PlayerControlButton
+            size={buttonSize}
             onPress={handleNext}
+            color={COLORS.white}
             type={PlayerControlButtonType.Next}
-            size={PLAYER_SIZES.controlButtonSize}
           />
         )}
       </View>
@@ -93,9 +104,8 @@ export const FullscreenPlayerControls = ({ style }: FullscreenPlayerControlsProp
 const styles = StyleSheet.create({
   buttonWrapper: {
     alignItems: 'center',
-    height: PLAYER_SIZES.controlButtonSize,
     justifyContent: 'center',
-    width: PLAYER_SIZES.controlButtonSize,
+    marginHorizontal: INDENTS.medium,
   },
   container: {
     alignItems: 'center',
@@ -104,8 +114,7 @@ const styles = StyleSheet.create({
   },
   playButtonWrapper: {
     alignItems: 'center',
-    height: PLAYER_SIZES.controlButtonSize * 2,
     justifyContent: 'center',
-    width: PLAYER_SIZES.controlButtonSize * 2,
+    marginHorizontal: INDENTS.high,
   },
 })

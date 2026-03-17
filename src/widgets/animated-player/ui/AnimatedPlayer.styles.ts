@@ -20,11 +20,8 @@ export const styles = StyleSheet.create({
     zIndex: 10,
   },
   fullscreenBottomContent: {
-    bottom: 0,
-    left: 0,
-    padding: INDENTS.high,
-    position: 'absolute',
-    right: 0,
+    alignItems: 'center',
+    width: '100%',
   },
   fullscreenContainer: {
     backgroundColor: COLORS.white,
@@ -41,18 +38,19 @@ export const styles = StyleSheet.create({
   fullscreenInnerContent: {
     alignItems: 'center',
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     padding: INDENTS.high,
   },
   fullscreenPreview: {
     borderRadius: 20,
     height: previewSize * 1.2,
-    marginTop: -(previewSize / 2),
     width: previewSize,
   },
   fullscreenTitle: {
     fontSize: FONT_SIZES.h3,
     marginVertical: INDENTS.high,
+    paddingHorizontal: INDENTS.medium,
+    textAlign: 'center',
   },
   mediaButtons: {
     alignItems: 'center',
@@ -113,5 +111,8 @@ export const styles = StyleSheet.create({
   miniTitle: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  spacer: {
+    flex: 1,
   },
 })
