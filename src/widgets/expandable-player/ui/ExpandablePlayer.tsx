@@ -66,6 +66,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
       />
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.container, containerStyle, style]}>
+          {/* Background */}
           <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
             <Image
               resizeMode='cover'
@@ -76,7 +77,10 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
               <BlurView intensity={80} style={StyleSheet.absoluteFill} />
             </Animated.View>
           </Animated.View>
+
           <Animated.View style={[styles.miniOverlay, miniOverlayStyle]} />
+
+          {/* Mini player - uses normal onPress (pan gesture only activates on drag) */}
           <AnimatedPressable onPress={() => void open()} style={[styles.miniContainer, miniStyle]}>
             <Image style={styles.miniCover} source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }} />
             <View style={styles.miniTextContainer}>
@@ -94,6 +98,8 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
               />
             </View>
           </AnimatedPressable>
+
+          {/* Fullscreen content for swipe-to-close */}
           <FullscreenContent
             expanded={expanded}
             fullStyle={fullStyle}

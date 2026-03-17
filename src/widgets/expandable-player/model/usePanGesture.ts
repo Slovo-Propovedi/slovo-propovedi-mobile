@@ -22,42 +22,30 @@ interface UsePanGestureParams {
 }
 
 export const usePanGesture = ({ progress }: UsePanGestureParams) => {
-  // Use SharedValue for worklet-safe state sharing between gesture callbacks
   const startProgress = useSharedValue(0)
 
   return Gesture.Pan()
+    .activeOffsetY([-10, 10]) // Require 10px vertical movement in either direction to activate (allows taps to pass through)
     .onStart(() => {
       'worklet'
-      // Capture current progress at gesture start
       startProgress.value = progress.value
     })
     .onUpdate(e => {
       'worklet'
-      // translationY: positive = drag down, negative = drag up
-      // Normalize drag to progress change (0-1 range)
       const dragProgress = e.translationY / DRAG_DISTANCE
 
-      if (startProgress.value >= 0.5)
-        // Started expanded: drag down (positive Y) decreases progress
-        progress.value = Math.max(0, Math.min(1, 1 - dragProgress))
-      else
-        // Started collapsed: drag up (negative Y) increases progress
-        progress.value = Math.max(0, Math.min(1, -dragProgress))
+      if (startProgress.value >= 0.5) progress.value = Math.max(0, Math.min(1, 1 - dragProgress))
+      else progress.value = Math.max(0, Math.min(1, -dragProgress))
     })
     .onEnd(e => {
       'worklet'
       const velocity = e.velocityY
 
-      // High velocity determines snap direction
       if (velocity > VELOCITY_THRESHOLD)
-        // Fast swipe down - close
         progress.value = withTiming(0, { duration: CLOSE_DURATION })
       else if (velocity < -VELOCITY_THRESHOLD)
-        // Fast swipe up - open
         progress.value = withTiming(1, { duration: OPEN_DURATION })
-      else if (progress.value >= 0.5)
-        // No strong velocity - snap to nearest state
-        progress.value = withTiming(1, { duration: OPEN_DURATION })
+      else if (progress.value >= 0.5) progress.value = withTiming(1, { duration: OPEN_DURATION })
       else progress.value = withTiming(0, { duration: CLOSE_DURATION })
     })
 }
