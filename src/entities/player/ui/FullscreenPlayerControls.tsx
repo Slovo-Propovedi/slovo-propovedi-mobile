@@ -5,7 +5,9 @@ import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import { COLORS, INDENTS, PLAYER_SIZES } from 'shared/ui/themed'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { usePlayer } from '../lib/usePlayer'
+import { usePlayerState } from '../lib/usePlayerState'
 import { usePlayNewSermon } from '../lib/usePlaySermon'
+import { useSeekControls } from '../lib/useSeekControls'
 import { currentAudioAtom, currentPlaylistAtom, isBufferingAtom, isPlayingAtom } from '../model'
 
 interface FullscreenPlayerControlsProps {
@@ -17,8 +19,10 @@ export const FullscreenPlayerControls = ({ style }: FullscreenPlayerControlsProp
   const [isBuffering] = useAtom(isBufferingAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
   const [currentPlaylist] = useAtom(currentPlaylistAtom)
-  const { pause, play } = usePlayer()
+  const { pause, play, seekTo } = usePlayer()
+  const { duration, position } = usePlayerState()
   const playNewSermon = usePlayNewSermon()
+  const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
 
   const buttonSize = PLAYER_SIZES.controlButtonSize
   const playButtonSize = buttonSize * 2
@@ -53,8 +57,10 @@ export const FullscreenPlayerControls = ({ style }: FullscreenPlayerControlsProp
           <PlayerControlButton
             size={buttonSize}
             color={COLORS.white}
+            onPressOut={stopSeek}
             onPress={handlePrevious}
             type={PlayerControlButtonType.Prev}
+            onLongPress={() => startSeek('backward')}
           />
         )}
       </View>
@@ -78,9 +84,11 @@ export const FullscreenPlayerControls = ({ style }: FullscreenPlayerControlsProp
         {hasNext && (
           <PlayerControlButton
             size={buttonSize}
-            onPress={handleNext}
             color={COLORS.white}
+            onPress={handleNext}
+            onPressOut={stopSeek}
             type={PlayerControlButtonType.Next}
+            onLongPress={() => startSeek('forward')}
           />
         )}
       </View>
