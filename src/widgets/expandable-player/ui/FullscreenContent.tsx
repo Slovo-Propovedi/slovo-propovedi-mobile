@@ -1,8 +1,7 @@
 import { Entypo } from '@expo/vector-icons'
 import { useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useRouter } from 'expo-router'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Pressable, Text, View, type ViewStyle } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle, runOnJS } from 'react-native-reanimated'
@@ -20,8 +19,10 @@ import {
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { MovingText } from 'shared/ui'
 import { INDENTS } from 'shared/ui/themed'
+import type BottomSheet from '@gorhom/bottom-sheet'
 import { gradientStyles } from './gradients'
 import { PlayerMenu } from './PlayerMenu'
+import { PlaylistBottomSheet } from './PlaylistBottomSheet'
 import { styles } from './styles'
 
 interface FullscreenContentProps {
@@ -36,8 +37,9 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const [position] = useAtom(positionAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
   const { seekTo } = usePlayer()
-  const router = useRouter()
   const [showMenu, setShowMenu] = useState(false)
+  const [showPlaylist, setShowPlaylist] = useState(false)
+  const playlistSheetRef = useRef<BottomSheet>(null)
 
   const closeTapGesture = Gesture.Tap().onEnd(() => {
     'worklet'
@@ -48,6 +50,13 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
 
   const handleOpenMenu = () => setShowMenu(true)
   const handleCloseMenu = () => setShowMenu(false)
+
+  const handleOpenPlaylist = () => {
+    setShowPlaylist(true)
+    setTimeout(() => playlistSheetRef.current?.expand(), 0)
+  }
+
+  const handleClosePlaylist = () => setShowPlaylist(false)
 
   return (
     <Animated.View style={[styles.fullContainer, fullStyle]}>
@@ -99,14 +108,18 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
         <View style={styles.controlsRow}>
           <PlayerRepeatToggle style={styles.sideControl} />
           <FullscreenPlayerControls compact />
-          <Pressable
-            style={styles.sideControl}
-            onPress={() => void router.push('/listen/playlist')}
-          >
+          <Pressable style={styles.sideControl} onPress={handleOpenPlaylist}>
             <Entypo name='list' style={styles.controlIcon} />
           </Pressable>
         </View>
       </View>
+      {showPlaylist && (
+        <PlaylistBottomSheet
+          playlist={playlist}
+          sheetRef={playlistSheetRef}
+          onClose={handleClosePlaylist}
+        />
+      )}
     </Animated.View>
   )
 }
