@@ -10,7 +10,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
-import { COLORS, FONT_SIZES } from 'shared/themed'
+import { COLORS, FONT_SIZES } from 'shared/ui/themed'
 
 interface PlayerProgressBarProps {
   duration: number

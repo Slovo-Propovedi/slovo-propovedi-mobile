@@ -1,6 +1,6 @@
 import React from 'react'
 import { ImageBackground, StyleSheet, TouchableOpacity } from 'react-native'
-import { IMAGE_PLACEHOLDER } from 'shared/images'
+import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import type { ReactNode } from 'react'
 import type { GestureResponderEvent, ImageStyle, StyleProp, ViewStyle } from 'react-native'
 

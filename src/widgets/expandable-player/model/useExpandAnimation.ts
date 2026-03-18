@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from 'shared/config'
-import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/themed'
+import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
 
 const MINI_H = PLAYER_SIZES.miniPlayerHeight

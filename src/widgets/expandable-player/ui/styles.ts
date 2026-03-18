@@ -1,5 +1,5 @@
 import { Dimensions, StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export const styles = StyleSheet.create({

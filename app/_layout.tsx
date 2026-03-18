@@ -5,15 +5,16 @@ import { Stack } from 'expo-router'
 import React, { useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import {
-  setCurrentAudio as setCurrentAudioAction,
-  setCurrentPlaylist as setCurrentPlaylistAction,
-  setDuration,
-  setIsBuffering,
-  setIsPlaying,
-  setPosition,
-} from 'features/sermon-player-controls'
-import { type AudioPlayerData, usePlayer } from 'entities/player'
-import { playerService } from 'entities/player/lib/PlayerService'
+  type AudioPlayerData,
+  playerService,
+  setCurrentAudioAction,
+  setCurrentPlaylistAction,
+  setDurationAction,
+  setIsBufferingAction,
+  setIsPlayingAction,
+  setPositionAction,
+  usePlayer,
+} from 'entities/player'
 import {
   CURRENT_AUDIO,
   CURRENT_PLAYLIST,
@@ -26,10 +27,10 @@ import type { PlaylistData } from 'shared/model'
 const ctx = createCtx()
 
 const PlaybackStateSync = () => {
-  const updateIsPlaying = useAction(setIsPlaying)
-  const updatePosition = useAction(setPosition)
-  const updateDuration = useAction(setDuration)
-  const updateIsBuffering = useAction(setIsBuffering)
+  const updateIsPlaying = useAction(setIsPlayingAction)
+  const updatePosition = useAction(setPositionAction)
+  const updateDuration = useAction(setDurationAction)
+  const updateIsBuffering = useAction(setIsBufferingAction)
 
   useEffect(() => {
     const unsubscribe = playerService.subscribe(() => {

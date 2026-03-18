@@ -1,7 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
-import { currentAudioAtom, currentPlaylistAtom } from 'features/sermon-player-controls'
-import { usePlayer, usePlayerState } from 'entities/player'
+import { currentAudioAtom, currentPlaylistAtom, usePlayer, usePlayerState } from 'entities/player'
 import { isPlayerFullscreenAtom, setPlayerFullscreen } from 'shared/model'
 import { useListenNavigation } from 'shared/routing'
 import { usePlayerAnimation } from '../model/usePlayerAnimation'

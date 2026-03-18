@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler'
-import { COLORS } from 'shared/themed'
+import { COLORS } from 'shared/ui/themed'
 import type { StyleProp, ViewStyle } from 'react-native'
 
 interface ProgressProps {

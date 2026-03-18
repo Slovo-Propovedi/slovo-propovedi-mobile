@@ -1,7 +1,7 @@
 import { Gesture } from 'react-native-gesture-handler'
 import { runOnJS, withTiming } from 'react-native-reanimated'
 import { SCREEN_HEIGHT } from 'shared/config'
-import { INDENTS, PLAYER_SIZES } from 'shared/themed'
+import { INDENTS, PLAYER_SIZES } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
 
 const TAB_H = PLAYER_SIZES.tabBarHeight

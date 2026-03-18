@@ -1,11 +1,11 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
-import { usePlayNewSermon } from 'features/sermon-player-controls'
+import { usePlayNewSermon } from 'entities/player'
 import { type PlaylistData } from 'shared/model'
 import { useListenNavigation } from 'shared/routing'
-import { INDENTS } from 'shared/themed'
 import { Slider, SliderItemSize, WhereIsSlideTitleLocated } from 'shared/ui'
+import { INDENTS } from 'shared/ui/themed'
 import { getTopicalListSlider, TopicalListSliderAtom } from './model'
 
 export const TopicalListSlider = () => {

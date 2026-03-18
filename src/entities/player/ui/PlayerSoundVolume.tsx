@@ -1,8 +1,8 @@
 import { FontAwesome } from '@expo/vector-icons'
 import React, { useState } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { COLORS } from 'shared/themed'
 import { Progress } from 'shared/ui'
+import { COLORS } from 'shared/ui/themed'
 import type { StyleProp, ViewStyle } from 'react-native'
 
 export const PlayerSoundVolume = ({ style }: { style?: StyleProp<ViewStyle> }) => {

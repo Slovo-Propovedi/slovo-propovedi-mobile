@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, INDENTS } from 'shared/themed'
+import { COLORS, INDENTS } from 'shared/ui/themed'
 
 export const sliderStyles = StyleSheet.create({
   contentContainer: {

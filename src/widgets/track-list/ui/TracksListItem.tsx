@@ -1,7 +1,7 @@
 import React from 'react'
 import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
-import { IMAGE_PLACEHOLDER } from 'shared/images'
-import { COLORS } from 'shared/themed'
+import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { COLORS } from 'shared/ui/themed'
 import type { TracksListItemProps } from './types'
 import { tracksListStyles } from './styles'
 

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { TabView } from 'react-native-tab-view'
 import { renderScene } from 'pages/study/scene'
 import { getRenderTabBar } from 'shared/lib/tab-bar'
-import { COLORS } from 'shared/themed'
+import { COLORS } from 'shared/ui/themed'
 
 const StudyScreen = () => {
   const [index, setIndex] = useState(0)

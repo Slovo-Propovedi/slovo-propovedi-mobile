@@ -1,6 +1,6 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native'
 import {
   SliderItemDescriptionBackgroundStyle,

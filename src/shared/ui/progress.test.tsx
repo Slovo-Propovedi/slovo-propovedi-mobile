@@ -1,7 +1,7 @@
 import { act, render, waitFor } from '@testing-library/react-native'
 import React from 'react'
 import { Animated } from 'react-native'
-import { COLORS } from 'shared/themed'
+import { COLORS } from 'shared/ui/themed'
 import { Progress } from './progress'
 import '@testing-library/jest-native/extend-expect'
 

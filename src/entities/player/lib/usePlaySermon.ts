@@ -1,12 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { usePlayer } from 'entities/player'
-import { setPlayerFullscreen } from 'shared/model'
-import type { PlaylistData, SermonData } from 'shared/model'
-import {
-  currentAudioAtom,
-  setCurrentAudio as setCurrentAudioAction,
-  setCurrentPlaylist as setCurrentPlaylistAction,
-} from '../model'
+import { type PlaylistData, type SermonData, setPlayerFullscreen } from 'shared/model'
+import { currentAudioAtom, setCurrentAudioAction, setCurrentPlaylistAction } from '../model'
+import { usePlayer } from './usePlayer'
 
 export const usePlayNewSermon = () => {
   const { loadAudio, play } = usePlayer()

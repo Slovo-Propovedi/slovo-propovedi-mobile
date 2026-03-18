@@ -1,7 +1,7 @@
 import { Entypo } from '@expo/vector-icons'
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
-import { COLORS } from 'shared/themed'
+import { COLORS } from 'shared/ui/themed'
 import type { GestureResponderEvent, OpaqueColorValue, StyleProp, ViewStyle } from 'react-native'
 import { PlayerControlButtonType } from './control-button.types'
 

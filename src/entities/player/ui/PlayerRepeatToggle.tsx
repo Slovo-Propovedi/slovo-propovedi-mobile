@@ -1,13 +1,8 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
-import { Pressable, StyleSheet, Text } from 'react-native'
-import {
-  type RepeatMode,
-  repeatModeAtom,
-  setRepeatMode as setRepeatModeAction,
-} from 'features/sermon-player-controls/model'
-import { FONT_SIZES } from 'shared/themed'
-import type { StyleProp, ViewStyle } from 'react-native'
+import { Pressable, type StyleProp, StyleSheet, Text, type ViewStyle } from 'react-native'
+import { FONT_SIZES } from 'shared/ui/themed'
+import { type RepeatMode, repeatModeAtom, setRepeatModeAction } from '../model'
 
 interface PlayerRepeatToggleProps {
   style?: StyleProp<ViewStyle>

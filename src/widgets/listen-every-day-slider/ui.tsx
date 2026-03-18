@@ -1,10 +1,10 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
-import { usePlayNewSermon } from 'features/sermon-player-controls'
+import { usePlayNewSermon } from 'entities/player'
 import { useListenNavigation } from 'shared/routing'
-import { INDENTS } from 'shared/themed'
 import { Slider, SliderItemSize, SliderItemTransform } from 'shared/ui'
+import { INDENTS } from 'shared/ui/themed'
 import type { PlaylistData } from 'shared/model'
 import { getListenEveryDay, listenEveryDayAtom } from './model'
 

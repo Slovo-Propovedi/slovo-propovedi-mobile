@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router'
-import { COLORS } from 'shared/themed'
+import { COLORS } from 'shared/ui/themed'
 
 const ListenStackLayout = () => (
   <Stack

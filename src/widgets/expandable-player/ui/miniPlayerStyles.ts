@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/themed'
+import { COLORS, FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/themed'
 
 export const miniPlayerStyles = StyleSheet.create({
   miniContainer: {

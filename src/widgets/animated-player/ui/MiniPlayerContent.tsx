@@ -1,8 +1,8 @@
 import { Feather } from '@expo/vector-icons'
 import React from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
-import { IMAGE_PLACEHOLDER } from 'shared/images'
-import { COLORS } from 'shared/themed'
+import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { COLORS } from 'shared/ui/themed'
 import type { AudioPlayerData } from 'entities/player'
 import { styles } from './AnimatedPlayer.styles'
 

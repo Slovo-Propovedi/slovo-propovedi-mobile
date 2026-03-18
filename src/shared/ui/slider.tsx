@@ -1,7 +1,7 @@
 import { Entypo } from '@expo/vector-icons'
 import React from 'react'
 import { ScrollView, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES } from 'shared/themed'
+import { COLORS, FONT_SIZES } from 'shared/ui/themed'
 import type { SliderItemTransform } from './slider-item/slider-item.types'
 import type {
   SliderItemDescriptionBackgroundStyle,

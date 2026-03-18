@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
 
 const previewSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN - INDENTS.high * 2
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Image, StyleSheet, Text, View } from 'react-native'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { ListItemSize } from './list-item.types'
 

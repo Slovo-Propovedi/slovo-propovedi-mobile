@@ -6,8 +6,8 @@ import {
   CURRENT_SOUND_POSITION,
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
-import type { AudioPlayerData } from 'entities/player'
-import type { PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import { type AudioPlayerData } from './ui/PlayerControls.types'
 
 // Legacy atoms for backward compatibility
 export const currentAudioAtom = atom<AudioPlayerData | null>(null, 'currentAudioAtom')
@@ -27,22 +27,19 @@ export const repeatModeAtom = atom<RepeatMode>('off', 'repeatModeAtom')
 // Player expanded state (for expandable player)
 export const isPlayerExpandedAtom = atom(false, 'isPlayerExpandedAtom')
 
-// Legacy alias for backward compatibility
-export const isPlayerSheetOpenAtom = isPlayerExpandedAtom
-
-export const openPlayerSheet = action(async ctx => {
+export const openPlayerSheetAction = action(async ctx => {
   await ctx.schedule(() => {
     isPlayerExpandedAtom(ctx, true)
   })
 }, 'openPlayerSheet')
 
-export const closePlayerSheet = action(async ctx => {
+export const closePlayerSheetAction = action(async ctx => {
   await ctx.schedule(() => {
     isPlayerExpandedAtom(ctx, false)
   })
 }, 'closePlayerSheet')
 
-export const setCurrentAudio = action(async (ctx, audio: AudioPlayerData) => {
+export const setCurrentAudioAction = action(async (ctx, audio: AudioPlayerData) => {
   await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(audio))
   await ctx.schedule(() => {
     currentAudioAtom(ctx, audio)
@@ -50,7 +47,7 @@ export const setCurrentAudio = action(async (ctx, audio: AudioPlayerData) => {
   return audio
 }, 'setCurrentAudio')
 
-export const setCurrentPlaylist = action(async (ctx, playlist: PlaylistData) => {
+export const setCurrentPlaylistAction = action(async (ctx, playlist: PlaylistData) => {
   await AsyncStorage.setItem(CURRENT_PLAYLIST, JSON.stringify(playlist))
   await ctx.schedule(() => {
     currentPlaylistAtom(ctx, playlist)
@@ -58,28 +55,28 @@ export const setCurrentPlaylist = action(async (ctx, playlist: PlaylistData) => 
   return playlist
 }, 'setCurrentPlaylist')
 
-export const setIsPlaying = action(async (ctx, playing: boolean) => {
+export const setIsPlayingAction = action(async (ctx, playing: boolean) => {
   await ctx.schedule(() => {
     isPlayingAtom(ctx, playing)
   })
   return playing
 }, 'setIsPlaying')
 
-export const setPosition = action(async (ctx, position: number) => {
+export const setPositionAction = action(async (ctx, position: number) => {
   await ctx.schedule(() => {
     positionAtom(ctx, position)
   })
   return position
 }, 'setPosition')
 
-export const setDuration = action(async (ctx, duration: number) => {
+export const setDurationAction = action(async (ctx, duration: number) => {
   await ctx.schedule(() => {
     durationAtom(ctx, duration)
   })
   return duration
 }, 'setDuration')
 
-export const setVolume = action(async (ctx, volume: number) => {
+export const setVolumeAction = action(async (ctx, volume: number) => {
   await AsyncStorage.setItem(CURRENT_SOUND_VOLUME, String(volume))
   await ctx.schedule(() => {
     volumeAtom(ctx, volume)
@@ -87,21 +84,21 @@ export const setVolume = action(async (ctx, volume: number) => {
   return volume
 }, 'setVolume')
 
-export const setIsBuffering = action(async (ctx, buffering: boolean) => {
+export const setIsBufferingAction = action(async (ctx, buffering: boolean) => {
   await ctx.schedule(() => {
     isBufferingAtom(ctx, buffering)
   })
   return buffering
 }, 'setIsBuffering')
 
-export const setRepeatMode = action(async (ctx, mode: RepeatMode) => {
+export const setRepeatModeAction = action(async (ctx, mode: RepeatMode) => {
   await ctx.schedule(() => {
     repeatModeAtom(ctx, mode)
   })
   return mode
 }, 'setRepeatMode')
 
-export const savePlaybackPosition = action(async (_ctx, position: number) => {
+export const savePlaybackPositionAction = action(async (_ctx, position: number) => {
   await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(position))
   return position
 }, 'savePlaybackPosition')

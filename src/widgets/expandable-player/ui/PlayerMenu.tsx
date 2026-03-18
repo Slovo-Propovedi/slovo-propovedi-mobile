@@ -1,6 +1,6 @@
 import React from 'react'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 
 interface PlayerMenuProps {
   onClose: () => void

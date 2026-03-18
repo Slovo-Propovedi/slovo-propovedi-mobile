@@ -11,15 +11,15 @@ import {
   currentAudioAtom,
   currentPlaylistAtom,
   durationAtom,
+  FullscreenPlayerControls,
+  PlayerProgressBar,
+  PlayerRepeatToggle,
   positionAtom,
-} from 'features/sermon-player-controls'
-import { usePlayer } from 'entities/player'
-import { FullscreenPlayerControls } from 'entities/player/ui/FullscreenPlayerControls'
-import { PlayerProgressBar } from 'entities/player/ui/PlayerProgressBar'
-import { PlayerRepeatToggle } from 'entities/player/ui/PlayerRepeatToggle'
+  usePlayer,
+} from 'entities/player'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
-import { INDENTS } from 'shared/themed'
-import { MovingText } from 'shared/ui/MovingText/MovingText'
+import { MovingText } from 'shared/ui'
+import { INDENTS } from 'shared/ui/themed'
 import { gradientStyles } from './gradients'
 import { PlayerMenu } from './PlayerMenu'
 import { styles } from './styles'

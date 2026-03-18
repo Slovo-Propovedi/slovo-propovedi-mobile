@@ -4,18 +4,17 @@ import { Image, Pressable, type StyleProp, Text, View, type ViewStyle } from 're
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 import {
-  closePlayerSheet,
+  closePlayerSheetAction,
   currentAudioAtom,
   currentPlaylistAtom,
   isPlayerExpandedAtom,
   isPlayingAtom,
-  openPlayerSheet,
-} from 'features/sermon-player-controls'
-import { usePlayer } from 'entities/player'
-import { IMAGE_PLACEHOLDER } from 'shared/images'
-import { COLORS } from 'shared/themed'
-import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
-import { MovingText } from 'shared/ui/MovingText/MovingText'
+  openPlayerSheetAction,
+  usePlayer,
+} from 'entities/player'
+import { MovingText, PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
+import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { COLORS } from 'shared/ui/themed'
 import { useExpandAnimation } from '../model/useExpandAnimation'
 import { useFullscreenPanGesture } from '../model/useFullscreenPanGesture'
 import { useMiniPanGesture } from '../model/useMiniPanGesture'
@@ -31,8 +30,8 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
   const { pause, play } = usePlayer()
-  const open = useAction(openPlayerSheet)
-  const close = useAction(closePlayerSheet)
+  const open = useAction(openPlayerSheetAction)
+  const close = useAction(closePlayerSheetAction)
   const {
     backdropStyle,
     backgroundImageStyle,

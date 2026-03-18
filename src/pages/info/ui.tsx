@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { COLORS } from 'shared/themed'
+import { COLORS } from 'shared/ui/themed'
 
 export const InfoScreen = () => (
   <SafeAreaView style={styles.info}>

@@ -4,13 +4,13 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
+  PlayerControlsSize,
   SermonPlayerControls,
-} from 'features/sermon-player-controls'
-import { PlayerControlsSize } from 'entities/player'
-import { IMAGE_PLACEHOLDER } from 'shared/images'
+} from 'entities/player'
 import { useListenNavigation } from 'shared/routing'
-import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed'
 import { PlayerControlButtonType } from 'shared/ui'
+import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 import type { StyleProp, TextStyle } from 'react-native'
 
 export const MiniPlayer = () => {

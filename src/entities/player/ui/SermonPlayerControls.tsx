@@ -1,13 +1,9 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import React from 'react'
-import { PlayerControls } from 'entities/player'
-import type { ControlsNames, PlayerControlsSize } from 'entities/player'
 import type { StyleProp, ViewStyle } from 'react-native'
-import {
-  currentAudioAtom,
-  currentPlaylistAtom,
-  setCurrentAudio as setCurrentAudioAction,
-} from './model'
+import { currentAudioAtom, currentPlaylistAtom, setCurrentAudioAction } from '../model'
+import { PlayerControls } from './PlayerControls'
+import { type ControlsNames, type PlayerControlsSize } from './PlayerControls.types'
 
 interface SermonPlayerControlsProps {
   excludeButtons?: ControlsNames[]

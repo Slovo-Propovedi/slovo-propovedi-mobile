@@ -1,13 +1,9 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useState } from 'react'
-import { usePlayer } from 'entities/player'
-import type { AudioPlayerData } from 'entities/player'
 import type { PlaylistData, SermonData } from 'shared/model'
-import {
-  currentAudioAtom,
-  isPlayingAtom,
-  setCurrentPlaylist as setCurrentPlaylistAction,
-} from '../model'
+import { currentAudioAtom, isPlayingAtom, setCurrentPlaylistAction } from '../model'
+import { type AudioPlayerData } from '../ui/PlayerControls.types'
+import { usePlayer } from './usePlayer'
 
 interface UseQueueManagementReturn {
   activeTrack: AudioPlayerData | null

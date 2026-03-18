@@ -6,13 +6,15 @@ import { ListenEveryDaySlider } from 'widgets/listen-every-day-slider'
 import { NewSermonsSlider } from 'widgets/new-sermons-slider'
 import { SermonsOnBibleSlider } from 'widgets/sermons-on-bible-slider'
 import { TopicalListSlider } from 'widgets/topical-list-slider'
-import { QueueControls } from 'widgets/track-list/ui/QueueControls'
-import { TracksListItem } from 'widgets/track-list/ui/TracksListItem'
-import { useQueueManagement } from 'features/sermon-player-controls'
-import { currentAudioAtom, isPlayingAtom } from 'features/sermon-player-controls/model'
-import { mockNewSermons, mockSermons } from 'shared/lib/mockData/sermons'
-import { COLORS } from 'shared/themed'
-import type { AudioPlayerData } from 'entities/player'
+import { QueueControls, TracksListItem } from 'widgets/track-list'
+import {
+  type AudioPlayerData,
+  currentAudioAtom,
+  isPlayingAtom,
+  useQueueManagement,
+} from 'entities/player'
+import { COLORS } from 'shared/ui/themed'
+import { mockNewSermons, mockSermons } from './mockData'
 
 const SLIDER_COMPONENTS = [
   { component: <NewSermonsSlider />, key: 'newSermons' },

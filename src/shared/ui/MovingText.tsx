@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native'
 import TextTicker from 'react-native-text-ticker'
-import { COLORS } from 'shared/themed'
 import type { StyleProp, TextStyle } from 'react-native'
+import { COLORS } from './themed'
 
 interface MovingTextProps {
   animationThreshold?: number

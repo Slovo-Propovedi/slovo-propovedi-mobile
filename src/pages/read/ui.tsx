@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { NotesForPreachersBooksSlider } from 'widgets/notes-for-preachers-books-slider'
 import { TopicalAndThematicBooksSlider } from 'widgets/topical-and-thematic-books-slider'
 import { VerseByVerseBooksSlider } from 'widgets/verse-by-verse-books-slider'
-import { COLORS } from 'shared/themed'
+import { COLORS } from 'shared/ui/themed'
 
 export const ReadScreen = () => (
   <SafeAreaView style={styles.container}>

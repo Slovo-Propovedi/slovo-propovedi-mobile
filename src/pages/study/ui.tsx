@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { TabView } from 'react-native-tab-view'
 import { getRenderTabBar } from 'shared/lib/tab-bar'
-import { COLORS } from 'shared/themed'
+import { COLORS } from 'shared/ui/themed'
 import { renderScene } from './scene'
 
 export const StudyScreen = () => {

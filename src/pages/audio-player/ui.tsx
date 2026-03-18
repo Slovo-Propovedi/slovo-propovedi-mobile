@@ -8,16 +8,16 @@ import {
   currentAudioAtom,
   currentPlaylistAtom,
   durationAtom,
+  FullscreenPlayerControls,
+  PlayerProgressBar,
+  PlayerRepeatToggle,
+  PlayerVolumeBar,
   positionAtom,
-} from 'features/sermon-player-controls/model'
-import { usePlayer } from 'entities/player'
-import { FullscreenPlayerControls } from 'entities/player/ui/FullscreenPlayerControls'
-import { PlayerProgressBar } from 'entities/player/ui/PlayerProgressBar'
-import { PlayerRepeatToggle } from 'entities/player/ui/PlayerRepeatToggle'
-import { PlayerVolumeBar } from 'entities/player/ui/PlayerVolumeBar'
-import { IMAGE_PLACEHOLDER } from 'shared/images'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed'
-import { MovingText } from 'shared/ui/MovingText/MovingText'
+  usePlayer,
+} from 'entities/player'
+import { MovingText } from 'shared/ui'
+import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const ALBUM_ART_SIZE = SCREEN_WIDTH * 0.8

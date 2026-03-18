@@ -1,17 +1,12 @@
 import { useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
-import { usePlayNewSermon } from 'features/sermon-player-controls/lib/usePlaySermon'
-import {
-  currentAudioAtom,
-  currentPlaylistAtom,
-  isBufferingAtom,
-  isPlayingAtom,
-} from 'features/sermon-player-controls/model'
-import { COLORS, INDENTS, PLAYER_SIZES } from 'shared/themed'
 import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
+import { COLORS, INDENTS, PLAYER_SIZES } from 'shared/ui/themed'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { usePlayer } from '../lib/usePlayer'
+import { usePlayNewSermon } from '../lib/usePlaySermon'
+import { currentAudioAtom, currentPlaylistAtom, isBufferingAtom, isPlayingAtom } from '../model'
 
 interface FullscreenPlayerControlsProps {
   compact?: boolean

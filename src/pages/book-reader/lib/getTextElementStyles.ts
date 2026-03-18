@@ -1,6 +1,6 @@
 import { type StyleProp, StyleSheet, type TextStyle, type ViewStyle } from 'react-native'
 import { BodyXMLElementName } from 'entities/book-reader'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/themed'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
 import type { XMLElementName } from 'entities/book-reader'
 
 interface GetTextElementStylesReturnType {

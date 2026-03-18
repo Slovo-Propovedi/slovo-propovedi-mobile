@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES } from 'shared/themed'
+import { FONT_SIZES } from 'shared/ui/themed'
 
 export const playerControlsStyles = StyleSheet.create({
   bufferingText: {

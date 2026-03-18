@@ -2,7 +2,6 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import { useReadNavigation } from 'shared/routing'
-import { INDENTS } from 'shared/themed'
 import {
   Slider,
   SliderItemDescriptionBackgroundStyle,
@@ -10,6 +9,7 @@ import {
   SliderItemTransform,
   WhereIsSlideTitleLocated,
 } from 'shared/ui'
+import { INDENTS } from 'shared/ui/themed'
 import type { BookData } from 'shared/model'
 import { getVerseByVerseBooksSlider, VerseByVerseBooksSliderAtom } from './model'
 

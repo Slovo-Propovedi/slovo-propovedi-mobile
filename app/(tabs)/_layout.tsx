@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { View } from 'react-native'
 import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
-import { isPlayerExpandedAtom } from 'features/sermon-player-controls'
+import { isPlayerExpandedAtom } from 'entities/player'
 
 interface TabLayout {
   width: number
