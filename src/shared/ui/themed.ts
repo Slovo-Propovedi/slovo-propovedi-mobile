@@ -44,7 +44,7 @@ export const SCREEN_PADDING = {
 export const PLAYER_SIZES = {
   albumArtLarge: '45%',
   albumArtMini: 40,
-  controlButtonSize: 48,
+  controlButtonSize: FONT_SIZES.xxl,
   miniPlayerHeight: 60,
   progressThumbSize: 12,
   tabBarHeight: 78,

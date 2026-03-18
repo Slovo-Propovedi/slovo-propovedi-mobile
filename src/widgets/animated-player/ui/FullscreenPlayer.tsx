@@ -3,7 +3,7 @@ import React from 'react'
 import { Animated, Image, Text, TouchableOpacity, View } from 'react-native'
 import { type AudioPlayerData, PlayerListenProgress, SermonPlayerControls } from 'entities/player'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
-import { COLORS } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES } from 'shared/ui/themed'
 import { styles } from './AnimatedPlayer.styles'
 import { MiniPlayerContent } from './MiniPlayerContent'
 
@@ -83,8 +83,8 @@ export const FullscreenPlayer = ({
             <View />
             <TouchableOpacity onPress={onOpenPlaylist} disabled={isShowPlaylistButtonDisabled}>
               <Feather
-                size={35}
                 name='list'
+                size={FONT_SIZES.xxl}
                 color={isShowPlaylistButtonDisabled ? COLORS.disabled : COLORS.black}
               />
             </TouchableOpacity>

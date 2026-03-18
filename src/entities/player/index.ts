@@ -26,7 +26,6 @@ export { AudioPlayerData, ControlsNames, PlayerControlsSize } from './ui/PlayerC
 export { PlayerListenProgress } from './ui/PlayerListenProgress'
 export { PlayerProgressBar } from './ui/PlayerProgressBar'
 export { PlayerRepeatToggle } from './ui/PlayerRepeatToggle'
-export { PlayerSoundVolume } from './ui/PlayerSoundVolume'
 export { PlayerVolumeBar } from './ui/PlayerVolumeBar'
 
 export { SermonPlayerControls } from './ui/SermonPlayerControls'

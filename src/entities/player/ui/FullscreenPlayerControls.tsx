@@ -24,12 +24,10 @@ export const FullscreenPlayerControls = ({
   const { pause, play } = usePlayer()
   const playNewSermon = usePlayNewSermon()
 
-  const buttonSize = compact
-    ? PLAYER_SIZES.controlButtonSize * 0.75
-    : PLAYER_SIZES.controlButtonSize
+  const buttonSize = PLAYER_SIZES.controlButtonSize
   const playButtonSize = compact
-    ? PLAYER_SIZES.controlButtonSize * 1.5
-    : PLAYER_SIZES.controlButtonSize * 2
+    ? PLAYER_SIZES.controlButtonSize * 3
+    : PLAYER_SIZES.controlButtonSize * 4
 
   const handlePlayPause = useCallback(async () => {
     if (isPlaying) await pause()

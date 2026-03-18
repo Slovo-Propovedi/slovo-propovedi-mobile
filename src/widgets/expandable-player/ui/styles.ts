@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
   },
   closeIcon: {
     color: COLORS.white,
-    fontSize: 32,
+    fontSize: FONT_SIZES.xxl * 0.8,
   },
   container: {
     backgroundColor: COLORS.surface,
@@ -53,7 +53,7 @@ export const styles = StyleSheet.create({
   },
   controlIcon: {
     color: COLORS.white,
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxl,
   },
   controlsRow: {
     alignItems: 'center',
@@ -73,7 +73,7 @@ export const styles = StyleSheet.create({
   },
   menuIcon: {
     color: COLORS.textMuted,
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxl,
   },
   progressBarContainer: {
     flex: 1,
