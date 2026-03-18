@@ -1,8 +1,7 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  type GestureResponderEvent,
-  type LayoutRectangle,
-  Pressable,
+  type LayoutChangeEvent,
+  PanResponder,
   type StyleProp,
   StyleSheet,
   Text,
@@ -27,53 +26,89 @@ export const PlayerProgressBar = ({
   position,
   style,
 }: PlayerProgressBarProps) => {
-  const progress = duration > 0 ? position / duration : 0
-  const trackLayoutRef = useRef<LayoutRectangle | null>(null)
-  const [isPressing, setIsPressing] = useState(false)
+  const [layout, setLayout] = useState<{ width: number } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [previewPosition, setPreviewPosition] = useState(position)
 
-  const handleLayout = useCallback((event: { nativeEvent: { layout: LayoutRectangle } }) => {
-    trackLayoutRef.current = event.nativeEvent.layout
+  const gestureStartX = useRef<number>(0)
+  const gestureStartY = useRef<number>(0)
+  const containerPageX = useRef<number>(0)
+
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout
+    setLayout({ width })
+    event.currentTarget.measure((_x, _y, _width, _height, pageX) => {
+      containerPageX.current = pageX
+    })
   }, [])
 
-  const handlePress = useCallback(
-    (event: GestureResponderEvent) => {
-      if (!onSeek || duration === 0 || !trackLayoutRef.current) return
-      const { width, x } = trackLayoutRef.current
-      const touchX = event.nativeEvent.locationX - x
-      const seekPosition = (touchX / width) * duration
-      onSeek(Math.max(0, Math.min(duration, seekPosition)))
+  const calculatePosition = useCallback(
+    (gestureX: number) => {
+      if (!layout || duration === 0) return null
+      const clampedX = Math.max(0, Math.min(gestureX, layout.width))
+      return (clampedX / layout.width) * duration
     },
-    [duration, onSeek],
+    [layout, duration],
   )
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_evt, gestureState) => {
+          const dx = Math.abs(gestureState.dx)
+          const dy = Math.abs(gestureState.dy)
+          return dx > dy || dx > 5
+        },
+        onPanResponderGrant: evt => {
+          if (!layout) return
+          setIsDragging(true)
+          const touchX = evt.nativeEvent.pageX - containerPageX.current
+          const pos = calculatePosition(touchX)
+          if (pos !== null) setPreviewPosition(pos)
+        },
+        onPanResponderMove: evt => {
+          if (!layout) return
+          const touchX = evt.nativeEvent.pageX - containerPageX.current
+          const pos = calculatePosition(touchX)
+          if (pos !== null) setPreviewPosition(pos)
+        },
+        onPanResponderRelease: () => {
+          if (isDragging && onSeek) onSeek(previewPosition)
+        },
+        onPanResponderTerminate: () => setIsDragging(false),
+        onPanResponderTerminationRequest: () => true,
+        onStartShouldSetPanResponder: evt => {
+          gestureStartX.current = evt.nativeEvent.pageX - containerPageX.current
+          gestureStartY.current = evt.nativeEvent.pageY
+          return true
+        },
+      }),
+    [layout, isDragging, onSeek, previewPosition, calculatePosition],
+  )
+
+  useEffect(() => {
+    if (isDragging && Math.abs(position - previewPosition) < 100) setIsDragging(false)
+  }, [position, previewPosition, isDragging])
+
+  const displayPosition = isDragging ? previewPosition : position
+  const progress = duration > 0 ? displayPosition / duration : 0
 
   return (
     <View style={[styles.container, style]}>
-      <Pressable
-        onPress={handlePress}
+      <View
         onLayout={handleLayout}
+        {...panResponder.panHandlers}
         style={styles.trackContainer}
-        onPressIn={() => setIsPressing(true)}
-        onPressOut={() => setIsPressing(false)}
+        hitSlop={{ bottom: 20, left: 0, right: 0, top: 20 }}
       >
-        <View style={styles.track}>
-          <View style={[styles.progress, { flex: progress }]} />
-          <View style={[styles.remaining, { flex: 1 - progress }]} />
+        <View pointerEvents='none' style={styles.track}>
+          <View pointerEvents='none' style={[styles.progress, { flex: progress }]} />
+          <View pointerEvents='none' style={[styles.remaining, { flex: 1 - progress }]} />
         </View>
-        <View
-          style={[
-            styles.thumb,
-            {
-              left: `${progress * 100}%`,
-              opacity: isPressing ? 1 : 0.8,
-              transform: [{ scale: isPressing ? 1.2 : 1 }],
-            },
-          ]}
-        />
-      </Pressable>
-
+      </View>
       {!hideTime && (
         <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>{millisToMinutesAndSeconds(position)}</Text>
+          <Text style={styles.timeText}>{millisToMinutesAndSeconds(displayPosition)}</Text>
           <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>
         </View>
       )}
@@ -82,41 +117,11 @@ export const PlayerProgressBar = ({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-  },
-  progress: {
-    backgroundColor: COLORS.primary,
-  },
-  remaining: {
-    backgroundColor: COLORS.gray,
-  },
-  thumb: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 6,
-    height: 12,
-    marginLeft: -6,
-    position: 'absolute',
-    top: -4,
-    width: 12,
-  },
-  timeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  timeText: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZES.sm,
-  },
-  track: {
-    borderRadius: 2,
-    flexDirection: 'row',
-    height: 4,
-    overflow: 'hidden',
-  },
-  trackContainer: {
-    height: 20,
-    justifyContent: 'center',
-  },
+  container: { width: '100%' },
+  progress: { backgroundColor: COLORS.primary },
+  remaining: { backgroundColor: COLORS.gray },
+  timeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  timeText: { color: COLORS.textMuted, fontSize: FONT_SIZES.sm },
+  track: { borderRadius: 4, flexDirection: 'row', height: 8, overflow: 'hidden' },
+  trackContainer: { height: 20, justifyContent: 'center' },
 })
