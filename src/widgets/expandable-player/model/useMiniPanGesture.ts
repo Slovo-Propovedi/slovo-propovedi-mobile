@@ -1,5 +1,5 @@
 import { Gesture } from 'react-native-gesture-handler'
-import { withTiming } from 'react-native-reanimated'
+import { runOnJS, withTiming } from 'react-native-reanimated'
 import { SCREEN_HEIGHT } from 'shared/config'
 import { INDENTS, PLAYER_SIZES } from 'shared/themed'
 import type { SharedValue } from 'react-native-reanimated'
@@ -21,6 +21,8 @@ const CLOSE_DURATION = 250
 const SNAP_THRESHOLD = 0.3
 
 interface UseMiniPanGestureParams {
+  /** Called when gesture decides to open the player. */
+  onOpen?: () => void
   /** Shared progress value (0 = collapsed, 1 = expanded). */
   progress: SharedValue<number>
 }
@@ -30,9 +32,10 @@ interface UseMiniPanGestureParams {
  * Used for mini player to expand on upward swipe.
  * Taps pass through to onPress handler.
  * @param params - The parameters object.
+ * @param params.onOpen - Called when gesture decides to open the player.
  * @param params.progress - Shared progress value (0 = collapsed, 1 = expanded).
  */
-export const useMiniPanGesture = ({ progress }: UseMiniPanGestureParams) =>
+export const useMiniPanGesture = ({ onOpen, progress }: UseMiniPanGestureParams) =>
   Gesture.Pan()
     .activeOffsetY(-10) // Only activate when swiping UP 10px (negative Y)
     .failOffsetY(5) // Fail immediately if swiping down more than 5px
@@ -45,7 +48,10 @@ export const useMiniPanGesture = ({ progress }: UseMiniPanGestureParams) =>
     .onEnd(e => {
       'worklet'
       const shouldOpen = progress.value >= SNAP_THRESHOLD || e.velocityY < -VELOCITY_THRESHOLD
+
       progress.value = withTiming(shouldOpen ? 1 : 0, {
         duration: shouldOpen ? OPEN_DURATION : CLOSE_DURATION,
       })
+
+      if (shouldOpen && onOpen) runOnJS(onOpen)()
     })

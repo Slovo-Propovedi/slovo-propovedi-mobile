@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
     left: INDENTS.medium,
     position: 'absolute',
     width: 40,
-    zIndex: 100,
+    zIndex: 300, // выше чем у container (200)
   },
   closeIcon: {
     color: COLORS.white,

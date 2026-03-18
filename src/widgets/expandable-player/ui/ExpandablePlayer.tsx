@@ -3,7 +3,6 @@ import React, { useCallback } from 'react'
 import { Image, Pressable, type StyleProp, Text, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   closePlayerSheet,
   currentAudioAtom,
@@ -18,8 +17,8 @@ import { COLORS } from 'shared/themed'
 import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import { MovingText } from 'shared/ui/MovingText/MovingText'
 import { useExpandAnimation } from '../model/useExpandAnimation'
+import { useFullscreenPanGesture } from '../model/useFullscreenPanGesture'
 import { useMiniPanGesture } from '../model/useMiniPanGesture'
-import { usePanGesture } from '../model/usePanGesture'
 import { FullscreenContent } from './FullscreenContent'
 import { miniPlayerStyles } from './miniPlayerStyles'
 import { styles } from './styles'
@@ -27,7 +26,6 @@ import { styles } from './styles'
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) => {
-  const insets = useSafeAreaInsets()
   const [audio] = useAtom(currentAudioAtom)
   const [playing] = useAtom(isPlayingAtom)
   const [expanded] = useAtom(isPlayerExpandedAtom)
@@ -45,6 +43,8 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     progress,
   } = useExpandAnimation(expanded)
 
+  const panGesture = useFullscreenPanGesture({ close, expanded, progress })
+
   const handleMiniTap = useCallback(() => {
     if (!expanded) void open()
   }, [expanded, open])
@@ -53,22 +53,14 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     if (expanded) void close()
   }, [close, expanded])
 
-  const pan = usePanGesture({
-    onClose: handleCloseFullscreen,
-    onOpen: open,
-    progress,
-  })
-  const miniPan = useMiniPanGesture({ progress })
+  const miniPan = useMiniPanGesture({ onOpen: open, progress })
   const onPlayPause = async () => (playing ? pause() : play())
 
   if (!audio) return null
 
   return (
     <>
-      <Animated.View
-        style={[styles.backdrop, backdropStyle]}
-        pointerEvents={expanded ? 'auto' : 'none'}
-      />
+      <Animated.View pointerEvents='none' style={[styles.backdrop, backdropStyle]} />
       {!expanded && (
         <GestureDetector gesture={miniPan}>
           <AnimatedPressable
@@ -96,7 +88,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
           </AnimatedPressable>
         </GestureDetector>
       )}
-      <GestureDetector gesture={pan}>
+      <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.container, containerStyle, style]}>
           <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
             <Image
@@ -105,13 +97,11 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
               source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }}
             />
           </Animated.View>
-          <Animated.View style={[miniPlayerStyles.miniOverlay, miniOverlayStyle]} />
-          <FullscreenContent
-            expanded={expanded}
-            fullStyle={fullStyle}
-            insetsTop={insets.top}
-            onClose={handleCloseFullscreen}
+          <Animated.View
+            pointerEvents='none'
+            style={[miniPlayerStyles.miniOverlay, miniOverlayStyle]}
           />
+          <FullscreenContent fullStyle={fullStyle} onClose={handleCloseFullscreen} />
         </Animated.View>
       </GestureDetector>
     </>

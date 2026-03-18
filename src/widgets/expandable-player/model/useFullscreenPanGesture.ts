@@ -1,0 +1,39 @@
+import { Gesture } from 'react-native-gesture-handler'
+import { runOnJS, useSharedValue, withTiming } from 'react-native-reanimated'
+import { SCREEN_HEIGHT } from 'shared/config'
+import type { SharedValue } from 'react-native-reanimated'
+
+interface UseFullscreenPanGestureParams {
+  close: () => void
+  expanded: boolean
+  progress: SharedValue<number>
+}
+
+export const useFullscreenPanGesture = ({
+  close,
+  expanded,
+  progress,
+}: UseFullscreenPanGestureParams) => {
+  const startY = useSharedValue(0)
+
+  return expanded
+    ? Gesture.Pan()
+        .activeOffsetY(15)
+        .onStart(() => {
+          'worklet'
+          startY.value = progress.value
+        })
+        .onUpdate(e => {
+          'worklet'
+          const dragProgress = e.translationY / (SCREEN_HEIGHT - 100)
+          progress.value = Math.max(0, 1 - dragProgress)
+        })
+        .onEnd(e => {
+          'worklet'
+          if (e.velocityY > 500 || progress.value < 0.5) {
+            progress.value = withTiming(0, { duration: 250 })
+            runOnJS(close)()
+          } else progress.value = withTiming(1, { duration: 300 })
+        })
+    : Gesture.Pan().enabled(false)
+}

@@ -4,7 +4,9 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import { Pressable, Text, View, type ViewStyle } from 'react-native'
-import Animated, { type AnimatedStyle } from 'react-native-reanimated'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import Animated, { type AnimatedStyle, runOnJS } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
@@ -23,18 +25,12 @@ import { PlayerMenu } from './PlayerMenu'
 import { styles } from './styles'
 
 interface FullscreenContentProps {
-  expanded: boolean
   fullStyle: AnimatedStyle<ViewStyle>
-  insetsTop: number
   onClose: () => void
 }
 
-export const FullscreenContent = ({
-  expanded,
-  fullStyle,
-  insetsTop,
-  onClose,
-}: FullscreenContentProps) => {
+export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps) => {
+  const insets = useSafeAreaInsets()
   const [audio] = useAtom(currentAudioAtom)
   const [duration] = useAtom(durationAtom)
   const [position] = useAtom(positionAtom)
@@ -43,6 +39,12 @@ export const FullscreenContent = ({
   const router = useRouter()
   const [showMenu, setShowMenu] = useState(false)
 
+  // Tap gesture для closeButton - не блокируется pan gesture родителя
+  const closeTapGesture = Gesture.Tap().onEnd(() => {
+    'worklet'
+    runOnJS(onClose)()
+  })
+
   if (!audio) return null
 
   const handleOpenMenu = () => setShowMenu(true)
@@ -50,10 +52,14 @@ export const FullscreenContent = ({
   const handleOpenPlaylist = () => router.push('/listen/playlist')
 
   return (
-    <Animated.View
-      style={[styles.fullContainer, fullStyle]}
-      pointerEvents={expanded ? 'auto' : 'none'}
-    >
+    <Animated.View style={[styles.fullContainer, fullStyle]}>
+      {/* Close button */}
+      <GestureDetector gesture={closeTapGesture}>
+        <View style={[styles.closeButton, { top: insets.top + INDENTS.low }]}>
+          <Entypo name='chevron-down' style={styles.closeIcon} />
+        </View>
+      </GestureDetector>
+
       {/* Верхний градиент - от тёмного к прозрачному, сверху вниз */}
       <LinearGradient
         pointerEvents='none'
@@ -67,10 +73,6 @@ export const FullscreenContent = ({
         style={gradientStyles.bottomGradient}
         colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
       />
-
-      <Pressable onPress={onClose} style={[styles.closeButton, { top: insetsTop + INDENTS.low }]}>
-        <Entypo name='chevron-down' style={styles.closeIcon} />
-      </Pressable>
 
       {/* Spacer - занимает всё свободное место */}
       <View style={styles.spacer} />
