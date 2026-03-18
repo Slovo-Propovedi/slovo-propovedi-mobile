@@ -85,7 +85,7 @@ export const styles = StyleSheet.create({
   progressRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: INDENTS.low,
+    marginBottom: INDENTS.high,
   },
   sideControl: {
     alignItems: 'center',
@@ -104,7 +104,7 @@ export const styles = StyleSheet.create({
   trackInfoRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: INDENTS.medium,
+    marginBottom: INDENTS.high,
   },
   trackInfoTextContainer: {
     alignItems: 'center',
