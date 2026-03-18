@@ -1,14 +1,23 @@
 import type { KnipConfig } from 'knip'
 
 const config: KnipConfig = {
-  entry: ['src/app/main.tsx'],
+  expo: {
+    entry: ['app/**/*.{ts,tsx}'],
+  },
+
   ignore: [
+    'src/pages/book-reader/testFiles/**',
+    'src/pages/listen/mockData/**',
+    'src/entities/player/lib/PlayerService/index.web.ts',
     'src/shared/model/file/mimeTypes.ts',
-    '**/schemas.ts',
-    '**/*schemas.ts',
-    '**/index.web.ts',
   ],
-  project: ['src/**/*.{ts,js,tsx,jsx}'],
+
+  ignoreUnresolved: ['expo-router/entry'],
+
+  jest: true,
+
+  project: ['app/**/*.{ts,tsx}', 'src/**/*.{ts,js,tsx,jsx}'],
+
   rules: {
     dependencies: 'warn',
     devDependencies: 'warn',
