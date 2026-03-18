@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- FIXME: refactor */
 import { Entypo } from '@expo/vector-icons'
 import { useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -64,60 +65,62 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const handleClosePlaylist = () => setShowPlaylist(false)
 
   return (
-    <Animated.View style={[styles.fullContainer, fullStyle]}>
-      <GestureDetector gesture={closeTapGesture}>
-        <View style={[styles.closeButton, { top: insets.top + INDENTS.low }]}>
-          <Entypo name='chevron-down' style={styles.closeIcon} />
-        </View>
-      </GestureDetector>
-      <LinearGradient
-        pointerEvents='none'
-        style={gradientStyles.topGradient}
-        colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
-      />
-      <LinearGradient
-        pointerEvents='none'
-        style={gradientStyles.bottomGradient}
-        colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
-      />
-      <View style={styles.spacer} />
-      <View style={styles.bottomContentContainer}>
-        <View style={styles.trackInfoRow}>
-          <View style={styles.trackInfoTextContainer}>
-            <MovingText
-              animationThreshold={30}
-              text={audio.title || ''}
-              style={styles.trackTitle}
-            />
-            <Text style={styles.artistName}>{playlist?.title || 'Слово Истины'}</Text>
+    <>
+      <Animated.View style={[styles.fullContainer, fullStyle]}>
+        <GestureDetector gesture={closeTapGesture}>
+          <View style={[styles.closeButton, { top: insets.top + INDENTS.low }]}>
+            <Entypo name='chevron-down' style={styles.closeIcon} />
           </View>
-          <View style={styles.menuContainer}>
-            <Pressable onPress={handleOpenMenu} style={styles.menuButton}>
-              <Entypo style={styles.menuIcon} name='dots-three-vertical' />
+        </GestureDetector>
+        <LinearGradient
+          pointerEvents='none'
+          style={gradientStyles.topGradient}
+          colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
+        />
+        <LinearGradient
+          pointerEvents='none'
+          style={gradientStyles.bottomGradient}
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
+        />
+        <View style={styles.spacer} />
+        <View style={styles.bottomContentContainer}>
+          <View style={styles.trackInfoRow}>
+            <View style={styles.trackInfoTextContainer}>
+              <MovingText
+                animationThreshold={30}
+                text={audio.title || ''}
+                style={styles.trackTitle}
+              />
+              <Text style={styles.artistName}>{playlist?.title || 'Слово Истины'}</Text>
+            </View>
+            <View style={styles.menuContainer}>
+              <Pressable onPress={handleOpenMenu} style={styles.menuButton}>
+                <Entypo style={styles.menuIcon} name='dots-three-vertical' />
+              </Pressable>
+              {showMenu && <PlayerMenu onClose={handleCloseMenu} />}
+            </View>
+          </View>
+          <View style={styles.progressRow}>
+            <Text style={styles.timeText}>{millisToMinutesAndSeconds(position)}</Text>
+            <View style={styles.progressBarContainer}>
+              <PlayerProgressBar
+                hideTime
+                duration={duration}
+                position={position}
+                onSeek={p => void seekTo(p)}
+              />
+            </View>
+            <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>
+          </View>
+          <View style={styles.controlsRow}>
+            <PlayerRepeatToggle style={styles.sideControl} />
+            <FullscreenPlayerControls />
+            <Pressable style={styles.sideControl} onPress={handleOpenPlaylist}>
+              <Entypo name='list' style={styles.controlIcon} />
             </Pressable>
-            {showMenu && <PlayerMenu onClose={handleCloseMenu} />}
           </View>
         </View>
-        <View style={styles.progressRow}>
-          <Text style={styles.timeText}>{millisToMinutesAndSeconds(position)}</Text>
-          <View style={styles.progressBarContainer}>
-            <PlayerProgressBar
-              hideTime
-              duration={duration}
-              position={position}
-              onSeek={p => void seekTo(p)}
-            />
-          </View>
-          <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>
-        </View>
-        <View style={styles.controlsRow}>
-          <PlayerRepeatToggle style={styles.sideControl} />
-          <FullscreenPlayerControls />
-          <Pressable style={styles.sideControl} onPress={handleOpenPlaylist}>
-            <Entypo name='list' style={styles.controlIcon} />
-          </Pressable>
-        </View>
-      </View>
+      </Animated.View>
       {showPlaylist && (
         <PlaylistBottomSheet
           playlist={playlist}
@@ -125,6 +128,6 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
           onClose={handleClosePlaylist}
         />
       )}
-    </Animated.View>
+    </>
   )
 }

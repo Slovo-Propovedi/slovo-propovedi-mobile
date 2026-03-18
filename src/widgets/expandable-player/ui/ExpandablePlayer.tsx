@@ -40,9 +40,11 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     miniOverlayStyle,
     miniStyle,
     progress,
+    screenHeight,
+    screenWidth,
   } = useExpandAnimation(expanded)
 
-  const panGesture = useFullscreenPanGesture({ close, expanded, progress })
+  const panGesture = useFullscreenPanGesture({ close, expanded, progress, screenHeight })
 
   const handleMiniTap = useCallback(() => {
     if (!expanded) void open()
@@ -59,7 +61,10 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
 
   return (
     <>
-      <Animated.View pointerEvents='none' style={[styles.backdrop, backdropStyle]} />
+      <Animated.View
+        pointerEvents='none'
+        style={[styles.backdrop, backdropStyle, { height: screenHeight, width: screenWidth }]}
+      />
       {!expanded && (
         <GestureDetector gesture={miniPan}>
           <AnimatedPressable

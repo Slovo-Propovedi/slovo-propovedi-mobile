@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
+import { useWindowDimensions } from 'react-native'
 import { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from 'shared/config'
 import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
 
@@ -17,13 +17,14 @@ interface UseExpandAnimationResult {
   miniOverlayStyle: ReturnType<typeof useAnimatedStyle>
   miniStyle: ReturnType<typeof useAnimatedStyle>
   progress: SharedValue<number>
+  screenHeight: number
+  screenWidth: number
 }
 
 export const useExpandAnimation = (expanded: boolean): UseExpandAnimationResult => {
   const progress = useSharedValue(0)
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions()
 
-  // Sync progress with expanded prop changes (e.g., tap to open/close)
-  // Gesture controls progress during drag; this syncs on external state changes
   useEffect(() => {
     progress.value = withTiming(expanded ? 1 : 0, { duration: expanded ? 300 : 250 })
   }, [expanded])
@@ -34,9 +35,9 @@ export const useExpandAnimation = (expanded: boolean): UseExpandAnimationResult 
     borderTopLeftRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
     borderTopRightRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
     bottom: interpolate(progress.value, [0, 1], [MINI_BOTTOM, 0]),
-    height: interpolate(progress.value, [0, 1], [MINI_H, SCREEN_HEIGHT]),
+    height: interpolate(progress.value, [0, 1], [MINI_H, screenHeight]),
     left: interpolate(progress.value, [0, 1], [INDENTS.low, 0]),
-    width: interpolate(progress.value, [0, 1], [SCREEN_WIDTH - INDENTS.low * 2, SCREEN_WIDTH]),
+    width: interpolate(progress.value, [0, 1], [screenWidth - INDENTS.low * 2, screenWidth]),
   }))
 
   // Background image animation: fullscreen, just fades in/out
@@ -74,5 +75,7 @@ export const useExpandAnimation = (expanded: boolean): UseExpandAnimationResult 
     miniOverlayStyle,
     miniStyle,
     progress,
+    screenHeight,
+    screenWidth,
   }
 }

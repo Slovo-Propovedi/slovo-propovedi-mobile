@@ -1,6 +1,5 @@
-import { Dimensions, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export const styles = StyleSheet.create({
   artistName: {
@@ -11,12 +10,10 @@ export const styles = StyleSheet.create({
   },
   backdrop: {
     backgroundColor: COLORS.black,
-    height: SCREEN_HEIGHT,
     left: 0,
     position: 'absolute',
     right: 0,
     top: 0,
-    width: SCREEN_WIDTH,
     zIndex: 150,
   },
   backgroundContainer: {
