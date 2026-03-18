@@ -3,7 +3,7 @@ import { useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { TracksListItem } from 'widgets/track-list'
-import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
+import { currentAudioAtom, usePlayNewSermon } from 'entities/player'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
 import type { PlaylistData } from 'shared/model'
 
@@ -23,7 +23,6 @@ interface TrackListItemData {
 
 export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBottomSheetProps) => {
   const [currentAudio] = useAtom(currentAudioAtom)
-  const [isPlaying] = useAtom(isPlayingAtom)
   const playNewSermon = usePlayNewSermon()
 
   const tracksListData: TrackListItemData[] = (playlist?.list ?? []).map(sermon => ({
@@ -61,10 +60,10 @@ export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBot
         artist={item.artist}
         artwork={item.artwork}
         onPress={() => handlePressItem(index)}
-        isPlaying={isPlaying && currentAudio?.id === item.id}
+        isPlaying={currentAudio?.id === item.id}
       />
     ),
-    [isPlaying, currentAudio?.id, handlePressItem],
+    [currentAudio?.id, handlePressItem],
   )
 
   const ItemSeparator = useCallback(() => <View style={styles.divider} />, [])
@@ -94,10 +93,10 @@ export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBot
 
 const styles = StyleSheet.create({
   background: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(37, 37, 37, 0.8)',
   },
   divider: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     height: 1,
   },
   indicator: {

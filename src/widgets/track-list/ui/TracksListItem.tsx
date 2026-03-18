@@ -1,7 +1,6 @@
 import React from 'react'
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
+import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
-import { COLORS } from 'shared/ui/themed'
 import type { TracksListItemProps } from './types'
 import { tracksListStyles } from './styles'
 
@@ -15,18 +14,13 @@ export const TracksListItem = ({
   <TouchableOpacity
     onPress={onPress}
     testID='tracks-list-item'
-    style={[tracksListStyles.itemContainer, { backgroundColor: COLORS.background }]}
+    style={tracksListStyles.itemContainer}
   >
     <View style={tracksListStyles.albumArtContainer}>
       <Image
         source={{ uri: artwork || IMAGE_PLACEHOLDER }}
         style={[tracksListStyles.albumArt, isPlaying && tracksListStyles.albumArtPlaying]}
       />
-      {isPlaying && (
-        <View style={tracksListStyles.playingIndicator}>
-          <ActivityIndicator size='small' color={COLORS.primary} />
-        </View>
-      )}
     </View>
     <View style={tracksListStyles.textContainer}>
       <View style={tracksListStyles.titleWrapper}>

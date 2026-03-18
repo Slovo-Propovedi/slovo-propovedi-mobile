@@ -39,6 +39,8 @@ export const tracksListStyles = StyleSheet.create({
   },
   itemContainer: {
     alignItems: 'center',
+    backgroundColor: '#252525',
+    borderRadius: RADIUSES.middle,
     flexDirection: 'row',
     paddingHorizontal: INDENTS.middle,
     paddingVertical: INDENTS.middle,
