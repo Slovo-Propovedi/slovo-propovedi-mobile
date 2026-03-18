@@ -7,21 +7,18 @@ import {
   PlayerControlsSize,
   SermonPlayerControls,
 } from 'entities/player'
-import { useListenNavigation } from 'shared/routing'
 import { PlayerControlButtonType } from 'shared/ui'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 import type { StyleProp, TextStyle } from 'react-native'
 
 export const MiniPlayer = () => {
-  const { navigateToAudioPlayer } = useListenNavigation()
-
   const currentAudio = useAtom(currentAudioAtom)[0]
   const currentPlaylist = useAtom(currentPlaylistAtom)[0]
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={navigateToAudioPlayer} style={styles.touchableElements}>
+      <TouchableOpacity style={styles.touchableElements}>
         <Image
           alt='Sermon poster'
           style={styles.preview}

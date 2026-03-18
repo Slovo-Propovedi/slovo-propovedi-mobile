@@ -18,12 +18,7 @@ export const useListenNavigation = () => {
     })
   }
 
-  const navigateToAudioPlayer = () => {
-    router.push('/listen/audio-player')
-  }
-
   return {
-    navigateToAudioPlayer,
     navigateToPlaylist,
     navigateToPlaylistList,
   }

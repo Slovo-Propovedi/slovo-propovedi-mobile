@@ -107,7 +107,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
         </View>
         <View style={styles.controlsRow}>
           <PlayerRepeatToggle style={styles.sideControl} />
-          <FullscreenPlayerControls compact />
+          <FullscreenPlayerControls />
           <Pressable style={styles.sideControl} onPress={handleOpenPlaylist}>
             <Entypo name='list' style={styles.controlIcon} />
           </Pressable>

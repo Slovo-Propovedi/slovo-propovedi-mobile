@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES } from 'shared/ui/themed'
 
-export const THUMB_SIZE = 14
+export const THUMB_SIZE = 10
 
 export const progressBarStyles = StyleSheet.create({
   container: { width: '100%' },
@@ -17,15 +17,15 @@ export const progressBarStyles = StyleSheet.create({
     shadowOffset: { height: 1, width: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    top: -3,
+    top: -2.5,
     width: THUMB_SIZE,
   },
   timeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   timeText: { color: COLORS.textMuted, fontSize: FONT_SIZES.sm },
   track: {
-    borderRadius: 4,
+    borderRadius: 2.5,
     flexDirection: 'row',
-    height: 8,
+    height: 5,
     position: 'relative',
   },
   trackContainer: { height: 20, justifyContent: 'center' },

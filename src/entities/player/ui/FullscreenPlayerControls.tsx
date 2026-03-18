@@ -9,14 +9,10 @@ import { usePlayNewSermon } from '../lib/usePlaySermon'
 import { currentAudioAtom, currentPlaylistAtom, isBufferingAtom, isPlayingAtom } from '../model'
 
 interface FullscreenPlayerControlsProps {
-  compact?: boolean
   style?: StyleProp<ViewStyle>
 }
 
-export const FullscreenPlayerControls = ({
-  compact = false,
-  style,
-}: FullscreenPlayerControlsProps) => {
+export const FullscreenPlayerControls = ({ style }: FullscreenPlayerControlsProps) => {
   const [isPlaying] = useAtom(isPlayingAtom)
   const [isBuffering] = useAtom(isBufferingAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
@@ -25,9 +21,7 @@ export const FullscreenPlayerControls = ({
   const playNewSermon = usePlayNewSermon()
 
   const buttonSize = PLAYER_SIZES.controlButtonSize
-  const playButtonSize = compact
-    ? PLAYER_SIZES.controlButtonSize * 3
-    : PLAYER_SIZES.controlButtonSize * 4
+  const playButtonSize = buttonSize * 2
 
   const handlePlayPause = useCallback(async () => {
     if (isPlaying) await pause()

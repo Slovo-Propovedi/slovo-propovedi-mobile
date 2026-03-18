@@ -66,7 +66,6 @@ app/
 │   └── info.tsx
 ├── listen/               # Nested screens under listen tab
 │   ├── _layout.tsx
-│   ├── audio-player.tsx
 │   ├── playlist.tsx
 │   └── playlist-list.tsx
 └── read/                 # Nested screens under read tab
