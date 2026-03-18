@@ -1,39 +1,49 @@
 import React from 'react'
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 
 interface PlayerMenuProps {
   onClose: () => void
-  visible: boolean
 }
 
-export const PlayerMenu = ({ onClose, visible }: PlayerMenuProps) => (
-  <Modal transparent visible={visible} animationType='fade'>
-    <Pressable onPress={onClose} style={styles.menuOverlay}>
-      <View style={styles.menuContainer}>
-        <Pressable style={styles.menuItem}>
-          <Text style={styles.menuItemText}>Описание проповеди</Text>
-        </Pressable>
-        <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
-          <Text style={styles.menuItemTextDisabled}>Добавить в плейлист</Text>
-        </Pressable>
-        <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
-          <Text style={styles.menuItemTextDisabled}>Настройки звука</Text>
-        </Pressable>
-        <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
-          <Text style={styles.menuItemTextDisabled}>Поделиться</Text>
-        </Pressable>
-      </View>
-    </Pressable>
-  </Modal>
+export const PlayerMenu = ({ onClose }: PlayerMenuProps) => (
+  <>
+    <Pressable onPress={onClose} style={styles.backdrop} />
+    <View style={styles.menuContainer}>
+      <Pressable style={styles.menuItem}>
+        <Text style={styles.menuItemText}>Описание проповеди</Text>
+      </Pressable>
+      <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
+        <Text style={styles.menuItemTextDisabled}>Добавить в плейлист</Text>
+      </Pressable>
+      <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
+        <Text style={styles.menuItemTextDisabled}>Настройки звука</Text>
+      </Pressable>
+      <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
+        <Text style={styles.menuItemTextDisabled}>Поделиться</Text>
+      </Pressable>
+    </View>
+  </>
 )
 
 const styles = StyleSheet.create({
+  backdrop: {
+    bottom: -999,
+    left: -999,
+    position: 'absolute',
+    right: -999,
+    top: -999,
+    zIndex: 1,
+  },
   menuContainer: {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUSES.middle,
+    bottom: '100%',
     minWidth: 200,
     padding: INDENTS.low,
+    position: 'absolute',
+    right: 0,
+    zIndex: 2,
   },
   menuItem: {
     padding: INDENTS.medium,
@@ -48,13 +58,5 @@ const styles = StyleSheet.create({
   menuItemTextDisabled: {
     color: COLORS.textMuted,
     fontSize: FONT_SIZES.base,
-  },
-  menuOverlay: {
-    alignItems: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    flex: 1,
-    justifyContent: 'flex-start',
-    paddingRight: INDENTS.medium,
-    paddingTop: 100,
   },
 })

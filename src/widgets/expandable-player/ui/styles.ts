@@ -71,6 +71,9 @@ export const styles = StyleSheet.create({
   menuButton: {
     padding: INDENTS.low,
   },
+  menuContainer: {
+    position: 'relative',
+  },
   menuIcon: {
     color: COLORS.textMuted,
     fontSize: FONT_SIZES.xxl,
