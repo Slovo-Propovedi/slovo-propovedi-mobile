@@ -3,13 +3,12 @@ import {
   type LayoutChangeEvent,
   PanResponder,
   type StyleProp,
-  StyleSheet,
   Text,
   View,
   type ViewStyle,
 } from 'react-native'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
-import { COLORS, FONT_SIZES } from 'shared/ui/themed'
+import { progressBarStyles, THUMB_SIZE } from './PlayerProgressBar.styles'
 
 interface PlayerProgressBarProps {
   duration: number
@@ -94,34 +93,36 @@ export const PlayerProgressBar = ({
   const progress = duration > 0 ? displayPosition / duration : 0
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[progressBarStyles.container, style]}>
       <View
         onLayout={handleLayout}
         {...panResponder.panHandlers}
-        style={styles.trackContainer}
+        style={progressBarStyles.trackContainer}
         hitSlop={{ bottom: 20, left: 0, right: 0, top: 20 }}
       >
-        <View pointerEvents='none' style={styles.track}>
-          <View pointerEvents='none' style={[styles.progress, { flex: progress }]} />
-          <View pointerEvents='none' style={[styles.remaining, { flex: 1 - progress }]} />
+        <View pointerEvents='none' style={progressBarStyles.track}>
+          <View pointerEvents='none' style={[progressBarStyles.progress, { flex: progress }]} />
+          <View
+            pointerEvents='none'
+            style={[progressBarStyles.remaining, { flex: 1 - progress }]}
+          />
+          <View
+            pointerEvents='none'
+            style={[
+              progressBarStyles.thumb,
+              { left: progress * (layout?.width || 0) - THUMB_SIZE / 2 },
+            ]}
+          />
         </View>
       </View>
       {!hideTime && (
-        <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>{millisToMinutesAndSeconds(displayPosition)}</Text>
-          <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>
+        <View style={progressBarStyles.timeContainer}>
+          <Text style={progressBarStyles.timeText}>
+            {millisToMinutesAndSeconds(displayPosition)}
+          </Text>
+          <Text style={progressBarStyles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>
         </View>
       )}
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { width: '100%' },
-  progress: { backgroundColor: COLORS.primary },
-  remaining: { backgroundColor: COLORS.gray },
-  timeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  timeText: { color: COLORS.textMuted, fontSize: FONT_SIZES.sm },
-  track: { borderRadius: 4, flexDirection: 'row', height: 8, overflow: 'hidden' },
-  trackContainer: { height: 20, justifyContent: 'center' },
-})
