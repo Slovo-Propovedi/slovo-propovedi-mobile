@@ -1,7 +1,7 @@
 import { Entypo } from '@expo/vector-icons'
 import { useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
-import React, { useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { Pressable, Text, View, type ViewStyle } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle, runOnJS } from 'react-native-reanimated'
@@ -41,9 +41,14 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const [showPlaylist, setShowPlaylist] = useState(false)
   const playlistSheetRef = useRef<BottomSheet>(null)
 
+  const handleCollapsePress = useCallback(() => {
+    if (showPlaylist) return void playlistSheetRef.current?.close()
+    onClose()
+  }, [showPlaylist, onClose])
+
   const closeTapGesture = Gesture.Tap().onEnd(() => {
     'worklet'
-    runOnJS(onClose)()
+    runOnJS(handleCollapsePress)()
   })
 
   if (!audio) return null

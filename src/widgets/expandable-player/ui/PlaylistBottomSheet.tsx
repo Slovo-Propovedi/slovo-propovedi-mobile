@@ -1,4 +1,4 @@
-import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
@@ -78,6 +78,14 @@ export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBot
       onChange={handleSheetChanges}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.indicator}
+      backdropComponent={props => (
+        <BottomSheetBackdrop
+          {...props}
+          appearsOnIndex={0}
+          pressBehavior='close'
+          disappearsOnIndex={-1}
+        />
+      )}
     >
       <Text style={styles.title}>{playlist.title}</Text>
       <BottomSheetFlatList
