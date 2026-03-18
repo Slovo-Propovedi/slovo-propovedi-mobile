@@ -1,0 +1,1 @@
+export { MimeType } from './mimeTypes'

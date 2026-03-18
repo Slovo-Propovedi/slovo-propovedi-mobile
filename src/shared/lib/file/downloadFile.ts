@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy'
 import { Linking, Platform } from 'react-native'
-import type { MimeType } from 'shared/model'
+import { type MimeType } from 'shared/model'
 import { processRequest } from '../http/processRequest'
 
 interface DownloadFileArgs {

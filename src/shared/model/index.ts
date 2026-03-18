@@ -22,4 +22,4 @@ export type {
   FetchedSermonData,
   FetchedSermonsGroup,
 } from './fetched/fetched-data'
-export { MimeType } from './fetched/mime-types'
+export { MimeType } from './file/mimeTypes'
