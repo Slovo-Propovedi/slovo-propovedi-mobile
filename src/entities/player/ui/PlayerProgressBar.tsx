@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- FIXME: refactor */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   type LayoutChangeEvent,
@@ -25,72 +26,83 @@ export const PlayerProgressBar = ({
   position,
   style,
 }: PlayerProgressBarProps) => {
-  const [layout, setLayout] = useState<{ width: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [previewPosition, setPreviewPosition] = useState(position)
 
-  const gestureStartX = useRef<number>(0)
-  const gestureStartY = useRef<number>(0)
-  const containerPageX = useRef<number>(0)
+  const isDraggingRef = useRef(false)
+  const previewPositionRef = useRef(position)
+  const onSeekRef = useRef(onSeek)
+  const layoutRef = useRef<{ width: number } | null>(null)
+  const containerPageX = useRef(0)
+  const pendingSeekPositionRef = useRef<null | number>(null)
+
+  isDraggingRef.current = isDragging
+  previewPositionRef.current = previewPosition
+  onSeekRef.current = onSeek
+
+  useEffect(() => {
+    if (position < 1000 && previewPositionRef.current > 5000) {
+      setPreviewPosition(position)
+      setIsDragging(false)
+      pendingSeekPositionRef.current = null
+    } else if (
+      isDraggingRef.current &&
+      pendingSeekPositionRef.current !== null &&
+      Math.abs(position - pendingSeekPositionRef.current) < 100
+    ) {
+      setIsDragging(false)
+      pendingSeekPositionRef.current = null
+    }
+  }, [position])
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout
-    setLayout({ width })
-    event.currentTarget.measure((_x, _y, _width, _height, pageX) => {
+    layoutRef.current = { width }
+    event.currentTarget.measure((_x, _y, _w, _h, pageX) => {
       containerPageX.current = pageX
     })
   }, [])
 
-  const calculatePosition = useCallback(
-    (gestureX: number) => {
+  const panResponder = useMemo(() => {
+    const getPos = (pageX: number) => {
+      const layout = layoutRef.current
       if (!layout || duration === 0) return null
-      const clampedX = Math.max(0, Math.min(gestureX, layout.width))
-      return (clampedX / layout.width) * duration
-    },
-    [layout, duration],
-  )
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_evt, gestureState) => {
-          const dx = Math.abs(gestureState.dx)
-          const dy = Math.abs(gestureState.dy)
-          return dx > dy || dx > 5
-        },
-        onPanResponderGrant: evt => {
-          if (!layout) return
-          setIsDragging(true)
-          const touchX = evt.nativeEvent.pageX - containerPageX.current
-          const pos = calculatePosition(touchX)
-          if (pos !== null) setPreviewPosition(pos)
-        },
-        onPanResponderMove: evt => {
-          if (!layout) return
-          const touchX = evt.nativeEvent.pageX - containerPageX.current
-          const pos = calculatePosition(touchX)
-          if (pos !== null) setPreviewPosition(pos)
-        },
-        onPanResponderRelease: () => {
-          if (isDragging && onSeek) onSeek(previewPosition)
-        },
-        onPanResponderTerminate: () => setIsDragging(false),
-        onPanResponderTerminationRequest: () => true,
-        onStartShouldSetPanResponder: evt => {
-          gestureStartX.current = evt.nativeEvent.pageX - containerPageX.current
-          gestureStartY.current = evt.nativeEvent.pageY
-          return true
-        },
-      }),
-    [layout, isDragging, onSeek, previewPosition, calculatePosition],
-  )
-
-  useEffect(() => {
-    if (isDragging && Math.abs(position - previewPosition) < 100) setIsDragging(false)
-  }, [position, previewPosition, isDragging])
+      const x = Math.max(0, Math.min(pageX - containerPageX.current, layout.width))
+      return (x / layout.width) * duration
+    }
+    return PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > Math.abs(gs.dy) || gs.dx > 5,
+      onPanResponderGrant: evt => {
+        const pos = getPos(evt.nativeEvent.pageX)
+        if (!pos) return
+        setIsDragging(true)
+        setPreviewPosition(pos)
+        previewPositionRef.current = pos
+      },
+      onPanResponderMove: evt => {
+        const pos = getPos(evt.nativeEvent.pageX)
+        if (!pos) return
+        setPreviewPosition(pos)
+        previewPositionRef.current = pos
+      },
+      onPanResponderRelease: () => {
+        if (isDraggingRef.current && onSeekRef.current) {
+          onSeekRef.current(previewPositionRef.current)
+          pendingSeekPositionRef.current = previewPositionRef.current
+        }
+      },
+      onPanResponderTerminate: () => {
+        setIsDragging(false)
+        pendingSeekPositionRef.current = null
+      },
+      onPanResponderTerminationRequest: () => true,
+      onStartShouldSetPanResponder: () => true,
+    })
+  }, [duration])
 
   const displayPosition = isDragging ? previewPosition : position
   const progress = duration > 0 ? displayPosition / duration : 0
+  const trackWidth = layoutRef.current?.width || 0
 
   return (
     <View style={[progressBarStyles.container, style]}>
@@ -108,10 +120,7 @@ export const PlayerProgressBar = ({
           />
           <View
             pointerEvents='none'
-            style={[
-              progressBarStyles.thumb,
-              { left: progress * (layout?.width || 0) - THUMB_SIZE / 2 },
-            ]}
+            style={[progressBarStyles.thumb, { left: progress * trackWidth - THUMB_SIZE / 2 }]}
           />
         </View>
       </View>
@@ -126,3 +135,5 @@ export const PlayerProgressBar = ({
     </View>
   )
 }
+
+export default PlayerProgressBar

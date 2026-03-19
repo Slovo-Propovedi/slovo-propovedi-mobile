@@ -60,10 +60,13 @@ class PlayerService {
     this.setIsPlaying(this.playerInstance.playing)
 
     const dur = Math.floor(this.playerInstance.duration * 1000)
-    const pos = Math.floor(this.playerInstance.currentTime * 1000)
-
     this.setDuration(dur)
-    this.setPosition(pos)
+
+    // Don't update position while seeking - it's managed by seekTo
+    if (!this.isSeeking) {
+      const pos = Math.floor(this.playerInstance.currentTime * 1000)
+      this.setPosition(pos)
+    }
   }
 
   private startStatusTracking = () => {
@@ -110,8 +113,12 @@ class PlayerService {
 
   public seekTo = async (newPositionMs: number) => {
     if (this.playerInstance) {
-      await this.playerInstance.seekTo(newPositionMs / 1000)
-      this.setPosition(newPositionMs)
+      // Clamp position to valid range [0, duration]
+      const clampedPosition = Math.max(0, Math.min(this.duration, newPositionMs))
+      this.isSeeking = true
+      this.setPosition(clampedPosition) // Update immediately for UI responsiveness
+      await this.playerInstance.seekTo(clampedPosition / 1000)
+      this.isSeeking = false
     }
   }
 
@@ -127,6 +134,7 @@ class PlayerService {
   public loadAudio = async (audioUrl: string, initialPositionMs = 0) => {
     this.setIsBuffering(true)
     this.stopStatusTracking()
+    this.setPosition(0)
 
     await this.configureAudioMode()
 
@@ -154,10 +162,8 @@ class PlayerService {
           void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
           this.setIsBuffering(false)
 
-          if (initialPositionMs > 0) {
-            void player.seekTo(initialPositionMs / 1000)
-            this.setPosition(initialPositionMs)
-          }
+          if (initialPositionMs > 0) void player.seekTo(initialPositionMs / 1000)
+          this.setPosition(initialPositionMs)
 
           this.updateStatus()
           resolve(player)
@@ -189,6 +195,7 @@ class PlayerService {
   private audioModeConfigured = false
   private playerInstance: AudioPlayer | null = null
   private statusInterval: null | ReturnType<typeof setInterval> = null
+  private isSeeking = false
 }
 
 export const playerService = new PlayerService()

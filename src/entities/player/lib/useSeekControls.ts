@@ -1,6 +1,7 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 interface SeekControls {
+  isSeeking: boolean
   startSeek: (direction: 'backward' | 'forward') => void
   stopSeek: () => void
 }
@@ -21,21 +22,49 @@ export const useSeekControls = ({
   const seekDirectionRef = useRef<'backward' | 'forward'>('backward')
   const positionRef = useRef(position)
   const tickCountRef = useRef(0)
+  const [isSeeking, setIsSeeking] = useState(false)
 
   // Keep position ref updated
   positionRef.current = position
+
+  const stopSeek = useCallback(() => {
+    if (seekIntervalRef.current) {
+      clearInterval(seekIntervalRef.current)
+      seekIntervalRef.current = null
+    }
+    seekSpeedRef.current = 0
+    setIsSeeking(false)
+  }, [])
 
   const startSeek = useCallback(
     (direction: 'backward' | 'forward') => {
       seekDirectionRef.current = direction
       seekSpeedRef.current = 5000 // Start with 5 seconds
       tickCountRef.current = 0
+      setIsSeeking(true)
 
       const doSeek = () => {
-        const currentPos = positionRef.current // Use ref instead of closure
+        // Guard: don't seek if duration not available or invalid
+        if (!duration || duration <= 0) return
+
+        const currentPos = positionRef.current
         const delta =
           seekDirectionRef.current === 'forward' ? seekSpeedRef.current : -seekSpeedRef.current
-        const newPos = Math.max(0, Math.min(duration, currentPos + delta))
+
+        // Calculate new position with proper clamping
+        const maxPos = duration - 100 // 100ms buffer before end
+        const newPos = Math.max(0, Math.min(maxPos, currentPos + delta))
+
+        // Stop seeking if we've reached the boundary
+        if (
+          (seekDirectionRef.current === 'forward' && newPos >= maxPos) ||
+          (seekDirectionRef.current === 'backward' && newPos <= 0)
+        ) {
+          void seekTo(newPos)
+          stopSeek()
+          return
+        }
+
         void seekTo(newPos)
       }
 
@@ -51,16 +80,8 @@ export const useSeekControls = ({
         doSeek()
       }, 200)
     },
-    [duration, seekTo],
+    [duration, seekTo, stopSeek],
   )
 
-  const stopSeek = useCallback(() => {
-    if (seekIntervalRef.current) {
-      clearInterval(seekIntervalRef.current)
-      seekIntervalRef.current = null
-    }
-    seekSpeedRef.current = 0
-  }, [])
-
-  return { startSeek, stopSeek }
+  return { isSeeking, startSeek, stopSeek }
 }

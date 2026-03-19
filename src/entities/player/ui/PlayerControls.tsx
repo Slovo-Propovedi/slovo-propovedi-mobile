@@ -1,3 +1,4 @@
+import { useAtom } from '@reatom/npm-react'
 import React, { useEffect } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { isNonNullable } from 'shared/lib/utils'
@@ -8,6 +9,9 @@ import type { StyleProp, ViewStyle } from 'react-native'
 import type { PlaylistData } from 'shared/model'
 import { usePlayer } from '../lib/usePlayer'
 import { usePlayerState } from '../lib/usePlayerState'
+import { useSeekControls } from '../lib/useSeekControls'
+import { useTrackEndHandler } from '../lib/useTrackEndHandler'
+import { repeatModeAtom } from '../model'
 import { getExcludedButtons } from './getExcludedButtons'
 import { getIndexOfCurrentAudioInPlaylist } from './getIndexOfCurrentAudioInPlaylist'
 import { playerControlsStyles as styles } from './PlayerControls.styles'
@@ -30,33 +34,30 @@ export const PlayerControls = ({
   size = PlayerControlsSize.Large,
   style,
 }: PlayerControlsProps) => {
-  const { loadAudio, pause, play } = usePlayer()
+  const { loadAudio, pause, play, seekTo } = usePlayer()
   const { duration, isBuffering, isPlaying, position } = usePlayerState()
+  const { isSeeking } = useSeekControls({ duration, position, seekTo })
+  const [repeatMode] = useAtom(repeatModeAtom)
   const excludedButtons = getExcludedButtons(excludeButtons)
   const indexOfCurrentAudioInPlaylist = getIndexOfCurrentAudioInPlaylist(
     currentAudio,
     currentPlaylist,
   )
-
   const hasValidPlaylist =
     isNonNullable(currentPlaylist) && isNonNullable(indexOfCurrentAudioInPlaylist)
-  const isLastTrack = hasValidPlaylist
-    ? indexOfCurrentAudioInPlaylist === currentPlaylist.list.length - 1
-    : false
+  const isLastTrack =
+    hasValidPlaylist && currentPlaylist
+      ? indexOfCurrentAudioInPlaylist === currentPlaylist.list.length - 1
+      : false
   const isFirstTrack = hasValidPlaylist ? indexOfCurrentAudioInPlaylist === 0 : false
 
-  const togglePlay = async () => {
-    if (isPlaying) return await pause()
-    return await play()
-  }
-
+  const togglePlay = async () => (isPlaying ? await pause() : await play())
   const toggleTrack = async (dir: 'next' | 'prev') => {
     if (!hasValidPlaylist || !currentPlaylist) return
 
     const newIndex =
       dir === 'next' ? indexOfCurrentAudioInPlaylist + 1 : indexOfCurrentAudioInPlaylist - 1
     const track = currentPlaylist.list[newIndex]
-
     if (!track?.audioUrl) return
 
     const { audioUrl, ...otherProps } = track
@@ -67,13 +68,26 @@ export const PlayerControls = ({
     await play()
   }
 
+  const handleTrackEnd = useTrackEndHandler({
+    currentPlaylist,
+    hasValidPlaylist,
+    isLastTrack,
+    loadAudio,
+    pause,
+    play,
+    repeatMode,
+    seekTo,
+    setCurrentAudio,
+    toggleTrack,
+  })
+
   useEffect(() => {
-    if (!duration || !hasValidPlaylist || isLastTrack) return
-    if (position >= duration) void toggleTrack('next')
-  }, [duration, position, hasValidPlaylist, isLastTrack])
+    const THRESHOLD = 500 // 500ms before end to detect track end
+    if (!duration || position < duration - THRESHOLD || isSeeking) return
+    void handleTrackEnd()
+  }, [duration, position, handleTrackEnd, isSeeking])
 
   const isPrevDisabled = !hasValidPlaylist || isFirstTrack || !currentAudio
-  const isNextDisabled = !hasValidPlaylist || isLastTrack || !currentAudio
 
   return (
     <View testID='controls-container' style={[styles.controlsContainer, style]}>
@@ -106,9 +120,9 @@ export const PlayerControls = ({
       {!excludedButtons[PlayerControlButtonType.Next] && (
         <PlayerControlButton
           size={size}
-          isDisabled={isNextDisabled}
           type={PlayerControlButtonType.Next}
           onPress={() => void toggleTrack('next')}
+          isDisabled={!hasValidPlaylist || isLastTrack || !currentAudio}
         />
       )}
     </View>
