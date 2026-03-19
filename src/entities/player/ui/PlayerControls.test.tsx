@@ -11,6 +11,7 @@ jest.mock('../lib/PlayerService', () => ({
       position: 0,
     })),
     loadAudio: jest.fn(),
+    onTrackEnd: undefined,
     pause: jest.fn(),
     play: jest.fn(),
     seekTo: jest.fn(),

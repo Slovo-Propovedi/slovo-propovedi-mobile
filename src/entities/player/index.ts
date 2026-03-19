@@ -2,6 +2,7 @@ export { playerService } from './lib/PlayerService'
 export { usePlayer, usePlayerState } from './lib/usePlayer'
 export { usePlayNewSermon } from './lib/usePlaySermon'
 export { useQueueManagement } from './lib/useQueueManagement'
+export { useSeekControls } from './lib/useSeekControls'
 
 export {
   closePlayerSheetAction,
@@ -20,7 +21,6 @@ export {
   setPositionAction,
 } from './model'
 
-export { FullscreenPlayerControls } from './ui/FullscreenPlayerControls'
 export { PlayerControls } from './ui/PlayerControls'
 export { AudioPlayerData, ControlsNames, PlayerControlsSize } from './ui/PlayerControls.types'
 export { PlayerListenProgress } from './ui/PlayerListenProgress'

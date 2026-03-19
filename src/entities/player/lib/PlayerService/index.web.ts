@@ -118,6 +118,9 @@ class WebPlayerService {
     audio.addEventListener('timeupdate', () => {
       this.setPosition(Math.floor(audio.currentTime * 1000))
     })
+    audio.addEventListener('ended', () => {
+      this.onTrackEnd?.()
+    })
 
     return null
   }
@@ -135,6 +138,8 @@ class WebPlayerService {
   private listeners: Set<StateListener> = new Set()
   private audioInstance: HTMLAudioElement | null = null
   private statusInterval: null | ReturnType<typeof setInterval> = null
+
+  public onTrackEnd: (() => void) | undefined = undefined
 }
 
 export const playerService = new WebPlayerService()

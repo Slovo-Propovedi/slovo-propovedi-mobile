@@ -11,11 +11,12 @@ import {
   currentAudioAtom,
   currentPlaylistAtom,
   durationAtom,
-  FullscreenPlayerControls,
   PlayerProgressBar,
   PlayerRepeatToggle,
   positionAtom,
+  SermonPlayerControls,
   usePlayer,
+  useSeekControls,
 } from 'entities/player'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { MovingText } from 'shared/ui'
@@ -38,6 +39,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const [position] = useAtom(positionAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
   const { seekTo } = usePlayer()
+  const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
   const [showMenu, setShowMenu] = useState(false)
   const [showPlaylist, setShowPlaylist] = useState(false)
   const playlistSheetRef = useRef<BottomSheet>(null)
@@ -114,7 +116,11 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
           </View>
           <View style={styles.controlsRow}>
             <PlayerRepeatToggle style={styles.sideControl} />
-            <FullscreenPlayerControls />
+            <SermonPlayerControls
+              variant='fullscreen'
+              onPressOutSeek={stopSeek}
+              onLongPressSeek={startSeek}
+            />
             <Pressable style={styles.sideControl} onPress={handleOpenPlaylist}>
               <Entypo name='list' style={styles.controlIcon} />
             </Pressable>

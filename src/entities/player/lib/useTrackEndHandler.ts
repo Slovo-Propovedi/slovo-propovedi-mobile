@@ -6,6 +6,7 @@ import type { PlaylistData } from 'shared/model'
 interface UseTrackEndHandlerParams {
   currentPlaylist: null | PlaylistData
   hasValidPlaylist: boolean
+  indexOfCurrentAudio: number | undefined
   isLastTrack: boolean
   loadAudio: (url: string) => Promise<AudioPlayer | null>
   pause: () => Promise<void>
@@ -19,6 +20,7 @@ interface UseTrackEndHandlerParams {
 export const useTrackEndHandler = ({
   currentPlaylist,
   hasValidPlaylist,
+  indexOfCurrentAudio,
   isLastTrack,
   loadAudio,
   pause,
@@ -42,21 +44,24 @@ export const useTrackEndHandler = ({
       return
     }
 
-    // Last track in playlist
+    // Last track in playlist - use passed isLastTrack
     if (isLastTrack) {
       if (repeatMode === 'queue') {
         // Repeat playlist - go to first track
         const firstTrack = currentPlaylist.list[0]
         if (firstTrack?.audioUrl) {
           const { audioUrl, ...otherProps } = firstTrack
-          const newAudio = { ...otherProps, audioUrl, previewUrl: currentPlaylist.previewUrl }
+          const newAudio = {
+            ...otherProps,
+            artwork: currentPlaylist.previewUrl,
+            audioUrl,
+            previewUrl: currentPlaylist.previewUrl,
+          }
           await setCurrentAudio(newAudio)
           await loadAudio(newAudio.audioUrl)
           await play()
         }
-      } else
-        // No repeat - stop
-        await pause()
+      } else await pause() // No repeat - stop
       return
     }
 
@@ -65,6 +70,7 @@ export const useTrackEndHandler = ({
   }, [
     currentPlaylist,
     hasValidPlaylist,
+    indexOfCurrentAudio,
     isLastTrack,
     loadAudio,
     pause,

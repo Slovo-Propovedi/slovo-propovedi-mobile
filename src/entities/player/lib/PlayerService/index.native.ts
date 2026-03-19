@@ -56,6 +56,7 @@ class PlayerService {
   private updateStatus = () => {
     if (!this.playerInstance?.isLoaded) return
 
+    const wasPlaying = this.isPlaying
     this.setIsBuffering(this.playerInstance.isBuffering)
     this.setIsPlaying(this.playerInstance.playing)
 
@@ -66,6 +67,22 @@ class PlayerService {
     if (!this.isSeeking) {
       const pos = Math.floor(this.playerInstance.currentTime * 1000)
       this.setPosition(pos)
+
+      // FALLBACK: Detect track end via polling
+      // Trigger when:
+      // 1. Position is within 3 seconds of end, OR
+      // 2. Player stopped (playing went from true to false) and position is past 90% of duration
+      const isNearEnd = dur > 0 && pos >= dur - 3000
+      const playerStoppedNearEnd =
+        !this.playerInstance.playing && wasPlaying && dur > 0 && pos >= dur * 0.9
+
+      if ((isNearEnd || playerStoppedNearEnd) && !this.trackEndHandled) {
+        this.trackEndHandled = true
+        this.onTrackEnd?.()
+      }
+
+      // Reset flag when position is far from end (new track or seeked back)
+      if (dur > 0 && pos < dur - 10000) this.trackEndHandled = false
     }
   }
 
@@ -135,6 +152,7 @@ class PlayerService {
     this.setIsBuffering(true)
     this.stopStatusTracking()
     this.setPosition(0)
+    this.trackEndHandled = false
 
     await this.configureAudioMode()
 
@@ -166,6 +184,7 @@ class PlayerService {
           this.setPosition(initialPositionMs)
 
           this.updateStatus()
+          this.setupTrackEndListener()
           resolve(player)
         } else if (elapsed >= maxWait) {
           clearInterval(checkLoaded)
@@ -179,10 +198,35 @@ class PlayerService {
   public unload = async () => {
     this.stopStatusTracking()
 
+    if (this.trackEndSubscription) {
+      this.trackEndSubscription.remove()
+      this.trackEndSubscription = null
+    }
+
     if (this.playerInstance) {
       this.playerInstance.pause()
       this.playerInstance = null
     }
+  }
+
+  private setupTrackEndListener = () => {
+    // Remove old subscription if exists
+    if (this.trackEndSubscription) {
+      this.trackEndSubscription.remove()
+      this.trackEndSubscription = null
+    }
+
+    if (!this.playerInstance) {
+      console.warn('[PlayerService] setupTrackEndListener: no playerInstance')
+      return
+    }
+
+    this.trackEndSubscription = this.playerInstance.addListener('playbackStatusUpdate', status => {
+      if (status.didJustFinish && !this.trackEndHandled) {
+        this.trackEndHandled = true
+        this.onTrackEnd?.()
+      }
+    })
   }
 
   private duration = 0
@@ -191,11 +235,14 @@ class PlayerService {
   private isBuffering = false
   private isPlaying = false
   private listeners: Set<StateListener> = new Set()
-
   private audioModeConfigured = false
   private playerInstance: AudioPlayer | null = null
   private statusInterval: null | ReturnType<typeof setInterval> = null
   private isSeeking = false
+  private trackEndSubscription: { remove: () => void } | null = null
+  private trackEndHandled = false
+
+  public onTrackEnd: (() => void) | undefined = undefined
 }
 
 export const playerService = new PlayerService()
