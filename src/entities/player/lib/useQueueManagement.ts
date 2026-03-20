@@ -28,7 +28,7 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
   const createDefaultPlaylist = (tracks: AudioPlayerData[]): PlaylistData => ({
     list: tracks as SermonData[],
     previewUrl: tracks[0]?.artwork,
-    title: 'Слово Истины',
+    title: 'Слово.Проповеди',
   })
 
   const playPlaylist = useCallback(

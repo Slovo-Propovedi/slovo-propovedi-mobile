@@ -122,7 +122,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
                 text={audio.title || ''}
                 style={styles.trackTitle}
               />
-              <Text style={styles.artistName}>{playlist?.title || 'Слово Истины'}</Text>
+              <Text style={styles.artistName}>{playlist?.title || 'Слово.Проповеди'}</Text>
             </View>
             <View style={styles.menuContainer}>
               <Pressable style={styles.menuButton} onPress={() => setShowMenu(true)}>

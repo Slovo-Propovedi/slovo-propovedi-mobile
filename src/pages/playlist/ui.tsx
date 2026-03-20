@@ -44,7 +44,7 @@ export const PlaylistScreen = () => {
   }
 
   const tracksListData = list.map((sermon: SermonData) => ({
-    artist: 'Слово Истины',
+    artist: 'Слово.Проповеди',
     artwork: previewUrl,
     id: sermon.id,
     title: sermon.title,

@@ -78,7 +78,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
             <View style={miniPlayerStyles.miniTextContainer}>
               <MovingText text={audio.title || ''} style={miniPlayerStyles.miniTrackTitle} />
               <Text numberOfLines={1} style={miniPlayerStyles.miniPlaylistName}>
-                {playlist?.title || 'Слово Истины'}
+                {playlist?.title || 'Слово.Проповеди'}
               </Text>
             </View>
             <View style={miniPlayerStyles.miniControls}>
