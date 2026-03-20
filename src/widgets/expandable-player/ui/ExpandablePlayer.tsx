@@ -15,6 +15,7 @@ import {
 import { MovingText, PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { COLORS } from 'shared/ui/themed'
+import { showMenuAtom } from '../model/showMenuAtom'
 import { useExpandAnimation } from '../model/useExpandAnimation'
 import { useFullscreenPanGesture } from '../model/useFullscreenPanGesture'
 import { useMiniPanGesture } from '../model/useMiniPanGesture'
@@ -29,6 +30,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
   const [playing] = useAtom(isPlayingAtom)
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
+  const [showMenu] = useAtom(showMenuAtom)
   const { pause, play } = usePlayer()
   const open = useAction(openPlayerSheetAction)
   const close = useAction(closePlayerSheetAction)
@@ -44,7 +46,13 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     screenWidth,
   } = useExpandAnimation(expanded)
 
-  const panGesture = useFullscreenPanGesture({ close, expanded, progress, screenHeight })
+  const panGesture = useFullscreenPanGesture({
+    close,
+    disabled: showMenu,
+    expanded,
+    progress,
+    screenHeight,
+  })
 
   const handleMiniTap = useCallback(() => {
     if (!expanded) void open()

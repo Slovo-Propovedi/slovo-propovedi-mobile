@@ -4,6 +4,7 @@ import type { SharedValue } from 'react-native-reanimated'
 
 interface UseFullscreenPanGestureParams {
   close: () => void
+  disabled?: boolean
   expanded: boolean
   progress: SharedValue<number>
   screenHeight: number
@@ -11,13 +12,14 @@ interface UseFullscreenPanGestureParams {
 
 export const useFullscreenPanGesture = ({
   close,
+  disabled = false,
   expanded,
   progress,
   screenHeight,
 }: UseFullscreenPanGestureParams) => {
   const startY = useSharedValue(0)
 
-  return expanded
+  return expanded && !disabled
     ? Gesture.Pan()
         .activeOffsetY(15)
         .onStart(() => {

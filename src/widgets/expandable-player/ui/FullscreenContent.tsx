@@ -3,7 +3,7 @@ import { Entypo } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
 import React, { useCallback, useRef, useState } from 'react'
-import { Pressable, Text, View, type ViewStyle } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle, runOnJS } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -24,6 +24,7 @@ import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { MovingText } from 'shared/ui'
 import { INDENTS } from 'shared/ui/themed'
 import type BottomSheet from '@gorhom/bottom-sheet'
+import { showMenuAtom } from '../model/showMenuAtom'
 import { gradientStyles } from './gradients'
 import { PlayerMenu } from './PlayerMenu'
 import { PlaylistBottomSheet } from './PlaylistBottomSheet'
@@ -44,8 +45,9 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const { loadAudio, pause, play, seekTo } = usePlayer()
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
   const setCurrentAudio = useAction(setCurrentAudioAction)
-  const [showMenu, setShowMenu] = useState(false)
+  const [showMenu, setShowMenu] = useAtom(showMenuAtom)
   const [showPlaylist, setShowPlaylist] = useState(false)
+  const [showDescription, setShowDescription] = useState(false)
   const playlistSheetRef = useRef<BottomSheet>(null)
 
   const handleCollapsePress = useCallback(() => {
@@ -86,6 +88,14 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
     else await play()
   }
 
+  const handleShowDescription = () => {
+    setShowDescription(true)
+  }
+
+  const handleCloseDescription = () => {
+    setShowDescription(false)
+  }
+
   const handleOpenPlaylist = () => {
     setShowPlaylist(true)
     setTimeout(() => playlistSheetRef.current?.expand(), 0)
@@ -120,7 +130,21 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
           style={gradientStyles.bottomGradient}
           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
         />
-        <Pressable style={styles.spacer} onPress={() => void handleTogglePlay()} />
+        {showDescription ? (
+          <View style={[styles.descriptionContainer, { marginTop: insets.top + 60 }]}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={handleCloseDescription} />
+            <View style={styles.descriptionCard}>
+              <ScrollView>
+                <Text style={styles.descriptionText}>{audio.description}</Text>
+              </ScrollView>
+              <Pressable onPress={handleCloseDescription} style={styles.descriptionCloseButton}>
+                <Entypo name='cross' style={styles.descriptionCloseIcon} />
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Pressable style={styles.spacer} onPress={() => void handleTogglePlay()} />
+        )}
         <View style={styles.bottomContentContainer}>
           <View style={styles.trackInfoRow}>
             <View style={styles.trackInfoTextContainer}>
@@ -135,7 +159,13 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
               <Pressable style={styles.menuButton} onPress={() => setShowMenu(true)}>
                 <Entypo style={styles.menuIcon} name='dots-three-vertical' />
               </Pressable>
-              {showMenu && <PlayerMenu onClose={() => setShowMenu(false)} />}
+              {showMenu && (
+                <PlayerMenu
+                  onClose={() => setShowMenu(false)}
+                  hasDescription={!!audio.description}
+                  onShowDescription={handleShowDescription}
+                />
+              )}
             </View>
           </View>
           <View style={styles.progressRow}>

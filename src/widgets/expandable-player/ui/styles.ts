@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- TODO: refactor styles */
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 
 export const styles = StyleSheet.create({
   artistName: {
@@ -58,6 +58,32 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  descriptionCard: {
+    backgroundColor: 'rgba(30, 30, 30, 0.9)',
+    borderRadius: RADIUSES.middle,
+    flex: 1,
+    marginVertical: INDENTS.medium,
+    padding: INDENTS.medium,
+  },
+  descriptionCloseButton: {
+    position: 'absolute',
+    right: INDENTS.low,
+    top: INDENTS.low,
+  },
+  descriptionCloseIcon: {
+    color: COLORS.textMuted,
+    fontSize: FONT_SIZES.xl,
+  },
+  descriptionContainer: {
+    flex: 1,
+    marginHorizontal: INDENTS.medium,
+    position: 'relative',
+  },
+  descriptionText: {
+    color: COLORS.text,
+    fontSize: FONT_SIZES.base,
+    lineHeight: FONT_SIZES.base * 1.5,
+  },
   fullContainer: {
     bottom: 0,
     flex: 1,
@@ -74,7 +100,7 @@ export const styles = StyleSheet.create({
   },
   menuIcon: {
     color: COLORS.textMuted,
-    fontSize: FONT_SIZES.xxl,
+    fontSize: FONT_SIZES.lg,
   },
   nextSermonContainer: {
     alignItems: 'center',
@@ -82,7 +108,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: INDENTS.medium,
     position: 'absolute',
     right: 0,
-    zIndex: 300,
+    zIndex: 1,
   },
   nextSermonLabel: {
     color: COLORS.textMuted,
