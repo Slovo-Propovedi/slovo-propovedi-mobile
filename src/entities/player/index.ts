@@ -13,16 +13,21 @@ export {
   isPlayingAtom,
   openPlayerSheetAction,
   positionAtom,
+  RepeatMode,
+  repeatModeAtom,
+  repeatModeSchema,
   setCurrentAudioAction,
   setCurrentPlaylistAction,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
   setPositionAction,
+  setRepeatModeAction,
 } from './model'
 
 export { PlayerControls } from './ui/PlayerControls'
 export { AudioPlayerData, ControlsNames, PlayerControlsSize } from './ui/PlayerControls.types'
+export { audioPlayerDataSchema } from './ui/PlayerControls.types'
 export { PlayerListenProgress } from './ui/PlayerListenProgress'
 export { PlayerProgressBar } from './ui/PlayerProgressBar'
 export { PlayerRepeatToggle } from './ui/PlayerRepeatToggle'

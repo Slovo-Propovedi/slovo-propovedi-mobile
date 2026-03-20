@@ -5,21 +5,20 @@ export {
   setPlayerFullscreen,
 } from './app'
 export { BibleBookName, FetchedBooksGroupName, FetchedSermonsGroupName } from './domain/bible'
-export type {
-  BookData,
-  HOC,
-  KeyofAny,
-  PlaylistData,
-  RequireAtLeastOne,
-  SermonData,
-  Unpacked,
+export {
+  type BookData,
+  type PlaylistData,
+  playlistDataSchema,
+  type SermonData,
+  sermonDataSchema,
 } from './domain/common'
-export type {
-  DB,
-  FetchedBookData,
-  FetchedBooksGroup,
-  FetchedPlaylist,
-  FetchedSermonData,
-  FetchedSermonsGroup,
+export {
+  type DB,
+  type FetchedBookData,
+  type FetchedBooksGroup,
+  type FetchedPlaylist,
+  type FetchedSermonData,
+  type FetchedSermonsGroup,
 } from './fetched/fetched-data'
 export { MimeType } from './file/mimeTypes'
+export { parseJsonWithSchema } from './schemas'

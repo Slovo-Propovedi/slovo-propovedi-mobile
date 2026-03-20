@@ -1,13 +1,2 @@
-{
-  "/home/egoreast/Programming/slovo-istiny-mobile/lint-staged.config.js": {
-    "path": "/home/egoreast/Programming/slovo-istiny-mobile/lint-staged.config.js",
-    "statementMap": {
-      "0": { "start": { "line": 2, "column": 15 }, "end": { "line": 5, "column": 1 } }
-    },
-    "fnMap": {},
-    "branchMap": {},
-    "s": { "0": 0 },
-    "f": {},
-    "b": {}
-  }
+{"/home/egoreast/Programming/slovo-istiny-mobile/lint-staged.config.js": {"path":"/home/egoreast/Programming/slovo-istiny-mobile/lint-staged.config.js","statementMap":{"0":{"start":{"line":2,"column":15},"end":{"line":5,"column":1}}},"fnMap":{},"branchMap":{},"s":{"0":0},"f":{},"b":{}}
 }

@@ -1,4 +1,5 @@
-import type { SermonData } from 'shared/model'
+import z from 'zod'
+import { sermonDataSchema } from 'shared/model'
 import type { PlayerControlButtonType } from 'shared/ui'
 
 export enum PlayerControlsSize {
@@ -6,12 +7,14 @@ export enum PlayerControlsSize {
   Large = 35,
 }
 
-export type AudioPlayerData = {
-  artist?: string
-  artwork?: string
-  audioUrl: string
-  previewUrl?: string
-} & Omit<SermonData, 'audioUrl'>
+export const audioPlayerDataSchema = sermonDataSchema.extend({
+  artist: z.string().optional(),
+  artwork: z.string().optional(),
+  audioUrl: z.string(),
+  previewUrl: z.string().optional(),
+})
+
+export type AudioPlayerData = z.infer<typeof audioPlayerDataSchema>
 
 export type ControlsNames =
   | PlayerControlButtonType.Next

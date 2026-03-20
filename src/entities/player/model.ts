@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, atom } from '@reatom/framework'
+import z from 'zod'
 import {
   CURRENT_AUDIO,
   CURRENT_PLAYLIST,
+  CURRENT_REPEAT_MODE,
   CURRENT_SOUND_POSITION,
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
@@ -20,8 +22,15 @@ export const durationAtom = atom(0, 'durationAtom')
 export const volumeAtom = atom(1, 'volumeAtom')
 export const isBufferingAtom = atom(false, 'isBufferingAtom')
 
-// Repeat mode: 'off' | 'track' | 'queue'
-export type RepeatMode = 'off' | 'queue' | 'track'
+export const RepeatMode = {
+  Off: 'off',
+  Queue: 'queue',
+  Track: 'track',
+} as const
+export type RepeatMode = (typeof RepeatMode)[keyof typeof RepeatMode]
+
+export const repeatModeSchema = z.enum(Object.values(RepeatMode))
+
 export const repeatModeAtom = atom<RepeatMode>('off', 'repeatModeAtom')
 
 // Player expanded state (for expandable player)
@@ -92,6 +101,7 @@ export const setIsBufferingAction = action(async (ctx, buffering: boolean) => {
 }, 'setIsBuffering')
 
 export const setRepeatModeAction = action(async (ctx, mode: RepeatMode) => {
+  await AsyncStorage.setItem(CURRENT_REPEAT_MODE, mode)
   await ctx.schedule(() => {
     repeatModeAtom(ctx, mode)
   })

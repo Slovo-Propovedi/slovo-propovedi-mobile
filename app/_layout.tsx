@@ -4,25 +4,28 @@ import { reatomContext, useAction } from '@reatom/npm-react'
 import { Stack } from 'expo-router'
 import React, { useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import z from 'zod'
 import {
-  type AudioPlayerData,
+  audioPlayerDataSchema,
   playerService,
+  repeatModeSchema,
   setCurrentAudioAction,
   setCurrentPlaylistAction,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
   setPositionAction,
+  setRepeatModeAction,
   usePlayer,
 } from 'entities/player'
 import {
   CURRENT_AUDIO,
   CURRENT_PLAYLIST,
+  CURRENT_REPEAT_MODE,
   CURRENT_SOUND_POSITION,
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
-import { parseJSONToObject } from 'shared/lib/utils'
-import type { PlaylistData } from 'shared/model'
+import { parseJsonWithSchema, playlistDataSchema } from 'shared/model'
 
 const ctx = createCtx()
 
@@ -52,9 +55,7 @@ const PlaybackStateSync = () => {
         await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(state.position))
     }
     const interval = setInterval(savePosition, 5000)
-    return () => {
-      clearInterval(interval)
-    }
+    return () => clearInterval(interval)
   }, [])
 
   return null
@@ -63,8 +64,8 @@ const PlaybackStateSync = () => {
 const RootLayout = () => {
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
+  const setRepeatMode = useAction(setRepeatModeAction)
   const { loadAudio, setVolume, unload } = usePlayer()
-
   useEffect(() => {
     const initPlayerData = async () => {
       try {
@@ -73,27 +74,27 @@ const RootLayout = () => {
           [, storedCurrentPlaylist],
           [, storedSoundPosition],
           [, storedVolume],
+          [, storedRepeatMode],
         ] = await AsyncStorage.multiGet([
           CURRENT_AUDIO,
           CURRENT_PLAYLIST,
           CURRENT_SOUND_POSITION,
           CURRENT_SOUND_VOLUME,
+          CURRENT_REPEAT_MODE,
         ])
-        if (storedVolume) {
-          const volume = Number(storedVolume)
-          if (!isNaN(volume)) await setVolume(volume)
+
+        const parsedVolume = storedVolume ? Number(storedVolume) : null
+        const { data: parsedRepeat } = repeatModeSchema.safeParse(storedRepeatMode)
+        const audio = parseJsonWithSchema(audioPlayerDataSchema)(storedCurrentAudio)
+        const playlist = parseJsonWithSchema(playlistDataSchema)(storedCurrentPlaylist)
+        const { data: validVolume } = z.number().safeParse(parsedVolume)
+        if (validVolume) await setVolume(validVolume)
+        if (parsedRepeat) await setRepeatMode(parsedRepeat)
+        if (audio) {
+          await setCurrentAudio(audio)
+          await loadAudio(audio.audioUrl, Number(storedSoundPosition) || 0)
         }
-        if (storedCurrentAudio) {
-          const audio = parseJSONToObject<AudioPlayerData>(storedCurrentAudio)
-          if (audio) {
-            await setCurrentAudio(audio)
-            await loadAudio(audio.audioUrl, Number(storedSoundPosition) || 0)
-          }
-        }
-        if (storedCurrentPlaylist) {
-          const playlist = parseJSONToObject<PlaylistData>(storedCurrentPlaylist)
-          if (playlist) await setCurrentPlaylist(playlist)
-        }
+        if (playlist) await setCurrentPlaylist(playlist)
       } catch (error) {
         console.error('Error initializing player data:', error)
       }
