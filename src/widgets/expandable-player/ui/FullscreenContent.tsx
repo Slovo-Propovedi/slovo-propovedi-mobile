@@ -11,6 +11,7 @@ import {
   currentAudioAtom,
   currentPlaylistAtom,
   durationAtom,
+  isPlayingAtom,
   PlayerProgressBar,
   PlayerRepeatToggle,
   positionAtom,
@@ -39,7 +40,8 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const [duration] = useAtom(durationAtom)
   const [position] = useAtom(positionAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
-  const { loadAudio, play, seekTo } = usePlayer()
+  const [isPlaying] = useAtom(isPlayingAtom)
+  const { loadAudio, pause, play, seekTo } = usePlayer()
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const [showMenu, setShowMenu] = useState(false)
@@ -79,6 +81,11 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
     await play()
   }
 
+  const handleTogglePlay = async () => {
+    if (isPlaying) await pause()
+    else await play()
+  }
+
   const handleOpenPlaylist = () => {
     setShowPlaylist(true)
     setTimeout(() => playlistSheetRef.current?.expand(), 0)
@@ -113,7 +120,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
           style={gradientStyles.bottomGradient}
           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
         />
-        <View style={styles.spacer} />
+        <Pressable style={styles.spacer} onPress={() => void handleTogglePlay()} />
         <View style={styles.bottomContentContainer}>
           <View style={styles.trackInfoRow}>
             <View style={styles.trackInfoTextContainer}>
