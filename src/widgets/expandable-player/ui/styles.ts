@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- TODO: refactor styles */
 import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
 
@@ -74,6 +75,27 @@ export const styles = StyleSheet.create({
   menuIcon: {
     color: COLORS.textMuted,
     fontSize: FONT_SIZES.xxl,
+  },
+  nextSermonContainer: {
+    alignItems: 'center',
+    left: 0,
+    paddingHorizontal: INDENTS.medium,
+    position: 'absolute',
+    right: 0,
+    zIndex: 300,
+  },
+  nextSermonLabel: {
+    color: COLORS.textMuted,
+    fontSize: FONT_SIZES.md,
+    textAlign: 'center',
+  },
+  nextSermonTitle: {
+    color: COLORS.white,
+    fontSize: FONT_SIZES.xl,
+    fontWeight: '500',
+    marginTop: INDENTS.lowest,
+    maxWidth: '80%',
+    textAlign: 'center',
   },
   progressBarContainer: {
     flex: 1,

@@ -1,6 +1,6 @@
-/* eslint-disable max-lines -- FIXME: refactor */
+/* eslint-disable max-lines -- TODO: refactor next sermon block to separate component */
 import { Entypo } from '@expo/vector-icons'
-import { useAtom } from '@reatom/npm-react'
+import { useAction, useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
 import React, { useCallback, useRef, useState } from 'react'
 import { Pressable, Text, View, type ViewStyle } from 'react-native'
@@ -15,6 +15,7 @@ import {
   PlayerRepeatToggle,
   positionAtom,
   SermonPlayerControls,
+  setCurrentAudioAction,
   usePlayer,
   useSeekControls,
 } from 'entities/player'
@@ -38,8 +39,9 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const [duration] = useAtom(durationAtom)
   const [position] = useAtom(positionAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
-  const { seekTo } = usePlayer()
+  const { loadAudio, play, seekTo } = usePlayer()
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
+  const setCurrentAudio = useAction(setCurrentAudioAction)
   const [showMenu, setShowMenu] = useState(false)
   const [showPlaylist, setShowPlaylist] = useState(false)
   const playlistSheetRef = useRef<BottomSheet>(null)
@@ -56,15 +58,31 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
 
   if (!audio) return null
 
-  const handleOpenMenu = () => setShowMenu(true)
-  const handleCloseMenu = () => setShowMenu(false)
+  const playlistList = playlist?.list ?? []
+  const currentIndex = playlistList.findIndex(t => t.id === audio.id)
+  const nextSermon = playlistList[currentIndex + 1]
+  const hasNextSermon = currentIndex >= 0 && currentIndex < playlistList.length - 1
+
+  const handleNextSermon = async () => {
+    if (!playlist || currentIndex < 0) return
+    const track = playlistList[currentIndex + 1]
+    if (!track?.audioUrl) return
+    const { audioUrl, ...rest } = track
+    const newAudio = {
+      ...rest,
+      artwork: playlist.previewUrl,
+      audioUrl,
+      previewUrl: playlist.previewUrl,
+    }
+    await setCurrentAudio(newAudio)
+    await loadAudio(newAudio.audioUrl)
+    await play()
+  }
 
   const handleOpenPlaylist = () => {
     setShowPlaylist(true)
     setTimeout(() => playlistSheetRef.current?.expand(), 0)
   }
-
-  const handleClosePlaylist = () => setShowPlaylist(false)
 
   return (
     <>
@@ -74,6 +92,17 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
             <Entypo name='chevron-down' style={styles.closeIcon} />
           </View>
         </GestureDetector>
+        {hasNextSermon && (
+          <Pressable
+            onPress={() => void handleNextSermon()}
+            style={[styles.nextSermonContainer, { top: insets.top + INDENTS.low }]}
+          >
+            <Text style={styles.nextSermonLabel}>следующая проповедь</Text>
+            <Text numberOfLines={1} style={styles.nextSermonTitle}>
+              {nextSermon.title}
+            </Text>
+          </Pressable>
+        )}
         <LinearGradient
           pointerEvents='none'
           style={gradientStyles.topGradient}
@@ -96,10 +125,10 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
               <Text style={styles.artistName}>{playlist?.title || 'Слово Истины'}</Text>
             </View>
             <View style={styles.menuContainer}>
-              <Pressable onPress={handleOpenMenu} style={styles.menuButton}>
+              <Pressable style={styles.menuButton} onPress={() => setShowMenu(true)}>
                 <Entypo style={styles.menuIcon} name='dots-three-vertical' />
               </Pressable>
-              {showMenu && <PlayerMenu onClose={handleCloseMenu} />}
+              {showMenu && <PlayerMenu onClose={() => setShowMenu(false)} />}
             </View>
           </View>
           <View style={styles.progressRow}>
@@ -131,7 +160,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
         <PlaylistBottomSheet
           playlist={playlist}
           sheetRef={playlistSheetRef}
-          onClose={handleClosePlaylist}
+          onClose={() => setShowPlaylist(false)}
         />
       )}
     </>
