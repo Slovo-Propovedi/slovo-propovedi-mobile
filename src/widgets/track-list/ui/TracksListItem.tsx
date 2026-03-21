@@ -45,5 +45,3 @@ export const TracksListItem = ({
     */}
   </TouchableOpacity>
 )
-
-export default TracksListItem

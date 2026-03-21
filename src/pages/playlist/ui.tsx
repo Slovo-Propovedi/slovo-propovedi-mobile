@@ -98,5 +98,3 @@ const styles = StyleSheet.create({
     paddingBottom: INDENTS.high,
   },
 })
-
-export default PlaylistScreen

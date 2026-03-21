@@ -35,5 +35,3 @@ export const QueueControls = ({ onPressPlayAll, onPressShuffle }: QueueControlsP
     )}
   </View>
 )
-
-export default QueueControls

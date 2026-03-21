@@ -135,5 +135,3 @@ export const PlayerProgressBar = ({
     </View>
   )
 }
-
-export default PlayerProgressBar
