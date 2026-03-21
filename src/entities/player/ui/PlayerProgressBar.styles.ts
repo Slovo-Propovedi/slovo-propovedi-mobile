@@ -5,8 +5,18 @@ export const THUMB_SIZE = 10
 
 export const progressBarStyles = StyleSheet.create({
   container: { width: '100%' },
-  progress: { backgroundColor: COLORS.primary },
-  remaining: { backgroundColor: COLORS.gray },
+  downloadProgress: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.maximumTrackTintColor,
+    borderBottomLeftRadius: 2.5,
+    borderTopLeftRadius: 2.5,
+  },
+  progress: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.primary,
+    borderBottomLeftRadius: 2.5,
+    borderTopLeftRadius: 2.5,
+  },
   thumb: {
     backgroundColor: COLORS.primary,
     borderRadius: THUMB_SIZE / 2,
@@ -23,10 +33,14 @@ export const progressBarStyles = StyleSheet.create({
   timeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   timeText: { color: COLORS.textMuted, fontSize: FONT_SIZES.sm },
   track: {
+    backgroundColor: COLORS.gray,
     borderRadius: 2.5,
-    flexDirection: 'row',
     height: 5,
     position: 'relative',
+  },
+  trackBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.gray,
   },
   trackContainer: { height: 20, justifyContent: 'center' },
 })

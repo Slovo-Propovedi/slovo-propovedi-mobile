@@ -10,7 +10,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
+  downloadingAudioUrlAtom,
+  downloadProgressAtom,
   durationAtom,
+  isDownloadingAtom,
   isPlayingAtom,
   PlayerProgressBar,
   PlayerRepeatToggle,
@@ -42,6 +45,9 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const [position] = useAtom(positionAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
+  const [isDownloading] = useAtom(isDownloadingAtom)
+  const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
+  const [downloadProgress] = useAtom(downloadProgressAtom)
   const { loadAudio, pause, play, seekTo } = usePlayer()
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
   const setCurrentAudio = useAction(setCurrentAudioAction)
@@ -49,6 +55,9 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const [showPlaylist, setShowPlaylist] = useState(false)
   const [showDescription, setShowDescription] = useState(false)
   const playlistSheetRef = useRef<BottomSheet>(null)
+
+  const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
+  const currentDownloadProgress = isCurrentAudioDownloading ? downloadProgress : 0
 
   const handleCollapsePress = useCallback(() => {
     if (showPlaylist) return void playlistSheetRef.current?.close()
@@ -176,6 +185,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
                 duration={duration}
                 position={position}
                 onSeek={p => void seekTo(p)}
+                downloadProgress={currentDownloadProgress}
               />
             </View>
             <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>

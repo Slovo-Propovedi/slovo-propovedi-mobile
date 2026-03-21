@@ -2,6 +2,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/config'
+import { audioCacheService } from 'shared/lib/audio-cache'
+import { ctx } from 'shared/lib/reatom-ctx'
+import {
+  setDownloadingUrlAction,
+  setDownloadProgressAction,
+  setIsDownloadingAction,
+} from '../download-model'
 
 type StateListener = () => void
 
@@ -161,7 +168,19 @@ class PlayerService {
       this.playerInstance = null
     }
 
-    const player = createAudioPlayer({ uri: audioUrl }, { downloadFirst: true })
+    // Check if audio is already cached
+    let playUrl = audioUrl
+    try {
+      const cachedUri = await audioCacheService.getCachedUri(audioUrl)
+      if (cachedUri) playUrl = cachedUri
+      // Start background caching without blocking playback
+      else this.startBackgroundCaching(audioUrl)
+    } catch (error) {
+      console.error('[PlayerService] Error checking cache:', error)
+      // Continue with remote URL if cache check fails
+    }
+
+    const player = createAudioPlayer({ uri: playUrl }, { downloadFirst: true })
     this.playerInstance = player
 
     return new Promise<AudioPlayer | null>(resolve => {
@@ -227,6 +246,29 @@ class PlayerService {
         this.onTrackEnd?.()
       }
     })
+  }
+
+  private startBackgroundCaching = (audioUrl: string) => {
+    // Update download state atoms
+    setIsDownloadingAction(ctx, true)
+    setDownloadingUrlAction(ctx, audioUrl)
+    setDownloadProgressAction(ctx, 0)
+
+    // Start download in background (don't await)
+    audioCacheService
+      .cacheAudio(audioUrl, progress => {
+        setDownloadProgressAction(ctx, progress)
+      })
+      .then(() => {
+        setDownloadProgressAction(ctx, 1)
+      })
+      .catch(error => {
+        console.error('[PlayerService] Background caching failed:', error)
+      })
+      .finally(() => {
+        setIsDownloadingAction(ctx, false)
+        setDownloadingUrlAction(ctx, null)
+      })
   }
 
   private duration = 0

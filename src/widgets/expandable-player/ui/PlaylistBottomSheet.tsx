@@ -57,6 +57,7 @@ export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBot
     ({ index, item }: { index: number; item: TrackListItemData }) => (
       <TracksListItem
         title={item.title}
+        audioUrl={item.url}
         artist={item.artist}
         artwork={item.artwork}
         onPress={() => handlePressItem(index)}

@@ -24,6 +24,9 @@ export const tracksListStyles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     marginTop: INDENTS.lowest,
   },
+  cachedIcon: {
+    marginLeft: INDENTS.lowest,
+  },
   container: {
     backgroundColor: COLORS.background,
     flex: 1,

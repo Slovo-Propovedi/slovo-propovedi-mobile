@@ -18,6 +18,7 @@ export const TracksList = ({
   const renderItem = ({ index, item }: { index: number; item: (typeof data)[0] }) => (
     <TracksListItem
       title={item.title}
+      audioUrl={item.url}
       artist={item.artist}
       artwork={item.artwork}
       onPress={() => onPressItem(index)}

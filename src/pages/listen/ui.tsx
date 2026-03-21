@@ -63,6 +63,7 @@ export const ListenScreen = () => {
         title={item.title}
         artist={item.artist}
         artwork={item.artwork}
+        audioUrl={item.audioUrl}
         onPress={() => handlePressItem(index)}
         isPlaying={isPlaying && currentAudio?.id === item.id}
       />

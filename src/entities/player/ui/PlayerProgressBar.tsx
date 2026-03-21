@@ -12,6 +12,7 @@ import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { progressBarStyles, THUMB_SIZE } from './PlayerProgressBar.styles'
 
 interface PlayerProgressBarProps {
+  downloadProgress?: number
   duration: number
   hideTime?: boolean
   onSeek?: (position: number) => void
@@ -20,6 +21,7 @@ interface PlayerProgressBarProps {
 }
 
 export const PlayerProgressBar = ({
+  downloadProgress = 0,
   duration,
   hideTime = false,
   onSeek,
@@ -102,6 +104,7 @@ export const PlayerProgressBar = ({
 
   const displayPosition = isDragging ? previewPosition : position
   const progress = duration > 0 ? displayPosition / duration : 0
+  const downloadProgressFraction = downloadProgress / 100
   const trackWidth = layoutRef.current?.width || 0
 
   return (
@@ -113,10 +116,17 @@ export const PlayerProgressBar = ({
         hitSlop={{ bottom: 20, left: 0, right: 0, top: 20 }}
       >
         <View pointerEvents='none' style={progressBarStyles.track}>
-          <View pointerEvents='none' style={[progressBarStyles.progress, { flex: progress }]} />
+          <View pointerEvents='none' style={progressBarStyles.trackBackground} />
           <View
             pointerEvents='none'
-            style={[progressBarStyles.remaining, { flex: 1 - progress }]}
+            style={[
+              progressBarStyles.downloadProgress,
+              { width: `${downloadProgressFraction * 100}%` },
+            ]}
+          />
+          <View
+            pointerEvents='none'
+            style={[progressBarStyles.progress, { width: `${progress * 100}%` }]}
           />
           <View
             pointerEvents='none'

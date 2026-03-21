@@ -11,6 +11,7 @@ interface DefaultControlsProps {
   excludeButtons?: ControlsNames[]
   hasCurrentAudio: boolean
   isBuffering: boolean
+  isDownloading: boolean
   isNextDisabled: boolean
   isPlaying: boolean
   isPrevDisabled: boolean
@@ -24,6 +25,7 @@ export const DefaultControls = ({
   excludeButtons,
   hasCurrentAudio,
   isBuffering,
+  isDownloading,
   isNextDisabled,
   isPlaying,
   isPrevDisabled,
@@ -33,6 +35,7 @@ export const DefaultControls = ({
   toggleTrack,
 }: DefaultControlsProps) => {
   const excludedButtons = getExcludedButtons(excludeButtons)
+  const showSpinner = isBuffering || isDownloading
 
   return (
     <View testID='controls-container' style={[styles.controlsContainer, style]}>
@@ -46,7 +49,7 @@ export const DefaultControls = ({
         />
       )}
       {!excludedButtons[PlayerControlButtonType.Play] &&
-        (isBuffering ? (
+        (showSpinner ? (
           <View>
             <ActivityIndicator
               color={COLORS.primary}

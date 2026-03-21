@@ -1,3 +1,1 @@
-import { createCtx } from '@reatom/framework'
-
-export const ctx = createCtx()
+export { ctx } from 'shared/lib/reatom-ctx'

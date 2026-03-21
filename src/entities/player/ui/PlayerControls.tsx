@@ -1,9 +1,11 @@
+/* eslint-disable max-lines -- Complex component with multiple variants */
 import { useAtom } from '@reatom/npm-react'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { isNonNullable } from 'shared/lib/utils'
 import type { AudioPlayerData, ControlsNames } from './PlayerControls.types'
 import type { StyleProp, ViewStyle } from 'react-native'
 import type { PlaylistData } from 'shared/model'
+import { downloadingAudioUrlAtom, isDownloadingAtom } from '../lib/download-model'
 import { usePlayer } from '../lib/usePlayer'
 import { usePlayerState } from '../lib/usePlayerState'
 import { useTrackEndHandler } from '../lib/useTrackEndHandler'
@@ -41,10 +43,14 @@ export const PlayerControls = ({
   const { loadAudio, onTrackEndSetter, pause, play, seekTo } = usePlayer()
   const { isBuffering, isPlaying } = usePlayerState()
   const [repeatMode] = useAtom(repeatModeAtom)
+  const [isDownloading] = useAtom(isDownloadingAtom)
+  const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
   const index = getIndexOfCurrentAudioInPlaylist(currentAudio, currentPlaylist)
   const hasValidPlaylist = isNonNullable(currentPlaylist) && isNonNullable(index)
   const isLastTrack = hasValidPlaylist && index === currentPlaylist.list.length - 1
   const isFirstTrack = hasValidPlaylist && index === 0
+
+  const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === currentAudio?.audioUrl
 
   const isFullscreen = variant === 'fullscreen'
   const buttonSize = isFullscreen ? 24 : size // PLAYER_SIZES.controlButtonSize = FONT_SIZES.xxl = 24
@@ -110,6 +116,7 @@ export const PlayerControls = ({
         onPressOutSeek={onPressOutSeek}
         playButtonSize={playButtonSize}
         onLongPressSeek={onLongPressSeek}
+        isDownloading={isCurrentAudioDownloading}
       />
     )
 
@@ -125,6 +132,7 @@ export const PlayerControls = ({
       isNextDisabled={isNextDisabled}
       isPrevDisabled={isPrevDisabled}
       hasCurrentAudio={!!currentAudio}
+      isDownloading={isCurrentAudioDownloading}
     />
   )
 }

@@ -35,8 +35,8 @@ export const MovingText = ({
   return (
     <TextTicker
       loop
-      bounce
-      scrollSpeed={30}
+      bounce={false}
+      scrollSpeed={8}
       numberOfLines={1}
       repeatSpacer={50}
       marqueeDelay={2000}
