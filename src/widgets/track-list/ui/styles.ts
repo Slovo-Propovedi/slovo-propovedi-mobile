@@ -24,12 +24,27 @@ export const tracksListStyles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     marginTop: INDENTS.lowest,
   },
-  cachedIcon: {
-    marginLeft: INDENTS.lowest,
+  cacheIconContainer: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 12,
+    bottom: 4,
+    height: 24,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 4,
+    width: 24,
   },
   container: {
     backgroundColor: COLORS.background,
     flex: 1,
+  },
+  contextMenuItem: {
+    padding: INDENTS.medium,
+  },
+  contextMenuItemText: {
+    color: COLORS.text,
+    fontSize: FONT_SIZES.base,
   },
   divider: {
     backgroundColor: COLORS.surface,
@@ -40,20 +55,25 @@ export const tracksListStyles = StyleSheet.create({
   dotsButton: {
     padding: INDENTS.low,
   },
+  dropdownMenu: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUSES.middle,
+    elevation: 101,
+    position: 'absolute',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    zIndex: 101,
+  },
   itemContainer: {
     alignItems: 'center',
-    backgroundColor: '#252525',
+    backgroundColor: '#151515',
     borderRadius: RADIUSES.middle,
     flexDirection: 'row',
     paddingHorizontal: INDENTS.middle,
     paddingVertical: INDENTS.middle,
   },
-  playingIndicator: {
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
+  itemContainerActive: {
+    zIndex: 100,
   },
   textContainer: {
     flex: 1,
@@ -66,11 +86,6 @@ export const tracksListStyles = StyleSheet.create({
   },
   titlePlaying: {
     color: COLORS.primary,
-  },
-  titleWrapper: {
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
   },
 })
 

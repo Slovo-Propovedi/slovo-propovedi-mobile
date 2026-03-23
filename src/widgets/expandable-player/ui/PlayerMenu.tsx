@@ -6,11 +6,19 @@ import type { LayoutChangeEvent } from 'react-native'
 
 interface PlayerMenuProps {
   hasDescription: boolean
+  isCached?: boolean
   onClose: () => void
   onShowDescription: () => void
+  onToggleCache: () => void
 }
 
-export const PlayerMenu = ({ hasDescription, onClose, onShowDescription }: PlayerMenuProps) => {
+export const PlayerMenu = ({
+  hasDescription,
+  isCached,
+  onClose,
+  onShowDescription,
+  onToggleCache,
+}: PlayerMenuProps) => {
   const [measuredHeight, setMeasuredHeight] = useState<null | number>(null)
   const height = useSharedValue(0)
   const opacity = useSharedValue(0)
@@ -27,6 +35,11 @@ export const PlayerMenu = ({ hasDescription, onClose, onShowDescription }: Playe
 
   const handleDescriptionPress = () => {
     onShowDescription()
+    onClose()
+  }
+
+  const handleToggleCache = () => {
+    onToggleCache()
     onClose()
   }
 
@@ -61,6 +74,11 @@ export const PlayerMenu = ({ hasDescription, onClose, onShowDescription }: Playe
               <Text style={styles.menuItemText}>Описание проповеди</Text>
             </Pressable>
           )}
+          <Pressable style={styles.menuItem} onPress={handleToggleCache}>
+            <Text style={styles.menuItemText}>
+              {isCached ? 'Удалить из кеша' : 'Добавить в кеш'}
+            </Text>
+          </Pressable>
           <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
             <Text style={styles.menuItemTextDisabled}>Добавить в плейлист</Text>
           </Pressable>
@@ -77,14 +95,7 @@ export const PlayerMenu = ({ hasDescription, onClose, onShowDescription }: Playe
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    bottom: -999,
-    left: -999,
-    position: 'absolute',
-    right: -999,
-    top: -999,
-    zIndex: 1,
-  },
+  backdrop: { bottom: -999, left: -999, position: 'absolute', right: -999, top: -999, zIndex: 1 },
   backdropPressable: { flex: 1 },
   menuContainer: {
     backgroundColor: COLORS.surface,
@@ -94,14 +105,8 @@ const styles = StyleSheet.create({
   },
   menuItem: { padding: INDENTS.medium },
   menuItemDisabled: { opacity: 0.5 },
-  menuItemText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZES.base,
-  },
-  menuItemTextDisabled: {
-    color: COLORS.textMuted,
-    fontSize: FONT_SIZES.base,
-  },
+  menuItemText: { color: COLORS.text, fontSize: FONT_SIZES.base },
+  menuItemTextDisabled: { color: COLORS.textMuted, fontSize: FONT_SIZES.base },
   menuWrapper: {
     alignSelf: 'flex-end',
     bottom: '100%',

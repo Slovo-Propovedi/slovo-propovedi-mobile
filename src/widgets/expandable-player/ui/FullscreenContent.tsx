@@ -23,6 +23,7 @@ import {
   usePlayer,
   useSeekControls,
 } from 'entities/player'
+import { cacheAudio, removeFromCache, useIsCached } from 'shared/lib/audio-cache'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { MovingText } from 'shared/ui'
 import { INDENTS } from 'shared/ui/themed'
@@ -110,6 +111,18 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
     setTimeout(() => playlistSheetRef.current?.expand(), 0)
   }
 
+  const isCached = useIsCached(audio?.audioUrl ?? null)
+
+  const handleToggleCache = async () => {
+    if (!audio?.audioUrl) return
+    try {
+      if (isCached) await removeFromCache(audio.audioUrl)
+      else await cacheAudio(audio.audioUrl)
+    } catch (error) {
+      console.warn('[FullscreenContent] Error toggling cache:', error)
+    }
+  }
+
   return (
     <>
       <Animated.View style={[styles.fullContainer, fullStyle]}>
@@ -170,6 +183,8 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
               </Pressable>
               {showMenu && (
                 <PlayerMenu
+                  isCached={isCached}
+                  onToggleCache={handleToggleCache}
                   onClose={() => setShowMenu(false)}
                   hasDescription={!!audio.description}
                   onShowDescription={handleShowDescription}

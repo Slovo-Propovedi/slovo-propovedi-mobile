@@ -31,11 +31,9 @@ const ensureCacheDirectoryExists = (): void => {
 class AudioCacheService {
   public getCachedUri = async (audioUrl: string): Promise<null | string> => {
     if (!audioUrl) return null
-
     try {
       ensureCacheDirectoryExists()
       const cachedFile = getCachedFile(audioUrl)
-
       if (cachedFile.exists) return cachedFile.uri
       return null
     } catch (error) {
@@ -46,11 +44,9 @@ class AudioCacheService {
 
   public isCached = async (audioUrl: string): Promise<boolean> => {
     if (!audioUrl) return false
-
     try {
       ensureCacheDirectoryExists()
-      const cachedFile = getCachedFile(audioUrl)
-      return cachedFile.exists
+      return getCachedFile(audioUrl).exists
     } catch (error) {
       console.error('[AudioCacheService] Error checking cache status:', error)
       return false
@@ -61,14 +57,10 @@ class AudioCacheService {
     try {
       ensureCacheDirectoryExists()
       const cacheDir = getAudioCacheDirectory()
-
       if (!cacheDir.exists) return { fileCount: 0, totalSize: 0 }
-
       const files = await cacheDir.list()
       let totalSize = 0
-
       for (const file of files) if (file instanceof File) totalSize += file.size ?? 0
-
       return { fileCount: files.length, totalSize }
     } catch (error) {
       console.error('[AudioCacheService] Error getting cache info:', error)
@@ -81,25 +73,15 @@ class AudioCacheService {
     onProgress?: (progress: number) => void,
   ): Promise<string> => {
     if (!audioUrl) throw new Error('[AudioCacheService] audioUrl is required')
-
     try {
       ensureCacheDirectoryExists()
       const cachedFile = getCachedFile(audioUrl)
-
-      // Check if already cached
       if (cachedFile.exists) return cachedFile.uri
-
-      // Report starting download
       if (onProgress) onProgress(0)
-
-      // Download file (new API doesn't support progress callbacks)
       const downloadedFile = await File.downloadFileAsync(audioUrl, cachedFile, {
         idempotent: true,
       })
-
-      // Report completion
       if (onProgress) onProgress(1)
-
       return downloadedFile.uri
     } catch (error) {
       console.error('[AudioCacheService] Error caching audio:', error)
@@ -116,6 +98,23 @@ class AudioCacheService {
       throw error
     }
   }
+
+  public removeFromCache = async (audioUrl: string): Promise<boolean> => {
+    if (!audioUrl) return false
+    try {
+      const cachedFile = getCachedFile(audioUrl)
+      if (cachedFile.exists) {
+        await cachedFile.delete()
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('[AudioCacheService] Error removing from cache:', error)
+      return false
+    }
+  }
 }
 
 export const audioCacheService = new AudioCacheService()
+export const removeFromCache = audioCacheService.removeFromCache
+export const cacheAudio = audioCacheService.cacheAudio

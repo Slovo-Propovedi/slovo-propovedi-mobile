@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { audioCacheService } from './AudioCacheService'
 
-export const useIsCached = (audioUrl: null | string): boolean => {
+export const useIsCached = (audioUrl: null | string, cacheTrigger?: number): boolean => {
   const [isCached, setIsCached] = useState(false)
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export const useIsCached = (audioUrl: null | string): boolean => {
     return () => {
       isCancelled = true
     }
-  }, [audioUrl])
+  }, [audioUrl, cacheTrigger])
 
   return isCached
 }
