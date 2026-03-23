@@ -9,7 +9,7 @@ import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/play
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { COLORS, INDENTS } from 'shared/ui/themed'
 import type { PlaylistData, SermonData } from 'shared/model'
-import { TITLE_APPEAR_THRESHOLD, useCollapsingHeader } from '../lib/useCollapsingHeader'
+import { useCollapsingHeader } from '../lib/useCollapsingHeader'
 import { styles } from './styles'
 
 const ItemSeparator = () => <View style={tracksListStyles.divider} />
@@ -25,28 +25,33 @@ export const PlaylistScreen = () => {
   const playNewSermon = usePlayNewSermon()
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
-
-  const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, updateHeaderTitle } =
-    useCollapsingHeader(title, navigation)
-
+  const {
+    headerImageHeight,
+    imageOpacityStyle,
+    scrollHandler,
+    scrollY,
+    titleAppearThreshold,
+    updateHeaderTitle,
+  } = useCollapsingHeader(title, navigation)
   const [headerBgOpacity, setHeaderBgOpacity] = useState(0)
-
-  // Derive header background opacity and title visibility from scroll position
+  const DARKEN_START_OFFSET = 80
+  // Derive header background opacity and title visibility - delay darkening until ~80px before title
   useDerivedValue(() => {
-    const opacity = interpolate(scrollY.value, [0, TITLE_APPEAR_THRESHOLD], [0, 1], 'clamp')
+    const opacity = interpolate(
+      scrollY.value,
+      [titleAppearThreshold - DARKEN_START_OFFSET, titleAppearThreshold],
+      [0, 1],
+      'clamp',
+    )
     runOnJS(setHeaderBgOpacity)(opacity)
-    const shouldShowTitle = scrollY.value > TITLE_APPEAR_THRESHOLD
-    runOnJS(updateHeaderTitle)(shouldShowTitle)
+    runOnJS(updateHeaderTitle)(scrollY.value > titleAppearThreshold)
   }, [scrollY, updateHeaderTitle])
-
-  // Create animated header background component
   const headerBackground = useMemo(
     () => () => (
       <View style={{ backgroundColor: COLORS.background, flex: 1, opacity: headerBgOpacity }} />
     ),
     [headerBgOpacity],
   )
-
   useEffect(() => {
     navigation.setOptions({ headerBackground, headerTitle: '' })
     return () => navigation.setOptions({ headerBackground: undefined, headerTitle: 'Плейлист' })

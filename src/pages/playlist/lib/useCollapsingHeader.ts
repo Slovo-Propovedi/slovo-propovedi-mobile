@@ -17,14 +17,12 @@ const ESTIMATED_HEADER_HEIGHT = 100
 // Base image height (50% of screen) - used for threshold calculation
 const BASE_IMAGE_HEIGHT = windowHeight * 0.5
 
-// When the title reaches this scroll position, show header title
-export const TITLE_APPEAR_THRESHOLD = BASE_IMAGE_HEIGHT * 0.7
-
 interface UseCollapsingHeaderResult {
   headerImageHeight: number
   imageOpacityStyle: ReturnType<typeof useAnimatedStyle>
   scrollHandler: ReturnType<typeof useAnimatedScrollHandler>
   scrollY: SharedValue<number>
+  titleAppearThreshold: number
   updateHeaderTitle: (shouldShowTitle: boolean) => void
 }
 
@@ -39,6 +37,13 @@ export const useCollapsingHeader = (
 
   // Image extends behind the header for a seamless look
   const headerImageHeight = BASE_IMAGE_HEIGHT + headerHeight
+
+  // Title appears when scroll position reaches this threshold
+  // Title is centered in headerImageContainer (which extends behind header)
+  // Title center = headerImageHeight / 2, goes under header when:
+  // headerImageHeight / 2 - scrollY <= headerHeight
+  // scrollY >= headerImageHeight / 2 - headerHeight
+  const titleAppearThreshold = headerImageHeight / 2 - headerHeight
 
   const updateHeaderTitle = useCallback(
     (shouldShowTitle: boolean) => {
@@ -65,6 +70,7 @@ export const useCollapsingHeader = (
     imageOpacityStyle,
     scrollHandler,
     scrollY,
+    titleAppearThreshold,
     updateHeaderTitle,
   }
 }
