@@ -25,6 +25,8 @@ const ListenStackLayout = () => (
     <Stack.Screen
       name='playlist'
       options={{
+        headerStyle: { backgroundColor: 'transparent' },
+        headerTransparent: true,
         title: 'Плейлист',
       }}
     />
