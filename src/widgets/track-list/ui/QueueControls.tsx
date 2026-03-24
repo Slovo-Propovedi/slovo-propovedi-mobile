@@ -17,7 +17,7 @@ export const QueueControls = ({ onPressPlayAll, onPressShuffle }: QueueControlsP
       style={queueControlsStyles.button}
     >
       <MaterialCommunityIcons name='play' size={FONT_SIZES.base} color={COLORS.onPrimary} />
-      <Text style={queueControlsStyles.buttonText}>Play All</Text>
+      <Text style={queueControlsStyles.buttonText}>Воспроизвести все</Text>
     </TouchableOpacity>
     {onPressShuffle && (
       <TouchableOpacity
@@ -30,7 +30,7 @@ export const QueueControls = ({ onPressPlayAll, onPressShuffle }: QueueControlsP
           size={FONT_SIZES.base}
           color={COLORS.onPrimary}
         />
-        <Text style={queueControlsStyles.buttonText}>Shuffle</Text>
+        <Text style={queueControlsStyles.buttonText}>Перемешать</Text>
       </TouchableOpacity>
     )}
   </View>
