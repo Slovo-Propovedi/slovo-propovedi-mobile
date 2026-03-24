@@ -36,7 +36,7 @@ export const MovingText = ({
     <TextTicker
       loop
       bounce={false}
-      scrollSpeed={8}
+      scrollSpeed={30}
       numberOfLines={1}
       repeatSpacer={50}
       marqueeDelay={2000}
@@ -47,8 +47,4 @@ export const MovingText = ({
   )
 }
 
-const styles = StyleSheet.create({
-  text: {
-    color: COLORS.text,
-  },
-})
+const styles = StyleSheet.create({ text: { color: COLORS.text } })
