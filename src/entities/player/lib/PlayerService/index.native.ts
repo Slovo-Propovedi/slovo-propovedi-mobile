@@ -5,6 +5,12 @@ import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/config'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {
+  setDurationAction,
+  setIsBufferingAction,
+  setIsPlayingAction,
+  setPositionAction,
+} from '../../model'
+import {
   setDownloadingUrlAction,
   setDownloadProgressAction,
   setIsDownloadingAction,
@@ -221,6 +227,7 @@ class PlayerService {
 
           this.updateStatus()
           this.setupTrackEndListener()
+          this.setupPlaybackStatusListener()
           resolve(player)
         } else if (elapsed >= maxWait) {
           clearInterval(checkLoaded)
@@ -240,6 +247,11 @@ class PlayerService {
     if (this.trackEndSubscription) {
       this.trackEndSubscription.remove()
       this.trackEndSubscription = null
+    }
+
+    if (this.playbackStatusSubscription) {
+      this.playbackStatusSubscription.remove()
+      this.playbackStatusSubscription = null
     }
 
     if (this.playerInstance) {
@@ -266,6 +278,39 @@ class PlayerService {
         this.onTrackEnd?.()
       }
     })
+  }
+
+  private setupPlaybackStatusListener = () => {
+    // Remove old subscription if exists
+    if (this.playbackStatusSubscription) {
+      this.playbackStatusSubscription.remove()
+      this.playbackStatusSubscription = null
+    }
+
+    if (!this.playerInstance) {
+      console.warn('[PlayerService] setupPlaybackStatusListener: no playerInstance')
+      return
+    }
+
+    // Sync atoms with player state - handles remote commands from lock screen
+    this.playbackStatusSubscription = this.playerInstance.addListener(
+      'playbackStatusUpdate',
+      status => {
+        // Sync isPlaying state (handles play/pause from lock screen)
+        void setIsPlayingAction(ctx, status.playing)
+
+        // Sync position
+        const positionMs = Math.floor(status.currentTime * 1000)
+        void setPositionAction(ctx, positionMs)
+
+        // Sync duration
+        const durationMs = Math.floor(status.duration * 1000)
+        void setDurationAction(ctx, durationMs)
+
+        // Sync buffering state
+        void setIsBufferingAction(ctx, status.isBuffering)
+      },
+    )
   }
 
   private startBackgroundCaching = (audioUrl: string) => {
@@ -302,6 +347,7 @@ class PlayerService {
   private statusInterval: null | ReturnType<typeof setInterval> = null
   private isSeeking = false
   private trackEndSubscription: { remove: () => void } | null = null
+  private playbackStatusSubscription: { remove: () => void } | null = null
   private trackEndHandled = false
   private currentLockScreenMetadata: LockScreenMetadata | null = null
 

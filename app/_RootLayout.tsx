@@ -25,7 +25,7 @@ const RootLayout = () => {
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
   const setRepeatMode = useAction(setRepeatModeAction)
-  const { loadAudio, setVolume, unload } = usePlayer()
+  const { loadAudio, setLockScreenMetadata, setVolume, unload } = usePlayer()
 
   useEffect(() => {
     const initPlayerData = async () => {
@@ -54,6 +54,13 @@ const RootLayout = () => {
         if (audio) {
           await setCurrentAudio(audio)
           await loadAudio(audio.audioUrl, Number(storedSoundPosition) || 0)
+          // Set lock screen metadata for notification player
+          setLockScreenMetadata({
+            albumTitle: playlist?.title,
+            artist: audio.artist,
+            artworkUrl: audio.artwork || audio.previewUrl,
+            title: audio.title,
+          })
         }
         if (playlist) await setCurrentPlaylist(playlist)
       } catch (error) {
