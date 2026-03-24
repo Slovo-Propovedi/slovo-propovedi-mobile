@@ -7,12 +7,10 @@ import { QueueControls, TracksListItem } from 'widgets/track-list'
 import { tracksListStyles } from 'widgets/track-list/ui/styles'
 import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
-import { COLORS, INDENTS } from 'shared/ui/themed'
+import { COLORS, INDENTS, PLAYER_SIZES } from 'shared/ui/themed'
 import type { PlaylistData, SermonData } from 'shared/model'
 import { useCollapsingHeader } from '../lib/useCollapsingHeader'
 import { styles } from './styles'
-
-const ItemSeparator = () => <View style={tracksListStyles.divider} />
 
 export const PlaylistScreen = () => {
   const params = useLocalSearchParams<{ playlist: string }>()
@@ -119,9 +117,11 @@ export const PlaylistScreen = () => {
         scrollEventThrottle={16}
         keyExtractor={item => item.id}
         style={tracksListStyles.container}
-        ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={ListHeaderComponent}
-        contentContainerStyle={{ paddingBottom: INDENTS.high }}
+        ItemSeparatorComponent={() => <View style={tracksListStyles.divider} />}
+        contentContainerStyle={{
+          paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
+        }}
       />
     </View>
   )
