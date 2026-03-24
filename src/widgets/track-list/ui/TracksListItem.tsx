@@ -90,11 +90,11 @@ export const TracksListItem = ({
       </Pressable>
     </Modal>
   )
-
   return (
     <Pressable
       onPress={handleItemPress}
       testID='tracks-list-item'
+      onLongPress={handleToggleMenu}
       style={[tracksListStyles.itemContainer, isMenuOpen && tracksListStyles.itemContainerActive]}
     >
       <View style={tracksListStyles.albumArtContainer}>
