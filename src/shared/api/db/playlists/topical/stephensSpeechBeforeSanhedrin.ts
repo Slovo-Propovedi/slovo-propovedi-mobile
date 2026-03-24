@@ -1,8 +1,10 @@
 import type { FetchedPlaylist } from 'shared/model'
+import { DEFAULT_ARTIST } from '../../constants'
 
 export const stephensSpeechBeforeSanhedrin: FetchedPlaylist = {
   list: [
     {
+      artist: DEFAULT_ARTIST,
       audioUrl: 'https://slovo-istini.com/image/pages/1221/bezgranichnyy_bog._deyaniya_7_1-8.mp3',
       chapter: 7,
       id: '1212',
@@ -11,6 +13,7 @@ export const stephensSpeechBeforeSanhedrin: FetchedPlaylist = {
       youtubeUrl: 'https://youtu.be/pvbP0k4Ebi0',
     },
     {
+      artist: DEFAULT_ARTIST,
       audioUrl:
         'https://slovo-istini.com/image/pages/1221/maloizvestnyy_priznak_poslannika_boga._deyaniya_7__9-16.mp3',
       chapter: 7,

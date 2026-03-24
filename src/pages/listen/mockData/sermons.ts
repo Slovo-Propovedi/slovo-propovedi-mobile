@@ -1,8 +1,8 @@
+import { DEFAULT_ARTIST } from 'shared/api'
 import type { AudioPlayerData } from 'entities/player'
 
 const DEFAULT_ARTWORK =
   'https://slovo-istini.com/image/categories/78/whatsapp_image_2022-02-15_at_11.20.06.jpeg'
-const DEFAULT_ARTIST = 'Церковь Слово.Проповеди'
 
 export const mockSermons: AudioPlayerData[] = [
   {

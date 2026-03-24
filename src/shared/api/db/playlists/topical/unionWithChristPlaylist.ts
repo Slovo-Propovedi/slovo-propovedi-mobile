@@ -1,8 +1,10 @@
 import type { FetchedPlaylist } from 'shared/model'
+import { DEFAULT_ARTIST } from '../../constants'
 
 export const unionWithChristPlaylist: FetchedPlaylist = {
   list: [
     {
+      artist: DEFAULT_ARTIST,
       audioUrl: 'https://slovo-istini.com/image/pages/1207/soyuz_so_hristom.mp3',
       id: '22222',
       title: 'Союз со Христом',

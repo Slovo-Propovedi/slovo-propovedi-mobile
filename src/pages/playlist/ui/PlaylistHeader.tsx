@@ -1,0 +1,40 @@
+import { Image, Text, View } from 'react-native'
+import Animated, { type useAnimatedStyle } from 'react-native-reanimated'
+import { QueueControls } from 'widgets/track-list'
+import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { headerStyles } from './headerStyles'
+
+interface PlaylistHeaderProps {
+  description?: string
+  headerImageHeight: number
+  imageOpacityStyle: ReturnType<typeof useAnimatedStyle>
+  onPressPlayAll: () => void
+  previewUrl?: string
+  title: string
+}
+
+export const PlaylistHeader = ({
+  description,
+  headerImageHeight,
+  imageOpacityStyle,
+  onPressPlayAll,
+  previewUrl,
+  title,
+}: PlaylistHeaderProps) => (
+  <>
+    <Animated.View
+      style={[headerStyles.headerImageContainer, { height: headerImageHeight }, imageOpacityStyle]}
+    >
+      <Image style={headerStyles.headerImage} source={{ uri: previewUrl || IMAGE_PLACEHOLDER }} />
+      <View style={headerStyles.overlay} />
+      <View style={headerStyles.titleContainer}>
+        <Text style={headerStyles.title}>{title}</Text>
+      </View>
+    </Animated.View>
+
+    <View style={headerStyles.contentSection}>
+      {description && <Text style={headerStyles.description}>{description}</Text>}
+      <QueueControls onPressPlayAll={onPressPlayAll} />
+    </View>
+  </>
+)

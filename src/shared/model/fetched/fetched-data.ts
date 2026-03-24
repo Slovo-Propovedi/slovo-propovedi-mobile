@@ -35,6 +35,7 @@ export interface FetchedPlaylist {
 }
 
 export type FetchedSermonData = {
+  artist: string
   audioUrl?: string
   description?: string
   id: string

@@ -11,9 +11,10 @@ export const getNewSermons = action(async ctx => {
   const mappedList = list?.map<PlaylistData>(playlist => ({
     ...playlist,
     list: playlist.list.map<SermonData>(el => {
-      const { audioUrl, description, id, textFileUrl, youtubeUrl } = el
+      const { artist, audioUrl, description, id, textFileUrl, youtubeUrl } = el
 
       return {
+        artist,
         audioUrl,
         description,
         id,

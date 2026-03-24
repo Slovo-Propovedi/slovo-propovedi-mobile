@@ -25,18 +25,21 @@ const currentPlaylist = {
   id: '1',
   list: [
     {
+      artist: 'Test Artist',
       audioUrl: 'https://test.com/audio1.mp3',
       description: 'Description 1',
       id: '1',
       title: 'Title 1',
     },
     {
+      artist: 'Test Artist',
       audioUrl: 'https://test.com/audio2.mp3',
       description: 'Description 2',
       id: '2',
       title: 'Title 2',
     },
     {
+      artist: 'Test Artist',
       audioUrl: 'https://test.com/audio3.mp3',
       description: 'Description 3',
       id: '3',

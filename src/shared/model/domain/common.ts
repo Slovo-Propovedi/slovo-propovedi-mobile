@@ -9,6 +9,7 @@ export interface BookData {
 }
 
 export const sermonDataSchema = z.object({
+  artist: z.string(),
   audioUrl: z.string().optional(),
   description: z.string().optional(),
   id: z.string(),

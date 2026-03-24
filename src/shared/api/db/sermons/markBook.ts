@@ -1,7 +1,9 @@
 import type { FetchedSermonData } from 'shared/model'
+import { DEFAULT_ARTIST } from '../constants'
 
 export const markBook: FetchedSermonData[] = [
   {
+    artist: DEFAULT_ARTIST,
     audioUrl:
       'https://slovo-istini.com/image/pages/134/01._svidetelstva_o_prishestvii_messii_(chast_1)._marka_1_1-3.mp3',
     chapter: 1,
@@ -15,6 +17,7 @@ export const markBook: FetchedSermonData[] = [
     youtubeUrl: 'https://youtu.be/P5POxTHf6ZA',
   },
   {
+    artist: DEFAULT_ARTIST,
     audioUrl:
       'https://slovo-istini.com/image/pages/133/02._svidetelstva_o_prishestvii_messii_(chast_2)._marka_1_4-8.mp3',
     chapter: 1,
@@ -29,6 +32,7 @@ export const markBook: FetchedSermonData[] = [
     youtubeUrl: 'https://youtu.be/2cxYIstk6nQ',
   },
   {
+    artist: DEFAULT_ARTIST,
     audioUrl:
       'https://slovo-istini.com/image/pages/132/03._podgotovka_k_velikomu_slujeniyu._marka_1_9-15.mp3',
     chapter: 1,
@@ -42,6 +46,7 @@ export const markBook: FetchedSermonData[] = [
     youtubeUrl: 'https://youtu.be/hlNXrYyi7VM',
   },
   {
+    artist: DEFAULT_ARTIST,
     audioUrl:
       'https://slovo-istini.com/image/pages/131/04._prizyv_k_blagovestiyu._marka_1_16-20.mp3',
     chapter: 1,
@@ -54,6 +59,7 @@ export const markBook: FetchedSermonData[] = [
     youtubeUrl: 'https://youtu.be/XT3fsf1EDNs',
   },
   {
+    artist: DEFAULT_ARTIST,
     audioUrl:
       'https://slovo-istini.com/image/pages/130/protivostoyanie_temnym_silam._marka_1_21-28.mp3',
     chapter: 1,
@@ -67,6 +73,7 @@ export const markBook: FetchedSermonData[] = [
     youtubeUrl: 'https://youtu.be/38__FQuCPOo',
   },
   {
+    artist: DEFAULT_ARTIST,
     audioUrl: 'https://slovo-istini.com/image/pages/129/vlast_nad_boleznyami._marka_1_29-31.mp3',
     chapter: 1,
     description:
@@ -78,6 +85,7 @@ export const markBook: FetchedSermonData[] = [
     youtubeUrl: 'https://youtu.be/aaT00nXcnRk',
   },
   {
+    artist: DEFAULT_ARTIST,
     audioUrl:
       'https://slovo-istini.com/image/pages/128/kak_postupat_pri_vozrastayushchey_populyarnosti_slujeniya._marka_1_32-39.mp3',
     chapter: 1,
@@ -91,6 +99,7 @@ export const markBook: FetchedSermonData[] = [
     youtubeUrl: 'https://youtu.be/-ONSmsNLeHY',
   },
   {
+    artist: DEFAULT_ARTIST,
     audioUrl:
       'https://slovo-istini.com/image/pages/127/osoboe_miloserdie_gospoda._marka_1_40-45.mp3',
     chapter: 1,
