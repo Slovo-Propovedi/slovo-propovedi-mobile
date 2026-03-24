@@ -4,7 +4,7 @@ import { currentAudioAtom, setCurrentAudioAction, setCurrentPlaylistAction } fro
 import { usePlayer } from './usePlayer'
 
 export const usePlayNewSermon = () => {
-  const { loadAudio, play } = usePlayer()
+  const { loadAudio, play, setLockScreenMetadata } = usePlayer()
 
   const currentAudio = useAtom(currentAudioAtom)[0]
   const setCurrentAudio = useAction(setCurrentAudioAction)
@@ -16,15 +16,20 @@ export const usePlayNewSermon = () => {
     sermon: SermonData
   }
 
-  return async ({ playlist, sermon: { audioUrl, id, ...other } }: PlayNewSermonProps) => {
+  return async ({
+    playlist,
+    sermon: { artist, audioUrl, id, title, ...other },
+  }: PlayNewSermonProps) => {
     if (!audioUrl) return
 
     const newAudio = {
       ...other,
+      artist,
       artwork: playlist.previewUrl,
       audioUrl,
       id,
       previewUrl: playlist.previewUrl,
+      title,
     }
 
     await setCurrentAudio(newAudio)
@@ -35,5 +40,13 @@ export const usePlayNewSermon = () => {
     if (currentAudio?.id !== id) await loadAudio(newAudio.audioUrl)
 
     await play()
+
+    // Set metadata for lock screen controls
+    setLockScreenMetadata({
+      albumTitle: playlist.title,
+      artist: newAudio.artist,
+      artworkUrl: newAudio.artwork,
+      title: newAudio.title,
+    })
   }
 }

@@ -10,6 +10,13 @@ import {
   setIsDownloadingAction,
 } from '../download-model'
 
+interface LockScreenMetadata {
+  albumTitle?: string
+  artist?: string
+  artworkUrl?: string
+  title: string
+}
+
 type StateListener = () => void
 
 class PlayerService {
@@ -53,11 +60,21 @@ class PlayerService {
   private configureAudioMode = async () => {
     if (this.audioModeConfigured) return
     await setAudioModeAsync({
-      interruptionMode: 'mixWithOthers',
+      interruptionMode: 'doNotMix',
       playsInSilentMode: true,
       shouldPlayInBackground: true,
     })
     this.audioModeConfigured = true
+  }
+
+  public setLockScreenMetadata = (metadata: LockScreenMetadata) => {
+    this.currentLockScreenMetadata = metadata
+    if (this.playerInstance?.isLoaded) this.playerInstance.setActiveForLockScreen(true, metadata)
+  }
+
+  public clearLockScreenControls = () => {
+    if (this.playerInstance?.isLoaded) this.playerInstance.setActiveForLockScreen(false)
+    this.currentLockScreenMetadata = null
   }
 
   private updateStatus = () => {
@@ -217,6 +234,9 @@ class PlayerService {
   public unload = async () => {
     this.stopStatusTracking()
 
+    // Clear lock screen controls
+    this.clearLockScreenControls()
+
     if (this.trackEndSubscription) {
       this.trackEndSubscription.remove()
       this.trackEndSubscription = null
@@ -283,6 +303,7 @@ class PlayerService {
   private isSeeking = false
   private trackEndSubscription: { remove: () => void } | null = null
   private trackEndHandled = false
+  private currentLockScreenMetadata: LockScreenMetadata | null = null
 
   public onTrackEnd: (() => void) | undefined = undefined
 }

@@ -4,6 +4,7 @@ import { playerService } from './PlayerService'
 export const usePlayer = () =>
   useMemo(
     () => ({
+      clearLockScreenControls: playerService.clearLockScreenControls,
       getVolume: playerService.getVolume,
       loadAudio: playerService.loadAudio,
       onTrackEndSetter: (callback: (() => void) | undefined) => {
@@ -12,6 +13,7 @@ export const usePlayer = () =>
       pause: playerService.pause,
       play: playerService.play,
       seekTo: playerService.seekTo,
+      setLockScreenMetadata: playerService.setLockScreenMetadata,
       setVolume: playerService.setVolume,
       stop: playerService.stop,
       unload: playerService.unload,
