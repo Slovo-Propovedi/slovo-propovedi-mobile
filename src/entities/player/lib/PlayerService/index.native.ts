@@ -75,7 +75,11 @@ class PlayerService {
 
   public setLockScreenMetadata = (metadata: LockScreenMetadata) => {
     this.currentLockScreenMetadata = metadata
-    if (this.playerInstance?.isLoaded) this.playerInstance.setActiveForLockScreen(true, metadata)
+    if (this.playerInstance?.isLoaded)
+      this.playerInstance.setActiveForLockScreen(true, metadata, {
+        showSeekBackward: true,
+        showSeekForward: true,
+      })
   }
 
   public clearLockScreenControls = () => {
