@@ -14,6 +14,7 @@ export {
   currentAudioAtom,
   currentPlaylistAtom,
   durationAtom,
+  isBufferingAtom,
   isPlayerExpandedAtom,
   isPlayingAtom,
   openPlayerSheetAction,

@@ -1,12 +1,24 @@
+/* eslint-disable max-lines -- Keep all player logic in one component for simplicity */
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
-import { Image, Pressable, type StyleProp, Text, View, type ViewStyle } from 'react-native'
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  type StyleProp,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 import {
   closePlayerSheetAction,
   currentAudioAtom,
   currentPlaylistAtom,
+  downloadingAudioUrlAtom,
+  isBufferingAtom,
+  isDownloadingAtom,
   isPlayerExpandedAtom,
   isPlayingAtom,
   openPlayerSheetAction,
@@ -31,6 +43,12 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
   const [showMenu] = useAtom(showMenuAtom)
+  const [isBuffering] = useAtom(isBufferingAtom)
+  const [isDownloading] = useAtom(isDownloadingAtom)
+  const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
+
+  const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
+  const showSpinner = isBuffering || isCurrentAudioDownloading
   const { pause, play } = usePlayer()
   const open = useAction(openPlayerSheetAction)
   const close = useAction(closePlayerSheetAction)
@@ -90,12 +108,16 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
               </Text>
             </View>
             <View style={miniPlayerStyles.miniControls}>
-              <PlayerControlButton
-                size={36}
-                color={COLORS.white}
-                onPress={onPlayPause}
-                type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
-              />
+              {showSpinner ? (
+                <ActivityIndicator size={36} color={COLORS.white} />
+              ) : (
+                <PlayerControlButton
+                  size={36}
+                  color={COLORS.white}
+                  onPress={onPlayPause}
+                  type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
+                />
+              )}
             </View>
           </AnimatedPressable>
         </GestureDetector>
