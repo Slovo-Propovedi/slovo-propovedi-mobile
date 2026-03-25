@@ -12,6 +12,7 @@ export const usePlayer = () =>
       },
       pause: playerService.pause,
       play: playerService.play,
+      replaceAudio: playerService.replaceAudio,
       seekTo: playerService.seekTo,
       setLockScreenMetadata: playerService.setLockScreenMetadata,
       setVolume: playerService.setVolume,

@@ -40,7 +40,8 @@ export const PlayerControls = ({
   style,
   variant = 'default',
 }: PlayerControlsProps) => {
-  const { loadAudio, onTrackEndSetter, pause, play, seekTo, setLockScreenMetadata } = usePlayer()
+  const { loadAudio, onTrackEndSetter, pause, play, replaceAudio, seekTo, setLockScreenMetadata } =
+    usePlayer()
   const { isBuffering, isPlaying } = usePlayerState()
   const [repeatMode] = useAtom(repeatModeAtom)
   const [isDownloading] = useAtom(isDownloadingAtom)
@@ -71,7 +72,7 @@ export const PlayerControls = ({
         previewUrl: currentPlaylist.previewUrl,
       }
       await setCurrentAudio(newAudio)
-      await loadAudio(newAudio.audioUrl)
+      await replaceAudio(newAudio.audioUrl)
       setLockScreenMetadata({
         albumTitle: currentPlaylist.title,
         artist: newAudio.artist,
@@ -85,7 +86,7 @@ export const PlayerControls = ({
       currentPlaylist,
       index,
       setCurrentAudio,
-      loadAudio,
+      replaceAudio,
       play,
       setLockScreenMetadata,
     ],

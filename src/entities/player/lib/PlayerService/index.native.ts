@@ -242,6 +242,66 @@ class PlayerService {
     })
   }
 
+  public replaceAudio = async (audioUrl: string, initialPositionMs = 0) => {
+    this.setIsBuffering(true)
+    this.stopStatusTracking()
+    this.trackEndHandled = false
+
+    await this.configureAudioMode()
+
+    if (!this.playerInstance?.isLoaded)
+      // Fallback to loadAudio if no player is loaded
+      return this.loadAudio(audioUrl, initialPositionMs)
+
+    // Check if audio is already cached
+    let playUrl = audioUrl
+    try {
+      const cachedUri = await audioCacheService.getCachedUri(audioUrl)
+      if (cachedUri) playUrl = cachedUri
+      // Start background caching without blocking playback
+      else this.startBackgroundCaching(audioUrl)
+    } catch (error) {
+      console.error('[PlayerService] Error checking cache:', error)
+      // Continue with remote URL if cache check fails
+    }
+
+    // Use replace instead of creating a new player - this keeps lock screen active
+    this.playerInstance.replace(playUrl)
+
+    // Wait for the new track to load
+    return new Promise<AudioPlayer | null>(resolve => {
+      const maxWait = 30000
+      const checkInterval = 100
+      let elapsed = 0
+      const player = this.playerInstance
+
+      const checkLoaded = setInterval(() => {
+        elapsed += checkInterval
+
+        if (player?.isLoaded) {
+          clearInterval(checkLoaded)
+
+          const dur = Math.floor(player.duration * 1000)
+          this.setDuration(dur)
+          void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
+          this.setIsBuffering(false)
+
+          if (initialPositionMs > 0) void player.seekTo(initialPositionMs / 1000)
+          this.setPosition(initialPositionMs)
+
+          this.updateStatus()
+          this.setupTrackEndListener()
+          this.setupPlaybackStatusListener()
+          resolve(player)
+        } else if (elapsed >= maxWait) {
+          clearInterval(checkLoaded)
+          this.setIsBuffering(false)
+          resolve(null)
+        }
+      }, checkInterval)
+    })
+  }
+
   public unload = async () => {
     this.stopStatusTracking()
 
