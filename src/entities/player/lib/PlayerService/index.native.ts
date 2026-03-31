@@ -1,20 +1,10 @@
 /* eslint-disable max-lines -- FIXME: refactor */
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio'
-import {
-  CURRENT_AUDIO,
-  CURRENT_PLAYLIST,
-  CURRENT_REPEAT_MODE,
-  CURRENT_SOUND_DURATION,
-  CURRENT_SOUND_POSITION,
-} from 'shared/config'
+import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/config'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { AudioPlayerData } from '../../ui/PlayerControls.types'
-import type { PlaylistData } from 'shared/model'
 import {
-  RepeatMode,
-  setCurrentAudioAction,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
@@ -269,32 +259,6 @@ class PlayerService {
         setIsDownloadingAction(ctx, false)
         setDownloadingUrlAction(ctx, null)
       })
-  }
-
-  private async handleTrackEndAutoAdvance() {
-    const currentPlaylistStr = await AsyncStorage.getItem(CURRENT_PLAYLIST)
-    const currentPlaylist: PlaylistData = JSON.parse(currentPlaylistStr || 'null')
-    const repeatModeStr = await AsyncStorage.getItem(CURRENT_REPEAT_MODE)
-    const repeatMode = (repeatModeStr as RepeatMode) || RepeatMode.Off
-
-    if (!currentPlaylist) return
-
-    const currentAudioStr = await AsyncStorage.getItem(CURRENT_AUDIO)
-    const currentAudio: AudioPlayerData = JSON.parse(currentAudioStr || 'null')
-    const currentIndex = currentPlaylist.list.findIndex(t => t.id === currentAudio?.id)
-    const isLastTrack = currentIndex === currentPlaylist.list.length - 1
-    const nextTrack = currentPlaylist.list[currentIndex + 1]
-
-    if (!isLastTrack && repeatMode !== RepeatMode.Track && nextTrack?.audioUrl) {
-      await setCurrentAudioAction(ctx, {
-        ...nextTrack,
-        artwork: currentPlaylist.previewUrl,
-        audioUrl: nextTrack.audioUrl,
-        previewUrl: currentPlaylist.previewUrl,
-      })
-      await this.replaceAudio(nextTrack.audioUrl)
-      void this.play()
-    }
   }
 
   private audioModeConfigured = false

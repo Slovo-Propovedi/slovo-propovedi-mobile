@@ -1,9 +1,9 @@
 /* eslint-disable max-lines -- Complex component with multiple variants */
 import { useAtom } from '@reatom/npm-react'
 import React, { useCallback, useEffect, useRef } from 'react'
+import { AppState, type AppStateStatus, type StyleProp, type ViewStyle } from 'react-native'
 import { isNonNullable } from 'shared/lib/utils'
 import type { AudioPlayerData, ControlsNames } from './PlayerControls.types'
-import type { StyleProp, ViewStyle } from 'react-native'
 import type { PlaylistData } from 'shared/model'
 import { downloadingAudioUrlAtom, isDownloadingAtom } from '../lib/download-model'
 import { usePlayer } from '../lib/usePlayer'
@@ -79,7 +79,13 @@ export const PlayerControls = ({
         artworkUrl: newAudio.artwork || newAudio.previewUrl,
         title: newAudio.title,
       })
-      await play()
+      try {
+        await play()
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('activity is no longer available'))
+          console.warn('[Player] Ignoring AppState-related error:', error.message)
+        else throw error
+      }
     },
     [
       hasValidPlaylist,
@@ -103,6 +109,7 @@ export const PlayerControls = ({
     repeatMode,
     seekTo,
     setCurrentAudio,
+    setLockScreenMetadata,
     toggleTrack,
   })
   const ref = useRef(handleTrackEnd)
@@ -112,6 +119,30 @@ export const PlayerControls = ({
     onTrackEndSetter(() => void ref.current())
     return () => void onTrackEndSetter(undefined)
   }, [onTrackEndSetter])
+
+  useEffect(() => {
+    let appState = AppState.currentState
+
+    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      if (appState.match(/inactive|background/) && nextAppState === 'active')
+        if (!isPlaying && currentAudio && repeatMode === 'queue')
+          // App returning from background - try to resume if needed
+          try {
+            await play()
+          } catch (error) {
+            if (error instanceof Error && error.message.includes('activity is no longer available'))
+              console.warn('[Player] Ignoring AppState-related error:', error.message)
+            else throw error
+          }
+
+      appState = nextAppState
+    }
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange)
+    return () => {
+      subscription.remove()
+    }
+  }, [currentAudio, isPlaying, repeatMode, play])
 
   const isPrevDisabled = !hasValidPlaylist || isFirstTrack || !currentAudio
   const isNextDisabled = !hasValidPlaylist || isLastTrack || !currentAudio
