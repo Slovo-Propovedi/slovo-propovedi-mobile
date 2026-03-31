@@ -27,7 +27,7 @@ export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBot
 
   const tracksListData: TrackListItemData[] = (playlist?.list ?? []).map(sermon => ({
     artist: sermon.artist || 'Слово.Проповеди',
-    artwork: playlist?.previewUrl,
+    artwork: playlist?.artwork,
     id: sermon.id,
     title: sermon.title,
     url: sermon.audioUrl,

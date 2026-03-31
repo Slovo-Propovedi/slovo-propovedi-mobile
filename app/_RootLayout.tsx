@@ -61,7 +61,7 @@ const RootLayout = () => {
           setLockScreenMetadata({
             albumTitle: playlist?.title,
             artist: audio.artist,
-            artworkUrl: audio.artwork || audio.previewUrl,
+            artworkUrl: audio.artwork,
             title: audio.title,
           })
         }

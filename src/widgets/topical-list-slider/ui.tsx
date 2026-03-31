@@ -47,9 +47,9 @@ export const TopicalListSlider = () => {
       }}
       whereIsSlideTitleLocated={WhereIsSlideTitleLocated.BothOnAndUnder}
       items={topicalList.map(item => ({
+        artwork: item.artwork,
         data: item,
         description: item.title,
-        previewURL: item.previewUrl || '',
       }))}
     />
   )

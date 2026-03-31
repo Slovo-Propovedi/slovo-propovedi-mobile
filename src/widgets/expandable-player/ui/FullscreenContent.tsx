@@ -8,6 +8,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle, runOnJS } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
+  type AudioPlayerData,
   currentAudioAtom,
   currentPlaylistAtom,
   downloadingAudioUrlAtom,
@@ -82,12 +83,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
     const track = playlistList[currentIndex + 1]
     if (!track?.audioUrl) return
     const { audioUrl, ...rest } = track
-    const newAudio = {
-      ...rest,
-      artwork: playlist.previewUrl,
-      audioUrl,
-      previewUrl: playlist.previewUrl,
-    }
+    const newAudio: AudioPlayerData = { ...rest, artwork: playlist.artwork, audioUrl }
     await setCurrentAudio(newAudio)
     await loadAudio(newAudio.audioUrl)
     await play()

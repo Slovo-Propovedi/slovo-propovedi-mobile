@@ -1,16 +1,27 @@
 /* eslint-disable max-lines -- FIXME: refactor */
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio'
-import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/config'
+import {
+  CURRENT_AUDIO,
+  CURRENT_PLAYLIST,
+  CURRENT_REPEAT_MODE,
+  CURRENT_SOUND_DURATION,
+  CURRENT_SOUND_POSITION,
+} from 'shared/config'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { parseJsonWithSchema, type PlaylistData, playlistDataSchema } from 'shared/model'
 import {
+  RepeatMode,
+  repeatModeSchema,
+  setCurrentAudioAction,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
   setPositionAction,
   setVolumeAction,
 } from '../../model'
+import { type AudioPlayerData, audioPlayerDataSchema } from '../../ui/PlayerControls.types'
 import {
   setDownloadingUrlAction,
   setDownloadProgressAction,
@@ -89,6 +100,15 @@ class PlayerService {
   }
 
   public getVolume = () => this.volume
+
+  public getStatus = async () => {
+    if (!this.playerInstance?.isLoaded) return { duration: 0, isPlaying: false, position: 0 }
+    return {
+      duration: Math.floor(this.playerInstance.duration * 1000),
+      isPlaying: this.playerInstance.playing,
+      position: Math.floor(this.playerInstance.currentTime * 1000),
+    }
+  }
 
   public setVolume = async (newVolume: number) => {
     this.volume = Math.max(0, Math.min(1, newVolume))
@@ -216,7 +236,7 @@ class PlayerService {
     this.trackEndSubscription = this.playerInstance.addListener('playbackStatusUpdate', status => {
       if (status.didJustFinish && !this.trackEndHandled) {
         this.trackEndHandled = true
-        this.onTrackEnd?.()
+        void this.handleTrackEndAutoAdvance()
       }
     })
   }
@@ -238,6 +258,98 @@ class PlayerService {
         void setIsBufferingAction(ctx, status.isBuffering)
       },
     )
+  }
+
+  private handleTrackEndAutoAdvance = async () => {
+    const [[, storedCurrentAudio], [, storedCurrentPlaylist], [, storedRepeatMode]] =
+      await AsyncStorage.multiGet([CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE])
+
+    const { data: repeatMode = RepeatMode.Off } = repeatModeSchema.safeParse(storedRepeatMode)
+    const currentAudio = parseJsonWithSchema(audioPlayerDataSchema)(storedCurrentAudio)
+    const currentPlaylist = parseJsonWithSchema(playlistDataSchema)(storedCurrentPlaylist)
+
+    if (!currentPlaylist) return
+
+    const currentIndex = currentPlaylist.list.findIndex(t => t.id === currentAudio?.id)
+    const isLastTrack = currentIndex === currentPlaylist.list.length - 1
+
+    // Repeat one track
+    if (repeatMode === RepeatMode.Track) {
+      await this.seekTo(0)
+      await this.play()
+      return
+    }
+
+    // Last track - handle repeat or stop
+    if (isLastTrack) {
+      if (repeatMode === RepeatMode.Queue) {
+        await this.playFirstTrackInQueue(currentPlaylist)
+        return
+      }
+      await this.pause()
+      return
+    }
+
+    // Not last track - play next
+    const nextTrack = currentPlaylist.list[currentIndex + 1]
+
+    if (!nextTrack?.audioUrl) return
+    const audioUrl = nextTrack.audioUrl
+
+    await this.playNextTrack({ ...nextTrack, audioUrl }, currentPlaylist, audioUrl)
+  }
+
+  private playFirstTrackInQueue = async (currentPlaylist: PlaylistData) => {
+    const firstTrack = currentPlaylist.list[0]
+
+    if (!firstTrack?.audioUrl) return
+    const audioUrl = firstTrack.audioUrl
+
+    const newAudio: AudioPlayerData = { ...firstTrack, audioUrl }
+
+    await setCurrentAudioAction(ctx, newAudio)
+    await this.replaceAudio(newAudio.audioUrl)
+    this.setLockScreenMetadata({
+      albumTitle: currentPlaylist.title,
+      artist: newAudio.artist,
+      artworkUrl: newAudio.artwork,
+      title: newAudio.title,
+    })
+
+    try {
+      await this.play()
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('activity is no longer available'))
+        console.warn('[PlayerService] Ignoring AppState-related error:', error.message)
+      else throw error
+    }
+  }
+
+  private playNextTrack = async (
+    nextTrack: AudioPlayerData,
+    currentPlaylist: PlaylistData,
+    audioUrl: string,
+  ) => {
+    const newAudio: AudioPlayerData = {
+      ...nextTrack,
+      audioUrl,
+    }
+    await setCurrentAudioAction(ctx, newAudio)
+    await this.replaceAudio(audioUrl)
+    this.setLockScreenMetadata({
+      albumTitle: currentPlaylist.title,
+      artist: newAudio.artist,
+      artworkUrl: newAudio.artwork,
+      title: newAudio.title,
+    })
+
+    try {
+      await this.play()
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('activity is no longer available'))
+        console.warn('[PlayerService] Ignoring AppState-related error:', error.message)
+      else throw error
+    }
   }
 
   private startBackgroundCaching = (audioUrl: string) => {
@@ -269,8 +381,6 @@ class PlayerService {
   private trackEndHandled = false
   private currentLockScreenMetadata: LockScreenMetadata | null = null
   private volume = 1
-
-  public onTrackEnd: (() => void) | undefined = undefined
 }
 
 export const playerService = new PlayerService()

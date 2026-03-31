@@ -17,6 +17,7 @@ const componentMiddleSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.44
 const componentSmallSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.285
 
 export const SliderItem = ({
+  artwork,
   descriptionBackgroundStyle,
   descriptionSubTitle,
   descriptionSubTitleTextAlign,
@@ -24,15 +25,12 @@ export const SliderItem = ({
   descriptionTitleTextAlign,
   isDescriptionTitleOnSlideLarge,
   onPress,
-  previewURL,
   size = SliderItemSize.Small,
   style,
   testID,
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderItemProps) => {
-  if (!previewURL) return null
-
   const conditionSize = {
     [SliderItemSize.Large]: componentLargeSize,
     [SliderItemSize.Middle]: componentMiddleSize,
@@ -63,7 +61,7 @@ export const SliderItem = ({
         <ImageBackground
           resizeMode='cover'
           imageStyle={[styles.backgroundImage]}
-          source={{ uri: previewURL || IMAGE_PLACEHOLDER }}
+          source={{ uri: artwork || IMAGE_PLACEHOLDER }}
           style={[styles.imageBackgroundComponent, { height: imageHeight }]}
         >
           {isVisibleDescriptionOnSlide && (

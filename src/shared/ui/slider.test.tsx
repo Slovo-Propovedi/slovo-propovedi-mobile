@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native'
 import { Slider } from './slider'
 import '@testing-library/jest-native/extend-expect'
 
-const itemStub = { data: {}, previewURL: 'https//:vk.com' }
+const itemStub = { artwork: 'https//:vk.com', data: {} }
 const sliderStub = { items: [itemStub], title: 'title' }
 const mockData: { text: null | string } = { text: null }
 const sliderRowId = 'slider-row'

@@ -47,9 +47,9 @@ export const TopicalAndThematicBooksSlider = () => {
         onPressTitle(topicalAndThematicBooks)
       }}
       items={topicalAndThematicBooks.map(item => ({
+        artwork: item.artwork,
         data: item,
         description: item.title,
-        previewURL: item.previewUrl || '',
       }))}
     />
   )

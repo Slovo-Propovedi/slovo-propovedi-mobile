@@ -5,11 +5,9 @@ export const usePlayer = () =>
   useMemo(
     () => ({
       clearLockScreenControls: playerService.clearLockScreenControls,
+      getStatus: playerService.getStatus,
       getVolume: playerService.getVolume,
       loadAudio: playerService.loadAudio,
-      onTrackEndSetter: (callback: (() => void) | undefined) => {
-        playerService.onTrackEnd = callback
-      },
       pause: playerService.pause,
       play: playerService.play,
       replaceAudio: playerService.replaceAudio,

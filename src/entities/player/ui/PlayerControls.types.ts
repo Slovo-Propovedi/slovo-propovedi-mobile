@@ -8,10 +8,9 @@ export enum PlayerControlsSize {
 }
 
 export const audioPlayerDataSchema = sermonDataSchema.extend({
-  artist: z.string().optional(),
+  artist: z.string(),
   artwork: z.string().optional(),
   audioUrl: z.string(),
-  previewUrl: z.string().optional(),
 })
 
 export type AudioPlayerData = z.infer<typeof audioPlayerDataSchema>

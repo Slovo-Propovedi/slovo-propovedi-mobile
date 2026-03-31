@@ -5,27 +5,27 @@ import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { headerStyles } from './headerStyles'
 
 interface PlaylistHeaderProps {
+  artwork: string | undefined
   description?: string
   headerImageHeight: number
   imageOpacityStyle: ReturnType<typeof useAnimatedStyle>
   onPressPlayAll: () => void
-  previewUrl?: string
   title: string
 }
 
 export const PlaylistHeader = ({
+  artwork,
   description,
   headerImageHeight,
   imageOpacityStyle,
   onPressPlayAll,
-  previewUrl,
   title,
 }: PlaylistHeaderProps) => (
   <>
     <Animated.View
       style={[headerStyles.headerImageContainer, { height: headerImageHeight }, imageOpacityStyle]}
     >
-      <Image style={headerStyles.headerImage} source={{ uri: previewUrl || IMAGE_PLACEHOLDER }} />
+      <Image style={headerStyles.headerImage} source={{ uri: artwork || IMAGE_PLACEHOLDER }} />
       <View style={headerStyles.overlay} />
       <View style={headerStyles.titleContainer}>
         <Text style={headerStyles.title}>{title}</Text>

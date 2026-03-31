@@ -20,7 +20,7 @@ export const PlaylistScreen = () => {
     title: '',
   }
 
-  const { description, list, previewUrl, title } = playlist
+  const { artwork, description, list, title } = playlist
   const playNewSermon = usePlayNewSermon()
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
@@ -43,7 +43,7 @@ export const PlaylistScreen = () => {
 
   const tracksListData = list.map((sermon: SermonData) => ({
     artist: sermon.artist || 'Слово.Проповеди',
-    artwork: previewUrl,
+    artwork,
     id: sermon.id,
     title: sermon.title,
     url: sermon.audioUrl,
@@ -76,7 +76,7 @@ export const PlaylistScreen = () => {
         ListHeaderComponent={
           <PlaylistHeader
             title={title}
-            previewUrl={previewUrl}
+            artwork={artwork}
             description={description}
             onPressPlayAll={handlePressPlayAll}
             headerImageHeight={headerImageHeight}

@@ -23,6 +23,7 @@ export enum WhereIsSlideTitleLocated {
 }
 
 export interface SliderItemProps {
+  artwork: string | undefined
   descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle
   descriptionSubTitle?: string
   descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign
@@ -30,7 +31,6 @@ export interface SliderItemProps {
   descriptionTitleTextAlign?: SliderItemDescriptionTextAlign
   isDescriptionTitleOnSlideLarge?: boolean
   onPress?: (event: GestureResponderEvent) => void
-  previewURL: string
   size?: SliderItemSize
   style?: StyleProp<ViewStyle>
   testID?: string

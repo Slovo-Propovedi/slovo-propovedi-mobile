@@ -1,6 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type PlaylistData, type SermonData, setPlayerFullscreen } from 'shared/model'
 import { currentAudioAtom, setCurrentAudioAction, setCurrentPlaylistAction } from '../model'
+import { type AudioPlayerData } from '../ui/PlayerControls.types'
 import { usePlayer } from './usePlayer'
 
 export const usePlayNewSermon = () => {
@@ -22,13 +23,12 @@ export const usePlayNewSermon = () => {
   }: PlayNewSermonProps) => {
     if (!audioUrl) return
 
-    const newAudio = {
+    const newAudio: AudioPlayerData = {
       ...other,
       artist,
-      artwork: playlist.previewUrl,
+      artwork: playlist.artwork,
       audioUrl,
       id,
-      previewUrl: playlist.previewUrl,
       title,
     }
 

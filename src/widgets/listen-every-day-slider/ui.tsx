@@ -47,9 +47,9 @@ export const ListenEveryDaySlider = () => {
         onPressTitle(listenEveryDay)
       }}
       items={listenEveryDay.map(item => ({
+        artwork: item.artwork,
         data: item,
         description: item.title,
-        previewURL: item.previewUrl || '',
       }))}
     />
   )

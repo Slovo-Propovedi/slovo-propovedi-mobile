@@ -1,9 +1,9 @@
 import z from 'zod'
 
 export interface BookData {
+  artwork?: string
   description?: string
   id: string
-  previewUrl?: string
   textFileUrl?: string
   title: string
 }
@@ -21,9 +21,9 @@ export const sermonDataSchema = z.object({
 export type SermonData = z.infer<typeof sermonDataSchema>
 
 export const playlistDataSchema = z.object({
+  artwork: z.string().optional(),
   description: z.string().optional(),
   list: sermonDataSchema.array(),
-  previewUrl: z.string().optional(),
   title: z.string(),
 })
 

@@ -15,9 +15,9 @@ import { sliderStyles as styles } from './slider.styles'
 type FontSizes = typeof FONT_SIZES
 
 interface SliderItemsElement<D extends object> {
+  artwork: string | undefined
   data: D
   description?: string
-  previewURL: string
 }
 
 interface SliderProps<D extends object> {
@@ -94,13 +94,13 @@ export const Slider = <D extends object>({
       >
         {itemsByRows.map((row, i) => (
           <View key={`row-${i}`} style={styles.row} testID='slider-row'>
-            {row.map(({ data, description, previewURL }, index) => (
+            {row.map(({ artwork, data, description }, index) => (
               <SliderItem
                 key={index}
                 size={itemsSize}
+                artwork={artwork}
                 testID='slider-item'
                 transform={transform}
-                previewURL={previewURL}
                 descriptionTitle={description}
                 onPress={event => onPressItem?.(data, event)}
                 whereIsSlideTitleLocated={whereIsSlideTitleLocated}

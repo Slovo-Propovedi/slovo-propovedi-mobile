@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- Complex component with multiple variants */
 import { useAtom } from '@reatom/npm-react'
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { AppState, type AppStateStatus, type StyleProp, type ViewStyle } from 'react-native'
 import { isNonNullable } from 'shared/lib/utils'
 import type { AudioPlayerData, ControlsNames } from './PlayerControls.types'
@@ -8,8 +8,6 @@ import type { PlaylistData } from 'shared/model'
 import { downloadingAudioUrlAtom, isDownloadingAtom } from '../lib/download-model'
 import { usePlayer } from '../lib/usePlayer'
 import { usePlayerState } from '../lib/usePlayerState'
-import { useTrackEndHandler } from '../lib/useTrackEndHandler'
-import { repeatModeAtom } from '../model'
 import { DefaultControls } from './DefaultControls'
 import { FullscreenControls } from './FullscreenControls'
 import { getIndexOfCurrentAudioInPlaylist } from './getIndexOfCurrentAudioInPlaylist'
@@ -40,10 +38,8 @@ export const PlayerControls = ({
   style,
   variant = 'default',
 }: PlayerControlsProps) => {
-  const { loadAudio, onTrackEndSetter, pause, play, replaceAudio, seekTo, setLockScreenMetadata } =
-    usePlayer()
+  const { getStatus, pause, play, replaceAudio, setLockScreenMetadata } = usePlayer()
   const { isBuffering, isPlaying } = usePlayerState()
-  const [repeatMode] = useAtom(repeatModeAtom)
   const [isDownloading] = useAtom(isDownloadingAtom)
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
   const index = getIndexOfCurrentAudioInPlaylist(currentAudio, currentPlaylist)
@@ -65,18 +61,17 @@ export const PlayerControls = ({
       const track = currentPlaylist.list[newIndex]
       if (!track?.audioUrl) return
       const { audioUrl, ...rest } = track
-      const newAudio = {
+      const newAudio: AudioPlayerData = {
         ...rest,
-        artwork: currentPlaylist.previewUrl,
+        artwork: currentPlaylist.artwork,
         audioUrl,
-        previewUrl: currentPlaylist.previewUrl,
       }
       await setCurrentAudio(newAudio)
       await replaceAudio(newAudio.audioUrl)
       setLockScreenMetadata({
         albumTitle: currentPlaylist.title,
         artist: newAudio.artist,
-        artworkUrl: newAudio.artwork || newAudio.previewUrl,
+        artworkUrl: newAudio.artwork,
         title: newAudio.title,
       })
       try {
@@ -98,43 +93,21 @@ export const PlayerControls = ({
     ],
   )
 
-  const handleTrackEnd = useTrackEndHandler({
-    currentPlaylist,
-    hasValidPlaylist,
-    indexOfCurrentAudio: index,
-    isLastTrack,
-    loadAudio,
-    pause,
-    play,
-    repeatMode,
-    seekTo,
-    setCurrentAudio,
-    setLockScreenMetadata,
-    toggleTrack,
-  })
-  const ref = useRef(handleTrackEnd)
-  ref.current = handleTrackEnd
-
-  useEffect(() => {
-    onTrackEndSetter(() => void ref.current())
-    return () => void onTrackEndSetter(undefined)
-  }, [onTrackEndSetter])
-
   useEffect(() => {
     let appState = AppState.currentState
 
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active')
-        if (!isPlaying && currentAudio && repeatMode === 'queue')
-          // App returning from background - try to resume if needed
-          try {
-            await play()
-          } catch (error) {
-            if (error instanceof Error && error.message.includes('activity is no longer available'))
-              console.warn('[Player] Ignoring AppState-related error:', error.message)
-            else throw error
-          }
-
+      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+        // App returning from background - sync media session
+        const audioStatus = await getStatus()
+        if (currentAudio && audioStatus.isPlaying)
+          setLockScreenMetadata({
+            albumTitle: currentPlaylist?.title,
+            artist: currentAudio.artist,
+            artworkUrl: currentAudio.artwork,
+            title: currentAudio.title,
+          })
+      }
       appState = nextAppState
     }
 
@@ -142,7 +115,7 @@ export const PlayerControls = ({
     return () => {
       subscription.remove()
     }
-  }, [currentAudio, isPlaying, repeatMode, play])
+  }, [currentAudio, currentPlaylist, getStatus, setLockScreenMetadata])
 
   const isPrevDisabled = !hasValidPlaylist || isFirstTrack || !currentAudio
   const isNextDisabled = !hasValidPlaylist || isLastTrack || !currentAudio

@@ -1,6 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useState } from 'react'
-import type { PlaylistData, SermonData } from 'shared/model'
+import type { PlaylistData } from 'shared/model'
 import { currentAudioAtom, isPlayingAtom, setCurrentPlaylistAction } from '../model'
 import { type AudioPlayerData } from '../ui/PlayerControls.types'
 import { usePlayer } from './usePlayer'
@@ -26,8 +26,8 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
   const { loadAudio, play } = usePlayer()
 
   const createDefaultPlaylist = (tracks: AudioPlayerData[]): PlaylistData => ({
-    list: tracks as SermonData[],
-    previewUrl: tracks[0]?.artwork,
+    artwork: tracks[0]?.artwork,
+    list: tracks,
     title: tracks[0]?.title || 'Слово.Проповеди',
   })
 

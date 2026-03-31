@@ -35,9 +35,9 @@ export const SermonsOnBibleSlider = () => {
         onPressTitle(onBibleBooksList)
       }}
       items={onBibleBooksList.map(item => ({
+        artwork: item.artwork,
         data: item,
         description: item.title,
-        previewURL: item.previewUrl || '',
       }))}
     />
   )
