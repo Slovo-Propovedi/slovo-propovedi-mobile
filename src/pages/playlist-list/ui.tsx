@@ -31,13 +31,12 @@ export const PlaylistListScreen = () => {
       </View>
 
       <View style={styles.list}>
-        {playlists.map((playlist, index) => (
+        {playlists.map(playlist => (
           <TouchableListItem
             data={playlist}
             key={playlist.title}
             onPress={onPressListItem}
             size={ListItemSize.Middle}
-            previewPlaceholderText={`${index + 1}`}
           />
         ))}
       </View>

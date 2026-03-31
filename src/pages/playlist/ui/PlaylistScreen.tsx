@@ -16,6 +16,8 @@ export const PlaylistScreen = () => {
   const params = useLocalSearchParams<{ playlist: string }>()
   const navigation = useNavigation()
   const playlist = parseJsonWithSchema(playlistDataSchema)(params.playlist) || {
+    artwork: '',
+    description: '',
     list: [],
     title: '',
   }

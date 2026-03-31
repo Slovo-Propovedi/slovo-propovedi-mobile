@@ -5,7 +5,13 @@ export interface DB {
   sermons: FetchedSermonsGroup[]
 }
 
-export type FetchedBookData = (
+export type FetchedBookData = {
+  artwork: string
+  description?: string
+  id: string
+  textFileUrl?: string
+  title: string
+} & (
   | {
       chapter: number
       verse?: [from: number, to: number] | number
@@ -14,13 +20,7 @@ export type FetchedBookData = (
       chapter?: undefined
       verse?: undefined
     }
-) & {
-  description?: string
-  id: string
-  previewUrl?: string
-  textFileUrl?: string
-  title: string
-}
+)
 
 export interface FetchedBooksGroup {
   books: FetchedBookData[]
@@ -28,14 +28,15 @@ export interface FetchedBooksGroup {
 }
 
 export interface FetchedPlaylist {
+  artwork: string
   description?: string
   list: FetchedSermonData[]
-  previewUrl?: string
   title: string
 }
 
 export type FetchedSermonData = {
   artist: string
+  artwork: string
   audioUrl?: string
   description?: string
   id: string

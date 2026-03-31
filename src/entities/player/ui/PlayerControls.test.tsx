@@ -26,10 +26,12 @@ jest.mock('../lib/PlayerService', () => ({
 }))
 
 const currentPlaylist = {
+  artwork: 'https://test.com/preview1.mp3',
   id: '1',
   list: [
     {
       artist: 'Test Artist',
+      artwork: 'https://test.com/preview1.mp3',
       audioUrl: 'https://test.com/audio1.mp3',
       description: 'Description 1',
       id: '1',
@@ -37,6 +39,7 @@ const currentPlaylist = {
     },
     {
       artist: 'Test Artist',
+      artwork: 'https://test.com/preview1.mp3',
       audioUrl: 'https://test.com/audio2.mp3',
       description: 'Description 2',
       id: '2',
@@ -44,13 +47,13 @@ const currentPlaylist = {
     },
     {
       artist: 'Test Artist',
+      artwork: 'https://test.com/preview1.mp3',
       audioUrl: 'https://test.com/audio3.mp3',
       description: 'Description 3',
       id: '3',
       title: 'Title 3',
     },
   ],
-  previewUrl: 'https://test.com/preview1.mp3',
   title: 'Playlist 1',
 }
 

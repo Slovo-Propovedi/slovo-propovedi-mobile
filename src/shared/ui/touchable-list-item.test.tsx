@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native'
 import { TouchableListItem } from './touchable-list-item'
 
 const dataStub = {
-  previewUrl: 'google.com',
+  artwork: 'google.com',
   title: 'test',
 }
 

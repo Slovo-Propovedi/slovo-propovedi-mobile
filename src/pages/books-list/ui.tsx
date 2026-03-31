@@ -29,13 +29,12 @@ export const BooksListScreen = () => {
       </View>
 
       <View style={styles.list}>
-        {books.map((book, index) => (
+        {books.map(book => (
           <TouchableListItem
             data={book}
             key={book.id}
             onPress={onPressListItem}
             size={ListItemSize.Middle}
-            previewPlaceholderText={`${index + 1}`}
           />
         ))}
       </View>

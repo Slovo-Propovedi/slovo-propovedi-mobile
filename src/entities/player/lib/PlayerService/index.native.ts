@@ -256,6 +256,7 @@ class PlayerService {
     )
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- FIXME: refactor
   private handleTrackEndAutoAdvance = async () => {
     const [[, storedCurrentAudio], [, storedCurrentPlaylist], [, storedRepeatMode]] =
       await AsyncStorage.multiGet([CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE])
@@ -271,8 +272,23 @@ class PlayerService {
 
     // Repeat one track
     if (repeatMode === RepeatMode.Track) {
-      await this.seekTo(0)
-      await this.play()
+      if (currentAudio?.audioUrl) {
+        await setCurrentAudioAction(ctx, currentAudio)
+        await this.replaceAudio(currentAudio.audioUrl, 0)
+        this.setLockScreenMetadata({
+          albumTitle: currentPlaylist.title,
+          artist: currentAudio.artist,
+          artworkUrl: currentAudio.artwork,
+          title: currentAudio.title,
+        })
+        try {
+          await this.play()
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('activity is no longer available'))
+            console.warn('[PlayerService] Ignoring AppState-related error:', error.message)
+          else throw error
+        }
+      }
       return
     }
 

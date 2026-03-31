@@ -5,21 +5,19 @@ import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { ListItemSize } from './list-item.types'
 
-type ListItemComponent = <T extends { previewUrl?: string; title: string }>(
+type ListItemComponent = <T extends { artwork: string; title: string }>(
   props: ListItemProps<T>,
 ) => null | React.JSX.Element
 
 interface ListItemProps<T> {
   data: T
-  previewPlaceholderText?: string
   size?: ListItemSize
   style?: StyleProp<ViewStyle>
   testID?: string
 }
 
 export const ListItem: ListItemComponent = ({
-  data: { previewUrl, title },
-  previewPlaceholderText = '',
+  data: { artwork, title },
   size = ListItemSize.Small,
   style,
   testID,
@@ -35,11 +33,7 @@ export const ListItem: ListItemComponent = ({
         }[size],
       ]}
     >
-      {previewUrl ? (
-        <Image testID='preview' style={styles.preview} source={{ uri: previewUrl }} />
-      ) : (
-        <Text style={styles.counter}>{previewPlaceholderText}</Text>
-      )}
+      <Image testID='preview' style={styles.preview} source={{ uri: artwork }} />
     </View>
     <View style={styles.textsContainer}>
       <Text testID='title' style={styles.listItemTitle}>
@@ -58,14 +52,6 @@ const styles = StyleSheet.create({
     height: 'auto',
     justifyContent: 'center',
     minHeight: 60,
-  },
-  counter: {
-    backgroundColor: COLORS.disabled,
-    borderRadius: RADIUSES.low,
-    color: COLORS.text,
-    height: '100%',
-    textAlign: 'center',
-    textAlignVertical: 'center',
   },
   listItemTitle: {
     color: COLORS.text,

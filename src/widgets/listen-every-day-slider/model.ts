@@ -10,10 +10,11 @@ export const getListenEveryDay = action(async ctx => {
   const mappedList = list?.map<PlaylistData>(playlist => ({
     ...playlist,
     list: playlist.list.map<SermonData>(el => {
-      const { artist, audioUrl, description, id, textFileUrl, youtubeUrl } = el
+      const { artist, artwork, audioUrl, description, id, textFileUrl, youtubeUrl } = el
 
       return {
         artist,
+        artwork,
         audioUrl,
         description,
         id,
