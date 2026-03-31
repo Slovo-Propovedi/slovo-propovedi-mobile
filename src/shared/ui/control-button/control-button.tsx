@@ -1,6 +1,7 @@
 import { Entypo } from '@expo/vector-icons'
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
+import { match } from 'ts-pattern'
 import { COLORS } from 'shared/ui/themed'
 import type { GestureResponderEvent, OpaqueColorValue, StyleProp, ViewStyle } from 'react-native'
 import { PlayerControlButtonType } from './control-button.types'
@@ -40,14 +41,12 @@ export const PlayerControlButton = ({
       <Entypo
         size={size}
         style={[styles.icon, color ? { color } : null, isDisabled && styles.iconDisabled]}
-        name={
-          {
-            [PlayerControlButtonType.Next]: 'controller-fast-forward' as const,
-            [PlayerControlButtonType.Pause]: 'controller-paus' as const,
-            [PlayerControlButtonType.Play]: 'controller-play' as const,
-            [PlayerControlButtonType.Prev]: 'controller-fast-backward' as const,
-          }[type]
-        }
+        name={match(type)
+          .with(PlayerControlButtonType.Next, () => 'controller-fast-forward' as const)
+          .with(PlayerControlButtonType.Pause, () => 'controller-paus' as const)
+          .with(PlayerControlButtonType.Play, () => 'controller-play' as const)
+          .with(PlayerControlButtonType.Prev, () => 'controller-fast-backward' as const)
+          .exhaustive()}
       />
     </Text>
   </TouchableOpacity>

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Image, StyleSheet, Text, View } from 'react-native'
+import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 import type { StyleProp, ViewStyle } from 'react-native'
@@ -26,11 +27,11 @@ export const ListItem: ListItemComponent = ({
     <View
       testID='preview-or-counter'
       style={[
-        styles.previewOrCounter,
-        {
-          [ListItemSize.Middle]: styles.previewOrCounterMiddle,
-          [ListItemSize.Small]: styles.previewOrCounterSmall,
-        }[size],
+        styles.previewContainer,
+        match(size)
+          .with(ListItemSize.Middle, () => styles.previewMiddle)
+          .with(ListItemSize.Small, () => styles.previewSmall)
+          .exhaustive(),
       ]}
     >
       <Image testID='preview' style={styles.preview} source={{ uri: artwork }} />
@@ -43,7 +44,7 @@ export const ListItem: ListItemComponent = ({
   </View>
 )
 
-const previewOrCounterSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25
+const previewMiddleSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25
 
 const styles = StyleSheet.create({
   component: {
@@ -53,26 +54,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 60,
   },
-  listItemTitle: {
-    color: COLORS.text,
-    fontSize: FONT_SIZES.h2,
-  },
-  preview: {
-    borderRadius: RADIUSES.low,
-    height: '100%',
-  },
-  previewOrCounter: {
-    borderRadius: RADIUSES.low,
-    marginVertical: INDENTS.middle,
-  },
-  previewOrCounterMiddle: {
-    height: previewOrCounterSize,
-    width: previewOrCounterSize,
-  },
-  previewOrCounterSmall: {
-    height: 40,
-    width: 40,
-  },
+  listItemTitle: { color: COLORS.text, fontSize: FONT_SIZES.h2 },
+  preview: { borderRadius: RADIUSES.low, height: '100%' },
+  previewContainer: { borderRadius: RADIUSES.low, marginVertical: INDENTS.middle },
+  previewMiddle: { height: previewMiddleSize, width: previewMiddleSize },
+  previewSmall: { height: 40, width: 40 },
   textsContainer: {
     borderBottomColor: COLORS.disabled,
     borderBottomWidth: 1,

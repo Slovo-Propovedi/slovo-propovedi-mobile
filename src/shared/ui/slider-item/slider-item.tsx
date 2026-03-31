@@ -1,5 +1,6 @@
 import React from 'react'
 import { ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { RADIUSES } from 'shared/ui/themed'
@@ -10,11 +11,6 @@ import {
   SliderItemTransform,
   WhereIsSlideTitleLocated,
 } from './slider-item.types'
-
-const componentXLargeSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.9
-const componentLargeSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.62
-const componentMiddleSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.44
-const componentSmallSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.285
 
 export const SliderItem = ({
   artwork,
@@ -31,12 +27,12 @@ export const SliderItem = ({
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderItemProps) => {
-  const conditionSize = {
-    [SliderItemSize.Large]: componentLargeSize,
-    [SliderItemSize.Middle]: componentMiddleSize,
-    [SliderItemSize.Small]: componentSmallSize,
-    [SliderItemSize.XLarge]: componentXLargeSize,
-  }[size]
+  const conditionSize = match(size)
+    .with(SliderItemSize.Large, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.62)
+    .with(SliderItemSize.Middle, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.44)
+    .with(SliderItemSize.Small, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.285)
+    .with(SliderItemSize.XLarge, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.9)
+    .exhaustive()
 
   const isVisibleDescriptionOnSlide =
     (whereIsSlideTitleLocated === WhereIsSlideTitleLocated.On ||
@@ -47,13 +43,11 @@ export const SliderItem = ({
       whereIsSlideTitleLocated === WhereIsSlideTitleLocated.BothOnAndUnder) &&
     descriptionTitle
 
-  const imageHeight =
-    (transform &&
-      {
-        [SliderItemTransform.High]: conditionSize * 1.3,
-        [SliderItemTransform.Short]: conditionSize / 2,
-      }[transform]) ||
-    conditionSize
+  const imageHeight = match(transform)
+    .with(SliderItemTransform.High, () => conditionSize * 1.3)
+    .with(SliderItemTransform.Short, () => conditionSize / 2)
+    .with(undefined, () => conditionSize)
+    .exhaustive()
 
   return (
     <TouchableOpacity testID={testID} onPress={onPress} activeOpacity={0.8}>
