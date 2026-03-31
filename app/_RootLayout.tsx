@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useAction } from '@reatom/npm-react'
+import { useAction, useAtom } from '@reatom/npm-react'
 import { Stack } from 'expo-router'
 import { useEffect } from 'react'
 import z from 'zod'
 import {
   audioPlayerDataSchema,
+  isPlayingAtom,
+  positionAtom,
   repeatModeSchema,
   setCurrentAudioAction,
   setCurrentPlaylistAction,
@@ -19,13 +21,14 @@ import {
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
 import { parseJsonWithSchema, playlistDataSchema } from 'shared/model'
-import PlaybackStateSync from './_PlaybackStateSync'
 
 const RootLayout = () => {
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
   const setRepeatMode = useAction(setRepeatModeAction)
   const { loadAudio, setLockScreenMetadata, setVolume, unload } = usePlayer()
+  const [isPlaying] = useAtom(isPlayingAtom)
+  const [position] = useAtom(positionAtom)
 
   useEffect(() => {
     const initPlayerData = async () => {
@@ -73,13 +76,18 @@ const RootLayout = () => {
     }
   }, [])
 
+  useEffect(() => {
+    const savePosition = async () => {
+      if (!isPlaying) await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(position))
+    }
+    const interval = setInterval(savePosition, 5000)
+    return () => clearInterval(interval)
+  }, [isPlaying, position])
+
   return (
-    <>
-      <PlaybackStateSync />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-      </Stack>
-    </>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+    </Stack>
   )
 }
 

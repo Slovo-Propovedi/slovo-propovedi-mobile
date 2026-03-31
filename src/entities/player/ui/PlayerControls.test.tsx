@@ -1,6 +1,10 @@
+import { createCtx } from '@reatom/framework'
+import { reatomContext } from '@reatom/npm-react'
 import { render } from '@testing-library/react-native'
 import { PlayerControls } from './PlayerControls'
 import '@testing-library/jest-native/extend-expect'
+
+const ctx = createCtx()
 
 jest.mock('../lib/PlayerService', () => ({
   playerService: {
@@ -65,7 +69,11 @@ describe('<PlayerControls>', () => {
   })
 
   test('PlayerControls renders correctly', () => {
-    const { getByTestId } = render(<PlayerControls {...mockPlayerControlsProps} />)
+    const { getByTestId } = render(
+      <reatomContext.Provider value={ctx}>
+        <PlayerControls {...mockPlayerControlsProps} />
+      </reatomContext.Provider>,
+    )
     const controlsContainer = getByTestId('controls-container')
     expect(controlsContainer).toBeTruthy()
   })

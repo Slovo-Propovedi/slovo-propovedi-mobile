@@ -1,17 +1,27 @@
-import { useEffect, useState } from 'react'
-import { playerService } from './PlayerService'
+import { useAtom } from '@reatom/npm-react'
+import {
+  currentAudioAtom,
+  durationAtom,
+  isBufferingAtom,
+  isPlayingAtom,
+  positionAtom,
+  volumeAtom,
+} from '../model'
 
 export const usePlayerState = () => {
-  const [state, setState] = useState(playerService.getState())
+  const [currentAudio] = useAtom(currentAudioAtom)
+  const [duration] = useAtom(durationAtom)
+  const [isBuffering] = useAtom(isBufferingAtom)
+  const [isPlaying] = useAtom(isPlayingAtom)
+  const [position] = useAtom(positionAtom)
+  const [volume] = useAtom(volumeAtom)
 
-  useEffect(() => {
-    const unsubscribe = playerService.subscribe(() => {
-      setState(playerService.getState())
-    })
-    return () => {
-      unsubscribe()
-    }
-  }, [])
-
-  return state
+  return {
+    currentAudio,
+    duration,
+    isBuffering,
+    isPlaying,
+    position,
+    volume,
+  }
 }

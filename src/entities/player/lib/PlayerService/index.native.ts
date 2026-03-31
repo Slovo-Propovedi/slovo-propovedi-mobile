@@ -1,14 +1,25 @@
 /* eslint-disable max-lines -- FIXME: refactor */
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio'
-import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/config'
+import {
+  CURRENT_AUDIO,
+  CURRENT_PLAYLIST,
+  CURRENT_REPEAT_MODE,
+  CURRENT_SOUND_DURATION,
+  CURRENT_SOUND_POSITION,
+} from 'shared/config'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
+import type { AudioPlayerData } from '../../ui/PlayerControls.types'
+import type { PlaylistData } from 'shared/model'
 import {
+  RepeatMode,
+  setCurrentAudioAction,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
   setPositionAction,
+  setVolumeAction,
 } from '../../model'
 import {
   setDownloadingUrlAction,
@@ -23,54 +34,19 @@ interface LockScreenMetadata {
   title: string
 }
 
-type StateListener = () => void
-
 class PlayerService {
-  public getState = () => ({
-    duration: this.duration,
-    isBuffering: this.isBuffering,
-    isPlaying: this.isPlaying,
-    position: this.position,
-    volume: this.volume,
-  })
-
-  public subscribe = (listener: StateListener) => {
-    this.listeners.add(listener)
-    return () => this.listeners.delete(listener)
-  }
-
-  private notify = () => {
-    this.listeners.forEach(listener => listener())
-  }
-
-  private setDuration = (value: number) => {
-    this.duration = value
-    this.notify()
-  }
-
-  private setPosition = (value: number) => {
-    this.position = value
-    this.notify()
-  }
-
-  private setIsBuffering = (value: boolean) => {
-    this.isBuffering = value
-    this.notify()
-  }
-
-  private setIsPlaying = (value: boolean) => {
-    this.isPlaying = value
-    this.notify()
-  }
-
   private configureAudioMode = async () => {
     if (this.audioModeConfigured) return
-    await setAudioModeAsync({
-      interruptionMode: 'doNotMix',
-      playsInSilentMode: true,
-      shouldPlayInBackground: true,
-    })
-    this.audioModeConfigured = true
+    try {
+      await setAudioModeAsync({
+        interruptionMode: 'doNotMix',
+        playsInSilentMode: true,
+        shouldPlayInBackground: true,
+      })
+      this.audioModeConfigured = true
+    } catch (error) {
+      console.warn('[PlayerService] configureAudioMode: Failed (app may be backgrounded):', error)
+    }
   }
 
   public setLockScreenMetadata = (metadata: LockScreenMetadata) => {
@@ -87,58 +63,10 @@ class PlayerService {
     this.currentLockScreenMetadata = null
   }
 
-  private updateStatus = () => {
-    if (!this.playerInstance?.isLoaded) return
-
-    const wasPlaying = this.isPlaying
-    this.setIsBuffering(this.playerInstance.isBuffering)
-    this.setIsPlaying(this.playerInstance.playing)
-
-    const dur = Math.floor(this.playerInstance.duration * 1000)
-    this.setDuration(dur)
-
-    // Don't update position while seeking - it's managed by seekTo
-    if (!this.isSeeking) {
-      const pos = Math.floor(this.playerInstance.currentTime * 1000)
-      this.setPosition(pos)
-
-      // FALLBACK: Detect track end via polling
-      // Trigger when:
-      // 1. Position is within 3 seconds of end, OR
-      // 2. Player stopped (playing went from true to false) and position is past 90% of duration
-      const isNearEnd = dur > 0 && pos >= dur - 3000
-      const playerStoppedNearEnd =
-        !this.playerInstance.playing && wasPlaying && dur > 0 && pos >= dur * 0.9
-
-      if ((isNearEnd || playerStoppedNearEnd) && !this.trackEndHandled) {
-        this.trackEndHandled = true
-        this.onTrackEnd?.()
-      }
-
-      // Reset flag when position is far from end (new track or seeked back)
-      if (dur > 0 && pos < dur - 10000) this.trackEndHandled = false
-    }
-  }
-
-  private startStatusTracking = () => {
-    if (this.statusInterval) clearInterval(this.statusInterval)
-    this.statusInterval = setInterval(this.updateStatus, 500)
-  }
-
-  private stopStatusTracking = () => {
-    if (this.statusInterval) {
-      clearInterval(this.statusInterval)
-      this.statusInterval = null
-    }
-  }
-
   public play = async () => {
     await this.configureAudioMode()
 
-    if (this.playerInstance?.isLoaded) {
-      this.playerInstance.play()
-      this.startStatusTracking()
-    }
+    if (this.playerInstance?.isLoaded) this.playerInstance.play()
   }
 
   public pause = async () => {
@@ -148,8 +76,7 @@ class PlayerService {
         CURRENT_SOUND_POSITION,
         String(Math.floor(this.playerInstance.currentTime * 1000)),
       )
-      this.stopStatusTracking()
-      this.setIsPlaying(false)
+      void setIsPlayingAction(ctx, false)
     }
   }
 
@@ -157,20 +84,18 @@ class PlayerService {
     if (this.playerInstance) {
       this.playerInstance.pause()
       await this.playerInstance.seekTo(0)
-      this.stopStatusTracking()
-      this.setIsPlaying(false)
+      void setIsPlayingAction(ctx, false)
     }
   }
 
   public seekTo = async (newPositionMs: number) => {
-    if (this.playerInstance) {
-      // Clamp position to valid range [0, duration]
-      const clampedPosition = Math.max(0, Math.min(this.duration, newPositionMs))
-      this.isSeeking = true
-      this.setPosition(clampedPosition) // Update immediately for UI responsiveness
-      await this.playerInstance.seekTo(clampedPosition / 1000)
-      this.isSeeking = false
-    }
+    if (!this.playerInstance) return
+
+    const clampedPosition = Math.max(0, newPositionMs)
+    this.isSeeking = true
+    void setPositionAction(ctx, clampedPosition)
+    await this.playerInstance.seekTo(clampedPosition / 1000)
+    this.isSeeking = false
   }
 
   public getVolume = () => this.volume
@@ -178,14 +103,12 @@ class PlayerService {
   public setVolume = async (newVolume: number) => {
     this.volume = Math.max(0, Math.min(1, newVolume))
     if (this.playerInstance?.isLoaded) this.playerInstance.volume = this.volume
-
-    this.notify()
+    void setVolumeAction(ctx, this.volume)
   }
 
   public loadAudio = async (audioUrl: string, initialPositionMs = 0) => {
-    this.setIsBuffering(true)
-    this.stopStatusTracking()
-    this.setPosition(0)
+    void setIsBufferingAction(ctx, true)
+    void setPositionAction(ctx, 0)
     this.trackEndHandled = false
 
     await this.configureAudioMode()
@@ -200,11 +123,9 @@ class PlayerService {
     try {
       const cachedUri = await audioCacheService.getCachedUri(audioUrl)
       if (cachedUri) playUrl = cachedUri
-      // Start background caching without blocking playback
       else this.startBackgroundCaching(audioUrl)
     } catch (error) {
-      console.error('[PlayerService] Error checking cache:', error)
-      // Continue with remote URL if cache check fails
+      console.error('[PlayerService] loadAudio - Error checking cache:', error)
     }
 
     const player = createAudioPlayer({ uri: playUrl }, { downloadFirst: true })
@@ -222,100 +143,75 @@ class PlayerService {
           clearInterval(checkLoaded)
 
           const dur = Math.floor(player.duration * 1000)
-          this.setDuration(dur)
+          void setDurationAction(ctx, dur)
           void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
-          this.setIsBuffering(false)
+          void setIsBufferingAction(ctx, false)
 
-          if (initialPositionMs > 0) void player.seekTo(initialPositionMs / 1000)
-          this.setPosition(initialPositionMs)
+          void player.seekTo(initialPositionMs / 1000)
+          void setPositionAction(ctx, initialPositionMs)
 
-          this.updateStatus()
           this.setupTrackEndListener()
           this.setupPlaybackStatusListener()
-          resolve(player)
+          try {
+            resolve(player)
+          } catch (error) {
+            console.error('[PlayerService] loadAudio: ERROR - resolve() threw exception:', error)
+            throw error
+          }
         } else if (elapsed >= maxWait) {
           clearInterval(checkLoaded)
-          this.setIsBuffering(false)
-          resolve(null)
+          void setIsBufferingAction(ctx, false)
+          try {
+            resolve(null)
+          } catch (error) {
+            console.error(
+              '[PlayerService] loadAudio: ERROR - resolve(null) threw exception:',
+              error,
+            )
+            throw error
+          }
         }
       }, checkInterval)
+    }).catch(error => {
+      console.error('[PlayerService] loadAudio: Promise rejected with error:', error)
+      void setIsBufferingAction(ctx, false)
+      return null
     })
   }
 
   public replaceAudio = async (audioUrl: string, initialPositionMs = 0) => {
-    this.setIsBuffering(true)
-    this.stopStatusTracking()
+    void setIsBufferingAction(ctx, true)
     this.trackEndHandled = false
 
     await this.configureAudioMode()
 
-    if (!this.playerInstance?.isLoaded)
-      // Fallback to loadAudio if no player is loaded
-      return this.loadAudio(audioUrl, initialPositionMs)
+    if (!this.playerInstance) return this.loadAudio(audioUrl, initialPositionMs)
 
     // Check if audio is already cached
     let playUrl = audioUrl
     try {
       const cachedUri = await audioCacheService.getCachedUri(audioUrl)
       if (cachedUri) playUrl = cachedUri
-      // Start background caching without blocking playback
       else this.startBackgroundCaching(audioUrl)
     } catch (error) {
-      console.error('[PlayerService] Error checking cache:', error)
-      // Continue with remote URL if cache check fails
+      console.error('[PlayerService] replaceAudio - Error checking cache:', error)
     }
 
-    // Use replace instead of creating a new player - this keeps lock screen active
     this.playerInstance.replace(playUrl)
-
-    // Wait for the new track to load
-    return new Promise<AudioPlayer | null>(resolve => {
-      const maxWait = 30000
-      const checkInterval = 100
-      let elapsed = 0
-      const player = this.playerInstance
-
-      const checkLoaded = setInterval(() => {
-        elapsed += checkInterval
-
-        if (player?.isLoaded) {
-          clearInterval(checkLoaded)
-
-          const dur = Math.floor(player.duration * 1000)
-          this.setDuration(dur)
-          void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
-          this.setIsBuffering(false)
-
-          if (initialPositionMs > 0) void player.seekTo(initialPositionMs / 1000)
-          this.setPosition(initialPositionMs)
-
-          this.updateStatus()
-          this.setupTrackEndListener()
-          this.setupPlaybackStatusListener()
-          resolve(player)
-        } else if (elapsed >= maxWait) {
-          clearInterval(checkLoaded)
-          this.setIsBuffering(false)
-          resolve(null)
-        }
-      }, checkInterval)
-    })
+    return this.playerInstance
   }
 
   public unload = async () => {
-    this.stopStatusTracking()
-
-    // Clear lock screen controls
     this.clearLockScreenControls()
-
-    if (this.trackEndSubscription) {
-      this.trackEndSubscription.remove()
-      this.trackEndSubscription = null
-    }
 
     if (this.playbackStatusSubscription) {
       this.playbackStatusSubscription.remove()
       this.playbackStatusSubscription = null
+    }
+
+    if (this.trackEndSubscription) {
+      this.trackEndSubscription.remove()
+      this.trackEndSubscription = null
     }
 
     if (this.playerInstance) {
@@ -325,16 +221,7 @@ class PlayerService {
   }
 
   private setupTrackEndListener = () => {
-    // Remove old subscription if exists
-    if (this.trackEndSubscription) {
-      this.trackEndSubscription.remove()
-      this.trackEndSubscription = null
-    }
-
-    if (!this.playerInstance) {
-      console.warn('[PlayerService] setupTrackEndListener: no playerInstance')
-      return
-    }
+    if (!this.playerInstance) return
 
     this.trackEndSubscription = this.playerInstance.addListener('playbackStatusUpdate', status => {
       if (status.didJustFinish && !this.trackEndHandled) {
@@ -345,45 +232,29 @@ class PlayerService {
   }
 
   private setupPlaybackStatusListener = () => {
-    // Remove old subscription if exists
-    if (this.playbackStatusSubscription) {
-      this.playbackStatusSubscription.remove()
-      this.playbackStatusSubscription = null
-    }
+    if (!this.playerInstance) return
 
-    if (!this.playerInstance) {
-      console.warn('[PlayerService] setupPlaybackStatusListener: no playerInstance')
-      return
-    }
-
-    // Sync atoms with player state - handles remote commands from lock screen
     this.playbackStatusSubscription = this.playerInstance.addListener(
       'playbackStatusUpdate',
       status => {
-        // Sync isPlaying state (handles play/pause from lock screen)
         void setIsPlayingAction(ctx, status.playing)
 
-        // Sync position
         const positionMs = Math.floor(status.currentTime * 1000)
         void setPositionAction(ctx, positionMs)
 
-        // Sync duration
         const durationMs = Math.floor(status.duration * 1000)
         void setDurationAction(ctx, durationMs)
 
-        // Sync buffering state
         void setIsBufferingAction(ctx, status.isBuffering)
       },
     )
   }
 
   private startBackgroundCaching = (audioUrl: string) => {
-    // Update download state atoms
     setIsDownloadingAction(ctx, true)
     setDownloadingUrlAction(ctx, audioUrl)
     setDownloadProgressAction(ctx, 0)
 
-    // Start download in background (don't await)
     audioCacheService
       .cacheAudio(audioUrl, progress => {
         setDownloadProgressAction(ctx, progress)
@@ -400,20 +271,40 @@ class PlayerService {
       })
   }
 
-  private duration = 0
-  private position = 0
-  private volume = 1
-  private isBuffering = false
-  private isPlaying = false
-  private listeners: Set<StateListener> = new Set()
+  private async handleTrackEndAutoAdvance() {
+    const currentPlaylistStr = await AsyncStorage.getItem(CURRENT_PLAYLIST)
+    const currentPlaylist: PlaylistData = JSON.parse(currentPlaylistStr || 'null')
+    const repeatModeStr = await AsyncStorage.getItem(CURRENT_REPEAT_MODE)
+    const repeatMode = (repeatModeStr as RepeatMode) || RepeatMode.Off
+
+    if (!currentPlaylist) return
+
+    const currentAudioStr = await AsyncStorage.getItem(CURRENT_AUDIO)
+    const currentAudio: AudioPlayerData = JSON.parse(currentAudioStr || 'null')
+    const currentIndex = currentPlaylist.list.findIndex(t => t.id === currentAudio?.id)
+    const isLastTrack = currentIndex === currentPlaylist.list.length - 1
+    const nextTrack = currentPlaylist.list[currentIndex + 1]
+
+    if (!isLastTrack && repeatMode !== RepeatMode.Track && nextTrack?.audioUrl) {
+      await setCurrentAudioAction(ctx, {
+        ...nextTrack,
+        artwork: currentPlaylist.previewUrl,
+        audioUrl: nextTrack.audioUrl,
+        previewUrl: currentPlaylist.previewUrl,
+      })
+      await this.replaceAudio(nextTrack.audioUrl)
+      void this.play()
+    }
+  }
+
   private audioModeConfigured = false
   private playerInstance: AudioPlayer | null = null
-  private statusInterval: null | ReturnType<typeof setInterval> = null
   private isSeeking = false
-  private trackEndSubscription: { remove: () => void } | null = null
   private playbackStatusSubscription: { remove: () => void } | null = null
+  private trackEndSubscription: { remove: () => void } | null = null
   private trackEndHandled = false
   private currentLockScreenMetadata: LockScreenMetadata | null = null
+  private volume = 1
 
   public onTrackEnd: (() => void) | undefined = undefined
 }
