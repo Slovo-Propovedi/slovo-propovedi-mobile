@@ -51,7 +51,6 @@ class PlayerService {
   }
 
   public setLockScreenMetadata = (metadata: LockScreenMetadata) => {
-    this.currentLockScreenMetadata = metadata
     if (this.playerInstance?.isLoaded)
       this.playerInstance.setActiveForLockScreen(true, metadata, {
         showSeekBackward: true,
@@ -61,7 +60,6 @@ class PlayerService {
 
   public clearLockScreenControls = () => {
     if (this.playerInstance?.isLoaded) this.playerInstance.setActiveForLockScreen(false)
-    this.currentLockScreenMetadata = null
   }
 
   public play = async () => {
@@ -93,10 +91,8 @@ class PlayerService {
     if (!this.playerInstance) return
 
     const clampedPosition = Math.max(0, newPositionMs)
-    this.isSeeking = true
     void setPositionAction(ctx, clampedPosition)
     await this.playerInstance.seekTo(clampedPosition / 1000)
-    this.isSeeking = false
   }
 
   public getVolume = () => this.volume
@@ -375,11 +371,9 @@ class PlayerService {
 
   private audioModeConfigured = false
   private playerInstance: AudioPlayer | null = null
-  private isSeeking = false
   private playbackStatusSubscription: { remove: () => void } | null = null
   private trackEndSubscription: { remove: () => void } | null = null
   private trackEndHandled = false
-  private currentLockScreenMetadata: LockScreenMetadata | null = null
   private volume = 1
 }
 
