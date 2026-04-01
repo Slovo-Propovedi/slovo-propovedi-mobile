@@ -48,7 +48,7 @@ describe('<TouchableImageBackground/>', () => {
     )
 
     const imageBackground = getByTestId('image-background')
-    expect(imageBackground).toHaveStyle({ resizeMode: 'cover' })
+    expect(imageBackground).toHaveProp('resizeMode', 'cover')
     expect(imageBackground).toHaveStyle({ opacity: 0.5 })
   })
 

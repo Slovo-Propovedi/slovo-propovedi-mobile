@@ -1,4 +1,4 @@
-/* eslint-disable max-lines -- Complex component with multiple variants */
+/* eslint-disable max-lines -- FIXME: refactor */
 import { useAtom } from '@reatom/npm-react'
 import React, { useCallback, useEffect } from 'react'
 import { AppState, type AppStateStatus, type StyleProp, type ViewStyle } from 'react-native'

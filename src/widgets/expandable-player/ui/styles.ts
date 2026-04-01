@@ -1,4 +1,4 @@
-/* eslint-disable max-lines -- TODO: refactor styles */
+/* eslint-disable max-lines -- FIXME: refactor */
 import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 

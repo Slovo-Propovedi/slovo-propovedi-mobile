@@ -6,7 +6,7 @@ import '@testing-library/jest-native/extend-expect'
 
 const ctx = createCtx()
 
-jest.mock('../lib/PlayerService', () => ({
+jest.mock('../../lib/PlayerService', () => ({
   playerService: {
     getState: jest.fn(() => ({
       duration: 0,

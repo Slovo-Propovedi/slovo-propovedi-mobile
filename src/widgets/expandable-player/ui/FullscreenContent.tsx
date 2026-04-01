@@ -1,4 +1,4 @@
-/* eslint-disable max-lines -- TODO: refactor next sermon block to separate component */
+/* eslint-disable max-lines -- FIXME: refactor */
 import { Entypo } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'

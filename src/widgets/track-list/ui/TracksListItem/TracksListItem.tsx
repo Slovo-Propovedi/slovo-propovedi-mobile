@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- FIXME: refactor */
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAtom } from '@reatom/npm-react'
 import React, { useEffect, useRef, useState } from 'react'
@@ -8,12 +7,10 @@ import { cacheAudio, removeFromCache, useIsCached } from 'shared/lib/audio-cache
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { MovingText } from 'shared/ui/MovingText'
 import { COLORS } from 'shared/ui/themed'
-import type { TracksListItemProps } from './types'
-import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
-import { tracksListStyles } from './styles'
-
-const TITLE_ANIMATION_THRESHOLD = 30
-const MENU_WIDTH = 160
+import type { TracksListItemProps } from '../types'
+import { PlayingStatusOrChacheIcon } from '../PlayingStatusOrChacheIcon'
+import { tracksListStyles } from '../styles'
+import { MENU_WIDTH, TITLE_ANIMATION_THRESHOLD } from './constants'
 
 export const TracksListItem = ({
   artist,

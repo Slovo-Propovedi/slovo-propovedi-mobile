@@ -1,4 +1,4 @@
-/* eslint-disable max-lines -- Keep all player logic in one component for simplicity */
+/* eslint-disable max-lines -- FIXME: refactor */
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useCallback, useState } from 'react'
 import {

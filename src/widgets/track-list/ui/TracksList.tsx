@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated'
 import type { TracksListProps } from './types'
 import { QueueControls } from './QueueControls'
 import { tracksListStyles } from './styles'
-import { TracksListItem } from './TracksListItem'
+import { TracksListItem } from './TracksListItem/TracksListItem'
 
 const ItemSeparator = () => <View style={tracksListStyles.divider} />
 

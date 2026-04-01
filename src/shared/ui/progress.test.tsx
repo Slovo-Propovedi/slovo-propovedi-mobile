@@ -51,11 +51,11 @@ describe('<Progress/>', () => {
     expect(getByTestId(progressBarInnerId)).toHaveStyle({ width: '75%' })
   })
 
-  it('renders a white background progress bar', () => {
+  it('renders a gray background progress bar', () => {
     const { getByTestId } = render(
       <Progress total={total} progress={progress} loaderValue={loaderValue} />,
     )
-    expect(getByTestId('progress-bar')).toHaveStyle({ backgroundColor: 'white' })
+    expect(getByTestId('progress-bar')).toHaveStyle({ backgroundColor: COLORS.gray })
   })
 
   it('renders a primary colored progress bar', () => {
