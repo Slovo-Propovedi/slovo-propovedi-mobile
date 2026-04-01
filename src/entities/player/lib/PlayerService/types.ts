@@ -60,6 +60,8 @@ export type StateListener = () => void
  * Used to sync player state with external state management (Reatom).
  */
 export interface StatusCallbacks {
+  /** Called when audio is interrupted (phone call) or interruption ends. */
+  onAudioInterruption: (isInterrupted: boolean) => void
   /** Called when buffering state changes. */
   onBufferingChange: (isBuffering: boolean) => void
   /** Called when track duration becomes available. */

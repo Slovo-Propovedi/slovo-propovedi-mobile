@@ -22,6 +22,15 @@ export const durationAtom = atom(0, 'durationAtom')
 export const volumeAtom = atom(1, 'volumeAtom')
 export const isBufferingAtom = atom(false, 'isBufferingAtom')
 
+// Pause type: 'auto' = interrupted by system (phone call), 'manual' = user paused
+export const PauseType = {
+  Auto: 'auto',
+  Manual: 'manual',
+} as const
+export type PauseType = (typeof PauseType)[keyof typeof PauseType]
+
+export const pauseTypeAtom = atom<null | PauseType>(null, 'pauseTypeAtom')
+
 export const RepeatMode = {
   Off: 'off',
   Queue: 'queue',
@@ -99,6 +108,13 @@ export const setIsBufferingAction = action(async (ctx, buffering: boolean) => {
   })
   return buffering
 }, 'setIsBuffering')
+
+export const setPauseTypeAction = action(async (ctx, pauseType: null | PauseType) => {
+  await ctx.schedule(() => {
+    pauseTypeAtom(ctx, pauseType)
+  })
+  return pauseType
+}, 'setPauseType')
 
 export const setRepeatModeAction = action(async (ctx, mode: RepeatMode) => {
   await AsyncStorage.setItem(CURRENT_REPEAT_MODE, mode)

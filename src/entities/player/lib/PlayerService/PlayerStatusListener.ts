@@ -4,6 +4,7 @@ import type { AudioPlayer } from 'expo-audio'
 /**
  * Manages playback status listeners for the audio player.
  * Monitors playing state, position, duration, buffering, and track end events.
+ * Detects audio interruptions by comparing previous and current playing states.
  */
 class PlayerStatusListener {
   /**
@@ -37,6 +38,7 @@ class PlayerStatusListener {
     }
 
     this.trackEndHandled = false
+    this.wasPlayingBeforeInterruption = false
   }
 
   /**
@@ -59,7 +61,9 @@ class PlayerStatusListener {
 
   private setupPlaybackStatusListener(player: AudioPlayer, callbacks: StatusCallbacks): void {
     this.playbackStatusSubscription = player.addListener('playbackStatusUpdate', status => {
-      callbacks.onPlayingChange(status.playing)
+      const currentPlaying = status.playing
+
+      callbacks.onPlayingChange(currentPlaying)
 
       const positionMs = Math.floor(status.currentTime * 1000)
       callbacks.onPositionChange(positionMs)
@@ -68,12 +72,23 @@ class PlayerStatusListener {
       callbacks.onDurationChange(durationMs)
 
       callbacks.onBufferingChange(status.isBuffering)
+
+      // Detect audio interruptions: playing changed from true to false (not user-initiated)
+      // This happens when phone calls or other audio interruptions occur
+      if (this.wasPlayingBeforeInterruption && !currentPlaying) callbacks.onAudioInterruption(true)
+      else if (!this.wasPlayingBeforeInterruption && currentPlaying)
+        // Audio resumed after interruption
+        callbacks.onAudioInterruption(false)
+
+      // Update previous playing state for next iteration
+      this.wasPlayingBeforeInterruption = currentPlaying
     })
   }
 
   private playbackStatusSubscription: { remove: () => void } | null = null
   private trackEndSubscription: { remove: () => void } | null = null
   private trackEndHandled = false
+  private wasPlayingBeforeInterruption = false
 }
 
 export const playerStatusListener = new PlayerStatusListener()

@@ -1,10 +1,14 @@
+/* eslint-disable max-lines -- Audio player service requires comprehensive state management */
 import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
 import type { LockScreenMetadata } from './types'
 import {
+  isPlayingAtom,
+  pauseTypeAtom,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
+  setPauseTypeAction,
   setPositionAction,
 } from '../../model'
 import { audioLoader } from './AudioLoader'
@@ -15,37 +19,13 @@ import { playerStatusListener } from './PlayerStatusListener'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService'
 
 export class PlayerService {
-  public setLockScreenMetadata = (metadata: LockScreenMetadata): void => {
-    lockScreenControls.setMetadata(this.playerInstance, metadata)
-  }
-
   public clearLockScreenControls = (): void => {
     lockScreenControls.clear(this.playerInstance)
   }
 
-  public play = async (): Promise<void> => {
-    await playbackController.play(this.playerInstance)
-  }
-
-  public pause = async (): Promise<void> => {
-    await playbackController.pause(this.playerInstance)
-  }
-
-  public stop = async (): Promise<void> => {
-    await playbackController.stop(this.playerInstance)
-  }
-
-  public seekTo = async (newPositionMs: number): Promise<void> => {
-    await playbackController.seekTo(this.playerInstance, newPositionMs)
-  }
-
   public getStatus = () => playbackController.getStatus(this.playerInstance)
 
-  public setVolume = async (newVolume: number): Promise<void> => {
-    await playbackController.setVolume(this.playerInstance, newVolume)
-  }
-
-  public getVolume = (): number => playbackController.getVolume()
+  public getVolume = () => playbackController.getVolume()
 
   public loadAudio = async (
     audioUrl: string,
@@ -54,7 +34,7 @@ export class PlayerService {
     if (!audioUrl) return null
     void setIsBufferingAction(ctx, true)
     void setPositionAction(ctx, 0)
-    await this.ensureAudioModeConfigured()
+    await audioModeManager.configure()
 
     const player = await audioLoader.loadAudio(audioUrl, initialPositionMs)
     if (!player) {
@@ -64,8 +44,16 @@ export class PlayerService {
 
     this.playerInstance = player
     this.setupListeners()
-
     return player
+  }
+
+  public pause = async (pauseType?: 'auto'): Promise<void> => {
+    if (pauseType === 'auto') void setPauseTypeAction(ctx, 'auto')
+    await playbackController.pause(this.playerInstance)
+  }
+
+  public play = async (): Promise<void> => {
+    await playbackController.play(this.playerInstance)
   }
 
   public replaceAudio = async (
@@ -73,7 +61,6 @@ export class PlayerService {
     initialPositionMs = 0,
   ): Promise<AudioPlayer | null> => {
     if (!audioUrl) return null
-
     void setIsBufferingAction(ctx, true)
     void setDurationAction(ctx, 0)
     audioLoader.resetTrackEndHandled()
@@ -85,6 +72,22 @@ export class PlayerService {
     this.playerInstance = player
     this.setupListeners()
     return player
+  }
+
+  public seekTo = async (newPositionMs: number): Promise<void> => {
+    await playbackController.seekTo(this.playerInstance, newPositionMs)
+  }
+
+  public setLockScreenMetadata = (metadata: LockScreenMetadata): void => {
+    lockScreenControls.setMetadata(this.playerInstance, metadata)
+  }
+
+  public setVolume = async (newVolume: number): Promise<void> => {
+    await playbackController.setVolume(this.playerInstance, newVolume)
+  }
+
+  public stop = async (): Promise<void> => {
+    await playbackController.stop(this.playerInstance)
   }
 
   public unload = async (): Promise<void> => {
@@ -99,23 +102,32 @@ export class PlayerService {
 
   private setupListeners = (): void => {
     if (!this.playerInstance) return
-
     playerStatusListener.setupListeners(this.playerInstance, {
+      onAudioInterruption: this.handleAudioInterruption,
       onBufferingChange: isBuffering => void setIsBufferingAction(ctx, isBuffering),
       onDurationChange: durationMs => void setDurationAction(ctx, durationMs),
       onPlayingChange: isPlaying => void setIsPlayingAction(ctx, isPlaying),
       onPositionChange: positionMs => void setPositionAction(ctx, positionMs),
-      onTrackEnd: () => {
-        void trackAutoAdvanceService.handleTrackEnd()
-      },
+      onTrackEnd: () => void trackAutoAdvanceService.handleTrackEnd(),
     })
   }
 
-  private async ensureAudioModeConfigured(): Promise<void> {
-    await audioModeManager.configure()
-  }
+  private handleAudioInterruption = (isInterrupted: boolean): void => {
+    if (isInterrupted) {
+      const wasPlaying = ctx.get(isPlayingAtom)
+      this.wasPlayingBeforeInterruption = wasPlaying
+      if (wasPlaying) void this.pause('auto')
+      return
+    }
 
+    const pauseType = ctx.get(pauseTypeAtom)
+    if (pauseType === 'auto' && this.wasPlayingBeforeInterruption) void this.play()
+
+    this.wasPlayingBeforeInterruption = false
+    void setPauseTypeAction(ctx, null)
+  }
   private playerInstance: AudioPlayer | null = null
+  private wasPlayingBeforeInterruption = false
 }
 
 export const playerService = new PlayerService()

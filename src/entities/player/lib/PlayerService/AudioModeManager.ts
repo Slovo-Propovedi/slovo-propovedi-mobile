@@ -1,11 +1,20 @@
-import { setAudioModeAsync } from 'expo-audio'
+import { type AudioMode, setAudioModeAsync } from 'expo-audio'
 import { AppState } from 'react-native'
 
-const AUDIO_MODE_CONFIG = {
+/**
+ * Audio mode configuration for expo-audio.
+ * Using 'doNotMix' interruption mode ensures playback pauses completely
+ * on interruptions (like phone calls) instead of just ducking/muting.
+ */
+const AUDIO_MODE_CONFIG: Partial<AudioMode> = {
+  // Interruption mode - 'doNotMix' pauses playback on interruptions
+  // (phone calls, other audio apps) instead of just muting/ducking
   interruptionMode: 'doNotMix',
+  // iOS - allow playback in silent mode
   playsInSilentMode: true,
+  // Background playback
   shouldPlayInBackground: true,
-} as const
+}
 
 const ACTIVITY_UNAVAILABLE_ERROR = 'activity is no longer available'
 
