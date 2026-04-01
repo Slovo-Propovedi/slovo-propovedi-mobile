@@ -4,6 +4,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "api:generate": "yarn delete-generated-api-files && orval",
+    "build-local-debug:android": "cd android && ./gradlew assembleDebug",
+    "build-local-release:android": "cd android && ./gradlew assembleRelease",
     "build-preview:all": "eas build -p all --profile preview",
     "build-preview:android": "eas build -p android --profile preview",
     "build-preview:ios": "eas build -p ios --profile preview",
@@ -116,7 +118,7 @@
     "husky": "^9.1.7",
     "knip": "^5.88.0",
     "lint-staged": "^16.3.2",
-    "orval": "^7.11.2",
+    "orval": "7.13.2",
     "patch-package": "^8.0.1",
     "prettier": "^3.8.1",
     "react-dom": "19.2.0",
@@ -127,5 +129,8 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1"
   },
-  "private": true
+  "private": true,
+  "resolutions": {
+    "punycode": "2.3.1"
+  }
 }
