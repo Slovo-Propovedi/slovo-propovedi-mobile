@@ -19,5 +19,3 @@ export const usePlayer = () =>
     }),
     [],
   )
-
-export { usePlayerState } from './usePlayerState'
