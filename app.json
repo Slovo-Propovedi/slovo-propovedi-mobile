@@ -36,9 +36,26 @@
       "favicon": "./assets/favicon.jpg",
       "bundler": "metro"
     },
-    "plugins": [["expo-audio", { "enableBackgroundPlayback": true }], "expo-asset", "expo-router"],
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true
+        }
+      ],
+      "expo-asset",
+      "expo-router"
+    ],
     "updates": {
-      "enabled": false
-    }
+      "enabled": false,
+      "url": "https://u.expo.dev/ddf9e2dd-b431-490b-afed-1340eed6137a"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ddf9e2dd-b431-490b-afed-1340eed6137a"
+      }
+    },
+    "runtimeVersion": "1.0.0"
   }
 }
