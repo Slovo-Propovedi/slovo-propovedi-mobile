@@ -12,7 +12,6 @@ import {
   audioModeManager,
   lockScreenControls,
   playbackController,
-  type PlayerActions,
   playerStatusListener,
   trackAutoAdvanceService,
 } from './sub-services'
@@ -77,6 +76,7 @@ export class PlayerService {
     if (!audioUrl) return null
 
     void setIsBufferingAction(ctx, true)
+    void setDurationAction(ctx, 0)
     audioLoader.resetTrackEndHandled()
     playerStatusListener.resetTrackEndHandled()
 
@@ -121,10 +121,9 @@ export class PlayerService {
 
 export const playerService = new PlayerService()
 
-const playerActions: PlayerActions = {
+trackAutoAdvanceService.setPlayerActions({
   pause: () => playerService.pause(),
   play: () => playerService.play(),
   replaceAudio: (audioUrl, initialPositionMs) =>
     playerService.replaceAudio(audioUrl, initialPositionMs),
-}
-trackAutoAdvanceService.setPlayerActions(playerActions)
+})

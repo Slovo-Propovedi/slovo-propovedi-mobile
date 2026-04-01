@@ -103,7 +103,7 @@ export const PlayerProgressBar = ({
   }, [duration])
 
   const displayPosition = isDragging ? previewPosition : position
-  const progress = duration > 0 ? displayPosition / duration : 0
+  const progress = Math.max(0, Math.min(1, duration > 0 ? displayPosition / duration : 0))
   const downloadProgressFraction = downloadProgress / 100
   const trackWidth = layoutRef.current?.width || 0
 
