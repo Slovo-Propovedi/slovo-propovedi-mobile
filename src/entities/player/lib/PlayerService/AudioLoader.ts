@@ -9,7 +9,6 @@ import {
   setDownloadProgressAction,
   setIsDownloadingAction,
 } from '../download-model'
-import { audioModeManager } from './AudioModeManager'
 
 const LOAD_TIMEOUT_MS = 30000
 const LOAD_CHECK_INTERVAL_MS = 100
@@ -20,7 +19,6 @@ class AudioLoader {
     void setIsBufferingAction(ctx, true)
     void setPositionAction(ctx, 0)
     this.trackEndHandled = false
-    await audioModeManager.configure()
     if (this.playerInstance) {
       this.playerInstance.pause()
       this.playerInstance = null
@@ -69,7 +67,6 @@ class AudioLoader {
     if (!audioUrl) return null
     void setIsBufferingAction(ctx, true)
     this.trackEndHandled = false
-    await audioModeManager.configure()
     if (!this.playerInstance) return this.loadAudio(audioUrl, initialPositionMs)
     const playUrl = await this.getPlaybackUrl(audioUrl)
     this.playerInstance.replace(playUrl)

@@ -16,8 +16,7 @@ import {
   playerStatusListener,
   trackAutoAdvanceService,
 } from './sub-services'
-
-class PlayerService {
+export class PlayerService {
   public setLockScreenMetadata = (metadata: LockScreenMetadata): void => {
     lockScreenControls.setMetadata(this.playerInstance, metadata)
   }
@@ -27,7 +26,6 @@ class PlayerService {
   }
 
   public play = async (): Promise<void> => {
-    await audioModeManager.configure()
     await playbackController.play(this.playerInstance)
   }
 
@@ -55,8 +53,10 @@ class PlayerService {
     audioUrl: string,
     initialPositionMs = 0,
   ): Promise<AudioPlayer | null> => {
+    if (!audioUrl) return null
     void setIsBufferingAction(ctx, true)
     void setPositionAction(ctx, 0)
+    await this.ensureAudioModeConfigured()
 
     const player = await audioLoader.loadAudio(audioUrl, initialPositionMs)
     if (!player) {
@@ -78,12 +78,13 @@ class PlayerService {
 
     void setIsBufferingAction(ctx, true)
     audioLoader.resetTrackEndHandled()
+    playerStatusListener.resetTrackEndHandled()
 
     const player = await audioLoader.replaceAudio(audioUrl, initialPositionMs)
     if (!player) return null
 
     this.playerInstance = player
-
+    this.setupListeners()
     return player
   }
 
@@ -111,17 +112,19 @@ class PlayerService {
     })
   }
 
+  private async ensureAudioModeConfigured(): Promise<void> {
+    await audioModeManager.configure()
+  }
+
   private playerInstance: AudioPlayer | null = null
 }
 
 export const playerService = new PlayerService()
 
-// Set up player actions for dependency injection
 const playerActions: PlayerActions = {
   pause: () => playerService.pause(),
   play: () => playerService.play(),
   replaceAudio: (audioUrl, initialPositionMs) =>
     playerService.replaceAudio(audioUrl, initialPositionMs),
 }
-
 trackAutoAdvanceService.setPlayerActions(playerActions)

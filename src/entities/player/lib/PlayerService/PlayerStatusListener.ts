@@ -39,6 +39,14 @@ class PlayerStatusListener {
     this.trackEndHandled = false
   }
 
+  /**
+   * Reset the track end handled flag.
+   * Used when replacing audio to allow track end events on the new track.
+   */
+  public resetTrackEndHandled(): void {
+    this.trackEndHandled = false
+  }
+
   private setupTrackEndListener(player: AudioPlayer, onTrackEnd: () => void): void {
     this.trackEndSubscription = player.addListener('playbackStatusUpdate', status => {
       // Guard: prevent duplicate track end handling
