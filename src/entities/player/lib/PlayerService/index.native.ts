@@ -7,14 +7,13 @@ import {
   setIsPlayingAction,
   setPositionAction,
 } from '../../model'
-import {
-  audioLoader,
-  audioModeManager,
-  lockScreenControls,
-  playbackController,
-  playerStatusListener,
-  trackAutoAdvanceService,
-} from './sub-services'
+import { audioLoader } from './AudioLoader'
+import { audioModeManager } from './AudioModeManager'
+import { lockScreenControls } from './LockScreenControls'
+import { playbackController } from './PlaybackController'
+import { playerStatusListener } from './PlayerStatusListener'
+import { trackAutoAdvanceService } from './TrackAutoAdvanceService'
+
 export class PlayerService {
   public setLockScreenMetadata = (metadata: LockScreenMetadata): void => {
     lockScreenControls.setMetadata(this.playerInstance, metadata)
