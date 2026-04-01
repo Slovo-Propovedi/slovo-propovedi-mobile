@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- Keep all player logic in one component for simplicity */
 import { useAction, useAtom } from '@reatom/npm-react'
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
   Image,
@@ -47,6 +47,8 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
   const [isDownloading] = useAtom(isDownloadingAtom)
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
 
+  const [showPlaylist, setShowPlaylist] = useState(false)
+
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
   const showSpinner = isBuffering || isCurrentAudioDownloading
   const { pause, play } = usePlayer()
@@ -70,6 +72,8 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     expanded,
     progress,
     screenHeight,
+    setShowPlaylist,
+    showPlaylist,
   })
 
   const handleMiniTap = useCallback(() => {
@@ -135,7 +139,12 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
             pointerEvents='none'
             style={[miniPlayerStyles.miniOverlay, miniOverlayStyle]}
           />
-          <FullscreenContent fullStyle={fullStyle} onClose={handleCloseFullscreen} />
+          <FullscreenContent
+            fullStyle={fullStyle}
+            showPlaylist={showPlaylist}
+            onClose={handleCloseFullscreen}
+            setShowPlaylist={setShowPlaylist}
+          />
         </Animated.View>
       </GestureDetector>
     </>

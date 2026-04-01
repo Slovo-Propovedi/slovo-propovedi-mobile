@@ -38,9 +38,16 @@ import { styles } from './styles'
 interface FullscreenContentProps {
   fullStyle: AnimatedStyle<ViewStyle>
   onClose: () => void
+  setShowPlaylist?: React.Dispatch<React.SetStateAction<boolean>>
+  showPlaylist?: boolean
 }
 
-export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps) => {
+export const FullscreenContent = ({
+  fullStyle,
+  onClose,
+  setShowPlaylist: setShowPlaylistProp,
+  showPlaylist: showPlaylistProp,
+}: FullscreenContentProps) => {
   const insets = useSafeAreaInsets()
   const [audio] = useAtom(currentAudioAtom)
   const [duration] = useAtom(durationAtom)
@@ -54,7 +61,8 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const [showMenu, setShowMenu] = useAtom(showMenuAtom)
-  const [showPlaylist, setShowPlaylist] = useState(false)
+  const setShowPlaylist = setShowPlaylistProp ?? (() => {})
+  const showPlaylist = showPlaylistProp ?? false
   const [showDescription, setShowDescription] = useState(false)
   const playlistSheetRef = useRef<BottomSheet>(null)
 
@@ -62,14 +70,34 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const currentDownloadProgress = isCurrentAudioDownloading ? downloadProgress : 0
 
   const handleCollapsePress = useCallback(() => {
-    if (showPlaylist) return void playlistSheetRef.current?.close()
+    if (showPlaylist) {
+      setShowPlaylist(false)
+      return
+    }
     onClose()
-  }, [showPlaylist, onClose])
+  }, [showPlaylist, setShowPlaylist, onClose])
+
+  const closePlaylistOnSwipe = useCallback(() => {
+    if (showPlaylist) setShowPlaylist(false)
+  }, [showPlaylist, setShowPlaylist])
 
   const closeTapGesture = Gesture.Tap().onEnd(() => {
     'worklet'
     runOnJS(handleCollapsePress)()
   })
+
+  const closePanGesture = Gesture.Pan()
+    .activeOffsetY(15)
+    .onStart(() => {
+      'worklet'
+      runOnJS(closePlaylistOnSwipe)()
+    })
+    .onEnd(event => {
+      'worklet'
+      if (event.velocityY > 300 || event.translationY > 100) runOnJS(handleCollapsePress)()
+    })
+
+  const closeGesture = Gesture.Race(closeTapGesture, closePanGesture)
 
   if (!audio) return null
 
@@ -103,7 +131,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   }
 
   const handleOpenPlaylist = () => {
-    setShowPlaylist(true)
+    setShowPlaylist?.(true)
     setTimeout(() => playlistSheetRef.current?.expand(), 0)
   }
 
@@ -122,7 +150,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   return (
     <>
       <Animated.View style={[styles.fullContainer, fullStyle]}>
-        <GestureDetector gesture={closeTapGesture}>
+        <GestureDetector gesture={closeGesture}>
           <View style={[styles.closeButton, { top: insets.top + INDENTS.low }]}>
             <Entypo name='chevron-down' style={styles.closeIcon} />
           </View>
