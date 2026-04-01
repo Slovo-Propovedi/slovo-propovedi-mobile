@@ -25,11 +25,15 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
 
   const { loadAudio, play } = usePlayer()
 
-  const createDefaultPlaylist = (tracks: AudioPlayerData[]): PlaylistData => ({
-    artwork: tracks[0]?.artwork,
-    list: tracks,
-    title: tracks[0]?.title || 'Слово.Проповеди',
-  })
+  const createDefaultPlaylist = (tracks: AudioPlayerData[]): PlaylistData => {
+    const firstTrack = tracks[0]
+    if (!firstTrack) return { artwork: '', list: [], title: 'Слово.Проповеди' }
+    return {
+      artwork: firstTrack.artwork,
+      list: tracks,
+      title: firstTrack.title,
+    }
+  }
 
   const playPlaylist = useCallback(
     async (tracks: AudioPlayerData[], startIndex = 0) => {
