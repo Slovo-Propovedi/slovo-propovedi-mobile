@@ -3,7 +3,7 @@ import { useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { TracksListItem } from 'widgets/track-list'
-import { currentAudioAtom, usePlayNewSermon } from 'entities/player'
+import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
 import type { PlaylistData } from 'shared/model'
 
@@ -23,6 +23,7 @@ interface TrackListItemData {
 
 export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBottomSheetProps) => {
   const [currentAudio] = useAtom(currentAudioAtom)
+  const [isAudioPlaying] = useAtom(isPlayingAtom)
   const playNewSermon = usePlayNewSermon()
 
   const tracksListData: TrackListItemData[] = (playlist?.list ?? []).map(sermon => ({
@@ -62,9 +63,10 @@ export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBot
         artwork={item.artwork}
         onPress={() => handlePressItem(index)}
         isPlaying={currentAudio?.id === item.id}
+        isAudioPlaying={currentAudio?.id === item.id && isAudioPlaying}
       />
     ),
-    [currentAudio?.id, handlePressItem],
+    [currentAudio?.id, handlePressItem, isAudioPlaying],
   )
 
   const ItemSeparator = useCallback(() => <View style={styles.divider} />, [])

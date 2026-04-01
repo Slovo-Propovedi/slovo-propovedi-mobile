@@ -75,6 +75,17 @@ export const tracksListStyles = StyleSheet.create({
   itemContainerActive: {
     zIndex: 100,
   },
+  playOrSoundBarsIconContainer: {
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    bottom: 4,
+    height: 24,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 4,
+    width: 24,
+  },
   textContainer: {
     flex: 1,
     justifyContent: 'center',

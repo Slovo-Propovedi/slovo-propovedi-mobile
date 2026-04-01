@@ -58,7 +58,8 @@ export const PlaylistScreen = () => {
       artist={item.artist}
       artwork={item.artwork}
       onPress={() => handlePressItem(index)}
-      isPlaying={isPlaying && currentAudio?.id === item.id}
+      isPlaying={currentAudio?.id === item.id}
+      isAudioPlaying={currentAudio?.id === item.id && isPlaying}
     />
   )
 

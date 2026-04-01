@@ -6,6 +6,7 @@ export interface TracksListItemProps {
   artist?: string
   artwork?: string
   audioUrl?: string
+  isAudioPlaying?: boolean
   isCached?: boolean
   isPlaying: boolean
   onPress: () => void

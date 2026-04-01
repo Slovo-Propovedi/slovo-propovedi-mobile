@@ -58,7 +58,7 @@ class AudioCacheService {
       ensureCacheDirectoryExists()
       const cacheDir = getAudioCacheDirectory()
       if (!cacheDir.exists) return { fileCount: 0, totalSize: 0 }
-      const files = await cacheDir.list()
+      const files = cacheDir.list()
       let totalSize = 0
       for (const file of files) if (file instanceof File) totalSize += file.size ?? 0
       return { fileCount: files.length, totalSize }
@@ -92,7 +92,7 @@ class AudioCacheService {
   public clearCache = async (): Promise<void> => {
     try {
       const cacheDir = getAudioCacheDirectory()
-      if (cacheDir.exists) await cacheDir.delete()
+      if (cacheDir.exists) cacheDir.delete()
     } catch (error) {
       console.error('[AudioCacheService] Error clearing cache:', error)
       throw error
@@ -104,7 +104,7 @@ class AudioCacheService {
     try {
       const cachedFile = getCachedFile(audioUrl)
       if (cachedFile.exists) {
-        await cachedFile.delete()
+        cachedFile.delete()
         return true
       }
       return false

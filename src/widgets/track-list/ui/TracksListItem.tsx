@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- FIXME: refactor */
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAtom } from '@reatom/npm-react'
 import React, { useEffect, useRef, useState } from 'react'
@@ -8,6 +9,7 @@ import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { MovingText } from 'shared/ui/MovingText'
 import { COLORS } from 'shared/ui/themed'
 import type { TracksListItemProps } from './types'
+import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
 import { tracksListStyles } from './styles'
 
 const TITLE_ANIMATION_THRESHOLD = 30
@@ -17,6 +19,7 @@ export const TracksListItem = ({
   artist,
   artwork,
   audioUrl,
+  isAudioPlaying = false,
   isPlaying,
   onPress,
   title,
@@ -29,6 +32,7 @@ export const TracksListItem = ({
   const prevDownloadingUrlRef = useRef<null | string>(null)
   const isCached = useIsCached(audioUrl ?? null, cacheTrigger)
   const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
+
   useEffect(() => {
     const wasThisAudioDownloading = prevDownloadingUrlRef.current === audioUrl
     if (wasThisAudioDownloading && downloadingUrl === null) setCacheTrigger(prev => prev + 1)
@@ -90,6 +94,7 @@ export const TracksListItem = ({
       </Pressable>
     </Modal>
   )
+
   return (
     <Pressable
       onPress={handleItemPress}
@@ -102,10 +107,8 @@ export const TracksListItem = ({
           source={{ uri: artwork || IMAGE_PLACEHOLDER }}
           style={[tracksListStyles.albumArt, isPlaying && tracksListStyles.albumArtPlaying]}
         />
-        {!isCached && (
-          <View style={tracksListStyles.cacheIconContainer}>
-            <MaterialCommunityIcons size={16} color={COLORS.white} name='cloud-download-outline' />
-          </View>
+        {(!isCached || isPlaying) && (
+          <PlayingStatusOrChacheIcon isPlaying={isPlaying} isAudioPlaying={isAudioPlaying} />
         )}
       </View>
       <View style={tracksListStyles.textContainer}>

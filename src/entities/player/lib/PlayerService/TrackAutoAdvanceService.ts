@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- FIXME: refactor */
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer } from 'expo-audio'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/config'
@@ -59,7 +60,11 @@ class TrackAutoAdvanceService {
 
     if (!nextTrack?.audioUrl) return
 
-    await this.playNextTrack(nextTrack as AudioPlayerData, currentPlaylist, nextTrack.audioUrl)
+    await this.playNextTrack(
+      { ...nextTrack, audioUrl: nextTrack.audioUrl },
+      currentPlaylist,
+      nextTrack.audioUrl,
+    )
   }
 
   private async repeatTrack(
@@ -76,7 +81,7 @@ class TrackAutoAdvanceService {
     playlist: PlaylistData,
     audioUrl: string,
   ): Promise<void> {
-    const newAudio = { ...nextTrack, artwork: nextTrack.artwork ?? '', audioUrl } as AudioPlayerData
+    const newAudio: AudioPlayerData = { ...nextTrack, artwork: nextTrack.artwork, audioUrl }
     await setCurrentAudioAction(ctx, newAudio)
     await this.playTrackWithMetadata(newAudio, playlist, audioUrl)
   }
@@ -85,11 +90,11 @@ class TrackAutoAdvanceService {
     const firstTrack = playlist.list[0]
     if (!firstTrack?.audioUrl) return
 
-    const newAudio = {
+    const newAudio: AudioPlayerData = {
       ...firstTrack,
       artwork: firstTrack.artwork ?? '',
       audioUrl: firstTrack.audioUrl,
-    } as AudioPlayerData
+    }
     await setCurrentAudioAction(ctx, newAudio)
     await this.playTrackWithMetadata(newAudio, playlist, newAudio.audioUrl)
   }
