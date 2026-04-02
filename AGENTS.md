@@ -376,18 +376,6 @@ src/entities/player/lib/PlayerService/
 └── index.web.ts    # Web implementation
 ```
 
-## i18n
-
-The project uses i18next. ESLint warns on literal strings (should use translation keys):
-
-```typescript
-// Avoid
-<Text>Hello World</Text>
-
-// Use
-<Text>{t('greeting')}</Text>
-```
-
 ## Package Manager
 
 **IMPORTANT:** This project uses **yarn** as the package manager. Always use yarn instead of npm for all operations:

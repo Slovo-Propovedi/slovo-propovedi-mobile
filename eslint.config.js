@@ -14,7 +14,6 @@ import sonarjs from 'eslint-plugin-sonarjs'
 import globals from 'globals'
 import process from 'process'
 import tseslint from 'typescript-eslint'
-import i18next from 'eslint-plugin-i18next'
 
 const LAYERS = ['app', 'pages', 'widgets', 'features', 'entities', 'shared']
 
@@ -67,7 +66,6 @@ export default tseslint.config(
       perfectionist.configs['recommended-alphabetical'],
       reactRefresh.configs.recommended,
       jsdoc.configs['flat/recommended'],
-      i18next.configs['flat/recommended'],
     ],
     files: ['**/*.{ts,tsx,js,jsx}'],
     plugins: {
@@ -201,8 +199,6 @@ export default tseslint.config(
       '@eslint-community/eslint-comments/disable-enable-pair': ['error', { allowWholeFile: true }],
       '@eslint-community/eslint-comments/no-unlimited-disable': 'error',
       '@eslint-community/eslint-comments/require-description': ['error', { ignore: [] }],
-
-      'i18next/no-literal-string': 'warn',
     },
   },
 )
