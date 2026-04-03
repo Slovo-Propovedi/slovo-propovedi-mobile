@@ -4,6 +4,7 @@ import React from 'react'
 import { BackHandler } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { showPlaylistAtom } from 'widgets/expandable-player'
+import { showMenuAtom } from 'widgets/expandable-player/model/showMenuAtom'
 import { closePlayerSheetAction, initializePlayer, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import RootLayout from './_RootLayout'
@@ -20,10 +21,17 @@ void initializePlayer()
 
 // Subscribe to back handler
 BackHandler.addEventListener('hardwareBackPress', () => {
+  const currentShowMenu = ctx.get(showMenuAtom)
   const currentShowPlaylist = ctx.get(showPlaylistAtom)
   const currentIsPlayerExpanded = ctx.get(isPlayerExpandedAtom)
 
-  // Priority 1: Close playlist sheet if open
+  if (currentShowMenu) {
+    void ctx.schedule(() => {
+      showMenuAtom(ctx, false)
+    })
+    return true
+  }
+
   if (currentShowPlaylist) {
     void ctx.schedule(() => {
       showPlaylistAtom(ctx, false)
@@ -31,7 +39,6 @@ BackHandler.addEventListener('hardwareBackPress', () => {
     return true
   }
 
-  // Priority 2: Close expanded player sheet
   if (currentIsPlayerExpanded) {
     void ctx.schedule(() => {
       void closePlayerSheetAction(ctx)
@@ -39,13 +46,11 @@ BackHandler.addEventListener('hardwareBackPress', () => {
     return true
   }
 
-  // Priority 3: Navigate back if possible
   if (router.canGoBack()) {
     router.back()
     return true
   }
 
-  // Priority 4: Let system minimize the app
   return false
 })
 
