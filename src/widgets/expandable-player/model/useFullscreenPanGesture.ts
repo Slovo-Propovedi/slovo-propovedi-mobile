@@ -1,7 +1,8 @@
+import { useAtom } from '@reatom/npm-react'
 import { Gesture } from 'react-native-gesture-handler'
 import { runOnJS, useSharedValue, withTiming } from 'react-native-reanimated'
-import type React from 'react'
 import type { SharedValue } from 'react-native-reanimated'
+import { showPlaylistAtom } from '../model/showPlaylistAtom'
 
 interface UseFullscreenPanGestureParams {
   close: () => void
@@ -9,8 +10,6 @@ interface UseFullscreenPanGestureParams {
   expanded: boolean
   progress: SharedValue<number>
   screenHeight: number
-  setShowPlaylist?: React.Dispatch<React.SetStateAction<boolean>>
-  showPlaylist?: boolean
 }
 
 export const useFullscreenPanGesture = ({
@@ -19,9 +18,8 @@ export const useFullscreenPanGesture = ({
   expanded,
   progress,
   screenHeight,
-  setShowPlaylist,
-  showPlaylist,
 }: UseFullscreenPanGestureParams) => {
+  const [showPlaylist, setShowPlaylist] = useAtom(showPlaylistAtom)
   const startY = useSharedValue(0)
 
   return expanded && !disabled
@@ -29,7 +27,7 @@ export const useFullscreenPanGesture = ({
         .activeOffsetY(15)
         .onStart(() => {
           'worklet'
-          if (showPlaylist && setShowPlaylist) {
+          if (showPlaylist) {
             runOnJS(setShowPlaylist)(false)
             return
           }

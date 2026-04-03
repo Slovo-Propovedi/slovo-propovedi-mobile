@@ -30,6 +30,7 @@ import { MovingText } from 'shared/ui'
 import { INDENTS } from 'shared/ui/themed'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import { showMenuAtom } from '../model/showMenuAtom'
+import { showPlaylistAtom } from '../model/showPlaylistAtom'
 import { gradientStyles } from './gradients'
 import { PlayerMenu } from './PlayerMenu'
 import { PlaylistBottomSheet } from './PlaylistBottomSheet'
@@ -38,16 +39,9 @@ import { styles } from './styles'
 interface FullscreenContentProps {
   fullStyle: AnimatedStyle<ViewStyle>
   onClose: () => void
-  setShowPlaylist?: React.Dispatch<React.SetStateAction<boolean>>
-  showPlaylist?: boolean
 }
 
-export const FullscreenContent = ({
-  fullStyle,
-  onClose,
-  setShowPlaylist: setShowPlaylistProp,
-  showPlaylist: showPlaylistProp,
-}: FullscreenContentProps) => {
+export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps) => {
   const insets = useSafeAreaInsets()
   const [audio] = useAtom(currentAudioAtom)
   const [duration] = useAtom(durationAtom)
@@ -61,8 +55,7 @@ export const FullscreenContent = ({
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const [showMenu, setShowMenu] = useAtom(showMenuAtom)
-  const setShowPlaylist = setShowPlaylistProp ?? (() => {})
-  const showPlaylist = showPlaylistProp ?? false
+  const [showPlaylist, setShowPlaylist] = useAtom(showPlaylistAtom)
   const [showDescription, setShowDescription] = useState(false)
   const playlistSheetRef = useRef<BottomSheet>(null)
 
@@ -131,7 +124,7 @@ export const FullscreenContent = ({
   }
 
   const handleOpenPlaylist = () => {
-    setShowPlaylist?.(true)
+    setShowPlaylist(true)
     setTimeout(() => playlistSheetRef.current?.expand(), 0)
   }
 

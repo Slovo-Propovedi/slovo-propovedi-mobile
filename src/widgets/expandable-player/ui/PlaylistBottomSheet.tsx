@@ -8,6 +8,7 @@ import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
 import type { PlaylistData } from 'shared/model'
 
 interface PlaylistBottomSheetProps {
+  closeOnBack?: boolean
   onClose: () => void
   playlist: null | PlaylistData
   sheetRef: React.RefObject<BottomSheet | null>
@@ -21,7 +22,12 @@ interface TrackListItemData {
   url?: string
 }
 
-export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBottomSheetProps) => {
+export const PlaylistBottomSheet = ({
+  closeOnBack = true,
+  onClose,
+  playlist,
+  sheetRef,
+}: PlaylistBottomSheetProps) => {
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isAudioPlaying] = useAtom(isPlayingAtom)
   const playNewSermon = usePlayNewSermon()
@@ -49,9 +55,9 @@ export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBot
 
   const handleSheetChanges = useCallback(
     (index: number) => {
-      if (index === -1) onClose()
+      if (closeOnBack && index === -1) onClose()
     },
-    [onClose],
+    [closeOnBack, onClose],
   )
 
   const renderItem = useCallback(
@@ -103,20 +109,10 @@ export const PlaylistBottomSheet = ({ onClose, playlist, sheetRef }: PlaylistBot
 }
 
 const styles = StyleSheet.create({
-  background: {
-    backgroundColor: 'rgba(37, 37, 37, 0.8)',
-  },
-  divider: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    height: 1,
-  },
-  indicator: {
-    backgroundColor: COLORS.textMuted,
-  },
-  listContent: {
-    paddingBottom: INDENTS.medium,
-    paddingHorizontal: INDENTS.medium,
-  },
+  background: { backgroundColor: 'rgba(37, 37, 37, 0.8)' },
+  divider: { backgroundColor: 'rgba(255, 255, 255, 0.1)', height: 1 },
+  indicator: { backgroundColor: COLORS.textMuted },
+  listContent: { paddingBottom: INDENTS.medium, paddingHorizontal: INDENTS.medium },
   title: {
     color: COLORS.text,
     fontSize: FONT_SIZES.h2,

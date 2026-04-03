@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- FIXME: refactor */
 import { useAction, useAtom } from '@reatom/npm-react'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import {
   ActivityIndicator,
   Image,
@@ -47,8 +47,6 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
   const [isDownloading] = useAtom(isDownloadingAtom)
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
 
-  const [showPlaylist, setShowPlaylist] = useState(false)
-
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
   const showSpinner = isBuffering || isCurrentAudioDownloading
   const { pause, play } = usePlayer()
@@ -72,8 +70,6 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     expanded,
     progress,
     screenHeight,
-    setShowPlaylist,
-    showPlaylist,
   })
 
   const handleMiniTap = useCallback(() => {
@@ -139,12 +135,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
             pointerEvents='none'
             style={[miniPlayerStyles.miniOverlay, miniOverlayStyle]}
           />
-          <FullscreenContent
-            fullStyle={fullStyle}
-            showPlaylist={showPlaylist}
-            onClose={handleCloseFullscreen}
-            setShowPlaylist={setShowPlaylist}
-          />
+          <FullscreenContent fullStyle={fullStyle} onClose={handleCloseFullscreen} />
         </Animated.View>
       </GestureDetector>
     </>
