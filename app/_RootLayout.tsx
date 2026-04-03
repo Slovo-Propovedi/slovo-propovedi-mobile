@@ -1,9 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAtom } from '@reatom/npm-react'
-import { Stack } from 'expo-router'
+import { router, Stack } from 'expo-router'
 import { useEffect } from 'react'
-import { isPlayingAtom, positionAtom } from 'entities/player'
+import { BackHandler } from 'react-native'
+import { showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
+import {
+  closePlayerSheetAction,
+  isPlayerExpandedAtom,
+  isPlayingAtom,
+  positionAtom,
+} from 'entities/player'
 import { CURRENT_SOUND_POSITION } from 'shared/config'
+import { ctx } from 'shared/lib/reatom-ctx'
 
 const RootLayout = () => {
   const [isPlaying] = useAtom(isPlayingAtom)
@@ -16,6 +24,45 @@ const RootLayout = () => {
     const interval = setInterval(savePosition, 5000)
     return () => clearInterval(interval)
   }, [isPlaying, position])
+
+  useEffect(() => {
+    const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+      const currentShowMenu = ctx.get(showMenuAtom)
+      const currentShowPlaylist = ctx.get(showPlaylistAtom)
+      const currentIsPlayerExpanded = ctx.get(isPlayerExpandedAtom)
+      const canGoBack = router.canGoBack()
+
+      if (currentShowMenu) {
+        void ctx.schedule(() => {
+          showMenuAtom(ctx, false)
+        })
+        return true
+      }
+
+      if (currentShowPlaylist) {
+        void ctx.schedule(() => {
+          showPlaylistAtom(ctx, false)
+        })
+        return true
+      }
+
+      if (currentIsPlayerExpanded) {
+        void ctx.schedule(() => {
+          void closePlayerSheetAction(ctx)
+        })
+        return true
+      }
+
+      if (canGoBack) {
+        router.back()
+        return true
+      }
+
+      return false
+    })
+
+    return () => listener.remove()
+  }, [])
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
