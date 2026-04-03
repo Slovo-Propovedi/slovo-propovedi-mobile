@@ -3,6 +3,7 @@ export {
   downloadProgressAtom,
   isDownloadingAtom,
 } from './lib/download-model'
+export { initializePlayer } from './lib/initializePlayer'
 export { usePlayer } from './lib/usePlayer'
 export { usePlayNewSermon } from './lib/usePlaySermon'
 export { useQueueManagement } from './lib/useQueueManagement'

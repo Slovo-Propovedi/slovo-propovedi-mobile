@@ -4,7 +4,7 @@ import React from 'react'
 import { BackHandler } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { showPlaylistAtom } from 'widgets/expandable-player'
-import { closePlayerSheetAction, isPlayerExpandedAtom } from 'entities/player'
+import { closePlayerSheetAction, initializePlayer, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import RootLayout from './_RootLayout'
 
@@ -15,6 +15,8 @@ const RootLayoutWithProvider = () => (
     </GestureHandlerRootView>
   </reatomContext.Provider>
 )
+
+void initializePlayer()
 
 // Subscribe to back handler
 BackHandler.addEventListener('hardwareBackPress', () => {
