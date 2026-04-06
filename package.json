@@ -1,6 +1,6 @@
 {
-  "name": "slovo-istiny-mobile",
-  "version": "1.0.5",
+  "name": "slovo-propovedi-mobile",
+  "version": "0.0.0",
   "main": "expo-router/entry",
   "scripts": {
     "api:generate": "yarn delete-generated-api-files && orval",

@@ -1,6 +1,6 @@
 {
-  "/home/egoreast/Programming/slovo-istiny-mobile/lint-staged.config.js": {
-    "path": "/home/egoreast/Programming/slovo-istiny-mobile/lint-staged.config.js",
+  "/home/egoreast/Programming/slovo-propovedi-mobile/lint-staged.config.js": {
+    "path": "/home/egoreast/Programming/slovo-propovedi-mobile/lint-staged.config.js",
     "statementMap": {
       "0": { "start": { "line": 2, "column": 15 }, "end": { "line": 5, "column": 1 } }
     },

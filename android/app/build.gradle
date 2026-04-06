@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.egoreast.slovoistinymobile'
+    namespace 'com.egoreast.slovopropovedimobile'
     defaultConfig {
-        applicationId 'com.egoreast.slovoistinymobile'
+        applicationId 'com.egoreast.slovopropovedimobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

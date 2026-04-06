@@ -27,8 +27,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>slovo-istiny</string>
-          <string>com.egoreast.slovoistinymobile</string>
+          <string>slovo-propovedi</string>
+          <string>com.egoreast.slovopropovedimobile</string>
         </array>
       </dict>
     </array>

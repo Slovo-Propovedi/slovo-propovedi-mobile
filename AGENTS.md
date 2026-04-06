@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Coding agent instructions for the slovo-istiny-mobile React Native/Expo project.
+Coding agent instructions for the slovo-propovedi-mobile React Native/Expo project.
 
 ## Build, Lint, and Test Commands
 

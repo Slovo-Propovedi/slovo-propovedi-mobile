@@ -1,12 +1,12 @@
 {
   "expo": {
     "name": "Слово.Проповеди",
-    "slug": "slovo-istiny-mobile",
-    "version": "1.0.5",
+    "slug": "slovo-propovedi-mobile",
+    "version": "0.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "scheme": "slovo-istiny",
+    "scheme": "slovo-propovedi",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.egoreast.slovoistinymobile",
+      "bundleIdentifier": "com.egoreast.slovopropovedimobile",
       "infoPlist": {
         "UIBackgroundModes": ["audio"]
       }
@@ -24,7 +24,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#f16031"
       },
-      "package": "com.egoreast.slovoistinymobile",
+      "package": "com.egoreast.slovopropovedimobile",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
@@ -53,9 +53,10 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "ddf9e2dd-b431-490b-afed-1340eed6137a"
+        "projectId": "ef4d8a44-3b37-4690-8592-59429a673845"
       }
     },
-    "runtimeVersion": "1.0.0"
+    "runtimeVersion": "1.0.0",
+    "owner": "egoreast"
   }
 }

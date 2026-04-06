@@ -1,4 +1,4 @@
-package com.egoreast.slovoistinymobile
+package com.egoreast.slovopropovedimobile
 
 import android.os.Build
 import android.os.Bundle
