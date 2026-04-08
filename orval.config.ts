@@ -25,7 +25,7 @@ export default defineConfig({
   //   input: 'https://docs.api.exarh.ru/openapi.dev.yml',
   // },
   mainZod: {
-    input: 'https://example.com/openapi.yml',
+    input: './openAPI.yaml',
     output: {
       target: './src/shared/api/generated',
       schemas: './src/shared/api/generated/model',
