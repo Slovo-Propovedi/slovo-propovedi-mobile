@@ -137,8 +137,14 @@ components:
           type: number
           nullable: true
         verse:
-          type: string
           nullable: true
+          oneOf:
+            - type: number
+            - type: array
+              items:
+                type: number
+              minItems: 2
+              maxItems: 2
 
     SermonEntity:
       type: object
@@ -175,7 +181,13 @@ components:
         chapter:
           type: number
         verse:
-          type: string
+          oneOf:
+            - type: number
+            - type: array
+              items:
+                type: number
+              minItems: 2
+              maxItems: 2
 
     AllSermonsResponse:
       type: object
@@ -267,6 +279,37 @@ components:
           type: string
         description:
           type: string
+          nullable: true
+        itemsSize:
+          type: string
+          enum:
+            - small
+            - middle
+            - large
+            - xLarge
+          nullable: true
+        itemsRows:
+          type: integer
+          nullable: true
+        transform:
+          type: string
+          enum:
+            - high
+            - short
+          nullable: true
+        isDescriptionTitleOnSlideLarge:
+          type: boolean
+          nullable: true
+        whereIsSlideTitleLocated:
+          type: string
+          enum:
+            - on
+            - under
+            - bothOnAndUnder
+          nullable: true
+        borderRadius:
+          type: boolean
+          nullable: true
 
     UpdateSectionDto:
       type: object
@@ -275,14 +318,49 @@ components:
           type: string
         description:
           type: string
+          nullable: true
         playlistsIds:
           type: array
           items:
             type: string
             format: uuid
+        itemsSize:
+          type: string
+          enum:
+            - small
+            - middle
+            - large
+            - xLarge
+          nullable: true
+        itemsRows:
+          type: integer
+          nullable: true
+        transform:
+          type: string
+          enum:
+            - high
+            - short
+          nullable: true
+        isDescriptionTitleOnSlideLarge:
+          type: boolean
+          nullable: true
+        whereIsSlideTitleLocated:
+          type: string
+          enum:
+            - on
+            - under
+            - bothOnAndUnder
+          nullable: true
+        borderRadius:
+          type: boolean
+          nullable: true
 
     SectionEntity:
       type: object
+      required:
+        - id
+        - title
+        - playlists
       properties:
         id:
           type: string
@@ -292,6 +370,36 @@ components:
         description:
           type: string
           nullable: true
+        itemsSize:
+          type: string
+          enum:
+            - small
+            - middle
+            - large
+            - xLarge
+          default: middle
+        itemsRows:
+          type: integer
+          nullable: true
+        transform:
+          type: string
+          enum:
+            - high
+            - short
+          nullable: true
+        isDescriptionTitleOnSlideLarge:
+          type: boolean
+          default: false
+        whereIsSlideTitleLocated:
+          type: string
+          enum:
+            - on
+            - under
+            - bothOnAndUnder
+          default: under
+        borderRadius:
+          type: boolean
+          default: false
         playlists:
           type: array
           items:

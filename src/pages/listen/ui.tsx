@@ -2,10 +2,7 @@ import { useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
 import { FlatList, StatusBar, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ListenEveryDaySlider } from 'widgets/listen-every-day-slider'
-import { NewSermonsSlider } from 'widgets/new-sermons-slider'
-import { SermonsOnBibleSlider } from 'widgets/sermons-on-bible-slider'
-import { TopicalListSlider } from 'widgets/topical-list-slider'
+import { DynamicSectionsSlider } from 'widgets/dynamic-sections-slider'
 import { QueueControls, TracksListItem } from 'widgets/track-list'
 import {
   type AudioPlayerData,
@@ -15,13 +12,6 @@ import {
 } from 'entities/player'
 import { COLORS } from 'shared/ui/themed'
 import { mockNewSermons, mockSermons } from './mockData'
-
-const SLIDER_COMPONENTS = [
-  { component: <NewSermonsSlider />, key: 'newSermons' },
-  { component: <SermonsOnBibleSlider />, key: 'sermonsOnBible' },
-  { component: <TopicalListSlider />, key: 'topicalList' },
-  { component: <ListenEveryDaySlider />, key: 'listenEveryDay' },
-]
 
 export const ListenScreen = () => {
   const { playPlaylist, shufflePlaylist } = useQueueManagement()
@@ -46,11 +36,7 @@ export const ListenScreen = () => {
   const ListHeaderComponent = useCallback(
     () => (
       <View>
-        {SLIDER_COMPONENTS.map(item => (
-          <View key={item.key} style={styles.sliderSection}>
-            {item.component}
-          </View>
-        ))}
+        <DynamicSectionsSlider />
         <QueueControls onPressPlayAll={handlePlayAll} onPressShuffle={handleShuffle} />
       </View>
     ),
@@ -93,8 +79,5 @@ const styles = StyleSheet.create({
   listen: {
     backgroundColor: COLORS.background,
     flex: 1,
-  },
-  sliderSection: {
-    marginBottom: 16,
   },
 })

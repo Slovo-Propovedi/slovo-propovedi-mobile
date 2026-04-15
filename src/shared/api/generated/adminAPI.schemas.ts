@@ -53,18 +53,56 @@ export interface CreateSermonDto {
   /** @nullable */
   textFileUrl?: string | null
   title: string
-  /** @nullable */
-  verse?: string | null
+  verse?: number | number[] | null
   /** @nullable */
   youtubeUrl?: string | null
 }
 
+export type SectionEntityItemsSize =
+  (typeof SectionEntityItemsSize)[keyof typeof SectionEntityItemsSize]
+
+export const SectionEntityItemsSize = {
+  small: 'small',
+  middle: 'middle',
+  large: 'large',
+  xLarge: 'xLarge',
+} as const
+
+/**
+ * @nullable
+ */
+export type SectionEntityTransform =
+  | (typeof SectionEntityTransform)[keyof typeof SectionEntityTransform]
+  | null
+
+export const SectionEntityTransform = {
+  high: 'high',
+  short: 'short',
+} as const
+
+export type SectionEntityWhereIsSlideTitleLocated =
+  (typeof SectionEntityWhereIsSlideTitleLocated)[keyof typeof SectionEntityWhereIsSlideTitleLocated]
+
+export const SectionEntityWhereIsSlideTitleLocated = {
+  on: 'on',
+  under: 'under',
+  bothOnAndUnder: 'bothOnAndUnder',
+} as const
+
 export interface SectionEntity {
+  borderRadius?: boolean
   /** @nullable */
   description?: string | null
-  id?: string
-  playlists?: PlaylistEntity[]
-  title?: string
+  id: string
+  isDescriptionTitleOnSlideLarge?: boolean
+  /** @nullable */
+  itemsRows?: number | null
+  itemsSize?: SectionEntityItemsSize
+  playlists: PlaylistEntity[]
+  title: string
+  /** @nullable */
+  transform?: SectionEntityTransform
+  whereIsSlideTitleLocated?: SectionEntityWhereIsSlideTitleLocated
 }
 
 export interface PlaylistEntity {
@@ -88,7 +126,7 @@ export interface SermonEntity {
   /** @nullable */
   textFileUrl?: string | null
   title: string
-  verse?: string
+  verse?: number | number[]
   /** @nullable */
   youtubeUrl?: string | null
 }
@@ -117,15 +155,119 @@ export interface StatusPlaylistResponse {
   status?: string
 }
 
+/**
+ * @nullable
+ */
+export type CreateSectionDtoItemsSize =
+  | (typeof CreateSectionDtoItemsSize)[keyof typeof CreateSectionDtoItemsSize]
+  | null
+
+export const CreateSectionDtoItemsSize = {
+  small: 'small',
+  middle: 'middle',
+  large: 'large',
+  xLarge: 'xLarge',
+} as const
+
+/**
+ * @nullable
+ */
+export type CreateSectionDtoTransform =
+  | (typeof CreateSectionDtoTransform)[keyof typeof CreateSectionDtoTransform]
+  | null
+
+export const CreateSectionDtoTransform = {
+  high: 'high',
+  short: 'short',
+} as const
+
+/**
+ * @nullable
+ */
+export type CreateSectionDtoWhereIsSlideTitleLocated =
+  | (typeof CreateSectionDtoWhereIsSlideTitleLocated)[keyof typeof CreateSectionDtoWhereIsSlideTitleLocated]
+  | null
+
+export const CreateSectionDtoWhereIsSlideTitleLocated = {
+  on: 'on',
+  under: 'under',
+  bothOnAndUnder: 'bothOnAndUnder',
+} as const
+
 export interface CreateSectionDto {
-  description?: string
+  /** @nullable */
+  borderRadius?: boolean | null
+  /** @nullable */
+  description?: string | null
+  /** @nullable */
+  isDescriptionTitleOnSlideLarge?: boolean | null
+  /** @nullable */
+  itemsRows?: number | null
+  /** @nullable */
+  itemsSize?: CreateSectionDtoItemsSize
   title: string
+  /** @nullable */
+  transform?: CreateSectionDtoTransform
+  /** @nullable */
+  whereIsSlideTitleLocated?: CreateSectionDtoWhereIsSlideTitleLocated
 }
 
+/**
+ * @nullable
+ */
+export type UpdateSectionDtoItemsSize =
+  | (typeof UpdateSectionDtoItemsSize)[keyof typeof UpdateSectionDtoItemsSize]
+  | null
+
+export const UpdateSectionDtoItemsSize = {
+  small: 'small',
+  middle: 'middle',
+  large: 'large',
+  xLarge: 'xLarge',
+} as const
+
+/**
+ * @nullable
+ */
+export type UpdateSectionDtoTransform =
+  | (typeof UpdateSectionDtoTransform)[keyof typeof UpdateSectionDtoTransform]
+  | null
+
+export const UpdateSectionDtoTransform = {
+  high: 'high',
+  short: 'short',
+} as const
+
+/**
+ * @nullable
+ */
+export type UpdateSectionDtoWhereIsSlideTitleLocated =
+  | (typeof UpdateSectionDtoWhereIsSlideTitleLocated)[keyof typeof UpdateSectionDtoWhereIsSlideTitleLocated]
+  | null
+
+export const UpdateSectionDtoWhereIsSlideTitleLocated = {
+  on: 'on',
+  under: 'under',
+  bothOnAndUnder: 'bothOnAndUnder',
+} as const
+
 export interface UpdateSectionDto {
-  description?: string
+  /** @nullable */
+  borderRadius?: boolean | null
+  /** @nullable */
+  description?: string | null
+  /** @nullable */
+  isDescriptionTitleOnSlideLarge?: boolean | null
+  /** @nullable */
+  itemsRows?: number | null
+  /** @nullable */
+  itemsSize?: UpdateSectionDtoItemsSize
   playlistsIds?: string[]
   title?: string
+  /** @nullable */
+  transform?: UpdateSectionDtoTransform
+  /** @nullable */
+  whereIsSlideTitleLocated?: UpdateSectionDtoWhereIsSlideTitleLocated
 }
 
 export interface AllSectionsResponse {

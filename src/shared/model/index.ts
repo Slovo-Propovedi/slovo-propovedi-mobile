@@ -10,6 +10,7 @@ export {
   type BookData,
   type PlaylistData,
   playlistDataSchema,
+  type SectionData,
   type SermonData,
   sermonDataSchema,
 } from './domain/common'

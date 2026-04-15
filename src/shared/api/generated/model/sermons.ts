@@ -12,6 +12,9 @@ import * as zod from 'zod'
 /**
  * @summary Создать новую проповедь
  */
+export const createSermonBodyVerseTwoMin = 2
+export const createSermonBodyVerseTwoMax = 2
+
 export const CreateSermonBody = zod.object({
   title: zod.string(),
   description: zod.string(),
@@ -21,8 +24,20 @@ export const CreateSermonBody = zod.object({
   artist: zod.string().nullish(),
   artwork: zod.string().nullish(),
   chapter: zod.number().nullish(),
-  verse: zod.string().nullish(),
+  verse: zod
+    .union([
+      zod.number(),
+      zod.array(zod.number()).min(createSermonBodyVerseTwoMin).max(createSermonBodyVerseTwoMax),
+    ])
+    .nullish(),
 })
+
+export const createSermon200ResponsePlaylistsItemSectionsItemItemsSizeDefault = `middle`
+export const createSermon200ResponsePlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
+export const createSermon200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault = `under`
+export const createSermon200ResponsePlaylistsItemSectionsItemBorderRadiusDefault = false
+export const createSermon200ResponseVerseTwoMin = 2
+export const createSermon200ResponseVerseTwoMax = 2
 
 export const CreateSermon200Response = zod.object({
   id: zod.uuid(),
@@ -44,10 +59,28 @@ export const CreateSermon200Response = zod.object({
         sections: zod
           .array(
             zod.object({
-              id: zod.uuid().optional(),
-              title: zod.string().optional(),
+              id: zod.uuid(),
+              title: zod.string(),
               description: zod.string().nullish(),
-              playlists: zod.array(zod.unknown()).optional(),
+              itemsSize: zod
+                .enum(['small', 'middle', 'large', 'xLarge'])
+                .default(createSermon200ResponsePlaylistsItemSectionsItemItemsSizeDefault),
+              itemsRows: zod.number().nullish(),
+              transform: zod.enum(['high', 'short']).nullish(),
+              isDescriptionTitleOnSlideLarge: zod
+                .boolean()
+                .default(
+                  createSermon200ResponsePlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault,
+                ),
+              whereIsSlideTitleLocated: zod
+                .enum(['on', 'under', 'bothOnAndUnder'])
+                .default(
+                  createSermon200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault,
+                ),
+              borderRadius: zod
+                .boolean()
+                .default(createSermon200ResponsePlaylistsItemSectionsItemBorderRadiusDefault),
+              playlists: zod.array(zod.unknown()),
             }),
           )
           .optional(),
@@ -55,12 +88,27 @@ export const CreateSermon200Response = zod.object({
     )
     .optional(),
   chapter: zod.number().optional(),
-  verse: zod.string().optional(),
+  verse: zod
+    .union([
+      zod.number(),
+      zod
+        .array(zod.number())
+        .min(createSermon200ResponseVerseTwoMin)
+        .max(createSermon200ResponseVerseTwoMax),
+    ])
+    .optional(),
 })
 
 /**
  * @summary Получить список всех проповедей
  */
+export const getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemItemsSizeDefault = `middle`
+export const getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
+export const getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault = `under`
+export const getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemBorderRadiusDefault = false
+export const getAllSermons200ResponseSermonsItemVerseTwoMin = 2
+export const getAllSermons200ResponseSermonsItemVerseTwoMax = 2
+
 export const GetAllSermons200Response = zod.object({
   sermons: zod
     .array(
@@ -84,10 +132,32 @@ export const GetAllSermons200Response = zod.object({
               sections: zod
                 .array(
                   zod.object({
-                    id: zod.uuid().optional(),
-                    title: zod.string().optional(),
+                    id: zod.uuid(),
+                    title: zod.string(),
                     description: zod.string().nullish(),
-                    playlists: zod.array(zod.unknown()).optional(),
+                    itemsSize: zod
+                      .enum(['small', 'middle', 'large', 'xLarge'])
+                      .default(
+                        getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemItemsSizeDefault,
+                      ),
+                    itemsRows: zod.number().nullish(),
+                    transform: zod.enum(['high', 'short']).nullish(),
+                    isDescriptionTitleOnSlideLarge: zod
+                      .boolean()
+                      .default(
+                        getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault,
+                      ),
+                    whereIsSlideTitleLocated: zod
+                      .enum(['on', 'under', 'bothOnAndUnder'])
+                      .default(
+                        getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault,
+                      ),
+                    borderRadius: zod
+                      .boolean()
+                      .default(
+                        getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemBorderRadiusDefault,
+                      ),
+                    playlists: zod.array(zod.unknown()),
                   }),
                 )
                 .optional(),
@@ -95,7 +165,15 @@ export const GetAllSermons200Response = zod.object({
           )
           .optional(),
         chapter: zod.number().optional(),
-        verse: zod.string().optional(),
+        verse: zod
+          .union([
+            zod.number(),
+            zod
+              .array(zod.number())
+              .min(getAllSermons200ResponseSermonsItemVerseTwoMin)
+              .max(getAllSermons200ResponseSermonsItemVerseTwoMax),
+          ])
+          .optional(),
       }),
     )
     .optional(),
@@ -108,6 +186,13 @@ export const GetAllSermons200Response = zod.object({
 export const GetSermonByIdParams = zod.object({
   id: zod.uuid(),
 })
+
+export const getSermonById200ResponsePlaylistsItemSectionsItemItemsSizeDefault = `middle`
+export const getSermonById200ResponsePlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
+export const getSermonById200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault = `under`
+export const getSermonById200ResponsePlaylistsItemSectionsItemBorderRadiusDefault = false
+export const getSermonById200ResponseVerseTwoMin = 2
+export const getSermonById200ResponseVerseTwoMax = 2
 
 export const GetSermonById200Response = zod.object({
   id: zod.uuid(),
@@ -129,10 +214,28 @@ export const GetSermonById200Response = zod.object({
         sections: zod
           .array(
             zod.object({
-              id: zod.uuid().optional(),
-              title: zod.string().optional(),
+              id: zod.uuid(),
+              title: zod.string(),
               description: zod.string().nullish(),
-              playlists: zod.array(zod.unknown()).optional(),
+              itemsSize: zod
+                .enum(['small', 'middle', 'large', 'xLarge'])
+                .default(getSermonById200ResponsePlaylistsItemSectionsItemItemsSizeDefault),
+              itemsRows: zod.number().nullish(),
+              transform: zod.enum(['high', 'short']).nullish(),
+              isDescriptionTitleOnSlideLarge: zod
+                .boolean()
+                .default(
+                  getSermonById200ResponsePlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault,
+                ),
+              whereIsSlideTitleLocated: zod
+                .enum(['on', 'under', 'bothOnAndUnder'])
+                .default(
+                  getSermonById200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault,
+                ),
+              borderRadius: zod
+                .boolean()
+                .default(getSermonById200ResponsePlaylistsItemSectionsItemBorderRadiusDefault),
+              playlists: zod.array(zod.unknown()),
             }),
           )
           .optional(),
@@ -140,7 +243,15 @@ export const GetSermonById200Response = zod.object({
     )
     .optional(),
   chapter: zod.number().optional(),
-  verse: zod.string().optional(),
+  verse: zod
+    .union([
+      zod.number(),
+      zod
+        .array(zod.number())
+        .min(getSermonById200ResponseVerseTwoMin)
+        .max(getSermonById200ResponseVerseTwoMax),
+    ])
+    .optional(),
 })
 
 /**
@@ -149,6 +260,9 @@ export const GetSermonById200Response = zod.object({
 export const UpdateSermonParams = zod.object({
   id: zod.uuid(),
 })
+
+export const updateSermonBodyVerseTwoMin = 2
+export const updateSermonBodyVerseTwoMax = 2
 
 export const UpdateSermonBody = zod.object({
   title: zod.string(),
@@ -159,7 +273,12 @@ export const UpdateSermonBody = zod.object({
   artist: zod.string().nullish(),
   artwork: zod.string().nullish(),
   chapter: zod.number().nullish(),
-  verse: zod.string().nullish(),
+  verse: zod
+    .union([
+      zod.number(),
+      zod.array(zod.number()).min(updateSermonBodyVerseTwoMin).max(updateSermonBodyVerseTwoMax),
+    ])
+    .nullish(),
 })
 
 export const UpdateSermon200Response = zod.object({
