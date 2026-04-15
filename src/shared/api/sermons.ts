@@ -1,26 +1,22 @@
 import type { FetchedSermonsGroupName, PlaylistData } from 'shared/model'
-import { localDB } from './localBD'
+import { sectionsApi } from './generated'
+import { mapAllSectionsResponse, mapPlaylistEntities } from './lib/mappers'
 
 /**
- * Получить плейлисты по группе.
+ * Получить плейлисты по группе через секции.
+ * Загружает все секции, находит нужную по title и возвращает её плейлисты.
  * @param tabName - Название группы проповедей.
  * @returns Плейлисты группы или null.
- *
- * TODO: Заменить на вызов getAllPlaylists из Orval когда бэкенд будет готов.
  */
 const getPlaylistsOnSermonsGroup = async (
   tabName: FetchedSermonsGroupName,
 ): Promise<null | PlaylistData[]> => {
-  const sermons = localDB.getSermons()
-  const content = sermons.find(el => el.groupName === tabName)
+  const sections = mapAllSectionsResponse(await sectionsApi.getSections().getAllSections())
+  const section = sections.find(el => el.title === tabName)
 
-  if (!content) return null
+  if (!section?.playlists) return null
 
-  return content.playlists
-
-  // Реализация с бэкендом (когда будет готов):
-  // const response = await getAllPlaylists()
-  // return mapAllPlaylistsResponse(response)
+  return mapPlaylistEntities(section.playlists)
 }
 
 export const sermonsAPI = {

@@ -24,22 +24,25 @@ export const CreateSection200Response = zod.object({
   playlists: zod
     .array(
       zod.object({
-        id: zod.uuid().optional(),
-        title: zod.string().optional(),
+        id: zod.uuid(),
+        title: zod.string(),
+        artwork: zod.string(),
         description: zod.string().optional(),
-        sermons: zod
-          .array(
-            zod.object({
-              id: zod.uuid().optional(),
-              title: zod.string().optional(),
-              description: zod.string().optional(),
-              textFileUrl: zod.string().nullish(),
-              audioUrl: zod.string().nullish(),
-              youtubeUrl: zod.string().nullish(),
-              playlists: zod.array(zod.unknown()).optional(),
-            }),
-          )
-          .optional(),
+        sermons: zod.array(
+          zod.object({
+            id: zod.uuid(),
+            title: zod.string(),
+            artist: zod.string(),
+            artwork: zod.string(),
+            description: zod.string().optional(),
+            textFileUrl: zod.string().nullish(),
+            audioUrl: zod.string().nullish(),
+            youtubeUrl: zod.string().nullish(),
+            playlists: zod.array(zod.unknown()).optional(),
+            chapter: zod.number().optional(),
+            verse: zod.string().optional(),
+          }),
+        ),
         sections: zod.array(zod.unknown()).optional(),
       }),
     )
@@ -59,22 +62,25 @@ export const GetAllSections200Response = zod.object({
         playlists: zod
           .array(
             zod.object({
-              id: zod.uuid().optional(),
-              title: zod.string().optional(),
+              id: zod.uuid(),
+              title: zod.string(),
+              artwork: zod.string(),
               description: zod.string().optional(),
-              sermons: zod
-                .array(
-                  zod.object({
-                    id: zod.uuid().optional(),
-                    title: zod.string().optional(),
-                    description: zod.string().optional(),
-                    textFileUrl: zod.string().nullish(),
-                    audioUrl: zod.string().nullish(),
-                    youtubeUrl: zod.string().nullish(),
-                    playlists: zod.array(zod.unknown()).optional(),
-                  }),
-                )
-                .optional(),
+              sermons: zod.array(
+                zod.object({
+                  id: zod.uuid(),
+                  title: zod.string(),
+                  artist: zod.string(),
+                  artwork: zod.string(),
+                  description: zod.string().optional(),
+                  textFileUrl: zod.string().nullish(),
+                  audioUrl: zod.string().nullish(),
+                  youtubeUrl: zod.string().nullish(),
+                  playlists: zod.array(zod.unknown()).optional(),
+                  chapter: zod.number().optional(),
+                  verse: zod.string().optional(),
+                }),
+              ),
               sections: zod.array(zod.unknown()).optional(),
             }),
           )
@@ -99,22 +105,25 @@ export const GetSectionById200Response = zod.object({
   playlists: zod
     .array(
       zod.object({
-        id: zod.uuid().optional(),
-        title: zod.string().optional(),
+        id: zod.uuid(),
+        title: zod.string(),
+        artwork: zod.string(),
         description: zod.string().optional(),
-        sermons: zod
-          .array(
-            zod.object({
-              id: zod.uuid().optional(),
-              title: zod.string().optional(),
-              description: zod.string().optional(),
-              textFileUrl: zod.string().nullish(),
-              audioUrl: zod.string().nullish(),
-              youtubeUrl: zod.string().nullish(),
-              playlists: zod.array(zod.unknown()).optional(),
-            }),
-          )
-          .optional(),
+        sermons: zod.array(
+          zod.object({
+            id: zod.uuid(),
+            title: zod.string(),
+            artist: zod.string(),
+            artwork: zod.string(),
+            description: zod.string().optional(),
+            textFileUrl: zod.string().nullish(),
+            audioUrl: zod.string().nullish(),
+            youtubeUrl: zod.string().nullish(),
+            playlists: zod.array(zod.unknown()).optional(),
+            chapter: zod.number().optional(),
+            verse: zod.string().optional(),
+          }),
+        ),
         sections: zod.array(zod.unknown()).optional(),
       }),
     )
@@ -141,22 +150,25 @@ export const UpdateSection200Response = zod.object({
   playlists: zod
     .array(
       zod.object({
-        id: zod.uuid().optional(),
-        title: zod.string().optional(),
+        id: zod.uuid(),
+        title: zod.string(),
+        artwork: zod.string(),
         description: zod.string().optional(),
-        sermons: zod
-          .array(
-            zod.object({
-              id: zod.uuid().optional(),
-              title: zod.string().optional(),
-              description: zod.string().optional(),
-              textFileUrl: zod.string().nullish(),
-              audioUrl: zod.string().nullish(),
-              youtubeUrl: zod.string().nullish(),
-              playlists: zod.array(zod.unknown()).optional(),
-            }),
-          )
-          .optional(),
+        sermons: zod.array(
+          zod.object({
+            id: zod.uuid(),
+            title: zod.string(),
+            artist: zod.string(),
+            artwork: zod.string(),
+            description: zod.string().optional(),
+            textFileUrl: zod.string().nullish(),
+            audioUrl: zod.string().nullish(),
+            youtubeUrl: zod.string().nullish(),
+            playlists: zod.array(zod.unknown()).optional(),
+            chapter: zod.number().optional(),
+            verse: zod.string().optional(),
+          }),
+        ),
         sections: zod.array(zod.unknown()).optional(),
       }),
     )

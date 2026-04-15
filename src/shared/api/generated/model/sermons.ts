@@ -18,11 +18,17 @@ export const CreateSermonBody = zod.object({
   textFileUrl: zod.string().nullish(),
   audioUrl: zod.string().nullish(),
   youtubeUrl: zod.string().nullish(),
+  artist: zod.string().nullish(),
+  artwork: zod.string().nullish(),
+  chapter: zod.number().nullish(),
+  verse: zod.string().nullish(),
 })
 
 export const CreateSermon200Response = zod.object({
-  id: zod.uuid().optional(),
-  title: zod.string().optional(),
+  id: zod.uuid(),
+  title: zod.string(),
+  artist: zod.string(),
+  artwork: zod.string(),
   description: zod.string().optional(),
   textFileUrl: zod.string().nullish(),
   audioUrl: zod.string().nullish(),
@@ -30,10 +36,11 @@ export const CreateSermon200Response = zod.object({
   playlists: zod
     .array(
       zod.object({
-        id: zod.uuid().optional(),
-        title: zod.string().optional(),
+        id: zod.uuid(),
+        title: zod.string(),
+        artwork: zod.string(),
         description: zod.string().optional(),
-        sermons: zod.array(zod.unknown()).optional(),
+        sermons: zod.array(zod.unknown()),
         sections: zod
           .array(
             zod.object({
@@ -47,6 +54,8 @@ export const CreateSermon200Response = zod.object({
       }),
     )
     .optional(),
+  chapter: zod.number().optional(),
+  verse: zod.string().optional(),
 })
 
 /**
@@ -56,8 +65,10 @@ export const GetAllSermons200Response = zod.object({
   sermons: zod
     .array(
       zod.object({
-        id: zod.uuid().optional(),
-        title: zod.string().optional(),
+        id: zod.uuid(),
+        title: zod.string(),
+        artist: zod.string(),
+        artwork: zod.string(),
         description: zod.string().optional(),
         textFileUrl: zod.string().nullish(),
         audioUrl: zod.string().nullish(),
@@ -65,10 +76,11 @@ export const GetAllSermons200Response = zod.object({
         playlists: zod
           .array(
             zod.object({
-              id: zod.uuid().optional(),
-              title: zod.string().optional(),
+              id: zod.uuid(),
+              title: zod.string(),
+              artwork: zod.string(),
               description: zod.string().optional(),
-              sermons: zod.array(zod.unknown()).optional(),
+              sermons: zod.array(zod.unknown()),
               sections: zod
                 .array(
                   zod.object({
@@ -82,6 +94,8 @@ export const GetAllSermons200Response = zod.object({
             }),
           )
           .optional(),
+        chapter: zod.number().optional(),
+        verse: zod.string().optional(),
       }),
     )
     .optional(),
@@ -96,8 +110,10 @@ export const GetSermonByIdParams = zod.object({
 })
 
 export const GetSermonById200Response = zod.object({
-  id: zod.uuid().optional(),
-  title: zod.string().optional(),
+  id: zod.uuid(),
+  title: zod.string(),
+  artist: zod.string(),
+  artwork: zod.string(),
   description: zod.string().optional(),
   textFileUrl: zod.string().nullish(),
   audioUrl: zod.string().nullish(),
@@ -105,10 +121,11 @@ export const GetSermonById200Response = zod.object({
   playlists: zod
     .array(
       zod.object({
-        id: zod.uuid().optional(),
-        title: zod.string().optional(),
+        id: zod.uuid(),
+        title: zod.string(),
+        artwork: zod.string(),
         description: zod.string().optional(),
-        sermons: zod.array(zod.unknown()).optional(),
+        sermons: zod.array(zod.unknown()),
         sections: zod
           .array(
             zod.object({
@@ -122,6 +139,8 @@ export const GetSermonById200Response = zod.object({
       }),
     )
     .optional(),
+  chapter: zod.number().optional(),
+  verse: zod.string().optional(),
 })
 
 /**
@@ -137,6 +156,10 @@ export const UpdateSermonBody = zod.object({
   textFileUrl: zod.string().nullish(),
   audioUrl: zod.string().nullish(),
   youtubeUrl: zod.string().nullish(),
+  artist: zod.string().nullish(),
+  artwork: zod.string().nullish(),
+  chapter: zod.number().nullish(),
+  verse: zod.string().nullish(),
 })
 
 export const UpdateSermon200Response = zod.object({

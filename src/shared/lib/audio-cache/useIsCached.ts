@@ -6,6 +6,7 @@ export const useIsCached = (audioUrl: null | string, cacheTrigger?: number): boo
 
   useEffect(() => {
     if (!audioUrl) {
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- correct
       setIsCached(false)
       return
     }

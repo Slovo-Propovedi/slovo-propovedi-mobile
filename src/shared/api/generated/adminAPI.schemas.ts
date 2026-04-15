@@ -42,11 +42,19 @@ export interface FileUploadResponse {
 
 export interface CreateSermonDto {
   /** @nullable */
+  artist?: string | null
+  /** @nullable */
+  artwork?: string | null
+  /** @nullable */
   audioUrl?: string | null
+  /** @nullable */
+  chapter?: number | null
   description: string
   /** @nullable */
   textFileUrl?: string | null
   title: string
+  /** @nullable */
+  verse?: string | null
   /** @nullable */
   youtubeUrl?: string | null
 }
@@ -60,22 +68,27 @@ export interface SectionEntity {
 }
 
 export interface PlaylistEntity {
+  artwork: string
   description?: string
-  id?: string
+  id: string
   sections?: SectionEntity[]
-  sermons?: SermonEntity[]
-  title?: string
+  sermons: SermonEntity[]
+  title: string
 }
 
 export interface SermonEntity {
+  artist: string
+  artwork: string
   /** @nullable */
   audioUrl?: string | null
+  chapter?: number
   description?: string
-  id?: string
+  id: string
   playlists?: PlaylistEntity[]
   /** @nullable */
   textFileUrl?: string | null
-  title?: string
+  title: string
+  verse?: string
   /** @nullable */
   youtubeUrl?: string | null
 }

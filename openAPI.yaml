@@ -127,14 +127,35 @@ components:
         youtubeUrl:
           type: string
           nullable: true
+        artist:
+          type: string
+          nullable: true
+        artwork:
+          type: string
+          nullable: true
+        chapter:
+          type: number
+          nullable: true
+        verse:
+          type: string
+          nullable: true
 
     SermonEntity:
       type: object
+      required:
+        - id
+        - title
+        - artist
+        - artwork
       properties:
         id:
           type: string
           format: uuid
         title:
+          type: string
+        artist:
+          type: string
+        artwork:
           type: string
         description:
           type: string
@@ -151,6 +172,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PlaylistEntity'
+        chapter:
+          type: number
+        verse:
+          type: string
 
     AllSermonsResponse:
       type: object
@@ -190,11 +215,18 @@ components:
 
     PlaylistEntity:
       type: object
+      required:
+        - id
+        - title
+        - artwork
+        - sermons
       properties:
         id:
           type: string
           format: uuid
         title:
+          type: string
+        artwork:
           type: string
         description:
           type: string
