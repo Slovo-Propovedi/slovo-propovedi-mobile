@@ -18,10 +18,10 @@ export const styles = StyleSheet.create({
     zIndex: 150,
   },
   backgroundContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   blurOverlay: {
     ...StyleSheet.absoluteFill,

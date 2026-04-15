@@ -32,18 +32,21 @@ export const PlaylistBottomSheet = ({
   const [isAudioPlaying] = useAtom(isPlayingAtom)
   const playNewSermon = usePlayNewSermon()
 
-  const tracksListData: TrackListItemData[] = (playlist?.list ?? []).map(sermon => ({
-    artist: sermon.artist || 'Слово.Проповеди',
+  if (!playlist) return null
+
+  const tracksListData: TrackListItemData[] = playlist.sermons.map(sermon => ({
+    artist: sermon.artist,
     artwork: playlist?.artwork,
     id: sermon.id,
     title: sermon.title,
-    url: sermon.audioUrl,
+    url: sermon.audioUrl ?? undefined,
   }))
 
   const handlePressItem = useCallback(
     async (index: number) => {
       if (!playlist) return
-      const sermon = playlist.list[index]
+      const playlistList = playlist.sermons
+      const sermon = playlistList[index]
       if (!sermon.audioUrl) return
 
       await playNewSermon({ playlist, sermon })

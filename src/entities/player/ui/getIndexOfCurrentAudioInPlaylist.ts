@@ -6,5 +6,5 @@ export const getIndexOfCurrentAudioInPlaylist = (
   currentPlaylist: null | PlaylistData,
 ): number | undefined => {
   if (!currentAudio || !currentPlaylist) return undefined
-  return currentPlaylist.list.findIndex(({ id }) => currentAudio.id === id)
+  return currentPlaylist.sermons?.findIndex(({ id }) => currentAudio.id === id)
 }

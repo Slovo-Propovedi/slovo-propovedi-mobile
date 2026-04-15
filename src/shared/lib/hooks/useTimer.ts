@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 export const useTimer = (startValue: number, timeout = 1000) => {
   const [countdownValue, setCountdownValue] = useState(startValue)
 
-  const intervalIdRef = useRef<number | undefined>(undefined)
+  const intervalIdRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
 
   const createTimer = () => {
     intervalIdRef.current = setInterval(() => {

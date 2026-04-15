@@ -9,20 +9,10 @@ export const getListenEveryDay = action(async ctx => {
   const list = await API.sermons.getPlaylistsOnSermonsGroup(FetchedSermonsGroupName.OnBible)
   const mappedList = list?.map<PlaylistData>(playlist => ({
     ...playlist,
-    list: playlist.list.map<SermonData>(el => {
-      const { artist, artwork, audioUrl, description, id, textFileUrl, youtubeUrl } = el
-
-      return {
-        artist,
-        artwork,
-        audioUrl,
-        description,
-        id,
-        textFileUrl,
-        title: getBookLinkAsString(el),
-        youtubeUrl,
-      }
-    }),
+    sermons: playlist.sermons.map<SermonData>(el => ({
+      ...el,
+      title: getBookLinkAsString({ title: el.title }),
+    })),
   }))
 
   const result = mappedList || []

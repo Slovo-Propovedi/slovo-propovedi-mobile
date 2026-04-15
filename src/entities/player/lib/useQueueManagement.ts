@@ -27,10 +27,12 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
 
   const createDefaultPlaylist = (tracks: AudioPlayerData[]): PlaylistData => {
     const firstTrack = tracks[0]
-    if (!firstTrack) return { artwork: '', list: [], title: 'Слово.Проповеди' }
+    if (!firstTrack) return { artwork: '', id: 'default', sermons: [], title: 'Слово.Проповеди' }
+
     return {
-      artwork: firstTrack.artwork,
-      list: tracks,
+      artwork: firstTrack.artwork || '',
+      id: firstTrack.id,
+      sermons: tracks,
       title: firstTrack.title,
     }
   }

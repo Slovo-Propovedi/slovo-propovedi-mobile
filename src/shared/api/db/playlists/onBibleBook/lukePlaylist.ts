@@ -4,12 +4,13 @@ import type { FetchedPlaylist } from 'shared/model'
 export const lukePlaylist: FetchedPlaylist = {
   artwork:
     'https://slovo-istini.com/image/categories/78/whatsapp_image_2022-02-15_at_11.20.06.jpeg',
-  list: [],
+  id: 'luke',
+  sermons: [],
   title: 'Евангелие от Луки',
-  // list: [
+  // sermons: [
   //   {
   //     title: 'Глава 1',
-  //     list: [
+  //     sermons: [
   //       {
   //         title: '1. Особенности Евангелия от Луки. Луки 1:1-4',
   //         youtubeUrl: 'https://youtu.be/TlIn4dMm23E',
@@ -44,7 +45,7 @@ export const lukePlaylist: FetchedPlaylist = {
   //   },
   //   {
   //     title: 'Глава 2',
-  //     list: [
+  //     sermons: [
   //       {
   //         title: '6. Рождение Иисуса Христа. Луки 2:1-7',
   //         youtubeUrl: 'https://youtu.be/zfzuAwgPg6k',
@@ -72,7 +73,7 @@ export const lukePlaylist: FetchedPlaylist = {
   //   },
   //   {
   //     title: 'Глава 3',
-  //     list: [
+  //     sermons: [
   //       {
   //         title: '10. Служение Иоанна Крестителя (часть 1). Луки 3:1-20',
   //         youtubeUrl: 'https://youtu.be/szOt7AZ6tH0',
@@ -101,7 +102,7 @@ export const lukePlaylist: FetchedPlaylist = {
   //   },
   //   {
   //     title: 'Глава 4',
-  //     list: [
+  //     sermons: [
   //       {
   //         title: '14. Три истины об искушениях. Луки 4:1-2а',
   //         youtubeUrl: 'https://youtu.be/-gCvaWPlbPk',
@@ -154,7 +155,7 @@ export const lukePlaylist: FetchedPlaylist = {
   //   },
   //   {
   //     title: 'Глава 5',
-  //     list: [
+  //     sermons: [
   //       {
   //         title:
   //           '22. От земных дел к посвященному служению (что для этого необходимо). Луки 5:1-11',
@@ -191,7 +192,7 @@ export const lukePlaylist: FetchedPlaylist = {
   //   },
   //   {
   //     title: 'Глава 6',
-  //     list: [
+  //     sermons: [
   //       {
   //         title: '27. Христос и религиозные заблуждения, обременяющие человека. Луки 6:1-11',
   //         youtubeUrl: 'https://youtu.be/2I9LSnhYbys',
@@ -250,7 +251,7 @@ export const lukePlaylist: FetchedPlaylist = {
   //   },
   //   {
   //     title: 'Глава 7',
-  //     list: [
+  //     sermons: [
   //       {
   //         title: '36. Пример настоящего верующего. Луки 7:1-10',
   //         youtubeUrl: 'https://youtu.be/nUIzlAfJGk8',
@@ -291,7 +292,7 @@ export const lukePlaylist: FetchedPlaylist = {
   //   },
   //   {
   //     title: 'Глава 8',
-  //     list: [
+  //     sermons: [
   //       {
   //         title: '42. Ответственность следующего за Христом. Луки 8:1-3',
   //         youtubeUrl: 'https://youtu.be/6YAJrSIfQVk',
@@ -347,7 +348,7 @@ export const lukePlaylist: FetchedPlaylist = {
   //   },
   //   {
   //     title: 'Глава 9',
-  //     list: [
+  //     sermons: [
   //       {
   //         title: '50. Служение последователей Христа. Луки 9:1-6',
   //         youtubeUrl: 'https://youtu.be/0ACVhUEP0XQ',

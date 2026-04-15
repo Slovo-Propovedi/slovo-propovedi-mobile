@@ -32,11 +32,13 @@ export const PlaylistListScreen = () => {
 
       <View style={styles.list}>
         {playlists.map(playlist => (
-          <TouchableListItem
-            data={playlist}
+          <TouchableListItem<{ artwork: string; title: string }>
             key={playlist.title}
-            onPress={onPressListItem}
             size={ListItemSize.Middle}
+            data={playlist as { artwork: string; title: string }}
+            onPress={
+              onPressListItem as OnPressTouchableListItem<{ artwork: string; title: string }>
+            }
           />
         ))}
       </View>

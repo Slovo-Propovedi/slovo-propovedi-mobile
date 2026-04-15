@@ -1,60 +1,33 @@
-import { type FetchedBooksGroupName, type FetchedSermonsGroupName } from '../domain/bible'
+import type { PlaylistData, SermonData } from 'shared/model'
 
 export interface DB {
-  books: FetchedBooksGroup[]
-  sermons: FetchedSermonsGroup[]
+  books: Array<{
+    books: SermonData[]
+    groupName: FetchedBooksGroupName
+  }>
+  sermons: Array<{
+    groupName: FetchedSermonsGroupName
+    playlists: PlaylistData[]
+  }>
 }
 
-export type FetchedBookData = {
-  artwork: string
-  description?: string
-  id: string
-  textFileUrl?: string
-  title: string
-} & (
-  | {
-      chapter: number
-      verse?: [from: number, to: number] | number
-    }
-  | {
-      chapter?: undefined
-      verse?: undefined
-    }
-)
+// Алиасы для удобства
+export type FetchedBookData = SermonData
 
+// Типы групп (алиасы для совместимости)
 export interface FetchedBooksGroup {
-  books: FetchedBookData[]
+  books: SermonData[]
   groupName: FetchedBooksGroupName
 }
+// Сохраняем типы групп для фильтрации
+export type FetchedBooksGroupName = 'notesForPreachers' | 'topicalAndThematic' | 'verseByVerse'
+export type FetchedPlaylist = PlaylistData
 
-export interface FetchedPlaylist {
-  artwork: string
-  description?: string
-  list: FetchedSermonData[]
-  title: string
-}
-
-export type FetchedSermonData = {
-  artist: string
-  artwork: string
-  audioUrl?: string
-  description?: string
-  id: string
-  textFileUrl?: string
-  title: string
-  youtubeUrl?: string
-} & (
-  | {
-      chapter: number
-      verse?: [from: number, to: number] | number
-    }
-  | {
-      chapter?: undefined
-      verse?: undefined
-    }
-)
+export type FetchedSermonData = SermonData
 
 export interface FetchedSermonsGroup {
   groupName: FetchedSermonsGroupName
-  playlists: FetchedPlaylist[]
+  playlists: PlaylistData[]
 }
+
+export type FetchedSermonsGroupName = 'new' | 'onBible' | 'topical'

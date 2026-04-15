@@ -25,11 +25,11 @@ export const usePlayNewSermon = () => {
 
     const newAudio: AudioPlayerData = {
       ...other,
-      artist,
-      artwork: playlist.artwork,
+      artist: artist ?? '',
+      artwork: playlist.artwork ?? '',
       audioUrl,
-      id,
-      title,
+      id: id ?? '',
+      title: title ?? '',
     }
 
     await setCurrentAudio(newAudio)

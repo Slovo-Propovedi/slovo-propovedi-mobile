@@ -28,7 +28,7 @@ jest.mock('../../lib/PlayerService', () => ({
 const currentPlaylist = {
   artwork: 'https://test.com/preview1.mp3',
   id: '1',
-  list: [
+  sermons: [
     {
       artist: 'Test Artist',
       artwork: 'https://test.com/preview1.mp3',
@@ -58,7 +58,7 @@ const currentPlaylist = {
 }
 
 const getMockPlayerControlsProps = () => ({
-  currentAudio: currentPlaylist.list[0],
+  currentAudio: currentPlaylist.sermons[0],
   currentPlaylist,
   setCurrentAudio: jest.fn(),
 })

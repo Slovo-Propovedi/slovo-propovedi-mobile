@@ -16,7 +16,7 @@ export const NewSermonsSlider = () => {
   const fetchNewSermons = useAction(getNewSermons)
 
   const onItemPress = async (playlist: PlaylistData) => {
-    const sermons = playlist.list
+    const sermons = playlist.sermons
 
     if (sermons.length && sermons.length < 2)
       return await playNewSermon({ playlist, sermon: sermons[0] })

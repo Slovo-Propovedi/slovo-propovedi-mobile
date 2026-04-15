@@ -23,9 +23,7 @@ const Layout = () => {
   return (
     <View style={{ flex: 1 }}>
       <Tabs
-        screenOptions={{
-          headerShown: false,
-        }}
+        screenOptions={{ headerShown: false }}
         tabBar={props => (
           <CustomTabBar
             {...props}

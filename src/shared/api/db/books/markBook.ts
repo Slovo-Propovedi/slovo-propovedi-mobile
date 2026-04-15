@@ -1,9 +1,11 @@
 import type { FetchedBookData } from 'shared/model'
+import { DEFAULT_ARTIST } from '../constants'
 
 const markBookPreviewUrl = 'https://slovo-istini.com/image/categories/22/marka_(1).jpg'
 
 export const markBook: FetchedBookData[] = [
   {
+    artist: DEFAULT_ARTIST,
     artwork: markBookPreviewUrl,
     chapter: 1,
     description:
@@ -15,6 +17,7 @@ export const markBook: FetchedBookData[] = [
     verse: [1, 3],
   },
   {
+    artist: DEFAULT_ARTIST,
     artwork: markBookPreviewUrl,
     chapter: 1,
     description:
@@ -27,10 +30,11 @@ export const markBook: FetchedBookData[] = [
     verse: [4, 8],
   },
   {
+    artist: DEFAULT_ARTIST,
     artwork: markBookPreviewUrl,
     chapter: 1,
     description:
-      'Великое служение Христа началось с великой подготовки. Господь продемонстрировал великое послушание, крестившись от Иоанна, Он получил великие полномочия от Отца и Духа, выдержал великое испытание в пустыне и выступил с великой проповедью. Если вы хотите уподобляться Христу в служении, служите, проявляя послушание, служите в соответствии со своими дарами, преодолевайте испытания, через которые Господь закаляет вас, словом и делом утверждайте великие библейские истины. Хотели бы вы уподобиться Христу в служении? Данная проповедь поможет вам в этом.',
+      'Великое служение Христа началось с великой подготовки. Господь продемонстрировал великое послушание, крестившись от Иоанна, Он получил великие полномочия от Отца и Духа, выдержал великое испытание в пустыне и выступил с великой проповедью. Если вы хотите уподобляться Христу в служении, служите, проявляя послушание, служите в соответствии со своими дарами, преодолевайте испытания, через которые Господь закаляет вас, словом и делом утверждайте великие библейские истины. Хотели бы вы уподобляться Христу в служении? Данная проповедь поможет вам в этом.',
     id: '3',
     textFileUrl:
       'https://slovo-istini.com/image/pages/132/3._podgotovka_k_velikomu_slujeniyu_(1_9-15).pdf',
@@ -38,6 +42,7 @@ export const markBook: FetchedBookData[] = [
     verse: [9, 15],
   },
   {
+    artist: DEFAULT_ARTIST,
     artwork: markBookPreviewUrl,
     chapter: 1,
     description:
@@ -48,6 +53,7 @@ export const markBook: FetchedBookData[] = [
     verse: [16, 20],
   },
   {
+    artist: DEFAULT_ARTIST,
     artwork: markBookPreviewUrl,
     chapter: 1,
     description:
@@ -59,6 +65,7 @@ export const markBook: FetchedBookData[] = [
     verse: [21, 28],
   },
   {
+    artist: DEFAULT_ARTIST,
     artwork: markBookPreviewUrl,
     chapter: 1,
     description:
@@ -69,6 +76,7 @@ export const markBook: FetchedBookData[] = [
     verse: [29, 31],
   },
   {
+    artist: DEFAULT_ARTIST,
     artwork: markBookPreviewUrl,
     chapter: 1,
     description:
@@ -80,6 +88,7 @@ export const markBook: FetchedBookData[] = [
     verse: [32, 39],
   },
   {
+    artist: DEFAULT_ARTIST,
     artwork: markBookPreviewUrl,
     chapter: 1,
     description:

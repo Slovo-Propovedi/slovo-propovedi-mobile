@@ -10,9 +10,9 @@ export const getYoutubeVideoData = async (videoUrl: string) => {
     // const apiUrl = `videos?part=snippet&id=${videoId}&key=${API_KEY}`;
 
     // Отправляем GET-запрос к API
-    const response = await youtubeApi.get(apiUrl, { searchParams: { id: videoId ?? '' } })
+    const response = await youtubeApi.get(apiUrl, { params: { id: videoId ?? '' } })
 
-    const json = await response.json()
+    const json = response.data
 
     if (json && typeof json === 'object' && 'items' in json && Array.isArray(json.items))
       //Возвращаем данные о видео

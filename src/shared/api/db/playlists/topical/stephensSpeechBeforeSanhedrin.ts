@@ -5,7 +5,8 @@ const artwork =
   'https://slovo-istini.com/image/cache/image/pages/1221/image-19-08-23-02-50_700x1000.png'
 export const stephensSpeechBeforeSanhedrin: FetchedPlaylist = {
   artwork,
-  list: [
+  id: 'stephensSpeechBeforeSanhedrin',
+  sermons: [
     {
       artist: DEFAULT_ARTIST,
       artwork,

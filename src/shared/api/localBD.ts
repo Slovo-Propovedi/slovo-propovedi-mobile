@@ -1,9 +1,18 @@
+import type {
+  FetchedBooksGroupName,
+  FetchedSermonsGroupName,
+  PlaylistData,
+  SermonData,
+} from 'shared/model'
 import { db } from './db'
 
-const getSermons = () => db.sermons
-const getBooks = () => db.books
-
 export const localDB = {
-  getBooks,
-  getSermons,
+  getBooks: (): Array<{
+    books: SermonData[]
+    groupName: FetchedBooksGroupName
+  }> => db.books,
+  getSermons: (): Array<{
+    groupName: FetchedSermonsGroupName
+    playlists: PlaylistData[]
+  }> => db.sermons,
 }

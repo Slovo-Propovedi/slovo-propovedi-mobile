@@ -43,8 +43,9 @@ export const PlayerControls = ({
   const [isDownloading] = useAtom(isDownloadingAtom)
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
   const index = getIndexOfCurrentAudioInPlaylist(currentAudio, currentPlaylist)
+  const playlistList = currentPlaylist ? currentPlaylist.sermons : []
   const hasValidPlaylist = isNonNullable(currentPlaylist) && isNonNullable(index)
-  const isLastTrack = hasValidPlaylist && index === currentPlaylist.list.length - 1
+  const isLastTrack = hasValidPlaylist && index === playlistList.length - 1
   const isFirstTrack = hasValidPlaylist && index === 0
 
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === currentAudio?.audioUrl
@@ -58,13 +59,15 @@ export const PlayerControls = ({
     async (dir: 'next' | 'prev') => {
       if (!hasValidPlaylist || !currentPlaylist || index === undefined) return
       const newIndex = dir === 'next' ? index + 1 : index - 1
-      const track = currentPlaylist.list[newIndex]
+      const track = playlistList[newIndex]
       if (!track?.audioUrl) return
-      const { audioUrl, ...rest } = track
+      const { audioUrl, id, title, ...rest } = track
       const newAudio: AudioPlayerData = {
         ...rest,
         artwork: currentPlaylist.artwork,
         audioUrl,
+        id,
+        title,
       }
       await setCurrentAudio(newAudio)
       await replaceAudio(newAudio.audioUrl)

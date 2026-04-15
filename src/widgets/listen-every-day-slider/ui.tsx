@@ -16,7 +16,7 @@ export const ListenEveryDaySlider = () => {
   const fetchListenEveryDay = useAction(getListenEveryDay)
 
   const onItemPress = async (playlist: PlaylistData) => {
-    const sermons = playlist.list
+    const sermons = playlist.sermons
 
     if (sermons.length && sermons.length < 2) {
       await playNewSermon({ playlist, sermon: sermons[0] })

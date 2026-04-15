@@ -8,8 +8,6 @@ export enum PlayerControlsSize {
 }
 
 export const audioPlayerDataSchema = sermonDataSchema.extend({
-  artist: z.string(),
-  artwork: z.string(),
   audioUrl: z.string(),
 })
 

@@ -361,7 +361,7 @@ Max header length: 100 characters
 - **Navigation:** expo-router, @react-navigation/\*
 - **State:** @reatom/core, @reatom/npm-react, @reatom/framework
 - **Audio:** expo-audio
-- **HTTP:** ky
+- **HTTP:** axios
 - **Storage:** @react-native-async-storage/async-storage
 - **Book parsing:** xml-js (FB2 format)
 
@@ -390,7 +390,55 @@ src/entities/player/lib/PlayerService/
 ## Gotchas
 
 1. **AsyncStorage Mock:** Must be mocked in `__mocks__/` for tests
-2. **Generated API Code:** `src/shared/api/generated/` is auto-generated and ignored by ESLint/FSD linting
+2. **Generated API Code:** `src/shared/api/generated/` is auto-generated and includes:
+   - Axios API functions (auth, sermons, playlists, sections, files, users)
+   - Zod schemas for runtime validation
+   - MSW mocks for development
+   - TypeScript types (exported as APITypes)
+
+## API Usage
+
+The project uses Orval for API code generation. The generated API is located in `src/shared/api/generated/` and includes:
+
+- **APITypes**: All TypeScript types from the OpenAPI schema
+- **API Functions**: Axios-wrapped functions for all endpoints
+- **Zod Schemas**: Runtime validation schemas
+- **MSW Mocks**: Mock Service Worker handlers for development
+
+### Example Usage
+
+```typescript
+import { API } from 'shared/api'
+import type { APITypes } from 'shared/api/generated'
+
+// Use generated API functions
+const result = await API.getAllSermons()
+
+// Use types
+const sermon: APITypes.SermonEntity = result.data.sermons[0]
+
+// Use Zod schemas for validation
+import { createSermonBody } from 'shared/api/generated/API'
+const validated = createSermonBody.parse(sermonData)
+```
+
+### Token Management
+
+The project uses AsyncStorage for token storage with automatic refresh token mechanism:
+
+```typescript
+import { tokenStorage } from 'shared/api/axiosInstance'
+
+// Set tokens
+await tokenStorage.setTokens(accessToken, refreshToken)
+
+// Get access token
+const token = await tokenStorage.getAccessToken()
+
+// Clear tokens (logout)
+await tokenStorage.clearTokens()
+```
+
 3. **FSD Insignificant Slice:** Rule set to 'warn' - single-use features should be relocated eventually
 4. **No Semicolons:** Project uses no semicolons, enforced by ESLint
 5. **React 19:** Project uses React 19.2.0

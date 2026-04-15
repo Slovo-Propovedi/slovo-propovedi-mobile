@@ -18,11 +18,13 @@ export const PlaylistScreen = () => {
   const playlist = parseJsonWithSchema(playlistDataSchema)(params.playlist) || {
     artwork: '',
     description: '',
-    list: [],
+    id: 'default',
+    sermons: [],
     title: '',
   }
 
-  const { artwork, description, list, title } = playlist
+  const { artwork, description, sermons: playlistSermons, title } = playlist
+  const list = playlistSermons ?? []
   const playNewSermon = usePlayNewSermon()
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
@@ -44,7 +46,7 @@ export const PlaylistScreen = () => {
   }
 
   const tracksListData = list.map((sermon: SermonData) => ({
-    artist: sermon.artist || 'Слово.Проповеди',
+    artist: sermon.artist,
     artwork,
     id: sermon.id,
     title: sermon.title,
@@ -54,9 +56,9 @@ export const PlaylistScreen = () => {
   const renderItem = ({ index, item }: { index: number; item: (typeof tracksListData)[0] }) => (
     <TracksListItem
       title={item.title}
-      audioUrl={item.url}
       artist={item.artist}
       artwork={item.artwork}
+      audioUrl={item.url ?? undefined}
       onPress={() => handlePressItem(index)}
       isPlaying={currentAudio?.id === item.id}
       isAudioPlaying={currentAudio?.id === item.id && isPlaying}
@@ -70,8 +72,8 @@ export const PlaylistScreen = () => {
         renderItem={renderItem}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        keyExtractor={item => item.id}
         style={tracksListStyles.container}
+        keyExtractor={item => item.id ?? ''}
         ItemSeparatorComponent={() => <View style={tracksListStyles.divider} />}
         contentContainerStyle={{
           paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,

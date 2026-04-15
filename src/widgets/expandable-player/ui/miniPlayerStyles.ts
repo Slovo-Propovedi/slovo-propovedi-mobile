@@ -24,7 +24,7 @@ export const miniPlayerStyles = StyleSheet.create({
     width: 40,
   },
   miniOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: COLORS.surface,
     borderRadius: RADIUSES.middle,
   },

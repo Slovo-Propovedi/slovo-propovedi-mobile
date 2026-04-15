@@ -1,5 +1,4 @@
 import comments from '@eslint-community/eslint-plugin-eslint-comments'
-import css from '@eslint/css'
 import eslint from '@eslint/js'
 import eslintConfigPrettier from 'eslint-config-prettier'
 import importX from 'eslint-plugin-import-x'
@@ -12,8 +11,12 @@ import reactHooksExtra from 'eslint-plugin-react-hooks-extra'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import sonarjs from 'eslint-plugin-sonarjs'
 import globals from 'globals'
+import path from 'path'
 import process from 'process'
 import tseslint from 'typescript-eslint'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const LAYERS = ['app', 'pages', 'widgets', 'features', 'entities', 'shared']
 
@@ -57,7 +60,7 @@ export default tseslint.config(
       },
       parserOptions: {
         project: ['./tsconfig.json'],
-        tsconfigRootDir: import.meta.dirname,
+        tsconfigRootDir: __dirname,
       },
     },
     extends: [

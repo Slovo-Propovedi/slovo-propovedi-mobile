@@ -5,6 +5,7 @@ export {
   setPlayerFullscreen,
 } from './app'
 export { BibleBookName, FetchedBooksGroupName, FetchedSermonsGroupName } from './domain/bible'
+// Реэкспорт типов из схем
 export {
   type BookData,
   type PlaylistData,

@@ -1,5 +1,4 @@
-import { FetchedBooksGroupName, FetchedSermonsGroupName } from 'shared/model'
-import type { DB } from 'shared/model'
+import { type FetchedBooksGroupName, type FetchedSermonsGroupName } from 'shared/model'
 import {
   actsBookList,
   ephesiansBookList,
@@ -35,11 +34,11 @@ import {
   unionWithChristPlaylist,
 } from './playlists'
 
-export const db: DB = {
+export const db = {
   books: [
     {
       books: [...actsBookList, ...markBookList, ...johnBookList, ...lukeBookList],
-      groupName: FetchedBooksGroupName.NotesForPreachers,
+      groupName: 'notesForPreachers' as FetchedBooksGroupName,
     },
     {
       books: [
@@ -53,7 +52,7 @@ export const db: DB = {
         ...ephesiansBookList,
         ...firstAndSecondThessaloniansBookList,
       ],
-      groupName: FetchedBooksGroupName.VerseByVerse,
+      groupName: 'verseByVerse' as FetchedBooksGroupName,
     },
     {
       books: [
@@ -61,12 +60,12 @@ export const db: DB = {
         ...isThereAnUnforgivableSinBooks,
         ...stephensSpeechBeforeSanhedrinBookList,
       ],
-      groupName: FetchedBooksGroupName.TopicalAndThematic,
+      groupName: 'topicalAndThematic' as FetchedBooksGroupName,
     },
   ],
   sermons: [
     {
-      groupName: FetchedSermonsGroupName.New,
+      groupName: 'new' as FetchedSermonsGroupName,
       playlists: [
         unionWithChristPlaylist,
         isThereAnUnforgivableSinPlaylist,
@@ -77,7 +76,7 @@ export const db: DB = {
       ],
     },
     {
-      groupName: FetchedSermonsGroupName.OnBible,
+      groupName: 'onBible' as FetchedSermonsGroupName,
       playlists: [
         markPlaylist,
         lukePlaylist,
@@ -97,7 +96,7 @@ export const db: DB = {
       ],
     },
     {
-      groupName: FetchedSermonsGroupName.Topical,
+      groupName: 'topical' as FetchedSermonsGroupName,
       playlists: [
         unionWithChristPlaylist,
         isThereAnUnforgivableSinPlaylist,

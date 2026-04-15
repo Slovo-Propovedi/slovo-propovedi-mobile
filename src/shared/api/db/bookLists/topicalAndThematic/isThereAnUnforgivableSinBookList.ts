@@ -1,7 +1,9 @@
 import type { FetchedBookData } from 'shared/model'
+import { DEFAULT_ARTIST } from '../../constants'
 
 export const isThereAnUnforgivableSinBooks: FetchedBookData[] = [
   {
+    artist: DEFAULT_ARTIST,
     artwork:
       'https://slovo-istini.com/image/cache/image/pages/1161/whatsapp_image_2022-12-12_at_22.34.13_701x1000.jpeg',
     description:

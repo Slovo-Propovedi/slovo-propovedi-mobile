@@ -59,6 +59,8 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const [showDescription, setShowDescription] = useState(false)
   const playlistSheetRef = useRef<BottomSheet>(null)
 
+  const isCached = useIsCached(audio?.audioUrl ?? null)
+
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
   const currentDownloadProgress = isCurrentAudioDownloading ? downloadProgress : 0
 
@@ -94,7 +96,9 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
 
   if (!audio) return null
 
-  const playlistList = playlist?.list ?? []
+  if (!playlist) return null
+
+  const playlistList = playlist.sermons
   const currentIndex = playlistList.findIndex(t => t.id === audio.id)
   const nextSermon = playlistList[currentIndex + 1]
   const hasNextSermon = currentIndex >= 0 && currentIndex < playlistList.length - 1
@@ -102,9 +106,15 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   const handleNextSermon = async () => {
     if (!playlist || currentIndex < 0) return
     const track = playlistList[currentIndex + 1]
-    if (!track?.audioUrl) return
+    if (!track?.audioUrl || !track.id) return
     const { audioUrl, ...rest } = track
-    const newAudio: AudioPlayerData = { ...rest, artwork: playlist.artwork, audioUrl }
+    const newAudio: AudioPlayerData = {
+      ...rest,
+      artwork: playlist.artwork,
+      audioUrl,
+      id: track.id,
+      title: track.title,
+    }
     await setCurrentAudio(newAudio)
     await loadAudio(newAudio.audioUrl)
     await play()
@@ -127,8 +137,6 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
     setShowPlaylist(true)
     setTimeout(() => playlistSheetRef.current?.expand(), 0)
   }
-
-  const isCached = useIsCached(audio?.audioUrl ?? null)
 
   const handleToggleCache = async () => {
     if (!audio?.audioUrl) return

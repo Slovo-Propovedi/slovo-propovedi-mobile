@@ -6,13 +6,13 @@ export const THUMB_SIZE = 10
 export const progressBarStyles = StyleSheet.create({
   container: { width: '100%' },
   downloadProgress: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: COLORS.maximumTrackTintColor,
     borderBottomLeftRadius: 2.5,
     borderTopLeftRadius: 2.5,
   },
   progress: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: COLORS.primary,
     borderBottomLeftRadius: 2.5,
     borderTopLeftRadius: 2.5,
@@ -39,7 +39,7 @@ export const progressBarStyles = StyleSheet.create({
     position: 'relative',
   },
   trackBackground: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: COLORS.gray,
   },
   trackContainer: { height: 20, justifyContent: 'center' },

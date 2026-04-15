@@ -5,7 +5,8 @@ import { BibleBookName, type FetchedPlaylist } from 'shared/model'
 export const markPlaylist: FetchedPlaylist = {
   artwork: 'https://slovo-istini.com/image/categories/22/marka_(1).jpg',
   description: 'Эта книга - Евангелие от Марка',
-  list: sermonsDB[BibleBookName.Mark],
+  id: 'mark',
+  sermons: sermonsDB[BibleBookName.Mark],
   title: 'Евангелие от Марка',
   // [
   //   {

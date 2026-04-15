@@ -36,15 +36,14 @@ class AudioModeManager {
       await setAudioModeAsync(AUDIO_MODE_CONFIG)
       this.configured = true
       this.pendingConfiguration = false
-    } catch (error) {
+    } catch (error: unknown) {
       if (this.isAppStateError(error)) {
         this.pendingConfiguration = true
         console.warn('[AudioModeManager] Audio mode unavailable - will retry when app is active')
         return
       }
-      throw new Error(
-        `[AudioModeManager] Failed to set audio mode: ${error instanceof Error ? error.message : String(error)}`,
-      )
+      const message = error instanceof Error ? error.message : String(error)
+      throw new Error(`[AudioModeManager] Failed to set audio mode: ${message}`, { cause: error })
     }
   }
 

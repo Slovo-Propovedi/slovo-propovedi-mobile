@@ -8,7 +8,7 @@
 - **Navigation**: `expo-router` (file-based routing)
 - **State Management**: `@reatom/core`, `@reatom/framework`, `@reatom/npm-react`
 - **Audio**: `expo-audio`
-- **Requests**: `ky`
+- **HTTP**: `axios`
 - **Storage**: `@react-native-async-storage/async-storage`
 - **Book Parsing**: `xml-js` (FB2 format)
 - **Lang**: `typescript`
@@ -21,7 +21,7 @@
 <img title="expo" alt="expo" height=48 src="https://static.expo.dev/static/favicons/favicon-light-48x48.png"/>
 <img title="reatom" alt="reatom" height=48 src="https://avatars.githubusercontent.com/u/50905415?s=200&v=4"/>
 <img title="expo-router" alt="expo-router" height=48 src="https://github.com/expo/expo/raw/main/.github/assets/logo.png"/>
-<img title="ky" alt="ky" height=48 src="https://raw.githubusercontent.com/sindresorhus/ky/356d61c1534c9dc2cfb8ce1c1ff5c4832579e11b/media/logo.svg"/>
+<img title="axios" alt="axios" height=48 src="https://axios-http.com/assets/logo.png"/>
 <img title="typescript" alt="typescript" height=48 src="https://raw.githubusercontent.com/remojansen/logo.ts/master/ts.png"/>
 <img title="prettier" alt="prettier" height=48 src="https://prettier.io/icon.png"/>
 <img title="eslint" alt="eslint" height=48 src="https://eslint.org/favicon.ico"/>
@@ -190,9 +190,9 @@ Cross-platform audio playback for sermons and audio content.
 
 FB2 format book parsing for the reading section.
 
-### HTTP: ky
+### HTTP: axios
 
-Modern and user-friendly HTTP client for API requests.
+Modern HTTP client for API requests with interceptors and automatic token refresh.
 
 ## Code Quality
 

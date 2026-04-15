@@ -8,6 +8,9 @@ const config: Config = {
     '!**/node_modules/**',
     '!**/babel.config.js',
     '!**/jest.setup.js',
+    '!eslint.config.js',
+    '!jest.config.ts',
+    '!__mocks__/**',
   ],
   preset: 'jest-expo',
   setupFiles: [

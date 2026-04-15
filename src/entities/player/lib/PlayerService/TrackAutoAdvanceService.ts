@@ -30,16 +30,24 @@ class TrackAutoAdvanceService {
   }
 
   public async handleTrackEnd(): Promise<void> {
-    const [[, storedCurrentAudio], [, storedCurrentPlaylist], [, storedRepeatMode]] =
-      await AsyncStorage.multiGet([CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE])
+    const stored = await AsyncStorage.multiGet([
+      CURRENT_AUDIO,
+      CURRENT_PLAYLIST,
+      CURRENT_REPEAT_MODE,
+    ])
+    const storedMap = Object.fromEntries(stored)
+    const storedCurrentAudio = storedMap[CURRENT_AUDIO]
+    const storedCurrentPlaylist = storedMap[CURRENT_PLAYLIST]
+    const storedRepeatMode = storedMap[CURRENT_REPEAT_MODE]
     const { data: repeatMode = RepeatMode.Off } = repeatModeSchema.safeParse(storedRepeatMode)
     const currentAudio = parseJsonWithSchema(audioPlayerDataSchema)(storedCurrentAudio)
     const currentPlaylist = parseJsonWithSchema(playlistDataSchema)(storedCurrentPlaylist)
 
     if (!currentPlaylist) return
 
-    const currentIndex = currentPlaylist.list.findIndex(t => t.id === currentAudio?.id)
-    const isLastTrack = currentIndex === currentPlaylist.list.length - 1
+    const playlistSermons = currentPlaylist.sermons
+    const currentIndex = playlistSermons.findIndex(t => t.id === currentAudio?.id)
+    const isLastTrack = currentIndex === playlistSermons.length - 1
 
     if (repeatMode === RepeatMode.Track) {
       if (currentAudio?.audioUrl)
@@ -56,12 +64,17 @@ class TrackAutoAdvanceService {
       return
     }
 
-    const nextTrack = currentPlaylist.list[currentIndex + 1]
+    const nextTrack = playlistSermons[currentIndex + 1]
 
     if (!nextTrack?.audioUrl) return
 
     await this.playNextTrack(
-      { ...nextTrack, audioUrl: nextTrack.audioUrl },
+      {
+        ...nextTrack,
+        artist: nextTrack.artist,
+        artwork: nextTrack.artwork,
+        audioUrl: nextTrack.audioUrl,
+      },
       currentPlaylist,
       nextTrack.audioUrl,
     )
@@ -81,18 +94,17 @@ class TrackAutoAdvanceService {
     playlist: PlaylistData,
     audioUrl: string,
   ): Promise<void> {
-    const newAudio: AudioPlayerData = { ...nextTrack, artwork: nextTrack.artwork, audioUrl }
+    const newAudio: AudioPlayerData = { ...nextTrack, audioUrl }
     await setCurrentAudioAction(ctx, newAudio)
     await this.playTrackWithMetadata(newAudio, playlist, audioUrl)
   }
 
   private async playFirstTrackInQueue(playlist: PlaylistData): Promise<void> {
-    const firstTrack = playlist.list[0]
-    if (!firstTrack?.audioUrl) return
+    const firstTrack = playlist.sermons[0]
+    if (!firstTrack?.audioUrl || !firstTrack?.id || !firstTrack?.title) return
 
     const newAudio: AudioPlayerData = {
       ...firstTrack,
-      artwork: firstTrack.artwork ?? '',
       audioUrl: firstTrack.audioUrl,
     }
     await setCurrentAudioAction(ctx, newAudio)

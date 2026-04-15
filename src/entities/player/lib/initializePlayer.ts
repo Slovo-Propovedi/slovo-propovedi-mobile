@@ -20,19 +20,19 @@ import { playerService } from './PlayerService'
 
 export const initializePlayer = async () => {
   try {
-    const [
-      [, storedCurrentAudio],
-      [, storedCurrentPlaylist],
-      [, storedSoundPosition],
-      [, storedVolume],
-      [, storedRepeatMode],
-    ] = await AsyncStorage.multiGet([
+    const stored = await AsyncStorage.multiGet([
       CURRENT_AUDIO,
       CURRENT_PLAYLIST,
       CURRENT_SOUND_POSITION,
       CURRENT_SOUND_VOLUME,
       CURRENT_REPEAT_MODE,
     ])
+    const storedMap = Object.fromEntries(stored)
+    const storedCurrentAudio = storedMap[CURRENT_AUDIO]
+    const storedCurrentPlaylist = storedMap[CURRENT_PLAYLIST]
+    const storedSoundPosition = storedMap[CURRENT_SOUND_POSITION]
+    const storedVolume = storedMap[CURRENT_SOUND_VOLUME]
+    const storedRepeatMode = storedMap[CURRENT_REPEAT_MODE]
 
     const parsedVolume = storedVolume ? Number(storedVolume) : null
     const { data: parsedRepeat } = repeatModeSchema.safeParse(storedRepeatMode)
