@@ -11,6 +11,7 @@ export const COLORS = {
   minimumTrackTintColor: 'rgba(255, 255, 255, 0.6)',
   onPrimary: '#fff',
   primary: '#f16031',
+  skeleton: '#333333',
   surface: '#252525',
   tabBarActive: '#f16031',
   tabBarBackground: 'rgba(0, 0, 0, 0.8)',

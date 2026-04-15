@@ -273,7 +273,9 @@ components:
     CreateSectionDto:
       type: object
       required:
+        - itemsSize
         - title
+        - transform
       properties:
         title:
           type: string
@@ -287,7 +289,6 @@ components:
             - middle
             - large
             - xLarge
-          nullable: true
         itemsRows:
           type: integer
           nullable: true
@@ -296,7 +297,6 @@ components:
           enum:
             - high
             - short
-          nullable: true
         isDescriptionTitleOnSlideLarge:
           type: boolean
           nullable: true
@@ -359,8 +359,10 @@ components:
       type: object
       required:
         - id
-        - title
+        - itemsSize
         - playlists
+        - title
+        - transform
       properties:
         id:
           type: string
@@ -377,7 +379,6 @@ components:
             - middle
             - large
             - xLarge
-          default: middle
         itemsRows:
           type: integer
           nullable: true
@@ -386,7 +387,6 @@ components:
           enum:
             - high
             - short
-          nullable: true
         isDescriptionTitleOnSlideLarge:
           type: boolean
           default: false

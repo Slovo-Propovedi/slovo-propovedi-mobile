@@ -32,7 +32,6 @@ export const CreateSermonBody = zod.object({
     .nullish(),
 })
 
-export const createSermon200ResponsePlaylistsItemSectionsItemItemsSizeDefault = `middle`
 export const createSermon200ResponsePlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const createSermon200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const createSermon200ResponsePlaylistsItemSectionsItemBorderRadiusDefault = false
@@ -62,11 +61,9 @@ export const CreateSermon200Response = zod.object({
               id: zod.uuid(),
               title: zod.string(),
               description: zod.string().nullish(),
-              itemsSize: zod
-                .enum(['small', 'middle', 'large', 'xLarge'])
-                .default(createSermon200ResponsePlaylistsItemSectionsItemItemsSizeDefault),
+              itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
               itemsRows: zod.number().nullish(),
-              transform: zod.enum(['high', 'short']).nullish(),
+              transform: zod.enum(['high', 'short']),
               isDescriptionTitleOnSlideLarge: zod
                 .boolean()
                 .default(
@@ -102,7 +99,6 @@ export const CreateSermon200Response = zod.object({
 /**
  * @summary Получить список всех проповедей
  */
-export const getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemItemsSizeDefault = `middle`
 export const getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemBorderRadiusDefault = false
@@ -135,13 +131,9 @@ export const GetAllSermons200Response = zod.object({
                     id: zod.uuid(),
                     title: zod.string(),
                     description: zod.string().nullish(),
-                    itemsSize: zod
-                      .enum(['small', 'middle', 'large', 'xLarge'])
-                      .default(
-                        getAllSermons200ResponseSermonsItemPlaylistsItemSectionsItemItemsSizeDefault,
-                      ),
+                    itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
                     itemsRows: zod.number().nullish(),
-                    transform: zod.enum(['high', 'short']).nullish(),
+                    transform: zod.enum(['high', 'short']),
                     isDescriptionTitleOnSlideLarge: zod
                       .boolean()
                       .default(
@@ -187,7 +179,6 @@ export const GetSermonByIdParams = zod.object({
   id: zod.uuid(),
 })
 
-export const getSermonById200ResponsePlaylistsItemSectionsItemItemsSizeDefault = `middle`
 export const getSermonById200ResponsePlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const getSermonById200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const getSermonById200ResponsePlaylistsItemSectionsItemBorderRadiusDefault = false
@@ -217,11 +208,9 @@ export const GetSermonById200Response = zod.object({
               id: zod.uuid(),
               title: zod.string(),
               description: zod.string().nullish(),
-              itemsSize: zod
-                .enum(['small', 'middle', 'large', 'xLarge'])
-                .default(getSermonById200ResponsePlaylistsItemSectionsItemItemsSizeDefault),
+              itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
               itemsRows: zod.number().nullish(),
-              transform: zod.enum(['high', 'short']).nullish(),
+              transform: zod.enum(['high', 'short']),
               isDescriptionTitleOnSlideLarge: zod
                 .boolean()
                 .default(

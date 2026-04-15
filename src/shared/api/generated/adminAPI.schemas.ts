@@ -68,12 +68,8 @@ export const SectionEntityItemsSize = {
   xLarge: 'xLarge',
 } as const
 
-/**
- * @nullable
- */
 export type SectionEntityTransform =
-  | (typeof SectionEntityTransform)[keyof typeof SectionEntityTransform]
-  | null
+  (typeof SectionEntityTransform)[keyof typeof SectionEntityTransform]
 
 export const SectionEntityTransform = {
   high: 'high',
@@ -97,11 +93,10 @@ export interface SectionEntity {
   isDescriptionTitleOnSlideLarge?: boolean
   /** @nullable */
   itemsRows?: number | null
-  itemsSize?: SectionEntityItemsSize
+  itemsSize: SectionEntityItemsSize
   playlists: PlaylistEntity[]
   title: string
-  /** @nullable */
-  transform?: SectionEntityTransform
+  transform: SectionEntityTransform
   whereIsSlideTitleLocated?: SectionEntityWhereIsSlideTitleLocated
 }
 
@@ -155,12 +150,8 @@ export interface StatusPlaylistResponse {
   status?: string
 }
 
-/**
- * @nullable
- */
 export type CreateSectionDtoItemsSize =
-  | (typeof CreateSectionDtoItemsSize)[keyof typeof CreateSectionDtoItemsSize]
-  | null
+  (typeof CreateSectionDtoItemsSize)[keyof typeof CreateSectionDtoItemsSize]
 
 export const CreateSectionDtoItemsSize = {
   small: 'small',
@@ -169,12 +160,8 @@ export const CreateSectionDtoItemsSize = {
   xLarge: 'xLarge',
 } as const
 
-/**
- * @nullable
- */
 export type CreateSectionDtoTransform =
-  | (typeof CreateSectionDtoTransform)[keyof typeof CreateSectionDtoTransform]
-  | null
+  (typeof CreateSectionDtoTransform)[keyof typeof CreateSectionDtoTransform]
 
 export const CreateSectionDtoTransform = {
   high: 'high',
@@ -203,11 +190,9 @@ export interface CreateSectionDto {
   isDescriptionTitleOnSlideLarge?: boolean | null
   /** @nullable */
   itemsRows?: number | null
-  /** @nullable */
-  itemsSize?: CreateSectionDtoItemsSize
+  itemsSize: CreateSectionDtoItemsSize
   title: string
-  /** @nullable */
-  transform?: CreateSectionDtoTransform
+  transform: CreateSectionDtoTransform
   /** @nullable */
   whereIsSlideTitleLocated?: CreateSectionDtoWhereIsSlideTitleLocated
 }

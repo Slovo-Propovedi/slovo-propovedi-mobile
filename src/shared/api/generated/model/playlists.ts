@@ -21,7 +21,6 @@ export const CreatePlaylistBody = zod.object({
 export const createPlaylist200ResponseSermonsItemVerseTwoMin = 2
 export const createPlaylist200ResponseSermonsItemVerseTwoMax = 2
 
-export const createPlaylist200ResponseSectionsItemItemsSizeDefault = `middle`
 export const createPlaylist200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const createPlaylist200ResponseSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const createPlaylist200ResponseSectionsItemBorderRadiusDefault = false
@@ -60,11 +59,9 @@ export const CreatePlaylist200Response = zod.object({
         id: zod.uuid(),
         title: zod.string(),
         description: zod.string().nullish(),
-        itemsSize: zod
-          .enum(['small', 'middle', 'large', 'xLarge'])
-          .default(createPlaylist200ResponseSectionsItemItemsSizeDefault),
+        itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
         itemsRows: zod.number().nullish(),
-        transform: zod.enum(['high', 'short']).nullish(),
+        transform: zod.enum(['high', 'short']),
         isDescriptionTitleOnSlideLarge: zod
           .boolean()
           .default(createPlaylist200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault),
@@ -86,7 +83,6 @@ export const CreatePlaylist200Response = zod.object({
 export const getAllPlaylists200ResponsePlaylistsItemSermonsItemVerseTwoMin = 2
 export const getAllPlaylists200ResponsePlaylistsItemSermonsItemVerseTwoMax = 2
 
-export const getAllPlaylists200ResponsePlaylistsItemSectionsItemItemsSizeDefault = `middle`
 export const getAllPlaylists200ResponsePlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const getAllPlaylists200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const getAllPlaylists200ResponsePlaylistsItemSectionsItemBorderRadiusDefault = false
@@ -128,11 +124,9 @@ export const GetAllPlaylists200Response = zod.object({
               id: zod.uuid(),
               title: zod.string(),
               description: zod.string().nullish(),
-              itemsSize: zod
-                .enum(['small', 'middle', 'large', 'xLarge'])
-                .default(getAllPlaylists200ResponsePlaylistsItemSectionsItemItemsSizeDefault),
+              itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
               itemsRows: zod.number().nullish(),
-              transform: zod.enum(['high', 'short']).nullish(),
+              transform: zod.enum(['high', 'short']),
               isDescriptionTitleOnSlideLarge: zod
                 .boolean()
                 .default(
@@ -166,7 +160,6 @@ export const GetPlaylistByIdParams = zod.object({
 export const getPlaylistById200ResponseSermonsItemVerseTwoMin = 2
 export const getPlaylistById200ResponseSermonsItemVerseTwoMax = 2
 
-export const getPlaylistById200ResponseSectionsItemItemsSizeDefault = `middle`
 export const getPlaylistById200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const getPlaylistById200ResponseSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const getPlaylistById200ResponseSectionsItemBorderRadiusDefault = false
@@ -205,11 +198,9 @@ export const GetPlaylistById200Response = zod.object({
         id: zod.uuid(),
         title: zod.string(),
         description: zod.string().nullish(),
-        itemsSize: zod
-          .enum(['small', 'middle', 'large', 'xLarge'])
-          .default(getPlaylistById200ResponseSectionsItemItemsSizeDefault),
+        itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
         itemsRows: zod.number().nullish(),
-        transform: zod.enum(['high', 'short']).nullish(),
+        transform: zod.enum(['high', 'short']),
         isDescriptionTitleOnSlideLarge: zod
           .boolean()
           .default(getPlaylistById200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault),
@@ -241,7 +232,6 @@ export const UpdatePlaylistBody = zod.object({
 export const updatePlaylist200ResponseSermonsItemVerseTwoMin = 2
 export const updatePlaylist200ResponseSermonsItemVerseTwoMax = 2
 
-export const updatePlaylist200ResponseSectionsItemItemsSizeDefault = `middle`
 export const updatePlaylist200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const updatePlaylist200ResponseSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const updatePlaylist200ResponseSectionsItemBorderRadiusDefault = false
@@ -280,11 +270,9 @@ export const UpdatePlaylist200Response = zod.object({
         id: zod.uuid(),
         title: zod.string(),
         description: zod.string().nullish(),
-        itemsSize: zod
-          .enum(['small', 'middle', 'large', 'xLarge'])
-          .default(updatePlaylist200ResponseSectionsItemItemsSizeDefault),
+        itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
         itemsRows: zod.number().nullish(),
-        transform: zod.enum(['high', 'short']).nullish(),
+        transform: zod.enum(['high', 'short']),
         isDescriptionTitleOnSlideLarge: zod
           .boolean()
           .default(updatePlaylist200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault),

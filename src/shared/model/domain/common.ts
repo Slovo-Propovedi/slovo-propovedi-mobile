@@ -25,18 +25,10 @@ interface SectionDataDef {
   id?: string | undefined
   isDescriptionTitleOnSlideLarge?: boolean | undefined
   itemsRows?: null | number | undefined
-  itemsSize?:
-    | 'bothOnAndUnder'
-    | 'large'
-    | 'middle'
-    | 'on'
-    | 'small'
-    | 'under'
-    | 'xLarge'
-    | undefined
+  itemsSize: 'bothOnAndUnder' | 'large' | 'middle' | 'on' | 'small' | 'under' | 'xLarge'
   playlists?: PlaylistDataDef[] | undefined
   title?: string | undefined
-  transform?: 'high' | 'short' | null | undefined
+  transform: 'high' | 'short'
   whereIsSlideTitleLocated?: 'bothOnAndUnder' | 'on' | 'under' | undefined
 }
 
@@ -62,12 +54,10 @@ export const sectionSchema = z.object({
   id: z.string().optional(),
   isDescriptionTitleOnSlideLarge: z.boolean().optional(),
   itemsRows: z.number().nullable().optional(),
-  itemsSize: z
-    .enum(['bothOnAndUnder', 'large', 'middle', 'on', 'small', 'under', 'xLarge'])
-    .optional(),
+  itemsSize: z.enum(['bothOnAndUnder', 'large', 'middle', 'on', 'small', 'under', 'xLarge']),
   playlists: z.lazy((): z.ZodType<PlaylistDataDef[]> => z.array(playlistSchema)).optional(),
   title: z.string().optional(),
-  transform: z.enum(['high', 'short']).nullable().optional(),
+  transform: z.enum(['high', 'short']),
   whereIsSlideTitleLocated: z.enum(['bothOnAndUnder', 'on', 'under']).optional(),
 })
 

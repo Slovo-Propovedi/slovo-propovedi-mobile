@@ -6,7 +6,8 @@ import { useListenNavigation } from 'shared/routing'
 import { Slider, SliderItemSize, SliderItemTransform, WhereIsSlideTitleLocated } from 'shared/ui'
 import { INDENTS, RADIUSES } from 'shared/ui/themed'
 import type { PlaylistData, SectionData } from 'shared/model'
-import { dynamicSectionsAtom, fetchAllSections } from './model'
+import { dynamicSectionsAtom, fetchAllSections, isLoadingSectionsAtom } from './model'
+import { SectionsSkeleton } from './skeleton'
 
 const mapItemsSize = (size?: string): SliderItemSize => {
   const map: Record<string, SliderItemSize> = {
@@ -37,6 +38,7 @@ export const DynamicSectionsSlider = () => {
   const playNewSermon = usePlayNewSermon()
   const { navigateToPlaylist, navigateToPlaylistList } = useListenNavigation()
   const sections = useAtom(dynamicSectionsAtom)[0]
+  const isLoading = useAtom(isLoadingSectionsAtom)[0]
   const fetchSections = useAction(fetchAllSections)
 
   useEffect(() => {
@@ -49,6 +51,8 @@ export const DynamicSectionsSlider = () => {
 
     navigateToPlaylist(playlist)
   }
+
+  if (isLoading) return <SectionsSkeleton />
 
   return <>{sections.map(section => renderSection(section, onItemPress, navigateToPlaylistList))}</>
 }

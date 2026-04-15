@@ -15,15 +15,14 @@ import * as zod from 'zod'
 export const CreateSectionBody = zod.object({
   title: zod.string(),
   description: zod.string().nullish(),
-  itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']).nullish(),
+  itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
   itemsRows: zod.number().nullish(),
-  transform: zod.enum(['high', 'short']).nullish(),
+  transform: zod.enum(['high', 'short']),
   isDescriptionTitleOnSlideLarge: zod.boolean().nullish(),
   whereIsSlideTitleLocated: zod.enum(['on', 'under', 'bothOnAndUnder']).nullish(),
   borderRadius: zod.boolean().nullish(),
 })
 
-export const createSection200ResponseItemsSizeDefault = `middle`
 export const createSection200ResponseIsDescriptionTitleOnSlideLargeDefault = false
 export const createSection200ResponseWhereIsSlideTitleLocatedDefault = `under`
 export const createSection200ResponseBorderRadiusDefault = false
@@ -34,11 +33,9 @@ export const CreateSection200Response = zod.object({
   id: zod.uuid(),
   title: zod.string(),
   description: zod.string().nullish(),
-  itemsSize: zod
-    .enum(['small', 'middle', 'large', 'xLarge'])
-    .default(createSection200ResponseItemsSizeDefault),
+  itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
   itemsRows: zod.number().nullish(),
-  transform: zod.enum(['high', 'short']).nullish(),
+  transform: zod.enum(['high', 'short']),
   isDescriptionTitleOnSlideLarge: zod
     .boolean()
     .default(createSection200ResponseIsDescriptionTitleOnSlideLargeDefault),
@@ -83,7 +80,6 @@ export const CreateSection200Response = zod.object({
 /**
  * @summary Получить все разделы
  */
-export const getAllSections200ResponseSectionsItemItemsSizeDefault = `middle`
 export const getAllSections200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const getAllSections200ResponseSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const getAllSections200ResponseSectionsItemBorderRadiusDefault = false
@@ -97,11 +93,9 @@ export const GetAllSections200Response = zod.object({
         id: zod.uuid(),
         title: zod.string(),
         description: zod.string().nullish(),
-        itemsSize: zod
-          .enum(['small', 'middle', 'large', 'xLarge'])
-          .default(getAllSections200ResponseSectionsItemItemsSizeDefault),
+        itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
         itemsRows: zod.number().nullish(),
-        transform: zod.enum(['high', 'short']).nullish(),
+        transform: zod.enum(['high', 'short']),
         isDescriptionTitleOnSlideLarge: zod
           .boolean()
           .default(getAllSections200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault),
@@ -158,7 +152,6 @@ export const GetSectionByIdParams = zod.object({
   id: zod.uuid(),
 })
 
-export const getSectionById200ResponseItemsSizeDefault = `middle`
 export const getSectionById200ResponseIsDescriptionTitleOnSlideLargeDefault = false
 export const getSectionById200ResponseWhereIsSlideTitleLocatedDefault = `under`
 export const getSectionById200ResponseBorderRadiusDefault = false
@@ -169,11 +162,9 @@ export const GetSectionById200Response = zod.object({
   id: zod.uuid(),
   title: zod.string(),
   description: zod.string().nullish(),
-  itemsSize: zod
-    .enum(['small', 'middle', 'large', 'xLarge'])
-    .default(getSectionById200ResponseItemsSizeDefault),
+  itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
   itemsRows: zod.number().nullish(),
-  transform: zod.enum(['high', 'short']).nullish(),
+  transform: zod.enum(['high', 'short']),
   isDescriptionTitleOnSlideLarge: zod
     .boolean()
     .default(getSectionById200ResponseIsDescriptionTitleOnSlideLargeDefault),
@@ -234,7 +225,6 @@ export const UpdateSectionBody = zod.object({
   borderRadius: zod.boolean().nullish(),
 })
 
-export const updateSection200ResponseItemsSizeDefault = `middle`
 export const updateSection200ResponseIsDescriptionTitleOnSlideLargeDefault = false
 export const updateSection200ResponseWhereIsSlideTitleLocatedDefault = `under`
 export const updateSection200ResponseBorderRadiusDefault = false
@@ -245,11 +235,9 @@ export const UpdateSection200Response = zod.object({
   id: zod.uuid(),
   title: zod.string(),
   description: zod.string().nullish(),
-  itemsSize: zod
-    .enum(['small', 'middle', 'large', 'xLarge'])
-    .default(updateSection200ResponseItemsSizeDefault),
+  itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
   itemsRows: zod.number().nullish(),
-  transform: zod.enum(['high', 'short']).nullish(),
+  transform: zod.enum(['high', 'short']),
   isDescriptionTitleOnSlideLarge: zod
     .boolean()
     .default(updateSection200ResponseIsDescriptionTitleOnSlideLargeDefault),

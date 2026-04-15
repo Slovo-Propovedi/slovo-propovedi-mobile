@@ -4,6 +4,7 @@ import { sectionsApi } from 'shared/api/generated'
 import type { SectionData } from 'shared/model'
 
 export const dynamicSectionsAtom = atom<SectionData[]>([], 'dynamicSectionsAtom')
+export const isLoadingSectionsAtom = atom(true, 'isLoadingSectionsAtom')
 
 const getMockSections = (): SectionData[] => {
   const { sermons: sermonsGroups } = db
@@ -18,18 +19,21 @@ const getMockSections = (): SectionData[] => {
       itemsSize: 'small',
       playlists: newGroup?.playlists ?? [],
       title: 'Новые',
+      transform: 'high',
     },
     {
       id: 'mock-on-bible',
       itemsSize: 'middle',
       playlists: onBibleGroup?.playlists ?? [],
       title: 'По библии',
+      transform: 'high',
     },
     {
       id: 'mock-topical',
       itemsSize: 'xLarge',
       playlists: topicalGroup?.playlists ?? [],
       title: 'Тематические',
+      transform: 'high',
     },
     {
       id: 'mock-listen-every-day',
@@ -42,6 +46,10 @@ const getMockSections = (): SectionData[] => {
 }
 
 export const fetchAllSections = action(async ctx => {
+  await ctx.schedule(() => {
+    isLoadingSectionsAtom(ctx, true)
+  })
+
   let sections: SectionData[]
 
   try {
@@ -53,5 +61,6 @@ export const fetchAllSections = action(async ctx => {
 
   await ctx.schedule(() => {
     dynamicSectionsAtom(ctx, sections)
+    isLoadingSectionsAtom(ctx, false)
   })
 }, 'fetchAllSections')
