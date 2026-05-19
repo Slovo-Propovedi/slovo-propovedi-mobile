@@ -28,7 +28,7 @@ interface SectionDataDef {
   itemsSize: 'bothOnAndUnder' | 'large' | 'middle' | 'on' | 'small' | 'under' | 'xLarge'
   playlists?: PlaylistDataDef[] | undefined
   title?: string | undefined
-  transform: 'high' | 'short'
+  transform: 'high' | 'middle' | 'short'
   whereIsSlideTitleLocated?: 'bothOnAndUnder' | 'on' | 'under' | undefined
 }
 
@@ -57,7 +57,7 @@ export const sectionSchema = z.object({
   itemsSize: z.enum(['bothOnAndUnder', 'large', 'middle', 'on', 'small', 'under', 'xLarge']),
   playlists: z.lazy((): z.ZodType<PlaylistDataDef[]> => z.array(playlistSchema)).optional(),
   title: z.string().optional(),
-  transform: z.enum(['high', 'short']),
+  transform: z.enum(['high', 'short', 'middle']),
   whereIsSlideTitleLocated: z.enum(['bothOnAndUnder', 'on', 'under']).optional(),
 })
 
