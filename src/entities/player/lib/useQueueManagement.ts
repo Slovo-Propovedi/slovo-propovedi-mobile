@@ -23,7 +23,7 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
   const [queue, setQueue] = useState<AudioPlayerData[]>([])
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
 
-  const { loadAudio, play } = usePlayer()
+  const { loadAudio, play, replaceAudio } = usePlayer()
 
   const createDefaultPlaylist = (tracks: AudioPlayerData[]): PlaylistData => {
     const firstTrack = tracks[0]
@@ -56,11 +56,11 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
       const playlist = createDefaultPlaylist(queueData)
       await setCurrentPlaylist(playlist)
       if (queueData[index]) {
-        await loadAudio(queueData[index].audioUrl)
+        await replaceAudio(queueData[index].audioUrl)
         await play()
       }
     },
-    [loadAudio, play, setCurrentPlaylist],
+    [play, replaceAudio, setCurrentPlaylist],
   )
 
   const shufflePlaylist = useCallback(
@@ -70,11 +70,11 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
       const playlist = createDefaultPlaylist(shuffledTracks)
       await setCurrentPlaylist(playlist)
       if (shuffledTracks[0]) {
-        await loadAudio(shuffledTracks[0].audioUrl)
+        await replaceAudio(shuffledTracks[0].audioUrl)
         await play()
       }
     },
-    [loadAudio, play, setCurrentPlaylist],
+    [play, replaceAudio, setCurrentPlaylist],
   )
 
   const addToQueue = useCallback(async (track: AudioPlayerData) => {
@@ -85,19 +85,19 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
     const currentIndex = queue.findIndex(t => t.id === currentAudio?.id)
     if (currentIndex >= 0 && currentIndex < queue.length - 1) {
       const nextTrack = queue[currentIndex + 1]
-      await loadAudio(nextTrack.audioUrl)
+      await replaceAudio(nextTrack.audioUrl)
       await play()
     }
-  }, [currentAudio, queue, loadAudio, play])
+  }, [currentAudio, queue, play, replaceAudio])
 
   const playPrevious = useCallback(async () => {
     const currentIndex = queue.findIndex(t => t.id === currentAudio?.id)
     if (currentIndex > 0) {
       const prevTrack = queue[currentIndex - 1]
-      await loadAudio(prevTrack.audioUrl)
+      await replaceAudio(prevTrack.audioUrl)
       await play()
     }
-  }, [currentAudio, queue, loadAudio, play])
+  }, [currentAudio, queue, play, replaceAudio])
 
   return {
     activeTrack: currentAudio,

@@ -20,7 +20,7 @@ class AudioLoader {
     void setPositionAction(ctx, 0)
     this.trackEndHandled = false
     if (this.playerInstance) {
-      this.playerInstance.pause()
+      this.playerInstance.remove()
       this.playerInstance = null
     }
     const playUrl = await this.getPlaybackUrl(audioUrl)

@@ -5,7 +5,7 @@ import { type AudioPlayerData } from '../ui/PlayerControls.types'
 import { usePlayer } from './usePlayer'
 
 export const usePlayNewSermon = () => {
-  const { loadAudio, play, setLockScreenMetadata } = usePlayer()
+  const { play, replaceAudio, setLockScreenMetadata } = usePlayer()
 
   const currentAudio = useAtom(currentAudioAtom)[0]
   const setCurrentAudio = useAction(setCurrentAudioAction)
@@ -37,7 +37,7 @@ export const usePlayNewSermon = () => {
 
     void openPlayerFullscreen(true)
 
-    if (currentAudio?.id !== id) await loadAudio(newAudio.audioUrl)
+    if (currentAudio?.id !== id) await replaceAudio(newAudio.audioUrl)
 
     await play()
 

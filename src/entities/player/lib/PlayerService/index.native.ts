@@ -95,7 +95,7 @@ export class PlayerService {
     playerStatusListener.cleanup()
 
     if (this.playerInstance) {
-      this.playerInstance.pause()
+      this.playerInstance.remove()
       this.playerInstance = null
     }
   }
