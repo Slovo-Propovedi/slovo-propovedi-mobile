@@ -3,7 +3,15 @@ import { Entypo } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
 import React, { useCallback, useRef, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native'
+import {
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle, runOnJS } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -151,6 +159,7 @@ export const FullscreenContent = ({ fullStyle, onClose }: FullscreenContentProps
   return (
     <>
       <Animated.View style={[styles.fullContainer, fullStyle]}>
+        <StatusBar translucent barStyle='light-content' backgroundColor='transparent' />
         <GestureDetector gesture={closeGesture}>
           <View style={[styles.closeButton, { top: insets.top + INDENTS.low }]}>
             <Entypo name='chevron-down' style={styles.closeIcon} />

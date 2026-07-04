@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useWindowDimensions } from 'react-native'
+import { Dimensions, useWindowDimensions } from 'react-native'
 import { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
@@ -24,6 +24,7 @@ interface UseExpandAnimationResult {
 export const useExpandAnimation = (expanded: boolean): UseExpandAnimationResult => {
   const progress = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
+  const fullScreenHeight = Dimensions.get('screen').height
 
   useEffect(() => {
     progress.value = withTiming(expanded ? 1 : 0, { duration: expanded ? 300 : 250 })
@@ -35,8 +36,8 @@ export const useExpandAnimation = (expanded: boolean): UseExpandAnimationResult 
     borderTopLeftRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
     borderTopRightRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
     bottom: interpolate(progress.value, [0, 1], [MINI_BOTTOM, 0]),
-    height: interpolate(progress.value, [0, 1], [MINI_H, screenHeight]),
     left: interpolate(progress.value, [0, 1], [INDENTS.low, 0]),
+    top: interpolate(progress.value, [0, 1], [fullScreenHeight - MINI_BOTTOM - MINI_H, 0]),
     width: interpolate(progress.value, [0, 1], [screenWidth - INDENTS.low * 2, screenWidth]),
   }))
 
