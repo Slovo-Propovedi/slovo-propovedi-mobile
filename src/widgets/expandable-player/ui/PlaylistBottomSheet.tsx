@@ -2,9 +2,9 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/b
 import { useAtom } from '@reatom/npm-react'
 import React, { useCallback } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { TracksListItem } from 'widgets/track-list'
 import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { TracksListItem } from 'shared/ui/track-list'
 import type { PlaylistData } from 'shared/model'
 
 interface PlaylistBottomSheetProps {

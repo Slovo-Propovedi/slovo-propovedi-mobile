@@ -3,7 +3,7 @@ import React, { useCallback } from 'react'
 import { FlatList, StatusBar, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { DynamicSectionsSlider } from 'widgets/dynamic-sections-slider'
-import { QueueControls, TracksListItem } from 'widgets/track-list'
+import { QueueControls } from 'widgets/track-list'
 import {
   type AudioPlayerData,
   currentAudioAtom,
@@ -11,6 +11,7 @@ import {
   useQueueManagement,
 } from 'entities/player'
 import { COLORS } from 'shared/ui/themed'
+import { TracksListItem } from 'shared/ui/track-list'
 import { mockNewSermons, mockSermons } from './mockData'
 
 export const ListenScreen = () => {

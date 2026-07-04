@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
+import { TracksListItem, tracksListStyles } from 'shared/ui/track-list'
 import type { TracksListProps } from './types'
 import { QueueControls } from './QueueControls'
-import { tracksListStyles } from './styles'
-import { TracksListItem } from './TracksListItem/TracksListItem'
 
 const ItemSeparator = () => <View style={tracksListStyles.divider} />
 

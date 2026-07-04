@@ -2,17 +2,6 @@ import type { ReactNode } from 'react'
 import type { ScrollView } from 'react-native'
 import type Animated from 'react-native-reanimated'
 
-export interface TracksListItemProps {
-  artist?: string
-  artwork?: string
-  audioUrl?: string
-  isAudioPlaying?: boolean
-  isCached?: boolean
-  isPlaying: boolean
-  onPress: () => void
-  title: string
-}
-
 export interface TracksListProps {
   contentContainerStyle?: AnimatedFlatListProps['contentContainerStyle']
   data: Array<{

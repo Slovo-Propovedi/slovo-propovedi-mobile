@@ -1,4 +1,5 @@
 export { QueueControls } from './ui/QueueControls'
 export { TracksList } from './ui/TracksList'
-export { TracksListItem } from './ui/TracksListItem/TracksListItem'
 export * from './ui/types'
+export { tracksListStyles } from 'shared/ui/track-list'
+export { TracksListItem } from 'shared/ui/track-list'

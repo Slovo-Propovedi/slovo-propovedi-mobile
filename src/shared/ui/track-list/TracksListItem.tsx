@@ -1,21 +1,20 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { useAtom } from '@reatom/npm-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { Image, Modal, Pressable, Text, View } from 'react-native'
-import { downloadingAudioUrlAtom } from 'entities/player'
 import { cacheAudio, removeFromCache, useIsCached } from 'shared/lib/audio-cache'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { MovingText } from 'shared/ui/MovingText'
 import { COLORS } from 'shared/ui/themed'
-import type { TracksListItemProps } from '../types'
-import { PlayingStatusOrChacheIcon } from '../PlayingStatusOrChacheIcon'
-import { tracksListStyles } from '../styles'
+import type { TracksListItemProps } from './types'
 import { MENU_WIDTH, TITLE_ANIMATION_THRESHOLD } from './constants'
+import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
+import { tracksListStyles } from './styles'
 
 export const TracksListItem = ({
   artist,
   artwork,
   audioUrl,
+  downloadingUrl,
   isAudioPlaying = false,
   isPlaying,
   onPress,
@@ -26,9 +25,8 @@ export const TracksListItem = ({
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
   const [menuHeight, setMenuHeight] = useState(44)
   const dotsButtonRef = useRef<View>(null)
-  const prevDownloadingUrlRef = useRef<null | string>(null)
+  const prevDownloadingUrlRef = useRef<null | string | undefined>(null)
   const isCached = useIsCached(audioUrl ?? null, cacheTrigger)
-  const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
 
   useEffect(() => {
     const wasThisAudioDownloading = prevDownloadingUrlRef.current === audioUrl

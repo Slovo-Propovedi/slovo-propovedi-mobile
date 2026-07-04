@@ -1,6 +1,5 @@
 import { action, atom } from '@reatom/framework'
-import { db } from 'shared/api/db/db'
-import { sectionsApi } from 'shared/api/generated'
+import { db, sectionsApi } from 'shared/api'
 import type { SectionData } from 'shared/model'
 
 export const dynamicSectionsAtom = atom<SectionData[]>([], 'dynamicSectionsAtom')
