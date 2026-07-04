@@ -1,16 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export const useTimer = (startValue: number, timeout = 1000) => {
   const [countdownValue, setCountdownValue] = useState(startValue)
 
   const intervalIdRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
+  const countdownValueRef = useRef(countdownValue)
+  countdownValueRef.current = countdownValue
 
-  const createTimer = () => {
+  const createTimer = useCallback(() => {
+    clearInterval(intervalIdRef.current)
     intervalIdRef.current = setInterval(() => {
-      if (countdownValue <= 0) clearInterval(intervalIdRef.current)
-      else setCountdownValue(countdownValue - 1)
+      if (countdownValueRef.current <= 0) clearInterval(intervalIdRef.current)
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- intentional countdown tick
+      else setCountdownValue(prev => prev - 1)
     }, timeout)
-  }
+  }, [timeout])
 
   const restartTimer = () => {
     setCountdownValue(startValue)
@@ -27,10 +31,11 @@ export const useTimer = (startValue: number, timeout = 1000) => {
   useEffect(() => {
     createTimer()
     return () => clearInterval(intervalIdRef.current)
-  }, [countdownValue])
+  }, [createTimer])
 
   useEffect(() => {
-    if (startValue) restartTimer()
+    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- reset to initial value on mount only
+    if (startValue) setCountdownValue(startValue)
   }, [])
 
   return { countdownValue, pauseTimer, restartTimer, resumeTimer, setCountdownValue }

@@ -6,6 +6,9 @@ import '@testing-library/jest-native/extend-expect'
 
 const ctx = createCtx()
 
+const PREVIEW_URL = 'https://test.com/preview1.mp3'
+const TEST_ARTIST = 'Test Artist'
+
 jest.mock('../../lib/PlayerService', () => ({
   playerService: {
     getState: jest.fn(() => ({
@@ -26,28 +29,28 @@ jest.mock('../../lib/PlayerService', () => ({
 }))
 
 const currentPlaylist = {
-  artwork: 'https://test.com/preview1.mp3',
+  artwork: PREVIEW_URL,
   id: '1',
   sermons: [
     {
-      artist: 'Test Artist',
-      artwork: 'https://test.com/preview1.mp3',
+      artist: TEST_ARTIST,
+      artwork: PREVIEW_URL,
       audioUrl: 'https://test.com/audio1.mp3',
       description: 'Description 1',
       id: '1',
       title: 'Title 1',
     },
     {
-      artist: 'Test Artist',
-      artwork: 'https://test.com/preview1.mp3',
+      artist: TEST_ARTIST,
+      artwork: PREVIEW_URL,
       audioUrl: 'https://test.com/audio2.mp3',
       description: 'Description 2',
       id: '2',
       title: 'Title 2',
     },
     {
-      artist: 'Test Artist',
-      artwork: 'https://test.com/preview1.mp3',
+      artist: TEST_ARTIST,
+      artwork: PREVIEW_URL,
       audioUrl: 'https://test.com/audio3.mp3',
       description: 'Description 3',
       id: '3',
@@ -71,8 +74,8 @@ describe('<PlayerControls>', () => {
     jest.clearAllMocks()
   })
 
-  test('PlayerControls renders correctly', () => {
-    const { getByTestId } = render(
+  test('PlayerControls renders correctly', async () => {
+    const { getByTestId } = await render(
       <reatomContext.Provider value={ctx}>
         <PlayerControls {...mockPlayerControlsProps} />
       </reatomContext.Provider>,

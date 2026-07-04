@@ -7,8 +7,8 @@ describe('<TouchableImageBackground/>', () => {
   const mockOnPress = jest.fn()
   const testPreviewSrc = 'https://www.test-preview-src.com'
 
-  test('renders correctly and calls onPress when pressed', () => {
-    const { getByTestId } = render(
+  test('renders correctly and calls onPress when pressed', async () => {
+    const { getByTestId } = await render(
       <TouchableImageBackground
         testID='touchable'
         onPress={mockOnPress}
@@ -23,8 +23,8 @@ describe('<TouchableImageBackground/>', () => {
     expect(mockOnPress).toHaveBeenCalled()
   })
 
-  test('displays the correct preview image', () => {
-    const { getByTestId } = render(
+  test('displays the correct preview image', async () => {
+    const { getByTestId } = await render(
       <TouchableImageBackground onPress={mockOnPress} previewSrc={testPreviewSrc}>
         <Text>Test Child</Text>
       </TouchableImageBackground>,
@@ -35,8 +35,8 @@ describe('<TouchableImageBackground/>', () => {
     expect(imageBackground).toHaveProp('source', { uri: testPreviewSrc })
   })
 
-  test('applies style and imageStyle props correctly', () => {
-    const { getByTestId } = render(
+  test('applies style and imageStyle props correctly', async () => {
+    const { getByTestId } = await render(
       <TouchableImageBackground
         onPress={mockOnPress}
         previewSrc={testPreviewSrc}
@@ -52,8 +52,8 @@ describe('<TouchableImageBackground/>', () => {
     expect(imageBackground).toHaveStyle({ opacity: 0.5 })
   })
 
-  test('displays child elements', () => {
-    const { getByText } = render(
+  test('displays child elements', async () => {
+    const { getByText } = await render(
       <TouchableImageBackground onPress={mockOnPress} previewSrc={testPreviewSrc}>
         <Text>Test Child</Text>
       </TouchableImageBackground>,

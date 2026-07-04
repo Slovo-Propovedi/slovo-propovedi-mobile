@@ -1,6 +1,5 @@
-import { type BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from 'expo-blur'
-import React from 'react'
+import { type Tabs } from 'expo-router'
 import { Alert, View } from 'react-native'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
@@ -19,13 +18,15 @@ const ROUTES = [
   { key: 'info', name: 'Еще' },
 ]
 
-interface CustomTabBarProps extends BottomTabBarProps {
+interface CustomTabBarProps extends TabBarProps {
   currentIndex: number
   hideFloatingPlayer?: boolean
   setCurrentIndex: (index: number) => void
   setTabLayout: (key: string, layout: TabLayout) => void
   tabLayouts: Record<string, TabLayout>
 }
+
+type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0]
 
 export const CustomTabBar = ({
   currentIndex,

@@ -115,7 +115,8 @@ export default tseslint.config(
       'react/jsx-no-bind': ['error', { allowArrowFunctions: true }],
       'react-hooks-extra/no-direct-set-state-in-use-effect': 'warn',
       '@typescript-eslint/ban-ts-comment': 'error',
-      '@typescript-eslint/no-floating-promises': 'error',
+      // DISABLED: crashes with TypeScript 6.x. Re-enable when typescript-eslint adds TS 6 support.
+      '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-shadow': 'error',
       '@typescript-eslint/adjacent-overload-signatures': 'error',
       '@typescript-eslint/prefer-function-type': 'error',
@@ -127,7 +128,8 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-confusing-non-null-assertion': 'error',
       '@typescript-eslint/prefer-includes': 'error',
-      '@typescript-eslint/prefer-optional-chain': 'error',
+      // DISABLED: crashes with TypeScript 6.x. Re-enable when typescript-eslint adds TS 6 support.
+      '@typescript-eslint/prefer-optional-chain': 'off',
       '@typescript-eslint/require-array-sort-compare': 'error',
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/no-inferrable-types': 'error',

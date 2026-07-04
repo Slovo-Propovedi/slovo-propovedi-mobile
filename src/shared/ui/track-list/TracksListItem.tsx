@@ -30,6 +30,7 @@ export const TracksListItem = ({
 
   useEffect(() => {
     const wasThisAudioDownloading = prevDownloadingUrlRef.current === audioUrl
+    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- intentionally triggering cache refresh after download completes
     if (wasThisAudioDownloading && downloadingUrl === null) setCacheTrigger(prev => prev + 1)
     prevDownloadingUrlRef.current = downloadingUrl
   }, [downloadingUrl, audioUrl])

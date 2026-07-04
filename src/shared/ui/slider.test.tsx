@@ -12,19 +12,19 @@ describe('<Slider/>', () => {
     mockData.text = null
   })
 
-  test('return null if items prop is undefined', () => {
+  test('return null if items prop is undefined', async () => {
     //@ts-expect-error - undefined is a not a valid items
-    render(<Slider items={undefined} />)
+    await render(<Slider items={undefined} />)
     expect(screen.toJSON()).toBeNull()
   })
 
-  test('return null, if items length === 0', () => {
-    render(<Slider items={[]} />)
+  test('return null, if items length === 0', async () => {
+    await render(<Slider items={[]} />)
     expect(screen.toJSON()).toBeNull()
   })
 
-  test('return View, if items length > 0', () => {
-    render(<Slider items={sliderStub.items} />)
+  test('return View, if items length > 0', async () => {
+    await render(<Slider items={sliderStub.items} />)
     const tree = screen.toJSON()
     expect(tree).toBeDefined()
     expect(Array.isArray(tree)).toEqual(false)
@@ -32,15 +32,15 @@ describe('<Slider/>', () => {
     expect(tree.type).toEqual('View')
   })
 
-  test('return 2 slider items, if items length === 2', () => {
-    render(<Slider items={[itemStub, itemStub]} />)
+  test('return 2 slider items, if items length === 2', async () => {
+    await render(<Slider items={[itemStub, itemStub]} />)
     const tree = screen.toJSON()
     if (!tree || Array.isArray(tree)) return
     expect(screen.getAllByTestId('slider-item').length).toEqual(2)
   })
 
-  test('onPressItem called on press item', () => {
-    render(
+  test('onPressItem called on press item', async () => {
+    await render(
       <Slider
         items={sliderStub.items}
         onPressItem={() => {
@@ -54,18 +54,18 @@ describe('<Slider/>', () => {
     expect(mockData.text).not.toBeNull()
   })
 
-  test('has Text element, if title is defined', () => {
-    render(<Slider items={sliderStub.items} title={sliderStub.title} />)
+  test('has Text element, if title is defined', async () => {
+    await render(<Slider items={sliderStub.items} title={sliderStub.title} />)
     expect(screen.queryByTestId('title')).not.toBeNull()
   })
 
-  test('content in the Text element equals to title prop', () => {
-    render(<Slider items={sliderStub.items} title={sliderStub.title} />)
+  test('content in the Text element equals to title prop', async () => {
+    await render(<Slider items={sliderStub.items} title={sliderStub.title} />)
     expect(screen.queryByTestId('title')).toHaveTextContent(sliderStub.title)
   })
 
-  test('call onPressTitle callback, when press on tittle element', () => {
-    render(
+  test('call onPressTitle callback, when press on tittle element', async () => {
+    await render(
       <Slider
         items={sliderStub.items}
         title={sliderStub.title}
@@ -78,14 +78,18 @@ describe('<Slider/>', () => {
     expect(mockData.text).toEqual('new value')
   })
 
-  test('length of rows elements is equal to itemsRows props', () => {
-    const { update } = render(<Slider items={[itemStub, itemStub, itemStub, itemStub]} />)
+  test('length of rows elements is equal to itemsRows props', async () => {
+    const { rerender } = await render(<Slider items={[itemStub, itemStub, itemStub, itemStub]} />)
     expect(screen.getAllByTestId(sliderRowId).length).toEqual(1)
     let itemsRows = 2
-    update(<Slider itemsRows={itemsRows} items={[itemStub, itemStub, itemStub, itemStub]} />)
+    await rerender(
+      <Slider itemsRows={itemsRows} items={[itemStub, itemStub, itemStub, itemStub]} />,
+    )
     expect(screen.getAllByTestId(sliderRowId).length).toEqual(itemsRows)
     itemsRows++
-    update(<Slider itemsRows={itemsRows} items={[itemStub, itemStub, itemStub, itemStub]} />)
+    await rerender(
+      <Slider itemsRows={itemsRows} items={[itemStub, itemStub, itemStub, itemStub]} />,
+    )
     expect(screen.getAllByTestId(sliderRowId).length).toEqual(itemsRows)
   })
 })

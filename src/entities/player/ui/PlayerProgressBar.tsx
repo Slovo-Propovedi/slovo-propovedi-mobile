@@ -44,7 +44,9 @@ export const PlayerProgressBar = ({
 
   useEffect(() => {
     if (position < 1000 && previewPositionRef.current > 5000) {
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- intentionally syncing state from prop with guards
       setPreviewPosition(position)
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- intentionally syncing state from prop with guards
       setIsDragging(false)
       pendingSeekPositionRef.current = null
     } else if (
@@ -52,6 +54,7 @@ export const PlayerProgressBar = ({
       pendingSeekPositionRef.current !== null &&
       Math.abs(position - pendingSeekPositionRef.current) < 100
     ) {
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- intentionally syncing state from prop with guards
       setIsDragging(false)
       pendingSeekPositionRef.current = null
     }

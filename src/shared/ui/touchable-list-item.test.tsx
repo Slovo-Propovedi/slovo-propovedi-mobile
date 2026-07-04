@@ -13,22 +13,22 @@ describe('<TouchableListItem/>', () => {
     mockFunction.mockClear()
   })
 
-  test('rendered View in the container', () => {
-    render(<TouchableListItem data={dataStub} onPress={() => null} />)
+  test('rendered View in the container', async () => {
+    await render(<TouchableListItem data={dataStub} onPress={() => null} />)
 
     const listItem = screen.getByTestId('list-item')
 
     expect(listItem.type).toEqual('View')
   })
 
-  test('not called mock function if not touch on item', () => {
-    render(<TouchableListItem data={dataStub} onPress={mockFunction} />)
+  test('not called mock function if not touch on item', async () => {
+    await render(<TouchableListItem data={dataStub} onPress={mockFunction} />)
 
     expect(mockFunction).not.toHaveBeenCalled()
   })
 
-  test('mock function is called if touch on item', () => {
-    render(<TouchableListItem data={dataStub} onPress={mockFunction} />)
+  test('mock function is called if touch on item', async () => {
+    await render(<TouchableListItem data={dataStub} onPress={mockFunction} />)
 
     fireEvent.press(screen.getByTestId('container'))
 

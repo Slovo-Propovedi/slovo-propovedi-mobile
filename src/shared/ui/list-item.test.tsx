@@ -7,8 +7,8 @@ const titleStub = 'test'
 const artworkStub = 'google.com'
 
 describe('<TouchableListItem>', () => {
-  test('if data defined return View', () => {
-    render(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
+  test('if data defined return View', async () => {
+    await render(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
 
     const tree = screen.toJSON()
 
@@ -17,16 +17,16 @@ describe('<TouchableListItem>', () => {
     expect(tree.type).toEqual('View')
   })
 
-  test('if title prop defined title element equals title prop', () => {
-    render(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
+  test('if title prop defined title element equals title prop', async () => {
+    await render(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
 
     const title = screen.getByTestId('title')
 
     expect(title).toHaveTextContent(titleStub)
   })
 
-  test('displayed preview if artwork in data is defined', () => {
-    render(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
+  test('displayed preview if artwork in data is defined', async () => {
+    await render(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
 
     const preview = screen.queryByTestId('preview')
 
