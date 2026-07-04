@@ -21,15 +21,16 @@ export const Progress = ({
 }: ProgressProps) => {
   const loaderValue = useRef(loaderValueInitial || new Animated.Value(0)).current
 
-  const viewElementRef = useRef<View>(null)
+  const animatedWidth = useRef(
+    loaderValue.interpolate({
+      inputRange: [0, 100],
+      outputRange: ['0%', '100%'],
+    }),
+  ).current
 
   const safeTotal = Math.max(total, 1)
 
-  const width = loaderValue.interpolate({
-    extrapolate: 'clamp',
-    inputRange: [0, safeTotal],
-    outputRange: ['0%', '100%'],
-  })
+  const viewElementRef = useRef<View>(null)
 
   const calculateAndCallChangeProgressValue = (coordinateX: number) =>
     viewElementRef.current?.measure((...args) => {
@@ -38,8 +39,8 @@ export const Progress = ({
     })
 
   useEffect(() => {
-    loaderValue.setValue(progress)
-  }, [progress])
+    loaderValue.setValue((progress / safeTotal) * 100)
+  }, [progress, safeTotal, loaderValue])
 
   return (
     <GestureHandlerRootView testID='progress-bar-gesture-root'>
@@ -57,7 +58,10 @@ export const Progress = ({
           <View ref={viewElementRef} testID='progress-bar' style={[styles.progressBar, style]}>
             <Animated.View
               testID='progress-bar-inner'
-              style={[StyleSheet.absoluteFill, { backgroundColor: COLORS.primary, width: width }]}
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: COLORS.primary, width: animatedWidth },
+              ]}
             />
           </View>
         </PanGestureHandler>

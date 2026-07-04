@@ -46,9 +46,6 @@
     "@expo/vector-icons": "^15.1.1",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@react-native-async-storage/async-storage": "2.2.0",
-    "@react-navigation/bottom-tabs": "7.18.7",
-    "@react-navigation/native": "7.3.7",
-    "@react-navigation/native-stack": "7.17.9",
     "@reatom/core": "^1001.1.0",
     "@reatom/framework": "^3.4.68",
     "@reatom/npm-react": "^3.10.6",
@@ -136,9 +133,6 @@
   },
   "private": true,
   "resolutions": {
-    "punycode": "2.3.1",
-    "@react-navigation/core": "7.20.0",
-    "@react-navigation/native": "7.3.1",
-    "@react-navigation/routers": "7.6.0"
+    "punycode": "2.3.1"
   }
 }

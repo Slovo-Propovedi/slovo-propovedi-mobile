@@ -1,4 +1,4 @@
-import { act, render, waitFor } from '@testing-library/react-native'
+import { act, render } from '@testing-library/react-native'
 import React from 'react'
 import { Animated } from 'react-native'
 import { COLORS } from 'shared/ui/themed'
@@ -42,10 +42,7 @@ describe('<Progress/>', () => {
       <Progress total={total} progress={progress} loaderValue={loaderValue} />,
     )
     expect(getByTestId(progressBarInnerId)).toHaveStyle({ width: '50%' })
-    act(() => {
-      loaderValue.setValue(75)
-    })
-    await waitFor(() => {
+    await act(async () => {
       rerender(<Progress progress={75} total={total} loaderValue={loaderValue} />)
     })
     expect(getByTestId(progressBarInnerId)).toHaveStyle({ width: '75%' })
