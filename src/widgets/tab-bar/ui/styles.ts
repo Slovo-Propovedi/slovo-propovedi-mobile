@@ -1,6 +1,9 @@
 const BORDER_RADIUS = 20
 
 export const styles = {
+  disabledTabButton: {
+    opacity: 0.5,
+  },
   floatingContainer: {
     bottom: 0,
     elevation: 12,

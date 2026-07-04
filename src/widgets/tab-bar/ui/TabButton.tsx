@@ -5,13 +5,21 @@ import { styles } from './styles'
 
 interface TabButtonProps {
   isActive: boolean
+  isDisabled?: boolean
   onLayout: (layout: { width: number; x: number }) => void
   onPress: () => void
   routeKey: string
   routeName: string
 }
 
-export const TabButton = ({ isActive, onLayout, onPress, routeKey, routeName }: TabButtonProps) => {
+export const TabButton = ({
+  isActive,
+  isDisabled,
+  onLayout,
+  onPress,
+  routeKey,
+  routeName,
+}: TabButtonProps) => {
   const color = isActive ? COLORS.tabBarActive : COLORS.tabBarInactive
 
   const getIcon = () => {
@@ -27,9 +35,7 @@ export const TabButton = ({ isActive, onLayout, onPress, routeKey, routeName }: 
     if (routeName === 'listen') return <AntDesign size={22} color={color} name='play-circle' />
 
     if (routeName === 'info')
-      return (
-        <Ionicons size={22} color={color} name={isActive ? 'information' : 'information-outline'} />
-      )
+      return <MaterialCommunityIcons size={22} color={color} name='dots-vertical' />
 
     return <Ionicons size={22} color={color} name={isActive ? 'book' : 'book-outline'} />
   }
@@ -41,13 +47,13 @@ export const TabButton = ({ isActive, onLayout, onPress, routeKey, routeName }: 
         ? 'Читать'
         : routeName === 'study'
           ? 'Учиться'
-          : 'Инфо.'
+          : 'Еще'
 
   return (
     <TouchableOpacity
       key={routeKey}
       onPress={onPress}
-      style={styles.tabButton}
+      style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
       onLayout={e =>
         onLayout({
           width: e.nativeEvent.layout.width,

@@ -1,7 +1,7 @@
 import { type BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from 'expo-blur'
 import React from 'react'
-import { View } from 'react-native'
+import { Alert, View } from 'react-native'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabIndicator } from './TabIndicator'
@@ -16,7 +16,7 @@ const ROUTES = [
   { key: 'listen', name: 'Слушать' },
   { key: 'read', name: 'Читать' },
   { key: 'study', name: 'Учиться' },
-  { key: 'info', name: 'Информация' },
+  { key: 'info', name: 'Еще' },
 ]
 
 interface CustomTabBarProps extends BottomTabBarProps {
@@ -58,6 +58,14 @@ export const CustomTabBar = ({
             const isActive = index === state.index
 
             const onPress = () => {
+              if (route.name === 'read' || route.name === 'study') {
+                Alert.alert(
+                  'Скоро будет доступно',
+                  'Этот раздел будет реализован в будущих обновлениях',
+                )
+                return
+              }
+
               const event = navigation.emit({
                 canPreventDefault: true,
                 target: route.key,
@@ -77,6 +85,7 @@ export const CustomTabBar = ({
                 routeKey={route.key}
                 routeName={route.name}
                 onLayout={layout => setTabLayout(route.key, layout)}
+                isDisabled={route.name === 'read' || route.name === 'study'}
               />
             )
           })}
