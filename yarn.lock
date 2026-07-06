@@ -6677,6 +6677,11 @@ expo-checkbox@~57.0.0:
   resolved "https://registry.yarnpkg.com/expo-checkbox/-/expo-checkbox-57.0.0.tgz#769bc0fe39a2ae450b2946dd2e79f325098f3388"
   integrity sha512-niJeYxodyu7R6HhxZ8eBzj2K+iuvBs5A20bXgOE/Dxs7rht3oAq2crEjpDModFkAf1aHr7xhDUXxxB4G4coDgw==
 
+expo-clipboard@^57.0.0:
+  version "57.0.0"
+  resolved "https://registry.yarnpkg.com/expo-clipboard/-/expo-clipboard-57.0.0.tgz#d42f393013fbfcb284c478d7e44d40b91e70507d"
+  integrity sha512-eIt47f6kvR33HOnIEWvs9l1AUAY4GeLY27szwamSuwRl7nntNythSFFbmnrEtiSUaz//y8XVqCG9WLpdMkOpjA==
+
 expo-constants@~57.0.2, expo-constants@~57.0.3:
   version "57.0.3"
   resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.3.tgz#ca226539ffaa46459b5de1cd9f59062275de2a4b"

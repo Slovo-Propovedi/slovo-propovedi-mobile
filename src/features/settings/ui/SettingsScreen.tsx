@@ -2,6 +2,7 @@ import { useAction } from '@reatom/npm-react'
 import React, { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { ErrorDialog, useErrorDialog } from 'shared/ui/error-dialog'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
 import { clearCacheAction } from '../model'
 import { ClearCacheDialog } from './ClearCacheDialog'
@@ -10,18 +11,18 @@ import { SettingsItem } from './SettingsItem'
 export const SettingsScreen = () => {
   const [showDialog, setShowDialog] = useState(false)
   const clearCache = useAction(clearCacheAction)
+  const { dismissError, errorDetail, errorMessage, showError } = useErrorDialog()
 
   const handleClearCache = () => {
-    // Закрываем диалог СРАЗУ — Early Exit, не ждем результата
     setShowDialog(false)
 
-    // Запускаем очистку в фоне без await
     void clearCache()
       .then(result => {
-        if (!result?.success) console.error('❌ Ошибка при очистке:', result?.error)
+        if (!result?.success && result?.error)
+          showError(result.error, 'Не удалось очистить кеш. Попробуйте снова.')
       })
       .catch(error => {
-        console.error('❌ Неожиданная ошибка:', error)
+        showError(error, 'Ошибка при очистке кеша')
       })
   }
 
@@ -30,8 +31,8 @@ export const SettingsScreen = () => {
       <View style={styles.content}>
         <Text style={styles.title}>Настройки</Text>
         <SettingsItem
-          title='Очистить кэш'
           icon='trash-outline'
+          title='Очистить кэш'
           testID='clear-cache-item'
           description='Удалить все скачанные аудио файлы'
           onPress={() => {
@@ -45,6 +46,12 @@ export const SettingsScreen = () => {
         onCancel={() => {
           setShowDialog(false)
         }}
+      />
+      <ErrorDialog
+        detail={errorDetail}
+        onDismiss={dismissError}
+        message={errorMessage || ''}
+        visible={errorMessage !== null}
       />
     </SafeAreaView>
   )
