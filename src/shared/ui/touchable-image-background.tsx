@@ -1,4 +1,3 @@
-import React from 'react'
 import { ImageBackground, StyleSheet, TouchableOpacity } from 'react-native'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import type { ReactNode } from 'react'

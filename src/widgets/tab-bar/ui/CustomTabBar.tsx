@@ -15,7 +15,7 @@ const ROUTES = [
   { key: 'listen', name: 'Слушать' },
   { key: 'read', name: 'Читать' },
   { key: 'study', name: 'Учиться' },
-  { key: 'info', name: 'Еще' },
+  { key: 'more', name: 'Еще' },
 ]
 
 interface CustomTabBarProps extends TabBarProps {

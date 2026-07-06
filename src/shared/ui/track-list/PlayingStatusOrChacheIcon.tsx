@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import React from 'react'
 import { View } from 'react-native'
 import { COLORS } from 'shared/ui/themed'
 import { AnimatedSoundBars } from './AnimatedSoundBars'

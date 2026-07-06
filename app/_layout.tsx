@@ -1,5 +1,4 @@
 import { reatomContext } from '@reatom/npm-react'
-import React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { initializePlayer } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'

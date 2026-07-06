@@ -1,6 +1,5 @@
 import { useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
-import React from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { tracksListStyles } from 'widgets/track-list'

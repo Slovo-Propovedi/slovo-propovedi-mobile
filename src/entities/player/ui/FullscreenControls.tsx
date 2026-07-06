@@ -1,4 +1,3 @@
-import React from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import { COLORS, INDENTS } from 'shared/ui/themed'

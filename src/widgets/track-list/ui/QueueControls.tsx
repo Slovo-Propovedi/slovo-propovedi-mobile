@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { COLORS, FONT_SIZES } from 'shared/ui/themed'
 import { queueControlsStyles } from './styles'

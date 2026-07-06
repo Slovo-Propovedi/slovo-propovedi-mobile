@@ -1,4 +1,3 @@
-import React from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { COLORS, INDENTS, RADIUSES } from 'shared/ui/themed'
 import { SkeletonSliderItem } from './skeleton-slider-item'

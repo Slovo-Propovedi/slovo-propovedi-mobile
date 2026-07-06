@@ -34,7 +34,7 @@ export const TabButton = ({
 
     if (routeName === 'listen') return <AntDesign size={22} color={color} name='play-circle' />
 
-    if (routeName === 'info')
+    if (routeName === 'more')
       return <MaterialCommunityIcons size={22} color={color} name='dots-vertical' />
 
     return <Ionicons size={22} color={color} name={isActive ? 'book' : 'book-outline'} />

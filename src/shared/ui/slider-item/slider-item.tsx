@@ -1,4 +1,3 @@
-import React from 'react'
 import { ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'

@@ -1,4 +1,3 @@
-import React from 'react'
 import { StyleSheet, TouchableOpacity } from 'react-native'
 import { COLORS } from 'shared/ui/themed'
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'

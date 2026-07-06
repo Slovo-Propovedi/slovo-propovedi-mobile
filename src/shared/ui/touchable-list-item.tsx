@@ -1,4 +1,3 @@
-import React from 'react'
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import { ListItem } from './list-item/list-item'
 import { type ListItemSize } from './list-item/list-item.types'

@@ -1,5 +1,4 @@
 import { Entypo } from '@expo/vector-icons'
-import React from 'react'
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
 import { match } from 'ts-pattern'
 import { COLORS } from 'shared/ui/themed'

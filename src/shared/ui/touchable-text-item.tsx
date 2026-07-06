@@ -1,4 +1,3 @@
-import React from 'react'
 import { StyleSheet, Text } from 'react-native'
 import { FONT_SIZES, INDENTS } from 'shared/ui/themed'
 import { TouchableItem } from 'shared/ui/touchable-item'

@@ -3,8 +3,8 @@ import axios from 'axios'
 import { API_URL } from 'shared/config/config'
 import type { AxiosRequestConfig } from 'axios'
 
-const ACCESS_TOKEN_KEY = '@access_token'
-const REFRESH_TOKEN_KEY = '@refresh_token'
+export const ACCESS_TOKEN_KEY = '@access_token'
+export const REFRESH_TOKEN_KEY = '@refresh_token'
 
 export const axiosInstance = axios.create({
   baseURL: API_URL,
