@@ -1,14 +1,28 @@
 import { useAtom } from '@reatom/npm-react'
-import { Tabs } from 'expo-router'
+import { type SuspenseFallbackProps, Tabs } from 'expo-router'
 import { useState } from 'react'
-import { View } from 'react-native'
+import { ActivityIndicator, Text, View } from 'react-native'
 import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
 import { isPlayerExpandedAtom } from 'entities/player'
+import { COLORS, INDENTS } from 'shared/ui/themed'
 
 interface TabLayout {
   width: number
   x: number
+}
+
+/**
+ * Fallback component shown while the tab layout's route content is loading via Suspense.
+ * @param _props - Standard Suspense fallback props (unused).
+ */
+export function SuspenseFallback(_props: SuspenseFallbackProps) {
+  return (
+    <View style={styles.suspenseContainer}>
+      <ActivityIndicator size='large' color={COLORS.primary} />
+      <Text style={styles.suspenseText}>Загрузка...</Text>
+    </View>
+  )
 }
 
 const Layout = () => {
@@ -45,3 +59,17 @@ const Layout = () => {
   )
 }
 export default Layout
+
+const styles = {
+  suspenseContainer: {
+    alignItems: 'center' as const,
+    backgroundColor: COLORS.background,
+    flex: 1,
+    gap: INDENTS.medium,
+    justifyContent: 'center' as const,
+  },
+  suspenseText: {
+    color: COLORS.text,
+    fontSize: 16,
+  },
+}
