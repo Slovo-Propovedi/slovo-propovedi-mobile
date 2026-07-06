@@ -1,9 +1,8 @@
 import { useAction } from '@reatom/npm-react'
-import { useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import React, { useState } from 'react'
+import { StyleSheet, View } from 'react-native'
 import { ErrorDialog, useErrorDialog } from 'shared/ui/error-dialog'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { COLORS, INDENTS } from 'shared/ui/themed'
 import { clearCacheAction } from '../model'
 import { ClearCacheDialog } from './ClearCacheDialog'
 import { SettingsItem } from './SettingsItem'
@@ -27,9 +26,8 @@ export const SettingsScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Настройки</Text>
         <SettingsItem
           icon='trash-outline'
           title='Очистить кэш'
@@ -53,7 +51,7 @@ export const SettingsScreen = () => {
         message={errorMessage || ''}
         visible={errorMessage !== null}
       />
-    </SafeAreaView>
+    </View>
   )
 }
 
@@ -65,12 +63,5 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingTop: INDENTS.high,
-  },
-  title: {
-    color: COLORS.text,
-    fontSize: FONT_SIZES.h1,
-    fontWeight: 'bold',
-    marginBottom: INDENTS.high,
-    paddingHorizontal: INDENTS.high,
   },
 })
