@@ -2,7 +2,7 @@
 import { Entypo } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
-import React, { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
   Pressable,
   ScrollView,

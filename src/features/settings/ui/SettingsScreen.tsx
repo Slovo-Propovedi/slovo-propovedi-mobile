@@ -1,5 +1,5 @@
 import { useAction } from '@reatom/npm-react'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ErrorDialog, useErrorDialog } from 'shared/ui/error-dialog'

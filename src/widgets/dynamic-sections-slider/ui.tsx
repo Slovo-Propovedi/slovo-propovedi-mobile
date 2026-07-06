@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { usePlayNewSermon } from 'entities/player'
 import { useListenNavigation } from 'shared/routing'

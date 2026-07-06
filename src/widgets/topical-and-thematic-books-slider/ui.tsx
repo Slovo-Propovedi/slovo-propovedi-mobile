@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import { useReadNavigation } from 'shared/routing'
 import {

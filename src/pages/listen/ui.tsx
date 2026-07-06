@@ -1,5 +1,5 @@
 import { useAtom } from '@reatom/npm-react'
-import React, { useCallback } from 'react'
+import { useCallback } from 'react'
 import { FlatList, StatusBar, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { DynamicSectionsSlider } from 'widgets/dynamic-sections-slider'

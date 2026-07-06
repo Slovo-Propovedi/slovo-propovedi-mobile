@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- FIXME: refactor */
 import { useAtom } from '@reatom/npm-react'
-import React, { useCallback, useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { AppState, type AppStateStatus, type StyleProp, type ViewStyle } from 'react-native'
 import { isNonNullable } from 'shared/lib/utils'
 import type { AudioPlayerData, ControlsNames } from '../PlayerControls.types'

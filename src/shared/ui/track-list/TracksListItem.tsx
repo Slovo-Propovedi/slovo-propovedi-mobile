@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Image, Modal, Pressable, Text, View } from 'react-native'
 import { cacheAudio, removeFromCache, useIsCached } from 'shared/lib/audio-cache'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'

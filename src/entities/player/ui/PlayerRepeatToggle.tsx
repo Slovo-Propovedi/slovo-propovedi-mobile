@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
-import React, { useCallback } from 'react'
+import { useCallback } from 'react'
 import { Pressable, type StyleProp, StyleSheet, type ViewStyle } from 'react-native'
 import { COLORS, FONT_SIZES } from 'shared/ui/themed'
 import { type RepeatMode, repeatModeAtom, setRepeatModeAction } from '../model'

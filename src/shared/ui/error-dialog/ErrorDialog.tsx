@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { setStringAsync } from 'expo-clipboard'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Modal, Platform, StyleSheet, Text, View } from 'react-native'
 import { Button } from 'shared/ui/button'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'

@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- FIXME: refactor */
 import { useAction, useAtom } from '@reatom/npm-react'
-import React, { useCallback } from 'react'
+import { useCallback } from 'react'
 import {
   ActivityIndicator,
   Image,
