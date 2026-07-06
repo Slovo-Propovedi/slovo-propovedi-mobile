@@ -1,4 +1,5 @@
 export { API_URL } from './config'
+export { COPYRIGHT_HOLDER, COPYRIGHT_YEAR, LICENSE_NAME, LICENSE_URL, PROJECT_URL } from './license'
 export {
   CURRENT_AUDIO,
   CURRENT_PLAYLIST,

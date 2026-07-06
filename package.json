@@ -2,6 +2,7 @@
   "name": "slovo-propovedi-mobile",
   "version": "0.0.0",
   "main": "expo-router/entry",
+  "license": "MIT",
   "scripts": {
     "api:generate": "yarn delete-generated-api-files && orval",
     "build-local-debug:android": "cd android && ./gradlew assembleDebug",
