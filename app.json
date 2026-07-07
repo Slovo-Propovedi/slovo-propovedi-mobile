@@ -45,6 +45,7 @@
         }
       ],
       "expo-asset",
+      "expo-notifications",
       "expo-router"
     ],
     "updates": {

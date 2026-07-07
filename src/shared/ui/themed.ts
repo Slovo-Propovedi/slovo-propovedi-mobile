@@ -5,6 +5,7 @@ export const COLORS = {
   black70: '#000000b3',
   blue: 'blue',
   disabled: '#d3d3d3',
+  error: '#ff3b30',
   gray: '#808080',
   icon: '#fff',
   maximumTrackTintColor: 'rgba(255, 255, 255, 0.4)',

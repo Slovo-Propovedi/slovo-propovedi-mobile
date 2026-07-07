@@ -61,8 +61,10 @@ export const PlaylistScreen = () => {
   }))
 
   const headerRightCallback = useCallback(
-    () => <PlaylistCacheMenu disabled={isCaching} tracksData={tracksListData} />,
-    [isCaching, tracksListData],
+    () => (
+      <PlaylistCacheMenu disabled={isCaching} playlistTitle={title} tracksData={tracksListData} />
+    ),
+    [isCaching, title, tracksListData],
   )
 
   useEffect(() => {

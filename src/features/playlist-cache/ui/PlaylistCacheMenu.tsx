@@ -1,12 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { useAtom, useCtx } from '@reatom/npm-react'
-import { useCallback, useRef, useState } from 'react'
-import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native'
-import { cacheUpdateTriggerAtom, isCachingPlaylistAtom } from 'features/playlist-cache/model'
-import { audioCacheService } from 'shared/lib/audio-cache'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
+import { ErrorModal } from 'shared/ui/error-modal'
 import { COLORS } from 'shared/ui/themed'
-import { playlistCacheService, type TrackToCache, usePlaylistCacheStatus } from '../lib'
+import type { TrackToCache } from '../lib'
+import { playlistCacheService } from '../lib'
+import { usePlaylistCacheMenu } from '../lib/usePlaylistCacheMenu'
 import { PlaylistCacheMenuDropdown } from './PlaylistCacheMenuDropdown'
 
 const ICON_SIZE = 24
@@ -14,53 +14,57 @@ const BUTTON_SIZE = 44
 
 export interface PlaylistCacheMenuProps {
   disabled?: boolean
+  playlistTitle: string
   tracksData: TrackToCache[]
 }
 
-export const PlaylistCacheMenu = ({ disabled = false, tracksData }: PlaylistCacheMenuProps) => {
-  const ctx = useCtx()
-  const [isCaching] = useAtom(isCachingPlaylistAtom)
-  const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
-  const [cacheDialogVisible, setCacheDialogVisible] = useState(false)
-  const [clearDialogVisible, setClearDialogVisible] = useState(false)
-  const [menuVisible, setMenuVisible] = useState(false)
-  const [menuPosition, setMenuPosition] = useState({ right: 0, top: 0 })
-  const buttonRef = useRef<View>(null)
+export const PlaylistCacheMenu = ({
+  disabled = false,
+  playlistTitle,
+  tracksData,
+}: PlaylistCacheMenuProps) => {
+  const [error, setError] = useState<Error | null>(null)
+  const errorShownRef = useRef(false)
+  const setErrorRef = useRef(setError)
 
-  const { allCached, cachedCount } = usePlaylistCacheStatus(tracksData, cacheTrigger)
-  const isMenuDisabled = disabled || isCaching
-  const isCacheAllDisabled = isCaching || allCached
+  const {
+    allCached,
+    buttonRef,
+    cachedCount,
+    cacheDialogVisible,
+    clearDialogVisible,
+    handleCacheAllConfirm,
+    handleCacheAllOption,
+    handleClearCacheConfirm,
+    handleClearCacheOption,
+    handleOpenMenu,
+    isCacheAllDisabled,
+    isMenuDisabled,
+    menuPosition,
+    menuVisible,
+    setCacheDialogVisible,
+    setClearDialogVisible,
+    setMenuVisible,
+  } = usePlaylistCacheMenu(tracksData, playlistTitle, disabled)
 
-  const handleCacheAllConfirm = useCallback(() => {
-    setCacheDialogVisible(false)
-    void playlistCacheService.cachePlaylist(ctx, tracksData)
-  }, [ctx, tracksData])
-  const handleClearCacheConfirm = useCallback(async () => {
-    setClearDialogVisible(false)
-    try {
-      await audioCacheService.clearCache()
-      cacheUpdateTriggerAtom(ctx, prev => prev + 1)
-    } catch (error) {
-      console.error('[PlaylistCacheMenu] Error clearing cache:', error)
+  useEffect(() => {
+    setErrorRef.current = setError
+  }, [setError])
+
+  useEffect(() => {
+    if (!errorShownRef.current) {
+      const currentError = playlistCacheService.getError()
+      if (currentError) {
+        setErrorRef.current(currentError)
+        errorShownRef.current = true
+      }
     }
-  }, [ctx])
+  }, [cacheDialogVisible])
 
-  const handleOpenMenu = useCallback(() => {
-    buttonRef.current?.measureInWindow((x, y, width, height) => {
-      const { width: screenWidth } = Dimensions.get('window')
-      setMenuPosition({ right: screenWidth - x - width, top: y + height })
-      setMenuVisible(true)
-    })
-  }, [])
-
-  const handleCacheAllOption = useCallback(() => {
-    setMenuVisible(false)
-    setCacheDialogVisible(true)
-  }, [])
-
-  const handleClearCacheOption = useCallback(() => {
-    setMenuVisible(false)
-    setClearDialogVisible(true)
+  const handleErrorClose = useCallback(() => {
+    playlistCacheService.clearError()
+    setError(null)
+    errorShownRef.current = false
   }, [])
 
   return (
@@ -109,10 +113,10 @@ export const PlaylistCacheMenu = ({ disabled = false, tracksData }: PlaylistCach
         onCancel={() => setClearDialogVisible(false)}
         message={`Удалить ${cachedCount} закешированных треков из кеша?`}
       />
+      <ErrorModal error={error} visible={error !== null} onClose={handleErrorClose} />
     </>
   )
 }
-
 export default PlaylistCacheMenu
 
 const styles = StyleSheet.create({

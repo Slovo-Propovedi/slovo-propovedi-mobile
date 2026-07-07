@@ -1,8 +1,6 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
-
-const ICON_SIZE = 18
+import { Modal, Pressable, StyleSheet, View } from 'react-native'
+import { COLORS, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { PlaylistCacheMenuItem } from './PlaylistCacheMenuItem'
 
 export interface PlaylistCacheMenuDropdownProps {
   allCached: boolean
@@ -31,49 +29,23 @@ export const PlaylistCacheMenuDropdown = ({
     <Modal transparent onRequestClose={onClose}>
       <Pressable onPress={onClose} style={styles.overlay}>
         <View style={[styles.dropdown, { right: menuPosition.right, top: menuPosition.top }]}>
-          <Pressable
+          <PlaylistCacheMenuItem
             onPress={onCacheAll}
-            disabled={isCacheAllDisabled}
-            style={[styles.dropdownItem, isCacheAllDisabled && styles.dropdownItemDisabled]}
-          >
-            <MaterialCommunityIcons
-              size={ICON_SIZE}
-              style={styles.dropdownIcon}
-              color={isCacheAllDisabled ? COLORS.textMuted : COLORS.icon}
-              name={allCached ? 'check-circle-outline' : 'download-outline'}
-            />
-            <Text
-              style={[
-                styles.dropdownItemText,
-                isCacheAllDisabled && styles.dropdownItemTextDisabled,
-              ]}
-            >
-              {allCached ? 'Плейлист закеширован' : 'Закешировать все'}
-            </Text>
-          </Pressable>
+            isDisabled={isCacheAllDisabled}
+            icon={allCached ? 'check-circle-outline' : 'download-outline'}
+            text={allCached ? 'Плейлист закеширован' : 'Закешировать все'}
+          />
 
           <View style={styles.dropdownDivider} />
 
-          <Pressable
-            disabled={isClearCacheDisabled}
-            style={[styles.dropdownItem, isClearCacheDisabled && styles.dropdownItemDisabled]}
-            onPress={() => {
-              if (isClearCacheDisabled) return
-              onClearCache()
-            }}
-          >
-            <MaterialCommunityIcons
-              size={ICON_SIZE}
-              name='delete-outline'
-              style={styles.dropdownIcon}
-              color={isClearCacheDisabled ? COLORS.disabled : COLORS.text}
-            />
-            <Text
-              style={[styles.dropdownItemText, isClearCacheDisabled && { color: COLORS.disabled }]}
-            >
-              Удалить из кеша все
-            </Text>
-          </Pressable>
+          <PlaylistCacheMenuItem
+            icon='delete-outline'
+            onPress={onClearCache}
+            text='Удалить из кеша все'
+            isDisabled={isClearCacheDisabled}
+            textColor={isClearCacheDisabled ? COLORS.disabled : undefined}
+            iconColor={isClearCacheDisabled ? COLORS.disabled : COLORS.text}
+          />
         </View>
       </Pressable>
     </Modal>
@@ -101,15 +73,5 @@ const styles = StyleSheet.create({
     marginHorizontal: INDENTS.medium,
     opacity: 0.3,
   },
-  dropdownIcon: { marginRight: INDENTS.low },
-  dropdownItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    paddingHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.middle,
-  },
-  dropdownItemDisabled: { opacity: 0.5 },
-  dropdownItemText: { color: COLORS.text, fontSize: FONT_SIZES.base },
-  dropdownItemTextDisabled: { color: COLORS.textMuted },
   overlay: { flex: 1 },
 })

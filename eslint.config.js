@@ -89,7 +89,6 @@ export default tseslint.config(
       curly: ['error', 'multi'],
       'arrow-parens': ['error', 'as-needed'],
       'arrow-body-style': ['error', 'as-needed'],
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-control-regex': 'warn',
       'no-restricted-imports': [
         'error',
