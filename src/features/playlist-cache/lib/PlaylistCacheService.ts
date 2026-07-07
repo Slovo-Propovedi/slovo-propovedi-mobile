@@ -1,13 +1,8 @@
 import { type Ctx } from '@reatom/framework'
 import { debugConfig } from 'shared/config'
 import { audioCacheService } from 'shared/lib/audio-cache'
-import {
-  cacheUpdateTriggerAtom,
-  isCachingPlaylistAtom,
-  playlistCacheErrorAtom,
-  playlistCacheProgressAtom,
-  playlistDownloadProgressAtom,
-} from '../model'
+import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
+import { isCachingPlaylistAtom, playlistCacheErrorAtom, playlistCacheProgressAtom } from '../model'
 import { playlistCacheNotifications } from './PlaylistCacheNotifications'
 
 const NETWORK_ERROR_PATTERNS = ['network', 'internet', 'Network request failed', 'ECONNREFUSED']

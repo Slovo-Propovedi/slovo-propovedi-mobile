@@ -4,12 +4,9 @@ import { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { tracksListStyles } from 'widgets/track-list'
-import {
-  cacheUpdateTriggerAtom,
-  isCachingPlaylistAtom,
-  PlaylistCacheMenu,
-} from 'features/playlist-cache'
+import { isCachingPlaylistAtom, PlaylistCacheMenu } from 'features/playlist-cache'
 import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
+import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { parseJsonWithSchema, playlistDataSchema, type SermonData } from 'shared/model'
 import { INDENTS, PLAYER_SIZES } from 'shared/ui/themed'
 import { TracksListItem } from 'shared/ui/track-list'
