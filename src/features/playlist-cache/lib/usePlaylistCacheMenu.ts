@@ -3,7 +3,8 @@ import { useCallback, useRef, useState } from 'react'
 import { Dimensions, type View } from 'react-native'
 import { cacheUpdateTriggerAtom, isCachingPlaylistAtom } from 'features/playlist-cache/model'
 import { audioCacheService } from 'shared/lib/audio-cache'
-import { playlistCacheService, type TrackToCache, usePlaylistCacheStatus } from '../lib'
+import { playlistCacheService, type TrackToCache } from './PlaylistCacheService'
+import { usePlaylistCacheStatus } from './usePlaylistCacheStatus'
 
 export const usePlaylistCacheMenu = (
   tracksData: TrackToCache[],

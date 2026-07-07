@@ -1,5 +1,4 @@
-export { playlistCacheService } from './lib'
-export type { TrackToCache } from './lib'
+export { playlistCacheService, type TrackToCache } from './lib/PlaylistCacheService'
 export {
   cacheUpdateTriggerAtom,
   isCachingPlaylistAtom,
