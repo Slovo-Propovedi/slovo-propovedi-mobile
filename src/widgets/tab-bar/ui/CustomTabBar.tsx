@@ -1,6 +1,8 @@
 import { BlurView } from 'expo-blur'
 import { type Tabs } from 'expo-router'
-import { Alert, View } from 'react-native'
+import { useState } from 'react'
+import { View } from 'react-native'
+import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabIndicator } from './TabIndicator'
@@ -38,6 +40,7 @@ export const CustomTabBar = ({
   state,
   tabLayouts,
 }: CustomTabBarProps) => {
+  const [unavailableDialogVisible, setUnavailableDialogVisible] = useState(false)
   const currentKey = ROUTES[currentIndex]?.key
   const { indicatorOpacity, indicatorPosition, indicatorWidth } = useTabIndicator(
     currentIndex,
@@ -60,10 +63,7 @@ export const CustomTabBar = ({
 
             const onPress = () => {
               if (route.name === 'read' || route.name === 'study') {
-                Alert.alert(
-                  'Скоро будет доступно',
-                  'Этот раздел будет реализован в будущих обновлениях',
-                )
+                setUnavailableDialogVisible(true)
                 return
               }
 
@@ -92,6 +92,14 @@ export const CustomTabBar = ({
           })}
         </View>
       </BlurView>
+      <ConfirmDialog
+        hideCancel
+        title='Скоро будет доступно'
+        visible={unavailableDialogVisible}
+        onCancel={() => setUnavailableDialogVisible(false)}
+        onConfirm={() => setUnavailableDialogVisible(false)}
+        message='Этот раздел будет реализован в будущих обновлениях'
+      />
     </View>
   )
 }

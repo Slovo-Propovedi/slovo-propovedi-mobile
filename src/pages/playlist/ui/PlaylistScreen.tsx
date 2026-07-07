@@ -1,8 +1,10 @@
 import { useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
+import { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { tracksListStyles } from 'widgets/track-list'
+import { isCachingPlaylistAtom, PlaylistCacheMenu } from 'features/playlist-cache'
 import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
 import { parseJsonWithSchema, playlistDataSchema, type SermonData } from 'shared/model'
 import { INDENTS, PLAYER_SIZES } from 'shared/ui/themed'
@@ -27,6 +29,7 @@ export const PlaylistScreen = () => {
   const playNewSermon = usePlayNewSermon()
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
+  const [isCaching] = useAtom(isCachingPlaylistAtom)
   const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader(title, navigation)
 
@@ -47,17 +50,30 @@ export const PlaylistScreen = () => {
   const tracksListData = list.map((sermon: SermonData) => ({
     artist: sermon.artist,
     artwork,
+    audioUrl: sermon.audioUrl,
     id: sermon.id,
     title: sermon.title,
-    url: sermon.audioUrl,
   }))
+
+  const headerRightCallback = useCallback(
+    () => <PlaylistCacheMenu disabled={isCaching} tracksData={tracksListData} />,
+    [isCaching, tracksListData],
+  )
+
+  useEffect(() => {
+    navigation.setOptions({ headerRight: headerRightCallback })
+
+    return () => {
+      navigation.setOptions({ headerRight: undefined })
+    }
+  }, [navigation, headerRightCallback])
 
   const renderItem = ({ index, item }: { index: number; item: (typeof tracksListData)[0] }) => (
     <TracksListItem
       title={item.title}
       artist={item.artist}
       artwork={item.artwork}
-      audioUrl={item.url ?? undefined}
+      audioUrl={item.audioUrl ?? undefined}
       onPress={() => handlePressItem(index)}
       isPlaying={currentAudio?.id === item.id}
       isAudioPlaying={currentAudio?.id === item.id && isPlaying}
