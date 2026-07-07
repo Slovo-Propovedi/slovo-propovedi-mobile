@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { APP_NAME, APP_VERSION } from 'shared/config'
-import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
+import { styles } from './styles'
 
 interface MoreMenuSettingsItemProps {
   description?: string
@@ -83,56 +84,3 @@ export const MoreScreen = () => {
     </SafeAreaView>
   )
 }
-
-const styles = StyleSheet.create({
-  appDescription: {
-    fontSize: FONT_SIZES.base,
-    marginBottom: INDENTS.high,
-    paddingHorizontal: INDENTS.high,
-  },
-  appName: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: 'bold',
-  },
-  appVersion: {
-    fontSize: FONT_SIZES.sm,
-  },
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingTop: INDENTS.high,
-  },
-  header: {
-    alignItems: 'flex-end',
-    marginBottom: INDENTS.low,
-    paddingHorizontal: INDENTS.high,
-  },
-  itemContainer: {
-    borderBottomColor: COLORS.disabled,
-    borderBottomWidth: 1,
-    paddingHorizontal: INDENTS.high,
-    paddingVertical: INDENTS.high,
-  },
-  itemContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  itemDescription: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: INDENTS.low,
-  },
-  itemIcon: {
-    marginRight: INDENTS.medium,
-  },
-  itemTextContainer: {
-    flex: 1,
-  },
-  itemTitle: {
-    fontSize: FONT_SIZES.base,
-  },
-  menu: {
-    flex: 1,
-  },
-})
