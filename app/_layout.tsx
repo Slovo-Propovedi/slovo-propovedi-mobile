@@ -5,7 +5,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { initializePlayer } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
-import { COLORS } from 'shared/ui/themed'
+import { ThemeProvider } from 'shared/ui/theme'
+import { COLORS, useTheme } from 'shared/ui/themed'
 import RootLayout from './_RootLayout'
 
 /**
@@ -13,8 +14,10 @@ import RootLayout from './_RootLayout'
  * @param _props - Standard Suspense fallback props (unused).
  */
 export function SuspenseFallback(_props: SuspenseFallbackProps) {
+  const { currentTheme } = useTheme()
+  
   return (
-    <View style={styles.container}>
+    <View style={{ ...styles.container, backgroundColor: currentTheme.background }}>
       <ActivityIndicator size='large' color={COLORS.primary} />
     </View>
   )
@@ -22,12 +25,14 @@ export function SuspenseFallback(_props: SuspenseFallbackProps) {
 
 const RootLayoutWithProvider = () => (
   <reatomContext.Provider value={ctx}>
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ErrorBoundary>
-        <GlobalErrorHandler />
-        <RootLayout />
-      </ErrorBoundary>
-    </GestureHandlerRootView>
+    <ThemeProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ErrorBoundary>
+          <GlobalErrorHandler />
+          <RootLayout />
+        </ErrorBoundary>
+      </GestureHandlerRootView>
+    </ThemeProvider>
   </reatomContext.Provider>
 )
 
@@ -38,7 +43,6 @@ export default RootLayoutWithProvider
 const styles = {
   container: {
     alignItems: 'center' as const,
-    backgroundColor: COLORS.background,
     flex: 1,
     justifyContent: 'center' as const,
   },

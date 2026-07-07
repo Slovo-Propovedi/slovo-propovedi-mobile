@@ -1,7 +1,6 @@
-import { StyleSheet } from 'react-native'
 import TextTicker from 'react-native-text-ticker'
 import type { StyleProp, TextStyle } from 'react-native'
-import { COLORS } from './themed'
+import { useTheme } from './themed'
 
 interface MovingTextProps {
   animationThreshold?: number
@@ -17,6 +16,7 @@ export const MovingText = ({
   style,
   text,
 }: MovingTextProps) => {
+  const { currentTheme } = useTheme()
   const shouldAnimate = text.length > animationThreshold
 
   if (!shouldAnimate)
@@ -26,7 +26,7 @@ export const MovingText = ({
         loop={false}
         bounce={false}
         marqueeDelay={0}
-        style={[styles.text, style]}
+        style={[{ color: currentTheme.text }, style]}
       >
         {text}
       </TextTicker>
@@ -40,11 +40,9 @@ export const MovingText = ({
       numberOfLines={1}
       repeatSpacer={50}
       marqueeDelay={2000}
-      style={[styles.text, style]}
+      style={[{ color: currentTheme.text }, style]}
     >
       {text}
     </TextTicker>
   )
 }
-
-const styles = StyleSheet.create({ text: { color: COLORS.text } })

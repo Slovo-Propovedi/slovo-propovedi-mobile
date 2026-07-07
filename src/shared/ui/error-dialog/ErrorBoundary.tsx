@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { View } from 'react-native'
-import { COLORS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import { ErrorDialog } from './ErrorDialog'
 import { getErrorDetail, getErrorMessage } from './useErrorDialog'
 
@@ -37,9 +37,9 @@ class ErrorBoundaryInternal extends Component<Props, State> {
         (errorInfo ? `\n\nComponent Stack:\n${errorInfo.componentStack}` : '')
 
       return (
-        <View style={{ backgroundColor: COLORS.background, flex: 1 }}>
+        <ErrorBoundaryThemeWrapper>
           <ErrorDialog visible detail={detail} message={message} onDismiss={this.handleDismiss} />
-        </View>
+        </ErrorBoundaryThemeWrapper>
       )
     }
 
@@ -53,6 +53,11 @@ class ErrorBoundaryInternal extends Component<Props, State> {
       errorInfo: null,
     }
   }
+}
+
+const ErrorBoundaryThemeWrapper = ({ children }: { children: ReactNode }) => {
+  const { currentTheme } = useTheme()
+  return <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>{children}</View>
 }
 
 export const ErrorBoundary = ({ children }: Props) => (

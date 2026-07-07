@@ -3,6 +3,7 @@ import { type Tabs } from 'expo-router'
 import { useState } from 'react'
 import { View } from 'react-native'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
+import { useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabIndicator } from './TabIndicator'
@@ -42,6 +43,7 @@ export const CustomTabBar = ({
 }: CustomTabBarProps) => {
   const [unavailableDialogVisible, setUnavailableDialogVisible] = useState(false)
   const currentKey = ROUTES[currentIndex]?.key
+  const { isLight } = useTheme()
   const { indicatorOpacity, indicatorPosition, indicatorWidth } = useTabIndicator(
     currentIndex,
     tabLayouts,
@@ -50,7 +52,15 @@ export const CustomTabBar = ({
 
   return (
     <View style={styles.floatingContainer}>
-      <BlurView tint='dark' intensity={70} style={styles.floatingIsland}>
+      <BlurView
+        intensity={70}
+        key={isLight ? 'light' : 'dark'}
+        tint={isLight ? 'light' : 'dark'}
+        style={[
+          styles.floatingIsland,
+          { backgroundColor: isLight ? 'rgba(230, 230, 230, 0.9)' : 'rgba(0, 0, 0, 0.85)' },
+        ]}
+      >
         <View style={styles.tabBar}>
           <TabIndicator
             width={indicatorWidth}

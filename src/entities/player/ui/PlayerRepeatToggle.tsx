@@ -19,7 +19,7 @@ interface IconConfig {
 const getRepeatIcon = (mode: RepeatMode): IconConfig => {
   switch (mode) {
     case 'off':
-      return { color: COLORS.textMuted, name: 'repeat-off' }
+      return { color: '#9ca3af', name: 'repeat-off' }
     case 'queue':
       return { color: COLORS.primary, name: 'repeat' }
     case 'track':

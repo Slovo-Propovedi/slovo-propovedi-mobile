@@ -1,11 +1,15 @@
 import { useMemo } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { TracksListItem, tracksListStyles } from 'shared/ui/track-list'
+import { type ThemeColors } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/themed'
+import { createTracksListStyles, TracksListItem } from 'shared/ui/track-list'
 import type { TracksListProps } from './types'
 import { QueueControls } from './QueueControls'
 
-const ItemSeparator = () => <View style={tracksListStyles.divider} />
+const ItemSeparator = ({ theme }: { theme: ThemeColors }) => (
+  <View style={createTracksListStyles(theme).divider} />
+)
 
 export const TracksList = ({
   contentContainerStyle,
@@ -19,6 +23,9 @@ export const TracksList = ({
   playingTrackId,
   scrollEventThrottle = 16,
 }: TracksListProps) => {
+  const { currentTheme } = useTheme()
+  const tracksListStyles = createTracksListStyles(currentTheme)
+
   const renderItem = ({ index, item }: { index: number; item: (typeof data)[0] }) => (
     <TracksListItem
       title={item.title}
@@ -58,10 +65,10 @@ export const TracksList = ({
       renderItem={renderItem}
       keyExtractor={item => item.id}
       style={tracksListStyles.container}
-      ItemSeparatorComponent={ItemSeparator}
       ListHeaderComponent={ListHeaderComponent}
       scrollEventThrottle={scrollEventThrottle}
       contentContainerStyle={contentContainerStyle}
+      ItemSeparatorComponent={() => <ItemSeparator theme={currentTheme} />}
     />
   )
 }

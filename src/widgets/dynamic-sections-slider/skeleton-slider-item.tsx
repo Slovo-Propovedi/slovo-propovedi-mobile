@@ -1,14 +1,20 @@
 import { StyleSheet, View } from 'react-native'
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { COLORS, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { type ThemeColors } from 'shared/ui/theme'
+import { INDENTS, RADIUSES } from 'shared/ui/themed'
 
 interface SkeletonSliderItemProps {
   size?: 'middle' | 'small' | 'xLarge'
+  theme: ThemeColors
   transform?: 'high' | 'short'
 }
 
-export const SkeletonSliderItem = ({ size = 'small', transform }: SkeletonSliderItemProps) => {
+export const SkeletonSliderItem = ({
+  size = 'small',
+  theme,
+  transform,
+}: SkeletonSliderItemProps) => {
   const itemWidth = match(size)
     .with('middle', () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.44)
     .with('small', () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.285)
@@ -23,15 +29,14 @@ export const SkeletonSliderItem = ({ size = 'small', transform }: SkeletonSlider
 
   return (
     <View style={[styles.item, { width: itemWidth }]}>
-      <View style={[styles.image, { height: itemHeight }]} />
-      <View style={styles.title} />
+      <View style={[styles.image, { backgroundColor: theme.skeleton, height: itemHeight }]} />
+      <View style={[styles.title, { backgroundColor: theme.skeleton }]} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   image: {
-    backgroundColor: COLORS.skeleton,
     borderRadius: RADIUSES.large,
     width: '100%',
   },
@@ -42,7 +47,6 @@ const styles = StyleSheet.create({
     minWidth: 50,
   },
   title: {
-    backgroundColor: COLORS.skeleton,
     borderRadius: RADIUSES.low,
     height: 14,
     marginTop: 6,

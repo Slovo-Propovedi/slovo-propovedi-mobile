@@ -13,7 +13,6 @@ export const styles = {
     zIndex: 10,
   },
   floatingIsland: {
-    backgroundColor: 'rgba(37, 37, 37, 0.75)',
     borderTopLeftRadius: BORDER_RADIUS,
     borderTopRightRadius: BORDER_RADIUS,
     overflow: 'hidden' as const,

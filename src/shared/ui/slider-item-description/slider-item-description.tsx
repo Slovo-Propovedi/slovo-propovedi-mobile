@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native'
 import {
   SliderItemDescriptionBackgroundStyle,
@@ -29,6 +29,7 @@ export const SliderItemDescription = ({
   titleStyle,
   titleTextAlign = 'left',
 }: SliderItemDescriptionProps) => {
+  const { currentTheme } = useTheme()
   if (!title) return null
 
   const isDarkBackground = backgroundStyle === SliderItemDescriptionBackgroundStyle.Dark
@@ -49,8 +50,8 @@ export const SliderItemDescription = ({
         testID='slider-item-description-title'
         style={[
           styles.title,
-          (isDarkBackground || isDarkBlurBackground) && styles.titleColorOnDark,
           isTitleLarge && styles.titleLarge,
+          { color: isDarkBackground || isDarkBlurBackground ? COLORS.white : currentTheme.text },
           { textAlign: titleTextAlign },
           titleStyle,
         ]}
@@ -63,7 +64,10 @@ export const SliderItemDescription = ({
           testID='slider-item-description-sub-title'
           style={[
             styles.subTitle,
-            (isDarkBackground || isDarkBlurBackground) && styles.subTitleColorOnDark,
+            {
+              color:
+                isDarkBackground || isDarkBlurBackground ? COLORS.white : currentTheme.textMuted,
+            },
             { textAlign: subTitleTextAlign },
             titleStyle,
           ]}
@@ -87,19 +91,11 @@ const styles = StyleSheet.create({
   darkBackground: { backgroundColor: COLORS.black },
 
   subTitle: {
-    color: COLORS.textMuted,
     fontSize: FONT_SIZES.h3,
-  },
-  subTitleColorOnDark: {
-    color: COLORS.white,
   },
 
   title: {
-    color: COLORS.text,
     fontSize: FONT_SIZES.h3,
-  },
-  titleColorOnDark: {
-    color: COLORS.white,
   },
   titleLarge: { fontSize: FONT_SIZES.h3 * 2, fontWeight: 'bold' },
 })

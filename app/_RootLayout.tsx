@@ -12,9 +12,10 @@ import {
 } from 'entities/player'
 import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { COLORS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 
 const RootLayout = () => {
+  const { currentTheme } = useTheme()
   const [isPlaying] = useAtom(isPlayingAtom)
   const [position] = useAtom(positionAtom)
 
@@ -66,15 +67,20 @@ const RootLayout = () => {
   }, [])
 
   return (
-    <Stack>
+    <Stack
+      screenOptions={{
+        contentStyle: { backgroundColor: currentTheme.background },
+      }}
+    >
+      <Stack.Screen name='index' options={{ headerShown: false }} />
       <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
       <Stack.Screen
         name='settings'
         options={{
           headerBackTitle: 'Назад',
-          headerStyle: { backgroundColor: COLORS.background },
-          headerTintColor: COLORS.text,
-          headerTitleStyle: { color: COLORS.text },
+          headerStyle: { backgroundColor: currentTheme.background },
+          headerTintColor: currentTheme.text,
+          headerTitleStyle: { color: currentTheme.text },
           title: 'Настройки',
         }}
       />
@@ -82,9 +88,9 @@ const RootLayout = () => {
         name='about'
         options={{
           headerBackTitle: 'Назад',
-          headerStyle: { backgroundColor: COLORS.background },
-          headerTintColor: COLORS.text,
-          headerTitleStyle: { color: COLORS.text },
+          headerStyle: { backgroundColor: currentTheme.background },
+          headerTintColor: currentTheme.text,
+          headerTitleStyle: { color: currentTheme.text },
           title: 'О приложении',
         }}
       />

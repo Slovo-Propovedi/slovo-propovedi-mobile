@@ -1,5 +1,6 @@
 import { Modal, Pressable, Text, View } from 'react-native'
-import { tracksListStyles } from './styles'
+import { type ThemeColors } from 'shared/ui/theme'
+import { createTracksListStyles } from './styles'
 
 export interface TracksListItemContextMenuProps {
   isCached: boolean
@@ -9,6 +10,7 @@ export interface TracksListItemContextMenuProps {
   onClose: () => void
   onMenuHeightChange: (height: number) => void
   onToggleCache: () => void
+  theme: ThemeColors
 }
 
 export const TracksListItemContextMenu = ({
@@ -19,7 +21,9 @@ export const TracksListItemContextMenu = ({
   onClose,
   onMenuHeightChange,
   onToggleCache,
+  theme,
 }: TracksListItemContextMenuProps) => {
+  const tracksListStyles = createTracksListStyles(theme)
   const handleLayout = (e: { nativeEvent: { layout: { height: number } } }) => {
     const h = e.nativeEvent.layout.height
     if (h !== menuHeight) onMenuHeightChange(h)

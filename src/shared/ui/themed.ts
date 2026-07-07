@@ -1,26 +1,18 @@
-export const COLORS = {
-  // Base colors
-  background: '#000',
-  black: '#000',
-  black70: '#000000b3',
-  blue: 'blue',
-  disabled: '#d3d3d3',
-  error: '#ff3b30',
-  gray: '#808080',
-  icon: '#fff',
-  maximumTrackTintColor: 'rgba(255, 255, 255, 0.4)',
-  minimumTrackTintColor: 'rgba(255, 255, 255, 0.6)',
-  onPrimary: '#fff',
-  primary: '#f16031',
-  skeleton: '#333333',
-  surface: '#252525',
-  tabBarActive: '#f16031',
-  tabBarBackground: 'rgba(0, 0, 0, 0.8)',
-  tabBarInactive: '#9ca3af',
-  text: '#fff',
-  textMuted: '#9ca3af',
-  white: '#fff',
-} as const
+import { ctx } from 'shared/lib/reatom-ctx'
+import {
+  initializeCOLORS,
+  COLORS as THEME_COLORS,
+  updateCOLORS as updateThemeColors,
+} from './theme/colors'
+
+// Initialize theme colors on module load
+initializeCOLORS(ctx)
+
+export const COLORS = THEME_COLORS
+
+export const updateCOLORS = () => {
+  updateThemeColors(ctx)
+}
 
 export const FONT_SIZES = {
   base: 14,
@@ -68,3 +60,5 @@ export const INDENTS = {
   medium: 16,
   middle: 12,
 } as const
+
+export { useTheme } from 'shared/ui/theme'

@@ -1,4 +1,4 @@
-export { TRACK_LIST_ITEM_SIZES, tracksListStyles } from './styles'
+export { createTracksListStyles, TRACK_LIST_ITEM_SIZES } from './styles'
 export { TracksListItem } from './TracksListItem'
 export { TracksListItemContextMenu } from './TracksListItemContextMenu'
 export type { TracksListItemProps } from './types'

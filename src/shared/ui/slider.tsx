@@ -1,6 +1,6 @@
 import { Entypo } from '@expo/vector-icons'
 import { ScrollView, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES } from 'shared/ui/themed'
+import { FONT_SIZES, useTheme } from 'shared/ui/themed'
 import type { SliderItemTransform } from './slider-item/slider-item.types'
 import type {
   SliderItemDescriptionBackgroundStyle,
@@ -9,7 +9,7 @@ import type {
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import { SliderItem } from './slider-item/slider-item'
 import { SliderItemSize, WhereIsSlideTitleLocated } from './slider-item/slider-item.types'
-import { sliderStyles as styles } from './slider.styles'
+import { createSliderStyles as styles } from './slider.styles'
 
 type FontSizes = typeof FONT_SIZES
 
@@ -71,28 +71,31 @@ export const Slider = <D extends object>({
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderProps<D>) => {
+  const { currentTheme } = useTheme()
+  const sliderStyles = styles(currentTheme)
+
   if (!items?.length) return null
 
   const itemsByRows = getItemsByRows(items, itemsRows)
   const marginBottom = getMarginBottom(itemsSize, titleFontSize)
 
   return (
-    <View style={[styles.slider, { marginTop: titleFontSize / 2 }, { marginBottom }, style]}>
+    <View style={[sliderStyles.slider, { marginTop: titleFontSize / 2 }, { marginBottom }, style]}>
       <Text
         testID='title'
         onPress={onPressTitle}
-        style={[styles.title, { fontSize: titleFontSize }]}
+        style={[sliderStyles.title, { fontSize: titleFontSize }]}
       >
         {`${title}`}
-        <Entypo color={COLORS.text} name='chevron-right' size={titleFontSize} />
+        <Entypo name='chevron-right' size={titleFontSize} color={currentTheme.text} />
       </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={sliderStyles.contentContainer}
       >
         {itemsByRows.map((row, i) => (
-          <View key={`row-${i}`} style={styles.row} testID='slider-row'>
+          <View key={`row-${i}`} testID='slider-row' style={sliderStyles.row}>
             {row.map(({ artwork, data, description }, index) => (
               <SliderItem
                 key={index}

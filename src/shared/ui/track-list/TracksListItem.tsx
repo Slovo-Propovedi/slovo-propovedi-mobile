@@ -3,11 +3,11 @@ import { useRef, useState } from 'react'
 import { Image, Pressable, Text, View } from 'react-native'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { MovingText } from 'shared/ui/MovingText'
-import { COLORS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import type { TracksListItemProps } from './types'
 import { MENU_WIDTH, TITLE_ANIMATION_THRESHOLD } from './constants'
 import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
-import { tracksListStyles } from './styles'
+import { createTracksListStyles } from './styles'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
 import { useTrackItemCache } from './useTrackItemCache'
 
@@ -22,6 +22,8 @@ export const TracksListItem = ({
   onPress,
   title,
 }: TracksListItemProps) => {
+  const { currentTheme } = useTheme()
+  const tracksListStyles = createTracksListStyles(currentTheme)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
   const [menuHeight, setMenuHeight] = useState(44)
@@ -83,7 +85,11 @@ export const TracksListItem = ({
             </View>
           )}
           {!isDownloading && (!isCached || isPlaying) && (
-            <PlayingStatusOrChacheIcon isPlaying={isPlaying} isAudioPlaying={isAudioPlaying} />
+            <PlayingStatusOrChacheIcon
+              theme={currentTheme}
+              isPlaying={isPlaying}
+              isAudioPlaying={isAudioPlaying}
+            />
           )}
         </View>
         <View style={tracksListStyles.textContainer}>
@@ -100,12 +106,13 @@ export const TracksListItem = ({
           testID='tracks-list-item-menu'
           style={tracksListStyles.dotsButton}
         >
-          <MaterialCommunityIcons size={20} name='dots-vertical' color={COLORS.textMuted} />
+          <MaterialCommunityIcons size={20} name='dots-vertical' color={currentTheme.textMuted} />
         </Pressable>
       </Pressable>
 
       <TracksListItemContextMenu
         isCached={isCached}
+        theme={currentTheme}
         isMenuOpen={isMenuOpen}
         menuHeight={menuHeight}
         onClose={handleToggleMenu}

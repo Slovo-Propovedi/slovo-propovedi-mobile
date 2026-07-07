@@ -2,7 +2,8 @@ import { Image, Text, View } from 'react-native'
 import Animated, { type useAnimatedStyle } from 'react-native-reanimated'
 import { QueueControls } from 'widgets/track-list'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
-import { headerStyles } from './headerStyles'
+import { type ThemeColors } from 'shared/ui/theme'
+import { createHeaderStyles } from './headerStyles'
 
 interface PlaylistHeaderProps {
   artwork: string | undefined
@@ -10,6 +11,7 @@ interface PlaylistHeaderProps {
   headerImageHeight: number
   imageOpacityStyle: ReturnType<typeof useAnimatedStyle>
   onPressPlayAll: () => void
+  theme: ThemeColors
   title: string
 }
 
@@ -19,22 +21,30 @@ export const PlaylistHeader = ({
   headerImageHeight,
   imageOpacityStyle,
   onPressPlayAll,
+  theme,
   title,
-}: PlaylistHeaderProps) => (
-  <>
-    <Animated.View
-      style={[headerStyles.headerImageContainer, { height: headerImageHeight }, imageOpacityStyle]}
-    >
-      <Image style={headerStyles.headerImage} source={{ uri: artwork || IMAGE_PLACEHOLDER }} />
-      <View style={headerStyles.overlay} />
-      <View style={headerStyles.titleContainer}>
-        <Text style={headerStyles.title}>{title}</Text>
-      </View>
-    </Animated.View>
+}: PlaylistHeaderProps) => {
+  const headerStyles = createHeaderStyles(theme)
+  return (
+    <>
+      <Animated.View
+        style={[
+          headerStyles.headerImageContainer,
+          { height: headerImageHeight },
+          imageOpacityStyle,
+        ]}
+      >
+        <Image style={headerStyles.headerImage} source={{ uri: artwork || IMAGE_PLACEHOLDER }} />
+        <View style={headerStyles.overlay} />
+        <View style={headerStyles.titleContainer}>
+          <Text style={headerStyles.title}>{title}</Text>
+        </View>
+      </Animated.View>
 
-    <View style={headerStyles.contentSection}>
-      {description && <Text style={headerStyles.description}>{description}</Text>}
-      <QueueControls onPressPlayAll={onPressPlayAll} />
-    </View>
-  </>
-)
+      <View style={headerStyles.contentSection}>
+        {description && <Text style={headerStyles.description}>{description}</Text>}
+        <QueueControls onPressPlayAll={onPressPlayAll} />
+      </View>
+    </>
+  )
+}

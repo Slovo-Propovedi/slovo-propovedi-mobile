@@ -1,4 +1,5 @@
 import { View } from 'react-native'
+import { type ThemeColors } from 'shared/ui/theme'
 import type { XMLElement, XMLElementName } from 'entities/book-reader'
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native'
 import { getElementKey } from './getElementKey'
@@ -10,6 +11,7 @@ export interface GetBlockElementProps {
   name: XMLElementName
   parentKey: string
   style: StyleProp<ViewStyle>
+  theme: ThemeColors
 }
 
 export const getBlockElement = ({
@@ -18,6 +20,7 @@ export const getBlockElement = ({
   name,
   parentKey,
   style,
+  theme,
 }: GetBlockElementProps) => (
   <View
     style={style}
@@ -30,6 +33,7 @@ export const getBlockElement = ({
       elements,
       parentKey,
       style: childrenStyle,
+      theme,
     })}
   </View>
 )

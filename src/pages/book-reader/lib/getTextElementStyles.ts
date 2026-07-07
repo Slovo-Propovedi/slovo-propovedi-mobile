@@ -1,47 +1,58 @@
 import { type StyleProp, StyleSheet, type TextStyle, type ViewStyle } from 'react-native'
 import { BodyXMLElementName } from 'entities/book-reader'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
-import type { XMLElementName } from 'entities/book-reader'
+import { type XMLElementName } from 'entities/book-reader'
+import { type ThemeColors } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS } from 'shared/ui/themed'
 
 interface GetTextElementStylesReturnType {
   style?: StyleProp<ViewStyle>
   textStyle?: StyleProp<TextStyle>
 }
 
-export const getTextElementStyles = (name: XMLElementName): GetTextElementStylesReturnType =>
+export const getTextElementStyles = (
+  name: XMLElementName,
+  theme: ThemeColors,
+): GetTextElementStylesReturnType =>
   ({
     [BodyXMLElementName.Body]: {},
-    [BodyXMLElementName.Emphasis]: { textStyle: styles.emphasisText },
+    [BodyXMLElementName.Emphasis]: { textStyle: createStyles(theme).emphasisText },
     [BodyXMLElementName.P]: {
-      style: styles.paragraph,
-      textStyle: styles.paragraphText,
+      style: createStyles(theme).paragraph,
+      textStyle: createStyles(theme).paragraphText,
     },
     [BodyXMLElementName.Section]: {},
-    [BodyXMLElementName.Strong]: { textStyle: styles.strongText },
-    [BodyXMLElementName.Subtitle]: { style: styles.subtitle, textStyle: styles.subtitleText },
-    [BodyXMLElementName.Title]: { style: styles.title, textStyle: styles.titleText },
+    [BodyXMLElementName.Strong]: { textStyle: createStyles(theme).strongText },
+    [BodyXMLElementName.Subtitle]: {
+      style: createStyles(theme).subtitle,
+      textStyle: createStyles(theme).subtitleText,
+    },
+    [BodyXMLElementName.Title]: {
+      style: createStyles(theme).title,
+      textStyle: createStyles(theme).titleText,
+    },
   })[name as BodyXMLElementName]
 
-const styles = StyleSheet.create({
-  emphasisText: { color: COLORS.text, fontStyle: 'italic' },
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    emphasisText: { color: theme.text, fontStyle: 'italic' },
 
-  paragraph: {
-    marginVertical: INDENTS.lowest,
-  },
-  paragraphText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZES.h4,
-  },
+    paragraph: {
+      marginVertical: INDENTS.lowest,
+    },
+    paragraphText: {
+      color: theme.text,
+      fontSize: FONT_SIZES.h4,
+    },
 
-  strongText: { color: COLORS.text, fontWeight: 'bold' },
+    strongText: { color: theme.text, fontWeight: 'bold' },
 
-  subtitle: {
-    marginVertical: INDENTS.low,
-  },
-  subtitleText: { color: COLORS.text, fontSize: FONT_SIZES.h2 },
+    subtitle: {
+      marginVertical: INDENTS.low,
+    },
+    subtitleText: { color: theme.text, fontSize: FONT_SIZES.h2 },
 
-  title: {
-    marginVertical: INDENTS.middle,
-  },
-  titleText: { color: COLORS.text, fontSize: FONT_SIZES.h1 },
-})
+    title: {
+      marginVertical: INDENTS.middle,
+    },
+    titleText: { color: theme.text, fontSize: FONT_SIZES.h1 },
+  })

@@ -1,12 +1,13 @@
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { BodyXMLElementName, parseFb2BookToObject, XMLElementType } from 'entities/book-reader'
-import { COLORS, INDENTS } from 'shared/ui/themed'
+import { INDENTS, useTheme } from 'shared/ui/themed'
 import type { XMLElementElement } from 'entities/book-reader'
 import { parseObjectToStylizedElements } from './lib'
 import { testFb2String } from './testFiles/testFb2'
 
 export const BookReaderScreen = () => {
+  const { currentTheme } = useTheme()
   const book = parseFb2BookToObject(testFb2String)
 
   if (!book) return null
@@ -18,10 +19,14 @@ export const BookReaderScreen = () => {
   )
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <View style={styles.content}>
         <ScrollView>
-          {body && parseObjectToStylizedElements({ element: body as XMLElementElement })}
+          {body &&
+            parseObjectToStylizedElements({
+              element: body as XMLElementElement,
+              theme: currentTheme,
+            })}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -30,7 +35,6 @@ export const BookReaderScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background,
     flex: 1,
   },
   content: {

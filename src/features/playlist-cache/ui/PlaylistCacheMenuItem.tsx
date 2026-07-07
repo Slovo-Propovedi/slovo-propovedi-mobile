@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
 
 const ICON_SIZE = 18
 
@@ -21,6 +21,7 @@ export const PlaylistCacheMenuItem = ({
   text,
   textColor,
 }: PlaylistCacheMenuItemProps) => {
+  const { currentTheme } = useTheme()
   const handlePress = () => {
     if (isDisabled) return
     onPress()
@@ -35,12 +36,12 @@ export const PlaylistCacheMenuItem = ({
         name={icon}
         size={ICON_SIZE}
         style={styles.dropdownIcon}
-        color={iconColor || (isDisabled ? COLORS.textMuted : COLORS.icon)}
+        color={iconColor || (isDisabled ? currentTheme.textMuted : currentTheme.icon)}
       />
       <Text
         style={[
           styles.dropdownItemText,
-          isDisabled && styles.dropdownItemTextDisabled,
+          { color: isDisabled ? currentTheme.textMuted : currentTheme.text },
           textColor && { color: textColor },
         ]}
       >
@@ -61,6 +62,5 @@ const styles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   dropdownItemDisabled: { opacity: 0.5 },
-  dropdownItemText: { color: COLORS.text, fontSize: FONT_SIZES.base },
-  dropdownItemTextDisabled: { color: COLORS.textMuted },
+  dropdownItemText: { fontSize: FONT_SIZES.base },
 })

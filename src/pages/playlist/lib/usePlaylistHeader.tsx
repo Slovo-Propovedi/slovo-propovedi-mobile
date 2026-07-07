@@ -2,7 +2,7 @@ import { useNavigation } from 'expo-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { interpolate, runOnJS, useDerivedValue } from 'react-native-reanimated'
-import { COLORS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
 
 interface UsePlaylistHeaderProps {
@@ -18,6 +18,7 @@ export const usePlaylistHeader = ({
 }: UsePlaylistHeaderProps) => {
   const navigation = useNavigation()
   const [headerBgOpacity, setHeaderBgOpacity] = useState(0)
+  const { currentTheme } = useTheme()
   const DARKEN_START_OFFSET = 80
 
   const updateHeaderTitle = useCallback(
@@ -43,13 +44,13 @@ export const usePlaylistHeader = ({
   const headerBackground = useMemo(() => {
     const innerStyle = StyleSheet.create({
       bg: {
-        backgroundColor: COLORS.background,
+        backgroundColor: currentTheme.background,
         flex: 1,
         opacity: headerBgOpacity,
       },
     })
     return () => <View style={innerStyle.bg} />
-  }, [headerBgOpacity])
+  }, [headerBgOpacity, currentTheme.background])
 
   useEffect(() => {
     navigation.setOptions({ headerBackground, headerTitle: '' })

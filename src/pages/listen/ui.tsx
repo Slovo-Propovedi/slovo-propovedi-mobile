@@ -1,24 +1,30 @@
-import { ScrollView, StatusBar, StyleSheet } from 'react-native'
+import { ScrollView, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { DynamicSectionsSlider } from 'widgets/dynamic-sections-slider'
-import { COLORS } from 'shared/ui/themed'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
 
-export const ListenScreen = () => (
-  <SafeAreaView style={styles.listen}>
-    <StatusBar translucent barStyle='light-content' backgroundColor='transparent' />
-    <ScrollView style={styles.content}>
-      <DynamicSectionsSlider />
-    </ScrollView>
-  </SafeAreaView>
-)
+export const ListenScreen = () => {
+  const { currentTheme } = useTheme()
+
+  return (
+    <SafeAreaView style={[styles.listen, { backgroundColor: currentTheme.background }]}>
+      <ScrollView
+        style={[styles.content, { backgroundColor: currentTheme.background }]}
+        contentContainerStyle={{
+          paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
+        }}
+      >
+        <DynamicSectionsSlider />
+      </ScrollView>
+    </SafeAreaView>
+  )
+}
 
 const styles = StyleSheet.create({
   content: {
-    backgroundColor: COLORS.background,
-    marginBottom: 100, // Keep padding for mini player
+    flex: 1,
   },
   listen: {
-    backgroundColor: COLORS.background,
     flex: 1,
   },
 })

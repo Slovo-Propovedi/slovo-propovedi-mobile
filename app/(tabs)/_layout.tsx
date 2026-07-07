@@ -5,7 +5,7 @@ import { ActivityIndicator, Text, View } from 'react-native'
 import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
 import { isPlayerExpandedAtom } from 'entities/player'
-import { COLORS, INDENTS } from 'shared/ui/themed'
+import { COLORS, INDENTS, useTheme } from 'shared/ui/themed'
 
 interface TabLayout {
   width: number
@@ -17,15 +17,17 @@ interface TabLayout {
  * @param _props - Standard Suspense fallback props (unused).
  */
 export function SuspenseFallback(_props: SuspenseFallbackProps) {
+  const { currentTheme } = useTheme()
   return (
-    <View style={styles.suspenseContainer}>
+    <View style={[styles.suspenseContainer, { backgroundColor: currentTheme.background }]}>
       <ActivityIndicator size='large' color={COLORS.primary} />
-      <Text style={styles.suspenseText}>Загрузка...</Text>
+      <Text style={[styles.suspenseText, { color: currentTheme.text }]}>Загрузка...</Text>
     </View>
   )
 }
 
 const Layout = () => {
+  const { currentTheme } = useTheme()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [tabLayouts, setTabLayoutsState] = useState<Record<string, TabLayout>>({})
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
@@ -35,7 +37,7 @@ const Layout = () => {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
       <Tabs
         screenOptions={{ headerShown: false }}
         tabBar={props => (
@@ -63,13 +65,11 @@ export default Layout
 const styles = {
   suspenseContainer: {
     alignItems: 'center' as const,
-    backgroundColor: COLORS.background,
     flex: 1,
     gap: INDENTS.medium,
     justifyContent: 'center' as const,
   },
   suspenseText: {
-    color: COLORS.text,
     fontSize: 16,
   },
 }

@@ -1,15 +1,18 @@
 import { Stack } from 'expo-router'
-import { COLORS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 
-const ListenStackLayout = () => (
-  <Stack
-    screenOptions={{
-      headerBackTitle: 'Назад',
-      headerStyle: { backgroundColor: COLORS.background },
-      headerTintColor: COLORS.text,
-      headerTitleStyle: { color: COLORS.text },
-    }}
-  >
+const ListenStackLayout = () => {
+  const { currentTheme } = useTheme()
+  return (
+    <Stack
+      screenOptions={{
+        contentStyle: { backgroundColor: currentTheme.background },
+        headerBackTitle: 'Назад',
+        headerStyle: { backgroundColor: currentTheme.background },
+        headerTintColor: currentTheme.text,
+        headerTitleStyle: { color: currentTheme.text },
+      }}
+    >
     <Stack.Screen
       name='index'
       options={{
@@ -30,7 +33,8 @@ const ListenStackLayout = () => (
         title: 'Плейлист',
       }}
     />
-  </Stack>
-)
+    </Stack>
+  )
+}
 
 export default ListenStackLayout

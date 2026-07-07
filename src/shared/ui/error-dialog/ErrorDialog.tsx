@@ -3,7 +3,7 @@ import { setStringAsync } from 'expo-clipboard'
 import { useState } from 'react'
 import { Modal, Platform, StyleSheet, Text, View } from 'react-native'
 import { Button } from 'shared/ui/button'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
 
 export interface ErrorDialogProps {
   detail: string
@@ -14,6 +14,7 @@ export interface ErrorDialogProps {
 
 export const ErrorDialog = ({ detail, message, onDismiss, visible }: ErrorDialogProps) => {
   const [copied, setCopied] = useState(false)
+  const { currentTheme } = useTheme()
 
   const handleCopy = async () => {
     const errorText = `
@@ -31,13 +32,15 @@ ${detail}
   return (
     <Modal transparent visible={visible} animationType='fade' onRequestClose={onDismiss}>
       <View style={styles.overlay}>
-        <View style={styles.dialog}>
+        <View style={[styles.dialog, { backgroundColor: currentTheme.surface }]}>
           <Ionicons size={48} name='warning' style={styles.icon} color={COLORS.primary} />
-          <Text style={styles.title}>Ошибка</Text>
-          <Text style={styles.message}>{message}</Text>
-          <View style={styles.detailContainer}>
-            <Text style={styles.detailTitle}>Детали ошибки:</Text>
-            <Text selectable style={styles.detailText}>
+          <Text style={[styles.title, { color: currentTheme.text }]}>Ошибка</Text>
+          <Text style={[styles.message, { color: currentTheme.text }]}>{message}</Text>
+          <View style={[styles.detailContainer, { backgroundColor: currentTheme.background }]}>
+            <Text style={[styles.detailTitle, { color: currentTheme.textMuted }]}>
+              Детали ошибки:
+            </Text>
+            <Text selectable style={[styles.detailText, { color: currentTheme.text }]}>
               {detail}
             </Text>
           </View>
@@ -45,14 +48,14 @@ ${detail}
             <Button
               onPress={handleCopy}
               titleStyle={styles.buttonText}
-              style={[styles.button, styles.copyButton]}
               title={copied ? '✓ Скопировано' : '📋 Копировать'}
+              style={[styles.button, { backgroundColor: currentTheme.textMuted }]}
             />
             <Button
               title='Закрыть'
               onPress={onDismiss}
-              style={styles.button}
               titleStyle={styles.buttonText}
+              style={[styles.button, { backgroundColor: COLORS.primary }]}
             />
           </View>
         </View>
@@ -63,7 +66,6 @@ ${detail}
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: COLORS.primary,
     borderRadius: RADIUSES.low,
   },
   buttonContainer: {
@@ -73,31 +75,24 @@ const styles = StyleSheet.create({
   buttonText: {
     color: COLORS.onPrimary,
   },
-  copyButton: {
-    backgroundColor: COLORS.textMuted,
-  },
   detailContainer: {
-    backgroundColor: COLORS.background,
     borderRadius: RADIUSES.low,
     marginBottom: INDENTS.high,
     padding: INDENTS.medium,
     width: '100%',
   },
   detailText: {
-    color: COLORS.text,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: FONT_SIZES.sm,
     lineHeight: 16,
   },
   detailTitle: {
-    color: COLORS.textMuted,
     fontSize: FONT_SIZES.sm,
     fontWeight: 'bold',
     marginBottom: INDENTS.low,
   },
   dialog: {
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUSES.high,
     padding: INDENTS.high,
     width: '100%',
@@ -106,7 +101,6 @@ const styles = StyleSheet.create({
     marginBottom: INDENTS.medium,
   },
   message: {
-    color: COLORS.text,
     fontSize: FONT_SIZES.base,
     marginBottom: INDENTS.medium,
     textAlign: 'center',
@@ -119,7 +113,6 @@ const styles = StyleSheet.create({
     padding: INDENTS.high,
   },
   title: {
-    color: COLORS.text,
     fontSize: FONT_SIZES.h1,
     fontWeight: 'bold',
     marginBottom: INDENTS.medium,

@@ -1,5 +1,5 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native'
-import { COLORS, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { COLORS, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
 import { PlaylistCacheMenuItem } from './PlaylistCacheMenuItem'
 
 export interface PlaylistCacheMenuDropdownProps {
@@ -23,12 +23,22 @@ export const PlaylistCacheMenuDropdown = ({
   onClose,
   visible,
 }: PlaylistCacheMenuDropdownProps) => {
+  const { currentTheme } = useTheme()
   if (!visible) return null
 
   return (
     <Modal transparent onRequestClose={onClose}>
       <Pressable onPress={onClose} style={styles.overlay}>
-        <View style={[styles.dropdown, { right: menuPosition.right, top: menuPosition.top }]}>
+        <View
+          style={[
+            styles.dropdown,
+            {
+              backgroundColor: currentTheme.surface,
+              right: menuPosition.right,
+              top: menuPosition.top,
+            },
+          ]}
+        >
           <PlaylistCacheMenuItem
             onPress={onCacheAll}
             isDisabled={isCacheAllDisabled}
@@ -36,7 +46,7 @@ export const PlaylistCacheMenuDropdown = ({
             text={allCached ? 'Плейлист закеширован' : 'Закешировать все'}
           />
 
-          <View style={styles.dropdownDivider} />
+          <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
 
           <PlaylistCacheMenuItem
             icon='delete-outline'
@@ -44,7 +54,7 @@ export const PlaylistCacheMenuDropdown = ({
             text='Удалить из кеша все'
             isDisabled={isClearCacheDisabled}
             textColor={isClearCacheDisabled ? COLORS.disabled : undefined}
-            iconColor={isClearCacheDisabled ? COLORS.disabled : COLORS.text}
+            iconColor={isClearCacheDisabled ? COLORS.disabled : currentTheme.text}
           />
         </View>
       </Pressable>
@@ -56,7 +66,6 @@ export default PlaylistCacheMenuDropdown
 
 const styles = StyleSheet.create({
   dropdown: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUSES.low,
     elevation: 8,
     minWidth: 180,
@@ -68,7 +77,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   dropdownDivider: {
-    backgroundColor: COLORS.textMuted,
     height: 1,
     marginHorizontal: INDENTS.medium,
     opacity: 0.3,

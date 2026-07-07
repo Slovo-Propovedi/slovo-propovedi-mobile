@@ -1,7 +1,7 @@
 import { Image, StyleSheet, Text, View } from 'react-native'
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { ListItemSize } from './list-item.types'
 
@@ -21,27 +21,30 @@ export const ListItem: ListItemComponent = ({
   size = ListItemSize.Small,
   style,
   testID,
-}) => (
-  <View testID={testID} style={[styles.component, style]}>
-    <View
-      testID='preview-or-counter'
-      style={[
-        styles.previewContainer,
-        match(size)
-          .with(ListItemSize.Middle, () => styles.previewMiddle)
-          .with(ListItemSize.Small, () => styles.previewSmall)
-          .exhaustive(),
-      ]}
-    >
-      <Image testID='preview' style={styles.preview} source={{ uri: artwork }} />
+}) => {
+  const { currentTheme } = useTheme()
+  return (
+    <View testID={testID} style={[styles.component, style]}>
+      <View
+        testID='preview-or-counter'
+        style={[
+          styles.previewContainer,
+          match(size)
+            .with(ListItemSize.Middle, () => styles.previewMiddle)
+            .with(ListItemSize.Small, () => styles.previewSmall)
+            .exhaustive(),
+        ]}
+      >
+        <Image testID='preview' style={styles.preview} source={{ uri: artwork }} />
+      </View>
+      <View style={styles.textsContainer}>
+        <Text testID='title' style={[styles.listItemTitle, { color: currentTheme.text }]}>
+          {title}
+        </Text>
+      </View>
     </View>
-    <View style={styles.textsContainer}>
-      <Text testID='title' style={styles.listItemTitle}>
-        {title}
-      </Text>
-    </View>
-  </View>
-)
+  )
+}
 
 const previewMiddleSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25
 
@@ -53,7 +56,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 60,
   },
-  listItemTitle: { color: COLORS.text, fontSize: FONT_SIZES.h2 },
+  listItemTitle: { fontSize: FONT_SIZES.h2 },
   preview: { borderRadius: RADIUSES.low, height: '100%' },
   previewContainer: { borderRadius: RADIUSES.low, marginVertical: INDENTS.middle },
   previewMiddle: { height: previewMiddleSize, width: previewMiddleSize },

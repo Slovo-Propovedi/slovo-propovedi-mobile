@@ -9,7 +9,8 @@ import {
   type ViewStyle,
 } from 'react-native'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
-import { progressBarStyles, THUMB_SIZE } from './PlayerProgressBar.styles'
+import { useTheme } from 'shared/ui/themed'
+import { createProgressBarStyles, THUMB_SIZE } from './PlayerProgressBar.styles'
 
 interface PlayerProgressBarProps {
   downloadProgress?: number
@@ -28,6 +29,8 @@ export const PlayerProgressBar = ({
   position,
   style,
 }: PlayerProgressBarProps) => {
+  const { currentTheme } = useTheme()
+  const progressBarStyles = createProgressBarStyles(currentTheme)
   const [isDragging, setIsDragging] = useState(false)
   const [previewPosition, setPreviewPosition] = useState(position)
 

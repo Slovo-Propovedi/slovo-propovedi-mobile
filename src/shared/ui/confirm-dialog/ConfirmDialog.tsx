@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { Modal, Text, View } from 'react-native'
-import { COLORS } from 'shared/ui/themed'
+import { COLORS, useTheme } from 'shared/ui/themed'
 import { ConfirmDialogButton } from './ConfirmDialogButton'
 import { styles } from './styles'
 
@@ -34,6 +34,7 @@ export const ConfirmDialog = ({
   visible,
 }: ConfirmDialogProps) => {
   const messages = Array.isArray(message) ? message : [message]
+  const { currentTheme } = useTheme()
 
   return (
     <Modal
@@ -44,11 +45,11 @@ export const ConfirmDialog = ({
       onRequestClose={onCancel}
     >
       <View style={styles.backdrop}>
-        <View style={styles.dialog}>
+        <View style={[styles.dialog, { backgroundColor: currentTheme.surface }]}>
           {icon && <View style={styles.iconContainer}>{icon}</View>}
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, { color: currentTheme.text }]}>{title}</Text>
           {messages.map((msg, index) => (
-            <Text key={index} style={styles.message}>
+            <Text key={index} style={[styles.message, { color: currentTheme.text }]}>
               {msg}
             </Text>
           ))}

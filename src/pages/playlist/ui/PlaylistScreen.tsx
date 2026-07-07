@@ -1,20 +1,22 @@
 import { useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
 import { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { tracksListStyles } from 'widgets/track-list'
+import { createTracksListStyles } from 'widgets/track-list'
 import { isCachingPlaylistAtom, PlaylistCacheMenu } from 'features/playlist-cache'
 import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { parseJsonWithSchema, playlistDataSchema, type SermonData } from 'shared/model'
-import { INDENTS, PLAYER_SIZES } from 'shared/ui/themed'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
 import { TracksListItem } from 'shared/ui/track-list'
 import { useCollapsingHeader, usePlaylistHeader } from '../lib'
 import { PlaylistHeader } from './PlaylistHeader'
-import { styles } from './styles'
+import { createStyles } from './styles'
 
 export const PlaylistScreen = () => {
+  const { currentTheme } = useTheme()
   const params = useLocalSearchParams<{ playlist: string }>()
   const navigation = useNavigation()
   const playlist = parseJsonWithSchema(playlistDataSchema)(params.playlist) || {
@@ -85,8 +87,12 @@ export const PlaylistScreen = () => {
     />
   )
 
+  const styles = createStyles(currentTheme)
+  const tracksListStyles = createTracksListStyles(currentTheme)
+
   return (
     <View style={styles.container}>
+      <StatusBar style='light' />
       <Animated.FlatList
         data={tracksListData}
         renderItem={renderItem}
@@ -102,6 +108,7 @@ export const PlaylistScreen = () => {
           <PlaylistHeader
             title={title}
             artwork={artwork}
+            theme={currentTheme}
             description={description}
             onPressPlayAll={handlePressPlayAll}
             headerImageHeight={headerImageHeight}

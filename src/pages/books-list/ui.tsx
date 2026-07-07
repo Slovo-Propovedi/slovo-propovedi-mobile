@@ -2,12 +2,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ListItemSize, TouchableListItem } from 'shared/ui'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
 import type { BookData } from 'shared/model'
 import type { OnPressTouchableListItem } from 'shared/ui'
 
 export const BooksListScreen = () => {
   const { top } = useSafeAreaInsets()
+  const { currentTheme } = useTheme()
   const router = useRouter()
   const params = useLocalSearchParams<{ books: string; title: string }>()
 
@@ -22,9 +23,9 @@ export const BooksListScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <View style={[styles.titleContainer, { top }]}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: currentTheme.text }]}>{title}</Text>
       </View>
 
       <View style={styles.list}>
@@ -45,12 +46,10 @@ export const BooksListScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background,
     flex: 1,
   },
   list: { paddingLeft: INDENTS.high },
   title: {
-    color: COLORS.text,
     fontSize: FONT_SIZES.h1,
     paddingVertical: INDENTS.high,
   },

@@ -1,11 +1,12 @@
 import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
 import { useCallback } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { TracksListItem } from 'shared/ui/track-list'
 import type { PlaylistData } from 'shared/model'
+import { createStyles } from './PlaylistBottomSheet.styles'
 
 interface PlaylistBottomSheetProps {
   closeOnBack?: boolean
@@ -31,6 +32,7 @@ export const PlaylistBottomSheet = ({
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isAudioPlaying] = useAtom(isPlayingAtom)
   const playNewSermon = usePlayNewSermon()
+  const { currentTheme } = useTheme()
 
   if (!playlist) return null
 
@@ -78,9 +80,11 @@ export const PlaylistBottomSheet = ({
     [currentAudio?.id, handlePressItem, isAudioPlaying],
   )
 
-  const ItemSeparator = useCallback(() => <View style={styles.divider} />, [])
-
   if (!playlist) return null
+
+  const renderStyles = createStyles(currentTheme)
+
+  const ItemSeparator = useCallback(() => <View style={renderStyles.divider} />, [renderStyles])
 
   return (
     <BottomSheet
@@ -88,8 +92,8 @@ export const PlaylistBottomSheet = ({
       enablePanDownToClose
       snapPoints={['50%', '80%']}
       onChange={handleSheetChanges}
-      backgroundStyle={styles.background}
-      handleIndicatorStyle={styles.indicator}
+      backgroundStyle={renderStyles.background}
+      handleIndicatorStyle={renderStyles.indicator}
       backdropComponent={props => (
         <BottomSheetBackdrop
           {...props}
@@ -99,28 +103,14 @@ export const PlaylistBottomSheet = ({
         />
       )}
     >
-      <Text style={styles.title}>{playlist.title}</Text>
+      <Text style={renderStyles.title}>{playlist.title}</Text>
       <BottomSheetFlatList
         data={tracksListData}
         renderItem={renderItem}
         ItemSeparatorComponent={ItemSeparator}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={renderStyles.listContent}
         keyExtractor={(item: TrackListItemData) => item.id}
       />
     </BottomSheet>
   )
 }
-
-const styles = StyleSheet.create({
-  background: { backgroundColor: 'rgba(37, 37, 37, 0.8)' },
-  divider: { backgroundColor: 'rgba(255, 255, 255, 0.1)', height: 1 },
-  indicator: { backgroundColor: COLORS.textMuted },
-  listContent: { paddingBottom: INDENTS.medium, paddingHorizontal: INDENTS.medium },
-  title: {
-    color: COLORS.text,
-    fontSize: FONT_SIZES.h2,
-    fontWeight: 'bold',
-    paddingBottom: INDENTS.medium,
-    paddingHorizontal: INDENTS.medium,
-  },
-})

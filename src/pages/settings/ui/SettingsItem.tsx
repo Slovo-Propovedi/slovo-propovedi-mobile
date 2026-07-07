@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
 
@@ -20,21 +20,32 @@ export const SettingsItem = ({
   style,
   testID,
   title,
-}: SettingsItemProps) => (
-  <TouchableItem testID={testID} onPress={onPress} style={[styles.container, style]}>
-    <View style={styles.content}>
-      {icon && <Ionicons size={24} name={icon} color={COLORS.text} style={styles.icon} />}
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{title}</Text>
-        {description && <Text style={styles.description}>{description}</Text>}
+}: SettingsItemProps) => {
+  const { currentTheme } = useTheme()
+
+  return (
+    <TouchableItem
+      testID={testID}
+      onPress={onPress}
+      style={[styles.container, { backgroundColor: currentTheme.surface }, style]}
+    >
+      <View style={styles.content}>
+        {icon && <Ionicons size={24} name={icon} style={styles.icon} color={currentTheme.text} />}
+        <View style={styles.textContainer}>
+          <Text style={[styles.title, { color: currentTheme.text }]}>{title}</Text>
+          {description && (
+            <Text style={[styles.description, { color: currentTheme.textMuted }]}>
+              {description}
+            </Text>
+          )}
+        </View>
       </View>
-    </View>
-  </TouchableItem>
-)
+    </TouchableItem>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.surface,
     borderBottomColor: COLORS.disabled,
     borderBottomWidth: 1,
     paddingHorizontal: INDENTS.high,
@@ -45,7 +56,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   description: {
-    color: COLORS.textMuted,
     fontSize: FONT_SIZES.sm,
     marginTop: INDENTS.low,
   },
@@ -56,7 +66,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: COLORS.text,
     fontSize: FONT_SIZES.base,
   },
 })

@@ -3,10 +3,11 @@ import { View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { TabView } from 'react-native-tab-view'
 import { getRenderTabBar } from 'shared/lib/tab-bar'
-import { COLORS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import { renderScene } from './scene'
 
 export const StudyScreen = () => {
+  const { currentTheme } = useTheme()
   const [index, setIndex] = useState(0)
 
   const routes = [
@@ -19,8 +20,8 @@ export const StudyScreen = () => {
   })
 
   return (
-    <SafeAreaView style={{ backgroundColor: COLORS.background, flex: 1 }}>
-      <View style={{ backgroundColor: COLORS.background, flex: 1, paddingBottom: 100 }}>
+    <SafeAreaView style={{ backgroundColor: currentTheme.background, flex: 1 }}>
+      <View style={{ backgroundColor: currentTheme.background, flex: 1, paddingBottom: 100 }}>
         <TabView
           onIndexChange={setIndex}
           renderScene={renderScene}

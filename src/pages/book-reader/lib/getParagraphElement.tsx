@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 import { BodyXMLElementName, type XMLElement } from 'entities/book-reader'
+import { type ThemeColors } from 'shared/ui/theme'
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native'
 import { getElementKey } from './getElementKey'
 import { getElementsInBlockElement } from './getElementsInBlockElement'
@@ -10,6 +11,7 @@ export interface GetParagraphElementProps {
   parentKey: string
   style: StyleProp<ViewStyle>
   textStyle: StyleProp<TextStyle>
+  theme: ThemeColors
 }
 
 export const getParagraphElement = ({
@@ -18,6 +20,7 @@ export const getParagraphElement = ({
   parentKey,
   style,
   textStyle,
+  theme,
 }: GetParagraphElementProps) => (
   <View
     style={style}
@@ -31,6 +34,7 @@ export const getParagraphElement = ({
         elements,
         parentKey,
         style: childrenStyle,
+        theme,
       })}
     </Text>
   </View>

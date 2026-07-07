@@ -1,5 +1,6 @@
 /* eslint-disable max-lines -- FIXME: refactor */
 import { useAction, useAtom } from '@reatom/npm-react'
+import { StatusBar } from 'expo-status-bar'
 import { useCallback } from 'react'
 import {
   ActivityIndicator,
@@ -24,20 +25,23 @@ import {
   openPlayerSheetAction,
   usePlayer,
 } from 'entities/player'
-import { MovingText, PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
+import { MovingText, PlayerControlButton, PlayerControlButtonType, useTheme } from 'shared/ui'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
-import { COLORS } from 'shared/ui/themed'
 import { showMenuAtom } from '../model/showMenuAtom'
 import { useExpandAnimation } from '../model/useExpandAnimation'
 import { useFullscreenPanGesture } from '../model/useFullscreenPanGesture'
 import { useMiniPanGesture } from '../model/useMiniPanGesture'
 import { FullscreenContent } from './FullscreenContent'
-import { miniPlayerStyles } from './miniPlayerStyles'
-import { styles } from './styles'
+import { createMiniPlayerStyles } from './miniPlayerStyles'
+import { createStyles } from './styles'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) => {
+  const { currentTheme } = useTheme()
+  const miniPlayerStyles = createMiniPlayerStyles(currentTheme)
+  const styles = createStyles(currentTheme)
+
   const [audio] = useAtom(currentAudioAtom)
   const [playing] = useAtom(isPlayingAtom)
   const [expanded] = useAtom(isPlayerExpandedAtom)
@@ -85,6 +89,8 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
 
   if (!audio) return null
 
+  const onPrimaryColor = currentTheme.background === '#fff' ? '#000' : '#fff'
+
   return (
     <>
       <Animated.View
@@ -95,7 +101,11 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
         <GestureDetector gesture={miniPan}>
           <AnimatedPressable
             onPress={handleMiniTap}
-            style={[miniPlayerStyles.miniContainer, miniStyle]}
+            style={[
+              miniPlayerStyles.miniContainer,
+              miniStyle,
+              { backgroundColor: currentTheme.surface },
+            ]}
           >
             <Image
               style={miniPlayerStyles.miniCover}
@@ -109,12 +119,12 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
             </View>
             <View style={miniPlayerStyles.miniControls}>
               {showSpinner ? (
-                <ActivityIndicator size={36} color={COLORS.white} />
+                <ActivityIndicator size={36} color={onPrimaryColor} />
               ) : (
                 <PlayerControlButton
                   size={36}
-                  color={COLORS.white}
                   onPress={onPlayPause}
+                  color={onPrimaryColor}
                   type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
                 />
               )}
@@ -123,7 +133,14 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
         </GestureDetector>
       )}
       <GestureDetector gesture={panGesture}>
-        <Animated.View style={[styles.container, containerStyle, style]}>
+        <Animated.View
+          style={[
+            styles.container,
+            containerStyle,
+            style,
+            { backgroundColor: currentTheme.surface },
+          ]}
+        >
           <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
             <Image
               resizeMode='cover'
@@ -135,7 +152,12 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
             pointerEvents='none'
             style={[miniPlayerStyles.miniOverlay, miniOverlayStyle]}
           />
-          <FullscreenContent fullStyle={fullStyle} onClose={handleCloseFullscreen} />
+          {expanded && <StatusBar style='light' />}
+          <FullscreenContent
+            styles={styles}
+            fullStyle={fullStyle}
+            onClose={handleCloseFullscreen}
+          />
         </Animated.View>
       </GestureDetector>
     </>
