@@ -2,6 +2,8 @@ export interface TracksListItemProps {
   artist?: string
   artwork?: string
   audioUrl?: string
+  /** Incrementing value to trigger cache status refresh from outside (e.g. Batch caching). */
+  cacheTrigger?: number
   /** Current URL being downloaded, used to refresh cache indicator on completion. */
   downloadingUrl?: null | string
   isAudioPlaying?: boolean

@@ -56,11 +56,11 @@ export const PlaylistCacheMenuDropdown = ({
 
           <Pressable
             disabled={isClearCacheDisabled}
+            style={[styles.dropdownItem, isClearCacheDisabled && styles.dropdownItemDisabled]}
             onPress={() => {
               if (isClearCacheDisabled) return
               onClearCache()
             }}
-            style={[styles.dropdownItem, isClearCacheDisabled && styles.dropdownItemDisabled]}
           >
             <MaterialCommunityIcons
               size={ICON_SIZE}

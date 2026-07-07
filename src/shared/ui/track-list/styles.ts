@@ -86,6 +86,19 @@ export const tracksListStyles = StyleSheet.create({
     right: 4,
     width: 24,
   },
+  progressBarBackground: {
+    borderRadius: 1.5,
+    bottom: 0,
+    height: 3,
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+  },
+  progressBarFill: {
+    backgroundColor: COLORS.primary,
+    height: '100%',
+  },
   textContainer: {
     flex: 1,
     justifyContent: 'center',

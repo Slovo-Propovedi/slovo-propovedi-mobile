@@ -1,6 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useAtom } from '@reatom/npm-react'
 import { useEffect, useRef, useState } from 'react'
 import { Image, Modal, Pressable, Text, View } from 'react-native'
+import { playlistDownloadProgressAtom } from 'features/playlist-cache/model'
 import { cacheAudio, removeFromCache, useIsCached } from 'shared/lib/audio-cache'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { MovingText } from 'shared/ui/MovingText'
@@ -14,55 +16,53 @@ export const TracksListItem = ({
   artist,
   artwork,
   audioUrl,
+  cacheTrigger: externalCacheTrigger,
   downloadingUrl,
   isAudioPlaying = false,
   isPlaying,
   onPress,
   title,
 }: TracksListItemProps) => {
-  const [cacheTrigger, setCacheTrigger] = useState(0)
+  const [internalCacheTrigger, setInternalCacheTrigger] = useState(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
   const [menuHeight, setMenuHeight] = useState(44)
   const dotsButtonRef = useRef<View>(null)
   const prevDownloadingUrlRef = useRef<null | string | undefined>(null)
-  const isCached = useIsCached(audioUrl ?? null, cacheTrigger)
-
+  const isCached = useIsCached(audioUrl ?? null, internalCacheTrigger + (externalCacheTrigger ?? 0))
+  const progressValue = useAtom(playlistDownloadProgressAtom)[0][audioUrl ?? ''] ?? -1
+  const isDownloading = progressValue >= 0 && progressValue < 1
   useEffect(() => {
     const wasThisAudioDownloading = prevDownloadingUrlRef.current === audioUrl
     // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- intentionally triggering cache refresh after download completes
-    if (wasThisAudioDownloading && downloadingUrl === null) setCacheTrigger(prev => prev + 1)
+    if (wasThisAudioDownloading && downloadingUrl === null)
+      setInternalCacheTrigger(prev => prev + 1)
     prevDownloadingUrlRef.current = downloadingUrl
   }, [downloadingUrl, audioUrl])
-
   const measureButton = () => {
-    dotsButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) => {
-      setMenuPosition({ x: pageX + width - MENU_WIDTH, y: pageY - height - menuHeight - 5 })
-    })
+    dotsButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) =>
+      setMenuPosition({ x: pageX + width - MENU_WIDTH, y: pageY - height - menuHeight - 5 }),
+    )
   }
-
   const handleToggleMenu = () => {
     if (!audioUrl) return
     if (!isMenuOpen) measureButton()
     setIsMenuOpen(!isMenuOpen)
   }
-
   const handleToggleCache = async () => {
     setIsMenuOpen(false)
     if (!audioUrl) return
     try {
       isCached ? await removeFromCache(audioUrl) : await cacheAudio(audioUrl)
-      setCacheTrigger(prev => prev + 1)
+      setInternalCacheTrigger(prev => prev + 1)
     } catch (error) {
       console.warn('[TracksListItem] Error toggling cache:', error)
     }
   }
-
   const handleItemPress = () => {
     if (isMenuOpen) setIsMenuOpen(false)
     onPress()
   }
-
   const renderMenu = () => (
     <Modal transparent animationType='none' visible={isMenuOpen} onRequestClose={handleToggleMenu}>
       <Pressable style={{ flex: 1 }} onPress={handleToggleMenu}>
@@ -90,7 +90,6 @@ export const TracksListItem = ({
       </Pressable>
     </Modal>
   )
-
   return (
     <Pressable
       onPress={handleItemPress}
@@ -103,7 +102,14 @@ export const TracksListItem = ({
           source={{ uri: artwork || IMAGE_PLACEHOLDER }}
           style={[tracksListStyles.albumArt, isPlaying && tracksListStyles.albumArtPlaying]}
         />
-        {(!isCached || isPlaying) && (
+        {isDownloading && (
+          <View style={tracksListStyles.progressBarBackground}>
+            <View
+              style={[tracksListStyles.progressBarFill, { width: `${progressValue * 100}%` }]}
+            />
+          </View>
+        )}
+        {!isDownloading && (!isCached || isPlaying) && (
           <PlayingStatusOrChacheIcon isPlaying={isPlaying} isAudioPlaying={isAudioPlaying} />
         )}
       </View>

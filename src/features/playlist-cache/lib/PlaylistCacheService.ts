@@ -1,6 +1,11 @@
 import { type Ctx } from '@reatom/framework'
 import { audioCacheService } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom, isCachingPlaylistAtom, playlistCacheProgressAtom } from '../model'
+import {
+  cacheUpdateTriggerAtom,
+  isCachingPlaylistAtom,
+  playlistCacheProgressAtom,
+  playlistDownloadProgressAtom,
+} from '../model'
 
 export interface TrackToCache {
   audioUrl?: null | string
@@ -37,7 +42,18 @@ class PlaylistCacheService {
 
       for (const track of tracksToCache) {
         try {
-          await audioCacheService.cacheAudio(track.audioUrl)
+          // Set initial progress to 0 before starting the download
+          playlistDownloadProgressAtom(ctx, prev => ({
+            ...prev,
+            [track.audioUrl]: 0,
+          }))
+
+          await audioCacheService.cacheAudio(track.audioUrl, (progress: number) => {
+            playlistDownloadProgressAtom(ctx, prev => ({
+              ...prev,
+              [track.audioUrl]: progress,
+            }))
+          })
         } catch (error) {
           console.error(
             `[PlaylistCacheService] Failed to cache "${track.title}" (${track.id}):`,
@@ -52,8 +68,9 @@ class PlaylistCacheService {
         cacheUpdateTriggerAtom(ctx, prev => prev + 1)
       }
     } finally {
-      // Ensure the caching flag is always reset, even on unexpected errors
+      // Ensure the caching flag and per-track progress are always reset, even on unexpected errors
       isCachingPlaylistAtom(ctx, false)
+      playlistDownloadProgressAtom(ctx, {})
     }
   }
 }
