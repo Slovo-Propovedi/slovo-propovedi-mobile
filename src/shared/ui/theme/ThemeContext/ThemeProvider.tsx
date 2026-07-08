@@ -1,7 +1,7 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
-import { Appearance, StatusBar as RNStatusBar } from 'react-native'
+import { Appearance, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { updateCOLORS } from '../colors'
 import { LightTheme } from '../constants'
 import {
@@ -42,8 +42,10 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   }, [themeMode, updateThemeBasedOnModeAction])
 
   useEffect(() => {
-    RNStatusBar.setTranslucent(true)
-    RNStatusBar.setBackgroundColor('transparent')
+    if (Platform.OS === 'android') {
+      RNStatusBar.setTranslucent(true)
+      RNStatusBar.setBackgroundColor('transparent')
+    }
   }, [])
 
   return (

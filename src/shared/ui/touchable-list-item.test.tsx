@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react-native'
+import { fireEvent, screen } from '@testing-library/react-native'
+import { renderWithProviders } from 'shared/mocks'
 import { TouchableListItem } from './touchable-list-item'
 
 const dataStub = {
@@ -14,7 +15,7 @@ describe('<TouchableListItem/>', () => {
   })
 
   test('rendered View in the container', async () => {
-    await render(<TouchableListItem data={dataStub} onPress={() => null} />)
+    await renderWithProviders(<TouchableListItem data={dataStub} onPress={() => null} />)
 
     const listItem = screen.getByTestId('list-item')
 
@@ -22,13 +23,13 @@ describe('<TouchableListItem/>', () => {
   })
 
   test('not called mock function if not touch on item', async () => {
-    await render(<TouchableListItem data={dataStub} onPress={mockFunction} />)
+    await renderWithProviders(<TouchableListItem data={dataStub} onPress={mockFunction} />)
 
     expect(mockFunction).not.toHaveBeenCalled()
   })
 
   test('mock function is called if touch on item', async () => {
-    await render(<TouchableListItem data={dataStub} onPress={mockFunction} />)
+    await renderWithProviders(<TouchableListItem data={dataStub} onPress={mockFunction} />)
 
     fireEvent.press(screen.getByTestId('container'))
 

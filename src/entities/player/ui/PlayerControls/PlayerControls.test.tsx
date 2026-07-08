@@ -1,10 +1,6 @@
-import { createCtx } from '@reatom/framework'
-import { reatomContext } from '@reatom/npm-react'
-import { render } from '@testing-library/react-native'
+import { renderWithProviders } from 'shared/mocks'
 import { PlayerControls } from './PlayerControls'
 import '@testing-library/jest-native/extend-expect'
-
-const ctx = createCtx()
 
 const PREVIEW_URL = 'https://test.com/preview1.mp3'
 const TEST_ARTIST = 'Test Artist'
@@ -75,10 +71,8 @@ describe('<PlayerControls>', () => {
   })
 
   test('PlayerControls renders correctly', async () => {
-    const { getByTestId } = await render(
-      <reatomContext.Provider value={ctx}>
-        <PlayerControls {...mockPlayerControlsProps} />
-      </reatomContext.Provider>,
+    const { getByTestId } = await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} />,
     )
     const controlsContainer = getByTestId('controls-container')
     expect(controlsContainer).toBeTruthy()

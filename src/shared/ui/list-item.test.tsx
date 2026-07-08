@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react-native'
-import { ListItem } from './list-item/list-item'
+import { screen } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
+import { renderWithProviders } from 'shared/mocks'
+import { ListItem } from './list-item/list-item'
 
 const titleStub = 'test'
 
@@ -8,7 +9,7 @@ const artworkStub = 'google.com'
 
 describe('<TouchableListItem>', () => {
   test('if data defined return View', async () => {
-    await render(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
+    await renderWithProviders(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
 
     const tree = screen.toJSON()
 
@@ -18,7 +19,7 @@ describe('<TouchableListItem>', () => {
   })
 
   test('if title prop defined title element equals title prop', async () => {
-    await render(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
+    await renderWithProviders(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
 
     const title = screen.getByTestId('title')
 
@@ -26,7 +27,7 @@ describe('<TouchableListItem>', () => {
   })
 
   test('displayed preview if artwork in data is defined', async () => {
-    await render(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
+    await renderWithProviders(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
 
     const preview = screen.queryByTestId('preview')
 

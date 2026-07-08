@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react-native'
+import { screen } from '@testing-library/react-native'
+import { renderWithProviders } from 'shared/mocks'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { SliderItem } from './slider-item'
 import { WhereIsSlideTitleLocated } from './slider-item.types'
@@ -35,7 +36,7 @@ const getSourceUri = () => {
 
 describe('<SliderItem/>', () => {
   test('not return null or array, if artwork is valid', async () => {
-    await render(<SliderItem testID={sliderItemTestId} artwork={propsStub.artwork} />)
+    await renderWithProviders(<SliderItem testID={sliderItemTestId} artwork={propsStub.artwork} />)
 
     const tree = screen.toJSON()
     expect(tree).not.toBeNull()
@@ -43,7 +44,7 @@ describe('<SliderItem/>', () => {
   })
 
   test('render with testID when artwork is valid', async () => {
-    await render(<SliderItem testID={sliderItemTestId} artwork={propsStub.artwork} />)
+    await renderWithProviders(<SliderItem testID={sliderItemTestId} artwork={propsStub.artwork} />)
 
     const sliderItem = screen.getByTestId(sliderItemTestId)
     expect(sliderItem).not.toBeFalsy()
@@ -51,19 +52,19 @@ describe('<SliderItem/>', () => {
   })
 
   test('use IMAGE_PLACEHOLDER, if artwork is undefined', async () => {
-    await render(<SliderItem artwork={undefined} testID={sliderItemTestId} />)
+    await renderWithProviders(<SliderItem artwork={undefined} testID={sliderItemTestId} />)
     expect(screen.getByTestId(sliderItemTestId)).not.toBeFalsy()
     expect(getSourceUri()).toEqual(IMAGE_PLACEHOLDER)
   })
 
   test('use IMAGE_PLACEHOLDER, if artwork is empty string', async () => {
-    await render(<SliderItem artwork='' testID={sliderItemTestId} />)
+    await renderWithProviders(<SliderItem artwork='' testID={sliderItemTestId} />)
     expect(screen.getByTestId(sliderItemTestId)).not.toBeFalsy()
     expect(getSourceUri()).toEqual(IMAGE_PLACEHOLDER)
   })
 
   test('description visible, if descriptionTitle prop defined', async () => {
-    await render(
+    await renderWithProviders(
       <SliderItem artwork={propsStub.artwork} descriptionTitle={propsStub.descriptionTitle} />,
     )
     const tree = screen.toJSON()
@@ -74,7 +75,7 @@ describe('<SliderItem/>', () => {
   })
 
   test('description component type is View', async () => {
-    await render(
+    await renderWithProviders(
       <SliderItem artwork={propsStub.artwork} descriptionTitle={propsStub.descriptionTitle} />,
     )
     const tree = screen.toJSON()
@@ -85,7 +86,7 @@ describe('<SliderItem/>', () => {
   })
 
   test('description visible on slider when whereIsSlideTitleLocated is On', async () => {
-    await render(
+    await renderWithProviders(
       <SliderItem
         artwork={propsStub.artwork}
         descriptionTitle={propsStub.descriptionTitle}
@@ -104,7 +105,7 @@ describe('<SliderItem/>', () => {
   })
 
   test('descriptions visible on and under slider when whereIsSlideTitleLocated is BothOnAndUnder', async () => {
-    await render(
+    await renderWithProviders(
       <SliderItem
         artwork={propsStub.artwork}
         descriptionTitle={propsStub.descriptionTitle}
