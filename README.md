@@ -4,12 +4,20 @@
 
 ## Technology stack
 
-- **UI**: `react@19.2.0`, `react-native`, `expo@55`
+- **UI**: `react`, `react-native`, `expo`
 - **Navigation**: `expo-router` (file-based routing)
 - **State Management**: `@reatom/core`, `@reatom/framework`, `@reatom/npm-react`
 - **Audio**: `expo-audio`
 - **HTTP**: `axios`
 - **Storage**: `@react-native-async-storage/async-storage`
+- **Validation**: `zod`
+- **Pattern Matching**: `ts-pattern`
+- **UI Components**: `@gorhom/bottom-sheet`
+- **Animations**: `react-native-reanimated`
+- **Gestures**: `react-native-gesture-handler`
+- **Tab View**: `react-native-tab-view`
+- **Notifications**: `expo-notifications`
+- **OTA Updates**: `expo-updates`
 - **Book Parsing**: `xml-js` (FB2 format)
 - **Lang**: `typescript`
 - **Lint**: `prettier`, `eslint`
@@ -17,10 +25,10 @@
 
 <div align="center">
 <img title="react" alt="react" height=48 src="https://raw.githubusercontent.com/yurijserrano/Github-Profile-Readme-Logos/master/frameworks/react.svg"/>
-<img title="react-native" alt="react-native" height=48 src="https://reactnative.dev/img/favicon.ico"/>
+<img title="react-native" alt="react-native" height=48 src="https://reactnative.dev/img/header_logo.svg"/>
 <img title="expo" alt="expo" height=48 src="https://static.expo.dev/static/favicons/favicon-light-48x48.png"/>
 <img title="reatom" alt="reatom" height=48 src="https://avatars.githubusercontent.com/u/50905415?s=200&v=4"/>
-<img title="expo-router" alt="expo-router" height=48 src="https://github.com/expo/expo/raw/main/.github/assets/logo.png"/>
+<img title="expo-router" alt="expo-router" height=48 src="https://static.expo.dev/static/favicons/favicon-light-48x48.png"/>
 <img title="axios" alt="axios" height=48 src="https://axios-http.com/assets/logo.png"/>
 <img title="typescript" alt="typescript" height=48 src="https://raw.githubusercontent.com/remojansen/logo.ts/master/ts.png"/>
 <img title="prettier" alt="prettier" height=48 src="https://prettier.io/icon.png"/>
@@ -60,6 +68,7 @@ This will start the Expo development server. You can then scan the QR code with 
 - `yarn check:types` — TypeScript type checking
 - `yarn check:fsd` — FSD architecture linting (steiger)
 - `yarn check:fsd-watch` — FSD linting in watch mode
+- `yarn check:unused` — Check for unused code (knip)
 
 ### Testing
 
@@ -81,6 +90,9 @@ This will start the Expo development server. You can then scan the QR code with 
 - `yarn build:android` — Build Android with EAS
 - `yarn build:ios` — Build iOS with EAS
 - `yarn build:all` — Build all platforms
+- `yarn build:list` — List EAS builds
+- `yarn build-local-debug:android` — Build Android debug locally
+- `yarn build-local-release:android` — Build Android release locally
 - `yarn update-app` — Deploy OTA update to main branch
 
 ### Additional Commands
@@ -88,6 +100,8 @@ This will start the Expo development server. You can then scan the QR code with 
 - `yarn build-preview:android` — Build Android with preview profile
 - `yarn build-preview:ios` — Build iOS with preview profile
 - `yarn build-preview:all` — Build all platforms with preview profile
+- `yarn emulator-run-builds` — Run EAS builds on emulator
+- `yarn visualize-deps` — Visualize FSD dependencies
 - `yarn prepare` — Set up git hooks (husky)
 
 ## Project Architecture
@@ -110,22 +124,21 @@ src/
 
 ```
 app/
-├── _layout.tsx           # Root layout with providers (Reatom context)
-├── index.tsx             # Redirect to /listen
-├── (tabs)/               # Tab navigation group
-│   ├── _layout.tsx       # Tab bar layout with custom TabBar
-│   ├── listen.tsx        # Re-exports src/pages/listen/ui.tsx
-│   ├── read.tsx
-│   ├── study.tsx
-│   └── info.tsx
-├── listen/               # Nested screens under listen tab
-│   ├── _layout.tsx
-│   ├── playlist.tsx
-│   └── playlist-list.tsx
-└── read/                 # Nested screens under read tab
-    ├── _layout.tsx
-    ├── book-reader.tsx
-    └── books-list.tsx
+├── _layout.tsx              # Root layout
+├── _RootLayout.tsx          # Root layout component
+├── index.tsx                # Redirect entry
+├── about.tsx                # About screen
+├── settings.tsx             # Settings screen
+└── (tabs)/                  # Tab navigation group
+    ├── _layout.tsx          # Tab bar layout
+    ├── listen/              # Listen tab with nested screens
+    │   ├── _layout.tsx
+    │   ├── index.tsx
+    │   ├── playlist.tsx
+    │   └── playlist-list.tsx
+    ├── read.tsx             # Read tab (single screen)
+    ├── study.tsx            # Study tab
+    └── more.tsx             # More tab
 ```
 
 **Important:** Screen logic lives in `src/pages/`, `app/` only re-exports.
@@ -219,15 +232,23 @@ Modern HTTP client for API requests with interceptors and automatic token refres
 
 ## Pre-commit Hooks
 
-The project uses **husky** + **lint-staged** to ensure code quality before commits.
+The project uses **husky** + **lint-staged** + **commitlint** to ensure code quality before commits.
 
-**What runs on commit:**
+**What runs on commit (pre-commit):**
 
 ```bash
 yarn lint:staged && yarn check:types
 ```
 
 This runs ESLint fix + Prettier on staged files, then TypeScript type checking.
+
+**What runs on commit (commit-msg):**
+
+```bash
+yarn commitlint
+```
+
+This validates that commit messages follow the Conventional Commits format.
 
 ## Package Manager
 
