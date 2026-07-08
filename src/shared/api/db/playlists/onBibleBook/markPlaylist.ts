@@ -1,7 +1,7 @@
 /* eslint-disable max-lines -- correct for mocks */
 import { BibleBookName } from '../../../../model/domain/bible'
 import { type FetchedPlaylist } from '../../../../model/fetched/fetched-data'
-import { sermonsDB } from '../../sermons'
+import { sermonsDB } from '../../sermons/sermonsDB'
 
 export const markPlaylist: FetchedPlaylist = {
   artwork: 'https://slovo-istini.com/image/categories/22/marka_(1).jpg',

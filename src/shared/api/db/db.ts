@@ -1,38 +1,34 @@
 import { type FetchedBooksGroupName, type FetchedSermonsGroupName } from '../../model/domain/bible'
-import {
-  actsBookList,
-  ephesiansBookList,
-  firstAndSecondThessaloniansBookList,
-  firstCorinthiansBookList,
-  firstPeteBookList,
-  isThereAnUnforgivableSinBooks,
-  jacobBookList,
-  johnBookList,
-  lukeBookList,
-  markBookList,
-  stephensSpeechBeforeSanhedrinBookList,
-  unionWithChristBookList,
-} from './bookLists'
-import {
-  actsPlaylist,
-  ephesiansPlaylist,
-  firstAndSecondThessaloniansPlaylist,
-  firstCorinthiansPlaylist,
-  firstPetePlaylist,
-  isThereAnUnforgivableSinPlaylist,
-  jacobPlaylist,
-  johnPlaylist,
-  lukePlaylist,
-  markPlaylist,
-  philemonPlaylist,
-  philippiansPlaylist,
-  revelationPlaylist,
-  secondCorinthiansPlaylist,
-  secondPetePlaylist,
-  stephensSpeechBeforeSanhedrin,
-  titusPlaylist,
-  unionWithChristPlaylist,
-} from './playlists'
+import { isThereAnUnforgivableSinBooks } from './bookLists/topicalAndThematic/isThereAnUnforgivableSinBookList'
+import { stephensSpeechBeforeSanhedrinBookList } from './bookLists/topicalAndThematic/stephensSpeechBeforeSanhedrinBookList'
+import { unionWithChristBookList } from './bookLists/topicalAndThematic/unionWithChristBookList'
+import { actsBookList } from './bookLists/verseByVerse/actsBookList'
+import { ephesiansBookList } from './bookLists/verseByVerse/ephesiansBookList'
+import { firstAndSecondThessaloniansBookList } from './bookLists/verseByVerse/firstAndSecondThessaloniansBookList'
+import { firstCorinthiansBookList } from './bookLists/verseByVerse/firstCorinthiansBookList'
+import { firstPeteBookList } from './bookLists/verseByVerse/firstPeteBookList'
+import { jacobBookList } from './bookLists/verseByVerse/jacobBookList'
+import { johnBookList } from './bookLists/verseByVerse/johnBookList'
+import { lukeBookList } from './bookLists/verseByVerse/lukeBookList'
+import { markBookList } from './bookLists/verseByVerse/markBookList'
+import { actsPlaylist } from './playlists/onBibleBook/actsPlaylist'
+import { ephesiansPlaylist } from './playlists/onBibleBook/ephesiansPlaylist'
+import { firstAndSecondThessaloniansPlaylist } from './playlists/onBibleBook/firstAndSecondThessaloniansPlaylist'
+import { firstCorinthiansPlaylist } from './playlists/onBibleBook/firstCorinthiansPlaylist'
+import { firstPetePlaylist } from './playlists/onBibleBook/firstPetePlaylist'
+import { jacobPlaylist } from './playlists/onBibleBook/jacobPlaylist'
+import { johnPlaylist } from './playlists/onBibleBook/johnPlaylist'
+import { lukePlaylist } from './playlists/onBibleBook/lukePlaylist'
+import { markPlaylist } from './playlists/onBibleBook/markPlaylist'
+import { philemonPlaylist } from './playlists/onBibleBook/philemonPlaylist'
+import { philippiansPlaylist } from './playlists/onBibleBook/philippiansPlaylist'
+import { revelationPlaylist } from './playlists/onBibleBook/revelationPlaylist'
+import { secondCorinthiansPlaylist } from './playlists/onBibleBook/secondCorinthiansPlaylist'
+import { secondPetePlaylist } from './playlists/onBibleBook/secondPetePlaylist'
+import { titusPlaylist } from './playlists/onBibleBook/titusPlaylist'
+import { isThereAnUnforgivableSinPlaylist } from './playlists/topical/isThereAnUnforgivableSinPlaylist'
+import { stephensSpeechBeforeSanhedrin } from './playlists/topical/stephensSpeechBeforeSanhedrin'
+import { unionWithChristPlaylist } from './playlists/topical/unionWithChristPlaylist'
 
 export const db = {
   books: [
