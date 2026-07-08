@@ -1,11 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { type ColorValue, StyleSheet, TouchableOpacity, View } from 'react-native'
-import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { ErrorModal } from 'shared/ui/error-modal'
 import { useTheme } from 'shared/ui/themed'
 import { playlistCacheService, type TrackToCache } from '../lib/PlaylistCacheService'
 import { usePlaylistCacheMenu } from '../lib/usePlaylistCacheMenu'
+import { PlaylistCacheDialogs } from './PlaylistCacheDialogs'
 import { PlaylistCacheMenuDropdown } from './PlaylistCacheMenuDropdown'
 
 const ICON_SIZE = 24
@@ -99,25 +99,15 @@ export const PlaylistCacheMenu = ({
         isClearCacheDisabled={cachedCount === 0}
       />
 
-      <ConfirmDialog
-        cancelText='Отмена'
-        visible={cacheDialogVisible}
-        title='Кеширование плейлиста'
-        onConfirm={handleCacheAllConfirm}
-        confirmColor={currentTheme.primary}
-        confirmText='Закешировать весь плейлист'
-        onCancel={() => setCacheDialogVisible(false)}
-        message={`Загрузить все треки (${tracksData.length}) для прослушивания без интернета?`}
-      />
-      <ConfirmDialog
-        cancelText='Отмена'
-        title='Удаление кеша'
-        confirmText='Удалить всё'
-        visible={clearDialogVisible}
-        confirmColor={currentTheme.primary}
-        onConfirm={handleClearCacheConfirm}
-        onCancel={() => setClearDialogVisible(false)}
-        message={`Удалить ${cachedCount} закешированных треков из кеша?`}
+      <PlaylistCacheDialogs
+        tracksData={tracksData}
+        cachedCount={cachedCount}
+        cacheDialogVisible={cacheDialogVisible}
+        clearDialogVisible={clearDialogVisible}
+        onCacheAllConfirm={handleCacheAllConfirm}
+        onClearCacheConfirm={handleClearCacheConfirm}
+        onCacheCancel={() => setCacheDialogVisible(false)}
+        onClearCancel={() => setClearDialogVisible(false)}
       />
       <ErrorModal error={error} visible={error !== null} onClose={handleErrorClose} />
     </>
