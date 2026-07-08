@@ -2,9 +2,11 @@ import { useAction } from '@reatom/npm-react'
 import React, { useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { ErrorDialog, useErrorDialog } from 'shared/ui/error-dialog'
+import { isMaterialYouSupported } from 'shared/ui/theme'
 import { INDENTS, useTheme } from 'shared/ui/themed'
 import { clearCacheAction } from '../model'
 import { ClearCacheDialog } from './ClearCacheDialog'
+import { DynamicColorsItem } from './DynamicColorsItem'
 import { SettingsItem } from './SettingsItem'
 import { ThemeDialog } from './ThemeDialog'
 
@@ -40,6 +42,7 @@ export const SettingsScreen = () => {
             setShowThemeDialog(true)
           }}
         />
+        {isMaterialYouSupported() && <DynamicColorsItem testID='dynamic-colors-item' />}
         <SettingsItem
           icon='trash-outline'
           title='Очистить кэш'

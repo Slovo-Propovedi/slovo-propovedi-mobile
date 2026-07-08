@@ -1,16 +1,17 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { StyleSheet, Text, View } from 'react-native'
+import { type ColorValue } from 'react-native'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
 
 const ICON_SIZE = 18
 
 export interface PlaylistCacheMenuItemProps {
   icon: keyof typeof MaterialCommunityIcons.glyphMap
-  iconColor?: string
+  iconColor?: ColorValue
   isDisabled?: boolean
   onPress: () => void
   text: string
-  textColor?: string
+  textColor?: ColorValue
 }
 
 export const PlaylistCacheMenuItem = ({

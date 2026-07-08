@@ -37,7 +37,7 @@ export const PlaylistScreen = () => {
   const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader(title, navigation)
 
-  usePlaylistHeader({ scrollY, title, titleAppearThreshold })
+  const { headerIconColor } = usePlaylistHeader({ scrollY, title, titleAppearThreshold })
 
   const handlePressItem = async (index: number) => {
     const sermon = list[index]
@@ -61,9 +61,14 @@ export const PlaylistScreen = () => {
 
   const headerRightCallback = useCallback(
     () => (
-      <PlaylistCacheMenu disabled={isCaching} playlistTitle={title} tracksData={tracksListData} />
+      <PlaylistCacheMenu
+        disabled={isCaching}
+        playlistTitle={title}
+        tracksData={tracksListData}
+        iconColor={headerIconColor}
+      />
     ),
-    [isCaching, title, tracksListData],
+    [headerIconColor, isCaching, title, tracksListData],
   )
 
   useEffect(() => {

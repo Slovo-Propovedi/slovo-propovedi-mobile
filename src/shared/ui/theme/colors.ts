@@ -1,4 +1,5 @@
 import { type Ctx } from '@reatom/framework'
+import { type ColorValue } from 'react-native'
 import { currentThemeAtom } from './model'
 
 const STATIC_COLORS = {
@@ -17,19 +18,25 @@ const STATIC_COLORS = {
   white: '#fff',
 } as const
 
+interface MutableColorSlots {
+  backdrop: ColorValue
+  background: ColorValue
+  card: ColorValue
+  icon: ColorValue
+  maximumTrackTintColor: ColorValue
+  minimumTrackTintColor: ColorValue
+  primary: ColorValue
+  surface: ColorValue
+  tabBarActive: ColorValue
+  text: ColorValue
+  textMuted: ColorValue
+}
+
+type StaticColorsOnly = Omit<typeof STATIC_COLORS, keyof MutableColorSlots>
+
 export const COLORS = {
   ...STATIC_COLORS,
-} as {
-  backdrop: string
-  background: string
-  card: string
-  icon: string
-  maximumTrackTintColor: string
-  minimumTrackTintColor: string
-  surface: string
-  text: string
-  textMuted: string
-} & typeof STATIC_COLORS
+} as MutableColorSlots & StaticColorsOnly
 
 export const initializeCOLORS = (ctx: Ctx) => {
   const initialTheme = ctx.get(currentThemeAtom)
@@ -43,11 +50,12 @@ export const initializeCOLORS = (ctx: Ctx) => {
 
 export const updateCOLORS = (ctx: Ctx) => {
   const newTheme = ctx.get(currentThemeAtom)
-  if (newTheme.background !== COLORS.background || newTheme.text !== COLORS.text)
-    Object.assign(COLORS, {
-      ...newTheme,
-      icon: newTheme.text,
-      maximumTrackTintColor: 'rgba(128, 128, 128, 0.6)',
-      minimumTrackTintColor: 'rgba(128, 128, 128, 0.4)',
-    })
+
+  Object.assign(COLORS, {
+    ...newTheme,
+    icon: newTheme.text,
+    maximumTrackTintColor: 'rgba(128, 128, 128, 0.6)',
+    minimumTrackTintColor: 'rgba(128, 128, 128, 0.4)',
+    tabBarActive: newTheme.primary,
+  })
 }

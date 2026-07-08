@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, atom } from '@reatom/framework'
 import { Appearance } from 'react-native'
-import { DarkTheme, LightTheme } from './constants'
+import { buildDynamicTheme, DarkTheme, LightTheme } from './constants'
 import { type ThemeColors, ThemeMode } from './types'
 
 const THEME_MODE_KEY = 'theme_mode'
+const DYNAMIC_COLORS_KEY = 'dynamic_colors'
 
 export const themeModeAtom = atom<ThemeMode>('system', 'themeModeAtom')
 
@@ -17,25 +18,65 @@ const initialSystemTheme = Appearance.getColorScheme() === 'light' ? 'light' : '
 const initialCurrentTheme = initialSystemTheme === 'light' ? LightTheme : DarkTheme
 export const currentThemeAtom = atom<ThemeColors>(initialCurrentTheme, 'currentThemeAtom')
 
+export const dynamicColorsEnabledAtom = atom<boolean>(false, 'dynamicColorsEnabledAtom')
+
+const resolveTheme = (
+  mode: ThemeMode,
+  systemTheme: 'dark' | 'light',
+  dynamicEnabled: boolean,
+): ThemeColors => {
+  if (dynamicEnabled) {
+    const dynamic = buildDynamicTheme()
+    if (dynamic) return dynamic
+  }
+
+  const isLight = mode === 'system' ? systemTheme === 'light' : mode === 'light'
+
+  return isLight ? LightTheme : DarkTheme
+}
+
+export const setDynamicColors = action(async (ctx, enabled: boolean) => {
+  await AsyncStorage.setItem(DYNAMIC_COLORS_KEY, String(enabled))
+
+  await ctx.schedule(() => {
+    dynamicColorsEnabledAtom(ctx, enabled)
+  })
+
+  await updateThemeBasedOnMode(ctx)
+
+  return enabled
+}, 'setDynamicColors')
+
+export const loadDynamicColors = action(async ctx => {
+  try {
+    const saved = await AsyncStorage.getItem(DYNAMIC_COLORS_KEY)
+    const enabled = saved === 'true'
+
+    dynamicColorsEnabledAtom(ctx, enabled)
+
+    return enabled
+  } catch (error) {
+    console.error('Failed to load dynamic colors:', error)
+    dynamicColorsEnabledAtom(ctx, false)
+
+    return false
+  }
+}, 'loadDynamicColors')
+
 export const setThemeMode = action(async (ctx, mode: ThemeMode) => {
   if (!Object.values(ThemeMode).includes(mode)) throw new Error(`Invalid theme mode: ${mode}`)
 
   await AsyncStorage.setItem(THEME_MODE_KEY, mode)
   Appearance.setColorScheme(mode === 'system' ? 'unspecified' : mode)
+
   const systemTheme =
     mode === 'system'
       ? Appearance.getColorScheme() === 'light'
         ? 'light'
         : 'dark'
       : ctx.get(systemThemeAtom)
-  const newTheme =
-    mode === 'system'
-      ? systemTheme === 'light'
-        ? LightTheme
-        : DarkTheme
-      : mode === 'light'
-        ? LightTheme
-        : DarkTheme
+
+  const newTheme = resolveTheme(mode, systemTheme, ctx.get(dynamicColorsEnabledAtom))
 
   await ctx.schedule(() => {
     themeModeAtom(ctx, mode)
@@ -47,14 +88,8 @@ export const setThemeMode = action(async (ctx, mode: ThemeMode) => {
 export const setSystemTheme = action((ctx, systemTheme: 'dark' | 'light') => {
   systemThemeAtom(ctx, systemTheme)
   const mode = ctx.get(themeModeAtom)
-  const newTheme =
-    mode === 'system'
-      ? systemTheme === 'light'
-        ? LightTheme
-        : DarkTheme
-      : mode === 'light'
-        ? LightTheme
-        : DarkTheme
+  const newTheme = resolveTheme(mode, systemTheme, ctx.get(dynamicColorsEnabledAtom))
+
   currentThemeAtom(ctx, newTheme)
   return systemTheme
 }, 'setSystemTheme')
@@ -62,10 +97,8 @@ export const setSystemTheme = action((ctx, systemTheme: 'dark' | 'light') => {
 export const updateThemeBasedOnMode = action(async ctx => {
   const mode = ctx.get(themeModeAtom)
   const systemTheme = ctx.get(systemThemeAtom)
-
-  let newTheme: ThemeColors
-  if (mode === 'system') newTheme = systemTheme === 'light' ? LightTheme : DarkTheme
-  else newTheme = mode === 'light' ? LightTheme : DarkTheme
+  const dynamicEnabled = ctx.get(dynamicColorsEnabledAtom)
+  const newTheme = resolveTheme(mode, systemTheme, dynamicEnabled)
 
   currentThemeAtom(ctx, newTheme)
 }, 'updateThemeBasedOnMode')
@@ -82,14 +115,8 @@ export const loadThemeMode = action(async ctx => {
       'dark' | 'light'
     systemThemeAtom(ctx, systemTheme)
 
-    const newTheme =
-      validMode === 'system'
-        ? systemTheme === 'light'
-          ? LightTheme
-          : DarkTheme
-        : validMode === 'light'
-          ? LightTheme
-          : DarkTheme
+    const dynamicEnabled = ctx.get(dynamicColorsEnabledAtom)
+    const newTheme = resolveTheme(validMode, systemTheme, dynamicEnabled)
 
     themeModeAtom(ctx, validMode)
     currentThemeAtom(ctx, newTheme)

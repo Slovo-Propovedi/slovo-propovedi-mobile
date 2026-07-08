@@ -17,14 +17,6 @@ export const styles = {
     borderTopRightRadius: BORDER_RADIUS,
     overflow: 'hidden' as const,
   },
-  indicator: {
-    backgroundColor: 'rgba(241, 96, 49, 0.15)',
-    borderRadius: 20,
-    bottom: 12,
-    left: 0,
-    position: 'absolute' as const,
-    top: 12,
-  },
   tabBar: {
     backgroundColor: 'transparent',
     borderTopLeftRadius: BORDER_RADIUS,

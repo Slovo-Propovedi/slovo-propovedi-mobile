@@ -4,7 +4,6 @@ import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
 export const queueControlsStyles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
     borderRadius: RADIUSES.round,
     flexDirection: 'row',
     justifyContent: 'center',

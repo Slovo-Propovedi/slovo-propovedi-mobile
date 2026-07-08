@@ -33,7 +33,7 @@ ${detail}
     <Modal transparent visible={visible} animationType='fade' onRequestClose={onDismiss}>
       <View style={styles.overlay}>
         <View style={[styles.dialog, { backgroundColor: currentTheme.surface }]}>
-          <Ionicons size={48} name='warning' style={styles.icon} color={COLORS.primary} />
+          <Ionicons size={48} name='warning' style={styles.icon} color={currentTheme.primary} />
           <Text style={[styles.title, { color: currentTheme.text }]}>Ошибка</Text>
           <Text style={[styles.message, { color: currentTheme.text }]}>{message}</Text>
           <View style={[styles.detailContainer, { backgroundColor: currentTheme.background }]}>
@@ -55,7 +55,7 @@ ${detail}
               title='Закрыть'
               onPress={onDismiss}
               titleStyle={styles.buttonText}
-              style={[styles.button, { backgroundColor: COLORS.primary }]}
+              style={[styles.button, { backgroundColor: currentTheme.primary }]}
             />
           </View>
         </View>

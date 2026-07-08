@@ -42,7 +42,10 @@ export const ClearCacheDialog = ({ onCancel, onConfirm, visible }: ClearCacheDia
                 <Text style={styles.cancelButtonText}>Отмена</Text>
               </View>
             </Pressable>
-            <Pressable onPress={onConfirm} style={styles.confirmButton}>
+            <Pressable
+              onPress={onConfirm}
+              style={[styles.confirmButton, { backgroundColor: currentTheme.primary }]}
+            >
               <View style={styles.buttonContent}>
                 <Ionicons size={20} name='trash' color={COLORS.onPrimary} />
                 <Text style={styles.confirmButtonText}>Очистить</Text>
@@ -83,7 +86,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   confirmButton: {
-    backgroundColor: COLORS.primary,
     borderRadius: RADIUSES.low,
     flex: 1,
     paddingVertical: INDENTS.middle,

@@ -1,13 +1,13 @@
 import { type ReactNode } from 'react'
-import { Modal, Text, View } from 'react-native'
-import { COLORS, useTheme } from '../themed'
+import { type ColorValue, Modal, Text, View } from 'react-native'
+import { useTheme } from '../themed'
 import { ConfirmDialogButton } from './ConfirmDialogButton'
 import { styles } from './styles'
 
 export interface ConfirmDialogProps {
   cancelIcon?: ReactNode
   cancelText?: string
-  confirmColor?: string
+  confirmColor?: ColorValue
   confirmIcon?: ReactNode
   confirmText?: string
   hideCancel?: boolean
@@ -22,7 +22,7 @@ export interface ConfirmDialogProps {
 export const ConfirmDialog = ({
   cancelIcon,
   cancelText = 'Отмена',
-  confirmColor = COLORS.primary,
+  confirmColor,
   confirmIcon,
   confirmText = 'ОК',
   hideCancel = false,
@@ -35,6 +35,7 @@ export const ConfirmDialog = ({
 }: ConfirmDialogProps) => {
   const messages = Array.isArray(message) ? message : [message]
   const { currentTheme } = useTheme()
+  const resolvedConfirmColor = confirmColor ?? currentTheme.primary
 
   return (
     <Modal
@@ -67,7 +68,7 @@ export const ConfirmDialog = ({
               icon={confirmIcon}
               text={confirmText}
               onPress={onConfirm}
-              color={confirmColor}
+              color={resolvedConfirmColor}
             />
           </View>
         </View>

@@ -1,9 +1,10 @@
+import { useAtom } from '@reatom/npm-react'
 import { BlurView } from 'expo-blur'
-import { type Tabs } from 'expo-router'
+import { Color, type Tabs } from 'expo-router'
 import { useState } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { useTheme } from 'shared/ui/theme'
+import { dynamicColorsEnabledAtom, useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabIndicator } from './TabIndicator'
@@ -42,8 +43,13 @@ export const CustomTabBar = ({
   tabLayouts,
 }: CustomTabBarProps) => {
   const [unavailableDialogVisible, setUnavailableDialogVisible] = useState(false)
+  const [dynamicEnabled] = useAtom(dynamicColorsEnabledAtom)
   const currentKey = ROUTES[currentIndex]?.key
   const { isLight } = useTheme()
+  const indicatorColor =
+    dynamicEnabled && Platform.OS === 'android'
+      ? Color.android.dynamic.primaryContainer
+      : 'rgba(241, 96, 49, 0.15)'
   const { indicatorOpacity, indicatorPosition, indicatorWidth } = useTabIndicator(
     currentIndex,
     tabLayouts,
@@ -63,6 +69,7 @@ export const CustomTabBar = ({
       >
         <View style={styles.tabBar}>
           <TabIndicator
+            color={indicatorColor}
             width={indicatorWidth}
             opacity={indicatorOpacity}
             position={indicatorPosition}

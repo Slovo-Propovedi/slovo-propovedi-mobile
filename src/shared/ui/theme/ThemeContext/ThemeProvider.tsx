@@ -1,11 +1,12 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
-import { Appearance, Platform, StatusBar as RNStatusBar } from 'react-native'
+import { Appearance, Platform, StatusBar as RNStatusBar, useColorScheme } from 'react-native'
 import { updateCOLORS } from '../colors'
-import { LightTheme } from '../constants'
 import {
   currentThemeAtom,
+  dynamicColorsEnabledAtom,
+  loadDynamicColors,
   loadThemeMode,
   setSystemTheme,
   themeModeAtom,
@@ -16,11 +17,19 @@ import { ThemeContext } from './themeContext'
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentTheme] = useAtom(currentThemeAtom)
   const [themeMode] = useAtom(themeModeAtom)
+  const [dynamicEnabled] = useAtom(dynamicColorsEnabledAtom)
+  const systemTheme = useColorScheme()
   const ctx = useCtx()
   const setSystemThemeAction = useAction(setSystemTheme)
   const loadThemeModeAction = useAction(loadThemeMode)
+  const loadDynamicColorsAction = useAction(loadDynamicColors)
   const updateThemeBasedOnModeAction = useAction(updateThemeBasedOnMode)
-  const isLight = currentTheme.background === LightTheme.background
+
+  const isLight = dynamicEnabled
+    ? systemTheme === 'light'
+    : themeMode === 'system'
+      ? systemTheme === 'light'
+      : themeMode === 'light'
 
   useEffect(() => {
     updateCOLORS(ctx)
@@ -28,7 +37,8 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     void loadThemeModeAction()
-  }, [loadThemeModeAction])
+    void loadDynamicColorsAction()
+  }, [loadThemeModeAction, loadDynamicColorsAction])
 
   useEffect(() => {
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {
@@ -39,7 +49,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     void updateThemeBasedOnModeAction()
-  }, [themeMode, updateThemeBasedOnModeAction])
+  }, [themeMode, dynamicEnabled, systemTheme, updateThemeBasedOnModeAction])
 
   useEffect(() => {
     if (Platform.OS === 'android') {

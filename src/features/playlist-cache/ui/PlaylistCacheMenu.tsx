@@ -1,9 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { type ColorValue, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { ErrorModal } from 'shared/ui/error-modal'
-import { COLORS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import { playlistCacheService, type TrackToCache } from '../lib/PlaylistCacheService'
 import { usePlaylistCacheMenu } from '../lib/usePlaylistCacheMenu'
 import { PlaylistCacheMenuDropdown } from './PlaylistCacheMenuDropdown'
@@ -13,15 +13,18 @@ const BUTTON_SIZE = 44
 
 export interface PlaylistCacheMenuProps {
   disabled?: boolean
+  iconColor?: ColorValue
   playlistTitle: string
   tracksData: TrackToCache[]
 }
 
 export const PlaylistCacheMenu = ({
   disabled = false,
+  iconColor,
   playlistTitle,
   tracksData,
 }: PlaylistCacheMenuProps) => {
+  const { currentTheme } = useTheme()
   const [error, setError] = useState<Error | null>(null)
   const errorShownRef = useRef(false)
   const setErrorRef = useRef(setError)
@@ -77,7 +80,11 @@ export const PlaylistCacheMenu = ({
           accessibilityHint='Нажмите чтобы открыть меню'
           style={[styles.button, isMenuDisabled && styles.buttonDisabled]}
         >
-          <MaterialCommunityIcons size={ICON_SIZE} color={COLORS.text} name='dots-vertical' />
+          <MaterialCommunityIcons
+            size={ICON_SIZE}
+            name='dots-vertical'
+            color={iconColor ?? currentTheme.text}
+          />
         </TouchableOpacity>
       </View>
 
@@ -95,9 +102,9 @@ export const PlaylistCacheMenu = ({
       <ConfirmDialog
         cancelText='Отмена'
         visible={cacheDialogVisible}
-        confirmColor={COLORS.primary}
         title='Кеширование плейлиста'
         onConfirm={handleCacheAllConfirm}
+        confirmColor={currentTheme.primary}
         confirmText='Закешировать весь плейлист'
         onCancel={() => setCacheDialogVisible(false)}
         message={`Загрузить все треки (${tracksData.length}) для прослушивания без интернета?`}
@@ -107,7 +114,7 @@ export const PlaylistCacheMenu = ({
         title='Удаление кеша'
         confirmText='Удалить всё'
         visible={clearDialogVisible}
-        confirmColor={COLORS.primary}
+        confirmColor={currentTheme.primary}
         onConfirm={handleClearCacheConfirm}
         onCancel={() => setClearDialogVisible(false)}
         message={`Удалить ${cachedCount} закешированных треков из кеша?`}
@@ -116,8 +123,6 @@ export const PlaylistCacheMenu = ({
     </>
   )
 }
-export default PlaylistCacheMenu
-
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',

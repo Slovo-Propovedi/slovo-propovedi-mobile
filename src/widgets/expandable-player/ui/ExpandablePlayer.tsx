@@ -89,8 +89,6 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
 
   if (!audio) return null
 
-  const onPrimaryColor = currentTheme.background === '#fff' ? '#000' : '#fff'
-
   return (
     <>
       <Animated.View
@@ -119,12 +117,12 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
             </View>
             <View style={miniPlayerStyles.miniControls}>
               {showSpinner ? (
-                <ActivityIndicator size={36} color={onPrimaryColor} />
+                <ActivityIndicator size={36} color={currentTheme.text} />
               ) : (
                 <PlayerControlButton
                   size={36}
                   onPress={onPlayPause}
-                  color={onPrimaryColor}
+                  color={currentTheme.text}
                   type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
                 />
               )}

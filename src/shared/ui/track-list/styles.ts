@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native'
 import { type ThemeColors } from '../theme/types'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from '../themed'
+import { FONT_SIZES, INDENTS, RADIUSES } from '../themed'
 
 export const TRACK_LIST_ITEM_SIZES = {
   albumArtSize: 50,
@@ -79,7 +79,7 @@ export const createTracksListStyles = (theme: ThemeColors) =>
     },
     playOrSoundBarsIconContainer: {
       alignItems: 'center',
-      backgroundColor: COLORS.primary,
+      backgroundColor: theme.primary,
       borderRadius: 12,
       bottom: 4,
       height: 24,
@@ -98,7 +98,7 @@ export const createTracksListStyles = (theme: ThemeColors) =>
       right: 0,
     },
     progressBarFill: {
-      backgroundColor: COLORS.primary,
+      backgroundColor: theme.primary,
       height: '100%',
     },
     textContainer: {
@@ -111,6 +111,6 @@ export const createTracksListStyles = (theme: ThemeColors) =>
       fontWeight: '600',
     },
     titlePlaying: {
-      color: COLORS.primary,
+      color: theme.primary,
     },
   })

@@ -1,8 +1,14 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback } from 'react'
-import { Pressable, type StyleProp, StyleSheet, type ViewStyle } from 'react-native'
-import { COLORS, FONT_SIZES } from 'shared/ui/themed'
+import {
+  type ColorValue,
+  Pressable,
+  type StyleProp,
+  StyleSheet,
+  type ViewStyle,
+} from 'react-native'
+import { FONT_SIZES, useTheme } from 'shared/ui/themed'
 import { type RepeatMode, repeatModeAtom, setRepeatModeAction } from '../model'
 
 interface PlayerRepeatToggleProps {
@@ -12,22 +18,23 @@ interface PlayerRepeatToggleProps {
 const REPEAT_MODES: RepeatMode[] = ['off', 'track', 'queue']
 
 interface IconConfig {
-  color: string
+  color: ColorValue
   name: keyof typeof MaterialCommunityIcons.glyphMap
 }
 
-const getRepeatIcon = (mode: RepeatMode): IconConfig => {
+const getRepeatIcon = (mode: RepeatMode, primaryColor: ColorValue): IconConfig => {
   switch (mode) {
     case 'off':
       return { color: '#9ca3af', name: 'repeat-off' }
     case 'queue':
-      return { color: COLORS.primary, name: 'repeat' }
+      return { color: primaryColor, name: 'repeat' }
     case 'track':
-      return { color: COLORS.primary, name: 'repeat-once' }
+      return { color: primaryColor, name: 'repeat-once' }
   }
 }
 
 export const PlayerRepeatToggle = ({ style }: PlayerRepeatToggleProps) => {
+  const { currentTheme } = useTheme()
   const [repeatMode] = useAtom(repeatModeAtom)
   const setRepeatMode = useAction(setRepeatModeAction)
 
@@ -37,7 +44,7 @@ export const PlayerRepeatToggle = ({ style }: PlayerRepeatToggleProps) => {
     void setRepeatMode(REPEAT_MODES[nextIndex])
   }, [repeatMode, setRepeatMode])
 
-  const iconConfig = getRepeatIcon(repeatMode)
+  const iconConfig = getRepeatIcon(repeatMode, currentTheme.primary)
 
   return (
     <Pressable onPress={handlePress} style={[styles.container, style]}>

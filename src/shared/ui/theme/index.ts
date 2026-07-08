@@ -1,10 +1,15 @@
 // Constants
-export { DarkTheme, getTheme, LightTheme } from './constants'
+export { buildDynamicTheme, DarkTheme, getTheme, LightTheme } from './constants'
+
+export { isMaterialYouSupported } from './materialYou'
 
 // Reatom model
 export {
   currentThemeAtom,
+  dynamicColorsEnabledAtom,
+  loadDynamicColors,
   loadThemeMode,
+  setDynamicColors,
   setSystemTheme,
   setThemeMode,
   systemThemeAtom,

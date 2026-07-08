@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { StyleSheet, Text, View } from 'react-native'
-import { COLORS, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
+import { INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
 
@@ -21,12 +21,17 @@ export const LinkButton = ({ icon, onPress, style, testID, title }: LinkButtonPr
       style={[styles.linkButton, { backgroundColor: currentTheme.surface }, style]}
     >
       <View style={styles.linkButtonContent}>
-        <Ionicons size={24} name={icon} color={COLORS.primary} style={styles.linkButtonIcon} />
+        <Ionicons
+          size={24}
+          name={icon}
+          color={currentTheme.primary}
+          style={styles.linkButtonIcon}
+        />
         <Text style={[styles.linkButtonText, { color: currentTheme.text }]}>{title}</Text>
         <Ionicons
           size={20}
           name='open-outline'
-          color={COLORS.primary}
+          color={currentTheme.primary}
           style={{ marginLeft: 'auto' }}
         />
       </View>

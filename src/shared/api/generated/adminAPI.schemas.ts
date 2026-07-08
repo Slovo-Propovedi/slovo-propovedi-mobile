@@ -201,8 +201,7 @@ export interface CreateSectionDto {
  * @nullable
  */
 export type UpdateSectionDtoItemsSize =
-  | (typeof UpdateSectionDtoItemsSize)[keyof typeof UpdateSectionDtoItemsSize]
-  | null
+  (typeof UpdateSectionDtoItemsSize)[keyof typeof UpdateSectionDtoItemsSize] | null
 
 export const UpdateSectionDtoItemsSize = {
   small: 'small',
@@ -215,8 +214,7 @@ export const UpdateSectionDtoItemsSize = {
  * @nullable
  */
 export type UpdateSectionDtoTransform =
-  | (typeof UpdateSectionDtoTransform)[keyof typeof UpdateSectionDtoTransform]
-  | null
+  (typeof UpdateSectionDtoTransform)[keyof typeof UpdateSectionDtoTransform] | null
 
 export const UpdateSectionDtoTransform = {
   high: 'high',

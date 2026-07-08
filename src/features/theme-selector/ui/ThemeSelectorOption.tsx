@@ -25,7 +25,7 @@ export const ThemeSelectorOption = ({
       styles.optionContainer,
       {
         backgroundColor: currentTheme.surface,
-        borderColor: isSelected ? COLORS.primary : 'transparent',
+        borderColor: isSelected ? currentTheme.primary : 'transparent',
       },
     ]}
   >
@@ -43,11 +43,13 @@ export const ThemeSelectorOption = ({
         style={[
           styles.radioOuter,
           {
-            borderColor: isSelected ? COLORS.primary : currentTheme.textMuted,
+            borderColor: isSelected ? currentTheme.primary : currentTheme.textMuted,
           },
         ]}
       >
-        {isSelected && <View style={styles.radioInner} />}
+        {isSelected && (
+          <View style={[styles.radioInner, { backgroundColor: currentTheme.primary }]} />
+        )}
       </View>
     </View>
   </TouchableItem>
@@ -82,7 +84,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   radioInner: {
-    backgroundColor: COLORS.primary,
     borderRadius: 8,
     height: 16,
     width: 16,

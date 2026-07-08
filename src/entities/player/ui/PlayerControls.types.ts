@@ -14,6 +14,4 @@ export const audioPlayerDataSchema = sermonDataSchema.extend({
 export type AudioPlayerData = z.infer<typeof audioPlayerDataSchema>
 
 export type ControlsNames =
-  | PlayerControlButtonType.Next
-  | PlayerControlButtonType.Play
-  | PlayerControlButtonType.Prev
+  PlayerControlButtonType.Next | PlayerControlButtonType.Play | PlayerControlButtonType.Prev

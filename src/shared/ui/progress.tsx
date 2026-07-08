@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler'
-import { COLORS } from './themed'
+import { COLORS, useTheme } from './themed'
 
 interface ProgressProps {
   loaderValue?: Animated.Value
@@ -25,6 +25,7 @@ export const Progress = ({
   style,
   total,
 }: ProgressProps) => {
+  const { currentTheme } = useTheme()
   const loaderValue = useRef(loaderValueInitial || new Animated.Value(0)).current
 
   const animatedWidth = useRef(
@@ -66,7 +67,7 @@ export const Progress = ({
               testID='progress-bar-inner'
               style={[
                 StyleSheet.absoluteFill,
-                { backgroundColor: COLORS.primary, width: animatedWidth },
+                { backgroundColor: currentTheme.primary, width: animatedWidth },
               ]}
             />
           </View>

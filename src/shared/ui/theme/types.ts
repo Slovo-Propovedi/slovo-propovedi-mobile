@@ -1,3 +1,5 @@
+import { type ColorValue } from 'react-native'
+
 export const ThemeMode = {
   Dark: 'dark',
   Light: 'light',
@@ -5,20 +7,21 @@ export const ThemeMode = {
 } as const
 
 export interface ThemeColors {
-  backdrop: string
-  background: string
-  card: string
-  icon: string
-  skeleton: string
-  surface: string
-  text: string
-  textMuted: string
+  backdrop: ColorValue
+  background: ColorValue
+  card: ColorValue
+  icon: ColorValue
+  primary: ColorValue
+  skeleton: ColorValue
+  surface: ColorValue
+  text: ColorValue
+  textMuted: ColorValue
 }
 
 export type ThemedColors = {
-  icon: string
-  maximumTrackTintColor: string
-  minimumTrackTintColor: string
+  icon: ColorValue
+  maximumTrackTintColor: ColorValue
+  minimumTrackTintColor: ColorValue
 } & ThemeColors
 
 export type ThemeMode = (typeof ThemeMode)[keyof typeof ThemeMode]

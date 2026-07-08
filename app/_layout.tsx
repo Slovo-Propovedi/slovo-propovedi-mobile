@@ -15,7 +15,7 @@ import RootLayout from './_RootLayout'
  */
 export function SuspenseFallback(_props: SuspenseFallbackProps) {
   const { currentTheme } = useTheme()
-  
+
   return (
     <View style={{ ...styles.container, backgroundColor: currentTheme.background }}>
       <ActivityIndicator size='large' color={COLORS.primary} />

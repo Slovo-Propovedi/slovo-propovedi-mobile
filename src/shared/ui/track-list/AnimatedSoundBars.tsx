@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { Animated, Easing, View } from 'react-native'
-import { COLORS } from '../themed'
+import { COLORS, useTheme } from '../themed'
 
 const BAR_COUNT = 3
 const BAR_WIDTH = 3
 const BAR_SPACING = 2
 
 export const AnimatedSoundBars = () => {
+  const { currentTheme } = useTheme()
   const animatedValues = useRef(
     Array.from({ length: BAR_COUNT }, () => new Animated.Value(0.5)),
   ).current
@@ -46,7 +47,7 @@ export const AnimatedSoundBars = () => {
     <View
       style={{
         alignItems: 'center',
-        backgroundColor: COLORS.primary,
+        backgroundColor: currentTheme.primary,
         borderRadius: 12,
         height: 24,
         justifyContent: 'center',

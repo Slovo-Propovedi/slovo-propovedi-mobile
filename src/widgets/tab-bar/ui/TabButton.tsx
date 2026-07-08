@@ -1,6 +1,6 @@
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { Text, TouchableOpacity, View } from 'react-native'
-import { COLORS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import { styles } from './styles'
 
 interface TabButtonProps {
@@ -20,7 +20,8 @@ export const TabButton = ({
   routeKey,
   routeName,
 }: TabButtonProps) => {
-  const color = isActive ? COLORS.tabBarActive : COLORS.tabBarInactive
+  const { currentTheme } = useTheme()
+  const color = isActive ? currentTheme.primary : currentTheme.textMuted
 
   const getIcon = () => {
     if (routeName === 'study')

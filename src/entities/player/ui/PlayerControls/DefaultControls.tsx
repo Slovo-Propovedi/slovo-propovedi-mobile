@@ -1,6 +1,6 @@
 import { ActivityIndicator, View } from 'react-native'
 import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
-import { COLORS } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import type { ControlsNames, PlayerControlsSize } from '../PlayerControls.types'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { getExcludedButtons } from '../getExcludedButtons'
@@ -33,6 +33,7 @@ export const DefaultControls = ({
   togglePlay,
   toggleTrack,
 }: DefaultControlsProps) => {
+  const { currentTheme } = useTheme()
   const excludedButtons = getExcludedButtons(excludeButtons)
   const showSpinner = isBuffering || isDownloading
 
@@ -51,7 +52,7 @@ export const DefaultControls = ({
         (showSpinner ? (
           <View>
             <ActivityIndicator
-              color={COLORS.primary}
+              color={currentTheme.primary}
               size={size * 2 - styles.bufferingText.fontSize}
             />
           </View>

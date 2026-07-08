@@ -15,12 +15,12 @@ export const createProgressBarStyles = (theme: ThemeColors) =>
     },
     progress: {
       ...StyleSheet.absoluteFill,
-      backgroundColor: COLORS.primary,
+      backgroundColor: theme.primary,
       borderBottomLeftRadius: 2.5,
       borderTopLeftRadius: 2.5,
     },
     thumb: {
-      backgroundColor: COLORS.primary,
+      backgroundColor: theme.primary,
       borderRadius: THUMB_SIZE / 2,
       elevation: 2,
       height: THUMB_SIZE,

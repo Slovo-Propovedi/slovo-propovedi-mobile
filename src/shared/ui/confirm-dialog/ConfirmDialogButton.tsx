@@ -1,9 +1,9 @@
 import { type ReactNode } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from '../themed'
+import { type ColorValue, Pressable, StyleSheet, Text, View } from 'react-native'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from '../themed'
 
 export interface ConfirmDialogButtonProps {
-  color?: string
+  color?: ColorValue
   icon?: ReactNode
   isConfirm?: boolean
   onPress: () => void
@@ -19,10 +19,12 @@ export const ConfirmDialogButton = ({
   testID,
   text,
 }: ConfirmDialogButtonProps) => {
+  const { currentTheme } = useTheme()
+
   if (!onPress || !text) return null
 
   const buttonStyle = isConfirm
-    ? [styles.confirmButton, { backgroundColor: color ?? COLORS.primary }]
+    ? [styles.confirmButton, { backgroundColor: color ?? currentTheme.primary }]
     : styles.cancelButton
 
   const textStyle = isConfirm ? styles.confirmButtonText : styles.cancelButtonText

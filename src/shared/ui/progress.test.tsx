@@ -1,5 +1,6 @@
-import { act, render } from '@testing-library/react-native'
+import { act } from '@testing-library/react-native'
 import { Animated } from 'react-native'
+import { renderWithProviders } from 'shared/mocks'
 import { Progress } from './progress'
 import { COLORS } from './themed'
 import '@testing-library/jest-native/extend-expect'
@@ -17,27 +18,27 @@ describe('<Progress/>', () => {
   })
 
   it('renders correctly with progress 0', async () => {
-    const { getByTestId } = await render(<Progress progress={0} total={total} />)
+    const { getByTestId } = await renderWithProviders(<Progress progress={0} total={total} />)
 
     expect(getByTestId(progressBarInnerId)).toHaveStyle({ width: '0%' })
   })
 
   it('renders correctly with progress 50', async () => {
-    const { getByTestId } = await render(
+    const { getByTestId } = await renderWithProviders(
       <Progress total={total} progress={progress} loaderValue={loaderValue} />,
     )
     expect(getByTestId(progressBarInnerId)).toHaveStyle({ width: '50%' })
   })
 
   it('renders correctly with progress 100', async () => {
-    const { getByTestId } = await render(
+    const { getByTestId } = await renderWithProviders(
       <Progress total={total} progress={total} loaderValue={new Animated.Value(100)} />,
     )
     expect(getByTestId(progressBarInnerId)).toHaveStyle({ width: '100%' })
   })
 
   it('updates width when progress prop changes', async () => {
-    const { getByTestId, rerender } = await render(
+    const { getByTestId, rerender } = await renderWithProviders(
       <Progress total={total} progress={progress} loaderValue={loaderValue} />,
     )
     expect(getByTestId(progressBarInnerId)).toHaveStyle({ width: '50%' })
@@ -48,14 +49,14 @@ describe('<Progress/>', () => {
   })
 
   it('renders a gray background progress bar', async () => {
-    const { getByTestId } = await render(
+    const { getByTestId } = await renderWithProviders(
       <Progress total={total} progress={progress} loaderValue={loaderValue} />,
     )
     expect(getByTestId('progress-bar')).toHaveStyle({ backgroundColor: COLORS.gray })
   })
 
   it('renders a primary colored progress bar', async () => {
-    const { getByTestId } = await render(
+    const { getByTestId } = await renderWithProviders(
       <Progress total={total} progress={progress} loaderValue={loaderValue} />,
     )
     expect(getByTestId(progressBarInnerId)).toHaveStyle({ backgroundColor: COLORS.primary })

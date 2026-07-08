@@ -1,8 +1,8 @@
 import { useNavigation } from 'expo-router'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { interpolate, runOnJS, useDerivedValue } from 'react-native-reanimated'
-import { useTheme } from 'shared/ui/themed'
+import { COLORS, useTheme } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
 
 interface UsePlaylistHeaderProps {
@@ -20,6 +20,8 @@ export const usePlaylistHeader = ({
   const [headerBgOpacity, setHeaderBgOpacity] = useState(0)
   const { currentTheme } = useTheme()
   const DARKEN_START_OFFSET = 80
+  const ICON_DARK_THRESHOLD = 0.7
+  const ICON_LIGHT_THRESHOLD = 0.4
 
   const updateHeaderTitle = useCallback(
     (shouldShowTitle: boolean) => {
@@ -41,6 +43,19 @@ export const usePlaylistHeader = ({
     runOnJS(updateHeaderTitle)(scrollY.value > titleAppearThreshold)
   }, [scrollY, titleAppearThreshold, updateHeaderTitle])
 
+  const [iconMode, setIconMode] = useState<'cover' | 'header'>('cover')
+  const iconModeRef = useRef(iconMode)
+  iconModeRef.current = iconMode
+
+  useEffect(() => {
+    if (iconModeRef.current === 'cover' && headerBgOpacity >= ICON_DARK_THRESHOLD)
+      setIconMode('header')
+    else if (iconModeRef.current === 'header' && headerBgOpacity <= ICON_LIGHT_THRESHOLD)
+      setIconMode('cover')
+  }, [headerBgOpacity])
+
+  const headerIconColor = iconMode === 'cover' ? COLORS.white : currentTheme.text
+
   const headerBackground = useMemo(() => {
     const innerStyle = StyleSheet.create({
       bg: {
@@ -59,5 +74,9 @@ export const usePlaylistHeader = ({
     }
   }, [navigation, headerBackground])
 
-  return { headerBgOpacity }
+  useEffect(() => {
+    navigation.setOptions({ headerTintColor: headerIconColor })
+  }, [navigation, headerIconColor])
+
+  return { headerBgOpacity, headerIconColor }
 }
