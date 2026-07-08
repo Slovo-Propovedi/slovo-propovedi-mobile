@@ -2,8 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAtom } from '@reatom/npm-react'
 import { router, Stack } from 'expo-router'
 import { useEffect } from 'react'
-import { BackHandler } from 'react-native'
+import { BackHandler, View } from 'react-native'
 import { showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
+import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import {
   closePlayerSheetAction,
   isPlayerExpandedAtom,
@@ -11,8 +12,12 @@ import {
   positionAtom,
 } from 'entities/player'
 import { CURRENT_SOUND_POSITION } from 'shared/config'
+import { subscribeToNetwork } from 'shared/lib/network'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { useTheme } from 'shared/ui/themed'
+
+// Module-level: subscribes once for the app lifetime
+subscribeToNetwork()
 
 const RootLayout = () => {
   const { currentTheme } = useTheme()
@@ -67,34 +72,38 @@ const RootLayout = () => {
   }, [])
 
   return (
-    <Stack
-      screenOptions={{
-        contentStyle: { backgroundColor: currentTheme.background },
-      }}
-    >
-      <Stack.Screen name='index' options={{ headerShown: false }} />
-      <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-      <Stack.Screen
-        name='settings'
-        options={{
-          headerBackTitle: 'Назад',
-          headerStyle: { backgroundColor: currentTheme.background },
-          headerTintColor: currentTheme.text,
-          headerTitleStyle: { color: currentTheme.text },
-          title: 'Настройки',
+    <View style={{ flex: 1 }}>
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: currentTheme.background },
         }}
-      />
-      <Stack.Screen
-        name='about'
-        options={{
-          headerBackTitle: 'Назад',
-          headerStyle: { backgroundColor: currentTheme.background },
-          headerTintColor: currentTheme.text,
-          headerTitleStyle: { color: currentTheme.text },
-          title: 'О приложении',
-        }}
-      />
-    </Stack>
+      >
+        <Stack.Screen name='index' options={{ headerShown: false }} />
+        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Screen
+          name='settings'
+          options={{
+            headerBackTitle: 'Назад',
+            headerStyle: { backgroundColor: currentTheme.background },
+            headerTintColor: currentTheme.text,
+            headerTitleStyle: { color: currentTheme.text },
+            title: 'Настройки',
+          }}
+        />
+        <Stack.Screen
+          name='about'
+          options={{
+            headerBackTitle: 'Назад',
+            headerStyle: { backgroundColor: currentTheme.background },
+            headerTintColor: currentTheme.text,
+            headerTitleStyle: { color: currentTheme.text },
+            title: 'О приложении',
+          }}
+        />
+      </Stack>
+      <NetworkBanner />
+      <ServerErrorToast />
+    </View>
   )
 }
 

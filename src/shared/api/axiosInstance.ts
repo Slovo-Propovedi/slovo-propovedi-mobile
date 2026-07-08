@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios from 'axios'
 import { API_URL } from 'shared/config/config'
+import { ctx } from 'shared/lib/reatom-ctx'
+import { reportServerReachable, reportServerUnreachable } from 'shared/model'
 import type { AxiosRequestConfig } from 'axios'
 
 export const ACCESS_TOKEN_KEY = '@access_token'
@@ -36,10 +38,18 @@ axiosInstance.interceptors.request.use(async config => {
   return config
 })
 
-// Response interceptor для обработки ошибок и refresh токена
+// Response interceptor для обработки ошибок, refresh токена и мониторинга статуса сервера
 axiosInstance.interceptors.response.use(
-  response => response,
+  response => {
+    // Сервер ответил успешно — отмечаем его как доступный
+    reportServerReachable(ctx)
+
+    return response
+  },
   async error => {
+    // Сетевая ошибка (сервер не ответил) — отмечаем как недоступный
+    if (!error.response) reportServerUnreachable(ctx)
+
     const originalRequest = error.config
 
     // Если ошибка 401 и это не запрос на refresh

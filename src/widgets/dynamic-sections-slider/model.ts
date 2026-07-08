@@ -1,7 +1,7 @@
 import { action, atom } from '@reatom/framework'
 import { db, sectionsApi } from 'shared/api'
 import { getCachedSections, setCachedSections } from 'shared/lib/sections-cache'
-import type { SectionData } from 'shared/model'
+import { type SectionData } from 'shared/model'
 
 export const dynamicSectionsAtom = atom<SectionData[]>([], 'dynamicSectionsAtom')
 export const isLoadingSectionsAtom = atom(true, 'isLoadingSectionsAtom')
