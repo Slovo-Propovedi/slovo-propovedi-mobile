@@ -11,6 +11,7 @@ export {
   type PlaylistData,
   playlistDataSchema,
   type SectionData,
+  sectionSchema,
   type SermonData,
   sermonDataSchema,
 } from './domain/common'

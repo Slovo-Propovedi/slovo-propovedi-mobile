@@ -1,5 +1,6 @@
 import { action, atom } from '@reatom/framework'
 import { db, sectionsApi } from 'shared/api'
+import { getCachedSections, setCachedSections } from 'shared/lib/sections-cache'
 import type { SectionData } from 'shared/model'
 
 export const dynamicSectionsAtom = atom<SectionData[]>([], 'dynamicSectionsAtom')
@@ -54,12 +55,23 @@ export const fetchAllSections = action(async ctx => {
   try {
     const response = await sectionsApi.getSections().getAllSections()
     sections = (response.sections as SectionData[]) ?? []
-  } catch {
-    sections = getMockSections()
+  } catch (error) {
+    console.error('fetchAllSections network failed:', error)
+    try {
+      const cachedSections = await getCachedSections()
+      if (cachedSections?.length) sections = cachedSections
+      else sections = getMockSections()
+    } catch (cacheError) {
+      console.error('Cache read failed, using mock:', cacheError)
+      sections = getMockSections()
+    }
   }
 
   await ctx.schedule(() => {
     dynamicSectionsAtom(ctx, sections)
     isLoadingSectionsAtom(ctx, false)
   })
+
+  // Online-first: cache fresh data for offline use (fire-and-forget)
+  void setCachedSections(sections).catch(error => console.error('Cache write failed:', error))
 }, 'fetchAllSections')
