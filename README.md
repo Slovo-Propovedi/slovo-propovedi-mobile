@@ -29,7 +29,7 @@
 <img title="expo" alt="expo" height=48 src="https://static.expo.dev/static/favicons/favicon-light-48x48.png"/>
 <img title="reatom" alt="reatom" height=48 src="https://avatars.githubusercontent.com/u/50905415?s=200&v=4"/>
 <img title="expo-router" alt="expo-router" height=48 src="https://static.expo.dev/static/favicons/favicon-light-48x48.png"/>
-<img title="axios" alt="axios" height=48 src="https://axios-http.com/assets/logo.png"/>
+<img title="axios" alt="axios" height=48 src="https://axios.rest/favicon-32x32.png"/>
 <img title="typescript" alt="typescript" height=48 src="https://raw.githubusercontent.com/remojansen/logo.ts/master/ts.png"/>
 <img title="prettier" alt="prettier" height=48 src="https://prettier.io/icon.png"/>
 <img title="eslint" alt="eslint" height=48 src="https://eslint.org/favicon.ico"/>
