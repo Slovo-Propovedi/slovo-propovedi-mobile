@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { setupWorker } from 'msw/browser'
-import type { APITypes } from 'shared/api/generated'
+import { type APITypes } from './generated'
 import { localDB } from './localBD'
 
 // Создаем MSW worker

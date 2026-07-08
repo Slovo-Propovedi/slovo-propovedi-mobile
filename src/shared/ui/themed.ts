@@ -1,4 +1,4 @@
-import { ctx } from 'shared/lib/reatom-ctx'
+import { ctx } from '../lib/reatom-ctx/ctx'
 import {
   initializeCOLORS,
   COLORS as THEME_COLORS,
@@ -61,4 +61,4 @@ export const INDENTS = {
   middle: 12,
 } as const
 
-export { useTheme } from 'shared/ui/theme'
+export { useTheme } from './theme'

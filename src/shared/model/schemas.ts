@@ -1,5 +1,5 @@
-import { parseJSONToObject } from 'shared/lib/utils'
 import type z from 'zod'
+import { parseJSONToObject } from '../lib/utils/parseJSONToObject'
 
 export const parseJsonWithSchema =
   <T>(schema: z.ZodSchema<T>) =>

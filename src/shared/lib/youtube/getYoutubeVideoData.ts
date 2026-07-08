@@ -1,4 +1,4 @@
-import { youtubeApi } from 'shared/api'
+import { youtubeApi } from '../../api/youtube'
 
 export const getYoutubeVideoData = async (videoUrl: string) => {
   try {

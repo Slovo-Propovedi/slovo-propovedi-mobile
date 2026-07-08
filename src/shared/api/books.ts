@@ -1,4 +1,5 @@
-import type { FetchedBooksGroupName, SermonData } from 'shared/model'
+import { type FetchedBooksGroupName } from '../model/domain/bible'
+import { type SermonData } from '../model/domain/common'
 import { localDB } from './localBD'
 
 /**

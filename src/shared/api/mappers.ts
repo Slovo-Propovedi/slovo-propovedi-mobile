@@ -1,5 +1,5 @@
-import type { APITypes } from 'shared/api/generated'
-import type { PlaylistData, SermonData } from 'shared/model'
+import { type PlaylistData, type SermonData } from '../model/domain/common'
+import { type APITypes } from './generated'
 
 /**
  * Маппер: SermonEntity (API) -> SermonData (App).

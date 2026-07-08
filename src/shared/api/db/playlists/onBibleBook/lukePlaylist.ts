@@ -1,5 +1,5 @@
 /* eslint-disable max-lines -- correct for mocks */
-import type { FetchedPlaylist } from 'shared/model'
+import { type FetchedPlaylist } from '../../../../model/fetched/fetched-data'
 
 export const lukePlaylist: FetchedPlaylist = {
   artwork:

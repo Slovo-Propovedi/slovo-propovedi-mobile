@@ -1,4 +1,4 @@
-import { type FetchedBooksGroupName, type FetchedSermonsGroupName } from 'shared/model'
+import { type FetchedBooksGroupName, type FetchedSermonsGroupName } from '../../model/domain/bible'
 import {
   actsBookList,
   ephesiansBookList,

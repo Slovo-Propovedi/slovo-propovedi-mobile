@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import z from 'zod'
-import { CACHED_SECTIONS } from 'shared/config'
-import { parseJsonWithSchema, sectionSchema } from 'shared/model'
-import type { SectionData } from 'shared/model'
+import { CACHED_SECTIONS } from '../../config/cache-storage-keys'
+import { type SectionData, sectionSchema } from '../../model/domain/common'
+import { parseJsonWithSchema } from '../../model/schemas'
 
 const sectionsArraySchema = z.array(sectionSchema)
 

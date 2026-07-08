@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native'
-import { renderWithProviders } from 'shared/mocks'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { IMAGE_PLACEHOLDER } from '../images'
 import { SliderItem } from './slider-item'
 import { WhereIsSlideTitleLocated } from './slider-item.types'
 import '@testing-library/jest-native/extend-expect'

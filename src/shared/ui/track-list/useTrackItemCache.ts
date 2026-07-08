@@ -1,7 +1,8 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { useEffect, useRef, useState } from 'react'
-import { cacheAudio, removeFromCache, useIsCached } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
+import { cacheAudio, removeFromCache } from '../../lib/audio-cache/AudioCacheService'
+import { useIsCached } from '../../lib/audio-cache/useIsCached'
+import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from '../../lib/cache-triggers'
 
 export const useTrackItemCache = (
   audioUrl: null | string | undefined,

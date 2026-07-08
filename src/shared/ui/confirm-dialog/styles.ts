@@ -1,5 +1,5 @@
 import { Platform, StatusBar, StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from '../themed'
 
 const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0
 

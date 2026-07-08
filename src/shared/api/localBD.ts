@@ -1,9 +1,5 @@
-import type {
-  FetchedBooksGroupName,
-  FetchedSermonsGroupName,
-  PlaylistData,
-  SermonData,
-} from 'shared/model'
+import { type FetchedBooksGroupName, type FetchedSermonsGroupName } from '../model/domain/bible'
+import { type PlaylistData, type SermonData } from '../model/domain/common'
 import { db } from './db'
 
 export const localDB = {

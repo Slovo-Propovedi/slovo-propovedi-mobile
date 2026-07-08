@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { setStringAsync } from 'expo-clipboard'
 import { useState } from 'react'
 import { Modal, Platform, StyleSheet, Text, View } from 'react-native'
-import { Button } from 'shared/ui/button'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
+import { Button } from '../button'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from '../themed'
 
 export interface ErrorDialogProps {
   detail: string

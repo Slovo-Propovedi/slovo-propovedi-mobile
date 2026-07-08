@@ -1,4 +1,4 @@
-import { booksDB } from 'shared/api/db/books'
-import { BibleBookName } from 'shared/model'
+import { BibleBookName } from '../../../../model/domain/bible'
+import { booksDB } from '../../books'
 
 export const markBookList = booksDB[BibleBookName.Mark]

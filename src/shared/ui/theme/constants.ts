@@ -1,4 +1,4 @@
-import type { ThemeColors } from './types'
+import { type ThemeColors } from './types'
 
 export const LightTheme = {
   backdrop: 'rgba(0, 0, 0, 0.5)',

@@ -1,7 +1,6 @@
 import { StyleSheet, Text } from 'react-native'
-import { FONT_SIZES, INDENTS } from 'shared/ui/themed'
-import { TouchableItem } from 'shared/ui/touchable-item'
-import type { TouchableItemProps } from 'shared/ui/touchable-item'
+import { FONT_SIZES, INDENTS } from './themed'
+import { TouchableItem, type TouchableItemProps } from './touchable-item'
 
 type TouchableTextItemProps = { title: string } & Omit<TouchableItemProps, 'children'>
 

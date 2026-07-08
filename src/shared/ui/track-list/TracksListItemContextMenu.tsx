@@ -1,5 +1,5 @@
 import { Modal, Pressable, Text, View } from 'react-native'
-import { type ThemeColors } from 'shared/ui/theme'
+import { type ThemeColors } from '../theme'
 import { createTracksListStyles } from './styles'
 
 export interface TracksListItemContextMenuProps {

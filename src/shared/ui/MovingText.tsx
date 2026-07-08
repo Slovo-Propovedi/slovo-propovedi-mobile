@@ -1,5 +1,5 @@
+import { type StyleProp, type TextStyle } from 'react-native'
 import TextTicker from 'react-native-text-ticker'
-import type { StyleProp, TextStyle } from 'react-native'
 import { useTheme } from './themed'
 
 interface MovingTextProps {

@@ -1,4 +1,4 @@
-import type { PlaylistData, SermonData } from 'shared/model'
+import { type PlaylistData, type SermonData } from '../domain/common'
 
 export interface DB {
   books: Array<{

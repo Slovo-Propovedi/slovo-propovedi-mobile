@@ -1,4 +1,4 @@
-import type { Ctx } from '@reatom/framework'
+import { type Ctx } from '@reatom/framework'
 import { currentThemeAtom } from './model'
 
 const STATIC_COLORS = {

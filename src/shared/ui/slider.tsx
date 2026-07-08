@@ -1,15 +1,18 @@
 import { Entypo } from '@expo/vector-icons'
 import { ScrollView, Text, View } from 'react-native'
-import { FONT_SIZES, useTheme } from 'shared/ui/themed'
-import type { SliderItemTransform } from './slider-item/slider-item.types'
-import type {
-  SliderItemDescriptionBackgroundStyle,
-  SliderItemDescriptionTextAlign,
-} from './slider-item-description/slider-item-description.types'
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
+import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
 import { SliderItem } from './slider-item/slider-item'
-import { SliderItemSize, WhereIsSlideTitleLocated } from './slider-item/slider-item.types'
+import {
+  SliderItemSize,
+  type SliderItemTransform,
+  WhereIsSlideTitleLocated,
+} from './slider-item/slider-item.types'
+import {
+  type SliderItemDescriptionBackgroundStyle,
+  type SliderItemDescriptionTextAlign,
+} from './slider-item-description/slider-item-description.types'
 import { createSliderStyles as styles } from './slider.styles'
+import { FONT_SIZES, useTheme } from './themed'
 
 type FontSizes = typeof FONT_SIZES
 

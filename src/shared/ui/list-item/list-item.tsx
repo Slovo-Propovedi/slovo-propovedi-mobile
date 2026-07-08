@@ -1,8 +1,7 @@
-import { Image, StyleSheet, Text, View } from 'react-native'
+import { Image, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import { match } from 'ts-pattern'
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
-import type { StyleProp, ViewStyle } from 'react-native'
+import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../config/screen-dimensions'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from '../themed'
 import { ListItemSize } from './list-item.types'
 
 type ListItemComponent = <T extends { artwork: string; title: string }>(

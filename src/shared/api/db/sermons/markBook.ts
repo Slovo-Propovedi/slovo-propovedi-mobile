@@ -1,4 +1,4 @@
-import type { FetchedSermonData } from 'shared/model'
+import { type FetchedSermonData } from '../../../model/fetched/fetched-data'
 import { DEFAULT_ARTIST } from '../constants'
 
 const artwork = 'https://slovo-istini.com/image/categories/22/marka_(1).jpg'

@@ -1,6 +1,6 @@
 import { StyleSheet, TouchableOpacity } from 'react-native'
-import { COLORS } from 'shared/ui/themed'
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
+import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
+import { COLORS } from './themed'
 
 export interface TouchableItemProps {
   children: React.ReactNode

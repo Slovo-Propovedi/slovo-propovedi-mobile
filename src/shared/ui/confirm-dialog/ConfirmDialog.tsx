@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { Modal, Text, View } from 'react-native'
-import { COLORS, useTheme } from 'shared/ui/themed'
+import { COLORS, useTheme } from '../themed'
 import { ConfirmDialogButton } from './ConfirmDialogButton'
 import { styles } from './styles'
 

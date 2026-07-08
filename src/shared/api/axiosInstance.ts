@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios from 'axios'
-import { API_URL } from 'shared/config/config'
-import { ctx } from 'shared/lib/reatom-ctx'
-import { reportServerReachable, reportServerUnreachable } from 'shared/model'
-import type { AxiosRequestConfig } from 'axios'
+import { type AxiosRequestConfig } from 'axios'
+import { API_URL } from '../config/config'
+import { ctx } from '../lib/reatom-ctx/ctx'
+import { reportServerReachable, reportServerUnreachable } from '../model/network'
 
 export const ACCESS_TOKEN_KEY = '@access_token'
 export const REFRESH_TOKEN_KEY = '@refresh_token'

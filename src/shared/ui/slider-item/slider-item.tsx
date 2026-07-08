@@ -1,9 +1,9 @@
 import { ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { match } from 'ts-pattern'
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
-import { RADIUSES } from 'shared/ui/themed'
+import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../config/screen-dimensions'
+import { IMAGE_PLACEHOLDER } from '../images'
 import { SliderItemDescription } from '../slider-item-description/slider-item-description'
+import { RADIUSES } from '../themed'
 import {
   type SliderItemProps,
   SliderItemSize,

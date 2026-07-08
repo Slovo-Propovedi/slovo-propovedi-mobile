@@ -1,7 +1,7 @@
 import { act, render } from '@testing-library/react-native'
 import { Animated } from 'react-native'
-import { COLORS } from 'shared/ui/themed'
 import { Progress } from './progress'
+import { COLORS } from './themed'
 import '@testing-library/jest-native/extend-expect'
 
 const total = 100

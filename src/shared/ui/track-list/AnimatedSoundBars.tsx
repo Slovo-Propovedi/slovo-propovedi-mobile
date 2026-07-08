@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Animated, Easing, View } from 'react-native'
-import { COLORS } from 'shared/ui/themed'
+import { COLORS } from '../themed'
 
 const BAR_COUNT = 3
 const BAR_WIDTH = 3

@@ -9,7 +9,7 @@ import {
   type RenderResult,
 } from '@testing-library/react-native'
 import React from 'react'
-import { ThemeProvider } from 'shared/ui/theme'
+import { ThemeProvider } from '../ui/theme/ThemeContext/ThemeProvider'
 
 interface CustomRenderHookOptions<Props>
   extends Omit<RenderHookOptions<Props>, 'wrapper'>, ProvidersOptions {}

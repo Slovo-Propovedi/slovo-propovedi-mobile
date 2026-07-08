@@ -1,4 +1,4 @@
-import type { ThemeColors, ThemeMode } from '../types'
+import { type ThemeColors, type ThemeMode } from '../types'
 
 export interface ThemeContextValue {
   currentTheme: ThemeColors

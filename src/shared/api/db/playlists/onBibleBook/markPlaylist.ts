@@ -1,6 +1,7 @@
 /* eslint-disable max-lines -- correct for mocks */
-import { sermonsDB } from 'shared/api/db/sermons'
-import { BibleBookName, type FetchedPlaylist } from 'shared/model'
+import { BibleBookName } from '../../../../model/domain/bible'
+import { type FetchedPlaylist } from '../../../../model/fetched/fetched-data'
+import { sermonsDB } from '../../sermons'
 
 export const markPlaylist: FetchedPlaylist = {
   artwork: 'https://slovo-istini.com/image/categories/22/marka_(1).jpg',

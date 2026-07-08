@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { View } from 'react-native'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from '../themed'
 import { ErrorDialog } from './ErrorDialog'
 import { getErrorDetail, getErrorMessage } from './useErrorDialog'
 

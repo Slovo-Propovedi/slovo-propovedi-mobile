@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
-import type { ButtonProps, StyleProp, TextStyle, ViewStyle } from 'react-native'
+import { type ButtonProps, type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from './themed'
 
 type CustomButtonProps = { style?: StyleProp<ViewStyle>; titleStyle?: TextStyle } & ButtonProps
 

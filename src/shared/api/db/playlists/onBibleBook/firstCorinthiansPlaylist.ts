@@ -1,4 +1,4 @@
-import type { FetchedPlaylist } from 'shared/model'
+import { type FetchedPlaylist } from '../../../../model/fetched/fetched-data'
 
 export const firstCorinthiansPlaylist: FetchedPlaylist = {
   artwork: 'https://slovo-istini.com/image/categories/65/1_korin_(1).jpg',

@@ -1,8 +1,8 @@
-import type {
-  SliderItemDescriptionBackgroundStyle,
-  SliderItemDescriptionTextAlign,
+import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
+import {
+  type SliderItemDescriptionBackgroundStyle,
+  type SliderItemDescriptionTextAlign,
 } from '../slider-item-description/slider-item-description.types'
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 
 export enum SliderItemSize {
   Large = 'large',

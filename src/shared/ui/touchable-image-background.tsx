@@ -1,7 +1,14 @@
-import { ImageBackground, StyleSheet, TouchableOpacity } from 'react-native'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
-import type { ReactNode } from 'react'
-import type { GestureResponderEvent, ImageStyle, StyleProp, ViewStyle } from 'react-native'
+import { type ReactNode } from 'react'
+import {
+  type GestureResponderEvent,
+  ImageBackground,
+  type ImageStyle,
+  type StyleProp,
+  StyleSheet,
+  TouchableOpacity,
+  type ViewStyle,
+} from 'react-native'
+import { IMAGE_PLACEHOLDER } from './images'
 
 interface TouchableImageBackgroundProps {
   children: ReactNode

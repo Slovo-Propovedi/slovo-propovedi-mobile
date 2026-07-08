@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import type { PlaylistData } from 'shared/model'
+import { type PlaylistData } from '../model/domain/common'
 
 export const useListenNavigation = () => {
   const router = useRouter()

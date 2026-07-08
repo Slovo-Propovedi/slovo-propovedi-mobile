@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { View } from 'react-native'
-import { type ThemeColors } from 'shared/ui/theme'
-import { COLORS } from 'shared/ui/themed'
+import { type ThemeColors } from '../theme'
+import { COLORS } from '../themed'
 import { AnimatedSoundBars } from './AnimatedSoundBars'
 import { createTracksListStyles } from './styles'
 

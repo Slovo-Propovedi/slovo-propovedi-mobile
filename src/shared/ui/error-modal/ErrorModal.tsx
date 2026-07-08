@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { type ReactNode } from 'react'
 import { Clipboard } from 'react-native'
-import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { COLORS } from 'shared/ui/themed'
-import type { ReactNode } from 'react'
+import { ConfirmDialog } from '../confirm-dialog'
+import { COLORS } from '../themed'
 
 export interface ErrorModalProps {
   error: Error | null

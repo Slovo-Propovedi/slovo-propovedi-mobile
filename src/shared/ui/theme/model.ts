@@ -1,9 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, atom } from '@reatom/framework'
 import { Appearance } from 'react-native'
-import type { ThemeColors } from './types'
 import { DarkTheme, LightTheme } from './constants'
-import { ThemeMode } from './types'
+import { type ThemeColors, ThemeMode } from './types'
 
 const THEME_MODE_KEY = 'theme_mode'
 

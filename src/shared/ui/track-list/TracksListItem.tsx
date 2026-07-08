@@ -1,14 +1,14 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRef, useState } from 'react'
 import { Image, Pressable, Text, View } from 'react-native'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
-import { MovingText } from 'shared/ui/MovingText'
-import { useTheme } from 'shared/ui/themed'
-import type { TracksListItemProps } from './types'
+import { IMAGE_PLACEHOLDER } from '../images'
+import { MovingText } from '../MovingText'
+import { useTheme } from '../themed'
 import { MENU_WIDTH, TITLE_ANIMATION_THRESHOLD } from './constants'
 import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
 import { createTracksListStyles } from './styles'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
+import { type TracksListItemProps } from './types'
 import { useTrackItemCache } from './useTrackItemCache'
 
 export const TracksListItem = ({

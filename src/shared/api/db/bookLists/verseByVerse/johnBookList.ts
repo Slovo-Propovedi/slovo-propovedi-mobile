@@ -1,4 +1,4 @@
-import type { FetchedBookData } from 'shared/model'
+import { type FetchedBookData } from '../../../../model/fetched/fetched-data'
 import { DEFAULT_ARTIST } from '../../constants'
 
 export const johnBookList: FetchedBookData[] = [

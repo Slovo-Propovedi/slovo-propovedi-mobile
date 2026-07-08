@@ -1,6 +1,6 @@
+import { type ReactNode } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
-import type { ReactNode } from 'react'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from '../themed'
 
 export interface ConfirmDialogButtonProps {
   color?: string

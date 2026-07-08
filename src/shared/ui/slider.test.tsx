@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native'
-import { renderWithProviders } from 'shared/mocks'
+import { renderWithProviders } from '../mocks/renderWithProviders'
 import { Slider } from './slider'
 import '@testing-library/jest-native/extend-expect'
 

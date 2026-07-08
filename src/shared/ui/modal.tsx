@@ -1,5 +1,5 @@
 import { Pressable, Modal as RNModal, StyleSheet, View } from 'react-native'
-import { INDENTS, useTheme } from 'shared/ui/themed'
+import { INDENTS, useTheme } from './themed'
 
 type Props = React.PropsWithChildren<{
   onBackdropPress: () => void
