@@ -18,7 +18,7 @@ export const usePlaylistHeader = ({
 }: UsePlaylistHeaderProps) => {
   const navigation = useNavigation()
   const [headerBgOpacity, setHeaderBgOpacity] = useState(0)
-  const { currentTheme } = useTheme()
+  const { currentTheme, isLight } = useTheme()
   const DARKEN_START_OFFSET = 80
   const ICON_DARK_THRESHOLD = 0.7
   const ICON_LIGHT_THRESHOLD = 0.4
@@ -55,6 +55,8 @@ export const usePlaylistHeader = ({
   }, [headerBgOpacity])
 
   const headerIconColor = iconMode === 'cover' ? COLORS.white : currentTheme.text
+  const statusBarStyle: 'dark' | 'light' =
+    iconMode === 'cover' ? 'light' : isLight ? 'dark' : 'light'
 
   const headerBackground = useMemo(() => {
     const innerStyle = StyleSheet.create({
@@ -78,5 +80,5 @@ export const usePlaylistHeader = ({
     navigation.setOptions({ headerTintColor: headerIconColor })
   }, [navigation, headerIconColor])
 
-  return { headerBgOpacity, headerIconColor }
+  return { headerBgOpacity, headerIconColor, statusBarStyle }
 }

@@ -37,7 +37,11 @@ export const PlaylistScreen = () => {
   const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader(title, navigation)
 
-  const { headerIconColor } = usePlaylistHeader({ scrollY, title, titleAppearThreshold })
+  const { headerIconColor, statusBarStyle } = usePlaylistHeader({
+    scrollY,
+    title,
+    titleAppearThreshold,
+  })
 
   const handlePressItem = async (index: number) => {
     const sermon = list[index]
@@ -94,10 +98,9 @@ export const PlaylistScreen = () => {
 
   const styles = createStyles(currentTheme)
   const tracksListStyles = createTracksListStyles(currentTheme)
-
   return (
     <View style={styles.container}>
-      <StatusBar style='light' />
+      <StatusBar style={statusBarStyle} />
       <Animated.FlatList
         data={tracksListData}
         renderItem={renderItem}
