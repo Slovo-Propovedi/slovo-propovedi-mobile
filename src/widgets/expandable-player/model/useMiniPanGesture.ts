@@ -1,5 +1,6 @@
 import { Gesture } from 'react-native-gesture-handler'
-import { runOnJS, withTiming } from 'react-native-reanimated'
+import { withTiming } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import { SCREEN_HEIGHT } from 'shared/config'
 import { INDENTS, PLAYER_SIZES } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
@@ -53,5 +54,5 @@ export const useMiniPanGesture = ({ onOpen, progress }: UseMiniPanGestureParams)
         duration: shouldOpen ? OPEN_DURATION : CLOSE_DURATION,
       })
 
-      if (shouldOpen && onOpen) runOnJS(onOpen)()
+      if (shouldOpen && onOpen) scheduleOnRN(onOpen)
     })

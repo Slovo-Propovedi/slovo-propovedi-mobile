@@ -1,6 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { Gesture } from 'react-native-gesture-handler'
-import { runOnJS, useSharedValue, withTiming } from 'react-native-reanimated'
+import { useSharedValue, withTiming } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import type { SharedValue } from 'react-native-reanimated'
 import { showPlaylistAtom } from '../model/showPlaylistAtom'
 
@@ -28,7 +29,7 @@ export const useFullscreenPanGesture = ({
         .onStart(() => {
           'worklet'
           if (showPlaylist) {
-            runOnJS(setShowPlaylist)(false)
+            scheduleOnRN(setShowPlaylist, false)
             return
           }
           startY.value = progress.value
@@ -44,7 +45,7 @@ export const useFullscreenPanGesture = ({
           if (showPlaylist) return
           if (e.velocityY > 500 || progress.value < 0.5) {
             progress.value = withTiming(0, { duration: 250 })
-            runOnJS(close)()
+            scheduleOnRN(close)
           } else progress.value = withTiming(1, { duration: 300 })
         })
     : Gesture.Pan().enabled(false)

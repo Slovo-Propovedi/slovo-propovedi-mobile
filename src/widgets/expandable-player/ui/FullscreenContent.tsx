@@ -5,8 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import Animated, { type AnimatedStyle, runOnJS } from 'react-native-reanimated'
+import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { scheduleOnRN } from 'react-native-worklets'
 import {
   type AudioPlayerData,
   currentAudioAtom,
@@ -79,18 +80,18 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
 
   const closeTapGesture = Gesture.Tap().onEnd(() => {
     'worklet'
-    runOnJS(handleCollapsePress)()
+    scheduleOnRN(handleCollapsePress)
   })
 
   const closePanGesture = Gesture.Pan()
     .activeOffsetY(15)
     .onStart(() => {
       'worklet'
-      runOnJS(closePlaylistOnSwipe)()
+      scheduleOnRN(closePlaylistOnSwipe)
     })
     .onEnd(event => {
       'worklet'
-      if (event.velocityY > 300 || event.translationY > 100) runOnJS(handleCollapsePress)()
+      if (event.velocityY > 300 || event.translationY > 100) scheduleOnRN(handleCollapsePress)
     })
 
   const closeGesture = Gesture.Race(closeTapGesture, closePanGesture)

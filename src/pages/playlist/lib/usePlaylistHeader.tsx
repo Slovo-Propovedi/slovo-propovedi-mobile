@@ -1,7 +1,8 @@
 import { useNavigation } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { interpolate, runOnJS, useDerivedValue } from 'react-native-reanimated'
+import { interpolate, useDerivedValue } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import { COLORS, useTheme } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
 
@@ -39,8 +40,8 @@ export const usePlaylistHeader = ({
       [0, 1],
       'clamp',
     )
-    runOnJS(setHeaderBgOpacity)(opacity)
-    runOnJS(updateHeaderTitle)(scrollY.value > titleAppearThreshold)
+    scheduleOnRN(setHeaderBgOpacity, opacity)
+    scheduleOnRN(updateHeaderTitle, scrollY.value > titleAppearThreshold)
   }, [scrollY, titleAppearThreshold, updateHeaderTitle])
 
   const [iconMode, setIconMode] = useState<'cover' | 'header'>('cover')
