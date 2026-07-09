@@ -19,7 +19,14 @@ const ListenStackLayout = () => {
           headerShown: false,
         }}
       />
-      <Stack.Screen name='playlist-list' options={{ title: '' }} />
+      <Stack.Screen
+        name='playlist-list'
+        options={{
+          headerStyle: { backgroundColor: 'transparent' },
+          headerTransparent: true,
+          title: '',
+        }}
+      />
       <Stack.Screen
         name='playlist'
         options={{
