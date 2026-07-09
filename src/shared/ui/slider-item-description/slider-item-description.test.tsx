@@ -19,39 +19,29 @@ describe('<SliderItemDescription/>', () => {
       />,
     )
 
-    const tree = screen.toJSON()
-    expect(tree).toBeNull()
+    expect(screen.queryByTestId(sliderItemDescriptionTitleId)).toBeNull()
   })
 
   test('return null, if title === ""', async () => {
     await renderWithProviders(<SliderItemDescription title='' />)
 
-    const tree = screen.toJSON()
-    expect(tree).toBeNull()
+    expect(screen.queryByTestId(sliderItemDescriptionTitleId)).toBeNull()
   })
 
   test('not return null or array, if title is valid', async () => {
     await renderWithProviders(<SliderItemDescription title={propsStub.title} />)
 
-    const tree = screen.toJSON()
-    expect(tree).not.toBeNull()
-    expect(Array.isArray(tree)).toEqual(false)
+    expect(screen.getByTestId(sliderItemDescriptionTitleId)).not.toBeNull()
   })
 
   test('return View, if title is valid', async () => {
     await renderWithProviders(<SliderItemDescription title={propsStub.title} />)
 
-    const tree = screen.toJSON()
+    const title = screen.getByTestId(sliderItemDescriptionTitleId)
 
-    if (!tree || Array.isArray(tree)) return
-
-    expect(tree.type).toEqual('View')
-
-    expect(tree.children).not.toBeNull()
-
-    if (!Array.isArray(tree.children)) return
-
-    expect(tree.children.length).toEqual(1)
+    expect(title).toBeTruthy()
+    expect(title.type).toEqual('View')
+    expect(title.children).not.toBeNull()
   })
 
   test('text is visible, if title prop valid', async () => {

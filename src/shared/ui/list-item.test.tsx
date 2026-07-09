@@ -8,14 +8,13 @@ const titleStub = 'test'
 const artworkStub = 'google.com'
 
 describe('<TouchableListItem>', () => {
-  test('if data defined return View', async () => {
+  test('if data defined renders title', async () => {
     await renderWithProviders(<ListItem data={{ artwork: artworkStub, title: titleStub }} />)
 
-    const tree = screen.toJSON()
+    const title = screen.getByTestId('title')
 
-    if (!tree || Array.isArray(tree)) return
-
-    expect(tree.type).toEqual('View')
+    expect(title).toBeTruthy()
+    expect(title.type).toEqual('Text')
   })
 
   test('if title prop defined title element equals title prop', async () => {

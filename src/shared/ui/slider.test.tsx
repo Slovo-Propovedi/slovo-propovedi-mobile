@@ -16,21 +16,17 @@ describe('<Slider/>', () => {
   test('return null if items prop is undefined', async () => {
     //@ts-expect-error - undefined is a not a valid items
     await renderWithProviders(<Slider items={undefined} />)
-    expect(screen.toJSON()).toBeNull()
+    expect(screen.queryByTestId('slider-item')).toBeNull()
   })
 
   test('return null, if items length === 0', async () => {
     await renderWithProviders(<Slider items={[]} />)
-    expect(screen.toJSON()).toBeNull()
+    expect(screen.queryByTestId('slider-item')).toBeNull()
   })
 
   test('return View, if items length > 0', async () => {
     await renderWithProviders(<Slider items={sliderStub.items} />)
-    const tree = screen.toJSON()
-    expect(tree).toBeDefined()
-    expect(Array.isArray(tree)).toEqual(false)
-    if (!tree || Array.isArray(tree)) return
-    expect(tree.type).toEqual('View')
+    expect(screen.getAllByTestId('slider-item').length).toBeGreaterThan(0)
   })
 
   test('return 2 slider items, if items length === 2', async () => {

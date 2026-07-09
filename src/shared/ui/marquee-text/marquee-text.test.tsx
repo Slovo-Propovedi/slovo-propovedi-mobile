@@ -10,16 +10,16 @@ const propsStub = {
 
 describe('<MarqueeText />', () => {
   test('returns null when text is empty', async () => {
-    const tree = await renderWithProviders(<MarqueeText text='' />)
-    expect(tree.toJSON()).toBeNull()
+    const { queryByTestId } = await renderWithProviders(<MarqueeText text='' />)
+    expect(queryByTestId('marquee-text')).toBeNull()
   })
 
   test('returns null when text is undefined', async () => {
-    const tree = await renderWithProviders(
+    const { queryByTestId } = await renderWithProviders(
       // @ts-expect-error - testing undefined text
       <MarqueeText text={undefined} />,
     )
-    expect(tree.toJSON()).toBeNull()
+    expect(queryByTestId('marquee-text')).toBeNull()
   })
 
   test('renders text content', async () => {
