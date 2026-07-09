@@ -12,6 +12,7 @@ const mockExpand = jest.fn()
 jest.mock('./useNetworkIslandAnimation', () => ({
   useNetworkIslandAnimation: jest.fn(),
 }))
+
 const mockedUseAnimation = useNetworkIslandAnimation as jest.MockedFunction<
   typeof useNetworkIslandAnimation
 >
