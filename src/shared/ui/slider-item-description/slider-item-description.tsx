@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
+import { MarqueeText } from '../marquee-text/marquee-text'
 import { COLORS, FONT_SIZES, INDENTS, useTheme } from '../themed'
 import {
   SliderItemDescriptionBackgroundStyle,
@@ -45,19 +46,17 @@ export const SliderItemDescription = ({
         style,
       ]}
     >
-      <Text
-        numberOfLines={1}
+      <MarqueeText
+        text={title}
         testID='slider-item-description-title'
-        style={[
+        textStyle={[
           styles.title,
           isTitleLarge && styles.titleLarge,
           { color: isDarkBackground || isDarkBlurBackground ? COLORS.white : currentTheme.text },
           { textAlign: titleTextAlign },
           titleStyle,
         ]}
-      >
-        {title}
-      </Text>
+      />
       {subTitle && (
         <Text
           numberOfLines={2}
@@ -85,6 +84,7 @@ const styles = StyleSheet.create({
   component: {
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+    overflow: 'hidden',
     padding: INDENTS.middle,
   },
 

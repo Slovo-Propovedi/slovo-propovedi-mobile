@@ -65,15 +65,15 @@ describe('<SliderItemDescription/>', () => {
 
     expect(sliderItemDescription).not.toBeFalsy()
   })
-  test('title is Text in View', async () => {
+  test('title is View with text content', async () => {
     const { root } = await renderWithProviders(<SliderItemDescription title={propsStub.title} />)
 
     const sliderItemDescriptionTitle = screen.getByTestId(sliderItemDescriptionTitleId)
 
     expect(root?.children.length).toEqual(1)
 
-    expect(sliderItemDescriptionTitle?.type).toEqual('Text')
-    expect(typeof sliderItemDescriptionTitle?.children[0]).toEqual('string')
+    expect(sliderItemDescriptionTitle?.type).toEqual('View')
+    expect(sliderItemDescriptionTitle).toHaveTextContent(propsStub.title)
   })
 
   test('text in title field equals to title prop', async () => {

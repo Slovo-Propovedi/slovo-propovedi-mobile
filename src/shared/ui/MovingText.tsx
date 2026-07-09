@@ -6,6 +6,7 @@ interface MovingTextProps {
   animationThreshold?: number
   containerWidth?: number
   style?: StyleProp<TextStyle>
+  testID?: string
   text: string
 }
 
@@ -14,6 +15,7 @@ const DEFAULT_THRESHOLD = 25
 export const MovingText = ({
   animationThreshold = DEFAULT_THRESHOLD,
   style,
+  testID,
   text,
 }: MovingTextProps) => {
   const { currentTheme } = useTheme()
@@ -25,6 +27,7 @@ export const MovingText = ({
         duration={0}
         loop={false}
         bounce={false}
+        testID={testID}
         marqueeDelay={0}
         style={[{ color: currentTheme.text }, style]}
       >
@@ -36,6 +39,7 @@ export const MovingText = ({
     <TextTicker
       loop
       bounce={false}
+      testID={testID}
       scrollSpeed={30}
       numberOfLines={1}
       repeatSpacer={50}

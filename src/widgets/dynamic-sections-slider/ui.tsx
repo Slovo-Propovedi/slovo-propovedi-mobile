@@ -1,6 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
-import { StyleSheet, View } from 'react-native'
 import { usePlayNewSermon } from 'entities/player'
 import { useListenNavigation } from 'shared/routing'
 import { Slider, SliderItemSize, SliderItemTransform, WhereIsSlideTitleLocated } from 'shared/ui'
@@ -54,13 +53,20 @@ export const DynamicSectionsSlider = () => {
 
   if (isLoading) return <SectionsSkeleton />
 
-  return <>{sections.map(section => renderSection(section, onItemPress, navigateToPlaylistList))}</>
+  return (
+    <>
+      {sections.map((section, index) =>
+        renderSection(section, onItemPress, navigateToPlaylistList, index),
+      )}
+    </>
+  )
 }
 
 const renderSection = (
   section: SectionData,
   onItemPress: (playlist: PlaylistData) => void,
   navigateToPlaylistList: (playlists: PlaylistData[], title: string) => void,
+  index: number,
 ) => {
   const playlists = section.playlists ?? []
   const hasBorderRadius = section.borderRadius ?? false
@@ -71,29 +77,22 @@ const renderSection = (
   }
 
   return (
-    <View key={section.id} style={styles.section}>
-      <Slider
-        style={sliderStyle}
-        title={section.title}
-        onPressItem={onItemPress}
-        itemsRows={section.itemsRows ?? undefined}
-        itemsSize={mapItemsSize(section.itemsSize)}
-        transform={mapTransform(section.transform)}
-        isDescriptionTitleOnSlideLarge={section.isDescriptionTitleOnSlideLarge}
-        onPressTitle={() => navigateToPlaylistList(playlists, section.title ?? '')}
-        whereIsSlideTitleLocated={mapWhereIsTitleLocated(section.whereIsSlideTitleLocated)}
-        items={playlists.map(item => ({
-          artwork: item.artwork,
-          data: item,
-          description: item.title,
-        }))}
-      />
-    </View>
+    <Slider
+      style={sliderStyle}
+      title={section.title}
+      onPressItem={onItemPress}
+      key={section.id ?? section.title ?? index}
+      itemsRows={section.itemsRows ?? undefined}
+      itemsSize={mapItemsSize(section.itemsSize)}
+      transform={mapTransform(section.transform)}
+      isDescriptionTitleOnSlideLarge={section.isDescriptionTitleOnSlideLarge}
+      onPressTitle={() => navigateToPlaylistList(playlists, section.title ?? '')}
+      whereIsSlideTitleLocated={mapWhereIsTitleLocated(section.whereIsSlideTitleLocated)}
+      items={playlists.map(item => ({
+        artwork: item.artwork,
+        data: item,
+        description: item.title,
+      }))}
+    />
   )
 }
-
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: INDENTS.low,
-  },
-})
