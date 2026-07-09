@@ -35,7 +35,7 @@ export const PlaylistScreen = () => {
   const [isCaching] = useAtom(isCachingPlaylistAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
   const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, titleAppearThreshold } =
-    useCollapsingHeader(title, navigation)
+    useCollapsingHeader()
 
   const { headerIconColor, statusBarStyle } = usePlaylistHeader({
     scrollY,

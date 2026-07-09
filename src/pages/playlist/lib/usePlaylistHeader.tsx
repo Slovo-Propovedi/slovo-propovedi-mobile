@@ -1,7 +1,7 @@
 import { useNavigation } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { interpolate, useDerivedValue } from 'react-native-reanimated'
+import { interpolate, useDerivedValue, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { COLORS, useTheme } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
@@ -33,6 +33,8 @@ export const usePlaylistHeader = ({
     [navigation, title],
   )
 
+  const wasAboveThreshold = useSharedValue<boolean | null>(null)
+
   useDerivedValue(() => {
     const opacity = interpolate(
       scrollY.value,
@@ -41,8 +43,17 @@ export const usePlaylistHeader = ({
       'clamp',
     )
     scheduleOnRN(setHeaderBgOpacity, opacity)
-    scheduleOnRN(updateHeaderTitle, scrollY.value > titleAppearThreshold)
+    const crossed = scrollY.value > titleAppearThreshold
+    if (wasAboveThreshold.value !== crossed) {
+      wasAboveThreshold.value = crossed
+      scheduleOnRN(updateHeaderTitle, crossed)
+    }
   }, [scrollY, titleAppearThreshold, updateHeaderTitle])
+
+  // Re-apply title when the title prop changes (the transition guard would otherwise skip it)
+  useEffect(() => {
+    wasAboveThreshold.value = null
+  }, [title])
 
   const iconModeRef = useRef<'cover' | 'header'>('cover')
 
@@ -70,9 +81,9 @@ export const usePlaylistHeader = ({
   }, [headerBgOpacity, currentTheme.background])
 
   useEffect(() => {
-    navigation.setOptions({ headerBackground, headerTitle: '' })
+    navigation.setOptions({ headerBackground })
     return () => {
-      navigation.setOptions({ headerBackground: undefined, headerTitle: 'Плейлист' })
+      navigation.setOptions({ headerBackground: undefined })
     }
   }, [navigation, headerBackground])
 

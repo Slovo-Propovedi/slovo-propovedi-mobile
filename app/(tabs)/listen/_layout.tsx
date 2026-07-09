@@ -13,26 +13,21 @@ const ListenStackLayout = () => {
         headerTitleStyle: { color: currentTheme.text },
       }}
     >
-    <Stack.Screen
-      name='index'
-      options={{
-        headerShown: false,
-      }}
-    />
-    <Stack.Screen
-      name='playlist-list'
-      options={{
-        title: 'Плейлисты',
-      }}
-    />
-    <Stack.Screen
-      name='playlist'
-      options={{
-        headerStyle: { backgroundColor: 'transparent' },
-        headerTransparent: true,
-        title: 'Плейлист',
-      }}
-    />
+      <Stack.Screen
+        name='index'
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen name='playlist-list' options={{ title: '' }} />
+      <Stack.Screen
+        name='playlist'
+        options={{
+          headerStyle: { backgroundColor: 'transparent' },
+          headerTransparent: true,
+          title: '',
+        }}
+      />
     </Stack>
   )
 }

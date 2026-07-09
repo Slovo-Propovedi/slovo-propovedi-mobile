@@ -1,5 +1,4 @@
 import { useHeaderHeight } from 'expo-router/react-navigation'
-import { useCallback } from 'react'
 import { Dimensions } from 'react-native'
 import {
   interpolate,
@@ -23,15 +22,9 @@ interface UseCollapsingHeaderResult {
   scrollHandler: ReturnType<typeof useAnimatedScrollHandler>
   scrollY: SharedValue<number>
   titleAppearThreshold: number
-  updateHeaderTitle: (shouldShowTitle: boolean) => void
 }
 
-export const useCollapsingHeader = (
-  title: string,
-  navigation: {
-    setOptions: (options: { headerTitle: string }) => void
-  },
-): UseCollapsingHeaderResult => {
+export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
   const scrollY = useSharedValue(0)
   const headerHeight = useHeaderHeight() || ESTIMATED_HEADER_HEIGHT
 
@@ -44,15 +37,6 @@ export const useCollapsingHeader = (
   // headerImageHeight / 2 - scrollY <= headerHeight
   // scrollY >= headerImageHeight / 2 - headerHeight
   const titleAppearThreshold = headerImageHeight / 2 - headerHeight
-
-  const updateHeaderTitle = useCallback(
-    (shouldShowTitle: boolean) => {
-      navigation.setOptions({
-        headerTitle: shouldShowTitle ? title : '',
-      })
-    },
-    [navigation, title],
-  )
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
@@ -71,6 +55,5 @@ export const useCollapsingHeader = (
     scrollHandler,
     scrollY,
     titleAppearThreshold,
-    updateHeaderTitle,
   }
 }
