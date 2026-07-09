@@ -11,6 +11,11 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+      - name: Debug env
+        run: |
+          echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
+          ls -la /toolcache 2>/dev/null || echo "/toolcache недоступен"
+          ls -la /opt/hostedtoolcache 2>/dev/null || echo "/opt/hostedtoolcache недоступен"
       - name: Checkout repository
         uses: actions/checkout@v4
 
