@@ -44,16 +44,15 @@ export const usePlaylistHeader = ({
     scheduleOnRN(updateHeaderTitle, scrollY.value > titleAppearThreshold)
   }, [scrollY, titleAppearThreshold, updateHeaderTitle])
 
-  const [iconMode, setIconMode] = useState<'cover' | 'header'>('cover')
-  const iconModeRef = useRef(iconMode)
-  iconModeRef.current = iconMode
+  const iconModeRef = useRef<'cover' | 'header'>('cover')
 
-  useEffect(() => {
-    if (iconModeRef.current === 'cover' && headerBgOpacity >= ICON_DARK_THRESHOLD)
-      setIconMode('header')
-    else if (iconModeRef.current === 'header' && headerBgOpacity <= ICON_LIGHT_THRESHOLD)
-      setIconMode('cover')
-  }, [headerBgOpacity])
+  // Hysteresis logic: different thresholds for icon mode transitions prevent flickering
+  if (iconModeRef.current === 'cover' && headerBgOpacity >= ICON_DARK_THRESHOLD)
+    iconModeRef.current = 'header'
+  else if (iconModeRef.current === 'header' && headerBgOpacity <= ICON_LIGHT_THRESHOLD)
+    iconModeRef.current = 'cover'
+
+  const iconMode = iconModeRef.current
 
   const headerIconColor = iconMode === 'cover' ? COLORS.white : currentTheme.text
   const statusBarStyle: 'dark' | 'light' =

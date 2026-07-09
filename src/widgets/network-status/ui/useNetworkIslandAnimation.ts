@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useWindowDimensions } from 'react-native'
-import { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import {
+  interpolate,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 
 const DOT_SIZE = 12
 const PILL_WIDTH = 110
@@ -19,23 +26,32 @@ export const useNetworkIslandAnimation = (isOnline: boolean) => {
 
   const collapse = useCallback(() => {
     expandProgress.value = withTiming(0, { duration: ANIMATION_DURATION })
-    setIsExpanded(false)
   }, [])
 
   const expand = useCallback(() => {
     expandProgress.value = withTiming(1, { duration: ANIMATION_DURATION })
-    setIsExpanded(true)
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
     timeoutRef.current = setTimeout(() => collapse(), AUTO_COLLAPSE_MS)
   }, [collapse])
 
   useEffect(() => {
     if (!isOnline) expand()
+    else if (timeoutRef.current) clearTimeout(timeoutRef.current)
   }, [isOnline, expand])
 
   useEffect(
     () => () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    },
+    [],
+  )
+
+  // Sync SharedValue progress to React state so consumers get JS-thread re-renders.
+  // This avoids stale isExpanded when animations run on the UI thread.
+  useAnimatedReaction(
+    () => expandProgress.value > 0.5,
+    isExpandedValue => {
+      scheduleOnRN(setIsExpanded, isExpandedValue)
     },
     [],
   )
