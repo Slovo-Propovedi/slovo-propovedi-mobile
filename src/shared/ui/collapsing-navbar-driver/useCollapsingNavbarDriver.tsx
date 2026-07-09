@@ -6,17 +6,30 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { useTheme } from 'shared/ui/themed'
 import type { SharedValue } from 'react-native-reanimated'
 
-interface UseCollapsingListHeaderProps {
+interface UseCollapsingNavbarDriverOptions {
+  // Scroll offset where the navbar background STARTS darkening; it reaches full opacity at `threshold`.
+  darkenStart: SharedValue<number>
+  // Shared scroll offset driven by the screen's scroll handler.
   scrollY: SharedValue<number>
+  // Navbar title appears when scrollY > threshold.
+  threshold: SharedValue<number>
+  // Text shown in the navbar once scroll crosses the threshold.
   title: string
-  titleAppearThreshold: SharedValue<number>
 }
 
-export const useCollapsingListHeader = ({
+interface UseCollapsingNavbarDriverResult {
+  // Current navbar background opacity (0..1) as React state — useful for icon/statusbar color coupling.
+  headerBgOpacity: number
+}
+
+// Drives a collapsing navbar: fades the header background over [darkenStart, threshold] and toggles the
+// header title (the SOLE writer of headerTitle via navigation.setOptions) when scroll crosses the threshold.
+export const useCollapsingNavbarDriver = ({
+  darkenStart,
   scrollY,
+  threshold,
   title,
-  titleAppearThreshold,
-}: UseCollapsingListHeaderProps) => {
+}: UseCollapsingNavbarDriverOptions): UseCollapsingNavbarDriverResult => {
   const navigation = useNavigation()
   const { currentTheme } = useTheme()
   const [headerBgOpacity, setHeaderBgOpacity] = useState(0)
@@ -30,18 +43,22 @@ export const useCollapsingListHeader = ({
 
   const wasAboveThreshold = useSharedValue<boolean | null>(null)
 
-  // Navbar bg darkens over [0, titleAppearThreshold] and the title appears at the threshold:
-  // both complete together, when the content title fully slides under the navbar.
   useDerivedValue(() => {
-    const opacity = interpolate(scrollY.value, [0, titleAppearThreshold.value], [0, 1], 'clamp')
+    const opacity = interpolate(
+      scrollY.value,
+      [darkenStart.value, threshold.value],
+      [0, 1],
+      'clamp',
+    )
     scheduleOnRN(setHeaderBgOpacity, opacity)
-    const crossed = scrollY.value > titleAppearThreshold.value
+    const crossed = scrollY.value > threshold.value
     if (wasAboveThreshold.value !== crossed) {
       wasAboveThreshold.value = crossed
       scheduleOnRN(updateHeaderTitle, crossed)
     }
-  }, [scrollY, titleAppearThreshold, updateHeaderTitle])
+  }, [darkenStart, scrollY, threshold, updateHeaderTitle])
 
+  // Re-apply the title when the `title` prop changes (the transition guard would otherwise skip it).
   useEffect(() => {
     wasAboveThreshold.value = null
   }, [title])
@@ -59,4 +76,6 @@ export const useCollapsingListHeader = ({
       navigation.setOptions({ headerBackground: undefined })
     }
   }, [navigation, headerBackground])
+
+  return { headerBgOpacity }
 }

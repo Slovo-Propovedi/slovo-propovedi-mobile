@@ -7,6 +7,7 @@ import type { SharedValue } from 'react-native-reanimated'
 const ESTIMATED_HEADER_HEIGHT = 100
 
 interface UseCollapsingHeaderResult {
+  darkenStart: SharedValue<number>
   headerHeight: number
   onTitleLayout: (event: LayoutChangeEvent) => void
   scrollHandler: ReturnType<typeof useAnimatedScrollHandler>
@@ -16,6 +17,7 @@ interface UseCollapsingHeaderResult {
 
 export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
   const scrollY = useSharedValue(0)
+  const darkenStart = useSharedValue(0)
   const titleAppearThreshold = useSharedValue(Number.MAX_SAFE_INTEGER)
   const headerHeight = useHeaderHeight() || ESTIMATED_HEADER_HEIGHT
   const [titleLayout, setTitleLayout] = useState({ height: 0, top: 0 })
@@ -38,5 +40,5 @@ export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
     },
   })
 
-  return { headerHeight, onTitleLayout, scrollHandler, scrollY, titleAppearThreshold }
+  return { darkenStart, headerHeight, onTitleLayout, scrollHandler, scrollY, titleAppearThreshold }
 }

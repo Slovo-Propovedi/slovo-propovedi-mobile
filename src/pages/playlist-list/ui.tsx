@@ -3,10 +3,11 @@ import { StatusBar } from 'expo-status-bar'
 import { StyleSheet, Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { ListItemSize, TouchableListItem } from 'shared/ui'
+import { useCollapsingNavbarDriver } from 'shared/ui/collapsing-navbar-driver'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
 import type { PlaylistData } from 'shared/model'
 import type { OnPressTouchableListItem } from 'shared/ui'
-import { useCollapsingHeader, useCollapsingListHeader } from './lib'
+import { useCollapsingHeader } from './lib'
 
 const TITLE_TOP_GAP = 80
 
@@ -20,10 +21,10 @@ export const PlaylistListScreen = () => {
     : []
   const title = params.title || ''
 
-  const { headerHeight, onTitleLayout, scrollHandler, scrollY, titleAppearThreshold } =
+  const { darkenStart, headerHeight, onTitleLayout, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader()
 
-  useCollapsingListHeader({ scrollY, title, titleAppearThreshold })
+  useCollapsingNavbarDriver({ darkenStart, scrollY, threshold: titleAppearThreshold, title })
 
   const onPressListItem: OnPressTouchableListItem<PlaylistData> = playlist => {
     router.push({
