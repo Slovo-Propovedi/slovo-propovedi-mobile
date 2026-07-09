@@ -47,10 +47,6 @@ describe('<SliderItemDescription/>', () => {
   test('text is visible, if title prop valid', async () => {
     await renderWithProviders(<SliderItemDescription title={propsStub.title} />)
 
-    const tree = screen.toJSON()
-
-    if (!tree || Array.isArray(tree)) return
-
     const sliderItemDescription = screen.getByTestId(sliderItemDescriptionTitleId)
 
     expect(sliderItemDescription).not.toBeFalsy()

@@ -31,8 +31,6 @@ describe('<Slider/>', () => {
 
   test('return 2 slider items, if items length === 2', async () => {
     await renderWithProviders(<Slider items={[itemStub, itemStub]} />)
-    const tree = screen.toJSON()
-    if (!tree || Array.isArray(tree)) return
     expect(screen.getAllByTestId('slider-item').length).toEqual(2)
   })
 
@@ -45,8 +43,6 @@ describe('<Slider/>', () => {
         }}
       />,
     )
-    const tree = screen.toJSON()
-    if (!tree || Array.isArray(tree)) return
     fireEvent.press(screen.getAllByTestId('slider-item')[0])
     expect(mockData.text).not.toBeNull()
   })
