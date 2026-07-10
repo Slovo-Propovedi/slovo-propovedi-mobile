@@ -1,8 +1,8 @@
 import { type StyleProp, StyleSheet, type TextStyle, type ViewStyle } from 'react-native'
-import { BodyXMLElementName } from 'entities/book-reader'
-import { type XMLElementName } from 'entities/book-reader'
 import { type ThemeColors } from 'shared/ui/theme'
 import { FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import type { XMLElementName } from '../model'
+import { BodyXMLElementName } from '../model'
 
 interface GetTextElementStylesReturnType {
   style?: StyleProp<ViewStyle>

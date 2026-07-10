@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import { type ThemeColors } from 'shared/ui/theme'
-import type { XMLElement, XMLElementName } from 'entities/book-reader'
+import type { XMLElement, XMLElementName } from '../model'
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native'
 import { getElementKey } from './getElementKey'
 import { getElementsInBlockElement } from './getElementsInBlockElement'

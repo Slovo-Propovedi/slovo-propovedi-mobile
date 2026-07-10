@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native'
-import { BodyXMLElementName, type XMLElement } from 'entities/book-reader'
 import { type ThemeColors } from 'shared/ui/theme'
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native'
+import { BodyXMLElementName, type XMLElement } from '../model'
 import { getElementKey } from './getElementKey'
 import { getElementsInBlockElement } from './getElementsInBlockElement'
 

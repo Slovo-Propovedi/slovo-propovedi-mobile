@@ -11,7 +11,7 @@ import {
 } from 'shared/ui'
 import { INDENTS } from 'shared/ui/themed'
 import type { BookData } from 'shared/model'
-import { getVerseByVerseBooksSlider, VerseByVerseBooksSliderAtom } from './model'
+import { getVerseByVerseBooksSlider, VerseByVerseBooksSliderAtom } from '../model-verseByVerse'
 
 export const VerseByVerseBooksSlider = () => {
   const title = 'По библии. Стих за стихом'

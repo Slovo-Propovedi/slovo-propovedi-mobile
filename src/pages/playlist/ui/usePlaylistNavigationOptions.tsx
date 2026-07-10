@@ -1,8 +1,8 @@
 import { useNavigation } from 'expo-router'
 import { useEffect } from 'react'
 import { type ColorValue } from 'react-native'
-import { PlaylistCacheMenu } from 'features/playlist-cache'
 import { type SermonData } from 'shared/model'
+import { PlaylistCacheMenu } from './PlaylistCacheMenu'
 
 export type TracksListData = ReturnType<typeof buildTracksListData>
 

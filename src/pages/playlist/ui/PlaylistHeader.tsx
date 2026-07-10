@@ -1,9 +1,9 @@
 import { Image, Text, View } from 'react-native'
 import Animated, { type useAnimatedStyle } from 'react-native-reanimated'
-import { QueueControls } from 'widgets/track-list'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import { type ThemeColors } from 'shared/ui/theme'
 import { createHeaderStyles } from './headerStyles'
+import { QueueControls } from './QueueControls'
 
 interface PlaylistHeaderProps {
   artwork: string | undefined

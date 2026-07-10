@@ -1,9 +1,10 @@
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { BodyXMLElementName, parseFb2BookToObject, XMLElementType } from 'entities/book-reader'
 import { INDENTS, useTheme } from 'shared/ui/themed'
-import type { XMLElementElement } from 'entities/book-reader'
+import type { XMLElementElement } from './model'
 import { parseObjectToStylizedElements } from './lib'
+import { parseFb2BookToObject } from './lib/parseFb2BookToObject'
+import { BodyXMLElementName, XMLElementType } from './model'
 import { testFb2String } from './testFiles/testFb2'
 
 export const BookReaderScreen = () => {

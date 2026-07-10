@@ -1,9 +1,9 @@
 import { ScrollView, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { NotesForPreachersBooksSlider } from 'widgets/notes-for-preachers-books-slider'
-import { TopicalAndThematicBooksSlider } from 'widgets/topical-and-thematic-books-slider'
-import { VerseByVerseBooksSlider } from 'widgets/verse-by-verse-books-slider'
 import { useTheme } from 'shared/ui/themed'
+import { NotesForPreachersBooksSlider } from './NotesForPreachersBooksSlider'
+import { TopicalAndThematicBooksSlider } from './TopicalAndThematicBooksSlider'
+import { VerseByVerseBooksSlider } from './VerseByVerseBooksSlider'
 
 export const ReadScreen = () => {
   const { currentTheme } = useTheme()

@@ -1,5 +1,5 @@
 import { type StyleProp, Text, type TextStyle } from 'react-native'
-import type { XMLElementText } from 'entities/book-reader'
+import type { XMLElementText } from '../model'
 
 interface GetTextElementProps {
   element: XMLElementText

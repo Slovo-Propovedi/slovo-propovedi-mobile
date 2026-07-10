@@ -1,9 +1,9 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { useCallback, useRef, useState } from 'react'
 import { Dimensions, type View } from 'react-native'
-import { isCachingPlaylistAtom } from 'features/playlist-cache/model'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
+import { isCachingPlaylistAtom } from '../model'
 import { playlistCacheService, type TrackToCache } from './PlaylistCacheService'
 import { usePlaylistCacheStatus } from './usePlaylistCacheStatus'
 

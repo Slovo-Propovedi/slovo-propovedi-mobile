@@ -1,4 +1,4 @@
-import type { XMLElementName } from 'entities/book-reader'
+import type { XMLElementName } from '../model'
 
 interface GetElementKeyProps {
   endWith?: number | string

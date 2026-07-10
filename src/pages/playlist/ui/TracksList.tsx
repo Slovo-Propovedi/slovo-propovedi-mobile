@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated'
 import { type ThemeColors } from 'shared/ui/theme'
 import { useTheme } from 'shared/ui/themed'
 import { createTracksListStyles, TracksListItem } from 'shared/ui/track-list'
-import type { TracksListProps } from './types'
+import type { TracksListProps } from './trackListTypes'
 import { QueueControls } from './QueueControls'
 
 const ItemSeparator = ({ theme }: { theme: ThemeColors }) => (

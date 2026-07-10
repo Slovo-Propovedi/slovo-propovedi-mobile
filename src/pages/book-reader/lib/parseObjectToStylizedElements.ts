@@ -1,10 +1,6 @@
 import { type StyleProp, type TextStyle } from 'react-native'
-import {
-  BodyXMLElementName,
-  type XMLElementElement,
-  type XMLElementText,
-} from 'entities/book-reader'
 import { type ThemeColors } from 'shared/ui/theme'
+import { BodyXMLElementName, type XMLElementElement, type XMLElementText } from '../model'
 import { getBlockElement } from './getBlockElement'
 import { getElementKey } from './getElementKey'
 import { getParagraphElement } from './getParagraphElement'

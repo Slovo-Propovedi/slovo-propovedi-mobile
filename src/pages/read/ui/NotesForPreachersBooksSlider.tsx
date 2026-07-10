@@ -11,15 +11,18 @@ import {
 } from 'shared/ui'
 import { INDENTS } from 'shared/ui/themed'
 import type { BookData } from 'shared/model'
-import { getTopicalAndThematicBooksSlider, topicalAndThematicBooksSliderAtomt } from './model'
+import {
+  getNotesForPreachersBooksSlider,
+  notesForPreachersBooksSliderAtom,
+} from '../model-notesForPreachers'
 
-export const TopicalAndThematicBooksSlider = () => {
-  const title = 'Актуальные и тематические'
+export const NotesForPreachersBooksSlider = () => {
+  const title = 'Конспекты для проповедников'
 
   const { navigateToBookReader, navigateToBooksList } = useReadNavigation()
 
-  const topicalAndThematicBooks = useAtom(topicalAndThematicBooksSliderAtomt)[0]
-  const fetchTopicalAndThematicBooks = useAction(getTopicalAndThematicBooksSlider)
+  const notesForPreachersBooks = useAtom(notesForPreachersBooksSliderAtom)[0]
+  const fetchNotesForPreachersBooks = useAction(getNotesForPreachersBooksSlider)
 
   const onItemPress = async (bookList: BookData) => {
     navigateToBookReader(bookList)
@@ -30,7 +33,7 @@ export const TopicalAndThematicBooksSlider = () => {
   }
 
   useEffect(() => {
-    void fetchTopicalAndThematicBooks()
+    void fetchNotesForPreachersBooks()
   }, [])
 
   return (
@@ -44,9 +47,9 @@ export const TopicalAndThematicBooksSlider = () => {
       whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
       descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
       onPressTitle={() => {
-        onPressTitle(topicalAndThematicBooks)
+        onPressTitle(notesForPreachersBooks)
       }}
-      items={topicalAndThematicBooks.map(item => ({
+      items={notesForPreachersBooks.map(item => ({
         artwork: item.artwork,
         data: item,
         description: item.title,

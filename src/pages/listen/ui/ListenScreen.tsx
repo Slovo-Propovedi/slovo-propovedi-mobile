@@ -1,7 +1,7 @@
 import { ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { DynamicSectionsSlider } from 'widgets/dynamic-sections-slider'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/themed'
+import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 
 export const ListenScreen = () => {
   const { currentTheme } = useTheme()
