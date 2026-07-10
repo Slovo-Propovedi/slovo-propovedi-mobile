@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { setStringAsync } from 'expo-clipboard'
 import { useState } from 'react'
-import { Modal, Platform, StyleSheet, Text, View } from 'react-native'
+import { Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { Button } from '../button'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from '../themed'
 
@@ -35,15 +35,17 @@ ${detail}
         <View style={[styles.dialog, { backgroundColor: currentTheme.surface }]}>
           <Ionicons size={48} name='warning' style={styles.icon} color={currentTheme.primary} />
           <Text style={[styles.title, { color: currentTheme.text }]}>Ошибка</Text>
-          <Text style={[styles.message, { color: currentTheme.text }]}>{message}</Text>
-          <View style={[styles.detailContainer, { backgroundColor: currentTheme.background }]}>
-            <Text style={[styles.detailTitle, { color: currentTheme.textMuted }]}>
-              Детали ошибки:
-            </Text>
-            <Text selectable style={[styles.detailText, { color: currentTheme.text }]}>
-              {detail}
-            </Text>
-          </View>
+          <ScrollView alwaysBounceVertical style={styles.scrollContent}>
+            <Text style={[styles.message, { color: currentTheme.text }]}>{message}</Text>
+            <View style={[styles.detailContainer, { backgroundColor: currentTheme.background }]}>
+              <Text style={[styles.detailTitle, { color: currentTheme.textMuted }]}>
+                Детали ошибки:
+              </Text>
+              <Text selectable style={[styles.detailText, { color: currentTheme.text }]}>
+                {detail}
+              </Text>
+            </View>
+          </ScrollView>
           <View style={styles.buttonContainer}>
             <Button
               onPress={handleCopy}
@@ -69,6 +71,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUSES.low,
   },
   buttonContainer: {
+    flexShrink: 0,
     gap: INDENTS.low,
     width: '100%',
   },
@@ -94,6 +97,8 @@ const styles = StyleSheet.create({
   dialog: {
     alignItems: 'center',
     borderRadius: RADIUSES.high,
+    maxHeight: '85%',
+    overflow: 'hidden',
     padding: INDENTS.high,
     width: '100%',
   },
@@ -111,6 +116,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: INDENTS.high,
+  },
+  scrollContent: {
+    flexShrink: 1,
+    marginBottom: INDENTS.medium,
+    width: '100%',
   },
   title: {
     fontSize: FONT_SIZES.h1,

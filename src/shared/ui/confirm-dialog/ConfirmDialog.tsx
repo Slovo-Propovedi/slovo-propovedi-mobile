@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { type ColorValue, Modal, Text, View } from 'react-native'
+import { type ColorValue, Modal, ScrollView, Text, View } from 'react-native'
 import { useTheme } from '../themed'
 import { ConfirmDialogButton } from './ConfirmDialogButton'
 import { styles } from './styles'
@@ -49,11 +49,13 @@ export const ConfirmDialog = ({
         <View style={[styles.dialog, { backgroundColor: currentTheme.surface }]}>
           {icon && <View style={styles.iconContainer}>{icon}</View>}
           <Text style={[styles.title, { color: currentTheme.text }]}>{title}</Text>
-          {messages.map((msg, index) => (
-            <Text key={index} style={[styles.message, { color: currentTheme.text }]}>
-              {msg}
-            </Text>
-          ))}
+          <ScrollView alwaysBounceVertical style={styles.messageScroll}>
+            {messages.map((msg, index) => (
+              <Text key={index} style={[styles.message, { color: currentTheme.text }]}>
+                {msg}
+              </Text>
+            ))}
+          </ScrollView>
           <View style={styles.buttons}>
             {!hideCancel && (
               <ConfirmDialogButton

@@ -13,12 +13,7 @@ const ListenStackLayout = () => {
         headerTitleStyle: { color: currentTheme.text },
       }}
     >
-      <Stack.Screen
-        name='index'
-        options={{
-          headerShown: false,
-        }}
-      />
+      <Stack.Screen name='index' options={{ headerShown: false }} />
       <Stack.Screen
         name='playlist-list'
         options={{

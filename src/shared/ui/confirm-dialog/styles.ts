@@ -19,6 +19,7 @@ export const styles = StyleSheet.create({
   },
   buttons: {
     flexDirection: 'row',
+    flexShrink: 0,
     gap: INDENTS.medium,
   },
   cancelButton: {
@@ -47,13 +48,24 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  dialog: { backgroundColor: COLORS.surface, borderRadius: RADIUSES.middle, padding: INDENTS.high },
+  dialog: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUSES.middle,
+    maxHeight: '85%',
+    overflow: 'hidden',
+    padding: INDENTS.high,
+  },
   iconContainer: { marginBottom: INDENTS.medium },
   message: {
     color: COLORS.text,
     fontSize: FONT_SIZES.base,
     lineHeight: FONT_SIZES.base * 1.5,
     marginBottom: INDENTS.high,
+  },
+  messageScroll: {
+    flexShrink: 1,
+    marginBottom: INDENTS.medium,
+    width: '100%',
   },
   title: {
     color: COLORS.text,
