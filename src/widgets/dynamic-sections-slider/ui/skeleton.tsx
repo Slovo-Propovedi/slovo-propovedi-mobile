@@ -1,7 +1,7 @@
 import {
+  Slider,
   SliderItemSize,
   SliderItemTransform,
-  SliderSkeleton,
   type WhereIsSlideTitleLocated,
 } from 'shared/ui'
 
@@ -25,7 +25,7 @@ const SKELETON_SECTIONS: SkeletonSectionProps[] = [
 export const SectionsSkeleton = () => (
   <>
     {SKELETON_SECTIONS.map((section, index) => (
-      <SliderSkeleton key={index} {...section} />
+      <Slider.Skeleton key={index} {...section} />
     ))}
   </>
 )

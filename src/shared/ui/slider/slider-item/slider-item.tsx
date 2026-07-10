@@ -4,6 +4,7 @@ import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../../config/screen-dimension
 import { IMAGE_PLACEHOLDER } from '../../images'
 import { RADIUSES } from '../../themed'
 import { SliderItemDescription } from '../slider-item-description/slider-item-description'
+import { SliderItemSkeleton } from './skeleton'
 import {
   type SliderItemProps,
   SliderItemSize,
@@ -83,6 +84,8 @@ export const SliderItem = ({
     </TouchableOpacity>
   )
 }
+
+SliderItem.Skeleton = SliderItemSkeleton
 
 const styles = StyleSheet.create({
   backgroundImage: { borderRadius: RADIUSES.large },

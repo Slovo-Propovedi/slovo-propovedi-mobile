@@ -13,6 +13,7 @@ import Animated, { useDerivedValue, useSharedValue } from 'react-native-reanimat
 import { scheduleOnUI } from 'react-native-worklets'
 import { createMarqueeGesture } from './createMarqueeGesture'
 import { REPEAT_SPACER, shouldMarquee } from './marquee-utils'
+import { MarqueeTextSkeleton } from './skeleton'
 import { useMarqueeAnimation } from './useMarqueeAnimation'
 
 export interface MarqueeTextProps {
@@ -88,5 +89,7 @@ export const MarqueeText = ({
     </View>
   )
 }
+
+MarqueeText.Skeleton = MarqueeTextSkeleton
 
 export default MarqueeText

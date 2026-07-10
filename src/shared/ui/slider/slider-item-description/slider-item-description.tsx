@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import { type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
 import { MarqueeText } from '../../marquee-text/marquee-text'
 import { COLORS, FONT_SIZES, INDENTS, useTheme } from '../../themed'
+import { SliderItemDescriptionSkeleton } from './skeleton'
 import {
   SliderItemDescriptionBackgroundStyle,
   type SliderItemDescriptionTextAlign,
@@ -77,6 +78,8 @@ export const SliderItemDescription = ({
     </View>
   )
 }
+
+SliderItemDescription.Skeleton = SliderItemDescriptionSkeleton
 
 const styles = StyleSheet.create({
   blurBackground: { backgroundColor: COLORS.black70 },

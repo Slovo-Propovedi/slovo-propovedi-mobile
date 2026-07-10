@@ -13,6 +13,7 @@ import {
   type SliderItemDescriptionBackgroundStyle,
   type SliderItemDescriptionTextAlign,
 } from './slider-item-description/slider-item-description.types'
+import { SliderSkeleton } from './slider-skeleton'
 import { createSliderStyles as styles } from './slider.styles'
 
 type FontSizes = typeof FONT_SIZES
@@ -122,3 +123,5 @@ export const Slider = <D extends object>({
     </View>
   )
 }
+
+Slider.Skeleton = SliderSkeleton
