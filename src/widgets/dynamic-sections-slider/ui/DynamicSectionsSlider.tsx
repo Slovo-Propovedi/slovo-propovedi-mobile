@@ -2,36 +2,10 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import { usePlayNewSermon } from 'entities/player'
 import { useListenNavigation } from 'shared/routing'
-import { Slider, SliderItemSize, SliderItemTransform, WhereIsSlideTitleLocated } from 'shared/ui'
-import { INDENTS, RADIUSES } from 'shared/ui/themed'
-import type { PlaylistData, SectionData } from 'shared/model'
+import type { PlaylistData } from 'shared/model'
 import { dynamicSectionsAtom, fetchAllSections, isLoadingSectionsAtom } from '../model'
+import { renderSection } from './renderSection'
 import { SectionsSkeleton } from './skeleton'
-
-const mapItemsSize = (size?: string): SliderItemSize => {
-  const map: Record<string, SliderItemSize> = {
-    large: SliderItemSize.Large,
-    middle: SliderItemSize.Middle,
-    small: SliderItemSize.Small,
-    xLarge: SliderItemSize.XLarge,
-  }
-  return map[size ?? 'middle'] ?? SliderItemSize.Middle
-}
-
-const mapTransform = (transform?: null | string): SliderItemTransform | undefined => {
-  if (transform === 'high') return SliderItemTransform.High
-  if (transform === 'short') return SliderItemTransform.Short
-  return undefined
-}
-
-const mapWhereIsTitleLocated = (where?: string): WhereIsSlideTitleLocated => {
-  const map: Record<string, WhereIsSlideTitleLocated> = {
-    bothOnAndUnder: WhereIsSlideTitleLocated.BothOnAndUnder,
-    on: WhereIsSlideTitleLocated.On,
-    under: WhereIsSlideTitleLocated.Under,
-  }
-  return map[where ?? 'under'] ?? WhereIsSlideTitleLocated.Under
-}
 
 export const DynamicSectionsSlider = () => {
   const playNewSermon = usePlayNewSermon()
@@ -56,43 +30,8 @@ export const DynamicSectionsSlider = () => {
   return (
     <>
       {sections.map((section, index) =>
-        renderSection(section, onItemPress, navigateToPlaylistList, index),
+        renderSection({ index, navigateToPlaylistList, onItemPress, section }),
       )}
     </>
-  )
-}
-
-const renderSection = (
-  section: SectionData,
-  onItemPress: (playlist: PlaylistData) => void,
-  navigateToPlaylistList: (playlists: PlaylistData[], title: string) => void,
-  index: number,
-) => {
-  const playlists = section.playlists ?? []
-  const hasBorderRadius = section.borderRadius ?? false
-
-  const sliderStyle = {
-    paddingHorizontal: INDENTS.middle,
-    ...(hasBorderRadius ? { borderRadius: RADIUSES.low } : {}),
-  }
-
-  return (
-    <Slider
-      style={sliderStyle}
-      title={section.title}
-      onPressItem={onItemPress}
-      key={section.id ?? section.title ?? index}
-      itemsRows={section.itemsRows ?? undefined}
-      itemsSize={mapItemsSize(section.itemsSize)}
-      transform={mapTransform(section.transform)}
-      isDescriptionTitleOnSlideLarge={section.isDescriptionTitleOnSlideLarge}
-      onPressTitle={() => navigateToPlaylistList(playlists, section.title ?? '')}
-      whereIsSlideTitleLocated={mapWhereIsTitleLocated(section.whereIsSlideTitleLocated)}
-      items={playlists.map(item => ({
-        artwork: item.artwork,
-        data: item,
-        description: item.title,
-      }))}
-    />
   )
 }

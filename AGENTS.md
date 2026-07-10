@@ -91,6 +91,23 @@ src/entities/player/
     └── PlayerControls.test.tsx
 ```
 
+## Barrel Export Rules
+
+- **One barrel per slice**: Each FSD slice should have only ONE barrel export file: `index.ts` at the slice root
+- **No segment barrels**: DO NOT create `index.ts` files for segments (e.g., `ui/index.ts`, `lib/index.ts`)
+- **Export only public API**: Export ONLY what's actually reused externally from other slices/layers. Internal implementation details (helper functions, internal components, atoms) should NOT be exported
+- **Public API example**: If only one component is reused externally, export only that component:
+  ```typescript
+  export { MyComponent } from './ui/MyComponent'
+  ```
+  NOT:
+  ```typescript
+  export { MyComponent } from './ui/MyComponent'
+  export { internalHelper } from './lib/internalHelper'  // ❌ Internal, not reused externally
+  export { InternalComponent } from './ui/InternalComponent'  // ❌ Internal, not reused externally
+  export { myAtom } from './model'  // ❌ Internal state, not reused externally
+  ```
+
 ## Code Style Guidelines
 
 ### Imports
