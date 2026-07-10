@@ -20,6 +20,7 @@ export const TracksListItem = ({
   isAudioPlaying = false,
   isPlaying,
   onPress,
+  style,
   title,
 }: TracksListItemProps) => {
   const { currentTheme } = useTheme()
@@ -70,7 +71,11 @@ export const TracksListItem = ({
         onPress={handleItemPress}
         testID='tracks-list-item'
         onLongPress={handleToggleMenu}
-        style={[tracksListStyles.itemContainer, isMenuOpen && tracksListStyles.itemContainerActive]}
+        style={[
+          style,
+          tracksListStyles.itemContainer,
+          isMenuOpen && tracksListStyles.itemContainerActive,
+        ]}
       >
         <View style={tracksListStyles.albumArtContainer}>
           <Image
@@ -123,5 +128,3 @@ export const TracksListItem = ({
     </>
   )
 }
-
-export default TracksListItem

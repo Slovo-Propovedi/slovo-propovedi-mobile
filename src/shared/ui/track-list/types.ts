@@ -1,3 +1,5 @@
+import { type StyleProp, type ViewStyle } from 'react-native'
+
 export interface TracksListItemProps {
   artist?: string
   artwork?: string
@@ -10,5 +12,6 @@ export interface TracksListItemProps {
   isCached?: boolean
   isPlaying: boolean
   onPress: () => void
+  style?: StyleProp<ViewStyle>
   title: string
 }

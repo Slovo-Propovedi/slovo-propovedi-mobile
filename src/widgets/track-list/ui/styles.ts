@@ -20,7 +20,6 @@ export const queueControlsStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    paddingHorizontal: INDENTS.middle,
     paddingVertical: INDENTS.middle,
   },
   icon: {
