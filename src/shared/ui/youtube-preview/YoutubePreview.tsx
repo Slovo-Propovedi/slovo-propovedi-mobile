@@ -1,6 +1,7 @@
 import { Image, Linking, StyleSheet } from 'react-native'
 import { type StyleProp, type ViewStyle } from 'react-native'
 import { TouchableImageBackground } from '../touchable-image-background/touchable-image-background'
+import youtubeLogo from './assets/youtube-logo-png-2069.png'
 
 interface YoutubePreviewProps {
   previewSrc: string
@@ -16,12 +17,7 @@ export const YoutubePreview = ({ previewSrc, style, url }: YoutubePreviewProps) 
       void Linking.openURL(url)
     }}
   >
-    <Image
-      resizeMode='contain'
-      style={styles.youtubeButton}
-      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Static asset import
-      source={require('./assets/youtube-logo-png-2069.png')}
-    />
+    <Image resizeMode='contain' source={youtubeLogo} style={styles.youtubeButton} />
   </TouchableImageBackground>
 )
 

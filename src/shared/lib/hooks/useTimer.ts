@@ -33,10 +33,5 @@ export const useTimer = (startValue: number, timeout = 1000) => {
     return () => clearInterval(intervalIdRef.current)
   }, [createTimer])
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- reset to initial value on mount only
-    if (startValue) setCountdownValue(startValue)
-  }, [])
-
   return { countdownValue, pauseTimer, restartTimer, resumeTimer, setCountdownValue }
 }

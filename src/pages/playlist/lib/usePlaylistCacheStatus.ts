@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import type { TrackToCache } from './PlaylistCacheService'
 
@@ -18,18 +18,17 @@ export const usePlaylistCacheStatus = (
     totalCount: 0,
   })
 
-  useEffect(() => {
-    // Parse: keep only tracks with audio URLs
-    const tracksWithUrls = tracks.filter(
-      (track): track is { audioUrl: string } & TrackToCache => track.audioUrl != null,
-    )
+  // Parse: keep only tracks with audio URLs
+  const tracksWithUrls = useMemo(
+    () =>
+      tracks.filter(
+        (track): track is { audioUrl: string } & TrackToCache => track.audioUrl != null,
+      ),
+    [tracks],
+  )
 
-    // Early exit: no tracks with audio URLs to check
-    if (tracksWithUrls.length === 0) {
-      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- correct
-      setStatus({ allCached: false, cachedCount: 0, totalCount: 0 })
-      return
-    }
+  useEffect(() => {
+    if (tracksWithUrls.length === 0) return
 
     let isCancelled = false
 
@@ -52,7 +51,9 @@ export const usePlaylistCacheStatus = (
     return () => {
       isCancelled = true
     }
-  }, [tracks, cacheTrigger])
+  }, [tracksWithUrls, cacheTrigger])
+
+  if (tracksWithUrls.length === 0) return { allCached: false, cachedCount: 0, totalCount: 0 }
 
   return status
 }

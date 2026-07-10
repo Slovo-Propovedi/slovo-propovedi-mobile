@@ -27,7 +27,7 @@ export {
 
 export { AudioPlayerData } from './ui/PlayerControls.types'
 export { audioPlayerDataSchema } from './ui/PlayerControls.types'
-export { PlayerProgressBar } from './ui/PlayerProgressBar'
+export { PlayerProgressBar } from './ui/PlayerProgressBar/PlayerProgressBar'
 export { PlayerRepeatToggle } from './ui/PlayerRepeatToggle'
 export { PlayerVolumeBar } from './ui/PlayerVolumeBar'
 export { SermonPlayerControls } from './ui/SermonPlayerControls'

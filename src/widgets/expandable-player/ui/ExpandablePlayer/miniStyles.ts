@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/themed'
 import type { ThemeColors } from 'shared/ui/theme'
 
-export const createMiniPlayerStyles = (theme: ThemeColors) =>
+export const createMiniStyles = (theme: ThemeColors) =>
   StyleSheet.create({
     miniContainer: {
       alignItems: 'center',

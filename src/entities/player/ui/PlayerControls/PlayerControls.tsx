@@ -1,9 +1,8 @@
-/* eslint-disable max-lines -- FIXME: refactor */
 import { useAtom } from '@reatom/npm-react'
-import { useCallback, useEffect } from 'react'
-import { AppState, type AppStateStatus, type StyleProp, type ViewStyle } from 'react-native'
+import { useCallback } from 'react'
 import { isNonNullable } from 'shared/lib/utils'
 import type { AudioPlayerData, ControlsNames } from '../PlayerControls.types'
+import type { StyleProp, ViewStyle } from 'react-native'
 import type { PlaylistData } from 'shared/model'
 import { downloadingAudioUrlAtom, isDownloadingAtom } from '../../lib/download-model'
 import { usePlayer } from '../../lib/usePlayer'
@@ -12,6 +11,7 @@ import { FullscreenControls } from '../FullscreenControls'
 import { getIndexOfCurrentAudioInPlaylist } from '../getIndexOfCurrentAudioInPlaylist'
 import { PlayerControlsSize } from '../PlayerControls.types'
 import { DefaultControls } from './DefaultControls'
+import { useAppStatePlayback } from './useAppStatePlayback'
 
 interface PlayerControlsProps {
   currentAudio: AudioPlayerData | null
@@ -42,6 +42,7 @@ export const PlayerControls = ({
   const { isBuffering, isPlaying } = usePlayerState()
   const [isDownloading] = useAtom(isDownloadingAtom)
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
+  useAppStatePlayback({ currentAudio, currentPlaylist, getStatus, setLockScreenMetadata })
   const index = getIndexOfCurrentAudioInPlaylist(currentAudio, currentPlaylist)
   const playlistList = currentPlaylist ? currentPlaylist.sermons : []
   const hasValidPlaylist = isNonNullable(currentPlaylist) && isNonNullable(index)
@@ -49,9 +50,8 @@ export const PlayerControls = ({
   const isFirstTrack = hasValidPlaylist && index === 0
 
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === currentAudio?.audioUrl
-
   const isFullscreen = variant === 'fullscreen'
-  const buttonSize = isFullscreen ? 24 : size // PLAYER_SIZES.controlButtonSize = FONT_SIZES.xxl = 24
+  const buttonSize = isFullscreen ? 24 : size
   const playButtonSize = buttonSize * 2
 
   const togglePlay = async () => (isPlaying ? await pause() : await play())
@@ -69,6 +69,7 @@ export const PlayerControls = ({
         id,
         title,
       }
+
       await setCurrentAudio(newAudio)
       await replaceAudio(newAudio.audioUrl)
       setLockScreenMetadata({
@@ -95,31 +96,6 @@ export const PlayerControls = ({
       setLockScreenMetadata,
     ],
   )
-
-  useEffect(() => {
-    let appState = AppState.currentState
-
-    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        // App returning from background - sync media session
-        const audioStatus = await getStatus()
-        if (currentAudio && audioStatus.isPlaying)
-          setLockScreenMetadata({
-            albumTitle: currentPlaylist?.title,
-            artist: currentAudio.artist,
-            artworkUrl: currentAudio.artwork,
-            title: currentAudio.title,
-          })
-      }
-      appState = nextAppState
-    }
-
-    const subscription = AppState.addEventListener('change', handleAppStateChange)
-    return () => {
-      subscription.remove()
-    }
-  }, [currentAudio, currentPlaylist, getStatus, setLockScreenMetadata])
-
   const isPrevDisabled = !hasValidPlaylist || isFirstTrack || !currentAudio
   const isNextDisabled = !hasValidPlaylist || isLastTrack || !currentAudio
 

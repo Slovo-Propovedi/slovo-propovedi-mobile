@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { audioCacheService } from './AudioCacheService'
 
 export const useIsCached = (audioUrl: null | string, cacheTrigger?: number): boolean => {
   const [isCached, setIsCached] = useState(false)
+  const lastCheckedUrlRef = useRef<null | string>(null)
 
   useEffect(() => {
     if (!audioUrl) {
-      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- correct
-      setIsCached(false)
+      lastCheckedUrlRef.current = null
       return
     }
 
     let isCancelled = false
+
+    lastCheckedUrlRef.current = audioUrl
 
     const checkCache = async () => {
       const cached = await audioCacheService.isCached(audioUrl)
@@ -25,5 +27,7 @@ export const useIsCached = (audioUrl: null | string, cacheTrigger?: number): boo
     }
   }, [audioUrl, cacheTrigger])
 
+  if (!audioUrl) return false
+  if (lastCheckedUrlRef.current !== audioUrl) return false
   return isCached
 }

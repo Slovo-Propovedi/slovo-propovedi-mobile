@@ -1,22 +1,19 @@
-/* eslint-disable max-lines -- Audio player service requires comprehensive state management */
-import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
 import type { LockScreenMetadata } from './types'
+import type { AudioPlayer } from 'expo-audio'
 import {
-  isPlayingAtom,
-  pauseTypeAtom,
   setDurationAction,
   setIsBufferingAction,
-  setIsPlayingAction,
   setPauseTypeAction,
   setPositionAction,
 } from '../../model'
 import { audioLoader } from './AudioLoader'
 import { audioModeManager } from './AudioModeManager'
 import { lockScreenControls } from './LockScreenControls'
+import { createAudioInterruptionHandler, setupPlayerListeners } from './nativePlayerHelpers'
 import { playbackController } from './PlaybackController'
 import { playerStatusListener } from './PlayerStatusListener'
-import { trackAutoAdvanceService } from './TrackAutoAdvanceService'
+import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdvanceService'
 
 export class PlayerService {
   public clearLockScreenControls = (): void => {
@@ -102,32 +99,15 @@ export class PlayerService {
 
   private setupListeners = (): void => {
     if (!this.playerInstance) return
-    playerStatusListener.setupListeners(this.playerInstance, {
-      onAudioInterruption: this.handleAudioInterruption,
-      onBufferingChange: isBuffering => void setIsBufferingAction(ctx, isBuffering),
-      onDurationChange: durationMs => void setDurationAction(ctx, durationMs),
-      onPlayingChange: isPlaying => void setIsPlayingAction(ctx, isPlaying),
-      onPositionChange: positionMs => void setPositionAction(ctx, positionMs),
-      onTrackEnd: () => void trackAutoAdvanceService.handleTrackEnd(),
-    })
+    setupPlayerListeners(this.playerInstance, this.handleAudioInterruption)
   }
 
-  private handleAudioInterruption = (isInterrupted: boolean): void => {
-    if (isInterrupted) {
-      const wasPlaying = ctx.get(isPlayingAtom)
-      this.wasPlayingBeforeInterruption = wasPlaying
-      if (wasPlaying) void this.pause('auto')
-      return
-    }
+  private handleAudioInterruption = createAudioInterruptionHandler({
+    pause: (...args) => this.pause(...args),
+    play: () => this.play(),
+  })
 
-    const pauseType = ctx.get(pauseTypeAtom)
-    if (pauseType === 'auto' && this.wasPlayingBeforeInterruption) void this.play()
-
-    this.wasPlayingBeforeInterruption = false
-    void setPauseTypeAction(ctx, null)
-  }
   private playerInstance: AudioPlayer | null = null
-  private wasPlayingBeforeInterruption = false
 }
 
 export const playerService = new PlayerService()

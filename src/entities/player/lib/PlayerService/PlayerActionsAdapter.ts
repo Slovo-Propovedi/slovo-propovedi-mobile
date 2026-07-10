@@ -1,6 +1,6 @@
-import type { PlayerActions } from './TrackAutoAdvanceService'
+import type { PlayerActions } from './TrackAutoAdvanceService/types'
 import { playerService } from './index.native'
-import { trackAutoAdvanceService } from './TrackAutoAdvanceService'
+import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdvanceService'
 
 /**
  * Sets up dependency injection for TrackAutoAdvanceService.

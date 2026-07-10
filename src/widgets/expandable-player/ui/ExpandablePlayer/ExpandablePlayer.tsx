@@ -1,16 +1,6 @@
-/* eslint-disable max-lines -- FIXME: refactor */
 import { useAction, useAtom } from '@reatom/npm-react'
 import { StatusBar } from 'expo-status-bar'
-import { useCallback } from 'react'
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  type StyleProp,
-  Text,
-  View,
-  type ViewStyle,
-} from 'react-native'
+import { Image, type StyleProp, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 import {
@@ -25,21 +15,19 @@ import {
   openPlayerSheetAction,
   usePlayer,
 } from 'entities/player'
-import { MovingText, PlayerControlButton, PlayerControlButtonType, useTheme } from 'shared/ui'
+import { useTheme } from 'shared/ui'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
-import { showMenuAtom } from '../model/showMenuAtom'
-import { useExpandAnimation } from '../model/useExpandAnimation'
-import { useFullscreenPanGesture } from '../model/useFullscreenPanGesture'
-import { useMiniPanGesture } from '../model/useMiniPanGesture'
-import { FullscreenContent } from './FullscreenContent'
-import { createMiniPlayerStyles } from './miniPlayerStyles'
+import { showMenuAtom } from '../../model/showMenuAtom'
+import { useExpandAnimation } from '../../model/useExpandAnimation'
+import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
+import { MiniPlayer } from './MiniPlayer'
+import { createMiniStyles } from './miniStyles'
 import { createStyles } from './styles'
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+import { useExpandablePlayerGesture } from './useExpandablePlayerGesture'
 
 export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { currentTheme } = useTheme()
-  const miniPlayerStyles = createMiniPlayerStyles(currentTheme)
+  const miniStyles = createMiniStyles(currentTheme)
   const styles = createStyles(currentTheme)
 
   const [audio] = useAtom(currentAudioAtom)
@@ -68,23 +56,15 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     screenWidth,
   } = useExpandAnimation(expanded)
 
-  const panGesture = useFullscreenPanGesture({
+  const { handleCloseFullscreen, handleMiniTap, miniPan, panGesture } = useExpandablePlayerGesture({
     close,
     disabled: showMenu,
     expanded,
+    open,
     progress,
     screenHeight,
   })
 
-  const handleMiniTap = useCallback(() => {
-    if (!expanded) void open()
-  }, [expanded, open])
-
-  const handleCloseFullscreen = useCallback(() => {
-    if (expanded) void close()
-  }, [close, expanded])
-
-  const miniPan = useMiniPanGesture({ onOpen: open, progress })
   const onPlayPause = async () => (playing ? pause() : play())
 
   if (!audio) return null
@@ -96,39 +76,18 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
         style={[styles.backdrop, backdropStyle, { height: screenHeight, width: screenWidth }]}
       />
       {!expanded && (
-        <GestureDetector gesture={miniPan}>
-          <AnimatedPressable
-            onPress={handleMiniTap}
-            style={[
-              miniPlayerStyles.miniContainer,
-              miniStyle,
-              { backgroundColor: currentTheme.surface },
-            ]}
-          >
-            <Image
-              style={miniPlayerStyles.miniCover}
-              source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }}
-            />
-            <View style={miniPlayerStyles.miniTextContainer}>
-              <MovingText text={audio.title || ''} style={miniPlayerStyles.miniTrackTitle} />
-              <Text numberOfLines={1} style={miniPlayerStyles.miniPlaylistName}>
-                {playlist?.title || 'Слово.Проповеди'}
-              </Text>
-            </View>
-            <View style={miniPlayerStyles.miniControls}>
-              {showSpinner ? (
-                <ActivityIndicator size={36} color={currentTheme.text} />
-              ) : (
-                <PlayerControlButton
-                  size={36}
-                  onPress={onPlayPause}
-                  color={currentTheme.text}
-                  type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
-                />
-              )}
-            </View>
-          </AnimatedPressable>
-        </GestureDetector>
+        <MiniPlayer
+          audio={audio}
+          miniPan={miniPan}
+          playing={playing}
+          playlist={playlist}
+          miniStyle={miniStyle}
+          miniStyles={miniStyles}
+          onPress={handleMiniTap}
+          onPlayPause={onPlayPause}
+          showSpinner={showSpinner}
+          currentTheme={currentTheme}
+        />
       )}
       <GestureDetector gesture={panGesture}>
         <Animated.View
@@ -146,10 +105,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
               source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }}
             />
           </Animated.View>
-          <Animated.View
-            pointerEvents='none'
-            style={[miniPlayerStyles.miniOverlay, miniOverlayStyle]}
-          />
+          <Animated.View pointerEvents='none' style={[miniStyles.miniOverlay, miniOverlayStyle]} />
           {expanded && <StatusBar style='light' />}
           <FullscreenContent
             styles={styles}
