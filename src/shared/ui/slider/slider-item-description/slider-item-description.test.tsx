@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
-import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { renderWithProviders } from '../../../mocks/renderWithProviders'
 import { SliderItemDescription } from './slider-item-description'
 
 const propsStub = {

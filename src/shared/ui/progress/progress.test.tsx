@@ -1,8 +1,8 @@
 import { act } from '@testing-library/react-native'
 import { Animated } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
+import { COLORS } from '../themed'
 import { Progress } from './progress'
-import { COLORS } from './themed'
 import '@testing-library/jest-native/extend-expect'
 
 const total = 100

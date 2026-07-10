@@ -1,7 +1,7 @@
 import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
-import { ListItem } from './list-item/list-item'
-import { type ListItemSize } from './list-item/list-item.types'
-import { TouchableItem } from './touchable-item'
+import { ListItem } from '../list-item/list-item'
+import { type ListItemSize } from '../list-item/list-item.types'
+import { TouchableItem } from '../touchable-item'
 
 export type OnPressTouchableListItem<T> = (data: T, event: GestureResponderEvent) => void
 

@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native'
-import { renderWithProviders } from '../mocks/renderWithProviders'
+import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { TouchableListItem } from './touchable-list-item'
 
 const dataStub = {

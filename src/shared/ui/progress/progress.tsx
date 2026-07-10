@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler'
-import { COLORS, useTheme } from './themed'
+import { COLORS, useTheme } from '../themed'
 
 interface ProgressProps {
   loaderValue?: Animated.Value

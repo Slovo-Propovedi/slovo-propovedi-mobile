@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native'
-import { renderWithProviders } from '../mocks/renderWithProviders'
+import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { Slider } from './slider'
 import '@testing-library/jest-native/extend-expect'
 
@@ -14,7 +14,7 @@ describe('<Slider/>', () => {
   })
 
   test('return null if items prop is undefined', async () => {
-    //@ts-expect-error - undefined is a not a valid items
+    //@ts-expect-error -- undefined is a not a valid items
     await renderWithProviders(<Slider items={undefined} />)
     expect(screen.queryByTestId('slider-item')).toBeNull()
   })

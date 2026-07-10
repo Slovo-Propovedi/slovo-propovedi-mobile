@@ -1,6 +1,6 @@
 import { Image, Linking, StyleSheet } from 'react-native'
 import { type StyleProp, type ViewStyle } from 'react-native'
-import { TouchableImageBackground } from '../touchable-image-background'
+import { TouchableImageBackground } from '../touchable-image-background/touchable-image-background'
 
 interface YoutubePreviewProps {
   previewSrc: string

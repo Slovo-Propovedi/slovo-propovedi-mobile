@@ -1,23 +1,25 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { SliderItemSize, SliderItemTransform, WhereIsSlideTitleLocated } from 'shared/ui'
-import { type ThemeColors } from 'shared/ui/theme'
-import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { INDENTS, RADIUSES, useTheme } from '../../themed'
+import { SliderItemDescriptionSkeleton } from '../slider-item-description/skeleton'
+import { SliderItemSize, SliderItemTransform, WhereIsSlideTitleLocated } from './slider-item.types'
 
-interface SkeletonSliderItemProps {
+interface SliderItemSkeletonProps {
   size?: SliderItemSize
-  theme: ThemeColors
+  testID?: string
   transform?: SliderItemTransform
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
 }
 
-export const SkeletonSliderItem = ({
+export const SliderItemSkeleton = ({
   size = SliderItemSize.Small,
-  theme,
+  testID = 'slider-item',
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
-}: SkeletonSliderItemProps) => {
+}: SliderItemSkeletonProps) => {
+  const { currentTheme } = useTheme()
+
   const itemWidth = match(size)
     .with(SliderItemSize.Large, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.62)
     .with(SliderItemSize.Middle, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.44)
@@ -40,15 +42,17 @@ export const SkeletonSliderItem = ({
     whereIsSlideTitleLocated === WhereIsSlideTitleLocated.BothOnAndUnder
 
   return (
-    <TouchableOpacity activeOpacity={0.8} testID='slider-item'>
+    <TouchableOpacity testID={testID} activeOpacity={0.8}>
       <View style={[styles.component, { width: itemWidth }]}>
-        <View style={[styles.image, { backgroundColor: theme.skeleton, height: imageHeight }]}>
+        <View
+          style={[styles.image, { backgroundColor: currentTheme.skeleton, height: imageHeight }]}
+        >
           {isVisibleDescriptionOnSlide && (
-            <View style={[styles.descriptionOnSlide, { backgroundColor: theme.skeleton }]} />
+            <SliderItemDescriptionSkeleton style={styles.descriptionOnSlide} />
           )}
         </View>
         {isVisibleDescriptionUnderSlide && (
-          <View style={[styles.descriptionUnderSlide, { backgroundColor: theme.skeleton }]} />
+          <SliderItemDescriptionSkeleton style={styles.descriptionUnderSlide} />
         )}
       </View>
     </TouchableOpacity>
@@ -62,19 +66,11 @@ const styles = StyleSheet.create({
     minWidth: 50,
   },
   descriptionOnSlide: {
-    borderRadius: RADIUSES.low,
-    height: INDENTS.middle * 2 + FONT_SIZES.h3,
     marginBottom: INDENTS.low,
-    marginHorizontal: INDENTS.middle,
     marginTop: 'auto',
-    width: '80%',
   },
   descriptionUnderSlide: {
-    alignSelf: 'center',
-    borderRadius: RADIUSES.low,
-    height: INDENTS.middle * 2 + FONT_SIZES.h3,
     marginTop: INDENTS.low,
-    width: '80%',
   },
   image: {
     borderRadius: RADIUSES.large,

@@ -2,6 +2,7 @@ import { Entypo } from '@expo/vector-icons'
 import { Text, View } from 'react-native'
 import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
+import { FONT_SIZES, useTheme } from '../themed'
 import { SliderItem } from './slider-item/slider-item'
 import {
   SliderItemSize,
@@ -13,7 +14,6 @@ import {
   type SliderItemDescriptionTextAlign,
 } from './slider-item-description/slider-item-description.types'
 import { createSliderStyles as styles } from './slider.styles'
-import { FONT_SIZES, useTheme } from './themed'
 
 type FontSizes = typeof FONT_SIZES
 

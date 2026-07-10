@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   type ViewStyle,
 } from 'react-native'
-import { IMAGE_PLACEHOLDER } from './images'
+import { IMAGE_PLACEHOLDER } from '../images'
 
 interface TouchableImageBackgroundProps {
   children: ReactNode
