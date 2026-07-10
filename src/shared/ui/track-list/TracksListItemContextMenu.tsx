@@ -51,5 +51,3 @@ export const TracksListItemContextMenu = ({
     </Modal>
   )
 }
-
-export default TracksListItemContextMenu

@@ -91,5 +91,3 @@ export const MarqueeText = ({
 }
 
 MarqueeText.Skeleton = MarqueeTextSkeleton
-
-export default MarqueeText

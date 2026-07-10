@@ -52,8 +52,6 @@ export const PlaylistCacheMenuItem = ({
   )
 }
 
-export default PlaylistCacheMenuItem
-
 const styles = StyleSheet.create({
   dropdownIcon: { marginRight: INDENTS.low },
   dropdownItem: {

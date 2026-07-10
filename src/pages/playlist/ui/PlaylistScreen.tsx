@@ -1,8 +1,8 @@
 import { useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { useCallback, useEffect } from 'react'
-import { View } from 'react-native'
+import { useEffect } from 'react'
+import { Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { createTracksListStyles } from 'widgets/track-list'
 import { isCachingPlaylistAtom, PlaylistCacheMenu } from 'features/playlist-cache'
@@ -63,52 +63,39 @@ export const PlaylistScreen = () => {
     title: sermon.title,
   }))
 
-  const headerRightCallback = useCallback(
-    () => (
-      <PlaylistCacheMenu
-        disabled={isCaching}
-        playlistTitle={title}
-        tracksData={tracksListData}
-        iconColor={headerIconColor}
-      />
-    ),
-    [headerIconColor, isCaching, title, tracksListData],
-  )
-
   useEffect(() => {
-    navigation.setOptions({ headerRight: headerRightCallback })
+    navigation.setOptions({
+      headerRight: () => (
+        <PlaylistCacheMenu
+          disabled={isCaching}
+          playlistTitle={title}
+          tracksData={tracksListData}
+          iconColor={headerIconColor}
+        />
+      ),
+    })
 
     return () => {
       navigation.setOptions({ headerRight: undefined })
     }
-  }, [navigation, headerRightCallback])
-
-  const renderItem = ({ index, item }: { index: number; item: (typeof tracksListData)[0] }) => (
-    <TracksListItem
-      title={item.title}
-      artist={item.artist}
-      artwork={item.artwork}
-      cacheTrigger={cacheTrigger}
-      audioUrl={item.audioUrl ?? undefined}
-      onPress={() => handlePressItem(index)}
-      isPlaying={currentAudio?.id === item.id}
-      isAudioPlaying={currentAudio?.id === item.id && isPlaying}
-    />
-  )
+  }, [navigation, isCaching, title, tracksListData, headerIconColor])
 
   const styles = createStyles(currentTheme)
   const tracksListStyles = createTracksListStyles(currentTheme)
+
   return (
     <View style={styles.container}>
       <StatusBar style={statusBarStyle} />
       <Animated.FlatList
         data={tracksListData}
-        renderItem={renderItem}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         style={tracksListStyles.container}
         keyExtractor={item => item.id ?? ''}
         ItemSeparatorComponent={() => <View style={tracksListStyles.divider} />}
+        ListEmptyComponent={
+          <Text style={{ marginHorizontal: 'auto' }}>В плейлисте нет записей</Text>
+        }
         contentContainerStyle={{
           paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
         }}
@@ -123,8 +110,20 @@ export const PlaylistScreen = () => {
             imageOpacityStyle={imageOpacityStyle}
           />
         }
+        renderItem={({ index, item }) => (
+          <TracksListItem
+            title={item.title}
+            artist={item.artist}
+            artwork={item.artwork}
+            cacheTrigger={cacheTrigger}
+            audioUrl={item.audioUrl ?? undefined}
+            onPress={() => handlePressItem(index)}
+            isPlaying={currentAudio?.id === item.id}
+            style={{ marginHorizontal: INDENTS.medium }}
+            isAudioPlaying={currentAudio?.id === item.id && isPlaying}
+          />
+        )}
       />
     </View>
   )
 }
-export default PlaylistScreen

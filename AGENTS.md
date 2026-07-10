@@ -131,20 +131,16 @@ import { localHelper } from './lib/helper'
 ### Component Style
 
 ```typescript
-// Use arrow functions as default exports
+// Use arrow functions as named exports (preferred)
 export const MyComponent = ({ prop1, prop2 }: MyComponentProps) => {
   return <View>...</View>
 }
-
-export default MyComponent
-
-// Or inline for simple cases
-export default () => <Redirect href="/listen" />
 ```
 
+- **CRITICAL:** `export default` should ONLY be used in the `app/` folder for Expo Router entry points
+- In all other folders (src/pages/, src/widgets/, src/features/, src/entities/, src/shared/), use ONLY named exports
 - Arrow functions preferred over function declarations
 - Use `export const` for named exports
-- Use `export default` for screen components
 - Max 130 lines per file (enforced by ESLint)
 - Self-closing components required: `<View />` not `<View></View>`
 
@@ -279,7 +275,14 @@ export const useListenNavigation = () => {
 
 ```typescript
 // app/(tabs)/listen.tsx
+// NOTE: export default is ONLY allowed in app/ folder for Expo Router
 export { ListenScreen as default } from 'pages/listen'
+
+// src/pages/listen/ui.tsx
+// NOTE: Use named exports, NOT default exports in src/ folder
+export const ListenScreen = () => {
+  // component implementation
+}
 
 // src/pages/listen/index.ts
 export { ListenScreen } from './ui'

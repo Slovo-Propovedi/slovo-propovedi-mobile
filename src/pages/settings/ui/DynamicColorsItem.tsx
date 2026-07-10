@@ -81,5 +81,3 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
   },
 })
-
-export default DynamicColorsItem

@@ -101,5 +101,3 @@ export const tokenStorage = {
     await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
   },
 }
-
-export default axiosInstance

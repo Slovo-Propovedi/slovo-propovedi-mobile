@@ -62,8 +62,6 @@ export const PlaylistCacheMenuDropdown = ({
   )
 }
 
-export default PlaylistCacheMenuDropdown
-
 const styles = StyleSheet.create({
   dropdown: {
     borderRadius: RADIUSES.low,
