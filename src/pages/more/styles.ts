@@ -18,7 +18,6 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
     paddingTop: INDENTS.high,
   },
   header: {

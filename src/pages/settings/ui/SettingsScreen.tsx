@@ -1,6 +1,6 @@
 import { useAction } from '@reatom/npm-react'
 import React, { useState } from 'react'
-import { StyleSheet, View } from 'react-native'
+import { ScrollView, StyleSheet, View } from 'react-native'
 import { ErrorDialog, useErrorDialog } from 'shared/ui/error-dialog'
 import { isMaterialYouSupported } from 'shared/ui/theme'
 import { INDENTS, useTheme } from 'shared/ui/themed'
@@ -32,7 +32,7 @@ export const SettingsScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <SettingsItem
           title='Тема оформления'
           icon='color-palette-outline'
@@ -52,7 +52,7 @@ export const SettingsScreen = () => {
             setShowDialog(true)
           }}
         />
-      </View>
+      </ScrollView>
       <ClearCacheDialog
         visible={showDialog}
         onConfirm={handleClearCache}
@@ -81,7 +81,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
     paddingTop: INDENTS.high,
   },
 })

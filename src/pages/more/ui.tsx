@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React from 'react'
-import { Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { APP_NAME, APP_VERSION } from 'shared/config'
 import { useTheme } from 'shared/ui/themed'
@@ -57,7 +57,7 @@ export const MoreScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={[styles.appName, { color: currentTheme.text }]}>{APP_NAME}</Text>
           <Text style={styles.appVersion}>v{APP_VERSION}</Text>
@@ -80,7 +80,7 @@ export const MoreScreen = () => {
             onPress={() => router.push('/about')}
           />
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   )
 }
