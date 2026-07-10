@@ -15,7 +15,7 @@ import {
   setCurrentPlaylistAction,
   setRepeatModeAction,
 } from '../model'
-import { audioPlayerDataSchema } from '../ui/PlayerControls.types'
+import { audioPlayerDataSchema } from '../ui/PlayerControls/PlayerControls.types'
 import { playerService } from './PlayerService'
 
 const parseAudioPlayerData = getParseJsonWithSchema(audioPlayerDataSchema)

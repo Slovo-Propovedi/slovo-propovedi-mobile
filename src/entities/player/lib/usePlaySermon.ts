@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type PlaylistData, type SermonData, setPlayerFullscreen } from 'shared/model'
 import { currentAudioAtom, setCurrentAudioAction, setCurrentPlaylistAction } from '../model'
-import { type AudioPlayerData } from '../ui/PlayerControls.types'
+import { type AudioPlayerData } from '../ui/PlayerControls/PlayerControls.types'
 import { usePlayer } from './usePlayer'
 
 export const usePlayNewSermon = () => {

@@ -3,7 +3,7 @@ import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/con
 import { getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
 import type { PlayerActions } from './types'
 import { RepeatMode, repeatModeSchema } from '../../../model'
-import { audioPlayerDataSchema } from '../../../ui/PlayerControls.types'
+import { audioPlayerDataSchema } from '../../../ui/PlayerControls/PlayerControls.types'
 import {
   findCurrentTrackIndex,
   getNextTrack,

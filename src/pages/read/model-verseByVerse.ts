@@ -3,14 +3,18 @@ import { API } from 'shared/api'
 import { FetchedBooksGroupName } from 'shared/model'
 import type { BookData } from 'shared/model'
 
-export const VerseByVerseBooksSliderAtom = atom<BookData[]>([], 'verse-by-verse-books-sliderAtom')
+export const verseByVerseBooksSliderAtom = atom<BookData[]>([], 'verseByVerseBooksSliderAtom')
 
 export const getVerseByVerseBooksSlider = action(async ctx => {
-  const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.VerseByVerse)
+  try {
+    const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.VerseByVerse)
 
-  const result = list || []
+    const result = list || []
 
-  await ctx.schedule(() => {
-    VerseByVerseBooksSliderAtom(ctx, result)
-  })
+    await ctx.schedule(() => {
+      verseByVerseBooksSliderAtom(ctx, result)
+    })
+  } catch (error) {
+    console.error('[read/verseByVerse] Failed to fetch books:', error)
+  }
 }, 'getVerseByVerseBooksSlider')

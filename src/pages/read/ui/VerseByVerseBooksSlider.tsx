@@ -11,14 +11,14 @@ import {
 } from 'shared/ui'
 import { INDENTS } from 'shared/ui/themed'
 import type { BookData } from 'shared/model'
-import { getVerseByVerseBooksSlider, VerseByVerseBooksSliderAtom } from '../model-verseByVerse'
+import { getVerseByVerseBooksSlider, verseByVerseBooksSliderAtom } from '../model-verseByVerse'
 
 export const VerseByVerseBooksSlider = () => {
   const title = 'По библии. Стих за стихом'
 
   const { navigateToBookReader, navigateToBooksList } = useReadNavigation()
 
-  const verseByVerseBooks = useAtom(VerseByVerseBooksSliderAtom)[0]
+  const verseByVerseBooks = useAtom(verseByVerseBooksSliderAtom)[0]
   const fetchVerseByVerseBooks = useAction(getVerseByVerseBooksSlider)
 
   const onItemPress = async (bookList: BookData) => {

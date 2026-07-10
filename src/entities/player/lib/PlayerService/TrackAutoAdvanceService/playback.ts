@@ -1,6 +1,6 @@
 import { ctx } from 'shared/lib/reatom-ctx'
 import type { PlayerActions } from './types'
-import type { AudioPlayerData } from '../../../ui/PlayerControls.types'
+import type { AudioPlayerData } from '../../../ui/PlayerControls/PlayerControls.types'
 import type { PlaylistData } from 'shared/model'
 import { setCurrentAudioAction } from '../../../model'
 import { lockScreenControls } from '../LockScreenControls'

@@ -9,7 +9,7 @@ import {
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
 import { type PlaylistData } from 'shared/model'
-import { type AudioPlayerData } from './ui/PlayerControls.types'
+import { type AudioPlayerData } from './lib/audioPlayerData'
 
 // Legacy atoms for backward compatibility
 export const currentAudioAtom = atom<AudioPlayerData | null>(null, 'currentAudioAtom')

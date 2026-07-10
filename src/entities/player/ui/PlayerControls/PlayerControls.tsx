@@ -1,17 +1,16 @@
-import { useAtom } from '@reatom/npm-react'
-import { useCallback } from 'react'
-import { isNonNullable } from 'shared/lib/utils'
-import type { AudioPlayerData, ControlsNames } from '../PlayerControls.types'
+import type { AudioPlayerData, ControlsNames } from './PlayerControls.types'
 import type { StyleProp, ViewStyle } from 'react-native'
 import type { PlaylistData } from 'shared/model'
-import { downloadingAudioUrlAtom, isDownloadingAtom } from '../../lib/download-model'
 import { usePlayer } from '../../lib/usePlayer'
 import { usePlayerState } from '../../lib/usePlayerState'
 import { FullscreenControls } from '../FullscreenControls'
-import { getIndexOfCurrentAudioInPlaylist } from '../getIndexOfCurrentAudioInPlaylist'
-import { PlayerControlsSize } from '../PlayerControls.types'
 import { DefaultControls } from './DefaultControls'
+import { PlayerControlsSize } from './PlayerControls.types'
 import { useAppStatePlayback } from './useAppStatePlayback'
+import { usePlayerControlSizes } from './usePlayerControlSizes'
+import { usePlayerDownloadState } from './usePlayerDownloadState'
+import { usePlayerToggleTrack } from './usePlayerToggleTrack'
+import { usePlayerTrackState } from './usePlayerTrackState'
 
 interface PlayerControlsProps {
   currentAudio: AudioPlayerData | null
@@ -39,86 +38,69 @@ export const PlayerControls = ({
   variant = 'default',
 }: PlayerControlsProps) => {
   const { getStatus, pause, play, replaceAudio, setLockScreenMetadata } = usePlayer()
+
   const { isBuffering, isPlaying } = usePlayerState()
-  const [isDownloading] = useAtom(isDownloadingAtom)
-  const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
+
   useAppStatePlayback({ currentAudio, currentPlaylist, getStatus, setLockScreenMetadata })
-  const index = getIndexOfCurrentAudioInPlaylist(currentAudio, currentPlaylist)
-  const playlistList = currentPlaylist ? currentPlaylist.sermons : []
-  const hasValidPlaylist = isNonNullable(currentPlaylist) && isNonNullable(index)
-  const isLastTrack = hasValidPlaylist && index === playlistList.length - 1
-  const isFirstTrack = hasValidPlaylist && index === 0
 
-  const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === currentAudio?.audioUrl
-  const isFullscreen = variant === 'fullscreen'
-  const buttonSize = isFullscreen ? 24 : size
-  const playButtonSize = buttonSize * 2
+  const { hasValidPlaylist, index, isFirstTrack, isLastTrack } = usePlayerTrackState({
+    currentAudio,
+    currentPlaylist,
+  })
 
-  const togglePlay = async () => (isPlaying ? await pause() : await play())
-  const toggleTrack = useCallback(
-    async (dir: 'next' | 'prev') => {
-      if (!hasValidPlaylist || !currentPlaylist || index === undefined) return
-      const newIndex = dir === 'next' ? index + 1 : index - 1
-      const track = playlistList[newIndex]
-      if (!track?.audioUrl) return
-      const { audioUrl, id, title, ...rest } = track
-      const newAudio: AudioPlayerData = {
-        ...rest,
-        artwork: currentPlaylist.artwork,
-        audioUrl,
-        id,
-        title,
+  const isCurrentAudioDownloading = usePlayerDownloadState(currentAudio)
+
+  const { buttonSize, isFullscreen, playButtonSize } = usePlayerControlSizes({
+    size,
+    variant,
+  })
+
+  const togglePlay = async () => {
+    try {
+      return isPlaying ? await pause() : await play()
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('activity is no longer available'))
+        console.warn('[PlayerControls] Ignoring AppState-related error:', error.message)
+      else {
+        console.error('[PlayerControls] togglePlay error:', error)
+        throw error
       }
+    }
+  }
 
-      await setCurrentAudio(newAudio)
-      await replaceAudio(newAudio.audioUrl)
-      setLockScreenMetadata({
-        albumTitle: currentPlaylist.title,
-        artist: newAudio.artist,
-        artworkUrl: newAudio.artwork,
-        title: newAudio.title,
-      })
-      try {
-        await play()
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('activity is no longer available'))
-          console.warn('[Player] Ignoring AppState-related error:', error.message)
-        else throw error
-      }
-    },
-    [
-      hasValidPlaylist,
-      currentPlaylist,
-      index,
-      setCurrentAudio,
-      replaceAudio,
-      play,
-      setLockScreenMetadata,
-    ],
-  )
+  const toggleTrack = usePlayerToggleTrack({
+    currentPlaylist,
+    hasValidPlaylist,
+    index,
+    play,
+    replaceAudio,
+    setCurrentAudio,
+    setLockScreenMetadata,
+  })
+
   const isPrevDisabled = !hasValidPlaylist || isFirstTrack || !currentAudio
+
   const isNextDisabled = !hasValidPlaylist || isLastTrack || !currentAudio
 
-  if (isFullscreen)
-    return (
-      <FullscreenControls
-        style={style}
-        isPlaying={isPlaying}
-        buttonSize={buttonSize}
-        togglePlay={togglePlay}
-        isBuffering={isBuffering}
-        toggleTrack={toggleTrack}
-        excludeButtons={excludeButtons}
-        isNextDisabled={isNextDisabled}
-        isPrevDisabled={isPrevDisabled}
-        onPressOutSeek={onPressOutSeek}
-        playButtonSize={playButtonSize}
-        onLongPressSeek={onLongPressSeek}
-        isDownloading={isCurrentAudioDownloading}
-      />
-    )
+  const renderFullscreenControls = () => (
+    <FullscreenControls
+      style={style}
+      isPlaying={isPlaying}
+      buttonSize={buttonSize}
+      togglePlay={togglePlay}
+      isBuffering={isBuffering}
+      toggleTrack={toggleTrack}
+      excludeButtons={excludeButtons}
+      isNextDisabled={isNextDisabled}
+      isPrevDisabled={isPrevDisabled}
+      onPressOutSeek={onPressOutSeek}
+      playButtonSize={playButtonSize}
+      onLongPressSeek={onLongPressSeek}
+      isDownloading={isCurrentAudioDownloading}
+    />
+  )
 
-  return (
+  const renderDefaultControls = () => (
     <DefaultControls
       size={size}
       style={style}
@@ -133,4 +115,8 @@ export const PlayerControls = ({
       isDownloading={isCurrentAudioDownloading}
     />
   )
+
+  if (isFullscreen) return renderFullscreenControls()
+
+  return renderDefaultControls()
 }

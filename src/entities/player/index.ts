@@ -1,3 +1,4 @@
+export { type AudioPlayerData, audioPlayerDataSchema } from './lib/audioPlayerData'
 export {
   downloadingAudioUrlAtom,
   downloadProgressAtom,
@@ -25,8 +26,6 @@ export {
   setRepeatModeAction,
 } from './model'
 
-export { AudioPlayerData } from './ui/PlayerControls.types'
-export { audioPlayerDataSchema } from './ui/PlayerControls.types'
 export { PlayerProgressBar } from './ui/PlayerProgressBar/PlayerProgressBar'
 export { PlayerRepeatToggle } from './ui/PlayerRepeatToggle'
 export { PlayerVolumeBar } from './ui/PlayerVolumeBar'

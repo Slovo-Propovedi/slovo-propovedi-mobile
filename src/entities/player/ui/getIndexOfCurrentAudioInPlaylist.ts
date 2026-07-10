@@ -1,4 +1,4 @@
-import type { AudioPlayerData } from './PlayerControls.types'
+import type { AudioPlayerData } from './PlayerControls/PlayerControls.types'
 import type { PlaylistData } from 'shared/model'
 
 export const getIndexOfCurrentAudioInPlaylist = (

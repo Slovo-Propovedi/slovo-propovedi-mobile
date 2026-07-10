@@ -5,15 +5,19 @@ import type { BookData } from 'shared/model'
 
 export const notesForPreachersBooksSliderAtom = atom<BookData[]>(
   [],
-  'notes-for-preachers-books-sliderAtom',
+  'notesForPreachersBooksSliderAtom',
 )
 
 export const getNotesForPreachersBooksSlider = action(async ctx => {
-  const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.NotesForPreachers)
+  try {
+    const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.NotesForPreachers)
 
-  const result = list || []
+    const result = list || []
 
-  await ctx.schedule(() => {
-    notesForPreachersBooksSliderAtom(ctx, result)
-  })
+    await ctx.schedule(() => {
+      notesForPreachersBooksSliderAtom(ctx, result)
+    })
+  } catch (error) {
+    console.error('[read/notesForPreachers] Failed to fetch books:', error)
+  }
 }, 'getNotesForPreachersBooksSlider')

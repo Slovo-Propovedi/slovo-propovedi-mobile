@@ -1,7 +1,7 @@
 import { ActivityIndicator, View } from 'react-native'
 import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import { useTheme } from 'shared/ui/themed'
-import type { ControlsNames, PlayerControlsSize } from '../PlayerControls.types'
+import type { ControlsNames, PlayerControlsSize } from './PlayerControls.types'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { getExcludedButtons } from '../getExcludedButtons'
 import { playerControlsStyles as styles } from './PlayerControls.styles'

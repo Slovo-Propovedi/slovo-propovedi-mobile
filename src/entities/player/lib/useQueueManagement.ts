@@ -2,7 +2,7 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useState } from 'react'
 import type { PlaylistData } from 'shared/model'
 import { currentAudioAtom, isPlayingAtom, setCurrentPlaylistAction } from '../model'
-import { type AudioPlayerData } from '../ui/PlayerControls.types'
+import { type AudioPlayerData } from '../ui/PlayerControls/PlayerControls.types'
 import { usePlayer } from './usePlayer'
 
 interface UseQueueManagementReturn {

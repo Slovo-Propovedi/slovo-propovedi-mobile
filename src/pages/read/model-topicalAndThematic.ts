@@ -3,17 +3,21 @@ import { API } from 'shared/api'
 import { FetchedBooksGroupName } from 'shared/model'
 import type { BookData } from 'shared/model'
 
-export const topicalAndThematicBooksSliderAtomt = atom<BookData[]>(
+export const topicalAndThematicBooksSliderAtom = atom<BookData[]>(
   [],
-  'topical-and-thematic-books-sliderAtom',
+  'topicalAndThematicBooksSliderAtom',
 )
 
 export const getTopicalAndThematicBooksSlider = action(async ctx => {
-  const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.TopicalAndThematic)
+  try {
+    const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.TopicalAndThematic)
 
-  const result = list || []
+    const result = list || []
 
-  await ctx.schedule(() => {
-    topicalAndThematicBooksSliderAtomt(ctx, result)
-  })
+    await ctx.schedule(() => {
+      topicalAndThematicBooksSliderAtom(ctx, result)
+    })
+  } catch (error) {
+    console.error('[read/topicalAndThematic] Failed to fetch books:', error)
+  }
 }, 'getTopicalAndThematicBooksSlider')

@@ -13,7 +13,7 @@ import { INDENTS } from 'shared/ui/themed'
 import type { BookData } from 'shared/model'
 import {
   getTopicalAndThematicBooksSlider,
-  topicalAndThematicBooksSliderAtomt,
+  topicalAndThematicBooksSliderAtom,
 } from '../model-topicalAndThematic'
 
 export const TopicalAndThematicBooksSlider = () => {
@@ -21,7 +21,7 @@ export const TopicalAndThematicBooksSlider = () => {
 
   const { navigateToBookReader, navigateToBooksList } = useReadNavigation()
 
-  const topicalAndThematicBooks = useAtom(topicalAndThematicBooksSliderAtomt)[0]
+  const topicalAndThematicBooks = useAtom(topicalAndThematicBooksSliderAtom)[0]
   const fetchTopicalAndThematicBooks = useAction(getTopicalAndThematicBooksSlider)
 
   const onItemPress = async (bookList: BookData) => {
