@@ -3,10 +3,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer } from 'expo-audio'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { parseJsonWithSchema, type PlaylistData, playlistDataSchema } from 'shared/model'
+import { getParseJsonWithSchema, type PlaylistData, playlistDataSchema } from 'shared/model'
 import { RepeatMode, repeatModeSchema, setCurrentAudioAction } from '../../model'
 import { type AudioPlayerData, audioPlayerDataSchema } from '../../ui/PlayerControls.types'
 import { lockScreenControls } from './LockScreenControls'
+
+const parseAudioPlayerData = getParseJsonWithSchema(audioPlayerDataSchema)
+const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 
 export interface PlayerActions {
   pause(): Promise<void>
@@ -40,8 +43,8 @@ class TrackAutoAdvanceService {
     const storedCurrentPlaylist = storedMap[CURRENT_PLAYLIST]
     const storedRepeatMode = storedMap[CURRENT_REPEAT_MODE]
     const { data: repeatMode = RepeatMode.Off } = repeatModeSchema.safeParse(storedRepeatMode)
-    const currentAudio = parseJsonWithSchema(audioPlayerDataSchema)(storedCurrentAudio)
-    const currentPlaylist = parseJsonWithSchema(playlistDataSchema)(storedCurrentPlaylist)
+    const currentAudio = parseAudioPlayerData(storedCurrentAudio)
+    const currentPlaylist = parsePlaylistData(storedCurrentPlaylist)
 
     if (!currentPlaylist) return
 

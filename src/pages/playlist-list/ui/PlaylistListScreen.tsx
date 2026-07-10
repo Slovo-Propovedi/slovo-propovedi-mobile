@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { StyleSheet, Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
+import { getParseJsonWithSchema, playlistsArraySchema } from 'shared/model'
 import { useCollapsingNavbarDriver } from 'shared/ui/collapsing-navbar-driver'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
 import type { PlaylistData } from 'shared/model'
@@ -10,15 +11,14 @@ import { ALBUM_ART_SIZE, PlaylistListItem } from './PlaylistListItem'
 
 const TITLE_TOP_GAP = 80
 const DIVIDER_LEFT_OFFSET = ALBUM_ART_SIZE + INDENTS.medium + INDENTS.medium
+const parsePlaylists = getParseJsonWithSchema(playlistsArraySchema)
 
 export const PlaylistListScreen = () => {
   const { currentTheme, isLight } = useTheme()
   const router = useRouter()
   const params = useLocalSearchParams<{ playlists: string; title: string }>()
 
-  const playlists = params.playlists
-    ? (JSON.parse(params.playlists as string) as PlaylistData[])
-    : []
+  const playlists = parsePlaylists(params.playlists ?? null) ?? []
   const title = params.title || ''
 
   const { darkenStart, headerHeight, onTitleLayout, scrollHandler, scrollY, titleAppearThreshold } =

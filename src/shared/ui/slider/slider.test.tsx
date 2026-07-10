@@ -3,6 +3,8 @@ import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { Slider } from './slider'
 import '@testing-library/jest-native/extend-expect'
 
+const SLIDER_ITEM_ID = 'slider-item'
+
 const itemStub = { artwork: 'https//:vk.com', data: {} }
 const sliderStub = { items: [itemStub], title: 'title' }
 const mockData: { text: null | string } = { text: null }
@@ -16,22 +18,22 @@ describe('<Slider/>', () => {
   test('return null if items prop is undefined', async () => {
     //@ts-expect-error -- undefined is a not a valid items
     await renderWithProviders(<Slider items={undefined} />)
-    expect(screen.queryByTestId('slider-item')).toBeNull()
+    expect(screen.queryByTestId(SLIDER_ITEM_ID)).toBeNull()
   })
 
   test('return null, if items length === 0', async () => {
     await renderWithProviders(<Slider items={[]} />)
-    expect(screen.queryByTestId('slider-item')).toBeNull()
+    expect(screen.queryByTestId(SLIDER_ITEM_ID)).toBeNull()
   })
 
   test('return View, if items length > 0', async () => {
     await renderWithProviders(<Slider items={sliderStub.items} />)
-    expect(screen.getAllByTestId('slider-item').length).toBeGreaterThan(0)
+    expect(screen.getAllByTestId(SLIDER_ITEM_ID).length).toBeGreaterThan(0)
   })
 
   test('return 2 slider items, if items length === 2', async () => {
     await renderWithProviders(<Slider items={[itemStub, itemStub]} />)
-    expect(screen.getAllByTestId('slider-item').length).toEqual(2)
+    expect(screen.getAllByTestId(SLIDER_ITEM_ID).length).toEqual(2)
   })
 
   test('onPressItem called on press item', async () => {

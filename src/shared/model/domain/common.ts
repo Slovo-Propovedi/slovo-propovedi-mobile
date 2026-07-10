@@ -104,6 +104,12 @@ export const bookSchema = sermonSchema
 /** Тип книги (извлекается из схемы). */
 export type BookData = SermonData
 
+/** Схема для массива книг (BookData[]). */
+export const booksArraySchema = z.array(bookSchema)
+
+/** Схема для массива плейлистов (PlaylistData[]). */
+export const playlistsArraySchema = z.array(playlistSchema)
+
 // Алиасы для обратной совместимости
 export const sermonDataSchema = sermonSchema
 export const playlistDataSchema = playlistSchema

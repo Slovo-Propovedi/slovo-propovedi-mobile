@@ -155,6 +155,59 @@ export const MyComponent = ({ prop1, prop2 }: MyComponentProps) => {
 - JSX: single quotes, bracket on new line
 - Platform-specific line endings (LF on Unix, CRLF on Windows)
 
+### Linting Requirements and Best Practices
+
+When fixing linting errors, follow these guidelines:
+
+1. **Max Lines Limit (130 lines)**:
+   - When a file exceeds the 130-line limit, **decompose** code into smaller, focused pieces
+   - Extract large components into sub-components
+   - Extract complex logic into helper functions/hooks
+   - Extract repetitive patterns into utilities
+   - **DO NOT** remove blank lines between logical blocks to reduce line count
+   - Maintain readability through proper separation of concerns
+
+2. **Duplicate String Warnings**:
+   - Extract duplicate strings into named constants at the top of the file
+   - Use descriptive names: `TEST_ID`, `SLIDER_ITEM_ID`, `ERROR_MESSAGE`, etc.
+   - Place constants before component/function declarations
+
+3. **General Principles**:
+   - **Readability first**: Better to have more well-named, focused functions than one monolithic file
+   - **Decomposition over compression**: Extract logic rather than remove spacing
+   - **Preserve logical separation**: Blank lines between logical blocks are intentional and should be kept
+
+**Example of proper decomposition:**
+
+```typescript
+// ❌ BAD: Removing blank lines to fit line limit
+const MyComponent = () => {
+  const data = fetchData()
+  const transformed = transformData(data)
+  const filtered = filterData(transformed)
+  return <List items={filtered} />
+}
+
+// ✅ GOOD: Decomposing into focused functions
+const useFilteredData = () => {
+  const data = fetchData()
+
+  const transformed = transformData(data)
+
+  return filterData(transformed)
+}
+
+export const MyComponent = () => {
+  const filteredData = useFilteredData()
+
+  return <List items={filteredData} />
+}
+```
+
+1. **Verification**:
+   - Always run `yarn lint` after fixes to verify all errors are resolved
+   - Run `yarn check:types` to ensure no type errors were introduced
+
 ### Types
 
 ```typescript

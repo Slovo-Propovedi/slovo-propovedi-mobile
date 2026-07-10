@@ -8,7 +8,7 @@ import {
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { parseJsonWithSchema, playlistDataSchema } from 'shared/model'
+import { getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
 import {
   repeatModeSchema,
   setCurrentAudioAction,
@@ -17,6 +17,9 @@ import {
 } from '../model'
 import { audioPlayerDataSchema } from '../ui/PlayerControls.types'
 import { playerService } from './PlayerService'
+
+const parseAudioPlayerData = getParseJsonWithSchema(audioPlayerDataSchema)
+const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 
 export const initializePlayer = async () => {
   try {
@@ -36,8 +39,8 @@ export const initializePlayer = async () => {
 
     const parsedVolume = storedVolume ? Number(storedVolume) : null
     const { data: parsedRepeat } = repeatModeSchema.safeParse(storedRepeatMode)
-    const audio = parseJsonWithSchema(audioPlayerDataSchema)(storedCurrentAudio)
-    const playlist = parseJsonWithSchema(playlistDataSchema)(storedCurrentPlaylist)
+    const audio = parseAudioPlayerData(storedCurrentAudio)
+    const playlist = parsePlaylistData(storedCurrentPlaylist)
     const { data: validVolume } = z.number().safeParse(parsedVolume)
 
     if (validVolume) await playerService.setVolume(validVolume)

@@ -3,15 +3,17 @@ import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { MarqueeText } from './marquee-text'
 
+const TEST_ID = 'marquee-text'
+
 const propsStub = {
-  testID: 'marquee-text',
+  testID: TEST_ID,
   text: 'Hello World',
 }
 
 describe('<MarqueeText />', () => {
   test('returns null when text is empty', async () => {
     const { queryByTestId } = await renderWithProviders(<MarqueeText text='' />)
-    expect(queryByTestId('marquee-text')).toBeNull()
+    expect(queryByTestId(TEST_ID)).toBeNull()
   })
 
   test('returns null when text is undefined', async () => {
@@ -19,7 +21,7 @@ describe('<MarqueeText />', () => {
       // @ts-expect-error - testing undefined text
       <MarqueeText text={undefined} />,
     )
-    expect(queryByTestId('marquee-text')).toBeNull()
+    expect(queryByTestId(TEST_ID)).toBeNull()
   })
 
   test('renders text content', async () => {

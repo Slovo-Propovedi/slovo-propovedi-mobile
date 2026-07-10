@@ -1,10 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { booksArraySchema, getParseJsonWithSchema } from 'shared/model'
 import { ListItemSize, TouchableListItem } from 'shared/ui'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
 import type { BookData } from 'shared/model'
 import type { OnPressTouchableListItem } from 'shared/ui'
+
+const parseBooks = getParseJsonWithSchema(booksArraySchema)
 
 export const BooksListScreen = () => {
   const { top } = useSafeAreaInsets()
@@ -12,7 +15,7 @@ export const BooksListScreen = () => {
   const router = useRouter()
   const params = useLocalSearchParams<{ books: string; title: string }>()
 
-  const books = params.books ? (JSON.parse(params.books as string) as BookData[]) : []
+  const books = parseBooks(params.books ?? null) ?? []
   const title = params.title || ''
 
   const onPressListItem: OnPressTouchableListItem<BookData> = data => {

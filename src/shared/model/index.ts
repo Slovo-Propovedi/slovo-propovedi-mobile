@@ -7,13 +7,17 @@ export {
 export { BibleBookName, FetchedBooksGroupName, FetchedSermonsGroupName } from './domain/bible'
 // Реэкспорт типов из схем
 export {
+  booksArraySchema,
+  playlistDataSchema,
+  playlistsArraySchema,
+  sectionSchema,
+  sermonDataSchema,
+} from './domain/common'
+export {
   type BookData,
   type PlaylistData,
-  playlistDataSchema,
   type SectionData,
-  sectionSchema,
   type SermonData,
-  sermonDataSchema,
 } from './domain/common'
 export {
   type DB,
@@ -24,6 +28,7 @@ export {
   type FetchedSermonsGroup,
 } from './fetched/fetched-data'
 export { MimeType } from './file/mimeTypes'
+export { getParseJsonWithSchema } from './getParseJsonWithSchema'
 export {
   isOnlineAtom,
   reportServerReachable,
@@ -31,4 +36,3 @@ export {
   serverUnreachableAtom,
   setOnlineStatus,
 } from './network'
-export { parseJsonWithSchema } from './schemas'
