@@ -1,1 +1,1 @@
-export { DynamicSectionsSlider } from './ui'
+export { DynamicSectionsSlider } from './ui/DynamicSectionsSlider'
