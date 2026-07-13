@@ -6,6 +6,9 @@ import { type SectionData } from 'shared/model'
 export const dynamicSectionsAtom = atom<SectionData[]>([], 'dynamicSectionsAtom')
 export const isLoadingSectionsAtom = atom(true, 'isLoadingSectionsAtom')
 
+export type SectionDataSource = 'cache' | 'mock' | 'network' | 'unknown'
+export const sectionDataSourceAtom = atom<SectionDataSource>('unknown', 'sectionDataSourceAtom')
+
 const getMockSections = (): SectionData[] => {
   const { sermons: sermonsGroups } = db
 
@@ -50,28 +53,42 @@ export const fetchAllSections = action(async ctx => {
     isLoadingSectionsAtom(ctx, true)
   })
 
-  let sections: SectionData[]
+  let sections: SectionData[] = []
+  let dataSource: SectionDataSource = 'mock'
 
   try {
-    const response = await sectionsApi.getSections().getAllSections()
-    sections = (response.sections as SectionData[]) ?? []
-  } catch (error) {
-    console.error('fetchAllSections network failed:', error)
     try {
-      const cachedSections = await getCachedSections()
-      if (cachedSections?.length) sections = cachedSections
-      else sections = getMockSections()
-    } catch (cacheError) {
-      console.error('Cache read failed, using mock:', cacheError)
-      sections = getMockSections()
+      const response = await sectionsApi.getSections().getAllSections()
+      sections = (response.sections as SectionData[]) ?? []
+      dataSource = 'network'
+    } catch (error) {
+      console.error('fetchAllSections network failed:', error)
+      try {
+        const cachedSections = await getCachedSections()
+        if (cachedSections?.length) {
+          sections = cachedSections
+          dataSource = 'cache'
+        } else {
+          sections = getMockSections()
+          dataSource = 'mock'
+        }
+      } catch (cacheError) {
+        console.error('Cache read failed, using mock:', cacheError)
+        sections = getMockSections()
+        dataSource = 'mock'
+      }
     }
+
+    await ctx.schedule(() => {
+      dynamicSectionsAtom(ctx, sections)
+      sectionDataSourceAtom(ctx, dataSource)
+    })
+
+    // Online-first: cache fresh data for offline use (fire-and-forget)
+    void setCachedSections(sections).catch(error => console.error('Cache write failed:', error))
+  } finally {
+    await ctx.schedule(() => {
+      isLoadingSectionsAtom(ctx, false)
+    })
   }
-
-  await ctx.schedule(() => {
-    dynamicSectionsAtom(ctx, sections)
-    isLoadingSectionsAtom(ctx, false)
-  })
-
-  // Online-first: cache fresh data for offline use (fire-and-forget)
-  void setCachedSections(sections).catch(error => console.error('Cache write failed:', error))
 }, 'fetchAllSections')

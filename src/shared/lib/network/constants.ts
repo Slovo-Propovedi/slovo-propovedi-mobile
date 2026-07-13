@@ -1,0 +1,2 @@
+export const RETRY_INTERVAL_NO_DATA_MS = 5_000
+export const RETRY_INTERVAL_CACHED_MS = 30_000
