@@ -1,4 +1,4 @@
-import { BibleBookName } from '../../../model/domain/bible'
+import { BibleBookName } from '../bibleBookNames'
 import { markBook } from './markBook'
 
 export const sermonsDB = {

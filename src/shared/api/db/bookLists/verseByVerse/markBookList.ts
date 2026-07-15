@@ -1,4 +1,4 @@
-import { BibleBookName } from '../../../../model/domain/bible'
+import { BibleBookName } from '../../bibleBookNames'
 import { booksDB } from '../../books/booksDB'
 
 export const markBookList = booksDB[BibleBookName.Mark]

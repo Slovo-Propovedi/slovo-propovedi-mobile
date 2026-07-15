@@ -4,7 +4,7 @@ export {
   setIsAudioPlayerMounted,
   setPlayerFullscreen,
 } from './app'
-export { BibleBookName, FetchedBooksGroupName, FetchedSermonsGroupName } from './domain/bible'
+export { FetchedBooksGroupName, FetchedSermonsGroupName } from './domain/bible'
 // Реэкспорт типов из схем
 export {
   booksArraySchema,

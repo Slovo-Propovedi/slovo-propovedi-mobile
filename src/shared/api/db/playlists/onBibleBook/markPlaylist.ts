@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- correct for mocks */
-import { BibleBookName } from '../../../../model/domain/bible'
 import { type FetchedPlaylist } from '../../../../model/fetched/fetched-data'
+import { BibleBookName } from '../../bibleBookNames'
 import { sermonsDB } from '../../sermons/sermonsDB'
 
 export const markPlaylist: FetchedPlaylist = {
