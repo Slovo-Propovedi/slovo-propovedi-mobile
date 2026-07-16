@@ -1,6 +1,14 @@
 import { processRequest } from './processRequest'
 
 describe('processRequest', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   describe('successful request', () => {
     test('returns data and null error for resolved promise', async () => {
       const result = await processRequest(Promise.resolve('hello'))
@@ -31,16 +39,6 @@ describe('processRequest', () => {
   })
 
   describe('failed request', () => {
-    let errorSpy: jest.SpyInstance
-
-    beforeEach(() => {
-      errorSpy = jest.spyOn(console, 'error').mockImplementation()
-    })
-
-    afterEach(() => {
-      errorSpy.mockRestore()
-    })
-
     test('returns null data and error for rejected promise', async () => {
       const error = new Error('network failure')
       const result = await processRequest(Promise.reject(error))
@@ -52,13 +50,13 @@ describe('processRequest', () => {
     test('logs default error message on failure', async () => {
       await processRequest(Promise.reject(new Error('fail')))
 
-      expect(errorSpy).toHaveBeenCalledWith('Ошибка запроса: ', expect.any(Error))
+      expect(console.error).toHaveBeenCalledWith('Ошибка запроса: ', expect.any(Error))
     })
 
     test('logs custom error message on failure', async () => {
       await processRequest(Promise.reject(new Error('fail')), 'Custom error')
 
-      expect(errorSpy).toHaveBeenCalledWith('Custom error: ', expect.any(Error))
+      expect(console.error).toHaveBeenCalledWith('Custom error: ', expect.any(Error))
     })
 
     test('captures non-Error thrown values', async () => {
