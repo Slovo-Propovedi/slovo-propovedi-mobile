@@ -1,6 +1,7 @@
 import { createCtx, type Ctx } from '@reatom/framework'
-import type { currentThemeAtom as CurrentThemeAtom } from './model'
+import { COLORS, initializeCOLORS, updateCOLORS } from './colors'
 import { DarkTheme, LightTheme } from './constants'
+import { currentThemeAtom } from './model'
 
 const TRACK_MAX_INIT = 'rgba(128, 128, 128, 0.4)'
 const TRACK_MAX_UPDATE = 'rgba(128, 128, 128, 0.6)'
@@ -36,33 +37,33 @@ const STATIC_ENTRIES: Record<string, string> = {
   white: '#fff',
 }
 
+const STATIC_KEYS = new Set(Object.keys(STATIC_ENTRIES))
+
+/**
+ * Reset COLORS to its initial module-level state:
+ * static keys restored to defaults, mutable keys deleted.
+ */
+const resetCOLORS = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- COLORS is a dynamic record used for testing
+  const ref = COLORS as Record<string, any>
+  for (const key of Object.keys(ref))
+    if (STATIC_KEYS.has(key)) ref[key] = STATIC_ENTRIES[key]
+    else delete ref[key]
+}
+
 describe('colors', () => {
   let ctx: Ctx
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- COLORS is a dynamic record used for testing
-  let COLORS: Record<string, any>
-  let currentThemeAtomLocal: typeof CurrentThemeAtom
-  let initializeCOLORS: (ctx: Ctx) => void
-  let updateCOLORS: (ctx: Ctx) => void
 
   beforeEach(() => {
     ctx = createCtx()
-
-    // Must isolateModules so colors.ts gets a fresh COLORS singleton,
-    // and import currentThemeAtomLocal from the same isolated module tree
-    jest.isolateModules(async () => {
-      const model = await import('./model')
-      const colors = await import('./colors')
-      COLORS = colors.COLORS
-      currentThemeAtomLocal = model.currentThemeAtom
-      initializeCOLORS = colors.initializeCOLORS
-      updateCOLORS = colors.updateCOLORS
-    })
+    resetCOLORS()
   })
 
   describe('COLORS initial state', () => {
     test('contains all static color values', () => {
       Object.entries(STATIC_ENTRIES).forEach(([key, value]) => {
-        expect(COLORS[key]).toBe(value)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic key access on COLORS record
+        expect((COLORS as Record<string, any>)[key]).toBe(value)
       })
     })
 
@@ -74,8 +75,8 @@ describe('colors', () => {
   })
 
   describe('initializeCOLORS', () => {
-    test('sets theme properties from currentThemeAtomLocal', () => {
-      currentThemeAtomLocal(ctx, LightTheme)
+    test('sets theme properties from currentThemeAtom', () => {
+      currentThemeAtom(ctx, LightTheme)
       initializeCOLORS(ctx)
 
       expect(COLORS.background).toBe(LightTheme.background)
@@ -89,35 +90,35 @@ describe('colors', () => {
     })
 
     test('sets icon to theme.text value (not theme.icon)', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       initializeCOLORS(ctx)
 
       expect(COLORS.icon).toBe(DarkTheme.text)
     })
 
     test('sets maximumTrackTintColor to 0.4 opacity', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       initializeCOLORS(ctx)
 
       expect(COLORS.maximumTrackTintColor).toBe(TRACK_MAX_INIT)
     })
 
     test('sets minimumTrackTintColor to 0.6 opacity', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       initializeCOLORS(ctx)
 
       expect(COLORS.minimumTrackTintColor).toBe(TRACK_MIN_INIT)
     })
 
     test('does NOT set tabBarActive from theme — stays static', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       initializeCOLORS(ctx)
 
       expect(COLORS.tabBarActive).toBe('#f16031')
     })
 
     test('preserves static color values after initialization', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       initializeCOLORS(ctx)
 
       expect(COLORS.black).toBe('#000')
@@ -128,8 +129,8 @@ describe('colors', () => {
   })
 
   describe('updateCOLORS', () => {
-    test('sets theme properties from currentThemeAtomLocal', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+    test('sets theme properties from currentThemeAtom', () => {
+      currentThemeAtom(ctx, DarkTheme)
       updateCOLORS(ctx)
 
       expect(COLORS.background).toBe(DarkTheme.background)
@@ -143,28 +144,28 @@ describe('colors', () => {
     })
 
     test('sets icon to theme.text', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       updateCOLORS(ctx)
 
       expect(COLORS.icon).toBe(DarkTheme.text)
     })
 
     test('sets maximumTrackTintColor to 0.6 opacity (swapped vs initialize)', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       updateCOLORS(ctx)
 
       expect(COLORS.maximumTrackTintColor).toBe(TRACK_MAX_UPDATE)
     })
 
     test('sets minimumTrackTintColor to 0.4 opacity (swapped vs initialize)', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       updateCOLORS(ctx)
 
       expect(COLORS.minimumTrackTintColor).toBe(TRACK_MIN_UPDATE)
     })
 
     test('sets tabBarActive to theme.primary', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       updateCOLORS(ctx)
 
       expect(COLORS.tabBarActive).toBe(DarkTheme.primary)
@@ -173,7 +174,7 @@ describe('colors', () => {
 
   describe('difference between initialize and update', () => {
     test('update sets tabBarActive to theme.primary; initialize does not', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       initializeCOLORS(ctx)
 
       expect(COLORS.tabBarActive).toBe('#f16031')
@@ -184,7 +185,7 @@ describe('colors', () => {
     })
 
     test('update swaps track tint values vs initialize', () => {
-      currentThemeAtomLocal(ctx, DarkTheme)
+      currentThemeAtom(ctx, DarkTheme)
       initializeCOLORS(ctx)
 
       const maxAfterInit = COLORS.maximumTrackTintColor
