@@ -21,7 +21,7 @@ export const RadioButton = (props: RadioButtonProps) => {
   }
 
   return (
-    <TouchableOpacity disabled={disabled} onPress={handleOnPress}>
+    <TouchableOpacity disabled={disabled} onPress={handleOnPress} accessibilityRole='button'>
       <View>
         {label ? <Text>{label}</Text> : null}
         <View>{selected ? <View /> : null}</View>

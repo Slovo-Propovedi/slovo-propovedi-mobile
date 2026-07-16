@@ -41,7 +41,11 @@ export const TracksListItemContextMenu = ({
             { left: menuPosition.x, position: 'absolute', top: menuPosition.y },
           ]}
         >
-          <Pressable onPress={onToggleCache} style={tracksListStyles.contextMenuItem}>
+          <Pressable
+            onPress={onToggleCache}
+            accessibilityRole='button'
+            style={tracksListStyles.contextMenuItem}
+          >
             <Text style={tracksListStyles.contextMenuItemText}>
               {isCached ? 'Удалить из кеша' : 'Добавить в кеш'}
             </Text>

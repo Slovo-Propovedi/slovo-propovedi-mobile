@@ -70,6 +70,7 @@ export const TracksListItem = ({
       <Pressable
         onPress={handleItemPress}
         testID='tracks-list-item'
+        accessibilityRole='button'
         onLongPress={handleToggleMenu}
         style={[
           style,
@@ -107,6 +108,7 @@ export const TracksListItem = ({
         </View>
         <Pressable
           ref={dotsButtonRef}
+          accessibilityRole='button'
           onPress={handleToggleMenu}
           testID='tracks-list-item-menu'
           style={tracksListStyles.dotsButton}

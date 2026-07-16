@@ -50,7 +50,12 @@ export const SliderItem = ({
     .exhaustive()
 
   return (
-    <TouchableOpacity testID={testID} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      testID={testID}
+      onPress={onPress}
+      activeOpacity={0.8}
+      accessibilityRole='button'
+    >
       <View style={[styles.component, { width: conditionSize }, style]}>
         <ImageBackground
           resizeMode='cover'

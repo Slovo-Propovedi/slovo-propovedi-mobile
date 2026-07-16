@@ -52,6 +52,7 @@ export const Progress = ({
   return (
     <GestureHandlerRootView testID='progress-bar-gesture-root'>
       <TouchableOpacity
+        accessibilityRole='button'
         testID='progress-bar-touchable'
         onPress={({ nativeEvent: { locationX } }) => {
           calculateAndCallChangeProgressValue(locationX)

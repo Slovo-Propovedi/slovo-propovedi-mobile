@@ -19,7 +19,7 @@ export const Button = ({
   buttonStyles.push(style)
 
   return (
-    <TouchableOpacity disabled={disabled} style={buttonStyles} {...rest}>
+    <TouchableOpacity disabled={disabled} style={buttonStyles} accessibilityRole='button' {...rest}>
       <Text style={[styles.text, titleStyle, { color }]}>{title}</Text>
     </TouchableOpacity>
   )

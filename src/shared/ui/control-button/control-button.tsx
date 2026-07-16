@@ -41,6 +41,7 @@ export const PlayerControlButton = ({
     onPress={onPress}
     onPressOut={onPressOut}
     onLongPress={onLongPress}
+    accessibilityRole='button'
     disabled={Boolean(isDisabled)}
   >
     <Text>

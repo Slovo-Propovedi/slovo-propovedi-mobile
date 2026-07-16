@@ -24,7 +24,13 @@ export const TouchableItem = ({
   buttonStyles.push(style)
 
   return (
-    <TouchableOpacity testID={testID} onPress={onPress} disabled={disabled} style={buttonStyles}>
+    <TouchableOpacity
+      testID={testID}
+      onPress={onPress}
+      disabled={disabled}
+      style={buttonStyles}
+      accessibilityRole='button'
+    >
       {children}
     </TouchableOpacity>
   )

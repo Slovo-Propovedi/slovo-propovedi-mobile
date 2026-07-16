@@ -30,7 +30,7 @@ export const ConfirmDialogButton = ({
   const textStyle = isConfirm ? styles.confirmButtonText : styles.cancelButtonText
 
   return (
-    <Pressable testID={testID} onPress={onPress} style={buttonStyle}>
+    <Pressable testID={testID} onPress={onPress} style={buttonStyle} accessibilityRole='button'>
       <View style={styles.buttonContent}>
         {icon}
         <Text style={textStyle}>{text}</Text>

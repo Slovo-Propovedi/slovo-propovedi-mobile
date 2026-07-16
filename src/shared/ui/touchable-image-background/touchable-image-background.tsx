@@ -27,7 +27,12 @@ export const TouchableImageBackground = ({
   style,
   testID,
 }: TouchableImageBackgroundProps) => (
-  <TouchableOpacity testID={testID} onPress={onPress} activeOpacity={0.8}>
+  <TouchableOpacity
+    testID={testID}
+    onPress={onPress}
+    activeOpacity={0.8}
+    accessibilityRole='button'
+  >
     <ImageBackground
       resizeMode='cover'
       imageStyle={imageStyle}
