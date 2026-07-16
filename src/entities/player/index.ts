@@ -11,20 +11,19 @@ export { useQueueManagement } from './lib/useQueueManagement'
 export { useSeekControls } from './lib/useSeekControls'
 
 export {
-  closePlayerSheetAction,
   currentAudioAtom,
   currentPlaylistAtom,
   durationAtom,
   isBufferingAtom,
-  isPlayerExpandedAtom,
   isPlayingAtom,
-  openPlayerSheetAction,
   positionAtom,
   repeatModeSchema,
   setCurrentAudioAction,
   setCurrentPlaylistAction,
   setRepeatModeAction,
 } from './model'
+
+export { closePlayerSheetAction, isPlayerExpandedAtom, openPlayerSheetAction } from './playerSheet'
 
 export { PlayerProgressBar } from './ui/PlayerProgressBar/PlayerProgressBar'
 export { PlayerRepeatToggle } from './ui/PlayerRepeatToggle'

@@ -21,6 +21,7 @@ export const positionAtom = atom(0, 'positionAtom')
 export const durationAtom = atom(0, 'durationAtom')
 export const volumeAtom = atom(1, 'volumeAtom')
 export const isBufferingAtom = atom(false, 'isBufferingAtom')
+export const isSeekingAtom = atom(false, 'isSeekingAtom')
 
 // Pause type: 'auto' = interrupted by system (phone call), 'manual' = user paused
 export const PauseType = {
@@ -41,21 +42,6 @@ export type RepeatMode = (typeof RepeatMode)[keyof typeof RepeatMode]
 export const repeatModeSchema = z.enum(Object.values(RepeatMode))
 
 export const repeatModeAtom = atom<RepeatMode>('off', 'repeatModeAtom')
-
-// Player expanded state (for expandable player)
-export const isPlayerExpandedAtom = atom(false, 'isPlayerExpandedAtom')
-
-export const openPlayerSheetAction = action(async ctx => {
-  await ctx.schedule(() => {
-    isPlayerExpandedAtom(ctx, true)
-  })
-}, 'openPlayerSheet')
-
-export const closePlayerSheetAction = action(async ctx => {
-  await ctx.schedule(() => {
-    isPlayerExpandedAtom(ctx, false)
-  })
-}, 'closePlayerSheet')
 
 export const setCurrentAudioAction = action(async (ctx, audio: AudioPlayerData) => {
   await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(audio))
@@ -86,6 +72,13 @@ export const setPositionAction = action(async (ctx, position: number) => {
   })
   return position
 }, 'setPosition')
+
+export const setIsSeekingAction = action(async (ctx, value: boolean) => {
+  await ctx.schedule(() => {
+    isSeekingAtom(ctx, value)
+  })
+  return value
+}, 'setIsSeeking')
 
 export const setDurationAction = action(async (ctx, duration: number) => {
   await ctx.schedule(() => {

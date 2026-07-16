@@ -2,7 +2,13 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/b
 import { useAtom } from '@reatom/npm-react'
 import { useCallback, useMemo } from 'react'
 import { Text, View } from 'react-native'
-import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
+import {
+  currentAudioAtom,
+  downloadingAudioUrlAtom,
+  isPlayingAtom,
+  usePlayNewSermon,
+} from 'entities/player'
+import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { useTheme } from 'shared/ui/theme'
 import { TracksListItem } from 'shared/ui/track-list'
 import type { PlaylistData } from 'shared/model'
@@ -30,7 +36,9 @@ export const PlaylistBottomSheet = ({
   sheetRef,
 }: PlaylistBottomSheetProps) => {
   const [currentAudio] = useAtom(currentAudioAtom)
+  const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
   const [isAudioPlaying] = useAtom(isPlayingAtom)
+  const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
   const playNewSermon = usePlayNewSermon()
   const { currentTheme } = useTheme()
 
@@ -62,12 +70,14 @@ export const PlaylistBottomSheet = ({
         audioUrl={item.url}
         artist={item.artist}
         artwork={item.artwork}
+        cacheTrigger={cacheTrigger}
+        downloadingUrl={downloadingUrl}
         onPress={() => handlePressItem(index)}
         isPlaying={currentAudio?.id === item.id}
         isAudioPlaying={currentAudio?.id === item.id && isAudioPlaying}
       />
     ),
-    [currentAudio?.id, handlePressItem, isAudioPlaying],
+    [cacheTrigger, currentAudio?.id, downloadingUrl, handlePressItem, isAudioPlaying],
   )
 
   const renderStyles = useMemo(() => createStyles(currentTheme), [currentTheme])

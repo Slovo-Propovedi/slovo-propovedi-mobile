@@ -2,6 +2,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import type { AudioPlayer } from 'expo-audio'
 import {
   isPlayingAtom,
+  isSeekingAtom,
   pauseTypeAtom,
   setDurationAction,
   setIsBufferingAction,
@@ -21,7 +22,9 @@ export const setupPlayerListeners = (
     onBufferingChange: isBuffering => void setIsBufferingAction(ctx, isBuffering),
     onDurationChange: durationMs => void setDurationAction(ctx, durationMs),
     onPlayingChange: isPlaying => void setIsPlayingAction(ctx, isPlaying),
-    onPositionChange: positionMs => void setPositionAction(ctx, positionMs),
+    onPositionChange: positionMs => {
+      if (!ctx.get(isSeekingAtom)) void setPositionAction(ctx, positionMs)
+    },
     onTrackEnd: () => void trackAutoAdvanceService.handleTrackEnd(),
   })
 }

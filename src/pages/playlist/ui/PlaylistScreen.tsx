@@ -3,7 +3,12 @@ import { useLocalSearchParams } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
+import {
+  currentAudioAtom,
+  downloadingAudioUrlAtom,
+  isPlayingAtom,
+  usePlayNewSermon,
+} from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { getParseJsonWithSchema, playlistDataSchema, type SermonData } from 'shared/model'
 import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
@@ -35,6 +40,7 @@ export const PlaylistScreen = () => {
   const playNewSermon = usePlayNewSermon()
 
   const [currentAudio] = useAtom(currentAudioAtom)
+  const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
   const [isCaching] = useAtom(isCachingPlaylistAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
@@ -104,6 +110,7 @@ export const PlaylistScreen = () => {
             audioUrl={item.audioUrl}
             onPress={handlePressItem}
             cacheTrigger={cacheTrigger}
+            downloadingUrl={downloadingUrl}
             currentAudioId={currentAudio?.id}
           />
         )}

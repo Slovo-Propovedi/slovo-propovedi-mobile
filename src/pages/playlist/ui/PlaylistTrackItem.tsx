@@ -6,6 +6,7 @@ interface PlaylistTrackItemProps {
   audioUrl?: null | string
   cacheTrigger?: number
   currentAudioId?: string
+  downloadingUrl?: null | string
   id: string | undefined
   index: number
   isPlaying: boolean
@@ -18,6 +19,7 @@ export const PlaylistTrackItem = ({
   audioUrl,
   cacheTrigger,
   currentAudioId,
+  downloadingUrl,
   id,
   index,
   isPlaying,
@@ -30,6 +32,7 @@ export const PlaylistTrackItem = ({
     artist={undefined}
     cacheTrigger={cacheTrigger}
     onPress={() => onPress(index)}
+    downloadingUrl={downloadingUrl}
     audioUrl={audioUrl ?? undefined}
     isPlaying={currentAudioId === id}
     style={{ marginHorizontal: INDENTS.medium }}

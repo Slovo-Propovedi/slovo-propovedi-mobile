@@ -2,7 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer } from 'expo-audio'
 import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { setIsPlayingAction, setPositionAction, setVolumeAction } from '../../model'
+import {
+  setIsPlayingAction,
+  setIsSeekingAction,
+  setPositionAction,
+  setVolumeAction,
+} from '../../model'
 import { type PlaybackStatus } from './types'
 
 const DEFAULT_PLAYBACK_STATUS: PlaybackStatus = {
@@ -43,8 +48,13 @@ class PlaybackController {
     if (!player?.isLoaded) return
 
     const clampedPosition = Math.max(0, positionMs)
+    void setIsSeekingAction(ctx, true)
     void setPositionAction(ctx, clampedPosition)
-    await player.seekTo(clampedPosition / 1000)
+    try {
+      await player.seekTo(clampedPosition / 1000)
+    } finally {
+      void setIsSeekingAction(ctx, false)
+    }
   }
 
   public setVolume = async (player: AudioPlayer | null, volume: number): Promise<void> => {

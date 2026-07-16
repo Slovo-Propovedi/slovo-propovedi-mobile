@@ -4,11 +4,7 @@ import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { setDurationAction, setIsBufferingAction, setPositionAction } from '../../model'
-import {
-  setDownloadingUrlAction,
-  setDownloadProgressAction,
-  setIsDownloadingAction,
-} from '../download-model'
+import { startBackgroundCaching } from './BackgroundCachingService'
 
 const LOAD_TIMEOUT_MS = 30000
 const LOAD_CHECK_INTERVAL_MS = 100
@@ -96,28 +92,8 @@ class AudioLoader {
     } catch (error) {
       console.error('[AudioLoader] getPlaybackUrl: Error checking cache:', error)
     }
-    this.startBackgroundCaching(audioUrl)
+    startBackgroundCaching(audioUrl)
     return audioUrl
-  }
-
-  private startBackgroundCaching = (audioUrl: string) => {
-    void setIsDownloadingAction(ctx, true)
-    void setDownloadingUrlAction(ctx, audioUrl)
-    void setDownloadProgressAction(ctx, 0)
-    audioCacheService
-      .cacheAudio(audioUrl, progress => {
-        void setDownloadProgressAction(ctx, progress)
-      })
-      .then(() => {
-        void setDownloadProgressAction(ctx, 1)
-      })
-      .catch(error => {
-        console.error('[AudioLoader] Background caching failed:', error)
-      })
-      .finally(() => {
-        void setIsDownloadingAction(ctx, false)
-        void setDownloadingUrlAction(ctx, null)
-      })
   }
 
   private playerInstance: AudioPlayer | null = null
