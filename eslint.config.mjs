@@ -217,4 +217,11 @@ export default tseslint.config(
       '@eslint-community/eslint-comments/require-description': ['error', { ignore: [] }],
     },
   },
+  // Disable max-lines for test files (must come after main config to override)
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    rules: {
+      'max-lines': 'off',
+    },
+  },
 )
