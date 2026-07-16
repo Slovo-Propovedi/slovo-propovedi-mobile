@@ -13,14 +13,11 @@ export const Modal = ({ children, onBackdropPress, visible }: Props) => {
     <RNModal transparent visible={visible} animationType='fade' statusBarTranslucent>
       <View style={[styles.backdrop, { backgroundColor: currentTheme.backdrop }]}>
         <Pressable
-          testID='modal-backdrop'
           onPress={onBackdropPress}
+          accessibilityRole='button'
           style={styles.backdropPressable}
         >
-          <View
-            testID='modal-content'
-            style={[styles.contentContainer, { backgroundColor: currentTheme.surface }]}
-          >
+          <View style={[styles.contentContainer, { backgroundColor: currentTheme.surface }]}>
             {children}
           </View>
         </Pressable>

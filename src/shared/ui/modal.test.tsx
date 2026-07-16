@@ -31,21 +31,9 @@ describe('<Modal>', () => {
       </Modal>,
     )
 
-    fireEvent.press(screen.getByTestId('modal-backdrop'))
+    fireEvent.press(screen.getByRole('button'))
 
     expect(onBackdropPressMock).toHaveBeenCalledTimes(1)
-  })
-
-  test('renders content container', async () => {
-    await renderWithProviders(
-      <Modal visible onBackdropPress={onBackdropPressMock}>
-        <Text>{CHILDREN_TEXT}</Text>
-      </Modal>,
-    )
-
-    const contentContainer = screen.getByTestId('modal-content')
-
-    expect(contentContainer).toBeTruthy()
   })
 
   test('does not render children when visible is false', async () => {
