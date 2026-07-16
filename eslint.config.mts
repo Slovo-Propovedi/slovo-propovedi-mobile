@@ -5,6 +5,7 @@ import importX from 'eslint-plugin-import-x'
 import jsdoc from 'eslint-plugin-jsdoc'
 import perfectionist from 'eslint-plugin-perfectionist'
 import prettier from 'eslint-plugin-prettier'
+import prettierRecommended from 'eslint-plugin-prettier/recommended'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactHooksExtra from 'eslint-plugin-react-hooks-extra'
@@ -13,6 +14,7 @@ import sonarjs from 'eslint-plugin-sonarjs'
 import globals from 'globals'
 import path from 'path'
 import process from 'process'
+import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import { fileURLToPath } from 'url'
 
@@ -31,7 +33,7 @@ const ignoredConfigs = [
   'orval',
 ]
 
-export default tseslint.config(
+export default defineConfig(
   {
     ignores: [
       '**/*.{html,snap}',
@@ -86,19 +88,24 @@ export default tseslint.config(
     },
     extends: [
       eslint.configs.recommended,
-      ...tseslint.configs.recommended,
+      tseslint.configs.recommended,
       perfectionist.configs['recommended-alphabetical'],
       reactRefresh.configs.recommended,
       jsdoc.configs['flat/recommended'],
+      reactHooks.configs.flat.recommended,
+      prettierRecommended,
+      importX.flatConfigs.react,
     ],
     files: ['**/*.{ts,tsx,js,jsx}'],
     plugins: {
-      react,
-      'react-hooks': reactHooks,
+      jsdoc,
+      reactRefresh,
+      // perfectionist,
+      // '@typescript-eslint': tseslint,
+      react: react,
       prettier,
       sonarjs,
       import: importX,
-      '@typescript-eslint': tseslint.plugin,
       'react-hooks-extra': reactHooksExtra,
       '@eslint-community/eslint-comments': comments,
     },

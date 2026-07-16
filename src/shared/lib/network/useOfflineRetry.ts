@@ -26,24 +26,28 @@ export const useOfflineRetry = ({
 
   // Refs to avoid stale closures inside intervals and event listeners
   const fetchFnRef = useRef(fetchFn)
-  fetchFnRef.current = fetchFn
   const needsRetryRef = useRef(needsRetry)
-  needsRetryRef.current = needsRetry
   const isLoadingRef = useRef(isLoading)
-  isLoadingRef.current = isLoading
 
   // Synchronous in-flight guard — doesn't depend on deferred atom updates
   const inflightRef = useRef(false)
   const safeFetchRef = useRef<() => void>(() => {})
-  safeFetchRef.current = () => {
-    if (inflightRef.current) return
-    inflightRef.current = true
-    Promise.resolve(fetchFnRef.current())
-      .catch(error => console.error('Retry fetch failed:', error))
-      .finally(() => {
-        inflightRef.current = false
-      })
-  }
+
+  // Sync refs after render to keep callbacks up-to-date without updating during render
+  useEffect(() => {
+    fetchFnRef.current = fetchFn
+    needsRetryRef.current = needsRetry
+    isLoadingRef.current = isLoading
+    safeFetchRef.current = () => {
+      if (inflightRef.current) return
+      inflightRef.current = true
+      Promise.resolve(fetchFnRef.current())
+        .catch(error => console.error('Retry fetch failed:', error))
+        .finally(() => {
+          inflightRef.current = false
+        })
+    }
+  }, [fetchFn, needsRetry, isLoading])
 
   // Track app foreground/background — retry immediately when returning to foreground
   useEffect(() => {

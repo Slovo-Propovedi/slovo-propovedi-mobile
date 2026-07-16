@@ -34,7 +34,7 @@ export const NotesForPreachersBooksSlider = () => {
 
   useEffect(() => {
     void fetchNotesForPreachersBooks()
-  }, [])
+  }, [fetchNotesForPreachersBooks])
 
   return (
     <Slider

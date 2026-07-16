@@ -25,19 +25,21 @@ export const useNetworkIslandAnimation = (isOnline: boolean) => {
   const translateXCollapsed = screenWidth / 2 - DOT_SIZE / 2 - RIGHT_MARGIN
 
   const collapse = useCallback(() => {
+    // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in callback
     expandProgress.value = withTiming(0, { duration: ANIMATION_DURATION })
-  }, [])
+  }, [expandProgress])
 
   const expand = useCallback(() => {
+    // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in callback
     expandProgress.value = withTiming(1, { duration: ANIMATION_DURATION })
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
     timeoutRef.current = setTimeout(() => collapse(), AUTO_COLLAPSE_MS)
-  }, [collapse])
+  }, [collapse, expandProgress])
 
   useEffect(() => {
     if (!isOnline) expand()
     else if (timeoutRef.current) clearTimeout(timeoutRef.current)
-  }, [isOnline, expand])
+  }, [expand, isOnline])
 
   useEffect(
     () => () => {

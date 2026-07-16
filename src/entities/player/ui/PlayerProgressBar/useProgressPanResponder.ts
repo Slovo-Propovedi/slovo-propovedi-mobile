@@ -1,5 +1,10 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { type LayoutChangeEvent, PanResponder } from 'react-native'
+
+interface LayoutInfo {
+  containerPageX: number
+  width: number
+}
 
 type PanResponderInstance = ReturnType<typeof PanResponder.create>
 
@@ -18,32 +23,25 @@ interface UseProgressPanResponderResult {
 
 export const useProgressPanResponder = (
   duration: number,
-  seekCallbacks: SeekCallbacks,
+  { onSeekCancel, onSeekEnd, onSeekStart, onSeekUpdate }: SeekCallbacks,
 ): UseProgressPanResponderResult => {
-  const layoutRef = useRef<{ width: number } | null>(null)
-  const containerPageX = useRef(0)
-  const callbacksRef = useRef(seekCallbacks)
-
-  callbacksRef.current = seekCallbacks
+  const [layoutInfo, setLayoutInfo] = useState<LayoutInfo | null>(null)
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout
 
-    layoutRef.current = { width }
     event.currentTarget.measure((_x, _y, _w, _h, pageX) => {
-      containerPageX.current = pageX
+      setLayoutInfo({ containerPageX: pageX, width })
     })
   }, [])
 
   const panResponder = useMemo(() => {
     const getPos = (pageX: number) => {
-      const layout = layoutRef.current
+      if (!layoutInfo || duration === 0) return null
 
-      if (!layout || duration === 0) return null
+      const x = Math.max(0, Math.min(pageX - layoutInfo.containerPageX, layoutInfo.width))
 
-      const x = Math.max(0, Math.min(pageX - containerPageX.current, layout.width))
-
-      return (x / layout.width) * duration
+      return (x / layoutInfo.width) * duration
     }
 
     return PanResponder.create({
@@ -53,27 +51,27 @@ export const useProgressPanResponder = (
 
         if (pos === null) return
 
-        callbacksRef.current.onSeekStart(pos)
+        onSeekStart(pos)
       },
       onPanResponderMove: evt => {
         const pos = getPos(evt.nativeEvent.pageX)
 
         if (pos === null) return
 
-        callbacksRef.current.onSeekUpdate(pos)
+        onSeekUpdate(pos)
       },
       onPanResponderRelease: () => {
-        callbacksRef.current.onSeekEnd()
+        onSeekEnd()
       },
       onPanResponderTerminate: () => {
-        callbacksRef.current.onSeekCancel()
+        onSeekCancel()
       },
       onPanResponderTerminationRequest: () => true,
       onStartShouldSetPanResponder: () => true,
     })
-  }, [duration])
+  }, [duration, layoutInfo, onSeekCancel, onSeekEnd, onSeekStart, onSeekUpdate])
 
-  const trackWidth = layoutRef.current?.width || 0
+  const trackWidth = layoutInfo?.width ?? 0
 
   return { handleLayout, panResponder, trackWidth }
 }

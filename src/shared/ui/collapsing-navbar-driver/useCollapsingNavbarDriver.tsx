@@ -42,8 +42,15 @@ export const useCollapsingNavbarDriver = ({
   )
 
   const wasAboveThreshold = useSharedValue<boolean | null>(null)
+  const prevTitleSv = useSharedValue(title)
 
   useDerivedValue(() => {
+    // Reset threshold tracking when title changes (guard clause)
+    if (prevTitleSv.value !== title) {
+      prevTitleSv.value = title
+      wasAboveThreshold.value = null
+    }
+
     const opacity = interpolate(
       scrollY.value,
       [darkenStart.value, threshold.value],
@@ -56,12 +63,7 @@ export const useCollapsingNavbarDriver = ({
       wasAboveThreshold.value = crossed
       scheduleOnRN(updateHeaderTitle, crossed)
     }
-  }, [darkenStart, scrollY, threshold, updateHeaderTitle])
-
-  // Re-apply the title when the `title` prop changes (the transition guard would otherwise skip it).
-  useEffect(() => {
-    wasAboveThreshold.value = null
-  }, [title])
+  }, [darkenStart, scrollY, threshold, updateHeaderTitle, title])
 
   const headerBackground = useMemo(() => {
     const innerStyle = StyleSheet.create({

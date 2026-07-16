@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Animated } from 'react-native'
 
 interface TabLayout {
@@ -11,9 +11,9 @@ export const useTabIndicator = (
   tabLayouts: Record<string, TabLayout>,
   currentKey: string | undefined,
 ) => {
-  const indicatorPosition = useRef(new Animated.Value(0)).current
-  const indicatorWidth = useRef(new Animated.Value(0)).current
-  const indicatorOpacity = useRef(new Animated.Value(0)).current
+  const [indicatorPosition] = useState(() => new Animated.Value(0))
+  const [indicatorWidth] = useState(() => new Animated.Value(0))
+  const [indicatorOpacity] = useState(() => new Animated.Value(0))
 
   useEffect(() => {
     const layout = currentKey ? tabLayouts[currentKey] : null
@@ -40,7 +40,7 @@ export const useTabIndicator = (
       toValue: 1,
       useNativeDriver: false,
     }).start()
-  }, [currentIndex, tabLayouts, currentKey, indicatorPosition, indicatorWidth, indicatorOpacity])
+  }, [currentIndex, indicatorOpacity, indicatorPosition, indicatorWidth, tabLayouts, currentKey])
 
   return {
     indicatorOpacity,

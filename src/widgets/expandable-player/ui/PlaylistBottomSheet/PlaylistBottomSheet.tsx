@@ -1,6 +1,6 @@
 import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Text, View } from 'react-native'
 import { currentAudioAtom, isPlayingAtom, usePlayNewSermon } from 'entities/player'
 import { useTheme } from 'shared/ui/theme'
@@ -33,16 +33,6 @@ export const PlaylistBottomSheet = ({
   const [isAudioPlaying] = useAtom(isPlayingAtom)
   const playNewSermon = usePlayNewSermon()
   const { currentTheme } = useTheme()
-
-  if (!playlist) return null
-
-  const tracksListData: TrackListItemData[] = playlist.sermons.map(sermon => ({
-    artist: sermon.artist,
-    artwork: playlist?.artwork,
-    id: sermon.id,
-    title: sermon.title,
-    url: sermon.audioUrl ?? undefined,
-  }))
 
   const handlePressItem = useCallback(
     async (index: number) => {
@@ -80,11 +70,19 @@ export const PlaylistBottomSheet = ({
     [currentAudio?.id, handlePressItem, isAudioPlaying],
   )
 
-  if (!playlist) return null
-
-  const renderStyles = createStyles(currentTheme)
+  const renderStyles = useMemo(() => createStyles(currentTheme), [currentTheme])
 
   const ItemSeparator = useCallback(() => <View style={renderStyles.divider} />, [renderStyles])
+
+  if (!playlist) return null
+
+  const tracksListData: TrackListItemData[] = playlist.sermons.map(sermon => ({
+    artist: sermon.artist,
+    artwork: playlist.artwork,
+    id: sermon.id,
+    title: sermon.title,
+    url: sermon.audioUrl ?? undefined,
+  }))
 
   return (
     <BottomSheet

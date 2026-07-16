@@ -36,13 +36,15 @@ export const usePlaylistHeader = ({
   const navigation = useNavigation()
   const iconModeRef = useRef<'cover' | 'header'>('cover')
 
-  // Hysteresis: different thresholds for icon-mode transitions prevent flickering.
+  /* eslint-disable react-hooks/refs -- intentional: hysteresis state machine uses ref as mutable render-time state to avoid re-renders */
   if (iconModeRef.current === 'cover' && headerBgOpacity >= ICON_DARK_THRESHOLD)
     iconModeRef.current = 'header'
   else if (iconModeRef.current === 'header' && headerBgOpacity <= ICON_LIGHT_THRESHOLD)
     iconModeRef.current = 'cover'
 
   const iconMode = iconModeRef.current
+  /* eslint-enable react-hooks/refs -- re-enabling after hysteresis ref block */
+
   const headerIconColor = iconMode === 'cover' ? COLORS.white : currentTheme.text
   const statusBarStyle: 'dark' | 'light' =
     iconMode === 'cover' ? 'light' : isLight ? 'dark' : 'light'

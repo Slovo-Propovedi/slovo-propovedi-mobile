@@ -28,6 +28,7 @@ export const useIsCached = (audioUrl: null | string, cacheTrigger?: number): boo
   }, [audioUrl, cacheTrigger])
 
   if (!audioUrl) return false
+  // eslint-disable-next-line react-hooks/refs -- intentional: check if ref-tracked URL matches current to gate stale cache state
   if (lastCheckedUrlRef.current !== audioUrl) return false
   return isCached
 }

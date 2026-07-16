@@ -32,6 +32,7 @@ export const MarqueeText = ({
   textStyle,
 }: MarqueeTextProps) => {
   const [started, setStarted] = useState(false)
+
   const containerWidth = useSharedValue(0)
   const textWidth = useSharedValue(0)
   const maxOffset = useDerivedValue(() => Math.max(0, textWidth.value - containerWidth.value))
@@ -45,9 +46,11 @@ export const MarqueeText = ({
     needsMarquee,
     text,
   )
+
   const pan = createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee)
 
   const handleContainerLayout = (e: LayoutChangeEvent) => {
+    // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in layout callback
     containerWidth.value = e.nativeEvent.layout.width
     if (!started && containerWidth.value > 0 && textWidth.value > 0) {
       setStarted(true)
@@ -57,6 +60,7 @@ export const MarqueeText = ({
 
   const handleTextLayout = (e: TextLayoutEvent) => {
     const lines = e.nativeEvent.lines
+    // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in layout callback
     textWidth.value = lines.length > 0 ? lines[0].width : 0
     if (!started && containerWidth.value > 0 && textWidth.value > 0) {
       setStarted(true)

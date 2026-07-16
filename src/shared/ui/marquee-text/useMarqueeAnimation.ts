@@ -41,6 +41,7 @@ export const useMarqueeAnimation = (
   const startIdleMarquee = () => {
     'worklet'
     if (!needsMarquee.value) {
+      // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value reset in worklet to stop animation
       translateX.value = 0
       return
     }

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- FIXME: refactor */
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRef, useState } from 'react'
 import { Image, Pressable, Text, View } from 'react-native'

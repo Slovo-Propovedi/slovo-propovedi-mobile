@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Animated, Easing, View } from 'react-native'
 import { COLORS, useTheme } from '../themed'
 
@@ -8,9 +8,9 @@ const BAR_SPACING = 2
 
 export const AnimatedSoundBars = () => {
   const { currentTheme } = useTheme()
-  const animatedValues = useRef(
+  const [animatedValues] = useState(() =>
     Array.from({ length: BAR_COUNT }, () => new Animated.Value(0.5)),
-  ).current
+  )
 
   useEffect(() => {
     const animations = animatedValues.map((value, index) => {

@@ -1,9 +1,6 @@
 import debounce from 'debounce'
-import { useCallback } from 'react'
-import { type AnyFunction } from '../../model/aliases'
+import { useMemo } from 'react'
+import type { AnyFunction } from '../../model/aliases'
 
-export const useDebounce = <F extends AnyFunction>(
-  action: F,
-  delay: number,
-  deps?: React.DependencyList,
-) => useCallback(debounce(action, delay), deps || [])
+export const useDebounce = <F extends AnyFunction>(action: F, delay: number) =>
+  useMemo(() => debounce(action, delay), [action, delay])

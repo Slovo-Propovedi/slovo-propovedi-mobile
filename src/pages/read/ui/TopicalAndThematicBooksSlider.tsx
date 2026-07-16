@@ -34,7 +34,7 @@ export const TopicalAndThematicBooksSlider = () => {
 
   useEffect(() => {
     void fetchTopicalAndThematicBooks()
-  }, [])
+  }, [fetchTopicalAndThematicBooks])
 
   return (
     <Slider

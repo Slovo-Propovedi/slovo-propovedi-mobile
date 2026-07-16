@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SeekControls {
   isSeeking: boolean
@@ -24,8 +24,9 @@ export const useSeekControls = ({
   const tickCountRef = useRef(0)
   const [isSeeking, setIsSeeking] = useState(false)
 
-  // Keep position ref updated
-  positionRef.current = position
+  useEffect(() => {
+    positionRef.current = position
+  }, [position])
 
   const stopSeek = useCallback(() => {
     if (seekIntervalRef.current) {

@@ -1,15 +1,28 @@
 import { useMemo } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { type ThemeColors } from 'shared/ui/theme'
 import { useTheme } from 'shared/ui/themed'
 import { createTracksListStyles, TracksListItem } from 'shared/ui/track-list'
 import type { TracksListProps } from './trackListTypes'
+import type { ThemeColors } from 'shared/ui/theme'
 import { QueueControls } from './QueueControls'
 
 const ItemSeparator = ({ theme }: { theme: ThemeColors }) => (
   <View style={createTracksListStyles(theme).divider} />
 )
+
+interface QueueControlsHeaderProps {
+  onPressPlayAll?: () => void
+  onPressShuffle?: () => void
+}
+
+const QueueControlsHeader = ({ onPressPlayAll, onPressShuffle }: QueueControlsHeaderProps) => {
+  if (!onPressPlayAll && !onPressShuffle) return null
+
+  return (
+    <QueueControls onPressShuffle={onPressShuffle} onPressPlayAll={onPressPlayAll ?? (() => {})} />
+  )
+}
 
 export const TracksList = ({
   contentContainerStyle,
@@ -37,22 +50,17 @@ export const TracksList = ({
     />
   )
 
-  const QueueControlsHeader = () => {
-    if (!onPressPlayAll && !onPressShuffle) return null
-
-    return (
-      <QueueControls
-        onPressShuffle={onPressShuffle}
-        onPressPlayAll={onPressPlayAll ?? (() => {})}
-      />
-    )
-  }
-
   const ListHeaderComponent = useMemo(() => {
     const components = []
     if (ListHeaderComponentProp) components.push(ListHeaderComponentProp)
     if (onPressPlayAll || onPressShuffle)
-      components.push(<QueueControlsHeader key='queue-controls' />)
+      components.push(
+        <QueueControlsHeader
+          key='queue-controls'
+          onPressShuffle={onPressShuffle}
+          onPressPlayAll={onPressPlayAll}
+        />,
+      )
     if (components.length === 0) return null
     return <>{components}</>
   }, [ListHeaderComponentProp, onPressPlayAll, onPressShuffle])

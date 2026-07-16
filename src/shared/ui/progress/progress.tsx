@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   type StyleProp,
@@ -26,14 +26,16 @@ export const Progress = ({
   total,
 }: ProgressProps) => {
   const { currentTheme } = useTheme()
-  const loaderValue = useRef(loaderValueInitial || new Animated.Value(0)).current
+  const [loaderValue] = useState(() => loaderValueInitial || new Animated.Value(0))
 
-  const animatedWidth = useRef(
-    loaderValue.interpolate({
-      inputRange: [0, 100],
-      outputRange: ['0%', '100%'],
-    }),
-  ).current
+  const animatedWidth = useMemo(
+    () =>
+      loaderValue.interpolate({
+        inputRange: [0, 100],
+        outputRange: ['0%', '100%'],
+      }),
+    [loaderValue],
+  )
 
   const safeTotal = Math.max(total, 1)
 

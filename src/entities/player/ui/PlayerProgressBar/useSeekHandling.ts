@@ -21,7 +21,9 @@ export const useSeekHandling = (
   const onSeekRef = useRef(onSeek)
   const pendingSeekPositionRef = useRef<null | number>(null)
 
-  onSeekRef.current = onSeek
+  useEffect(() => {
+    onSeekRef.current = onSeek
+  }, [onSeek])
 
   useEffect(() => {
     if (position < 1000 && previewPositionRef.current > 5000) {

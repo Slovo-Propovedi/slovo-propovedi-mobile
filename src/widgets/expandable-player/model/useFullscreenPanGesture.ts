@@ -38,12 +38,14 @@ export const useFullscreenPanGesture = ({
           'worklet'
           if (showPlaylist) return
           const dragProgress = e.translationY / (screenHeight - 100)
+          // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in gesture worklet
           progress.value = Math.max(0, 1 - dragProgress)
         })
         .onEnd(e => {
           'worklet'
           if (showPlaylist) return
           if (e.velocityY > 500 || progress.value < 0.5) {
+            // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in gesture worklet
             progress.value = withTiming(0, { duration: 250 })
             scheduleOnRN(close)
           } else progress.value = withTiming(1, { duration: 300 })

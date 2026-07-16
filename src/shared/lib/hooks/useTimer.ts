@@ -5,7 +5,10 @@ export const useTimer = (startValue: number, timeout = 1000) => {
 
   const intervalIdRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
   const countdownValueRef = useRef(countdownValue)
-  countdownValueRef.current = countdownValue
+
+  useEffect(() => {
+    countdownValueRef.current = countdownValue
+  }, [countdownValue])
 
   const createTimer = useCallback(() => {
     clearInterval(intervalIdRef.current)

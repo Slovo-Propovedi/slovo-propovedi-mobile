@@ -14,10 +14,14 @@ export const useTrackItemCache = (
   const prevDownloadingUrlRef = useRef<null | string | undefined>(null)
 
   // Event-driven: increment cache trigger when download completes (transition from downloading to not downloading)
+  // eslint-disable-next-line react-hooks/refs -- intentional: read ref during render to detect download completion transition
   const wasThisAudioDownloading = prevDownloadingUrlRef.current === audioUrl
+  // eslint-disable-next-line react-hooks/refs -- intentional: detect download completion during render to trigger immediate cache re-check
   if (wasThisAudioDownloading && downloadingUrl === null) internalCacheTriggerRef.current += 1
+  // eslint-disable-next-line react-hooks/refs -- intentional: track download state transition during render
   prevDownloadingUrlRef.current = downloadingUrl
 
+  // eslint-disable-next-line react-hooks/refs -- intentional: read ref-trigger counter during render for cache key
   const internalCacheTrigger = internalCacheTriggerRef.current
   const isCached = useIsCached(audioUrl ?? null, internalCacheTrigger + (externalCacheTrigger ?? 0))
   const progressValue = useAtom(playlistDownloadProgressAtom)[0][audioUrl ?? ''] ?? -1
@@ -34,10 +38,5 @@ export const useTrackItemCache = (
     }
   }
 
-  return {
-    isCached,
-    isDownloading,
-    progressValue,
-    toggleCache,
-  }
+  return { isCached, isDownloading, progressValue, toggleCache }
 }

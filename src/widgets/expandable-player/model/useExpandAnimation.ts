@@ -28,7 +28,7 @@ export const useExpandAnimation = (expanded: boolean): UseExpandAnimationResult 
 
   useEffect(() => {
     progress.value = withTiming(expanded ? 1 : 0, { duration: expanded ? 300 : 250 })
-  }, [expanded])
+  }, [expanded, progress])
 
   const containerStyle = useAnimatedStyle(() => ({
     borderBottomLeftRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),

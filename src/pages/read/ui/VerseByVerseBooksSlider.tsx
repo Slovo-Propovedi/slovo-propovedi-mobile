@@ -31,7 +31,7 @@ export const VerseByVerseBooksSlider = () => {
 
   useEffect(() => {
     void fetchVerseByVerseBooks()
-  }, [])
+  }, [fetchVerseByVerseBooks])
 
   return (
     <Slider
