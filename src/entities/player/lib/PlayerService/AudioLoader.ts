@@ -23,36 +23,7 @@ class AudioLoader {
     const player = createAudioPlayer({ uri: playUrl }, { downloadFirst: true })
     this.playerInstance = player
 
-    return new Promise<AudioPlayer | null>(resolve => {
-      let elapsed = 0
-      const checkLoaded = setInterval(() => {
-        elapsed += LOAD_CHECK_INTERVAL_MS
-        if (player.isLoaded) {
-          clearInterval(checkLoaded)
-          const dur = Math.floor(player.duration * 1000)
-          void setDurationAction(ctx, dur)
-          void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
-          void setIsBufferingAction(ctx, false)
-          void player.seekTo(initialPositionMs / 1000)
-          void setPositionAction(ctx, initialPositionMs)
-          try {
-            resolve(player)
-          } catch (error) {
-            console.error('[AudioLoader] loadAudio: ERROR - resolve() threw exception:', error)
-            throw error
-          }
-        } else if (elapsed >= LOAD_TIMEOUT_MS) {
-          clearInterval(checkLoaded)
-          void setIsBufferingAction(ctx, false)
-          try {
-            resolve(null)
-          } catch (error) {
-            console.error('[AudioLoader] loadAudio: ERROR - resolve(null) threw exception:', error)
-            throw error
-          }
-        }
-      }, LOAD_CHECK_INTERVAL_MS)
-    }).catch(error => {
+    return this.waitForLoaded(player, initialPositionMs).catch(error => {
       console.error('[AudioLoader] loadAudio: Promise rejected with error:', error)
       void setIsBufferingAction(ctx, false)
       return null
@@ -66,7 +37,7 @@ class AudioLoader {
     if (!this.playerInstance) return this.loadAudio(audioUrl, initialPositionMs)
     const playUrl = await this.getPlaybackUrl(audioUrl)
     this.playerInstance.replace(playUrl)
-    return this.playerInstance
+    return this.waitForLoaded(this.playerInstance, initialPositionMs)
   }
 
   public getPlayerInstance(): AudioPlayer | null {
@@ -83,6 +54,29 @@ class AudioLoader {
 
   public markTrackEndHandled(): void {
     this.trackEndHandled = true
+  }
+
+  private waitForLoaded(player: AudioPlayer, initialPositionMs = 0): Promise<AudioPlayer | null> {
+    return new Promise(resolve => {
+      let elapsed = 0
+      const checkLoaded = setInterval(() => {
+        elapsed += LOAD_CHECK_INTERVAL_MS
+        if (player.isLoaded) {
+          clearInterval(checkLoaded)
+          const dur = Math.floor(player.duration * 1000)
+          void setDurationAction(ctx, dur)
+          void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
+          void setIsBufferingAction(ctx, false)
+          void player.seekTo(initialPositionMs / 1000)
+          void setPositionAction(ctx, initialPositionMs)
+          resolve(player)
+        } else if (elapsed >= LOAD_TIMEOUT_MS) {
+          clearInterval(checkLoaded)
+          void setIsBufferingAction(ctx, false)
+          resolve(null)
+        }
+      }, LOAD_CHECK_INTERVAL_MS)
+    })
   }
 
   private async getPlaybackUrl(audioUrl: string): Promise<string> {

@@ -3,12 +3,16 @@ import { type AudioPlayer } from 'expo-audio'
 import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {
+  isSeekingAtom,
   setIsPlayingAction,
   setIsSeekingAction,
   setPositionAction,
   setVolumeAction,
 } from '../../model'
 import { type PlaybackStatus } from './types'
+
+/** If no fresh position event arrives within this window, unblock the guard. */
+const SEEK_SAFETY_TIMEOUT_MS = 2000
 
 const DEFAULT_PLAYBACK_STATUS: PlaybackStatus = {
   duration: 0,
@@ -46,13 +50,19 @@ class PlaybackController {
 
   public seekTo = async (player: AudioPlayer | null, positionMs: number): Promise<void> => {
     if (!player?.isLoaded) return
+    if (this.seekTimeoutId) clearTimeout(this.seekTimeoutId)
 
     const clampedPosition = Math.max(0, positionMs)
     void setIsSeekingAction(ctx, true)
     void setPositionAction(ctx, clampedPosition)
     try {
       await player.seekTo(clampedPosition / 1000)
-    } finally {
+      this.seekTimeoutId = setTimeout(() => {
+        this.seekTimeoutId = null
+        if (ctx.get(isSeekingAtom)) void setIsSeekingAction(ctx, false)
+      }, SEEK_SAFETY_TIMEOUT_MS)
+    } catch (error) {
+      console.error('[PlaybackController] seekTo failed:', error)
       void setIsSeekingAction(ctx, false)
     }
   }
@@ -77,6 +87,7 @@ class PlaybackController {
 
   public getVolume = (): number => this.volume
 
+  private seekTimeoutId: null | ReturnType<typeof setTimeout> = null
   private volume = 1
 }
 
