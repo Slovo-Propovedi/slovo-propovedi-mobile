@@ -1,6 +1,5 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
-import React from 'react'
-import { Text } from 'react-native'
+import { Text as MockText } from 'react-native'
 import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { ErrorDialog } from './ErrorDialog'
@@ -10,7 +9,7 @@ jest.mock('expo-clipboard', () => ({
 }))
 
 jest.mock('@expo/vector-icons', () => ({
-  Ionicons: (props: { name: string }) => React.createElement(Text, null, props.name),
+  Ionicons: (props: { name: string }) => <MockText>{props.name}</MockText>,
 }))
 
 const COPY_LABEL = '📋 Копировать'
