@@ -1,12 +1,12 @@
 import { screen } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
-import { Text } from 'react-native'
+import { Text as MockText } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
 
 jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: (props: { name: string }) => (
-    <Text testID={`icon-${props.name}`}>{props.name}</Text>
+    <MockText testID={`icon-${props.name}`}>{props.name}</MockText>
   ),
 }))
 
