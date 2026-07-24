@@ -22,7 +22,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.egoreast.slovopropovedimobile",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
@@ -51,7 +53,8 @@
       ],
       "expo-asset",
       "expo-notifications",
-      "expo-router"
+      "expo-router",
+      "expo-status-bar"
     ],
     "updates": {
       "enabled": false,
