@@ -11,7 +11,7 @@ info:
 servers:
   - url: http://localhost:3000
     description: Локальный сервер разработки
-  - url: https://api.slovoistini.com
+  - url: https://api.slovo-propovedi.ru
     description: Продакшн сервер
 
 tags:
