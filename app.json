@@ -3,7 +3,7 @@
     "name": "Слово.Проповеди",
     "slug": "slovo-propovedi-mobile",
     "version": "0.0.0",
-    "license": "MIT",
+    "license": "GPL-3.0-or-later",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",

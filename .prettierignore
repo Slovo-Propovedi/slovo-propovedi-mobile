@@ -3,3 +3,9 @@ ios/
 android/
 assets/
 .expo/
+
+# Legal / metadata — do not reformat
+LICENSE
+ADDITIONAL-PERMISSIONS.md
+AUTHORS
+THIRD-PARTY-LICENSES.md

@@ -1,0 +1,55 @@
+version = 1
+
+# Default SPDX metadata for all project source files.
+# This covers TypeScript, JavaScript, JSX/TSX, JSON, Markdown, CSS,
+# YAML, XML, Gradle, Kotlin, Swift, and other tracked source files.
+[[annotations]]
+path = [
+  "**/*.ts",
+  "**/*.tsx",
+  "**/*.js",
+  "**/*.jsx",
+  "**/*.json",
+  "**/*.md",
+  "**/*.css",
+  "**/*.yml",
+  "**/*.yaml",
+  "**/*.xml",
+  "**/*.gradle",
+  "**/*.properties",
+  "**/*.kt",
+  "**/*.swift",
+  "**/*.h",
+  "**/*.html",
+  "**/*.cjs",
+  "**/*.mts",
+  "**/*.bat",
+  "**/*.plist",
+  "**/*.pbxproj",
+  "**/*.xcscheme",
+  "**/*.env",
+  "**/*.jar",
+  "app/**",
+  "src/**",
+  "patches/**",
+  "plugins/**",
+  "android/**",
+  "ios/**",
+  "assets/**",
+  ".__mocks__/**",
+  ".forgejo/**",
+  ".github/**",
+  ".husky/**",
+  ".vscode/**",
+  ".gitignore",
+  ".prettierignore",
+  "yarn.lock",
+  "openAPI.yaml",
+  "fsd-high-level-dependencies.html",
+  "slovo-istiny-mobile.code-workspace",
+  "AUTHORS",
+  "LICENSE",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Slovo.Propovedi"
+SPDX-License-Identifier = "GPL-3.0-or-later"
