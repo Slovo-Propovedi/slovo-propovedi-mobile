@@ -515,4 +515,4 @@ await tokenStorage.clearTokens()
 3. **FSD Insignificant Slice:** Rule set to 'warn' - single-use features should be relocated eventually
 4. **No Semicolons:** Project uses no semicolons, enforced by ESLint
 5. **React 19:** Project uses React 19.2.0
-6. **Expo SDK 55:** Using Expo SDK ~55.0.4
+6. **Expo SDK 57:** Using Expo SDK ~57.0.8
