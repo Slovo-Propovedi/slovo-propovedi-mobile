@@ -22,9 +22,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "ru.slovopropovedi",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ]
+        "UIBackgroundModes": ["audio"]
       }
     },
     "android": {
@@ -52,7 +50,13 @@
         }
       ],
       "expo-asset",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#f16031"
+        }
+      ],
       "expo-router",
       "expo-status-bar"
     ],
