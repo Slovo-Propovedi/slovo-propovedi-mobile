@@ -4,6 +4,8 @@ name: DCO
 # compatibility. This is the project convention (see ci.yml).
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -21,8 +23,16 @@ jobs:
         run: |
           set -e
 
-          BASE_SHA=${{ github.event.pull_request.base.sha }}
-          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          if [ -n "${{ github.event.pull_request }}" ]; then
+            BASE_SHA=${{ github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA=$(git rev-list --max-parents=0 HEAD | tail -1)
+            HEAD_SHA=${{ github.event.after }}
+          else
+            BASE_SHA=${{ github.event.before }}
+            HEAD_SHA=${{ github.event.after }}
+          fi
 
           # Get all non-merge commits in the PR range
           COMMITS=$(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA")
