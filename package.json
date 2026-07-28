@@ -38,6 +38,7 @@
     "testFinal": "jest",
     "update-app": "eas update --branch main --message \"Updating the app\"",
     "updateSnapshots": "jest -u --coverage=false",
+    "bump-version": "node scripts/bump-version.mjs",
     "version-major": "yarn version --major",
     "version-minor": "yarn version --minor",
     "version-patch": "yarn version --patch",
