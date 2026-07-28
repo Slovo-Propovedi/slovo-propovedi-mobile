@@ -1,0 +1,197 @@
+Categories:
+  - Internet
+  - Multimedia
+  - Reading
+License: GPL-3.0-or-later
+AuthorName: Slovo.Propovedi
+AuthorWebSite: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile
+WebSite: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile
+SourceCode: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile
+IssueTracker: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/issues
+Changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/commits/branch/main
+
+Summary: Listen to and read Christian sermons
+
+Description: |-
+  Slovo Propovedi (Слово.Проповеди) is a free and libre open source
+  application for listening to and reading Christian sermons.
+
+  Features:
+  * Audio playback of sermon playlists with background playback and media controls
+  * FB2 format book reader for offline reading
+  * User-configurable server URL — no vendor lock-in, works with any compatible backend
+  * Local notifications only — no proprietary push notification services
+  * No tracking, no advertising, no analytics
+  * Russian-language interface
+
+  Licensed under GNU General Public License v3.0 or later (GPL-3.0-or-later).
+  The source code is fully available. This app contains no proprietary components,
+  no non-free network services, and no user tracking.
+
+Repo: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile.git
+RepoType: git
+Builds:
+  - versionName: '0.0.0'
+    versionCode: 1
+    commit: v0.0.0
+    output: android/app/build/outputs/apk/release/app-release.apk
+    prebuild: |
+      # Strip FCM (Firebase Cloud Messaging) from expo-notifications.
+      # Line 43 of node_modules/expo-notifications/android/build.gradle contains:
+      #   implementation 'com.google.firebase:firebase-messaging:25.0.1'
+      # This is pulled unconditionally but never used — the app only uses local
+      # notifications via scheduleNotificationAsync({trigger: null}).
+      sed -i "/firebase-messaging/d" node_modules/expo-notifications/android/build.gradle
+
+      # Strip installreferrer from expo-application (transitive dep of expo-notifications).
+      # Line 18 of node_modules/expo-application/android/build.gradle contains:
+      #   implementation 'com.android.installreferrer:installreferrer:2.2'
+      # This is proprietary Google Play tracking and must not be included.
+      sed -i "/installreferrer/d" node_modules/expo-application/android/build.gradle
+
+      # Strip ShortcutBadger from expo-notifications (not needed for local-only notifications).
+      # Line 45 of node_modules/expo-notifications/android/build.gradle contains:
+      #   implementation 'me.leolin:ShortcutBadger:1.1.22@aar'
+      sed -i "/ShortcutBadger/d" node_modules/expo-notifications/android/build.gradle
+
+      # Enable Expo autolinking buildFromSource for reproducible source builds.
+      # This tells Expo to build all native modules from source rather than
+      # downloading prebuilt binaries (which would break reproducibility).
+      node -e "
+        const fs = require('fs');
+        const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+        pkg.expo = pkg.expo || {};
+        pkg.expo.autolinking = pkg.expo.autolinking || {};
+        pkg.expo.autolinking.android = pkg.expo.autolinking.android || {};
+        pkg.expo.autolinking.android.buildFromSource = ['.*'];
+        fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+      "
+    build: |
+      yarn install --frozen-lockfile
+      cd android && ./gradlew assembleRelease
+    scandelete:
+      - node_modules/
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '0.0.0'
+CurrentVersionCode: 1
+
+MaintainerNotes: |
+  ## F-Droid Build Recipe for Slovo Propovedi
+
+  ### 1. FCM Strip Patch
+
+  The expo-notifications module (v57.0.7) unconditionally includes Firebase Cloud
+  Messaging at node_modules/expo-notifications/android/build.gradle line 43:
+
+      implementation 'com.google.firebase:firebase-messaging:25.0.1'
+
+  The app NEVER uses push notifications. It only uses local notifications via
+  setNotificationHandler() and scheduleNotificationAsync({trigger: null}).
+  The FCM dependency is stripped with a sed command in the prebuild step.
+
+  ### 2. installreferrer Strip Patch
+
+  expo-notifications transitively depends on expo-application (v57.0.2), which
+  includes the proprietary Google Play Install Referrer library at
+  node_modules/expo-application/android/build.gradle line 18:
+
+      implementation 'com.android.installreferrer:installreferrer:2.2'
+
+  This is proprietary Google Play tracking infrastructure. It is stripped with
+  a sed command in the prebuild step. The app does not use install attribution.
+
+  ### 3. ShortcutBadger Strip Patch
+
+  expo-notifications includes ShortcutBadger at line 45:
+
+      implementation 'me.leolin:ShortcutBadger:1.1.22@aar'
+
+  This is an open-source badge-count library, but the app only uses local
+  notifications and does not display badge counts. It is stripped for
+  minimization. ShortcutBadger itself is Apache-2.0 licensed, so this is
+  optional — include it if F-Droid reviewers prefer minimal deps.
+
+  ### 4. Expo Autolinking Build-From-Source
+
+  F-Droid requires all native code to be built from source. The following
+  configuration is applied to package.json during prebuild:
+
+      "expo": {
+        "autolinking": {
+          "android": {
+            "buildFromSource": [".*"]
+          }
+        }
+      }
+
+  This ensures all Expo modules are compiled from their source in node_modules
+  rather than downloading prebuilt AAR/JAR artifacts, which would break
+  reproducible builds.
+
+  ### 5. Per-ABI Builds
+
+  F-Droid prefers separate APKs per ABI for smaller downloads. Build each
+  architecture separately:
+
+      cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+      cd android && ./gradlew assembleRelease -PreactNativeArchitectures=armeabi-v7a
+      cd android && ./gradlew assembleRelease -PreactNativeArchitectures=x86_64
+
+  The project default in gradle.properties includes all four ABIs:
+  armeabi-v7a, arm64-v8a, x86, x86_64
+
+  ### 6. Reproducible Builds
+
+  This app uses Hermes JS engine (hermesEnabled=true) with React Native 0.86.0
+  and Expo SDK 57. EAS Cloud builds are NOT bit-reproducible. F-Droid builds
+  must be done locally. To improve reproducibility:
+
+  - Pin Node.js version (>= 22.x, currently v22.23.1)
+  - Pin Yarn version (classic 1.22.x)
+  - Pin JDK version (>= 17, OpenJDK)
+  - Gradle 9.0.0 (via wrapper)
+  - Android SDK API 35+, build-tools 35.0.0
+
+  Exact bit-for-bit reproducibility may require additional patches to remove
+  timestamps and non-deterministic build artifacts. This is documented as a
+  goal but may not be achieved in the initial F-Droid submission.
+
+  ### 7. Server URL Configuration
+
+  The app has a user-configurable server URL accessible via the Settings screen.
+  Default: https://api.slovo-propovedi.ru
+
+  This is NOT a TetheredNet anti-feature because:
+  - The server URL is changeable at runtime by the user
+  - The app works with any compatible backend
+  - There is no account system or vendor lock-in
+  - Users can self-host the backend
+
+  ### 8. YouTube Removal
+
+  YouTube playback library fully removed (no `react-native-youtube` dep, no API
+  client). URL fields retained in sermon data model for backend API compatibility
+  — these are plain strings, not YouTube integration.
+
+  ### 9. Signing Configuration
+
+  Default local release builds use the debug keystore
+  (`signingConfig signingConfigs.debug` in `android/app/build.gradle:112-122`).
+  F-Droid reproducible builds will replace this with F-Droid's own signing key.
+
+  Maintainer TODO: pin the debug-keystore SHA-256 fingerprint here for
+  reproducibility verification (fingerprint not yet captured).
+
+  ### 10. Known Issues / TODO
+
+  - The commit placeholder 'v0.0.0' in the build entry must be replaced with a
+    real git tag once the project creates release tags.
+  - F-Droid may require a signing key separate from the debug keystore.
+    The current build.gradle uses the debug signing config for release builds.
+  - The REUSE.toml annotations at the project root already cover fdroid/**/*.yml
+    with GPL-3.0-or-later, so the metadata file is SPDX-compliant.
+  - Verify Forgejo/Gitea Changelog URL format (`/commits/branch/main` vs
+    `/commits/?ref=main`). The current URL follows Forgejo conventions but
+    should be tested before F-Droid submission.
