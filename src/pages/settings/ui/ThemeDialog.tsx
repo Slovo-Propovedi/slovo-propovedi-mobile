@@ -1,4 +1,3 @@
-import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { Modal } from 'shared/ui/modal'
 import { INDENTS, useTheme } from 'shared/ui/themed'

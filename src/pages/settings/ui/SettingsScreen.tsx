@@ -1,5 +1,5 @@
 import { useAction } from '@reatom/npm-react'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { ErrorDialog, useErrorDialog } from 'shared/ui/error-dialog'
 import { isMaterialYouSupported } from 'shared/ui/theme'

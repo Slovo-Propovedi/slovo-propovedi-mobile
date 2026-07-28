@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 import { serverUrlAtom, setServerUrlAction } from 'entities/settings'
 import { DEFAULT_API_URL } from 'shared/config'

@@ -8,7 +8,7 @@ import {
   type RenderOptions,
   type RenderResult,
 } from '@testing-library/react-native'
-import React from 'react'
+import { Fragment } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { ThemeProvider } from '../ui/theme/ThemeContext/ThemeProvider'
 
@@ -27,7 +27,7 @@ const getWrapper = ({
   ctx,
 }: Pick<ProvidersOptions, 'AdditionalWrapper'> &
   Required<Pick<ProvidersOptions, 'ctx'>>): React.FunctionComponent<React.PropsWithChildren> => {
-  const Wrapper = AdditionalWrapper ?? React.Fragment
+  const Wrapper = AdditionalWrapper ?? Fragment
 
   return ({ children }) => (
     <reatomContext.Provider value={ctx}>
