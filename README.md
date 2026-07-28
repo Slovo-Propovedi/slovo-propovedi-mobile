@@ -17,7 +17,6 @@
 - **Gestures**: `react-native-gesture-handler`
 - **Tab View**: `react-native-tab-view`
 - **Notifications**: `expo-notifications`
-- **OTA Updates**: `expo-updates`
 - **Book Parsing**: `xml-js` (FB2 format)
 - **Lang**: `typescript`
 - **Lint**: `prettier`, `eslint`
@@ -35,6 +34,20 @@
 <img title="eslint" alt="eslint" height=48 src="https://eslint.org/favicon.ico"/>
 <img title="feature-sliced" alt="feature-sliced" height=48 src="https://avatars.githubusercontent.com/u/60469024?s=200&v=4"/>
 </div>
+
+## License
+
+This project is Free/Libre Open Source Software, licensed under the **GNU General Public License v3.0 or later** ([GPL-3.0-or-later](LICENSE)).
+
+Distribution via the Apple App Store and Google Play Store is permitted under the [App Store Additional Permission](ADDITIONAL-PERMISSIONS.md) — a Section 7 exception that allows GPL-3.0 to coexist with store terms of service.
+
+- **Source code**: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile
+- **Bug reports & contact**: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/issues
+- **License text**: [LICENSE](LICENSE)
+- **Third-party licenses**: [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md)
+- **Authors**: [AUTHORS](AUTHORS)
+
+All project dependencies (1,710 transitive packages per yarn.lock audit, including development dependencies) are GPL-3.0-compatible. Production-only enumeration: 864 packages — see [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md). No proprietary code is included in the distributed binary.
 
 ## Getting Started
 
@@ -93,7 +106,7 @@ This will start the Expo development server. You can then scan the QR code with 
 - `yarn build:list` — List EAS builds
 - `yarn build-local-debug:android` — Build Android debug locally
 - `yarn build-local-release:android` — Build Android release locally
-- `yarn update-app` — Deploy OTA update to main branch
+- `yarn update-app` — Disabled. OTA updates are off; see [docs/OTA-STRATEGY.md](docs/OTA-STRATEGY.md) for the decision and re-enablement path.
 
 ### Additional Commands
 
@@ -314,28 +327,35 @@ To run a single test file:
 yarn jest path/to/file.test.tsx
 ```
 
-## Build for Production
+## Building
 
-To build the app for production using EAS (Expo Application Services):
+### Local Builds (Recommended)
 
-```bash
-# Build for Android
-yarn build:android
+The app can be built entirely locally without proprietary cloud services. See **[docs/BUILD-LOCAL.md](docs/BUILD-LOCAL.md)** for detailed instructions.
 
-# Build for iOS
-yarn build:ios
+Quick reference:
+- Android release: `yarn build-local-release:android` → outputs APK at `android/app/build/outputs/apk/release/app-release.apk`
+- Android debug: `yarn build-local-debug:android`
+- iOS release: `yarn run:ios -- --configuration Release`
 
-# Build for all platforms
-yarn build:all
-```
+**Note**: Default local builds are signed with the debug keystore. For production signing, follow the steps in [docs/BUILD-LOCAL.md](docs/BUILD-LOCAL.md#production-signing).
+
+### EAS Cloud Build (Optional Alternative)
+
+[Expo Application Services (EAS)](https://expo.dev/eas) Build is also supported as an optional convenience. Note: EAS Build is a proprietary cloud service and is **not** part of the FLOSS distribution.
+
+- `yarn build:android` / `yarn build:ios` / `yarn build:all`
+- `yarn build-preview:android` / `yarn build-preview:ios`
+
+OTA updates are disabled — see [docs/OTA-STRATEGY.md](docs/OTA-STRATEGY.md).
 
 ## OTA Updates
 
-To deploy an OTA (Over-the-Air) update to the main branch:
+OTA updates are currently **disabled**. Users receive updates through the Apple App Store and Google Play Store only.
 
-```bash
-yarn update-app
-```
+This is an intentional decision to decouple the app from proprietary EAS (Expo Application Services) cloud infrastructure, in keeping with the project's FLOSS (Free/Libre Open Source Software) commitments under GPL-3.0-or-later.
+
+For the full rationale, current state, and future re-enablement path (including self-hosted OTA server options), see **[docs/OTA-STRATEGY.md](docs/OTA-STRATEGY.md)**.
 
 ## Additional Resources
 
