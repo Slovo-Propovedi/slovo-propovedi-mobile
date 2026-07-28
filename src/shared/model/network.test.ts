@@ -93,5 +93,32 @@ describe('network model', () => {
 
       jest.useRealTimers()
     })
+
+    test('shows toast only once per outage until server is reachable again', () => {
+      jest.useFakeTimers()
+
+      setOnlineStatus(ctx, true)
+
+      // First call — toast shows
+      reportServerUnreachable(ctx)
+      expect(ctx.get(serverUnreachableAtom)).toBe(true)
+
+      // Auto-dismiss
+      jest.advanceTimersByTime(4000)
+      expect(ctx.get(serverUnreachableAtom)).toBe(false)
+
+      // Second call during same outage — toast does NOT show again
+      reportServerUnreachable(ctx)
+      expect(ctx.get(serverUnreachableAtom)).toBe(false)
+
+      // Server recovers — resets the "shown" flag
+      reportServerReachable(ctx)
+
+      // Next outage — toast shows again
+      reportServerUnreachable(ctx)
+      expect(ctx.get(serverUnreachableAtom)).toBe(true)
+
+      jest.useRealTimers()
+    })
   })
 })
