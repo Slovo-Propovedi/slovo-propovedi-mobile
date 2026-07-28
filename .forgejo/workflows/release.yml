@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Get yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Verify version matches tag
+        id: version
+        run: |
+          TAG_VERSION="${{ github.ref_name }}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$TAG_VERSION"
+          EXPECTED_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+
+          # Check package.json
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
+          # Check app.json
+          APP_VERSION=$(node -p "require('./app.json').expo.version")
+          if [ "$APP_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::app.json version ($APP_VERSION) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
+          # Check build.gradle
+          GRADLE_VERSION_NAME=$(grep 'versionName' android/app/build.gradle | head -1 | sed 's/.*versionName "\([^"]*\)".*/\1/')
+          GRADLE_VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | sed 's/.*versionCode \([0-9]*\).*/\1/')
+          if [ "$GRADLE_VERSION_NAME" != "$TAG_VERSION" ]; then
+            echo "::error::build.gradle versionName ($GRADLE_VERSION_NAME) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+          if [ "$GRADLE_VERSION_CODE" != "$EXPECTED_CODE" ]; then
+            echo "::error::build.gradle versionCode ($GRADLE_VERSION_CODE) does not match expected ($EXPECTED_CODE)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
+          echo "All versions match tag $TAG_VERSION (code: $EXPECTED_CODE)"
+          echo "version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
+          echo "code=$EXPECTED_CODE" >> "$GITHUB_OUTPUT"
+
+      - name: Prebuild native code
+        run: npx expo prebuild --platform android --clean
+
+      - name: Build APK
+        run: |
+          cd android
+          nice -n 19 ionice -c 3 ./gradlew assembleRelease --no-daemon -Dorg.gradle.parallel=false
+
+      - name: Zip APK
+        run: |
+          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
+          zip -j "slovo-propovedi-v${{ steps.version.outputs.version }}.zip" "$APK_PATH"
+
+      - name: Create Forgejo Release and upload asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RESPONSE=$(curl -s -X POST \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag_name\":\"${{ github.ref_name }}\",\"name\":\"${{ github.ref_name }}\",\"body\":\"Release version ${{ steps.version.outputs.version }}\"}")
+          RELEASE_ID=$(echo "$RESPONSE" | jq -r .id)
+          curl -s -X POST \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-v${{ steps.version.outputs.version }}.zip" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/zip" \
+            --data-binary @slovo-propovedi-v${{ steps.version.outputs.version }}.zip
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          rm -rf node_modules .yarn/cache .expo jest-cache dist android/app/build 2>/dev/null || true
+          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
+          find . -name '.cache' -type d -delete 2>/dev/null || true

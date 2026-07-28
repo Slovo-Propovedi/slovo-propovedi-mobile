@@ -32,7 +32,7 @@ Repo: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile.git
 RepoType: git
 Builds:
   - versionName: '0.0.0'
-    versionCode: 1
+    versionCode: 0
     commit: v0.0.0
     output: android/app/build/outputs/apk/release/app-release.apk
     prebuild: |
@@ -75,7 +75,7 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: '0.0.0'
-CurrentVersionCode: 1
+CurrentVersionCode: 0
 
 MaintainerNotes: |
   ## F-Droid Build Recipe for Slovo Propovedi

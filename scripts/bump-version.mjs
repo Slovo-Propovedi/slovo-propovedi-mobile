@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync } from 'fs'
-import { execSync } from 'child_process'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { execSync } from 'node:child_process'
 
 const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'
@@ -21,7 +21,10 @@ if (!arg) {
   exitError('Usage: node scripts/bump-version.mjs <version|patch|minor|major>')
 }
 
-if (!/^\d+\.\d+\.\d+$/.test(arg) && !['patch', 'minor', 'major'].includes(arg)) {
+// Strip optional 'v' prefix (e.g. v1.2.3 → 1.2.3), consistent with CI tag format
+const versionArg = arg.startsWith('v') ? arg.slice(1) : arg
+
+if (!/^\d+\.\d+\.\d+$/.test(versionArg) && !['patch', 'minor', 'major'].includes(versionArg)) {
   exitError(`Invalid argument: "${arg}". Use X.Y.Z, patch, minor, or major.`)
 }
 
@@ -33,8 +36,8 @@ const currentVersion = pkg.version
 // --- Calculate new version ---
 let newVersion
 
-if (/^\d+\.\d+\.\d+$/.test(arg)) {
-  newVersion = arg
+if (/^\d+\.\d+\.\d+$/.test(versionArg)) {
+  newVersion = versionArg
 } else {
   const [major, minor, patch] = currentVersion.split('.').map(Number)
   const bumps = {
@@ -45,7 +48,11 @@ if (/^\d+\.\d+\.\d+$/.test(arg)) {
   newVersion = bumps[arg]
 }
 
-// --- Read current versionCode from build.gradle ---
+// --- Derive versionCode from new semver ---
+const [newMajor, newMinor, newPatch] = newVersion.split('.').map(Number)
+const newVersionCode = newMajor * 10000 + newMinor * 100 + newPatch
+
+// --- Read build.gradle for updates ---
 const gradlePath = 'android/app/build.gradle'
 let gradleContent
 
@@ -54,10 +61,6 @@ try {
 } catch {
   exitError(`File not found: ${gradlePath}`)
 }
-
-const versionCodeMatch = gradleContent.match(/versionCode (\d+)/)
-const currentVersionCode = versionCodeMatch ? parseInt(versionCodeMatch[1], 10) : 1
-const newVersionCode = currentVersionCode + 1
 
 // --- Update all 5 files ---
 
@@ -112,7 +115,7 @@ execSync(`git tag -a v${newVersion} -m "v${newVersion}"`, { cwd: process.cwd() }
 log('\n══════════════════════════════════════', GREEN)
 log('  Version bump complete!', GREEN)
 log(`  ${currentVersion} → ${newVersion}`, GREEN)
-log(`  VersionCode: ${currentVersionCode} → ${newVersionCode}`, GREEN)
+log(`  VersionCode: ${newVersionCode}`, GREEN)
 log(`  Tag: v${newVersion}`, GREEN)
 log('══════════════════════════════════════', GREEN)
 log('  Reminder:  git push --tags origin main', YELLOW)
