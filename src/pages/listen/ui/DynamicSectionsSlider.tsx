@@ -39,7 +39,7 @@ export const DynamicSectionsSlider = () => {
     navigateToPlaylist(playlist)
   }
 
-  if (isLoading) return <SectionsSkeleton />
+  if (isLoading && sections.length === 0) return <SectionsSkeleton />
 
   return (
     <>
