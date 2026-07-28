@@ -7,6 +7,7 @@ import { INDENTS, useTheme } from 'shared/ui/themed'
 import { clearCacheAction } from '../model'
 import { ClearCacheDialog } from './ClearCacheDialog'
 import { DynamicColorsItem } from './DynamicColorsItem'
+import { ServerUrlSettings } from './ServerUrlSettings'
 import { SettingsItem } from './SettingsItem'
 import { ThemeDialog } from './ThemeDialog'
 
@@ -52,6 +53,7 @@ export const SettingsScreen = () => {
             setShowDialog(true)
           }}
         />
+        <ServerUrlSettings />
       </ScrollView>
       <ClearCacheDialog
         visible={showDialog}

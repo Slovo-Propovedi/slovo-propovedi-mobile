@@ -1,15 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios from 'axios'
 import { type AxiosRequestConfig } from 'axios'
-import { API_URL } from '../config/config'
+import { DEFAULT_API_URL } from '../config/config'
 import { ctx } from '../lib/reatom-ctx/ctx'
 import { reportServerReachable, reportServerUnreachable } from '../model/network'
 
 export const ACCESS_TOKEN_KEY = '@access_token'
 export const REFRESH_TOKEN_KEY = '@refresh_token'
 
+// Dynamic base URL: initialized with DEFAULT_API_URL, updated by
+// entities/settings actions (setServerUrlAction, initServerUrlAction)
+// whenever the user changes or restores the server URL.
 export const axiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: DEFAULT_API_URL,
 })
 
 // Функция для refresh токена
@@ -17,7 +20,7 @@ const performTokenRefresh = async () => {
   const storedRefreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY)
   if (!storedRefreshToken) throw new Error('No refresh token available')
 
-  const response = await axios.post(`${API_URL}/auth/refresh`, {
+  const response = await axios.post(`${axiosInstance.defaults.baseURL}/auth/refresh`, {
     refreshToken: storedRefreshToken,
   })
 
