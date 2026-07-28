@@ -30,7 +30,7 @@ License v3 (or later). It applies to the Slovo.Propovedi application as a whole.
 >     of the Program.
 >
 > Mailing address for written offers (per GPL-3.0 section 3):
->   Slovo.Propovedi <contact-pending>
+>   Slovo.Propovedi <https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/issues>
 >
 > References:
 >   - GNU GPL FAQ on App Store distribution:

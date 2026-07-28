@@ -20,7 +20,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.egoreast.slovopropovedimobile",
+      "bundleIdentifier": "ru.slovopropovedi",
       "infoPlist": {
         "UIBackgroundModes": [
           "audio"
@@ -32,7 +32,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#f16031"
       },
-      "package": "com.egoreast.slovopropovedimobile",
+      "package": "ru.slovopropovedi",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
@@ -57,16 +57,11 @@
       "expo-status-bar"
     ],
     "updates": {
-      "enabled": false,
-      "url": "https://u.expo.dev/ddf9e2dd-b431-490b-afed-1340eed6137a"
+      "enabled": false
     },
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "ef4d8a44-3b37-4690-8592-59429a673845"
-      }
+      "router": {}
     },
-    "runtimeVersion": "1.0.0",
     "owner": "egoreast"
   }
 }
