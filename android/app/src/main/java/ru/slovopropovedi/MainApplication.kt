@@ -1,4 +1,4 @@
-package com.egoreast.slovopropovedimobile
+package ru.slovopropovedi
 
 import android.app.Application
 import android.content.res.Configuration

@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>slovo-propovedi</string>
-          <string>com.egoreast.slovopropovedimobile</string>
+          <string>ru.slovopropovedi</string>
         </array>
       </dict>
     </array>
