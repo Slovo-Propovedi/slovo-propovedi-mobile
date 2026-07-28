@@ -1,10 +1,11 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import React, { useState } from 'react'
-import { StyleSheet, Text, TextInput, View } from 'react-native'
+import { Text, TextInput, View } from 'react-native'
 import { serverUrlAtom, setServerUrlAction } from 'entities/settings'
 import { DEFAULT_API_URL } from 'shared/config'
-import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import { TouchableItem } from 'shared/ui/touchable-item'
+import { styles } from './ServerUrlSettings.styles'
 
 const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url)
 
@@ -68,6 +69,7 @@ export const ServerUrlSettings = () => {
       </View>
       <TouchableItem
         disabled={isDefault}
+        noDisabledBackground
         onPress={handleReset}
         testID='reset-server-url-link'
         style={{ opacity: isDefault ? 0.4 : 1 }}
@@ -79,52 +81,3 @@ export const ServerUrlSettings = () => {
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  button: {
-    borderRadius: 8,
-    paddingHorizontal: INDENTS.high,
-    paddingVertical: INDENTS.middle,
-  },
-  buttons: {
-    flexDirection: 'row',
-    gap: INDENTS.low,
-    marginTop: INDENTS.medium,
-  },
-  buttonText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
-  },
-  container: {
-    borderBottomColor: COLORS.disabled,
-    borderBottomWidth: 1,
-    paddingHorizontal: INDENTS.high,
-    paddingVertical: INDENTS.high,
-  },
-  current: {
-    fontSize: FONT_SIZES.sm,
-    marginBottom: INDENTS.low,
-  },
-  input: {
-    borderRadius: 8,
-    borderWidth: 1,
-    fontSize: FONT_SIZES.base,
-    paddingHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.middle,
-  },
-  label: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
-    marginBottom: INDENTS.low,
-  },
-  resetLink: {
-    alignSelf: 'flex-start',
-    fontSize: FONT_SIZES.sm,
-    marginTop: INDENTS.medium,
-    textDecorationLine: 'underline',
-  },
-  saveButton: {
-    backgroundColor: COLORS.primary,
-  },
-})

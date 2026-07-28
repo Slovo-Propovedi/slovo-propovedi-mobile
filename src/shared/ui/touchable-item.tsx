@@ -5,6 +5,7 @@ import { COLORS } from './themed'
 export interface TouchableItemProps {
   children: React.ReactNode
   disabled?: boolean
+  noDisabledBackground?: boolean
   onPress: (event: GestureResponderEvent) => void
   style?: StyleProp<ViewStyle>
   testID?: string
@@ -13,13 +14,14 @@ export interface TouchableItemProps {
 export const TouchableItem = ({
   children,
   disabled = false,
+  noDisabledBackground = false,
   onPress,
   style,
   testID,
 }: TouchableItemProps) => {
   const buttonStyles: StyleProp<ViewStyle>[] = [styles.item]
 
-  if (disabled) buttonStyles.push({ backgroundColor: COLORS.disabled })
+  if (disabled && !noDisabledBackground) buttonStyles.push({ backgroundColor: COLORS.disabled })
 
   buttonStyles.push(style)
 
