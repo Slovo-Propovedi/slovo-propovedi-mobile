@@ -72,6 +72,9 @@ components:
         accessToken:
           type: string
           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         user:
           type: object
           properties:
@@ -93,6 +96,25 @@ components:
         email:
           type: string
           format: email
+
+    RefreshTokenDto:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    RefreshResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
     # ====================== Files ======================
     FileUploadResponse:
@@ -118,6 +140,41 @@ components:
         description:
           type: string
           example: 'Подробное описание проповеди...'
+        textFileUrl:
+          type: string
+          nullable: true
+        audioUrl:
+          type: string
+          nullable: true
+        youtubeUrl:
+          type: string
+          nullable: true
+        artist:
+          type: string
+          nullable: true
+        artwork:
+          type: string
+          nullable: true
+        chapter:
+          type: number
+          nullable: true
+        verse:
+          nullable: true
+          oneOf:
+            - type: number
+            - type: array
+              items:
+                type: number
+              minItems: 2
+              maxItems: 2
+
+    UpdateSermonDto:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
         textFileUrl:
           type: string
           nullable: true
@@ -224,6 +281,19 @@ components:
             type: string
             format: uuid
           example: ['uuid-sermon-1', 'uuid-sermon-2']
+
+    UpdatePlaylistDto:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        sermonsIds:
+          type: array
+          items:
+            type: string
+            format: uuid
 
     PlaylistEntity:
       type: object
@@ -463,6 +533,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserEntity'
 
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      operationId: authRefresh
+      summary: Обновить access и refresh токены
+      description: Принимает refresh токен и возвращает новую пару токенов
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenDto'
+      responses:
+        '200':
+          description: Новая пара токенов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '401':
+          description: Недействительный или истёкший refresh токен
+
   # ====================== FILES ======================
   /files:
     post:
@@ -584,7 +677,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSermonDto'
+              $ref: '#/components/schemas/UpdateSermonDto'
       responses:
         '200':
           description: Проповедь обновлена
@@ -689,7 +782,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreatePlaylistDto'
+              $ref: '#/components/schemas/UpdatePlaylistDto'
       responses:
         '200':
           description: Плейлист обновлён
@@ -850,3 +943,43 @@ paths:
       responses:
         '200':
           description: Список пользователей
+
+  /users/{id}:
+    patch:
+      tags: [Users]
+      operationId: updateUser
+      summary: Обновить пользователя
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserEntity'
+      responses:
+        '200':
+          description: Пользователь обновлён
+
+    delete:
+      tags: [Users]
+      operationId: deleteUser
+      summary: Удалить пользователя
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Пользователь удалён
