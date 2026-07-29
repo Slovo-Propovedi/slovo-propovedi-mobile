@@ -133,6 +133,8 @@ components:
       required:
         - title
         - description
+        - artist
+        - artwork
       properties:
         title:
           type: string
@@ -151,10 +153,12 @@ components:
           nullable: true
         artist:
           type: string
-          nullable: true
         artwork:
           type: string
+        book:
+          type: string
           nullable: true
+          example: 'Genesis'
         chapter:
           type: number
           nullable: true
@@ -190,6 +194,9 @@ components:
         artwork:
           type: string
           nullable: true
+        book:
+          type: string
+          nullable: true
         chapter:
           type: number
           nullable: true
@@ -210,6 +217,7 @@ components:
         - title
         - artist
         - artwork
+        - description
       properties:
         id:
           type: string
@@ -235,9 +243,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PlaylistEntity'
+        book:
+          type: string
+          nullable: true
+          example: 'Genesis'
         chapter:
           type: number
+          nullable: true
         verse:
+          nullable: true
           oneOf:
             - type: number
             - type: array
@@ -270,10 +284,13 @@ components:
       required:
         - title
         - description
+        - artwork
       properties:
         title:
           type: string
         description:
+          type: string
+        artwork:
           type: string
         sermonsIds:
           type: array
@@ -288,6 +305,8 @@ components:
         title:
           type: string
         description:
+          type: string
+        artwork:
           type: string
         sermonsIds:
           type: array

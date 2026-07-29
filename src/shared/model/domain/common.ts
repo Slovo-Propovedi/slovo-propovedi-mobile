@@ -37,7 +37,7 @@ interface SermonDataDef {
   artist: string
   artwork: string
   audioUrl?: null | string | undefined
-  chapter?: number | undefined
+  chapter?: null | number | undefined
   description?: string | undefined
   id: string
   playlists?: PlaylistDataDef[] | undefined
@@ -69,7 +69,7 @@ export const sermonSchema = z.object({
   artist: z.string(),
   artwork: z.string(),
   audioUrl: z.string().nullable().optional(),
-  chapter: z.number().optional(),
+  chapter: z.number().nullish(),
   description: z.string().optional(),
   id: z.string(),
   playlists: z.lazy((): z.ZodType<PlaylistDataDef[]> => z.array(playlistSchema)).optional(),
