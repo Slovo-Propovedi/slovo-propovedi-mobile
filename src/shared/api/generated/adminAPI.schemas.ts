@@ -61,6 +61,8 @@ export interface CreateSermonDto {
   chapter?: number | null
   description: string
   /** @nullable */
+  playlistsIds?: string[] | null
+  /** @nullable */
   textFileUrl?: string | null
   title: string
   verse?: number | number[] | null
@@ -80,6 +82,8 @@ export interface UpdateSermonDto {
   /** @nullable */
   chapter?: number | null
   description?: string
+  /** @nullable */
+  playlistsIds?: string[] | null
   /** @nullable */
   textFileUrl?: string | null
   title?: string
@@ -178,6 +182,8 @@ export interface CreatePlaylistDto {
 export interface UpdatePlaylistDto {
   artwork?: string
   description?: string
+  /** @nullable */
+  sectionsIds?: string[] | null
   sermonsIds?: string[]
   title?: string
 }

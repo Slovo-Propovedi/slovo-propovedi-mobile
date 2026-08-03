@@ -3,7 +3,7 @@ import { defineConfig, NamingConvention, OutputMode, PropertySortOrder } from 'o
 export default defineConfig({
   // Output 1: Axios API функции с mutator и MSW моками
   main: {
-    input: './openAPI.yaml',
+    input: 'https://docs.slovo-propovedi.ru/openAPI.yaml',
     output: {
       mode: OutputMode.TAGS_SPLIT,
       client: 'axios',

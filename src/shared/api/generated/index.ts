@@ -4,7 +4,6 @@ export * as sermonsApi from './sermons/sermons'
 export * as playlistsApi from './playlists/playlists'
 export * as sectionsApi from './sections/sections'
 export * as filesApi from './files/files'
-export * as usersApi from './users/users'
 
 // export * as authMocks from './auth/auth.msw'
 // export * as sermonsMocks from './sermons/sermons.msw'
