@@ -23,7 +23,7 @@ export const getPlaylists = () => {
   /**
    * @summary Создать плейлист
    */
-  const createPlaylist = (
+  const playlistControllerCreate = (
     createPlaylistDto: CreatePlaylistDto,
     options?: SecondParameter<typeof customInstance<PlaylistEntity>>,
   ) => {
@@ -40,7 +40,7 @@ export const getPlaylists = () => {
   /**
    * @summary Получить все плейлисты
    */
-  const getAllPlaylists = (
+  const playlistControllerFindAll = (
     options?: SecondParameter<typeof customInstance<AllPlaylistsResponse>>,
   ) => {
     return customInstance<AllPlaylistsResponse>({ url: `/playlists`, method: 'GET' }, options)
@@ -48,7 +48,7 @@ export const getPlaylists = () => {
   /**
    * @summary Получить плейлист по ID (с проповедями)
    */
-  const getPlaylistById = (
+  const playlistControllerFindOne = (
     id: string,
     options?: SecondParameter<typeof customInstance<PlaylistEntity>>,
   ) => {
@@ -57,9 +57,9 @@ export const getPlaylists = () => {
   /**
    * @summary Обновить плейлист
    */
-  const updatePlaylist = (
+  const playlistControllerUpdate = (
     id: string,
-    updatePlaylistDto?: UpdatePlaylistDto,
+    updatePlaylistDto: UpdatePlaylistDto,
     options?: SecondParameter<typeof customInstance<PlaylistEntity>>,
   ) => {
     return customInstance<PlaylistEntity>(
@@ -75,7 +75,7 @@ export const getPlaylists = () => {
   /**
    * @summary Удалить плейлист
    */
-  const deletePlaylist = (
+  const playlistControllerRemove = (
     id: string,
     options?: SecondParameter<typeof customInstance<StatusPlaylistResponse>>,
   ) => {
@@ -84,20 +84,26 @@ export const getPlaylists = () => {
       options,
     )
   }
-  return { createPlaylist, getAllPlaylists, getPlaylistById, updatePlaylist, deletePlaylist }
+  return {
+    playlistControllerCreate,
+    playlistControllerFindAll,
+    playlistControllerFindOne,
+    playlistControllerUpdate,
+    playlistControllerRemove,
+  }
 }
-export type CreatePlaylistResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getPlaylists>['createPlaylist']>>
+export type PlaylistControllerCreateResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getPlaylists>['playlistControllerCreate']>>
 >
-export type GetAllPlaylistsResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getPlaylists>['getAllPlaylists']>>
+export type PlaylistControllerFindAllResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getPlaylists>['playlistControllerFindAll']>>
 >
-export type GetPlaylistByIdResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getPlaylists>['getPlaylistById']>>
+export type PlaylistControllerFindOneResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getPlaylists>['playlistControllerFindOne']>>
 >
-export type UpdatePlaylistResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getPlaylists>['updatePlaylist']>>
+export type PlaylistControllerUpdateResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getPlaylists>['playlistControllerUpdate']>>
 >
-export type DeletePlaylistResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getPlaylists>['deletePlaylist']>>
+export type PlaylistControllerRemoveResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getPlaylists>['playlistControllerRemove']>>
 >

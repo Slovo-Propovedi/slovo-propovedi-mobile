@@ -7,7 +7,11 @@
  *
  * OpenAPI spec version: 1.0.0
  */
-import type { FileUploadResponse, UploadFileBody } from '../adminAPI.schemas'
+import type {
+  AppControllerUploadFileBody,
+  IFileResponseDto,
+  StreamUrlResponse,
+} from '../adminAPI.schemas'
 
 import { customInstance } from '../../axiosInstance'
 
@@ -18,16 +22,16 @@ export const getFiles = () => {
    * Файл сохраняется в MinIO
    * @summary Загрузить файл (аудио, видео, изображение и др.)
    */
-  const uploadFile = (
-    uploadFileBody: UploadFileBody,
-    options?: SecondParameter<typeof customInstance<FileUploadResponse>>,
+  const appControllerUploadFile = (
+    appControllerUploadFileBody: AppControllerUploadFileBody,
+    options?: SecondParameter<typeof customInstance<IFileResponseDto>>,
   ) => {
     const formData = new FormData()
-    if (uploadFileBody.file !== undefined) {
-      formData.append(`file`, uploadFileBody.file)
+    if (appControllerUploadFileBody.file !== undefined) {
+      formData.append(`file`, appControllerUploadFileBody.file)
     }
 
-    return customInstance<FileUploadResponse>(
+    return customInstance<IFileResponseDto>(
       {
         url: `/files`,
         method: 'POST',
@@ -38,19 +42,34 @@ export const getFiles = () => {
     )
   }
   /**
+   * @summary Получить URL потока для файла
+   */
+  const appControllerGetStreamUrl = (
+    fileName: string,
+    options?: SecondParameter<typeof customInstance<StreamUrlResponse>>,
+  ) => {
+    return customInstance<StreamUrlResponse>(
+      { url: `/files/${fileName}/stream-url`, method: 'GET' },
+      options,
+    )
+  }
+  /**
    * @summary Получить публичный URL файла
    */
-  const getFileUrl = (
+  const appControllerGetFile = (
     fileName: string,
-    options?: SecondParameter<typeof customInstance<FileUploadResponse>>,
+    options?: SecondParameter<typeof customInstance<IFileResponseDto>>,
   ) => {
-    return customInstance<FileUploadResponse>({ url: `/files/${fileName}`, method: 'GET' }, options)
+    return customInstance<IFileResponseDto>({ url: `/files/${fileName}`, method: 'GET' }, options)
   }
-  return { uploadFile, getFileUrl }
+  return { appControllerUploadFile, appControllerGetStreamUrl, appControllerGetFile }
 }
-export type UploadFileResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getFiles>['uploadFile']>>
+export type AppControllerUploadFileResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerUploadFile']>>
 >
-export type GetFileUrlResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getFiles>['getFileUrl']>>
+export type AppControllerGetStreamUrlResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerGetStreamUrl']>>
+>
+export type AppControllerGetFileResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerGetFile']>>
 >

@@ -12,7 +12,7 @@ import type {
   RefreshResponse,
   RefreshTokenDto,
   SignInRequestDto,
-  UserEntity,
+  UserResponse,
 } from '../adminAPI.schemas'
 
 import { customInstance } from '../../axiosInstance'
@@ -24,7 +24,7 @@ export const getAuth = () => {
    * Возвращает JWT токен для дальнейших запросов
    * @summary Вход в админ-панель
    */
-  const authLogin = (
+  const authControllerSignIn = (
     signInRequestDto: SignInRequestDto,
     options?: SecondParameter<typeof customInstance<AuthResponse>>,
   ) => {
@@ -39,16 +39,10 @@ export const getAuth = () => {
     )
   }
   /**
-   * @summary Получить профиль текущего пользователя
-   */
-  const authGetProfile = (options?: SecondParameter<typeof customInstance<UserEntity>>) => {
-    return customInstance<UserEntity>({ url: `/auth/profile`, method: 'GET' }, options)
-  }
-  /**
    * Принимает refresh токен и возвращает новую пару токенов
    * @summary Обновить access и refresh токены
    */
-  const authRefresh = (
+  const authControllerRefresh = (
     refreshTokenDto: RefreshTokenDto,
     options?: SecondParameter<typeof customInstance<RefreshResponse>>,
   ) => {
@@ -62,14 +56,22 @@ export const getAuth = () => {
       options,
     )
   }
-  return { authLogin, authGetProfile, authRefresh }
+  /**
+   * @summary Получить профиль текущего пользователя
+   */
+  const authControllerGetProfile = (
+    options?: SecondParameter<typeof customInstance<UserResponse>>,
+  ) => {
+    return customInstance<UserResponse>({ url: `/auth/profile`, method: 'GET' }, options)
+  }
+  return { authControllerSignIn, authControllerRefresh, authControllerGetProfile }
 }
-export type AuthLoginResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getAuth>['authLogin']>>
+export type AuthControllerSignInResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getAuth>['authControllerSignIn']>>
 >
-export type AuthGetProfileResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getAuth>['authGetProfile']>>
+export type AuthControllerRefreshResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getAuth>['authControllerRefresh']>>
 >
-export type AuthRefreshResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getAuth>['authRefresh']>>
+export type AuthControllerGetProfileResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getAuth>['authControllerGetProfile']>>
 >

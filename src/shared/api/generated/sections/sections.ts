@@ -23,7 +23,7 @@ export const getSections = () => {
   /**
    * @summary Создать раздел
    */
-  const createSection = (
+  const sectionControllerCreate = (
     createSectionDto: CreateSectionDto,
     options?: SecondParameter<typeof customInstance<SectionEntity>>,
   ) => {
@@ -40,7 +40,7 @@ export const getSections = () => {
   /**
    * @summary Получить все разделы
    */
-  const getAllSections = (
+  const sectionControllerFindAll = (
     options?: SecondParameter<typeof customInstance<AllSectionsResponse>>,
   ) => {
     return customInstance<AllSectionsResponse>({ url: `/section`, method: 'GET' }, options)
@@ -48,7 +48,7 @@ export const getSections = () => {
   /**
    * @summary Получить раздел по ID
    */
-  const getSectionById = (
+  const sectionControllerFindOne = (
     id: string,
     options?: SecondParameter<typeof customInstance<SectionEntity>>,
   ) => {
@@ -57,9 +57,9 @@ export const getSections = () => {
   /**
    * @summary Обновить раздел (включая связанные плейлисты)
    */
-  const updateSection = (
+  const sectionControllerUpdate = (
     id: string,
-    updateSectionDto?: UpdateSectionDto,
+    updateSectionDto: UpdateSectionDto,
     options?: SecondParameter<typeof customInstance<SectionEntity>>,
   ) => {
     return customInstance<SectionEntity>(
@@ -75,7 +75,7 @@ export const getSections = () => {
   /**
    * @summary Удалить раздел
    */
-  const deleteSection = (
+  const sectionControllerRemove = (
     id: string,
     options?: SecondParameter<typeof customInstance<StatusSectionsResponse>>,
   ) => {
@@ -84,20 +84,26 @@ export const getSections = () => {
       options,
     )
   }
-  return { createSection, getAllSections, getSectionById, updateSection, deleteSection }
+  return {
+    sectionControllerCreate,
+    sectionControllerFindAll,
+    sectionControllerFindOne,
+    sectionControllerUpdate,
+    sectionControllerRemove,
+  }
 }
-export type CreateSectionResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSections>['createSection']>>
+export type SectionControllerCreateResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSections>['sectionControllerCreate']>>
 >
-export type GetAllSectionsResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSections>['getAllSections']>>
+export type SectionControllerFindAllResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSections>['sectionControllerFindAll']>>
 >
-export type GetSectionByIdResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSections>['getSectionById']>>
+export type SectionControllerFindOneResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSections>['sectionControllerFindOne']>>
 >
-export type UpdateSectionResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSections>['updateSection']>>
+export type SectionControllerUpdateResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSections>['sectionControllerUpdate']>>
 >
-export type DeleteSectionResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSections>['deleteSection']>>
+export type SectionControllerRemoveResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSections>['sectionControllerRemove']>>
 >

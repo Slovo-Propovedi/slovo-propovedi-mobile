@@ -58,8 +58,8 @@ export const fetchAllSections = action(async ctx => {
 
   try {
     try {
-      const response = await sectionsApi.getSections().getAllSections()
-      sections = (response.sections as SectionData[]) ?? []
+      const response = await sectionsApi.getSections().sectionControllerFindAll()
+      sections = response.sections
       dataSource = 'network'
     } catch (error) {
       console.error('fetchAllSections network failed:', error)

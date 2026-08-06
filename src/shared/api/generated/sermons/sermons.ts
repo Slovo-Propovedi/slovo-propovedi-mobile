@@ -10,8 +10,10 @@
 import type {
   AllSermonsResponse,
   CreateSermonDto,
+  SermonControllerFindAllParams,
   SermonEntity,
   StatusSermonResponse,
+  StreamUrlResponse,
   UpdateSermonDto,
 } from '../adminAPI.schemas'
 
@@ -23,7 +25,7 @@ export const getSermons = () => {
   /**
    * @summary Создать новую проповедь
    */
-  const createSermon = (
+  const sermonControllerCreate = (
     createSermonDto: CreateSermonDto,
     options?: SecondParameter<typeof customInstance<SermonEntity>>,
   ) => {
@@ -40,13 +42,28 @@ export const getSermons = () => {
   /**
    * @summary Получить список всех проповедей
    */
-  const getAllSermons = (options?: SecondParameter<typeof customInstance<AllSermonsResponse>>) => {
-    return customInstance<AllSermonsResponse>({ url: `/sermons`, method: 'GET' }, options)
+  const sermonControllerFindAll = (
+    params?: SermonControllerFindAllParams,
+    options?: SecondParameter<typeof customInstance<AllSermonsResponse>>,
+  ) => {
+    return customInstance<AllSermonsResponse>({ url: `/sermons`, method: 'GET', params }, options)
+  }
+  /**
+   * @summary Получить URL потока для аудио проповеди
+   */
+  const sermonControllerGetStreamUrl = (
+    id: string,
+    options?: SecondParameter<typeof customInstance<StreamUrlResponse>>,
+  ) => {
+    return customInstance<StreamUrlResponse>(
+      { url: `/sermons/${id}/stream-url`, method: 'GET' },
+      options,
+    )
   }
   /**
    * @summary Получить одну проповедь по ID
    */
-  const getSermonById = (
+  const sermonControllerFindOne = (
     id: string,
     options?: SecondParameter<typeof customInstance<SermonEntity>>,
   ) => {
@@ -55,9 +72,9 @@ export const getSermons = () => {
   /**
    * @summary Обновить проповедь
    */
-  const updateSermon = (
+  const sermonControllerUpdate = (
     id: string,
-    updateSermonDto?: UpdateSermonDto,
+    updateSermonDto: UpdateSermonDto,
     options?: SecondParameter<typeof customInstance<StatusSermonResponse>>,
   ) => {
     return customInstance<StatusSermonResponse>(
@@ -73,7 +90,7 @@ export const getSermons = () => {
   /**
    * @summary Удалить проповедь
    */
-  const deleteSermon = (
+  const sermonControllerRemove = (
     id: string,
     options?: SecondParameter<typeof customInstance<StatusSermonResponse>>,
   ) => {
@@ -82,20 +99,30 @@ export const getSermons = () => {
       options,
     )
   }
-  return { createSermon, getAllSermons, getSermonById, updateSermon, deleteSermon }
+  return {
+    sermonControllerCreate,
+    sermonControllerFindAll,
+    sermonControllerGetStreamUrl,
+    sermonControllerFindOne,
+    sermonControllerUpdate,
+    sermonControllerRemove,
+  }
 }
-export type CreateSermonResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSermons>['createSermon']>>
+export type SermonControllerCreateResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSermons>['sermonControllerCreate']>>
 >
-export type GetAllSermonsResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSermons>['getAllSermons']>>
+export type SermonControllerFindAllResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSermons>['sermonControllerFindAll']>>
 >
-export type GetSermonByIdResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSermons>['getSermonById']>>
+export type SermonControllerGetStreamUrlResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSermons>['sermonControllerGetStreamUrl']>>
 >
-export type UpdateSermonResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSermons>['updateSermon']>>
+export type SermonControllerFindOneResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSermons>['sermonControllerFindOne']>>
 >
-export type DeleteSermonResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getSermons>['deleteSermon']>>
+export type SermonControllerUpdateResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSermons>['sermonControllerUpdate']>>
+>
+export type SermonControllerRemoveResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSermons>['sermonControllerRemove']>>
 >

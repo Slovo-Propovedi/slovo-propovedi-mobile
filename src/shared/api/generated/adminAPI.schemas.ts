@@ -7,89 +7,55 @@
  *
  * OpenAPI spec version: 1.0.0
  */
-export interface ErrorResponse {
-  error?: string
-  message?: string
-  statusCode?: number
+export interface HealthResponse {
+  status: string
 }
 
-export interface SignInRequestDto {
-  email: string
-  password: string
+export interface StreamUrlResponse {
+  url: string
 }
 
-export type AuthResponseUser = {
-  email?: string
-  id?: string
-  name?: string
+export interface IFileResponseDto {
+  fileName: string
+  fileUrl: string
 }
 
-export interface AuthResponse {
-  accessToken?: string
-  refreshToken?: string
-  user?: AuthResponseUser
-}
+export type CreateSectionDtoItemsSize =
+  (typeof CreateSectionDtoItemsSize)[keyof typeof CreateSectionDtoItemsSize]
 
-export interface UserEntity {
-  email?: string
-  id?: string
-  name?: string
-}
+export const CreateSectionDtoItemsSize = {
+  small: 'small',
+  middle: 'middle',
+  large: 'large',
+  xLarge: 'xLarge',
+} as const
 
-export interface RefreshTokenDto {
-  refreshToken: string
-}
+export type CreateSectionDtoTransform =
+  (typeof CreateSectionDtoTransform)[keyof typeof CreateSectionDtoTransform]
 
-export interface RefreshResponse {
-  accessToken?: string
-  refreshToken?: string
-}
+export const CreateSectionDtoTransform = {
+  high: 'high',
+  short: 'short',
+} as const
 
-export interface FileUploadResponse {
-  fileName?: string
-  fileUrl?: string
-}
+export type CreateSectionDtoWhereIsSlideTitleLocated =
+  (typeof CreateSectionDtoWhereIsSlideTitleLocated)[keyof typeof CreateSectionDtoWhereIsSlideTitleLocated]
 
-export interface CreateSermonDto {
-  artist: string
-  artwork: string
-  /** @nullable */
-  audioUrl?: string | null
-  /** @nullable */
-  book?: string | null
-  /** @nullable */
-  chapter?: number | null
-  description: string
-  /** @nullable */
-  playlistsIds?: string[] | null
-  /** @nullable */
-  textFileUrl?: string | null
-  title: string
-  verse?: number | number[] | null
-  /** @nullable */
-  youtubeUrl?: string | null
-}
+export const CreateSectionDtoWhereIsSlideTitleLocated = {
+  on: 'on',
+  under: 'under',
+  bothOnAndUnder: 'bothOnAndUnder',
+} as const
 
-export interface UpdateSermonDto {
-  /** @nullable */
-  artist?: string | null
-  /** @nullable */
-  artwork?: string | null
-  /** @nullable */
-  audioUrl?: string | null
-  /** @nullable */
-  book?: string | null
-  /** @nullable */
-  chapter?: number | null
+export interface CreateSectionDto {
+  borderRadius?: boolean
   description?: string
-  /** @nullable */
-  playlistsIds?: string[] | null
-  /** @nullable */
-  textFileUrl?: string | null
-  title?: string
-  verse?: number | number[] | null
-  /** @nullable */
-  youtubeUrl?: string | null
+  isDescriptionTitleOnSlideLarge?: boolean
+  itemsRows?: number
+  itemsSize: CreateSectionDtoItemsSize
+  title: string
+  transform: CreateSectionDtoTransform
+  whereIsSlideTitleLocated?: CreateSectionDtoWhereIsSlideTitleLocated
 }
 
 export type SectionEntityItemsSize =
@@ -119,6 +85,35 @@ export const SectionEntityWhereIsSlideTitleLocated = {
   bothOnAndUnder: 'bothOnAndUnder',
 } as const
 
+export interface SermonEntity {
+  artist: string
+  artwork: string
+  /** @nullable */
+  audioUrl: string | null
+  /** @nullable */
+  book: string | null
+  /** @nullable */
+  chapter: number | null
+  description: string
+  id: string
+  playlists: PlaylistEntity[]
+  /** @nullable */
+  textFileUrl: string | null
+  title: string
+  verse: number | number[] | null
+  /** @nullable */
+  youtubeUrl: string | null
+}
+
+export interface PlaylistEntity {
+  artwork: string
+  description: string
+  id: string
+  sections: SectionEntity[]
+  sermons: SermonEntity[]
+  title: string
+}
+
 export interface SectionEntity {
   borderRadius?: boolean
   /** @nullable */
@@ -134,42 +129,52 @@ export interface SectionEntity {
   whereIsSlideTitleLocated?: SectionEntityWhereIsSlideTitleLocated
 }
 
-export interface PlaylistEntity {
-  artwork: string
+export interface AllSectionsResponse {
+  count: number
+  sections: SectionEntity[]
+}
+
+export type UpdateSectionDtoItemsSize =
+  (typeof UpdateSectionDtoItemsSize)[keyof typeof UpdateSectionDtoItemsSize]
+
+export const UpdateSectionDtoItemsSize = {
+  small: 'small',
+  middle: 'middle',
+  large: 'large',
+  xLarge: 'xLarge',
+} as const
+
+export type UpdateSectionDtoTransform =
+  (typeof UpdateSectionDtoTransform)[keyof typeof UpdateSectionDtoTransform]
+
+export const UpdateSectionDtoTransform = {
+  high: 'high',
+  short: 'short',
+} as const
+
+export type UpdateSectionDtoWhereIsSlideTitleLocated =
+  (typeof UpdateSectionDtoWhereIsSlideTitleLocated)[keyof typeof UpdateSectionDtoWhereIsSlideTitleLocated]
+
+export const UpdateSectionDtoWhereIsSlideTitleLocated = {
+  on: 'on',
+  under: 'under',
+  bothOnAndUnder: 'bothOnAndUnder',
+} as const
+
+export interface UpdateSectionDto {
+  borderRadius?: boolean
   description?: string
-  id: string
-  sections?: SectionEntity[]
-  sermons: SermonEntity[]
-  title: string
+  isDescriptionTitleOnSlideLarge?: boolean
+  itemsRows?: number
+  itemsSize?: UpdateSectionDtoItemsSize
+  playlistsIds?: string[]
+  title?: string
+  transform?: UpdateSectionDtoTransform
+  whereIsSlideTitleLocated?: UpdateSectionDtoWhereIsSlideTitleLocated
 }
 
-export interface SermonEntity {
-  artist: string
-  artwork: string
-  /** @nullable */
-  audioUrl?: string | null
-  /** @nullable */
-  book?: string | null
-  /** @nullable */
-  chapter?: number | null
-  description: string
-  id: string
-  playlists?: PlaylistEntity[]
-  /** @nullable */
-  textFileUrl?: string | null
-  title: string
-  verse?: number | number[] | null
-  /** @nullable */
-  youtubeUrl?: string | null
-}
-
-export interface AllSermonsResponse {
-  count?: number
-  sermons?: SermonEntity[]
-}
-
-export interface StatusSermonResponse {
-  status?: string
+export interface StatusSectionsResponse {
+  status: string
 }
 
 export interface CreatePlaylistDto {
@@ -179,136 +184,103 @@ export interface CreatePlaylistDto {
   title: string
 }
 
+export interface AllPlaylistsResponse {
+  count: number
+  playlists: PlaylistEntity[]
+}
+
 export interface UpdatePlaylistDto {
   artwork?: string
   description?: string
-  /** @nullable */
-  sectionsIds?: string[] | null
+  sectionsIds?: string[]
   sermonsIds?: string[]
   title?: string
 }
 
-export interface AllPlaylistsResponse {
-  count?: number
-  playlists?: PlaylistEntity[]
-}
-
 export interface StatusPlaylistResponse {
-  status?: string
+  status: string
 }
 
-export type CreateSectionDtoItemsSize =
-  (typeof CreateSectionDtoItemsSize)[keyof typeof CreateSectionDtoItemsSize]
-
-export const CreateSectionDtoItemsSize = {
-  small: 'small',
-  middle: 'middle',
-  large: 'large',
-  xLarge: 'xLarge',
-} as const
-
-export type CreateSectionDtoTransform =
-  (typeof CreateSectionDtoTransform)[keyof typeof CreateSectionDtoTransform]
-
-export const CreateSectionDtoTransform = {
-  high: 'high',
-  short: 'short',
-} as const
-
-/**
- * @nullable
- */
-export type CreateSectionDtoWhereIsSlideTitleLocated =
-  | (typeof CreateSectionDtoWhereIsSlideTitleLocated)[keyof typeof CreateSectionDtoWhereIsSlideTitleLocated]
-  | null
-
-export const CreateSectionDtoWhereIsSlideTitleLocated = {
-  on: 'on',
-  under: 'under',
-  bothOnAndUnder: 'bothOnAndUnder',
-} as const
-
-export interface CreateSectionDto {
+export interface CreateSermonDto {
+  artist: string
+  artwork: string
+  audioUrl?: string
   /** @nullable */
-  borderRadius?: boolean | null
-  /** @nullable */
-  description?: string | null
-  /** @nullable */
-  isDescriptionTitleOnSlideLarge?: boolean | null
-  /** @nullable */
-  itemsRows?: number | null
-  itemsSize: CreateSectionDtoItemsSize
-  title: string
-  transform: CreateSectionDtoTransform
-  /** @nullable */
-  whereIsSlideTitleLocated?: CreateSectionDtoWhereIsSlideTitleLocated
-}
-
-/**
- * @nullable
- */
-export type UpdateSectionDtoItemsSize =
-  (typeof UpdateSectionDtoItemsSize)[keyof typeof UpdateSectionDtoItemsSize] | null
-
-export const UpdateSectionDtoItemsSize = {
-  small: 'small',
-  middle: 'middle',
-  large: 'large',
-  xLarge: 'xLarge',
-} as const
-
-/**
- * @nullable
- */
-export type UpdateSectionDtoTransform =
-  (typeof UpdateSectionDtoTransform)[keyof typeof UpdateSectionDtoTransform] | null
-
-export const UpdateSectionDtoTransform = {
-  high: 'high',
-  short: 'short',
-} as const
-
-/**
- * @nullable
- */
-export type UpdateSectionDtoWhereIsSlideTitleLocated =
-  | (typeof UpdateSectionDtoWhereIsSlideTitleLocated)[keyof typeof UpdateSectionDtoWhereIsSlideTitleLocated]
-  | null
-
-export const UpdateSectionDtoWhereIsSlideTitleLocated = {
-  on: 'on',
-  under: 'under',
-  bothOnAndUnder: 'bothOnAndUnder',
-} as const
-
-export interface UpdateSectionDto {
-  /** @nullable */
-  borderRadius?: boolean | null
-  /** @nullable */
-  description?: string | null
-  /** @nullable */
-  isDescriptionTitleOnSlideLarge?: boolean | null
-  /** @nullable */
-  itemsRows?: number | null
-  /** @nullable */
-  itemsSize?: UpdateSectionDtoItemsSize
+  book?: string | null
+  chapter?: number
+  description: string
   playlistsIds?: string[]
+  textFileUrl?: string
+  title: string
+  verse?: number | number[]
+  youtubeUrl?: string
+}
+
+export interface AllSermonsResponse {
+  /** @nullable */
+  count: number | null
+  /** @nullable */
+  nextCursor: string | null
+  sermons: SermonEntity[]
+}
+
+export interface UpdateSermonDto {
+  artist?: string
+  artwork?: string
+  audioUrl?: string
+  /** @nullable */
+  book?: string | null
+  chapter?: number
+  description?: string
+  playlistsIds?: string[]
+  textFileUrl?: string
   title?: string
-  /** @nullable */
-  transform?: UpdateSectionDtoTransform
-  /** @nullable */
-  whereIsSlideTitleLocated?: UpdateSectionDtoWhereIsSlideTitleLocated
+  verse?: number | number[]
+  youtubeUrl?: string
 }
 
-export interface AllSectionsResponse {
-  count?: number
-  sections?: SectionEntity[]
+export interface StatusSermonResponse {
+  status: string
 }
 
-export interface StatusSectionsResponse {
-  status?: string
+export interface SignInRequestDto {
+  password: string
+  /** Имя пользователя для входа */
+  username: string
 }
 
-export type UploadFileBody = {
+export interface UserResponse {
+  email: string
+  id: string
+  name: string
+  /** Имя пользователя для входа в систему */
+  username: string
+}
+
+export interface AuthResponse {
+  accessToken: string
+  refreshToken: string
+  user: UserResponse
+}
+
+export interface RefreshTokenDto {
+  refreshToken: string
+}
+
+export interface RefreshResponse {
+  accessToken: string
+  refreshToken: string
+}
+
+export type AppControllerUploadFileBody = {
   file?: Blob
+}
+
+export type SermonControllerFindAllParams = {
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  take?: number
+  cursor?: string
 }
