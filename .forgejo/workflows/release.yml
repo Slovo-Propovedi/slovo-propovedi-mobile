@@ -20,6 +20,8 @@ jobs:
           set -e
           URL="${{ github.server_url }}/api/v1/repos/${{ github.repository }}/commits/${{ github.sha }}/status"
 
+          # Runner capacity is 2, so this job holding a runner slot while
+          # polling no longer starves the CI workflow of a runner to run on.
           for i in $(seq 1 40); do
             STATE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$URL" | jq -r '.statuses[] | select(.context == "CI / checks") | .status' | head -1)
 
