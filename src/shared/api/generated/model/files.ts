@@ -13,23 +13,34 @@ import * as zod from 'zod'
  * Файл сохраняется в MinIO
  * @summary Загрузить файл (аудио, видео, изображение и др.)
  */
-export const UploadFileBody = zod.object({
+export const AppControllerUploadFileBody = zod.object({
   file: zod.instanceof(File).optional(),
 })
 
-export const UploadFile200Response = zod.object({
-  fileName: zod.string().optional(),
-  fileUrl: zod.string().optional(),
+export const AppControllerUploadFile200Response = zod.object({
+  fileName: zod.string(),
+  fileUrl: zod.string(),
+})
+
+/**
+ * @summary Получить URL потока для файла
+ */
+export const AppControllerGetStreamUrlParams = zod.object({
+  fileName: zod.string(),
+})
+
+export const AppControllerGetStreamUrl200Response = zod.object({
+  url: zod.string(),
 })
 
 /**
  * @summary Получить публичный URL файла
  */
-export const GetFileUrlParams = zod.object({
+export const AppControllerGetFileParams = zod.object({
   fileName: zod.string(),
 })
 
-export const GetFileUrl200Response = zod.object({
-  fileName: zod.string().optional(),
-  fileUrl: zod.string().optional(),
+export const AppControllerGetFile200Response = zod.object({
+  fileName: zod.string(),
+  fileUrl: zod.string(),
 })

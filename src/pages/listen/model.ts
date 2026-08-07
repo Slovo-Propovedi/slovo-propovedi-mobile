@@ -1,5 +1,5 @@
 import { action, atom } from '@reatom/framework'
-import { db, sectionsApi } from 'shared/api'
+import { db, mapAllSectionsResponse, sectionsApi } from 'shared/api'
 import { getCachedSections, setCachedSections } from 'shared/lib/sections-cache'
 import { type SectionData } from 'shared/model'
 
@@ -59,7 +59,7 @@ export const fetchAllSections = action(async ctx => {
   try {
     try {
       const response = await sectionsApi.getSections().sectionControllerFindAll()
-      sections = response.sections
+      sections = mapAllSectionsResponse(response)
       dataSource = 'network'
     } catch (error) {
       console.error('fetchAllSections network failed:', error)

@@ -13,45 +13,41 @@ import * as zod from 'zod'
  * Возвращает JWT токен для дальнейших запросов
  * @summary Вход в админ-панель
  */
-export const AuthLoginBody = zod.object({
-  email: zod.email(),
+export const AuthControllerSignInBody = zod.object({
+  username: zod.string().describe('Имя пользователя для входа'),
   password: zod.string(),
 })
 
-export const AuthLogin200Response = zod.object({
-  accessToken: zod.string().optional(),
-  refreshToken: zod.string().optional(),
-  user: zod
-    .object({
-      id: zod.string().optional(),
-      name: zod.string().optional(),
-      email: zod.string().optional(),
-    })
-    .optional(),
-})
-
-export const AuthLogin401Response = zod.unknown()
-
-/**
- * @summary Получить профиль текущего пользователя
- */
-export const AuthGetProfile200Response = zod.object({
-  id: zod.uuid().optional(),
-  name: zod.string().optional(),
-  email: zod.email().optional(),
+export const AuthControllerSignIn200Response = zod.object({
+  accessToken: zod.string(),
+  refreshToken: zod.string(),
+  user: zod.object({
+    id: zod.string(),
+    name: zod.string(),
+    username: zod.string().describe('Имя пользователя для входа в систему'),
+    email: zod.string(),
+  }),
 })
 
 /**
  * Принимает refresh токен и возвращает новую пару токенов
  * @summary Обновить access и refresh токены
  */
-export const AuthRefreshBody = zod.object({
+export const AuthControllerRefreshBody = zod.object({
   refreshToken: zod.string(),
 })
 
-export const AuthRefresh200Response = zod.object({
-  accessToken: zod.string().optional(),
-  refreshToken: zod.string().optional(),
+export const AuthControllerRefresh200Response = zod.object({
+  accessToken: zod.string(),
+  refreshToken: zod.string(),
 })
 
-export const AuthRefresh401Response = zod.unknown()
+/**
+ * @summary Получить профиль текущего пользователя
+ */
+export const AuthControllerGetProfile200Response = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  username: zod.string().describe('Имя пользователя для входа в систему'),
+  email: zod.string(),
+})

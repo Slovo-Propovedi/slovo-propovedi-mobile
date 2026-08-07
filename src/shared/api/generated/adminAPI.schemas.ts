@@ -85,6 +85,20 @@ export const SectionEntityWhereIsSlideTitleLocated = {
   bothOnAndUnder: 'bothOnAndUnder',
 } as const
 
+export interface SectionRef {
+  id: string
+  title: string
+}
+
+export interface PlaylistEntity {
+  artwork: string
+  description: string
+  id: string
+  sections: SectionEntity[]
+  sermons: SermonEntity[]
+  title: string
+}
+
 export interface SermonEntity {
   artist: string
   artwork: string
@@ -105,11 +119,11 @@ export interface SermonEntity {
   youtubeUrl: string | null
 }
 
-export interface PlaylistEntity {
+export interface SectionPlaylist {
   artwork: string
   description: string
   id: string
-  sections: SectionEntity[]
+  sections: SectionRef[]
   sermons: SermonEntity[]
   title: string
 }
@@ -123,7 +137,7 @@ export interface SectionEntity {
   /** @nullable */
   itemsRows?: number | null
   itemsSize: SectionEntityItemsSize
-  playlists: PlaylistEntity[]
+  playlists: SectionPlaylist[]
   title: string
   transform: SectionEntityTransform
   whereIsSlideTitleLocated?: SectionEntityWhereIsSlideTitleLocated
