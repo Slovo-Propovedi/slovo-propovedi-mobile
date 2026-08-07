@@ -1,37 +1,37 @@
 #!/usr/bin/env sh
 
-# Husky commit-msg hook: commitlint validation + DCO auto-sign.
+# Husky commit-msg hook: DCO auto-sign + commitlint validation.
 # Runs after the editor saves the commit message; receives the message
 # file path as $1. Bypass with --no-verify.
 
-# 1. Validate conventional-commit format (existing behavior).
-yarn commitlint --edit "$1" || exit 1
-
-# 2. DCO auto-sign: append Signed-off-by trailer if missing.
+# 1. DCO auto-sign: append Signed-off-by trailer if missing.
 # Works with any git client (lazygit, VS Code, CLI, IDEs).
+# Must run before commitlint, since commitlint's signed-off-by rule
+# rejects messages that don't already carry the trailer.
 
 MSG_FILE="$1"
 
-if grep -q "^Signed-off-by:" "$MSG_FILE"; then
-  exit 0
-fi
+if ! grep -q "^Signed-off-by:" "$MSG_FILE"; then
+  NAME=$(git config user.name)
+  EMAIL=$(git config user.email)
 
-NAME=$(git config user.name)
-EMAIL=$(git config user.email)
-
-if [ -z "$NAME" ] || [ -z "$EMAIL" ]; then
-  echo "❌ Cannot add Signed-off-by: git user.name or user.email not configured."
-  echo "   Fix with:"
-  echo "     git config user.name 'Your Name'"
-  echo "     git config user.email 'your.email@example.com'"
-  exit 1
-fi
-
-if [ -s "$MSG_FILE" ]; then
-  LAST_CHAR=$(tail -c1 "$MSG_FILE")
-  if [ "$LAST_CHAR" != "" ]; then
-    echo "" >> "$MSG_FILE"
+  if [ -z "$NAME" ] || [ -z "$EMAIL" ]; then
+    echo "❌ Cannot add Signed-off-by: git user.name or user.email not configured."
+    echo "   Fix with:"
+    echo "     git config user.name 'Your Name'"
+    echo "     git config user.email 'your.email@example.com'"
+    exit 1
   fi
+
+  if [ -s "$MSG_FILE" ]; then
+    LAST_CHAR=$(tail -c1 "$MSG_FILE")
+    if [ "$LAST_CHAR" != "" ]; then
+      echo "" >> "$MSG_FILE"
+    fi
+  fi
+
+  echo "Signed-off-by: $NAME <$EMAIL>" >> "$MSG_FILE"
 fi
 
-echo "Signed-off-by: $NAME <$EMAIL>" >> "$MSG_FILE"
+# 2. Validate conventional-commit format + signed-off-by trailer.
+yarn commitlint --edit "$1" || exit 1

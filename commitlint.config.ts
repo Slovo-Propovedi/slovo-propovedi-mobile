@@ -24,6 +24,7 @@ const Configuration: UserConfig = {
       ],
     ],
     'header-max-length': [RuleConfigSeverity.Error, 'always', 100],
+    'signed-off-by': [RuleConfigSeverity.Error, 'always', 'Signed-off-by:'],
   },
 }
 

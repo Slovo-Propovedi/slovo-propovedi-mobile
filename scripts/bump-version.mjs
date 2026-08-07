@@ -106,7 +106,7 @@ log('\n→ Staging all changes...', YELLOW)
 execSync('git add -A', { cwd: process.cwd() })
 
 log('→ Committing...', YELLOW)
-execSync(`git commit -m "chore: bump version to ${newVersion}"`, { cwd: process.cwd() })
+execSync(`git commit -s -m "chore: bump version to ${newVersion}"`, { cwd: process.cwd() })
 
 log('→ Tagging...', YELLOW)
 execSync(`git tag -a v${newVersion} -m "v${newVersion}"`, { cwd: process.cwd() })
