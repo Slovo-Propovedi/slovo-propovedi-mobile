@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { usePlayNewSermon } from 'entities/player'
 import { useOfflineRetry } from 'shared/lib/network'
 import { useListenNavigation } from 'shared/routing'
+import { EmptyState } from 'shared/ui'
 import type { PlaylistData } from 'shared/model'
 import {
   dynamicSectionsAtom,
@@ -40,6 +41,7 @@ export const DynamicSectionsSlider = () => {
   }
 
   if (isLoading && sections.length === 0) return <SectionsSkeleton />
+  if (!isLoading && sections.length === 0) return <EmptyState />
 
   return (
     <>

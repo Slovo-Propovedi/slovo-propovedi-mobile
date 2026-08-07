@@ -1,52 +1,13 @@
 import { action, atom } from '@reatom/framework'
-import { db, mapAllSectionsResponse, sectionsApi } from 'shared/api'
+import { mapAllSectionsResponse, sectionsApi } from 'shared/api'
 import { getCachedSections, setCachedSections } from 'shared/lib/sections-cache'
 import { type SectionData } from 'shared/model'
 
 export const dynamicSectionsAtom = atom<SectionData[]>([], 'dynamicSectionsAtom')
 export const isLoadingSectionsAtom = atom(true, 'isLoadingSectionsAtom')
 
-export type SectionDataSource = 'cache' | 'mock' | 'network' | 'unknown'
+export type SectionDataSource = 'cache' | 'network' | 'unknown'
 export const sectionDataSourceAtom = atom<SectionDataSource>('unknown', 'sectionDataSourceAtom')
-
-const getMockSections = (): SectionData[] => {
-  const { sermons: sermonsGroups } = db
-
-  const newGroup = sermonsGroups.find(g => g.groupName === 'new')
-  const onBibleGroup = sermonsGroups.find(g => g.groupName === 'onBible')
-  const topicalGroup = sermonsGroups.find(g => g.groupName === 'topical')
-
-  return [
-    {
-      id: 'mock-new',
-      itemsSize: 'small',
-      playlists: newGroup?.playlists ?? [],
-      title: 'Новые',
-      transform: 'middle',
-    },
-    {
-      id: 'mock-on-bible',
-      itemsSize: 'middle',
-      playlists: onBibleGroup?.playlists ?? [],
-      title: 'По библии',
-      transform: 'middle',
-    },
-    {
-      id: 'mock-topical',
-      itemsSize: 'xLarge',
-      playlists: topicalGroup?.playlists ?? [],
-      title: 'Тематические',
-      transform: 'middle',
-    },
-    {
-      id: 'mock-listen-every-day',
-      itemsSize: 'middle',
-      playlists: onBibleGroup?.playlists ?? [],
-      title: 'Слушать каждый день',
-      transform: 'short',
-    },
-  ]
-}
 
 export const fetchAllSections = action(async ctx => {
   await ctx.schedule(() => {
@@ -54,7 +15,7 @@ export const fetchAllSections = action(async ctx => {
   })
 
   let sections: SectionData[] = []
-  let dataSource: SectionDataSource = 'mock'
+  let dataSource: SectionDataSource = 'unknown'
 
   try {
     try {
@@ -68,14 +29,9 @@ export const fetchAllSections = action(async ctx => {
         if (cachedSections?.length) {
           sections = cachedSections
           dataSource = 'cache'
-        } else {
-          sections = getMockSections()
-          dataSource = 'mock'
         }
       } catch (cacheError) {
-        console.error('Cache read failed, using mock:', cacheError)
-        sections = getMockSections()
-        dataSource = 'mock'
+        console.error('Cache read failed:', cacheError)
       }
     }
 
