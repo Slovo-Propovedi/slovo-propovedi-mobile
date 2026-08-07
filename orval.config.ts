@@ -24,7 +24,7 @@ export default defineConfig({
   },
   // Output 2: Zod схемы отдельно (без mutator)
   schemas: {
-    input: './openAPI.yaml',
+    input: 'https://docs.slovo-propovedi.ru/openAPI.yaml',
     output: {
       mode: OutputMode.TAGS,
       propertySortOrder: PropertySortOrder.ALPHABETICAL,
