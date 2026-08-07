@@ -111,6 +111,15 @@ execSync(`git commit -s -m "chore: bump version to ${newVersion}"`, { cwd: proce
 log('→ Tagging...', YELLOW)
 execSync(`git tag -a v${newVersion} -m "v${newVersion}"`, { cwd: process.cwd() })
 
+// Verify the tag actually landed: `git tag -a` has been observed to exit 0
+// without an error yet leave the ref missing (filesystem race?), which
+// silently produces a commit with no matching tag.
+try {
+  execSync(`git rev-parse --verify -q v${newVersion}`, { cwd: process.cwd() })
+} catch {
+  exitError(`Tag v${newVersion} was not created despite 'git tag' reporting success. Run 'git tag -a v${newVersion} -m "v${newVersion}"' manually and verify with 'git tag -l'.`)
+}
+
 // --- Summary ---
 log('\n══════════════════════════════════════', GREEN)
 log('  Version bump complete!', GREEN)
