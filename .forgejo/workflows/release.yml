@@ -13,6 +13,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Wait for CI to pass on this commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          URL="${{ github.server_url }}/api/v1/repos/${{ github.repository }}/commits/${{ github.sha }}/status"
+
+          for i in $(seq 1 40); do
+            STATE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$URL" | jq -r '.statuses[] | select(.context == "CI / checks") | .status' | head -1)
+
+            case "$STATE" in
+              success) echo "CI passed for ${{ github.sha }}"; exit 0 ;;
+              failure|error) echo "::error::CI did not pass for ${{ github.sha }} (status: $STATE). Refusing to release."; exit 1 ;;
+            esac
+
+            echo "Waiting for CI status on ${{ github.sha }} (attempt $i/40)..."
+            sleep 15
+          done
+
+          echo "::error::Timed out waiting for CI status on ${{ github.sha }}"
+          exit 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -40,7 +62,22 @@ jobs:
           java-version: '17'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        env:
+          ANDROID_SDK_ROOT: /opt/android-sdk
+        run: |
+          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+          curl -sSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
+          mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+          rm cmdline-tools.zip
+
+          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platform-tools" > /dev/null
 
       - name: Cache Gradle dependencies
         uses: actions/cache@v4

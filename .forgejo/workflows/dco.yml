@@ -12,6 +12,10 @@ on:
 jobs:
   DCO:
     runs-on: ubuntu-24.04
+    # Tags point at commits already checked when they were pushed to main;
+    # some Forgejo versions still dispatch this workflow for tag pushes
+    # despite the `branches: [main]` filter, so guard explicitly.
+    if: github.ref_type != 'tag'
 
     steps:
       - name: Checkout repository

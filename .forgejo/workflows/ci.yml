@@ -1,18 +1,25 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
+  # Chained after DCO for pushes to main (see dco.yml), so CI never runs
+  # against a commit that failed the sign-off check. PRs still trigger CI
+  # directly since workflow_run doesn't reliably chain across PR events.
+  workflow_run:
+    workflows: ['DCO']
+    types: [completed]
   pull_request:
     branches: [main]
 
 jobs:
   checks:
     runs-on: ubuntu-24.04
+    if: github.event_name == 'pull_request' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
