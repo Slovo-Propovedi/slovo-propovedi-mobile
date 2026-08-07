@@ -19,3 +19,4 @@ web-build/
 /tsconfig.tsbuildinfo
 
 /coverage
+/.claude/settings.local.json
