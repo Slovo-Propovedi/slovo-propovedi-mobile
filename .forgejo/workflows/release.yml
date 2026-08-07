@@ -23,7 +23,9 @@ jobs:
           # Runner capacity is 2, so this job holding a runner slot while
           # polling no longer starves the CI workflow of a runner to run on.
           for i in $(seq 1 40); do
-            STATE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$URL" | jq -r '.statuses[] | select(.context == "CI / checks") | .status' | head -1)
+            # Forgejo appends the triggering event to the context, e.g.
+            # "CI / checks (push)", so match by prefix rather than equality.
+            STATE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$URL" | jq -r '.statuses[] | select(.context | startswith("CI / checks")) | .status' | head -1)
 
             case "$STATE" in
               success) echo "CI passed for ${{ github.sha }}"; exit 0 ;;
