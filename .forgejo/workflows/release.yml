@@ -80,7 +80,11 @@ jobs:
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
 
-          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          # `yes` never exits on its own — it gets SIGPIPE once sdkmanager
+          # stops reading, and Actions runs steps with `bash -o pipefail`,
+          # so that expected SIGPIPE (141) would otherwise fail this step
+          # even though sdkmanager itself succeeds.
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platform-tools" > /dev/null
 
       - name: Cache Gradle dependencies
