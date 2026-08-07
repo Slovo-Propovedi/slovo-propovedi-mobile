@@ -20,5 +20,17 @@ allprojects {
   }
 }
 
+subprojects {
+  afterEvaluate { project ->
+    if (project.plugins.hasPlugin("com.android.library")) {
+      project.android {
+        lint {
+          checkReleaseBuilds = false
+        }
+      }
+    }
+  }
+}
+
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
