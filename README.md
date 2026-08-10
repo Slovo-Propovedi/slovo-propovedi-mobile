@@ -1,50 +1,52 @@
 # Слово.Проповеди
 
-> Listen to and read Christian sermons on your mobile device.
+[English](README.en.md) | **Русский**
 
-![Slovo.Propovedi icon](assets/icon.png)
+> Слушайте и читайте христианские проповеди на вашем устройстве.
 
-## Features
+<p align="center"><img src="assets/icon.png" width="128" alt="Slovo Propovedi icon" /></p>
 
-- **Audio playback** — Stream and cache sermons for offline listening
-- **FB2 book reader** — Read Christian books in FB2 format
-- **Configurable server** — Connect to any compatible sermon server
-- **No ads, no tracking, no analytics** — Privacy-first
-- **Dark/light theme** — Choose your preferred appearance
-- **Free and Open Source** — GPL-3.0-or-later
+## Возможности
 
-## Download
+- **Аудио воспроизведение** — Потоковое воспроизведение и кеширование проповедей для прослушивания офлайн
+- **Чтение FB2-книг** — Читайте христианские книги в формате FB2
+- **Настраиваемый сервер** — Подключение к любому совместимому серверу проповедей
+- **Без рекламы, без отслеживания, без аналитики** — Конфиденциальность прежде всего
+- **Тёмная/светлая тема** — Выберите предпочитаемый внешний вид
+- **Свободное и открытое ПО** — GPL-3.0-or-later
 
-### F-Droid (recommended)
+## Загрузка
 
-[Link will be added once published on F-Droid]
+### F-Droid (рекомендуется)
 
-### Direct APK
+[Ссылка будет добавлена после публикации в F-Droid]
 
-Download the latest APK from the [releases page](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases).
+### Прямая загрузка APK
 
-## Screenshots
+Скачайте последний APK со [страницы релизов](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases).
 
-[Screenshots will be added later]
+## Скриншоты
 
-## License
+[Скриншоты будут добавлены позже]
 
-This project is Free/Libre Open Source Software, licensed under the **GNU General Public License v3.0 or later** ([GPL-3.0-or-later](LICENSE)).
+## Лицензия
 
-Distribution via the Apple App Store and Google Play Store is permitted under the [App Store Additional Permission](ADDITIONAL-PERMISSIONS.md).
+Этот проект является свободным открытым программным обеспечением, распространяемым под лицензией **GNU General Public License v3.0 или новее** ([GPL-3.0-or-later](LICENSE)).
 
-- **Source code**: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile
-- **Bug reports & contact**: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/issues
-- **License text**: [LICENSE](LICENSE)
-- **Third-party licenses**: [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md)
-- **Authors**: [AUTHORS](AUTHORS)
+Распространение через Apple App Store и Google Play Store разрешено в соответствии с [Дополнительным разрешением для магазинов приложений](ADDITIONAL-PERMISSIONS.md).
 
-## Contributing
+- **Исходный код**: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile
+- **Отчёты об ошибках и связь**: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/issues
+- **Текст лицензии**: [LICENSE](LICENSE)
+- **Сторонние лицензии**: [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md)
+- **Авторы**: [AUTHORS](AUTHORS)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and contribution workflow.
+## Участие в разработке
 
-For technical details about the project architecture, build system, and development scripts, see [DEVELOPMENT.md](DEVELOPMENT.md).
+См. [CONTRIBUTING.md](CONTRIBUTING.md) для настройки окружения, стандартов кода и процесса участия.
 
-## Changelog
+Технические детали об архитектуре проекта, системе сборки и скриптах разработки см. в [DEVELOPMENT.md](DEVELOPMENT.md).
 
-See [CHANGELOG.md](CHANGELOG.md) for the full list of changes.
+## История изменений
+
+См. [CHANGELOG.md](CHANGELOG.md) для полного списка изменений.
