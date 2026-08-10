@@ -60,9 +60,6 @@
       "expo-router",
       "expo-status-bar"
     ],
-    "updates": {
-      "enabled": false
-    },
     "extra": {
       "router": {}
     },
