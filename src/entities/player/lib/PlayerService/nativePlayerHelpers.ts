@@ -4,7 +4,6 @@ import {
   isPlayingAtom,
   isSeekingAtom,
   pauseTypeAtom,
-  positionAtom,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
@@ -14,9 +13,6 @@ import {
 } from '../../model'
 import { playerStatusListener } from './PlayerStatusListener'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdvanceService'
-
-/** Stale events farther than this from the seek target are blocked. */
-const SEEK_TOLERANCE_MS = 1000
 
 export const setupPlayerListeners = (
   player: AudioPlayer,
@@ -28,14 +24,7 @@ export const setupPlayerListeners = (
     onDurationChange: durationMs => void setDurationAction(ctx, durationMs),
     onPlayingChange: isPlaying => void setIsPlayingAction(ctx, isPlaying),
     onPositionChange: positionMs => {
-      if (ctx.get(isSeekingAtom)) {
-        const seekTarget = ctx.get(positionAtom)
-        if (Math.abs(positionMs - seekTarget) > SEEK_TOLERANCE_MS) return
-        void setPositionAction(ctx, positionMs)
-        void setIsSeekingAction(ctx, false)
-        return
-      }
-
+      if (ctx.get(isSeekingAtom)) void setIsSeekingAction(ctx, false)
       void setPositionAction(ctx, positionMs)
     },
     onTrackEnd: () => void trackAutoAdvanceService.handleTrackEnd(),

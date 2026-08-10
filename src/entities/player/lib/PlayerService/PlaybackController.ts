@@ -49,20 +49,24 @@ class PlaybackController {
   }
 
   public seekTo = async (player: AudioPlayer | null, positionMs: number): Promise<void> => {
-    if (!player?.isLoaded) return
+    if (!player) return
     if (this.seekTimeoutId) clearTimeout(this.seekTimeoutId)
 
     const clampedPosition = Math.max(0, positionMs)
     void setIsSeekingAction(ctx, true)
     void setPositionAction(ctx, clampedPosition)
+    this.seekTimeoutId = setTimeout(() => {
+      this.seekTimeoutId = null
+      if (ctx.get(isSeekingAtom)) void setIsSeekingAction(ctx, false)
+    }, SEEK_SAFETY_TIMEOUT_MS)
     try {
       await player.seekTo(clampedPosition / 1000)
-      this.seekTimeoutId = setTimeout(() => {
-        this.seekTimeoutId = null
-        if (ctx.get(isSeekingAtom)) void setIsSeekingAction(ctx, false)
-      }, SEEK_SAFETY_TIMEOUT_MS)
     } catch (error) {
       console.error('[PlaybackController] seekTo failed:', error)
+      if (this.seekTimeoutId) {
+        clearTimeout(this.seekTimeoutId)
+        this.seekTimeoutId = null
+      }
       void setIsSeekingAction(ctx, false)
     }
   }

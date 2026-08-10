@@ -9,6 +9,7 @@ class LockScreenControls {
     // Skip lock screen controls in Expo Go - native audio services may not be properly initialized
     if (!isExpoGo)
       player.setActiveForLockScreen(true, metadata, {
+        isLiveStream: false,
         showSeekBackward: true,
         showSeekForward: true,
       })
