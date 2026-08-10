@@ -2,18 +2,21 @@
 
 **English** | [Русский](README.md)
 
-> Listen to and read Christian sermons on your mobile device.
+> Listen to Christian sermons on your mobile device.
 
 <p align="center"><img src="assets/icon.png" width="128" alt="Slovo Propovedi icon" /></p>
 
 ## Features
 
 - **Audio playback** — Stream and cache sermons for offline listening
-- **FB2 book reader** — Read Christian books in FB2 format
 - **Configurable server** — Connect to any compatible sermon server
 - **No ads, no tracking, no analytics** — Privacy-first
 - **Dark/light theme** — Choose your preferred appearance
 - **Free and Open Source** — GPL-3.0-or-later
+
+## Roadmap
+
+- **FB2 book reader** — Online reading of Christian books in FB2 format from the server (no local files)
 
 ## Download
 

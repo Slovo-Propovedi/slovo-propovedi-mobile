@@ -1,11 +1,12 @@
-Slovo Propovedi (Слово.Проповеди) is a free and libre open source application for listening to and reading Christian sermons.
+Slovo Propovedi (Слово.Проповеди) is a free and libre open source application for listening to Christian sermons.
 
 Features:
 • Audio playback of sermon playlists with background playback and media controls
-• FB2 format book reader for offline reading
 • User-configurable server URL — no vendor lock-in, works with any compatible backend
 • Local notifications only — no proprietary push notification services
 • No tracking, no advertising, no analytics
 • Russian-language interface
 
 Licensed under GNU General Public License v3.0 or later (GPL-3.0-or-later). The source code is fully available. This app contains no proprietary components, no non-free network services, and no user tracking.
+
+Planned: FB2 book reading from the server (online, no local files).
