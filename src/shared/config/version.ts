@@ -1,4 +1,9 @@
 import Constants from 'expo-constants'
 
-export const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0'
+const rawVersion = Constants.expoConfig?.version
+if (!rawVersion)
+  console.error(
+    '[version] APP_VERSION is undefined — expoConfig.version missing. Update detection will not work correctly.',
+  )
+export const APP_VERSION = rawVersion ?? '0.0.0'
 export const APP_NAME = 'Слово.Проповеди'

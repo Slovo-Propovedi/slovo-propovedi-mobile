@@ -1,15 +1,20 @@
 import { debugConfig } from 'shared/config'
-import { isExpoGo } from 'shared/lib/isExpoEnvironment'
+import {
+  hideNotification,
+  requestPermissions,
+  scheduleNotification,
+} from 'shared/lib/notifications'
 import {
   CACHING_TITLE,
   COMPLETION_TITLE,
   ERROR_TITLE,
   FIXED_NOTIFICATION_ID,
 } from './notificationConstants'
-import { hideNotification, requestPermissions, scheduleNotification } from './notificationsHelpers'
+
+const NOTIFICATION_GROUP = 'playlist-cache'
 
 const log = debugConfig.enablePlaylistCacheLogs
-  ? (...args: unknown[]) => console.log('[PlaylistCacheNotifications]', ...args)
+  ? (...args: unknown[]) => console.warn('[PlaylistCacheNotifications]', ...args)
   : () => {}
 
 class PlaylistCacheNotifications {
@@ -18,6 +23,7 @@ class PlaylistCacheNotifications {
     return scheduleNotification(
       { body: `${playlistTitle}: Скачивание началось`, title: CACHING_TITLE },
       FIXED_NOTIFICATION_ID,
+      NOTIFICATION_GROUP,
     )
   }
 
@@ -30,6 +36,7 @@ class PlaylistCacheNotifications {
     return scheduleNotification(
       { body: `${playlistTitle}: Скачано ${current} из ${total}`, title: CACHING_TITLE },
       FIXED_NOTIFICATION_ID,
+      NOTIFICATION_GROUP,
     )
   }
 
@@ -37,6 +44,7 @@ class PlaylistCacheNotifications {
     return scheduleNotification(
       { body: `${playlistTitle}: Скачано ${total} проповедей`, title: COMPLETION_TITLE },
       FIXED_NOTIFICATION_ID,
+      NOTIFICATION_GROUP,
     )
   }
 
@@ -45,13 +53,12 @@ class PlaylistCacheNotifications {
     return scheduleNotification(
       { body: `${playlistTitle}: ${error.message}`, title: ERROR_TITLE },
       FIXED_NOTIFICATION_ID,
+      NOTIFICATION_GROUP,
     )
   }
 
   public async hideCachingNotification(_id: string): Promise<void> {
-    if (isExpoGo) return
-
-    await hideNotification()
+    await hideNotification(FIXED_NOTIFICATION_ID)
   }
 }
 

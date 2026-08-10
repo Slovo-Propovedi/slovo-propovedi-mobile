@@ -36,3 +36,9 @@ export {
   serverUnreachableAtom,
   setOnlineStatus,
 } from './network'
+export {
+  checkForUpdateAction,
+  latestVersionAtom,
+  releaseUrlAtom,
+  updateAvailableAtom,
+} from './update'

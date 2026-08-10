@@ -8,6 +8,7 @@ export interface NotificationsApi {
   }) => Promise<string>
   setNotificationHandler: (handler: {
     handleNotification: () => Promise<{
+      shouldPlaySound: boolean
       shouldSetBadge: boolean
       shouldShowBanner: boolean
       shouldShowList: boolean

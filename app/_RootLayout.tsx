@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useAtom } from '@reatom/npm-react'
+import { useAction, useAtom } from '@reatom/npm-react'
 import { router, Stack } from 'expo-router'
 import { useEffect } from 'react'
-import { BackHandler, View } from 'react-native'
+import { BackHandler, InteractionManager, View } from 'react-native'
 import { showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
+import { UpdateBanner } from 'widgets/update-status'
 import {
   closePlayerSheetAction,
   isPlayerExpandedAtom,
@@ -14,6 +15,7 @@ import {
 import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { subscribeToNetwork } from 'shared/lib/network'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { checkForUpdateAction } from 'shared/model'
 import { useTheme } from 'shared/ui/themed'
 
 // Module-level: subscribes once for the app lifetime
@@ -23,6 +25,7 @@ const RootLayout = () => {
   const { currentTheme } = useTheme()
   const [isPlaying] = useAtom(isPlayingAtom)
   const [position] = useAtom(positionAtom)
+  const checkForUpdate = useAction(checkForUpdateAction)
 
   useEffect(() => {
     const savePosition = async () => {
@@ -31,6 +34,13 @@ const RootLayout = () => {
     const interval = setInterval(savePosition, 5000)
     return () => clearInterval(interval)
   }, [isPlaying, position])
+
+  useEffect(() => {
+    const handle = InteractionManager.runAfterInteractions(() => {
+      void checkForUpdate()
+    })
+    return () => handle.cancel()
+  }, [checkForUpdate])
 
   useEffect(() => {
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -103,6 +113,7 @@ const RootLayout = () => {
       </Stack>
       <NetworkBanner />
       <ServerErrorToast />
+      <UpdateBanner />
     </View>
   )
 }
