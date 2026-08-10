@@ -25,7 +25,7 @@ yarn install
 yarn start
 ```
 
-For detailed environment setup (environment variables, emulator configuration, local builds), see the [README.md](README.md).
+For detailed environment setup (environment variables, emulator configuration, local builds), see the [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Development Workflow
 
