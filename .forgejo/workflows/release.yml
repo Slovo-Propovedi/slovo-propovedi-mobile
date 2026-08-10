@@ -145,15 +145,33 @@ jobs:
       - name: Prebuild native code
         run: npx expo prebuild --platform android --clean
 
+      - name: Configure Gradle for CI
+        run: |
+          # expo prebuild regenerates android/gradle.properties from its template
+          # with default JVM args (512 MiB metaspace). Increase to prevent OOM.
+          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=2g/' android/gradle.properties
+          # Trim ABIs to arm64-v8a and armeabi-v7a only (drop x86/x86_64).
+          # x86/x86_64 are only for emulators, not real devices. This halves
+          # native build output and significantly reduces disk usage on CI.
+          sed -i 's/reactNativeArchitectures=.*/reactNativeArchitectures=arm64-v8a,armeabi-v7a/' android/gradle.properties
+
+      - name: Check disk space
+        run: df -h /
+
       - name: Build APK
         run: |
           cd android
-          nice -n 19 ionice -c 3 ./gradlew assembleRelease --no-daemon -Dorg.gradle.parallel=false
+          nice -n 19 ionice -c 3 ./gradlew assembleRelease --no-daemon -Dorg.gradle.parallel=false --init-script ../scripts/gradle/disable-lint-vital.gradle
+          df -h /
 
-      - name: Zip APK
+      - name: Rename and zip APK
         run: |
           APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
-          zip -j "slovo-propovedi-v${{ steps.version.outputs.version }}.zip" "$APK_PATH"
+          APK_DIR=$(dirname "$APK_PATH")
+          VERSION="${{ steps.version.outputs.version }}"
+          RENAMED="Slovo.Propovedi v${VERSION}.apk"
+          cp "$APK_PATH" "$APK_DIR/$RENAMED"
+          zip -j "slovo-propovedi-v${VERSION}.zip" "$APK_DIR/$RENAMED"
 
       - name: Create Forgejo Release and upload asset
         env:

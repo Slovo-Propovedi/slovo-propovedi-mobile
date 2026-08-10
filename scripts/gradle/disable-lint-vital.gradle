@@ -1,0 +1,12 @@
+// Disable lintVital tasks to prevent metaspace OOM in CI.
+// This init script lives outside android/ so it survives `expo prebuild --clean`.
+// The committed android/build.gradle sets checkReleaseBuilds=false, but that
+// setting is overwritten by expo prebuild, and lintVitalAnalyzeRelease runs
+// anyway as an AGP sub-task, consuming excessive JVM metaspace.
+allprojects {
+  tasks.configureEach {
+    if (name.startsWith('lintVital')) {
+      enabled = false
+    }
+  }
+}

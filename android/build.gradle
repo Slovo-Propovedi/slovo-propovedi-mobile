@@ -29,6 +29,11 @@ subprojects {
         }
       }
     }
+    // Disable lintVital tasks — checkReleaseBuilds=false does not prevent
+    // lintVitalAnalyzeRelease from running, and it causes metaspace OOM.
+    project.tasks.matching { it.name.startsWith('lintVital') }.configureEach {
+      enabled = false
+    }
   }
 }
 
