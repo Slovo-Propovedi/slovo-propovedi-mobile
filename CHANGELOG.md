@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-08-07
+
+### Fixed
+
+- Remove mock sermons from listen page
+
+## [0.2.0] - 2026-08-07
+
+### Fixed
+
+- Add section mappers for updated API schemas
+- Replace local openapi docs with remote link in orval
+
 ## [Unreleased]
 
 ### Added
@@ -43,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reconciled OTA section.
 - `AGENTS.md`: corrected stale Expo SDK version (55 → 57).
 - `LICENSE`: prepended Copyright (C) 2026 Slovo.Propovedi preamble
-  + App Store exception reference.
+  - App Store exception reference.
 
 ### Deprecated
 
@@ -73,3 +86,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `firebase-messaging`, `installreferrer`, `ShortcutBadger`
   from F-Droid builds (via prebuild sed patches) — no proprietary
   Google dependencies in distributed APK.
+
+[0.2.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.2.1
+[0.2.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.2.0

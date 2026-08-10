@@ -173,15 +173,38 @@ jobs:
           cp "$APK_PATH" "$APK_DIR/$RENAMED"
           zip -j "slovo-propovedi-v${VERSION}.zip" "$APK_DIR/$RENAMED"
 
+      - name: Extract changelog section
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          awk -v target="## [$VERSION]" '
+            index($0, target) == 1 { found = 1; next }
+            found && $0 ~ /^## \[/ { exit }
+            found && $0 ~ /^\[.*\]: / { exit }
+            found { print }
+          ' CHANGELOG.md > release-body.md
+
+          if [ ! -s release-body.md ]; then
+            echo "::error::No changelog section found for v$VERSION in CHANGELOG.md"
+            echo "::error::Run 'node scripts/bump-version.mjs $VERSION' before tagging"
+            exit 1
+          fi
+
+          echo "Extracted changelog section for v$VERSION ($(wc -l < release-body.md) lines)"
+
       - name: Create Forgejo Release and upload asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          jq -n \
+            --arg tag "${{ github.ref_name }}" \
+            --arg name "${{ github.ref_name }}" \
+            --arg body "$(cat release-body.md)" \
+            '{tag_name: $tag, name: $name, body: $body}' > release.json
           RESPONSE=$(curl -s -X POST \
             "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases" \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"tag_name\":\"${{ github.ref_name }}\",\"name\":\"${{ github.ref_name }}\",\"body\":\"Release version ${{ steps.version.outputs.version }}\"}")
+            --data @release.json)
           RELEASE_ID=$(echo "$RESPONSE" | jq -r .id)
           curl -s -X POST \
             "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-v${{ steps.version.outputs.version }}.zip" \

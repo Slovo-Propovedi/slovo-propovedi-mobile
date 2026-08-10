@@ -2,6 +2,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
+import { updateChangelogFiles } from './generate-changelog.mjs'
 
 const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'
@@ -100,6 +101,16 @@ fdroid = fdroid.replace(/versionCode: \d+/, `versionCode: ${newVersionCode}`)
 fdroid = fdroid.replace(/commit: v\d+\.\d+\.\d+/, `commit: v${newVersion}`)
 writeFileSync(fdroidPath, fdroid)
 log('✓ Updated fdroid/metadata/ru.slovopropovedi.yml', GREEN)
+
+// --- Generate changelog ---
+log('\n→ Updating changelog...', YELLOW)
+
+try {
+  updateChangelogFiles(currentVersion, newVersion, newVersionCode, new Date().toISOString().slice(0, 10))
+  log('✓ Updated CHANGELOG.md and fastlane changelogs', GREEN)
+} catch (error) {
+  exitError(`Changelog update failed: ${error.message}`)
+}
 
 // --- Git operations ---
 log('\n→ Staging all changes...', YELLOW)
