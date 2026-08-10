@@ -120,8 +120,7 @@ provided for convenience — they are **not** required:
 | `yarn update-app` | Deploy OTA update (requires EAS Cloud) |
 
 These scripts are retained for users who choose to use EAS. The
-`eas.json` file documents build profiles for reference. See
-[OTA-STRATEGY.md](./OTA-STRATEGY.md) for details on OTA updates.
+`eas.json` file documents build profiles for reference.
 
 ## Troubleshooting
 

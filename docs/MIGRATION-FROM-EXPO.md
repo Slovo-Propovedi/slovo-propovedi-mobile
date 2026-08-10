@@ -14,7 +14,7 @@ maintainers, should the project ever decide to eject from Expo SDK.
 
 - Expo SDK 57.0.8 (MIT)
 - React Native 0.86.0 (MIT)
-- OTA updates disabled (see [OTA-STRATEGY.md](./OTA-STRATEGY.md))
+- OTA updates disabled
 - Local builds supported (see [BUILD-LOCAL.md](./BUILD-LOCAL.md))
 - EAS Cloud is optional, not required
 - No proprietary dependencies in distributed APK
@@ -52,7 +52,6 @@ Replacement table for each Expo module currently in use:
 | `expo-task-manager` | `react-native-background-actions` | MIT | Medium | Different API; check use case |
 | `expo-linking` | React Native's `Linking` | MIT | Easy | Built into RN core |
 | `@expo/vector-icons` | `react-native-vector-icons` | MIT | Easy | Drop-in |
-| `expo-updates` | Self-hosted OTA (see [OTA-STRATEGY.md](./OTA-STRATEGY.md)) | various | Hard | Currently disabled; must be re-enabled post-eject if OTA is wanted |
 
 ## Build System Changes
 
@@ -100,7 +99,6 @@ are:
 
 - [Expo Documentation](https://docs.expo.dev/)
 - [React Navigation Documentation](https://reactnavigation.org/)
-- [OTA Strategy](./OTA-STRATEGY.md)
 - [Local Build Instructions](./BUILD-LOCAL.md)
 
 ---

@@ -34,8 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User-configurable server URL setting (Settings screen) — removes
   vendor lock-in and F-Droid TetheredNet anti-feature.
 - Reset-to-default link in server URL settings UI.
-- `docs/OTA-STRATEGY.md` documenting OTA disablement and
-  future re-enablement path.
 - `docs/BUILD-LOCAL.md` local build instructions (no proprietary
   EAS required).
 - `fdroid/metadata/ru.slovopropovedi.yml` F-Droid
@@ -75,6 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `src/shared/ui/youtube-preview/YoutubePreview.tsx` + test.
   - `src/shared/ui/youtube-preview/assets/youtube-logo-png-2069.png`.
 - 14 tests removed (473 → 459).
+- `docs/OTA-STRATEGY.md` (expo-updates fully removed; OTA updates
+  permanently disabled, app distributed via F-Droid and direct
+  APK).
 
 ### Security
 
