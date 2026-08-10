@@ -1,0 +1,9 @@
+Add app version check with update notification and green banner
+Add store screenshots for F-Droid listing
+Automate changelog generation from conventional commits
+Add fastlane metadata for F-Droid store listing
+Resolve Gradle metaspace OOM and optimize release build
+Update signing check in commit-msg
+Eliminate Metaspace OOM on runner
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

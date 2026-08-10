@@ -83,13 +83,20 @@ export const generateChangelogSection = (version, date, subjects) => {
   return [`## [${version}] - ${date}`, '', ...categoryBlocks].join('\n')
 }
 
-export const insertSectionBeforeUnreleased = (changelog, section) => {
+export const insertSectionAfterUnreleased = (changelog, section) => {
   const unreleasedHeading = '## [Unreleased]'
   const unreleasedIndex = changelog.indexOf(unreleasedHeading)
 
   if (unreleasedIndex === -1) return insertAfterHeader(changelog, section)
 
-  return `${changelog.slice(0, unreleasedIndex).trimEnd()}\n\n${section}\n\n${changelog.slice(unreleasedIndex)}`
+  const restAfterUnreleased = changelog.slice(unreleasedIndex + unreleasedHeading.length)
+  const nextSectionMatch = /\n## /.exec(restAfterUnreleased)
+
+  if (!nextSectionMatch) return `${changelog.trimEnd()}\n\n${section}\n`
+
+  const nextSectionIndex = unreleasedIndex + unreleasedHeading.length + nextSectionMatch.index
+
+  return `${changelog.slice(0, nextSectionIndex).trimEnd()}\n\n${section}\n\n${changelog.slice(nextSectionIndex + 1)}`
 }
 
 const insertAfterHeader = (changelog, section) => {
@@ -148,7 +155,7 @@ export const updateChangelogFiles = (previousVersion, newVersion, versionCode, d
 
   const changelogPath = 'CHANGELOG.md'
   const changelog = readFileSync(changelogPath, 'utf-8')
-  writeFileSync(changelogPath, addLinkReference(insertSectionBeforeUnreleased(changelog, section), newVersion))
+  writeFileSync(changelogPath, addLinkReference(insertSectionAfterUnreleased(changelog, section), newVersion))
 
   const enChangelogPath = `fastlane/metadata/android/en-US/changelogs/${versionCode}.txt`
   const ruChangelogPath = `fastlane/metadata/android/ru/changelogs/${versionCode}.txt`
