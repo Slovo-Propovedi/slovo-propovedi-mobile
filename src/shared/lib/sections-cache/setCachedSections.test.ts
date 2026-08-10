@@ -36,7 +36,7 @@ describe('setCachedSections', () => {
 
   test('passes the stringified array to setItem', async () => {
     const spy = jest.spyOn(AsyncStorage, 'setItem').mockResolvedValueOnce()
-    const sections: SectionData[] = [validSection, { itemsSize: 'on', transform: 'short' }]
+    const sections: SectionData[] = [validSection, { itemsSize: 'middle', transform: 'short' }]
 
     await setCachedSections(sections)
 
