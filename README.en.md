@@ -14,6 +14,21 @@
 - **Dark/light theme** — Choose your preferred appearance
 - **Free and Open Source** — GPL-3.0-or-later
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="assets/screenshots/listen-screen.png" width="200" /><br/>Listen</td>
+    <td align="center"><img src="assets/screenshots/playlist-screen.png" width="200" /><br/>Playlist</td>
+    <td align="center"><img src="assets/screenshots/player-screen.png" width="200" /><br/>Player</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/screenshots/settings-screen.png" width="200" /><br/>Settings</td>
+    <td align="center"><img src="assets/screenshots/about-screen.png" width="200" /><br/>About</td>
+    <td></td>
+  </tr>
+</table>
+
 ## Roadmap
 
 - **FB2 book reader** — Online reading of Christian books in FB2 format from the server (no local files)
@@ -27,10 +42,6 @@
 ### Direct APK
 
 Download the latest APK from the [releases page](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases).
-
-## Screenshots
-
-[Screenshots will be added later]
 
 ## License
 

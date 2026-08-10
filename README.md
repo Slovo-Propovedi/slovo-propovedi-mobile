@@ -14,6 +14,21 @@
 - **Тёмная/светлая тема** — Выберите предпочитаемый внешний вид
 - **Свободное и открытое ПО** — GPL-3.0-or-later
 
+## Скриншоты
+
+<table>
+  <tr>
+    <td align="center"><img src="assets/screenshots/listen-screen.png" width="200" /><br/>Слушать</td>
+    <td align="center"><img src="assets/screenshots/playlist-screen.png" width="200" /><br/>Плейлист</td>
+    <td align="center"><img src="assets/screenshots/player-screen.png" width="200" /><br/>Плеер</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/screenshots/settings-screen.png" width="200" /><br/>Настройки</td>
+    <td align="center"><img src="assets/screenshots/about-screen.png" width="200" /><br/>О приложении</td>
+    <td></td>
+  </tr>
+</table>
+
 ## Запланировано
 
 - **Чтение FB2-книг** — Онлайн-чтение христианских книг в формате FB2 с сервера (без локальных файлов)
@@ -27,10 +42,6 @@
 ### Прямая загрузка APK
 
 Скачайте последний APK со [страницы релизов](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases).
-
-## Скриншоты
-
-[Скриншоты будут добавлены позже]
 
 ## Лицензия
 
