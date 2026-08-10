@@ -1,0 +1,3 @@
+Удалены заглушки данных для запросов
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

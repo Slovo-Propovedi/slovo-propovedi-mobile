@@ -1,0 +1,6 @@
+Implemented core functionality for listening to sermons:
+- fetching list of sections, playlists and sermons
+- caching of sermons, including entire playlists
+- app theming settings
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
