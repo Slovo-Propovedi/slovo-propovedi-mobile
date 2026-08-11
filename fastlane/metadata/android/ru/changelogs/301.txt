@@ -1,0 +1,3 @@
+Restore seeking and OS notification progress bar
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
