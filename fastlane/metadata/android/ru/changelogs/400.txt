@@ -1,0 +1,4 @@
+Insert changelog link references in version-descending order
+Add notification action button, fix re-entry banner, resize banner
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
