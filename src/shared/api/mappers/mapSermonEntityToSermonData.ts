@@ -1,0 +1,21 @@
+import { type SermonData } from '../../model/domain/common'
+import { type APITypes } from '../generated'
+import { mapPlaylistEntityToPlaylistData } from './mapPlaylistEntityToPlaylistData'
+
+/**
+ * Маппер: SermonEntity (API) -> SermonData (App).
+ * @param apiSermon - Проповедь из API.
+ */
+export const mapSermonEntityToSermonData = (apiSermon: APITypes.SermonEntity): SermonData => ({
+  artist: apiSermon.artist,
+  artwork: apiSermon.artwork,
+  audioUrl: apiSermon.audioUrl ?? null,
+  chapter: apiSermon.chapter,
+  description: apiSermon.description,
+  id: apiSermon.id,
+  playlists: apiSermon.playlists?.map(mapPlaylistEntityToPlaylistData),
+  textFileUrl: apiSermon.textFileUrl ?? null,
+  title: apiSermon.title,
+  verse: undefined,
+  youtubeUrl: apiSermon.youtubeUrl ?? null,
+})

@@ -11,6 +11,7 @@ import type {
   AllPlaylistsResponse,
   CreatePlaylistDto,
   PlaylistEntity,
+  ReorderSermonsDto,
   StatusPlaylistResponse,
   UpdatePlaylistDto,
 } from '../adminAPI.schemas'
@@ -84,12 +85,32 @@ export const getPlaylists = () => {
       options,
     )
   }
+  /**
+   * Принимает список id проповедей в новом порядке и обновляет их позиции внутри плейлиста
+   * @summary Изменить порядок проповедей в плейлисте
+   */
+  const reorderSermonsInPlaylist = (
+    id: string,
+    reorderSermonsDto: ReorderSermonsDto,
+    options?: SecondParameter<typeof customInstance<StatusPlaylistResponse>>,
+  ) => {
+    return customInstance<StatusPlaylistResponse>(
+      {
+        url: `/playlists/${id}/sermons/reorder`,
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        data: reorderSermonsDto,
+      },
+      options,
+    )
+  }
   return {
     playlistControllerCreate,
     playlistControllerFindAll,
     playlistControllerFindOne,
     playlistControllerUpdate,
     playlistControllerRemove,
+    reorderSermonsInPlaylist,
   }
 }
 export type PlaylistControllerCreateResult = NonNullable<
@@ -106,4 +127,7 @@ export type PlaylistControllerUpdateResult = NonNullable<
 >
 export type PlaylistControllerRemoveResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getPlaylists>['playlistControllerRemove']>>
+>
+export type ReorderSermonsInPlaylistResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getPlaylists>['reorderSermonsInPlaylist']>>
 >

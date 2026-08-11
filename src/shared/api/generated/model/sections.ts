@@ -14,10 +14,10 @@ import * as zod from 'zod'
  */
 export const SectionControllerCreateBody = zod.object({
   title: zod.string(),
-  description: zod.string().optional(),
+  description: zod.string().nullable(),
   itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
-  itemsRows: zod.number().optional(),
-  transform: zod.enum(['high', 'short']),
+  itemsRows: zod.number().nullable(),
+  transform: zod.enum(['high', 'middle', 'short']),
   isDescriptionTitleOnSlideLarge: zod.boolean().optional(),
   whereIsSlideTitleLocated: zod.enum(['on', 'under', 'bothOnAndUnder']).optional(),
   borderRadius: zod.boolean().optional(),
@@ -32,10 +32,11 @@ export const sectionControllerCreate200ResponsePlaylistsItemSermonsItemVerseTwoM
 export const SectionControllerCreate200Response = zod.object({
   id: zod.string(),
   title: zod.string(),
-  description: zod.string().nullish(),
+  description: zod.string().nullable(),
+  position: zod.int(),
   itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
-  itemsRows: zod.number().nullish(),
-  transform: zod.enum(['high', 'short']),
+  itemsRows: zod.number().nullable(),
+  transform: zod.enum(['high', 'middle', 'short']),
   isDescriptionTitleOnSlideLarge: zod
     .boolean()
     .default(sectionControllerCreate200ResponseIsDescriptionTitleOnSlideLargeDefault),
@@ -49,6 +50,7 @@ export const SectionControllerCreate200Response = zod.object({
       title: zod.string(),
       description: zod.string(),
       artwork: zod.string(),
+      position: zod.int(),
       sections: zod.array(
         zod.object({
           id: zod.string(),
@@ -66,7 +68,7 @@ export const SectionControllerCreate200Response = zod.object({
           artist: zod.string(),
           artwork: zod.string(),
           book: zod.string().nullable(),
-          chapter: zod.number().nullable(),
+          chapter: zod.int().nullable(),
           verse: zod
             .union([
               zod.int(),
@@ -76,14 +78,11 @@ export const SectionControllerCreate200Response = zod.object({
                 .max(sectionControllerCreate200ResponsePlaylistsItemSermonsItemVerseTwoMax),
             ])
             .nullable(),
+          position: zod.int(),
           playlists: zod.array(
             zod.object({
               id: zod.string(),
               title: zod.string(),
-              description: zod.string(),
-              artwork: zod.string(),
-              sections: zod.array(zod.unknown()),
-              sermons: zod.array(zod.unknown()),
             }),
           ),
         }),
@@ -106,10 +105,11 @@ export const SectionControllerFindAll200Response = zod.object({
     zod.object({
       id: zod.string(),
       title: zod.string(),
-      description: zod.string().nullish(),
+      description: zod.string().nullable(),
+      position: zod.int(),
       itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
-      itemsRows: zod.number().nullish(),
-      transform: zod.enum(['high', 'short']),
+      itemsRows: zod.number().nullable(),
+      transform: zod.enum(['high', 'middle', 'short']),
       isDescriptionTitleOnSlideLarge: zod
         .boolean()
         .default(
@@ -127,6 +127,7 @@ export const SectionControllerFindAll200Response = zod.object({
           title: zod.string(),
           description: zod.string(),
           artwork: zod.string(),
+          position: zod.int(),
           sections: zod.array(
             zod.object({
               id: zod.string(),
@@ -144,7 +145,7 @@ export const SectionControllerFindAll200Response = zod.object({
               artist: zod.string(),
               artwork: zod.string(),
               book: zod.string().nullable(),
-              chapter: zod.number().nullable(),
+              chapter: zod.int().nullable(),
               verse: zod
                 .union([
                   zod.int(),
@@ -158,14 +159,11 @@ export const SectionControllerFindAll200Response = zod.object({
                     ),
                 ])
                 .nullable(),
+              position: zod.int(),
               playlists: zod.array(
                 zod.object({
                   id: zod.string(),
                   title: zod.string(),
-                  description: zod.string(),
-                  artwork: zod.string(),
-                  sections: zod.array(zod.unknown()),
-                  sermons: zod.array(zod.unknown()),
                 }),
               ),
             }),
@@ -193,10 +191,11 @@ export const sectionControllerFindOne200ResponsePlaylistsItemSermonsItemVerseTwo
 export const SectionControllerFindOne200Response = zod.object({
   id: zod.string(),
   title: zod.string(),
-  description: zod.string().nullish(),
+  description: zod.string().nullable(),
+  position: zod.int(),
   itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
-  itemsRows: zod.number().nullish(),
-  transform: zod.enum(['high', 'short']),
+  itemsRows: zod.number().nullable(),
+  transform: zod.enum(['high', 'middle', 'short']),
   isDescriptionTitleOnSlideLarge: zod
     .boolean()
     .default(sectionControllerFindOne200ResponseIsDescriptionTitleOnSlideLargeDefault),
@@ -210,6 +209,7 @@ export const SectionControllerFindOne200Response = zod.object({
       title: zod.string(),
       description: zod.string(),
       artwork: zod.string(),
+      position: zod.int(),
       sections: zod.array(
         zod.object({
           id: zod.string(),
@@ -227,7 +227,7 @@ export const SectionControllerFindOne200Response = zod.object({
           artist: zod.string(),
           artwork: zod.string(),
           book: zod.string().nullable(),
-          chapter: zod.number().nullable(),
+          chapter: zod.int().nullable(),
           verse: zod
             .union([
               zod.int(),
@@ -237,14 +237,11 @@ export const SectionControllerFindOne200Response = zod.object({
                 .max(sectionControllerFindOne200ResponsePlaylistsItemSermonsItemVerseTwoMax),
             ])
             .nullable(),
+          position: zod.int(),
           playlists: zod.array(
             zod.object({
               id: zod.string(),
               title: zod.string(),
-              description: zod.string(),
-              artwork: zod.string(),
-              sections: zod.array(zod.unknown()),
-              sermons: zod.array(zod.unknown()),
             }),
           ),
         }),
@@ -261,15 +258,15 @@ export const SectionControllerUpdateParams = zod.object({
 })
 
 export const SectionControllerUpdateBody = zod.object({
-  title: zod.string().optional(),
-  description: zod.string().optional(),
-  playlistsIds: zod.array(zod.string()).optional(),
-  itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']).optional(),
-  itemsRows: zod.number().optional(),
-  transform: zod.enum(['high', 'short']).optional(),
-  isDescriptionTitleOnSlideLarge: zod.boolean().optional(),
-  whereIsSlideTitleLocated: zod.enum(['on', 'under', 'bothOnAndUnder']).optional(),
-  borderRadius: zod.boolean().optional(),
+  title: zod.string(),
+  description: zod.string().nullable(),
+  playlistsIds: zod.array(zod.string()),
+  itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
+  itemsRows: zod.number().nullable(),
+  transform: zod.enum(['high', 'middle', 'short']),
+  isDescriptionTitleOnSlideLarge: zod.boolean(),
+  whereIsSlideTitleLocated: zod.enum(['on', 'under', 'bothOnAndUnder']),
+  borderRadius: zod.boolean(),
 })
 
 export const sectionControllerUpdate200ResponseIsDescriptionTitleOnSlideLargeDefault = false
@@ -281,10 +278,11 @@ export const sectionControllerUpdate200ResponsePlaylistsItemSermonsItemVerseTwoM
 export const SectionControllerUpdate200Response = zod.object({
   id: zod.string(),
   title: zod.string(),
-  description: zod.string().nullish(),
+  description: zod.string().nullable(),
+  position: zod.int(),
   itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
-  itemsRows: zod.number().nullish(),
-  transform: zod.enum(['high', 'short']),
+  itemsRows: zod.number().nullable(),
+  transform: zod.enum(['high', 'middle', 'short']),
   isDescriptionTitleOnSlideLarge: zod
     .boolean()
     .default(sectionControllerUpdate200ResponseIsDescriptionTitleOnSlideLargeDefault),
@@ -298,6 +296,7 @@ export const SectionControllerUpdate200Response = zod.object({
       title: zod.string(),
       description: zod.string(),
       artwork: zod.string(),
+      position: zod.int(),
       sections: zod.array(
         zod.object({
           id: zod.string(),
@@ -315,7 +314,7 @@ export const SectionControllerUpdate200Response = zod.object({
           artist: zod.string(),
           artwork: zod.string(),
           book: zod.string().nullable(),
-          chapter: zod.number().nullable(),
+          chapter: zod.int().nullable(),
           verse: zod
             .union([
               zod.int(),
@@ -325,14 +324,11 @@ export const SectionControllerUpdate200Response = zod.object({
                 .max(sectionControllerUpdate200ResponsePlaylistsItemSermonsItemVerseTwoMax),
             ])
             .nullable(),
+          position: zod.int(),
           playlists: zod.array(
             zod.object({
               id: zod.string(),
               title: zod.string(),
-              description: zod.string(),
-              artwork: zod.string(),
-              sections: zod.array(zod.unknown()),
-              sermons: zod.array(zod.unknown()),
             }),
           ),
         }),

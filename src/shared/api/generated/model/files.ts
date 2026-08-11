@@ -10,8 +10,8 @@
 import * as zod from 'zod'
 
 /**
- * Файл сохраняется в MinIO
- * @summary Загрузить файл (аудио, видео, изображение и др.)
+ * Файл сохраняется в MinIO. Допустимые форматы: JPEG, PNG, WebP (изображения), MP3 (аудио), PDF, FB2 (документы).
+ * @summary Загрузить файл (изображение, аудио MP3, PDF, FB2)
  */
 export const AppControllerUploadFileBody = zod.object({
   file: zod.instanceof(File).optional(),
@@ -20,6 +20,22 @@ export const AppControllerUploadFileBody = zod.object({
 export const AppControllerUploadFile200Response = zod.object({
   fileName: zod.string(),
   fileUrl: zod.string(),
+})
+
+/**
+ * Returns a list of all image files in storage (for cover reuse feature)
+ * @summary List image files
+ */
+export const GetFiles200Response = zod.object({
+  files: zod.array(
+    zod.object({
+      fileName: zod.string(),
+      fileUrl: zod.string(),
+      size: zod.int().nullable(),
+      lastModified: zod.iso.datetime({ offset: true }).nullable(),
+    }),
+  ),
+  count: zod.int(),
 })
 
 /**

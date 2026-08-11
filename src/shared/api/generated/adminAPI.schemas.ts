@@ -20,6 +20,20 @@ export interface IFileResponseDto {
   fileUrl: string
 }
 
+export interface FileMetadataDto {
+  fileName: string
+  fileUrl: string
+  /** @nullable */
+  lastModified: string | null
+  /** @nullable */
+  size: number | null
+}
+
+export interface AllFilesResponse {
+  count: number
+  files: FileMetadataDto[]
+}
+
 export type CreateSectionDtoItemsSize =
   (typeof CreateSectionDtoItemsSize)[keyof typeof CreateSectionDtoItemsSize]
 
@@ -35,6 +49,7 @@ export type CreateSectionDtoTransform =
 
 export const CreateSectionDtoTransform = {
   high: 'high',
+  middle: 'middle',
   short: 'short',
 } as const
 
@@ -49,9 +64,11 @@ export const CreateSectionDtoWhereIsSlideTitleLocated = {
 
 export interface CreateSectionDto {
   borderRadius?: boolean
-  description?: string
+  /** @nullable */
+  description: string | null
   isDescriptionTitleOnSlideLarge?: boolean
-  itemsRows?: number
+  /** @nullable */
+  itemsRows: number | null
   itemsSize: CreateSectionDtoItemsSize
   title: string
   transform: CreateSectionDtoTransform
@@ -73,6 +90,7 @@ export type SectionEntityTransform =
 
 export const SectionEntityTransform = {
   high: 'high',
+  middle: 'middle',
   short: 'short',
 } as const
 
@@ -90,12 +108,64 @@ export interface SectionRef {
   title: string
 }
 
+export type PlaylistSermonPlaylistsItem = {
+  id: string
+  title: string
+}
+
+export interface PlaylistSermon {
+  artist: string
+  artwork: string
+  /** @nullable */
+  audioUrl: string | null
+  /** @nullable */
+  book: string | null
+  /** @nullable */
+  chapter: number | null
+  description: string
+  id: string
+  playlists: PlaylistSermonPlaylistsItem[]
+  position: number
+  /** @nullable */
+  textFileUrl: string | null
+  title: string
+  verse: number | number[] | null
+  /** @nullable */
+  youtubeUrl: string | null
+}
+
+export interface SectionPlaylist {
+  artwork: string
+  description: string
+  id: string
+  position: number
+  sections: SectionRef[]
+  sermons: PlaylistSermon[]
+  title: string
+}
+
+export interface SectionEntity {
+  borderRadius?: boolean
+  /** @nullable */
+  description: string | null
+  id: string
+  isDescriptionTitleOnSlideLarge?: boolean
+  /** @nullable */
+  itemsRows: number | null
+  itemsSize: SectionEntityItemsSize
+  playlists: SectionPlaylist[]
+  position: number
+  title: string
+  transform: SectionEntityTransform
+  whereIsSlideTitleLocated?: SectionEntityWhereIsSlideTitleLocated
+}
+
 export interface PlaylistEntity {
   artwork: string
   description: string
   id: string
   sections: SectionEntity[]
-  sermons: SermonEntity[]
+  sermons: PlaylistSermon[]
   title: string
 }
 
@@ -119,30 +189,6 @@ export interface SermonEntity {
   youtubeUrl: string | null
 }
 
-export interface SectionPlaylist {
-  artwork: string
-  description: string
-  id: string
-  sections: SectionRef[]
-  sermons: SermonEntity[]
-  title: string
-}
-
-export interface SectionEntity {
-  borderRadius?: boolean
-  /** @nullable */
-  description?: string | null
-  id: string
-  isDescriptionTitleOnSlideLarge?: boolean
-  /** @nullable */
-  itemsRows?: number | null
-  itemsSize: SectionEntityItemsSize
-  playlists: SectionPlaylist[]
-  title: string
-  transform: SectionEntityTransform
-  whereIsSlideTitleLocated?: SectionEntityWhereIsSlideTitleLocated
-}
-
 export interface AllSectionsResponse {
   count: number
   sections: SectionEntity[]
@@ -163,6 +209,7 @@ export type UpdateSectionDtoTransform =
 
 export const UpdateSectionDtoTransform = {
   high: 'high',
+  middle: 'middle',
   short: 'short',
 } as const
 
@@ -176,15 +223,17 @@ export const UpdateSectionDtoWhereIsSlideTitleLocated = {
 } as const
 
 export interface UpdateSectionDto {
-  borderRadius?: boolean
-  description?: string
-  isDescriptionTitleOnSlideLarge?: boolean
-  itemsRows?: number
-  itemsSize?: UpdateSectionDtoItemsSize
-  playlistsIds?: string[]
-  title?: string
-  transform?: UpdateSectionDtoTransform
-  whereIsSlideTitleLocated?: UpdateSectionDtoWhereIsSlideTitleLocated
+  borderRadius: boolean
+  /** @nullable */
+  description: string | null
+  isDescriptionTitleOnSlideLarge: boolean
+  /** @nullable */
+  itemsRows: number | null
+  itemsSize: UpdateSectionDtoItemsSize
+  playlistsIds: string[]
+  title: string
+  transform: UpdateSectionDtoTransform
+  whereIsSlideTitleLocated: UpdateSectionDtoWhereIsSlideTitleLocated
 }
 
 export interface StatusSectionsResponse {
@@ -193,7 +242,8 @@ export interface StatusSectionsResponse {
 
 export interface CreatePlaylistDto {
   artwork: string
-  description: string
+  /** @nullable */
+  description: string | null
   sermonsIds?: string[]
   title: string
 }
@@ -204,30 +254,48 @@ export interface AllPlaylistsResponse {
 }
 
 export interface UpdatePlaylistDto {
-  artwork?: string
-  description?: string
+  artwork: string
+  /** @nullable */
+  description: string | null
   sectionsIds?: string[]
-  sermonsIds?: string[]
-  title?: string
+  sermonsIds: string[]
+  title: string
 }
 
 export interface StatusPlaylistResponse {
   status: string
 }
 
+export interface ReorderSectionsDto {
+  ids: string[]
+}
+
+export interface ReorderSermonsDto {
+  sermonIds: string[]
+}
+
+export interface ReorderPlaylistsDto {
+  playlistIds: string[]
+}
+
 export interface CreateSermonDto {
   artist: string
   artwork: string
-  audioUrl?: string
   /** @nullable */
-  book?: string | null
-  chapter?: number
-  description: string
+  audioUrl: string | null
+  /** @nullable */
+  book: string | null
+  /** @nullable */
+  chapter: number | null
+  /** @nullable */
+  description: string | null
   playlistsIds?: string[]
-  textFileUrl?: string
+  /** @nullable */
+  textFileUrl: string | null
   title: string
-  verse?: number | number[]
-  youtubeUrl?: string
+  verse: number | number[] | null
+  /** @nullable */
+  youtubeUrl: string | null
 }
 
 export interface AllSermonsResponse {
@@ -239,18 +307,23 @@ export interface AllSermonsResponse {
 }
 
 export interface UpdateSermonDto {
-  artist?: string
-  artwork?: string
-  audioUrl?: string
+  artist: string
+  artwork: string
   /** @nullable */
-  book?: string | null
-  chapter?: number
-  description?: string
-  playlistsIds?: string[]
-  textFileUrl?: string
-  title?: string
-  verse?: number | number[]
-  youtubeUrl?: string
+  audioUrl: string | null
+  /** @nullable */
+  book: string | null
+  /** @nullable */
+  chapter: number | null
+  /** @nullable */
+  description: string | null
+  playlistsIds: string[]
+  /** @nullable */
+  textFileUrl: string | null
+  title: string
+  verse: number | number[] | null
+  /** @nullable */
+  youtubeUrl: string | null
 }
 
 export interface StatusSermonResponse {
@@ -287,6 +360,7 @@ export interface RefreshResponse {
 }
 
 export type AppControllerUploadFileBody = {
+  /** Допустимые форматы — JPEG, PNG, WebP, MP3, PDF, FB2. Другие форматы будут отклонены. */
   file?: Blob
 }
 

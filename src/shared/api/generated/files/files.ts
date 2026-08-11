@@ -8,6 +8,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
+  AllFilesResponse,
   AppControllerUploadFileBody,
   IFileResponseDto,
   StreamUrlResponse,
@@ -19,8 +20,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
 export const getFiles = () => {
   /**
-   * Файл сохраняется в MinIO
-   * @summary Загрузить файл (аудио, видео, изображение и др.)
+   * Файл сохраняется в MinIO. Допустимые форматы: JPEG, PNG, WebP (изображения), MP3 (аудио), PDF, FB2 (документы).
+   * @summary Загрузить файл (изображение, аудио MP3, PDF, FB2)
    */
   const appControllerUploadFile = (
     appControllerUploadFileBody: AppControllerUploadFileBody,
@@ -40,6 +41,13 @@ export const getFiles = () => {
       },
       options,
     )
+  }
+  /**
+   * Returns a list of all image files in storage (for cover reuse feature)
+   * @summary List image files
+   */
+  const getFiles = (options?: SecondParameter<typeof customInstance<AllFilesResponse>>) => {
+    return customInstance<AllFilesResponse>({ url: `/files`, method: 'GET' }, options)
   }
   /**
    * @summary Получить URL потока для файла
@@ -62,10 +70,13 @@ export const getFiles = () => {
   ) => {
     return customInstance<IFileResponseDto>({ url: `/files/${fileName}`, method: 'GET' }, options)
   }
-  return { appControllerUploadFile, appControllerGetStreamUrl, appControllerGetFile }
+  return { appControllerUploadFile, getFiles, appControllerGetStreamUrl, appControllerGetFile }
 }
 export type AppControllerUploadFileResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerUploadFile']>>
+>
+export type GetFilesResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getFiles>['getFiles']>>
 >
 export type AppControllerGetStreamUrlResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerGetStreamUrl']>>

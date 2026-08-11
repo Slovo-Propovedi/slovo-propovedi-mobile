@@ -14,7 +14,7 @@ import * as zod from 'zod'
  */
 export const PlaylistControllerCreateBody = zod.object({
   title: zod.string(),
-  description: zod.string(),
+  description: zod.string().nullable(),
   artwork: zod.string(),
   sermonsIds: zod.array(zod.string()).optional(),
 })
@@ -37,10 +37,11 @@ export const PlaylistControllerCreate200Response = zod.object({
     zod.object({
       id: zod.string(),
       title: zod.string(),
-      description: zod.string().nullish(),
+      description: zod.string().nullable(),
+      position: zod.int(),
       itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
-      itemsRows: zod.number().nullish(),
-      transform: zod.enum(['high', 'short']),
+      itemsRows: zod.number().nullable(),
+      transform: zod.enum(['high', 'middle', 'short']),
       isDescriptionTitleOnSlideLarge: zod
         .boolean()
         .default(
@@ -58,6 +59,7 @@ export const PlaylistControllerCreate200Response = zod.object({
           title: zod.string(),
           description: zod.string(),
           artwork: zod.string(),
+          position: zod.int(),
           sections: zod.array(
             zod.object({
               id: zod.string(),
@@ -75,7 +77,7 @@ export const PlaylistControllerCreate200Response = zod.object({
               artist: zod.string(),
               artwork: zod.string(),
               book: zod.string().nullable(),
-              chapter: zod.number().nullable(),
+              chapter: zod.int().nullable(),
               verse: zod
                 .union([
                   zod.int(),
@@ -89,7 +91,13 @@ export const PlaylistControllerCreate200Response = zod.object({
                     ),
                 ])
                 .nullable(),
-              playlists: zod.array(zod.unknown()),
+              position: zod.int(),
+              playlists: zod.array(
+                zod.object({
+                  id: zod.string(),
+                  title: zod.string(),
+                }),
+              ),
             }),
           ),
         }),
@@ -107,7 +115,7 @@ export const PlaylistControllerCreate200Response = zod.object({
       artist: zod.string(),
       artwork: zod.string(),
       book: zod.string().nullable(),
-      chapter: zod.number().nullable(),
+      chapter: zod.int().nullable(),
       verse: zod
         .union([
           zod.int(),
@@ -117,7 +125,13 @@ export const PlaylistControllerCreate200Response = zod.object({
             .max(playlistControllerCreate200ResponseSermonsItemVerseTwoMax),
         ])
         .nullable(),
-      playlists: zod.array(zod.unknown()),
+      position: zod.int(),
+      playlists: zod.array(
+        zod.object({
+          id: zod.string(),
+          title: zod.string(),
+        }),
+      ),
     }),
   ),
 })
@@ -145,10 +159,11 @@ export const PlaylistControllerFindAll200Response = zod.object({
         zod.object({
           id: zod.string(),
           title: zod.string(),
-          description: zod.string().nullish(),
+          description: zod.string().nullable(),
+          position: zod.int(),
           itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
-          itemsRows: zod.number().nullish(),
-          transform: zod.enum(['high', 'short']),
+          itemsRows: zod.number().nullable(),
+          transform: zod.enum(['high', 'middle', 'short']),
           isDescriptionTitleOnSlideLarge: zod
             .boolean()
             .default(
@@ -170,6 +185,7 @@ export const PlaylistControllerFindAll200Response = zod.object({
               title: zod.string(),
               description: zod.string(),
               artwork: zod.string(),
+              position: zod.int(),
               sections: zod.array(
                 zod.object({
                   id: zod.string(),
@@ -187,7 +203,7 @@ export const PlaylistControllerFindAll200Response = zod.object({
                   artist: zod.string(),
                   artwork: zod.string(),
                   book: zod.string().nullable(),
-                  chapter: zod.number().nullable(),
+                  chapter: zod.int().nullable(),
                   verse: zod
                     .union([
                       zod.int(),
@@ -201,7 +217,13 @@ export const PlaylistControllerFindAll200Response = zod.object({
                         ),
                     ])
                     .nullable(),
-                  playlists: zod.array(zod.unknown()),
+                  position: zod.int(),
+                  playlists: zod.array(
+                    zod.object({
+                      id: zod.string(),
+                      title: zod.string(),
+                    }),
+                  ),
                 }),
               ),
             }),
@@ -219,7 +241,7 @@ export const PlaylistControllerFindAll200Response = zod.object({
           artist: zod.string(),
           artwork: zod.string(),
           book: zod.string().nullable(),
-          chapter: zod.number().nullable(),
+          chapter: zod.int().nullable(),
           verse: zod
             .union([
               zod.int(),
@@ -229,7 +251,13 @@ export const PlaylistControllerFindAll200Response = zod.object({
                 .max(playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseTwoMax),
             ])
             .nullable(),
-          playlists: zod.array(zod.unknown()),
+          position: zod.int(),
+          playlists: zod.array(
+            zod.object({
+              id: zod.string(),
+              title: zod.string(),
+            }),
+          ),
         }),
       ),
     }),
@@ -262,10 +290,11 @@ export const PlaylistControllerFindOne200Response = zod.object({
     zod.object({
       id: zod.string(),
       title: zod.string(),
-      description: zod.string().nullish(),
+      description: zod.string().nullable(),
+      position: zod.int(),
       itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
-      itemsRows: zod.number().nullish(),
-      transform: zod.enum(['high', 'short']),
+      itemsRows: zod.number().nullable(),
+      transform: zod.enum(['high', 'middle', 'short']),
       isDescriptionTitleOnSlideLarge: zod
         .boolean()
         .default(
@@ -283,6 +312,7 @@ export const PlaylistControllerFindOne200Response = zod.object({
           title: zod.string(),
           description: zod.string(),
           artwork: zod.string(),
+          position: zod.int(),
           sections: zod.array(
             zod.object({
               id: zod.string(),
@@ -300,7 +330,7 @@ export const PlaylistControllerFindOne200Response = zod.object({
               artist: zod.string(),
               artwork: zod.string(),
               book: zod.string().nullable(),
-              chapter: zod.number().nullable(),
+              chapter: zod.int().nullable(),
               verse: zod
                 .union([
                   zod.int(),
@@ -314,7 +344,13 @@ export const PlaylistControllerFindOne200Response = zod.object({
                     ),
                 ])
                 .nullable(),
-              playlists: zod.array(zod.unknown()),
+              position: zod.int(),
+              playlists: zod.array(
+                zod.object({
+                  id: zod.string(),
+                  title: zod.string(),
+                }),
+              ),
             }),
           ),
         }),
@@ -332,7 +368,7 @@ export const PlaylistControllerFindOne200Response = zod.object({
       artist: zod.string(),
       artwork: zod.string(),
       book: zod.string().nullable(),
-      chapter: zod.number().nullable(),
+      chapter: zod.int().nullable(),
       verse: zod
         .union([
           zod.int(),
@@ -342,7 +378,13 @@ export const PlaylistControllerFindOne200Response = zod.object({
             .max(playlistControllerFindOne200ResponseSermonsItemVerseTwoMax),
         ])
         .nullable(),
-      playlists: zod.array(zod.unknown()),
+      position: zod.int(),
+      playlists: zod.array(
+        zod.object({
+          id: zod.string(),
+          title: zod.string(),
+        }),
+      ),
     }),
   ),
 })
@@ -355,10 +397,10 @@ export const PlaylistControllerUpdateParams = zod.object({
 })
 
 export const PlaylistControllerUpdateBody = zod.object({
-  title: zod.string().optional(),
-  description: zod.string().optional(),
-  artwork: zod.string().optional(),
-  sermonsIds: zod.array(zod.string()).optional(),
+  title: zod.string(),
+  description: zod.string().nullable(),
+  artwork: zod.string(),
+  sermonsIds: zod.array(zod.string()),
   sectionsIds: zod.array(zod.string()).optional(),
 })
 
@@ -380,10 +422,11 @@ export const PlaylistControllerUpdate200Response = zod.object({
     zod.object({
       id: zod.string(),
       title: zod.string(),
-      description: zod.string().nullish(),
+      description: zod.string().nullable(),
+      position: zod.int(),
       itemsSize: zod.enum(['small', 'middle', 'large', 'xLarge']),
-      itemsRows: zod.number().nullish(),
-      transform: zod.enum(['high', 'short']),
+      itemsRows: zod.number().nullable(),
+      transform: zod.enum(['high', 'middle', 'short']),
       isDescriptionTitleOnSlideLarge: zod
         .boolean()
         .default(
@@ -401,6 +444,7 @@ export const PlaylistControllerUpdate200Response = zod.object({
           title: zod.string(),
           description: zod.string(),
           artwork: zod.string(),
+          position: zod.int(),
           sections: zod.array(
             zod.object({
               id: zod.string(),
@@ -418,7 +462,7 @@ export const PlaylistControllerUpdate200Response = zod.object({
               artist: zod.string(),
               artwork: zod.string(),
               book: zod.string().nullable(),
-              chapter: zod.number().nullable(),
+              chapter: zod.int().nullable(),
               verse: zod
                 .union([
                   zod.int(),
@@ -432,7 +476,13 @@ export const PlaylistControllerUpdate200Response = zod.object({
                     ),
                 ])
                 .nullable(),
-              playlists: zod.array(zod.unknown()),
+              position: zod.int(),
+              playlists: zod.array(
+                zod.object({
+                  id: zod.string(),
+                  title: zod.string(),
+                }),
+              ),
             }),
           ),
         }),
@@ -450,7 +500,7 @@ export const PlaylistControllerUpdate200Response = zod.object({
       artist: zod.string(),
       artwork: zod.string(),
       book: zod.string().nullable(),
-      chapter: zod.number().nullable(),
+      chapter: zod.int().nullable(),
       verse: zod
         .union([
           zod.int(),
@@ -460,7 +510,13 @@ export const PlaylistControllerUpdate200Response = zod.object({
             .max(playlistControllerUpdate200ResponseSermonsItemVerseTwoMax),
         ])
         .nullable(),
-      playlists: zod.array(zod.unknown()),
+      position: zod.int(),
+      playlists: zod.array(
+        zod.object({
+          id: zod.string(),
+          title: zod.string(),
+        }),
+      ),
     }),
   ),
 })
@@ -473,5 +529,21 @@ export const PlaylistControllerRemoveParams = zod.object({
 })
 
 export const PlaylistControllerRemove200Response = zod.object({
+  status: zod.string(),
+})
+
+/**
+ * Принимает список id проповедей в новом порядке и обновляет их позиции внутри плейлиста
+ * @summary Изменить порядок проповедей в плейлисте
+ */
+export const ReorderSermonsInPlaylistParams = zod.object({
+  id: zod.uuid(),
+})
+
+export const ReorderSermonsInPlaylistBody = zod.object({
+  sermonIds: zod.array(zod.uuid()),
+})
+
+export const ReorderSermonsInPlaylist200Response = zod.object({
   status: zod.string(),
 })
