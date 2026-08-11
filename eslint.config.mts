@@ -226,7 +226,14 @@ export default defineConfig(
   },
   // Disable max-lines for test files (must come after main config to override)
   {
-    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    files: [
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      '**/*.test.js',
+      '**/*.spec.js',
+    ],
     rules: {
       'max-lines': 'off',
     },

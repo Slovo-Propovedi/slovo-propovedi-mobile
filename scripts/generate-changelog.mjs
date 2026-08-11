@@ -1,89 +1,18 @@
-// Shared changelog generation helpers used by bump-version.mjs.
-// Commit parsing, filtering, and markdown rendering stay pure where possible;
-// only getCommitsSinceTag and updateChangelogFiles touch I/O.
+// Changelog I/O orchestrator: reads commits from git, renders sections via
+// changelog-core, and writes CHANGELOG.md plus fastlane changelog files.
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
+import { generateChangelogSection, getUserFacingCommits } from './changelog-core.mjs'
 
 const REPO_URL = 'https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile'
 
-export const FASTLANE_EN_LINK = `Full changelog: ${REPO_URL}/src/branch/main/CHANGELOG.md`
-export const FASTLANE_RU_LINK = `Полный список изменений: ${REPO_URL}/src/branch/main/CHANGELOG.md`
+const FASTLANE_EN_LINK = `Full changelog: ${REPO_URL}/src/branch/main/CHANGELOG.md`
+const FASTLANE_RU_LINK = `Полный список изменений: ${REPO_URL}/src/branch/main/CHANGELOG.md`
 
 const MAX_FASTLANE_CHARS = 500
-const SIGN_OFF_PATTERN = /\s+Signed-off-by:.*$/
-const CONVENTIONAL_PATTERN = /^(\w+)(?:\([^)]*\))?!?:\s*(.*)$/
-const BUMP_VERSION_PATTERN = /^bump version to \d+\.\d+\.\d+$/
-const CHORE_NOISE_PATTERN =
-  /(bump version|gitignore|claude|validation schema|dependenc|lockfile|eslint|prettier|husky|ci|cleanup|dco|commit-msg|pre-commit|workflow)/i
 
-const CATEGORY_ORDER = ['Added', 'Changed', 'Deprecated', 'Removed', 'Fixed', 'Security']
-
-const CATEGORY_BY_TYPE = {
-  feat: 'Added',
-  perf: 'Changed',
-  refactor: 'Changed',
-  fix: 'Fixed',
-  revert: 'Fixed',
-}
-
-const stripInlineSignoff = (subject) => subject.replace(SIGN_OFF_PATTERN, '').trim()
-
-export const parseCommitSubject = (subject) => {
-  const match = CONVENTIONAL_PATTERN.exec(stripInlineSignoff(subject))
-  const description = match?.[2]?.trim()
-
-  if (!match || !description) return null
-
-  return { type: match[1], description }
-}
-
-const isBumpCommit = (commit) =>
-  commit.type === 'chore' && BUMP_VERSION_PATTERN.test(commit.description)
-
-const isInternalChore = (commit) =>
-  commit.type === 'chore' && CHORE_NOISE_PATTERN.test(commit.description)
-
-const getCategory = (commit) => {
-  if (isBumpCommit(commit) || commit.type === 'ci' || isInternalChore(commit)) return null
-  if (commit.type === 'chore') return 'Fixed'
-
-  return CATEGORY_BY_TYPE[commit.type] ?? null
-}
-
-const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1)
-
-export const getUserFacingCommits = (subjects) =>
-  subjects
-    .map(parseCommitSubject)
-    .filter(Boolean)
-    .flatMap((commit) => {
-      const category = getCategory(commit)
-      return category ? [{ ...commit, category, description: capitalize(commit.description) }] : []
-    })
-
-export const groupByCategory = (subjects) => {
-  const groups = Object.fromEntries(CATEGORY_ORDER.map((category) => [category, []]))
-
-  for (const commit of getUserFacingCommits(subjects)) {
-    groups[commit.category].push(commit.description)
-  }
-
-  return groups
-}
-
-export const generateChangelogSection = (version, date, subjects) => {
-  const groups = groupByCategory(subjects)
-  const categoryBlocks = CATEGORY_ORDER
-    .filter((category) => groups[category].length > 0)
-    .map((category) => `### ${category}\n\n${groups[category].map((item) => `- ${item}`).join('\n')}`)
-
-  if (categoryBlocks.length === 0) return null
-
-  return [`## [${version}] - ${date}`, '', ...categoryBlocks].join('\n')
-}
-
-export const insertSectionAfterUnreleased = (changelog, section) => {
+const insertSectionAfterUnreleased = (changelog, section) => {
   const unreleasedHeading = '## [Unreleased]'
   const unreleasedIndex = changelog.indexOf(unreleasedHeading)
 
@@ -107,14 +36,14 @@ const insertAfterHeader = (changelog, section) => {
   return `${changelog.slice(0, firstSectionIndex).trimEnd()}\n\n${section}\n\n${changelog.slice(firstSectionIndex + 1)}`
 }
 
-export const addLinkReference = (changelog, version) => {
+const addLinkReference = (changelog, version) => {
   const link = `[${version}]: ${REPO_URL}/src/tag/v${version}`
   if (changelog.includes(`[${version}]:`)) return changelog
 
   return `${changelog.trimEnd()}\n\n${link}\n`
 }
 
-export const generateFastlaneChangelog = (subjects, link) => {
+const generateFastlaneChangelog = (subjects, link) => {
   const lines = getUserFacingCommits(subjects)
     .filter((commit) => commit.type === 'feat' || commit.type === 'fix')
     .map((commit) => commit.description)
@@ -137,7 +66,7 @@ export const generateFastlaneChangelog = (subjects, link) => {
   return kept ? `${kept}\n\n${link}` : link
 }
 
-export const getCommitsSinceTag = (tag) => {
+const getCommitsSinceTag = (tag) => {
   const output = execSync(`git log ${tag}..HEAD --format=%s`, { cwd: process.cwd() }).toString()
 
   return output.replace(/\r/g, '').split('\n').filter(Boolean)
