@@ -36,11 +36,51 @@ const insertAfterHeader = (changelog, section) => {
   return `${changelog.slice(0, firstSectionIndex).trimEnd()}\n\n${section}\n\n${changelog.slice(firstSectionIndex + 1)}`
 }
 
+const LINK_REFERENCE_PATTERN = /^\[([^\]]+)\]:\s+\S+$/
+
+const parseVersion = (version) => version.split('.').map(Number)
+
+const compareVersions = (a, b) => {
+  const partsA = parseVersion(a)
+  const partsB = parseVersion(b)
+
+  for (let i = 0; i < Math.max(partsA.length, partsB.length); i += 1) {
+    const diff = (partsB[i] ?? 0) - (partsA[i] ?? 0)
+    if (diff !== 0) return diff
+  }
+
+  return 0
+}
+
+const getLinkReferenceLines = (lines) =>
+  lines.flatMap((line, index) => {
+    const match = LINK_REFERENCE_PATTERN.exec(line)
+    return match ? [{ index, version: match[1] }] : []
+  })
+
+const findInsertIndex = (version, linkReferenceLines) => {
+  const firstOlderLine = linkReferenceLines.find(({ version: existingVersion }) =>
+    compareVersions(version, existingVersion) < 0,
+  )
+
+  if (firstOlderLine) return firstOlderLine.index
+
+  return linkReferenceLines[linkReferenceLines.length - 1].index + 1
+}
+
 const addLinkReference = (changelog, version) => {
   const link = `[${version}]: ${REPO_URL}/src/tag/v${version}`
   if (changelog.includes(`[${version}]:`)) return changelog
 
-  return `${changelog.trimEnd()}\n\n${link}\n`
+  const lines = changelog.split('\n')
+  const linkReferenceLines = getLinkReferenceLines(lines)
+
+  if (linkReferenceLines.length === 0) return `${changelog.trimEnd()}\n\n${link}\n`
+
+  const insertIndex = findInsertIndex(version, linkReferenceLines)
+  lines.splice(insertIndex, 0, link)
+
+  return `${lines.join('\n').trimEnd()}\n`
 }
 
 const generateFastlaneChangelog = (subjects, link) => {
