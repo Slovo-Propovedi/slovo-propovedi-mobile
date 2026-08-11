@@ -6,6 +6,7 @@ import { BackHandler, InteractionManager, View } from 'react-native'
 import { showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { UpdateBanner } from 'widgets/update-status'
+import { useUpdateNotificationResponse } from 'features/update-notification'
 import {
   closePlayerSheetAction,
   isPlayerExpandedAtom,
@@ -26,6 +27,7 @@ const RootLayout = () => {
   const [isPlaying] = useAtom(isPlayingAtom)
   const [position] = useAtom(positionAtom)
   const checkForUpdate = useAction(checkForUpdateAction)
+  useUpdateNotificationResponse()
 
   useEffect(() => {
     const savePosition = async () => {

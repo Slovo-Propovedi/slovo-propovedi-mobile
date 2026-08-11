@@ -1,5 +1,6 @@
 import { isExpoGo } from 'shared/lib/isExpoEnvironment'
 import type { NotificationsApi } from './NotificationsApi'
+import { setupUpdateNotificationCategory } from './notificationActions'
 
 let notificationsApi: NotificationsApi | null = null
 let isInitialized = false
@@ -23,6 +24,7 @@ export const ensureNotifications = (): Promise<NotificationsApi | null> => {
         })
         isInitialized = true
       }
+      void setupUpdateNotificationCategory()
       notificationsApi = mod as unknown as NotificationsApi
       return notificationsApi
     } catch (error) {
@@ -35,7 +37,12 @@ export const ensureNotifications = (): Promise<NotificationsApi | null> => {
 }
 
 export const scheduleNotification = async (
-  content: { body?: string; title: string },
+  content: {
+    body?: string
+    categoryIdentifier?: string
+    data?: Record<string, string>
+    title: string
+  },
   identifier: string,
   groupId: string,
 ): Promise<string> => {
@@ -46,7 +53,7 @@ export const scheduleNotification = async (
 
   try {
     return await api.scheduleNotificationAsync({
-      content: { ...content, data: { groupId }, sound: null },
+      content: { ...content, data: { ...content.data, groupId }, sound: null },
       identifier,
       trigger: null,
     })

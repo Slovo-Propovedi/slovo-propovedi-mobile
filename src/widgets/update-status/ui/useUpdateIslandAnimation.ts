@@ -10,8 +10,8 @@ import {
 import { scheduleOnRN } from 'react-native-worklets'
 
 const DOT_SIZE = 12
-const PILL_WIDTH = 110
-const PILL_HEIGHT = 32
+const PILL_WIDTH = 160
+const PILL_HEIGHT = 36
 const RIGHT_MARGIN = 16
 const ANIMATION_DURATION = 300
 

@@ -10,7 +10,7 @@ import { useUpdateIslandAnimation } from './useUpdateIslandAnimation'
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 // Kept in sync with useUpdateIslandAnimation to sit below the NetworkBanner
-const PILL_HEIGHT = 32
+const PILL_HEIGHT = 36
 
 export const UpdateBanner = () => {
   const [updateAvailable] = useAtom(updateAvailableAtom)

@@ -1,3 +1,7 @@
+export {
+  addNotificationResponseListener,
+  setupUpdateNotificationCategory,
+} from './notificationActions'
 export { type NotificationsApi } from './NotificationsApi'
 export {
   ensureNotifications,
