@@ -56,22 +56,21 @@ This project follows Feature-Sliced Design (FSD) architecture with Expo Router f
 
 ```
 app/
-├── _layout.tsx           # Root layout with providers (Reatom context)
-├── index.tsx             # Redirect to /listen
-├── (tabs)/               # Tab navigation group
-│   ├── _layout.tsx       # Tab bar layout with custom TabBar
-│   ├── listen.tsx        # Re-exports src/pages/listen/ui.tsx
-│   ├── read.tsx
-│   ├── study.tsx
-│   └── info.tsx
-├── listen/               # Nested screens under listen tab
-│   ├── _layout.tsx
-│   ├── playlist.tsx
-│   └── playlist-list.tsx
-└── read/                 # Nested screens under read tab
-    ├── _layout.tsx
-    ├── book-reader.tsx
-    └── books-list.tsx
+├── _layout.tsx           # Корневой провайдер (reatomContext + ThemeProvider + GestureHandler + ErrorBoundary)
+├── _RootLayout.tsx       # Корневой Stack: баннеры (Network/ServerError/Update), hardware-back каскад
+├── index.tsx             # Redirect → /listen
+├── settings.tsx          # → pages/settings (вне таб-группы)
+├── about.tsx             # → pages/about (вне таб-группы)
+└── (tabs)/
+    ├── _layout.tsx       # 4 таба + CustomTabBar + ExpandablePlayer
+    ├── listen/           # Стек раздела «Слушать»
+    │   ├── _layout.tsx
+    │   ├── index.tsx     # → pages/listen (главный экран)
+    │   ├── playlist.tsx  # → pages/playlist
+    │   └── playlist-list.tsx
+    ├── read.tsx          # → pages/read (таб, ЗАБЛОКИРОВАН)
+    ├── study.tsx         # → pages/study (таб, ЗАБЛОКИРОВАН/заглушка)
+    └── more.tsx          # → pages/more
 ```
 
 **Important:** Screen logic lives in `src/pages/`, `app/` only re-exports.
@@ -91,11 +90,52 @@ src/entities/player/
     └── PlayerControls.test.tsx
 ```
 
+## Documentation (docs/)
+
+В папке `docs/` лежит подробная документация функционала приложения на русском. Это **первоисточник знаний о проекте** для агентов (opencode, Claude Code, Cursor).
+
+### Структура docs/
+
+| Раздел | Назначение |
+| --- | --- |
+| `docs/README.md` | Карта документации и правила для агентов |
+| `docs/architecture.md` | Архитектура «почему» (FSD + Expo Router + Reatom) |
+| `docs/conventions.md` | Процессные договорённости (git, AI, ведение docs) |
+| `docs/decisions.md` | Принятый стек и отклонённые варианты |
+| `docs/debt.md` | Технический долг |
+| `docs/features/` | Крупные функциональные модули (player, audio-cache, navigation, state, theme, offline-and-network, updates, book-reader) |
+| `docs/screens/` | Описание экранов (с чек-листом формата в `screens/README.md`) |
+| `docs/contracts/` | Внешние контракты: REST API, AsyncStorage, локальная БД |
+
+### Обязательные правила для агентов
+
+1. **Перед реализацией фичи/фикса** прочитай соответствующие документы в `docs/`:
+   - `docs/screens/<экран>.md` — при работе с экраном
+   - `docs/features/<модуль>.md` — при работе с модулем (плеер, кэш, навигация и т.д.)
+   - `docs/contracts/<протокол>.md` — при работе с API/хранилищем
+   - `docs/architecture.md` — при архитектурных решениях
+   - `docs/decisions.md` — перед добавлением новой зависимости
+
+2. **При изменении кода** обнови затронутые документы `docs/` **в том же PR/коммите**. Если изменил экран — обнови `docs/screens/<экран>.md`; изменил модуль — `docs/features/<модуль>.md`; изменил API-контракт — `docs/contracts/rest-api.md`; изменил ключи AsyncStorage — `docs/contracts/storage.md`.
+
+3. **Каждый «срезанный угол»** (TODO, hack, отложенная задача, workaround) → запись в `docs/debt.md` в том же PR. Формат:
+   ```
+   - [ ] <что не доделано> — <где (пути файлов)> — <когда вернуться/контекст>
+   ```
+   Комментарий `// TODO(name):` в коде допустим **только** с зеркальной записью в `docs/debt.md`.
+
+4. **Новые зависимости** — только через запись в `docs/decisions.md` (секция Approved stack) с объяснением «почему». Не добавляй пакеты «молча».
+
+5. **Если в `docs/` нет нужной информации** — добавь её, исследовав код, чтобы следующий агент не делал это повторно. Это цель документации.
+
+Полные правила ведения docs — в `docs/README.md` и `docs/conventions.md`. AGENTS.md и docs/ должны оставаться консистентными.
+
 ## Barrel Export Rules
 
 - **One barrel per slice**: Each FSD slice should have only ONE barrel export file: `index.ts` at the slice root
 - **No segment barrels**: DO NOT create `index.ts` files for segments (e.g., `ui/index.ts`, `lib/index.ts`)
 - **Export only public API**: Export ONLY what's actually reused externally from other slices/layers. Internal implementation details (helper functions, internal components, atoms) should NOT be exported
+- **Internal imports must be relative**: Inside a slice, files import each other via relative paths (`./lib/usePlayer`, `../model`), NEVER through the slice's own barrel (`'entities/player'`). This keeps the source context visible while reading code and prevents circular imports through the barrel.
 - **Public API example**: If only one component is reused externally, export only that component:
   ```typescript
   export { MyComponent } from './ui/MyComponent'
@@ -368,15 +408,16 @@ describe('<PlayerControls>', () => {
   })
 
   test('PlayerControls renders correctly', () => {
-    const { getByTestId } = render(<PlayerControls {...props} />)
-    expect(getByTestId('controls-container')).toBeTruthy()
+    // Prefer accessibility queries (text, role, label) over testID
+    const { getByRole } = render(<PlayerControls {...props} />)
+    expect(getByRole('button', { name: /play/i })).toBeTruthy()
   })
 })
 ```
 
 ### Testing Guidelines
 
-- Use `testID` props for element selection
+- **Prefer accessibility queries over `testID`**: query elements by text (`getByText`), role/label (`getByRole`, `getByLabelText`, `aria-label`) first. Avoid `testID` — it duplicates identity already expressed via accessible name/role and doesn't verify real accessibility. `testID` is acceptable only when text/role genuinely don't apply (e.g., an unnamed container without text)
 - Use `@testing-library/jest-native/extend-expect` for extended matchers
 - Mock external dependencies and hooks
 - Use `beforeEach` to reset mock state
