@@ -149,7 +149,7 @@ jobs:
         run: |
           # expo prebuild regenerates android/gradle.properties from its template
           # with default JVM args (512 MiB metaspace). Increase to prevent OOM.
-          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=2g/' android/gradle.properties
+          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m/' android/gradle.properties
           # Trim ABIs to arm64-v8a and armeabi-v7a only (drop x86/x86_64).
           # x86/x86_64 are only for emulators, not real devices. This halves
           # native build output and significantly reduces disk usage on CI.
