@@ -134,7 +134,9 @@ jobs:
         run: yarn lint
 
       - name: Run all tests (jest)
-        run: yarn testFinal
+        # --maxWorkers=2 caps peak memory: heavy jest-expo + RN UI test suites
+        # were triggering OOM (SIGKILL) when many workers ran in parallel.
+        run: yarn testFinal --maxWorkers=2
 
       # Clean up large directories to reduce runner storage usage
       - name: Cleanup workspace

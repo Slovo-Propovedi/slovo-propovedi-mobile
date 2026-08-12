@@ -13,6 +13,10 @@ const config: Config = {
     '!__mocks__/**',
   ],
   preset: 'jest-expo',
+  // Recycle a worker once its resident memory crosses this threshold
+  // (checked between test files). Primary OOM cap is --maxWorkers=2 in CI;
+  // this prevents RSS accumulation across heavy jest-expo/RN suites.
+  workerIdleMemoryLimit: '1GB',
   setupFiles: [
     './__mocks__/@react-native-async-storage/async-storage.js',
     './__mocks__/react-native-gesture-handler.js',
