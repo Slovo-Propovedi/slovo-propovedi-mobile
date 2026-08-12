@@ -117,7 +117,6 @@ provided for convenience — they are **not** required:
 | `yarn build-preview:android` | Build Android (preview profile) |
 | `yarn build-preview:ios` | Build iOS (preview profile) |
 | `yarn build-preview:all` | Build all platforms (preview profile) |
-| `yarn update-app` | Deploy OTA update (requires EAS Cloud) |
 
 These scripts are retained for users who choose to use EAS. The
 `eas.json` file documents build profiles for reference.

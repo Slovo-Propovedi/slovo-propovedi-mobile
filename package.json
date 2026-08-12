@@ -36,7 +36,6 @@
     "test": "jest --watch --coverage=false --changedSince=origin/main",
     "testDebug": "jest -o --watch --coverage=false",
     "testFinal": "jest",
-    "update-app": "eas update --branch main --message \"Updating the app\"",
     "updateSnapshots": "jest -u --coverage=false",
     "bump-version": "node scripts/bump-version.mjs",
     "version-major": "yarn version --major",

@@ -334,7 +334,7 @@ Quick reference:
 - `yarn build:android` / `yarn build:ios` / `yarn build:all`
 - `yarn build-preview:android` / `yarn build-preview:ios`
 
-OTA updates are disabled. The app is distributed through F-Droid and direct APK downloads.
+The app is distributed through F-Droid and direct APK downloads.
 
 ## Additional Resources
 

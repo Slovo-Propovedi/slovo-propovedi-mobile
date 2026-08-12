@@ -36,7 +36,6 @@ npm run api:generate         # Generate API client from OpenAPI spec (orval)
 npm run build:android        # Build Android with EAS
 npm run build:ios            # Build iOS with EAS
 npm run build:all            # Build all platforms
-npm run update-app           # Deploy OTA update to main branch
 ```
 
 ## Project Architecture
