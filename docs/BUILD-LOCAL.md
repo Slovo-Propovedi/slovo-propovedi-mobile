@@ -21,13 +21,16 @@ Local builds are the FLOSS-compliant path — no proprietary services required.
 yarn build-local-release:android
 ```
 
-This runs `cd android && ./gradlew assembleRelease`.
+This runs `cd android && ./gradlew assembleProdRelease`.
 
 The output APK is located at:
 
 ```
-android/app/build/outputs/apk/release/app-release.apk
+android/app/build/outputs/apk/prod/release/app-prod-release.apk
 ```
+
+The exact file name may carry an `-unsigned` suffix depending on the
+signing configuration.
 
 > **Note:** By default, release builds use the debug keystore
 > (`android/app/debug.keystore`). This is fine for development and
@@ -102,7 +105,59 @@ For development testing on Android:
 yarn build-local-debug:android
 ```
 
-Output: `android/app/build/outputs/apk/debug/app-debug.apk`
+This runs `cd android && ./gradlew assembleDevDebug`.
+
+Output: `android/app/build/outputs/apk/dev/debug/app-dev-debug.apk`
+
+The dev build uses `applicationId = ru.slovopropovedi.dev` and the app name
+«Слово.Проповеди Dev», so it installs side by side with the production app
+(`ru.slovopropovedi`) and never overwrites it.
+
+## Build Flavors (dev/prod)
+
+The Android project defines two Gradle product flavors to keep the
+development build separate from the production app on the same device:
+
+| Flavor | Application ID | App name | Variants |
+|--------|----------------|----------|----------|
+| `dev` | `ru.slovopropovedi.dev` | Слово.Проповеди Dev | `devDebug`, `devRelease` |
+| `prod` | `ru.slovopropovedi` | Слово.Проповеди | `prodDebug`, `prodRelease` |
+
+The `dev` flavor adds an `applicationIdSuffix` (`.dev`) and a
+`versionNameSuffix` (`-dev`). Both flavors share the same launcher icon
+(from `src/main/res`); per-flavor overrides can be added later under
+`android/app/src/dev/res/` and `android/app/src/prod/res/`.
+
+`yarn run:android` builds the `devDebug` variant by default — it installs
+as a separate app and never overwrites the production build. To run the
+prod variant locally: `yarn run:android:prod`.
+
+`debuggableVariants` (in `android/app/build.gradle`, `react { }` block)
+lists `devDebug` and `prodDebug` — these variants run JS from Metro
+instead of embedding a bundle. Release variants bundle JS normally.
+
+### Relaunching the Dev App (`yarn dev:launch`)
+
+The dev flavor loads JS from Metro over `localhost:8081`, which requires
+an `adb reverse` tunnel. That tunnel is ephemeral — it is lost when the
+phone is re-plugged or adb restarts, and the app then shows a white
+screen. To resume the dev app on the connected phone without a full
+rebuild:
+
+```bash
+yarn dev:launch
+```
+
+This runs, in order:
+
+1. `adb reverse tcp:8081 tcp:8081` — sets up the Metro reverse tunnel;
+2. `adb shell am force-stop ru.slovopropovedi.dev` — force-stops the dev
+   app so JS reloads from a clean state (fixes the white screen);
+3. `adb shell am start -n ru.slovopropovedi.dev/ru.slovopropovedi.MainActivity`
+   — relaunches the dev app's launcher activity.
+
+Prerequisite: Metro must be running (`yarn start` in another terminal).
+This works only for the dev flavor (package `ru.slovopropovedi.dev`).
 
 ## EAS Cloud Build (Alternative)
 
@@ -120,6 +175,10 @@ provided for convenience — they are **not** required:
 
 These scripts are retained for users who choose to use EAS. The
 `eas.json` file documents build profiles for reference.
+
+EAS profiles use an explicit `gradleCommand` (see `eas.json`):
+`development` → `:app:assembleDevDebug`, `preview` →
+`:app:assembleProdRelease`, `production` → `:app:bundleProdRelease`.
 
 ## Troubleshooting
 
@@ -151,7 +210,7 @@ cd android && ./gradlew --stop
 Ensure you have network access and try:
 
 ```bash
-cd android && ./gradlew clean assembleRelease
+cd android && ./gradlew clean assembleProdRelease
 ```
 
 ### APK not found after build

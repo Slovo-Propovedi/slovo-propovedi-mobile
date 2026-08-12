@@ -34,7 +34,7 @@ Builds:
   - versionName: '0.4.0'
     versionCode: 400
     commit: v0.4.0
-    output: android/app/build/outputs/apk/release/app-release.apk
+    output: android/app/build/outputs/apk/prod/release/app-prod-release.apk
     prebuild: |
       # Strip FCM (Firebase Cloud Messaging) from expo-notifications.
       # Line 43 of node_modules/expo-notifications/android/build.gradle contains:
@@ -68,7 +68,7 @@ Builds:
       "
     build: |
       yarn install --frozen-lockfile
-      cd android && ./gradlew assembleRelease
+      cd android && ./gradlew assembleProdRelease
     scandelete:
       - node_modules/
 
@@ -135,12 +135,22 @@ MaintainerNotes: |
   F-Droid prefers separate APKs per ABI for smaller downloads. Build each
   architecture separately:
 
-      cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
-      cd android && ./gradlew assembleRelease -PreactNativeArchitectures=armeabi-v7a
-      cd android && ./gradlew assembleRelease -PreactNativeArchitectures=x86_64
+      cd android && ./gradlew assembleProdRelease -PreactNativeArchitectures=arm64-v8a
+      cd android && ./gradlew assembleProdRelease -PreactNativeArchitectures=armeabi-v7a
+      cd android && ./gradlew assembleProdRelease -PreactNativeArchitectures=x86_64
 
   The project default in gradle.properties includes all four ABIs:
   armeabi-v7a, arm64-v8a, x86, x86_64
+
+  ### 5a. Build Flavors (prod for F-Droid)
+
+  The project defines Gradle product flavors `dev` and `prod` (dimension
+  `env`). F-Droid MUST build the **prod** flavor: `./gradlew assembleProdRelease`.
+  The `dev` flavor carries an `applicationIdSuffix` (`.dev`) and
+  `versionNameSuffix` (`-dev`) and is intended for local development only —
+  it would not match the F-Droid Application ID (`ru.slovopropovedi`) nor the
+  declared `versionName`. The aggregate `assembleRelease` task builds BOTH
+  flavors and must not be used.
 
   ### 6. Reproducible Builds
 

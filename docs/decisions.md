@@ -45,6 +45,7 @@
 - **Платформы:** iOS, Android, Web; платформенные реализации через `.native.ts`/`.web.ts`.
 - **Язык UI:** русский; технические термины — английским.
 - **API:** контракт через OpenAPI + Orval; ручные типы под API не пишем.
+- **Android build flavors:** Gradle `productFlavors` `dev`/`prod` (dimension `env`). Dev: `applicationIdSuffix ".dev"`, имя «Слово.Проповеди Dev». Prod: базовый `ru.slovopropovedi`. `debuggableVariants = ["devDebug", "prodDebug"]`. Цель — dev-сборка не перезаписывает prod на одном устройстве. См. [`BUILD-LOCAL.md`](./BUILD-LOCAL.md).
 
 ## Superseded (отменённые решения)
 

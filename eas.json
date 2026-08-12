@@ -7,11 +7,14 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "android": {
+        "gradleCommand": ":app:assembleDevDebug"
+      },
       "channel": "development"
     },
     "preview": {
       "android": {
-        "buildType": "apk"
+        "gradleCommand": ":app:assembleProdRelease"
       },
       "autoIncrement": true,
       "distribution": "internal",
@@ -20,7 +23,7 @@
     "production": {
       "android": {
         // Такой тип нужен для публикации в плей маркет
-        "buildType": "app-bundle"
+        "gradleCommand": ":app:bundleProdRelease"
       },
       "autoIncrement": true,
       "channel": "production"

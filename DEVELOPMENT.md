@@ -321,7 +321,7 @@ yarn jest path/to/file.test.tsx
 The app can be built entirely locally without proprietary cloud services. See **[docs/BUILD-LOCAL.md](docs/BUILD-LOCAL.md)** for detailed instructions.
 
 Quick reference:
-- Android release: `yarn build-local-release:android` → outputs APK at `android/app/build/outputs/apk/release/app-release.apk`
+- Android release: `yarn build-local-release:android` → outputs APK at `android/app/build/outputs/apk/prod/release/app-prod-release.apk`
 - Android debug: `yarn build-local-debug:android`
 - iOS release: `yarn run:ios -- --configuration Release`
 
