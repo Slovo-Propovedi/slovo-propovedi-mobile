@@ -4,6 +4,7 @@ import { type AxiosRequestConfig } from 'axios'
 import { DEFAULT_API_URL } from '../config/config'
 import { ctx } from '../lib/reatom-ctx/ctx'
 import { reportServerReachable, reportServerUnreachable } from '../model/network'
+import { getAuth } from './generated/auth/auth'
 
 export const ACCESS_TOKEN_KEY = '@access_token'
 export const REFRESH_TOKEN_KEY = '@refresh_token'
@@ -15,26 +16,32 @@ export const axiosInstance = axios.create({
   baseURL: DEFAULT_API_URL,
 })
 
+// Циклический импорт (axiosInstance ⇄ generated/auth/auth) безопасен:
+// getAuth() создаёт только замыкания на customInstance, которые вызываются
+// в рантайме после полной инициализации модуля (ES live bindings).
+const { authControllerRefresh } = getAuth()
+
 // Функция для refresh токена
 const performTokenRefresh = async () => {
   const storedRefreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY)
   if (!storedRefreshToken) throw new Error('No refresh token available')
 
-  const response = await axios.post(`${axiosInstance.defaults.baseURL}/auth/refresh`, {
+  const { accessToken, refreshToken: newRefreshToken } = await authControllerRefresh({
     refreshToken: storedRefreshToken,
   })
 
-  const { accessToken, refreshToken: newRefreshToken } = response.data
-
-  // Сохраняем новые токены
-  await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
-  if (newRefreshToken) await AsyncStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken)
+  await tokenStorage.setTokens(accessToken, newRefreshToken)
 
   return accessToken
 }
 
 // Request interceptor для добавления токенов
 axiosInstance.interceptors.request.use(async config => {
+  // Refresh-запрос аутентифицируется refresh-токеном из тела,
+  // поэтому Authorization с просроченным access-токеном ему не нужен
+  const isRefreshRequest = config.url?.includes('/auth/refresh')
+  if (isRefreshRequest) return config
+
   const token = await AsyncStorage.getItem(ACCESS_TOKEN_KEY)
   if (token) config.headers.Authorization = `Bearer ${token}`
 
@@ -54,9 +61,10 @@ axiosInstance.interceptors.response.use(
     if (!error.response) reportServerUnreachable(ctx)
 
     const originalRequest = error.config
+    const isRefreshRequest = Boolean(originalRequest.url?.includes('/auth/refresh'))
 
     // Если ошибка 401 и это не запрос на refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
       originalRequest._retry = true
 
       try {

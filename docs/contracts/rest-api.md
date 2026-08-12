@@ -12,14 +12,14 @@
 
 Реализация — `src/shared/api/axiosInstance.ts`:
 
-- **Request-interceptor** читает access-токен из AsyncStorage (`ACCESS_TOKEN_KEY`) и добавляет заголовок `Authorization: Bearer <accessToken>`.
+- **Request-interceptor** читает access-токен из AsyncStorage (`ACCESS_TOKEN_KEY`) и добавляет заголовок `Authorization: Bearer <accessToken>`; для запросов `POST /auth/refresh` заголовок не добавляется (refresh аутентифицируется токеном из тела).
 - **Response-interceptor**:
   - при успешном ответе отмечает сервер доступным (`reportServerReachable(ctx)`, см. `src/shared/model/network`);
   - при сетевой ошибке (сервер не ответил) отмечает недоступным (`reportServerUnreachable(ctx)`);
-  - при `401` (кроме запроса refresh) помечает запрос `_retry` и вызывает `performTokenRefresh()`: отправляет `POST /auth/refresh` **сырым `axios.post`** с refresh-токеном, сохраняет новую пару токенов в AsyncStorage, повторяет оригинальный запрос с новым access-токеном;
+  - при `401` (кроме самого запроса refresh — guard `isRefreshRequest`, чтобы refresh-запрос не запускал повторный refresh) помечает запрос `_retry` и вызывает `performTokenRefresh()`: отправляет `POST /auth/refresh` через сгенерированную обёртку `authControllerRefresh` (через `customInstance` → `axiosInstance`, с теми же интерцепторами) с refresh-токеном, сохраняет новую пару токенов через `tokenStorage.setTokens`, повторяет оригинальный запрос с новым access-токеном;
   - при неудачном refresh очищает токены (`AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY])`) и отклоняет запрос. TODO: переход на экран логина не реализован (см. комментарий в `axiosInstance.ts`).
 
-> ⚠️ `POST /auth/refresh` вызывается **напрямую axios**, а не через сгенерированную обёртку `authControllerRefresh`. Это единственный «живой» auth-эндпоинт.
+> ✅ `POST /auth/refresh` вызывается через сгенерированную обёртку `authControllerRefresh` (через `customInstance` → `axiosInstance`). Так как refresh проходит через `axiosInstance`, интерцептор ответов пропускает сам refresh-запрос (guard `isRefreshRequest`), чтобы не запускать повторный refresh при 401. Это единственный «живой» auth-эндпоинт.
 
 ## Хранилище токенов — `tokenStorage`
 
@@ -62,24 +62,23 @@ generated/
 
 ## Карта использования эндпоинтов
 
-Из 29 функций-обёрток сгенерированного клиента в рантайме **реально вызывается только одна** — `sectionControllerFindAll`. Остальные определены «на вырост» и не задействованы.
+Из 29 функций-обёрток сгенерированного клиента в рантайме **реально вызываются две** — `sectionControllerFindAll` и `authControllerRefresh`. Остальные определены «на вырост» и не задействованы.
 
-| Модуль    | Функция                                                                                    | Эндпоинт                                          | Статус                           | Где используется                                                                                                               |
-| --------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| sections  | `sectionControllerFindAll`                                                                 | `GET /section`                                    | ✅ используется                  | `src/pages/listen/model.ts:22` (главный экран, `fetchAllSections`, online-first с фолбэком на кэш `shared/lib/sections-cache`) |
-| auth      | `POST /auth/refresh` (сырой axios)                                                         | `POST /auth/refresh`                              | ⚠️ эндпоинт жив, обёртка мёртвая | `src/shared/api/axiosInstance.ts:23` — **сырым `axios.post`** в интерцепторе на 401 (не через `authControllerRefresh`)         |
-| auth      | `authControllerSignIn`                                                                     | `POST /auth/login`                                | ❌ мёртвый                       | UI логина отсутствует                                                                                                          |
-| auth      | `authControllerRefresh`                                                                    | `POST /auth/refresh`                              | ❌ мёртвая обёртка               | refresh идёт сырым axios (см. выше)                                                                                            |
-| auth      | `authControllerGetProfile`                                                                 | `GET /auth/profile`                               | ❌ мёртвый                       | —                                                                                                                              |
-| sermons   | `sermonControllerCreate/FindAll/FindOne/Update/Remove`                                     | `POST/GET/PATCH/DELETE /sermons*`                 | ❌ мёртвые                       | нет admin-UI                                                                                                                   |
-| sermons   | `sermonControllerGetStreamUrl`                                                             | `GET /sermons/{id}/stream-url`                    | ❌ мёртвый                       | плеер играет `audioUrl` из `SermonEntity` напрямую                                                                             |
-| playlists | `playlistControllerCreate/FindAll/FindOne/Update/Remove`, `reorderSermonsInPlaylist`       | CRUD `/playlists*`                                | ❌ мёртвые                       | нет admin-UI                                                                                                                   |
-| sections  | `sectionControllerCreate/FindOne/Update/Remove`                                            | `POST/GET/PATCH/DELETE /section*` (кроме FindAll) | ❌ мёртвые                       | нет admin-UI                                                                                                                   |
-| section   | `reorderSections`, `reorderPlaylistsInSection`                                             | `PATCH /section/reorder*`                         | ❌ мёртвые                       | фабрика `getSection` не реэкспортирована                                                                                       |
-| files     | `appControllerUploadFile`, `getFiles`, `appControllerGetStreamUrl`, `appControllerGetFile` | `/files*`                                         | ❌ мёртвые                       | нет UI загрузки файлов                                                                                                         |
-| default   | `healthControllerCheck`                                                                    | `GET /health`                                     | ❌ мёртвый                       | фабрика `getDefault` не реэкспортирована                                                                                       |
+| Модуль    | Функция                                                                                    | Эндпоинт                                          | Статус          | Где используется                                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| sections  | `sectionControllerFindAll`                                                                 | `GET /section`                                    | ✅ используется | `src/pages/listen/model.ts:22` (главный экран, `fetchAllSections`, online-first с фолбэком на кэш `shared/lib/sections-cache`) |
+| auth      | `authControllerRefresh`                                                                    | `POST /auth/refresh`                              | ✅ используется | `src/shared/api/axiosInstance.ts:25` — `performTokenRefresh` (интерцептор на 401, guard `isRefreshRequest`)                    |
+| auth      | `authControllerSignIn`                                                                     | `POST /auth/login`                                | ❌ мёртвый      | UI логина отсутствует                                                                                                          |
+| auth      | `authControllerGetProfile`                                                                 | `GET /auth/profile`                               | ❌ мёртвый      | —                                                                                                                              |
+| sermons   | `sermonControllerCreate/FindAll/FindOne/Update/Remove`                                     | `POST/GET/PATCH/DELETE /sermons*`                 | ❌ мёртвые      | нет admin-UI                                                                                                                   |
+| sermons   | `sermonControllerGetStreamUrl`                                                             | `GET /sermons/{id}/stream-url`                    | ❌ мёртвый      | плеер играет `audioUrl` из `SermonEntity` напрямую                                                                             |
+| playlists | `playlistControllerCreate/FindAll/FindOne/Update/Remove`, `reorderSermonsInPlaylist`       | CRUD `/playlists*`                                | ❌ мёртвые      | нет admin-UI                                                                                                                   |
+| sections  | `sectionControllerCreate/FindOne/Update/Remove`                                            | `POST/GET/PATCH/DELETE /section*` (кроме FindAll) | ❌ мёртвые      | нет admin-UI                                                                                                                   |
+| section   | `reorderSections`, `reorderPlaylistsInSection`                                             | `PATCH /section/reorder*`                         | ❌ мёртвые      | фабрика `getSection` не реэкспортирована                                                                                       |
+| files     | `appControllerUploadFile`, `getFiles`, `appControllerGetStreamUrl`, `appControllerGetFile` | `/files*`                                         | ❌ мёртвые      | нет UI загрузки файлов                                                                                                         |
+| default   | `healthControllerCheck`                                                                    | `GET /health`                                     | ❌ мёртвый      | фабрика `getDefault` не реэкспортирована                                                                                       |
 
-> **Итог:** приложение работает на **одном сетевом эндпоинте** (`GET /section`) + локальной БД для раздела книг (см. [local-db.md](./local-db.md)). Весь CRUD-клиент заведён «на вырост».
+> **Итог:** приложение работает на **двух сетевых эндпоинтах** (`GET /section` и `POST /auth/refresh`) + локальной БД для раздела книг (см. [local-db.md](./local-db.md)). Весь остальной CRUD-клиент заведён «на вырост».
 
 ## Мёртвый код
 
@@ -120,7 +119,7 @@ generated/
 - Главный экран («Слушать») берёт данные секций с сервера через `sectionControllerFindAll` (`src/pages/listen/model.ts:22`) + кэш как офлайн-фолбэк (`setCachedSections`/`getCachedSections` в `src/shared/lib/sections-cache/`).
 - **Плеер** получает `audioUrl`/`textFileUrl` из `SermonEntity` (пришедшей через `GET /section`) и играет напрямую; `sermonControllerGetStreamUrl` не используется.
 - **Раздел книг `/read`** (таб заблокирован) использует локальную БД через `API.books.getBooksOnBooksGroup` → `localDB.getBooks()` → `db.books` (`src/shared/api/books.ts:15`). TODO в `books.ts:10`: заменить на реальный API-вызов, когда бэкенд для книг будет готов — см. [../debt.md](../debt.md).
-- **Аутентификация** не реализована: UI логина отсутствует; `setTokens` ни разу не вызывается; refresh работает только через интерцептор на 401.
+- **Аутентификация** не реализована полностью: UI логина отсутствует; `tokenStorage.setTokens` вызывается только из `performTokenRefresh` при авто-refresh на 401; сам refresh работает через интерцептор (`authControllerRefresh`).
 
 ## Связанные документы
 
