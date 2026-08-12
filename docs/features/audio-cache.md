@@ -20,7 +20,7 @@
 
 ## Автоматическое кэширование при воспроизведении
 
-При старте трека `AudioLoader.getPlaybackUrl` (`src/entities/player/lib/PlayerService/AudioLoader.ts`) сначала ищет кэш; если файла нет — вызывает `startBackgroundCaching` (`BackgroundCachingService.ts`), который скачивает трек в фоне и обновляет прогресс.
+При старте трека `AudioLoader.getPlaybackUrl` (`src/entities/player/lib/PlayerService/AudioLoader.ts`) сначала ищет кэш; если файла нет — плеер **стримит** с сервера (`downloadFirst: false`, HTTP range requests), а параллельно `startBackgroundCaching` (`BackgroundCachingService.ts`) скачивает трек целиком в офлайн-кэш и обновляет прогресс.
 
 ## Скачивание одного трека
 

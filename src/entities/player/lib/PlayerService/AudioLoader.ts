@@ -20,7 +20,7 @@ class AudioLoader {
       this.playerInstance = null
     }
     const playUrl = await this.getPlaybackUrl(audioUrl)
-    const player = createAudioPlayer({ uri: playUrl }, { downloadFirst: true })
+    const player = createAudioPlayer({ uri: playUrl }, { downloadFirst: false })
     this.playerInstance = player
 
     return this.waitForLoaded(player, initialPositionMs).catch(error => {

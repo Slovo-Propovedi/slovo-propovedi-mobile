@@ -40,6 +40,10 @@
 - [ ] **Мёртвый код локальной БД и неиспользуемые мапперы.** `db.getSermons`/`getSermons` (`src/shared/api/localBD.ts:10`), `src/shared/api/db/sermons/sermonsDB.ts`, а также мапперы `mapAllSermonsResponse`, `mapAllPlaylistsResponse`, `mapPlaylistEntities`, `mapPlaylistEntityToPlaylistData` существуют, но не вызываются в рантайме основного сценария (он использует цепочку `mapAllSectionsResponse` → `mapSectionEntityToSectionData` → `mapSectionPlaylistToPlaylistData` → `mapPlaylistSermonToSermonData`). Удалить после подтверждения, что они не нужны.
 - [ ] **В `src/shared/api/generated/index.ts` закомментированы MSW-моки** (`authMocks`, `sermonsMocks`, `playlistsMocks`, `sectionsMocks`, `filesMocks`, `usersMocks`) — включить/документировать при внедрении моков.
 
+## Backend
+
+- [ ] **Presigned URL из `GET /sermons/{id}/stream-url` отклоняет HEAD-запросы с `403 SignatureDoesNotMatch`.** Причина: HTTP-метод входит в AWS Sig V4 canonical request, поэтому URL, подписанный для GET, нельзя переиспользовать для HEAD. GET с `Range` работает корректно (`206`, подтверждено эмпирически). Важно: `Range` **намеренно не включён** в подпись — это правильно и позволяет стримингу/перемотке работать; НЕ следует добавлять `Range` в `SignedHeaders` (это сломает стриминг). Несущественно для плеера (HEAD не используется, стриминг идёт через прямой `audioUrl`), но мешает использовать `getStreamUrl` для probe/метаданных в будущем. Обёртка `sermonControllerGetStreamUrl` — `src/shared/api/generated/sermons/sermons.ts:59`. — сообщить бэкенд-команде для проверки; корректирующее действие — поддержка HEAD или отдельный presigned URL для HEAD, а не подпись `Range`.
+
 ## Book routes not registered
 
 - [ ] **Маршруты чтения книг не созданы.** `src/pages/book-reader` и `src/pages/books-list` существуют, но в `app/` нет ни вложенной папки `read/` с этими экранами, ни ссылок в `shared/routing/useReadNavigation.ts` (хук готов, роуты `/read/book-reader`, `/read/books-list` объявлены). Создать маршруты при подключении таба «Читать».

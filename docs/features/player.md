@@ -23,7 +23,7 @@
 
 | Модуль | Назначение |
 |--------|-----------|
-| `AudioLoader.ts` | создание/замена `AudioPlayer`, ожидание загрузки, `downloadFirst: true`, чтение из аудио-кэша |
+| `AudioLoader.ts` | создание/замена `AudioPlayer`, ожидание загрузки, стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша |
 | `PlaybackController.ts` | play/pause/stop/seek/setVolume/getStatus; персист позиции |
 | `AudioModeManager.ts` | конфигурация аудио-режима с retry по AppState |
 | `LockScreenControls.ts` | метаданные lock screen (`setActiveForLockScreen`) |
@@ -34,6 +34,15 @@
 | `webPlayerState.ts`, `webPlayerPubSub.ts` | состояние и pub-sub для веб-реализации |
 | `types.ts` | общие типы (`LockScreenMetadata`, `PlaybackStatus`, `StatusCallbacks`, `PlayerActions`) |
 | `PlayerActionsAdapter.ts` | DI для `TrackAutoAdvanceService` |
+
+### Стриминг и кэш
+
+`AudioLoader.getPlaybackUrl` определяет источник воспроизведения:
+- если файл **в кэше** → играет локальный `file://` (мгновенный старт);
+- если файла нет → **стримит** с сервера (`downloadFirst: false`, прогрессивная буферизация через нативные движки: AVPlayer на iOS, ExoPlayer на Android), воспроизведение начинается после загрузки метаданных/начала буфера, не дожидаясь полного файла. Параллельно `startBackgroundCaching` скачивает трек в офлайн-кэш.
+- **Web** — `WebPlayerService` использует `HTMLAudioElement` (`new Audio()`), который всегда выполнял прогрессивное стриминг-воспроизведение независимо от `downloadFirst` (опция не влияет на веб-путь).
+
+Стриминг работает благодаря HTTP range requests (MinIO отдаёт `206 Partial Content`, `Accept-Ranges: bytes`). Раньше `downloadFirst: true` блокировал воспроизведение до полного скачивания файла в tmp-каталог.
 
 ## Состояние (Reatom)
 
