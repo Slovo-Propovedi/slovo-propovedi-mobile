@@ -5,7 +5,7 @@
  * REST API для административной панели проекта "Слово.Проповеди".
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.3.0
+ * OpenAPI spec version: 0.4.1
  */
 import type { HealthResponse } from '../adminAPI.schemas'
 

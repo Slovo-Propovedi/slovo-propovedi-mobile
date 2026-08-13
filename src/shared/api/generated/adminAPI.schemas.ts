@@ -5,7 +5,7 @@
  * REST API для административной панели проекта "Слово.Проповеди".
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.3.0
+ * OpenAPI spec version: 0.4.1
  */
 export interface HealthResponse {
   status: string
@@ -371,4 +371,9 @@ export type SermonControllerFindAllParams = {
    */
   take?: number
   cursor?: string
+  /**
+   * Поисковый запрос по названию, проповеднику, книге и описанию
+   * @minLength 1
+   */
+  search?: string
 }
