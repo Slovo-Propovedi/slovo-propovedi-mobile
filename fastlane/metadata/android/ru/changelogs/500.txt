@@ -1,0 +1,4 @@
+Display sermon bible reference and author across the app
+Cap jest workers to prevent OOM (SIGKILL) in CI
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
