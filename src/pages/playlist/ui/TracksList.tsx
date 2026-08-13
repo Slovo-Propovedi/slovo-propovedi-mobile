@@ -43,8 +43,8 @@ export const TracksList = ({
     <TracksListItem
       title={item.title}
       audioUrl={item.url}
-      artist={item.artist}
       artwork={item.artwork}
+      subtitle={item.subtitle}
       onPress={() => onPressItem(index)}
       isPlaying={isPlaying && playingTrackId === item.id}
     />

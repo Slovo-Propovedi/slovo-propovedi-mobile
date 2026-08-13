@@ -35,7 +35,7 @@ const CONTEXT_MENU_TEST_ID = 'context-menu-visible'
 const DOTS_BUTTON_TEST_ID = 'tracks-list-item-menu'
 const TRACK_ITEM_TEST_ID = 'tracks-list-item'
 const AUDIO_URL = 'https://example.com/audio.mp3'
-const TEST_ARTIST = 'Test Artist'
+const TEST_SUBTITLE = 'Test Subtitle'
 const TEST_TITLE = 'Test Title'
 
 const defaultProps = {
@@ -58,16 +58,16 @@ describe('<TracksListItem>', () => {
     expect(screen.getByText(TEST_TITLE)).toBeTruthy()
   })
 
-  test('renders artist text when artist prop is provided', async () => {
-    await renderItem({ artist: TEST_ARTIST })
+  test('renders subtitle text when subtitle prop is provided', async () => {
+    await renderItem({ subtitle: TEST_SUBTITLE })
 
-    expect(screen.getByText(TEST_ARTIST)).toBeTruthy()
+    expect(screen.getByText(TEST_SUBTITLE)).toBeTruthy()
   })
 
-  test('does not render artist when artist prop is omitted', async () => {
+  test('does not render subtitle when subtitle prop is omitted', async () => {
     await renderItem()
 
-    expect(screen.queryByText(TEST_ARTIST)).toBeNull()
+    expect(screen.queryByText(TEST_SUBTITLE)).toBeNull()
   })
 
   test('pressing the main item calls onPress', async () => {

@@ -19,7 +19,7 @@
 
 ## Тип данных
 
-`BookData = SermonData` — **книга = проповедь** (поля `id, title, artist, artwork, chapter, verse, description, textFileUrl, audioUrl, youtubeUrl`). Определено в `src/shared/model/domain/common.ts` (`bookSchema = sermonSchema`, `BookData = SermonData`, `booksArraySchema`).
+`BookData = SermonData` — **книга = проповедь** (поля `id, title, artist, artwork, book, chapter, verse, description, textFileUrl, audioUrl, youtubeUrl`). Определено в `src/shared/model/domain/common.ts` (`bookSchema = sermonSchema`, `BookData = SermonData`, `booksArraySchema`).
 
 ## Локальная БД книг
 

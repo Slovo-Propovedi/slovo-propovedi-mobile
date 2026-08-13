@@ -11,6 +11,7 @@ interface PlaylistTrackItemProps {
   index: number
   isPlaying: boolean
   onPress: (index: number) => void
+  subtitle?: string
   title: string
 }
 
@@ -24,12 +25,13 @@ export const PlaylistTrackItem = ({
   index,
   isPlaying,
   onPress,
+  subtitle,
   title,
 }: PlaylistTrackItemProps) => (
   <TracksListItem
     title={title}
     artwork={artwork}
-    artist={undefined}
+    subtitle={subtitle}
     cacheTrigger={cacheTrigger}
     onPress={() => onPress(index)}
     downloadingUrl={downloadingUrl}

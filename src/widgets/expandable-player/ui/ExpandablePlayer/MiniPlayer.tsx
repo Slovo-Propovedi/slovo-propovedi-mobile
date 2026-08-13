@@ -1,6 +1,7 @@
 import { ActivityIndicator, Image, Pressable, Text, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
+import { formatSermonReference } from 'shared/lib/format'
 import { MovingText, PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import type { createMiniStyles } from './miniStyles'
@@ -35,31 +36,38 @@ export const MiniPlayer = ({
   playing,
   playlist,
   showSpinner,
-}: MiniPlayerProps) => (
-  <GestureDetector gesture={miniPan}>
-    <AnimatedPressable
-      onPress={onPress}
-      style={[miniStyles.miniContainer, miniStyle, { backgroundColor: currentTheme.surface }]}
-    >
-      <Image style={miniStyles.miniCover} source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }} />
-      <View style={miniStyles.miniTextContainer}>
-        <MovingText text={audio.title || ''} style={miniStyles.miniTrackTitle} />
-        <Text numberOfLines={1} style={miniStyles.miniPlaylistName}>
-          {playlist?.title || 'Слово.Проповеди'}
-        </Text>
-      </View>
-      <View style={miniStyles.miniControls}>
-        {showSpinner ? (
-          <ActivityIndicator size={36} color={currentTheme.text} />
-        ) : (
-          <PlayerControlButton
-            size={36}
-            onPress={onPlayPause}
-            color={currentTheme.text}
-            type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
-          />
-        )}
-      </View>
-    </AnimatedPressable>
-  </GestureDetector>
-)
+}: MiniPlayerProps) => {
+  const subtitle =
+    formatSermonReference({ book: audio.book, chapter: audio.chapter, verse: audio.verse }) ??
+    playlist?.title ??
+    'Слово.Проповеди'
+
+  return (
+    <GestureDetector gesture={miniPan}>
+      <AnimatedPressable
+        onPress={onPress}
+        style={[miniStyles.miniContainer, miniStyle, { backgroundColor: currentTheme.surface }]}
+      >
+        <Image style={miniStyles.miniCover} source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }} />
+        <View style={miniStyles.miniTextContainer}>
+          <MovingText text={audio.title || ''} style={miniStyles.miniTrackTitle} />
+          <Text numberOfLines={1} style={miniStyles.miniPlaylistName}>
+            {subtitle}
+          </Text>
+        </View>
+        <View style={miniStyles.miniControls}>
+          {showSpinner ? (
+            <ActivityIndicator size={36} color={currentTheme.text} />
+          ) : (
+            <PlayerControlButton
+              size={36}
+              onPress={onPlayPause}
+              color={currentTheme.text}
+              type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
+            />
+          )}
+        </View>
+      </AnimatedPressable>
+    </GestureDetector>
+  )
+}

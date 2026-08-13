@@ -108,6 +108,7 @@ export const PlaylistScreen = () => {
             isPlaying={isPlaying}
             artwork={item.artwork}
             audioUrl={item.audioUrl}
+            subtitle={item.subtitle}
             onPress={handlePressItem}
             cacheTrigger={cacheTrigger}
             downloadingUrl={downloadingUrl}

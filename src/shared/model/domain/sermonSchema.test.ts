@@ -36,6 +36,12 @@ describe('sermonSchema', () => {
     expect(result.verse).toEqual([1, 2, 3])
   })
 
+  test('parses sermon with book reference', () => {
+    const sermon = { ...validSermon, book: 'Бытие' }
+    const result = sermonSchema.parse(sermon)
+    expect(result.book).toBe('Бытие')
+  })
+
   test('parses sermon with nullable fields set to null', () => {
     const sermon = { ...validSermon, audioUrl: null, textFileUrl: null, youtubeUrl: null }
     const result = sermonSchema.parse(sermon)

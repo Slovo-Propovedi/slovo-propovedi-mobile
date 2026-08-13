@@ -37,6 +37,7 @@ interface SermonDataDef {
   artist: string
   artwork: string
   audioUrl?: null | string | undefined
+  book?: null | string | undefined
   chapter?: null | number | undefined
   description?: string | undefined
   id: string
@@ -69,6 +70,7 @@ export const sermonSchema = z.object({
   artist: z.string(),
   artwork: z.string(),
   audioUrl: z.string().nullable().optional(),
+  book: z.string().nullish(),
   chapter: z.number().nullish(),
   description: z.string().optional(),
   id: z.string(),

@@ -21,11 +21,6 @@ export const createTracksListStyles = (theme: ThemeColors) =>
     albumArtPlaying: {
       opacity: 0.6,
     },
-    artist: {
-      color: theme.textMuted,
-      fontSize: FONT_SIZES.base,
-      marginTop: INDENTS.lowest,
-    },
     cacheIconContainer: {
       alignItems: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -100,6 +95,11 @@ export const createTracksListStyles = (theme: ThemeColors) =>
     progressBarFill: {
       backgroundColor: theme.primary,
       height: '100%',
+    },
+    subtitle: {
+      color: theme.textMuted,
+      fontSize: FONT_SIZES.base,
+      marginTop: INDENTS.lowest,
     },
     textContainer: {
       flex: 1,

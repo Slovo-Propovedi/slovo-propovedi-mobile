@@ -9,6 +9,7 @@ import {
   usePlayNewSermon,
 } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
+import { formatSermonReference } from 'shared/lib/format'
 import { useTheme } from 'shared/ui/theme'
 import { TracksListItem } from 'shared/ui/track-list'
 import type { PlaylistData } from 'shared/model'
@@ -22,9 +23,9 @@ interface PlaylistBottomSheetProps {
 }
 
 interface TrackListItemData {
-  artist: string
   artwork?: string
   id: string
+  subtitle?: string
   title: string
   url?: string
 }
@@ -68,8 +69,8 @@ export const PlaylistBottomSheet = ({
       <TracksListItem
         title={item.title}
         audioUrl={item.url}
-        artist={item.artist}
         artwork={item.artwork}
+        subtitle={item.subtitle}
         cacheTrigger={cacheTrigger}
         downloadingUrl={downloadingUrl}
         onPress={() => handlePressItem(index)}
@@ -87,9 +88,13 @@ export const PlaylistBottomSheet = ({
   if (!playlist) return null
 
   const tracksListData: TrackListItemData[] = playlist.sermons.map(sermon => ({
-    artist: sermon.artist,
     artwork: playlist.artwork,
     id: sermon.id,
+    subtitle: formatSermonReference({
+      book: sermon.book,
+      chapter: sermon.chapter,
+      verse: sermon.verse,
+    }),
     title: sermon.title,
     url: sermon.audioUrl ?? undefined,
   }))

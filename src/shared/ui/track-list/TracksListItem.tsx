@@ -13,7 +13,6 @@ import { type TracksListItemProps } from './types'
 import { useTrackItemCache } from './useTrackItemCache'
 
 export const TracksListItem = ({
-  artist,
   artwork,
   audioUrl,
   cacheTrigger: externalCacheTrigger,
@@ -22,6 +21,7 @@ export const TracksListItem = ({
   isPlaying,
   onPress,
   style,
+  subtitle,
   title,
 }: TracksListItemProps) => {
   const { currentTheme } = useTheme()
@@ -105,7 +105,7 @@ export const TracksListItem = ({
             animationThreshold={TITLE_ANIMATION_THRESHOLD}
             style={[tracksListStyles.title, isPlaying && tracksListStyles.titlePlaying]}
           />
-          {artist && <Text style={tracksListStyles.artist}>{artist}</Text>}
+          {subtitle && <Text style={tracksListStyles.subtitle}>{subtitle}</Text>}
         </View>
         <Pressable
           ref={dotsButtonRef}

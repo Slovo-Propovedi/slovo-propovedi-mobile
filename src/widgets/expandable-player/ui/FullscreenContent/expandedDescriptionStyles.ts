@@ -26,10 +26,4 @@ export const expandedDescriptionStyles = StyleSheet.create({
     marginHorizontal: INDENTS.medium,
     position: 'relative',
   },
-
-  descriptionText: {
-    color: '#fff',
-    fontSize: FONT_SIZES.base,
-    lineHeight: FONT_SIZES.base * 1.5,
-  },
 })

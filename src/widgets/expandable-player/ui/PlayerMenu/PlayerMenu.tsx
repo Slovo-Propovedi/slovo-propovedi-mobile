@@ -6,18 +6,16 @@ import type { LayoutChangeEvent } from 'react-native'
 import { styles } from './PlayerMenu.styles'
 
 interface PlayerMenuProps {
-  hasDescription: boolean
   isCached?: boolean
   onClose: () => void
-  onShowDescription: () => void
+  onShowDetails: () => void
   onToggleCache: () => void
 }
 
 export const PlayerMenu = ({
-  hasDescription,
   isCached,
   onClose,
-  onShowDescription,
+  onShowDetails,
   onToggleCache,
 }: PlayerMenuProps) => {
   const { currentTheme } = useTheme()
@@ -35,8 +33,8 @@ export const PlayerMenu = ({
     }
   }
 
-  const handleDescriptionPress = () => {
-    onShowDescription()
+  const handleDetailsPress = () => {
+    onShowDetails()
     onClose()
   }
 
@@ -74,13 +72,9 @@ export const PlayerMenu = ({
           onLayout={handleLayout}
           style={[styles.menuContainer, { backgroundColor: currentTheme.surface }]}
         >
-          {hasDescription && (
-            <Pressable style={styles.menuItem} onPress={handleDescriptionPress}>
-              <Text style={[styles.menuItemText, { color: currentTheme.text }]}>
-                Описание проповеди
-              </Text>
-            </Pressable>
-          )}
+          <Pressable style={styles.menuItem} onPress={handleDetailsPress}>
+            <Text style={[styles.menuItemText, { color: currentTheme.text }]}>Подробнее</Text>
+          </Pressable>
           <Pressable style={styles.menuItem} onPress={handleToggleCache}>
             <Text style={[styles.menuItemText, { color: currentTheme.text }]}>
               {isCached ? 'Удалить из кеша' : 'Добавить в кеш'}

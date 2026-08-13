@@ -5,10 +5,10 @@ import type Animated from 'react-native-reanimated'
 export interface TracksListProps {
   contentContainerStyle?: AnimatedFlatListProps['contentContainerStyle']
   data: Array<{
-    artist?: string
     artwork?: string
     audioUrl?: string
     id: string
+    subtitle?: string
     title: string
     url?: string
   }>

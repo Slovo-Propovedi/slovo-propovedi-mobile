@@ -33,7 +33,7 @@ export const useFullscreenHandlers = () => {
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const [showMenu, setShowMenu] = useAtom(showMenuAtom)
   const [showPlaylist, setShowPlaylist] = useAtom(showPlaylistAtom)
-  const [showDescription, setShowDescription] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
   const playlistSheetRef = useRef<BottomSheet>(null)
 
   const isCached = useIsCached(audio?.audioUrl ?? null)
@@ -93,10 +93,10 @@ export const useFullscreenHandlers = () => {
     playlistSheetRef,
     position,
     seekTo,
-    setShowDescription,
+    setShowDetails,
     setShowMenu,
     setShowPlaylist,
-    showDescription,
+    showDetails,
     showMenu,
     showPlaylist,
     startSeek,

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { INDENTS } from 'shared/ui/themed'
 import { type createStyles } from '../ExpandablePlayer/styles'
 import { PlaylistBottomSheet } from '../PlaylistBottomSheet/PlaylistBottomSheet'
-import { DescriptionOverlay } from './DescriptionOverlay'
+import { DetailsOverlay } from './DetailsOverlay'
 import { gradientStyles } from './gradients'
 import { HeaderOverlay } from './HeaderOverlay'
 import { PlayerControlsSection } from './PlayerControlsSection'
@@ -32,10 +32,10 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
     playlistSheetRef,
     position,
     seekTo,
-    setShowDescription,
+    setShowDetails,
     setShowMenu,
     setShowPlaylist,
-    showDescription,
+    showDetails,
     showMenu,
     showPlaylist,
     startSeek,
@@ -85,12 +85,12 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
           style={gradientStyles.bottomGradient}
           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
         />
-        {showDescription ? (
-          <DescriptionOverlay
+        {showDetails ? (
+          <DetailsOverlay
             audio={audio}
             styles={styles}
             insetsTop={insets.top}
-            onClose={() => setShowDescription(false)}
+            onClose={() => setShowDetails(false)}
           />
         ) : (
           <Pressable style={styles.spacer} onPress={() => void handleTogglePlay()} />
@@ -109,8 +109,8 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
           setShowMenu={setShowMenu}
           onToggleCache={handleToggleCache}
           onOpenPlaylist={handleOpenPlaylist}
+          onShowDetails={() => setShowDetails(true)}
           currentDownloadProgress={currentDownloadProgress}
-          onShowDescription={() => setShowDescription(true)}
         />
       </Animated.View>
       {showPlaylist && (
