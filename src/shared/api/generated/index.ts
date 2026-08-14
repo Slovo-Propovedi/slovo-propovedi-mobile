@@ -1,9 +1,9 @@
 // Импортируем все сгенерированные функции из Orval
-export * as authApi from './auth/auth'
-export * as sermonsApi from './sermons/sermons'
-export * as playlistsApi from './playlists/playlists'
-export * as sectionsApi from './sections/sections'
-export * as filesApi from './files/files'
+export * as authApi from './auth'
+export * as sermonsApi from './sermons'
+export * as playlistsApi from './playlists'
+export * as sectionsApi from './sections'
+export * as filesApi from './files'
 
 // export * as authMocks from './auth/auth.msw'
 // export * as sermonsMocks from './sermons/sermons.msw'
@@ -13,4 +13,4 @@ export * as filesApi from './files/files'
 // export * as usersMocks from './users/users.msw'
 
 // Реэкспортируем все типы
-export * as APITypes from './adminAPI.schemas'
+export * as APITypes from './api.schemas'

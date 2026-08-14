@@ -5,7 +5,7 @@ export default defineConfig({
   main: {
     input: 'https://docs.slovo-propovedi.ru/openAPI.yaml',
     output: {
-      mode: OutputMode.TAGS_SPLIT,
+      mode: OutputMode.TAGS,
       client: 'axios',
       httpClient: 'axios',
       target: './src/shared/api/generated',
