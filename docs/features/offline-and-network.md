@@ -47,14 +47,27 @@
 2. восстановление **connectivity** (`isOnline` стал `true`);
 3. **polling** по интервалу (только в foreground): 5с (`RETRY_INTERVAL_NO_DATA_MS`) или 30с (`RETRY_INTERVAL_CACHED_MS`) в зависимости от `hasCachedData`.
 
+## Кэш поиска проповедей
+
+`src/features/sermon-search/lib/searchCache.ts` — `getCachedSearchResults` / `setCachedSearchResults`, ключи `cachedSermonSearch:<query>` + индекс `cachedSermonSearch:index` (`src/shared/config/cache-storage-keys.ts`). Ключ запроса нормализуется (`trim` + `toLowerCase`); пустые результаты не кэшируются; индекс хранит до 30 последних ключей, при переполнении самые старые удаляются (`AsyncStorage.multiRemove`). Универсальные обёртки — `src/shared/lib/cache/` (`getCachedJson` / `setCachedJson`).
+
+Поток `fetchSearchResults` (`src/features/sermon-search/model.ts`):
+
+1. запрос `sermonsApi.getSermons().sermonControllerFindAll({ search, take: 20 })` (сеть);
+2. успешный ответ всегда пишется в кэш (fire-and-forget `setCachedSearchResults`);
+3. при сетевой ошибке — чтение кэша (`getCachedSearchResults`); при непустом результате он показывается, иначе — пустое состояние «Ничего не найдено»;
+4. защита от устаревших ответов: кэш-фолбэк применяется, только если `requestId === latestRequestId` (медленное чтение кэша не перезаписывает более свежий поиск).
+
+`useOfflineRetry` для поиска **не** используется (нет UI-индикатора источника данных — см. `docs/debt.md`).
+
 ## Кэш аудио
 
 Офлайн-прослушивание обеспечивает кэш аудио — [audio-cache.md](./audio-cache.md). При старте трека `AudioLoader` сначала берёт закэшированный файл, иначе стартует фоновое кэширование.
 
 ## Поток: offline ↔ online
 
-- **Offline:** `NetInfo` → `isOnlineAtom = false` → показывается `NetworkBanner`; API-вызовы падают с сетевой ошибкой → `reportServerUnreachable` → `ServerErrorToast`; `fetchAllSections` показывает кэш секций; аудио играет из кэша.
-- **Online:** `isOnlineAtom = true` → баннер скрывается; `useOfflineRetry` немедленно перезапрашивает данные; успешные ответы → `reportServerReachable`.
+- **Offline:** `NetInfo` → `isOnlineAtom = false` → показывается `NetworkBanner`; API-вызовы падают с сетевой ошибкой → `reportServerUnreachable` → `ServerErrorToast`; `fetchAllSections` показывает кэш секций; поиск проповедей показывает per-query кэш (`cachedSermonSearch:<query>`), если он есть; аудио играет из кэша.
+- **Online:** `isOnlineAtom = true` → баннер скрывается; `useOfflineRetry` немедленно перезапрашивает данные; успешные ответы → `reportServerReachable`; поиск пишет свежие результаты в кэш.
 
 ### Различие баннера и тоста
 
@@ -78,5 +91,5 @@
 
 - [state.md](./state.md) — атомы сети (`isOnlineAtom`, `serverUnreachableAtom`)
 - [audio-cache.md](./audio-cache.md) — кэш аудио
-- [storage.md](../contracts/storage.md) — ключ `cachedSections`
+- [storage.md](../contracts/storage.md) — ключи `cachedSections` и `cachedSermonSearch:*`
 - [../screens/listen.md](../screens/listen.md) — офлайн-состояние главного экрана

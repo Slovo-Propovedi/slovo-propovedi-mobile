@@ -12,6 +12,7 @@ export {
   playlistsArraySchema,
   sectionSchema,
   sermonDataSchema,
+  sermonSchema,
 } from './domain/common'
 export {
   type BookData,
