@@ -17,6 +17,8 @@
 | `currentSoundVolume` | `CURRENT_SOUND_VOLUME` — там же | число как строка | `setVolumeAction` — `src/entities/player/model.ts` | (восстановление состояния) | громкость |
 | `currentRepeatMode` | `CURRENT_REPEAT_MODE` — там же | строка: `off` / `queue` / `track` | `setRepeatModeAction` — `src/entities/player/model.ts` | (восстановление состояния) | режим повтора |
 | `cachedSections` | `CACHED_SECTIONS` — `src/shared/config/cache-storage-keys.ts` | JSON `SectionData[]` | `setCachedSections` — `src/shared/lib/sections-cache/` | `getCachedSections` (фолбэк при офлайне) | кэш секций главного экрана |
+| `cachedSermonSearch:<query>` | `CACHED_SERMON_SEARCH` — `src/shared/config/cache-storage-keys.ts` (префикс) | JSON `SermonData[]` | `setCachedSearchResults` — `src/features/sermon-search/lib/searchCache.ts` | `getCachedSearchResults` (фолбэк при офлайне) | per-query кэш результатов поиска проповедей; `<query>` — нормализованный запрос (`trim` + `toLowerCase`) |
+| `cachedSermonSearch:index` | `CACHED_SERMON_SEARCH_INDEX` — там же | JSON `string[]` (полные ключи запросов) | `setCachedSearchResults` (обновление индекса) | `setCachedSearchResults` (ротация) | индекс недавних запросов поиска; при превышении 30 записей самые старые удаляются через `AsyncStorage.multiRemove` |
 | `server-url` | `SERVER_URL` — `src/shared/config/server-storage-keys.ts` | строка URL | `setServerUrlAction` — `src/entities/settings/model.ts` | `initServerUrlAction` — там же | кастомный URL сервера |
 | `theme_mode` | `THEME_MODE_KEY` (локальная) — `src/shared/ui/theme/model.ts` | строка `system` / `light` / `dark` | `setThemeMode` — там же | `loadThemeMode` — там же | режим темы |
 | `dynamic_colors` | `DYNAMIC_COLORS_KEY` (локальная) — `src/shared/ui/theme/model.ts` | строка `'true'` / `'false'` | `setDynamicColors` — там же | `loadDynamicColors` — там же | включены ли Material You (динамические) цвета |
@@ -26,9 +28,9 @@
 
 ## Формат
 
-- **Структурированные данные** (аудио, плейлист, секции) хранятся как **JSON-строки** через `JSON.stringify` / `JSON.parse`.
+- **Структурированные данные** (аудио, плейлист, секции, результаты поиска) хранятся как **JSON-строки** через `JSON.stringify` / `JSON.parse`.
 - **Простые скаляры** (позиция, громкость, длительность, режим повтора, тема, флаги) хранятся как строки через `String(...)`.
-- **Безопасный парсинг JSON — через `getParseJsonWithSchema(schema)`** (`src/shared/model/getParseJsonWithSchema.ts`): оборачивает Zod-схему (`customZ.jsonSchema(...).safeParse`) и возвращает `undefined` при отсутствии/невалидности данных. Используется для восстановления `AudioPlayerData`/`PlaylistData` (`src/entities/player/lib/initializePlayer.ts`) и секций (`src/shared/lib/sections-cache/getCachedSections.ts`).
+- **Безопасный парсинг JSON — через `getParseJsonWithSchema(schema)`** (`src/shared/model/getParseJsonWithSchema.ts`): оборачивает Zod-схему (`customZ.jsonSchema(...).safeParse`) и возвращает `undefined` при отсутствии/невалидности данных. Универсальные обёртки для кэша — `getCachedJson(key, schema)` / `setCachedJson(key, value)` (`src/shared/lib/cache/`): читают/пишут JSON под ключом с тем же безопасным парсингом. Используются для восстановления `AudioPlayerData`/`PlaylistData` (`src/entities/player/lib/initializePlayer.ts`), секций (`src/shared/lib/sections-cache/getCachedSections.ts`) и результатов поиска (`src/features/sermon-search/lib/searchCache.ts`).
 - Доменные Zod-схемы для восстановления: `src/shared/model/domain/common.ts` (`sectionSchema`, `sermonSchema`, `playlistSchema`, `audioPlayerDataSchema` и т.д.).
 
 ## Жизненный цикл
@@ -36,6 +38,7 @@
 - **Токены**: пишутся при входе/refresh (`tokenStorage.setTokens`, `performTokenRefresh`), читаются request-interceptor'ом и `performTokenRefresh`, чистятся при logout / неудачном refresh (`tokenStorage.clearTokens`, `multiRemove` в `axiosInstance.ts`).
 - **Плеер** (`currentAudio`, `currentPlaylist`, позиция, громкость, режим повтора, длительность): пишутся в Reatom-экшенах `src/entities/player/model.ts` и `PlayerService/*`; восстанавливаются при старте через `src/entities/player/lib/initializePlayer.ts` (multiGet + Zod-парсинг).
 - **Кэш секций** (`cachedSections`): пишется после успешной загрузки с сети (online-first, fire-and-forget) и читается как фолбэк при недоступности сети. Логика — `src/pages/listen/model.ts` (`fetchAllSections`) + `src/shared/lib/sections-cache/`.
+- **Кэш поиска проповедей** (`cachedSermonSearch:<query>`, `cachedSermonSearch:index`): пишется после успешного ответа `sermonControllerFindAll` (online-first, fire-and-forget в `fetchSearchResults`), читается как фолбэк при сетевой ошибке. Ключ запроса нормализуется (`trim` + `toLowerCase`). Пустые результаты не кэшируются. Индекс хранит до 30 последних ключей; при переполнении самые старые удаляются (`AsyncStorage.multiRemove`). Логика — `src/features/sermon-search/lib/searchCache.ts`.
 - **Сервер URL** (`server-url`): пишется при смене в Настройках, читается при старте (`initServerUrlAction`).
 - **Тема** (`theme_mode`, `dynamic_colors`): пишутся при изменении, читаются при старте (`loadThemeMode`, `loadDynamicColors`).
 - **Версия уведомления об обновлении**: пишется после показа, читается перед проверкой.

@@ -23,6 +23,11 @@ export default {
       delete storage[key]
     }
   }),
+  multiRemove: jest.fn(async (keys: string[]) => {
+    for (const key of keys) {
+      delete storage[key]
+    }
+  }),
   getAllKeys: jest.fn(async () => Object.keys(storage)),
   clear: jest.fn(async () => {
     Object.keys(storage).forEach(key => delete storage[key])

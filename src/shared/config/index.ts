@@ -1,4 +1,8 @@
-export { CACHED_SECTIONS } from './cache-storage-keys'
+export {
+  CACHED_SECTIONS,
+  CACHED_SERMON_SEARCH,
+  CACHED_SERMON_SEARCH_INDEX,
+} from './cache-storage-keys'
 export { DEFAULT_API_URL } from './config'
 export { debugConfig } from './debug'
 export { COPYRIGHT_HOLDER, COPYRIGHT_YEAR, LICENSE_NAME, LICENSE_URL, PROJECT_URL } from './license'
