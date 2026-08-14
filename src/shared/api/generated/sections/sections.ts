@@ -5,17 +5,19 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.7.0
+ * OpenAPI spec version: 0.7.2
  */
 import type {
   AllSectionsResponse,
   CreateSectionDto,
+  ReorderPlaylistsDto,
+  ReorderSectionsDto,
   SectionEntity,
   StatusSectionsResponse,
   UpdateSectionDto,
-} from './api.schemas'
+} from '../api.schemas'
 
-import { customInstance } from '../axiosInstance'
+import { customInstance } from '../../axiosInstance'
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
@@ -44,6 +46,24 @@ export const getSections = () => {
     options?: SecondParameter<typeof customInstance<AllSectionsResponse>>,
   ) => {
     return customInstance<AllSectionsResponse>({ url: `/section`, method: 'GET' }, options)
+  }
+  /**
+   * Принимает список id разделов в новом порядке и обновляет позиции
+   * @summary Изменить порядок разделов
+   */
+  const reorderSections = (
+    reorderSectionsDto: ReorderSectionsDto,
+    options?: SecondParameter<typeof customInstance<StatusSectionsResponse>>,
+  ) => {
+    return customInstance<StatusSectionsResponse>(
+      {
+        url: `/section/reorder`,
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        data: reorderSectionsDto,
+      },
+      options,
+    )
   }
   /**
    * @summary Получить раздел по ID
@@ -84,12 +104,33 @@ export const getSections = () => {
       options,
     )
   }
+  /**
+   * Принимает список id плейлистов в новом порядке и обновляет их позиции внутри раздела
+   * @summary Изменить порядок плейлистов в разделе
+   */
+  const reorderPlaylistsInSection = (
+    id: string,
+    reorderPlaylistsDto: ReorderPlaylistsDto,
+    options?: SecondParameter<typeof customInstance<StatusSectionsResponse>>,
+  ) => {
+    return customInstance<StatusSectionsResponse>(
+      {
+        url: `/section/${id}/playlists/reorder`,
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        data: reorderPlaylistsDto,
+      },
+      options,
+    )
+  }
   return {
     sectionControllerCreate,
     sectionControllerFindAll,
+    reorderSections,
     sectionControllerFindOne,
     sectionControllerUpdate,
     sectionControllerRemove,
+    reorderPlaylistsInSection,
   }
 }
 export type SectionControllerCreateResult = NonNullable<
@@ -97,6 +138,9 @@ export type SectionControllerCreateResult = NonNullable<
 >
 export type SectionControllerFindAllResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getSections>['sectionControllerFindAll']>>
+>
+export type ReorderSectionsResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSections>['reorderSections']>>
 >
 export type SectionControllerFindOneResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getSections>['sectionControllerFindOne']>>
@@ -106,4 +150,7 @@ export type SectionControllerUpdateResult = NonNullable<
 >
 export type SectionControllerRemoveResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getSections>['sectionControllerRemove']>>
+>
+export type ReorderPlaylistsInSectionResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSections>['reorderPlaylistsInSection']>>
 >

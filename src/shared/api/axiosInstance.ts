@@ -4,7 +4,7 @@ import { type AxiosRequestConfig } from 'axios'
 import { DEFAULT_API_URL } from '../config/config'
 import { ctx } from '../lib/reatom-ctx/ctx'
 import { reportServerReachable, reportServerUnreachable } from '../model/network'
-import { getAuth } from './generated/auth'
+import { getAuth } from './generated/auth/auth'
 
 export const ACCESS_TOKEN_KEY = '@access_token'
 export const REFRESH_TOKEN_KEY = '@refresh_token'

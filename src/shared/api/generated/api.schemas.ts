@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.7.0
+ * OpenAPI spec version: 0.7.2
  */
 export interface HealthResponse {
   status: string
@@ -23,9 +23,7 @@ export interface IFileResponseDto {
 export interface FileMetadataDto {
   fileName: string
   fileUrl: string
-  /** @nullable */
   lastModified: string | null
-  /** @nullable */
   size: number | null
 }
 
@@ -64,10 +62,8 @@ export const CreateSectionDtoWhereIsSlideTitleLocated = {
 
 export interface CreateSectionDto {
   borderRadius?: boolean
-  /** @nullable */
   description: string | null
   isDescriptionTitleOnSlideLarge?: boolean
-  /** @nullable */
   itemsRows: number | null
   itemsSize: CreateSectionDtoItemsSize
   title: string
@@ -116,21 +112,16 @@ export type PlaylistSermonPlaylistsItem = {
 export interface PlaylistSermon {
   artist: string
   artwork: string
-  /** @nullable */
   audioUrl: string | null
-  /** @nullable */
   book: string | null
-  /** @nullable */
   chapter: number | null
   description: string
   id: string
   playlists: PlaylistSermonPlaylistsItem[]
   position: number
-  /** @nullable */
   textFileUrl: string | null
   title: string
   verse: number | number[] | null
-  /** @nullable */
   youtubeUrl: string | null
 }
 
@@ -146,11 +137,9 @@ export interface SectionPlaylist {
 
 export interface SectionEntity {
   borderRadius?: boolean
-  /** @nullable */
   description: string | null
   id: string
   isDescriptionTitleOnSlideLarge?: boolean
-  /** @nullable */
   itemsRows: number | null
   itemsSize: SectionEntityItemsSize
   playlists: SectionPlaylist[]
@@ -172,20 +161,15 @@ export interface PlaylistEntity {
 export interface SermonEntity {
   artist: string
   artwork: string
-  /** @nullable */
   audioUrl: string | null
-  /** @nullable */
   book: string | null
-  /** @nullable */
   chapter: number | null
   description: string
   id: string
   playlists: PlaylistEntity[]
-  /** @nullable */
   textFileUrl: string | null
   title: string
   verse: number | number[] | null
-  /** @nullable */
   youtubeUrl: string | null
 }
 
@@ -224,10 +208,8 @@ export const UpdateSectionDtoWhereIsSlideTitleLocated = {
 
 export interface UpdateSectionDto {
   borderRadius: boolean
-  /** @nullable */
   description: string | null
   isDescriptionTitleOnSlideLarge: boolean
-  /** @nullable */
   itemsRows: number | null
   itemsSize: UpdateSectionDtoItemsSize
   playlistsIds: string[]
@@ -242,7 +224,6 @@ export interface StatusSectionsResponse {
 
 export interface CreatePlaylistDto {
   artwork: string
-  /** @nullable */
   description: string | null
   sermonsIds?: string[]
   title: string
@@ -255,7 +236,6 @@ export interface AllPlaylistsResponse {
 
 export interface UpdatePlaylistDto {
   artwork: string
-  /** @nullable */
   description: string | null
   sectionsIds?: string[]
   sermonsIds: string[]
@@ -281,27 +261,19 @@ export interface ReorderPlaylistsDto {
 export interface CreateSermonDto {
   artist: string
   artwork: string
-  /** @nullable */
   audioUrl: string | null
-  /** @nullable */
   book: string | null
-  /** @nullable */
   chapter: number | null
-  /** @nullable */
   description: string | null
   playlistsIds?: string[]
-  /** @nullable */
   textFileUrl: string | null
   title: string
   verse: number | number[] | null
-  /** @nullable */
   youtubeUrl: string | null
 }
 
 export interface AllSermonsResponse {
-  /** @nullable */
   count: number | null
-  /** @nullable */
   nextCursor: string | null
   sermons: SermonEntity[]
 }
@@ -309,20 +281,14 @@ export interface AllSermonsResponse {
 export interface UpdateSermonDto {
   artist: string
   artwork: string
-  /** @nullable */
   audioUrl: string | null
-  /** @nullable */
   book: string | null
-  /** @nullable */
   chapter: number | null
-  /** @nullable */
   description: string | null
   playlistsIds: string[]
-  /** @nullable */
   textFileUrl: string | null
   title: string
   verse: number | number[] | null
-  /** @nullable */
   youtubeUrl: string | null
 }
 

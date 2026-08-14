@@ -5,15 +5,15 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.7.0
+ * OpenAPI spec version: 0.7.2
  */
-import type { HealthResponse } from './api.schemas'
+import type { HealthResponse } from '../api.schemas'
 
-import { customInstance } from '../axiosInstance'
+import { customInstance } from '../../axiosInstance'
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
-export const getDefault = () => {
+export const getBasic = () => {
   /**
    * @summary Проверить состояние сервиса
    */
@@ -25,5 +25,5 @@ export const getDefault = () => {
   return { healthControllerCheck }
 }
 export type HealthControllerCheckResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getDefault>['healthControllerCheck']>>
+  Awaited<ReturnType<ReturnType<typeof getBasic>['healthControllerCheck']>>
 >

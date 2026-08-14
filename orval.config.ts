@@ -1,15 +1,21 @@
-import { defineConfig, NamingConvention, OutputMode, PropertySortOrder } from 'orval'
+import {
+  defineConfig,
+  NamingConvention,
+  OutputMockType,
+  OutputMode,
+  PropertySortOrder,
+} from 'orval'
 
 export default defineConfig({
   // Output 1: Axios API функции с mutator и MSW моками
   main: {
     input: 'https://docs.slovo-propovedi.ru/openAPI.yaml',
     output: {
-      mode: OutputMode.TAGS,
+      mode: OutputMode.TAGS_SPLIT,
       client: 'axios',
       httpClient: 'axios',
       target: './src/shared/api/generated',
-      // mock: { type: OutputMockType.MSW, generateEachHttpStatus: true },
+      mock: { generators: [{ type: OutputMockType.FAKER, generateEachHttpStatus: true }] },
       propertySortOrder: PropertySortOrder.ALPHABETICAL,
       unionAddMissingProperties: true,
       namingConvention: NamingConvention.CAMEL_CASE,

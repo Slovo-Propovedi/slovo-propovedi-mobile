@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.7.0
+ * OpenAPI spec version: 0.7.2
  */
 import * as zod from 'zod'
 
@@ -173,6 +173,18 @@ export const SectionControllerFindAll200Response = zod.object({
     }),
   ),
   count: zod.number(),
+})
+
+/**
+ * Принимает список id разделов в новом порядке и обновляет позиции
+ * @summary Изменить порядок разделов
+ */
+export const ReorderSectionsBody = zod.object({
+  ids: zod.array(zod.uuid()),
+})
+
+export const ReorderSections200Response = zod.object({
+  status: zod.string(),
 })
 
 /**
@@ -345,5 +357,21 @@ export const SectionControllerRemoveParams = zod.object({
 })
 
 export const SectionControllerRemove200Response = zod.object({
+  status: zod.string(),
+})
+
+/**
+ * Принимает список id плейлистов в новом порядке и обновляет их позиции внутри раздела
+ * @summary Изменить порядок плейлистов в разделе
+ */
+export const ReorderPlaylistsInSectionParams = zod.object({
+  id: zod.uuid(),
+})
+
+export const ReorderPlaylistsInSectionBody = zod.object({
+  playlistIds: zod.array(zod.uuid()),
+})
+
+export const ReorderPlaylistsInSection200Response = zod.object({
   status: zod.string(),
 })

@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.7.0
+ * OpenAPI spec version: 0.7.2
  */
 import * as zod from 'zod'
 
@@ -14,7 +14,12 @@ import * as zod from 'zod'
  * @summary Загрузить файл (изображение, аудио MP3, PDF, FB2)
  */
 export const AppControllerUploadFileBody = zod.object({
-  file: zod.instanceof(File).optional(),
+  file: zod
+    .instanceof(File)
+    .optional()
+    .describe(
+      'Допустимые форматы — JPEG, PNG, WebP, MP3, PDF, FB2. Другие форматы будут отклонены.',
+    ),
 })
 
 export const AppControllerUploadFile200Response = zod.object({
