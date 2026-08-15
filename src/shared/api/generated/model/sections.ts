@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.7.2
+ * OpenAPI spec version: 0.8.1
  */
 import * as zod from 'zod'
 
@@ -69,15 +69,14 @@ export const SectionControllerCreate200Response = zod.object({
           artwork: zod.string(),
           book: zod.string().nullable(),
           chapter: zod.int().nullable(),
-          verse: zod
-            .union([
-              zod.int(),
-              zod
-                .array(zod.int())
-                .min(sectionControllerCreate200ResponsePlaylistsItemSermonsItemVerseTwoMin)
-                .max(sectionControllerCreate200ResponsePlaylistsItemSermonsItemVerseTwoMax),
-            ])
-            .nullable(),
+          verse: zod.union([
+            zod.int(),
+            zod
+              .array(zod.int())
+              .min(sectionControllerCreate200ResponsePlaylistsItemSermonsItemVerseTwoMin)
+              .max(sectionControllerCreate200ResponsePlaylistsItemSermonsItemVerseTwoMax),
+            zod.null(),
+          ]),
           position: zod.int(),
           playlists: zod.array(
             zod.object({
@@ -146,19 +145,18 @@ export const SectionControllerFindAll200Response = zod.object({
               artwork: zod.string(),
               book: zod.string().nullable(),
               chapter: zod.int().nullable(),
-              verse: zod
-                .union([
-                  zod.int(),
-                  zod
-                    .array(zod.int())
-                    .min(
-                      sectionControllerFindAll200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
-                    )
-                    .max(
-                      sectionControllerFindAll200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
-                    ),
-                ])
-                .nullable(),
+              verse: zod.union([
+                zod.int(),
+                zod
+                  .array(zod.int())
+                  .min(
+                    sectionControllerFindAll200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
+                  )
+                  .max(
+                    sectionControllerFindAll200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
+                  ),
+                zod.null(),
+              ]),
               position: zod.int(),
               playlists: zod.array(
                 zod.object({
@@ -240,15 +238,14 @@ export const SectionControllerFindOne200Response = zod.object({
           artwork: zod.string(),
           book: zod.string().nullable(),
           chapter: zod.int().nullable(),
-          verse: zod
-            .union([
-              zod.int(),
-              zod
-                .array(zod.int())
-                .min(sectionControllerFindOne200ResponsePlaylistsItemSermonsItemVerseTwoMin)
-                .max(sectionControllerFindOne200ResponsePlaylistsItemSermonsItemVerseTwoMax),
-            ])
-            .nullable(),
+          verse: zod.union([
+            zod.int(),
+            zod
+              .array(zod.int())
+              .min(sectionControllerFindOne200ResponsePlaylistsItemSermonsItemVerseTwoMin)
+              .max(sectionControllerFindOne200ResponsePlaylistsItemSermonsItemVerseTwoMax),
+            zod.null(),
+          ]),
           position: zod.int(),
           playlists: zod.array(
             zod.object({
@@ -327,15 +324,14 @@ export const SectionControllerUpdate200Response = zod.object({
           artwork: zod.string(),
           book: zod.string().nullable(),
           chapter: zod.int().nullable(),
-          verse: zod
-            .union([
-              zod.int(),
-              zod
-                .array(zod.int())
-                .min(sectionControllerUpdate200ResponsePlaylistsItemSermonsItemVerseTwoMin)
-                .max(sectionControllerUpdate200ResponsePlaylistsItemSermonsItemVerseTwoMax),
-            ])
-            .nullable(),
+          verse: zod.union([
+            zod.int(),
+            zod
+              .array(zod.int())
+              .min(sectionControllerUpdate200ResponsePlaylistsItemSermonsItemVerseTwoMin)
+              .max(sectionControllerUpdate200ResponsePlaylistsItemSermonsItemVerseTwoMax),
+            zod.null(),
+          ]),
           position: zod.int(),
           playlists: zod.array(
             zod.object({

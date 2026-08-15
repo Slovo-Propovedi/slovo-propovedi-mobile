@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.7.2
+ * OpenAPI spec version: 0.8.1
  */
 import { faker } from '@faker-js/faker'
 
@@ -34,8 +34,11 @@ export const getGetFilesResponseMock = (
   files: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
     fileName: faker.string.alpha({ length: { min: 10, max: 20 } }),
     fileUrl: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    lastModified: faker.date.past().toISOString().slice(0, 19) + 'Z',
-    size: faker.number.int(),
+    lastModified: faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + 'Z',
+      null,
+    ]),
+    size: faker.helpers.arrayElement([faker.number.int(), null]),
   })),
   ...overrideResponse,
 })
@@ -47,8 +50,11 @@ export const getGetFilesResponseMock200 = (
   files: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
     fileName: faker.string.alpha({ length: { min: 10, max: 20 } }),
     fileUrl: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    lastModified: faker.date.past().toISOString().slice(0, 19) + 'Z',
-    size: faker.number.int(),
+    lastModified: faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + 'Z',
+      null,
+    ]),
+    size: faker.helpers.arrayElement([faker.number.int(), null]),
   })),
   ...overrideResponse,
 })
