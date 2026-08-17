@@ -1,0 +1,6 @@
+Fallback app icon artwork for missing covers
+Search suggestions with distinct values
+Render text duplicate only when it doesn't fit
+Support chapter/verse ranges and lists from API 0.15.1
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
