@@ -35,7 +35,7 @@ export const useMarqueeAnimation = (
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
-    width: textWidth.value > 0 ? textWidth.value * 2 + REPEAT_SPACER : undefined,
+    width: needsMarquee.value ? textWidth.value * 2 + REPEAT_SPACER : textWidth.value || undefined,
   }))
 
   const startIdleMarquee = () => {

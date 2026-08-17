@@ -31,7 +31,7 @@ export const MarqueeText = ({
   text,
   textStyle,
 }: MarqueeTextProps) => {
-  const [started, setStarted] = useState(false)
+  const [needsRepeat, setNeedsRepeat] = useState(false)
 
   const containerWidth = useSharedValue(0)
   const textWidth = useSharedValue(0)
@@ -49,23 +49,27 @@ export const MarqueeText = ({
 
   const pan = createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee)
 
+  const evaluateNeedsRepeat = (containerW: number, textW: number) => {
+    const next =
+      containerW > 0 &&
+      textW > 0 &&
+      shouldMarquee(text.length, Math.max(0, textW - containerW), animationThreshold)
+    setNeedsRepeat(next)
+  }
+
   const handleContainerLayout = (e: LayoutChangeEvent) => {
     // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in layout callback
     containerWidth.value = e.nativeEvent.layout.width
-    if (!started && containerWidth.value > 0 && textWidth.value > 0) {
-      setStarted(true)
-      scheduleOnUI(startIdleMarquee)
-    }
+    evaluateNeedsRepeat(containerWidth.value, textWidth.value)
+    scheduleOnUI(startIdleMarquee)
   }
 
   const handleTextLayout = (e: TextLayoutEvent) => {
     const lines = e.nativeEvent.lines
     // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in layout callback
     textWidth.value = lines.length > 0 ? lines[0].width : 0
-    if (!started && containerWidth.value > 0 && textWidth.value > 0) {
-      setStarted(true)
-      scheduleOnUI(startIdleMarquee)
-    }
+    evaluateNeedsRepeat(containerWidth.value, textWidth.value)
+    scheduleOnUI(startIdleMarquee)
   }
 
   if (!text) return null
@@ -77,10 +81,14 @@ export const MarqueeText = ({
           <Text numberOfLines={1} style={textStyle}>
             {text}
           </Text>
-          <View style={{ width: REPEAT_SPACER }} />
-          <Text numberOfLines={1} style={textStyle}>
-            {text}
-          </Text>
+          {needsRepeat && (
+            <>
+              <View style={{ width: REPEAT_SPACER }} />
+              <Text numberOfLines={1} style={textStyle}>
+                {text}
+              </Text>
+            </>
+          )}
         </Animated.View>
       </GestureDetector>
       <Text
