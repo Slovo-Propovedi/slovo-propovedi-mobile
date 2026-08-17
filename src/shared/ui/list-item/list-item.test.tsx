@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { IMAGE_PLACEHOLDER } from '../images'
 import { ListItem } from '../list-item/list-item'
 
 const titleStub = 'test'
@@ -32,5 +33,13 @@ describe('<TouchableListItem>', () => {
 
     expect(preview).not.toBeNull()
     expect(preview?.type).toEqual('Image')
+  })
+
+  test('uses IMAGE_PLACEHOLDER if artwork is empty string', async () => {
+    await renderWithProviders(<ListItem data={{ artwork: '', title: titleStub }} />)
+
+    const preview = screen.getByTestId('preview')
+
+    expect(preview.props.source).toEqual({ uri: IMAGE_PLACEHOLDER })
   })
 })

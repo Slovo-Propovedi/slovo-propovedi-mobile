@@ -18,6 +18,7 @@
 ## Audio player
 
 - [ ] **`TrackAutoAdvanceService.ts` и `TracksListItem.tsx` отключены от лимита строк через `eslint-disable max-lines`** — `src/entities/player/lib/PlayerService/TrackAutoAdvanceService.ts`, `src/shared/ui/track-list/TracksListItem.tsx` — FIXME: refactor. Разбить на подмодули и убрать `eslint-disable`.
+- [ ] **Fire-and-forget `downloadAsync` иконки-фолбэка может опоздать к первому `setMetadata`.** `src/shared/lib/app-icon.ts`, `src/entities/player/lib/PlayerService/LockScreenControls.ts` — до завершения загрузки lock screen/уведомление создаётся без артворка (следующий `setMetadata` поправит). Вернуться, если понадобится гарантированный артворк с первого показа (дождаться загрузки при инициализации плеера или ретраить `setMetadata`).
 
 ## Read tab / FB2 reader
 

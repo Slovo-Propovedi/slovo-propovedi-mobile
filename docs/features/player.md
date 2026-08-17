@@ -103,6 +103,8 @@
 
 `playerService.setLockScreenMetadata({ albumTitle, artist, artworkUrl, title })` → `LockScreenControls.setMetadata` → `player.setActiveForLockScreen(true, metadata, { isLiveStream: false, showSeekBackward, showSeekForward })`. Скипается в Expo Go (`isExpoGo`).
 
+Artwork резолвится с фолбэком: `artworkUrl = metadata.artworkUrl || getLocalAppIconUri() || undefined` — приоритет artwork трека, затем локальная иконка приложения (`getLocalAppIconUri` из `src/shared/lib/app-icon.ts`: ассет `assets/fallback-artwork.png` через `Asset.fromModule(...)` + `downloadAsync()` → `file://` uri), иначе — без артворка. Пустая строка никогда не уходит в натив: на Android `URL('')` даёт `MalformedURLException` и роняет весь `setActiveForLockScreen` — плеер в панели уведомлений/lock screen не создавался (главный симптом бага), на iOS уведомление показывалось без артворка. Ограничение: `downloadAsync` — fire-and-forget, поэтому до его завершения уведомление может создаться без артворка; следующий `setMetadata` поправит.
+
 ## Персистенция позиции
 
 Каждые 5с в `app/_RootLayout.tsx` (`setInterval(savePosition, 5000)`): при не-воспроизведении пишет `CURRENT_SOUND_POSITION` в AsyncStorage.

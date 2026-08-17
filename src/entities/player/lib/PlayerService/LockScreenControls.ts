@@ -1,4 +1,5 @@
 import { type AudioPlayer } from 'expo-audio'
+import { getLocalAppIconUri } from 'shared/lib/app-icon'
 import { isExpoGo } from 'shared/lib/isExpoEnvironment'
 import type { LockScreenMetadata } from './types'
 
@@ -6,13 +7,19 @@ class LockScreenControls {
   public setMetadata = (player: AudioPlayer | null, metadata: LockScreenMetadata): void => {
     if (!player?.isLoaded) return
 
+    const artworkUrl = metadata.artworkUrl || getLocalAppIconUri() || undefined
+
     // Skip lock screen controls in Expo Go - native audio services may not be properly initialized
     if (!isExpoGo)
-      player.setActiveForLockScreen(true, metadata, {
-        isLiveStream: false,
-        showSeekBackward: true,
-        showSeekForward: true,
-      })
+      player.setActiveForLockScreen(
+        true,
+        { ...metadata, artworkUrl },
+        {
+          isLiveStream: false,
+          showSeekBackward: true,
+          showSeekForward: true,
+        },
+      )
   }
 
   public clear = (player: AudioPlayer | null): void => {

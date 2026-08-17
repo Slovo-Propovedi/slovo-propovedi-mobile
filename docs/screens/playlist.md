@@ -6,13 +6,13 @@
 
 ## Что делает
 
-Показывает один плейлист: обложку, название, описание, кнопку «Слушать всё» и список треков (проповедей). Поддерживает скачивание плейлиста целиком через контекст-меню.
+Показывает один плейлист: обложку (при отсутствии artwork — фолбэк-обложка иконкой приложения, `IMAGE_PLACEHOLDER`), название, описание, кнопку «Слушать всё» и список треков (проповедей). Поддерживает скачивание плейлиста целиком через контекст-меню.
 
 ## Что показывается
 
-- Схлопывающаяся шапка (`PlaylistHeader`, `src/pages/playlist/ui/PlaylistHeader.tsx` + `useCollapsingHeader` из `src/pages/playlist/lib/useCollapsingHeader.ts`).
+- Схлопывающаяся шапка (`PlaylistHeader`, `src/pages/playlist/ui/PlaylistHeader.tsx` + `useCollapsingHeader` из `src/pages/playlist/lib/useCollapsingHeader.ts`). Обложка шапки — `artwork || IMAGE_PLACEHOLDER` (фолбэк иконкой приложения).
 - Кнопка «Слушать всё» (`PlaylistHeader` → `handlePressPlayAll`).
-- Список треков `TracksList`/`PlaylistTrackItem` (`src/pages/playlist/ui/PlaylistTrackItem.tsx`) с иконками «играет»/«кэш» и контекст-меню. Под заголовком каждого трека — подпись «книга глава:стихи» (например «Бытие 1:1-5»); автор в списке не показывается — он вынесен в оверлей «Подробнее» полноэкранного плеера. Формируется через `formatSermonReference` из `src/shared/lib/format/formatSermonReference.ts`; в ходе миграции на спецификацию API v0.15.1 форматтер расширяется на диапазоны глав/стихов (см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи»).
+- Список треков `TracksList`/`PlaylistTrackItem` (`src/pages/playlist/ui/PlaylistTrackItem.tsx`) с иконками «играет»/«кэш» и контекст-меню; обложка трека рендерится через `TracksListItem` (`shared/ui/track-list`) с фолбэком `IMAGE_PLACEHOLDER` при отсутствии artwork. Под заголовком каждого трека — подпись «книга глава:стихи» (например «Бытие 1:1-5»); автор в списке не показывается — он вынесен в оверлей «Подробнее» полноэкранного плеера. Формируется через `formatSermonReference` из `src/shared/lib/format/formatSermonReference.ts`; в ходе миграции на спецификацию API v0.15.1 форматтер расширяется на диапазоны глав/стихов (см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи»).
 - Индикаторы скачивания: прогресс плейлиста, системные уведомления (`src/pages/playlist/lib/PlaylistCacheNotifications.ts`, `notificationConstants.ts`).
 - Статус-бар и цвет иконок шапки адаптируются к скроллу (`usePlaylistHeader`, `usePlaylistNavigationOptions`).
 

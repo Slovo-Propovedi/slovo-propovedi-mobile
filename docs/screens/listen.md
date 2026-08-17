@@ -10,7 +10,7 @@
 
 ## Что показывается
 
-- Вертикальный список секций; каждая секция рендерится через `renderSection` (`src/pages/listen/ui/renderSection.tsx`) в компонент `Slider` (заголовок секции + горизонтальный слайдер плейлистов с обложками).
+- Вертикальный список секций; каждая секция рендерится через `renderSection` (`src/pages/listen/ui/renderSection.tsx`) в компонент `Slider` (заголовок секции + горизонтальный слайдер плейлистов с обложками). У плейлиста без `artwork` карточка слайдера показывает фолбэк-обложку — иконку приложения (`IMAGE_PLACEHOLDER` из `src/shared/ui/images.ts`).
 - Параметры отображения секции (размер слайдов, трансформация, строки, скругление) приходят с сервера и мапятся в `src/pages/listen/lib/` (`mapItemsSize.ts`, `mapTransform.ts`, `mapWhereIsTitleLocated.ts`).
 - Тап на заголовок секции («показать все») открывает список плейлистов секции.
 
@@ -32,7 +32,7 @@
 - Кнопка «✕» (`Очистить поиск`) видна всегда, пока открыт поиск:
   - запрос непустой → `resetSearchResults` (сброс `searchResultsAtom`/`isSearchingAtom` + инвалидация in-flight запросов через bump `latestRequestId`) и очистка поля (секции возвращаются, поиск остаётся открытым, фокус сохраняется);
   - запрос пустой → закрывает поиск целиком (`closeSearch`, клавиатура скрывается).
-- `SermonSearchResults` (`src/features/sermon-search/ui/SermonSearchResults.tsx`) — рендерится вместо секций, когда поиск открыт и `useIsSearchActive()` истинно (длина обрезанного запроса `≥ MIN_QUERY_LENGTH = 2`). `FlatList` строк `SermonSearchRow` (обложка, заголовок жирным, артист, книга+глава+стих через `formatScripture`); пустое состояние/спиннер — `ListEmptyComponent`. В ходе миграции на спецификацию API v0.15.1 `formatScripture` расширяется на диапазоны глав/стихов (см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи»). Строка поиска **не входит** в список: она закреплена над скролл-областью на уровне экрана (`ListenScreen.tsx`), а список скроллится под ней.
+- `SermonSearchResults` (`src/features/sermon-search/ui/SermonSearchResults.tsx`) — рендерится вместо секций, когда поиск открыт и `useIsSearchActive()` истинно (длина обрезанного запроса `≥ MIN_QUERY_LENGTH = 2`). `FlatList` строк `SermonSearchRow` (обложка — при отсутствии artwork фолбэк иконкой приложения `IMAGE_PLACEHOLDER` — заголовок жирным, артист, книга+глава+стих через `formatScripture`); пустое состояние/спиннер — `ListEmptyComponent`. В ходе миграции на спецификацию API v0.15.1 `formatScripture` расширяется на диапазоны глав/стихов (см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи»). Строка поиска **не входит** в список: она закреплена над скролл-областью на уровне экрана (`ListenScreen.tsx`), а список скроллится под ней.
 - Тап по результату запускает воспроизведение: `usePlayNewSermon` из `entities/player` с `resolvePlaylist(sermon)` (первый плейлист проповеди или минимальный fallback из полей самой проповеди).
 
 ### Подсказки (автодополнение)

@@ -80,4 +80,7 @@ async function main() {
   console.log(`Opaque (white) pixels in result: ${opaqueCount} (${(opaqueCount / totalPixels * 100).toFixed(1)}%)`)
 }
 
-main().catch(console.error)
+main().catch(error => {
+  console.error(error)
+  process.exitCode = 1
+})

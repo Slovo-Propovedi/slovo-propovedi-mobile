@@ -1,5 +1,7 @@
 import { createCtx } from '@reatom/framework'
+import { screen } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks'
+import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import type { SermonData } from 'shared/model'
 import { isSearchingAtom, searchQueryAtom, searchResultsAtom } from '../model'
 import { SermonSearchResults } from './SermonSearchResults'
@@ -52,6 +54,21 @@ const renderWithQuery = async (query: string) => {
   return renderWithProviders(<SermonSearchResults />, { ctx })
 }
 
+const findImageSource = (node: Record<string, unknown>): string | undefined => {
+  if (!node || typeof node !== 'object') return undefined
+  const nodeProps = node.props as Record<string, unknown> | undefined
+  if (node.type === 'Image' && nodeProps && 'source' in nodeProps)
+    return (nodeProps.source as { uri?: string }).uri
+
+  const children = node.children
+  if (Array.isArray(children))
+    for (const child of children) {
+      const result = findImageSource(child as Record<string, unknown>)
+      if (result) return result
+    }
+  return undefined
+}
+
 describe('<SermonSearchResults>', () => {
   test('renders the list of found sermons', async () => {
     const ctx = createCtx()
@@ -88,5 +105,16 @@ describe('<SermonSearchResults>', () => {
     const { queryByText } = await renderWithProviders(<SermonSearchResults />, { ctx })
 
     expect(queryByText(SERMON_TITLE)).toBeNull()
+  })
+
+  test('uses IMAGE_PLACEHOLDER when a sermon has no artwork', async () => {
+    const ctx = createCtx()
+    searchQueryAtom(ctx, ACTIVE_QUERY)
+    searchResultsAtom(ctx, [{ ...sermons[0], artwork: '' }])
+    await renderWithProviders(<SermonSearchResults />, { ctx })
+
+    const tree = screen.toJSON()
+    expect(tree && !Array.isArray(tree)).toBe(true)
+    expect(findImageSource(tree as unknown as Record<string, unknown>)).toEqual(IMAGE_PLACEHOLDER)
   })
 })

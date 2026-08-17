@@ -11,7 +11,7 @@
 ## Что показывается
 
 - Схлопывающаяся шапка с заголовком секции (`useCollapsingHeader` из `src/pages/playlist-list/lib/useCollapsingHeader.ts` + `useCollapsingNavbarDriver` из `shared/ui/collapsing-navbar-driver`).
-- Вертикальный список плейлистов — `PlaylistListItem` (`src/pages/playlist-list/ui/PlaylistListItem.tsx`): обложка, название, описание (одна строка каждое).
+- Вертикальный список плейлистов — `PlaylistListItem` (`src/pages/playlist-list/ui/PlaylistListItem.tsx`): обложка (при отсутствии artwork — фолбэк иконкой приложения), название, описание (одна строка каждое).
 
 ## Откуда данные
 

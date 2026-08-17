@@ -1,6 +1,7 @@
 import { Image, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../config/screen-dimensions'
+import { IMAGE_PLACEHOLDER } from '../images'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from '../themed'
 import { ListItemSize } from './list-item.types'
 
@@ -34,7 +35,11 @@ export const ListItem: ListItemComponent = ({
             .exhaustive(),
         ]}
       >
-        <Image testID='preview' style={styles.preview} source={{ uri: artwork }} />
+        <Image
+          testID='preview'
+          style={styles.preview}
+          source={{ uri: artwork || IMAGE_PLACEHOLDER }}
+        />
       </View>
       <View style={styles.textsContainer}>
         <Text testID='title' style={[styles.listItemTitle, { color: currentTheme.text }]}>
