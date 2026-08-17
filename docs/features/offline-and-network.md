@@ -60,13 +60,25 @@
 
 `useOfflineRetry` для поиска **не** используется (нет UI-индикатора источника данных — см. `docs/debt.md`).
 
+## Кэш подсказок поиска
+
+`src/features/sermon-search/lib/distinctValuesCache.ts` — `getCachedDistinctValues` / `setCachedDistinctValues` над ключом `cachedDistinctValues` (`CACHED_DISTINCT_VALUES` в `src/shared/config/cache-storage-keys.ts`) с zod-схемой `distinctValuesSchema` (`{ artists: string[], books: string[] }`); невалидный кэш на чтении трактуется как отсутствующий. Универсальные обёртки — `src/shared/lib/cache/` (`getCachedJson` / `setCachedJson`).
+
+Поток `fetchDistinctValues` (`src/features/sermon-search/model-distinctValues.ts`):
+
+1. однократный запрос `sermonsApi.getSermons().sermonControllerGetDistinctValues()` при открытии поиска (повторные сессии не перезапрашивают: guard `distinctValuesAtom !== null` + in-flight guard + `requestId` от stale-ответов);
+2. успешный сетевой ответ пишется в кэш (fire-and-forget `setCachedDistinctValues`);
+3. при сетевой ошибке — чтение кэша (`getCachedDistinctValues`); кэша нет — подсказки тихо не показываются (ошибки логируются `console.error` и не ломают существующий поиск).
+
+`useOfflineRetry` для подсказок **не** используется (однократная загрузка на сессию поиска).
+
 ## Кэш аудио
 
 Офлайн-прослушивание обеспечивает кэш аудио — [audio-cache.md](./audio-cache.md). При старте трека `AudioLoader` сначала берёт закэшированный файл, иначе стартует фоновое кэширование.
 
 ## Поток: offline ↔ online
 
-- **Offline:** `NetInfo` → `isOnlineAtom = false` → показывается `NetworkBanner`; API-вызовы падают с сетевой ошибкой → `reportServerUnreachable` → `ServerErrorToast`; `fetchAllSections` показывает кэш секций; поиск проповедей показывает per-query кэш (`cachedSermonSearch:<query>`), если он есть; аудио играет из кэша.
+- **Offline:** `NetInfo` → `isOnlineAtom = false` → показывается `NetworkBanner`; API-вызовы падают с сетевой ошибкой → `reportServerUnreachable` → `ServerErrorToast`; `fetchAllSections` показывает кэш секций; поиск проповедей показывает per-query кэш (`cachedSermonSearch:<query>`), если он есть; подсказки поиска берутся из кэша `cachedDistinctValues`, если он есть (иначе скрываются); аудио играет из кэша.
 - **Online:** `isOnlineAtom = true` → баннер скрывается; `useOfflineRetry` немедленно перезапрашивает данные; успешные ответы → `reportServerReachable`; поиск пишет свежие результаты в кэш.
 
 ### Различие баннера и тоста

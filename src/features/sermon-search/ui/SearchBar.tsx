@@ -1,9 +1,12 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
-import { useEffect, useRef, useState } from 'react'
-import { Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { useEffect, useState } from 'react'
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
 import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
+import { useSearchAutofocus } from '../lib/useSearchAutofocus'
 import { closeSearch, resetSearchResults, searchQueryAtom } from '../model'
+import { fetchDistinctValues } from '../model-distinctValues'
+import { SearchSuggestions } from './SearchSuggestions'
 
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
 const CLEAR_LABEL = 'Очистить поиск'
@@ -17,39 +20,26 @@ export const SearchBar = () => {
   // landing) can never push a stale query back. Seeded from the atom at mount.
   const [inputValue, setInputValue] = useState(() => ctx.get(searchQueryAtom))
   const [isFocused, setIsFocused] = useState(false)
-  const inputRef = useRef<TextInput>(null)
-  const hasFocusedOnMount = useRef(false)
+  const [hasSelectedSuggestion, setHasSelectedSuggestion] = useState(false)
+  const inputRef = useSearchAutofocus()
   const closeSearchAction = useAction(closeSearch)
   const resetSearchResultsAction = useAction(resetSearchResults)
+  const fetchDistinctValuesAction = useAction(fetchDistinctValues)
 
   useEffect(() => {
-    if (Platform.OS === 'web') return
-
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      // A hide left over from a previous dismissal can arrive right after
-      // mount and would kill the autofocus — ignore it until focus is applied.
-      if (!hasFocusedOnMount.current) return
-      inputRef.current?.blur()
-      setIsFocused(false)
-    })
-
-    return () => hideSubscription.remove()
-  }, [])
-
-  // Focus one frame after mount: on Android a focus request issued before the
-  // bar is laid out is dropped, so the keyboard never appears.
-  useEffect(() => {
-    const focusFrame = requestAnimationFrame(() => {
-      inputRef.current?.focus()
-      hasFocusedOnMount.current = true
-    })
-
-    return () => cancelAnimationFrame(focusFrame)
-  }, [])
+    void fetchDistinctValuesAction()
+  }, [fetchDistinctValuesAction])
 
   const handleChangeText = (text: string) => {
     setInputValue(text)
     setQuery(text)
+    setHasSelectedSuggestion(false)
+  }
+
+  const handleSelectSuggestion = (value: string) => {
+    setInputValue(value)
+    setQuery(value)
+    setHasSelectedSuggestion(true)
   }
 
   const handleClear = () => {
@@ -96,6 +86,13 @@ export const SearchBar = () => {
       >
         <Text style={[styles.clearIcon, { color: currentTheme.textMuted }]}>{CLEAR_SYMBOL}</Text>
       </Pressable>
+      {!hasSelectedSuggestion && (
+        <SearchSuggestions
+          query={inputValue}
+          isFocused={isFocused}
+          onSelect={handleSelectSuggestion}
+        />
+      )}
     </View>
   )
 }

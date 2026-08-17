@@ -62,14 +62,14 @@ generated/
 
 ## Карта использования эндпоинтов
 
-Из 35 функций-обёрток сгенерированного клиента в рантайме **реально вызываются три** — `sectionControllerFindAll`, `sermonControllerFindAll` и `authControllerRefresh`. Остальные определены «на вырост» и не задействованы.
+Из 35 функций-обёрток сгенерированного клиента в рантайме **реально вызываются четыре** — `sectionControllerFindAll`, `sermonControllerFindAll`, `authControllerRefresh` и `sermonControllerGetDistinctValues`. Остальные определены «на вырост» и не задействованы.
 
 | Модуль    | Функция                                                                                        | Эндпоинт                                          | Статус          | Где используется                                                                                                               |
 | --------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | sections  | `sectionControllerFindAll`                                                                     | `GET /section`                                    | ✅ используется | `src/pages/listen/model.ts:22` (главный экран, `fetchAllSections`, online-first с фолбэком на кэш `shared/lib/sections-cache`) |
 | sermons   | `sermonControllerFindAll`                                                                      | `GET /sermons` (`{search, take}`)                 | ✅ используется | `src/features/sermon-search/model.ts:61` — `fetchSearchResults` (online-first + per-query кэш, см. [offline-and-network.md](../features/offline-and-network.md)) |
 | auth      | `authControllerRefresh`                                                                        | `POST /auth/refresh`                              | ✅ используется | `src/shared/api/axiosInstance.ts:22` — `performTokenRefresh` (интерцептор на 401, guard `isRefreshRequest`)                    |
-| sermons   | `sermonControllerGetDistinctValues`                                                            | `GET /sermons/distinct-values`                    | ❌ новый, не используется | возвращает `SermonDistinctValuesResponse` (`{artists, books}`) — кандидат для автодополнения; сейчас нигде не вызывается       |
+| sermons   | `sermonControllerGetDistinctValues`                                                            | `GET /sermons/distinct-values`                    | ✅ используется | возвращает `SermonDistinctValuesResponse` (`{artists, books}`); автодополнение в поиске проповедей — `src/features/sermon-search/model-distinctValues.ts`: однократная загрузка при открытии поиска, клиентская фильтрация, кэш `cachedDistinctValues` |
 | auth      | `authControllerSignIn`                                                                         | `POST /auth/login`                                | ❌ мёртвый      | UI логина отсутствует                                                                                                          |
 | auth      | `authControllerLogout`                                                                         | `POST /auth/logout`                               | ❌ мёртвый      | нет выхода из системы                                                                                                          |
 | auth      | `authControllerGetProfile`                                                                     | `GET /auth/profile`                               | ❌ мёртвый      | —                                                                                                                              |
@@ -82,7 +82,7 @@ generated/
 | files     | `appControllerUploadFile`, `getFiles`, `appControllerGetStreamUrl`, `appControllerGetFile`     | `/files*`                                         | ❌ мёртвые      | нет UI загрузки файлов                                                                                                         |
 | basic     | `healthControllerCheck`                                                                        | `GET /health`                                     | ❌ мёртвый      | фабрика `getBasic` не реэкспортирована                                                                                         |
 
-> **Итог:** приложение работает на **трёх сетевых эндпоинтах** (`GET /section`, `GET /sermons` для поиска, `POST /auth/refresh`) + локальной БД для раздела книг (см. [local-db.md](./local-db.md)). Весь остальной CRUD-клиент заведён «на вырост».
+> **Итог:** приложение работает на **четырёх сетевых эндпоинтах** (`GET /section`, `GET /sermons` для поиска, `GET /sermons/distinct-values` для подсказок поиска, `POST /auth/refresh`) + локальной БД для раздела книг (см. [local-db.md](./local-db.md)). Весь остальной CRUD-клиент заведён «на вырост».
 
 ## Мёртвый код
 

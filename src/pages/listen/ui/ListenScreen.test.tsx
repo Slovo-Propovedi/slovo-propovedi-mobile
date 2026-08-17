@@ -26,6 +26,7 @@ jest.mock('shared/api', () => ({
   sermonsApi: {
     getSermons: () => ({
       sermonControllerFindAll: jest.fn(),
+      sermonControllerGetDistinctValues: jest.fn().mockResolvedValue({ artists: [], books: [] }),
     }),
   },
 }))

@@ -4,6 +4,7 @@ import { Keyboard, TextInput } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
 import type { SermonData } from 'shared/model'
 import { isSearchingAtom, isSearchOpenAtom, searchQueryAtom, searchResultsAtom } from '../model'
+import { distinctValuesAtom } from '../model-distinctValues'
 import { SearchBar } from './SearchBar'
 import '@testing-library/jest-native/extend-expect'
 
@@ -12,12 +13,18 @@ jest.mock('shared/api', () => ({
   sermonsApi: {
     getSermons: () => ({
       sermonControllerFindAll: jest.fn(),
+      sermonControllerGetDistinctValues: jest.fn().mockResolvedValue({ artists: [], books: [] }),
     }),
   },
 }))
 
 const CLEAR_LABEL = 'Очистить поиск'
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
+const IVAN_ZLATOUST = 'Иван Златоуст'
+const DISTINCT_VALUES = {
+  artists: [IVAN_ZLATOUST, 'Иоанн Кронштадтский'],
+  books: ['Матфея', 'Иоанна'],
+}
 
 const flushAnimationFrame = async () => {
   await act(async () => {
@@ -143,6 +150,26 @@ describe('<SearchBar>', () => {
     const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
 
     expect(getByLabelText(CLEAR_LABEL)).toBeTruthy()
+  })
+
+  test('shows suggestions again after typing a new query following a selection', async () => {
+    const ctx = createCtx()
+    distinctValuesAtom(ctx, DISTINCT_VALUES)
+    const { getByPlaceholderText, getByRole, queryByRole } = await renderWithProviders(
+      <SearchBar />,
+      { ctx },
+    )
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+    await fireEvent.changeText(input, 'иван')
+    await fireEvent.press(getByRole('button', { name: /Иван Златоуст/ }))
+    expect(queryByRole('button', { name: /Иван Златоуст/ })).toBeNull()
+
+    await fireEvent.changeText(input, 'мат')
+    expect(getByRole('button', { name: /Матфея/ })).toBeTruthy()
   })
 
   test('blurs the input when the keyboard hides', async () => {

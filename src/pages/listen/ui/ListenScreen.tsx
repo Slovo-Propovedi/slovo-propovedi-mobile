@@ -54,5 +54,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     height: SEARCH_HEADER_HEIGHT,
+    zIndex: 1,
   },
 })
