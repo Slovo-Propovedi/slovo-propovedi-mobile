@@ -38,13 +38,13 @@ interface SermonDataDef {
   artwork: string
   audioUrl?: null | string | undefined
   book?: null | string | undefined
-  chapter?: null | number | undefined
+  chapter?: null | number | number[] | undefined
   description?: string | undefined
   id: string
   playlists?: PlaylistDataDef[] | undefined
   textFileUrl?: null | string | undefined
   title: string
-  verse?: null | number | number[] | undefined
+  verse?: (number | number[])[] | null | number | number[] | undefined
   youtubeUrl?: null | string | undefined
 }
 
@@ -71,16 +71,15 @@ export const sermonSchema = z.object({
   artwork: z.string(),
   audioUrl: z.string().nullable().optional(),
   book: z.string().nullish(),
-  chapter: z.number().nullish(),
+  chapter: z.union([z.number(), z.array(z.number())]).nullish(),
   description: z.string().optional(),
   id: z.string(),
   playlists: z.lazy((): z.ZodType<PlaylistDataDef[]> => z.array(playlistSchema)).optional(),
   textFileUrl: z.string().nullable().optional(),
   title: z.string(),
   verse: z
-    .union([z.number(), z.array(z.number())])
-    .nullable()
-    .optional(),
+    .union([z.number(), z.array(z.number()), z.array(z.union([z.number(), z.array(z.number())]))])
+    .nullish(),
   youtubeUrl: z.string().nullable().optional(),
 })
 

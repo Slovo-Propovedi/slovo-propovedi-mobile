@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.8.1
+ * OpenAPI spec version: 0.15.1
  */
 export interface HealthResponse {
   status: string
@@ -120,8 +120,7 @@ export interface PlaylistSermon {
   audioUrl: string | null
   /** @nullable */
   book: string | null
-  /** @nullable */
-  chapter: number | null
+  chapter: number | number[] | null
   description: string
   id: string
   playlists: PlaylistSermonPlaylistsItem[]
@@ -129,7 +128,8 @@ export interface PlaylistSermon {
   /** @nullable */
   textFileUrl: string | null
   title: string
-  verse: number | number[] | null
+  /** Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20). */
+  verse: number | number[] | (number | number[])[] | null
   /** @nullable */
   youtubeUrl: string | null
 }
@@ -176,15 +176,15 @@ export interface SermonEntity {
   audioUrl: string | null
   /** @nullable */
   book: string | null
-  /** @nullable */
-  chapter: number | null
+  chapter: number | number[] | null
   description: string
   id: string
   playlists: PlaylistEntity[]
   /** @nullable */
   textFileUrl: string | null
   title: string
-  verse: number | number[] | null
+  /** Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20). */
+  verse: number | number[] | (number | number[])[] | null
   /** @nullable */
   youtubeUrl: string | null
 }
@@ -286,15 +286,15 @@ export interface CreateSermonDto {
   audioUrl: string | null
   /** @nullable */
   book: string | null
-  /** @nullable */
-  chapter: number | null
+  chapter?: number | number[] | null
   /** @nullable */
   description: string | null
   playlistsIds?: string[]
   /** @nullable */
   textFileUrl: string | null
   title: string
-  verse: number | number[] | null
+  /** Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20). */
+  verse?: number | number[] | (number | number[])[] | null
   /** @nullable */
   youtubeUrl: string | null
 }
@@ -307,6 +307,14 @@ export interface AllSermonsResponse {
   sermons: SermonEntity[]
 }
 
+/**
+ * Списки уникальных значений проповедников и книг
+ */
+export interface SermonDistinctValuesResponse {
+  artists: string[]
+  books: string[]
+}
+
 export interface UpdateSermonDto {
   artist: string
   artwork: string
@@ -314,15 +322,15 @@ export interface UpdateSermonDto {
   audioUrl: string | null
   /** @nullable */
   book: string | null
-  /** @nullable */
-  chapter: number | null
+  chapter?: number | number[] | null
   /** @nullable */
   description: string | null
   playlistsIds: string[]
   /** @nullable */
   textFileUrl: string | null
   title: string
-  verse: number | number[] | null
+  /** Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20). */
+  verse?: number | number[] | (number | number[])[] | null
   /** @nullable */
   youtubeUrl: string | null
 }
@@ -355,6 +363,11 @@ export interface UserResponse {
   role: UserRole
   /** Имя пользователя для входа в систему */
   username: string
+}
+
+export interface AllUsersResponse {
+  count: number
+  users: UserResponse[]
 }
 
 export interface CreateUserRequest {
@@ -401,6 +414,25 @@ export type AppControllerUploadFileBody = {
   file?: Blob
 }
 
+export type PlaylistControllerFindAllParams = {
+  /**
+   * Поисковый запрос по названию и описанию
+   * @minLength 1
+   */
+  search?: string
+  /**
+   * Номер страницы для оффсетной пагинации
+   * @minimum 1
+   */
+  page?: number
+  /**
+   * Размер страницы; если указан без page, используется первая страница
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number
+}
+
 export type SermonControllerFindAllParams = {
   /**
    * @minimum 1
@@ -413,4 +445,29 @@ export type SermonControllerFindAllParams = {
    * @minLength 1
    */
   search?: string
+  /**
+   * Номер страницы для оффсетной пагинации; взаимоисключителен с take и cursor (одновременное использование → 400)
+   * @minimum 1
+   */
+  page?: number
+  /**
+   * Размер страницы; если указан без page, используется первая страница; взаимоисключителен с take и cursor (одновременное использование → 400)
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number
+}
+
+export type UsersControllerFindAllParams = {
+  /**
+   * Номер страницы для оффсетной пагинации
+   * @minimum 1
+   */
+  page?: number
+  /**
+   * Размер страницы; если указан без page, используется первая страница
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number
 }

@@ -5,30 +5,40 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.8.1
+ * OpenAPI spec version: 0.15.1
  */
 import { faker } from '@faker-js/faker'
 
 import { UserRole } from '../api.schemas'
-import type { UserResponse } from '../api.schemas'
+import type { AllUsersResponse, UserResponse } from '../api.schemas'
 
-export const getUsersControllerFindAllResponseMock = (): UserResponse[] =>
-  Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
+export const getUsersControllerFindAllResponseMock = (
+  overrideResponse: Partial<Extract<AllUsersResponse, object>> = {},
+): AllUsersResponse => ({
+  count: faker.number.int(),
+  users: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
     email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     id: faker.string.alpha({ length: { min: 10, max: 20 } }),
     name: faker.string.alpha({ length: { min: 10, max: 20 } }),
     role: faker.helpers.arrayElement(Object.values(UserRole)),
     username: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  }))
+  })),
+  ...overrideResponse,
+})
 
-export const getUsersControllerFindAllResponseMock200 = (): UserResponse[] =>
-  Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
+export const getUsersControllerFindAllResponseMock200 = (
+  overrideResponse: Partial<Extract<AllUsersResponse, object>> = {},
+): AllUsersResponse => ({
+  count: faker.number.int(),
+  users: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
     email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     id: faker.string.alpha({ length: { min: 10, max: 20 } }),
     name: faker.string.alpha({ length: { min: 10, max: 20 } }),
     role: faker.helpers.arrayElement(Object.values(UserRole)),
     username: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  }))
+  })),
+  ...overrideResponse,
+})
 
 export const getUsersControllerCreateResponseMock = (
   overrideResponse: Partial<Extract<UserResponse, object>> = {},

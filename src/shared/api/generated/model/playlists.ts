@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.8.1
+ * OpenAPI spec version: 0.15.1
  */
 import * as zod from 'zod'
 
@@ -23,11 +23,23 @@ export const PlaylistControllerCreateBody = zod.object({
 export const playlistControllerCreate200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const playlistControllerCreate200ResponseSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const playlistControllerCreate200ResponseSectionsItemBorderRadiusDefault = false
+export const playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMin = 2
+export const playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMax = 2
+
 export const playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin = 2
 export const playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax = 2
 
+export const playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMin = 2
+export const playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMax = 2
+
+export const playlistControllerCreate200ResponseSermonsItemChapterTwoMin = 2
+export const playlistControllerCreate200ResponseSermonsItemChapterTwoMax = 2
+
 export const playlistControllerCreate200ResponseSermonsItemVerseTwoMin = 2
 export const playlistControllerCreate200ResponseSermonsItemVerseTwoMax = 2
+
+export const playlistControllerCreate200ResponseSermonsItemVerseThreeItemTwoMin = 2
+export const playlistControllerCreate200ResponseSermonsItemVerseThreeItemTwoMax = 2
 
 export const PlaylistControllerCreate200Response = zod.object({
   id: zod.string(),
@@ -78,19 +90,49 @@ export const PlaylistControllerCreate200Response = zod.object({
               artist: zod.string(),
               artwork: zod.string(),
               book: zod.string().nullable(),
-              chapter: zod.int().nullable(),
-              verse: zod.union([
+              chapter: zod.union([
                 zod.int(),
                 zod
                   .array(zod.int())
                   .min(
-                    playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
+                    playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMin,
                   )
                   .max(
-                    playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
+                    playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMax,
                   ),
                 zod.null(),
               ]),
+              verse: zod
+                .union([
+                  zod.int(),
+                  zod
+                    .array(zod.int())
+                    .min(
+                      playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
+                    )
+                    .max(
+                      playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
+                    ),
+                  zod
+                    .array(
+                      zod.union([
+                        zod.int(),
+                        zod
+                          .array(zod.int())
+                          .min(
+                            playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMin,
+                          )
+                          .max(
+                            playlistControllerCreate200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMax,
+                          ),
+                      ]),
+                    )
+                    .min(1),
+                  zod.null(),
+                ])
+                .describe(
+                  'Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20).',
+                ),
               position: zod.int(),
               playlists: zod.array(
                 zod.object({
@@ -115,15 +157,37 @@ export const PlaylistControllerCreate200Response = zod.object({
       artist: zod.string(),
       artwork: zod.string(),
       book: zod.string().nullable(),
-      chapter: zod.int().nullable(),
-      verse: zod.union([
+      chapter: zod.union([
         zod.int(),
         zod
           .array(zod.int())
-          .min(playlistControllerCreate200ResponseSermonsItemVerseTwoMin)
-          .max(playlistControllerCreate200ResponseSermonsItemVerseTwoMax),
+          .min(playlistControllerCreate200ResponseSermonsItemChapterTwoMin)
+          .max(playlistControllerCreate200ResponseSermonsItemChapterTwoMax),
         zod.null(),
       ]),
+      verse: zod
+        .union([
+          zod.int(),
+          zod
+            .array(zod.int())
+            .min(playlistControllerCreate200ResponseSermonsItemVerseTwoMin)
+            .max(playlistControllerCreate200ResponseSermonsItemVerseTwoMax),
+          zod
+            .array(
+              zod.union([
+                zod.int(),
+                zod
+                  .array(zod.int())
+                  .min(playlistControllerCreate200ResponseSermonsItemVerseThreeItemTwoMin)
+                  .max(playlistControllerCreate200ResponseSermonsItemVerseThreeItemTwoMax),
+              ]),
+            )
+            .min(1),
+          zod.null(),
+        ])
+        .describe(
+          'Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20).',
+        ),
       position: zod.int(),
       playlists: zod.array(
         zod.object({
@@ -138,14 +202,40 @@ export const PlaylistControllerCreate200Response = zod.object({
 /**
  * @summary Получить все плейлисты
  */
+
+export const playlistControllerFindAllQueryLimitMax = 100
+
+export const PlaylistControllerFindAllQueryParams = zod.object({
+  search: zod.string().min(1).optional().describe('Поисковый запрос по названию и описанию'),
+  page: zod.int().min(1).optional().describe('Номер страницы для оффсетной пагинации'),
+  limit: zod
+    .int()
+    .min(1)
+    .max(playlistControllerFindAllQueryLimitMax)
+    .optional()
+    .describe('Размер страницы; если указан без page, используется первая страница'),
+})
+
 export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemBorderRadiusDefault = false
+export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemChapterTwoMin = 2
+export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemChapterTwoMax = 2
+
 export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseTwoMin = 2
 export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseTwoMax = 2
 
+export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMin = 2
+export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMax = 2
+
+export const playlistControllerFindAll200ResponsePlaylistsItemSermonsItemChapterTwoMin = 2
+export const playlistControllerFindAll200ResponsePlaylistsItemSermonsItemChapterTwoMax = 2
+
 export const playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseTwoMin = 2
 export const playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseTwoMax = 2
+
+export const playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseThreeItemTwoMin = 2
+export const playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseThreeItemTwoMax = 2
 
 export const PlaylistControllerFindAll200Response = zod.object({
   playlists: zod.array(
@@ -202,19 +292,49 @@ export const PlaylistControllerFindAll200Response = zod.object({
                   artist: zod.string(),
                   artwork: zod.string(),
                   book: zod.string().nullable(),
-                  chapter: zod.int().nullable(),
-                  verse: zod.union([
+                  chapter: zod.union([
                     zod.int(),
                     zod
                       .array(zod.int())
                       .min(
-                        playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
+                        playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemChapterTwoMin,
                       )
                       .max(
-                        playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
+                        playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemChapterTwoMax,
                       ),
                     zod.null(),
                   ]),
+                  verse: zod
+                    .union([
+                      zod.int(),
+                      zod
+                        .array(zod.int())
+                        .min(
+                          playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
+                        )
+                        .max(
+                          playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
+                        ),
+                      zod
+                        .array(
+                          zod.union([
+                            zod.int(),
+                            zod
+                              .array(zod.int())
+                              .min(
+                                playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMin,
+                              )
+                              .max(
+                                playlistControllerFindAll200ResponsePlaylistsItemSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMax,
+                              ),
+                          ]),
+                        )
+                        .min(1),
+                      zod.null(),
+                    ])
+                    .describe(
+                      'Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20).',
+                    ),
                   position: zod.int(),
                   playlists: zod.array(
                     zod.object({
@@ -239,15 +359,41 @@ export const PlaylistControllerFindAll200Response = zod.object({
           artist: zod.string(),
           artwork: zod.string(),
           book: zod.string().nullable(),
-          chapter: zod.int().nullable(),
-          verse: zod.union([
+          chapter: zod.union([
             zod.int(),
             zod
               .array(zod.int())
-              .min(playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseTwoMin)
-              .max(playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseTwoMax),
+              .min(playlistControllerFindAll200ResponsePlaylistsItemSermonsItemChapterTwoMin)
+              .max(playlistControllerFindAll200ResponsePlaylistsItemSermonsItemChapterTwoMax),
             zod.null(),
           ]),
+          verse: zod
+            .union([
+              zod.int(),
+              zod
+                .array(zod.int())
+                .min(playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseTwoMin)
+                .max(playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseTwoMax),
+              zod
+                .array(
+                  zod.union([
+                    zod.int(),
+                    zod
+                      .array(zod.int())
+                      .min(
+                        playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseThreeItemTwoMin,
+                      )
+                      .max(
+                        playlistControllerFindAll200ResponsePlaylistsItemSermonsItemVerseThreeItemTwoMax,
+                      ),
+                  ]),
+                )
+                .min(1),
+              zod.null(),
+            ])
+            .describe(
+              'Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20).',
+            ),
           position: zod.int(),
           playlists: zod.array(
             zod.object({
@@ -272,11 +418,23 @@ export const PlaylistControllerFindOneParams = zod.object({
 export const playlistControllerFindOne200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const playlistControllerFindOne200ResponseSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const playlistControllerFindOne200ResponseSectionsItemBorderRadiusDefault = false
+export const playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMin = 2
+export const playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMax = 2
+
 export const playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin = 2
 export const playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax = 2
 
+export const playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMin = 2
+export const playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMax = 2
+
+export const playlistControllerFindOne200ResponseSermonsItemChapterTwoMin = 2
+export const playlistControllerFindOne200ResponseSermonsItemChapterTwoMax = 2
+
 export const playlistControllerFindOne200ResponseSermonsItemVerseTwoMin = 2
 export const playlistControllerFindOne200ResponseSermonsItemVerseTwoMax = 2
+
+export const playlistControllerFindOne200ResponseSermonsItemVerseThreeItemTwoMin = 2
+export const playlistControllerFindOne200ResponseSermonsItemVerseThreeItemTwoMax = 2
 
 export const PlaylistControllerFindOne200Response = zod.object({
   id: zod.string(),
@@ -327,19 +485,49 @@ export const PlaylistControllerFindOne200Response = zod.object({
               artist: zod.string(),
               artwork: zod.string(),
               book: zod.string().nullable(),
-              chapter: zod.int().nullable(),
-              verse: zod.union([
+              chapter: zod.union([
                 zod.int(),
                 zod
                   .array(zod.int())
                   .min(
-                    playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
+                    playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMin,
                   )
                   .max(
-                    playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
+                    playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMax,
                   ),
                 zod.null(),
               ]),
+              verse: zod
+                .union([
+                  zod.int(),
+                  zod
+                    .array(zod.int())
+                    .min(
+                      playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
+                    )
+                    .max(
+                      playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
+                    ),
+                  zod
+                    .array(
+                      zod.union([
+                        zod.int(),
+                        zod
+                          .array(zod.int())
+                          .min(
+                            playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMin,
+                          )
+                          .max(
+                            playlistControllerFindOne200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMax,
+                          ),
+                      ]),
+                    )
+                    .min(1),
+                  zod.null(),
+                ])
+                .describe(
+                  'Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20).',
+                ),
               position: zod.int(),
               playlists: zod.array(
                 zod.object({
@@ -364,15 +552,37 @@ export const PlaylistControllerFindOne200Response = zod.object({
       artist: zod.string(),
       artwork: zod.string(),
       book: zod.string().nullable(),
-      chapter: zod.int().nullable(),
-      verse: zod.union([
+      chapter: zod.union([
         zod.int(),
         zod
           .array(zod.int())
-          .min(playlistControllerFindOne200ResponseSermonsItemVerseTwoMin)
-          .max(playlistControllerFindOne200ResponseSermonsItemVerseTwoMax),
+          .min(playlistControllerFindOne200ResponseSermonsItemChapterTwoMin)
+          .max(playlistControllerFindOne200ResponseSermonsItemChapterTwoMax),
         zod.null(),
       ]),
+      verse: zod
+        .union([
+          zod.int(),
+          zod
+            .array(zod.int())
+            .min(playlistControllerFindOne200ResponseSermonsItemVerseTwoMin)
+            .max(playlistControllerFindOne200ResponseSermonsItemVerseTwoMax),
+          zod
+            .array(
+              zod.union([
+                zod.int(),
+                zod
+                  .array(zod.int())
+                  .min(playlistControllerFindOne200ResponseSermonsItemVerseThreeItemTwoMin)
+                  .max(playlistControllerFindOne200ResponseSermonsItemVerseThreeItemTwoMax),
+              ]),
+            )
+            .min(1),
+          zod.null(),
+        ])
+        .describe(
+          'Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20).',
+        ),
       position: zod.int(),
       playlists: zod.array(
         zod.object({
@@ -402,11 +612,23 @@ export const PlaylistControllerUpdateBody = zod.object({
 export const playlistControllerUpdate200ResponseSectionsItemIsDescriptionTitleOnSlideLargeDefault = false
 export const playlistControllerUpdate200ResponseSectionsItemWhereIsSlideTitleLocatedDefault = `under`
 export const playlistControllerUpdate200ResponseSectionsItemBorderRadiusDefault = false
+export const playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMin = 2
+export const playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMax = 2
+
 export const playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin = 2
 export const playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax = 2
 
+export const playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMin = 2
+export const playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMax = 2
+
+export const playlistControllerUpdate200ResponseSermonsItemChapterTwoMin = 2
+export const playlistControllerUpdate200ResponseSermonsItemChapterTwoMax = 2
+
 export const playlistControllerUpdate200ResponseSermonsItemVerseTwoMin = 2
 export const playlistControllerUpdate200ResponseSermonsItemVerseTwoMax = 2
+
+export const playlistControllerUpdate200ResponseSermonsItemVerseThreeItemTwoMin = 2
+export const playlistControllerUpdate200ResponseSermonsItemVerseThreeItemTwoMax = 2
 
 export const PlaylistControllerUpdate200Response = zod.object({
   id: zod.string(),
@@ -457,19 +679,49 @@ export const PlaylistControllerUpdate200Response = zod.object({
               artist: zod.string(),
               artwork: zod.string(),
               book: zod.string().nullable(),
-              chapter: zod.int().nullable(),
-              verse: zod.union([
+              chapter: zod.union([
                 zod.int(),
                 zod
                   .array(zod.int())
                   .min(
-                    playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
+                    playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMin,
                   )
                   .max(
-                    playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
+                    playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemChapterTwoMax,
                   ),
                 zod.null(),
               ]),
+              verse: zod
+                .union([
+                  zod.int(),
+                  zod
+                    .array(zod.int())
+                    .min(
+                      playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMin,
+                    )
+                    .max(
+                      playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseTwoMax,
+                    ),
+                  zod
+                    .array(
+                      zod.union([
+                        zod.int(),
+                        zod
+                          .array(zod.int())
+                          .min(
+                            playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMin,
+                          )
+                          .max(
+                            playlistControllerUpdate200ResponseSectionsItemPlaylistsItemSermonsItemVerseThreeItemTwoMax,
+                          ),
+                      ]),
+                    )
+                    .min(1),
+                  zod.null(),
+                ])
+                .describe(
+                  'Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20).',
+                ),
               position: zod.int(),
               playlists: zod.array(
                 zod.object({
@@ -494,15 +746,37 @@ export const PlaylistControllerUpdate200Response = zod.object({
       artist: zod.string(),
       artwork: zod.string(),
       book: zod.string().nullable(),
-      chapter: zod.int().nullable(),
-      verse: zod.union([
+      chapter: zod.union([
         zod.int(),
         zod
           .array(zod.int())
-          .min(playlistControllerUpdate200ResponseSermonsItemVerseTwoMin)
-          .max(playlistControllerUpdate200ResponseSermonsItemVerseTwoMax),
+          .min(playlistControllerUpdate200ResponseSermonsItemChapterTwoMin)
+          .max(playlistControllerUpdate200ResponseSermonsItemChapterTwoMax),
         zod.null(),
       ]),
+      verse: zod
+        .union([
+          zod.int(),
+          zod
+            .array(zod.int())
+            .min(playlistControllerUpdate200ResponseSermonsItemVerseTwoMin)
+            .max(playlistControllerUpdate200ResponseSermonsItemVerseTwoMax),
+          zod
+            .array(
+              zod.union([
+                zod.int(),
+                zod
+                  .array(zod.int())
+                  .min(playlistControllerUpdate200ResponseSermonsItemVerseThreeItemTwoMin)
+                  .max(playlistControllerUpdate200ResponseSermonsItemVerseThreeItemTwoMax),
+              ]),
+            )
+            .min(1),
+          zod.null(),
+        ])
+        .describe(
+          'Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20).',
+        ),
       position: zod.int(),
       playlists: zod.array(
         zod.object({

@@ -1,15 +1,15 @@
+import { formatSermonReference } from 'shared/lib/format'
 import type { SermonData } from 'shared/model'
 
-const joinVerse = (verse: NonNullable<SermonData['verse']>): string =>
-  Array.isArray(verse) ? verse.join(',') : String(verse)
-
 export const formatScripture = (sermon: SermonData): null | string => {
-  const { book, chapter, verse } = sermon
-  if (!book) return null
+  // Preserve legacy UI behavior: hide the scripture line when there is no book name
+  if (!sermon.book) return null
 
-  if (chapter != null && verse != null) return `${book} ${chapter}:${joinVerse(verse)}`
-  if (chapter != null) return `${book} ${chapter}`
-  if (verse != null) return `${book} ${joinVerse(verse)}`
+  const reference = formatSermonReference({
+    book: sermon.book,
+    chapter: sermon.chapter,
+    verse: sermon.verse,
+  })
 
-  return book
+  return reference ?? null
 }

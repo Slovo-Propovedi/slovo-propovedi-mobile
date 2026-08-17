@@ -36,6 +36,30 @@ describe('sermonSchema', () => {
     expect(result.verse).toEqual([1, 2, 3])
   })
 
+  test('parses sermon with chapter as range', () => {
+    const sermon = { ...validSermon, chapter: [3, 4] }
+    const result = sermonSchema.parse(sermon)
+    expect(result.chapter).toEqual([3, 4])
+  })
+
+  test('parses sermon with verse as range', () => {
+    const sermon = { ...validSermon, verse: [16, 18] }
+    const result = sermonSchema.parse(sermon)
+    expect(result.verse).toEqual([16, 18])
+  })
+
+  test('parses sermon with verse as segment list', () => {
+    const sermon = { ...validSermon, verse: [16, [18, 20], 22] }
+    const result = sermonSchema.parse(sermon)
+    expect(result.verse).toEqual([16, [18, 20], 22])
+  })
+
+  test('parses sermon with verse list starting with a range', () => {
+    const sermon = { ...validSermon, verse: [[9, 18], 20] }
+    const result = sermonSchema.parse(sermon)
+    expect(result.verse).toEqual([[9, 18], 20])
+  })
+
   test('parses sermon with book reference', () => {
     const sermon = { ...validSermon, book: 'Бытие' }
     const result = sermonSchema.parse(sermon)
@@ -62,6 +86,11 @@ describe('sermonSchema', () => {
 
   test('throws when verse has invalid type', () => {
     const sermon = { ...validSermon, verse: 'not a number' }
+    expect(() => sermonSchema.parse(sermon)).toThrow()
+  })
+
+  test('throws when verse is a numeric string', () => {
+    const sermon = { ...validSermon, verse: '16' }
     expect(() => sermonSchema.parse(sermon)).toThrow()
   })
 })

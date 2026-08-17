@@ -1,18 +1,44 @@
+import { type SermonData } from 'shared/model'
+
 interface FormatSermonReferenceParams {
-  book?: null | string | undefined
-  chapter?: null | number | undefined
-  verse?: null | number | number[] | undefined
+  book?: SermonData['book']
+  chapter?: SermonData['chapter']
+  verse?: SermonData['verse']
 }
 
-const formatVerse = (verse: null | number | number[] | undefined): string | undefined => {
-  if (verse === null || verse === undefined) return undefined
+const formatRange = (range: number[]): string | undefined => {
+  if (range.length === 0) return undefined
+  if (range.length === 1) return String(range[0])
 
+  return `${range[0]}-${range[range.length - 1]}`
+}
+
+const formatChapter = (chapter: SermonData['chapter']): string | undefined => {
+  if (chapter === null || chapter === undefined) return undefined
+  if (typeof chapter === 'number') return String(chapter)
+
+  return formatRange(chapter)
+}
+
+const formatVerseItem = (item: number | number[]): string | undefined => {
+  if (typeof item === 'number') return String(item)
+
+  return formatRange(item)
+}
+
+// Ровно два числа — диапазон; иначе — список отрезков
+const isVerseRange = (verse: (number | number[])[]): verse is number[] =>
+  verse.length === 2 && verse.every(item => typeof item === 'number')
+
+const formatVerse = (verse: SermonData['verse']): string | undefined => {
+  if (verse === null || verse === undefined) return undefined
   if (typeof verse === 'number') return String(verse)
 
-  if (verse.length === 0) return undefined
-  if (verse.length === 1) return String(verse[0])
+  if (isVerseRange(verse)) return formatRange(verse)
 
-  return `${verse[0]}-${verse[verse.length - 1]}`
+  const items = verse.map(formatVerseItem).filter((item): item is string => item !== undefined)
+
+  return items.length === 0 ? undefined : items.join(', ')
 }
 
 export const formatSermonReference = ({
@@ -21,7 +47,7 @@ export const formatSermonReference = ({
   verse,
 }: FormatSermonReferenceParams): string | undefined => {
   const verseText = formatVerse(verse)
-  const chapterText = typeof chapter === 'number' ? String(chapter) : undefined
+  const chapterText = formatChapter(chapter)
 
   const parts: string[] = []
 

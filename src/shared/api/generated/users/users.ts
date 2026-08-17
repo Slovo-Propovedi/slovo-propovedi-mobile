@@ -5,13 +5,15 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.8.1
+ * OpenAPI spec version: 0.15.1
  */
 import type {
+  AllUsersResponse,
   ChangePasswordRequest,
   CreateUserRequest,
   UpdateUserRequest,
   UserResponse,
+  UsersControllerFindAllParams,
 } from '../api.schemas'
 
 import { customInstance } from '../../axiosInstance'
@@ -20,9 +22,10 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
 export const getUsers = () => {
   const usersControllerFindAll = (
-    options?: SecondParameter<typeof customInstance<UserResponse[]>>,
+    params?: UsersControllerFindAllParams,
+    options?: SecondParameter<typeof customInstance<AllUsersResponse>>,
   ) => {
-    return customInstance<UserResponse[]>({ url: `/users`, method: 'GET' }, options)
+    return customInstance<AllUsersResponse>({ url: `/users`, method: 'GET', params }, options)
   }
   const usersControllerCreate = (
     createUserRequest: CreateUserRequest,

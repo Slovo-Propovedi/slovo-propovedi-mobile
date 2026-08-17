@@ -5,18 +5,34 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.8.1
+ * OpenAPI spec version: 0.15.1
  */
 import * as zod from 'zod'
 
-export const UsersControllerFindAll200ResponseItem = zod.object({
-  id: zod.string(),
-  name: zod.string(),
-  username: zod.string().describe('Имя пользователя для входа в систему'),
-  email: zod.string(),
-  role: zod.enum(['admin', 'moderator', 'user']).describe('Роль пользователя в системе'),
+export const usersControllerFindAllQueryLimitMax = 100
+
+export const UsersControllerFindAllQueryParams = zod.object({
+  page: zod.int().min(1).optional().describe('Номер страницы для оффсетной пагинации'),
+  limit: zod
+    .int()
+    .min(1)
+    .max(usersControllerFindAllQueryLimitMax)
+    .optional()
+    .describe('Размер страницы; если указан без page, используется первая страница'),
 })
-export const UsersControllerFindAll200Response = zod.array(UsersControllerFindAll200ResponseItem)
+
+export const UsersControllerFindAll200Response = zod.object({
+  users: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      username: zod.string().describe('Имя пользователя для входа в систему'),
+      email: zod.string(),
+      role: zod.enum(['admin', 'moderator', 'user']).describe('Роль пользователя в системе'),
+    }),
+  ),
+  count: zod.int(),
+})
 
 export const UsersControllerCreateBody = zod.object({
   name: zod.string(),

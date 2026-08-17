@@ -33,7 +33,53 @@ describe('formatSermonReference', () => {
     expect(formatSermonReference({ book: null, chapter: null, verse: null })).toBeUndefined()
   })
 
+  test('undefined values return undefined', () => {
+    expect(
+      formatSermonReference({ book: undefined, chapter: undefined, verse: undefined }),
+    ).toBeUndefined()
+  })
+
   test('empty params return undefined', () => {
     expect(formatSermonReference({})).toBeUndefined()
+  })
+
+  test('book + chapter range', () => {
+    expect(formatSermonReference({ book: 'Бытие', chapter: [3, 4] })).toBe('Бытие 3-4')
+  })
+
+  test('book + chapter range + verse', () => {
+    expect(formatSermonReference({ book: 'Бытие', chapter: [3, 4], verse: 5 })).toBe('Бытие 3-4:5')
+  })
+
+  test('chapter range without book', () => {
+    expect(formatSermonReference({ chapter: [3, 4] })).toBe('3-4')
+  })
+
+  test('book + verse range', () => {
+    expect(formatSermonReference({ book: 'Бытие', verse: [16, 18] })).toBe('Бытие 16-18')
+  })
+
+  test('book + verse list with nested ranges', () => {
+    expect(formatSermonReference({ book: 'Бытие', verse: [16, [18, 20], 22] })).toBe(
+      'Бытие 16, 18-20, 22',
+    )
+  })
+
+  test('book + verse list starting with a range', () => {
+    expect(formatSermonReference({ book: 'Бытие', verse: [[9, 18], 20] })).toBe('Бытие 9-18, 20')
+  })
+
+  test('verse list without book', () => {
+    expect(formatSermonReference({ verse: [16, [18, 20], 22] })).toBe('16, 18-20, 22')
+  })
+
+  test('plain verse array with 3+ ints is a list of scattered verses', () => {
+    expect(formatSermonReference({ book: 'Бытие', verse: [16, 18, 22] })).toBe('Бытие 16, 18, 22')
+  })
+
+  test('book + chapter + verse segment list', () => {
+    expect(formatSermonReference({ book: 'Бытие', chapter: 3, verse: [16, [18, 20], 22] })).toBe(
+      'Бытие 3:16, 18-20, 22',
+    )
   })
 })

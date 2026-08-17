@@ -5,12 +5,13 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.8.1
+ * OpenAPI spec version: 0.15.1
  */
 import { faker } from '@faker-js/faker'
 
 import type {
   AllSermonsResponse,
+  SermonDistinctValuesResponse,
   SermonEntity,
   StatusSermonResponse,
   StreamUrlResponse,
@@ -26,7 +27,13 @@ export const getSermonControllerCreateResponseMock = (
     null,
   ]),
   book: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-  chapter: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  chapter: faker.helpers.arrayElement([
+    faker.number.int(),
+    Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+      faker.number.int(),
+    ),
+    null,
+  ]),
   description: faker.string.alpha({ length: { min: 10, max: 20 } }),
   id: faker.string.alpha({ length: { min: 10, max: 20 } }),
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -74,7 +81,13 @@ export const getSermonControllerCreateResponseMock = (
                 faker.string.alpha({ length: { min: 10, max: 20 } }),
                 null,
               ]),
-              chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+              chapter: faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+                null,
+              ]),
               description: faker.string.alpha({ length: { min: 10, max: 20 } }),
               id: faker.string.alpha({ length: { min: 10, max: 20 } }),
               playlists: Array.from(
@@ -94,6 +107,16 @@ export const getSermonControllerCreateResponseMock = (
                 faker.number.int(),
                 Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                   () => faker.number.int(),
+                ),
+                Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                  () =>
+                    faker.helpers.arrayElement([
+                      faker.number.int(),
+                      Array.from(
+                        { length: faker.number.int({ min: 2, max: 2 }) },
+                        (_, i) => i + 1,
+                      ).map(() => faker.number.int()),
+                    ]),
                 ),
                 null,
               ]),
@@ -126,7 +149,13 @@ export const getSermonControllerCreateResponseMock = (
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
           ]),
-          chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+          chapter: faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+            null,
+          ]),
           description: faker.string.alpha({ length: { min: 10, max: 20 } }),
           id: faker.string.alpha({ length: { min: 10, max: 20 } }),
           playlists: Array.from(
@@ -146,6 +175,14 @@ export const getSermonControllerCreateResponseMock = (
             faker.number.int(),
             Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
               faker.number.int(),
+            ),
+            Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+              faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+              ]),
             ),
             null,
           ]),
@@ -168,6 +205,14 @@ export const getSermonControllerCreateResponseMock = (
     Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
       faker.number.int(),
     ),
+    Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+      faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+      ]),
+    ),
     null,
   ]),
   youtubeUrl: faker.helpers.arrayElement([
@@ -187,7 +232,13 @@ export const getSermonControllerCreateResponseMock200 = (
     null,
   ]),
   book: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-  chapter: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  chapter: faker.helpers.arrayElement([
+    faker.number.int(),
+    Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+      faker.number.int(),
+    ),
+    null,
+  ]),
   description: faker.string.alpha({ length: { min: 10, max: 20 } }),
   id: faker.string.alpha({ length: { min: 10, max: 20 } }),
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -235,7 +286,13 @@ export const getSermonControllerCreateResponseMock200 = (
                 faker.string.alpha({ length: { min: 10, max: 20 } }),
                 null,
               ]),
-              chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+              chapter: faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+                null,
+              ]),
               description: faker.string.alpha({ length: { min: 10, max: 20 } }),
               id: faker.string.alpha({ length: { min: 10, max: 20 } }),
               playlists: Array.from(
@@ -255,6 +312,16 @@ export const getSermonControllerCreateResponseMock200 = (
                 faker.number.int(),
                 Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                   () => faker.number.int(),
+                ),
+                Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                  () =>
+                    faker.helpers.arrayElement([
+                      faker.number.int(),
+                      Array.from(
+                        { length: faker.number.int({ min: 2, max: 2 }) },
+                        (_, i) => i + 1,
+                      ).map(() => faker.number.int()),
+                    ]),
                 ),
                 null,
               ]),
@@ -287,7 +354,13 @@ export const getSermonControllerCreateResponseMock200 = (
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
           ]),
-          chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+          chapter: faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+            null,
+          ]),
           description: faker.string.alpha({ length: { min: 10, max: 20 } }),
           id: faker.string.alpha({ length: { min: 10, max: 20 } }),
           playlists: Array.from(
@@ -307,6 +380,14 @@ export const getSermonControllerCreateResponseMock200 = (
             faker.number.int(),
             Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
               faker.number.int(),
+            ),
+            Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+              faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+              ]),
             ),
             null,
           ]),
@@ -328,6 +409,14 @@ export const getSermonControllerCreateResponseMock200 = (
     faker.number.int(),
     Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
       faker.number.int(),
+    ),
+    Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+      faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+      ]),
     ),
     null,
   ]),
@@ -358,7 +447,13 @@ export const getSermonControllerFindAllResponseMock = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
-      chapter: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+      chapter: faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -411,7 +506,13 @@ export const getSermonControllerFindAllResponseMock = (
                   faker.string.alpha({ length: { min: 10, max: 20 } }),
                   null,
                 ]),
-                chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+                chapter: faker.helpers.arrayElement([
+                  faker.number.int(),
+                  Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                    () => faker.number.int(),
+                  ),
+                  null,
+                ]),
                 description: faker.string.alpha({ length: { min: 10, max: 20 } }),
                 id: faker.string.alpha({ length: { min: 10, max: 20 } }),
                 playlists: Array.from(
@@ -431,6 +532,18 @@ export const getSermonControllerFindAllResponseMock = (
                   faker.number.int(),
                   Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                     () => faker.number.int(),
+                  ),
+                  Array.from(
+                    { length: faker.number.int({ min: 1, max: 10 }) },
+                    (_, i) => i + 1,
+                  ).map(() =>
+                    faker.helpers.arrayElement([
+                      faker.number.int(),
+                      Array.from(
+                        { length: faker.number.int({ min: 2, max: 2 }) },
+                        (_, i) => i + 1,
+                      ).map(() => faker.number.int()),
+                    ]),
                   ),
                   null,
                 ]),
@@ -464,7 +577,13 @@ export const getSermonControllerFindAllResponseMock = (
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
             ]),
-            chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+            chapter: faker.helpers.arrayElement([
+              faker.number.int(),
+              Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                () => faker.number.int(),
+              ),
+              null,
+            ]),
             description: faker.string.alpha({ length: { min: 10, max: 20 } }),
             id: faker.string.alpha({ length: { min: 10, max: 20 } }),
             playlists: Array.from(
@@ -485,6 +604,16 @@ export const getSermonControllerFindAllResponseMock = (
               Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                 () => faker.number.int(),
               ),
+              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                () =>
+                  faker.helpers.arrayElement([
+                    faker.number.int(),
+                    Array.from(
+                      { length: faker.number.int({ min: 2, max: 2 }) },
+                      (_, i) => i + 1,
+                    ).map(() => faker.number.int()),
+                  ]),
+              ),
               null,
             ]),
             youtubeUrl: faker.helpers.arrayElement([
@@ -504,6 +633,14 @@ export const getSermonControllerFindAllResponseMock = (
         faker.number.int(),
         Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
           faker.number.int(),
+        ),
+        Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+          faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+          ]),
         ),
         null,
       ]),
@@ -536,7 +673,13 @@ export const getSermonControllerFindAllResponseMock200 = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
-      chapter: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+      chapter: faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -589,7 +732,13 @@ export const getSermonControllerFindAllResponseMock200 = (
                   faker.string.alpha({ length: { min: 10, max: 20 } }),
                   null,
                 ]),
-                chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+                chapter: faker.helpers.arrayElement([
+                  faker.number.int(),
+                  Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                    () => faker.number.int(),
+                  ),
+                  null,
+                ]),
                 description: faker.string.alpha({ length: { min: 10, max: 20 } }),
                 id: faker.string.alpha({ length: { min: 10, max: 20 } }),
                 playlists: Array.from(
@@ -609,6 +758,18 @@ export const getSermonControllerFindAllResponseMock200 = (
                   faker.number.int(),
                   Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                     () => faker.number.int(),
+                  ),
+                  Array.from(
+                    { length: faker.number.int({ min: 1, max: 10 }) },
+                    (_, i) => i + 1,
+                  ).map(() =>
+                    faker.helpers.arrayElement([
+                      faker.number.int(),
+                      Array.from(
+                        { length: faker.number.int({ min: 2, max: 2 }) },
+                        (_, i) => i + 1,
+                      ).map(() => faker.number.int()),
+                    ]),
                   ),
                   null,
                 ]),
@@ -642,7 +803,13 @@ export const getSermonControllerFindAllResponseMock200 = (
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
             ]),
-            chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+            chapter: faker.helpers.arrayElement([
+              faker.number.int(),
+              Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                () => faker.number.int(),
+              ),
+              null,
+            ]),
             description: faker.string.alpha({ length: { min: 10, max: 20 } }),
             id: faker.string.alpha({ length: { min: 10, max: 20 } }),
             playlists: Array.from(
@@ -662,6 +829,16 @@ export const getSermonControllerFindAllResponseMock200 = (
               faker.number.int(),
               Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                 () => faker.number.int(),
+              ),
+              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                () =>
+                  faker.helpers.arrayElement([
+                    faker.number.int(),
+                    Array.from(
+                      { length: faker.number.int({ min: 2, max: 2 }) },
+                      (_, i) => i + 1,
+                    ).map(() => faker.number.int()),
+                  ]),
               ),
               null,
             ]),
@@ -683,6 +860,14 @@ export const getSermonControllerFindAllResponseMock200 = (
         Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
           faker.number.int(),
         ),
+        Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+          faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+          ]),
+        ),
         null,
       ]),
       youtubeUrl: faker.helpers.arrayElement([
@@ -690,6 +875,30 @@ export const getSermonControllerFindAllResponseMock200 = (
         null,
       ]),
     }),
+  ),
+  ...overrideResponse,
+})
+
+export const getSermonControllerGetDistinctValuesResponseMock = (
+  overrideResponse: Partial<Extract<SermonDistinctValuesResponse, object>> = {},
+): SermonDistinctValuesResponse => ({
+  artists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ),
+  books: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ),
+  ...overrideResponse,
+})
+
+export const getSermonControllerGetDistinctValuesResponseMock200 = (
+  overrideResponse: Partial<Extract<SermonDistinctValuesResponse, object>> = {},
+): SermonDistinctValuesResponse => ({
+  artists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ),
+  books: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
   ),
   ...overrideResponse,
 })
@@ -718,7 +927,13 @@ export const getSermonControllerFindOneResponseMock = (
     null,
   ]),
   book: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-  chapter: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  chapter: faker.helpers.arrayElement([
+    faker.number.int(),
+    Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+      faker.number.int(),
+    ),
+    null,
+  ]),
   description: faker.string.alpha({ length: { min: 10, max: 20 } }),
   id: faker.string.alpha({ length: { min: 10, max: 20 } }),
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -766,7 +981,13 @@ export const getSermonControllerFindOneResponseMock = (
                 faker.string.alpha({ length: { min: 10, max: 20 } }),
                 null,
               ]),
-              chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+              chapter: faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+                null,
+              ]),
               description: faker.string.alpha({ length: { min: 10, max: 20 } }),
               id: faker.string.alpha({ length: { min: 10, max: 20 } }),
               playlists: Array.from(
@@ -786,6 +1007,16 @@ export const getSermonControllerFindOneResponseMock = (
                 faker.number.int(),
                 Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                   () => faker.number.int(),
+                ),
+                Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                  () =>
+                    faker.helpers.arrayElement([
+                      faker.number.int(),
+                      Array.from(
+                        { length: faker.number.int({ min: 2, max: 2 }) },
+                        (_, i) => i + 1,
+                      ).map(() => faker.number.int()),
+                    ]),
                 ),
                 null,
               ]),
@@ -818,7 +1049,13 @@ export const getSermonControllerFindOneResponseMock = (
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
           ]),
-          chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+          chapter: faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+            null,
+          ]),
           description: faker.string.alpha({ length: { min: 10, max: 20 } }),
           id: faker.string.alpha({ length: { min: 10, max: 20 } }),
           playlists: Array.from(
@@ -838,6 +1075,14 @@ export const getSermonControllerFindOneResponseMock = (
             faker.number.int(),
             Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
               faker.number.int(),
+            ),
+            Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+              faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+              ]),
             ),
             null,
           ]),
@@ -860,6 +1105,14 @@ export const getSermonControllerFindOneResponseMock = (
     Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
       faker.number.int(),
     ),
+    Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+      faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+      ]),
+    ),
     null,
   ]),
   youtubeUrl: faker.helpers.arrayElement([
@@ -879,7 +1132,13 @@ export const getSermonControllerFindOneResponseMock200 = (
     null,
   ]),
   book: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-  chapter: faker.helpers.arrayElement([faker.number.float({ fractionDigits: 2 }), null]),
+  chapter: faker.helpers.arrayElement([
+    faker.number.int(),
+    Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+      faker.number.int(),
+    ),
+    null,
+  ]),
   description: faker.string.alpha({ length: { min: 10, max: 20 } }),
   id: faker.string.alpha({ length: { min: 10, max: 20 } }),
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -927,7 +1186,13 @@ export const getSermonControllerFindOneResponseMock200 = (
                 faker.string.alpha({ length: { min: 10, max: 20 } }),
                 null,
               ]),
-              chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+              chapter: faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+                null,
+              ]),
               description: faker.string.alpha({ length: { min: 10, max: 20 } }),
               id: faker.string.alpha({ length: { min: 10, max: 20 } }),
               playlists: Array.from(
@@ -947,6 +1212,16 @@ export const getSermonControllerFindOneResponseMock200 = (
                 faker.number.int(),
                 Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                   () => faker.number.int(),
+                ),
+                Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                  () =>
+                    faker.helpers.arrayElement([
+                      faker.number.int(),
+                      Array.from(
+                        { length: faker.number.int({ min: 2, max: 2 }) },
+                        (_, i) => i + 1,
+                      ).map(() => faker.number.int()),
+                    ]),
                 ),
                 null,
               ]),
@@ -979,7 +1254,13 @@ export const getSermonControllerFindOneResponseMock200 = (
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
           ]),
-          chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+          chapter: faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+            null,
+          ]),
           description: faker.string.alpha({ length: { min: 10, max: 20 } }),
           id: faker.string.alpha({ length: { min: 10, max: 20 } }),
           playlists: Array.from(
@@ -999,6 +1280,14 @@ export const getSermonControllerFindOneResponseMock200 = (
             faker.number.int(),
             Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
               faker.number.int(),
+            ),
+            Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+              faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+              ]),
             ),
             null,
           ]),
@@ -1020,6 +1309,14 @@ export const getSermonControllerFindOneResponseMock200 = (
     faker.number.int(),
     Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
       faker.number.int(),
+    ),
+    Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+      faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+      ]),
     ),
     null,
   ]),

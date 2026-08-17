@@ -5,12 +5,13 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.8.1
+ * OpenAPI spec version: 0.15.1
  */
 import type {
   AllSermonsResponse,
   CreateSermonDto,
   SermonControllerFindAllParams,
+  SermonDistinctValuesResponse,
   SermonEntity,
   StatusSermonResponse,
   StreamUrlResponse,
@@ -47,6 +48,17 @@ export const getSermons = () => {
     options?: SecondParameter<typeof customInstance<AllSermonsResponse>>,
   ) => {
     return customInstance<AllSermonsResponse>({ url: `/sermons`, method: 'GET', params }, options)
+  }
+  /**
+   * @summary Получить список ранее использованных проповедников и книг (для автодополнения)
+   */
+  const sermonControllerGetDistinctValues = (
+    options?: SecondParameter<typeof customInstance<SermonDistinctValuesResponse>>,
+  ) => {
+    return customInstance<SermonDistinctValuesResponse>(
+      { url: `/sermons/distinct-values`, method: 'GET' },
+      options,
+    )
   }
   /**
    * @summary Получить URL потока для аудио проповеди
@@ -102,6 +114,7 @@ export const getSermons = () => {
   return {
     sermonControllerCreate,
     sermonControllerFindAll,
+    sermonControllerGetDistinctValues,
     sermonControllerGetStreamUrl,
     sermonControllerFindOne,
     sermonControllerUpdate,
@@ -113,6 +126,9 @@ export type SermonControllerCreateResult = NonNullable<
 >
 export type SermonControllerFindAllResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getSermons>['sermonControllerFindAll']>>
+>
+export type SermonControllerGetDistinctValuesResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getSermons>['sermonControllerGetDistinctValues']>>
 >
 export type SermonControllerGetStreamUrlResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getSermons>['sermonControllerGetStreamUrl']>>

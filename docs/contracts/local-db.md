@@ -36,7 +36,7 @@ db/
     └── ...
 ```
 
-Данные-элементы — объекты типа `SermonData`/`FetchedBookData` (структурно совпадают с доменным `SermonData` из `src/shared/model/domain/common.ts`): поля `id, title, artist, artwork, chapter, verse (number | number[]), description, textFileUrl`, иногда `audioUrl`, `youtubeUrl`. Пример записей — `src/shared/api/db/books/markBook.ts`.
+Данные-элементы — объекты типа `SermonData`/`FetchedBookData` (структурно совпадают с доменным `SermonData` из `src/shared/model/domain/common.ts`): поля `id, title, artist, artwork, chapter, verse, description, textFileUrl`, иногда `audioUrl`, `youtubeUrl`. Пример записей — `src/shared/api/db/books/markBook.ts`. В локальной БД `chapter`/`verse` хранятся в простых формах (число или массив чисел); доменный `SermonData` в ходе миграции на спецификацию v0.15.1 расширяется до диапазонов (см. [rest-api.md](./rest-api.md) → «Главы и стихи»).
 
 ## API
 

@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.8.1
+ * OpenAPI spec version: 0.15.1
  */
 import { faker } from '@faker-js/faker'
 
@@ -55,7 +55,13 @@ export const getPlaylistControllerCreateResponseMock = (
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
             ]),
-            chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+            chapter: faker.helpers.arrayElement([
+              faker.number.int(),
+              Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                () => faker.number.int(),
+              ),
+              null,
+            ]),
             description: faker.string.alpha({ length: { min: 10, max: 20 } }),
             id: faker.string.alpha({ length: { min: 10, max: 20 } }),
             playlists: Array.from(
@@ -75,6 +81,16 @@ export const getPlaylistControllerCreateResponseMock = (
               faker.number.int(),
               Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                 () => faker.number.int(),
+              ),
+              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                () =>
+                  faker.helpers.arrayElement([
+                    faker.number.int(),
+                    Array.from(
+                      { length: faker.number.int({ min: 2, max: 2 }) },
+                      (_, i) => i + 1,
+                    ).map(() => faker.number.int()),
+                  ]),
               ),
               null,
             ]),
@@ -108,7 +124,13 @@ export const getPlaylistControllerCreateResponseMock = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
-      chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+      chapter: faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -127,6 +149,14 @@ export const getPlaylistControllerCreateResponseMock = (
         faker.number.int(),
         Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
           faker.number.int(),
+        ),
+        Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+          faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+          ]),
         ),
         null,
       ]),
@@ -184,7 +214,13 @@ export const getPlaylistControllerCreateResponseMock200 = (
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
             ]),
-            chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+            chapter: faker.helpers.arrayElement([
+              faker.number.int(),
+              Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                () => faker.number.int(),
+              ),
+              null,
+            ]),
             description: faker.string.alpha({ length: { min: 10, max: 20 } }),
             id: faker.string.alpha({ length: { min: 10, max: 20 } }),
             playlists: Array.from(
@@ -204,6 +240,16 @@ export const getPlaylistControllerCreateResponseMock200 = (
               faker.number.int(),
               Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                 () => faker.number.int(),
+              ),
+              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                () =>
+                  faker.helpers.arrayElement([
+                    faker.number.int(),
+                    Array.from(
+                      { length: faker.number.int({ min: 2, max: 2 }) },
+                      (_, i) => i + 1,
+                    ).map(() => faker.number.int()),
+                  ]),
               ),
               null,
             ]),
@@ -237,7 +283,13 @@ export const getPlaylistControllerCreateResponseMock200 = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
-      chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+      chapter: faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -256,6 +308,14 @@ export const getPlaylistControllerCreateResponseMock200 = (
         faker.number.int(),
         Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
           faker.number.int(),
+        ),
+        Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+          faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+          ]),
         ),
         null,
       ]),
@@ -318,7 +378,13 @@ export const getPlaylistControllerFindAllResponseMock = (
                 faker.string.alpha({ length: { min: 10, max: 20 } }),
                 null,
               ]),
-              chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+              chapter: faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+                null,
+              ]),
               description: faker.string.alpha({ length: { min: 10, max: 20 } }),
               id: faker.string.alpha({ length: { min: 10, max: 20 } }),
               playlists: Array.from(
@@ -338,6 +404,16 @@ export const getPlaylistControllerFindAllResponseMock = (
                 faker.number.int(),
                 Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                   () => faker.number.int(),
+                ),
+                Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                  () =>
+                    faker.helpers.arrayElement([
+                      faker.number.int(),
+                      Array.from(
+                        { length: faker.number.int({ min: 2, max: 2 }) },
+                        (_, i) => i + 1,
+                      ).map(() => faker.number.int()),
+                    ]),
                 ),
                 null,
               ]),
@@ -370,7 +446,13 @@ export const getPlaylistControllerFindAllResponseMock = (
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
           ]),
-          chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+          chapter: faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+            null,
+          ]),
           description: faker.string.alpha({ length: { min: 10, max: 20 } }),
           id: faker.string.alpha({ length: { min: 10, max: 20 } }),
           playlists: Array.from(
@@ -390,6 +472,14 @@ export const getPlaylistControllerFindAllResponseMock = (
             faker.number.int(),
             Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
               faker.number.int(),
+            ),
+            Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+              faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+              ]),
             ),
             null,
           ]),
@@ -454,7 +544,13 @@ export const getPlaylistControllerFindAllResponseMock200 = (
                 faker.string.alpha({ length: { min: 10, max: 20 } }),
                 null,
               ]),
-              chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+              chapter: faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+                null,
+              ]),
               description: faker.string.alpha({ length: { min: 10, max: 20 } }),
               id: faker.string.alpha({ length: { min: 10, max: 20 } }),
               playlists: Array.from(
@@ -474,6 +570,16 @@ export const getPlaylistControllerFindAllResponseMock200 = (
                 faker.number.int(),
                 Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                   () => faker.number.int(),
+                ),
+                Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                  () =>
+                    faker.helpers.arrayElement([
+                      faker.number.int(),
+                      Array.from(
+                        { length: faker.number.int({ min: 2, max: 2 }) },
+                        (_, i) => i + 1,
+                      ).map(() => faker.number.int()),
+                    ]),
                 ),
                 null,
               ]),
@@ -506,7 +612,13 @@ export const getPlaylistControllerFindAllResponseMock200 = (
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
           ]),
-          chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+          chapter: faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+            null,
+          ]),
           description: faker.string.alpha({ length: { min: 10, max: 20 } }),
           id: faker.string.alpha({ length: { min: 10, max: 20 } }),
           playlists: Array.from(
@@ -526,6 +638,14 @@ export const getPlaylistControllerFindAllResponseMock200 = (
             faker.number.int(),
             Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
               faker.number.int(),
+            ),
+            Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+              faker.helpers.arrayElement([
+                faker.number.int(),
+                Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                  () => faker.number.int(),
+                ),
+              ]),
             ),
             null,
           ]),
@@ -585,7 +705,13 @@ export const getPlaylistControllerFindOneResponseMock = (
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
             ]),
-            chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+            chapter: faker.helpers.arrayElement([
+              faker.number.int(),
+              Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                () => faker.number.int(),
+              ),
+              null,
+            ]),
             description: faker.string.alpha({ length: { min: 10, max: 20 } }),
             id: faker.string.alpha({ length: { min: 10, max: 20 } }),
             playlists: Array.from(
@@ -605,6 +731,16 @@ export const getPlaylistControllerFindOneResponseMock = (
               faker.number.int(),
               Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                 () => faker.number.int(),
+              ),
+              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                () =>
+                  faker.helpers.arrayElement([
+                    faker.number.int(),
+                    Array.from(
+                      { length: faker.number.int({ min: 2, max: 2 }) },
+                      (_, i) => i + 1,
+                    ).map(() => faker.number.int()),
+                  ]),
               ),
               null,
             ]),
@@ -638,7 +774,13 @@ export const getPlaylistControllerFindOneResponseMock = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
-      chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+      chapter: faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -657,6 +799,14 @@ export const getPlaylistControllerFindOneResponseMock = (
         faker.number.int(),
         Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
           faker.number.int(),
+        ),
+        Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+          faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+          ]),
         ),
         null,
       ]),
@@ -714,7 +864,13 @@ export const getPlaylistControllerFindOneResponseMock200 = (
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
             ]),
-            chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+            chapter: faker.helpers.arrayElement([
+              faker.number.int(),
+              Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                () => faker.number.int(),
+              ),
+              null,
+            ]),
             description: faker.string.alpha({ length: { min: 10, max: 20 } }),
             id: faker.string.alpha({ length: { min: 10, max: 20 } }),
             playlists: Array.from(
@@ -734,6 +890,16 @@ export const getPlaylistControllerFindOneResponseMock200 = (
               faker.number.int(),
               Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                 () => faker.number.int(),
+              ),
+              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                () =>
+                  faker.helpers.arrayElement([
+                    faker.number.int(),
+                    Array.from(
+                      { length: faker.number.int({ min: 2, max: 2 }) },
+                      (_, i) => i + 1,
+                    ).map(() => faker.number.int()),
+                  ]),
               ),
               null,
             ]),
@@ -767,7 +933,13 @@ export const getPlaylistControllerFindOneResponseMock200 = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
-      chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+      chapter: faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -786,6 +958,14 @@ export const getPlaylistControllerFindOneResponseMock200 = (
         faker.number.int(),
         Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
           faker.number.int(),
+        ),
+        Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+          faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+          ]),
         ),
         null,
       ]),
@@ -843,7 +1023,13 @@ export const getPlaylistControllerUpdateResponseMock = (
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
             ]),
-            chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+            chapter: faker.helpers.arrayElement([
+              faker.number.int(),
+              Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                () => faker.number.int(),
+              ),
+              null,
+            ]),
             description: faker.string.alpha({ length: { min: 10, max: 20 } }),
             id: faker.string.alpha({ length: { min: 10, max: 20 } }),
             playlists: Array.from(
@@ -863,6 +1049,16 @@ export const getPlaylistControllerUpdateResponseMock = (
               faker.number.int(),
               Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                 () => faker.number.int(),
+              ),
+              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                () =>
+                  faker.helpers.arrayElement([
+                    faker.number.int(),
+                    Array.from(
+                      { length: faker.number.int({ min: 2, max: 2 }) },
+                      (_, i) => i + 1,
+                    ).map(() => faker.number.int()),
+                  ]),
               ),
               null,
             ]),
@@ -896,7 +1092,13 @@ export const getPlaylistControllerUpdateResponseMock = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
-      chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+      chapter: faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -915,6 +1117,14 @@ export const getPlaylistControllerUpdateResponseMock = (
         faker.number.int(),
         Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
           faker.number.int(),
+        ),
+        Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+          faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+          ]),
         ),
         null,
       ]),
@@ -972,7 +1182,13 @@ export const getPlaylistControllerUpdateResponseMock200 = (
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
             ]),
-            chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+            chapter: faker.helpers.arrayElement([
+              faker.number.int(),
+              Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
+                () => faker.number.int(),
+              ),
+              null,
+            ]),
             description: faker.string.alpha({ length: { min: 10, max: 20 } }),
             id: faker.string.alpha({ length: { min: 10, max: 20 } }),
             playlists: Array.from(
@@ -992,6 +1208,16 @@ export const getPlaylistControllerUpdateResponseMock200 = (
               faker.number.int(),
               Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(
                 () => faker.number.int(),
+              ),
+              Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+                () =>
+                  faker.helpers.arrayElement([
+                    faker.number.int(),
+                    Array.from(
+                      { length: faker.number.int({ min: 2, max: 2 }) },
+                      (_, i) => i + 1,
+                    ).map(() => faker.number.int()),
+                  ]),
               ),
               null,
             ]),
@@ -1025,7 +1251,13 @@ export const getPlaylistControllerUpdateResponseMock200 = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
-      chapter: faker.helpers.arrayElement([faker.number.int(), null]),
+      chapter: faker.helpers.arrayElement([
+        faker.number.int(),
+        Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+          faker.number.int(),
+        ),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
@@ -1044,6 +1276,14 @@ export const getPlaylistControllerUpdateResponseMock200 = (
         faker.number.int(),
         Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
           faker.number.int(),
+        ),
+        Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+          faker.helpers.arrayElement([
+            faker.number.int(),
+            Array.from({ length: faker.number.int({ min: 2, max: 2 }) }, (_, i) => i + 1).map(() =>
+              faker.number.int(),
+            ),
+          ]),
         ),
         null,
       ]),

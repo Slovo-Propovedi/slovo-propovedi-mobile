@@ -19,7 +19,7 @@
 
 ## Тип данных
 
-`BookData = SermonData` — **книга = проповедь** (поля `id, title, artist, artwork, book, chapter, verse, description, textFileUrl, audioUrl, youtubeUrl`). Определено в `src/shared/model/domain/common.ts` (`bookSchema = sermonSchema`, `BookData = SermonData`, `booksArraySchema`).
+`BookData = SermonData` — **книга = проповедь** (поля `id, title, artist, artwork, book, chapter, verse, description, textFileUrl, audioUrl, youtubeUrl`). Определено в `src/shared/model/domain/common.ts` (`bookSchema = sermonSchema`, `BookData = SermonData`, `booksArraySchema`). В ходе миграции на спецификацию API v0.15.1 доменные `chapter`/`verse` расширяются до диапазонов (число | массив чисел | список отрезков), см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи».
 
 ## Локальная БД книг
 

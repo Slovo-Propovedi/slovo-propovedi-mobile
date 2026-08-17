@@ -5,11 +5,12 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.8.1
+ * OpenAPI spec version: 0.15.1
  */
 import type {
   AllPlaylistsResponse,
   CreatePlaylistDto,
+  PlaylistControllerFindAllParams,
   PlaylistEntity,
   ReorderSermonsDto,
   StatusPlaylistResponse,
@@ -42,9 +43,13 @@ export const getPlaylists = () => {
    * @summary Получить все плейлисты
    */
   const playlistControllerFindAll = (
+    params?: PlaylistControllerFindAllParams,
     options?: SecondParameter<typeof customInstance<AllPlaylistsResponse>>,
   ) => {
-    return customInstance<AllPlaylistsResponse>({ url: `/playlists`, method: 'GET' }, options)
+    return customInstance<AllPlaylistsResponse>(
+      { url: `/playlists`, method: 'GET', params },
+      options,
+    )
   }
   /**
    * @summary Получить плейлист по ID (с проповедями)

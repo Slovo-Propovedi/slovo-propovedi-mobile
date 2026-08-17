@@ -86,7 +86,7 @@
 
 - `ui/ExpandablePlayer/ExpandablePlayer.tsx` — контейнер с `useExpandAnimation`; `MiniPlayer.tsx`; жесты — `useExpandablePlayerGesture.ts`, `useMiniPanGesture`, `useFullscreenPanGesture` (модель/`useExpandAnimation` в `widgets/expandable-player/model/`).
 - `ui/FullscreenContent/` — полноэкранный вид: `FullscreenContent.tsx`, `PlayerControlsSection.tsx`, `HeaderOverlay.tsx`, `DetailsOverlay.tsx`, `useFullscreenHandlers.ts`, градиенты. Оверлей «Подробнее» (`DetailsOverlay.tsx`) показывает секции «Описание» (увеличенный шрифт) и «Проповедник» (автор проповеди); каждая секция рендерится только при наличии данных.
-- **Подзаголовок (subtitle)** в мини-плеере (`ui/ExpandablePlayer/MiniPlayer.tsx`) и в шапке полноэкранного плеера (`ui/FullscreenContent/PlayerControlsSection.tsx`) показывает ссылку на проповедь (книга глава:стих) через `formatSermonReference` (`shared/lib/format`); при отсутствии ссылки фолбэк — название плейлиста, затем название приложения «Слово.Проповеди».
+- **Подзаголовок (subtitle)** в мини-плеере (`ui/ExpandablePlayer/MiniPlayer.tsx`) и в шапке полноэкранного плеера (`ui/FullscreenContent/PlayerControlsSection.tsx`) показывает ссылку на проповедь (книга глава:стих) через `formatSermonReference` (`shared/lib/format`); при отсутствии ссылки фолбэк — название плейлиста, затем название приложения «Слово.Проповеди». В ходе миграции на спецификацию API v0.15.1 форматтер расширяется на диапазоны глав/стихов (см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи»).
 - `ui/PlayerMenu/` — контекстное меню (подробнее, кэш, заблокированные пункты). Открытие — `showMenuAtom`.
 - `ui/PlaylistBottomSheet/` — шторка со списком треков плейлиста (`@gorhom/bottom-sheet`). Открытие — `showPlaylistAtom`.
 
