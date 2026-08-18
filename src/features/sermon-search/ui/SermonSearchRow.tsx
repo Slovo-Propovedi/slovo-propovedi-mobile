@@ -1,5 +1,5 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { CoverImage } from 'shared/ui'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
 import type { SermonData } from 'shared/model'
 import { formatScripture } from '../lib/formatScripture'
@@ -22,7 +22,7 @@ export const SermonSearchRow = ({ onPress, sermon }: SermonSearchRowProps) => {
         { backgroundColor: pressed ? currentTheme.surface : 'transparent' },
       ]}
     >
-      <Image style={styles.artwork} source={{ uri: sermon.artwork || IMAGE_PLACEHOLDER }} />
+      <CoverImage uri={sermon.artwork} style={styles.artwork} />
       <View style={styles.texts}>
         <Text numberOfLines={2} style={[styles.title, { color: currentTheme.text }]}>
           {sermon.title}

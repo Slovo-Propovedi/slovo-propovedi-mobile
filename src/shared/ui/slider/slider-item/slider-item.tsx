@@ -1,7 +1,7 @@
-import { ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../../config/screen-dimensions'
-import { IMAGE_PLACEHOLDER } from '../../images'
+import { CoverImage } from '../../cover-image'
 import { RADIUSES } from '../../themed'
 import { SliderItemDescription } from '../slider-item-description/slider-item-description'
 import { SliderItemSkeleton } from './skeleton'
@@ -57,12 +57,7 @@ export const SliderItem = ({
       accessibilityRole='button'
     >
       <View style={[styles.component, { width: conditionSize }, style]}>
-        <ImageBackground
-          resizeMode='cover'
-          imageStyle={[styles.backgroundImage]}
-          source={{ uri: artwork || IMAGE_PLACEHOLDER }}
-          style={[styles.imageBackgroundComponent, { height: imageHeight }]}
-        >
+        <CoverImage uri={artwork} style={[styles.imageBackground, { height: imageHeight }]}>
           {isVisibleDescriptionOnSlide && (
             <SliderItemDescription
               title={descriptionTitle}
@@ -74,7 +69,7 @@ export const SliderItem = ({
               subTitleTextAlign={descriptionSubTitleTextAlign}
             />
           )}
-        </ImageBackground>
+        </CoverImage>
         {isVisibleDescriptionUnderSlide && (
           <SliderItemDescription
             title={descriptionTitle}
@@ -93,7 +88,6 @@ export const SliderItem = ({
 SliderItem.Skeleton = SliderItemSkeleton
 
 const styles = StyleSheet.create({
-  backgroundImage: { borderRadius: RADIUSES.large },
   component: { borderRadius: RADIUSES.large, minHeight: 50, minWidth: 50 },
-  imageBackgroundComponent: { justifyContent: 'flex-end', width: '100%' },
+  imageBackground: { borderRadius: RADIUSES.large, justifyContent: 'flex-end', width: '100%' },
 })

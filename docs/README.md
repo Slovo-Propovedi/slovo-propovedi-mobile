@@ -35,6 +35,7 @@
 | [`debt.md`](./debt.md) | Технический долг, срезанные углы |
 | [`features/player.md`](./features/player.md) | Как работает плеер (модель, PlayerService, кэш аудио) |
 | [`features/audio-cache.md`](./features/audio-cache.md) | Кэширование аудио и секций (offline) |
+| [`features/images.md`](./features/images.md) | Кэширование и рендеринг изображений (expo-image) |
 | [`features/navigation.md`](./features/navigation.md) | Навигация expo-router: табы, стеки, маршруты |
 | [`features/state.md`](./features/state.md) | Reatom: атомы, экшены, `ctx` |
 | [`features/theme.md`](./features/theme.md) | Тема, цвета, Material You |

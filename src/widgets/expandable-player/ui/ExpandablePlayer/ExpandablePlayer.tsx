@@ -1,6 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { StatusBar } from 'expo-status-bar'
-import { Image, type StyleProp, type ViewStyle } from 'react-native'
+import { type StyleProp, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 import {
@@ -15,8 +15,7 @@ import {
   openPlayerSheetAction,
   usePlayer,
 } from 'entities/player'
-import { useTheme } from 'shared/ui'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { CoverImage, useTheme } from 'shared/ui'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
@@ -99,11 +98,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
           ]}
         >
           <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
-            <Image
-              resizeMode='cover'
-              style={styles.backgroundImage}
-              source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }}
-            />
+            <CoverImage eager uri={audio.artwork} style={styles.backgroundImage} />
           </Animated.View>
           <Animated.View pointerEvents='none' style={[miniStyles.miniOverlay, miniOverlayStyle]} />
           {expanded && <StatusBar style='light' />}

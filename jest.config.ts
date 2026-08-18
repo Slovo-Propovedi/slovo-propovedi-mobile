@@ -19,6 +19,7 @@ const config: Config = {
   workerIdleMemoryLimit: '1GB',
   setupFiles: [
     './__mocks__/@react-native-async-storage/async-storage.js',
+    './__mocks__/expo-image.js',
     './__mocks__/react-native-gesture-handler.js',
     './__mocks__/react-native-reanimated.js',
     './__mocks__/react-native-worklets.js',

@@ -46,6 +46,8 @@ UI и хуки — `src/pages/playlist/lib/`:
 
 В Настройках (`src/pages/settings/ui/SettingsScreen.tsx`) пункт «Очистить кэш» → `ClearCacheDialog.tsx` → `clearCacheAction` (`src/pages/settings/model.ts`) → `clearCache` (`src/pages/settings/lib/clearCache.ts`) → `audioCacheService.clearCache()`.
 
+> **Примечание:** Кэш изображений (`expo-image`, `cachePolicy='memory-disk'`) физически отделён от `document/audio-cache` и этими операциями не затрагивается. Подробнее — [features/images.md](./images.md).
+
 ## Hooks
 
 - `useIsCached` (`src/shared/lib/audio-cache/useIsCached.ts`) — проверка кэша для конкретного `audioUrl`, опциональный `cacheTrigger` для перепроверки.

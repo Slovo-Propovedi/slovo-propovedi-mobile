@@ -11,6 +11,7 @@
 | Навигация | `expo-router` `~57.0.12` | Файловая навигация, один источник истины для маршрутов, типизация путей (см. [`architecture.md`](./architecture.md)) |
 | Состояние | `@reatom/core`, `@reatom/framework`, `@reatom/npm-react` | Атомы + асинхронные экшены с `ctx`; единый контекст доступен вне React (см. [`architecture.md`](./architecture.md)) |
 | Аудио | `expo-audio` `~57.0.3` | Воспроизведение, экран блокировки, авто-продвижение (native); Web — `HTMLAudioElement` в `.web.ts` |
+| Изображения | `expo-image` `~57.0.3` | Персистентный дисковый кэш обложек, переживающий рестарт приложения; нативный lazy-loading по вьюпорту; memory+disk кэш для мгновенного повторного показа; встроенные placeholder/transition. `react-native-fast-image` отклонён — несовместим с New Architecture. |
 | HTTP-клиент | `axios` `^1.19.0` | Интерцепторы для токенов/refresh и мониторинга доступности сервера |
 | Генерация API | `orval` `8.23.0` + `zod` `^4.4.3` | Клиент, типы и схемы валидации из OpenAPI (`yarn api:generate`) |
 | Парсинг FB2 | `xml-js` `^1.6.11` | Разбор FB2-книг в объектную модель (см. [`features/book-reader.md`](./features/book-reader.md)) |

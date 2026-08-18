@@ -1,14 +1,13 @@
 import { type ReactNode } from 'react'
 import {
   type GestureResponderEvent,
-  ImageBackground,
   type ImageStyle,
   type StyleProp,
   StyleSheet,
   TouchableOpacity,
   type ViewStyle,
 } from 'react-native'
-import { IMAGE_PLACEHOLDER } from '../images'
+import { CoverImage } from '../cover-image'
 
 interface TouchableImageBackgroundProps {
   children: ReactNode
@@ -33,15 +32,14 @@ export const TouchableImageBackground = ({
     activeOpacity={0.8}
     accessibilityRole='button'
   >
-    <ImageBackground
-      resizeMode='cover'
+    <CoverImage
+      uri={previewSrc}
       imageStyle={imageStyle}
       testID='image-background'
       style={[styles.item, style]}
-      source={{ uri: previewSrc || IMAGE_PLACEHOLDER }}
     >
       {children}
-    </ImageBackground>
+    </CoverImage>
   </TouchableOpacity>
 )
 

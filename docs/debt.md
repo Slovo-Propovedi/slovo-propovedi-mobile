@@ -62,6 +62,10 @@
 - [ ] **`shared/ui/theme/` частично покрыт** (`colors`, `constants`, `model` — есть тесты), но `helpers/` и `ThemeContext/` без тестов — покрыть.
 - [ ] **Widgets (`expandable-player`, `network-status`, `update-status`, `tab-bar`) без тестов** — покрыть.
 
+## UI performance
+
+- [ ] **Слайдеры и ListenScreen монтируют все элементы** (ScrollView + map, ~300 view остаются смонтированными) — `src/shared/ui/slider/slider.tsx`, `src/pages/listen` — вернуться при проблемах с памятью; кандидаты: FlashList/virtualization.
+
 ## Прочее (найдено через grep TODO/FIXME/HACK/XXX в src/ и app/)
 
 - [ ] `src/shared/api/axiosInstance.ts` — TODO перехода на экран логина (см. Auth flow).

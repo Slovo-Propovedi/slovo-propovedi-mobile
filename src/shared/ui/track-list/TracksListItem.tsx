@@ -1,8 +1,8 @@
 /* eslint-disable max-lines -- FIXME: refactor */
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRef, useState } from 'react'
-import { Image, Pressable, Text, View } from 'react-native'
-import { IMAGE_PLACEHOLDER } from '../images'
+import { Pressable, Text, View } from 'react-native'
+import { CoverImage } from '../cover-image'
 import { MovingText } from '../MovingText'
 import { useTheme } from '../themed'
 import { MENU_WIDTH, TITLE_ANIMATION_THRESHOLD } from './constants'
@@ -80,8 +80,8 @@ export const TracksListItem = ({
         ]}
       >
         <View style={tracksListStyles.albumArtContainer}>
-          <Image
-            source={{ uri: artwork || IMAGE_PLACEHOLDER }}
+          <CoverImage
+            uri={artwork}
             style={[tracksListStyles.albumArt, isPlaying && tracksListStyles.albumArtPlaying]}
           />
           {isDownloading && (

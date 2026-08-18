@@ -1,6 +1,7 @@
 export * from './button'
 export * from './control-button/control-button'
 export * from './control-button/control-button.types'
+export * from './cover-image'
 export * from './empty-state'
 export { ErrorBoundary, ErrorDialog, GlobalErrorHandler, useErrorDialog } from './error-dialog'
 export * from './list-item/list-item'

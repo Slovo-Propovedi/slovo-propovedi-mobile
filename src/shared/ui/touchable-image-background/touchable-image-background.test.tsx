@@ -1,5 +1,6 @@
-import { fireEvent, render } from '@testing-library/react-native'
+import { fireEvent, screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
+import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { TouchableImageBackground } from './touchable-image-background'
 import '@testing-library/jest-native/extend-expect'
 
@@ -8,7 +9,7 @@ describe('<TouchableImageBackground/>', () => {
   const testPreviewSrc = 'https://www.test-preview-src.com'
 
   test('renders correctly and calls onPress when pressed', async () => {
-    const { getByTestId } = await render(
+    await renderWithProviders(
       <TouchableImageBackground
         testID='touchable'
         onPress={mockOnPress}
@@ -18,25 +19,23 @@ describe('<TouchableImageBackground/>', () => {
       </TouchableImageBackground>,
     )
 
-    const touchable = getByTestId('touchable')
-    fireEvent.press(touchable)
+    fireEvent.press(screen.getByTestId('touchable'))
     expect(mockOnPress).toHaveBeenCalled()
   })
 
   test('displays the correct preview image', async () => {
-    const { getByTestId } = await render(
+    await renderWithProviders(
       <TouchableImageBackground onPress={mockOnPress} previewSrc={testPreviewSrc}>
         <Text>Test Child</Text>
       </TouchableImageBackground>,
     )
 
-    const imageBackground = getByTestId('image-background')
-
+    const imageBackground = screen.getByTestId('image-background')
     expect(imageBackground).toHaveProp('source', { uri: testPreviewSrc })
   })
 
   test('applies style and imageStyle props correctly', async () => {
-    const { getByTestId } = await render(
+    await renderWithProviders(
       <TouchableImageBackground
         onPress={mockOnPress}
         previewSrc={testPreviewSrc}
@@ -47,18 +46,17 @@ describe('<TouchableImageBackground/>', () => {
       </TouchableImageBackground>,
     )
 
-    const imageBackground = getByTestId('image-background')
-    expect(imageBackground).toHaveProp('resizeMode', 'cover')
+    const imageBackground = screen.getByTestId('image-background')
     expect(imageBackground).toHaveStyle({ opacity: 0.5 })
+    expect(imageBackground).toHaveStyle({ backgroundColor: 'red' })
   })
 
   test('displays child elements', async () => {
-    const { getByText } = await render(
+    await renderWithProviders(
       <TouchableImageBackground onPress={mockOnPress} previewSrc={testPreviewSrc}>
         <Text>Test Child</Text>
       </TouchableImageBackground>,
     )
-    const childText = getByText('Test Child')
-    expect(childText).toBeTruthy()
+    expect(screen.getByText('Test Child')).toBeTruthy()
   })
 })

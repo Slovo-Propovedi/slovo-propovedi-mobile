@@ -1,6 +1,6 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { CoverImage } from 'shared/ui'
 import { type ThemeColors } from 'shared/ui/theme'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
 import type { PlaylistData } from 'shared/model'
@@ -54,7 +54,7 @@ export const PlaylistListItem = ({ onPress, playlist }: PlaylistListItemProps) =
   return (
     <Pressable onPress={onPress} style={styles.itemContainer}>
       <View style={styles.albumArtContainer}>
-        <Image style={styles.albumArt} source={{ uri: playlist.artwork || IMAGE_PLACEHOLDER }} />
+        <CoverImage uri={playlist.artwork} style={styles.albumArt} />
       </View>
       <View style={styles.textContainer}>
         <Text numberOfLines={1} style={styles.title}>

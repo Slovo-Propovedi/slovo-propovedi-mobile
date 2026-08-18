@@ -1,9 +1,8 @@
-import { ActivityIndicator, Image, Pressable, Text, View, type ViewStyle } from 'react-native'
+import { ActivityIndicator, Pressable, Text, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { formatSermonReference } from 'shared/lib/format'
-import { MovingText, PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { CoverImage, MovingText, PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import type { createMiniStyles } from './miniStyles'
 import type { AudioPlayerData } from 'entities/player'
 import type { GestureType } from 'react-native-gesture-handler'
@@ -48,7 +47,7 @@ export const MiniPlayer = ({
         onPress={onPress}
         style={[miniStyles.miniContainer, miniStyle, { backgroundColor: currentTheme.surface }]}
       >
-        <Image style={miniStyles.miniCover} source={{ uri: audio.artwork || IMAGE_PLACEHOLDER }} />
+        <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
         <View style={miniStyles.miniTextContainer}>
           <MovingText text={audio.title || ''} style={miniStyles.miniTrackTitle} />
           <Text numberOfLines={1} style={miniStyles.miniPlaylistName}>

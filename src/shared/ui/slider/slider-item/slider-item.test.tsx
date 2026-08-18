@@ -16,8 +16,10 @@ const sliderItemTestId = 'slider-item'
 const findImageSource = (node: Record<string, unknown>): string | undefined => {
   if (!node || typeof node !== 'object') return undefined
   const nodeProps = node.props as Record<string, unknown> | undefined
-  if (node.type === 'Image' && nodeProps && 'source' in nodeProps)
-    return (nodeProps.source as { uri?: string }).uri
+  if (nodeProps && 'source' in nodeProps) {
+    const uri = (nodeProps.source as { uri?: string })?.uri
+    if (uri) return uri
+  }
 
   const children = node.children
   if (Array.isArray(children))

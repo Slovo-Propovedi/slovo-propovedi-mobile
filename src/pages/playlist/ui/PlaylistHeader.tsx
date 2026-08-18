@@ -1,6 +1,6 @@
-import { Image, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, { type useAnimatedStyle } from 'react-native-reanimated'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
+import { CoverImage } from 'shared/ui'
 import { type ThemeColors } from 'shared/ui/theme'
 import { createHeaderStyles } from './headerStyles'
 import { QueueControls } from './QueueControls'
@@ -34,7 +34,7 @@ export const PlaylistHeader = ({
           imageOpacityStyle,
         ]}
       >
-        <Image style={headerStyles.headerImage} source={{ uri: artwork || IMAGE_PLACEHOLDER }} />
+        <CoverImage eager uri={artwork} style={headerStyles.headerImage} />
         <View style={headerStyles.overlay} />
         <View style={headerStyles.titleContainer}>
           <Text style={headerStyles.title}>{title}</Text>

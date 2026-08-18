@@ -32,7 +32,7 @@ describe('<TouchableListItem>', () => {
     const preview = screen.queryByTestId('preview')
 
     expect(preview).not.toBeNull()
-    expect(preview?.type).toEqual('Image')
+    expect(preview?.props.source).toEqual({ uri: artworkStub })
   })
 
   test('uses IMAGE_PLACEHOLDER if artwork is empty string', async () => {
