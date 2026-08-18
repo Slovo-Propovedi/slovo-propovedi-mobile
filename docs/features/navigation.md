@@ -53,7 +53,7 @@
 Параметры передаются **JSON-строками** через `router.push({ pathname, params })`:
 
 - `/listen/playlist?playlist=<JSON PlaylistData>` — `navigateToPlaylist`;
-- `/listen/playlist-list?playlists=<JSON PlaylistData[]>&title=<строка>` — `navigateToPlaylistList`.
+- `/listen/playlist-list?sectionId=<строка>&title=<строка>` — `navigateToPlaylistList`.
 
 Хелперы — `src/shared/routing/`:
 

@@ -37,7 +37,7 @@ describe('useListenNavigation', () => {
 
   test('navigateToPlaylistList calls router.push with correct pathname', async () => {
     const { result } = await renderHook(() => useListenNavigation())
-    result.current.navigateToPlaylistList([mockPlaylist], 'My List')
+    result.current.navigateToPlaylistList('section-123', 'My List')
 
     expect(mockPush).toHaveBeenCalledTimes(1)
     expect(mockPush).toHaveBeenCalledWith(
@@ -45,13 +45,12 @@ describe('useListenNavigation', () => {
     )
   })
 
-  test('navigateToPlaylistList serializes playlists array and passes title', async () => {
+  test('navigateToPlaylistList passes sectionId and title', async () => {
     const { result } = await renderHook(() => useListenNavigation())
-    const playlists = [mockPlaylist]
-    result.current.navigateToPlaylistList(playlists, 'My List')
+    result.current.navigateToPlaylistList('section-42', 'My List')
 
     const calledWith = mockPush.mock.calls[0][0]
-    expect(calledWith.params.playlists).toBe(JSON.stringify(playlists))
+    expect(calledWith.params.sectionId).toBe('section-42')
     expect(calledWith.params.title).toBe('My List')
   })
 })

@@ -69,7 +69,7 @@
 ## Куда можно перейти
 
 - Тап на плейлист: если треков `< 2` — сразу запуск воспроизведения (`usePlayNewSermon`); иначе → `/listen/playlist?playlist=<JSON PlaylistData>` (`navigateToPlaylist` из `src/shared/routing/useListenNavigation.ts`).
-- Тап на заголовок секции → `/listen/playlist-list?playlists=<JSON PlaylistData[]>&title=<строка>` (`navigateToPlaylistList`).
+- Тап на заголовок секции → `/listen/playlist-list?sectionId=<id секции>&title=<строка>` (`navigateToPlaylistList`).
 - Тап на проповедь в результатах поиска — запуск воспроизведения (без перехода).
 
 ## Состояния

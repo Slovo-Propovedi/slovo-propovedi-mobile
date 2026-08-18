@@ -3,5 +3,5 @@ export {
   fetchAllSections,
   isLoadingSectionsAtom,
   sectionDataSourceAtom,
-} from 'entities/section'
-export type { SectionDataSource } from 'entities/section'
+} from './model'
+export type { SectionDataSource } from './model'

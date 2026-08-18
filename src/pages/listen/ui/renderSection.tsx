@@ -6,7 +6,7 @@ import { mapWhereIsTitleLocated } from '../lib/mapWhereIsTitleLocated'
 
 export interface RenderSectionProps {
   index: number
-  navigateToPlaylistList: (playlists: PlaylistData[], title: string) => void
+  navigateToPlaylistList: (sectionId: string, title: string) => void
   onItemPress: (playlist: PlaylistData) => void
   section: SectionData
 }
@@ -35,13 +35,19 @@ export const renderSection = ({
       itemsSize={mapItemsSize(section.itemsSize)}
       transform={mapTransform(section.transform)}
       isDescriptionTitleOnSlideLarge={section.isDescriptionTitleOnSlideLarge}
-      onPressTitle={() => navigateToPlaylistList(playlists, section.title ?? '')}
       whereIsSlideTitleLocated={mapWhereIsTitleLocated(section.whereIsSlideTitleLocated)}
       items={playlists.map(item => ({
         artwork: item.artwork,
         data: item,
         description: item.title,
       }))}
+      onPressTitle={() => {
+        if (!section.id) {
+          console.error('renderSection: section.id is required for navigateToPlaylistList')
+          return
+        }
+        navigateToPlaylistList(section.id, section.title ?? '')
+      }}
     />
   )
 }

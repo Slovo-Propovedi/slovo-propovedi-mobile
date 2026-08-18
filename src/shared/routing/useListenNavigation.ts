@@ -11,9 +11,9 @@ export const useListenNavigation = () => {
     })
   }
 
-  const navigateToPlaylistList = (playlists: PlaylistData[], title: string) => {
+  const navigateToPlaylistList = (sectionId: string, title: string) => {
     router.push({
-      params: { playlists: JSON.stringify(playlists), title },
+      params: { sectionId, title },
       pathname: '/listen/playlist-list',
     })
   }
