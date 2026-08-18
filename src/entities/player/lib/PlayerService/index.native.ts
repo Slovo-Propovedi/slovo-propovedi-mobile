@@ -60,13 +60,10 @@ export class PlayerService {
     if (!audioUrl) return null
     void setIsBufferingAction(ctx, true)
     void setDurationAction(ctx, 0)
-    audioLoader.resetTrackEndHandled()
-    playerStatusListener.resetTrackEndHandled()
+    playerStatusListener.cleanup()
 
     const player = await audioLoader.replaceAudio(audioUrl, initialPositionMs)
-    if (!player) return null
-
-    this.playerInstance = player
+    if (player) this.playerInstance = player
     this.setupListeners()
     return player
   }
