@@ -1,5 +1,5 @@
-import { useAtom, useCtx } from '@reatom/npm-react'
-import { useRef } from 'react'
+import { useCtx } from '@reatom/npm-react'
+import { useEffect, useRef, useState } from 'react'
 import { cacheAudio, removeFromCache } from '../../lib/audio-cache/AudioCacheService'
 import { useIsCached } from '../../lib/audio-cache/useIsCached'
 import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from '../../lib/cache-triggers'
@@ -24,8 +24,21 @@ export const useTrackItemCache = (
   // eslint-disable-next-line react-hooks/refs -- intentional: read ref-trigger counter during render for cache key
   const internalCacheTrigger = internalCacheTriggerRef.current
   const isCached = useIsCached(audioUrl ?? null, internalCacheTrigger + (externalCacheTrigger ?? 0))
-  const progressValue = useAtom(playlistDownloadProgressAtom)[0][audioUrl ?? ''] ?? -1
-  const isDownloading = progressValue >= 0 && progressValue < 1
+  // Narrow subscription: manual ctx.subscribe + useState bailout (Object.is) so a
+  // progress tick re-renders ONLY the track whose url changed, not every list item.
+  // NOTE: useAtom(computedFn, deps) overload crashes with installed core@1001.3.0.
+  const [progressValue, setProgressValue] = useState(-1)
+  useEffect(() => {
+    if (!audioUrl) return
+    const readProgress = () => {
+      const next = ctx.get(playlistDownloadProgressAtom)[audioUrl] ?? -1
+      setProgressValue(prev => (prev === next ? prev : next))
+    }
+    readProgress()
+    return ctx.subscribe(playlistDownloadProgressAtom, readProgress)
+  }, [ctx, audioUrl])
+  const effectiveProgress = audioUrl ? progressValue : -1
+  const isDownloading = effectiveProgress >= 0 && effectiveProgress < 1
 
   const toggleCache = async () => {
     if (!audioUrl) return
@@ -38,5 +51,5 @@ export const useTrackItemCache = (
     }
   }
 
-  return { isCached, isDownloading, progressValue, toggleCache }
+  return { isCached, isDownloading, progressValue: effectiveProgress, toggleCache }
 }

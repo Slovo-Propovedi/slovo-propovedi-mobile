@@ -13,10 +13,12 @@
 ## Auth flow
 
 - [ ] **Отсутствует экран логина.** Токены работают только на уровне axios-интерцептора; при неудачном refresh токены очищаются, но переход на экран логина не выполнен — `src/shared/api/axiosInstance.ts` — TODO прямо в коде (строка «перейти на экран логина»). Вернуться при внедрении авторизации.
+- [ ] **Chunked transfer без `Content-Length` не показывает прогресс скачивания.** `AudioCacheService.cacheAudio` пропускает `onProgress` при `totalBytes ≤ 0` (сервер не отдал `Content-Length`). Прогресс скачивания недоступен для chunked-response файлов — индикация отсутствует. Вернуться, если понадобится приблизительный прогресс через `bytesWritten`.
 - [ ] **Экран логина/регистрации не спроектирован** — нет маршрута в `app/` и страницы в `src/pages/`. Связано с пунктом выше.
 
 ## Audio player
 
+- [ ] **Осиротевшие `.part`-файлы при убийстве приложения посреди закачки не подчищаются.** `src/shared/lib/audio-cache/AudioCacheService.ts` — rename выполняется только при успехе, delete — только при пойманной ошибке; `getCacheInfo` считает `.part` в `fileCount`/`totalSize`. Когда вернуться — опциональный стартовый sweep `*.part` при инициализации кэша.
 - [ ] **`TrackAutoAdvanceService.ts` и `TracksListItem.tsx` отключены от лимита строк через `eslint-disable max-lines`** — `src/entities/player/lib/PlayerService/TrackAutoAdvanceService.ts`, `src/shared/ui/track-list/TracksListItem.tsx` — FIXME: refactor. Разбить на подмодули и убрать `eslint-disable`.
 - [ ] **Fire-and-forget `downloadAsync` иконки-фолбэка может опоздать к первому `setMetadata`.** `src/shared/lib/app-icon.ts`, `src/entities/player/lib/PlayerService/LockScreenControls.ts` — до завершения загрузки lock screen/уведомление создаётся без артворка (следующий `setMetadata` поправит). Вернуться, если понадобится гарантированный артворк с первого показа (дождаться загрузки при инициализации плеера или ретраить `setMetadata`).
 
@@ -50,6 +52,7 @@
 ## Backend
 
 - [ ] **Presigned URL из `GET /sermons/{id}/stream-url` отклоняет HEAD-запросы с `403 SignatureDoesNotMatch`.** Причина: HTTP-метод входит в AWS Sig V4 canonical request, поэтому URL, подписанный для GET, нельзя переиспользовать для HEAD. GET с `Range` работает корректно (`206`, подтверждено эмпирически). Важно: `Range` **намеренно не включён** в подпись — это правильно и позволяет стримингу/перемотке работать; НЕ следует добавлять `Range` в `SignedHeaders` (это сломает стриминг). Несущественно для плеера (HEAD не используется, стриминг идёт через прямой `audioUrl`), но мешает использовать `getStreamUrl` для probe/метаданных в будущем. Обёртка `sermonControllerGetStreamUrl` — `src/shared/api/generated/sermons/sermons.ts:59`. — сообщить бэкенд-команде для проверки; корректирующее действие — поддержка HEAD или отдельный presigned URL для HEAD, а не подпись `Range`.
+- [ ] useAtom(computedFn, deps) из @reatom/npm-react@3.10.6 падает в рантайме с установленным @reatom/core@1001.3.0 (TypeError: Cannot convert undefined value to object) — узкие подписки делать вручную через ctx.get/ctx.subscribe (паттерн в src/shared/ui/track-list/useTrackItemCache.ts) — пересмотреть при выравнивании версий @reatom (package.json: core ^1001.3.0 при framework ^3.4.68, ожидающем core ^3.10.3)
 
 ## Book routes not registered
 
@@ -60,7 +63,7 @@
 - [ ] **`playerSheet` (`src/entities/player/playerSheet.ts`) без тестов** — покрыть.
 - [ ] **`pages/` (listen, playlist, playlist-list, more, read, study, settings, about) без тестов экранов** — покрыть ключевые сценарии (переходы, состояния).
 - [ ] **`shared/ui/theme/` частично покрыт** (`colors`, `constants`, `model` — есть тесты), но `helpers/` и `ThemeContext/` без тестов — покрыть.
-- [ ] **Widgets (`expandable-player`, `network-status`, `update-status`, `tab-bar`) без тестов** — покрыть.
+- [ ] **Widgets (`expandable-player`, `network-status`, `update-status`, `tab-bar`) без тестов** — покрыть (включая индикатор прогресса скачивания в MiniPlayer и гейтинг спиннера в ExpandablePlayer).
 
 ## UI performance
 
