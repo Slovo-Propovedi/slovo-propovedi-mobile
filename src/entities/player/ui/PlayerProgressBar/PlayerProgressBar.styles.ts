@@ -9,7 +9,7 @@ export const createProgressBarStyles = (theme: ThemeColors) =>
     container: { width: '100%' },
     downloadProgress: {
       ...StyleSheet.absoluteFill,
-      backgroundColor: COLORS.maximumTrackTintColor,
+      backgroundColor: 'rgba(255,255,255,0.35)',
       borderBottomLeftRadius: 2.5,
       borderTopLeftRadius: 2.5,
     },

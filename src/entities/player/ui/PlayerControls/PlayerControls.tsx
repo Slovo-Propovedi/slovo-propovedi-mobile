@@ -8,7 +8,6 @@ import { DefaultControls } from './DefaultControls'
 import { PlayerControlsSize } from './PlayerControls.types'
 import { useAppStatePlayback } from './useAppStatePlayback'
 import { usePlayerControlSizes } from './usePlayerControlSizes'
-import { usePlayerDownloadState } from './usePlayerDownloadState'
 import { usePlayerToggleTrack } from './usePlayerToggleTrack'
 import { usePlayerTrackState } from './usePlayerTrackState'
 
@@ -47,8 +46,6 @@ export const PlayerControls = ({
     currentAudio,
     currentPlaylist,
   })
-
-  const isCurrentAudioDownloading = usePlayerDownloadState(currentAudio)
 
   const { buttonSize, isFullscreen, playButtonSize } = usePlayerControlSizes({
     size,
@@ -96,7 +93,6 @@ export const PlayerControls = ({
       onPressOutSeek={onPressOutSeek}
       playButtonSize={playButtonSize}
       onLongPressSeek={onLongPressSeek}
-      isDownloading={isCurrentAudioDownloading}
     />
   )
 
@@ -112,7 +108,6 @@ export const PlayerControls = ({
       isNextDisabled={isNextDisabled}
       isPrevDisabled={isPrevDisabled}
       hasCurrentAudio={!!currentAudio}
-      isDownloading={isCurrentAudioDownloading}
     />
   )
 

@@ -36,7 +36,7 @@ export const PlayerProgressBar = ({
 
   const displayPosition = isDragging ? previewPosition : position
   const progress = Math.max(0, Math.min(1, duration > 0 ? displayPosition / duration : 0))
-  const downloadProgressFraction = downloadProgress / 100
+  const downloadProgressFraction = Math.max(0, Math.min(1, downloadProgress))
 
   return (
     <View style={[progressBarStyles.container, style]}>

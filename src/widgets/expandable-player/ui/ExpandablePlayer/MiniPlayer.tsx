@@ -14,6 +14,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 interface MiniPlayerProps {
   audio: AudioPlayerData
   currentTheme: ThemeColors
+  downloadProgress: number
+  isDownloading: boolean
   miniPan: GestureType
   miniStyle: AnimatedStyle<ViewStyle>
   miniStyles: ReturnType<typeof createMiniStyles>
@@ -27,6 +29,8 @@ interface MiniPlayerProps {
 export const MiniPlayer = ({
   audio,
   currentTheme,
+  downloadProgress,
+  isDownloading,
   miniPan,
   miniStyle,
   miniStyles,
@@ -56,7 +60,7 @@ export const MiniPlayer = ({
         </View>
         <View style={miniStyles.miniControls}>
           {showSpinner ? (
-            <ActivityIndicator size={36} color={currentTheme.text} />
+            <ActivityIndicator size={36} color={currentTheme.text} testID='buffering-indicator' />
           ) : (
             <PlayerControlButton
               size={36}
@@ -66,6 +70,19 @@ export const MiniPlayer = ({
             />
           )}
         </View>
+        {isDownloading && (
+          <View style={miniStyles.downloadTrack}>
+            <View
+              style={[
+                miniStyles.downloadFill,
+                {
+                  backgroundColor: currentTheme.primary,
+                  width: `${downloadProgress * 100}%`,
+                },
+              ]}
+            />
+          </View>
+        )}
       </AnimatedPressable>
     </GestureDetector>
   )

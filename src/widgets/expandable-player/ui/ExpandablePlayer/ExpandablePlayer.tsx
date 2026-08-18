@@ -8,6 +8,7 @@ import {
   currentAudioAtom,
   currentPlaylistAtom,
   downloadingAudioUrlAtom,
+  downloadProgressAtom,
   isBufferingAtom,
   isDownloadingAtom,
   isPlayerExpandedAtom,
@@ -37,9 +38,9 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
   const [isBuffering] = useAtom(isBufferingAtom)
   const [isDownloading] = useAtom(isDownloadingAtom)
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
+  const [downloadProgress] = useAtom(downloadProgressAtom)
 
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
-  const showSpinner = isBuffering || isCurrentAudioDownloading
   const { pause, play } = usePlayer()
   const open = useAction(openPlayerSheetAction)
   const close = useAction(closePlayerSheetAction)
@@ -84,8 +85,10 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
           miniStyles={miniStyles}
           onPress={handleMiniTap}
           onPlayPause={onPlayPause}
-          showSpinner={showSpinner}
+          showSpinner={isBuffering}
           currentTheme={currentTheme}
+          isDownloading={isCurrentAudioDownloading}
+          downloadProgress={isCurrentAudioDownloading ? downloadProgress : 0}
         />
       )}
       <GestureDetector gesture={panGesture}>

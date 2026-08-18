@@ -10,7 +10,6 @@ interface DefaultControlsProps {
   excludeButtons?: ControlsNames[]
   hasCurrentAudio: boolean
   isBuffering: boolean
-  isDownloading: boolean
   isNextDisabled: boolean
   isPlaying: boolean
   isPrevDisabled: boolean
@@ -24,7 +23,6 @@ export const DefaultControls = ({
   excludeButtons,
   hasCurrentAudio,
   isBuffering,
-  isDownloading,
   isNextDisabled,
   isPlaying,
   isPrevDisabled,
@@ -35,7 +33,7 @@ export const DefaultControls = ({
 }: DefaultControlsProps) => {
   const { currentTheme } = useTheme()
   const excludedButtons = getExcludedButtons(excludeButtons)
-  const showSpinner = isBuffering || isDownloading
+  const showSpinner = isBuffering
 
   return (
     <View testID='controls-container' style={[styles.controlsContainer, style]}>
@@ -50,7 +48,7 @@ export const DefaultControls = ({
       )}
       {!excludedButtons[PlayerControlButtonType.Play] &&
         (showSpinner ? (
-          <View>
+          <View testID='buffering-indicator'>
             <ActivityIndicator
               color={currentTheme.primary}
               size={size * 2 - styles.bufferingText.fontSize}

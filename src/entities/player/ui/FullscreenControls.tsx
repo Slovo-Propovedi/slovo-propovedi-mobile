@@ -9,7 +9,6 @@ interface FullscreenControlsProps {
   buttonSize: number
   excludeButtons?: ControlsNames[]
   isBuffering: boolean
-  isDownloading: boolean
   isNextDisabled: boolean
   isPlaying: boolean
   isPrevDisabled: boolean
@@ -25,7 +24,6 @@ export const FullscreenControls = ({
   buttonSize,
   excludeButtons,
   isBuffering,
-  isDownloading,
   isNextDisabled,
   isPlaying,
   isPrevDisabled,
@@ -37,7 +35,7 @@ export const FullscreenControls = ({
   toggleTrack,
 }: FullscreenControlsProps) => {
   const excludedButtons = getExcludedButtons(excludeButtons)
-  const showSpinner = isBuffering || isDownloading
+  const showSpinner = isBuffering
 
   return (
     <View style={[styles.container, style]}>
@@ -59,6 +57,7 @@ export const FullscreenControls = ({
       {!excludedButtons[PlayerControlButtonType.Play] &&
         (showSpinner ? (
           <View
+            testID='buffering-indicator'
             style={[styles.playButtonWrapper, { height: playButtonSize, width: playButtonSize }]}
           >
             <ActivityIndicator size='large' color={COLORS.white} />

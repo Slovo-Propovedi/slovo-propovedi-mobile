@@ -24,6 +24,32 @@ jest.mock('../../lib/PlayerService', () => ({
   },
 }))
 
+const mockEntypoSpy = jest.fn()
+
+jest.mock('@expo/vector-icons', () => {
+  const Actual = jest.requireActual('@expo/vector-icons')
+  return {
+    ...Actual,
+    Entypo: (props: Record<string, unknown>) => {
+      mockEntypoSpy(props)
+      return <Actual.Entypo {...props} />
+    },
+  }
+})
+
+const mockUsePlayerState = jest.fn(() => ({
+  currentAudio: null,
+  duration: 0,
+  isBuffering: false,
+  isPlaying: false,
+  position: 0,
+  volume: 1,
+}))
+
+jest.mock('../../lib/usePlayerState', () => ({
+  usePlayerState: () => mockUsePlayerState(),
+}))
+
 const currentPlaylist = {
   artwork: PREVIEW_URL,
   id: '1',
@@ -67,6 +93,15 @@ let mockPlayerControlsProps = getMockPlayerControlsProps()
 describe('<PlayerControls>', () => {
   beforeEach(() => {
     mockPlayerControlsProps = getMockPlayerControlsProps()
+    mockEntypoSpy.mockClear()
+    mockUsePlayerState.mockReturnValue({
+      currentAudio: null,
+      duration: 0,
+      isBuffering: false,
+      isPlaying: false,
+      position: 0,
+      volume: 1,
+    })
     jest.clearAllMocks()
   })
 
@@ -76,5 +111,51 @@ describe('<PlayerControls>', () => {
     )
     const controlsContainer = getByTestId('controls-container')
     expect(controlsContainer).toBeTruthy()
+  })
+
+  test('shows play button when not buffering and not downloading', async () => {
+    const { getByTestId, queryByTestId } = await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} />,
+    )
+    expect(getByTestId('play-button')).toBeTruthy()
+    expect(queryByTestId('buffering-indicator')).toBeNull()
+  })
+
+  test('keeps play/pause button visible while playing', async () => {
+    mockUsePlayerState.mockReturnValue({
+      currentAudio: null,
+      duration: 0,
+      isBuffering: false,
+      isPlaying: true,
+      position: 0,
+      volume: 1,
+    })
+    mockEntypoSpy.mockClear()
+    const { getByTestId, queryByTestId } = await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} />,
+    )
+    expect(getByTestId('play-button')).toBeTruthy()
+    expect(queryByTestId('buffering-indicator')).toBeNull()
+    const iconNames = mockEntypoSpy.mock.calls.map(
+      (call: [Record<string, unknown>]) => call[0].name,
+    )
+    expect(iconNames).toContain('controller-paus')
+    expect(iconNames).not.toContain('controller-play')
+  })
+
+  test('shows spinner when buffering', async () => {
+    mockUsePlayerState.mockReturnValue({
+      currentAudio: null,
+      duration: 0,
+      isBuffering: true,
+      isPlaying: false,
+      position: 0,
+      volume: 1,
+    })
+    const { queryByTestId } = await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} />,
+    )
+    expect(queryByTestId('play-button')).toBeNull()
+    expect(queryByTestId('buffering-indicator')).toBeTruthy()
   })
 })

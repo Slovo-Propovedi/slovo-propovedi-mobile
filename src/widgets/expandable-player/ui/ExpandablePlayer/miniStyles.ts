@@ -4,6 +4,17 @@ import type { ThemeColors } from 'shared/ui/theme'
 
 export const createMiniStyles = (theme: ThemeColors) =>
   StyleSheet.create({
+    downloadFill: {
+      height: '100%',
+    },
+    downloadTrack: {
+      backgroundColor: 'rgba(128, 128, 128, 0.4)',
+      bottom: 0,
+      height: 2,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+    },
     miniContainer: {
       alignItems: 'center',
       backgroundColor: theme.surface,
