@@ -1,5 +1,5 @@
 import { type Directory, File } from 'expo-file-system'
-import { audioCacheService } from './AudioCacheService'
+import { _resetInflightCacheForTesting, audioCacheService } from './AudioCacheService'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 
 jest.mock('expo-file-system', () => ({
@@ -8,6 +8,7 @@ jest.mock('expo-file-system', () => ({
       this.exists = mockFileState.exists
       this.uri = `file://cache/${name}`
       this.delete = jest.fn()
+      this.rename = jest.fn()
       this.size = 1024
     }
 
@@ -15,6 +16,7 @@ jest.mock('expo-file-system', () => ({
     public exists: boolean
     public uri: string
     public delete: jest.Mock
+    public rename: jest.Mock
     public size: number
   },
 }))
@@ -39,6 +41,7 @@ const mockedGetAudioCacheDirectory = jest.mocked(getAudioCacheDirectory)
 describe('AudioCacheService', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    _resetInflightCacheForTesting()
     mockFileState.exists = false
     mockCacheDir.exists = true
     ;(mockCacheDir.list as jest.Mock).mockReturnValue([])
@@ -92,8 +95,8 @@ describe('AudioCacheService', () => {
   })
 
   describe('cacheAudio', () => {
-    test('throws for empty string', async () => {
-      await expect(audioCacheService.cacheAudio('')).rejects.toThrow('audioUrl is required')
+    test('throws for empty string', () => {
+      expect(() => audioCacheService.cacheAudio('')).toThrow('audioUrl is required')
     })
 
     test('returns existing uri when already cached', async () => {
@@ -110,7 +113,102 @@ describe('AudioCacheService', () => {
       expect(File.downloadFileAsync).toHaveBeenCalled()
       expect(onProgress).toHaveBeenCalledWith(0)
       expect(onProgress).toHaveBeenCalledWith(1)
-      expect(result).toBe('file://downloaded.mp3')
+      expect(result).toContain('file://cache/')
+    })
+
+    describe('single-flight dedup', () => {
+      test('second concurrent call returns same promise', async () => {
+        mockFileState.exists = false
+        let resolveDownload!: (value: unknown) => void
+        ;(File.downloadFileAsync as jest.Mock).mockReturnValueOnce(
+          new Promise(r => {
+            resolveDownload = r
+          }),
+        )
+
+        const p1 = audioCacheService.cacheAudio(EXAMPLE_URL)
+        const p2 = audioCacheService.cacheAudio(EXAMPLE_URL)
+
+        expect(p1).toBe(p2)
+
+        resolveDownload({ uri: 'file://dl.mp3' })
+        await expect(p1).resolves.toContain('file://cache/')
+      })
+
+      test('does not re-invoke download for duplicate URL', async () => {
+        mockFileState.exists = false
+        ;(File.downloadFileAsync as jest.Mock).mockReturnValue(new Promise(() => {}))
+
+        audioCacheService.cacheAudio(EXAMPLE_URL)
+        audioCacheService.cacheAudio(EXAMPLE_URL)
+
+        expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+      })
+
+      test('allows new download after previous completes', async () => {
+        mockFileState.exists = false
+        ;(File.downloadFileAsync as jest.Mock).mockResolvedValue({ uri: 'file://dl.mp3' })
+
+        await audioCacheService.cacheAudio(EXAMPLE_URL)
+        ;(File.downloadFileAsync as jest.Mock).mockClear()
+        ;(File.downloadFileAsync as jest.Mock).mockResolvedValue({ uri: 'file://dl2.mp3' })
+
+        await audioCacheService.cacheAudio(EXAMPLE_URL)
+        expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+      })
+
+      test('allows new download after previous fails', async () => {
+        mockFileState.exists = false
+        ;(File.downloadFileAsync as jest.Mock).mockRejectedValueOnce(new Error('fail'))
+
+        await expect(audioCacheService.cacheAudio(EXAMPLE_URL)).rejects.toThrow('fail')
+        ;(File.downloadFileAsync as jest.Mock).mockClear()
+        ;(File.downloadFileAsync as jest.Mock).mockResolvedValue({ uri: 'file://dl.mp3' })
+
+        await audioCacheService.cacheAudio(EXAMPLE_URL)
+        expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+      })
+
+      test('second caller onProgress receives fan-out ticks and retroactive seed', async () => {
+        mockFileState.exists = false
+        let downloadOnProgress:
+          ((data: { bytesWritten: number; totalBytes: number }) => void) | undefined
+        let resolveDownload!: (value: unknown) => void
+        ;(File.downloadFileAsync as jest.Mock).mockImplementation(
+          (
+            _url: string,
+            _file: unknown,
+            opts: { onProgress?: (data: { bytesWritten: number; totalBytes: number }) => void },
+          ) => {
+            downloadOnProgress = opts.onProgress
+            return new Promise(r => {
+              resolveDownload = r
+            })
+          },
+        )
+
+        const cb1 = jest.fn()
+        audioCacheService.cacheAudio(EXAMPLE_URL, cb1)
+
+        // Simulate download tick (via downloadToCache's throttled progress)
+        downloadOnProgress?.({ bytesWritten: 400, totalBytes: 1000 })
+
+        const cb2 = jest.fn()
+        audioCacheService.cacheAudio(EXAMPLE_URL, cb2)
+
+        // cb2 receives retroactive seed
+        expect(cb2).toHaveBeenCalledWith(0.4)
+
+        // Next tick fans out to both
+        downloadOnProgress?.({ bytesWritten: 800, totalBytes: 1000 })
+        expect(cb1).toHaveBeenCalledWith(0.8)
+        expect(cb2).toHaveBeenCalledWith(0.8)
+
+        resolveDownload({ uri: 'file://dl.mp3' })
+        await expect(audioCacheService.cacheAudio(EXAMPLE_URL, cb2)).resolves.toContain(
+          'file://cache/',
+        )
+      })
     })
   })
 

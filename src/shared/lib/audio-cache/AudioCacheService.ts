@@ -1,31 +1,15 @@
 import { File } from 'expo-file-system'
+import { downloadToCache, ensureCacheDirectoryExists, getCachedFile } from './cacheDownloader'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
+import { inflightCache, type InflightEntry, resetInflightCache } from './inflightCache'
 
 export interface CacheInfo {
   fileCount: number
   totalSize: number
 }
 
-const getUrlHash = (url: string): string => {
-  // Simple hash function to create a unique filename from URL
-  let hash = 0
-  for (let i = 0; i < url.length; i++) {
-    const char = url.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash // Convert to 32bit integer
-  }
-  // Convert to base36 for shorter string and make it positive
-  return Math.abs(hash).toString(36)
-}
-
-const getCachedFile = (audioUrl: string): File => {
-  const hash = getUrlHash(audioUrl)
-  return new File(getAudioCacheDirectory(), `${hash}.mp3`)
-}
-
-const ensureCacheDirectoryExists = (): void => {
-  const cacheDir = getAudioCacheDirectory()
-  if (!cacheDir.exists) cacheDir.create({ intermediates: true })
+export const _resetInflightCacheForTesting = (): void => {
+  resetInflightCache()
 }
 
 class AudioCacheService {
@@ -41,7 +25,6 @@ class AudioCacheService {
       return null
     }
   }
-
   public isCached = async (audioUrl: string): Promise<boolean> => {
     if (!audioUrl) return false
     try {
@@ -52,7 +35,6 @@ class AudioCacheService {
       return false
     }
   }
-
   public getCacheInfo = async (): Promise<CacheInfo> => {
     try {
       ensureCacheDirectoryExists()
@@ -67,28 +49,55 @@ class AudioCacheService {
       return { fileCount: 0, totalSize: 0 }
     }
   }
-
-  public cacheAudio = async (
+  public cacheAudio = (
     audioUrl: string,
     onProgress?: (progress: number) => void,
   ): Promise<string> => {
     if (!audioUrl) throw new Error('[AudioCacheService] audioUrl is required')
-    try {
-      ensureCacheDirectoryExists()
-      const cachedFile = getCachedFile(audioUrl)
-      if (cachedFile.exists) return cachedFile.uri
-      if (onProgress) onProgress(0)
-      const downloadedFile = await File.downloadFileAsync(audioUrl, cachedFile, {
-        idempotent: true,
-      })
-      if (onProgress) onProgress(1)
-      return downloadedFile.uri
-    } catch (error) {
-      console.error('[AudioCacheService] Error caching audio:', error)
-      throw error
+    const existing = inflightCache.get(audioUrl)
+    if (existing) {
+      if (onProgress) {
+        existing.callbacks.add(onProgress)
+        if (existing.lastValue > 0)
+          try {
+            onProgress(existing.lastValue)
+          } catch (err) {
+            console.error('[AudioCacheService] onProgress callback error:', err)
+          }
+      }
+      return existing.promise
     }
+    const callbacks = new Set<(progress: number) => void>()
+    if (onProgress) callbacks.add(onProgress)
+    const entry: InflightEntry = {
+      callbacks,
+      emit: (progress: number) => {
+        entry.lastValue = progress
+        for (const cb of callbacks)
+          try {
+            cb(progress)
+          } catch (err) {
+            console.error('[AudioCacheService] onProgress callback error:', err)
+          }
+      },
+      lastValue: 0,
+      promise: null as unknown as Promise<string>,
+    }
+    const promise = downloadToCache(audioUrl, entry.emit)
+    entry.promise = promise
+    inflightCache.set(audioUrl, entry)
+    promise.then(
+      () => {
+        callbacks.clear()
+        inflightCache.delete(audioUrl)
+      },
+      () => {
+        callbacks.clear()
+        inflightCache.delete(audioUrl)
+      },
+    )
+    return promise
   }
-
   public clearCache = async (): Promise<void> => {
     try {
       const cacheDir = getAudioCacheDirectory()
@@ -98,7 +107,6 @@ class AudioCacheService {
       throw error
     }
   }
-
   public removeFromCache = async (audioUrl: string): Promise<boolean> => {
     if (!audioUrl) return false
     try {
