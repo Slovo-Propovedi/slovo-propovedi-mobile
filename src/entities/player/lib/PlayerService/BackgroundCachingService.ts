@@ -16,8 +16,25 @@ const removeTrackProgress = (audioUrl: string) => {
   })
 }
 
+const inflightDownloads = new Set<string>()
+
+export const _resetInFlightDownloadsForTesting = (): void => {
+  inflightDownloads.clear()
+}
+
 export const startBackgroundCaching = (audioUrl: string): void => {
   if (!audioUrl) return
+
+  if (inflightDownloads.has(audioUrl)) {
+    void setIsDownloadingAction(ctx, true)
+    void setDownloadingUrlAction(ctx, audioUrl)
+    const perTrackProgress = ctx.get(playlistDownloadProgressAtom)[audioUrl] ?? 0
+    void setDownloadProgressAction(ctx, perTrackProgress)
+    return
+  }
+
+  inflightDownloads.add(audioUrl)
+
   void setIsDownloadingAction(ctx, true)
   void setDownloadingUrlAction(ctx, audioUrl)
   void setDownloadProgressAction(ctx, 0)
@@ -25,7 +42,8 @@ export const startBackgroundCaching = (audioUrl: string): void => {
 
   audioCacheService
     .cacheAudio(audioUrl, progress => {
-      void setDownloadProgressAction(ctx, progress)
+      if (ctx.get(downloadingAudioUrlAtom) === audioUrl)
+        void setDownloadProgressAction(ctx, progress)
       playlistDownloadProgressAtom(ctx, prev => ({ ...prev, [audioUrl]: progress }))
     })
     .then(() => {
@@ -38,10 +56,10 @@ export const startBackgroundCaching = (audioUrl: string): void => {
       removeTrackProgress(audioUrl)
     })
     .finally(() => {
+      inflightDownloads.delete(audioUrl)
       if (ctx.get(downloadingAudioUrlAtom) === audioUrl) {
         void setIsDownloadingAction(ctx, false)
         void setDownloadingUrlAction(ctx, null)
-        void setDownloadProgressAction(ctx, 0)
       }
     })
 }
