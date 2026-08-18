@@ -1,0 +1,4 @@
+Resolve playlist list from section id for instant opening
+Cache covers via expo-image with lazy viewport loading
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
