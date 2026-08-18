@@ -1,0 +1,7 @@
+Narrow per-track progress subscription to fix crash and re-render storms
+Reset status listeners before replacing audio to prevent stale events
+Adopt in-flight background caching on sermon switch to keep progress visible
+Emit throttled download progress with atomic .part files and single-flight
+Show play/pause during download, move progress to bar and mini-player line
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Слово.Проповеди",
     "slug": "slovo-propovedi-mobile",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "license": "GPL-3.0-or-later",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
