@@ -1,8 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer } from 'expo-audio'
+import { updateHistoryProgressAction } from 'entities/listening-history'
 import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {
+  currentAudioAtom,
+  durationAtom,
   isSeekingAtom,
   setIsPlayingAction,
   setIsSeekingAction,
@@ -38,6 +41,14 @@ class PlaybackController {
     await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(positionMs))
     player.pause()
     void setIsPlayingAction(ctx, false)
+
+    const sermonId = ctx.get(currentAudioAtom)?.id
+    if (sermonId)
+      void updateHistoryProgressAction(ctx, {
+        durationMs: ctx.get(durationAtom),
+        positionMs,
+        sermonId,
+      })
   }
 
   public stop = async (player: AudioPlayer | null): Promise<void> => {

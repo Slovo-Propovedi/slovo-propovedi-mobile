@@ -1,5 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAction } from '@reatom/npm-react'
 import { router, Stack } from 'expo-router'
 import { useEffect } from 'react'
 import { BackHandler, InteractionManager, View } from 'react-native'
@@ -10,10 +9,8 @@ import { useUpdateNotificationResponse } from 'features/update-notification'
 import {
   closePlayerSheetAction,
   isPlayerExpandedAtom,
-  isPlayingAtom,
-  positionAtom,
+  usePlaybackProgressSaver,
 } from 'entities/player'
-import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { subscribeToNetwork } from 'shared/lib/network'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { checkForUpdateAction } from 'shared/model'
@@ -24,18 +21,9 @@ subscribeToNetwork()
 
 const RootLayout = () => {
   const { currentTheme } = useTheme()
-  const [isPlaying] = useAtom(isPlayingAtom)
-  const [position] = useAtom(positionAtom)
   const checkForUpdate = useAction(checkForUpdateAction)
   useUpdateNotificationResponse()
-
-  useEffect(() => {
-    const savePosition = async () => {
-      if (!isPlaying) await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(position))
-    }
-    const interval = setInterval(savePosition, 5000)
-    return () => clearInterval(interval)
-  }, [isPlaying, position])
+  usePlaybackProgressSaver()
 
   useEffect(() => {
     const handle = InteractionManager.runAfterInteractions(() => {

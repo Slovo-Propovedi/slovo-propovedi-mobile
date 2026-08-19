@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { markHistoryCompletedAction } from 'entities/listening-history'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/config'
+import { ctx } from 'shared/lib/reatom-ctx'
 import { getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
 import type { PlayerActions } from './types'
 import { RepeatMode, repeatModeSchema } from '../../../model'
@@ -46,6 +48,8 @@ export class TrackAutoAdvanceService {
     const { data: repeatMode = RepeatMode.Off } = repeatModeSchema.safeParse(storedRepeatMode)
     const currentAudio = parseAudioPlayerData(storedCurrentAudio)
     const currentPlaylist = parsePlaylistData(storedCurrentPlaylist)
+
+    if (currentAudio?.id) void markHistoryCompletedAction(ctx, currentAudio.id)
 
     if (!currentPlaylist) return
 

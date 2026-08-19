@@ -1,3 +1,4 @@
+import { recordPlaybackStartAction } from 'entities/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
 import type { PlayerActions } from './types'
 import type { AudioPlayerData } from '../../../ui/PlayerControls/PlayerControls.types'
@@ -13,6 +14,8 @@ export const playTrackWithMetadata = async (
   audioUrl: string,
   initialPositionMs = 0,
 ): Promise<void> => {
+  void recordPlaybackStartAction(ctx, audio, playlist)
+
   const playerInstance = await playerActions.replaceAudio(audioUrl, initialPositionMs)
   lockScreenControls.setMetadata(playerInstance, {
     albumTitle: playlist.title,
