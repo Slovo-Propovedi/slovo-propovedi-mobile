@@ -15,6 +15,7 @@ export const TracksListItem = ({
   downloadingUrl,
   isAudioPlaying = false,
   isPlaying,
+  menuActions,
   onPress,
   progress,
   style,
@@ -97,6 +98,7 @@ export const TracksListItem = ({
         theme={currentTheme}
         isMenuOpen={isMenuOpen}
         menuHeight={menuHeight}
+        menuActions={menuActions}
         onClose={handleToggleMenu}
         menuPosition={menuPosition}
         onToggleCache={handleToggleCache}

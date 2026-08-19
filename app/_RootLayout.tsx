@@ -91,6 +91,16 @@ const RootLayout = () => {
           }}
         />
         <Stack.Screen
+          name='history'
+          options={{
+            headerBackTitle: 'Назад',
+            headerStyle: { backgroundColor: currentTheme.background },
+            headerTintColor: currentTheme.text,
+            headerTitleStyle: { color: currentTheme.text },
+            title: 'История прослушивания',
+          }}
+        />
+        <Stack.Screen
           name='about'
           options={{
             headerBackTitle: 'Назад',

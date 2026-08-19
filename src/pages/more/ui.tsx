@@ -67,6 +67,12 @@ export const MoreScreen = () => {
 
         <View style={styles.menu}>
           <MoreMenuSettingsItem
+            icon='time-outline'
+            testID='history-item'
+            title='История прослушивания'
+            onPress={() => router.push('/history')}
+          />
+          <MoreMenuSettingsItem
             title='Настройки'
             testID='settings-item'
             icon='settings-outline'
