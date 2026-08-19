@@ -1,1 +1,1 @@
-export { MoreScreen as MoreMenu } from './ui'
+export { MoreScreen as MoreMenu } from './ui/MoreScreen'

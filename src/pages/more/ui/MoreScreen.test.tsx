@@ -1,7 +1,7 @@
 import { fireEvent } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks'
-import { MoreScreen } from './ui'
+import { MoreScreen } from './MoreScreen'
 
 const mockPush = jest.fn()
 

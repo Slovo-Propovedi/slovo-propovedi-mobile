@@ -27,7 +27,6 @@ export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRow
   const progress = useSermonProgress(entry.sermon.id, storedProgress)
 
   const handlePress = useCallback(async () => {
-    if (!entry.sermon.audioUrl) return
     await playNewSermon({ playlist: entry.playlist, sermon: entry.sermon })
   }, [entry, playNewSermon])
 

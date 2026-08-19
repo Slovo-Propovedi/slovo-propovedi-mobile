@@ -4,13 +4,14 @@ import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native'
 import { useHistoryProgressMap } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
 import { EmptyState } from 'shared/ui'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
+import { PLAYER_SIZES, useTheme } from 'shared/ui/themed'
 import type { ColorValue } from 'react-native'
 import type { SermonData } from 'shared/model'
 import { resolvePlaylist } from '../lib/resolvePlaylist'
 import { useDebouncedSearch } from '../lib/useDebouncedSearch'
 import { isSearchingAtom, MIN_QUERY_LENGTH, searchQueryAtom, searchResultsAtom } from '../model'
 import { SearchResultsRow } from './SearchResultsRow'
+import { SearchRowSeparator } from './SearchRowSeparator'
 
 const NO_RESULTS_MESSAGE = 'Ничего не найдено'
 
@@ -63,21 +64,10 @@ const SearchSpinner = ({ color }: { color: ColorValue }) => (
   </View>
 )
 
-const SearchRowSeparator = () => {
-  const { currentTheme } = useTheme()
-
-  return <View style={[styles.separator, { backgroundColor: currentTheme.surface }]} />
-}
-
 const styles = StyleSheet.create({
   listContent: {
     flexGrow: 1,
     paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight,
-  },
-  separator: {
-    height: 1,
-    marginLeft: 48 + INDENTS.middle + INDENTS.medium,
-    marginRight: INDENTS.medium,
   },
   spinnerContainer: {
     alignItems: 'center',

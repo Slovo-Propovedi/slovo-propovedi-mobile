@@ -8,6 +8,7 @@ import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
 import { createTracksListStyles } from 'shared/ui/track-list'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
 import { HistoryRow } from './HistoryRow'
+import { HistorySeparator } from './HistorySeparator'
 
 export const HistoryScreen = () => {
   const { currentTheme } = useTheme()
@@ -29,7 +30,7 @@ export const HistoryScreen = () => {
       <FlatList
         data={entries}
         keyExtractor={item => item.sermon.id}
-        ItemSeparatorComponent={() => <View style={tracksListStyles.divider} />}
+        ItemSeparatorComponent={HistorySeparator}
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: entries.length === 0 ? 'center' : undefined,

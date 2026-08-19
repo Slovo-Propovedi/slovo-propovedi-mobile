@@ -10,7 +10,7 @@ import {
 import { usePlayNewSermon } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
-import { HistoryScreen } from './ui'
+import { HistoryScreen } from './HistoryScreen'
 
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
