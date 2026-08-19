@@ -182,6 +182,8 @@ export const MyComponent = ({ prop1, prop2 }: MyComponentProps) => {
 - Use `export const` for named exports
 - Max 130 lines per file (enforced by ESLint)
 - Self-closing components required: `<View />` not `<View></View>`
+- **UI components live in `ui/` segment:** Every slice (pages, widgets, features, entities) places its UI components and their co-located tests inside the `ui/` folder, never at the slice root
+- **One component or hook per file:** Each component and hook gets its own file — helper components (e.g. `HistorySeparator`, `SearchRowSeparator`) must not be declared inside another component's file
 
 ### Formatting
 

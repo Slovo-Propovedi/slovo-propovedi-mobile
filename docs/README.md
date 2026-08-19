@@ -34,6 +34,7 @@
 | [`decisions.md`](./decisions.md) | Стек и решения: approved / rejected / superseded |
 | [`debt.md`](./debt.md) | Технический долг, срезанные углы |
 | [`features/player.md`](./features/player.md) | Как работает плеер (модель, PlayerService, кэш аудио) |
+| [`features/listening-history.md`](./features/listening-history.md) | История прослушивания, resume-логика, прогресс в UI |
 | [`features/audio-cache.md`](./features/audio-cache.md) | Кэширование аудио и секций (offline) |
 | [`features/images.md`](./features/images.md) | Кэширование и рендеринг изображений (expo-image) |
 | [`features/navigation.md`](./features/navigation.md) | Навигация expo-router: табы, стеки, маршруты |

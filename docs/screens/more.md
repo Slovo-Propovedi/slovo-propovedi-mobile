@@ -14,7 +14,7 @@
 
 - Заголовок: `APP_NAME` («Слово.Проповеди»), версия `v{APP_VERSION}` (из `shared/config`);
 - Описание: «Приложение для прослушивания и чтения проповедей»;
-- Пункты меню (`MoreMenuSettingsItem`): «Настройки» (иконка `settings-outline`) и «О приложении» (иконка `information-circle-outline`).
+- Пункты меню (`MoreMenuSettingsItem`): «История прослушивания» (иконка `time-outline`, первый в списке), «Настройки» (иконка `settings-outline`) и «О приложении» (иконка `information-circle-outline`).
 
 ## Откуда данные
 
@@ -22,6 +22,7 @@
 
 ## Куда можно перейти
 
+- «История прослушивания» → `/history` (`router.push('/history')`).
 - «Настройки» → `/settings` (`router.push('/settings')`).
 - «О приложении» → `/about` (`router.push('/about')`).
 
@@ -31,5 +32,6 @@
 
 ## Связанные документы
 
+- [screens/history.md](./history.md)
 - [screens/settings.md](./settings.md)
 - [screens/about.md](./about.md)

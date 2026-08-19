@@ -109,8 +109,46 @@ Artwork резолвится с фолбэком: `artworkUrl = metadata.artwork
 
 Каждые 5с в `app/_RootLayout.tsx` (`setInterval(savePosition, 5000)`): при не-воспроизведении пишет `CURRENT_SOUND_POSITION` в AsyncStorage.
 
+## История прослушивания и resume
+
+Позиция воспроизведения пишется в историю раз в 5с и при паузе. Это отдельный механизм от персиста позиции плеера (`CURRENT_SOUND_POSITION`).
+
+### Запись прогресса
+
+| Путь | Где | Когда |
+|------|-----|-------|
+| `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts` | каждые 5с: `CURRENT_SOUND_POSITION` в AsyncStorage + `updateHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })` |
+| `PlaybackController.pause` | `src/entities/player/lib/PlayerService/PlaybackController.ts` | при паузе (нативный): `CURRENT_SOUND_POSITION` + `updateHistoryProgressAction` |
+| `WebPlayerService.pause` | `src/entities/player/lib/PlayerService/index.web.ts` | при паузе (веб): `CURRENT_SOUND_POSITION` + `updateHistoryProgressAction` |
+
+### Завершение трека
+
+`TrackAutoAdvanceService.handleTrackEnd` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/TrackAutoAdvanceService.ts`) вызывает `markHistoryCompletedAction(ctx, sermonId)` **до** ветвления путей (repeat → `repeatCurrentTrack` / next → `playNextTrack` / pause). Это гарантирует запись `positionMs = durationMs` при каждом окончании трека.
+
+### Resume при ручном тапе
+
+`usePlayNewSermon` (`src/entities/player/lib/usePlaySermon.ts`) — основной хук «тапнул на трек»:
+
+1. `getResumePosition(history, sermonId)` вычисляет позицию resume (0 если нет записи / завершена / position ≤ 0, иначе `positionMs`).
+2. Текущий трек другой → `replaceAudio(url, resumeMs)`.
+3. Текущий трек тот же (same-id tolerance 1с):
+   - `resumeMs === 0` → `seekTo(0)` (с начала).
+   - `resumeMs > 0` и позиция далеко → `seekTo(resumeMs)`.
+4. `recordPlaybackStartAction(newAudio, playlist)` — записывает/обновляет запись в истории.
+
+### Авто-переход всегда с 0
+
+`playTrackWithMetadata` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/playback.ts`) — общий funnel для всех путей авто-перехода (`playNextTrack`, `playFirstTrackInQueue`, `repeatCurrentTrack`). Вызывает `recordPlaybackStartAction` и `replaceAudio(url, 0)` — resume-позиция игнорируется.
+
+### WebPlayerService.replaceAudio
+
+На вебе `replaceAudio` делегирует `loadAudio(url, initialPositionMs)` — синтаксический сахар, позиция устанавливается после `loadedmetadata` через `audio.currentTime`.
+
+Подробнее — [listening-history.md](./listening-history.md).
+
 ## Связанные документы
 
 - [audio-cache.md](./audio-cache.md) — кэширование аудио (в т.ч. автоматическое при старте трека)
+- [listening-history.md](./listening-history.md) — история прослушивания, resume-логика, прогресс в UI
 - [navigation.md](./navigation.md) — стек экранов и hardware-back
 - [state.md](./state.md) — карта Reatom-атомов
