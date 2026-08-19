@@ -1,13 +1,9 @@
-/* eslint-disable max-lines -- FIXME: refactor */
-import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRef, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
-import { CoverImage } from '../cover-image'
-import { MovingText } from '../MovingText'
+import { Pressable, type View } from 'react-native'
 import { useTheme } from '../themed'
-import { MENU_WIDTH, TITLE_ANIMATION_THRESHOLD } from './constants'
-import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
+import { MENU_WIDTH } from './constants'
 import { createTracksListStyles } from './styles'
+import { TracksListItemContent } from './TracksListItemContent'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
 import { type TracksListItemProps } from './types'
 import { useTrackItemCache } from './useTrackItemCache'
@@ -20,6 +16,7 @@ export const TracksListItem = ({
   isAudioPlaying = false,
   isPlaying,
   onPress,
+  progress,
   style,
   subtitle,
   title,
@@ -79,43 +76,20 @@ export const TracksListItem = ({
           isMenuOpen && tracksListStyles.itemContainerActive,
         ]}
       >
-        <View style={tracksListStyles.albumArtContainer}>
-          <CoverImage
-            uri={artwork}
-            style={[tracksListStyles.albumArt, isPlaying && tracksListStyles.albumArtPlaying]}
-          />
-          {isDownloading && (
-            <View style={tracksListStyles.progressBarBackground}>
-              <View
-                style={[tracksListStyles.progressBarFill, { width: `${progressValue * 100}%` }]}
-              />
-            </View>
-          )}
-          {!isDownloading && (!isCached || isPlaying) && (
-            <PlayingStatusOrChacheIcon
-              theme={currentTheme}
-              isPlaying={isPlaying}
-              isAudioPlaying={isAudioPlaying}
-            />
-          )}
-        </View>
-        <View style={tracksListStyles.textContainer}>
-          <MovingText
-            text={title}
-            animationThreshold={TITLE_ANIMATION_THRESHOLD}
-            style={[tracksListStyles.title, isPlaying && tracksListStyles.titlePlaying]}
-          />
-          {subtitle && <Text style={tracksListStyles.subtitle}>{subtitle}</Text>}
-        </View>
-        <Pressable
+        <TracksListItemContent
+          title={title}
+          artwork={artwork}
+          isCached={isCached}
+          progress={progress}
           ref={dotsButtonRef}
-          accessibilityRole='button'
-          onPress={handleToggleMenu}
-          testID='tracks-list-item-menu'
-          style={tracksListStyles.dotsButton}
-        >
-          <MaterialCommunityIcons size={20} name='dots-vertical' color={currentTheme.textMuted} />
-        </Pressable>
+          subtitle={subtitle}
+          theme={currentTheme}
+          isPlaying={isPlaying}
+          isDownloading={isDownloading}
+          progressValue={progressValue}
+          dotsOnPress={handleToggleMenu}
+          isAudioPlaying={isAudioPlaying}
+        />
       </Pressable>
 
       <TracksListItemContextMenu

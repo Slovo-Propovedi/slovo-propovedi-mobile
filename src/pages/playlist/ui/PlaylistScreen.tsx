@@ -1,8 +1,10 @@
 import { useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { useCallback, useMemo } from 'react'
 import { Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
+import { useHistoryProgressMap } from 'entities/listening-history'
 import {
   currentAudioAtom,
   downloadingAudioUrlAtom,
@@ -22,22 +24,22 @@ import { buildTracksListData, usePlaylistNavigationOptions } from './usePlaylist
 
 const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 
+const EMPTY_PLAYLIST = { artwork: '', description: '', id: 'default', sermons: [], title: '' }
+
 export const PlaylistScreen = () => {
   const { currentTheme } = useTheme()
   const params = useLocalSearchParams<{ playlist: string }>()
 
-  const playlist = parsePlaylistData(params.playlist) || {
-    artwork: '',
-    description: '',
-    id: 'default',
-    sermons: [],
-    title: '',
-  }
+  const playlist = useMemo(
+    () => parsePlaylistData(params.playlist) || EMPTY_PLAYLIST,
+    [params.playlist],
+  )
 
   const { artwork, description, sermons: playlistSermons, title } = playlist
-  const list = playlistSermons ?? []
+  const list = useMemo(() => playlistSermons ?? [], [playlistSermons])
 
   const playNewSermon = usePlayNewSermon()
+  const progressMap = useHistoryProgressMap()
 
   const [currentAudio] = useAtom(currentAudioAtom)
   const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
@@ -54,17 +56,20 @@ export const PlaylistScreen = () => {
     titleAppearThreshold,
   })
 
-  const handlePressItem = async (index: number) => {
-    const sermon = list[index]
-    if (!sermon.audioUrl) return
-    await playNewSermon({ playlist, sermon })
-  }
+  const handlePressItem = useCallback(
+    async (index: number) => {
+      const sermon = list[index]
+      if (!sermon.audioUrl) return
+      await playNewSermon({ playlist, sermon })
+    },
+    [list, playNewSermon, playlist],
+  )
 
-  const handlePressPlayAll = async () => {
+  const handlePressPlayAll = useCallback(async () => {
     if (list.length === 0) return
     const firstSermon = list.find((s: SermonData) => s.audioUrl)
     if (firstSermon) await playNewSermon({ playlist, sermon: firstSermon })
-  }
+  }, [list, playNewSermon, playlist])
 
   const tracksListData = buildTracksListData(list, artwork)
 
@@ -113,6 +118,7 @@ export const PlaylistScreen = () => {
             cacheTrigger={cacheTrigger}
             downloadingUrl={downloadingUrl}
             currentAudioId={currentAudio?.id}
+            storedProgress={progressMap.get(item.id ?? '')}
           />
         )}
       />

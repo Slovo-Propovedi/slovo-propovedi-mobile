@@ -1,3 +1,5 @@
+import { memo } from 'react'
+import { useSermonProgress } from 'entities/listening-history'
 import { INDENTS } from 'shared/ui/themed'
 import { TracksListItem } from 'shared/ui/track-list'
 
@@ -11,33 +13,42 @@ interface PlaylistTrackItemProps {
   index: number
   isPlaying: boolean
   onPress: (index: number) => void
+  storedProgress?: number
   subtitle?: string
   title: string
 }
 
-export const PlaylistTrackItem = ({
-  artwork,
-  audioUrl,
-  cacheTrigger,
-  currentAudioId,
-  downloadingUrl,
-  id,
-  index,
-  isPlaying,
-  onPress,
-  subtitle,
-  title,
-}: PlaylistTrackItemProps) => (
-  <TracksListItem
-    title={title}
-    artwork={artwork}
-    subtitle={subtitle}
-    cacheTrigger={cacheTrigger}
-    onPress={() => onPress(index)}
-    downloadingUrl={downloadingUrl}
-    audioUrl={audioUrl ?? undefined}
-    isPlaying={currentAudioId === id}
-    style={{ marginHorizontal: INDENTS.medium }}
-    isAudioPlaying={currentAudioId === id && isPlaying}
-  />
+export const PlaylistTrackItem = memo(
+  ({
+    artwork,
+    audioUrl,
+    cacheTrigger,
+    currentAudioId,
+    downloadingUrl,
+    id,
+    index,
+    isPlaying,
+    onPress,
+    storedProgress,
+    subtitle,
+    title,
+  }: PlaylistTrackItemProps) => {
+    const progress = useSermonProgress(id ?? '', storedProgress)
+
+    return (
+      <TracksListItem
+        title={title}
+        artwork={artwork}
+        subtitle={subtitle}
+        progress={progress}
+        cacheTrigger={cacheTrigger}
+        onPress={() => onPress(index)}
+        downloadingUrl={downloadingUrl}
+        audioUrl={audioUrl ?? undefined}
+        isPlaying={currentAudioId === id}
+        style={{ marginHorizontal: INDENTS.medium }}
+        isAudioPlaying={currentAudioId === id && isPlaying}
+      />
+    )
+  },
 )

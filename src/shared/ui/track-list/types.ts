@@ -11,6 +11,8 @@ export interface TracksListItemProps {
   isCached?: boolean
   isPlaying: boolean
   onPress: () => void
+  /** Listening progress 0..1, renders a thin bar along the row bottom edge. */
+  progress?: number
   style?: StyleProp<ViewStyle>
   subtitle?: string
   title: string

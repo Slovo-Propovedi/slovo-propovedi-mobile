@@ -1,13 +1,16 @@
 import { useAtom } from '@reatom/npm-react'
+import { useCallback } from 'react'
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native'
+import { useHistoryProgressMap } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
 import { EmptyState } from 'shared/ui'
 import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
 import type { ColorValue } from 'react-native'
+import type { SermonData } from 'shared/model'
 import { resolvePlaylist } from '../lib/resolvePlaylist'
 import { useDebouncedSearch } from '../lib/useDebouncedSearch'
 import { isSearchingAtom, MIN_QUERY_LENGTH, searchQueryAtom, searchResultsAtom } from '../model'
-import { SermonSearchRow } from './SermonSearchRow'
+import { SearchResultsRow } from './SearchResultsRow'
 
 const NO_RESULTS_MESSAGE = 'Ничего не найдено'
 
@@ -19,6 +22,12 @@ export const SermonSearchResults = () => {
   const [results] = useAtom(searchResultsAtom)
   const [isSearching] = useAtom(isSearchingAtom)
   const playNewSermon = usePlayNewSermon()
+  const progressMap = useHistoryProgressMap()
+
+  const handlePress = useCallback(
+    (sermon: SermonData) => void playNewSermon({ playlist: resolvePlaylist(sermon), sermon }),
+    [playNewSermon],
+  )
 
   if (query.trim().length < MIN_QUERY_LENGTH) return null
 
@@ -30,6 +39,13 @@ export const SermonSearchResults = () => {
       keyboardShouldPersistTaps='handled'
       contentContainerStyle={styles.listContent}
       ItemSeparatorComponent={SearchRowSeparator}
+      renderItem={({ item }) => (
+        <SearchResultsRow
+          sermon={item}
+          onPress={handlePress}
+          storedProgress={progressMap.get(item.id)}
+        />
+      )}
       ListEmptyComponent={
         isSearching ? (
           <SearchSpinner color={currentTheme.primary} />
@@ -37,12 +53,6 @@ export const SermonSearchResults = () => {
           <EmptyState message={NO_RESULTS_MESSAGE} />
         )
       }
-      renderItem={({ item }) => (
-        <SermonSearchRow
-          sermon={item}
-          onPress={() => void playNewSermon({ playlist: resolvePlaylist(item), sermon: item })}
-        />
-      )}
     />
   )
 }
