@@ -29,6 +29,7 @@ export const MovingText = ({
         bounce={false}
         testID={testID}
         marqueeDelay={0}
+        isInteraction={false}
         style={[{ color: currentTheme.text }, style]}
       >
         {text}
@@ -44,6 +45,7 @@ export const MovingText = ({
       numberOfLines={1}
       repeatSpacer={50}
       marqueeDelay={2000}
+      isInteraction={false}
       style={[{ color: currentTheme.text }, style]}
     >
       {text}

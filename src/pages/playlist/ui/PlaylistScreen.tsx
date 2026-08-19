@@ -35,8 +35,7 @@ export const PlaylistScreen = () => {
     [params.playlist],
   )
 
-  const { artwork, description, sermons: playlistSermons, title } = playlist
-  const list = useMemo(() => playlistSermons ?? [], [playlistSermons])
+  const { artwork, description, sermons: list = [], title } = playlist
 
   const playNewSermon = usePlayNewSermon()
   const progressMap = useHistoryProgressMap()
@@ -66,23 +65,43 @@ export const PlaylistScreen = () => {
   )
 
   const handlePressPlayAll = useCallback(async () => {
-    if (list.length === 0) return
     const firstSermon = list.find((s: SermonData) => s.audioUrl)
-    if (firstSermon) await playNewSermon({ playlist, sermon: firstSermon })
+    if (!firstSermon) return
+    await playNewSermon({ playlist, sermon: firstSermon })
   }, [list, playNewSermon, playlist])
 
   const tracksListData = buildTracksListData(list, artwork)
 
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: (typeof tracksListData)[number] }) => (
+      <PlaylistTrackItem
+        id={item.id}
+        index={index}
+        title={item.title}
+        isPlaying={isPlaying}
+        artwork={item.artwork}
+        audioUrl={item.audioUrl}
+        subtitle={item.subtitle}
+        onPress={handlePressItem}
+        cacheTrigger={cacheTrigger}
+        downloadingUrl={downloadingUrl}
+        currentAudioId={currentAudio?.id}
+        storedProgress={progressMap.get(item.id ?? '')}
+      />
+    ),
+    [cacheTrigger, currentAudio?.id, downloadingUrl, handlePressItem, isPlaying, progressMap],
+  )
+
   usePlaylistNavigationOptions({ headerIconColor, isCaching, title, tracksListData })
 
-  const styles = createStyles(currentTheme)
   const tracksListStyles = createTracksListStyles(currentTheme)
 
   return (
-    <View style={styles.container}>
+    <View style={createStyles(currentTheme).container}>
       <StatusBar style={statusBarStyle} />
       <Animated.FlatList
         data={tracksListData}
+        renderItem={renderItem}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         style={tracksListStyles.container}
@@ -105,22 +124,6 @@ export const PlaylistScreen = () => {
             imageOpacityStyle={imageOpacityStyle}
           />
         }
-        renderItem={({ index, item }) => (
-          <PlaylistTrackItem
-            id={item.id}
-            index={index}
-            title={item.title}
-            isPlaying={isPlaying}
-            artwork={item.artwork}
-            audioUrl={item.audioUrl}
-            subtitle={item.subtitle}
-            onPress={handlePressItem}
-            cacheTrigger={cacheTrigger}
-            downloadingUrl={downloadingUrl}
-            currentAudioId={currentAudio?.id}
-            storedProgress={progressMap.get(item.id ?? '')}
-          />
-        )}
       />
     </View>
   )

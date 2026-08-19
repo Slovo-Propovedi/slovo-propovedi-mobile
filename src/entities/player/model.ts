@@ -60,6 +60,7 @@ export const setCurrentPlaylistAction = action(async (ctx, playlist: PlaylistDat
 }, 'setCurrentPlaylist')
 
 export const setIsPlayingAction = action(async (ctx, playing: boolean) => {
+  if (ctx.get(isPlayingAtom) === playing) return playing
   await ctx.schedule(() => {
     isPlayingAtom(ctx, playing)
   })
@@ -81,6 +82,7 @@ export const setIsSeekingAction = action(async (ctx, value: boolean) => {
 }, 'setIsSeeking')
 
 export const setDurationAction = action(async (ctx, duration: number) => {
+  if (ctx.get(durationAtom) === duration) return duration
   await ctx.schedule(() => {
     durationAtom(ctx, duration)
   })
@@ -96,6 +98,7 @@ export const setVolumeAction = action(async (ctx, volume: number) => {
 }, 'setVolume')
 
 export const setIsBufferingAction = action(async (ctx, buffering: boolean) => {
+  if (ctx.get(isBufferingAtom) === buffering) return buffering
   await ctx.schedule(() => {
     isBufferingAtom(ctx, buffering)
   })
