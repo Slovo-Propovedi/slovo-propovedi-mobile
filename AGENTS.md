@@ -243,9 +243,11 @@ export const MyComponent = () => {
 }
 ```
 
-1. **Verification**:
-   - Always run `yarn lint` after fixes to verify all errors are resolved
-   - Run `yarn check:types` to ensure no type errors were introduced
+1. **Lint-fix escalation** (strictly in this order):
+   - `yarn lint:fix` — auto-fix everything ESLint can
+   - `yarn prettier:write` — formatting pass
+   - Whatever still remains — manual fixes by the coding agent (following the decomposition rules above: extract components/helpers, do NOT squeeze lines or remove blank lines)
+   - After all steps, run `yarn lint` to verify zero errors remain, then `yarn check:types` to ensure no type errors were introduced
 
 ### Types
 
