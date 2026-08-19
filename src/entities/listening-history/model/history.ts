@@ -41,6 +41,8 @@ export const recordPlaybackStartAction = action(
         const withoutExisting = current.filter((_, i) => i !== existingIndex)
         next = sortAndCapEntries([entry, ...withoutExisting])
       } else {
+        const { playlists: _stripped, ...sanitized } = audio
+        const mergedSermon = { ...existing.sermon, ...sanitized }
         const updated = {
           ...existing,
           lastPlayedAt: now,
@@ -48,10 +50,10 @@ export const recordPlaybackStartAction = action(
             artwork: playlist.artwork,
             description: playlist.description,
             id: playlist.id,
-            sermons: [existing.sermon],
+            sermons: [mergedSermon],
             title: playlist.title,
           },
-          sermon: { ...existing.sermon, ...audio },
+          sermon: mergedSermon,
         }
         const withoutExisting = current.filter((_, i) => i !== existingIndex)
         next = sortAndCapEntries([updated, ...withoutExisting])

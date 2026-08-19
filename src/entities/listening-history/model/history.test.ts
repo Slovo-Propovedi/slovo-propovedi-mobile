@@ -150,6 +150,45 @@ describe('listening-history model', () => {
       expect(atomState[0].durationMs).toBe(1000)
       expect(atomState[1].sermon.id).toBe('sermon-2')
     })
+
+    test('merge branch strips playlists from audio and keeps entry/playlist consistent', async () => {
+      const existingSermon: AudioPlayerData = {
+        artist: 'Old Author',
+        artwork: 'old.jpg',
+        audioUrl: 'https://example.com/old.mp3',
+        id: 'sermon-1',
+        title: 'Old Title',
+      }
+      const existing = makeEntry('sermon-1', {
+        durationMs: 2000,
+        lastPlayedAt: 100,
+        positionMs: 1000,
+        sermon: existingSermon,
+      })
+      const ctx = createCtx()
+      historyAtom(ctx, [existing])
+
+      const audioWithPlaylists = {
+        ...mockAudio,
+        playlists: [
+          { artwork: 'extra.jpg', id: 'pl-extra', sermons: [], title: 'Extra' } as PlaylistData,
+        ],
+      } as AudioPlayerData
+      await recordPlaybackStartAction(ctx, audioWithPlaylists, mockPlaylist)
+
+      const entry = ctx.get(historyAtom)[0]
+      expect(entry.sermon).not.toHaveProperty('playlists')
+
+      const merged = {
+        artist: 'Author',
+        artwork: 'sermon.jpg',
+        audioUrl: 'https://example.com/audio.mp3',
+        id: 'sermon-1',
+        title: 'Test Sermon',
+      }
+      expect(entry.sermon).toEqual(merged)
+      expect(entry.playlist.sermons[0]).toEqual(merged)
+    })
   })
 
   describe('updateHistoryProgressAction', () => {

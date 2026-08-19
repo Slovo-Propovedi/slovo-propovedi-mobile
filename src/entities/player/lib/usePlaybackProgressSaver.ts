@@ -26,6 +26,7 @@ export const usePlaybackProgressSaver = () => {
     })
 
     const savePosition = () => {
+      if (!isPlayingRef.current) return
       const position = positionRef.current
       const sermonId = currentAudioRef.current?.id
       if (position <= 0 || !sermonId) return
