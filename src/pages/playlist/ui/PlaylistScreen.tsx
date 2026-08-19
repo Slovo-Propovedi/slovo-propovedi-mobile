@@ -2,8 +2,7 @@ import { useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useCallback, useMemo } from 'react'
-import { Text, View } from 'react-native'
-import Animated from 'react-native-reanimated'
+import { View } from 'react-native'
 import { useHistoryProgressMap } from 'entities/listening-history'
 import {
   currentAudioAtom,
@@ -13,12 +12,13 @@ import {
 } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { getParseJsonWithSchema, playlistDataSchema, type SermonData } from 'shared/model'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/themed'
 import { createTracksListStyles } from 'shared/ui/track-list'
 import { useCollapsingHeader, usePlaylistHeader } from '../lib'
 import { isCachingPlaylistAtom } from '../model'
 import { PlaylistHeader } from './PlaylistHeader'
 import { PlaylistTrackItem } from './PlaylistTrackItem'
+import { PlaylistTrackList } from './PlaylistTrackList'
 import { createStyles } from './styles'
 import { buildTracksListData, usePlaylistNavigationOptions } from './usePlaylistNavigationOptions'
 
@@ -70,7 +70,7 @@ export const PlaylistScreen = () => {
     await playNewSermon({ playlist, sermon: firstSermon })
   }, [list, playNewSermon, playlist])
 
-  const tracksListData = buildTracksListData(list, artwork)
+  const tracksListData = useMemo(() => buildTracksListData(list, artwork), [list, artwork])
 
   const renderItem = useCallback(
     ({ index, item }: { index: number; item: (typeof tracksListData)[number] }) => (
@@ -94,26 +94,25 @@ export const PlaylistScreen = () => {
 
   usePlaylistNavigationOptions({ headerIconColor, isCaching, title, tracksListData })
 
-  const tracksListStyles = createTracksListStyles(currentTheme)
+  const tracksListStyles = useMemo(() => createTracksListStyles(currentTheme), [currentTheme])
+
+  const styles = useMemo(() => createStyles(currentTheme), [currentTheme])
+
+  const ItemSeparator = useCallback(
+    () => <View style={tracksListStyles.divider} />,
+    [tracksListStyles],
+  )
 
   return (
-    <View style={createStyles(currentTheme).container}>
+    <View style={styles.container}>
       <StatusBar style={statusBarStyle} />
-      <Animated.FlatList
+      <PlaylistTrackList
         data={tracksListData}
         renderItem={renderItem}
         onScroll={scrollHandler}
-        scrollEventThrottle={16}
         style={tracksListStyles.container}
-        keyExtractor={item => item.id ?? ''}
-        ItemSeparatorComponent={() => <View style={tracksListStyles.divider} />}
-        ListEmptyComponent={
-          <Text style={{ marginHorizontal: 'auto' }}>В плейлисте нет записей</Text>
-        }
-        contentContainerStyle={{
-          paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
-        }}
-        ListHeaderComponent={
+        ItemSeparatorComponent={ItemSeparator}
+        headerElement={
           <PlaylistHeader
             title={title}
             artwork={artwork}

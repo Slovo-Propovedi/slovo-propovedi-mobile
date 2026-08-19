@@ -13,29 +13,38 @@
 src/entities/listening-history/
 ├── index.ts                  # Публичный API
 ├── model/
-│   ├── types.ts              # Zod-схемы: listeningHistoryEntrySchema, listeningHistorySchema; типы ListeningHistoryEntry, ListeningHistory
-│   └── history.ts            # Атомы и экшены: historyAtom, loadHistoryAction, recordPlaybackStartAction, updateHistoryProgressAction, markHistoryCompletedAction, removeHistoryEntryAction, clearHistoryAction
+│   ├── types.ts              # Zod-схемы: listeningHistoryEntrySchema, listeningHistorySchema; типы ListeningHistoryEntry, ListeningHistory (sermon опционален)
+│   └── history.ts            # Атомы и экшены: historyAtom, loadHistoryAction, recordPlaybackStartAction, flushHistoryProgressAction, markHistoryCompletedAction, removeHistoryEntryAction, clearHistoryAction
 └── lib/
     ├── constants.ts          # COMPLETION_REMAINING_MS (10 000), MAX_HISTORY_ENTRIES (100)
     ├── historyStorage.ts     # readHistory / writeHistory (обёртки над getCachedJson/setCachedJson + очередь записей)
+    ├── liveProgressStorage.ts    # Мини-снапшот LISTENING_PROGRESS_SNAPSHOT: writeLiveProgressSnapshot / readLiveProgressSnapshot / clearLiveProgressSnapshot
     ├── buildHistoryEntry.ts  # Фабрика новой записи: санитизация sermon (убирает playlists), снапшот context-playlist
     ├── isEntryCompleted.ts   # Правило завершённости (см. ниже)
     ├── getResumePosition.ts  # Вычисление позиции resume для usePlayNewSermon
+    ├── getEntrySermon.ts     # getEntrySermon(entry): sermon из entry.sermon ?? entry.playlist.sermons[0]
     ├── sortAndCapEntries.ts  # Дедупликация по sermon.id + сортировка по lastPlayedAt desc + обрезка до MAX_HISTORY_ENTRIES
-    ├── useHistoryProgressMap.ts   # Map<sermonId, 0..1> — прогресс из historyAtom для списков
-    ├── useLiveSermonProgress.ts   # Per-id производный атом getLiveProgressAtom: live-позиция текущей проповеди
-    └── useSermonProgress.ts       # Объединение live и stored: useSermonProgress(id, stored) = live ?? stored
+    ├── flushHistoryProgress.ts   # flushHistoryProgressAction — flush при паузе (read-modify-write одного поля)
+    ├── recordSermonSwitch.ts     # recordSermonSwitchAction — flush старого + запись нового за один проход (markOldCompleted)
+    ├── reconcileOnHydration.ts   # Слияние мини-снапшота в каталог при гидрации
+    └── useHistoryProgressMap.ts  # Map<sermonId, 0..1> — stored-прогресс из historyAtom для списков
 ```
+
+> **Удалено** (в рамках перф-работы): live-чтение прогресса — хуки `useLiveSermonProgress`, `useSermonProgress` и `getLiveProgressAtom`. Прогресс в UI теперь только stored (обновляется по событиям, см. «Прогресс в UI»).
 
 ### Публичный API (barrel)
 
 ```typescript
 // entities/listening-history
+export { flushHistoryProgressAction }
+export { getEntrySermon }
 export { getResumePosition }
-export { useHistoryProgressMap, useLiveSermonProgress, useSermonProgress }
-export { historyAtom, loadHistoryAction, recordPlaybackStartAction,
-         updateHistoryProgressAction, markHistoryCompletedAction,
-         removeHistoryEntryAction, clearHistoryAction }
+export { writeLiveProgressSnapshot }
+export { recordSermonSwitchAction }
+export { useHistoryProgressMap }
+export { clearHistoryAction, historyAtom, loadHistoryAction,
+         markHistoryCompletedAction, recordPlaybackStartAction,
+         removeHistoryEntryAction, updateHistoryProgressAction }
 export type { ListeningHistory, ListeningHistoryEntry }
 ```
 
@@ -45,15 +54,18 @@ export type { ListeningHistory, ListeningHistoryEntry }
 
 ```typescript
 {
-  sermon: AudioPlayerData   // снапшот проповеди (без playlists)
-  playlist: PlaylistData    // контекстный плейлист (только sermons[0] текущей проповеди)
+  playlist: PlaylistData    // контекстный плейлист; sermon — в playlist.sermons[0]
   positionMs: number        // текущая позиция воспроизведения
   durationMs: number        // длительность трека
   lastPlayedAt: number      // timestamp последнего воспроизведения (Date.now())
 }
 ```
 
+Записи **slim**: top-level поля `sermon` нет — снапшот проповеди живёт в `playlist.sermons[0]` (buildHistoryEntry кладёт санитизированную копию без `playlists`). Доступ к проповеди — через `getEntrySermon(entry)` (`entry.sermon ?? entry.playlist.sermons[0]`). В `types.ts` поле `sermon` оставлено опциональным для совместимости чтения старых записей (легаси-формат с top-level sermon).
+
 Массив `ListeningHistoryEntry[]` хранится в AsyncStorage под ключом `listeningHistory` (константа `LISTENING_HISTORY` — `src/shared/config/history-storage-keys.ts`). Валидация при чтении — Zod `listeningHistorySchema`; невалидные данные сбрасываются в пустой массив.
+
+Отдельно от каталога живёт **мини-снапшот** текущего прогресса под ключом `listeningProgressSnapshot` (константа `LISTENING_PROGRESS_SNAPSHOT` — там же): сырой JSON `{ sermonId, positionMs, durationMs }` (~60 байт), без Zod-схемы (ручная валидация `isValidSnapshot` в `liveProgressStorage.ts`). Пишется каждые 5с **только при воспроизведении** и мержится в каталог при гидрации (`reconcileOnHydration`), см. «Запись прогресса».
 
 ## Правило завершённости
 
@@ -89,15 +101,27 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
 
 ## Запись прогресса
 
-Прогресс обновляется тремя путями:
+### Модель: события + мини-ключ
 
-| Путь | Где | Когда |
-|------|-----|-------|
-| `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts` | каждые 5с через `setInterval` + `CURRENT_SOUND_POSITION` в AsyncStorage |
-| `PlaybackController.pause` | `src/entities/player/lib/PlayerService/PlaybackController.ts` | при паузе (нативный плеер) |
-| `WebPlayerService.pause` | `src/entities/player/lib/PlayerService/index.web.ts` | при паузе (веб-плеер) |
+Каталог `listeningHistory` пишется **только по событиям**, 5с-тики в него больше не пишут:
 
-Все три вызывают `updateHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })`. При этом `lastPlayedAt` **не** обновляется — он устанавливается только при старте воспроизведения (`recordPlaybackStartAction`).
+| Событие | Где | Что происходит |
+|---------|-----|----------------|
+| Старт воспроизведения | `usePlayNewSermon` → `recordPlaybackStartAction` | новая запись (позиция 0) / перемещение существующей в начало / сброс завершённой |
+| Пауза | `PlaybackController.pause`, `WebPlayerService.pause` → `flushHistoryProgressAction` | read-modify-write позиции (no-op при `positionMs ≤ 0` или не-прогрессе) |
+| Переключение трека | `recordSermonSwitchAction` — из `usePlayNewSermon` (ручной тап) и `playTrackWithMetadata` (авто-переход) | за один проход: flush позиции старого трека + запись/обновление нового; `markOldCompleted: true` на авто-переходе (позиция старого = durationMs) |
+| Окончание трека | `handleTrackEnd` → `markHistoryCompletedAction` | `positionMs = durationMs` (ветка pause-on-last-track) |
+| Удаление / очистка | `removeHistoryEntryAction`, `clearHistoryAction` | per-item / полная очистка |
+
+`lastPlayedAt` обновляется только при старте воспроизведения (`recordPlaybackStartAction`), не при flush.
+
+5с-тик `usePlaybackProgressSaver` (`src/entities/player/lib/usePlaybackProgressSaver.ts`) при воспроизведении пишет **только мини-снапшот** `listeningProgressSnapshot` через `writeLiveProgressSnapshot` (сырой JSON ~60 байт) — каталог не трогает. Есть защита **skip-first-tick-после-переключения**: первый тик после смены `currentAudio` пропускается (рефы `previousAudioIdRef` / `skipNextTickRef`), чтобы не записать «мусорную» позицию перехода.
+
+При гидрации `loadHistoryAction` вызывает `reconcileOnHydration` (`src/entities/listening-history/lib/reconcileOnHydration.ts`):
+
+1. читает каталог + снапшот;
+2. снапшот без совпадающей записи (или запись завершена, или `snapshot.positionMs ≤ entry.positionMs`) → дропается, каталог не меняется;
+3. иначе — мержит в запись: `positionMs = snapshot.positionMs`, `durationMs = max(entry, snapshot)`, пишет каталог и чистит снапшот.
 
 ### Завершение трека
 
@@ -107,9 +131,8 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
 
 ### Хранение и вычисление
 
-- **Stored** — `useHistoryProgressMap()` возвращает `Map<string, number>` (0..1), вычисляемую из `historyAtom`. Используется в списках как исходное значение прогресса.
-- **Live** — `getLiveProgressAtom(sermonId)` создаёт per-id производный атом, который вычисляет `position/duration` из `currentAudioAtom`/`positionAtom`/`durationAtom`. Возвращает `undefined` если текущая проповедь ≠ `sermonId`. Значение округляется до 2 знаков (квант 0.01) — consumers ре-рендерятся не более ~50 раз за полное прослушивание.
-- **Объединение** — `useSermonProgress(id, stored)` = `live ?? stored`. Non-текущие строки не ре-рендерятся (Reatom dedup по reference equality `undefined === undefined`).
+- **Stored** — `useHistoryProgressMap()` возвращает `Map<string, number>` (0..1), вычисляемую из `historyAtom` (`getEntrySermon(entry).id` + `isEntryCompleted`). Используется в списках как единственный источник прогресса.
+- **Live-чтения нет.** Хуки `useLiveSermonProgress` / `useSermonProgress` и атом `getLiveProgressAtom` удалены: строки списков не подписаны на `positionAtom`/`durationAtom`, поэтому не ре-рендерятся 2 раза в секунду во время воспроизведения. Значение строки обновляется **только по событиям** (старт, пауза/flush, переключение, завершение, удаление) — когда `historyAtom` меняется целиком.
 
 ### Отображение
 
@@ -117,12 +140,12 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
 
 | Место | Файл | Как |
 |-------|------|-----|
-| Список плейлиста | `src/pages/playlist/ui/PlaylistTrackItem.tsx` | `useSermonProgress(id, storedProgress)` |
-| Шторка очереди (мини-плейлист) | `src/widgets/expandable-player/ui/PlaylistBottomSheet/PlaylistSheetRow.tsx` | `useSermonProgress(id, storedProgress)` |
-| Результаты поиска | `src/features/sermon-search/ui/SermonSearchRow.tsx` | `useSermonProgress(sermon.id, storedProgress)` |
-| Экран истории | `src/pages/history/ui/HistoryRow.tsx` | `useSermonProgress(entry.sermon.id, storedProgress)` |
+| Список плейлиста | `src/pages/playlist/ui/PlaylistTrackItem.tsx` | `useHistoryProgressMap()` + `getEntrySermon` |
+| Шторка очереди (мини-плейлист) | `src/widgets/expandable-player/ui/PlaylistBottomSheet/PlaylistSheetRow.tsx` | `useHistoryProgressMap()` |
+| Результаты поиска | `src/features/sermon-search/ui/SermonSearchRow.tsx` | `useHistoryProgressMap()` |
+| Экран истории | `src/pages/history/ui/HistoryRow.tsx` | `useHistoryProgressMap()` |
 
-Для текущей (сейчас воспроизводимой) проповеди live-прогресс обновляется в реальном времени.
+Все строки показывают только **сохранённый** прогресс (stored, событийно обновляемый). Полоса текущей (сейчас воспроизводимой) проповеди не «тикает» в реальном времени — она обновится на ближайшем событии (пауза, переключение и т.д.).
 
 ## Экран истории
 
@@ -138,14 +161,13 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
 
 | Сьют | Файл | Что проверяет |
 |------|------|---------------|
-| `history model` | `model/history.test.ts` | `loadHistoryAction` (загрузка из storage), `recordPlaybackStartAction` (новая запись, сброс завершённой, перемещение незавершённой), `updateHistoryProgressAction` (обновление позиции/длительности, no-op для неизвестного id), `markHistoryCompletedAction` (positionMs = durationMs, no-op для нет/0), `removeHistoryEntryAction` (удаление по id), `clearHistoryAction` (очистка) |
+| `history model` | `model/history.test.ts` | `loadHistoryAction` (загрузка из storage; reconcile со снапшотом; дроп осиротевшего снапшота), `recordPlaybackStartAction` (новая запись, сброс завершённой, перемещение незавершённой, merge-ветка со strip `playlists`), `flushHistoryProgressAction` (alias `updateHistoryProgressAction`: no-op для неизвестного id, обновление позиции/длительности без изменения `lastPlayedAt`, персист), `markHistoryCompletedAction` (positionMs = durationMs, no-op для нет/0), `removeHistoryEntryAction` (удаление по id), `clearHistoryAction` (очистка) |
 | `isEntryCompleted` | `lib/isEntryCompleted.test.ts` | Границы: 100с осталось (false), 10с осталось (true), 5с осталось (true), position = duration (true), duration < 10с (false), duration = 0 (false), position = 0 (false) |
-| `buildHistoryEntry` | `lib/buildHistoryEntry.test.ts` | Фабрика записи: sanitizer убирает `playlists`, контекстный плейлист содержит один sermon, начальные позиции 0 |
+| `buildHistoryEntry` | `lib/buildHistoryEntry.test.ts` | Фабрика записи: sanitizer убирает `playlists`, контекстный плейлист содержит один sermon, начальные позиции 0, top-level `sermon` отсутствует |
 | `sortAndCapEntries` | `lib/sortAndCapEntries.test.ts` | Дедупликация по sermon.id (остаётся самая свежая), сортировка по lastPlayedAt desc, обрезка до MAX_HISTORY_ENTRIES |
 | `getResumePosition` | `lib/getResumePosition.test.ts` | Нет записи → 0, завершённая → 0, position ≤ 0 → 0, иначе positionMs |
+| `liveProgressStorage` | `lib/liveProgressStorage.test.ts` | Запись/чтение валидного снапшота; невалидный JSON/отсутствие/поля с отрицательными значениями → undefined |
 | `useHistoryProgressMap` | `lib/useHistoryProgressMap.test.ts` | Пустой history → пустая Map, completed → 1, partial → position/duration, position ≤ 0 → пропуск |
-| `useLiveSermonProgress` | `lib/useLiveSermonProgress.test.ts` | Текущий трек → live progress, другой трек → undefined, duration ≤ 0 → undefined |
-| `useSermonProgress` | `lib/useSermonProgress.test.ts` | live undefined → stored, live определён → live (приоритет), stored = 0 → 0 сохраняется (nullish coalescing) |
 
 ## Связанные документы
 

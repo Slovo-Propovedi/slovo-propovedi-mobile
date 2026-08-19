@@ -1,9 +1,10 @@
 import { type Ctx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
+import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import type { ListeningHistory } from 'entities/listening-history'
 import { type AudioPlayerData } from '../lib/audioPlayerData'
-import { currentAudioAtom, positionAtom } from '../model'
+import { currentAudioAtom, durationAtom, positionAtom } from '../model'
 import { usePlayNewSermon } from './usePlaySermon'
 
 const mockPlay = jest.fn().mockResolvedValue(undefined)
@@ -76,14 +77,11 @@ const COMPLETED_ENTRY = {
   positionMs: 100000,
 }
 
-const setAtomState = async (
-  ctx: Ctx,
-  opts: {
-    currentAudio?: { id: string }
-    history?: ListeningHistory
-    position?: number
-  },
-) => {
+const setAtomState = async (opts: {
+  currentAudio?: { id: string }
+  history?: ListeningHistory
+  position?: number
+}) => {
   await act(async () => {
     if (opts.currentAudio) currentAudioAtom(ctx, opts.currentAudio as AudioPlayerData)
     if (opts.history) mockHistoryAtom(ctx, opts.history)
@@ -99,13 +97,17 @@ describe('usePlayNewSermon', () => {
     mockSeekTo.mockResolvedValue(undefined)
     mockRecordPlaybackStart.mockResolvedValue(undefined)
     mockRecordSermonSwitch.mockResolvedValue(undefined)
+    currentAudioAtom(ctx, null)
+    positionAtom(ctx, 0)
+    durationAtom(ctx, 5678)
+    mockHistoryAtom(ctx, [])
   })
 
   test('(a) different sermon → replaceAudio called with resume ms', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
-    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
-    await setAtomState(ctx, { currentAudio: { id: OTHER_SERMON_ID } })
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({ currentAudio: { id: OTHER_SERMON_ID } })
 
     await act(async () => {
       await result.current({ playlist: mockPlaylist, sermon: mockSermon })
@@ -117,8 +119,8 @@ describe('usePlayNewSermon', () => {
   test('(b) different sermon, completed entry → replaceAudio called with 0', async () => {
     mockGetResumePosition.mockReturnValue(0)
 
-    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
-    await setAtomState(ctx, { currentAudio: { id: OTHER_SERMON_ID } })
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({ currentAudio: { id: OTHER_SERMON_ID } })
 
     await act(async () => {
       await result.current({ playlist: mockPlaylist, sermon: mockSermon })
@@ -130,8 +132,8 @@ describe('usePlayNewSermon', () => {
   test('(c) same sermon, completed → seekTo(0)', async () => {
     mockGetResumePosition.mockReturnValue(0)
 
-    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
-    await setAtomState(ctx, {
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
       currentAudio: { id: SERMON_ID },
       history: [COMPLETED_ENTRY],
     })
@@ -147,8 +149,8 @@ describe('usePlayNewSermon', () => {
   test('(d) same sermon, mismatch >1s → seekTo(resume)', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
-    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
-    await setAtomState(ctx, {
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
       currentAudio: { id: SERMON_ID },
       history: [PARTIAL_ENTRY],
       position: RESUME_MS + 5000,
@@ -165,8 +167,8 @@ describe('usePlayNewSermon', () => {
   test('(e) same sermon playing, positions match → no seekTo, no replaceAudio', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
-    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
-    await setAtomState(ctx, {
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
       currentAudio: { id: SERMON_ID },
       history: [PARTIAL_ENTRY],
       position: RESUME_MS + 500,
@@ -183,7 +185,7 @@ describe('usePlayNewSermon', () => {
   test('(f) first play (no old audio) → recordPlaybackStartAction called', async () => {
     mockGetResumePosition.mockReturnValue(0)
 
-    const { result } = await renderHookWithProviders(() => usePlayNewSermon())
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
 
     await act(async () => {
       await result.current({ playlist: mockPlaylist, sermon: mockSermon })
@@ -201,9 +203,9 @@ describe('usePlayNewSermon', () => {
     // even though the sermon has stored progress. replaceAudio receives 0 — resume missed once.
     mockGetResumePosition.mockReturnValue(0)
 
-    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
 
-    await setAtomState(ctx, {
+    await setAtomState({
       currentAudio: { id: OTHER_SERMON_ID },
       history: [],
     })
@@ -218,8 +220,8 @@ describe('usePlayNewSermon', () => {
   test('(h) switching sermon A→B → recordSermonSwitchAction called once with markOldCompleted:false before replaceAudio', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
-    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
-    await setAtomState(ctx, { currentAudio: { id: OTHER_SERMON_ID } })
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({ currentAudio: { id: OTHER_SERMON_ID } })
 
     await act(async () => {
       await result.current({ playlist: mockPlaylist, sermon: mockSermon })
@@ -243,8 +245,8 @@ describe('usePlayNewSermon', () => {
   test('(i) same sermon tap → recordSermonSwitchAction NOT called', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
-    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
-    await setAtomState(ctx, {
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
       currentAudio: { id: SERMON_ID },
       history: [PARTIAL_ENTRY],
       position: RESUME_MS + 500,

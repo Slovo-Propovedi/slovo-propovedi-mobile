@@ -111,19 +111,22 @@ Artwork резолвится с фолбэком: `artworkUrl = metadata.artwork
 
 ## История прослушивания и resume
 
-Позиция воспроизведения пишется в историю раз в 5с и при паузе. Это отдельный механизм от персиста позиции плеера (`CURRENT_SOUND_POSITION`).
+История пишется **по событиям** (старт, пауза/flush, переключение трека, завершение); 5с-тики пишут только мини-снапшот `listeningProgressSnapshot`. Это отдельный механизм от персиста позиции плеера (`CURRENT_SOUND_POSITION`).
 
 ### Запись прогресса
 
 | Путь | Где | Когда |
 |------|-----|-------|
-| `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts` | каждые 5с: `CURRENT_SOUND_POSITION` в AsyncStorage + `updateHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })` |
-| `PlaybackController.pause` | `src/entities/player/lib/PlayerService/PlaybackController.ts` | при паузе (нативный): `CURRENT_SOUND_POSITION` + `updateHistoryProgressAction` |
-| `WebPlayerService.pause` | `src/entities/player/lib/PlayerService/index.web.ts` | при паузе (веб): `CURRENT_SOUND_POSITION` + `updateHistoryProgressAction` |
+| `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts` | каждые 5с (только при воспроизведении): `CURRENT_SOUND_POSITION` + мини-снапшот `writeLiveProgressSnapshot` (~60 байт) — каталог истории не трогает; первый тик после переключения трека пропускается (skip-first-tick через рефы) |
+| `PlaybackController.pause` | `src/entities/player/lib/PlayerService/PlaybackController.ts` | при паузе (нативный): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })` |
+| `WebPlayerService.pause` | `src/entities/player/lib/PlayerService/index.web.ts` | при паузе (веб): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction` |
+| `recordSermonSwitchAction` | `usePlayNewSermon` (ручной тап, `markOldCompleted: false`), `playTrackWithMetadata` (авто-переход, `markOldCompleted: true`) | при смене трека: flush позиции старого + запись/обновление нового за один проход |
+
+При гидрации `reconcileOnHydration` мержит мини-снапшот в каталог (только если новее и запись не завершена, `durationMs = max`). Подробнее — [listening-history.md](./listening-history.md) → «Запись прогресса».
 
 ### Завершение трека
 
-`TrackAutoAdvanceService.handleTrackEnd` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/TrackAutoAdvanceService.ts`) вызывает `markHistoryCompletedAction(ctx, sermonId)` **до** ветвления путей (repeat → `repeatCurrentTrack` / next → `playNextTrack` / pause). Это гарантирует запись `positionMs = durationMs` при каждом окончании трека.
+`TrackAutoAdvanceService.handleTrackEnd` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/TrackAutoAdvanceService.ts`) вызывает `markHistoryCompletedAction(ctx, sermonId)` **до** ветвления путей (repeat → `repeatCurrentTrack` / next → `playNextTrack` / pause). Это гарантирует запись `positionMs = durationMs` при каждом окончании трека; ветка pause-on-last-track помечает завершённой через `markHistoryCompletedAction`.
 
 ### Resume при ручном тапе
 
@@ -134,11 +137,16 @@ Artwork резолвится с фолбэком: `artworkUrl = metadata.artwork
 3. Текущий трек тот же (same-id tolerance 1с):
    - `resumeMs === 0` → `seekTo(0)` (с начала).
    - `resumeMs > 0` и позиция далеко → `seekTo(resumeMs)`.
-4. `recordPlaybackStartAction(newAudio, playlist)` — записывает/обновляет запись в истории.
+4. При смене трека (`oldAudio.id !== sermonId`) — `recordSermonSwitchAction({ markOldCompleted: false, ... })` **до** `replaceAudio`: flush позиции старого трека в историю.
+5. `recordPlaybackStartAction(newAudio, playlist)` — записывает/обновляет запись в истории (только если трек новый или тот же).
+
+### Чтение состояния через ctx.get (без useAtom)
+
+`usePlayNewSermon` **не подписывается** на `currentAudioAtom`/`positionAtom`/`durationAtom`/`historyAtom` через `useAtom` — состояние читается императивно снапшотом `ctx.get(...)` в момент вызова (`src/shared/lib/reatom-ctx`). Это было корневой причиной перф-проблемы: реактивная подписка хука в каждом `TracksListItem` держала все экраны списков подписанными на атомы плеера, и те ре-рендерились ~2 раза в секунду (каждый position-тик) во время воспроизведения. При императивном чтении хук не ре-рендерится от плеера вовсе — списки обновляются только когда меняется `historyAtom` (по событиям истории).
 
 ### Авто-переход всегда с 0
 
-`playTrackWithMetadata` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/playback.ts`) — общий funnel для всех путей авто-перехода (`playNextTrack`, `playFirstTrackInQueue`, `repeatCurrentTrack`). Вызывает `recordPlaybackStartAction` и `replaceAudio(url, 0)` — resume-позиция игнорируется.
+`playTrackWithMetadata` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/playback.ts`) — общий funnel для всех путей авто-перехода (`playNextTrack`, `playFirstTrackInQueue`, `repeatCurrentTrack`). Вызывает `recordSermonSwitchAction` с `markOldCompleted: true` (старый трек фиксируется как завершённый) и `replaceAudio(url, 0)` — resume-позиция игнорируется.
 
 ### WebPlayerService.replaceAudio
 

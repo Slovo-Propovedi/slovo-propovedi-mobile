@@ -14,8 +14,8 @@
   - заголовок — название проповеди;
   - сабтайтл — `formatRelativeDate(lastPlayedAt)` (относительная дата прослушивания);
   - обложка — через `CoverImage` с фолбэком `IMAGE_PLACEHOLDER`;
-  - тонкая полоса прогресса прослушивания (сохранённая позиция);
-  - для текущей (сейчас воспроизводимой) проповеди — индикатор `live` (прогресс обновляется в реальном времени).
+  - тонкая полоса прогресса прослушивания (сохранённая позиция, stored);
+  - полоса обновляется **только по событиям** (старт, пауза/flush, переключение, завершение, удаление) — без live-тикания в реальном времени (live-чтение убрано).
 - Тап по строке — воспроизведение проповеди с места остановки. Если проповедь помечена как `completed` — воспроизведение начинается заново.
 - Контекстное меню (три точки / long-press) → пункт «Удалить из истории».
 - Шапка (header): иконка меню (три точки) → `HistoryHeaderMenu` (`src/pages/history/ui/HistoryHeaderMenu.tsx`) → пункт «Очистить историю» → `ConfirmDialog`:
@@ -26,7 +26,7 @@
 ## Откуда данные
 
 - Атомы и действия из `entities/listening-history` (см. [features/listening-history.md](../features/listening-history.md)).
-- Live-прогресс текущего трека — `useLiveSermonProgress` (`entities/listening-history/lib/useLiveSermonProgress.ts`).
+- Прогресс строк — `useHistoryProgressMap()` (stored-прогресс из `historyAtom`); live-чтения нет (`useLiveSermonProgress`/`useSermonProgress` удалены).
 
 ## Куда можно перейти
 
