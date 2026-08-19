@@ -9,8 +9,15 @@ import {
 } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { type PlaylistData } from 'shared/model'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
 import { HistoryScreen } from './HistoryScreen'
+
+const mockResolveEntryPlaylist = jest.fn()
+
+jest.mock('../lib/resolveEntryPlaylist', () => ({
+  resolveEntryPlaylist: (...args: unknown[]) => mockResolveEntryPlaylist(...args),
+}))
 
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
@@ -75,6 +82,14 @@ jest.mock('shared/ui/track-list', () => {
 const MOCK_SERMON_ID = 'sermon-1'
 const MOCK_SERMON_TITLE = 'Проповедь о вере'
 
+const mockSermon = {
+  artist: 'Test Artist',
+  artwork: 'https://example.com/art.jpg',
+  audioUrl: 'https://example.com/audio.mp3',
+  id: MOCK_SERMON_ID,
+  title: MOCK_SERMON_TITLE,
+}
+
 const mockEntry: ListeningHistoryEntry = {
   durationMs: 120000,
   lastPlayedAt: Date.now() - 3600000,
@@ -85,13 +100,7 @@ const mockEntry: ListeningHistoryEntry = {
     title: 'Test Playlist',
   },
   positionMs: 30000,
-  sermon: {
-    artist: 'Test Artist',
-    artwork: 'https://example.com/art.jpg',
-    audioUrl: 'https://example.com/audio.mp3',
-    id: MOCK_SERMON_ID,
-    title: MOCK_SERMON_TITLE,
-  },
+  sermon: mockSermon,
 }
 
 const seedHistory = (entries: ListeningHistoryEntry[] = []) => {
@@ -103,6 +112,9 @@ const seedHistory = (entries: ListeningHistoryEntry[] = []) => {
 describe('<HistoryScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockResolveEntryPlaylist.mockImplementation((entry: ListeningHistoryEntry) =>
+      Promise.resolve(entry.playlist),
+    )
   })
 
   test('renders entries with titles and subtitles', async () => {
@@ -121,7 +133,7 @@ describe('<HistoryScreen>', () => {
     expect(getByText('История пуста')).toBeTruthy()
   })
 
-  test('row press calls playNewSermon', async () => {
+  test('row press calls playNewSermon with resolved playlist', async () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
 
@@ -129,10 +141,41 @@ describe('<HistoryScreen>', () => {
 
     const { getByTestId } = await renderWithProviders(<HistoryScreen />, { ctx })
 
-    fireEvent.press(getByTestId('tracks-list-item-press'))
+    await act(async () => {
+      fireEvent.press(getByTestId('tracks-list-item-press'))
+    })
+
+    expect(mockResolveEntryPlaylist).toHaveBeenCalledWith(mockEntry)
     expect(playNewSermonMock).toHaveBeenCalledWith({
       playlist: mockEntry.playlist,
-      sermon: mockEntry.sermon,
+      sermon: mockSermon,
+    })
+  })
+
+  test('row press passes resolved playlist (different from snapshot) to playNewSermon', async () => {
+    const playNewSermonMock = jest.fn()
+    jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
+
+    const resolvedPlaylist: PlaylistData = {
+      artwork: 'resolved.jpg',
+      description: 'Full playlist',
+      id: 'playlist-1',
+      sermons: [mockSermon, { artist: 'B', artwork: 'b.jpg', id: 'sermon-2', title: 'Sermon 2' }],
+      title: 'Full Playlist',
+    }
+    mockResolveEntryPlaylist.mockResolvedValue(resolvedPlaylist)
+
+    const ctx = seedHistory([mockEntry])
+
+    const { getByTestId } = await renderWithProviders(<HistoryScreen />, { ctx })
+
+    await act(async () => {
+      fireEvent.press(getByTestId('tracks-list-item-press'))
+    })
+
+    expect(playNewSermonMock).toHaveBeenCalledWith({
+      playlist: resolvedPlaylist,
+      sermon: mockSermon,
     })
   })
 

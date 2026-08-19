@@ -9,6 +9,7 @@ import { formatRelativeDate } from 'shared/lib/format'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { INDENTS } from 'shared/ui/themed'
 import { type MenuAction, TracksListItem } from 'shared/ui/track-list'
+import { resolveEntryPlaylist } from '../lib/resolveEntryPlaylist'
 
 interface HistoryRowProps {
   entry: ListeningHistoryEntry
@@ -26,7 +27,8 @@ export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRow
       : undefined
 
   const handlePress = useCallback(async () => {
-    await playNewSermon({ playlist: entry.playlist, sermon })
+    const playlist = await resolveEntryPlaylist(entry)
+    await playNewSermon({ playlist, sermon })
   }, [entry, playNewSermon, sermon])
 
   const menuActions: MenuAction[] = [
