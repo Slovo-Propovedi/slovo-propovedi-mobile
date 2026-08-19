@@ -30,6 +30,5 @@ export const buildHistoryEntry = (
     lastPlayedAt: now,
     playlist: buildContextPlaylist(playlist, sanitizedSermon),
     positionMs: 0,
-    sermon: sanitizedSermon,
   }
 }

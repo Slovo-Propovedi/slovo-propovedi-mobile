@@ -1,5 +1,6 @@
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'
 import { MAX_HISTORY_ENTRIES } from './constants'
+import { getEntrySermon } from './getEntrySermon'
 import { sortAndCapEntries } from './sortAndCapEntries'
 
 const makeEntry = (sermonId: string, lastPlayedAt: number): ListeningHistoryEntry => ({
@@ -8,17 +9,18 @@ const makeEntry = (sermonId: string, lastPlayedAt: number): ListeningHistoryEntr
   playlist: {
     artwork: 'art.jpg',
     id: 'pl-1',
-    sermons: [],
+    sermons: [
+      {
+        artist: 'Author',
+        artwork: 'sermon.jpg',
+        audioUrl: 'https://example.com/audio.mp3',
+        id: sermonId,
+        title: `Sermon ${sermonId}`,
+      },
+    ],
     title: 'Playlist',
   },
   positionMs: 500,
-  sermon: {
-    artist: 'Author',
-    artwork: 'sermon.jpg',
-    audioUrl: 'https://example.com/audio.mp3',
-    id: sermonId,
-    title: `Sermon ${sermonId}`,
-  },
 })
 
 describe('sortAndCapEntries', () => {
@@ -29,7 +31,7 @@ describe('sortAndCapEntries', () => {
       makeEntry('s-3', 200),
     ]
     const result = sortAndCapEntries(entries)
-    expect(result.map(e => e.sermon.id)).toEqual(['s-2', 's-3', 's-1'])
+    expect(result.map(e => getEntrySermon(e).id)).toEqual(['s-2', 's-3', 's-1'])
   })
 
   test('caps overflow and drops oldest entries', () => {
@@ -38,7 +40,7 @@ describe('sortAndCapEntries', () => {
     )
     const result = sortAndCapEntries(entries)
     expect(result).toHaveLength(MAX_HISTORY_ENTRIES)
-    expect(result[0].sermon.id).toBe(`s-${MAX_HISTORY_ENTRIES + 9}`)
+    expect(getEntrySermon(result[0]).id).toBe(`s-${MAX_HISTORY_ENTRIES + 9}`)
   })
 
   test('dedupes by sermon id keeping most recent', () => {
@@ -49,7 +51,7 @@ describe('sortAndCapEntries', () => {
     ]
     const result = sortAndCapEntries(entries)
     expect(result).toHaveLength(2)
-    const s1Entry = result.find(e => e.sermon.id === 's-1')
+    const s1Entry = result.find(e => getEntrySermon(e).id === 's-1')
     expect(s1Entry?.lastPlayedAt).toBe(300)
   })
 

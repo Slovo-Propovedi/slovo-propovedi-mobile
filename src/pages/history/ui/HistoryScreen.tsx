@@ -2,7 +2,7 @@ import { useAtom } from '@reatom/npm-react'
 import { useNavigation } from 'expo-router'
 import { useLayoutEffect } from 'react'
 import { FlatList, Text, View } from 'react-native'
-import { historyAtom } from 'entities/listening-history'
+import { getEntrySermon, historyAtom } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
 import { createTracksListStyles } from 'shared/ui/track-list'
@@ -29,8 +29,8 @@ export const HistoryScreen = () => {
     <View style={tracksListStyles.container}>
       <FlatList
         data={entries}
-        keyExtractor={item => item.sermon.id}
         ItemSeparatorComponent={HistorySeparator}
+        keyExtractor={item => getEntrySermon(item).id}
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: entries.length === 0 ? 'center' : undefined,
@@ -49,7 +49,7 @@ export const HistoryScreen = () => {
           </Text>
         }
         renderItem={({ item }) => {
-          const isCurrentAudio = currentAudio?.id === item.sermon.id
+          const isCurrentAudio = currentAudio?.id === getEntrySermon(item).id
           return (
             <HistoryRow
               entry={item}

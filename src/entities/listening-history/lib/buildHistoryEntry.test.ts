@@ -45,8 +45,13 @@ describe('buildHistoryEntry', () => {
   const entry = buildHistoryEntry(mockAudio, mockPlaylist, NOW)
 
   test('strips playlists from sermon', () => {
-    expect(entry.sermon).not.toHaveProperty('playlists')
-    expect('playlists' in entry.sermon).toBe(false)
+    const sermon = entry.playlist.sermons[0]
+    expect(sermon).not.toHaveProperty('playlists')
+    expect('playlists' in sermon).toBe(false)
+  })
+
+  test('entry has no top-level sermon field (slim)', () => {
+    expect(entry).not.toHaveProperty('sermon')
   })
 
   test('playlist contains single sermon', () => {

@@ -7,7 +7,7 @@ export const listeningHistoryEntrySchema = z.object({
   lastPlayedAt: z.number(),
   playlist: playlistDataSchema,
   positionMs: z.number().nonnegative(),
-  sermon: audioPlayerDataSchema,
+  sermon: audioPlayerDataSchema.optional(),
 })
 
 export const listeningHistorySchema = z.array(listeningHistoryEntrySchema)

@@ -1,6 +1,5 @@
 import { memo } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { useSermonProgress } from 'entities/listening-history'
 import { CoverImage, ProgressBar } from 'shared/ui'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
 import type { SermonData } from 'shared/model'
@@ -14,7 +13,6 @@ interface SermonSearchRowProps {
 
 export const SermonSearchRow = memo(({ onPress, sermon, storedProgress }: SermonSearchRowProps) => {
   const { currentTheme } = useTheme()
-  const progress = useSermonProgress(sermon.id, storedProgress)
   const scripture = formatScripture(sermon)
 
   return (
@@ -40,7 +38,7 @@ export const SermonSearchRow = memo(({ onPress, sermon, storedProgress }: Sermon
           </Text>
         )}
       </View>
-      {progress != null && progress > 0 && <ProgressBar progress={progress} />}
+      {storedProgress != null && storedProgress > 0 && <ProgressBar progress={storedProgress} />}
     </Pressable>
   )
 })

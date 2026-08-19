@@ -67,7 +67,6 @@ export const PlaylistBottomSheet = ({
   const renderItem = useCallback(
     ({ index, item }: { index: number; item: TrackListItemData }) => (
       <PlaylistSheetRow
-        id={item.id}
         index={index}
         title={item.title}
         audioUrl={item.url}

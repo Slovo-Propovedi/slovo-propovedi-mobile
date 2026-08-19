@@ -1,8 +1,8 @@
 import { memo, useCallback } from 'react'
 import {
+  getEntrySermon,
   type ListeningHistoryEntry,
   removeHistoryEntryAction,
-  useSermonProgress,
 } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
 import { formatRelativeDate } from 'shared/lib/format'
@@ -18,36 +18,35 @@ interface HistoryRowProps {
 
 export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRowProps) => {
   const playNewSermon = usePlayNewSermon()
+  const sermon = getEntrySermon(entry)
 
   const storedProgress =
     entry.durationMs > 0 && entry.positionMs > 0
       ? Math.min(entry.positionMs / entry.durationMs, 1)
       : undefined
 
-  const progress = useSermonProgress(entry.sermon.id, storedProgress)
-
   const handlePress = useCallback(async () => {
-    await playNewSermon({ playlist: entry.playlist, sermon: entry.sermon })
-  }, [entry, playNewSermon])
+    await playNewSermon({ playlist: entry.playlist, sermon })
+  }, [entry, playNewSermon, sermon])
 
   const menuActions: MenuAction[] = [
     {
       icon: 'trash-outline',
-      onPress: () => void removeHistoryEntryAction(ctx, entry.sermon.id),
+      onPress: () => void removeHistoryEntryAction(ctx, sermon.id),
       text: 'Удалить из истории',
     },
   ]
 
   return (
     <TracksListItem
-      progress={progress}
+      title={sermon.title}
       isPlaying={isPlaying}
       onPress={handlePress}
+      artwork={sermon.artwork}
+      progress={storedProgress}
       menuActions={menuActions}
-      title={entry.sermon.title}
-      artwork={entry.sermon.artwork}
+      audioUrl={sermon.audioUrl}
       isAudioPlaying={isAudioPlaying}
-      audioUrl={entry.sermon.audioUrl}
       style={{ marginHorizontal: INDENTS.medium }}
       subtitle={formatRelativeDate(entry.lastPlayedAt)}
     />

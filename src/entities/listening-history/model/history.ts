@@ -2,8 +2,12 @@ import { action, atom } from '@reatom/framework'
 import { type AudioPlayerData } from 'entities/player'
 import { type PlaylistData } from 'shared/model'
 import { buildHistoryEntry } from '../lib/buildHistoryEntry'
-import { readHistory, writeHistory } from '../lib/historyStorage'
+import { flushHistoryProgressAction } from '../lib/flushHistoryProgress'
+import { getEntrySermon } from '../lib/getEntrySermon'
+import { writeHistory } from '../lib/historyStorage'
 import { isEntryCompleted } from '../lib/isEntryCompleted'
+import { clearLiveProgressSnapshot } from '../lib/liveProgressStorage'
+import { reconcileOnHydration } from '../lib/reconcileOnHydration'
 import { sortAndCapEntries } from '../lib/sortAndCapEntries'
 import { type ListeningHistory } from './types'
 
@@ -11,8 +15,7 @@ export const historyAtom = atom<ListeningHistory>([], 'historyAtom')
 
 export const loadHistoryAction = action(async ctx => {
   try {
-    const entries = await readHistory()
-    const sorted = sortAndCapEntries(entries)
+    const sorted = sortAndCapEntries(await reconcileOnHydration())
     await ctx.schedule(() => {
       historyAtom(ctx, sorted)
     })
@@ -27,7 +30,7 @@ export const recordPlaybackStartAction = action(
     const sermonId = audio.id
     const now = Date.now()
 
-    const existingIndex = current.findIndex(e => e.sermon.id === sermonId)
+    const existingIndex = current.findIndex(e => getEntrySermon(e).id === sermonId)
 
     let next: ListeningHistory
 
@@ -42,7 +45,10 @@ export const recordPlaybackStartAction = action(
         next = sortAndCapEntries([entry, ...withoutExisting])
       } else {
         const { playlists: _stripped, ...sanitized } = audio
-        const mergedSermon = { ...existing.sermon, ...sanitized }
+        const mergedSermon = {
+          ...getEntrySermon(existing),
+          ...sanitized,
+        }
         const updated = {
           ...existing,
           lastPlayedAt: now,
@@ -53,7 +59,6 @@ export const recordPlaybackStartAction = action(
             sermons: [mergedSermon],
             title: playlist.title,
           },
-          sermon: mergedSermon,
         }
         const withoutExisting = current.filter((_, i) => i !== existingIndex)
         next = sortAndCapEntries([updated, ...withoutExisting])
@@ -64,36 +69,15 @@ export const recordPlaybackStartAction = action(
     await ctx.schedule(() => {
       historyAtom(ctx, next)
     })
+    clearLiveProgressSnapshot()
     return next
   },
   'recordPlaybackStart',
 )
 
-export const updateHistoryProgressAction = action(
-  async (ctx, params: { durationMs: number; positionMs: number; sermonId: string }) => {
-    const current = ctx.get(historyAtom)
-    const index = current.findIndex(e => e.sermon.id === params.sermonId)
-    if (index === -1) return
-
-    const entry = current[index]
-    const updated = {
-      ...entry,
-      durationMs: params.durationMs > 0 ? params.durationMs : entry.durationMs,
-      positionMs: params.positionMs >= 0 ? params.positionMs : entry.positionMs,
-    }
-    const next = [...current.slice(0, index), updated, ...current.slice(index + 1)]
-
-    await writeHistory(next)
-    await ctx.schedule(() => {
-      historyAtom(ctx, next)
-    })
-  },
-  'updateHistoryProgress',
-)
-
 export const markHistoryCompletedAction = action(async (ctx, sermonId: string) => {
   const current = ctx.get(historyAtom)
-  const index = current.findIndex(e => e.sermon.id === sermonId)
+  const index = current.findIndex(e => getEntrySermon(e).id === sermonId)
   if (index === -1) return
 
   const entry = current[index]
@@ -110,7 +94,7 @@ export const markHistoryCompletedAction = action(async (ctx, sermonId: string) =
 
 export const removeHistoryEntryAction = action(async (ctx, sermonId: string) => {
   const current = ctx.get(historyAtom)
-  const next = current.filter(e => e.sermon.id !== sermonId)
+  const next = current.filter(e => getEntrySermon(e).id !== sermonId)
 
   if (next.length === current.length) return
 
@@ -118,6 +102,7 @@ export const removeHistoryEntryAction = action(async (ctx, sermonId: string) => 
   await ctx.schedule(() => {
     historyAtom(ctx, next)
   })
+  clearLiveProgressSnapshot()
 }, 'removeHistoryEntry')
 
 export const clearHistoryAction = action(async ctx => {
@@ -125,4 +110,8 @@ export const clearHistoryAction = action(async ctx => {
   await ctx.schedule(() => {
     historyAtom(ctx, [])
   })
+  clearLiveProgressSnapshot()
 }, 'clearHistory')
+
+/** @deprecated Use flushHistoryProgressAction instead. */
+export const updateHistoryProgressAction = flushHistoryProgressAction

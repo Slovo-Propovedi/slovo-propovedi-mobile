@@ -28,9 +28,10 @@ jest.mock('entities/listening-history', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
     clearHistoryAction: jest.fn(),
+    getEntrySermon: (entry: { playlist: { sermons: unknown[] }; sermon?: unknown }) =>
+      entry.sermon ?? entry.playlist.sermons[0],
     historyAtom: atom([], 'testHistoryAtom'),
     removeHistoryEntryAction: jest.fn(),
-    useSermonProgress: jest.fn((_id: string, stored?: number) => stored),
   }
 })
 

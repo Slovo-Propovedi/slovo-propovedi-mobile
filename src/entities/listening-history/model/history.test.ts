@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { type AudioPlayerData } from 'entities/player'
-import { LISTENING_HISTORY } from 'shared/config'
+import { LISTENING_HISTORY, LISTENING_PROGRESS_SNAPSHOT } from 'shared/config'
 import { type PlaylistData } from 'shared/model'
+import { getEntrySermon } from '../lib/getEntrySermon'
 import {
   clearHistoryAction,
   historyAtom,
@@ -52,17 +53,18 @@ const makeEntry = (
   playlist: {
     artwork: 'art.jpg',
     id: 'pl-1',
-    sermons: [],
+    sermons: [
+      {
+        artist: 'Author',
+        artwork: 'sermon.jpg',
+        audioUrl: 'https://example.com/audio.mp3',
+        id: sermonId,
+        title: `Sermon ${sermonId}`,
+      },
+    ],
     title: 'Playlist',
   },
   positionMs: 500,
-  sermon: {
-    artist: 'Author',
-    artwork: 'sermon.jpg',
-    audioUrl: 'https://example.com/audio.mp3',
-    id: sermonId,
-    title: `Sermon ${sermonId}`,
-  },
   ...overrides,
 })
 
@@ -90,6 +92,30 @@ describe('listening-history model', () => {
 
       expect(ctx.get(historyAtom)).toEqual([])
     })
+
+    test('clears orphan snapshot that matches no history entry', async () => {
+      const entry = makeEntry('sermon-1')
+      await AsyncStorage.setItem(LISTENING_HISTORY, JSON.stringify([entry]))
+      // Snapshot references a sermon id not in history
+      await AsyncStorage.setItem(
+        LISTENING_PROGRESS_SNAPSHOT,
+        JSON.stringify({
+          durationMs: 5000,
+          positionMs: 2000,
+          sermonId: 'unknown-sermon',
+        }),
+      )
+
+      const ctx = createCtx()
+      await loadHistoryAction(ctx)
+
+      // Snapshot should have been cleared
+      const snapshot = await AsyncStorage.getItem(LISTENING_PROGRESS_SNAPSHOT)
+      expect(snapshot).toBeNull()
+      // Entries should be unchanged
+      expect(ctx.get(historyAtom)).toHaveLength(1)
+      expect(getEntrySermon(ctx.get(historyAtom)[0]).id).toBe('sermon-1')
+    })
   })
 
   describe('recordPlaybackStartAction', () => {
@@ -101,7 +127,7 @@ describe('listening-history model', () => {
 
       const atomState = ctx.get(historyAtom)
       expect(atomState).toHaveLength(1)
-      expect(atomState[0].sermon.id).toBe('sermon-1')
+      expect(getEntrySermon(atomState[0]).id).toBe('sermon-1')
       expect(atomState[0].positionMs).toBe(0)
       expect(atomState[0].durationMs).toBe(0)
       expect(atomState[0].lastPlayedAt).toBeGreaterThanOrEqual(before)
@@ -110,7 +136,7 @@ describe('listening-history model', () => {
         (await AsyncStorage.getItem(LISTENING_HISTORY)) ?? '[]',
       ) as ListeningHistory
       expect(stored).toHaveLength(1)
-      expect(stored[0].sermon.id).toBe('sermon-1')
+      expect(getEntrySermon(stored[0]).id).toBe('sermon-1')
     })
 
     test('resets completed entry to head with position 0', async () => {
@@ -126,7 +152,7 @@ describe('listening-history model', () => {
 
       const atomState = ctx.get(historyAtom)
       expect(atomState).toHaveLength(1)
-      expect(atomState[0].sermon.id).toBe('sermon-1')
+      expect(getEntrySermon(atomState[0]).id).toBe('sermon-1')
       expect(atomState[0].positionMs).toBe(0)
       expect(atomState[0].durationMs).toBe(0)
       expect(atomState[0].lastPlayedAt).toBeGreaterThan(100)
@@ -145,10 +171,10 @@ describe('listening-history model', () => {
       await recordPlaybackStartAction(ctx, mockAudio, mockPlaylist)
 
       const atomState = ctx.get(historyAtom)
-      expect(atomState[0].sermon.id).toBe('sermon-1')
+      expect(getEntrySermon(atomState[0]).id).toBe('sermon-1')
       expect(atomState[0].positionMs).toBe(500)
       expect(atomState[0].durationMs).toBe(1000)
-      expect(atomState[1].sermon.id).toBe('sermon-2')
+      expect(getEntrySermon(atomState[1]).id).toBe('sermon-2')
     })
 
     test('merge branch strips playlists from audio and keeps entry/playlist consistent', async () => {
@@ -163,8 +189,11 @@ describe('listening-history model', () => {
         durationMs: 2000,
         lastPlayedAt: 100,
         positionMs: 1000,
-        sermon: existingSermon,
       })
+      existing.playlist = {
+        ...existing.playlist,
+        sermons: [existingSermon],
+      }
       const ctx = createCtx()
       historyAtom(ctx, [existing])
 
@@ -177,7 +206,8 @@ describe('listening-history model', () => {
       await recordPlaybackStartAction(ctx, audioWithPlaylists, mockPlaylist)
 
       const entry = ctx.get(historyAtom)[0]
-      expect(entry.sermon).not.toHaveProperty('playlists')
+      const entrySermon = getEntrySermon(entry)
+      expect(entrySermon).not.toHaveProperty('playlists')
 
       const merged = {
         artist: 'Author',
@@ -186,7 +216,7 @@ describe('listening-history model', () => {
         id: 'sermon-1',
         title: 'Test Sermon',
       }
-      expect(entry.sermon).toEqual(merged)
+      expect(entrySermon).toEqual(merged)
       expect(entry.playlist.sermons[0]).toEqual(merged)
     })
   })
@@ -284,7 +314,7 @@ describe('listening-history model', () => {
       await removeHistoryEntryAction(ctx, 'sermon-1')
 
       expect(ctx.get(historyAtom)).toHaveLength(1)
-      expect(ctx.get(historyAtom)[0].sermon.id).toBe('sermon-2')
+      expect(getEntrySermon(ctx.get(historyAtom)[0]).id).toBe('sermon-2')
     })
 
     test('no-op when sermon id not found', async () => {

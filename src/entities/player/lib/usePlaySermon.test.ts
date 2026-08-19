@@ -12,6 +12,7 @@ const mockSeekTo = jest.fn().mockResolvedValue(undefined)
 const mockSetLockScreenMetadata = jest.fn()
 const mockGetResumePosition = jest.fn()
 const mockRecordPlaybackStart = jest.fn().mockResolvedValue(undefined)
+const mockRecordSermonSwitch = jest.fn().mockResolvedValue(undefined)
 
 const OTHER_SERMON_ID = 'other-sermon'
 
@@ -27,9 +28,12 @@ jest.mock('./usePlayer', () => ({
 jest.mock('entities/listening-history', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
+    getEntrySermon: (entry: { playlist: { sermons: unknown[] }; sermon?: unknown }) =>
+      entry.sermon ?? entry.playlist.sermons[0],
     getResumePosition: (...args: unknown[]) => mockGetResumePosition(...args),
     historyAtom: atom([], 'mockHistoryAtom'),
     recordPlaybackStartAction: (...args: unknown[]) => mockRecordPlaybackStart(...args),
+    recordSermonSwitchAction: (...args: unknown[]) => mockRecordSermonSwitch(...args),
   }
 })
 
@@ -94,6 +98,7 @@ describe('usePlayNewSermon', () => {
     mockReplaceAudio.mockResolvedValue(null)
     mockSeekTo.mockResolvedValue(undefined)
     mockRecordPlaybackStart.mockResolvedValue(undefined)
+    mockRecordSermonSwitch.mockResolvedValue(undefined)
   })
 
   test('(a) different sermon → replaceAudio called with resume ms', async () => {
@@ -175,11 +180,10 @@ describe('usePlayNewSermon', () => {
     expect(mockReplaceAudio).not.toHaveBeenCalled()
   })
 
-  test('(f) recordPlaybackStartAction called', async () => {
+  test('(f) first play (no old audio) → recordPlaybackStartAction called', async () => {
     mockGetResumePosition.mockReturnValue(0)
 
-    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
-    await setAtomState(ctx, { currentAudio: { id: OTHER_SERMON_ID } })
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon())
 
     await act(async () => {
       await result.current({ playlist: mockPlaylist, sermon: mockSermon })
@@ -209,5 +213,47 @@ describe('usePlayNewSermon', () => {
     })
 
     expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, 0)
+  })
+
+  test('(h) switching sermon A→B → recordSermonSwitchAction called once with markOldCompleted:false before replaceAudio', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+
+    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
+    await setAtomState(ctx, { currentAudio: { id: OTHER_SERMON_ID } })
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockRecordSermonSwitch).toHaveBeenCalledTimes(1)
+    expect(mockRecordSermonSwitch).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        markOldCompleted: false,
+        newAudio: expect.objectContaining({ id: SERMON_ID }),
+        oldSermonId: OTHER_SERMON_ID,
+      }),
+    )
+    expect(mockRecordSermonSwitch.mock.invocationCallOrder[0]).toBeLessThan(
+      mockReplaceAudio.mock.invocationCallOrder[0],
+    )
+    expect(mockRecordPlaybackStart).not.toHaveBeenCalled()
+  })
+
+  test('(i) same sermon tap → recordSermonSwitchAction NOT called', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+
+    const { ctx, result } = await renderHookWithProviders(() => usePlayNewSermon())
+    await setAtomState(ctx, {
+      currentAudio: { id: SERMON_ID },
+      history: [PARTIAL_ENTRY],
+      position: RESUME_MS + 500,
+    })
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
   })
 })

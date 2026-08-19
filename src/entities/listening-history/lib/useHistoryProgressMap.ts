@@ -1,6 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useMemo } from 'react'
 import { historyAtom } from '../model/history'
+import { getEntrySermon } from './getEntrySermon'
 import { isEntryCompleted } from './isEntryCompleted'
 
 /**
@@ -18,12 +19,13 @@ export const useHistoryProgressMap = (): Map<string, number> => {
     const map = new Map<string, number>()
 
     for (const entry of entries) {
-      const { durationMs, positionMs, sermon } = entry
+      const { durationMs, positionMs } = entry
 
       if (positionMs <= 0 || durationMs <= 0) continue
 
-      if (isEntryCompleted(entry)) map.set(sermon.id, 1)
-      else map.set(sermon.id, Math.min(positionMs / durationMs, 1))
+      const sermonId = getEntrySermon(entry).id
+      if (isEntryCompleted(entry)) map.set(sermonId, 1)
+      else map.set(sermonId, Math.min(positionMs / durationMs, 1))
     }
 
     return map

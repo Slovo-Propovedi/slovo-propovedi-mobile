@@ -1,12 +1,7 @@
 import { screen } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
-import { useSermonProgress } from 'entities/listening-history'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { PlaylistSheetRow } from './PlaylistSheetRow'
-
-jest.mock('entities/listening-history', () => ({
-  useSermonProgress: jest.fn((_id: string, stored?: number) => stored),
-}))
 
 jest.mock('shared/ui/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
@@ -62,14 +57,5 @@ describe('<PlaylistSheetRow>', () => {
     await renderItem({ storedProgress: 0 })
 
     expect(screen.queryByTestId(PROGRESS_BAR_TEST_ID)).toBeNull()
-  })
-
-  test('live progress overrides storedProgress', async () => {
-    jest.mocked(useSermonProgress).mockReturnValue(0.9)
-
-    await renderItem({ storedProgress: 0.2 })
-
-    expect(screen.getByLabelText('90% progress')).toBeTruthy()
-    expect(screen.queryByLabelText('20% progress')).toBeNull()
   })
 })

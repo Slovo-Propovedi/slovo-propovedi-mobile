@@ -3,8 +3,9 @@ import { markHistoryCompletedAction } from 'entities/listening-history'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
+import type { OldTrackFlush } from './playback'
 import type { PlayerActions } from './types'
-import { RepeatMode, repeatModeSchema } from '../../../model'
+import { durationAtom, positionAtom, RepeatMode, repeatModeSchema } from '../../../model'
 import { audioPlayerDataSchema } from '../../../ui/PlayerControls/PlayerControls.types'
 import {
   findCurrentTrackIndex,
@@ -17,6 +18,12 @@ import { playFirstTrackInQueue, playNextTrack, repeatCurrentTrack } from './play
 
 const parseAudioPlayerData = getParseJsonWithSchema(audioPlayerDataSchema)
 const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
+
+const buildOldFlush = (sermonId: string): OldTrackFlush => ({
+  oldDurationMs: ctx.get(durationAtom),
+  oldPositionMs: ctx.get(positionAtom),
+  oldSermonId: sermonId,
+})
 
 export type { PlayerActions } from './types'
 
@@ -49,30 +56,32 @@ export class TrackAutoAdvanceService {
     const currentAudio = parseAudioPlayerData(storedCurrentAudio)
     const currentPlaylist = parsePlaylistData(storedCurrentPlaylist)
 
-    if (currentAudio?.id) void markHistoryCompletedAction(ctx, currentAudio.id)
-
+    if (!currentAudio?.id) return
     if (!currentPlaylist) return
 
     const playerActions = this.ensurePlayerActions()
-    const currentIndex = findCurrentTrackIndex(currentAudio?.id, currentPlaylist.sermons)
+    const currentIndex = findCurrentTrackIndex(currentAudio.id, currentPlaylist.sermons)
     const isLastTrack = isLastTrackInPlaylist(currentIndex, currentPlaylist.sermons.length)
+    const oldFlush = buildOldFlush(currentAudio.id)
 
     if (shouldRepeatTrack(repeatMode)) {
-      if (currentAudio?.audioUrl)
+      if (currentAudio.audioUrl)
         await repeatCurrentTrack(
           playerActions,
           currentAudio,
           currentPlaylist,
           currentAudio.audioUrl,
+          oldFlush,
         )
       return
     }
 
     if (isLastTrack) {
       if (shouldRestartQueue(repeatMode, isLastTrack)) {
-        await playFirstTrackInQueue(playerActions, currentPlaylist)
+        await playFirstTrackInQueue(playerActions, currentPlaylist, oldFlush)
         return
       }
+      void markHistoryCompletedAction(ctx, currentAudio.id)
       await playerActions.pause()
       return
     }
@@ -80,7 +89,7 @@ export class TrackAutoAdvanceService {
     const nextTrack = getNextTrack(currentPlaylist, currentIndex)
     if (!nextTrack?.audioUrl) return
 
-    await playNextTrack(playerActions, nextTrack, currentPlaylist, nextTrack.audioUrl)
+    await playNextTrack(playerActions, nextTrack, currentPlaylist, nextTrack.audioUrl, oldFlush)
   }
 
   private playerActions: null | PlayerActions = null
