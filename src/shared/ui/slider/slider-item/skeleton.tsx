@@ -1,7 +1,8 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { INDENTS, RADIUSES, useTheme } from '../../themed'
+import { useTheme } from '../../theme/ThemeContext/useTheme'
+import { INDENTS, RADIUSES } from '../../theme/themed'
 import { SliderItemDescriptionSkeleton } from '../slider-item-description/skeleton'
 import { SliderItemSize, SliderItemTransform, WhereIsSlideTitleLocated } from './slider-item.types'
 

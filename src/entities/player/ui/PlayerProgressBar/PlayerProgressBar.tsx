@@ -1,6 +1,6 @@
 import { type StyleProp, Text, View, type ViewStyle } from 'react-native'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { createProgressBarStyles, THUMB_SIZE } from './PlayerProgressBar.styles'
 import { useProgressPanResponder } from './useProgressPanResponder'
 import { useSeekHandling } from './useSeekHandling'

@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { INDENTS } from 'shared/ui/themed'
+import { INDENTS } from 'shared/ui/theme'
 import { TracksListItem } from 'shared/ui/track-list'
 
 interface PlaylistTrackItemProps {

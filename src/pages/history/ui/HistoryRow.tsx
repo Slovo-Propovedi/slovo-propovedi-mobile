@@ -7,7 +7,7 @@ import {
 import { usePlayNewSermon } from 'entities/player'
 import { formatRelativeDate } from 'shared/lib/format'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { INDENTS } from 'shared/ui/themed'
+import { INDENTS } from 'shared/ui/theme'
 import { type MenuAction, TracksListItem } from 'shared/ui/track-list'
 import { resolveEntryPlaylist } from '../lib/resolveEntryPlaylist'
 

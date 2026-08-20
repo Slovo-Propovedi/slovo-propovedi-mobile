@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES } from 'shared/ui/theme'
 
 interface EmptyStateProps {
   message?: string

@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router'
 import { ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { APP_NAME, APP_VERSION } from 'shared/config'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { MoreMenuSettingsItem } from './MoreMenuSettingsItem'
 import { styles } from './styles'
 

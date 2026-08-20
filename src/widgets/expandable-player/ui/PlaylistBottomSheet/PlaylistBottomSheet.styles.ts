@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import { TRACK_LIST_ITEM_SIZES } from 'shared/ui/track-list'
 import type { ThemeColors } from 'shared/ui/theme'
 

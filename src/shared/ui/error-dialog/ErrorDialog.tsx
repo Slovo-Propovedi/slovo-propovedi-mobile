@@ -3,7 +3,20 @@ import { setStringAsync } from 'expo-clipboard'
 import { useState } from 'react'
 import { Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { Button } from '../button'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from '../themed'
+import { COLORS } from '../theme/colors'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
+
+const useErrorCopy = (message: string, detail: string) => {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = async () => {
+    const text = `ОШИБКА: ${message}\n\nДЕТАЛИ:\n${detail}`.trim()
+    await setStringAsync(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return { copied, handleCopy }
+}
 
 export interface ErrorDialogProps {
   detail: string
@@ -13,21 +26,8 @@ export interface ErrorDialogProps {
 }
 
 export const ErrorDialog = ({ detail, message, onDismiss, visible }: ErrorDialogProps) => {
-  const [copied, setCopied] = useState(false)
   const { currentTheme } = useTheme()
-
-  const handleCopy = async () => {
-    const errorText = `
-ОШИБКА: ${message}
-
-ДЕТАЛИ:
-${detail}
-`.trim()
-
-    await setStringAsync(errorText)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  const { copied, handleCopy } = useErrorCopy(message, detail)
 
   return (
     <Modal transparent visible={visible} animationType='fade' onRequestClose={onDismiss}>

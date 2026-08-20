@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { CoverImage, ProgressBar } from 'shared/ui'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import type { SermonData } from 'shared/model'
 import { formatScripture } from '../lib/formatScripture'
 

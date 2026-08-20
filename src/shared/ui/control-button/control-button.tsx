@@ -9,7 +9,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 import { match } from 'ts-pattern'
-import { COLORS } from '../themed'
+import { COLORS } from '../theme/colors'
 import { PlayerControlButtonType } from './control-button.types'
 
 interface PlayerControlButtonProps {

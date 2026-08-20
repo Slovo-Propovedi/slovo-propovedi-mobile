@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
 import { getSuggestions, type Suggestion } from '../lib/suggestions'
 import { distinctValuesAtom } from '../model-distinctValues'

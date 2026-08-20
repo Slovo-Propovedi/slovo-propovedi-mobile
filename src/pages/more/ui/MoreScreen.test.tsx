@@ -11,7 +11,7 @@ jest.mock('expo-router', () => ({
   }),
 }))
 
-jest.mock('shared/ui/themed', () => ({
+jest.mock('shared/ui/theme', () => ({
   COLORS: { disabled: '#ccc' },
   FONT_SIZES: { base: 16, lg: 20, sm: 12 },
   INDENTS: { high: 16, low: 8, medium: 12 },

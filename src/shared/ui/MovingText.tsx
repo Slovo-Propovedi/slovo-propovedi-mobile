@@ -1,6 +1,6 @@
 import { type StyleProp, type TextStyle } from 'react-native'
 import TextTicker from 'react-native-text-ticker'
-import { useTheme } from './themed'
+import { useTheme } from './theme/ThemeContext/useTheme'
 
 interface MovingTextProps {
   animationThreshold?: number

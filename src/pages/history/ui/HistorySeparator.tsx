@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { createTracksListStyles } from 'shared/ui/track-list'
 
 export const HistorySeparator = () => {

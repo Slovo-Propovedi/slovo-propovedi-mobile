@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Animated, Easing, View } from 'react-native'
-import { COLORS, useTheme } from '../themed'
+import { COLORS } from '../theme/colors'
+import { useTheme } from '../theme/ThemeContext/useTheme'
 
 const BAR_COUNT = 3
 const BAR_HEIGHT = 12

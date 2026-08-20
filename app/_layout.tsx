@@ -7,8 +7,7 @@ import { initializePlayer } from 'entities/player'
 import { initServerUrlAction } from 'entities/settings'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
-import { ThemeProvider } from 'shared/ui/theme'
-import { COLORS, useTheme } from 'shared/ui/themed'
+import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
 import RootLayout from './_RootLayout'
 
 /**

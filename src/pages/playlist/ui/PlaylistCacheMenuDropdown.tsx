@@ -1,5 +1,5 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native'
-import { COLORS, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
+import { COLORS, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { PlaylistCacheMenuItem } from './PlaylistCacheMenuItem'
 
 export interface PlaylistCacheMenuDropdownProps {

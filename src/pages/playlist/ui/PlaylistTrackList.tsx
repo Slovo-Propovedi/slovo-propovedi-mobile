@@ -1,6 +1,6 @@
 import { Text } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { INDENTS, PLAYER_SIZES } from 'shared/ui/themed'
+import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
 import type { TracksListData } from './usePlaylistNavigationOptions'
 import type { ReactElement } from 'react'
 import type { ListRenderItem, StyleProp, ViewStyle } from 'react-native'

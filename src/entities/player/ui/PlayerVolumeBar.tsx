@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback } from 'react'
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native'
-import { COLORS, FONT_SIZES, useTheme } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, useTheme } from 'shared/ui/theme'
 import { usePlayer } from '../lib/usePlayer'
 import { setVolumeAction, volumeAtom } from '../model'
 

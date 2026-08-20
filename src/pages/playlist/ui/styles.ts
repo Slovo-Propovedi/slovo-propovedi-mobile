@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 import type { ThemeColors } from 'shared/ui/theme'
 
 export const createStyles = (theme: ThemeColors) =>

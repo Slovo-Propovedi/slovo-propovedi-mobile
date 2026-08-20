@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { NotesForPreachersBooksSlider } from './NotesForPreachersBooksSlider'
 import { TopicalAndThematicBooksSlider } from './TopicalAndThematicBooksSlider'
 import { VerseByVerseBooksSlider } from './VerseByVerseBooksSlider'

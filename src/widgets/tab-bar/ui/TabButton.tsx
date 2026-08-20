@@ -1,6 +1,6 @@
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { Text, TouchableOpacity, View } from 'react-native'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
 
 interface TabButtonProps {

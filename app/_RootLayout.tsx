@@ -14,7 +14,7 @@ import {
 import { subscribeToNetwork } from 'shared/lib/network'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { checkForUpdateAction } from 'shared/model'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 
 // Module-level: subscribes once for the app lifetime
 subscribeToNetwork()

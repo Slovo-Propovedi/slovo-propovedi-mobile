@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { StyleSheet, Text, View } from 'react-native'
 import { type ColorValue } from 'react-native'
-import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 
 const ICON_SIZE = 18
 

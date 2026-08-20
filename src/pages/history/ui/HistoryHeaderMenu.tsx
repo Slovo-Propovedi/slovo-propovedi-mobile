@@ -4,7 +4,7 @@ import { Modal, Pressable, StyleSheet, Text, TouchableOpacity } from 'react-nati
 import { clearHistoryAction } from 'entities/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { FONT_SIZES, RADIUSES, useTheme } from 'shared/ui/themed'
+import { FONT_SIZES, RADIUSES, useTheme } from 'shared/ui/theme'
 
 const ICON_SIZE = 24
 const BUTTON_SIZE = 44

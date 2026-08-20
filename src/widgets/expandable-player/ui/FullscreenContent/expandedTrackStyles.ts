@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 
 export const expandedTrackStyles = StyleSheet.create({
   artistName: {

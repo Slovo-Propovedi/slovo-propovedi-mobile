@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { INDENTS } from 'shared/ui/themed'
+import { INDENTS } from 'shared/ui/theme'
 
 export const expandedLayoutStyles = StyleSheet.create({
   backgroundContainer: {

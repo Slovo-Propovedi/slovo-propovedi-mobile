@@ -2,7 +2,7 @@ import { render } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
 import { ProgressBar } from './ProgressBar'
 
-jest.mock('../themed', () => ({
+jest.mock('../theme/ThemeContext/useTheme', () => ({
   useTheme: jest.fn(() => ({
     currentTheme: {
       primary: '#f16031',

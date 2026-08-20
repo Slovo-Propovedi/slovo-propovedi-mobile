@@ -2,7 +2,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../../config/screen-dimensions'
 import { CoverImage } from '../../cover-image'
-import { RADIUSES } from '../../themed'
+import { RADIUSES } from '../../theme/themed'
 import { SliderItemDescription } from '../slider-item-description/slider-item-description'
 import { SliderItemSkeleton } from './skeleton'
 import {

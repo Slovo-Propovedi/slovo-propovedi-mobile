@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useAction } from '@reatom/npm-react'
 import { Pressable, StyleSheet } from 'react-native'
-import { INDENTS, useTheme } from 'shared/ui/themed'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { openSearch } from '../model'
 
 const SEARCH_TOGGLE_LABEL = 'Поиск'

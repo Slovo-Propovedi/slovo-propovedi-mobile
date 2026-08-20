@@ -1,6 +1,6 @@
 import { memo, useRef, useState } from 'react'
 import { Pressable, type View } from 'react-native'
-import { useTheme } from '../themed'
+import { useTheme } from '../theme/ThemeContext/useTheme'
 import { MENU_WIDTH } from './constants'
 import { createTracksListStyles } from './styles'
 import { TracksListItemContent } from './TracksListItemContent'

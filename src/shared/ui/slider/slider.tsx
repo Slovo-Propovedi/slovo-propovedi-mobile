@@ -2,7 +2,8 @@ import { Entypo } from '@expo/vector-icons'
 import { Text, View } from 'react-native'
 import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
-import { FONT_SIZES, useTheme } from '../themed'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { FONT_SIZES } from '../theme/themed'
 import { SliderItem } from './slider-item/slider-item'
 import {
   SliderItemSize,

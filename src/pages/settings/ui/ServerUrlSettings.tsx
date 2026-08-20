@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 import { serverUrlAtom, setServerUrlAction } from 'entities/settings'
 import { DEFAULT_API_URL } from 'shared/config'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './ServerUrlSettings.styles'
 

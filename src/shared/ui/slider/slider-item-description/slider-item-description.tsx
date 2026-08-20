@@ -1,7 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
 import { MarqueeText } from '../../marquee-text/marquee-text'
-import { COLORS, FONT_SIZES, INDENTS, useTheme } from '../../themed'
+import { COLORS } from '../../theme/colors'
+import { useTheme } from '../../theme/ThemeContext/useTheme'
+import { FONT_SIZES, INDENTS } from '../../theme/themed'
 import { SliderItemDescriptionSkeleton } from './skeleton'
 import {
   SliderItemDescriptionBackgroundStyle,

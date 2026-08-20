@@ -12,7 +12,7 @@ import {
 } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { getParseJsonWithSchema, playlistDataSchema, type SermonData } from 'shared/model'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { createTracksListStyles } from 'shared/ui/track-list'
 import { useCollapsingHeader, usePlaylistHeader } from '../lib'
 import { isCachingPlaylistAtom } from '../model'

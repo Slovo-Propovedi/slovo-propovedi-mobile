@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native'
-import { useTheme } from '../themed'
+import { useTheme } from '../theme/ThemeContext/useTheme'
 
 const BAR_HEIGHT = 2
 const TRACK_OPACITY = 0.3

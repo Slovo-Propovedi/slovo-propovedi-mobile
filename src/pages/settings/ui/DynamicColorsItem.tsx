@@ -2,8 +2,14 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { Checkbox } from 'expo-checkbox'
 import { StyleSheet, Text, View } from 'react-native'
-import { dynamicColorsEnabledAtom, setDynamicColors } from 'shared/ui/theme'
-import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
+import {
+  COLORS,
+  dynamicColorsEnabledAtom,
+  FONT_SIZES,
+  INDENTS,
+  setDynamicColors,
+  useTheme,
+} from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
 

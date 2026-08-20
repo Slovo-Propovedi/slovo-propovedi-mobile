@@ -2,7 +2,7 @@ import { Image, type ImageProps } from 'expo-image'
 import { type ReactNode } from 'react'
 import { type ImageStyle, type StyleProp, type ViewStyle } from 'react-native'
 import { IMAGE_PLACEHOLDER } from '../images'
-import { useTheme } from '../themed'
+import { useTheme } from '../theme/ThemeContext/useTheme'
 
 const ImageWithChildren = Image as React.ComponentType<{ children?: ReactNode } & ImageProps>
 

@@ -1,6 +1,6 @@
 import { Entypo } from '@expo/vector-icons'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import type { AudioPlayerData } from 'entities/player'
 

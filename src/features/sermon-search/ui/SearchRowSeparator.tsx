@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native'
-import { INDENTS, useTheme } from 'shared/ui/themed'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 
 export const SearchRowSeparator = () => {
   const { currentTheme } = useTheme()

@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { type ColorValue, Modal, ScrollView, Text, View } from 'react-native'
-import { useTheme } from '../themed'
+import { useTheme } from '../theme/ThemeContext/useTheme'
 import { ConfirmDialogButton } from './ConfirmDialogButton'
 import { styles } from './styles'
 
