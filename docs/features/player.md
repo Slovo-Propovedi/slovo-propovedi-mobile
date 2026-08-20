@@ -21,23 +21,24 @@
 
 Вспомогательные модули (в `src/entities/player/lib/PlayerService/`):
 
-| Модуль | Назначение |
-|--------|-----------|
-| `AudioLoader.ts` | создание/замена `AudioPlayer`, ожидание загрузки, стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша |
-| `PlaybackController.ts` | play/pause/stop/seek/setVolume/getStatus; персист позиции |
-| `AudioModeManager.ts` | конфигурация аудио-режима; каждая `configure()` перезапускает `setAudioModeAsync` (re-assert после сбросов ОС), дедупликация конкурентных вызовов, AppState `active` → всегда re-assert |
-| `LockScreenControls.ts` | метаданные lock screen (`setActiveForLockScreen`); retry при ещё не загруженном плеере (до 10×200мс), version-counter для отмены устаревших retry |
-| `PlayerStatusListener.ts` | подписка на статус-события (playing/position/duration/buffering/trackEnd, детект прерываний) |
-| `BackgroundCachingService.ts` | фоновое кэширование трека при старте воспроизведения |
-| `TrackAutoAdvanceService/` | авто-переход на следующий трек по окончании |
-| `nativePlayerHelpers.ts` | сборка listener'ов и обработчика прерываний |
-| `webPlayerState.ts`, `webPlayerPubSub.ts` | состояние и pub-sub для веб-реализации |
-| `types.ts` | общие типы (`LockScreenMetadata`, `PlaybackStatus`, `StatusCallbacks`, `PlayerActions`) |
-| `PlayerActionsAdapter.ts` | DI для `TrackAutoAdvanceService` |
+| Модуль                                    | Назначение                                                                                                                                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AudioLoader.ts`                          | создание/замена `AudioPlayer`, ожидание загрузки, стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша                                                                |
+| `PlaybackController.ts`                   | play/pause/stop/seek/setVolume/getStatus; персист позиции                                                                                                                               |
+| `AudioModeManager.ts`                     | конфигурация аудио-режима; каждая `configure()` перезапускает `setAudioModeAsync` (re-assert после сбросов ОС), дедупликация конкурентных вызовов, AppState `active` → всегда re-assert |
+| `LockScreenControls.ts`                   | метаданные lock screen (`setActiveForLockScreen`); retry при ещё не загруженном плеере (до 10×200мс), version-counter для отмены устаревших retry                                       |
+| `PlayerStatusListener.ts`                 | подписка на статус-события (playing/position/duration/buffering/trackEnd, детект прерываний)                                                                                            |
+| `BackgroundCachingService.ts`             | фоновое кэширование трека при старте воспроизведения                                                                                                                                    |
+| `TrackAutoAdvanceService/`                | авто-переход на следующий трек по окончании                                                                                                                                             |
+| `nativePlayerHelpers.ts`                  | сборка listener'ов и обработчика прерываний                                                                                                                                             |
+| `webPlayerState.ts`, `webPlayerPubSub.ts` | состояние и pub-sub для веб-реализации                                                                                                                                                  |
+| `types.ts`                                | общие типы (`LockScreenMetadata`, `PlaybackStatus`, `StatusCallbacks`, `PlayerActions`)                                                                                                 |
+| `PlayerActionsAdapter.ts`                 | DI для `TrackAutoAdvanceService`                                                                                                                                                        |
 
 ### Стриминг и кэш
 
 `AudioLoader.getPlaybackUrl` определяет источник воспроизведения:
+
 - если файл **в кэше** → играет локальный `file://` (мгновенный старт);
 - если файла нет → **стримит** с сервера (`downloadFirst: false`, прогрессивная буферизация через нативные движки: AVPlayer на iOS, ExoPlayer на Android), воспроизведение начинается после загрузки метаданных/начала буфера, не дожидаясь полного файла. Параллельно `startBackgroundCaching` скачивает трек в офлайн-кэш.
 - **Web** — `WebPlayerService` использует `HTMLAudioElement` (`new Audio()`), который всегда выполнял прогрессивное стриминг-воспроизведение независимо от `downloadFirst` (опция не влияет на веб-путь).
@@ -69,7 +70,8 @@
 Release-before-recreate: `PlayerService.replaceAudio` и `unload` вызывают `audioLoader.releaseAndReset()` — полный `release()` нативного `AudioPlayer` и обнуление ссылок (`AudioLoader.playerInstance` и `PlayerService.playerInstance`). Lock screen очищается до release. Это гарантирует, что повторный вызов `replaceAudio` всегда создаёт свежий `AudioPlayer` через `createAudioPlayer`, а не пытается `replace()` на уничтоженном нативном объекте.
 
 Upstream-причины:
-- `expo/expo#46137` — сервис не вызывал `startForeground` после рестарта ОС, foreground-service падал;       release-before-recreate пересоздаёт нативный контекст, восстанавливая работоспособность.
+
+- `expo/expo#46137` — сервис не вызывал `startForeground` после рестарта ОС, foreground-service падал; release-before-recreate пересоздаёт нативный контекст, восстанавливая работоспособность.
 - `expo/expo#46957` — на Android 15+ нельзя запросить audio focus из фона (`Activity` недоступна); release-before-recreate сбрасывает нативное состояние контроллера фокуса.
 - `androidx/media#1928` — застрявший audio focus чистится только ребутом; наш release — митигация, полная очистка может требовать перезагрузки ОС.
 
@@ -124,12 +126,14 @@ Artwork резолвится с фолбэком: `artworkUrl = metadata.artwork
 
 ### Запись прогресса
 
-| Путь | Где | Когда |
-|------|-----|-------|
-| `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts` | каждые 5с (только при воспроизведении): `CURRENT_SOUND_POSITION` + мини-снапшот `writeLiveProgressSnapshot` (~60 байт) — каталог истории не трогает; первый тик после переключения трека пропускается (skip-first-tick через рефы) |
-| `PlaybackController.pause` | `src/entities/player/lib/PlayerService/PlaybackController.ts` | при паузе (нативный): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })` |
-| `WebPlayerService.pause` | `src/entities/player/lib/PlayerService/index.web.ts` | при паузе (веб): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction` |
-| `recordSermonSwitchAction` | `usePlayNewSermon` (ручной тап, `markOldCompleted: false`), `playTrackWithMetadata` (авто-переход, `markOldCompleted: true`) | при смене трека: flush позиции старого + запись/обновление нового за один проход |
+| Путь                       | Где                                                                                                                          | Когда                                                                                                                                                                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts`                                                                        | каждые 5с (только при воспроизведении): `CURRENT_SOUND_POSITION` + мини-снапшот `writeLiveProgressSnapshot` (~60 байт) — каталог истории не трогает; первый тик после переключения трека пропускается (skip-first-tick через рефы) |
+| `PlaybackController.pause` | `src/entities/player/lib/PlayerService/PlaybackController.ts`                                                                | при паузе (нативный): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })`                                                                                                           |
+| `WebPlayerService.pause`   | `src/entities/player/lib/PlayerService/index.web.ts`                                                                         | при паузе (веб): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction`                                                                                                                                                           |
+| `recordSermonSwitchAction` | `usePlayNewSermon` (ручной тап, `markOldCompleted: false`), `playTrackWithMetadata` (авто-переход, `markOldCompleted: true`) | при смене трека: flush позиции старого + запись/обновление нового за один проход                                                                                                                                                   |
+
+Все файлы `entities/player`, которым нужны символы из `listening-history`, импортируют их через **@x-точку** `entities/listening-history/@x/player` — а не из основного barrel `entities/listening-history`. Подробнее — [listening-history.md](./listening-history.md) → «@x cross-import».
 
 При гидрации `reconcileOnHydration` мержит мини-снапшот в каталог (только если новее и запись не завершена, `durationMs = max`). Подробнее — [listening-history.md](./listening-history.md) → «Запись прогресса».
 

@@ -95,16 +95,16 @@ src/entities/player/
 
 ### Структура docs/
 
-| Раздел | Назначение |
-| --- | --- |
-| `docs/README.md` | Карта документации и правила для агентов |
-| `docs/architecture.md` | Архитектура «почему» (FSD + Expo Router + Reatom) |
-| `docs/conventions.md` | Процессные договорённости (git, AI, ведение docs) |
-| `docs/decisions.md` | Принятый стек и отклонённые варианты |
-| `docs/debt.md` | Технический долг |
-| `docs/features/` | Крупные функциональные модули (player, audio-cache, navigation, state, theme, offline-and-network, updates, book-reader) |
-| `docs/screens/` | Описание экранов (с чек-листом формата в `screens/README.md`) |
-| `docs/contracts/` | Внешние контракты: REST API, AsyncStorage, локальная БД |
+| Раздел                 | Назначение                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `docs/README.md`       | Карта документации и правила для агентов                                                                                 |
+| `docs/architecture.md` | Архитектура «почему» (FSD + Expo Router + Reatom)                                                                        |
+| `docs/conventions.md`  | Процессные договорённости (git, AI, ведение docs)                                                                        |
+| `docs/decisions.md`    | Принятый стек и отклонённые варианты                                                                                     |
+| `docs/debt.md`         | Технический долг                                                                                                         |
+| `docs/features/`       | Крупные функциональные модули (player, audio-cache, navigation, state, theme, offline-and-network, updates, book-reader) |
+| `docs/screens/`        | Описание экранов (с чек-листом формата в `screens/README.md`)                                                            |
+| `docs/contracts/`      | Внешние контракты: REST API, AsyncStorage, локальная БД                                                                  |
 
 ### Обязательные правила для агентов
 
@@ -118,9 +118,11 @@ src/entities/player/
 2. **При изменении кода** обнови затронутые документы `docs/` **в том же PR/коммите**. Если изменил экран — обнови `docs/screens/<экран>.md`; изменил модуль — `docs/features/<модуль>.md`; изменил API-контракт — `docs/contracts/rest-api.md`; изменил ключи AsyncStorage — `docs/contracts/storage.md`.
 
 3. **Каждый «срезанный угол»** (TODO, hack, отложенная задача, workaround) → запись в `docs/debt.md` в том же PR. Формат:
+
    ```
    - [ ] <что не доделано> — <где (пути файлов)> — <когда вернуться/контекст>
    ```
+
    Комментарий `// TODO(name):` в коде допустим **только** с зеркальной записью в `docs/debt.md`.
 
 4. **Новые зависимости** — только через запись в `docs/decisions.md` (секция Approved stack) с объяснением «почему». Не добавляй пакеты «молча».
@@ -142,9 +144,9 @@ src/entities/player/
   NOT:
   ```typescript
   export { MyComponent } from './ui/MyComponent'
-  export { internalHelper } from './lib/internalHelper'  // ❌ Internal, not reused externally
-  export { InternalComponent } from './ui/InternalComponent'  // ❌ Internal, not reused externally
-  export { myAtom } from './model'  // ❌ Internal state, not reused externally
+  export { internalHelper } from './lib/internalHelper' // ❌ Internal, not reused externally
+  export { InternalComponent } from './ui/InternalComponent' // ❌ Internal, not reused externally
+  export { myAtom } from './model' // ❌ Internal state, not reused externally
   ```
 
 ## Code Style Guidelines
@@ -156,7 +158,7 @@ src/entities/player/
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import { usePlayer } from 'entities/player'
-import { COLORS } from 'shared/themed'
+import { COLORS } from 'shared/ui/theme'
 import type { StyleProp, ViewStyle } from 'react-native'
 import type { PlaylistData } from 'shared/model'
 import { localHelper } from './lib/helper'
@@ -281,8 +283,8 @@ const styles = StyleSheet.create({
   },
 })
 
-// Use themed constants from shared/themed
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/themed'
+// Use themed constants from shared/ui/theme
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 ```
 
 ### Naming Conventions

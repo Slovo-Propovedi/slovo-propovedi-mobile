@@ -1,6 +1,8 @@
 # Тема и Material You
 
-**Слой:** `shared/ui/theme`, `shared/ui/themed.ts`
+**Слой:** `shared/ui/theme`
+
+**Миграция:** `shared/ui/themed.ts` перемещён в `shared/ui/theme/themed.ts`. Символы темы (`COLORS`, `FONT_SIZES`, `INDENTS`, `RADIUSES`, `useTheme`) экспортируются из `shared/ui/theme`, **не** из `shared/ui`. Barrel `shared/ui/index.ts` больше не реэкспортирует символы темы.
 **Статус:** готов
 
 ## Режимы темы
@@ -33,7 +35,7 @@
 
 Интерфейс `ThemeColors` (`src/shared/ui/theme/types.ts`): `backdrop, background, card, icon, primary, skeleton, surface, text, textMuted`. Объекты `LightTheme`/`DarkTheme` — `src/shared/ui/theme/constants.ts`.
 
-Константы вёрстки — `src/shared/ui/themed.ts`:
+Константы вёрстки — `src/shared/ui/theme/themed.ts`:
 
 - `COLORS` (мутируемые слоты темы + статичные цвета),
 - `FONT_SIZES`, `INDENTS`, `RADIUSES`, `SCREEN_PADDING`, `PLAYER_SIZES`.
@@ -42,7 +44,7 @@
 
 ```tsx
 import { StyleSheet } from 'react-native'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 
 const { currentTheme } = useTheme()
 
