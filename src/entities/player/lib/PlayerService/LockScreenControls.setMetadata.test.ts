@@ -16,16 +16,19 @@ jest.mock('shared/lib/app-icon', () => ({
 
 const mockedGetLocalAppIconUri = jest.mocked(getLocalAppIconUri)
 
-const createPlayer = () => {
+const createPlayer = (loaded = true) => {
   const setActiveForLockScreen = jest.fn()
-  const player = { isLoaded: true, setActiveForLockScreen } as unknown as AudioPlayer
+  const player = {
+    isLoaded: loaded,
+    setActiveForLockScreen,
+  } as unknown as AudioPlayer
 
   return { player, setActiveForLockScreen }
 }
 
 const metadataStub = { title: 'Проповедь' }
 
-describe('LockScreenControls', () => {
+describe('setMetadata (immediate — player loaded)', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockIsExpoGo.isExpoGo = false

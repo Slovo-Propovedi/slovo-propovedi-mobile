@@ -40,6 +40,12 @@ class AudioLoader {
     return this.waitForLoaded(this.playerInstance, initialPositionMs)
   }
 
+  public releaseAndReset(): void {
+    if (!this.playerInstance) return
+    this.playerInstance.release()
+    this.playerInstance = null
+  }
+
   public getPlayerInstance(): AudioPlayer | null {
     return this.playerInstance
   }

@@ -17,12 +17,21 @@ import {
 } from '../model'
 import { audioPlayerDataSchema } from '../ui/PlayerControls/PlayerControls.types'
 import { playerService } from './PlayerService'
+import { audioModeManager } from './PlayerService/AudioModeManager'
 
 const parseAudioPlayerData = getParseJsonWithSchema(audioPlayerDataSchema)
 const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 
 export const initializePlayer = async () => {
   try {
+    // Unconditional configure: re-assert audio mode even without a restored track.
+    // Isolated so a hard failure doesn't skip restoring track/playlist/volume/repeat.
+    try {
+      await audioModeManager.configure()
+    } catch (error) {
+      console.warn('[initializePlayer] Failed to configure audio mode:', error)
+    }
+
     const stored = await AsyncStorage.multiGet([
       CURRENT_AUDIO,
       CURRENT_PLAYLIST,

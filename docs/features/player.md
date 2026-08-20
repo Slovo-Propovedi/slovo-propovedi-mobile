@@ -25,8 +25,8 @@
 |--------|-----------|
 | `AudioLoader.ts` | создание/замена `AudioPlayer`, ожидание загрузки, стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша |
 | `PlaybackController.ts` | play/pause/stop/seek/setVolume/getStatus; персист позиции |
-| `AudioModeManager.ts` | конфигурация аудио-режима с retry по AppState |
-| `LockScreenControls.ts` | метаданные lock screen (`setActiveForLockScreen`) |
+| `AudioModeManager.ts` | конфигурация аудио-режима; каждая `configure()` перезапускает `setAudioModeAsync` (re-assert после сбросов ОС), дедупликация конкурентных вызовов, AppState `active` → всегда re-assert |
+| `LockScreenControls.ts` | метаданные lock screen (`setActiveForLockScreen`); retry при ещё не загруженном плеере (до 10×200мс), version-counter для отмены устаревших retry |
 | `PlayerStatusListener.ts` | подписка на статус-события (playing/position/duration/buffering/trackEnd, детект прерываний) |
 | `BackgroundCachingService.ts` | фоновое кэширование трека при старте воспроизведения |
 | `TrackAutoAdvanceService/` | авто-переход на следующий трек по окончании |
@@ -63,6 +63,15 @@
 ## Инициализация
 
 `initializePlayer` (`src/entities/player/lib/initializePlayer.ts`) вызывается модульно в `app/_layout.tsx` (`void initializePlayer()`). Восстанавливает из AsyncStorage (`multiGet` + Zod-парсинг через `getParseJsonWithSchema`): последний аудио/плейлист, позицию, громкость, режим повтора. Затем загружает аудио (`playerService.loadAudio(audioUrl, position)`) и ставит метаданные lock screen.
+
+## Восстановление после сбоя
+
+Release-before-recreate: `PlayerService.replaceAudio` и `unload` вызывают `audioLoader.releaseAndReset()` — полный `release()` нативного `AudioPlayer` и обнуление ссылок (`AudioLoader.playerInstance` и `PlayerService.playerInstance`). Lock screen очищается до release. Это гарантирует, что повторный вызов `replaceAudio` всегда создаёт свежий `AudioPlayer` через `createAudioPlayer`, а не пытается `replace()` на уничтоженном нативном объекте.
+
+Upstream-причины:
+- `expo/expo#46137` — сервис не вызывал `startForeground` после рестарта ОС, foreground-service падал;       release-before-recreate пересоздаёт нативный контекст, восстанавливая работоспособность.
+- `expo/expo#46957` — на Android 15+ нельзя запросить audio focus из фона (`Activity` недоступна); release-before-recreate сбрасывает нативное состояние контроллера фокуса.
+- `androidx/media#1928` — застрявший audio focus чистится только ребутом; наш release — митигация, полная очистка может требовать перезагрузки ОС.
 
 ## Hooks
 
