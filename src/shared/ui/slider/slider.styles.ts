@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native'
+import { INDENTS } from '../theme/themed'
 import { type ThemeColors } from '../theme/types'
-import { INDENTS } from '../themed'
 
 export const createSliderStyles = (theme: ThemeColors) =>
   StyleSheet.create({

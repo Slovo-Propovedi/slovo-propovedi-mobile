@@ -1,14 +1,8 @@
-import { ctx } from '../lib/reatom-ctx/ctx'
-import {
-  initializeCOLORS,
-  COLORS as THEME_COLORS,
-  updateCOLORS as updateThemeColors,
-} from './theme/colors'
+import { ctx } from '../../lib/reatom-ctx/ctx'
+import { initializeCOLORS, updateCOLORS as updateThemeColors } from './colors'
 
 // Initialize theme colors on module load
 initializeCOLORS(ctx)
-
-export const COLORS = THEME_COLORS
 
 export const updateCOLORS = () => {
   updateThemeColors(ctx)
@@ -60,5 +54,3 @@ export const INDENTS = {
   medium: 16,
   middle: 12,
 } as const
-
-export { useTheme } from './theme'

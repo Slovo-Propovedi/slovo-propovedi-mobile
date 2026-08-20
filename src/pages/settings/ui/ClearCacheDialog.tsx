@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 
 interface ClearCacheDialogProps {
   onCancel: () => void

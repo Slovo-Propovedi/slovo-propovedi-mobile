@@ -31,6 +31,10 @@ jest.mock('shared/api', () => ({
   },
 }))
 
+jest.mock('entities/listening-history', () => ({
+  useHistoryProgressMap: jest.fn(() => new Map()),
+}))
+
 jest.mock('entities/player', () => ({
   usePlayNewSermon: jest.fn(() => jest.fn()),
 }))

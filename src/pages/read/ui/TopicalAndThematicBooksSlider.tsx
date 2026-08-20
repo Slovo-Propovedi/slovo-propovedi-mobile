@@ -9,7 +9,7 @@ import {
   SliderItemTransform,
   WhereIsSlideTitleLocated,
 } from 'shared/ui'
-import { INDENTS } from 'shared/ui/themed'
+import { INDENTS } from 'shared/ui/theme'
 import type { BookData } from 'shared/model'
 import {
   getTopicalAndThematicBooksSlider,

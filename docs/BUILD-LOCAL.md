@@ -5,13 +5,13 @@ Local builds are the FLOSS-compliant path — no proprietary services required.
 
 ## Prerequisites
 
-| Tool | Version | Notes |
-|------|---------|-------|
-| Node.js | >= 22.x | Current LTS. Check with `node --version`. |
-| Yarn | 1.22.x | Classic Yarn. No `dlx` support. |
-| JDK | >= 17 | OpenJDK 17 or newer. Expo SDK 57 + React Native 0.86. |
-| Android SDK | API 35+ | Install via Android Studio or `sdkmanager`. |
-| Xcode | 16+ | macOS only. Required for iOS builds. |
+| Tool        | Version | Notes                                                 |
+| ----------- | ------- | ----------------------------------------------------- |
+| Node.js     | >= 22.x | Current LTS. Check with `node --version`.             |
+| Yarn        | 1.22.x  | Classic Yarn. No `dlx` support.                       |
+| JDK         | >= 17   | OpenJDK 17 or newer. Expo SDK 57 + React Native 0.86. |
+| Android SDK | API 35+ | Install via Android Studio or `sdkmanager`.           |
+| Xcode       | 16+     | macOS only. Required for iOS builds.                  |
 
 ## Android Release Build
 
@@ -118,10 +118,10 @@ The dev build uses `applicationId = ru.slovopropovedi.dev` and the app name
 The Android project defines two Gradle product flavors to keep the
 development build separate from the production app on the same device:
 
-| Flavor | Application ID | App name | Variants |
-|--------|----------------|----------|----------|
-| `dev` | `ru.slovopropovedi.dev` | Слово.Проповеди Dev | `devDebug`, `devRelease` |
-| `prod` | `ru.slovopropovedi` | Слово.Проповеди | `prodDebug`, `prodRelease` |
+| Flavor | Application ID          | App name            | Variants                   |
+| ------ | ----------------------- | ------------------- | -------------------------- |
+| `dev`  | `ru.slovopropovedi.dev` | Слово.Проповеди Dev | `devDebug`, `devRelease`   |
+| `prod` | `ru.slovopropovedi`     | Слово.Проповеди     | `prodDebug`, `prodRelease` |
 
 The `dev` flavor adds an `applicationIdSuffix` (`.dev`) and a
 `versionNameSuffix` (`-dev`). Both flavors share the same launcher icon
@@ -164,14 +164,14 @@ This works only for the dev flavor (package `ru.slovopropovedi.dev`).
 The following scripts depend on the proprietary EAS Cloud service and are
 provided for convenience — they are **not** required:
 
-| Script | Description |
-|--------|-------------|
-| `yarn build:android` | Build Android with EAS Cloud |
-| `yarn build:ios` | Build iOS with EAS Cloud |
-| `yarn build:all` | Build all platforms with EAS Cloud |
-| `yarn build-preview:android` | Build Android (preview profile) |
-| `yarn build-preview:ios` | Build iOS (preview profile) |
-| `yarn build-preview:all` | Build all platforms (preview profile) |
+| Script                       | Description                           |
+| ---------------------------- | ------------------------------------- |
+| `yarn build:android`         | Build Android with EAS Cloud          |
+| `yarn build:ios`             | Build iOS with EAS Cloud              |
+| `yarn build:all`             | Build all platforms with EAS Cloud    |
+| `yarn build-preview:android` | Build Android (preview profile)       |
+| `yarn build-preview:ios`     | Build iOS (preview profile)           |
+| `yarn build-preview:all`     | Build all platforms (preview profile) |
 
 These scripts are retained for users who choose to use EAS. The
 `eas.json` file documents build profiles for reference.

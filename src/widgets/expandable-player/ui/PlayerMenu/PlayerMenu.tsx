@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import type { LayoutChangeEvent } from 'react-native'
 import { styles } from './PlayerMenu.styles'
 

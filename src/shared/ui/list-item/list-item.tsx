@@ -2,7 +2,9 @@ import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-na
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../config/screen-dimensions'
 import { CoverImage } from '../cover-image'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from '../themed'
+import { COLORS } from '../theme/colors'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 import { ListItemSize } from './list-item.types'
 
 type ListItemComponent = <T extends { artwork: string; title: string }>(

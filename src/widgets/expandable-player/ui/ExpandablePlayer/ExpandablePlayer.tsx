@@ -16,7 +16,8 @@ import {
   openPlayerSheetAction,
   usePlayer,
 } from 'entities/player'
-import { CoverImage, useTheme } from 'shared/ui'
+import { CoverImage } from 'shared/ui'
+import { useTheme } from 'shared/ui/theme'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'

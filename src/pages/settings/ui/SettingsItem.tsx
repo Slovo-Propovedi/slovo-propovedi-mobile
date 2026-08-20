@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
 

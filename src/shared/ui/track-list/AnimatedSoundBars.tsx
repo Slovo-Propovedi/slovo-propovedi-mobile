@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Animated, Easing, View } from 'react-native'
-import { COLORS, useTheme } from '../themed'
+import { COLORS } from '../theme/colors'
+import { useTheme } from '../theme/ThemeContext/useTheme'
 
 const BAR_COUNT = 3
+const BAR_HEIGHT = 12
 const BAR_WIDTH = 3
 const BAR_SPACING = 2
+const MIN_SCALE = 0.3
+const MAX_SCALE = 1
 
 export const AnimatedSoundBars = () => {
   const { currentTheme } = useTheme()
@@ -21,14 +25,14 @@ export const AnimatedSoundBars = () => {
           Animated.timing(value, {
             duration: duration / 2,
             easing: Easing.inOut(Easing.ease),
-            toValue: 1,
-            useNativeDriver: false,
+            toValue: MAX_SCALE,
+            useNativeDriver: true,
           }),
           Animated.timing(value, {
             duration: duration / 2,
             easing: Easing.inOut(Easing.ease),
-            toValue: 0.3,
-            useNativeDriver: false,
+            toValue: MIN_SCALE,
+            useNativeDriver: true,
           }),
         ]),
       )
@@ -58,21 +62,21 @@ export const AnimatedSoundBars = () => {
         style={{
           alignItems: 'flex-end',
           flexDirection: 'row',
-          height: 12,
+          height: BAR_HEIGHT,
           width: containerWidth,
         }}
       >
         {animatedValues.map((value, index) => (
           <Animated.View
             key={index}
+            testID={`sound-bar-${index}`}
             style={{
               backgroundColor: COLORS.white,
               borderRadius: 1,
-              height: value.interpolate({
-                inputRange: [0.3, 1],
-                outputRange: [3, 12],
-              }),
+              height: BAR_HEIGHT,
               marginRight: index < BAR_COUNT - 1 ? BAR_SPACING : 0,
+              transform: [{ scaleY: value }],
+              transformOrigin: 'bottom',
               width: BAR_WIDTH,
             }}
           />

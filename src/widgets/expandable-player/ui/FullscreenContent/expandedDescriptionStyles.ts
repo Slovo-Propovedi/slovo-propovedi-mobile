@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const expandedDescriptionStyles = StyleSheet.create({
   descriptionCard: {

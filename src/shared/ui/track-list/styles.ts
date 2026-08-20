@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native'
+import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 import { type ThemeColors } from '../theme/types'
-import { FONT_SIZES, INDENTS, RADIUSES } from '../themed'
 
 export const TRACK_LIST_ITEM_SIZES = {
   albumArtSize: 50,

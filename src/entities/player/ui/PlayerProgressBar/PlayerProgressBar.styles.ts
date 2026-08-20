@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native'
 import { type ThemeColors } from 'shared/ui/theme'
-import { COLORS, FONT_SIZES } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES } from 'shared/ui/theme'
 
 export const THUMB_SIZE = 10
 

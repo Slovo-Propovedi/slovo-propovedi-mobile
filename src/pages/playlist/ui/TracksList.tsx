@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { createTracksListStyles, TracksListItem } from 'shared/ui/track-list'
 import type { TracksListProps } from './trackListTypes'
 import type { ThemeColors } from 'shared/ui/theme'

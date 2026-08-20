@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { isOnlineAtom, serverUnreachableAtom } from 'shared/model'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 const TOAST_COLOR = '#ff9500'
 

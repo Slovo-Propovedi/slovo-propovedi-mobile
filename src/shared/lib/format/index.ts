@@ -1,2 +1,2 @@
-export * from './capitalizeString'
-export * from './formatSermonReference'
+export { formatRelativeDate } from './formatRelativeDate'
+export { formatSermonReference } from './formatSermonReference'

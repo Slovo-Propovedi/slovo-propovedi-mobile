@@ -32,25 +32,25 @@ Consider ejecting from Expo SDK if any of the following occur:
 
 Replacement table for each Expo module currently in use:
 
-| Expo Module | Replacement | License | Difficulty | Notes |
-|-------------|-------------|---------|------------|-------|
-| `expo` (CLI) | React Native CLI (`@react-native-community/cli`) | MIT | Medium | RN CLI is the standard alternative |
-| `expo-router` | React Navigation (`@react-navigation/native` + `@react-navigation/native-stack`) | MIT | Hard | Requires rewriting routing; Expo Router is built on React Navigation so concepts map directly |
-| `expo-audio` | `react-native-track-player` | Apache-2.0 | Medium | Mature, GPL-compatible; similar API to expo-audio |
-| `expo-notifications` | UnifiedPush (`@ungerik/unified-push` or community port) | Apache-2.0 | Medium | Push without Google FCM; currently only local notifications used so removal may suffice |
-| `expo-asset` | `react-native-asset` | MIT | Easy | Drop-in replacement |
-| `expo-file-system` | `react-native-fs` | MIT | Easy | Similar API |
-| `expo-clipboard` | `@react-native-clipboard/clipboard` | MIT | Easy | Drop-in |
-| `expo-linear-gradient` | `react-native-linear-gradient` | MIT | Easy | Drop-in |
-| `expo-blur` | `@react-native-community/blur` | MIT | Easy | Drop-in |
-| `expo-checkbox` | `@react-native-community/checkbox` | MIT | Easy | Drop-in |
-| `expo-constants` | `react-native-config` | MIT | Easy | Config via `.env` files |
-| `expo-device` | `react-native-device-info` | MIT | Easy | Drop-in |
-| `expo-intent-launcher` | `react-native-intent-launcher` | MIT | Easy | Drop-in |
-| `expo-status-bar` | React Native's `StatusBar` | MIT | Easy | Built into RN core |
-| `expo-task-manager` | `react-native-background-actions` | MIT | Medium | Different API; check use case |
-| `expo-linking` | React Native's `Linking` | MIT | Easy | Built into RN core |
-| `@expo/vector-icons` | `react-native-vector-icons` | MIT | Easy | Drop-in |
+| Expo Module            | Replacement                                                                      | License    | Difficulty | Notes                                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------- | ---------- | ---------- | --------------------------------------------------------------------------------------------- |
+| `expo` (CLI)           | React Native CLI (`@react-native-community/cli`)                                 | MIT        | Medium     | RN CLI is the standard alternative                                                            |
+| `expo-router`          | React Navigation (`@react-navigation/native` + `@react-navigation/native-stack`) | MIT        | Hard       | Requires rewriting routing; Expo Router is built on React Navigation so concepts map directly |
+| `expo-audio`           | `react-native-track-player`                                                      | Apache-2.0 | Medium     | Mature, GPL-compatible; similar API to expo-audio                                             |
+| `expo-notifications`   | UnifiedPush (`@ungerik/unified-push` or community port)                          | Apache-2.0 | Medium     | Push without Google FCM; currently only local notifications used so removal may suffice       |
+| `expo-asset`           | `react-native-asset`                                                             | MIT        | Easy       | Drop-in replacement                                                                           |
+| `expo-file-system`     | `react-native-fs`                                                                | MIT        | Easy       | Similar API                                                                                   |
+| `expo-clipboard`       | `@react-native-clipboard/clipboard`                                              | MIT        | Easy       | Drop-in                                                                                       |
+| `expo-linear-gradient` | `react-native-linear-gradient`                                                   | MIT        | Easy       | Drop-in                                                                                       |
+| `expo-blur`            | `@react-native-community/blur`                                                   | MIT        | Easy       | Drop-in                                                                                       |
+| `expo-checkbox`        | `@react-native-community/checkbox`                                               | MIT        | Easy       | Drop-in                                                                                       |
+| `expo-constants`       | `react-native-config`                                                            | MIT        | Easy       | Config via `.env` files                                                                       |
+| `expo-device`          | `react-native-device-info`                                                       | MIT        | Easy       | Drop-in                                                                                       |
+| `expo-intent-launcher` | `react-native-intent-launcher`                                                   | MIT        | Easy       | Drop-in                                                                                       |
+| `expo-status-bar`      | React Native's `StatusBar`                                                       | MIT        | Easy       | Built into RN core                                                                            |
+| `expo-task-manager`    | `react-native-background-actions`                                                | MIT        | Medium     | Different API; check use case                                                                 |
+| `expo-linking`         | React Native's `Linking`                                                         | MIT        | Easy       | Built into RN core                                                                            |
+| `@expo/vector-icons`   | `react-native-vector-icons`                                                      | MIT        | Easy       | Drop-in                                                                                       |
 
 ## Build System Changes
 

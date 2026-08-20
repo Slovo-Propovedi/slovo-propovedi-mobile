@@ -5,6 +5,7 @@ export {
   isDownloadingAtom,
 } from './lib/download-model'
 export { initializePlayer } from './lib/initializePlayer'
+export { usePlaybackProgressSaver } from './lib/usePlaybackProgressSaver'
 export { usePlayer } from './lib/usePlayer'
 export { usePlayNewSermon } from './lib/usePlaySermon'
 export { useQueueManagement } from './lib/useQueueManagement'

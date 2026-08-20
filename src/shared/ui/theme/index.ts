@@ -1,8 +1,9 @@
+export { COLORS } from './colors'
+
 // Constants
 export { buildDynamicTheme, DarkTheme, getTheme, LightTheme } from './constants'
 
 export { isMaterialYouSupported } from './materialYou'
-
 // Reatom model
 export {
   currentThemeAtom,
@@ -18,12 +19,11 @@ export {
 } from './model'
 // Re-export Context-related from ThemeContext subfolder
 export { ThemeContext } from './ThemeContext/themeContext'
+
 export type { ThemeContextValue } from './ThemeContext/ThemeContext'
 
 export { ThemeProvider } from './ThemeContext/ThemeProvider'
-
 export { useTheme } from './ThemeContext/useTheme'
-// Types
-export type { ThemeColors, ThemedColors } from './types'
-export { ThemeMode } from './types'
-export type { ThemeMode as ThemeModeType } from './types'
+export { FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from './themed'
+
+export { type ThemeColors, type ThemedColors, ThemeMode } from './types'

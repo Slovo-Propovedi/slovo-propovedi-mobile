@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { Text, TouchableOpacity, View } from 'react-native'
-import { COLORS, FONT_SIZES, useTheme } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, useTheme } from 'shared/ui/theme'
 import { queueControlsStyles } from './styles'
 
 interface QueueControlsProps {

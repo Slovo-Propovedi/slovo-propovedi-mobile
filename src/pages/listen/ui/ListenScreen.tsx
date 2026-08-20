@@ -8,7 +8,7 @@ import {
   useIsSearchActive,
   useIsSearchOpen,
 } from 'features/sermon-search'
-import { PLAYER_SIZES, useTheme } from 'shared/ui/themed'
+import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 
 export const ListenScreen = () => {

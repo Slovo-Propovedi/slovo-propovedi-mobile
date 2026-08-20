@@ -14,6 +14,7 @@
 - `index` и `(tabs)` — без шапки (`headerShown: false`);
 - `settings` — заголовок «Настройки», `headerBackTitle: 'Назад'`;
 - `about` — заголовок «О приложении», «Назад»;
+- `history` — заголовок «История прослушивания», вход из вкладки «Еще» (`router.push('/history')`).
 - цвет фона контента и шапки — из `currentTheme`.
 
 Глобальные элементы поверх стека: `NetworkBanner`, `ServerErrorToast`, `UpdateBanner` (все — внутри `_RootLayout`).
@@ -67,16 +68,17 @@
 
 ## Типичные маршруты
 
-| Маршрут | Экран | Источник |
-|---------|-------|----------|
-| `/` | редирект → `/listen` | `app/index.tsx` |
-| `/listen` | `ListenScreen` | `pages/listen` |
-| `/listen/playlist` | `PlaylistScreen` | `pages/playlist` |
-| `/listen/playlist-list` | `PlaylistListScreen` | `pages/playlist-list` |
-| `/settings` | `SettingsScreen` | `pages/settings` |
-| `/about` | `AboutScreen` | `pages/about` |
-| `/read` (таб) | `ReadScreen` | `pages/read` (заблокирован) |
-| `/read/book-reader`, `/read/books-list` | — | **не зарегистрированы** |
+| Маршрут                                 | Экран                | Источник                    |
+| --------------------------------------- | -------------------- | --------------------------- |
+| `/`                                     | редирект → `/listen` | `app/index.tsx`             |
+| `/listen`                               | `ListenScreen`       | `pages/listen`              |
+| `/listen/playlist`                      | `PlaylistScreen`     | `pages/playlist`            |
+| `/listen/playlist-list`                 | `PlaylistListScreen` | `pages/playlist-list`       |
+| `/settings`                             | `SettingsScreen`     | `pages/settings`            |
+| `/about`                                | `AboutScreen`        | `pages/about`               |
+| `/history`                              | `HistoryScreen`      | `pages/history`             |
+| `/read` (таб)                           | `ReadScreen`         | `pages/read` (заблокирован) |
+| `/read/book-reader`, `/read/books-list` | —                    | **не зарегистрированы**     |
 
 ## Загрузочное состояние (Suspense)
 

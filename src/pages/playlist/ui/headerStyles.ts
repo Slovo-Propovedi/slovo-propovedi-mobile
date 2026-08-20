@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/themed'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { ThemeColors } from 'shared/ui/theme'
 
 export const createHeaderStyles = (theme: ThemeColors) =>

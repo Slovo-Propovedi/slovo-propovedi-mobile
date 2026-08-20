@@ -19,6 +19,10 @@ jest.mock('entities/player', () => ({
   usePlayNewSermon: jest.fn(() => jest.fn()),
 }))
 
+jest.mock('entities/listening-history', () => ({
+  useHistoryProgressMap: jest.fn(() => new Map()),
+}))
+
 jest.mock('../lib/useDebouncedSearch', () => ({
   useDebouncedSearch: () => undefined,
 }))

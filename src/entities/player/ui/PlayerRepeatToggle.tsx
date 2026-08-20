@@ -8,7 +8,7 @@ import {
   StyleSheet,
   type ViewStyle,
 } from 'react-native'
-import { FONT_SIZES, useTheme } from 'shared/ui/themed'
+import { FONT_SIZES, useTheme } from 'shared/ui/theme'
 import { type RepeatMode, repeatModeAtom, setRepeatModeAction } from '../model'
 
 interface PlayerRepeatToggleProps {

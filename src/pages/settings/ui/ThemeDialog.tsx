@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { Modal } from 'shared/ui/modal'
-import { INDENTS, useTheme } from 'shared/ui/themed'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { ThemeSelector } from './ThemeSelector'
 
 export const ThemeDialog = ({

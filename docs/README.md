@@ -13,7 +13,7 @@
    - функциональный модуль → `features/<модуль>.md`;
    - внешний протокол/контракт → `contracts/<протокол>.md`;
    - архитектурное решение → `architecture.md`.
-   Если документ ещё не создан — прочитать код, затем создать/дополнить документ (см. правило 4).
+     Если документ ещё не создан — прочитать код, затем создать/дополнить документ (см. правило 4).
 
 2. **При изменении кода** агент ОБЯЗАН обновить затронутые документы `docs/` **в том же PR/коммите**. Изменение кода без обновления `docs/` считается неполным.
 
@@ -26,33 +26,34 @@
 
 ## Структура docs/
 
-| Файл | Назначение |
-|------|------------|
-| [`README.md`](./README.md) | Карта документации и правила для агентов (этот файл) |
-| [`architecture.md`](./architecture.md) | Архитектура «почему»: FSD, expo-router, Reatom, платформенные реализации |
-| [`conventions.md`](./conventions.md) | Процессные договорённости: git, MR, работа с агентами, DoD |
-| [`decisions.md`](./decisions.md) | Стек и решения: approved / rejected / superseded |
-| [`debt.md`](./debt.md) | Технический долг, срезанные углы |
-| [`features/player.md`](./features/player.md) | Как работает плеер (модель, PlayerService, кэш аудио) |
-| [`features/audio-cache.md`](./features/audio-cache.md) | Кэширование аудио и секций (offline) |
-| [`features/images.md`](./features/images.md) | Кэширование и рендеринг изображений (expo-image) |
-| [`features/navigation.md`](./features/navigation.md) | Навигация expo-router: табы, стеки, маршруты |
-| [`features/state.md`](./features/state.md) | Reatom: атомы, экшены, `ctx` |
-| [`features/theme.md`](./features/theme.md) | Тема, цвета, Material You |
-| [`features/offline-and-network.md`](./features/offline-and-network.md) | Сеть, офлайн, баннеры, авто-refresh токенов |
-| [`features/updates.md`](./features/updates.md) | Проверка обновлений и уведомления |
-| [`features/book-reader.md`](./features/book-reader.md) | Чтение FB2-книг (в разработке) |
-| [`screens/listen.md`](./screens/listen.md) | Таб «Слушать» и его экраны |
-| [`screens/playlist.md`](./screens/playlist.md) | Экран плейлиста |
-| [`screens/playlist-list.md`](./screens/playlist-list.md) | Экран списка плейлистов |
-| [`screens/read.md`](./screens/read.md) | Таб «Читать» (заблокирован) |
-| [`screens/study.md`](./screens/study.md) | Таб «Учиться» (заглушка) |
-| [`screens/more.md`](./screens/more.md) | Таб «Еще» |
-| [`screens/settings.md`](./screens/settings.md) | Экран «Настройки» |
-| [`screens/about.md`](./screens/about.md) | Экран «О приложении» |
-| [`contracts/rest-api.md`](./contracts/rest-api.md) | REST API и сгенерированный клиент (Orval) |
-| [`contracts/storage.md`](./contracts/storage.md) | AsyncStorage: ключи, токены, позиция |
-| [`contracts/local-db.md`](./contracts/local-db.md) | Встроенная БД `src/shared/api/db/` |
+| Файл                                                                   | Назначение                                                               |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [`README.md`](./README.md)                                             | Карта документации и правила для агентов (этот файл)                     |
+| [`architecture.md`](./architecture.md)                                 | Архитектура «почему»: FSD, expo-router, Reatom, платформенные реализации |
+| [`conventions.md`](./conventions.md)                                   | Процессные договорённости: git, MR, работа с агентами, DoD               |
+| [`decisions.md`](./decisions.md)                                       | Стек и решения: approved / rejected / superseded                         |
+| [`debt.md`](./debt.md)                                                 | Технический долг, срезанные углы                                         |
+| [`features/player.md`](./features/player.md)                           | Как работает плеер (модель, PlayerService, кэш аудио)                    |
+| [`features/listening-history.md`](./features/listening-history.md)     | История прослушивания, resume-логика, прогресс в UI                      |
+| [`features/audio-cache.md`](./features/audio-cache.md)                 | Кэширование аудио и секций (offline)                                     |
+| [`features/images.md`](./features/images.md)                           | Кэширование и рендеринг изображений (expo-image)                         |
+| [`features/navigation.md`](./features/navigation.md)                   | Навигация expo-router: табы, стеки, маршруты                             |
+| [`features/state.md`](./features/state.md)                             | Reatom: атомы, экшены, `ctx`                                             |
+| [`features/theme.md`](./features/theme.md)                             | Тема, цвета, Material You                                                |
+| [`features/offline-and-network.md`](./features/offline-and-network.md) | Сеть, офлайн, баннеры, авто-refresh токенов                              |
+| [`features/updates.md`](./features/updates.md)                         | Проверка обновлений и уведомления                                        |
+| [`features/book-reader.md`](./features/book-reader.md)                 | Чтение FB2-книг (в разработке)                                           |
+| [`screens/listen.md`](./screens/listen.md)                             | Таб «Слушать» и его экраны                                               |
+| [`screens/playlist.md`](./screens/playlist.md)                         | Экран плейлиста                                                          |
+| [`screens/playlist-list.md`](./screens/playlist-list.md)               | Экран списка плейлистов                                                  |
+| [`screens/read.md`](./screens/read.md)                                 | Таб «Читать» (заблокирован)                                              |
+| [`screens/study.md`](./screens/study.md)                               | Таб «Учиться» (заглушка)                                                 |
+| [`screens/more.md`](./screens/more.md)                                 | Таб «Еще»                                                                |
+| [`screens/settings.md`](./screens/settings.md)                         | Экран «Настройки»                                                        |
+| [`screens/about.md`](./screens/about.md)                               | Экран «О приложении»                                                     |
+| [`contracts/rest-api.md`](./contracts/rest-api.md)                     | REST API и сгенерированный клиент (Orval)                                |
+| [`contracts/storage.md`](./contracts/storage.md)                       | AsyncStorage: ключи, токены, позиция                                     |
+| [`contracts/local-db.md`](./contracts/local-db.md)                     | Встроенная БД `src/shared/api/db/`                                       |
 
 > Файлы, помеченные «в разработке» или ещё не созданные, добавляются по мере работы. Таблица служит картой, а не обязательным списком существующих файлов.
 

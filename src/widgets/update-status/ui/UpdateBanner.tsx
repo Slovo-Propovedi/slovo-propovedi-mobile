@@ -4,7 +4,7 @@ import { Linking, Pressable, StyleSheet, Text } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { releaseUrlAtom, updateAvailableAtom } from 'shared/model'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import { useUpdateIslandAnimation } from './useUpdateIslandAnimation'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)

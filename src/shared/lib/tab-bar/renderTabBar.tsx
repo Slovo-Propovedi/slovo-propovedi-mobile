@@ -1,6 +1,6 @@
 import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { type NavigationState, type SceneRendererProps } from 'react-native-tab-view'
-import { INDENTS } from '../../ui/themed'
+import { INDENTS } from '../../ui/theme/themed'
 
 type GetRenderTabBar = (props: { setActiveTabIndex: (index: number) => void }) => RenderTabBar
 

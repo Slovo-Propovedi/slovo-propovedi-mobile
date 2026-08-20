@@ -14,6 +14,9 @@ jest.mock('./useTrackItemCache', () => ({
 }))
 
 jest.mock('@expo/vector-icons', () => ({
+  Ionicons: (props: { name: string }) => (
+    <MockText testID={`icon-${props.name}`}>{props.name}</MockText>
+  ),
   MaterialCommunityIcons: (props: { name: string }) => (
     <MockText testID={`icon-${props.name}`}>{props.name}</MockText>
   ),
@@ -31,8 +34,21 @@ jest.mock('./TracksListItemContextMenu', () => ({
   },
 }))
 
+jest.mock('../progress-bar/ProgressBar', () => {
+  const { View } = jest.requireActual('react-native')
+  return {
+    ProgressBar: (props: { progress: number }) => (
+      <View
+        testID='progress-bar'
+        accessibilityLabel={`${Math.round(props.progress * 100)}% progress`}
+      />
+    ),
+  }
+})
+
 const CONTEXT_MENU_TEST_ID = 'context-menu-visible'
 const DOTS_BUTTON_TEST_ID = 'tracks-list-item-menu'
+const PROGRESS_BAR_TEST_ID = 'progress-bar'
 const TRACK_ITEM_TEST_ID = 'tracks-list-item'
 const AUDIO_URL = 'https://example.com/audio.mp3'
 const TEST_SUBTITLE = 'Test Subtitle'
@@ -97,5 +113,23 @@ describe('<TracksListItem>', () => {
     fireEvent.press(screen.getByTestId(DOTS_BUTTON_TEST_ID))
 
     expect(screen.queryByTestId(CONTEXT_MENU_TEST_ID)).toBeNull()
+  })
+
+  test('renders ProgressBar when progress is greater than 0', async () => {
+    await renderItem({ progress: 0.5 })
+
+    expect(screen.getByTestId(PROGRESS_BAR_TEST_ID)).toBeTruthy()
+  })
+
+  test('does not render ProgressBar when progress is undefined', async () => {
+    await renderItem()
+
+    expect(screen.queryByTestId(PROGRESS_BAR_TEST_ID)).toBeNull()
+  })
+
+  test('does not render ProgressBar when progress is 0', async () => {
+    await renderItem({ progress: 0 })
+
+    expect(screen.queryByTestId(PROGRESS_BAR_TEST_ID)).toBeNull()
   })
 })

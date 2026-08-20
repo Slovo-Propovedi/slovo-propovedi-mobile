@@ -1,15 +1,17 @@
+import { memo } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { CoverImage } from 'shared/ui'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
+import { CoverImage, ProgressBar } from 'shared/ui'
+import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import type { SermonData } from 'shared/model'
 import { formatScripture } from '../lib/formatScripture'
 
 interface SermonSearchRowProps {
   onPress: () => void
   sermon: SermonData
+  storedProgress?: number
 }
 
-export const SermonSearchRow = ({ onPress, sermon }: SermonSearchRowProps) => {
+export const SermonSearchRow = memo(({ onPress, sermon, storedProgress }: SermonSearchRowProps) => {
   const { currentTheme } = useTheme()
   const scripture = formatScripture(sermon)
 
@@ -36,9 +38,10 @@ export const SermonSearchRow = ({ onPress, sermon }: SermonSearchRowProps) => {
           </Text>
         )}
       </View>
+      {storedProgress != null && storedProgress > 0 && <ProgressBar progress={storedProgress} />}
     </Pressable>
   )
-}
+})
 
 const styles = StyleSheet.create({
   artist: {

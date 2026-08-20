@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
   backdrop: { bottom: -999, left: -999, position: 'absolute', right: -999, top: -999, zIndex: 1 },

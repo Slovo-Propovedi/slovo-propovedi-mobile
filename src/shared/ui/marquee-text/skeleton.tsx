@@ -1,5 +1,6 @@
 import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
-import { FONT_SIZES, RADIUSES, useTheme } from '../themed'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { FONT_SIZES, RADIUSES } from '../theme/themed'
 
 interface MarqueeTextSkeletonProps {
   fontSize?: number

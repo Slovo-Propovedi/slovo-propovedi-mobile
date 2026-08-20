@@ -10,7 +10,7 @@ import {
   LICENSE_URL,
   PROJECT_URL,
 } from 'shared/config'
-import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { LinkButton } from './LinkButton'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro bundler requires require() for static assets

@@ -62,6 +62,13 @@ export class PlayerService {
     void setDurationAction(ctx, 0)
     playerStatusListener.cleanup()
 
+    // Release old player's lock-screen session before replacing (D4 recovery)
+    if (this.playerInstance) lockScreenControls.clear(this.playerInstance)
+    audioLoader.releaseAndReset()
+    this.playerInstance = null
+
+    await audioModeManager.configure()
+
     const player = await audioLoader.replaceAudio(audioUrl, initialPositionMs)
     if (player) this.playerInstance = player
     this.setupListeners()
@@ -85,13 +92,10 @@ export class PlayerService {
   }
 
   public unload = async (): Promise<void> => {
-    this.clearLockScreenControls()
+    if (this.playerInstance) lockScreenControls.clear(this.playerInstance)
     playerStatusListener.cleanup()
-
-    if (this.playerInstance) {
-      this.playerInstance.remove()
-      this.playerInstance = null
-    }
+    audioLoader.releaseAndReset()
+    this.playerInstance = null
   }
 
   private setupListeners = (): void => {

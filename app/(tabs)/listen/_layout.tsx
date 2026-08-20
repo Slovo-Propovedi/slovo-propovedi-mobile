@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 
 const ListenStackLayout = () => {
   const { currentTheme } = useTheme()

@@ -1,5 +1,5 @@
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { type TrackToCache } from '../lib/PlaylistCacheService'
 
 interface PlaylistCacheDialogsProps {

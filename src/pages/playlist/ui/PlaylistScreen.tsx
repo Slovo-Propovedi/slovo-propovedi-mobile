@@ -1,8 +1,9 @@
 import { useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { Text, View } from 'react-native'
-import Animated from 'react-native-reanimated'
+import { useCallback, useMemo } from 'react'
+import { View } from 'react-native'
+import { useHistoryProgressMap } from 'entities/listening-history'
 import {
   currentAudioAtom,
   downloadingAudioUrlAtom,
@@ -11,33 +12,33 @@ import {
 } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { getParseJsonWithSchema, playlistDataSchema, type SermonData } from 'shared/model'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import { createTracksListStyles } from 'shared/ui/track-list'
 import { useCollapsingHeader, usePlaylistHeader } from '../lib'
 import { isCachingPlaylistAtom } from '../model'
 import { PlaylistHeader } from './PlaylistHeader'
 import { PlaylistTrackItem } from './PlaylistTrackItem'
+import { PlaylistTrackList } from './PlaylistTrackList'
 import { createStyles } from './styles'
 import { buildTracksListData, usePlaylistNavigationOptions } from './usePlaylistNavigationOptions'
 
 const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 
+const EMPTY_PLAYLIST = { artwork: '', description: '', id: 'default', sermons: [], title: '' }
+
 export const PlaylistScreen = () => {
   const { currentTheme } = useTheme()
   const params = useLocalSearchParams<{ playlist: string }>()
 
-  const playlist = parsePlaylistData(params.playlist) || {
-    artwork: '',
-    description: '',
-    id: 'default',
-    sermons: [],
-    title: '',
-  }
+  const playlist = useMemo(
+    () => parsePlaylistData(params.playlist) || EMPTY_PLAYLIST,
+    [params.playlist],
+  )
 
-  const { artwork, description, sermons: playlistSermons, title } = playlist
-  const list = playlistSermons ?? []
+  const { artwork, description, sermons: list = [], title } = playlist
 
   const playNewSermon = usePlayNewSermon()
+  const progressMap = useHistoryProgressMap()
 
   const [currentAudio] = useAtom(currentAudioAtom)
   const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
@@ -54,42 +55,64 @@ export const PlaylistScreen = () => {
     titleAppearThreshold,
   })
 
-  const handlePressItem = async (index: number) => {
-    const sermon = list[index]
-    if (!sermon.audioUrl) return
-    await playNewSermon({ playlist, sermon })
-  }
+  const handlePressItem = useCallback(
+    async (index: number) => {
+      const sermon = list[index]
+      if (!sermon.audioUrl) return
+      await playNewSermon({ playlist, sermon })
+    },
+    [list, playNewSermon, playlist],
+  )
 
-  const handlePressPlayAll = async () => {
-    if (list.length === 0) return
+  const handlePressPlayAll = useCallback(async () => {
     const firstSermon = list.find((s: SermonData) => s.audioUrl)
-    if (firstSermon) await playNewSermon({ playlist, sermon: firstSermon })
-  }
+    if (!firstSermon) return
+    await playNewSermon({ playlist, sermon: firstSermon })
+  }, [list, playNewSermon, playlist])
 
-  const tracksListData = buildTracksListData(list, artwork)
+  const tracksListData = useMemo(() => buildTracksListData(list, artwork), [list, artwork])
+
+  const renderItem = useCallback(
+    ({ index, item }: { index: number; item: (typeof tracksListData)[number] }) => (
+      <PlaylistTrackItem
+        id={item.id}
+        index={index}
+        title={item.title}
+        isPlaying={isPlaying}
+        artwork={item.artwork}
+        audioUrl={item.audioUrl}
+        subtitle={item.subtitle}
+        onPress={handlePressItem}
+        cacheTrigger={cacheTrigger}
+        downloadingUrl={downloadingUrl}
+        currentAudioId={currentAudio?.id}
+        storedProgress={progressMap.get(item.id ?? '')}
+      />
+    ),
+    [cacheTrigger, currentAudio?.id, downloadingUrl, handlePressItem, isPlaying, progressMap],
+  )
 
   usePlaylistNavigationOptions({ headerIconColor, isCaching, title, tracksListData })
 
-  const styles = createStyles(currentTheme)
-  const tracksListStyles = createTracksListStyles(currentTheme)
+  const tracksListStyles = useMemo(() => createTracksListStyles(currentTheme), [currentTheme])
+
+  const styles = useMemo(() => createStyles(currentTheme), [currentTheme])
+
+  const ItemSeparator = useCallback(
+    () => <View style={tracksListStyles.divider} />,
+    [tracksListStyles],
+  )
 
   return (
     <View style={styles.container}>
       <StatusBar style={statusBarStyle} />
-      <Animated.FlatList
+      <PlaylistTrackList
         data={tracksListData}
+        renderItem={renderItem}
         onScroll={scrollHandler}
-        scrollEventThrottle={16}
         style={tracksListStyles.container}
-        keyExtractor={item => item.id ?? ''}
-        ItemSeparatorComponent={() => <View style={tracksListStyles.divider} />}
-        ListEmptyComponent={
-          <Text style={{ marginHorizontal: 'auto' }}>В плейлисте нет записей</Text>
-        }
-        contentContainerStyle={{
-          paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
-        }}
-        ListHeaderComponent={
+        ItemSeparatorComponent={ItemSeparator}
+        headerElement={
           <PlaylistHeader
             title={title}
             artwork={artwork}
@@ -100,21 +123,6 @@ export const PlaylistScreen = () => {
             imageOpacityStyle={imageOpacityStyle}
           />
         }
-        renderItem={({ index, item }) => (
-          <PlaylistTrackItem
-            id={item.id}
-            index={index}
-            title={item.title}
-            isPlaying={isPlaying}
-            artwork={item.artwork}
-            audioUrl={item.audioUrl}
-            subtitle={item.subtitle}
-            onPress={handlePressItem}
-            cacheTrigger={cacheTrigger}
-            downloadingUrl={downloadingUrl}
-            currentAudioId={currentAudio?.id}
-          />
-        )}
       />
     </View>
   )

@@ -12,19 +12,19 @@
 
 ## Карта атомов по слоям
 
-| Слой | Файл | Атомы / экшены | Назначение |
-|------|------|----------------|------------|
-| entities/player | `src/entities/player/model.ts` | `currentAudioAtom`, `currentPlaylistAtom`, `isPlayingAtom`, `positionAtom`, `durationAtom`, `volumeAtom`, `isBufferingAtom`, `isSeekingAtom`, `pauseTypeAtom`, `repeatModeAtom` + set-экшены | состояние плеера |
-| entities/player | `src/entities/player/playerSheet.ts` | `isPlayerExpandedAtom`, `openPlayerSheetAction`, `closePlayerSheetAction` | развёрнут/свёрнут плеер |
-| entities/player | `src/entities/player/lib/download-model.ts` | `downloadProgressAtom`, `isDownloadingAtom`, `downloadingAudioUrlAtom` + set-экшены | скачивание трека |
-| entities/settings | `src/entities/settings/model.ts` | `serverUrlAtom`, `setServerUrlAction`, `initServerUrlAction` | URL сервера (синхронизирует `axiosInstance.baseURL`) |
-| shared/ui/theme | `src/shared/ui/theme/model.ts` | `themeModeAtom`, `currentThemeAtom`, `systemThemeAtom`, `dynamicColorsEnabledAtom` + `setThemeMode`, `loadThemeMode`, `setSystemTheme`, `setDynamicColors`, `loadDynamicColors`, `updateThemeBasedOnMode` | тема и Material You |
-| shared/model | `src/shared/model/network.ts` | `isOnlineAtom`, `serverUnreachableAtom`, `setOnlineStatus`, `reportServerReachable`, `reportServerUnreachable` | сеть и доступность сервера |
-| shared/model | `src/shared/model/update.ts` | `updateAvailableAtom`, `latestVersionAtom`, `releaseUrlAtom`, `checkForUpdateAction` | проверка обновлений |
-| shared/model | `src/shared/model/app.ts` | `isAudioPlayerMountedAtom`, `isPlayerFullscreenAtom`, `setIsAudioPlayerMounted`, `setPlayerFullscreen` | глобальные флаги плеера |
-| pages/listen | `src/pages/listen/model.ts` | `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom`, `fetchAllSections` | секции главного экрана |
-| pages/playlist | `src/pages/playlist/model.ts` | `isCachingPlaylistAtom`, `playlistCacheProgressAtom`, `playlistCacheErrorAtom` | скачивание плейлиста |
-| shared/lib | `src/shared/lib/cache-triggers.ts` | `cacheUpdateTriggerAtom`, `incrementCacheTrigger`, `playlistDownloadProgressAtom` | триггеры обновления кэша |
+| Слой              | Файл                                        | Атомы / экшены                                                                                                                                                                                            | Назначение                                           |
+| ----------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| entities/player   | `src/entities/player/model.ts`              | `currentAudioAtom`, `currentPlaylistAtom`, `isPlayingAtom`, `positionAtom`, `durationAtom`, `volumeAtom`, `isBufferingAtom`, `isSeekingAtom`, `pauseTypeAtom`, `repeatModeAtom` + set-экшены              | состояние плеера                                     |
+| entities/player   | `src/entities/player/playerSheet.ts`        | `isPlayerExpandedAtom`, `openPlayerSheetAction`, `closePlayerSheetAction`                                                                                                                                 | развёрнут/свёрнут плеер                              |
+| entities/player   | `src/entities/player/lib/download-model.ts` | `downloadProgressAtom`, `isDownloadingAtom`, `downloadingAudioUrlAtom` + set-экшены                                                                                                                       | скачивание трека                                     |
+| entities/settings | `src/entities/settings/model.ts`            | `serverUrlAtom`, `setServerUrlAction`, `initServerUrlAction`                                                                                                                                              | URL сервера (синхронизирует `axiosInstance.baseURL`) |
+| shared/ui/theme   | `src/shared/ui/theme/model.ts`              | `themeModeAtom`, `currentThemeAtom`, `systemThemeAtom`, `dynamicColorsEnabledAtom` + `setThemeMode`, `loadThemeMode`, `setSystemTheme`, `setDynamicColors`, `loadDynamicColors`, `updateThemeBasedOnMode` | тема и Material You                                  |
+| shared/model      | `src/shared/model/network.ts`               | `isOnlineAtom`, `serverUnreachableAtom`, `setOnlineStatus`, `reportServerReachable`, `reportServerUnreachable`                                                                                            | сеть и доступность сервера                           |
+| shared/model      | `src/shared/model/update.ts`                | `updateAvailableAtom`, `latestVersionAtom`, `releaseUrlAtom`, `checkForUpdateAction`                                                                                                                      | проверка обновлений                                  |
+| shared/model      | `src/shared/model/app.ts`                   | `isAudioPlayerMountedAtom`, `isPlayerFullscreenAtom`, `setIsAudioPlayerMounted`, `setPlayerFullscreen`                                                                                                    | глобальные флаги плеера                              |
+| pages/listen      | `src/pages/listen/model.ts`                 | `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom`, `fetchAllSections`                                                                                                               | секции главного экрана                               |
+| pages/playlist    | `src/pages/playlist/model.ts`               | `isCachingPlaylistAtom`, `playlistCacheProgressAtom`, `playlistCacheErrorAtom`                                                                                                                            | скачивание плейлиста                                 |
+| shared/lib        | `src/shared/lib/cache-triggers.ts`          | `cacheUpdateTriggerAtom`, `incrementCacheTrigger`, `playlistDownloadProgressAtom`                                                                                                                         | триггеры обновления кэша                             |
 
 ## Паттерны
 

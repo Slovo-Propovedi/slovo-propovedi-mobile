@@ -1,0 +1,2 @@
+export const COMPLETION_REMAINING_MS = 10_000
+export const MAX_HISTORY_ENTRIES = 100

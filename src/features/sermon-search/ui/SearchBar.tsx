@@ -1,7 +1,7 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { useEffect, useState } from 'react'
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/themed'
+import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
 import { useSearchAutofocus } from '../lib/useSearchAutofocus'
 import { closeSearch, resetSearchResults, searchQueryAtom } from '../model'

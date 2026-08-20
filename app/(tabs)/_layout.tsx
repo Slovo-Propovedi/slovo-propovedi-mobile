@@ -5,7 +5,7 @@ import { ActivityIndicator, Text, View } from 'react-native'
 import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
 import { isPlayerExpandedAtom } from 'entities/player'
-import { COLORS, INDENTS, useTheme } from 'shared/ui/themed'
+import { COLORS, INDENTS, useTheme } from 'shared/ui/theme'
 
 interface TabLayout {
   width: number

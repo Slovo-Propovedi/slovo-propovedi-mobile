@@ -1,7 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { StyleSheet, View } from 'react-native'
-import { setThemeMode, themeModeAtom } from 'shared/ui/theme'
-import { INDENTS, useTheme } from 'shared/ui/themed'
+import { INDENTS, setThemeMode, themeModeAtom, useTheme } from 'shared/ui/theme'
 import { themeOptions } from './themeOptions'
 import { ThemeSelectorOption } from './ThemeSelectorOption'
 

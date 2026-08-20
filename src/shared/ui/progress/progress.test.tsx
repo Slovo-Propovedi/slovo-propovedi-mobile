@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react-native'
 import { Animated } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
-import { COLORS } from '../themed'
+import { COLORS } from '../theme/colors'
 import { Progress } from './progress'
 import '@testing-library/jest-native/extend-expect'
 

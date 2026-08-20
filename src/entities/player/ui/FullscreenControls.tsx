@@ -1,6 +1,6 @@
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
-import { COLORS, INDENTS } from 'shared/ui/themed'
+import { COLORS, INDENTS } from 'shared/ui/theme'
 import type { ControlsNames } from './PlayerControls/PlayerControls.types'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { getExcludedButtons } from './getExcludedButtons'

@@ -1,5 +1,5 @@
 import { StyleSheet, Text } from 'react-native'
-import { FONT_SIZES, INDENTS } from './themed'
+import { FONT_SIZES, INDENTS } from './theme/themed'
 import { TouchableItem, type TouchableItemProps } from './touchable-item'
 
 type TouchableTextItemProps = { title: string } & Omit<TouchableItemProps, 'children'>

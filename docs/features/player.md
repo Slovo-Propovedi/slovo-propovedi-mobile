@@ -21,23 +21,24 @@
 
 Вспомогательные модули (в `src/entities/player/lib/PlayerService/`):
 
-| Модуль | Назначение |
-|--------|-----------|
-| `AudioLoader.ts` | создание/замена `AudioPlayer`, ожидание загрузки, стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша |
-| `PlaybackController.ts` | play/pause/stop/seek/setVolume/getStatus; персист позиции |
-| `AudioModeManager.ts` | конфигурация аудио-режима с retry по AppState |
-| `LockScreenControls.ts` | метаданные lock screen (`setActiveForLockScreen`) |
-| `PlayerStatusListener.ts` | подписка на статус-события (playing/position/duration/buffering/trackEnd, детект прерываний) |
-| `BackgroundCachingService.ts` | фоновое кэширование трека при старте воспроизведения |
-| `TrackAutoAdvanceService/` | авто-переход на следующий трек по окончании |
-| `nativePlayerHelpers.ts` | сборка listener'ов и обработчика прерываний |
-| `webPlayerState.ts`, `webPlayerPubSub.ts` | состояние и pub-sub для веб-реализации |
-| `types.ts` | общие типы (`LockScreenMetadata`, `PlaybackStatus`, `StatusCallbacks`, `PlayerActions`) |
-| `PlayerActionsAdapter.ts` | DI для `TrackAutoAdvanceService` |
+| Модуль                                    | Назначение                                                                                                                                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AudioLoader.ts`                          | создание/замена `AudioPlayer`, ожидание загрузки, стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша                                                                |
+| `PlaybackController.ts`                   | play/pause/stop/seek/setVolume/getStatus; персист позиции                                                                                                                               |
+| `AudioModeManager.ts`                     | конфигурация аудио-режима; каждая `configure()` перезапускает `setAudioModeAsync` (re-assert после сбросов ОС), дедупликация конкурентных вызовов, AppState `active` → всегда re-assert |
+| `LockScreenControls.ts`                   | метаданные lock screen (`setActiveForLockScreen`); retry при ещё не загруженном плеере (до 10×200мс), version-counter для отмены устаревших retry                                       |
+| `PlayerStatusListener.ts`                 | подписка на статус-события (playing/position/duration/buffering/trackEnd, детект прерываний)                                                                                            |
+| `BackgroundCachingService.ts`             | фоновое кэширование трека при старте воспроизведения                                                                                                                                    |
+| `TrackAutoAdvanceService/`                | авто-переход на следующий трек по окончании                                                                                                                                             |
+| `nativePlayerHelpers.ts`                  | сборка listener'ов и обработчика прерываний                                                                                                                                             |
+| `webPlayerState.ts`, `webPlayerPubSub.ts` | состояние и pub-sub для веб-реализации                                                                                                                                                  |
+| `types.ts`                                | общие типы (`LockScreenMetadata`, `PlaybackStatus`, `StatusCallbacks`, `PlayerActions`)                                                                                                 |
+| `PlayerActionsAdapter.ts`                 | DI для `TrackAutoAdvanceService`                                                                                                                                                        |
 
 ### Стриминг и кэш
 
 `AudioLoader.getPlaybackUrl` определяет источник воспроизведения:
+
 - если файл **в кэше** → играет локальный `file://` (мгновенный старт);
 - если файла нет → **стримит** с сервера (`downloadFirst: false`, прогрессивная буферизация через нативные движки: AVPlayer на iOS, ExoPlayer на Android), воспроизведение начинается после загрузки метаданных/начала буфера, не дожидаясь полного файла. Параллельно `startBackgroundCaching` скачивает трек в офлайн-кэш.
 - **Web** — `WebPlayerService` использует `HTMLAudioElement` (`new Audio()`), который всегда выполнял прогрессивное стриминг-воспроизведение независимо от `downloadFirst` (опция не влияет на веб-путь).
@@ -63,6 +64,16 @@
 ## Инициализация
 
 `initializePlayer` (`src/entities/player/lib/initializePlayer.ts`) вызывается модульно в `app/_layout.tsx` (`void initializePlayer()`). Восстанавливает из AsyncStorage (`multiGet` + Zod-парсинг через `getParseJsonWithSchema`): последний аудио/плейлист, позицию, громкость, режим повтора. Затем загружает аудио (`playerService.loadAudio(audioUrl, position)`) и ставит метаданные lock screen.
+
+## Восстановление после сбоя
+
+Release-before-recreate: `PlayerService.replaceAudio` и `unload` вызывают `audioLoader.releaseAndReset()` — полный `release()` нативного `AudioPlayer` и обнуление ссылок (`AudioLoader.playerInstance` и `PlayerService.playerInstance`). Lock screen очищается до release. Это гарантирует, что повторный вызов `replaceAudio` всегда создаёт свежий `AudioPlayer` через `createAudioPlayer`, а не пытается `replace()` на уничтоженном нативном объекте.
+
+Upstream-причины:
+
+- `expo/expo#46137` — сервис не вызывал `startForeground` после рестарта ОС, foreground-service падал; release-before-recreate пересоздаёт нативный контекст, восстанавливая работоспособность.
+- `expo/expo#46957` — на Android 15+ нельзя запросить audio focus из фона (`Activity` недоступна); release-before-recreate сбрасывает нативное состояние контроллера фокуса.
+- `androidx/media#1928` — застрявший audio focus чистится только ребутом; наш release — митигация, полная очистка может требовать перезагрузки ОС.
 
 ## Hooks
 
@@ -109,8 +120,56 @@ Artwork резолвится с фолбэком: `artworkUrl = metadata.artwork
 
 Каждые 5с в `app/_RootLayout.tsx` (`setInterval(savePosition, 5000)`): при не-воспроизведении пишет `CURRENT_SOUND_POSITION` в AsyncStorage.
 
+## История прослушивания и resume
+
+История пишется **по событиям** (старт, пауза/flush, переключение трека, завершение); 5с-тики пишут только мини-снапшот `listeningProgressSnapshot`. Это отдельный механизм от персиста позиции плеера (`CURRENT_SOUND_POSITION`).
+
+### Запись прогресса
+
+| Путь                       | Где                                                                                                                          | Когда                                                                                                                                                                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts`                                                                        | каждые 5с (только при воспроизведении): `CURRENT_SOUND_POSITION` + мини-снапшот `writeLiveProgressSnapshot` (~60 байт) — каталог истории не трогает; первый тик после переключения трека пропускается (skip-first-tick через рефы) |
+| `PlaybackController.pause` | `src/entities/player/lib/PlayerService/PlaybackController.ts`                                                                | при паузе (нативный): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })`                                                                                                           |
+| `WebPlayerService.pause`   | `src/entities/player/lib/PlayerService/index.web.ts`                                                                         | при паузе (веб): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction`                                                                                                                                                           |
+| `recordSermonSwitchAction` | `usePlayNewSermon` (ручной тап, `markOldCompleted: false`), `playTrackWithMetadata` (авто-переход, `markOldCompleted: true`) | при смене трека: flush позиции старого + запись/обновление нового за один проход                                                                                                                                                   |
+
+Все файлы `entities/player`, которым нужны символы из `listening-history`, импортируют их через **@x-точку** `entities/listening-history/@x/player` — а не из основного barrel `entities/listening-history`. Подробнее — [listening-history.md](./listening-history.md) → «@x cross-import».
+
+При гидрации `reconcileOnHydration` мержит мини-снапшот в каталог (только если новее и запись не завершена, `durationMs = max`). Подробнее — [listening-history.md](./listening-history.md) → «Запись прогресса».
+
+### Завершение трека
+
+`TrackAutoAdvanceService.handleTrackEnd` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/TrackAutoAdvanceService.ts`) вызывает `markHistoryCompletedAction(ctx, sermonId)` **до** ветвления путей (repeat → `repeatCurrentTrack` / next → `playNextTrack` / pause). Это гарантирует запись `positionMs = durationMs` при каждом окончании трека; ветка pause-on-last-track помечает завершённой через `markHistoryCompletedAction`.
+
+### Resume при ручном тапе
+
+`usePlayNewSermon` (`src/entities/player/lib/usePlaySermon.ts`) — основной хук «тапнул на трек»:
+
+1. `getResumePosition(history, sermonId)` вычисляет позицию resume (0 если нет записи / завершена / position ≤ 0, иначе `positionMs`).
+2. Текущий трек другой → `replaceAudio(url, resumeMs)`.
+3. Текущий трек тот же (same-id tolerance 1с):
+   - `resumeMs === 0` → `seekTo(0)` (с начала).
+   - `resumeMs > 0` и позиция далеко → `seekTo(resumeMs)`.
+4. При смене трека (`oldAudio.id !== sermonId`) — `recordSermonSwitchAction({ markOldCompleted: false, ... })` **до** `replaceAudio`: flush позиции старого трека в историю.
+5. `recordPlaybackStartAction(newAudio, playlist)` — записывает/обновляет запись в истории (только если трек новый или тот же).
+
+### Чтение состояния через ctx.get (без useAtom)
+
+`usePlayNewSermon` **не подписывается** на `currentAudioAtom`/`positionAtom`/`durationAtom`/`historyAtom` через `useAtom` — состояние читается императивно снапшотом `ctx.get(...)` в момент вызова (`src/shared/lib/reatom-ctx`). Это было корневой причиной перф-проблемы: реактивная подписка хука в каждом `TracksListItem` держала все экраны списков подписанными на атомы плеера, и те ре-рендерились ~2 раза в секунду (каждый position-тик) во время воспроизведения. При императивном чтении хук не ре-рендерится от плеера вовсе — списки обновляются только когда меняется `historyAtom` (по событиям истории).
+
+### Авто-переход всегда с 0
+
+`playTrackWithMetadata` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/playback.ts`) — общий funnel для всех путей авто-перехода (`playNextTrack`, `playFirstTrackInQueue`, `repeatCurrentTrack`). Вызывает `recordSermonSwitchAction` с `markOldCompleted: true` (старый трек фиксируется как завершённый) и `replaceAudio(url, 0)` — resume-позиция игнорируется.
+
+### WebPlayerService.replaceAudio
+
+На вебе `replaceAudio` делегирует `loadAudio(url, initialPositionMs)` — синтаксический сахар, позиция устанавливается после `loadedmetadata` через `audio.currentTime`.
+
+Подробнее — [listening-history.md](./listening-history.md).
+
 ## Связанные документы
 
 - [audio-cache.md](./audio-cache.md) — кэширование аудио (в т.ч. автоматическое при старте трека)
+- [listening-history.md](./listening-history.md) — история прослушивания, resume-логика, прогресс в UI
 - [navigation.md](./navigation.md) — стек экранов и hardware-back
 - [state.md](./state.md) — карта Reatom-атомов

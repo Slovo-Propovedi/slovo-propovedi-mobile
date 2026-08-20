@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { interpolate, useDerivedValue, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { useTheme } from 'shared/ui/themed'
+import { useTheme } from 'shared/ui/theme'
 import type { SharedValue } from 'react-native-reanimated'
 
 interface UseCollapsingNavbarDriverOptions {

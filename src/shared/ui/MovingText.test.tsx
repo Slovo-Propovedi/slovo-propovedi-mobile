@@ -49,6 +49,7 @@ describe('<MovingText />', () => {
     expect(props.duration).toBe(0)
     expect(props.loop).toBe(false)
     expect(props.bounce).toBe(false)
+    expect(props.isInteraction).toBe(false)
     expect(props.marqueeDelay).toBe(0)
   })
 
@@ -59,6 +60,7 @@ describe('<MovingText />', () => {
     const props = getCapturedProps()
     expect(props.loop).toBe(true)
     expect(props.bounce).toBe(false)
+    expect(props.isInteraction).toBe(false)
     expect(props.scrollSpeed).toBe(30)
     expect(props.numberOfLines).toBe(1)
     expect(props.repeatSpacer).toBe(50)

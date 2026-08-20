@@ -1,6 +1,7 @@
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
 import { type ButtonProps, type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from './themed'
+import { COLORS } from './theme/colors'
+import { FONT_SIZES, INDENTS, RADIUSES } from './theme/themed'
 
 type CustomButtonProps = { style?: StyleProp<ViewStyle>; titleStyle?: TextStyle } & ButtonProps
 

@@ -2,6 +2,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/b
 import { useAtom } from '@reatom/npm-react'
 import { useCallback, useMemo } from 'react'
 import { Text, View } from 'react-native'
+import { useHistoryProgressMap } from 'entities/listening-history'
 import {
   currentAudioAtom,
   downloadingAudioUrlAtom,
@@ -11,9 +12,9 @@ import {
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { formatSermonReference } from 'shared/lib/format'
 import { useTheme } from 'shared/ui/theme'
-import { TracksListItem } from 'shared/ui/track-list'
 import type { PlaylistData } from 'shared/model'
 import { createStyles } from './PlaylistBottomSheet.styles'
+import { PlaylistSheetRow } from './PlaylistSheetRow'
 
 interface PlaylistBottomSheetProps {
   closeOnBack?: boolean
@@ -41,6 +42,7 @@ export const PlaylistBottomSheet = ({
   const [isAudioPlaying] = useAtom(isPlayingAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
   const playNewSermon = usePlayNewSermon()
+  const progressMap = useHistoryProgressMap()
   const { currentTheme } = useTheme()
 
   const handlePressItem = useCallback(
@@ -56,33 +58,31 @@ export const PlaylistBottomSheet = ({
     },
     [playlist, playNewSermon, sheetRef, onClose],
   )
-
   const handleSheetChanges = useCallback(
     (index: number) => {
       if (closeOnBack && index === -1) onClose()
     },
     [closeOnBack, onClose],
   )
-
   const renderItem = useCallback(
     ({ index, item }: { index: number; item: TrackListItemData }) => (
-      <TracksListItem
+      <PlaylistSheetRow
+        index={index}
         title={item.title}
         audioUrl={item.url}
         artwork={item.artwork}
         subtitle={item.subtitle}
+        onPress={handlePressItem}
         cacheTrigger={cacheTrigger}
         downloadingUrl={downloadingUrl}
-        onPress={() => handlePressItem(index)}
         isPlaying={currentAudio?.id === item.id}
+        storedProgress={progressMap.get(item.id)}
         isAudioPlaying={currentAudio?.id === item.id && isAudioPlaying}
       />
     ),
-    [cacheTrigger, currentAudio?.id, downloadingUrl, handlePressItem, isAudioPlaying],
+    [cacheTrigger, currentAudio?.id, downloadingUrl, handlePressItem, isAudioPlaying, progressMap],
   )
-
   const renderStyles = useMemo(() => createStyles(currentTheme), [currentTheme])
-
   const ItemSeparator = useCallback(() => <View style={renderStyles.divider} />, [renderStyles])
 
   if (!playlist) return null
