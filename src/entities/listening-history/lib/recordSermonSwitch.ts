@@ -29,17 +29,13 @@ export const recordSermonSwitchAction = action(
     let flushed: ListeningHistory
     if (oldIndex !== -1 && params.oldPositionMs > 0) {
       const oldEntry = current[oldIndex]
-      const finalPosition = params.markOldCompleted
-        ? oldEntry.durationMs
-        : Math.max(params.oldPositionMs, oldEntry.positionMs)
+      const finalPosition = params.markOldCompleted ? oldEntry.durationMs : params.oldPositionMs
 
-      if (finalPosition > oldEntry.positionMs || params.markOldCompleted) {
-        const flushedEntry: ListeningHistoryEntry = {
-          ...oldEntry,
-          positionMs: finalPosition,
-        }
-        flushed = [...current.slice(0, oldIndex), flushedEntry, ...current.slice(oldIndex + 1)]
-      } else flushed = current
+      const flushedEntry: ListeningHistoryEntry = {
+        ...oldEntry,
+        positionMs: finalPosition,
+      }
+      flushed = [...current.slice(0, oldIndex), flushedEntry, ...current.slice(oldIndex + 1)]
     } else flushed = current
 
     // --- Create/update new sermon entry ---

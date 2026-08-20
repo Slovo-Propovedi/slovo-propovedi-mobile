@@ -13,7 +13,6 @@ export const flushHistoryProgressAction = action(
     if (index === -1) return
 
     const entry = current[index]
-    if (params.positionMs <= entry.positionMs) return
 
     const updated = {
       ...entry,

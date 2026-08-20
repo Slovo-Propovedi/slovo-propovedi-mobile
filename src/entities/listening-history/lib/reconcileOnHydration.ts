@@ -19,8 +19,6 @@ export const reconcileOnHydration = async (): Promise<ListeningHistory> => {
   const entry = entries[index]
   if (isEntryCompleted(entry)) return entries
 
-  if (snapshot.positionMs <= entry.positionMs) return entries
-
   const reconciled = [...entries]
   reconciled[index] = {
     ...entry,
