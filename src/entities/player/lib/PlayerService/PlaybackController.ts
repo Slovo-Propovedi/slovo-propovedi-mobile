@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer } from 'expo-audio'
-import { flushHistoryProgressAction } from 'entities/listening-history'
+import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {

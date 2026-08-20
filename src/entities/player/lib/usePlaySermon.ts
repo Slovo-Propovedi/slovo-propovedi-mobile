@@ -5,7 +5,7 @@ import {
   historyAtom,
   recordPlaybackStartAction,
   recordSermonSwitchAction,
-} from 'entities/listening-history'
+} from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { type PlaylistData, type SermonData, setPlayerFullscreen } from 'shared/model'
 import {

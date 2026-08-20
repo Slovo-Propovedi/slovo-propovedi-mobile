@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { flushHistoryProgressAction } from 'entities/listening-history'
+import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { currentAudioAtom, durationAtom } from '../../model'

@@ -6,9 +6,7 @@ import { usePlaybackProgressSaver } from './usePlaybackProgressSaver'
 
 const mockWriteLiveProgressSnapshot = jest.fn()
 
-jest.mock('entities/listening-history', () => ({
-  flushHistoryProgressAction: jest.fn(),
-  updateHistoryProgressAction: jest.fn(),
+jest.mock('entities/listening-history/@x/player', () => ({
   writeLiveProgressSnapshot: (...args: unknown[]) => mockWriteLiveProgressSnapshot(...args),
 }))
 

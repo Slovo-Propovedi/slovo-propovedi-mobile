@@ -2,7 +2,7 @@ import { type Ctx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
-import type { ListeningHistory } from 'entities/listening-history'
+import type { ListeningHistory } from 'entities/listening-history/@x/player'
 import { type AudioPlayerData } from '../lib/audioPlayerData'
 import { currentAudioAtom, durationAtom, positionAtom } from '../model'
 import { usePlayNewSermon } from './usePlaySermon'
@@ -26,7 +26,7 @@ jest.mock('./usePlayer', () => ({
   }),
 }))
 
-jest.mock('entities/listening-history', () => {
+jest.mock('entities/listening-history/@x/player', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
     getEntrySermon: (entry: { playlist: { sermons: unknown[] }; sermon?: unknown }) =>
@@ -39,7 +39,7 @@ jest.mock('entities/listening-history', () => {
 })
 
 const mockHistoryAtom = (
-  jest.requireMock('entities/listening-history') as {
+  jest.requireMock('entities/listening-history/@x/player') as {
     historyAtom: (ctx: Ctx, v: ListeningHistory) => void
   }
 ).historyAtom
@@ -103,7 +103,7 @@ describe('usePlayNewSermon', () => {
     mockHistoryAtom(ctx, [])
   })
 
-  test('(a) different sermon → replaceAudio called with resume ms', async () => {
+  test('different sermon → replaceAudio called with resume ms', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
@@ -116,7 +116,7 @@ describe('usePlayNewSermon', () => {
     expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, RESUME_MS)
   })
 
-  test('(b) different sermon, completed entry → replaceAudio called with 0', async () => {
+  test('different sermon, completed entry → replaceAudio called with 0', async () => {
     mockGetResumePosition.mockReturnValue(0)
 
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
@@ -129,7 +129,7 @@ describe('usePlayNewSermon', () => {
     expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, 0)
   })
 
-  test('(c) same sermon, completed → seekTo(0)', async () => {
+  test('same sermon, completed → seekTo(0)', async () => {
     mockGetResumePosition.mockReturnValue(0)
 
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
@@ -146,7 +146,7 @@ describe('usePlayNewSermon', () => {
     expect(mockReplaceAudio).not.toHaveBeenCalled()
   })
 
-  test('(d) same sermon, mismatch >1s → seekTo(resume)', async () => {
+  test('same sermon, mismatch >1s → seekTo(resume)', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
@@ -164,7 +164,7 @@ describe('usePlayNewSermon', () => {
     expect(mockReplaceAudio).not.toHaveBeenCalled()
   })
 
-  test('(e) same sermon playing, positions match → no seekTo, no replaceAudio', async () => {
+  test('same sermon playing, positions match → no seekTo, no replaceAudio', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
@@ -182,7 +182,7 @@ describe('usePlayNewSermon', () => {
     expect(mockReplaceAudio).not.toHaveBeenCalled()
   })
 
-  test('(f) first play (no old audio) → recordPlaybackStartAction called', async () => {
+  test('first play (no old audio) → recordPlaybackStartAction called', async () => {
     mockGetResumePosition.mockReturnValue(0)
 
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
@@ -198,7 +198,7 @@ describe('usePlayNewSermon', () => {
     )
   })
 
-  test('(g) hydration race: history empty + stored progress → replaceAudio called with 0 (resume missed once)', async () => {
+  test('hydration race: history empty + stored progress → replaceAudio called with 0 (resume missed once)', async () => {
     // History atom is [] (not yet hydrated from storage), so getResumePosition returns 0
     // even though the sermon has stored progress. replaceAudio receives 0 — resume missed once.
     mockGetResumePosition.mockReturnValue(0)
@@ -217,7 +217,7 @@ describe('usePlayNewSermon', () => {
     expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, 0)
   })
 
-  test('(h) switching sermon A→B → recordSermonSwitchAction called once with markOldCompleted:false before replaceAudio', async () => {
+  test('switching sermon A→B → recordSermonSwitchAction called once with markOldCompleted:false before replaceAudio', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
@@ -242,7 +242,7 @@ describe('usePlayNewSermon', () => {
     expect(mockRecordPlaybackStart).not.toHaveBeenCalled()
   })
 
-  test('(i) same sermon tap → recordSermonSwitchAction NOT called', async () => {
+  test('same sermon tap → recordSermonSwitchAction NOT called', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })

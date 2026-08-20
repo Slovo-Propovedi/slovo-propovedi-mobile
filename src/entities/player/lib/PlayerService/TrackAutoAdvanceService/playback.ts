@@ -1,4 +1,4 @@
-import { recordSermonSwitchAction } from 'entities/listening-history'
+import { recordSermonSwitchAction } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import type { PlayerActions } from './types'
 import type { AudioPlayerData } from '../../../ui/PlayerControls/PlayerControls.types'

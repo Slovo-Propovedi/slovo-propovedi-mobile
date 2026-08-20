@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useEffect, useRef } from 'react'
-import { writeLiveProgressSnapshot } from 'entities/listening-history'
+import { writeLiveProgressSnapshot } from 'entities/listening-history/@x/player'
 import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
