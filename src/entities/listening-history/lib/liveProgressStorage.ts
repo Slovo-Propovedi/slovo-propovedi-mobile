@@ -1,27 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import z from 'zod'
 import { LISTENING_PROGRESS_SNAPSHOT } from 'shared/config'
 
-export interface LiveProgressSnapshot {
-  durationMs: number
-  positionMs: number
-  sermonId: string
-}
+export const liveProgressSnapshotSchema = z.object({
+  durationMs: z.number().nonnegative(),
+  positionMs: z.number().nonnegative(),
+  sermonId: z.string(),
+})
+
+export type LiveProgressSnapshot = z.infer<typeof liveProgressSnapshotSchema>
 
 export const writeLiveProgressSnapshot = (value: LiveProgressSnapshot): void => {
   void AsyncStorage.setItem(LISTENING_PROGRESS_SNAPSHOT, JSON.stringify(value))
-}
-
-const isValidSnapshot = (value: unknown): value is LiveProgressSnapshot => {
-  if (typeof value !== 'object' || value === null) return false
-
-  const obj = value as Record<string, unknown>
-  return (
-    typeof obj.sermonId === 'string' &&
-    typeof obj.positionMs === 'number' &&
-    obj.positionMs >= 0 &&
-    typeof obj.durationMs === 'number' &&
-    obj.durationMs >= 0
-  )
 }
 
 export const readLiveProgressSnapshot = async (): Promise<LiveProgressSnapshot | undefined> => {
@@ -30,7 +20,8 @@ export const readLiveProgressSnapshot = async (): Promise<LiveProgressSnapshot |
     if (!raw) return undefined
 
     const parsed = JSON.parse(raw) as unknown
-    return isValidSnapshot(parsed) ? parsed : undefined
+    const result = liveProgressSnapshotSchema.safeParse(parsed)
+    return result.success ? result.data : undefined
   } catch {
     return undefined
   }
