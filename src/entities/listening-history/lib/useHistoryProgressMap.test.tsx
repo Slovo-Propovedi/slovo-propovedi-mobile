@@ -1,6 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { reatomContext } from '@reatom/npm-react'
-import { renderHook } from '@testing-library/react-native'
+import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { historyAtom } from '../model/history'
 import { type ListeningHistoryEntry } from '../model/types'
 import { useHistoryProgressMap } from './useHistoryProgressMap'
@@ -41,22 +40,12 @@ const makeEntry = (
   ...overrides,
 })
 
-const renderWithCtx = async (
-  callback: () => Map<string, number>,
-  ctx: ReturnType<typeof createCtx>,
-) =>
-  renderHook(callback, {
-    wrapper: ({ children }) => (
-      <reatomContext.Provider value={ctx}>{children}</reatomContext.Provider>
-    ),
-  })
-
 describe('useHistoryProgressMap', () => {
   test('maps mid-progress entry to position/duration ratio', async () => {
     const ctx = createCtx()
     historyAtom(ctx, [makeEntry('sermon-1', { durationMs: 1000, positionMs: 500 })])
 
-    const { result } = await renderWithCtx(() => useHistoryProgressMap(), ctx)
+    const { result } = await renderHookWithProviders(() => useHistoryProgressMap(), { ctx })
 
     expect(result.current.get('sermon-1')).toBe(0.5)
   })
@@ -65,7 +54,7 @@ describe('useHistoryProgressMap', () => {
     const ctx = createCtx()
     historyAtom(ctx, [makeEntry('sermon-1', { durationMs: 1000, positionMs: 1000 })])
 
-    const { result } = await renderWithCtx(() => useHistoryProgressMap(), ctx)
+    const { result } = await renderHookWithProviders(() => useHistoryProgressMap(), { ctx })
 
     expect(result.current.get('sermon-1')).toBe(1)
   })
@@ -74,7 +63,7 @@ describe('useHistoryProgressMap', () => {
     const ctx = createCtx()
     historyAtom(ctx, [makeEntry('sermon-1', { durationMs: 1000, positionMs: 0 })])
 
-    const { result } = await renderWithCtx(() => useHistoryProgressMap(), ctx)
+    const { result } = await renderHookWithProviders(() => useHistoryProgressMap(), { ctx })
 
     expect(result.current.has('sermon-1')).toBe(false)
   })
@@ -83,7 +72,7 @@ describe('useHistoryProgressMap', () => {
     const ctx = createCtx()
     historyAtom(ctx, [makeEntry('sermon-1', { durationMs: 0, positionMs: 500 })])
 
-    const { result } = await renderWithCtx(() => useHistoryProgressMap(), ctx)
+    const { result } = await renderHookWithProviders(() => useHistoryProgressMap(), { ctx })
 
     expect(result.current.has('sermon-1')).toBe(false)
   })
@@ -96,7 +85,7 @@ describe('useHistoryProgressMap', () => {
       makeEntry('sermon-3', { durationMs: 500, positionMs: 0 }),
     ])
 
-    const { result } = await renderWithCtx(() => useHistoryProgressMap(), ctx)
+    const { result } = await renderHookWithProviders(() => useHistoryProgressMap(), { ctx })
 
     expect(result.current.size).toBe(2)
     expect(result.current.get('sermon-1')).toBe(0.5)

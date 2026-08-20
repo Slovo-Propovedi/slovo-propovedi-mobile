@@ -82,7 +82,7 @@ describe('resolveEntryPlaylist', () => {
     getCachedSectionsMock.mockResolvedValue(undefined)
   })
 
-  test('(a) found in live atom → returned, cache NOT read', async () => {
+  test('found in live atom → returned, cache NOT read', async () => {
     const fullPlaylist = makePlaylist(PLAYLIST_ID, [makeSermon(SERMON_ID), makeSermon('sermon-2')])
     seedAtom([makeSection([fullPlaylist])])
 
@@ -92,7 +92,7 @@ describe('resolveEntryPlaylist', () => {
     expect(getCachedSectionsMock).not.toHaveBeenCalled()
   })
 
-  test('(b) not in atom, in cache → cached returned', async () => {
+  test('not in atom, in cache → cached returned', async () => {
     const fullPlaylist = makePlaylist(PLAYLIST_ID, [makeSermon(SERMON_ID), makeSermon('sermon-3')])
     getCachedSectionsMock.mockResolvedValue([makeSection([fullPlaylist])])
 
@@ -101,7 +101,7 @@ describe('resolveEntryPlaylist', () => {
     expect(result).toBe(fullPlaylist)
   })
 
-  test('(c) playlist id matches but sermon NOT in sermons → snapshot fallback', async () => {
+  test('playlist id matches but sermon NOT in sermons → snapshot fallback', async () => {
     const wrongSermonPlaylist = makePlaylist(PLAYLIST_ID, [makeSermon('other')])
     seedAtom([makeSection([wrongSermonPlaylist])])
     getCachedSectionsMock.mockResolvedValue([makeSection([wrongSermonPlaylist])])
@@ -111,7 +111,7 @@ describe('resolveEntryPlaylist', () => {
     expect(result).toBe(snapshotPlaylist)
   })
 
-  test('(d) empty atom + undefined cache → snapshot', async () => {
+  test('empty atom + undefined cache → snapshot', async () => {
     seedAtom([])
     getCachedSectionsMock.mockResolvedValue(undefined)
 
@@ -120,7 +120,7 @@ describe('resolveEntryPlaylist', () => {
     expect(result).toBe(snapshotPlaylist)
   })
 
-  test('(e) sections without playlists handled', async () => {
+  test('sections without playlists handled', async () => {
     seedAtom([makeSection(undefined)])
     getCachedSectionsMock.mockResolvedValue([makeSection(undefined)])
 
@@ -129,7 +129,7 @@ describe('resolveEntryPlaylist', () => {
     expect(result).toBe(snapshotPlaylist)
   })
 
-  test('(f) empty cache array → snapshot', async () => {
+  test('empty cache array → snapshot', async () => {
     seedAtom([])
     getCachedSectionsMock.mockResolvedValue([])
 
@@ -138,7 +138,7 @@ describe('resolveEntryPlaylist', () => {
     expect(result).toBe(snapshotPlaylist)
   })
 
-  test('(g) live atom miss, cache hit with multiple sections → correct playlist', async () => {
+  test('live atom miss, cache hit with multiple sections → correct playlist', async () => {
     seedAtom([])
     const target = makePlaylist(PLAYLIST_ID, [makeSermon(SERMON_ID)])
     const other = makePlaylist('playlist-2', [makeSermon('sermon-99')])
