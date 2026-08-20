@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-08-20
+
+### Added
+
+- Play from history in original playlist with full queue
+- Add listening history screen with progress and clear-all
+- Show listening progress in sermon lists
+- Resume playback from listening history and track progress
+- Add listening history entity with local progress persistence
+
+### Changed
+
+- Migrate themed to theme and tighten barrel exports
+- Add @x/player cross-import entry point
+- Replace hand-rolled validation with Zod schema
+- Read player state imperatively in usePlaySermon to stop position-tick re-renders
+- Native equalizer animation, atom write guards, stable renderItem
+- Split live progress snapshot from catalog writes
+- Move slice components into ui folders, one component per file
+
+### Fixed
+
+- Allow backward position saving in progress tracking
+- Restore background audio playback and media notification after long inactivity
+- Strip playlists on merge and skip writes while paused
+
 ## [0.8.1] - 2026-08-18
 
 ### Fixed
@@ -363,6 +389,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.9.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.9.0
 [0.8.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.8.1
 [0.8.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.8.0
 [0.7.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.7.0

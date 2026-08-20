@@ -1,0 +1,8 @@
+Allow backward position saving in progress tracking
+Restore background audio playback and media notification after long inactivity
+Play from history in original playlist with full queue
+Strip playlists on merge and skip writes while paused
+Add listening history screen with progress and clear-all
+Show listening progress in sermon lists
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
