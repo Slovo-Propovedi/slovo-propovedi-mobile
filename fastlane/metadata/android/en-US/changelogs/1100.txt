@@ -1,0 +1,5 @@
+Null-safe getEntrySermon across history consumers
+Harden auto-advance for Issue #45 — artwork, ordering, crash guards
+Add global error dialog with reportError imperative API
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

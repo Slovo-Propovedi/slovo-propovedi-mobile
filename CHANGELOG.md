@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-08-22
+
+### Added
+
+- Add global error dialog with reportError imperative API
+
+### Changed
+
+- Make artwork nullable across domain and UI
+
+### Fixed
+
+- Rename dev build to «Dev Слово.Проповеди»
+- Null-safe getEntrySermon across history consumers
+- Harden auto-advance for Issue #45 — artwork, ordering, crash guards
+
 ## [0.10.0] - 2026-08-22
 
 ### Added
@@ -395,6 +411,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.11.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.11.0
 [0.10.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.10.0
 [0.9.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.9.0
 [0.8.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.8.1
