@@ -159,6 +159,14 @@ jobs:
         run: df -h /
 
       - name: Build APK
+        env:
+          # Cap the Metro bundler's Node.js heap (createBundleReleaseJsAndAssets
+          # spawns node). Without a cap Node's heap grows proportionally to host
+          # RAM and, running next to the Gradle JVM (-Xmx2048m), gets OOM-killed
+          # (exit 137) during release sourcemap serialization.
+          # If builds start failing with "JavaScript heap out of memory" instead,
+          # bump to 3072.
+          NODE_OPTIONS: --max-old-space-size=2048
         run: |
           cd android
           nice -n 19 ionice -c 3 ./gradlew assembleRelease --no-daemon -Dorg.gradle.parallel=false --init-script ../scripts/gradle/disable-lint-vital.gradle
