@@ -1,17 +1,26 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
-import { Linking } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
-import { releaseUrlAtom, updateAvailableAtom } from 'shared/model'
+import { updateAvailableAtom } from 'shared/model'
 import { UpdateBanner } from './UpdateBanner'
 import { useUpdateIslandAnimation } from './useUpdateIslandAnimation'
 
 const BANNER_TEST_ID = 'update-banner'
-const RELEASE_URL = 'https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/releases/tag/v0.3.0'
+const DIALOG_TITLE = 'Доступно обновление'
 
 jest.mock('./useUpdateIslandAnimation', () => ({
   useUpdateIslandAnimation: jest.fn(),
+}))
+
+jest.mock('features/app-update', () => ({
+  useUpdateInstall: () => ({
+    error: null,
+    progress: 0,
+    reset: jest.fn(),
+    startUpdate: jest.fn(),
+    updateState: 'idle',
+  }),
 }))
 
 const mockedUseAnimation = useUpdateIslandAnimation as jest.MockedFunction<
@@ -29,11 +38,10 @@ const defaultHookReturn = {
 describe('<UpdateBanner>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockedUseAnimation.mockReturnValue(defaultHookReturn as never)
   })
 
   test('returns null when no update is available', async () => {
-    mockedUseAnimation.mockReturnValue(defaultHookReturn as never)
-
     const { queryByTestId } = await renderWithProviders(<UpdateBanner />)
 
     expect(queryByTestId(BANNER_TEST_ID)).toBeNull()
@@ -42,53 +50,42 @@ describe('<UpdateBanner>', () => {
   test('renders the banner when an update is available', async () => {
     const ctx = createCtx()
     updateAvailableAtom(ctx, true)
-    releaseUrlAtom(ctx, RELEASE_URL)
-    mockedUseAnimation.mockReturnValue(defaultHookReturn as never)
 
     const { getByTestId } = await renderWithProviders(<UpdateBanner />, { ctx })
 
     expect(getByTestId(BANNER_TEST_ID)).toBeTruthy()
   })
 
-  test('opens the release URL when the expanded banner is pressed', async () => {
+  test('does not show the dialog before the banner is pressed', async () => {
     const ctx = createCtx()
     updateAvailableAtom(ctx, true)
-    releaseUrlAtom(ctx, RELEASE_URL)
-    mockedUseAnimation.mockReturnValue(defaultHookReturn as never)
-    const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
 
-    const { getByTestId } = await renderWithProviders(<UpdateBanner />, { ctx })
+    const { queryByText } = await renderWithProviders(<UpdateBanner />, { ctx })
 
-    fireEvent.press(getByTestId(BANNER_TEST_ID))
-
-    expect(openURLSpy).toHaveBeenCalledWith(RELEASE_URL)
+    expect(queryByText(DIALOG_TITLE)).toBeNull()
   })
 
-  test('does not open non-https URLs', async () => {
+  test('shows the update dialog when the expanded banner is pressed', async () => {
     const ctx = createCtx()
     updateAvailableAtom(ctx, true)
-    releaseUrlAtom(ctx, 'http://evil.com')
-    mockedUseAnimation.mockReturnValue(defaultHookReturn as never)
-    const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
 
-    const { getByTestId } = await renderWithProviders(<UpdateBanner />, { ctx })
+    const { findByText, getByTestId } = await renderWithProviders(<UpdateBanner />, { ctx })
 
     fireEvent.press(getByTestId(BANNER_TEST_ID))
 
-    expect(openURLSpy).not.toHaveBeenCalled()
+    expect(await findByText(DIALOG_TITLE)).toBeTruthy()
   })
 
-  test('does not open the URL when releaseUrl is null', async () => {
+  test('expands the pill instead of showing the dialog when collapsed', async () => {
     const ctx = createCtx()
     updateAvailableAtom(ctx, true)
-    releaseUrlAtom(ctx, null)
-    mockedUseAnimation.mockReturnValue(defaultHookReturn as never)
-    const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
+    mockedUseAnimation.mockReturnValue({ ...defaultHookReturn, isExpanded: false } as never)
 
-    const { getByTestId } = await renderWithProviders(<UpdateBanner />, { ctx })
+    const { getByTestId, queryByText } = await renderWithProviders(<UpdateBanner />, { ctx })
 
     fireEvent.press(getByTestId(BANNER_TEST_ID))
 
-    expect(openURLSpy).not.toHaveBeenCalled()
+    expect(defaultHookReturn.expand).toHaveBeenCalledTimes(1)
+    expect(queryByText(DIALOG_TITLE)).toBeNull()
   })
 })

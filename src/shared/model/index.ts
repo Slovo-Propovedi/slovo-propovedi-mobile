@@ -42,4 +42,5 @@ export {
   latestVersionAtom,
   releaseUrlAtom,
   updateAvailableAtom,
+  zipDownloadUrlAtom,
 } from './update'

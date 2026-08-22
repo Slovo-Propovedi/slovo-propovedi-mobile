@@ -11059,6 +11059,11 @@ react-native-worklets@0.10.1:
     convert-source-map "^2.0.0"
     semver "^7.7.4"
 
+react-native-zip-archive@^9.4.0:
+  version "9.4.0"
+  resolved "https://registry.yarnpkg.com/react-native-zip-archive/-/react-native-zip-archive-9.4.0.tgz#caf9a4f2a7a6553e199c7f410b7cbdefd652d32c"
+  integrity sha512-uz5/OyjUmgyKtwvFXp+tLNlO66GyncFWTerbIXZr8vZQDsw7WllxJNu65CBWTBstjmp8B1hF/3RpKj3/IFO3/A==
+
 react-native@0.86.2:
   version "0.86.2"
   resolved "https://registry.yarnpkg.com/react-native/-/react-native-0.86.2.tgz#540c82ea073017dd6fc5f2074f5baf8c6cc9ce6d"

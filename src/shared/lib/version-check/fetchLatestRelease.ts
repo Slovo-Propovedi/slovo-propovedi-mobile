@@ -36,16 +36,16 @@ const parseRelease = (data: unknown): LatestReleaseInfo | null => {
   if (release.prerelease) return null
   if (release.tag_name.includes('-')) return null
 
-  const apkAsset = release.assets.find(asset => asset.name.endsWith('.apk'))
+  const zipAsset = release.assets.find(asset => asset.name.endsWith('.zip'))
 
   return {
-    apkDownloadUrl: apkAsset?.browser_download_url ?? null,
     body: release.body.replace(/\r\n/g, '\n'),
     htmlUrl: release.html_url,
     name: release.name,
     publishedAt: release.published_at,
     tagName: release.tag_name,
     version: release.tag_name.replace(/^v/, ''),
+    zipDownloadUrl: zipAsset?.browser_download_url ?? null,
   }
 }
 

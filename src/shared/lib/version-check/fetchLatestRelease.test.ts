@@ -11,7 +11,7 @@ const FORGEJO_API_URL =
   'https://git.lightnode.ru/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest'
 const GITHUB_API_URL =
   'https://api.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile/releases/latest'
-const APK_DOWNLOAD_URL = 'https://example.com/releases/download/v0.3.0/app.apk'
+const ZIP_DOWNLOAD_URL = 'https://example.com/releases/download/v0.3.0/slovo-propovedi-v0.3.0.zip'
 const RELEASE_BODY = 'Release notes\r\nSecond line'
 const RELEASE_HTML_URL = 'https://example.com/releases/tag/v0.3.0'
 const RELEASE_NAME = 'Слово.Проповеди v0.3.0'
@@ -19,7 +19,7 @@ const RELEASE_PUBLISHED_AT = '2026-08-01T00:00:00Z'
 const RELEASE_TAG = 'v0.3.0'
 
 const validRelease = {
-  assets: [{ browser_download_url: APK_DOWNLOAD_URL, name: 'app-0.3.0.apk' }],
+  assets: [{ browser_download_url: ZIP_DOWNLOAD_URL, name: 'slovo-propovedi-v0.3.0.zip' }],
   body: RELEASE_BODY,
   draft: false,
   html_url: RELEASE_HTML_URL,
@@ -30,13 +30,13 @@ const validRelease = {
 }
 
 const expectedRelease: LatestReleaseInfo = {
-  apkDownloadUrl: APK_DOWNLOAD_URL,
   body: 'Release notes\nSecond line',
   htmlUrl: RELEASE_HTML_URL,
   name: RELEASE_NAME,
   publishedAt: RELEASE_PUBLISHED_AT,
   tagName: RELEASE_TAG,
   version: '0.3.0',
+  zipDownloadUrl: ZIP_DOWNLOAD_URL,
 }
 
 describe('fetchLatestRelease', () => {

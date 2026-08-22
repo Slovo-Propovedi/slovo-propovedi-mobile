@@ -13,6 +13,7 @@ const UPDATE_NOTIFICATION_GROUP = 'app-update'
 export const updateAvailableAtom = atom<boolean>(false, 'updateAvailableAtom')
 export const latestVersionAtom = atom<null | string>(null, 'latestVersionAtom')
 export const releaseUrlAtom = atom<null | string>(null, 'releaseUrlAtom')
+export const zipDownloadUrlAtom = atom<null | string>(null, 'zipDownloadUrlAtom')
 
 export const checkForUpdateAction = action(async ctx => {
   if (!ctx.get(isOnlineAtom)) return
@@ -27,6 +28,7 @@ export const checkForUpdateAction = action(async ctx => {
     updateAvailableAtom(ctx, true)
     latestVersionAtom(ctx, release.version)
     releaseUrlAtom(ctx, release.htmlUrl)
+    zipDownloadUrlAtom(ctx, release.zipDownloadUrl)
   })
 
   let lastNotifiedVersion: null | string = null

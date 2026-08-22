@@ -104,6 +104,10 @@
 - [ ] **Дублирование sermon в entry истории сокращено, остаточное для легаси-записей** — `src/entities/listening-history/lib/buildHistoryEntry.ts`, `getEntrySermon.ts` — новые записи slim (top-level `sermon` убран, живёт только в `playlist.sermons[0]`); дублирование возможно только при чтении легаси-записей со старым top-level `sermon`. Вернуться при чистке хранилища/миграции формата.
 - [ ] **Магическая привязка dropdown-меню (top: 50) на экране истории** — `src/pages/history/HistoryHeaderMenu.tsx:83` — может смещаться на маленьких экранах/крупных шрифтах; привязать к реальным измерениям кнопки.
 
+## Updates (самообновление)
+
+- [ ] iOS in-app update not supported — `src/shared/lib/update-service/updateService.ts`, `src/features/app-update/lib/useUpdateInstall.ts` — iOS falls back to browser; implement iOS OTA or TestFlight flow when needed
+
 ## Navigation
 
 - [ ] **Передача плейлиста в `/listen/playlist` через JSON-парамы** — `src/shared/routing/useListenNavigation.ts`, `src/pages/playlist` — при проблемах перенести на atom/id (по образцу playlist-list).

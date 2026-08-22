@@ -1,10 +1,12 @@
 import { Feather } from '@expo/vector-icons'
 import { useAtom } from '@reatom/npm-react'
-import { Linking, Pressable, StyleSheet, Text } from 'react-native'
+import { useState } from 'react'
+import { Pressable, StyleSheet, Text } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { releaseUrlAtom, updateAvailableAtom } from 'shared/model'
+import { updateAvailableAtom } from 'shared/model'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/theme'
+import { UpdateDialog } from './UpdateDialog'
 import { useUpdateIslandAnimation } from './useUpdateIslandAnimation'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -14,19 +16,10 @@ const PILL_HEIGHT = 36
 
 export const UpdateBanner = () => {
   const [updateAvailable] = useAtom(updateAvailableAtom)
-  const [releaseUrl] = useAtom(releaseUrlAtom)
+  const [isDialogVisible, setIsDialogVisible] = useState(false)
   const insets = useSafeAreaInsets()
   const { containerStyle, contentStyle, expand, isExpanded } =
     useUpdateIslandAnimation(updateAvailable)
-
-  const openReleaseUrl = () => {
-    if (!releaseUrl) return
-    if (!releaseUrl.startsWith('https://')) return
-
-    Linking.openURL(releaseUrl).catch(error => {
-      console.error('[update-banner] Failed to open release URL:', error)
-    })
-  }
 
   const handlePress = () => {
     if (!isExpanded) {
@@ -34,27 +27,30 @@ export const UpdateBanner = () => {
       return
     }
 
-    openReleaseUrl()
+    setIsDialogVisible(true)
   }
 
   if (!updateAvailable) return null
 
   return (
-    <AnimatedPressable
-      onPress={handlePress}
-      testID='update-banner'
-      hitSlop={isExpanded ? 0 : 16}
-      style={[
-        styles.container,
-        { top: insets.top + INDENTS.low + PILL_HEIGHT + INDENTS.low },
-        containerStyle,
-      ]}
-    >
-      <Animated.View style={[styles.pill, contentStyle]}>
-        <Feather size={16} color={COLORS.white} name='arrow-up-circle' />
-        <Text style={styles.text}>Обновление</Text>
-      </Animated.View>
-    </AnimatedPressable>
+    <>
+      <AnimatedPressable
+        onPress={handlePress}
+        testID='update-banner'
+        hitSlop={isExpanded ? 0 : 16}
+        style={[
+          styles.container,
+          { top: insets.top + INDENTS.low + PILL_HEIGHT + INDENTS.low },
+          containerStyle,
+        ]}
+      >
+        <Animated.View style={[styles.pill, contentStyle]}>
+          <Feather size={16} color={COLORS.white} name='arrow-up-circle' />
+          <Text style={styles.text}>Обновление</Text>
+        </Animated.View>
+      </AnimatedPressable>
+      <UpdateDialog visible={isDialogVisible} onClose={() => setIsDialogVisible(false)} />
+    </>
   )
 }
 
