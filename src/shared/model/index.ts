@@ -45,12 +45,17 @@ export {
   zipDownloadUrlAtom,
 } from './update'
 export {
+  decidePermissionResume,
   isBusyUpdateState,
-  resetUpdateAction,
-  startUpdateAction,
+  type PermissionResumeDecision,
   updateDialogVisibleAtom,
   updateErrorAtom,
   updateProgressAtom,
   type UpdateState,
   updateStateAtom,
 } from './updateInstall'
+export {
+  resetUpdateAction,
+  resumeUpdateAfterPermissionAction,
+  startUpdateAction,
+} from './updateInstallFlow'

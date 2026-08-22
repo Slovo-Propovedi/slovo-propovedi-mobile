@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
+import * as ApkInstaller from 'apk-installer'
 import { Linking } from 'react-native'
 import { type UpdateState, useUpdateInstall } from 'features/app-update'
 import { renderWithProviders } from 'shared/mocks'
@@ -121,6 +122,33 @@ describe('<UpdateDialog>', () => {
     const { getByText } = await renderDialog(true, { updateState: 'extracting' })
 
     expect(getByText('Распаковка...')).toBeTruthy()
+  })
+
+  test('renders the permission state with explainer and actions', async () => {
+    const { getByRole, getByText } = await renderDialog(true, { updateState: 'permission' })
+
+    expect(getByText('Требуется разрешение')).toBeTruthy()
+    expect(getByText(/разрешите установку из этого источника/)).toBeTruthy()
+    expect(getByRole('button', { name: 'Открыть настройки' })).toBeTruthy()
+    expect(getByRole('button', { name: 'Не сейчас' })).toBeTruthy()
+  })
+
+  test('opens install permission settings from the permission state', async () => {
+    const { getByRole } = await renderDialog(true, { updateState: 'permission' })
+
+    fireEvent.press(getByRole('button', { name: 'Открыть настройки' }))
+
+    expect(ApkInstaller.openInstallPermissionSettings).toHaveBeenCalledTimes(1)
+  })
+
+  test('closes and resets from the permission state', async () => {
+    const reset = jest.fn()
+    const { getByRole } = await renderDialog(true, { reset, updateState: 'permission' })
+
+    fireEvent.press(getByRole('button', { name: 'Не сейчас' }))
+
+    expect(reset).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   test('shows the error message and fallback actions in the error state', async () => {

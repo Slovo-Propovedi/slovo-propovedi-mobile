@@ -1,10 +1,12 @@
 import { useAtom } from '@reatom/npm-react'
 import { Modal, Text, View } from 'react-native'
 import { type UpdateState, useUpdateInstall } from 'features/app-update'
+import { openInstallPermissionSettings } from 'shared/lib/update-service'
 import { isBusyUpdateState, latestVersionAtom, releaseUrlAtom } from 'shared/model'
 import { openReleaseUrl } from '../lib/openReleaseUrl'
 import { UpdateDialogConfirm } from './UpdateDialogConfirm'
 import { UpdateDialogError } from './UpdateDialogError'
+import { UpdateDialogPermission } from './UpdateDialogPermission'
 import { UpdateDialogProgress } from './UpdateDialogProgress'
 import { updateDialogStyles as styles } from './updateDialogStyles'
 
@@ -14,11 +16,13 @@ export interface UpdateDialogProps {
 }
 
 const CONFIRM_TITLE = 'Доступно обновление'
+const PERMISSION_TITLE = 'Требуется разрешение'
 const PROGRESS_TITLE = 'Обновление'
 const ERROR_TITLE = 'Ошибка обновления'
 
 const getDialogTitle = (updateState: UpdateState): string => {
   if (updateState === 'error') return ERROR_TITLE
+  if (updateState === 'permission') return PERMISSION_TITLE
   if (isBusyUpdateState(updateState)) return PROGRESS_TITLE
   return CONFIRM_TITLE
 }
@@ -48,6 +52,14 @@ export const UpdateDialog = ({ onClose, visible }: UpdateDialogProps) => {
           errorMessage={error}
           onClose={handleClose}
           onOpenReleases={handleOpenReleases}
+        />
+      )
+
+    if (updateState === 'permission')
+      return (
+        <UpdateDialogPermission
+          onClose={handleClose}
+          onOpenSettings={openInstallPermissionSettings}
         />
       )
 

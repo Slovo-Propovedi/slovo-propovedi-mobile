@@ -1,3 +1,4 @@
+import * as ApkInstaller from 'apk-installer'
 import { Directory, File, Paths } from 'expo-file-system'
 import * as IntentLauncher from 'expo-intent-launcher'
 import { Platform } from 'react-native'
@@ -82,17 +83,37 @@ export const extractApkFromZip = async (zipPath: string): Promise<string> => {
   return safeApk.uri
 }
 
+export const apkFileExists = (apkPath: string): boolean => new File(apkPath).exists
+
 export const installApk = async (apkPath: string): Promise<void> => {
   assertAndroid('installApk')
 
   const apkFile = new File(apkPath)
   if (!apkFile.exists) throw new Error(`[updateService] APK file not found at: ${apkPath}`)
 
+  if (ApkInstaller.isApkInstallerAvailable()) {
+    await ApkInstaller.installApk(apkPath)
+    return
+  }
+
   await IntentLauncher.startActivityAsync(VIEW_ACTION, {
     data: apkFile.contentUri,
     flags: INSTALL_INTENT_FLAGS,
     type: APK_MIME_TYPE,
   })
+}
+
+export const canRequestPackageInstalls = async (): Promise<boolean> => {
+  if (!ApkInstaller.isApkInstallerAvailable()) return true
+  return ApkInstaller.canRequestPackageInstalls()
+}
+
+export const openInstallPermissionSettings = async (): Promise<void> => {
+  if (!ApkInstaller.isApkInstallerAvailable()) {
+    console.warn('[updateService] openInstallPermissionSettings is unavailable')
+    return
+  }
+  await ApkInstaller.openInstallPermissionSettings()
 }
 
 export const cleanupUpdateFiles = async (): Promise<void> => {
