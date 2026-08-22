@@ -40,7 +40,7 @@ export const usePlayNewSermon = () => {
   }: PlayNewSermonProps) => {
     if (!audioUrl) return
 
-    const sermonId = id ?? ''
+    const sermonId = id
     const currentAudio = ctx.get(currentAudioAtom)
     const currentPosition = ctx.get(positionAtom)
     const currentDuration = ctx.get(durationAtom)
@@ -49,11 +49,11 @@ export const usePlayNewSermon = () => {
 
     const newAudio: AudioPlayerData = {
       ...other,
-      artist: artist ?? '',
-      artwork: playlist.artwork ?? '',
+      artist,
+      artwork: playlist.artwork,
       audioUrl,
       id: sermonId,
-      title: title ?? '',
+      title,
     }
 
     const oldAudio = currentAudio
@@ -77,7 +77,7 @@ export const usePlayNewSermon = () => {
 
     if (currentAudio?.id !== sermonId) await replaceAudio(newAudio.audioUrl, resumeMs)
     else {
-      const entry = history.find(e => getEntrySermon(e).id === sermonId)
+      const entry = history.find(e => getEntrySermon(e)?.id === sermonId)
 
       if (entry && resumeMs === 0) await seekTo(0)
       else if (resumeMs > 0 && Math.abs(currentPosition - resumeMs) > SAME_SERMON_TOLERANCE_MS)

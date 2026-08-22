@@ -40,13 +40,13 @@ export const playTrackWithMetadata = async (
   })
 
   const playerInstance = await playerActions.replaceAudio(audioUrl, initialPositionMs)
+  await playWithAppStateHandling(playerActions)
   lockScreenControls.setMetadata(playerInstance, {
     albumTitle: playlist.title,
     artist: audio.artist,
     artworkUrl: audio.artwork,
     title: audio.title,
   })
-  await playWithAppStateHandling(playerActions)
 }
 
 export const playWithAppStateHandling = async (playerActions: PlayerActions): Promise<void> => {
@@ -66,8 +66,9 @@ export const repeatCurrentTrack = async (
   audioUrl: string,
   oldFlush: OldTrackFlush,
 ): Promise<void> => {
-  await setCurrentAudioAction(ctx, audio)
-  await playTrackWithMetadata(playerActions, audio, playlist, audioUrl, 0, oldFlush)
+  const newAudio: AudioPlayerData = { ...audio, artwork: playlist.artwork }
+  await setCurrentAudioAction(ctx, newAudio)
+  await playTrackWithMetadata(playerActions, newAudio, playlist, audioUrl, 0, oldFlush)
 }
 
 export const playNextTrack = async (
@@ -77,7 +78,7 @@ export const playNextTrack = async (
   audioUrl: string,
   oldFlush: OldTrackFlush,
 ): Promise<void> => {
-  const newAudio: AudioPlayerData = { ...nextTrack, audioUrl }
+  const newAudio: AudioPlayerData = { ...nextTrack, artwork: playlist.artwork, audioUrl }
   await setCurrentAudioAction(ctx, newAudio)
   await playTrackWithMetadata(playerActions, newAudio, playlist, audioUrl, 0, oldFlush)
 }
@@ -90,6 +91,7 @@ export const playFirstTrackInQueue = async (
   const firstTrack = getFirstTrack(playlist)
   if (!firstTrack) return
 
-  await setCurrentAudioAction(ctx, firstTrack)
-  await playTrackWithMetadata(playerActions, firstTrack, playlist, firstTrack.audioUrl, 0, oldFlush)
+  const newAudio: AudioPlayerData = { ...firstTrack, artwork: playlist.artwork }
+  await setCurrentAudioAction(ctx, newAudio)
+  await playTrackWithMetadata(playerActions, newAudio, playlist, firstTrack.audioUrl, 0, oldFlush)
 }

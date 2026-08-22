@@ -1,4 +1,8 @@
-export { type AudioPlayerData, audioPlayerDataSchema } from './lib/audioPlayerData'
+export {
+  type AudioPlayerData,
+  audioPlayerDataSchema,
+  toAudioPlayerData,
+} from './lib/audioPlayerData'
 export {
   downloadingAudioUrlAtom,
   downloadProgressAtom,

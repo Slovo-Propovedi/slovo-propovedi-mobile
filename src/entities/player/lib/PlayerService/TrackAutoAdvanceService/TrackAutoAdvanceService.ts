@@ -3,6 +3,7 @@ import { markHistoryCompletedAction } from 'entities/listening-history/@x/player
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
+import { reportError } from 'shared/model/error-dialog'
 import type { OldTrackFlush } from './playback'
 import type { PlayerActions } from './types'
 import { durationAtom, positionAtom, RepeatMode, repeatModeSchema } from '../../../model'
@@ -43,6 +44,15 @@ export class TrackAutoAdvanceService {
   }
 
   public async handleTrackEnd(): Promise<void> {
+    try {
+      await this.advanceToNextTrack()
+    } catch (error) {
+      console.error('[TrackAutoAdvanceService] handleTrackEnd failed:', error)
+      reportError(error, 'Ошибка при автоматическом переходе к следующей проповеди')
+    }
+  }
+
+  private async advanceToNextTrack(): Promise<void> {
     const stored = await AsyncStorage.multiGet([
       CURRENT_AUDIO,
       CURRENT_PLAYLIST,
@@ -56,8 +66,24 @@ export class TrackAutoAdvanceService {
     const currentAudio = parseAudioPlayerData(storedCurrentAudio)
     const currentPlaylist = parsePlaylistData(storedCurrentPlaylist)
 
-    if (!currentAudio?.id) return
-    if (!currentPlaylist) return
+    if (!currentAudio) {
+      if (storedCurrentAudio) {
+        console.error(
+          '[TrackAutoAdvanceService] CURRENT_AUDIO failed schema validation, auto-advance aborted',
+        )
+        reportError(new Error('Не удалось прочитать данные проповеди из хранилища'))
+      }
+      return
+    }
+    if (!currentPlaylist) {
+      if (storedCurrentPlaylist) {
+        console.error(
+          '[TrackAutoAdvanceService] CURRENT_PLAYLIST failed schema validation, auto-advance aborted',
+        )
+        reportError(new Error('Не удалось прочитать данные плейлиста из хранилища'))
+      }
+      return
+    }
 
     const playerActions = this.ensurePlayerActions()
     const currentIndex = findCurrentTrackIndex(currentAudio.id, currentPlaylist.sermons)
@@ -81,7 +107,10 @@ export class TrackAutoAdvanceService {
         await playFirstTrackInQueue(playerActions, currentPlaylist, oldFlush)
         return
       }
-      void markHistoryCompletedAction(ctx, currentAudio.id)
+      void markHistoryCompletedAction(ctx, currentAudio.id).catch(error => {
+        console.error('[TrackAutoAdvanceService] markHistoryCompletedAction failed:', error)
+        reportError(error, 'Ошибка при завершении записи истории')
+      })
       await playerActions.pause()
       return
     }
