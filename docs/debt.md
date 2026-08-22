@@ -27,6 +27,7 @@
 - [ ] **Bounded retry в `setMetadata` (10×200мс) может не дождаться экстремально медленной загрузки (>2с).** `src/entities/player/lib/PlayerService/LockScreenControls.ts` — retry ограничен `MAX_RETRY_ATTEMPTS = 10` с интервалом 200мс; при загрузке дольше 2с lock screen создаётся без метаданных. Вернуться при репортах о пропадании метаданных на медленных устройствах.
 - [ ] **Застывшее audio-focus/MediaSession состояние на Android 15.** На Android 15+ нельзя запросить audio focus из фона (`expo/expo#46957`), застрявший фокус чистится только перезагрузкой ОС (`androidx/media#1928`). Наш release-before-recreate в `replaceAudio`/`unload` — митигация (сброс нативного состояния при смене трека), но полная очистка может требовать ребута. — `src/entities/player/lib/PlayerService/index.native.ts`, `AudioLoader.ts` — вернуться, если жалобы на «застрявший звук» умножатся.
 - [ ] **Мигание обложки при разворачивании плеера.** При раскрытии полноэкранного плеера обложка может «мигнуть» (перемонтирование/сброс состояния изображения). Pre-existing с 0.8.1; кандидат — `useFullscreenHandlers` `sheetRef.expand()`. — `src/widgets/expandable-player` — вернуться при полировке анимаций разворота.
+- [ ] **Notification panel не восстанавливается если replaceAudio вернул null (30s таймаут сети)** — `src/entities/player/lib/PlayerService/AudioLoader.ts` (waitForLoaded) + `playback.ts` — Issue #45: ordering-фикс применён, но null-player случай остаётся; событийный setMetadata (подписка на playbackStatusUpdate вместо polling) как будущий вариант.
 
 ## Read tab / FB2 reader
 
@@ -103,6 +104,7 @@
 - [ ] **Barrel-цикл entities/player ↔ entities/listening-history** — `src/entities/listening-history/model/types.ts:2` (value-import audioPlayerDataSchema из 'entities/player') vs обратные импорты в `src/entities/player/index.ts`, `lib/usePlaySermon.ts`, `lib/PlayerService/PlaybackController.ts`, `lib/PlayerService/TrackAutoAdvanceService/playback.ts` — работает за счёт порядка экспортов; починить переносом audioPlayerDataSchema в shared/model; вернуться перед следующим расширением слайса player. (См. также «Прочее» → require-циклы.)
 - [ ] **Дублирование sermon в entry истории сокращено, остаточное для легаси-записей** — `src/entities/listening-history/lib/buildHistoryEntry.ts`, `getEntrySermon.ts` — новые записи slim (top-level `sermon` убран, живёт только в `playlist.sermons[0]`); дублирование возможно только при чтении легаси-записей со старым top-level `sermon`. Вернуться при чистке хранилища/миграции формата.
 - [ ] **Магическая привязка dropdown-меню (top: 50) на экране истории** — `src/pages/history/HistoryHeaderMenu.tsx:83` — может смещаться на маленьких экранах/крупных шрифтах; привязать к реальным измерениям кнопки.
+- [ ] **handleTrackEnd: гонка lost-update между экшенами истории остаётся** — `src/entities/player/lib/PlayerService/TrackAutoAdvanceService/TrackAutoAdvanceService.ts` — сам метод теперь обёрнут в try-catch (unhandled rejection из Issue #45 устранён), но потеря обновлений истории при гонке экшенов (см. «История прослушивания») не решена; вернуться вместе с синхронизацией historyAtom.
 
 ## Updates (самообновление)
 

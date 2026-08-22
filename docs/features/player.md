@@ -167,6 +167,58 @@ Artwork резолвится с фолбэком: `artworkUrl = metadata.artwork
 
 Подробнее — [listening-history.md](./listening-history.md).
 
+## Известные баги (Issue #45)
+
+Пользовательский репорт после долгого прослушивания: (1) авто-переключённая проповедь без обложки, хотя в плейлисте она есть; (2) через некоторое время воспроизведение начинает ставиться на паузу, плеер исчезает из панели уведомлений и не возвращается; (3) после нескольких попыток resume + перезапуска приложения — crash loop (приложение открывается и сразу закрывается).
+
+### Баг 1: Отсутствует обложка при авто-переходе (ИСПРАВЛЕНО)
+
+`playNextTrack` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/playback.ts:74`) создаёт `newAudio` (L81) = `{ ...nextTrack, audioUrl }` — берётся `nextTrack.artwork` (собственный artwork проповеди, может быть пустым), а не `playlist.artwork`. Та же ошибка в `repeatCurrentTrack` и `playFirstTrackInQueue`.
+
+Для сравнения: ручное воспроизведение (`usePlaySermon.ts:53`) и `usePlayerToggleTrack` корректно используют `playlist.artwork`.
+
+Последствия:
+
+- In-app UI (`MiniPlayer.tsx:54`, `ExpandablePlayer.tsx:105`) читает `audio.artwork` напрямую → пустая обложка после авто-переключения.
+- `initializePlayer.ts:61-66` восстанавливает lock-screen метаданные из `audio.artwork` → «плохой» персистнутый artwork переживает перезапуски.
+
+Фикс: во всех трёх функциях авто-перехода (`playNextTrack`, `repeatCurrentTrack`, `playFirstTrackInQueue`) `newAudio` наследует `artwork: playlist.artwork` от плейлиста, аналогично ручному переходу через `usePlaySermon`:
+
+```typescript
+const newAudio: AudioPlayerData = { ...nextTrack, artwork: playlist.artwork, audioUrl }
+```
+
+`artwork` в домене — `string | null` (см. Баг 4): при `null` UI-компоненты показывают плейсхолдер через `CoverImage`, а lock screen подставляет иконку приложения.
+
+### Баг 2: Плеер исчезает из панели уведомлений (ИСПРАВЛЕНО)
+
+Корневая причина — **порядок вызовов** в авто-переходе. Ручной путь (`usePlaySermon.ts:78-96`) работает: `replaceAudio` → `play()` → `setLockScreenMetadata` — плеер загружен И играет в момент `setActiveForLockScreen(true)`, что надёжно показывает уведомление. Авто-путь (`playback.ts`) делал наоборот: `replaceAudio` → `setMetadata` → `play` — метаданные выставлялись на неиграющем MediaSession и уведомление не появлялось.
+
+Фикс: порядок вызовов в `playTrackWithMetadata` теперь `replaceAudio → play → setMetadata`, выровнен с ручным путём `usePlaySermon`. Плеер загружен и играет в момент `setActiveForLockScreen(true)`, что надёжно показывает уведомление. Покрыто регрессионным тестом `playback.test.ts` (assert порядка через `invocationCallOrder`).
+
+Остаточный риск: если `replaceAudio` вернул `null` (30s таймаут сети), `setMetadata` выходит по guard'у `if (!player) return` и панель остаётся скрытой — отслеживается в `docs/debt.md`.
+
+### Баг 3: Crash loop при перезапуске (ИСПРАВЛЕНО)
+
+Наиболее вероятно — нативный краш ExoPlayer/MediaSession (resume-попытки на уже released плеере):
+
+- ~~`handleTrackEnd` **без try-catch**~~ — исправлено (Issue #45, Phase 1): тело метода вынесено в приватный `advanceToNextTrack`, а `handleTrackEnd` оборачивает вызов в try-catch с логированием (`console.error('[TrackAutoAdvanceService] handleTrackEnd failed:', error)`) и `reportError`, так что `void trackAutoAdvanceService.handleTrackEnd()` больше не даёт unhandled promise rejection.
+- `GlobalErrorHandler` повторно вызывает `originalHandler(error, isFatal)` после `reportError` — фатальные ошибки по-прежнему убивают процесс (нативный краш не подавляется), но теперь перед этим показывается глобальный диалог ошибок (см. [error-handling.md](./error-handling.md)), а `markHistoryCompletedAction` снабжён `.catch` — асинхронная ошибка не роняет плеер. Это убирает симптом «показывает диалог, потом закрывается» для обрабатываемых ошибок.
+- Коммит `ec69eeb` (20.08.2026) документирует проблемы уничтожения Android MediaSession/ExoPlayer («activity is no longer available», expo#46137, androidx/media#1928).
+- Стартовые чтения хранилища все обёрнуты в safeParse — повреждённый JSON истории сам по себе краш старта НЕ вызовет.
+
+Фикс: crash-loop устраняется связкой правок Issue #45 — `handleTrackEnd` обёрнут в try-catch (нет unhandled rejection), zod-схемы приведены к честному `artwork: string | null` (Баг 4), а ошибки сервисов/слушателей теперь идут в `reportError` → глобальный диалог вместо молчаливого краша. Необрабатываемый фатальный нативный краш по-прежнему завершает процесс (см. [error-handling.md](./error-handling.md) → GlobalErrorHandler).
+
+### Баг 4: Zod schema drift убивает auto-advance молча (ИСПРАВЛЕНО)
+
+`TrackAutoAdvanceService.ts:46-106`: `handleTrackEnd` перечитывает `CURRENT_AUDIO`, `CURRENT_PLAYLIST`, `CURRENT_REPEAT_MODE` из AsyncStorage и парсит их zod-схемами (`parseAudioPlayerData`/`parsePlaylistData`). Если парсинг вернул `undefined` (например, `sermonSchema` требует `artwork: z.string()`, а API для некоторых проповедей отдаёт `null`/отсутствующее поле), `handleTrackEnd` молча выходит на L69-70 — авто-переход умирает **без единой ошибки в логах**.
+
+Сильный кандидат на симптом «воспроизведение встаёт на паузу и больше не возобновляется» после долгих сессий. Корневая причина — расхождение (drift) между payload API и строгими zod-схемами.
+
+Фикс: `sermonSchema.artwork` изменён на `z.string().nullable()`, `playlistSchema.artwork` — тоже `z.string().nullable()`: доменный тип `artwork` теперь честный `string | null` вместо пустой строки-заглушки. Маппер нормализует на границе API (`apiSermon.artwork ?? null`). Потребители null: `CoverImage` подставляет `IMAGE_PLACEHOLDER`, lock screen — иконку приложения (`metadata.artworkUrl || getLocalAppIconUri()`).
+
+Дополнительно (observability): при будущем schema drift парсинг `CURRENT_AUDIO`/`CURRENT_PLAYLIST` в `advanceToNextTrack` логирует `console.error` и показывает глобальный диалог через `reportError` — авто-переход по-прежнему прерывается (safety net), но ошибка больше не молчит.
+
 ## Связанные документы
 
 - [audio-cache.md](./audio-cache.md) — кэширование аудио (в т.ч. автоматическое при старте трека)
