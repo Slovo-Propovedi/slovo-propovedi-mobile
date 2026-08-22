@@ -1,0 +1,5 @@
+Sanitize lock screen artwork URI to prevent fatal crash
+Add startup crash guard to break restore crash loops
+Cap Metro node heap to prevent release build OOM
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
