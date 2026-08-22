@@ -1,0 +1,5 @@
+In-app update flow with permission gate, fix apk cleanup race
+Add russian mapping for native install errors
+Add local apk-installer expo module wrapping PackageInstaller
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
