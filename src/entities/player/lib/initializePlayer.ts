@@ -9,6 +9,7 @@ import {
 } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
+import { reportError } from 'shared/model/error-dialog'
 import {
   repeatModeSchema,
   setCurrentAudioAction,
@@ -69,5 +70,6 @@ export const initializePlayer = async () => {
     if (playlist) await setCurrentPlaylistAction(ctx, playlist)
   } catch (error) {
     console.error('Error initializing player data:', error)
+    reportError(error, 'Ошибка при восстановлении плеера')
   }
 }

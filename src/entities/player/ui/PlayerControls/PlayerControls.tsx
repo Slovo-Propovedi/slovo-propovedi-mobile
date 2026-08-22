@@ -1,3 +1,4 @@
+import { reportError } from 'shared/model/error-dialog'
 import type { AudioPlayerData, ControlsNames } from './PlayerControls.types'
 import type { StyleProp, ViewStyle } from 'react-native'
 import type { PlaylistData } from 'shared/model'
@@ -60,6 +61,7 @@ export const PlayerControls = ({
         console.warn('[PlayerControls] Ignoring AppState-related error:', error.message)
       else {
         console.error('[PlayerControls] togglePlay error:', error)
+        reportError(error, 'Ошибка при переключении воспроизведения')
         throw error
       }
     }

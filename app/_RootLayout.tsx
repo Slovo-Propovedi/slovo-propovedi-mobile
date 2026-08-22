@@ -14,6 +14,7 @@ import {
 import { subscribeToNetwork } from 'shared/lib/network'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { checkForUpdateAction } from 'shared/model'
+import { GlobalErrorDialog } from 'shared/ui/error-dialog'
 import { useTheme } from 'shared/ui/theme'
 
 // Module-level: subscribes once for the app lifetime
@@ -114,6 +115,7 @@ const RootLayout = () => {
       <NetworkBanner />
       <ServerErrorToast />
       <UpdateBanner />
+      <GlobalErrorDialog />
     </View>
   )
 }

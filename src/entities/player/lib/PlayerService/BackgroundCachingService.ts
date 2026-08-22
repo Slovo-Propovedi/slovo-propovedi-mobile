@@ -1,6 +1,7 @@
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { incrementCacheTrigger, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { reportError } from 'shared/model/error-dialog'
 import {
   downloadingAudioUrlAtom,
   setDownloadingUrlAction,
@@ -53,6 +54,7 @@ export const startBackgroundCaching = (audioUrl: string): void => {
     })
     .catch(error => {
       console.error('[BackgroundCaching] Caching failed:', error)
+      reportError(error, 'Ошибка при фоновом кэшировании аудио')
       removeTrackProgress(audioUrl)
     })
     .finally(() => {

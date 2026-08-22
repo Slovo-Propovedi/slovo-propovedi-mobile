@@ -1,10 +1,10 @@
 import { render } from '@testing-library/react-native'
 import { GlobalErrorHandler } from './GlobalErrorHandler'
 
-const mockShowError = jest.fn()
+const mockReportError = jest.fn()
 
-jest.mock('./useErrorDialog', () => ({
-  useErrorDialog: () => ({ showError: mockShowError }),
+jest.mock('../../model/error-dialog', () => ({
+  reportError: (error: unknown, message?: string) => mockReportError(error, message),
 }))
 
 const FATAL_MESSAGE = 'Фатальная ошибка приложения'
@@ -14,7 +14,7 @@ const getInstalledHandler = () => jest.mocked(ErrorUtils.setGlobalHandler).mock.
 
 describe('<GlobalErrorHandler>', () => {
   beforeEach(() => {
-    mockShowError.mockClear()
+    mockReportError.mockClear()
     jest.spyOn(console, 'error').mockImplementation(() => {})
     jest.spyOn(ErrorUtils, 'setGlobalHandler')
     jest.spyOn(ErrorUtils, 'getGlobalHandler').mockReturnValue(jest.fn())
@@ -36,7 +36,7 @@ describe('<GlobalErrorHandler>', () => {
     expect(ErrorUtils.setGlobalHandler).toHaveBeenCalledTimes(1)
   })
 
-  test('installed handler calls showError with fatal message when isFatal=true', async () => {
+  test('installed handler calls reportError with fatal message when isFatal=true', async () => {
     await render(<GlobalErrorHandler />)
 
     const handler = getInstalledHandler()
@@ -44,10 +44,10 @@ describe('<GlobalErrorHandler>', () => {
 
     handler(error, true)
 
-    expect(mockShowError).toHaveBeenCalledWith(error, FATAL_MESSAGE)
+    expect(mockReportError).toHaveBeenCalledWith(error, FATAL_MESSAGE)
   })
 
-  test('installed handler calls showError with non-fatal message when isFatal=false', async () => {
+  test('installed handler calls reportError with non-fatal message when isFatal=false', async () => {
     await render(<GlobalErrorHandler />)
 
     const handler = getInstalledHandler()
@@ -55,10 +55,10 @@ describe('<GlobalErrorHandler>', () => {
 
     handler(error, false)
 
-    expect(mockShowError).toHaveBeenCalledWith(error, NON_FATAL_MESSAGE)
+    expect(mockReportError).toHaveBeenCalledWith(error, NON_FATAL_MESSAGE)
   })
 
-  test('installed handler calls showError with non-fatal message when isFatal is undefined', async () => {
+  test('installed handler calls reportError with non-fatal message when isFatal is undefined', async () => {
     await render(<GlobalErrorHandler />)
 
     const handler = getInstalledHandler()
@@ -66,7 +66,7 @@ describe('<GlobalErrorHandler>', () => {
 
     handler(error, undefined)
 
-    expect(mockShowError).toHaveBeenCalledWith(error, NON_FATAL_MESSAGE)
+    expect(mockReportError).toHaveBeenCalledWith(error, NON_FATAL_MESSAGE)
   })
 
   test('installed handler also calls the original handler (chaining)', async () => {
@@ -80,12 +80,12 @@ describe('<GlobalErrorHandler>', () => {
 
     handler(error, true)
 
-    expect(mockShowError).toHaveBeenCalledTimes(1)
+    expect(mockReportError).toHaveBeenCalledTimes(1)
     expect(originalHandler).toHaveBeenCalledTimes(1)
     expect(originalHandler).toHaveBeenCalledWith(error, true)
   })
 
-  test('the error object passed to showError is the same reference', async () => {
+  test('the error object passed to reportError is the same reference', async () => {
     await render(<GlobalErrorHandler />)
 
     const handler = getInstalledHandler()
@@ -93,6 +93,6 @@ describe('<GlobalErrorHandler>', () => {
 
     handler(error, true)
 
-    expect(mockShowError.mock.calls[0][0]).toBe(error)
+    expect(mockReportError.mock.calls[0][0]).toBe(error)
   })
 })

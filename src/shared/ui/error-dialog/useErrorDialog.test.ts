@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native'
-import { getErrorDetail, getErrorMessage, useErrorDialog } from './useErrorDialog'
+import { getErrorDetail, getErrorMessage } from '../../lib/error-utils'
+import { useErrorDialog } from './useErrorDialog'
 
 describe('getErrorMessage', () => {
   test('returns error.message for an Error instance', () => {

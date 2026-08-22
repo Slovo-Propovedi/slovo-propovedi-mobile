@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { reportError } from 'shared/model/error-dialog'
 import { currentAudioAtom, durationAtom } from '../../model'
 import { createPubSub } from './webPlayerPubSub'
 import { createWebPlayerState } from './webPlayerState'
@@ -12,7 +13,10 @@ class WebPlayerService {
   public subscribe = (listener: () => void) => this.pubsub.subscribe(listener)
 
   public play = async () => {
-    this.audioInstance?.play().catch(console.error)
+    this.audioInstance?.play().catch(error => {
+      console.error('[WebPlayerService] play failed:', error)
+      reportError(error, 'Ошибка при воспроизведении аудио')
+    })
     this.startStatusTracking()
   }
 

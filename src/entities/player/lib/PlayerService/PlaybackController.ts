@@ -3,6 +3,7 @@ import { type AudioPlayer } from 'expo-audio'
 import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { reportError } from 'shared/model/error-dialog'
 import {
   currentAudioAtom,
   durationAtom,
@@ -74,6 +75,7 @@ class PlaybackController {
       await player.seekTo(clampedPosition / 1000)
     } catch (error) {
       console.error('[PlaybackController] seekTo failed:', error)
+      reportError(error, 'Ошибка при перемотке аудио')
       if (this.seekTimeoutId) {
         clearTimeout(this.seekTimeoutId)
         this.seekTimeoutId = null

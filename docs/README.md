@@ -41,6 +41,7 @@
 | [`features/state.md`](./features/state.md)                             | Reatom: атомы, экшены, `ctx`                                             |
 | [`features/theme.md`](./features/theme.md)                             | Тема, цвета, Material You                                                |
 | [`features/offline-and-network.md`](./features/offline-and-network.md) | Сеть, офлайн, баннеры, авто-refresh токенов                              |
+| [`features/error-handling.md`](./features/error-handling.md)           | Глобальный диалог ошибок, reportError, ErrorBoundary                     |
 | [`features/updates.md`](./features/updates.md)                         | Проверка обновлений и уведомления                                        |
 | [`features/book-reader.md`](./features/book-reader.md)                 | Чтение FB2-книг (в разработке)                                           |
 | [`screens/listen.md`](./screens/listen.md)                             | Таб «Слушать» и его экраны                                               |

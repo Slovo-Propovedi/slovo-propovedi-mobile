@@ -1,8 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { View } from 'react-native'
+import { getErrorDetail, getErrorMessage } from '../../lib/error-utils'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { ErrorDialog } from './ErrorDialog'
-import { getErrorDetail, getErrorMessage } from './useErrorDialog'
 
 interface Props {
   children: ReactNode

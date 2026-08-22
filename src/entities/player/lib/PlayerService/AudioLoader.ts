@@ -3,6 +3,7 @@ import { type AudioPlayer, createAudioPlayer } from 'expo-audio'
 import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { reportError } from 'shared/model/error-dialog'
 import { setDurationAction, setIsBufferingAction, setPositionAction } from '../../model'
 import { startBackgroundCaching } from './BackgroundCachingService'
 
@@ -25,6 +26,7 @@ class AudioLoader {
 
     return this.waitForLoaded(player, initialPositionMs).catch(error => {
       console.error('[AudioLoader] loadAudio: Promise rejected with error:', error)
+      reportError(error, 'Ошибка при загрузке аудио')
       void setIsBufferingAction(ctx, false)
       return null
     })
@@ -91,6 +93,7 @@ class AudioLoader {
       if (cachedUri) return cachedUri
     } catch (error) {
       console.error('[AudioLoader] getPlaybackUrl: Error checking cache:', error)
+      reportError(error, 'Ошибка при проверке кэша аудио')
     }
     startBackgroundCaching(audioUrl)
     return audioUrl

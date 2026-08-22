@@ -1,20 +1,18 @@
 import { useEffect } from 'react'
-import { useErrorDialog } from './useErrorDialog'
+import { reportError } from '../../model/error-dialog'
 
 export const GlobalErrorHandler = () => {
-  const { showError } = useErrorDialog()
-
   useEffect(() => {
     const handleError = (error: Error, isFatal?: boolean) => {
       const message = isFatal ? 'Фатальная ошибка приложения' : 'Произошла непредвиденная ошибка'
 
-      showError(error, message)
+      reportError(error, message)
     }
 
     const handlePromiseRejection = (event: PromiseRejectionEvent) => {
       const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason))
 
-      showError(error, 'Произошла ошибка асинхронной операции')
+      reportError(error, 'Произошла ошибка асинхронной операции')
     }
 
     // Глобальный обработчик ошибок React Native
@@ -34,7 +32,7 @@ export const GlobalErrorHandler = () => {
       if (typeof window !== 'undefined' && 'removeEventListener' in window)
         window.removeEventListener('unhandledrejection', handlePromiseRejection)
     }
-  }, [showError])
+  }, [])
 
   return null
 }

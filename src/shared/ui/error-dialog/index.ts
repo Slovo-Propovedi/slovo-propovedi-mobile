@@ -1,5 +1,6 @@
 export { ErrorBoundary } from './ErrorBoundary'
 export type { ErrorDialogProps } from './ErrorDialog'
 export { ErrorDialog } from './ErrorDialog'
+export { GlobalErrorDialog } from './GlobalErrorDialog'
 export { GlobalErrorHandler } from './GlobalErrorHandler'
-export { getErrorDetail, getErrorMessage, useErrorDialog } from './useErrorDialog'
+export { useErrorDialog } from './useErrorDialog'
