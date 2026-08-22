@@ -47,7 +47,7 @@
 - **Платформы:** iOS, Android, Web; платформенные реализации через `.native.ts`/`.web.ts`.
 - **Язык UI:** русский; технические термины — английским.
 - **API:** контракт через OpenAPI + Orval; ручные типы под API не пишем.
-- **Android build flavors:** Gradle `productFlavors` `dev`/`prod` (dimension `env`). Dev: `applicationIdSuffix ".dev"`, имя «Слово.Проповеди Dev». Prod: базовый `ru.slovopropovedi`. `debuggableVariants = ["devDebug", "prodDebug"]`. Цель — dev-сборка не перезаписывает prod на одном устройстве. См. [`BUILD-LOCAL.md`](./BUILD-LOCAL.md).
+- **Android build flavors:** Gradle `productFlavors` `dev`/`prod` (dimension `env`). Dev: `applicationIdSuffix ".dev"`, имя «Dev Слово.Проповеди». Prod: базовый `ru.slovopropovedi`. `debuggableVariants = ["devDebug", "prodDebug"]`. Цель — dev-сборка не перезаписывает prod на одном устройстве. См. [`BUILD-LOCAL.md`](./BUILD-LOCAL.md).
 - **CI: ограничение памяти Jest.** В `jest.config.ts` добавлен `workerIdleMemoryLimit: '1GB'` (перезапуск воркера при росте RSS), а в `.forgejo/workflows/ci.yml` шаг тестов запускается как `yarn testFinal --maxWorkers=2`. Причина: тяжёлые `jest-expo`/RN UI-сьюты вызывали OOM (SIGKILL от ОС) при параллельном запуске множества воркеров.
 
 ## Superseded (отменённые решения)

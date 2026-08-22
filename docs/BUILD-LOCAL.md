@@ -110,7 +110,7 @@ This runs `cd android && ./gradlew assembleDevDebug`.
 Output: `android/app/build/outputs/apk/dev/debug/app-dev-debug.apk`
 
 The dev build uses `applicationId = ru.slovopropovedi.dev` and the app name
-«Слово.Проповеди Dev», so it installs side by side with the production app
+«Dev Слово.Проповеди», so it installs side by side with the production app
 (`ru.slovopropovedi`) and never overwrites it.
 
 ## Build Flavors (dev/prod)
@@ -120,7 +120,7 @@ development build separate from the production app on the same device:
 
 | Flavor | Application ID          | App name            | Variants                   |
 | ------ | ----------------------- | ------------------- | -------------------------- |
-| `dev`  | `ru.slovopropovedi.dev` | Слово.Проповеди Dev | `devDebug`, `devRelease`   |
+| `dev`  | `ru.slovopropovedi.dev` | Dev Слово.Проповеди | `devDebug`, `devRelease`   |
 | `prod` | `ru.slovopropovedi`     | Слово.Проповеди     | `prodDebug`, `prodRelease` |
 
 The `dev` flavor adds an `applicationIdSuffix` (`.dev`) and a
