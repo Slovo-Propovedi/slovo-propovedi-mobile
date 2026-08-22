@@ -1,6 +1,6 @@
 # Проверка обновлений
 
-**Слой:** `shared/model/update`, `shared/lib/version-check`, `shared/lib/update-service`, `widgets/update-status`, `features/app-update`, `features/update-notification`
+**Слой:** `shared/model/update`, `shared/model/updateInstall`, `shared/lib/version-check`, `shared/lib/update-service`, `widgets/update-status`, `features/app-update`, `features/update-notification`
 **Статус:** готов
 
 ## Проверка версии
@@ -36,6 +36,15 @@
 - `releaseUrlAtom` (URL страницы релиза);
 - `zipDownloadUrlAtom` (URL скачивания ZIP-ассета с APK, используется самообновлением).
 
+`src/shared/model/updateInstall.ts` — состояние процесса самообновления (общее для баннера, диалога и push-уведомления):
+
+- `updateStateAtom` (`UpdateState`): `'idle' | 'downloading' | 'extracting' | 'installing' | 'error'` — этап самообновления;
+- `updateProgressAtom` (number 0–100): процент загрузки ZIP;
+- `updateErrorAtom` (`null | string`): текст ошибки для диалога;
+- `updateDialogVisibleAtom` (boolean): видимость диалога обновления;
+- `startUpdateAction` — запуск самообновления (см. ниже);
+- `resetUpdateAction` — сброс состояния и скрытие диалога.
+
 Проверка запускается в `app/_RootLayout.tsx` после `InteractionManager.runAfterInteractions`.
 
 ## UI
@@ -45,7 +54,7 @@
 Поток нажатий:
 
 1. первый тап — разворот пилюли (`expand()`);
-2. тап по развёрнутой пилюле — открытие `UpdateDialog` (локальный стейт `isDialogVisible`). URL больше не открывается напрямую из баннера.
+2. тап по развёрнутой пилюле — открытие `UpdateDialog` (`updateDialogVisibleAtom = true`). URL больше не открывается напрямую из баннера.
 
 ### UpdateDialog
 
@@ -71,22 +80,17 @@
 
 ### Фича app-update
 
-`src/features/app-update/lib/useUpdateInstall.ts` — хук `useUpdateInstall()`, управляющий процессом. Атомы объявлены в файле хука (feature-level состояние):
+`src/features/app-update/lib/useUpdateInstall.ts` — хук `useUpdateInstall()`, тонкая обёртка над общим состоянием из `shared/model/updateInstall.ts`. Публичный API хука не изменился: `{ error, progress, reset, startUpdate, updateState }`. Атомы и логика переехали в `shared/model`, чтобы и `features/update-notification` (обработчик push), и `widgets/update-status` (диалог/баннер) могли их использовать без нарушения FSD (импорт features → features запрещён).
 
-| Атом              | Тип                                                                                  | Назначение                          |
-| ----------------- | ------------------------------------------------------------------------------------ | ----------------------------------- |
-| `updateStateAtom` | `'idle' \| 'downloading' \| 'extracting' \| 'installing' \| 'error'` (`UpdateState`) | этап самообновления                 |
-| `progressAtom`    | number (0–100)                                                                       | процент загрузки ZIP                |
-| `errorAtom`       | `null \| string`                                                                     | текст ошибки для диалога            |
+Логика `startUpdateAction` (guard-клаузы по порядку):
 
-Логика `startUpdate()` (guard-клаузы по порядку):
+1. уже идёт загрузка/распаковка/установка (`isBusyUpdateState`) → повторно показать диалог с текущим прогрессом и выйти (защита от повторного входа при повторном тапе по кнопке уведомления);
+2. платформа не Android (iOS) → открыть страницу релизов в браузере;
+3. офлайн (`!isOnlineAtom`) → `updateErrorAtom = «Нет подключения к интернету»`, состояние `error`, диалог видим;
+4. нет `zipDownloadUrlAtom` → открыть страницу релизов в браузере;
+5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с текстом ошибки; в `finally` — `cleanupUpdateFiles()`.
 
-1. платформа не Android (iOS) → открыть страницу релизов в браузере;
-2. офлайн (`!isOnlineAtom`) → `errorAtom = «Нет подключения к интернету»`, состояние `error`;
-3. нет `zipDownloadUrlAtom` → открыть страницу релизов в браузере;
-4. иначе последовательно: `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с текстом ошибки; в `finally` — `cleanupUpdateFiles()`.
-
-`reset()` возвращает атомы в исходное состояние — вызывается при закрытии диалога.
+`resetUpdateAction` возвращает атомы в исходное состояние и скрывает диалог — вызывается при закрытии диалога.
 
 ### Сервис update-service
 
@@ -108,21 +112,22 @@
 
 ## Push-уведомления vs баннер
 
-Поведение тапов разделено намеренно:
+Категория `app-update` содержит два действия, оба открывают приложение:
 
-| Триггер                    | Действие                                              |
-| -------------------------- | ----------------------------------------------------- |
-| Тап по баннеру в приложении | In-app установка (диалог → скачивание → установщик)   |
-| Тап по push-уведомлению     | Открытие страницы релизов в браузере (`Linking.openURL`) |
+| Триггер                          | Действие                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| Тап по баннеру в приложении       | In-app установка (диалог → скачивание → установщик)                      |
+| Push: кнопка «Обновить»           | In-app установка: `startUpdateAction(ctx)` — диалог открывается автоматически с прогрессом |
+| Push: кнопка «Перейти»            | Открытие страницы релизов в браузере (`Linking.openURL`)                 |
 
-Push обрабатывается через `useUpdateNotificationResponse` и всегда ведёт в браузер — in-app установка из ответа на уведомление не выполняется.
+Push обрабатывается через `useUpdateNotificationResponse`: `start-in-app-update` запускает `startUpdateAction` (диалог виден благодаря `updateDialogVisibleAtom`), `open-release-url` ведёт в браузер.
 
 ## Push-уведомления
 
 `src/shared/lib/notifications/`:
 
 - `notificationsHelpers.ts` — `scheduleNotification`, `requestPermissions`, `hideNotification`, `ensureNotifications` (ленивый импорт `expo-notifications`; в Expo Go — no-op).
-- `notificationActions.ts` — `setupUpdateNotificationCategory` (категория `app-update` с действием `open-release-url`, канал `app-update`), `addNotificationResponseListener`.
+- `notificationActions.ts` — `setupUpdateNotificationCategory` (категория `app-update` с действиями `start-in-app-update` («Обновить») и `open-release-url` («Перейти»), канал `app-update`), `addNotificationResponseListener`.
 - `NotificationsApi.ts` — тип-фасад над `expo-notifications`.
 
 При доступном обновлении `checkForUpdateAction` планирует локальное уведомление «Доступна новая версия» (если для этой версии ещё не показывалось — ключ `LAST_UPDATE_NOTIFIED_KEY`).
@@ -135,7 +140,7 @@ Push обрабатывается через `useUpdateNotificationResponse` и 
 
 ## Фича update-notification
 
-`src/features/update-notification/lib/useUpdateNotificationResponse.ts` — `useUpdateNotificationResponse()`, вызывается в `_RootLayout`. Слушает ответы на push; при `actionIdentifier === 'open-release-url'` открывает `releaseUrl` через `Linking.openURL` (только `https://`).
+`src/features/update-notification/lib/useUpdateNotificationResponse.ts` — `useUpdateNotificationResponse()`, вызывается в `_RootLayout`. Слушает ответы на push; при `actionIdentifier === 'start-in-app-update'` запускает `startUpdateAction(ctx)` (in-app установка с автоматически открытым диалогом); при `actionIdentifier === 'open-release-url'` открывает `releaseUrl` через `Linking.openURL` (только `https://`).
 
 ### compareVersions
 

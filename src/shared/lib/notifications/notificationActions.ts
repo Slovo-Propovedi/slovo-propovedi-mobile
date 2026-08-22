@@ -8,6 +8,11 @@ export const setupUpdateNotificationCategory = async (): Promise<void> => {
   try {
     await api.setNotificationCategoryAsync('app-update', [
       {
+        buttonTitle: 'Обновить',
+        identifier: 'start-in-app-update',
+        options: { opensAppToForeground: true, showUserInterface: true },
+      },
+      {
         buttonTitle: 'Перейти',
         identifier: 'open-release-url',
         options: { opensAppToForeground: true, showUserInterface: true },

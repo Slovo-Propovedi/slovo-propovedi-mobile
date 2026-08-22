@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { Modal, Text, View } from 'react-native'
 import { type UpdateState, useUpdateInstall } from 'features/app-update'
-import { latestVersionAtom, releaseUrlAtom } from 'shared/model'
+import { isBusyUpdateState, latestVersionAtom, releaseUrlAtom } from 'shared/model'
 import { openReleaseUrl } from '../lib/openReleaseUrl'
 import { UpdateDialogConfirm } from './UpdateDialogConfirm'
 import { UpdateDialogError } from './UpdateDialogError'
@@ -17,13 +17,9 @@ const CONFIRM_TITLE = 'Доступно обновление'
 const PROGRESS_TITLE = 'Обновление'
 const ERROR_TITLE = 'Ошибка обновления'
 
-const BUSY_STATES: UpdateState[] = ['downloading', 'extracting', 'installing']
-
-const isBusyState = (updateState: UpdateState): boolean => BUSY_STATES.includes(updateState)
-
 const getDialogTitle = (updateState: UpdateState): string => {
   if (updateState === 'error') return ERROR_TITLE
-  if (isBusyState(updateState)) return PROGRESS_TITLE
+  if (isBusyUpdateState(updateState)) return PROGRESS_TITLE
   return CONFIRM_TITLE
 }
 
@@ -36,7 +32,7 @@ export const UpdateDialog = ({ onClose, visible }: UpdateDialogProps) => {
 
   if (!visible) return null
 
-  const isBusy = isBusyState(updateState)
+  const isBusy = isBusyUpdateState(updateState)
 
   const handleClose = () => {
     reset()

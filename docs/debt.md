@@ -108,7 +108,7 @@
 
 ## Updates (самообновление)
 
-- [ ] iOS in-app update not supported — `src/shared/lib/update-service/updateService.ts`, `src/features/app-update/lib/useUpdateInstall.ts` — iOS falls back to browser; implement iOS OTA or TestFlight flow when needed
+- [ ] iOS in-app update not supported — `src/shared/lib/update-service/updateService.ts`, `src/shared/model/updateInstall.ts` — iOS falls back to browser; implement iOS OTA or TestFlight flow when needed
 
 ## Navigation
 

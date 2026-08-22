@@ -1,10 +1,9 @@
 import { Feather } from '@expo/vector-icons'
 import { useAtom } from '@reatom/npm-react'
-import { useState } from 'react'
 import { Pressable, StyleSheet, Text } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { updateAvailableAtom } from 'shared/model'
+import { updateAvailableAtom, updateDialogVisibleAtom } from 'shared/model'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import { UpdateDialog } from './UpdateDialog'
 import { useUpdateIslandAnimation } from './useUpdateIslandAnimation'
@@ -16,7 +15,7 @@ const PILL_HEIGHT = 36
 
 export const UpdateBanner = () => {
   const [updateAvailable] = useAtom(updateAvailableAtom)
-  const [isDialogVisible, setIsDialogVisible] = useState(false)
+  const [isDialogVisible, setIsDialogVisible] = useAtom(updateDialogVisibleAtom)
   const insets = useSafeAreaInsets()
   const { containerStyle, contentStyle, expand, isExpanded } =
     useUpdateIslandAnimation(updateAvailable)
