@@ -272,6 +272,43 @@ export const COLORS = {
 } as const
 ```
 
+### Type Assertions (`as`)
+
+**`as` type assertions are BANNED in production code (`src/`).** Type mismatches must be fixed at boundaries, not bypassed.
+
+**Allowed exceptions:**
+
+- `as const` — compile-time literal narrowing (not a runtime suppression)
+- `as unknown` — only as an intermediate step before zod validation (e.g., `JSON.parse(raw) as unknown` before `schema.parse()`)
+- `as` in test files (`*.test.ts`, `*.test.tsx`) — acceptable when truly necessary, but minimize even in tests
+
+**What to do instead of `as`:**
+
+1. **Fix at mapper boundaries** — normalize API responses where data enters the domain:
+
+   ```typescript
+   // ❌ BAD: null enters the domain, `as` hides it downstream
+   artwork: apiSermon.artwork // API may return null
+
+   // ✅ GOOD: normalize at the boundary — honest null, not a fake empty string
+   // (domain type is `string | null`; consumers handle null: placeholder, fallback)
+   artwork: apiSermon.artwork ?? null
+   ```
+
+2. **Construct new objects with narrowed types** instead of casting:
+
+   ```typescript
+   // ❌ BAD: `as` hides that SermonData ≠ AudioPlayerData
+   return nextTrack as AudioPlayerData
+
+   // ✅ GOOD: construct a new object, TypeScript narrows via truthiness check
+   return { ...nextTrack, audioUrl: nextTrack.audioUrl }
+   ```
+
+3. **Fix zod schemas** — if a field can be null from the API, declare it honestly with `.nullable()` so the domain type is `string | null`. Do NOT normalize null to a fake value like `''` (empty string is also invalid — it just moves the lie downstream)
+
+**Rationale:** `as` suppresses TypeScript's type checking at runtime. When the assumption behind `as` is wrong (e.g., API returns `null` where the type says `string`), the code compiles but crashes at runtime. This was a root cause of Issue #45 crashes.
+
 ### Styling
 
 ```typescript
