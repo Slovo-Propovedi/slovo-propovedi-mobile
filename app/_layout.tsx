@@ -3,7 +3,7 @@ import { type SuspenseFallbackProps } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { loadHistoryAction } from 'entities/listening-history'
-import { initializePlayer } from 'entities/player'
+import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
 import { initServerUrlAction } from 'entities/settings'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
@@ -38,6 +38,7 @@ const RootLayoutWithProvider = () => (
 )
 
 void initializePlayer()
+scheduleStartupGuardReset()
 void initServerUrlAction(ctx)
 void loadHistoryAction(ctx)
 

@@ -19,12 +19,28 @@ import {
 import { audioPlayerDataSchema } from '../ui/PlayerControls/PlayerControls.types'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/AudioModeManager'
+import {
+  readStartupAttempts,
+  resetStartupAttempts,
+  shouldSkipRestore,
+  writeStartupAttempts,
+} from './startupGuard'
 
 const parseAudioPlayerData = getParseJsonWithSchema(audioPlayerDataSchema)
 const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 
 export const initializePlayer = async () => {
   try {
+    const startupAttempts = await readStartupAttempts()
+
+    if (shouldSkipRestore(startupAttempts)) {
+      console.warn('[initializePlayer] skipping player restore after repeated startup crashes')
+      await resetStartupAttempts()
+      return
+    }
+
+    await writeStartupAttempts(startupAttempts + 1)
+
     // Unconditional configure: re-assert audio mode even without a restored track.
     // Isolated so a hard failure doesn't skip restoring track/playlist/volume/repeat.
     try {

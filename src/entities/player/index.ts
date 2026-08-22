@@ -9,6 +9,7 @@ export {
   isDownloadingAtom,
 } from './lib/download-model'
 export { initializePlayer } from './lib/initializePlayer'
+export { scheduleStartupGuardReset } from './lib/startupGuard'
 export { usePlaybackProgressSaver } from './lib/usePlaybackProgressSaver'
 export { usePlayer } from './lib/usePlayer'
 export { usePlayNewSermon } from './lib/usePlaySermon'

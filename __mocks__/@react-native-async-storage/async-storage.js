@@ -2,6 +2,7 @@ const storage: Record<string, string | null> = {}
 
 export default {
   getItem: jest.fn(async (key: string) => storage[key] ?? null),
+  multiGet: jest.fn(async (keys: string[]) => keys.map(key => [key, storage[key] ?? null])),
   setItem: jest.fn(async (key: string, value: string) => {
     storage[key] = value
   }),
