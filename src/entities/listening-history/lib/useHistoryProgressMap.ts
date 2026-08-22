@@ -23,7 +23,10 @@ export const useHistoryProgressMap = (): Map<string, number> => {
 
       if (positionMs <= 0 || durationMs <= 0) continue
 
-      const sermonId = getEntrySermon(entry).id
+      const sermon = getEntrySermon(entry)
+      if (!sermon) continue
+
+      const sermonId = sermon.id
       if (isEntryCompleted(entry)) map.set(sermonId, 1)
       else map.set(sermonId, Math.min(positionMs / durationMs, 1))
     }

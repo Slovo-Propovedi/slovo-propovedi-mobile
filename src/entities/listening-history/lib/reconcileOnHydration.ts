@@ -10,7 +10,7 @@ export const reconcileOnHydration = async (): Promise<ListeningHistory> => {
 
   if (!snapshot) return entries
 
-  const index = entries.findIndex(e => getEntrySermon(e).id === snapshot.sermonId)
+  const index = entries.findIndex(e => getEntrySermon(e)?.id === snapshot.sermonId)
   if (index === -1) {
     clearLiveProgressSnapshot()
     return entries

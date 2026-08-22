@@ -9,7 +9,7 @@ export const flushHistoryProgressAction = action(
     if (params.positionMs <= 0) return
 
     const current = ctx.get(historyAtom)
-    const index = current.findIndex(e => getEntrySermon(e).id === params.sermonId)
+    const index = current.findIndex(e => getEntrySermon(e)?.id === params.sermonId)
     if (index === -1) return
 
     const entry = current[index]

@@ -30,7 +30,7 @@ export const HistoryScreen = () => {
       <FlatList
         data={entries}
         ItemSeparatorComponent={HistorySeparator}
-        keyExtractor={item => getEntrySermon(item).id}
+        keyExtractor={item => getEntrySermon(item)?.id ?? `${item.lastPlayedAt}`}
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: entries.length === 0 ? 'center' : undefined,
@@ -49,7 +49,8 @@ export const HistoryScreen = () => {
           </Text>
         }
         renderItem={({ item }) => {
-          const isCurrentAudio = currentAudio?.id === getEntrySermon(item).id
+          const sermonId = getEntrySermon(item)?.id
+          const isCurrentAudio = sermonId !== undefined && currentAudio?.id === sermonId
           return (
             <HistoryRow
               entry={item}

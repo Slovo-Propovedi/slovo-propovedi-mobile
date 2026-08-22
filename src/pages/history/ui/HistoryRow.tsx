@@ -27,9 +27,14 @@ export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRow
       : undefined
 
   const handlePress = useCallback(async () => {
+    const rowSermon = getEntrySermon(entry)
+    if (!rowSermon) return
+
     const playlist = await resolveEntryPlaylist(entry)
-    await playNewSermon({ playlist, sermon })
-  }, [entry, playNewSermon, sermon])
+    await playNewSermon({ playlist, sermon: rowSermon })
+  }, [entry, playNewSermon])
+
+  if (!sermon) return null
 
   const menuActions: MenuAction[] = [
     {

@@ -6,9 +6,11 @@ export const sortAndCapEntries = (entries: ListeningHistory): ListeningHistory =
   const deduped = new Map<string, (typeof entries)[number]>()
 
   for (const entry of entries) {
-    const existing = deduped.get(getEntrySermon(entry).id)
-    if (!existing || entry.lastPlayedAt > existing.lastPlayedAt)
-      deduped.set(getEntrySermon(entry).id, entry)
+    const sermonId = getEntrySermon(entry)?.id
+    if (!sermonId) continue
+
+    const existing = deduped.get(sermonId)
+    if (!existing || entry.lastPlayedAt > existing.lastPlayedAt) deduped.set(sermonId, entry)
   }
 
   return [...deduped.values()]

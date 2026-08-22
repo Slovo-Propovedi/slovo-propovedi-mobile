@@ -1,6 +1,7 @@
 import { action, atom } from '@reatom/framework'
 import { type AudioPlayerData } from 'entities/player'
 import { type PlaylistData } from 'shared/model'
+import { reportError } from 'shared/model/error-dialog'
 import { buildHistoryEntry } from '../lib/buildHistoryEntry'
 import { flushHistoryProgressAction } from '../lib/flushHistoryProgress'
 import { getEntrySermon } from '../lib/getEntrySermon'
@@ -21,6 +22,7 @@ export const loadHistoryAction = action(async ctx => {
     })
   } catch (error) {
     console.error('Failed to load listening history:', error)
+    reportError(error, 'Не удалось загрузить историю прослушивания')
   }
 }, 'loadHistory')
 
@@ -30,7 +32,7 @@ export const recordPlaybackStartAction = action(
     const sermonId = audio.id
     const now = Date.now()
 
-    const existingIndex = current.findIndex(e => getEntrySermon(e).id === sermonId)
+    const existingIndex = current.findIndex(e => getEntrySermon(e)?.id === sermonId)
 
     let next: ListeningHistory
 
@@ -77,7 +79,7 @@ export const recordPlaybackStartAction = action(
 
 export const markHistoryCompletedAction = action(async (ctx, sermonId: string) => {
   const current = ctx.get(historyAtom)
-  const index = current.findIndex(e => getEntrySermon(e).id === sermonId)
+  const index = current.findIndex(e => getEntrySermon(e)?.id === sermonId)
   if (index === -1) return
 
   const entry = current[index]
@@ -94,7 +96,7 @@ export const markHistoryCompletedAction = action(async (ctx, sermonId: string) =
 
 export const removeHistoryEntryAction = action(async (ctx, sermonId: string) => {
   const current = ctx.get(historyAtom)
-  const next = current.filter(e => getEntrySermon(e).id !== sermonId)
+  const next = current.filter(e => getEntrySermon(e)?.id !== sermonId)
 
   if (next.length === current.length) return
 

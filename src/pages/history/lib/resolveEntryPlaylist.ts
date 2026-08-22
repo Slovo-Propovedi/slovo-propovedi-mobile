@@ -14,7 +14,9 @@ import { type PlaylistData, type SectionData } from 'shared/model'
  *   or the original snapshot playlist as a fallback.
  */
 export const resolveEntryPlaylist = async (entry: ListeningHistoryEntry): Promise<PlaylistData> => {
-  const sermonId = getEntrySermon(entry).id
+  const sermonId = getEntrySermon(entry)?.id
+  if (!sermonId) return entry.playlist
+
   const playlistId = entry.playlist.id
 
   const findPlaylist = (sections: SectionData[]): PlaylistData | undefined =>

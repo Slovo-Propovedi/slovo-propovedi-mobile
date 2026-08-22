@@ -25,7 +25,7 @@ export const recordSermonSwitchAction = action(
     const current = ctx.get(historyAtom)
 
     // --- Flush old sermon (read-modify-write in one pass) ---
-    const oldIndex = current.findIndex(e => getEntrySermon(e).id === params.oldSermonId)
+    const oldIndex = current.findIndex(e => getEntrySermon(e)?.id === params.oldSermonId)
     let flushed: ListeningHistory
     if (oldIndex !== -1 && params.oldPositionMs > 0) {
       const oldEntry = current[oldIndex]
@@ -40,7 +40,7 @@ export const recordSermonSwitchAction = action(
 
     // --- Create/update new sermon entry ---
     const newSermonId = params.newAudio.id
-    const existingIndex = flushed.findIndex(e => getEntrySermon(e).id === newSermonId)
+    const existingIndex = flushed.findIndex(e => getEntrySermon(e)?.id === newSermonId)
 
     let next: ListeningHistory
     if (existingIndex === -1) {

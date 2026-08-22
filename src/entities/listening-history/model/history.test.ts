@@ -25,6 +25,8 @@ jest.mock('entities/player', () => {
       id: z.string(),
       title: z.string(),
     }),
+    toAudioPlayerData: (sermon?: { audioUrl?: null | string } | null) =>
+      sermon?.audioUrl ? sermon : null,
   }
 })
 
@@ -114,7 +116,7 @@ describe('listening-history model', () => {
       expect(snapshot).toBeNull()
       // Entries should be unchanged
       expect(ctx.get(historyAtom)).toHaveLength(1)
-      expect(getEntrySermon(ctx.get(historyAtom)[0]).id).toBe('sermon-1')
+      expect(getEntrySermon(ctx.get(historyAtom)[0])?.id).toBe('sermon-1')
     })
   })
 
@@ -127,7 +129,7 @@ describe('listening-history model', () => {
 
       const atomState = ctx.get(historyAtom)
       expect(atomState).toHaveLength(1)
-      expect(getEntrySermon(atomState[0]).id).toBe('sermon-1')
+      expect(getEntrySermon(atomState[0])?.id).toBe('sermon-1')
       expect(atomState[0].positionMs).toBe(0)
       expect(atomState[0].durationMs).toBe(0)
       expect(atomState[0].lastPlayedAt).toBeGreaterThanOrEqual(before)
@@ -136,7 +138,7 @@ describe('listening-history model', () => {
         (await AsyncStorage.getItem(LISTENING_HISTORY)) ?? '[]',
       ) as ListeningHistory
       expect(stored).toHaveLength(1)
-      expect(getEntrySermon(stored[0]).id).toBe('sermon-1')
+      expect(getEntrySermon(stored[0])?.id).toBe('sermon-1')
     })
 
     test('resets completed entry to head with position 0', async () => {
@@ -152,7 +154,7 @@ describe('listening-history model', () => {
 
       const atomState = ctx.get(historyAtom)
       expect(atomState).toHaveLength(1)
-      expect(getEntrySermon(atomState[0]).id).toBe('sermon-1')
+      expect(getEntrySermon(atomState[0])?.id).toBe('sermon-1')
       expect(atomState[0].positionMs).toBe(0)
       expect(atomState[0].durationMs).toBe(0)
       expect(atomState[0].lastPlayedAt).toBeGreaterThan(100)
@@ -171,10 +173,10 @@ describe('listening-history model', () => {
       await recordPlaybackStartAction(ctx, mockAudio, mockPlaylist)
 
       const atomState = ctx.get(historyAtom)
-      expect(getEntrySermon(atomState[0]).id).toBe('sermon-1')
+      expect(getEntrySermon(atomState[0])?.id).toBe('sermon-1')
       expect(atomState[0].positionMs).toBe(500)
       expect(atomState[0].durationMs).toBe(1000)
-      expect(getEntrySermon(atomState[1]).id).toBe('sermon-2')
+      expect(getEntrySermon(atomState[1])?.id).toBe('sermon-2')
     })
 
     test('merge branch strips playlists from audio and keeps entry/playlist consistent', async () => {
@@ -314,7 +316,7 @@ describe('listening-history model', () => {
       await removeHistoryEntryAction(ctx, 'sermon-1')
 
       expect(ctx.get(historyAtom)).toHaveLength(1)
-      expect(getEntrySermon(ctx.get(historyAtom)[0]).id).toBe('sermon-2')
+      expect(getEntrySermon(ctx.get(historyAtom)[0])?.id).toBe('sermon-2')
     })
 
     test('no-op when sermon id not found', async () => {

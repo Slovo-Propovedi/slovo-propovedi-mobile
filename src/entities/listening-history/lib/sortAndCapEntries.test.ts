@@ -3,6 +3,21 @@ import { MAX_HISTORY_ENTRIES } from './constants'
 import { getEntrySermon } from './getEntrySermon'
 import { sortAndCapEntries } from './sortAndCapEntries'
 
+jest.mock('entities/player', () => {
+  const z = jest.requireActual('zod').default
+  return {
+    audioPlayerDataSchema: z.object({
+      artist: z.string(),
+      artwork: z.string(),
+      audioUrl: z.string(),
+      id: z.string(),
+      title: z.string(),
+    }),
+    toAudioPlayerData: (sermon?: { audioUrl?: null | string } | null) =>
+      sermon?.audioUrl ? sermon : null,
+  }
+})
+
 const makeEntry = (sermonId: string, lastPlayedAt: number): ListeningHistoryEntry => ({
   durationMs: 1000,
   lastPlayedAt,
@@ -31,7 +46,7 @@ describe('sortAndCapEntries', () => {
       makeEntry('s-3', 200),
     ]
     const result = sortAndCapEntries(entries)
-    expect(result.map(e => getEntrySermon(e).id)).toEqual(['s-2', 's-3', 's-1'])
+    expect(result.map(e => getEntrySermon(e)?.id)).toEqual(['s-2', 's-3', 's-1'])
   })
 
   test('caps overflow and drops oldest entries', () => {
@@ -40,7 +55,7 @@ describe('sortAndCapEntries', () => {
     )
     const result = sortAndCapEntries(entries)
     expect(result).toHaveLength(MAX_HISTORY_ENTRIES)
-    expect(getEntrySermon(result[0]).id).toBe(`s-${MAX_HISTORY_ENTRIES + 9}`)
+    expect(getEntrySermon(result[0])?.id).toBe(`s-${MAX_HISTORY_ENTRIES + 9}`)
   })
 
   test('dedupes by sermon id keeping most recent', () => {
@@ -51,7 +66,7 @@ describe('sortAndCapEntries', () => {
     ]
     const result = sortAndCapEntries(entries)
     expect(result).toHaveLength(2)
-    const s1Entry = result.find(e => getEntrySermon(e).id === 's-1')
+    const s1Entry = result.find(e => getEntrySermon(e)?.id === 's-1')
     expect(s1Entry?.lastPlayedAt).toBe(300)
   })
 
