@@ -55,6 +55,7 @@
 | [`contracts/rest-api.md`](./contracts/rest-api.md)                     | REST API и сгенерированный клиент (Orval)                                |
 | [`contracts/storage.md`](./contracts/storage.md)                       | AsyncStorage: ключи, токены, позиция                                     |
 | [`contracts/local-db.md`](./contracts/local-db.md)                     | Встроенная БД `src/shared/api/db/`                                       |
+| [`contracts/native-modules.md`](./contracts/native-modules.md)         | Граница JS→натив: expo-audio, expo-asset, правила валидации              |
 
 > Файлы, помеченные «в разработке» или ещё не созданные, добавляются по мере работы. Таблица служит картой, а не обязательным списком существующих файлов.
 

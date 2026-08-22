@@ -309,6 +309,17 @@ export const COLORS = {
 
 **Rationale:** `as` suppresses TypeScript's type checking at runtime. When the assumption behind `as` is wrong (e.g., API returns `null` where the type says `string`), the code compiles but crashes at runtime. This was a root cause of Issue #45 crashes.
 
+### Native Module Boundary
+
+Values passed to native modules must be validated at the JS boundary.
+
+- For URIs use `hasUriProtocol` from `shared/lib/app-icon` — native `java.net.URL` casts throw on protocol-less values (`MalformedURLException`).
+- Wrap native calls that can throw in try-catch + `reportError`. Cosmetic features (lock screen artwork, metadata) must never crash the app.
+- expo-asset: `asset.uri`/`asset.localUri` may be bare asset names in release builds — validate before use.
+- AsyncStorage data survives app updates — treat stored values as untrusted legacy input; validate at the read boundary.
+
+**Rationale:** Issue #45 crash loop (protocol-less `assets_fallbackartwork` → `MalformedURLException` → uncaught throw → fatal). See [`docs/contracts/native-modules.md`](docs/contracts/native-modules.md).
+
 ### Styling
 
 ```typescript

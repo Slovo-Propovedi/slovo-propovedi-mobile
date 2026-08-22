@@ -228,6 +228,8 @@ const newAudio: AudioPlayerData = { ...nextTrack, artwork: playlist.artwork, aud
 
 Фикс: crash-loop устраняется связкой правок Issue #45 — `handleTrackEnd` обёрнут в try-catch (нет unhandled rejection), zod-схемы приведены к честному `artwork: string | null` (Баг 4), а ошибки сервисов/слушателей теперь идут в `reportError` → глобальный диалог вместо молчаливого краша. Необрабатываемый фатальный нативный краш по-прежнему завершает процесс (см. [error-handling.md](./error-handling.md) → GlobalErrorHandler).
 
+Общий контракт передачи данных из JS в нативные модули (expo-audio, expo-asset), правила валидации на границе и диагностика нативного краша — в [../contracts/native-modules.md](../contracts/native-modules.md).
+
 ### Баг 4: Zod schema drift убивает auto-advance молча (ИСПРАВЛЕНО)
 
 `TrackAutoAdvanceService.ts:46-106`: `handleTrackEnd` перечитывает `CURRENT_AUDIO`, `CURRENT_PLAYLIST`, `CURRENT_REPEAT_MODE` из AsyncStorage и парсит их zod-схемами (`parseAudioPlayerData`/`parsePlaylistData`). Если парсинг вернул `undefined` (например, `sermonSchema` требует `artwork: z.string()`, а API для некоторых проповедей отдаёт `null`/отсутствующее поле), `handleTrackEnd` молча выходит на L69-70 — авто-переход умирает **без единой ошибки в логах**.
