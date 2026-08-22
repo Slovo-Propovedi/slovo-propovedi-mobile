@@ -38,12 +38,15 @@
 
 `src/shared/model/updateInstall.ts` — состояние процесса самообновления (общее для баннера, диалога и push-уведомления):
 
-- `updateStateAtom` (`UpdateState`): `'idle' | 'downloading' | 'extracting' | 'installing' | 'error'` — этап самообновления;
+- `updateStateAtom` (`UpdateState`): `'idle' | 'downloading' | 'extracting' | 'installing' | 'permission' | 'error'` — этап самообновления;
 - `updateProgressAtom` (number 0–100): процент загрузки ZIP;
 - `updateErrorAtom` (`null | string`): текст ошибки для диалога;
 - `updateDialogVisibleAtom` (boolean): видимость диалога обновления;
 - `startUpdateAction` — запуск самообновления (см. ниже);
+- `resumeUpdateAfterPermissionAction` — продолжение после возврата из настроек разрешения (см. ниже);
 - `resetUpdateAction` — сброс состояния и скрытие диалога.
+
+Файл разбит на `updateInstall.ts` (типы, атомы, чистые хелперы `isBusyUpdateState`/`decidePermissionResume`) и `updateInstallFlow.ts` (экшены и поток).
 
 Проверка запускается в `app/_RootLayout.tsx` после `InteractionManager.runAfterInteractions`.
 
@@ -66,21 +69,26 @@
 | `downloading`        | «Обновление»           | прогресс-бар + «Загрузка... N%»                                            |
 | `extracting`         | «Обновление»           | «Распаковка...»                                                            |
 | `installing`         | «Обновление»           | «Запуск установки...»                                                      |
+| `permission`         | «Требуется разрешение» | объяснение + кнопки «Открыть настройки» / «Не сейчас»                      |
 | `error`              | «Ошибка обновления»    | текст ошибки, кнопки «Открыть в браузере» / «Закрыть»                      |
 
 - «Обновить» → `startUpdate()`; во время загрузки закрытие диалога заблокировано (`onRequestClose` — no-op).
-- Закрытие («Не обновлять», «Закрыть», back) вызывает `reset()` хука и `onClose`.
+- Закрытие («Не обновлять», «Закрыть», «Не сейчас», back) вызывает `reset()` хука и `onClose`.
 - Ссылки открывают `releaseUrlAtom` через `openReleaseUrl` (`lib/openReleaseUrl.ts`) с защитой: только `https://`.
 
-Составные части: `UpdateDialogConfirm.tsx`, `UpdateDialogProgress.tsx`, `UpdateDialogError.tsx`, общие стили — `updateDialogStyles.ts`. Кнопки переиспользуют `shared/ui/confirm-dialog/ConfirmDialogButton`.
+Составные части: `UpdateDialogConfirm.tsx`, `UpdateDialogProgress.tsx`, `UpdateDialogPermission.tsx`, `UpdateDialogError.tsx`, общие стили — `updateDialogStyles.ts`. Кнопки переиспользуют `shared/ui/confirm-dialog/ConfirmDialogButton`.
 
 ## Самообновление (in-app)
 
-Полный поток: **баннер → диалог подтверждения → скачивание ZIP → распаковка APK → запуск системного установщика Android**. Работает только на Android; на iOS и при ошибках — фолбэк на открытие страницы релизов в браузере.
+Полный поток: **баннер → диалог подтверждения → скачивание ZIP → распаковка APK → проверка разрешения → установка через `PackageInstaller`**. Работает только на Android; на iOS и при ошибках — фолбэк на открытие страницы релизов в браузере.
+
+> **F-Droid:** сборки F-Droid подписываются собственным ключом F-Droid, поэтому самообновление в них не сработает — подпись установленной версии не совпадёт с подписью APK из релиза (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). Обновление таких сборок — через клиент F-Droid.
 
 ### Фича app-update
 
 `src/features/app-update/lib/useUpdateInstall.ts` — хук `useUpdateInstall()`, тонкая обёртка над общим состоянием из `shared/model/updateInstall.ts`. Публичный API хука не изменился: `{ error, progress, reset, startUpdate, updateState }`. Атомы и логика переехали в `shared/model`, чтобы и `features/update-notification` (обработчик push), и `widgets/update-status` (диалог/баннер) могли их использовать без нарушения FSD (импорт features → features запрещён).
+
+Хук также подписывается на `AppState` (`change` → `active`, debounce 500 мс) и вызывает `resumeUpdateAfterPermissionAction` — это продолжает установку, когда пользователь вернулся из системных настроек разрешения.
 
 Логика `startUpdateAction` (guard-клаузы по порядку):
 
@@ -88,9 +96,26 @@
 2. платформа не Android (iOS) → открыть страницу релизов в браузере;
 3. офлайн (`!isOnlineAtom`) → `updateErrorAtom = «Нет подключения к интернету»`, состояние `error`, диалог видим;
 4. нет `zipDownloadUrlAtom` → открыть страницу релизов в браузере;
-5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с текстом ошибки; в `finally` — `cleanupUpdateFiles()`.
+5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с текстом ошибки.
 
-`resetUpdateAction` возвращает атомы в исходное состояние и скрывает диалог — вызывается при закрытии диалога.
+**Тайминг очистки:** `cleanupUpdateFiles()` вызывается в **начале** потока (перед скачиванием — чистит остатки прошлого запуска), а НЕ в `finally`. Файлы никогда не удаляются, пока сессия `PackageInstaller` может их читать (раньше `finally` удалял APK сразу после старта интента установщика — причина «Возникла проблема с файлом приложения»).
+
+### Разрешение установки из этого источника
+
+После распаковки APK `startUpdateAction` вызывает `canRequestPackageInstalls()`:
+
+- разрешение есть → сразу `installing` → `installApk`;
+- разрешения нет → путь APK сохраняется в module-level `pendingApkPath`, состояние `permission` (диалог «Требуется разрешение»).
+
+Когда пользователь возвращается из настроек (`AppState` → `active`, debounce 500 мс), `resumeUpdateAfterPermissionAction`:
+
+1. если состояние не `permission` — выход;
+2. повторно `canRequestPackageInstalls()` + проверка существования APK (`apkFileExists`) через чистый хелпер `decidePermissionResume`:
+   - `wait` (разрешения всё ещё нет) — остаёмся в `permission`;
+   - `install` (разрешение есть, APK на месте) — `installing` → `installApk`;
+   - `restart` (разрешение есть, APK пропал) — перезапуск всего потока `startUpdateAction`.
+
+`resetUpdateAction` очищает `pendingApkPath` и возвращает атомы в исходное состояние.
 
 ### Сервис update-service
 
@@ -100,15 +125,28 @@
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `downloadUpdateZip(url, onProgress?)`         | Скачивание ZIP через `File.createDownloadTask` (expo-file-system) в `<cache>/updates/slovo-propovedi-update.zip`; прогресс в процентах через колбэк. Guard: URL только `https://`.                                                       |
 | `extractApkFromZip(zipPath)`                  | Поиск первого `.apk` внутри архива (`listContents`), селективная распаковка (`unzip`, `react-native-zip-archive`) и переименование в `update.apk` — оригинальное имя `Slovo.Propovedi v<версия>.apk` содержит пробелы и небезопасно для shell. |
-| `installApk(apkPath)`                         | Запуск системного установщика: `IntentLauncher.startActivityAsync(VIEW_ACTION, ...)` с флагами `FLAG_ACTIVITY_NEW_TASK \| FLAG_GRANT_READ_URI_PERMISSION` и MIME `application/vnd.android.package-archive`.                              |
-| `cleanupUpdateFiles()`                        | Удаление каталога `<cache>/updates` (вызывается в `finally`); ошибки логируются, не бросаются. На не-Android — no-op.                                                                                                                   |
+| `installApk(apkPath)`                         | Если доступен локальный модуль `apk-installer` — установка через `PackageInstaller` (сессия, стриминг APK, commit; результат приходит broadcast'ом). Иначе — фолбэк `IntentLauncher.startActivityAsync(VIEW_ACTION, ...)` (Expo Go / экзотика). |
+| `canRequestPackageInstalls()`                 | Обёртка над нативным `canRequestPackageInstalls()`; при недоступности модуля возвращает `true` (фолбэк-установщик сам решает).                                                                                                          |
+| `openInstallPermissionSettings()`             | Открывает системный экран «Разрешить установку из этого источника» (`Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES`).                                                                                                                      |
+| `apkFileExists(apkPath)`                      | Проверка существования APK на диске (`new File(path).exists`) — используется при возобновлении после разрешения.                                                                                                                        |
+| `cleanupUpdateFiles()`                        | Удаление каталога `<cache>/updates` (вызывается в начале потока обновления); ошибки логируются, не бросаются. На не-Android — no-op.                                                                                                   |
 
 Все функции установки бросают ошибку при вызове не на Android (`assertAndroid`) — Fail Fast.
 
+### Локальный модуль apk-installer
+
+`modules/apk-installer` — локальный Expo-модуль (Kotlin, `expo-modules-core`), подключён через `"apk-installer": "file:./modules/apk-installer"` в корневом `package.json`. API:
+
+- `installApk(apkPath)` — создаёт `PackageInstaller.SessionParams(MODE_FULL_INSTALL)` с `setAppPackageName(context.packageName)` (self-update), стримит APK в сессию (`openWrite("base.apk", 0, -1)` → `fsync`), коммитит с `PendingIntent` broadcast (`FLAG_UPDATE_CURRENT | FLAG_MUTABLE`). Promise резолвится из `BroadcastReceiver` (`STATUS_SUCCESS` → `{ status: 'success' }`; `STATUS_PENDING_USER_ACTION` → запуск системного диалога подтверждения; failure-статусы → reject с описанием). При self-update процесс обычно убивается до `STATUS_SUCCESS` — JS трактует промис как fire-and-forget после commit.
+- `canRequestPackageInstalls()` — `packageManager.canRequestPackageInstalls()` (API 26+; ниже — `true`).
+- `openInstallPermissionSettings()` — системный экран разрешения.
+- `isApkInstallerAvailable()` — безопасная проверка наличия нативного модуля (try/catch вокруг `requireNativeModule`; `false` в Expo Go / web).
+
 ### Разрешение и зависимость
 
-- **`REQUEST_INSTALL_PACKAGES`** объявлен в `app.json` (`android.permissions`) — разрешение Android на установку APK из приложения.
+- **`REQUEST_INSTALL_PACKAGES`** объявлен в `app.json` (`android.permissions`) и в закоммиченном `android/app/src/main/AndroidManifest.xml` (CI `prebuild --clean` регенерирует манифест из `app.json`, локальные gradle-сборки используют закоммиченный).
 - **`react-native-zip-archive`** — распаковка ZIP-ассета (см. [`../decisions.md`](../decisions.md) → Approved stack → Обновления).
+- **`modules/apk-installer`** — локальный модуль для `PackageInstaller` (см. [`../decisions.md`](../decisions.md) → Approved stack → Обновления).
 
 ## Push-уведомления vs баннер
 

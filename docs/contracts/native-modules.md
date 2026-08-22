@@ -31,6 +31,15 @@ stack: CodedError ← applyMetadata ← anonymous (setInterval retry callback)
 - `downloadAsync()` — асинхронный; до его завершения `localUri` невалиден. Использовать локальный uri только после успешного `downloadAsync` и только если он прошёл `hasUriProtocol`.
 - Паттерн: `localAppIconUri` присваивается только валидному uri; `APP_ICON_URI` — live binding (`export let`), переприсваивается на валидный локальный uri после загрузки.
 
+## apk-installer контракт
+
+`modules/apk-installer` — локальный Expo-модуль (Kotlin) для self-update через Android `PackageInstaller` (см. [`../features/updates.md`](../features/updates.md)):
+
+- **Вход:** `installApk(apkPath)` принимает путь к APK. JS-граница (`src/shared/lib/update-service/updateService.ts`) проверяет `new File(apkPath).exists` ДО вызова; нативный код дополнительно резолвит `Uri.parse(apkPath).path` и повторно проверяет `File.exists()` — Fail Fast.
+- **Асинхронность:** промис резолвится из `BroadcastReceiver` (`STATUS_SUCCESS`), а не по завершении commit. При self-update процесс обычно убивается до этого — JS трактует промис как fire-and-forget.
+- **Ошибки:** failure-статусы (`STATUS_FAILURE*`) реджектят промис с описанием; `STATUS_PENDING_USER_ACTION` запускает системный диалог подтверждения без резолва.
+- **Разрешение:** `canRequestPackageInstalls()` / `openInstallPermissionSettings()` — проверка и открытие системного экрана «Разрешить установку из этого источника».
+
 ## Общие правила границы JS→native (чек-лист)
 
 1. **Валидация на JS-границе.** Любое значение, уходящее в нативный модуль, проверяется до вызова. Для URI — `hasUriProtocol` (`src/shared/lib/app-icon.ts`); паттерн тот же, что в LockScreenControls.

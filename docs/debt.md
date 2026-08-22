@@ -109,6 +109,12 @@
 ## Updates (самообновление)
 
 - [ ] iOS in-app update not supported — `src/shared/lib/update-service/updateService.ts`, `src/shared/model/updateInstall.ts` — iOS falls back to browser; implement iOS OTA or TestFlight flow when needed
+- [ ] **Фолбэк `ACTION_VIEW` (IntentLauncher) не проверен на устройстве в новом потоке.** `src/shared/lib/update-service/updateService.ts` — `installApk` использует `PackageInstaller` через `modules/apk-installer`, но при недоступности модуля (Expo Go / экзотика) остаётся старый `IntentLauncher`-путь с известной гонкой удаления APK. Вернуться, если понадобится поддержка Expo Go для self-update.
+- [ ] **`setRequireUserAction(USER_ACTION_NOT_REQUIRED)` — best-effort.** `modules/apk-installer/android/.../ApkInstallerModule.kt` — на не-Play установщиках (OEM ROMs) флаг может игнорироваться, и системный диалог подтверждения всё равно появится (`STATUS_PENDING_USER_ACTION`). Проверить на реальных устройствах Android 16.
+- [ ] **Путь `STATUS_PENDING_USER_ACTION` (системный диалог подтверждения) не проверен на устройстве.** `modules/apk-installer/android/.../ApkInstallerModule.kt` — обработчик запускает confirmation intent; на Android 16 с `USER_ACTION_NOT_REQUIRED` может не срабатывать. Вернуться после on-device теста.
+- [ ] **`EXTRA_LEGACY_STATUS` удалён из SDK, используется строковая константа.** `modules/apk-installer/android/.../ApkInstallerModule.kt` — `"android.content.pm.extra.LEGACY_STATUS"`; система всё ещё шлёт extra, но это не гарантировано в будущих Android. Убрать из сообщения об ошибке, если перестанет приходить.
+- [ ] **`UpdateDialog.test.tsx` — pre-existing «overlapping act()» от error-теста.** `src/widgets/update-status/ui/UpdateDialog.test.tsx` — error-тест не дожидается `Linking.openURL` (fire-and-forget), что даёт warning и ломает последующие тесты; permission-тесты размещены ДО error-теста как workaround. Починить error-тест (await промиса) при следующей правке файла.
+- [ ] **Маппинг ошибок установки опирается на substring-поиск имён статусов в сообщении нативного модуля.** `src/shared/lib/update-service/installErrorMessage.ts` — `getInstallErrorMessage` ищет `STATUS_FAILURE_*`/`INSTALL_FAILED_UPDATE_INCOMPATIBLE` подстрокой в тексте ошибки `apk-installer`; если нативный модуль изменит формат сообщения (или `EXTRA_LEGACY_STATUS` перестанет приходить), маппинг молча вернёт generic-текст. Вернуться при изменении формата ошибок `modules/apk-installer`.
 
 ## Navigation
 
