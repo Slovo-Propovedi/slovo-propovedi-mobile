@@ -5,7 +5,7 @@ import type { LockScreenMetadata, PlaybackStatus } from '../../lib/PlayerService
 interface AppStatePlaybackParams {
   currentAudio: {
     artist: string
-    artwork: string
+    artwork: null | string
     title: string
   } | null
   currentPlaylist: { title?: string } | null

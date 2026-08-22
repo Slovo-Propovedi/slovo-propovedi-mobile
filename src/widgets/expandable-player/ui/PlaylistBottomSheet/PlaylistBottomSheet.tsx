@@ -24,7 +24,7 @@ interface PlaylistBottomSheetProps {
 }
 
 interface TrackListItemData {
-  artwork?: string
+  artwork?: null | string
   id: string
   subtitle?: string
   title: string

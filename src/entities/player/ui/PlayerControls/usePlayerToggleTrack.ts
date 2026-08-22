@@ -14,7 +14,7 @@ interface UsePlayerToggleTrackParams {
   setLockScreenMetadata: (metadata: {
     albumTitle: string
     artist: string
-    artworkUrl: string
+    artworkUrl: null | string
     title: string
   }) => void
 }

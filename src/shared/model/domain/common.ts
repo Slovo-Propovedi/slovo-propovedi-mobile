@@ -10,7 +10,7 @@ import z from 'zod'
 
 /** Интерфейс для плейлиста (PlaylistData). Используется для опережающего объявления типов. */
 interface PlaylistDataDef {
-  artwork: string
+  artwork: null | string
   description?: string | undefined
   id: string
   sections?: SectionDataDef[] | undefined
@@ -35,7 +35,7 @@ interface SectionDataDef {
 /** Интерфейс для проповеди (SermonData). Используется для опережающего объявления типов. */
 interface SermonDataDef {
   artist: string
-  artwork: string
+  artwork: null | string
   audioUrl?: null | string | undefined
   book?: null | string | undefined
   chapter?: null | number | number[] | undefined
@@ -68,7 +68,8 @@ export type SectionData = z.infer<typeof sectionSchema>
 /** Схема для проповеди (SermonData). */
 export const sermonSchema = z.object({
   artist: z.string(),
-  artwork: z.string(),
+  // API может вернуть null (несмотря на OpenAPI-спеку) — оставляем null как есть
+  artwork: z.string().nullable(),
   audioUrl: z.string().nullable().optional(),
   book: z.string().nullish(),
   chapter: z.union([z.number(), z.array(z.number())]).nullish(),
@@ -88,7 +89,7 @@ export type SermonData = z.infer<typeof sermonSchema>
 
 /** Схема для плейлиста (PlaylistData). */
 export const playlistSchema = z.object({
-  artwork: z.string(),
+  artwork: z.string().nullable(),
   description: z.string().optional(),
   id: z.string(),
   sections: z.lazy((): z.ZodType<SectionDataDef[]> => z.array(sectionSchema)).optional(),

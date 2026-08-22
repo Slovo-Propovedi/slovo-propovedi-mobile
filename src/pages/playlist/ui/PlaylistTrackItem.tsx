@@ -3,7 +3,7 @@ import { INDENTS } from 'shared/ui/theme'
 import { TracksListItem } from 'shared/ui/track-list'
 
 interface PlaylistTrackItemProps {
-  artwork: string
+  artwork: null | string
   audioUrl?: null | string
   cacheTrigger?: number
   currentAudioId?: string

@@ -33,13 +33,11 @@ export const BooksListScreen = () => {
 
       <View style={styles.list}>
         {books.map(book => (
-          <TouchableListItem<{ artwork: string; title: string }>
+          <TouchableListItem
+            data={book}
             key={book.id}
+            onPress={onPressListItem}
             size={ListItemSize.Middle}
-            data={book as { artwork: string; title: string }}
-            onPress={
-              onPressListItem as OnPressTouchableListItem<{ artwork: string; title: string }>
-            }
           />
         ))}
       </View>

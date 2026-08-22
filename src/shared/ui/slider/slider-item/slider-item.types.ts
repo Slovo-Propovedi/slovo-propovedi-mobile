@@ -23,7 +23,7 @@ export enum WhereIsSlideTitleLocated {
 }
 
 export interface SliderItemProps {
-  artwork: string | undefined
+  artwork: null | string | undefined
   descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle
   descriptionSubTitle?: string
   descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign

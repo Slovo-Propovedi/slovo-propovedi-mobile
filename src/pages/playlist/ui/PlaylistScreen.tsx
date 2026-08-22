@@ -24,7 +24,7 @@ import { buildTracksListData, usePlaylistNavigationOptions } from './usePlaylist
 
 const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 
-const EMPTY_PLAYLIST = { artwork: '', description: '', id: 'default', sermons: [], title: '' }
+const EMPTY_PLAYLIST = { artwork: null, description: '', id: 'default', sermons: [], title: '' }
 
 export const PlaylistScreen = () => {
   const { currentTheme } = useTheme()

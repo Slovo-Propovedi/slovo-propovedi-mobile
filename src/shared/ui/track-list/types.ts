@@ -2,7 +2,7 @@ import { type StyleProp, type ViewStyle } from 'react-native'
 import { type MenuAction } from './TracksListItemContextMenu'
 
 export interface TracksListItemProps {
-  artwork?: string
+  artwork?: null | string
   audioUrl?: string
   /** Incrementing value to trigger cache status refresh from outside (e.g. Batch caching). */
   cacheTrigger?: number

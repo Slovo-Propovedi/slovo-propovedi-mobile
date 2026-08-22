@@ -12,7 +12,7 @@ interface CoverImageProps {
   imageStyle?: StyleProp<ImageStyle>
   style?: StyleProp<ViewStyle>
   testID?: string
-  uri?: string
+  uri?: null | string
 }
 
 export const CoverImage = ({

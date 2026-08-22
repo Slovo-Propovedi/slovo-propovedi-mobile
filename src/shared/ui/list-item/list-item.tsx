@@ -7,7 +7,7 @@ import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 import { ListItemSize } from './list-item.types'
 
-type ListItemComponent = <T extends { artwork: string; title: string }>(
+type ListItemComponent = <T extends { artwork: null | string; title: string }>(
   props: ListItemProps<T>,
 ) => null | React.JSX.Element
 

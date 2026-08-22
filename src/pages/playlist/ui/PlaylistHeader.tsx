@@ -6,7 +6,7 @@ import { createHeaderStyles } from './headerStyles'
 import { QueueControls } from './QueueControls'
 
 interface PlaylistHeaderProps {
-  artwork: string | undefined
+  artwork: null | string | undefined
   description?: string
   headerImageHeight: number
   imageOpacityStyle: ReturnType<typeof useAnimatedStyle>

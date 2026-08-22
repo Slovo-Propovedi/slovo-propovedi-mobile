@@ -10,7 +10,7 @@ import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
 import { createTracksListStyles } from './styles'
 
 interface TracksListItemContentProps {
-  artwork?: string
+  artwork?: null | string
   dotsOnPress: () => void
   isAudioPlaying: boolean
   isCached: boolean

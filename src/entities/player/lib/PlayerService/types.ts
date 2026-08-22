@@ -30,8 +30,8 @@ export interface LockScreenMetadata {
   albumTitle?: string
   /** Artist name. */
   artist?: string
-  /** URL to album artwork image. */
-  artworkUrl?: string
+  /** URL to album artwork image, or null when the track has no artwork. */
+  artworkUrl?: null | string
   /** Track title (required). */
   title: string
 }

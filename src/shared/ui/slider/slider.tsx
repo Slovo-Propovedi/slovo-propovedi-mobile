@@ -20,7 +20,7 @@ import { createSliderStyles as styles } from './slider.styles'
 type FontSizes = typeof FONT_SIZES
 
 interface SliderItemsElement<D extends object> {
-  artwork: string | undefined
+  artwork: null | string | undefined
   data: D
   description?: string
 }

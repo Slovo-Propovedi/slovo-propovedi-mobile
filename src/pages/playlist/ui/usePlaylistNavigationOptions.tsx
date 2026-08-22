@@ -7,7 +7,7 @@ import { PlaylistCacheMenu } from './PlaylistCacheMenu'
 
 export type TracksListData = ReturnType<typeof buildTracksListData>
 
-export const buildTracksListData = (list: SermonData[], artwork: string) =>
+export const buildTracksListData = (list: SermonData[], artwork: null | string) =>
   list.map(sermon => ({
     artwork,
     audioUrl: sermon.audioUrl,

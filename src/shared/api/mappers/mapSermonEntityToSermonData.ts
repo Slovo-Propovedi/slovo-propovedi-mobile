@@ -8,7 +8,7 @@ import { mapPlaylistEntityToPlaylistData } from './mapPlaylistEntityToPlaylistDa
  */
 export const mapSermonEntityToSermonData = (apiSermon: APITypes.SermonEntity): SermonData => ({
   artist: apiSermon.artist,
-  artwork: apiSermon.artwork,
+  artwork: apiSermon.artwork ?? null,
   audioUrl: apiSermon.audioUrl ?? null,
   book: apiSermon.book,
   chapter: apiSermon.chapter,

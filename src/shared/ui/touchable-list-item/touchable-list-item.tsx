@@ -5,7 +5,7 @@ import { TouchableItem } from '../touchable-item'
 
 export type OnPressTouchableListItem<T> = (data: T, event: GestureResponderEvent) => void
 
-type TouchableListItemComponent = <T extends { artwork: string; title: string }>(
+type TouchableListItemComponent = <T extends { artwork: null | string; title: string }>(
   props: TouchableListItemProps<T>,
 ) => React.JSX.Element
 

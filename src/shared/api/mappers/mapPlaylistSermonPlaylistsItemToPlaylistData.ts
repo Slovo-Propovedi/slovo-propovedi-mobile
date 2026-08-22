@@ -10,7 +10,7 @@ import { type APITypes } from '../generated'
 export const mapPlaylistSermonPlaylistsItemToPlaylistData = (
   item: APITypes.PlaylistSermonPlaylistsItem,
 ): PlaylistData => ({
-  artwork: '',
+  artwork: null,
   description: undefined,
   id: item.id,
   sections: undefined,
