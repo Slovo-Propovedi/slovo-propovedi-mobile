@@ -1,0 +1,10 @@
+{
+  "name": "apk-installer",
+  "version": "0.1.0",
+  "description": "Local Expo module for in-app self-update via Android PackageInstaller",
+  "main": "index.ts",
+  "license": "GPL-3.0-or-later",
+  "peerDependencies": {
+    "expo": "*"
+  }
+}

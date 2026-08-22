@@ -46,6 +46,7 @@
     "visualize-deps": "npx fsd-cruise"
   },
   "dependencies": {
+    "apk-installer": "file:./modules/apk-installer",
     "@expo/vector-icons": "^15.1.1",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@react-native-async-storage/async-storage": "2.2.0",
