@@ -125,7 +125,7 @@ Upstream-причины:
 
 `playerService.setLockScreenMetadata({ albumTitle, artist, artworkUrl, title })` → `LockScreenControls.setMetadata` → `player.setActiveForLockScreen(true, metadata, { isLiveStream: false, showSeekBackward, showSeekForward })`. Скипается в Expo Go (`isExpoGo`).
 
-Artwork резолвится с фолбэком: `artworkUrl = metadata.artworkUrl || getLocalAppIconUri() || undefined` — приоритет artwork трека, затем локальная иконка приложения (`getLocalAppIconUri` из `src/shared/lib/app-icon.ts`: ассет `assets/fallback-artwork.png` через `Asset.fromModule(...)` + `downloadAsync()` → `file://` uri), иначе — без артворка. Пустая строка никогда не уходит в натив: на Android `URL('')` даёт `MalformedURLException` и роняет весь `setActiveForLockScreen` — плеер в панели уведомлений/lock screen не создавался (главный симптом бага), на iOS уведомление показывалось без артворка. Ограничение: `downloadAsync` — fire-and-forget, поэтому до его завершения уведомление может создаться без артворка; следующий `setMetadata` поправит.
+Artwork резолвится с фолбэком: `artworkUrl = [metadata.artworkUrl, getLocalAppIconUri()].find(hasUriProtocol)` — приоритет artwork трека, затем локальная иконка приложения (`getLocalAppIconUri` из `src/shared/lib/app-icon.ts`: ассет `assets/fallback-artwork.png` через `Asset.fromModule(...)` + `downloadAsync()` → `file://` uri), иначе — без артворка. `hasUriProtocol` отбрасывает значения без протокола (`assets_fallbackartwork` из release-сборки, `''`, `null`) — в натив уходит только валидный URL (`https://`, `http://`, `file://`, `asset:///`, `content://`). Если валидного значения нет, ключ `artworkUrl` полностью опускается (не отправляется даже как `undefined`). `setActiveForLockScreen` обёрнут в try-catch (см. Баг 3). Ограничение: `downloadAsync` — fire-and-forget, поэтому до его завершения уведомление может создаться без артворка; следующий `setMetadata` поправит.
 
 ## Персистенция позиции
 
@@ -211,7 +211,15 @@ const newAudio: AudioPlayerData = { ...nextTrack, artwork: playlist.artwork, aud
 
 ### Баг 3: Crash loop при перезапуске (ИСПРАВЛЕНО)
 
-Наиболее вероятно — нативный краш ExoPlayer/MediaSession (resume-попытки на уже released плеере):
+**Подтверждённая корневая причина (из реального crash log):** фолбэк-обложка возвращала URI без протокола (`assets_fallbackartwork`) в release-сборке — `getLocalAppIconUri()` после `downloadAsync()` отдавал `asset.localUri` как голое имя ассета. expo-audio `setActiveForLockScreen` (синхронный JSI-вызов) бросал `MalformedURLException` (`Cannot cast value for field 'artworkUrl'` — натив ждёт `java.net.URL`), а необработанный throw из колбэка `setInterval` (retry-путь `setMetadata`) приводил к фатальному крашу при восстановлении плеера на старте — crash loop на каждом запуске.
+
+Фикс (связка правок):
+
+- **Санитизация на границе** (`LockScreenControls.applyMetadata`): `artworkUrl = [metadata.artworkUrl, getLocalAppIconUri()].find(hasUriProtocol)` — `hasUriProtocol` пропускает только значения с протоколом (`https://`, `http://`, `file://`, `asset:///`, `content://`), отбрасывает голые имена (`assets_fallbackartwork`), `''`, `null`. Ключ `artworkUrl` **полностью опускается**, если валидного значения нет (не отправляется даже как `undefined`).
+- **Fail-safe** (`setActiveForLockScreen` в `applyMetadata` и `clear`): вызов обёрнут в try-catch — `console.error('[LockScreenControls] setActiveForLockScreen failed:', error)` + `reportError(error, 'Не удалось обновить данные плеера на экране блокировки')`. Метод никогда не бросает вверх: lock screen косметичен, ошибка показывает диалог, но не роняет процесс.
+- **Валидация в app-icon** (`src/shared/lib/app-icon.ts`): `localAppIconUri` присваивается только если `asset.localUri` прошёл `hasUriProtocol`; `APP_ICON_URI` — live binding (`export let`), обновляется на валидный локальный uri после загрузки (плейсхолдер в UI начинает рендериться).
+
+Ранее (до подтверждения корневой причины) считалось, что crash-loop вызывает нативный краш ExoPlayer/MediaSession:
 
 - ~~`handleTrackEnd` **без try-catch**~~ — исправлено (Issue #45, Phase 1): тело метода вынесено в приватный `advanceToNextTrack`, а `handleTrackEnd` оборачивает вызов в try-catch с логированием (`console.error('[TrackAutoAdvanceService] handleTrackEnd failed:', error)`) и `reportError`, так что `void trackAutoAdvanceService.handleTrackEnd()` больше не даёт unhandled promise rejection.
 - `GlobalErrorHandler` повторно вызывает `originalHandler(error, isFatal)` после `reportError` — фатальные ошибки по-прежнему убивают процесс (нативный краш не подавляется), но теперь перед этим показывается глобальный диалог ошибок (см. [error-handling.md](./error-handling.md)), а `markHistoryCompletedAction` снабжён `.catch` — асинхронная ошибка не роняет плеер. Это убирает симптом «показывает диалог, потом закрывается» для обрабатываемых ошибок.

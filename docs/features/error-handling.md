@@ -68,6 +68,7 @@
 | `entities/player/lib/PlayerService/TrackAutoAdvanceService` (parse) | Не удалось прочитать данные проповеди/плейлиста из хранилища   |
 | `entities/player/lib/PlayerService/index.web.ts`                    | Ошибка при воспроизведении аудио                               |
 | `entities/player/lib/PlayerService/BackgroundCachingService`        | Ошибка при фоновом кэшировании аудио                           |
+| `entities/player/lib/PlayerService/LockScreenControls.ts`           | Не удалось обновить данные плеера на экране блокировки         |
 | `entities/player/ui/PlayerControls/PlayerControls.tsx`              | Ошибка при переключении воспроизведения                        |
 
 Ошибки, связанные с AppState («activity is no longer available»), диалог не поднимают —

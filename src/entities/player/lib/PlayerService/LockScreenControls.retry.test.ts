@@ -8,6 +8,7 @@ jest.mock('shared/lib/isExpoEnvironment', () => ({
 }))
 
 jest.mock('shared/lib/app-icon', () => ({
+  ...jest.requireActual('shared/lib/app-icon'),
   getLocalAppIconUri: jest.fn(),
 }))
 
