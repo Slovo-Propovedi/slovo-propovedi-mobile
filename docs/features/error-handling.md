@@ -35,7 +35,7 @@
   моноширинные детали (selectable), кнопки «📋 Копировать» (expo-clipboard) и «Закрыть»;
 - `GlobalErrorDialog.tsx` — читает `globalErrorAtom` через `useAtom`, дисмисс через
   `useAction(dismissErrorAction)`. Рендерится в корневом layout `app/_RootLayout.tsx`
-  рядом с `NetworkBanner` / `ServerErrorToast` / `UpdateBanner`;
+  рядом с `NetworkBanner` / `ServerErrorToast` / `UpdateDialogRoot`;
 - `GlobalErrorHandler.tsx` — подписка на глобальные сбои: `ErrorUtils.setGlobalHandler`
   (нативные фатальные ошибки, с сохранением оригинального обработчика) и
   `window.addEventListener('unhandledrejection')` (web). Все события идут в `reportError`.

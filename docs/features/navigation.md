@@ -17,7 +17,7 @@
 - `history` — заголовок «История прослушивания», вход из вкладки «Еще» (`router.push('/history')`).
 - цвет фона контента и шапки — из `currentTheme`.
 
-Глобальные элементы поверх стека: `NetworkBanner`, `ServerErrorToast`, `UpdateBanner` (все — внутри `_RootLayout`).
+Глобальные элементы поверх стека: `NetworkBanner`, `ServerErrorToast`, `UpdateDialogRoot` (все — внутри `_RootLayout`).
 
 **Аппаратная кнопка «Назад» (Android)** — обработчик `BackHandler.addEventListener('hardwareBackPress', ...)` с каскадом:
 

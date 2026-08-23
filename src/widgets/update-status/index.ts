@@ -1,1 +1,1 @@
-export { UpdateBanner } from './ui/UpdateBanner'
+export { UpdateDialogRoot } from './ui/UpdateDialogRoot'

@@ -41,7 +41,6 @@ export {
   checkForUpdateAction,
   latestVersionAtom,
   releaseUrlAtom,
-  updateAvailableAtom,
   zipDownloadUrlAtom,
 } from './update'
 export {

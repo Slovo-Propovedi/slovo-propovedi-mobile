@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { BackHandler, InteractionManager, View } from 'react-native'
 import { showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
-import { UpdateBanner } from 'widgets/update-status'
+import { UpdateDialogRoot } from 'widgets/update-status'
 import { useUpdateNotificationResponse } from 'features/update-notification'
 import {
   closePlayerSheetAction,
@@ -104,7 +104,7 @@ const RootLayout = () => {
       </Stack>
       <NetworkBanner />
       <ServerErrorToast />
-      <UpdateBanner />
+      <UpdateDialogRoot />
       <GlobalErrorDialog />
     </View>
   )

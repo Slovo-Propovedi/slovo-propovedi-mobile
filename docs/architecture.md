@@ -86,7 +86,7 @@ src/entities/listening-history/
 ```
 app/
 ├── _layout.tsx          # корневой провайдер: reatomContext + ThemeProvider + ErrorBoundary
-├── _RootLayout.tsx      # корневой Stack, баннеры сети/обновлений, hardware back
+├── _RootLayout.tsx      # корневой Stack, баннер сети, диалог обновлений, hardware back
 ├── index.tsx            # Redirect → /listen
 ├── settings.tsx         # реэкспорт pages/settings
 ├── about.tsx            # реэкспорт pages/about

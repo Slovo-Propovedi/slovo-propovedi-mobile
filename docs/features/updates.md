@@ -9,7 +9,7 @@
 
 - выходит, если `!ctx.get(isOnlineAtom)`;
 - получает последний релиз через `fetchLatestRelease()`; если нет — выходит;
-- сравнивает `compareVersions(release.version, APP_VERSION)`; если релиз новее — ставит атомы и планирует уведомление.
+- сравнивает `compareVersions(release.version, APP_VERSION)`; если релиз новее — планирует уведомление и открывает диалог обновления.
 
 `src/shared/lib/version-check/`:
 
@@ -31,12 +31,13 @@
 
 `src/shared/model/update.ts`:
 
-- `updateAvailableAtom` (boolean);
 - `latestVersionAtom` (строка версии);
 - `releaseUrlAtom` (URL страницы релиза);
 - `zipDownloadUrlAtom` (URL скачивания ZIP-ассета с APK, используется самообновлением).
 
-`src/shared/model/updateInstall.ts` — состояние процесса самообновления (общее для баннера, диалога и push-уведомления):
+При обнаружении новой версии `checkForUpdateAction` открывает диалог (`updateDialogVisibleAtom = true`) — при каждом запуске приложения, пока доступна новая версия (без гейта «показывать раз на версию»). Диалог открывается **в конце** экшена: сначала устанавливаются атомы версии/URL, затем выполняется необязательная секция push-уведомления (запрос разрешений через `requestPermissions()` и планирование), и только потом — `updateDialogVisibleAtom = true`. Такой порядок нужен, чтобы системный промпт разрешений не появлялся поверх модалки обновления.
+
+`src/shared/model/updateInstall.ts` — состояние процесса самообновления (общее для диалога и push-уведомления):
 
 - `updateStateAtom` (`UpdateState`): `'idle' | 'downloading' | 'extracting' | 'installing' | 'permission' | 'error'` — этап самообновления;
 - `updateProgressAtom` (number 0–100): процент загрузки ZIP;
@@ -52,12 +53,7 @@
 
 ## UI
 
-`UpdateBanner` (`src/widgets/update-status/ui/UpdateBanner.tsx`) — пилюля «Обновление» (`testID='update-banner'`), видна при `updateAvailable`. Анимация — `useUpdateIslandAnimation.ts`. Располагается ниже `NetworkBanner`.
-
-Поток нажатий:
-
-1. первый тап — разворот пилюли (`expand()`);
-2. тап по развёрнутой пилюле — открытие `UpdateDialog` (`updateDialogVisibleAtom = true`). URL больше не открывается напрямую из баннера.
+`UpdateDialogRoot` (`src/widgets/update-status/ui/UpdateDialogRoot.tsx`) — контейнер без пропсов, рендерится в `app/_RootLayout.tsx` рядом с `NetworkBanner` / `ServerErrorToast` / `GlobalErrorDialog`. Подписан на `updateDialogVisibleAtom` и рендерит `UpdateDialog`; закрытие диалога сбрасывает атом в `false`.
 
 ### UpdateDialog
 
@@ -80,13 +76,13 @@
 
 ## Самообновление (in-app)
 
-Полный поток: **баннер → диалог подтверждения → скачивание ZIP → распаковка APK → проверка разрешения → установка через `PackageInstaller`**. Работает только на Android; на iOS и при ошибках — фолбэк на открытие страницы релизов в браузере.
+Полный поток: **диалог подтверждения → скачивание ZIP → распаковка APK → проверка разрешения → установка через `PackageInstaller`**. Работает только на Android; на iOS и при ошибках — фолбэк на открытие страницы релизов в браузере.
 
 > **F-Droid:** сборки F-Droid подписываются собственным ключом F-Droid, поэтому самообновление в них не сработает — подпись установленной версии не совпадёт с подписью APK из релиза (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). Обновление таких сборок — через клиент F-Droid.
 
 ### Фича app-update
 
-`src/features/app-update/lib/useUpdateInstall.ts` — хук `useUpdateInstall()`, тонкая обёртка над общим состоянием из `shared/model/updateInstall.ts`. Публичный API хука не изменился: `{ error, progress, reset, startUpdate, updateState }`. Атомы и логика переехали в `shared/model`, чтобы и `features/update-notification` (обработчик push), и `widgets/update-status` (диалог/баннер) могли их использовать без нарушения FSD (импорт features → features запрещён).
+`src/features/app-update/lib/useUpdateInstall.ts` — хук `useUpdateInstall()`, тонкая обёртка над общим состоянием из `shared/model/updateInstall.ts`. Публичный API хука не изменился: `{ error, progress, reset, startUpdate, updateState }`. Атомы и логика переехали в `shared/model`, чтобы и `features/update-notification` (обработчик push), и `widgets/update-status` (диалог) могли их использовать без нарушения FSD (импорт features → features запрещён).
 
 Хук также подписывается на `AppState` (`change` → `active`, debounce 500 мс) и вызывает `resumeUpdateAfterPermissionAction` — это продолжает установку, когда пользователь вернулся из системных настроек разрешения.
 
@@ -148,13 +144,13 @@
 - **`react-native-zip-archive`** — распаковка ZIP-ассета (см. [`../decisions.md`](../decisions.md) → Approved stack → Обновления).
 - **`modules/apk-installer`** — локальный модуль для `PackageInstaller` (см. [`../decisions.md`](../decisions.md) → Approved stack → Обновления).
 
-## Push-уведомления vs баннер
+## Push-уведомления vs диалог
 
 Категория `app-update` содержит два действия, оба открывают приложение:
 
 | Триггер                          | Действие                                                                 |
 | -------------------------------- | ------------------------------------------------------------------------ |
-| Тап по баннеру в приложении       | In-app установка (диалог → скачивание → установщик)                      |
+| Автооткрытие при старте приложения | Диалог подтверждения (`checkForUpdateAction` ставит `updateDialogVisibleAtom = true` в конце экшена — после секции push) — каждый запуск, пока доступна новая версия |
 | Push: кнопка «Обновить»           | In-app установка: `startUpdateAction(ctx)` — диалог открывается автоматически с прогрессом |
 | Push: кнопка «Перейти»            | Открытие страницы релизов в браузере (`Linking.openURL`)                 |
 
@@ -183,10 +179,6 @@ Push обрабатывается через `useUpdateNotificationResponse`: `s
 ### compareVersions
 
 `compareVersions(a, b)` (`src/shared/lib/version-check/compareVersions.ts`) нормализует версии (`normalizeVersion`): убирает `v` и всё после `-`, разбивает на части по `.` и сравнивает покомпонентно (отсутствующие части = 0). Возвращает `1` если `a > b`, `-1` если `a < b`, иначе `0`.
-
-### Позиция баннера
-
-`UpdateBanner` позиционируется ниже `NetworkBanner` (константа `PILL_HEIGHT = 36`, `top: insets.top + INDENTS.low + PILL_HEIGHT + INDENTS.low`), чтобы пилюли не перекрывались. Скрывается, когда `!updateAvailable`.
 
 ## Связанные документы
 
