@@ -40,6 +40,12 @@ export const MoreScreen = () => {
             icon='information-circle-outline'
             onPress={() => router.push('/about')}
           />
+          <MoreMenuSettingsItem
+            testID='share-item'
+            icon='share-social-outline'
+            title='Поделиться приложением'
+            onPress={() => router.push('/share')}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

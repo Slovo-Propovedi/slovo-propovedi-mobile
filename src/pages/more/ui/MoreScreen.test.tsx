@@ -67,4 +67,15 @@ describe('<MoreScreen>', () => {
     fireEvent.press(getByText('О приложении'))
     expect(mockPush).toHaveBeenCalledWith('/about')
   })
+
+  test('renders share menu item', async () => {
+    const { getByText } = await renderWithProviders(<MoreScreen />)
+    expect(getByText('Поделиться приложением')).toBeTruthy()
+  })
+
+  test('share item navigates to /share on press', async () => {
+    const { getByText } = await renderWithProviders(<MoreScreen />)
+    fireEvent.press(getByText('Поделиться приложением'))
+    expect(mockPush).toHaveBeenCalledWith('/share')
+  })
 })

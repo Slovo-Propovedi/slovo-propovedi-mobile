@@ -20,6 +20,13 @@ import { useTheme } from 'shared/ui/theme'
 // Module-level: subscribes once for the app lifetime
 subscribeToNetwork()
 
+const SUB_SCREENS = [
+  { name: 'settings', title: 'Настройки' },
+  { name: 'history', title: 'История прослушивания' },
+  { name: 'about', title: 'О приложении' },
+  { name: 'share', title: 'Поделиться приложением' },
+] as const
+
 const RootLayout = () => {
   const { currentTheme } = useTheme()
   const checkForUpdate = useAction(checkForUpdateAction)
@@ -81,36 +88,19 @@ const RootLayout = () => {
       >
         <Stack.Screen name='index' options={{ headerShown: false }} />
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-        <Stack.Screen
-          name='settings'
-          options={{
-            headerBackTitle: 'Назад',
-            headerStyle: { backgroundColor: currentTheme.background },
-            headerTintColor: currentTheme.text,
-            headerTitleStyle: { color: currentTheme.text },
-            title: 'Настройки',
-          }}
-        />
-        <Stack.Screen
-          name='history'
-          options={{
-            headerBackTitle: 'Назад',
-            headerStyle: { backgroundColor: currentTheme.background },
-            headerTintColor: currentTheme.text,
-            headerTitleStyle: { color: currentTheme.text },
-            title: 'История прослушивания',
-          }}
-        />
-        <Stack.Screen
-          name='about'
-          options={{
-            headerBackTitle: 'Назад',
-            headerStyle: { backgroundColor: currentTheme.background },
-            headerTintColor: currentTheme.text,
-            headerTitleStyle: { color: currentTheme.text },
-            title: 'О приложении',
-          }}
-        />
+        {SUB_SCREENS.map(({ name, title }) => (
+          <Stack.Screen
+            key={name}
+            name={name}
+            options={{
+              headerBackTitle: 'Назад',
+              headerStyle: { backgroundColor: currentTheme.background },
+              headerTintColor: currentTheme.text,
+              headerTitleStyle: { color: currentTheme.text },
+              title,
+            }}
+          />
+        ))}
       </Stack>
       <NetworkBanner />
       <ServerErrorToast />
