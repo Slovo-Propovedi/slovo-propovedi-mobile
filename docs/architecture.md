@@ -52,6 +52,10 @@ src/entities/listening-history/
 
 **Не путать с barrel-файлами:** `@x/` — это НЕ сегментные barrel-файлы (которые запрещены). Barrel в корне слайса (`index.ts`) един и служит внешним потребителям. `@x/` — это дополнительные, узкие точки входа, создаваемые по мере необходимости при кросс-слойных связях.
 
+### Babel module-resolver
+
+Абсолютные импорты по слоям разворачивает `babel-plugin-module-resolver` в [`babel.config.js`](../babel.config.js): алиасы `entities`/`features`/`pages`/`shared`/`widgets` → `src/*`. Важно: Metro применяет babel-конфиг проекта **ко всем файлам, включая node_modules**, поэтому в конфиге передан кастомный `resolvePath`, который пропускает переписывание для файлов внутри node_modules. Без этого guard'а bare-импорт npm-пакета с совпадающим именем (например, пакет `entities` из цепочки react-native-svg → css-select → domutils → dom-serializer) переписывался бы в `src/entities` и ломал сборку.
+
 ## Почему «один компонент / хук / функция — отдельный файл»
 
 Внутри слайса файлы дробятся по принципу «одна сущность — один файл»: один React-компонент, один хук или одна функция живут в отдельном файле (например, `usePlayer.ts`, `useSeekControls.ts`, `PlayerProgressBar.tsx`). Причины:
