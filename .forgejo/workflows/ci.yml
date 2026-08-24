@@ -97,6 +97,13 @@ jobs:
     needs: dco
     runs-on: ubuntu-24.04
 
+    # Both runner slots share one 4 GB host; heavy jobs must not overlap with
+    # the release build. Same group as the `release` job in release.yml —
+    # see its comment for the OOM (exit 137) context.
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

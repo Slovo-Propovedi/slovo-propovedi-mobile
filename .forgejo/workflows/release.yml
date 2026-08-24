@@ -9,6 +9,14 @@ jobs:
   release:
     runs-on: ubuntu-24.04
 
+    # Both runner slots share one 4 GB host. A CI job running concurrently with
+    # this build starves it for memory (release OOM, exit 137). This group is
+    # also declared on the `checks` job in ci.yml, so heavy jobs queue instead
+    # of overlapping. Light jobs (dco) stay outside the group.
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -148,27 +156,52 @@ jobs:
       - name: Configure Gradle for CI
         run: |
           # expo prebuild regenerates android/gradle.properties from its template
-          # with default JVM args (512 MiB metaspace). Increase to prevent OOM.
-          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m/' android/gradle.properties
+          # with default JVM args (512 MiB metaspace). 1536m heap + 512m metaspace
+          # (~1.6 GB total, includes in-process Kotlin compilation) leaves enough
+          # RAM for the Metro node process on the 4 GB runner — see the Build APK
+          # step for the full memory budget.
+          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=512m/' android/gradle.properties
           # Trim ABIs to arm64-v8a and armeabi-v7a only (drop x86/x86_64).
           # x86/x86_64 are only for emulators, not real devices. This halves
           # native build output and significantly reduces disk usage on CI.
           sed -i 's/reactNativeArchitectures=.*/reactNativeArchitectures=arm64-v8a,armeabi-v7a/' android/gradle.properties
+          # Compile Kotlin inside the Gradle JVM. The default strategy spawns a
+          # separate Kotlin daemon that stays alive (holding RAM) while the JS
+          # bundle task runs — on a 4 GB host that memory is needed by node/Metro.
+          echo 'kotlin.compiler.execution.strategy=in-process' >> android/gradle.properties
 
-      - name: Check disk space
-        run: df -h /
+          # Fail fast: if a future Expo SDK changes the template lines above, the seds
+          # silently no-op and the build OOMs again with misleading logs (exit 137).
+          grep -q '^org.gradle.jvmargs=.*Xmx1536m' android/gradle.properties \
+            || { echo '::error::gradle.properties jvmargs override did not apply — sed pattern no longer matches the Expo template'; exit 1; }
+          grep -q '^kotlin.compiler.execution.strategy=in-process' android/gradle.properties \
+            || { echo '::error::kotlin.compiler.execution.strategy append did not apply'; exit 1; }
+
+      - name: Check runner resources
+        run: |
+          df -h /
+          free -h
+          cat /sys/fs/cgroup/memory.max 2>/dev/null || true
 
       - name: Build APK
         env:
-          # Cap the Metro bundler's Node.js heap (createBundleReleaseJsAndAssets
-          # spawns node). Without a cap Node's heap grows proportionally to host
-          # RAM and, running next to the Gradle JVM (-Xmx2048m), gets OOM-killed
-          # (exit 137) during release sourcemap serialization.
-          # If builds start failing with "JavaScript heap out of memory" instead,
-          # bump to 3072.
-          NODE_OPTIONS: --max-old-space-size=2048
+          # Memory budget on the 4 GB runner host:
+          #   OS/runner ~0.6 GB + Gradle JVM ~1.6 GB (Xmx1536m + 512m metaspace,
+          #   in-process Kotlin — no separate Kotlin daemon) + node/Metro main
+          #   capped at 1536 MB + 2 Metro workers ~0.5 GB. Swap on the host is
+          #   the safety net for peaks.
+          # NODE_OPTIONS caps the Metro bundler's Node.js heap
+          # (createBundleReleaseJsAndAssets spawns node) and applies to its
+          # forked worker processes too. CI_METRO_MAX_WORKERS is read by
+          # metro.config.js to cap transform workers (each holds ASTs in RAM).
+          # Tuning: if node starts failing with "JavaScript heap out of memory"
+          # (exit 134) instead of 137, bump NODE_OPTIONS to 1792; if OOM-kills
+          # (exit 137) persist, set CI_METRO_MAX_WORKERS=1.
+          NODE_OPTIONS: --max-old-space-size=1536
+          CI_METRO_MAX_WORKERS: '2'
         run: |
           cd android
+          free -h
           nice -n 19 ionice -c 3 ./gradlew assembleRelease --no-daemon -Dorg.gradle.parallel=false --init-script ../scripts/gradle/disable-lint-vital.gradle
           df -h /
 

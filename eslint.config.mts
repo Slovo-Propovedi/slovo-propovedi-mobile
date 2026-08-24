@@ -39,6 +39,7 @@ export default defineConfig(
       '**/*.{html,snap}',
       '__mocks__/**/*',
       'babel.config.js',
+      'metro.config.js',
       'coverage/**/*',
       'dist/**',
       'env.d.ts',
