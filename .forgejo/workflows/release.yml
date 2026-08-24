@@ -168,7 +168,10 @@ jobs:
           # Compile Kotlin inside the Gradle JVM. The default strategy spawns a
           # separate Kotlin daemon that stays alive (holding RAM) while the JS
           # bundle task runs — on a 4 GB host that memory is needed by node/Metro.
-          echo 'kotlin.compiler.execution.strategy=in-process' >> android/gradle.properties
+          # printf with a leading \n: if the prebuild template lacks a trailing
+          # newline, a plain echo merges this property into the previous line
+          # (corrupting it — e.g. jvmargs) and the property never takes effect.
+          printf '\nkotlin.compiler.execution.strategy=in-process\n' >> android/gradle.properties
 
           # Fail fast: if a future Expo SDK changes the template lines above, the seds
           # silently no-op and the build OOMs again with misleading logs (exit 137).
