@@ -156,15 +156,18 @@ jobs:
       - name: Configure Gradle for CI
         run: |
           # expo prebuild regenerates android/gradle.properties from its template
-          # with default JVM args (512 MiB metaspace). 1536m heap + 512m metaspace
-          # (~1.6 GB total, includes in-process Kotlin compilation) leaves enough
-          # RAM for the Metro node process on the 4 GB runner — see the Build APK
-          # step for the full memory budget.
-          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=512m/' android/gradle.properties
-          # Trim ABIs to arm64-v8a and armeabi-v7a only (drop x86/x86_64).
-          # x86/x86_64 are only for emulators, not real devices. This halves
-          # native build output and significantly reduces disk usage on CI.
-          sed -i 's/reactNativeArchitectures=.*/reactNativeArchitectures=arm64-v8a,armeabi-v7a/' android/gradle.properties
+          # with default JVM args (512 MiB metaspace). 1536m heap + 768m metaspace
+          # (~2.3 GB total) leaves enough RAM for the Metro node process on the
+          # 4 GB runner — see the Build APK step for the full memory budget.
+          # In-process Kotlin compilation (below) raises daemon metaspace usage;
+          # 768m is headroom — metaspace commits only what it actually uses.
+          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=768m/' android/gradle.properties
+          # Trim ABIs to arm64-v8a only (drop armeabi-v7a, x86, x86_64).
+          # x86/x86_64 are only for emulators; armeabi-v7a (32-bit) is dropped to
+          # halve native-compilation memory/time peak — almost all Android devices
+          # since ~2018 are arm64. The react-native-gradle-plugin reads this
+          # property and applies it to ndk.abiFilters.
+          sed -i 's/reactNativeArchitectures=.*/reactNativeArchitectures=arm64-v8a/' android/gradle.properties
           # Compile Kotlin inside the Gradle JVM. The default strategy spawns a
           # separate Kotlin daemon that stays alive (holding RAM) while the JS
           # bundle task runs — on a 4 GB host that memory is needed by node/Metro.
@@ -172,13 +175,20 @@ jobs:
           # newline, a plain echo merges this property into the previous line
           # (corrupting it — e.g. jvmargs) and the property never takes effect.
           printf '\nkotlin.compiler.execution.strategy=in-process\n' >> android/gradle.properties
+          # Cap concurrent Gradle workers/tasks to soften memory peaks during
+          # native (clang/CMake) + Kotlin compilation on the 4 GB runner.
+          printf '\norg.gradle.workers.max=2\n' >> android/gradle.properties
 
           # Fail fast: if a future Expo SDK changes the template lines above, the seds
           # silently no-op and the build OOMs again with misleading logs (exit 137).
-          grep -q '^org.gradle.jvmargs=.*Xmx1536m' android/gradle.properties \
+          grep -q '^reactNativeArchitectures=arm64-v8a$' android/gradle.properties \
+            || { echo '::error::reactNativeArchitectures override did not apply — sed pattern no longer matches the Expo template'; exit 1; }
+          grep -q '^org.gradle.jvmargs=.*Xmx1536m.*MaxMetaspaceSize=768m' android/gradle.properties \
             || { echo '::error::gradle.properties jvmargs override did not apply — sed pattern no longer matches the Expo template'; exit 1; }
           grep -q '^kotlin.compiler.execution.strategy=in-process' android/gradle.properties \
             || { echo '::error::kotlin.compiler.execution.strategy append did not apply'; exit 1; }
+          grep -q '^org.gradle.workers.max=2' android/gradle.properties \
+            || { echo '::error::workers.max append did not apply'; exit 1; }
 
       - name: Check runner resources
         run: |
@@ -189,10 +199,11 @@ jobs:
       - name: Build APK
         env:
           # Memory budget on the 4 GB runner host:
-          #   OS/runner ~0.6 GB + Gradle JVM ~1.6 GB (Xmx1536m + 512m metaspace,
-          #   in-process Kotlin — no separate Kotlin daemon) + node/Metro main
-          #   capped at 1536 MB + 2 Metro workers ~0.5 GB. Swap on the host is
-          #   the safety net for peaks.
+          #   OS/runner ~0.6 GB + Gradle JVM ~2.3 GB (Xmx1536m + 768m metaspace,
+          #   in-process Kotlin — no separate Kotlin daemon; workers.max=2 caps
+          #   concurrent compile tasks) + node/Metro main capped at 1536 MB +
+          #   2 Metro workers ~0.5 GB. Single ABI (arm64-v8a) halves the native
+          #   compile peak. Swap on the host is the safety net for peaks.
           # NODE_OPTIONS caps the Metro bundler's Node.js heap
           # (createBundleReleaseJsAndAssets spawns node) and applies to its
           # forked worker processes too. CI_METRO_MAX_WORKERS is read by
