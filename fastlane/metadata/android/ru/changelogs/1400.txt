@@ -1,0 +1,8 @@
+Survive native build phase on 4GB runner
+Newline-safe append of kotlin.strategy to gradle.properties
+Prevent release build OOM on 4GB runner
+Show update dialog immediately instead of green banner (#55)
+Module-resolver must not rewrite imports from node_modules
+Add 'Share app' screen in 'More' tab (#52)
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

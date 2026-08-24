@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-08-24
+
+### Added
+
+- Show update dialog immediately instead of green banner (#55)
+- Add 'Share app' screen in 'More' tab (#52)
+
+### Fixed
+
+- Survive native build phase on 4GB runner
+- Newline-safe append of kotlin.strategy to gradle.properties
+- Prevent release build OOM on 4GB runner
+- Module-resolver must not rewrite imports from node_modules
+
 ## [0.13.0] - 2026-08-22
 
 ### Added
@@ -433,6 +447,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.14.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.14.0
 [0.13.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.13.0
 [0.12.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.12.0
 [0.11.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.11.1

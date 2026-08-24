@@ -1,6 +1,6 @@
 {
   "name": "slovo-propovedi-mobile",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "main": "expo-router/entry",
   "license": "GPL-3.0-or-later",
   "scripts": {
