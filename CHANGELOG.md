@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.2] - 2026-08-24
+
+### Changed
+
+- Eliminate Metro require cycles and ban shared re-exports via higher layers
+
+### Fixed
+
+- Downgrade package for correct running tests
+- Fix require cycle in listening-history entity
+- Update packages
+- Enlarge splash image to ~1/3 screen width (#54)
+- Configure splash screen via expo-splash-screen plugin (#54)
+
 ## [0.14.1] - 2026-08-24
 
 ### Fixed
@@ -456,6 +470,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.14.2]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.14.2
 [0.14.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.14.1
 [0.14.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.14.0
 [0.13.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.13.0
