@@ -1,11 +1,10 @@
 import { type Ctx } from '@reatom/framework'
 import { debugConfig } from 'shared/config'
-import { audioCacheService } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
-import { isCachingPlaylistAtom, playlistCacheErrorAtom, playlistCacheProgressAtom } from '../model'
+import { playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
+import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
+import { isNetworkError } from './isNetworkError'
 import { playlistCacheNotifications } from './PlaylistCacheNotifications'
-
-const NETWORK_ERROR_PATTERNS = ['network', 'internet', 'Network request failed', 'ECONNREFUSED']
+import { runPlaylistCaching } from './runPlaylistCaching'
 
 const log = debugConfig.enablePlaylistCacheLogs
   ? (...args: unknown[]) => console.log('[PlaylistCacheService]', ...args)
@@ -15,11 +14,6 @@ export interface TrackToCache {
   audioUrl?: null | string
   id: string
   title: string
-}
-
-const isNetworkError = (error: Error): boolean => {
-  const lowerMessage = error.message.toLowerCase()
-  return NETWORK_ERROR_PATTERNS.some(pattern => lowerMessage.includes(pattern.toLowerCase()))
 }
 
 class PlaylistCacheService {
@@ -45,54 +39,14 @@ class PlaylistCacheService {
     )
     if (tracksToCache.length === 0) return
 
-    let notificationId = ''
-    let hasErrors = false
-
     try {
       isCachingPlaylistAtom(ctx, true)
-      playlistCacheProgressAtom(ctx, {
-        current: 0,
-        total: tracksToCache.length,
-      })
 
-      notificationId = await playlistCacheNotifications.showCachingNotification(playlistTitle)
+      const failedCount = await runPlaylistCaching(ctx, tracksToCache, playlistTitle)
 
-      for (const [index, track] of tracksToCache.entries()) {
-        try {
-          playlistDownloadProgressAtom(ctx, prev => ({
-            ...prev,
-            [track.audioUrl]: 0,
-          }))
-
-          await audioCacheService.cacheAudio(track.audioUrl, (progress: number) => {
-            playlistDownloadProgressAtom(ctx, prev => ({
-              ...prev,
-              [track.audioUrl]: progress,
-            }))
-          })
-        } catch (error) {
-          hasErrors = true
-          log(`Failed to cache "${track.title}" (${track.id}):`, error)
-        }
-
-        const current = index + 1
-        playlistCacheProgressAtom(ctx, prev => ({
-          ...prev,
-          current,
-        }))
-        cacheUpdateTriggerAtom(ctx, prev => prev + 1)
-
-        notificationId = await playlistCacheNotifications.updateCachingNotification(
-          notificationId,
-          current,
-          tracksToCache.length,
-          playlistTitle,
-        )
-      }
-
-      if (hasErrors)
+      if (failedCount > 0)
         await playlistCacheNotifications.showErrorNotification(
-          new Error('Некоторые проповеди не удалось скачать'),
+          new Error(`Не удалось скачать ${failedCount} из ${tracksToCache.length}`),
           playlistTitle,
         )
       else
@@ -111,7 +65,6 @@ class PlaylistCacheService {
 
       await playlistCacheNotifications.showErrorNotification(errorObj, playlistTitle)
     } finally {
-      if (notificationId) await playlistCacheNotifications.hideCachingNotification(notificationId)
       isCachingPlaylistAtom(ctx, false)
       playlistDownloadProgressAtom(ctx, {})
     }

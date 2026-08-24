@@ -11,12 +11,31 @@
 - **Методы:**
   - `getCachedUri(audioUrl)` — URI закэшированного файла или `null`;
   - `isCached(audioUrl)` — boolean;
-  - `cacheAudio(audioUrl, onProgress?)` — скачивание через `File.downloadFileAsync` (expo-file-system), `idempotent: true`. Метод single-flight для всех вызывающих кодов: повторные вызовы с тем же URL возвращают общий промис (дублирующая скачка не запускается). При повторном вызове с `onProgress` — callback регистрируется в live-сете и получает текущий прогресс (retroactive seed) + все последующие тики через fan-out emitter. Файлы скачиваются во временное имя `<hash>.mp3.part`; при успешном завершении файл атомарно переименовывается в `<hash>.mp3` (`File.rename()`). Частично скачанные файлы (`.part`) никогда не распознаются как закэшированные (`getCachedUri`, `isCached` проверяют только финальный файл), что исключает воспроизведение обрезанных данных. При ошибке скачивания `.part`-файл удаляется. Прогресс передаётся через `onProgress` callback expo-file-system (`{ bytesWritten, totalBytes }`), конвертируется в дробь 0..1 с троттлингом ≥0.01. При отсутствии `Content-Length` (`totalBytes ≤ 0`) прогресс не обновляется (chunked transfer).
+  - `cacheAudio(audioUrl, onProgress?)` — скачивание через `File.downloadFileAsync` (expo-file-system), `idempotent: true`, с ретраями и защитой от зависания (см. «Повторы и защита от зависания» ниже). Метод single-flight для всех вызывающих кодов: повторные вызовы с тем же URL возвращают общий промис (дублирующая скачка не запускается). При повторном вызове с `onProgress` — callback регистрируется в live-сете и получает текущий прогресс (retroactive seed) + все последующие тики через fan-out emitter. Файлы скачиваются во временное имя `<hash>.mp3.part`; при успешном завершении файл атомарно переименовывается в `<hash>.mp3` (`File.rename()`). Частично скачанные файлы (`.part`) никогда не распознаются как закэшированные (`getCachedUri`, `isCached` проверяют только финальный файл), что исключает воспроизведение обрезанных данных. При окончательной неудаче всех попыток `.part`-файл удаляется. Прогресс передаётся через `onProgress` callback expo-file-system (`{ bytesWritten, totalBytes }`), конвертируется в дробь 0..1 с троттлингом ≥0.01. При отсутствии `Content-Length` (`totalBytes ≤ 0`) прогресс не обновляется (chunked transfer).
   - `getCacheInfo()` — `{ fileCount, totalSize }`;
   - `clearCache()` — удалить весь каталог кэша;
   - `removeFromCache(audioUrl)` — удалить файл по URL.
 
 Каталог кэша создаётся при необходимости (`ensureCacheDirectoryExists`).
+
+## Повторы и защита от зависания (Issue #49)
+
+`downloadToCache` (`src/shared/lib/audio-cache/cacheDownloader.ts`) оборачивает скачивание в retry-цикл — мотивация: обрыв TCP-соединения при переключении WiFi → мобильный интернет посреди скачивания раньше приводил к безвозвратной ошибке трека.
+
+Константы политики — `src/shared/lib/audio-cache/downloadRetryPolicy.ts`:
+
+- `MAX_DOWNLOAD_ATTEMPTS = 3` — всего попыток (1 начальная + 2 повтора);
+- `RETRY_BACKOFF_DELAYS_MS = [1000, 5000]` — задержка перед 2-й и 3-й попыткой;
+- `DOWNLOAD_STALL_TIMEOUT_MS = 30_000` — попытка прерывается, если прогресс не приходит 30с;
+- `STALL_CHECK_INTERVAL_MS = 5_000` — период проверки «зависания»;
+- `WAIT_ONLINE_BEFORE_RETRY_MS = 60_000` — ограниченное ожидание возврата сети перед каждым повтором (`waitForOnline` из `shared/lib/network`).
+
+Механика:
+
+- **Stall guard** — `runDownloadAttempt` (`attemptDownload.ts`) на каждую попытку создаёт `AbortController`; каждый сырой тик прогресса (до троттлинга) обновляет `lastActivityAt`; интервал (раз в 5с) делает `abort()`, если тиков не было дольше 30с (типично для half-open соединения после смены сети). `AbortSignal` передаётся в `File.downloadFileAsync`; интервал всегда снимается в `finally`.
+- **Ретраятся все ошибки** — RN-ошибки скачивания не надёжно раскрывают HTTP-статус; повторный 404 стоит только ~6с дополнительного времени.
+- **Прогресс** — `onProgress(0)` эмитится в начале каждой попытки (UI сбрасывает полосу между попытками).
+- **`.part`-файл** — между попытками НЕ удаляется (`idempotent: true` перезапишет его); удаляется только после окончательной неудачи всех попыток (плюс `console.error`, затем ретроу последней ошибки).
 
 ## Автоматическое кэширование при воспроизведении
 
@@ -32,7 +51,8 @@
 
 - фильтрует треки без `audioUrl`;
 - ставит `isCachingPlaylistAtom = true` и прогресс `playlistCacheProgressAtom = { current, total }`;
-- показывает системные уведомления (`PlaylistCacheNotifications.ts`): начало, прогресс «Скачано N из M», завершение/ошибка (группа `playlist-cache`, фиксированный ID);
+- делегирует последовательный прогон в `runPlaylistCaching` (`runPlaylistCaching.ts`): перед каждым треком проверяет подключение (`waitForOnline`, до 60с) — если сеть не вернулась, весь прогон прерывается ошибкой «Нет подключения к интернету» (сетевые ошибки не показывают алерт `playlistCacheErrorAtom`, только уведомление); неудача одного трека не прерывает остальные;
+- показывает системные уведомления (`PlaylistCacheNotifications.ts`): начало, прогресс «Скачано N из M», завершение «Скачано N проповедей» либо ошибка «Не удалось скачать X из N» при частичной неудаче (группа `playlist-cache`, фиксированный ID);
 - обновляет `playlistDownloadProgressAtom` (по URL трека) и инкрементирует `cacheUpdateTriggerAtom`;
 - в `finally` сбрасывает состояние.
 

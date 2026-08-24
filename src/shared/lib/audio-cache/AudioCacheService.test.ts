@@ -21,6 +21,17 @@ jest.mock('expo-file-system', () => ({
   },
 }))
 
+jest.mock('@react-native-community/netinfo', () => ({
+  __esModule: true,
+  default: { fetch: jest.fn().mockResolvedValue({ isConnected: true }) },
+}))
+
+// Skip real backoff delays between download retries — retries stay instant in tests
+jest.mock('./downloadRetryPolicy', () => ({
+  ...jest.requireActual('./downloadRetryPolicy'),
+  sleep: jest.fn().mockResolvedValue(undefined),
+}))
+
 const mockFileState = { exists: false }
 
 jest.mock('./getAudioCacheDirectory', () => ({
@@ -159,7 +170,7 @@ describe('AudioCacheService', () => {
 
       test('allows new download after previous fails', async () => {
         mockFileState.exists = false
-        ;(File.downloadFileAsync as jest.Mock).mockRejectedValueOnce(new Error('fail'))
+        ;(File.downloadFileAsync as jest.Mock).mockRejectedValue(new Error('fail'))
 
         await expect(audioCacheService.cacheAudio(EXAMPLE_URL)).rejects.toThrow('fail')
         ;(File.downloadFileAsync as jest.Mock).mockClear()

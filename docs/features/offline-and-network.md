@@ -23,6 +23,13 @@
 - response-interceptor: успех → `reportServerReachable(ctx)`; сетевая ошибка (нет `error.response`) → `reportServerUnreachable(ctx)`.
 - Дополнительно: request-interceptor добавляет `Bearer`-токен, 401 → `performTokenRefresh` → повтор запроса; при провале refresh токены очищаются.
 
+## Ожидание сети
+
+`waitForOnline(timeoutMs)` (`src/shared/lib/network/waitForOnline.ts`) — асинхронное ограниченное ожидание подключения: сразу (без начальной задержки) опрашивает `NetInfo.fetch()`, при офлайне повторяет опрос раз в секунду; резолвится `true` при первом же «онлайн»-ответе или `false`, если истёк `timeoutMs`. Используется:
+
+- в retry-цикле скачивания кэша (`src/shared/lib/audio-cache/cacheDownloader.ts`) — ожидание сети до 60с перед каждой повторной попыткой;
+- в скачивании плейлиста (`src/pages/playlist/lib/runPlaylistCaching.ts`) — проверка перед каждым треком; если сеть не вернулась за 60с, весь прогон прерывается ошибкой «Нет подключения к интернету».
+
 ## Офлайн-повтор запроса
 
 `useOfflineRetry` (`src/shared/lib/network/useOfflineRetry.ts`) — перезапрос данных при возврате онлайн, при выходе приложения в foreground и по фиксированному интервалу (5с без кэша / 30с с кэшем — `src/shared/lib/network/constants.ts`). Принимает `fetchFn`, `hasCachedData`, `isLoading`, `needsRetry`.
