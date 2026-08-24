@@ -157,8 +157,8 @@ jobs:
         run: |
           # expo prebuild regenerates android/gradle.properties from its template
           # with default JVM args (512 MiB metaspace). 1536m heap + 768m metaspace
-          # (~2.3 GB total) leaves enough RAM for the Metro node process on the
-          # 4 GB runner — see the Build APK step for the full memory budget.
+          # (~2.3 GB total) leaves enough RAM for the Metro node process in the
+          # memory-limited CI container — see the Build APK step for the full memory budget.
           # In-process Kotlin compilation (below) raises daemon metaspace usage;
           # 768m is headroom — metaspace commits only what it actually uses.
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=768m/' android/gradle.properties
@@ -170,13 +170,19 @@ jobs:
           sed -i 's/reactNativeArchitectures=.*/reactNativeArchitectures=arm64-v8a/' android/gradle.properties
           # Compile Kotlin inside the Gradle JVM. The default strategy spawns a
           # separate Kotlin daemon that stays alive (holding RAM) while the JS
-          # bundle task runs — on a 4 GB host that memory is needed by node/Metro.
+          # bundle task runs — in the memory-limited CI container that memory is
+          # needed by node/Metro.
           # printf with a leading \n: if the prebuild template lacks a trailing
           # newline, a plain echo merges this property into the previous line
           # (corrupting it — e.g. jvmargs) and the property never takes effect.
           printf '\nkotlin.compiler.execution.strategy=in-process\n' >> android/gradle.properties
-          # Cap concurrent Gradle workers/tasks to soften memory peaks during
-          # native (clang/CMake) + Kotlin compilation on the 4 GB runner.
+          # org.gradle.workers.max caps concurrent Gradle tasks (e.g. per-ABI
+          # CMake tasks, multi-module Kotlin) — it does NOT cap ninja -j inside
+          # a single CMake task: AGP derives ninja parallelism from the CPU core
+          # count (verified: react-native-gradle-plugin has no ninja/workers
+          # handling). Kept as cheap insurance; the actual fix for the
+          # native-phase memcg OOM was raising the job-container limit (see
+          # docs/decisions.md).
           printf '\norg.gradle.workers.max=2\n' >> android/gradle.properties
 
           # Fail fast: if a future Expo SDK changes the template lines above, the seds
@@ -198,19 +204,23 @@ jobs:
 
       - name: Build APK
         env:
-          # Memory budget on the 4 GB runner host:
+          # Memory budget on the memory-limited CI container (memcg; the limit
+          # is managed in the act-runner config — see docs/decisions.md):
           #   OS/runner ~0.6 GB + Gradle JVM ~2.3 GB (Xmx1536m + 768m metaspace,
           #   in-process Kotlin — no separate Kotlin daemon; workers.max=2 caps
-          #   concurrent compile tasks) + node/Metro main capped at 1536 MB +
-          #   2 Metro workers ~0.5 GB. Single ABI (arm64-v8a) halves the native
-          #   compile peak. Swap on the host is the safety net for peaks.
+          #   concurrent Gradle tasks, not clang within one ABI) + node/Metro
+          #   main capped at 1536 MB + 2 Metro workers ~0.5 GB. Single ABI
+          #   (arm64-v8a) halves the native compile peak. Host swap was the
+          #   safety net for peaks, but the job container cannot push past its
+          #   memcg limit.
           # NODE_OPTIONS caps the Metro bundler's Node.js heap
           # (createBundleReleaseJsAndAssets spawns node) and applies to its
           # forked worker processes too. CI_METRO_MAX_WORKERS is read by
           # metro.config.js to cap transform workers (each holds ASTs in RAM).
           # Tuning: if node starts failing with "JavaScript heap out of memory"
           # (exit 134) instead of 137, bump NODE_OPTIONS to 1792; if OOM-kills
-          # (exit 137) persist, set CI_METRO_MAX_WORKERS=1.
+          # (exit 137) persist, set CI_METRO_MAX_WORKERS=1. These values are a
+          # conservative floor now that the job-container limit is raised.
           NODE_OPTIONS: --max-old-space-size=1536
           CI_METRO_MAX_WORKERS: '2'
         run: |
