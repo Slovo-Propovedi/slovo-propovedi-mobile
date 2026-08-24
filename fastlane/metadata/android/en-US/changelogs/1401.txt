@@ -1,0 +1,6 @@
+Keep media session alive across track switch for background auto-advance (#50)
+Lift tab bar above 3-button navigation using safe-area insets
+Prevent tab bar label wrapping and derive mini-player offset from measured tab bar height
+Retry playlist track downloads on network switch (#49)
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

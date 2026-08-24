@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1] - 2026-08-24
+
+### Fixed
+
+- Keep media session alive across track switch for background auto-advance (#50)
+- Lift tab bar above 3-button navigation using safe-area insets
+- Prevent tab bar label wrapping and derive mini-player offset from measured tab bar height
+- Retry playlist track downloads on network switch (#49)
+
 ## [0.14.0] - 2026-08-24
 
 ### Added
@@ -447,6 +456,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.14.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.14.1
 [0.14.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.14.0
 [0.13.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.13.0
 [0.12.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.12.0
