@@ -1,8 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
-import { type AudioPlayerData } from 'entities/player'
 import { LISTENING_HISTORY, LISTENING_PROGRESS_SNAPSHOT } from 'shared/config'
-import { type PlaylistData } from 'shared/model'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { getEntrySermon } from '../lib/getEntrySermon'
 import {
   clearHistoryAction,
@@ -14,21 +13,6 @@ import {
   removeHistoryEntryAction,
 } from './history'
 import { type ListeningHistory, type ListeningHistoryEntry } from './types'
-
-jest.mock('entities/player', () => {
-  const z = jest.requireActual('zod').default
-  return {
-    audioPlayerDataSchema: z.object({
-      artist: z.string(),
-      artwork: z.string(),
-      audioUrl: z.string(),
-      id: z.string(),
-      title: z.string(),
-    }),
-    toAudioPlayerData: (sermon?: { audioUrl?: null | string } | null) =>
-      sermon?.audioUrl ? sermon : null,
-  }
-})
 
 const mockAudio: AudioPlayerData = {
   artist: 'Author',

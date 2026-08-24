@@ -3,10 +3,9 @@ import { Pressable, Text, View } from 'react-native'
 import { PlayerProgressBar, PlayerRepeatToggle, SermonPlayerControls } from 'entities/player'
 import { formatSermonReference } from 'shared/lib/format'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { MovingText } from 'shared/ui'
 import type { createStyles } from '../ExpandablePlayer/styles'
-import type { AudioPlayerData } from 'entities/player'
-import type { PlaylistData } from 'shared/model'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
 
 interface PlayerControlsSectionProps {

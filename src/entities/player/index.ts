@@ -1,9 +1,4 @@
 export {
-  type AudioPlayerData,
-  audioPlayerDataSchema,
-  toAudioPlayerData,
-} from './lib/audioPlayerData'
-export {
   downloadingAudioUrlAtom,
   downloadProgressAtom,
   isDownloadingAtom,

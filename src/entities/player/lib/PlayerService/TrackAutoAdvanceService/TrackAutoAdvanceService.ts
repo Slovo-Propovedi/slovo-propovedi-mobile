@@ -2,12 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { markHistoryCompletedAction } from 'entities/listening-history/@x/player'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
+import { audioPlayerDataSchema, getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import type { OldTrackFlush } from './playback'
 import type { PlayerActions } from './types'
 import { durationAtom, positionAtom, RepeatMode, repeatModeSchema } from '../../../model'
-import { audioPlayerDataSchema } from '../../../ui/PlayerControls/PlayerControls.types'
 import {
   findCurrentTrackIndex,
   getNextTrack,

@@ -1,8 +1,8 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent } from '@testing-library/react-native'
-import { type UpdateState, useUpdateInstall } from 'features/app-update'
+import { useUpdateInstall } from 'features/app-update'
 import { renderWithProviders } from 'shared/mocks'
-import { updateDialogVisibleAtom } from 'shared/model'
+import { updateDialogVisibleAtom, type UpdateState } from 'shared/model'
 import { UpdateDialogRoot } from './UpdateDialogRoot'
 
 const CONFIRM_BUTTON_TEXT = 'Обновить'

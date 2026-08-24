@@ -1,7 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useRef, useState } from 'react'
 import {
-  type AudioPlayerData,
   currentAudioAtom,
   currentPlaylistAtom,
   downloadingAudioUrlAtom,
@@ -15,6 +14,7 @@ import {
   useSeekControls,
 } from 'entities/player'
 import { cacheAudio, removeFromCache, useIsCached } from 'shared/lib/audio-cache'
+import { type AudioPlayerData } from 'shared/model'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { showPlaylistAtom } from '../../model/showPlaylistAtom'

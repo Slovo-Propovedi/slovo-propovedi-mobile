@@ -1,11 +1,7 @@
+export { ensureNotifications } from './ensureNotifications'
 export {
   addNotificationResponseListener,
   setupUpdateNotificationCategory,
 } from './notificationActions'
 export { type NotificationsApi } from './NotificationsApi'
-export {
-  ensureNotifications,
-  hideNotification,
-  requestPermissions,
-  scheduleNotification,
-} from './notificationsHelpers'
+export { hideNotification, requestPermissions, scheduleNotification } from './notificationsHelpers'

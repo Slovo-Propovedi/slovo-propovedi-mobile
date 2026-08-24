@@ -8,7 +8,7 @@ import {
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
+import { audioPlayerDataSchema, getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import {
   repeatModeSchema,
@@ -16,7 +16,6 @@ import {
   setCurrentPlaylistAction,
   setRepeatModeAction,
 } from '../model'
-import { audioPlayerDataSchema } from '../ui/PlayerControls/PlayerControls.types'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/AudioModeManager'
 import {

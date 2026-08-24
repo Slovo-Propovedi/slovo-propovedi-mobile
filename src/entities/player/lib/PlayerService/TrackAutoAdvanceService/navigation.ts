@@ -1,6 +1,5 @@
-import type { PlaylistData } from 'shared/model'
+import { type AudioPlayerData, type PlaylistData, toAudioPlayerData } from 'shared/model'
 import { RepeatMode } from '../../../model'
-import { type AudioPlayerData, toAudioPlayerData } from '../../audioPlayerData'
 
 export const findCurrentTrackIndex = (
   currentAudioId: string | undefined,

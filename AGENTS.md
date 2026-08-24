@@ -15,6 +15,7 @@ npm run lint:fix             # Run ESLint with auto-fix
 npm run check:types          # TypeScript type checking
 npm run check:fsd            # FSD architecture linting (steiger)
 npm run check:fsd-watch      # FSD linting in watch mode
+npm run check:circular       # Check for circular dependencies (dependency-cruiser)
 
 # Testing
 npm run test                 # Jest in watch mode, changed files only (vs main)
@@ -148,6 +149,27 @@ src/entities/player/
   export { InternalComponent } from './ui/InternalComponent' // ❌ Internal, not reused externally
   export { myAtom } from './model' // ❌ Internal state, not reused externally
   ```
+
+### No re-exports of shared through higher layers
+
+The `entities`, `features`, `widgets`, and `pages` layers must **NEVER** re-export anything from `shared/*` — no shim files (files whose content is essentially `export ... from 'shared/...'`), no re-export lines in slice barrels (`export { X } from 'shared/...'`). This ban covers BOTH value and type re-exports. Consumers must import from `shared/*` directly at the point of use.
+
+```typescript
+// ❌ BANNED: shim file inside an entity
+// src/entities/player/lib/audioPlayerData.ts
+export { audioPlayerDataSchema } from 'shared/model'
+
+// ❌ BANNED: barrel line in a feature
+// src/features/app-update/index.ts
+export type { UpdateState } from 'shared/model'
+
+// ✅ CORRECT: direct import at the point of use
+import { audioPlayerDataSchema, type UpdateState } from 'shared/model'
+```
+
+Exemptions (NOT violations): `src/shared/**` itself; `app/` entry files re-exporting pages for Expo Router (`export { X as default } from 'pages/...'`); `@x` segment files (same-layer cross-slice convention); re-exports of NON-shared code (e.g. widgets composing entities — legal downward direction).
+
+Rationale: such re-exports hide real dependencies (the import path no longer shows the symbol lives in `shared`), pull heavy module graphs through barrels, and caused Metro require cycles (player ↔ listening-history incident, 2026-08: the shim `entities/player/lib/audioPlayerData.ts` had to be deleted and every consumer rewired to import directly from `shared/model`). See [`docs/architecture.md`](docs/architecture.md) → «Запрет реэкспортов shared через верхние слои». This ban is enforced by code review only — there is no automated guard (steiger cannot see shims because a shim is a legal downward import; depcruise only catches cycles that result).
 
 ## Code Style Guidelines
 

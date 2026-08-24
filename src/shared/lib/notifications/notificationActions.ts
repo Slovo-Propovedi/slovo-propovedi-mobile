@@ -1,5 +1,5 @@
 import { isExpoGo } from 'shared/lib/isExpoEnvironment'
-import { ensureNotifications } from './notificationsHelpers'
+import { ensureNotifications } from './ensureNotifications'
 
 export const setupUpdateNotificationCategory = async (): Promise<void> => {
   const api = await ensureNotifications()

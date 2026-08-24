@@ -1,6 +1,5 @@
 import { useCallback } from 'react'
-import type { AudioPlayerData } from './PlayerControls.types'
-import type { PlaylistData } from 'shared/model'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 
 type TrackDirection = 'next' | 'prev'
 

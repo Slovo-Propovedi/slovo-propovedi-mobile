@@ -1,7 +1,6 @@
 /* eslint-disable max-lines -- FIXME: refactor  */
 import { action, atom } from '@reatom/framework'
-import { type AudioPlayerData } from 'entities/player'
-import { type PlaylistData } from 'shared/model'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { buildHistoryEntry } from '../lib/buildHistoryEntry'
 import { getEntrySermon } from '../lib/getEntrySermon'

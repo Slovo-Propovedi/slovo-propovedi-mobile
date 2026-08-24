@@ -3,21 +3,6 @@ import { MAX_HISTORY_ENTRIES } from './constants'
 import { getEntrySermon } from './getEntrySermon'
 import { sortAndCapEntries } from './sortAndCapEntries'
 
-jest.mock('entities/player', () => {
-  const z = jest.requireActual('zod').default
-  return {
-    audioPlayerDataSchema: z.object({
-      artist: z.string(),
-      artwork: z.string(),
-      audioUrl: z.string(),
-      id: z.string(),
-      title: z.string(),
-    }),
-    toAudioPlayerData: (sermon?: { audioUrl?: null | string } | null) =>
-      sermon?.audioUrl ? sermon : null,
-  }
-})
-
 const makeEntry = (sermonId: string, lastPlayedAt: number): ListeningHistoryEntry => ({
   durationMs: 1000,
   lastPlayedAt,

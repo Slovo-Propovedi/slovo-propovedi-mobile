@@ -1,39 +1,14 @@
 import { isExpoGo } from 'shared/lib/isExpoEnvironment'
-import type { NotificationsApi } from './NotificationsApi'
+import { ensureNotifications } from './ensureNotifications'
 import { setupUpdateNotificationCategory } from './notificationActions'
 
-let notificationsApi: NotificationsApi | null = null
-let isInitialized = false
-let initPromise: null | Promise<NotificationsApi | null> = null
+let categorySetupPromise: null | Promise<void> = null
 
-export const ensureNotifications = (): Promise<NotificationsApi | null> => {
-  if (notificationsApi && isInitialized) return Promise.resolve(notificationsApi)
-  if (initPromise) return initPromise
+/** Registers the update notification category once per session (memoized promise). */
+const ensureCategory = (): Promise<void> => {
+  if (!categorySetupPromise) categorySetupPromise = setupUpdateNotificationCategory()
 
-  initPromise = (async () => {
-    try {
-      const mod = await import('expo-notifications')
-      if (!isInitialized) {
-        mod.setNotificationHandler({
-          handleNotification: async () => ({
-            shouldPlaySound: false,
-            shouldSetBadge: false,
-            shouldShowBanner: true,
-            shouldShowList: true,
-          }),
-        })
-        isInitialized = true
-      }
-      void setupUpdateNotificationCategory()
-      notificationsApi = mod as unknown as NotificationsApi
-      return notificationsApi
-    } catch (error) {
-      console.error('[notifications] Failed to load expo-notifications:', error)
-      return null
-    }
-  })()
-
-  return initPromise
+  return categorySetupPromise
 }
 
 export const scheduleNotification = async (
@@ -50,6 +25,7 @@ export const scheduleNotification = async (
 
   const api = await ensureNotifications()
   if (!api) return ''
+  await ensureCategory()
 
   try {
     return await api.scheduleNotificationAsync({
@@ -69,6 +45,8 @@ export const requestPermissions = async (): Promise<boolean> => {
   const api = await ensureNotifications()
   if (!api) return false
 
+  void ensureCategory()
+
   try {
     const { granted } = await api.requestPermissionsAsync({ android: {} })
     return granted
@@ -83,6 +61,7 @@ export const hideNotification = async (identifier: string): Promise<void> => {
 
   const api = await ensureNotifications()
   if (!api) return
+  await ensureCategory()
 
   try {
     await api.cancelScheduledNotificationAsync(identifier)

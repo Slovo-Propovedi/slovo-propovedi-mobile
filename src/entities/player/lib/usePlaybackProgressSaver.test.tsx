@@ -1,6 +1,6 @@
 import { type Ctx } from '@reatom/framework'
 import { act, renderHook } from '@testing-library/react-native'
-import { type AudioPlayerData } from 'entities/player'
+import { type AudioPlayerData } from 'shared/model'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
 import { usePlaybackProgressSaver } from './usePlaybackProgressSaver'
 

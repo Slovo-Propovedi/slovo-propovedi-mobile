@@ -88,6 +88,8 @@ export { type ListeningHistory } from '../model/types'
 
 **Почему @x, а не основной barrel:** Паттерн `@x` (см. [`architecture.md`](../architecture.md)) — FSD-практикa для кросс-слойных импортов: @x-сегменты предоставляют узкий, целевой API для конкретного потребителя, предотвращая случайную связанность с полным публичным API слайса. Это особенно важно, когда `entities/player` и `entities/listening-history` — оба слоя `entities/`, а FSD не разрешает импорты между слоями `entities` напрямую через основной barrel.
 
+> Обратной зависимости у listening-history на player больше нет: контракт `AudioPlayerData` (`audioPlayerDataSchema`, тип, `toAudioPlayerData`) живёт в `shared/model/domain/audioPlayerData.ts` и импортируется из `shared/model`. Это устранило require-цикл `entities/player` ↔ `entities/listening-history` (бывшая запись в debt.md). Направление player → history через `@x/player` сохранено.
+
 ## Типы данных
 
 Запись истории — `ListeningHistoryEntry`:
@@ -101,7 +103,7 @@ export { type ListeningHistory } from '../model/types'
 }
 ```
 
-Записи **slim**: top-level поля `sermon` нет — снапшот проповеди живёт в `playlist.sermons[0]` (buildHistoryEntry кладёт санитизированную копию без `playlists`). Доступ к проповеди — через `getEntrySermon(entry)` (`entry.sermon ?? toAudioPlayerData(entry.playlist.sermons[0])`, где `toAudioPlayerData` — `entities/player`; возвращает `null`, если у проповеди нет `audioUrl`). В `types.ts` поле `sermon` оставлено опциональным для совместимости чтения старых записей (легаси-формат с top-level sermon).
+Записи **slim**: top-level поля `sermon` нет — снапшот проповеди живёт в `playlist.sermons[0]` (buildHistoryEntry кладёт санитизированную копию без `playlists`). Доступ к проповеди — через `getEntrySermon(entry)` (`entry.sermon ?? toAudioPlayerData(entry.playlist.sermons[0])`, где `toAudioPlayerData` — `shared/model`; возвращает `null`, если у проповеди нет `audioUrl`). В `types.ts` поле `sermon` оставлено опциональным для совместимости чтения старых записей (легаси-формат с top-level sermon).
 
 > ✅ **Issue #45 (Phase 1, safety nets): `getEntrySermon` возвращает `AudioPlayerData | null`.**
 >

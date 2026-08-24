@@ -7,7 +7,12 @@ import {
   recordSermonSwitchAction,
 } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type PlaylistData, type SermonData, setPlayerFullscreen } from 'shared/model'
+import {
+  type AudioPlayerData,
+  type PlaylistData,
+  type SermonData,
+  setPlayerFullscreen,
+} from 'shared/model'
 import {
   currentAudioAtom,
   durationAtom,
@@ -15,7 +20,6 @@ import {
   setCurrentAudioAction,
   setCurrentPlaylistAction,
 } from '../model'
-import { type AudioPlayerData } from '../ui/PlayerControls/PlayerControls.types'
 import { usePlayer } from './usePlayer'
 
 const SAME_SERMON_TOLERANCE_MS = 1000

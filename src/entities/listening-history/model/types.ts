@@ -1,6 +1,5 @@
 import z from 'zod'
-import { audioPlayerDataSchema } from 'entities/player'
-import { playlistDataSchema } from 'shared/model'
+import { audioPlayerDataSchema, playlistDataSchema } from 'shared/model'
 
 export const listeningHistoryEntrySchema = z.object({
   durationMs: z.number().nonnegative(),

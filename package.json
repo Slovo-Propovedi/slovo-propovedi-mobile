@@ -16,6 +16,7 @@
     "build:list": "eas build:list",
     "check:fsd": "steiger .",
     "check:fsd-watch": "steiger . --watch",
+    "check:circular": "depcruise src --config .dependency-cruiser.cjs",
     "check:types": "tsc -p tsconfig.json",
     "check:types-open": "editor=$(printf 'nvim\\nnvim --remote-silent\\ncode -r' | fzf --prompt='Select editor: ') && files=($(tsc -p tsconfig.json 2>&1 | grep -oE '[^ (]+.tsx?' | sort -u)) && if [ ${#files[@]} -gt 0 ]; then $editor \"${files[@]}\"; else echo 'No files with errors found'; fi",
     "check:types-open-windows": "tsc -p tsconfig.json 2>&1 | grep -oE '[^ (]+.tsx?' | sort -u | xargs code",

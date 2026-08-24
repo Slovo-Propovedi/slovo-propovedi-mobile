@@ -1,21 +1,6 @@
 import { type ListeningHistory } from '../model/types'
 import { getResumePosition } from './getResumePosition'
 
-jest.mock('entities/player', () => {
-  const z = jest.requireActual('zod').default
-  return {
-    audioPlayerDataSchema: z.object({
-      artist: z.string(),
-      artwork: z.string(),
-      audioUrl: z.string(),
-      id: z.string(),
-      title: z.string(),
-    }),
-    toAudioPlayerData: (sermon?: { audioUrl?: null | string } | null) =>
-      sermon?.audioUrl ? sermon : null,
-  }
-})
-
 const makeEntries = (overrides: Record<string, unknown> = {}): ListeningHistory => [
   {
     durationMs: 3_600_000,

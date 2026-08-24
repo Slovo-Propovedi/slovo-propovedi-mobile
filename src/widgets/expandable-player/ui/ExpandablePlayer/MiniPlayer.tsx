@@ -2,11 +2,10 @@ import { ActivityIndicator, Pressable, Text, View, type ViewStyle } from 'react-
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { formatSermonReference } from 'shared/lib/format'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { CoverImage, MovingText, PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import type { createMiniStyles } from './miniStyles'
-import type { AudioPlayerData } from 'entities/player'
 import type { GestureType } from 'react-native-gesture-handler'
-import type { PlaylistData } from 'shared/model'
 import type { ThemeColors } from 'shared/ui/theme'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)

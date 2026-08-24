@@ -4,6 +4,11 @@ export {
   setIsAudioPlayerMounted,
   setPlayerFullscreen,
 } from './app'
+export {
+  type AudioPlayerData,
+  audioPlayerDataSchema,
+  toAudioPlayerData,
+} from './domain/audioPlayerData'
 export { FetchedBooksGroupName, FetchedSermonsGroupName } from './domain/bible'
 // Реэкспорт типов из схем
 export {

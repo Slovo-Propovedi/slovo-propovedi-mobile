@@ -52,6 +52,27 @@ src/entities/listening-history/
 
 **Не путать с barrel-файлами:** `@x/` — это НЕ сегментные barrel-файлы (которые запрещены). Barrel в корне слайса (`index.ts`) един и служит внешним потребителям. `@x/` — это дополнительные, узкие точки входа, создаваемые по мере необходимости при кросс-слойных связях.
 
+### Запрет реэкспортов `shared/*` через верхние слои
+
+Слои `entities`, `features`, `widgets`, `pages` **никогда** не реэкспортируют ничего из `shared/*` — ни через shim-файлы («файлы-прокладки», чьё содержимое сводится к `export ... from 'shared/...'`), ни через строки в barrel (`export { X } from 'shared/...'`). Запрещены реэкспорты и значений, и типов. Потребитель всегда импортирует из `shared/*` напрямую в месте использования.
+
+```
+// ❌ ЗАПРЕЩЕНО: shim-файл в entities
+// src/entities/player/lib/audioPlayerData.ts
+export { audioPlayerDataSchema } from 'shared/model'
+
+// ❌ ЗАПРЕЩЕНО: строка в barrel слайса
+// src/features/app-update/index.ts
+export type { UpdateState } from 'shared/model'
+
+// ✅ ПРАВИЛЬНО: прямой импорт в месте использования
+import { audioPlayerDataSchema, type UpdateState } from 'shared/model'
+```
+
+Исключения (не считаются нарушением): сам `src/shared/**`; реэкспорты экранов в `app/` для expo-router (`export { X as default } from 'pages/...'`); `@x`-сегменты (кросс-слойные импорты одного уровня); реэкспорты НЕ-shared кода (например, widgets компонуют entities — легальное направление вниз).
+
+**Мотивация:** такие реэкспорты скрывают реальные зависимости (по импорту не видно, что символ живёт в `shared`), протаскивают тяжёлые графы модулей через barrel'ы и становились причиной Metro require-циклов (инцидент player ↔ listening-history, август 2026: shim `entities/player/lib/audioPlayerData.ts` пришлось удалять, а всех потребителей переправлять на прямые импорты из `shared/model`).
+
 ### Babel module-resolver
 
 Абсолютные импорты по слоям разворачивает `babel-plugin-module-resolver` в [`babel.config.js`](../babel.config.js): алиасы `entities`/`features`/`pages`/`shared`/`widgets` → `src/*`. Важно: Metro применяет babel-конфиг проекта **ко всем файлам, включая node_modules**, поэтому в конфиге передан кастомный `resolvePath`, который пропускает переписывание для файлов внутри node_modules. Без этого guard'а bare-импорт npm-пакета с совпадающим именем (например, пакет `entities` из цепочки react-native-svg → css-select → domutils → dom-serializer) переписывался бы в `src/entities` и ломал сборку.

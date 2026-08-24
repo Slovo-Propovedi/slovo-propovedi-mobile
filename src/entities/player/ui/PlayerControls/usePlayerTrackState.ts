@@ -1,5 +1,4 @@
-import type { AudioPlayerData } from './PlayerControls.types'
-import type { PlaylistData } from 'shared/model'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { getIndexOfCurrentAudioInPlaylist } from '../getIndexOfCurrentAudioInPlaylist'
 
 interface UsePlayerTrackStateParams {

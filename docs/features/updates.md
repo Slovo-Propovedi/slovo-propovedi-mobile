@@ -59,14 +59,14 @@
 
 `src/widgets/update-status/ui/UpdateDialog.tsx` — модальный диалог самообновления (RN `Modal`, fade). Состояния определяются `updateState` из хука `useUpdateInstall` (`features/app-update`):
 
-| Состояние            | Заголовок              | Содержимое                                                                 |
-| -------------------- | ---------------------- | -------------------------------------------------------------------------- |
-| `idle`               | «Доступно обновление»  | версия из `latestVersionAtom`, кнопки «Обновить» / «Не обновлять», ссылка «Все версии обновлений» |
-| `downloading`        | «Обновление»           | прогресс-бар + «Загрузка... N%»                                            |
-| `extracting`         | «Обновление»           | «Распаковка...»                                                            |
-| `installing`         | «Обновление»           | «Запуск установки...»                                                      |
-| `permission`         | «Требуется разрешение» | объяснение + кнопки «Открыть настройки» / «Не сейчас»                      |
-| `error`              | «Ошибка обновления»    | текст ошибки, кнопки «Открыть в браузере» / «Закрыть»                      |
+| Состояние     | Заголовок              | Содержимое                                                                                        |
+| ------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `idle`        | «Доступно обновление»  | версия из `latestVersionAtom`, кнопки «Обновить» / «Не обновлять», ссылка «Все версии обновлений» |
+| `downloading` | «Обновление»           | прогресс-бар + «Загрузка... N%»                                                                   |
+| `extracting`  | «Обновление»           | «Распаковка...»                                                                                   |
+| `installing`  | «Обновление»           | «Запуск установки...»                                                                             |
+| `permission`  | «Требуется разрешение» | объяснение + кнопки «Открыть настройки» / «Не сейчас»                                             |
+| `error`       | «Ошибка обновления»    | текст ошибки, кнопки «Открыть в браузере» / «Закрыть»                                             |
 
 - «Обновить» → `startUpdate()`; во время загрузки закрытие диалога заблокировано (`onRequestClose` — no-op).
 - Закрытие («Не обновлять», «Закрыть», «Не сейчас», back) вызывает `reset()` хука и `onClose`.
@@ -117,15 +117,15 @@
 
 `src/shared/lib/update-service/updateService.ts`:
 
-| Функция                                       | Назначение                                                                                                                                                                                                                             |
-| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `downloadUpdateZip(url, onProgress?)`         | Скачивание ZIP через `File.createDownloadTask` (expo-file-system) в `<cache>/updates/slovo-propovedi-update.zip`; прогресс в процентах через колбэк. Guard: URL только `https://`.                                                       |
-| `extractApkFromZip(zipPath)`                  | Поиск первого `.apk` внутри архива (`listContents`), селективная распаковка (`unzip`, `react-native-zip-archive`) и переименование в `update.apk` — оригинальное имя `Slovo.Propovedi v<версия>.apk` содержит пробелы и небезопасно для shell. |
-| `installApk(apkPath)`                         | Если доступен локальный модуль `apk-installer` — установка через `PackageInstaller` (сессия, стриминг APK, commit; результат приходит broadcast'ом). Иначе — фолбэк `IntentLauncher.startActivityAsync(VIEW_ACTION, ...)` (Expo Go / экзотика). |
-| `canRequestPackageInstalls()`                 | Обёртка над нативным `canRequestPackageInstalls()`; при недоступности модуля возвращает `true` (фолбэк-установщик сам решает).                                                                                                          |
-| `openInstallPermissionSettings()`             | Открывает системный экран «Разрешить установку из этого источника» (`Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES`).                                                                                                                      |
-| `apkFileExists(apkPath)`                      | Проверка существования APK на диске (`new File(path).exists`) — используется при возобновлении после разрешения.                                                                                                                        |
-| `cleanupUpdateFiles()`                        | Удаление каталога `<cache>/updates` (вызывается в начале потока обновления); ошибки логируются, не бросаются. На не-Android — no-op.                                                                                                   |
+| Функция                               | Назначение                                                                                                                                                                                                                                      |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `downloadUpdateZip(url, onProgress?)` | Скачивание ZIP через `File.createDownloadTask` (expo-file-system) в `<cache>/updates/slovo-propovedi-update.zip`; прогресс в процентах через колбэк. Guard: URL только `https://`.                                                              |
+| `extractApkFromZip(zipPath)`          | Поиск первого `.apk` внутри архива (`listContents`), селективная распаковка (`unzip`, `react-native-zip-archive`) и переименование в `update.apk` — оригинальное имя `Slovo.Propovedi v<версия>.apk` содержит пробелы и небезопасно для shell.  |
+| `installApk(apkPath)`                 | Если доступен локальный модуль `apk-installer` — установка через `PackageInstaller` (сессия, стриминг APK, commit; результат приходит broadcast'ом). Иначе — фолбэк `IntentLauncher.startActivityAsync(VIEW_ACTION, ...)` (Expo Go / экзотика). |
+| `canRequestPackageInstalls()`         | Обёртка над нативным `canRequestPackageInstalls()`; при недоступности модуля возвращает `true` (фолбэк-установщик сам решает).                                                                                                                  |
+| `openInstallPermissionSettings()`     | Открывает системный экран «Разрешить установку из этого источника» (`Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES`).                                                                                                                              |
+| `apkFileExists(apkPath)`              | Проверка существования APK на диске (`new File(path).exists`) — используется при возобновлении после разрешения.                                                                                                                                |
+| `cleanupUpdateFiles()`                | Удаление каталога `<cache>/updates` (вызывается в начале потока обновления); ошибки логируются, не бросаются. На не-Android — no-op.                                                                                                            |
 
 Все функции установки бросают ошибку при вызове не на Android (`assertAndroid`) — Fail Fast.
 
@@ -148,11 +148,11 @@
 
 Категория `app-update` содержит два действия, оба открывают приложение:
 
-| Триггер                          | Действие                                                                 |
-| -------------------------------- | ------------------------------------------------------------------------ |
+| Триггер                            | Действие                                                                                                                                                             |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Автооткрытие при старте приложения | Диалог подтверждения (`checkForUpdateAction` ставит `updateDialogVisibleAtom = true` в конце экшена — после секции push) — каждый запуск, пока доступна новая версия |
-| Push: кнопка «Обновить»           | In-app установка: `startUpdateAction(ctx)` — диалог открывается автоматически с прогрессом |
-| Push: кнопка «Перейти»            | Открытие страницы релизов в браузере (`Linking.openURL`)                 |
+| Push: кнопка «Обновить»            | In-app установка: `startUpdateAction(ctx)` — диалог открывается автоматически с прогрессом                                                                           |
+| Push: кнопка «Перейти»             | Открытие страницы релизов в браузере (`Linking.openURL`)                                                                                                             |
 
 Push обрабатывается через `useUpdateNotificationResponse`: `start-in-app-update` запускает `startUpdateAction` (диалог виден благодаря `updateDialogVisibleAtom`), `open-release-url` ведёт в браузер.
 
@@ -160,9 +160,12 @@ Push обрабатывается через `useUpdateNotificationResponse`: `s
 
 `src/shared/lib/notifications/`:
 
-- `notificationsHelpers.ts` — `scheduleNotification`, `requestPermissions`, `hideNotification`, `ensureNotifications` (ленивый импорт `expo-notifications`; в Expo Go — no-op).
+- `ensureNotifications.ts` — ленивый синглтон `ensureNotifications` (динамический импорт `expo-notifications`, установка `setNotificationHandler` один раз за сессию; возвращает `null` при ошибке загрузки). Не зависит от остальных модулей папки — разрывает цикл зависимостей. Файл назван по единственному публичному экспорту (конвенция как у `usePlayer.ts`); прежнее имя `notificationsApi.ts` конфликтовало по регистру с тип-фасадом `NotificationsApi.ts` на файловых системах без учёта регистра, отсюда переименование.
+- `notificationsHelpers.ts` — `scheduleNotification`, `requestPermissions`, `hideNotification` (в Expo Go — no-op). Перед планированием/скрытием уведомления гарантирует регистрацию категории через мемоизированный промис `ensureCategory()` (один вызов `setupUpdateNotificationCategory` за сессию; в `requestPermissions` — fire-and-forget).
 - `notificationActions.ts` — `setupUpdateNotificationCategory` (категория `app-update` с действиями `start-in-app-update` («Обновить») и `open-release-url` («Перейти»), канал `app-update`), `addNotificationResponseListener`.
 - `NotificationsApi.ts` — тип-фасад над `expo-notifications`.
+
+Граф зависимостей ацикличен: `notificationsHelpers → notificationActions → ensureNotifications`; `index.ts` реэкспортирует публичное API.
 
 При доступном обновлении `checkForUpdateAction` планирует локальное уведомление «Доступна новая версия» (если для этой версии ещё не показывалось — ключ `LAST_UPDATE_NOTIFIED_KEY`).
 

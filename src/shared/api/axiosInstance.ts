@@ -4,42 +4,46 @@ import { type AxiosRequestConfig } from 'axios'
 import { DEFAULT_API_URL } from '../config/config'
 import { ctx } from '../lib/reatom-ctx/ctx'
 import { reportServerReachable, reportServerUnreachable } from '../model/network'
-import { getAuth } from './generated/auth/auth'
+import { type RefreshResponse } from './generated/api.schemas'
 
 export const ACCESS_TOKEN_KEY = '@access_token'
 export const REFRESH_TOKEN_KEY = '@refresh_token'
 
-// Dynamic base URL: initialized with DEFAULT_API_URL, updated by
-// entities/settings actions (setServerUrlAction, initServerUrlAction)
-// whenever the user changes or restores the server URL.
+// Динамический base URL: инициализируется DEFAULT_API_URL и обновляется
+// экшенами entities/settings (setServerUrlAction, initServerUrlAction),
+// когда пользователь меняет или восстанавливает адрес сервера.
 export const axiosInstance = axios.create({
   baseURL: DEFAULT_API_URL,
 })
 
-// Циклический импорт (axiosInstance ⇄ generated/auth/auth) безопасен:
-// getAuth() создаёт только замыкания на customInstance, которые вызываются
-// в рантайме после полной инициализации модуля (ES live bindings).
-const { authControllerRefresh } = getAuth()
+// Единственный источник правды об эндпоинте refresh: используется и в guard'ах
+// интерцепторов, и в самом запросе обновления токенов (performTokenRefresh).
+// ВАЖНО: этот файл не должен иметь runtime-импортов из ./generated/** —
+// только type-only (стираются на этапе сборки). Иначе возникает require cycle
+// axiosInstance ⇄ generated/auth/auth (generated импортирует customInstance отсюда).
+const REFRESH_ENDPOINT = '/auth/refresh'
 
-// Функция для refresh токена
+// Обновление пары токенов: запрос идёт через тот же axiosInstance,
+// поэтому проходит через оба интерцептора (guard isRefreshRequest
+// пропускает его без Authorization и без повторного refresh при 401)
 const performTokenRefresh = async () => {
   const storedRefreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY)
   if (!storedRefreshToken) throw new Error('No refresh token available')
 
-  const { accessToken, refreshToken: newRefreshToken } = await authControllerRefresh({
+  const { data } = await axiosInstance.post<RefreshResponse>(REFRESH_ENDPOINT, {
     refreshToken: storedRefreshToken,
   })
 
-  await tokenStorage.setTokens(accessToken, newRefreshToken)
+  await tokenStorage.setTokens(data.accessToken, data.refreshToken)
 
-  return accessToken
+  return data.accessToken
 }
 
 // Request interceptor для добавления токенов
 axiosInstance.interceptors.request.use(async config => {
   // Refresh-запрос аутентифицируется refresh-токеном из тела,
   // поэтому Authorization с просроченным access-токеном ему не нужен
-  const isRefreshRequest = config.url?.includes('/auth/refresh')
+  const isRefreshRequest = config.url?.includes(REFRESH_ENDPOINT)
   if (isRefreshRequest) return config
 
   const token = await AsyncStorage.getItem(ACCESS_TOKEN_KEY)
@@ -61,7 +65,7 @@ axiosInstance.interceptors.response.use(
     if (!error.response) reportServerUnreachable(ctx)
 
     const originalRequest = error.config
-    const isRefreshRequest = Boolean(originalRequest.url?.includes('/auth/refresh'))
+    const isRefreshRequest = Boolean(originalRequest.url?.includes(REFRESH_ENDPOINT))
 
     // Если ошибка 401 и это не запрос на refresh
     if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {

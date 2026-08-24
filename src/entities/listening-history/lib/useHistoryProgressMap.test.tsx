@@ -4,19 +4,6 @@ import { historyAtom } from '../model/history'
 import { type ListeningHistoryEntry } from '../model/types'
 import { useHistoryProgressMap } from './useHistoryProgressMap'
 
-jest.mock('entities/player', () => {
-  const z = jest.requireActual('zod').default
-  return {
-    audioPlayerDataSchema: z.object({
-      artist: z.string(),
-      artwork: z.string(),
-      audioUrl: z.string(),
-      id: z.string(),
-      title: z.string(),
-    }),
-  }
-})
-
 const makeEntry = (
   sermonId: string,
   overrides: Partial<ListeningHistoryEntry> = {},

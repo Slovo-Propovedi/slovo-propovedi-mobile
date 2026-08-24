@@ -35,7 +35,7 @@
 - **Структурированные данные** (аудио, плейлист, секции, результаты поиска) хранятся как **JSON-строки** через `JSON.stringify` / `JSON.parse`.
 - **Простые скаляры** (позиция, громкость, длительность, режим повтора, тема, флаги) хранятся как строки через `String(...)`.
 - **Безопасный парсинг JSON — через `getParseJsonWithSchema(schema)`** (`src/shared/model/getParseJsonWithSchema.ts`): оборачивает Zod-схему (`customZ.jsonSchema(...).safeParse`) и возвращает `undefined` при отсутствии/невалидности данных. Универсальные обёртки для кэша — `getCachedJson(key, schema)` / `setCachedJson(key, value)` (`src/shared/lib/cache/`): читают/пишут JSON под ключом с тем же безопасным парсингом. Используются для восстановления `AudioPlayerData`/`PlaylistData` (`src/entities/player/lib/initializePlayer.ts`), секций (`src/shared/lib/sections-cache/getCachedSections.ts`), результатов поиска (`src/features/sermon-search/lib/searchCache.ts`) и подсказок поиска (`src/features/sermon-search/lib/distinctValuesCache.ts`).
-- Доменные Zod-схемы для восстановления: `src/shared/model/domain/common.ts` (`sectionSchema`, `sermonSchema`, `playlistSchema`, `audioPlayerDataSchema` и т.д.).
+- Доменные Zod-схемы для восстановления: `src/shared/model/domain/common.ts` (`sectionSchema`, `sermonSchema`, `playlistSchema` и т.д.) и `src/shared/model/domain/audioPlayerData.ts` (`audioPlayerDataSchema`).
 
 ## Жизненный цикл
 

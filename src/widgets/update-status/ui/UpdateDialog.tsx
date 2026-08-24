@@ -1,8 +1,13 @@
 import { useAtom } from '@reatom/npm-react'
 import { Modal, Text, View } from 'react-native'
-import { type UpdateState, useUpdateInstall } from 'features/app-update'
+import { useUpdateInstall } from 'features/app-update'
 import { openInstallPermissionSettings } from 'shared/lib/update-service'
-import { isBusyUpdateState, latestVersionAtom, releaseUrlAtom } from 'shared/model'
+import {
+  isBusyUpdateState,
+  latestVersionAtom,
+  releaseUrlAtom,
+  type UpdateState,
+} from 'shared/model'
 import { openReleaseUrl } from '../lib/openReleaseUrl'
 import { UpdateDialogConfirm } from './UpdateDialogConfirm'
 import { UpdateDialogError } from './UpdateDialogError'

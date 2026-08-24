@@ -1,6 +1,5 @@
 import { type AudioPlayer } from 'expo-audio'
-import { type PlaylistData } from 'shared/model'
-import { type AudioPlayerData } from '../../../ui/PlayerControls/PlayerControls.types'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { lockScreenControls } from '../LockScreenControls'
 import { type OldTrackFlush, playTrackWithMetadata } from './playback'
 

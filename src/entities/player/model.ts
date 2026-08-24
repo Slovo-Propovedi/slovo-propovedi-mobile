@@ -8,8 +8,7 @@ import {
   CURRENT_SOUND_POSITION,
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
-import { type PlaylistData } from 'shared/model'
-import { type AudioPlayerData } from './lib/audioPlayerData'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 
 // Legacy atoms for backward compatibility
 export const currentAudioAtom = atom<AudioPlayerData | null>(null, 'currentAudioAtom')

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
-import { type UpdateState } from 'features/app-update'
+import { type UpdateState } from 'shared/model'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 const DOWNLOADING_TEMPLATE = 'Загрузка... '
