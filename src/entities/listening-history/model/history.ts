@@ -1,9 +1,9 @@
+/* eslint-disable max-lines -- FIXME: refactor  */
 import { action, atom } from '@reatom/framework'
 import { type AudioPlayerData } from 'entities/player'
 import { type PlaylistData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { buildHistoryEntry } from '../lib/buildHistoryEntry'
-import { flushHistoryProgressAction } from '../lib/flushHistoryProgress'
 import { getEntrySermon } from '../lib/getEntrySermon'
 import { writeHistory } from '../lib/historyStorage'
 import { isEntryCompleted } from '../lib/isEntryCompleted'
@@ -115,5 +115,28 @@ export const clearHistoryAction = action(async ctx => {
   clearLiveProgressSnapshot()
 }, 'clearHistory')
 
-/** @deprecated Use flushHistoryProgressAction instead. */
-export const updateHistoryProgressAction = flushHistoryProgressAction
+export const flushHistoryProgressAction = action(
+  async (ctx, params: { durationMs: number; positionMs: number; sermonId: string }) => {
+    if (params.positionMs <= 0) return
+
+    const current = ctx.get(historyAtom)
+    const index = current.findIndex(e => getEntrySermon(e)?.id === params.sermonId)
+    if (index === -1) return
+
+    const entry = current[index]
+
+    const updated = {
+      ...entry,
+      durationMs: params.durationMs > 0 ? params.durationMs : entry.durationMs,
+      positionMs: params.positionMs,
+    }
+    const next = [...current.slice(0, index), updated, ...current.slice(index + 1)]
+
+    await writeHistory(next)
+    await ctx.schedule(() => {
+      historyAtom(ctx, next)
+    })
+    clearLiveProgressSnapshot()
+  },
+  'flushHistoryProgress',
+)

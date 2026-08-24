@@ -26,7 +26,6 @@ src/entities/listening-history/
     ├── getResumePosition.ts  # Вычисление позиции resume для usePlayNewSermon
     ├── getEntrySermon.ts     # getEntrySermon(entry): sermon из entry.sermon ?? entry.playlist.sermons[0]
     ├── sortAndCapEntries.ts  # Дедупликация по sermon.id + сортировка по lastPlayedAt desc + обрезка до MAX_HISTORY_ENTRIES
-    ├── flushHistoryProgress.ts   # flushHistoryProgressAction — flush при паузе (read-modify-write одного поля)
     ├── recordSermonSwitch.ts     # recordSermonSwitchAction — flush старого + запись нового за один проход (markOldCompleted)
     ├── reconcileOnHydration.ts   # Слияние мини-снапшота в каталог при гидрации
     └── useHistoryProgressMap.ts  # Map<sermonId, 0..1> — stored-прогресс из historyAtom для списков
@@ -38,7 +37,6 @@ src/entities/listening-history/
 
 ```typescript
 // entities/listening-history
-export { flushHistoryProgressAction }
 export { getEntrySermon }
 export { getResumePosition }
 export { writeLiveProgressSnapshot }
@@ -51,7 +49,7 @@ export {
   markHistoryCompletedAction,
   recordPlaybackStartAction,
   removeHistoryEntryAction,
-  updateHistoryProgressAction,
+  flushHistoryProgressAction,
 }
 export type { ListeningHistory, ListeningHistoryEntry }
 ```
@@ -75,7 +73,6 @@ import {
 
 ```typescript
 // entities/listening-history/@x/player.ts
-export { flushHistoryProgressAction } from '../lib/flushHistoryProgress'
 export { getEntrySermon } from '../lib/getEntrySermon'
 export { getResumePosition } from '../lib/getResumePosition'
 export { writeLiveProgressSnapshot } from '../lib/liveProgressStorage'
@@ -84,6 +81,7 @@ export {
   historyAtom,
   markHistoryCompletedAction,
   recordPlaybackStartAction,
+  flushHistoryProgressAction,
 } from '../model/history'
 export { type ListeningHistory } from '../model/types'
 ```
@@ -108,6 +106,7 @@ export { type ListeningHistory } from '../model/types'
 > ✅ **Issue #45 (Phase 1, safety nets): `getEntrySermon` возвращает `AudioPlayerData | null`.**
 >
 > Если `entry.sermon` равен `undefined` **и** `entry.playlist.sermons` — пустой массив (валидно по zod-схеме), функция возвращает `null` вместо краша. Все вызывающие места обрабатывают `null`:
+>
 > - предикаты поиска (`findIndex`/`find`/`filter`) — через optional chaining (`getEntrySermon(e)?.id`);
 > - `useHistoryProgressMap`, `sortAndCapEntries` — записи без проповеди пропускаются (`continue`);
 > - `HistoryRow` — не рендерится (`return null` после хуков);
@@ -212,15 +211,15 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
 
 ## Тесты
 
-| Сьют                    | Файл                                | Что проверяет                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ----------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `history model`         | `model/history.test.ts`             | `loadHistoryAction` (загрузка из storage; reconcile со снапшотом; дроп осиротевшего снапшота), `recordPlaybackStartAction` (новая запись, сброс завершённой, перемещение незавершённой, merge-ветка со strip `playlists`), `flushHistoryProgressAction` (alias `updateHistoryProgressAction`: no-op для неизвестного id, обновление позиции/длительности без изменения `lastPlayedAt`, персист), `markHistoryCompletedAction` (positionMs = durationMs, no-op для нет/0), `removeHistoryEntryAction` (удаление по id), `clearHistoryAction` (очистка) |
-| `isEntryCompleted`      | `lib/isEntryCompleted.test.ts`      | Границы: 100с осталось (false), 10с осталось (true), 5с осталось (true), position = duration (true), duration < 10с (false), duration = 0 (false), position = 0 (false)                                                                                                                                                                                                                                                                                                                                                                               |
-| `buildHistoryEntry`     | `lib/buildHistoryEntry.test.ts`     | Фабрика записи: sanitizer убирает `playlists`, контекстный плейлист содержит один sermon, начальные позиции 0, top-level `sermon` отсутствует                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `sortAndCapEntries`     | `lib/sortAndCapEntries.test.ts`     | Дедупликация по sermon.id (остаётся самая свежая), сортировка по lastPlayedAt desc, обрезка до MAX_HISTORY_ENTRIES                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `getResumePosition`     | `lib/getResumePosition.test.ts`     | Нет записи → 0, завершённая → 0, position ≤ 0 → 0, иначе positionMs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `liveProgressStorage`   | `lib/liveProgressStorage.test.ts`   | Запись/чтение валидного снапшота; невалидный JSON/отсутствие/поля с отрицательными значениями → undefined                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `useHistoryProgressMap` | `lib/useHistoryProgressMap.test.ts` | Пустой history → пустая Map, completed → 1, partial → position/duration, position ≤ 0 → пропуск                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Сьют                    | Файл                                | Что проверяет                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `history model`         | `model/history.test.ts`             | `loadHistoryAction` (загрузка из storage; reconcile со снапшотом; дроп осиротевшего снапшота), `recordPlaybackStartAction` (новая запись, сброс завершённой, перемещение незавершённой, merge-ветка со strip `playlists`), `flushHistoryProgressAction` (no-op для неизвестного id, обновление позиции/длительности без изменения `lastPlayedAt`, персист), `markHistoryCompletedAction` (positionMs = durationMs, no-op для нет/0), `removeHistoryEntryAction` (удаление по id), `clearHistoryAction` (очистка) |
+| `isEntryCompleted`      | `lib/isEntryCompleted.test.ts`      | Границы: 100с осталось (false), 10с осталось (true), 5с осталось (true), position = duration (true), duration < 10с (false), duration = 0 (false), position = 0 (false)                                                                                                                                                                                                                                                                                                                                          |
+| `buildHistoryEntry`     | `lib/buildHistoryEntry.test.ts`     | Фабрика записи: sanitizer убирает `playlists`, контекстный плейлист содержит один sermon, начальные позиции 0, top-level `sermon` отсутствует                                                                                                                                                                                                                                                                                                                                                                    |
+| `sortAndCapEntries`     | `lib/sortAndCapEntries.test.ts`     | Дедупликация по sermon.id (остаётся самая свежая), сортировка по lastPlayedAt desc, обрезка до MAX_HISTORY_ENTRIES                                                                                                                                                                                                                                                                                                                                                                                               |
+| `getResumePosition`     | `lib/getResumePosition.test.ts`     | Нет записи → 0, завершённая → 0, position ≤ 0 → 0, иначе positionMs                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `liveProgressStorage`   | `lib/liveProgressStorage.test.ts`   | Запись/чтение валидного снапшота; невалидный JSON/отсутствие/поля с отрицательными значениями → undefined                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `useHistoryProgressMap` | `lib/useHistoryProgressMap.test.ts` | Пустой history → пустая Map, completed → 1, partial → position/duration, position ≤ 0 → пропуск                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## Связанные документы
 

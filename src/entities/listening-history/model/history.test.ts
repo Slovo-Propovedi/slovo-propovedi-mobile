@@ -6,12 +6,12 @@ import { type PlaylistData } from 'shared/model'
 import { getEntrySermon } from '../lib/getEntrySermon'
 import {
   clearHistoryAction,
+  flushHistoryProgressAction,
   historyAtom,
   loadHistoryAction,
   markHistoryCompletedAction,
   recordPlaybackStartAction,
   removeHistoryEntryAction,
-  updateHistoryProgressAction,
 } from './history'
 import { type ListeningHistory, type ListeningHistoryEntry } from './types'
 
@@ -223,13 +223,13 @@ describe('listening-history model', () => {
     })
   })
 
-  describe('updateHistoryProgressAction', () => {
+  describe('flushHistoryProgressAction', () => {
     test('no-op for unknown sermon id', async () => {
       const entry = makeEntry('sermon-1')
       const ctx = createCtx()
       historyAtom(ctx, [entry])
 
-      await updateHistoryProgressAction(ctx, {
+      await flushHistoryProgressAction(ctx, {
         durationMs: 2000,
         positionMs: 1000,
         sermonId: 'unknown',
@@ -243,7 +243,7 @@ describe('listening-history model', () => {
       const ctx = createCtx()
       historyAtom(ctx, [entry])
 
-      await updateHistoryProgressAction(ctx, {
+      await flushHistoryProgressAction(ctx, {
         durationMs: 2000,
         positionMs: 800,
         sermonId: 'sermon-1',
@@ -260,7 +260,7 @@ describe('listening-history model', () => {
       const ctx = createCtx()
       historyAtom(ctx, [entry])
 
-      await updateHistoryProgressAction(ctx, {
+      await flushHistoryProgressAction(ctx, {
         durationMs: 2000,
         positionMs: 800,
         sermonId: 'sermon-1',
