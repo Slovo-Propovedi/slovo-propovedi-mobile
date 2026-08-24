@@ -10,14 +10,14 @@ interface AppStatePlaybackParams {
   } | null
   currentPlaylist: { title?: string } | null
   getStatus: () => PlaybackStatus
-  setLockScreenMetadata: (metadata: LockScreenMetadata) => void
+  reassertLockScreenMetadata: (metadata: LockScreenMetadata) => void
 }
 
 export const useAppStatePlayback = ({
   currentAudio,
   currentPlaylist,
   getStatus,
-  setLockScreenMetadata,
+  reassertLockScreenMetadata,
 }: AppStatePlaybackParams) => {
   useEffect(() => {
     let appState = AppState.currentState
@@ -26,8 +26,11 @@ export const useAppStatePlayback = ({
       if (appState.match(/inactive|background/) && nextAppState === 'active') {
         const audioStatus = getStatus()
 
+        // Full re-activation (not the in-place update): if the OS killed the
+        // foreground service while backgrounded, updateLockScreenMetadata is
+        // silently dropped and the notification would never come back
         if (currentAudio && audioStatus.isPlaying)
-          setLockScreenMetadata({
+          reassertLockScreenMetadata({
             albumTitle: currentPlaylist?.title,
             artist: currentAudio.artist,
             artworkUrl: currentAudio.artwork,
@@ -43,5 +46,5 @@ export const useAppStatePlayback = ({
     return () => {
       subscription.remove()
     }
-  }, [currentAudio, currentPlaylist, getStatus, setLockScreenMetadata])
+  }, [currentAudio, currentPlaylist, getStatus, reassertLockScreenMetadata])
 }

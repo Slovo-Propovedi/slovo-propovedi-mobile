@@ -16,10 +16,6 @@ import { playerStatusListener } from './PlayerStatusListener'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdvanceService'
 
 export class PlayerService {
-  public clearLockScreenControls = (): void => {
-    lockScreenControls.clear(this.playerInstance)
-  }
-
   public getStatus = () => playbackController.getStatus(this.playerInstance)
 
   public getVolume = () => playbackController.getVolume()
@@ -58,15 +54,13 @@ export class PlayerService {
     initialPositionMs = 0,
   ): Promise<AudioPlayer | null> => {
     if (!audioUrl) return null
-    void setIsBufferingAction(ctx, true)
     void setDurationAction(ctx, 0)
     playerStatusListener.cleanup()
 
-    // Release old player's lock-screen session before replacing (D4 recovery)
-    if (this.playerInstance) lockScreenControls.clear(this.playerInstance)
-    audioLoader.releaseAndReset()
-    this.playerInstance = null
-
+    // Replace-in-place strategy: the same AudioPlayer (and thus the same MediaSession,
+    // foreground service and notification ID) survives the track switch. Tearing down
+    // the lock-screen session here stopped the Android foreground service mid-transition,
+    // freezing background auto-advance (issue #50) and orphaning duplicate notifications.
     await audioModeManager.configure()
 
     const player = await audioLoader.replaceAudio(audioUrl, initialPositionMs)
@@ -83,6 +77,10 @@ export class PlayerService {
     lockScreenControls.setMetadata(this.playerInstance, metadata)
   }
 
+  public reassertLockScreenMetadata = (metadata: LockScreenMetadata): void => {
+    lockScreenControls.reassertMetadata(this.playerInstance, metadata)
+  }
+
   public setVolume = async (newVolume: number): Promise<void> => {
     await playbackController.setVolume(this.playerInstance, newVolume)
   }
@@ -92,7 +90,9 @@ export class PlayerService {
   }
 
   public unload = async (): Promise<void> => {
-    if (this.playerInstance) lockScreenControls.clear(this.playerInstance)
+    // No lockScreenControls.clear() here: release() while the session is still
+    // active removes the notification natively and reliably, while deactivating
+    // first can silently no-op mid-BINDING and orphan a duplicate notification.
     playerStatusListener.cleanup()
     audioLoader.releaseAndReset()
     this.playerInstance = null

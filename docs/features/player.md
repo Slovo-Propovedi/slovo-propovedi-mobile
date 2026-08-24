@@ -5,7 +5,7 @@
 
 ## Обзор
 
-Аудиоплеер построен на `expo-audio` (`~57.0.3`) и отвечает за воспроизведение проповедей, очередь, режимы повтора, lock-screen-управление и фоновое воспроизведение.
+Аудиоплеер построен на `expo-audio` (`~57.0.4`) и отвечает за воспроизведение проповедей, очередь, режимы повтора, lock-screen-управление и фоновое воспроизведение.
 
 - **iOS:** фоновое воспроизведение включено через `infoPlist.UIBackgroundModes: ["audio"]` и плагин `expo-audio` с `enableBackgroundPlayback: true` (`app.json`).
 - **Android:** foreground-service через permission `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (`app.json`).
@@ -21,19 +21,19 @@
 
 Вспомогательные модули (в `src/entities/player/lib/PlayerService/`):
 
-| Модуль                                    | Назначение                                                                                                                                                                              |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AudioLoader.ts`                          | создание/замена `AudioPlayer`, ожидание загрузки, стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша                                                                |
-| `PlaybackController.ts`                   | play/pause/stop/seek/setVolume/getStatus; персист позиции                                                                                                                               |
-| `AudioModeManager.ts`                     | конфигурация аудио-режима; каждая `configure()` перезапускает `setAudioModeAsync` (re-assert после сбросов ОС), дедупликация конкурентных вызовов, AppState `active` → всегда re-assert |
-| `LockScreenControls.ts`                   | метаданные lock screen (`setActiveForLockScreen`); retry при ещё не загруженном плеере (до 10×200мс), version-counter для отмены устаревших retry                                       |
-| `PlayerStatusListener.ts`                 | подписка на статус-события (playing/position/duration/buffering/trackEnd, детект прерываний)                                                                                            |
-| `BackgroundCachingService.ts`             | фоновое кэширование трека при старте воспроизведения                                                                                                                                    |
-| `TrackAutoAdvanceService/`                | авто-переход на следующий трек по окончании                                                                                                                                             |
-| `nativePlayerHelpers.ts`                  | сборка listener'ов и обработчика прерываний                                                                                                                                             |
-| `webPlayerState.ts`, `webPlayerPubSub.ts` | состояние и pub-sub для веб-реализации                                                                                                                                                  |
-| `types.ts`                                | общие типы (`LockScreenMetadata`, `PlaybackStatus`, `StatusCallbacks`, `PlayerActions`)                                                                                                 |
-| `PlayerActionsAdapter.ts`                 | DI для `TrackAutoAdvanceService`                                                                                                                                                        |
+| Модуль                                    | Назначение                                                                                                                                                                                                                                                  |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AudioLoader.ts`                          | создание/замена `AudioPlayer` (`replace()` in-place при живом инстансе), ожидание загрузки, стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша                                                                                          |
+| `PlaybackController.ts`                   | play/pause/stop/seek/setVolume/getStatus; персист позиции                                                                                                                                                                                                   |
+| `AudioModeManager.ts`                     | конфигурация аудио-режима; каждая `configure()` перезапускает `setAudioModeAsync` (re-assert после сбросов ОС), дедупликация конкурентных вызовов, AppState `active` → всегда re-assert                                                                     |
+| `LockScreenControls.ts`                   | метаданные lock screen: полный `setActiveForLockScreen(true, ...)` для нового плеера, `updateLockScreenMetadata(...)` для того же плеера (replace-in-place); retry при ещё не загруженном плеере (до 10×200мс), version-counter для отмены устаревших retry |
+| `PlayerStatusListener.ts`                 | подписка на статус-события (playing/position/duration/buffering/trackEnd, детект прерываний); guard против устаревших `didJustFinish` после смены источника (expo-audio #34301)                                                                             |
+| `BackgroundCachingService.ts`             | фоновое кэширование трека при старте воспроизведения                                                                                                                                                                                                        |
+| `TrackAutoAdvanceService/`                | авто-переход на следующий трек по окончании                                                                                                                                                                                                                 |
+| `nativePlayerHelpers.ts`                  | сборка listener'ов и обработчика прерываний                                                                                                                                                                                                                 |
+| `webPlayerState.ts`, `webPlayerPubSub.ts` | состояние и pub-sub для веб-реализации                                                                                                                                                                                                                      |
+| `types.ts`                                | общие типы (`LockScreenMetadata`, `PlaybackStatus`, `StatusCallbacks`, `PlayerActions`)                                                                                                                                                                     |
+| `PlayerActionsAdapter.ts`                 | DI для `TrackAutoAdvanceService`                                                                                                                                                                                                                            |
 
 ### Стриминг и кэш
 
@@ -67,13 +67,13 @@
 
 ## Восстановление после сбоя
 
-Release-before-recreate: `PlayerService.replaceAudio` и `unload` вызывают `audioLoader.releaseAndReset()` — полный `release()` нативного `AudioPlayer` и обнуление ссылок (`AudioLoader.playerInstance` и `PlayerService.playerInstance`). Lock screen очищается до release. Это гарантирует, что повторный вызов `replaceAudio` всегда создаёт свежий `AudioPlayer` через `createAudioPlayer`, а не пытается `replace()` на уничтоженном нативном объекте.
+Полный teardown остался только в `unload`: `playerStatusListener.cleanup()` → `audioLoader.releaseAndReset()` (полный `release()` нативного `AudioPlayer` + обнуление ссылок) → `PlayerService.playerInstance = null`. Lock screen **не** деактивируется перед release: `release()` при ещё активной сессии удаляет уведомление нативно и надёжно, а предварительный `setActiveForLockScreen(false)` может молча не сработать, пока сервис binder в состоянии BINDING, и оставить осиротевшее уведомление (дубли — см. «Replace-in-place при смене трека»).
 
 Upstream-причины:
 
-- `expo/expo#46137` — сервис не вызывал `startForeground` после рестарта ОС, foreground-service падал; release-before-recreate пересоздаёт нативный контекст, восстанавливая работоспособность.
-- `expo/expo#46957` — на Android 15+ нельзя запросить audio focus из фона (`Activity` недоступна); release-before-recreate сбрасывает нативное состояние контроллера фокуса.
-- `androidx/media#1928` — застрявший audio focus чистится только ребутом; наш release — митигация, полная очистка может требовать перезагрузки ОС.
+- `expo/expo#46137` — сервис не вызывал `startForeground` после рестарта ОС, foreground-service падал; полный release в `unload` пересоздаёт нативный контекст при следующем `loadAudio`, восстанавливая работоспособность.
+- `expo/expo#46957` — на Android 15+ нельзя запросить audio focus из фона (`Activity` недоступна); replace-in-place при смене трека не бросает и не перезапрашивает фокус из фона вовсе (митигация сильнее прежнего release-before-recreate).
+- `androidx/media#1928` — застрявший audio focus чистится только ребутом; наш release в `unload` — митигация, полная очистка может требовать перезагрузки ОС.
 
 ### Crash-guard при старте (Issue #45)
 
@@ -123,7 +123,12 @@ Upstream-причины:
 
 ## Метаданные lock screen
 
-`playerService.setLockScreenMetadata({ albumTitle, artist, artworkUrl, title })` → `LockScreenControls.setMetadata` → `player.setActiveForLockScreen(true, metadata, { isLiveStream: false, showSeekBackward, showSeekForward })`. Скипается в Expo Go (`isExpoGo`).
+`playerService.setLockScreenMetadata({ albumTitle, artist, artworkUrl, title })` → `LockScreenControls.setMetadata` → два пути:
+
+- **Новый плеер** (первое воспроизведение / после `unload`): полный `player.setActiveForLockScreen(true, metadata, { isLiveStream: false, showSeekBackward, showSeekForward })` — активация MediaSession и foreground service.
+- **Тот же плеер** (replace-in-place смена трека): лёгкий `player.updateLockScreenMetadata(metadata)` — обновляет заголовок/артиста/обложку в существующем уведомлении без teardown-гонок.
+
+Скипается в Expo Go (`isExpoGo`).
 
 Artwork резолвится с фолбэком: `artworkUrl = [metadata.artworkUrl, getLocalAppIconUri()].find(hasUriProtocol)` — приоритет artwork трека, затем локальная иконка приложения (`getLocalAppIconUri` из `src/shared/lib/app-icon.ts`: ассет `assets/fallback-artwork.png` через `Asset.fromModule(...)` + `downloadAsync()` → `file://` uri), иначе — без артворка. `hasUriProtocol` отбрасывает значения без протокола (`assets_fallbackartwork` из release-сборки, `''`, `null`) — в натив уходит только валидный URL (`https://`, `http://`, `file://`, `asset:///`, `content://`). Если валидного значения нет, ключ `artworkUrl` полностью опускается (не отправляется даже как `undefined`). `setActiveForLockScreen` обёрнут в try-catch (см. Баг 3). Ограничение: `downloadAsync` — fire-and-forget, поэтому до его завершения уведомление может создаться без артворка; следующий `setMetadata` поправит.
 
@@ -172,6 +177,19 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 
 `playTrackWithMetadata` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/playback.ts`) — общий funnel для всех путей авто-перехода (`playNextTrack`, `playFirstTrackInQueue`, `repeatCurrentTrack`). Вызывает `recordSermonSwitchAction` с `markOldCompleted: true` (старый трек фиксируется как завершённый) и `replaceAudio(url, 0)` — resume-позиция игнорируется.
 
+### Replace-in-place при смене трека (Issue #50 и дубли уведомлений)
+
+С 2026-08-24 смена трека **не** teardown'ит плеер. Если `AudioLoader.playerInstance` жив, `replaceAudio` вызывает `player.replace(url)` на том же нативном `AudioPlayer` — тот же ExoPlayer, тот же MediaSession, тот же foreground service, тот же ID уведомления. Полное пересоздание (`createAudioPlayer`) происходит только при первом воспроизведении и после `unload`.
+
+Почему прежний release-before-recreate был убран:
+
+- **Issue #50 (Android, заблокированный экран): авто-переход не срабатывает.** Прежний `replaceAudio` вызывал `lockScreenControls.clear()` → `setActiveForLockScreen(false)`, что останавливало foreground service, и затем release'ил плеер до старта нового источника. Без FGS и без аудио Android замораживал кэшированный процесс → JS-цепочка авто-перехода (включая setInterval-цикл `waitForLoaded` в `AudioLoader`) стояла до разблокировки экрана.
+- **Дубли media-уведомлений.** В expo-audio 57.0.x `setActiveForLockScreen(false)` может молча не сработать, пока сервис binder в состоянии BINDING → старый MediaSession/уведомление осиротевали; per-player ID уведомлений и коллизии пустых `MediaSession.setId("")` (expo#47101/#48694, фикс не бэкпортирован в 57.0.x) давали второе «зависшее» уведомление со старой проповедью, переживающее рестарт приложения.
+
+Replace-in-place устраняет оба класса проблем: нет окна без FGS/аудио (нечего замораживать) и нет teardown-гонок (сессия одна на всё время жизни плеера). Дополнительно `createAudioPlayer` создаётся с `keepAudioSessionActive: true` — iOS AVAudioSession не деактивируется в конце трека (тот же класс отказа авто-перехода на iOS), а предыдущий плеер в `loadAudio` освобождается через `release()` вместо `remove()` (утечка нативного плеера, expo#41852).
+
+Guard в `PlayerStatusListener`: продакшен-Android после смены источника может выстрелить устаревшим `didJustFinish` от старого трека (expo#34301). Основная защита — окно снятия слушателей (`cleanup()` до `replace`, `setupListeners()` после загрузки), плюс два эшелона внутри слушателя: (1) **arming** — обработчик `didJustFinish` активируется только после первого «здорового» статуса нового источника (`isLoaded && duration > 0 && !didJustFinish`); до этого события конца трека игнорируются полностью — это закрывает случай, когда устаревшее событие с `duration = 0` или позицией ≈ длительности проскальзывает мимо окна и обманывает эвристику; (2) эвристика `isGenuineTrackEnd` + дедупликация `trackEndHandled` — событие считается настоящим, только если позиция в пределах 3с от длительности (или длительность неизвестна); иначе игнорируется (одиночный `console.warn`). Флаг arming сбрасывается в `cleanup()`.
+
 ### WebPlayerService.replaceAudio
 
 На вебе `replaceAudio` делегирует `loadAudio(url, initialPositionMs)` — синтаксический сахар, позиция устанавливается после `loadedmetadata` через `audio.currentTime`.
@@ -207,7 +225,7 @@ const newAudio: AudioPlayerData = { ...nextTrack, artwork: playlist.artwork, aud
 
 Фикс: порядок вызовов в `playTrackWithMetadata` теперь `replaceAudio → play → setMetadata`, выровнен с ручным путём `usePlaySermon`. Плеер загружен и играет в момент `setActiveForLockScreen(true)`, что надёжно показывает уведомление. Покрыто регрессионным тестом `playback.test.ts` (assert порядка через `invocationCallOrder`).
 
-Остаточный риск: если `replaceAudio` вернул `null` (30s таймаут сети), `setMetadata` выходит по guard'у `if (!player) return` и панель остаётся скрытой — отслеживается в `docs/debt.md`.
+Остаточный риск: если `replaceAudio` вернул `null` (30s таймаут сети), сессия/уведомление **не исчезают** (replace-in-place: teardown'а нет) — панель остаётся видимой, но показывает метаданные **старого** трека, тогда как UI приложения уже показывает новый. Восстановление: следующий успешный `setLockScreenMetadata` (например, при ручном переключении трека или повторном воспроизведении) обновит метаданные; возврат в foreground триггерит `reassertLockScreenMetadata` (`useAppStatePlayback`), который принудительно проходит полный путь активации `setActiveForLockScreen(true)` и перепривязывает сервис. Отслеживается в `docs/debt.md`.
 
 ### Баг 3: Crash loop при перезапуске (ИСПРАВЛЕНО)
 

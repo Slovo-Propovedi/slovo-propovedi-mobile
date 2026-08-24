@@ -1,5 +1,8 @@
 import type { StatusCallbacks } from './types'
-import type { AudioPlayer } from 'expo-audio'
+import type { AudioPlayer, AudioStatus } from 'expo-audio'
+
+const STALE_TRACK_END_TOLERANCE_MS = 3000
+const STALE_TRACK_END_WARNING = '[PlayerStatusListener] Ignored stale didJustFinish event'
 
 /**
  * Manages playback status listeners for the audio player.
@@ -39,6 +42,8 @@ class PlayerStatusListener {
 
     this.trackEndHandled = false
     this.wasPlayingBeforeInterruption = false
+    this.staleTrackEndWarned = false
+    this.listenerArmed = false
   }
 
   /**
@@ -47,20 +52,49 @@ class PlayerStatusListener {
    */
   public resetTrackEndHandled(): void {
     this.trackEndHandled = false
+    this.staleTrackEndWarned = false
   }
 
   private setupTrackEndListener(player: AudioPlayer, onTrackEnd: () => void): void {
     this.trackEndSubscription = player.addListener('playbackStatusUpdate', status => {
-      // Guard: prevent duplicate track end handling
-      if (status.didJustFinish && !this.trackEndHandled) {
-        this.trackEndHandled = true
-        onTrackEnd()
+      if (!status.didJustFinish) return
+
+      // Guard: ignore until a healthy status of the CURRENT source has been seen — a
+      // stale event past the listener-removal window defeats isGenuineTrackEnd
+      if (!this.listenerArmed || this.trackEndHandled) return
+
+      // Guard: stale didJustFinish from the previous source (expo-audio #34301) —
+      // production Android fires it right after a source change with the old position
+      if (!this.isGenuineTrackEnd(status)) {
+        this.warnStaleTrackEndOnce()
+        return
       }
+
+      this.trackEndHandled = true
+      onTrackEnd()
     })
+  }
+
+  private isGenuineTrackEnd = (status: AudioStatus): boolean => {
+    // Unknown duration — cannot distinguish, treat as genuine
+    if (status.duration <= 0) return true
+
+    const remainingMs = Math.floor(status.duration * 1000) - Math.floor(status.currentTime * 1000)
+
+    return remainingMs <= STALE_TRACK_END_TOLERANCE_MS
+  }
+
+  private warnStaleTrackEndOnce = (): void => {
+    if (this.staleTrackEndWarned) return
+    this.staleTrackEndWarned = true
+    console.warn(`${STALE_TRACK_END_WARNING} (position far from duration)`)
   }
 
   private setupPlaybackStatusListener(player: AudioPlayer, callbacks: StatusCallbacks): void {
     this.playbackStatusSubscription = player.addListener('playbackStatusUpdate', status => {
+      // Arm the didJustFinish handler on the first healthy tick of the new source
+      if (status.isLoaded && status.duration > 0 && !status.didJustFinish) this.listenerArmed = true
+
       const currentPlaying = status.playing
 
       callbacks.onPlayingChange(currentPlaying)
@@ -89,6 +123,8 @@ class PlayerStatusListener {
   private trackEndSubscription: { remove: () => void } | null = null
   private trackEndHandled = false
   private wasPlayingBeforeInterruption = false
+  private staleTrackEndWarned = false
+  private listenerArmed = false
 }
 
 export const playerStatusListener = new PlayerStatusListener()

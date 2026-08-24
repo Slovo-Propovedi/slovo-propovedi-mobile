@@ -9,6 +9,7 @@ import { startBackgroundCaching } from './BackgroundCachingService'
 
 const LOAD_TIMEOUT_MS = 30000
 const LOAD_CHECK_INTERVAL_MS = 100
+const REPLACE_AUDIO_ERROR_MESSAGE = 'Ошибка при замене аудио'
 
 class AudioLoader {
   public async loadAudio(audioUrl: string, initialPositionMs = 0): Promise<AudioPlayer | null> {
@@ -17,11 +18,17 @@ class AudioLoader {
     void setPositionAction(ctx, 0)
     this.trackEndHandled = false
     if (this.playerInstance) {
-      this.playerInstance.remove()
+      // release() (not remove()) — remove() leaks the native player (expo-audio #41852)
+      this.playerInstance.release()
       this.playerInstance = null
     }
     const playUrl = await this.getPlaybackUrl(audioUrl)
-    const player = createAudioPlayer({ uri: playUrl }, { downloadFirst: false })
+    // keepAudioSessionActive prevents iOS AVAudioSession deactivation at track end,
+    // which otherwise stalls background auto-advance until the app is foregrounded
+    const player = createAudioPlayer(
+      { uri: playUrl },
+      { downloadFirst: false, keepAudioSessionActive: true },
+    )
     this.playerInstance = player
 
     return this.waitForLoaded(player, initialPositionMs).catch(error => {
@@ -38,7 +45,16 @@ class AudioLoader {
     this.trackEndHandled = false
     if (!this.playerInstance) return this.loadAudio(audioUrl, initialPositionMs)
     const playUrl = await this.getPlaybackUrl(audioUrl)
-    this.playerInstance.replace(playUrl)
+    try {
+      // replace-in-place: same native player, same MediaSession, same foreground service.
+      // Never pass null to replace() — it crashes the player (expo-audio #48219)
+      this.playerInstance.replace(playUrl)
+    } catch (error) {
+      console.error('[AudioLoader] replaceAudio: replace failed with error:', error)
+      reportError(error, REPLACE_AUDIO_ERROR_MESSAGE)
+      void setIsBufferingAction(ctx, false)
+      return null
+    }
     return this.waitForLoaded(this.playerInstance, initialPositionMs)
   }
 
@@ -75,7 +91,11 @@ class AudioLoader {
           void setDurationAction(ctx, dur)
           void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
           void setIsBufferingAction(ctx, false)
-          void player.seekTo(initialPositionMs / 1000)
+          // Guarded: a rejection here (first-tick race mid-transition) must not
+          // surface as an unhandled promise rejection
+          player.seekTo(initialPositionMs / 1000).catch(error => {
+            console.error('[AudioLoader] waitForLoaded: initial seekTo failed:', error)
+          })
           void setPositionAction(ctx, initialPositionMs)
           resolve(player)
         } else if (elapsed >= LOAD_TIMEOUT_MS) {

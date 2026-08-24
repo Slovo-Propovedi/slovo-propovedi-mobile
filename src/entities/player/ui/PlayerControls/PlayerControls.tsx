@@ -37,11 +37,18 @@ export const PlayerControls = ({
   style,
   variant = 'default',
 }: PlayerControlsProps) => {
-  const { getStatus, pause, play, replaceAudio, setLockScreenMetadata } = usePlayer()
+  const {
+    getStatus,
+    pause,
+    play,
+    reassertLockScreenMetadata,
+    replaceAudio,
+    setLockScreenMetadata,
+  } = usePlayer()
 
   const { isBuffering, isPlaying } = usePlayerState()
 
-  useAppStatePlayback({ currentAudio, currentPlaylist, getStatus, setLockScreenMetadata })
+  useAppStatePlayback({ currentAudio, currentPlaylist, getStatus, reassertLockScreenMetadata })
 
   const { hasValidPlaylist, index, isFirstTrack, isLastTrack } = usePlayerTrackState({
     currentAudio,
