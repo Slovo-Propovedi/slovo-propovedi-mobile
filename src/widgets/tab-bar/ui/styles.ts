@@ -25,7 +25,6 @@ export const styles = {
     flexDirection: 'row' as const,
     gap: 8,
     justifyContent: 'space-around' as const,
-    paddingBottom: 30,
     paddingHorizontal: 12,
     paddingTop: 8,
   },

@@ -1,8 +1,8 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { BlurView } from 'expo-blur'
 import { Color, type Tabs } from 'expo-router'
-import { useState } from 'react'
 import { Platform, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { setTabBarHeight } from 'shared/ui/layout'
 import { dynamicColorsEnabledAtom, useTheme } from 'shared/ui/theme'
@@ -10,6 +10,7 @@ import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabIndicator } from './TabIndicator'
 import { useTabIndicator } from './useTabIndicator'
+import { isUnavailableTabRoute, useTabPress } from './useTabPress'
 
 interface TabLayout {
   width: number
@@ -22,6 +23,10 @@ const ROUTES = [
   { key: 'study', name: 'Учиться' },
   { key: 'more', name: 'Еще' },
 ]
+
+// Минимальный отступ снизу — зона жестов; на 3-кнопочной навигации берётся высота навбара
+// из safe-area insets (Issue #56)
+const MIN_TAB_BAR_BOTTOM_PADDING = 30
 
 interface CustomTabBarProps extends TabBarProps {
   currentIndex: number
@@ -43,11 +48,15 @@ export const CustomTabBar = ({
   state,
   tabLayouts,
 }: CustomTabBarProps) => {
-  const [unavailableDialogVisible, setUnavailableDialogVisible] = useState(false)
   const [dynamicEnabled] = useAtom(dynamicColorsEnabledAtom)
   const setMeasuredTabBarHeight = useAction(setTabBarHeight)
   const currentKey = ROUTES[currentIndex]?.key
+  const { bottom } = useSafeAreaInsets()
   const { isLight } = useTheme()
+  const { handleTabPress, hideUnavailableDialog, unavailableDialogVisible } = useTabPress({
+    navigation,
+    setCurrentIndex,
+  })
   const indicatorColor =
     dynamicEnabled && Platform.OS === 'android'
       ? Color.android.dynamic.primaryContainer
@@ -70,7 +79,9 @@ export const CustomTabBar = ({
           { backgroundColor: isLight ? 'rgba(230, 230, 230, 0.9)' : 'rgba(0, 0, 0, 0.85)' },
         ]}
       >
-        <View style={styles.tabBar}>
+        <View
+          style={[styles.tabBar, { paddingBottom: Math.max(bottom, MIN_TAB_BAR_BOTTOM_PADDING) }]}
+        >
           <TabIndicator
             color={indicatorColor}
             width={indicatorWidth}
@@ -81,32 +92,15 @@ export const CustomTabBar = ({
             const { options: _options } = descriptors[route.key]
             const isActive = index === state.index
 
-            const onPress = () => {
-              if (route.name === 'read' || route.name === 'study') {
-                setUnavailableDialogVisible(true)
-                return
-              }
-
-              const event = navigation.emit({
-                canPreventDefault: true,
-                target: route.key,
-                type: 'tabPress',
-              })
-
-              if (!isActive && !event.defaultPrevented) navigation.navigate(route.name)
-
-              setCurrentIndex(index)
-            }
-
             return (
               <TabButton
                 key={route.key}
-                onPress={onPress}
                 isActive={isActive}
                 routeKey={route.key}
                 routeName={route.name}
+                isDisabled={isUnavailableTabRoute(route.name)}
                 onLayout={layout => setTabLayout(route.key, layout)}
-                isDisabled={route.name === 'read' || route.name === 'study'}
+                onPress={() => handleTabPress(route, index, isActive)}
               />
             )
           })}
@@ -115,9 +109,9 @@ export const CustomTabBar = ({
       <ConfirmDialog
         hideCancel
         title='Скоро будет доступно'
+        onCancel={hideUnavailableDialog}
+        onConfirm={hideUnavailableDialog}
         visible={unavailableDialogVisible}
-        onCancel={() => setUnavailableDialogVisible(false)}
-        onConfirm={() => setUnavailableDialogVisible(false)}
         message='Этот раздел будет реализован в будущих обновлениях'
       />
     </View>
