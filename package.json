@@ -105,7 +105,7 @@
     "@expo/webpack-config": "^19.0.1",
     "@faker-js/faker": "^10.6.0",
     "@feature-sliced/steiger-plugin": "^0.7.0",
-    "@react-native/jest-preset": "^0.87.0",
+    "@react-native/jest-preset": "^0.86.2",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^14.0.1",
     "@total-typescript/ts-reset": "^0.6.1",
