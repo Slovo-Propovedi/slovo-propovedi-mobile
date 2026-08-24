@@ -64,7 +64,9 @@ export const TabButton = ({
     >
       <View style={styles.tabItem}>
         {getIcon()}
-        <Text style={[styles.tabText, { color }]}>{displayName}</Text>
+        <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={[styles.tabText, { color }]}>
+          {displayName}
+        </Text>
       </View>
     </TouchableOpacity>
   )

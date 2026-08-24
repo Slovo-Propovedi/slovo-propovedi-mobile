@@ -88,6 +88,10 @@
 
 `CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`) — плавающий остров с `BlurView` и анимированным индикатором (`TabIndicator`, `useTabIndicator`). Учитывает `dynamicColorsEnabledAtom` для цвета индикатора (Material You) и скрывает плавающий плеер при развороте (`hideFloatingPlayer`).
 
+Подписи табов не переносятся и почти не масштабируются шрифтом: в `TabButton.tsx` у текста заданы `numberOfLines={1}` и `maxFontSizeMultiplier={1.2}` (фикс «сломанного» таб-бара на узких экранах / крупном системном шрифте, Issue #53).
+
+Высота острова измеряется через `onLayout` на `BlurView` и записывается в `tabBarHeightAtom` (`src/shared/ui/layout`, экшен `setTabBarHeight`) — это единственный источник правды о высоте таб-бара. Начальное значение атома — приближение `PLAYER_SIZES.tabBarHeight` из темы, только до первого измерения. Потребители высоты (мини-плеер, нижние отступы экранов) читают атом, константу напрямую больше не используют — см. [player.md](./player.md) и [state.md](./state.md).
+
 ## Связанные документы
 
 - [../screens/listen.md](../screens/listen.md) — главный экран и переходы

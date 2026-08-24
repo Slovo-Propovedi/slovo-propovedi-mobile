@@ -37,7 +37,7 @@ export const styles = {
     borderRadius: 20,
     flex: 1,
     justifyContent: 'center' as const,
-    paddingHorizontal: 16,
+    paddingHorizontal: 2,
     paddingVertical: 8,
   },
   tabText: {

@@ -1,3 +1,4 @@
+import { useAtom } from '@reatom/npm-react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
@@ -8,6 +9,7 @@ import {
   useIsSearchActive,
   useIsSearchOpen,
 } from 'features/sermon-search'
+import { tabBarHeightAtom } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 
@@ -15,6 +17,7 @@ export const ListenScreen = () => {
   const { currentTheme } = useTheme()
   const isSearchOpen = useIsSearchOpen()
   const isSearchActive = useIsSearchActive()
+  const [tabBarHeight] = useAtom(tabBarHeightAtom)
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: currentTheme.background }]}>
@@ -29,8 +32,8 @@ export const ListenScreen = () => {
         <ScrollView
           keyboardDismissMode='on-drag'
           keyboardShouldPersistTaps='handled'
-          contentContainerStyle={styles.scrollContent}
           style={[styles.scroll, { backgroundColor: currentTheme.background }]}
+          contentContainerStyle={[{ paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight }]}
         >
           {!isSearchOpen && <SearchToggleButton />}
           <DynamicSectionsSlider />
@@ -46,9 +49,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight,
   },
   searchHeader: {
     alignItems: 'center',

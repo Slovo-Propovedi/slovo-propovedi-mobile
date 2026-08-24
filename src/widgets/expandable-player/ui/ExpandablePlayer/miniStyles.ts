@@ -1,8 +1,9 @@
 import { StyleSheet } from 'react-native'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
 import type { ThemeColors } from 'shared/ui/theme'
+import { getMiniPlayerBottom } from '../../lib/getMiniPlayerBottom'
 
-export const createMiniStyles = (theme: ThemeColors) =>
+export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number) =>
   StyleSheet.create({
     downloadFill: {
       height: '100%',
@@ -19,7 +20,7 @@ export const createMiniStyles = (theme: ThemeColors) =>
       alignItems: 'center',
       backgroundColor: theme.surface,
       borderRadius: RADIUSES.middle,
-      bottom: PLAYER_SIZES.tabBarHeight + INDENTS.low,
+      bottom: getMiniPlayerBottom(tabBarHeight),
       flexDirection: 'row',
       height: PLAYER_SIZES.miniPlayerHeight,
       left: INDENTS.low,

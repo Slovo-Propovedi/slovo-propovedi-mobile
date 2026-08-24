@@ -6,14 +6,15 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { dynamicSectionsAtom } from 'entities/section'
 import { useCollapsingNavbarDriver } from 'shared/ui/collapsing-navbar-driver'
+import { tabBarHeightAtom } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import type { PlaylistData, SectionData } from 'shared/model'
 import { useCollapsingHeader } from '../lib'
 import { resolveSectionFromCache } from '../lib/resolveSectionFromCache'
-import { ALBUM_ART_SIZE, PlaylistListItem } from './PlaylistListItem'
+import { PlaylistListItem } from './PlaylistListItem'
+import { PlaylistListSeparator } from './PlaylistListSeparator'
 
 const TITLE_TOP_GAP = 80
-const DIVIDER_LEFT_OFFSET = ALBUM_ART_SIZE + INDENTS.medium + INDENTS.medium
 const INITIAL_NUM_TO_RENDER = 12
 
 export const PlaylistListScreen = () => {
@@ -24,6 +25,7 @@ export const PlaylistListScreen = () => {
   const title = params.title || ''
 
   const [sections] = useAtom(dynamicSectionsAtom)
+  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const [cachedSection, setCachedSection] = useState<SectionData | undefined>(undefined)
   const [cacheResolved, setCacheResolved] = useState(false)
 
@@ -84,7 +86,7 @@ export const PlaylistListScreen = () => {
         scrollEventThrottle={16}
         keyExtractor={item => item.id}
         initialNumToRender={INITIAL_NUM_TO_RENDER}
-        contentContainerStyle={[styles.listContent, { paddingTop: headerHeight + TITLE_TOP_GAP }]}
+        ItemSeparatorComponent={PlaylistListSeparator}
         renderItem={({ item }) => (
           <PlaylistListItem playlist={item} onPress={() => handlePlaylistPress(item)} />
         )}
@@ -96,16 +98,13 @@ export const PlaylistListScreen = () => {
             <Text style={[styles.title, { color: currentTheme.text }]}>{title}</Text>
           </View>
         }
-        ItemSeparatorComponent={() => (
-          <View
-            style={{
-              backgroundColor: currentTheme.surface,
-              height: 1,
-              marginLeft: DIVIDER_LEFT_OFFSET,
-              marginVertical: INDENTS.low,
-            }}
-          />
-        )}
+        contentContainerStyle={[
+          styles.listContent,
+          {
+            paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
+            paddingTop: headerHeight + TITLE_TOP_GAP,
+          },
+        ]}
       />
     </View>
   )
@@ -116,7 +115,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   emptyText: { fontSize: FONT_SIZES.md, marginHorizontal: 'auto', marginTop: INDENTS.high },
   listContent: {
-    paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
     paddingHorizontal: INDENTS.medium,
   },
   title: { fontSize: FONT_SIZES.h1 },

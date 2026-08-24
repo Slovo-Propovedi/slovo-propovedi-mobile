@@ -1,5 +1,7 @@
+import { useAtom } from '@reatom/npm-react'
 import { Text } from 'react-native'
 import Animated from 'react-native-reanimated'
+import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
 import type { TracksListData } from './usePlaylistNavigationOptions'
 import type { ReactElement } from 'react'
@@ -22,19 +24,23 @@ export const PlaylistTrackList = ({
   onScroll,
   renderItem,
   style,
-}: PlaylistTrackListProps) => (
-  <Animated.FlatList
-    data={data}
-    style={style}
-    onScroll={onScroll}
-    renderItem={renderItem}
-    scrollEventThrottle={16}
-    ListHeaderComponent={headerElement}
-    keyExtractor={item => item.id ?? ''}
-    ItemSeparatorComponent={ItemSeparatorComponent}
-    ListEmptyComponent={<Text style={{ marginHorizontal: 'auto' }}>В плейлисте нет записей</Text>}
-    contentContainerStyle={{
-      paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
-    }}
-  />
-)
+}: PlaylistTrackListProps) => {
+  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+
+  return (
+    <Animated.FlatList
+      data={data}
+      style={style}
+      onScroll={onScroll}
+      renderItem={renderItem}
+      scrollEventThrottle={16}
+      ListHeaderComponent={headerElement}
+      keyExtractor={item => item.id ?? ''}
+      ItemSeparatorComponent={ItemSeparatorComponent}
+      ListEmptyComponent={<Text style={{ marginHorizontal: 'auto' }}>В плейлисте нет записей</Text>}
+      contentContainerStyle={{
+        paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
+      }}
+    />
+  )
+}

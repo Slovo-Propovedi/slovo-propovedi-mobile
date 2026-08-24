@@ -10,6 +10,7 @@ interface UseExpandablePlayerGestureInput {
   open: () => void
   progress: SharedValue<number>
   screenHeight: number
+  tabBarHeight: number
 }
 
 interface UseExpandablePlayerGestureResult {
@@ -26,6 +27,7 @@ export const useExpandablePlayerGesture = ({
   open,
   progress,
   screenHeight,
+  tabBarHeight,
 }: UseExpandablePlayerGestureInput): UseExpandablePlayerGestureResult => {
   const handleMiniTap = useCallback(() => {
     if (!expanded) void open()
@@ -35,7 +37,7 @@ export const useExpandablePlayerGesture = ({
     if (expanded) void close()
   }, [close, expanded])
 
-  const miniPan = useMiniPanGesture({ onOpen: open, progress })
+  const miniPan = useMiniPanGesture({ onOpen: open, progress, tabBarHeight })
   const panGesture = useFullscreenPanGesture({
     close,
     disabled,

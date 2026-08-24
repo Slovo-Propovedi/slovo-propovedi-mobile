@@ -4,6 +4,7 @@ import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native'
 import { useHistoryProgressMap } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
 import { EmptyState } from 'shared/ui'
+import { tabBarHeightAtom } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import type { ColorValue } from 'react-native'
 import type { SermonData } from 'shared/model'
@@ -22,6 +23,7 @@ export const SermonSearchResults = () => {
   const [query] = useAtom(searchQueryAtom)
   const [results] = useAtom(searchResultsAtom)
   const [isSearching] = useAtom(isSearchingAtom)
+  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const playNewSermon = usePlayNewSermon()
   const progressMap = useHistoryProgressMap()
 
@@ -38,8 +40,11 @@ export const SermonSearchResults = () => {
       keyExtractor={({ id }) => id}
       data={isSearching ? [] : results}
       keyboardShouldPersistTaps='handled'
-      contentContainerStyle={styles.listContent}
       ItemSeparatorComponent={SearchRowSeparator}
+      contentContainerStyle={[
+        styles.listContent,
+        { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
+      ]}
       renderItem={({ item }) => (
         <SearchResultsRow
           sermon={item}
@@ -67,7 +72,6 @@ const SearchSpinner = ({ color }: { color: ColorValue }) => (
 const styles = StyleSheet.create({
   listContent: {
     flexGrow: 1,
-    paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight,
   },
   spinnerContainer: {
     alignItems: 'center',

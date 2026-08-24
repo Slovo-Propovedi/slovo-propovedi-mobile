@@ -2,14 +2,8 @@ import { Gesture } from 'react-native-gesture-handler'
 import { withTiming } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { SCREEN_HEIGHT } from 'shared/config'
-import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
 import type { SharedValue } from 'react-native-reanimated'
-
-const TAB_H = PLAYER_SIZES.tabBarHeight
-const MINI_BOTTOM = TAB_H + INDENTS.low
-
-// Distance needed to fully expand (same as usePanGesture)
-const DRAG_DISTANCE = SCREEN_HEIGHT - MINI_BOTTOM
+import { getMiniPlayerBottom } from '../lib/getMiniPlayerBottom'
 
 // Velocity threshold for fast swipe detection
 const VELOCITY_THRESHOLD = 500
@@ -26,6 +20,8 @@ interface UseMiniPanGestureParams {
   onOpen?: () => void
   /** Shared progress value (0 = collapsed, 1 = expanded). */
   progress: SharedValue<number>
+  /** Measured tab bar height used to compute the mini player bottom offset. */
+  tabBarHeight: number
 }
 
 /**
@@ -35,15 +31,19 @@ interface UseMiniPanGestureParams {
  * @param params - The parameters object.
  * @param params.onOpen - Called when gesture decides to open the player.
  * @param params.progress - Shared progress value (0 = collapsed, 1 = expanded).
+ * @param params.tabBarHeight - Measured tab bar height.
  */
-export const useMiniPanGesture = ({ onOpen, progress }: UseMiniPanGestureParams) =>
-  Gesture.Pan()
+export const useMiniPanGesture = ({ onOpen, progress, tabBarHeight }: UseMiniPanGestureParams) => {
+  // Distance needed to fully expand (same as usePanGesture)
+  const dragDistance = SCREEN_HEIGHT - getMiniPlayerBottom(tabBarHeight)
+
+  return Gesture.Pan()
     .activeOffsetY(-10) // Only activate when swiping UP 10px (negative Y)
     .failOffsetY(5) // Fail immediately if swiping down more than 5px
     .onUpdate(e => {
       'worklet'
       // translationY is negative when swiping up, use absolute value
-      const normalizedProgress = Math.abs(e.translationY) / DRAG_DISTANCE
+      const normalizedProgress = Math.abs(e.translationY) / dragDistance
       progress.value = Math.min(1, normalizedProgress)
     })
     .onEnd(e => {
@@ -56,3 +56,4 @@ export const useMiniPanGesture = ({ onOpen, progress }: UseMiniPanGestureParams)
 
       if (shouldOpen && onOpen) scheduleOnRN(onOpen)
     })
+}

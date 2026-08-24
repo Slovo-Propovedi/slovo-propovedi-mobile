@@ -71,7 +71,7 @@
 - [ ] **`playerSheet` (`src/entities/player/playerSheet.ts`) без тестов** — покрыть.
 - [ ] **`pages/` (listen, playlist, playlist-list, more, read, study, settings, about) без тестов экранов** — покрыть ключевые сценарии (переходы, состояния).
 - [ ] **`shared/ui/theme/` частично покрыт** (`colors`, `constants`, `model` — есть тесты), но `helpers/` и `ThemeContext/` без тестов — покрыть.
-- [ ] **Widgets (`expandable-player`, `network-status`, `update-status`, `tab-bar`) без тестов** — покрыть (включая индикатор прогресса скачивания в MiniPlayer и гейтинг спиннера в ExpandablePlayer).
+- [ ] **Widgets (`expandable-player`, `network-status`, `update-status`) без тестов; `tab-bar` частично покрыт** (`TabButton.test.tsx`) — покрыть остальное (включая индикатор прогресса скачивания в MiniPlayer и гейтинг спиннера в ExpandablePlayer). Тесты `shared/ui/layout/model.test.ts` (таб-бар атом) — есть.
 
 ## UI performance
 

@@ -17,6 +17,7 @@ import {
   usePlayer,
 } from 'entities/player'
 import { CoverImage } from 'shared/ui'
+import { tabBarHeightAtom } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
@@ -28,7 +29,8 @@ import { useExpandablePlayerGesture } from './useExpandablePlayerGesture'
 
 export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { currentTheme } = useTheme()
-  const miniStyles = createMiniStyles(currentTheme)
+  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const miniStyles = createMiniStyles(currentTheme, tabBarHeight)
   const styles = createStyles(currentTheme)
 
   const [audio] = useAtom(currentAudioAtom)
@@ -55,7 +57,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     progress,
     screenHeight,
     screenWidth,
-  } = useExpandAnimation(expanded)
+  } = useExpandAnimation(expanded, tabBarHeight)
 
   const { handleCloseFullscreen, handleMiniTap, miniPan, panGesture } = useExpandablePlayerGesture({
     close,
@@ -64,6 +66,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
     open,
     progress,
     screenHeight,
+    tabBarHeight,
   })
 
   const onPlayPause = async () => (playing ? pause() : play())

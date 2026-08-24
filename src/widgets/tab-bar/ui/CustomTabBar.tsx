@@ -1,9 +1,10 @@
-import { useAtom } from '@reatom/npm-react'
+import { useAction, useAtom } from '@reatom/npm-react'
 import { BlurView } from 'expo-blur'
 import { Color, type Tabs } from 'expo-router'
 import { useState } from 'react'
 import { Platform, View } from 'react-native'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
+import { setTabBarHeight } from 'shared/ui/layout'
 import { dynamicColorsEnabledAtom, useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
@@ -44,6 +45,7 @@ export const CustomTabBar = ({
 }: CustomTabBarProps) => {
   const [unavailableDialogVisible, setUnavailableDialogVisible] = useState(false)
   const [dynamicEnabled] = useAtom(dynamicColorsEnabledAtom)
+  const setMeasuredTabBarHeight = useAction(setTabBarHeight)
   const currentKey = ROUTES[currentIndex]?.key
   const { isLight } = useTheme()
   const indicatorColor =
@@ -62,6 +64,7 @@ export const CustomTabBar = ({
         intensity={70}
         key={isLight ? 'light' : 'dark'}
         tint={isLight ? 'light' : 'dark'}
+        onLayout={event => setMeasuredTabBarHeight(event.nativeEvent.layout.height)}
         style={[
           styles.floatingIsland,
           { backgroundColor: isLight ? 'rgba(230, 230, 230, 0.9)' : 'rgba(0, 0, 0, 0.85)' },

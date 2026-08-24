@@ -35,6 +35,7 @@ export const PLAYER_SIZES = {
   controlButtonSize: FONT_SIZES.xxl,
   miniPlayerHeight: 60,
   progressThumbSize: 12,
+  // Approximation used only until the real height is measured (see shared/ui/layout)
   tabBarHeight: 78,
 } as const
 

@@ -4,6 +4,7 @@ import { useLayoutEffect } from 'react'
 import { FlatList, Text, View } from 'react-native'
 import { getEntrySermon, historyAtom } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
+import { tabBarHeightAtom } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { createTracksListStyles } from 'shared/ui/track-list'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
@@ -16,6 +17,7 @@ export const HistoryScreen = () => {
   const [entries] = useAtom(historyAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
+  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const tracksListStyles = createTracksListStyles(currentTheme)
 
   useLayoutEffect(() => {
@@ -34,7 +36,7 @@ export const HistoryScreen = () => {
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: entries.length === 0 ? 'center' : undefined,
-          paddingBottom: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
+          paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
         }}
         ListEmptyComponent={
           <Text
