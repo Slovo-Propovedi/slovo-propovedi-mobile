@@ -147,9 +147,17 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
    - `resumeMs === 0` → `seekTo(0)` (воспроизведение с начала)
    - `resumeMs > 0` и текущая позиция далеко от resume — `seekTo(resumeMs)`
 
+### Кнопки Next/Prev (`usePlayerToggleTrack`)
+
+При переключении через кнопки Next/Prev (`src/entities/player/ui/PlayerControls/usePlayerToggleTrack.ts`) позиция resume вычисляется из истории через `ctx.get(historyAtom)` + `getResumePosition(history, sermonId)`. Позиция старого трека flush'ится через `recordSermonSwitchAction({ markOldCompleted: false, ... })`.
+
+### Очередь (`useQueueManagement`)
+
+Все пути очереди, вызывающие `replaceAudio(url)` (`playTrack`, `playNext`, `playPrevious`, `shufflePlaylist` в `src/entities/player/lib/useQueueManagement.ts`), вычисляют `getResumePosition(history, targetSermonId)` и передают resumeMs в `replaceAudio`.
+
 ### Авто-переход (TrackAutoAdvanceService)
 
-Все пути авто-перехода (`playNextTrack`, `playFirstTrackInQueue`, `repeatCurrentTrack` в `src/entities/player/lib/PlayerService/TrackAutoAdvanceService/playback.ts`) используют `playTrackWithMetadata` с `initialPositionMs = 0`. Автоматический переход **всегда** начинает воспроизведение с 0, независимо от истории.
+`playNextTrack` и `playFirstTrackInQueue` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/playback.ts`) вычисляют resume через `ctx.get(historyAtom)` + `getResumePosition(history, nextTrackId)` и передают в `playTrackWithMetadata`. `repeatCurrentTrack` **всегда** передаёт 0 (режим повтора — воспроизведение с начала).
 
 ## Запись прогресса
 
@@ -161,7 +169,7 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
 | --------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Старт воспроизведения | `usePlayNewSermon` → `recordPlaybackStartAction`                                                         | новая запись (позиция 0) / перемещение существующей в начало / сброс завершённой                                                                 |
 | Пауза                 | `PlaybackController.pause`, `WebPlayerService.pause` → `flushHistoryProgressAction`                      | read-modify-write позиции (no-op при `positionMs ≤ 0` или не-прогрессе)                                                                          |
-| Переключение трека    | `recordSermonSwitchAction` — из `usePlayNewSermon` (ручной тап) и `playTrackWithMetadata` (авто-переход) | за один проход: flush позиции старого трека + запись/обновление нового; `markOldCompleted: true` на авто-переходе (позиция старого = durationMs) |
+| Переключение трека    | `recordSermonSwitchAction` — из `usePlayNewSermon` (ручной тап), `usePlayerToggleTrack` (кнопки Next/Prev) и `playTrackWithMetadata` (авто-переход) | за один проход: flush позиции старого трека + запись/обновление нового; `markOldCompleted: true` на авто-переходе (позиция старого = durationMs), `false` на тапе и кнопках |
 | Окончание трека       | `handleTrackEnd` → `markHistoryCompletedAction`                                                          | `positionMs = durationMs` (ветка pause-on-last-track)                                                                                            |
 | Удаление / очистка    | `removeHistoryEntryAction`, `clearHistoryAction`                                                         | per-item / полная очистка                                                                                                                        |
 

@@ -1,7 +1,10 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useState } from 'react'
+import { getResumePosition, historyAtom } from 'entities/listening-history/@x/player'
+import { ctx } from 'shared/lib/reatom-ctx'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { currentAudioAtom, isPlayingAtom, setCurrentPlaylistAction } from '../model'
+import { savePlaybackProgress } from './playbackProgress'
 import { usePlayer } from './usePlayer'
 
 interface UseQueueManagementReturn {
@@ -55,7 +58,11 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
       const playlist = createDefaultPlaylist(queueData)
       await setCurrentPlaylist(playlist)
       if (queueData[index]) {
-        await replaceAudio(queueData[index].audioUrl)
+        const targetSermonId = queueData[index].id
+        const history = ctx.get(historyAtom)
+        const resumeMs = getResumePosition(history, targetSermonId)
+        void savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: targetSermonId })
+        await replaceAudio(queueData[index].audioUrl, resumeMs)
         await play()
       }
     },
@@ -69,7 +76,11 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
       const playlist = createDefaultPlaylist(shuffledTracks)
       await setCurrentPlaylist(playlist)
       if (shuffledTracks[0]) {
-        await replaceAudio(shuffledTracks[0].audioUrl)
+        const targetSermonId = shuffledTracks[0].id
+        const history = ctx.get(historyAtom)
+        const resumeMs = getResumePosition(history, targetSermonId)
+        void savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: targetSermonId })
+        await replaceAudio(shuffledTracks[0].audioUrl, resumeMs)
         await play()
       }
     },
@@ -84,7 +95,10 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
     const currentIndex = queue.findIndex(t => t.id === currentAudio?.id)
     if (currentIndex >= 0 && currentIndex < queue.length - 1) {
       const nextTrack = queue[currentIndex + 1]
-      await replaceAudio(nextTrack.audioUrl)
+      const history = ctx.get(historyAtom)
+      const resumeMs = getResumePosition(history, nextTrack.id)
+      void savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: nextTrack.id })
+      await replaceAudio(nextTrack.audioUrl, resumeMs)
       await play()
     }
   }, [currentAudio, queue, play, replaceAudio])
@@ -93,7 +107,10 @@ export const useQueueManagement = (): UseQueueManagementReturn => {
     const currentIndex = queue.findIndex(t => t.id === currentAudio?.id)
     if (currentIndex > 0) {
       const prevTrack = queue[currentIndex - 1]
-      await replaceAudio(prevTrack.audioUrl)
+      const history = ctx.get(historyAtom)
+      const resumeMs = getResumePosition(history, prevTrack.id)
+      void savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: prevTrack.id })
+      await replaceAudio(prevTrack.audioUrl, resumeMs)
       await play()
     }
   }, [currentAudio, queue, play, replaceAudio])

@@ -1,5 +1,14 @@
 import { useCallback } from 'react'
+import {
+  getResumePosition,
+  historyAtom,
+  recordSermonSwitchAction,
+} from 'entities/listening-history/@x/player'
+import { ctx } from 'shared/lib/reatom-ctx'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { reportError } from 'shared/model/error-dialog'
+import { savePlaybackProgress } from '../../lib/playbackProgress'
+import { currentAudioAtom, durationAtom, positionAtom } from '../../model'
 
 type TrackDirection = 'next' | 'prev'
 
@@ -8,7 +17,7 @@ interface UsePlayerToggleTrackParams {
   hasValidPlaylist: boolean
   index: number | undefined
   play: () => Promise<void>
-  replaceAudio: (url: string) => Promise<unknown>
+  replaceAudio: (url: string, positionMs?: number) => Promise<unknown>
   setCurrentAudio: (audio: AudioPlayerData) => Promise<unknown>
   setLockScreenMetadata: (metadata: {
     albumTitle: string
@@ -61,9 +70,30 @@ export const usePlayerToggleTrack = ({
         title,
       }
 
-      await setCurrentAudio(newAudio)
+      const oldAudio = ctx.get(currentAudioAtom)
+      const oldPositionMs = ctx.get(positionAtom)
 
-      await replaceAudio(newAudio.audioUrl)
+      // Persist new track's start position for crash-consistency (matches auto-advance path)
+      const history = ctx.get(historyAtom)
+      const resumeMs = getResumePosition(history, id)
+      void savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: id })
+
+      // Flush old track's position to history before switching
+      if (oldAudio?.id && oldAudio.id !== id)
+        void recordSermonSwitchAction(ctx, {
+          markOldCompleted: false,
+          newAudio,
+          newPlaylist: currentPlaylist,
+          oldDurationMs: ctx.get(durationAtom),
+          oldPositionMs: Math.max(0, oldPositionMs),
+          oldSermonId: oldAudio.id,
+        }).catch(error => {
+          console.error('[usePlayerToggleTrack] history flush failed:', error)
+          reportError(error, 'Ошибка при сохранении позиции предыдущего трека')
+        })
+
+      await setCurrentAudio(newAudio)
+      await replaceAudio(newAudio.audioUrl, resumeMs)
 
       setLockScreenMetadata({
         albumTitle: currentPlaylist.title,

@@ -1,4 +1,8 @@
-import { recordSermonSwitchAction } from 'entities/listening-history/@x/player'
+import {
+  getResumePosition,
+  historyAtom,
+  recordSermonSwitchAction,
+} from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import type { PlayerActions } from './types'
@@ -32,7 +36,7 @@ export const playTrackWithMetadata = async (
   initialPositionMs = 0,
   oldFlush: OldTrackFlush,
 ): Promise<void> => {
-  await savePlaybackProgress(ctx, { positionMs: 0, sermonId: audio.id })
+  await savePlaybackProgress(ctx, { positionMs: initialPositionMs, sermonId: audio.id })
 
   void recordSermonSwitchAction(ctx, {
     markOldCompleted: true,
@@ -82,7 +86,9 @@ export const playNextTrack = async (
 ): Promise<void> => {
   const newAudio: AudioPlayerData = { ...nextTrack, artwork: playlist.artwork, audioUrl }
   await setCurrentAudioAction(ctx, newAudio)
-  await playTrackWithMetadata(playerActions, newAudio, playlist, audioUrl, 0, oldFlush)
+  const history = ctx.get(historyAtom)
+  const resumeMs = getResumePosition(history, nextTrack.id)
+  await playTrackWithMetadata(playerActions, newAudio, playlist, audioUrl, resumeMs, oldFlush)
 }
 
 export const playFirstTrackInQueue = async (
@@ -95,5 +101,14 @@ export const playFirstTrackInQueue = async (
 
   const newAudio: AudioPlayerData = { ...firstTrack, artwork: playlist.artwork }
   await setCurrentAudioAction(ctx, newAudio)
-  await playTrackWithMetadata(playerActions, newAudio, playlist, firstTrack.audioUrl, 0, oldFlush)
+  const history = ctx.get(historyAtom)
+  const resumeMs = getResumePosition(history, firstTrack.id)
+  await playTrackWithMetadata(
+    playerActions,
+    newAudio,
+    playlist,
+    firstTrack.audioUrl,
+    resumeMs,
+    oldFlush,
+  )
 }
