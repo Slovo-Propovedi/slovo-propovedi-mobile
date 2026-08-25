@@ -120,9 +120,39 @@ Upstream-причины:
 
 **Фикс (два уровня защиты, виджет selbstständig):**
 
-1. **Снап `progress` при каждом возврате в active** (`model/useExpandAnimation.ts`): подписка на AppState, при `nextAppState === 'active'` — прямое присваивание `progress.value = expanded ? 1 : 0` (без `withTiming`). Прямое присваивание отменяет любую in-flight анимацию и фиксирует значение на UI-thread.
+1. **Снап `progress` при каждом возврате в active** (`model/useAppStateSnap.ts`, вызывается из `useExpandAnimation.ts`): подписка на AppState, при `nextAppState === 'active'` — прямое присваивание `progress.value = expanded ? 1 : 0` (без `withTiming`). Прямое присваивание отменяет любую in-flight анимацию и фиксирует значение на UI-thread.
 
 2. **Remount поддерева по ключу** (`ui/ExpandablePlayer/ExpandablePlayer.tsx`): хук `useBackgroundRecovery` (`model/useBackgroundRecovery.ts`) отслеживает AppState и возвращает счётчик; при возврате из фона дольше 5 минут счётчик инкрементируется. Обёртка `View` с `key={recoveryKey}`, `pointerEvents="box-none"` и `StyleSheet.absoluteFill` оборачивает всё содержимое виджета — смена ключа полностью перемонтирует поддерево (свежие нативные view для жестов, изображений, анимаций, бегущего текста; shared values перепривязываются). `pointerEvents="box-none"` гарантирует, что обёртка не перехватывает касания, предназначенные экранам табов.
+
+### Расползание мини-плеера при обновлении (Issue #63) — ИСПРАВЛЕНО, ПОДТВЕРЖДЕНО НА УСТРОЙСТВЕ
+
+**Симптом:** после обновления приложения (новый build) на Android верх мини-плеера (60px статичный бар, `MiniPlayer`, zIndex 300) стоит **правильно**, но нижняя часть surface-цветного контейнера-подложки (zIndex 200, `ExpandablePlayer.tsx`) растягивается вниз поверх иконок таб-бара — должна перекрывать только на 4px (`MINI_PLAYER_TAB_OVERLAP`). Любое взаимодействие (тап/пан на плеере) исправляет.
+
+**Статус:** фикс подтверждён на реальном устройстве (Android). TEMP(#63) телеметрия (логгеры `issue63Log`, `logContainerApply`, `useIssue63Diagnostics`, `issue63Debug`) удалена после подтверждения стабильности.
+
+**Корневая причина (рассинхронизация Reanimated UI-thread + ненадёжный канал обновления worklet-замыканий):**
+
+1. `tabBarHeightAtom` стартует с приближения 78; реальное измерение `CustomTabBar` через `onLayout` приходит через 1–2 кадра. На Android измерение может быть **двухфазным**: `useSafeAreaInsets()` на первых кадрах может вернуть `bottom: 0` → BlurView с `paddingBottom: Math.max(bottom, 30)` растёт, когда реальные insets приходят → второй `onLayout` с **большей** высотой.
+
+2. Когда атом обновляется после монта, Reanimated должен обновить замыкание worklet'а и повторно применить стиль на UI-thread. В загруженном окне старта повторное применение может быть **сброшено** — JS-сторона корректна (статичный мини-бар на правильной позиции), но нативный контейнер сохраняет устаревшую геометрию: `bottom` вычислен из **меньшего** устаревшего `tabBarHeight` → коробка свисает поверх табов на дельту высот.
+
+3. Доказательство асимметрии каналов: запись `progress.value` (что делает пан-жест / любой тап) **всегда** перезапускает worklet'ы с актуальными замыканиями и восстанавливает layout. Shared-value writes — надёжный межпоточный канал; обновления через замыкание worklet'а — ненадёжный.
+
+**Постоянная архитектура защиты (6 уровней):**
+
+1. **Гейтинг по измеренной высоте таб-бара** (`ui/ExpandablePlayer/ExpandablePlayer.tsx`): атом `isTabBarMeasuredAtom` (начальное значение `false`) переключается в `true` при первом `setTabBarHeight` из `CustomTabBar`. Виджет рендерится (`return null`) до измерения реальной высоты, поэтому первый кадр использует точную геометрию вместо приближения 78.
+
+2. **Прямое присваивание `progress` при первом монте** (`model/useExpandAnimation.ts`): на первом запуске эффекта `expanded` прямое присваивание `progress.value = expanded ? 1 : 0` (без `withTiming`) — форсирует shared value на UI-thread и перезапускает зависимые worklets. Последующие изменения `expanded` анимируются через `withTiming`.
+
+3. **AppState snap** (`model/useAppStateSnap.ts`): при каждом возврате в active — прямое присваивание `progress.value = expanded ? 1 : 0` (отменяет застрявшие mid-animation значения).
+
+4. **Геометрия через shared values вместо замыканий worklet'ов** (`model/useExpandAnimation.ts` + `model/useGeometrySharedValues.ts`): значения `miniBottom`, `screenWidth`, `fullScreenHeight` зеркалируются в `useSharedValue`-обёртки; `containerStyle` worklet читает `*.value` вместо значений из JS-замыкания. Синхронизация через `useEffect` → `.value = ...` — надёжный межпоточный канал.
+
+5. **Статичная resting-геометрия через React shadow tree** (`lib/getRestingContainerStyle.ts`): контейнер получает **plain-стиль** (не анимированный) с корректной resting-геометрией. React shadow tree commits **никогда не сбрасываются** — в отличие от JS-триггерных Reanimated commits. Стилевой массив: `[styles.container, containerStyle, restingContainerStyle, style, {backgroundColor}]` — animated `containerStyle` переопределяет значения во время анимации; в покое оба слоя согласованы.
+
+6. **Закрытый контур детекции и лечения** (`model/useContainerGeometryGuard.ts` + `model/useExpandAnimation.ts`): `useContainerGeometryGuard` — хук детекции (onLayout → сигнатура `y > expectedTop + 1dp` → окно 15с → кап 5) + `onMismatch` callback → `forceGeometryReapply` (запись в `geometryReapplyTick` shared value, alternating ±0.01dp — sub-pixel diff defeating no-diff skip, drift permanently bounded). Ожидание **всегда закреплено за СВЁРНУТОЙ геометрией** (`collapsedRestingContainerStyle.top`) — сигнатура бага (#63) существует только в мини-состоянии; при анимациях разворота/сворачивания y ≤ collapsedTop → ложных срабатываний нет по построению. Окно 15с отсчитывается от **аттача контейнера** (первый guarded onLayout), а не от маунта хука — покрывает поздний аттач (свежая установка: пользователь нажал play через 40с). `console.warn('playerGeometryHeal', …)` — fail-loud телеметрия последней линии; если warn появится в проде — сигнал рецидива, нужен лог. Тип `style`-пропа контейнера запрещает геометрические ключи (`NonGeometricStyle`) на уровне компилятора — last-wins в shadow tree не может быть нарушен внешним стилем.
+
+**Флип порядка стилей** (`ui/ExpandablePlayer/ContainerView.tsx`): `restingContainerStyle` после `containerStyle` — на уровне теневого дерева «последний побеждает», shadow всегда несёт корректную resting-геометрию, и любой релэйаут перезаписывает кадр правильными значениями.
 
 ## Управление
 
