@@ -1,6 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { StatusBar } from 'expo-status-bar'
-import { type StyleProp, type ViewStyle } from 'react-native'
+import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 import {
@@ -20,6 +20,7 @@ import { CoverImage } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { showMenuAtom } from '../../model/showMenuAtom'
+import { useBackgroundRecovery } from '../../model/useBackgroundRecovery'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
 import { MiniPlayer } from './MiniPlayer'
@@ -71,10 +72,16 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
 
   const onPlayPause = async () => (playing ? pause() : play())
 
+  // After ≥5 min in background, Reanimated UI-thread desync can leave an opaque
+  // gray container over the mini-player with dead touches. Remounting the
+  // subtree via key forces fresh native views for gestures, images, and styles.
+  // Issue #61.
+  const recoveryKey = useBackgroundRecovery()
+
   if (!audio) return null
 
   return (
-    <>
+    <View key={recoveryKey} pointerEvents='box-none' style={StyleSheet.absoluteFill}>
       <Animated.View
         pointerEvents='none'
         style={[styles.backdrop, backdropStyle, { height: screenHeight, width: screenWidth }]}
@@ -116,6 +123,6 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<ViewStyle> }) =>
           />
         </Animated.View>
       </GestureDetector>
-    </>
+    </View>
   )
 }

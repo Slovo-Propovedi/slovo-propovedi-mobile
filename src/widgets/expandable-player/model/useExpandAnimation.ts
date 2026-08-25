@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Dimensions, useWindowDimensions } from 'react-native'
+import { AppState, type AppStateStatus, Dimensions, useWindowDimensions } from 'react-native'
 import { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
 import type { SharedValue } from 'react-native-reanimated'
@@ -31,6 +31,21 @@ export const useExpandAnimation = (
 
   useEffect(() => {
     progress.value = withTiming(expanded ? 1 : 0, { duration: expanded ? 300 : 250 })
+  }, [expanded, progress])
+
+  // Snap progress on foreground resume — cancels any in-flight withTiming
+  // and forces the shared value onto the UI thread, killing stale
+  // mid-animation values that can desync after a long background (Issue #61).
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') progress.value = expanded ? 1 : 0
+    }
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange)
+
+    return () => {
+      subscription.remove()
+    }
   }, [expanded, progress])
 
   const containerStyle = useAnimatedStyle(() => ({
