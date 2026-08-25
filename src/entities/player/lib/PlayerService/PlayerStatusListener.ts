@@ -1,8 +1,6 @@
 import type { StatusCallbacks } from './types'
 import type { AudioPlayer, AudioStatus } from 'expo-audio'
-
 const STALE_TRACK_END_TOLERANCE_MS = 3000
-const STALE_TRACK_END_WARNING = '[PlayerStatusListener] Ignored stale didJustFinish event'
 
 /**
  * Manages playback status listeners for the audio player.
@@ -87,7 +85,9 @@ class PlayerStatusListener {
   private warnStaleTrackEndOnce = (): void => {
     if (this.staleTrackEndWarned) return
     this.staleTrackEndWarned = true
-    console.warn(`${STALE_TRACK_END_WARNING} (position far from duration)`)
+    console.warn(
+      '[PlayerStatusListener] Ignored stale didJustFinish event (position far from duration)',
+    )
   }
 
   private setupPlaybackStatusListener(player: AudioPlayer, callbacks: StatusCallbacks): void {

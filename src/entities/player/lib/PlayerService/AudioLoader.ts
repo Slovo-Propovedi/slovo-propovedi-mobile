@@ -1,14 +1,11 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio'
-import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
-import { setDurationAction, setIsBufferingAction, setPositionAction } from '../../model'
+import { setIsBufferingAction, setPositionAction } from '../../model'
 import { startBackgroundCaching } from './BackgroundCachingService'
+import { waitForLoaded } from './waitForLoaded'
 
-const LOAD_TIMEOUT_MS = 30000
-const LOAD_CHECK_INTERVAL_MS = 100
 const REPLACE_AUDIO_ERROR_MESSAGE = 'Ошибка при замене аудио'
 
 class AudioLoader {
@@ -30,8 +27,7 @@ class AudioLoader {
       { downloadFirst: false, keepAudioSessionActive: true },
     )
     this.playerInstance = player
-
-    return this.waitForLoaded(player, initialPositionMs).catch(error => {
+    return waitForLoaded(player, initialPositionMs, p => p === this.playerInstance).catch(error => {
       console.error('[AudioLoader] loadAudio: Promise rejected with error:', error)
       reportError(error, 'Ошибка при загрузке аудио')
       void setIsBufferingAction(ctx, false)
@@ -55,7 +51,7 @@ class AudioLoader {
       void setIsBufferingAction(ctx, false)
       return null
     }
-    return this.waitForLoaded(this.playerInstance, initialPositionMs)
+    return waitForLoaded(this.playerInstance, initialPositionMs, p => p === this.playerInstance)
   }
 
   public releaseAndReset(): void {
@@ -78,33 +74,6 @@ class AudioLoader {
 
   public markTrackEndHandled(): void {
     this.trackEndHandled = true
-  }
-
-  private waitForLoaded(player: AudioPlayer, initialPositionMs = 0): Promise<AudioPlayer | null> {
-    return new Promise(resolve => {
-      let elapsed = 0
-      const checkLoaded = setInterval(() => {
-        elapsed += LOAD_CHECK_INTERVAL_MS
-        if (player.isLoaded) {
-          clearInterval(checkLoaded)
-          const dur = Math.floor(player.duration * 1000)
-          void setDurationAction(ctx, dur)
-          void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
-          void setIsBufferingAction(ctx, false)
-          // Guarded: a rejection here (first-tick race mid-transition) must not
-          // surface as an unhandled promise rejection
-          player.seekTo(initialPositionMs / 1000).catch(error => {
-            console.error('[AudioLoader] waitForLoaded: initial seekTo failed:', error)
-          })
-          void setPositionAction(ctx, initialPositionMs)
-          resolve(player)
-        } else if (elapsed >= LOAD_TIMEOUT_MS) {
-          clearInterval(checkLoaded)
-          void setIsBufferingAction(ctx, false)
-          resolve(null)
-        }
-      }, LOAD_CHECK_INTERVAL_MS)
-    })
   }
 
   private async getPlaybackUrl(audioUrl: string): Promise<string> {

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { CURRENT_AUDIO, PLAYER_STARTUP_ATTEMPTS } from 'shared/config'
+import { CURRENT_AUDIO, CURRENT_SOUND_POSITION, PLAYER_STARTUP_ATTEMPTS } from 'shared/config'
 import { initializePlayer } from './initializePlayer'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/AudioModeManager'
@@ -93,6 +93,72 @@ describe('startup crash guard', () => {
         mockedLoadAudio.mock.invocationCallOrder[0],
       )
       expect(mockedSetItem).toHaveBeenCalledWith(PLAYER_STARTUP_ATTEMPTS, '2')
+    })
+
+    test('restores position from bound format when sermonId matches', async () => {
+      await seedStoredAudio()
+      const bound = JSON.stringify({
+        positionMs: 42000,
+        savedAtMs: Date.now(),
+        sermonId: 'sermon-1',
+      })
+      await AsyncStorage.setItem(CURRENT_SOUND_POSITION, bound)
+
+      await initializePlayer()
+
+      expect(mockedLoadAudio).toHaveBeenCalledWith(AUDIO.audioUrl, 42000)
+    })
+
+    test('restores position 0 when sermonId does not match', async () => {
+      await seedStoredAudio()
+      const bound = JSON.stringify({
+        positionMs: 42000,
+        savedAtMs: Date.now(),
+        sermonId: 'other-sermon',
+      })
+      await AsyncStorage.setItem(CURRENT_SOUND_POSITION, bound)
+
+      await initializePlayer()
+
+      expect(mockedLoadAudio).toHaveBeenCalledWith(AUDIO.audioUrl, 0)
+    })
+
+    test('restores position 0 when stored value is legacy bare number', async () => {
+      await seedStoredAudio()
+      await AsyncStorage.setItem(CURRENT_SOUND_POSITION, '42000')
+
+      await initializePlayer()
+
+      expect(mockedLoadAudio).toHaveBeenCalledWith(AUDIO.audioUrl, 0)
+    })
+
+    test('clamps position to bound durationMs when position exceeds duration', async () => {
+      await seedStoredAudio()
+      const bound = JSON.stringify({
+        durationMs: 120000,
+        positionMs: 200000,
+        savedAtMs: Date.now(),
+        sermonId: 'sermon-1',
+      })
+      await AsyncStorage.setItem(CURRENT_SOUND_POSITION, bound)
+
+      await initializePlayer()
+
+      expect(mockedLoadAudio).toHaveBeenCalledWith(AUDIO.audioUrl, 120000)
+    })
+
+    test('skips clamp when bound record has no durationMs', async () => {
+      await seedStoredAudio()
+      const bound = JSON.stringify({
+        positionMs: 200000,
+        savedAtMs: Date.now(),
+        sermonId: 'sermon-1',
+      })
+      await AsyncStorage.setItem(CURRENT_SOUND_POSITION, bound)
+
+      await initializePlayer()
+
+      expect(mockedLoadAudio).toHaveBeenCalledWith(AUDIO.audioUrl, 200000)
     })
   })
 })

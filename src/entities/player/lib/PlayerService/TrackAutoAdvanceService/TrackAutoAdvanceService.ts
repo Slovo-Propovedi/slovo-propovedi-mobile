@@ -67,18 +67,14 @@ export class TrackAutoAdvanceService {
 
     if (!currentAudio) {
       if (storedCurrentAudio) {
-        console.error(
-          '[TrackAutoAdvanceService] CURRENT_AUDIO failed schema validation, auto-advance aborted',
-        )
+        console.error('[TrackAutoAdvanceService] CURRENT_AUDIO schema validation failed')
         reportError(new Error('Не удалось прочитать данные проповеди из хранилища'))
       }
       return
     }
     if (!currentPlaylist) {
       if (storedCurrentPlaylist) {
-        console.error(
-          '[TrackAutoAdvanceService] CURRENT_PLAYLIST failed schema validation, auto-advance aborted',
-        )
+        console.error('[TrackAutoAdvanceService] CURRENT_PLAYLIST schema validation failed')
         reportError(new Error('Не удалось прочитать данные плейлиста из хранилища'))
       }
       return

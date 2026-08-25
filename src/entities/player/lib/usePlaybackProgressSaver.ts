@@ -1,9 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useEffect, useRef } from 'react'
+import { AppState } from 'react-native'
 import { writeLiveProgressSnapshot } from 'entities/listening-history/@x/player'
-import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
+import { savePlaybackProgress } from './playbackProgress'
 
 export const usePlaybackProgressSaver = () => {
   const positionRef = useRef(0)
@@ -31,7 +31,7 @@ export const usePlaybackProgressSaver = () => {
       currentAudioRef.current = v
     })
 
-    const savePosition = () => {
+    const flushNow = () => {
       if (!isPlayingRef.current) return
 
       if (skipNextTickRef.current) {
@@ -43,7 +43,11 @@ export const usePlaybackProgressSaver = () => {
       const sermonId = currentAudioRef.current?.id
       if (position <= 0 || !sermonId) return
 
-      void AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(position))
+      void savePlaybackProgress(ctx, {
+        durationMs: durationRef.current,
+        positionMs: position,
+        sermonId,
+      })
       writeLiveProgressSnapshot({
         durationMs: durationRef.current,
         positionMs: position,
@@ -51,10 +55,15 @@ export const usePlaybackProgressSaver = () => {
       })
     }
 
-    const interval = setInterval(savePosition, 5000)
+    const interval = setInterval(flushNow, 5000)
+
+    const subAppState = AppState.addEventListener('change', nextState => {
+      if (nextState === 'background') flushNow()
+    })
 
     return () => {
       clearInterval(interval)
+      subAppState.remove()
       unsubPosition()
       unsubDuration()
       unsubIsPlaying()

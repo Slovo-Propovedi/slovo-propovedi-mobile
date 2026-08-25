@@ -23,7 +23,7 @@
 
 | Модуль                                    | Назначение                                                                                                                                                                                                                                                  |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AudioLoader.ts`                          | создание/замена `AudioPlayer` (`replace()` in-place при живом инстансе), ожидание загрузки, стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша                                                                                          |
+| `AudioLoader.ts` + `waitForLoaded.ts` | создание/замена `AudioPlayer` (`replace()` in-place при живом инстансе), ожидание загрузки (event-driven: подписка на `playbackStatusUpdate`, работает в фоне где JS-таймеры заморожены), стриминг с буферизацией (`downloadFirst: false`), чтение из аудио-кэша. `waitForLoaded` защищён от seek-to-zero и от seek при stale-позиции (position уже продвинулась past target — Issue #60)                                                                                          |
 | `PlaybackController.ts`                   | play/pause/stop/seek/setVolume/getStatus; персист позиции                                                                                                                                                                                                   |
 | `AudioModeManager.ts`                     | конфигурация аудио-режима; каждая `configure()` перезапускает `setAudioModeAsync` (re-assert после сбросов ОС), дедупликация конкурентных вызовов, AppState `active` → всегда re-assert                                                                     |
 | `LockScreenControls.ts`                   | метаданные lock screen: полный `setActiveForLockScreen(true, ...)` для нового плеера, `updateLockScreenMetadata(...)` для того же плеера (replace-in-place); retry при ещё не загруженном плеере (до 10×200мс), version-counter для отмены устаревших retry |
@@ -134,7 +134,14 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 
 ## Персистенция позиции
 
-Каждые 5с в `app/_RootLayout.tsx` (`setInterval(savePosition, 5000)`): при не-воспроизведении пишет `CURRENT_SOUND_POSITION` в AsyncStorage.
+Позиция воспроизведения сохраняется в `CURRENT_SOUND_POSITION` как JSON `{ sermonId, positionMs, savedAtMs, durationMs? }` — привязана к конкретной проповеди. Поле `durationMs` опционально: пишется при наличии длительности (5с-тик, пауза), опускается при flush авто-перехода (`positionMs: 0`). Точки flush:
+
+- **5с-тик** (`usePlaybackProgressSaver`): при воспроизведении — bound-запись + мини-снапшот `listeningProgressSnapshot`; skip-first-tick после переключения трека.
+- **Пауза** (`PlaybackController.pause`, `WebPlayerService.pause`): немедленная bound-запись.
+- **Авто-переход** (`playTrackWithMetadata`): `savePlaybackProgress(positionMs: 0)` для нового трека перед `recordSermonSwitchAction` — закрывает гонку «stale-позиция A применяется к B».
+- **Уход в фон** (`usePlaybackProgressSaver`): AppState `background` → немедленный flush теми же guard'ами.
+
+При cold start `initializePlayer` парсит JSON через `playbackProgressSchema`; легаси-голое-число → parse вернёт `undefined` → позиция 0. Если `sermonId` не совпадает с текущим аудио → позиция 0. Позиция clamp'ится к `durationMs` из записи (если поле отсутствует или ≤ 0, clamp не применяется).
 
 ## История прослушивания и resume
 
@@ -146,7 +153,7 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts`                                                                        | каждые 5с (только при воспроизведении): `CURRENT_SOUND_POSITION` + мини-снапшот `writeLiveProgressSnapshot` (~60 байт) — каталог истории не трогает; первый тик после переключения трека пропускается (skip-first-tick через рефы) |
 | `PlaybackController.pause` | `src/entities/player/lib/PlayerService/PlaybackController.ts`                                                                | при паузе (нативный): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })`                                                                                                           |
-| `WebPlayerService.pause`   | `src/entities/player/lib/PlayerService/index.web.ts`                                                                         | при паузе (веб): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction`                                                                                                                                                           |
+| `WebPlayerService.pause`   | `src/entities/player/lib/PlayerService/index.web.ts`                                                                         | при паузе (веб): `savePlaybackProgress` (bound-запись) + `flushHistoryProgressAction`                                                                                                                                          |
 | `recordSermonSwitchAction` | `usePlayNewSermon` (ручной тап, `markOldCompleted: false`), `playTrackWithMetadata` (авто-переход, `markOldCompleted: true`) | при смене трека: flush позиции старого + запись/обновление нового за один проход                                                                                                                                                   |
 
 Все файлы `entities/player`, которым нужны символы из `listening-history`, импортируют их через **@x-точку** `entities/listening-history/@x/player` — а не из основного barrel `entities/listening-history`. Подробнее — [listening-history.md](./listening-history.md) → «@x cross-import».
@@ -183,7 +190,7 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 
 Почему прежний release-before-recreate был убран:
 
-- **Issue #50 (Android, заблокированный экран): авто-переход не срабатывает.** Прежний `replaceAudio` вызывал `lockScreenControls.clear()` → `setActiveForLockScreen(false)`, что останавливало foreground service, и затем release'ил плеер до старта нового источника. Без FGS и без аудио Android замораживал кэшированный процесс → JS-цепочка авто-перехода (включая setInterval-цикл `waitForLoaded` в `AudioLoader`) стояла до разблокировки экрана.
+- **Issue #50 (Android, заблокированный экран): авто-переход не срабатывает.** Прежний `replaceAudio` вызывал `lockScreenControls.clear()` → `setActiveForLockScreen(false)`, что останавливало foreground service, и затем release'ил плеер до старта нового источника. Без FGS и без аудио Android замораживал кэшированный процесс → JS-цепочка авто-перехода (включая polling `waitForLoaded` в `AudioLoader`) стояла до разблокировки экрана.
 - **Дубли media-уведомлений.** В expo-audio 57.0.x `setActiveForLockScreen(false)` может молча не сработать, пока сервис binder в состоянии BINDING → старый MediaSession/уведомление осиротевали; per-player ID уведомлений и коллизии пустых `MediaSession.setId("")` (expo#47101/#48694, фикс не бэкпортирован в 57.0.x) давали второе «зависшее» уведомление со старой проповедью, переживающее рестарт приложения.
 
 Replace-in-place устраняет оба класса проблем: нет окна без FGS/аудио (нечего замораживать) и нет teardown-гонок (сессия одна на всё время жизни плеера). Дополнительно `createAudioPlayer` создаётся с `keepAudioSessionActive: true` — iOS AVAudioSession не деактивируется в конце трека (тот же класс отказа авто-перехода на iOS), а предыдущий плеер в `loadAudio` освобождается через `release()` вместо `remove()` (утечка нативного плеера, expo#41852).
@@ -257,6 +264,25 @@ const newAudio: AudioPlayerData = { ...nextTrack, artwork: playlist.artwork, aud
 Фикс: `sermonSchema.artwork` изменён на `z.string().nullable()`, `playlistSchema.artwork` — тоже `z.string().nullable()`: доменный тип `artwork` теперь честный `string | null` вместо пустой строки-заглушки. Маппер нормализует на границе API (`apiSermon.artwork ?? null`). Потребители null: `CoverImage` подставляет `IMAGE_PLACEHOLDER`, lock screen — иконку приложения (`metadata.artworkUrl || getLocalAppIconUri()`).
 
 Дополнительно (observability): при будущем schema drift парсинг `CURRENT_AUDIO`/`CURRENT_PLAYLIST` в `advanceToNextTrack` логирует `console.error` и показывает глобальный диалог через `reportError` — авто-переход по-прежнему прерывается (safety net), но ошибка больше не молчит.
+
+### Event-driven waitForLoaded и seek-guards (Issue #60)
+
+**Корневая причина:** при фоновом авто-переходе на Android (заблокированный экран) JS-таймеры (`setInterval`, `setTimeout`) замораживаются (`JavaTimerManager` паузится при host pause), но нативные события `playbackStatusUpdate` **продолжают приходить**. Старый `waitForLoaded` использовал `setInterval(100ms)` polling — при фоновом `replace()` нативный плеер становился loaded и начинал воспроизведение, но polling стоял из-за замороженных таймеров. Когда пользователь открывал приложение, polling обнаруживал `isLoaded === true` и безусловно вызывал `seekTo(initialPositionMs)` — с `initialPositionMs=0` это `seekTo(0)` на уже играющем треке → **аудио перезапускалось с начала** (hearable restart from zero). Дополнительно `isBufferingAtom` застревал в `true` (буферизация не очищалась в замороженном polling) → на кнопке play мелькал спиннер.
+
+**Фикс** (`src/entities/player/lib/PlayerService/waitForLoaded.ts`, вынесен из `AudioLoader.ts`):
+
+1. **Sync fast-path:** если `player.isLoaded === true` — полная загрузка сразу (без подписок и таймеров).
+2. **Event-driven primary path:** подписка на `player.addListener('playbackStatusUpdate', ...)` — событие приходит даже в фоне. При `status.isLoaded === true` → `completeLoad`. После завершения подписка удаляется (double-completion guard через флаг `resolved`).
+3. **Safety-net timeout:** `setTimeout(30s)` fallback для foreground stall (таймеры не работают в фоне — это нормально, event path покрывает).
+4. **Error fast-fail:** если нативный статус содержит `status.error`, `waitForLoaded` разрешается `null` сразу (clear subscription/timeout, clear buffering) — вместо зависания на 30с. `waitForLoaded` не реджектит при ошибке, поэтому `loadAudio`'s `.catch` не срабатывает — результат тихий `null` (как и старый 30с timeout, не регресс).
+5. **Seek- guards** (убивают баг):
+   - `seekTo` вызывается **только** когда `initialPositionMs > 0` — seek-to-zero это no-op для нового источника, а для уже играющего — деструктивный рестарт.
+   - `seekTo` **пропускается** если `currentTime > initialPositionMs + 1500ms` (stale poll: позиция уже продвинулась past target).
+   - `initialPositionMs` clamp'ится к загруженной длительности перед seek — seek за пределы длительности → ExoPlayer clamps к концу → STATE_ENDED → случайный auto-advance.
+6. **Position semantics:** `setPositionAction` вызывается при каждом прохождении stale-progress guard (`currentMs ≤ initialPositionMs + tolerance`) — seek или не seek. Это восстанавливает старое поведение «сброс на 0 сразу» на авто-переходе (initial=0, свежий source → position 0) и не тянет продвинувшуюся позицию назад.
+7. **Staleness guard:** `waitForLoaded` принимает `isCurrentPlayer(player)` callback (передаётся из `AudioLoader` как `p => p === this.playerInstance`). При завершении (event/timeout/error), если `!isCurrentPlayer(player)`: пропускает ВСЕ записи состояния (duration, AsyncStorage, buffering, position), пропускает seekTo, resolves молча. Защищает от stale-closure когда более новый `loadAudio` release'ит предыдущий плеер или `releaseAndReset()` запущен.
+
+**Связанные файлы:** `AudioLoader.ts` (96 строк, импортирует `waitForLoaded`), `waitForLoaded.ts`. Публичный API `AudioLoader` не изменился.
 
 ## Связанные документы
 

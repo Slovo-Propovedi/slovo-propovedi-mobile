@@ -1,5 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type Ctx } from '@reatom/framework'
 import { act, renderHook } from '@testing-library/react-native'
+import { AppState, type AppStateStatus } from 'react-native'
 import { type AudioPlayerData } from 'shared/model'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
 import { usePlaybackProgressSaver } from './usePlaybackProgressSaver'
@@ -16,6 +18,17 @@ jest.mock('shared/lib/reatom-ctx', () => {
 })
 
 const testCtx = (jest.requireMock('shared/lib/reatom-ctx') as { ctx: Ctx }).ctx
+
+const mockedSetItem = jest.mocked(AsyncStorage.setItem)
+
+const mockAppStateListeners: Array<(state: AppStateStatus) => void> = []
+
+jest
+  .spyOn(AppState, 'addEventListener')
+  .mockImplementation((_event: string, cb: (state: AppStateStatus) => void) => {
+    mockAppStateListeners.push(cb)
+    return { remove: jest.fn() }
+  })
 
 const SERMON_ID = 'sermon-1'
 const mockAudio: AudioPlayerData = {
@@ -45,10 +58,20 @@ const seedAtoms = (opts?: {
   positionAtom(testCtx, position)
 }
 
+const advanceTimeAndFlush = async (ms: number) => {
+  await act(async () => {
+    jest.advanceTimersByTime(ms)
+  })
+  // Allow the void savePlaybackProgress promise to resolve
+  await act(async () => {})
+}
+
 describe('usePlaybackProgressSaver', () => {
   beforeEach(() => {
     jest.useFakeTimers()
     jest.clearAllMocks()
+    mockedSetItem.mockClear()
+    mockAppStateListeners.length = 0
     seedAtoms()
   })
 
@@ -56,16 +79,14 @@ describe('usePlaybackProgressSaver', () => {
     jest.useRealTimers()
   })
 
-  test('calls writeLiveProgressSnapshot with correct args', async () => {
+  test('writes bound JSON with sermonId on tick', async () => {
     await renderHook(() => usePlaybackProgressSaver())
 
     await act(async () => {
       seedAtoms({ duration: 120000, isPlaying: true, position: 30000 })
     })
 
-    await act(async () => {
-      jest.advanceTimersByTime(5000)
-    })
+    await advanceTimeAndFlush(5000)
 
     expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(1)
     expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledWith({
@@ -73,6 +94,17 @@ describe('usePlaybackProgressSaver', () => {
       positionMs: 30000,
       sermonId: SERMON_ID,
     })
+
+    const setItemCall = mockedSetItem.mock.calls.find(([key]) => key === 'currentSoundPosition')
+    expect(setItemCall).toBeTruthy()
+    const storedValue = setItemCall ? setItemCall[1] : ''
+    const parsed = JSON.parse(storedValue as string)
+    expect(parsed).toMatchObject({
+      durationMs: 120000,
+      positionMs: 30000,
+      sermonId: SERMON_ID,
+    })
+    expect(typeof parsed.savedAtMs).toBe('number')
   })
 
   test('does not save when paused', async () => {
@@ -111,9 +143,7 @@ describe('usePlaybackProgressSaver', () => {
     })
 
     // First tick — should fire normally with initial audio
-    await act(async () => {
-      jest.advanceTimersByTime(5000)
-    })
+    await advanceTimeAndFlush(5000)
 
     expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(1)
     expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledWith({
@@ -127,17 +157,13 @@ describe('usePlaybackProgressSaver', () => {
       seedAtoms({ audio: mockAudio2, duration: 200000, isPlaying: true, position: 10000 })
     })
 
-    await act(async () => {
-      jest.advanceTimersByTime(5000)
-    })
+    await advanceTimeAndFlush(5000)
 
     // Still only 1 call — the tick after id change was skipped
     expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(1)
 
     // Second tick after id change — should fire
-    await act(async () => {
-      jest.advanceTimersByTime(5000)
-    })
+    await advanceTimeAndFlush(5000)
 
     expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(2)
     expect(mockWriteLiveProgressSnapshot).toHaveBeenLastCalledWith({
@@ -145,6 +171,55 @@ describe('usePlaybackProgressSaver', () => {
       positionMs: 10000,
       sermonId: 'sermon-2',
     })
+  })
+
+  test('flushes on AppState change to background', async () => {
+    await renderHook(() => usePlaybackProgressSaver())
+
+    await act(async () => {
+      seedAtoms({ duration: 120000, isPlaying: true, position: 55000 })
+    })
+
+    await advanceTimeAndFlush(0)
+
+    await act(async () => {
+      for (const listener of mockAppStateListeners) listener('background')
+    })
+    await advanceTimeAndFlush(0)
+
+    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(1)
+    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledWith({
+      durationMs: 120000,
+      positionMs: 55000,
+      sermonId: SERMON_ID,
+    })
+
+    const setItemCall = mockedSetItem.mock.calls.find(([key]) => key === 'currentSoundPosition')
+    expect(setItemCall).toBeTruthy()
+    const storedValue = setItemCall ? setItemCall[1] : ''
+    const parsed = JSON.parse(storedValue as string)
+    expect(parsed).toMatchObject({
+      durationMs: 120000,
+      positionMs: 55000,
+      sermonId: SERMON_ID,
+    })
+  })
+
+  test('does not flush on AppState change to inactive', async () => {
+    await renderHook(() => usePlaybackProgressSaver())
+
+    await act(async () => {
+      seedAtoms({ duration: 120000, isPlaying: true, position: 55000 })
+    })
+
+    await advanceTimeAndFlush(0)
+
+    await act(async () => {
+      for (const listener of mockAppStateListeners) listener('inactive')
+    })
+    await advanceTimeAndFlush(0)
+
+    expect(mockWriteLiveProgressSnapshot).not.toHaveBeenCalled()
   })
 
   test('clears interval on unmount', async () => {

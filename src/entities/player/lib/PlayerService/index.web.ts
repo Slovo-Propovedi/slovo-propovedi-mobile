@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
-import { CURRENT_SOUND_DURATION, CURRENT_SOUND_POSITION } from 'shared/config'
+import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { currentAudioAtom, durationAtom } from '../../model'
+import { savePlaybackProgress } from '../playbackProgress'
 import { createPubSub } from './webPlayerPubSub'
 import { createWebPlayerState } from './webPlayerState'
 
@@ -24,15 +25,20 @@ class WebPlayerService {
     if (this.audioInstance) {
       this.audioInstance.pause()
       const positionMs = Math.floor(this.audioInstance.currentTime * 1000)
-      await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(positionMs))
 
       const sermonId = ctx.get(currentAudioAtom)?.id
-      if (sermonId)
+      if (sermonId) {
+        void savePlaybackProgress(ctx, {
+          durationMs: ctx.get(durationAtom),
+          positionMs,
+          sermonId,
+        })
         void flushHistoryProgressAction(ctx, {
           durationMs: ctx.get(durationAtom),
           positionMs,
           sermonId,
         })
+      }
     }
     this.stopStatusTracking()
     this.state.setIsPlaying(false)

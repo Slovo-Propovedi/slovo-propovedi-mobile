@@ -16,6 +16,7 @@ import {
   setCurrentPlaylistAction,
   setRepeatModeAction,
 } from '../model'
+import { playbackProgressSchema } from './playbackProgress'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/AudioModeManager'
 import {
@@ -27,6 +28,7 @@ import {
 
 const parseAudioPlayerData = getParseJsonWithSchema(audioPlayerDataSchema)
 const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
+const parsePlaybackProgress = getParseJsonWithSchema(playbackProgressSchema)
 
 export const initializePlayer = async () => {
   try {
@@ -66,6 +68,7 @@ export const initializePlayer = async () => {
     const { data: parsedRepeat } = repeatModeSchema.safeParse(storedRepeatMode)
     const audio = parseAudioPlayerData(storedCurrentAudio)
     const playlist = parsePlaylistData(storedCurrentPlaylist)
+    const parsedProgress = parsePlaybackProgress(storedSoundPosition)
     const { data: validVolume } = z.number().safeParse(parsedVolume)
 
     if (validVolume) await playerService.setVolume(validVolume)
@@ -73,7 +76,8 @@ export const initializePlayer = async () => {
 
     if (audio) {
       await setCurrentAudioAction(ctx, audio)
-      await playerService.loadAudio(audio.audioUrl, Number(storedSoundPosition) || 0)
+      const resumeMs = computeResumeMs(parsedProgress, audio.id)
+      await playerService.loadAudio(audio.audioUrl, resumeMs)
       playerService.setLockScreenMetadata({
         albumTitle: playlist?.title,
         artist: audio.artist,
@@ -87,4 +91,17 @@ export const initializePlayer = async () => {
     console.error('Error initializing player data:', error)
     reportError(error, 'Ошибка при восстановлении плеера')
   }
+}
+
+const computeResumeMs = (
+  parsedProgress:
+    { durationMs?: number; positionMs: number; savedAtMs: number; sermonId: string } | undefined,
+  currentSermonId: string,
+): number => {
+  if (!parsedProgress || parsedProgress.sermonId !== currentSermonId) return 0
+
+  const { durationMs: duration, positionMs } = parsedProgress
+
+  if (typeof duration === 'number' && duration > 0) return Math.min(positionMs, duration)
+  return positionMs
 }

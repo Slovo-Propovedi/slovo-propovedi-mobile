@@ -1,7 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer } from 'expo-audio'
 import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
-import { CURRENT_SOUND_POSITION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import {
@@ -13,6 +11,7 @@ import {
   setPositionAction,
   setVolumeAction,
 } from '../../model'
+import { savePlaybackProgress } from '../playbackProgress'
 import { type PlaybackStatus } from './types'
 
 /** If no fresh position event arrives within this window, unblock the guard. */
@@ -39,17 +38,18 @@ class PlaybackController {
     if (!player?.isLoaded) return
 
     const positionMs = Math.floor(player.currentTime * 1000)
-    await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(positionMs))
     player.pause()
     void setIsPlayingAction(ctx, false)
 
     const sermonId = ctx.get(currentAudioAtom)?.id
-    if (sermonId)
+    if (sermonId) {
+      void savePlaybackProgress(ctx, { durationMs: ctx.get(durationAtom), positionMs, sermonId })
       void flushHistoryProgressAction(ctx, {
         durationMs: ctx.get(durationAtom),
         positionMs,
         sermonId,
       })
+    }
   }
 
   public stop = async (player: AudioPlayer | null): Promise<void> => {

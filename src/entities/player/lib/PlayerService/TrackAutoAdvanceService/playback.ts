@@ -3,6 +3,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import type { PlayerActions } from './types'
 import { setCurrentAudioAction } from '../../../model'
+import { savePlaybackProgress } from '../../playbackProgress'
 import { lockScreenControls } from '../LockScreenControls'
 import { getFirstTrack } from './navigation'
 
@@ -31,6 +32,8 @@ export const playTrackWithMetadata = async (
   initialPositionMs = 0,
   oldFlush: OldTrackFlush,
 ): Promise<void> => {
+  await savePlaybackProgress(ctx, { positionMs: 0, sermonId: audio.id })
+
   void recordSermonSwitchAction(ctx, {
     markOldCompleted: true,
     newAudio: audio,

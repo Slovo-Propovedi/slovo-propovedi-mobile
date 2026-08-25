@@ -15,6 +15,10 @@ jest.mock('../LockScreenControls', () => ({
   },
 }))
 
+jest.mock('../../playbackProgress', () => ({
+  savePlaybackProgress: jest.fn().mockResolvedValue(undefined),
+}))
+
 const setMetadataMock = jest.mocked(lockScreenControls.setMetadata)
 
 const mockPlay = jest.fn().mockResolvedValue(undefined)
@@ -77,5 +81,27 @@ describe('playTrackWithMetadata', () => {
       artworkUrl: audio.artwork,
       title: audio.title,
     })
+  })
+
+  test('saves bound progress with position 0 for the new track before recordSermonSwitch', async () => {
+    const player = { isLoaded: true } as unknown as AudioPlayer
+    mockReplaceAudio.mockResolvedValue(player)
+    const { savePlaybackProgress } = jest.requireMock('../../playbackProgress') as {
+      savePlaybackProgress: jest.Mock
+    }
+
+    await playTrackWithMetadata(playerActions, audio, playlist, audio.audioUrl, 0, oldFlush)
+
+    expect(savePlaybackProgress).toHaveBeenCalledTimes(1)
+    expect(savePlaybackProgress).toHaveBeenCalledWith(expect.anything(), {
+      positionMs: 0,
+      sermonId: audio.id,
+    })
+    expect(savePlaybackProgress.mock.invocationCallOrder[0]).toBeLessThan(
+      mockRecordSermonSwitch.mock.invocationCallOrder[0],
+    )
+    expect(savePlaybackProgress.mock.invocationCallOrder[0]).toBeLessThan(
+      mockReplaceAudio.mock.invocationCallOrder[0],
+    )
   })
 })

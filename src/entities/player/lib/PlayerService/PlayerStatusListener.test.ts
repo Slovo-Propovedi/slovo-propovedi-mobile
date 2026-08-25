@@ -44,13 +44,14 @@ const armListener = (player: AudioPlayer): void => {
 }
 
 describe('PlayerStatusListener track end', () => {
+  let consoleWarnSpy: jest.SpyInstance
   let player: AudioPlayer
   let callbacks: StatusCallbacks
   let onTrackEnd: StatusUpdateHandler
 
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     player = createPlayerStub()
     callbacks = createCallbacks()
     playerStatusListener.setupListeners(player, callbacks)
@@ -58,7 +59,7 @@ describe('PlayerStatusListener track end', () => {
   })
 
   afterEach(() => {
-    jest.restoreAllMocks()
+    consoleWarnSpy.mockRestore()
   })
 
   test('ignores didJustFinish fired before the listener is armed', () => {
@@ -116,7 +117,10 @@ describe('PlayerStatusListener track end', () => {
     armListener(player)
     onTrackEnd(staleEvent)
 
-    expect(console.warn).toHaveBeenCalledTimes(2)
+    const staleWarnings = consoleWarnSpy.mock.calls.filter(
+      ([msg]) => typeof msg === 'string' && msg.includes('Ignored stale didJustFinish event'),
+    )
+    expect(staleWarnings).toHaveLength(2)
   })
 
   test('ignores a stale didJustFinish fired right after a source change (expo-audio #34301)', () => {
@@ -155,6 +159,9 @@ describe('PlayerStatusListener track end', () => {
     onTrackEnd(statusWith({ currentTime: 10, duration: 120 }))
     onTrackEnd(statusWith({ currentTime: 20, duration: 120 }))
 
-    expect(console.warn).toHaveBeenCalledTimes(1)
+    const staleWarnings = consoleWarnSpy.mock.calls.filter(
+      ([msg]) => typeof msg === 'string' && msg.includes('Ignored stale didJustFinish event'),
+    )
+    expect(staleWarnings).toHaveLength(1)
   })
 })

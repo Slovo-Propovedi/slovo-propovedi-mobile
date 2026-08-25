@@ -5,11 +5,9 @@ import {
   CURRENT_AUDIO,
   CURRENT_PLAYLIST,
   CURRENT_REPEAT_MODE,
-  CURRENT_SOUND_POSITION,
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
-
 // Legacy atoms for backward compatibility
 export const currentAudioAtom = atom<AudioPlayerData | null>(null, 'currentAudioAtom')
 export const currentPlaylistAtom = atom<null | PlaylistData>(null, 'currentPlaylistAtom')
@@ -118,8 +116,3 @@ export const setRepeatModeAction = action(async (ctx, mode: RepeatMode) => {
   })
   return mode
 }, 'setRepeatMode')
-
-export const savePlaybackPositionAction = action(async (_ctx, position: number) => {
-  await AsyncStorage.setItem(CURRENT_SOUND_POSITION, String(position))
-  return position
-}, 'savePlaybackPosition')
