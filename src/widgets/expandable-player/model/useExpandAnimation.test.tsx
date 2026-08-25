@@ -3,6 +3,7 @@ import { Text } from 'react-native'
 import { AppState, type AppStateStatus } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
 import { useExpandAnimation } from './useExpandAnimation'
 
 const mockedWithTiming = withTiming as jest.Mock
@@ -110,5 +111,43 @@ describe('useExpandAnimation foreground snap', () => {
     })
 
     expect(capturedProgress.value).toBe(0.5)
+  })
+})
+
+describe('useExpandAnimation restingContainerStyle', () => {
+  test('returns collapsed geometry when expanded is false', async () => {
+    let capturedResult: null | ReturnType<typeof useExpandAnimation> = null
+
+    const Harness = ({
+      onResult,
+    }: {
+      onResult: (r: ReturnType<typeof useExpandAnimation>) => void
+    }) => {
+      const result = useExpandAnimation(false, 56)
+      onResult(result)
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    await renderWithProviders(
+      <Harness
+        onResult={r => {
+          capturedResult = r
+        }}
+      />,
+    )
+
+    expect(capturedResult).not.toBeNull()
+    expect(capturedResult).toMatchObject({
+      restingContainerStyle: {
+        borderBottomLeftRadius: RADIUSES.middle,
+        borderBottomRightRadius: RADIUSES.middle,
+        borderTopLeftRadius: RADIUSES.middle,
+        borderTopRightRadius: RADIUSES.middle,
+        bottom: 52,
+        left: INDENTS.low,
+        top: 800 - 52 - PLAYER_SIZES.miniPlayerHeight,
+        width: 400 - INDENTS.low * 2,
+      },
+    })
   })
 })

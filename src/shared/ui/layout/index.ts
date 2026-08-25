@@ -1,1 +1,1 @@
-export { setTabBarHeight, tabBarHeightAtom } from './model'
+export { isTabBarMeasuredAtom, setTabBarHeight, tabBarHeightAtom } from './model'

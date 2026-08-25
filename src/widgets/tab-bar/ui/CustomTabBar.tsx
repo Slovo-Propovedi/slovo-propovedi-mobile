@@ -12,11 +12,6 @@ import { TabIndicator } from './TabIndicator'
 import { useTabIndicator } from './useTabIndicator'
 import { isUnavailableTabRoute, useTabPress } from './useTabPress'
 
-interface TabLayout {
-  width: number
-  x: number
-}
-
 const ROUTES = [
   { key: 'listen', name: 'Слушать' },
   { key: 'read', name: 'Читать' },
@@ -32,15 +27,14 @@ interface CustomTabBarProps extends TabBarProps {
   currentIndex: number
   hideFloatingPlayer?: boolean
   setCurrentIndex: (index: number) => void
-  setTabLayout: (key: string, layout: TabLayout) => void
-  tabLayouts: Record<string, TabLayout>
+  setTabLayout: (key: string, layout: { width: number; x: number }) => void
+  tabLayouts: Record<string, { width: number; x: number }>
 }
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0]
 
 export const CustomTabBar = ({
   currentIndex,
-  descriptors,
   hideFloatingPlayer: _,
   navigation,
   setCurrentIndex,
@@ -73,7 +67,9 @@ export const CustomTabBar = ({
         intensity={70}
         key={isLight ? 'light' : 'dark'}
         tint={isLight ? 'light' : 'dark'}
-        onLayout={event => setMeasuredTabBarHeight(event.nativeEvent.layout.height)}
+        onLayout={event => {
+          setMeasuredTabBarHeight(event.nativeEvent.layout.height)
+        }}
         style={[
           styles.floatingIsland,
           { backgroundColor: isLight ? 'rgba(230, 230, 230, 0.9)' : 'rgba(0, 0, 0, 0.85)' },
@@ -89,7 +85,6 @@ export const CustomTabBar = ({
             position={indicatorPosition}
           />
           {state.routes.map((route, index: number) => {
-            const { options: _options } = descriptors[route.key]
             const isActive = index === state.index
 
             return (

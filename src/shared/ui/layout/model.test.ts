@@ -1,6 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { PLAYER_SIZES } from 'shared/ui/theme'
-import { setTabBarHeight, tabBarHeightAtom } from './model'
+import { isTabBarMeasuredAtom, setTabBarHeight, tabBarHeightAtom } from './model'
 
 describe('tabBarHeight model', () => {
   test('atom starts with the fallback approximation', () => {
@@ -29,5 +29,31 @@ describe('tabBarHeight model', () => {
 
     // 1 initial subscription call + 1 real change; duplicate write is skipped
     expect(changeCount).toBe(2)
+  })
+})
+
+describe('isTabBarMeasuredAtom', () => {
+  test('starts as false', () => {
+    const ctx = createCtx()
+
+    expect(ctx.get(isTabBarMeasuredAtom)).toBe(false)
+  })
+
+  test('flips to true on setTabBarHeight even when value equals the initial guess', () => {
+    const ctx = createCtx()
+
+    setTabBarHeight(ctx, PLAYER_SIZES.tabBarHeight)
+
+    expect(ctx.get(isTabBarMeasuredAtom)).toBe(true)
+    expect(ctx.get(tabBarHeightAtom)).toBe(PLAYER_SIZES.tabBarHeight)
+  })
+
+  test('flips to true and updates atom when value differs from the initial guess', () => {
+    const ctx = createCtx()
+
+    setTabBarHeight(ctx, 82)
+
+    expect(ctx.get(isTabBarMeasuredAtom)).toBe(true)
+    expect(ctx.get(tabBarHeightAtom)).toBe(82)
   })
 })
