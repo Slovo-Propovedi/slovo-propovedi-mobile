@@ -1,0 +1,7 @@
+Prevent mini-player stretching after app update (#63)
+Restore listening position on track switch via buttons and auto-advance (#46)
+Add .agtents to steiger ignore
+Restore mini-player after long background on Android (#61)
+Prevent track restart after background auto-advance on app open (#60)
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
