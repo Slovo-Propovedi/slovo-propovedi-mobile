@@ -3,10 +3,13 @@ import { flushHistoryProgressAction } from 'entities/listening-history/@x/player
 import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
+import type { PlaybackRate } from '../../playback-rate'
 import { currentAudioAtom, durationAtom } from '../../model'
+import { setPlaybackRateAction } from '../../playback-rate'
 import { savePlaybackProgress } from '../playbackProgress'
 import { createPubSub } from './webPlayerPubSub'
 import { createWebPlayerState } from './webPlayerState'
+import { createStatusTracker } from './webPlayerStatusTracker'
 
 class WebPlayerService {
   public getState = () => this.state.getState()
@@ -18,7 +21,7 @@ class WebPlayerService {
       console.error('[WebPlayerService] play failed:', error)
       reportError(error, 'Ошибка при воспроизведении аудио')
     })
-    this.startStatusTracking()
+    this.statusTracker.start()
   }
 
   public pause = async () => {
@@ -40,8 +43,14 @@ class WebPlayerService {
         })
       }
     }
-    this.stopStatusTracking()
+    this.statusTracker.stop()
     this.state.setIsPlaying(false)
+  }
+
+  public setPlaybackRate = async (rate: PlaybackRate): Promise<void> => {
+    this.playbackRate = rate
+    if (this.audioInstance) this.audioInstance.playbackRate = rate
+    void setPlaybackRateAction(ctx, rate)
   }
 
   public stop = async () => {
@@ -49,7 +58,7 @@ class WebPlayerService {
       this.audioInstance.pause()
       this.audioInstance.currentTime = 0
     }
-    this.stopStatusTracking()
+    this.statusTracker.stop()
     this.state.setIsPlaying(false)
   }
 
@@ -65,12 +74,14 @@ class WebPlayerService {
 
   public loadAudio = async (audioUrl: string, initialPositionMs = 0) => {
     this.state.setIsBuffering(true)
-    this.stopStatusTracking()
+    this.statusTracker.stop()
 
     if (this.audioInstance) this.audioInstance.pause()
 
     const audio = new Audio(audioUrl)
     this.audioInstance = audio
+
+    if (this.playbackRate !== 1) audio.playbackRate = this.playbackRate
 
     audio.addEventListener('loadedmetadata', () => {
       const dur = Math.floor(audio.duration * 1000)
@@ -97,34 +108,17 @@ class WebPlayerService {
   }
 
   public unload = async () => {
-    this.stopStatusTracking()
+    this.statusTracker.stop()
     this.audioInstance?.pause()
     this.audioInstance = null
   }
 
-  private updateStatus = () => {
-    if (!this.audioInstance) return
-    this.state.setIsPlaying(!this.audioInstance.paused)
-    this.state.setPosition(Math.floor(this.audioInstance.currentTime * 1000))
-  }
-
-  private startStatusTracking = () => {
-    if (this.statusInterval) clearInterval(this.statusInterval)
-    this.statusInterval = setInterval(this.updateStatus, 500)
-  }
-
-  private stopStatusTracking = () => {
-    if (this.statusInterval) {
-      clearInterval(this.statusInterval)
-      this.statusInterval = null
-    }
-  }
-
   private audioInstance: HTMLAudioElement | null = null
   private onTrackEnd: (() => void) | undefined = undefined
+  private playbackRate: PlaybackRate = 1
   private pubsub = createPubSub()
   private state = createWebPlayerState(this.pubsub)
-  private statusInterval: null | ReturnType<typeof setInterval> = null
+  private statusTracker = createStatusTracker(() => this.audioInstance, this.state)
 }
 
 export const playerService = new WebPlayerService()

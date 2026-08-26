@@ -1,5 +1,6 @@
 import { ctx } from 'shared/lib/reatom-ctx'
 import type { LockScreenMetadata } from './types'
+import type { PlaybackRate } from '../../playback-rate'
 import type { AudioPlayer } from 'expo-audio'
 import {
   setDurationAction,
@@ -36,6 +37,7 @@ export class PlayerService {
     }
 
     this.playerInstance = player
+    playbackController.applyPlaybackRate(player)
     this.setupListeners()
     return player
   }
@@ -65,6 +67,7 @@ export class PlayerService {
 
     const player = await audioLoader.replaceAudio(audioUrl, initialPositionMs)
     if (player) this.playerInstance = player
+    playbackController.applyPlaybackRate(this.playerInstance)
     this.setupListeners()
     return player
   }
@@ -79,6 +82,10 @@ export class PlayerService {
 
   public reassertLockScreenMetadata = (metadata: LockScreenMetadata): void => {
     lockScreenControls.reassertMetadata(this.playerInstance, metadata)
+  }
+
+  public setPlaybackRate = async (rate: PlaybackRate): Promise<void> => {
+    await playbackController.setPlaybackRate(this.playerInstance, rate)
   }
 
   public setVolume = async (newVolume: number): Promise<void> => {

@@ -6,6 +6,7 @@ export {
 export { initializePlayer } from './lib/initializePlayer'
 export { scheduleStartupGuardReset } from './lib/startupGuard'
 export { usePlaybackProgressSaver } from './lib/usePlaybackProgressSaver'
+export { usePlaybackRate } from './lib/usePlaybackRate'
 export { usePlayer } from './lib/usePlayer'
 export { usePlayNewSermon } from './lib/usePlaySermon'
 export { useQueueManagement } from './lib/useQueueManagement'
@@ -23,6 +24,8 @@ export {
   setCurrentPlaylistAction,
   setRepeatModeAction,
 } from './model'
+
+export { PLAYBACK_RATES, type PlaybackRate } from './playback-rate'
 
 export { closePlayerSheetAction, isPlayerExpandedAtom, openPlayerSheetAction } from './playerSheet'
 

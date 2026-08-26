@@ -11,6 +11,8 @@ import {
   setPositionAction,
   setVolumeAction,
 } from '../../model'
+import { type PlaybackRate } from '../../playback-rate'
+import { setPlaybackRateAction } from '../../playback-rate'
 import { savePlaybackProgress } from '../playbackProgress'
 import { type PlaybackStatus } from './types'
 
@@ -84,12 +86,26 @@ class PlaybackController {
     }
   }
 
+  public setPlaybackRate = async (
+    player: AudioPlayer | null,
+    rate: PlaybackRate,
+  ): Promise<void> => {
+    this.playbackRate = rate
+    player?.setPlaybackRate(rate, 'high')
+    void setPlaybackRateAction(ctx, rate)
+  }
+
   public setVolume = async (player: AudioPlayer | null, volume: number): Promise<void> => {
     this.volume = Math.max(0, Math.min(1, volume))
 
     if (player?.isLoaded) player.volume = this.volume
 
     void setVolumeAction(ctx, this.volume)
+  }
+
+  public applyPlaybackRate = (player: AudioPlayer | null): void => {
+    if (this.playbackRate === 1) return
+    player?.setPlaybackRate(this.playbackRate, 'high')
   }
 
   public getStatus = (player: AudioPlayer | null): PlaybackStatus => {
@@ -102,8 +118,11 @@ class PlaybackController {
     }
   }
 
+  public getPlaybackRate = (): PlaybackRate => this.playbackRate
+
   public getVolume = (): number => this.volume
 
+  private playbackRate: PlaybackRate = 1
   private seekTimeoutId: null | ReturnType<typeof setTimeout> = null
   private volume = 1
 }

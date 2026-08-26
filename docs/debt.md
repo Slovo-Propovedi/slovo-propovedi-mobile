@@ -38,6 +38,7 @@
 - [ ] **Однократная потеря позиции у легаси-значения `currentSoundPosition` (голое число).** `src/entities/player/lib/initializePlayer.ts` — после Issue #60 старый формат (голое число) не парсится `playbackProgressSchema` → позиция восстанавливается с 0. Одноразовая потеря при первом обновлении приложения; миграция не планируется.
 - [ ] **`useQueueManagement` — мёртвый код (нет потребителей вне barrel).** `src/entities/player/lib/useQueueManagement.ts`, экспорт в `src/entities/player/index.ts` — при подключении очереди добавить `recordSermonSwitchAction` flush старого трека для паритета с `usePlayerToggleTrack`.
 - [ ] **`LockScreenControls.retryWhenLoaded` использует таймер-ретраи (10×200мс), которые замораживаются в фоне** как и polling из #60. Последствия мягкие (ретрай происходит при foreground); вернуться, если возникнут проблемы с метаданными lock screen.
+- [ ] **Восстановленная громкость не применяется к новому экземпляру плеера:** `initializePlayer` вызывает `setVolume` до `loadAudio` (плеер null), и после загрузки `this.volume` никогда не ре-применяется — `src/entities/player/lib/PlayerService/PlaybackController.ts` (`setVolume`), `src/entities/player/lib/initializePlayer.ts` — исправить по образцу `applyPlaybackRate` (добавить `applyVolume` в `loadAudio`/`replaceAudio`), `PlaybackController.ts` уже на лимите 130 строк — потребуется декомпозиция
 
 ## Read tab / FB2 reader
 

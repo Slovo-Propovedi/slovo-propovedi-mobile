@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import z from 'zod'
 import {
   CURRENT_AUDIO,
+  CURRENT_PLAYBACK_RATE,
   CURRENT_PLAYLIST,
   CURRENT_REPEAT_MODE,
   CURRENT_SOUND_POSITION,
@@ -16,6 +17,7 @@ import {
   setCurrentPlaylistAction,
   setRepeatModeAction,
 } from '../model'
+import { playbackRateSchema } from '../playback-rate'
 import { playbackProgressSchema } from './playbackProgress'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/AudioModeManager'
@@ -56,6 +58,7 @@ export const initializePlayer = async () => {
       CURRENT_SOUND_POSITION,
       CURRENT_SOUND_VOLUME,
       CURRENT_REPEAT_MODE,
+      CURRENT_PLAYBACK_RATE,
     ])
     const storedMap = Object.fromEntries(stored)
     const storedCurrentAudio = storedMap[CURRENT_AUDIO]
@@ -63,15 +66,19 @@ export const initializePlayer = async () => {
     const storedSoundPosition = storedMap[CURRENT_SOUND_POSITION]
     const storedVolume = storedMap[CURRENT_SOUND_VOLUME]
     const storedRepeatMode = storedMap[CURRENT_REPEAT_MODE]
+    const storedPlaybackRate = storedMap[CURRENT_PLAYBACK_RATE]
 
     const parsedVolume = storedVolume ? Number(storedVolume) : null
+    const parsedRate = storedPlaybackRate ? Number(storedPlaybackRate) : null
     const { data: parsedRepeat } = repeatModeSchema.safeParse(storedRepeatMode)
     const audio = parseAudioPlayerData(storedCurrentAudio)
     const playlist = parsePlaylistData(storedCurrentPlaylist)
     const parsedProgress = parsePlaybackProgress(storedSoundPosition)
     const { data: validVolume } = z.number().safeParse(parsedVolume)
+    const { data: validRate } = playbackRateSchema.safeParse(parsedRate)
 
     if (validVolume) await playerService.setVolume(validVolume)
+    if (validRate) await playerService.setPlaybackRate(validRate)
     if (parsedRepeat) await setRepeatModeAction(ctx, parsedRepeat)
 
     if (audio) {

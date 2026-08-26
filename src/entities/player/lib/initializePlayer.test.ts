@@ -1,5 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { CURRENT_AUDIO, CURRENT_SOUND_POSITION, PLAYER_STARTUP_ATTEMPTS } from 'shared/config'
+import {
+  CURRENT_AUDIO,
+  CURRENT_PLAYBACK_RATE,
+  CURRENT_SOUND_POSITION,
+  PLAYER_STARTUP_ATTEMPTS,
+} from 'shared/config'
 import { initializePlayer } from './initializePlayer'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/AudioModeManager'
@@ -9,6 +14,7 @@ jest.mock('./PlayerService', () => ({
   playerService: {
     loadAudio: jest.fn().mockResolvedValue(null),
     setLockScreenMetadata: jest.fn(),
+    setPlaybackRate: jest.fn().mockResolvedValue(undefined),
     setVolume: jest.fn().mockResolvedValue(undefined),
   },
 }))
@@ -20,6 +26,7 @@ jest.mock('./PlayerService/AudioModeManager', () => ({
 }))
 
 const mockedLoadAudio = jest.mocked(playerService.loadAudio)
+const mockedSetPlaybackRate = jest.mocked(playerService.setPlaybackRate)
 const mockedConfigure = jest.mocked(audioModeManager.configure)
 const mockedSetItem = jest.mocked(AsyncStorage.setItem)
 
@@ -159,6 +166,27 @@ describe('startup crash guard', () => {
       await initializePlayer()
 
       expect(mockedLoadAudio).toHaveBeenCalledWith(AUDIO.audioUrl, 200000)
+    })
+
+    test('restores playback rate when valid rate stored', async () => {
+      await seedStoredAudio()
+      await AsyncStorage.setItem(CURRENT_PLAYBACK_RATE, '1.5')
+
+      await initializePlayer()
+
+      expect(mockedSetPlaybackRate).toHaveBeenCalledWith(1.5)
+      expect(mockedSetPlaybackRate.mock.invocationCallOrder[0]).toBeLessThan(
+        mockedLoadAudio.mock.invocationCallOrder[0],
+      )
+    })
+
+    test('does not restore playback rate when invalid value stored', async () => {
+      await seedStoredAudio()
+      await AsyncStorage.setItem(CURRENT_PLAYBACK_RATE, 'garbage')
+
+      await initializePlayer()
+
+      expect(mockedSetPlaybackRate).not.toHaveBeenCalled()
     })
   })
 })

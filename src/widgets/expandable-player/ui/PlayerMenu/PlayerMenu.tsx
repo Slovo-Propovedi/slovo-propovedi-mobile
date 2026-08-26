@@ -1,9 +1,17 @@
-import { useEffect, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import { useEffect, useRef, useState } from 'react'
+import { type LayoutChangeEvent, Pressable, View } from 'react-native'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
+import { type PlaybackRate, usePlaybackRate } from 'entities/player'
+import { reportError } from 'shared/model/error-dialog'
 import { useTheme } from 'shared/ui/theme'
-import type { LayoutChangeEvent } from 'react-native'
 import { styles } from './PlayerMenu.styles'
+import { PlayerMenuItems } from './PlayerMenuItems'
+import { PlayerSpeedMenu } from './PlayerSpeedMenu'
 
 interface PlayerMenuProps {
   isCached?: boolean
@@ -19,17 +27,26 @@ export const PlayerMenu = ({
   onToggleCache,
 }: PlayerMenuProps) => {
   const { currentTheme } = useTheme()
-  const [measuredHeight, setMeasuredHeight] = useState<null | number>(null)
+  const { rate, setPlaybackRate } = usePlaybackRate()
+  const [view, setView] = useState<'main' | 'speed'>('main')
+  const [hasMeasured, setHasMeasured] = useState(false)
+  const lastLayoutHeightRef = useRef<null | number>(null)
   const height = useSharedValue(0)
   const opacity = useSharedValue(0)
   const backdropOpacity = useSharedValue(0)
+  const isAnimating = useSharedValue(false)
 
   const handleLayout = (event: LayoutChangeEvent) => {
     const { height: layoutHeight } = event.nativeEvent.layout
-    if (measuredHeight === null && layoutHeight > 0) {
-      setMeasuredHeight(layoutHeight)
-      // Start animation after measurement
-      height.value = withTiming(layoutHeight, { duration: 200 })
+    if (layoutHeight <= 0) return
+    if (!hasMeasured) setHasMeasured(true)
+    if (isAnimating.value) return
+    if (lastLayoutHeightRef.current !== layoutHeight) {
+      lastLayoutHeightRef.current = layoutHeight
+      isAnimating.value = true
+      height.value = withTiming(layoutHeight, { duration: 200, easing: Easing.linear }, () => {
+        isAnimating.value = false
+      })
     }
   }
 
@@ -43,19 +60,19 @@ export const PlayerMenu = ({
     onClose()
   }
 
+  const handleSpeedSelect = (selectedRate: PlaybackRate) => {
+    void setPlaybackRate(selectedRate).catch(reportError)
+    onClose()
+  }
+
   useEffect(() => {
     opacity.value = withTiming(1, { duration: 150 })
     backdropOpacity.value = withTiming(1, { duration: 150 })
   }, [opacity, backdropOpacity])
 
   const wrapperStyle = useAnimatedStyle(() => {
-    // Before measurement: no height constraint, just invisible
-    // After measurement: animate height
-    if (measuredHeight === null) return { opacity: 0 }
-    return {
-      height: height.value,
-      opacity: opacity.value,
-    }
+    if (!hasMeasured) return { opacity: 0 }
+    return { height: height.value, opacity: opacity.value }
   })
 
   const backdropStyle = useAnimatedStyle(() => ({
@@ -72,29 +89,21 @@ export const PlayerMenu = ({
           onLayout={handleLayout}
           style={[styles.menuContainer, { backgroundColor: currentTheme.surface }]}
         >
-          <Pressable style={styles.menuItem} onPress={handleDetailsPress}>
-            <Text style={[styles.menuItemText, { color: currentTheme.text }]}>Подробнее</Text>
-          </Pressable>
-          <Pressable style={styles.menuItem} onPress={handleToggleCache}>
-            <Text style={[styles.menuItemText, { color: currentTheme.text }]}>
-              {isCached ? 'Удалить из кеша' : 'Добавить в кеш'}
-            </Text>
-          </Pressable>
-          <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
-            <Text style={[styles.menuItemTextDisabled, { color: currentTheme.textMuted }]}>
-              Добавить в плейлист
-            </Text>
-          </Pressable>
-          <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
-            <Text style={[styles.menuItemTextDisabled, { color: currentTheme.textMuted }]}>
-              Настройки звука
-            </Text>
-          </Pressable>
-          <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
-            <Text style={[styles.menuItemTextDisabled, { color: currentTheme.textMuted }]}>
-              Поделиться
-            </Text>
-          </Pressable>
+          {view === 'main' ? (
+            <PlayerMenuItems
+              rate={rate}
+              isCached={isCached}
+              onDetails={handleDetailsPress}
+              onToggleCache={handleToggleCache}
+              onShowSpeed={() => setView('speed')}
+            />
+          ) : (
+            <PlayerSpeedMenu
+              currentRate={rate}
+              onSelect={handleSpeedSelect}
+              onBack={() => setView('main')}
+            />
+          )}
         </View>
       </Animated.View>
     </>

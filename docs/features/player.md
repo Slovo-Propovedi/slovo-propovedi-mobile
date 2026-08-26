@@ -57,13 +57,15 @@
 
 Состояние разворота — `src/entities/player/playerSheet.ts`: `isPlayerExpandedAtom`, `openPlayerSheetAction`, `closePlayerSheetAction`.
 
+Скорость воспроизведения — `src/entities/player/playback-rate.ts`: `playbackRateAtom`, `setPlaybackRateAction`, персист `CURRENT_PLAYBACK_RATE`.
+
 Скачивание — `src/entities/player/lib/download-model.ts`: `downloadProgressAtom`, `isDownloadingAtom`, `downloadingAudioUrlAtom` + set-экшены.
 
 Общая картина атомов — [state.md](./state.md).
 
 ## Инициализация
 
-`initializePlayer` (`src/entities/player/lib/initializePlayer.ts`) вызывается модульно в `app/_layout.tsx` (`void initializePlayer()`). Восстанавливает из AsyncStorage (`multiGet` + Zod-парсинг через `getParseJsonWithSchema`): последний аудио/плейлист, позицию, громкость, режим повтора. Затем загружает аудио (`playerService.loadAudio(audioUrl, position)`) и ставит метаданные lock screen.
+`initializePlayer` (`src/entities/player/lib/initializePlayer.ts`) вызывается модульно в `app/_layout.tsx` (`void initializePlayer()`). Восстанавливает из AsyncStorage (`multiGet` + Zod-парсинг через `getParseJsonWithSchema`): последний аудио/плейлист, позицию, громкость, скорость воспроизведения, режим повтора. Затем загружает аудио (`playerService.loadAudio(audioUrl, position)`) и ставит метаданные lock screen. Скорость восстанавливается до `loadAudio` — контроллер сохраняет значение, `applyPlaybackRate` внутри `loadAudio`/`replaceAudio` применяет его к свежему `AudioPlayer` (новый экземпляр всегда стартует с 1.0).
 
 ## Восстановление после сбоя
 
@@ -90,7 +92,7 @@ Upstream-причины:
 
 В `src/entities/player/lib/`:
 
-- `usePlayer.ts` — обёртка над `playerService` (стабильный объект методов).
+- `usePlayer.ts` — обёртка над `playerService` (стабильный объект методов): `getStatus`, `getVolume`, `loadAudio`, `pause`, `play`, `reassertLockScreenMetadata`, `replaceAudio`, `seekTo`, `setLockScreenMetadata`, `setPlaybackRate`, `setVolume`, `stop`, `unload`.
 - `usePlaySermon.ts` — `usePlayNewSermon` — основной поток «тапнул на трек»: задаёт `currentAudio`/`currentPlaylist`, открывает полноэкранный плеер, при смене трека `replaceAudio`, `play()`, ставит lock-screen-метаданные.
 - `useQueueManagement.ts` — локальная очередь: `playPlaylist`, `playTrack`, `shufflePlaylist`, `addToQueue`, `playNext`, `playPrevious`.
 - `useSeekControls.ts` — долгое удержание ±10с с ускорением (5с→30с, тик 200мс).
@@ -107,9 +109,9 @@ Upstream-причины:
 Виджет `widgets/expandable-player` — мини-плеер ↔ полноэкранный:
 
 - `ui/ExpandablePlayer/ExpandablePlayer.tsx` — контейнер с `useExpandAnimation`; `MiniPlayer.tsx`; жесты — `useExpandablePlayerGesture.ts`, `useMiniPanGesture`, `useFullscreenPanGesture` (модель/`useExpandAnimation` в `widgets/expandable-player/model/`). Позиционирование мини-плеера (`bottom` в `miniStyles.ts`) и анимация разворота/сворачивания (`useExpandAnimation`, `useMiniPanGesture`) считаются от **измеренной** высоты таб-бара (`tabBarHeightAtom` из `shared/ui/layout`, измеряется через `onLayout` в `CustomTabBar`; формула — измеренная высота таб-бара минус 4px наложения на таб-бар, централизована в `getMiniPlayerBottom` из `widgets/expandable-player/lib/getMiniPlayerBottom.ts`, константа `MINI_PLAYER_TAB_OVERLAP = 4`, Issue #53). Хардкод-константа `PLAYER_SIZES.tabBarHeight` осталась только как начальное приближение атома. Мини-плеер показывает спиннер (`ActivityIndicator`) только при буферизации (`isBuffering`). Во время фонового скачивания (`isCurrentAudioDownloading`) на нижнем краю мини-плеера отображается тонкая полоса прогресса (2px, `currentTheme.primary`), видна только пока идёт скачивание.
-- `ui/FullscreenContent/` — полноэкранный вид: `FullscreenContent.tsx`, `PlayerControlsSection.tsx`, `HeaderOverlay.tsx`, `DetailsOverlay.tsx`, `useFullscreenHandlers.ts`, градиенты. Полноэкранный плеер: спиннер показывается только при буферизации; `PlayerProgressBar` показывает прогресс скачивания (полупрозрачный белый `rgba(255,255,255,0.35)` под основным прогрессом) через `currentDownloadProgress` (0..1 из `downloadProgressAtom`). Оверлей «Подробнее» (`DetailsOverlay.tsx`) показывает секции «Описание» (увеличенный шрифт) и «Проповедник» (автор проповеди); каждая секция рендерится только при наличии данных.
+- `ui/FullscreenContent/` — полноэкранный вид: `FullscreenContent.tsx`, `PlayerControlsSection.tsx`, `HeaderOverlay.tsx`, `DetailsOverlay.tsx`, `useFullscreenHandlers.ts`, градиенты. Полноэкранный плеер: спиннер показывается только при буферизации; `PlayerProgressBar` показывает прогресс скачивания (полупрозрачный белый `rgba(255,255,255,0.35)` под основным прогрессом) через `currentDownloadProgress` (0..1 из `downloadProgressAtom`). В `controlsRow` слева — `PlayerRepeatToggle`, по центру — транспорт (`SermonPlayerControls`), справа — кнопка плейлиста. Управление скоростью вынесено в `PlayerMenu` (см. ниже). Оверлей «Подробнее» (`DetailsOverlay.tsx`) показывает секции «Описание» (увеличенный шрифт) и «Проповедник» (автор проповеди); каждая секция рендерится только при наличии данных.
 - **Подзаголовок (subtitle)** в мини-плеере (`ui/ExpandablePlayer/MiniPlayer.tsx`) и в шапке полноэкранного плеера (`ui/FullscreenContent/PlayerControlsSection.tsx`) показывает ссылку на проповедь (книга глава:стих) через `formatSermonReference` (`shared/lib/format`); при отсутствии ссылки фолбэк — название плейлиста, затем название приложения «Слово.Проповеди». В ходе миграции на спецификацию API v0.15.1 форматтер расширяется на диапазоны глав/стихов (см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи»).
-- `ui/PlayerMenu/` — контекстное меню (подробнее, кэш, заблокированные пункты). Открытие — `showMenuAtom`.
+- `ui/PlayerMenu/` — контекстное меню (подробнее, кэш, скорость, заблокированные пункты). Меню поддерживает переключение видов: главный список → подменю скорости (`PlayerSpeedMenu`). Открытие — `showMenuAtom`. Скорость управляется через `usePlaybackRate` (обёртка над `playbackRateAtom`).
 - `ui/PlaylistBottomSheet/` — шторка со списком треков плейлиста (`@gorhom/bottom-sheet`). Открытие — `showPlaylistAtom`.
 
 ### Восстановление после фона (Issue #61)
@@ -160,6 +162,7 @@ Upstream-причины:
 - **Next/Prev** — `usePlayerToggleTrack` по текущему плейлисту (Prev/Next disable на границах). Переключение через кнопки восстанавливает позицию из истории (`getResumePosition`) и flush'ит позицию старого трека (`recordSermonSwitchAction`).
 - **Перемотка** — `useSeekControls` + `PlayerProgressBar`; long-press кнопок ±10с.
 - **Repeat** — `PlayerRepeatToggle` (off/track/queue).
+- **Скорость** — `PlayerSpeedMenu` в `ui/PlayerMenu/` (YouTube-style submenu: 0.75/1/1.25/1.5/2), атом `playbackRateAtom` через `usePlaybackRate` hook, ре-применение после `loadAudio`/`replaceAudio` (новый `AudioPlayer` стартует с 1.0). Pitch-коррекция `'high'` (на iOS — spectral-алгоритм; чуть дороже по CPU, но сохраняет тембр речи).
 - **Громкость** — `PlayerVolumeBar`.
 - **Long-press ±10с** — через `onLongPressSeek`/`onPressOutSeek` в `PlayerControls`.
 
