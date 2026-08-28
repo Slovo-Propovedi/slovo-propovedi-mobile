@@ -24,10 +24,10 @@ export const HistoryHeaderMenu = () => {
   const buttonRef = useRef<View>(null)
 
   const handleOpenMenu = useCallback(() => {
-    setMenuVisible(true)
     buttonRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
       const { width: screenWidth } = Dimensions.get('window')
       setMenuPosition({ right: screenWidth - x - width, top: y + height + MENU_GAP })
+      setMenuVisible(true)
     })
   }, [])
 

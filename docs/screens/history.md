@@ -1,7 +1,7 @@
 # Экран «История прослушивания»
 
 **Маршрут:** `/history` (вне таб-группы, Stack.Screen)
-**Файлы:** `app/history.tsx` (реэкспорт) → `src/pages/history/ui/HistoryScreen.tsx`, `src/pages/history/ui/HistoryRow.tsx`, `src/pages/history/ui/HistoryHeaderMenu.tsx`
+**Файлы:** `app/history.tsx` (реэкспорт) → `src/pages/history/ui/HistoryScreen.tsx`, `src/pages/history/ui/HistoryRow.tsx`, `src/pages/history/ui/HistoryHeaderMenu.tsx`, `src/pages/history/ui/HistoryHeaderMenuDropdown.tsx`
 **Статус:** готов
 
 ## Что делает

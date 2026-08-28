@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
+import { View } from 'react-native'
 import {
   clearHistoryAction,
   historyAtom,
@@ -52,14 +53,14 @@ jest.mock('entities/player', () => {
 })
 
 jest.mock('shared/ui/track-list', () => {
-  const { Pressable, StyleSheet, Text, View } = jest.requireActual('react-native')
+  const { Pressable, StyleSheet, Text, View: RNView } = jest.requireActual('react-native')
   const TracksListItem = (props: {
     menuActions?: Array<{ onPress: () => void; text: string }>
     onPress: () => void
     subtitle?: string
     title: string
   }) => (
-    <View testID='tracks-list-item'>
+    <RNView testID='tracks-list-item'>
       <Text>{props.title}</Text>
       {props.subtitle && <Text>{props.subtitle}</Text>}
       <Pressable onPress={props.onPress} testID='tracks-list-item-press'>
@@ -70,7 +71,7 @@ jest.mock('shared/ui/track-list', () => {
           <Text>{action.text}</Text>
         </Pressable>
       ))}
-    </View>
+    </RNView>
   )
 
   return {
@@ -115,6 +116,18 @@ describe('<HistoryScreen>', () => {
     mockResolveEntryPlaylist.mockImplementation((entry: ListeningHistoryEntry) =>
       Promise.resolve(entry.playlist),
     )
+    // In Jest, host-component measureInWindow never fires its callback, so the
+    // header menu would never open. Mock the measurement with fixed geometry.
+    jest
+      .spyOn(View.prototype, 'measureInWindow')
+      .mockImplementation((cb: (x: number, y: number, width: number, height: number) => void) => {
+        cb(300, 100, 44, 44)
+        return undefined
+      })
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   test('renders entries with titles and subtitles', async () => {

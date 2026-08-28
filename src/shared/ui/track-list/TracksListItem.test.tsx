@@ -1,7 +1,8 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
-import { Text as MockText } from 'react-native'
+import { Text as MockText, View } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { MENU_GAP, MENU_WIDTH } from './constants'
 import { TracksListItem } from './TracksListItem'
 
 jest.mock('./useTrackItemCache', () => ({
@@ -27,18 +28,24 @@ jest.mock('react-native-text-ticker', () => ({
   default: (props: { children: string }) => <MockText>{props.children}</MockText>,
 }))
 
+let mockLastMenuPosition: { x: number; y: number } | null = null
+
 jest.mock('./TracksListItemContextMenu', () => ({
-  TracksListItemContextMenu: (props: { isMenuOpen: boolean }) => {
+  TracksListItemContextMenu: (props: {
+    isMenuOpen: boolean
+    menuPosition: { x: number; y: number }
+  }) => {
+    mockLastMenuPosition = props.menuPosition
     if (!props.isMenuOpen) return null
     return <MockText testID='context-menu-visible'>Menu is open</MockText>
   },
 }))
 
 jest.mock('../progress-bar/ProgressBar', () => {
-  const { View } = jest.requireActual('react-native')
+  const { View: RNView } = jest.requireActual('react-native')
   return {
     ProgressBar: (props: { progress: number }) => (
-      <View
+      <RNView
         testID='progress-bar'
         accessibilityLabel={`${Math.round(props.progress * 100)}% progress`}
       />
@@ -54,6 +61,12 @@ const AUDIO_URL = 'https://example.com/audio.mp3'
 const TEST_SUBTITLE = 'Test Subtitle'
 const TEST_TITLE = 'Test Title'
 
+// Fixed geometry returned by the mocked View.prototype.measure
+const MOCK_MEASURE_PAGE_X = 200
+const MOCK_MEASURE_PAGE_Y = 300
+const MOCK_MEASURE_WIDTH = 36
+const MOCK_MEASURE_HEIGHT = 36
+
 const defaultProps = {
   isPlaying: false,
   onPress: jest.fn(),
@@ -66,6 +79,37 @@ const renderItem = async (props?: Partial<React.ComponentProps<typeof TracksList
 describe('<TracksListItem>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockLastMenuPosition = null
+    // In Jest, host-component measure never fires its callback, so the menu
+    // would never receive a position. Mock the measurement with fixed geometry.
+    jest
+      .spyOn(View.prototype, 'measure')
+      .mockImplementation(
+        (
+          cb: (
+            x: number,
+            y: number,
+            width: number,
+            height: number,
+            pageX: number,
+            pageY: number,
+          ) => void,
+        ) => {
+          cb(
+            0,
+            0,
+            MOCK_MEASURE_WIDTH,
+            MOCK_MEASURE_HEIGHT,
+            MOCK_MEASURE_PAGE_X,
+            MOCK_MEASURE_PAGE_Y,
+          )
+          return undefined
+        },
+      )
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   test('renders the title text', async () => {
@@ -104,6 +148,19 @@ describe('<TracksListItem>', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId(CONTEXT_MENU_TEST_ID)).toBeTruthy()
+    })
+  })
+
+  test('anchors context menu to the dots button using measured geometry', async () => {
+    await renderItem({ audioUrl: AUDIO_URL })
+
+    fireEvent.press(screen.getByTestId(DOTS_BUTTON_TEST_ID))
+
+    await waitFor(() => {
+      expect(mockLastMenuPosition).toEqual({
+        x: MOCK_MEASURE_PAGE_X + MOCK_MEASURE_WIDTH - MENU_WIDTH,
+        y: MOCK_MEASURE_PAGE_Y + MOCK_MEASURE_HEIGHT + MENU_GAP,
+      })
     })
   })
 
