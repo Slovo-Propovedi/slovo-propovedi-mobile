@@ -56,7 +56,6 @@ export const createTracksListStyles = (theme: ThemeColors) =>
       backgroundColor: theme.surface,
       borderRadius: RADIUSES.middle,
       elevation: 101,
-      position: 'absolute',
       shadowOpacity: 0.25,
       shadowRadius: 8,
       zIndex: 101,

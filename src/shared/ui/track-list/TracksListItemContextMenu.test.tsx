@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react-native'
+import { act, fireEvent, render, screen } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
 import { DarkTheme } from 'shared/ui/theme'
+import type { TestInstance } from 'test-renderer'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
 
 const ADD_CACHE_TEXT = 'Добавить в кеш'
@@ -14,12 +15,23 @@ jest.mock('@expo/vector-icons', () => ({
 }))
 
 const baseProps = {
+  anchor: { height: 0, width: 0, x: 0, y: 0 },
   isCached: false,
   isMenuOpen: true,
-  menuPosition: { x: 0, y: 0 },
   onClose: jest.fn(),
   onToggleCache: jest.fn(),
   theme: DarkTheme,
+}
+
+const measureMenu = async (container: TestInstance) => {
+  const layoutView = container.queryAll(node => node.props.onLayout !== undefined, {
+    includeSelf: true,
+  })[0]
+  await act(async () => {
+    fireEvent(layoutView, 'layout', {
+      nativeEvent: { layout: { height: 100, width: 160, x: 0, y: 0 } },
+    })
+  })
 }
 
 describe('<TracksListItemContextMenu>', () => {
@@ -46,7 +58,9 @@ describe('<TracksListItemContextMenu>', () => {
   })
 
   test('pressing cache toggle button calls onToggleCache', async () => {
-    await render(<TracksListItemContextMenu {...baseProps} />)
+    const { container } = await render(<TracksListItemContextMenu {...baseProps} />)
+
+    await measureMenu(container)
 
     fireEvent.press(screen.getByRole('button'))
 
@@ -71,7 +85,11 @@ describe('<TracksListItemContextMenu>', () => {
     const customOnPress = jest.fn()
     const customActions = [{ onPress: customOnPress, text: 'Share' }]
 
-    await render(<TracksListItemContextMenu {...baseProps} menuActions={customActions} />)
+    const { container } = await render(
+      <TracksListItemContextMenu {...baseProps} menuActions={customActions} />,
+    )
+
+    await measureMenu(container)
 
     fireEvent.press(screen.getByText('Share'))
 

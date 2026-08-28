@@ -1,12 +1,13 @@
-import { Modal, Pressable, StyleSheet, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
+import { AnchoredDropdown, type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { COLORS, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { PlaylistCacheMenuItem } from './PlaylistCacheMenuItem'
 
 export interface PlaylistCacheMenuDropdownProps {
   allCached: boolean
+  anchor: AnchorRect | null
   isCacheAllDisabled: boolean
   isClearCacheDisabled?: boolean
-  menuPosition: { right: number; top: number }
   onCacheAll: () => void
   onClearCache: () => void
   onClose: () => void
@@ -15,50 +16,41 @@ export interface PlaylistCacheMenuDropdownProps {
 
 export const PlaylistCacheMenuDropdown = ({
   allCached,
+  anchor,
   isCacheAllDisabled,
   isClearCacheDisabled = false,
-  menuPosition,
   onCacheAll,
   onClearCache,
   onClose,
   visible,
 }: PlaylistCacheMenuDropdownProps) => {
   const { currentTheme } = useTheme()
-  if (!visible) return null
 
   return (
-    <Modal transparent onRequestClose={onClose}>
-      <Pressable onPress={onClose} style={styles.overlay}>
-        <View
-          style={[
-            styles.dropdown,
-            {
-              backgroundColor: currentTheme.surface,
-              right: menuPosition.right,
-              top: menuPosition.top,
-            },
-          ]}
-        >
-          <PlaylistCacheMenuItem
-            onPress={onCacheAll}
-            isDisabled={isCacheAllDisabled}
-            icon={allCached ? 'check-circle-outline' : 'download-outline'}
-            text={allCached ? 'Плейлист закеширован' : 'Закешировать все'}
-          />
+    <AnchoredDropdown
+      anchor={anchor}
+      visible={visible}
+      onClose={onClose}
+      menuStyle={[styles.dropdown, { backgroundColor: currentTheme.surface }]}
+    >
+      <PlaylistCacheMenuItem
+        onPress={onCacheAll}
+        isDisabled={isCacheAllDisabled}
+        icon={allCached ? 'check-circle-outline' : 'download-outline'}
+        text={allCached ? 'Плейлист закеширован' : 'Закешировать все'}
+      />
 
-          <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
+      <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
 
-          <PlaylistCacheMenuItem
-            icon='delete-outline'
-            onPress={onClearCache}
-            text='Удалить из кеша все'
-            isDisabled={isClearCacheDisabled}
-            textColor={isClearCacheDisabled ? COLORS.disabled : undefined}
-            iconColor={isClearCacheDisabled ? COLORS.disabled : currentTheme.text}
-          />
-        </View>
-      </Pressable>
-    </Modal>
+      <PlaylistCacheMenuItem
+        icon='delete-outline'
+        onPress={onClearCache}
+        text='Удалить из кеша все'
+        isDisabled={isClearCacheDisabled}
+        textColor={isClearCacheDisabled ? COLORS.disabled : undefined}
+        iconColor={isClearCacheDisabled ? COLORS.disabled : currentTheme.text}
+      />
+    </AnchoredDropdown>
   )
 }
 
@@ -68,7 +60,6 @@ const styles = StyleSheet.create({
     elevation: 8,
     minWidth: 180,
     paddingVertical: INDENTS.lowest,
-    position: 'absolute',
     shadowColor: '#000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.3,
@@ -79,5 +70,4 @@ const styles = StyleSheet.create({
     marginHorizontal: INDENTS.medium,
     opacity: 0.3,
   },
-  overlay: { flex: 1 },
 })

@@ -1,7 +1,7 @@
 import { memo, useRef, useState } from 'react'
 import { Pressable, type View } from 'react-native'
+import { type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { useTheme } from '../theme/ThemeContext/useTheme'
-import { MENU_GAP, MENU_WIDTH } from './constants'
 import { createTracksListStyles } from './styles'
 import { TracksListItemContent } from './TracksListItemContent'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
@@ -26,7 +26,7 @@ export const TracksListItem = memo(
     const { currentTheme } = useTheme()
     const tracksListStyles = createTracksListStyles(currentTheme)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+    const [menuAnchor, setMenuAnchor] = useState<AnchorRect | null>(null)
     const dotsButtonRef = useRef<View>(null)
 
     const { isCached, isDownloading, progressValue, toggleCache } = useTrackItemCache(
@@ -37,7 +37,7 @@ export const TracksListItem = memo(
 
     const measureButton = () => {
       dotsButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) =>
-        setMenuPosition({ x: pageX + width - MENU_WIDTH, y: pageY + height + MENU_GAP }),
+        setMenuAnchor({ height, width, x: pageX, y: pageY }),
       )
     }
 
@@ -88,11 +88,11 @@ export const TracksListItem = memo(
 
         <TracksListItemContextMenu
           isCached={isCached}
+          anchor={menuAnchor}
           theme={currentTheme}
           isMenuOpen={isMenuOpen}
           menuActions={menuActions}
           onClose={handleToggleMenu}
-          menuPosition={menuPosition}
           onToggleCache={handleToggleCache}
         />
       </>

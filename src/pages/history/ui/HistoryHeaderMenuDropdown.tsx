@@ -1,48 +1,40 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { Modal, Pressable, StyleSheet, Text } from 'react-native'
+import { Pressable, StyleSheet, Text } from 'react-native'
+import { AnchoredDropdown, type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { FONT_SIZES, RADIUSES, useTheme } from 'shared/ui/theme'
 
 export interface HistoryHeaderMenuDropdownProps {
-  menuPosition: { right: number; top: number }
+  anchor: AnchorRect | null
   onClear: () => void
   onClose: () => void
   visible: boolean
 }
 
 export const HistoryHeaderMenuDropdown = ({
-  menuPosition,
+  anchor,
   onClear,
   onClose,
   visible,
 }: HistoryHeaderMenuDropdownProps) => {
   const { currentTheme } = useTheme()
-  if (!visible) return null
 
   return (
-    <Modal transparent onRequestClose={onClose}>
-      <Pressable onPress={onClose} style={styles.overlay}>
-        <Pressable
-          onPress={onClear}
-          accessibilityRole='button'
-          style={[
-            styles.dropdown,
-            {
-              backgroundColor: currentTheme.surface,
-              right: menuPosition.right,
-              top: menuPosition.top,
-            },
-          ]}
-        >
-          <MaterialCommunityIcons
-            size={18}
-            name='delete-outline'
-            color={currentTheme.text}
-            style={styles.actionIcon}
-          />
-          <Text style={[styles.actionText, { color: currentTheme.text }]}>Очистить историю</Text>
-        </Pressable>
+    <AnchoredDropdown
+      anchor={anchor}
+      visible={visible}
+      onClose={onClose}
+      menuStyle={[styles.dropdown, { backgroundColor: currentTheme.surface }]}
+    >
+      <Pressable onPress={onClear} style={styles.menuItem} accessibilityRole='button'>
+        <MaterialCommunityIcons
+          size={18}
+          name='delete-outline'
+          color={currentTheme.text}
+          style={styles.actionIcon}
+        />
+        <Text style={[styles.actionText, { color: currentTheme.text }]}>Очистить историю</Text>
       </Pressable>
-    </Modal>
+    </AnchoredDropdown>
   )
 }
 
@@ -54,17 +46,17 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
   },
   dropdown: {
-    alignItems: 'center',
     borderRadius: RADIUSES.low,
     elevation: 8,
-    flexDirection: 'row',
     minWidth: 180,
     paddingVertical: 12,
-    position: 'absolute',
     shadowColor: '#000',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
-  overlay: { flex: 1 },
+  menuItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
 })

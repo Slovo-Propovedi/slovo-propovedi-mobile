@@ -42,7 +42,7 @@ export const PlaylistCacheMenu = ({
     handleOpenMenu,
     isCacheAllDisabled,
     isMenuDisabled,
-    menuPosition,
+    menuAnchor,
     menuVisible,
     setCacheDialogVisible,
     setClearDialogVisible,
@@ -89,9 +89,9 @@ export const PlaylistCacheMenu = ({
       </View>
 
       <PlaylistCacheMenuDropdown
+        anchor={menuAnchor}
         visible={menuVisible}
         allCached={allCached}
-        menuPosition={menuPosition}
         onCacheAll={handleCacheAllOption}
         onClearCache={handleClearCacheOption}
         onClose={() => setMenuVisible(false)}

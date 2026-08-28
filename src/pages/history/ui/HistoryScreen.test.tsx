@@ -203,12 +203,22 @@ describe('<HistoryScreen>', () => {
   })
 
   test('clear flow: open menu, select clear, confirm, clearHistoryAction called', async () => {
-    const { getByTestId, getByText } = await renderWithProviders(<HistoryHeaderMenu />)
+    const { container, getByTestId, getByText } = await renderWithProviders(<HistoryHeaderMenu />)
 
     await act(async () => {
       fireEvent.press(getByTestId('history-header-menu'))
     })
     const clearMenuItem = await waitFor(() => getByText('Очистить историю'))
+
+    const layoutView = container.queryAll(node => node.props.onLayout !== undefined, {
+      includeSelf: true,
+    })[0]
+    await act(async () => {
+      fireEvent(layoutView, 'layout', {
+        nativeEvent: { layout: { height: 100, width: 180, x: 0, y: 0 } },
+      })
+    })
+
     fireEvent.press(clearMenuItem)
     const confirmButton = await waitFor(() => getByText('Очистить'))
     fireEvent.press(confirmButton)

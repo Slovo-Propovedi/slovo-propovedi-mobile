@@ -1,15 +1,15 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useCallback, useRef, useState } from 'react'
-import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { clearHistoryAction } from 'entities/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { useTheme } from 'shared/ui/theme'
 import { HistoryHeaderMenuDropdown } from './HistoryHeaderMenuDropdown'
 
 const ICON_SIZE = 24
 const BUTTON_SIZE = 44
-const MENU_GAP = 4
 
 const CLEAR_TITLE = 'Очистить историю?'
 const CLEAR_MESSAGE =
@@ -20,13 +20,12 @@ export const HistoryHeaderMenu = () => {
   const { currentTheme } = useTheme()
   const [menuVisible, setMenuVisible] = useState(false)
   const [dialogVisible, setDialogVisible] = useState(false)
-  const [menuPosition, setMenuPosition] = useState({ right: 0, top: 0 })
+  const [menuAnchor, setMenuAnchor] = useState<AnchorRect | null>(null)
   const buttonRef = useRef<View>(null)
 
   const handleOpenMenu = useCallback(() => {
     buttonRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
-      const { width: screenWidth } = Dimensions.get('window')
-      setMenuPosition({ right: screenWidth - x - width, top: y + height + MENU_GAP })
+      setMenuAnchor({ height, width, x, y })
       setMenuVisible(true)
     })
   }, [])
@@ -55,8 +54,8 @@ export const HistoryHeaderMenu = () => {
       </View>
 
       <HistoryHeaderMenuDropdown
+        anchor={menuAnchor}
         visible={menuVisible}
-        menuPosition={menuPosition}
         onClear={handleClearOption}
         onClose={() => setMenuVisible(false)}
       />

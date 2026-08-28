@@ -2,7 +2,6 @@ import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
 import { Text as MockText, View } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { MENU_GAP, MENU_WIDTH } from './constants'
 import { TracksListItem } from './TracksListItem'
 
 jest.mock('./useTrackItemCache', () => ({
@@ -28,14 +27,14 @@ jest.mock('react-native-text-ticker', () => ({
   default: (props: { children: string }) => <MockText>{props.children}</MockText>,
 }))
 
-let mockLastMenuPosition: { x: number; y: number } | null = null
+let mockLastMenuAnchor: { height: number; width: number; x: number; y: number } | null = null
 
 jest.mock('./TracksListItemContextMenu', () => ({
   TracksListItemContextMenu: (props: {
+    anchor: { height: number; width: number; x: number; y: number } | null
     isMenuOpen: boolean
-    menuPosition: { x: number; y: number }
   }) => {
-    mockLastMenuPosition = props.menuPosition
+    mockLastMenuAnchor = props.anchor
     if (!props.isMenuOpen) return null
     return <MockText testID='context-menu-visible'>Menu is open</MockText>
   },
@@ -79,7 +78,7 @@ const renderItem = async (props?: Partial<React.ComponentProps<typeof TracksList
 describe('<TracksListItem>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockLastMenuPosition = null
+    mockLastMenuAnchor = null
     // In Jest, host-component measure never fires its callback, so the menu
     // would never receive a position. Mock the measurement with fixed geometry.
     jest
@@ -157,9 +156,11 @@ describe('<TracksListItem>', () => {
     fireEvent.press(screen.getByTestId(DOTS_BUTTON_TEST_ID))
 
     await waitFor(() => {
-      expect(mockLastMenuPosition).toEqual({
-        x: MOCK_MEASURE_PAGE_X + MOCK_MEASURE_WIDTH - MENU_WIDTH,
-        y: MOCK_MEASURE_PAGE_Y + MOCK_MEASURE_HEIGHT + MENU_GAP,
+      expect(mockLastMenuAnchor).toEqual({
+        height: MOCK_MEASURE_HEIGHT,
+        width: MOCK_MEASURE_WIDTH,
+        x: MOCK_MEASURE_PAGE_X,
+        y: MOCK_MEASURE_PAGE_Y,
       })
     })
   })

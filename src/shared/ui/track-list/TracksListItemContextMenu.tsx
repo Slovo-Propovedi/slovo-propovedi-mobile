@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { type ComponentProps } from 'react'
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { AnchoredDropdown, type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { type ThemeColors } from '../theme'
 import { createTracksListStyles } from './styles'
 
@@ -11,27 +12,25 @@ export interface MenuAction {
 }
 
 export interface TracksListItemContextMenuProps {
+  anchor: AnchorRect | null
   isCached: boolean
   isMenuOpen: boolean
   menuActions?: MenuAction[]
-  menuPosition: { x: number; y: number }
   onClose: () => void
   onToggleCache: () => void
   theme: ThemeColors
 }
 
 export const TracksListItemContextMenu = ({
+  anchor,
   isCached,
   isMenuOpen,
   menuActions,
-  menuPosition,
   onClose,
   onToggleCache,
   theme,
 }: TracksListItemContextMenuProps) => {
   const tracksListStyles = createTracksListStyles(theme)
-
-  if (!isMenuOpen) return null
 
   const renderItems = () => {
     if (menuActions)
@@ -73,18 +72,14 @@ export const TracksListItemContextMenu = ({
   }
 
   return (
-    <Modal visible transparent animationType='none' onRequestClose={onClose}>
-      <Pressable onPress={onClose} style={{ flex: 1 }}>
-        <View
-          style={[
-            tracksListStyles.dropdownMenu,
-            { left: menuPosition.x, position: 'absolute', top: menuPosition.y },
-          ]}
-        >
-          {renderItems()}
-        </View>
-      </Pressable>
-    </Modal>
+    <AnchoredDropdown
+      anchor={anchor}
+      onClose={onClose}
+      visible={isMenuOpen}
+      menuStyle={tracksListStyles.dropdownMenu}
+    >
+      {renderItems()}
+    </AnchoredDropdown>
   )
 }
 

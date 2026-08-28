@@ -1,8 +1,9 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { useCallback, useRef, useState } from 'react'
-import { Dimensions, type View } from 'react-native'
+import { type View } from 'react-native'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
+import { type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { isCachingPlaylistAtom } from '../model'
 import { playlistCacheService, type TrackToCache } from './PlaylistCacheService'
 import { usePlaylistCacheStatus } from './usePlaylistCacheStatus'
@@ -18,7 +19,7 @@ export const usePlaylistCacheMenu = (
   const [cacheDialogVisible, setCacheDialogVisible] = useState(false)
   const [clearDialogVisible, setClearDialogVisible] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
-  const [menuPosition, setMenuPosition] = useState({ right: 0, top: 0 })
+  const [menuAnchor, setMenuAnchor] = useState<AnchorRect | null>(null)
   const buttonRef = useRef<View>(null)
 
   const { allCached, cachedCount } = usePlaylistCacheStatus(tracksData, cacheTrigger)
@@ -42,8 +43,7 @@ export const usePlaylistCacheMenu = (
 
   const handleOpenMenu = useCallback(() => {
     buttonRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
-      const { width: screenWidth } = Dimensions.get('window')
-      setMenuPosition({ right: screenWidth - x - width, top: y + height })
+      setMenuAnchor({ height, width, x, y })
       setMenuVisible(true)
     })
   }, [])
@@ -71,7 +71,7 @@ export const usePlaylistCacheMenu = (
     handleOpenMenu,
     isCacheAllDisabled,
     isMenuDisabled,
-    menuPosition,
+    menuAnchor,
     menuVisible,
     setCacheDialogVisible,
     setClearDialogVisible,
