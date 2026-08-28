@@ -13,19 +13,11 @@ jest.mock('@expo/vector-icons', () => ({
   },
 }))
 
-const expectRenderedRoot = (result: Awaited<ReturnType<typeof render>>) => {
-  if (!result.root) throw new Error('Expected component to render a root element')
-
-  return result.root
-}
-
 const baseProps = {
   isCached: false,
   isMenuOpen: true,
-  menuHeight: 44,
   menuPosition: { x: 0, y: 0 },
   onClose: jest.fn(),
-  onMenuHeightChange: jest.fn(),
   onToggleCache: jest.fn(),
   theme: DarkTheme,
 }
@@ -59,30 +51,6 @@ describe('<TracksListItemContextMenu>', () => {
     fireEvent.press(screen.getByRole('button'))
 
     expect(baseProps.onToggleCache).toHaveBeenCalledTimes(1)
-  })
-
-  test('handleLayout calls onMenuHeightChange when height differs', async () => {
-    const result = await render(<TracksListItemContextMenu {...baseProps} menuHeight={44} />)
-    const root = expectRenderedRoot(result)
-
-    const menuView = root.queryAll(el => el.props.onLayout)[0]
-    fireEvent(menuView, 'layout', {
-      nativeEvent: { layout: { height: 99 } },
-    })
-
-    expect(baseProps.onMenuHeightChange).toHaveBeenCalledWith(99)
-  })
-
-  test('handleLayout does not call onMenuHeightChange when height equals menuHeight', async () => {
-    const result = await render(<TracksListItemContextMenu {...baseProps} menuHeight={44} />)
-    const root = expectRenderedRoot(result)
-
-    const menuView = root.queryAll(el => el.props.onLayout)[0]
-    fireEvent(menuView, 'layout', {
-      nativeEvent: { layout: { height: 44 } },
-    })
-
-    expect(baseProps.onMenuHeightChange).not.toHaveBeenCalled()
   })
 
   test('renders menuActions items and hides cache item', async () => {

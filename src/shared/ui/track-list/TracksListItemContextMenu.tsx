@@ -14,10 +14,8 @@ export interface TracksListItemContextMenuProps {
   isCached: boolean
   isMenuOpen: boolean
   menuActions?: MenuAction[]
-  menuHeight: number
   menuPosition: { x: number; y: number }
   onClose: () => void
-  onMenuHeightChange: (height: number) => void
   onToggleCache: () => void
   theme: ThemeColors
 }
@@ -26,19 +24,12 @@ export const TracksListItemContextMenu = ({
   isCached,
   isMenuOpen,
   menuActions,
-  menuHeight,
   menuPosition,
   onClose,
-  onMenuHeightChange,
   onToggleCache,
   theme,
 }: TracksListItemContextMenuProps) => {
   const tracksListStyles = createTracksListStyles(theme)
-
-  const handleLayout = (e: { nativeEvent: { layout: { height: number } } }) => {
-    const h = e.nativeEvent.layout.height
-    if (h !== menuHeight) onMenuHeightChange(h)
-  }
 
   if (!isMenuOpen) return null
 
@@ -85,7 +76,6 @@ export const TracksListItemContextMenu = ({
     <Modal visible transparent animationType='none' onRequestClose={onClose}>
       <Pressable onPress={onClose} style={{ flex: 1 }}>
         <View
-          onLayout={handleLayout}
           style={[
             tracksListStyles.dropdownMenu,
             { left: menuPosition.x, position: 'absolute', top: menuPosition.y },

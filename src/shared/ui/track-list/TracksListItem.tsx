@@ -1,7 +1,7 @@
 import { memo, useRef, useState } from 'react'
 import { Pressable, type View } from 'react-native'
 import { useTheme } from '../theme/ThemeContext/useTheme'
-import { MENU_WIDTH } from './constants'
+import { MENU_GAP, MENU_WIDTH } from './constants'
 import { createTracksListStyles } from './styles'
 import { TracksListItemContent } from './TracksListItemContent'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
@@ -27,7 +27,6 @@ export const TracksListItem = memo(
     const tracksListStyles = createTracksListStyles(currentTheme)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
-    const [menuHeight, setMenuHeight] = useState(44)
     const dotsButtonRef = useRef<View>(null)
 
     const { isCached, isDownloading, progressValue, toggleCache } = useTrackItemCache(
@@ -38,7 +37,7 @@ export const TracksListItem = memo(
 
     const measureButton = () => {
       dotsButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) =>
-        setMenuPosition({ x: pageX + width - MENU_WIDTH, y: pageY - height - menuHeight - 5 }),
+        setMenuPosition({ x: pageX + width - MENU_WIDTH, y: pageY + height + MENU_GAP }),
       )
     }
 
@@ -56,13 +55,6 @@ export const TracksListItem = memo(
     const handleItemPress = () => {
       if (isMenuOpen) setIsMenuOpen(false)
       onPress()
-    }
-
-    const handleMenuHeightChange = (newHeight: number) => {
-      setMenuHeight(newHeight)
-      dotsButtonRef.current?.measure((_x, _y, width, buttonHeight, pageX, pageY) =>
-        setMenuPosition({ x: pageX + width - MENU_WIDTH, y: pageY - buttonHeight - newHeight - 5 }),
-      )
     }
 
     return (
@@ -98,12 +90,10 @@ export const TracksListItem = memo(
           isCached={isCached}
           theme={currentTheme}
           isMenuOpen={isMenuOpen}
-          menuHeight={menuHeight}
           menuActions={menuActions}
           onClose={handleToggleMenu}
           menuPosition={menuPosition}
           onToggleCache={handleToggleCache}
-          onMenuHeightChange={handleMenuHeightChange}
         />
       </>
     )

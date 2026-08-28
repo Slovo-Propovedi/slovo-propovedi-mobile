@@ -1,13 +1,15 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { useCallback, useState } from 'react'
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity } from 'react-native'
+import { useCallback, useRef, useState } from 'react'
+import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { clearHistoryAction } from 'entities/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { FONT_SIZES, RADIUSES, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
+import { HistoryHeaderMenuDropdown } from './HistoryHeaderMenuDropdown'
 
 const ICON_SIZE = 24
 const BUTTON_SIZE = 44
+const MENU_GAP = 4
 
 const CLEAR_TITLE = 'Очистить историю?'
 const CLEAR_MESSAGE =
@@ -18,6 +20,16 @@ export const HistoryHeaderMenu = () => {
   const { currentTheme } = useTheme()
   const [menuVisible, setMenuVisible] = useState(false)
   const [dialogVisible, setDialogVisible] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ right: 0, top: 0 })
+  const buttonRef = useRef<View>(null)
+
+  const handleOpenMenu = useCallback(() => {
+    setMenuVisible(true)
+    buttonRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
+      const { width: screenWidth } = Dimensions.get('window')
+      setMenuPosition({ right: screenWidth - x - width, top: y + height + MENU_GAP })
+    })
+  }, [])
 
   const handleClearOption = useCallback(() => {
     setMenuVisible(false)
@@ -31,36 +43,23 @@ export const HistoryHeaderMenu = () => {
 
   return (
     <>
-      <TouchableOpacity
-        style={styles.button}
-        testID='history-header-menu'
-        accessibilityLabel='Меню истории'
-        onPress={() => setMenuVisible(true)}
-      >
-        <MaterialCommunityIcons size={ICON_SIZE} name='dots-vertical' color={currentTheme.text} />
-      </TouchableOpacity>
+      <View ref={buttonRef} collapsable={false}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleOpenMenu}
+          testID='history-header-menu'
+          accessibilityLabel='Меню истории'
+        >
+          <MaterialCommunityIcons size={ICON_SIZE} name='dots-vertical' color={currentTheme.text} />
+        </TouchableOpacity>
+      </View>
 
-      {menuVisible && (
-        <Modal transparent onRequestClose={() => setMenuVisible(false)}>
-          <Pressable style={styles.overlay} onPress={() => setMenuVisible(false)}>
-            <Pressable
-              accessibilityRole='button'
-              onPress={handleClearOption}
-              style={[styles.dropdown, { backgroundColor: currentTheme.surface }]}
-            >
-              <MaterialCommunityIcons
-                size={18}
-                name='delete-outline'
-                color={currentTheme.text}
-                style={styles.actionIcon}
-              />
-              <Text style={[styles.actionText, { color: currentTheme.text }]}>
-                Очистить историю
-              </Text>
-            </Pressable>
-          </Pressable>
-        </Modal>
-      )}
+      <HistoryHeaderMenuDropdown
+        visible={menuVisible}
+        menuPosition={menuPosition}
+        onClear={handleClearOption}
+        onClose={() => setMenuVisible(false)}
+      />
 
       <ConfirmDialog
         title={CLEAR_TITLE}
@@ -75,32 +74,10 @@ export const HistoryHeaderMenu = () => {
 }
 
 const styles = StyleSheet.create({
-  actionIcon: {
-    marginRight: 8,
-  },
-  actionText: {
-    fontSize: FONT_SIZES.base,
-  },
   button: {
     alignItems: 'center',
     height: BUTTON_SIZE,
     justifyContent: 'center',
     width: BUTTON_SIZE,
   },
-  dropdown: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    elevation: 8,
-    flexDirection: 'row',
-    minWidth: 180,
-    paddingVertical: 12,
-    position: 'absolute',
-    right: 16,
-    shadowColor: '#000',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    top: 50,
-  },
-  overlay: { flex: 1 },
 })
