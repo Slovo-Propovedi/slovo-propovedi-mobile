@@ -28,6 +28,8 @@ jest.mock('react-native-reanimated', () => {
       // Animations complete synchronously in tests; invoke the completion
       // callback so exit-animation state (e.g. unmount-after-collapse) is
       // exercised honestly.
+      // Intentional divergence: real Reanimated passes `finished=false` when
+      // an animation is interrupted; no repo test depends on that semantics.
       if (typeof callback === 'function') callback(true)
       return toValue
     }),

@@ -18,7 +18,7 @@ interface NextSermonPlateProps {
 }
 
 const ANIMATION_DURATION = 220
-const AUTO_COLLAPSE_DELAY_MS = 10_000
+export const AUTO_COLLAPSE_DELAY_MS = 10_000
 
 export const NextSermonPlate = memo(
   ({ currentAudioId, insetsTop, nextSermonTitle, styles }: NextSermonPlateProps) => {
@@ -93,11 +93,8 @@ export const NextSermonPlate = memo(
             </Animated.View>
           </View>
           {isTitleMounted && (
-            <Animated.View
-              onLayout={handleTitleLayout}
-              style={[styles.nextSermonTitleWrapper, titleStyle]}
-            >
-              <Text numberOfLines={2} style={styles.nextSermonTitle}>
+            <Animated.View style={[styles.nextSermonTitleWrapper, titleStyle]}>
+              <Text numberOfLines={2} onLayout={handleTitleLayout} style={styles.nextSermonTitle}>
                 {nextSermonTitle}
               </Text>
             </Animated.View>

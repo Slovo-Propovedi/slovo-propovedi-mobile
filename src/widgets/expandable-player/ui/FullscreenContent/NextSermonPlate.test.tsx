@@ -2,13 +2,12 @@ import '@testing-library/jest-native/extend-expect'
 import { act, fireEvent } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import type { createStyles } from '../ExpandablePlayer/styles'
-import { NextSermonPlate } from './NextSermonPlate'
+import { AUTO_COLLAPSE_DELAY_MS, NextSermonPlate } from './NextSermonPlate'
 
 const LABEL = 'следующая проповедь'
 const TITLE = 'Следующая проповедь о вере'
 const ACCESSIBLE_NAME = 'Следующая проповедь'
 const EXPANDED_NAME = `${ACCESSIBLE_NAME}. ${TITLE}`
-const AUTO_COLLAPSE_DELAY_MS = 10_000
 
 const styles = {
   nextSermonAnchor: {},
@@ -125,13 +124,35 @@ describe('<NextSermonPlate>', () => {
     const plate = getByRole('button', { name: ACCESSIBLE_NAME })
 
     await fireEvent.press(plate)
+    expect(queryByText(TITLE)).toBeTruthy()
+
+    await act(async () => {
+      jest.advanceTimersByTime(AUTO_COLLAPSE_DELAY_MS / 2)
+    })
+
     await fireEvent.press(getByRole('button', { name: EXPANDED_NAME }))
     expect(queryByText(TITLE)).toBeNull()
 
+    await fireEvent.press(getByRole('button', { name: ACCESSIBLE_NAME }))
+    expect(queryByText(TITLE)).toBeTruthy()
+
     await act(async () => {
-      jest.advanceTimersByTime(AUTO_COLLAPSE_DELAY_MS)
+      jest.advanceTimersByTime(AUTO_COLLAPSE_DELAY_MS / 2)
+    })
+
+    // A leaked timer from the first expansion would have collapsed the plate here.
+    expect(queryByText(TITLE)).toBeTruthy()
+    expect(getByRole('button', { name: EXPANDED_NAME })).toHaveAccessibilityState({
+      expanded: true,
+    })
+
+    await act(async () => {
+      jest.advanceTimersByTime(AUTO_COLLAPSE_DELAY_MS / 2)
     })
 
     expect(queryByText(TITLE)).toBeNull()
+    expect(getByRole('button', { name: ACCESSIBLE_NAME })).toHaveAccessibilityState({
+      expanded: false,
+    })
   })
 })
