@@ -24,7 +24,6 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
     audio,
     currentDownloadProgress,
     duration,
-    handleNextSermon,
     handleOpenPlaylist,
     handleToggleCache,
     handleTogglePlay,
@@ -71,8 +70,8 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
       <Animated.View style={[styles.fullContainer, fullStyle]}>
         <HeaderOverlay
           styles={styles}
+          currentAudioId={audio.id}
           hasNextSermon={hasNextSermon}
-          onNextSermon={handleNextSermon}
           collapseOnPan={handleCollapsePress}
           collapseOnTap={handleCollapsePress}
           nextSermonTitle={nextSermon?.title}

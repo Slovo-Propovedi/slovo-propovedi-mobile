@@ -8,6 +8,10 @@ jest.mock('react-native-reanimated', () => {
     createAnimatedComponent: Component => Component,
     Easing: { linear: () => 'linear' },
     interpolate: p => p,
+    runOnJS:
+      fn =>
+      (...args) =>
+        fn(...args),
     useAnimatedReaction: () => {
       // No-op: useAnimatedReaction synchronizes shared values from the UI
       // thread to JS state. In tests, we rely on the initial useState value.
@@ -20,6 +24,12 @@ jest.mock('react-native-reanimated', () => {
     withDelay: (_delay, value) => value,
     withRepeat: value => value,
     withSequence: (...values) => values[values.length - 1],
-    withTiming: jest.fn(toValue => toValue),
+    withTiming: jest.fn((toValue, _config, callback) => {
+      // Animations complete synchronously in tests; invoke the completion
+      // callback so exit-animation state (e.g. unmount-after-collapse) is
+      // exercised honestly.
+      if (typeof callback === 'function') callback(true)
+      return toValue
+    }),
   }
 })

@@ -1,4 +1,4 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAtom } from '@reatom/npm-react'
 import { useRef, useState } from 'react'
 import {
   currentAudioAtom,
@@ -9,12 +9,10 @@ import {
   isDownloadingAtom,
   isPlayingAtom,
   positionAtom,
-  setCurrentAudioAction,
   usePlayer,
   useSeekControls,
 } from 'entities/player'
 import { cacheAudio, removeFromCache, useIsCached } from 'shared/lib/audio-cache'
-import { type AudioPlayerData } from 'shared/model'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { showPlaylistAtom } from '../../model/showPlaylistAtom'
@@ -28,9 +26,8 @@ export const useFullscreenHandlers = () => {
   const [isDownloading] = useAtom(isDownloadingAtom)
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
   const [downloadProgress] = useAtom(downloadProgressAtom)
-  const { loadAudio, pause, play, seekTo } = usePlayer()
+  const { pause, play, seekTo } = usePlayer()
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
-  const setCurrentAudio = useAction(setCurrentAudioAction)
   const [showMenu, setShowMenu] = useAtom(showMenuAtom)
   const [showPlaylist, setShowPlaylist] = useAtom(showPlaylistAtom)
   const [showDetails, setShowDetails] = useState(false)
@@ -59,31 +56,10 @@ export const useFullscreenHandlers = () => {
     }
   }
 
-  const handleNextSermon = async () => {
-    if (!playlist) return
-    const playlistList = playlist.sermons
-    const currentIndex = playlistList.findIndex(t => t.id === audio?.id)
-    if (currentIndex < 0) return
-    const track = playlistList[currentIndex + 1]
-    if (!track?.audioUrl || !track.id) return
-    const { audioUrl, ...rest } = track
-    const newAudio: AudioPlayerData = {
-      ...rest,
-      artwork: playlist.artwork,
-      audioUrl,
-      id: track.id,
-      title: track.title,
-    }
-    await setCurrentAudio(newAudio)
-    await loadAudio(newAudio.audioUrl)
-    await play()
-  }
-
   return {
     audio,
     currentDownloadProgress,
     duration,
-    handleNextSermon,
     handleOpenPlaylist,
     handleToggleCache,
     handleTogglePlay,

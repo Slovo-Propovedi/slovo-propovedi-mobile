@@ -1,17 +1,18 @@
 import { Entypo } from '@expo/vector-icons'
-import { Pressable, Text, View } from 'react-native'
+import { View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { scheduleOnRN } from 'react-native-worklets'
 import type { createStyles } from '../ExpandablePlayer/styles'
+import { NextSermonPlate } from './NextSermonPlate'
 
 interface HeaderOverlayProps {
   closePlaylistOnSwipe: () => void
   collapseOnPan: () => void
   collapseOnTap: () => void
+  currentAudioId: string
   hasNextSermon: boolean
   insetsTop: number
   nextSermonTitle: string | undefined
-  onNextSermon: () => void
   styles: ReturnType<typeof createStyles>
 }
 
@@ -19,10 +20,10 @@ export const HeaderOverlay = ({
   closePlaylistOnSwipe,
   collapseOnPan,
   collapseOnTap,
+  currentAudioId,
   hasNextSermon,
   insetsTop,
   nextSermonTitle,
-  onNextSermon,
   styles,
 }: HeaderOverlayProps) => {
   const closeTapGesture = Gesture.Tap().onEnd(() => {
@@ -50,16 +51,13 @@ export const HeaderOverlay = ({
           <Entypo name='chevron-down' style={styles.closeIcon} />
         </View>
       </GestureDetector>
-      {hasNextSermon && (
-        <Pressable
-          onPress={() => void onNextSermon()}
-          style={[styles.nextSermonContainer, { top: insetsTop }]}
-        >
-          <Text style={styles.nextSermonLabel}>следующая проповедь</Text>
-          <Text numberOfLines={1} style={styles.nextSermonTitle}>
-            {nextSermonTitle}
-          </Text>
-        </Pressable>
+      {hasNextSermon && nextSermonTitle && (
+        <NextSermonPlate
+          styles={styles}
+          insetsTop={insetsTop}
+          currentAudioId={currentAudioId}
+          nextSermonTitle={nextSermonTitle}
+        />
       )}
     </>
   )
