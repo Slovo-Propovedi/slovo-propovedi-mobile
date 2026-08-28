@@ -1,0 +1,85 @@
+diff --git a/node_modules/@gorhom/bottom-sheet/lib/commonjs/components/bottomSheet/BottomSheet.js b/node_modules/@gorhom/bottom-sheet/lib/commonjs/components/bottomSheet/BottomSheet.js
+index a7748c0..75dc42d 100644
+--- a/node_modules/@gorhom/bottom-sheet/lib/commonjs/components/bottomSheet/BottomSheet.js
++++ b/node_modules/@gorhom/bottom-sheet/lib/commonjs/components/bottomSheet/BottomSheet.js
+@@ -203,7 +203,7 @@ const BottomSheetComponent = /*#__PURE__*/(0, _react.forwardRef)(function Bottom
+     } = animatedLayoutState.get();
+     // extended position = container height - sheet height
+     const extendedPosition = containerHeight - animatedSheetHeight.value;
+-    if (animatedPosition.value === extendedPosition) {
++    if (Math.abs(animatedPosition.value - extendedPosition) < 0.5) {
+       return _constants.SHEET_STATE.EXTENDED;
+     }
+ 
+@@ -213,12 +213,12 @@ const BottomSheetComponent = /*#__PURE__*/(0, _react.forwardRef)(function Bottom
+     const extendedPositionWithKeyboard = Math.max(0, containerHeight - (animatedSheetHeight.value + keyboardHeightInContainer));
+ 
+     // detect if keyboard is open and the sheet is in temporary position
+-    if (keyboardBehavior === _constants.KEYBOARD_BEHAVIOR.interactive && isInTemporaryPosition.value && animatedPosition.value === extendedPositionWithKeyboard) {
++    if (keyboardBehavior === _constants.KEYBOARD_BEHAVIOR.interactive && isInTemporaryPosition.value && Math.abs(animatedPosition.value - extendedPositionWithKeyboard) < 0.5) {
+       return _constants.SHEET_STATE.EXTENDED;
+     }
+ 
+     // fill parent = 0
+-    if (animatedPosition.value === 0) {
++    if (Math.abs(animatedPosition.value) < 0.5) {
+       return _constants.SHEET_STATE.FILL_PARENT;
+     }
+ 
+diff --git a/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheet/BottomSheet.js b/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheet/BottomSheet.js
+index ca4bb3b..9fe9402 100644
+--- a/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheet/BottomSheet.js
++++ b/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheet/BottomSheet.js
+@@ -196,7 +196,7 @@ const BottomSheetComponent = /*#__PURE__*/forwardRef(function BottomSheet(props,
+     } = animatedLayoutState.get();
+     // extended position = container height - sheet height
+     const extendedPosition = containerHeight - animatedSheetHeight.value;
+-    if (animatedPosition.value === extendedPosition) {
++    if (Math.abs(animatedPosition.value - extendedPosition) < 0.5) {
+       return SHEET_STATE.EXTENDED;
+     }
+ 
+@@ -206,12 +206,12 @@ const BottomSheetComponent = /*#__PURE__*/forwardRef(function BottomSheet(props,
+     const extendedPositionWithKeyboard = Math.max(0, containerHeight - (animatedSheetHeight.value + keyboardHeightInContainer));
+ 
+     // detect if keyboard is open and the sheet is in temporary position
+-    if (keyboardBehavior === KEYBOARD_BEHAVIOR.interactive && isInTemporaryPosition.value && animatedPosition.value === extendedPositionWithKeyboard) {
++    if (keyboardBehavior === KEYBOARD_BEHAVIOR.interactive && isInTemporaryPosition.value && Math.abs(animatedPosition.value - extendedPositionWithKeyboard) < 0.5) {
+       return SHEET_STATE.EXTENDED;
+     }
+ 
+     // fill parent = 0
+-    if (animatedPosition.value === 0) {
++    if (Math.abs(animatedPosition.value) < 0.5) {
+       return SHEET_STATE.FILL_PARENT;
+     }
+ 
+diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheet/BottomSheet.tsx b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheet/BottomSheet.tsx
+index fc52033..f112059 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheet/BottomSheet.tsx
++++ b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheet/BottomSheet.tsx
+@@ -306,7 +306,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
+       const { containerHeight } = animatedLayoutState.get();
+       // extended position = container height - sheet height
+       const extendedPosition = containerHeight - animatedSheetHeight.value;
+-      if (animatedPosition.value === extendedPosition) {
++      if (Math.abs(animatedPosition.value - extendedPosition) < 0.5) {
+         return SHEET_STATE.EXTENDED;
+       }
+ 
+@@ -324,13 +324,13 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
+       if (
+         keyboardBehavior === KEYBOARD_BEHAVIOR.interactive &&
+         isInTemporaryPosition.value &&
+-        animatedPosition.value === extendedPositionWithKeyboard
++        Math.abs(animatedPosition.value - extendedPositionWithKeyboard) < 0.5
+       ) {
+         return SHEET_STATE.EXTENDED;
+       }
+ 
+       // fill parent = 0
+-      if (animatedPosition.value === 0) {
++      if (Math.abs(animatedPosition.value) < 0.5) {
+         return SHEET_STATE.FILL_PARENT;
+       }
+ 

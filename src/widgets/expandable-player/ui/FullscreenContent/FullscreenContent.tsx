@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient'
+import { useCallback } from 'react'
 import { Pressable, type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -53,6 +54,9 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
   const closePlaylistOnSwipe = () => {
     if (showPlaylist) setShowPlaylist(false)
   }
+
+  // Stable identity so the memoized sheet skips re-renders on parent ticks.
+  const handleClosePlaylist = useCallback(() => setShowPlaylist(false), [setShowPlaylist])
 
   if (!audio) return null
   if (!playlist) return null
@@ -117,7 +121,7 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
         <PlaylistBottomSheet
           playlist={playlist}
           sheetRef={playlistSheetRef}
-          onClose={() => setShowPlaylist(false)}
+          onClose={handleClosePlaylist}
         />
       )}
     </>

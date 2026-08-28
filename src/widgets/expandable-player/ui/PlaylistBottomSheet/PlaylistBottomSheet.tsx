@@ -1,7 +1,7 @@
-import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
-import { useCallback, useMemo } from 'react'
-import { Text, View } from 'react-native'
+import { memo, useCallback, useMemo } from 'react'
+import { Text } from 'react-native'
 import { useHistoryProgressMap } from 'entities/listening-history'
 import {
   currentAudioAtom,
@@ -10,11 +10,15 @@ import {
   usePlayNewSermon,
 } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
-import { formatSermonReference } from 'shared/lib/format'
 import { useTheme } from 'shared/ui/theme'
 import type { PlaylistData } from 'shared/model'
 import { createStyles } from './PlaylistBottomSheet.styles'
-import { PlaylistSheetRow } from './PlaylistSheetRow'
+import { PlaylistSheetList } from './PlaylistSheetList'
+import { useListReveal } from './useListReveal'
+import { useScrollToCurrentTrack } from './useScrollToCurrentTrack'
+
+const SNAP_POINTS: (number | string)[] = ['50%', '80%']
+const FINAL_SNAP_INDEX = SNAP_POINTS.length - 1
 
 interface PlaylistBottomSheetProps {
   closeOnBack?: boolean
@@ -23,15 +27,7 @@ interface PlaylistBottomSheetProps {
   sheetRef: React.RefObject<BottomSheet | null>
 }
 
-interface TrackListItemData {
-  artwork?: null | string
-  id: string
-  subtitle?: string
-  title: string
-  url?: string
-}
-
-export const PlaylistBottomSheet = ({
+const PlaylistBottomSheetComponent = ({
   closeOnBack = true,
   onClose,
   playlist,
@@ -44,12 +40,28 @@ export const PlaylistBottomSheet = ({
   const playNewSermon = usePlayNewSermon()
   const progressMap = useHistoryProgressMap()
   const { currentTheme } = useTheme()
+  const {
+    currentIndex,
+    handleDragEnd,
+    handleDragStart,
+    handleMomentumEnd,
+    handleMomentumStart,
+    handleScrollToIndexFailed,
+    initialNumToRender,
+    listRef,
+    noteSheetIndex,
+    scrollToCurrent,
+  } = useScrollToCurrentTrack({
+    currentAudio,
+    finalSnapIndex: FINAL_SNAP_INDEX,
+    playlist,
+  })
+  const { handleListScroll, isRevealed, noteScrollScheduled } = useListReveal({ currentIndex })
 
   const handlePressItem = useCallback(
     async (index: number) => {
       if (!playlist) return
-      const playlistList = playlist.sermons
-      const sermon = playlistList[index]
+      const sermon = playlist.sermons[index]
       if (!sermon.audioUrl) return
 
       await playNewSermon({ playlist, sermon })
@@ -60,50 +72,26 @@ export const PlaylistBottomSheet = ({
   )
   const handleSheetChanges = useCallback(
     (index: number) => {
+      noteSheetIndex(index)
+      if (index === FINAL_SNAP_INDEX) {
+        scrollToCurrent()
+        noteScrollScheduled()
+      }
       if (closeOnBack && index === -1) onClose()
     },
-    [closeOnBack, onClose],
-  )
-  const renderItem = useCallback(
-    ({ index, item }: { index: number; item: TrackListItemData }) => (
-      <PlaylistSheetRow
-        index={index}
-        title={item.title}
-        audioUrl={item.url}
-        artwork={item.artwork}
-        subtitle={item.subtitle}
-        onPress={handlePressItem}
-        cacheTrigger={cacheTrigger}
-        downloadingUrl={downloadingUrl}
-        isPlaying={currentAudio?.id === item.id}
-        storedProgress={progressMap.get(item.id)}
-        isAudioPlaying={currentAudio?.id === item.id && isAudioPlaying}
-      />
-    ),
-    [cacheTrigger, currentAudio?.id, downloadingUrl, handlePressItem, isAudioPlaying, progressMap],
+    [closeOnBack, noteSheetIndex, noteScrollScheduled, onClose, scrollToCurrent],
   )
   const renderStyles = useMemo(() => createStyles(currentTheme), [currentTheme])
-  const ItemSeparator = useCallback(() => <View style={renderStyles.divider} />, [renderStyles])
 
   if (!playlist) return null
-
-  const tracksListData: TrackListItemData[] = playlist.sermons.map(sermon => ({
-    artwork: playlist.artwork,
-    id: sermon.id,
-    subtitle: formatSermonReference({
-      book: sermon.book,
-      chapter: sermon.chapter,
-      verse: sermon.verse,
-    }),
-    title: sermon.title,
-    url: sermon.audioUrl ?? undefined,
-  }))
 
   return (
     <BottomSheet
       ref={sheetRef}
       enablePanDownToClose
-      snapPoints={['50%', '80%']}
+      index={FINAL_SNAP_INDEX}
+      snapPoints={SNAP_POINTS}
+      enableDynamicSizing={false}
       onChange={handleSheetChanges}
       backgroundStyle={renderStyles.background}
       handleIndicatorStyle={renderStyles.indicator}
@@ -117,13 +105,26 @@ export const PlaylistBottomSheet = ({
       )}
     >
       <Text style={renderStyles.title}>{playlist.title}</Text>
-      <BottomSheetFlatList
-        data={tracksListData}
-        renderItem={renderItem}
-        ItemSeparatorComponent={ItemSeparator}
-        contentContainerStyle={renderStyles.listContent}
-        keyExtractor={(item: TrackListItemData) => item.id}
+      <PlaylistSheetList
+        listRef={listRef}
+        playlist={playlist}
+        styles={renderStyles}
+        isRevealed={isRevealed}
+        onPress={handlePressItem}
+        progressMap={progressMap}
+        onDragEnd={handleDragEnd}
+        cacheTrigger={cacheTrigger}
+        onScroll={handleListScroll}
+        onDragStart={handleDragStart}
+        downloadingUrl={downloadingUrl}
+        isAudioPlaying={isAudioPlaying}
+        currentAudioId={currentAudio?.id}
+        onMomentumEnd={handleMomentumEnd}
+        onMomentumStart={handleMomentumStart}
+        initialNumToRender={initialNumToRender}
+        onScrollToIndexFailed={handleScrollToIndexFailed}
       />
     </BottomSheet>
   )
 }
+export const PlaylistBottomSheet = memo(PlaylistBottomSheetComponent)

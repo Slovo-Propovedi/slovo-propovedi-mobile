@@ -47,7 +47,6 @@ export const useFullscreenHandlers = () => {
 
   const handleOpenPlaylist = () => {
     setShowPlaylist(true)
-    setTimeout(() => playlistSheetRef.current?.expand(), 0)
   }
 
   const handleToggleCache = async () => {
