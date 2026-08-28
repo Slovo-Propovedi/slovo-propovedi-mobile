@@ -1,6 +1,6 @@
 import { Entypo } from '@expo/vector-icons'
 import { memo, useCallback, useEffect, useState } from 'react'
-import { type LayoutChangeEvent, Pressable, Text, View } from 'react-native'
+import { PixelRatio, Pressable, Text, View } from 'react-native'
 import Animated, {
   interpolate,
   runOnJS,
@@ -8,6 +8,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
 
 interface NextSermonPlateProps {
@@ -19,12 +20,15 @@ interface NextSermonPlateProps {
 
 const ANIMATION_DURATION = 220
 export const AUTO_COLLAPSE_DELAY_MS = 10_000
+const TITLE_LINES = 2
+const TITLE_LINE_HEIGHT_FACTOR = 1.25
+// Vertical spacing inside the wrapper: the title Text's marginTop (INDENTS.lowest).
+const TITLE_WRAPPER_GAP = INDENTS.lowest
 
 export const NextSermonPlate = memo(
   ({ currentAudioId, insetsTop, nextSermonTitle, styles }: NextSermonPlateProps) => {
     const [isExpanded, setIsExpanded] = useState(false)
     const [isTitleMounted, setIsTitleMounted] = useState(false)
-    const [titleHeight, setTitleHeight] = useState(0)
     const [prevAudioId, setPrevAudioId] = useState(currentAudioId)
     const progress = useSharedValue(0)
 
@@ -59,17 +63,16 @@ export const NextSermonPlate = memo(
       }
     }
 
-    const handleTitleLayout = (event: LayoutChangeEvent) => {
-      const { height } = event.nativeEvent.layout
-      if (height > 0) setTitleHeight(height)
-    }
+    const fontScale = PixelRatio.getFontScale()
+    const titleLineHeight = Math.ceil(FONT_SIZES.xl * TITLE_LINE_HEIGHT_FACTOR * fontScale)
+    const maxTitleHeight = titleLineHeight * TITLE_LINES + TITLE_WRAPPER_GAP
 
     const chevronStyle = useAnimatedStyle(() => ({
       transform: [{ rotate: `${interpolate(progress.value, [0, 1], [0, 180])}deg` }],
     }))
 
     const titleStyle = useAnimatedStyle(() => ({
-      maxHeight: interpolate(progress.value, [0, 1], [0, titleHeight]),
+      maxHeight: interpolate(progress.value, [0, 1], [0, maxTitleHeight]),
       opacity: progress.value,
     }))
 
@@ -94,7 +97,10 @@ export const NextSermonPlate = memo(
           </View>
           {isTitleMounted && (
             <Animated.View style={[styles.nextSermonTitleWrapper, titleStyle]}>
-              <Text numberOfLines={2} onLayout={handleTitleLayout} style={styles.nextSermonTitle}>
+              <Text
+                numberOfLines={2}
+                style={[styles.nextSermonTitle, { lineHeight: titleLineHeight }]}
+              >
                 {nextSermonTitle}
               </Text>
             </Animated.View>
