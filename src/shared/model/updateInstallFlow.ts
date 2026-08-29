@@ -4,7 +4,6 @@ import {
   apkFileExists,
   canRequestPackageInstalls,
   cleanupUpdateFiles,
-  downloadUpdateZip,
   extractApkFromZip,
   getInstallErrorMessage,
   installApk,
@@ -19,6 +18,7 @@ import {
   updateProgressAtom,
   updateStateAtom,
 } from './updateInstall'
+import { downloadUpdateZipWithFallback } from './updateInstallFallback'
 
 const OFFLINE_ERROR_MESSAGE = 'Нет подключения к интернету'
 
@@ -43,9 +43,7 @@ const openReleaseInBrowser = async (releaseUrl: null | string): Promise<void> =>
 const performUpdate = async (ctx: Ctx, zipDownloadUrl: string): Promise<void> => {
   try {
     await cleanupUpdateFiles()
-    const zipPath = await downloadUpdateZip(zipDownloadUrl, percent => {
-      ctx.schedule(() => updateProgressAtom(ctx, percent))
-    })
+    const zipPath = await downloadUpdateZipWithFallback(ctx, zipDownloadUrl)
 
     await ctx.schedule(() => updateStateAtom(ctx, 'extracting'))
     const apkPath = await extractApkFromZip(zipPath)

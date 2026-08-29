@@ -27,6 +27,16 @@
 - `zipDownloadUrl` — первый ассет с расширением `.zip` (может быть `null`). Релизный пайплайн (`.forgejo/workflows/release.yml`) загружает единственный ассет `slovo-propovedi-v<версия>.zip`, внутри которого лежит APK `Slovo.Propovedi v<версия>.apk`.
 - Сетевые ошибки логируются (`console.warn`) и не прерывают `checkForUpdateAction`.
 
+### Зеркалирование релиза в GitHub (CI)
+
+`.forgejo/workflows/release.yml` после публикации релиза в Forgejo выполняет шаг **«Mirror release to GitHub»** (опциональный): создаёт/обновляет релиз в `Slovo-Propovedi/slovo-propovedi-mobile` и загружает ZIP-ассет через GitHub REST API v3 (`Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`). Шаг пропускается (`exit 0`), если секрет `GITHUB_MIRROR_TOKEN` не задан — пайплайн остаётся зелёным без конфигурации. Любая ошибка GitHub API — `::warning::`, джоба не падает (релиз Forgejo уже опубликован). HTTP 422 при загрузке ассета (имя уже занято) трактуется как успех.
+
+**Настройка:**
+
+1. В GitHub создать PAT (Personal Access Token) со scope `repo` (для публичного репозитория достаточно `public_repo`) — права на создание релизов и загрузку ассетов.
+2. В настройках Forgejo-репозитория (`Settings → Actions → Secrets`) добавить секрет `GITHUB_MIRROR_TOKEN` со значением PAT.
+3. Тег `v*` должен быть запушен в GitHub (репозиторий зеркалируется) — если тега ещё нет, создание релиза упадёт с предупреждением, джоба продолжит работу.
+
 ## Состояние
 
 `src/shared/model/update.ts`:
@@ -95,6 +105,8 @@
 5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с текстом ошибки.
 
 **Тайминг очистки:** `cleanupUpdateFiles()` вызывается в **начале** потока (перед скачиванием — чистит остатки прошлого запуска), а НЕ в `finally`. Файлы никогда не удаляются, пока сессия `PackageInstaller` может их читать (раньше `finally` удалял APK сразу после старта интента установщика — причина «Возникла проблема с файлом приложения»).
+
+**Фолбэк скачивания (GitHub mirror):** если `downloadUpdateZip` упал (Forgejo ответил при проверке, но «умер» до тапа «Обновить»), `downloadUpdateZipWithFallback` (`src/shared/model/updateInstallFallback.ts`) один раз перезапрашивает `fetchLatestRelease()` и, если у свежего релиза `zipDownloadUrl` **отличается** от упавшего URL **и версия не старше** упавшей (`compareVersions(release.version, failedVersion) >= 0`, где `failedVersion` — `latestVersionAtom`), сбрасывает `updateProgressAtom` в 0, обновляет `latestVersionAtom`/`releaseUrlAtom`/`zipDownloadUrlAtom` (ссылка «Открыть в браузере» в диалоге ошибки ведёт на живую страницу) и повторяет скачивание с новым URL. Ретрай ровно один, без циклов. Если релиз недоступен, `zipDownloadUrl` пуст/совпадает с упавшим URL, версия фолбэка старше упавшей или повторное скачивание тоже упало — пробрасывается исходная ошибка (существующий поток `setErrorState`). Решение о ретрае — чистый хелпер `getFallbackDownloadUrl(failedUrl, failedVersion, release)` (тесты рядом, `updateInstallFallback.test.ts`). Фолбэк применяется **только** к шагу скачивания: ошибки распаковки/установки обрабатываются как раньше.
 
 ### Разрешение установки из этого источника
 
