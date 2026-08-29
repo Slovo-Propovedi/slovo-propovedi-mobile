@@ -13,6 +13,8 @@ import { type ListeningHistory } from './types'
 
 export const historyAtom = atom<ListeningHistory>([], 'historyAtom')
 
+export const isHistoryLoadedAtom = atom(false, 'isHistoryLoadedAtom')
+
 export const loadHistoryAction = action(async ctx => {
   try {
     const sorted = sortAndCapEntries(await reconcileOnHydration())
@@ -22,6 +24,10 @@ export const loadHistoryAction = action(async ctx => {
   } catch (error) {
     console.error('Failed to load listening history:', error)
     reportError(error, 'Не удалось загрузить историю прослушивания')
+  } finally {
+    await ctx.schedule(() => {
+      isHistoryLoadedAtom(ctx, true)
+    })
   }
 }, 'loadHistory')
 

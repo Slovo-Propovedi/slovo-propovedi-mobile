@@ -1,8 +1,8 @@
 import { type Ctx } from '@reatom/framework'
-import { type ListeningHistoryEntry } from 'entities/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { type getCachedSections } from 'shared/lib/sections-cache'
 import { type PlaylistData, type SectionData } from 'shared/model'
+import { type ListeningHistoryEntry } from '../model/types'
 import { resolveEntryPlaylist } from './resolveEntryPlaylist'
 
 const SERMON_ID = 'sermon-1'
@@ -13,17 +13,15 @@ const mockGetEntrySermon = jest.fn(
     entry.sermon ?? entry.playlist.sermons[0],
 )
 
-jest.mock('entities/listening-history', () => ({
+jest.mock('./getEntrySermon', () => ({
   getEntrySermon: (...args: Parameters<typeof mockGetEntrySermon>) => mockGetEntrySermon(...args),
 }))
-
-jest.mock('entities/player', () => ({}))
 
 jest.mock('shared/lib/sections-cache', () => ({
   getCachedSections: jest.fn(),
 }))
 
-jest.mock('entities/section', () => {
+jest.mock('entities/section/@x/listening-history', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return { dynamicSectionsAtom: atom([], 'testDynamicSectionsAtom') }
 })
@@ -33,7 +31,7 @@ const getCachedSectionsMock = jest.mocked(
 )
 
 const dynamicSectionsAtom = (
-  jest.requireMock('entities/section') as {
+  jest.requireMock('entities/section/@x/listening-history') as {
     dynamicSectionsAtom: (ctx: Ctx, v: SectionData[]) => void
   }
 ).dynamicSectionsAtom

@@ -1,6 +1,6 @@
 import { reatomContext } from '@reatom/npm-react'
 import { type SuspenseFallbackProps } from 'expo-router'
-import { ActivityIndicator, View } from 'react-native'
+import { ActivityIndicator, LogBox, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { loadHistoryAction } from 'entities/listening-history'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
@@ -9,6 +9,11 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
 import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
 import RootLayout from './_RootLayout'
+
+// Upstream expo-router bug (DEV-only): initial-URL promise resolves before ContextNavigator mounts.
+// Unfixed upstream (expo#47659, fix PR #46653 closed unmerged; 57.0.17 и main всё ещё затронуты).
+// Удалить после миграции на SDK 58 — см. запись в docs/debt.md.
+LogBox.ignoreLogs(["Can't perform a React state update on a component that hasn't mounted yet"])
 
 /**
  * Fallback component shown while the root layout's route content is loading via Suspense.

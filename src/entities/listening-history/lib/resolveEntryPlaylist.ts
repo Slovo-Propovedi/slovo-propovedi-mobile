@@ -1,8 +1,9 @@
-import { getEntrySermon, type ListeningHistoryEntry } from 'entities/listening-history'
-import { dynamicSectionsAtom } from 'entities/section'
+import { dynamicSectionsAtom } from 'entities/section/@x/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { getCachedSections } from 'shared/lib/sections-cache'
 import { type PlaylistData, type SectionData } from 'shared/model'
+import { type ListeningHistoryEntry } from '../model/types'
+import { getEntrySermon } from './getEntrySermon'
 
 /**
  * Find the full playlist containing the sermon from a history entry.

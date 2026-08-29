@@ -1,15 +1,16 @@
 import { memo, useCallback } from 'react'
+import { useEntryPlayback } from 'features/entry-playback'
 import {
   getEntrySermon,
   type ListeningHistoryEntry,
   removeHistoryEntryAction,
 } from 'entities/listening-history'
-import { usePlayNewSermon } from 'entities/player'
 import { formatRelativeDate } from 'shared/lib/format'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { INDENTS } from 'shared/ui/theme'
 import { type MenuAction, TracksListItem } from 'shared/ui/track-list'
-import { resolveEntryPlaylist } from '../lib/resolveEntryPlaylist'
+
+const PLAYBACK_ERROR_MESSAGE = 'Не удалось воспроизвести проповедь из истории'
 
 interface HistoryRowProps {
   entry: ListeningHistoryEntry
@@ -18,7 +19,7 @@ interface HistoryRowProps {
 }
 
 export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRowProps) => {
-  const playNewSermon = usePlayNewSermon()
+  const playEntry = useEntryPlayback(PLAYBACK_ERROR_MESSAGE)
   const sermon = getEntrySermon(entry)
 
   const storedProgress =
@@ -26,13 +27,7 @@ export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRow
       ? Math.min(entry.positionMs / entry.durationMs, 1)
       : undefined
 
-  const handlePress = useCallback(async () => {
-    const rowSermon = getEntrySermon(entry)
-    if (!rowSermon) return
-
-    const playlist = await resolveEntryPlaylist(entry)
-    await playNewSermon({ playlist, sermon: rowSermon })
-  }, [entry, playNewSermon])
+  const handlePress = useCallback(() => playEntry(entry), [entry, playEntry])
 
   if (!sermon) return null
 

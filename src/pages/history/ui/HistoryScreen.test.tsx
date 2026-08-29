@@ -16,10 +16,6 @@ import { HistoryScreen } from './HistoryScreen'
 
 const mockResolveEntryPlaylist = jest.fn()
 
-jest.mock('../lib/resolveEntryPlaylist', () => ({
-  resolveEntryPlaylist: (...args: unknown[]) => mockResolveEntryPlaylist(...args),
-}))
-
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
   return {
@@ -40,6 +36,7 @@ jest.mock('entities/listening-history', () => {
       entry.sermon ?? entry.playlist.sermons[0],
     historyAtom: atom([], 'testHistoryAtom'),
     removeHistoryEntryAction: jest.fn(),
+    resolveEntryPlaylist: (...args: unknown[]) => mockResolveEntryPlaylist(...args),
   }
 })
 

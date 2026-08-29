@@ -18,6 +18,7 @@ import { useMarqueeAnimation } from './useMarqueeAnimation'
 
 export interface MarqueeTextProps {
   animationThreshold?: number
+  centerWhenStatic?: boolean
   style?: StyleProp<ViewStyle>
   testID?: string
   text: string
@@ -26,6 +27,7 @@ export interface MarqueeTextProps {
 
 export const MarqueeText = ({
   animationThreshold = 0,
+  centerWhenStatic = false,
   style,
   testID,
   text,
@@ -74,10 +76,12 @@ export const MarqueeText = ({
 
   if (!text) return null
 
+  const alignSelf = needsRepeat ? 'flex-start' : centerWhenStatic ? 'center' : 'flex-start'
+
   return (
     <View testID={testID} onLayout={handleContainerLayout} style={[{ overflow: 'hidden' }, style]}>
       <GestureDetector gesture={pan}>
-        <Animated.View style={[animatedStyle, { alignSelf: 'flex-start', flexDirection: 'row' }]}>
+        <Animated.View style={[animatedStyle, { alignSelf, flexDirection: 'row' }]}>
           <Text numberOfLines={1} style={textStyle}>
             {text}
           </Text>

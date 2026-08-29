@@ -2,17 +2,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { LISTENING_HISTORY, LISTENING_PROGRESS_SNAPSHOT } from 'shared/config'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { reportError } from 'shared/model/error-dialog'
 import { getEntrySermon } from '../lib/getEntrySermon'
 import {
   clearHistoryAction,
   flushHistoryProgressAction,
   historyAtom,
+  isHistoryLoadedAtom,
   loadHistoryAction,
   markHistoryCompletedAction,
   recordPlaybackStartAction,
   removeHistoryEntryAction,
 } from './history'
 import { type ListeningHistory, type ListeningHistoryEntry } from './types'
+
+jest.mock('shared/model/error-dialog', () => ({
+  reportError: jest.fn(),
+}))
 
 const mockAudio: AudioPlayerData = {
   artist: 'Author',
@@ -77,6 +83,26 @@ describe('listening-history model', () => {
       await loadHistoryAction(ctx)
 
       expect(ctx.get(historyAtom)).toEqual([])
+    })
+
+    test('marks history as loaded after hydration', async () => {
+      const ctx = createCtx()
+      expect(ctx.get(isHistoryLoadedAtom)).toBe(false)
+
+      await loadHistoryAction(ctx)
+
+      expect(ctx.get(isHistoryLoadedAtom)).toBe(true)
+    })
+
+    test('marks history as loaded and keeps empty atom when storage read fails', async () => {
+      jest.spyOn(AsyncStorage, 'getItem').mockRejectedValueOnce(new Error('read failed'))
+
+      const ctx = createCtx()
+      await loadHistoryAction(ctx)
+
+      expect(ctx.get(isHistoryLoadedAtom)).toBe(true)
+      expect(ctx.get(historyAtom)).toEqual([])
+      expect(reportError).toHaveBeenCalled()
     })
 
     test('clears orphan snapshot that matches no history entry', async () => {

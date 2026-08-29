@@ -1,0 +1,1 @@
+export { dynamicSectionsAtom } from '../model'

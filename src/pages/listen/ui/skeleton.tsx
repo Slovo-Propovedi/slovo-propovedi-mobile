@@ -16,16 +16,25 @@ interface SkeletonSectionProps {
 }
 
 const SKELETON_SECTIONS: SkeletonSectionProps[] = [
-  { itemsCount: 6, itemsSize: SliderItemSize.Small },
+  { itemsCount: 1, itemsSize: SliderItemSize.Small },
   { itemsCount: 6, itemsSize: SliderItemSize.Middle },
   { itemsCount: 4, itemsSize: SliderItemSize.XLarge },
   { itemsCount: 6, itemsSize: SliderItemSize.Middle, transform: SliderItemTransform.Short },
 ]
 
-export const SectionsSkeleton = () => (
-  <>
-    {SKELETON_SECTIONS.map((section, index) => (
-      <Slider.Skeleton key={index} {...section} />
-    ))}
-  </>
-)
+interface SectionsSkeletonProps {
+  count?: number
+  from?: number
+}
+
+export const SectionsSkeleton = ({ count, from = 0 }: SectionsSkeletonProps) => {
+  const sections = SKELETON_SECTIONS.slice(from, count === undefined ? undefined : from + count)
+
+  return (
+    <>
+      {sections.map((section, index) => (
+        <Slider.Skeleton key={index} {...section} />
+      ))}
+    </>
+  )
+}

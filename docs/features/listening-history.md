@@ -16,7 +16,7 @@ src/entities/listening-history/
 │   └── player.ts             # @x-точка для entities/player: узкий API-контракт (см. «@x cross-import»)
 ├── model/
 │   ├── types.ts              # Zod-схемы: listeningHistoryEntrySchema, listeningHistorySchema; типы ListeningHistoryEntry, ListeningHistory (sermon опционален)
-│   └── history.ts            # Атомы и экшены: historyAtom, loadHistoryAction, recordPlaybackStartAction, flushHistoryProgressAction, markHistoryCompletedAction, removeHistoryEntryAction, clearHistoryAction
+│   └── history.ts            # Атомы и экшены: historyAtom, isHistoryLoadedAtom (внутренний), loadHistoryAction, recordPlaybackStartAction, flushHistoryProgressAction, markHistoryCompletedAction, removeHistoryEntryAction, clearHistoryAction
 └── lib/
     ├── constants.ts          # COMPLETION_REMAINING_MS (10 000), MAX_HISTORY_ENTRIES (100)
     ├── historyStorage.ts     # readHistory / writeHistory (обёртки над getCachedJson/setCachedJson + очередь записей)
@@ -25,10 +25,12 @@ src/entities/listening-history/
     ├── isEntryCompleted.ts   # Правило завершённости (см. ниже)
     ├── getResumePosition.ts  # Вычисление позиции resume для usePlayNewSermon
     ├── getEntrySermon.ts     # getEntrySermon(entry): sermon из entry.sermon ?? entry.playlist.sermons[0]
+    ├── resolveEntryPlaylist.ts   # Резолв полного PlaylistData записи: live dynamicSectionsAtom (через @x entities/section/@x/listening-history) → sections-cache → снапшот entry.playlist
     ├── sortAndCapEntries.ts  # Дедупликация по sermon.id + сортировка по lastPlayedAt desc + обрезка до MAX_HISTORY_ENTRIES
     ├── recordSermonSwitch.ts     # recordSermonSwitchAction — flush старого + запись нового за один проход (markOldCompleted)
     ├── reconcileOnHydration.ts   # Слияние мини-снапшота в каталог при гидрации
-    └── useHistoryProgressMap.ts  # Map<sermonId, 0..1> — stored-прогресс из historyAtom для списков
+    ├── useHistoryProgressMap.ts  # Map<sermonId, 0..1> — stored-прогресс из historyAtom для списков
+    └── useLastListeningEntry.ts  # Хук последней записи с проповедью: { isLoaded, entry, sermon } для кнопки «Продолжить»
 ```
 
 > **Удалено** (в рамках перф-работы): live-чтение прогресса — хуки `useLiveSermonProgress`, `useSermonProgress` и `getLiveProgressAtom`. Прогресс в UI теперь только stored (обновляется по событиям, см. «Прогресс в UI»).
@@ -39,9 +41,11 @@ src/entities/listening-history/
 // entities/listening-history
 export { getEntrySermon }
 export { getResumePosition }
+export { resolveEntryPlaylist }
 export { writeLiveProgressSnapshot }
 export { recordSermonSwitchAction }
 export { useHistoryProgressMap }
+export { useLastListeningEntry }
 export {
   clearHistoryAction,
   historyAtom,
@@ -53,6 +57,28 @@ export {
 }
 export type { ListeningHistory, ListeningHistoryEntry }
 ```
+
+> `isHistoryLoadedAtom` — **внутренний** атом (не экспортируется из барреля): флаг того, что `loadHistoryAction` завершил чтение AsyncStorage (ставится `true` в `finally`, даже при ошибке чтения). Используется только внутри `useLastListeningEntry`, чтобы кнопка «Продолжить» не мигала disabled-состоянием на холодном старте.
+
+### `useLastListeningEntry`
+
+Хук для кнопки «Продолжить» на экране «Слушать» (`src/pages/listen/ui/ContinueListeningButton.tsx`). Читает `historyAtom` + `isHistoryLoadedAtom` и возвращает:
+
+```typescript
+{
+  isLoaded: boolean,                    // false, пока история не загружена
+  entry: ListeningHistoryEntry | null,  // первая запись с getEntrySermon(entry) !== null
+  sermon: AudioPlayerData | null,       // getEntrySermon(entry) той же записи
+}
+```
+
+- `isLoaded === false` → `entry`/`sermon` = `null` (кнопка не рендерится).
+- Иначе — перебирает `historyAtom` (отсортирован по `lastPlayedAt` DESC) и возвращает первую запись, у которой `getEntrySermon(entry)` не `null` (записи без проповеди пропускаются). `getEntrySermon` вызывается **один раз** на запись.
+- Нет подходящей записи → `{ isLoaded: true, entry: null, sermon: null }` (кнопка «Начать слушать», disabled).
+
+### Общий press-хук `useEntryPlayback`
+
+Общий press-флоу «резолв плейлиста → воспроизведение» для записей истории вынесен в хук `useEntryPlayback` (`src/features/entry-playback/`, features-слой — чтобы не создать entities-цикл player ↔ listening-history). Используется `ContinueListeningButton` (экран «Слушать») и `HistoryRow` (экран истории). Флоу: guard `getEntrySermon(entry)` → `resolveEntryPlaylist` → `playNewSermon`, всё в try/catch → `reportError(error, errorMessage)`.
 
 ### @x cross-import (entities/player)
 
@@ -87,6 +113,8 @@ export { type ListeningHistory } from '../model/types'
 ```
 
 **Почему @x, а не основной barrel:** Паттерн `@x` (см. [`architecture.md`](../architecture.md)) — FSD-практикa для кросс-слойных импортов: @x-сегменты предоставляют узкий, целевой API для конкретного потребителя, предотвращая случайную связанность с полным публичным API слайса. Это особенно важно, когда `entities/player` и `entities/listening-history` — оба слоя `entities/`, а FSD не разрешает импорты между слоями `entities` напрямую через основной barrel.
+
+**Импорт из `entities/section` (тоже через @x):** `resolveEntryPlaylist` читает live-секции через `dynamicSectionsAtom`, импортируя его из @x-точки `entities/section/@x/listening-history` (а не из основного barrel `entities/section`) — по тому же правилу @x для кросс-слойных импортов между сущностями одного уровня.
 
 > Обратной зависимости у listening-history на player больше нет: контракт `AudioPlayerData` (`audioPlayerDataSchema`, тип, `toAudioPlayerData`) живёт в `shared/model/domain/audioPlayerData.ts` и импортируется из `shared/model`. Это устранило require-цикл `entities/player` ↔ `entities/listening-history` (бывшая запись в debt.md). Направление player → history через `@x/player` сохранено.
 
@@ -169,6 +197,7 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
 | --------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Старт воспроизведения | `usePlayNewSermon` → `recordPlaybackStartAction`                                                         | новая запись (позиция 0) / перемещение существующей в начало / сброс завершённой                                                                 |
 | Пауза                 | `PlaybackController.pause`, `WebPlayerService.pause` → `flushHistoryProgressAction`                      | read-modify-write позиции (no-op при `positionMs ≤ 0` или не-прогрессе)                                                                          |
+| Seek                  | `PlaybackController.seekTo` → `flushHistoryProgressAction`                                               | trailing-дебаунс 400мс: позиция истории обновляется после seek (в т.ч. на паузе); серия seek (long-press, тик 200мс) коалесится в один финальный write |
 | Переключение трека    | `recordSermonSwitchAction` — из `usePlayNewSermon` (ручной тап), `usePlayerToggleTrack` (кнопки Next/Prev) и `playTrackWithMetadata` (авто-переход) | за один проход: flush позиции старого трека + запись/обновление нового; `markOldCompleted: true` на авто-переходе (позиция старого = durationMs), `false` на тапе и кнопках |
 | Окончание трека       | `handleTrackEnd` → `markHistoryCompletedAction`                                                          | `positionMs = durationMs` (ветка pause-on-last-track)                                                                                            |
 | Удаление / очистка    | `removeHistoryEntryAction`, `clearHistoryAction`                                                         | per-item / полная очистка                                                                                                                        |

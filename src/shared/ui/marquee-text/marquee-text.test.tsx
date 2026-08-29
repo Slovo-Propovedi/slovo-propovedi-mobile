@@ -1,5 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
+import { StyleSheet } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { MarqueeText } from './marquee-text'
 
@@ -64,6 +65,52 @@ describe('<MarqueeText />', () => {
     await fireTextLayout(propsStub.text, 100)
 
     expect(screen.getAllByText(propsStub.text)).toHaveLength(2)
+  })
+
+  test('centers the static text when centerWhenStatic is set', async () => {
+    await renderWithProviders(
+      <MarqueeText centerWhenStatic testID={TEST_ID} text={propsStub.text} />,
+    )
+
+    await fireContainerLayout(300)
+    await fireTextLayout(propsStub.text, 100)
+
+    const animatedView = screen.getAllByText(propsStub.text)[0].parent
+    const style = StyleSheet.flatten(animatedView?.props.style)
+    expect(style.alignSelf).toBe('center')
+  })
+
+  test('switches from centered static to scrolling when the text overflows', async () => {
+    const shortText = 'Короткий'
+    const longText = 'Очень длинный текст, который не помещается в контейнер'
+
+    const { rerender } = await renderWithProviders(
+      <MarqueeText centerWhenStatic testID={TEST_ID} text={shortText} />,
+    )
+
+    await fireContainerLayout(300)
+    await fireTextLayout(shortText, 100)
+    expect(
+      StyleSheet.flatten(screen.getAllByText(shortText)[0].parent?.props.style).alignSelf,
+    ).toBe('center')
+
+    await rerender(<MarqueeText text={longText} centerWhenStatic testID={TEST_ID} />)
+    await fireContainerLayout(100)
+    await fireTextLayout(longText, 300)
+    expect(StyleSheet.flatten(screen.getAllByText(longText)[0].parent?.props.style).alignSelf).toBe(
+      'flex-start',
+    )
+  })
+
+  test('keeps the static text left-aligned by default', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(300)
+    await fireTextLayout(propsStub.text, 100)
+
+    const animatedView = screen.getAllByText(propsStub.text)[0].parent
+    const style = StyleSheet.flatten(animatedView?.props.style)
+    expect(style.alignSelf).toBe('flex-start')
   })
 
   test('renders a duplicate copy when the text overflows the container', async () => {

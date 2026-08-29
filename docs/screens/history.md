@@ -16,7 +16,7 @@
   - обложка — через `CoverImage` с фолбэком `IMAGE_PLACEHOLDER`;
   - тонкая полоса прогресса прослушивания (сохранённая позиция, stored);
   - полоса обновляется **только по событиям** (старт, пауза/flush, переключение, завершение, удаление) — без live-тикания в реальном времени (live-чтение убрано).
-- Тап по строке — воспроизведение проповеди в исходном плейлисте (полная очередь + авто-переход) с места остановки. Если проповедь помечена как `completed` — воспроизведение начинается заново.
+- Тап по строке — воспроизведение проповеди в исходном плейлисте (полная очередь + авто-переход) с места остановки. Если проповедь помечена как `completed` — воспроизведение начинается заново. Флоу идёт через общий хук `useEntryPlayback` (`src/features/entry-playback/`): оборачивает воспроизведение в try/catch и показывает ошибку через `reportError` («Не удалось воспроизвести проповедь из истории»).
 - Контекстное меню (три точки / long-press) → пункт «Удалить из истории».
 - Шапка (header): иконка меню (три точки) → `HistoryHeaderMenu` (`src/pages/history/ui/HistoryHeaderMenu.tsx`) → пункт «Очистить историю» → `ConfirmDialog`:
   - заголовок: «Очистить историю?»;
@@ -30,7 +30,7 @@
 
 ## Куда можно перейти
 
-- Тап на запись → воспроизведение проповеди в **исходном плейлисте** (полная очередь + авто-переход). Тап резолвит полный `PlaylistData` через `resolveEntryPlaylist` (`src/pages/history/lib/resolveEntryPlaylist.ts`): ищет в `dynamicSectionsAtom` (live), затем в `sections-cache`, фолбэк — снапшот `entry.playlist`.
+- Тап на запись → воспроизведение проповеди в **исходном плейлисте** (полная очередь + авто-переход). Флоу идёт через общий хук `useEntryPlayback` (`src/features/entry-playback/`): guard `getEntrySermon(entry)` → `resolveEntryPlaylist(entry)` → `playNewSermon({ playlist, sermon })`, всё в try/catch → `reportError(error, errorMessage)` («Не удалось воспроизвести проповедь из истории»). Внутри хука `resolveEntryPlaylist` (`src/entities/listening-history/lib/resolveEntryPlaylist.ts`) по-прежнему резолвит полный `PlaylistData`: ищет в `dynamicSectionsAtom` (live), затем в `sections-cache`, фолбэк — снапшот `entry.playlist`.
 
 ## Состояния
 

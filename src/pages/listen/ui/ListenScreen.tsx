@@ -11,6 +11,7 @@ import {
 } from 'features/sermon-search'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { ContinueListeningButton } from './ContinueListeningButton'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 
 export const ListenScreen = () => {
@@ -36,7 +37,9 @@ export const ListenScreen = () => {
           contentContainerStyle={[{ paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight }]}
         >
           {!isSearchOpen && <SearchToggleButton />}
-          <DynamicSectionsSlider />
+          <DynamicSectionsSlider
+            leadingElement={!isSearchActive ? <ContinueListeningButton /> : undefined}
+          />
         </ScrollView>
       )}
     </SafeAreaView>

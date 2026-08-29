@@ -14,6 +14,45 @@
 - Параметры отображения секции (размер слайдов, трансформация, строки, скругление) приходят с сервера и мапятся в `src/pages/listen/lib/` (`mapItemsSize.ts`, `mapTransform.ts`, `mapWhereIsTitleLocated.ts`).
 - Тап на заголовок секции («показать все») открывает список плейлистов секции.
 
+## Кнопка «Продолжить» (ContinueListeningButton)
+
+Акцентная кнопка вверху главного экрана (`ContinueListeningButton`, `src/pages/listen/ui/ContinueListeningButton.tsx`). Передаётся в `DynamicSectionsSlider` как проп `leadingElement` и рендерится в **фиксированной левой колонке** рядом с первым разделом (см. «Размещение»). Кнопка скрывается **только когда активны результаты поиска** (`leadingElement={!isSearchActive ? <ContinueListeningButton /> : undefined}`): при открытом, но неактивном поиске (запрос короче порога `MIN_QUERY_LENGTH`) кнопка остаётся видимой. Когда скрыта — первый раздел занимает всю ширину.
+
+### Размещение
+
+Кнопка стоит **под** кнопкой-лупой поиска и **слева от первого раздела**, в две колонки:
+
+- **Левая колонка** — блок кнопки: `width: '50%'`, `alignSelf: 'stretch'`, `marginHorizontal: INDENTS.middle`, `justifyContent: 'flex-start'`. Фиксированная колонка, **не скроллится** вместе с карточками первого раздела.
+- **Правая колонка** — первый раздел целиком (заголовок + карточки, `flex: 1`, ~55% ширины).
+- Разделы со 2-го — на всю ширину, как раньше.
+
+Строка двух колонок рендерится в `FirstSectionRow` (`src/pages/listen/ui/FirstSectionRow.tsx`): `View` с `flexDirection: 'row'` + `alignItems: 'stretch'` → `leadingElement` + `View flex: 1` с первым разделом. Блок кнопки растянут по высоте первого раздела; внутри — центральная зона `mainArea` с треугольником/волной (см. «UI»), контент выровнен по верху (`justifyContent: 'flex-start'`).
+
+### Состояния
+
+- **История ещё не загружена** (`isHistoryLoadedAtom === false`) → кнопка **не рендерится** (`if (!isLoaded) return null`), чтобы не мигать disabled «Начать слушать» на холодном старте, пока `loadHistoryAction` читает AsyncStorage.
+- **История пуста** (нет записей с проповедью) → на треугольнике надпись «Начать слушать», под ней — «выберите проповедь»; блок **disabled**: треугольник сохраняет акцентный цвет, но `opacity: 0.5`, `accessibilityState={{ disabled: true }}`, `onPress` не срабатывает.
+- **История не пуста** → на треугольнике надпись «Продолжить» + под ней название последней проповеди (первая запись из `historyAtom`, у которой `getEntrySermon(entry)` определён; записи отсортированы по `lastPlayedAt` DESC, записи без проповеди пропускаются). Выбор записи — через хук `useLastListeningEntry` (`entities/listening-history`).
+- **Что-то играет** (`isPlayingAtom === true`) → вместо треугольника по центру слово **«Воспроизводится»**, под ним — название текущего трека (`currentAudioAtom.title`), а за ними фоном — анимированная **волна** (`PlayingWave`, `src/pages/listen/ui/PlayingWave.tsx`) в Material-стиле: гладкая непрерывная синусоида (не столбики-эквалайзер), цвет `currentTheme.primary`, бесконечно течёт вбок (reanimated `withRepeat(withTiming(-WAVE_LENGTH, { easing: linear }), -1)` без reverse, контейнер `overflow: 'hidden'`). Волна **приглушена** (`opacity: 0.45`), чтобы не спорить с текстом. Волна имеет **приоритет над disabled**: даже если история пуста, но что-то играет — кнопка активна (клик = пауза), `accessibilityState.disabled === false`.
+
+### Тап
+
+- **Когда ничего не играет** — возобновляет воспроизведение последней проповеди с сохранённой позиции: `resolveEntryPlaylist(entry)` (из `entities/listening-history`) резолвит полный `PlaylistData` (live `dynamicSectionsAtom` → `sections-cache` → снапшот `entry.playlist`), затем `usePlayNewSermon({ playlist, sermon })` — позиция восстанавливается автоматически через `getResumePosition` (см. [features/listening-history.md](../features/listening-history.md) → «Resume-логика»). Ошибки оборачиваются в try/catch → `reportError` (никаких тихих unhandled rejection).
+- **Когда что-то играет** — клик = **пауза** (`pause()` из `usePlayer`), фуллскрин-плеер **не открывается**, `playNewSermon` не вызывается. Ошибки паузы — по паттерну `PlayerControls`: AppState-ошибка `'activity is no longer available'` → `console.warn` и гасится, остальное → `reportError`.
+
+### UI
+
+Весь блок (треугольник/волна) — один `Pressable` (`accessible` — склеивает детей в один фокус TalkBack, `accessibilityRole='button'`). `accessibilityLabel`: когда играет — **«Воспроизводится: <название текущей проповеди>»** (или просто **«Воспроизводится»**, если `currentAudio` недоступен) + `accessibilityHint` **«Приостановить воспроизведение»**; иначе — «Продолжить: <название>» / «Начать слушать» (без hint). Имя в playing-состоянии согласовано с видимым текстом по **WCAG 2.5.3 Label-in-Name**: раньше TalkBack озвучивал «Пауза», хотя на экране было «Воспроизводится»; теперь имя содержит видимые слова (константа `NOW_PLAYING_LABEL` экспортируется из `NowPlayingLayer` — единый источник). **Центральная зона** `mainArea` (`flex: 1`, `justifyContent: 'center'`, `alignItems: 'center'`, `width: '100%'`) занимает всё пространство блока, поэтому контент оказывается **вертикально по центру** доступной высоты.
+
+**Когда не играет** — в `mainArea` рендерится **залитый play-треугольник** (`View` `triangleWrap`: `height: '100%'` + `aspectRatio: 39.7/54.16 ≈ 0.733` — пропорция пути, поэтому треугольник максимально большой в зоне и сохраняет форму; при узком блоке ширину клампит контейнер). Внутри — `Svg` + `Path` (`react-native-svg`, viewBox `35 22.92 39.7 54.16` — кропнут ТОЧНО по фактическому bbox пути, без оптических полей; `preserveAspectRatio='xMidYMid meet'`), залитый цветом `currentTheme.primary` (path с квадратичными кривыми для скругления углов). **Поверх треугольника** — колонка из двух строк (`labelColumn`, `alignItems: 'center'`, `justifyContent: 'center'`, `width: '100%'`), центрированная в треугольнике:
+
+- **Основная строка** — «Продолжить» / «Начать слушать» (`COLORS.onPrimary`, `FONT_SIZES.lg`, жирный, по центру, `numberOfLines={1}`). Размер шрифта `lg` (18) — акцентная строка кнопки; как страховка на коротких секциях текст лейбла сжимается через `adjustsFontSizeToFit` + `minimumFontScale={0.8}` (`numberOfLines={1}`).
+- **Вторичная строка** — под лейблом, мельче (`FONT_SIZES.xs`, без жирного, `COLORS.onPrimary`): если есть выбранная проповедь — название через `MarqueeText` (`shared/ui/marquee-text`, `centerWhenStatic`, `textStyle` onPrimary), обёрнутое в `View` `marqueeZone` с явной шириной `width: '78%'` (ограниченная ширина нужна для измерения марка); если проповеди нет — статичный `Text` «выберите проповедь» (`numberOfLines={1}`). Обе строки центрируются вместе как одна колонка, поэтому вторичная строка не ломает вертикальное центрирование.
+
+**Когда играет** — в `mainArea` рендерится слой `waveLayer` (`width: '100%'`, `aspectRatio: 2.3` — полоса высотой ~74px при блоке ~171px, а не на всю высоту): фоном — `View` `waveBackground` (`...StyleSheet.absoluteFill`, `opacity: 0.45`) с `PlayingWave` (волна как приглушённое «подчёркивание» за текстом), поверх — колонка из двух строк (`labelColumn`): **«Воспроизводится»** (`currentTheme.text`, `FONT_SIZES.lg`, жирный, по центру) и под ним название текущего трека из `currentAudioAtom` (`entities/player`) через `MarqueeText` (`shared/ui/marquee-text`, `centerWhenStatic`, `FONT_SIZES.sm`, без жирного, `currentTheme.text`), обёрнутое в `View` `marqueeZone` с шириной `width: '78%'`; если `currentAudio === null` — вторая строка не рендерится. Волна **адаптивна по высоте**: мерит через `onLayout` и ширину, и высоту контейнера; viewBox `0 0 waveWidth containerHeight`, `midY = containerHeight / 2`, амплитуда выведена из высоты (`amplitude = Math.max(0, (containerHeight − STROKE_WIDTH) / 2 − 1)`), поэтому пики (с учётом полштриха из-за `strokeLinecap='round'`) никогда не обрезаются; `STROKE_WIDTH = 15`; `Animated.View` — `height: '100%'`. Волна заякорена **слева** внутри слота (`alignSelf: 'flex-start'`): ширина волны = ширина слота + один период (`waveWidth = containerWidth + WAVE_LENGTH`), поэтому на всём цикле анимации (translateX от 0 до −90) слот покрыт полностью, а рестарт бесшовный благодаря периодичности пути (период 90).
+
+**Нижней подписи больше нет** — название проповеди перенесено внутрь треугольника (вторичная строка, см. «UI»). Pressed-состояние — `opacity: 0.8` при нажатии.
+
 ## Поиск
 
 Фича `src/features/sermon-search/` (баррель `index.ts`, атомы и действия в `model.ts`).
@@ -74,7 +113,7 @@
 
 ## Состояния
 
-- Загрузка: `SectionsSkeleton` (`src/pages/listen/ui/skeleton.tsx`) — пока идёт загрузка и секций ещё нет.
+- Загрузка: `SectionsSkeleton` (`src/pages/listen/ui/skeleton.tsx`) — пока идёт загрузка и секций ещё нет. При наличии `leadingElement` (кнопка «Продолжить») скелетон **сплитится**: первая строка = первая (самая узкая, Small) секция скелетона справа (`count={1}`) + кнопка слева, а остальные секции скелетона (`from={1}`) рендерятся ниже на всю ширину. Так кнопка растягивается только на высоту первой строки (~239px), а не на весь скелетон (~1255px). `SectionsSkeleton` принимает пропсы `from` (индекс, по умолчанию 0) и `count` (сколько секций, по умолчанию все) → `SKELETON_SECTIONS.slice(from, count ? from + count : undefined)`.
 - Пусто: `EmptyState` (`shared/ui`), когда загрузка завершена, а секций нет.
 - Офлайн: показывается кэш (`sectionDataSourceAtom === 'cache'`), фоновые повторы через `useOfflineRetry`; при отсутствии кэша — `EmptyState`.
 - Ошибка: сетевые ошибки логируются (`console.error`), при наличии кэша он показывается.

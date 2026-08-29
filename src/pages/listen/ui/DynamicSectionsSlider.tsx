@@ -1,20 +1,25 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { useEffect } from 'react'
+import { type ReactElement, useEffect } from 'react'
 import { usePlayNewSermon } from 'entities/player'
 import { useOfflineRetry } from 'shared/lib/network'
 import { useListenNavigation } from 'shared/routing'
 import { EmptyState } from 'shared/ui'
-import type { PlaylistData } from 'shared/model'
+import type { PlaylistData, SectionData } from 'shared/model'
 import {
   dynamicSectionsAtom,
   fetchAllSections,
   isLoadingSectionsAtom,
   sectionDataSourceAtom,
 } from '../model'
+import { FirstSectionRow } from './FirstSectionRow'
 import { renderSection } from './renderSection'
 import { SectionsSkeleton } from './skeleton'
 
-export const DynamicSectionsSlider = () => {
+interface DynamicSectionsSliderProps {
+  leadingElement?: ReactElement
+}
+
+export const DynamicSectionsSlider = ({ leadingElement }: DynamicSectionsSliderProps) => {
   const playNewSermon = usePlayNewSermon()
   const { navigateToPlaylist, navigateToPlaylistList } = useListenNavigation()
   const [sections] = useAtom(dynamicSectionsAtom)
@@ -40,14 +45,37 @@ export const DynamicSectionsSlider = () => {
     navigateToPlaylist(playlist)
   }
 
-  if (isLoading && sections.length === 0) return <SectionsSkeleton />
-  if (!isLoading && sections.length === 0) return <EmptyState />
+  const renderSectionAt = (section: SectionData, index: number) =>
+    renderSection({ index, navigateToPlaylistList, onItemPress, section })
 
-  return (
-    <>
-      {sections.map((section, index) =>
-        renderSection({ index, navigateToPlaylistList, onItemPress, section }),
-      )}
-    </>
-  )
+  const renderSectionsFrom = (fromIndex: number) =>
+    sections.slice(fromIndex).map((section, offset) => renderSectionAt(section, fromIndex + offset))
+
+  if (leadingElement) {
+    if (sections.length === 0) {
+      if (isLoading)
+        return (
+          <>
+            <FirstSectionRow
+              leadingElement={leadingElement}
+              right={<SectionsSkeleton count={1} />}
+            />
+            <SectionsSkeleton from={1} />
+          </>
+        )
+
+      return <FirstSectionRow right={<EmptyState />} leadingElement={leadingElement} />
+    }
+
+    return (
+      <>
+        <FirstSectionRow leadingElement={leadingElement} right={renderSectionAt(sections[0], 0)} />
+        {renderSectionsFrom(1)}
+      </>
+    )
+  }
+
+  if (sections.length === 0) return isLoading ? <SectionsSkeleton /> : <EmptyState />
+
+  return <>{renderSectionsFrom(0)}</>
 }

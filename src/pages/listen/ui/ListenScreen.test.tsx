@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { type ReactElement } from 'react'
 import { StyleSheet, TextInput } from 'react-native'
 import { SEARCH_HEADER_HEIGHT } from 'features/sermon-search'
 import {
@@ -43,11 +44,29 @@ jest.mock('features/sermon-search/lib/useDebouncedSearch', () => ({
   useDebouncedSearch: () => undefined,
 }))
 
+const mockDynamicSectionsSliderProps = jest.fn()
+
 jest.mock('./DynamicSectionsSlider', () => {
   const { Text } = jest.requireActual('react-native')
 
   return {
-    DynamicSectionsSlider: () => <Text>SECTIONS_MOCK</Text>,
+    DynamicSectionsSlider: (props: { leadingElement?: ReactElement }) => {
+      mockDynamicSectionsSliderProps(props)
+      return (
+        <>
+          {props.leadingElement}
+          <Text>SECTIONS_MOCK</Text>
+        </>
+      )
+    },
+  }
+})
+
+jest.mock('./ContinueListeningButton', () => {
+  const { Text } = jest.requireActual('react-native')
+
+  return {
+    ContinueListeningButton: () => <Text>CONTINUE_BUTTON_MOCK</Text>,
   }
 })
 
@@ -115,6 +134,36 @@ describe('<ListenScreen>', () => {
     expect(getByText('SECTIONS_MOCK')).toBeTruthy()
     expect(hasScrollAncestor(getByLabelText(SEARCH_TOGGLE_LABEL))).toBe(true)
     expect(queryByPlaceholderText(SEARCH_PLACEHOLDER)).toBeNull()
+  })
+
+  test('passes the continue button as leadingElement inside the scroll content when the search is closed', async () => {
+    const { getByText } = await renderWithProviders(<ListenScreen />, {})
+
+    expect(hasScrollAncestor(getByText('CONTINUE_BUTTON_MOCK'))).toBe(true)
+    expect(mockDynamicSectionsSliderProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ leadingElement: expect.anything() }),
+    )
+  })
+
+  test('keeps the continue button visible when the search is open but not active', async () => {
+    const { getByText } = await renderWithOpenSearch()
+
+    expect(getByText('CONTINUE_BUTTON_MOCK')).toBeTruthy()
+    expect(mockDynamicSectionsSliderProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ leadingElement: expect.anything() }),
+    )
+  })
+
+  test('hides the continue button while search results are active', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    searchResultsAtom(ctx, sermons)
+    isSearchingAtom(ctx, false)
+
+    const { queryByText } = await renderWithProviders(<ListenScreen />, { ctx })
+
+    expect(queryByText('CONTINUE_BUTTON_MOCK')).toBeNull()
   })
 
   test('opens search via the magnifier, pinning the bar above the scroll content', async () => {
