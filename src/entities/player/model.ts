@@ -19,6 +19,7 @@ export const durationAtom = atom(0, 'durationAtom')
 export const volumeAtom = atom(1, 'volumeAtom')
 export const isBufferingAtom = atom(false, 'isBufferingAtom')
 export const isSeekingAtom = atom(false, 'isSeekingAtom')
+export const seekTargetPositionAtom = atom<null | number>(null, 'seekTargetPositionAtom')
 
 // Pause type: 'auto' = interrupted by system (phone call), 'manual' = user paused
 export const PauseType = {
@@ -77,6 +78,13 @@ export const setIsSeekingAction = action(async (ctx, value: boolean) => {
   })
   return value
 }, 'setIsSeeking')
+
+export const setSeekTargetAction = action(async (ctx, target: null | number) => {
+  await ctx.schedule(() => {
+    seekTargetPositionAtom(ctx, target)
+  })
+  return target
+}, 'setSeekTarget')
 
 export const setDurationAction = action(async (ctx, duration: number) => {
   if (ctx.get(durationAtom) === duration) return duration

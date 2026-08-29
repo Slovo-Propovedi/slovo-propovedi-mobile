@@ -4,15 +4,20 @@ import {
   isPlayingAtom,
   isSeekingAtom,
   pauseTypeAtom,
+  seekTargetPositionAtom,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
   setIsSeekingAction,
   setPauseTypeAction,
   setPositionAction,
+  setSeekTargetAction,
 } from '../../model'
 import { playerStatusListener } from './PlayerStatusListener'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdvanceService'
+
+/** Native position must land this close to the seek target before the guard lifts. */
+const SEEK_TARGET_CONFIRM_TOLERANCE_MS = 500
 
 export const setupPlayerListeners = (
   player: AudioPlayer,
@@ -24,7 +29,14 @@ export const setupPlayerListeners = (
     onDurationChange: durationMs => void setDurationAction(ctx, durationMs),
     onPlayingChange: isPlaying => void setIsPlayingAction(ctx, isPlaying),
     onPositionChange: positionMs => {
-      if (ctx.get(isSeekingAtom)) void setIsSeekingAction(ctx, false)
+      if (ctx.get(isSeekingAtom)) {
+        const target = ctx.get(seekTargetPositionAtom)
+        if (target !== null && Math.abs(positionMs - target) < SEEK_TARGET_CONFIRM_TOLERANCE_MS) {
+          void setIsSeekingAction(ctx, false)
+          void setSeekTargetAction(ctx, null)
+        }
+        return
+      }
       void setPositionAction(ctx, positionMs)
     },
     onTrackEnd: () => void trackAutoAdvanceService.handleTrackEnd(),

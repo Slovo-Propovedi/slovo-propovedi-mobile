@@ -55,6 +55,9 @@ export const useSeekControls = ({
         // Calculate new position with proper clamping
         const maxPos = duration - 100 // 100ms buffer before end
         const newPos = Math.max(0, Math.min(maxPos, currentPos + delta))
+        // Sync the base synchronously so the next 200ms tick computes from the
+        // fresh position instead of the pre-render prop value (bounce fix).
+        positionRef.current = newPos
 
         // Stop seeking if we've reached the boundary
         if (

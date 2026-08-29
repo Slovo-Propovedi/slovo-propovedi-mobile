@@ -57,6 +57,7 @@ export class PlayerService {
   ): Promise<AudioPlayer | null> => {
     if (!audioUrl) return null
     void setDurationAction(ctx, 0)
+    playbackController.resetSeekGuard()
     playerStatusListener.cleanup()
 
     // Replace-in-place strategy: the same AudioPlayer (and thus the same MediaSession,

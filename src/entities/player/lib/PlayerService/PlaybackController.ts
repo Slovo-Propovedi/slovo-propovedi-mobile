@@ -1,19 +1,17 @@
 import { type AudioPlayer } from 'expo-audio'
-import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import {
-  currentAudioAtom,
-  durationAtom,
   isSeekingAtom,
   setIsPlayingAction,
   setIsSeekingAction,
   setPositionAction,
+  setSeekTargetAction,
   setVolumeAction,
 } from '../../model'
 import { type PlaybackRate } from '../../playback-rate'
 import { setPlaybackRateAction } from '../../playback-rate'
-import { savePlaybackProgress } from '../playbackProgress'
+import { flushProgress, scheduleHistoryFlush } from './progressFlusher'
 import { type PlaybackStatus } from './types'
 
 /** If no fresh position event arrives within this window, unblock the guard. */
@@ -42,16 +40,7 @@ class PlaybackController {
     const positionMs = Math.floor(player.currentTime * 1000)
     player.pause()
     void setIsPlayingAction(ctx, false)
-
-    const sermonId = ctx.get(currentAudioAtom)?.id
-    if (sermonId) {
-      void savePlaybackProgress(ctx, { durationMs: ctx.get(durationAtom), positionMs, sermonId })
-      void flushHistoryProgressAction(ctx, {
-        durationMs: ctx.get(durationAtom),
-        positionMs,
-        sermonId,
-      })
-    }
+    flushProgress(positionMs)
   }
 
   public stop = async (player: AudioPlayer | null): Promise<void> => {
@@ -68,7 +57,9 @@ class PlaybackController {
 
     const clampedPosition = Math.max(0, positionMs)
     void setIsSeekingAction(ctx, true)
+    void setSeekTargetAction(ctx, clampedPosition)
     void setPositionAction(ctx, clampedPosition)
+    scheduleHistoryFlush(clampedPosition)
     this.seekTimeoutId = setTimeout(() => {
       this.seekTimeoutId = null
       if (ctx.get(isSeekingAtom)) void setIsSeekingAction(ctx, false)
@@ -84,6 +75,15 @@ class PlaybackController {
       }
       void setIsSeekingAction(ctx, false)
     }
+  }
+
+  public resetSeekGuard = (): void => {
+    if (this.seekTimeoutId) {
+      clearTimeout(this.seekTimeoutId)
+      this.seekTimeoutId = null
+    }
+    void setIsSeekingAction(ctx, false)
+    void setSeekTargetAction(ctx, null)
   }
 
   public setPlaybackRate = async (

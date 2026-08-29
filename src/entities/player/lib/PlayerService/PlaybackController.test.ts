@@ -1,7 +1,7 @@
 import { type AudioPlayer } from 'expo-audio'
 import { playbackController } from './PlaybackController'
 
-jest.mock('shared/lib/reatom-ctx', () => ({ ctx: {} }))
+jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
@@ -12,6 +12,7 @@ jest.mock('../../model', () => ({
   setIsPlayingAction: jest.fn(),
   setIsSeekingAction: jest.fn(),
   setPositionAction: jest.fn(),
+  setSeekTargetAction: jest.fn(),
   setVolumeAction: jest.fn(),
 }))
 
