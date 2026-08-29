@@ -22,6 +22,10 @@ export const expandedControlsStyles = StyleSheet.create({
     fontSize: FONT_SIZES.xxl,
   },
 
+  controlsArea: {
+    position: 'relative',
+  },
+
   controlsRow: {
     alignItems: 'center',
     flexDirection: 'row',

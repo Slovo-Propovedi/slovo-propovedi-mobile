@@ -4,16 +4,23 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import type { ListeningHistory } from 'entities/listening-history/@x/player'
-import { currentAudioAtom, positionAtom } from '../../model'
+import { currentAudioAtom, positionAtom, RepeatMode, repeatModeAtom } from '../../model'
+import { trackBoundaryNoticeAtom } from '../../trackBoundaryNotice'
 import { usePlayerToggleTrack } from './usePlayerToggleTrack'
 
 const mockPlay = jest.fn().mockResolvedValue(undefined)
 const mockReplaceAudio = jest.fn().mockResolvedValue(null)
+const mockSeekTo = jest.fn().mockResolvedValue(undefined)
 const mockSetCurrentAudio = jest.fn().mockResolvedValue(undefined)
 const mockSetLockScreenMetadata = jest.fn()
 const mockGetResumePosition = jest.fn().mockReturnValue(0)
 const mockRecordSermonSwitch = jest.fn().mockResolvedValue(undefined)
 const mockSavePlaybackProgress = jest.fn().mockResolvedValue(undefined)
+const mockReportError = jest.fn()
+
+jest.mock('shared/model/error-dialog', () => ({
+  reportError: (...args: unknown[]) => mockReportError(...args),
+}))
 
 jest.mock('entities/listening-history/@x/player', () => {
   const { atom } = jest.requireActual('@reatom/framework')
@@ -72,11 +79,13 @@ const setAtomState = async (opts: {
   currentAudio?: { id: string }
   history?: ListeningHistory
   position?: number
+  repeatMode?: RepeatMode
 }) => {
   await act(async () => {
     if (opts.currentAudio) currentAudioAtom(ctx, opts.currentAudio as AudioPlayerData)
     if (opts.history) mockHistoryAtom(ctx, opts.history)
     if (opts.position !== undefined) positionAtom(ctx, opts.position)
+    if (opts.repeatMode !== undefined) repeatModeAtom(ctx, opts.repeatMode)
   })
 }
 
@@ -86,6 +95,7 @@ const defaultProps = {
   index: 1, // sermon-current is at index 1
   play: mockPlay,
   replaceAudio: mockReplaceAudio,
+  seekTo: mockSeekTo,
   setCurrentAudio: mockSetCurrentAudio,
   setLockScreenMetadata: mockSetLockScreenMetadata,
 }
@@ -95,13 +105,17 @@ describe('usePlayerToggleTrack', () => {
     jest.clearAllMocks()
     mockPlay.mockResolvedValue(undefined)
     mockReplaceAudio.mockResolvedValue(null)
+    mockSeekTo.mockResolvedValue(undefined)
     mockSetCurrentAudio.mockResolvedValue(undefined)
     mockGetResumePosition.mockReturnValue(0)
     mockRecordSermonSwitch.mockResolvedValue(undefined)
     mockSavePlaybackProgress.mockResolvedValue(undefined)
+    mockReportError.mockClear()
     currentAudioAtom(ctx, null)
     positionAtom(ctx, 0)
     mockHistoryAtom(ctx, [])
+    repeatModeAtom(ctx, RepeatMode.Off)
+    trackBoundaryNoticeAtom(ctx, null)
   })
 
   test('next → replaceAudio called with resume ms from history', async () => {
@@ -271,7 +285,7 @@ describe('usePlayerToggleTrack', () => {
     )
   })
 
-  test('next at boundary → no-op', async () => {
+  test('Off + next on last track → boundary notice, no switch', async () => {
     const { result } = await renderHookWithProviders(
       () => usePlayerToggleTrack({ ...defaultProps, index: 2 }), // last track
       { ctx },
@@ -281,11 +295,15 @@ describe('usePlayerToggleTrack', () => {
       await result.current('next')
     })
 
+    expect(ctx.get(trackBoundaryNoticeAtom)).toEqual({
+      at: expect.any(Number),
+      boundary: 'last',
+    })
     expect(mockReplaceAudio).not.toHaveBeenCalled()
     expect(mockSavePlaybackProgress).not.toHaveBeenCalled()
   })
 
-  test('prev at boundary → no-op', async () => {
+  test('Off + prev on first track → boundary notice, no switch', async () => {
     const { result } = await renderHookWithProviders(
       () => usePlayerToggleTrack({ ...defaultProps, index: 0 }), // first track
       { ctx },
@@ -295,8 +313,148 @@ describe('usePlayerToggleTrack', () => {
       await result.current('prev')
     })
 
+    expect(ctx.get(trackBoundaryNoticeAtom)).toEqual({
+      at: expect.any(Number),
+      boundary: 'first',
+    })
     expect(mockReplaceAudio).not.toHaveBeenCalled()
     expect(mockSavePlaybackProgress).not.toHaveBeenCalled()
+  })
+
+  test('Queue + next on last track → setCurrentAudio called with first sermon', async () => {
+    const { result } = await renderHookWithProviders(
+      () => usePlayerToggleTrack({ ...defaultProps, index: 2 }), // last track
+      { ctx },
+    )
+    await setAtomState({ repeatMode: RepeatMode.Queue })
+
+    await act(async () => {
+      await result.current('next')
+    })
+
+    expect(mockSetCurrentAudio).toHaveBeenCalledWith(
+      expect.objectContaining({
+        artwork: mockPlaylist.artwork,
+        audioUrl: PREV_AUDIO_URL,
+        id: 'sermon-prev',
+        title: 'Prev Sermon',
+      }),
+    )
+    expect(mockReplaceAudio).toHaveBeenCalledWith(PREV_AUDIO_URL, 0)
+  })
+
+  test('Queue + prev on first track → setCurrentAudio called with last sermon', async () => {
+    const { result } = await renderHookWithProviders(
+      () => usePlayerToggleTrack({ ...defaultProps, index: 0 }), // first track
+      { ctx },
+    )
+    await setAtomState({ repeatMode: RepeatMode.Queue })
+
+    await act(async () => {
+      await result.current('prev')
+    })
+
+    expect(mockSetCurrentAudio).toHaveBeenCalledWith(
+      expect.objectContaining({
+        artwork: mockPlaylist.artwork,
+        audioUrl: NEXT_AUDIO_URL,
+        id: 'sermon-next',
+        title: 'Next Sermon',
+      }),
+    )
+    expect(mockReplaceAudio).toHaveBeenCalledWith(NEXT_AUDIO_URL, 0)
+  })
+
+  test('Track + next on last track → restart current track', async () => {
+    const { result } = await renderHookWithProviders(
+      () => usePlayerToggleTrack({ ...defaultProps, index: 2 }), // last track
+      { ctx },
+    )
+    await setAtomState({ repeatMode: RepeatMode.Track })
+
+    await act(async () => {
+      await result.current('next')
+    })
+
+    expect(mockSeekTo).toHaveBeenCalledWith(0)
+    expect(mockPlay).toHaveBeenCalledTimes(1)
+    expect(mockSetCurrentAudio).not.toHaveBeenCalled()
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
+    expect(ctx.get(trackBoundaryNoticeAtom)).toBeNull()
+  })
+
+  test('Track + prev on first track → restart current track', async () => {
+    const { result } = await renderHookWithProviders(
+      () => usePlayerToggleTrack({ ...defaultProps, index: 0 }), // first track
+      { ctx },
+    )
+    await setAtomState({ repeatMode: RepeatMode.Track })
+
+    await act(async () => {
+      await result.current('prev')
+    })
+
+    expect(mockSeekTo).toHaveBeenCalledWith(0)
+    expect(mockPlay).toHaveBeenCalledTimes(1)
+    expect(mockSetCurrentAudio).not.toHaveBeenCalled()
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
+  })
+
+  test('Track + next in the middle → restart current track, no switch', async () => {
+    const { result } = await renderHookWithProviders(
+      () => usePlayerToggleTrack(defaultProps), // index 1
+      { ctx },
+    )
+    await setAtomState({ repeatMode: RepeatMode.Track })
+
+    await act(async () => {
+      await result.current('next')
+    })
+
+    expect(mockSeekTo).toHaveBeenCalledWith(0)
+    expect(mockPlay).toHaveBeenCalledTimes(1)
+    expect(mockSetCurrentAudio).not.toHaveBeenCalled()
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
+  })
+
+  test('Track restart → seekTo rejection is caught and reported, no unhandled rejection', async () => {
+    const seekError = new Error('seek failed')
+    mockSeekTo.mockRejectedValue(seekError)
+
+    const { result } = await renderHookWithProviders(
+      () => usePlayerToggleTrack({ ...defaultProps, index: 2 }), // last track
+      { ctx },
+    )
+    await setAtomState({ repeatMode: RepeatMode.Track })
+
+    await act(async () => {
+      await result.current('next')
+    })
+
+    expect(mockReportError).toHaveBeenCalledTimes(1)
+    expect(mockReportError).toHaveBeenCalledWith(seekError, 'Ошибка при переключении трека')
+  })
+
+  test('Off + prev on first track → boundary notice, setCurrentAudio NOT called', async () => {
+    const { result } = await renderHookWithProviders(
+      () => usePlayerToggleTrack({ ...defaultProps, index: 0 }), // first track
+      { ctx },
+    )
+    await setAtomState({ repeatMode: RepeatMode.Off })
+
+    await act(async () => {
+      await result.current('prev')
+    })
+
+    expect(ctx.get(trackBoundaryNoticeAtom)).toEqual({
+      at: expect.any(Number),
+      boundary: 'first',
+    })
+    expect(mockSetCurrentAudio).not.toHaveBeenCalled()
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
   })
 
   test('no playlist → no-op', async () => {

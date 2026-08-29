@@ -9,9 +9,8 @@ interface FullscreenControlsProps {
   buttonSize: number
   excludeButtons?: ControlsNames[]
   isBuffering: boolean
-  isNextDisabled: boolean
   isPlaying: boolean
-  isPrevDisabled: boolean
+  isTrackButtonDisabled: boolean
   onLongPressSeek?: (direction: 'backward' | 'forward') => void
   onPressOutSeek?: () => void
   playButtonSize: number
@@ -24,9 +23,8 @@ export const FullscreenControls = ({
   buttonSize,
   excludeButtons,
   isBuffering,
-  isNextDisabled,
   isPlaying,
-  isPrevDisabled,
+  isTrackButtonDisabled,
   onLongPressSeek,
   onPressOutSeek,
   playButtonSize,
@@ -41,17 +39,16 @@ export const FullscreenControls = ({
     <View style={[styles.container, style]}>
       {!excludedButtons[PlayerControlButtonType.Prev] && (
         <View style={[styles.buttonWrapper, { height: buttonSize, width: buttonSize }]}>
-          {!isPrevDisabled && (
-            <PlayerControlButton
-              size={buttonSize}
-              color={COLORS.white}
-              testID='prev-button'
-              onPressOut={onPressOutSeek}
-              type={PlayerControlButtonType.Prev}
-              onPress={() => void toggleTrack('prev')}
-              onLongPress={onLongPressSeek ? () => onLongPressSeek('backward') : undefined}
-            />
-          )}
+          <PlayerControlButton
+            size={buttonSize}
+            color={COLORS.white}
+            testID='prev-button'
+            onPressOut={onPressOutSeek}
+            isDisabled={isTrackButtonDisabled}
+            type={PlayerControlButtonType.Prev}
+            onPress={() => void toggleTrack('prev')}
+            onLongPress={onLongPressSeek ? () => onLongPressSeek('backward') : undefined}
+          />
         </View>
       )}
       {!excludedButtons[PlayerControlButtonType.Play] &&
@@ -77,16 +74,16 @@ export const FullscreenControls = ({
         ))}
       {!excludedButtons[PlayerControlButtonType.Next] && (
         <View style={[styles.buttonWrapper, { height: buttonSize, width: buttonSize }]}>
-          {!isNextDisabled && (
-            <PlayerControlButton
-              size={buttonSize}
-              color={COLORS.white}
-              onPressOut={onPressOutSeek}
-              type={PlayerControlButtonType.Next}
-              onPress={() => void toggleTrack('next')}
-              onLongPress={onLongPressSeek ? () => onLongPressSeek('forward') : undefined}
-            />
-          )}
+          <PlayerControlButton
+            size={buttonSize}
+            color={COLORS.white}
+            testID='next-button'
+            onPressOut={onPressOutSeek}
+            isDisabled={isTrackButtonDisabled}
+            type={PlayerControlButtonType.Next}
+            onPress={() => void toggleTrack('next')}
+            onLongPress={onLongPressSeek ? () => onLongPressSeek('forward') : undefined}
+          />
         </View>
       )}
     </View>

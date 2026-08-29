@@ -7,6 +7,7 @@ import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { MovingText } from 'shared/ui'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
+import { BoundaryHint } from './BoundaryHint'
 
 interface PlayerControlsSectionProps {
   audio: AudioPlayerData
@@ -82,16 +83,19 @@ export const PlayerControlsSection = ({
         </View>
         <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>
       </View>
-      <View style={styles.controlsRow}>
-        <PlayerRepeatToggle style={styles.sideControl} />
-        <SermonPlayerControls
-          variant='fullscreen'
-          onPressOutSeek={stopSeek}
-          onLongPressSeek={startSeek}
-        />
-        <Pressable onPress={onOpenPlaylist} style={styles.sideControl}>
-          <Entypo name='list' style={styles.controlIcon} />
-        </Pressable>
+      <View style={styles.controlsArea}>
+        <BoundaryHint styles={styles} />
+        <View style={styles.controlsRow}>
+          <PlayerRepeatToggle style={styles.sideControl} />
+          <SermonPlayerControls
+            variant='fullscreen'
+            onPressOutSeek={stopSeek}
+            onLongPressSeek={startSeek}
+          />
+          <Pressable onPress={onOpenPlaylist} style={styles.sideControl}>
+            <Entypo name='list' style={styles.controlIcon} />
+          </Pressable>
+        </View>
       </View>
     </View>
   )

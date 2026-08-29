@@ -1,3 +1,4 @@
+import { fireEvent } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { PlayerControls } from './PlayerControls'
 import '@testing-library/jest-native/extend-expect'
@@ -157,5 +158,38 @@ describe('<PlayerControls>', () => {
     )
     expect(queryByTestId('play-button')).toBeNull()
     expect(queryByTestId('buffering-indicator')).toBeTruthy()
+  })
+
+  test('fullscreen renders next button on last track (Issue #67)', async () => {
+    mockPlayerControlsProps.currentAudio = currentPlaylist.sermons[2]
+    const { getByTestId } = await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} variant='fullscreen' />,
+    )
+    expect(getByTestId('next-button')).toBeTruthy()
+  })
+
+  test('fullscreen renders prev button on first track (Issue #67)', async () => {
+    mockPlayerControlsProps.currentAudio = currentPlaylist.sermons[0]
+    const { getByTestId } = await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} variant='fullscreen' />,
+    )
+    expect(getByTestId('prev-button')).toBeTruthy()
+  })
+
+  test('default variant keeps next button enabled on last track (Issue #67)', async () => {
+    mockPlayerControlsProps.currentAudio = currentPlaylist.sermons[2]
+    const { getByTestId } = await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} />,
+    )
+    expect(getByTestId('next-button').props.disabled).toBeFalsy()
+  })
+
+  test('tap at playlist boundary is a no-op (Issue #67)', async () => {
+    mockPlayerControlsProps.currentAudio = currentPlaylist.sermons[2]
+    const { getByTestId } = await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} />,
+    )
+    fireEvent.press(getByTestId('next-button'))
+    expect(mockPlayerControlsProps.setCurrentAudio).not.toHaveBeenCalled()
   })
 })

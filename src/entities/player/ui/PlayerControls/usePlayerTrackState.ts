@@ -9,14 +9,12 @@ interface UsePlayerTrackStateParams {
 interface UsePlayerTrackStateResult {
   hasValidPlaylist: boolean
   index: number | undefined
-  isFirstTrack: boolean
-  isLastTrack: boolean
   playlistList: PlaylistData['sermons']
 }
 
 /**
  * Определяет состояние текущего трека в плейлисте.
- * Возвращает индекс, список, валидность и границы плейлиста.
+ * Возвращает индекс, список и валидность плейлиста.
  * @param root0 - Параметры состояния трека.
  * @param root0.currentAudio - Текущее воспроизводимое аудио.
  * @param root0.currentPlaylist - Текущий плейлист.
@@ -31,15 +29,9 @@ export const usePlayerTrackState = ({
 
   const hasValidPlaylist = currentPlaylist != null && index != null
 
-  const isLastTrack = hasValidPlaylist && index === playlistList.length - 1
-
-  const isFirstTrack = hasValidPlaylist && index === 0
-
   return {
     hasValidPlaylist,
     index,
-    isFirstTrack,
-    isLastTrack,
     playlistList,
   }
 }

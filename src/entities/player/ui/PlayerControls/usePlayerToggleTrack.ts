@@ -5,12 +5,13 @@ import {
   recordSermonSwitchAction,
 } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type AudioPlayerData, type PlaylistData, toAudioPlayerData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { savePlaybackProgress } from '../../lib/playbackProgress'
-import { currentAudioAtom, durationAtom, positionAtom } from '../../model'
-
-type TrackDirection = 'next' | 'prev'
+import { currentAudioAtom, durationAtom, positionAtom, repeatModeAtom } from '../../model'
+import { setTrackBoundaryNoticeAction } from '../../trackBoundaryNotice'
+import { playSafely } from './playSafely'
+import { resolveTrackToggle, type TrackDirection } from './resolveTrackToggle'
 
 interface UsePlayerToggleTrackParams {
   currentPlaylist: null | PlaylistData
@@ -18,6 +19,7 @@ interface UsePlayerToggleTrackParams {
   index: number | undefined
   play: () => Promise<void>
   replaceAudio: (url: string, positionMs?: number) => Promise<unknown>
+  seekTo: (positionMs: number) => Promise<void>
   setCurrentAudio: (audio: AudioPlayerData) => Promise<unknown>
   setLockScreenMetadata: (metadata: {
     albumTitle: string
@@ -27,87 +29,86 @@ interface UsePlayerToggleTrackParams {
   }) => void
 }
 
-/**
- * Управляет переключением между треками плейлиста.
- * Создаёт новый AudioPlayerData из данных трека и воспроизводит его.
- * @param root0 - Параметры переключения трека.
- * @param root0.currentPlaylist - Текущий плейлист.
- * @param root0.hasValidPlaylist - Флаг валидности плейлиста.
- * @param root0.index - Индекс текущего трека.
- * @param root0.play - Функция воспроизведения.
- * @param root0.replaceAudio - Функция замены аудио.
- * @param root0.setCurrentAudio - Функция установки текущего аудио.
- * @param root0.setLockScreenMetadata - Функция установки метаданных экрана блокировки.
- */
 export const usePlayerToggleTrack = ({
   currentPlaylist,
   hasValidPlaylist,
   index,
   play,
   replaceAudio,
+  seekTo,
   setCurrentAudio,
   setLockScreenMetadata,
 }: UsePlayerToggleTrackParams) =>
   useCallback(
     async (dir: TrackDirection) => {
-      if (!hasValidPlaylist || !currentPlaylist || index === undefined) return
-
-      const newIndex = dir === 'next' ? index + 1 : index - 1
-
-      if (newIndex < 0 || newIndex >= currentPlaylist.sermons.length) return
-
-      const track = currentPlaylist.sermons[newIndex]
-
-      if (!track?.audioUrl) return
-
-      const { audioUrl, id, title, ...rest } = track
-
-      const newAudio: AudioPlayerData = {
-        ...rest,
-        artwork: currentPlaylist.artwork,
-        audioUrl,
-        id,
-        title,
-      }
-
-      const oldAudio = ctx.get(currentAudioAtom)
-      const oldPositionMs = ctx.get(positionAtom)
-
-      // Persist new track's start position for crash-consistency (matches auto-advance path)
-      const history = ctx.get(historyAtom)
-      const resumeMs = getResumePosition(history, id)
-      void savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: id })
-
-      // Flush old track's position to history before switching
-      if (oldAudio?.id && oldAudio.id !== id)
-        void recordSermonSwitchAction(ctx, {
-          markOldCompleted: false,
-          newAudio,
-          newPlaylist: currentPlaylist,
-          oldDurationMs: ctx.get(durationAtom),
-          oldPositionMs: Math.max(0, oldPositionMs),
-          oldSermonId: oldAudio.id,
-        }).catch(error => {
-          console.error('[usePlayerToggleTrack] history flush failed:', error)
-          reportError(error, 'Ошибка при сохранении позиции предыдущего трека')
-        })
-
-      await setCurrentAudio(newAudio)
-      await replaceAudio(newAudio.audioUrl, resumeMs)
-
-      setLockScreenMetadata({
-        albumTitle: currentPlaylist.title,
-        artist: newAudio.artist,
-        artworkUrl: newAudio.artwork,
-        title: newAudio.title,
-      })
-
       try {
-        await play()
+        if (!hasValidPlaylist || !currentPlaylist || index === undefined) return
+
+        const target = resolveTrackToggle(
+          dir,
+          index,
+          currentPlaylist.sermons.length,
+          ctx.get(repeatModeAtom),
+        )
+        if (target.kind === 'restart') {
+          await seekTo(0)
+          await playSafely(play)
+          return
+        }
+        if (target.kind === 'boundary') {
+          setTrackBoundaryNoticeAction(ctx, target.boundary)
+          return
+        }
+
+        const track = currentPlaylist.sermons[target.newIndex]
+
+        const baseAudio = toAudioPlayerData(track)
+        if (!baseAudio) return
+
+        const newAudio: AudioPlayerData = { ...baseAudio, artwork: currentPlaylist.artwork }
+
+        const oldAudio = ctx.get(currentAudioAtom)
+        const oldPositionMs = ctx.get(positionAtom)
+
+        // Persist new track's start position for crash-consistency (matches auto-advance path)
+        const history = ctx.get(historyAtom)
+        const resumeMs = getResumePosition(history, baseAudio.id)
+        void savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: baseAudio.id }).catch(
+          error => {
+            console.error('[usePlayerToggleTrack] savePlaybackProgress failed:', error)
+            reportError(error, 'Ошибка при сохранении позиции трека')
+          },
+        )
+
+        // Flush old track's position to history before switching
+        if (oldAudio?.id && oldAudio.id !== baseAudio.id)
+          void recordSermonSwitchAction(ctx, {
+            markOldCompleted: false,
+            newAudio,
+            newPlaylist: currentPlaylist,
+            oldDurationMs: ctx.get(durationAtom),
+            oldPositionMs: Math.max(0, oldPositionMs),
+            oldSermonId: oldAudio.id,
+          }).catch(error => {
+            console.error('[usePlayerToggleTrack] history flush failed:', error)
+            reportError(error, 'Ошибка при сохранении позиции предыдущего трека')
+          })
+
+        await setCurrentAudio(newAudio)
+        await replaceAudio(newAudio.audioUrl, resumeMs)
+
+        // Play before setting lock-screen metadata (matches usePlaySermon; fixes lock-screen notification)
+        await playSafely(play)
+
+        setLockScreenMetadata({
+          albumTitle: currentPlaylist.title,
+          artist: newAudio.artist,
+          artworkUrl: newAudio.artwork,
+          title: newAudio.title,
+        })
       } catch (error) {
-        if (error instanceof Error && error.message.includes('activity is no longer available'))
-          console.warn('[Player] Ignoring AppState-related error:', error.message)
-        else throw error
+        console.error('[usePlayerToggleTrack] toggleTrack failed:', error)
+        reportError(error, 'Ошибка при переключении трека')
       }
     },
     [
@@ -116,6 +117,7 @@ export const usePlayerToggleTrack = ({
       index,
       setCurrentAudio,
       replaceAudio,
+      seekTo,
       play,
       setLockScreenMetadata,
     ],

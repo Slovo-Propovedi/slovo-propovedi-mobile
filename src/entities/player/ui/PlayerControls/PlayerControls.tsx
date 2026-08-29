@@ -43,6 +43,7 @@ export const PlayerControls = ({
     play,
     reassertLockScreenMetadata,
     replaceAudio,
+    seekTo,
     setLockScreenMetadata,
   } = usePlayer()
 
@@ -50,7 +51,7 @@ export const PlayerControls = ({
 
   useAppStatePlayback({ currentAudio, currentPlaylist, getStatus, reassertLockScreenMetadata })
 
-  const { hasValidPlaylist, index, isFirstTrack, isLastTrack } = usePlayerTrackState({
+  const { hasValidPlaylist, index } = usePlayerTrackState({
     currentAudio,
     currentPlaylist,
   })
@@ -80,13 +81,14 @@ export const PlayerControls = ({
     index,
     play,
     replaceAudio,
+    seekTo,
     setCurrentAudio,
     setLockScreenMetadata,
   })
 
-  const isPrevDisabled = !hasValidPlaylist || isFirstTrack || !currentAudio
-
-  const isNextDisabled = !hasValidPlaylist || isLastTrack || !currentAudio
+  // Issue #67: кнопки не отключаем на границах плейлиста — long-press перемотка
+  // должна работать всегда; тап на границе — безопасный no-op (guard в usePlayerToggleTrack).
+  const isTrackButtonDisabled = !currentAudio
 
   const renderFullscreenControls = () => (
     <FullscreenControls
@@ -97,11 +99,10 @@ export const PlayerControls = ({
       isBuffering={isBuffering}
       toggleTrack={toggleTrack}
       excludeButtons={excludeButtons}
-      isNextDisabled={isNextDisabled}
-      isPrevDisabled={isPrevDisabled}
       onPressOutSeek={onPressOutSeek}
       playButtonSize={playButtonSize}
       onLongPressSeek={onLongPressSeek}
+      isTrackButtonDisabled={isTrackButtonDisabled}
     />
   )
 
@@ -114,9 +115,8 @@ export const PlayerControls = ({
       isBuffering={isBuffering}
       toggleTrack={toggleTrack}
       excludeButtons={excludeButtons}
-      isNextDisabled={isNextDisabled}
-      isPrevDisabled={isPrevDisabled}
       hasCurrentAudio={!!currentAudio}
+      isTrackButtonDisabled={isTrackButtonDisabled}
     />
   )
 

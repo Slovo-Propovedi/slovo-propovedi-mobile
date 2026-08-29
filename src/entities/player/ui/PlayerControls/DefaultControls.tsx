@@ -10,9 +10,8 @@ interface DefaultControlsProps {
   excludeButtons?: ControlsNames[]
   hasCurrentAudio: boolean
   isBuffering: boolean
-  isNextDisabled: boolean
   isPlaying: boolean
-  isPrevDisabled: boolean
+  isTrackButtonDisabled: boolean
   size: PlayerControlsSize
   style?: StyleProp<ViewStyle>
   togglePlay: () => Promise<void>
@@ -23,9 +22,8 @@ export const DefaultControls = ({
   excludeButtons,
   hasCurrentAudio,
   isBuffering,
-  isNextDisabled,
   isPlaying,
-  isPrevDisabled,
+  isTrackButtonDisabled,
   size,
   style,
   togglePlay,
@@ -41,7 +39,7 @@ export const DefaultControls = ({
         <PlayerControlButton
           size={size}
           testID='prev-button'
-          isDisabled={isPrevDisabled}
+          isDisabled={isTrackButtonDisabled}
           type={PlayerControlButtonType.Prev}
           onPress={() => void toggleTrack('prev')}
         />
@@ -66,7 +64,8 @@ export const DefaultControls = ({
       {!excludedButtons[PlayerControlButtonType.Next] && (
         <PlayerControlButton
           size={size}
-          isDisabled={isNextDisabled}
+          testID='next-button'
+          isDisabled={isTrackButtonDisabled}
           type={PlayerControlButtonType.Next}
           onPress={() => void toggleTrack('next')}
         />
