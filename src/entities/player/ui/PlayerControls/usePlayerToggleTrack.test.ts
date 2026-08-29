@@ -5,7 +5,7 @@ import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import type { ListeningHistory } from 'entities/listening-history/@x/player'
 import { currentAudioAtom, positionAtom, RepeatMode, repeatModeAtom } from '../../model'
-import { trackBoundaryNoticeAtom } from '../../trackBoundaryNotice'
+import { trackToggleNoticeAtom } from '../../trackToggleNotice'
 import { usePlayerToggleTrack } from './usePlayerToggleTrack'
 
 const mockPlay = jest.fn().mockResolvedValue(undefined)
@@ -115,7 +115,7 @@ describe('usePlayerToggleTrack', () => {
     positionAtom(ctx, 0)
     mockHistoryAtom(ctx, [])
     repeatModeAtom(ctx, RepeatMode.Off)
-    trackBoundaryNoticeAtom(ctx, null)
+    trackToggleNoticeAtom(ctx, null)
   })
 
   test('next → replaceAudio called with resume ms from history', async () => {
@@ -295,9 +295,10 @@ describe('usePlayerToggleTrack', () => {
       await result.current('next')
     })
 
-    expect(ctx.get(trackBoundaryNoticeAtom)).toEqual({
+    expect(ctx.get(trackToggleNoticeAtom)).toEqual({
       at: expect.any(Number),
       boundary: 'last',
+      kind: 'boundary',
     })
     expect(mockReplaceAudio).not.toHaveBeenCalled()
     expect(mockSavePlaybackProgress).not.toHaveBeenCalled()
@@ -313,9 +314,10 @@ describe('usePlayerToggleTrack', () => {
       await result.current('prev')
     })
 
-    expect(ctx.get(trackBoundaryNoticeAtom)).toEqual({
+    expect(ctx.get(trackToggleNoticeAtom)).toEqual({
       at: expect.any(Number),
       boundary: 'first',
+      kind: 'boundary',
     })
     expect(mockReplaceAudio).not.toHaveBeenCalled()
     expect(mockSavePlaybackProgress).not.toHaveBeenCalled()
@@ -341,6 +343,11 @@ describe('usePlayerToggleTrack', () => {
       }),
     )
     expect(mockReplaceAudio).toHaveBeenCalledWith(PREV_AUDIO_URL, 0)
+    expect(ctx.get(trackToggleNoticeAtom)).toEqual({
+      at: expect.any(Number),
+      kind: 'wrap',
+      to: 'first',
+    })
   })
 
   test('Queue + prev on first track → setCurrentAudio called with last sermon', async () => {
@@ -363,6 +370,26 @@ describe('usePlayerToggleTrack', () => {
       }),
     )
     expect(mockReplaceAudio).toHaveBeenCalledWith(NEXT_AUDIO_URL, 0)
+    expect(ctx.get(trackToggleNoticeAtom)).toEqual({
+      at: expect.any(Number),
+      kind: 'wrap',
+      to: 'last',
+    })
+  })
+
+  test('Queue + next in the middle → switch, no notice dispatched', async () => {
+    const { result } = await renderHookWithProviders(
+      () => usePlayerToggleTrack(defaultProps), // index 1 (middle)
+      { ctx },
+    )
+    await setAtomState({ repeatMode: RepeatMode.Queue })
+
+    await act(async () => {
+      await result.current('next')
+    })
+
+    expect(mockSetCurrentAudio).toHaveBeenCalledWith(expect.objectContaining({ id: 'sermon-next' }))
+    expect(ctx.get(trackToggleNoticeAtom)).toBeNull()
   })
 
   test('Track + next on last track → restart current track', async () => {
@@ -381,7 +408,10 @@ describe('usePlayerToggleTrack', () => {
     expect(mockSetCurrentAudio).not.toHaveBeenCalled()
     expect(mockReplaceAudio).not.toHaveBeenCalled()
     expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
-    expect(ctx.get(trackBoundaryNoticeAtom)).toBeNull()
+    expect(ctx.get(trackToggleNoticeAtom)).toEqual({
+      at: expect.any(Number),
+      kind: 'restart',
+    })
   })
 
   test('Track + prev on first track → restart current track', async () => {
@@ -449,9 +479,10 @@ describe('usePlayerToggleTrack', () => {
       await result.current('prev')
     })
 
-    expect(ctx.get(trackBoundaryNoticeAtom)).toEqual({
+    expect(ctx.get(trackToggleNoticeAtom)).toEqual({
       at: expect.any(Number),
       boundary: 'first',
+      kind: 'boundary',
     })
     expect(mockSetCurrentAudio).not.toHaveBeenCalled()
     expect(mockReplaceAudio).not.toHaveBeenCalled()

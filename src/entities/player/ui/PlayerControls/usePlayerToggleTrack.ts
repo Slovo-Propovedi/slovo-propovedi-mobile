@@ -1,15 +1,10 @@
 import { useCallback } from 'react'
-import {
-  getResumePosition,
-  historyAtom,
-  recordSermonSwitchAction,
-} from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type AudioPlayerData, type PlaylistData, toAudioPlayerData } from 'shared/model'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
-import { savePlaybackProgress } from '../../lib/playbackProgress'
-import { currentAudioAtom, durationAtom, positionAtom, repeatModeAtom } from '../../model'
-import { setTrackBoundaryNoticeAction } from '../../trackBoundaryNotice'
+import { repeatModeAtom } from '../../model'
+import { setTrackToggleNoticeAction } from '../../trackToggleNotice'
+import { executeTrackSwitch } from './executeTrackSwitch'
 import { playSafely } from './playSafely'
 import { resolveTrackToggle, type TrackDirection } from './resolveTrackToggle'
 
@@ -51,60 +46,34 @@ export const usePlayerToggleTrack = ({
           ctx.get(repeatModeAtom),
         )
         if (target.kind === 'restart') {
+          setTrackToggleNoticeAction(ctx, { at: Date.now(), kind: 'restart' })
           await seekTo(0)
           await playSafely(play)
           return
         }
         if (target.kind === 'boundary') {
-          setTrackBoundaryNoticeAction(ctx, target.boundary)
+          setTrackToggleNoticeAction(ctx, {
+            at: Date.now(),
+            boundary: target.boundary,
+            kind: 'boundary',
+          })
           return
         }
-
-        const track = currentPlaylist.sermons[target.newIndex]
-
-        const baseAudio = toAudioPlayerData(track)
-        if (!baseAudio) return
-
-        const newAudio: AudioPlayerData = { ...baseAudio, artwork: currentPlaylist.artwork }
-
-        const oldAudio = ctx.get(currentAudioAtom)
-        const oldPositionMs = ctx.get(positionAtom)
-
-        // Persist new track's start position for crash-consistency (matches auto-advance path)
-        const history = ctx.get(historyAtom)
-        const resumeMs = getResumePosition(history, baseAudio.id)
-        void savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: baseAudio.id }).catch(
-          error => {
-            console.error('[usePlayerToggleTrack] savePlaybackProgress failed:', error)
-            reportError(error, 'Ошибка при сохранении позиции трека')
-          },
-        )
-
-        // Flush old track's position to history before switching
-        if (oldAudio?.id && oldAudio.id !== baseAudio.id)
-          void recordSermonSwitchAction(ctx, {
-            markOldCompleted: false,
-            newAudio,
-            newPlaylist: currentPlaylist,
-            oldDurationMs: ctx.get(durationAtom),
-            oldPositionMs: Math.max(0, oldPositionMs),
-            oldSermonId: oldAudio.id,
-          }).catch(error => {
-            console.error('[usePlayerToggleTrack] history flush failed:', error)
-            reportError(error, 'Ошибка при сохранении позиции предыдущего трека')
+        if (target.wrappedTo)
+          setTrackToggleNoticeAction(ctx, {
+            at: Date.now(),
+            kind: 'wrap',
+            to: target.wrappedTo,
           })
 
-        await setCurrentAudio(newAudio)
-        await replaceAudio(newAudio.audioUrl, resumeMs)
-
-        // Play before setting lock-screen metadata (matches usePlaySermon; fixes lock-screen notification)
-        await playSafely(play)
-
-        setLockScreenMetadata({
-          albumTitle: currentPlaylist.title,
-          artist: newAudio.artist,
-          artworkUrl: newAudio.artwork,
-          title: newAudio.title,
+        await executeTrackSwitch({
+          ctx,
+          newIndex: target.newIndex,
+          play,
+          playlist: currentPlaylist,
+          replaceAudio,
+          setCurrentAudio,
+          setLockScreenMetadata,
         })
       } catch (error) {
         console.error('[usePlayerToggleTrack] toggleTrack failed:', error)

@@ -584,6 +584,7 @@ src/entities/player/lib/PlayerService/
    - Zod schemas for runtime validation
    - MSW mocks for development
    - TypeScript types (exported as APITypes)
+3. **Reanimated v4 worklets:** never call JS-side functions (React state setters, callbacks) synchronously from worklet/animation callbacks (`withTiming` completion, `useAnimatedReaction`, gesture handlers) — it throws "Tried to synchronously call a Remote Function". Use `scheduleOnRN` from `react-native-worklets`. `runOnJS` is DEPRECATED — do not use it in new code (see docs/conventions.md).
 
 ## API Usage
 

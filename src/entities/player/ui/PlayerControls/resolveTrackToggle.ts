@@ -5,7 +5,7 @@ export type TrackDirection = 'next' | 'prev'
 export type TrackToggleTarget =
   | { boundary: 'first' | 'last'; kind: 'boundary' }
   | { kind: 'restart' }
-  | { kind: 'switch'; newIndex: number }
+  | { kind: 'switch'; newIndex: number; wrappedTo?: 'first' | 'last' }
 
 /**
  * Определяет семантику тапа next/prev в зависимости от режима повтора.
@@ -27,5 +27,9 @@ export const resolveTrackToggle = (
   if (repeatMode === RepeatMode.Track) return { kind: 'restart' }
   if (isOutOfBounds && repeatMode !== RepeatMode.Queue)
     return { boundary: dir === 'next' ? 'last' : 'first', kind: 'boundary' }
-  return { kind: 'switch', newIndex: ((rawIndex % totalTracks) + totalTracks) % totalTracks }
+
+  const newIndex = ((rawIndex % totalTracks) + totalTracks) % totalTracks
+  if (isOutOfBounds)
+    return { kind: 'switch', newIndex, wrappedTo: dir === 'next' ? 'first' : 'last' }
+  return { kind: 'switch', newIndex }
 }

@@ -2,7 +2,8 @@ import { useAtom } from '@reatom/npm-react'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
-import { trackBoundaryNoticeAtom } from 'entities/player'
+import { scheduleOnRN } from 'react-native-worklets'
+import { type TrackToggleNotice, trackToggleNoticeAtom } from 'entities/player'
 import type { createStyles } from '../ExpandablePlayer/styles'
 
 interface BoundaryHintProps {
@@ -12,11 +13,20 @@ interface BoundaryHintProps {
 export const HINT_DURATION_MS = 2000
 const FADE_DURATION_MS = 200
 const STALE_NOTICE_MAX_AGE_MS = 5000
-const FIRST_TEXT = 'Это первая проповедь'
-const LAST_TEXT = 'Это последняя проповедь'
+const FIRST_BOUNDARY_TEXT = 'Это первая проповедь'
+const LAST_BOUNDARY_TEXT = 'Это последняя проповедь'
+const RESTART_TEXT = 'Проповедь запущена заново'
+const WRAP_FIRST_TEXT = 'Это начало плейлиста'
+const WRAP_LAST_TEXT = 'Это конец плейлиста'
+
+const noticeText = (notice: TrackToggleNotice): string => {
+  if (notice.kind === 'restart') return RESTART_TEXT
+  if (notice.kind === 'wrap') return notice.to === 'first' ? WRAP_FIRST_TEXT : WRAP_LAST_TEXT
+  return notice.boundary === 'first' ? FIRST_BOUNDARY_TEXT : LAST_BOUNDARY_TEXT
+}
 
 export const BoundaryHint = ({ styles }: BoundaryHintProps) => {
-  const [notice] = useAtom(trackBoundaryNoticeAtom)
+  const [notice] = useAtom(trackToggleNoticeAtom)
   const [activeAt, setActiveAt] = useState<null | number>(null)
   const [visible, setVisible] = useState(false)
   const [mountedAt] = useState(() => Date.now())
@@ -35,7 +45,7 @@ export const BoundaryHint = ({ styles }: BoundaryHintProps) => {
     if (!visible || !notice) return
     const timer = setTimeout(() => {
       opacity.value = withTiming(0, { duration: FADE_DURATION_MS }, finished => {
-        if (finished) setVisible(false)
+        if (finished) scheduleOnRN(setVisible, false)
       })
     }, HINT_DURATION_MS)
     return () => clearTimeout(timer)
@@ -52,9 +62,7 @@ export const BoundaryHint = ({ styles }: BoundaryHintProps) => {
         accessibilityLiveRegion='polite'
         style={[styles.boundaryHint, animatedStyle]}
       >
-        <Text style={styles.boundaryHintText}>
-          {notice.boundary === 'first' ? FIRST_TEXT : LAST_TEXT}
-        </Text>
+        <Text style={styles.boundaryHintText}>{noticeText(notice)}</Text>
       </Animated.View>
     </View>
   )

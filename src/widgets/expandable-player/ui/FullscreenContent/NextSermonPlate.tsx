@@ -3,11 +3,11 @@ import { memo, useCallback, useEffect, useState } from 'react'
 import { PixelRatio, Pressable, Text, View } from 'react-native'
 import Animated, {
   interpolate,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
 
@@ -43,7 +43,7 @@ export const NextSermonPlate = memo(
     const collapse = useCallback(() => {
       setIsExpanded(false)
       progress.value = withTiming(0, { duration: ANIMATION_DURATION }, finished => {
-        if (finished) runOnJS(setIsTitleMounted)(false)
+        if (finished) scheduleOnRN(setIsTitleMounted, false)
       })
     }, [progress])
 

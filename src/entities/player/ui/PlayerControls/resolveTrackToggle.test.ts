@@ -27,6 +27,7 @@ type ToggleCase =
       newIndex: number
       repeatMode: RepeatMode
       totalTracks: number
+      wrappedTo?: 'first' | 'last'
     }
 
 const CASES: ToggleCase[] = [
@@ -98,6 +99,7 @@ const CASES: ToggleCase[] = [
     newIndex: 0,
     repeatMode: RepeatMode.Queue,
     totalTracks: 3,
+    wrappedTo: 'first',
   },
   {
     dir: 'prev',
@@ -107,6 +109,7 @@ const CASES: ToggleCase[] = [
     newIndex: 2,
     repeatMode: RepeatMode.Queue,
     totalTracks: 3,
+    wrappedTo: 'last',
   },
   {
     dir: 'next',
@@ -116,6 +119,7 @@ const CASES: ToggleCase[] = [
     newIndex: 0,
     repeatMode: RepeatMode.Queue,
     totalTracks: 1,
+    wrappedTo: 'first',
   },
   {
     boundary: 'last',
@@ -129,7 +133,12 @@ const CASES: ToggleCase[] = [
 ]
 
 const buildExpected = (c: ToggleCase) => {
-  if (c.expected === 'switch') return { kind: 'switch', newIndex: c.newIndex }
+  if (c.expected === 'switch')
+    return {
+      kind: 'switch',
+      newIndex: c.newIndex,
+      ...(c.wrappedTo ? { wrappedTo: c.wrappedTo } : {}),
+    }
   if (c.expected === 'restart') return { kind: 'restart' }
   return { boundary: c.boundary, kind: 'boundary' }
 }

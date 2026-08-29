@@ -37,6 +37,7 @@
 - разложение больших файлов, а не удаление пустых строк для впихивания в лимит.
 - **Запрет `as` в продакшн-коде:** `as Type` запрещён в `src/` (кроме `as const` и `as unknown` перед zod-валидацией). Вместо `as` — чинить типы на границах: нормализовать API-ответы в мапперах (`artwork: apiSermon.artwork ?? null`), конструировать новые объекты с narrowed-типами (`{ ...sermon, audioUrl: sermon.audioUrl }`), корректировать zod-схемы (`.nullable()` для полей, которые API отдаёт как null). В тестах `as` допустим, но минимален. Обоснование: `as` подавляет проверку типов — код компилируется, но крашится в рантайме (корневая причина Issue #45).
 - **Валидация на границе JS→натив:** URI-значения проверяются (`hasUriProtocol`), нативные вызовы, способные бросить, — в try-catch; данные AsyncStorage — нелегитимный ввод (переживают апдейты). Подробнее: [`contracts/native-modules.md`](./contracts/native-modules.md).
+- **Вызов JS из ворклетов:** `runOnJS` из `react-native-reanimated` устарел (deprecated) в Reanimated v4 — в новом коде не использовать. Для вызова JS-функций (сеттеры React-состояния, колбэки) из ворклетов и анимационных колбэков (`withTiming` completion, `useAnimatedReaction`, gesture handlers) используй `scheduleOnRN` из `react-native-worklets`. Сигнатура — `scheduleOnRN(fn, ...args)`, не каррированная (в отличие от `runOnJS(fn)(args)`). Синхронный вызов JS из ворклета падает с «Tried to synchronously call a Remote Function» (инцидент BoundaryHint, 2026-08).
 
 ## Расположение компонентов
 

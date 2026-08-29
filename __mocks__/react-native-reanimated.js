@@ -8,10 +8,6 @@ jest.mock('react-native-reanimated', () => {
     createAnimatedComponent: Component => Component,
     Easing: { linear: () => 'linear' },
     interpolate: p => p,
-    runOnJS:
-      fn =>
-      (...args) =>
-        fn(...args),
     useAnimatedReaction: () => {
       // No-op: useAnimatedReaction synchronizes shared values from the UI
       // thread to JS state. In tests, we rely on the initial useState value.

@@ -29,7 +29,7 @@ export { PLAYBACK_RATES, type PlaybackRate } from './playback-rate'
 
 export { closePlayerSheetAction, isPlayerExpandedAtom, openPlayerSheetAction } from './playerSheet'
 
-export { trackBoundaryNoticeAtom } from './trackBoundaryNotice'
+export { type TrackToggleNotice, trackToggleNoticeAtom } from './trackToggleNotice'
 
 export { PlayerProgressBar } from './ui/PlayerProgressBar/PlayerProgressBar'
 export { PlayerRepeatToggle } from './ui/PlayerRepeatToggle'
