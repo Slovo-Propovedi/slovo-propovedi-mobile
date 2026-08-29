@@ -1,0 +1,7 @@
+Fallback update download to GitHub Releases and mirror releases in CI (closes #68)
+Repeat-aware tap hints and worklets scheduleOnRN migration (#67)
+Always-active prev/next with repeat-aware boundary behavior (#67)
+Scrollable playlist title in playlist list via MarqueeText (#66)
+Resume from new position after seek on pause and smooth scrubbing
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-08-29
+
+### Added
+
+- Fallback update download to GitHub Releases and mirror releases in CI (closes #68)
+- Repeat-aware tap hints and worklets scheduleOnRN migration (#67)
+- Scrollable playlist title in playlist list via MarqueeText (#66)
+- Add continue listening button to listen screen (#47)
+- Open dropdown menus above the button with flip below near screen top (#64)
+- Collapsible next-sermon plate in fullscreen player (#57)
+- Auto-scroll playlist sheet to current sermon (#48)
+
+### Fixed
+
+- Always-active prev/next with repeat-aware boundary behavior (#67)
+- Resume from new position after seek on pause and smooth scrubbing
+- Remove first-open dropdown flash and pin menu anchoring with tests (#64)
+- Anchor dropdown menus to their trigger buttons (#64)
+- Compute next-sermon title reveal height instead of onLayout measurement (#57)
+- Avoid maxHeight measurement feedback loop in next-sermon plate (#57)
+
 ## [0.15.0] - 2026-08-26
 
 ### Added
@@ -486,6 +507,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.16.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.16.0
 [0.15.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.15.0
 [0.14.3]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.14.3
 [0.14.2]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.14.2
