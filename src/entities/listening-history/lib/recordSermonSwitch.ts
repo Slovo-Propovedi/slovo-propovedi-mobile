@@ -28,10 +28,13 @@ export const recordSermonSwitchAction = action(
     let flushed: ListeningHistory
     if (oldIndex !== -1 && params.oldPositionMs > 0) {
       const oldEntry = current[oldIndex]
-      const finalPosition = params.markOldCompleted ? oldEntry.durationMs : params.oldPositionMs
+      const durationMs = params.oldDurationMs > 0 ? params.oldDurationMs : oldEntry.durationMs
+      const finalPosition =
+        params.markOldCompleted && durationMs > 0 ? durationMs : params.oldPositionMs
 
       const flushedEntry: ListeningHistoryEntry = {
         ...oldEntry,
+        durationMs,
         positionMs: finalPosition,
       }
       flushed = [...current.slice(0, oldIndex), flushedEntry, ...current.slice(oldIndex + 1)]

@@ -1,7 +1,6 @@
 import { ctx } from 'shared/lib/reatom-ctx'
 import type { AudioPlayer } from 'expo-audio'
 import {
-  isPlayingAtom,
   isSeekingAtom,
   pauseTypeAtom,
   seekTargetPositionAtom,
@@ -51,11 +50,14 @@ interface InterruptionCallbacks {
 export const createAudioInterruptionHandler = (callbacks: InterruptionCallbacks) => {
   let wasPlayingBeforeInterruption = false
 
+  // Any playing→false edge is treated as an interruption: pause('auto') is idempotent
+  // (flush no-op guard, pause on a paused player is a no-op), so user-pause and
+  // natural-track-end also route through it harmlessly. User-pause discrimination is
+  // unnecessary — stop()/unload() detach the status listener first (see index.native.ts).
   return (isInterrupted: boolean): void => {
     if (isInterrupted) {
-      const wasPlaying = ctx.get(isPlayingAtom)
-      wasPlayingBeforeInterruption = wasPlaying
-      if (wasPlaying) void callbacks.pause('auto')
+      wasPlayingBeforeInterruption = true
+      void callbacks.pause('auto')
       return
     }
 

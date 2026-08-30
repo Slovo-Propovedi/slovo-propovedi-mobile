@@ -32,6 +32,8 @@
 | `TrackAutoAdvanceService/`                | авто-переход на следующий трек по окончании                                                                                                                                                                                                                 |
 | `nativePlayerHelpers.ts`                  | сборка listener'ов и обработчика прерываний                                                                                                                                                                                                                 |
 | `webPlayerState.ts`, `webPlayerPubSub.ts` | состояние и pub-sub для веб-реализации                                                                                                                                                                                                                      |
+| `webAudioEvents.ts`                      | слушатели событий `<audio>` для веб-реализации (`loadedmetadata`/`durationchange`/`play`/`pause`/`timeupdate`/`ended`) + cleanup-функция; чистый wiring-модуль: `loadedmetadata`/`durationchange` прогоняют длительность через guard `Number.isFinite && > 0` и делегируют в `handlers.onDuration` — запись в атом/состояние/AsyncStorage делает `webDurationWriter` |
+| `webDurationWriter.ts`                   | единственный владелец записи web-длительности: `writeWebDuration` (атом `durationAtom` через `setDurationAction` + `webPlayerState` + AsyncStorage `CURRENT_SOUND_DURATION`) и `resetWebDuration` (сброс в 0 при смене трека — паритет с нативным `replaceAudio`) |
 | `types.ts`                                | общие типы (`LockScreenMetadata`, `PlaybackStatus`, `StatusCallbacks`, `PlayerActions`)                                                                                                                                                                     |
 | `PlayerActionsAdapter.ts`                 | DI для `TrackAutoAdvanceService`                                                                                                                                                                                                                            |
 
@@ -180,11 +182,12 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 
 ## Персистенция позиции
 
-Позиция воспроизведения сохраняется в `CURRENT_SOUND_POSITION` как JSON `{ sermonId, positionMs, savedAtMs, durationMs? }` — привязана к конкретной проповеди. Поле `durationMs` опционально: пишется при наличии длительности (5с-тик, пауза), опускается при flush авто-перехода. Точки flush:
+Позиция воспроизведения сохраняется в `CURRENT_SOUND_POSITION` как JSON `{ sermonId, positionMs, savedAtMs, durationMs? }` — привязана к конкретной проповеди. Поле `durationMs` опционально: пишется при наличии длительности (10с-тик, пауза), опускается при flush авто-перехода. Точки flush:
 
-- **5с-тик** (`usePlaybackProgressSaver`): при воспроизведении — bound-запись + мини-снапшот `listeningProgressSnapshot`; skip-first-tick после переключения трека.
-- **Пауза** (`PlaybackController.pause`, `WebPlayerService.pause`): немедленная bound-запись.
-- **Seek** (`PlaybackController.seekTo`): `flushHistoryProgressAction` с trailing-дебаунсом 400мс (`SEEK_HISTORY_FLUSH_DEBOUNCE_MS`) — позиция истории обновляется после seek (в т.ч. на паузе); частые seek long-press (тик 200мс) коалесятся в один финальный write.
+- **10с-тик** (`usePlaybackProgressSaver`): при воспроизведении — bound-запись (`savePlaybackProgress`) + flush каталога истории (`flushHistoryProgressAction`); мини-снапшот `listeningProgressSnapshot` **больше не пишется** (писатель удалён); пауза останавливает авто-сохранение (гейт на `isPlaying`); skip-first-tick после переключения трека.
+- **Пауза** — позиция персистится на каждом пути: кнопки UI, нативный/веб-контроллер (`PlaybackController.pause`, `WebPlayerService.pause`), lock-screen и OS-прерывание (auto-pause), уход в фон; внешняя пауза веб-элемента `<audio>` тоже flush'ит позицию (слушатель `pause`-события в `index.web.ts`). Flush паузы при OS/lock-screen-прерывании **безусловен на ребре playing→false**: `PlayerStatusListener` вызывает `onAudioInterruption(true)` без чтения атомов, `createAudioInterruptionHandler` безусловно вызывает `pause('auto')` (идемпотентно: no-op guard флаша истории, пауза на уже паузе — no-op) — user-pause и natural-end тоже проходят через этот путь (прослежено как безвредное). `stop()`/`unload()` сначала отвязывают статус-листенер (`playerStatusListener.cleanup()`), чтобы асинхронный тик после `seekTo(0)` не сработал как ребро прерывания и не затёр позицию нулём.
+- **Stop/Unload** — `PlaybackController.stop` (нативный) и `WebPlayerService.stop`/`unload` (веб) flush'ят позицию **до** паузы/сброса (`flushProgress`/`flushProgressAtCurrentTime`) — персистится живая pre-stop позиция, как при паузе.
+- **Seek** (`PlaybackController.seekTo` нативный, `WebPlayerService.seekTo` веб): `flushHistoryProgressAction` с trailing-дебаунсом 400мс (`SEEK_HISTORY_FLUSH_DEBOUNCE_MS`) — позиция истории обновляется после seek (в т.ч. на паузе); частые seek long-press (тик 200мс) коалесятся в один финальный write. Веб-`seekTo` использует тот же общий `scheduleHistoryFlush` (паритет с нативным путём).
 - **Авто-переход** (`playTrackWithMetadata`): `savePlaybackProgress(positionMs: initialPositionMs)` для нового трека перед `recordSermonSwitchAction` — позиция resume персистится при авто-переходе, чтобы краш сразу после смены трека восстановился на позиции resume.
 - **Уход в фон** (`usePlaybackProgressSaver`): AppState `background` → немедленный flush теми же guard'ами.
 
@@ -192,21 +195,21 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 
 ## История прослушивания и resume
 
-История пишется **по событиям** (старт, пауза/flush, переключение трека, завершение); 5с-тики пишут только мини-снапшот `listeningProgressSnapshot`. Это отдельный механизм от персиста позиции плеера (`CURRENT_SOUND_POSITION`).
+История пишется **по событиям** (старт, пауза/flush, переключение трека, завершение) и **каждые 10с при воспроизведении** (тик `usePlaybackProgressSaver` пишет каталог; мини-снапшот больше не пишется). Это отдельный механизм от персиста позиции плеера (`CURRENT_SOUND_POSITION`).
 
 ### Запись прогресса
 
 | Путь                       | Где                                                                                                                          | Когда                                                                                                                                                                                                                              |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts`                                                                        | каждые 5с (только при воспроизведении): `CURRENT_SOUND_POSITION` + мини-снапшот `writeLiveProgressSnapshot` (~60 байт) — каталог истории не трогает; первый тик после переключения трека пропускается (skip-first-tick через рефы) |
+| `usePlaybackProgressSaver` | `src/entities/player/lib/usePlaybackProgressSaver.ts`                                                                        | каждые 10с (только при воспроизведении): `CURRENT_SOUND_POSITION` (`savePlaybackProgress`) + `flushHistoryProgressAction` (каталог истории); мини-снапшот `writeLiveProgressSnapshot` **не пишется** (писатель удалён); пауза останавливает авто-сохранение (гейт на `isPlaying`); первый тик после переключения трека пропускается (skip-first-tick через рефы) |
 | `PlaybackController.pause` | `src/entities/player/lib/PlayerService/PlaybackController.ts`                                                                | при паузе (нативный): `CURRENT_SOUND_POSITION` + `flushHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })`                                                                                                           |
 | `PlaybackController.seekTo` | `src/entities/player/lib/PlayerService/PlaybackController.ts`                                                               | при seek (нативный): `flushHistoryProgressAction` с trailing-дебаунсом 400мс — позиция истории обновляется после seek (в т.ч. на паузе), серия seek коалесится в один финальный write |
 | `WebPlayerService.pause`   | `src/entities/player/lib/PlayerService/index.web.ts`                                                                         | при паузе (веб): `savePlaybackProgress` (bound-запись) + `flushHistoryProgressAction`                                                                                                                                          |
-| `recordSermonSwitchAction` | `usePlayNewSermon` (ручной тап, `markOldCompleted: false`), `usePlayerToggleTrack` (кнопки Next/Prev, `markOldCompleted: false`), `playTrackWithMetadata` (авто-переход, `markOldCompleted: true`) | при смене трека: flush позиции старого + запись/обновление нового за один проход                                                                                                                                                   |
+| `recordSermonSwitchAction` | `usePlayNewSermon` (ручной тап, `markOldCompleted: false`), `usePlayerToggleTrack` (кнопки Next/Prev, `markOldCompleted: false`), `playTrackWithMetadata` (авто-переход, `markOldCompleted: true`) | при смене трека: flush позиции старого + запись/обновление нового за один проход; завершение на авто-переходе использует живую длительность из атомов (`oldDurationMs`) |
 
 Все файлы `entities/player`, которым нужны символы из `listening-history`, импортируют их через **@x-точку** `entities/listening-history/@x/player` — а не из основного barrel `entities/listening-history`. Подробнее — [listening-history.md](./listening-history.md) → «@x cross-import».
 
-При гидрации `reconcileOnHydration` мержит мини-снапшот в каталог (только если новее и запись не завершена, `durationMs = max`). Подробнее — [listening-history.md](./listening-history.md) → «Запись прогресса».
+При гидрации `reconcileOnHydration` мержит легаси-мини-снапшот в каталог (только если запись не завершена, `durationMs = max`); если снапшота нет — позиция каталога сохраняется как есть. Подробнее — [listening-history.md](./listening-history.md) → «Запись прогресса».
 
 ### Завершение трека
 
@@ -264,6 +267,12 @@ Guard в `PlayerStatusListener`: продакшен-Android после смен�
 ### WebPlayerService.replaceAudio
 
 На вебе `replaceAudio` делегирует `loadAudio(url, initialPositionMs)` — синтаксический сахар, позиция устанавливается после `loadedmetadata` через `audio.currentTime`.
+
+Web-длительность синхронизируется в общий `durationAtom` (паритет с нативным путём `waitForLoaded`): слушатели `loadedmetadata`/`durationchange` (`webAudioEvents.ts`, чистый wiring-модуль) прогоняют `Math.floor(audio.duration * 1000)` через guard `Number.isFinite && > 0` и делегируют в `handlers.onDuration`; запись делает `webDurationWriter` (`writeWebDuration`: `setDurationAction` + `webPlayerState` + AsyncStorage `CURRENT_SOUND_DURATION`) — web-флаши (`flushProgressAtCurrentTime`, `scheduleHistoryFlush`) пишут реальный `durationMs`, а не 0. Слушатели отвязываются на teardown/replace (cleanup-функция `attachWebAudioEvents`).
+
+При смене трека `loadAudio` **сбрасывает длительность в 0 до создания/подключения элемента** (`resetWebDuration`: `setDurationAction(ctx, 0)` + `webPlayerState.setDuration(0)`) — зеркалит нативный `replaceAudio` (`index.native.ts`), чтобы stale-длительность трека A не попала в запись трека B (иначе completion-детекция и границы скраба использовали бы неверный bound во время буферизации).
+
+Веб-сервис покрыт юнит-тестами (`index.web.test.ts`, импорт по явному пути `./index.web` в обход jest-expo platform-resolution): identity-guard пауз-листенера, гейт `state.isPlaying`, flush-пути stop/unload/seekTo, no-op guard'ы `flushProgressAtCurrentTime`, duration-bridge (включая сброс длительности при replace до прихода реальной длительности).
 
 Подробнее — [listening-history.md](./listening-history.md).
 

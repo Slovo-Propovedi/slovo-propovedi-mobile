@@ -94,6 +94,7 @@ export class PlayerService {
   }
 
   public stop = async (): Promise<void> => {
+    playerStatusListener.cleanup() // Detach first: the post-stop status tick must not flush position 0.
     await playbackController.stop(this.playerInstance)
   }
 

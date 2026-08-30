@@ -1,4 +1,7 @@
 import { type AudioPlayer } from 'expo-audio'
+import { ctx } from 'shared/lib/reatom-ctx'
+import { currentAudioAtom, durationAtom } from '../../model'
+import { savePlaybackProgress } from '../playbackProgress'
 import { playbackController } from './PlaybackController'
 
 jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
@@ -75,5 +78,49 @@ describe('PlaybackController playback rate', () => {
     playbackController.applyPlaybackRate(freshPlayer)
 
     expect(setRateOnFresh).toHaveBeenCalledWith(1.5, 'high')
+  })
+})
+
+describe('PlaybackController stop flush', () => {
+  test('stop() flushes the pre-stop position', async () => {
+    ;(ctx.get as jest.Mock).mockImplementation(atom => {
+      if (atom === currentAudioAtom) return { id: 'sermon-1' }
+      if (atom === durationAtom) return 100000
+      return undefined
+    })
+    const player = {
+      currentTime: 42,
+      isLoaded: true,
+      pause: jest.fn(),
+      seekTo: jest.fn().mockResolvedValue(undefined),
+    } as unknown as AudioPlayer
+
+    await playbackController.stop(player)
+
+    expect(savePlaybackProgress).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ positionMs: 42000 }),
+    )
+  })
+
+  test('stop() still flushes the pre-stop position when seekTo(0) rejects', async () => {
+    ;(ctx.get as jest.Mock).mockImplementation(atom => {
+      if (atom === currentAudioAtom) return { id: 'sermon-1' }
+      if (atom === durationAtom) return 100000
+      return undefined
+    })
+    const player = {
+      currentTime: 42,
+      isLoaded: true,
+      pause: jest.fn(),
+      seekTo: jest.fn().mockRejectedValue(new Error('seek failed')),
+    } as unknown as AudioPlayer
+
+    await playbackController.stop(player)
+
+    expect(savePlaybackProgress).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ positionMs: 42000 }),
+    )
   })
 })

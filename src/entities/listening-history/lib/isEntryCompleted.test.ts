@@ -22,28 +22,28 @@ const makeEntry = (overrides: Partial<ListeningHistoryEntry> = {}): ListeningHis
 })
 
 describe('isEntryCompleted', () => {
-  test('returns false when fewer than 10s remain (100s left on 1h sermon)', () => {
+  test('returns false when more than 10s remain on a long track', () => {
     const entry = makeEntry({ durationMs: 3_600_000, positionMs: 3_500_000 })
     expect(isEntryCompleted(entry)).toBe(false)
   })
 
-  test('returns true when exactly 10s remain', () => {
+  test('returns true when 10s or fewer remain on a long track', () => {
     const entry = makeEntry({ durationMs: 3_600_000, positionMs: 3_590_000 })
     expect(isEntryCompleted(entry)).toBe(true)
   })
 
-  test('returns true when 5s remain', () => {
-    const entry = makeEntry({ durationMs: 3_600_000, positionMs: 3_595_000 })
-    expect(isEntryCompleted(entry)).toBe(true)
-  })
-
-  test('returns true when positionMs equals durationMs (long sermon)', () => {
+  test('returns true when positionMs equals durationMs on a long track', () => {
     const entry = makeEntry({ durationMs: 3_600_000, positionMs: 3_600_000 })
     expect(isEntryCompleted(entry)).toBe(true)
   })
 
-  test('returns false when durationMs is shorter than 10s', () => {
+  test('returns true when a short track reaches its full duration', () => {
     const entry = makeEntry({ durationMs: 5_000, positionMs: 5_000 })
+    expect(isEntryCompleted(entry)).toBe(true)
+  })
+
+  test('returns false when a short track is only partially played', () => {
+    const entry = makeEntry({ durationMs: 5_000, positionMs: 2_000 })
     expect(isEntryCompleted(entry)).toBe(false)
   })
 
@@ -52,8 +52,8 @@ describe('isEntryCompleted', () => {
     expect(isEntryCompleted(entry)).toBe(false)
   })
 
-  test('returns false when positionMs is 0', () => {
-    const entry = makeEntry({ durationMs: 3_600_000, positionMs: 0 })
+  test('returns false when durationMs is negative', () => {
+    const entry = makeEntry({ durationMs: -100, positionMs: 0 })
     expect(isEntryCompleted(entry)).toBe(false)
   })
 })

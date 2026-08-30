@@ -6,10 +6,10 @@ import { type AudioPlayerData } from 'shared/model'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
 import { usePlaybackProgressSaver } from './usePlaybackProgressSaver'
 
-const mockWriteLiveProgressSnapshot = jest.fn()
+const mockFlushHistoryProgress = jest.fn()
 
 jest.mock('entities/listening-history/@x/player', () => ({
-  writeLiveProgressSnapshot: (...args: unknown[]) => mockWriteLiveProgressSnapshot(...args),
+  flushHistoryProgressAction: (_ctx: unknown, params: unknown) => mockFlushHistoryProgress(params),
 }))
 
 jest.mock('shared/lib/reatom-ctx', () => {
@@ -86,10 +86,10 @@ describe('usePlaybackProgressSaver', () => {
       seedAtoms({ duration: 120000, isPlaying: true, position: 30000 })
     })
 
-    await advanceTimeAndFlush(5000)
+    await advanceTimeAndFlush(10000)
 
-    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(1)
-    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledWith({
+    expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(1)
+    expect(mockFlushHistoryProgress).toHaveBeenCalledWith({
       durationMs: 120000,
       positionMs: 30000,
       sermonId: SERMON_ID,
@@ -115,10 +115,10 @@ describe('usePlaybackProgressSaver', () => {
     })
 
     await act(async () => {
-      jest.advanceTimersByTime(5000)
+      jest.advanceTimersByTime(10000)
     })
 
-    expect(mockWriteLiveProgressSnapshot).not.toHaveBeenCalled()
+    expect(mockFlushHistoryProgress).not.toHaveBeenCalled()
   })
 
   test('does not save when position <= 0', async () => {
@@ -129,10 +129,10 @@ describe('usePlaybackProgressSaver', () => {
     })
 
     await act(async () => {
-      jest.advanceTimersByTime(5000)
+      jest.advanceTimersByTime(10000)
     })
 
-    expect(mockWriteLiveProgressSnapshot).not.toHaveBeenCalled()
+    expect(mockFlushHistoryProgress).not.toHaveBeenCalled()
   })
 
   test('skips first tick after audio id changes, calls on second tick', async () => {
@@ -143,10 +143,10 @@ describe('usePlaybackProgressSaver', () => {
     })
 
     // First tick — should fire normally with initial audio
-    await advanceTimeAndFlush(5000)
+    await advanceTimeAndFlush(10000)
 
-    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(1)
-    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledWith({
+    expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(1)
+    expect(mockFlushHistoryProgress).toHaveBeenCalledWith({
       durationMs: 120000,
       positionMs: 30000,
       sermonId: SERMON_ID,
@@ -157,16 +157,16 @@ describe('usePlaybackProgressSaver', () => {
       seedAtoms({ audio: mockAudio2, duration: 200000, isPlaying: true, position: 10000 })
     })
 
-    await advanceTimeAndFlush(5000)
+    await advanceTimeAndFlush(10000)
 
     // Still only 1 call — the tick after id change was skipped
-    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(1)
+    expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(1)
 
     // Second tick after id change — should fire
-    await advanceTimeAndFlush(5000)
+    await advanceTimeAndFlush(10000)
 
-    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(2)
-    expect(mockWriteLiveProgressSnapshot).toHaveBeenLastCalledWith({
+    expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(2)
+    expect(mockFlushHistoryProgress).toHaveBeenLastCalledWith({
       durationMs: 200000,
       positionMs: 10000,
       sermonId: 'sermon-2',
@@ -187,8 +187,8 @@ describe('usePlaybackProgressSaver', () => {
     })
     await advanceTimeAndFlush(0)
 
-    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledTimes(1)
-    expect(mockWriteLiveProgressSnapshot).toHaveBeenCalledWith({
+    expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(1)
+    expect(mockFlushHistoryProgress).toHaveBeenCalledWith({
       durationMs: 120000,
       positionMs: 55000,
       sermonId: SERMON_ID,
@@ -219,7 +219,7 @@ describe('usePlaybackProgressSaver', () => {
     })
     await advanceTimeAndFlush(0)
 
-    expect(mockWriteLiveProgressSnapshot).not.toHaveBeenCalled()
+    expect(mockFlushHistoryProgress).not.toHaveBeenCalled()
   })
 
   test('clears interval on unmount', async () => {
@@ -233,12 +233,12 @@ describe('usePlaybackProgressSaver', () => {
       unmount()
     })
 
-    mockWriteLiveProgressSnapshot.mockClear()
+    mockFlushHistoryProgress.mockClear()
 
     await act(async () => {
       jest.advanceTimersByTime(10000)
     })
 
-    expect(mockWriteLiveProgressSnapshot).not.toHaveBeenCalled()
+    expect(mockFlushHistoryProgress).not.toHaveBeenCalled()
   })
 })

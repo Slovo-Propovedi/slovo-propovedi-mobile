@@ -20,7 +20,7 @@ src/entities/listening-history/
 └── lib/
     ├── constants.ts          # COMPLETION_REMAINING_MS (10 000), MAX_HISTORY_ENTRIES (100)
     ├── historyStorage.ts     # readHistory / writeHistory (обёртки над getCachedJson/setCachedJson + очередь записей)
-    ├── liveProgressStorage.ts    # Мини-снапшот LISTENING_PROGRESS_SNAPSHOT: liveProgressSnapshotSchema (Zod) + write/read/clear
+    ├── liveProgressStorage.ts    # Мини-снапшот LISTENING_PROGRESS_SNAPSHOT: liveProgressSnapshotSchema (Zod) + read/clear
     ├── buildHistoryEntry.ts  # Фабрика новой записи: санитизация sermon (убирает playlists), снапшот context-playlist
     ├── isEntryCompleted.ts   # Правило завершённости (см. ниже)
     ├── getResumePosition.ts  # Вычисление позиции resume для usePlayNewSermon
@@ -42,7 +42,6 @@ src/entities/listening-history/
 export { getEntrySermon }
 export { getResumePosition }
 export { resolveEntryPlaylist }
-export { writeLiveProgressSnapshot }
 export { recordSermonSwitchAction }
 export { useHistoryProgressMap }
 export { useLastListeningEntry }
@@ -101,7 +100,6 @@ import {
 // entities/listening-history/@x/player.ts
 export { getEntrySermon } from '../lib/getEntrySermon'
 export { getResumePosition } from '../lib/getResumePosition'
-export { writeLiveProgressSnapshot } from '../lib/liveProgressStorage'
 export { recordSermonSwitchAction } from '../lib/recordSermonSwitch'
 export {
   historyAtom,
@@ -145,17 +143,19 @@ export { type ListeningHistory } from '../model/types'
 
 Массив `ListeningHistoryEntry[]` хранится в AsyncStorage под ключом `listeningHistory` (константа `LISTENING_HISTORY` — `src/shared/config/history-storage-keys.ts`). Валидация при чтении — Zod `listeningHistorySchema`; невалидные данные сбрасываются в пустой массив.
 
-Отдельно от каталога живёт **мини-снапшот** текущего прогресса под ключом `listeningProgressSnapshot` (константа `LISTENING_PROGRESS_SNAPSHOT` — там же): сырой JSON `{ sermonId, positionMs, durationMs }` (~60 байт). Валидация при чтении — Zod-схема `liveProgressSnapshotSchema` (`liveProgressStorage.ts`) с `safeParse`; невалидные данные возвращают `undefined`. Тип `LiveProgressSnapshot` выводится из схемы через `z.infer`. Пишется каждые 5с **только при воспроизведении** и мержится в каталог при гидрации (`reconcileOnHydration`), см. «Запись прогресса».
+Отдельно от каталога живёт **мини-снапшот** текущего прогресса под ключом `listeningProgressSnapshot` (константа `LISTENING_PROGRESS_SNAPSHOT` — там же): сырой JSON `{ sermonId, positionMs, durationMs }` (~60 байт). Валидация при чтении — Zod-схема `liveProgressSnapshotSchema` (`liveProgressStorage.ts`) с `safeParse`; невалидные данные возвращают `undefined`. Тип `LiveProgressSnapshot` выводится из схемы через `z.infer`. **LEGACY:** больше не пишется при воспроизведении (писатель удалён); хранится только для одноразовой миграции старых on-disk снапшотов при гидрации (`reconcileOnHydration`), чистится при каждом **реальном** flush каталога (no-op flush — позиция/длительность не изменились — пропускает и запись, и очистку). См. «Запись прогресса» → «Мини-снапшот (LEGACY)».
 
 ## Правило завершённости
 
 Запись считается завершённой, если:
 
 ```
-durationMs > 10 000  &&  positionMs >= durationMs − 10 000
+durationMs <= 0            → никогда
+durationMs <= 10 000       → positionMs >= durationMs
+иначе                     → positionMs >= durationMs − 10 000
 ```
 
-То есть проповедь длиной более 10с считается дослушанной, если до конца осталось не более 10с. Проповеди короче 10с никогда не считаются завершёнными (даже при `positionMs === durationMs`). Это предотвращает ложные срабатывания на коротких треках.
+То есть проповедь длиной более 10с считается дослушанной, если до конца осталось не более 10с. Короткие треки (`durationMs ≤ 10 000`) завершаются, когда позиция достигает полной длительности (`positionMs >= durationMs`). Записи с `durationMs ≤ 0` никогда не считаются завершёнными.
 
 При завершённой записи `getResumePosition` возвращает 0 (воспроизведение начнётся заново), а `recordPlaybackStartAction` создаёт новую запись вместо обновления существующей.
 
@@ -191,32 +191,39 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
 
 ### Модель: события + мини-ключ
 
-Каталог `listeningHistory` пишется **только по событиям**, 5с-тики в него больше не пишут:
+Каталог `listeningHistory` пишется **по событиям** и **каждые 10с при воспроизведении** (тик `usePlaybackProgressSaver` → `flushHistoryProgressAction`):
 
 | Событие               | Где                                                                                                      | Что происходит                                                                                                                                   |
 | --------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Старт воспроизведения | `usePlayNewSermon` → `recordPlaybackStartAction`                                                         | новая запись (позиция 0) / перемещение существующей в начало / сброс завершённой                                                                 |
 | Пауза                 | `PlaybackController.pause`, `WebPlayerService.pause` → `flushHistoryProgressAction`                      | read-modify-write позиции (no-op при `positionMs ≤ 0` или не-прогрессе)                                                                          |
 | Seek                  | `PlaybackController.seekTo` → `flushHistoryProgressAction`                                               | trailing-дебаунс 400мс: позиция истории обновляется после seek (в т.ч. на паузе); серия seek (long-press, тик 200мс) коалесится в один финальный write |
-| Переключение трека    | `recordSermonSwitchAction` — из `usePlayNewSermon` (ручной тап), `usePlayerToggleTrack` (кнопки Next/Prev) и `playTrackWithMetadata` (авто-переход) | за один проход: flush позиции старого трека + запись/обновление нового; `markOldCompleted: true` на авто-переходе (позиция старого = durationMs), `false` на тапе и кнопках |
-| Окончание трека       | `handleTrackEnd` → `markHistoryCompletedAction`                                                          | `positionMs = durationMs` (ветка pause-on-last-track)                                                                                            |
+| Переключение трека    | `recordSermonSwitchAction` — из `usePlayNewSermon` (ручной тап), `usePlayerToggleTrack` (кнопки Next/Prev) и `playTrackWithMetadata` (авто-переход) | за один проход: flush позиции старого трека + запись/обновление нового; `markOldCompleted: true` на авто-переходе (позиция старого = живая длительность `oldDurationMs`), `false` на тапе и кнопках. **Zero-duration guard:** при `markOldCompleted: true`, но неизвестной длительности (`oldDurationMs = 0` и `entry.durationMs = 0`) позиция **не** обнуляется — сохраняется `oldPositionMs` (не фабрикуем завершение без знания длительности) |
+| Окончание трека       | `handleTrackEnd` → `markHistoryCompletedAction`                                                          | `positionMs = durationMs` (ветка pause-on-last-track); длительность берётся из атома (`durationMs`-параметр), чтобы завершить запись даже при `durationMs: 0` в каталоге |
 | Удаление / очистка    | `removeHistoryEntryAction`, `clearHistoryAction`                                                         | per-item / полная очистка                                                                                                                        |
 
 > **Важно:** Позиция **всегда** записывается как есть, даже если пользователь перемотал назад. Ранее система сохраняла только монотонно-нарастающий прогресс (при перемотке назад сохранялась более высокая позиция). Сейчас `recordSermonSwitch`, `flushHistoryProgress` и `reconcileOnHydration` пишут фактическую текущую позицию — при перемотке назад и переключении трека сохраняется позиция, на которой пользователь реально остановился. Это касается всех трёх модулей записи прогресса.
 
 `lastPlayedAt` обновляется только при старте воспроизведения (`recordPlaybackStartAction`), не при flush.
 
-5с-тик `usePlaybackProgressSaver` (`src/entities/player/lib/usePlaybackProgressSaver.ts`) при воспроизведении пишет **только мини-снапшот** `listeningProgressSnapshot` через `writeLiveProgressSnapshot` (сырой JSON ~60 байт) — каталог не трогает. Есть защита **skip-first-tick-после-переключения**: первый тик после смены `currentAudio` пропускается (рефы `previousAudioIdRef` / `skipNextTickRef`), чтобы не записать «мусорную» позицию перехода.
+10с-тик `usePlaybackProgressSaver` (`src/entities/player/lib/usePlaybackProgressSaver.ts`) при воспроизведении пишет **bound-ключ** `CURRENT_SOUND_POSITION` (`savePlaybackProgress`) и **каталог** (`flushHistoryProgressAction`); пауза останавливает авто-сохранение (гейт на `isPlaying`). Мини-снапшот `listeningProgressSnapshot` при воспроизведении **больше не пишется** (писатель удалён — см. «Мини-снапшот (LEGACY)»). Есть защита **skip-first-tick-после-переключения**: первый тик после смены `currentAudio` пропускается (рефы `previousAudioIdRef` / `skipNextTickRef`), чтобы не записать «мусорную» позицию перехода.
+
+**Инвариант:** снапшот всегда не новее каталога — каждый **реальный** flush каталога (`flushHistoryProgressAction`, позиция/длительность изменились) чистит снапшот (`clearLiveProgressSnapshot`). No-op flush (позиция и длительность не изменились) выходит раньше и пропускает и запись, и очистку — это безопасно: ничего не изменилось, инвариант «каталог не старее снапшота» сохраняется, следующий реальный flush очистит снапшот. Это гарантирует, что seek-while-paused (обновляет каталог, но не снапшот) не регрессируется при гидрации: если приложение убито после seek, `reconcileOnHydration` не найдёт снапшота и сохранит позицию каталога.
 
 При гидрации `loadHistoryAction` вызывает `reconcileOnHydration` (`src/entities/listening-history/lib/reconcileOnHydration.ts`):
 
 1. читает каталог + снапшот;
-2. снапшот без совпадающей записи (или запись завершена) → дропается, каталог не меняется;
-3. иначе — мержит в запись: `positionMs = snapshot.positionMs`, `durationMs = max(entry, snapshot)`, пишет каталог и чистит снапшот.
+2. снапшота нет → каталог возвращается как есть (позиция каталога сохраняется);
+3. снапшот без совпадающей записи (или запись завершена) → дропается, каталог не меняется;
+4. иначе — мержит в запись: `positionMs = snapshot.positionMs`, `durationMs = max(entry, snapshot)`, пишет каталог и чистит снапшот.
+
+### Мини-снапшот (LEGACY)
+
+`listeningProgressSnapshot` — **легаси-ключ**: больше не пишется при воспроизведении (писатель `writeLiveProgressSnapshot` из `usePlaybackProgressSaver` удалён). Хранится только для одноразовой миграции старых on-disk снапшотов при гидрации через `reconcileOnHydration`. Чистится при каждом реальном flush каталога (no-op flush пропускает очистку) и при reconcile/remove/clear.
 
 ### Завершение трека
 
-`handleTrackEnd` в `TrackAutoAdvanceService` вызывает `markHistoryCompletedAction(ctx, sermonId)` **до** ветвления путей (repeat/next/pause). Это гарантирует, что позиция `positionMs = durationMs` записывается в историю при каждом окончании трека, даже если далее произойдёт повтор или переход.
+`handleTrackEnd` в `TrackAutoAdvanceService` вызывает `markHistoryCompletedAction(ctx, sermonId, durationMs)` **до** ветвления путей (repeat/next/pause), передавая живую длительность из атома. Это гарантирует, что позиция `positionMs = durationMs` записывается в историю при каждом окончании трека, даже если далее произойдёт повтор или переход.
 
 ## Прогресс в UI
 
@@ -252,12 +259,13 @@ durationMs > 10 000  &&  positionMs >= durationMs − 10 000
 
 | Сьют                    | Файл                                | Что проверяет                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ----------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `history model`         | `model/history.test.ts`             | `loadHistoryAction` (загрузка из storage; reconcile со снапшотом; дроп осиротевшего снапшота), `recordPlaybackStartAction` (новая запись, сброс завершённой, перемещение незавершённой, merge-ветка со strip `playlists`), `flushHistoryProgressAction` (no-op для неизвестного id, обновление позиции/длительности без изменения `lastPlayedAt`, персист), `markHistoryCompletedAction` (positionMs = durationMs, no-op для нет/0), `removeHistoryEntryAction` (удаление по id), `clearHistoryAction` (очистка) |
-| `isEntryCompleted`      | `lib/isEntryCompleted.test.ts`      | Границы: 100с осталось (false), 10с осталось (true), 5с осталось (true), position = duration (true), duration < 10с (false), duration = 0 (false), position = 0 (false)                                                                                                                                                                                                                                                                                                                                          |
+| `history model`         | `model/history.test.ts`             | `loadHistoryAction` (загрузка из storage; reconcile со снапшотом; дроп осиротевшего снапшота), `recordPlaybackStartAction` (новая запись, сброс завершённой, перемещение незавершённой, merge-ветка со strip `playlists`), `flushHistoryProgressAction` (no-op для неизвестного id, обновление позиции/длительности без изменения `lastPlayedAt`, персист), `markHistoryCompletedAction` (positionMs = durationMs, живая длительность из параметра, no-op для нет/0), `removeHistoryEntryAction` (удаление по id), `clearHistoryAction` (очистка) |
+| `recordSermonSwitch`    | `lib/recordSermonSwitch.test.ts`    | flush старого трека: завершение по живой длительности (`oldDurationMs`) при `markOldCompleted: true`, fallback на длительность записи, ручное переключение сохраняет `oldPositionMs`; создание нового трека вверху; сброс завершённой записи нового |
+| `isEntryCompleted`      | `lib/isEntryCompleted.test.ts`      | Границы: >10с осталось (false), 10с осталось (true), position = duration на длинном треке (true), короткий трек (5с) при position = duration (true), короткий трек частично (false), duration = 0 (false), отрицательная duration (false)                                                                                                                                                                                                                                                                          |
 | `buildHistoryEntry`     | `lib/buildHistoryEntry.test.ts`     | Фабрика записи: sanitizer убирает `playlists`, контекстный плейлист содержит один sermon, начальные позиции 0, top-level `sermon` отсутствует                                                                                                                                                                                                                                                                                                                                                                    |
 | `sortAndCapEntries`     | `lib/sortAndCapEntries.test.ts`     | Дедупликация по sermon.id (остаётся самая свежая), сортировка по lastPlayedAt desc, обрезка до MAX_HISTORY_ENTRIES                                                                                                                                                                                                                                                                                                                                                                                               |
 | `getResumePosition`     | `lib/getResumePosition.test.ts`     | Нет записи → 0, завершённая → 0, position ≤ 0 → 0, иначе positionMs                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `liveProgressStorage`   | `lib/liveProgressStorage.test.ts`   | Запись/чтение валидного снапшота; невалидный JSON/отсутствие/поля с отрицательными значениями → undefined                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `liveProgressStorage`   | `lib/liveProgressStorage.test.ts`   | Чтение валидного снапшота; невалидный JSON/отсутствие/поля с отрицательными значениями → undefined; очистка                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `useHistoryProgressMap` | `lib/useHistoryProgressMap.test.ts` | Пустой history → пустая Map, completed → 1, partial → position/duration, position ≤ 0 → пропуск                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## Связанные документы

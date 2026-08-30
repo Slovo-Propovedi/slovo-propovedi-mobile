@@ -4,7 +4,6 @@ import {
   clearLiveProgressSnapshot,
   type LiveProgressSnapshot,
   readLiveProgressSnapshot,
-  writeLiveProgressSnapshot,
 } from './liveProgressStorage'
 
 const KEY = LISTENING_PROGRESS_SNAPSHOT
@@ -21,7 +20,7 @@ describe('liveProgressStorage', () => {
     jest.clearAllMocks()
   })
 
-  test('write → read round-trip preserves all fields', async () => {
+  test('read returns snapshot stored under the key', async () => {
     // Write directly to storage to avoid fire-and-forget timing
     await AsyncStorage.setItem(KEY, JSON.stringify(snapshot))
 
@@ -100,12 +99,6 @@ describe('liveProgressStorage', () => {
 
     const result = await readLiveProgressSnapshot()
     expect(result).toBeUndefined()
-  })
-
-  test('write calls setItem with correct key and JSON', () => {
-    writeLiveProgressSnapshot(snapshot)
-
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith(KEY, JSON.stringify(snapshot))
   })
 
   test('clear calls removeItem with correct key', () => {

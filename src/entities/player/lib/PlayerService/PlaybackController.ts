@@ -2,7 +2,6 @@ import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import {
-  isSeekingAtom,
   setIsPlayingAction,
   setIsSeekingAction,
   setPositionAction,
@@ -12,10 +11,8 @@ import {
 import { type PlaybackRate } from '../../playback-rate'
 import { setPlaybackRateAction } from '../../playback-rate'
 import { flushProgress, scheduleHistoryFlush } from './progressFlusher'
+import { seekGuard } from './SeekGuard'
 import { type PlaybackStatus } from './types'
-
-/** If no fresh position event arrives within this window, unblock the guard. */
-const SEEK_SAFETY_TIMEOUT_MS = 2000
 
 const DEFAULT_PLAYBACK_STATUS: PlaybackStatus = {
   duration: 0,
@@ -46,44 +43,39 @@ class PlaybackController {
   public stop = async (player: AudioPlayer | null): Promise<void> => {
     if (!player?.isLoaded) return
 
+    const positionMs = Math.floor(player.currentTime * 1000)
     player.pause()
-    await player.seekTo(0)
+    try {
+      await player.seekTo(0)
+    } catch (error) {
+      console.error('[PlaybackController] stop seekTo(0) failed:', error)
+      reportError(error, 'Ошибка при сбросе позиции')
+    }
     void setIsPlayingAction(ctx, false)
+    flushProgress(positionMs)
   }
 
   public seekTo = async (player: AudioPlayer | null, positionMs: number): Promise<void> => {
     if (!player) return
-    if (this.seekTimeoutId) clearTimeout(this.seekTimeoutId)
+    seekGuard.arm()
 
     const clampedPosition = Math.max(0, positionMs)
     void setIsSeekingAction(ctx, true)
     void setSeekTargetAction(ctx, clampedPosition)
     void setPositionAction(ctx, clampedPosition)
     scheduleHistoryFlush(clampedPosition)
-    this.seekTimeoutId = setTimeout(() => {
-      this.seekTimeoutId = null
-      if (ctx.get(isSeekingAtom)) void setIsSeekingAction(ctx, false)
-    }, SEEK_SAFETY_TIMEOUT_MS)
     try {
       await player.seekTo(clampedPosition / 1000)
     } catch (error) {
       console.error('[PlaybackController] seekTo failed:', error)
       reportError(error, 'Ошибка при перемотке аудио')
-      if (this.seekTimeoutId) {
-        clearTimeout(this.seekTimeoutId)
-        this.seekTimeoutId = null
-      }
+      seekGuard.clear()
       void setIsSeekingAction(ctx, false)
     }
   }
 
   public resetSeekGuard = (): void => {
-    if (this.seekTimeoutId) {
-      clearTimeout(this.seekTimeoutId)
-      this.seekTimeoutId = null
-    }
-    void setIsSeekingAction(ctx, false)
-    void setSeekTargetAction(ctx, null)
+    seekGuard.reset()
   }
 
   public setPlaybackRate = async (
@@ -123,7 +115,6 @@ class PlaybackController {
   public getVolume = (): number => this.volume
 
   private playbackRate: PlaybackRate = 1
-  private seekTimeoutId: null | ReturnType<typeof setTimeout> = null
   private volume = 1
 }
 

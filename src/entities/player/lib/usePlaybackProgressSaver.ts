@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { AppState } from 'react-native'
-import { writeLiveProgressSnapshot } from 'entities/listening-history/@x/player'
+import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
 import { savePlaybackProgress } from './playbackProgress'
+
+const AUTO_SAVE_INTERVAL_MS = 10_000
 
 export const usePlaybackProgressSaver = () => {
   const positionRef = useRef(0)
@@ -48,14 +50,14 @@ export const usePlaybackProgressSaver = () => {
         positionMs: position,
         sermonId,
       })
-      writeLiveProgressSnapshot({
+      void flushHistoryProgressAction(ctx, {
         durationMs: durationRef.current,
         positionMs: position,
         sermonId,
       })
     }
 
-    const interval = setInterval(flushNow, 5000)
+    const interval = setInterval(flushNow, AUTO_SAVE_INTERVAL_MS)
 
     const subAppState = AppState.addEventListener('change', nextState => {
       if (nextState === 'background') flushNow()

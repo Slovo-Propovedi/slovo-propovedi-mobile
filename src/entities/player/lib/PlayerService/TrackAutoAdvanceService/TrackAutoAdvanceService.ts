@@ -102,7 +102,7 @@ export class TrackAutoAdvanceService {
         await playFirstTrackInQueue(playerActions, currentPlaylist, oldFlush)
         return
       }
-      void markHistoryCompletedAction(ctx, currentAudio.id).catch(error => {
+      void markHistoryCompletedAction(ctx, currentAudio.id, ctx.get(durationAtom)).catch(error => {
         console.error('[TrackAutoAdvanceService] markHistoryCompletedAction failed:', error)
         reportError(error, 'Ошибка при завершении записи истории')
       })

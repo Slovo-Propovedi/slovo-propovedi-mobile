@@ -107,11 +107,11 @@ class PlayerStatusListener {
 
       callbacks.onBufferingChange(status.isBuffering)
 
-      // Detect audio interruptions: playing changed from true to false (not user-initiated)
-      // This happens when phone calls or other audio interruptions occur
+      // Detect audio interruptions: any playing→false edge is treated as an interruption.
+      // User-pause discrimination is unnecessary — pause('auto') is idempotent and
+      // stop()/unload() detach this listener before pausing (see index.native.ts).
       if (this.wasPlayingBeforeInterruption && !currentPlaying) callbacks.onAudioInterruption(true)
       else if (!this.wasPlayingBeforeInterruption && currentPlaying)
-        // Audio resumed after interruption
         callbacks.onAudioInterruption(false)
 
       // Update previous playing state for next iteration

@@ -165,3 +165,29 @@ describe('PlayerStatusListener track end', () => {
     expect(staleWarnings).toHaveLength(1)
   })
 })
+
+describe('PlayerStatusListener interruption', () => {
+  let player: AudioPlayer
+  let callbacks: StatusCallbacks
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    player = createPlayerStub()
+    callbacks = createCallbacks()
+    playerStatusListener.setupListeners(player, callbacks)
+  })
+
+  test('fires the interruption callback on the playing→false edge', () => {
+    getPlaybackStatusHandler(player)(statusWith({ playing: true }))
+    getPlaybackStatusHandler(player)(statusWith({ playing: false }))
+
+    expect(callbacks.onAudioInterruption).toHaveBeenCalledWith(true)
+  })
+
+  test('fires the callback on the resume edge', () => {
+    getPlaybackStatusHandler(player)(statusWith({ playing: false }))
+    getPlaybackStatusHandler(player)(statusWith({ playing: true }))
+
+    expect(callbacks.onAudioInterruption).toHaveBeenCalledWith(false)
+  })
+})

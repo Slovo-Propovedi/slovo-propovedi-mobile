@@ -10,10 +10,6 @@ export const liveProgressSnapshotSchema = z.object({
 
 export type LiveProgressSnapshot = z.infer<typeof liveProgressSnapshotSchema>
 
-export const writeLiveProgressSnapshot = (value: LiveProgressSnapshot): void => {
-  void AsyncStorage.setItem(LISTENING_PROGRESS_SNAPSHOT, JSON.stringify(value))
-}
-
 export const readLiveProgressSnapshot = async (): Promise<LiveProgressSnapshot | undefined> => {
   try {
     const raw = await AsyncStorage.getItem(LISTENING_PROGRESS_SNAPSHOT)

@@ -1,6 +1,5 @@
 export { getEntrySermon } from '../lib/getEntrySermon'
 export { getResumePosition } from '../lib/getResumePosition'
-export { writeLiveProgressSnapshot } from '../lib/liveProgressStorage'
 export { recordSermonSwitchAction } from '../lib/recordSermonSwitch'
 export {
   flushHistoryProgressAction,

@@ -4,6 +4,7 @@ import { LISTENING_HISTORY, LISTENING_PROGRESS_SNAPSHOT } from 'shared/config'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { getEntrySermon } from '../lib/getEntrySermon'
+import * as liveProgressStorage from '../lib/liveProgressStorage'
 import {
   clearHistoryAction,
   flushHistoryProgressAction,
@@ -234,6 +235,12 @@ describe('listening-history model', () => {
   })
 
   describe('flushHistoryProgressAction', () => {
+    let clearSpy: jest.SpyInstance
+
+    beforeEach(() => {
+      clearSpy = jest.spyOn(liveProgressStorage, 'clearLiveProgressSnapshot')
+    })
+
     test('no-op for unknown sermon id', async () => {
       const entry = makeEntry('sermon-1')
       const ctx = createCtx()
@@ -246,6 +253,7 @@ describe('listening-history model', () => {
       })
 
       expect(ctx.get(historyAtom)).toEqual([entry])
+      expect(clearSpy).not.toHaveBeenCalled()
     })
 
     test('updates position and duration without changing lastPlayedAt', async () => {
@@ -263,6 +271,7 @@ describe('listening-history model', () => {
       expect(atomState[0].positionMs).toBe(800)
       expect(atomState[0].durationMs).toBe(2000)
       expect(atomState[0].lastPlayedAt).toBe(100)
+      expect(clearSpy).toHaveBeenCalledTimes(1)
     })
 
     test('persists to storage', async () => {
@@ -281,6 +290,37 @@ describe('listening-history model', () => {
       ) as ListeningHistory
       expect(stored[0].positionMs).toBe(800)
       expect(stored[0].durationMs).toBe(2000)
+      expect(clearSpy).toHaveBeenCalledTimes(1)
+    })
+
+    test('no-op when position and duration unchanged', async () => {
+      const entry = makeEntry('sermon-1', { durationMs: 1000, positionMs: 500 })
+      const ctx = createCtx()
+      historyAtom(ctx, [entry])
+
+      await flushHistoryProgressAction(ctx, {
+        durationMs: 1000,
+        positionMs: 500,
+        sermonId: 'sermon-1',
+      })
+
+      expect(ctx.get(historyAtom)).toEqual([entry])
+      expect(clearSpy).not.toHaveBeenCalled()
+    })
+
+    test('writes a lower position when flushing backward (no max-clamping)', async () => {
+      const entry = makeEntry('sermon-1', { durationMs: 1000, positionMs: 800 })
+      const ctx = createCtx()
+      historyAtom(ctx, [entry])
+
+      await flushHistoryProgressAction(ctx, {
+        durationMs: 1000,
+        positionMs: 300,
+        sermonId: 'sermon-1',
+      })
+
+      expect(ctx.get(historyAtom)[0].positionMs).toBe(300)
+      expect(clearSpy).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -295,6 +335,18 @@ describe('listening-history model', () => {
       expect(ctx.get(historyAtom)[0].positionMs).toBe(1000)
     })
 
+    test('uses live durationMs when provided and greater than 0', async () => {
+      const entry = makeEntry('sermon-1', { durationMs: 0, positionMs: 0 })
+      const ctx = createCtx()
+      historyAtom(ctx, [entry])
+
+      await markHistoryCompletedAction(ctx, 'sermon-1', 3_600_000)
+
+      const updated = ctx.get(historyAtom)[0]
+      expect(updated.durationMs).toBe(3_600_000)
+      expect(updated.positionMs).toBe(3_600_000)
+    })
+
     test('no-op when entry missing', async () => {
       const entry = makeEntry('sermon-1')
       const ctx = createCtx()
@@ -305,7 +357,7 @@ describe('listening-history model', () => {
       expect(ctx.get(historyAtom)).toEqual([entry])
     })
 
-    test('no-op when durationMs is 0', async () => {
+    test('no-op when durationMs is 0 and no live duration provided', async () => {
       const entry = makeEntry('sermon-1', { durationMs: 0, positionMs: 0 })
       const ctx = createCtx()
       historyAtom(ctx, [entry])

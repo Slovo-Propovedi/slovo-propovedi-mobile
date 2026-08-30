@@ -3,6 +3,8 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { isSeekingAtom, seekTargetPositionAtom } from '../../model'
 import { audioLoader } from './AudioLoader'
 import { playerService } from './index.native'
+import { playbackController } from './PlaybackController'
+import { playerStatusListener } from './PlayerStatusListener'
 
 jest.mock('./AudioLoader', () => ({ audioLoader: { replaceAudio: jest.fn() } }))
 
@@ -45,5 +47,22 @@ describe('PlayerService.replaceAudio', () => {
 
     expect(ctx.get(isSeekingAtom)).toBe(false)
     expect(ctx.get(seekTargetPositionAtom)).toBe(null)
+  })
+})
+
+describe('PlayerService.stop', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('detaches the status listener before pausing (no post-stop interruption flush)', async () => {
+    const cleanupSpy = jest.mocked(playerStatusListener.cleanup)
+    const stopSpy = jest.spyOn(playbackController, 'stop').mockResolvedValue(undefined)
+
+    await playerService.stop()
+
+    expect(cleanupSpy).toHaveBeenCalled()
+    expect(stopSpy).toHaveBeenCalled()
+    expect(cleanupSpy.mock.invocationCallOrder[0]).toBeLessThan(stopSpy.mock.invocationCallOrder[0])
   })
 })

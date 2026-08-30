@@ -82,22 +82,27 @@ export const recordPlaybackStartAction = action(
   'recordPlaybackStart',
 )
 
-export const markHistoryCompletedAction = action(async (ctx, sermonId: string) => {
-  const current = ctx.get(historyAtom)
-  const index = current.findIndex(e => getEntrySermon(e)?.id === sermonId)
-  if (index === -1) return
+export const markHistoryCompletedAction = action(
+  async (ctx, sermonId: string, durationMs?: number) => {
+    const current = ctx.get(historyAtom)
+    const index = current.findIndex(e => getEntrySermon(e)?.id === sermonId)
+    if (index === -1) return
 
-  const entry = current[index]
-  if (entry.durationMs === 0) return
+    const entry = current[index]
+    const finalDurationMs =
+      durationMs !== undefined && durationMs > 0 ? durationMs : entry.durationMs
+    if (finalDurationMs === 0) return
 
-  const updated = { ...entry, positionMs: entry.durationMs }
-  const next = [...current.slice(0, index), updated, ...current.slice(index + 1)]
+    const updated = { ...entry, durationMs: finalDurationMs, positionMs: finalDurationMs }
+    const next = [...current.slice(0, index), updated, ...current.slice(index + 1)]
 
-  await writeHistory(next)
-  await ctx.schedule(() => {
-    historyAtom(ctx, next)
-  })
-}, 'markHistoryCompleted')
+    await writeHistory(next)
+    await ctx.schedule(() => {
+      historyAtom(ctx, next)
+    })
+  },
+  'markHistoryCompleted',
+)
 
 export const removeHistoryEntryAction = action(async (ctx, sermonId: string) => {
   const current = ctx.get(historyAtom)
@@ -130,9 +135,12 @@ export const flushHistoryProgressAction = action(
 
     const entry = current[index]
 
+    const resolvedDurationMs = params.durationMs > 0 ? params.durationMs : entry.durationMs
+    if (entry.positionMs === params.positionMs && entry.durationMs === resolvedDurationMs) return
+
     const updated = {
       ...entry,
-      durationMs: params.durationMs > 0 ? params.durationMs : entry.durationMs,
+      durationMs: resolvedDurationMs,
       positionMs: params.positionMs,
     }
     const next = [...current.slice(0, index), updated, ...current.slice(index + 1)]

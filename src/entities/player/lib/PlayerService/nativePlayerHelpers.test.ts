@@ -1,7 +1,7 @@
 import { type AudioPlayer, type AudioStatus } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { isSeekingAtom, positionAtom, seekTargetPositionAtom } from '../../model'
-import { setupPlayerListeners } from './nativePlayerHelpers'
+import { isSeekingAtom, pauseTypeAtom, positionAtom, seekTargetPositionAtom } from '../../model'
+import { createAudioInterruptionHandler, setupPlayerListeners } from './nativePlayerHelpers'
 
 type StatusUpdateHandler = (status: AudioStatus) => void
 
@@ -95,5 +95,35 @@ describe('setupPlayerListeners position sync during seek', () => {
     await flushMicrotasks()
 
     expect(ctx.get(positionAtom)).toBe(42000)
+  })
+})
+
+describe('createAudioInterruptionHandler', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    pauseTypeAtom(ctx, null)
+  })
+
+  test('pauses with auto type on the interruption edge', () => {
+    const pause = jest.fn().mockResolvedValue(undefined)
+    const play = jest.fn().mockResolvedValue(undefined)
+    const handler = createAudioInterruptionHandler({ pause, play })
+
+    handler(true)
+
+    expect(pause).toHaveBeenCalledWith('auto')
+    expect(play).not.toHaveBeenCalled()
+  })
+
+  test('resumes on interruption end when pauseType is auto and stored flag set', () => {
+    const pause = jest.fn().mockResolvedValue(undefined)
+    const play = jest.fn().mockResolvedValue(undefined)
+    const handler = createAudioInterruptionHandler({ pause, play })
+
+    handler(true)
+    pauseTypeAtom(ctx, 'auto')
+    handler(false)
+
+    expect(play).toHaveBeenCalled()
   })
 })
