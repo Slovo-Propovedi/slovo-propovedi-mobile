@@ -1,25 +1,18 @@
-import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
+import BottomSheet from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
-import { memo, useCallback, useMemo } from 'react'
-import { Text } from 'react-native'
+import { memo, useMemo } from 'react'
 import { useHistoryProgressMap } from 'entities/listening-history'
-import {
-  currentAudioAtom,
-  downloadingAudioUrlAtom,
-  isPlayingAtom,
-  usePlayNewSermon,
-} from 'entities/player'
+import { currentAudioAtom, downloadingAudioUrlAtom, isPlayingAtom } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { useTheme } from 'shared/ui/theme'
 import type { PlaylistData } from 'shared/model'
 import { createStyles } from './PlaylistBottomSheet.styles'
-import { PlaylistSheetList } from './PlaylistSheetList'
+import { PlaylistSheetBackdrop } from './PlaylistSheetBackdrop'
+import { PlaylistSheetContent } from './PlaylistSheetContent'
 import { useListReveal } from './useListReveal'
+import { FINAL_SNAP_INDEX, useQueueSheetSnapMetrics } from './useQueueSheetSnapMetrics'
 import { useScrollToCurrentTrack } from './useScrollToCurrentTrack'
-
-const SNAP_POINTS: (number | string)[] = ['50%', '80%']
-const FINAL_SNAP_INDEX = SNAP_POINTS.length - 1
-
+import { useSheetLifecycle } from './useSheetLifecycle'
 interface PlaylistBottomSheetProps {
   closeOnBack?: boolean
   onClose: () => void
@@ -37,7 +30,6 @@ const PlaylistBottomSheetComponent = ({
   const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
   const [isAudioPlaying] = useAtom(isPlayingAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
-  const playNewSermon = usePlayNewSermon()
   const progressMap = useHistoryProgressMap()
   const { currentTheme } = useTheme()
   const {
@@ -57,30 +49,17 @@ const PlaylistBottomSheetComponent = ({
     playlist,
   })
   const { handleListScroll, isRevealed, noteScrollScheduled } = useListReveal({ currentIndex })
+  const { handlePressItem, handleSheetChanges, sheetIndex } = useSheetLifecycle({
+    closeOnBack,
+    noteScrollScheduled,
+    noteSheetIndex,
+    onClose,
+    playlist,
+    scrollToCurrent,
+    sheetRef,
+  })
 
-  const handlePressItem = useCallback(
-    async (index: number) => {
-      if (!playlist) return
-      const sermon = playlist.sermons[index]
-      if (!sermon.audioUrl) return
-
-      await playNewSermon({ playlist, sermon })
-      sheetRef.current?.close()
-      onClose()
-    },
-    [playlist, playNewSermon, sheetRef, onClose],
-  )
-  const handleSheetChanges = useCallback(
-    (index: number) => {
-      noteSheetIndex(index)
-      if (index === FINAL_SNAP_INDEX) {
-        scrollToCurrent()
-        noteScrollScheduled()
-      }
-      if (closeOnBack && index === -1) onClose()
-    },
-    [closeOnBack, noteSheetIndex, noteScrollScheduled, onClose, scrollToCurrent],
-  )
+  const { hiddenBelowSheetEdge, snapPoints } = useQueueSheetSnapMetrics({ sheetIndex })
   const renderStyles = useMemo(() => createStyles(currentTheme), [currentTheme])
 
   if (!playlist) return null
@@ -89,23 +68,16 @@ const PlaylistBottomSheetComponent = ({
     <BottomSheet
       ref={sheetRef}
       enablePanDownToClose
+      snapPoints={snapPoints}
       index={FINAL_SNAP_INDEX}
-      snapPoints={SNAP_POINTS}
       enableDynamicSizing={false}
       onChange={handleSheetChanges}
+      enableContentPanningGesture={false}
       backgroundStyle={renderStyles.background}
+      backdropComponent={PlaylistSheetBackdrop}
       handleIndicatorStyle={renderStyles.indicator}
-      backdropComponent={props => (
-        <BottomSheetBackdrop
-          {...props}
-          appearsOnIndex={0}
-          pressBehavior='close'
-          disappearsOnIndex={-1}
-        />
-      )}
     >
-      <Text style={renderStyles.title}>{playlist.title}</Text>
-      <PlaylistSheetList
+      <PlaylistSheetContent
         listRef={listRef}
         playlist={playlist}
         styles={renderStyles}
@@ -122,6 +94,7 @@ const PlaylistBottomSheetComponent = ({
         onMomentumEnd={handleMomentumEnd}
         onMomentumStart={handleMomentumStart}
         initialNumToRender={initialNumToRender}
+        hiddenBelowSheetEdge={hiddenBelowSheetEdge}
         onScrollToIndexFailed={handleScrollToIndexFailed}
       />
     </BottomSheet>

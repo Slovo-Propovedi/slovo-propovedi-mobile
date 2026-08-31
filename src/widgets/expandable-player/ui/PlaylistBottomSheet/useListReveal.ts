@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const REVEAL_CEILING_MS = 1500
-const REVEAL_SCROLL_THRESHOLD_PX = 100
 // Row ≈ 50px art + paddings + separator — estimate for the upfront decision.
 const ROW_HEIGHT_ESTIMATE_PX = 70
 // Offsets up to ~3-4 rows: the correction scroll is tiny, no gate needed.
@@ -48,7 +47,11 @@ export const useListReveal = ({ currentIndex }: UseListRevealParams) => {
 
   const handleListScroll = useCallback(
     (y: number) => {
-      if (y > REVEAL_SCROLL_THRESHOLD_PX) reveal()
+      // Any real scroll offset means the list is interactive/landed. The old
+      // 100px threshold was unreachable for short playlists whose whole
+      // scrollable distance is ~1 row (~73px) — the list stayed skeleton'd
+      // until the ceiling timer (issue #69).
+      if (y > 0) reveal()
     },
     [reveal],
   )

@@ -25,6 +25,7 @@ export const useFullscreenPanGesture = ({
 
   return expanded && !disabled
     ? Gesture.Pan()
+        .enabled(!showPlaylist)
         .activeOffsetY(15)
         .onStart(() => {
           'worklet'

@@ -1,17 +1,17 @@
 import { type BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
-import { memo, useCallback, useMemo } from 'react'
+import { memo } from 'react'
 import { View } from 'react-native'
-import { formatSermonReference } from 'shared/lib/format'
 import type { PlaylistData } from 'shared/model'
 import { type createStyles } from './PlaylistBottomSheet.styles'
-import { PlaylistSheetRow } from './PlaylistSheetRow'
 import { PlaylistSheetSkeleton } from './PlaylistSheetSkeleton'
 import { ScrollableSheetList } from './ScrollableSheetList'
+import { type TrackListItemData, usePlaylistSheetList } from './usePlaylistSheetList'
 
 interface PlaylistSheetListProps {
   cacheTrigger: number
   currentAudioId?: string
   downloadingUrl?: null | string
+  hiddenBelowSheetEdge: number
   initialNumToRender?: number
   isAudioPlaying: boolean
   isRevealed: boolean
@@ -27,21 +27,12 @@ interface PlaylistSheetListProps {
   progressMap: Map<string, number>
   styles: ReturnType<typeof createStyles>
 }
-
-interface TrackListItemData {
-  artwork?: null | string
-  id: string
-  subtitle?: string
-  title: string
-  url?: string
-}
-
 const keyExtractor = (item: TrackListItemData) => item.id
-
 const PlaylistSheetListComponent = ({
   cacheTrigger,
   currentAudioId,
   downloadingUrl,
+  hiddenBelowSheetEdge,
   initialNumToRender,
   isAudioPlaying,
   isRevealed,
@@ -57,42 +48,26 @@ const PlaylistSheetListComponent = ({
   progressMap,
   styles,
 }: PlaylistSheetListProps) => {
-  const tracksListData = useMemo<TrackListItemData[]>(
-    () =>
-      playlist.sermons.map(sermon => ({
-        artwork: playlist.artwork,
-        id: sermon.id,
-        subtitle: formatSermonReference({
-          book: sermon.book,
-          chapter: sermon.chapter,
-          verse: sermon.verse,
-        }),
-        title: sermon.title,
-        url: sermon.audioUrl ?? undefined,
-      })),
-    [playlist],
-  )
-
-  const renderItem = useCallback(
-    ({ index, item }: { index: number; item: TrackListItemData }) => (
-      <PlaylistSheetRow
-        index={index}
-        onPress={onPress}
-        title={item.title}
-        audioUrl={item.url}
-        artwork={item.artwork}
-        subtitle={item.subtitle}
-        cacheTrigger={cacheTrigger}
-        downloadingUrl={downloadingUrl}
-        isPlaying={currentAudioId === item.id}
-        storedProgress={progressMap.get(item.id)}
-        isAudioPlaying={currentAudioId === item.id && isAudioPlaying}
-      />
-    ),
-    [cacheTrigger, currentAudioId, downloadingUrl, isAudioPlaying, onPress, progressMap],
-  )
-  const ItemSeparator = useCallback(() => <View style={styles.divider} />, [styles])
-
+  const {
+    footerHeight,
+    handleContentSizeChange,
+    handleListLayout,
+    handleScrollEvent,
+    ItemSeparator,
+    renderItem,
+    tracksListData,
+  } = usePlaylistSheetList({
+    cacheTrigger,
+    currentAudioId,
+    downloadingUrl,
+    hiddenBelowSheetEdge,
+    isAudioPlaying,
+    onPress,
+    onScroll,
+    playlist,
+    progressMap,
+    styles,
+  })
   return (
     <View style={styles.listWrapper}>
       <ScrollableSheetList
@@ -101,15 +76,18 @@ const PlaylistSheetListComponent = ({
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         onScrollEndDrag={onDragEnd}
+        onLayout={handleListLayout}
         onScrollBeginDrag={onDragStart}
         onMomentumScrollEnd={onMomentumEnd}
         ItemSeparatorComponent={ItemSeparator}
         initialNumToRender={initialNumToRender}
         onMomentumScrollBegin={onMomentumStart}
         onScrollToIndexFailed={onScrollToIndexFailed}
-        contentContainerStyle={[styles.listContent, !isRevealed && styles.hiddenContent]}
+        onContentSizeChange={handleContentSizeChange}
         // Per-frame native→JS dispatch is only needed until the landing signal arrives.
-        onScroll={isRevealed ? undefined : event => onScroll(event.nativeEvent.contentOffset.y)}
+        onScroll={isRevealed ? undefined : handleScrollEvent}
+        contentContainerStyle={[styles.listContent, !isRevealed && styles.hiddenContent]}
+        ListFooterComponent={<View pointerEvents='none' style={{ height: footerHeight }} />}
       />
       {!isRevealed && <PlaylistSheetSkeleton styles={styles} />}
     </View>

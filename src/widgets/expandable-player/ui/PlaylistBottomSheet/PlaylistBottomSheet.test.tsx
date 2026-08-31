@@ -185,7 +185,7 @@ describe('<PlaylistBottomSheet>', () => {
 
     await renderSheet(ctx, makePlaylist(sermons))
 
-    expect(mockMountIndex).toBe(1)
+    expect(mockMountIndex).toBe(0)
   })
 
   test('scrolls to the current track when the sheet settles at the top snap', async () => {
@@ -197,7 +197,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
 
@@ -214,7 +214,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await act(async () => {
       jest.advanceTimersByTime(0)
@@ -236,7 +236,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(0)
+      mockOnChange?.(1)
     })
     await fireNudge()
 
@@ -252,7 +252,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
 
@@ -268,7 +268,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
 
@@ -285,7 +285,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
@@ -293,7 +293,7 @@ describe('<PlaylistBottomSheet>', () => {
 
     // A second settle at the top snap is NOT a fresh scroll (one-shot per mount).
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
@@ -308,14 +308,14 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
       mockOnChange?.(0)
+      mockOnChange?.(1)
     })
     await fireNudge()
     expect(mockScrollToIndex).not.toHaveBeenCalled()
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
@@ -330,7 +330,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
@@ -415,7 +415,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
@@ -448,7 +448,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
@@ -459,7 +459,7 @@ describe('<PlaylistBottomSheet>', () => {
     expect(mockScrollToOffset).toHaveBeenCalledTimes(1)
 
     await act(async () => {
-      mockOnChange?.(0)
+      mockOnChange?.(1)
     })
     await act(async () => {
       jest.advanceTimersByTime(150)
@@ -483,7 +483,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
@@ -537,7 +537,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await act(async () => {
       mockOnMomentumScrollBegin?.()
@@ -550,7 +550,7 @@ describe('<PlaylistBottomSheet>', () => {
       mockOnMomentumScrollEnd?.()
     })
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
@@ -565,7 +565,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
@@ -606,7 +606,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await act(async () => {
       unmount()
@@ -625,14 +625,14 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
 
     expect(mockContentContainerStyle).toEqual(expect.arrayContaining([{ opacity: 0 }]))
   })
 
-  test('reveals the list once the first scroll passes the threshold', async () => {
+  test('reveals the list once the first real scroll offset arrives', async () => {
     const ctx = createCtx()
     const sermons = Array.from({ length: 10 }, (_, i) => makeSermon(`s${i}`))
     currentAudioAtom(ctx, makeAudio('s6'))
@@ -641,13 +641,21 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockContentContainerStyle).toEqual(expect.arrayContaining([{ opacity: 0 }]))
 
+    // y:0 (Android layout-settle noise) must NOT reveal the list.
     await act(async () => {
-      mockOnScroll?.({ nativeEvent: { contentOffset: { y: 1500 } } })
+      mockOnScroll?.({ nativeEvent: { contentOffset: { y: 0 } } })
+    })
+    expect(mockContentContainerStyle).toEqual(expect.arrayContaining([{ opacity: 0 }]))
+
+    // Any real offset (even 10px, below the old 100px threshold) reveals the
+    // list — short playlists have only ~73px of scrollable distance (issue #69).
+    await act(async () => {
+      mockOnScroll?.({ nativeEvent: { contentOffset: { y: 10 } } })
     })
 
     expect(mockContentContainerStyle).not.toEqual(expect.arrayContaining([{ opacity: 0 }]))
@@ -681,7 +689,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(mockContentContainerStyle).toEqual(expect.arrayContaining([{ opacity: 0 }]))
@@ -702,14 +710,14 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
 
     expect(getByTestId(SKELETON_TEST_ID)).toBeTruthy()
   })
 
-  test('hides the skeleton once the first scroll passes the threshold', async () => {
+  test('hides the skeleton once the first real scroll offset arrives', async () => {
     const ctx = createCtx()
     const sermons = Array.from({ length: 10 }, (_, i) => makeSermon(`s${i}`))
     currentAudioAtom(ctx, makeAudio('s6'))
@@ -718,13 +726,13 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
     expect(getByTestId(SKELETON_TEST_ID)).toBeTruthy()
 
     await act(async () => {
-      mockOnScroll?.({ nativeEvent: { contentOffset: { y: 1500 } } })
+      mockOnScroll?.({ nativeEvent: { contentOffset: { y: 10 } } })
     })
 
     expect(queryByTestId(SKELETON_TEST_ID)).toBeNull()
@@ -749,7 +757,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
 
@@ -768,7 +776,7 @@ describe('<PlaylistBottomSheet>', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
 
     await act(async () => {
-      mockOnChange?.(1)
+      mockOnChange?.(0)
     })
     await fireNudge()
 

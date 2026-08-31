@@ -14,7 +14,10 @@ export const createStyles = (themeColors: ThemeColors) =>
     },
     hiddenContent: { opacity: 0 },
     indicator: { backgroundColor: themeColors.textMuted },
-    listContent: { paddingBottom: INDENTS.medium, paddingHorizontal: INDENTS.medium },
+    listContent: {
+      paddingBottom: INDENTS.medium,
+      paddingHorizontal: INDENTS.medium,
+    },
     listWrapper: { flex: 1 },
     skeletonArt: {
       borderRadius: RADIUSES.low,
