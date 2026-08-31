@@ -276,6 +276,8 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 4. При смене трека (`oldAudio.id !== sermonId`) — `recordSermonSwitchAction({ markOldCompleted: false, ... })` **до** `replaceAudio`: flush позиции старого трека в историю.
 5. `recordPlaybackStartAction(newAudio, playlist)` — записывает/обновляет запись в истории (только если трек новый или тот же).
 
+Повторный тап по той же проповеди подавляется гардом (Issue #74): хук держит `inFlightSermonIdsRef` (Set id запусков «в полёте») и `lastTapRef` (id + время последнего тапа, запустившего воспроизведение). Если та же проповедь уже «в полёте» (запуск не завершён) или с последнего тапа, запустившего воспроизведение, прошло < 1000мс — тап игнорируется (leading-edge: первый тап срабатывает сразу, повторные в окне/в полёте гасятся; подавленные тапы окно не обновляют). Параллельные запуски одной проповеди невозможны (Set), разные проповеди идут параллельно свободно (пользователь передумал); после окна тап по той же проповеди снова работает (осознанный рестарт). При ошибке запуска окно подавления сбрасывается — повторный тап срабатывает сразу. Гард живёт в refs хука и действует на каждый экземпляр хука отдельно: у `PlaylistScreen`, `DynamicSectionsSlider`, `SermonSearchResults`, `useEntryPlayback` и `useSheetLifecycle` своё состояние гарда, тапы через разные компоненты взаимно не подавляются (на практике открытие полноэкранного плеера перекрывает UI).
+
 #### Кнопки Next/Prev (`usePlayerToggleTrack`)
 
 `usePlayerToggleTrack` (`src/entities/player/ui/PlayerControls/usePlayerToggleTrack.ts`) — чтение истории через `ctx.get(historyAtom)` + `getResumePosition(history, sermonId)`. При смене трека `recordSermonSwitchAction({ markOldCompleted: false, ... })` flush'ит позицию старого трека.

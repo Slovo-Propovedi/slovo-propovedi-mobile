@@ -17,6 +17,8 @@ const mockRecordSermonSwitch = jest.fn().mockResolvedValue(undefined)
 
 const OTHER_SERMON_ID = 'other-sermon'
 
+let dateNowSpy: jest.SpyInstance
+
 jest.mock('./usePlayer', () => ({
   usePlayer: () => ({
     play: mockPlay,
@@ -46,6 +48,7 @@ const mockHistoryAtom = (
 
 const SERMON_ID = 'sermon-1'
 const AUDIO_URL = 'https://example.com/audio.mp3'
+const OTHER_AUDIO_URL = 'https://example.com/other.mp3'
 const RESUME_MS = 50000
 
 const mockSermon = {
@@ -92,6 +95,7 @@ const setAtomState = async (opts: {
 describe('usePlayNewSermon', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(1000)
     mockPlay.mockResolvedValue(undefined)
     mockReplaceAudio.mockResolvedValue(null)
     mockSeekTo.mockResolvedValue(undefined)
@@ -101,6 +105,10 @@ describe('usePlayNewSermon', () => {
     positionAtom(ctx, 0)
     durationAtom(ctx, 5678)
     mockHistoryAtom(ctx, [])
+  })
+
+  afterEach(() => {
+    dateNowSpy.mockRestore()
   })
 
   test('different sermon → replaceAudio called with resume ms', async () => {
@@ -257,5 +265,135 @@ describe('usePlayNewSermon', () => {
     })
 
     expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
+  })
+
+  test('duplicate tap while first is in-flight → single play (suppressed)', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+    mockReplaceAudio.mockReturnValue(new Promise(() => {}))
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+
+    await act(async () => {
+      void result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    dateNowSpy.mockReturnValue(2001)
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockReplaceAudio).toHaveBeenCalledTimes(1)
+    expect(mockPlay).toHaveBeenCalledTimes(0)
+    expect(mockRecordPlaybackStart).toHaveBeenCalledTimes(0)
+  })
+
+  test('different sermon while first is in-flight → both proceed', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+
+    const otherSermon = { ...mockSermon, id: OTHER_SERMON_ID }
+
+    await act(async () => {
+      const firstTap = result.current({ playlist: mockPlaylist, sermon: mockSermon })
+      const secondTap = result.current({ playlist: mockPlaylist, sermon: otherSermon })
+      await Promise.all([firstTap, secondTap])
+    })
+
+    expect(mockReplaceAudio).toHaveBeenCalledTimes(2)
+    expect(mockPlay).toHaveBeenCalledTimes(2)
+    expect(mockRecordPlaybackStart).toHaveBeenCalledTimes(2)
+  })
+
+  test('A→B→A interleave: A#2 suppressed while A#1 in-flight, B proceeds', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+    mockReplaceAudio.mockReturnValue(new Promise(() => {}))
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+
+    const otherSermon = { ...mockSermon, audioUrl: OTHER_AUDIO_URL, id: OTHER_SERMON_ID }
+
+    await act(async () => {
+      void result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    mockReplaceAudio.mockResolvedValue(null)
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: otherSermon })
+    })
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockReplaceAudio).toHaveBeenCalledTimes(2)
+    expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, RESUME_MS)
+    expect(mockReplaceAudio).toHaveBeenCalledWith(OTHER_AUDIO_URL, RESUME_MS)
+    expect(mockPlay).toHaveBeenCalledTimes(1)
+  })
+
+  test('failed play clears suppression window → immediate retry proceeds', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+    mockReplaceAudio.mockRejectedValueOnce(new Error('boom'))
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+
+    await act(async () => {
+      await expect(result.current({ playlist: mockPlaylist, sermon: mockSermon })).rejects.toThrow(
+        'boom',
+      )
+    })
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockReplaceAudio).toHaveBeenCalledTimes(1)
+    expect(mockSeekTo).toHaveBeenCalledWith(RESUME_MS)
+    expect(mockPlay).toHaveBeenCalledTimes(1)
+  })
+
+  test('same sermon within 1000ms window after completion → suppressed', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockReplaceAudio).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockReplaceAudio).toHaveBeenCalledTimes(1)
+    expect(mockPlay).toHaveBeenCalledTimes(1)
+    expect(mockRecordPlaybackStart).toHaveBeenCalledTimes(1)
+  })
+
+  test('same sermon after window expired → plays again', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockPlay).toHaveBeenCalledTimes(1)
+
+    dateNowSpy.mockReturnValue(2001)
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockPlay).toHaveBeenCalledTimes(2)
+    expect(mockRecordPlaybackStart).toHaveBeenCalledTimes(2)
+    expect(mockSeekTo).toHaveBeenCalledWith(RESUME_MS)
   })
 })

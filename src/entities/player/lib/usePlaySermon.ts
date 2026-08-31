@@ -21,6 +21,7 @@ import {
   setCurrentPlaylistAction,
 } from '../model'
 import { usePlayer } from './usePlayer'
+import { usePlayTapGuard } from './usePlayTapGuard'
 
 const SAME_SERMON_TOLERANCE_MS = 1000
 
@@ -32,6 +33,9 @@ export const usePlayNewSermon = () => {
   const openPlayerFullscreen = useAction(setPlayerFullscreen)
   const recordPlaybackStart = useAction(recordPlaybackStartAction)
   const recordSermonSwitch = useAction(recordSermonSwitchAction)
+
+  const { clearSuppressionOnError, isRepeatTapSuppressed, markPlayFinished, markPlayStarted } =
+    usePlayTapGuard()
 
   interface PlayNewSermonProps {
     playlist: PlaylistData
@@ -45,58 +49,70 @@ export const usePlayNewSermon = () => {
     if (!audioUrl) return
 
     const sermonId = id
-    const currentAudio = ctx.get(currentAudioAtom)
-    const currentPosition = ctx.get(positionAtom)
-    const currentDuration = ctx.get(durationAtom)
-    const history = ctx.get(historyAtom)
-    const resumeMs = getResumePosition(history, sermonId)
 
-    const newAudio: AudioPlayerData = {
-      ...other,
-      artist,
-      artwork: playlist.artwork,
-      audioUrl,
-      id: sermonId,
-      title,
-    }
+    if (isRepeatTapSuppressed(sermonId)) return
 
-    const oldAudio = currentAudio
-    const oldPositionMs = currentPosition
-    const oldDurationMs = currentDuration
+    markPlayStarted(sermonId)
 
-    await setCurrentAudio(newAudio)
-    await setCurrentPlaylist(playlist)
+    try {
+      const currentAudio = ctx.get(currentAudioAtom)
+      const currentPosition = ctx.get(positionAtom)
+      const currentDuration = ctx.get(durationAtom)
+      const history = ctx.get(historyAtom)
+      const resumeMs = getResumePosition(history, sermonId)
 
-    void openPlayerFullscreen(true)
+      const newAudio: AudioPlayerData = {
+        ...other,
+        artist,
+        artwork: playlist.artwork,
+        audioUrl,
+        id: sermonId,
+        title,
+      }
 
-    if (oldAudio?.id && oldAudio.id !== sermonId)
-      await recordSermonSwitch({
-        markOldCompleted: false,
-        newAudio,
-        newPlaylist: playlist,
-        oldDurationMs,
-        oldPositionMs: Math.max(0, oldPositionMs),
-        oldSermonId: oldAudio.id,
+      const oldAudio = currentAudio
+      const oldPositionMs = currentPosition
+      const oldDurationMs = currentDuration
+
+      await setCurrentAudio(newAudio)
+      await setCurrentPlaylist(playlist)
+
+      void openPlayerFullscreen(true)
+
+      if (oldAudio?.id && oldAudio.id !== sermonId)
+        await recordSermonSwitch({
+          markOldCompleted: false,
+          newAudio,
+          newPlaylist: playlist,
+          oldDurationMs,
+          oldPositionMs: Math.max(0, oldPositionMs),
+          oldSermonId: oldAudio.id,
+        })
+
+      if (currentAudio?.id !== sermonId) await replaceAudio(newAudio.audioUrl, resumeMs)
+      else {
+        const entry = history.find(e => getEntrySermon(e)?.id === sermonId)
+
+        if (entry && resumeMs === 0) await seekTo(0)
+        else if (resumeMs > 0 && Math.abs(currentPosition - resumeMs) > SAME_SERMON_TOLERANCE_MS)
+          await seekTo(resumeMs)
+      }
+
+      if (!oldAudio?.id || oldAudio.id === sermonId) void recordPlaybackStart(newAudio, playlist)
+
+      await play()
+
+      setLockScreenMetadata({
+        albumTitle: playlist.title,
+        artist: newAudio.artist,
+        artworkUrl: newAudio.artwork,
+        title: newAudio.title,
       })
-
-    if (currentAudio?.id !== sermonId) await replaceAudio(newAudio.audioUrl, resumeMs)
-    else {
-      const entry = history.find(e => getEntrySermon(e)?.id === sermonId)
-
-      if (entry && resumeMs === 0) await seekTo(0)
-      else if (resumeMs > 0 && Math.abs(currentPosition - resumeMs) > SAME_SERMON_TOLERANCE_MS)
-        await seekTo(resumeMs)
+    } catch (error) {
+      clearSuppressionOnError(sermonId)
+      throw error
+    } finally {
+      markPlayFinished(sermonId)
     }
-
-    if (!oldAudio?.id || oldAudio.id === sermonId) void recordPlaybackStart(newAudio, playlist)
-
-    await play()
-
-    setLockScreenMetadata({
-      albumTitle: playlist.title,
-      artist: newAudio.artist,
-      artworkUrl: newAudio.artwork,
-      title: newAudio.title,
-    })
   }
 }
