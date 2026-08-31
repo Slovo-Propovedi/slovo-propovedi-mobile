@@ -18,14 +18,30 @@
 
 <table>
   <tr>
-    <td align="center"><img src="assets/screenshots/listen-screen.png" width="200" /><br/>Слушать</td>
-    <td align="center"><img src="assets/screenshots/playlist-screen.png" width="200" /><br/>Плейлист</td>
-    <td align="center"><img src="assets/screenshots/player-screen.png" width="200" /><br/>Плеер</td>
+    <td align="center"><img src="assets/screenshots/listen-screen-white.png" width="200" alt="Слушать" /><br/>Слушать</td>
+    <td align="center"><img src="assets/screenshots/listen-screen-dark.png" width="200" alt="Слушать (тёмная тема)" /><br/>Слушать (тёмная тема)</td>
+    <td align="center"><img src="assets/screenshots/search-screen-dark.png" width="200" alt="Поиск" /><br/>Поиск</td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/screenshots/settings-screen.png" width="200" /><br/>Настройки</td>
-    <td align="center"><img src="assets/screenshots/about-screen.png" width="200" /><br/>О приложении</td>
-    <td></td>
+    <td align="center"><img src="assets/screenshots/playlists-list-screen.png" width="200" alt="Список плейлистов" /><br/>Список плейлистов</td>
+    <td align="center"><img src="assets/screenshots/playlist-screen-dark.png" width="200" alt="Плейлист" /><br/>Плейлист</td>
+    <td align="center"><img src="assets/screenshots/playlist-in-bottomsheet.png" width="200" alt="Плейлист в шторке" /><br/>Плейлист в шторке</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/screenshots/fullscreen-player.png" width="200" alt="Плеер" /><br/>Плеер</td>
+    <td align="center"><img src="assets/screenshots/menu-in-fullscreen-player.png" width="200" alt="Меню плеера" /><br/>Меню плеера</td>
+    <td align="center"><img src="assets/screenshots/history-screen.png" width="200" alt="История прослушивания" /><br/>История прослушивания</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center"><img src="assets/screenshots/settings-screen.png" width="200" alt="Настройки" /><br/>Настройки</td>
+    <td align="center"><img src="assets/screenshots/more-screen.png" width="200" alt="Ещё" /><br/>Ещё</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/screenshots/about-screen.png" width="200" alt="О приложении" /><br/>О приложении</td>
+    <td align="center"><img src="assets/screenshots/share-screen.png" width="200" alt="Поделиться" /><br/>Поделиться</td>
   </tr>
 </table>
 

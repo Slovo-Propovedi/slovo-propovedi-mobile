@@ -18,14 +18,30 @@
 
 <table>
   <tr>
-    <td align="center"><img src="assets/screenshots/listen-screen.png" width="200" /><br/>Listen</td>
-    <td align="center"><img src="assets/screenshots/playlist-screen.png" width="200" /><br/>Playlist</td>
-    <td align="center"><img src="assets/screenshots/player-screen.png" width="200" /><br/>Player</td>
+    <td align="center"><img src="assets/screenshots/listen-screen-white.png" width="200" alt="Listen" /><br/>Listen</td>
+    <td align="center"><img src="assets/screenshots/listen-screen-dark.png" width="200" alt="Listen (dark theme)" /><br/>Listen (dark theme)</td>
+    <td align="center"><img src="assets/screenshots/search-screen-dark.png" width="200" alt="Search" /><br/>Search</td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/screenshots/settings-screen.png" width="200" /><br/>Settings</td>
-    <td align="center"><img src="assets/screenshots/about-screen.png" width="200" /><br/>About</td>
-    <td></td>
+    <td align="center"><img src="assets/screenshots/playlists-list-screen.png" width="200" alt="Playlists" /><br/>Playlists</td>
+    <td align="center"><img src="assets/screenshots/playlist-screen-dark.png" width="200" alt="Playlist" /><br/>Playlist</td>
+    <td align="center"><img src="assets/screenshots/playlist-in-bottomsheet.png" width="200" alt="Playlist sheet" /><br/>Playlist sheet</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/screenshots/fullscreen-player.png" width="200" alt="Player" /><br/>Player</td>
+    <td align="center"><img src="assets/screenshots/menu-in-fullscreen-player.png" width="200" alt="Player menu" /><br/>Player menu</td>
+    <td align="center"><img src="assets/screenshots/history-screen.png" width="200" alt="Listening history" /><br/>Listening history</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center"><img src="assets/screenshots/settings-screen.png" width="200" alt="Settings" /><br/>Settings</td>
+    <td align="center"><img src="assets/screenshots/more-screen.png" width="200" alt="More" /><br/>More</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/screenshots/about-screen.png" width="200" alt="About" /><br/>About</td>
+    <td align="center"><img src="assets/screenshots/share-screen.png" width="200" alt="Share" /><br/>Share</td>
   </tr>
 </table>
 
