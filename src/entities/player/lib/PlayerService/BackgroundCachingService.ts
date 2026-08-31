@@ -1,7 +1,6 @@
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { incrementCacheTrigger, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { reportError } from 'shared/model/error-dialog'
 import {
   downloadingAudioUrlAtom,
   setDownloadingUrlAction,
@@ -53,8 +52,11 @@ export const startBackgroundCaching = (audioUrl: string): void => {
       if (ctx.get(downloadingAudioUrlAtom) === audioUrl) void setDownloadProgressAction(ctx, 1)
     })
     .catch(error => {
+      // Silent failure: background caching is an automatic, invisible optimization
+      // (Issue #73) — playback streams from network and is unaffected; a network
+      // error must not open the global error dialog. Next playback of this track
+      // re-triggers caching.
       console.error('[BackgroundCaching] Caching failed:', error)
-      reportError(error, 'Ошибка при фоновом кэшировании аудио')
       removeTrackProgress(audioUrl)
     })
     .finally(() => {

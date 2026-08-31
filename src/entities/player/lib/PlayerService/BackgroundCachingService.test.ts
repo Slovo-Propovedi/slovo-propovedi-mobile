@@ -1,5 +1,6 @@
 import { createCtx, type Ctx } from '@reatom/framework'
 import { incrementCacheTrigger, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
+import { reportError } from 'shared/model/error-dialog'
 import { downloadingAudioUrlAtom, downloadProgressAtom, isDownloadingAtom } from '../download-model'
 import {
   _resetInFlightDownloadsForTesting,
@@ -9,6 +10,7 @@ import {
 const TEST_URL = 'https://example.com/audio.mp3'
 const SECOND_URL = 'https://example.com/audio2.mp3'
 const CACHED_URI = 'file://cached.mp3'
+const DOWNLOAD_ERROR = new Error('download failed')
 
 let mockCtx: Ctx
 
@@ -25,6 +27,12 @@ jest.mock('shared/lib/audio-cache', () => ({
     cacheAudio: (...args: Parameters<typeof mockCacheAudio>) => mockCacheAudio(...args),
   },
 }))
+
+jest.mock('shared/model/error-dialog', () => ({
+  reportError: jest.fn(),
+}))
+
+const mockReportError = jest.mocked(reportError)
 
 jest.mock('shared/lib/cache-triggers', () => {
   const actual = jest.requireActual('shared/lib/cache-triggers')
@@ -115,7 +123,7 @@ describe('BackgroundCachingService', () => {
 
   describe('cleanup on error', () => {
     test('removes per-track key without calling incrementCacheTrigger', async () => {
-      mockCacheAudio.mockRejectedValue(new Error('download failed'))
+      mockCacheAudio.mockRejectedValue(DOWNLOAD_ERROR)
       startBackgroundCaching(TEST_URL)
       await flushPromises()
 
@@ -124,12 +132,20 @@ describe('BackgroundCachingService', () => {
     })
 
     test('resets global downloading state after error', async () => {
-      mockCacheAudio.mockRejectedValue(new Error('download failed'))
+      mockCacheAudio.mockRejectedValue(DOWNLOAD_ERROR)
       startBackgroundCaching(TEST_URL)
       await flushPromises()
 
       expect(mockCtx.get(isDownloadingAtom)).toBe(false)
       expect(mockCtx.get(downloadingAudioUrlAtom)).toBeNull()
+    })
+
+    test('does NOT open global error dialog on download failure (Issue #73)', async () => {
+      mockCacheAudio.mockRejectedValue(DOWNLOAD_ERROR)
+      startBackgroundCaching(TEST_URL)
+      await flushPromises()
+
+      expect(mockReportError).not.toHaveBeenCalled()
     })
   })
 
