@@ -4,9 +4,9 @@ import { useEntryPlayback } from 'features/entry-playback'
 import { useLastListeningEntry } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom, usePlayer } from 'entities/player'
 import { reportError } from 'shared/model/error-dialog'
-import { INDENTS } from 'shared/ui/theme'
-import { ContinueTriangle } from './ContinueTriangle'
-import { NOW_PLAYING_LABEL, NowPlayingLayer } from './NowPlayingLayer'
+import { ContinueCircleButton } from './ContinueCircleButton'
+
+export const NOW_PLAYING_LABEL = 'Воспроизводится'
 
 const START_LISTENING_LABEL = 'Начать слушать'
 const CONTINUE_LABEL = 'Продолжить'
@@ -50,8 +50,6 @@ export const ContinueListeningButton = () => {
       ? `${CONTINUE_LABEL}: ${sermon.title}`
       : START_LISTENING_LABEL
 
-  const idleLabel = isDisabled ? START_LISTENING_LABEL : CONTINUE_LABEL
-
   return (
     <Pressable
       accessible
@@ -64,11 +62,7 @@ export const ContinueListeningButton = () => {
       style={({ pressed }) => [styles.block, { opacity: pressed ? 0.8 : isDisabled ? 0.5 : 1 }]}
     >
       <View style={styles.mainArea}>
-        {isPlaying ? (
-          <NowPlayingLayer />
-        ) : (
-          <ContinueTriangle label={idleLabel} title={sermon?.title ?? null} />
-        )}
+        <ContinueCircleButton isPlaying={isPlaying} />
       </View>
     </Pressable>
   )
@@ -78,7 +72,9 @@ const styles = StyleSheet.create({
   block: {
     alignSelf: 'stretch',
     justifyContent: 'flex-start',
-    marginHorizontal: INDENTS.middle,
+    // Ровно половина ширины строки — как и секция справа в FirstSectionRow, без
+    // внешних полей. Мягкое свечение большой кнопки выходит за границы бокса, но
+    // непрозрачный круг остаётся внутри, а секция не вылезает за экран.
     width: '50%',
   },
   mainArea: {

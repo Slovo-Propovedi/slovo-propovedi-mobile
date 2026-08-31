@@ -6,14 +6,22 @@ jest.mock('react-native-reanimated', () => {
     default: { View, createAnimatedComponent: Component => Component },
     cancelAnimation: () => {},
     createAnimatedComponent: Component => Component,
-    Easing: { linear: () => 'linear' },
+    Easing: {
+      in: fn => fn,
+      inOut: fn => fn,
+      linear: () => 'linear',
+      out: fn => fn,
+      sin: () => 'sin',
+    },
     interpolate: p => p,
+    ReduceMotion: { Always: 'always', Never: 'never', System: 'system' },
     useAnimatedReaction: () => {
       // No-op: useAnimatedReaction synchronizes shared values from the UI
       // thread to JS state. In tests, we rely on the initial useState value.
       // The hook's isExpanded starts as `true` via useState; collapse/expand
       // are tested directly via their exposed functions.
     },
+    useAnimatedProps: fn => (typeof fn === 'function' ? fn() : {}),
     useAnimatedStyle: fn => (typeof fn === 'function' ? fn() : {}),
     useDerivedValue: fn => ({ value: typeof fn === 'function' ? fn() : undefined }),
     useSharedValue: init => ({ value: init }),
