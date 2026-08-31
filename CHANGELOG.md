@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-08-31
+
+### Added
+
+- Redesign continue button as round glowing play/pause (#72)
+
+### Fixed
+
+- Update fsd visualize
+- Suppress repeat taps in usePlayNewSermon (#74)
+- Update store and README screenshots to current app UI
+- Suppress error dialog on background caching network failure (#73)
+- Bound queue sheet list frame to screen and guarantee scroll clearance (issue #69)
+- Remove obsolete @gorhom/bottom-sheet epsilon patch (issue #48)
+- Rework queue sheet gestures and guarantee scroll for short playlists (issue #69)
+- Auto-save position every 10s and mark completion on auto-advance (#65)
+
 ## [0.16.0] - 2026-08-29
 
 ### Added
@@ -507,6 +524,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.17.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.17.0
 [0.16.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.16.0
 [0.15.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.15.0
 [0.14.3]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.14.3

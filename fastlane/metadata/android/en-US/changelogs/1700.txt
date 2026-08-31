@@ -1,0 +1,7 @@
+Suppress repeat taps in usePlayNewSermon (#74)
+Redesign continue button as round glowing play/pause (#72)
+Suppress error dialog on background caching network failure (#73)
+Bound queue sheet list frame to screen and guarantee scroll clearance (issue #69)
+Rework queue sheet gestures and guarantee scroll for short playlists (issue #69)
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
