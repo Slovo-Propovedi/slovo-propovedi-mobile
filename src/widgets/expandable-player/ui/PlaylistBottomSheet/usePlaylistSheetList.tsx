@@ -18,12 +18,13 @@ interface UsePlaylistSheetListParams {
   cacheTrigger: number
   currentAudioId?: string
   downloadingUrl?: null | string
-  hiddenBelowSheetEdge: number
   isAudioPlaying: boolean
   onPress: (index: number) => void
   onScroll: (y: number) => void
   playlist: PlaylistData
   progressMap: Map<string, number>
+  settleTick: number
+  sheetTop: number
   styles: ReturnType<typeof createStyles>
 }
 
@@ -33,12 +34,13 @@ export const usePlaylistSheetList = ({
   cacheTrigger,
   currentAudioId,
   downloadingUrl,
-  hiddenBelowSheetEdge,
   isAudioPlaying,
   onPress,
   onScroll,
   playlist,
   progressMap,
+  settleTick,
+  sheetTop,
   styles,
 }: UsePlaylistSheetListParams) => {
   const tracksListData = useMemo<TrackListItemData[]>(
@@ -56,9 +58,11 @@ export const usePlaylistSheetList = ({
       })),
     [playlist],
   )
-  const { footerHeight, handleContentSizeChange, handleListLayout } = useScrollGuarantee({
-    hiddenBelowSheetEdge,
-  })
+  const { footerHeight, handleContentSizeChange, handleWrapperLayout, maxListHeight, wrapperRef } =
+    useScrollGuarantee({
+      settleTick,
+      sheetTop,
+    })
 
   const handleScrollEvent = useCallback(
     (event: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -89,10 +93,12 @@ export const usePlaylistSheetList = ({
   return {
     footerHeight,
     handleContentSizeChange,
-    handleListLayout,
     handleScrollEvent,
+    handleWrapperLayout,
     ItemSeparator,
+    maxListHeight,
     renderItem,
     tracksListData,
+    wrapperRef,
   }
 }

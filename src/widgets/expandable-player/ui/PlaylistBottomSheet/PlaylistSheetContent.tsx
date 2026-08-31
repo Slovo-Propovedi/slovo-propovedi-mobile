@@ -9,7 +9,6 @@ interface PlaylistSheetContentProps {
   cacheTrigger: number
   currentAudioId?: string
   downloadingUrl?: null | string
-  hiddenBelowSheetEdge: number
   initialNumToRender?: number
   isAudioPlaying: boolean
   isRevealed: boolean
@@ -23,6 +22,8 @@ interface PlaylistSheetContentProps {
   onScrollToIndexFailed: (info: { averageItemLength: number; index: number }) => void
   playlist: PlaylistData
   progressMap: Map<string, number>
+  settleTick: number
+  sheetTop: number
   styles: ReturnType<typeof createStyles>
 }
 
@@ -32,7 +33,6 @@ export const PlaylistSheetContent = memo(
     cacheTrigger,
     currentAudioId,
     downloadingUrl,
-    hiddenBelowSheetEdge,
     initialNumToRender,
     isAudioPlaying,
     isRevealed,
@@ -46,6 +46,8 @@ export const PlaylistSheetContent = memo(
     onScrollToIndexFailed,
     playlist,
     progressMap,
+    settleTick,
+    sheetTop,
     styles,
   }: PlaylistSheetContentProps) => (
     <>
@@ -56,8 +58,10 @@ export const PlaylistSheetContent = memo(
         onPress={onPress}
         playlist={playlist}
         onScroll={onScroll}
+        sheetTop={sheetTop}
         onDragEnd={onDragEnd}
         isRevealed={isRevealed}
+        settleTick={settleTick}
         progressMap={progressMap}
         onDragStart={onDragStart}
         cacheTrigger={cacheTrigger}
@@ -67,7 +71,6 @@ export const PlaylistSheetContent = memo(
         currentAudioId={currentAudioId}
         onMomentumStart={onMomentumStart}
         initialNumToRender={initialNumToRender}
-        hiddenBelowSheetEdge={hiddenBelowSheetEdge}
         onScrollToIndexFailed={onScrollToIndexFailed}
       />
     </>

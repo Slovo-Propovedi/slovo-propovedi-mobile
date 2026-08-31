@@ -1,6 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { useHistoryProgressMap } from 'entities/listening-history'
 import { currentAudioAtom, downloadingAudioUrlAtom, isPlayingAtom } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
@@ -13,6 +13,7 @@ import { useListReveal } from './useListReveal'
 import { FINAL_SNAP_INDEX, useQueueSheetSnapMetrics } from './useQueueSheetSnapMetrics'
 import { useScrollToCurrentTrack } from './useScrollToCurrentTrack'
 import { useSheetLifecycle } from './useSheetLifecycle'
+
 interface PlaylistBottomSheetProps {
   closeOnBack?: boolean
   onClose: () => void
@@ -30,6 +31,7 @@ const PlaylistBottomSheetComponent = ({
   const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
   const [isAudioPlaying] = useAtom(isPlayingAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
+  const [settleTick, setSettleTick] = useState(0)
   const progressMap = useHistoryProgressMap()
   const { currentTheme } = useTheme()
   const {
@@ -49,17 +51,18 @@ const PlaylistBottomSheetComponent = ({
     playlist,
   })
   const { handleListScroll, isRevealed, noteScrollScheduled } = useListReveal({ currentIndex })
-  const { handlePressItem, handleSheetChanges, sheetIndex } = useSheetLifecycle({
+  const { handleAnimate, handlePressItem, handleSheetChanges, sheetIndex } = useSheetLifecycle({
     closeOnBack,
     noteScrollScheduled,
     noteSheetIndex,
     onClose,
+    onSheetSettled: () => setSettleTick(t => t + 1),
     playlist,
     scrollToCurrent,
     sheetRef,
   })
 
-  const { hiddenBelowSheetEdge, snapPoints } = useQueueSheetSnapMetrics({ sheetIndex })
+  const { sheetTop, snapPoints } = useQueueSheetSnapMetrics({ sheetIndex })
   const renderStyles = useMemo(() => createStyles(currentTheme), [currentTheme])
 
   if (!playlist) return null
@@ -70,6 +73,7 @@ const PlaylistBottomSheetComponent = ({
       enablePanDownToClose
       snapPoints={snapPoints}
       index={FINAL_SNAP_INDEX}
+      onAnimate={handleAnimate}
       enableDynamicSizing={false}
       onChange={handleSheetChanges}
       enableContentPanningGesture={false}
@@ -80,8 +84,10 @@ const PlaylistBottomSheetComponent = ({
       <PlaylistSheetContent
         listRef={listRef}
         playlist={playlist}
+        sheetTop={sheetTop}
         styles={renderStyles}
         isRevealed={isRevealed}
+        settleTick={settleTick}
         onPress={handlePressItem}
         progressMap={progressMap}
         onDragEnd={handleDragEnd}
@@ -94,7 +100,6 @@ const PlaylistBottomSheetComponent = ({
         onMomentumEnd={handleMomentumEnd}
         onMomentumStart={handleMomentumStart}
         initialNumToRender={initialNumToRender}
-        hiddenBelowSheetEdge={hiddenBelowSheetEdge}
         onScrollToIndexFailed={handleScrollToIndexFailed}
       />
     </BottomSheet>
