@@ -279,10 +279,12 @@ jobs:
 
       - name: Mirror release to GitHub
         env:
-          GITHUB_MIRROR_TOKEN: ${{ secrets.GITHUB_MIRROR_TOKEN }}
+          # Forgejo reserves GITHUB_-prefixed names for its own env vars/secrets,
+          # so both the secret and the env var use the MIRROR_GITHUB_TOKEN name.
+          MIRROR_GITHUB_TOKEN: ${{ secrets.MIRROR_GITHUB_TOKEN }}
         run: |
-          if [ -z "${GITHUB_MIRROR_TOKEN:-}" ]; then
-            echo "GITHUB_MIRROR_TOKEN is not configured - skipping GitHub mirror"
+          if [ -z "${MIRROR_GITHUB_TOKEN:-}" ]; then
+            echo "MIRROR_GITHUB_TOKEN is not configured - skipping GitHub mirror"
             exit 0
           fi
 
@@ -291,7 +293,7 @@ jobs:
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
           API_BASE="https://api.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile"
           UPLOAD_BASE="https://uploads.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile"
-          AUTH_HEADER="Authorization: Bearer ${GITHUB_MIRROR_TOKEN}"
+          AUTH_HEADER="Authorization: Bearer ${MIRROR_GITHUB_TOKEN}"
           ACCEPT_HEADER="Accept: application/vnd.github+json"
           API_VERSION_HEADER="X-GitHub-Api-Version: 2022-11-28"
 

@@ -29,12 +29,12 @@
 
 ### Зеркалирование релиза в GitHub (CI)
 
-`.forgejo/workflows/release.yml` после публикации релиза в Forgejo выполняет шаг **«Mirror release to GitHub»** (опциональный): создаёт/обновляет релиз в `Slovo-Propovedi/slovo-propovedi-mobile` и загружает ZIP-ассет через GitHub REST API v3 (`Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`). Шаг пропускается (`exit 0`), если секрет `GITHUB_MIRROR_TOKEN` не задан — пайплайн остаётся зелёным без конфигурации. Любая ошибка GitHub API — `::warning::`, джоба не падает (релиз Forgejo уже опубликован). HTTP 422 при загрузке ассета (имя уже занято) трактуется как успех.
+`.forgejo/workflows/release.yml` после публикации релиза в Forgejo выполняет шаг **«Mirror release to GitHub»** (опциональный): создаёт/обновляет релиз в `Slovo-Propovedi/slovo-propovedi-mobile` и загружает ZIP-ассет через GitHub REST API v3 (`Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`). Шаг пропускается (`exit 0`), если секрет `MIRROR_GITHUB_TOKEN` не задан — пайплайн остаётся зелёным без конфигурации. Любая ошибка GitHub API — `::warning::`, джоба не падает (релиз Forgejo уже опубликован). HTTP 422 при загрузке ассета (имя уже занято) трактуется как успех.
 
 **Настройка:**
 
 1. В GitHub создать PAT (Personal Access Token) со scope `repo` (для публичного репозитория достаточно `public_repo`) — права на создание релизов и загрузку ассетов.
-2. В настройках Forgejo-репозитория (`Settings → Actions → Secrets`) добавить секрет `GITHUB_MIRROR_TOKEN` со значением PAT.
+2. В настройках Forgejo-репозитория (`Settings → Actions → Secrets`) добавить секрет `MIRROR_GITHUB_TOKEN` со значением PAT.
 3. Тег `v*` должен быть запушен в GitHub (репозиторий зеркалируется) — если тега ещё нет, создание релиза упадёт с предупреждением, джоба продолжит работу.
 
 ## Состояние
