@@ -92,7 +92,8 @@
 - [ ] **`playerSheet` (`src/entities/player/playerSheet.ts`) без тестов** — покрыть.
 - [ ] **`pages/` (listen, playlist, playlist-list, more, read, study, settings, about) без тестов экранов** — покрыть ключевые сценарии (переходы, состояния).
 - [ ] **`shared/ui/theme/` частично покрыт** (`colors`, `constants`, `model` — есть тесты), но `helpers/` и `ThemeContext/` без тестов — покрыть.
-- [ ] **Widgets (`expandable-player`, `network-status`, `update-status`) без тестов; `tab-bar` частично покрыт** (`TabButton.test.tsx`) — покрыть остальное (включая индикатор прогресса скачивания в MiniPlayer и гейтинг спиннера в ExpandablePlayer). Тесты `shared/ui/layout/model.test.ts` (таб-бар атом) — есть.
+- [ ] **Widgets (`expandable-player`, `network-status`, `update-status`) без тестов; `tab-bar` частично покрыт** (`TabButton.test.tsx`) — покрыть остальное (включая индикатор прогресса скачивания в MiniPlayer и гейтинг спиннера в ExpandablePlayer). Тесты `shared/ui/layout/model.test.ts` (таб-бар атом) — есть. **`sub-screen-header-back` (`HeaderBackButton`) без тестов вовсе** — покрыть: рендер `chevron-back` + «Назад», переход по `router.back()`/`router.replace('/more')`.
+- [ ] **`ShareScreen.test.tsx` использует `testID` для заголовков `CollapsibleSection` вместо accessible role/name**, отступление от конвенции accessibility-first в [`conventions.md`](./conventions.md) → «Тестирование». Причина: заголовок — `TouchableItem` с текстом заголовка **и** декоративной иконкой `Ionicons` (глиф без своего `accessibilityLabel`) как соседними `Text`-узлами, из-за чего вычисляемое accessible-имя кнопки не совпадает точно с текстом заголовка (`getByRole('button', { name: 'Сайт' })` не находит элемент). — `src/pages/share/ui/CollapsibleSection.tsx`, `src/pages/share/ui/ShareScreen.test.tsx` — вернуться и заменить на `getByRole('button', { name: /Сайт/ })` (regex-match вместо точного) либо скрыть иконку из accessibility-дерева (`importantForAccessibility='no'` на `Ionicons`), убрав `testID`.
 
 ## UI performance
 
@@ -151,6 +152,7 @@
 
 - [ ] **Передача плейлиста в `/listen/playlist` через JSON-парамы** — `src/shared/routing/useListenNavigation.ts`, `src/pages/playlist` — при проблемах перенести на atom/id (по образцу playlist-list).
 - [ ] **Убрать LogBox-подавление expo-router initial-linking warning** — `app/_layout.tsx` — после миграции на Expo SDK 58 (апстрим не чинит: expo#47659 bot-closed, PR #46653 unmerged; направление SDK 58 — PR #49063 убирает initialState-путь).
+- [ ] **`HeaderBackButton` фолбэк всегда ведёт на `/more`, а не восстанавливает реальный стек.** `src/widgets/sub-screen-header-back/ui/HeaderBackButton.tsx` — на web после полной перезагрузки страницы (`router.canGoBack() === false`) кнопка «Назад» под-экранов (`settings`/`history`/`about`/`share`) уводит на `/more`, а не на фактический родительский маршрут (например, релоад на `/listen/playlist` вернул бы на `/more`, а не на `/listen`). Сейчас приемлемо — фолбэк используют только одноуровневые под-экраны из «Еще». Вернуться, если под `HeaderBackButton`/аналогичный паттерн попадут вложенные маршруты (`/listen/*`) — понадобится восстановление стека из URL, а не жёсткий fallback-route.
 
 ## Web / PWA
 

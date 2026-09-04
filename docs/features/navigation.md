@@ -12,10 +12,17 @@
 `app/_RootLayout.tsx` (`_RootLayout`) — содержит `Stack`:
 
 - `index` и `(tabs)` — без шапки (`headerShown: false`);
-- `settings` — заголовок «Настройки», `headerBackTitle: 'Назад'`;
-- `about` — заголовок «О приложении», «Назад»;
-- `history` — заголовок «История прослушивания», вход из вкладки «Еще» (`router.push('/history')`).
-- цвет фона контента и шапки — из `currentTheme`.
+- `settings` — заголовок «Настройки»;
+- `about` — заголовок «О приложении»;
+- `history` — заголовок «История прослушивания», вход из вкладки «Еще» (`router.push('/history')`);
+- `share` — заголовок «Поделиться приложением» (см. [`../screens/share.md`](../screens/share.md)).
+- цвет фона контента и шапки — из `currentTheme`; `headerTitleAlign: 'center'` в `screenOptions` — заголовок центрирован в шапке, а не прижат к кастомной кнопке «Назад» (см. ниже).
+
+**Кнопка «Назад» в шапке (`headerLeft`)** — все четыре под-экрана (`settings`/`history`/`about`/`share`) используют кастомный `HeaderBackButton` (`src/widgets/sub-screen-header-back/ui/HeaderBackButton.tsx`) вместо стандартной кнопки react-navigation:
+
+- По нажатию: если `router.canGoBack()` — `router.back()`; иначе — `router.replace('/more')` (таб «Еще», логический родитель всех четырёх под-экранов).
+- **Почему не стандартная кнопка:** на web после **полной перезагрузки страницы** (например, `F5` на `/settings`) история навигации react-navigation пуста — экран становится «корневым» в стеке, и `router.canGoBack()` возвращает `false`, поэтому системная кнопка «Назад» вообще не рендерится (react-navigation её не показывает, когда идти некуда) — пользователь не может вернуться в приложение. Кастомная кнопка рендерится всегда и в этом случае уводит на `/more`.
+- **Ограничение:** фолбэк всегда ведёт на `/more`, а не восстанавливает реальный стек навигации (например, `/listen/playlist` после релоада уйдёт на `/more`, а не на `/listen`). Приемлемо для текущих под-экранов (все они одноуровневые, доступны только из «Еще»); подробнее — [`debt.md`](../debt.md) → Navigation.
 
 Глобальные элементы поверх стека: `NetworkBanner`, `ServerErrorToast`, `UpdateDialogRoot` (все — внутри `_RootLayout`).
 
@@ -77,6 +84,7 @@
 | `/settings`                             | `SettingsScreen`     | `pages/settings`            |
 | `/about`                                | `AboutScreen`        | `pages/about`               |
 | `/history`                              | `HistoryScreen`      | `pages/history`             |
+| `/share`                                | `ShareScreen`        | `pages/share`               |
 | `/read` (таб)                           | `ReadScreen`         | `pages/read` (заблокирован) |
 | `/read/book-reader`, `/read/books-list` | —                    | **не зарегистрированы**     |
 
@@ -99,4 +107,5 @@
 - [../screens/listen.md](../screens/listen.md) — главный экран и переходы
 - [../screens/playlist.md](../screens/playlist.md) — экран плейлиста
 - [../screens/playlist-list.md](../screens/playlist-list.md) — список плейлистов
+- [../screens/share.md](../screens/share.md) — использует `HeaderBackButton` через общий `_RootLayout`
 - [state.md](./state.md) — атомы, используемые в обработчике hardware-back

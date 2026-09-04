@@ -159,7 +159,7 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
 │           more  settings  about  book-reader  books-list    │
 ├────────────────────────────────────────────────────────────┤
 │ widgets/  expandable-player  tab-bar  network-status        │
-│           update-status                                     │
+│           update-status  sub-screen-header-back             │
 ├────────────────────────────────────────────────────────────┤
 │ features/ update-notification                               │
 ├────────────────────────────────────────────────────────────┤

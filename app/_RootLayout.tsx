@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { BackHandler, InteractionManager, View } from 'react-native'
 import { showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
+import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
 import { useUpdateNotificationResponse } from 'features/update-notification'
 import {
@@ -84,6 +85,7 @@ const RootLayout = () => {
       <Stack
         screenOptions={{
           contentStyle: { backgroundColor: currentTheme.background },
+          headerTitleAlign: 'center',
         }}
       >
         <Stack.Screen name='index' options={{ headerShown: false }} />
@@ -93,7 +95,7 @@ const RootLayout = () => {
             key={name}
             name={name}
             options={{
-              headerBackTitle: 'Назад',
+              headerLeft: props => <HeaderBackButton tintColor={props.tintColor} />,
               headerStyle: { backgroundColor: currentTheme.background },
               headerTintColor: currentTheme.text,
               headerTitleStyle: { color: currentTheme.text },
