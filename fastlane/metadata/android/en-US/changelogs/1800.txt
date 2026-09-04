@@ -1,0 +1,9 @@
+Restore back navigation on sub-screens after a page reloadr
+Split share screen into collapsible landing/release links
+Themed scrollbars, drop the phantom horizontal scrollbar
+Cap the layout to a centered column on desktop
+Render conditional text via ternaries, not &&
+Offline audio cache, PWA, and build tooling
+Drop expo-notifications from the web bundle graph
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

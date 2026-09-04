@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2026-09-04
+
+### Added
+
+- Split share screen into collapsible landing/release links
+- Cap the layout to a centered column on desktop
+- Offline audio cache, PWA, and build tooling
+
+### Changed
+
+- Pass id-only params instead of full JSON in listen URLs
+
+### Fixed
+
+- Restore back navigation on sub-screens after a page reloadr
+- Themed scrollbars, drop the phantom horizontal scrollbar
+- Render conditional text via ternaries, not &&
+- Drop expo-notifications from the web bundle graph
+- Mirror web player state into the shared atoms
+- Guard native-only APIs to stop startup crashes
+
 ## [0.17.0] - 2026-08-31
 
 ### Added
@@ -524,6 +545,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.18.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.18.0
 [0.17.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.17.0
 [0.16.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.16.0
 [0.15.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.15.0
