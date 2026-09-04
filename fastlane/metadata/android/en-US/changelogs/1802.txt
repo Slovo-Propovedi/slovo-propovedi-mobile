@@ -1,0 +1,4 @@
+Hide the native-update dialog on web
+Make the cover blur actually blur on Android
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
