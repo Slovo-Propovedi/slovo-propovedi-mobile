@@ -5,17 +5,23 @@ on:
     tags:
       - 'v*'
 
+# Three jobs:
+#   create-release  — gate on CI, verify versions, cut the Forgejo Release
+#   web             — needs: create-release — export + deploy the web PWA + attach zip
+#   android         — needs: create-release — build APK + attach zip + mirror to GitHub
+# `web` and `android` depend only on `create-release`, never on each other, so
+# they run in whichever order the runner picks them up. Both are memory-heavy,
+# so they share the `memory-heavy-jobs` concurrency group (also on ci.yml's
+# `checks`) and queue on the 4 GB host instead of overlapping.
+# create-release stays OUT of that group: it waits for `CI / checks`, which is
+# in the group — sharing it would deadlock.
+
 jobs:
-  release:
+  create-release:
     runs-on: ubuntu-24.04
 
-    # Both runner slots share one 4 GB host. A CI job running concurrently with
-    # this build starves it for memory (release OOM, exit 137). This group is
-    # also declared on the `checks` job in ci.yml, so heavy jobs queue instead
-    # of overlapping. Light jobs (dco) stay outside the group.
-    concurrency:
-      group: memory-heavy-jobs
-      cancel-in-progress: false
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Checkout repository
@@ -46,6 +52,225 @@ jobs:
 
           echo "::error::Timed out waiting for CI status on ${{ github.sha }}"
           exit 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify version matches tag
+        id: version
+        run: |
+          TAG_VERSION="${{ github.ref_name }}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$TAG_VERSION"
+          EXPECTED_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
+          APP_VERSION=$(node -p "require('./app.json').expo.version")
+          if [ "$APP_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::app.json version ($APP_VERSION) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
+          GRADLE_VERSION_NAME=$(grep 'versionName' android/app/build.gradle | head -1 | sed 's/.*versionName "\([^"]*\)".*/\1/')
+          GRADLE_VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | sed 's/.*versionCode \([0-9]*\).*/\1/')
+          if [ "$GRADLE_VERSION_NAME" != "$TAG_VERSION" ]; then
+            echo "::error::build.gradle versionName ($GRADLE_VERSION_NAME) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+          if [ "$GRADLE_VERSION_CODE" != "$EXPECTED_CODE" ]; then
+            echo "::error::build.gradle versionCode ($GRADLE_VERSION_CODE) does not match expected ($EXPECTED_CODE)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
+          echo "All versions match tag $TAG_VERSION (code: $EXPECTED_CODE)"
+          echo "version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog section
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          awk -v target="## [$VERSION]" '
+            index($0, target) == 1 { found = 1; next }
+            found && $0 ~ /^## \[/ { exit }
+            found && $0 ~ /^\[.*\]: / { exit }
+            found { print }
+          ' CHANGELOG.md > release-body.md
+
+          if [ ! -s release-body.md ]; then
+            echo "::error::No changelog section found for v$VERSION in CHANGELOG.md"
+            echo "::error::Run 'node scripts/bump-version.mjs $VERSION' before tagging"
+            exit 1
+          fi
+
+          echo "Extracted changelog section for v$VERSION ($(wc -l < release-body.md) lines)"
+
+      - name: Create Forgejo Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          jq -n \
+            --arg tag "${{ github.ref_name }}" \
+            --arg name "${{ github.ref_name }}" \
+            --arg body "$(cat release-body.md)" \
+            '{tag_name: $tag, name: $name, body: $body}' > release.json
+
+          HTTP_CODE=$(curl -s -o release-response.json -w "%{http_code}" -X POST \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data @release.json)
+
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "::error::Failed to create Forgejo Release (HTTP $HTTP_CODE)"
+            cat release-response.json
+            exit 1
+          fi
+          echo "Created Forgejo Release ${{ github.ref_name }} (HTTP $HTTP_CODE)"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f release-body.md release.json release-response.json
+
+  web:
+    needs: create-release
+    runs-on: ubuntu-24.04
+
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Get yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Export web
+        env:
+          # Same Metro memory caps as the APK build — the 4 GB host is shared.
+          NODE_OPTIONS: --max-old-space-size=1536
+          CI_METRO_MAX_WORKERS: '2'
+        run: yarn web:build
+
+      - name: Zip web build
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          (cd dist && zip -qr "../slovo-propovedi-web-v${VERSION}.zip" .)
+
+      - name: Upload web zip to the Forgejo Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          TAG="${{ github.ref_name }}"
+          RELEASE_ID=$(curl -s \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG" | jq -r .id)
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "::error::Could not resolve Forgejo release id for $TAG"
+            exit 1
+          fi
+          curl -s -X POST \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-web-v${VERSION}.zip" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/zip" \
+            --data-binary @slovo-propovedi-web-v${VERSION}.zip
+
+      - name: Check deploy config
+        id: deploycfg
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+        run: |
+          if [ -n "$VPS_HOST" ] && [ -n "$WEB_HOSTNAME" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::VPS_HOST secret or WEB_HOSTNAME variable not set — skipping VPS deploy (the web zip is still attached to the release)"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup SSH
+        if: steps.deploycfg.outputs.deploy == 'true'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy to VPS
+        if: steps.deploycfg.outputs.deploy == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_USER: ${{ secrets.VPS_SSH_USER }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+          DEPLOY_TAG: ${{ github.ref_name }}
+        run: |
+          SSH_TARGET="${VPS_SSH_USER:-root}@$VPS_HOST"
+          SRC=/slovo/web/container-src
+
+          # Ship only what the image needs: the export + the nginx bits.
+          tar czf - dist Dockerfile nginx.conf .dockerignore \
+            | ssh "$SSH_TARGET" "rm -rf $SRC && mkdir -p $SRC && tar xzf - -C $SRC"
+          scp scripts/vps-deploy-web.sh "$SSH_TARGET:/tmp/vps-deploy-web.sh"
+          ssh "$SSH_TARGET" \
+            "chmod +x /tmp/vps-deploy-web.sh && \
+             DEPLOY_TAG='$DEPLOY_TAG' \
+             WEB_HOSTNAME='$WEB_HOSTNAME' \
+             ACME_EMAIL='$ACME_EMAIL' \
+             bash /tmp/vps-deploy-web.sh"
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          rm -rf node_modules .yarn/cache .expo dist ~/.ssh/id_ed25519 2>/dev/null || true
+          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
+
+  android:
+    needs: create-release
+    runs-on: ubuntu-24.04
+
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -107,48 +332,6 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-
-      - name: Verify version matches tag
-        id: version
-        run: |
-          TAG_VERSION="${{ github.ref_name }}"
-          TAG_VERSION="${TAG_VERSION#v}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$TAG_VERSION"
-          EXPECTED_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
-
-          # Check package.json
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
-            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
-            exit 1
-          fi
-
-          # Check app.json
-          APP_VERSION=$(node -p "require('./app.json').expo.version")
-          if [ "$APP_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::app.json version ($APP_VERSION) does not match tag ($TAG_VERSION)"
-            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
-            exit 1
-          fi
-
-          # Check build.gradle
-          GRADLE_VERSION_NAME=$(grep 'versionName' android/app/build.gradle | head -1 | sed 's/.*versionName "\([^"]*\)".*/\1/')
-          GRADLE_VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | sed 's/.*versionCode \([0-9]*\).*/\1/')
-          if [ "$GRADLE_VERSION_NAME" != "$TAG_VERSION" ]; then
-            echo "::error::build.gradle versionName ($GRADLE_VERSION_NAME) does not match tag ($TAG_VERSION)"
-            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
-            exit 1
-          fi
-          if [ "$GRADLE_VERSION_CODE" != "$EXPECTED_CODE" ]; then
-            echo "::error::build.gradle versionCode ($GRADLE_VERSION_CODE) does not match expected ($EXPECTED_CODE)"
-            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
-            exit 1
-          fi
-
-          echo "All versions match tag $TAG_VERSION (code: $EXPECTED_CODE)"
-          echo "version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
-          echo "code=$EXPECTED_CODE" >> "$GITHUB_OUTPUT"
 
       - name: Prebuild native code
         run: npx expo prebuild --platform android --clean
@@ -233,14 +416,14 @@ jobs:
         run: |
           APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
           APK_DIR=$(dirname "$APK_PATH")
-          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${{ needs.create-release.outputs.version }}"
           RENAMED="Slovo.Propovedi v${VERSION}.apk"
           cp "$APK_PATH" "$APK_DIR/$RENAMED"
           zip -j "slovo-propovedi-v${VERSION}.zip" "$APK_DIR/$RENAMED"
 
       - name: Extract changelog section
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${{ needs.create-release.outputs.version }}"
           awk -v target="## [$VERSION]" '
             index($0, target) == 1 { found = 1; next }
             found && $0 ~ /^## \[/ { exit }
@@ -248,34 +431,24 @@ jobs:
             found { print }
           ' CHANGELOG.md > release-body.md
 
-          if [ ! -s release-body.md ]; then
-            echo "::error::No changelog section found for v$VERSION in CHANGELOG.md"
-            echo "::error::Run 'node scripts/bump-version.mjs $VERSION' before tagging"
-            exit 1
-          fi
-
-          echo "Extracted changelog section for v$VERSION ($(wc -l < release-body.md) lines)"
-
-      - name: Create Forgejo Release and upload asset
+      - name: Upload APK to the Forgejo Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          jq -n \
-            --arg tag "${{ github.ref_name }}" \
-            --arg name "${{ github.ref_name }}" \
-            --arg body "$(cat release-body.md)" \
-            '{tag_name: $tag, name: $name, body: $body}' > release.json
-          RESPONSE=$(curl -s -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases" \
+          VERSION="${{ needs.create-release.outputs.version }}"
+          TAG="${{ github.ref_name }}"
+          RELEASE_ID=$(curl -s \
             -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/json" \
-            --data @release.json)
-          RELEASE_ID=$(echo "$RESPONSE" | jq -r .id)
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG" | jq -r .id)
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "::error::Could not resolve Forgejo release id for $TAG"
+            exit 1
+          fi
           curl -s -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-v${{ steps.version.outputs.version }}.zip" \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-v${VERSION}.zip" \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/zip" \
-            --data-binary @slovo-propovedi-v${{ steps.version.outputs.version }}.zip
+            --data-binary @slovo-propovedi-v${VERSION}.zip
 
       - name: Mirror release to GitHub
         env:
@@ -289,7 +462,7 @@ jobs:
           fi
 
           TAG="${{ github.ref_name }}"
-          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${{ needs.create-release.outputs.version }}"
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
           API_BASE="https://api.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile"
           UPLOAD_BASE="https://uploads.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile"
@@ -334,9 +507,6 @@ jobs:
           fi
 
           # 422 means the asset name is already taken - treat as success.
-          # The /tmp/gh-*.json scratch files are safe to reuse across steps:
-          # the `memory-heavy-jobs` concurrency group serializes releases, so
-          # no parallel job can collide with these paths.
           UPLOAD_STATUS=$(curl -s -o /tmp/gh-upload.json -w "%{http_code}" -X POST \
             -H "$AUTH_HEADER" -H "$ACCEPT_HEADER" -H "$API_VERSION_HEADER" \
             -H "Content-Type: application/zip" \

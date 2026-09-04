@@ -1,0 +1,4 @@
+# The web image only needs the exported `dist/` + nginx.conf.
+*
+!dist
+!nginx.conf
