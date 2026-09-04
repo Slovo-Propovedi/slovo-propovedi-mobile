@@ -8,6 +8,9 @@ Coding agent instructions for the slovo-propovedi-mobile React Native/Expo proje
 # Development
 npm start                    # Start Expo dev server
 npm start -- --clear         # Start with cleared cache
+npm run web                  # Web dev server (EXPO_NO_METRO_LAZY=1 expo start --web)
+npm run web:build            # Export web to dist/
+npm run web:preview          # Build + serve dist/ with SPA fallback on :3000
 
 # Linting
 npm run lint                 # Run ESLint

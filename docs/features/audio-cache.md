@@ -18,6 +18,8 @@
 
 Каталог кэша создаётся при необходимости (`ensureCacheDirectoryExists`).
 
+> **Web:** `expo-file-system` в браузере не работает. Metro резолвит `./AudioCacheService` → `AudioCacheService.web.ts` — реализация поверх **Cache Storage API** (тот же бакет `audio-cache-v1`, что читает Service Worker для офлайн-воспроизведения). Подробнее — [web.md](./web.md).
+
 ## Повторы и защита от зависания (Issue #49)
 
 `downloadToCache` (`src/shared/lib/audio-cache/cacheDownloader.ts`) оборачивает скачивание в retry-цикл — мотивация: обрыв TCP-соединения при переключении WiFi → мобильный интернет посреди скачивания раньше приводил к безвозвратной ошибке трека.

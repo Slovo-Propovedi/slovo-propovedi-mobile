@@ -37,6 +37,7 @@
 | [`features/listening-history.md`](./features/listening-history.md)     | История прослушивания, resume-логика, прогресс в UI                      |
 | [`features/audio-cache.md`](./features/audio-cache.md)                 | Кэширование аудио и секций (offline)                                     |
 | [`features/images.md`](./features/images.md)                           | Кэширование и рендеринг изображений (expo-image)                         |
+| [`features/web.md`](./features/web.md)                                 | Web-платформа: PWA, Service Worker, офлайн-кеш аудио, десктопный layout  |
 | [`features/navigation.md`](./features/navigation.md)                   | Навигация expo-router: табы, стеки, маршруты                             |
 | [`features/state.md`](./features/state.md)                             | Reatom: атомы, экшены, `ctx`                                             |
 | [`features/theme.md`](./features/theme.md)                             | Тема, цвета, Material You                                                |
