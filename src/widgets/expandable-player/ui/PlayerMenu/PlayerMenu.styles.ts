@@ -30,7 +30,9 @@ export const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     bottom: '100%',
     minWidth: 200,
-    overflow: 'scroll',
+    // Clip content while the height animates open. 'hidden' (not 'scroll') —
+    // on web 'scroll' forces permanent empty scrollbars on both axes.
+    overflow: 'hidden',
     position: 'absolute',
     right: 0,
     transform: [{ translateY: 20 }],

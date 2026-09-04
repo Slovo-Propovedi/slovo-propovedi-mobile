@@ -58,6 +58,14 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [])
 
+  useEffect(() => {
+    // Feed the active theme into the CSS scrollbar vars declared in public/index.html.
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return
+    const root = document.documentElement.style
+    root.setProperty('--sp-scrollbar-thumb', String(currentTheme.textMuted))
+    root.setProperty('--sp-scrollbar-thumb-hover', String(currentTheme.text))
+  }, [currentTheme])
+
   return (
     <ThemeContext.Provider value={{ currentTheme, isLight, themeMode }}>
       <StatusBar style='auto' />
