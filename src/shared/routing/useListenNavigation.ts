@@ -6,14 +6,14 @@ export const useListenNavigation = () => {
 
   const navigateToPlaylist = (playlist: PlaylistData) => {
     router.push({
-      params: { playlist: JSON.stringify(playlist) },
+      params: { playlist: playlist.id },
       pathname: '/listen/playlist',
     })
   }
 
-  const navigateToPlaylistList = (sectionId: string, title: string) => {
+  const navigateToPlaylistList = (sectionId: string) => {
     router.push({
-      params: { sectionId, title },
+      params: { sectionId },
       pathname: '/listen/playlist-list',
     })
   }

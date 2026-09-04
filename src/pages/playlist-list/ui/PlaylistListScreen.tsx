@@ -20,9 +20,8 @@ const INITIAL_NUM_TO_RENDER = 12
 export const PlaylistListScreen = () => {
   const { currentTheme, isLight } = useTheme()
   const router = useRouter()
-  const params = useLocalSearchParams<{ sectionId: string; title: string }>()
+  const params = useLocalSearchParams<{ sectionId: string }>()
   const sectionId = params.sectionId ?? ''
-  const title = params.title || ''
 
   const [sections] = useAtom(dynamicSectionsAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -30,6 +29,7 @@ export const PlaylistListScreen = () => {
   const [cacheResolved, setCacheResolved] = useState(false)
 
   const section = sections.find(s => s.id === sectionId) ?? cachedSection
+  const title = section?.title ?? ''
 
   useEffect(() => {
     if (section || !sectionId) return
@@ -53,7 +53,7 @@ export const PlaylistListScreen = () => {
 
   const handlePlaylistPress = useCallback(
     (playlist: PlaylistData) => {
-      router.push({ params: { playlist: JSON.stringify(playlist) }, pathname: '/listen/playlist' })
+      router.push({ params: { playlist: playlist.id }, pathname: '/listen/playlist' })
     },
     [router],
   )

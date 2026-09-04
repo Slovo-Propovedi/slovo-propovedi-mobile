@@ -1,28 +1,21 @@
-import { useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { useHistoryProgressMap } from 'entities/listening-history'
-import {
-  currentAudioAtom,
-  downloadingAudioUrlAtom,
-  isPlayingAtom,
-  usePlayNewSermon,
-} from 'entities/player'
-import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
-import { getParseJsonWithSchema, playlistDataSchema, type SermonData } from 'shared/model'
+import { usePlayNewSermon } from 'entities/player'
+import { type SermonData } from 'shared/model'
 import { useTheme } from 'shared/ui/theme'
 import { createTracksListStyles } from 'shared/ui/track-list'
 import { useCollapsingHeader, usePlaylistHeader } from '../lib'
-import { isCachingPlaylistAtom } from '../model'
+import { usePlaylistById } from '../lib/usePlaylistById'
+import { usePlaylistPlayerState } from '../lib/usePlaylistPlayerState'
 import { PlaylistHeader } from './PlaylistHeader'
+import { PlaylistStatusView } from './PlaylistStatusView'
 import { PlaylistTrackItem } from './PlaylistTrackItem'
 import { PlaylistTrackList } from './PlaylistTrackList'
 import { createStyles } from './styles'
 import { buildTracksListData, usePlaylistNavigationOptions } from './usePlaylistNavigationOptions'
-
-const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 
 const EMPTY_PLAYLIST = { artwork: null, description: '', id: 'default', sermons: [], title: '' }
 
@@ -30,21 +23,16 @@ export const PlaylistScreen = () => {
   const { currentTheme } = useTheme()
   const params = useLocalSearchParams<{ playlist: string }>()
 
-  const playlist = useMemo(
-    () => parsePlaylistData(params.playlist) || EMPTY_PLAYLIST,
-    [params.playlist],
-  )
+  const { isLoading, notFound, playlist: resolvedPlaylist } = usePlaylistById(params.playlist ?? '')
+  const playlist = resolvedPlaylist ?? EMPTY_PLAYLIST
 
   const { artwork, description, sermons: list = [], title } = playlist
 
   const playNewSermon = usePlayNewSermon()
   const progressMap = useHistoryProgressMap()
 
-  const [currentAudio] = useAtom(currentAudioAtom)
-  const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
-  const [isPlaying] = useAtom(isPlayingAtom)
-  const [isCaching] = useAtom(isCachingPlaylistAtom)
-  const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
+  const { cacheTrigger, currentAudio, downloadingUrl, isCaching, isPlaying } =
+    usePlaylistPlayerState()
 
   const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader()
@@ -102,6 +90,16 @@ export const PlaylistScreen = () => {
     () => <View style={tracksListStyles.divider} />,
     [tracksListStyles],
   )
+
+  if (notFound || isLoading)
+    return (
+      <PlaylistStatusView
+        styles={styles}
+        notFound={notFound}
+        theme={currentTheme}
+        statusBarStyle={statusBarStyle}
+      />
+    )
 
   return (
     <View style={styles.container}>

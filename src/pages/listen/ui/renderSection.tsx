@@ -7,7 +7,7 @@ import { mapWhereIsTitleLocated } from '../lib/mapWhereIsTitleLocated'
 
 export interface RenderSectionProps {
   index: number
-  navigateToPlaylistList: (sectionId: string, title: string) => void
+  navigateToPlaylistList: (sectionId: string) => void
   onItemPress: (playlist: PlaylistData) => void
   section: SectionData
 }
@@ -47,7 +47,7 @@ export const renderSection = ({
           console.error('renderSection: section.id is required for navigateToPlaylistList')
           return
         }
-        navigateToPlaylistList(section.id, section.title ?? '')
+        navigateToPlaylistList(section.id)
       }}
     />
   )

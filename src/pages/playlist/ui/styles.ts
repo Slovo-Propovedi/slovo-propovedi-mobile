@@ -4,6 +4,12 @@ import type { ThemeColors } from 'shared/ui/theme'
 
 export const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
+    centered: {
+      alignItems: 'center',
+      backgroundColor: theme.background,
+      flex: 1,
+      justifyContent: 'center',
+    },
     container: {
       backgroundColor: theme.background,
       flex: 1,
@@ -20,6 +26,10 @@ export const createStyles = (theme: ThemeColors) =>
       lineHeight: FONT_SIZES.base * 1.5,
       paddingHorizontal: INDENTS.medium,
       textAlign: 'center',
+    },
+    emptyText: {
+      color: theme.textMuted,
+      fontSize: FONT_SIZES.md,
     },
     headerImage: {
       height: '100%',
