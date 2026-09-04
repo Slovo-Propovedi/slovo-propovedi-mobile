@@ -1,0 +1,8 @@
+Stop continue button from claiming half the row width
+Move continue button after the first section
+Make QR code and URL text open the link on tap
+Add a web app link section
+Drop text from back buttons and unify their icon
+Blur cover artwork behind the header title
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
