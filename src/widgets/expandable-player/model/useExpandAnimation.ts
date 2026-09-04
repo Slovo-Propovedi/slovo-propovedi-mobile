@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Dimensions, useWindowDimensions } from 'react-native'
 import { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import { getColumnSideInset } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
 import type { SharedValue } from 'react-native-reanimated'
 import { getMiniPlayerBottom } from '../lib/getMiniPlayerBottom'
@@ -78,10 +79,12 @@ export const useExpandAnimation = (
       [0, 1],
       [fullScreenHeightShared.value - miniBottomShared.value - MINI_H, 0],
     )
+    // Desktop-web: collapsed bar is centered in a capped column; expanded is full width.
+    const inset = getColumnSideInset(screenWidthShared.value, INDENTS.low)
     const w = interpolate(
       progress.value,
       [0, 1],
-      [screenWidthShared.value - INDENTS.low * 2, screenWidthShared.value],
+      [screenWidthShared.value - inset * 2, screenWidthShared.value],
     )
     return {
       borderBottomLeftRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
@@ -89,7 +92,7 @@ export const useExpandAnimation = (
       borderTopLeftRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
       borderTopRightRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
       bottom: b,
-      left: interpolate(progress.value, [0, 1], [INDENTS.low, 0]),
+      left: interpolate(progress.value, [0, 1], [inset, 0]),
       top: t + reapply,
       width: w,
     }

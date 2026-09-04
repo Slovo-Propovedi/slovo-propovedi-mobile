@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native'
+import { APP_MAX_CONTENT_WIDTH } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 
 export const expandedControlsStyles = StyleSheet.create({
@@ -23,7 +24,11 @@ export const expandedControlsStyles = StyleSheet.create({
   },
 
   controlsArea: {
+    // Desktop-web: playback controls stay in a centered column.
+    alignSelf: 'center',
+    maxWidth: APP_MAX_CONTENT_WIDTH,
     position: 'relative',
+    width: '100%',
   },
 
   controlsRow: {

@@ -147,6 +147,8 @@ src/entities/player/lib/PlayerService/
 
 Общий `index.ts` резолвится бандлером в нужную платформенную реализацию автоматически. Наружу слайс экспортирует один и тот же контракт (`playerService`), поэтому потребители (`src/entities/player/lib/usePlayer.ts`) не знают о платформе.
 
+Web-специфика целиком (PWA, Service Worker, офлайн-кеш аудио на Cache Storage, десктопный layout, обход бага Metro lazy-bundling) — в [`features/web.md`](./features/web.md).
+
 ## Итоговая ASCII-диаграмма
 
 ```

@@ -1,10 +1,14 @@
 import { StyleSheet } from 'react-native'
+import { getColumnSideInset } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
 import type { ThemeColors } from 'shared/ui/theme'
 import { getMiniPlayerBottom } from '../../lib/getMiniPlayerBottom'
 
-export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number) =>
-  StyleSheet.create({
+export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number, screenWidth: number) => {
+  // Desktop-web: center the collapsed bar in an APP_MAX_CONTENT_WIDTH column.
+  const sideInset = getColumnSideInset(screenWidth, INDENTS.low)
+
+  return StyleSheet.create({
     downloadFill: {
       height: '100%',
     },
@@ -23,11 +27,11 @@ export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number) =>
       bottom: getMiniPlayerBottom(tabBarHeight),
       flexDirection: 'row',
       height: PLAYER_SIZES.miniPlayerHeight,
-      left: INDENTS.low,
+      left: sideInset,
       overflow: 'hidden',
       paddingHorizontal: INDENTS.low,
       position: 'absolute',
-      right: INDENTS.low,
+      right: sideInset,
       zIndex: 300,
     },
     miniControls: {
@@ -62,3 +66,4 @@ export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number) =>
       fontSize: FONT_SIZES.base,
     },
   })
+}

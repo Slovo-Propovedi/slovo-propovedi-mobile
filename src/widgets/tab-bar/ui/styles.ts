@@ -1,3 +1,5 @@
+import { APP_MAX_CONTENT_WIDTH } from 'shared/ui/layout'
+
 const BORDER_RADIUS = 20
 
 export const styles = {
@@ -13,9 +15,13 @@ export const styles = {
     zIndex: 10,
   },
   floatingIsland: {
+    // Desktop-web: keep the bar as a centered column instead of edge to edge.
+    alignSelf: 'center' as const,
     borderTopLeftRadius: BORDER_RADIUS,
     borderTopRightRadius: BORDER_RADIUS,
+    maxWidth: APP_MAX_CONTENT_WIDTH,
     overflow: 'hidden' as const,
+    width: '100%' as const,
   },
   tabBar: {
     backgroundColor: 'transparent',

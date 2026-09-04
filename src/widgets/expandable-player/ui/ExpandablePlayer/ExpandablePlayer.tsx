@@ -43,7 +43,6 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyl
 
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
 
-  const miniStyles = createMiniStyles(currentTheme, tabBarHeight)
   const styles = createStyles(currentTheme)
 
   const { pause, play } = usePlayer()
@@ -65,6 +64,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyl
     screenHeight,
     screenWidth,
   } = useExpandAnimation(expanded, tabBarHeight)
+  const miniStyles = createMiniStyles(currentTheme, tabBarHeight, screenWidth)
 
   const gesture = useExpandablePlayerGesture({
     close,

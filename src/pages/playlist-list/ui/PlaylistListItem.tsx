@@ -58,11 +58,11 @@ export const PlaylistListItem = ({ onPress, playlist }: PlaylistListItemProps) =
       </View>
       <View style={styles.textContainer}>
         <MarqueeText text={playlist.title} textStyle={styles.title} />
-        {playlist.description && (
+        {playlist.description ? (
           <Text numberOfLines={1} style={styles.description}>
             {playlist.description}
           </Text>
-        )}
+        ) : null}
       </View>
     </Pressable>
   )

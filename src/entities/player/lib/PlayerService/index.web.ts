@@ -11,6 +11,7 @@ import { resetWebDuration, writeWebDuration } from './webDurationWriter'
 import { createPubSub } from './webPlayerPubSub'
 import { createWebPlayerState } from './webPlayerState'
 import { createStatusTracker } from './webPlayerStatusTracker'
+import { createWebStubControls } from './webPlayerStubControls'
 
 class WebPlayerService {
   public getState = () => this.state.getState()
@@ -123,4 +124,6 @@ class WebPlayerService {
   private statusTracker = createStatusTracker(() => this.audioInstance, this.state)
 }
 
-export const playerService = new WebPlayerService()
+const webPlayer = new WebPlayerService()
+// Web fills for controls with no browser equivalent (lock screen, OS volume, status snapshot).
+export const playerService = Object.assign(webPlayer, createWebStubControls(webPlayer.getState))

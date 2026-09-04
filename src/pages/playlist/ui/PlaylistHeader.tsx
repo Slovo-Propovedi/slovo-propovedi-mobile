@@ -42,7 +42,7 @@ export const PlaylistHeader = ({
       </Animated.View>
 
       <View style={headerStyles.contentSection}>
-        {description && <Text style={headerStyles.description}>{description}</Text>}
+        {description ? <Text style={headerStyles.description}>{description}</Text> : null}
         <QueueControls onPressPlayAll={onPressPlayAll} />
       </View>
     </>

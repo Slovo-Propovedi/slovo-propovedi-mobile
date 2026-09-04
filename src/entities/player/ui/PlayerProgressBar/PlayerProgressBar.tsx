@@ -27,12 +27,15 @@ export const PlayerProgressBar = ({
 
   const { isDragging, onSeekCancel, onSeekEnd, onSeekStart, onSeekUpdate, previewPosition } =
     useSeekHandling(position, onSeek)
-  const { handleLayout, panResponder, trackWidth } = useProgressPanResponder(duration, {
-    onSeekCancel,
-    onSeekEnd,
-    onSeekStart,
-    onSeekUpdate,
-  })
+  const { containerRef, handleLayout, panResponder, trackWidth } = useProgressPanResponder(
+    duration,
+    {
+      onSeekCancel,
+      onSeekEnd,
+      onSeekStart,
+      onSeekUpdate,
+    },
+  )
 
   const displayPosition = isDragging ? previewPosition : position
   const progress = Math.max(0, Math.min(1, duration > 0 ? displayPosition / duration : 0))
@@ -41,6 +44,7 @@ export const PlayerProgressBar = ({
   return (
     <View style={[progressBarStyles.container, style]}>
       <View
+        ref={containerRef}
         onLayout={handleLayout}
         {...panResponder.panHandlers}
         style={progressBarStyles.trackContainer}

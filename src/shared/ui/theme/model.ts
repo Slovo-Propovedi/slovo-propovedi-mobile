@@ -67,7 +67,7 @@ export const setThemeMode = action(async (ctx, mode: ThemeMode) => {
   if (!Object.values(ThemeMode).includes(mode)) throw new Error(`Invalid theme mode: ${mode}`)
 
   await AsyncStorage.setItem(THEME_MODE_KEY, mode)
-  Appearance.setColorScheme(mode === 'system' ? 'unspecified' : mode)
+  Appearance.setColorScheme?.(mode === 'system' ? 'unspecified' : mode) // web: no setColorScheme
 
   const systemTheme =
     mode === 'system'
@@ -120,7 +120,7 @@ export const loadThemeMode = action(async ctx => {
 
     themeModeAtom(ctx, validMode)
     currentThemeAtom(ctx, newTheme)
-    Appearance.setColorScheme(validMode === 'system' ? 'unspecified' : validMode)
+    Appearance.setColorScheme?.(validMode === 'system' ? 'unspecified' : validMode)
     return validMode
   } catch (error) {
     console.error('Failed to load theme mode:', error)

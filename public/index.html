@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
+    />
+    <title>%WEB_TITLE%</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#f16031" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Проповеди" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+
+    <style id="sp-scrollbars">
+      /*
+       * Themed scrollbars. The vars are set from the active app theme by
+       * ThemeProvider on web; the fallbacks are a theme-neutral grey so the
+       * scrollbar looks fine before/without JS.
+       */
+      :root {
+        --sp-scrollbar-thumb: rgba(136, 136, 136, 0.5);
+        --sp-scrollbar-thumb-hover: rgba(136, 136, 136, 0.8);
+      }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--sp-scrollbar-thumb) transparent;
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track,
+      ::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: var(--sp-scrollbar-thumb);
+        background-clip: content-box;
+        border: 2px solid transparent;
+        border-radius: 5px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background-color: var(--sp-scrollbar-thumb-hover);
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+
+    <script>
+      // Register the service worker (offline shell + audio cache). Skipped on
+      // localhost so it never interferes with the Metro dev server / HMR — test
+      // the PWA from a production build (`expo export -p web`). sw.js is in /public.
+      (function () {
+        var host = location.hostname;
+        var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+        if ('serviceWorker' in navigator && !isLocal) {
+          window.addEventListener('load', function () {
+            navigator.serviceWorker.register('/sw.js').catch(function (error) {
+              console.warn('[pwa] service worker registration failed:', error);
+            });
+          });
+        } else if ('serviceWorker' in navigator && isLocal) {
+          // Clean up a worker left over from a previous production-style run.
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            regs.forEach(function (reg) {
+              reg.unregister();
+            });
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

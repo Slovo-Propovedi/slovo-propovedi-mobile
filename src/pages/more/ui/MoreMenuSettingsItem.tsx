@@ -31,16 +31,16 @@ export const MoreMenuSettingsItem = ({
       style={[styles.itemContainer, { backgroundColor: currentTheme.surface }, style]}
     >
       <View style={styles.itemContent}>
-        {icon && (
+        {icon ? (
           <Ionicons size={24} name={icon} style={styles.itemIcon} color={currentTheme.text} />
-        )}
+        ) : null}
         <View style={styles.itemTextContainer}>
           <Text style={[styles.itemTitle, { color: currentTheme.text }]}>{title}</Text>
-          {description && (
+          {description ? (
             <Text style={[styles.itemDescription, { color: currentTheme.textMuted }]}>
               {description}
             </Text>
-          )}
+          ) : null}
         </View>
       </View>
     </TouchableItem>

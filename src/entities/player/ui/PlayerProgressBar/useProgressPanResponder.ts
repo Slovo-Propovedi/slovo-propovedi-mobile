@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
-import { type LayoutChangeEvent, PanResponder } from 'react-native'
+import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
+import { type LayoutChangeEvent, PanResponder, type View } from 'react-native'
 
 interface LayoutInfo {
   containerPageX: number
@@ -16,6 +16,7 @@ interface SeekCallbacks {
 }
 
 interface UseProgressPanResponderResult {
+  containerRef: RefObject<null | View>
   handleLayout: (event: LayoutChangeEvent) => void
   panResponder: PanResponderInstance
   trackWidth: number
@@ -26,11 +27,14 @@ export const useProgressPanResponder = (
   { onSeekCancel, onSeekEnd, onSeekStart, onSeekUpdate }: SeekCallbacks,
 ): UseProgressPanResponderResult => {
   const [layoutInfo, setLayoutInfo] = useState<LayoutInfo | null>(null)
+  const containerRef = useRef<null | View>(null)
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout
 
-    event.currentTarget.measure((_x, _y, _w, _h, pageX) => {
+    // Measure via the node ref, not event.currentTarget: react-native-web's
+    // onLayout event carries no currentTarget, so reading .measure() on it throws.
+    containerRef.current?.measure((_x, _y, _w, _h, pageX) => {
       setLayoutInfo({ containerPageX: pageX, width })
     })
   }, [])
@@ -73,5 +77,5 @@ export const useProgressPanResponder = (
 
   const trackWidth = layoutInfo?.width ?? 0
 
-  return { handleLayout, panResponder, trackWidth }
+  return { containerRef, handleLayout, panResponder, trackWidth }
 }

@@ -69,7 +69,11 @@ const styles = StyleSheet.create({
 
 ## Синхронизация `Appearance`
 
-`setThemeMode` и `loadThemeMode` вызывают `Appearance.setColorScheme(...)` (`'system'` → `'unspecified'`), чтобы системный статус-бар и нативные элементы соответствовали выбранному режиму. При `setSystemTheme` (смена системной темы) `currentThemeAtom` пересчитывается, а `Appearance` не трогается.
+`setThemeMode` и `loadThemeMode` вызывают `Appearance.setColorScheme?.(...)` (`'system'` → `'unspecified'`), чтобы системный статус-бар и нативные элементы соответствовали выбранному режиму. При `setSystemTheme` (смена системной темы) `currentThemeAtom` пересчитывается, а `Appearance` не трогается. Опциональный вызов (`?.`) — на `react-native-web` метода `setColorScheme` нет.
+
+## Скроллбары на web
+
+`ThemeProvider` (эффект только при `Platform.OS === 'web'`) прокидывает цвета активной темы в CSS-переменные `--sp-scrollbar-thumb` (`currentTheme.textMuted`) и `--sp-scrollbar-thumb-hover` (`currentTheme.text`) на `document.documentElement`. Сами правила `::-webkit-scrollbar*` / `scrollbar-width` / `scrollbar-color` — в `public/index.html` (фолбэк — нейтральный серый). Переключение светлая/тёмная перекрашивает скроллбары автоматически. Подробнее — [web.md](./web.md#скроллбары).
 
 ## Настройки
 

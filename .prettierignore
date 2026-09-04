@@ -3,6 +3,7 @@ ios/
 android/
 assets/
 .expo/
+public/
 
 # Legal / metadata — do not reformat
 LICENSE
