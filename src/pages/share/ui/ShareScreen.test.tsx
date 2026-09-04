@@ -9,6 +9,7 @@ import { ShareScreen } from './ShareScreen'
 const mockUseLatestReleaseUrl = jest.fn()
 const mockRetry = jest.fn()
 const LANDING_URL = 'https://slovo-propovedi.ru/'
+const WEB_APP_URL = 'https://app.slovo-propovedi.ru/'
 const RELEASE_URL =
   'https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest'
 
@@ -88,6 +89,16 @@ describe('<ShareScreen>', () => {
 
     expect(queryByText(LANDING_URL)).toBeNull()
     expect(queryByText('Релиз 1.2.0')).toBeTruthy()
+  })
+
+  test('expanding the web app section shows its url and qr code, collapsing the landing section', async () => {
+    mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
+
+    const { getByTestId, queryByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByTestId('share-section-header-Веб-версия'))
+
+    expect(queryByText(LANDING_URL)).toBeNull()
+    expect(queryByText(WEB_APP_URL)).toBeTruthy()
   })
 
   test('landing copy button copies the landing url and shows feedback', async () => {

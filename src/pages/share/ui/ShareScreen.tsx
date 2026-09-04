@@ -3,16 +3,17 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
-import { LANDING_URL } from '../lib/constants'
+import { LANDING_URL, WEB_APP_URL } from '../lib/constants'
 import { useLatestReleaseUrl } from '../lib/useLatestReleaseUrl'
 import { CollapsibleSection } from './CollapsibleSection'
 import { ShareLinkCard } from './ShareLinkCard'
 import { styles } from './styles'
 
 const LANDING_TITLE = 'Сайт'
+const WEB_APP_TITLE = 'Веб-версия'
 const RELEASE_TITLE = 'Приложение'
 
-type SectionKey = 'landing' | 'release'
+type SectionKey = 'landing' | 'release' | 'webApp'
 
 const ERROR_MESSAGE = 'Не удалось загрузить информацию о релизе'
 const RETRY_BUTTON_TITLE = 'Повторить'
@@ -80,6 +81,14 @@ export const ShareScreen = () => {
           isExpanded={expandedSection === 'landing'}
         >
           <ShareLinkCard url={LANDING_URL} />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title={WEB_APP_TITLE}
+          onToggle={() => toggleSection('webApp')}
+          isExpanded={expandedSection === 'webApp'}
+        >
+          <ShareLinkCard url={WEB_APP_URL} />
         </CollapsibleSection>
 
         <CollapsibleSection
