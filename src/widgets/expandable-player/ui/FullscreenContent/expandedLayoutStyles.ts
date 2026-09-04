@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native'
+import { APP_MAX_CONTENT_WIDTH } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 
 export const expandedLayoutStyles = StyleSheet.create({
@@ -34,8 +35,13 @@ export const expandedLayoutStyles = StyleSheet.create({
 
   trackInfoRow: {
     alignItems: 'center',
+    // Desktop-web: title + menu button stay in a centered column; the progress
+    // bar and header below/above keep the full width.
+    alignSelf: 'center',
     flexDirection: 'row',
     marginBottom: INDENTS.high,
+    maxWidth: APP_MAX_CONTENT_WIDTH,
+    width: '100%',
   },
 
   trackInfoTextContainer: {
