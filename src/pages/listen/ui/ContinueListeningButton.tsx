@@ -4,7 +4,7 @@ import { useEntryPlayback } from 'features/entry-playback'
 import { useLastListeningEntry } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom, usePlayer } from 'entities/player'
 import { reportError } from 'shared/model/error-dialog'
-import { ContinueCircleButton } from './ContinueCircleButton'
+import { ContinueCircleButton, TOTAL_SIZE } from './ContinueCircleButton'
 
 export const NOW_PLAYING_LABEL = 'Воспроизводится'
 
@@ -71,11 +71,10 @@ export const ContinueListeningButton = () => {
 const styles = StyleSheet.create({
   block: {
     alignSelf: 'stretch',
-    justifyContent: 'flex-start',
-    // Ровно половина ширины строки — как и секция справа в FirstSectionRow, без
-    // внешних полей. Мягкое свечение большой кнопки выходит за границы бокса, но
-    // непрозрачный круг остаётся внутри, а секция не вылезает за экран.
-    width: '50%',
+    justifyContent: 'center',
+    // Fixed to the circle's own size, not a share of the row — the first
+    // section next to it gets whatever width is actually left over.
+    width: TOTAL_SIZE,
   },
   mainArea: {
     alignItems: 'center',

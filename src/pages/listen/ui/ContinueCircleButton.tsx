@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native'
 import { useTheme } from 'shared/ui/theme'
 import { GlowRing } from './GlowRing'
 
-const TOTAL_SIZE = 224 // MUST match GlowRing.RING_SIZE (224) — both define the same overlay
+export const TOTAL_SIZE = 224 // MUST match GlowRing.RING_SIZE (224) — both define the same overlay
 const INNER_SIZE = 168
 const ICON_SIZE = 100
 // Треугольник play визуально смещён влево от геометрического центра (масса слева,
