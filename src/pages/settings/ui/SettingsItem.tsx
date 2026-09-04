@@ -30,14 +30,16 @@ export const SettingsItem = ({
       style={[styles.container, { backgroundColor: currentTheme.surface }, style]}
     >
       <View style={styles.content}>
-        {icon && <Ionicons size={24} name={icon} style={styles.icon} color={currentTheme.text} />}
+        {icon ? (
+          <Ionicons size={24} name={icon} style={styles.icon} color={currentTheme.text} />
+        ) : null}
         <View style={styles.textContainer}>
           <Text style={[styles.title, { color: currentTheme.text }]}>{title}</Text>
-          {description && (
+          {description ? (
             <Text style={[styles.description, { color: currentTheme.textMuted }]}>
               {description}
             </Text>
-          )}
+          ) : null}
         </View>
       </View>
     </TouchableItem>

@@ -70,7 +70,7 @@ export const TracksListItemContent = forwardRef<View, TracksListItemContentProps
             animationThreshold={TITLE_ANIMATION_THRESHOLD}
             style={[tracksListStyles.title, isPlaying && tracksListStyles.titlePlaying]}
           />
-          {subtitle && <Text style={tracksListStyles.subtitle}>{subtitle}</Text>}
+          {subtitle ? <Text style={tracksListStyles.subtitle}>{subtitle}</Text> : null}
         </View>
         <Pressable
           ref={ref}

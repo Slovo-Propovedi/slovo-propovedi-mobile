@@ -60,7 +60,7 @@ export const SliderItemDescription = ({
           titleStyle,
         ]}
       />
-      {subTitle && (
+      {subTitle ? (
         <Text
           numberOfLines={2}
           testID='slider-item-description-sub-title'
@@ -76,7 +76,7 @@ export const SliderItemDescription = ({
         >
           {subTitle}
         </Text>
-      )}
+      ) : null}
     </View>
   )
 }
