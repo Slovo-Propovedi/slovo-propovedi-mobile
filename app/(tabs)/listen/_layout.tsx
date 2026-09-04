@@ -1,5 +1,8 @@
 import { Stack } from 'expo-router'
+import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { useTheme } from 'shared/ui/theme'
+
+const LISTEN_FALLBACK_ROUTE = '/listen'
 
 const ListenStackLayout = () => {
   const { currentTheme } = useTheme()
@@ -7,7 +10,9 @@ const ListenStackLayout = () => {
     <Stack
       screenOptions={{
         contentStyle: { backgroundColor: currentTheme.background },
-        headerBackTitle: 'Назад',
+        headerLeft: props => (
+          <HeaderBackButton tintColor={props.tintColor} fallbackRoute={LISTEN_FALLBACK_ROUTE} />
+        ),
         headerStyle: { backgroundColor: currentTheme.background },
         headerTintColor: currentTheme.text,
         headerTitleStyle: { color: currentTheme.text },
