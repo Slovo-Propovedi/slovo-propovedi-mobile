@@ -7,6 +7,7 @@
 
 `checkForUpdateAction` — `src/shared/model/update.ts`:
 
+- выходит, если `Platform.OS === 'web'` — веб-версия обновляется сама через Service Worker (см. [web.md](./web.md) → PWA), диалог «скачать APK» там не имеет смысла;
 - выходит, если `!ctx.get(isOnlineAtom)`;
 - получает последний релиз через `fetchLatestRelease()`; если нет — выходит;
 - сравнивает `compareVersions(release.version, APP_VERSION)`; если релиз новее — планирует уведомление и открывает диалог обновления.
@@ -199,5 +200,6 @@ Push обрабатывается через `useUpdateNotificationResponse`: `s
 
 - [state.md](./state.md) — атомы обновления в карте состояния
 - [offline-and-network.md](./offline-and-network.md) — гейт проверки по `isOnlineAtom`
+- [web.md](./web.md) — PWA обновляется через Service Worker, диалог отключён на `Platform.OS === 'web'`
 - [storage.md](../contracts/storage.md) — ключ `last-update-notified-version`
 - [../decisions.md](../decisions.md) — `react-native-zip-archive` в Approved stack
