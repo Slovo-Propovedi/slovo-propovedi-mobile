@@ -1,3 +1,4 @@
+import { BlurView } from 'expo-blur'
 import { Text, View } from 'react-native'
 import Animated, { type useAnimatedStyle } from 'react-native-reanimated'
 import { CoverImage } from 'shared/ui'
@@ -35,6 +36,7 @@ export const PlaylistHeader = ({
         ]}
       >
         <CoverImage eager uri={artwork} style={headerStyles.headerImage} />
+        <BlurView tint='dark' intensity={70} style={headerStyles.blur} />
         <View style={headerStyles.overlay} />
         <View style={headerStyles.titleContainer}>
           <Text style={headerStyles.title}>{title}</Text>

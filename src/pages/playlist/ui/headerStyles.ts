@@ -4,6 +4,13 @@ import type { ThemeColors } from 'shared/ui/theme'
 
 export const createHeaderStyles = (theme: ThemeColors) =>
   StyleSheet.create({
+    blur: {
+      bottom: 0,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+    },
     contentSection: {
       backgroundColor: theme.background,
       paddingBottom: INDENTS.medium,
