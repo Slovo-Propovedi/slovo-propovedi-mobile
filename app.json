@@ -31,7 +31,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.jpg",
-      "bundler": "metro"
+      "bundler": "metro",
+      "lang": "ru",
+      "name": "Слово.Проповеди",
+      "shortName": "Проповеди",
+      "description": "Аудио проповеди: слушайте онлайн и офлайн"
     },
     "plugins": [
       [

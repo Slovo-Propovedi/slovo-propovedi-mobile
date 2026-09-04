@@ -46,6 +46,7 @@ export default defineConfig(
       'env.ts',
       'jest.config.ts',
       'node_modules/**',
+      'public/**',
       'src/pages/book-reader/testFiles/**',
       'src/shared/api/generated/**/*',
       'tests/setup.ts',

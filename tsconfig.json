@@ -12,5 +12,12 @@
     "skipLibCheck": true,
     "types": ["jest", "node"]
   },
-  "exclude": ["node_modules", "babel.config.js", "metro.config.js", "jest.config.ts", "__mocks__"]
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.ts",
+    "__mocks__",
+    "public"
+  ]
 }
