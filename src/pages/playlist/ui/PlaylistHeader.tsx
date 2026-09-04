@@ -1,4 +1,5 @@
-import { BlurView } from 'expo-blur'
+import { BlurTargetView, BlurView } from 'expo-blur'
+import { useRef } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { type useAnimatedStyle } from 'react-native-reanimated'
 import { CoverImage } from 'shared/ui'
@@ -26,6 +27,8 @@ export const PlaylistHeader = ({
   title,
 }: PlaylistHeaderProps) => {
   const headerStyles = createHeaderStyles(theme)
+  const blurTargetRef = useRef<View>(null)
+
   return (
     <>
       <Animated.View
@@ -35,8 +38,16 @@ export const PlaylistHeader = ({
           imageOpacityStyle,
         ]}
       >
-        <CoverImage eager uri={artwork} style={headerStyles.headerImage} />
-        <BlurView tint='dark' intensity={70} style={headerStyles.blur} />
+        <BlurTargetView ref={blurTargetRef} style={headerStyles.blur}>
+          <CoverImage eager uri={artwork} style={headerStyles.headerImage} />
+        </BlurTargetView>
+        <BlurView
+          tint='dark'
+          intensity={70}
+          style={headerStyles.blur}
+          blurTarget={blurTargetRef}
+          blurMethod='dimezisBlurViewSdk31Plus'
+        />
         <View style={headerStyles.overlay} />
         <View style={headerStyles.titleContainer}>
           <Text style={headerStyles.title}>{title}</Text>
