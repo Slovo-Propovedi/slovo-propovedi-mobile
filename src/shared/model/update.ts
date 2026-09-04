@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, atom } from '@reatom/framework'
+import { Platform } from 'react-native'
 import { APP_VERSION } from 'shared/config'
 import { requestPermissions, scheduleNotification } from 'shared/lib/notifications'
 import {
@@ -59,6 +60,9 @@ const scheduleUpdateNotification = async (release: LatestReleaseInfo): Promise<v
 }
 
 export const checkForUpdateAction = action(async ctx => {
+  // Web is a PWA and updates itself via the service worker — the native
+  // APK-download dialog is meaningless there.
+  if (Platform.OS === 'web') return
   if (!ctx.get(isOnlineAtom)) return
 
   const release = await fetchLatestRelease()
