@@ -47,6 +47,9 @@ export const styles = StyleSheet.create({
     marginTop: INDENTS.low,
     textAlign: 'center',
   },
+  releaseUrlLink: {
+    textDecorationLine: 'underline',
+  },
   releaseVersion: {
     fontSize: FONT_SIZES.base,
     marginTop: INDENTS.lowest,
