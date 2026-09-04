@@ -1,11 +1,18 @@
+import { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
-import QRCode from 'react-native-qrcode-svg'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
+import { LANDING_URL } from '../lib/constants'
 import { useLatestReleaseUrl } from '../lib/useLatestReleaseUrl'
-import { CopyLinkButton } from './CopyLinkButton'
+import { CollapsibleSection } from './CollapsibleSection'
+import { ShareLinkCard } from './ShareLinkCard'
 import { styles } from './styles'
+
+const LANDING_TITLE = 'Сайт'
+const RELEASE_TITLE = 'Приложение'
+
+type SectionKey = 'landing' | 'release'
 
 const ERROR_MESSAGE = 'Не удалось загрузить информацию о релизе'
 const RETRY_BUTTON_TITLE = 'Повторить'
@@ -50,13 +57,7 @@ const ReadyState = ({ htmlUrl, name, version }: ReadyStateProps) => {
       <Text style={[styles.releaseVersion, { color: currentTheme.textMuted }]}>
         Версия {version}
       </Text>
-      <View style={[styles.qrCard, { backgroundColor: '#ffffff' }]}>
-        <QRCode size={220} color='#000000' value={htmlUrl} backgroundColor='#ffffff' />
-      </View>
-      <Text selectable style={[styles.releaseUrl, { color: currentTheme.textMuted }]}>
-        {htmlUrl}
-      </Text>
-      <CopyLinkButton url={htmlUrl} style={styles.copyButton} />
+      <ShareLinkCard url={htmlUrl} />
     </>
   )
 }
@@ -64,19 +65,38 @@ const ReadyState = ({ htmlUrl, name, version }: ReadyStateProps) => {
 export const ShareScreen = () => {
   const { currentTheme } = useTheme()
   const { retry, state } = useLatestReleaseUrl()
+  const [expandedSection, setExpandedSection] = useState<null | SectionKey>('landing')
+
+  const toggleSection = (section: SectionKey) => {
+    setExpandedSection(current => (current === section ? null : section))
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
-        {state.status === 'loading' && <LoadingState />}
-        {state.status === 'error' && <ErrorState onRetry={retry} />}
-        {state.status === 'ready' && (
-          <ReadyState
-            name={state.release.name}
-            htmlUrl={state.release.htmlUrl}
-            version={state.release.version}
-          />
-        )}
+        <CollapsibleSection
+          title={LANDING_TITLE}
+          onToggle={() => toggleSection('landing')}
+          isExpanded={expandedSection === 'landing'}
+        >
+          <ShareLinkCard url={LANDING_URL} />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title={RELEASE_TITLE}
+          onToggle={() => toggleSection('release')}
+          isExpanded={expandedSection === 'release'}
+        >
+          {state.status === 'loading' && <LoadingState />}
+          {state.status === 'error' && <ErrorState onRetry={retry} />}
+          {state.status === 'ready' && (
+            <ReadyState
+              name={state.release.name}
+              htmlUrl={state.release.htmlUrl}
+              version={state.release.version}
+            />
+          )}
+        </CollapsibleSection>
       </ScrollView>
     </SafeAreaView>
   )

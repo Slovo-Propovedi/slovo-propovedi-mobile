@@ -4,16 +4,15 @@ import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 export const styles = StyleSheet.create({
   centered: {
     alignItems: 'center',
-    flex: 1,
     justifyContent: 'center',
-    minHeight: 300,
+    minHeight: 160,
     width: '100%',
   },
   container: {
     flex: 1,
   },
   content: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     padding: INDENTS.high,
   },
   copyButton: {
@@ -26,7 +25,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loader: {
-    marginTop: INDENTS.highest,
+    marginVertical: INDENTS.medium,
   },
   qrCard: {
     borderRadius: RADIUSES.high,
@@ -57,5 +56,25 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     fontWeight: '600',
     paddingVertical: INDENTS.low,
+  },
+  section: {
+    borderRadius: RADIUSES.high,
+    marginBottom: INDENTS.medium,
+    overflow: 'hidden',
+  },
+  sectionBody: {
+    alignItems: 'center',
+    paddingBottom: INDENTS.medium,
+    paddingHorizontal: INDENTS.medium,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: INDENTS.medium,
+  },
+  sectionTitle: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
   },
 })
