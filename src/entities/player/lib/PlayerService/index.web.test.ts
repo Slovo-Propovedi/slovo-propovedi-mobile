@@ -15,6 +15,9 @@ jest.mock('../../model', () => ({
   currentAudioAtom: jest.fn(),
   durationAtom: jest.fn(),
   setDurationAction: jest.fn(),
+  setIsBufferingAction: jest.fn(),
+  setIsPlayingAction: jest.fn(),
+  setPositionAction: jest.fn(),
 }))
 
 jest.mock('../../playback-rate', () => ({ setPlaybackRateAction: jest.fn() }))
