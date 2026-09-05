@@ -1,5 +1,4 @@
-import { Entypo } from '@expo/vector-icons'
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import { useTheme } from '../theme/ThemeContext/useTheme'
@@ -15,6 +14,7 @@ import {
   type SliderItemDescriptionTextAlign,
 } from './slider-item-description/slider-item-description.types'
 import { SliderSkeleton } from './slider-skeleton'
+import { SliderTitle } from './slider-title'
 import { createSliderStyles as styles } from './slider.styles'
 
 type FontSizes = typeof FONT_SIZES
@@ -87,14 +87,7 @@ export const Slider = <D extends object>({
 
   return (
     <View style={[sliderStyles.slider, { marginTop: titleFontSize / 2 }, { marginBottom }, style]}>
-      <Text
-        testID='title'
-        onPress={onPressTitle}
-        style={[sliderStyles.title, { fontSize: titleFontSize }]}
-      >
-        {`${title}`}
-        <Entypo name='chevron-right' size={titleFontSize} color={currentTheme.text} />
-      </Text>
+      <SliderTitle title={title} onPress={onPressTitle} fontSize={titleFontSize} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

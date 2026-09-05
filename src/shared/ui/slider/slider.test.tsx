@@ -59,6 +59,23 @@ describe('<Slider/>', () => {
     expect(screen.queryByTestId('title')).toHaveTextContent(sliderStub.title)
   })
 
+  test('wraps the title and keeps the arrow glued inline inside the title text', async () => {
+    await renderWithProviders(
+      <Slider
+        items={sliderStub.items}
+        title='Очень длинный заголовок секции, который должен переноситься на несколько строк'
+      />,
+    )
+    const title = screen.getByTestId('title')
+    // Заголовок переносится естественно — без numberOfLines и многоточия.
+    expect(title.props.numberOfLines).toBeUndefined()
+    expect(title.props.ellipsizeMode).toBeUndefined()
+    // Стрелка рендерится вложенным инлайн-элементом внутри заголовка — приклеена
+    // к тексту, а не вынесена отдельным элементом, который мог бы уехать на свою строку.
+    const hasNestedArrow = title.children.some(child => typeof child !== 'string')
+    expect(hasNestedArrow).toBe(true)
+  })
+
   test('call onPressTitle callback, when press on tittle element', async () => {
     await renderWithProviders(
       <Slider
