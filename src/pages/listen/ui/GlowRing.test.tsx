@@ -7,7 +7,7 @@ jest.mock('react-native-svg', () => {
   return {
     __esModule: true,
     Circle: (props: object) => <View testID='glow-blob' {...props} />,
-    default: (props: object) => <View {...props} />,
+    default: (props: object) => <View testID='glow-svg' {...props} />,
     Defs: (props: object) => <View {...props} />,
     G: (props: object) => <View {...props} />,
     RadialGradient: (props: object) => <View testID='glow-gradient' {...props} />,
@@ -33,5 +33,13 @@ describe('<GlowRing>', () => {
 
     expect(getByTestId('glow-ring')).toBeTruthy()
     expect(getAllByTestId('glow-blob')).toHaveLength(14)
+  })
+
+  test('applies the passed size to the Svg canvas', async () => {
+    const { getByTestId } = await renderWithProviders(<GlowRing size={150} isPlaying={false} />)
+
+    const svg = getByTestId('glow-svg')
+    expect(svg.props.width).toBe(150)
+    expect(svg.props.height).toBe(150)
   })
 })

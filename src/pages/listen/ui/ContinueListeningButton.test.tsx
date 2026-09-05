@@ -1,10 +1,25 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { useEntryPlayback } from 'features/entry-playback'
 import { useLastListeningEntry } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom, usePlayer } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks'
+import type { SectionData } from 'shared/model'
+import { dynamicSectionsAtom, isLoadingSectionsAtom } from '../model'
 import { ContinueListeningButton, NOW_PLAYING_LABEL } from './ContinueListeningButton'
+
+jest.mock('shared/config/screen-dimensions', () => ({
+  SCREEN_HEIGHT: 640,
+  SCREEN_WIDTH: 320,
+  SIZE_OF_MINIMUM_SIDE_OF_SCREEN: 320,
+}))
+
+const mockScreenDimensions = jest.requireMock('shared/config/screen-dimensions') as {
+  SCREEN_HEIGHT: number
+  SCREEN_WIDTH: number
+  SIZE_OF_MINIMUM_SIDE_OF_SCREEN: number
+}
 
 jest.mock('react-native-svg', () => {
   const { View } = jest.requireActual('react-native')
@@ -43,6 +58,15 @@ jest.mock('entities/player', () => {
   }
 })
 
+jest.mock('../model', () => {
+  const { atom } = jest.requireActual('@reatom/framework')
+
+  return {
+    dynamicSectionsAtom: atom([], 'testDynamicSectionsAtom'),
+    isLoadingSectionsAtom: atom(false, 'testIsLoadingSectionsAtom'),
+  }
+})
+
 jest.mock('entities/listening-history', () => ({
   useLastListeningEntry: jest.fn(),
 }))
@@ -76,9 +100,19 @@ const makeEntry = (sermon?: ReturnType<typeof makeSermon>) => ({
   sermon,
 })
 
+const makeSection = (itemsSize: SectionData['itemsSize']): SectionData => ({
+  id: 'section-1',
+  itemsSize,
+  playlists: [],
+  title: 'Section',
+  transform: 'short',
+})
+
 describe('<ContinueListeningButton>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockScreenDimensions.SCREEN_WIDTH = 320
+    mockScreenDimensions.SIZE_OF_MINIMUM_SIDE_OF_SCREEN = 320
   })
 
   test('renders nothing until the history is loaded', async () => {
@@ -218,5 +252,40 @@ describe('<ContinueListeningButton>', () => {
     })
 
     expect(pauseMock).toHaveBeenCalled()
+  })
+
+  test('sizes the block from the first section layout', async () => {
+    const ctx = createCtx()
+    dynamicSectionsAtom(ctx, [makeSection('small')])
+    isLoadingSectionsAtom(ctx, false)
+
+    const { getByRole } = await renderWithProviders(<ContinueListeningButton />, { ctx })
+
+    const button = getByRole('button', { name: START_LISTENING_LABEL })
+    const flatStyle = StyleSheet.flatten(button.props.style)
+
+    // Small-секция на экране 320px → кнопка сжимается до 157 (см. first-section-layout).
+    expect(flatStyle.width).toBe(157)
+    // В row-режиме блок растянут на высоту первой секции.
+    expect(flatStyle.alignSelf).toBe('stretch')
+  })
+
+  test('stacks the block at full width, aligned to the right, on a narrow screen', async () => {
+    mockScreenDimensions.SCREEN_WIDTH = 150
+    mockScreenDimensions.SIZE_OF_MINIMUM_SIDE_OF_SCREEN = 150
+
+    const ctx = createCtx()
+    dynamicSectionsAtom(ctx, [makeSection('small')])
+    isLoadingSectionsAtom(ctx, false)
+
+    const { getByRole } = await renderWithProviders(<ContinueListeningButton />, { ctx })
+
+    const button = getByRole('button', { name: START_LISTENING_LABEL })
+    const flatStyle = StyleSheet.flatten(button.props.style)
+
+    // 150 < 250 → stacked: кнопка ширины 150−32=118, прижата к правому краю
+    // (alignSelf 'flex-end'), секция уходит под неё на всю ширину.
+    expect(flatStyle.width).toBe(118)
+    expect(flatStyle.alignSelf).toBe('flex-end')
   })
 })

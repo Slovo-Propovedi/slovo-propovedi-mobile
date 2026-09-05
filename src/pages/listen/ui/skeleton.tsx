@@ -4,6 +4,7 @@ import {
   SliderItemTransform,
   type WhereIsSlideTitleLocated,
 } from 'shared/ui'
+import { FIRST_SKELETON_SECTION_SIZE } from './skeleton.constants'
 
 interface SkeletonSectionProps {
   borderRadius?: boolean
@@ -16,7 +17,7 @@ interface SkeletonSectionProps {
 }
 
 const SKELETON_SECTIONS: SkeletonSectionProps[] = [
-  { itemsCount: 1, itemsSize: SliderItemSize.Small },
+  { itemsCount: 1, itemsSize: FIRST_SKELETON_SECTION_SIZE },
   { itemsCount: 6, itemsSize: SliderItemSize.Middle },
   { itemsCount: 4, itemsSize: SliderItemSize.XLarge },
   { itemsCount: 6, itemsSize: SliderItemSize.Middle, transform: SliderItemTransform.Short },

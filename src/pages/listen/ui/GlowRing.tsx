@@ -20,7 +20,13 @@ import {
 } from './glowConfig'
 import { GlowLayer } from './GlowLayer'
 
-export const GlowRing = ({ isPlaying }: { isPlaying: boolean }) => {
+export const GlowRing = ({
+  isPlaying,
+  size = RING_SIZE,
+}: {
+  isPlaying: boolean
+  size?: number
+}) => {
   const { currentTheme } = useTheme()
   const primary = String(currentTheme.primary)
 
@@ -60,7 +66,7 @@ export const GlowRing = ({ isPlaying }: { isPlaying: boolean }) => {
 
   return (
     <View testID='glow-ring' style={styles.container}>
-      <Svg width={RING_SIZE} viewBox={viewBox} height={RING_SIZE}>
+      <Svg width={size} height={size} viewBox={viewBox}>
         <Defs>
           {ACCENT_KEYS.map(accent => (
             <RadialGradient r='50%' cx='50%' cy='50%' key={`${accent}`} id={`glow${accent}`}>

@@ -1,9 +1,9 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { match } from 'ts-pattern'
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
 import { useTheme } from '../../theme/ThemeContext/useTheme'
 import { INDENTS, RADIUSES } from '../../theme/themed'
 import { SliderItemDescriptionSkeleton } from '../slider-item-description/skeleton'
+import { getSliderItemWidth } from './slider-item.lib'
 import { SliderItemSize, SliderItemTransform, WhereIsSlideTitleLocated } from './slider-item.types'
 
 interface SliderItemSkeletonProps {
@@ -21,12 +21,7 @@ export const SliderItemSkeleton = ({
 }: SliderItemSkeletonProps) => {
   const { currentTheme } = useTheme()
 
-  const itemWidth = match(size)
-    .with(SliderItemSize.Large, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.62)
-    .with(SliderItemSize.Middle, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.44)
-    .with(SliderItemSize.Small, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.285)
-    .with(SliderItemSize.XLarge, () => SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.9)
-    .exhaustive()
+  const itemWidth = getSliderItemWidth(size)
 
   const imageHeight = match(transform)
     .with(SliderItemTransform.High, () => itemWidth * 1.3)

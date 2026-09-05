@@ -14,6 +14,7 @@ export { Progress } from './progress/progress'
 export { Slider } from './slider/slider'
 export { SliderItemDescription } from './slider/slider-item-description/slider-item-description'
 export { SliderItemDescriptionBackgroundStyle } from './slider/slider-item-description/slider-item-description.types'
+export { getSliderItemWidth } from './slider/slider-item/slider-item.lib'
 export {
   SliderItemSize,
   SliderItemTransform,

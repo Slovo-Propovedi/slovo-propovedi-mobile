@@ -5,6 +5,7 @@ import { useOfflineRetry } from 'shared/lib/network'
 import { useListenNavigation } from 'shared/routing'
 import { EmptyState } from 'shared/ui'
 import type { PlaylistData, SectionData } from 'shared/model'
+import { getFirstSectionLayout } from '../lib/first-section-layout'
 import {
   dynamicSectionsAtom,
   fetchAllSections,
@@ -53,23 +54,35 @@ export const DynamicSectionsSlider = ({ leadingElement }: DynamicSectionsSliderP
 
   if (leadingElement) {
     if (sections.length === 0) {
-      if (isLoading)
+      if (isLoading) {
+        const layout = getFirstSectionLayout(sections, isLoading)
+
         return (
           <>
             <FirstSectionRow
-              leadingElement={leadingElement}
-              right={<SectionsSkeleton count={1} />}
+              button={leadingElement}
+              stacked={layout.stacked}
+              section={<SectionsSkeleton count={1} />}
+              sectionMinWidth={layout.sectionMinWidth}
             />
             <SectionsSkeleton from={1} />
           </>
         )
+      }
 
-      return <FirstSectionRow right={<EmptyState />} leadingElement={leadingElement} />
+      return <FirstSectionRow button={leadingElement} section={<EmptyState />} />
     }
+
+    const layout = getFirstSectionLayout(sections, isLoading)
 
     return (
       <>
-        <FirstSectionRow leadingElement={leadingElement} right={renderSectionAt(sections[0], 0)} />
+        <FirstSectionRow
+          button={leadingElement}
+          stacked={layout.stacked}
+          sectionMinWidth={layout.sectionMinWidth}
+          section={renderSectionAt(sections[0], 0)}
+        />
         {renderSectionsFrom(1)}
       </>
     )

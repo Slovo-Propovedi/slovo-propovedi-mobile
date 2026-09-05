@@ -4,7 +4,9 @@ import { useEntryPlayback } from 'features/entry-playback'
 import { useLastListeningEntry } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom, usePlayer } from 'entities/player'
 import { reportError } from 'shared/model/error-dialog'
-import { ContinueCircleButton, TOTAL_SIZE } from './ContinueCircleButton'
+import { getFirstSectionLayout } from '../lib/first-section-layout'
+import { dynamicSectionsAtom, isLoadingSectionsAtom } from '../model'
+import { ContinueCircleButton } from './ContinueCircleButton'
 
 export const NOW_PLAYING_LABEL = 'Воспроизводится'
 
@@ -20,10 +22,14 @@ export const ContinueListeningButton = () => {
   const { pause } = usePlayer()
   const [isPlaying] = useAtom(isPlayingAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
+  const [sections] = useAtom(dynamicSectionsAtom)
+  const [isLoading] = useAtom(isLoadingSectionsAtom)
 
   if (!isLoaded) return null
 
   const isDisabled = !isPlaying && sermon === null
+  const layout = getFirstSectionLayout(sections, isLoading)
+  const width = layout.buttonWidth
 
   const handlePress = async () => {
     if (isPlaying) {
@@ -59,10 +65,17 @@ export const ContinueListeningButton = () => {
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: isDisabled }}
       accessibilityHint={isPlaying ? PAUSE_HINT : undefined}
-      style={({ pressed }) => [styles.block, { opacity: pressed ? 0.8 : isDisabled ? 0.5 : 1 }]}
+      style={({ pressed }) => [
+        styles.block,
+        {
+          alignSelf: layout.stacked ? 'flex-end' : 'stretch',
+          opacity: pressed ? 0.8 : isDisabled ? 0.5 : 1,
+          width,
+        },
+      ]}
     >
       <View style={styles.mainArea}>
-        <ContinueCircleButton isPlaying={isPlaying} />
+        <ContinueCircleButton width={width} isPlaying={isPlaying} />
       </View>
     </Pressable>
   )
@@ -70,11 +83,7 @@ export const ContinueListeningButton = () => {
 
 const styles = StyleSheet.create({
   block: {
-    alignSelf: 'stretch',
     justifyContent: 'center',
-    // Fixed to the circle's own size, not a share of the row — the first
-    // section next to it gets whatever width is actually left over.
-    width: TOTAL_SIZE,
   },
   mainArea: {
     alignItems: 'center',
