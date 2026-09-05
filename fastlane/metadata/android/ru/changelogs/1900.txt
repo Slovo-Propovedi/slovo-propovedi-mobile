@@ -1,0 +1,5 @@
+Swallow expo-font load timeout rejection
+Wrap long section titles keeping arrow inline
+Adaptive first-section layout with stacked mode
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
