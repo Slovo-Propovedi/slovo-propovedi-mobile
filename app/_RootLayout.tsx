@@ -7,6 +7,7 @@ import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
 import { useUpdateNotificationResponse } from 'features/update-notification'
+import { WebUpdateModal } from 'features/web-update'
 import {
   closePlayerSheetAction,
   isPlayerExpandedAtom,
@@ -107,6 +108,7 @@ const RootLayout = () => {
       <NetworkBanner />
       <ServerErrorToast />
       <UpdateDialogRoot />
+      <WebUpdateModal />
       <GlobalErrorDialog />
     </View>
   )

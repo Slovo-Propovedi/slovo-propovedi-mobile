@@ -79,9 +79,19 @@
     <div id="root"></div>
 
     <script>
-      // Register the service worker (offline shell + audio cache). Skipped on
-      // localhost so it never interferes with the Metro dev server / HMR — test
-      // the PWA from a production build (`expo export -p web`). sw.js is in /public.
+      // Register the service worker (versioned precache + audio cache). Skipped
+      // on localhost so it never interferes with the Metro dev server / HMR —
+      // test the PWA from a production build (`expo export -p web`). sw.js is
+      // in /public.
+      //
+      // This script only does the early ES5 registration. Background update
+      // checks and the update confirmation modal live in the app bundle
+      // (features/web-update): the SW precaches the whole dist manifest at
+      // build time and serves it cache-first, so normal opens never hit the
+      // server. New versions are detected by the bundle (60-min interval +
+      // online + visibility), downloaded into a new cache bucket and left
+      // WAITING; the user confirms the update in a modal, the page posts
+      // SKIP_WAITING, the SW activates and the page reloads.
       (function () {
         var host = location.hostname;
         var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';

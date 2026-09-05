@@ -1,13 +1,13 @@
 # Проверка обновлений
 
-**Слой:** `shared/model/update`, `shared/model/updateInstall`, `shared/lib/version-check`, `shared/lib/update-service`, `widgets/update-status`, `features/app-update`, `features/update-notification`
+**Слой:** `shared/model/update`, `shared/model/updateInstall`, `shared/lib/version-check`, `shared/lib/update-service`, `widgets/update-status`, `features/app-update`, `features/update-notification`, `features/web-update`
 **Статус:** готов
 
 ## Проверка версии
 
 `checkForUpdateAction` — `src/shared/model/update.ts`:
 
-- выходит, если `Platform.OS === 'web'` — веб-версия обновляется сама через Service Worker (см. [web.md](./web.md) → PWA), диалог «скачать APK» там не имеет смысла;
+- выходит, если `Platform.OS === 'web'` — веб-версия обновляется сама через Service Worker; применение новой версии — через модалку подтверждения (features/web-update, см. [web.md](./web.md) → PWA), диалог «скачать APK» там не имеет смысла;
 - выходит, если `!ctx.get(isOnlineAtom)`;
 - получает последний релиз через `fetchLatestRelease()`; если нет — выходит;
 - сравнивает `compareVersions(release.version, APP_VERSION)`; если релиз новее — планирует уведомление и открывает диалог обновления.

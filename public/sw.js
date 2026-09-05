@@ -6,9 +6,18 @@
  * Слово.Проповеди — service worker.
  *
  * Two jobs:
- *  1. Offline app shell — precache "/" and static assets, serve them when the
- *     network is down (production hosts only; on localhost the shell is left
- *     to Metro so dev reloads stay fresh).
+ *  1. Versioned app precache — at build time scripts/inject-sw-precache.mjs
+ *     writes the dist file manifest and a content hash into BUILD_VERSION and
+ *     PRECACHE_URLS below. On install the whole manifest is downloaded into a
+ *     versioned bucket (`precache-v<hash>`); navigations and same-origin
+ *     static assets are served cache-first from it, so normal opens never hit
+ *     the server. Activation is user-driven: a new build installs into a NEW
+ *     bucket and then WAITS in `waiting` (install never calls skipWaiting).
+ *     The page (features/web-update) shows a confirmation modal when a
+ *     waiting worker appears; on "Обновить" it posts { type: 'SKIP_WAITING' },
+ *     the worker activates (activate drops the old buckets + clients.claim),
+ *     the page reloads on controllerchange and serves the fresh build. The
+ *     very first install (no controller yet) activates itself with no dialog.
  *  2. Offline audio — serve sermon audio from the Cache Storage bucket that
  *     AudioCacheService.web fills on an explicit "download". Uncached audio is
  *     streamed straight from the network, exactly like on native.
@@ -25,24 +34,24 @@ const sw = /** @type {SW & typeof globalThis} */ (
   /** @type {unknown} */ (self)
 )
 
-/** @type {string} Cache bucket for the precached app shell. */
-const SHELL_CACHE = 'shell-cache-v1'
 /**
  * @type {string} Cache bucket for downloaded sermon audio.
  * Keep in sync with AUDIO_CACHE_NAME in src/shared/lib/audio-cache/webCacheApi.ts.
  */
 const AUDIO_CACHE = 'audio-cache-v1'
 
-/** @type {string[]} Same-origin URLs precached on install (production only). */
-const SHELL_URLS = [
-  '/',
-  '/manifest.webmanifest',
-  '/favicon.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/icon-maskable-512.png',
-  '/icons/apple-touch-icon.png',
-]
+/** Build version, injected by scripts/inject-sw-precache.mjs at build time. */
+const BUILD_VERSION = '__SW_BUILD_VERSION__'
+/**
+ * @type {string[]} Dist file manifest, injected at build time (a string in
+ * source; dev never precaches).
+ */
+const PRECACHE_URLS = /** @type {string[]} */ (
+  /** @type {unknown} */ ('__SW_PRECACHE_URLS__')
+)
+
+/** @type {string} Versioned cache bucket holding the current build's files. */
+const PRECACHE = 'precache-v' + BUILD_VERSION
 
 const AUDIO_EXT = /\.(mp3|m4a|aac|ogg|opus|wav|flac)(\?|$)/i
 const DEV_HOSTS = ['localhost', '127.0.0.1']
@@ -54,9 +63,15 @@ sw.addEventListener('install', (event) => {
     Promise.resolve()
       .then(() => {
         if (isDev) return undefined
-        return caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_URLS))
-      })
-      .then(() => sw.skipWaiting()),
+        // addAll is all-or-nothing: if any file fails to download, install
+        // fails and the old SW keeps serving the old fully-cached version;
+        // the next update check retries.
+        return caches.open(PRECACHE).then((cache) =>
+          cache.addAll(
+            PRECACHE_URLS.map((url) => new Request(url, { cache: 'reload' })),
+          ),
+        )
+      }),
   )
 })
 
@@ -68,12 +83,19 @@ sw.addEventListener('activate', (event) => {
         Promise.all(
           keys
             // Never drop AUDIO_CACHE on a SW update — those are the user's downloads.
-            .filter((key) => key !== SHELL_CACHE && key !== AUDIO_CACHE)
+            // This also cleans up the legacy shell-cache-v1 bucket.
+            .filter((key) => key !== PRECACHE && key !== AUDIO_CACHE)
             .map((key) => caches.delete(key)),
         ),
       )
       .then(() => sw.clients.claim()),
   )
+})
+
+// Activation is user-driven: the page asks the waiting worker to take over
+// only after the user confirms the update dialog (features/web-update).
+sw.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') sw.skipWaiting()
 })
 
 /**
@@ -142,36 +164,42 @@ function audioStrategy(request, url) {
 }
 
 /**
- * Stale-while-revalidate for same-origin static assets.
+ * Cache-first for navigations: serve the precached SPA shell (`/index.html`),
+ * fall back to the network on the very first visit (before the SW finished
+ * installing).
  * @param {Request} request
  * @returns {Promise<Response>}
  */
-function staleWhileRevalidate(request) {
-  return caches.open(SHELL_CACHE).then((cache) =>
-    cache.match(request).then((cached) => {
-      const network = fetch(request)
-        .then((response) => {
-          if (response && response.ok) cache.put(request, response.clone()).catch(() => {})
-          return response
-        })
-        .catch(() => cached || Response.error())
-      return cached || network
+function navigationStrategy(request) {
+  return caches.open(PRECACHE).then((cache) =>
+    cache.match('/index.html', { ignoreSearch: true }).then((cached) => {
+      if (cached) return cached
+      return fetch(request)
     }),
   )
 }
 
 /**
- * Network-first for navigations, falling back to the cached app shell offline.
+ * Cache-first for same-origin static assets, with a runtime-fill safety net
+ * for anything not in the manifest.
  * @param {Request} request
  * @returns {Promise<Response>}
  */
-function navigationStrategy(request) {
-  return fetch(request).catch(() =>
-    caches.match('/', { ignoreSearch: true }).then((cached) => cached || Response.error()),
+function cacheFirst(request) {
+  return caches.open(PRECACHE).then((cache) =>
+    cache.match(request).then((cached) => {
+      if (cached) return cached
+      return fetch(request).then((response) => {
+        if (response && response.ok) cache.put(request, response.clone()).catch(() => {})
+        return response
+      })
+    }),
   )
 }
 
 sw.addEventListener('fetch', (event) => {
+  // Navigation Preload is deliberately NOT used: cache-first navigations never
+  // read the network, so a preload request would only waste bandwidth.
   const request = event.request
   if (request.method !== 'GET') return
 
@@ -185,12 +213,16 @@ sw.addEventListener('fetch', (event) => {
   // In dev, leave the shell to Metro so hot reloads are never served stale.
   if (isDev) return
 
-  if (request.mode === 'navigate') {
+  // Never serve the SW script from cache — the browser fetches /sw.js itself
+  // to detect updates, and nginx already sends it with no-cache.
+  if (url.pathname === '/sw.js') return
+
+  if (request.mode === 'navigate' && url.origin === sw.location.origin) {
     event.respondWith(navigationStrategy(request))
     return
   }
 
   if (url.origin === sw.location.origin) {
-    event.respondWith(staleWhileRevalidate(request))
+    event.respondWith(cacheFirst(request))
   }
 })
