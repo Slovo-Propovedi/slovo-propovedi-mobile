@@ -1,0 +1,13 @@
+diff --git a/node_modules/expo-font/build/FontLoader.web.js b/node_modules/expo-font/build/FontLoader.web.js
+index 4051bf3..85b1ac5 100644
+--- a/node_modules/expo-font/build/FontLoader.web.js
++++ b/node_modules/expo-font/build/FontLoader.web.js
+@@ -60,7 +60,7 @@ export function loadSingleFontAsync(name, input) {
+     // NOTE(@hassankhan): This seems broken for async calls; we should investigate removing
+     // `fontfaceobserver` altogether
+     try {
+-        return ExpoFontLoader.loadAsync(name, input);
++        return ExpoFontLoader.loadAsync(name, input).catch(() => {});
+     }
+     catch {
+         // `FontObserver` rejects on unsupported browsers/network timeouts (see #22954). The font

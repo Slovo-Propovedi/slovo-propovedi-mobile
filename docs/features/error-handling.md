@@ -74,6 +74,17 @@
 Ошибки, связанные с AppState («activity is no longer available»), диалог не поднимают —
 только `console.warn`.
 
+### Известный источник ложных срабатываний `unhandledrejection` на web
+
+На mobile-web (Android Chrome) медленная сеть могла поднимать ложное окно
+«Произошла ошибка асинхронной операции» из-за `@expo/vector-icons` → `expo-font`
+`Font.loadAsync`: async-отклонение шрифта (`FontObserver` 12-сек таймаут, крупные
+TTF ~1.3 МБ) утекало как unhandled promise rejection, которое ловил
+`GlobalErrorHandler`. Шрифт при этом всё равно загружался через `@font-face` CSS,
+поэтому модалка была шумом. Исправлено патчем expo-font (глотает async-отклонение),
+см. [`decisions.md`](../decisions.md) → «Патч expo-font». Фильтрация в `GlobalErrorHandler`
+сознательно не добавлялась.
+
 ## Связанные документы
 
 - [offline-and-network.md](./offline-and-network.md) — тосты/баннеры сети (отдельный механизм)
