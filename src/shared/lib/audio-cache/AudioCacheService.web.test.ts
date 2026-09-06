@@ -182,7 +182,9 @@ describe('AudioCacheService.web', () => {
     mockFetchOk(1024)
     await cacheAudio(AUDIO_URL)
     await webDownloadJournal.addActiveDownload(OTHER_URL)
-    await expect(webDownloadJournal.getActiveDownloads()).resolves.toContain(OTHER_URL)
+    await expect(webDownloadJournal.getActiveDownloads()).resolves.toContainEqual(
+      expect.objectContaining({ url: OTHER_URL }),
+    )
 
     await audioCacheService.clearCache()
 
@@ -264,7 +266,9 @@ describe('AudioCacheService.web', () => {
     const promise = cacheAudio(AUDIO_URL)
     await waitForFetchCall(fetchSpy)
 
-    await expect(webDownloadJournal.getActiveDownloads()).resolves.toEqual([AUDIO_URL])
+    await expect(webDownloadJournal.getActiveDownloads()).resolves.toEqual([
+      expect.objectContaining({ url: AUDIO_URL }),
+    ])
 
     resolveFetch(corsResponse(1024))
     await promise
@@ -273,7 +277,7 @@ describe('AudioCacheService.web', () => {
 
   test('journals the url before starting the fetch', async () => {
     const fetchSpy = mockFetchOk(1024)
-    const addSpy = jest.spyOn(webDownloadJournal, 'addActiveDownload')
+    const addSpy = jest.spyOn(webDownloadJournal, 'addActiveDownloadWithHeartbeat')
 
     await cacheAudio(AUDIO_URL)
 

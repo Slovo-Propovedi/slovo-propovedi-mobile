@@ -3,46 +3,120 @@ import { z } from 'zod'
 
 export const ACTIVE_DOWNLOADS_KEY = 'audio-cache/active-downloads'
 
-const activeDownloadsSchema = z.array(z.string())
+const entrySchema = z.object({
+  lastSeenAt: z.number(),
+  sessionId: z.string(),
+  url: z.string(),
+})
 
-/**
- * Read the set of URLs with an in-flight download, tolerating legacy/corrupt
- * stored JSON (returns an empty list and logs).
- */
-export const getActiveDownloads = async (): Promise<string[]> => {
+const entriesSchema = z.array(entrySchema)
+
+export type ActiveDownloadEntry = z.infer<typeof entrySchema>
+
+const generateSessionId = (): string => {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+      return crypto.randomUUID()
+  } catch {
+    // crypto unavailable in some environments
+  }
+  return Math.random().toString(36).slice(2)
+}
+
+export const sessionId = generateSessionId()
+
+// Serialized read-modify-write queue (pattern like manifestQueue).
+let writeQueue: Promise<void> = Promise.resolve()
+
+const enqueueWrite = <T>(fn: () => Promise<T>): Promise<T> => {
+  const result = writeQueue.then(fn, fn)
+  writeQueue = result.then(() => undefined).catch(() => undefined)
+  return result
+}
+
+const parseEntries = (raw: string): ActiveDownloadEntry[] => {
+  const parsed: unknown = JSON.parse(raw)
+
+  const v2Result = entriesSchema.safeParse(parsed)
+  if (v2Result.success) return v2Result.data
+
+  // Legacy v1: string[] → stale entries (never shipped in a release).
+  if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string'))
+    return parsed.map(url => ({ lastSeenAt: 0, sessionId: 'legacy', url }))
+
+  console.error('[audio-cache] Invalid active-downloads journal, ignoring:', v2Result.error)
+  return []
+}
+
+// Read active downloads, tolerating legacy/corrupt JSON (logs + empty list).
+export const getActiveDownloads = async (): Promise<ActiveDownloadEntry[]> => {
   try {
     const raw = await AsyncStorage.getItem(ACTIVE_DOWNLOADS_KEY)
-    if (!raw) return []
-    const parsed = activeDownloadsSchema.safeParse(JSON.parse(raw))
-    if (!parsed.success) {
-      console.error('[audio-cache] Invalid active-downloads journal, ignoring:', parsed.error)
-      return []
-    }
-    return parsed.data
+    return raw ? parseEntries(raw) : []
   } catch (error) {
     console.error('[audio-cache] Invalid active-downloads journal, ignoring:', error)
     return []
   }
 }
 
-const writeActiveDownloads = async (urls: string[]): Promise<void> => {
+const writeEntries = async (entries: ActiveDownloadEntry[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(ACTIVE_DOWNLOADS_KEY, JSON.stringify(urls))
+    await AsyncStorage.setItem(ACTIVE_DOWNLOADS_KEY, JSON.stringify(entries))
   } catch (error) {
     console.error('[audio-cache] Failed to persist active-downloads journal:', error)
   }
 }
 
-export const addActiveDownload = async (audioUrl: string): Promise<void> => {
-  const urls = await getActiveDownloads()
-  if (!urls.includes(audioUrl)) urls.push(audioUrl)
-  await writeActiveDownloads(urls)
-}
+export const addActiveDownload = async (audioUrl: string): Promise<void> =>
+  enqueueWrite(async () => {
+    const entries = await getActiveDownloads()
+    if (!entries.some(e => e.url === audioUrl)) {
+      entries.push({ lastSeenAt: Date.now(), sessionId, url: audioUrl })
+      await writeEntries(entries)
+    }
+  })
 
-export const removeActiveDownload = async (audioUrl: string): Promise<void> => {
-  const urls = await getActiveDownloads()
-  const next = urls.filter(url => url !== audioUrl)
-  if (next.length !== urls.length) await writeActiveDownloads(next)
+export const removeActiveDownload = async (audioUrl: string): Promise<void> =>
+  enqueueWrite(async () => {
+    const entries = await getActiveDownloads()
+    const next = entries.filter(e => e.url !== audioUrl)
+    if (next.length !== entries.length) await writeEntries(next)
+  })
+
+export const removeActiveDownloadEntries = async (toRemove: ActiveDownloadEntry[]): Promise<void> =>
+  enqueueWrite(async () => {
+    const entries = await getActiveDownloads()
+    const removeUrls = new Set(toRemove.map(e => e.url))
+    const next = entries.filter(e => !removeUrls.has(e.url))
+    if (next.length !== entries.length) await writeEntries(next)
+  })
+
+// Update lastSeenAt for a url, but only if it belongs to the current session.
+export const refreshActiveDownload = async (audioUrl: string): Promise<void> =>
+  enqueueWrite(async () => {
+    const entries = await getActiveDownloads()
+    let changed = false
+    for (const entry of entries)
+      if (entry.url === audioUrl && entry.sessionId === sessionId) {
+        entry.lastSeenAt = Date.now()
+        changed = true
+      }
+
+    if (changed) await writeEntries(entries)
+  })
+
+// Add a download to the journal and start a heartbeat that refreshes lastSeenAt
+// every 10s. Returns a stop function to clear the interval (call in finally).
+export const addActiveDownloadWithHeartbeat = async (audioUrl: string): Promise<() => void> => {
+  await addActiveDownload(audioUrl)
+
+  const intervalId = setInterval(() => {
+    void refreshActiveDownload(audioUrl)
+  }, 10_000)
+
+  return () => {
+    clearInterval(intervalId)
+  }
 }
 
 export const clearActiveDownloads = async (): Promise<void> => {

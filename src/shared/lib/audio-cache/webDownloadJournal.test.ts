@@ -2,9 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   ACTIVE_DOWNLOADS_KEY,
   addActiveDownload,
+  addActiveDownloadWithHeartbeat,
   clearActiveDownloads,
   getActiveDownloads,
+  refreshActiveDownload,
   removeActiveDownload,
+  removeActiveDownloadEntries,
+  sessionId,
 } from './webDownloadJournal'
 
 const AUDIO_URL_A = 'https://cdn.example.com/a.mp3'
@@ -15,11 +19,13 @@ describe('webDownloadJournal', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    jest.useFakeTimers()
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     return AsyncStorage.clear()
   })
 
   afterEach(() => {
+    jest.useRealTimers()
     consoleErrorSpy.mockRestore()
   })
 
@@ -27,17 +33,23 @@ describe('webDownloadJournal', () => {
     await addActiveDownload(AUDIO_URL_A)
     await addActiveDownload(AUDIO_URL_B)
 
-    await expect(getActiveDownloads()).resolves.toEqual([AUDIO_URL_A, AUDIO_URL_B])
+    const entries = await getActiveDownloads()
+    expect(entries.map(entry => entry.url)).toEqual([AUDIO_URL_A, AUDIO_URL_B])
+    expect(entries.every(entry => entry.sessionId === sessionId)).toBe(true)
 
     await removeActiveDownload(AUDIO_URL_A)
-    await expect(getActiveDownloads()).resolves.toEqual([AUDIO_URL_B])
+    await expect(getActiveDownloads()).resolves.toEqual([
+      expect.objectContaining({ url: AUDIO_URL_B }),
+    ])
   })
 
   test('addActiveDownload does not duplicate an existing url', async () => {
     await addActiveDownload(AUDIO_URL_A)
     await addActiveDownload(AUDIO_URL_A)
 
-    await expect(getActiveDownloads()).resolves.toEqual([AUDIO_URL_A])
+    const entries = await getActiveDownloads()
+    expect(entries).toHaveLength(1)
+    expect(entries[0].url).toBe(AUDIO_URL_A)
   })
 
   test('returns empty array when nothing is stored', async () => {
@@ -65,10 +77,63 @@ describe('webDownloadJournal', () => {
     expect(consoleErrorSpy).toHaveBeenCalled()
   })
 
+  test('migrates a legacy string[] payload into stale entries', async () => {
+    await AsyncStorage.setItem(ACTIVE_DOWNLOADS_KEY, JSON.stringify([AUDIO_URL_A, AUDIO_URL_B]))
+
+    const entries = await getActiveDownloads()
+
+    expect(entries).toEqual([
+      { lastSeenAt: 0, sessionId: 'legacy', url: AUDIO_URL_A },
+      { lastSeenAt: 0, sessionId: 'legacy', url: AUDIO_URL_B },
+    ])
+  })
+
   test('clearActiveDownloads empties the journal', async () => {
     await addActiveDownload(AUDIO_URL_A)
     await clearActiveDownloads()
 
     await expect(getActiveDownloads()).resolves.toEqual([])
+  })
+
+  test('refreshActiveDownload updates lastSeenAt for this session only', async () => {
+    await addActiveDownload(AUDIO_URL_A)
+    await AsyncStorage.setItem(
+      ACTIVE_DOWNLOADS_KEY,
+      JSON.stringify([
+        { lastSeenAt: 1, sessionId, url: AUDIO_URL_A },
+        { lastSeenAt: 1, sessionId: 'other-tab', url: AUDIO_URL_B },
+      ]),
+    )
+
+    await refreshActiveDownload(AUDIO_URL_A)
+
+    const entries = await getActiveDownloads()
+    expect(entries.find(entry => entry.url === AUDIO_URL_A)?.lastSeenAt).toBeGreaterThan(1)
+    expect(entries.find(entry => entry.url === AUDIO_URL_B)?.lastSeenAt).toBe(1)
+  })
+
+  test('heartbeat refreshes lastSeenAt on interval and stops on cleanup', async () => {
+    const stopHeartbeat = await addActiveDownloadWithHeartbeat(AUDIO_URL_A)
+    const before = (await getActiveDownloads())[0].lastSeenAt
+
+    await jest.advanceTimersByTimeAsync(10_000)
+
+    const after = (await getActiveDownloads())[0].lastSeenAt
+    expect(after).toBeGreaterThan(before)
+
+    stopHeartbeat()
+    const stopped = after
+    await jest.advanceTimersByTimeAsync(10_000)
+    expect((await getActiveDownloads())[0].lastSeenAt).toBe(stopped)
+  })
+
+  test('removeActiveDownloadEntries drops only the given urls', async () => {
+    await addActiveDownload(AUDIO_URL_A)
+    await addActiveDownload(AUDIO_URL_B)
+
+    await removeActiveDownloadEntries([{ lastSeenAt: 0, sessionId, url: AUDIO_URL_A }])
+
+    const entries = await getActiveDownloads()
+    expect(entries.map(entry => entry.url)).toEqual([AUDIO_URL_B])
   })
 })

@@ -13,7 +13,11 @@ import {
   isUrlCommitted,
   uncommitAudioUrl,
 } from './webCacheManifest'
-import { addActiveDownload, clearActiveDownloads, removeActiveDownload } from './webDownloadJournal'
+import {
+  addActiveDownloadWithHeartbeat,
+  clearActiveDownloads,
+  removeActiveDownload,
+} from './webDownloadJournal'
 
 export interface AudioCacheSummary {
   fileCount: number
@@ -66,8 +70,7 @@ export const clearAudioCache = async (): Promise<void> => {
   if (!isCacheStorageAvailable()) return
   await caches.delete(AUDIO_CACHE_NAME)
   // Dropping the bucket must also clear the download journal, or the next
-  // startup would resurrect an empty bucket via deleteAudioEntry→uncommit→
-  // ensureManifest. A journal failure must not fail the clear itself.
+  // startup would resurrect an empty bucket via deleteAudioEntry→uncommit.
   await clearActiveDownloads()
 }
 
@@ -92,8 +95,7 @@ export const summarizeAudioCache = async (): Promise<AudioCacheSummary> => {
 
 /**
  * Skip a track that is already fully downloaded; otherwise drop any stale
- * uncommitted/truncated entry, download a fresh copy, store it and commit it in
- * the manifest so the service worker serves it offline.
+ * uncommitted/truncated entry, download a fresh copy, store and commit it.
  * @param audioUrl - Canonical URL of the track.
  * @param onProgress - Progress callback (0..1) for the download.
  */
@@ -109,8 +111,8 @@ export const downloadAndStoreAudio = async (
     console.error('[audio-cache] Error clearing stale cache entry:', error),
   )
   // Journal the in-flight download so an unclean shutdown leaves a trace the
-  // next startup can clean up without enumerating the bucket.
-  await addActiveDownload(audioUrl)
+  // next startup can clean up; the heartbeat keeps `lastSeenAt` fresh.
+  const stopHeartbeat = await addActiveDownloadWithHeartbeat(audioUrl)
   try {
     const response = await fetchAudioForCache(audioUrl, onProgress)
     await putAudioResponse(audioUrl, response)
@@ -121,6 +123,7 @@ export const downloadAndStoreAudio = async (
       console.error('[audio-cache] Failed to commit audio url:', error)
     }
   } finally {
+    stopHeartbeat()
     await removeActiveDownload(audioUrl)
   }
   return audioUrl

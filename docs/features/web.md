@@ -57,7 +57,7 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 | `shared/lib/audio-cache/webCacheApi.ts` | Низкоуровневые операции Cache Storage + feature-detect `isCacheStorageAvailable()` + `hasCompleteAudio` + `downloadAndStoreAudio` (skip-cached → дроп stale → fetch → put → commit) |
 | `shared/lib/audio-cache/openAudioCache.ts` | Recovery-хелпер открытия бакета (при сбое `caches.open` → `caches.delete` → reopen) + первоисточник `AUDIO_CACHE_NAME` |
 | `shared/lib/audio-cache/webCacheManifest.ts` | Commit-манифест `__manifest__`: `commitAudioUrl`/`uncommitAudioUrl`/`ensureManifest` (сериализованный read-modify-write) |
-| `shared/lib/audio-cache/webDownloadJournal.ts` | AsyncStorage-журнал активных загрузок (`audio-cache/active-downloads`, web-only) для точечной очистки орфанов |
+| `shared/lib/audio-cache/webDownloadJournal.ts` | AsyncStorage-журнал активных загрузок (`audio-cache/active-downloads`, web-only): записи `{ url, sessionId, lastSeenAt }` + heartbeat (10с) для multi-tab-безопасной очистки орфанов |
 | `shared/lib/audio-cache/cleanupOrphans.web.ts` | Стартовый sweep орфанов (незакоммиченных записей после аварийного завершения) по журналу, без перечисления бакета |
 | `shared/lib/audio-cache/webAudioDownload.ts` | `fetchAudioForCache`: сначала CORS-запрос (реальный прогресс 0..1 по `Content-Length`), при отказе — opaque `no-cors` (прогресс скачет 0→1, размер неизвестен) |
 | `shared/lib/audio-cache/getAudioCacheDirectory.ts` | Кидает явную ошибку при `Platform.OS === 'web'` — страховка на случай устаревшего кеша Metro (иначе загадочный `this.validatePath`) |
@@ -66,7 +66,7 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 
 ### Возобновление «кешировать все» (Issue #78)
 
-Повторный прогон скачивания плейлиста на web не перекачивает уже закешированные треки (skip-cached, паритет с нативным), повреждённый бакет `audio-cache-v1` чинится через `caches.delete` + reopen (`openAudioCache` в `webCacheApi.ts`), а неудачные скачивания не дают unhandled rejection. Орфаны после аварийного завершения (незакоммиченные записи, оставшиеся от убитого процесса) чистятся на старте по журналу активных загрузок `webDownloadJournal.ts` → `cleanupOrphans.web.ts`, **без перечисления бакета** (риск crash-loop на повреждённом iOS-бакете). Подробности и WebKit-баги (260962/305539) — [audio-cache.md](./audio-cache.md) → «Очистка осиротевших загрузок после аварийного завершения».
+Повторный прогон скачивания плейлиста на web не перекачивает уже закешированные треки (skip-cached, паритет с нативным), повреждённый бакет `audio-cache-v1` чинится через `caches.delete` + reopen (`openAudioCache` в `webCacheApi.ts`), а неудачные скачивания не дают unhandled rejection. Орфаны после аварийного завершения (незакоммиченные записи, оставшиеся от убитого процесса) чистятся на старте по журналу активных загрузок `webDownloadJournal.ts` → `cleanupOrphans.web.ts`, **без перечисления бакета** (риск crash-loop на повреждённом iOS-бакете). Журнал multi-tab-безопасен: свежие записи (heartbeat `lastSeenAt` < 60с) не трогаются, stale-записи режутся точечно по манифесту. Подробности и WebKit-баги (260962/305539) — [audio-cache.md](./audio-cache.md) → «Очистка осиротевших загрузок после аварийного завершения».
 
 ### Ограничение: CORS
 
