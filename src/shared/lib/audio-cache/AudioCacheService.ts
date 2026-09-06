@@ -1,5 +1,10 @@
 import { File } from 'expo-file-system'
-import { downloadToCache, ensureCacheDirectoryExists, getCachedFile } from './cacheDownloader'
+import {
+  downloadToCache,
+  ensureCacheDirectoryExists,
+  getCachedFile,
+  PART_SUFFIX,
+} from './cacheDownloader'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 import { inflightCache, type InflightEntry, resetInflightCache } from './inflightCache'
 
@@ -40,10 +45,11 @@ class AudioCacheService {
       ensureCacheDirectoryExists()
       const cacheDir = getAudioCacheDirectory()
       if (!cacheDir.exists) return { fileCount: 0, totalSize: 0 }
-      const files = cacheDir.list()
-      let totalSize = 0
-      for (const file of files) if (file instanceof File) totalSize += file.size ?? 0
-      return { fileCount: files.length, totalSize }
+      const cachedFiles = cacheDir
+        .list()
+        .filter((file): file is File => file instanceof File && !file.name.endsWith(PART_SUFFIX))
+      const totalSize = cachedFiles.reduce((sum, file) => sum + (file.size ?? 0), 0)
+      return { fileCount: cachedFiles.length, totalSize }
     } catch (error) {
       console.error('[AudioCacheService] Error getting cache info:', error)
       return { fileCount: 0, totalSize: 0 }
@@ -86,16 +92,11 @@ class AudioCacheService {
     const promise = downloadToCache(audioUrl, entry.emit)
     entry.promise = promise
     inflightCache.set(audioUrl, entry)
-    promise.then(
-      () => {
-        callbacks.clear()
-        inflightCache.delete(audioUrl)
-      },
-      () => {
-        callbacks.clear()
-        inflightCache.delete(audioUrl)
-      },
-    )
+    const cleanup = (): void => {
+      callbacks.clear()
+      inflightCache.delete(audioUrl)
+    }
+    promise.then(cleanup, cleanup)
     return promise
   }
   public clearCache = async (): Promise<void> => {

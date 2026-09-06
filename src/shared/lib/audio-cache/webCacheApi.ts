@@ -13,6 +13,7 @@ import {
   isUrlCommitted,
   uncommitAudioUrl,
 } from './webCacheManifest'
+import { addActiveDownload, removeActiveDownload } from './webDownloadJournal'
 
 export interface AudioCacheSummary {
   fileCount: number
@@ -103,13 +104,20 @@ export const downloadAndStoreAudio = async (
   await deleteAudioEntry(audioUrl).catch(error =>
     console.error('[audio-cache] Error clearing stale cache entry:', error),
   )
-  const response = await fetchAudioForCache(audioUrl, onProgress)
-  await putAudioResponse(audioUrl, response)
+  // Journal the in-flight download so an unclean shutdown leaves a trace the
+  // next startup can clean up without enumerating the bucket.
+  await addActiveDownload(audioUrl)
   try {
-    // A commit failure only means a re-download next session — never fail the download.
-    await commitAudioUrl(await openAudioCache(), audioUrl)
-  } catch (error) {
-    console.error('[audio-cache] Failed to commit audio url:', error)
+    const response = await fetchAudioForCache(audioUrl, onProgress)
+    await putAudioResponse(audioUrl, response)
+    try {
+      // A commit failure only means a re-download next session — never fail the download.
+      await commitAudioUrl(await openAudioCache(), audioUrl)
+    } catch (error) {
+      console.error('[audio-cache] Failed to commit audio url:', error)
+    }
+  } finally {
+    await removeActiveDownload(audioUrl)
   }
   return audioUrl
 }

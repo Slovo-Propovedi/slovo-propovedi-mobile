@@ -10,7 +10,7 @@ import {
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 
 const CACHED_EXTENSION = '.mp3'
-const PART_SUFFIX = '.mp3.part'
+export const PART_SUFFIX = '.mp3.part'
 
 export const getUrlHash = (url: string): string => {
   let hash = 0

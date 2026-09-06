@@ -18,7 +18,12 @@ export const openAudioCache = async (): Promise<Cache> => {
     return await caches.open(AUDIO_CACHE_NAME)
   } catch (error) {
     console.error('[audio-cache] Opening cache bucket failed, dropping and retrying:', error)
-    await caches.delete(AUDIO_CACHE_NAME)
+    try {
+      await caches.delete(AUDIO_CACHE_NAME)
+    } catch (deleteError) {
+      console.error('[audio-cache] Dropping corrupt cache bucket failed:', deleteError)
+      throw new Error('[audio-cache] Cache Storage is unavailable', { cause: deleteError })
+    }
     try {
       return await caches.open(AUDIO_CACHE_NAME)
     } catch (retryError) {

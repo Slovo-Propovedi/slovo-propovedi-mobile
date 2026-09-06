@@ -1,9 +1,11 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   _resetInflightCacheForTesting,
   audioCacheService,
   cacheAudio,
   removeFromCache,
 } from './AudioCacheService.web'
+import { getActiveDownloads } from './webDownloadJournal'
 
 const AUDIO_URL = 'https://cdn.example.com/sermon-1.mp3'
 const OTHER_URL = 'https://cdn.example.com/sermon-2.mp3'
@@ -69,11 +71,20 @@ const corsResponse = (bytes: number): Response =>
 const mockFetchOk = (bytes: number): jest.SpyInstance =>
   jest.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(corsResponse(bytes)))
 
+const waitForFetchCall = async (spy: jest.SpyInstance): Promise<void> => {
+  for (let i = 0; i < 100; i++) {
+    if (spy.mock.calls.length > 0) return
+    await new Promise(resolve => setTimeout(resolve, 0))
+  }
+  throw new Error('fetch was never called')
+}
+
 beforeEach(() => {
   _resetInflightCacheForTesting()
   cacheStorage = new FakeCacheStorage()
   ;(globalThis as { caches: unknown }).caches = cacheStorage
   jest.restoreAllMocks()
+  return AsyncStorage.clear()
 })
 
 afterEach(() => {
@@ -192,6 +203,39 @@ describe('AudioCacheService.web', () => {
     expect(bucket().put).not.toHaveBeenCalled()
     expect(progress).toEqual([1])
     expect(result).toBe(AUDIO_URL)
+  })
+
+  test('skip path does not journal the url', async () => {
+    await cacheStorage.open('audio-cache-v1')
+    await bucket().put(AUDIO_URL, corsResponse(1024))
+    await bucket().put(
+      '__manifest__',
+      new Response(JSON.stringify({ urls: [AUDIO_URL], version: 1 })),
+    )
+    const fetchSpy = mockFetchOk(1024)
+
+    await cacheAudio(AUDIO_URL)
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+    await expect(getActiveDownloads()).resolves.toEqual([])
+  })
+
+  test('journals the url during download and clears it after success', async () => {
+    let resolveFetch!: (value: Response) => void
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockReturnValue(
+      new Promise<Response>(resolve => {
+        resolveFetch = resolve
+      }),
+    )
+
+    const promise = cacheAudio(AUDIO_URL)
+    await waitForFetchCall(fetchSpy)
+
+    await expect(getActiveDownloads()).resolves.toEqual([AUDIO_URL])
+
+    resolveFetch(corsResponse(1024))
+    await promise
+    await expect(getActiveDownloads()).resolves.toEqual([])
   })
 
   test('re-downloads and deletes a stale entry that is present but uncommitted', async () => {

@@ -13,6 +13,7 @@ import {
   isPlayerExpandedAtom,
   usePlaybackProgressSaver,
 } from 'entities/player'
+import { cleanupOrphanedDownloads } from 'shared/lib/audio-cache'
 import { subscribeToNetwork } from 'shared/lib/network'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { checkForUpdateAction } from 'shared/model'
@@ -41,6 +42,10 @@ const RootLayout = () => {
     })
     return () => handle.cancel()
   }, [checkForUpdate])
+
+  useEffect(() => {
+    void cleanupOrphanedDownloads()
+  }, [])
 
   useEffect(() => {
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
