@@ -13,7 +13,12 @@ export const cleanupOrphanedDownloads = async (): Promise<void> => {
     const partFiles = cacheDir
       .list()
       .filter((item): item is File => item instanceof File && item.name.endsWith(PART_SUFFIX))
-    for (const partFile of partFiles) partFile.delete()
+    for (const partFile of partFiles)
+      try {
+        partFile.delete()
+      } catch (error) {
+        console.error('[audio-cache] Failed to delete orphaned part file:', partFile.name, error)
+      }
   } catch (error) {
     console.error('[audio-cache] Failed to cleanup orphaned downloads:', error)
   }

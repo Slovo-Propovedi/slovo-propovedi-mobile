@@ -156,6 +156,17 @@ describe('AudioCacheService.web', () => {
     expect(cacheStorage.delete).toHaveBeenCalledWith('audio-cache-v1')
   })
 
+  test('clearCache also clears the active-downloads journal', async () => {
+    mockFetchOk(1024)
+    await cacheAudio(AUDIO_URL)
+    await webDownloadJournal.addActiveDownload(OTHER_URL)
+    await expect(webDownloadJournal.getActiveDownloads()).resolves.toContain(OTHER_URL)
+
+    await audioCacheService.clearCache()
+
+    await expect(webDownloadJournal.getActiveDownloads()).resolves.toEqual([])
+  })
+
   test('cacheAudio rejects an empty url', () => {
     expect(() => cacheAudio('')).toThrow('audioUrl is required')
   })

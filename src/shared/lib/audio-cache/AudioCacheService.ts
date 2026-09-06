@@ -87,10 +87,10 @@ class AudioCacheService {
           }
       },
       lastValue: 0,
-      promise: null as unknown as Promise<string>,
+      promise: Promise.resolve(''),
     }
-    const promise = downloadToCache(audioUrl, entry.emit)
-    entry.promise = promise
+    entry.promise = downloadToCache(audioUrl, entry.emit)
+    const promise = entry.promise
     inflightCache.set(audioUrl, entry)
     const cleanup = (): void => {
       callbacks.clear()

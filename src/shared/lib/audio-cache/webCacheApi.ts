@@ -13,7 +13,7 @@ import {
   isUrlCommitted,
   uncommitAudioUrl,
 } from './webCacheManifest'
-import { addActiveDownload, removeActiveDownload } from './webDownloadJournal'
+import { addActiveDownload, clearActiveDownloads, removeActiveDownload } from './webDownloadJournal'
 
 export interface AudioCacheSummary {
   fileCount: number
@@ -65,6 +65,10 @@ export const deleteAudioEntry = async (audioUrl: string): Promise<boolean> => {
 export const clearAudioCache = async (): Promise<void> => {
   if (!isCacheStorageAvailable()) return
   await caches.delete(AUDIO_CACHE_NAME)
+  // Dropping the bucket must also clear the download journal, or the next
+  // startup would resurrect an empty bucket via deleteAudioEntry→uncommit→
+  // ensureManifest. A journal failure must not fail the clear itself.
+  await clearActiveDownloads()
 }
 
 export const summarizeAudioCache = async (): Promise<AudioCacheSummary> => {

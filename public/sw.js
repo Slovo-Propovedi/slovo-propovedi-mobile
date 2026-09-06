@@ -184,8 +184,13 @@ function audioStrategy(request, url) {
 
       return manifestEntry.json().then(
         (manifest) => {
-          const committed =
-            Array.isArray(manifest.urls) && manifest.urls.indexOf(url.href) !== -1
+          // Guard: stored JSON may be null or missing the urls array (e.g.
+          // corrupted write). Treat both as "no manifest" — fall back to the
+          // legacy path instead of throwing inside this handler (the .catch
+          // below only covers the json() rejection).
+          if (!manifest || !Array.isArray(manifest.urls))
+            return serveCachedOrFetch(request, url, cache)
+          var committed = manifest.urls.indexOf(url.href) !== -1
           if (!committed) return fetch(request)
           return serveCachedOrFetch(request, url, cache)
         },
