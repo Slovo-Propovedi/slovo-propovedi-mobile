@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] - 2026-09-06
+
+### Added
+
+- Versioned SW precache with user-confirmed static updates
+
+### Changed
+
+- Extract cache summary and scope enumeration guarantee (#78)
+
+### Fixed
+
+- Skip manifest build in web cleanup to avoid bucket enumeration (#78)
+- Address review of journal liveness and replay coverage (#78)
+- Make web orphan cleanup multi-tab safe via journal liveness (#78)
+- Replay inflight progress to late joiners on web (#78)
+- Harden sw manifest guard and polish cleanup after review
+- Sequence orphan sweep before player restore and harden journal
+- Purge orphaned partial downloads after unclean app shutdown (#78)
+- Only commit fully downloaded tracks into audio cache (#78)
+- Skip cached tracks and recover audio cache bucket on iOS PWA crash (#78)
+
 ## [0.19.0] - 2026-09-05
 
 ### Added
@@ -574,6 +596,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.20.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.20.0
 [0.19.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.19.0
 [0.18.2]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.18.2
 [0.18.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.18.1

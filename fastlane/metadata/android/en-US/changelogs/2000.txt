@@ -1,0 +1,8 @@
+Skip manifest build in web cleanup to avoid bucket enumeration (#78)
+Address review of journal liveness and replay coverage (#78)
+Make web orphan cleanup multi-tab safe via journal liveness (#78)
+Replay inflight progress to late joiners on web (#78)
+Harden sw manifest guard and polish cleanup after review
+Sequence orphan sweep before player restore and harden journal
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
