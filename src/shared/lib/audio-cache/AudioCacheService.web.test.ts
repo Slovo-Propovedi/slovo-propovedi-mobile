@@ -79,6 +79,14 @@ const waitForFetchCall = async (spy: jest.SpyInstance): Promise<void> => {
   throw new Error('fetch was never called')
 }
 
+const waitForProgress = async (progress: number[], expected: number): Promise<void> => {
+  for (let i = 0; i < 100; i++) {
+    if (progress.includes(expected)) return
+    await new Promise(resolve => setTimeout(resolve, 0))
+  }
+  throw new Error(`progress ${expected} was never reported`)
+}
+
 beforeEach(() => {
   _resetInflightCacheForTesting()
   cacheStorage = new FakeCacheStorage()
@@ -144,10 +152,18 @@ describe('AudioCacheService.web', () => {
   })
 
   test('late joiner immediately receives the current progress value', async () => {
-    let resolveFetch!: (value: Response) => void
-    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockReturnValue(
-      new Promise<Response>(resolve => {
-        resolveFetch = resolve
+    const totalBytes = 1024
+    const halfBytes = totalBytes / 2
+    let controller!: ReadableStreamDefaultController<Uint8Array>
+    const stream = new ReadableStream<Uint8Array>({
+      start(c) {
+        controller = c
+      },
+    })
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(stream, {
+        headers: { 'Content-Length': String(totalBytes), 'Content-Type': 'audio/mpeg' },
+        status: 200,
       }),
     )
 
@@ -155,14 +171,32 @@ describe('AudioCacheService.web', () => {
     const promiseA = cacheAudio(AUDIO_URL, p => progressA.push(p))
     await waitForFetchCall(fetchSpy)
 
-    resolveFetch(corsResponse(1024))
-    await promiseA
+    // Deliver half the bytes but keep the stream open, so the download stays
+    // in flight at a partial fraction.
+    controller.enqueue(new Uint8Array(halfBytes).fill(1))
+    await waitForProgress(progressA, 0.5)
 
-    // A fresh call with onProgress should get replay of lastValue (1)
+    // A late caller joins the still-inflight download and gets the current
+    // fraction synchronously — no waiting for the next tick.
     const progressB: number[] = []
-    await cacheAudio(AUDIO_URL, p => progressB.push(p))
+    const promiseB = cacheAudio(AUDIO_URL, p => progressB.push(p))
+    expect(progressB[0]).toBe(0.5)
 
-    expect(progressB[0]).toBe(1)
+    controller.close()
+    await expect(promiseA).resolves.toBe(AUDIO_URL)
+    await expect(promiseB).resolves.toBe(AUDIO_URL)
+    expect(progressA.at(-1)).toBe(1)
+    expect(progressB.at(-1)).toBe(1)
+  })
+
+  test('clears the journal row and stops the heartbeat when fetch fails', async () => {
+    jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'))
+    const removeSpy = jest.spyOn(webDownloadJournal, 'removeActiveDownload')
+
+    await expect(cacheAudio(AUDIO_URL)).rejects.toThrow('network down')
+
+    expect(removeSpy).toHaveBeenCalledWith(AUDIO_URL)
+    await expect(webDownloadJournal.getActiveDownloads()).resolves.toEqual([])
   })
 
   test('removeFromCache and clearCache drop entries', async () => {

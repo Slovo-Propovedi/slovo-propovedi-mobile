@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { z } from 'zod'
+import { startHeartbeat } from './webDownloadHeartbeat'
 
 export const ACTIVE_DOWNLOADS_KEY = 'audio-cache/active-downloads'
 
@@ -25,7 +26,9 @@ const generateSessionId = (): string => {
 
 export const sessionId = generateSessionId()
 
-// Serialized read-modify-write queue (pattern like manifestQueue).
+// Serialized read-modify-write queue (pattern like manifestQueue). Every
+// journal fn must stay non-throwing: a rejection here surfaces as an unhandled
+// rejection → global error modal on web.
 let writeQueue: Promise<void> = Promise.resolve()
 
 const enqueueWrite = <T>(fn: () => Promise<T>): Promise<T> => {
@@ -67,10 +70,13 @@ const writeEntries = async (entries: ActiveDownloadEntry[]): Promise<void> => {
   }
 }
 
+// Rows are keyed by (sessionId, url): two tabs downloading the SAME url each
+// keep their own live row, so one tab's completion or death never reaps the
+// other's still-running download.
 export const addActiveDownload = async (audioUrl: string): Promise<void> =>
   enqueueWrite(async () => {
     const entries = await getActiveDownloads()
-    if (!entries.some(e => e.url === audioUrl)) {
+    if (!entries.some(e => e.url === audioUrl && e.sessionId === sessionId)) {
       entries.push({ lastSeenAt: Date.now(), sessionId, url: audioUrl })
       await writeEntries(entries)
     }
@@ -79,15 +85,15 @@ export const addActiveDownload = async (audioUrl: string): Promise<void> =>
 export const removeActiveDownload = async (audioUrl: string): Promise<void> =>
   enqueueWrite(async () => {
     const entries = await getActiveDownloads()
-    const next = entries.filter(e => e.url !== audioUrl)
+    const next = entries.filter(e => !(e.url === audioUrl && e.sessionId === sessionId))
     if (next.length !== entries.length) await writeEntries(next)
   })
 
 export const removeActiveDownloadEntries = async (toRemove: ActiveDownloadEntry[]): Promise<void> =>
   enqueueWrite(async () => {
     const entries = await getActiveDownloads()
-    const removeUrls = new Set(toRemove.map(e => e.url))
-    const next = entries.filter(e => !removeUrls.has(e.url))
+    const toRemoveKeys = new Set(toRemove.map(e => `${e.sessionId}:${e.url}`))
+    const next = entries.filter(e => !toRemoveKeys.has(`${e.sessionId}:${e.url}`))
     if (next.length !== entries.length) await writeEntries(next)
   })
 
@@ -105,24 +111,18 @@ export const refreshActiveDownload = async (audioUrl: string): Promise<void> =>
     if (changed) await writeEntries(entries)
   })
 
-// Add a download to the journal and start a heartbeat that refreshes lastSeenAt
-// every 10s. Returns a stop function to clear the interval (call in finally).
+// Add a download to the journal and start a heartbeat; returns a stop function
+// to clear the interval (call in finally).
 export const addActiveDownloadWithHeartbeat = async (audioUrl: string): Promise<() => void> => {
   await addActiveDownload(audioUrl)
-
-  const intervalId = setInterval(() => {
-    void refreshActiveDownload(audioUrl)
-  }, 10_000)
-
-  return () => {
-    clearInterval(intervalId)
-  }
+  return startHeartbeat(() => void refreshActiveDownload(audioUrl))
 }
 
-export const clearActiveDownloads = async (): Promise<void> => {
-  try {
-    await AsyncStorage.removeItem(ACTIVE_DOWNLOADS_KEY)
-  } catch (error) {
-    console.error('[audio-cache] Failed to clear active-downloads journal:', error)
-  }
-}
+export const clearActiveDownloads = async (): Promise<void> =>
+  enqueueWrite(async () => {
+    try {
+      await AsyncStorage.removeItem(ACTIVE_DOWNLOADS_KEY)
+    } catch (error) {
+      console.error('[audio-cache] Failed to clear active-downloads journal:', error)
+    }
+  })

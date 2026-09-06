@@ -52,6 +52,34 @@ describe('webDownloadJournal', () => {
     expect(entries[0].url).toBe(AUDIO_URL_A)
   })
 
+  test('addActiveDownload keeps a row for this session even if another tab has the url', async () => {
+    await AsyncStorage.setItem(
+      ACTIVE_DOWNLOADS_KEY,
+      JSON.stringify([{ lastSeenAt: 1, sessionId: 'other-tab', url: AUDIO_URL_A }]),
+    )
+    await addActiveDownload(AUDIO_URL_A)
+
+    const entries = await getActiveDownloads()
+    expect(entries).toHaveLength(2)
+    expect(
+      entries.filter(entry => entry.sessionId === sessionId && entry.url === AUDIO_URL_A),
+    ).toHaveLength(1)
+  })
+
+  test('removeActiveDownload removes only this session row', async () => {
+    await AsyncStorage.setItem(
+      ACTIVE_DOWNLOADS_KEY,
+      JSON.stringify([
+        { lastSeenAt: 1, sessionId: 'other-tab', url: AUDIO_URL_A },
+        { lastSeenAt: 1, sessionId, url: AUDIO_URL_A },
+      ]),
+    )
+    await removeActiveDownload(AUDIO_URL_A)
+
+    const entries = await getActiveDownloads()
+    expect(entries).toEqual([expect.objectContaining({ sessionId: 'other-tab', url: AUDIO_URL_A })])
+  })
+
   test('returns empty array when nothing is stored', async () => {
     await expect(getActiveDownloads()).resolves.toEqual([])
   })

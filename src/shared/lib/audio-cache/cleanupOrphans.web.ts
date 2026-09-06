@@ -1,6 +1,7 @@
 import { openAudioCache } from './openAudioCache'
 import { deleteAudioEntry } from './webCacheApi'
 import { isUrlCommitted, readCommittedUrls } from './webCacheManifest'
+import { HEARTBEAT_MS } from './webDownloadHeartbeat'
 import {
   type ActiveDownloadEntry,
   getActiveDownloads,
@@ -9,9 +10,12 @@ import {
 
 /**
  * A journal entry is considered dead only after this many milliseconds without
- * a heartbeat refresh (6 missed 10s heartbeats).
+ * a heartbeat refresh (12 missed heartbeats). The generous 12× margin absorbs
+ * Chrome intensive timer throttling (~1 timer/min after 5 min hidden) and
+ * Safari's harder background suspension, so a live background download in
+ * another tab is never reaped as stale.
  */
-export const STALE_MS = 60_000
+export const STALE_MS = HEARTBEAT_MS * 12
 
 /**
  * Delete uncommitted cache entries left behind when the app is killed
