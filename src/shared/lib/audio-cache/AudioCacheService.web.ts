@@ -12,8 +12,8 @@ import {
   deleteAudioEntry,
   downloadAndStoreAudio,
   hasCompleteAudio,
-  summarizeAudioCache,
 } from './webCacheApi'
+import { summarizeAudioCache } from './webCacheSummary'
 
 export interface CacheInfo {
   fileCount: number

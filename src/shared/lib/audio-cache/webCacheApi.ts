@@ -8,7 +8,6 @@ import { AUDIO_CACHE_NAME, openAudioCache } from './openAudioCache'
 import { fetchAudioForCache } from './webAudioDownload'
 import {
   commitAudioUrl,
-  isManifestUrl,
   isUrlCommitted,
   readCommittedUrls,
   uncommitAudioUrl,
@@ -18,11 +17,6 @@ import {
   clearActiveDownloads,
   removeActiveDownload,
 } from './webDownloadJournal'
-
-export interface AudioCacheSummary {
-  fileCount: number
-  totalSize: number
-}
 
 export const isCacheStorageAvailable = (): boolean =>
   typeof caches !== 'undefined' && typeof caches.open === 'function'
@@ -72,25 +66,6 @@ export const clearAudioCache = async (): Promise<void> => {
   // Dropping the bucket must also clear the download journal, or the next
   // startup would resurrect an empty bucket via deleteAudioEntry→uncommit.
   await clearActiveDownloads()
-}
-
-export const summarizeAudioCache = async (): Promise<AudioCacheSummary> => {
-  if (!isCacheStorageAvailable()) return { fileCount: 0, totalSize: 0 }
-  const cache = await openAudioCache()
-  const requests = await cache.keys()
-
-  let totalSize = 0
-  let fileCount = 0
-  for (const request of requests) {
-    if (isManifestUrl(request.url)) continue
-    fileCount++
-    const response = await cache.match(request)
-    // Opaque (cross-origin, no CORS) responses report no length — skip them.
-    const declared = Number(response?.headers.get('Content-Length'))
-    if (Number.isFinite(declared) && declared > 0) totalSize += declared
-  }
-
-  return { fileCount, totalSize }
 }
 
 /**

@@ -16,6 +16,7 @@ const config: KnipConfig = {
     'src/shared/lib/audio-cache/webAudioDownload.ts',
     'src/shared/lib/audio-cache/webCacheApi.ts',
     'src/shared/lib/audio-cache/webCacheManifest.ts',
+    'src/shared/lib/audio-cache/webCacheSummary.ts',
     'src/shared/lib/notifications/ensureNotifications.web.ts',
     'src/shared/model/file/mimeTypes.ts',
   ],
