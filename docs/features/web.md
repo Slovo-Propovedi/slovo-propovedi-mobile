@@ -31,9 +31,9 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 Две задачи:
 
 1. **Версионированный precache приложения** (только прод-хосты). На этапе сборки `scripts/inject-sw-precache.mjs` (шаг `yarn web:build` после `expo export`) вписывает в `dist/sw.js` манифест всех файлов `dist/` и контентный хеш сборки (плейсхолдеры `__SW_BUILD_VERSION__` / `__SW_PRECACHE_URLS__`). `install` скачивает весь манифест в версионированный бакет `precache-v<hash>` (`cache: 'reload'` — мимо HTTP-кеша); навигации и same-origin статика отдаются **cache-first** из него, обычные открытия не ходят в сеть (runtime-fill — страховка для файлов вне манифеста). Новая сборка ставится в **новый** бакет, старый удаляется на `activate` (заодно чистится легаси `shell-cache-v1` — миграция не нужна). Обновления ищутся в фоне хуком `features/web-update` (`reg.update()`: интервал 60 мин + событие `online` + `visibilitychange` с троттлингом 5 мин). Обнаруженный новый SW ставится в этот бакет и **ждёт в `waiting`** (install не вызывает `skipWaiting`). Приложение показывает модалку `WebUpdateModal`: статус скачивания → «Обновить» → `SKIP_WAITING` → активация → перезагрузка страницы; «Позже» — модалка снова при следующем запуске. Простая перезагрузка без подтверждения НЕ активирует обновление (waiting-воркер не становится контроллером сам). Первая установка (нет controller) активируется сама — модалка не показывается. На localhost (`isDev`) весь этот блок отключён — оболочку отдаёт Metro.
-2. **Офлайн-аудио**. `fetch` для аудио (`request.destination === 'audio'` или расширение) — cache-first из бакета `audio-cache-v1`. Не скачанное заранее — стримится из сети (как на нативе). Для читаемых (CORS) кешей поддержана нарезка `Range` → `206`; opaque-ответы (кросс-домен без CORS) отдаются целиком.
+2. **Офлайн-аудио**. `fetch` для аудио (`request.destination === 'audio'` или расширение) — из бакета `audio-cache-v1` отдаётся **только трек, закоммиченный в манифест** `__manifest__` (инвариант «в кэше ⇔ полностью скачан»); отсутствует манифест → легаси-fallback (отдать что есть); трек не закоммичен → стримится из сети (как на нативе). Для читаемых (CORS) кешей поддержана нарезка `Range` → `206`; opaque-ответы (кросс-домен без CORS) отдаются целиком. Ключ манифеста продублирован константой `AUDIO_MANIFEST_KEY` в `sw.js` (keep-in-sync).
 
-`audio-cache-v1` **никогда не чистится** при обновлении SW (`activate` удаляет только чужие бакеты) — это скачивания пользователя. Имя бакета продублировано константой `AUDIO_CACHE_NAME` в `webCacheApi.ts`.
+`audio-cache-v1` **никогда не чистится** при обновлении SW (`activate` удаляет только чужие бакеты) — это скачивания пользователя. Имя бакета — константа `AUDIO_CACHE_NAME` в `openAudioCache.ts` (первоисточник, импортируется `webCacheApi.ts` и `sw.js` комментом keep-in-sync).
 
 Операционные заметки по precache:
 
@@ -53,8 +53,10 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 
 | Файл | Роль |
 | --- | --- |
-| `shared/lib/audio-cache/AudioCacheService.web.ts` | Тот же публичный API, что у нативного (`isCached` / `cacheAudio` / `clearCache` / `removeFromCache` / `getCacheInfo` / `getCachedUri`). Дедуп параллельных загрузок — общий `inflightCache`. `getCachedUri` → `null` (воспроизведением занимается SW прозрачно) |
-| `shared/lib/audio-cache/webCacheApi.ts` | Низкоуровневые операции Cache Storage + `AUDIO_CACHE_NAME` + feature-detect `isCacheStorageAvailable()` |
+| `shared/lib/audio-cache/AudioCacheService.web.ts` | Тот же публичный API, что у нативного (`isCached` / `cacheAudio` / `clearCache` / `removeFromCache` / `getCacheInfo` / `getCachedUri`). Дедуп параллельных загрузок — общий `inflightCache`. `getCachedUri` → `null` (воспроизведением занимается SW прозрачно). Скачивание делегируется `downloadAndStoreAudio` из `webCacheApi.ts` |
+| `shared/lib/audio-cache/webCacheApi.ts` | Низкоуровневые операции Cache Storage + feature-detect `isCacheStorageAvailable()` + `downloadAndStoreAudio` (skip-cached → дроп stale → fetch → put → commit) |
+| `shared/lib/audio-cache/openAudioCache.ts` | Recovery-хелпер открытия бакета (при сбое `caches.open` → `caches.delete` → reopen) + первоисточник `AUDIO_CACHE_NAME` |
+| `shared/lib/audio-cache/webCacheManifest.ts` | Commit-манифест `__manifest__`: `hasCompleteAudio`/`commitAudioUrl`/`uncommitAudioUrl`/`ensureManifest` (сериализованный read-modify-write) |
 | `shared/lib/audio-cache/webAudioDownload.ts` | `fetchAudioForCache`: сначала CORS-запрос (реальный прогресс 0..1 по `Content-Length`), при отказе — opaque `no-cors` (прогресс скачет 0→1, размер неизвестен) |
 | `shared/lib/audio-cache/getAudioCacheDirectory.ts` | Кидает явную ошибку при `Platform.OS === 'web'` — страховка на случай устаревшего кеша Metro (иначе загадочный `this.validatePath`) |
 

@@ -102,6 +102,18 @@ describe('downloadToCache', () => {
     expect(result).toContain('file://cache/')
   })
 
+  test('deletes stale .part file before downloading', async () => {
+    mockFileState.part = true
+    const onProgress = jest.fn()
+
+    const result = await downloadToCache(EXAMPLE_URL, onProgress)
+
+    // A `.part` orphaned by a killed app must be dropped before the retry loop.
+    expect(getPartFile()?.delete).toHaveBeenCalledTimes(1)
+    expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+    expect(result).toContain('file://cache/')
+  })
+
   test('succeeds on third attempt after two failures', async () => {
     const onProgress = jest.fn()
     ;(File.downloadFileAsync as jest.Mock)

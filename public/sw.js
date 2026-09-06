@@ -36,9 +36,15 @@ const sw = /** @type {SW & typeof globalThis} */ (
 
 /**
  * @type {string} Cache bucket for downloaded sermon audio.
- * Keep in sync with AUDIO_CACHE_NAME in src/shared/lib/audio-cache/webCacheApi.ts.
+ * Keep in sync with AUDIO_CACHE_NAME in src/shared/lib/audio-cache/openAudioCache.ts.
  */
 const AUDIO_CACHE = 'audio-cache-v1'
+
+/**
+ * Reserved same-origin key inside the audio bucket holding the commit manifest.
+ * Keep in sync with AUDIO_MANIFEST_KEY in src/shared/lib/audio-cache/webCacheManifest.ts.
+ */
+const AUDIO_MANIFEST = '__manifest__'
 
 /** Build version, injected by scripts/inject-sw-precache.mjs at build time. */
 const BUILD_VERSION = '__SW_BUILD_VERSION__'
@@ -148,17 +154,44 @@ function serveWithRange(request, cached) {
 }
 
 /**
- * Cache-first for audio: serve a downloaded copy if present, otherwise stream
- * from the network (uncached audio is never auto-downloaded here).
+ * Serve a cached audio response if present, otherwise stream from the network.
+ * @param {Request} request
+ * @param {URL} url
+ * @param {Cache} cache
+ * @returns {Promise<Response>}
+ */
+function serveCachedOrFetch(request, url, cache) {
+  return cache.match(url.href, { ignoreVary: true }).then((cached) => {
+    if (cached) return serveWithRange(request, cached)
+    return fetch(request)
+  })
+}
+
+/**
+ * Cache-first for audio: serve a downloaded copy only when the track is both
+ * present in the bucket AND committed in the manifest (see webCacheManifest.ts).
+ * A URL missing from the manifest (or a missing manifest, pre-migration) may
+ * mean the body is truncated — never serve uncommitted bytes, stream instead.
  * @param {Request} request
  * @param {URL} url
  * @returns {Promise<Response>}
  */
 function audioStrategy(request, url) {
   return caches.open(AUDIO_CACHE).then((cache) =>
-    cache.match(url.href, { ignoreVary: true }).then((cached) => {
-      if (cached) return serveWithRange(request, cached)
-      return fetch(request)
+    cache.match(AUDIO_MANIFEST, { ignoreVary: true }).then((manifestEntry) => {
+      // Legacy fallback: no manifest yet (migration not run) — trust existing entries.
+      if (!manifestEntry) return serveCachedOrFetch(request, url, cache)
+
+      return manifestEntry.json().then(
+        (manifest) => {
+          const committed =
+            Array.isArray(manifest.urls) && manifest.urls.indexOf(url.href) !== -1
+          if (!committed) return fetch(request)
+          return serveCachedOrFetch(request, url, cache)
+        },
+        // Unparseable manifest — fall back to the legacy path.
+        () => serveCachedOrFetch(request, url, cache),
+      )
     }),
   )
 }

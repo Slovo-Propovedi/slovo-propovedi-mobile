@@ -11,7 +11,12 @@ const OTHER_URL = 'https://cdn.example.com/sermon-2.mp3'
 class FakeCache {
   private readonly store = new Map<string, Response>()
 
-  public match = jest.fn(async (request: Request | string) => this.store.get(keyOf(request)))
+  public match = jest.fn(async (request: Request | string) => {
+    const stored = this.store.get(keyOf(request))
+    // Mirror the real Cache API: each match returns a fresh copy, so reading a
+    // body (e.g. the manifest `.json()`) never consumes the stored response.
+    return stored ? stored.clone() : undefined
+  })
   public put = jest.fn(async (request: Request | string, response: Response) => {
     this.store.set(keyOf(request), response)
   })
@@ -32,10 +37,21 @@ class FakeCacheStorage {
   public delete = jest.fn(async (name: string) => this.buckets.delete(name))
 }
 
-const keyOf = (request: Request | string): string =>
-  typeof request === 'string' ? request : request.url
+const keyOf = (request: Request | string): string => {
+  const url = typeof request === 'string' ? request : request.url
+  // The real Cache API resolves relative keys (e.g. the `__manifest__` entry)
+  // against the document base URL; mirror that so `keys()` yields valid URLs.
+  return new URL(url, 'https://cache.test').href
+}
 
 const bucket = (): FakeCache => cacheStorage.buckets.get('audio-cache-v1') as FakeCache
+
+const readManifest = async (): Promise<string[]> => {
+  const entry = await bucket().match('__manifest__')
+  if (!entry) return []
+  const manifest = JSON.parse(await entry.text())
+  return Array.isArray(manifest.urls) ? manifest.urls : []
+}
 
 let cacheStorage: FakeCacheStorage
 let unhandledRejectionSpy: jest.Mock | null = null
@@ -47,6 +63,11 @@ const corsResponse = (bytes: number): Response =>
     headers: { 'Content-Length': String(bytes), 'Content-Type': 'audio/mpeg' },
     status: 200,
   })
+
+// Each fetch call must return a FRESH response — a shared one would have its
+// body consumed by the first download's progress read (mirrors real fetches).
+const mockFetchOk = (bytes: number): jest.SpyInstance =>
+  jest.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(corsResponse(bytes)))
 
 beforeEach(() => {
   _resetInflightCacheForTesting()
@@ -65,14 +86,14 @@ afterEach(() => {
 
 describe('AudioCacheService.web', () => {
   test('nothing is cached before a download', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
+    mockFetchOk(1024)
 
     await expect(audioCacheService.isCached(AUDIO_URL)).resolves.toBe(false)
     await expect(audioCacheService.getCachedUri()).resolves.toBeNull()
   })
 
   test('cacheAudio downloads, reports 0..1 progress and stores the file', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(4096))
+    mockFetchOk(4096)
     const progress: number[] = []
 
     const result = await cacheAudio(AUDIO_URL, p => progress.push(p))
@@ -103,7 +124,7 @@ describe('AudioCacheService.web', () => {
   })
 
   test('concurrent cacheAudio calls for the same url share one download', async () => {
-    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
+    const fetchSpy = mockFetchOk(1024)
 
     const [a, b] = await Promise.all([cacheAudio(AUDIO_URL), cacheAudio(AUDIO_URL)])
 
@@ -112,7 +133,7 @@ describe('AudioCacheService.web', () => {
   })
 
   test('removeFromCache and clearCache drop entries', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
+    mockFetchOk(1024)
     await cacheAudio(AUDIO_URL)
     await cacheAudio(OTHER_URL)
 
@@ -136,27 +157,32 @@ describe('AudioCacheService.web', () => {
   })
 
   test('removeFromCache on an unknown url resolves false', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
+    mockFetchOk(1024)
     await expect(removeFromCache(OTHER_URL)).resolves.toBe(false)
   })
 
   test('bucket keeps a single entry per url', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
+    mockFetchOk(1024)
     await cacheAudio(AUDIO_URL)
     // A sequential re-cache of the same url now hits the skip path — no re-put.
+    bucket().put.mockClear()
     await cacheAudio(AUDIO_URL)
 
-    expect(bucket().put).toHaveBeenCalledTimes(1)
+    expect(bucket().put).not.toHaveBeenCalled()
     await expect(audioCacheService.getCacheInfo()).resolves.toEqual({
       fileCount: 1,
       totalSize: 1024,
     })
   })
 
-  test('skips download when track is already cached', async () => {
-    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
+  test('skips download when track is committed in the manifest', async () => {
+    const fetchSpy = mockFetchOk(1024)
     await cacheStorage.open('audio-cache-v1')
     await bucket().put(AUDIO_URL, corsResponse(1024))
+    await bucket().put(
+      '__manifest__',
+      new Response(JSON.stringify({ urls: [AUDIO_URL], version: 1 })),
+    )
     bucket().put.mockClear()
     const progress: number[] = []
 
@@ -168,15 +194,80 @@ describe('AudioCacheService.web', () => {
     expect(result).toBe(AUDIO_URL)
   })
 
+  test('re-downloads and deletes a stale entry that is present but uncommitted', async () => {
+    mockFetchOk(1024)
+    await cacheStorage.open('audio-cache-v1')
+    await bucket().put(AUDIO_URL, corsResponse(1024))
+    await bucket().put('__manifest__', new Response(JSON.stringify({ urls: [], version: 1 })))
+    bucket().delete.mockClear()
+    bucket().put.mockClear()
+
+    const result = await cacheAudio(AUDIO_URL)
+
+    expect(bucket().delete).toHaveBeenCalledWith(AUDIO_URL, { ignoreVary: true })
+    expect(bucket().put).toHaveBeenCalledWith(AUDIO_URL, expect.any(Response))
+    expect(result).toBe(AUDIO_URL)
+    const manifest = await readManifest()
+    expect(manifest).toContain(AUDIO_URL)
+  })
+
+  test('legacy migration trusts existing entries and writes the manifest', async () => {
+    await cacheStorage.open('audio-cache-v1')
+    await bucket().put(AUDIO_URL, corsResponse(1024))
+
+    await expect(audioCacheService.isCached(AUDIO_URL)).resolves.toBe(true)
+
+    const manifest = await readManifest()
+    expect(manifest).toContain(AUDIO_URL)
+  })
+
+  test('removeFromCache uncommits the url', async () => {
+    mockFetchOk(1024)
+    await cacheAudio(AUDIO_URL)
+
+    await removeFromCache(AUDIO_URL)
+
+    const manifest = await readManifest()
+    expect(manifest).not.toContain(AUDIO_URL)
+    await expect(audioCacheService.isCached(AUDIO_URL)).resolves.toBe(false)
+  })
+
+  test('summarize excludes the manifest entry', async () => {
+    mockFetchOk(1024)
+    await cacheAudio(AUDIO_URL)
+    await cacheAudio(OTHER_URL)
+
+    await expect(audioCacheService.getCacheInfo()).resolves.toEqual({
+      fileCount: 2,
+      totalSize: 2048,
+    })
+  })
+
+  test('parallel isCached calls build the manifest once', async () => {
+    await cacheStorage.open('audio-cache-v1')
+    await bucket().put(AUDIO_URL, corsResponse(1024))
+    bucket().put.mockClear()
+
+    const [a, b] = await Promise.all([
+      audioCacheService.isCached(AUDIO_URL),
+      audioCacheService.isCached(AUDIO_URL),
+    ])
+
+    expect(a).toBe(true)
+    expect(b).toBe(true)
+    // Only the manifest write — the two checks share one in-flight build.
+    expect(bucket().put).toHaveBeenCalledTimes(1)
+  })
+
   test('recovers cache bucket when open fails once', async () => {
-    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
+    const fetchSpy = mockFetchOk(1024)
     cacheStorage.open.mockRejectedValueOnce(new TypeError('corrupt bucket'))
 
     await cacheAudio(AUDIO_URL)
 
     expect(cacheStorage.delete).toHaveBeenCalledWith('audio-cache-v1')
     expect(fetchSpy).toHaveBeenCalledTimes(1)
-    expect(bucket().put).toHaveBeenCalledTimes(1)
+    expect(bucket().put).toHaveBeenCalledWith(AUDIO_URL, expect.any(Response))
     await expect(audioCacheService.isCached(AUDIO_URL)).resolves.toBe(true)
   })
 

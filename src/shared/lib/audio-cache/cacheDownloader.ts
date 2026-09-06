@@ -68,6 +68,9 @@ export const downloadToCache = async (
 
   const hash = getUrlHash(audioUrl)
   const tempFile = new File(getAudioCacheDirectory(), `${hash}${PART_SUFFIX}`)
+  // Drop a stale `.part` orphaned by a killed app — the file is kept between
+  // retries below, but must not survive from a previous (interrupted) session.
+  deletePartFile(tempFile)
   const throttledProgress = onProgress ? createThrottledProgress(onProgress) : undefined
 
   let lastError: unknown = null

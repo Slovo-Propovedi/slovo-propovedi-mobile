@@ -7,12 +7,11 @@
  */
 
 import { inflightCache, type InflightEntry, resetInflightCache } from './inflightCache'
-import { fetchAudioForCache } from './webAudioDownload'
 import {
-  cacheHasAudio,
   clearAudioCache,
   deleteAudioEntry,
-  putAudioResponse,
+  downloadAndStoreAudio,
+  hasCompleteAudio,
   summarizeAudioCache,
 } from './webCacheApi'
 
@@ -32,7 +31,7 @@ class WebAudioCacheService {
   public isCached = async (audioUrl: string): Promise<boolean> => {
     if (!audioUrl) return false
     try {
-      return await cacheHasAudio(audioUrl)
+      return await hasCompleteAudio(audioUrl)
     } catch (error) {
       console.error('[AudioCacheService] Error checking cache status:', error)
       return false
@@ -73,7 +72,7 @@ class WebAudioCacheService {
       })
     }
 
-    const promise = this.downloadAndStore(audioUrl, emit)
+    const promise = downloadAndStoreAudio(audioUrl, emit)
     const entry: InflightEntry = { callbacks, emit, lastValue: 0, promise }
     inflightCache.set(audioUrl, entry)
     const cleanup = (): void => {
@@ -101,19 +100,6 @@ class WebAudioCacheService {
       console.error('[AudioCacheService] Error removing from cache:', error)
       return false
     }
-  }
-
-  private downloadAndStore = async (
-    audioUrl: string,
-    onProgress: (progress: number) => void,
-  ): Promise<string> => {
-    if (await cacheHasAudio(audioUrl)) {
-      onProgress(1)
-      return audioUrl
-    }
-    const response = await fetchAudioForCache(audioUrl, onProgress)
-    await putAudioResponse(audioUrl, response)
-    return audioUrl
   }
 }
 
