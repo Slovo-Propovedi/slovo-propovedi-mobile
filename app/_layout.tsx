@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { loadHistoryAction } from 'entities/listening-history'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
 import { initServerUrlAction } from 'entities/settings'
+import { cleanupOrphanedDownloads } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
 import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
@@ -42,7 +43,12 @@ const RootLayoutWithProvider = () => (
   </reatomContext.Provider>
 )
 
-void initializePlayer()
+// Purge orphaned .part files / stale entries BEFORE player restore: a restored
+// track auto-starts a background download that would race the sweep and get
+// its active .part deleted (review finding — startup race).
+void cleanupOrphanedDownloads()
+  .catch(error => console.error('[audio-cache] orphan cleanup failed:', error))
+  .then(() => initializePlayer())
 scheduleStartupGuardReset()
 void initServerUrlAction(ctx)
 void loadHistoryAction(ctx)

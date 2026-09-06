@@ -51,10 +51,18 @@ describe('webDownloadJournal', () => {
     expect(consoleErrorSpy).toHaveBeenCalled()
   })
 
-  test('ignores non-string entries in stored JSON', async () => {
+  test('returns empty array when stored JSON is not an array', async () => {
+    await AsyncStorage.setItem(ACTIVE_DOWNLOADS_KEY, JSON.stringify({ urls: [AUDIO_URL_A] }))
+
+    await expect(getActiveDownloads()).resolves.toEqual([])
+    expect(consoleErrorSpy).toHaveBeenCalled()
+  })
+
+  test('returns empty array when stored JSON has a wrong element type', async () => {
     await AsyncStorage.setItem(ACTIVE_DOWNLOADS_KEY, JSON.stringify([AUDIO_URL_A, 42, null]))
 
-    await expect(getActiveDownloads()).resolves.toEqual([AUDIO_URL_A])
+    await expect(getActiveDownloads()).resolves.toEqual([])
+    expect(consoleErrorSpy).toHaveBeenCalled()
   })
 
   test('clearActiveDownloads empties the journal', async () => {

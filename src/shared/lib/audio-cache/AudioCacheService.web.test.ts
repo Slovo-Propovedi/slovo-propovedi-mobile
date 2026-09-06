@@ -5,7 +5,7 @@ import {
   cacheAudio,
   removeFromCache,
 } from './AudioCacheService.web'
-import { getActiveDownloads } from './webDownloadJournal'
+import * as webDownloadJournal from './webDownloadJournal'
 
 const AUDIO_URL = 'https://cdn.example.com/sermon-1.mp3'
 const OTHER_URL = 'https://cdn.example.com/sermon-2.mp3'
@@ -217,7 +217,7 @@ describe('AudioCacheService.web', () => {
     await cacheAudio(AUDIO_URL)
 
     expect(fetchSpy).not.toHaveBeenCalled()
-    await expect(getActiveDownloads()).resolves.toEqual([])
+    await expect(webDownloadJournal.getActiveDownloads()).resolves.toEqual([])
   })
 
   test('journals the url during download and clears it after success', async () => {
@@ -231,11 +231,21 @@ describe('AudioCacheService.web', () => {
     const promise = cacheAudio(AUDIO_URL)
     await waitForFetchCall(fetchSpy)
 
-    await expect(getActiveDownloads()).resolves.toEqual([AUDIO_URL])
+    await expect(webDownloadJournal.getActiveDownloads()).resolves.toEqual([AUDIO_URL])
 
     resolveFetch(corsResponse(1024))
     await promise
-    await expect(getActiveDownloads()).resolves.toEqual([])
+    await expect(webDownloadJournal.getActiveDownloads()).resolves.toEqual([])
+  })
+
+  test('journals the url before starting the fetch', async () => {
+    const fetchSpy = mockFetchOk(1024)
+    const addSpy = jest.spyOn(webDownloadJournal, 'addActiveDownload')
+
+    await cacheAudio(AUDIO_URL)
+
+    expect(addSpy).toHaveBeenCalledWith(AUDIO_URL)
+    expect(addSpy.mock.invocationCallOrder[0]).toBeLessThan(fetchSpy.mock.invocationCallOrder[0])
   })
 
   test('re-downloads and deletes a stale entry that is present but uncommitted', async () => {

@@ -1,6 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { z } from 'zod'
 
 export const ACTIVE_DOWNLOADS_KEY = 'audio-cache/active-downloads'
+
+const activeDownloadsSchema = z.array(z.string())
 
 /**
  * Read the set of URLs with an in-flight download, tolerating legacy/corrupt
@@ -10,10 +13,12 @@ export const getActiveDownloads = async (): Promise<string[]> => {
   try {
     const raw = await AsyncStorage.getItem(ACTIVE_DOWNLOADS_KEY)
     if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed)
-      ? parsed.filter((url): url is string => typeof url === 'string')
-      : []
+    const parsed = activeDownloadsSchema.safeParse(JSON.parse(raw))
+    if (!parsed.success) {
+      console.error('[audio-cache] Invalid active-downloads journal, ignoring:', parsed.error)
+      return []
+    }
+    return parsed.data
   } catch (error) {
     console.error('[audio-cache] Invalid active-downloads journal, ignoring:', error)
     return []
