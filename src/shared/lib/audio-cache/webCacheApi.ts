@@ -8,9 +8,9 @@ import { AUDIO_CACHE_NAME, openAudioCache } from './openAudioCache'
 import { fetchAudioForCache } from './webAudioDownload'
 import {
   commitAudioUrl,
-  ensureManifest,
   isManifestUrl,
   isUrlCommitted,
+  readCommittedUrls,
   uncommitAudioUrl,
 } from './webCacheManifest'
 import {
@@ -29,22 +29,22 @@ export const isCacheStorageAvailable = (): boolean =>
 
 /**
  * Whether a track is fully downloaded: its entry exists in the bucket AND its
- * canonical URL is committed in the manifest. When the manifest cannot be built
- * (e.g. A legacy bucket that failed to read) it falls back to the legacy
- * `match`-only heuristic so existing downloads keep working.
+ * canonical URL is committed in the manifest. When the manifest is missing
+ * (legacy bucket) it falls back to the match-only heuristic.
  * @param audioUrl - Canonical URL of the track.
  */
 export const hasCompleteAudio = async (audioUrl: string): Promise<boolean> => {
   if (!isCacheStorageAvailable()) return false
   const cache = await openAudioCache()
-  let committed: Set<string>
+  let committed: null | Set<string>
   try {
-    committed = await ensureManifest(cache)
+    committed = await readCommittedUrls(cache)
   } catch (error) {
-    console.error('[audio-cache] ensureManifest failed, falling back to legacy check:', error)
-    return (await cache.match(audioUrl, { ignoreVary: true })) != null
+    console.error('[audio-cache] readCommittedUrls failed, falling back to legacy check:', error)
+    committed = null
   }
   const present = (await cache.match(audioUrl, { ignoreVary: true })) != null
+  if (!committed) return present
   return isUrlCommitted(committed, audioUrl) && present
 }
 

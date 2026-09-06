@@ -5,6 +5,7 @@ import {
   cacheAudio,
   removeFromCache,
 } from './AudioCacheService.web'
+import { commitAudioUrl } from './webCacheManifest'
 import * as webDownloadJournal from './webDownloadJournal'
 
 const AUDIO_URL = 'https://cdn.example.com/sermon-1.mp3'
@@ -24,6 +25,9 @@ class FakeCache {
   })
   public delete = jest.fn(async (request: Request | string) => this.store.delete(keyOf(request)))
   public keys = jest.fn(async () => [...this.store.keys()].map(url => new Request(url)))
+  public add = jest.fn(async () => undefined)
+  public addAll = jest.fn(async () => undefined)
+  public matchAll = jest.fn(async () => [])
 }
 
 class FakeCacheStorage {
@@ -336,11 +340,12 @@ describe('AudioCacheService.web', () => {
     expect(manifest).toContain(AUDIO_URL)
   })
 
-  test('legacy migration trusts existing entries and writes the manifest', async () => {
+  test('legacy migration builds the manifest on first commit', async () => {
     await cacheStorage.open('audio-cache-v1')
     await bucket().put(AUDIO_URL, corsResponse(1024))
+    bucket().put.mockClear()
 
-    await expect(audioCacheService.isCached(AUDIO_URL)).resolves.toBe(true)
+    await commitAudioUrl(bucket(), AUDIO_URL)
 
     const manifest = await readManifest()
     expect(manifest).toContain(AUDIO_URL)
@@ -357,6 +362,18 @@ describe('AudioCacheService.web', () => {
     await expect(audioCacheService.isCached(AUDIO_URL)).resolves.toBe(false)
   })
 
+  test('removeFromCache with no manifest does not enumerate the bucket', async () => {
+    await cacheStorage.open('audio-cache-v1')
+    await bucket().put(AUDIO_URL, corsResponse(1024))
+    bucket().keys.mockClear()
+    bucket().put.mockClear()
+
+    await expect(removeFromCache(AUDIO_URL)).resolves.toBe(true)
+
+    expect(bucket().keys).not.toHaveBeenCalled()
+    expect(bucket().put).not.toHaveBeenCalled()
+  })
+
   test('summarize excludes the manifest entry', async () => {
     mockFetchOk(1024)
     await cacheAudio(AUDIO_URL)
@@ -368,9 +385,10 @@ describe('AudioCacheService.web', () => {
     })
   })
 
-  test('parallel isCached calls build the manifest once', async () => {
+  test('parallel isCached calls on a legacy bucket never build the manifest', async () => {
     await cacheStorage.open('audio-cache-v1')
     await bucket().put(AUDIO_URL, corsResponse(1024))
+    bucket().keys.mockClear()
     bucket().put.mockClear()
 
     const [a, b] = await Promise.all([
@@ -380,8 +398,8 @@ describe('AudioCacheService.web', () => {
 
     expect(a).toBe(true)
     expect(b).toBe(true)
-    // Only the manifest write — the two checks share one in-flight build.
-    expect(bucket().put).toHaveBeenCalledTimes(1)
+    expect(bucket().keys).not.toHaveBeenCalled()
+    expect(bucket().put).not.toHaveBeenCalled()
   })
 
   test('recovers cache bucket when open fails once', async () => {

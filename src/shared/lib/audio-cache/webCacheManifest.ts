@@ -61,13 +61,12 @@ let ensureInflight: null | Promise<Set<string>> = null
 
 /**
  * Return the committed URL set, building the manifest once from the bucket's
- * existing entries on first use (legacy migration). Concurrent calls share a
- * single build via a module-level in-flight promise. On `cache.keys()` failure
- * the error propagates — an empty manifest is never written over a legacy
- * bucket that could not be read.
+ * existing entries on first use (legacy migration). Commit-path only — never
+ * called from read/delete/cleanup paths. Concurrent calls share a single build
+ * via a module-level in-flight promise; `cache.keys()` failures propagate.
  * @param cache - The audio cache bucket.
  */
-export const ensureManifest = (cache: Cache): Promise<Set<string>> => {
+const ensureManifest = (cache: Cache): Promise<Set<string>> => {
   if (ensureInflight) return ensureInflight
   ensureInflight = buildManifest(cache).finally(() => {
     ensureInflight = null
@@ -120,7 +119,8 @@ export const commitAudioUrl = async (cache: Cache, audioUrl: string): Promise<vo
 export const uncommitAudioUrl = async (cache: Cache, audioUrl: string): Promise<void> => {
   const canonical = canonicalUrl(audioUrl)
   await enqueueManifestWrite(async () => {
-    const urls = await ensureManifest(cache)
+    const urls = await readCommittedUrls(cache)
+    if (!urls) return
     urls.delete(canonical)
     await writeManifest(cache, urls)
   })
