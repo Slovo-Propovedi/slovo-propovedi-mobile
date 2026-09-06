@@ -7,14 +7,13 @@
  */
 
 import { inflightCache, type InflightEntry, resetInflightCache } from './inflightCache'
-import { fetchAudioForCache } from './webAudioDownload'
 import {
-  cacheHasAudio,
   clearAudioCache,
   deleteAudioEntry,
-  putAudioResponse,
-  summarizeAudioCache,
+  downloadAndStoreAudio,
+  hasCompleteAudio,
 } from './webCacheApi'
+import { summarizeAudioCache } from './webCacheSummary'
 
 export interface CacheInfo {
   fileCount: number
@@ -32,7 +31,7 @@ class WebAudioCacheService {
   public isCached = async (audioUrl: string): Promise<boolean> => {
     if (!audioUrl) return false
     try {
-      return await cacheHasAudio(audioUrl)
+      return await hasCompleteAudio(audioUrl)
     } catch (error) {
       console.error('[AudioCacheService] Error checking cache status:', error)
       return false
@@ -56,31 +55,43 @@ class WebAudioCacheService {
 
     const existing = inflightCache.get(audioUrl)
     if (existing) {
-      if (onProgress) existing.callbacks.add(onProgress)
+      if (onProgress) {
+        existing.callbacks.add(onProgress)
+        if (existing.lastValue > 0)
+          try {
+            onProgress(existing.lastValue)
+          } catch (err) {
+            console.error('[AudioCacheService] onProgress callback error:', err)
+          }
+      }
       return existing.promise
     }
 
     const callbacks = new Set<(progress: number) => void>()
     if (onProgress) callbacks.add(onProgress)
 
-    const emit = (progress: number): void => {
-      callbacks.forEach(callback => {
-        try {
-          callback(progress)
-        } catch (error) {
-          console.error('[AudioCacheService] onProgress callback error:', error)
-        }
-      })
+    const entry: InflightEntry = {
+      callbacks,
+      emit: (progress: number) => {
+        entry.lastValue = progress
+        for (const cb of callbacks)
+          try {
+            cb(progress)
+          } catch (err) {
+            console.error('[AudioCacheService] onProgress callback error:', err)
+          }
+      },
+      lastValue: 0,
+      promise: Promise.resolve(''),
     }
-
-    const promise = this.downloadAndStore(audioUrl, emit)
-    const entry: InflightEntry = { callbacks, emit, lastValue: 0, promise }
+    entry.promise = downloadAndStoreAudio(audioUrl, entry.emit)
     inflightCache.set(audioUrl, entry)
-    void promise.finally(() => {
+    const cleanup = (): void => {
       callbacks.clear()
       inflightCache.delete(audioUrl)
-    })
-    return promise
+    }
+    entry.promise.then(cleanup, cleanup)
+    return entry.promise
   }
 
   public clearCache = async (): Promise<void> => {
@@ -100,15 +111,6 @@ class WebAudioCacheService {
       console.error('[AudioCacheService] Error removing from cache:', error)
       return false
     }
-  }
-
-  private downloadAndStore = async (
-    audioUrl: string,
-    onProgress: (progress: number) => void,
-  ): Promise<string> => {
-    const response = await fetchAudioForCache(audioUrl, onProgress)
-    await putAudioResponse(audioUrl, response)
-    return audioUrl
   }
 }
 

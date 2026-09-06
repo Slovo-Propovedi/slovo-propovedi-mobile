@@ -1,26 +1,45 @@
 /**
  * Low-level access to the browser Cache Storage bucket that holds downloaded
  * sermon audio on web. The service worker (`public/sw.js`) reads the same
- * bucket to serve audio offline, so the name must stay in sync.
+ * bucket to serve audio offline, so the bucket name must stay in sync.
  */
 
-// Keep in sync with AUDIO_CACHE in public/sw.js
-export const AUDIO_CACHE_NAME = 'audio-cache-v1'
-
-export interface AudioCacheSummary {
-  fileCount: number
-  totalSize: number
-}
+import { AUDIO_CACHE_NAME, openAudioCache } from './openAudioCache'
+import { fetchAudioForCache } from './webAudioDownload'
+import {
+  commitAudioUrl,
+  isUrlCommitted,
+  readCommittedUrls,
+  uncommitAudioUrl,
+} from './webCacheManifest'
+import {
+  addActiveDownloadWithHeartbeat,
+  clearActiveDownloads,
+  removeActiveDownload,
+} from './webDownloadJournal'
 
 export const isCacheStorageAvailable = (): boolean =>
   typeof caches !== 'undefined' && typeof caches.open === 'function'
 
-const openAudioCache = (): Promise<Cache> => caches.open(AUDIO_CACHE_NAME)
-
-export const cacheHasAudio = async (audioUrl: string): Promise<boolean> => {
+/**
+ * Whether a track is fully downloaded: its entry exists in the bucket AND its
+ * canonical URL is committed in the manifest. When the manifest is missing
+ * (legacy bucket) it falls back to the match-only heuristic.
+ * @param audioUrl - Canonical URL of the track.
+ */
+export const hasCompleteAudio = async (audioUrl: string): Promise<boolean> => {
   if (!isCacheStorageAvailable()) return false
   const cache = await openAudioCache()
-  return (await cache.match(audioUrl, { ignoreVary: true })) != null
+  let committed: null | Set<string>
+  try {
+    committed = await readCommittedUrls(cache)
+  } catch (error) {
+    console.error('[audio-cache] readCommittedUrls failed, falling back to legacy check:', error)
+    committed = null
+  }
+  const present = (await cache.match(audioUrl, { ignoreVary: true })) != null
+  if (!committed) return present
+  return isUrlCommitted(committed, audioUrl) && present
 }
 
 export const putAudioResponse = async (audioUrl: string, response: Response): Promise<void> => {
@@ -32,26 +51,55 @@ export const putAudioResponse = async (audioUrl: string, response: Response): Pr
 export const deleteAudioEntry = async (audioUrl: string): Promise<boolean> => {
   if (!isCacheStorageAvailable()) return false
   const cache = await openAudioCache()
-  return cache.delete(audioUrl, { ignoreVary: true })
+  const deleted = await cache.delete(audioUrl, { ignoreVary: true })
+  try {
+    await uncommitAudioUrl(cache, audioUrl)
+  } catch (error) {
+    console.error('[audio-cache] Failed to uncommit url after delete:', error)
+  }
+  return deleted
 }
 
 export const clearAudioCache = async (): Promise<void> => {
   if (!isCacheStorageAvailable()) return
   await caches.delete(AUDIO_CACHE_NAME)
+  // Dropping the bucket must also clear the download journal, or the next
+  // startup would resurrect an empty bucket via deleteAudioEntry→uncommit.
+  await clearActiveDownloads()
 }
 
-export const summarizeAudioCache = async (): Promise<AudioCacheSummary> => {
-  if (!isCacheStorageAvailable()) return { fileCount: 0, totalSize: 0 }
-  const cache = await openAudioCache()
-  const requests = await cache.keys()
-
-  let totalSize = 0
-  for (const request of requests) {
-    const response = await cache.match(request)
-    // Opaque (cross-origin, no CORS) responses report no length — skip them.
-    const declared = Number(response?.headers.get('Content-Length'))
-    if (Number.isFinite(declared) && declared > 0) totalSize += declared
+/**
+ * Skip a track that is already fully downloaded; otherwise drop any stale
+ * uncommitted/truncated entry, download a fresh copy, store and commit it.
+ * @param audioUrl - Canonical URL of the track.
+ * @param onProgress - Progress callback (0..1) for the download.
+ */
+export const downloadAndStoreAudio = async (
+  audioUrl: string,
+  onProgress: (progress: number) => void,
+): Promise<string> => {
+  if (await hasCompleteAudio(audioUrl)) {
+    onProgress(1)
+    return audioUrl
   }
-
-  return { fileCount: requests.length, totalSize }
+  await deleteAudioEntry(audioUrl).catch(error =>
+    console.error('[audio-cache] Error clearing stale cache entry:', error),
+  )
+  // Journal the in-flight download so an unclean shutdown leaves a trace the
+  // next startup can clean up; the heartbeat keeps `lastSeenAt` fresh.
+  const stopHeartbeat = await addActiveDownloadWithHeartbeat(audioUrl)
+  try {
+    const response = await fetchAudioForCache(audioUrl, onProgress)
+    await putAudioResponse(audioUrl, response)
+    try {
+      // A commit failure only means a re-download next session — never fail the download.
+      await commitAudioUrl(await openAudioCache(), audioUrl)
+    } catch (error) {
+      console.error('[audio-cache] Failed to commit audio url:', error)
+    }
+  } finally {
+    stopHeartbeat()
+    await removeActiveDownload(audioUrl)
+  }
+  return audioUrl
 }
