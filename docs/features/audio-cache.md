@@ -20,6 +20,14 @@
 
 > **Web:** `expo-file-system` в браузере не работает. Metro резолвит `./AudioCacheService` → `AudioCacheService.web.ts` — реализация поверх **Cache Storage API** (тот же бакет `audio-cache-v1`, что читает Service Worker для офлайн-воспроизведения). Подробнее — [web.md](./web.md).
 
+### Web: возобновление скачивания (Issue #78)
+
+При повторном «кешировать все» в плейлисте на web реализация ведёт себя так же, как нативная (паритет):
+
+- **Skip-cached (паритет с нативным):** перед скачиванием `downloadAndStore` проверяет `cacheHasAudio(audioUrl)` (через `openAudioCache`). Если трек уже в бакете — `fetch`/`put` **не запускаются**, эмитится `onProgress(1)` ровно один раз и промис резолвится URL'ом. Инвариант: `cacheAudio` зарезолвился ⇒ `onProgress(1)` эмитился. Раньше каждый трек перекачивался заново (SW отдавал кешированное тело → страница делала `cache.put` того же ответа обратно в тот же бакет) — шторм re-put на iOS WebKit, класс крашей jetsam / CacheStorage writeRecord (см. [debt.md](../debt.md)).
+- **Recovery бакета:** `openAudioCache` (`webCacheApi.ts`) при сбое `caches.open` (повреждённый Cache Storage после убийства процесса посреди записи — WebKit bugs [260962](https://bugs.webkit.org/show_bug.cgi?id=260962)/[305539](https://bugs.webkit.org/show_bug.cgi?id=305539)) делает `caches.delete(AUDIO_CACHE_NAME)` и повторно открывает; если и это не удалось — кидает обычный `Error` (callers уже обрабатывают rejections). Используется во всех операциях web-кэша (has/put/delete/summarize). Для remove/clear исход восстановления может просто распространяться.
+- **Без URE:** очистка inflight-состояния идёт через `promise.then(cleanup, cleanup)` (не `void promise.finally(...)`, который на неудаче ре-throw'ил и давал unhandled rejection → глобальную модалку ошибок), как в нативном `AudioCacheService.ts`.
+
 ## Повторы и защита от зависания (Issue #49)
 
 `downloadToCache` (`src/shared/lib/audio-cache/cacheDownloader.ts`) оборачивает скачивание в retry-цикл — мотивация: обрыв TCP-соединения при переключении WiFi → мобильный интернет посреди скачивания раньше приводил к безвозвратной ошибке трека.

@@ -76,10 +76,11 @@ class WebAudioCacheService {
     const promise = this.downloadAndStore(audioUrl, emit)
     const entry: InflightEntry = { callbacks, emit, lastValue: 0, promise }
     inflightCache.set(audioUrl, entry)
-    void promise.finally(() => {
+    const cleanup = (): void => {
       callbacks.clear()
       inflightCache.delete(audioUrl)
-    })
+    }
+    promise.then(cleanup, cleanup)
     return promise
   }
 
@@ -106,6 +107,10 @@ class WebAudioCacheService {
     audioUrl: string,
     onProgress: (progress: number) => void,
   ): Promise<string> => {
+    if (await cacheHasAudio(audioUrl)) {
+      onProgress(1)
+      return audioUrl
+    }
     const response = await fetchAudioForCache(audioUrl, onProgress)
     await putAudioResponse(audioUrl, response)
     return audioUrl

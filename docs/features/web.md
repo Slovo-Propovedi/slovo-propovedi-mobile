@@ -60,6 +60,10 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 
 `BackgroundCachingService` платформенно-нейтрален и переиспользуется как есть.
 
+### Возобновление «кешировать все» (Issue #78)
+
+Повторный прогон скачивания плейлиста на web не перекачивает уже закешированные треки (skip-cached, паритет с нативным), повреждённый бакет `audio-cache-v1` чинится через `caches.delete` + reopen (`openAudioCache` в `webCacheApi.ts`), а неудачные скачивания не дают unhandled rejection. Подробности и WebKit-баги (260962/305539) — [audio-cache.md](./audio-cache.md) → «Web: возобновление скачивания (Issue #78)».
+
 ### Ограничение: CORS
 
 Аудио-хост `slovo-istini.com` не отдаёт `Access-Control-Allow-Origin`. Поэтому:

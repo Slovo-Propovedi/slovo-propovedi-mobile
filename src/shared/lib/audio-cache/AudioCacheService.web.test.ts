@@ -38,6 +38,7 @@ const keyOf = (request: Request | string): string =>
 const bucket = (): FakeCache => cacheStorage.buckets.get('audio-cache-v1') as FakeCache
 
 let cacheStorage: FakeCacheStorage
+let unhandledRejectionSpy: jest.Mock | null = null
 
 const mp3Body = (bytes: number): Blob => new Blob([new Uint8Array(bytes).fill(1)] as BlobPart[])
 
@@ -56,6 +57,10 @@ beforeEach(() => {
 
 afterEach(() => {
   delete (globalThis as { caches?: unknown }).caches
+  if (unhandledRejectionSpy) {
+    process.off('unhandledRejection', unhandledRejectionSpy)
+    unhandledRejectionSpy = null
+  }
 })
 
 describe('AudioCacheService.web', () => {
@@ -138,12 +143,52 @@ describe('AudioCacheService.web', () => {
   test('bucket keeps a single entry per url', async () => {
     jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
     await cacheAudio(AUDIO_URL)
+    // A sequential re-cache of the same url now hits the skip path — no re-put.
     await cacheAudio(AUDIO_URL)
 
-    expect(bucket().put).toHaveBeenCalledTimes(2)
+    expect(bucket().put).toHaveBeenCalledTimes(1)
     await expect(audioCacheService.getCacheInfo()).resolves.toEqual({
       fileCount: 1,
       totalSize: 1024,
     })
+  })
+
+  test('skips download when track is already cached', async () => {
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
+    await cacheStorage.open('audio-cache-v1')
+    await bucket().put(AUDIO_URL, corsResponse(1024))
+    bucket().put.mockClear()
+    const progress: number[] = []
+
+    const result = await cacheAudio(AUDIO_URL, p => progress.push(p))
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+    expect(bucket().put).not.toHaveBeenCalled()
+    expect(progress).toEqual([1])
+    expect(result).toBe(AUDIO_URL)
+  })
+
+  test('recovers cache bucket when open fails once', async () => {
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(corsResponse(1024))
+    cacheStorage.open.mockRejectedValueOnce(new TypeError('corrupt bucket'))
+
+    await cacheAudio(AUDIO_URL)
+
+    expect(cacheStorage.delete).toHaveBeenCalledWith('audio-cache-v1')
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(bucket().put).toHaveBeenCalledTimes(1)
+    await expect(audioCacheService.isCached(AUDIO_URL)).resolves.toBe(true)
+  })
+
+  test('rejects cleanly when cache storage is unusable', async () => {
+    cacheStorage.open.mockRejectedValue(new TypeError('corrupt bucket'))
+    unhandledRejectionSpy = jest.fn()
+    process.on('unhandledRejection', unhandledRejectionSpy)
+
+    await expect(cacheAudio(AUDIO_URL)).rejects.toBeInstanceOf(Error)
+
+    // Flush microtasks/timers so any unhandled rejection would have fired by now.
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(unhandledRejectionSpy).not.toHaveBeenCalled()
   })
 })
