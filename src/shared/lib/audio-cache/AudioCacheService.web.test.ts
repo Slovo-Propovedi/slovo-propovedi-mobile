@@ -143,6 +143,28 @@ describe('AudioCacheService.web', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1)
   })
 
+  test('late joiner immediately receives the current progress value', async () => {
+    let resolveFetch!: (value: Response) => void
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockReturnValue(
+      new Promise<Response>(resolve => {
+        resolveFetch = resolve
+      }),
+    )
+
+    const progressA: number[] = []
+    const promiseA = cacheAudio(AUDIO_URL, p => progressA.push(p))
+    await waitForFetchCall(fetchSpy)
+
+    resolveFetch(corsResponse(1024))
+    await promiseA
+
+    // A fresh call with onProgress should get replay of lastValue (1)
+    const progressB: number[] = []
+    await cacheAudio(AUDIO_URL, p => progressB.push(p))
+
+    expect(progressB[0]).toBe(1)
+  })
+
   test('removeFromCache and clearCache drop entries', async () => {
     mockFetchOk(1024)
     await cacheAudio(AUDIO_URL)
