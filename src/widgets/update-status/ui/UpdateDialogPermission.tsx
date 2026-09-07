@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native'
 import { ConfirmDialogButton } from 'shared/ui/confirm-dialog'
-import { COLORS } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { updateDialogStyles as styles } from './updateDialogStyles'
 
 const OPEN_SETTINGS_TEXT = 'Открыть настройки'
@@ -16,17 +16,21 @@ interface UpdateDialogPermissionProps {
 export const UpdateDialogPermission = ({
   onClose,
   onOpenSettings,
-}: UpdateDialogPermissionProps) => (
-  <>
-    <Text style={styles.message}>{EXPLAINER_TEXT}</Text>
-    <View style={styles.buttons}>
-      <ConfirmDialogButton
-        isConfirm
-        color={COLORS.primary}
-        onPress={onOpenSettings}
-        text={OPEN_SETTINGS_TEXT}
-      />
-      <ConfirmDialogButton onPress={onClose} text={NOT_NOW_TEXT} />
-    </View>
-  </>
-)
+}: UpdateDialogPermissionProps) => {
+  const { currentTheme } = useTheme()
+
+  return (
+    <>
+      <Text style={[styles.message, { color: currentTheme.textMuted }]}>{EXPLAINER_TEXT}</Text>
+      <View style={styles.buttons}>
+        <ConfirmDialogButton
+          isConfirm
+          onPress={onOpenSettings}
+          text={OPEN_SETTINGS_TEXT}
+          color={currentTheme.primary}
+        />
+        <ConfirmDialogButton onPress={onClose} text={NOT_NOW_TEXT} />
+      </View>
+    </>
+  )
+}

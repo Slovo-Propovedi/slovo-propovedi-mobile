@@ -8,6 +8,7 @@ import {
   releaseUrlAtom,
   type UpdateState,
 } from 'shared/model'
+import { useTheme } from 'shared/ui/theme'
 import { openReleaseUrl } from '../lib/openReleaseUrl'
 import { UpdateDialogConfirm } from './UpdateDialogConfirm'
 import { UpdateDialogError } from './UpdateDialogError'
@@ -35,6 +36,7 @@ const getDialogTitle = (updateState: UpdateState): string => {
 const preventClose = () => {}
 
 export const UpdateDialog = ({ onClose, visible }: UpdateDialogProps) => {
+  const { currentTheme } = useTheme()
   const [latestVersion] = useAtom(latestVersionAtom)
   const [releaseUrl] = useAtom(releaseUrlAtom)
   const { error, progress, reset, startUpdate, updateState } = useUpdateInstall()
@@ -88,9 +90,11 @@ export const UpdateDialog = ({ onClose, visible }: UpdateDialogProps) => {
       statusBarTranslucent
       onRequestClose={isBusy ? preventClose : handleClose}
     >
-      <View style={styles.backdrop}>
-        <View style={styles.dialog}>
-          <Text style={styles.title}>{getDialogTitle(updateState)}</Text>
+      <View style={[styles.backdrop, { backgroundColor: currentTheme.backdrop }]}>
+        <View style={[styles.dialog, { backgroundColor: currentTheme.surface }]}>
+          <Text style={[styles.title, { color: currentTheme.text }]}>
+            {getDialogTitle(updateState)}
+          </Text>
           {renderContent()}
         </View>
       </View>

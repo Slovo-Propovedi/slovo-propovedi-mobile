@@ -30,10 +30,10 @@ export const WebUpdateModal = () => {
       statusBarTranslucent
       onRequestClose={applying ? preventClose : dismiss}
     >
-      <View style={styles.backdrop}>
-        <View style={styles.dialog}>
-          <Text style={styles.title}>{TITLE}</Text>
-          <Text style={styles.message}>{message}</Text>
+      <View style={[styles.backdrop, { backgroundColor: currentTheme.backdrop }]}>
+        <View style={[styles.dialog, { backgroundColor: currentTheme.surface }]}>
+          <Text style={[styles.title, { color: currentTheme.text }]}>{TITLE}</Text>
+          <Text style={[styles.message, { color: currentTheme.textMuted }]}>{message}</Text>
           <View style={styles.buttons}>
             <Pressable
               onPress={apply}

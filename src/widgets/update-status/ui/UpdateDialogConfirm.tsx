@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native'
 import { ConfirmDialogButton } from 'shared/ui/confirm-dialog'
-import { COLORS } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { updateDialogStyles as styles } from './updateDialogStyles'
 
 const CONFIRM_TEXT = 'Обновить'
@@ -19,20 +19,30 @@ export const UpdateDialogConfirm = ({
   onCancel,
   onConfirm,
   onOpenReleases,
-}: UpdateDialogConfirmProps) => (
-  <>
-    <Text style={styles.message}>Версия {latestVersion ?? ''} доступна для установки</Text>
-    <View style={styles.buttons}>
-      <ConfirmDialogButton
-        isConfirm
-        text={CONFIRM_TEXT}
-        onPress={onConfirm}
-        color={COLORS.success}
-      />
-      <ConfirmDialogButton text={CANCEL_TEXT} onPress={onCancel} />
-    </View>
-    <Text style={styles.link} accessibilityRole='link' onPress={onOpenReleases}>
-      {RELEASES_LINK_TEXT}
-    </Text>
-  </>
-)
+}: UpdateDialogConfirmProps) => {
+  const { currentTheme } = useTheme()
+
+  return (
+    <>
+      <Text style={[styles.message, { color: currentTheme.text }]}>
+        Версия {latestVersion ?? ''} доступна для установки
+      </Text>
+      <View style={styles.buttons}>
+        <ConfirmDialogButton
+          isConfirm
+          text={CONFIRM_TEXT}
+          onPress={onConfirm}
+          color={currentTheme.primary}
+        />
+        <ConfirmDialogButton text={CANCEL_TEXT} onPress={onCancel} />
+      </View>
+      <Text
+        accessibilityRole='link'
+        onPress={onOpenReleases}
+        style={[styles.link, { color: currentTheme.primary }]}
+      >
+        {RELEASES_LINK_TEXT}
+      </Text>
+    </>
+  )
+}
