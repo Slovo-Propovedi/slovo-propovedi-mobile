@@ -12,9 +12,9 @@ jest.mock(AUDIO_CACHE_SERVICE_MODULE, () => {
   return {
     ...actual,
     audioCacheService: {
+      cacheAudio: jest.fn().mockResolvedValue('file:///cached.mp3'),
       isCached: jest.fn().mockResolvedValue(false),
     },
-    cacheAudio: jest.fn().mockResolvedValue('file:///cached.mp3'),
     removeFromCache: jest.fn().mockResolvedValue(true),
   }
 })
@@ -22,7 +22,8 @@ jest.mock(AUDIO_CACHE_SERVICE_MODULE, () => {
 const mockedIsCached = audioCacheService.isCached as jest.MockedFunction<
   typeof audioCacheService.isCached
 >
-const mockedCacheAudio = jest.requireMock(AUDIO_CACHE_SERVICE_MODULE).cacheAudio as jest.Mock
+const mockedCacheAudio = jest.requireMock(AUDIO_CACHE_SERVICE_MODULE).audioCacheService
+  .cacheAudio as jest.Mock
 const mockedRemoveFromCache = jest.requireMock(AUDIO_CACHE_SERVICE_MODULE)
   .removeFromCache as jest.Mock
 
@@ -156,7 +157,7 @@ describe('useTrackItemCache', () => {
       expect(mockedRemoveFromCache).not.toHaveBeenCalled()
     })
 
-    test('calls cacheAudio when not cached', async () => {
+    test('calls cacheAudio with an onProgress callback when not cached', async () => {
       mockedIsCached.mockResolvedValue(false)
 
       const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL, null))
@@ -169,7 +170,7 @@ describe('useTrackItemCache', () => {
         await result.current.toggleCache()
       })
 
-      expect(mockedCacheAudio).toHaveBeenCalledWith(AUDIO_URL)
+      expect(mockedCacheAudio).toHaveBeenCalledWith(AUDIO_URL, expect.any(Function))
       expect(mockedRemoveFromCache).not.toHaveBeenCalled()
     })
 
@@ -237,6 +238,150 @@ describe('useTrackItemCache', () => {
 
       expect(warnSpy).toHaveBeenCalled()
       warnSpy.mockRestore()
+    })
+  })
+
+  describe('manual cache download progress', () => {
+    test('writes per-URL progress 0 when manual cache starts', async () => {
+      let onProgressCb: ((progress: number) => void) | undefined
+      mockedCacheAudio.mockImplementationOnce(
+        (_url: string, onProgress?: (progress: number) => void) => {
+          onProgressCb = onProgress
+          return new Promise<string>(() => {})
+        },
+      )
+
+      const { ctx, result } = await renderHookWithProviders(() =>
+        useTrackItemCache(AUDIO_URL, null),
+      )
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
+
+      await act(async () => {
+        void result.current.toggleCache()
+      })
+
+      expect(ctx.get(playlistDownloadProgressAtom)).toEqual({ [AUDIO_URL]: 0 })
+      expect(onProgressCb).toBeDefined()
+    })
+
+    test('propagates progress ticks to the atom and the hook', async () => {
+      let onProgressCb: ((progress: number) => void) | undefined
+      mockedCacheAudio.mockImplementationOnce(
+        (_url: string, onProgress?: (progress: number) => void) => {
+          onProgressCb = onProgress
+          return new Promise<string>(() => {})
+        },
+      )
+
+      const { ctx, result } = await renderHookWithProviders(() =>
+        useTrackItemCache(AUDIO_URL, null),
+      )
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
+
+      await act(async () => {
+        void result.current.toggleCache()
+      })
+
+      await act(async () => {
+        onProgressCb?.(0.25)
+        onProgressCb?.(0.5)
+      })
+
+      expect(ctx.get(playlistDownloadProgressAtom)).toEqual({ [AUDIO_URL]: 0.5 })
+      expect(result.current.progressValue).toBe(0.5)
+      expect(result.current.isDownloading).toBe(true)
+    })
+
+    test('removes per-URL progress entry when download succeeds', async () => {
+      const { ctx, result } = await renderHookWithProviders(() =>
+        useTrackItemCache(AUDIO_URL, null),
+      )
+
+      await act(async () => {
+        await result.current.toggleCache()
+      })
+
+      expect(ctx.get(playlistDownloadProgressAtom)).not.toHaveProperty(AUDIO_URL)
+    })
+
+    test('removes per-URL progress entry when download fails', async () => {
+      mockedCacheAudio.mockRejectedValueOnce(new Error('download failed'))
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      const { ctx, result } = await renderHookWithProviders(() =>
+        useTrackItemCache(AUDIO_URL, null),
+      )
+
+      await act(async () => {
+        await result.current.toggleCache()
+      })
+
+      expect(ctx.get(playlistDownloadProgressAtom)).not.toHaveProperty(AUDIO_URL)
+      warnSpy.mockRestore()
+    })
+
+    test('removes the progress entry when cacheAudio resolves without onProgress ticks', async () => {
+      // The download "succeeds" instantly via the native skip-cached path, so
+      // cacheAudio never invokes onProgress(1). Cleanup still runs (finally).
+      mockedIsCached.mockResolvedValueOnce(false).mockResolvedValue(true)
+
+      const { ctx, rerender, result } = await renderHookWithProviders(
+        ({ cacheTrigger }: { cacheTrigger: number }) =>
+          useTrackItemCache(AUDIO_URL, null, cacheTrigger),
+        { initialProps: { cacheTrigger: 0 } },
+      )
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
+
+      const initialTrigger = ctx.get(cacheUpdateTriggerAtom)
+
+      await act(async () => {
+        await result.current.toggleCache()
+      })
+
+      expect(mockedCacheAudio).toHaveBeenCalledWith(AUDIO_URL, expect.any(Function))
+      expect(ctx.get(playlistDownloadProgressAtom)).toEqual({})
+      expect(ctx.get(cacheUpdateTriggerAtom)).toBe(initialTrigger + 1)
+
+      // Parent (subscribed to cacheUpdateTriggerAtom) propagates the new
+      // trigger down, so the isCached re-check runs and reports the track cached.
+      await act(async () => {
+        rerender({ cacheTrigger: ctx.get(cacheUpdateTriggerAtom) })
+      })
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
+
+      expect(mockedIsCached.mock.calls.length).toBe(2)
+      expect(result.current.isCached).toBe(true)
+    })
+
+    test('does not write progress when removing from cache', async () => {
+      mockedIsCached.mockResolvedValue(true)
+
+      const { ctx, result } = await renderHookWithProviders(() =>
+        useTrackItemCache(AUDIO_URL, null),
+      )
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
+
+      await act(async () => {
+        await result.current.toggleCache()
+      })
+
+      expect(mockedRemoveFromCache).toHaveBeenCalledWith(AUDIO_URL)
+      expect(ctx.get(playlistDownloadProgressAtom)).toEqual({})
     })
   })
 

@@ -1,8 +1,9 @@
 import { useCtx } from '@reatom/npm-react'
 import { useEffect, useRef, useState } from 'react'
-import { cacheAudio, removeFromCache } from '../../lib/audio-cache/AudioCacheService'
+import { removeFromCache } from '../../lib/audio-cache/AudioCacheService'
+import { cacheAudioWithProgress } from '../../lib/audio-cache/cacheAudioWithProgress'
 import { useIsCached } from '../../lib/audio-cache/useIsCached'
-import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from '../../lib/cache-triggers'
+import { incrementCacheTrigger, playlistDownloadProgressAtom } from '../../lib/cache-triggers'
 
 export const useTrackItemCache = (
   audioUrl: null | string | undefined,
@@ -43,9 +44,10 @@ export const useTrackItemCache = (
   const toggleCache = async () => {
     if (!audioUrl) return
     try {
-      isCached ? await removeFromCache(audioUrl) : await cacheAudio(audioUrl)
+      if (isCached) await removeFromCache(audioUrl)
+      else await cacheAudioWithProgress(ctx, audioUrl)
       internalCacheTriggerRef.current += 1
-      cacheUpdateTriggerAtom(ctx, prev => prev + 1)
+      incrementCacheTrigger(ctx)
     } catch (error) {
       console.warn('[useTrackItemCache] Error toggling cache:', error)
     }

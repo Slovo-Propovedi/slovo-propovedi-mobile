@@ -1,13 +1,16 @@
 import { act } from '@testing-library/react-native'
 import { currentAudioAtom } from 'entities/player'
+import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { useFullscreenHandlers } from './useFullscreenHandlers'
 
+const AUDIO_CACHE_MODULE = 'shared/lib/audio-cache'
+
 jest.mock('shared/lib/audio-cache', () => ({
-  cacheAudio: jest.fn(),
+  cacheAudioWithProgress: jest.fn(),
   removeFromCache: jest.fn(),
-  useIsCached: jest.fn(() => false),
+  useIsCached: jest.fn(),
 }))
 
 jest.mock('../../model/showMenuAtom', () => {
@@ -35,6 +38,11 @@ const mockAudio = {
 
 const mockSeekTo = jest.fn().mockResolvedValue(undefined)
 const mockTogglePlay = jest.fn().mockResolvedValue(undefined)
+
+const mockedCacheAudioWithProgress = jest.requireMock(AUDIO_CACHE_MODULE)
+  .cacheAudioWithProgress as jest.Mock
+const mockedRemoveFromCache = jest.requireMock(AUDIO_CACHE_MODULE).removeFromCache as jest.Mock
+const mockedUseIsCached = jest.requireMock(AUDIO_CACHE_MODULE).useIsCached as jest.Mock
 
 jest.mock('entities/player', () => {
   const { atom } = jest.requireActual('@reatom/framework')
@@ -80,5 +88,47 @@ describe('useFullscreenHandlers handleTogglePlay', () => {
     const { result } = await renderHandlers()
 
     expect(result.current.handleTogglePlay).toBe(mockTogglePlay)
+  })
+})
+
+describe('useFullscreenHandlers handleToggleCache', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockedUseIsCached.mockReturnValue(false)
+    mockedCacheAudioWithProgress.mockResolvedValue('file:///cached.mp3')
+    mockedRemoveFromCache.mockResolvedValue(true)
+    currentAudioAtom(ctx, null)
+  })
+
+  test('caches via cacheAudioWithProgress and increments the cache trigger', async () => {
+    currentAudioAtom(ctx, mockAudio)
+
+    const { result } = await renderHandlers()
+    const initialTrigger = ctx.get(cacheUpdateTriggerAtom)
+
+    await act(async () => {
+      await result.current.handleToggleCache()
+    })
+
+    expect(mockedUseIsCached).toHaveBeenCalledWith(AUDIO_URL, initialTrigger)
+    expect(mockedCacheAudioWithProgress).toHaveBeenCalledWith(ctx, AUDIO_URL)
+    expect(mockedRemoveFromCache).not.toHaveBeenCalled()
+    expect(ctx.get(cacheUpdateTriggerAtom)).toBe(initialTrigger + 1)
+  })
+
+  test('removes from cache and increments the trigger when already cached', async () => {
+    mockedUseIsCached.mockReturnValue(true)
+    currentAudioAtom(ctx, mockAudio)
+
+    const { result } = await renderHandlers()
+    const initialTrigger = ctx.get(cacheUpdateTriggerAtom)
+
+    await act(async () => {
+      await result.current.handleToggleCache()
+    })
+
+    expect(mockedRemoveFromCache).toHaveBeenCalledWith(AUDIO_URL)
+    expect(mockedCacheAudioWithProgress).not.toHaveBeenCalled()
+    expect(ctx.get(cacheUpdateTriggerAtom)).toBe(initialTrigger + 1)
   })
 })
