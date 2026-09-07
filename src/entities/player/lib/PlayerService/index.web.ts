@@ -1,13 +1,12 @@
-import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
+import type { LockScreenMetadata } from './types'
 import type { PlaybackRate } from '../../playback-rate'
-import { currentAudioAtom, durationAtom } from '../../model'
 import { setPlaybackRateAction } from '../../playback-rate'
-import { savePlaybackProgress } from '../playbackProgress'
-import { scheduleHistoryFlush } from './progressFlusher'
-import { attachWebAudioEvents } from './webAudioEvents'
-import { resetWebDuration, writeWebDuration } from './webDurationWriter'
+import { flushProgress, scheduleHistoryFlush } from './progressFlusher'
+import { attachWebAudioHandlers } from './webAudioHandlers'
+import { resetWebDuration } from './webDurationWriter'
+import { createWebMediaSession } from './webMediaSession'
 import { createPubSub } from './webPlayerPubSub'
 import { createWebPlayerState } from './webPlayerState'
 import { createStatusTracker } from './webPlayerStatusTracker'
@@ -33,21 +32,22 @@ class WebPlayerService {
     this.state.setIsPlaying(false)
   }
 
+  public setLockScreenMetadata = (metadata: LockScreenMetadata): void => {
+    this.mediaSession.setMetadata(metadata)
+  }
+
+  public reassertLockScreenMetadata = (metadata: LockScreenMetadata): void =>
+    this.setLockScreenMetadata(metadata)
+
   private flushProgressAtCurrentTime = (): void => {
     if (!this.audioInstance) return
-
-    const positionMs = Math.floor(this.audioInstance.currentTime * 1000)
-    const sermonId = ctx.get(currentAudioAtom)?.id
-    if (!sermonId) return
-
-    const durationMs = ctx.get(durationAtom)
-    void savePlaybackProgress(ctx, { durationMs, positionMs, sermonId })
-    void flushHistoryProgressAction(ctx, { durationMs, positionMs, sermonId })
+    flushProgress(Math.floor(this.audioInstance.currentTime * 1000))
   }
 
   public setPlaybackRate = async (rate: PlaybackRate): Promise<void> => {
     this.playbackRate = rate
     if (this.audioInstance) this.audioInstance.playbackRate = rate
+    this.mediaSession.updatePositionState()
     void setPlaybackRateAction(ctx, rate)
   }
 
@@ -65,6 +65,7 @@ class WebPlayerService {
       this.audioInstance.currentTime = clampedPositionMs / 1000
       this.state.setPosition(clampedPositionMs)
     }
+    this.mediaSession.updatePositionState()
     scheduleHistoryFlush(clampedPositionMs)
   }
 
@@ -86,22 +87,14 @@ class WebPlayerService {
 
     if (this.playbackRate !== 1) audio.playbackRate = this.playbackRate
 
-    this.detachAudioEvents = attachWebAudioEvents(audio, {
-      onDuration: durationMs => writeWebDuration(this.state, durationMs),
-      onEnded: () => this.onTrackEnd?.(),
-      onLoaded: () => {
-        this.state.setIsBuffering(false)
-        if (initialPositionMs <= 0) return
-        audio.currentTime = initialPositionMs / 1000
-        this.state.setPosition(initialPositionMs)
-      },
-      onPause: () => {
-        if (audio === this.audioInstance && this.state.getState().isPlaying)
-          this.flushProgressAtCurrentTime()
-        this.state.setIsPlaying(false)
-      },
-      onPlay: () => this.state.setIsPlaying(true),
-      onPosition: positionMs => this.state.setPosition(positionMs),
+    this.detachAudioEvents = attachWebAudioHandlers({
+      audio,
+      flushProgressAtCurrentTime: this.flushProgressAtCurrentTime,
+      initialPositionMs,
+      isCurrentAudio: current => current === this.audioInstance,
+      mediaSession: this.mediaSession,
+      onTrackEnd: this.onTrackEnd,
+      state: this.state,
     })
     return null
   }
@@ -113,6 +106,7 @@ class WebPlayerService {
     this.detachAudioEvents = null
     this.audioInstance?.pause()
     this.audioInstance = null
+    this.mediaSession.clear()
   }
 
   private audioInstance: HTMLAudioElement | null = null
@@ -122,8 +116,13 @@ class WebPlayerService {
   private pubsub = createPubSub()
   private state = createWebPlayerState(this.pubsub)
   private statusTracker = createStatusTracker(() => this.audioInstance, this.state)
+  private mediaSession = createWebMediaSession(
+    { pause: this.pause, play: this.play, seekTo: this.seekTo },
+    () => this.audioInstance,
+  )
 }
 
 const webPlayer = new WebPlayerService()
-// Web fills for controls with no browser equivalent (lock screen, OS volume, status snapshot).
+// Web fills for controls with no browser equivalent (OS volume, status snapshot).
+// Lock-screen metadata is handled by the class-level MediaSession controller.
 export const playerService = Object.assign(webPlayer, createWebStubControls(webPlayer.getState))

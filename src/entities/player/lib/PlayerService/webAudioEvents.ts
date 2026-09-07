@@ -1,5 +1,6 @@
 interface WebAudioEventHandlers {
   onDuration: (durationMs: number) => void
+  onDurationChange?: (durationMs: number) => void
   onEnded: () => void
   onLoaded: () => void
   onPause: () => void
@@ -11,10 +12,15 @@ export const attachWebAudioEvents = (
   audio: HTMLAudioElement,
   handlers: WebAudioEventHandlers,
 ): (() => void) => {
-  const writeDuration = () => {
+  const getValidDurationMs = (): null | number => {
     const durationMs = Math.floor(audio.duration * 1000)
-    if (!Number.isFinite(durationMs) || durationMs <= 0) return
-    handlers.onDuration(durationMs)
+    if (!Number.isFinite(durationMs) || durationMs <= 0) return null
+    return durationMs
+  }
+
+  const writeDuration = () => {
+    const ms = getValidDurationMs()
+    if (ms !== null) handlers.onDuration(ms)
   }
 
   const handleLoadedMetadata = () => {
@@ -22,7 +28,12 @@ export const attachWebAudioEvents = (
     handlers.onLoaded()
   }
 
-  const handleDurationChange = () => writeDuration()
+  const handleDurationChange = () => {
+    const ms = getValidDurationMs()
+    if (ms === null) return
+    handlers.onDuration(ms)
+    handlers.onDurationChange?.(ms)
+  }
 
   const handlePlay = () => handlers.onPlay()
   const handlePause = () => handlers.onPause()

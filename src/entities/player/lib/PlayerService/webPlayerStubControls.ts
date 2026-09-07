@@ -4,10 +4,12 @@ import type { WebPlayerStateData } from './webPlayerState'
 /**
  * Web fills for PlayerService controls that have no browser counterpart.
  *
- * - Lock-screen / MediaSession metadata: not wired up on web yet.
  * - Volume: owned by the browser and OS media UI, not settable programmatically.
  * - getStatus: the native player exposes a live status object; on web we derive
  *   the same shape from the web player state.
+ *
+ * Lock-screen / MediaSession metadata is handled by the class-level
+ * MediaSession controller (webMediaSession.ts), not by these stubs.
  * @param getState - Accessor for the current web player state, used by getStatus.
  */
 export const createWebStubControls = (getState: () => WebPlayerStateData) => ({
@@ -16,7 +18,5 @@ export const createWebStubControls = (getState: () => WebPlayerStateData) => ({
     return { duration, isPlaying, position }
   },
   getVolume: (): number => 1,
-  reassertLockScreenMetadata: (): void => {},
-  setLockScreenMetadata: (): void => {},
   setVolume: async (): Promise<void> => {},
 })

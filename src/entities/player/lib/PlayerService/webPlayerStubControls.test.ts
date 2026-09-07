@@ -22,11 +22,9 @@ describe('createWebStubControls', () => {
     expect(createWebStubControls(makeState).getVolume()).toBe(1)
   })
 
-  test('lock-screen and volume setters are no-ops that resolve/return without throwing', async () => {
+  test('setVolume resolves without throwing', async () => {
     const controls = createWebStubControls(makeState)
 
-    expect(controls.setLockScreenMetadata()).toBeUndefined()
-    expect(controls.reassertLockScreenMetadata()).toBeUndefined()
     await expect(controls.setVolume()).resolves.toBeUndefined()
   })
 })

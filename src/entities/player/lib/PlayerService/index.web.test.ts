@@ -1,11 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { currentAudioAtom, durationAtom, setDurationAction } from '../../model'
-import { savePlaybackProgress } from '../playbackProgress'
 import { playerService } from './index.web'
-import { scheduleHistoryFlush } from './progressFlusher'
+import { flushProgress, scheduleHistoryFlush } from './progressFlusher'
 
 jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
 
@@ -22,13 +20,10 @@ jest.mock('../../model', () => ({
 
 jest.mock('../../playback-rate', () => ({ setPlaybackRateAction: jest.fn() }))
 
-jest.mock('../playbackProgress', () => ({ savePlaybackProgress: jest.fn() }))
-
-jest.mock('entities/listening-history/@x/player', () => ({
-  flushHistoryProgressAction: jest.fn(),
+jest.mock('./progressFlusher', () => ({
+  flushProgress: jest.fn(),
+  scheduleHistoryFlush: jest.fn(),
 }))
-
-jest.mock('./progressFlusher', () => ({ scheduleHistoryFlush: jest.fn() }))
 
 const AUDIO_URL = 'https://example.com/audio.mp3'
 const LOADED_METADATA_EVENT = 'loadedmetadata'
@@ -100,8 +95,6 @@ const mockSermonContext = () => {
 let audioStubs: AudioElementStub[]
 
 beforeEach(async () => {
-  jest.clearAllMocks()
-  ;(ctx.get as jest.Mock).mockReset()
   audioStubs = []
   ;(global as { Audio: unknown }).Audio = jest.fn(() => {
     const stub = createAudioElementStub()
@@ -110,6 +103,8 @@ beforeEach(async () => {
   })
   await playerService.unload()
   await playerService.pause()
+  jest.clearAllMocks()
+  ;(ctx.get as jest.Mock).mockReset()
 })
 
 afterEach(() => {
@@ -126,8 +121,7 @@ describe('WebPlayerService pause flush', () => {
 
     audioStubs[0].fireEvent(PAUSE_EVENT)
 
-    expect(savePlaybackProgress).not.toHaveBeenCalled()
-    expect(flushHistoryProgressAction).not.toHaveBeenCalled()
+    expect(flushProgress).not.toHaveBeenCalled()
     AUDIO_EVENT_TYPES.forEach(type => {
       expect(audioStubs[0].element.removeEventListener).toHaveBeenCalledWith(
         type,
@@ -143,8 +137,7 @@ describe('WebPlayerService pause flush', () => {
 
     audioStubs[0].fireEvent(PAUSE_EVENT)
 
-    expect(savePlaybackProgress).not.toHaveBeenCalled()
-    expect(flushHistoryProgressAction).not.toHaveBeenCalled()
+    expect(flushProgress).not.toHaveBeenCalled()
   })
 
   test('external pause event while playing flushes with the element currentTime', async () => {
@@ -156,14 +149,7 @@ describe('WebPlayerService pause flush', () => {
 
     audioStubs[0].fireEvent(PAUSE_EVENT)
 
-    expect(savePlaybackProgress).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ positionMs: 42000 }),
-    )
-    expect(flushHistoryProgressAction).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ positionMs: 42000 }),
-    )
+    expect(flushProgress).toHaveBeenCalledWith(42000)
   })
 })
 
@@ -176,10 +162,7 @@ describe('WebPlayerService stop and unload flush', () => {
 
     await playerService.stop()
 
-    expect(savePlaybackProgress).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ positionMs: 42000 }),
-    )
+    expect(flushProgress).toHaveBeenCalledWith(42000)
     expect(audioStubs[0].pause).toHaveBeenCalled()
     expect(audioStubs[0].element.currentTime).toBe(0)
   })
@@ -192,10 +175,7 @@ describe('WebPlayerService stop and unload flush', () => {
 
     await playerService.unload()
 
-    expect(savePlaybackProgress).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ positionMs: 12000 }),
-    )
+    expect(flushProgress).toHaveBeenCalledWith(12000)
     expect(audioStubs[0].pause).toHaveBeenCalled()
   })
 })
@@ -226,18 +206,16 @@ describe('WebPlayerService flushProgressAtCurrentTime guards', () => {
 
     await playerService.pause()
 
-    expect(savePlaybackProgress).not.toHaveBeenCalled()
-    expect(flushHistoryProgressAction).not.toHaveBeenCalled()
+    expect(flushProgress).not.toHaveBeenCalled()
   })
 
-  test('no-ops without a sermon id', async () => {
+  test('delegates the current position to flushProgress (sermon guard lives downstream)', async () => {
     await playerService.loadAudio(AUDIO_URL)
     audioStubs[0].element.currentTime = 42
 
     await playerService.pause()
 
-    expect(savePlaybackProgress).not.toHaveBeenCalled()
-    expect(flushHistoryProgressAction).not.toHaveBeenCalled()
+    expect(flushProgress).toHaveBeenCalledWith(42000)
   })
 })
 

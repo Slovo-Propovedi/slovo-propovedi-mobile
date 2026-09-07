@@ -57,6 +57,17 @@ describe('progressFlusher', () => {
     expect(await AsyncStorage.getItem(LISTENING_HISTORY)).toBeNull()
   })
 
+  test('flushProgress early-returns without currentAudio', async () => {
+    currentAudioAtom(ctx, null)
+
+    flushProgress(60000)
+
+    await jest.advanceTimersByTimeAsync(400)
+
+    expect(ctx.get(historyAtom)[0].positionMs).toBe(10000)
+    expect(await AsyncStorage.getItem(LISTENING_HISTORY)).toBeNull()
+  })
+
   test('series of schedules within debounce window → single final write', async () => {
     scheduleHistoryFlush(10000)
     scheduleHistoryFlush(20000)
