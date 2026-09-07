@@ -3,7 +3,6 @@ import { BlurView } from 'expo-blur'
 import { Color, type Tabs } from 'expo-router'
 import { Platform, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { setTabBarHeight } from 'shared/ui/layout'
 import { dynamicColorsEnabledAtom, useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
@@ -47,7 +46,7 @@ export const CustomTabBar = ({
   const currentKey = ROUTES[currentIndex]?.key
   const { bottom } = useSafeAreaInsets()
   const { isLight } = useTheme()
-  const { handleTabPress, hideUnavailableDialog, unavailableDialogVisible } = useTabPress({
+  const { handleTabPress } = useTabPress({
     navigation,
     setCurrentIndex,
   })
@@ -101,14 +100,6 @@ export const CustomTabBar = ({
           })}
         </View>
       </BlurView>
-      <ConfirmDialog
-        hideCancel
-        title='Скоро будет доступно'
-        onCancel={hideUnavailableDialog}
-        onConfirm={hideUnavailableDialog}
-        visible={unavailableDialogVisible}
-        message='Этот раздел будет реализован в будущих обновлениях'
-      />
     </View>
   )
 }

@@ -1,5 +1,5 @@
 import { type Tabs } from 'expo-router'
-import { useState } from 'react'
+import { showInfo } from 'shared/model/info-dialog'
 
 type TabBarNavigation = Parameters<
   NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>
@@ -15,18 +15,17 @@ interface UseTabPressParams {
   setCurrentIndex: (index: number) => void
 }
 
+export const UNAVAILABLE_TAB_TITLE = 'Скоро будет доступно'
+export const UNAVAILABLE_TAB_MESSAGE = 'Этот раздел будет реализован в будущих обновлениях'
+
 // Табы «Читать» и «Учиться» заблокированы до готовности разделов
 export const isUnavailableTabRoute = (routeName: string) =>
   routeName === 'read' || routeName === 'study'
 
 export const useTabPress = ({ navigation, setCurrentIndex }: UseTabPressParams) => {
-  const [unavailableDialogVisible, setUnavailableDialogVisible] = useState(false)
-
-  const hideUnavailableDialog = () => setUnavailableDialogVisible(false)
-
   const handleTabPress = (route: TabRoute, index: number, isActive: boolean) => {
     if (isUnavailableTabRoute(route.name)) {
-      setUnavailableDialogVisible(true)
+      showInfo(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
       return
     }
 
@@ -41,5 +40,5 @@ export const useTabPress = ({ navigation, setCurrentIndex }: UseTabPressParams) 
     setCurrentIndex(index)
   }
 
-  return { handleTabPress, hideUnavailableDialog, unavailableDialogVisible }
+  return { handleTabPress }
 }

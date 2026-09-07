@@ -2,7 +2,7 @@
 
 **Маршрут:** `/study` (таб)
 **Файлы:** `app/(tabs)/study.tsx` → `export { StudyScreen as default }` из `pages/study`
-**Статус:** **заблокирован** — кнопка в `CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`, `isDisabled={route.name === 'study'}`) показывает диалог «Скоро будет доступно». Внутри экрана — заглушка.
+**Статус:** **заблокирован** — кнопка в `CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`, `isDisabled={isUnavailableTabRoute(route.name)}`) показывает глобальный информационный диалог «Скоро будет доступно» (`showInfo`). Внутри экрана — заглушка.
 
 ## Что делает (планируемое)
 
@@ -23,7 +23,7 @@
 
 ## Куда можно перейти
 
-- Никуда; таб доступен только через блокировку в `CustomTabBar` (диалог «Скоро будет доступно»).
+- Никуда; таб доступен только через блокировку в `CustomTabBar` (глобальный информационный диалог «Скоро будет доступно» через `showInfo`).
 
 ## Состояния
 
