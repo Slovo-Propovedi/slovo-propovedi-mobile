@@ -1,6 +1,5 @@
 import { type Ctx } from '@reatom/framework'
 import { debugConfig } from 'shared/config'
-import { playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
 import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
 import { playlistCacheNotifications } from './PlaylistCacheNotifications'
@@ -66,7 +65,6 @@ class PlaylistCacheService {
       await playlistCacheNotifications.showErrorNotification(errorObj, playlistTitle)
     } finally {
       isCachingPlaylistAtom(ctx, false)
-      playlistDownloadProgressAtom(ctx, {})
     }
   }
 

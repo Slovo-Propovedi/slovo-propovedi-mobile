@@ -222,7 +222,7 @@ describe('BackgroundCachingService', () => {
       // Per-URL record for A is still updated (track-list shows old track's bar)
       expect(mockCtx.get(playlistDownloadProgressAtom)[TEST_URL]).toBe(1.0)
 
-      // Resolve A's download — .then fires incrementCacheTrigger + removeTrackProgress,
+      // Resolve A's download — .then fires incrementCacheTrigger + removeTrackDownloadProgress,
       // .finally skips global state reset because downloadingAudioUrlAtom !== A
       resolveRef.current?.(CACHED_URI)
       await flushPromises()

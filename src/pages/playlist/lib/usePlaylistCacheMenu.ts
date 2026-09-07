@@ -2,7 +2,7 @@ import { useAtom, useCtx } from '@reatom/npm-react'
 import { useCallback, useRef, useState } from 'react'
 import { type View } from 'react-native'
 import { audioCacheService } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
+import { cacheUpdateTriggerAtom, incrementCacheTrigger } from 'shared/lib/cache-triggers'
 import { type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { isCachingPlaylistAtom } from '../model'
 import { playlistCacheService, type TrackToCache } from './PlaylistCacheService'
@@ -35,7 +35,7 @@ export const usePlaylistCacheMenu = (
     setClearDialogVisible(false)
     try {
       await audioCacheService.clearCache()
-      cacheUpdateTriggerAtom(ctx, prev => prev + 1)
+      incrementCacheTrigger(ctx)
     } catch (error) {
       console.error('[PlaylistCacheMenu] Error clearing cache:', error)
     }

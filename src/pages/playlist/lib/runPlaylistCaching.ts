@@ -1,7 +1,7 @@
 import { type Ctx } from '@reatom/framework'
 import { debugConfig } from 'shared/config'
-import { audioCacheService } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
+import { cacheAudioWithProgress } from 'shared/lib/audio-cache'
+import { incrementCacheTrigger } from 'shared/lib/cache-triggers'
 import { waitForOnline } from 'shared/lib/network'
 import { playlistCacheProgressAtom } from '../model'
 import { playlistCacheNotifications } from './PlaylistCacheNotifications'
@@ -20,24 +20,15 @@ interface CacheableTrack {
 }
 
 /**
- * Downloads one track, reporting per-URL progress.
+ * Downloads one track. Per-URL progress protocol (pre-set 0 → onProgress ticks →
+ * finally-cleanup) lives in `cacheAudioWithProgress` (`shared/lib/audio-cache`).
  * @param ctx - Reatom context for atom updates.
  * @param track - Track to download.
  * @returns True on success, false when the download failed.
  */
 const cacheSingleTrack = async (ctx: Ctx, track: CacheableTrack): Promise<boolean> => {
   try {
-    playlistDownloadProgressAtom(ctx, prev => ({
-      ...prev,
-      [track.audioUrl]: 0,
-    }))
-
-    await audioCacheService.cacheAudio(track.audioUrl, (progress: number) => {
-      playlistDownloadProgressAtom(ctx, prev => ({
-        ...prev,
-        [track.audioUrl]: progress,
-      }))
-    })
+    await cacheAudioWithProgress(ctx, track.audioUrl)
     return true
   } catch (error) {
     log(`Failed to cache "${track.title}" (${track.id}):`, error)
@@ -74,7 +65,7 @@ export const runPlaylistCaching = async (
 
       const current = index + 1
       playlistCacheProgressAtom(ctx, prev => ({ ...prev, current }))
-      cacheUpdateTriggerAtom(ctx, prev => prev + 1)
+      incrementCacheTrigger(ctx)
       notificationId = await playlistCacheNotifications.updateCachingNotification(
         notificationId,
         current,

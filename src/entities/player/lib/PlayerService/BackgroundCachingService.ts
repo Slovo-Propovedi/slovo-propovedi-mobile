@@ -1,5 +1,10 @@
 import { audioCacheService } from 'shared/lib/audio-cache'
-import { incrementCacheTrigger, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
+import {
+  incrementCacheTrigger,
+  playlistDownloadProgressAtom,
+  removeTrackDownloadProgress,
+  setTrackDownloadProgress,
+} from 'shared/lib/cache-triggers'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {
   downloadingAudioUrlAtom,
@@ -7,14 +12,6 @@ import {
   setDownloadProgressAction,
   setIsDownloadingAction,
 } from '../download-model'
-
-const removeTrackProgress = (audioUrl: string) => {
-  playlistDownloadProgressAtom(ctx, prev => {
-    const next = { ...prev }
-    delete next[audioUrl]
-    return next
-  })
-}
 
 const inflightDownloads = new Set<string>()
 
@@ -38,16 +35,15 @@ export const startBackgroundCaching = (audioUrl: string): void => {
   void setIsDownloadingAction(ctx, true)
   void setDownloadingUrlAction(ctx, audioUrl)
   void setDownloadProgressAction(ctx, 0)
-  playlistDownloadProgressAtom(ctx, prev => ({ ...prev, [audioUrl]: 0 }))
+  setTrackDownloadProgress(ctx, { progress: 0, url: audioUrl })
 
   audioCacheService
     .cacheAudio(audioUrl, progress => {
       if (ctx.get(downloadingAudioUrlAtom) === audioUrl)
         void setDownloadProgressAction(ctx, progress)
-      playlistDownloadProgressAtom(ctx, prev => ({ ...prev, [audioUrl]: progress }))
+      setTrackDownloadProgress(ctx, { progress, url: audioUrl })
     })
     .then(() => {
-      removeTrackProgress(audioUrl)
       void incrementCacheTrigger(ctx)
       if (ctx.get(downloadingAudioUrlAtom) === audioUrl) void setDownloadProgressAction(ctx, 1)
     })
@@ -57,9 +53,9 @@ export const startBackgroundCaching = (audioUrl: string): void => {
       // error must not open the global error dialog. Next playback of this track
       // re-triggers caching.
       console.error('[BackgroundCaching] Caching failed:', error)
-      removeTrackProgress(audioUrl)
     })
     .finally(() => {
+      removeTrackDownloadProgress(ctx, audioUrl)
       inflightDownloads.delete(audioUrl)
       if (ctx.get(downloadingAudioUrlAtom) === audioUrl) {
         void setIsDownloadingAction(ctx, false)

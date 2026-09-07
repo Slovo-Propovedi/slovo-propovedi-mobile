@@ -15,3 +15,25 @@ export const playlistDownloadProgressAtom = atom<Record<string, number>>(
   {},
   'playlistDownloadProgressAtom',
 )
+
+interface TrackDownloadProgress {
+  progress: number
+  url: string
+}
+
+// Action to record per-track download progress for a given audio URL
+export const setTrackDownloadProgress = action((ctx, { progress, url }: TrackDownloadProgress) => {
+  playlistDownloadProgressAtom(ctx, prev => ({ ...prev, [url]: progress }))
+  return progress
+}, 'setTrackDownloadProgress')
+
+// Action to drop a per-track progress entry once its download settles
+export const removeTrackDownloadProgress = action((ctx, url: string) => {
+  playlistDownloadProgressAtom(ctx, prev => {
+    if (!(url in prev)) return prev
+    const next = { ...prev }
+    delete next[url]
+    return next
+  })
+  return url
+}, 'removeTrackDownloadProgress')
