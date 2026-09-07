@@ -1,4 +1,4 @@
-import { useAction } from '@reatom/npm-react'
+import { useAction, useAtom } from '@reatom/npm-react'
 import {
   getEntrySermon,
   getResumePosition,
@@ -13,6 +13,7 @@ import {
   type SermonData,
   setPlayerFullscreen,
 } from 'shared/model'
+import { isOnlineAtom } from 'shared/model/network'
 import {
   currentAudioAtom,
   durationAtom,
@@ -20,6 +21,7 @@ import {
   setCurrentAudioAction,
   setCurrentPlaylistAction,
 } from '../model'
+import { guardOfflinePlayback } from './playOfflineGuard'
 import { usePlayer } from './usePlayer'
 import { usePlayTapGuard } from './usePlayTapGuard'
 
@@ -27,6 +29,7 @@ const SAME_SERMON_TOLERANCE_MS = 1000
 
 export const usePlayNewSermon = () => {
   const { play, replaceAudio, seekTo, setLockScreenMetadata } = usePlayer()
+  const [isOnline] = useAtom(isOnlineAtom)
 
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
@@ -55,6 +58,7 @@ export const usePlayNewSermon = () => {
     markPlayStarted(sermonId)
 
     try {
+      if (await guardOfflinePlayback(audioUrl, isOnline)) return
       const currentAudio = ctx.get(currentAudioAtom)
       const currentPosition = ctx.get(positionAtom)
       const currentDuration = ctx.get(durationAtom)

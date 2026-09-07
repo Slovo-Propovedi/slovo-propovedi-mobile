@@ -83,6 +83,24 @@
 
 Офлайн-прослушивание обеспечивает кэш аудио — [audio-cache.md](./audio-cache.md). При старте трека `AudioLoader` сначала берёт закэшированный файл, иначе стартует фоновое кэширование.
 
+## Офлайн-guard при воспроизведении (Issue #81)
+
+Общий guard `guardOfflinePlayback(audioUrl, isOnline)` (`src/entities/player/lib/playOfflineGuard.ts`) проверяет сеть и кэш перед стартом воспроизведения:
+
+- **офлайн + трек не закэширован** → вместо попытки воспроизведения (которая раньше падала с глобальной ошибкой «Ошибка при воспроизведении аудио / The media resource … was not suitable») показывается дружелюбный диалог `reportError(new Error(OFFLINE_PLAYBACK_MESSAGE), OFFLINE_PLAYBACK_MESSAGE)` с текстом «Невозможно воспроизвести незакешированную проповедь без интернета», и воспроизведение блокируется (guard вернул `true`);
+- **офлайн + трек закэширован** → воспроизведение из кэша идёт нормально;
+- **онлайн** → поток без изменений.
+
+Guard покрывает все пути старта воспроизведения:
+
+1. **Тап на трек** — `usePlayNewSermon` (`src/entities/player/lib/usePlaySermon.ts`): при блокировке `currentAudio`/`currentPlaylist` не задаются, `replaceAudio`/`play` не вызываются, полноэкранный плеер не открывается.
+2. **Toggle-play (пауза → play)** — единый хук `useGuardedTogglePlay` (`src/entities/player/lib/useGuardedTogglePlay.ts`): при блокировке `play()` не вызывается, плеер остаётся на паузе. Пауза (play → pause) guard'ом не блокируется. Хук используется всеми play/pause-кнопками: полноэкранный плеер (`useFullscreenHandlers`), мини-плеер (`ExpandablePlayer`) и кнопка play в `PlayerControls`.
+3. **Next/Prev переключение трека** — `usePlayerToggleTrack` (`src/entities/player/ui/PlayerControls/usePlayerToggleTrack.ts`) вызывает guard перед `executeTrackSwitch` (когда у целевого трека есть `audioUrl`): при блокировке переключение не происходит, wrap-уведомление не показывается.
+4. **Web media-session play** — play-хендлер `webMediaSession.ts` вызывает guard при паузе (когда `currentAudio.audioUrl` существует): при блокировке `play()` не вызывается.
+5. **Нативный авто-переход по окончании трека** — `TrackAutoAdvanceService.advanceToNextTrack` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/TrackAutoAdvanceService.ts`) вызывает guard перед **каждым** из трёх путей перехода — next (`playNextTrack`), repeat-one (`repeatCurrentTrack`) и queue-restart на последнем треке (`playFirstTrackInQueue`) — до любых мутаций (`setCurrentAudioAction`/`replaceAudio`/`play`/lock-screen-метаданных): при блокировке переключение/повтор не происходит, показывается **один** дружелюбный диалог guard'а, и воспроизведение просто заканчивается на текущем треке (плеер переходит в остановленное состояние). Guard срабатывает по целевому `audioUrl` (для queue-restart — первый трек плейлиста); если у целевого трека нет `audioUrl`, ветка ведёт себя как раньше. Generic-ошибка «Ошибка при автоматическом переходе к следующей проповеди» осталась только для других (онлайн) сбоев загрузки.
+
+Guard проверяет `isOnlineAtom` (NetInfo) и `audioCacheService.isCached(audioUrl)` (с молчаливым `catch(() => false)` — сбой проверки кэша трактуется как «не закэшировано»). Работает на обеих платформах.
+
 ## Поток: offline ↔ online
 
 - **Offline:** `NetInfo` → `isOnlineAtom = false` → показывается `NetworkBanner`; API-вызовы падают с сетевой ошибкой → `reportServerUnreachable` → `ServerErrorToast`; `fetchAllSections` показывает кэш секций; поиск проповедей показывает per-query кэш (`cachedSermonSearch:<query>`), если он есть; подсказки поиска берутся из кэша `cachedDistinctValues`, если он есть (иначе скрываются); аудио играет из кэша.

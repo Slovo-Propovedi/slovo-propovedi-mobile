@@ -7,8 +7,8 @@ import {
   downloadProgressAtom,
   durationAtom,
   isDownloadingAtom,
-  isPlayingAtom,
   positionAtom,
+  useGuardedTogglePlay,
   usePlayer,
   useSeekControls,
 } from 'entities/player'
@@ -22,11 +22,11 @@ export const useFullscreenHandlers = () => {
   const [duration] = useAtom(durationAtom)
   const [position] = useAtom(positionAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
-  const [isPlaying] = useAtom(isPlayingAtom)
   const [isDownloading] = useAtom(isDownloadingAtom)
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
   const [downloadProgress] = useAtom(downloadProgressAtom)
-  const { pause, play, seekTo } = usePlayer()
+  const { seekTo } = usePlayer()
+  const { togglePlay } = useGuardedTogglePlay()
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
   const [showMenu, setShowMenu] = useAtom(showMenuAtom)
   const [showPlaylist, setShowPlaylist] = useAtom(showPlaylistAtom)
@@ -36,11 +36,6 @@ export const useFullscreenHandlers = () => {
   const isCached = useIsCached(audio?.audioUrl ?? null)
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
   const currentDownloadProgress = isCurrentAudioDownloading ? downloadProgress : 0
-
-  const handleTogglePlay = async () => {
-    if (isPlaying) await pause()
-    else await play()
-  }
 
   const handleOpenPlaylist = () => {
     setShowPlaylist(true)
@@ -62,7 +57,7 @@ export const useFullscreenHandlers = () => {
     duration,
     handleOpenPlaylist,
     handleToggleCache,
-    handleTogglePlay,
+    handleTogglePlay: togglePlay,
     isCached,
     playlist,
     playlistSheetRef,

@@ -1,8 +1,11 @@
 import { type Ctx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
+import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { type AudioPlayerData } from 'shared/model'
+import { reportError } from 'shared/model/error-dialog'
+import { isOnlineAtom } from 'shared/model/network'
 import type { ListeningHistory } from 'entities/listening-history/@x/player'
 import { currentAudioAtom, durationAtom, positionAtom } from '../model'
 import { usePlayNewSermon } from './usePlaySermon'
@@ -14,6 +17,12 @@ const mockSetLockScreenMetadata = jest.fn()
 const mockGetResumePosition = jest.fn()
 const mockRecordPlaybackStart = jest.fn().mockResolvedValue(undefined)
 const mockRecordSermonSwitch = jest.fn().mockResolvedValue(undefined)
+
+jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
+
+jest.mock('shared/lib/audio-cache', () => ({
+  audioCacheService: { isCached: jest.fn() },
+}))
 
 const OTHER_SERMON_ID = 'other-sermon'
 
@@ -105,6 +114,8 @@ describe('usePlayNewSermon', () => {
     positionAtom(ctx, 0)
     durationAtom(ctx, 5678)
     mockHistoryAtom(ctx, [])
+    isOnlineAtom(ctx, true)
+    jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
   })
 
   afterEach(() => {
@@ -395,5 +406,67 @@ describe('usePlayNewSermon', () => {
     expect(mockPlay).toHaveBeenCalledTimes(2)
     expect(mockRecordPlaybackStart).toHaveBeenCalledTimes(2)
     expect(mockSeekTo).toHaveBeenCalledWith(RESUME_MS)
+  })
+
+  describe('offline playback guard', () => {
+    const OFFLINE_PLAYBACK_MESSAGE =
+      'Невозможно воспроизвести незакешированную проповедь без интернета'
+
+    test('offline + uncached → friendly error, no playback state mutation', async () => {
+      mockGetResumePosition.mockReturnValue(RESUME_MS)
+      isOnlineAtom(ctx, false)
+      jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
+
+      const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+      await setAtomState({ currentAudio: { id: OTHER_SERMON_ID } })
+
+      await act(async () => {
+        await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+      })
+
+      expect(reportError).toHaveBeenCalledWith(
+        new Error(OFFLINE_PLAYBACK_MESSAGE),
+        OFFLINE_PLAYBACK_MESSAGE,
+      )
+      expect(mockReplaceAudio).not.toHaveBeenCalled()
+      expect(mockPlay).not.toHaveBeenCalled()
+      expect(mockRecordPlaybackStart).not.toHaveBeenCalled()
+      // currentAudio untouched — setCurrentAudioAction was never called
+      expect(ctx.get(currentAudioAtom)).toEqual({ id: OTHER_SERMON_ID })
+    })
+
+    test('offline + cached → playback proceeds normally', async () => {
+      mockGetResumePosition.mockReturnValue(RESUME_MS)
+      isOnlineAtom(ctx, false)
+      jest.mocked(audioCacheService.isCached).mockResolvedValue(true)
+
+      const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+      await setAtomState({ currentAudio: { id: OTHER_SERMON_ID } })
+
+      await act(async () => {
+        await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+      })
+
+      expect(reportError).not.toHaveBeenCalled()
+      expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, RESUME_MS)
+      expect(mockPlay).toHaveBeenCalledTimes(1)
+    })
+
+    test('online + uncached → playback proceeds normally', async () => {
+      mockGetResumePosition.mockReturnValue(RESUME_MS)
+      isOnlineAtom(ctx, true)
+      jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
+
+      const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+      await setAtomState({ currentAudio: { id: OTHER_SERMON_ID } })
+
+      await act(async () => {
+        await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+      })
+
+      expect(reportError).not.toHaveBeenCalled()
+      expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, RESUME_MS)
+      expect(mockPlay).toHaveBeenCalledTimes(1)
+    })
   })
 })

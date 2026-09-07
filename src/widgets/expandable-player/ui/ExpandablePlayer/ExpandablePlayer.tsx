@@ -12,7 +12,7 @@ import {
   isPlayerExpandedAtom,
   isPlayingAtom,
   openPlayerSheetAction,
-  usePlayer,
+  useGuardedTogglePlay,
 } from 'entities/player'
 import { isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
@@ -45,7 +45,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyl
 
   const styles = createStyles(currentTheme)
 
-  const { pause, play } = usePlayer()
+  const { togglePlay } = useGuardedTogglePlay()
 
   const open = useAction(openPlayerSheetAction)
   const close = useAction(closePlayerSheetAction)
@@ -76,8 +76,6 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyl
     tabBarHeight,
   })
 
-  const onPlayPause = async () => (playing ? pause() : play())
-
   const recoveryKey = useBackgroundRecovery()
 
   const { onLayout: guardedContainerLayout } = useContainerGeometryGuard({
@@ -100,8 +98,8 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyl
           playlist={playlist}
           miniStyle={miniStyle}
           miniStyles={miniStyles}
+          onPlayPause={togglePlay}
           miniPan={gesture.miniPan}
-          onPlayPause={onPlayPause}
           showSpinner={isBuffering}
           currentTheme={currentTheme}
           onPress={gesture.handleMiniTap}

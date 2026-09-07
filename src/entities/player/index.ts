@@ -4,7 +4,9 @@ export {
   isDownloadingAtom,
 } from './lib/download-model'
 export { initializePlayer } from './lib/initializePlayer'
+export { guardOfflinePlayback } from './lib/playOfflineGuard'
 export { scheduleStartupGuardReset } from './lib/startupGuard'
+export { useGuardedTogglePlay } from './lib/useGuardedTogglePlay'
 export { usePlaybackProgressSaver } from './lib/usePlaybackProgressSaver'
 export { usePlaybackRate } from './lib/usePlaybackRate'
 export { usePlayer } from './lib/usePlayer'

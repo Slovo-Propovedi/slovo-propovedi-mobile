@@ -3,6 +3,7 @@ import { act } from '@testing-library/react-native'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { isOnlineAtom } from 'shared/model/network'
 import type { ListeningHistory } from 'entities/listening-history/@x/player'
 import { currentAudioAtom, positionAtom, RepeatMode, repeatModeAtom } from '../../model'
 import { trackToggleNoticeAtom } from '../../trackToggleNotice'
@@ -17,9 +18,14 @@ const mockGetResumePosition = jest.fn().mockReturnValue(0)
 const mockRecordSermonSwitch = jest.fn().mockResolvedValue(undefined)
 const mockSavePlaybackProgress = jest.fn().mockResolvedValue(undefined)
 const mockReportError = jest.fn()
+const mockGuardOfflinePlayback = jest.fn().mockResolvedValue(false)
 
 jest.mock('shared/model/error-dialog', () => ({
   reportError: (...args: unknown[]) => mockReportError(...args),
+}))
+
+jest.mock('../../lib/playOfflineGuard', () => ({
+  guardOfflinePlayback: (...args: unknown[]) => mockGuardOfflinePlayback(...args),
 }))
 
 jest.mock('entities/listening-history/@x/player', () => {
@@ -78,12 +84,14 @@ const mockPlaylist: PlaylistData = {
 const setAtomState = async (opts: {
   currentAudio?: { id: string }
   history?: ListeningHistory
+  isOnline?: boolean
   position?: number
   repeatMode?: RepeatMode
 }) => {
   await act(async () => {
     if (opts.currentAudio) currentAudioAtom(ctx, opts.currentAudio as AudioPlayerData)
     if (opts.history) mockHistoryAtom(ctx, opts.history)
+    if (opts.isOnline !== undefined) isOnlineAtom(ctx, opts.isOnline)
     if (opts.position !== undefined) positionAtom(ctx, opts.position)
     if (opts.repeatMode !== undefined) repeatModeAtom(ctx, opts.repeatMode)
   })
@@ -111,10 +119,12 @@ describe('usePlayerToggleTrack', () => {
     mockRecordSermonSwitch.mockResolvedValue(undefined)
     mockSavePlaybackProgress.mockResolvedValue(undefined)
     mockReportError.mockClear()
+    mockGuardOfflinePlayback.mockResolvedValue(false)
     currentAudioAtom(ctx, null)
     positionAtom(ctx, 0)
     mockHistoryAtom(ctx, [])
     repeatModeAtom(ctx, RepeatMode.Off)
+    isOnlineAtom(ctx, true)
     trackToggleNoticeAtom(ctx, null)
   })
 
@@ -498,6 +508,102 @@ describe('usePlayerToggleTrack', () => {
       await result.current('next')
     })
 
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(mockSavePlaybackProgress).not.toHaveBeenCalled()
+  })
+
+  test('offline + uncached next → guard blocks, no switch', async () => {
+    mockGuardOfflinePlayback.mockResolvedValue(true)
+
+    const { result } = await renderHookWithProviders(() => usePlayerToggleTrack(defaultProps), {
+      ctx,
+    })
+    await setAtomState({ currentAudio: { id: 'sermon-current' }, isOnline: false })
+
+    await act(async () => {
+      await result.current('next')
+    })
+
+    expect(mockGuardOfflinePlayback).toHaveBeenCalledWith(NEXT_AUDIO_URL, false)
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(mockSetCurrentAudio).not.toHaveBeenCalled()
+    expect(mockSavePlaybackProgress).not.toHaveBeenCalled()
+    expect(ctx.get(trackToggleNoticeAtom)).toBeNull()
+  })
+
+  test('offline + cached next → switch proceeds', async () => {
+    const { result } = await renderHookWithProviders(() => usePlayerToggleTrack(defaultProps), {
+      ctx,
+    })
+    await setAtomState({ currentAudio: { id: 'sermon-current' }, isOnline: false })
+
+    await act(async () => {
+      await result.current('next')
+    })
+
+    expect(mockGuardOfflinePlayback).toHaveBeenCalledWith(NEXT_AUDIO_URL, false)
+    expect(mockReplaceAudio).toHaveBeenCalledWith(NEXT_AUDIO_URL, 0)
+  })
+
+  test('online next → guard called with true, switch proceeds', async () => {
+    const { result } = await renderHookWithProviders(() => usePlayerToggleTrack(defaultProps), {
+      ctx,
+    })
+    await setAtomState({ currentAudio: { id: 'sermon-current' }, isOnline: true })
+
+    await act(async () => {
+      await result.current('next')
+    })
+
+    expect(mockGuardOfflinePlayback).toHaveBeenCalledWith(NEXT_AUDIO_URL, true)
+    expect(mockReplaceAudio).toHaveBeenCalledWith(NEXT_AUDIO_URL, 0)
+  })
+
+  test('Queue + offline + uncached wrap → guard blocks, no wrap notice', async () => {
+    mockGuardOfflinePlayback.mockResolvedValue(true)
+
+    const { result } = await renderHookWithProviders(
+      () => usePlayerToggleTrack({ ...defaultProps, index: 2 }), // last track
+      { ctx },
+    )
+    await setAtomState({ isOnline: false, repeatMode: RepeatMode.Queue })
+
+    await act(async () => {
+      await result.current('next')
+    })
+
+    expect(mockGuardOfflinePlayback).toHaveBeenCalledWith(PREV_AUDIO_URL, false)
+    expect(mockSetCurrentAudio).not.toHaveBeenCalled()
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(ctx.get(trackToggleNoticeAtom)).toBeNull()
+  })
+
+  test('Queue + prev on first track with no-audioUrl wrap target → no wrap notice, no switch', async () => {
+    const noUrlPlaylist: PlaylistData = {
+      ...mockPlaylist,
+      sermons: mockPlaylist.sermons.map((sermon, index) =>
+        index === 2 ? { ...sermon, audioUrl: undefined } : sermon,
+      ),
+    }
+
+    const { result } = await renderHookWithProviders(
+      () =>
+        usePlayerToggleTrack({
+          ...defaultProps,
+          currentPlaylist: noUrlPlaylist,
+          index: 0, // first track
+        }),
+      { ctx },
+    )
+    await setAtomState({ repeatMode: RepeatMode.Queue })
+
+    await act(async () => {
+      await result.current('prev')
+    })
+
+    expect(mockGuardOfflinePlayback).not.toHaveBeenCalled()
+    expect(ctx.get(trackToggleNoticeAtom)).toBeNull()
+    expect(mockSetCurrentAudio).not.toHaveBeenCalled()
     expect(mockReplaceAudio).not.toHaveBeenCalled()
     expect(mockSavePlaybackProgress).not.toHaveBeenCalled()
   })

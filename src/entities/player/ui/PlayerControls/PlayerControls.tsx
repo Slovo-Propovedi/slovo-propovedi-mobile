@@ -1,7 +1,7 @@
-import { reportError } from 'shared/model/error-dialog'
 import type { ControlsNames } from './PlayerControls.types'
 import type { StyleProp, ViewStyle } from 'react-native'
 import type { AudioPlayerData, PlaylistData } from 'shared/model'
+import { useGuardedTogglePlay } from '../../lib/useGuardedTogglePlay'
 import { usePlayer } from '../../lib/usePlayer'
 import { usePlayerState } from '../../lib/usePlayerState'
 import { FullscreenControls } from '../FullscreenControls'
@@ -39,7 +39,6 @@ export const PlayerControls = ({
 }: PlayerControlsProps) => {
   const {
     getStatus,
-    pause,
     play,
     reassertLockScreenMetadata,
     replaceAudio,
@@ -48,6 +47,8 @@ export const PlayerControls = ({
   } = usePlayer()
 
   const { isBuffering, isPlaying } = usePlayerState()
+
+  const { togglePlay } = useGuardedTogglePlay()
 
   useAppStatePlayback({ currentAudio, currentPlaylist, getStatus, reassertLockScreenMetadata })
 
@@ -60,20 +61,6 @@ export const PlayerControls = ({
     size,
     variant,
   })
-
-  const togglePlay = async () => {
-    try {
-      return isPlaying ? await pause() : await play()
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('activity is no longer available'))
-        console.warn('[PlayerControls] Ignoring AppState-related error:', error.message)
-      else {
-        console.error('[PlayerControls] togglePlay error:', error)
-        reportError(error, 'Ошибка при переключении воспроизведения')
-        throw error
-      }
-    }
-  }
 
   const toggleTrack = usePlayerToggleTrack({
     currentPlaylist,

@@ -1,5 +1,9 @@
+import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
+import { isOnlineAtom } from 'shared/model/network'
 import type { LockScreenMetadata } from './types'
+import { currentAudioAtom } from '../../model'
+import { guardOfflinePlayback } from '../playOfflineGuard'
 import { type GetAudio, type MediaSessionPlayer, registerSeekHandlers } from './webMediaSessionSeek'
 import { updatePlaybackState, updatePositionState } from './webMediaSessionState'
 
@@ -77,7 +81,20 @@ export const createWebMediaSession = (
 
   const registerActionHandlers = (): void => {
     setHandler('play', () => {
-      player.play()
+      const audio = getAudio()
+      if (!audio || !audio.paused) {
+        player.play()
+        return
+      }
+      const audioUrl = ctx.get(currentAudioAtom)?.audioUrl
+      if (!audioUrl) return
+      void guardOfflinePlayback(audioUrl, ctx.get(isOnlineAtom))
+        .then(blocked => {
+          if (!blocked) player.play()
+        })
+        .catch(() => {
+          /* guard failure is non-fatal — media-session play is skipped */
+        })
     })
 
     setHandler('pause', () => {

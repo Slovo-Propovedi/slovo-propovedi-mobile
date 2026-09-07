@@ -2,6 +2,8 @@ import { useCallback } from 'react'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
+import { isOnlineAtom } from 'shared/model/network'
+import { guardOfflinePlayback } from '../../lib/playOfflineGuard'
 import { repeatModeAtom } from '../../model'
 import { setTrackToggleNoticeAction } from '../../trackToggleNotice'
 import { executeTrackSwitch } from './executeTrackSwitch'
@@ -59,6 +61,9 @@ export const usePlayerToggleTrack = ({
           })
           return
         }
+        const targetTrack = currentPlaylist.sermons[target.newIndex]
+        if (!targetTrack?.audioUrl) return
+        if (await guardOfflinePlayback(targetTrack.audioUrl, ctx.get(isOnlineAtom))) return
         if (target.wrappedTo)
           setTrackToggleNoticeAction(ctx, {
             at: Date.now(),

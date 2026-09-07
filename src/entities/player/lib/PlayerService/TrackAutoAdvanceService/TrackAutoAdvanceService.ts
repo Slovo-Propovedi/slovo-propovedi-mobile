@@ -4,9 +4,11 @@ import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/con
 import { ctx } from 'shared/lib/reatom-ctx'
 import { audioPlayerDataSchema, getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
+import { isOnlineAtom } from 'shared/model/network'
 import type { OldTrackFlush } from './playback'
 import type { PlayerActions } from './types'
 import { durationAtom, positionAtom, RepeatMode, repeatModeSchema } from '../../../model'
+import { guardOfflinePlayback } from '../../playOfflineGuard'
 import {
   findCurrentTrackIndex,
   getNextTrack,
@@ -25,7 +27,18 @@ const buildOldFlush = (sermonId: string): OldTrackFlush => ({
   oldSermonId: sermonId,
 })
 
-export type { PlayerActions } from './types'
+const reportParseFailure = (
+  key: string,
+  storedValue: null | string | undefined,
+  label: string,
+): void => {
+  if (!storedValue) return
+  console.error(`[TrackAutoAdvanceService] ${key} schema validation failed`)
+  reportError(new Error(`Не удалось прочитать данные ${label} из хранилища`))
+}
+
+const isAdvanceBlocked = (audioUrl: null | string | undefined): Promise<boolean> =>
+  audioUrl ? guardOfflinePlayback(audioUrl, ctx.get(isOnlineAtom)) : Promise.resolve(false)
 
 export class TrackAutoAdvanceService {
   public ensurePlayerActions(): PlayerActions {
@@ -36,10 +49,6 @@ export class TrackAutoAdvanceService {
 
   public setPlayerActions(actions: PlayerActions): void {
     this.playerActions = actions
-  }
-
-  public getPlayerActions(): null | PlayerActions {
-    return this.playerActions
   }
 
   public async handleTrackEnd(): Promise<void> {
@@ -66,17 +75,11 @@ export class TrackAutoAdvanceService {
     const currentPlaylist = parsePlaylistData(storedCurrentPlaylist)
 
     if (!currentAudio) {
-      if (storedCurrentAudio) {
-        console.error('[TrackAutoAdvanceService] CURRENT_AUDIO schema validation failed')
-        reportError(new Error('Не удалось прочитать данные проповеди из хранилища'))
-      }
+      reportParseFailure('CURRENT_AUDIO', storedCurrentAudio, 'проповеди')
       return
     }
     if (!currentPlaylist) {
-      if (storedCurrentPlaylist) {
-        console.error('[TrackAutoAdvanceService] CURRENT_PLAYLIST schema validation failed')
-        reportError(new Error('Не удалось прочитать данные плейлиста из хранилища'))
-      }
+      reportParseFailure('CURRENT_PLAYLIST', storedCurrentPlaylist, 'плейлиста')
       return
     }
 
@@ -86,19 +89,21 @@ export class TrackAutoAdvanceService {
     const oldFlush = buildOldFlush(currentAudio.id)
 
     if (shouldRepeatTrack(repeatMode)) {
-      if (currentAudio.audioUrl)
-        await repeatCurrentTrack(
-          playerActions,
-          currentAudio,
-          currentPlaylist,
-          currentAudio.audioUrl,
-          oldFlush,
-        )
+      if (!currentAudio.audioUrl || (await isAdvanceBlocked(currentAudio.audioUrl))) return
+
+      await repeatCurrentTrack(
+        playerActions,
+        currentAudio,
+        currentPlaylist,
+        currentAudio.audioUrl,
+        oldFlush,
+      )
       return
     }
 
     if (isLastTrack) {
       if (shouldRestartQueue(repeatMode, isLastTrack)) {
+        if (await isAdvanceBlocked(currentPlaylist.sermons[0]?.audioUrl)) return
         await playFirstTrackInQueue(playerActions, currentPlaylist, oldFlush)
         return
       }
@@ -111,7 +116,7 @@ export class TrackAutoAdvanceService {
     }
 
     const nextTrack = getNextTrack(currentPlaylist, currentIndex)
-    if (!nextTrack?.audioUrl) return
+    if (!nextTrack?.audioUrl || (await isAdvanceBlocked(nextTrack.audioUrl))) return
 
     await playNextTrack(playerActions, nextTrack, currentPlaylist, nextTrack.audioUrl, oldFlush)
   }
