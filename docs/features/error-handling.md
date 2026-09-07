@@ -85,6 +85,38 @@ TTF ~1.3 МБ) утекало как unhandled promise rejection, которое
 см. [`decisions.md`](../decisions.md) → «Патч expo-font». Фильтрация в `GlobalErrorHandler`
 сознательно не добавлялась.
 
+## Информационный диалог (не ошибка)
+
+Не всякое модальное окно — ошибка. Для информационных сообщений (например,
+«Невозможно воспроизвести незакешированную проповедь без интернета») есть
+отдельный механизм — без заголовка «Ошибка», без блока «Детали ошибки» и без
+кнопки «Копировать»: сообщение и одна кнопка «Понятно» (стиль `ConfirmDialog`,
+без иконки, заголовок по умолчанию «Информация»).
+
+### Состояние — `src/shared/model/info-dialog.ts`
+
+- `globalInfoAtom` (`GlobalInfo | null`, поля `message` + опциональный `title`) — текущее сообщение;
+- `showInfo(message, title?)` — императивный репортер, вызывается откуда угодно
+  (сервисы, слушатели, не-React код). Использует модульный Reatom-контекст из
+  `shared/lib/reatom-ctx` (синглтон), как и `reportError`;
+- `dismissInfoAction(ctx)` — закрывает диалог (очищает атом).
+
+### Отображение — `src/shared/ui/confirm-dialog/`
+
+- `GlobalConfirmDialog.tsx` — читает `globalInfoAtom` через `useAtom`, дисмисс через
+  `useAction(dismissInfoAction)`. Рендерит `ConfirmDialog` (`hideCancel`, без иконки,
+  кнопка «Понятно», заголовок по умолчанию «Информация»). Рендерится в корневом
+  layout `app/_RootLayout.tsx` рядом с `GlobalErrorDialog`.
+
+### Использование
+
+Информационные сообщения идут через `showInfo` (deep import из
+`shared/model/info-dialog`), а не через `reportError` — ошибка подразумевает сбой,
+а здесь пользователю просто сообщают факт. Call sites:
+
+- `guardOfflinePlayback` (`src/entities/player/lib/playOfflineGuard.ts`) — офлайн-воспроизведение незакешированной проповеди;
+- `useTabPress` (`src/widgets/tab-bar/ui/useTabPress.ts`) — тап по заблокированному табу («Читать»/«Учиться»).
+
 ## Связанные документы
 
 - [offline-and-network.md](./offline-and-network.md) — тосты/баннеры сети (отдельный механизм)

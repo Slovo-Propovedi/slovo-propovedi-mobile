@@ -5,6 +5,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { type AudioPlayerData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
+import { showInfo } from 'shared/model/info-dialog'
 import { isOnlineAtom } from 'shared/model/network'
 import type { ListeningHistory } from 'entities/listening-history/@x/player'
 import { currentAudioAtom, durationAtom, positionAtom } from '../model'
@@ -19,6 +20,8 @@ const mockRecordPlaybackStart = jest.fn().mockResolvedValue(undefined)
 const mockRecordSermonSwitch = jest.fn().mockResolvedValue(undefined)
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
+
+jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
 
 jest.mock('shared/lib/audio-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
@@ -412,7 +415,7 @@ describe('usePlayNewSermon', () => {
     const OFFLINE_PLAYBACK_MESSAGE =
       'Невозможно воспроизвести незакешированную проповедь без интернета'
 
-    test('offline + uncached → friendly error, no playback state mutation', async () => {
+    test('offline + uncached → friendly info dialog, no playback state mutation', async () => {
       mockGetResumePosition.mockReturnValue(RESUME_MS)
       isOnlineAtom(ctx, false)
       jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
@@ -424,10 +427,8 @@ describe('usePlayNewSermon', () => {
         await result.current({ playlist: mockPlaylist, sermon: mockSermon })
       })
 
-      expect(reportError).toHaveBeenCalledWith(
-        new Error(OFFLINE_PLAYBACK_MESSAGE),
-        OFFLINE_PLAYBACK_MESSAGE,
-      )
+      expect(showInfo).toHaveBeenCalledWith(OFFLINE_PLAYBACK_MESSAGE)
+      expect(reportError).not.toHaveBeenCalled()
       expect(mockReplaceAudio).not.toHaveBeenCalled()
       expect(mockPlay).not.toHaveBeenCalled()
       expect(mockRecordPlaybackStart).not.toHaveBeenCalled()
@@ -448,6 +449,7 @@ describe('usePlayNewSermon', () => {
       })
 
       expect(reportError).not.toHaveBeenCalled()
+      expect(showInfo).not.toHaveBeenCalled()
       expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, RESUME_MS)
       expect(mockPlay).toHaveBeenCalledTimes(1)
     })
@@ -465,6 +467,7 @@ describe('usePlayNewSermon', () => {
       })
 
       expect(reportError).not.toHaveBeenCalled()
+      expect(showInfo).not.toHaveBeenCalled()
       expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, RESUME_MS)
       expect(mockPlay).toHaveBeenCalledTimes(1)
     })

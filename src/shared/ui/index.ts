@@ -1,3 +1,4 @@
+export { GlobalConfirmDialog } from './confirm-dialog'
 export { PlayerControlButton } from './control-button/control-button'
 export { PlayerControlButtonType } from './control-button/control-button.types'
 export { CoverImage } from './cover-image'

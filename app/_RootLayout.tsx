@@ -16,6 +16,7 @@ import {
 import { subscribeToNetwork } from 'shared/lib/network'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { checkForUpdateAction } from 'shared/model'
+import { GlobalConfirmDialog } from 'shared/ui/confirm-dialog'
 import { GlobalErrorDialog } from 'shared/ui/error-dialog'
 import { useTheme } from 'shared/ui/theme'
 
@@ -110,6 +111,7 @@ const RootLayout = () => {
       <UpdateDialogRoot />
       <WebUpdateModal />
       <GlobalErrorDialog />
+      <GlobalConfirmDialog />
     </View>
   )
 }
