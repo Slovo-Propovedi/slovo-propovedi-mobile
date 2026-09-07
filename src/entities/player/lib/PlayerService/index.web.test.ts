@@ -1,13 +1,26 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { CURRENT_SOUND_DURATION } from 'shared/config'
+import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { isOnlineAtom } from 'shared/model/network'
 import { currentAudioAtom, durationAtom, setDurationAction } from '../../model'
+import { startBackgroundCaching } from './BackgroundCachingService'
 import { playerService } from './index.web'
 import { flushProgress, scheduleHistoryFlush } from './progressFlusher'
 
 jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
+
+jest.mock('shared/model/network', () => ({ isOnlineAtom: jest.fn() }))
+
+jest.mock('shared/lib/audio-cache', () => ({
+  audioCacheService: { isCached: jest.fn() },
+}))
+
+jest.mock('./BackgroundCachingService', () => ({
+  startBackgroundCaching: jest.fn(),
+}))
 
 jest.mock('../../model', () => ({
   currentAudioAtom: jest.fn(),
@@ -92,6 +105,18 @@ const mockSermonContext = () => {
   })
 }
 
+const mockOnlineStatus = (online: boolean) => {
+  ;(ctx.get as jest.Mock).mockImplementation(atom => {
+    if (atom === isOnlineAtom) return online
+    return undefined
+  })
+}
+
+const flushAutoCache = () =>
+  new Promise<void>(resolve => {
+    setImmediate(resolve)
+  })
+
 let audioStubs: AudioElementStub[]
 
 beforeEach(async () => {
@@ -101,6 +126,7 @@ beforeEach(async () => {
     audioStubs.push(stub)
     return stub.element
   })
+  jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
   await playerService.unload()
   await playerService.pause()
   jest.clearAllMocks()
@@ -276,5 +302,54 @@ describe('WebPlayerService duration bridge', () => {
     audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
 
     expect(AsyncStorage.setItem).toHaveBeenCalledWith(CURRENT_SOUND_DURATION, '60000')
+  })
+})
+
+describe('WebPlayerService auto-cache on play', () => {
+  beforeEach(() => {
+    // `jest.clearAllMocks()` does not reset the `ctx.get` implementation
+    // installed by `mockOnlineStatus` — reset it here so stale implementations
+    // cannot leak if this describe block is reordered before other blocks.
+    ;(ctx.get as jest.Mock).mockReset()
+  })
+
+  test('uncached track while online triggers startBackgroundCaching', async () => {
+    mockOnlineStatus(true)
+    jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
+
+    await playerService.loadAudio(AUDIO_URL)
+    await flushAutoCache()
+
+    expect(startBackgroundCaching).toHaveBeenCalledWith(AUDIO_URL)
+  })
+
+  test('cached track does NOT trigger startBackgroundCaching', async () => {
+    mockOnlineStatus(true)
+    jest.mocked(audioCacheService.isCached).mockResolvedValue(true)
+
+    await playerService.loadAudio(AUDIO_URL)
+    await flushAutoCache()
+
+    expect(startBackgroundCaching).not.toHaveBeenCalled()
+  })
+
+  test('uncached track while offline does NOT trigger startBackgroundCaching', async () => {
+    mockOnlineStatus(false)
+    jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
+
+    await playerService.loadAudio(AUDIO_URL)
+    await flushAutoCache()
+
+    expect(startBackgroundCaching).not.toHaveBeenCalled()
+  })
+
+  test('replaceAudio also triggers startBackgroundCaching for an uncached online track', async () => {
+    mockOnlineStatus(true)
+    jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
+
+    await playerService.replaceAudio(AUDIO_URL)
+    await flushAutoCache()
+
+    expect(startBackgroundCaching).toHaveBeenCalledWith(AUDIO_URL)
   })
 })

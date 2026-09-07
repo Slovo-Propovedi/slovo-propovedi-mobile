@@ -5,6 +5,7 @@ import type { PlaybackRate } from '../../playback-rate'
 import { setPlaybackRateAction } from '../../playback-rate'
 import { flushProgress, scheduleHistoryFlush } from './progressFlusher'
 import { attachWebAudioHandlers } from './webAudioHandlers'
+import { autoCacheOnPlay } from './webAutoCache'
 import { resetWebDuration } from './webDurationWriter'
 import { createWebMediaSession } from './webMediaSession'
 import { createPubSub } from './webPlayerPubSub'
@@ -87,6 +88,8 @@ class WebPlayerService {
 
     if (this.playbackRate !== 1) audio.playbackRate = this.playbackRate
 
+    autoCacheOnPlay(audioUrl)
+
     this.detachAudioEvents = attachWebAudioHandlers({
       audio,
       flushProgressAtCurrentTime: this.flushProgressAtCurrentTime,
@@ -123,6 +126,5 @@ class WebPlayerService {
 }
 
 const webPlayer = new WebPlayerService()
-// Web fills for controls with no browser equivalent (OS volume, status snapshot).
-// Lock-screen metadata is handled by the class-level MediaSession controller.
+// Web fills for controls with no browser equivalent; lock-screen metadata handled by class-level MediaSession controller.
 export const playerService = Object.assign(webPlayer, createWebStubControls(webPlayer.getState))
