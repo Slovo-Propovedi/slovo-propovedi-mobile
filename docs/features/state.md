@@ -27,7 +27,7 @@
 | shared/model      | `src/shared/model/app.ts`                   | `isAudioPlayerMountedAtom`, `isPlayerFullscreenAtom`, `setIsAudioPlayerMounted`, `setPlayerFullscreen`                                                                                                    | глобальные флаги плеера                              |
 | pages/listen      | `src/pages/listen/model.ts`                 | `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom`, `fetchAllSections`                                                                                                               | секции главного экрана                               |
 | pages/playlist    | `src/pages/playlist/model.ts`               | `isCachingPlaylistAtom`, `playlistCacheProgressAtom`, `playlistCacheErrorAtom`                                                                                                                            | скачивание плейлиста                                 |
-| shared/lib        | `src/shared/lib/cache-triggers.ts`          | `cacheUpdateTriggerAtom`, `incrementCacheTrigger`, `playlistDownloadProgressAtom`                                                                                                                         | триггеры обновления кэша                             |
+| shared/lib        | `src/shared/lib/cache-triggers.ts`          | `cacheUpdateTriggerAtom`, `incrementCacheTrigger`, `playlistDownloadProgressAtom`, `setTrackDownloadProgress`, `removeTrackDownloadProgress`                                                              | триггеры обновления кэша                             |
 
 ## Паттерны
 

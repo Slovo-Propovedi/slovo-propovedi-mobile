@@ -5,7 +5,7 @@
 
 ## AudioCacheService
 
-Сервис кэширования аудио — `src/shared/lib/audio-cache/AudioCacheService.ts`. Singleton `audioCacheService`, также экспортирует `cacheAudio` и `removeFromCache`.
+Сервис кэширования аудио — `src/shared/lib/audio-cache/AudioCacheService.ts`. Singleton `audioCacheService`, также экспортирует `cacheAudio` и `removeFromCache`. Модуль также экспортирует общий helper `cacheAudioWithProgress` (`cacheAudioWithProgress.ts`) — единая точка ручного кеширования с прогрессом (см. «Скачивание одного трека»).
 
 - **Ключ кэша** — хеш URL трека (`getUrlHash`, 32-bit `Math.abs(hash).toString(36)`); файл `<hash>.mp3` в каталоге кэша (путь — `getAudioCacheDirectory.ts`).
 - **Методы:**
@@ -66,7 +66,13 @@
 
 ## Скачивание одного трека
 
-Из контекстного меню полноэкранного плеера `PlayerMenu` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenu.tsx`) пункт «Добавить в кеш / Удалить из кеша» → `useFullscreenHandlers.handleToggleCache` (`.../FullscreenContent/useFullscreenHandlers.ts`) → `cacheAudio` / `removeFromCache`.
+Все **три** ручные точки входа кеширования идут через общий helper `cacheAudioWithProgress` (`src/shared/lib/audio-cache/cacheAudioWithProgress.ts`) с единым протоколом: pre-set `0` перед стартом → тики `onProgress` → очистка записи в `finally` (успех, ошибка и skip-cached-путь, где `cacheAudio` резолвится без единого тика). Helper пишет/чистит `playlistDownloadProgressAtom` через `setTrackDownloadProgress`/`removeTrackDownloadProgress` из `shared/lib/cache-triggers` (Issue #82). Rejection пробрасывается вызывающему.
+
+- **Контекстное меню строки трека** (точки / долгое нажатие → «Добавить в кеш») — `TracksListItemContextMenu` → `useTrackItemCache.toggleCache` (`src/shared/ui/track-list/useTrackItemCache.ts`) → `cacheAudioWithProgress` / `removeFromCache`. После успеха (обе ветки — добавить и удалить) инкрементит `cacheUpdateTriggerAtom`.
+- **Меню полноэкранного плеера** `PlayerMenu` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenu.tsx`) — пункт «Добавить в кеш / Удалить из кеша» → `useFullscreenHandlers.handleToggleCache` (`.../FullscreenContent/useFullscreenHandlers.ts`) → `cacheAudioWithProgress` / `removeFromCache`; после успеха (обе ветки) инкрементит `cacheUpdateTriggerAtom` (строки списков перепроверяют `isCached`, включая ветку удаления; собственная метка меню тоже перепроверяет — `useIsCached` теперь получает `cacheTrigger`). Раньше полноэкранный путь звал `cacheAudio(audio.audioUrl)` «вхолостую» — без `onProgress` и без записи в атом; теперь он пишет per-URL прогресс, видимый в строках списков (закрытие долга, Issue #82 follow-up).
+- **Прогон плейлиста** — `cacheSingleTrack` в `runPlaylistCaching` (`src/pages/playlist/lib/runPlaylistCaching.ts`) тоже зовёт `cacheAudioWithProgress` (протокол переехал в helper).
+
+`BackgroundCachingService` (`src/entities/player/lib/PlayerService/BackgroundCachingService.ts`) остаётся отдельным писателем: глобальный прогресс (`downloadProgressAtom`) + учёт inflight — у него свой собственный путь, через `cacheAudioWithProgress` он не идёт.
 
 ## Скачивание плейлиста целиком
 
@@ -76,8 +82,8 @@
 - ставит `isCachingPlaylistAtom = true` и прогресс `playlistCacheProgressAtom = { current, total }`;
 - делегирует последовательный прогон в `runPlaylistCaching` (`runPlaylistCaching.ts`): перед каждым треком проверяет подключение (`waitForOnline`, до 60с) — если сеть не вернулась, весь прогон прерывается ошибкой «Нет подключения к интернету» (сетевые ошибки не показывают алерт `playlistCacheErrorAtom`, только уведомление); неудача одного трека не прерывает остальные;
 - показывает системные уведомления (`PlaylistCacheNotifications.ts`): начало, прогресс «Скачано N из M», завершение «Скачано N проповедей» либо ошибка «Не удалось скачать X из N» при частичной неудаче (группа `playlist-cache`, фиксированный ID);
-- обновляет `playlistDownloadProgressAtom` (по URL трека) и инкрементирует `cacheUpdateTriggerAtom`;
-- в `finally` сбрасывает состояние.
+- обновляет `playlistDownloadProgressAtom` (по URL трека, через `setTrackDownloadProgress`) и инкрементирует `cacheUpdateTriggerAtom`; запись каждого трека удаляется в его собственном `finally` (`removeTrackDownloadProgress`, успех и ошибка);
+- в `finally` сбрасывает `isCachingPlaylistAtom` (глобального сброса `playlistDownloadProgressAtom` в `{}` нет — см. «Состояние»).
 
 UI и хуки — `src/pages/playlist/lib/`:
 
@@ -104,7 +110,7 @@ UI и хуки — `src/pages/playlist/lib/`:
 Триггеры обновления UI — `src/shared/lib/cache-triggers.ts`:
 
 - `cacheUpdateTriggerAtom` (инкрементируется `incrementCacheTrigger`);
-- `playlistDownloadProgressAtom` — прогресс по URL (`Record<string, number>`).
+- `playlistDownloadProgressAtom` — прогресс по URL (`Record<string, number>`). Пишут его `setTrackDownloadProgress` (запись прогресса по URL) и `removeTrackDownloadProgress` (удаление записи по URL, no-op если ключа нет) — оба из `shared/lib/cache-triggers`. Вызываются из `BackgroundCachingService` (авто-кэш, напрямую) и из общего helper'а `cacheAudioWithProgress`, который обслуживает все три ручные точки входа (`useTrackItemCache.toggleCache`, `useFullscreenHandlers.handleToggleCache`, `runPlaylistCaching.cacheSingleTrack`). Каждый путь чистит **свою** запись через `removeTrackDownloadProgress` в `finally` (успех и ошибка); глобального сброса атома в `{}` больше нет — его убрали из `PlaylistCacheService.cachePlaylist`, т.к. он стирал прогресс параллельных ручных скачиваний (Issue #82).
 
 Константа ключа — `src/shared/config/cache-storage-keys.ts` (`CACHED_SECTIONS`). Ключи хранилища — [storage.md](../contracts/storage.md).
 
@@ -115,7 +121,7 @@ UI и хуки — `src/pages/playlist/lib/`:
 ## Поток скачивания
 
 1. **Старт воспроизведения** → `AudioLoader.getPlaybackUrl`: нет в кэше → `startBackgroundCaching` (авто-кэш без действия пользователя).
-2. **Ручное скачивание трека** → меню плеера `PlayerMenu` → `handleToggleCache` → `cacheAudio`/`removeFromCache`.
+2. **Ручное скачивание трека** → меню плеера `PlayerMenu` → `handleToggleCache` → `cacheAudioWithProgress`/`removeFromCache`; либо контекстное меню строки трека → `useTrackItemCache.toggleCache` (обе точки входа — с per-URL прогрессом через `cacheAudioWithProgress`, Issue #82).
 3. **Скачивание плейлиста** → `PlaylistCacheService.cachePlaylist` (с прогрессом и системными уведомлениями).
 4. **Очистка кэша** → Настройки → `ClearCacheDialog`.
 
