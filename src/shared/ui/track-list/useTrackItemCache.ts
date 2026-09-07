@@ -1,9 +1,10 @@
-import { useCtx } from '@reatom/npm-react'
+import { useAtom, useCtx } from '@reatom/npm-react'
 import { useEffect, useRef, useState } from 'react'
 import { removeFromCache } from '../../lib/audio-cache/AudioCacheService'
 import { cacheAudioWithProgress } from '../../lib/audio-cache/cacheAudioWithProgress'
 import { useIsCached } from '../../lib/audio-cache/useIsCached'
 import { incrementCacheTrigger, playlistDownloadProgressAtom } from '../../lib/cache-triggers'
+import { isOnlineAtom } from '../../model/network'
 
 export const useTrackItemCache = (
   audioUrl: null | string | undefined,
@@ -11,6 +12,7 @@ export const useTrackItemCache = (
   externalCacheTrigger?: number,
 ) => {
   const ctx = useCtx()
+  const [isOnline] = useAtom(isOnlineAtom)
   const internalCacheTriggerRef = useRef(0)
   const prevDownloadingUrlRef = useRef<null | string | undefined>(null)
 
@@ -43,6 +45,7 @@ export const useTrackItemCache = (
 
   const toggleCache = async () => {
     if (!audioUrl) return
+    if (!isOnline && !isCached) return
     try {
       if (isCached) await removeFromCache(audioUrl)
       else await cacheAudioWithProgress(ctx, audioUrl)
@@ -53,5 +56,7 @@ export const useTrackItemCache = (
     }
   }
 
-  return { isCached, isDownloading, progressValue: effectiveProgress, toggleCache }
+  const isCacheDisabled = !isOnline && !isCached
+
+  return { isCached, isCacheDisabled, isDownloading, progressValue: effectiveProgress, toggleCache }
 }

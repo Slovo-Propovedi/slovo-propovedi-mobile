@@ -101,6 +101,16 @@ Guard покрывает все пути старта воспроизведен
 
 Guard проверяет `isOnlineAtom` (NetInfo) и `audioCacheService.isCached(audioUrl)` (с молчаливым `catch(() => false)` — сбой проверки кэша трактуется как «не закэшировано»). Работает на обеих платформах.
 
+## Офлайн: UI добавления в кеш дизейблится
+
+При `!isOnline` все действия «добавить в кеш» недоступны (требуют интернета), а «удалить из кеша» работает офлайн:
+
+- «Закешировать все» на экране плейлиста — `usePlaylistCacheMenu` (`src/pages/playlist/lib/usePlaylistCacheMenu.ts`): `isCacheAllDisabled` включает `!isOnline`;
+- «Добавить в кеш» в контекстном меню строки трека — `useTrackItemCache.isCacheDisabled` (`src/shared/ui/track-list/useTrackItemCache.ts`) + no-op guard в `toggleCache`;
+- «Добавить в кеш» в меню полноэкранного плеера — `PlayerMenuItems.isCacheDisabled` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenuItems.tsx`).
+
+Подробнее — [audio-cache.md](./audio-cache.md) → «Офлайн: добавление в кеш недоступно».
+
 ## Поток: offline ↔ online
 
 - **Offline:** `NetInfo` → `isOnlineAtom = false` → показывается `NetworkBanner`; API-вызовы падают с сетевой ошибкой → `reportServerUnreachable` → `ServerErrorToast`; `fetchAllSections` показывает кэш секций; поиск проповедей показывает per-query кэш (`cachedSermonSearch:<query>`), если он есть; подсказки поиска берутся из кэша `cachedDistinctValues`, если он есть (иначе скрываются); аудио играет из кэша.

@@ -2,6 +2,7 @@ import { act } from '@testing-library/react-native'
 import { audioCacheService } from 'shared/lib/audio-cache/AudioCacheService'
 import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
+import { isOnlineAtom } from 'shared/model'
 import { useTrackItemCache } from './useTrackItemCache'
 
 const AUDIO_URL = 'https://example.com/audio.mp3'
@@ -155,6 +156,83 @@ describe('useTrackItemCache', () => {
 
       expect(mockedCacheAudio).not.toHaveBeenCalled()
       expect(mockedRemoveFromCache).not.toHaveBeenCalled()
+    })
+
+    test('does not cache when offline and not cached', async () => {
+      const { ctx, result } = await renderHookWithProviders(() =>
+        useTrackItemCache(AUDIO_URL, null),
+      )
+
+      await act(async () => {
+        isOnlineAtom(ctx, false)
+      })
+
+      await act(async () => {
+        await result.current.toggleCache()
+      })
+
+      expect(mockedCacheAudio).not.toHaveBeenCalled()
+      expect(mockedRemoveFromCache).not.toHaveBeenCalled()
+    })
+
+    test('removes from cache when offline and cached', async () => {
+      mockedIsCached.mockResolvedValue(true)
+
+      const { ctx, result } = await renderHookWithProviders(() =>
+        useTrackItemCache(AUDIO_URL, null),
+      )
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
+
+      await act(async () => {
+        isOnlineAtom(ctx, false)
+      })
+
+      await act(async () => {
+        await result.current.toggleCache()
+      })
+
+      expect(mockedRemoveFromCache).toHaveBeenCalledWith(AUDIO_URL)
+      expect(mockedCacheAudio).not.toHaveBeenCalled()
+    })
+
+    test('caches when online and not cached', async () => {
+      const { ctx, result } = await renderHookWithProviders(() =>
+        useTrackItemCache(AUDIO_URL, null),
+      )
+
+      await act(async () => {
+        isOnlineAtom(ctx, true)
+      })
+
+      await act(async () => {
+        await result.current.toggleCache()
+      })
+
+      expect(mockedCacheAudio).toHaveBeenCalledWith(AUDIO_URL, expect.any(Function))
+      expect(mockedRemoveFromCache).not.toHaveBeenCalled()
+    })
+
+    test('exposes isCacheDisabled true only when offline and not cached', async () => {
+      mockedIsCached.mockResolvedValue(false)
+
+      const { ctx, result } = await renderHookWithProviders(() =>
+        useTrackItemCache(AUDIO_URL, null),
+      )
+
+      await act(async () => {
+        isOnlineAtom(ctx, false)
+      })
+
+      expect(result.current.isCacheDisabled).toBe(true)
+
+      await act(async () => {
+        isOnlineAtom(ctx, true)
+      })
+
+      expect(result.current.isCacheDisabled).toBe(false)
     })
 
     test('calls cacheAudio with an onProgress callback when not cached', async () => {

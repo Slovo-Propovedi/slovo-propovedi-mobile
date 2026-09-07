@@ -1,5 +1,7 @@
+import { useAtom } from '@reatom/npm-react'
 import { Pressable, Text } from 'react-native'
 import { formatPlaybackRate } from 'shared/lib/player'
+import { isOnlineAtom } from 'shared/model'
 import { useTheme } from 'shared/ui/theme'
 import type { PlaybackRate } from 'entities/player'
 import { styles } from './PlayerMenu.styles'
@@ -20,14 +22,26 @@ export const PlayerMenuItems = ({
   rate,
 }: PlayerMenuItemsProps) => {
   const { currentTheme } = useTheme()
+  const [isOnline] = useAtom(isOnlineAtom)
+  const isCacheDisabled = !isOnline && !isCached
 
   return (
     <>
       <Pressable onPress={onDetails} style={styles.menuItem} accessibilityRole='button'>
         <Text style={[styles.menuItemText, { color: currentTheme.text }]}>Подробнее</Text>
       </Pressable>
-      <Pressable onPress={onToggleCache} style={styles.menuItem} accessibilityRole='button'>
-        <Text style={[styles.menuItemText, { color: currentTheme.text }]}>
+      <Pressable
+        accessibilityRole='button'
+        onPress={isCacheDisabled ? undefined : onToggleCache}
+        accessibilityState={isCacheDisabled ? { disabled: true } : undefined}
+        style={[styles.menuItem, isCacheDisabled && styles.menuItemDisabled]}
+      >
+        <Text
+          style={[
+            styles.menuItemText,
+            { color: isCacheDisabled ? currentTheme.textMuted : currentTheme.text },
+          ]}
+        >
           {isCached ? 'Удалить из кеша' : 'Добавить в кеш'}
         </Text>
       </Pressable>

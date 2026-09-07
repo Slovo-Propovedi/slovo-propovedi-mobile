@@ -14,6 +14,7 @@ import {
 } from 'entities/player'
 import { cacheAudioWithProgress, removeFromCache, useIsCached } from 'shared/lib/audio-cache'
 import { cacheUpdateTriggerAtom, incrementCacheTrigger } from 'shared/lib/cache-triggers'
+import { isOnlineAtom } from 'shared/model'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { showPlaylistAtom } from '../../model/showPlaylistAtom'
@@ -28,6 +29,7 @@ export const useFullscreenHandlers = () => {
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
   const [downloadProgress] = useAtom(downloadProgressAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
+  const [isOnline] = useAtom(isOnlineAtom)
   const { seekTo } = usePlayer()
   const { togglePlay } = useGuardedTogglePlay()
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
@@ -46,6 +48,7 @@ export const useFullscreenHandlers = () => {
 
   const handleToggleCache = async () => {
     if (!audio?.audioUrl) return
+    if (!isOnline && !isCached) return
     try {
       if (isCached) await removeFromCache(audio.audioUrl)
       else await cacheAudioWithProgress(ctx, audio.audioUrl)

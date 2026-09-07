@@ -74,6 +74,14 @@
 
 `BackgroundCachingService` (`src/entities/player/lib/PlayerService/BackgroundCachingService.ts`) остаётся отдельным писателем: глобальный прогресс (`downloadProgressAtom`) + учёт inflight — у него свой собственный путь, через `cacheAudioWithProgress` он не идёт.
 
+## Офлайн: добавление в кеш недоступно
+
+Добавление в кеш требует интернета, поэтому все UI-действия «добавить» дизейблятся при `!isOnline` (`isOnlineAtom` из `shared/model/network`). Удаление из кеша работает офлайн и остаётся активным.
+
+- **Плейлист «Закешировать все»** — `usePlaylistCacheMenu` (`src/pages/playlist/lib/usePlaylistCacheMenu.ts`): `isCacheAllDisabled = isCaching || allCached || !isOnline`. Пункт «Удалить из кеша все» от сети не зависит.
+- **Контекстное меню строки трека** — `useTrackItemCache` (`src/shared/ui/track-list/useTrackItemCache.ts`) подписывается на `isOnlineAtom` и возвращает `isCacheDisabled = !isOnline && !isCached`; `TracksListItemContextMenu` рендерит пункт «Добавить в кеш» задизейбленным (без `onPress`, muted-стиль, `accessibilityState={{ disabled: true }}`). Плюс поведенческий no-op guard в `toggleCache`: `if (!isOnline && !isCached) return` — защита от запуска скачивания в обход UI.
+- **Меню полноэкранного плеера** — `PlayerMenuItems` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenuItems.tsx`): `isCacheDisabled = !isOnline && !isCached`; строка «Добавить в кеш» рендерится как обычный disabled-пункт меню. «Удалить из кеша» (трек закэширован) остаётся активным офлайн. Плюс поведенческий no-op guard в `useFullscreenHandlers.handleToggleCache` (`.../FullscreenContent/useFullscreenHandlers.ts`): `if (!isOnline && !isCached) return` — защита от запуска скачивания в обход UI теперь покрывает и track-list, и player-menu пути.
+
 ## Скачивание плейлиста целиком
 
 `PlaylistCacheService` — `src/pages/playlist/lib/PlaylistCacheService.ts` (`playlistCacheService`). Метод `cachePlaylist(ctx, tracks, playlistTitle)`:

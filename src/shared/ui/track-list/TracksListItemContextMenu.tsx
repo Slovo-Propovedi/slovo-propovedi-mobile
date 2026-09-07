@@ -14,6 +14,7 @@ export interface MenuAction {
 export interface TracksListItemContextMenuProps {
   anchor: AnchorRect | null
   isCached: boolean
+  isCacheDisabled?: boolean
   isMenuOpen: boolean
   menuActions?: MenuAction[]
   onClose: () => void
@@ -24,6 +25,7 @@ export interface TracksListItemContextMenuProps {
 export const TracksListItemContextMenu = ({
   anchor,
   isCached,
+  isCacheDisabled = false,
   isMenuOpen,
   menuActions,
   onClose,
@@ -60,11 +62,17 @@ export const TracksListItemContextMenu = ({
 
     return (
       <Pressable
-        onPress={onToggleCache}
         accessibilityRole='button'
-        style={tracksListStyles.contextMenuItem}
+        onPress={isCacheDisabled ? undefined : onToggleCache}
+        accessibilityState={isCacheDisabled ? { disabled: true } : undefined}
+        style={[tracksListStyles.contextMenuItem, isCacheDisabled && localStyles.cacheItemDisabled]}
       >
-        <Text style={tracksListStyles.contextMenuItemText}>
+        <Text
+          style={[
+            tracksListStyles.contextMenuItemText,
+            isCacheDisabled && { color: theme.textMuted },
+          ]}
+        >
           {isCached ? 'Удалить из кеша' : 'Добавить в кеш'}
         </Text>
       </Pressable>
@@ -91,4 +99,5 @@ const localStyles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
+  cacheItemDisabled: { opacity: 0.5 },
 })

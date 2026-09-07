@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react'
 import { type View } from 'react-native'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { cacheUpdateTriggerAtom, incrementCacheTrigger } from 'shared/lib/cache-triggers'
+import { isOnlineAtom } from 'shared/model'
 import { type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { isCachingPlaylistAtom } from '../model'
 import { playlistCacheService, type TrackToCache } from './PlaylistCacheService'
@@ -14,6 +15,7 @@ export const usePlaylistCacheMenu = (
   disabled?: boolean,
 ) => {
   const ctx = useCtx()
+  const [isOnline] = useAtom(isOnlineAtom)
   const [isCaching] = useAtom(isCachingPlaylistAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
   const [cacheDialogVisible, setCacheDialogVisible] = useState(false)
@@ -24,7 +26,7 @@ export const usePlaylistCacheMenu = (
 
   const { allCached, cachedCount } = usePlaylistCacheStatus(tracksData, cacheTrigger)
   const isMenuDisabled = disabled || isCaching
-  const isCacheAllDisabled = isCaching || allCached
+  const isCacheAllDisabled = isCaching || allCached || !isOnline
 
   const handleCacheAllConfirm = useCallback(() => {
     setCacheDialogVisible(false)

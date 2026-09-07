@@ -1,6 +1,7 @@
 import { act, fireEvent } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { isOnlineAtom } from 'shared/model'
 import type { PlaybackRate } from 'entities/player'
 import type { TestInstance } from 'test-renderer'
 import { PlayerMenu } from './PlayerMenu'
@@ -135,6 +136,39 @@ describe('<PlayerMenuItems>', () => {
     )
     fireEvent.press(getByText('Подробнее'))
     expect(mockOnShowDetails).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not call onToggleCache when offline and not cached', async () => {
+    const { ctx, getByText } = await renderWithProviders(
+      <PlayerMenuItems
+        rate={1}
+        onDetails={mockOnShowDetails}
+        onShowSpeed={mockOnShowSpeed}
+        onToggleCache={mockOnToggleCache}
+      />,
+    )
+    await act(async () => {
+      isOnlineAtom(ctx, false)
+    })
+    fireEvent.press(getByText('Добавить в кеш'))
+    expect(mockOnToggleCache).not.toHaveBeenCalled()
+  })
+
+  test('calls onToggleCache when offline and cached (remove)', async () => {
+    const { ctx, getByText } = await renderWithProviders(
+      <PlayerMenuItems
+        rate={1}
+        isCached
+        onDetails={mockOnShowDetails}
+        onShowSpeed={mockOnShowSpeed}
+        onToggleCache={mockOnToggleCache}
+      />,
+    )
+    await act(async () => {
+      isOnlineAtom(ctx, false)
+    })
+    fireEvent.press(getByText('Удалить из кеша'))
+    expect(mockOnToggleCache).toHaveBeenCalledTimes(1)
   })
 })
 

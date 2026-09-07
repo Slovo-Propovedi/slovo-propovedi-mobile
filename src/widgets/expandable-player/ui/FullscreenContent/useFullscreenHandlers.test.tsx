@@ -3,6 +3,7 @@ import { currentAudioAtom } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
+import { isOnlineAtom } from 'shared/model'
 import { useFullscreenHandlers } from './useFullscreenHandlers'
 
 const AUDIO_CACHE_MODULE = 'shared/lib/audio-cache'
@@ -98,6 +99,7 @@ describe('useFullscreenHandlers handleToggleCache', () => {
     mockedCacheAudioWithProgress.mockResolvedValue('file:///cached.mp3')
     mockedRemoveFromCache.mockResolvedValue(true)
     currentAudioAtom(ctx, null)
+    isOnlineAtom(ctx, true)
   })
 
   test('caches via cacheAudioWithProgress and increments the cache trigger', async () => {
@@ -122,6 +124,45 @@ describe('useFullscreenHandlers handleToggleCache', () => {
 
     const { result } = await renderHandlers()
     const initialTrigger = ctx.get(cacheUpdateTriggerAtom)
+
+    await act(async () => {
+      await result.current.handleToggleCache()
+    })
+
+    expect(mockedRemoveFromCache).toHaveBeenCalledWith(AUDIO_URL)
+    expect(mockedCacheAudioWithProgress).not.toHaveBeenCalled()
+    expect(ctx.get(cacheUpdateTriggerAtom)).toBe(initialTrigger + 1)
+  })
+
+  test('does not cache when offline and not cached', async () => {
+    currentAudioAtom(ctx, mockAudio)
+
+    const { result } = await renderHandlers()
+    const initialTrigger = ctx.get(cacheUpdateTriggerAtom)
+
+    await act(async () => {
+      isOnlineAtom(ctx, false)
+    })
+
+    await act(async () => {
+      await result.current.handleToggleCache()
+    })
+
+    expect(mockedCacheAudioWithProgress).not.toHaveBeenCalled()
+    expect(mockedRemoveFromCache).not.toHaveBeenCalled()
+    expect(ctx.get(cacheUpdateTriggerAtom)).toBe(initialTrigger)
+  })
+
+  test('removes from cache when offline and cached', async () => {
+    mockedUseIsCached.mockReturnValue(true)
+    currentAudioAtom(ctx, mockAudio)
+
+    const { result } = await renderHandlers()
+    const initialTrigger = ctx.get(cacheUpdateTriggerAtom)
+
+    await act(async () => {
+      isOnlineAtom(ctx, false)
+    })
 
     await act(async () => {
       await result.current.handleToggleCache()

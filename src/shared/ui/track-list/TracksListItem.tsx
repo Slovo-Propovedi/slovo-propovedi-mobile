@@ -29,11 +29,8 @@ export const TracksListItem = memo(
     const [menuAnchor, setMenuAnchor] = useState<AnchorRect | null>(null)
     const dotsButtonRef = useRef<View>(null)
 
-    const { isCached, isDownloading, progressValue, toggleCache } = useTrackItemCache(
-      audioUrl,
-      downloadingUrl,
-      externalCacheTrigger,
-    )
+    const { isCached, isCacheDisabled, isDownloading, progressValue, toggleCache } =
+      useTrackItemCache(audioUrl, downloadingUrl, externalCacheTrigger)
 
     const measureButton = () => {
       dotsButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) =>
@@ -93,6 +90,7 @@ export const TracksListItem = memo(
           isMenuOpen={isMenuOpen}
           menuActions={menuActions}
           onClose={handleToggleMenu}
+          isCacheDisabled={isCacheDisabled}
           onToggleCache={handleToggleCache}
         />
       </>

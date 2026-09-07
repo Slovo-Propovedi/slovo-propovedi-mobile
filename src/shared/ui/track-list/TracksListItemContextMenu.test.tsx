@@ -111,4 +111,15 @@ describe('<TracksListItemContextMenu>', () => {
 
     expect(screen.getByText(ADD_CACHE_TEXT)).toBeTruthy()
   })
+
+  test('disables cache item when isCacheDisabled is true', async () => {
+    await render(<TracksListItemContextMenu {...baseProps} isCacheDisabled={true} />)
+
+    const cacheButton = screen.getByRole('button')
+    expect(cacheButton).toHaveAccessibilityState({ disabled: true })
+    expect(cacheButton.props.onPress).toBeUndefined()
+    expect(screen.getByText(ADD_CACHE_TEXT).props.style).toEqual(
+      expect.arrayContaining([{ color: DarkTheme.textMuted }]),
+    )
+  })
 })

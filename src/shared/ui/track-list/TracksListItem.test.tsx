@@ -3,15 +3,19 @@ import '@testing-library/jest-native/extend-expect'
 import { Text as MockText, View } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { TracksListItem } from './TracksListItem'
+import { useTrackItemCache } from './useTrackItemCache'
 
 jest.mock('./useTrackItemCache', () => ({
   useTrackItemCache: jest.fn(() => ({
     isCached: false,
+    isCacheDisabled: false,
     isDownloading: false,
     progressValue: -1,
     toggleCache: jest.fn(),
   })),
 }))
+
+const mockedUseTrackItemCache = useTrackItemCache as jest.MockedFunction<typeof useTrackItemCache>
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: (props: { name: string }) => (
@@ -28,13 +32,16 @@ jest.mock('react-native-text-ticker', () => ({
 }))
 
 let mockLastMenuAnchor: { height: number; width: number; x: number; y: number } | null = null
+let mockLastCacheDisabled: boolean | undefined = undefined
 
 jest.mock('./TracksListItemContextMenu', () => ({
   TracksListItemContextMenu: (props: {
     anchor: { height: number; width: number; x: number; y: number } | null
+    isCacheDisabled?: boolean
     isMenuOpen: boolean
   }) => {
     mockLastMenuAnchor = props.anchor
+    mockLastCacheDisabled = props.isCacheDisabled
     if (!props.isMenuOpen) return null
     return <MockText testID='context-menu-visible'>Menu is open</MockText>
   },
@@ -79,6 +86,7 @@ describe('<TracksListItem>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockLastMenuAnchor = null
+    mockLastCacheDisabled = undefined
     // In Jest, host-component measure never fires its callback, so the menu
     // would never receive a position. Mock the measurement with fixed geometry.
     jest
@@ -171,6 +179,26 @@ describe('<TracksListItem>', () => {
     fireEvent.press(screen.getByTestId(DOTS_BUTTON_TEST_ID))
 
     expect(screen.queryByTestId(CONTEXT_MENU_TEST_ID)).toBeNull()
+  })
+
+  test('passes isCacheDisabled from hook to context menu when offline and uncached', async () => {
+    mockedUseTrackItemCache.mockReturnValue({
+      isCached: false,
+      isCacheDisabled: true,
+      isDownloading: false,
+      progressValue: -1,
+      toggleCache: jest.fn(),
+    })
+
+    await renderItem({ audioUrl: AUDIO_URL })
+
+    fireEvent.press(screen.getByTestId(DOTS_BUTTON_TEST_ID))
+
+    await waitFor(() => {
+      expect(screen.getByTestId(CONTEXT_MENU_TEST_ID)).toBeTruthy()
+    })
+
+    expect(mockLastCacheDisabled).toBe(true)
   })
 
   test('renders ProgressBar when progress is greater than 0', async () => {
