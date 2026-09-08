@@ -66,4 +66,19 @@ export const expandedControlsStyles = StyleSheet.create({
     padding: INDENTS.low,
     width: 50,
   },
+
+  stopAllButton: {
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: INDENTS.medium,
+    width: 40,
+    zIndex: 300,
+  },
+
+  stopAllIcon: {
+    color: '#fff',
+    fontSize: FONT_SIZES.xxl,
+  },
 })

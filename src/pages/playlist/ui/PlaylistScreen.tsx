@@ -31,8 +31,7 @@ export const PlaylistScreen = () => {
   const playNewSermon = usePlayNewSermon()
   const progressMap = useHistoryProgressMap()
 
-  const { cacheTrigger, currentAudio, downloadingUrl, isCaching, isPlaying } =
-    usePlaylistPlayerState()
+  const { cacheTrigger, currentAudio, downloadingUrl, isPlaying } = usePlaylistPlayerState()
 
   const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader()
@@ -80,7 +79,7 @@ export const PlaylistScreen = () => {
     [cacheTrigger, currentAudio?.id, downloadingUrl, handlePressItem, isPlaying, progressMap],
   )
 
-  usePlaylistNavigationOptions({ headerIconColor, isCaching, title, tracksListData })
+  usePlaylistNavigationOptions({ headerIconColor, title, tracksListData })
 
   const tracksListStyles = useMemo(() => createTracksListStyles(currentTheme), [currentTheme])
 

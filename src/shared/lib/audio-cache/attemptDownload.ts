@@ -1,7 +1,10 @@
 import { File } from 'expo-file-system'
+import { bridgeAbortSignal } from './abortBridge'
 import { DOWNLOAD_STALL_TIMEOUT_MS, STALL_CHECK_INTERVAL_MS } from './downloadRetryPolicy'
 
 interface DownloadAttemptParams {
+  /** External cancellation signal bridged to the stall-guard controller. */
+  externalSignal?: AbortSignal
   /** Throttled progress callback; raw ticks update the activity timestamp before forwarding. */
   onProgressTick?: (data: RawProgress) => void
   tempFile: File
@@ -21,10 +24,12 @@ interface RawProgress {
  * @param root0 - Attempt parameters.
  * @param root0.url - Source URL to download from.
  * @param root0.tempFile - Destination `.part` file.
+ * @param root0.externalSignal - Optional signal that aborts this attempt when cancelled.
  * @param root0.onProgressTick - Throttled progress callback; raw ticks update
  * the activity timestamp before forwarding.
  */
 export const runDownloadAttempt = async ({
+  externalSignal,
   onProgressTick,
   tempFile,
   url,
@@ -44,6 +49,8 @@ export const runDownloadAttempt = async ({
     if (idleMs > DOWNLOAD_STALL_TIMEOUT_MS) abortController.abort()
   }, STALL_CHECK_INTERVAL_MS)
 
+  const unsubscribeExternalAbort = bridgeAbortSignal(externalSignal, abortController)
+
   try {
     await File.downloadFileAsync(url, tempFile, {
       idempotent: true,
@@ -52,5 +59,6 @@ export const runDownloadAttempt = async ({
     })
   } finally {
     clearInterval(stallWatcher)
+    unsubscribeExternalAbort()
   }
 }

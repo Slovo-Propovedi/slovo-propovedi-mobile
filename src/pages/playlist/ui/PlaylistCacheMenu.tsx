@@ -12,14 +12,12 @@ const ICON_SIZE = 24
 const BUTTON_SIZE = 44
 
 export interface PlaylistCacheMenuProps {
-  disabled?: boolean
   iconColor?: ColorValue
   playlistTitle: string
   tracksData: TrackToCache[]
 }
 
 export const PlaylistCacheMenu = ({
-  disabled = false,
   iconColor,
   playlistTitle,
   tracksData,
@@ -40,14 +38,16 @@ export const PlaylistCacheMenu = ({
     handleClearCacheConfirm,
     handleClearCacheOption,
     handleOpenMenu,
+    handleStopCaching,
     isCacheAllDisabled,
-    isMenuDisabled,
+    isCaching,
+    isClearCacheDisabled,
     menuAnchor,
     menuVisible,
     setCacheDialogVisible,
     setClearDialogVisible,
     setMenuVisible,
-  } = usePlaylistCacheMenu(tracksData, playlistTitle, disabled)
+  } = usePlaylistCacheMenu(tracksData, playlistTitle)
 
   useEffect(() => {
     setErrorRef.current = setError
@@ -73,12 +73,11 @@ export const PlaylistCacheMenu = ({
     <>
       <View ref={buttonRef} collapsable={false}>
         <TouchableOpacity
+          style={styles.button}
           onPress={handleOpenMenu}
-          disabled={isMenuDisabled}
           testID='playlist-cache-menu'
           accessibilityLabel='Меню кеширования'
           accessibilityHint='Нажмите чтобы открыть меню'
-          style={[styles.button, isMenuDisabled && styles.buttonDisabled]}
         >
           <MaterialCommunityIcons
             size={ICON_SIZE}
@@ -92,11 +91,13 @@ export const PlaylistCacheMenu = ({
         anchor={menuAnchor}
         visible={menuVisible}
         allCached={allCached}
+        isCaching={isCaching}
         onCacheAll={handleCacheAllOption}
+        onStopCaching={handleStopCaching}
         onClearCache={handleClearCacheOption}
         onClose={() => setMenuVisible(false)}
         isCacheAllDisabled={isCacheAllDisabled}
-        isClearCacheDisabled={cachedCount === 0}
+        isClearCacheDisabled={isClearCacheDisabled}
       />
 
       <PlaylistCacheDialogs
@@ -120,5 +121,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: BUTTON_SIZE,
   },
-  buttonDisabled: { opacity: 0.5 },
 })

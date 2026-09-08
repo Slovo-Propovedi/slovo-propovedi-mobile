@@ -1,11 +1,14 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
 import '@testing-library/jest-native/extend-expect'
 import { DarkTheme } from 'shared/ui/theme'
+import type { TrackCacheVisualState } from 'shared/lib/audio-cache'
 import type { TestInstance } from 'test-renderer'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
 
 const ADD_CACHE_TEXT = 'Добавить в кеш'
 const REMOVE_CACHE_TEXT = 'Удалить из кеша'
+const STOP_CACHING_TEXT = 'Остановить кеширование'
+const REMOVE_FROM_QUEUE_TEXT = 'Убрать из очереди'
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: (props: { name: string }) => {
@@ -21,6 +24,7 @@ const baseProps = {
   onClose: jest.fn(),
   onToggleCache: jest.fn(),
   theme: DarkTheme,
+  visualState: 'cloud' as TrackCacheVisualState,
 }
 
 const measureMenu = async (container: TestInstance) => {
@@ -45,14 +49,40 @@ describe('<TracksListItemContextMenu>', () => {
     expect(toJSON()).toBeNull()
   })
 
-  test('renders add cache text when isCached is false', async () => {
-    await render(<TracksListItemContextMenu {...baseProps} isCached={false} />)
+  test('renders add cache text when visualState is cloud', async () => {
+    await render(<TracksListItemContextMenu {...baseProps} visualState='cloud' />)
 
     expect(screen.getByText(ADD_CACHE_TEXT)).toBeTruthy()
   })
 
-  test('renders remove cache text when isCached is true', async () => {
-    await render(<TracksListItemContextMenu {...baseProps} isCached={true} />)
+  test('renders remove cache text when visualState is cached', async () => {
+    await render(<TracksListItemContextMenu {...baseProps} isCached={true} visualState='cached' />)
+
+    expect(screen.getByText(REMOVE_CACHE_TEXT)).toBeTruthy()
+  })
+
+  test('renders stop caching text when visualState is downloading', async () => {
+    await render(<TracksListItemContextMenu {...baseProps} visualState='downloading' />)
+
+    expect(screen.getByText(STOP_CACHING_TEXT)).toBeTruthy()
+  })
+
+  test('renders remove from queue text when visualState is queued', async () => {
+    await render(<TracksListItemContextMenu {...baseProps} visualState='queued' />)
+
+    expect(screen.getByText(REMOVE_FROM_QUEUE_TEXT)).toBeTruthy()
+  })
+
+  test('renders add cache text when playing and not cached', async () => {
+    await render(
+      <TracksListItemContextMenu {...baseProps} isCached={false} visualState='playing' />,
+    )
+
+    expect(screen.getByText(ADD_CACHE_TEXT)).toBeTruthy()
+  })
+
+  test('renders remove cache text when playing and cached', async () => {
+    await render(<TracksListItemContextMenu {...baseProps} isCached={true} visualState='playing' />)
 
     expect(screen.getByText(REMOVE_CACHE_TEXT)).toBeTruthy()
   })

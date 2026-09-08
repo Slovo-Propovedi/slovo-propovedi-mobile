@@ -10,8 +10,10 @@ jest.mock('./useTrackItemCache', () => ({
     isCached: false,
     isCacheDisabled: false,
     isDownloading: false,
+    isQueued: false,
     progressValue: -1,
     toggleCache: jest.fn(),
+    visualState: 'cloud',
   })),
 }))
 
@@ -186,8 +188,10 @@ describe('<TracksListItem>', () => {
       isCached: false,
       isCacheDisabled: true,
       isDownloading: false,
+      isQueued: false,
       progressValue: -1,
       toggleCache: jest.fn(),
+      visualState: 'cloud',
     })
 
     await renderItem({ audioUrl: AUDIO_URL })

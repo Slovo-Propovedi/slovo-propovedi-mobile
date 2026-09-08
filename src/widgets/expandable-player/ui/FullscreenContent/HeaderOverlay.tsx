@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { scheduleOnRN } from 'react-native-worklets'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { NextSermonPlate } from './NextSermonPlate'
+import { StopAllCachingButton } from './StopAllCachingButton'
 
 interface HeaderOverlayProps {
   closePlaylistOnSwipe: () => void
@@ -59,6 +60,7 @@ export const HeaderOverlay = ({
           nextSermonTitle={nextSermonTitle}
         />
       )}
+      <StopAllCachingButton styles={styles} insetsTop={insetsTop} />
     </>
   )
 }

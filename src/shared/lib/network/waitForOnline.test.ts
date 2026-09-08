@@ -56,4 +56,25 @@ describe('waitForOnline', () => {
     await expect(waitForOnline(0)).resolves.toBe(false)
     expect(mockedFetch).toHaveBeenCalledTimes(1)
   })
+
+  test('returns early without polling when the signal is already aborted', async () => {
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(waitForOnline(5000, controller.signal)).resolves.toBe(false)
+    expect(mockedFetch).not.toHaveBeenCalled()
+  })
+
+  test('returns early when the signal aborts during polling', async () => {
+    mockedFetch.mockResolvedValue(OFFLINE_STATE)
+    const controller = new AbortController()
+
+    const promise = waitForOnline(10_000, controller.signal)
+    await jest.advanceTimersByTimeAsync(1000)
+    controller.abort()
+    await jest.advanceTimersByTimeAsync(1000)
+
+    await expect(promise).resolves.toBe(false)
+    expect(mockedFetch).toHaveBeenCalledTimes(2)
+  })
 })

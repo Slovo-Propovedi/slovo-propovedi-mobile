@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { type ComponentProps } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
 import { AnchoredDropdown, type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { type ThemeColors } from '../theme'
 import { createTracksListStyles } from './styles'
@@ -20,6 +21,22 @@ export interface TracksListItemContextMenuProps {
   onClose: () => void
   onToggleCache: () => void
   theme: ThemeColors
+  visualState: TrackCacheVisualState
+}
+
+const CACHE_ACTION_LABELS: Record<TrackCacheVisualState, string> = {
+  cached: 'Удалить из кеша',
+  cloud: 'Добавить в кеш',
+  downloading: 'Остановить кеширование',
+  playing: 'Добавить в кеш',
+  queued: 'Убрать из очереди',
+}
+
+const getCacheActionLabel = (visualState: TrackCacheVisualState, isCached: boolean): string => {
+  // The resolver collapses a playing track to 'playing' regardless of cache
+  // status; the menu still needs the cached detail to pick add vs remove.
+  if (visualState === 'playing') return isCached ? 'Удалить из кеша' : 'Добавить в кеш'
+  return CACHE_ACTION_LABELS[visualState]
 }
 
 export const TracksListItemContextMenu = ({
@@ -31,6 +48,7 @@ export const TracksListItemContextMenu = ({
   onClose,
   onToggleCache,
   theme,
+  visualState,
 }: TracksListItemContextMenuProps) => {
   const tracksListStyles = createTracksListStyles(theme)
 
@@ -73,7 +91,7 @@ export const TracksListItemContextMenu = ({
             isCacheDisabled && { color: theme.textMuted },
           ]}
         >
-          {isCached ? 'Удалить из кеша' : 'Добавить в кеш'}
+          {getCacheActionLabel(visualState, isCached)}
         </Text>
       </Pressable>
     )

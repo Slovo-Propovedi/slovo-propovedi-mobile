@@ -11,6 +11,7 @@ jest.mock('@expo/vector-icons', () => ({
 }))
 
 const CLOUD_DOWNLOAD_ICON = 'icon-cloud-download-outline'
+const CLOCK_ICON = 'icon-clock-outline'
 
 const mockTheme = {
   backdrop: 'rgba(0, 0, 0, 0.5)',
@@ -43,6 +44,21 @@ describe('<PlayingStatusOrChacheIcon>', () => {
     expect(icon).toBeTruthy()
   })
 
+  test('renders clock-outline icon when queued and not playing', async () => {
+    await renderWithProviders(
+      <PlayingStatusOrChacheIcon
+        isQueued={true}
+        isPlaying={false}
+        theme={mockTheme}
+        isAudioPlaying={false}
+      />,
+    )
+
+    const icon = screen.getByTestId(CLOCK_ICON)
+    expect(icon).toBeTruthy()
+    expect(screen.queryByTestId(CLOUD_DOWNLOAD_ICON)).toBeNull()
+  })
+
   test('renders play icon when isPlaying is true and isAudioPlaying is false', async () => {
     await renderWithProviders(
       <PlayingStatusOrChacheIcon isPlaying={true} theme={mockTheme} isAudioPlaying={false} />,
@@ -52,6 +68,20 @@ describe('<PlayingStatusOrChacheIcon>', () => {
     expect(playIcon).toBeTruthy()
 
     expect(screen.queryByTestId(CLOUD_DOWNLOAD_ICON)).toBeNull()
+  })
+
+  test('renders play icon over clock when playing and queued', async () => {
+    await renderWithProviders(
+      <PlayingStatusOrChacheIcon
+        isQueued={true}
+        isPlaying={true}
+        theme={mockTheme}
+        isAudioPlaying={false}
+      />,
+    )
+
+    expect(screen.getByTestId('icon-play')).toBeTruthy()
+    expect(screen.queryByTestId(CLOCK_ICON)).toBeNull()
   })
 
   test('renders AnimatedSoundBars when both isPlaying and isAudioPlaying are true', async () => {

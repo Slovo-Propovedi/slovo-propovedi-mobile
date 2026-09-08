@@ -1,6 +1,13 @@
+import NetInfo from '@react-native-community/netinfo'
 import { type Directory, File } from 'expo-file-system'
+import { CacheCancelledError } from './CacheCancelledError'
 import { downloadToCache } from './cacheDownloader'
-import { DOWNLOAD_STALL_TIMEOUT_MS, STALL_CHECK_INTERVAL_MS } from './downloadRetryPolicy'
+import {
+  DOWNLOAD_STALL_TIMEOUT_MS,
+  RETRY_BACKOFF_DELAYS_MS,
+  sleepAbortable,
+  STALL_CHECK_INTERVAL_MS,
+} from './downloadRetryPolicy'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 
 jest.mock('@react-native-community/netinfo', () => ({
@@ -11,7 +18,7 @@ jest.mock('@react-native-community/netinfo', () => ({
 // Skip real backoff delays between download retries — retries stay instant in tests
 jest.mock('./downloadRetryPolicy', () => ({
   ...jest.requireActual('./downloadRetryPolicy'),
-  sleep: jest.fn().mockResolvedValue(undefined),
+  sleepAbortable: jest.fn().mockResolvedValue(undefined),
 }))
 
 jest.mock('expo-file-system', () => ({
@@ -46,6 +53,7 @@ const mockCacheDir = {
 } as unknown as Directory
 
 const mockedGetAudioCacheDirectory = jest.mocked(getAudioCacheDirectory)
+const mockedSleepAbortable = jest.mocked(sleepAbortable)
 
 const EXAMPLE_URL = 'http://example.com/a.mp3'
 
@@ -72,6 +80,7 @@ describe('downloadToCache', () => {
     mockCacheDir.exists = true
     mockedGetAudioCacheDirectory.mockReturnValue(mockCacheDir)
     ;(File.downloadFileAsync as jest.Mock).mockResolvedValue({ uri: 'file://downloaded.mp3' })
+    ;(NetInfo.fetch as jest.Mock).mockResolvedValue({ isConnected: true })
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
   })
 
@@ -172,6 +181,134 @@ describe('downloadToCache', () => {
     await rejectionAssertion
     expect(File.downloadFileAsync).toHaveBeenCalledTimes(3)
     expect(getPartFile()?.delete).toHaveBeenCalled()
+  })
+
+  test('cancels mid-attempt: one attempt, .part deleted, rejects with CacheCancelledError', async () => {
+    mockFileState.part = true
+    const controller = new AbortController()
+    ;(File.downloadFileAsync as jest.Mock).mockImplementation(
+      (_url: string, _file: unknown, opts: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          opts.signal.addEventListener('abort', () => reject(new Error('Aborted')))
+        }),
+    )
+
+    const promise = downloadToCache(EXAMPLE_URL, undefined, controller.signal)
+    controller.abort()
+
+    await expect(promise).rejects.toBeInstanceOf(CacheCancelledError)
+    expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+    expect(getPartFile()?.delete).toHaveBeenCalled()
+  })
+
+  test('rejects immediately with CacheCancelledError when already aborted before start', async () => {
+    mockFileState.part = true
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(downloadToCache(EXAMPLE_URL, undefined, controller.signal)).rejects.toBeInstanceOf(
+      CacheCancelledError,
+    )
+    expect(File.downloadFileAsync).not.toHaveBeenCalled()
+    expect(getPartFile()?.delete).toHaveBeenCalled()
+  })
+
+  test('stall guard still retries when an external signal is present but not aborted', async () => {
+    jest.useFakeTimers()
+    const controller = new AbortController()
+    ;(File.downloadFileAsync as jest.Mock)
+      .mockImplementationOnce((_url: string, _file: unknown, opts: { signal: AbortSignal }) =>
+        createStalledDownload(opts.signal),
+      )
+      .mockResolvedValueOnce({ uri: 'file://downloaded.mp3' })
+
+    const promise = downloadToCache(EXAMPLE_URL, undefined, controller.signal)
+    await jest.advanceTimersByTimeAsync(DOWNLOAD_STALL_TIMEOUT_MS + STALL_CHECK_INTERVAL_MS)
+
+    await expect(promise).resolves.toContain('file://cache/')
+    expect(File.downloadFileAsync).toHaveBeenCalledTimes(2)
+  })
+
+  test('aborts mid-backoff-sleep: prompt CacheCancelledError, .part deleted, no retry', async () => {
+    mockFileState.part = true
+    const controller = new AbortController()
+    ;(File.downloadFileAsync as jest.Mock).mockRejectedValueOnce(new Error('network lost'))
+
+    // sleepAbortable resolves only when abort fires — no timer needed.
+    mockedSleepAbortable.mockImplementation(
+      (_ms: number, signal?: AbortSignal) =>
+        new Promise<void>(resolve => {
+          if (signal?.aborted) return resolve()
+          signal?.addEventListener('abort', () => resolve(), { once: true })
+        }),
+    )
+
+    const promise = downloadToCache(EXAMPLE_URL, undefined, controller.signal)
+    // Flush: first attempt fails → waitForOnline resolves → sleepAbortable blocks.
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(mockedSleepAbortable).toHaveBeenCalled()
+
+    controller.abort()
+    await expect(promise).rejects.toBeInstanceOf(CacheCancelledError)
+    expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+    expect(getPartFile()?.delete).toHaveBeenCalled()
+  })
+
+  test('aborts while waitForOnline is waiting: prompt CacheCancelledError', async () => {
+    jest.useFakeTimers()
+    mockFileState.part = true
+    const controller = new AbortController()
+    ;(File.downloadFileAsync as jest.Mock).mockRejectedValueOnce(new Error('network lost'))
+    ;(NetInfo.fetch as jest.Mock).mockResolvedValue({ isConnected: false })
+
+    const promise = downloadToCache(EXAMPLE_URL, undefined, controller.signal)
+    // Attach the rejection assertion up-front: the promise rejects during timer advancement
+    // when the poll interval fires and waitForOnline re-checks the aborted signal.
+    const rejectionAssertion = expect(promise).rejects.toBeInstanceOf(CacheCancelledError)
+
+    // First attempt fails; waitForOnline starts polling (offline) and suspends at sleep(1000).
+    await jest.advanceTimersByTimeAsync(0)
+    // Abort during the poll sleep.
+    controller.abort()
+    // Advance past the poll interval so waitForOnline re-checks the signal → false →
+    // sleepAbortable resolves → throwIfCancelled throws CacheCancelledError.
+    await jest.advanceTimersByTimeAsync(60_000)
+
+    await rejectionAssertion
+    expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+    expect(getPartFile()?.delete).toHaveBeenCalled()
+  })
+
+  test('non-aborted backoff waits the full delay before retrying', async () => {
+    jest.useFakeTimers()
+    mockFileState.part = true
+    ;(File.downloadFileAsync as jest.Mock)
+      .mockRejectedValueOnce(new Error('network lost'))
+      .mockResolvedValueOnce({ uri: 'file://downloaded.mp3' })
+
+    mockedSleepAbortable.mockImplementation(
+      (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)),
+    )
+
+    const promise = downloadToCache(EXAMPLE_URL)
+    // Flush microtasks: first attempt fails → waitForOnline resolves → sleepAbortable called.
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(mockedSleepAbortable).toHaveBeenCalledWith(RETRY_BACKOFF_DELAYS_MS[0], undefined)
+
+    // Before the backoff elapses, no second attempt.
+    await jest.advanceTimersByTimeAsync(RETRY_BACKOFF_DELAYS_MS[0] - 1)
+    expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+
+    // After the full delay, the retry proceeds.
+    await jest.advanceTimersByTimeAsync(1)
+    await expect(promise).resolves.toContain('file://cache/')
+    expect(File.downloadFileAsync).toHaveBeenCalledTimes(2)
   })
 })
 

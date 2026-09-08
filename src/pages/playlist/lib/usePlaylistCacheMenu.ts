@@ -1,7 +1,12 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { useCallback, useRef, useState } from 'react'
 import { type View } from 'react-native'
-import { audioCacheService } from 'shared/lib/audio-cache'
+import {
+  activeCacheUrlAtom,
+  audioCacheService,
+  cacheQueueAtom,
+  hasInflightCacheDownloads,
+} from 'shared/lib/audio-cache'
 import { cacheUpdateTriggerAtom, incrementCacheTrigger } from 'shared/lib/cache-triggers'
 import { isOnlineAtom } from 'shared/model'
 import { type AnchorRect } from 'shared/ui/anchored-dropdown'
@@ -9,15 +14,13 @@ import { isCachingPlaylistAtom } from '../model'
 import { playlistCacheService, type TrackToCache } from './PlaylistCacheService'
 import { usePlaylistCacheStatus } from './usePlaylistCacheStatus'
 
-export const usePlaylistCacheMenu = (
-  tracksData: TrackToCache[],
-  playlistTitle: string,
-  disabled?: boolean,
-) => {
+export const usePlaylistCacheMenu = (tracksData: TrackToCache[], playlistTitle: string) => {
   const ctx = useCtx()
   const [isOnline] = useAtom(isOnlineAtom)
   const [isCaching] = useAtom(isCachingPlaylistAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
+  const [queue] = useAtom(cacheQueueAtom)
+  const [activeUrl] = useAtom(activeCacheUrlAtom)
   const [cacheDialogVisible, setCacheDialogVisible] = useState(false)
   const [clearDialogVisible, setClearDialogVisible] = useState(false)
   const [menuVisible, setMenuVisible] = useState(false)
@@ -25,8 +28,9 @@ export const usePlaylistCacheMenu = (
   const buttonRef = useRef<View>(null)
 
   const { allCached, cachedCount } = usePlaylistCacheStatus(tracksData, cacheTrigger)
-  const isMenuDisabled = disabled || isCaching
-  const isCacheAllDisabled = isCaching || allCached || !isOnline
+  const isCacheAllDisabled = allCached || !isOnline
+  const isQueueNonEmpty = Object.keys(queue).length > 0
+  const isClearCacheDisabled = cachedCount === 0 || isQueueNonEmpty || activeUrl !== null
 
   const handleCacheAllConfirm = useCallback(() => {
     setCacheDialogVisible(false)
@@ -35,12 +39,20 @@ export const usePlaylistCacheMenu = (
 
   const handleClearCacheConfirm = useCallback(async () => {
     setClearDialogVisible(false)
+    // Press-time belt-and-suspenders on a destructive op: the reactive source
+    // (activeCacheUrlAtom + cacheQueueAtom) drives the disabled state, but the
+    // imperative getter re-checks any inflight download at the moment of clear.
+    if (hasInflightCacheDownloads()) return
     try {
       await audioCacheService.clearCache()
       incrementCacheTrigger(ctx)
     } catch (error) {
       console.error('[PlaylistCacheMenu] Error clearing cache:', error)
     }
+  }, [ctx])
+
+  const handleStopCaching = useCallback(() => {
+    playlistCacheService.cancelPlaylistCache(ctx)
   }, [ctx])
 
   const handleOpenMenu = useCallback(() => {
@@ -57,6 +69,8 @@ export const usePlaylistCacheMenu = (
 
   const handleClearCacheOption = useCallback(() => {
     setMenuVisible(false)
+    // Press-time belt-and-suspenders (see handleClearCacheConfirm).
+    if (hasInflightCacheDownloads()) return
     setClearDialogVisible(true)
   }, [])
 
@@ -71,8 +85,10 @@ export const usePlaylistCacheMenu = (
     handleClearCacheConfirm,
     handleClearCacheOption,
     handleOpenMenu,
+    handleStopCaching,
     isCacheAllDisabled,
-    isMenuDisabled,
+    isCaching,
+    isClearCacheDisabled,
     menuAnchor,
     menuVisible,
     setCacheDialogVisible,

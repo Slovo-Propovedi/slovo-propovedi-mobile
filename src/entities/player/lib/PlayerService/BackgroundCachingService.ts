@@ -1,10 +1,5 @@
-import { audioCacheService } from 'shared/lib/audio-cache'
-import {
-  incrementCacheTrigger,
-  playlistDownloadProgressAtom,
-  removeTrackDownloadProgress,
-  setTrackDownloadProgress,
-} from 'shared/lib/cache-triggers'
+import { enqueueCache, isCacheCancelledError } from 'shared/lib/audio-cache'
+import { incrementCacheTrigger } from 'shared/lib/cache-triggers'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {
   downloadingAudioUrlAtom,
@@ -13,50 +8,42 @@ import {
   setIsDownloadingAction,
 } from '../download-model'
 
-const inflightDownloads = new Set<string>()
-
-export const _resetInFlightDownloadsForTesting = (): void => {
-  inflightDownloads.clear()
-}
-
+/**
+ * Kicks off background caching of a track through the global serial queue.
+ * The queue guarantees «не более одной активной закачки» app-wide; BCS only
+ * mirrors download progress into the global downloader atoms. Global atoms are
+ * written lazily on the first progress tick (M5) — enqueueing alone must not
+ * claim the downloader state while the URL waits in the queue.
+ * @param audioUrl - Network URL of the track to cache.
+ */
 export const startBackgroundCaching = (audioUrl: string): void => {
   if (!audioUrl) return
 
-  if (inflightDownloads.has(audioUrl)) {
-    void setIsDownloadingAction(ctx, true)
-    void setDownloadingUrlAction(ctx, audioUrl)
-    const perTrackProgress = ctx.get(playlistDownloadProgressAtom)[audioUrl] ?? 0
-    void setDownloadProgressAction(ctx, perTrackProgress)
-    return
-  }
-
-  inflightDownloads.add(audioUrl)
-
-  void setIsDownloadingAction(ctx, true)
-  void setDownloadingUrlAction(ctx, audioUrl)
-  void setDownloadProgressAction(ctx, 0)
-  setTrackDownloadProgress(ctx, { progress: 0, url: audioUrl })
-
-  audioCacheService
-    .cacheAudio(audioUrl, progress => {
-      if (ctx.get(downloadingAudioUrlAtom) === audioUrl)
-        void setDownloadProgressAction(ctx, progress)
-      setTrackDownloadProgress(ctx, { progress, url: audioUrl })
-    })
+  let claimed = false
+  void enqueueCache(ctx, audioUrl, 'auto', progress => {
+    // Claim the downloader state on the first tick only. A late tick after a
+    // newer downloader claimed the state must neither steal it back nor write
+    // progress.
+    if (!claimed && ctx.get(downloadingAudioUrlAtom) !== audioUrl) {
+      claimed = true
+      void setIsDownloadingAction(ctx, true)
+      void setDownloadingUrlAction(ctx, audioUrl)
+    }
+    if (ctx.get(downloadingAudioUrlAtom) === audioUrl) void setDownloadProgressAction(ctx, progress)
+  })
     .then(() => {
       void incrementCacheTrigger(ctx)
       if (ctx.get(downloadingAudioUrlAtom) === audioUrl) void setDownloadProgressAction(ctx, 1)
     })
     .catch(error => {
-      // Silent failure: background caching is an automatic, invisible optimization
-      // (Issue #73) — playback streams from network and is unaffected; a network
-      // error must not open the global error dialog. Next playback of this track
-      // re-triggers caching.
-      console.error('[BackgroundCaching] Caching failed:', error)
+      // Background caching is an automatic, invisible optimization (Issue #73):
+      // playback streams from network and is unaffected; a network error must
+      // not open the global error dialog. Next playback re-triggers caching.
+      if (isCacheCancelledError(error))
+        console.warn('[BackgroundCaching] Caching cancelled:', error)
+      else console.error('[BackgroundCaching] Caching failed:', error)
     })
     .finally(() => {
-      removeTrackDownloadProgress(ctx, audioUrl)
-      inflightDownloads.delete(audioUrl)
       if (ctx.get(downloadingAudioUrlAtom) === audioUrl) {
         void setIsDownloadingAction(ctx, false)
         void setDownloadingUrlAction(ctx, null)

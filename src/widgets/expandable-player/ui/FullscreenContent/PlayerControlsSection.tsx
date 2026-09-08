@@ -1,6 +1,7 @@
 import { Entypo } from '@expo/vector-icons'
 import { Pressable, Text, View } from 'react-native'
 import { PlayerProgressBar, PlayerRepeatToggle, SermonPlayerControls } from 'entities/player'
+import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
 import { formatSermonReference } from 'shared/lib/format'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
@@ -25,6 +26,7 @@ interface PlayerControlsSectionProps {
   startSeek: (direction: 'backward' | 'forward') => void
   stopSeek: () => void
   styles: ReturnType<typeof createStyles>
+  visualState: TrackCacheVisualState
 }
 
 export const PlayerControlsSection = ({
@@ -43,6 +45,7 @@ export const PlayerControlsSection = ({
   startSeek,
   stopSeek,
   styles,
+  visualState,
 }: PlayerControlsSectionProps) => {
   const subtitle =
     formatSermonReference({ book: audio.book, chapter: audio.chapter, verse: audio.verse }) ??
@@ -63,6 +66,7 @@ export const PlayerControlsSection = ({
           {showMenu && (
             <PlayerMenu
               isCached={isCached}
+              visualState={visualState}
               onToggleCache={onToggleCache}
               onShowDetails={onShowDetails}
               onClose={() => setShowMenu(false)}

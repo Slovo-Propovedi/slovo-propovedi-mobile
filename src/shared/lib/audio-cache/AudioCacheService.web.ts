@@ -6,7 +6,8 @@
  * the network URL and the service worker swaps in the cached bytes.
  */
 
-import { inflightCache, type InflightEntry, resetInflightCache } from './inflightCache'
+import { inflightCache, resetInflightCache } from './inflightCache'
+import { createInflightDownload, joinInflightDownload } from './inflightDownload'
 import {
   clearAudioCache,
   deleteAudioEntry,
@@ -50,48 +51,31 @@ class WebAudioCacheService {
   public cacheAudio = (
     audioUrl: string,
     onProgress?: (progress: number) => void,
+    externalSignal?: AbortSignal,
   ): Promise<string> => {
     if (!audioUrl) throw new Error('[AudioCacheService] audioUrl is required')
 
     const existing = inflightCache.get(audioUrl)
-    if (existing) {
-      if (onProgress) {
-        existing.callbacks.add(onProgress)
-        if (existing.lastValue > 0)
-          try {
-            onProgress(existing.lastValue)
-          } catch (err) {
-            console.error('[AudioCacheService] onProgress callback error:', err)
-          }
-      }
-      return existing.promise
-    }
+    if (existing) return joinInflightDownload(existing, onProgress)
 
-    const callbacks = new Set<(progress: number) => void>()
-    if (onProgress) callbacks.add(onProgress)
-
-    const entry: InflightEntry = {
-      callbacks,
-      emit: (progress: number) => {
-        entry.lastValue = progress
-        for (const cb of callbacks)
-          try {
-            cb(progress)
-          } catch (err) {
-            console.error('[AudioCacheService] onProgress callback error:', err)
-          }
-      },
-      lastValue: 0,
-      promise: Promise.resolve(''),
-    }
-    entry.promise = downloadAndStoreAudio(audioUrl, entry.emit)
+    const { cleanup, entry } = createInflightDownload(onProgress, externalSignal, (emit, signal) =>
+      downloadAndStoreAudio(audioUrl, emit, signal),
+    )
+    const promise = entry.promise
     inflightCache.set(audioUrl, entry)
-    const cleanup = (): void => {
-      callbacks.clear()
+    const cleanupEntry = (): void => {
+      cleanup()
       inflightCache.delete(audioUrl)
     }
-    entry.promise.then(cleanup, cleanup)
-    return entry.promise
+    promise.then(cleanupEntry, cleanupEntry)
+    return promise
+  }
+
+  public cancelAudioDownload = (audioUrl: string): boolean => {
+    const entry = inflightCache.get(audioUrl)
+    if (!entry?.abort) return false
+    entry.abort()
+    return true
   }
 
   public clearCache = async (): Promise<void> => {
@@ -117,3 +101,4 @@ class WebAudioCacheService {
 export const audioCacheService = new WebAudioCacheService()
 export const removeFromCache = audioCacheService.removeFromCache
 export const cacheAudio = audioCacheService.cacheAudio
+export const cancelAudioDownload = audioCacheService.cancelAudioDownload

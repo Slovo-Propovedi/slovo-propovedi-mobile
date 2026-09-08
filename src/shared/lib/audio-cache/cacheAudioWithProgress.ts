@@ -18,14 +18,27 @@ import { audioCacheService } from './AudioCacheService'
  * runner increment on success; BackgroundCachingService keeps its own path).
  * @param ctx - Reatom context for atom updates.
  * @param audioUrl - Audio URL to cache.
+ * @param onProgress - Optional extra progress callback (0..1) forwarded alongside
+ * the per-URL atom writes (used by the queue runner to fan out to joiners).
+ * @param signal - Optional signal that cancels the underlying download.
  * @returns The resolved local file URI from `audioCacheService.cacheAudio`.
  */
-export const cacheAudioWithProgress = async (ctx: Ctx, audioUrl: string): Promise<string> => {
+export const cacheAudioWithProgress = async (
+  ctx: Ctx,
+  audioUrl: string,
+  onProgress?: (progress: number) => void,
+  signal?: AbortSignal,
+): Promise<string> => {
   setTrackDownloadProgress(ctx, { progress: 0, url: audioUrl })
   try {
-    return await audioCacheService.cacheAudio(audioUrl, progress => {
-      setTrackDownloadProgress(ctx, { progress, url: audioUrl })
-    })
+    return await audioCacheService.cacheAudio(
+      audioUrl,
+      progress => {
+        setTrackDownloadProgress(ctx, { progress, url: audioUrl })
+        onProgress?.(progress)
+      },
+      signal,
+    )
   } finally {
     removeTrackDownloadProgress(ctx, audioUrl)
   }

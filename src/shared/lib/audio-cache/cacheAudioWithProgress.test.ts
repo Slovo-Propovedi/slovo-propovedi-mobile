@@ -83,7 +83,7 @@ describe('cacheAudioWithProgress', () => {
 
     await cacheAudioWithProgress(ctx, AUDIO_URL)
 
-    expect(cacheAudioSpy).toHaveBeenCalledWith(AUDIO_URL, expect.any(Function))
+    expect(cacheAudioSpy).toHaveBeenCalledWith(AUDIO_URL, expect.any(Function), undefined)
     expect(ctx.get(playlistDownloadProgressAtom)).toEqual({})
   })
 })

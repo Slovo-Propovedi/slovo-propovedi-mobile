@@ -13,4 +13,26 @@ export const STALL_CHECK_INTERVAL_MS = 5_000
 /** Bounded wait for connectivity to return before each retry. */
 export const WAIT_ONLINE_BEFORE_RETRY_MS = 60_000
 
-export const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms))
+/**
+ * Sleeps for `ms`, resolving early when `signal` aborts (does NOT reject — the
+ * single throw point for cancellation stays with the caller's `throwIfCancelled`).
+ * No signal → plain sleep. Already-aborted → resolves immediately.
+ * @param ms - Delay in milliseconds.
+ * @param signal - Optional signal that shortens the sleep on abort.
+ */
+export const sleepAbortable = (ms: number, signal?: AbortSignal): Promise<void> => {
+  if (signal?.aborted) return Promise.resolve()
+  if (!signal) return new Promise(resolve => setTimeout(resolve, ms))
+
+  return new Promise(resolve => {
+    const onAbort = () => {
+      clearTimeout(timer)
+      resolve()
+    }
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    signal.addEventListener('abort', onAbort, { once: true })
+  })
+}

@@ -5,6 +5,7 @@ import {
   cacheAudio,
   removeFromCache,
 } from './AudioCacheService.web'
+import { CacheCancelledError } from './CacheCancelledError'
 import { commitAudioUrl } from './webCacheManifest'
 import * as webDownloadJournal from './webDownloadJournal'
 
@@ -140,8 +141,16 @@ describe('AudioCacheService.web', () => {
 
     await cacheAudio(AUDIO_URL, p => progress.push(p))
 
-    expect(fetchSpy).toHaveBeenNthCalledWith(1, AUDIO_URL, { mode: 'cors' })
-    expect(fetchSpy).toHaveBeenNthCalledWith(2, AUDIO_URL, { mode: 'no-cors' })
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      AUDIO_URL,
+      expect.objectContaining({ mode: 'cors' }),
+    )
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      AUDIO_URL,
+      expect.objectContaining({ mode: 'no-cors' }),
+    )
     expect(progress).toEqual([0, 1])
     await expect(audioCacheService.isCached(AUDIO_URL)).resolves.toBe(true)
   })
@@ -201,6 +210,30 @@ describe('AudioCacheService.web', () => {
 
     expect(removeSpy).toHaveBeenCalledWith(AUDIO_URL)
     await expect(webDownloadJournal.getActiveDownloads()).resolves.toEqual([])
+  })
+
+  test('cancelAudioDownload aborts the fetch, deletes the entry and rejects with CacheCancelledError', async () => {
+    let fetchSignal: AbortSignal | undefined
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockImplementation(
+      (_url: RequestInfo, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          fetchSignal = init?.signal ?? undefined
+          init?.signal?.addEventListener('abort', () => reject(new Error('Aborted')))
+        }),
+    )
+
+    const promise = cacheAudio(AUDIO_URL)
+    await waitForFetchCall(fetchSpy)
+
+    expect(audioCacheService.cancelAudioDownload(AUDIO_URL)).toBe(true)
+
+    await expect(promise).rejects.toBeInstanceOf(CacheCancelledError)
+    expect(fetchSignal?.aborted).toBe(true)
+    expect(bucket().delete).toHaveBeenCalledWith(AUDIO_URL, { ignoreVary: true })
+  })
+
+  test('cancelAudioDownload returns false when nothing is inflight', () => {
+    expect(audioCacheService.cancelAudioDownload(AUDIO_URL)).toBe(false)
   })
 
   test('removeFromCache and clearCache drop entries', async () => {

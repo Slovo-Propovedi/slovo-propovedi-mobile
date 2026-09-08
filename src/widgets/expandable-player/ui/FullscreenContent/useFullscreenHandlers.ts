@@ -12,7 +12,15 @@ import {
   usePlayer,
   useSeekControls,
 } from 'entities/player'
-import { cacheAudioWithProgress, removeFromCache, useIsCached } from 'shared/lib/audio-cache'
+import {
+  cacheQueueAtom,
+  cancelCacheDownload,
+  enqueueCache,
+  isCacheCancelledError,
+  removeFromCache,
+  resolveCacheState,
+  useIsCached,
+} from 'shared/lib/audio-cache'
 import { cacheUpdateTriggerAtom, incrementCacheTrigger } from 'shared/lib/cache-triggers'
 import { isOnlineAtom } from 'shared/model'
 import type BottomSheet from '@gorhom/bottom-sheet'
@@ -30,6 +38,7 @@ export const useFullscreenHandlers = () => {
   const [downloadProgress] = useAtom(downloadProgressAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
   const [isOnline] = useAtom(isOnlineAtom)
+  const [queue] = useAtom(cacheQueueAtom)
   const { seekTo } = usePlayer()
   const { togglePlay } = useGuardedTogglePlay()
   const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
@@ -41,6 +50,13 @@ export const useFullscreenHandlers = () => {
   const isCached = useIsCached(audio?.audioUrl ?? null, cacheTrigger)
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
   const currentDownloadProgress = isCurrentAudioDownloading ? downloadProgress : 0
+  const isQueued = audio?.audioUrl ? audio.audioUrl in queue : false
+  const visualState = resolveCacheState({
+    isCached,
+    isDownloading: isCurrentAudioDownloading,
+    isPlaying: false,
+    isQueued,
+  })
 
   const handleOpenPlaylist = () => {
     setShowPlaylist(true)
@@ -48,14 +64,31 @@ export const useFullscreenHandlers = () => {
 
   const handleToggleCache = async () => {
     if (!audio?.audioUrl) return
-    if (!isOnline && !isCached) return
-    try {
-      if (isCached) await removeFromCache(audio.audioUrl)
-      else await cacheAudioWithProgress(ctx, audio.audioUrl)
-      incrementCacheTrigger(ctx)
-    } catch (error) {
-      console.warn('[FullscreenContent] Error toggling cache:', error)
+
+    if (isCurrentAudioDownloading || isQueued) {
+      cancelCacheDownload(ctx, audio.audioUrl)
+      return
     }
+
+    if (isCached) {
+      try {
+        await removeFromCache(audio.audioUrl)
+        incrementCacheTrigger(ctx)
+      } catch (error) {
+        console.warn('[FullscreenContent] Error removing from cache:', error)
+      }
+      return
+    }
+
+    if (!isOnline) return
+    void enqueueCache(ctx, audio.audioUrl, 'manual')
+      .then(() => {
+        incrementCacheTrigger(ctx)
+      })
+      .catch(error => {
+        if (!isCacheCancelledError(error))
+          console.warn('[FullscreenContent] Error enqueuing cache:', error)
+      })
   }
 
   return {
@@ -66,6 +99,7 @@ export const useFullscreenHandlers = () => {
     handleToggleCache,
     handleTogglePlay: togglePlay,
     isCached,
+    isQueued,
     playlist,
     playlistSheetRef,
     position,
@@ -78,5 +112,6 @@ export const useFullscreenHandlers = () => {
     showPlaylist,
     startSeek,
     stopSeek,
+    visualState,
   }
 }

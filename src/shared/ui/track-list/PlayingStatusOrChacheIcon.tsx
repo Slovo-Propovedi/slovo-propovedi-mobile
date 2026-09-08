@@ -5,21 +5,26 @@ import { COLORS } from '../theme/colors'
 import { AnimatedSoundBars } from './AnimatedSoundBars'
 import { createTracksListStyles } from './styles'
 
+interface PlayingStatusOrCacheIconProps {
+  isAudioPlaying: boolean
+  isPlaying: boolean
+  isQueued?: boolean
+  theme: ThemeColors
+}
+
 export const PlayingStatusOrChacheIcon = ({
   isAudioPlaying,
   isPlaying,
+  isQueued = false,
   theme,
-}: {
-  isAudioPlaying: boolean
-  isPlaying: boolean
-  theme: ThemeColors
-}) => {
+}: PlayingStatusOrCacheIconProps) => {
   const tracksListStyles = createTracksListStyles(theme)
   const icon = (() => {
-    if (!isPlaying)
-      return <MaterialCommunityIcons size={16} color={COLORS.white} name='cloud-download-outline' />
-    if (isAudioPlaying) return <AnimatedSoundBars />
-    return <MaterialCommunityIcons size={16} name='play' color={COLORS.white} />
+    if (isPlaying && isAudioPlaying) return <AnimatedSoundBars />
+    if (isPlaying) return <MaterialCommunityIcons size={16} name='play' color={COLORS.white} />
+    if (isQueued)
+      return <MaterialCommunityIcons size={16} name='clock-outline' color={COLORS.white} />
+    return <MaterialCommunityIcons size={16} color={COLORS.white} name='cloud-download-outline' />
   })()
 
   const style = isPlaying

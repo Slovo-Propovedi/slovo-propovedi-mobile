@@ -22,12 +22,10 @@ export const buildTracksListData = (list: SermonData[], artwork: null | string) 
 
 export const usePlaylistNavigationOptions = ({
   headerIconColor,
-  isCaching,
   title,
   tracksListData,
 }: {
   headerIconColor: ColorValue
-  isCaching: boolean
   title: string
   tracksListData: TracksListData
 }) => {
@@ -37,7 +35,6 @@ export const usePlaylistNavigationOptions = ({
     navigation.setOptions({
       headerRight: () => (
         <PlaylistCacheMenu
-          disabled={isCaching}
           playlistTitle={title}
           tracksData={tracksListData}
           iconColor={headerIconColor}
@@ -48,5 +45,5 @@ export const usePlaylistNavigationOptions = ({
     return () => {
       navigation.setOptions({ headerRight: undefined })
     }
-  }, [navigation, isCaching, title, tracksListData, headerIconColor])
+  }, [navigation, title, tracksListData, headerIconColor])
 }

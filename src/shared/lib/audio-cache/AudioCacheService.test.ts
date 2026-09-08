@@ -1,5 +1,6 @@
 import { type Directory, File } from 'expo-file-system'
 import { _resetInflightCacheForTesting, audioCacheService } from './AudioCacheService'
+import { CacheCancelledError } from './CacheCancelledError'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 
 jest.mock('expo-file-system', () => ({
@@ -31,7 +32,7 @@ jest.mock('@react-native-community/netinfo', () => ({
 // Skip real backoff delays between download retries — retries stay instant in tests
 jest.mock('./downloadRetryPolicy', () => ({
   ...jest.requireActual('./downloadRetryPolicy'),
-  sleep: jest.fn().mockResolvedValue(undefined),
+  sleepAbortable: jest.fn().mockResolvedValue(undefined),
 }))
 
 const mockFileState = { exists: false }
@@ -222,6 +223,30 @@ describe('AudioCacheService', () => {
           'file://cache/',
         )
       })
+    })
+  })
+
+  describe('cancelAudioDownload', () => {
+    test('returns false when nothing is inflight', () => {
+      expect(audioCacheService.cancelAudioDownload(EXAMPLE_URL)).toBe(false)
+    })
+
+    test('rejects the inflight promise for the creator and a joiner', async () => {
+      mockFileState.exists = false
+      ;(File.downloadFileAsync as jest.Mock).mockImplementation(
+        (_url: string, _file: unknown, opts: { signal: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            opts.signal.addEventListener('abort', () => reject(new Error('Aborted')))
+          }),
+      )
+
+      const creatorPromise = audioCacheService.cacheAudio(EXAMPLE_URL)
+      const joinerPromise = audioCacheService.cacheAudio(EXAMPLE_URL)
+
+      expect(audioCacheService.cancelAudioDownload(EXAMPLE_URL)).toBe(true)
+
+      await expect(creatorPromise).rejects.toBeInstanceOf(CacheCancelledError)
+      await expect(joinerPromise).rejects.toBeInstanceOf(CacheCancelledError)
     })
   })
 

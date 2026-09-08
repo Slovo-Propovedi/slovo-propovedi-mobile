@@ -1,11 +1,10 @@
 import { createCtx, type Ctx } from '@reatom/framework'
-import { incrementCacheTrigger, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
+import { enqueueCache } from 'shared/lib/audio-cache'
+import { CacheCancelledError } from 'shared/lib/audio-cache/CacheCancelledError'
+import { incrementCacheTrigger } from 'shared/lib/cache-triggers'
 import { reportError } from 'shared/model/error-dialog'
 import { downloadingAudioUrlAtom, downloadProgressAtom, isDownloadingAtom } from '../download-model'
-import {
-  _resetInFlightDownloadsForTesting,
-  startBackgroundCaching,
-} from './BackgroundCachingService'
+import { startBackgroundCaching } from './BackgroundCachingService'
 
 const TEST_URL = 'https://example.com/audio.mp3'
 const SECOND_URL = 'https://example.com/audio2.mp3'
@@ -20,19 +19,15 @@ jest.mock('shared/lib/reatom-ctx', () => ({
   },
 }))
 
-const mockCacheAudio = jest.fn<Promise<string>, [string, ((progress: number) => void)?]>()
-
 jest.mock('shared/lib/audio-cache', () => ({
-  audioCacheService: {
-    cacheAudio: (...args: Parameters<typeof mockCacheAudio>) => mockCacheAudio(...args),
-  },
+  enqueueCache: jest.fn(),
+  isCacheCancelledError: jest.requireActual('shared/lib/audio-cache/CacheCancelledError')
+    .isCacheCancelledError,
 }))
 
 jest.mock('shared/model/error-dialog', () => ({
   reportError: jest.fn(),
 }))
-
-const mockReportError = jest.mocked(reportError)
 
 jest.mock('shared/lib/cache-triggers', () => {
   const actual = jest.requireActual('shared/lib/cache-triggers')
@@ -42,16 +37,44 @@ jest.mock('shared/lib/cache-triggers', () => {
   }
 })
 
+const mockEnqueueCache = jest.mocked(enqueueCache)
+const mockReportError = jest.mocked(reportError)
 const mockIncrementCacheTrigger = jest.mocked(incrementCacheTrigger)
 
 const flushPromises = () => new Promise<void>(resolve => setImmediate(resolve))
+
+interface ControlledEnqueue {
+  onProgress?: (progress: number) => void
+  reject: (error: unknown) => void
+  resolve: (value: string) => void
+}
+
+const createControlledEnqueue = (): ControlledEnqueue => {
+  let resolve!: (value: string) => void
+  let reject!: (error: unknown) => void
+  const controlled: ControlledEnqueue = {
+    onProgress: undefined,
+    reject: error => reject(error),
+    resolve: value => resolve(value),
+  }
+  mockEnqueueCache.mockImplementation(
+    (_ctx, _url, _source, onProgress?: (progress: number) => void) => {
+      controlled.onProgress = onProgress
+      return new Promise<string>((res, rej) => {
+        resolve = res
+        reject = rej
+      })
+    },
+  )
+  return controlled
+}
 
 describe('BackgroundCachingService', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockCtx = createCtx()
-    _resetInFlightDownloadsForTesting()
     jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -59,9 +82,9 @@ describe('BackgroundCachingService', () => {
   })
 
   describe('empty audioUrl guard', () => {
-    test('returns early without calling cacheAudio', () => {
+    test('returns early without calling enqueueCache', () => {
       startBackgroundCaching('')
-      expect(mockCacheAudio).not.toHaveBeenCalled()
+      expect(mockEnqueueCache).not.toHaveBeenCalled()
     })
 
     test('does not set downloading state for empty url', () => {
@@ -71,49 +94,68 @@ describe('BackgroundCachingService', () => {
     })
   })
 
-  describe('progress updates', () => {
-    test('updates both atoms when onProgress is called', () => {
-      let onProgressCb: ((progress: number) => void) | undefined
-      mockCacheAudio.mockImplementation((_url: string, onProgress?: (progress: number) => void) => {
-        onProgressCb = onProgress
-        return new Promise<string>(() => {})
-      })
+  describe('lazy global atom writes (M5)', () => {
+    test('does not write global atoms at enqueue time', () => {
+      mockEnqueueCache.mockReturnValue(new Promise<string>(() => {}))
 
       startBackgroundCaching(TEST_URL)
-      onProgressCb?.(0.5)
 
-      expect(mockCtx.get(downloadProgressAtom)).toBe(0.5)
-      expect(mockCtx.get(playlistDownloadProgressAtom)).toEqual({ [TEST_URL]: 0.5 })
+      expect(mockCtx.get(isDownloadingAtom)).toBe(false)
+      expect(mockCtx.get(downloadingAudioUrlAtom)).toBeNull()
+      expect(mockCtx.get(downloadProgressAtom)).toBe(0)
     })
 
-    test('tracks initial progress as 0', () => {
-      mockCacheAudio.mockReturnValue(new Promise<string>(() => {}))
+    test('claims the downloader state on the first progress tick', () => {
+      const controlled = createControlledEnqueue()
+
       startBackgroundCaching(TEST_URL)
-      expect(mockCtx.get(playlistDownloadProgressAtom)).toEqual({ [TEST_URL]: 0 })
+      controlled.onProgress?.(0.5)
+
+      expect(mockCtx.get(isDownloadingAtom)).toBe(true)
+      expect(mockCtx.get(downloadingAudioUrlAtom)).toBe(TEST_URL)
+      expect(mockCtx.get(downloadProgressAtom)).toBe(0.5)
+    })
+  })
+
+  describe('progress updates', () => {
+    test('updates global progress on every tick', () => {
+      const controlled = createControlledEnqueue()
+
+      startBackgroundCaching(TEST_URL)
+      controlled.onProgress?.(0.25)
+      controlled.onProgress?.(0.75)
+
+      expect(mockCtx.get(downloadProgressAtom)).toBe(0.75)
+    })
+
+    test('calls enqueueCache with the auto source and a progress callback', () => {
+      mockEnqueueCache.mockReturnValue(new Promise<string>(() => {}))
+
+      startBackgroundCaching(TEST_URL)
+
+      expect(mockEnqueueCache).toHaveBeenCalledWith(mockCtx, TEST_URL, 'auto', expect.any(Function))
     })
   })
 
   describe('cleanup on success', () => {
-    test('removes per-track key and calls incrementCacheTrigger', async () => {
-      mockCacheAudio.mockResolvedValue(CACHED_URI)
+    test('calls incrementCacheTrigger and sets progress to 1', async () => {
+      const controlled = createControlledEnqueue()
+
       startBackgroundCaching(TEST_URL)
+      controlled.onProgress?.(0.5)
+      controlled.resolve(CACHED_URI)
       await flushPromises()
 
-      expect(mockCtx.get(playlistDownloadProgressAtom)).not.toHaveProperty(TEST_URL)
       expect(mockIncrementCacheTrigger).toHaveBeenCalledTimes(1)
-    })
-
-    test('sets downloadProgressAtom to 1 after completion', async () => {
-      mockCacheAudio.mockResolvedValue(CACHED_URI)
-      startBackgroundCaching(TEST_URL)
-      await flushPromises()
-
       expect(mockCtx.get(downloadProgressAtom)).toBe(1)
     })
 
     test('resets global downloading state after success', async () => {
-      mockCacheAudio.mockResolvedValue(CACHED_URI)
+      const controlled = createControlledEnqueue()
+
       startBackgroundCaching(TEST_URL)
+      controlled.onProgress?.(0.5)
+      controlled.resolve(CACHED_URI)
       await flushPromises()
 
       expect(mockCtx.get(isDownloadingAtom)).toBe(false)
@@ -122,263 +164,98 @@ describe('BackgroundCachingService', () => {
   })
 
   describe('cleanup on error', () => {
-    test('removes per-track key without calling incrementCacheTrigger', async () => {
-      mockCacheAudio.mockRejectedValue(DOWNLOAD_ERROR)
+    test('does not call incrementCacheTrigger and resets global state', async () => {
+      const controlled = createControlledEnqueue()
+
       startBackgroundCaching(TEST_URL)
+      controlled.onProgress?.(0.5)
+      controlled.reject(DOWNLOAD_ERROR)
       await flushPromises()
 
-      expect(mockCtx.get(playlistDownloadProgressAtom)).not.toHaveProperty(TEST_URL)
       expect(mockIncrementCacheTrigger).not.toHaveBeenCalled()
-    })
-
-    test('resets global downloading state after error', async () => {
-      mockCacheAudio.mockRejectedValue(DOWNLOAD_ERROR)
-      startBackgroundCaching(TEST_URL)
-      await flushPromises()
-
       expect(mockCtx.get(isDownloadingAtom)).toBe(false)
       expect(mockCtx.get(downloadingAudioUrlAtom)).toBeNull()
     })
 
     test('does NOT open global error dialog on download failure (Issue #73)', async () => {
-      mockCacheAudio.mockRejectedValue(DOWNLOAD_ERROR)
+      const controlled = createControlledEnqueue()
+
       startBackgroundCaching(TEST_URL)
+      controlled.reject(DOWNLOAD_ERROR)
       await flushPromises()
 
       expect(mockReportError).not.toHaveBeenCalled()
     })
+
+    test('logs a cancelled download with console.warn, not error', async () => {
+      const controlled = createControlledEnqueue()
+      const warnSpy = jest.spyOn(console, 'warn')
+
+      startBackgroundCaching(TEST_URL)
+      controlled.reject(new CacheCancelledError(TEST_URL))
+      await flushPromises()
+
+      expect(warnSpy).toHaveBeenCalled()
+      expect(console.error).not.toHaveBeenCalled()
+    })
   })
 
-  describe('incrementCacheTrigger fires on success only', () => {
-    test('called in .then but not in .catch', async () => {
-      mockCacheAudio.mockResolvedValue(CACHED_URI)
+  describe('queue delegation', () => {
+    test('calls enqueueCache for every start (dedup is the queue job)', () => {
+      mockEnqueueCache.mockReturnValue(new Promise<string>(() => {}))
+
       startBackgroundCaching(TEST_URL)
-      await flushPromises()
-      expect(mockIncrementCacheTrigger).toHaveBeenCalledTimes(1)
+      startBackgroundCaching(TEST_URL)
 
-      mockIncrementCacheTrigger.mockClear()
+      expect(mockEnqueueCache).toHaveBeenCalledTimes(2)
+    })
 
-      mockCacheAudio.mockRejectedValue(new Error('fail'))
+    test('enqueues different URLs (the queue serializes them)', () => {
+      mockEnqueueCache.mockReturnValue(new Promise<string>(() => {}))
+
+      startBackgroundCaching(TEST_URL)
       startBackgroundCaching(SECOND_URL)
-      await flushPromises()
-      expect(mockIncrementCacheTrigger).not.toHaveBeenCalled()
+
+      expect(mockEnqueueCache).toHaveBeenCalledTimes(2)
     })
   })
 
-  describe('race condition guard', () => {
-    test('does not reset global state when downloadingAudioUrlAtom was overwritten', async () => {
-      const resolveRef = { current: null as ((value: string) => void) | null }
-      const firstPromise = new Promise<string>(r => {
-        resolveRef.current = r
-      })
-      mockCacheAudio.mockReturnValueOnce(firstPromise)
+  describe('stale completion guard', () => {
+    test('does not clobber a newer downloader when the old download settles', async () => {
+      const controlled = createControlledEnqueue()
 
       startBackgroundCaching(TEST_URL)
-      expect(mockCtx.get(isDownloadingAtom)).toBe(true)
-      expect(mockCtx.get(downloadingAudioUrlAtom)).toBe(TEST_URL)
-
-      // Simulate second download overwriting the URL
-      downloadingAudioUrlAtom(mockCtx, SECOND_URL)
-
-      // Simulate second download having its own progress
-      downloadProgressAtom(mockCtx, 0.5)
-
-      // First download completes
-      resolveRef.current?.(CACHED_URI)
-      await flushPromises()
-
-      // Global state should NOT be cleared because we're no longer the active downloader
-      expect(mockCtx.get(isDownloadingAtom)).toBe(true)
-      expect(mockCtx.get(downloadingAudioUrlAtom)).toBe(SECOND_URL)
-      // Progress should NOT be clobbered to 0 — second download is still active
-      expect(mockCtx.get(downloadProgressAtom)).toBe(0.5)
-    })
-
-    test('late ticks and stale completion of old download do not clobber active download state', async () => {
-      const resolveRef = { current: null as ((value: string) => void) | null }
-      let onProgressCbA: ((progress: number) => void) | undefined
-      mockCacheAudio.mockImplementationOnce(
-        (_url: string, onProgress?: (progress: number) => void) => {
-          onProgressCbA = onProgress
-          return new Promise<string>(r => {
-            resolveRef.current = r
-          })
-        },
-      )
-
-      // Start download A, advance it
-      startBackgroundCaching(TEST_URL)
-      onProgressCbA?.(0.4)
+      controlled.onProgress?.(0.4)
       expect(mockCtx.get(downloadProgressAtom)).toBe(0.4)
 
-      // Switch to download B (as startBackgroundCaching(B) would do)
+      // A newer downloader claims the global state.
       downloadingAudioUrlAtom(mockCtx, SECOND_URL)
       downloadProgressAtom(mockCtx, 0.7)
 
-      // Late progress ticks from A — must NOT clobber global progress
-      onProgressCbA?.(0.8)
-      onProgressCbA?.(1.0)
-      expect(mockCtx.get(downloadProgressAtom)).toBe(0.7)
-      // Per-URL record for A is still updated (track-list shows old track's bar)
-      expect(mockCtx.get(playlistDownloadProgressAtom)[TEST_URL]).toBe(1.0)
-
-      // Resolve A's download — .then fires incrementCacheTrigger + removeTrackDownloadProgress,
-      // .finally skips global state reset because downloadingAudioUrlAtom !== A
-      resolveRef.current?.(CACHED_URI)
+      // The old download completes — must not clobber the newer downloader.
+      controlled.resolve(CACHED_URI)
       await flushPromises()
 
-      // incrementCacheTrigger DID fire (successful background cache, by design)
       expect(mockIncrementCacheTrigger).toHaveBeenCalledTimes(1)
-      // Per-URL record for A was cleaned up
-      expect(mockCtx.get(playlistDownloadProgressAtom)).not.toHaveProperty(TEST_URL)
-      // Global state still belongs to B — stale completion did not clobber it
       expect(mockCtx.get(downloadProgressAtom)).toBe(0.7)
       expect(mockCtx.get(downloadingAudioUrlAtom)).toBe(SECOND_URL)
       expect(mockCtx.get(isDownloadingAtom)).toBe(true)
     })
 
-    test('resets global state when still the active downloader', async () => {
-      mockCacheAudio.mockResolvedValue(CACHED_URI)
-      startBackgroundCaching(TEST_URL)
-      await flushPromises()
-
-      expect(mockCtx.get(isDownloadingAtom)).toBe(false)
-      expect(mockCtx.get(downloadingAudioUrlAtom)).toBeNull()
-    })
-  })
-
-  describe('setting downloading state on start', () => {
-    test('sets atoms before calling cacheAudio', () => {
-      mockCacheAudio.mockReturnValue(new Promise<string>(() => {}))
-      startBackgroundCaching(TEST_URL)
-
-      expect(mockCtx.get(isDownloadingAtom)).toBe(true)
-      expect(mockCtx.get(downloadingAudioUrlAtom)).toBe(TEST_URL)
-      expect(mockCtx.get(downloadProgressAtom)).toBe(0)
-      expect(mockCtx.get(playlistDownloadProgressAtom)).toEqual({ [TEST_URL]: 0 })
-    })
-  })
-
-  describe('single-flight guard', () => {
-    test('second startBackgroundCaching with same URL does not call cacheAudio again', () => {
-      mockCacheAudio.mockReturnValue(new Promise<string>(() => {}))
+    test('late ticks after the downloader switched do not clobber global progress', () => {
+      const controlled = createControlledEnqueue()
 
       startBackgroundCaching(TEST_URL)
-      startBackgroundCaching(TEST_URL)
-
-      expect(mockCacheAudio).toHaveBeenCalledTimes(1)
-    })
-
-    test('allows same URL again after first download completes', async () => {
-      mockCacheAudio.mockResolvedValue(CACHED_URI)
-      startBackgroundCaching(TEST_URL)
-      await flushPromises()
-
-      mockCacheAudio.mockClear()
-      mockCacheAudio.mockReturnValue(new Promise<string>(() => {}))
-      startBackgroundCaching(TEST_URL)
-
-      expect(mockCacheAudio).toHaveBeenCalledTimes(1)
-    })
-
-    test('allows different URLs concurrently', () => {
-      mockCacheAudio.mockReturnValue(new Promise<string>(() => {}))
-
-      startBackgroundCaching(TEST_URL)
-      startBackgroundCaching(SECOND_URL)
-
-      expect(mockCacheAudio).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  describe('atom adoption for in-flight URL', () => {
-    test('adopts atoms and seeds progress when URL already in-flight', () => {
-      let onProgressCb: ((progress: number) => void) | undefined
-      mockCacheAudio.mockImplementation((_url: string, onProgress?: (progress: number) => void) => {
-        onProgressCb = onProgress
-        return new Promise<string>(() => {})
-      })
-
-      startBackgroundCaching(TEST_URL)
-      onProgressCb?.(0.4)
-
-      // Simulate user switching away (atoms overwritten by another download)
-      downloadingAudioUrlAtom(mockCtx, SECOND_URL)
-      downloadProgressAtom(mockCtx, 0.7)
-
-      // Re-enter same URL — should adopt atoms, not no-op
-      startBackgroundCaching(TEST_URL)
-
-      expect(mockCtx.get(downloadingAudioUrlAtom)).toBe(TEST_URL)
-      expect(mockCtx.get(isDownloadingAtom)).toBe(true)
-      // Progress seeded from playlistDownloadProgressAtom (0.4)
-      expect(mockCtx.get(downloadProgressAtom)).toBe(0.4)
-      // cacheAudio NOT called twice
-      expect(mockCacheAudio).toHaveBeenCalledTimes(1)
-    })
-
-    test('adopts atoms with 0 when no prior progress recorded', () => {
-      mockCacheAudio.mockReturnValue(new Promise<string>(() => {}))
-
-      startBackgroundCaching(TEST_URL)
-      downloadingAudioUrlAtom(mockCtx, SECOND_URL)
-      downloadProgressAtom(mockCtx, 0.7)
-
-      startBackgroundCaching(TEST_URL)
-
-      expect(mockCtx.get(downloadingAudioUrlAtom)).toBe(TEST_URL)
-      expect(mockCtx.get(downloadProgressAtom)).toBe(0)
-      expect(mockCacheAudio).toHaveBeenCalledTimes(1)
-    })
-
-    test('adoption followed by download settle resets terminal state', async () => {
-      const resolveRef = { current: null as ((value: string) => void) | null }
-      let onProgressCb: ((progress: number) => void) | undefined
-      mockCacheAudio.mockImplementationOnce(
-        (_url: string, onProgress?: (progress: number) => void) => {
-          onProgressCb = onProgress
-          return new Promise<string>(r => {
-            resolveRef.current = r
-          })
-        },
-      )
-
-      // Start download A, advance it
-      startBackgroundCaching(TEST_URL)
-      onProgressCb?.(0.4)
-
-      // Adoption — re-enter same URL while still in-flight
-      startBackgroundCaching(TEST_URL)
-
-      // Resolve the download
-      resolveRef.current?.(CACHED_URI)
-      await flushPromises()
-
-      // Terminal state must be fully reset
-      expect(mockCtx.get(isDownloadingAtom)).toBe(false)
-      expect(mockCtx.get(downloadingAudioUrlAtom)).toBeNull()
-      expect(mockCtx.get(downloadProgressAtom)).toBe(1)
-    })
-
-    test('late ticks after adoption update global progress', () => {
-      let onProgressCb: ((progress: number) => void) | undefined
-      mockCacheAudio.mockImplementation((_url: string, onProgress?: (progress: number) => void) => {
-        onProgressCb = onProgress
-        return new Promise<string>(() => {})
-      })
-
-      startBackgroundCaching(TEST_URL)
-      onProgressCb?.(0.4)
+      controlled.onProgress?.(0.4)
 
       downloadingAudioUrlAtom(mockCtx, SECOND_URL)
       downloadProgressAtom(mockCtx, 0.7)
 
-      startBackgroundCaching(TEST_URL)
-      expect(mockCtx.get(downloadProgressAtom)).toBe(0.4)
+      controlled.onProgress?.(0.8)
+      controlled.onProgress?.(1.0)
 
-      // Late tick from the still-running download — now writes global progress
-      onProgressCb?.(0.6)
-      expect(mockCtx.get(downloadProgressAtom)).toBe(0.6)
+      expect(mockCtx.get(downloadProgressAtom)).toBe(0.7)
+      expect(mockCtx.get(downloadingAudioUrlAtom)).toBe(SECOND_URL)
     })
   })
 })

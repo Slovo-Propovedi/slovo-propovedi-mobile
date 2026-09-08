@@ -40,6 +40,7 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
     showPlaylist,
     startSeek,
     stopSeek,
+    visualState,
   } = useFullscreenHandlers()
 
   const handleCollapsePress = () => {
@@ -110,6 +111,7 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
           stopSeek={stopSeek}
           startSeek={startSeek}
           setShowMenu={setShowMenu}
+          visualState={visualState}
           onToggleCache={handleToggleCache}
           onOpenPlaylist={handleOpenPlaylist}
           onShowDetails={() => setShowDetails(true)}

@@ -3,6 +3,7 @@ import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
 import type { PlaybackRate } from 'entities/player'
+import type { TrackCacheVisualState } from 'shared/lib/audio-cache'
 import type { TestInstance } from 'test-renderer'
 import { PlayerMenu } from './PlayerMenu'
 import { PlayerMenuItems } from './PlayerMenuItems'
@@ -15,6 +16,8 @@ const mockSetPlaybackRate = jest.fn().mockResolvedValue(undefined)
 const mockOnShowSpeed = jest.fn()
 const mockOnSelect = jest.fn()
 const mockOnBack = jest.fn()
+
+const CLOUD_STATE: TrackCacheVisualState = 'cloud'
 
 jest.mock('entities/player', () => ({
   PLAYBACK_RATES: [0.75, 1, 1.25, 1.5, 2],
@@ -44,6 +47,7 @@ describe('<PlayerMenu>', () => {
     const { toJSON } = await renderWithProviders(
       <PlayerMenu
         onClose={mockOnClose}
+        visualState={CLOUD_STATE}
         onShowDetails={mockOnShowDetails}
         onToggleCache={mockOnToggleCache}
       />,
@@ -55,6 +59,7 @@ describe('<PlayerMenu>', () => {
     const { container, getByText } = await renderWithProviders(
       <PlayerMenu
         onClose={mockOnClose}
+        visualState={CLOUD_STATE}
         onShowDetails={mockOnShowDetails}
         onToggleCache={mockOnToggleCache}
       />,
@@ -91,6 +96,7 @@ describe('<PlayerMenuItems>', () => {
     const { getByText } = await renderWithProviders(
       <PlayerMenuItems
         rate={1}
+        visualState={CLOUD_STATE}
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
@@ -104,6 +110,7 @@ describe('<PlayerMenuItems>', () => {
     const { getByText } = await renderWithProviders(
       <PlayerMenuItems
         rate={1.5}
+        visualState={CLOUD_STATE}
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
@@ -116,6 +123,7 @@ describe('<PlayerMenuItems>', () => {
     const { getByRole } = await renderWithProviders(
       <PlayerMenuItems
         rate={1}
+        visualState={CLOUD_STATE}
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
@@ -129,6 +137,7 @@ describe('<PlayerMenuItems>', () => {
     const { getByText } = await renderWithProviders(
       <PlayerMenuItems
         rate={1}
+        visualState={CLOUD_STATE}
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
@@ -142,6 +151,7 @@ describe('<PlayerMenuItems>', () => {
     const { ctx, getByText } = await renderWithProviders(
       <PlayerMenuItems
         rate={1}
+        visualState={CLOUD_STATE}
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
@@ -159,6 +169,7 @@ describe('<PlayerMenuItems>', () => {
       <PlayerMenuItems
         rate={1}
         isCached
+        visualState='cached'
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
@@ -168,6 +179,49 @@ describe('<PlayerMenuItems>', () => {
       isOnlineAtom(ctx, false)
     })
     fireEvent.press(getByText('Удалить из кеша'))
+    expect(mockOnToggleCache).toHaveBeenCalledTimes(1)
+  })
+
+  test('shows stop caching label when downloading', async () => {
+    const { getByText } = await renderWithProviders(
+      <PlayerMenuItems
+        rate={1}
+        visualState='downloading'
+        onDetails={mockOnShowDetails}
+        onShowSpeed={mockOnShowSpeed}
+        onToggleCache={mockOnToggleCache}
+      />,
+    )
+    expect(getByText('Остановить кеширование')).toBeTruthy()
+  })
+
+  test('shows remove from queue label when queued', async () => {
+    const { getByText } = await renderWithProviders(
+      <PlayerMenuItems
+        rate={1}
+        visualState='queued'
+        onDetails={mockOnShowDetails}
+        onShowSpeed={mockOnShowSpeed}
+        onToggleCache={mockOnToggleCache}
+      />,
+    )
+    expect(getByText('Убрать из очереди')).toBeTruthy()
+  })
+
+  test('stop caching stays enabled when offline', async () => {
+    const { ctx, getByText } = await renderWithProviders(
+      <PlayerMenuItems
+        rate={1}
+        visualState='downloading'
+        onDetails={mockOnShowDetails}
+        onShowSpeed={mockOnShowSpeed}
+        onToggleCache={mockOnToggleCache}
+      />,
+    )
+    await act(async () => {
+      isOnlineAtom(ctx, false)
+    })
+    fireEvent.press(getByText('Остановить кеширование'))
     expect(mockOnToggleCache).toHaveBeenCalledTimes(1)
   })
 })

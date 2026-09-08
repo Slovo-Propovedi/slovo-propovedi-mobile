@@ -7,10 +7,12 @@ export interface PlaylistCacheMenuDropdownProps {
   allCached: boolean
   anchor: AnchorRect | null
   isCacheAllDisabled: boolean
+  isCaching: boolean
   isClearCacheDisabled?: boolean
   onCacheAll: () => void
   onClearCache: () => void
   onClose: () => void
+  onStopCaching: () => void
   visible: boolean
 }
 
@@ -18,10 +20,12 @@ export const PlaylistCacheMenuDropdown = ({
   allCached,
   anchor,
   isCacheAllDisabled,
+  isCaching,
   isClearCacheDisabled = false,
   onCacheAll,
   onClearCache,
   onClose,
+  onStopCaching,
   visible,
 }: PlaylistCacheMenuDropdownProps) => {
   const { currentTheme } = useTheme()
@@ -33,12 +37,20 @@ export const PlaylistCacheMenuDropdown = ({
       onClose={onClose}
       menuStyle={[styles.dropdown, { backgroundColor: currentTheme.surface }]}
     >
-      <PlaylistCacheMenuItem
-        onPress={onCacheAll}
-        isDisabled={isCacheAllDisabled}
-        icon={allCached ? 'check-circle-outline' : 'download-outline'}
-        text={allCached ? 'Плейлист закеширован' : 'Закешировать все'}
-      />
+      {isCaching ? (
+        <PlaylistCacheMenuItem
+          onPress={onStopCaching}
+          icon='stop-circle-outline'
+          text='Остановить кеширование'
+        />
+      ) : (
+        <PlaylistCacheMenuItem
+          onPress={onCacheAll}
+          isDisabled={isCacheAllDisabled}
+          icon={allCached ? 'check-circle-outline' : 'download-outline'}
+          text={allCached ? 'Плейлист закеширован' : 'Закешировать все'}
+        />
+      )}
 
       <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
 

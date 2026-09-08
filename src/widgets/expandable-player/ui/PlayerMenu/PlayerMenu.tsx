@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { type PlaybackRate, usePlaybackRate } from 'entities/player'
+import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
 import { reportError } from 'shared/model/error-dialog'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './PlayerMenu.styles'
@@ -18,6 +19,7 @@ interface PlayerMenuProps {
   onClose: () => void
   onShowDetails: () => void
   onToggleCache: () => void
+  visualState: TrackCacheVisualState
 }
 
 export const PlayerMenu = ({
@@ -25,6 +27,7 @@ export const PlayerMenu = ({
   onClose,
   onShowDetails,
   onToggleCache,
+  visualState,
 }: PlayerMenuProps) => {
   const { currentTheme } = useTheme()
   const { rate, setPlaybackRate } = usePlaybackRate()
@@ -93,6 +96,7 @@ export const PlayerMenu = ({
             <PlayerMenuItems
               rate={rate}
               isCached={isCached}
+              visualState={visualState}
               onDetails={handleDetailsPress}
               onToggleCache={handleToggleCache}
               onShowSpeed={() => setView('speed')}

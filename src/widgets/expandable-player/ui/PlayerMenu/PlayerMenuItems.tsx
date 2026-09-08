@@ -1,5 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { Pressable, Text } from 'react-native'
+import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
 import { formatPlaybackRate } from 'shared/lib/player'
 import { isOnlineAtom } from 'shared/model'
 import { useTheme } from 'shared/ui/theme'
@@ -12,6 +13,20 @@ interface PlayerMenuItemsProps {
   onShowSpeed: () => void
   onToggleCache: () => void
   rate: PlaybackRate
+  visualState: TrackCacheVisualState
+}
+
+const CACHE_ACTION_LABELS: Record<TrackCacheVisualState, string> = {
+  cached: 'Удалить из кеша',
+  cloud: 'Добавить в кеш',
+  downloading: 'Остановить кеширование',
+  playing: 'Добавить в кеш',
+  queued: 'Убрать из очереди',
+}
+
+const getCacheActionLabel = (visualState: TrackCacheVisualState, isCached: boolean): string => {
+  if (visualState === 'playing') return isCached ? 'Удалить из кеша' : 'Добавить в кеш'
+  return CACHE_ACTION_LABELS[visualState]
 }
 
 export const PlayerMenuItems = ({
@@ -20,10 +35,13 @@ export const PlayerMenuItems = ({
   onShowSpeed,
   onToggleCache,
   rate,
+  visualState,
 }: PlayerMenuItemsProps) => {
   const { currentTheme } = useTheme()
   const [isOnline] = useAtom(isOnlineAtom)
-  const isCacheDisabled = !isOnline && !isCached
+  // Stop/remove-from-queue actions must stay enabled; only the cloud branch
+  // (starting a download) is disabled while offline.
+  const isCacheDisabled = !isOnline && !isCached && visualState === 'cloud'
 
   return (
     <>
@@ -42,7 +60,7 @@ export const PlayerMenuItems = ({
             { color: isCacheDisabled ? currentTheme.textMuted : currentTheme.text },
           ]}
         >
-          {isCached ? 'Удалить из кеша' : 'Добавить в кеш'}
+          {getCacheActionLabel(visualState, isCached ?? false)}
         </Text>
       </Pressable>
       <Pressable

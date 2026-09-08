@@ -2,7 +2,9 @@ import { StyleSheet } from 'react-native'
 import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 // Horizontal inset so the pill never slides under the 40×40 close button
-// (expandedControlsStyles.closeButton: left: INDENTS.medium, width: 40).
+// (expandedControlsStyles.closeButton: left: INDENTS.medium, width: 40) or the
+// symmetric 40×40 stop-all button (expandedControlsStyles.stopAllButton:
+// right: INDENTS.medium, width: 40).
 const CLOSE_BUTTON_SAFE_AREA = INDENTS.medium + 40 + INDENTS.medium
 
 export const expandedTrackStyles = StyleSheet.create({

@@ -11,7 +11,8 @@
 - **Методы:**
   - `getCachedUri(audioUrl)` — URI закэшированного файла или `null`;
   - `isCached(audioUrl)` — boolean;
-  - `cacheAudio(audioUrl, onProgress?)` — скачивание через `File.downloadFileAsync` (expo-file-system), `idempotent: true`, с ретраями и защитой от зависания (см. «Повторы и защита от зависания» ниже). Метод single-flight для всех вызывающих кодов: повторные вызовы с тем же URL возвращают общий промис (дублирующая скачка не запускается). При повторном вызове с `onProgress` — callback регистрируется в live-сете и получает текущий прогресс (retroactive seed) + все последующие тики через fan-out emitter. Файлы скачиваются во временное имя `<hash>.mp3.part`; при успешном завершении файл атомарно переименовывается в `<hash>.mp3` (`File.rename()`). Частично скачанные файлы (`.part`) никогда не распознаются как закэшированные (`getCachedUri`, `isCached` проверяют только финальный файл), что исключает воспроизведение обрезанных данных. При окончательной неудаче всех попыток `.part`-файл удаляется. Прогресс передаётся через `onProgress` callback expo-file-system (`{ bytesWritten, totalBytes }`), конвертируется в дробь 0..1 с троттлингом ≥0.01. При отсутствии `Content-Length` (`totalBytes ≤ 0`) прогресс не обновляется (chunked transfer).
+  - `cacheAudio(audioUrl, onProgress?, signal?)` — скачивание через `File.downloadFileAsync` (expo-file-system), `idempotent: true`, с ретраями и защитой от зависания (см. «Повторы и защита от зависания» ниже). Метод single-flight для всех вызывающих кодов: повторные вызовы с тем же URL возвращают общий промис (дублирующая скачка не запускается). При повторном вызове с `onProgress` — callback регистрируется в live-сете и получает текущий прогресс (retroactive seed) + все последующие тики через fan-out emitter (`inflightDownload.ts`). Третий аргумент `signal` (AbortSignal) — внешняя отмена (мост в `abortBridge.ts`). Файлы скачиваются во временное имя `<hash>.mp3.part`; при успешном завершении файл атомарно переименовывается в `<hash>.mp3` (`File.rename()`). Частично скачанные файлы (`.part`) никогда не распознаются как закэшированные (`getCachedUri`, `isCached` проверяют только финальный файл), что исключает воспроизведение обрезанных данных. При окончательной неудаче всех попыток `.part`-файл удаляется; при **отмене** `.part`-файл тоже удаляется немедленно (см. «Отмена скачивания»). Прогресс передаётся через `onProgress` callback expo-file-system (`{ bytesWritten, totalBytes }`), конвертируется в дробь 0..1 с троттлингом ≥0.01. При отсутствии `Content-Length` (`totalBytes ≤ 0`) прогресс не обновляется (chunked transfer).
+  - `cancelAudioDownload(audioUrl)` — отменяет идущую закачку по URL: вызывает `abort()` владельца inflight-записи. Возвращает `boolean` (`false`, если закачка не идёт / уже отменена). Отмена приводит к `CacheCancelledError` (см. ниже).
   - `getCacheInfo()` — `{ fileCount, totalSize }`;
   - `clearCache()` — удалить весь каталог кэша;
   - `removeFromCache(audioUrl)` — удалить файл по URL.
@@ -57,41 +58,128 @@
 - **Ретраятся все ошибки** — RN-ошибки скачивания не надёжно раскрывают HTTP-статус; повторный 404 стоит только ~6с дополнительного времени.
 - **Прогресс** — `onProgress(0)` эмитится в начале каждой попытки (UI сбрасывает полосу между попытками).
 - **`.part`-файл** — между попытками НЕ удаляется (`idempotent: true` перезапишет его); удаляется только после окончательной неудачи всех попыток (плюс `console.error`, затем ретроу последней ошибки). Дополнительно `downloadToCache` при старте удаляет **осиротевший stale `.part`** (остался от убитого приложения посреди скачивания) — чтобы он не занимал место и не мешал перекачиванию.
+- **Отмена не ретраится** — перед каждым решением о повторе `throwIfCancelled` (`cacheDownloader.ts`) проверяет `externalSignal.aborted`; если сигнал отменён — `.part`-файл удаляется и бросается `CacheCancelledError` (см. «Отмена скачивания»). Отменённый URL никогда не перекачивается retry-циклом.
+- **Signal-aware backoff** — между повторами `downloadToCache` ждёт `waitForOnline(WAIT_ONLINE_BEFORE_RETRY_MS, externalSignal)` (проверяет `aborted` каждый poll-тик) и `sleepAbortable(RETRY_BACKOFF_DELAYS_MS[i], externalSignal)` (`downloadRetryPolicy.ts`): резолвится рано на abort, entry-check уже-aborted (не спит полную задержку), снимает abort-listener на таймауте. `throwIfCancelled` остаётся единственной точкой броска — отмена вступает в силу в пределах одного poll-тика (≤1с), а не `60с+5с`.
+
+## Глобальная очередь закачек (Issue #83)
+
+С Issue #83 **все** скачивания аудио проходят через единую глобальную serial-FIFO очередь (concurrency 1) — нового кода «просто вызвать `cacheAudio`» больше нет. Директива пользователя: **никаких параллельных закачек нигде**. Архитектура — `src/shared/lib/audio-cache/cacheQueue*.ts`.
+
+### Принцип работы
+
+- **Одна очередь, concurrency 1** — в каждый момент времени активна строго одна закачка; остальные ждут в очереди.
+- **FIFO** — порядок определяется монотонным `enqueuedAt` (счётчик `nextEnqueuedAt`), а не временем из часов — строго по порядку постановки в очередь.
+- **Источники (`CacheQueueSource`)**: `'manual'` | `'playlist'` | `'auto'` (BCS). Источник нужен для политики отмены и обходов.
+- **`cacheQueueAtom: Record<url, {source, enqueuedAt}>`** — содержит **только** URL в очереди (ещё не начавшие качаться). Когда загрузка URL стартует, запись удаляется из атома раннером (`dequeueEntry` в `cacheQueueRunner.ts`) — «часики» в строке исчезают, а активность видна через progress-атом. Смена атома триггерит реактивный UI строк (часы появляются/исчезают).
+- **`pendingPromises`** — Map «URL → deferred», резолвится URI кэшированного файла; потребитель ждёт именно свой промис (напр. плейлист ждёт каждый трек по очереди).
+- **`requesters`** — Map «URL → Set<source>» — кто ещё ждёт/качает этот URL (см. политику отмены ниже). Очищается, когда закачка оседает.
+
+### API очереди
+
+- `enqueueCache(ctx, url, source, onProgress?)` — главная точка входа. Дедуплицирует: если URL **уже в очереди** — добавляет requester/onProgress и возвращает общий промис; если **качается** (`inflightCache.has`) — присоединяется к идущей закачке (с retroactive-seed прогресса через `joinInflightDownload`); иначе ставит в очередь (`enqueueFresh`). **Не** дедуплицирует по `isCached` — закэшированный URL можно пере-поставить; UI показывает кэш-состояние, а не «часы» (см. resolver).
+- `removeFromQueue(ctx, url)` — снять URL с очереди (активную закачку не трогает), rejects промис `CacheCancelledError`.
+- `removeFromQueueBySource(ctx, source)` — снять все записи очереди с данным источником.
+- `cancelCacheDownload(ctx, url)` — **безусловная** отмена: `removeFromQueue` + `audioCacheService.cancelAudioDownload(url)` (снимает и с очереди, и с активной закачки).
+- `cancelAllCacheDownloads(ctx)` — **глобальный стоп** всех закачек (кнопка «Остановить все закачки» в правом верхнем углу полноэкранного плеера). Точный порядок: (0) если нет ни активной закачки, ни записей в очереди — ранний выход, стопперы не вызываются; (1) `invokePlaylistRunStopper()` — прерывает плейлист-прогон, чтобы он вернулся тихо (без ложного «Скачано N из N»); (2) если есть активная закачка (`activeCacheUrlAtom`) — `cancelCacheDownload(activeUrl)` (безусловно, даже с иностранными джойнерами); (3) дренаж: `removeFromQueue` для каждого URL в `cacheQueueAtom` (чистит requesters + прогресс + rejects deferred'ов `CacheCancelledError`). No-op при простое.
+- `isUrlQueued(ctx, url): boolean` — реактивная проверка (читает `cacheQueueAtom`).
+- `activeCacheUrlAtom: Atom<null | string>` — **реактивный** источник активной закачки: URL, который обрабатывает раннер очереди, или `null` при простое. UI, которому нужно отражать «идёт закачка» реактивно, подписывается на него (напр. `usePlaylistCacheMenu.isClearCacheDisabled`, `useStopAllCaching`).
+- `getCacheRequesters(url): ReadonlySet<source>` — read-only сет источников, ждущих/качающих URL.
+- `hasInflightCacheDownloads(): boolean` — есть ли хоть одна идущая закачка. **НЕ реактивен** (plain-Map). С Issue #83 реактивный источник — `activeCacheUrlAtom`; этот геттер остаётся **только press-time guard'ом** на деструктивных операциях (перепроверка на нажатии «Удалить из кеша все»), а не источником для UI.
+- `registerPlaylistRunStopper(stopper)` / `unregisterPlaylistRunStopper(stopper)` / `invokePlaylistRunStopper()` — реестр стопперов плейлист-прогонов (см. «Глобальный стоп» ниже).
+
+### Раннер (`cacheQueueRunner.ts`)
+
+`kickRunner` запускает `runQueue` (гвард `isRunnerActive` — вторая одновременная очередь не стартует). Цикл: `pickNextEntry` (минимальный `enqueuedAt`) → `processEntry` → пока очередь не пуста. В `processEntry`: URL снимается из `cacheQueueAtom` **inline** (НЕ через `removeQueueEntry` — requester'ы должны пережить снятие, чтобы отмена активной закачки видела joiners), `activeCacheUrlAtom(ctx, url)` (реактивный источник активной закачки), прогресс форвардится в зарегистрированные callbacks, загрузка через `cacheAudioWithProgress`, deferred резолвится/реджектится. В `finally`: `activeCacheUrlAtom(ctx, null)`, чистка requesters. Активная закачка отменяется через `cancelCacheDownload` → `audioCacheService.cancelAudioDownload(url)` (внутренний AbortController inflight-записи), поэтому раннер не держит собственный stop-controller. Защиты:
+
+- **Sentinel на deferreds** (`createDeferred` в `cacheQueueState.ts`): `promise.catch(() => {})` сразу после создания — rejection до привязки аwaiter не превращается в unhandled rejection.
+- **Lost-kick guard** — в `finally` раннера: запись, поставленная между последним `pickNextEntry` и `setRunnerActive(false)`, не должна «застрять» — если очередь снова непуста, раннер пере-kick'ается.
+- **Crash-guard drain** — при неожиданной ошибке раннера `drainPendingEntries` реджектит все оставшиеся promis'ы и сбрасывает атом/requesters/прогресс-колбэки — ни один аwaiter не зависнет навсегда.
+
+### Политика отмены по requesters
+
+Отмена активной закачки через run-level stop («Остановить кеширование» в плейлисте) **не трогает иностранных джойнеров**: активная закачка прерывается только если **все** её requester'ы — `'playlist'` (`isOnlyPlaylistRequester` в `PlaylistCacheService.ts`). Если к закачке присоединился `'manual'` или `'auto'` — run-level отмена его не заденет (ручной тап или авто-кэш воспроизведения не должны быть убиты остановкой плейлист-прогона).
+
+### Глобальный стоп (Issue #83)
+
+Плейлист-прогон продолжается после ухода с экрана (by design, см. [debt.md](../debt.md) L29). Чтобы остановить **всё** кеширование из любого места, в правом верхнем углу полноэкранного плеера есть кнопка «Остановить все закачки» (`HeaderOverlay` → `StopAllCachingButton` → `useStopAllCaching` → `cancelAllCacheDownloads`).
+
+**FSD-инверсия:** widgets не могут импортировать pages, поэтому семантика стопа живёт на уровне очереди (shared), а плейлист-прогон регистрирует свой стоппер в shared-реестре:
+
+- `registerPlaylistRunStopper(stopper)` / `unregisterPlaylistRunStopper(stopper)` — реестр в `cacheQueueState.ts`; `cachePlaylist` регистрирует `() => controller.abort()` сразу после создания run-контроллера и снимает его в `finally`. Удаление **по идентичности** — `finally` старого прогона никогда не снимет стоппер нового.
+- `invokePlaylistRunStopper()` — вызывает все зарегистрированные стопперы (no-op, когда их нет).
+
+`cancelAllCacheDownloads(ctx)` — точный порядок:
+1. **Guard «нет активной закачки + пустая очередь»** → ранний выход (no-op): стопперы **не** вызываются, уведомления не трогаются;
+2. `invokePlaylistRunStopper()` — прерывает run-контроллер плейлиста, цикл `runPlaylistCaching` выходит на ближайшем `if (signal.aborted) break`, и `cachePlaylist` возвращается тихо через `if (controller.signal.aborted) return` — **без** ложного уведомления «Скачано N из N»;
+3. активная закачка (`activeCacheUrlAtom`) → `cancelCacheDownload(activeUrl)` — **безусловно**, даже если у неё есть иностранные джойнеры (глобальный стоп отменяет всё);
+4. дренаж: `removeFromQueue` для каждого URL в `cacheQueueAtom` (чистит requesters + прогресс + rejects deferred'ов `CacheCancelledError`).
+
+Кнопка «Остановить все закачки» видна, когда очередь непуста **или** есть активная закачка (`useStopAllCaching`), и **всегда активна, в т.ч. офлайн** (отмена не требует сети).
+
+### Состояние очереди в UI
+
+- **Часы** (`clock-outline`, 16px, белый — та же семья/размер, что иконка облака) — URL в очереди (в `cacheQueueAtom`), загрузка ещё не началась. Прогресс-бара нет.
+- **Прогресс-бар** — загрузка идёт (URL активен).
+- Раннер удаляет запись из атома при старте загрузки, поэтому переход «часы → прогресс» реактивный без ре-рендера всего списка (точечная подписка, см. [debt.md](../debt.md)).
+- **Resolver приоритета** — `resolveCacheState` (`src/shared/lib/audio-cache/resolveCacheState.ts`) определяет визуальное состояние строки: `playing → downloading → cached → queued → cloud` (высший → низший). **Cached бьёт queued**: `enqueueCache` дедуплицирует по queued/inflight, а **не** по cached — «кешировать все» может пере-поставить уже закэшированный URL; при обоих флагах трек реально закэширован, поэтому строка показывает «кэш» (без часов), а не очередь.
+
+## Отмена скачивания (Issue #83)
+
+`CacheCancelledError` (`src/shared/lib/audio-cache/CacheCancelledError.ts`) + `isCacheCancelledError` — маркер ручной отмены (через `cancelAudioDownload`/внешний AbortSignal). Ключевые свойства:
+
+- **Отмена никогда не ретраится** — retry-цикл `downloadToCache` перед каждым решением о повторе проверяет отмену (`throwIfCancelled`); при отмене бросается `CacheCancelledError` без повторов.
+- **`.part`-файл удаляется на отмене** (натив): `throwIfCancelled` зовёт `deletePartFile(tempFile)` перед броском — не оставляет хвостов.
+- **Web удаляет незакоммиченную запись бакета** при отмене (`AudioCacheService.web.ts` → `downloadAndStoreAudio`), как и при любой неудаче.
+- **Молчаливость** — путь отмены не рассматривается как «ошибка»: ручные отмены логируются тихо/не показывают ошибку UI, run-отмена плейлиста не порождает уведомлений.
 
 ## Автоматическое кэширование при воспроизведении
 
-При старте трека `AudioLoader.getPlaybackUrl` (`src/entities/player/lib/PlayerService/AudioLoader.ts`) сначала ищет кэш; если файла нет — плеер **стримит** с сервера (`downloadFirst: false`, HTTP range requests), а параллельно `startBackgroundCaching` (`BackgroundCachingService.ts`) скачивает трек целиком в офлайн-кэш и обновляет прогресс. Дублирование скачивания одного URL блокируется: `startBackgroundCaching` проверяет модульный `Set<string>` in-flight URL; повторный вызов с тем же URL **ADOPTS** глобальные атомы (`downloadingAudioUrlAtom`, `isDownloadingAtom`) и подставляет прогресс из `playlistDownloadProgressAtom` вместо сброса в 0. Новое скачивание не запускается — original downloadToCache chain продолжает работать, а его тики через динамический guard `ctx.get(downloadingAudioUrlAtom) === audioUrl` начинают обновлять глобальный `downloadProgressAtom`. Сбой фонового кэширования обрабатывается молча (`console.error`), глобальный диалог ошибок НЕ показывается (Issue #73 — потеря сети при подключении к автомобилю через Bluetooth / переключение сети); воспроизведение не затрагивается (стриминг), а при следующем запуске того же трека кэширование запускается заново.
+При старте трека `AudioLoader.getPlaybackUrl` (`src/entities/player/lib/PlayerService/AudioLoader.ts`) сначала ищет кэш; если файла нет — плеер **стримит** с сервера (`downloadFirst: false`, HTTP range requests), а параллельно `startBackgroundCaching` (`BackgroundCachingService.ts`) ставит трек в глобальную очередь (`enqueueCache(ctx, url, 'auto', onProgress)`) для скачивания в офлайн-кэш. Дублирование скачивания одного URL блокируется самой очередью (dedup по queued/inflight). Глобальные атомы (`downloadingAudioUrlAtom`, `isDownloadingAtom`, `downloadProgressAtom`) пишутся **лениво** — только на первом progress-тике (`claimed`-флаг владельца): сама постановка в очередь НЕ «захватывает» downloader-состояние, пока URL ждёт своей очереди. Поздний stale-тик (после того как более новый downloader уже захватил состояние) не крадёт его обратно и не пишет прогресс (guard `ctx.get(downloadingAudioUrlAtom) === audioUrl` на каждую запись). При отмене — `console.warn('[BackgroundCaching] Caching cancelled:', …)`; сбой фонового кэширования обрабатывается молча (`console.error`), глобальный диалог ошибок НЕ показывается (Issue #73); воспроизведение не затрагивается (стриминг), а при следующем запуске того же трека кэширование ставится в очередь заново. Прежний модульный `Set` in-flight URL и механика «ADOPT» глобальных атомов (`_resetInFlightDownloadsForTesting` и т.п.) удалены — роль single-flight и прогресса теперь выполняет очередь + requester-реестр + lazy-запись.
 
 > **Web (Issue #81):** авто-кэш при воспроизведении теперь работает **на обеих платформах**. На web хук — `autoCacheOnPlay` (`src/entities/player/lib/PlayerService/webAutoCache.ts`), вызывается из `WebPlayerService.loadAudio` (покрывает и `replaceAudio`): проверяет `audioCacheService.isCached`, при отсутствии в кэше и онлайне (`isOnlineAtom`) запускает `startBackgroundCaching`. Fire-and-forget, воспроизведение не блокирует. Нативный путь через `AudioLoader.getPlaybackUrl` — без изменений.
 
 ## Скачивание одного трека
 
-Все **три** ручные точки входа кеширования идут через общий helper `cacheAudioWithProgress` (`src/shared/lib/audio-cache/cacheAudioWithProgress.ts`) с единым протоколом: pre-set `0` перед стартом → тики `onProgress` → очистка записи в `finally` (успех, ошибка и skip-cached-путь, где `cacheAudio` резолвится без единого тика). Helper пишет/чистит `playlistDownloadProgressAtom` через `setTrackDownloadProgress`/`removeTrackDownloadProgress` из `shared/lib/cache-triggers` (Issue #82). Rejection пробрасывается вызывающему.
+Все **три** ручные точки входа кеширования теперь проходят через глобальную очередь (`enqueueCache(ctx, url, 'manual', onProgress)`); общий helper `cacheAudioWithProgress` (`src/shared/lib/audio-cache/cacheAudioWithProgress.ts`) вызывается **раннером очереди** (а не самими точками входа) с единым протоколом: pre-set `0` перед стартом → тики `onProgress` → очистка записи в `finally` (успех, ошибка и skip-cached-путь, где `cacheAudio` резолвится без единого тика). Helper пишет/чистит `playlistDownloadProgressAtom` через `setTrackDownloadProgress`/`removeTrackDownloadProgress` из `shared/lib/cache-triggers` (Issue #82). Отмена идёт через `cancelCacheDownload` (снимает и очередь, и активную закачку).
 
-- **Контекстное меню строки трека** (точки / долгое нажатие → «Добавить в кеш») — `TracksListItemContextMenu` → `useTrackItemCache.toggleCache` (`src/shared/ui/track-list/useTrackItemCache.ts`) → `cacheAudioWithProgress` / `removeFromCache`. После успеха (обе ветки — добавить и удалить) инкрементит `cacheUpdateTriggerAtom`.
-- **Меню полноэкранного плеера** `PlayerMenu` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenu.tsx`) — пункт «Добавить в кеш / Удалить из кеша» → `useFullscreenHandlers.handleToggleCache` (`.../FullscreenContent/useFullscreenHandlers.ts`) → `cacheAudioWithProgress` / `removeFromCache`; после успеха (обе ветки) инкрементит `cacheUpdateTriggerAtom` (строки списков перепроверяют `isCached`, включая ветку удаления; собственная метка меню тоже перепроверяет — `useIsCached` теперь получает `cacheTrigger`). Раньше полноэкранный путь звал `cacheAudio(audio.audioUrl)` «вхолостую» — без `onProgress` и без записи в атом; теперь он пишет per-URL прогресс, видимый в строках списков (закрытие долга, Issue #82 follow-up).
-- **Прогон плейлиста** — `cacheSingleTrack` в `runPlaylistCaching` (`src/pages/playlist/lib/runPlaylistCaching.ts`) тоже зовёт `cacheAudioWithProgress` (протокол переехал в helper).
+- **Контекстное меню строки трека** (точки / долгое нажатие «Добавить в кеш») — `TracksListItemContextMenu` → `useTrackItemCache.toggleCache` (`src/shared/ui/track-list/useTrackItemCache.ts`). В зависимости от состояния: качается/в очереди → `cancelCacheDownload`; закэширован → `removeFromCache`; облако → `enqueueCache(ctx, url, 'manual')` (гейт `isOnline`). После успеха (ветки добавить и удалить) инкрементит `cacheUpdateTriggerAtom`. Подробнее про `isQueued`-подписку и offline-поведение — в разделах ниже.
+- **Меню полноэкранного плеера** `PlayerMenu` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenu.tsx`) — пункт «Добавить в кеш / Удалить из кеша / Остановить кеширование / Убрать из очереди» → `useFullscreenHandlers.handleToggleCache` → `enqueueCache(ctx, url, 'manual')` / `cancelCacheDownload` / `removeFromCache` (перепроводка с прямого `cacheAudio` на очередь была частью Issue #83). После успеха (обе ветки) инкрементит `cacheUpdateTriggerAtom`.
+- **Прогон плейлиста** — `runPlaylistCaching` (`src/pages/playlist/lib/runPlaylistCaching.ts`) ставит все треки через `enqueueCache(ctx, url, 'playlist')`.
 
-`BackgroundCachingService` (`src/entities/player/lib/PlayerService/BackgroundCachingService.ts`) остаётся отдельным писателем: глобальный прогресс (`downloadProgressAtom`) + учёт inflight — у него свой собственный путь, через `cacheAudioWithProgress` он не идёт.
+`BackgroundCachingService` (`src/entities/player/lib/PlayerService/BackgroundCachingService.ts`) — отдельный источник `'auto'`: глобальный прогресс (`downloadProgressAtom` + downloader-атомы) пишет **лениво** через очередь (см. «Автоматическое кэширование при воспроизведении»), напрямую через `cacheAudioWithProgress` не идёт.
 
 ## Офлайн: добавление в кеш недоступно
 
 Добавление в кеш требует интернета, поэтому все UI-действия «добавить» дизейблятся при `!isOnline` (`isOnlineAtom` из `shared/model/network`). Удаление из кеша работает офлайн и остаётся активным.
 
-- **Плейлист «Закешировать все»** — `usePlaylistCacheMenu` (`src/pages/playlist/lib/usePlaylistCacheMenu.ts`): `isCacheAllDisabled = isCaching || allCached || !isOnline`. Пункт «Удалить из кеша все» от сети не зависит.
-- **Контекстное меню строки трека** — `useTrackItemCache` (`src/shared/ui/track-list/useTrackItemCache.ts`) подписывается на `isOnlineAtom` и возвращает `isCacheDisabled = !isOnline && !isCached`; `TracksListItemContextMenu` рендерит пункт «Добавить в кеш» задизейбленным (без `onPress`, muted-стиль, `accessibilityState={{ disabled: true }}`). Плюс поведенческий no-op guard в `toggleCache`: `if (!isOnline && !isCached) return` — защита от запуска скачивания в обход UI.
-- **Меню полноэкранного плеера** — `PlayerMenuItems` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenuItems.tsx`): `isCacheDisabled = !isOnline && !isCached`; строка «Добавить в кеш» рендерится как обычный disabled-пункт меню. «Удалить из кеша» (трек закэширован) остаётся активным офлайн. Плюс поведенческий no-op guard в `useFullscreenHandlers.handleToggleCache` (`.../FullscreenContent/useFullscreenHandlers.ts`): `if (!isOnline && !isCached) return` — защита от запуска скачивания в обход UI теперь покрывает и track-list, и player-menu пути.
+- **Плейлист «Закешировать все»** — `usePlaylistCacheMenu` (`src/pages/playlist/lib/usePlaylistCacheMenu.ts`): `isCacheAllDisabled = allCached || !isOnline` (уже **не** включает `isCaching` — меню не блокируется во время кеширования; вместо «Закешировать все» показывается пункт «Остановить кеширование»). «Удалить из кеша все» от сети не зависит.
+- **Контекстное меню строки трека** — `useTrackItemCache` (`src/shared/ui/track-list/useTrackItemCache.ts`) подписывается на `isOnlineAtom` и возвращает `isCacheDisabled = !isOnline && !isCached && !isDownloading && !isQueued`: дизейблится **только** ветка «облако» (старт закачки офлайн); пункты «Остановить кеширование» (качается) и «Убрать из очереди» (в очереди) **всегда активны, в т.ч. офлайн** — отмена не требует сети. Поведенческий guard `toggleCache` гейтит сетью только cloud-ветку (`if (!isOnline) return` перед `enqueueCache`); cancel/remove работают офлайн. Ошибки ручного enqueue логируются `console.warn` (кроме `CacheCancelledError` — тихо).
+- **Меню полноэкранного плеера** — `PlayerMenuItems` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenuItems.tsx`): `isCacheDisabled = !isOnline && !isCached && visualState === 'cloud'`; строки «Добавить в кеш» рендерится как обычный disabled-пункт меню. «Удалить из кеша» (закэширован), «Остановить кеширование» (качается) и «Убрать из очереди» (в очереди) остаются активными офлайн. Поведенческий no-op guard в `useFullscreenHandlers.handleToggleCache` гейтит сетью только cloud-ветку.
 
 ## Скачивание плейлиста целиком
 
 `PlaylistCacheService` — `src/pages/playlist/lib/PlaylistCacheService.ts` (`playlistCacheService`). Метод `cachePlaylist(ctx, tracks, playlistTitle)`:
 
-- фильтрует треки без `audioUrl`;
-- ставит `isCachingPlaylistAtom = true` и прогресс `playlistCacheProgressAtom = { current, total }`;
-- делегирует последовательный прогон в `runPlaylistCaching` (`runPlaylistCaching.ts`): перед каждым треком проверяет подключение (`waitForOnline`, до 60с) — если сеть не вернулась, весь прогон прерывается ошибкой «Нет подключения к интернету» (сетевые ошибки не показывают алерт `playlistCacheErrorAtom`, только уведомление); неудача одного трека не прерывает остальные;
-- показывает системные уведомления (`PlaylistCacheNotifications.ts`): начало, прогресс «Скачано N из M», завершение «Скачано N проповедей» либо ошибка «Не удалось скачать X из N» при частичной неудаче (группа `playlist-cache`, фиксированный ID);
-- обновляет `playlistDownloadProgressAtom` (по URL трека, через `setTrackDownloadProgress`) и инкрементирует `cacheUpdateTriggerAtom`; запись каждого трека удаляется в его собственном `finally` (`removeTrackDownloadProgress`, успех и ошибка);
-- в `finally` сбрасывает `isCachingPlaylistAtom` (глобального сброса `playlistDownloadProgressAtom` в `{}` нет — см. «Состояние»).
+- **re-entry guard**: если `isCachingPlaylistAtom` уже `true` — второй вызов игнорируется (возврат);
+- фильтрует треки без `audioUrl`; ставит `isCachingPlaylistAtom = true` и прогресс `playlistCacheProgressAtom = { current, total }`;
+- делегирует прогон в `runPlaylistCaching` (`runPlaylistCaching.ts`): **сначала ставит ВСЕ треки в глобальную очередь** (`enqueueCache(ctx, url, 'playlist')` для каждого — все строки сразу получают «часы»), затем **await-ит промисы по очереди** (в порядке треков);
+- перед каждым треком проверяет подключение (`waitForOnline`, до 60с, **signal-aware**: возвращает `false` на abort ДО сетевой ошибки) — если сеть не вернулась, прогон прерывается ошибкой «Нет подключения к интернету»; неудача одного трека не прерывает остальные;
+- после каждого `await` проверяет `if (signal.aborted) break` — отменённый прогон выходит из цикла раньше;
+- per-track `CacheCancelledError` = просто `continue` (скipped, не считается ошибкой — реальная отмена, не сбой);
+- показывает системные уведомления (`PlaylistCacheNotifications.ts`): начало, прогресс «Скачано N из M», завершение «Скачано N проповедей» либо ошибка «Не удалось скачать X из N» при частичной неудаче (группа `playlist-cache`, фиксированный ID); **отменённый прогон НЕ показывает уведомлений** (в `cachePlaylist` после `runPlaylistCaching` стоит `if (controller.signal.aborted) return`);
+- обновляет `playlistDownloadProgressAtom` (по URL трека, через `setTrackDownloadProgress`) и инкрементирует `cacheUpdateTriggerAtom`;
+- сброс состояния — **только в `finally`**: `isCachingPlaylistAtom = false` + `removeFromQueueBySource(ctx, 'playlist')` (чистит оставшиеся записи очереди от этого прогона). Глобального сброса `playlistDownloadProgressAtom` в `{}` нет — см. «Состояние».
+
+### Отмена прогона (`cancelPlaylistCache`)
+
+`PlaylistCacheService.cancelPlaylistCache(ctx)` — **один синхронный блок** (без await):
+
+1. если не `isCachingPlaylistAtom` — возврат;
+2. если есть активная закачка и **все её requester'ы ⊆ `{'playlist'}`** (`isOnlyPlaylistRequester`) — `cancelCacheDownload(activeUrl)` (активная закачка, принадлежащая только этому прогону, прерывается; иностранных джойнеров — manual/auto — не трогает);
+3. `runController.abort()` — останавливает цикл `runPlaylistCaching` на ближайшем `if (signal.aborted) break`;
+4. `removeFromQueueBySource(ctx, 'playlist')` — снимает все ещё ждущие записи очереди этого прогона.
+
+Отмена не порождает уведомлений (см. выше).
 
 UI и хуки — `src/pages/playlist/lib/`:
 
@@ -118,7 +206,7 @@ UI и хуки — `src/pages/playlist/lib/`:
 Триггеры обновления UI — `src/shared/lib/cache-triggers.ts`:
 
 - `cacheUpdateTriggerAtom` (инкрементируется `incrementCacheTrigger`);
-- `playlistDownloadProgressAtom` — прогресс по URL (`Record<string, number>`). Пишут его `setTrackDownloadProgress` (запись прогресса по URL) и `removeTrackDownloadProgress` (удаление записи по URL, no-op если ключа нет) — оба из `shared/lib/cache-triggers`. Вызываются из `BackgroundCachingService` (авто-кэш, напрямую) и из общего helper'а `cacheAudioWithProgress`, который обслуживает все три ручные точки входа (`useTrackItemCache.toggleCache`, `useFullscreenHandlers.handleToggleCache`, `runPlaylistCaching.cacheSingleTrack`). Каждый путь чистит **свою** запись через `removeTrackDownloadProgress` в `finally` (успех и ошибка); глобального сброса атома в `{}` больше нет — его убрали из `PlaylistCacheService.cachePlaylist`, т.к. он стирал прогресс параллельных ручных скачиваний (Issue #82).
+- `playlistDownloadProgressAtom` — прогресс по URL (`Record<string, number>`). Запись идёт **только** через helper `cacheAudioWithProgress` (`shared/lib/audio-cache/cacheAudioWithProgress.ts`), который вызывается **раннером глобальной очереди** (`cacheQueueRunner.ts`) для **всех** источников (`'auto'`, `'manual'`, `'playlist'`). Helper пишет через `setTrackDownloadProgress` и чистит через `removeTrackDownloadProgress` (оба из `shared/lib/cache-triggers`) — запись создаётся до старта скачивания, тики обновляют прогресс, запись удаляется в `finally` (успех и ошибка). Глобального сброса атома в `{}` больше нет — его убрали из `PlaylistCacheService.cachePlaylist`, т.к. он стирал прогресс параллельных ручных скачиваний (Issue #82).
 
 Константа ключа — `src/shared/config/cache-storage-keys.ts` (`CACHED_SECTIONS`). Ключи хранилища — [storage.md](../contracts/storage.md).
 
@@ -128,9 +216,9 @@ UI и хуки — `src/pages/playlist/lib/`:
 
 ## Поток скачивания
 
-1. **Старт воспроизведения** → `AudioLoader.getPlaybackUrl`: нет в кэше → `startBackgroundCaching` (авто-кэш без действия пользователя).
-2. **Ручное скачивание трека** → меню плеера `PlayerMenu` → `handleToggleCache` → `cacheAudioWithProgress`/`removeFromCache`; либо контекстное меню строки трека → `useTrackItemCache.toggleCache` (обе точки входа — с per-URL прогрессом через `cacheAudioWithProgress`, Issue #82).
-3. **Скачивание плейлиста** → `PlaylistCacheService.cachePlaylist` (с прогрессом и системными уведомлениями).
+1. **Старт воспроизведения** → `AudioLoader.getPlaybackUrl`: нет в кэше → `startBackgroundCaching` → `enqueueCache('auto')` (авто-кэш без действия пользователя, в глобальную очередь).
+2. **Ручное скачивание трека** → меню плеера `PlayerMenu` → `handleToggleCache` → `enqueueCache('manual')`/`cancelCacheDownload`/`removeFromCache`; либо контекстное меню строки трека → `useTrackItemCache.toggleCache` (обе точки входа — через глобальную очередь с per-URL прогрессом, Issue #82/#83).
+3. **Скачивание плейлиста** → `PlaylistCacheService.cachePlaylist` (все треки в очередь, последовательный прогон, с прогрессом и системными уведомлениями).
 4. **Очистка кэша** → Настройки → `ClearCacheDialog`.
 
 После любого изменения кэша инкрементируется `cacheUpdateTriggerAtom`, чтобы хуки (`useIsCached`, `usePlaylistCacheStatus`) перепроверили состояние.

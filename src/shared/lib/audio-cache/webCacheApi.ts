@@ -4,6 +4,7 @@
  * bucket to serve audio offline, so the bucket name must stay in sync.
  */
 
+import { CacheCancelledError } from './CacheCancelledError'
 import { AUDIO_CACHE_NAME, openAudioCache } from './openAudioCache'
 import { fetchAudioForCache } from './webAudioDownload'
 import {
@@ -71,12 +72,16 @@ export const clearAudioCache = async (): Promise<void> => {
 /**
  * Skip a track that is already fully downloaded; otherwise drop any stale
  * uncommitted/truncated entry, download a fresh copy, store and commit it.
+ * On cancellation the uncommitted bucket entry is deleted best-effort and the
+ * download rejects with CacheCancelledError.
  * @param audioUrl - Canonical URL of the track.
  * @param onProgress - Progress callback (0..1) for the download.
+ * @param signal - Optional signal that cancels the download.
  */
 export const downloadAndStoreAudio = async (
   audioUrl: string,
   onProgress: (progress: number) => void,
+  signal?: AbortSignal,
 ): Promise<string> => {
   if (await hasCompleteAudio(audioUrl)) {
     onProgress(1)
@@ -89,7 +94,7 @@ export const downloadAndStoreAudio = async (
   // next startup can clean up; the heartbeat keeps `lastSeenAt` fresh.
   const stopHeartbeat = await addActiveDownloadWithHeartbeat(audioUrl)
   try {
-    const response = await fetchAudioForCache(audioUrl, onProgress)
+    const response = await fetchAudioForCache(audioUrl, onProgress, signal)
     await putAudioResponse(audioUrl, response)
     try {
       // A commit failure only means a re-download next session — never fail the download.
@@ -97,6 +102,15 @@ export const downloadAndStoreAudio = async (
     } catch (error) {
       console.error('[audio-cache] Failed to commit audio url:', error)
     }
+  } catch (error) {
+    if (signal?.aborted) {
+      // Drop the uncommitted/truncated entry — the web equivalent of a `.part` file.
+      await deleteAudioEntry(audioUrl).catch(cleanupError =>
+        console.error('[audio-cache] Error clearing entry after cancel:', cleanupError),
+      )
+      throw new CacheCancelledError(audioUrl)
+    }
+    throw error
   } finally {
     stopHeartbeat()
     await removeActiveDownload(audioUrl)
