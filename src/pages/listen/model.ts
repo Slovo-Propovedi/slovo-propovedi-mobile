@@ -1,7 +1,0 @@
-export {
-  dynamicSectionsAtom,
-  fetchAllSections,
-  isLoadingSectionsAtom,
-  sectionDataSourceAtom,
-} from 'entities/section'
-export type { SectionDataSource } from 'entities/section'

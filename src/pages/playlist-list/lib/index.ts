@@ -1,1 +1,0 @@
-export { useCollapsingHeader } from './useCollapsingHeader'

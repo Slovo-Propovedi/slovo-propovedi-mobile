@@ -1,9 +1,9 @@
 import { createCtx } from '@reatom/framework'
 import { StyleSheet, Text } from 'react-native'
+import { dynamicSectionsAtom, isLoadingSectionsAtom, sectionDataSourceAtom } from 'entities/section'
 import { renderWithProviders } from 'shared/mocks'
 import type { SectionData } from 'shared/model'
 import type { TestInstance } from 'test-renderer'
-import { dynamicSectionsAtom, isLoadingSectionsAtom, sectionDataSourceAtom } from '../model'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 
 jest.mock('shared/config/screen-dimensions', () => ({
@@ -18,7 +18,7 @@ const mockScreenDimensions = jest.requireMock('shared/config/screen-dimensions')
   SIZE_OF_MINIMUM_SIDE_OF_SCREEN: number
 }
 
-jest.mock('../model', () => {
+jest.mock('entities/section', () => {
   const { atom } = jest.requireActual('@reatom/framework')
 
   return {

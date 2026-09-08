@@ -4,9 +4,9 @@ import { StyleSheet } from 'react-native'
 import { useEntryPlayback } from 'features/entry-playback'
 import { useLastListeningEntry } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom, usePlayer } from 'entities/player'
+import { dynamicSectionsAtom, isLoadingSectionsAtom } from 'entities/section'
 import { renderWithProviders } from 'shared/mocks'
 import type { SectionData } from 'shared/model'
-import { dynamicSectionsAtom, isLoadingSectionsAtom } from '../model'
 import { ContinueListeningButton, NOW_PLAYING_LABEL } from './ContinueListeningButton'
 
 jest.mock('shared/config/screen-dimensions', () => ({
@@ -58,7 +58,7 @@ jest.mock('entities/player', () => {
   }
 })
 
-jest.mock('../model', () => {
+jest.mock('entities/section', () => {
   const { atom } = jest.requireActual('@reatom/framework')
 
   return {

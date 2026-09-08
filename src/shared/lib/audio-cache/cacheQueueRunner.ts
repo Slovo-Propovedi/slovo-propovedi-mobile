@@ -2,15 +2,17 @@ import { type Ctx } from '@reatom/framework'
 import { cacheAudioWithProgress } from './cacheAudioWithProgress'
 import { isCacheCancelledError } from './CacheCancelledError'
 import {
-  activeCacheUrlAtom,
-  cacheQueueAtom,
   clearAllProgressCallbacks,
   clearAllRequesters,
   clearRequesters,
+  takeProgressCallbacks,
+} from './cacheQueueRegistries'
+import {
+  activeCacheUrlAtom,
+  cacheQueueAtom,
   isRunnerActive,
   pendingPromises,
   setRunnerActive,
-  takeProgressCallbacks,
 } from './cacheQueueState'
 
 const pickNextEntry = (ctx: Ctx): null | string => {

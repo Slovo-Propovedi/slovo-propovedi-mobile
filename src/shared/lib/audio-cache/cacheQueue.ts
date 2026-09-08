@@ -2,30 +2,20 @@ import { action, type Ctx } from '@reatom/framework'
 import { audioCacheService } from './AudioCacheService'
 import { CacheCancelledError } from './CacheCancelledError'
 import {
-  activeCacheUrlAtom,
-  cacheQueueAtom,
-  type CacheQueueSource,
   clearAllProgressCallbacks,
   clearAllRequesters,
   clearProgressCallbacks,
+  removeRequester,
+} from './cacheQueueRegistries'
+import {
+  activeCacheUrlAtom,
+  cacheQueueAtom,
+  type CacheQueueSource,
   invokePlaylistRunStopper,
   pendingPromises,
   rejectPendingPromise,
   removeQueueEntry,
-  removeRequester,
   resetQueueEngineState,
-} from './cacheQueueState'
-
-export { enqueueCache } from './cacheQueueEnqueue'
-export { enqueueCacheMany } from './cacheQueueEnqueueMany'
-export {
-  activeCacheUrlAtom,
-  cacheQueueAtom,
-  type CacheQueueEntry,
-  type CacheQueueSource,
-  getCacheRequesters,
-  registerPlaylistRunStopper,
-  unregisterPlaylistRunStopper,
 } from './cacheQueueState'
 
 export const isUrlQueued = (ctx: Ctx, url: string): boolean => url in ctx.get(cacheQueueAtom)

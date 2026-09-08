@@ -4,18 +4,20 @@ import { cacheAudioWithProgress } from './cacheAudioWithProgress'
 import { CacheCancelledError } from './CacheCancelledError'
 import {
   _resetCacheQueueForTesting,
-  activeCacheUrlAtom,
-  cacheQueueAtom,
   cancelAllCacheDownloads,
   cancelCacheDownload,
-  enqueueCache,
-  getCacheRequesters,
   isUrlQueued,
-  registerPlaylistRunStopper,
   removeFromQueue,
   removeFromQueueBySource,
-  unregisterPlaylistRunStopper,
 } from './cacheQueue'
+import { enqueueCache } from './cacheQueueEnqueue'
+import { getCacheRequesters } from './cacheQueueRegistries'
+import {
+  activeCacheUrlAtom,
+  cacheQueueAtom,
+  registerPlaylistRunStopper,
+  unregisterPlaylistRunStopper,
+} from './cacheQueueState'
 import { inflightCache, resetInflightCache } from './inflightCache'
 import { createInflightDownload } from './inflightDownload'
 

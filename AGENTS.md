@@ -139,6 +139,7 @@ src/entities/player/
 
 - **One barrel per slice**: Each FSD slice should have only ONE barrel export file: `index.ts` at the slice root
 - **No segment barrels**: DO NOT create `index.ts` files for segments (e.g., `ui/index.ts`, `lib/index.ts`)
+- **Re-exports only in slice-root index.ts**: Re-export lines (`export … from`) live ONLY in the slice-root `index.ts`. No `export … from` in any other source file (exemptions: `@x` segments, `app/` router entries, platform-resolution `index.ts` like `entities/player/lib/PlayerService/index.ts`). A file that needs a symbol from a sibling module imports it directly (`import { X } from './cacheQueueState'`) instead of re-exporting it onward.
 - **Export only public API**: Export ONLY what's actually reused externally from other slices/layers. Internal implementation details (helper functions, internal components, atoms) should NOT be exported
 - **Internal imports must be relative**: Inside a slice, files import each other via relative paths (`./lib/usePlayer`, `../model`), NEVER through the slice's own barrel (`'entities/player'`). This keeps the source context visible while reading code and prevents circular imports through the barrel.
 - **Public API example**: If only one component is reused externally, export only that component:

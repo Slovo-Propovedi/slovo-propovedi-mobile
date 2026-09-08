@@ -1,8 +1,8 @@
 import { screen } from '@testing-library/react-native'
 import { View } from 'react-native'
 import '@testing-library/jest-native/extend-expect'
+import { APP_ICON_URI as IMAGE_PLACEHOLDER } from 'shared/lib/app-icon'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
-import { IMAGE_PLACEHOLDER } from '../images'
 import { CoverImage } from './cover-image'
 
 const URI_STUB = 'https://example.com/image.jpg'

@@ -1,9 +1,8 @@
 import { action, type Ctx } from '@reatom/framework'
 import { inflightIsJoinable, joinInflight, registerFresh } from './cacheQueueEnqueue'
+import { addProgressCallback, addRequester } from './cacheQueueRegistries'
 import { kickRunner } from './cacheQueueRunner'
 import {
-  addProgressCallback,
-  addRequester,
   cacheQueueAtom,
   type CacheQueueEntry,
   type CacheQueueSource,

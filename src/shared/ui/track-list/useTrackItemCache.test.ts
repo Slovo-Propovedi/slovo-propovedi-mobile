@@ -1,11 +1,9 @@
 import { act } from '@testing-library/react-native'
 import { audioCacheService } from 'shared/lib/audio-cache/AudioCacheService'
 import { CacheCancelledError } from 'shared/lib/audio-cache/CacheCancelledError'
-import {
-  cacheQueueAtom,
-  cancelCacheDownload,
-  enqueueCache,
-} from 'shared/lib/audio-cache/cacheQueue'
+import { cancelCacheDownload } from 'shared/lib/audio-cache/cacheQueue'
+import { enqueueCache } from 'shared/lib/audio-cache/cacheQueueEnqueue'
+import { cacheQueueAtom } from 'shared/lib/audio-cache/cacheQueueState'
 import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
@@ -14,6 +12,7 @@ import { useTrackItemCache } from './useTrackItemCache'
 const AUDIO_URL = 'https://example.com/audio.mp3'
 const AUDIO_CACHE_SERVICE_MODULE = 'shared/lib/audio-cache/AudioCacheService'
 const CACHE_QUEUE_MODULE = 'shared/lib/audio-cache/cacheQueue'
+const CACHE_QUEUE_ENQUEUE_MODULE = 'shared/lib/audio-cache/cacheQueueEnqueue'
 
 jest.mock(AUDIO_CACHE_SERVICE_MODULE, () => {
   const actual = jest.requireActual(AUDIO_CACHE_SERVICE_MODULE)
@@ -32,6 +31,13 @@ jest.mock(CACHE_QUEUE_MODULE, () => {
   return {
     ...actual,
     cancelCacheDownload: jest.fn(),
+  }
+})
+
+jest.mock(CACHE_QUEUE_ENQUEUE_MODULE, () => {
+  const actual = jest.requireActual(CACHE_QUEUE_ENQUEUE_MODULE)
+  return {
+    ...actual,
     enqueueCache: jest.fn().mockResolvedValue('file:///cached.mp3'),
   }
 })

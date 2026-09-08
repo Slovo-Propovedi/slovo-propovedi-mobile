@@ -1,12 +1,10 @@
 import { action, type Ctx } from '@reatom/framework'
 import { audioCacheService } from './AudioCacheService'
+import { addProgressCallback, addRequester, clearRequesters } from './cacheQueueRegistries'
 import { kickRunner } from './cacheQueueRunner'
 import {
-  addProgressCallback,
-  addRequester,
   cacheQueueAtom,
   type CacheQueueSource,
-  clearRequesters,
   createDeferred,
   type Deferred,
   nextEnqueuedAt,

@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { screen } from '@testing-library/react-native'
+import { APP_ICON_URI as IMAGE_PLACEHOLDER } from 'shared/lib/app-icon'
 import { renderWithProviders } from 'shared/mocks'
-import { IMAGE_PLACEHOLDER } from 'shared/ui/images'
 import type { SermonData } from 'shared/model'
 import { isSearchingAtom, searchQueryAtom, searchResultsAtom } from '../model'
 import { SermonSearchResults } from './SermonSearchResults'

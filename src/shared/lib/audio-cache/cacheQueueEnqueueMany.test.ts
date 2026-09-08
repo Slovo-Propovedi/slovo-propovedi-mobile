@@ -1,12 +1,10 @@
 import { createCtx, type Ctx } from '@reatom/framework'
 import { cacheAudioWithProgress } from './cacheAudioWithProgress'
-import {
-  _resetCacheQueueForTesting,
-  cacheQueueAtom,
-  enqueueCache,
-  enqueueCacheMany,
-  getCacheRequesters,
-} from './cacheQueue'
+import { _resetCacheQueueForTesting } from './cacheQueue'
+import { enqueueCache } from './cacheQueueEnqueue'
+import { enqueueCacheMany } from './cacheQueueEnqueueMany'
+import { getCacheRequesters } from './cacheQueueRegistries'
+import { cacheQueueAtom } from './cacheQueueState'
 import { inflightCache, resetInflightCache } from './inflightCache'
 import { createInflightDownload } from './inflightDownload'
 

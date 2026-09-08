@@ -1,17 +1,5 @@
 import { atom, type Ctx } from '@reatom/framework'
-import {
-  addProgressCallback,
-  addRequester,
-  clearAllProgressCallbacks,
-  clearAllRequesters,
-  clearProgressCallbacks,
-  clearRequesters,
-  getCacheRequesters,
-  progressCallbacks,
-  removeRequester,
-  requesters,
-  takeProgressCallbacks,
-} from './cacheQueueRegistries'
+import { clearRequesters } from './cacheQueueRegistries'
 
 export interface CacheQueueEntry {
   enqueuedAt: number
@@ -106,18 +94,4 @@ export const rejectPendingPromise = (url: string, error: unknown): void => {
     pendingPromises.delete(url)
     deferred.reject(error)
   }
-}
-
-export {
-  addProgressCallback,
-  addRequester,
-  clearAllProgressCallbacks,
-  clearAllRequesters,
-  clearProgressCallbacks,
-  clearRequesters,
-  getCacheRequesters,
-  progressCallbacks,
-  removeRequester,
-  requesters,
-  takeProgressCallbacks,
 }

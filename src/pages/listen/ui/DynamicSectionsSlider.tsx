@@ -1,17 +1,17 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type ReactElement, useEffect } from 'react'
 import { usePlayNewSermon } from 'entities/player'
-import { useOfflineRetry } from 'shared/lib/network'
-import { useListenNavigation } from 'shared/routing'
-import { EmptyState } from 'shared/ui'
-import type { PlaylistData, SectionData } from 'shared/model'
-import { getFirstSectionLayout } from '../lib/first-section-layout'
 import {
   dynamicSectionsAtom,
   fetchAllSections,
   isLoadingSectionsAtom,
   sectionDataSourceAtom,
-} from '../model'
+} from 'entities/section'
+import { useOfflineRetry } from 'shared/lib/network'
+import { useListenNavigation } from 'shared/routing'
+import { EmptyState } from 'shared/ui'
+import type { PlaylistData, SectionData } from 'shared/model'
+import { getFirstSectionLayout } from '../lib/first-section-layout'
 import { FirstSectionRow } from './FirstSectionRow'
 import { renderSection } from './renderSection'
 import { SectionsSkeleton } from './skeleton'
