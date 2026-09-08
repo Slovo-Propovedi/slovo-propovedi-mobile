@@ -1,0 +1,84 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard"],
+  "schedule": ["before 8am on monday"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 10,
+  "commitBody": "Signed-off-by: Renovate Bot <renovate@slovo-propovedi.ru>",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 8am on the first day of the month"]
+  },
+  "packageRules": [
+    {
+      "description": "Major updates wait for a tick in the Dependency Dashboard.",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Roll up non-major devDependency bumps into one PR.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "devDependencies (non-major)"
+    },
+    {
+      "description": "ESLint stack in one PR.",
+      "matchPackageNames": ["eslint", "eslint-*", "@eslint/*", "@eslint-community/*", "typescript-eslint"],
+      "groupName": "eslint"
+    },
+    {
+      "description": "commitlint packages move together.",
+      "matchPackageNames": ["@commitlint/*"],
+      "groupName": "commitlint"
+    },
+    {
+      "description": "Testing Library packages move together.",
+      "matchPackageNames": ["@testing-library/*"],
+      "groupName": "testing-library"
+    },
+    {
+      "description": "Reatom packages move together.",
+      "matchPackageNames": ["@reatom/*"],
+      "groupName": "reatom"
+    },
+    {
+      "description": "Steiger / Feature-Sliced tooling moves together.",
+      "matchPackageNames": ["steiger", "@feature-sliced/*"],
+      "groupName": "steiger / FSD"
+    },
+    {
+      "description": "orval codegen — keep out of the devDependencies bundle so a bump lands as its own PR (regenerate the API client and review the diff).",
+      "matchPackageNames": ["orval"],
+      "groupName": "orval"
+    },
+    {
+      "description": "Expo SDK + React Native core move as one aligned set — upgrade them with `npx expo install --fix` / the Expo upgrade guide, never piecemeal (this also owns the patches/expo-font pin). Surfaced on the Dependency Dashboard, never auto-PR'd. This rule is last so it wins over the groups above.",
+      "matchPackageNames": [
+        "expo",
+        "expo-*",
+        "@expo/*",
+        "jest-expo",
+        "react",
+        "react-dom",
+        "react-native",
+        "react-native-web",
+        "react-test-renderer",
+        "test-renderer",
+        "@react-native/*",
+        "@types/react",
+        "@types/react-test-renderer",
+        "@react-native-async-storage/async-storage",
+        "@react-native-community/netinfo",
+        "react-native-gesture-handler",
+        "react-native-pager-view",
+        "react-native-reanimated",
+        "react-native-safe-area-context",
+        "react-native-screens",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "groupName": "expo sdk",
+      "dependencyDashboardApproval": true
+    }
+  ]
+}
