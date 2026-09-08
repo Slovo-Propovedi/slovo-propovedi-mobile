@@ -1,6 +1,8 @@
 export interface InflightEntry {
   /** Aborts the in-flight download; set only on the entry that owns the download. */
   abort?: () => void
+  /** Set when the download is cancelled; lets enqueue treat the entry as non-joinable. */
+  aborted?: boolean
   callbacks: Set<(progress: number) => void>
   emit: (progress: number) => void
   lastValue: number

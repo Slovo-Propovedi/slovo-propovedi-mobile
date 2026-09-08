@@ -124,6 +124,20 @@ describe('enqueueCache', () => {
     await expect(result).resolves.toBe('/cache/a.mp3')
   })
 
+  test('treats an aborted inflight entry as fresh instead of joining it (Bug B)', async () => {
+    const download = createControlledDownload()
+    const { entry } = createInflightDownload(undefined, undefined, () => download.promise)
+    entry.aborted = true
+    inflightCache.set(URL_A, entry)
+    mockedCacheAudioWithProgress.mockImplementation(async (_ctx, url) => url)
+
+    const result = enqueueCache(ctx, URL_A, MANUAL_SOURCE)
+
+    // A fresh download starts; the dying (aborted) promise is not joined.
+    expect(mockedCacheAudioWithProgress).toHaveBeenCalledTimes(1)
+    await expect(result).resolves.toBe(URL_A)
+  })
+
   test('rejects when the download fails', async () => {
     const error = new Error('network down')
     mockedCacheAudioWithProgress.mockRejectedValue(error)

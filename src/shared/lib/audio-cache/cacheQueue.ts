@@ -17,6 +17,7 @@ import {
 } from './cacheQueueState'
 
 export { enqueueCache } from './cacheQueueEnqueue'
+export { enqueueCacheMany } from './cacheQueueEnqueueMany'
 export {
   activeCacheUrlAtom,
   cacheQueueAtom,

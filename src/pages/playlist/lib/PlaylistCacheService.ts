@@ -46,6 +46,7 @@ class PlaylistCacheService {
     )
     if (tracksToCache.length === 0) return
 
+    const runId = ++this.currentRunId
     const controller = new AbortController()
     this.runController = controller
     // Register the run in the global stopper registry so «Остановить все
@@ -90,13 +91,21 @@ class PlaylistCacheService {
       await playlistCacheNotifications.showErrorNotification(errorObj, playlistTitle)
     } finally {
       unregisterPlaylistRunStopper(stopper)
-      removeFromQueueBySource(ctx, 'playlist')
-      isCachingPlaylistAtom(ctx, false)
-      this.runController = null
+      // Generation guard: only the current run tears down shared playlist state.
+      // A stale run's late finally must never drain a successor's queue entries
+      // or clobber a fresh run's atom/controller (cross-run race, Issue #83).
+      if (this.currentRunId === runId) {
+        removeFromQueueBySource(ctx, 'playlist')
+        isCachingPlaylistAtom(ctx, false)
+        this.runController = null
+      }
     }
   }
 
   public cancelPlaylistCache(ctx: Ctx): void {
+    // Deliberately does NOT bump currentRunId: the atom reset lives ONLY in the
+    // guarded finally of cachePlaylist. Bumping here would make that finally skip
+    // teardown (currentRunId !== runId) and leave isCachingPlaylistAtom stuck true.
     if (!ctx.get(isCachingPlaylistAtom)) return
 
     const activeUrl = ctx.get(activeCacheUrlAtom)
@@ -108,6 +117,7 @@ class PlaylistCacheService {
 
   private runController: AbortController | null = null
   private currentError: Error | null = null
+  private currentRunId = 0
 }
 
 const isOnlyPlaylistRequester = (url: string): boolean => {

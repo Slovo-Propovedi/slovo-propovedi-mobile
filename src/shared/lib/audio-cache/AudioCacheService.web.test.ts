@@ -6,6 +6,7 @@ import {
   removeFromCache,
 } from './AudioCacheService.web'
 import { CacheCancelledError } from './CacheCancelledError'
+import { inflightCache } from './inflightCache'
 import { commitAudioUrl } from './webCacheManifest'
 import * as webDownloadJournal from './webDownloadJournal'
 
@@ -234,6 +235,54 @@ describe('AudioCacheService.web', () => {
 
   test('cancelAudioDownload returns false when nothing is inflight', () => {
     expect(audioCacheService.cancelAudioDownload(AUDIO_URL)).toBe(false)
+  })
+
+  test('marks the inflight entry aborted so re-enqueue treats it as non-joinable (Bug B)', async () => {
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockImplementation(
+      (_url: RequestInfo, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('Aborted')))
+        }),
+    )
+
+    const promise = cacheAudio(AUDIO_URL)
+    await waitForFetchCall(fetchSpy)
+
+    expect(audioCacheService.cancelAudioDownload(AUDIO_URL)).toBe(true)
+
+    // Synchronously after cancel the dying entry is still present but marked
+    // aborted — the queue's inflightIsJoinable then starts a fresh download.
+    expect(inflightCache.get(AUDIO_URL)?.aborted).toBe(true)
+    await expect(promise).rejects.toBeInstanceOf(CacheCancelledError)
+  })
+
+  test('starts a fresh download when the inflight entry is aborted (Bug B chokepoint)', async () => {
+    // A dying inflight entry created through cacheAudio, then cancelled so it
+    // is marked aborted but has not settled yet.
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockImplementation(
+      (_url: RequestInfo, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('Aborted')))
+        }),
+    )
+    const dying = cacheAudio(AUDIO_URL)
+    await waitForFetchCall(fetchSpy)
+    expect(audioCacheService.cancelAudioDownload(AUDIO_URL)).toBe(true)
+    expect(inflightCache.get(AUDIO_URL)?.aborted).toBe(true)
+
+    // A fresh cacheAudio must NOT join the dying promise.
+    const freshFetchSpy = mockFetchOk(1024)
+    const fresh = cacheAudio(AUDIO_URL)
+
+    expect(fresh).not.toBe(dying)
+    expect(freshFetchSpy).toHaveBeenCalledTimes(1)
+
+    // Let the dying entry settle (reject) — its identity-guarded cleanup must
+    // NOT delete the fresh entry from the inflight cache.
+    await expect(dying).rejects.toBeInstanceOf(CacheCancelledError)
+    expect(inflightCache.get(AUDIO_URL)).toBeDefined()
+
+    await expect(fresh).resolves.toBe(AUDIO_URL)
   })
 
   test('removeFromCache and clearCache drop entries', async () => {

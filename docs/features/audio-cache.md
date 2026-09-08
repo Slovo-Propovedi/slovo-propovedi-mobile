@@ -12,7 +12,7 @@
   - `getCachedUri(audioUrl)` — URI закэшированного файла или `null`;
   - `isCached(audioUrl)` — boolean;
   - `cacheAudio(audioUrl, onProgress?, signal?)` — скачивание через `File.downloadFileAsync` (expo-file-system), `idempotent: true`, с ретраями и защитой от зависания (см. «Повторы и защита от зависания» ниже). Метод single-flight для всех вызывающих кодов: повторные вызовы с тем же URL возвращают общий промис (дублирующая скачка не запускается). При повторном вызове с `onProgress` — callback регистрируется в live-сете и получает текущий прогресс (retroactive seed) + все последующие тики через fan-out emitter (`inflightDownload.ts`). Третий аргумент `signal` (AbortSignal) — внешняя отмена (мост в `abortBridge.ts`). Файлы скачиваются во временное имя `<hash>.mp3.part`; при успешном завершении файл атомарно переименовывается в `<hash>.mp3` (`File.rename()`). Частично скачанные файлы (`.part`) никогда не распознаются как закэшированные (`getCachedUri`, `isCached` проверяют только финальный файл), что исключает воспроизведение обрезанных данных. При окончательной неудаче всех попыток `.part`-файл удаляется; при **отмене** `.part`-файл тоже удаляется немедленно (см. «Отмена скачивания»). Прогресс передаётся через `onProgress` callback expo-file-system (`{ bytesWritten, totalBytes }`), конвертируется в дробь 0..1 с троттлингом ≥0.01. При отсутствии `Content-Length` (`totalBytes ≤ 0`) прогресс не обновляется (chunked transfer).
-  - `cancelAudioDownload(audioUrl)` — отменяет идущую закачку по URL: вызывает `abort()` владельца inflight-записи. Возвращает `boolean` (`false`, если закачка не идёт / уже отменена). Отмена приводит к `CacheCancelledError` (см. ниже).
+  - `cancelAudioDownload(audioUrl)` — отменяет идущую закачку по URL: **сначала помечает inflight-запись `aborted = true`, затем** вызывает `abort()` владельца записи. Возвращает `boolean` (`false`, если закачка не идёт / уже отменена). Отмена приводит к `CacheCancelledError` (см. ниже). Флаг `aborted` — ключ Bug B (Issue #83 follow-up): между отменой и settle'ом записи повторная постановка того же URL через очередь видит запись как **не-joinable** (`inflightIsJoinable` = запись есть И `!aborted`) и стартует **свежую** закачку вместо присоединения к умирающему (реджектящемуся) промису — иначе иконка трека застревала бы на «облаке» после stop → run → run.
   - `getCacheInfo()` — `{ fileCount, totalSize }`;
   - `clearCache()` — удалить весь каталог кэша;
   - `removeFromCache(audioUrl)` — удалить файл по URL.
@@ -76,7 +76,8 @@
 
 ### API очереди
 
-- `enqueueCache(ctx, url, source, onProgress?)` — главная точка входа. Дедуплицирует: если URL **уже в очереди** — добавляет requester/onProgress и возвращает общий промис; если **качается** (`inflightCache.has`) — присоединяется к идущей закачке (с retroactive-seed прогресса через `joinInflightDownload`); иначе ставит в очередь (`enqueueFresh`). **Не** дедуплицирует по `isCached` — закэшированный URL можно пере-поставить; UI показывает кэш-состояние, а не «часы» (см. resolver).
+- `enqueueCache(ctx, url, source, onProgress?)` — главная точка входа. Дедуплицирует: если URL **уже в очереди** — добавляет requester/onProgress и возвращает общий промис; если **качается** (`inflightCache.has` и запись **не aborted**) — присоединяется к идущей закачке (с retroactive-seed прогресса через `joinInflightDownload`); иначе ставит в очередь (`enqueueFresh`). **Не** дедуплицирует по `isCached` — закэшированный URL можно пере-поставить; UI показывает кэш-состояние, а не «часы» (см. resolver).
+- `enqueueCacheMany(ctx, urls, source, onProgress?)` — **батч-версия** для массовых постановок (прогон плейлиста, Issue #83 follow-up). Ставит N URL **одной записью** в `cacheQueueAtom` (вместо N записей — устранение N-кратного ре-рендера списка при «Закешировать все»), FIFO по порядку массива (`enqueuedAt` в порядке следования). Дедупликация **внутри батча**: повторный URL в том же массиве делит промис первого вхождения. Per-URL дедупликация идентична `enqueueCache` (queued → join, inflight не-aborted → join, иначе fresh). Возвращает промис на каждый URL в порядке входа. Бросает `[cacheQueue] audioUrl is required` при пустом URL (fail-fast до постановки).
 - `removeFromQueue(ctx, url)` — снять URL с очереди (активную закачку не трогает), rejects промис `CacheCancelledError`.
 - `removeFromQueueBySource(ctx, source)` — снять все записи очереди с данным источником.
 - `cancelCacheDownload(ctx, url)` — **безусловная** отмена: `removeFromQueue` + `audioCacheService.cancelAudioDownload(url)` (снимает и с очереди, и с активной закачки).
@@ -144,7 +145,7 @@
 
 - **Контекстное меню строки трека** (точки / долгое нажатие «Добавить в кеш») — `TracksListItemContextMenu` → `useTrackItemCache.toggleCache` (`src/shared/ui/track-list/useTrackItemCache.ts`). В зависимости от состояния: качается/в очереди → `cancelCacheDownload`; закэширован → `removeFromCache`; облако → `enqueueCache(ctx, url, 'manual')` (гейт `isOnline`). После успеха (ветки добавить и удалить) инкрементит `cacheUpdateTriggerAtom`. Подробнее про `isQueued`-подписку и offline-поведение — в разделах ниже.
 - **Меню полноэкранного плеера** `PlayerMenu` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenu.tsx`) — пункт «Добавить в кеш / Удалить из кеша / Остановить кеширование / Убрать из очереди» → `useFullscreenHandlers.handleToggleCache` → `enqueueCache(ctx, url, 'manual')` / `cancelCacheDownload` / `removeFromCache` (перепроводка с прямого `cacheAudio` на очередь была частью Issue #83). После успеха (обе ветки) инкрементит `cacheUpdateTriggerAtom`.
-- **Прогон плейлиста** — `runPlaylistCaching` (`src/pages/playlist/lib/runPlaylistCaching.ts`) ставит все треки через `enqueueCache(ctx, url, 'playlist')`.
+- **Прогон плейлиста** — `runPlaylistCaching` (`src/pages/playlist/lib/runPlaylistCaching.ts`) ставит все треки **одним батчем** через `enqueueCacheMany(ctx, urls, 'playlist')` (Issue #83 follow-up: одна запись в `cacheQueueAtom` вместо N — устранение фриза UI на ~140 треках).
 
 `BackgroundCachingService` (`src/entities/player/lib/PlayerService/BackgroundCachingService.ts`) — отдельный источник `'auto'`: глобальный прогресс (`downloadProgressAtom` + downloader-атомы) пишет **лениво** через очередь (см. «Автоматическое кэширование при воспроизведении»), напрямую через `cacheAudioWithProgress` не идёт.
 
@@ -162,13 +163,13 @@
 
 - **re-entry guard**: если `isCachingPlaylistAtom` уже `true` — второй вызов игнорируется (возврат);
 - фильтрует треки без `audioUrl`; ставит `isCachingPlaylistAtom = true` и прогресс `playlistCacheProgressAtom = { current, total }`;
-- делегирует прогон в `runPlaylistCaching` (`runPlaylistCaching.ts`): **сначала ставит ВСЕ треки в глобальную очередь** (`enqueueCache(ctx, url, 'playlist')` для каждого — все строки сразу получают «часы»), затем **await-ит промисы по очереди** (в порядке треков);
+- делегирует прогон в `runPlaylistCaching` (`runPlaylistCaching.ts`): **сначала ставит ВСЕ треки в глобальную очередь одним батчем** (`enqueueCacheMany(ctx, urls, 'playlist')` — все строки сразу получают «часы»), затем **await-ит промисы по очереди** (в порядке треков);
 - перед каждым треком проверяет подключение (`waitForOnline`, до 60с, **signal-aware**: возвращает `false` на abort ДО сетевой ошибки) — если сеть не вернулась, прогон прерывается ошибкой «Нет подключения к интернету»; неудача одного трека не прерывает остальные;
 - после каждого `await` проверяет `if (signal.aborted) break` — отменённый прогон выходит из цикла раньше;
 - per-track `CacheCancelledError` = просто `continue` (скipped, не считается ошибкой — реальная отмена, не сбой);
 - показывает системные уведомления (`PlaylistCacheNotifications.ts`): начало, прогресс «Скачано N из M», завершение «Скачано N проповедей» либо ошибка «Не удалось скачать X из N» при частичной неудаче (группа `playlist-cache`, фиксированный ID); **отменённый прогон НЕ показывает уведомлений** (в `cachePlaylist` после `runPlaylistCaching` стоит `if (controller.signal.aborted) return`);
-- обновляет `playlistDownloadProgressAtom` (по URL трека, через `setTrackDownloadProgress`) и инкрементирует `cacheUpdateTriggerAtom`;
-- сброс состояния — **только в `finally`**: `isCachingPlaylistAtom = false` + `removeFromQueueBySource(ctx, 'playlist')` (чистит оставшиеся записи очереди от этого прогона). Глобального сброса `playlistDownloadProgressAtom` в `{}` нет — см. «Состояние».
+- обновляет `playlistDownloadProgressAtom` (по URL трека, через `setTrackDownloadProgress`) и инкрементирует `cacheUpdateTriggerAtom` — **trailing-throttle 300мс** (`createTrailingThrottle` в `runPlaylistCaching.ts`): бёрст завершений подряд схлопывается в один инкремент, а `flush()` в `finally` гарантирует финальный инкремент (последнее состояние всегда свежее);
+- сброс состояния — **только в `finally`**: `isCachingPlaylistAtom = false` + `removeFromQueueBySource(ctx, 'playlist')` (чистит оставшиеся записи очереди от этого прогона). **Generation guard**: `cachePlaylist` инкрементирует `currentRunId` на старте, а `finally` сбрасывает состояние только если `currentRunId === runId` — поздний `finally` устаревшего прогона никогда не дренирует очередь и не затирает атом/контроллер преемника (cross-run race, Issue #83). **Отмена намеренно НЕ инкрементирует `currentRunId`** — сброс состояния живёт только в guarded `finally`; бамп на отмене пропустил бы teardown и оставил бы `isCachingPlaylistAtom` застрявшим в `true`. Глобального сброса `playlistDownloadProgressAtom` в `{}` нет — см. «Состояние».
 
 ### Отмена прогона (`cancelPlaylistCache`)
 
@@ -184,7 +185,7 @@
 UI и хуки — `src/pages/playlist/lib/`:
 
 - `usePlaylistCacheMenu.ts` — состояние меню кэша на экране плейлиста (диалоги подтверждения, позиция меню).
-- `usePlaylistCacheStatus.ts` — подсчёт закэшированных треков (`allCached`, `cachedCount`, `totalCount`).
+- `usePlaylistCacheStatus.ts` — подсчёт закэшированных треков (`allCached`, `cachedCount`, `totalCount`). **Debounce 250мс** (Issue #83 follow-up): первый `isCached`-проход по трекам идёт немедленно при смене набора треков, последующие перепроверки по `cacheUpdateTriggerAtom` — trailing-дебаунс 250мс. Бёрст инкрементов триггера (массовое завершение закачек) схлопывается в одну перепроверку — устранение N-кратных синхронных `File.exists` бёрстов (см. [debt.md](../debt.md)).
 - `PlaylistCacheMenu.tsx`, `PlaylistCacheMenuItem.tsx`, `PlaylistCacheMenuDropdown.tsx`, `PlaylistCacheDialogs.tsx` — в `src/pages/playlist/ui/`.
 
 ## Очистка кэша

@@ -2,6 +2,7 @@ import { type Directory, File } from 'expo-file-system'
 import { _resetInflightCacheForTesting, audioCacheService } from './AudioCacheService'
 import { CacheCancelledError } from './CacheCancelledError'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
+import { inflightCache } from './inflightCache'
 
 jest.mock('expo-file-system', () => ({
   File: class MockFile {
@@ -224,6 +225,42 @@ describe('AudioCacheService', () => {
         )
       })
     })
+
+    test('starts a fresh download when the inflight entry is aborted (Bug B chokepoint)', async () => {
+      mockFileState.exists = false
+      // A dying inflight entry created through cacheAudio, then cancelled so it
+      // is marked aborted but has not settled yet.
+      ;(File.downloadFileAsync as jest.Mock).mockImplementation(
+        (_url: string, _file: unknown, opts: { signal: AbortSignal }) =>
+          new Promise<string>((_resolve, reject) => {
+            opts.signal.addEventListener('abort', () => reject(new Error('Aborted')))
+          }),
+      )
+      const dying = audioCacheService.cacheAudio(EXAMPLE_URL)
+      audioCacheService.cancelAudioDownload(EXAMPLE_URL)
+      expect(inflightCache.get(EXAMPLE_URL)?.aborted).toBe(true)
+
+      // A fresh cacheAudio must NOT join the dying promise.
+      let resolveFresh!: (value: unknown) => void
+      ;(File.downloadFileAsync as jest.Mock).mockClear()
+      ;(File.downloadFileAsync as jest.Mock).mockReturnValueOnce(
+        new Promise(r => {
+          resolveFresh = r
+        }),
+      )
+      const fresh = audioCacheService.cacheAudio(EXAMPLE_URL)
+
+      expect(fresh).not.toBe(dying)
+      expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+
+      // Let the dying entry settle (reject) — its identity-guarded cleanup must
+      // NOT delete the fresh entry from the inflight cache.
+      await expect(dying).rejects.toBeInstanceOf(CacheCancelledError)
+      expect(inflightCache.get(EXAMPLE_URL)).toBeDefined()
+
+      resolveFresh({ uri: 'file://dl.mp3' })
+      await expect(fresh).resolves.toContain('file://cache/')
+    })
   })
 
   describe('cancelAudioDownload', () => {
@@ -247,6 +284,23 @@ describe('AudioCacheService', () => {
 
       await expect(creatorPromise).rejects.toBeInstanceOf(CacheCancelledError)
       await expect(joinerPromise).rejects.toBeInstanceOf(CacheCancelledError)
+    })
+
+    test('marks the inflight entry aborted so re-enqueue treats it as non-joinable (Bug B)', async () => {
+      mockFileState.exists = false
+      ;(File.downloadFileAsync as jest.Mock).mockImplementation(
+        (_url: string, _file: unknown, opts: { signal: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            opts.signal.addEventListener('abort', () => reject(new Error('Aborted')))
+          }),
+      )
+
+      audioCacheService.cacheAudio(EXAMPLE_URL)
+      expect(audioCacheService.cancelAudioDownload(EXAMPLE_URL)).toBe(true)
+
+      // Synchronously after cancel the dying entry is still present but marked
+      // aborted — the queue's inflightIsJoinable then starts a fresh download.
+      expect(inflightCache.get(EXAMPLE_URL)?.aborted).toBe(true)
     })
   })
 

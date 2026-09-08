@@ -8,12 +8,13 @@ import {
   type CacheQueueSource,
   clearRequesters,
   createDeferred,
+  type Deferred,
   nextEnqueuedAt,
   pendingPromises,
 } from './cacheQueueState'
 import { inflightCache } from './inflightCache'
 
-const joinInflight = (
+export const joinInflight = (
   url: string,
   source: CacheQueueSource,
   onProgress?: (progress: number) => void,
@@ -28,20 +29,40 @@ const joinInflight = (
   return promise
 }
 
+export const registerFresh = (
+  url: string,
+  source: CacheQueueSource,
+  onProgress?: (progress: number) => void,
+): Deferred<string> => {
+  const deferred = createDeferred<string>()
+  pendingPromises.set(url, deferred)
+  addRequester(url, source)
+  if (onProgress) addProgressCallback(url, onProgress)
+  return deferred
+}
+
 const enqueueFresh = (
   ctx: Ctx,
   url: string,
   source: CacheQueueSource,
   onProgress?: (progress: number) => void,
 ): Promise<string> => {
-  const deferred = createDeferred<string>()
-  pendingPromises.set(url, deferred)
-  addRequester(url, source)
-  if (onProgress) addProgressCallback(url, onProgress)
+  const deferred = registerFresh(url, source, onProgress)
   const enqueuedAt = nextEnqueuedAt()
   cacheQueueAtom(ctx, prev => ({ ...prev, [url]: { enqueuedAt, source } }))
   kickRunner(ctx)
   return deferred.promise
+}
+
+/**
+ * An inflight entry is joinable unless it was aborted. After `cancelAudioDownload`
+ * marks the entry aborted but before it settles, re-enqueueing the URL must start
+ * a FRESH download instead of joining the dying (rejecting) promise (Bug B).
+ * @param url - The audio URL to check.
+ */
+export const inflightIsJoinable = (url: string): boolean => {
+  const entry = inflightCache.get(url)
+  return entry !== undefined && !entry.aborted
 }
 
 const joinQueued = (
@@ -56,7 +77,7 @@ const joinQueued = (
     if (onProgress) addProgressCallback(url, onProgress)
     return queued.promise
   }
-  if (inflightCache.has(url)) return joinInflight(url, source, onProgress)
+  if (inflightIsJoinable(url)) return joinInflight(url, source, onProgress)
   return enqueueFresh(ctx, url, source, onProgress)
 }
 
@@ -68,7 +89,7 @@ const joinQueued = (
  */
 export const enqueueCache = action(
   (
-    ctx,
+    ctx: Ctx,
     url: string,
     source: CacheQueueSource,
     onProgress?: (progress: number) => void,

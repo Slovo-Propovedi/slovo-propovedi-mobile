@@ -63,7 +63,10 @@ class AudioCacheService {
   ): Promise<string> => {
     if (!audioUrl) throw new Error('[AudioCacheService] audioUrl is required')
     const existing = inflightCache.get(audioUrl)
-    if (existing) return joinInflightDownload(existing, onProgress)
+    // Join only a live download. An aborted (dying) entry must NOT be joined —
+    // its promise rejects with CacheCancelledError; fall through and start a
+    // fresh download instead (Bug B, same rule as the queue's inflightIsJoinable).
+    if (existing && !existing.aborted) return joinInflightDownload(existing, onProgress)
 
     const { cleanup, entry } = createInflightDownload(onProgress, externalSignal, (emit, signal) =>
       downloadToCache(audioUrl, emit, signal),
@@ -72,7 +75,9 @@ class AudioCacheService {
     inflightCache.set(audioUrl, entry)
     const cleanupEntry = (): void => {
       cleanup()
-      inflightCache.delete(audioUrl)
+      // Identity guard: a fresh entry may have replaced this dying one under the
+      // same URL key — never delete the fresh entry from the inflight cache.
+      if (inflightCache.get(audioUrl) === entry) inflightCache.delete(audioUrl)
     }
     promise.then(cleanupEntry, cleanupEntry)
     return promise
@@ -80,6 +85,9 @@ class AudioCacheService {
   public cancelAudioDownload = (audioUrl: string): boolean => {
     const entry = inflightCache.get(audioUrl)
     if (!entry?.abort) return false
+    // Mark aborted BEFORE aborting so a re-enqueue of the same URL treats this
+    // (dying) entry as non-joinable and starts a fresh download (Bug B).
+    entry.aborted = true
     entry.abort()
     return true
   }

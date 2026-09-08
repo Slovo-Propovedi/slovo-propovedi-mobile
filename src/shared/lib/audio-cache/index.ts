@@ -11,6 +11,7 @@ export {
   cancelAllCacheDownloads,
   cancelCacheDownload,
   enqueueCache,
+  enqueueCacheMany,
   getCacheRequesters,
   isUrlQueued,
   registerPlaylistRunStopper,
