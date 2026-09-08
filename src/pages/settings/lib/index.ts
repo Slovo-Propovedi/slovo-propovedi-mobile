@@ -1,1 +1,0 @@
-export { clearCache } from './clearCache'

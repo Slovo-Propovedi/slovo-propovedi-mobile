@@ -1,79 +1,84 @@
-import { createTrailingThrottle } from './runPlaylistCaching'
+import { createCtx } from '@reatom/framework'
+import { enqueueCacheMany } from 'shared/lib/audio-cache'
+import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
+import { waitForOnline } from 'shared/lib/network'
+import { playlistCacheProgressAtom } from '../model'
+import { playlistCacheNotifications } from './PlaylistCacheNotifications'
+import { runPlaylistCaching } from './runPlaylistCaching'
 
-describe('createTrailingThrottle', () => {
+jest.mock('shared/lib/network', () => ({
+  waitForOnline: jest.fn(),
+}))
+
+jest.mock('shared/lib/audio-cache', () => ({
+  enqueueCacheMany: jest.fn(),
+  isCacheCancelledError: jest.requireActual('shared/lib/audio-cache/CacheCancelledError')
+    .isCacheCancelledError,
+}))
+
+jest.mock('./PlaylistCacheNotifications', () => ({
+  playlistCacheNotifications: {
+    hideCachingNotification: jest.fn().mockResolvedValue(undefined),
+    showCachingNotification: jest.fn().mockResolvedValue('notification-id'),
+    updateCachingNotification: jest.fn().mockResolvedValue('notification-id'),
+  },
+}))
+
+const TRACKS = [
+  { audioUrl: 'http://example.com/1.mp3', id: '1', title: 'Первая' },
+  { audioUrl: 'http://example.com/2.mp3', id: '2', title: 'Вторая' },
+]
+
+const mockedEnqueueCacheMany = jest.mocked(enqueueCacheMany)
+const mockedWaitForOnline = jest.mocked(waitForOnline)
+const mockedNotifications = jest.mocked(playlistCacheNotifications)
+
+describe('runPlaylistCaching', () => {
   beforeEach(() => {
-    jest.useFakeTimers()
+    jest.clearAllMocks()
+    mockedWaitForOnline.mockResolvedValue(true)
+    mockedEnqueueCacheMany.mockImplementation((_ctx, urls) => urls.map(url => Promise.resolve(url)))
   })
 
-  afterEach(() => {
-    jest.useRealTimers()
+  test('does not increment cacheUpdateTriggerAtom', async () => {
+    const ctx = createCtx()
+    const before = ctx.get(cacheUpdateTriggerAtom)
+
+    await runPlaylistCaching(ctx, TRACKS, 'Плейлист', new AbortController().signal)
+
+    expect(ctx.get(cacheUpdateTriggerAtom)).toBe(before)
   })
 
-  test('fires once after the delay', () => {
-    const fn = jest.fn()
-    const throttle = createTrailingThrottle(fn, 300)
+  test('updates the playlist progress atom through the run', async () => {
+    const ctx = createCtx()
 
-    throttle.trigger()
-    expect(fn).not.toHaveBeenCalled()
+    await runPlaylistCaching(ctx, TRACKS, 'Плейлист', new AbortController().signal)
 
-    jest.advanceTimersByTime(299)
-    expect(fn).not.toHaveBeenCalled()
-
-    jest.advanceTimersByTime(1)
-    expect(fn).toHaveBeenCalledTimes(1)
+    expect(ctx.get(playlistCacheProgressAtom)).toEqual({ current: 2, total: 2 })
+    expect(mockedNotifications.updateCachingNotification).toHaveBeenCalledTimes(2)
   })
 
-  test('coalesces back-to-back triggers into a single trailing call', () => {
-    const fn = jest.fn()
-    const throttle = createTrailingThrottle(fn, 300)
+  test('returns the failed count and hides the notification', async () => {
+    const ctx = createCtx()
+    mockedEnqueueCacheMany.mockImplementation((_ctx, urls: string[]) =>
+      urls.map(url => {
+        if (url === TRACKS[1].audioUrl) {
+          const rejected = Promise.reject(new Error('download failed'))
+          void rejected.catch(() => {})
+          return rejected
+        }
+        return Promise.resolve(url)
+      }),
+    )
 
-    throttle.trigger()
-    jest.advanceTimersByTime(100)
-    throttle.trigger()
-    jest.advanceTimersByTime(100)
-    throttle.trigger()
-    jest.advanceTimersByTime(299)
-    expect(fn).not.toHaveBeenCalled()
+    const failedCount = await runPlaylistCaching(
+      ctx,
+      TRACKS,
+      'Плейлист',
+      new AbortController().signal,
+    )
 
-    jest.advanceTimersByTime(1)
-    expect(fn).toHaveBeenCalledTimes(1)
-  })
-
-  test('flush fires immediately when a timer is pending', () => {
-    const fn = jest.fn()
-    const throttle = createTrailingThrottle(fn, 300)
-
-    throttle.trigger()
-    throttle.flush()
-
-    expect(fn).toHaveBeenCalledTimes(1)
-    jest.advanceTimersByTime(300)
-    expect(fn).toHaveBeenCalledTimes(1)
-  })
-
-  test('flush is a no-op when no timer is pending', () => {
-    const fn = jest.fn()
-    const throttle = createTrailingThrottle(fn, 300)
-
-    throttle.flush()
-    expect(fn).not.toHaveBeenCalled()
-
-    throttle.trigger()
-    jest.advanceTimersByTime(300)
-    throttle.flush()
-    expect(fn).toHaveBeenCalledTimes(1)
-  })
-
-  test('a trigger after the timer fired schedules a fresh call', () => {
-    const fn = jest.fn()
-    const throttle = createTrailingThrottle(fn, 300)
-
-    throttle.trigger()
-    jest.advanceTimersByTime(300)
-    expect(fn).toHaveBeenCalledTimes(1)
-
-    throttle.trigger()
-    jest.advanceTimersByTime(300)
-    expect(fn).toHaveBeenCalledTimes(2)
+    expect(failedCount).toBe(1)
+    expect(mockedNotifications.hideCachingNotification).toHaveBeenCalled()
   })
 })

@@ -8,7 +8,7 @@ import {
   removeFromQueueBySource,
 } from 'shared/lib/audio-cache'
 import { CacheCancelledError } from 'shared/lib/audio-cache/CacheCancelledError'
-import { playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
+import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
 import { waitForOnline } from 'shared/lib/network'
 import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
@@ -274,6 +274,15 @@ describe('playlistCacheService.cachePlaylist', () => {
     await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
 
     expect(ctx.get(playlistDownloadProgressAtom)).toEqual({})
+  })
+
+  test('does not increment cacheUpdateTriggerAtom during a run', async () => {
+    const ctx = createCtx()
+    const before = ctx.get(cacheUpdateTriggerAtom)
+
+    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+
+    expect(ctx.get(cacheUpdateTriggerAtom)).toBe(before)
   })
 
   test('preserves a foreign progress entry from a concurrent manual download', async () => {

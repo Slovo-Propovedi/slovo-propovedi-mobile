@@ -1,5 +1,7 @@
+import { useCtx } from '@reatom/npm-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { audioCacheService } from 'shared/lib/audio-cache'
+import { cachedUrlsAtom } from 'shared/lib/cache-triggers'
 import type { TrackToCache } from './PlaylistCacheService'
 
 const STATUS_REFRESH_DEBOUNCE_MS = 250
@@ -14,11 +16,9 @@ export const usePlaylistCacheStatus = (
   tracks: TrackToCache[],
   cacheTrigger?: number,
 ): PlaylistCacheStatus => {
-  const [status, setStatus] = useState<PlaylistCacheStatus>({
-    allCached: false,
-    cachedCount: 0,
-    totalCount: 0,
-  })
+  const ctx = useCtx()
+  const [fsResults, setFsResults] = useState<Record<string, boolean>>({})
+  const [overlay, setOverlay] = useState<Record<string, boolean>>({})
   const checkedTracksRef = useRef<null | TrackToCache[]>(null)
 
   // Parse: keep only tracks with audio URLs
@@ -38,15 +38,17 @@ export const usePlaylistCacheStatus = (
 
     const checkCacheStatus = async () => {
       const results = await Promise.all(
-        tracksWithUrls.map(track => audioCacheService.isCached(track.audioUrl)),
+        tracksWithUrls.map(async track => ({
+          cached: await audioCacheService.isCached(track.audioUrl),
+          url: track.audioUrl,
+        })),
       )
       if (isCancelled) return
 
-      const cachedCount = results.filter(Boolean).length
-      setStatus({
-        allCached: cachedCount === tracksWithUrls.length,
-        cachedCount,
-        totalCount: tracksWithUrls.length,
+      setFsResults(prev => {
+        const next = { ...prev }
+        for (const { cached, url } of results) next[url] = cached
+        return next
       })
     }
 
@@ -65,7 +67,34 @@ export const usePlaylistCacheStatus = (
     }
   }, [tracksWithUrls, cacheTrigger])
 
+  // Narrow overlay subscription: a registry write updates counts reactively
+  // WITHOUT a cacheUpdateTriggerAtom increment (no debounced FS rescan needed).
+  useEffect(() => {
+    const readOverlay = () => {
+      const urls = ctx.get(cachedUrlsAtom)
+      setOverlay(prev => {
+        const changed = tracksWithUrls.some(
+          track => Boolean(urls[track.audioUrl]) !== Boolean(prev[track.audioUrl]),
+        )
+        if (!changed) return prev
+        const next: Record<string, boolean> = {}
+        for (const track of tracksWithUrls) if (urls[track.audioUrl]) next[track.audioUrl] = true
+
+        return next
+      })
+    }
+    readOverlay()
+    return ctx.subscribe(cachedUrlsAtom, readOverlay)
+  }, [ctx, tracksWithUrls])
+
+  const { allCached, cachedCount } = useMemo(() => {
+    let count = 0
+    for (const track of tracksWithUrls)
+      if (fsResults[track.audioUrl] || overlay[track.audioUrl]) count++
+    return { allCached: count === tracksWithUrls.length, cachedCount: count }
+  }, [fsResults, overlay, tracksWithUrls])
+
   if (tracksWithUrls.length === 0) return { allCached: false, cachedCount: 0, totalCount: 0 }
 
-  return status
+  return { allCached, cachedCount, totalCount: tracksWithUrls.length }
 }

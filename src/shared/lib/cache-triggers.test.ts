@@ -1,8 +1,12 @@
 import { createCtx } from '@reatom/framework'
 import type { Ctx } from '@reatom/framework'
 import {
+  cachedUrlsAtom,
   cacheUpdateTriggerAtom,
+  clearCachedUrls,
   incrementCacheTrigger,
+  markUrlCached,
+  markUrlEvicted,
   playlistDownloadProgressAtom,
   removeTrackDownloadProgress,
   setTrackDownloadProgress,
@@ -116,5 +120,70 @@ describe('removeTrackDownloadProgress', () => {
     const before = ctx.get(playlistDownloadProgressAtom)
     removeTrackDownloadProgress(ctx, 'https://example.com/1.mp3')
     expect(ctx.get(playlistDownloadProgressAtom)).toBe(before)
+  })
+})
+
+describe('cachedUrlsAtom registry', () => {
+  let ctx: Ctx
+
+  beforeEach(() => {
+    ctx = createCtx()
+  })
+
+  test('has initial value of empty object', () => {
+    expect(ctx.get(cachedUrlsAtom)).toEqual({})
+  })
+
+  test('markUrlCached records the URL', () => {
+    markUrlCached(ctx, 'https://example.com/1.mp3')
+    expect(ctx.get(cachedUrlsAtom)).toEqual({ 'https://example.com/1.mp3': true })
+  })
+
+  test('markUrlCached keeps other URLs untouched', () => {
+    markUrlCached(ctx, 'https://example.com/1.mp3')
+    markUrlCached(ctx, 'https://example.com/2.mp3')
+    expect(ctx.get(cachedUrlsAtom)).toEqual({
+      'https://example.com/1.mp3': true,
+      'https://example.com/2.mp3': true,
+    })
+  })
+
+  test('markUrlCached is a no-op when the URL is already present (atom reference unchanged)', () => {
+    markUrlCached(ctx, 'https://example.com/1.mp3')
+    const before = ctx.get(cachedUrlsAtom)
+    markUrlCached(ctx, 'https://example.com/1.mp3')
+    expect(ctx.get(cachedUrlsAtom)).toBe(before)
+  })
+
+  test('markUrlEvicted removes the URL', () => {
+    markUrlCached(ctx, 'https://example.com/1.mp3')
+    markUrlEvicted(ctx, 'https://example.com/1.mp3')
+    expect(ctx.get(cachedUrlsAtom)).toEqual({})
+  })
+
+  test('markUrlEvicted keeps other URLs untouched', () => {
+    markUrlCached(ctx, 'https://example.com/1.mp3')
+    markUrlCached(ctx, 'https://example.com/2.mp3')
+    markUrlEvicted(ctx, 'https://example.com/1.mp3')
+    expect(ctx.get(cachedUrlsAtom)).toEqual({ 'https://example.com/2.mp3': true })
+  })
+
+  test('markUrlEvicted is a no-op when the URL is absent (atom reference unchanged)', () => {
+    const before = ctx.get(cachedUrlsAtom)
+    markUrlEvicted(ctx, 'https://example.com/1.mp3')
+    expect(ctx.get(cachedUrlsAtom)).toBe(before)
+  })
+
+  test('clearCachedUrls drops the whole registry', () => {
+    markUrlCached(ctx, 'https://example.com/1.mp3')
+    markUrlCached(ctx, 'https://example.com/2.mp3')
+    clearCachedUrls(ctx)
+    expect(ctx.get(cachedUrlsAtom)).toEqual({})
+  })
+
+  test('clearCachedUrls is a no-op when already empty (atom reference unchanged)', () => {
+    const before = ctx.get(cachedUrlsAtom)
+    clearCachedUrls(ctx)
+    expect(ctx.get(cachedUrlsAtom)).toBe(before)
   })
 })

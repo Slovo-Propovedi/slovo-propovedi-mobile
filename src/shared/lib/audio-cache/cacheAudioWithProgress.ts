@@ -1,5 +1,9 @@
 import { type Ctx } from '@reatom/framework'
-import { removeTrackDownloadProgress, setTrackDownloadProgress } from '../cache-triggers'
+import {
+  markUrlCached,
+  removeTrackDownloadProgress,
+  setTrackDownloadProgress,
+} from '../cache-triggers'
 import { audioCacheService } from './AudioCacheService'
 
 /**
@@ -9,13 +13,16 @@ import { audioCacheService } from './AudioCacheService'
  * Unified download protocol:
  * 1. Pre-set `0` before the download starts;
  * 2. Forward each `onProgress` tick from `audioCacheService.cacheAudio`;
- * 3. Drop the progress entry in `finally` — on success, on failure, and on the
+ * 3. On success, mark the URL in the optimistic `cachedUrlsAtom` overlay BEFORE
+ *    the progress entry is dropped, so the row transitions progress→cached with
+ *    no intermediate 'cloud' frame;
+ * 4. Drop the progress entry in `finally` — on success, on failure, and on the
  *    skip-cached path where `cacheAudio` resolves without ever calling `onProgress`.
  *
  * Rejections propagate to the caller.
- * Note: this helper does NOT increment `cacheUpdateTriggerAtom`.
- * Trigger policy stays with callers (row hook / fullscreen handler / playlist
- * runner increment on success; BackgroundCachingService keeps its own path).
+ * Note: this helper does NOT increment `cacheUpdateTriggerAtom`. Registry write
+ * happens here (markUrlCached); the playlist run no longer bumps the trigger —
+ * UI updates flow purely through the overlay + progress + queue atoms.
  * @param ctx - Reatom context for atom updates.
  * @param audioUrl - Audio URL to cache.
  * @param onProgress - Optional extra progress callback (0..1) forwarded alongside
@@ -31,7 +38,7 @@ export const cacheAudioWithProgress = async (
 ): Promise<string> => {
   setTrackDownloadProgress(ctx, { progress: 0, url: audioUrl })
   try {
-    return await audioCacheService.cacheAudio(
+    const uri = await audioCacheService.cacheAudio(
       audioUrl,
       progress => {
         setTrackDownloadProgress(ctx, { progress, url: audioUrl })
@@ -39,6 +46,8 @@ export const cacheAudioWithProgress = async (
       },
       signal,
     )
+    markUrlCached(ctx, audioUrl)
+    return uri
   } finally {
     removeTrackDownloadProgress(ctx, audioUrl)
   }

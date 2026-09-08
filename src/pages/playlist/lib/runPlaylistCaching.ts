@@ -1,12 +1,10 @@
 import { type Ctx } from '@reatom/framework'
 import { enqueueCacheMany, isCacheCancelledError } from 'shared/lib/audio-cache'
-import { incrementCacheTrigger } from 'shared/lib/cache-triggers'
 import { waitForOnline } from 'shared/lib/network'
 import { playlistCacheProgressAtom } from '../model'
 import { playlistCacheNotifications } from './PlaylistCacheNotifications'
 
 const WAIT_ONLINE_BEFORE_TRACK_MS = 60_000
-const CACHE_TRIGGER_THROTTLE_MS = 300
 export const NETWORK_LOST_MESSAGE = 'Нет подключения к интернету'
 
 interface CacheableTrack {
@@ -15,35 +13,13 @@ interface CacheableTrack {
   title: string
 }
 
-export const createTrailingThrottle = (
-  fn: () => void,
-  delayMs: number,
-): { flush: () => void; trigger: () => void } => {
-  let timer: null | ReturnType<typeof setTimeout> = null
-
-  return {
-    flush: () => {
-      if (timer === null) return
-      clearTimeout(timer)
-      timer = null
-      fn()
-    },
-    trigger: () => {
-      if (timer !== null) clearTimeout(timer)
-      timer = setTimeout(() => {
-        timer = null
-        fn()
-      }, delayMs)
-    },
-  }
-}
-
 /**
  * Caches a playlist through the global serial queue: enqueues every track
  * upfront (FIFO) in ONE batch, then awaits each per-URL promise in order. A
  * cancelled track (CacheCancelledError) is skipped; a cancelled run breaks the
- * loop early. The cache trigger is trailing-throttled across back-to-back
- * completions and flushed once in the finally so the final state stays fresh.
+ * loop early. The run does NOT increment `cacheUpdateTriggerAtom` — per-track
+ * completion is reflected through the optimistic `cachedUrlsAtom` overlay
+ * (written by cacheAudioWithProgress) plus progress/queue atoms.
  * @param ctx - Reatom context for atom updates.
  * @param tracks - Tracks with a non-null audioUrl to cache.
  * @param playlistTitle - Playlist title used in notification texts.
@@ -58,10 +34,6 @@ export const runPlaylistCaching = async (
   signal: AbortSignal,
 ): Promise<number> => {
   let failedCount = 0
-  const triggerIncrement = createTrailingThrottle(
-    () => incrementCacheTrigger(ctx),
-    CACHE_TRIGGER_THROTTLE_MS,
-  )
 
   playlistCacheProgressAtom(ctx, { current: 0, total: tracks.length })
   let notificationId = await playlistCacheNotifications.showCachingNotification(playlistTitle)
@@ -94,7 +66,6 @@ export const runPlaylistCaching = async (
 
       const current = index + 1
       playlistCacheProgressAtom(ctx, prev => ({ ...prev, current }))
-      triggerIncrement.trigger()
       notificationId = await playlistCacheNotifications.updateCachingNotification(
         notificationId,
         current,
@@ -103,8 +74,6 @@ export const runPlaylistCaching = async (
       )
     }
   } finally {
-    // Guaranteed final trigger flush so the last completion is always reflected.
-    triggerIncrement.flush()
     await playlistCacheNotifications.hideCachingNotification(notificationId)
   }
 

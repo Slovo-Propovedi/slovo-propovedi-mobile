@@ -7,7 +7,7 @@ import {
   type CacheQueueEntry,
   hasInflightCacheDownloads,
 } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
+import { cachedUrlsAtom, cacheUpdateTriggerAtom, markUrlCached } from 'shared/lib/cache-triggers'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
 import { isCachingPlaylistAtom } from '../model'
@@ -185,6 +185,7 @@ describe('usePlaylistCacheMenu', () => {
 
     test('handleClearCacheConfirm clears the cache and bumps the trigger', async () => {
       const { ctx, result } = await renderMenu()
+      markUrlCached(ctx, 'http://example.com/1.mp3')
       const before = ctx.get(cacheUpdateTriggerAtom)
 
       await act(async () => {
@@ -192,6 +193,7 @@ describe('usePlaylistCacheMenu', () => {
       })
 
       expect(mockedClearCache).toHaveBeenCalled()
+      expect(ctx.get(cachedUrlsAtom)).toEqual({})
       expect(ctx.get(cacheUpdateTriggerAtom)).toBe(before + 1)
     })
 

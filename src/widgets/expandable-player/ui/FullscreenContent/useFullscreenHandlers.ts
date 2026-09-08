@@ -21,7 +21,11 @@ import {
   resolveCacheState,
   useIsCached,
 } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom, incrementCacheTrigger } from 'shared/lib/cache-triggers'
+import {
+  cacheUpdateTriggerAtom,
+  incrementCacheTrigger,
+  markUrlEvicted,
+} from 'shared/lib/cache-triggers'
 import { isOnlineAtom } from 'shared/model'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import { showMenuAtom } from '../../model/showMenuAtom'
@@ -73,6 +77,7 @@ export const useFullscreenHandlers = () => {
     if (isCached) {
       try {
         await removeFromCache(audio.audioUrl)
+        markUrlEvicted(ctx, audio.audioUrl)
         incrementCacheTrigger(ctx)
       } catch (error) {
         console.warn('[FullscreenContent] Error removing from cache:', error)

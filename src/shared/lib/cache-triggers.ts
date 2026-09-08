@@ -37,3 +37,39 @@ export const removeTrackDownloadProgress = action((ctx, url: string) => {
   })
   return url
 }, 'removeTrackDownloadProgress')
+
+// Optimistic registry of URLs known to be cached in the CURRENT session.
+// Populated synchronously when a download settles (see cacheAudioWithProgress)
+// so UI can reflect 'cached' without an async File.exists round-trip. It is a
+// session-only overlay: NOT persisted, NOT ground truth — a restart falls back
+// to a real FS scan. External file mutations (manual FS edits, web cache wipe)
+// are covered only by the remaining cacheUpdateTriggerAtom increments.
+export const cachedUrlsAtom = atom<Record<string, true>>({}, 'cachedUrlsAtom')
+
+// Action to record that a URL finished caching this session.
+export const markUrlCached = action((ctx, url: string) => {
+  cachedUrlsAtom(ctx, prev => {
+    if (Object.hasOwn(prev, url)) return prev
+    return { ...prev, [url]: true }
+  })
+  return url
+}, 'markUrlCached')
+
+// Action to forget a URL that was removed from the cache this session.
+export const markUrlEvicted = action((ctx, url: string) => {
+  cachedUrlsAtom(ctx, prev => {
+    if (!Object.hasOwn(prev, url)) return prev
+    const next = { ...prev }
+    delete next[url]
+    return next
+  })
+  return url
+}, 'markUrlEvicted')
+
+// Action to drop the whole session overlay (e.g. a full cache clear).
+export const clearCachedUrls = action(ctx => {
+  cachedUrlsAtom(ctx, prev => {
+    if (Object.keys(prev).length === 0) return prev
+    return {}
+  })
+}, 'clearCachedUrls')

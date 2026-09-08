@@ -1,5 +1,6 @@
 import { act } from '@testing-library/react-native'
 import { audioCacheService } from 'shared/lib/audio-cache'
+import { markUrlCached } from 'shared/lib/cache-triggers'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { usePlaylistCacheStatus } from './usePlaylistCacheStatus'
 
@@ -96,5 +97,23 @@ describe('usePlaylistCacheStatus', () => {
 
     expect(mockedIsCached).not.toHaveBeenCalled()
     expect(result.current).toEqual({ allCached: false, cachedCount: 0, totalCount: 0 })
+  })
+
+  test('counts grow reactively from the overlay without a trigger increment', async () => {
+    const { ctx, result } = await renderHookWithProviders(() => usePlaylistCacheStatus(TRACKS))
+    expect(result.current).toEqual({ allCached: false, cachedCount: 0, totalCount: 2 })
+
+    await act(async () => {
+      markUrlCached(ctx, TRACKS[0].audioUrl)
+    })
+    expect(result.current).toEqual({ allCached: false, cachedCount: 1, totalCount: 2 })
+
+    await act(async () => {
+      markUrlCached(ctx, TRACKS[1].audioUrl)
+    })
+    expect(result.current).toEqual({ allCached: true, cachedCount: 2, totalCount: 2 })
+
+    // The overlay path must not trigger a debounced FS rescan.
+    expect(mockedIsCached).toHaveBeenCalledTimes(2)
   })
 })

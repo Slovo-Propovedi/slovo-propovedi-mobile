@@ -1,4 +1,6 @@
-import { act, renderHook } from '@testing-library/react-native'
+import { act } from '@testing-library/react-native'
+import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
+import { markUrlCached, markUrlEvicted } from '../cache-triggers'
 import { audioCacheService } from './AudioCacheService'
 import { useIsCached } from './useIsCached'
 
@@ -16,12 +18,12 @@ describe('useIsCached', () => {
   })
 
   test('returns false for null audioUrl', async () => {
-    const { result } = await renderHook(() => useIsCached(null))
+    const { result } = await renderHookWithProviders(() => useIsCached(null))
     expect(result.current).toBe(false)
   })
 
   test('returns false for empty string audioUrl', async () => {
-    const { result } = await renderHook(() => useIsCached(''))
+    const { result } = await renderHookWithProviders(() => useIsCached(''))
     expect(result.current).toBe(false)
   })
 
@@ -29,13 +31,13 @@ describe('useIsCached', () => {
     ;(isCachedSpy as jest.MockedFunction<typeof audioCacheService.isCached>).mockResolvedValue(
       false,
     )
-    await renderHook(() => useIsCached(AUDIO_URL))
+    await renderHookWithProviders(() => useIsCached(AUDIO_URL))
     expect(isCachedSpy).toHaveBeenCalledWith(AUDIO_URL)
   })
 
   test('returns true after async check resolves to true', async () => {
     ;(isCachedSpy as jest.MockedFunction<typeof audioCacheService.isCached>).mockResolvedValue(true)
-    const { result } = await renderHook(() => useIsCached(AUDIO_URL))
+    const { result } = await renderHookWithProviders(() => useIsCached(AUDIO_URL))
 
     await act(async () => {
       await Promise.resolve()
@@ -48,7 +50,7 @@ describe('useIsCached', () => {
     ;(isCachedSpy as jest.MockedFunction<typeof audioCacheService.isCached>).mockResolvedValue(
       false,
     )
-    const { result } = await renderHook(() => useIsCached(AUDIO_URL))
+    const { result } = await renderHookWithProviders(() => useIsCached(AUDIO_URL))
 
     await act(async () => {
       await Promise.resolve()
@@ -61,7 +63,7 @@ describe('useIsCached', () => {
     const mockIsCached = isCachedSpy as jest.MockedFunction<typeof audioCacheService.isCached>
     mockIsCached.mockResolvedValue(true)
 
-    const { rerender, result } = await renderHook(
+    const { rerender, result } = await renderHookWithProviders(
       ({ trigger, url }: { trigger: number; url: string }) => useIsCached(url, trigger),
       {
         initialProps: { trigger: 1, url: AUDIO_URL },
@@ -95,9 +97,11 @@ describe('useIsCached', () => {
         }),
     )
 
-    const { unmount } = await renderHook(() => useIsCached(AUDIO_URL))
+    const { unmount } = await renderHookWithProviders(() => useIsCached(AUDIO_URL))
 
-    unmount()
+    await act(async () => {
+      unmount()
+    })
 
     await act(async () => {
       resolveCheck(true)
@@ -105,5 +109,46 @@ describe('useIsCached', () => {
     })
 
     expect(isCachedSpy).toHaveBeenCalledWith(AUDIO_URL)
+  })
+
+  test('returns true from the overlay without an FS truth', async () => {
+    ;(isCachedSpy as jest.MockedFunction<typeof audioCacheService.isCached>).mockResolvedValue(
+      false,
+    )
+    const { ctx, result } = await renderHookWithProviders(() => useIsCached(AUDIO_URL))
+
+    await act(async () => {
+      markUrlCached(ctx, AUDIO_URL)
+    })
+
+    expect(result.current).toBe(true)
+  })
+
+  test('markUrlEvicted flips the overlay hit back to false', async () => {
+    ;(isCachedSpy as jest.MockedFunction<typeof audioCacheService.isCached>).mockResolvedValue(
+      false,
+    )
+    const { ctx, result } = await renderHookWithProviders(() => useIsCached(AUDIO_URL))
+
+    await act(async () => {
+      markUrlCached(ctx, AUDIO_URL)
+    })
+    expect(result.current).toBe(true)
+
+    await act(async () => {
+      markUrlEvicted(ctx, AUDIO_URL)
+    })
+    expect(result.current).toBe(false)
+  })
+
+  test('FS truth without overlay stays true', async () => {
+    ;(isCachedSpy as jest.MockedFunction<typeof audioCacheService.isCached>).mockResolvedValue(true)
+    const { result } = await renderHookWithProviders(() => useIsCached(AUDIO_URL))
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(result.current).toBe(true)
   })
 })

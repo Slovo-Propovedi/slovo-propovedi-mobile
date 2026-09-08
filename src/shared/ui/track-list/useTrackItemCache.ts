@@ -11,7 +11,11 @@ import {
   type TrackCacheVisualState,
 } from '../../lib/audio-cache'
 import { useIsCached } from '../../lib/audio-cache/useIsCached'
-import { incrementCacheTrigger, playlistDownloadProgressAtom } from '../../lib/cache-triggers'
+import {
+  incrementCacheTrigger,
+  markUrlEvicted,
+  playlistDownloadProgressAtom,
+} from '../../lib/cache-triggers'
 import { isOnlineAtom } from '../../model/network'
 
 export const useTrackItemCache = (
@@ -80,6 +84,7 @@ export const useTrackItemCache = (
     if (isCached) {
       try {
         await removeFromCache(audioUrl)
+        markUrlEvicted(ctx, audioUrl)
         internalCacheTriggerRef.current += 1
         incrementCacheTrigger(ctx)
       } catch (error) {

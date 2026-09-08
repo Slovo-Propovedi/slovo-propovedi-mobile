@@ -168,7 +168,7 @@
 - после каждого `await` проверяет `if (signal.aborted) break` — отменённый прогон выходит из цикла раньше;
 - per-track `CacheCancelledError` = просто `continue` (скipped, не считается ошибкой — реальная отмена, не сбой);
 - показывает системные уведомления (`PlaylistCacheNotifications.ts`): начало, прогресс «Скачано N из M», завершение «Скачано N проповедей» либо ошибка «Не удалось скачать X из N» при частичной неудаче (группа `playlist-cache`, фиксированный ID); **отменённый прогон НЕ показывает уведомлений** (в `cachePlaylist` после `runPlaylistCaching` стоит `if (controller.signal.aborted) return`);
-- обновляет `playlistDownloadProgressAtom` (по URL трека, через `setTrackDownloadProgress`) и инкрементирует `cacheUpdateTriggerAtom` — **trailing-throttle 300мс** (`createTrailingThrottle` в `runPlaylistCaching.ts`): бёрст завершений подряд схлопывается в один инкремент, а `flush()` в `finally` гарантирует финальный инкремент (последнее состояние всегда свежее);
+- обновляет `playlistDownloadProgressAtom` (по URL трека, через `setTrackDownloadProgress`) и **не инкрементирует `cacheUpdateTriggerAtom`** — завершение трека отражается через optimistic-оверлей `cachedUrlsAtom` (пишется в `cacheAudioWithProgress`) + атомы прогресса/очереди, без троттлинга и без full-list re-render'ов (см. «Реестр закешированных URL» ниже);
 - сброс состояния — **только в `finally`**: `isCachingPlaylistAtom = false` + `removeFromQueueBySource(ctx, 'playlist')` (чистит оставшиеся записи очереди от этого прогона). **Generation guard**: `cachePlaylist` инкрементирует `currentRunId` на старте, а `finally` сбрасывает состояние только если `currentRunId === runId` — поздний `finally` устаревшего прогона никогда не дренирует очередь и не затирает атом/контроллер преемника (cross-run race, Issue #83). **Отмена намеренно НЕ инкрементирует `currentRunId`** — сброс состояния живёт только в guarded `finally`; бамп на отмене пропустил бы teardown и оставил бы `isCachingPlaylistAtom` застрявшим в `true`. Глобального сброса `playlistDownloadProgressAtom` в `{}` нет — см. «Состояние».
 
 ### Отмена прогона (`cancelPlaylistCache`)
@@ -185,18 +185,31 @@
 UI и хуки — `src/pages/playlist/lib/`:
 
 - `usePlaylistCacheMenu.ts` — состояние меню кэша на экране плейлиста (диалоги подтверждения, позиция меню).
-- `usePlaylistCacheStatus.ts` — подсчёт закэшированных треков (`allCached`, `cachedCount`, `totalCount`). **Debounce 250мс** (Issue #83 follow-up): первый `isCached`-проход по трекам идёт немедленно при смене набора треков, последующие перепроверки по `cacheUpdateTriggerAtom` — trailing-дебаунс 250мс. Бёрст инкрементов триггера (массовое завершение закачек) схлопывается в одну перепроверку — устранение N-кратных синхронных `File.exists` бёрстов (см. [debt.md](../debt.md)).
+- `usePlaylistCacheStatus.ts` — подсчёт закэшированных треков (`allCached`, `cachedCount`, `totalCount`). **Debounce 250мс** (Issue #83 follow-up): первый `isCached`-проход по трекам идёт немедленно при смене набора треков, последующие перепроверки по `cacheUpdateTriggerAtom` — trailing-дебаунс 250мс. Бёрст инкрементов триггера (массовое завершение закачек) схлопывается в одну перепроверку — устранение N-кратных синхронных `File.exists` бёрстов (см. [debt.md](../debt.md)). Дополнительно подписан на `cachedUrlsAtom` (narrow subscription): завершение трека в текущей сессии обновляет счётчики **реактивно, без инкремента триггера и без FS-перепроверки**.
 - `PlaylistCacheMenu.tsx`, `PlaylistCacheMenuItem.tsx`, `PlaylistCacheMenuDropdown.tsx`, `PlaylistCacheDialogs.tsx` — в `src/pages/playlist/ui/`.
+
+## Реестр закешированных URL (optimistic overlay)
+
+`cachedUrlsAtom` (`src/shared/lib/cache-triggers.ts`) — **сессионный** реестр URL, которые в текущей сессии точно завершили скачивание. Пишется **синхронно** в `cacheAudioWithProgress` (`markUrlCached`) сразу после резолва `audioCacheService.cacheAudio` и **до** удаления записи прогресса — строка переходит progress→cached атомарно, без промежуточного кадра «облако» (раньше `isCached` подтверждался только через throttle(300мс)→trigger→full re-render→async `File.exists`, отсюда мигание иконки ~1с).
+
+Семантика и границы:
+
+- **Не персистится, не является истиной.** После рестарта приложения реестр пуст — UI снова опирается на реальный FS-скан (`isCached`/`usePlaylistCacheStatus`). Внешние мутации файлов кэша (ручное удаление, web-очистка бакета) покрываются только оставшимися инкрементами `cacheUpdateTriggerAtom`.
+- **Запись:** `markUrlCached(ctx, url)` — no-diff bailout (повторная запись того же URL не меняет ссылку атома). Вызывается из `cacheAudioWithProgress` для **всех** источников (`'auto'`, `'manual'`, `'playlist'`) — единая точка завершения закачки. Join-inflight/skip-cached пути помечают идемпотентно/безвредно.
+- **Удаление:** `markUrlEvicted(ctx, url)` — из веток `removeFromCache` (`useTrackItemCache`, `useFullscreenHandlers`); `clearCachedUrls(ctx)` — из полных очисток кэша (`usePlaylistCacheMenu.handleClearCacheConfirm`, `clearCacheAction` в настройках).
+- **Потребители:** `useIsCached` (overlay-hit ИЛИ FS-результат) и `usePlaylistCacheStatus` (union per-track FS-результатов с overlay) — оба через narrow `ctx.subscribe` + `useState` с Object.is-bailout, чтобы запись реестра ре-рендерила только затронутые строки.
+- **Плейлист-прогон больше не инкрементирует `cacheUpdateTriggerAtom`** (`runPlaylistCaching`): UI обновляется чисто через overlay + прогресс + очередь. Это убирает full-list re-render (`PlaylistScreen.renderItem` deps) и 140×`isCached`-рескан (debounce 250мс) на каждое завершение в больших плейлистах.
+- **Известное ограничение (web):** `openAudioCache` при повреждённом бакете делает полный `caches.delete` — в текущей сессии overlay может остаться stale-true для URL, чьи записи реально удалены. Редко, самовосстанавливается (следующий FS-скан/рестарт), задокументировано как limitation.
 
 ## Очистка кэша
 
-В Настройках (`src/pages/settings/ui/SettingsScreen.tsx`) пункт «Очистить кэш» → `ClearCacheDialog.tsx` → `clearCacheAction` (`src/pages/settings/model.ts`) → `clearCache` (`src/pages/settings/lib/clearCache.ts`) → `audioCacheService.clearCache()`.
+В Настройках (`src/pages/settings/ui/SettingsScreen.tsx`) пункт «Очистить кэш» → `ClearCacheDialog.tsx` → `clearCacheAction` (`src/pages/settings/model.ts`) → `audioCacheService.clearCache()`. После очистки action сбрасывает optimistic-реестр (`clearCachedUrls`) и инкрементирует `cacheUpdateTriggerAtom` (строки/плейлист перепроверяют состояние).
 
 > **Примечание:** Кэш изображений (`expo-image`, `cachePolicy='memory-disk'`) физически отделён от `document/audio-cache` и этими операциями не затрагивается. Подробнее — [features/images.md](./images.md).
 
 ## Hooks
 
-- `useIsCached` (`src/shared/lib/audio-cache/useIsCached.ts`) — проверка кэша для конкретного `audioUrl`, опциональный `cacheTrigger` для перепроверки.
+- `useIsCached` (`src/shared/lib/audio-cache/useIsCached.ts`) — проверка кэша для конкретного `audioUrl`, опциональный `cacheTrigger` для перепроверки. Возвращает `fsResult || overlayHit` — мгновенный ответ из `cachedUrlsAtom` (если URL завершил скачивание в этой сессии) поверх асинхронного `File.exists`.
 
 ## Состояние
 
@@ -207,7 +220,8 @@ UI и хуки — `src/pages/playlist/lib/`:
 Триггеры обновления UI — `src/shared/lib/cache-triggers.ts`:
 
 - `cacheUpdateTriggerAtom` (инкрементируется `incrementCacheTrigger`);
-- `playlistDownloadProgressAtom` — прогресс по URL (`Record<string, number>`). Запись идёт **только** через helper `cacheAudioWithProgress` (`shared/lib/audio-cache/cacheAudioWithProgress.ts`), который вызывается **раннером глобальной очереди** (`cacheQueueRunner.ts`) для **всех** источников (`'auto'`, `'manual'`, `'playlist'`). Helper пишет через `setTrackDownloadProgress` и чистит через `removeTrackDownloadProgress` (оба из `shared/lib/cache-triggers`) — запись создаётся до старта скачивания, тики обновляют прогресс, запись удаляется в `finally` (успех и ошибка). Глобального сброса атома в `{}` больше нет — его убрали из `PlaylistCacheService.cachePlaylist`, т.к. он стирал прогресс параллельных ручных скачиваний (Issue #82).
+- `cachedUrlsAtom` — optimistic-реестр URL, завершивших скачивание в текущей сессии (`Record<string, true>`). Пишется `markUrlCached`/`markUrlEvicted`/`clearCachedUrls` (см. «Реестр закешированных URL» выше);
+- `playlistDownloadProgressAtom` — прогресс по URL (`Record<string, number>`). Запись идёт **только** через helper `cacheAudioWithProgress` (`shared/lib/audio-cache/cacheAudioWithProgress.ts`), который вызывается **раннером глобальной очереди** (`cacheQueueRunner.ts`) для **всех** источников (`'auto'`, `'manual'`, `'playlist'`). Helper пишет через `setTrackDownloadProgress` и чистит через `removeTrackDownloadProgress` (оба из `shared/lib/cache-triggers`) — запись создаётся до старта скачивания, тики обновляют прогресс, запись удаляется в `finally` (успех и ошибка); на успехе перед удалением прогресса вызывается `markUrlCached`. Глобального сброса атома в `{}` больше нет — его убрали из `PlaylistCacheService.cachePlaylist`, т.к. он стирал прогресс параллельных ручных скачиваний (Issue #82).
 
 Константа ключа — `src/shared/config/cache-storage-keys.ts` (`CACHED_SECTIONS`). Ключи хранилища — [storage.md](../contracts/storage.md).
 
@@ -222,7 +236,7 @@ UI и хуки — `src/pages/playlist/lib/`:
 3. **Скачивание плейлиста** → `PlaylistCacheService.cachePlaylist` (все треки в очередь, последовательный прогон, с прогрессом и системными уведомлениями).
 4. **Очистка кэша** → Настройки → `ClearCacheDialog`.
 
-После любого изменения кэша инкрементируется `cacheUpdateTriggerAtom`, чтобы хуки (`useIsCached`, `usePlaylistCacheStatus`) перепроверили состояние.
+После любого изменения кэша инкрементируется `cacheUpdateTriggerAtom`, чтобы хуки (`useIsCached`, `usePlaylistCacheStatus`) перепроверили состояние. Исключение — завершение закачки: оно пишет `cachedUrlsAtom` (overlay) и **не** инкрементирует триггер (см. «Реестр закешированных URL»).
 
 ## Связанные документы
 

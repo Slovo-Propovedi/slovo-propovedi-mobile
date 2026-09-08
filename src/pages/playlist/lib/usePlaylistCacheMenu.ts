@@ -7,7 +7,11 @@ import {
   cacheQueueAtom,
   hasInflightCacheDownloads,
 } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom, incrementCacheTrigger } from 'shared/lib/cache-triggers'
+import {
+  cacheUpdateTriggerAtom,
+  clearCachedUrls,
+  incrementCacheTrigger,
+} from 'shared/lib/cache-triggers'
 import { isOnlineAtom } from 'shared/model'
 import { type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { isCachingPlaylistAtom } from '../model'
@@ -45,6 +49,7 @@ export const usePlaylistCacheMenu = (tracksData: TrackToCache[], playlistTitle: 
     if (hasInflightCacheDownloads()) return
     try {
       await audioCacheService.clearCache()
+      clearCachedUrls(ctx)
       incrementCacheTrigger(ctx)
     } catch (error) {
       console.error('[PlaylistCacheMenu] Error clearing cache:', error)
