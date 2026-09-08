@@ -6,6 +6,7 @@ import type { StyleProp, ViewStyle } from 'react-native'
 
 interface SettingsItemProps {
   description?: string
+  disabled?: boolean
   icon?: keyof typeof Ionicons.glyphMap
   onPress: () => void
   style?: StyleProp<ViewStyle>
@@ -15,6 +16,7 @@ interface SettingsItemProps {
 
 export const SettingsItem = ({
   description,
+  disabled,
   icon,
   onPress,
   style,
@@ -27,14 +29,24 @@ export const SettingsItem = ({
     <TouchableItem
       testID={testID}
       onPress={onPress}
+      disabled={disabled}
       style={[styles.container, { backgroundColor: currentTheme.surface }, style]}
     >
       <View style={styles.content}>
         {icon ? (
-          <Ionicons size={24} name={icon} style={styles.icon} color={currentTheme.text} />
+          <Ionicons
+            size={24}
+            name={icon}
+            style={styles.icon}
+            color={disabled ? currentTheme.textMuted : currentTheme.text}
+          />
         ) : null}
         <View style={styles.textContainer}>
-          <Text style={[styles.title, { color: currentTheme.text }]}>{title}</Text>
+          <Text
+            style={[styles.title, { color: disabled ? currentTheme.textMuted : currentTheme.text }]}
+          >
+            {title}
+          </Text>
           {description ? (
             <Text style={[styles.description, { color: currentTheme.textMuted }]}>
               {description}

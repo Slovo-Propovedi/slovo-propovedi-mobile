@@ -63,7 +63,7 @@ export const useTrackItemCache = (
   useEffect(() => {
     const url = audioUrl ?? null
     const readQueued = () => {
-      const queued = url ? url in ctx.get(cacheQueueAtom) : false
+      const queued = url ? Object.hasOwn(ctx.get(cacheQueueAtom), url) : false
       setIsQueued(prev => (prev === queued ? prev : queued))
     }
     readQueued()

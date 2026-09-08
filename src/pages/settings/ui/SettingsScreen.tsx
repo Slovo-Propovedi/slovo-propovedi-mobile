@@ -1,6 +1,7 @@
-import { useAction } from '@reatom/npm-react'
+import { useAction, useAtom } from '@reatom/npm-react'
 import { useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
+import { activeCacheUrlAtom, cacheQueueAtom } from 'shared/lib/audio-cache'
 import { ErrorDialog, useErrorDialog } from 'shared/ui/error-dialog'
 import { INDENTS, isMaterialYouSupported, useTheme } from 'shared/ui/theme'
 import { clearCacheAction } from '../model'
@@ -14,8 +15,14 @@ export const SettingsScreen = () => {
   const [showDialog, setShowDialog] = useState(false)
   const [showThemeDialog, setShowThemeDialog] = useState(false)
   const clearCache = useAction(clearCacheAction)
+  const [queue] = useAtom(cacheQueueAtom)
+  const [activeUrl] = useAtom(activeCacheUrlAtom)
   const { dismissError, errorDetail, errorMessage, showError } = useErrorDialog()
   const { currentTheme } = useTheme()
+
+  // Reactive parity with the playlist menu: clearing the cache directory
+  // mid-download could delete the .part file the queue runner is writing.
+  const isClearCacheBusy = Object.keys(queue).length > 0 || activeUrl !== null
 
   const handleClearCache = () => {
     setShowDialog(false)
@@ -47,6 +54,7 @@ export const SettingsScreen = () => {
           icon='trash-outline'
           title='Очистить кэш'
           testID='clear-cache-item'
+          disabled={isClearCacheBusy}
           description='Удалить все скачанные аудио файлы'
           onPress={() => {
             setShowDialog(true)

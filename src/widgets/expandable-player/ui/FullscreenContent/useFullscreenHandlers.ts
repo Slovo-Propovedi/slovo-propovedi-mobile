@@ -54,7 +54,7 @@ export const useFullscreenHandlers = () => {
   const isCached = useIsCached(audio?.audioUrl ?? null, cacheTrigger)
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
   const currentDownloadProgress = isCurrentAudioDownloading ? downloadProgress : 0
-  const isQueued = audio?.audioUrl ? audio.audioUrl in queue : false
+  const isQueued = audio?.audioUrl ? Object.hasOwn(queue, audio.audioUrl) : false
   const visualState = resolveCacheState({
     isCached,
     isDownloading: isCurrentAudioDownloading,

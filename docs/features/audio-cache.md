@@ -203,7 +203,7 @@ UI и хуки — `src/pages/playlist/lib/`:
 
 ## Очистка кэша
 
-В Настройках (`src/pages/settings/ui/SettingsScreen.tsx`) пункт «Очистить кэш» → `ClearCacheDialog.tsx` → `clearCacheAction` (`src/pages/settings/model.ts`) → `audioCacheService.clearCache()`. После очистки action сбрасывает optimistic-реестр (`clearCachedUrls`) и инкрементирует `cacheUpdateTriggerAtom` (строки/плейлист перепроверяют состояние).
+В Настройках (`src/pages/settings/ui/SettingsScreen.tsx`) пункт «Очистить кэш» → `ClearCacheDialog.tsx` → `clearCacheAction` (`src/pages/settings/model.ts`) → `audioCacheService.clearCache()`. После очистки action сбрасывает optimistic-реестр (`clearCachedUrls`) и инкрементирует `cacheUpdateTriggerAtom` (строки/плейлист перепроверяют состояние). Пункт реактивно дизейблится, пока очередь непуста или идёт активная закачка (`cacheQueueAtom` + `activeCacheUrlAtom`); `clearCacheAction` дополнительно перепроверяет `hasInflightCacheDownloads()` на нажатии — press-time guard, defense-in-depth (паритет с меню плейлиста).
 
 > **Примечание:** Кэш изображений (`expo-image`, `cachePolicy='memory-disk'`) физически отделён от `document/audio-cache` и этими операциями не затрагивается. Подробнее — [features/images.md](./images.md).
 
