@@ -166,7 +166,7 @@
 ## Navigation
 
 - [ ] **Передача плейлиста в `/listen/playlist` через JSON-парамы** — `src/shared/routing/useListenNavigation.ts`, `src/pages/playlist` — при проблемах перенести на atom/id (по образцу playlist-list).
-- [ ] **Убрать LogBox-подавление expo-router initial-linking warning** — `app/_layout.tsx` — после миграции на Expo SDK 58 (апстрим не чинит: expo#47659 bot-closed, PR #46653 unmerged; направление SDK 58 — PR #49063 убирает initialState-путь).
+- [ ] **Убрать `patches/expo-router+57.0.19.patch`** (defer `onUnhandledLinking` в `build/fork/useLinking.native.js`) — `node_modules/expo-router`, `patches/` — после миграции на Expo SDK 58: апстрим переписывает `getInitialState` (expo#47659 bot-closed, PR #46653 closed unmerged, направление фикса — PR #49063).
 - [ ] **`HeaderBackButton` фолбэк всегда ведёт на `/more`, а не восстанавливает реальный стек.** `src/widgets/sub-screen-header-back/ui/HeaderBackButton.tsx` — на web после полной перезагрузки страницы (`router.canGoBack() === false`) кнопка «Назад» под-экранов (`settings`/`history`/`about`/`share`) уводит на `/more`, а не на фактический родительский маршрут (например, релоад на `/listen/playlist` вернул бы на `/more`, а не на `/listen`). Сейчас приемлемо — фолбэк используют только одноуровневые под-экраны из «Еще». Вернуться, если под `HeaderBackButton`/аналогичный паттерн попадут вложенные маршруты (`/listen/*`) — понадобится восстановление стека из URL, а не жёсткий fallback-route.
 
 ## Web / PWA

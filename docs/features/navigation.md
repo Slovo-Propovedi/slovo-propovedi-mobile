@@ -1,6 +1,6 @@
 # Навигация (Expo Router)
 
-**Стек:** `expo-router` (`~57.0.12`), настройка — `app/`
+**Стек:** `expo-router` (`~57.0.19`), настройка — `app/`
 **Статус:** готов (табы «Читать»/«Учиться» заблокированы)
 
 ## Точка входа
@@ -43,6 +43,10 @@
 В `_RootLayout.tsx` также: подписка `subscribeToNetwork()` (модульный вызов), `checkForUpdateAction` после `InteractionManager`, персист позиции каждые 5с, `useUpdateNotificationResponse()`.
 
 Провайдеры — `app/_layout.tsx`: `reatomContext.Provider` (единый `ctx`), `ThemeProvider`, `GestureHandlerRootView`, `ErrorBoundary` + `GlobalErrorHandler`. Здесь же модульные `initializePlayer()` и `initServerUrlAction(ctx)`.
+
+### Патч expo-router: отложенный `onUnhandledLinking` (SDK 57)
+
+`patches/expo-router+57.0.19.patch` — исправляет DEV-only warning «Can't perform a React state update on a component that hasn't mounted yet» при старте приложения. Корень: в `useLinking.native.js` промис `getInitialState()` резолвится до монтирования `ContextNavigator`, и `onUnhandledLinking` (setState) вызывается в `.then()` во время рендера. Патч оборачивает вызов в `setTimeout(..., 0)`, откладывая его до первого кадра после маунта. Удалить при миграции на Expo SDK 58 — апстрим переписывает `getInitialState` (expo#47659 bot-closed, PR #46653 closed unmerged, направление фикса — PR #49063).
 
 ## Табы
 
