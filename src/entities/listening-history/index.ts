@@ -1,22 +1,20 @@
 export { buildHistoryMenuActions } from './lib/buildHistoryMenuActions'
+export { clearHistoryAction } from './lib/clearHistory'
+export { flushHistoryProgressAction } from './lib/flushHistoryProgress'
 export { getEntrySermon } from './lib/getEntrySermon'
 export { getResumePosition } from './lib/getResumePosition'
 export { isEntryCompleted } from './lib/isEntryCompleted'
+export { loadHistoryAction } from './lib/loadHistory'
+export { markHistoryCompletedAction } from './lib/markHistoryCompleted'
 export { markSermonListenedAction } from './lib/markSermonListened'
 export { markSermonsListenedAction } from './lib/markSermonsListened'
+export { recordPlaybackStartAction } from './lib/recordPlaybackStart'
 export { recordSermonSwitchAction } from './lib/recordSermonSwitch'
+export { removeHistoryEntryAction } from './lib/removeHistoryEntry'
 export { removeSermonsFromHistoryAction } from './lib/removeSermonsFromHistory'
 export { resolveEntryPlaylist } from './lib/resolveEntryPlaylist'
 export { useHistoryProgressMap } from './lib/useHistoryProgressMap'
 export { useHistorySermonIds } from './lib/useHistorySermonIds'
 export { useLastListeningEntry } from './lib/useLastListeningEntry'
-export {
-  clearHistoryAction,
-  flushHistoryProgressAction,
-  loadHistoryAction,
-  markHistoryCompletedAction,
-  recordPlaybackStartAction,
-  removeHistoryEntryAction,
-} from './model/history'
 export { historyAtom } from './model/historyAtom'
 export { type ListeningHistory, type ListeningHistoryEntry } from './model/types'

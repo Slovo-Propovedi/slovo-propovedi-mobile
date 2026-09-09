@@ -1,9 +1,9 @@
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
-import { removeHistoryEntryAction } from '../model/history'
 import { buildHistoryMenuActions } from './buildHistoryMenuActions'
 import { markSermonListenedAction } from './markSermonListened'
+import { removeHistoryEntryAction } from './removeHistoryEntry'
 
-jest.mock('../model/history', () => ({
+jest.mock('./removeHistoryEntry', () => ({
   removeHistoryEntryAction: jest.fn(),
 }))
 

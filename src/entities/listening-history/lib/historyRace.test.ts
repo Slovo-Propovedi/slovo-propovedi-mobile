@@ -1,19 +1,17 @@
 import { createCtx } from '@reatom/framework'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
-import { getEntrySermon } from '../lib/getEntrySermon'
-import { writeHistory } from '../lib/historyStorage'
-import {
-  flushHistoryProgressAction,
-  markHistoryCompletedAction,
-  recordPlaybackStartAction,
-  removeHistoryEntryAction,
-} from './history'
-import { historyAtom } from './historyAtom'
-import { type ListeningHistoryEntry } from './types'
+import { historyAtom } from '../model/historyAtom'
+import { type ListeningHistoryEntry } from '../model/types'
+import { flushHistoryProgressAction } from './flushHistoryProgress'
+import { getEntrySermon } from './getEntrySermon'
+import { writeHistory } from './historyStorage'
+import { markHistoryCompletedAction } from './markHistoryCompleted'
+import { recordPlaybackStartAction } from './recordPlaybackStart'
+import { removeHistoryEntryAction } from './removeHistoryEntry'
 
 const mockHistoryWriteResolvers: Array<() => void> = []
 
-jest.mock('../lib/historyStorage', () => ({
+jest.mock('./historyStorage', () => ({
   writeHistory: jest.fn().mockImplementation(
     () =>
       new Promise<void>(resolve => {
@@ -22,7 +20,7 @@ jest.mock('../lib/historyStorage', () => ({
   ),
 }))
 
-jest.mock('../lib/liveProgressStorage', () => ({
+jest.mock('./liveProgressStorage', () => ({
   clearLiveProgressSnapshot: jest.fn(),
 }))
 

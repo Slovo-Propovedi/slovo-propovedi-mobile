@@ -58,7 +58,7 @@
 
 | Место                                                               | Сообщение                                                      |
 | ------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `entities/listening-history/model/history.ts`                       | Не удалось загрузить историю прослушивания                     |
+| `entities/listening-history/lib/loadHistory.ts`                     | Не удалось загрузить историю прослушивания                     |
 | `entities/listening-history/lib/historyStorage.ts`                  | Не удалось сохранить историю прослушивания                     |
 | `entities/player/lib/PlayerService/PlaybackController.ts`           | Ошибка при перемотке аудио                                     |
 | `entities/player/lib/initializePlayer.ts`                           | Ошибка при восстановлении плеера                               |

@@ -1,8 +1,8 @@
 import { ctx } from 'shared/lib/reatom-ctx'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { type MenuAction } from 'shared/ui/track-list'
-import { removeHistoryEntryAction } from '../model/history'
 import { markSermonListenedAction } from './markSermonListened'
+import { removeHistoryEntryAction } from './removeHistoryEntry'
 
 interface BuildHistoryMenuActionsParams {
   inHistory: boolean

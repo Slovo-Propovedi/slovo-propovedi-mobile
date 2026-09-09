@@ -1,10 +1,8 @@
+export { flushHistoryProgressAction } from '../lib/flushHistoryProgress'
 export { getEntrySermon } from '../lib/getEntrySermon'
 export { getResumePosition } from '../lib/getResumePosition'
+export { markHistoryCompletedAction } from '../lib/markHistoryCompleted'
+export { recordPlaybackStartAction } from '../lib/recordPlaybackStart'
 export { recordSermonSwitchAction } from '../lib/recordSermonSwitch'
-export {
-  flushHistoryProgressAction,
-  markHistoryCompletedAction,
-  recordPlaybackStartAction,
-} from '../model/history'
 export { historyAtom } from '../model/historyAtom'
 export { type ListeningHistory } from '../model/types'

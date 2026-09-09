@@ -36,14 +36,14 @@ jest.mock('entities/section/@x/listening-history', () => {
 })
 
 // The real buildHistoryMenuActions imports its actions via relative paths
-// (../model/history, ./markSermonListened), so a barrel-level mock would not
+// (./removeHistoryEntry, ./markSermonListened), so a barrel-level mock would not
 // intercept them. Mock the inner modules instead and keep the real builder.
 jest.mock('entities/listening-history/lib/markSermonListened', () => ({
   markSermonListenedAction: jest.fn(),
 }))
 
-jest.mock('entities/listening-history/model/history', () => {
-  const actual = jest.requireActual('entities/listening-history/model/history')
+jest.mock('entities/listening-history/lib/removeHistoryEntry', () => {
+  const actual = jest.requireActual('entities/listening-history/lib/removeHistoryEntry')
   return {
     ...actual,
     removeHistoryEntryAction: jest.fn(),

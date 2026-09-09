@@ -16,9 +16,8 @@ src/entities/listening-history/
 │   └── player.ts             # @x-точка для entities/player: узкий API-контракт (см. «@x cross-import»)
 ├── model/
 │   ├── types.ts              # Zod-схемы: listeningHistoryEntrySchema, listeningHistorySchema; типы ListeningHistoryEntry, ListeningHistory (sermon опционален)
-│   ├── historyAtom.ts        # Атом historyAtom (вынесен для разрыва цикла history ↔ commitHistory)
+│   ├── historyAtom.ts        # Атомы historyAtom + isHistoryLoadedAtom (вынесены для разрыва цикла history ↔ commitHistory)
 │   ├── commitHistory.ts      # Атомарный коммит истории: sync historyAtom до writeHistory (анти-гонка lost-update)
-│   └── history.ts            # Атомы и экшены: isHistoryLoadedAtom (внутренний), loadHistoryAction, recordPlaybackStartAction, flushHistoryProgressAction, markHistoryCompletedAction, removeHistoryEntryAction, clearHistoryAction
 └── lib/
     ├── constants.ts          # COMPLETION_REMAINING_MS (10 000), MAX_HISTORY_ENTRIES (100), MANUAL_LISTENED_DURATION_MS (1)
     ├── historyStorage.ts     # readHistory / writeHistory (обёртки над getCachedJson/setCachedJson + очередь записей)
@@ -30,7 +29,13 @@ src/entities/listening-history/
     ├── getEntrySermon.ts     # getEntrySermon(entry): sermon из entry.sermon ?? entry.playlist.sermons[0]
     ├── resolveEntryPlaylist.ts   # Резолв полного PlaylistData записи: live dynamicSectionsAtom (через @x entities/section/@x/listening-history) → sections-cache → снапшот entry.playlist
     ├── sortAndCapEntries.ts  # Дедупликация по sermon.id + сортировка по lastPlayedAt desc + обрезка до MAX_HISTORY_ENTRIES
-    ├── upsertHistoryProgress.ts # Чистый upsert прогресса (create-or-update) для flushHistoryProgressAction — вынесен из model/history.ts (лимит строк)
+    ├── upsertHistoryProgress.ts # Чистый upsert прогресса (create-or-update) для flushHistoryProgressAction — вынесен из lib/flushHistoryProgress.ts (лимит строк)
+    ├── loadHistory.ts        # loadHistoryAction — гидрация каталога: reconcile со снапшотом, sortAndCapEntries, ставит isHistoryLoadedAtom (finally)
+    ├── recordPlaybackStart.ts # recordPlaybackStartAction — старт воспроизведения: новая запись / перемещение в начало / сброс завершённой
+    ├── markHistoryCompleted.ts # markHistoryCompletedAction — внутреннее завершение существующей записи (no-op без записи)
+    ├── removeHistoryEntry.ts  # removeHistoryEntryAction — удаление записи по sermon.id
+    ├── clearHistory.ts        # clearHistoryAction — полная очистка истории
+    ├── flushHistoryProgress.ts # flushHistoryProgressAction — upsert реального прогресса (immediate/deferred, см. «Stale-flush protection»)
     ├── recordSermonSwitch.ts     # recordSermonSwitchAction — flush старого + запись нового за один проход (markOldCompleted)
     ├── reconcileOnHydration.ts   # Слияние мини-снапшота в каталог при гидрации
     ├── markSermonListened.ts     # markSermonListenedAction — ручная отметка «Пометить прослушанной» (upsert завершённой записи)
@@ -116,15 +121,13 @@ import {
 
 ```typescript
 // entities/listening-history/@x/player.ts
+export { flushHistoryProgressAction } from '../lib/flushHistoryProgress'
 export { getEntrySermon } from '../lib/getEntrySermon'
 export { getResumePosition } from '../lib/getResumePosition'
+export { markHistoryCompletedAction } from '../lib/markHistoryCompleted'
+export { recordPlaybackStartAction } from '../lib/recordPlaybackStart'
 export { recordSermonSwitchAction } from '../lib/recordSermonSwitch'
-export {
-  historyAtom,
-  markHistoryCompletedAction,
-  recordPlaybackStartAction,
-  flushHistoryProgressAction,
-} from '../model/history'
+export { historyAtom } from '../model/historyAtom'
 export { type ListeningHistory } from '../model/types'
 ```
 
@@ -186,7 +189,7 @@ durationMs <= 10 000       → positionMs >= durationMs
 
 Идемпотентна для уже завершённых записей (повторный вызов ничего не ломает). `lastPlayedAt` при обновлении существующей записи **не трогается** (не вызывает «всплытие» в начало; при отсутствии записи она попадает в начало сортировки по `lastPlayedAt` = now). После записи чистит мини-снапшот (`clearLiveProgressSnapshot`), сохраняя инвариант «снапшот не новее каталога».
 
-**Отличие от `markHistoryCompletedAction`** (model/history.ts): последний — внутренний для плеера и завершает **только существующую** запись реальной длительностью (no-op без записи). `markSermonListenedAction` — пользовательский upsert с синтетической длительностью. Поэтому живёт в `lib/`, а не в `model/history.ts` (модель на лимите строк).
+**Отличие от `markHistoryCompletedAction`** (lib/markHistoryCompleted.ts): последний — внутренний для плеера и завершает **только существующую** запись реальной длительностью (no-op без записи). `markSermonListenedAction` — пользовательский upsert с синтетической длительностью.
 
 **Почему `MANUAL_LISTENED_DURATION_MS = 1`:** 1мс удовлетворяет правилу завершённости коротких треков (`duration ≤ 10 000` → `position >= duration`), даёт `progress = 1` в `useHistoryProgressMap` (→ затемнение строки), `getResumePosition` возвращает 0 (завершённая → повторное воспроизведение с начала), а `recordPlaybackStartAction` при реальном воспроизведении пересоздаёт запись с настоящей длительностью.
 
@@ -323,10 +326,15 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 | Сьют                    | Файл                                | Что проверяет                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ----------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `history model`         | `model/history.test.ts`             | `loadHistoryAction` (загрузка из storage; reconcile со снапшотом; дроп осиротевшего снапшота), `recordPlaybackStartAction` (новая запись, сброс завершённой, перемещение незавершённой, merge-ветка со strip `playlists`), `flushHistoryProgressAction` (upsert: создание записи при отсутствии + синтетический плейлист + вытеснение на капе; обновление позиции/длительности без изменения `lastPlayedAt`; персист; deferred-флаш пропускает завершённую запись и создаёт запись при отсутствии; immediate-флаш перезаписывает её реальным прогрессом без изменения `lastPlayedAt`; создание с durationMs 0 → self-heal при следующем флаше), `markHistoryCompletedAction` (positionMs = durationMs, живая длительность из параметра, no-op для нет/0), `removeHistoryEntryAction` (удаление по id), `clearHistoryAction` (очистка) |
+| `loadHistory`          | `lib/loadHistory.test.ts`          | Загрузка из storage; пустой storage → пустой атом; `isHistoryLoadedAtom` после гидрации и при ошибке чтения; дроп осиротевшего снапшота                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `recordPlaybackStart`  | `lib/recordPlaybackStart.test.ts`  | Новая запись (позиция 0), сброс завершённой, перемещение незавершённой, merge-ветка со strip `playlists`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `flushHistoryProgress` | `lib/flushHistoryProgress.test.ts` | Upsert: создание записи при отсутствии + синтетический плейлист + вытеснение на капе; обновление позиции/длительности без изменения `lastPlayedAt`; персист; deferred-флаш пропускает завершённую запись и создаёт запись при отсутствии; immediate-флаш перезаписывает её реальным прогрессом без изменения `lastPlayedAt`; создание с durationMs 0 → self-heal при следующем флаше                                                                                                                                                                                                                                                                      |
+| `markHistoryCompleted` | `lib/markHistoryCompleted.test.ts` | positionMs = durationMs, живая длительность из параметра, no-op для нет/0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `removeHistoryEntry`   | `lib/removeHistoryEntry.test.ts`   | Удаление по id, no-op для неизвестного id                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `clearHistory`         | `lib/clearHistory.test.ts`         | Очистка атома и storage                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `progressFlusher`       | `lib/PlayerService/progressFlusher.test.ts` | `scheduleHistoryFlush` и `flushProgress`: ранний выход без audio; серия schedules → один write; durationMs захватывается при schedule; `cancelScheduledHistoryFlush`; `flushProgress` отменяет debounce; flush создаёт запись с текущим плейлистом; deferred пропускает завершённую; **capture-at-schedule: смена sermon в окне дебаунса не приводит к cross-track contamination** |
 | `usePlaybackProgressSaver` | `lib/usePlaybackProgressSaver.test.tsx` | 10с-тик пишет bound-ключ + flush каталога с sermon/duration/position; пауза и position ≤ 0 → без flush; skip-first-tick после смены audio; AppState background → flush, inactive → нет; unmount чистит интервал; **playlist из `currentPlaylistAtom` попадает в flush-payload** |
-| `race (commitHistory)` | `model/historyRace.test.ts`        | Конкурентный flush + remove: атом содержит оба эффекта до завершения persistence; авто-переход: `markHistoryCompletedAction` + `recordPlaybackStartAction` без await — обе трансформации выживают |
+| `race (commitHistory)` | `lib/historyRace.test.ts`        | Конкурентный flush + remove: атом содержит оба эффекта до завершения persistence; авто-переход: `markHistoryCompletedAction` + `recordPlaybackStartAction` без await — обе трансформации выживают |
 | `recordSermonSwitch`    | `lib/recordSermonSwitch.test.ts`    | flush старого трека: завершение по живой длительности (`oldDurationMs`) при `markOldCompleted: true`, fallback на длительность записи, ручное переключение сохраняет `oldPositionMs`; создание нового трека вверху; сброс завершённой записи нового |
 | `isEntryCompleted`      | `lib/isEntryCompleted.test.ts`      | Границы: >10с осталось (false), 10с осталось (true), position = duration на длинном треке (true), короткий трек (5с) при position = duration (true), короткий трек частично (false), duration = 0 (false), отрицательная duration (false)                                                                                                                                                                                                                                                                          |
 | `buildHistoryEntry`     | `lib/buildHistoryEntry.test.ts`     | Фабрика записи: sanitizer убирает `playlists`, контекстный плейлист содержит один sermon, начальные позиции 0, top-level `sermon` отсутствует                                                                                                                                                                                                                                                                                                                                                                    |

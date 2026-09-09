@@ -12,7 +12,7 @@ import { clearLiveProgressSnapshot } from './liveProgressStorage'
  *   → no-op return (no writeHistory call).
  * - Otherwise one `commitHistory` (sync atom set + write), one
  *   clearLiveProgressSnapshot
- *   (mirrors removeHistoryEntryAction in model/history.ts).
+ *   (mirrors removeHistoryEntryAction in lib/removeHistoryEntry.ts).
  */
 export const removeSermonsFromHistoryAction = action(async (ctx, sermonIds: string[]) => {
   if (sermonIds.length === 0) return
