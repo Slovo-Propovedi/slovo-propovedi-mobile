@@ -3,6 +3,7 @@ import { type AudioPlayerData } from 'shared/model'
 import { historyAtom, isHistoryLoadedAtom } from '../model/history'
 import { type ListeningHistoryEntry } from '../model/types'
 import { getEntrySermon } from './getEntrySermon'
+import { isEntryCompleted } from './isEntryCompleted'
 
 export interface LastListeningEntry {
   entry: ListeningHistoryEntry | null
@@ -10,6 +11,11 @@ export interface LastListeningEntry {
   sermon: AudioPlayerData | null
 }
 
+/**
+ * Returns the first history entry that has a resolvable sermon AND is not completed.
+ * Skips completed entries — there is nothing to "continue" for a finished track.
+ * Returns null when all sermon-bearing entries are completed or history is empty.
+ */
 export const useLastListeningEntry = (): LastListeningEntry => {
   const [isLoaded] = useAtom(isHistoryLoadedAtom)
   const [history] = useAtom(historyAtom)
@@ -18,7 +24,7 @@ export const useLastListeningEntry = (): LastListeningEntry => {
 
   for (const candidate of history) {
     const sermon = getEntrySermon(candidate)
-    if (sermon) return { entry: candidate, isLoaded, sermon }
+    if (sermon && !isEntryCompleted(candidate)) return { entry: candidate, isLoaded, sermon }
   }
 
   return { entry: null, isLoaded, sermon: null }

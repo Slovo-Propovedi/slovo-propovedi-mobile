@@ -20,8 +20,24 @@ jest.mock('entities/player', () => ({
 }))
 
 jest.mock('entities/listening-history', () => ({
+  buildHistoryMenuActions: jest.fn(() => []),
   useHistoryProgressMap: jest.fn(() => new Map()),
+  useHistorySermonIds: jest.fn(() => new Set()),
 }))
+
+jest.mock('shared/ui/track-list', () => {
+  const { Text, View } = jest.requireActual('react-native')
+  const { CoverImage } = jest.requireActual('shared/ui')
+  return {
+    TracksListItem: (props: { artwork?: null | string; subtitle?: string; title: string }) => (
+      <View testID='tracks-list-item'>
+        <CoverImage uri={props.artwork} />
+        <Text>{props.title}</Text>
+        {props.subtitle && <Text>{props.subtitle}</Text>}
+      </View>
+    ),
+  }
+})
 
 jest.mock('../lib/useDebouncedSearch', () => ({
   useDebouncedSearch: () => undefined,
@@ -85,7 +101,7 @@ describe('<SermonSearchResults>', () => {
     expect(getByText(SERMON_TITLE)).toBeTruthy()
     expect(getByText('Проповедь о любви')).toBeTruthy()
     expect(getByText('Иван')).toBeTruthy()
-    expect(getByText('Матфея 5:3')).toBeTruthy()
+    expect(getByText('Пётр • Матфея 5:3')).toBeTruthy()
   })
 
   test('shows the empty state when no sermons match', async () => {

@@ -2,8 +2,8 @@ import { useNavigation } from 'expo-router'
 import { useEffect } from 'react'
 import { type ColorValue } from 'react-native'
 import { formatSermonReference } from 'shared/lib/format'
-import { type SermonData } from 'shared/model'
-import { PlaylistCacheMenu } from './PlaylistCacheMenu'
+import { type PlaylistData, type SermonData } from 'shared/model'
+import { PlaylistHeaderMenu } from './PlaylistHeaderMenu'
 
 export type TracksListData = ReturnType<typeof buildTracksListData>
 
@@ -22,10 +22,12 @@ export const buildTracksListData = (list: SermonData[], artwork: null | string) 
 
 export const usePlaylistNavigationOptions = ({
   headerIconColor,
+  playlist,
   title,
   tracksListData,
 }: {
   headerIconColor: ColorValue
+  playlist: PlaylistData
   title: string
   tracksListData: TracksListData
 }) => {
@@ -34,7 +36,8 @@ export const usePlaylistNavigationOptions = ({
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <PlaylistCacheMenu
+        <PlaylistHeaderMenu
+          playlist={playlist}
           playlistTitle={title}
           tracksData={tracksListData}
           iconColor={headerIconColor}
@@ -45,5 +48,5 @@ export const usePlaylistNavigationOptions = ({
     return () => {
       navigation.setOptions({ headerRight: undefined })
     }
-  }, [navigation, title, tracksListData, headerIconColor])
+  }, [navigation, title, tracksListData, headerIconColor, playlist])
 }

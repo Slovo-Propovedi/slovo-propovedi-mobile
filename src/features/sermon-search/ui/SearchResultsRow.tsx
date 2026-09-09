@@ -3,22 +3,24 @@ import type { SermonData } from 'shared/model'
 import { SermonSearchRow } from './SermonSearchRow'
 
 interface SearchResultsRowProps {
+  inHistory: boolean
   onPress: (sermon: SermonData) => void
+  progress?: number
   sermon: SermonData
-  storedProgress?: number
 }
 
 /**
  * Thin memo wrapper around SermonSearchRow that stabilizes onPress.
  * The parent passes a useCallback-stable `handlePress(sermon)`,
  * and this component bridges it to the row's `onPress: () => void`.
- * Re-renders only when sermon / storedProgress / onPress reference change.
+ * Re-renders only when sermon / onPress / history-derived props change.
  */
 export const SearchResultsRow: NamedExoticComponent<SearchResultsRowProps> = memo(
-  ({ onPress, sermon, storedProgress }) => (
+  ({ inHistory, onPress, progress, sermon }) => (
     <SermonSearchRow
       sermon={sermon}
-      storedProgress={storedProgress}
+      progress={progress}
+      inHistory={inHistory}
       onPress={() => onPress(sermon)}
     />
   ),

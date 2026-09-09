@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { INDENTS } from 'shared/ui/theme'
-import { TracksListItem } from 'shared/ui/track-list'
+import { type MenuAction, TracksListItem } from 'shared/ui/track-list'
 
 interface PlaylistTrackItemProps {
   artwork: null | string
@@ -11,6 +11,7 @@ interface PlaylistTrackItemProps {
   id: string | undefined
   index: number
   isPlaying: boolean
+  menuActions?: MenuAction[]
   onPress: (index: number) => void
   storedProgress?: number
   subtitle?: string
@@ -27,6 +28,7 @@ export const PlaylistTrackItem = memo(
     id,
     index,
     isPlaying,
+    menuActions,
     onPress,
     storedProgress,
     subtitle,
@@ -37,6 +39,7 @@ export const PlaylistTrackItem = memo(
       artwork={artwork}
       subtitle={subtitle}
       progress={storedProgress}
+      menuActions={menuActions}
       cacheTrigger={cacheTrigger}
       onPress={() => onPress(index)}
       downloadingUrl={downloadingUrl}

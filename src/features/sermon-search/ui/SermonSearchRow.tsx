@@ -1,75 +1,41 @@
 import { memo } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { CoverImage, ProgressBar } from 'shared/ui'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
-import type { SermonData } from 'shared/model'
+import { buildHistoryMenuActions } from 'entities/listening-history'
+import { type SermonData, toAudioPlayerData } from 'shared/model'
+import { TracksListItem } from 'shared/ui/track-list'
 import { formatScripture } from '../lib/formatScripture'
 
 interface SermonSearchRowProps {
+  inHistory?: boolean
   onPress: () => void
+  progress?: number
   sermon: SermonData
-  storedProgress?: number
 }
 
-export const SermonSearchRow = memo(({ onPress, sermon, storedProgress }: SermonSearchRowProps) => {
-  const { currentTheme } = useTheme()
-  const scripture = formatScripture(sermon)
+export const SermonSearchRow = memo(
+  ({ inHistory = false, onPress, progress, sermon }: SermonSearchRowProps) => {
+    const audio = toAudioPlayerData(sermon)
+    const subtitle = [sermon.artist, formatScripture(sermon)].filter(Boolean).join(' • ')
 
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole='button'
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: pressed ? currentTheme.surface : 'transparent' },
-      ]}
-    >
-      <CoverImage uri={sermon.artwork} style={styles.artwork} />
-      <View style={styles.texts}>
-        <Text numberOfLines={2} style={[styles.title, { color: currentTheme.text }]}>
-          {sermon.title}
-        </Text>
-        <Text numberOfLines={1} style={[styles.artist, { color: currentTheme.textMuted }]}>
-          {sermon.artist}
-        </Text>
-        {scripture !== null && (
-          <Text numberOfLines={1} style={[styles.scripture, { color: currentTheme.textMuted }]}>
-            {scripture}
-          </Text>
-        )}
-      </View>
-      {storedProgress != null && storedProgress > 0 && <ProgressBar progress={storedProgress} />}
-    </Pressable>
-  )
-})
+    const menuActions = audio
+      ? buildHistoryMenuActions({
+          inHistory,
+          isCompleted: progress === 1,
+          playlist: sermon.playlists?.[0],
+          sermon: audio,
+        })
+      : undefined
 
-const styles = StyleSheet.create({
-  artist: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: INDENTS.lowest,
+    return (
+      <TracksListItem
+        onPress={onPress}
+        isPlaying={false}
+        subtitle={subtitle}
+        progress={progress}
+        title={sermon.title}
+        artwork={sermon.artwork}
+        menuActions={menuActions}
+        audioUrl={audio?.audioUrl}
+      />
+    )
   },
-  artwork: {
-    borderRadius: RADIUSES.low,
-    height: 48,
-    width: 48,
-  },
-  row: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.middle,
-    flexDirection: 'row',
-    marginHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.middle,
-  },
-  scripture: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: INDENTS.lowest,
-  },
-  texts: {
-    flex: 1,
-    marginLeft: INDENTS.middle,
-  },
-  title: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: 'bold',
-  },
-})
+)

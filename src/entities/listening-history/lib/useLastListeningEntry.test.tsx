@@ -74,4 +74,42 @@ describe('useLastListeningEntry', () => {
     expect(result.current.entry).toBe(withSermon)
     expect(result.current.sermon?.id).toBe('sermon-2')
   })
+
+  test('skips completed entries and returns the first incomplete one', async () => {
+    const ctx = createCtx()
+    isHistoryLoadedAtom(ctx, true)
+    const completed = makeEntry('sermon-1', { durationMs: 3600000, positionMs: 3600000 })
+    const incomplete = makeEntry('sermon-2', { durationMs: 3600000, positionMs: 1000 })
+    historyAtom(ctx, [completed, incomplete])
+
+    const { result } = await renderHookWithProviders(() => useLastListeningEntry(), { ctx })
+
+    expect(result.current.entry).toBe(incomplete)
+    expect(result.current.sermon?.id).toBe('sermon-2')
+  })
+
+  test('returns null when all entries are completed', async () => {
+    const ctx = createCtx()
+    isHistoryLoadedAtom(ctx, true)
+    const completed1 = makeEntry('sermon-1', { durationMs: 3600000, positionMs: 3600000 })
+    const completed2 = makeEntry('sermon-2', { durationMs: 3600000, positionMs: 3600000 })
+    historyAtom(ctx, [completed1, completed2])
+
+    const { result } = await renderHookWithProviders(() => useLastListeningEntry(), { ctx })
+
+    expect(result.current.entry).toBeNull()
+    expect(result.current.sermon).toBeNull()
+  })
+
+  test('returns position-0 incomplete entry', async () => {
+    const ctx = createCtx()
+    isHistoryLoadedAtom(ctx, true)
+    const fresh = makeEntry('sermon-1', { durationMs: 0, positionMs: 0 })
+    historyAtom(ctx, [fresh])
+
+    const { result } = await renderHookWithProviders(() => useLastListeningEntry(), { ctx })
+
+    expect(result.current.entry).toBe(fresh)
+    expect(result.current.sermon?.id).toBe('sermon-1')
+  })
 })

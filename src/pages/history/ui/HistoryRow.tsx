@@ -1,14 +1,14 @@
 import { memo, useCallback } from 'react'
 import { useEntryPlayback } from 'features/entry-playback'
 import {
+  buildHistoryMenuActions,
   getEntrySermon,
+  isEntryCompleted,
   type ListeningHistoryEntry,
-  removeHistoryEntryAction,
 } from 'entities/listening-history'
 import { formatRelativeDate } from 'shared/lib/format'
-import { ctx } from 'shared/lib/reatom-ctx'
 import { INDENTS } from 'shared/ui/theme'
-import { type MenuAction, TracksListItem } from 'shared/ui/track-list'
+import { TracksListItem } from 'shared/ui/track-list'
 
 const PLAYBACK_ERROR_MESSAGE = 'Не удалось воспроизвести проповедь из истории'
 
@@ -21,9 +21,11 @@ interface HistoryRowProps {
 export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRowProps) => {
   const playEntry = useEntryPlayback(PLAYBACK_ERROR_MESSAGE)
   const sermon = getEntrySermon(entry)
+  const completed = isEntryCompleted(entry)
 
-  const storedProgress =
-    entry.durationMs > 0 && entry.positionMs > 0
+  const storedProgress = completed
+    ? 1
+    : entry.durationMs > 0 && entry.positionMs > 0
       ? Math.min(entry.positionMs / entry.durationMs, 1)
       : undefined
 
@@ -31,13 +33,12 @@ export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRow
 
   if (!sermon) return null
 
-  const menuActions: MenuAction[] = [
-    {
-      icon: 'trash-outline',
-      onPress: () => void removeHistoryEntryAction(ctx, sermon.id),
-      text: 'Удалить из истории',
-    },
-  ]
+  const menuActions = buildHistoryMenuActions({
+    inHistory: true,
+    isCompleted: completed,
+    playlist: entry.playlist,
+    sermon,
+  })
 
   return (
     <TracksListItem

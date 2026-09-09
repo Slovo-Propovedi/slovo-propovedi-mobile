@@ -2,12 +2,11 @@ import { useLocalSearchParams } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { useHistoryProgressMap } from 'entities/listening-history'
-import { usePlayNewSermon } from 'entities/player'
-import { type SermonData } from 'shared/model'
+import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-history'
 import { useTheme } from 'shared/ui/theme'
 import { createTracksListStyles } from 'shared/ui/track-list'
 import { useCollapsingHeader } from '../lib/useCollapsingHeader'
+import { usePlaylistActions } from '../lib/usePlaylistActions'
 import { usePlaylistById } from '../lib/usePlaylistById'
 import { usePlaylistHeader } from '../lib/usePlaylistHeader'
 import { usePlaylistPlayerState } from '../lib/usePlaylistPlayerState'
@@ -29,8 +28,14 @@ export const PlaylistScreen = () => {
 
   const { artwork, description, sermons: list = [], title } = playlist
 
-  const playNewSermon = usePlayNewSermon()
   const progressMap = useHistoryProgressMap()
+  const historySermonIds = useHistorySermonIds()
+  const { buildMenuActions, handlePressItem, handlePressPlayAll } = usePlaylistActions(
+    list,
+    playlist,
+    historySermonIds,
+    progressMap,
+  )
 
   const { cacheTrigger, currentAudio, downloadingUrl, isPlaying } = usePlaylistPlayerState()
 
@@ -42,21 +47,6 @@ export const PlaylistScreen = () => {
     title,
     titleAppearThreshold,
   })
-
-  const handlePressItem = useCallback(
-    async (index: number) => {
-      const sermon = list[index]
-      if (!sermon.audioUrl) return
-      await playNewSermon({ playlist, sermon })
-    },
-    [list, playNewSermon, playlist],
-  )
-
-  const handlePressPlayAll = useCallback(async () => {
-    const firstSermon = list.find((s: SermonData) => s.audioUrl)
-    if (!firstSermon) return
-    await playNewSermon({ playlist, sermon: firstSermon })
-  }, [list, playNewSermon, playlist])
 
   const tracksListData = useMemo(() => buildTracksListData(list, artwork), [list, artwork])
 
@@ -74,13 +64,22 @@ export const PlaylistScreen = () => {
         cacheTrigger={cacheTrigger}
         downloadingUrl={downloadingUrl}
         currentAudioId={currentAudio?.id}
+        menuActions={buildMenuActions(index)}
         storedProgress={progressMap.get(item.id ?? '')}
       />
     ),
-    [cacheTrigger, currentAudio?.id, downloadingUrl, handlePressItem, isPlaying, progressMap],
+    [
+      buildMenuActions,
+      cacheTrigger,
+      currentAudio?.id,
+      downloadingUrl,
+      handlePressItem,
+      isPlaying,
+      progressMap,
+    ],
   )
 
-  usePlaylistNavigationOptions({ headerIconColor, title, tracksListData })
+  usePlaylistNavigationOptions({ headerIconColor, playlist, title, tracksListData })
 
   const tracksListStyles = useMemo(() => createTracksListStyles(currentTheme), [currentTheme])
 

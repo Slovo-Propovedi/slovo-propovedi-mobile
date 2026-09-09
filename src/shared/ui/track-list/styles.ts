@@ -14,6 +14,9 @@ export const createTracksListStyles = (theme: ThemeColors) =>
       height: TRACK_LIST_ITEM_SIZES.albumArtSize,
       width: TRACK_LIST_ITEM_SIZES.albumArtSize,
     },
+    albumArtCompleted: {
+      opacity: 0.5,
+    },
     albumArtContainer: {
       marginRight: INDENTS.middle,
       position: 'relative',
@@ -108,6 +111,9 @@ export const createTracksListStyles = (theme: ThemeColors) =>
       color: theme.text,
       fontSize: FONT_SIZES.md,
       fontWeight: '600',
+    },
+    titleCompleted: {
+      color: theme.textMuted,
     },
     titlePlaying: {
       color: theme.primary,

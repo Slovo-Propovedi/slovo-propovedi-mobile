@@ -96,7 +96,7 @@ describe('<TracksListItemContextMenu>', () => {
     expect(baseProps.onToggleCache).toHaveBeenCalledTimes(1)
   })
 
-  test('renders menuActions items and hides cache item', async () => {
+  test('renders menuActions items in addition to cache item', async () => {
     const customActions = [
       { onPress: jest.fn(), text: 'Custom Action 1' },
       { onPress: jest.fn(), text: 'Custom Action 2' },
@@ -106,8 +106,7 @@ describe('<TracksListItemContextMenu>', () => {
 
     expect(screen.getByText('Custom Action 1')).toBeTruthy()
     expect(screen.getByText('Custom Action 2')).toBeTruthy()
-    expect(screen.queryByText(ADD_CACHE_TEXT)).toBeNull()
-    expect(screen.queryByText(REMOVE_CACHE_TEXT)).toBeNull()
+    expect(screen.getByText(ADD_CACHE_TEXT)).toBeTruthy()
   })
 
   test('pressing menuActions item calls its onPress and onClose', async () => {

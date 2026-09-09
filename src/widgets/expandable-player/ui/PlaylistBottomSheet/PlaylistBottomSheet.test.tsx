@@ -89,7 +89,9 @@ jest.mock('entities/player', () => {
 })
 
 jest.mock('entities/listening-history', () => ({
+  buildHistoryMenuActions: jest.fn(() => []),
   useHistoryProgressMap: () => new Map<string, number>(),
+  useHistorySermonIds: () => new Set<string>(),
 }))
 
 jest.mock('shared/ui/track-list', () => {

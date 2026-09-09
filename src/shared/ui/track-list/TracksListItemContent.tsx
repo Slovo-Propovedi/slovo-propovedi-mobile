@@ -43,13 +43,19 @@ export const TracksListItemContent = forwardRef<View, TracksListItemContentProps
     ref,
   ) => {
     const tracksListStyles = createTracksListStyles(theme)
+    const isCompleted = progress != null && progress >= 1
 
     return (
       <>
         <View style={tracksListStyles.albumArtContainer}>
           <CoverImage
             uri={artwork}
-            style={[tracksListStyles.albumArt, isPlaying && tracksListStyles.albumArtPlaying]}
+            testID='tracks-list-item-artwork'
+            style={[
+              tracksListStyles.albumArt,
+              isCompleted && tracksListStyles.albumArtCompleted,
+              isPlaying && tracksListStyles.albumArtPlaying,
+            ]}
           />
           {isDownloading && (
             <View style={tracksListStyles.progressBarBackground}>
@@ -71,7 +77,11 @@ export const TracksListItemContent = forwardRef<View, TracksListItemContentProps
           <MovingText
             text={title}
             animationThreshold={TITLE_ANIMATION_THRESHOLD}
-            style={[tracksListStyles.title, isPlaying && tracksListStyles.titlePlaying]}
+            style={[
+              tracksListStyles.title,
+              isCompleted && tracksListStyles.titleCompleted,
+              isPlaying && tracksListStyles.titlePlaying,
+            ]}
           />
           {subtitle ? <Text style={tracksListStyles.subtitle}>{subtitle}</Text> : null}
         </View>

@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { StyleSheet, Text, View } from 'react-native'
 import { type ColorValue } from 'react-native'
-import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
+import { PlaylistMenuRow } from './PlaylistMenuRow'
 
 const ICON_SIZE = 18
 
@@ -23,43 +23,20 @@ export const PlaylistCacheMenuItem = ({
   textColor,
 }: PlaylistCacheMenuItemProps) => {
   const { currentTheme } = useTheme()
-  const handlePress = () => {
-    if (isDisabled) return
-    onPress()
-  }
 
   return (
-    <View
-      onTouchEnd={handlePress}
-      style={[styles.dropdownItem, isDisabled && styles.dropdownItemDisabled]}
-    >
-      <MaterialCommunityIcons
-        name={icon}
-        size={ICON_SIZE}
-        style={styles.dropdownIcon}
-        color={iconColor || (isDisabled ? currentTheme.textMuted : currentTheme.icon)}
-      />
-      <Text
-        style={[
-          styles.dropdownItemText,
-          { color: isDisabled ? currentTheme.textMuted : currentTheme.text },
-          textColor && { color: textColor },
-        ]}
-      >
-        {text}
-      </Text>
-    </View>
+    <PlaylistMenuRow
+      text={text}
+      onPress={onPress}
+      textColor={textColor}
+      isDisabled={isDisabled}
+      icon={
+        <MaterialCommunityIcons
+          name={icon}
+          size={ICON_SIZE}
+          color={iconColor || (isDisabled ? currentTheme.textMuted : currentTheme.icon)}
+        />
+      }
+    />
   )
 }
-
-const styles = StyleSheet.create({
-  dropdownIcon: { marginRight: INDENTS.low },
-  dropdownItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    paddingHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.middle,
-  },
-  dropdownItemDisabled: { opacity: 0.5 },
-  dropdownItemText: { fontSize: FONT_SIZES.base },
-})

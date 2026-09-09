@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useCallback } from 'react'
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native'
-import { useHistoryProgressMap } from 'entities/listening-history'
+import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
 import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
@@ -26,6 +26,7 @@ export const SermonSearchResults = () => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const playNewSermon = usePlayNewSermon()
   const progressMap = useHistoryProgressMap()
+  const historySermonIds = useHistorySermonIds()
 
   const handlePress = useCallback(
     (sermon: SermonData) => void playNewSermon({ playlist: resolvePlaylist(sermon), sermon }),
@@ -45,13 +46,6 @@ export const SermonSearchResults = () => {
         styles.listContent,
         { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
       ]}
-      renderItem={({ item }) => (
-        <SearchResultsRow
-          sermon={item}
-          onPress={handlePress}
-          storedProgress={progressMap.get(item.id)}
-        />
-      )}
       ListEmptyComponent={
         isSearching ? (
           <SearchSpinner color={currentTheme.primary} />
@@ -59,6 +53,14 @@ export const SermonSearchResults = () => {
           <EmptyState message={NO_RESULTS_MESSAGE} />
         )
       }
+      renderItem={({ item }) => (
+        <SearchResultsRow
+          sermon={item}
+          onPress={handlePress}
+          progress={progressMap.get(item.id)}
+          inHistory={historySermonIds.has(item.id)}
+        />
+      )}
     />
   )
 }

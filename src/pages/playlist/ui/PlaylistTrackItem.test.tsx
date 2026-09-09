@@ -5,9 +5,16 @@ import { PlaylistTrackItem } from './PlaylistTrackItem'
 jest.mock('shared/ui/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
   return {
-    TracksListItem: (props: { progress?: number; title: string }) => (
+    TracksListItem: (props: {
+      menuActions?: Array<{ text: string }>
+      progress?: number
+      title: string
+    }) => (
       <View testID='tracks-list-item'>
         <Text>{props.title}</Text>
+        {props.menuActions?.map(action => (
+          <Text key={action.text}>{action.text}</Text>
+        ))}
         {props.progress != null && props.progress > 0 && (
           <View
             testID='progress-bar'
@@ -22,6 +29,7 @@ jest.mock('shared/ui/track-list', () => {
 const PROGRESS_BAR_TEST_ID = 'progress-bar'
 const SERMON_ID = 'sermon-1'
 const TEST_TITLE = 'Test Sermon'
+const MARK_ACTION_TEXT = 'Пометить прослушанной'
 
 const defaultProps = {
   artwork: '',
@@ -57,5 +65,15 @@ describe('<PlaylistTrackItem>', () => {
     await renderItem({ storedProgress: 0 })
 
     expect(screen.queryByTestId(PROGRESS_BAR_TEST_ID)).toBeNull()
+  })
+
+  test('forwards menuActions to TracksListItem', async () => {
+    const menuActions = [
+      { icon: 'checkmark-done' as const, onPress: jest.fn(), text: MARK_ACTION_TEXT },
+    ]
+
+    await renderItem({ menuActions })
+
+    expect(screen.getByText(MARK_ACTION_TEXT)).toBeTruthy()
   })
 })

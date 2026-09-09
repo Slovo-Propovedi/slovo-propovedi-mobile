@@ -52,9 +52,24 @@ export const TracksListItemContextMenu = ({
 }: TracksListItemContextMenuProps) => {
   const tracksListStyles = createTracksListStyles(theme)
 
-  const renderItems = () => {
-    if (menuActions)
-      return menuActions.map((action, index) => (
+  const renderItems = () => (
+    <>
+      <Pressable
+        accessibilityRole='button'
+        onPress={isCacheDisabled ? undefined : onToggleCache}
+        accessibilityState={isCacheDisabled ? { disabled: true } : undefined}
+        style={[tracksListStyles.contextMenuItem, isCacheDisabled && localStyles.cacheItemDisabled]}
+      >
+        <Text
+          style={[
+            tracksListStyles.contextMenuItemText,
+            isCacheDisabled && { color: theme.textMuted },
+          ]}
+        >
+          {getCacheActionLabel(visualState, isCached)}
+        </Text>
+      </Pressable>
+      {menuActions?.map((action, index) => (
         <Pressable
           accessibilityRole='button'
           key={`${action.text}-${index}`}
@@ -76,26 +91,9 @@ export const TracksListItemContextMenu = ({
             <Text style={tracksListStyles.contextMenuItemText}>{action.text}</Text>
           </View>
         </Pressable>
-      ))
-
-    return (
-      <Pressable
-        accessibilityRole='button'
-        onPress={isCacheDisabled ? undefined : onToggleCache}
-        accessibilityState={isCacheDisabled ? { disabled: true } : undefined}
-        style={[tracksListStyles.contextMenuItem, isCacheDisabled && localStyles.cacheItemDisabled]}
-      >
-        <Text
-          style={[
-            tracksListStyles.contextMenuItemText,
-            isCacheDisabled && { color: theme.textMuted },
-          ]}
-        >
-          {getCacheActionLabel(visualState, isCached)}
-        </Text>
-      </Pressable>
-    )
-  }
+      ))}
+    </>
+  )
 
   return (
     <AnchoredDropdown

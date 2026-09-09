@@ -322,6 +322,36 @@ describe('listening-history model', () => {
       expect(ctx.get(historyAtom)[0].positionMs).toBe(300)
       expect(clearSpy).toHaveBeenCalledTimes(1)
     })
+
+    test('no-op when entry is already completed (stale-flush protection)', async () => {
+      const entry = makeEntry('sermon-1', { durationMs: 3600000, positionMs: 3600000 })
+      const ctx = createCtx()
+      historyAtom(ctx, [entry])
+
+      await flushHistoryProgressAction(ctx, {
+        durationMs: 3600000,
+        positionMs: 2000000,
+        sermonId: 'sermon-1',
+      })
+
+      expect(ctx.get(historyAtom)).toEqual([entry])
+      expect(clearSpy).not.toHaveBeenCalled()
+    })
+
+    test('updates incomplete entry normally (not blocked)', async () => {
+      const entry = makeEntry('sermon-1', { durationMs: 3600000, positionMs: 1000 })
+      const ctx = createCtx()
+      historyAtom(ctx, [entry])
+
+      await flushHistoryProgressAction(ctx, {
+        durationMs: 3600000,
+        positionMs: 2000000,
+        sermonId: 'sermon-1',
+      })
+
+      expect(ctx.get(historyAtom)[0].positionMs).toBe(2000000)
+      expect(clearSpy).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('markHistoryCompletedAction', () => {

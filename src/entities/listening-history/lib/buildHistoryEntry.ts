@@ -1,7 +1,7 @@
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { type ListeningHistoryEntry } from '../model/types'
 
-const buildSanitizedSermon = (audio: AudioPlayerData) => {
+export const buildSanitizedSermon = (audio: AudioPlayerData) => {
   const { playlists: _playlists, ...rest } = audio
   return rest
 }

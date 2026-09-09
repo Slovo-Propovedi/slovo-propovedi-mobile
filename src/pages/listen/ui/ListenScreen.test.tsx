@@ -19,6 +19,7 @@ jest.mock('@expo/vector-icons', () => {
 
   return {
     Ionicons: (props: { name: string }) => <Text>{props.name}</Text>,
+    MaterialCommunityIcons: (props: { name: string }) => <Text>{props.name}</Text>,
   }
 })
 
@@ -32,8 +33,21 @@ jest.mock('shared/api', () => ({
   },
 }))
 
+jest.mock('react-native-text-ticker', () => {
+  const { Text } = jest.requireActual('react-native')
+
+  return {
+    __esModule: true,
+    default: (props: { children: string; style?: unknown }) => (
+      <Text style={props.style as never}>{props.children}</Text>
+    ),
+  }
+})
+
 jest.mock('entities/listening-history', () => ({
+  buildHistoryMenuActions: jest.fn(() => []),
   useHistoryProgressMap: jest.fn(() => new Map()),
+  useHistorySermonIds: jest.fn(() => new Set()),
 }))
 
 jest.mock('entities/player', () => ({

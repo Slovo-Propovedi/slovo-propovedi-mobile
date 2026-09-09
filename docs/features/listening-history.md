@@ -18,18 +18,24 @@ src/entities/listening-history/
 │   ├── types.ts              # Zod-схемы: listeningHistoryEntrySchema, listeningHistorySchema; типы ListeningHistoryEntry, ListeningHistory (sermon опционален)
 │   └── history.ts            # Атомы и экшены: historyAtom, isHistoryLoadedAtom (внутренний), loadHistoryAction, recordPlaybackStartAction, flushHistoryProgressAction, markHistoryCompletedAction, removeHistoryEntryAction, clearHistoryAction
 └── lib/
-    ├── constants.ts          # COMPLETION_REMAINING_MS (10 000), MAX_HISTORY_ENTRIES (100)
+    ├── constants.ts          # COMPLETION_REMAINING_MS (10 000), MAX_HISTORY_ENTRIES (100), MANUAL_LISTENED_DURATION_MS (1)
     ├── historyStorage.ts     # readHistory / writeHistory (обёртки над getCachedJson/setCachedJson + очередь записей)
     ├── liveProgressStorage.ts    # Мини-снапшот LISTENING_PROGRESS_SNAPSHOT: liveProgressSnapshotSchema (Zod) + read/clear
-    ├── buildHistoryEntry.ts  # Фабрика новой записи: санитизация sermon (убирает playlists), снапшот context-playlist
-    ├── isEntryCompleted.ts   # Правило завершённости (см. ниже)
+    ├── buildHistoryEntry.ts  # Фабрика новой записи: санитизация sermon (убирает playlists), снапшот context-playlist; buildSanitizedSermon
+    ├── isEntryCompleted.ts   # Правило завершённости (см. ниже) — публичное
     ├── getResumePosition.ts  # Вычисление позиции resume для usePlayNewSermon
     ├── getEntrySermon.ts     # getEntrySermon(entry): sermon из entry.sermon ?? entry.playlist.sermons[0]
     ├── resolveEntryPlaylist.ts   # Резолв полного PlaylistData записи: live dynamicSectionsAtom (через @x entities/section/@x/listening-history) → sections-cache → снапшот entry.playlist
     ├── sortAndCapEntries.ts  # Дедупликация по sermon.id + сортировка по lastPlayedAt desc + обрезка до MAX_HISTORY_ENTRIES
     ├── recordSermonSwitch.ts     # recordSermonSwitchAction — flush старого + запись нового за один проход (markOldCompleted)
     ├── reconcileOnHydration.ts   # Слияние мини-снапшота в каталог при гидрации
+    ├── markSermonListened.ts     # markSermonListenedAction — ручная отметка «Пометить прослушанной» (upsert завершённой записи)
+    ├── completeSermonInHistory.ts # Чистый per-sermon upsert завершённой записи — общий для markSermonListenedAction и markSermonsListenedAction
+    ├── markSermonsListened.ts     # markSermonsListenedAction — массовая отметка «Пометить все прослушанными» (один read-transform-write)
+    ├── removeSermonsFromHistory.ts # removeSermonsFromHistoryAction — массовое удаление проповедей из истории (один read-transform-write)
     ├── useHistoryProgressMap.ts  # Map<sermonId, 0..1> — stored-прогресс из historyAtom для списков
+    ├── useHistorySermonIds.ts    # Set<sermonId> — надёжная проверка «проповедь есть в истории» для меню
+    ├── buildHistoryMenuActions.ts # Фабрика пунктов меню строк списков («Пометить прослушанной» / «Удалить из истории»)
     └── useLastListeningEntry.ts  # Хук последней записи с проповедью: { isLoaded, entry, sermon } для кнопки «Продолжить»
 ```
 
@@ -39,11 +45,17 @@ src/entities/listening-history/
 
 ```typescript
 // entities/listening-history
+export { buildHistoryMenuActions }
 export { getEntrySermon }
 export { getResumePosition }
+export { isEntryCompleted }
+export { markSermonListenedAction }
+export { markSermonsListenedAction }
 export { resolveEntryPlaylist }
 export { recordSermonSwitchAction }
+export { removeSermonsFromHistoryAction }
 export { useHistoryProgressMap }
+export { useHistorySermonIds }
 export { useLastListeningEntry }
 export {
   clearHistoryAction,
@@ -66,14 +78,16 @@ export type { ListeningHistory, ListeningHistoryEntry }
 ```typescript
 {
   isLoaded: boolean,                    // false, пока история не загружена
-  entry: ListeningHistoryEntry | null,  // первая запись с getEntrySermon(entry) !== null
+  entry: ListeningHistoryEntry | null,  // первая НЕзавершённая запись с getEntrySermon(entry) !== null
   sermon: AudioPlayerData | null,       // getEntrySermon(entry) той же записи
 }
 ```
 
 - `isLoaded === false` → `entry`/`sermon` = `null` (кнопка не рендерится).
-- Иначе — перебирает `historyAtom` (отсортирован по `lastPlayedAt` DESC) и возвращает первую запись, у которой `getEntrySermon(entry)` не `null` (записи без проповеди пропускаются). `getEntrySermon` вызывается **один раз** на запись.
+- Иначе — перебирает `historyAtom` (отсортирован по `lastPlayedAt` DESC) и возвращает первую запись, у которой `getEntrySermon(entry)` не `null` **и** `isEntryCompleted(entry)` ложно (записи без проповеди и завершённые записи пропускаются). `getEntrySermon` и `isEntryCompleted` вызываются **по одному разу** на запись.
 - Нет подходящей записи → `{ isLoaded: true, entry: null, sermon: null }` (кнопка «Начать слушать», disabled).
+
+Завершённые записи пропускаются намеренно: ручная отметка «Пометить прослушанной» устанавливает `lastPlayedAt = now` (запись всплывает в начало истории), но `isEntryCompleted` исключает её из «Продолжить» — resume с позиции 0 бессмыслен для завершённой проповеди. Натурально завершённые треки тоже пропускаются (нечего продолжать; повторное воспроизведение сбросит запись через `recordPlaybackStartAction`).
 
 ### Общий press-хук `useEntryPlayback`
 
@@ -159,6 +173,40 @@ durationMs <= 10 000       → positionMs >= durationMs
 
 При завершённой записи `getResumePosition` возвращает 0 (воспроизведение начнётся заново), а `recordPlaybackStartAction` создаёт новую запись вместо обновления существующей.
 
+## Ручная отметка «Пометить прослушанной»
+
+`markSermonListenedAction(ctx, sermon, playlist?)` (`src/entities/listening-history/lib/markSermonListened.ts`) — пользовательская отметка проповеди как прослушанной (пункт контекстного меню строк списков). Это **upsert** завершённой записи:
+
+- **Записи нет** — создаётся синтетическая завершённая запись: `durationMs = positionMs = MANUAL_LISTENED_DURATION_MS` (1мс). Контекстный плейлист строится `buildManualPlaylist` (slim-плейлист из одного санитизированного sermon'а), если не передан реальный `playlist`.
+- **Запись есть** — обновляется до завершённой: `durationMs = max(existing.durationMs, MANUAL_LISTENED_DURATION_MS)`, `positionMs = durationMs`.
+
+Идемпотентна для уже завершённых записей (повторный вызов ничего не ломает). `lastPlayedAt` при обновлении существующей записи **не трогается** (не вызывает «всплытие» в начало; при отсутствии записи она попадает в начало сортировки по `lastPlayedAt` = now). После записи чистит мини-снапшот (`clearLiveProgressSnapshot`), сохраняя инвариант «снапшот не новее каталога».
+
+**Отличие от `markHistoryCompletedAction`** (model/history.ts): последний — внутренний для плеера и завершает **только существующую** запись реальной длительностью (no-op без записи). `markSermonListenedAction` — пользовательский upsert с синтетической длительностью. Поэтому живёт в `lib/`, а не в `model/history.ts` (модель на лимите строк).
+
+**Почему `MANUAL_LISTENED_DURATION_MS = 1`:** 1мс удовлетворяет правилу завершённости коротких треков (`duration ≤ 10 000` → `position >= duration`), даёт `progress = 1` в `useHistoryProgressMap` (→ затемнение строки), `getResumePosition` возвращает 0 (завершённая → повторное воспроизведение с начала), а `recordPlaybackStartAction` при реальном воспроизведении пересоздаёт запись с настоящей длительностью.
+
+## Массовые операции плейлиста
+
+`markSermonsListenedAction(ctx, sermons, playlist)` (`src/entities/listening-history/lib/markSermonsListened.ts`) — массовая отметка проповедей плейлиста как прослушанных (пункт «Пометить все прослушанными» в меню шапки плейлиста). `removeSermonsFromHistoryAction(ctx, sermonIds)` (`src/entities/listening-history/lib/removeSermonsFromHistory.ts`) — массовое удаление проповедей из истории (пункт «Удалить проповеди из истории»).
+
+Обе — **один read-transform-write**: читают `historyAtom` один раз, применяют per-sermon трансформацию, один финальный `sortAndCapEntries` (дедуп по sermon.id, сортировка по `lastPlayedAt` desc, обрезка до `MAX_HISTORY_ENTRIES`), один `writeHistory` и один `clearLiveProgressSnapshot`. Пустой массив → ранний выход без записи; `removeSermonsFromHistoryAction` дополнительно no-op, если ни один id не найден в истории.
+
+Per-sermon семантика вынесена в чистый хелпер `completeSermonInHistory(entries, sermon, playlist, now)` (`src/entities/listening-history/lib/completeSermonInHistory.ts`): нет записи → синтетическая завершённая запись (как в `markSermonListenedAction`), есть → завершение in place с сохранением `lastPlayedAt` и позиции. `markSermonListenedAction` и `markSermonsListenedAction` используют один и тот же хелпер, поэтому семантика байт-в-байт идентична. Массовая отметка использует **один общий `now`** для всех новых записей — одна атомарная операция = один консистентный «момент» для всех новых записей и устойчивость к интерливингу на границе миллисекунд.
+
+## Меню строк списков (контекстное меню)
+
+Пункты, относящиеся к истории, для строк списков строятся через `buildHistoryMenuActions({ inHistory, isCompleted, playlist, sermon })` (`src/entities/listening-history/lib/buildHistoryMenuActions.ts`). Возвращает `MenuAction[]` (`shared/ui/track-list`), **аддитивно** по состоянию. Инвариант: `isCompleted` учитывается только при `inHistory === true` — состояние «прослушано, но не в истории» исключено по построению, поэтому строка без записи в истории всегда предлагает «Пометить прослушанной».
+
+| Условие          | Пункт                       | Иконка          | Экшен                                                        |
+| ---------------- | --------------------------- | --------------- | ------------------------------------------------------------ |
+| `!(inHistory && isCompleted)` | «Пометить прослушанной»     | `checkmark-done`| `markSermonListenedAction(ctx, sermon, playlist)`            |
+| `inHistory`      | «Удалить из истории»        | `trash-outline` | `removeHistoryEntryAction(ctx, sermon.id)`                   |
+
+Используется всеми строками списков (плейлист, история, шторка очереди, поиск). Строки-потребители подставляют в `buildHistoryMenuActions` `isCompleted` через `useHistoryProgressMap` (`progressMap.get(id) === 1`) и `inHistory` через `useHistorySermonIds`.
+
+`useHistorySermonIds()` (`src/entities/listening-history/lib/useHistorySermonIds.ts`) возвращает `Set<string>` id проповедей, присутствующих в истории. Это **надёжная** проверка «есть ли в истории»: в отличие от `useHistoryProgressMap` (которая пропускает записи с `position/duration ≤ 0`), каждая запись вносит свой sermon-id. Нужна для пункта «Удалить из истории» — он должен показываться и для записей с нулевым прогрессом.
+
 ## Resume-логика
 
 ### Ручной тап (usePlayNewSermon)
@@ -206,6 +254,8 @@ durationMs <= 10 000       → positionMs >= durationMs
 
 `lastPlayedAt` обновляется только при старте воспроизведения (`recordPlaybackStartAction`), не при flush.
 
+**Stale-flush protection:** `flushHistoryProgressAction` проверяет `isEntryCompleted(entry)` перед записью. Если запись уже завершена (например, `markSermonListenedAction` завершил её, пока flush ещё in-flight), flush пропускается — нет записи в storage, нет обновления атома. Это предотвращает перезапись завершённой записи устаревшим снапшотом с меньшим прогрессом. Свежие записи (после `recordPlaybackStartAction`) всегда incomplete → flush работает нормально.
+
 10с-тик `usePlaybackProgressSaver` (`src/entities/player/lib/usePlaybackProgressSaver.ts`) при воспроизведении пишет **bound-ключ** `CURRENT_SOUND_POSITION` (`savePlaybackProgress`) и **каталог** (`flushHistoryProgressAction`); пауза останавливает авто-сохранение (гейт на `isPlaying`). Мини-снапшот `listeningProgressSnapshot` при воспроизведении **больше не пишется** (писатель удалён — см. «Мини-снапшот (LEGACY)»). Есть защита **skip-first-tick-после-переключения**: первый тик после смены `currentAudio` пропускается (рефы `previousAudioIdRef` / `skipNextTickRef`), чтобы не записать «мусорную» позицию перехода.
 
 **Инвариант:** снапшот всегда не новее каталога — каждый **реальный** flush каталога (`flushHistoryProgressAction`, позиция/длительность изменились) чистит снапшот (`clearLiveProgressSnapshot`). No-op flush (позиция и длительность не изменились) выходит раньше и пропускает и запись, и очистку — это безопасно: ничего не изменилось, инвариант «каталог не старее снапшота» сохраняется, следующий реальный flush очистит снапшот. Это гарантирует, что seek-while-paused (обновляет каталог, но не снапшот) не регрессируется при гидрации: если приложение убито после seek, `reconcileOnHydration` не найдёт снапшота и сохранит позицию каталога.
@@ -240,10 +290,14 @@ durationMs <= 10 000       → positionMs >= durationMs
 | ------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------- |
 | Список плейлиста               | `src/pages/playlist/ui/PlaylistTrackItem.tsx`                               | `useHistoryProgressMap()` + `getEntrySermon` |
 | Шторка очереди (мини-плейлист) | `src/widgets/expandable-player/ui/PlaylistBottomSheet/PlaylistSheetRow.tsx` | `useHistoryProgressMap()`                    |
-| Результаты поиска              | `src/features/sermon-search/ui/SermonSearchRow.tsx`                         | `useHistoryProgressMap()`                    |
-| Экран истории                  | `src/pages/history/ui/HistoryRow.tsx`                                       | `useHistoryProgressMap()`                    |
+| Результаты поиска              | `src/features/sermon-search/ui/SermonSearchResults.tsx`                     | `useHistoryProgressMap()` + `useHistorySermonIds()` (подписка на уровне списка, прокидывается в строки) |
+| Экран истории                  | `src/pages/history/ui/HistoryRow.tsx`                                       | inline-вывод из записи: `completed ? 1 : min(positionMs/durationMs, 1)` |
 
 Все строки показывают только **сохранённый** прогресс (stored, событийно обновляемый). Полоса текущей (сейчас воспроизводимой) проповеди не «тикает» в реальном времени — она обновится на ближайшем событии (пауза, переключение и т.д.).
+
+### Затемнение завершённых
+
+В `TracksListItemContent` (`src/shared/ui/track-list/`) завершённая строка (`progress >= 1`) затемняется: обложка получает `albumArtCompleted` (opacity 0.5), заголовок — `titleCompleted` (приглушённый цвет). Правило: `isCompleted = progress != null && progress >= 1`. Строка истории (`HistoryRow`) дополнительно передаёт полный прогресс-бар (`storedProgress = 1`) для завершённых записей.
 
 ## Экран истории
 
@@ -267,6 +321,11 @@ durationMs <= 10 000       → positionMs >= durationMs
 | `getResumePosition`     | `lib/getResumePosition.test.ts`     | Нет записи → 0, завершённая → 0, position ≤ 0 → 0, иначе positionMs                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `liveProgressStorage`   | `lib/liveProgressStorage.test.ts`   | Чтение валидного снапшота; невалидный JSON/отсутствие/поля с отрицательными значениями → undefined; очистка                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `useHistoryProgressMap` | `lib/useHistoryProgressMap.test.ts` | Пустой history → пустая Map, completed → 1, partial → position/duration, position ≤ 0 → пропуск                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `markSermonListened`    | `lib/markSermonListened.test.ts`    | Upsert: создание завершённой записи (synthetic duration 1), обновление существующей до завершённой, идемпотентность для завершённой, не трогает `lastPlayedAt` при обновлении, персист                                                                                                                                                                                                                                                                                                                              |
+| `markSermonsListened`   | `lib/markSermonsListened.test.ts`   | Массовая отметка: один writeHistory для нескольких проповедей, завершение частичных записей с сохранением `lastPlayedAt`, смесь create+complete, пустой массив без записи, вытеснение на капе                                                                                                                                                                                                                                                                                                                              |
+| `removeSermonsFromHistory` | `lib/removeSermonsFromHistory.test.ts` | Массовое удаление: один writeHistory для нескольких id, неизвестные id → no-op, пустой массив без записи                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `useHistorySermonIds`   | `lib/useHistorySermonIds.test.ts`   | Пустой history → пустой Set, все sermon-id из истории (включая записи с нулевым прогрессом)                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `buildHistoryMenuActions` | `lib/buildHistoryMenuActions.test.ts` | Инвариант «isCompleted без inHistory → игнорируется»: при `!inHistory` всегда маркировка, при `inHistory && !isCompleted` маркировка + удаление, при `inHistory && isCompleted` только удаление; иконки и тексты пунктов                                                                                                                     |
 
 ## Связанные документы
 

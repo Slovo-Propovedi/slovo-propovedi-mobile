@@ -2,33 +2,43 @@ import { StyleSheet, View } from 'react-native'
 import { AnchoredDropdown, type AnchorRect } from 'shared/ui/anchored-dropdown'
 import { COLORS, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { PlaylistCacheMenuItem } from './PlaylistCacheMenuItem'
+import { PlaylistHistoryMenuItem } from './PlaylistHistoryMenuItem'
 
-export interface PlaylistCacheMenuDropdownProps {
+export interface PlaylistHeaderMenuDropdownProps {
   allCached: boolean
   anchor: AnchorRect | null
+  canMarkAll: boolean
+  canRemoveFromHistory: boolean
   isCacheAllDisabled: boolean
   isCaching: boolean
   isClearCacheDisabled?: boolean
   onCacheAll: () => void
   onClearCache: () => void
   onClose: () => void
+  onMarkAll: () => void
+  onRemoveFromHistory: () => void
   onStopCaching: () => void
   visible: boolean
 }
 
-export const PlaylistCacheMenuDropdown = ({
+export const PlaylistHeaderMenuDropdown = ({
   allCached,
   anchor,
+  canMarkAll,
+  canRemoveFromHistory,
   isCacheAllDisabled,
   isCaching,
   isClearCacheDisabled = false,
   onCacheAll,
   onClearCache,
   onClose,
+  onMarkAll,
+  onRemoveFromHistory,
   onStopCaching,
   visible,
-}: PlaylistCacheMenuDropdownProps) => {
+}: PlaylistHeaderMenuDropdownProps) => {
   const { currentTheme } = useTheme()
+  const showHistoryItems = canMarkAll || canRemoveFromHistory
 
   return (
     <AnchoredDropdown
@@ -62,6 +72,24 @@ export const PlaylistCacheMenuDropdown = ({
         textColor={isClearCacheDisabled ? COLORS.disabled : undefined}
         iconColor={isClearCacheDisabled ? COLORS.disabled : currentTheme.text}
       />
+
+      {showHistoryItems && (
+        <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
+      )}
+      {canMarkAll && (
+        <PlaylistHistoryMenuItem
+          onPress={onMarkAll}
+          icon='checkmark-done'
+          text='Пометить все прослушанными'
+        />
+      )}
+      {canRemoveFromHistory && (
+        <PlaylistHistoryMenuItem
+          icon='trash-outline'
+          onPress={onRemoveFromHistory}
+          text='Удалить проповеди из истории'
+        />
+      )}
     </AnchoredDropdown>
   )
 }

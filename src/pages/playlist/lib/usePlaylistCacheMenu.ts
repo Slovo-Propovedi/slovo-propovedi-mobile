@@ -52,7 +52,7 @@ export const usePlaylistCacheMenu = (tracksData: TrackToCache[], playlistTitle: 
       clearCachedUrls(ctx)
       incrementCacheTrigger(ctx)
     } catch (error) {
-      console.error('[PlaylistCacheMenu] Error clearing cache:', error)
+      console.error('[PlaylistHeaderMenu] Error clearing cache:', error)
     }
   }, [ctx])
 

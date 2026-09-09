@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react-native'
-import { Text as MockText } from 'react-native'
+import { Text as MockText, type StyleProp, type TextStyle } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { TracksListItemContent } from './TracksListItemContent'
 
@@ -11,11 +11,15 @@ jest.mock('@expo/vector-icons', () => ({
 
 jest.mock('react-native-text-ticker', () => ({
   __esModule: true,
-  default: (props: { children: string }) => <MockText>{props.children}</MockText>,
+  default: (props: { children: string; style?: StyleProp<TextStyle> }) => (
+    <MockText style={props.style}>{props.children}</MockText>
+  ),
 }))
 
 const CLOUD_DOWNLOAD_ICON = 'icon-cloud-download-outline'
 const CLOCK_ICON = 'icon-clock-outline'
+const ARTWORK_TEST_ID = 'tracks-list-item-artwork'
+const TEST_TITLE = 'Test Title'
 
 const mockTheme = {
   backdrop: 'rgba(0, 0, 0, 0.5)',
@@ -37,7 +41,7 @@ const baseProps = {
   isPlaying: false,
   progressValue: -1,
   theme: mockTheme,
-  title: 'Test Title',
+  title: TEST_TITLE,
 }
 
 describe('<TracksListItemContent>', () => {
@@ -75,5 +79,29 @@ describe('<TracksListItemContent>', () => {
 
     expect(screen.getByTestId('icon-play')).toBeTruthy()
     expect(screen.queryByTestId(CLOCK_ICON)).toBeNull()
+  })
+
+  test('dims title and artwork when progress is 1', async () => {
+    await renderWithProviders(<TracksListItemContent {...baseProps} progress={1} />)
+
+    expect(screen.getByText(TEST_TITLE)).toHaveStyle({ color: mockTheme.textMuted })
+    expect(screen.getByTestId(ARTWORK_TEST_ID)).toHaveStyle({ opacity: 0.5 })
+  })
+
+  test('playing wins over completed dimming', async () => {
+    await renderWithProviders(
+      <TracksListItemContent {...baseProps} progress={1} isPlaying={true} />,
+    )
+
+    expect(screen.getByText(TEST_TITLE)).toHaveStyle({ color: mockTheme.primary })
+    expect(screen.getByText(TEST_TITLE)).not.toHaveStyle({ color: mockTheme.textMuted })
+    expect(screen.getByTestId(ARTWORK_TEST_ID)).toHaveStyle({ opacity: 0.6 })
+  })
+
+  test('does not dim when progress is below 1', async () => {
+    await renderWithProviders(<TracksListItemContent {...baseProps} progress={0.5} />)
+
+    expect(screen.getByText(TEST_TITLE)).not.toHaveStyle({ color: mockTheme.textMuted })
+    expect(screen.getByTestId(ARTWORK_TEST_ID)).not.toHaveStyle({ opacity: 0.5 })
   })
 })

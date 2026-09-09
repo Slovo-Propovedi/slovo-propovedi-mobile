@@ -5,6 +5,7 @@ import type { PlaylistData } from 'shared/model'
 import { type createStyles } from './PlaylistBottomSheet.styles'
 import { PlaylistSheetRow } from './PlaylistSheetRow'
 import { useScrollGuarantee } from './useScrollGuarantee'
+import { useSheetMenuActions } from './useSheetMenuActions'
 
 export interface TrackListItemData {
   artwork?: null | string
@@ -70,6 +71,7 @@ export const usePlaylistSheetList = ({
     },
     [onScroll],
   )
+  const buildMenuActions = useSheetMenuActions(playlist, progressMap)
   const renderItem = useCallback(
     ({ index, item }: { index: number; item: TrackListItemData }) => (
       <PlaylistSheetRow
@@ -82,11 +84,20 @@ export const usePlaylistSheetList = ({
         cacheTrigger={cacheTrigger}
         downloadingUrl={downloadingUrl}
         isPlaying={currentAudioId === item.id}
+        menuActions={buildMenuActions(item.id)}
         storedProgress={progressMap.get(item.id)}
         isAudioPlaying={currentAudioId === item.id && isAudioPlaying}
       />
     ),
-    [cacheTrigger, currentAudioId, downloadingUrl, isAudioPlaying, onPress, progressMap],
+    [
+      buildMenuActions,
+      cacheTrigger,
+      currentAudioId,
+      downloadingUrl,
+      isAudioPlaying,
+      onPress,
+      progressMap,
+    ],
   )
   const ItemSeparator = useCallback(() => <View style={styles.divider} />, [styles])
 

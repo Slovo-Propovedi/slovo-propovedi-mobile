@@ -5,6 +5,7 @@ import {
   clearHistoryAction,
   historyAtom,
   type ListeningHistoryEntry,
+  markSermonListenedAction,
   removeHistoryEntryAction,
 } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
@@ -27,14 +28,33 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ setOptions: jest.fn() }),
 }))
 
-jest.mock('entities/listening-history', () => {
+jest.mock('entities/section/@x/listening-history', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
-    clearHistoryAction: jest.fn(),
-    getEntrySermon: (entry: { playlist: { sermons: unknown[] }; sermon?: unknown }) =>
-      entry.sermon ?? entry.playlist.sermons[0],
-    historyAtom: atom([], 'testHistoryAtom'),
+    dynamicSectionsAtom: atom([], 'testDynamicSectionsAtom'),
+  }
+})
+
+// The real buildHistoryMenuActions imports its actions via relative paths
+// (../model/history, ./markSermonListened), so a barrel-level mock would not
+// intercept them. Mock the inner modules instead and keep the real builder.
+jest.mock('entities/listening-history/lib/markSermonListened', () => ({
+  markSermonListenedAction: jest.fn(),
+}))
+
+jest.mock('entities/listening-history/model/history', () => {
+  const actual = jest.requireActual('entities/listening-history/model/history')
+  return {
+    ...actual,
     removeHistoryEntryAction: jest.fn(),
+  }
+})
+
+jest.mock('entities/listening-history', () => {
+  const actual = jest.requireActual('entities/listening-history')
+  return {
+    ...actual,
+    clearHistoryAction: jest.fn(),
     resolveEntryPlaylist: (...args: unknown[]) => mockResolveEntryPlaylist(...args),
   }
 })
@@ -189,13 +209,29 @@ describe('<HistoryScreen>', () => {
   })
 
   test('remove menu action calls removeHistoryEntryAction with sermon id', async () => {
-    const ctx = seedHistory([mockEntry])
+    const completedEntry: ListeningHistoryEntry = {
+      ...mockEntry,
+      durationMs: 120000,
+      positionMs: 120000,
+    }
+    const ctx = seedHistory([completedEntry])
 
     const { getByTestId } = await renderWithProviders(<HistoryScreen />, { ctx })
 
     fireEvent.press(getByTestId('menu-action-0'))
     expect(removeHistoryEntryAction).toHaveBeenCalledTimes(1)
     expect(jest.mocked(removeHistoryEntryAction).mock.calls[0][1]).toBe(MOCK_SERMON_ID)
+  })
+
+  test('mark menu action calls markSermonListenedAction with sermon and entry playlist', async () => {
+    const ctx = seedHistory([mockEntry])
+
+    const { getByTestId } = await renderWithProviders(<HistoryScreen />, { ctx })
+
+    fireEvent.press(getByTestId('menu-action-0'))
+    expect(markSermonListenedAction).toHaveBeenCalledTimes(1)
+    expect(jest.mocked(markSermonListenedAction).mock.calls[0][1]).toEqual(mockSermon)
+    expect(jest.mocked(markSermonListenedAction).mock.calls[0][2]).toEqual(mockEntry.playlist)
   })
 
   test('clear flow: open menu, select clear, confirm, clearHistoryAction called', async () => {

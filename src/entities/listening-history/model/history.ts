@@ -82,6 +82,8 @@ export const recordPlaybackStartAction = action(
   'recordPlaybackStart',
 )
 
+// Player-internal completion of an existing entry (no-op without one);
+// the user-initiated upsert lives in lib/markSermonListened.ts.
 export const markHistoryCompletedAction = action(
   async (ctx, sermonId: string, durationMs?: number) => {
     const current = ctx.get(historyAtom)
@@ -134,6 +136,10 @@ export const flushHistoryProgressAction = action(
     if (index === -1) return
 
     const entry = current[index]
+
+    // Stale-flush protection: skip if entry is already completed
+    // (e.g. markSermonListenedAction beat this in-flight flush).
+    if (isEntryCompleted(entry)) return
 
     const resolvedDurationMs = params.durationMs > 0 ? params.durationMs : entry.durationMs
     if (entry.positionMs === params.positionMs && entry.durationMs === resolvedDurationMs) return

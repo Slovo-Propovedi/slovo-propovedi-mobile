@@ -1,31 +1,34 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { type ColorValue, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { type ColorValue } from 'react-native'
+import { type PlaylistData } from 'shared/model'
 import { ErrorModal } from 'shared/ui/error-modal'
 import { useTheme } from 'shared/ui/theme'
-import { playlistCacheService, type TrackToCache } from '../lib/PlaylistCacheService'
+import { type TrackToCache } from '../lib/PlaylistCacheService'
+import { usePlaylistCacheError } from '../lib/usePlaylistCacheError'
 import { usePlaylistCacheMenu } from '../lib/usePlaylistCacheMenu'
+import { usePlaylistHistoryMenu } from '../lib/usePlaylistHistoryMenu'
 import { PlaylistCacheDialogs } from './PlaylistCacheDialogs'
-import { PlaylistCacheMenuDropdown } from './PlaylistCacheMenuDropdown'
+import { PlaylistHeaderMenuDropdown } from './PlaylistHeaderMenuDropdown'
+import { PlaylistHistoryDialogs } from './PlaylistHistoryDialogs'
 
 const ICON_SIZE = 24
 const BUTTON_SIZE = 44
 
-export interface PlaylistCacheMenuProps {
+export interface PlaylistHeaderMenuProps {
   iconColor?: ColorValue
+  playlist: PlaylistData
   playlistTitle: string
   tracksData: TrackToCache[]
 }
 
-export const PlaylistCacheMenu = ({
+export const PlaylistHeaderMenu = ({
   iconColor,
+  playlist,
   playlistTitle,
   tracksData,
-}: PlaylistCacheMenuProps) => {
+}: PlaylistHeaderMenuProps) => {
   const { currentTheme } = useTheme()
-  const [error, setError] = useState<Error | null>(null)
-  const errorShownRef = useRef(false)
-  const setErrorRef = useRef(setError)
 
   const {
     allCached,
@@ -49,25 +52,8 @@ export const PlaylistCacheMenu = ({
     setMenuVisible,
   } = usePlaylistCacheMenu(tracksData, playlistTitle)
 
-  useEffect(() => {
-    setErrorRef.current = setError
-  }, [setError])
-
-  useEffect(() => {
-    if (!errorShownRef.current) {
-      const currentError = playlistCacheService.getError()
-      if (currentError) {
-        setErrorRef.current(currentError)
-        errorShownRef.current = true
-      }
-    }
-  }, [cacheDialogVisible])
-
-  const handleErrorClose = useCallback(() => {
-    playlistCacheService.clearError()
-    setError(null)
-    errorShownRef.current = false
-  }, [])
+  const historyMenu = usePlaylistHistoryMenu(playlist, () => setMenuVisible(false))
+  const { error, handleErrorClose } = usePlaylistCacheError(cacheDialogVisible)
 
   return (
     <>
@@ -75,8 +61,8 @@ export const PlaylistCacheMenu = ({
         <TouchableOpacity
           style={styles.button}
           onPress={handleOpenMenu}
-          testID='playlist-cache-menu'
-          accessibilityLabel='Меню кеширования'
+          testID='playlist-header-menu'
+          accessibilityLabel='Меню плейлиста'
           accessibilityHint='Нажмите чтобы открыть меню'
         >
           <MaterialCommunityIcons
@@ -87,17 +73,21 @@ export const PlaylistCacheMenu = ({
         </TouchableOpacity>
       </View>
 
-      <PlaylistCacheMenuDropdown
+      <PlaylistHeaderMenuDropdown
         anchor={menuAnchor}
         visible={menuVisible}
         allCached={allCached}
         isCaching={isCaching}
         onCacheAll={handleCacheAllOption}
         onStopCaching={handleStopCaching}
+        canMarkAll={historyMenu.canMarkAll}
         onClearCache={handleClearCacheOption}
         onClose={() => setMenuVisible(false)}
         isCacheAllDisabled={isCacheAllDisabled}
+        onMarkAll={historyMenu.handleMarkAllOption}
         isClearCacheDisabled={isClearCacheDisabled}
+        onRemoveFromHistory={historyMenu.handleRemoveOption}
+        canRemoveFromHistory={historyMenu.canRemoveFromHistory}
       />
 
       <PlaylistCacheDialogs
@@ -109,6 +99,15 @@ export const PlaylistCacheMenu = ({
         onClearCacheConfirm={handleClearCacheConfirm}
         onCacheCancel={() => setCacheDialogVisible(false)}
         onClearCancel={() => setClearDialogVisible(false)}
+      />
+
+      <PlaylistHistoryDialogs
+        onMarkConfirm={historyMenu.handleMarkAllConfirm}
+        markDialogVisible={historyMenu.markDialogVisible}
+        onRemoveConfirm={historyMenu.handleRemoveConfirm}
+        removeDialogVisible={historyMenu.removeDialogVisible}
+        onMarkCancel={() => historyMenu.setMarkDialogVisible(false)}
+        onRemoveCancel={() => historyMenu.setRemoveDialogVisible(false)}
       />
       <ErrorModal error={error} visible={error !== null} onClose={handleErrorClose} />
     </>

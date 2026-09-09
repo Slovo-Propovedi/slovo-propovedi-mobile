@@ -186,7 +186,7 @@ UI и хуки — `src/pages/playlist/lib/`:
 
 - `usePlaylistCacheMenu.ts` — состояние меню кэша на экране плейлиста (диалоги подтверждения, позиция меню).
 - `usePlaylistCacheStatus.ts` — подсчёт закэшированных треков (`allCached`, `cachedCount`, `totalCount`). **Debounce 250мс** (Issue #83 follow-up): первый `isCached`-проход по трекам идёт немедленно при смене набора треков, последующие перепроверки по `cacheUpdateTriggerAtom` — trailing-дебаунс 250мс. Бёрст инкрементов триггера (массовое завершение закачек) схлопывается в одну перепроверку — устранение N-кратных синхронных `File.exists` бёрстов (см. [debt.md](../debt.md)). Дополнительно подписан на `cachedUrlsAtom` (narrow subscription): завершение трека в текущей сессии обновляет счётчики **реактивно, без инкремента триггера и без FS-перепроверки**.
-- `PlaylistCacheMenu.tsx`, `PlaylistCacheMenuItem.tsx`, `PlaylistCacheMenuDropdown.tsx`, `PlaylistCacheDialogs.tsx` — в `src/pages/playlist/ui/`.
+- `PlaylistHeaderMenu.tsx`, `PlaylistCacheMenuItem.tsx`, `PlaylistHeaderMenuDropdown.tsx`, `PlaylistCacheDialogs.tsx` — в `src/pages/playlist/ui/`.
 
 ## Реестр закешированных URL (optimistic overlay)
 
