@@ -1,4 +1,3 @@
-import '@testing-library/jest-native/extend-expect'
 import { act } from '@testing-library/react-native'
 import { trackToggleNoticeAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'

@@ -3,7 +3,6 @@ import { APP_ICON_URI as IMAGE_PLACEHOLDER } from 'shared/lib/app-icon'
 import { renderWithProviders } from '../../../mocks/renderWithProviders'
 import { SliderItem } from './slider-item'
 import { WhereIsSlideTitleLocated } from './slider-item.types'
-import '@testing-library/jest-native/extend-expect'
 
 const propsStub = {
   artwork: 'https://traveltimes.ru/wp-content/uploads/2021/07/image-4-2048x1366.jpg',

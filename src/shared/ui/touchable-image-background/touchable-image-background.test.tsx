@@ -2,7 +2,6 @@ import { fireEvent, screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { TouchableImageBackground } from './touchable-image-background'
-import '@testing-library/jest-native/extend-expect'
 
 describe('<TouchableImageBackground/>', () => {
   const mockOnPress = jest.fn()

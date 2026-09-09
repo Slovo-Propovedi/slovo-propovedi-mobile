@@ -1,5 +1,4 @@
 import { fireEvent, screen } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { Button } from './button'
 
@@ -12,7 +11,7 @@ describe('<Button>', () => {
     const title = screen.getByText(titleStub)
 
     expect(title).toBeTruthy()
-    expect(title).toHaveTextContent(titleStub)
+    expect(title).toHaveTextContent(titleStub, { exact: false })
   })
 
   test('calls onPress when pressed', async () => {

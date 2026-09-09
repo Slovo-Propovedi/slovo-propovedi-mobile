@@ -1,6 +1,5 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Text as MockText, Text } from 'react-native'
-import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { ErrorBoundary } from './ErrorBoundary'
 

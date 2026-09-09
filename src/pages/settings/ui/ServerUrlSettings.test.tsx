@@ -2,7 +2,6 @@ import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
 import { serverUrlAtom } from 'entities/settings'
 import { renderWithProviders } from 'shared/mocks'
-import '@testing-library/jest-native/extend-expect'
 import { ServerUrlSettings } from './ServerUrlSettings'
 
 const TEST_URL = 'https://test.example.com'

@@ -1,5 +1,4 @@
 import { act, fireEvent } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'

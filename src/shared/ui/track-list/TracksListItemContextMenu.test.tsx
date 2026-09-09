@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { DarkTheme } from 'shared/ui/theme'
 import type { TrackCacheVisualState } from 'shared/lib/audio-cache'
 import type { TestInstance } from 'test-renderer'
@@ -146,7 +145,7 @@ describe('<TracksListItemContextMenu>', () => {
     await render(<TracksListItemContextMenu {...baseProps} isCacheDisabled={true} />)
 
     const cacheButton = screen.getByRole('button')
-    expect(cacheButton).toHaveAccessibilityState({ disabled: true })
+    expect(cacheButton).toBeDisabled()
     expect(cacheButton.props.onPress).toBeUndefined()
     expect(screen.getByText(ADD_CACHE_TEXT).props.style).toEqual(
       expect.arrayContaining([{ color: DarkTheme.textMuted }]),

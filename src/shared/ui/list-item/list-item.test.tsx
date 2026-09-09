@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { APP_ICON_URI as IMAGE_PLACEHOLDER } from 'shared/lib/app-icon'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { ListItem } from '../list-item/list-item'
@@ -23,7 +22,7 @@ describe('<TouchableListItem>', () => {
 
     const title = screen.getByTestId('title')
 
-    expect(title).toHaveTextContent(titleStub)
+    expect(title).toHaveTextContent(titleStub, { exact: false })
   })
 
   test('displayed preview if artwork in data is defined', async () => {

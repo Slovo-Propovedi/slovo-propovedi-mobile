@@ -1,5 +1,4 @@
 import { act, fireEvent } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { activeCacheUrlAtom, cacheQueueAtom } from 'shared/lib/audio-cache'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'

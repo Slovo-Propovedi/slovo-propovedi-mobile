@@ -5,7 +5,6 @@ import type { TestInstance } from 'test-renderer'
 import { searchQueryAtom } from '../model'
 import { distinctValuesAtom } from '../model-distinctValues'
 import { SearchBar } from './SearchBar'
-import '@testing-library/jest-native/extend-expect'
 
 jest.mock('shared/api', () => ({
   mapAllSermonsResponse: jest.fn(),

@@ -1,7 +1,6 @@
 import { fireEvent } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { PlayerControls } from './PlayerControls'
-import '@testing-library/jest-native/extend-expect'
 
 const PREVIEW_URL = 'https://test.com/preview1.mp3'
 const TEST_ARTIST = 'Test Artist'

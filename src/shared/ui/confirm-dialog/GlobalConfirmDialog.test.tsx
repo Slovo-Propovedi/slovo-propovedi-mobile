@@ -1,5 +1,4 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { globalInfoAtom } from 'shared/model/info-dialog'
 import { GlobalConfirmDialog } from './GlobalConfirmDialog'

@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { Text as MockText } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { TracksListItemContent } from './TracksListItemContent'

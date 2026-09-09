@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from '../../../mocks/renderWithProviders'
 import { SliderItemDescription } from './slider-item-description'
 
@@ -59,7 +58,7 @@ describe('<SliderItemDescription/>', () => {
     expect(root?.children.length).toEqual(1)
 
     expect(sliderItemDescriptionTitle?.type).toEqual('View')
-    expect(sliderItemDescriptionTitle).toHaveTextContent(propsStub.title)
+    expect(sliderItemDescriptionTitle).toHaveTextContent(propsStub.title, { exact: false })
   })
 
   test('text in title field equals to title prop', async () => {
@@ -67,7 +66,7 @@ describe('<SliderItemDescription/>', () => {
 
     const sliderItemDescriptionTitle = screen.getByTestId(sliderItemDescriptionTitleId)
 
-    expect(sliderItemDescriptionTitle).toHaveTextContent(propsStub.title)
+    expect(sliderItemDescriptionTitle).toHaveTextContent(propsStub.title, { exact: false })
   })
 
   test('subTitle visible, if subTitle prop defined', async () => {
@@ -87,6 +86,6 @@ describe('<SliderItemDescription/>', () => {
 
     const sliderItemDescriptionSubTitle = screen.getByTestId('slider-item-description-sub-title')
 
-    expect(sliderItemDescriptionSubTitle).toHaveTextContent(propsStub.subTitle)
+    expect(sliderItemDescriptionSubTitle).toHaveTextContent(propsStub.subTitle, { exact: false })
   })
 })

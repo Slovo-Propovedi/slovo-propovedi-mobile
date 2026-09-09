@@ -1,5 +1,4 @@
 import { fireEvent, screen } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { ConfirmDialog } from './ConfirmDialog'
 

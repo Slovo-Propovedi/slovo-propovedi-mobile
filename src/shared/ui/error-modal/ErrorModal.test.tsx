@@ -1,6 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native'
 import { Clipboard, Text as MockText } from 'react-native'
-import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { ErrorModal } from './ErrorModal'
 

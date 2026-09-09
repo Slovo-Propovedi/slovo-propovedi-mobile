@@ -1,5 +1,4 @@
 import { fireEvent, screen } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { StyleSheet } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { MarqueeText } from './marquee-text'

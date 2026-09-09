@@ -1,4 +1,3 @@
-import '@testing-library/jest-native/extend-expect'
 import { screen } from '@testing-library/react-native'
 import { type StyleProp, Text, type TextStyle } from 'react-native'
 import TextTicker from 'react-native-text-ticker'

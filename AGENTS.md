@@ -473,7 +473,6 @@ export { ListenScreen } from './ui'
 
 ```typescript
 import { render } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 
 jest.mock('../lib/usePlayer', () => ({
   usePlayer: jest.fn(),
@@ -497,7 +496,7 @@ describe('<PlayerControls>', () => {
 ### Testing Guidelines
 
 - **Prefer accessibility queries over `testID`**: query elements by text (`getByText`), role/label (`getByRole`, `getByLabelText`, `aria-label`) first. Avoid `testID` — it duplicates identity already expressed via accessible name/role and doesn't verify real accessibility. `testID` is acceptable only when text/role genuinely don't apply (e.g., an unnamed container without text)
-- Use `@testing-library/jest-native/extend-expect` for extended matchers
+- Extended matchers (`toHaveStyle`, `toHaveTextContent`, `toBeDisabled`, `toBeExpanded`, `toBeSelected`, …) are built into `@testing-library/react-native` v12.4+ and auto-registered on import — no `extend-expect` import needed. `toHaveTextContent` defaults to an **exact** string match (jest-native defaulted to substring); pass `{ exact: false }` for a substring assert.
 - Mock external dependencies and hooks
 - Use `beforeEach` to reset mock state
 

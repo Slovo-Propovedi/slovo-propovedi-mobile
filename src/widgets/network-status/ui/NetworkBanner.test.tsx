@@ -1,6 +1,5 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks'
 import { isOnlineAtom } from 'shared/model'
 import { NetworkBanner } from './NetworkBanner'

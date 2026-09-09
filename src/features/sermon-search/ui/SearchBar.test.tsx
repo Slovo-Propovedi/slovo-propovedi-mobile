@@ -6,7 +6,6 @@ import type { SermonData } from 'shared/model'
 import { isSearchingAtom, isSearchOpenAtom, searchQueryAtom, searchResultsAtom } from '../model'
 import { distinctValuesAtom } from '../model-distinctValues'
 import { SearchBar } from './SearchBar'
-import '@testing-library/jest-native/extend-expect'
 
 jest.mock('shared/api', () => ({
   mapAllSermonsResponse: jest.fn(),

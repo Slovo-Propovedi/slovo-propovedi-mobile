@@ -1,4 +1,3 @@
-import '@testing-library/jest-native/extend-expect'
 import { act, fireEvent } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import type { createStyles } from '../ExpandablePlayer/styles'
@@ -48,9 +47,7 @@ describe('<NextSermonPlate>', () => {
     await fireEvent.press(plate)
 
     expect(getByText(TITLE)).toBeTruthy()
-    expect(getByRole('button', { name: EXPANDED_NAME })).toHaveAccessibilityState({
-      expanded: true,
-    })
+    expect(getByRole('button', { name: EXPANDED_NAME })).toBeExpanded()
   })
 
   test('collapses on second press and hides the title', async () => {
@@ -95,9 +92,7 @@ describe('<NextSermonPlate>', () => {
     })
 
     expect(queryByText(TITLE)).toBeNull()
-    expect(getByRole('button', { name: ACCESSIBLE_NAME })).toHaveAccessibilityState({
-      expanded: false,
-    })
+    expect(getByRole('button', { name: ACCESSIBLE_NAME })).toBeCollapsed()
   })
 
   test('does not auto-collapse before 10 seconds', async () => {
@@ -113,9 +108,7 @@ describe('<NextSermonPlate>', () => {
     })
 
     expect(queryByText(TITLE)).toBeTruthy()
-    expect(getByRole('button', { name: EXPANDED_NAME })).toHaveAccessibilityState({
-      expanded: true,
-    })
+    expect(getByRole('button', { name: EXPANDED_NAME })).toBeExpanded()
   })
 
   test('manual collapse clears the auto-collapse timer', async () => {
@@ -142,17 +135,13 @@ describe('<NextSermonPlate>', () => {
 
     // A leaked timer from the first expansion would have collapsed the plate here.
     expect(queryByText(TITLE)).toBeTruthy()
-    expect(getByRole('button', { name: EXPANDED_NAME })).toHaveAccessibilityState({
-      expanded: true,
-    })
+    expect(getByRole('button', { name: EXPANDED_NAME })).toBeExpanded()
 
     await act(async () => {
       jest.advanceTimersByTime(AUTO_COLLAPSE_DELAY_MS / 2)
     })
 
     expect(queryByText(TITLE)).toBeNull()
-    expect(getByRole('button', { name: ACCESSIBLE_NAME })).toHaveAccessibilityState({
-      expanded: false,
-    })
+    expect(getByRole('button', { name: ACCESSIBLE_NAME })).toBeCollapsed()
   })
 })

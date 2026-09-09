@@ -1,7 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { Slider } from './slider'
-import '@testing-library/jest-native/extend-expect'
 
 const SLIDER_ITEM_ID = 'slider-item'
 
@@ -56,7 +55,7 @@ describe('<Slider/>', () => {
 
   test('content in the Text element equals to title prop', async () => {
     await renderWithProviders(<Slider items={sliderStub.items} title={sliderStub.title} />)
-    expect(screen.queryByTestId('title')).toHaveTextContent(sliderStub.title)
+    expect(screen.queryByTestId('title')).toHaveTextContent(sliderStub.title, { exact: false })
   })
 
   test('wraps the title and keeps the arrow glued inline inside the title text', async () => {

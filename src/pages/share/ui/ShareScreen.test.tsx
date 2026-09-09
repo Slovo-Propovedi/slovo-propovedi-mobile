@@ -1,5 +1,4 @@
 import { act, fireEvent } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import * as Clipboard from 'expo-clipboard'
 import { View as MockView } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'

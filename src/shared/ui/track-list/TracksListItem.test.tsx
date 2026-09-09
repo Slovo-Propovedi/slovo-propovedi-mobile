@@ -1,5 +1,4 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { Text as MockText, View } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { TracksListItem } from './TracksListItem'

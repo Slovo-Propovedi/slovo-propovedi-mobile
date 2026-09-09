@@ -1,7 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { activeCacheUrlAtom, cacheQueueAtom } from 'shared/lib/audio-cache'
 import { renderWithProviders } from 'shared/mocks'
-import '@testing-library/jest-native/extend-expect'
 import { SettingsScreen } from './SettingsScreen'
 
 const CLEAR_CACHE_ITEM_ID = 'clear-cache-item'

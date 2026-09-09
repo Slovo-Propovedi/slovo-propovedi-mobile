@@ -1,4 +1,3 @@
-import '@testing-library/jest-native/extend-expect'
 import { act, screen } from '@testing-library/react-native'
 import { AppState, type AppStateStatus, Text } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'

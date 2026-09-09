@@ -1,5 +1,4 @@
 import { fireEvent } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { Platform } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { useWebUpdateWatcher } from '../lib/useWebUpdateWatcher'

@@ -1,5 +1,4 @@
 import { act, fireEvent } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
 import type { PlaybackRate } from 'entities/player'
@@ -269,9 +268,9 @@ describe('<PlayerSpeedMenu>', () => {
       <PlayerSpeedMenu currentRate={1} onBack={mockOnBack} onSelect={mockOnSelect} />,
     )
     const activeRow = getByLabelText('Скорость 1x')
-    expect(activeRow).toHaveAccessibilityState({ selected: true })
+    expect(activeRow).toBeSelected()
 
     const inactiveRow = getByLabelText('Скорость 1.5x')
-    expect(inactiveRow).not.toHaveAccessibilityState({ selected: true })
+    expect(inactiveRow).not.toBeSelected()
   })
 })

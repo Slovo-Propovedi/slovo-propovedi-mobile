@@ -1,6 +1,5 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import * as ApkInstaller from 'apk-installer'
 import { Linking } from 'react-native'
 import { useUpdateInstall } from 'features/app-update'

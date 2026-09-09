@@ -1,5 +1,4 @@
 import { createCtx } from '@reatom/framework'
-import '@testing-library/jest-native/extend-expect'
 import { act } from '@testing-library/react-native'
 import { currentAudioAtom } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'

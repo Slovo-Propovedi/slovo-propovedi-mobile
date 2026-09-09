@@ -1,6 +1,5 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
-import '@testing-library/jest-native/extend-expect'
 import { View } from 'react-native'
 import {
   clearHistoryAction,
