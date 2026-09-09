@@ -1,5 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { historyAtom } from '../model/history'
+import { historyAtom } from '../model/historyAtom'
 import { type ListeningHistoryEntry } from '../model/types'
 import { getEntrySermon } from './getEntrySermon'
 import { writeHistory } from './historyStorage'

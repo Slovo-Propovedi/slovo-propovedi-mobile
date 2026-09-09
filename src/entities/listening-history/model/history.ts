@@ -4,14 +4,13 @@ import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { buildHistoryEntry } from '../lib/buildHistoryEntry'
 import { getEntrySermon } from '../lib/getEntrySermon'
-import { writeHistory } from '../lib/historyStorage'
 import { isEntryCompleted } from '../lib/isEntryCompleted'
 import { clearLiveProgressSnapshot } from '../lib/liveProgressStorage'
 import { reconcileOnHydration } from '../lib/reconcileOnHydration'
 import { sortAndCapEntries } from '../lib/sortAndCapEntries'
+import { commitHistory } from './commitHistory'
+import { historyAtom } from './historyAtom'
 import { type ListeningHistory } from './types'
-
-export const historyAtom = atom<ListeningHistory>([], 'historyAtom')
 
 export const isHistoryLoadedAtom = atom(false, 'isHistoryLoadedAtom')
 
@@ -72,10 +71,7 @@ export const recordPlaybackStartAction = action(
       }
     }
 
-    await writeHistory(next)
-    await ctx.schedule(() => {
-      historyAtom(ctx, next)
-    })
+    await commitHistory(ctx, next)
     clearLiveProgressSnapshot()
     return next
   },
@@ -98,10 +94,7 @@ export const markHistoryCompletedAction = action(
     const updated = { ...entry, durationMs: finalDurationMs, positionMs: finalDurationMs }
     const next = [...current.slice(0, index), updated, ...current.slice(index + 1)]
 
-    await writeHistory(next)
-    await ctx.schedule(() => {
-      historyAtom(ctx, next)
-    })
+    await commitHistory(ctx, next)
   },
   'markHistoryCompleted',
 )
@@ -112,18 +105,12 @@ export const removeHistoryEntryAction = action(async (ctx, sermonId: string) => 
 
   if (next.length === current.length) return
 
-  await writeHistory(next)
-  await ctx.schedule(() => {
-    historyAtom(ctx, next)
-  })
+  await commitHistory(ctx, next)
   clearLiveProgressSnapshot()
 }, 'removeHistoryEntry')
 
 export const clearHistoryAction = action(async ctx => {
-  await writeHistory([])
-  await ctx.schedule(() => {
-    historyAtom(ctx, [])
-  })
+  await commitHistory(ctx, [])
   clearLiveProgressSnapshot()
 }, 'clearHistory')
 
@@ -151,10 +138,7 @@ export const flushHistoryProgressAction = action(
     }
     const next = [...current.slice(0, index), updated, ...current.slice(index + 1)]
 
-    await writeHistory(next)
-    await ctx.schedule(() => {
-      historyAtom(ctx, next)
-    })
+    await commitHistory(ctx, next)
     clearLiveProgressSnapshot()
   },
   'flushHistoryProgress',

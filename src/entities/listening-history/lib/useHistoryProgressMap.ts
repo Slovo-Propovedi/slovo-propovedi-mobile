@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { useMemo } from 'react'
-import { historyAtom } from '../model/history'
+import { historyAtom } from '../model/historyAtom'
 import { getEntrySermon } from './getEntrySermon'
 import { isEntryCompleted } from './isEntryCompleted'
 

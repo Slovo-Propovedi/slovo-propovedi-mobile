@@ -8,13 +8,13 @@ import * as liveProgressStorage from '../lib/liveProgressStorage'
 import {
   clearHistoryAction,
   flushHistoryProgressAction,
-  historyAtom,
   isHistoryLoadedAtom,
   loadHistoryAction,
   markHistoryCompletedAction,
   recordPlaybackStartAction,
   removeHistoryEntryAction,
 } from './history'
+import { historyAtom } from './historyAtom'
 import { type ListeningHistory, type ListeningHistoryEntry } from './types'
 
 jest.mock('shared/model/error-dialog', () => ({

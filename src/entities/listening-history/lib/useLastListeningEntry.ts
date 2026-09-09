@@ -1,6 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { type AudioPlayerData } from 'shared/model'
-import { historyAtom, isHistoryLoadedAtom } from '../model/history'
+import { isHistoryLoadedAtom } from '../model/history'
+import { historyAtom } from '../model/historyAtom'
 import { type ListeningHistoryEntry } from '../model/types'
 import { getEntrySermon } from './getEntrySermon'
 import { isEntryCompleted } from './isEntryCompleted'

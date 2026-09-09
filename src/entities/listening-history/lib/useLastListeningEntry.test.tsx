@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { renderHookWithProviders } from 'shared/mocks'
-import { historyAtom, isHistoryLoadedAtom } from '../model/history'
+import { isHistoryLoadedAtom } from '../model/history'
+import { historyAtom } from '../model/historyAtom'
 import { type ListeningHistoryEntry } from '../model/types'
 import { useLastListeningEntry } from './useLastListeningEntry'
 

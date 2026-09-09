@@ -1,7 +1,7 @@
 import { action } from '@reatom/framework'
-import { historyAtom } from '../model/history'
+import { commitHistory } from '../model/commitHistory'
+import { historyAtom } from '../model/historyAtom'
 import { getEntrySermon } from './getEntrySermon'
-import { writeHistory } from './historyStorage'
 import { clearLiveProgressSnapshot } from './liveProgressStorage'
 
 /**
@@ -23,9 +23,6 @@ export const removeSermonsFromHistoryAction = action(async (ctx, sermonIds: stri
 
   if (next.length === current.length) return
 
-  await writeHistory(next)
-  await ctx.schedule(() => {
-    historyAtom(ctx, next)
-  })
+  await commitHistory(ctx, next)
   clearLiveProgressSnapshot()
 }, 'removeSermonsFromHistory')

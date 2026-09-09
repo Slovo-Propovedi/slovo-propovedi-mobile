@@ -13,10 +13,10 @@ export { useLastListeningEntry } from './lib/useLastListeningEntry'
 export {
   clearHistoryAction,
   flushHistoryProgressAction,
-  historyAtom,
   loadHistoryAction,
   markHistoryCompletedAction,
   recordPlaybackStartAction,
   removeHistoryEntryAction,
 } from './model/history'
+export { historyAtom } from './model/historyAtom'
 export { type ListeningHistory, type ListeningHistoryEntry } from './model/types'

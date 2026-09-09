@@ -1,10 +1,10 @@
 import { action } from '@reatom/framework'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
-import { historyAtom } from '../model/history'
+import { commitHistory } from '../model/commitHistory'
+import { historyAtom } from '../model/historyAtom'
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'
 import { buildHistoryEntry } from './buildHistoryEntry'
 import { getEntrySermon } from './getEntrySermon'
-import { writeHistory } from './historyStorage'
 import { isEntryCompleted } from './isEntryCompleted'
 import { clearLiveProgressSnapshot } from './liveProgressStorage'
 import { sortAndCapEntries } from './sortAndCapEntries'
@@ -76,10 +76,7 @@ export const recordSermonSwitchAction = action(
       }
     }
 
-    await writeHistory(next)
-    await ctx.schedule(() => {
-      historyAtom(ctx, next)
-    })
+    await commitHistory(ctx, next)
     clearLiveProgressSnapshot()
   },
   'recordSermonSwitch',
