@@ -2,8 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type Ctx } from '@reatom/framework'
 import { act, renderHook } from '@testing-library/react-native'
 import { AppState, type AppStateStatus } from 'react-native'
-import { type AudioPlayerData } from 'shared/model'
-import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import {
+  currentAudioAtom,
+  currentPlaylistAtom,
+  durationAtom,
+  isPlayingAtom,
+  positionAtom,
+} from '../model'
 import { usePlaybackProgressSaver } from './usePlaybackProgressSaver'
 
 const mockFlushHistoryProgress = jest.fn()
@@ -49,10 +55,18 @@ const seedAtoms = (opts?: {
   audio?: AudioPlayerData
   duration?: number
   isPlaying?: boolean
+  playlist?: null | PlaylistData
   position?: number
 }) => {
-  const { audio = mockAudio, duration = 0, isPlaying = false, position = 0 } = opts ?? {}
+  const {
+    audio = mockAudio,
+    duration = 0,
+    isPlaying = false,
+    playlist = null,
+    position = 0,
+  } = opts ?? {}
   currentAudioAtom(testCtx, audio)
+  currentPlaylistAtom(testCtx, playlist)
   durationAtom(testCtx, duration)
   isPlayingAtom(testCtx, isPlaying)
   positionAtom(testCtx, position)
@@ -91,8 +105,9 @@ describe('usePlaybackProgressSaver', () => {
     expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(1)
     expect(mockFlushHistoryProgress).toHaveBeenCalledWith({
       durationMs: 120000,
+      playlist: undefined,
       positionMs: 30000,
-      sermonId: SERMON_ID,
+      sermon: mockAudio,
     })
 
     const setItemCall = mockedSetItem.mock.calls.find(([key]) => key === 'currentSoundPosition')
@@ -105,6 +120,32 @@ describe('usePlaybackProgressSaver', () => {
       sermonId: SERMON_ID,
     })
     expect(typeof parsed.savedAtMs).toBe('number')
+  })
+
+  test('passes the current playlist into the flush payload', async () => {
+    const mockPlaylist: PlaylistData = {
+      artwork: 'playlist.jpg',
+      description: 'A test playlist',
+      id: 'pl-1',
+      sermons: [mockAudio],
+      title: 'Test Playlist',
+    }
+
+    await renderHook(() => usePlaybackProgressSaver())
+
+    await act(async () => {
+      seedAtoms({ duration: 120000, isPlaying: true, playlist: mockPlaylist, position: 30000 })
+    })
+
+    await advanceTimeAndFlush(10000)
+
+    expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(1)
+    expect(mockFlushHistoryProgress).toHaveBeenCalledWith({
+      durationMs: 120000,
+      playlist: mockPlaylist,
+      positionMs: 30000,
+      sermon: mockAudio,
+    })
   })
 
   test('does not save when paused', async () => {
@@ -148,8 +189,9 @@ describe('usePlaybackProgressSaver', () => {
     expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(1)
     expect(mockFlushHistoryProgress).toHaveBeenCalledWith({
       durationMs: 120000,
+      playlist: undefined,
       positionMs: 30000,
-      sermonId: SERMON_ID,
+      sermon: mockAudio,
     })
 
     // Change audio id — next tick should be skipped
@@ -168,8 +210,9 @@ describe('usePlaybackProgressSaver', () => {
     expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(2)
     expect(mockFlushHistoryProgress).toHaveBeenLastCalledWith({
       durationMs: 200000,
+      playlist: undefined,
       positionMs: 10000,
-      sermonId: 'sermon-2',
+      sermon: mockAudio2,
     })
   })
 
@@ -190,8 +233,9 @@ describe('usePlaybackProgressSaver', () => {
     expect(mockFlushHistoryProgress).toHaveBeenCalledTimes(1)
     expect(mockFlushHistoryProgress).toHaveBeenCalledWith({
       durationMs: 120000,
+      playlist: undefined,
       positionMs: 55000,
-      sermonId: SERMON_ID,
+      sermon: mockAudio,
     })
 
     const setItemCall = mockedSetItem.mock.calls.find(([key]) => key === 'currentSoundPosition')

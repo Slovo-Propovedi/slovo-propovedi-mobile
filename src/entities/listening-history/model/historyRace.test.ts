@@ -91,7 +91,7 @@ describe('listening-history race (commitHistory)', () => {
     const flush = flushHistoryProgressAction(ctx, {
       durationMs: 10000,
       positionMs: 5000,
-      sermonId: 'sermon-x',
+      sermon: { ...mockAudio, id: 'sermon-x' },
     })
     const remove = removeHistoryEntryAction(ctx, 'sermon-y')
 

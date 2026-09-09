@@ -2,18 +2,10 @@ import { action } from '@reatom/framework'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { commitHistory } from '../model/commitHistory'
 import { historyAtom } from '../model/historyAtom'
-import { buildSanitizedSermon } from './buildHistoryEntry'
+import { buildManualPlaylist } from './buildManualPlaylist'
 import { completeSermonInHistory } from './completeSermonInHistory'
 import { clearLiveProgressSnapshot } from './liveProgressStorage'
 import { sortAndCapEntries } from './sortAndCapEntries'
-
-const buildManualPlaylist = (sermon: AudioPlayerData): PlaylistData => ({
-  artwork: sermon.artwork,
-  description: '',
-  id: sermon.id,
-  sermons: [buildSanitizedSermon(sermon)],
-  title: sermon.title,
-})
 
 /**
  * Marks a sermon as listened: creates a completed history entry or completes

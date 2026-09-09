@@ -8,6 +8,7 @@ import { isEntryCompleted } from '../lib/isEntryCompleted'
 import { clearLiveProgressSnapshot } from '../lib/liveProgressStorage'
 import { reconcileOnHydration } from '../lib/reconcileOnHydration'
 import { sortAndCapEntries } from '../lib/sortAndCapEntries'
+import { upsertHistoryProgress } from '../lib/upsertHistoryProgress'
 import { commitHistory } from './commitHistory'
 import { historyAtom } from './historyAtom'
 import { type ListeningHistory } from './types'
@@ -114,29 +115,31 @@ export const clearHistoryAction = action(async ctx => {
   clearLiveProgressSnapshot()
 }, 'clearHistory')
 
+/**
+ * Flushes real playback progress into the history catalog (UPSERT).
+ *
+ * Immediate flushes (pause, stop, 10s tick, app background) are statements of
+ * REAL playback state → always write: create the entry if missing, and update
+ * even completed entries (real listening supersedes a manual mark).
+ * Deferred flushes (400ms seek-debounce) may be stale — the user can mark the
+ * sermon listened during the debounce window — so they alone skip completed
+ * entries.
+ */
 export const flushHistoryProgressAction = action(
-  async (ctx, params: { durationMs: number; positionMs: number; sermonId: string }) => {
+  async (
+    ctx,
+    params: {
+      deferred?: boolean
+      durationMs: number
+      playlist?: PlaylistData
+      positionMs: number
+      sermon: AudioPlayerData
+    },
+  ) => {
     if (params.positionMs <= 0) return
 
-    const current = ctx.get(historyAtom)
-    const index = current.findIndex(e => getEntrySermon(e)?.id === params.sermonId)
-    if (index === -1) return
-
-    const entry = current[index]
-
-    // Stale-flush protection: skip if entry is already completed
-    // (e.g. markSermonListenedAction beat this in-flight flush).
-    if (isEntryCompleted(entry)) return
-
-    const resolvedDurationMs = params.durationMs > 0 ? params.durationMs : entry.durationMs
-    if (entry.positionMs === params.positionMs && entry.durationMs === resolvedDurationMs) return
-
-    const updated = {
-      ...entry,
-      durationMs: resolvedDurationMs,
-      positionMs: params.positionMs,
-    }
-    const next = [...current.slice(0, index), updated, ...current.slice(index + 1)]
+    const next = upsertHistoryProgress(ctx.get(historyAtom), params, Date.now())
+    if (!next) return
 
     await commitHistory(ctx, next)
     clearLiveProgressSnapshot()

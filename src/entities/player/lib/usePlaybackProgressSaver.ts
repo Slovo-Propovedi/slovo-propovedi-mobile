@@ -2,7 +2,14 @@ import { useEffect, useRef } from 'react'
 import { AppState } from 'react-native'
 import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
+import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import {
+  currentAudioAtom,
+  currentPlaylistAtom,
+  durationAtom,
+  isPlayingAtom,
+  positionAtom,
+} from '../model'
 import { savePlaybackProgress } from './playbackProgress'
 
 const AUTO_SAVE_INTERVAL_MS = 10_000
@@ -11,7 +18,8 @@ export const usePlaybackProgressSaver = () => {
   const positionRef = useRef(0)
   const durationRef = useRef(0)
   const isPlayingRef = useRef(false)
-  const currentAudioRef = useRef<{ id: string } | null>(null)
+  const currentAudioRef = useRef<AudioPlayerData | null>(null)
+  const playlistRef = useRef<null | PlaylistData>(null)
   const previousAudioIdRef = useRef<string | undefined>(undefined)
   const skipNextTickRef = useRef(false)
 
@@ -32,6 +40,9 @@ export const usePlaybackProgressSaver = () => {
       previousAudioIdRef.current = nextId
       currentAudioRef.current = v
     })
+    const unsubPlaylist = ctx.subscribe(currentPlaylistAtom, v => {
+      playlistRef.current = v
+    })
 
     const flushNow = () => {
       if (!isPlayingRef.current) return
@@ -42,18 +53,19 @@ export const usePlaybackProgressSaver = () => {
       }
 
       const position = positionRef.current
-      const sermonId = currentAudioRef.current?.id
-      if (position <= 0 || !sermonId) return
+      const audio = currentAudioRef.current
+      if (position <= 0 || !audio) return
 
       void savePlaybackProgress(ctx, {
         durationMs: durationRef.current,
         positionMs: position,
-        sermonId,
+        sermonId: audio.id,
       })
       void flushHistoryProgressAction(ctx, {
         durationMs: durationRef.current,
+        playlist: playlistRef.current ?? undefined,
         positionMs: position,
-        sermonId,
+        sermon: audio,
       })
     }
 
@@ -70,6 +82,7 @@ export const usePlaybackProgressSaver = () => {
       unsubDuration()
       unsubIsPlaying()
       unsubAudio()
+      unsubPlaylist()
     }
   }, [])
 }
