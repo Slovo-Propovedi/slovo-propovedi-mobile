@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2026-09-09
+
+### Added
+
+- Mark-as-listened/remove-from-history in sermon and playlist menus (#84)
+- Global serial queue with cancellation and reactive stop UI (#83)
+- Disable add-to-cache actions when offline
+- Global info dialog (ConfirmDialog-based) for offline playback guard
+- Wire row and fullscreen cache toggles through progress helper
+- Unified per-URL download progress protocol for manual caching
+- Web MediaSession with metadata, seekbar and ±10s controls
+
+### Changed
+
+- Extract listening-history actions from model/history.ts into lib/
+- Confine re-exports to slice-root barrels (#83)
+- Show locked-tab notice via global info dialog
+
+### Fixed
+
+- Defer expo-router onUnhandledLinking to silence pre-mount setState warning
+- Make immediate history flushes upsert and supersede manual marks
+- Eliminate lost-update race between listening-history actions
+- Drop deprecated @testing-library/jest-native
+- Reactively disable cache clearing while downloads are active (#83)
+- Reactive cached-url registry to kill completion flicker and rescan storms (#83)
+- Pre-validate batch enqueue and abort-unaware join chokepoint (#83)
+- Offline guard for playing uncached tracks (#81)
+- Cache track when starting playback on web (#81)
+- Theme-aware update modals with accent colors
+
 ## [0.20.0] - 2026-09-06
 
 ### Added
@@ -596,6 +627,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.21.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.0
 [0.20.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.20.0
 [0.19.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.19.0
 [0.18.2]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.18.2
