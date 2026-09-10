@@ -37,7 +37,7 @@ export class PlayerService {
     }
 
     this.playerInstance = player
-    playbackController.applyPlaybackRate(player)
+    playbackController.applyPreferences(player)
     this.setupListeners()
     return player
   }
@@ -68,7 +68,7 @@ export class PlayerService {
 
     const player = await audioLoader.replaceAudio(audioUrl, initialPositionMs)
     if (player) this.playerInstance = player
-    playbackController.applyPlaybackRate(this.playerInstance)
+    playbackController.applyPreferences(this.playerInstance)
     this.setupListeners()
     return player
   }

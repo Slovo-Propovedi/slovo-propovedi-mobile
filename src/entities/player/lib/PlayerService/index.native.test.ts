@@ -6,7 +6,9 @@ import { playerService } from './index.native'
 import { playbackController } from './PlaybackController'
 import { playerStatusListener } from './PlayerStatusListener'
 
-jest.mock('./AudioLoader', () => ({ audioLoader: { replaceAudio: jest.fn() } }))
+jest.mock('./AudioLoader', () => ({
+  audioLoader: { loadAudio: jest.fn(), replaceAudio: jest.fn() },
+}))
 
 jest.mock('./AudioModeManager', () => ({ audioModeManager: { configure: jest.fn() } }))
 
@@ -64,5 +66,32 @@ describe('PlayerService.stop', () => {
     expect(cleanupSpy).toHaveBeenCalled()
     expect(stopSpy).toHaveBeenCalled()
     expect(cleanupSpy.mock.invocationCallOrder[0]).toBeLessThan(stopSpy.mock.invocationCallOrder[0])
+  })
+})
+
+describe('PlayerService volume restore', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks()
+    await playerService.setVolume(1)
+  })
+
+  test('applies the restored volume to a fresh player after loadAudio', async () => {
+    const player = createPlayerStub()
+    ;(audioLoader.loadAudio as jest.Mock).mockResolvedValue(player)
+
+    await playerService.setVolume(0.4)
+    await playerService.loadAudio('https://example.com/audio.mp3')
+
+    expect(player.volume).toBe(0.4)
+  })
+
+  test('re-applies the stored volume after replaceAudio', async () => {
+    const player = createPlayerStub()
+    ;(audioLoader.replaceAudio as jest.Mock).mockResolvedValue(player)
+
+    await playerService.setVolume(0.4)
+    await playerService.replaceAudio('https://example.com/next.mp3')
+
+    expect(player.volume).toBe(0.4)
   })
 })

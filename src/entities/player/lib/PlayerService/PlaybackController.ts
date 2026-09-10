@@ -6,10 +6,9 @@ import {
   setIsSeekingAction,
   setPositionAction,
   setSeekTargetAction,
-  setVolumeAction,
 } from '../../model'
 import { type PlaybackRate } from '../../playback-rate'
-import { setPlaybackRateAction } from '../../playback-rate'
+import { playbackPreferences } from './playbackPreferences'
 import { flushProgress, scheduleHistoryFlush } from './progressFlusher'
 import { seekGuard } from './SeekGuard'
 import { type PlaybackStatus } from './types'
@@ -82,22 +81,24 @@ class PlaybackController {
     player: AudioPlayer | null,
     rate: PlaybackRate,
   ): Promise<void> => {
-    this.playbackRate = rate
-    player?.setPlaybackRate(rate, 'high')
-    void setPlaybackRateAction(ctx, rate)
+    playbackPreferences.setPlaybackRate(player, rate)
   }
 
   public setVolume = async (player: AudioPlayer | null, volume: number): Promise<void> => {
-    this.volume = Math.max(0, Math.min(1, volume))
+    playbackPreferences.setVolume(player, volume)
+  }
 
-    if (player?.isLoaded) player.volume = this.volume
-
-    void setVolumeAction(ctx, this.volume)
+  public applyPreferences = (player: AudioPlayer | null): void => {
+    this.applyPlaybackRate(player)
+    this.applyVolume(player)
   }
 
   public applyPlaybackRate = (player: AudioPlayer | null): void => {
-    if (this.playbackRate === 1) return
-    player?.setPlaybackRate(this.playbackRate, 'high')
+    playbackPreferences.applyPlaybackRate(player)
+  }
+
+  public applyVolume = (player: AudioPlayer | null): void => {
+    playbackPreferences.applyVolume(player)
   }
 
   public getStatus = (player: AudioPlayer | null): PlaybackStatus => {
@@ -110,12 +111,9 @@ class PlaybackController {
     }
   }
 
-  public getPlaybackRate = (): PlaybackRate => this.playbackRate
+  public getPlaybackRate = (): PlaybackRate => playbackPreferences.getPlaybackRate()
 
-  public getVolume = (): number => this.volume
-
-  private playbackRate: PlaybackRate = 1
-  private volume = 1
+  public getVolume = (): number => playbackPreferences.getVolume()
 }
 
 export const playbackController = new PlaybackController()
