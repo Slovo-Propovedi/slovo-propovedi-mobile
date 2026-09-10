@@ -74,8 +74,8 @@ describe('<ShareScreen>', () => {
   test('pressing the landing header collapses it', async () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
 
-    const { getByTestId, queryByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByTestId('share-section-header-Сайт'))
+    const { getByRole, queryByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByRole('button', { name: /Сайт/ }))
 
     expect(queryByText(LANDING_URL)).toBeNull()
   })
@@ -83,8 +83,8 @@ describe('<ShareScreen>', () => {
   test('expanding the release section collapses the landing section', async () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: READY_STATE })
 
-    const { getByTestId, queryByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByTestId('share-section-header-Приложение'))
+    const { getByRole, queryByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
 
     expect(queryByText(LANDING_URL)).toBeNull()
     expect(queryByText('Релиз 1.2.0')).toBeTruthy()
@@ -93,8 +93,8 @@ describe('<ShareScreen>', () => {
   test('expanding the web app section shows its url and qr code, collapsing the landing section', async () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
 
-    const { getByTestId, queryByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByTestId('share-section-header-Веб-версия'))
+    const { getByRole, queryByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByRole('button', { name: /Веб-версия/ }))
 
     expect(queryByText(LANDING_URL)).toBeNull()
     expect(queryByText(WEB_APP_URL)).toBeTruthy()
@@ -115,8 +115,8 @@ describe('<ShareScreen>', () => {
   test('expanding the release section while loading shows no error message', async () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
 
-    const { getByTestId, queryByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByTestId('share-section-header-Приложение'))
+    const { getByRole, queryByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
 
     expect(queryByText('Не удалось загрузить информацию о релизе')).toBeNull()
   })
@@ -124,8 +124,8 @@ describe('<ShareScreen>', () => {
   test('expanding the release section on error shows error message and retry button', async () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'error' } })
 
-    const { getByTestId, getByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByTestId('share-section-header-Приложение'))
+    const { getByRole, getByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
 
     expect(getByText('Не удалось загрузить информацию о релизе')).toBeTruthy()
     expect(getByText('Повторить')).toBeTruthy()
@@ -134,8 +134,8 @@ describe('<ShareScreen>', () => {
   test('retry button calls retry', async () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'error' } })
 
-    const { getByTestId, getByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByTestId('share-section-header-Приложение'))
+    const { getByRole, getByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
     await fireEvent.press(getByText('Повторить'))
 
     expect(mockRetry).toHaveBeenCalledTimes(1)
@@ -144,8 +144,8 @@ describe('<ShareScreen>', () => {
   test('expanding the release section when ready shows release name, version, url and qr code', async () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: READY_STATE })
 
-    const { getAllByTestId, getByTestId, getByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByTestId('share-section-header-Приложение'))
+    const { getAllByTestId, getByRole, getByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
 
     expect(getByText('Релиз 1.2.0')).toBeTruthy()
     expect(getByText('Версия 1.2.0')).toBeTruthy()
@@ -157,8 +157,8 @@ describe('<ShareScreen>', () => {
     ;(Clipboard.setStringAsync as jest.Mock).mockResolvedValue(true)
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: READY_STATE })
 
-    const { getByTestId, getByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByTestId('share-section-header-Приложение'))
+    const { getByRole, getByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
     await fireEvent.press(getByText('Скопировать ссылку'))
     await act(async () => {})
 

@@ -1,4 +1,5 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useMemo } from 'react'
+import { StyleSheet } from 'react-native'
 import { useEntryPlayback } from 'features/entry-playback'
 import {
   buildHistoryMenuActions,
@@ -11,6 +12,10 @@ import { INDENTS } from 'shared/ui/theme'
 import { TracksListItem } from 'shared/ui/track-list'
 
 const PLAYBACK_ERROR_MESSAGE = 'Не удалось воспроизвести проповедь из истории'
+
+const styles = StyleSheet.create({
+  row: { marginHorizontal: INDENTS.medium },
+})
 
 interface HistoryRowProps {
   entry: ListeningHistoryEntry
@@ -31,26 +36,33 @@ export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRow
 
   const handlePress = useCallback(() => playEntry(entry), [entry, playEntry])
 
-  if (!sermon) return null
+  const menuActions = useMemo(() => {
+    // Derive the sermon inside the memo: getEntrySermon builds a fresh object
+    // for entries without a snapshot sermon, so it must not be a dependency.
+    const memoizedSermon = getEntrySermon(entry)
+    return memoizedSermon
+      ? buildHistoryMenuActions({
+          inHistory: true,
+          isCompleted: completed,
+          playlist: entry.playlist,
+          sermon: memoizedSermon,
+        })
+      : []
+  }, [completed, entry])
 
-  const menuActions = buildHistoryMenuActions({
-    inHistory: true,
-    isCompleted: completed,
-    playlist: entry.playlist,
-    sermon,
-  })
+  if (!sermon) return null
 
   return (
     <TracksListItem
+      style={styles.row}
       title={sermon.title}
       isPlaying={isPlaying}
       onPress={handlePress}
       artwork={sermon.artwork}
-      progress={storedProgress}
       menuActions={menuActions}
+      progress={storedProgress}
       audioUrl={sermon.audioUrl}
       isAudioPlaying={isAudioPlaying}
-      style={{ marginHorizontal: INDENTS.medium }}
       subtitle={formatRelativeDate(entry.lastPlayedAt)}
     />
   )

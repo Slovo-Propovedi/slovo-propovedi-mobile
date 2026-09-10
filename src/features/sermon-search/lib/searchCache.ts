@@ -2,17 +2,46 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import z from 'zod'
 import { CACHED_SERMON_SEARCH, CACHED_SERMON_SEARCH_INDEX } from 'shared/config'
 import { getCachedJson, setCachedJson } from 'shared/lib/cache'
-import { type SermonData, sermonSchema } from 'shared/model'
+import { getParseJsonWithSchema, type SermonData, sermonSchema } from 'shared/model'
 
 export const MAX_CACHED_SEARCH_QUERIES = 30
 
 const sermonsArraySchema = z.array(sermonSchema)
 const queryIndexSchema = z.array(z.string())
 
+const SEARCH_CACHE_DATA_PREFIX = `${CACHED_SERMON_SEARCH}:`
+
 let indexWriteQueue: Promise<void> = Promise.resolve()
 
+const parseSearchIndex = getParseJsonWithSchema(queryIndexSchema)
+
+const cleanOrphanedSearchCacheKeys = async (excludeKey?: string): Promise<void> => {
+  const allKeys = await AsyncStorage.getAllKeys()
+  const orphanedKeys = allKeys.filter(
+    key =>
+      key.startsWith(SEARCH_CACHE_DATA_PREFIX) &&
+      key !== CACHED_SERMON_SEARCH_INDEX &&
+      key !== excludeKey,
+  )
+  if (orphanedKeys.length === 0) return
+  await AsyncStorage.multiRemove(orphanedKeys)
+}
+
 const updateSearchCacheIndex = async (latestKey: string): Promise<void> => {
-  const index = (await getCachedJson(CACHED_SERMON_SEARCH_INDEX, queryIndexSchema)) ?? []
+  const rawIndex = await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)
+  const parsedIndex = parseSearchIndex(rawIndex)
+
+  if (rawIndex !== null && parsedIndex === undefined) {
+    let cleanupSucceeded = true
+    await cleanOrphanedSearchCacheKeys(latestKey).catch(error => {
+      console.warn('Failed to clean orphaned search cache keys:', error)
+      cleanupSucceeded = false
+    })
+    if (cleanupSucceeded) await setCachedJson(CACHED_SERMON_SEARCH_INDEX, [latestKey])
+    return
+  }
+
+  const index = parsedIndex ?? []
   const withoutLatest = index.filter(entry => entry !== latestKey)
   const nextIndex = [...withoutLatest, latestKey]
 

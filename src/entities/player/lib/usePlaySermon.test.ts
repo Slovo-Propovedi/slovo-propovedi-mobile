@@ -125,6 +125,27 @@ describe('usePlayNewSermon', () => {
     dateNowSpy.mockRestore()
   })
 
+  test('returns stable identity across rerenders with same props', async () => {
+    const { rerender, result } = await renderHookWithProviders(
+      (_props: { trigger: number }) => usePlayNewSermon(),
+      { ctx },
+    )
+
+    const first = result.current
+    rerender({ trigger: 1 })
+    expect(result.current).toBe(first)
+  })
+
+  test('returns new identity when a dependency changes', async () => {
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+
+    const first = result.current
+    await act(async () => {
+      isOnlineAtom(ctx, false)
+    })
+    expect(result.current).not.toBe(first)
+  })
+
   test('different sermon → replaceAudio called with resume ms', async () => {
     mockGetResumePosition.mockReturnValue(RESUME_MS)
 

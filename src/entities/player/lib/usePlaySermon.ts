@@ -1,31 +1,15 @@
 import { useAction, useAtom } from '@reatom/npm-react'
+import { useCallback } from 'react'
 import {
-  getEntrySermon,
-  getResumePosition,
-  historyAtom,
   recordPlaybackStartAction,
   recordSermonSwitchAction,
 } from 'entities/listening-history/@x/player'
-import { ctx } from 'shared/lib/reatom-ctx'
-import {
-  type AudioPlayerData,
-  type PlaylistData,
-  type SermonData,
-  setPlayerFullscreen,
-} from 'shared/model'
+import { setPlayerFullscreen } from 'shared/model'
 import { isOnlineAtom } from 'shared/model/network'
-import {
-  currentAudioAtom,
-  durationAtom,
-  positionAtom,
-  setCurrentAudioAction,
-  setCurrentPlaylistAction,
-} from '../model'
-import { guardOfflinePlayback } from './playOfflineGuard'
+import { setCurrentAudioAction, setCurrentPlaylistAction } from '../model'
+import { playNewSermonAsync, type PlayNewSermonProps } from './playNewSermonAsync'
 import { usePlayer } from './usePlayer'
 import { usePlayTapGuard } from './usePlayTapGuard'
-
-const SAME_SERMON_TOLERANCE_MS = 1000
 
 export const usePlayNewSermon = () => {
   const { play, replaceAudio, seekTo, setLockScreenMetadata } = usePlayer()
@@ -40,83 +24,39 @@ export const usePlayNewSermon = () => {
   const { clearSuppressionOnError, isRepeatTapSuppressed, markPlayFinished, markPlayStarted } =
     usePlayTapGuard()
 
-  interface PlayNewSermonProps {
-    playlist: PlaylistData
-    sermon: SermonData
-  }
-
-  return async ({
-    playlist,
-    sermon: { artist, audioUrl, id, title, ...other },
-  }: PlayNewSermonProps) => {
-    if (!audioUrl) return
-
-    const sermonId = id
-
-    if (isRepeatTapSuppressed(sermonId)) return
-
-    markPlayStarted(sermonId)
-
-    try {
-      if (await guardOfflinePlayback(audioUrl, isOnline)) return
-      const currentAudio = ctx.get(currentAudioAtom)
-      const currentPosition = ctx.get(positionAtom)
-      const currentDuration = ctx.get(durationAtom)
-      const history = ctx.get(historyAtom)
-      const resumeMs = getResumePosition(history, sermonId)
-
-      const newAudio: AudioPlayerData = {
-        ...other,
-        artist,
-        artwork: playlist.artwork,
-        audioUrl,
-        id: sermonId,
-        title,
-      }
-
-      const oldAudio = currentAudio
-      const oldPositionMs = currentPosition
-      const oldDurationMs = currentDuration
-
-      await setCurrentAudio(newAudio)
-      await setCurrentPlaylist(playlist)
-
-      void openPlayerFullscreen(true)
-
-      if (oldAudio?.id && oldAudio.id !== sermonId)
-        await recordSermonSwitch({
-          markOldCompleted: false,
-          newAudio,
-          newPlaylist: playlist,
-          oldDurationMs,
-          oldPositionMs: Math.max(0, oldPositionMs),
-          oldSermonId: oldAudio.id,
-        })
-
-      if (currentAudio?.id !== sermonId) await replaceAudio(newAudio.audioUrl, resumeMs)
-      else {
-        const entry = history.find(e => getEntrySermon(e)?.id === sermonId)
-
-        if (entry && resumeMs === 0) await seekTo(0)
-        else if (resumeMs > 0 && Math.abs(currentPosition - resumeMs) > SAME_SERMON_TOLERANCE_MS)
-          await seekTo(resumeMs)
-      }
-
-      if (!oldAudio?.id || oldAudio.id === sermonId) void recordPlaybackStart(newAudio, playlist)
-
-      await play()
-
-      setLockScreenMetadata({
-        albumTitle: playlist.title,
-        artist: newAudio.artist,
-        artworkUrl: newAudio.artwork,
-        title: newAudio.title,
-      })
-    } catch (error) {
-      clearSuppressionOnError(sermonId)
-      throw error
-    } finally {
-      markPlayFinished(sermonId)
-    }
-  }
+  return useCallback(
+    (props: PlayNewSermonProps) =>
+      playNewSermonAsync(props, {
+        clearSuppressionOnError,
+        isOnline,
+        isRepeatTapSuppressed,
+        markPlayFinished,
+        markPlayStarted,
+        openPlayerFullscreen,
+        play,
+        recordPlaybackStart,
+        recordSermonSwitch,
+        replaceAudio,
+        seekTo,
+        setCurrentAudio,
+        setCurrentPlaylist,
+        setLockScreenMetadata,
+      }),
+    [
+      clearSuppressionOnError,
+      isOnline,
+      isRepeatTapSuppressed,
+      markPlayFinished,
+      markPlayStarted,
+      openPlayerFullscreen,
+      play,
+      recordPlaybackStart,
+      recordSermonSwitch,
+      replaceAudio,
+      seekTo,
+      setCurrentAudio,
+      setCurrentPlaylist,
+      setLockScreenMetadata,
+    ],
+  )
 }

@@ -22,15 +22,13 @@ export const CollapsibleSection = ({
 
   return (
     <View style={[styles.section, { backgroundColor: currentTheme.surface }]}>
-      <TouchableItem
-        onPress={onToggle}
-        style={styles.sectionHeader}
-        testID={`share-section-header-${title}`}
-      >
+      <TouchableItem onPress={onToggle} style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>{title}</Text>
         <Ionicons
           size={20}
+          accessibilityElementsHidden
           color={currentTheme.textMuted}
+          importantForAccessibility='no'
           name={isExpanded ? 'chevron-up' : 'chevron-down'}
         />
       </TouchableItem>

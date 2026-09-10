@@ -56,7 +56,7 @@
 
 ## Кэш поиска проповедей
 
-`src/features/sermon-search/lib/searchCache.ts` — `getCachedSearchResults` / `setCachedSearchResults`, ключи `cachedSermonSearch:<query>` + индекс `cachedSermonSearch:index` (`src/shared/config/cache-storage-keys.ts`). Ключ запроса нормализуется (`trim` + `toLowerCase`); пустые результаты не кэшируются; индекс хранит до 30 последних ключей, при переполнении самые старые удаляются (`AsyncStorage.multiRemove`). Универсальные обёртки — `src/shared/lib/cache/` (`getCachedJson` / `setCachedJson`).
+`src/features/sermon-search/lib/searchCache.ts` — `getCachedSearchResults` / `setCachedSearchResults`, ключи `cachedSermonSearch:<query>` + индекс `cachedSermonSearch:index` (`src/shared/config/cache-storage-keys.ts`). Ключ запроса нормализуется (`trim` + `toLowerCase`); пустые результаты не кэшируются; индекс хранит до 30 последних ключей, при переполнении самые старые удаляются (`AsyncStorage.multiRemove`). При повреждении индекса (`cachedSermonSearch:index` есть в raw, но zod-парсинг не удался) orphaned-ключи данных (`cachedSermonSearch:<query>`) вычищаются через `getAllKeys` + `multiRemove` (с исключением свежего ключа `latestKey`), индекс сбрасывается в `[latestKey]` — свежий поиск сохраняется в кэш бесшовно. Если чистка упала (ошибка `getAllKeys`/`multiRemove`), индекс остаётся повреждённым — следующий вызов `updateSearchCacheIndex` повторит попытку чистки (self-healing). Универсальные обёртки — `src/shared/lib/cache/` (`getCachedJson` / `setCachedJson`).
 
 Поток `fetchSearchResults` (`src/features/sermon-search/model.ts`):
 

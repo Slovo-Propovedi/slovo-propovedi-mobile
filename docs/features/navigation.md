@@ -52,7 +52,7 @@
 
 `app/(tabs)/_layout.tsx` — `Tabs` с кастомной панелью:
 
-- 4 таба: `listen` «Слушать», `read` «Читать», `study` «Учаться», `more` «Еще» (`title` в `_layout.tsx`; в `CustomTabBar` ROUTES — «Учиться»).
+- 4 таба: `listen` «Слушать», `read` «Читать», `study` «Учиться», `more` «Еще» (`title` в `_layout.tsx`; в `CustomTabBar` ROUTES — «Учиться»).
 - `tabBar` → `CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`) + `ExpandablePlayer` рендерится поверх на всех табах.
 - **ВАЖНО:** «Читать» и «Учиться» заблокированы — при тапе `CustomTabBar` показывает глобальный информационный диалог через `showInfo` («Скоро будет доступно», `useTabPress` → `shared/model/info-dialog`) (`isDisabled={isUnavailableTabRoute(route.name)}`). Реальные экраны табов (`app/(tabs)/read.tsx`, `study.tsx`) существуют и рендерят `ReadScreen`/`StudyScreen`, но переход к ним блокируется.
 

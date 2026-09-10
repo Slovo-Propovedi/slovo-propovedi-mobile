@@ -127,4 +127,54 @@ describe('searchCache', () => {
       expect(index).toHaveLength(2)
     })
   })
+
+  describe('corrupt index cleanup', () => {
+    test('preserves latestKey and resets index to [latestKey] on corrupt index', async () => {
+      await AsyncStorage.setItem('cachedSermonSearch:old-1', JSON.stringify([sermon]))
+      await AsyncStorage.setItem('cachedSermonSearch:old-2', JSON.stringify([sermon]))
+      await AsyncStorage.setItem(CACHED_SERMON_SEARCH_INDEX, 'not-valid-json')
+
+      await setCachedSearchResults('new-query', [sermon])
+
+      expect(await AsyncStorage.getItem('cachedSermonSearch:old-1')).toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:old-2')).toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:new-query')).not.toBeNull()
+      const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
+      expect(index).toEqual(['cachedSermonSearch:new-query'])
+    })
+
+    test('does not clean when index is valid', async () => {
+      await AsyncStorage.setItem('cachedSermonSearch:existing', JSON.stringify([sermon]))
+      await AsyncStorage.setItem(
+        CACHED_SERMON_SEARCH_INDEX,
+        JSON.stringify(['cachedSermonSearch:existing']),
+      )
+
+      await setCachedSearchResults('new-query', [sermon])
+
+      expect(await AsyncStorage.getItem('cachedSermonSearch:existing')).not.toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:new-query')).not.toBeNull()
+    })
+
+    test('leaves index corrupted on cleanup failure so next call retries', async () => {
+      await AsyncStorage.setItem('cachedSermonSearch:orphan', JSON.stringify([sermon]))
+      await AsyncStorage.setItem(CACHED_SERMON_SEARCH_INDEX, 'corrupt-data')
+
+      jest.spyOn(AsyncStorage, 'getAllKeys').mockRejectedValueOnce(new Error('storage error'))
+
+      await setCachedSearchResults('new-query', [sermon])
+
+      expect(await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)).toBe('corrupt-data')
+
+      jest.restoreAllMocks()
+
+      await setCachedSearchResults('retry-query', [sermon])
+
+      expect(await AsyncStorage.getItem('cachedSermonSearch:orphan')).toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:new-query')).toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:retry-query')).not.toBeNull()
+      const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
+      expect(index).toEqual(['cachedSermonSearch:retry-query'])
+    })
+  })
 })

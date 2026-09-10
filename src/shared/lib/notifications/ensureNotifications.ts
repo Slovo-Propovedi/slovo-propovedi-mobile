@@ -1,4 +1,8 @@
 import type { NotificationsApi } from './NotificationsApi'
+import {
+  getMissingNotificationsApiMethods,
+  isValidNotificationsApi,
+} from './isValidNotificationsApi'
 
 let notificationsModule: NotificationsApi | null = null
 let isInitialized = false
@@ -11,6 +15,15 @@ export const ensureNotifications = (): Promise<NotificationsApi | null> => {
   initPromise = (async () => {
     try {
       const mod = await import('expo-notifications')
+
+      if (!isValidNotificationsApi(mod)) {
+        const missing = getMissingNotificationsApiMethods(mod)
+        console.error(
+          `[notifications] expo-notifications module shape invalid: missing [${missing.join(', ')}]`,
+        )
+        return null
+      }
+
       if (!isInitialized) {
         mod.setNotificationHandler({
           handleNotification: async () => ({
@@ -22,7 +35,8 @@ export const ensureNotifications = (): Promise<NotificationsApi | null> => {
         })
         isInitialized = true
       }
-      notificationsModule = mod as unknown as NotificationsApi
+
+      notificationsModule = mod
       return notificationsModule
     } catch (error) {
       console.error('[notifications] Failed to load expo-notifications:', error)

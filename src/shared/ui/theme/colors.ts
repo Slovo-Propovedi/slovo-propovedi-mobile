@@ -11,7 +11,6 @@ const STATIC_COLORS = {
   gray: '#808080',
   onPrimary: '#fff',
   primary: '#f16031',
-  skeleton: '#333333',
   success: '#34c759',
   tabBarActive: '#f16031',
   tabBarBackground: 'rgba(0, 0, 0, 0.8)',
@@ -27,6 +26,7 @@ interface MutableColorSlots {
   maximumTrackTintColor: ColorValue
   minimumTrackTintColor: ColorValue
   primary: ColorValue
+  skeleton: ColorValue
   surface: ColorValue
   tabBarActive: ColorValue
   text: ColorValue

@@ -32,8 +32,6 @@ const createSetHandler =
   }
 
 const applyMetadata = (metadata: LockScreenMetadata | null): void => {
-  if (!navigator.mediaSession) return
-
   if (!metadata) {
     navigator.mediaSession.metadata = null
     return
