@@ -34,6 +34,13 @@ describe('<MoreScreen>', () => {
     mockPush.mockClear()
   })
 
+  test('renders app name, version and description in the header', async () => {
+    const { getByText } = await renderWithProviders(<MoreScreen />)
+    expect(getByText('TestApp')).toBeTruthy()
+    expect(getByText('v1.0.0')).toBeTruthy()
+    expect(getByText('Приложение для прослушивания и чтения проповедей')).toBeTruthy()
+  })
+
   test('renders history menu item', async () => {
     const { getByText } = await renderWithProviders(<MoreScreen />)
     expect(getByText('История прослушивания')).toBeTruthy()
@@ -41,7 +48,7 @@ describe('<MoreScreen>', () => {
 
   test('history item navigates to /history on press', async () => {
     const { getByText } = await renderWithProviders(<MoreScreen />)
-    fireEvent.press(getByText('История прослушивания'))
+    await fireEvent.press(getByText('История прослушивания'))
     expect(mockPush).toHaveBeenCalledWith('/history')
   })
 
@@ -52,7 +59,7 @@ describe('<MoreScreen>', () => {
 
   test('settings item navigates to /settings on press', async () => {
     const { getByText } = await renderWithProviders(<MoreScreen />)
-    fireEvent.press(getByText('Настройки'))
+    await fireEvent.press(getByText('Настройки'))
     expect(mockPush).toHaveBeenCalledWith('/settings')
   })
 
@@ -63,7 +70,7 @@ describe('<MoreScreen>', () => {
 
   test('about item navigates to /about on press', async () => {
     const { getByText } = await renderWithProviders(<MoreScreen />)
-    fireEvent.press(getByText('О приложении'))
+    await fireEvent.press(getByText('О приложении'))
     expect(mockPush).toHaveBeenCalledWith('/about')
   })
 
@@ -74,7 +81,7 @@ describe('<MoreScreen>', () => {
 
   test('share item navigates to /share on press', async () => {
     const { getByText } = await renderWithProviders(<MoreScreen />)
-    fireEvent.press(getByText('Поделиться приложением'))
+    await fireEvent.press(getByText('Поделиться приложением'))
     expect(mockPush).toHaveBeenCalledWith('/share')
   })
 })

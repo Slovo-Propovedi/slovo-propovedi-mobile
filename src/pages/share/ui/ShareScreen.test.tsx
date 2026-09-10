@@ -75,7 +75,7 @@ describe('<ShareScreen>', () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
 
     const { getByRole, queryByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByRole('button', { name: /Сайт/ }))
+    await fireEvent.press(getByRole('button', { name: /^Сайт/ }))
 
     expect(queryByText(LANDING_URL)).toBeNull()
   })
@@ -84,7 +84,7 @@ describe('<ShareScreen>', () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: READY_STATE })
 
     const { getByRole, queryByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
+    await fireEvent.press(getByRole('button', { name: /^Приложение/ }))
 
     expect(queryByText(LANDING_URL)).toBeNull()
     expect(queryByText('Релиз 1.2.0')).toBeTruthy()
@@ -94,7 +94,7 @@ describe('<ShareScreen>', () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
 
     const { getByRole, queryByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByRole('button', { name: /Веб-версия/ }))
+    await fireEvent.press(getByRole('button', { name: /^Веб-версия/ }))
 
     expect(queryByText(LANDING_URL)).toBeNull()
     expect(queryByText(WEB_APP_URL)).toBeTruthy()
@@ -116,7 +116,7 @@ describe('<ShareScreen>', () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
 
     const { getByRole, queryByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
+    await fireEvent.press(getByRole('button', { name: /^Приложение/ }))
 
     expect(queryByText('Не удалось загрузить информацию о релизе')).toBeNull()
   })
@@ -125,7 +125,7 @@ describe('<ShareScreen>', () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'error' } })
 
     const { getByRole, getByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
+    await fireEvent.press(getByRole('button', { name: /^Приложение/ }))
 
     expect(getByText('Не удалось загрузить информацию о релизе')).toBeTruthy()
     expect(getByText('Повторить')).toBeTruthy()
@@ -135,7 +135,7 @@ describe('<ShareScreen>', () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'error' } })
 
     const { getByRole, getByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
+    await fireEvent.press(getByRole('button', { name: /^Приложение/ }))
     await fireEvent.press(getByText('Повторить'))
 
     expect(mockRetry).toHaveBeenCalledTimes(1)
@@ -145,7 +145,7 @@ describe('<ShareScreen>', () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: READY_STATE })
 
     const { getAllByTestId, getByRole, getByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
+    await fireEvent.press(getByRole('button', { name: /^Приложение/ }))
 
     expect(getByText('Релиз 1.2.0')).toBeTruthy()
     expect(getByText('Версия 1.2.0')).toBeTruthy()
@@ -158,7 +158,7 @@ describe('<ShareScreen>', () => {
     mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: READY_STATE })
 
     const { getByRole, getByText } = await renderWithProviders(<ShareScreen />)
-    await fireEvent.press(getByRole('button', { name: /Приложение/ }))
+    await fireEvent.press(getByRole('button', { name: /^Приложение/ }))
     await fireEvent.press(getByText('Скопировать ссылку'))
     await act(async () => {})
 
