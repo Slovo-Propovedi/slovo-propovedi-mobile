@@ -27,7 +27,7 @@ export const _resetInflightCacheForTesting = (): void => {
 
 class WebAudioCacheService {
   // Playback is routed through the service worker, so there is no distinct local URI.
-  public getCachedUri = async (): Promise<null | string> => null
+  public getCachedUri = async (_audioUrl: string): Promise<null | string> => null
 
   public isCached = async (audioUrl: string): Promise<boolean> => {
     if (!audioUrl) return false

@@ -45,6 +45,20 @@ export const computeBelowScreenOffset = (
   chromeOffset === null ? 0 : Math.max(0, sheetTop + chromeOffset + frameHeight - windowHeight)
 
 /**
+ * Height cap that pins the list wrapper's bottom to the screen bottom:
+ *   sheetTop + chromeOffset + maxListHeight = windowHeight
+ * Clamped to 0 so an over-tall chrome never yields a negative height.
+ * @param windowHeight — device window height.
+ * @param sheetTop — top of the sheet in screen coords.
+ * @param chromeOffset — measured distance from screen top to wrapper top.
+ */
+export const computeMaxListHeight = (
+  windowHeight: number,
+  sheetTop: number,
+  chromeOffset: number,
+): number => Math.max(0, windowHeight - sheetTop - chromeOffset)
+
+/**
  * Compute the footer height satisfying both drag-guarantee and edge-clearance.
  * @param frame — measured frame height.
  * @param raw — raw content height (without footer).

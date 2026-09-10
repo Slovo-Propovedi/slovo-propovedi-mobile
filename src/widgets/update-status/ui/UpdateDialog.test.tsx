@@ -1,5 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { fireEvent } from '@testing-library/react-native'
+import { act, fireEvent } from '@testing-library/react-native'
 import * as ApkInstaller from 'apk-installer'
 import { Linking } from 'react-native'
 import { useUpdateInstall } from 'features/app-update'
@@ -85,7 +85,9 @@ describe('<UpdateDialog>', () => {
     const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     const { getByRole } = await renderDialog()
 
-    fireEvent.press(getByRole('link', { name: RELEASES_LINK_TEXT }))
+    await act(async () => {
+      fireEvent.press(getByRole('link', { name: RELEASES_LINK_TEXT }))
+    })
 
     expect(openURLSpy).toHaveBeenCalledWith(RELEASE_URL)
   })
@@ -101,7 +103,9 @@ describe('<UpdateDialog>', () => {
       ctx,
     })
 
-    fireEvent.press(getByRole('link', { name: RELEASES_LINK_TEXT }))
+    await act(async () => {
+      fireEvent.press(getByRole('link', { name: RELEASES_LINK_TEXT }))
+    })
 
     expect(openURLSpy).not.toHaveBeenCalled()
   })
@@ -162,7 +166,9 @@ describe('<UpdateDialog>', () => {
     expect(getByText('Ошибка обновления')).toBeTruthy()
     expect(getByText('Ошибка сети')).toBeTruthy()
 
-    fireEvent.press(getByRole('button', { name: 'Открыть в браузере' }))
+    await act(async () => {
+      fireEvent.press(getByRole('button', { name: 'Открыть в браузере' }))
+    })
     expect(openURLSpy).toHaveBeenCalledWith(RELEASE_URL)
 
     fireEvent.press(getByRole('button', { name: 'Закрыть' }))

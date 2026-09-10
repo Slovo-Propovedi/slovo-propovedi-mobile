@@ -114,7 +114,7 @@ describe('AudioCacheService.web', () => {
     mockFetchOk(1024)
 
     await expect(audioCacheService.isCached(AUDIO_URL)).resolves.toBe(false)
-    await expect(audioCacheService.getCachedUri()).resolves.toBeNull()
+    await expect(audioCacheService.getCachedUri(AUDIO_URL)).resolves.toBeNull()
   })
 
   test('cacheAudio downloads, reports 0..1 progress and stores the file', async () => {

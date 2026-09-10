@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useWindowDimensions } from 'react-native'
 import type { LayoutChangeEvent, View } from 'react-native'
-import { computeBelowScreenOffset, computeFooterHeight, MIN_GUARANTEE } from './scrollGuaranteeMath'
+import {
+  computeBelowScreenOffset,
+  computeFooterHeight,
+  computeMaxListHeight,
+  MIN_GUARANTEE,
+} from './scrollGuaranteeMath'
 
 export const useScrollGuarantee = ({
   settleTick,
@@ -87,7 +92,7 @@ export const useScrollGuarantee = ({
   // is not yet measured → wrapper fills the mask (current behavior). After the
   // first settle (~300ms) maxHeight applies — a one-time transient.
   const maxListHeight =
-    chromeOffset === null ? null : Math.max(0, windowHeight - sheetTop - chromeOffset)
+    chromeOffset === null ? null : computeMaxListHeight(windowHeight, sheetTop, chromeOffset)
 
   return {
     footerHeight,
