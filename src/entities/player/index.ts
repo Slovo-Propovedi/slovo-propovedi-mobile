@@ -11,7 +11,6 @@ export { usePlaybackProgressSaver } from './lib/usePlaybackProgressSaver'
 export { usePlaybackRate } from './lib/usePlaybackRate'
 export { usePlayer } from './lib/usePlayer'
 export { usePlayNewSermon } from './lib/usePlaySermon'
-export { useQueueManagement } from './lib/useQueueManagement'
 export { useSeekControls } from './lib/useSeekControls'
 
 export {
@@ -35,5 +34,4 @@ export { type TrackToggleNotice, trackToggleNoticeAtom } from './trackToggleNoti
 
 export { PlayerProgressBar } from './ui/PlayerProgressBar/PlayerProgressBar'
 export { PlayerRepeatToggle } from './ui/PlayerRepeatToggle'
-export { PlayerVolumeBar } from './ui/PlayerVolumeBar'
 export { SermonPlayerControls } from './ui/SermonPlayerControls'

@@ -176,5 +176,25 @@ describe('searchCache', () => {
       const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
       expect(index).toEqual(['cachedSermonSearch:retry-query'])
     })
+
+    test('keeps concurrent writes alive when the index is corrupt', async () => {
+      await AsyncStorage.setItem('cachedSermonSearch:stale', JSON.stringify([sermon]))
+      await AsyncStorage.setItem(CACHED_SERMON_SEARCH_INDEX, 'corrupt-data')
+
+      await Promise.all([
+        setCachedSearchResults('query-a', [sermon]),
+        setCachedSearchResults('query-b', [sermon]),
+      ])
+
+      expect(await getCachedSearchResults('query-a')).toEqual([sermon])
+      expect(await getCachedSearchResults('query-b')).toEqual([sermon])
+      expect(await AsyncStorage.getItem('cachedSermonSearch:stale')).toBeNull()
+
+      const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
+      expect(index).toEqual(
+        expect.arrayContaining(['cachedSermonSearch:query-a', 'cachedSermonSearch:query-b']),
+      )
+      for (const key of index) expect(await AsyncStorage.getItem(key)).not.toBeNull()
+    })
   })
 })

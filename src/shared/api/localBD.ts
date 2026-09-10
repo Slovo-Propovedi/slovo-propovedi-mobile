@@ -1,5 +1,5 @@
-import { type FetchedBooksGroupName, type FetchedSermonsGroupName } from '../model/domain/bible'
-import { type PlaylistData, type SermonData } from '../model/domain/common'
+import { type FetchedBooksGroupName } from '../model/domain/bible'
+import { type SermonData } from '../model/domain/common'
 import { db } from './db/db'
 
 export const localDB = {
@@ -7,8 +7,4 @@ export const localDB = {
     books: SermonData[]
     groupName: FetchedBooksGroupName
   }> => db.books,
-  getSermons: (): Array<{
-    groupName: FetchedSermonsGroupName
-    playlists: PlaylistData[]
-  }> => db.sermons,
 }

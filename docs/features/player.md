@@ -124,7 +124,7 @@ Upstream-причины:
 
 - `usePlayer.ts` — обёртка над `playerService` (стабильный объект методов): `getStatus`, `getVolume`, `loadAudio`, `pause`, `play`, `reassertLockScreenMetadata`, `replaceAudio`, `seekTo`, `setLockScreenMetadata`, `setPlaybackRate`, `setVolume`, `stop`, `unload`.
 - `usePlaySermon.ts` — `usePlayNewSermon` — основной поток «тапнул на трек»: задаёт `currentAudio`/`currentPlaylist`, открывает полноэкранный плеер, при смене трека `replaceAudio`, `play()`, ставит lock-screen-метаданные. Содержит офлайн-guard (см. «Офлайн-guard при воспроизведении (Issue #81)»).
-- `useQueueManagement.ts` — локальная очередь: `playPlaylist`, `playTrack`, `shufflePlaylist`, `addToQueue`, `playNext`, `playPrevious`.
+- ~~`useQueueManagement.ts`~~ — **удалено 2026-09-10**: мёртвый хук локальной очереди (`playPlaylist`, `playTrack`, `shufflePlaylist`, `addToQueue`, `playNext`, `playPrevious`) — потребителей не было.
 - `useSeekControls.ts` — долгое удержание ±10с с ускорением (5с→30с, тик 200мс).
 - `usePlayerState.ts` — группированный доступ к состоянию (`currentAudio`, `duration`, `isBuffering`, `isPlaying`, `position`, `volume`).
 
@@ -134,7 +134,7 @@ Upstream-причины:
 
 - `SermonPlayerControls.tsx` — связывает `PlayerControls` с атомами (используется как `PlayerControlsSection` во fullscreen).
 - `PlayerControls/` — `PlayerControls.tsx` (рендерит `DefaultControls`/`FullscreenControls` в зависимости от варианта), подhookи `usePlayerToggleTrack`, `usePlayerTrackState`, `useAppStatePlayback`, `usePlayerControlSizes`.
-- `PlayerProgressBar/`, `PlayerVolumeBar.tsx`, `PlayerRepeatToggle.tsx` (цикл off → track → queue), `FullscreenControls.tsx`.
+- `PlayerProgressBar/`, `PlayerRepeatToggle.tsx` (цикл off → track → queue), `FullscreenControls.tsx`. (`PlayerVolumeBar.tsx` — **удалено 2026-09-10**: мёртвый компонент, не рендерился нигде.)
 
 Виджет `widgets/expandable-player` — мини-плеер ↔ полноэкранный:
 
@@ -240,7 +240,7 @@ Upstream-причины:
 - **Перемотка** — `useSeekControls` + `PlayerProgressBar`; long-press кнопок ±10с. Во время seek (`isSeekingAtom`) нативные `onPositionChange` не перезаписывают `positionAtom` (оптимистичная позиция); флаг снимается, когда нативная позиция подтвердила цель (`seekTargetPositionAtom`, допуск `SEEK_TARGET_CONFIRM_TOLERANCE_MS` = 500мс), иначе — safety-timeout `SEEK_SAFETY_TIMEOUT_MS` = 2с. База интервала long-press обновляется синхронно в `doSeek` (`useSeekControls`), а не только React-эффектом от пропа. При смене трека (`replaceAudio`) guard сбрасывается (`resetSeekGuard`): `isSeekingAtom` → false, `seekTargetPositionAtom` → null — иначе позиции нового трека игнорировались бы до подтверждения цели.
 - **Repeat** — `PlayerRepeatToggle` (off/track/queue). В режиме `queue` ручное переключение кнопками Next/Prev заворачивает по циклу на границах плейлиста; в режиме `track` тап Next/Prev перезапускает текущую проповедь с начала (см. Next/Prev).
 - **Скорость** — `PlayerSpeedMenu` в `ui/PlayerMenu/` (YouTube-style submenu: 0.75/1/1.25/1.5/2), атом `playbackRateAtom` через `usePlaybackRate` hook, ре-применение после `loadAudio`/`replaceAudio` (новый `AudioPlayer` стартует с 1.0). Pitch-коррекция `'high'` (на iOS — spectral-алгоритм; чуть дороже по CPU, но сохраняет тембр речи).
-- **Громкость** — `PlayerVolumeBar`.
+- **Громкость** — `volumeAtom`/`setVolumeAction` (`usePlayerState`, `playbackPreferences`); компонент `PlayerVolumeBar` удалён 2026-09-10 (мёртвый, не рендерился).
 - **Long-press ±10с** — через `onLongPressSeek`/`onPressOutSeek` в `PlayerControls`. Работает независимо от позиции в плейлисте (кнопки не отключаются на границах, Issue #67).
 
 ## Метаданные lock screen
@@ -313,9 +313,9 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 
 `usePlayerToggleTrack` (`src/entities/player/ui/PlayerControls/usePlayerToggleTrack.ts`) — чтение истории через `ctx.get(historyAtom)` + `getResumePosition(history, sermonId)`. При смене трека `recordSermonSwitchAction({ markOldCompleted: false, ... })` flush'ит позицию старого трека.
 
-#### Очередь (`useQueueManagement`)
+#### Очередь
 
-`playTrack`, `playNext`, `playPrevious`, `shufflePlaylist` — все пути, вызывающие `replaceAudio(url)`, вычисляют `getResumePosition(history, targetSermonId)` и передают resumeMs.
+`playTrack`, `playNext`, `playPrevious`, `shufflePlaylist` — все пути, вызывающие `replaceAudio(url)`, вычисляют `getResumePosition(history, targetSermonId)` и передают resumeMs. (Модуль `useQueueManagement` удалён 2026-09-10 — мёртвый хук без потребителей; Next/Prev реализованы в `usePlayerToggleTrack`, авто-переход — в `TrackAutoAdvanceService`.)
 
 #### Авто-переход (`TrackAutoAdvanceService`)
 

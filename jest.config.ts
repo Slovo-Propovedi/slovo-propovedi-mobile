@@ -6,6 +6,7 @@ const config: Config = {
     '**/*.{js,jsx}',
     '!**/coverage/**',
     '!**/node_modules/**',
+    '!dist/**',
     '!**/babel.config.js',
     '!**/jest.setup.js',
     '!eslint.config.js',

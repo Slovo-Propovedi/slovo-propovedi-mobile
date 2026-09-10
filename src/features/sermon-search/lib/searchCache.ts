@@ -11,7 +11,7 @@ const queryIndexSchema = z.array(z.string())
 
 const SEARCH_CACHE_DATA_PREFIX = `${CACHED_SERMON_SEARCH}:`
 
-let indexWriteQueue: Promise<void> = Promise.resolve()
+let searchCacheWriteQueue: Promise<void> = Promise.resolve()
 
 const parseSearchIndex = getParseJsonWithSchema(queryIndexSchema)
 
@@ -53,14 +53,19 @@ const updateSearchCacheIndex = async (latestKey: string): Promise<void> => {
   await setCachedJson(CACHED_SERMON_SEARCH_INDEX, nextIndex.slice(-MAX_CACHED_SEARCH_QUERIES))
 }
 
-const enqueueIndexWrite = (latestKey: string): Promise<void> => {
-  indexWriteQueue = indexWriteQueue
-    .then(() => updateSearchCacheIndex(latestKey))
+const writeSearchCacheEntry = async (key: string, sermons: SermonData[]): Promise<void> => {
+  await setCachedJson(key, sermons)
+  await updateSearchCacheIndex(key)
+}
+
+const enqueueSearchCacheWrite = (key: string, sermons: SermonData[]): Promise<void> => {
+  searchCacheWriteQueue = searchCacheWriteQueue
+    .then(() => writeSearchCacheEntry(key, sermons))
     .catch(error => {
-      console.error('Search cache index write failed:', error)
+      console.error('Search cache write failed:', error)
     })
 
-  return indexWriteQueue
+  return searchCacheWriteQueue
 }
 
 export const getSearchCacheKey = (query: string): string =>
@@ -69,6 +74,13 @@ export const getSearchCacheKey = (query: string): string =>
 export const getCachedSearchResults = async (query: string): Promise<SermonData[] | undefined> =>
   getCachedJson(getSearchCacheKey(query), sermonsArraySchema)
 
+/**
+ * Persists search results for a query.
+ * Never rejects: failures are caught and logged inside the write queue;
+ * callers' `.catch` is a safety net only.
+ * @param query - Normalized search query (trimmed, lowercased).
+ * @param sermons - Results to cache; empty arrays are skipped.
+ */
 export const setCachedSearchResults = async (
   query: string,
   sermons: SermonData[],
@@ -77,6 +89,5 @@ export const setCachedSearchResults = async (
 
   const key = getSearchCacheKey(query)
 
-  await setCachedJson(key, sermons)
-  await enqueueIndexWrite(key)
+  await enqueueSearchCacheWrite(key, sermons)
 }

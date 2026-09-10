@@ -41,8 +41,7 @@ db/
 ## API
 
 - **`localDB`** (`src/shared/api/localBD.ts`):
-  - `getBooks()` → `Array<{ books: SermonData[]; groupName: FetchedBooksGroupName }>` (из `db.books`);
-  - `getSermons()` → `Array<{ groupName: FetchedSermonsGroupName; playlists: PlaylistData[] }>` (из `db.sermons`).
+  - `getBooks()` → `Array<{ books: SermonData[]; groupName: FetchedBooksGroupName }>` (из `db.books`).
 - **`booksAPI`** (`src/shared/api/books.ts`): `getBooksOnBooksGroup(tabName)` → `SermonData[] | null`. Читает книги через `localDB.getBooks()` и фильтрует по `groupName`. Содержит TODO-комментарий о замене на `getAllSermons` + `mapAllSermonsResponse`, когда бэкенд будет готов.
 
 ## Группы

@@ -234,9 +234,9 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 При переключении через кнопки Next/Prev (`src/entities/player/ui/PlayerControls/usePlayerToggleTrack.ts`) позиция resume вычисляется из истории через `ctx.get(historyAtom)` + `getResumePosition(history, sermonId)`. Позиция старого трека flush'ится через `recordSermonSwitchAction({ markOldCompleted: false, ... })`.
 
-### Очередь (`useQueueManagement`)
+### Очередь
 
-Все пути очереди, вызывающие `replaceAudio(url)` (`playTrack`, `playNext`, `playPrevious`, `shufflePlaylist` в `src/entities/player/lib/useQueueManagement.ts`), вычисляют `getResumePosition(history, targetSermonId)` и передают resumeMs в `replaceAudio`.
+Все пути очереди, вызывающие `replaceAudio(url)` (`playTrack`, `playNext`, `playPrevious`, `shufflePlaylist`), вычисляют `getResumePosition(history, targetSermonId)` и передают resumeMs в `replaceAudio`. (Модуль `useQueueManagement` удалён 2026-09-10 — мёртвый хук без потребителей.)
 
 ### Авто-переход (TrackAutoAdvanceService)
 

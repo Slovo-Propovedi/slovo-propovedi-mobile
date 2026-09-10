@@ -88,9 +88,9 @@ generated/
 
 Помимо неиспользуемых обёрток (см. таблицу выше), в `src/shared/api/` есть мёртвый код, не задействованный в рантайме:
 
-- **`db.sermons` / `localDB.getSermons`** (`src/shared/api/db/db.ts`, `src/shared/api/localBD.ts`) — локальные плейлисты проповедей, 0 ссылок. Используется только ветка `db.books` через `localDB.getBooks()`.
-- **`src/shared/api/db/sermons/sermonsDB.ts`** — мёртвый.
-- **Мапперы** `mapAllPlaylistsResponse`, `mapPlaylistEntities` — не дёргаются из живых цепочек (`mapAllSectionsResponse` и `mapAllSermonsResponse`).
+- **`db.sermons` / `localDB.getSermons`** (`src/shared/api/db/db.ts`, `src/shared/api/localBD.ts`) — локальные плейлисты проповедей, 0 ссылок. Используется только ветка `db.books` через `localDB.getBooks()`. — **удалено 2026-09-10**: `localDB.getSermons` удалён; массив `db.sermons` остаётся как мёртвые данные (см. [../debt.md](../debt.md)).
+- **`src/shared/api/db/sermons/sermonsDB.ts`** — НЕ мёртв: держится ребром `db.sermons` → `markPlaylist.ts` → `sermonsDB.ts` (см. [../debt.md](../debt.md)).
+- **Мапперы** `mapAllPlaylistsResponse`, `mapPlaylistEntities` — не дёргаются из живых цепочек (`mapAllSectionsResponse` и `mapAllSermonsResponse`). — **удалено 2026-09-10**.
 - **Zod-схемы в `generated/model/`** — не экспортируются из `generated/index.ts`, 0 ссылок вне `generated/`.
 
 Удаление мёртвого кода — в [../debt.md](../debt.md).
@@ -110,8 +110,8 @@ generated/
 | `mapSermonEntities` / `mapSermonEntityToSermonData` | массивы/сущности                               | ✅ живые (через `mapAllSermonsResponse`)            |
 | `mapPlaylistEntityToPlaylistData`                   | `PlaylistEntity` → `PlaylistData`              | ✅ живой (через `mapSermonEntityToSermonData`)      |
 | `mapPlaylistSermonPlaylistsItemToPlaylistData`      | `PlaylistSermonPlaylistsItem` → `PlaylistData` | ✅ живой (через `mapPlaylistSermonToSermonData`)    |
-| `mapAllPlaylistsResponse`                           | `AllPlaylistsResponse` → `PlaylistData[]`      | ❌ мёртвый                                          |
-| `mapPlaylistEntities`                               | массивы                                        | ❌ мёртвый                                          |
+| `mapAllPlaylistsResponse`                           | `AllPlaylistsResponse` → `PlaylistData[]`      | ❌ удалено 2026-09-10                               |
+| `mapPlaylistEntities`                               | массивы                                        | ❌ удалено 2026-09-10                               |
 
 > `src/shared/api/index.ts` наружу реэкспортирует `mapAllSectionsResponse` и `mapAllSermonsResponse`; остальные мапперы — внутренние.
 
