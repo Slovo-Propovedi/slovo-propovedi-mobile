@@ -31,8 +31,9 @@ class PlaybackPreferences {
 
   public applyPlaybackRate = (player: AudioPlayer | null): void => {
     if (this.playbackRate === DEFAULT_PLAYBACK_RATE) return
+    if (!player?.isLoaded) return
 
-    player?.setPlaybackRate(this.playbackRate, 'high')
+    player.setPlaybackRate(this.playbackRate, 'high')
   }
 
   public applyVolume = (player: AudioPlayer | null): void => {

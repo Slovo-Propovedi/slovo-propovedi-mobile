@@ -74,10 +74,10 @@ export const initializePlayer = async () => {
     const audio = parseAudioPlayerData(storedCurrentAudio)
     const playlist = parsePlaylistData(storedCurrentPlaylist)
     const parsedProgress = parsePlaybackProgress(storedSoundPosition)
-    const { data: validVolume } = z.number().safeParse(parsedVolume)
+    const volumeResult = z.number().min(0).max(1).safeParse(parsedVolume)
     const { data: validRate } = playbackRateSchema.safeParse(parsedRate)
 
-    if (validVolume) await playerService.setVolume(validVolume)
+    if (volumeResult.success) await playerService.setVolume(volumeResult.data)
     if (validRate) await playerService.setPlaybackRate(validRate)
     if (parsedRepeat) await setRepeatModeAction(ctx, parsedRepeat)
 

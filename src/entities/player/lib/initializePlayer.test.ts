@@ -3,6 +3,7 @@ import {
   CURRENT_AUDIO,
   CURRENT_PLAYBACK_RATE,
   CURRENT_SOUND_POSITION,
+  CURRENT_SOUND_VOLUME,
   PLAYER_STARTUP_ATTEMPTS,
 } from 'shared/config'
 import { initializePlayer } from './initializePlayer'
@@ -27,6 +28,7 @@ jest.mock('./PlayerService/AudioModeManager', () => ({
 
 const mockedLoadAudio = jest.mocked(playerService.loadAudio)
 const mockedSetPlaybackRate = jest.mocked(playerService.setPlaybackRate)
+const mockedSetVolume = jest.mocked(playerService.setVolume)
 const mockedConfigure = jest.mocked(audioModeManager.configure)
 const mockedSetItem = jest.mocked(AsyncStorage.setItem)
 
@@ -187,6 +189,51 @@ describe('startup crash guard', () => {
       await initializePlayer()
 
       expect(mockedSetPlaybackRate).not.toHaveBeenCalled()
+    })
+
+    test('restores muted volume (0) when stored value is "0"', async () => {
+      await seedStoredAudio()
+      await AsyncStorage.setItem(CURRENT_SOUND_VOLUME, '0')
+
+      await initializePlayer()
+
+      expect(mockedSetVolume).toHaveBeenCalledWith(0)
+    })
+
+    test('restores volume when valid value stored', async () => {
+      await seedStoredAudio()
+      await AsyncStorage.setItem(CURRENT_SOUND_VOLUME, '0.5')
+
+      await initializePlayer()
+
+      expect(mockedSetVolume).toHaveBeenCalledWith(0.5)
+    })
+
+    test('does not restore volume when invalid value stored', async () => {
+      await seedStoredAudio()
+      await AsyncStorage.setItem(CURRENT_SOUND_VOLUME, 'garbage')
+
+      await initializePlayer()
+
+      expect(mockedSetVolume).not.toHaveBeenCalled()
+    })
+
+    test('does not restore volume when stored value exceeds 1', async () => {
+      await seedStoredAudio()
+      await AsyncStorage.setItem(CURRENT_SOUND_VOLUME, '1.5')
+
+      await initializePlayer()
+
+      expect(mockedSetVolume).not.toHaveBeenCalled()
+    })
+
+    test('does not restore volume when stored value is below 0', async () => {
+      await seedStoredAudio()
+      await AsyncStorage.setItem(CURRENT_SOUND_VOLUME, '-0.3')
+
+      await initializePlayer()
+
+      expect(mockedSetVolume).not.toHaveBeenCalled()
     })
   })
 })

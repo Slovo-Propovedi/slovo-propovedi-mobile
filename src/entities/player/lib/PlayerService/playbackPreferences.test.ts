@@ -8,11 +8,12 @@ jest.mock('../../model', () => ({ setVolumeAction: jest.fn() }))
 jest.mock('../../playback-rate', () => ({ setPlaybackRateAction: jest.fn() }))
 
 const createPlayerStub = (loaded: boolean): AudioPlayer =>
-  ({ isLoaded: loaded, volume: 1 }) as unknown as AudioPlayer
+  ({ isLoaded: loaded, setPlaybackRate: jest.fn(), volume: 1 }) as unknown as AudioPlayer
 
 beforeEach(() => {
   jest.clearAllMocks()
   playbackPreferences.setVolume(createPlayerStub(true), 1)
+  playbackPreferences.setPlaybackRate(createPlayerStub(true), 1)
 })
 
 describe('PlaybackPreferences volume', () => {
@@ -55,5 +56,39 @@ describe('PlaybackPreferences volume', () => {
     playbackPreferences.applyVolume(player)
 
     expect(player.volume).toBe(0.7)
+  })
+
+  test('setVolume applies the volume to a loaded player', () => {
+    const player = createPlayerStub(true)
+
+    playbackPreferences.setVolume(player, 0.5)
+
+    expect(player.volume).toBe(0.5)
+  })
+})
+
+describe('PlaybackPreferences rate', () => {
+  test('setPlaybackRate stores the rate when there is no player instance yet', () => {
+    playbackPreferences.setPlaybackRate(null, 1.5)
+
+    expect(playbackPreferences.getPlaybackRate()).toBe(1.5)
+  })
+
+  test('applyPlaybackRate re-applies the stored rate to a fresh loaded player', () => {
+    playbackPreferences.setPlaybackRate(null, 1.5)
+    const player = createPlayerStub(true)
+
+    playbackPreferences.applyPlaybackRate(player)
+
+    expect(player.setPlaybackRate).toHaveBeenCalledWith(1.5, 'high')
+  })
+
+  test('applyPlaybackRate does not touch an unloaded player', () => {
+    playbackPreferences.setPlaybackRate(null, 1.5)
+    const player = createPlayerStub(false)
+
+    playbackPreferences.applyPlaybackRate(player)
+
+    expect(player.setPlaybackRate).not.toHaveBeenCalled()
   })
 })

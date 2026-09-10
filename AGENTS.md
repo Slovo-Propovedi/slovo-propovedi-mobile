@@ -548,6 +548,8 @@ Conventional commits with these types:
 
 Max header length: 100 characters
 
+Commit messages are English only (header and body) — see [`docs/conventions.md`](docs/conventions.md).
+
 ## Key Dependencies
 
 - **Navigation:** expo-router, @react-navigation/\*
