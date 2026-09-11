@@ -34,7 +34,7 @@
       "bundler": "metro",
       "lang": "ru",
       "name": "Слово.Проповеди",
-      "shortName": "Проповеди",
+      "shortName": "Слово.Проповеди",
       "description": "Аудио проповеди: слушайте онлайн и офлайн"
     },
     "plugins": [
