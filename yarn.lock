@@ -11244,9 +11244,9 @@ react-native-worklets@0.10.1:
     semver "^7.7.4"
 
 react-native-zip-archive@^9.4.0:
-  version "9.4.0"
-  resolved "https://registry.yarnpkg.com/react-native-zip-archive/-/react-native-zip-archive-9.4.0.tgz#caf9a4f2a7a6553e199c7f410b7cbdefd652d32c"
-  integrity sha512-uz5/OyjUmgyKtwvFXp+tLNlO66GyncFWTerbIXZr8vZQDsw7WllxJNu65CBWTBstjmp8B1hF/3RpKj3/IFO3/A==
+  version "9.5.1"
+  resolved "https://registry.yarnpkg.com/react-native-zip-archive/-/react-native-zip-archive-9.5.1.tgz#7ca1ae86306ed630873ba802157185ec9e242b13"
+  integrity sha512-i4yXsrDqWmkamXFHFNCxCTI2kOf8nHCAh14FPx8KNcanENYWPmfJ0QUjg6FK4bLvE8OEm2bMORHoIDmJuDHNdQ==
 
 react-native@0.86.3:
   version "0.86.3"
