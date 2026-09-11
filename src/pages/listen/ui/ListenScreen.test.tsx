@@ -88,6 +88,8 @@ const SEARCH_TOGGLE_LABEL = 'Поиск'
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
 const CLEAR_LABEL = 'Очистить поиск'
 const SERMON_TITLE = 'Проповедь о вере'
+const SECTIONS_MOCK = 'SECTIONS_MOCK'
+const CONTINUE_BUTTON_MOCK = 'CONTINUE_BUTTON_MOCK'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
 // A pinned element (the search bar) must not have any scroll container between
@@ -145,7 +147,7 @@ describe('<ListenScreen>', () => {
       {},
     )
 
-    expect(getByText('SECTIONS_MOCK')).toBeTruthy()
+    expect(getByText(SECTIONS_MOCK)).toBeTruthy()
     expect(hasScrollAncestor(getByLabelText(SEARCH_TOGGLE_LABEL))).toBe(true)
     expect(queryByPlaceholderText(SEARCH_PLACEHOLDER)).toBeNull()
   })
@@ -153,7 +155,7 @@ describe('<ListenScreen>', () => {
   test('passes the continue button as leadingElement inside the scroll content when the search is closed', async () => {
     const { getByText } = await renderWithProviders(<ListenScreen />, {})
 
-    expect(hasScrollAncestor(getByText('CONTINUE_BUTTON_MOCK'))).toBe(true)
+    expect(hasScrollAncestor(getByText(CONTINUE_BUTTON_MOCK))).toBe(true)
     expect(mockDynamicSectionsSliderProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ leadingElement: expect.anything() }),
     )
@@ -162,7 +164,7 @@ describe('<ListenScreen>', () => {
   test('keeps the continue button visible when the search is open but not active', async () => {
     const { getByText } = await renderWithOpenSearch()
 
-    expect(getByText('CONTINUE_BUTTON_MOCK')).toBeTruthy()
+    expect(getByText(CONTINUE_BUTTON_MOCK)).toBeTruthy()
     expect(mockDynamicSectionsSliderProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ leadingElement: expect.anything() }),
     )
@@ -177,7 +179,7 @@ describe('<ListenScreen>', () => {
 
     const { queryByText } = await renderWithProviders(<ListenScreen />, { ctx })
 
-    expect(queryByText('CONTINUE_BUTTON_MOCK')).toBeNull()
+    expect(queryByText(CONTINUE_BUTTON_MOCK)).toBeNull()
   })
 
   test('opens search via the magnifier, pinning the bar above the scroll content', async () => {
@@ -191,7 +193,7 @@ describe('<ListenScreen>', () => {
     expect(hasScrollAncestor(bar)).toBe(false)
     expect(findAncestorWithHeight(bar, SEARCH_HEADER_HEIGHT)).toBeTruthy()
     expect(queryByLabelText(SEARCH_TOGGLE_LABEL)).toBeNull()
-    expect(getByText('SECTIONS_MOCK')).toBeTruthy()
+    expect(getByText(SECTIONS_MOCK)).toBeTruthy()
   })
 
   test('hides sections and shows search results while the query is active, with the bar still pinned', async () => {
@@ -206,7 +208,7 @@ describe('<ListenScreen>', () => {
     )
 
     expect(hasScrollAncestor(getByPlaceholderText(SEARCH_PLACEHOLDER))).toBe(false)
-    expect(queryByText('SECTIONS_MOCK')).toBeNull()
+    expect(queryByText(SECTIONS_MOCK)).toBeNull()
     expect(getByText(SERMON_TITLE)).toBeTruthy()
   })
 
@@ -226,7 +228,7 @@ describe('<ListenScreen>', () => {
     expect(ctx.get(isSearchingAtom)).toBe(false)
     const bar = getByPlaceholderText(SEARCH_PLACEHOLDER)
     expect(hasScrollAncestor(bar)).toBe(false)
-    expect(getByText('SECTIONS_MOCK')).toBeTruthy()
+    expect(getByText(SECTIONS_MOCK)).toBeTruthy()
     expect(queryByText(SERMON_TITLE)).toBeNull()
   })
 
@@ -259,5 +261,81 @@ describe('<ListenScreen>', () => {
 
     // A remount would re-run the rAF autofocus; one call proves the bar stayed put.
     expect(focusMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('keeps sections mode for a single-character query below MIN_QUERY_LENGTH', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'в')
+    searchResultsAtom(ctx, sermons)
+    isSearchingAtom(ctx, false)
+
+    const { getByPlaceholderText, getByText, queryByText } = await renderWithProviders(
+      <ListenScreen />,
+      { ctx },
+    )
+
+    expect(hasScrollAncestor(getByPlaceholderText(SEARCH_PLACEHOLDER))).toBe(false)
+    expect(getByText(SECTIONS_MOCK)).toBeTruthy()
+    expect(getByText(CONTINUE_BUTTON_MOCK)).toBeTruthy()
+    expect(queryByText(SERMON_TITLE)).toBeNull()
+  })
+
+  test('switches to results mode exactly at MIN_QUERY_LENGTH', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
+    searchResultsAtom(ctx, sermons)
+    isSearchingAtom(ctx, false)
+
+    const { getByPlaceholderText, getByText, queryByText } = await renderWithProviders(
+      <ListenScreen />,
+      { ctx },
+    )
+
+    expect(hasScrollAncestor(getByPlaceholderText(SEARCH_PLACEHOLDER))).toBe(false)
+    expect(getByText(SERMON_TITLE)).toBeTruthy()
+    expect(queryByText(SECTIONS_MOCK)).toBeNull()
+    expect(queryByText(CONTINUE_BUTTON_MOCK)).toBeNull()
+  })
+
+  test('treats a whitespace-only query as inactive', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, '  ')
+    searchResultsAtom(ctx, sermons)
+    isSearchingAtom(ctx, false)
+
+    const { getByPlaceholderText, getByText, queryByText } = await renderWithProviders(
+      <ListenScreen />,
+      { ctx },
+    )
+
+    expect(hasScrollAncestor(getByPlaceholderText(SEARCH_PLACEHOLDER))).toBe(false)
+    expect(getByText(SECTIONS_MOCK)).toBeTruthy()
+    expect(getByText(CONTINUE_BUTTON_MOCK)).toBeTruthy()
+    expect(queryByText(SERMON_TITLE)).toBeNull()
+  })
+
+  test('returns sections when the query is edited below the threshold', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    searchResultsAtom(ctx, sermons)
+    isSearchingAtom(ctx, false)
+
+    const { getByPlaceholderText, getByText, queryByText } = await renderWithProviders(
+      <ListenScreen />,
+      { ctx },
+    )
+
+    expect(getByText(SERMON_TITLE)).toBeTruthy()
+
+    await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'в')
+
+    expect(getByText(SECTIONS_MOCK)).toBeTruthy()
+    expect(getByText(CONTINUE_BUTTON_MOCK)).toBeTruthy()
+    expect(queryByText(SERMON_TITLE)).toBeNull()
+    expect(hasScrollAncestor(getByPlaceholderText(SEARCH_PLACEHOLDER))).toBe(false)
   })
 })

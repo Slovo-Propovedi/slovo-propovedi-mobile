@@ -185,7 +185,10 @@ describe('usePlaylistCacheMenu', () => {
 
     test('handleClearCacheConfirm clears the cache and bumps the trigger', async () => {
       const { ctx, result } = await renderMenu()
-      markUrlCached(ctx, 'http://example.com/1.mp3')
+      await settleCacheStatus()
+      await act(() => {
+        markUrlCached(ctx, 'http://example.com/1.mp3')
+      })
       const before = ctx.get(cacheUpdateTriggerAtom)
 
       await act(async () => {
@@ -230,6 +233,32 @@ describe('usePlaylistCacheMenu', () => {
       })
 
       expect(mockedClearCache).not.toHaveBeenCalled()
+    })
+
+    test('handleCacheAllOption opens the cache dialog', async () => {
+      const { result } = await renderMenu()
+      await settleCacheStatus()
+
+      await act(() => {
+        result.current.handleCacheAllOption()
+      })
+
+      expect(result.current.cacheDialogVisible).toBe(true)
+    })
+
+    test('handleCacheAllConfirm starts caching the playlist', async () => {
+      const cachePlaylistSpy = jest
+        .spyOn(playlistCacheService, 'cachePlaylist')
+        .mockResolvedValue(undefined)
+      const { ctx, result } = await renderMenu()
+      await settleCacheStatus()
+
+      await act(async () => {
+        await result.current.handleCacheAllConfirm()
+      })
+
+      expect(cachePlaylistSpy).toHaveBeenCalledWith(ctx, TRACKS, 'Плейлист')
+      cachePlaylistSpy.mockRestore()
     })
   })
 })
