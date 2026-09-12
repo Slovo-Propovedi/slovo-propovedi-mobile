@@ -14,10 +14,10 @@ const REQUIRED_METHODS = [
 export const getMissingNotificationsApiMethods = (mod: unknown): string[] => {
   if (typeof mod !== 'object' || mod === null) return [...REQUIRED_METHODS]
 
-  return REQUIRED_METHODS.filter(method => {
-    const descriptor = Object.getOwnPropertyDescriptor(mod, method)
-    return typeof descriptor?.value !== 'function'
-  })
+  // Reflect.get triggers getters and walks the prototype chain — the same access
+  // semantics as the calling code (mod.setNotificationHandler(...)), unlike
+  // Object.getOwnPropertyDescriptor which misses Metro's ESM getter exports.
+  return REQUIRED_METHODS.filter(method => typeof Reflect.get(mod, method) !== 'function')
 }
 
 export const isValidNotificationsApi = (mod: unknown): mod is NotificationsApi =>
