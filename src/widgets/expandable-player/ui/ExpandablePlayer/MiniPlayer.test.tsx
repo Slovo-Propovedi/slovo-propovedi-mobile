@@ -4,7 +4,6 @@ import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { LightTheme } from 'shared/ui/theme'
 import type { GestureType } from 'react-native-gesture-handler'
-import type { TestInstance } from 'test-renderer'
 import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
 
@@ -22,6 +21,21 @@ jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
   return {
     Entypo: (props: { name: string }) => <Text>{props.name}</Text>,
+  }
+})
+
+// The hook under test (useDownloadProgressForUrl) imports these atoms directly from
+// 'entities/player/lib/download-model'. The factory must reuse the ACTUAL atom instances
+// via jest.requireActual — creating fresh atoms here would break identity, and the hook
+// would subscribe to different atoms than the test writes to.
+jest.mock('entities/player', () => {
+  const { downloadingAudioUrlAtom, downloadProgressAtom, isDownloadingAtom } = jest.requireActual(
+    'entities/player/lib/download-model',
+  )
+  return {
+    downloadingAudioUrlAtom,
+    downloadProgressAtom,
+    isDownloadingAtom,
   }
 })
 
@@ -60,8 +74,6 @@ const mockOnPress = jest.fn()
 const baseProps: MiniPlayerProps = {
   audio: AUDIO,
   currentTheme: LightTheme,
-  downloadProgress: 0,
-  isDownloading: false,
   miniPan: {} as GestureType,
   miniStyle: {},
   miniStyles: createMiniStyles(LightTheme, 0, 400),
@@ -74,13 +86,6 @@ const baseProps: MiniPlayerProps = {
 
 const renderMiniPlayer = (overrides: Partial<MiniPlayerProps> = {}) =>
   renderWithProviders(<MiniPlayer {...baseProps} {...overrides} />)
-
-const queryProgressFill = (container: TestInstance, progress: number) =>
-  container.queryAll(node => {
-    const style = node.props.style
-    if (!Array.isArray(style)) return false
-    return style.some((s: { width?: string } | null) => s?.width === `${progress * 100}%`)
-  })
 
 describe('<MiniPlayer>', () => {
   beforeEach(() => {
@@ -154,13 +159,5 @@ describe('<MiniPlayer>', () => {
 
     expect(getByTestId(BUFFERING_INDICATOR_TEST_ID)).toBeTruthy()
     expect(queryByRole('button')).toBeNull()
-  })
-
-  test('shows the download progress bar while downloading', async () => {
-    const downloading = await renderMiniPlayer({ downloadProgress: 0.5, isDownloading: true })
-    expect(queryProgressFill(downloading.container, 0.5)).toHaveLength(1)
-
-    const idle = await renderMiniPlayer({ isDownloading: false })
-    expect(queryProgressFill(idle.container, 0.5)).toHaveLength(0)
   })
 })

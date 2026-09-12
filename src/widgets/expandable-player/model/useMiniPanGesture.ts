@@ -4,13 +4,10 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { SCREEN_HEIGHT } from 'shared/config'
 import type { SharedValue } from 'react-native-reanimated'
 import { getMiniPlayerBottom } from '../lib/getMiniPlayerBottom'
+import { COLLAPSE_DURATION_MS, EXPAND_DURATION_MS } from './expandDurations'
 
 // Velocity threshold for fast swipe detection
 const VELOCITY_THRESHOLD = 500
-
-// Duration for snap animations
-const OPEN_DURATION = 300
-const CLOSE_DURATION = 250
 
 // Progress threshold for snap decision
 const SNAP_THRESHOLD = 0.3
@@ -51,7 +48,7 @@ export const useMiniPanGesture = ({ onOpen, progress, tabBarHeight }: UseMiniPan
       const shouldOpen = progress.value >= SNAP_THRESHOLD || e.velocityY < -VELOCITY_THRESHOLD
 
       progress.value = withTiming(shouldOpen ? 1 : 0, {
-        duration: shouldOpen ? OPEN_DURATION : CLOSE_DURATION,
+        duration: shouldOpen ? EXPAND_DURATION_MS : COLLAPSE_DURATION_MS,
       })
 
       if (shouldOpen && onOpen) scheduleOnRN(onOpen)

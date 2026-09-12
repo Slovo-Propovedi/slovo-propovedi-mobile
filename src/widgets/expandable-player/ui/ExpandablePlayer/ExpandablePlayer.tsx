@@ -5,10 +5,7 @@ import {
   closePlayerSheetAction,
   currentAudioAtom,
   currentPlaylistAtom,
-  downloadingAudioUrlAtom,
-  downloadProgressAtom,
   isBufferingAtom,
-  isDownloadingAtom,
   isPlayerExpandedAtom,
   isPlayingAtom,
   openPlayerSheetAction,
@@ -37,11 +34,6 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyl
   const [playlist] = useAtom(currentPlaylistAtom)
   const [showMenu] = useAtom(showMenuAtom)
   const [isBuffering] = useAtom(isBufferingAtom)
-  const [isDownloading] = useAtom(isDownloadingAtom)
-  const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
-  const [downloadProgress] = useAtom(downloadProgressAtom)
-
-  const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
 
   const styles = createStyles(currentTheme)
 
@@ -103,8 +95,6 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyl
           showSpinner={isBuffering}
           currentTheme={currentTheme}
           onPress={gesture.handleMiniTap}
-          isDownloading={isCurrentAudioDownloading}
-          downloadProgress={isCurrentAudioDownloading ? downloadProgress : 0}
         />
       )}
       <ContainerView

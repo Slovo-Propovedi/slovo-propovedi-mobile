@@ -5,7 +5,7 @@ import { DOWNLOAD_STALL_TIMEOUT_MS, STALL_CHECK_INTERVAL_MS } from './downloadRe
 interface DownloadAttemptParams {
   /** External cancellation signal bridged to the stall-guard controller. */
   externalSignal?: AbortSignal
-  /** Throttled progress callback; raw ticks update the activity timestamp before forwarding. */
+  /** Throttled progress callback; emits ticks at ≥1% delta AND ≥250ms apart. */
   onProgressTick?: (data: RawProgress) => void
   tempFile: File
   url: string
@@ -25,8 +25,8 @@ interface RawProgress {
  * @param root0.url - Source URL to download from.
  * @param root0.tempFile - Destination `.part` file.
  * @param root0.externalSignal - Optional signal that aborts this attempt when cancelled.
- * @param root0.onProgressTick - Throttled progress callback; raw ticks update
- * the activity timestamp before forwarding.
+ * @param root0.onProgressTick - Throttled progress callback; emits ticks at
+ * ≥1% delta AND ≥250ms apart.
  */
 export const runDownloadAttempt = async ({
   externalSignal,

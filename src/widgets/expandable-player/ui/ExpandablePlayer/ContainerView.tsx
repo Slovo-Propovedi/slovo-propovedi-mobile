@@ -6,6 +6,7 @@ import { CoverImage } from 'shared/ui'
 import type { createStyles } from './styles'
 import type { AudioPlayerData } from 'shared/model'
 import type { ThemeColors } from 'shared/ui/theme'
+import { useFullscreenContentMount } from '../../model/useFullscreenContentMount'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
 
 /** Consumer style must not carry geometry keys — enforced by compiler (Issue #63 invariant). */
@@ -43,39 +44,47 @@ export const ContainerView = ({
   restingContainerStyle,
   style,
   styles,
-}: ContainerViewProps) => (
-  <GestureDetector gesture={panGesture}>
-    <Animated.View
-      onLayout={onLayout}
-      style={[
-        styles.container,
-        // containerStyle (animated) wins at the NATIVE level for live animation
-        // (Reanimated applies above static styles — round-3 law).
-        // restingContainerStyle AFTER it wins at the SHADOW-TREE level (array
-        // resolution is last-wins) — so the shadow tree always carries the correct
-        // React-committed resting geometry; any Yoga relayout re-writes CORRECT
-        // values instead of stale attach-era ones. This is the Issue #63
-        // root-cause neutralization (Layer 6). Also doubles as the fallback if
-        // the animated layer never attaches.
-        //
-        // Consumer `style` must NOT carry geometry keys (top/bottom/left/width/height):
-        // enforced by NonGeometricStyle type (Issue #63 invariant).
-        //
-        // If a Yoga relayout fires mid-animation, the visible frame may snap to resting
-        // geometry for at most one frame until the next animation frame re-applies animated
-        // values — self-healing by design.
-        containerStyle,
-        restingContainerStyle,
-        { backgroundColor: currentTheme.surface },
-        style,
-      ]}
-    >
-      <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
-        <CoverImage eager uri={audio.artwork} style={styles.backgroundImage} />
+}: ContainerViewProps) => {
+  // FullscreenContent stays mounted through the collapse animation so the exit
+  // fade is visible, then unmounts to stop its per-tick re-render storm (Issue #100).
+  const isFullscreenContentMounted = useFullscreenContentMount(expanded)
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <Animated.View
+        onLayout={onLayout}
+        style={[
+          styles.container,
+          // containerStyle (animated) wins at the NATIVE level for live animation
+          // (Reanimated applies above static styles — round-3 law).
+          // restingContainerStyle AFTER it wins at the SHADOW-TREE level (array
+          // resolution is last-wins) — so the shadow tree always carries the correct
+          // React-committed resting geometry; any Yoga relayout re-writes CORRECT
+          // values instead of stale attach-era ones. This is the Issue #63
+          // root-cause neutralization (Layer 6). Also doubles as the fallback if
+          // the animated layer never attaches.
+          //
+          // Consumer `style` must NOT carry geometry keys (top/bottom/left/width/height):
+          // enforced by NonGeometricStyle type (Issue #63 invariant).
+          //
+          // If a Yoga relayout fires mid-animation, the visible frame may snap to resting
+          // geometry for at most one frame until the next animation frame re-applies animated
+          // values — self-healing by design.
+          containerStyle,
+          restingContainerStyle,
+          { backgroundColor: currentTheme.surface },
+          style,
+        ]}
+      >
+        <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
+          <CoverImage eager uri={audio.artwork} style={styles.backgroundImage} />
+        </Animated.View>
+        <Animated.View pointerEvents='none' style={[miniOverlay, miniOverlayStyle]} />
+        {expanded && <StatusBar style='light' />}
+        {isFullscreenContentMounted && (
+          <FullscreenContent styles={styles} fullStyle={fullStyle} onClose={closeFullscreen} />
+        )}
       </Animated.View>
-      <Animated.View pointerEvents='none' style={[miniOverlay, miniOverlayStyle]} />
-      {expanded && <StatusBar style='light' />}
-      <FullscreenContent styles={styles} fullStyle={fullStyle} onClose={closeFullscreen} />
-    </Animated.View>
-  </GestureDetector>
-)
+    </GestureDetector>
+  )
+}

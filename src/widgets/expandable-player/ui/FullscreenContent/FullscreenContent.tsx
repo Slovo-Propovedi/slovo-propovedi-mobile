@@ -22,7 +22,6 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
   const insets = useSafeAreaInsets()
   const {
     audio,
-    currentDownloadProgress,
     duration,
     handleOpenPlaylist,
     handleToggleCache,
@@ -115,7 +114,6 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
           onToggleCache={handleToggleCache}
           onOpenPlaylist={handleOpenPlaylist}
           onShowDetails={() => setShowDetails(true)}
-          currentDownloadProgress={currentDownloadProgress}
         />
       </Animated.View>
       {showPlaylist && (

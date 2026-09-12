@@ -138,16 +138,18 @@ describe('BackgroundCachingService', () => {
   })
 
   describe('cleanup on success', () => {
-    test('calls incrementCacheTrigger and sets progress to 1', async () => {
+    test('calls incrementCacheTrigger and resets progress to 0 after success', async () => {
       const controlled = createControlledEnqueue()
 
       startBackgroundCaching(TEST_URL)
       controlled.onProgress?.(0.5)
+      expect(mockCtx.get(downloadProgressAtom)).toBe(0.5)
+
       controlled.resolve(CACHED_URI)
       await flushPromises()
 
       expect(mockIncrementCacheTrigger).toHaveBeenCalledTimes(1)
-      expect(mockCtx.get(downloadProgressAtom)).toBe(1)
+      expect(mockCtx.get(downloadProgressAtom)).toBe(0)
     })
 
     test('resets global downloading state after success', async () => {
@@ -175,6 +177,7 @@ describe('BackgroundCachingService', () => {
       expect(mockIncrementCacheTrigger).not.toHaveBeenCalled()
       expect(mockCtx.get(isDownloadingAtom)).toBe(false)
       expect(mockCtx.get(downloadingAudioUrlAtom)).toBeNull()
+      expect(mockCtx.get(downloadProgressAtom)).toBe(0)
     })
 
     test('does NOT open global error dialog on download failure (Issue #73)', async () => {

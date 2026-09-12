@@ -4,7 +4,6 @@ import {
   currentAudioAtom,
   currentPlaylistAtom,
   downloadingAudioUrlAtom,
-  downloadProgressAtom,
   durationAtom,
   isDownloadingAtom,
   positionAtom,
@@ -39,7 +38,6 @@ export const useFullscreenHandlers = () => {
   const [playlist] = useAtom(currentPlaylistAtom)
   const [isDownloading] = useAtom(isDownloadingAtom)
   const [downloadingAudioUrl] = useAtom(downloadingAudioUrlAtom)
-  const [downloadProgress] = useAtom(downloadProgressAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
   const [isOnline] = useAtom(isOnlineAtom)
   const [queue] = useAtom(cacheQueueAtom)
@@ -53,7 +51,6 @@ export const useFullscreenHandlers = () => {
 
   const isCached = useIsCached(audio?.audioUrl ?? null, cacheTrigger)
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
-  const currentDownloadProgress = isCurrentAudioDownloading ? downloadProgress : 0
   const isQueued = audio?.audioUrl ? Object.hasOwn(queue, audio.audioUrl) : false
   const visualState = resolveCacheState({
     isCached,
@@ -98,7 +95,6 @@ export const useFullscreenHandlers = () => {
 
   return {
     audio,
-    currentDownloadProgress,
     duration,
     handleOpenPlaylist,
     handleToggleCache,

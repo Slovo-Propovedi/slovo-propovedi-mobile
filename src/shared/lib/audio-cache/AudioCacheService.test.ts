@@ -1,6 +1,7 @@
 import { type Directory, File } from 'expo-file-system'
 import { _resetInflightCacheForTesting, audioCacheService } from './AudioCacheService'
 import { CacheCancelledError } from './CacheCancelledError'
+import { PROGRESS_TICK_MIN_INTERVAL_MS } from './cacheDownloader'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 import { inflightCache } from './inflightCache'
 
@@ -69,6 +70,7 @@ describe('AudioCacheService', () => {
 
   afterEach(() => {
     jest.restoreAllMocks()
+    jest.useRealTimers()
   })
 
   describe('getCachedUri', () => {
@@ -185,6 +187,7 @@ describe('AudioCacheService', () => {
       })
 
       test('second caller onProgress receives fan-out ticks and retroactive seed', async () => {
+        jest.useFakeTimers()
         mockFileState.exists = false
         let downloadOnProgress:
           ((data: { bytesWritten: number; totalBytes: number }) => void) | undefined
@@ -214,7 +217,8 @@ describe('AudioCacheService', () => {
         // cb2 receives retroactive seed
         expect(cb2).toHaveBeenCalledWith(0.4)
 
-        // Next tick fans out to both
+        // Next tick fans out to both — after the throttle interval elapses
+        jest.advanceTimersByTime(PROGRESS_TICK_MIN_INTERVAL_MS)
         downloadOnProgress?.({ bytesWritten: 800, totalBytes: 1000 })
         expect(cb1).toHaveBeenCalledWith(0.8)
         expect(cb2).toHaveBeenCalledWith(0.8)

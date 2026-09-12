@@ -1,7 +1,11 @@
 import NetInfo from '@react-native-community/netinfo'
 import { type Directory, File } from 'expo-file-system'
 import { CacheCancelledError } from './CacheCancelledError'
-import { downloadToCache } from './cacheDownloader'
+import {
+  createThrottledProgress,
+  downloadToCache,
+  PROGRESS_TICK_MIN_INTERVAL_MS,
+} from './cacheDownloader'
 import {
   DOWNLOAD_STALL_TIMEOUT_MS,
   RETRY_BACKOFF_DELAYS_MS,
@@ -309,6 +313,99 @@ describe('downloadToCache', () => {
     await jest.advanceTimersByTimeAsync(1)
     await expect(promise).resolves.toContain('file://cache/')
     expect(File.downloadFileAsync).toHaveBeenCalledTimes(2)
+  })
+
+  describe('createThrottledProgress', () => {
+    beforeEach(() => {
+      jest.useFakeTimers()
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    test('emits the first qualifying tick immediately', () => {
+      const onProgress = jest.fn()
+      const throttled = createThrottledProgress(onProgress)
+
+      throttled({ bytesWritten: 500, totalBytes: 1000 })
+
+      expect(onProgress).toHaveBeenCalledTimes(1)
+      expect(onProgress).toHaveBeenCalledWith(0.5)
+    })
+
+    test('suppresses ticks below 1% delta even after the interval elapses', () => {
+      const onProgress = jest.fn()
+      const throttled = createThrottledProgress(onProgress)
+
+      throttled({ bytesWritten: 500, totalBytes: 1000 })
+      jest.advanceTimersByTime(PROGRESS_TICK_MIN_INTERVAL_MS)
+
+      throttled({ bytesWritten: 505, totalBytes: 1000 })
+
+      expect(onProgress).toHaveBeenCalledTimes(1)
+    })
+
+    test('suppresses ticks within the interval even when the delta qualifies', () => {
+      const onProgress = jest.fn()
+      const throttled = createThrottledProgress(onProgress)
+
+      throttled({ bytesWritten: 500, totalBytes: 1000 })
+      throttled({ bytesWritten: 600, totalBytes: 1000 })
+
+      expect(onProgress).toHaveBeenCalledTimes(1)
+
+      jest.advanceTimersByTime(PROGRESS_TICK_MIN_INTERVAL_MS)
+      throttled({ bytesWritten: 700, totalBytes: 1000 })
+
+      expect(onProgress).toHaveBeenCalledTimes(2)
+      expect(onProgress).toHaveBeenLastCalledWith(0.7)
+    })
+
+    test('always emits the final fraction === 1 tick regardless of delta and interval', () => {
+      const onProgress = jest.fn()
+      const throttled = createThrottledProgress(onProgress)
+
+      throttled({ bytesWritten: 500, totalBytes: 1000 })
+      throttled({ bytesWritten: 1000, totalBytes: 1000 })
+
+      expect(onProgress).toHaveBeenCalledTimes(2)
+      expect(onProgress).toHaveBeenLastCalledWith(1)
+    })
+
+    test('ignores non-positive totalBytes', () => {
+      const onProgress = jest.fn()
+      const throttled = createThrottledProgress(onProgress)
+
+      throttled({ bytesWritten: 500, totalBytes: 0 })
+      throttled({ bytesWritten: 500, totalBytes: -1 })
+
+      expect(onProgress).not.toHaveBeenCalled()
+    })
+
+    test('direct 0/1 progress calls bypass the throttle', async () => {
+      const onProgress = jest.fn()
+      ;(File.downloadFileAsync as jest.Mock).mockImplementation(
+        (
+          _url: string,
+          _file: unknown,
+          opts: { onProgress?: (data: { bytesWritten: number; totalBytes: number }) => void },
+        ) => {
+          opts.onProgress?.({ bytesWritten: 100, totalBytes: 1000 })
+          opts.onProgress?.({ bytesWritten: 200, totalBytes: 1000 })
+          opts.onProgress?.({ bytesWritten: 300, totalBytes: 1000 })
+          return Promise.resolve({ uri: 'file://downloaded.mp3' })
+        },
+      )
+
+      const result = await downloadToCache(EXAMPLE_URL, onProgress)
+
+      expect(onProgress).toHaveBeenCalledWith(0)
+      expect(onProgress).toHaveBeenCalledWith(1)
+      expect(onProgress).not.toHaveBeenCalledWith(0.2)
+      expect(onProgress).not.toHaveBeenCalledWith(0.3)
+      expect(result).toContain('file://cache/')
+    })
   })
 })
 
