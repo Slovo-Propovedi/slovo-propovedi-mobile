@@ -2,7 +2,7 @@ import BottomSheet from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
 import { memo, useMemo, useState } from 'react'
 import { useHistoryProgressMap } from 'entities/listening-history'
-import { currentAudioAtom, downloadingAudioUrlAtom, isPlayingAtom } from 'entities/player'
+import { currentAudioAtom, isPlayingAtom } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { useTheme } from 'shared/ui/theme'
 import type { PlaylistData } from 'shared/model'
@@ -28,7 +28,6 @@ const PlaylistBottomSheetComponent = ({
   sheetRef,
 }: PlaylistBottomSheetProps) => {
   const [currentAudio] = useAtom(currentAudioAtom)
-  const [downloadingUrl] = useAtom(downloadingAudioUrlAtom)
   const [isAudioPlaying] = useAtom(isPlayingAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
   const [settleTick, setSettleTick] = useState(0)
@@ -94,7 +93,6 @@ const PlaylistBottomSheetComponent = ({
         cacheTrigger={cacheTrigger}
         onScroll={handleListScroll}
         onDragStart={handleDragStart}
-        downloadingUrl={downloadingUrl}
         isAudioPlaying={isAudioPlaying}
         currentAudioId={currentAudio?.id}
         onMomentumEnd={handleMomentumEnd}

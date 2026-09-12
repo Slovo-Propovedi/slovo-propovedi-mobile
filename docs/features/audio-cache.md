@@ -110,6 +110,7 @@
 - `invokePlaylistRunStopper()` — вызывает все зарегистрированные стопперы (no-op, когда их нет).
 
 `cancelAllCacheDownloads(ctx)` — точный порядок:
+
 1. **Guard «нет активной закачки + пустая очередь»** → ранний выход (no-op): стопперы **не** вызываются, уведомления не трогаются;
 2. `invokePlaylistRunStopper()` — прерывает run-контроллер плейлиста, цикл `runPlaylistCaching` выходит на ближайшем `if (signal.aborted) break`, и `cachePlaylist` возвращается тихо через `if (controller.signal.aborted) return` — **без** ложного уведомления «Скачано N из N»;
 3. активная закачка (`activeCacheUrlAtom`) → `cancelCacheDownload(activeUrl)` — **безусловно**, даже если у неё есть иностранные джойнеры (глобальный стоп отменяет всё);
@@ -122,6 +123,7 @@
 - **Часы** (`clock-outline`, 16px, белый — та же семья/размер, что иконка облака) — URL в очереди (в `cacheQueueAtom`), загрузка ещё не началась. Прогресс-бара нет.
 - **Прогресс-бар** — загрузка идёт (URL активен).
 - Раннер удаляет запись из атома при старте загрузки, поэтому переход «часы → прогресс» реактивный без ре-рендера всего списка (точечная подписка, см. [debt.md](../debt.md)).
+- **Точечная подписка на скачивание per-row** (`useIsDownloadingUrl`, `src/entities/player/lib/useIsDownloadingUrl.ts`): per-row `ctx.subscribe` на `downloadingAudioUrlAtom` с Object.is-bailout (паттерн `useIsCached`). Row-обёртки (`PlaylistTrackItem`, `PlaylistSheetRow`) подписываются сами и передают boolean `isDownloading` вниз в `TracksListItem`. Списки (`PlaylistScreen`, `PlaylistBottomSheet`) больше не подписаны целиком — только совпадающий трек ре-рендерится при смене скачиваемого URL.
 - **Resolver приоритета** — `resolveCacheState` (`src/shared/lib/audio-cache/resolveCacheState.ts`) определяет визуальное состояние строки: `playing → downloading → cached → queued → cloud` (высший → низший). **Cached бьёт queued**: `enqueueCache` дедуплицирует по queued/inflight, а **не** по cached — «кешировать все» может пере-поставить уже закэшированный URL; при обоих флагах трек реально закэширован, поэтому строка показывает «кэш» (без часов), а не очередь.
 
 ## Отмена скачивания (Issue #83)

@@ -2,16 +2,24 @@ import { screen } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { PlaylistTrackItem } from './PlaylistTrackItem'
 
+const mockedUseIsDownloadingUrl = jest.fn((_audioUrl: null | string) => false)
+
+jest.mock('entities/player', () => ({
+  useIsDownloadingUrl: (audioUrl: null | string) => mockedUseIsDownloadingUrl(audioUrl),
+}))
+
 jest.mock('shared/ui/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
   return {
     TracksListItem: (props: {
+      isDownloading?: boolean
       menuActions?: Array<{ text: string }>
       progress?: number
       title: string
     }) => (
       <View testID='tracks-list-item'>
         <Text>{props.title}</Text>
+        {props.isDownloading && <Text testID='downloading-indicator'>downloading</Text>}
         {props.menuActions?.map(action => (
           <Text key={action.text}>{action.text}</Text>
         ))}
@@ -27,9 +35,11 @@ jest.mock('shared/ui/track-list', () => {
 })
 
 const PROGRESS_BAR_TEST_ID = 'progress-bar'
+const DOWNLOADING_INDICATOR_TEST_ID = 'downloading-indicator'
 const SERMON_ID = 'sermon-1'
 const TEST_TITLE = 'Test Sermon'
 const MARK_ACTION_TEXT = 'Пометить прослушанной'
+const AUDIO_URL = 'https://example.com/1.mp3'
 
 const defaultProps = {
   artwork: '',
@@ -46,6 +56,7 @@ const renderItem = (props?: Partial<React.ComponentProps<typeof PlaylistTrackIte
 describe('<PlaylistTrackItem>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockedUseIsDownloadingUrl.mockReturnValue(false)
   })
 
   test('renders TracksListItem with storedProgress when no live progress', async () => {
@@ -75,5 +86,14 @@ describe('<PlaylistTrackItem>', () => {
     await renderItem({ menuActions })
 
     expect(screen.getByText(MARK_ACTION_TEXT)).toBeTruthy()
+  })
+
+  test('forwards isDownloading to TracksListItem when the url is downloading', async () => {
+    mockedUseIsDownloadingUrl.mockReturnValue(true)
+
+    await renderItem({ audioUrl: AUDIO_URL })
+
+    expect(screen.getByTestId(DOWNLOADING_INDICATOR_TEST_ID)).toBeTruthy()
+    expect(mockedUseIsDownloadingUrl).toHaveBeenCalledWith(AUDIO_URL)
   })
 })

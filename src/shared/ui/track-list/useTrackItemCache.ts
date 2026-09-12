@@ -20,21 +20,21 @@ import { isOnlineAtom } from '../../model/network'
 
 export const useTrackItemCache = (
   audioUrl: null | string | undefined,
-  downloadingUrl: null | string | undefined,
+  isDownloading?: boolean,
   externalCacheTrigger?: number,
 ) => {
   const ctx = useCtx()
   const [isOnline] = useAtom(isOnlineAtom)
   const internalCacheTriggerRef = useRef(0)
-  const prevDownloadingUrlRef = useRef<null | string | undefined>(null)
+  const prevIsDownloadingRef = useRef(false)
 
   // Event-driven: increment cache trigger when download completes (transition from downloading to not downloading)
   // eslint-disable-next-line react-hooks/refs -- intentional: read ref during render to detect download completion transition
-  const wasThisAudioDownloading = prevDownloadingUrlRef.current === audioUrl
+  const wasThisAudioDownloading = prevIsDownloadingRef.current
   // eslint-disable-next-line react-hooks/refs -- intentional: detect download completion during render to trigger immediate cache re-check
-  if (wasThisAudioDownloading && downloadingUrl === null) internalCacheTriggerRef.current += 1
+  if (wasThisAudioDownloading && !isDownloading) internalCacheTriggerRef.current += 1
   // eslint-disable-next-line react-hooks/refs -- intentional: track download state transition during render
-  prevDownloadingUrlRef.current = downloadingUrl
+  prevIsDownloadingRef.current = isDownloading ?? false
 
   // eslint-disable-next-line react-hooks/refs -- intentional: read ref-trigger counter during render for cache key
   const internalCacheTrigger = internalCacheTriggerRef.current
@@ -54,7 +54,7 @@ export const useTrackItemCache = (
     return ctx.subscribe(playlistDownloadProgressAtom, readProgress)
   }, [ctx, audioUrl])
   const effectiveProgress = audioUrl ? progressValue : -1
-  const isDownloading = effectiveProgress >= 0 && effectiveProgress < 1
+  const isDownloadingByProgress = effectiveProgress >= 0 && effectiveProgress < 1
 
   // Queue subscription: track whether this URL is queued (not yet downloading).
   // The queue entry is removed by the runner when its download starts, so the
@@ -75,7 +75,7 @@ export const useTrackItemCache = (
     if (!audioUrl) return
 
     // Cancel: active download or queued — cancel unconditionally
-    if (isDownloading || isQueued) {
+    if (isDownloadingByProgress || isQueued) {
       cancelCacheDownload(ctx, audioUrl)
       return
     }
@@ -108,11 +108,11 @@ export const useTrackItemCache = (
 
   // isCacheDisabled: stop/remove-from-queue items must be ENABLED;
   // only disable the cloud branch (starting a download while offline)
-  const isCacheDisabled = !isOnline && !isCached && !isDownloading && !isQueued
+  const isCacheDisabled = !isOnline && !isCached && !isDownloadingByProgress && !isQueued
 
   const stateInput: ResolveCacheStateInput = {
     isCached,
-    isDownloading,
+    isDownloading: isDownloadingByProgress,
     isPlaying: false,
     isQueued,
   }
@@ -121,7 +121,7 @@ export const useTrackItemCache = (
   return {
     isCached,
     isCacheDisabled,
-    isDownloading,
+    isDownloading: isDownloadingByProgress,
     isQueued,
     progressValue: effectiveProgress,
     toggleCache,

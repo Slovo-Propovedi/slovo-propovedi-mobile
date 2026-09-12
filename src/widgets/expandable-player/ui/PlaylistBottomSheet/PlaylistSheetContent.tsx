@@ -8,7 +8,6 @@ import { PlaylistSheetList } from './PlaylistSheetList'
 interface PlaylistSheetContentProps {
   cacheTrigger: number
   currentAudioId?: string
-  downloadingUrl?: null | string
   initialNumToRender?: number
   isAudioPlaying: boolean
   isRevealed: boolean
@@ -32,7 +31,6 @@ export const PlaylistSheetContent = memo(
   ({
     cacheTrigger,
     currentAudioId,
-    downloadingUrl,
     initialNumToRender,
     isAudioPlaying,
     isRevealed,
@@ -66,7 +64,6 @@ export const PlaylistSheetContent = memo(
         onDragStart={onDragStart}
         cacheTrigger={cacheTrigger}
         onMomentumEnd={onMomentumEnd}
-        downloadingUrl={downloadingUrl}
         isAudioPlaying={isAudioPlaying}
         currentAudioId={currentAudioId}
         onMomentumStart={onMomentumStart}

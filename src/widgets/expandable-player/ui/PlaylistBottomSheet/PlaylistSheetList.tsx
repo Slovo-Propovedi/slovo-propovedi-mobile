@@ -10,7 +10,6 @@ import { type TrackListItemData, usePlaylistSheetList } from './usePlaylistSheet
 interface PlaylistSheetListProps {
   cacheTrigger: number
   currentAudioId?: string
-  downloadingUrl?: null | string
   initialNumToRender?: number
   isAudioPlaying: boolean
   isRevealed: boolean
@@ -33,7 +32,6 @@ const keyExtractor = (item: TrackListItemData) => item.id
 const PlaylistSheetListComponent = ({
   cacheTrigger,
   currentAudioId,
-  downloadingUrl,
   initialNumToRender,
   isAudioPlaying,
   isRevealed,
@@ -64,7 +62,6 @@ const PlaylistSheetListComponent = ({
   } = usePlaylistSheetList({
     cacheTrigger,
     currentAudioId,
-    downloadingUrl,
     isAudioPlaying,
     onPress,
     onScroll,

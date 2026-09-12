@@ -13,8 +13,8 @@ export const TracksListItem = memo(
     artwork,
     audioUrl,
     cacheTrigger: externalCacheTrigger,
-    downloadingUrl,
     isAudioPlaying = false,
+    isDownloading: isDownloadingUrl,
     isPlaying,
     menuActions,
     onPress,
@@ -37,7 +37,7 @@ export const TracksListItem = memo(
       progressValue,
       toggleCache,
       visualState,
-    } = useTrackItemCache(audioUrl, downloadingUrl, externalCacheTrigger)
+    } = useTrackItemCache(audioUrl, isDownloadingUrl, externalCacheTrigger)
 
     const measureButton = () => {
       dotsButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) =>

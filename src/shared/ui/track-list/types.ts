@@ -6,10 +6,10 @@ export interface TracksListItemProps {
   audioUrl?: string
   /** Incrementing value to trigger cache status refresh from outside (e.g. Batch caching). */
   cacheTrigger?: number
-  /** Current URL being downloaded, used to refresh cache indicator on completion. */
-  downloadingUrl?: null | string
   isAudioPlaying?: boolean
   isCached?: boolean
+  /** True while this row's audioUrl is the currently downloading URL (narrow per-row subscription). */
+  isDownloading?: boolean
   isPlaying: boolean
   /** Custom context-menu actions. Added after the default cache toggle. */
   menuActions?: MenuAction[]

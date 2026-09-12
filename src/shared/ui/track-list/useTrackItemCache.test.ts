@@ -59,7 +59,7 @@ describe('useTrackItemCache', () => {
 
   describe('initial state', () => {
     test('returns defaults when audioUrl is null', async () => {
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(null, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(null))
 
       expect(result.current.isCached).toBe(false)
       expect(result.current.isDownloading).toBe(false)
@@ -69,7 +69,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('returns defaults when audioUrl is empty string', async () => {
-      const { result } = await renderHookWithProviders(() => useTrackItemCache('', null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(''))
 
       expect(result.current.isCached).toBe(false)
       expect(result.current.isDownloading).toBe(false)
@@ -78,7 +78,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('returns defaults when audioUrl is undefined', async () => {
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(undefined, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(undefined))
 
       expect(result.current.isCached).toBe(false)
       expect(result.current.isDownloading).toBe(false)
@@ -91,7 +91,7 @@ describe('useTrackItemCache', () => {
     test('reflects audioCacheService.isCached result', async () => {
       mockedIsCached.mockResolvedValue(true)
 
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -104,7 +104,7 @@ describe('useTrackItemCache', () => {
     test('isCached is false when service returns false', async () => {
       mockedIsCached.mockResolvedValue(false)
 
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -116,9 +116,7 @@ describe('useTrackItemCache', () => {
 
   describe('isQueued reactivity', () => {
     test('isQueued is true when the URL is in cacheQueueAtom', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       expect(result.current.isQueued).toBe(false)
 
@@ -131,9 +129,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('isQueued becomes false when the queue entry is removed', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         cacheQueueAtom(ctx, { [AUDIO_URL]: { enqueuedAt: 0, source: 'manual' } })
@@ -149,9 +145,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('isQueued stays false for a different URL in the queue', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         cacheQueueAtom(ctx, {
@@ -165,9 +159,7 @@ describe('useTrackItemCache', () => {
 
   describe('download progress', () => {
     test('progressValue reads from playlistDownloadProgressAtom', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       expect(result.current.progressValue).toBe(-1)
 
@@ -179,9 +171,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('isDownloading is true when progress is between 0 and 1', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         playlistDownloadProgressAtom(ctx, { [AUDIO_URL]: 0.5 })
@@ -192,9 +182,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('isDownloading is true when progress is exactly 0', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         playlistDownloadProgressAtom(ctx, { [AUDIO_URL]: 0 })
@@ -204,15 +192,13 @@ describe('useTrackItemCache', () => {
     })
 
     test('isDownloading is false when progress is -1', async () => {
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       expect(result.current.isDownloading).toBe(false)
     })
 
     test('isDownloading is false when progress is exactly 1', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         playlistDownloadProgressAtom(ctx, { [AUDIO_URL]: 1 })
@@ -224,7 +210,7 @@ describe('useTrackItemCache', () => {
 
   describe('toggleCache', () => {
     test('does nothing when audioUrl is null', async () => {
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(null, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(null))
 
       await act(async () => {
         await result.current.toggleCache()
@@ -236,9 +222,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('does not enqueue when offline and not cached', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         isOnlineAtom(ctx, false)
@@ -255,9 +239,7 @@ describe('useTrackItemCache', () => {
     test('removes from cache when offline and cached', async () => {
       mockedIsCached.mockResolvedValue(true)
 
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -276,9 +258,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('enqueues with manual source when online and not cached', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         isOnlineAtom(ctx, true)
@@ -294,9 +274,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('cancels the download when isDownloading', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         playlistDownloadProgressAtom(ctx, { [AUDIO_URL]: 0.5 })
@@ -312,9 +290,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('cancels the queue entry when isQueued', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         cacheQueueAtom(ctx, { [AUDIO_URL]: { enqueuedAt: 0, source: 'manual' } })
@@ -330,9 +306,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('cancels the queue entry when offline (stop is enabled)', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         cacheQueueAtom(ctx, { [AUDIO_URL]: { enqueuedAt: 0, source: 'manual' } })
@@ -352,7 +326,7 @@ describe('useTrackItemCache', () => {
     test('removes from cache when cached', async () => {
       mockedIsCached.mockResolvedValue(true)
 
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -367,9 +341,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('increments cacheUpdateTriggerAtom after successful enqueue', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       const initialTrigger = ctx.get(cacheUpdateTriggerAtom)
 
@@ -383,9 +355,7 @@ describe('useTrackItemCache', () => {
     test('increments cacheUpdateTriggerAtom after removeFromCache', async () => {
       mockedIsCached.mockResolvedValue(true)
 
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -401,9 +371,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('does not increment trigger when cancelling a queued entry', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         cacheQueueAtom(ctx, { [AUDIO_URL]: { enqueuedAt: 0, source: 'manual' } })
@@ -422,7 +390,7 @@ describe('useTrackItemCache', () => {
       mockedEnqueueCache.mockRejectedValueOnce(new CacheCancelledError(AUDIO_URL))
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
 
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await result.current.toggleCache()
@@ -437,7 +405,7 @@ describe('useTrackItemCache', () => {
       mockedEnqueueCache.mockRejectedValueOnce(error)
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
 
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await result.current.toggleCache()
@@ -453,7 +421,7 @@ describe('useTrackItemCache', () => {
       mockedRemoveFromCache.mockRejectedValueOnce(error)
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
 
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -470,9 +438,7 @@ describe('useTrackItemCache', () => {
 
   describe('isCacheDisabled', () => {
     test('is true only when offline and not cached and not downloading and not queued', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         isOnlineAtom(ctx, false)
@@ -488,9 +454,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('is false when offline and queued (remove-from-queue stays enabled)', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         cacheQueueAtom(ctx, { [AUDIO_URL]: { enqueuedAt: 0, source: 'manual' } })
@@ -504,9 +468,7 @@ describe('useTrackItemCache', () => {
     })
 
     test('is false when offline and downloading (stop stays enabled)', async () => {
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         playlistDownloadProgressAtom(ctx, { [AUDIO_URL]: 0.5 })
@@ -524,7 +486,7 @@ describe('useTrackItemCache', () => {
     test('is cached when cached', async () => {
       mockedIsCached.mockResolvedValue(true)
 
-      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL, null))
+      const { result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -536,9 +498,7 @@ describe('useTrackItemCache', () => {
     test('is cached when cached and queued (cached wins per resolver)', async () => {
       mockedIsCached.mockResolvedValue(true)
 
-      const { ctx, result } = await renderHookWithProviders(() =>
-        useTrackItemCache(AUDIO_URL, null),
-      )
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 0))
@@ -549,6 +509,40 @@ describe('useTrackItemCache', () => {
       })
 
       expect(result.current.visualState).toBe('cached')
+    })
+  })
+
+  describe('download completion transition', () => {
+    test('re-checks the cache when isDownloading goes true→false', async () => {
+      const { rerender } = await renderHookWithProviders(
+        ({ isDownloading }: { isDownloading: boolean }) =>
+          useTrackItemCache(AUDIO_URL, isDownloading),
+        { initialProps: { isDownloading: true } },
+      )
+
+      expect(mockedIsCached).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        rerender({ isDownloading: false })
+      })
+
+      expect(mockedIsCached).toHaveBeenCalledTimes(2)
+    })
+
+    test('does not re-check when isDownloading stays false', async () => {
+      const { rerender } = await renderHookWithProviders(
+        ({ isDownloading }: { isDownloading: boolean }) =>
+          useTrackItemCache(AUDIO_URL, isDownloading),
+        { initialProps: { isDownloading: false } },
+      )
+
+      expect(mockedIsCached).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        rerender({ isDownloading: false })
+      })
+
+      expect(mockedIsCached).toHaveBeenCalledTimes(1)
     })
   })
 })

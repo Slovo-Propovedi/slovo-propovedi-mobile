@@ -82,8 +82,8 @@ jest.mock('entities/player', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
     currentAudioAtom: atom(null, 'currentAudioAtom'),
-    downloadingAudioUrlAtom: atom(null, 'downloadingAudioUrlAtom'),
     isPlayingAtom: atom(false, 'isPlayingAtom'),
+    useIsDownloadingUrl: () => false,
     usePlayNewSermon: () => jest.fn(),
   }
 })

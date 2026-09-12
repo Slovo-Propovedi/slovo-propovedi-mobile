@@ -35,10 +35,33 @@ jest.mock('entities/section', () => {
 
 jest.mock('entities/player', () => {
   const { atom } = jest.requireActual('@reatom/framework')
+  const { useCtx } = jest.requireActual('@reatom/npm-react')
+  const { useEffect, useState } = jest.requireActual('react')
+  const downloadingAudioUrlAtom = atom(null, 'testDownloadingAudioUrlAtom')
+
+  // Mirrors useIsDownloadingUrl semantics — sync with useIsDownloadingUrl.test.ts if matching policy changes.
+  const useIsDownloadingUrl = (audioUrl: null | string) => {
+    const ctx = useCtx()
+    const [isDownloadingUrl, setIsDownloadingUrl] = useState(false)
+
+    useEffect(() => {
+      const readDownloadingUrl = () => {
+        const isDownloading = audioUrl ? ctx.get(downloadingAudioUrlAtom) === audioUrl : false
+        setIsDownloadingUrl((prev: boolean) => (prev === isDownloading ? prev : isDownloading))
+      }
+      readDownloadingUrl()
+      if (!audioUrl) return
+      return ctx.subscribe(downloadingAudioUrlAtom, readDownloadingUrl)
+    }, [audioUrl, ctx])
+
+    return isDownloadingUrl
+  }
+
   return {
     currentAudioAtom: atom(null, 'testCurrentAudioAtom'),
-    downloadingAudioUrlAtom: atom(null, 'testDownloadingAudioUrlAtom'),
+    downloadingAudioUrlAtom,
     isPlayingAtom: atom(false, 'testIsPlayingAtom'),
+    useIsDownloadingUrl,
     usePlayNewSermon: jest.fn(() => jest.fn()),
   }
 })
@@ -79,28 +102,33 @@ jest.mock('expo-blur', () => {
   return { BlurTargetView: View, BlurView: View }
 })
 
-// Мок визуализирует связку props (downloadingUrl === audioUrl); политика matching'а тестируется в useTrackItemCache.test.
+// Мок визуализирует boolean-проп isDownloading; политика matching'а тестируется в useIsDownloadingUrl.test.
+let mockTracksListItemRenderCount = 0
+
 jest.mock('shared/ui/track-list', () => {
   const { Pressable, Text, View } = jest.requireActual('react-native')
   return {
     createTracksListStyles: () => ({ container: {}, divider: {} }),
     TracksListItem: (props: {
       audioUrl?: null | string
-      downloadingUrl?: null | string
       isAudioPlaying?: boolean
+      isDownloading?: boolean
       onPress?: () => void
       title: string
-    }) => (
-      <Pressable onPress={props.onPress} testID='tracks-list-item'>
-        <View>
-          <Text>{props.title}</Text>
-          {props.downloadingUrl && props.downloadingUrl === props.audioUrl && (
-            <Text testID='downloading-indicator'>{props.downloadingUrl}</Text>
-          )}
-          {props.isAudioPlaying && <Text testID={`playing-indicator-${props.title}`}>playing</Text>}
-        </View>
-      </Pressable>
-    ),
+    }) => {
+      mockTracksListItemRenderCount += 1
+      return (
+        <Pressable onPress={props.onPress} testID='tracks-list-item'>
+          <View>
+            <Text>{props.title}</Text>
+            {props.isDownloading && <Text testID='downloading-indicator'>{props.audioUrl}</Text>}
+            {props.isAudioPlaying && (
+              <Text testID={`playing-indicator-${props.title}`}>playing</Text>
+            )}
+          </View>
+        </Pressable>
+      )
+    },
   }
 })
 
@@ -217,6 +245,7 @@ describe('<PlaylistScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockParams.playlist = PLAYLIST_ID
+    mockTracksListItemRenderCount = 0
   })
 
   test('renders the playlist title and its tracks', async () => {
@@ -318,7 +347,7 @@ describe('<PlaylistScreen>', () => {
     expect(hasHeaderRight).toBe(true)
   })
 
-  test('passes the downloading url to the matching track item', async () => {
+  test('passes isDownloading only to the matching track item', async () => {
     const ctx = createCtx()
     dynamicSectionsAtom(ctx, [makeSection()])
     const { downloadingAudioUrlAtom } = jest.requireMock('entities/player') as {
@@ -334,6 +363,23 @@ describe('<PlaylistScreen>', () => {
 
     expect(queryByText(SERMON_1.audioUrl)).toBeTruthy()
     expect(queryByText(SERMON_2.audioUrl)).toBeNull()
+  })
+
+  test('re-renders only the matching track item when the downloading url changes', async () => {
+    const ctx = createCtx()
+    dynamicSectionsAtom(ctx, [makeSection()])
+    const { downloadingAudioUrlAtom } = jest.requireMock('entities/player') as {
+      downloadingAudioUrlAtom: (ctx: unknown, v: null | string) => unknown
+    }
+
+    await renderScreen(ctx)
+    const rendersAfterMount = mockTracksListItemRenderCount
+
+    await act(async () => {
+      downloadingAudioUrlAtom(ctx, SERMON_1.audioUrl)
+    })
+
+    expect(mockTracksListItemRenderCount).toBe(rendersAfterMount + 1)
   })
 
   test('shows the empty state when the playlist has no sermons', async () => {

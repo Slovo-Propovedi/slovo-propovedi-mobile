@@ -1,15 +1,29 @@
 import { memo } from 'react'
+import { useIsDownloadingUrl } from 'entities/player'
 import { TracksListItem } from 'shared/ui/track-list'
 import type { TracksListItemProps } from 'shared/ui/track-list/types'
 
-interface PlaylistSheetRowProps extends Omit<TracksListItemProps, 'onPress' | 'progress'> {
+interface PlaylistSheetRowProps extends Omit<
+  TracksListItemProps,
+  'isDownloading' | 'onPress' | 'progress'
+> {
   index: number
   onPress: (index: number) => void
   storedProgress?: number
 }
 
 export const PlaylistSheetRow = memo(
-  ({ index, onPress, storedProgress, ...trackItemProps }: PlaylistSheetRowProps) => (
-    <TracksListItem {...trackItemProps} progress={storedProgress} onPress={() => onPress(index)} />
-  ),
+  ({ audioUrl, index, onPress, storedProgress, ...trackItemProps }: PlaylistSheetRowProps) => {
+    const isDownloading = useIsDownloadingUrl(audioUrl ?? null)
+
+    return (
+      <TracksListItem
+        {...trackItemProps}
+        audioUrl={audioUrl}
+        progress={storedProgress}
+        isDownloading={isDownloading}
+        onPress={() => onPress(index)}
+      />
+    )
+  },
 )
