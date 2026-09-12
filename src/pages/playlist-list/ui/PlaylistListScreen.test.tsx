@@ -50,44 +50,6 @@ jest.mock('shared/ui', () => {
   }
 })
 
-// The global reanimated mock (jest.setup) does not expose Animated.FlatList,
-// which PlaylistListScreen renders. Extend it with the real FlatList.
-jest.mock('react-native-reanimated', () => {
-  const { FlatList, View } = jest.requireActual('react-native')
-
-  return {
-    __esModule: true,
-    cancelAnimation: () => {},
-    createAnimatedComponent: (Component: unknown) => Component,
-    default: {
-      createAnimatedComponent: (Component: unknown) => Component,
-      FlatList,
-      View,
-    },
-    Easing: {
-      in: (fn: (t: number) => number) => fn,
-      inOut: (fn: (t: number) => number) => fn,
-      linear: () => 'linear',
-      out: (fn: (t: number) => number) => fn,
-      sin: () => 'sin',
-    },
-    interpolate: (p: number) => p,
-    ReduceMotion: { Always: 'always', Never: 'never', System: 'system' },
-    useAnimatedProps: (fn: unknown) => (typeof fn === 'function' ? fn() : {}),
-    useAnimatedReaction: () => {},
-    useAnimatedStyle: (fn: unknown) => (typeof fn === 'function' ? fn() : {}),
-    useDerivedValue: (fn: unknown) => ({ value: typeof fn === 'function' ? fn() : undefined }),
-    useSharedValue: <T,>(init: T) => ({ value: init }),
-    withDelay: (_delay: number, value: unknown) => value,
-    withRepeat: (value: unknown) => value,
-    withSequence: (...values: unknown[]) => values[values.length - 1],
-    withTiming: jest.fn((toValue, _config, callback) => {
-      if (typeof callback === 'function') callback(true)
-      return toValue
-    }),
-  }
-})
-
 const SECTION_ID = 'section-1'
 const SECTION_TITLE = 'Раздел проповедей'
 const PLAYLIST_ID = 'playlist-1'

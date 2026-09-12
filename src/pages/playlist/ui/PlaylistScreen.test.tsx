@@ -79,6 +79,7 @@ jest.mock('expo-blur', () => {
   return { BlurTargetView: View, BlurView: View }
 })
 
+// Мок визуализирует связку props (downloadingUrl === audioUrl); политика matching'а тестируется в useTrackItemCache.test.
 jest.mock('shared/ui/track-list', () => {
   const { Pressable, Text, View } = jest.requireActual('react-native')
   return {
@@ -163,7 +164,7 @@ const PLAYING_INDICATOR_PREFIX = 'playing-indicator-'
 
 const SERMON_1 = {
   artist: 'Автор',
-  artwork: null as null,
+  artwork: null,
   audioUrl: 'https://example.com/1.mp3',
   id: 'sermon-1',
   title: 'Первая проповедь',
@@ -171,7 +172,7 @@ const SERMON_1 = {
 
 const SERMON_2 = {
   artist: 'Автор',
-  artwork: null as null,
+  artwork: null,
   audioUrl: 'https://example.com/2.mp3',
   id: 'sermon-2',
   title: 'Вторая проповедь',
@@ -371,6 +372,8 @@ describe('<PlaylistScreen>', () => {
 
 describe('<PlaylistScreen> header menu integration', () => {
   beforeEach(() => {
+    jest.clearAllMocks()
+    mockParams.playlist = PLAYLIST_ID
     jest.spyOn(RNView.prototype, 'measureInWindow').mockImplementation(cb => {
       cb(300, 100, 44, 44)
       return undefined

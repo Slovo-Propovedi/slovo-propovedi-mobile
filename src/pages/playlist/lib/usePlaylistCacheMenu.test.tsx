@@ -172,6 +172,10 @@ describe('usePlaylistCacheMenu', () => {
   })
 
   describe('handlers', () => {
+    afterEach(() => {
+      jest.restoreAllMocks()
+    })
+
     test('handleStopCaching delegates to playlistCacheService.cancelPlaylistCache', async () => {
       const cancelSpy = jest.spyOn(playlistCacheService, 'cancelPlaylistCache')
       const { ctx, result } = await renderMenu()
@@ -258,7 +262,6 @@ describe('usePlaylistCacheMenu', () => {
       })
 
       expect(cachePlaylistSpy).toHaveBeenCalledWith(ctx, TRACKS, 'Плейлист')
-      cachePlaylistSpy.mockRestore()
     })
   })
 })
