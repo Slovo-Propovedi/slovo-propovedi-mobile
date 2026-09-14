@@ -2516,24 +2516,24 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@orval/angular@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/angular/-/angular-8.26.0.tgz#11b5d78bd6b4c68663b79f1f2476a9f733a1f3b9"
-  integrity sha512-o+i+K5S0LyD0JTEN8MlEGgwkabt9t5w82jn0Hv2pBIYwu2Qyh+VM4OZ+Nx1xet+Rby4XSUMGESqCG5vmfzBE9w==
+"@orval/angular@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/angular/-/angular-8.33.0.tgz#9303e9e77d5c9afc8220948319c6ffaffefe4430"
+  integrity sha512-LwvVt4nTBD9gUvW+78Aby5bG77A4IYDcNjauLABYOzQqne2pXA/KToZtQUXxDWYHqWm4myFV/qFQHh0gxHTRvQ==
   dependencies:
-    "@orval/core" "8.26.0"
+    "@orval/core" "8.33.0"
 
-"@orval/axios@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/axios/-/axios-8.26.0.tgz#29b36e1000fec107604f5e0648aabceb7b66ca11"
-  integrity sha512-Hoj8zrOZuvS41K+IY49m8PS6P0H5lhN1h79FzkzODdf9CE2HlYsp9rDRhgx3087SdDFsgX94up1RU1Es6WvMDg==
+"@orval/axios@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/axios/-/axios-8.33.0.tgz#8f4323d1ef61f7449c560075ee589b9b0ba3e72b"
+  integrity sha512-63TcFKE2x5S7Zz1aHowTfJ6UElkFJXpjQfReF4GSrwXOrSUvBooufuUzCultl54i864KxRvH4nXCi+yL3GS4+w==
   dependencies:
-    "@orval/core" "8.26.0"
+    "@orval/core" "8.33.0"
 
-"@orval/core@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/core/-/core-8.26.0.tgz#f091469b8d444e7ae17732a5e93b7640c3d36abe"
-  integrity sha512-JbapBmuCssu8cIXBdkVvX4q2Wa40FlC2QMWvdY6jJPdJBUXWGu4TLn6/RGKMq2HuATCfCeWkPbl7eajB3phqjQ==
+"@orval/core@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/core/-/core-8.33.0.tgz#73b8d4cc8c38e22e32d7a630da9a3b606c042228"
+  integrity sha512-sqfTwjQIc2ti/+Tl0WuUnt4ZAhLFTvC1L8vkLCzM1bzZdityD79JeIu2BjkhIm4/nG7BIVLbZkMDyC0zUvatlg==
   dependencies:
     "@scalar/openapi-types" "0.9.4"
     acorn "^8.15.0"
@@ -2548,77 +2548,86 @@
     tinyglobby "^0.2.16"
     typedoc "^0.28.19"
 
-"@orval/effect@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/effect/-/effect-8.26.0.tgz#79b84cfdb5ae777af76cd9bd57a3481cb442ca3d"
-  integrity sha512-scX5ULwtWSv3KxGSTkSV9tpL+lz5zdY0a4Rm/I+CjzTlpacwTloRwtxz3BALFi/SVzuqwHWEwye9N8po+RyiCg==
+"@orval/effect@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/effect/-/effect-8.33.0.tgz#2c026e1eb0a60d62d338555678b65895edef12a5"
+  integrity sha512-L0uKhGXFvoNbBxs3ESz5LALDb7HvyBYttg90gDPBHUhr9BiDNa//7Um/81URI+mSkGum3otdH5hGVnC0gU0QOg==
   dependencies:
-    "@orval/core" "8.26.0"
+    "@orval/core" "8.33.0"
     remeda "^2.33.6"
 
-"@orval/fetch@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/fetch/-/fetch-8.26.0.tgz#af235f0e696c8693e36f0d96d4cf941eeaf059e8"
-  integrity sha512-hA3vY7Sc0RkoH+XzdNwnY1xpAZKsYcxOf2/OpkvVgnBGAX6vIh41W3SMGo5STFFYcViTSU3MfsjPLuUWf2R7Eg==
+"@orval/fetch@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/fetch/-/fetch-8.33.0.tgz#1ad487c061b17f4737ca691c1cdad718ac5e6bf7"
+  integrity sha512-HtcqG/MuF6hwB6wGXIbBivXN9++hK3PYc11a6VTL4DT9tC9xqVD9QeWWpdhGuc1IM4xiivWGEFmjixGbiYrxDQ==
   dependencies:
-    "@orval/core" "8.26.0"
+    "@orval/core" "8.33.0"
 
-"@orval/hono@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/hono/-/hono-8.26.0.tgz#340835ee96bb581ba7dba8d6759a9eaaafe58a4e"
-  integrity sha512-5+9YbJdBGi5YP5ye/CH1RucdHZh/nFBmx5gHZXfLpLB2+U2DzocnUNfShRxopQBmAELJAZz1anU9ePCQrNiWOg==
+"@orval/hono@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/hono/-/hono-8.33.0.tgz#2f094949c49fa3de447c0e75c961efe9eb70d6aa"
+  integrity sha512-H8qZsa7HGNljvs2FAqNfU+i+01H1SaSTHHMnoIHACYYDm5amxS2WIj4g4Jc76tRLZdGKMbovHn2j47/yxY+2gg==
   dependencies:
-    "@orval/core" "8.26.0"
-    "@orval/zod" "8.26.0"
+    "@orval/core" "8.33.0"
+    "@orval/zod" "8.33.0"
     fs-extra "^11.3.2"
 
-"@orval/mcp@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/mcp/-/mcp-8.26.0.tgz#63927a8f5b17c161c806c2e35c496de52c717219"
-  integrity sha512-3MB5jHGFT8Kq+RfyAJaK6y192ordhWLOgu4SKIRClxd3gQYTjekK0LxfIFGnZ9A2ocRr0FxnC8fB+dlgwCEXrw==
+"@orval/mcp@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/mcp/-/mcp-8.33.0.tgz#b0468fcaa8612232cb7e95771a44e53974741a8c"
+  integrity sha512-HJSjaGet8CBpOsWzWC22GQnfwXC0X99gStdhOnkjHRqtinRHI21MdUc4WdEYQRM7Wf2WK5+1iJVr0KitGcbNAQ==
   dependencies:
-    "@orval/core" "8.26.0"
-    "@orval/fetch" "8.26.0"
-    "@orval/zod" "8.26.0"
+    "@orval/core" "8.33.0"
+    "@orval/fetch" "8.33.0"
+    "@orval/zod" "8.33.0"
 
-"@orval/mock@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/mock/-/mock-8.26.0.tgz#244a59c6ca3e6bbdc5cb0e4f78d664d0ec4fac5c"
-  integrity sha512-HOTPhD7KGjQMpUAln/9WlvoOFMaNmSITMlqlgN6g4dwGECNgifL36qIW7FSN2Wo4l3Sa8BslIP5b8GCm1a/6ow==
+"@orval/mock@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/mock/-/mock-8.33.0.tgz#800c6d398bcac22aa1c4ff03a16d02828f84e8a1"
+  integrity sha512-q2wLFwz0ps/PIDw42eNS00YXoSh1ZB9SrflAllVuLWLdAwsamj9J63t0vRMHSSxy9L6g8B1uhSFmJ/TB8lynmQ==
   dependencies:
-    "@orval/core" "8.26.0"
+    "@orval/core" "8.33.0"
     remeda "^2.33.6"
 
-"@orval/query@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/query/-/query-8.26.0.tgz#421b6a8d62519eb6b20a03d7ffae99ac35aa7153"
-  integrity sha512-wHI1Q7Lx/wYtfrR6OC2rW8IpEADfy95DcQJZ9vKpWCUs+e47V4b9QQatvjmHQBZLtd1yUxPYJbNwaWYwTFeDyg==
+"@orval/pinia-colada@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/pinia-colada/-/pinia-colada-8.33.0.tgz#f3e79621f24f2bbb70d147b48019834101bdb4f0"
+  integrity sha512-A55+pkK7rWHlN4Vb39dEikhNAnhzTr2C7V5OEYaLHnoSnwFlN7U02cbCr7VUHuQxgsrmRL36wWSuy9z3jdttjw==
   dependencies:
-    "@orval/core" "8.26.0"
-    "@orval/fetch" "8.26.0"
+    "@orval/axios" "8.33.0"
+    "@orval/core" "8.33.0"
+    "@orval/fetch" "8.33.0"
+
+"@orval/query@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/query/-/query-8.33.0.tgz#dcc4880c9d9c4260cc22b98add4bdd0c79a03e2f"
+  integrity sha512-0tnJpS1A63KsvKG4pUkF1VXO7Jq0V6L4wYYwM+2kJmKL38pQkm93ue88wRKGsNhJT/omI8v3/D1wd16qBOQquw==
+  dependencies:
+    "@orval/core" "8.33.0"
+    "@orval/fetch" "8.33.0"
     remeda "^2.33.6"
 
-"@orval/solid-start@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/solid-start/-/solid-start-8.26.0.tgz#20bffd13736a20b9c5c2da4bef3b42bb9c41a806"
-  integrity sha512-V8nD+oehJRmilLhsZdYPbcqugFsD166OoazxJI12WBX1Hrquhka6VOlKllFjVG5kp/6Z+ZBlfrNS8Cq7nbShxQ==
+"@orval/solid-start@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/solid-start/-/solid-start-8.33.0.tgz#71f36a8e9b41bba808628c128f1dea9f7d336771"
+  integrity sha512-fRjRRCsL8LdCKzJ15/vOzcRd6cocX00iH2oOPN428eHsVS7ZuvBGJ9sqQ4Fzgy0vMkxi5hNj59IIr+wRquDJag==
   dependencies:
-    "@orval/core" "8.26.0"
+    "@orval/core" "8.33.0"
 
-"@orval/swr@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/swr/-/swr-8.26.0.tgz#3cf2fcbc549d0d9ee80ae947317f601b68677363"
-  integrity sha512-krObsMunyV2SfmxKlzOOBBhCfvJK3ZJ9y2vkCd+69sTcKE/38tk2M/UGjOyVPBO4vWh4e3X6koq9f26f+O4HcA==
+"@orval/swr@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/swr/-/swr-8.33.0.tgz#64d0be61d5a6f476eb0efff21264b79abd2cf80f"
+  integrity sha512-jnr/HWGXRakhv92R4vL1b11Kz1hqrY81m/1fra2d80h1zwSJGnTPrszWSOrI9pBviAQYFktJy/yWGmBdYeD66Q==
   dependencies:
-    "@orval/core" "8.26.0"
-    "@orval/fetch" "8.26.0"
+    "@orval/core" "8.33.0"
+    "@orval/fetch" "8.33.0"
 
-"@orval/zod@8.26.0":
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/@orval/zod/-/zod-8.26.0.tgz#7757ce50c3626ab775fbbd6eb42c0a3cc790e55d"
-  integrity sha512-tI1Rw34RL0ALs4q4T2C9kovlTY2c1DfoNWfvq94R9TTnezBm3hg+ZzahFKyrm2+gKzICe5baAQ5BUSNIYMYgjA==
+"@orval/zod@8.33.0":
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/@orval/zod/-/zod-8.33.0.tgz#ffa21d30a1d8c47b8639edcef9ff1bd335242597"
+  integrity sha512-m98RJzpNxrooSqeAilY+PlArZ49jyxBXQGvZGK7hX5tDuTAg6i4iXxvpEuPZ/uVrW04tMcRBoSiREbl5NjYzYw==
   dependencies:
-    "@orval/core" "8.26.0"
+    "@orval/core" "8.33.0"
     jsesc "^3.0.0"
     remeda "^2.33.6"
 
@@ -8931,10 +8940,10 @@ jiti@^2.7.0:
   resolved "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
-js-yaml@4.3.1:
-  version "4.3.1"
-  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.3.1.tgz#01216c001d67f48e2cd560d708c7af21090a3848"
-  integrity sha512-CY6crGq313MX8GkwvB7tzgp99vjQxY1++5y10/BKN/GUfHqWaOGQMNZkBvqSzsZKWk/ijwHlWzzkLulsGHhjWQ==
+js-yaml@4.3.2:
+  version "4.3.2"
+  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.3.2.tgz#8e44fb14a2643c59726bb15787b5f1512cb3d3fb"
+  integrity sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==
   dependencies:
     argparse "^2.0.1"
 
@@ -10155,24 +10164,25 @@ ora@^3.4.0:
     strip-ansi "^5.2.0"
     wcwidth "^1.0.1"
 
-orval@8.26.0:
-  version "8.26.0"
-  resolved "https://registry.yarnpkg.com/orval/-/orval-8.26.0.tgz#7971d952320736b67070489eaae843bae9eff682"
-  integrity sha512-7mqHCS9+L05em1rrwHtp7g60E5PNmN8GWSr1KLrilNOPHwGZyV7CJrp7NPYBLG2HW9rPxbGQL2XisvNINJx3Gg==
+orval@8.33.0:
+  version "8.33.0"
+  resolved "https://registry.yarnpkg.com/orval/-/orval-8.33.0.tgz#200b2dc3e032f9e4c3f3df54952464045e78f245"
+  integrity sha512-O3ENCt9k0HTGBCPH05W5YmQqaco0kNJmDL7bb5LLT0DN/eRlKekNYtmdq2zYrZBn84+dRt+9Lv+eMuSUt3tY4w==
   dependencies:
     "@commander-js/extra-typings" "^15.0.0"
-    "@orval/angular" "8.26.0"
-    "@orval/axios" "8.26.0"
-    "@orval/core" "8.26.0"
-    "@orval/effect" "8.26.0"
-    "@orval/fetch" "8.26.0"
-    "@orval/hono" "8.26.0"
-    "@orval/mcp" "8.26.0"
-    "@orval/mock" "8.26.0"
-    "@orval/query" "8.26.0"
-    "@orval/solid-start" "8.26.0"
-    "@orval/swr" "8.26.0"
-    "@orval/zod" "8.26.0"
+    "@orval/angular" "8.33.0"
+    "@orval/axios" "8.33.0"
+    "@orval/core" "8.33.0"
+    "@orval/effect" "8.33.0"
+    "@orval/fetch" "8.33.0"
+    "@orval/hono" "8.33.0"
+    "@orval/mcp" "8.33.0"
+    "@orval/mock" "8.33.0"
+    "@orval/pinia-colada" "8.33.0"
+    "@orval/query" "8.33.0"
+    "@orval/solid-start" "8.33.0"
+    "@orval/swr" "8.33.0"
+    "@orval/zod" "8.33.0"
     "@scalar/json-magic" "^0.12.19"
     "@scalar/openapi-parser" "^0.28.11"
     "@scalar/openapi-types" "0.9.4"
@@ -10183,7 +10193,8 @@ orval@8.26.0:
     fs-extra "^11.3.2"
     get-tsconfig "^4.14.0"
     jiti "^2.6.1"
-    js-yaml "4.3.1"
+    js-yaml "4.3.2"
+    json5 "2.2.3"
     remeda "^2.33.6"
     string-argv "^0.3.2"
     typedoc "^0.28.19"
