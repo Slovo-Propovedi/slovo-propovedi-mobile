@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { isExpoGo } from 'shared/lib/isExpoEnvironment'
 import { ensureNotifications } from './ensureNotifications'
 import { setupUpdateNotificationCategory } from './notificationActions'
@@ -16,10 +17,12 @@ export const scheduleNotification = async (
     body?: string
     categoryIdentifier?: string
     data?: Record<string, string>
+    sound?: boolean | null | string
     title: string
   },
   identifier: string,
   groupId: string,
+  channelId?: string,
 ): Promise<string> => {
   if (isExpoGo) return ''
 
@@ -28,10 +31,12 @@ export const scheduleNotification = async (
   await ensureCategory()
 
   try {
+    const trigger =
+      Platform.OS === 'android' && channelId ? { channelId, type: 'channel' as const } : null
     return await api.scheduleNotificationAsync({
-      content: { ...content, data: { ...content.data, groupId }, sound: null },
+      content: { ...content, data: { ...content.data, groupId }, sound: content.sound ?? null },
       identifier,
-      trigger: null,
+      trigger,
     })
   } catch (error) {
     console.warn('[notifications] Failed to schedule notification:', error)

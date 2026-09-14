@@ -16,11 +16,11 @@ export interface NotificationsApi {
       body?: string
       categoryIdentifier?: string
       data?: Record<string, string>
-      sound: null
+      sound?: boolean | null | string
       title: string
     }
     identifier?: string
-    trigger: null
+    trigger: { channelId: string; type: 'channel' } | null
   }) => Promise<string>
   setNotificationCategoryAsync: (
     identifier: string,
