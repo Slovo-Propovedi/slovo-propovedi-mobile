@@ -12,6 +12,7 @@ import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 
 const CACHED_EXTENSION = '.mp3'
 export const PART_SUFFIX = '.mp3.part'
+export const PROGRESS_TICK_MIN_INTERVAL_MS = 250
 
 export const getUrlHash = (url: string): string => {
   let hash = 0
@@ -35,11 +36,15 @@ export const ensureCacheDirectoryExists = (): void => {
 
 export const createThrottledProgress = (onProgress: (progress: number) => void) => {
   let last = 0
+  let lastEmittedAt = 0
   return (data: { bytesWritten: number; totalBytes: number }) => {
     if (data.totalBytes <= 0) return
     const fraction = Math.max(0, Math.min(1, data.bytesWritten / data.totalBytes))
-    if (fraction - last >= 0.01 || fraction === 1) {
+    const now = Date.now()
+    const elapsed = now - lastEmittedAt
+    if ((fraction - last >= 0.01 && elapsed >= PROGRESS_TICK_MIN_INTERVAL_MS) || fraction === 1) {
       last = fraction
+      lastEmittedAt = now
       onProgress(fraction)
     }
   }

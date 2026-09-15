@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Dimensions, useWindowDimensions } from 'react-native'
-import { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { getColumnSideInset } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
 import type { SharedValue } from 'react-native-reanimated'
@@ -9,6 +9,7 @@ import { getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 import { useAppStateSnap } from './useAppStateSnap'
 import { useGeometrySharedValues } from './useGeometrySharedValues'
 import { useOpacityStyles } from './useOpacityStyles'
+import { useProgressAnimation } from './useProgressAnimation'
 
 const MINI_H = PLAYER_SIZES.miniPlayerHeight
 
@@ -51,19 +52,7 @@ export const useExpandAnimation = (
     () => getRestingContainerStyle({ expanded: false, fullScreenHeight, miniBottom, screenWidth }),
     [fullScreenHeight, miniBottom, screenWidth],
   )
-  // On first mount, assign directly (no withTiming) to force the shared value
-  // onto the UI thread and re-trigger dependent worklets. Subsequent expanded
-  // changes animate normally with withTiming.
-  const isFirstRunRef = useRef(true)
-
-  useEffect(() => {
-    if (isFirstRunRef.current) {
-      isFirstRunRef.current = false
-      progress.value = expanded ? 1 : 0
-      return
-    }
-    progress.value = withTiming(expanded ? 1 : 0, { duration: expanded ? 300 : 250 })
-  }, [expanded, progress])
+  useProgressAnimation(expanded, progress)
 
   useAppStateSnap(expanded, progress)
 

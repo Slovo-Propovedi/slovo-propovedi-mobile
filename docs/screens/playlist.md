@@ -22,7 +22,7 @@
 ## Откуда данные
 
 - Параметр маршрута `playlist` (`useLocalSearchParams<{ playlist: string }>`), парсится через `getParseJsonWithSchema(playlistDataSchema)`; при отсутствии/ошибке используется пустой плейлист-заглушка.
-- Плеер: `currentAudioAtom`, `isPlayingAtom`, `downloadingAudioUrlAtom`, `usePlayNewSermon` из `entities/player`.
+- Плеер: `currentAudioAtom`, `isPlayingAtom`, `usePlayNewSermon` из `entities/player`. Индикация скачивания — per-row: `PlaylistTrackItem`/`PlaylistSheetRow` зовут `useIsDownloadingUrl(audioUrl)` (entities/player) и передают boolean `isDownloading` в `TracksListItem`. Прогресс-бар строки — через подписку на `playlistDownloadProgressAtom` (по URL трека).
 - Кэш: `cacheUpdateTriggerAtom` (`shared/lib/cache-triggers`), `isCachingPlaylistAtom`/`playlistCacheProgressAtom` из `src/pages/playlist/model.ts`.
 - Скачивание: `PlaylistCacheService` (`src/pages/playlist/lib/PlaylistCacheService.ts`), меню `PlaylistHeaderMenu`/`PlaylistHeaderMenuDropdown` (`src/pages/playlist/ui/`).
 

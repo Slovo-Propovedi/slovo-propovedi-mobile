@@ -47,6 +47,7 @@ export const startBackgroundCaching = (audioUrl: string): void => {
       if (ctx.get(downloadingAudioUrlAtom) === audioUrl) {
         void setIsDownloadingAction(ctx, false)
         void setDownloadingUrlAction(ctx, null)
+        void setDownloadProgressAction(ctx, 0)
       }
     })
 }

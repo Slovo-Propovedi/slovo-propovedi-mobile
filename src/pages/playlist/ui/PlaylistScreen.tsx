@@ -37,7 +37,7 @@ export const PlaylistScreen = () => {
     progressMap,
   )
 
-  const { cacheTrigger, currentAudio, downloadingUrl, isPlaying } = usePlaylistPlayerState()
+  const { cacheTrigger, currentAudio, isPlaying } = usePlaylistPlayerState()
 
   const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader()
@@ -62,21 +62,12 @@ export const PlaylistScreen = () => {
         subtitle={item.subtitle}
         onPress={handlePressItem}
         cacheTrigger={cacheTrigger}
-        downloadingUrl={downloadingUrl}
         currentAudioId={currentAudio?.id}
         menuActions={buildMenuActions(index)}
         storedProgress={progressMap.get(item.id ?? '')}
       />
     ),
-    [
-      buildMenuActions,
-      cacheTrigger,
-      currentAudio?.id,
-      downloadingUrl,
-      handlePressItem,
-      isPlaying,
-      progressMap,
-    ],
+    [buildMenuActions, cacheTrigger, currentAudio?.id, handlePressItem, isPlaying, progressMap],
   )
 
   usePlaylistNavigationOptions({ headerIconColor, playlist, title, tracksListData })

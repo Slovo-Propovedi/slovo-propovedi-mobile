@@ -3,6 +3,7 @@ import { Directory, File, Paths } from 'expo-file-system'
 import * as IntentLauncher from 'expo-intent-launcher'
 import { Platform } from 'react-native'
 import { listContents, unzip } from 'react-native-zip-archive'
+import { DOWNLOAD_TIMEOUT_MS, downloadFileWithTimeout } from './downloadFileWithTimeout'
 
 const APK_SAFE_NAME = 'update.apk'
 const APK_EXTENSION = '.apk'
@@ -31,6 +32,7 @@ const ensureUpdatesDirectoryExists = (): Directory => {
 export const downloadUpdateZip = async (
   url: string,
   onProgress?: (progressPercent: number) => void,
+  timeoutMs: number = DOWNLOAD_TIMEOUT_MS,
 ): Promise<string> => {
   assertAndroid('downloadUpdateZip')
   if (!url.startsWith(HTTPS_PREFIX))
@@ -40,16 +42,7 @@ export const downloadUpdateZip = async (
   const zipFile = new File(updatesDir, ZIP_FILE_NAME)
   if (zipFile.exists) zipFile.delete()
 
-  const task = File.createDownloadTask(url, zipFile, {
-    onProgress: onProgress
-      ? ({ bytesWritten, totalBytes }) => {
-          if (totalBytes <= 0) return
-          onProgress(Math.round((bytesWritten / totalBytes) * 100))
-        }
-      : undefined,
-  })
-
-  const downloadedFile = await task.downloadAsync()
+  const downloadedFile = await downloadFileWithTimeout(url, zipFile, onProgress, timeoutMs)
   if (!downloadedFile) throw new Error(`[updateService] Download failed or was cancelled: ${url}`)
   return downloadedFile.uri
 }

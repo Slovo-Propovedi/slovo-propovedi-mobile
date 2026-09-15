@@ -1,9 +1,9 @@
 jest.mock('react-native-reanimated', () => {
-  const { View } = require('react-native')
+  const { FlatList, View } = require('react-native')
 
   return {
     __esModule: true,
-    default: { View, createAnimatedComponent: Component => Component },
+    default: { FlatList, View, createAnimatedComponent: Component => Component },
     cancelAnimation: () => {},
     createAnimatedComponent: Component => Component,
     Easing: {

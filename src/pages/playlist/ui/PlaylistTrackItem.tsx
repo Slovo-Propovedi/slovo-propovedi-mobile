@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { useIsDownloadingUrl } from 'entities/player'
 import { INDENTS } from 'shared/ui/theme'
 import { type MenuAction, TracksListItem } from 'shared/ui/track-list'
 
@@ -7,7 +8,6 @@ interface PlaylistTrackItemProps {
   audioUrl?: null | string
   cacheTrigger?: number
   currentAudioId?: string
-  downloadingUrl?: null | string
   id: string | undefined
   index: number
   isPlaying: boolean
@@ -24,7 +24,6 @@ export const PlaylistTrackItem = memo(
     audioUrl,
     cacheTrigger,
     currentAudioId,
-    downloadingUrl,
     id,
     index,
     isPlaying,
@@ -33,20 +32,24 @@ export const PlaylistTrackItem = memo(
     storedProgress,
     subtitle,
     title,
-  }: PlaylistTrackItemProps) => (
-    <TracksListItem
-      title={title}
-      artwork={artwork}
-      subtitle={subtitle}
-      progress={storedProgress}
-      menuActions={menuActions}
-      cacheTrigger={cacheTrigger}
-      onPress={() => onPress(index)}
-      downloadingUrl={downloadingUrl}
-      audioUrl={audioUrl ?? undefined}
-      isPlaying={currentAudioId === id}
-      style={{ marginHorizontal: INDENTS.medium }}
-      isAudioPlaying={currentAudioId === id && isPlaying}
-    />
-  ),
+  }: PlaylistTrackItemProps) => {
+    const isDownloading = useIsDownloadingUrl(audioUrl ?? null)
+
+    return (
+      <TracksListItem
+        title={title}
+        artwork={artwork}
+        subtitle={subtitle}
+        progress={storedProgress}
+        menuActions={menuActions}
+        cacheTrigger={cacheTrigger}
+        isDownloading={isDownloading}
+        onPress={() => onPress(index)}
+        audioUrl={audioUrl ?? undefined}
+        isPlaying={currentAudioId === id}
+        style={{ marginHorizontal: INDENTS.medium }}
+        isAudioPlaying={currentAudioId === id && isPlaying}
+      />
+    )
+  },
 )

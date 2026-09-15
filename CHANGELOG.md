@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.1] - 2026-09-12
+
+### Changed
+
+- Subscribe to download state per row
+- Resolve 7 tech debt items and apply review fixes
+
+### Fixed
+
+- Eliminate overlay re-render storm during background download (Issue #100)
+- Accept getter-based module exports in notifications guard
+- Add update download timeout and centralize reanimated mock
+- Use full app name "Слово.Проповеди" in manifest and meta tags
+- Close search cache write race and remove dead code
+- Restore saved mute volume (0) on app restart
+- Re-apply saved volume after track load
+
 ## [0.21.0] - 2026-09-09
 
 ### Added
@@ -627,6 +644,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.21.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.1
 [0.21.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.0
 [0.20.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.20.0
 [0.19.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.19.0

@@ -1,6 +1,6 @@
 {
   "name": "slovo-propovedi-mobile",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "main": "expo-router/entry",
   "license": "GPL-3.0-or-later",
   "scripts": {
@@ -134,7 +134,7 @@
     "jest-expo": "~57.0.5",
     "knip": "^6.32.2",
     "lint-staged": "^17.3.0",
-    "orval": "8.26.0",
+    "orval": "8.33.0",
     "patch-package": "^8.0.1",
     "prettier": "^3.9.6",
     "react-native-web": "^0.21.2",
@@ -144,7 +144,7 @@
     "steiger": "^0.6.0",
     "test-renderer": "1.2.0",
     "ts-node": "^10.9.2",
-    "typescript-eslint": "8.68.0"
+    "typescript-eslint": "8.70.0"
   },
   "private": true,
   "resolutions": {

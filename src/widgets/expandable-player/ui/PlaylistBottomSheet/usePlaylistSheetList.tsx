@@ -18,7 +18,6 @@ export interface TrackListItemData {
 interface UsePlaylistSheetListParams {
   cacheTrigger: number
   currentAudioId?: string
-  downloadingUrl?: null | string
   isAudioPlaying: boolean
   onPress: (index: number) => void
   onScroll: (y: number) => void
@@ -34,7 +33,6 @@ interface UsePlaylistSheetListParams {
 export const usePlaylistSheetList = ({
   cacheTrigger,
   currentAudioId,
-  downloadingUrl,
   isAudioPlaying,
   onPress,
   onScroll,
@@ -82,22 +80,13 @@ export const usePlaylistSheetList = ({
         artwork={item.artwork}
         subtitle={item.subtitle}
         cacheTrigger={cacheTrigger}
-        downloadingUrl={downloadingUrl}
         isPlaying={currentAudioId === item.id}
         menuActions={buildMenuActions(item.id)}
         storedProgress={progressMap.get(item.id)}
         isAudioPlaying={currentAudioId === item.id && isAudioPlaying}
       />
     ),
-    [
-      buildMenuActions,
-      cacheTrigger,
-      currentAudioId,
-      downloadingUrl,
-      isAudioPlaying,
-      onPress,
-      progressMap,
-    ],
+    [buildMenuActions, cacheTrigger, currentAudioId, isAudioPlaying, onPress, progressMap],
   )
   const ItemSeparator = useCallback(() => <View style={styles.divider} />, [styles])
 

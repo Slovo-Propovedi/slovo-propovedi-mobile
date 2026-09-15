@@ -1,3 +1,5 @@
+import { Platform } from 'react-native'
+
 const mockIsExpoGo = { isExpoGo: false }
 
 jest.mock('shared/lib/isExpoEnvironment', () => ({
@@ -27,6 +29,7 @@ describe('notificationsHelpers memoization invariants', () => {
     jest.clearAllMocks()
     jest.resetModules()
     mockIsExpoGo.isExpoGo = false
+    jest.replaceProperty(Platform, 'OS', 'android')
     mockSetNotificationCategoryAsync.mockResolvedValue('app-update')
     mockSetNotificationChannelAsync.mockResolvedValue(undefined)
     mockScheduleNotificationAsync.mockResolvedValue(NOTIFICATION_ID)
@@ -66,5 +69,84 @@ describe('notificationsHelpers memoization invariants', () => {
     ])
 
     expect(mockSetNotificationCategoryAsync).toHaveBeenCalledTimes(1)
+  })
+
+  test('channelId on Android produces channel trigger', async () => {
+    const { scheduleNotification } = loadHelpers()
+
+    await scheduleNotification(
+      NOTIFICATION_CONTENT,
+      NOTIFICATION_ID,
+      NOTIFICATION_GROUP,
+      'test-channel',
+    )
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ trigger: { channelId: 'test-channel', type: 'channel' } }),
+    )
+  })
+
+  test('no channelId on Android produces null trigger', async () => {
+    const { scheduleNotification } = loadHelpers()
+
+    await scheduleNotification(NOTIFICATION_CONTENT, NOTIFICATION_ID, NOTIFICATION_GROUP)
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ trigger: null }),
+    )
+  })
+
+  test('channelId on iOS still produces null trigger', async () => {
+    jest.replaceProperty(Platform, 'OS', 'ios')
+    const { scheduleNotification } = loadHelpers()
+
+    await scheduleNotification(
+      NOTIFICATION_CONTENT,
+      NOTIFICATION_ID,
+      NOTIFICATION_GROUP,
+      'test-channel',
+    )
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ trigger: null }),
+    )
+  })
+
+  test('content sound defaults to null when not specified', async () => {
+    const { scheduleNotification } = loadHelpers()
+
+    await scheduleNotification(NOTIFICATION_CONTENT, NOTIFICATION_ID, NOTIFICATION_GROUP)
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.objectContaining({ sound: null }) }),
+    )
+  })
+
+  test('content sound is passed through when specified', async () => {
+    const { scheduleNotification } = loadHelpers()
+
+    await scheduleNotification(
+      { ...NOTIFICATION_CONTENT, sound: true },
+      NOTIFICATION_ID,
+      NOTIFICATION_GROUP,
+    )
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.objectContaining({ sound: true }) }),
+    )
+  })
+
+  test('content sound false is passed through (silent on iOS)', async () => {
+    const { scheduleNotification } = loadHelpers()
+
+    await scheduleNotification(
+      { ...NOTIFICATION_CONTENT, sound: false },
+      NOTIFICATION_ID,
+      NOTIFICATION_GROUP,
+    )
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.objectContaining({ sound: false }) }),
+    )
   })
 })

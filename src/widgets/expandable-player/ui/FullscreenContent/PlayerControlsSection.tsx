@@ -1,6 +1,6 @@
 import { Entypo } from '@expo/vector-icons'
 import { Pressable, Text, View } from 'react-native'
-import { PlayerProgressBar, PlayerRepeatToggle, SermonPlayerControls } from 'entities/player'
+import { PlayerRepeatToggle, SermonPlayerControls } from 'entities/player'
 import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
 import { formatSermonReference } from 'shared/lib/format'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
@@ -9,10 +9,10 @@ import { MovingText } from 'shared/ui'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
 import { BoundaryHint } from './BoundaryHint'
+import { FullscreenDownloadProgressBar } from './FullscreenDownloadProgressBar'
 
 interface PlayerControlsSectionProps {
   audio: AudioPlayerData
-  currentDownloadProgress: number
   duration: number
   isCached: boolean
   onOpenPlaylist: () => void
@@ -31,7 +31,6 @@ interface PlayerControlsSectionProps {
 
 export const PlayerControlsSection = ({
   audio,
-  currentDownloadProgress,
   duration,
   isCached,
   onOpenPlaylist,
@@ -77,12 +76,12 @@ export const PlayerControlsSection = ({
       <View style={styles.progressRow}>
         <Text style={styles.timeText}>{millisToMinutesAndSeconds(position)}</Text>
         <View style={styles.progressBarContainer}>
-          <PlayerProgressBar
+          <FullscreenDownloadProgressBar
             hideTime
             duration={duration}
             position={position}
+            audioUrl={audio.audioUrl}
             onSeek={p => void seekTo(p)}
-            downloadProgress={currentDownloadProgress}
           />
         </View>
         <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>

@@ -57,7 +57,6 @@ jest.mock('entities/player', () => {
     currentAudioAtom: atom(null, 'mockCurrentAudioAtom'),
     currentPlaylistAtom: atom(null, 'mockCurrentPlaylistAtom'),
     downloadingAudioUrlAtom: atom(null, 'mockDownloadingAudioUrlAtom'),
-    downloadProgressAtom: atom(0, 'mockDownloadProgressAtom'),
     durationAtom: atom(0, 'mockDurationAtom'),
     isDownloadingAtom: atom(false, 'mockIsDownloadingAtom'),
     positionAtom: atom(0, 'mockPositionAtom'),
