@@ -20,3 +20,7 @@ web-build/
 
 /coverage
 /.claude/settings.local.json
+
+# Local env overrides (see .env.example)
+.env
+.env.local

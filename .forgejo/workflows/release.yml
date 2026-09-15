@@ -181,6 +181,11 @@ jobs:
           # Same Metro memory caps as the APK build — the 4 GB host is shared.
           NODE_OPTIONS: --max-old-space-size=1536
           CI_METRO_MAX_WORKERS: '2'
+          # Inlined into the web bundle by Metro at export time (see
+          # src/shared/config/config.ts, src/pages/share/lib/constants.ts).
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
         run: yarn web:build
 
       - name: Zip web build
@@ -406,6 +411,12 @@ jobs:
           # conservative floor now that the job-container limit is raised.
           NODE_OPTIONS: --max-old-space-size=1536
           CI_METRO_MAX_WORKERS: '2'
+          # Inlined into the JS bundle by Metro when assembleRelease triggers
+          # createBundleReleaseJsAndAssets (see src/shared/config/config.ts,
+          # src/pages/share/lib/constants.ts).
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
         run: |
           cd android
           free -h

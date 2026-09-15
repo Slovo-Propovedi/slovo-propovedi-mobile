@@ -6,10 +6,12 @@ import {
   PropertySortOrder,
 } from 'orval'
 
+const OPENAPI_SPEC_URL = `https://${process.env.DOCS_HOSTNAME ?? 'docs.slovo-propovedi.ru'}/openAPI.yaml`
+
 export default defineConfig({
   // Output 1: Axios API функции с mutator и MSW моками
   main: {
-    input: 'https://docs.slovo-propovedi.ru/openAPI.yaml',
+    input: OPENAPI_SPEC_URL,
     output: {
       mode: OutputMode.TAGS_SPLIT,
       client: 'axios',
@@ -30,7 +32,7 @@ export default defineConfig({
   },
   // Output 2: Zod схемы отдельно (без mutator)
   schemas: {
-    input: 'https://docs.slovo-propovedi.ru/openAPI.yaml',
+    input: OPENAPI_SPEC_URL,
     output: {
       mode: OutputMode.TAGS,
       propertySortOrder: PropertySortOrder.ALPHABETICAL,
