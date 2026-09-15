@@ -4,7 +4,7 @@
   "main": "expo-router/entry",
   "license": "GPL-3.0-or-later",
   "scripts": {
-    "api:generate": "yarn delete-generated-api-files && orval",
+    "api:generate": "yarn delete-generated-api-files && NODE_OPTIONS=--no-network-family-autoselection orval",
     "build-local-debug:android": "cd android && ./gradlew assembleDevDebug",
     "build-local-release:android": "cd android && ./gradlew assembleProdRelease",
     "check:fsd": "steiger .",
