@@ -1,0 +1,6 @@
+Stop orval overwriting hand-written generated index
+Update api generating script
+Source API/landing/web/docs hostnames from env vars
+Silent playlist caching progress notifications, sound only on completion (#101)
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

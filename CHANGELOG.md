@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.2] - 2026-09-15
+
+### Added
+
+- Source API/landing/web/docs hostnames from env vars
+
+### Fixed
+
+- Restamp patches for installed package versions
+- Stop orval overwriting hand-written generated index
+- Update api generating script
+- Remove unused EAS Cloud build tooling
+- Silent playlist caching progress notifications, sound only on completion (#101)
+- Lock file maintenance
+- Update gradle to v9.7.1
+
 ## [0.21.1] - 2026-09-12
 
 ### Changed
@@ -644,6 +660,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.21.2]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.2
 [0.21.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.1
 [0.21.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.0
 [0.20.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.20.0
