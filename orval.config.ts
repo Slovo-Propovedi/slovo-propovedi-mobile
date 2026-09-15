@@ -17,6 +17,8 @@ export default defineConfig({
       client: 'axios',
       httpClient: 'axios',
       target: './src/shared/api/generated',
+      // index.ts ведётся вручную — Orval не должен его перезаписывать
+      indexFiles: false,
       mock: { generators: [{ type: OutputMockType.FAKER, generateEachHttpStatus: true }] },
       propertySortOrder: PropertySortOrder.ALPHABETICAL,
       unionAddMissingProperties: true,

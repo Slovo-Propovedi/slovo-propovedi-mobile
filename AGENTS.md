@@ -586,7 +586,7 @@ src/entities/player/lib/PlayerService/
 ## Gotchas
 
 1. **AsyncStorage Mock:** Must be mocked in `__mocks__/` for tests
-2. **Generated API Code:** `src/shared/api/generated/` is auto-generated and includes:
+2. **Generated API Code:** everything under `src/shared/api/generated/` is auto-generated except `index.ts`, which is hand-written (orval skips it via `indexFiles: false`; the `delete-generated-api-files` script also preserves it). It includes:
    - Axios API functions (auth, sermons, playlists, sections, files, users)
    - Zod schemas for runtime validation
    - MSW mocks for development
