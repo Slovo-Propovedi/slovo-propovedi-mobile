@@ -159,27 +159,6 @@ This runs, in order:
 Prerequisite: Metro must be running (`yarn start` in another terminal).
 This works only for the dev flavor (package `ru.slovopropovedi.dev`).
 
-## EAS Cloud Build (Alternative)
-
-The following scripts depend on the proprietary EAS Cloud service and are
-provided for convenience — they are **not** required:
-
-| Script                       | Description                           |
-| ---------------------------- | ------------------------------------- |
-| `yarn build:android`         | Build Android with EAS Cloud          |
-| `yarn build:ios`             | Build iOS with EAS Cloud              |
-| `yarn build:all`             | Build all platforms with EAS Cloud    |
-| `yarn build-preview:android` | Build Android (preview profile)       |
-| `yarn build-preview:ios`     | Build iOS (preview profile)           |
-| `yarn build-preview:all`     | Build all platforms (preview profile) |
-
-These scripts are retained for users who choose to use EAS. The
-`eas.json` file documents build profiles for reference.
-
-EAS profiles use an explicit `gradleCommand` (see `eas.json`):
-`development` → `:app:assembleDevDebug`, `preview` →
-`:app:assembleProdRelease`, `production` → `:app:bundleProdRelease`.
-
 ## Troubleshooting
 
 ### Build fails: "SDK not found"
