@@ -99,11 +99,15 @@ const PlaylistSheetListComponent = ({
       />
       {!isRevealed && (
         <View pointerEvents='none' testID='playlist-skeleton' style={styles.skeletonOverlay}>
-          <TracksListSkeleton rowCount={SKELETON_ROWS_COUNT} />
+          <PlaylistSheetList.Skeleton rowCount={SKELETON_ROWS_COUNT} />
         </View>
       )}
     </View>
   )
 }
 
-export const PlaylistSheetList = memo(PlaylistSheetListComponent)
+const PlaylistSheetListWithSkeleton = Object.assign(memo(PlaylistSheetListComponent), {
+  Skeleton: TracksListSkeleton,
+})
+
+export const PlaylistSheetList = PlaylistSheetListWithSkeleton
