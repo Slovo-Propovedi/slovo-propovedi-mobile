@@ -1,16 +1,24 @@
 import { createCtx } from '@reatom/framework'
-import { audioCacheService, hasInflightCacheDownloads } from 'shared/lib/audio-cache'
-import { cachedUrlsAtom, cacheUpdateTriggerAtom, markUrlCached } from 'shared/lib/cache-triggers'
-import { clearCacheAction } from './model'
+import { cachedUrlsAtom, cacheUpdateTriggerAtom, markUrlCached } from '../cache-triggers'
+import { audioCacheService } from './AudioCacheService'
+import { clearAudioCacheAction } from './clearAudioCacheAction'
+import { hasInflightCacheDownloads } from './inflightCache'
 
-jest.mock('shared/lib/audio-cache', () => {
-  const actual = jest.requireActual('shared/lib/audio-cache')
+jest.mock('./AudioCacheService', () => {
+  const actual = jest.requireActual('./AudioCacheService')
   return {
     ...actual,
     audioCacheService: {
       ...actual.audioCacheService,
       clearCache: jest.fn().mockResolvedValue(undefined),
     },
+  }
+})
+
+jest.mock('./inflightCache', () => {
+  const actual = jest.requireActual('./inflightCache')
+  return {
+    ...actual,
     hasInflightCacheDownloads: jest.fn(),
   }
 })
@@ -18,7 +26,7 @@ jest.mock('shared/lib/audio-cache', () => {
 const mockedClearCache = jest.mocked(audioCacheService.clearCache)
 const mockedHasInflightCacheDownloads = jest.mocked(hasInflightCacheDownloads)
 
-describe('clearCacheAction', () => {
+describe('clearAudioCacheAction', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockedHasInflightCacheDownloads.mockReturnValue(false)
@@ -29,7 +37,7 @@ describe('clearCacheAction', () => {
     markUrlCached(ctx, 'http://example.com/1.mp3')
     const before = ctx.get(cacheUpdateTriggerAtom)
 
-    const result = await clearCacheAction(ctx)
+    const result = await clearAudioCacheAction(ctx)
 
     expect(mockedClearCache).toHaveBeenCalled()
     expect(ctx.get(cachedUrlsAtom)).toEqual({})
@@ -41,7 +49,7 @@ describe('clearCacheAction', () => {
     const ctx = createCtx()
     mockedClearCache.mockRejectedValueOnce(new Error('clear failed'))
 
-    const result = await clearCacheAction(ctx)
+    const result = await clearAudioCacheAction(ctx)
 
     expect(result).toEqual({ error: expect.any(Error), success: false })
     expect(ctx.get(cacheUpdateTriggerAtom)).toBe(0)
@@ -53,7 +61,7 @@ describe('clearCacheAction', () => {
     const before = ctx.get(cacheUpdateTriggerAtom)
     mockedHasInflightCacheDownloads.mockReturnValue(true)
 
-    const result = await clearCacheAction(ctx)
+    const result = await clearAudioCacheAction(ctx)
 
     expect(mockedClearCache).not.toHaveBeenCalled()
     expect(ctx.get(cachedUrlsAtom)).toEqual({ 'http://example.com/1.mp3': true })

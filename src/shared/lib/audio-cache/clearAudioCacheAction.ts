@@ -1,8 +1,9 @@
 import { action } from '@reatom/framework'
-import { audioCacheService, hasInflightCacheDownloads } from 'shared/lib/audio-cache'
-import { clearCachedUrls, incrementCacheTrigger } from 'shared/lib/cache-triggers'
+import { clearCachedUrls, incrementCacheTrigger } from '../cache-triggers'
+import { audioCacheService } from './AudioCacheService'
+import { hasInflightCacheDownloads } from './inflightCache'
 
-export const clearCacheAction = action(async ctx => {
+export const clearAudioCacheAction = action(async ctx => {
   // Press-time belt-and-suspenders on a destructive op (mirrors the playlist
   // menu guard): clearing the cache directory mid-download could delete the
   // .part file the queue runner is writing. Silent no-op — no overlay clear,
@@ -16,4 +17,4 @@ export const clearCacheAction = action(async ctx => {
   } catch (error) {
     return { error, success: false }
   }
-}, 'clearCacheAction')
+}, 'clearAudioCacheAction')
