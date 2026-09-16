@@ -1,5 +1,6 @@
 import { Entypo } from '@expo/vector-icons'
 import { Pressable, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlayerRepeatToggle, SermonPlayerControls } from 'entities/player'
 import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
 import { formatSermonReference } from 'shared/lib/format'
@@ -7,6 +8,7 @@ import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { MovingText } from 'shared/ui'
 import type { createStyles } from '../ExpandablePlayer/styles'
+import { getFullscreenPlayerBottomPadding } from '../../lib/getFullscreenPlayerBottomPadding'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
 import { BoundaryHint } from './BoundaryHint'
 import { FullscreenDownloadProgressBar } from './FullscreenDownloadProgressBar'
@@ -46,13 +48,19 @@ export const PlayerControlsSection = ({
   styles,
   visualState,
 }: PlayerControlsSectionProps) => {
+  const { bottom } = useSafeAreaInsets()
   const subtitle =
     formatSermonReference({ book: audio.book, chapter: audio.chapter, verse: audio.verse }) ??
     playlist?.title ??
     'Слово.Проповеди'
 
   return (
-    <View style={styles.bottomContentContainer}>
+    <View
+      style={[
+        styles.bottomContentContainer,
+        { paddingBottom: getFullscreenPlayerBottomPadding(bottom) },
+      ]}
+    >
       <View style={styles.trackInfoRow}>
         <View style={styles.trackInfoTextContainer}>
           <MovingText animationThreshold={30} text={audio.title || ''} style={styles.trackTitle} />
