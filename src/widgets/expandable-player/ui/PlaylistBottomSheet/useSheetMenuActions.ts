@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { buildHistoryMenuActions, useHistorySermonIds } from 'entities/listening-history'
 import { type PlaylistData, toAudioPlayerData } from 'shared/model'
 import { type MenuAction } from 'shared/ui/track-list'
@@ -21,20 +21,34 @@ export const useSheetMenuActions = (
     () => new Map(playlist.sermons.map(sermon => [sermon.id, sermon] as const)),
     [playlist],
   )
+  // Per-id cache: rows re-render on unrelated state (cacheTrigger, other rows'
+  // progress) and would rebuild their menu actions every time. The cache is
+  // cleared synchronously when any dependency changes, so stale entries never
+  // leak into a render.
+  const actionsCacheRef = useRef(new Map<string, MenuAction[] | undefined>())
+  const cacheDepsRef = useRef<readonly unknown[]>([])
 
   return useCallback(
     (itemId: string): MenuAction[] | undefined => {
+      const deps: readonly unknown[] = [historySermonIds, playlist, progressMap, sermonById]
+      const prevDeps = cacheDepsRef.current
+      if (prevDeps.length !== deps.length || deps.some((dep, i) => dep !== prevDeps[i])) {
+        actionsCacheRef.current.clear()
+        cacheDepsRef.current = deps
+      }
+      if (actionsCacheRef.current.has(itemId)) return actionsCacheRef.current.get(itemId)
       const sermon = sermonById.get(itemId)
       const audio = sermon ? toAudioPlayerData(sermon) : null
-      if (audio)
-        return buildHistoryMenuActions({
-          inHistory: historySermonIds.has(itemId),
-          isCompleted: progressMap.get(itemId) === 1,
-          playlist,
-          sermon: audio,
-        })
-
-      return undefined
+      const actions = audio
+        ? buildHistoryMenuActions({
+            inHistory: historySermonIds.has(itemId),
+            isCompleted: progressMap.get(itemId) === 1,
+            playlist,
+            sermon: audio,
+          })
+        : undefined
+      actionsCacheRef.current.set(itemId, actions)
+      return actions
     },
     [historySermonIds, playlist, progressMap, sermonById],
   )

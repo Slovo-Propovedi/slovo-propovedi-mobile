@@ -83,7 +83,6 @@ jest.mock('entities/player', () => {
   return {
     currentAudioAtom: atom(null, 'currentAudioAtom'),
     isPlayingAtom: atom(false, 'isPlayingAtom'),
-    useIsDownloadingUrl: () => false,
     usePlayNewSermon: () => jest.fn(),
   }
 })
@@ -96,13 +95,17 @@ jest.mock('entities/listening-history', () => ({
 
 jest.mock('shared/ui/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
+  const TracksListItem = ({ title }: { title: string }) => (
+    <View testID='tracks-list-item'>
+      <Text>{title}</Text>
+    </View>
+  )
+  const TracksListSkeleton = () => null
+
   return {
     TRACK_LIST_ITEM_SIZES: { albumArtSize: 50, leftOffset: 60 },
-    TracksListItem: ({ title }: { title: string }) => (
-      <View testID='tracks-list-item'>
-        <Text>{title}</Text>
-      </View>
-    ),
+    TracksListItem,
+    TracksListSkeleton,
   }
 })
 
@@ -783,5 +786,63 @@ describe('<PlaylistBottomSheet>', () => {
 
     expect(mockContentContainerStyle).toEqual(expect.arrayContaining([{ opacity: 0 }]))
     expect(getByTestId(SKELETON_TEST_ID)).toBeTruthy()
+  })
+
+  test('keeps the skeleton after the estimate jump while a retry is pending', async () => {
+    const ctx = createCtx()
+    const sermons = Array.from({ length: 12 }, (_, i) => makeSermon(`s${i}`))
+    currentAudioAtom(ctx, makeAudio('s10'))
+
+    const { getByTestId } = await renderSheet(ctx, makePlaylist(sermons))
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+
+    await act(async () => {
+      mockOnChange?.(0)
+    })
+    await fireNudge()
+    expect(mockScrollToIndex).toHaveBeenCalledTimes(1)
+
+    // Estimate jump fires a scroll event at avg × index — a retry is pending,
+    // so the skeleton must stay (the jump stays masked).
+    await act(async () => {
+      mockOnScrollToIndexFailed?.({ averageItemLength: 50, index: 10 })
+    })
+    await act(async () => {
+      mockOnScroll?.({ nativeEvent: { contentOffset: { y: 500 } } })
+    })
+    expect(mockContentContainerStyle).toEqual(expect.arrayContaining([{ opacity: 0 }]))
+    expect(getByTestId(SKELETON_TEST_ID)).toBeTruthy()
+
+    // Retry fires (no pending work) and the list sits at the intended offset —
+    // reveal.
+    await act(async () => {
+      jest.advanceTimersByTime(100)
+    })
+    await act(async () => {
+      mockOnScroll?.({ nativeEvent: { contentOffset: { y: 500 } } })
+    })
+    expect(mockContentContainerStyle).not.toEqual(expect.arrayContaining([{ opacity: 0 }]))
+  })
+
+  test('reveals immediately when the user starts dragging the list', async () => {
+    const ctx = createCtx()
+    const sermons = Array.from({ length: 12 }, (_, i) => makeSermon(`s${i}`))
+    currentAudioAtom(ctx, makeAudio('s10'))
+
+    const { getByTestId, queryByTestId } = await renderSheet(ctx, makePlaylist(sermons))
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+
+    await act(async () => {
+      mockOnChange?.(0)
+    })
+    await fireNudge()
+    expect(getByTestId(SKELETON_TEST_ID)).toBeTruthy()
+
+    await act(async () => {
+      mockOnScrollBeginDrag?.()
+    })
+
+    expect(mockContentContainerStyle).not.toEqual(expect.arrayContaining([{ opacity: 0 }]))
+    expect(queryByTestId(SKELETON_TEST_ID)).toBeNull()
   })
 })

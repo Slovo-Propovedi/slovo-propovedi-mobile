@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ScrollGuards, ScrollToIndexFailedInfo } from './scrollGuards'
-import type { BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
+import type { ScrollToIndexFailedInfo } from './scrollGuards'
 import type { AudioPlayerData, PlaylistData } from 'shared/model'
 import { scheduleEstimateRetry } from './scrollGuards'
 import { createScrollScheduler } from './scrollScheduler'
 import { isOffsetNegligible } from './useListReveal'
+import { useScrollGuards } from './useScrollGuards'
 
 const MAX_SCROLL_RETRIES = 6
 const RETRY_BASE_DELAY_MS = 100
@@ -15,61 +15,42 @@ const INITIAL_NUM_TO_RENDER = 10
 interface UseScrollToCurrentTrackParams {
   currentAudio: AudioPlayerData | null
   finalSnapIndex: number
+  intendedOffsetRef: React.RefObject<null | number>
   playlist: null | PlaylistData
 }
 
 export const useScrollToCurrentTrack = ({
   currentAudio,
   finalSnapIndex,
+  intendedOffsetRef,
   playlist,
 }: UseScrollToCurrentTrackParams) => {
-  const listRef = useRef<BottomSheetFlatListMethods>(null)
   const didScrollRef = useRef(false)
   const retryCountRef = useRef(0)
-  // The sheet mounts at the final snap, so it starts there.
-  const lastSheetIndexRef = useRef(finalSnapIndex)
-  const isDraggingRef = useRef(false)
-  const isMomentumRef = useRef(false)
   const [scheduler] = useState(() => createScrollScheduler())
+  const {
+    currentIndexRef,
+    guards,
+    handleDragEnd,
+    handleDragStart,
+    handleMomentumEnd,
+    handleMomentumStart,
+    listRef,
+    noteSheetIndex,
+  } = useScrollGuards(finalSnapIndex)
 
   const currentIndex = useMemo(
     () => playlist?.sermons.findIndex(sermon => sermon.id === currentAudio?.id) ?? -1,
     [currentAudio?.id, playlist],
   )
-  const currentIndexRef = useRef(currentIndex)
 
   useEffect(() => {
     currentIndexRef.current = currentIndex
-  }, [currentIndex])
+  }, [currentIndex, currentIndexRef])
 
   useEffect(() => () => scheduler.clearAll(), [scheduler])
 
-  const guards = useMemo<ScrollGuards>(
-    () => ({ currentIndexRef, isDraggingRef, isMomentumRef, lastSheetIndexRef, listRef }),
-    [currentIndexRef, isDraggingRef, isMomentumRef, lastSheetIndexRef, listRef],
-  )
-
   const initialNumToRender = INITIAL_NUM_TO_RENDER
-
-  const noteSheetIndex = useCallback((index: number) => {
-    lastSheetIndexRef.current = index
-  }, [])
-
-  const handleDragStart = useCallback(() => {
-    isDraggingRef.current = true
-  }, [])
-
-  const handleDragEnd = useCallback(() => {
-    isDraggingRef.current = false
-  }, [])
-
-  const handleMomentumStart = useCallback(() => {
-    isMomentumRef.current = true
-  }, [])
-
-  const handleMomentumEnd = useCallback(() => {
-    isMomentumRef.current = false
-  }, [])
 
   const scrollToCurrent = useCallback(() => {
     if (currentIndex < 0) return
@@ -83,23 +64,26 @@ export const useScrollToCurrentTrack = ({
     // the NEXT frame after onChange (Reanimated derived-status, issue #2737).
     scheduler.scheduleNudge(() => {
       if (
-        lastSheetIndexRef.current !== finalSnapIndex ||
-        isDraggingRef.current ||
-        isMomentumRef.current
+        guards.lastSheetIndexRef.current !== finalSnapIndex ||
+        guards.isDraggingRef.current ||
+        guards.isMomentumRef.current
       ) {
         // The sheet left the top snap (or the user is dragging/flinging) before
         // the nudge fired — re-arm the one-shot so a later settle retries.
         didScrollRef.current = false
         return
       }
-      const index = currentIndexRef.current
+      const index = guards.currentIndexRef.current
       if (index < 0) return
-      listRef.current?.scrollToIndex({ animated: false, index, viewPosition: 0 })
+      guards.listRef.current?.scrollToIndex({ animated: false, index, viewPosition: 0 })
     })
-  }, [currentIndex, finalSnapIndex, scheduler])
+  }, [currentIndex, finalSnapIndex, guards, scheduler])
 
   const handleScrollToIndexFailed = useCallback(
     (info: ScrollToIndexFailedInfo) => {
+      // The estimate jump is the intended landing offset: the reveal gate
+      // compares real scroll offsets against it before unmasking the list.
+      intendedOffsetRef.current = info.averageItemLength * info.index
       scheduleEstimateRetry(
         scheduler,
         guards,
@@ -110,8 +94,10 @@ export const useScrollToCurrentTrack = ({
         RETRY_BASE_DELAY_MS,
       )
     },
-    [finalSnapIndex, guards, scheduler, retryCountRef],
+    [finalSnapIndex, guards, intendedOffsetRef, scheduler, retryCountRef],
   )
+
+  const hasPendingScroll = useCallback(() => scheduler.hasPending(), [scheduler])
 
   return {
     currentIndex,
@@ -120,6 +106,7 @@ export const useScrollToCurrentTrack = ({
     handleMomentumEnd,
     handleMomentumStart,
     handleScrollToIndexFailed,
+    hasPendingScroll,
     initialNumToRender,
     listRef,
     noteSheetIndex,

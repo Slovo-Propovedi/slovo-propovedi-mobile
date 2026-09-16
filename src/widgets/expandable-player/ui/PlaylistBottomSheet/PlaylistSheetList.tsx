@@ -1,11 +1,13 @@
 import { type BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
 import { memo } from 'react'
 import { View } from 'react-native'
+import { TracksListSkeleton } from 'shared/ui/track-list'
 import type { PlaylistData } from 'shared/model'
 import { type createStyles } from './PlaylistBottomSheet.styles'
-import { PlaylistSheetSkeleton } from './PlaylistSheetSkeleton'
 import { ScrollableSheetList } from './ScrollableSheetList'
 import { type TrackListItemData, usePlaylistSheetList } from './usePlaylistSheetList'
+
+const SKELETON_ROWS_COUNT = 8
 
 interface PlaylistSheetListProps {
   cacheTrigger: number
@@ -95,7 +97,11 @@ const PlaylistSheetListComponent = ({
         contentContainerStyle={[styles.listContent, !isRevealed && styles.hiddenContent]}
         ListFooterComponent={<View pointerEvents='none' style={{ height: footerHeight }} />}
       />
-      {!isRevealed && <PlaylistSheetSkeleton styles={styles} />}
+      {!isRevealed && (
+        <View pointerEvents='none' testID='playlist-skeleton' style={styles.skeletonOverlay}>
+          <TracksListSkeleton rowCount={SKELETON_ROWS_COUNT} />
+        </View>
+      )}
     </View>
   )
 }

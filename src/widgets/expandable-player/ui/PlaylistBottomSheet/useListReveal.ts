@@ -5,9 +5,14 @@ const REVEAL_CEILING_MS = 1500
 const ROW_HEIGHT_ESTIMATE_PX = 70
 // Offsets up to ~3-4 rows: the correction scroll is tiny, no gate needed.
 const IMMEDIATE_REVEAL_MAX_OFFSET_PX = 240
+// The estimate jump (avg × index) may differ from the converged offset by a
+// couple of rows; reveal once the list is within this band of the target.
+const REVEAL_CONVERGENCE_TOLERANCE_PX = 160
 
 interface UseListRevealParams {
   currentIndex: number
+  hasPendingScroll: () => boolean
+  intendedOffsetRef: React.RefObject<null | number>
 }
 
 // Near-top targets need no reveal gate — and no correction scroll: the target
@@ -17,8 +22,15 @@ export const isOffsetNegligible = (index: number) =>
 
 // Reveal gate for the playlist sheet: keep the list invisible until the
 // auto-scroll has landed, so the entrance spring never flashes the list at
-// offset 0. A ceiling timer force-reveals even if no scroll event ever fires.
-export const useListReveal = ({ currentIndex }: UseListRevealParams) => {
+// offset 0. The estimate jump and each backoff retry stay masked by the
+// skeleton: reveal fires only once the real offset is within tolerance of the
+// intended target AND no retry is pending. A ceiling timer force-reveals even
+// if no scroll event ever fires; a user drag/momentum reveals immediately.
+export const useListReveal = ({
+  currentIndex,
+  hasPendingScroll,
+  intendedOffsetRef,
+}: UseListRevealParams) => {
   const [isRevealed, setIsRevealed] = useState(
     currentIndex <= 0 || isOffsetNegligible(currentIndex),
   )
@@ -51,12 +63,24 @@ export const useListReveal = ({ currentIndex }: UseListRevealParams) => {
       // 100px threshold was unreachable for short playlists whose whole
       // scrollable distance is ~1 row (~73px) — the list stayed skeleton'd
       // until the ceiling timer (issue #69).
-      if (y > 0) reveal()
+      if (y <= 0) return
+      const intendedOffset = intendedOffsetRef.current
+      // No estimate path (scrollToIndex landed first try): the scroll event
+      // fires at the converged offset — reveal immediately.
+      if (intendedOffset === null) {
+        reveal()
+        return
+      }
+      // Estimate path: keep the skeleton until the list converges to the
+      // intended offset AND no retries are pending — the estimate jump and
+      // each backoff retry stay masked until the landing is stable.
+      if (Math.abs(y - intendedOffset) <= REVEAL_CONVERGENCE_TOLERANCE_PX && !hasPendingScroll())
+        reveal()
     },
-    [reveal],
+    [hasPendingScroll, intendedOffsetRef, reveal],
   )
 
   useEffect(() => clearCeilingTimer, [clearCeilingTimer])
 
-  return { handleListScroll, isRevealed, noteScrollScheduled }
+  return { handleListScroll, isRevealed, noteScrollScheduled, revealNow: reveal }
 }

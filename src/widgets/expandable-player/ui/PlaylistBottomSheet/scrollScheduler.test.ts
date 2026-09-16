@@ -46,4 +46,27 @@ describe('createScrollScheduler', () => {
     expect(nudgeCb).not.toHaveBeenCalled()
     expect(timerCb).not.toHaveBeenCalled()
   })
+
+  test('hasPending reflects scheduled work and clears after it fires', () => {
+    const scheduler = createScrollScheduler()
+    const cb = jest.fn()
+
+    expect(scheduler.hasPending()).toBe(false)
+
+    scheduler.scheduleTimer(cb, 100)
+    expect(scheduler.hasPending()).toBe(true)
+
+    jest.advanceTimersByTime(100)
+    expect(cb).toHaveBeenCalledTimes(1)
+    expect(scheduler.hasPending()).toBe(false)
+  })
+
+  test('hasPending is false after clearAll', () => {
+    const scheduler = createScrollScheduler()
+
+    scheduler.scheduleTimer(jest.fn(), 100)
+    scheduler.clearAll()
+
+    expect(scheduler.hasPending()).toBe(false)
+  })
 })

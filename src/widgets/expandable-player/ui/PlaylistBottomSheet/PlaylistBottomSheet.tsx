@@ -1,6 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
-import { memo, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { useHistoryProgressMap } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
@@ -33,6 +33,9 @@ const PlaylistBottomSheetComponent = ({
   const [settleTick, setSettleTick] = useState(0)
   const progressMap = useHistoryProgressMap()
   const { currentTheme } = useTheme()
+  // Shared with the scroll pipeline: the estimate jump's target offset, used
+  // by the reveal gate to detect scroll convergence (see useListReveal).
+  const intendedOffsetRef = useRef<null | number>(null)
   const {
     currentIndex,
     handleDragEnd,
@@ -40,6 +43,7 @@ const PlaylistBottomSheetComponent = ({
     handleMomentumEnd,
     handleMomentumStart,
     handleScrollToIndexFailed,
+    hasPendingScroll,
     initialNumToRender,
     listRef,
     noteSheetIndex,
@@ -47,9 +51,24 @@ const PlaylistBottomSheetComponent = ({
   } = useScrollToCurrentTrack({
     currentAudio,
     finalSnapIndex: FINAL_SNAP_INDEX,
+    intendedOffsetRef,
     playlist,
   })
-  const { handleListScroll, isRevealed, noteScrollScheduled } = useListReveal({ currentIndex })
+  const { handleListScroll, isRevealed, noteScrollScheduled, revealNow } = useListReveal({
+    currentIndex,
+    hasPendingScroll,
+    intendedOffsetRef,
+  })
+  // User touch = show the real list immediately; the auto-scroll retries stop
+  // fighting the finger (scrollGuards drops them while dragging/flinging).
+  const handleDragStartWithReveal = useCallback(() => {
+    revealNow()
+    handleDragStart()
+  }, [handleDragStart, revealNow])
+  const handleMomentumStartWithReveal = useCallback(() => {
+    revealNow()
+    handleMomentumStart()
+  }, [handleMomentumStart, revealNow])
   const { handleAnimate, handlePressItem, handleSheetChanges, sheetIndex } = useSheetLifecycle({
     closeOnBack,
     noteScrollScheduled,
@@ -92,12 +111,12 @@ const PlaylistBottomSheetComponent = ({
         onDragEnd={handleDragEnd}
         cacheTrigger={cacheTrigger}
         onScroll={handleListScroll}
-        onDragStart={handleDragStart}
         isAudioPlaying={isAudioPlaying}
         currentAudioId={currentAudio?.id}
         onMomentumEnd={handleMomentumEnd}
-        onMomentumStart={handleMomentumStart}
+        onDragStart={handleDragStartWithReveal}
         initialNumToRender={initialNumToRender}
+        onMomentumStart={handleMomentumStartWithReveal}
         onScrollToIndexFailed={handleScrollToIndexFailed}
       />
     </BottomSheet>

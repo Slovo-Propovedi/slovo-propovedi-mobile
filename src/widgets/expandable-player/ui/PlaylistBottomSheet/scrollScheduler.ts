@@ -1,5 +1,6 @@
 export interface ScrollScheduler {
   clearAll: () => void
+  hasPending: () => boolean
   scheduleNudge: (cb: () => void) => void
   scheduleTimer: (cb: () => void, delay: number) => void
 }
@@ -58,5 +59,7 @@ export const createScrollScheduler = (): ScrollScheduler => {
     pending.clear()
   }
 
-  return { clearAll, scheduleNudge, scheduleTimer }
+  const hasPending = () => pending.size > 0
+
+  return { clearAll, hasPending, scheduleNudge, scheduleTimer }
 }
