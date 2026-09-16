@@ -15,7 +15,7 @@ export interface ResolveCacheStateInput {
  * Cached beats queued because enqueueCache deduplicates by queued/inflight
  * status, NOT by cached — a "cache all" sweep re-enqueues already-cached URLs.
  * When both flags are true the track IS cached and the queue entry is
- * redundant, so the row must present as cached (no clock, "Удалить из кеша").
+ * redundant, so the row must present as cached (no clock, "Удалить из офлайн").
  */
 export type TrackCacheVisualState = 'cached' | 'cloud' | 'downloading' | 'playing' | 'queued'
 

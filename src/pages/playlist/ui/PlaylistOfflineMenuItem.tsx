@@ -5,7 +5,7 @@ import { PlaylistMenuRow } from './PlaylistMenuRow'
 
 const ICON_SIZE = 18
 
-export interface PlaylistCacheMenuItemProps {
+export interface PlaylistOfflineMenuItemProps {
   icon: keyof typeof MaterialCommunityIcons.glyphMap
   iconColor?: ColorValue
   isDisabled?: boolean
@@ -14,14 +14,14 @@ export interface PlaylistCacheMenuItemProps {
   textColor?: ColorValue
 }
 
-export const PlaylistCacheMenuItem = ({
+export const PlaylistOfflineMenuItem = ({
   icon,
   iconColor,
   isDisabled = false,
   onPress,
   text,
   textColor,
-}: PlaylistCacheMenuItemProps) => {
+}: PlaylistOfflineMenuItemProps) => {
   const { currentTheme } = useTheme()
 
   return (

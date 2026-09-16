@@ -434,7 +434,7 @@ describe('usePlayNewSermon', () => {
 
   describe('offline playback guard', () => {
     const OFFLINE_PLAYBACK_MESSAGE =
-      'Невозможно воспроизвести незакешированную проповедь без интернета'
+      'Невозможно воспроизвести проповедь без интернета, если она не сохранена в офлайн'
 
     test('offline + uncached → friendly info dialog, no playback state mutation', async () => {
       mockGetResumePosition.mockReturnValue(RESUME_MS)

@@ -159,7 +159,7 @@ describe('<PlayerMenuItems>', () => {
     await act(async () => {
       isOnlineAtom(ctx, false)
     })
-    fireEvent.press(getByText('Добавить в кеш'))
+    fireEvent.press(getByText('Добавить в офлайн'))
     expect(mockOnToggleCache).not.toHaveBeenCalled()
   })
 
@@ -177,7 +177,7 @@ describe('<PlayerMenuItems>', () => {
     await act(async () => {
       isOnlineAtom(ctx, false)
     })
-    fireEvent.press(getByText('Удалить из кеша'))
+    fireEvent.press(getByText('Удалить из офлайн'))
     expect(mockOnToggleCache).toHaveBeenCalledTimes(1)
   })
 
@@ -191,7 +191,7 @@ describe('<PlayerMenuItems>', () => {
         onToggleCache={mockOnToggleCache}
       />,
     )
-    expect(getByText('Остановить кеширование')).toBeTruthy()
+    expect(getByText('Остановить добавление в офлайн')).toBeTruthy()
   })
 
   test('shows remove from queue label when queued', async () => {
@@ -220,7 +220,7 @@ describe('<PlayerMenuItems>', () => {
     await act(async () => {
       isOnlineAtom(ctx, false)
     })
-    fireEvent.press(getByText('Остановить кеширование'))
+    fireEvent.press(getByText('Остановить добавление в офлайн'))
     expect(mockOnToggleCache).toHaveBeenCalledTimes(1)
   })
 })

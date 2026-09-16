@@ -3,7 +3,7 @@ import { enqueueCacheMany } from 'shared/lib/audio-cache'
 import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { waitForOnline } from 'shared/lib/network'
 import { playlistCacheProgressAtom } from '../model'
-import { playlistCacheNotifications } from './PlaylistCacheNotifications'
+import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
 import { runPlaylistCaching } from './runPlaylistCaching'
 
 jest.mock('shared/lib/network', () => ({
@@ -16,8 +16,8 @@ jest.mock('shared/lib/audio-cache', () => ({
     .isCacheCancelledError,
 }))
 
-jest.mock('./PlaylistCacheNotifications', () => ({
-  playlistCacheNotifications: {
+jest.mock('./PlaylistOfflineNotifications', () => ({
+  playlistOfflineNotifications: {
     hideCachingNotification: jest.fn().mockResolvedValue(undefined),
     showCachingNotification: jest.fn().mockResolvedValue('notification-id'),
     updateCachingNotification: jest.fn().mockResolvedValue('notification-id'),
@@ -31,7 +31,7 @@ const TRACKS = [
 
 const mockedEnqueueCacheMany = jest.mocked(enqueueCacheMany)
 const mockedWaitForOnline = jest.mocked(waitForOnline)
-const mockedNotifications = jest.mocked(playlistCacheNotifications)
+const mockedNotifications = jest.mocked(playlistOfflineNotifications)
 
 describe('runPlaylistCaching', () => {
   beforeEach(() => {

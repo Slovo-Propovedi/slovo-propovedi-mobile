@@ -16,17 +16,22 @@ interface PlayerMenuItemsProps {
   visualState: TrackCacheVisualState
 }
 
-const CACHE_ACTION_LABELS: Record<TrackCacheVisualState, string> = {
-  cached: 'Удалить из кеша',
-  cloud: 'Добавить в кеш',
-  downloading: 'Остановить кеширование',
-  playing: 'Добавить в кеш',
-  queued: 'Убрать из очереди',
+const ADD_TO_OFFLINE_TEXT = 'Добавить в офлайн'
+const REMOVE_CACHE_TEXT = 'Удалить из офлайн'
+const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
+const REMOVE_FROM_QUEUE_TEXT = 'Убрать из очереди'
+
+const OFFLINE_ACTION_LABELS: Record<TrackCacheVisualState, string> = {
+  cached: REMOVE_CACHE_TEXT,
+  cloud: ADD_TO_OFFLINE_TEXT,
+  downloading: STOP_CACHING_TEXT,
+  playing: ADD_TO_OFFLINE_TEXT,
+  queued: REMOVE_FROM_QUEUE_TEXT,
 }
 
 const getCacheActionLabel = (visualState: TrackCacheVisualState, isCached: boolean): string => {
-  if (visualState === 'playing') return isCached ? 'Удалить из кеша' : 'Добавить в кеш'
-  return CACHE_ACTION_LABELS[visualState]
+  if (visualState === 'playing') return isCached ? REMOVE_CACHE_TEXT : ADD_TO_OFFLINE_TEXT
+  return OFFLINE_ACTION_LABELS[visualState]
 }
 
 export const PlayerMenuItems = ({

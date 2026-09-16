@@ -11,8 +11,8 @@ import {
   FIXED_NOTIFICATION_ID,
   SILENT_CHANNEL_ID,
 } from './notificationConstants'
-import { playlistCacheNotifications } from './PlaylistCacheNotifications'
 import { ensurePlaylistNotificationChannels } from './playlistChannelIds'
+import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
 
 jest.mock('shared/lib/notifications', () => ({
   hideNotification: jest.fn().mockResolvedValue(undefined),
@@ -31,14 +31,14 @@ beforeEach(() => {
   jest.clearAllMocks()
 })
 
-describe('PlaylistCacheNotifications channel routing', () => {
+describe('PlaylistOfflineNotifications channel routing', () => {
   test('showCachingNotification uses silent channel', async () => {
-    await playlistCacheNotifications.showCachingNotification('Плейлист')
+    await playlistOfflineNotifications.showCachingNotification('Плейлист')
 
     expect(mockedEnsurePlaylistNotificationChannels).toHaveBeenCalled()
     expect(mockedScheduleNotification).toHaveBeenCalledWith(
       {
-        body: 'Плейлист: Скачивание началось',
+        body: 'Плейлист: Добавление в офлайн началось',
         sound: false,
         title: CACHING_TITLE,
       },
@@ -49,11 +49,11 @@ describe('PlaylistCacheNotifications channel routing', () => {
   })
 
   test('updateCachingNotification uses silent channel', async () => {
-    await playlistCacheNotifications.updateCachingNotification('id', 5, 10, 'Плейлист')
+    await playlistOfflineNotifications.updateCachingNotification('id', 5, 10, 'Плейлист')
 
     expect(mockedScheduleNotification).toHaveBeenCalledWith(
       {
-        body: 'Плейлист: Скачано 5 из 10',
+        body: 'Плейлист: Добавлено в офлайн 5 из 10',
         sound: false,
         title: CACHING_TITLE,
       },
@@ -64,11 +64,11 @@ describe('PlaylistCacheNotifications channel routing', () => {
   })
 
   test('showCompletionNotification uses alert channel with sound', async () => {
-    await playlistCacheNotifications.showCompletionNotification(10, 'Плейлист')
+    await playlistOfflineNotifications.showCompletionNotification(10, 'Плейлист')
 
     expect(mockedScheduleNotification).toHaveBeenCalledWith(
       {
-        body: 'Плейлист: Скачано 10 проповедей',
+        body: 'Плейлист: Добавлено в офлайн 10 проповедей',
         sound: true,
         title: COMPLETION_TITLE,
       },
@@ -79,14 +79,14 @@ describe('PlaylistCacheNotifications channel routing', () => {
   })
 
   test('showErrorNotification uses alert channel with sound', async () => {
-    await playlistCacheNotifications.showErrorNotification(
-      new Error('Не удалось скачать 3 из 5'),
+    await playlistOfflineNotifications.showErrorNotification(
+      new Error('Не удалось добавить в офлайн 3 из 5'),
       'Плейлист',
     )
 
     expect(mockedScheduleNotification).toHaveBeenCalledWith(
       {
-        body: 'Плейлист: Не удалось скачать 3 из 5',
+        body: 'Плейлист: Не удалось добавить в офлайн 3 из 5',
         sound: true,
         title: ERROR_TITLE,
       },
@@ -97,13 +97,13 @@ describe('PlaylistCacheNotifications channel routing', () => {
   })
 
   test('showCachingNotification requests permissions first', async () => {
-    await playlistCacheNotifications.showCachingNotification('Плейлист')
+    await playlistOfflineNotifications.showCachingNotification('Плейлист')
 
     expect(requestPermissions).toHaveBeenCalled()
   })
 
   test('hideCachingNotification hides by fixed ID', async () => {
-    await playlistCacheNotifications.hideCachingNotification('any-id')
+    await playlistOfflineNotifications.hideCachingNotification('any-id')
 
     expect(hideNotification).toHaveBeenCalledWith(FIXED_NOTIFICATION_ID)
   })

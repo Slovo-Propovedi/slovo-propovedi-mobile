@@ -2,7 +2,7 @@ import { useCtx } from '@reatom/npm-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { cachedUrlsAtom } from 'shared/lib/cache-triggers'
-import type { TrackToCache } from './PlaylistCacheService'
+import type { TrackToCache } from './PlaylistOfflineService'
 
 const STATUS_REFRESH_DEBOUNCE_MS = 250
 

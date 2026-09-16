@@ -35,33 +35,9 @@ jest.mock('entities/section', () => {
 
 jest.mock('entities/player', () => {
   const { atom } = jest.requireActual('@reatom/framework')
-  const { useCtx } = jest.requireActual('@reatom/npm-react')
-  const { useEffect, useState } = jest.requireActual('react')
-  const downloadingAudioUrlAtom = atom(null, 'testDownloadingAudioUrlAtom')
-
-  // Mirrors useIsDownloadingUrl semantics — sync with useIsDownloadingUrl.test.ts if matching policy changes.
-  const useIsDownloadingUrl = (audioUrl: null | string) => {
-    const ctx = useCtx()
-    const [isDownloadingUrl, setIsDownloadingUrl] = useState(false)
-
-    useEffect(() => {
-      const readDownloadingUrl = () => {
-        const isDownloading = audioUrl ? ctx.get(downloadingAudioUrlAtom) === audioUrl : false
-        setIsDownloadingUrl((prev: boolean) => (prev === isDownloading ? prev : isDownloading))
-      }
-      readDownloadingUrl()
-      if (!audioUrl) return
-      return ctx.subscribe(downloadingAudioUrlAtom, readDownloadingUrl)
-    }, [audioUrl, ctx])
-
-    return isDownloadingUrl
-  }
-
   return {
     currentAudioAtom: atom(null, 'testCurrentAudioAtom'),
-    downloadingAudioUrlAtom,
     isPlayingAtom: atom(false, 'testIsPlayingAtom'),
-    useIsDownloadingUrl,
     usePlayNewSermon: jest.fn(() => jest.fn()),
   }
 })
@@ -83,10 +59,10 @@ jest.mock('shared/lib/audio-cache', () => {
   }
 })
 
-jest.mock('../lib/PlaylistCacheService', () => ({
-  playlistCacheService: {
-    cachePlaylist: jest.fn().mockResolvedValue(undefined),
-    cancelPlaylistCache: jest.fn(),
+jest.mock('../lib/PlaylistOfflineService', () => ({
+  playlistOfflineService: {
+    addPlaylistToOffline: jest.fn().mockResolvedValue(undefined),
+    cancelPlaylistOfflineAdd: jest.fn(),
     clearError: jest.fn(),
     getError: jest.fn(() => null),
   },
@@ -102,9 +78,6 @@ jest.mock('expo-blur', () => {
   return { BlurTargetView: View, BlurView: View }
 })
 
-// Мок визуализирует boolean-проп isDownloading; политика matching'а тестируется в useIsDownloadingUrl.test.
-let mockTracksListItemRenderCount = 0
-
 jest.mock('shared/ui/track-list', () => {
   const { Pressable, Text, View } = jest.requireActual('react-native')
   return {
@@ -112,23 +85,16 @@ jest.mock('shared/ui/track-list', () => {
     TracksListItem: (props: {
       audioUrl?: null | string
       isAudioPlaying?: boolean
-      isDownloading?: boolean
       onPress?: () => void
       title: string
-    }) => {
-      mockTracksListItemRenderCount += 1
-      return (
-        <Pressable onPress={props.onPress} testID='tracks-list-item'>
-          <View>
-            <Text>{props.title}</Text>
-            {props.isDownloading && <Text testID='downloading-indicator'>{props.audioUrl}</Text>}
-            {props.isAudioPlaying && (
-              <Text testID={`playing-indicator-${props.title}`}>playing</Text>
-            )}
-          </View>
-        </Pressable>
-      )
-    },
+    }) => (
+      <Pressable onPress={props.onPress} testID='tracks-list-item'>
+        <View>
+          <Text>{props.title}</Text>
+          {props.isAudioPlaying && <Text testID={`playing-indicator-${props.title}`}>playing</Text>}
+        </View>
+      </Pressable>
+    ),
   }
 })
 
@@ -183,10 +149,10 @@ const SECTION_TITLE = 'Раздел'
 const NOT_FOUND_TEXT = 'Плейлист не найден'
 const EMPTY_TEXT = 'В плейлисте нет записей'
 const PLAY_ALL_TEXT = 'Воспроизвести все'
-const CACHE_ALL_TEXT = 'Закешировать все'
-const CACHE_ALL_CONFIRM_TEXT = 'Закешировать весь плейлист'
-const CACHE_DIALOG_TITLE = 'Кеширование плейлиста'
-const CLEAR_CACHE_TEXT = 'Удалить из кеша все'
+const ADD_ALL_TO_OFFLINE_TEXT = 'Добавить все в офлайн'
+const ADD_ALL_TO_OFFLINE_CONFIRM_TEXT = 'Добавить весь плейлист в офлайн'
+const CACHE_DIALOG_TITLE = 'Добавление плейлиста в офлайн'
+const CLEAR_CACHE_TEXT = 'Удалить из офлайн все'
 const MENU_BUTTON_TEST_ID = 'playlist-header-menu'
 const PLAYING_INDICATOR_PREFIX = 'playing-indicator-'
 
@@ -245,7 +211,6 @@ describe('<PlaylistScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockParams.playlist = PLAYLIST_ID
-    mockTracksListItemRenderCount = 0
   })
 
   test('renders the playlist title and its tracks', async () => {
@@ -347,41 +312,6 @@ describe('<PlaylistScreen>', () => {
     expect(hasHeaderRight).toBe(true)
   })
 
-  test('passes isDownloading only to the matching track item', async () => {
-    const ctx = createCtx()
-    dynamicSectionsAtom(ctx, [makeSection()])
-    const { downloadingAudioUrlAtom } = jest.requireMock('entities/player') as {
-      downloadingAudioUrlAtom: (ctx: unknown, v: null | string) => unknown
-    }
-
-    const { queryByText } = await renderScreen(ctx)
-    expect(queryByText(SERMON_1.audioUrl)).toBeNull()
-
-    await act(async () => {
-      downloadingAudioUrlAtom(ctx, SERMON_1.audioUrl)
-    })
-
-    expect(queryByText(SERMON_1.audioUrl)).toBeTruthy()
-    expect(queryByText(SERMON_2.audioUrl)).toBeNull()
-  })
-
-  test('re-renders only the matching track item when the downloading url changes', async () => {
-    const ctx = createCtx()
-    dynamicSectionsAtom(ctx, [makeSection()])
-    const { downloadingAudioUrlAtom } = jest.requireMock('entities/player') as {
-      downloadingAudioUrlAtom: (ctx: unknown, v: null | string) => unknown
-    }
-
-    await renderScreen(ctx)
-    const rendersAfterMount = mockTracksListItemRenderCount
-
-    await act(async () => {
-      downloadingAudioUrlAtom(ctx, SERMON_1.audioUrl)
-    })
-
-    expect(mockTracksListItemRenderCount).toBe(rendersAfterMount + 1)
-  })
-
   test('shows the empty state when the playlist has no sermons', async () => {
     const ctx = createCtx()
     dynamicSectionsAtom(ctx, [makeSection({ playlists: [{ ...PLAYLIST, sermons: [] }] })])
@@ -446,7 +376,7 @@ describe('<PlaylistScreen> header menu integration', () => {
     await renderScreen(ctx)
     const menu = await openHeaderMenu(ctx)
 
-    expect(menu.getByText(CACHE_ALL_TEXT)).toBeTruthy()
+    expect(menu.getByText(ADD_ALL_TO_OFFLINE_TEXT)).toBeTruthy()
     expect(menu.getByText(CLEAR_CACHE_TEXT)).toBeTruthy()
   })
 
@@ -458,7 +388,7 @@ describe('<PlaylistScreen> header menu integration', () => {
     await renderScreen(ctx)
     const menu = await openHeaderMenu(ctx)
 
-    await fireEvent(menu.getByText(CACHE_ALL_TEXT), 'touchEnd')
+    await fireEvent(menu.getByText(ADD_ALL_TO_OFFLINE_TEXT), 'touchEnd')
 
     expect(menu.queryByText(CACHE_DIALOG_TITLE)).toBeNull()
   })
@@ -466,20 +396,20 @@ describe('<PlaylistScreen> header menu integration', () => {
   test('cache-all confirm starts caching the playlist', async () => {
     const ctx = createCtx()
     dynamicSectionsAtom(ctx, [makeSection()])
-    const { playlistCacheService } = jest.requireMock('../lib/PlaylistCacheService') as {
-      playlistCacheService: { cachePlaylist: jest.Mock }
+    const { playlistOfflineService } = jest.requireMock('../lib/PlaylistOfflineService') as {
+      playlistOfflineService: { addPlaylistToOffline: jest.Mock }
     }
 
     await renderScreen(ctx)
     const menu = await openHeaderMenu(ctx)
 
-    await fireEvent(menu.getByText(CACHE_ALL_TEXT), 'touchEnd')
+    await fireEvent(menu.getByText(ADD_ALL_TO_OFFLINE_TEXT), 'touchEnd')
     expect(menu.getByText(CACHE_DIALOG_TITLE)).toBeTruthy()
 
-    await fireEvent.press(menu.getByText(CACHE_ALL_CONFIRM_TEXT))
+    await fireEvent.press(menu.getByText(ADD_ALL_TO_OFFLINE_CONFIRM_TEXT))
 
-    expect(playlistCacheService.cachePlaylist).toHaveBeenCalledTimes(1)
-    const [ctxArg, tracks, title] = playlistCacheService.cachePlaylist.mock.calls[0]
+    expect(playlistOfflineService.addPlaylistToOffline).toHaveBeenCalledTimes(1)
+    const [ctxArg, tracks, title] = playlistOfflineService.addPlaylistToOffline.mock.calls[0]
     expect(ctxArg).toBe(ctx)
     expect(tracks).toEqual([
       expect.objectContaining({

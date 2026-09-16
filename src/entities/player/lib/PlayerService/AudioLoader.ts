@@ -82,7 +82,7 @@ class AudioLoader {
       if (cachedUri) return cachedUri
     } catch (error) {
       console.error('[AudioLoader] getPlaybackUrl: Error checking cache:', error)
-      reportError(error, 'Ошибка при проверке кэша аудио')
+      reportError(error, 'Ошибка при проверке офлайн-копии аудио')
     }
     startBackgroundCaching(audioUrl)
     return audioUrl

@@ -1,7 +1,8 @@
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { showInfo } from 'shared/model/info-dialog'
 
-const OFFLINE_PLAYBACK_MESSAGE = 'Невозможно воспроизвести незакешированную проповедь без интернета'
+const OFFLINE_PLAYBACK_MESSAGE =
+  'Невозможно воспроизвести проповедь без интернета, если она не сохранена в офлайн'
 
 /**
  * Guards offline playback: when the user is offline and the track is not

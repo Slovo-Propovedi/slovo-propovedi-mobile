@@ -51,7 +51,7 @@ const forwardProgress =
 const processEntry = async (ctx: Ctx, url: string): Promise<void> => {
   const deferred = pendingPromises.get(url)
   // Dequeue inline (NOT via removeQueueEntry): requesters must survive the
-  // dequeue so cancelPlaylistCache can see joiners of the active download.
+  // dequeue so cancelPlaylistOfflineAdd can see joiners of the active download.
   dequeueEntry(ctx, url)
   pendingPromises.delete(url)
   if (!deferred) throw new Error(`[cacheQueue] No pending promise for ${url}`)

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { playlistCacheService } from './PlaylistCacheService'
+import { playlistOfflineService } from './PlaylistOfflineService'
 
 /**
  * Surfaces the playlist cache service's sticky error in the header menu.
@@ -18,7 +18,7 @@ export const usePlaylistCacheError = (cacheDialogVisible: boolean) => {
 
   useEffect(() => {
     if (!errorShownRef.current) {
-      const currentError = playlistCacheService.getError()
+      const currentError = playlistOfflineService.getError()
       if (currentError) {
         setErrorRef.current(currentError)
         errorShownRef.current = true
@@ -27,7 +27,7 @@ export const usePlaylistCacheError = (cacheDialogVisible: boolean) => {
   }, [cacheDialogVisible])
 
   const handleErrorClose = useCallback(() => {
-    playlistCacheService.clearError()
+    playlistOfflineService.clearError()
     setError(null)
     errorShownRef.current = false
   }, [])

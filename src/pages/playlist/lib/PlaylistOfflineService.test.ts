@@ -12,8 +12,8 @@ import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from 'shared/lib
 import { waitForOnline } from 'shared/lib/network'
 import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
-import { playlistCacheNotifications } from './PlaylistCacheNotifications'
-import { playlistCacheService } from './PlaylistCacheService'
+import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
+import { playlistOfflineService } from './PlaylistOfflineService'
 
 jest.mock('shared/lib/network', () => ({
   waitForOnline: jest.fn(),
@@ -49,8 +49,8 @@ jest.mock('shared/lib/audio-cache', () => {
   }
 })
 
-jest.mock('./PlaylistCacheNotifications', () => ({
-  playlistCacheNotifications: {
+jest.mock('./PlaylistOfflineNotifications', () => ({
+  playlistOfflineNotifications: {
     hideCachingNotification: jest.fn().mockResolvedValue(undefined),
     showCachingNotification: jest.fn().mockResolvedValue('notification-id'),
     showCompletionNotification: jest.fn().mockResolvedValue('notification-id'),
@@ -71,11 +71,11 @@ const mockedCancelCacheDownload = jest.mocked(cancelCacheDownload)
 const mockedGetCacheRequesters = jest.mocked(getCacheRequesters)
 const mockedRemoveFromQueueBySource = jest.mocked(removeFromQueueBySource)
 const mockedWaitForOnline = jest.mocked(waitForOnline)
-const mockedNotifications = jest.mocked(playlistCacheNotifications)
+const mockedNotifications = jest.mocked(playlistOfflineNotifications)
 
 const flushPromises = () => new Promise<void>(resolve => setImmediate(resolve))
 
-describe('playlistCacheService.cachePlaylist', () => {
+describe('playlistOfflineService.addPlaylistToOffline', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockedWaitForOnline.mockResolvedValue(true)
@@ -85,7 +85,7 @@ describe('playlistCacheService.cachePlaylist', () => {
   test('enqueues all tracks upfront with the playlist source', async () => {
     const ctx = createCtx()
 
-    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
 
     expect(mockedEnqueueCacheMany).toHaveBeenCalledTimes(1)
     expect(mockedEnqueueCacheMany.mock.calls[0][1]).toEqual([
@@ -117,7 +117,7 @@ describe('playlistCacheService.cachePlaylist', () => {
       }),
     )
 
-    const run = playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    const run = playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
     await flushPromises()
 
     // Resolving the second track first must not advance the run past the first.
@@ -152,11 +152,11 @@ describe('playlistCacheService.cachePlaylist', () => {
       }),
     )
 
-    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
 
     expect(mockedNotifications.showCompletionNotification).not.toHaveBeenCalled()
     const reportedError = mockedNotifications.showErrorNotification.mock.calls[0][0]
-    expect(reportedError.message).toBe('Не удалось скачать 1 из 3')
+    expect(reportedError.message).toBe('Не удалось добавить в офлайн 1 из 3')
   })
 
   test('skips a cancelled track without counting it as failed', async () => {
@@ -172,7 +172,7 @@ describe('playlistCacheService.cachePlaylist', () => {
       }),
     )
 
-    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
 
     expect(mockedNotifications.showCompletionNotification).toHaveBeenCalledWith(3, 'Плейлист')
     expect(mockedNotifications.showErrorNotification).not.toHaveBeenCalled()
@@ -182,7 +182,7 @@ describe('playlistCacheService.cachePlaylist', () => {
     const ctx = createCtx()
     mockedWaitForOnline.mockResolvedValue(false)
 
-    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
 
     expect(mockedEnqueueCacheMany).toHaveBeenCalledTimes(1)
     const reportedError = mockedNotifications.showErrorNotification.mock.calls[0][0]
@@ -214,10 +214,10 @@ describe('playlistCacheService.cachePlaylist', () => {
       }),
     )
 
-    const run = playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    const run = playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
     await flushPromises()
 
-    playlistCacheService.cancelPlaylistCache(ctx)
+    playlistOfflineService.cancelPlaylistOfflineAdd(ctx)
 
     // Simulate removeFromQueueBySource rejecting the pending promises.
     for (const { reject } of controlled.values())
@@ -234,7 +234,7 @@ describe('playlistCacheService.cachePlaylist', () => {
   test('resets isCachingPlaylistAtom in finally after a successful run', async () => {
     const ctx = createCtx()
 
-    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
 
     expect(ctx.get(isCachingPlaylistAtom)).toBe(false)
     expect(mockedRemoveFromQueueBySource).toHaveBeenCalledWith(ctx, 'playlist')
@@ -244,7 +244,7 @@ describe('playlistCacheService.cachePlaylist', () => {
     const ctx = createCtx()
     isCachingPlaylistAtom(ctx, true)
 
-    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
 
     expect(mockedEnqueueCacheMany).not.toHaveBeenCalled()
   })
@@ -252,7 +252,7 @@ describe('playlistCacheService.cachePlaylist', () => {
   test('returns early for empty tracks', async () => {
     const ctx = createCtx()
 
-    await playlistCacheService.cachePlaylist(ctx, [], 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, [], 'Плейлист')
 
     expect(mockedEnqueueCacheMany).not.toHaveBeenCalled()
   })
@@ -261,7 +261,7 @@ describe('playlistCacheService.cachePlaylist', () => {
     const ctx = createCtx()
     const tracks = [...TRACKS, { id: '4', title: 'Без URL' }]
 
-    await playlistCacheService.cachePlaylist(ctx, tracks, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, tracks, 'Плейлист')
 
     expect(mockedEnqueueCacheMany).toHaveBeenCalledTimes(1)
     expect(mockedEnqueueCacheMany.mock.calls[0][1]).toHaveLength(3)
@@ -271,7 +271,7 @@ describe('playlistCacheService.cachePlaylist', () => {
   test('leaves no run-owned progress entries after a successful run', async () => {
     const ctx = createCtx()
 
-    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
 
     expect(ctx.get(playlistDownloadProgressAtom)).toEqual({})
   })
@@ -280,7 +280,7 @@ describe('playlistCacheService.cachePlaylist', () => {
     const ctx = createCtx()
     const before = ctx.get(cacheUpdateTriggerAtom)
 
-    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
 
     expect(ctx.get(cacheUpdateTriggerAtom)).toBe(before)
   })
@@ -289,7 +289,7 @@ describe('playlistCacheService.cachePlaylist', () => {
     const ctx = createCtx()
     playlistDownloadProgressAtom(ctx, { 'http://other.com/manual.mp3': 0.42 })
 
-    await playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    await playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
 
     expect(ctx.get(playlistDownloadProgressAtom)).toEqual({ 'http://other.com/manual.mp3': 0.42 })
   })
@@ -325,11 +325,11 @@ describe('playlistCacheService.cachePlaylist', () => {
       }),
     )
 
-    const run1 = playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    const run1 = playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
     await flushPromises()
 
     // Cancel run 1: its finally starts and stalls at hideCachingNotification.
-    playlistCacheService.cancelPlaylistCache(ctx)
+    playlistOfflineService.cancelPlaylistOfflineAdd(ctx)
     // Simulate removeFromQueueBySource rejecting the pending promises.
     for (const { reject } of controlled.values())
       reject(new CacheCancelledError('http://example.com/1.mp3'))
@@ -337,7 +337,7 @@ describe('playlistCacheService.cachePlaylist', () => {
 
     // Simulate the successor starting while run 1's finally is still pending.
     isCachingPlaylistAtom(ctx, false)
-    playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
     await flushPromises()
     expect(mockedEnqueueCacheMany).toHaveBeenCalledTimes(2)
 
@@ -345,14 +345,14 @@ describe('playlistCacheService.cachePlaylist', () => {
     resolveHide()
     await run1
 
-    // Only cancelPlaylistCache drained the queue — run 1's finally did not.
+    // Only cancelPlaylistOfflineAdd drained the queue — run 1's finally did not.
     expect(mockedRemoveFromQueueBySource).toHaveBeenCalledTimes(1)
     // Run 2 is still active: its atom and controller were not clobbered.
     expect(ctx.get(isCachingPlaylistAtom)).toBe(true)
   })
 })
 
-describe('playlistCacheService.cancelPlaylistCache', () => {
+describe('playlistOfflineService.cancelPlaylistOfflineAdd', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     __stoppers.clear()
@@ -364,7 +364,7 @@ describe('playlistCacheService.cancelPlaylistCache', () => {
     activeCacheUrlAtom(ctx, TRACKS[0].audioUrl)
     mockedGetCacheRequesters.mockReturnValue(new Set(['playlist']))
 
-    playlistCacheService.cancelPlaylistCache(ctx)
+    playlistOfflineService.cancelPlaylistOfflineAdd(ctx)
 
     expect(mockedCancelCacheDownload).toHaveBeenCalledWith(ctx, TRACKS[0].audioUrl)
     expect(mockedRemoveFromQueueBySource).toHaveBeenCalledWith(ctx, 'playlist')
@@ -376,7 +376,7 @@ describe('playlistCacheService.cancelPlaylistCache', () => {
     activeCacheUrlAtom(ctx, TRACKS[0].audioUrl)
     mockedGetCacheRequesters.mockReturnValue(new Set(['auto', 'playlist']))
 
-    playlistCacheService.cancelPlaylistCache(ctx)
+    playlistOfflineService.cancelPlaylistOfflineAdd(ctx)
 
     expect(mockedCancelCacheDownload).not.toHaveBeenCalled()
     expect(mockedRemoveFromQueueBySource).toHaveBeenCalledWith(ctx, 'playlist')
@@ -385,7 +385,7 @@ describe('playlistCacheService.cancelPlaylistCache', () => {
   test('is a no-op when not caching', () => {
     const ctx = createCtx()
 
-    playlistCacheService.cancelPlaylistCache(ctx)
+    playlistOfflineService.cancelPlaylistOfflineAdd(ctx)
 
     expect(mockedCancelCacheDownload).not.toHaveBeenCalled()
     expect(mockedRemoveFromQueueBySource).not.toHaveBeenCalled()
@@ -427,7 +427,7 @@ describe('global stop (cancelAllCacheDownloads)', () => {
         reject(new CacheCancelledError('http://example.com/1.mp3'))
     })
 
-    const run = playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    const run = playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
     await flushPromises()
 
     cancelAllCacheDownloads(ctx)
@@ -452,7 +452,7 @@ describe('global stop (cancelAllCacheDownloads)', () => {
       for (const stopper of __stoppers) stopper()
     })
 
-    const run = playlistCacheService.cachePlaylist(ctx, TRACKS, 'Плейлист')
+    const run = playlistOfflineService.addPlaylistToOffline(ctx, TRACKS, 'Плейлист')
     await flushPromises()
     expect(mockedEnqueueCacheMany).not.toHaveBeenCalled()
 

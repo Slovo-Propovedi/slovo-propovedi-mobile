@@ -24,6 +24,6 @@ export const resetInflightCache = (): void => {
  * `activeCacheUrlAtom` (the URL the queue runner is processing, or null when
  * idle). UI that must reflect download state reactively should subscribe to
  * `activeCacheUrlAtom`; this getter is kept for imperative checks (e.g. The
- * press-time guard on «Удалить из кеша все») and legacy callers.
+ * press-time guard on «Удалить из офлайн все») and legacy callers.
  */
 export const hasInflightCacheDownloads = (): boolean => inflightCache.size > 0

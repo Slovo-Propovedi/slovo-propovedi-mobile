@@ -1,51 +1,51 @@
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { useTheme } from 'shared/ui/theme'
-import { type TrackToCache } from '../lib/PlaylistCacheService'
+import { type TrackToCache } from '../lib/PlaylistOfflineService'
 
-interface PlaylistCacheDialogsProps {
+interface PlaylistOfflineDialogsProps {
   cachedCount: number
   cacheDialogVisible: boolean
   clearDialogVisible: boolean
-  onCacheAllConfirm: () => void
-  onCacheCancel: () => void
+  onAddAllToOfflineConfirm: () => void
+  onAddToOfflineCancel: () => void
   onClearCacheConfirm: () => void
   onClearCancel: () => void
   tracksData: TrackToCache[]
 }
 
-export const PlaylistCacheDialogs = ({
+export const PlaylistOfflineDialogs = ({
   cachedCount,
   cacheDialogVisible,
   clearDialogVisible,
-  onCacheAllConfirm,
-  onCacheCancel,
+  onAddAllToOfflineConfirm,
+  onAddToOfflineCancel,
   onClearCacheConfirm,
   onClearCancel,
   tracksData,
-}: PlaylistCacheDialogsProps) => {
+}: PlaylistOfflineDialogsProps) => {
   const { currentTheme } = useTheme()
 
   return (
     <>
       <ConfirmDialog
         cancelText='Отмена'
-        onCancel={onCacheCancel}
         visible={cacheDialogVisible}
-        onConfirm={onCacheAllConfirm}
-        title='Кеширование плейлиста'
+        onCancel={onAddToOfflineCancel}
         confirmColor={currentTheme.primary}
-        confirmText='Закешировать весь плейлист'
-        message={`Загрузить все треки (${tracksData.length}) для прослушивания без интернета?`}
+        onConfirm={onAddAllToOfflineConfirm}
+        title='Добавление плейлиста в офлайн'
+        confirmText='Добавить весь плейлист в офлайн'
+        message={`Добавить все треки (${tracksData.length}) в офлайн для прослушивания без интернета?`}
       />
       <ConfirmDialog
         cancelText='Отмена'
-        title='Удаление кеша'
+        title='Удаление офлайна'
         onCancel={onClearCancel}
         confirmText='Удалить всё'
         visible={clearDialogVisible}
         onConfirm={onClearCacheConfirm}
         confirmColor={currentTheme.primary}
-        message={`Удалить ${cachedCount} закешированных треков из кеша?`}
+        message={`Удалить ${cachedCount} треков из офлайн?`}
       />
     </>
   )

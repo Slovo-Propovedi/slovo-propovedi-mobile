@@ -10,11 +10,11 @@ import {
 } from 'shared/lib/audio-cache'
 import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
-import { playlistCacheNotifications } from './PlaylistCacheNotifications'
+import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
 import { runPlaylistCaching } from './runPlaylistCaching'
 
 const log = debugConfig.enablePlaylistCacheLogs
-  ? (...args: unknown[]) => console.log('[PlaylistCacheService]', ...args)
+  ? (...args: unknown[]) => console.log('[PlaylistOfflineService]', ...args)
   : () => {}
 
 export interface TrackToCache {
@@ -23,7 +23,7 @@ export interface TrackToCache {
   title: string
 }
 
-class PlaylistCacheService {
+class PlaylistOfflineService {
   public getError(): Error | null {
     return this.currentError
   }
@@ -32,7 +32,7 @@ class PlaylistCacheService {
     this.currentError = null
   }
 
-  public async cachePlaylist(
+  public async addPlaylistToOffline(
     ctx: Ctx,
     tracks: TrackToCache[],
     playlistTitle: string,
@@ -68,12 +68,12 @@ class PlaylistCacheService {
       if (controller.signal.aborted) return
 
       if (failedCount > 0)
-        await playlistCacheNotifications.showErrorNotification(
-          new Error(`Не удалось скачать ${failedCount} из ${tracksToCache.length}`),
+        await playlistOfflineNotifications.showErrorNotification(
+          new Error(`Не удалось добавить в офлайн ${failedCount} из ${tracksToCache.length}`),
           playlistTitle,
         )
       else
-        await playlistCacheNotifications.showCompletionNotification(
+        await playlistOfflineNotifications.showCompletionNotification(
           tracksToCache.length,
           playlistTitle,
         )
@@ -88,7 +88,7 @@ class PlaylistCacheService {
         playlistCacheErrorAtom(ctx, errorObj)
       }
 
-      await playlistCacheNotifications.showErrorNotification(errorObj, playlistTitle)
+      await playlistOfflineNotifications.showErrorNotification(errorObj, playlistTitle)
     } finally {
       unregisterPlaylistRunStopper(stopper)
       // Generation guard: only the current run tears down shared playlist state.
@@ -102,9 +102,9 @@ class PlaylistCacheService {
     }
   }
 
-  public cancelPlaylistCache(ctx: Ctx): void {
+  public cancelPlaylistOfflineAdd(ctx: Ctx): void {
     // Deliberately does NOT bump currentRunId: the atom reset lives ONLY in the
-    // guarded finally of cachePlaylist. Bumping here would make that finally skip
+    // guarded finally of addPlaylistToOffline. Bumping here would make that finally skip
     // teardown (currentRunId !== runId) and leave isCachingPlaylistAtom stuck true.
     if (!ctx.get(isCachingPlaylistAtom)) return
 
@@ -127,4 +127,4 @@ const isOnlyPlaylistRequester = (url: string): boolean => {
   return true
 }
 
-export const playlistCacheService = new PlaylistCacheService()
+export const playlistOfflineService = new PlaylistOfflineService()

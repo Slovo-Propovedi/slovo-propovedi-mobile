@@ -1,18 +1,18 @@
 import { StyleSheet, View } from 'react-native'
-import { AnchoredDropdown, type AnchorRect } from 'shared/ui/anchored-dropdown'
+import { AnchoredDropdown, type AnchorRect } from 'shared/ui/menu'
 import { COLORS, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
-import { PlaylistCacheMenuItem } from './PlaylistCacheMenuItem'
 import { PlaylistHistoryMenuItem } from './PlaylistHistoryMenuItem'
+import { PlaylistOfflineMenuItem } from './PlaylistOfflineMenuItem'
 
 export interface PlaylistHeaderMenuDropdownProps {
   allCached: boolean
   anchor: AnchorRect | null
   canMarkAll: boolean
   canRemoveFromHistory: boolean
-  isCacheAllDisabled: boolean
+  isAddAllToOfflineDisabled: boolean
   isCaching: boolean
   isClearCacheDisabled?: boolean
-  onCacheAll: () => void
+  onAddAllToOffline: () => void
   onClearCache: () => void
   onClose: () => void
   onMarkAll: () => void
@@ -26,10 +26,10 @@ export const PlaylistHeaderMenuDropdown = ({
   anchor,
   canMarkAll,
   canRemoveFromHistory,
-  isCacheAllDisabled,
+  isAddAllToOfflineDisabled,
   isCaching,
   isClearCacheDisabled = false,
-  onCacheAll,
+  onAddAllToOffline,
   onClearCache,
   onClose,
   onMarkAll,
@@ -48,26 +48,26 @@ export const PlaylistHeaderMenuDropdown = ({
       menuStyle={[styles.dropdown, { backgroundColor: currentTheme.surface }]}
     >
       {isCaching ? (
-        <PlaylistCacheMenuItem
+        <PlaylistOfflineMenuItem
           onPress={onStopCaching}
           icon='stop-circle-outline'
-          text='Остановить кеширование'
+          text='Остановить добавление в офлайн'
         />
       ) : (
-        <PlaylistCacheMenuItem
-          onPress={onCacheAll}
-          isDisabled={isCacheAllDisabled}
-          icon={allCached ? 'check-circle-outline' : 'download-outline'}
-          text={allCached ? 'Плейлист закеширован' : 'Закешировать все'}
+        <PlaylistOfflineMenuItem
+          onPress={onAddAllToOffline}
+          isDisabled={isAddAllToOfflineDisabled}
+          icon={allCached ? 'check-circle-outline' : 'cloud-download'}
+          text={allCached ? 'Плейлист в офлайне' : 'Добавить все в офлайн'}
         />
       )}
 
       <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
 
-      <PlaylistCacheMenuItem
+      <PlaylistOfflineMenuItem
         icon='delete-outline'
         onPress={onClearCache}
-        text='Удалить из кеша все'
+        text='Удалить из офлайн все'
         isDisabled={isClearCacheDisabled}
         textColor={isClearCacheDisabled ? COLORS.disabled : undefined}
         iconColor={isClearCacheDisabled ? COLORS.disabled : currentTheme.text}

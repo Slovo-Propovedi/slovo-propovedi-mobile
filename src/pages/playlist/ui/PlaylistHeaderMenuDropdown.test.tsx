@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native'
-import { PlaylistCacheMenuItem } from './PlaylistCacheMenuItem'
 import { PlaylistHeaderMenuDropdown } from './PlaylistHeaderMenuDropdown'
 import { PlaylistHistoryMenuItem } from './PlaylistHistoryMenuItem'
+import { PlaylistOfflineMenuItem } from './PlaylistOfflineMenuItem'
 
 jest.mock('shared/ui/theme', () => {
   const actual = jest.requireActual('shared/ui/theme')
@@ -18,7 +18,7 @@ jest.mock('shared/ui/theme', () => {
   }
 })
 
-jest.mock('shared/ui/anchored-dropdown', () => {
+jest.mock('shared/ui/menu', () => {
   const { View } = jest.requireActual('react-native')
   return {
     AnchoredDropdown: ({
@@ -43,10 +43,10 @@ jest.mock('shared/ui/anchored-dropdown', () => {
 
 const ANCHOR = { height: 36, width: 44, x: 300, y: 500 }
 
-const CACHE_ALL_TEXT = 'Закешировать все'
-const STOP_CACHING_TEXT = 'Остановить кеширование'
-const ALL_CACHED_TEXT = 'Плейлист закеширован'
-const CLEAR_CACHE_TEXT = 'Удалить из кеша все'
+const ADD_ALL_TO_OFFLINE_TEXT = 'Добавить все в офлайн'
+const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
+const ALL_CACHED_TEXT = 'Плейлист в офлайне'
+const CLEAR_CACHE_TEXT = 'Удалить из офлайн все'
 const MARK_ALL_TEXT = 'Пометить все прослушанными'
 const REMOVE_TEXT = 'Удалить проповеди из истории'
 
@@ -55,10 +55,10 @@ const defaultProps = {
   anchor: ANCHOR,
   canMarkAll: false,
   canRemoveFromHistory: false,
-  isCacheAllDisabled: false,
+  isAddAllToOfflineDisabled: false,
   isCaching: false,
   isClearCacheDisabled: false,
-  onCacheAll: jest.fn(),
+  onAddAllToOffline: jest.fn(),
   onClearCache: jest.fn(),
   onClose: jest.fn(),
   onMarkAll: jest.fn(),
@@ -75,25 +75,25 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     jest.clearAllMocks()
   })
 
-  test('shows "Закешировать все" with download-outline when not caching and not all cached', async () => {
+  test('shows "Добавить все в офлайн" with cloud-download when not caching and not all cached', async () => {
     await renderDropdown()
 
-    expect(screen.getByText(CACHE_ALL_TEXT)).toBeTruthy()
+    expect(screen.getByText(ADD_ALL_TO_OFFLINE_TEXT)).toBeTruthy()
     expect(screen.queryByText(STOP_CACHING_TEXT)).toBeNull()
   })
 
-  test('shows "Плейлист закеширован" with check-circle-outline when allCached', async () => {
+  test('shows "Плейлист в офлайне" with check-circle-outline when allCached', async () => {
     await renderDropdown({ allCached: true })
 
     expect(screen.getByText(ALL_CACHED_TEXT)).toBeTruthy()
-    expect(screen.queryByText(CACHE_ALL_TEXT)).toBeNull()
+    expect(screen.queryByText(ADD_ALL_TO_OFFLINE_TEXT)).toBeNull()
   })
 
-  test('isCaching=true shows "Остановить кеширование" with stop-circle-outline', async () => {
+  test('isCaching=true shows "Остановить добавление в офлайн" with stop-circle-outline', async () => {
     await renderDropdown({ isCaching: true })
 
     expect(screen.getByText(STOP_CACHING_TEXT)).toBeTruthy()
-    expect(screen.queryByText(CACHE_ALL_TEXT)).toBeNull()
+    expect(screen.queryByText(ADD_ALL_TO_OFFLINE_TEXT)).toBeNull()
     expect(screen.queryByText(ALL_CACHED_TEXT)).toBeNull()
   })
 
@@ -108,20 +108,20 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
 
   test('isCaching=true + offline: stop item still enabled', async () => {
     const onStopCaching = jest.fn()
-    await renderDropdown({ isCacheAllDisabled: true, isCaching: true, onStopCaching })
+    await renderDropdown({ isAddAllToOfflineDisabled: true, isCaching: true, onStopCaching })
 
     fireEvent(screen.getByText(STOP_CACHING_TEXT), 'touchEnd')
 
     expect(onStopCaching).toHaveBeenCalledTimes(1)
   })
 
-  test('onCacheAll fires when cache-all item is pressed (not caching)', async () => {
-    const onCacheAll = jest.fn()
-    await renderDropdown({ onCacheAll })
+  test('onAddAllToOffline fires when add-all-to-offline item is pressed (not caching)', async () => {
+    const onAddAllToOffline = jest.fn()
+    await renderDropdown({ onAddAllToOffline })
 
-    fireEvent(screen.getByText(CACHE_ALL_TEXT), 'touchEnd')
+    fireEvent(screen.getByText(ADD_ALL_TO_OFFLINE_TEXT), 'touchEnd')
 
-    expect(onCacheAll).toHaveBeenCalledTimes(1)
+    expect(onAddAllToOffline).toHaveBeenCalledTimes(1)
   })
 
   test('clear-all disabled when cachedCount===0', async () => {
@@ -154,7 +154,7 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
   test('always renders both cache menu items with divider', async () => {
     await renderDropdown()
 
-    expect(screen.getByText(CACHE_ALL_TEXT)).toBeTruthy()
+    expect(screen.getByText(ADD_ALL_TO_OFFLINE_TEXT)).toBeTruthy()
     expect(screen.getByText(CLEAR_CACHE_TEXT)).toBeTruthy()
   })
 
@@ -195,10 +195,10 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
   })
 })
 
-describe('<PlaylistCacheMenuItem>', () => {
+describe('<PlaylistOfflineMenuItem>', () => {
   test('calls onPress when not disabled', async () => {
     const onPress = jest.fn()
-    await render(<PlaylistCacheMenuItem text='Cache' onPress={onPress} icon='download-outline' />)
+    await render(<PlaylistOfflineMenuItem text='Cache' onPress={onPress} icon='cloud-download' />)
 
     fireEvent(screen.getByText('Cache'), 'touchEnd')
 
@@ -208,7 +208,7 @@ describe('<PlaylistCacheMenuItem>', () => {
   test('does not call onPress when disabled', async () => {
     const onPress = jest.fn()
     await render(
-      <PlaylistCacheMenuItem isDisabled text='Cache' onPress={onPress} icon='download-outline' />,
+      <PlaylistOfflineMenuItem isDisabled text='Cache' onPress={onPress} icon='cloud-download' />,
     )
 
     fireEvent(screen.getByText('Cache'), 'touchEnd')

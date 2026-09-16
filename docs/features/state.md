@@ -50,7 +50,7 @@ const setRepeatMode = useAction(setRepeatModeAction)
 
 ### useCtx для чтения/записи в обработчиках
 
-В колбэках и хендлерах, где нужно прочитать текущее значение атома (например, в `PlaylistCacheService.cachePlaylist`), используется `useCtx()` из `@reatom/npm-react` или импортированный `ctx`. Пример:
+В колбэках и хендлерах, где нужно прочитать текущее значение атома (например, в `PlaylistOfflineService.addPlaylistToOffline`), используется `useCtx()` из `@reatom/npm-react` или импортированный `ctx`. Пример:
 
 ```tsx
 import { useCtx } from '@reatom/npm-react'

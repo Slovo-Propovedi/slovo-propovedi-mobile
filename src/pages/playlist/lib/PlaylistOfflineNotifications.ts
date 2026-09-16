@@ -17,16 +17,16 @@ import { ensurePlaylistNotificationChannels } from './playlistChannelIds'
 const NOTIFICATION_GROUP = 'playlist-cache'
 
 const log = debugConfig.enablePlaylistCacheLogs
-  ? (...args: unknown[]) => console.warn('[PlaylistCacheNotifications]', ...args)
+  ? (...args: unknown[]) => console.warn('[PlaylistOfflineNotifications]', ...args)
   : () => {}
 
-class PlaylistCacheNotifications {
+class PlaylistOfflineNotifications {
   public async showCachingNotification(playlistTitle: string): Promise<string> {
     await requestPermissions()
     await ensurePlaylistNotificationChannels()
     return scheduleNotification(
       {
-        body: `${playlistTitle}: Скачивание началось`,
+        body: `${playlistTitle}: Добавление в офлайн началось`,
         sound: false,
         title: CACHING_TITLE,
       },
@@ -47,7 +47,7 @@ class PlaylistCacheNotifications {
     // across restarts.
     return scheduleNotification(
       {
-        body: `${playlistTitle}: Скачано ${current} из ${total}`,
+        body: `${playlistTitle}: Добавлено в офлайн ${current} из ${total}`,
         sound: false,
         title: CACHING_TITLE,
       },
@@ -60,7 +60,7 @@ class PlaylistCacheNotifications {
   public async showCompletionNotification(total: number, playlistTitle: string): Promise<string> {
     return scheduleNotification(
       {
-        body: `${playlistTitle}: Скачано ${total} проповедей`,
+        body: `${playlistTitle}: Добавлено в офлайн ${total} проповедей`,
         sound: true,
         title: COMPLETION_TITLE,
       },
@@ -89,4 +89,4 @@ class PlaylistCacheNotifications {
   }
 }
 
-export const playlistCacheNotifications = new PlaylistCacheNotifications()
+export const playlistOfflineNotifications = new PlaylistOfflineNotifications()

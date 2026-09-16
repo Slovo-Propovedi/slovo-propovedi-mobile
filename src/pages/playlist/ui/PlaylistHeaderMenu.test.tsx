@@ -5,7 +5,7 @@ import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isCachingPlaylistAtom } from '../model'
 import { PlaylistHeaderMenu } from './PlaylistHeaderMenu'
 
-jest.mock('shared/ui/anchored-dropdown', () => {
+jest.mock('shared/ui/menu', () => {
   const { View: RNView } = jest.requireActual('react-native')
   return {
     AnchoredDropdown: ({

@@ -13,12 +13,12 @@ import {
   incrementCacheTrigger,
 } from 'shared/lib/cache-triggers'
 import { isOnlineAtom } from 'shared/model'
-import { type AnchorRect } from 'shared/ui/anchored-dropdown'
+import { type AnchorRect } from 'shared/ui/menu'
 import { isCachingPlaylistAtom } from '../model'
-import { playlistCacheService, type TrackToCache } from './PlaylistCacheService'
+import { playlistOfflineService, type TrackToCache } from './PlaylistOfflineService'
 import { usePlaylistCacheStatus } from './usePlaylistCacheStatus'
 
-export const usePlaylistCacheMenu = (tracksData: TrackToCache[], playlistTitle: string) => {
+export const usePlaylistOfflineMenu = (tracksData: TrackToCache[], playlistTitle: string) => {
   const ctx = useCtx()
   const [isOnline] = useAtom(isOnlineAtom)
   const [isCaching] = useAtom(isCachingPlaylistAtom)
@@ -32,13 +32,13 @@ export const usePlaylistCacheMenu = (tracksData: TrackToCache[], playlistTitle: 
   const buttonRef = useRef<View>(null)
 
   const { allCached, cachedCount } = usePlaylistCacheStatus(tracksData, cacheTrigger)
-  const isCacheAllDisabled = allCached || !isOnline
+  const isAddAllToOfflineDisabled = allCached || !isOnline
   const isQueueNonEmpty = Object.keys(queue).length > 0
   const isClearCacheDisabled = cachedCount === 0 || isQueueNonEmpty || activeUrl !== null
 
-  const handleCacheAllConfirm = useCallback(() => {
+  const handleAddAllToOfflineConfirm = useCallback(() => {
     setCacheDialogVisible(false)
-    void playlistCacheService.cachePlaylist(ctx, tracksData, playlistTitle)
+    void playlistOfflineService.addPlaylistToOffline(ctx, tracksData, playlistTitle)
   }, [ctx, playlistTitle, tracksData])
 
   const handleClearCacheConfirm = useCallback(async () => {
@@ -57,7 +57,7 @@ export const usePlaylistCacheMenu = (tracksData: TrackToCache[], playlistTitle: 
   }, [ctx])
 
   const handleStopCaching = useCallback(() => {
-    playlistCacheService.cancelPlaylistCache(ctx)
+    playlistOfflineService.cancelPlaylistOfflineAdd(ctx)
   }, [ctx])
 
   const handleOpenMenu = useCallback(() => {
@@ -67,7 +67,7 @@ export const usePlaylistCacheMenu = (tracksData: TrackToCache[], playlistTitle: 
     })
   }, [])
 
-  const handleCacheAllOption = useCallback(() => {
+  const handleAddAllToOfflineOption = useCallback(() => {
     setMenuVisible(false)
     setCacheDialogVisible(true)
   }, [])
@@ -85,13 +85,13 @@ export const usePlaylistCacheMenu = (tracksData: TrackToCache[], playlistTitle: 
     cachedCount,
     cacheDialogVisible,
     clearDialogVisible,
-    handleCacheAllConfirm,
-    handleCacheAllOption,
+    handleAddAllToOfflineConfirm,
+    handleAddAllToOfflineOption,
     handleClearCacheConfirm,
     handleClearCacheOption,
     handleOpenMenu,
     handleStopCaching,
-    isCacheAllDisabled,
+    isAddAllToOfflineDisabled,
     isCaching,
     isClearCacheDisabled,
     menuAnchor,

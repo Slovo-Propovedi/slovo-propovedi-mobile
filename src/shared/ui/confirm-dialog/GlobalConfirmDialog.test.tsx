@@ -5,7 +5,7 @@ import { GlobalConfirmDialog } from './GlobalConfirmDialog'
 
 const DEFAULT_TITLE = 'Информация'
 const CONFIRM_TEXT = 'Понятно'
-const MESSAGE = 'Невозможно воспроизвести незакешированную проповедь без интернета'
+const MESSAGE = 'Невозможно воспроизвести проповедь без интернета, если она не сохранена в офлайн'
 const CUSTOM_TITLE = 'Скоро будет доступно'
 
 describe('<GlobalConfirmDialog>', () => {

@@ -4,13 +4,13 @@ import { type ColorValue } from 'react-native'
 import { type PlaylistData } from 'shared/model'
 import { ErrorModal } from 'shared/ui/error-modal'
 import { useTheme } from 'shared/ui/theme'
-import { type TrackToCache } from '../lib/PlaylistCacheService'
+import { type TrackToCache } from '../lib/PlaylistOfflineService'
 import { usePlaylistCacheError } from '../lib/usePlaylistCacheError'
-import { usePlaylistCacheMenu } from '../lib/usePlaylistCacheMenu'
 import { usePlaylistHistoryMenu } from '../lib/usePlaylistHistoryMenu'
-import { PlaylistCacheDialogs } from './PlaylistCacheDialogs'
+import { usePlaylistOfflineMenu } from '../lib/usePlaylistOfflineMenu'
 import { PlaylistHeaderMenuDropdown } from './PlaylistHeaderMenuDropdown'
 import { PlaylistHistoryDialogs } from './PlaylistHistoryDialogs'
+import { PlaylistOfflineDialogs } from './PlaylistOfflineDialogs'
 
 const ICON_SIZE = 24
 const BUTTON_SIZE = 44
@@ -36,13 +36,13 @@ export const PlaylistHeaderMenu = ({
     cachedCount,
     cacheDialogVisible,
     clearDialogVisible,
-    handleCacheAllConfirm,
-    handleCacheAllOption,
+    handleAddAllToOfflineConfirm,
+    handleAddAllToOfflineOption,
     handleClearCacheConfirm,
     handleClearCacheOption,
     handleOpenMenu,
     handleStopCaching,
-    isCacheAllDisabled,
+    isAddAllToOfflineDisabled,
     isCaching,
     isClearCacheDisabled,
     menuAnchor,
@@ -50,7 +50,7 @@ export const PlaylistHeaderMenu = ({
     setCacheDialogVisible,
     setClearDialogVisible,
     setMenuVisible,
-  } = usePlaylistCacheMenu(tracksData, playlistTitle)
+  } = usePlaylistOfflineMenu(tracksData, playlistTitle)
 
   const historyMenu = usePlaylistHistoryMenu(playlist, () => setMenuVisible(false))
   const { error, handleErrorClose } = usePlaylistCacheError(cacheDialogVisible)
@@ -78,27 +78,27 @@ export const PlaylistHeaderMenu = ({
         visible={menuVisible}
         allCached={allCached}
         isCaching={isCaching}
-        onCacheAll={handleCacheAllOption}
         onStopCaching={handleStopCaching}
         canMarkAll={historyMenu.canMarkAll}
         onClearCache={handleClearCacheOption}
         onClose={() => setMenuVisible(false)}
-        isCacheAllDisabled={isCacheAllDisabled}
         onMarkAll={historyMenu.handleMarkAllOption}
         isClearCacheDisabled={isClearCacheDisabled}
+        onAddAllToOffline={handleAddAllToOfflineOption}
         onRemoveFromHistory={historyMenu.handleRemoveOption}
+        isAddAllToOfflineDisabled={isAddAllToOfflineDisabled}
         canRemoveFromHistory={historyMenu.canRemoveFromHistory}
       />
 
-      <PlaylistCacheDialogs
+      <PlaylistOfflineDialogs
         tracksData={tracksData}
         cachedCount={cachedCount}
         cacheDialogVisible={cacheDialogVisible}
         clearDialogVisible={clearDialogVisible}
-        onCacheAllConfirm={handleCacheAllConfirm}
         onClearCacheConfirm={handleClearCacheConfirm}
-        onCacheCancel={() => setCacheDialogVisible(false)}
         onClearCancel={() => setClearDialogVisible(false)}
+        onAddAllToOfflineConfirm={handleAddAllToOfflineConfirm}
+        onAddToOfflineCancel={() => setCacheDialogVisible(false)}
       />
 
       <PlaylistHistoryDialogs

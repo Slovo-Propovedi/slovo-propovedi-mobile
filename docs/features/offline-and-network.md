@@ -103,13 +103,13 @@ Guard проверяет `isOnlineAtom` (NetInfo) и `audioCacheService.isCached
 
 ## Офлайн: UI добавления в кеш дизейблится
 
-При `!isOnline` все действия «добавить в кеш» недоступны (требуют интернета), а «удалить из кеша» работает офлайн:
+При `!isOnline` все действия «добавить в офлайн» недоступны (требуют интернета), а «удалить из офлайн» работает офлайн:
 
-- «Закешировать все» на экране плейлиста — `usePlaylistCacheMenu` (`src/pages/playlist/lib/usePlaylistCacheMenu.ts`): `isCacheAllDisabled` включает `!isOnline`;
-- «Добавить в кеш» в контекстном меню строки трека — `useTrackItemCache.isCacheDisabled` (`src/shared/ui/track-list/useTrackItemCache.ts`) + no-op guard в `toggleCache`;
-- «Добавить в кеш» в меню полноэкранного плеера — `PlayerMenuItems.isCacheDisabled` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenuItems.tsx`).
+- «Добавить все в офлайн» на экране плейлиста — `usePlaylistOfflineMenu` (`src/pages/playlist/lib/usePlaylistOfflineMenu.ts`): `isAddAllToOfflineDisabled` включает `!isOnline`;
+- «Добавить в офлайн» в контекстном меню строки трека — `useTrackItemCache.isCacheDisabled` (`src/shared/ui/track-list/useTrackItemCache.ts`) + no-op guard в `toggleCache`;
+- «Добавить в офлайн» в меню полноэкранного плеера — `PlayerMenuItems.isCacheDisabled` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenuItems.tsx`).
 
-Подробнее — [audio-cache.md](./audio-cache.md) → «Офлайн: добавление в кеш недоступно».
+Подробнее — [audio-cache.md](./audio-cache.md) → «Офлайн: добавление в офлайн недоступно».
 
 ## Поток: offline ↔ online
 

@@ -2,7 +2,7 @@ import { type Ctx } from '@reatom/framework'
 import { enqueueCacheMany, isCacheCancelledError } from 'shared/lib/audio-cache'
 import { waitForOnline } from 'shared/lib/network'
 import { playlistCacheProgressAtom } from '../model'
-import { playlistCacheNotifications } from './PlaylistCacheNotifications'
+import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
 
 const WAIT_ONLINE_BEFORE_TRACK_MS = 60_000
 export const NETWORK_LOST_MESSAGE = 'Нет подключения к интернету'
@@ -36,7 +36,7 @@ export const runPlaylistCaching = async (
   let failedCount = 0
 
   playlistCacheProgressAtom(ctx, { current: 0, total: tracks.length })
-  let notificationId = await playlistCacheNotifications.showCachingNotification(playlistTitle)
+  let notificationId = await playlistOfflineNotifications.showCachingNotification(playlistTitle)
 
   try {
     // A global stop during the notification window must not enqueue anything:
@@ -66,7 +66,7 @@ export const runPlaylistCaching = async (
 
       const current = index + 1
       playlistCacheProgressAtom(ctx, prev => ({ ...prev, current }))
-      notificationId = await playlistCacheNotifications.updateCachingNotification(
+      notificationId = await playlistOfflineNotifications.updateCachingNotification(
         notificationId,
         current,
         tracks.length,
@@ -74,7 +74,7 @@ export const runPlaylistCaching = async (
       )
     }
   } finally {
-    await playlistCacheNotifications.hideCachingNotification(notificationId)
+    await playlistOfflineNotifications.hideCachingNotification(notificationId)
   }
 
   return failedCount

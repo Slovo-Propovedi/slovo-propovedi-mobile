@@ -11,8 +11,8 @@ import { cachedUrlsAtom, cacheUpdateTriggerAtom, markUrlCached } from 'shared/li
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
 import { isCachingPlaylistAtom } from '../model'
-import { playlistCacheService } from './PlaylistCacheService'
-import { usePlaylistCacheMenu } from './usePlaylistCacheMenu'
+import { playlistOfflineService } from './PlaylistOfflineService'
+import { usePlaylistOfflineMenu } from './usePlaylistOfflineMenu'
 
 jest.mock('shared/lib/audio-cache', () => {
   const actual = jest.requireActual('shared/lib/audio-cache')
@@ -42,9 +42,12 @@ const renderMenu = async () => {
   isCachingPlaylistAtom(ctx, false)
   cacheQueueAtom(ctx, {})
 
-  const { result } = await renderHookWithProviders(() => usePlaylistCacheMenu(TRACKS, 'Плейлист'), {
-    ctx,
-  })
+  const { result } = await renderHookWithProviders(
+    () => usePlaylistOfflineMenu(TRACKS, 'Плейлист'),
+    {
+      ctx,
+    },
+  )
 
   return { ctx, result }
 }
@@ -55,9 +58,12 @@ const renderMenuWithQueue = async (queue: Record<string, CacheQueueEntry>) => {
   isCachingPlaylistAtom(ctx, false)
   cacheQueueAtom(ctx, queue)
 
-  const { result } = await renderHookWithProviders(() => usePlaylistCacheMenu(TRACKS, 'Плейлист'), {
-    ctx,
-  })
+  const { result } = await renderHookWithProviders(
+    () => usePlaylistOfflineMenu(TRACKS, 'Плейлист'),
+    {
+      ctx,
+    },
+  )
 
   return { ctx, result }
 }
@@ -68,7 +74,7 @@ const settleCacheStatus = async () => {
   })
 }
 
-describe('usePlaylistCacheMenu', () => {
+describe('usePlaylistOfflineMenu', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockedIsCached.mockResolvedValue(false)
@@ -135,14 +141,14 @@ describe('usePlaylistCacheMenu', () => {
     })
   })
 
-  describe('isCacheAllDisabled', () => {
+  describe('isAddAllToOfflineDisabled', () => {
     test('is true when all tracks are cached', async () => {
       mockedIsCached.mockResolvedValue(true)
 
       const { result } = await renderMenu()
       await settleCacheStatus()
 
-      expect(result.current.isCacheAllDisabled).toBe(true)
+      expect(result.current.isAddAllToOfflineDisabled).toBe(true)
       expect(result.current.allCached).toBe(true)
     })
 
@@ -153,12 +159,12 @@ describe('usePlaylistCacheMenu', () => {
       cacheQueueAtom(ctx, {})
 
       const { result } = await renderHookWithProviders(
-        () => usePlaylistCacheMenu(TRACKS, 'Плейлист'),
+        () => usePlaylistOfflineMenu(TRACKS, 'Плейлист'),
         { ctx },
       )
       await settleCacheStatus()
 
-      expect(result.current.isCacheAllDisabled).toBe(true)
+      expect(result.current.isAddAllToOfflineDisabled).toBe(true)
     })
 
     test('is false when not all cached and online', async () => {
@@ -167,7 +173,7 @@ describe('usePlaylistCacheMenu', () => {
       const { result } = await renderMenu()
       await settleCacheStatus()
 
-      expect(result.current.isCacheAllDisabled).toBe(false)
+      expect(result.current.isAddAllToOfflineDisabled).toBe(false)
     })
   })
 
@@ -176,8 +182,8 @@ describe('usePlaylistCacheMenu', () => {
       jest.restoreAllMocks()
     })
 
-    test('handleStopCaching delegates to playlistCacheService.cancelPlaylistCache', async () => {
-      const cancelSpy = jest.spyOn(playlistCacheService, 'cancelPlaylistCache')
+    test('handleStopCaching delegates to playlistOfflineService.cancelPlaylistOfflineAdd', async () => {
+      const cancelSpy = jest.spyOn(playlistOfflineService, 'cancelPlaylistOfflineAdd')
       const { ctx, result } = await renderMenu()
 
       await act(() => {
@@ -239,29 +245,29 @@ describe('usePlaylistCacheMenu', () => {
       expect(mockedClearCache).not.toHaveBeenCalled()
     })
 
-    test('handleCacheAllOption opens the cache dialog', async () => {
+    test('handleAddAllToOfflineOption opens the add-to-offline dialog', async () => {
       const { result } = await renderMenu()
       await settleCacheStatus()
 
       await act(() => {
-        result.current.handleCacheAllOption()
+        result.current.handleAddAllToOfflineOption()
       })
 
       expect(result.current.cacheDialogVisible).toBe(true)
     })
 
-    test('handleCacheAllConfirm starts caching the playlist', async () => {
-      const cachePlaylistSpy = jest
-        .spyOn(playlistCacheService, 'cachePlaylist')
+    test('handleAddAllToOfflineConfirm starts adding the playlist to offline', async () => {
+      const addPlaylistToOfflineSpy = jest
+        .spyOn(playlistOfflineService, 'addPlaylistToOffline')
         .mockResolvedValue(undefined)
       const { ctx, result } = await renderMenu()
       await settleCacheStatus()
 
       await act(async () => {
-        await result.current.handleCacheAllConfirm()
+        await result.current.handleAddAllToOfflineConfirm()
       })
 
-      expect(cachePlaylistSpy).toHaveBeenCalledWith(ctx, TRACKS, 'Плейлист')
+      expect(addPlaylistToOfflineSpy).toHaveBeenCalledWith(ctx, TRACKS, 'Плейлист')
     })
   })
 })
