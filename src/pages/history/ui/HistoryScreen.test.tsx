@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import {
   clearHistoryAction,
   historyAtom,
+  isHistoryLoadedAtom,
   type ListeningHistoryEntry,
   markSermonListenedAction,
   removeHistoryEntryAction,
@@ -89,10 +90,18 @@ jest.mock('shared/ui/track-list', () => {
       ))}
     </RNView>
   )
+  const TracksListSkeleton = ({ rowCount = 6 }: { rowCount?: number }) => (
+    <>
+      {Array.from({ length: rowCount }, (_, index) => (
+        <RNView key={index} testID='tracks-list-item-skeleton' />
+      ))}
+    </>
+  )
 
   return {
     createTracksListStyles: () => StyleSheet.create({ container: {}, divider: {} }),
     TracksListItem,
+    TracksListSkeleton,
   }
 })
 
@@ -123,6 +132,7 @@ const mockEntry: ListeningHistoryEntry = {
 const seedHistory = (entries: ListeningHistoryEntry[] = []) => {
   const ctx = createCtx()
   historyAtom(ctx, entries)
+  isHistoryLoadedAtom(ctx, true)
   return ctx
 }
 
@@ -160,6 +170,16 @@ describe('<HistoryScreen>', () => {
     const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
 
     expect(getByText('История пуста')).toBeTruthy()
+  })
+
+  test('shows skeleton rows while history is loading', async () => {
+    const ctx = createCtx()
+    isHistoryLoadedAtom(ctx, false)
+
+    const { getAllByTestId, queryByText } = await renderWithProviders(<HistoryScreen />, { ctx })
+
+    expect(getAllByTestId('tracks-list-item-skeleton')).toHaveLength(6)
+    expect(queryByText('История пуста')).toBeNull()
   })
 
   test('row press calls playNewSermon with resolved playlist', async () => {
