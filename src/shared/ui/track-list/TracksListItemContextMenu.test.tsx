@@ -1,12 +1,11 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
-import { DarkTheme } from 'shared/ui/theme'
 import type { TrackCacheVisualState } from 'shared/lib/audio-cache'
 import type { TestInstance } from 'test-renderer'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
 
-const ADD_CACHE_TEXT = 'Добавить в кеш'
-const REMOVE_CACHE_TEXT = 'Удалить из кеша'
-const STOP_CACHING_TEXT = 'Остановить кеширование'
+const ADD_TO_OFFLINE_TEXT = 'Добавить в офлайн'
+const REMOVE_CACHE_TEXT = 'Удалить из офлайн'
+const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
 const REMOVE_FROM_QUEUE_TEXT = 'Убрать из очереди'
 
 jest.mock('@expo/vector-icons', () => ({
@@ -16,13 +15,20 @@ jest.mock('@expo/vector-icons', () => ({
   },
 }))
 
+jest.mock('shared/ui/theme', () => {
+  const actual = jest.requireActual('shared/ui/theme')
+  return {
+    ...actual,
+    useTheme: jest.fn(() => ({ currentTheme: actual.DarkTheme })),
+  }
+})
+
 const baseProps = {
   anchor: { height: 0, width: 0, x: 0, y: 0 },
   isCached: false,
   isMenuOpen: true,
   onClose: jest.fn(),
   onToggleCache: jest.fn(),
-  theme: DarkTheme,
   visualState: 'cloud' as TrackCacheVisualState,
 }
 
@@ -48,16 +54,18 @@ describe('<TracksListItemContextMenu>', () => {
     expect(toJSON()).toBeNull()
   })
 
-  test('renders add cache text when visualState is cloud', async () => {
+  test('renders add to offline text when visualState is cloud', async () => {
     await render(<TracksListItemContextMenu {...baseProps} visualState='cloud' />)
 
-    expect(screen.getByText(ADD_CACHE_TEXT)).toBeTruthy()
+    expect(screen.getByText(ADD_TO_OFFLINE_TEXT)).toBeTruthy()
+    expect(screen.getByTestId('icon-cloud-download')).toBeTruthy()
   })
 
   test('renders remove cache text when visualState is cached', async () => {
     await render(<TracksListItemContextMenu {...baseProps} isCached={true} visualState='cached' />)
 
     expect(screen.getByText(REMOVE_CACHE_TEXT)).toBeTruthy()
+    expect(screen.getByTestId('icon-trash-outline')).toBeTruthy()
   })
 
   test('renders stop caching text when visualState is downloading', async () => {
@@ -72,12 +80,12 @@ describe('<TracksListItemContextMenu>', () => {
     expect(screen.getByText(REMOVE_FROM_QUEUE_TEXT)).toBeTruthy()
   })
 
-  test('renders add cache text when playing and not cached', async () => {
+  test('renders add to offline text when playing and not cached', async () => {
     await render(
       <TracksListItemContextMenu {...baseProps} isCached={false} visualState='playing' />,
     )
 
-    expect(screen.getByText(ADD_CACHE_TEXT)).toBeTruthy()
+    expect(screen.getByText(ADD_TO_OFFLINE_TEXT)).toBeTruthy()
   })
 
   test('renders remove cache text when playing and cached', async () => {
@@ -106,7 +114,7 @@ describe('<TracksListItemContextMenu>', () => {
 
     expect(screen.getByText('Custom Action 1')).toBeTruthy()
     expect(screen.getByText('Custom Action 2')).toBeTruthy()
-    expect(screen.getByText(ADD_CACHE_TEXT)).toBeTruthy()
+    expect(screen.getByText(ADD_TO_OFFLINE_TEXT)).toBeTruthy()
   })
 
   test('pressing menuActions item calls its onPress and onClose', async () => {
@@ -137,7 +145,7 @@ describe('<TracksListItemContextMenu>', () => {
   test('renders cache item when menuActions is absent', async () => {
     await render(<TracksListItemContextMenu {...baseProps} />)
 
-    expect(screen.getByText(ADD_CACHE_TEXT)).toBeTruthy()
+    expect(screen.getByText(ADD_TO_OFFLINE_TEXT)).toBeTruthy()
   })
 
   test('disables cache item when isCacheDisabled is true', async () => {
@@ -146,8 +154,6 @@ describe('<TracksListItemContextMenu>', () => {
     const cacheButton = screen.getByRole('button')
     expect(cacheButton).toBeDisabled()
     expect(cacheButton.props.onPress).toBeUndefined()
-    expect(screen.getByText(ADD_CACHE_TEXT).props.style).toEqual(
-      expect.arrayContaining([{ color: DarkTheme.textMuted }]),
-    )
+    expect(cacheButton.props.style).toEqual(expect.arrayContaining([{ opacity: 0.5 }]))
   })
 })

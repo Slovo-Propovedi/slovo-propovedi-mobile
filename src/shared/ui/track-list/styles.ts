@@ -39,13 +39,6 @@ export const createTracksListStyles = (theme: ThemeColors) =>
       backgroundColor: theme.background,
       flex: 1,
     },
-    contextMenuItem: {
-      padding: INDENTS.medium,
-    },
-    contextMenuItemText: {
-      color: theme.text,
-      fontSize: FONT_SIZES.base,
-    },
     divider: {
       backgroundColor: theme.surface,
       height: 1,
@@ -54,14 +47,6 @@ export const createTracksListStyles = (theme: ThemeColors) =>
     },
     dotsButton: {
       padding: INDENTS.low,
-    },
-    dropdownMenu: {
-      backgroundColor: theme.surface,
-      borderRadius: RADIUSES.middle,
-      elevation: 101,
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      zIndex: 101,
     },
     itemContainer: {
       alignItems: 'center',

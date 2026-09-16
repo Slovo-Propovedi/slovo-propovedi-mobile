@@ -1,16 +1,7 @@
-import { Ionicons } from '@expo/vector-icons'
-import { type ComponentProps } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
-import { AnchoredDropdown, type AnchorRect } from 'shared/ui/anchored-dropdown'
-import { type ThemeColors } from '../theme'
-import { createTracksListStyles } from './styles'
+import { type AnchorRect, MenuDropdown, type MenuItem } from 'shared/ui/menu'
 
-export interface MenuAction {
-  icon?: ComponentProps<typeof Ionicons>['name']
-  onPress: () => void
-  text: string
-}
+export type MenuAction = MenuItem
 
 export interface TracksListItemContextMenuProps {
   anchor: AnchorRect | null
@@ -20,23 +11,42 @@ export interface TracksListItemContextMenuProps {
   menuActions?: MenuAction[]
   onClose: () => void
   onToggleCache: () => void
-  theme: ThemeColors
   visualState: TrackCacheVisualState
 }
 
-const CACHE_ACTION_LABELS: Record<TrackCacheVisualState, string> = {
-  cached: 'Удалить из кеша',
-  cloud: 'Добавить в кеш',
-  downloading: 'Остановить кеширование',
-  playing: 'Добавить в кеш',
-  queued: 'Убрать из очереди',
+const ADD_TO_OFFLINE_TEXT = 'Добавить в офлайн'
+const REMOVE_CACHE_TEXT = 'Удалить из офлайн'
+const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
+const REMOVE_FROM_QUEUE_TEXT = 'Убрать из очереди'
+
+const ADD_TO_OFFLINE_ICON = 'cloud-download' as const
+const REMOVE_CACHE_ICON = 'trash-outline' as const
+
+interface CacheActionItem {
+  icon?: MenuItem['icon']
+  text: string
 }
 
-const getCacheActionLabel = (visualState: TrackCacheVisualState, isCached: boolean): string => {
+const CACHE_ACTION_ITEMS: Record<TrackCacheVisualState, CacheActionItem> = {
+  cached: { icon: REMOVE_CACHE_ICON, text: REMOVE_CACHE_TEXT },
+  cloud: { icon: ADD_TO_OFFLINE_ICON, text: ADD_TO_OFFLINE_TEXT },
+  downloading: { text: STOP_CACHING_TEXT },
+  playing: { icon: ADD_TO_OFFLINE_ICON, text: ADD_TO_OFFLINE_TEXT },
+  queued: { text: REMOVE_FROM_QUEUE_TEXT },
+}
+
+const getCacheActionItem = (
+  visualState: TrackCacheVisualState,
+  isCached: boolean,
+): CacheActionItem => {
   // The resolver collapses a playing track to 'playing' regardless of cache
   // status; the menu still needs the cached detail to pick add vs remove.
-  if (visualState === 'playing') return isCached ? 'Удалить из кеша' : 'Добавить в кеш'
-  return CACHE_ACTION_LABELS[visualState]
+  if (visualState === 'playing')
+    return isCached
+      ? { icon: REMOVE_CACHE_ICON, text: REMOVE_CACHE_TEXT }
+      : { icon: ADD_TO_OFFLINE_ICON, text: ADD_TO_OFFLINE_TEXT }
+
+  return CACHE_ACTION_ITEMS[visualState]
 }
 
 export const TracksListItemContextMenu = ({
@@ -47,73 +57,18 @@ export const TracksListItemContextMenu = ({
   menuActions,
   onClose,
   onToggleCache,
-  theme,
   visualState,
 }: TracksListItemContextMenuProps) => {
-  const tracksListStyles = createTracksListStyles(theme)
+  const cacheAction = getCacheActionItem(visualState, isCached)
+  const items: MenuItem[] = [
+    {
+      disabled: isCacheDisabled,
+      icon: cacheAction.icon,
+      onPress: onToggleCache,
+      text: cacheAction.text,
+    },
+    ...(menuActions ?? []),
+  ]
 
-  const renderItems = () => (
-    <>
-      <Pressable
-        accessibilityRole='button'
-        onPress={isCacheDisabled ? undefined : onToggleCache}
-        accessibilityState={isCacheDisabled ? { disabled: true } : undefined}
-        style={[tracksListStyles.contextMenuItem, isCacheDisabled && localStyles.cacheItemDisabled]}
-      >
-        <Text
-          style={[
-            tracksListStyles.contextMenuItemText,
-            isCacheDisabled && { color: theme.textMuted },
-          ]}
-        >
-          {getCacheActionLabel(visualState, isCached)}
-        </Text>
-      </Pressable>
-      {menuActions?.map((action, index) => (
-        <Pressable
-          accessibilityRole='button'
-          key={`${action.text}-${index}`}
-          style={tracksListStyles.contextMenuItem}
-          onPress={() => {
-            action.onPress()
-            onClose()
-          }}
-        >
-          <View style={localStyles.actionRow}>
-            {action.icon && (
-              <Ionicons
-                size={18}
-                name={action.icon}
-                color={theme.text}
-                style={localStyles.actionIcon}
-              />
-            )}
-            <Text style={tracksListStyles.contextMenuItemText}>{action.text}</Text>
-          </View>
-        </Pressable>
-      ))}
-    </>
-  )
-
-  return (
-    <AnchoredDropdown
-      anchor={anchor}
-      onClose={onClose}
-      visible={isMenuOpen}
-      menuStyle={tracksListStyles.dropdownMenu}
-    >
-      {renderItems()}
-    </AnchoredDropdown>
-  )
+  return <MenuDropdown items={items} anchor={anchor} onClose={onClose} visible={isMenuOpen} />
 }
-
-const localStyles = StyleSheet.create({
-  actionIcon: {
-    marginRight: 8,
-  },
-  actionRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  cacheItemDisabled: { opacity: 0.5 },
-})
