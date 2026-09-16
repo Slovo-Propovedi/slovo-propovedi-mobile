@@ -14,23 +14,16 @@ export interface TracksListItemContextMenuProps {
   visualState: TrackCacheVisualState
 }
 
-const REMOVE_CACHE_TEXT = 'Удалить из офлайн'
-const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
-const REMOVE_FROM_QUEUE_TEXT = 'Убрать из очереди'
-
-const ADD_TO_OFFLINE_ICON = 'cloud-download' as const
-const REMOVE_CACHE_ICON = 'trash-outline' as const
-
 interface CacheActionItem {
   icon?: MenuItem['icon']
   text: string
 }
 
 const CACHE_ACTION_ITEMS: Record<Exclude<TrackCacheVisualState, 'playing'>, CacheActionItem> = {
-  cached: { icon: REMOVE_CACHE_ICON, text: REMOVE_CACHE_TEXT },
-  cloud: { icon: ADD_TO_OFFLINE_ICON, text: 'Добавить в офлайн' },
-  downloading: { text: STOP_CACHING_TEXT },
-  queued: { text: REMOVE_FROM_QUEUE_TEXT },
+  cached: { icon: 'trash-outline', text: 'Удалить из офлайн' },
+  cloud: { icon: 'cloud-download', text: 'Добавить в офлайн' },
+  downloading: { text: 'Остановить добавление в офлайн' },
+  queued: { text: 'Убрать из очереди' },
 }
 
 const getCacheActionItem = (
