@@ -2,24 +2,24 @@ import { screen } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { PlaylistSheetRow } from './PlaylistSheetRow'
 
-const mockedUseIsDownloadingUrl = jest.fn((_audioUrl: null | string) => false)
+const mockedUseHistoryProgress = jest.fn(
+  (_sermonId: string | undefined) => undefined as number | undefined,
+)
 
-jest.mock('entities/player', () => ({
-  useIsDownloadingUrl: (audioUrl: null | string) => mockedUseIsDownloadingUrl(audioUrl),
+jest.mock('entities/listening-history', () => ({
+  useHistoryProgress: (sermonId: string | undefined) => mockedUseHistoryProgress(sermonId),
 }))
 
 jest.mock('shared/ui/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
   return {
     TracksListItem: (props: {
-      isDownloading?: boolean
       menuActions?: Array<{ text: string }>
       progress?: number
       title: string
     }) => (
       <View testID='tracks-list-item'>
         <Text>{props.title}</Text>
-        {props.isDownloading && <Text testID='downloading-indicator'>downloading</Text>}
         {props.menuActions?.map(action => (
           <Text key={action.text}>{action.text}</Text>
         ))}
@@ -35,11 +35,9 @@ jest.mock('shared/ui/track-list', () => {
 })
 
 const PROGRESS_BAR_TEST_ID = 'progress-bar'
-const DOWNLOADING_INDICATOR_TEST_ID = 'downloading-indicator'
 const SERMON_ID = 'sheet-sermon-1'
 const TEST_TITLE = 'Bottom Sheet Sermon'
 const REMOVE_ACTION_TEXT = 'Удалить из истории'
-const AUDIO_URL = 'https://example.com/sheet.mp3'
 
 const defaultProps = {
   id: SERMON_ID,
@@ -55,24 +53,29 @@ const renderItem = (props?: Partial<React.ComponentProps<typeof PlaylistSheetRow
 describe('<PlaylistSheetRow>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedUseIsDownloadingUrl.mockReturnValue(false)
+    mockedUseHistoryProgress.mockReturnValue(undefined)
   })
 
-  test('renders progress bar from storedProgress', async () => {
-    await renderItem({ storedProgress: 0.5 })
+  test('renders progress bar from history progress', async () => {
+    mockedUseHistoryProgress.mockReturnValue(0.5)
+
+    await renderItem()
 
     expect(screen.getByTestId(PROGRESS_BAR_TEST_ID)).toBeTruthy()
     expect(screen.getByLabelText('50% progress')).toBeTruthy()
+    expect(mockedUseHistoryProgress).toHaveBeenCalledWith(SERMON_ID)
   })
 
-  test('does not render progress bar when no progress is available', async () => {
+  test('does not render progress bar when no history progress is available', async () => {
     await renderItem()
 
     expect(screen.queryByTestId(PROGRESS_BAR_TEST_ID)).toBeNull()
   })
 
-  test('does not render progress bar when storedProgress is 0', async () => {
-    await renderItem({ storedProgress: 0 })
+  test('does not render progress bar when history progress is 0', async () => {
+    mockedUseHistoryProgress.mockReturnValue(0)
+
+    await renderItem()
 
     expect(screen.queryByTestId(PROGRESS_BAR_TEST_ID)).toBeNull()
   })
@@ -85,14 +88,5 @@ describe('<PlaylistSheetRow>', () => {
     await renderItem({ menuActions })
 
     expect(screen.getByText(REMOVE_ACTION_TEXT)).toBeTruthy()
-  })
-
-  test('forwards isDownloading to TracksListItem when the url is downloading', async () => {
-    mockedUseIsDownloadingUrl.mockReturnValue(true)
-
-    await renderItem({ audioUrl: AUDIO_URL })
-
-    expect(screen.getByTestId(DOWNLOADING_INDICATOR_TEST_ID)).toBeTruthy()
-    expect(mockedUseIsDownloadingUrl).toHaveBeenCalledWith(AUDIO_URL)
   })
 })

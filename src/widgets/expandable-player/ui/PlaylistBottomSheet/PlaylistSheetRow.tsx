@@ -1,28 +1,25 @@
-import { memo } from 'react'
-import { useIsDownloadingUrl } from 'entities/player'
+import { memo, useCallback } from 'react'
+import { useHistoryProgress } from 'entities/listening-history'
 import { TracksListItem } from 'shared/ui/track-list'
 import type { TracksListItemProps } from 'shared/ui/track-list/types'
 
-interface PlaylistSheetRowProps extends Omit<
-  TracksListItemProps,
-  'isDownloading' | 'onPress' | 'progress'
-> {
+interface PlaylistSheetRowProps extends Omit<TracksListItemProps, 'onPress' | 'progress'> {
+  id: string
   index: number
   onPress: (index: number) => void
-  storedProgress?: number
 }
 
 export const PlaylistSheetRow = memo(
-  ({ audioUrl, index, onPress, storedProgress, ...trackItemProps }: PlaylistSheetRowProps) => {
-    const isDownloading = useIsDownloadingUrl(audioUrl ?? null)
+  ({ audioUrl, id, index, onPress, ...trackItemProps }: PlaylistSheetRowProps) => {
+    const storedProgress = useHistoryProgress(id)
+    const handlePress = useCallback(() => onPress(index), [index, onPress])
 
     return (
       <TracksListItem
         {...trackItemProps}
         audioUrl={audioUrl}
+        onPress={handlePress}
         progress={storedProgress}
-        isDownloading={isDownloading}
-        onPress={() => onPress(index)}
       />
     )
   },

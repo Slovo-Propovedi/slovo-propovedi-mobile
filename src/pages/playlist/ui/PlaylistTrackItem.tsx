@@ -1,5 +1,5 @@
-import { memo } from 'react'
-import { useIsDownloadingUrl } from 'entities/player'
+import { memo, useCallback } from 'react'
+import { StyleSheet } from 'react-native'
 import { INDENTS } from 'shared/ui/theme'
 import { type MenuAction, TracksListItem } from 'shared/ui/track-list'
 
@@ -33,23 +33,28 @@ export const PlaylistTrackItem = memo(
     subtitle,
     title,
   }: PlaylistTrackItemProps) => {
-    const isDownloading = useIsDownloadingUrl(audioUrl ?? null)
+    const handlePress = useCallback(() => onPress(index), [index, onPress])
 
     return (
       <TracksListItem
         title={title}
         artwork={artwork}
+        style={styles.row}
         subtitle={subtitle}
+        onPress={handlePress}
         progress={storedProgress}
         menuActions={menuActions}
         cacheTrigger={cacheTrigger}
-        isDownloading={isDownloading}
-        onPress={() => onPress(index)}
         audioUrl={audioUrl ?? undefined}
         isPlaying={currentAudioId === id}
-        style={{ marginHorizontal: INDENTS.medium }}
         isAudioPlaying={currentAudioId === id && isPlaying}
       />
     )
   },
 )
+
+const styles = StyleSheet.create({
+  row: {
+    marginHorizontal: INDENTS.medium,
+  },
+})

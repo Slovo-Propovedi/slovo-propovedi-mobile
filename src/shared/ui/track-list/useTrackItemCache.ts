@@ -18,9 +18,14 @@ import {
 } from '../../lib/cache-triggers'
 import { isOnlineAtom } from '../../model/network'
 
+/**
+ * Owns the per-row cache/download state of a track: cached/queued/downloading
+ * (from the shared per-URL queue and progress atoms) plus the offline toggle.
+ * @param audioUrl - Track audio URL; falsy URLs resolve to the idle state.
+ * @param externalCacheTrigger - Extra trigger such as batch caching that forces a cache re-check.
+ */
 export const useTrackItemCache = (
   audioUrl: null | string | undefined,
-  isDownloading?: boolean,
   externalCacheTrigger?: number,
 ) => {
   const ctx = useCtx()
@@ -28,21 +33,7 @@ export const useTrackItemCache = (
   const internalCacheTriggerRef = useRef(0)
   const prevIsDownloadingRef = useRef(false)
 
-  // Event-driven: increment cache trigger when download completes (transition from downloading to not downloading)
-  // eslint-disable-next-line react-hooks/refs -- intentional: read ref during render to detect download completion transition
-  const wasThisAudioDownloading = prevIsDownloadingRef.current
-  // eslint-disable-next-line react-hooks/refs -- intentional: detect download completion during render to trigger immediate cache re-check
-  if (wasThisAudioDownloading && !isDownloading) internalCacheTriggerRef.current += 1
-  // eslint-disable-next-line react-hooks/refs -- intentional: track download state transition during render
-  prevIsDownloadingRef.current = isDownloading ?? false
-
-  // eslint-disable-next-line react-hooks/refs -- intentional: read ref-trigger counter during render for cache key
-  const internalCacheTrigger = internalCacheTriggerRef.current
-  const isCached = useIsCached(audioUrl ?? null, internalCacheTrigger + (externalCacheTrigger ?? 0))
-
-  // Narrow subscription: manual ctx.subscribe + useState bailout (Object.is) so a
-  // progress tick re-renders ONLY the track whose url changed, not every list item.
-  // NOTE: useAtom(computedFn, deps) overload crashes with installed core@1001.3.0.
+  // Narrow per-URL progress subscription (Object.is bailout keeps unrelated rows from re-rendering).
   const [progressValue, setProgressValue] = useState(-1)
   useEffect(() => {
     if (!audioUrl) return
@@ -56,9 +47,18 @@ export const useTrackItemCache = (
   const effectiveProgress = audioUrl ? progressValue : -1
   const isDownloadingByProgress = effectiveProgress >= 0 && effectiveProgress < 1
 
-  // Queue subscription: track whether this URL is queued (not yet downloading).
-  // The queue entry is removed by the runner when its download starts, so the
-  // clock disappears and the progress bar takes over reactively.
+  // eslint-disable-next-line react-hooks/refs -- intentional: read ref during render to detect download completion transition
+  const wasThisAudioDownloading = prevIsDownloadingRef.current
+  // eslint-disable-next-line react-hooks/refs -- intentional: detect download completion during render to trigger immediate cache re-check
+  if (wasThisAudioDownloading && !isDownloadingByProgress) internalCacheTriggerRef.current += 1
+  // eslint-disable-next-line react-hooks/refs -- intentional: track download state transition during render
+  prevIsDownloadingRef.current = isDownloadingByProgress
+
+  // eslint-disable-next-line react-hooks/refs -- intentional: read ref-trigger counter during render for cache key
+  const internalCacheTrigger = internalCacheTriggerRef.current
+  const isCached = useIsCached(audioUrl ?? null, internalCacheTrigger + (externalCacheTrigger ?? 0))
+
+  // Queue subscription: the clock disappears when the runner starts the download.
   const [isQueued, setIsQueued] = useState(false)
   useEffect(() => {
     const url = audioUrl ?? null

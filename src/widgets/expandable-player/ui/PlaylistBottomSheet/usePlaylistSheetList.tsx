@@ -73,6 +73,7 @@ export const usePlaylistSheetList = ({
   const renderItem = useCallback(
     ({ index, item }: { index: number; item: TrackListItemData }) => (
       <PlaylistSheetRow
+        id={item.id}
         index={index}
         onPress={onPress}
         title={item.title}
@@ -82,11 +83,10 @@ export const usePlaylistSheetList = ({
         cacheTrigger={cacheTrigger}
         isPlaying={currentAudioId === item.id}
         menuActions={buildMenuActions(item.id)}
-        storedProgress={progressMap.get(item.id)}
         isAudioPlaying={currentAudioId === item.id && isAudioPlaying}
       />
     ),
-    [buildMenuActions, cacheTrigger, currentAudioId, isAudioPlaying, onPress, progressMap],
+    [buildMenuActions, cacheTrigger, currentAudioId, isAudioPlaying, onPress],
   )
   const ItemSeparator = useCallback(() => <View style={styles.divider} />, [styles])
 

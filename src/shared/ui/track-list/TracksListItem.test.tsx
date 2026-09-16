@@ -221,4 +221,27 @@ describe('<TracksListItem>', () => {
 
     expect(screen.queryByTestId(PROGRESS_BAR_TEST_ID)).toBeNull()
   })
+
+  test('owns per-URL downloading state through useTrackItemCache', async () => {
+    await renderItem({ audioUrl: AUDIO_URL, cacheTrigger: 3 })
+
+    expect(mockedUseTrackItemCache).toHaveBeenCalledWith(AUDIO_URL, 3)
+  })
+
+  test('renders the downloading progress bar from the internal cache state', async () => {
+    mockedUseTrackItemCache.mockReturnValue({
+      isCached: false,
+      isCacheDisabled: false,
+      isDownloading: true,
+      isQueued: false,
+      progressValue: 0.5,
+      toggleCache: jest.fn(),
+      visualState: 'downloading',
+    })
+
+    const { container } = await renderItem({ audioUrl: AUDIO_URL })
+
+    const downloadBars = container.queryAll(node => node.props.style?.height === 3)
+    expect(downloadBars.length).toBeGreaterThan(0)
+  })
 })

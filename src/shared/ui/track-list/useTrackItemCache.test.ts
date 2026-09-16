@@ -513,33 +513,34 @@ describe('useTrackItemCache', () => {
   })
 
   describe('download completion transition', () => {
-    test('re-checks the cache when isDownloading goes true→false', async () => {
-      const { rerender } = await renderHookWithProviders(
-        ({ isDownloading }: { isDownloading: boolean }) =>
-          useTrackItemCache(AUDIO_URL, isDownloading),
-        { initialProps: { isDownloading: true } },
-      )
+    test('re-checks the cache when the URL stops downloading', async () => {
+      const { ctx } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       expect(mockedIsCached).toHaveBeenCalledTimes(1)
 
       await act(async () => {
-        rerender({ isDownloading: false })
+        playlistDownloadProgressAtom(ctx, { [AUDIO_URL]: 0.5 })
+      })
+
+      expect(mockedIsCached).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        playlistDownloadProgressAtom(ctx, {})
       })
 
       expect(mockedIsCached).toHaveBeenCalledTimes(2)
     })
 
-    test('does not re-check when isDownloading stays false', async () => {
-      const { rerender } = await renderHookWithProviders(
-        ({ isDownloading }: { isDownloading: boolean }) =>
-          useTrackItemCache(AUDIO_URL, isDownloading),
-        { initialProps: { isDownloading: false } },
-      )
+    test('does not re-check while the URL keeps downloading', async () => {
+      const { ctx } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
 
       expect(mockedIsCached).toHaveBeenCalledTimes(1)
 
       await act(async () => {
-        rerender({ isDownloading: false })
+        playlistDownloadProgressAtom(ctx, { [AUDIO_URL]: 0.5 })
+      })
+      await act(async () => {
+        playlistDownloadProgressAtom(ctx, { [AUDIO_URL]: 0.8 })
       })
 
       expect(mockedIsCached).toHaveBeenCalledTimes(1)

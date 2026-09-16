@@ -1,0 +1,104 @@
+import { useRef, useState } from 'react'
+import { Pressable, type View } from 'react-native'
+import { type AnchorRect } from 'shared/ui/menu'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { createTracksListStyles } from './styles'
+import { TracksListItemContent } from './TracksListItemContent'
+import { TracksListItemContextMenu } from './TracksListItemContextMenu'
+import { type TracksListItemProps } from './types'
+import { useTrackItemCache } from './useTrackItemCache'
+
+export const TracksListItemBase = ({
+  artwork,
+  audioUrl,
+  cacheTrigger: externalCacheTrigger,
+  isAudioPlaying = false,
+  isPlaying,
+  menuActions,
+  onPress,
+  progress,
+  style,
+  subtitle,
+  title,
+}: TracksListItemProps) => {
+  const { currentTheme } = useTheme()
+  const tracksListStyles = createTracksListStyles(currentTheme)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [menuAnchor, setMenuAnchor] = useState<AnchorRect | null>(null)
+  const dotsButtonRef = useRef<View>(null)
+
+  const {
+    isCached,
+    isCacheDisabled,
+    isDownloading,
+    isQueued,
+    progressValue,
+    toggleCache,
+    visualState,
+  } = useTrackItemCache(audioUrl, externalCacheTrigger)
+
+  const measureButton = () => {
+    dotsButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) =>
+      setMenuAnchor({ height, width, x: pageX, y: pageY }),
+    )
+  }
+
+  const handleToggleMenu = () => {
+    if (!audioUrl) return
+    if (!isMenuOpen) measureButton()
+    setIsMenuOpen(!isMenuOpen)
+  }
+
+  const handleToggleCache = async () => {
+    setIsMenuOpen(false)
+    await toggleCache()
+  }
+
+  const handleItemPress = () => {
+    if (isMenuOpen) setIsMenuOpen(false)
+    onPress()
+  }
+
+  return (
+    <>
+      <Pressable
+        onPress={handleItemPress}
+        testID='tracks-list-item'
+        accessibilityRole='button'
+        onLongPress={handleToggleMenu}
+        style={[
+          style,
+          tracksListStyles.itemContainer,
+          isMenuOpen && tracksListStyles.itemContainerActive,
+        ]}
+      >
+        <TracksListItemContent
+          title={title}
+          artwork={artwork}
+          isCached={isCached}
+          progress={progress}
+          ref={dotsButtonRef}
+          subtitle={subtitle}
+          isQueued={isQueued}
+          theme={currentTheme}
+          isPlaying={isPlaying}
+          isDownloading={isDownloading}
+          progressValue={progressValue}
+          dotsOnPress={handleToggleMenu}
+          isAudioPlaying={isAudioPlaying}
+        />
+      </Pressable>
+
+      <TracksListItemContextMenu
+        isCached={isCached}
+        anchor={menuAnchor}
+        isMenuOpen={isMenuOpen}
+        menuActions={menuActions}
+        visualState={visualState}
+        onClose={handleToggleMenu}
+        isCacheDisabled={isCacheDisabled}
+        onToggleCache={handleToggleCache}
+      />
+    </>
+  )
+}
