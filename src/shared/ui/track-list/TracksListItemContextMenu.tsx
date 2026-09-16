@@ -14,7 +14,6 @@ export interface TracksListItemContextMenuProps {
   visualState: TrackCacheVisualState
 }
 
-const ADD_TO_OFFLINE_TEXT = 'Добавить в офлайн'
 const REMOVE_CACHE_TEXT = 'Удалить из офлайн'
 const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
 const REMOVE_FROM_QUEUE_TEXT = 'Убрать из очереди'
@@ -27,11 +26,10 @@ interface CacheActionItem {
   text: string
 }
 
-const CACHE_ACTION_ITEMS: Record<TrackCacheVisualState, CacheActionItem> = {
+const CACHE_ACTION_ITEMS: Record<Exclude<TrackCacheVisualState, 'playing'>, CacheActionItem> = {
   cached: { icon: REMOVE_CACHE_ICON, text: REMOVE_CACHE_TEXT },
-  cloud: { icon: ADD_TO_OFFLINE_ICON, text: ADD_TO_OFFLINE_TEXT },
+  cloud: { icon: ADD_TO_OFFLINE_ICON, text: 'Добавить в офлайн' },
   downloading: { text: STOP_CACHING_TEXT },
-  playing: { icon: ADD_TO_OFFLINE_ICON, text: ADD_TO_OFFLINE_TEXT },
   queued: { text: REMOVE_FROM_QUEUE_TEXT },
 }
 
@@ -42,9 +40,7 @@ const getCacheActionItem = (
   // The resolver collapses a playing track to 'playing' regardless of cache
   // status; the menu still needs the cached detail to pick add vs remove.
   if (visualState === 'playing')
-    return isCached
-      ? { icon: REMOVE_CACHE_ICON, text: REMOVE_CACHE_TEXT }
-      : { icon: ADD_TO_OFFLINE_ICON, text: ADD_TO_OFFLINE_TEXT }
+    return isCached ? CACHE_ACTION_ITEMS.cached : CACHE_ACTION_ITEMS.cloud
 
   return CACHE_ACTION_ITEMS[visualState]
 }
