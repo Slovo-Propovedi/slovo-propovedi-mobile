@@ -6,6 +6,7 @@ import { showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
+import { useOfflineRegistrySync } from 'features/offline-sermons'
 import { useUpdateNotificationResponse } from 'features/update-notification'
 import { WebUpdateModal } from 'features/web-update'
 import {
@@ -26,6 +27,7 @@ subscribeToNetwork()
 const SUB_SCREENS = [
   { name: 'settings', title: 'Настройки' },
   { name: 'history', title: 'История прослушивания' },
+  { name: 'offline', title: 'Офлайн' },
   { name: 'about', title: 'О приложении' },
   { name: 'share', title: 'Поделиться приложением' },
 ] as const
@@ -35,6 +37,7 @@ const RootLayout = () => {
   const checkForUpdate = useAction(checkForUpdateAction)
   useUpdateNotificationResponse()
   usePlaybackProgressSaver()
+  useOfflineRegistrySync()
 
   useEffect(() => {
     const handle = InteractionManager.runAfterInteractions(() => {

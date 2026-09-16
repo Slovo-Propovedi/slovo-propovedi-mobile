@@ -23,6 +23,12 @@ export const MoreScreen = () => {
 
         <View style={styles.menu}>
           <MoreMenuSettingsItem
+            title='Офлайн'
+            testID='offline-item'
+            icon='cloud-offline-outline'
+            onPress={() => router.push('/offline')}
+          />
+          <MoreMenuSettingsItem
             icon='time-outline'
             testID='history-item'
             title='История прослушивания'

@@ -21,7 +21,16 @@ export {
   unregisterPlaylistRunStopper,
 } from './cacheQueueState'
 export { cleanupOrphanedDownloads } from './cleanupOrphans'
+export { clearAudioCacheAction } from './clearAudioCacheAction'
 export { hasInflightCacheDownloads } from './inflightCache'
+export {
+  clearOfflineRegistry,
+  flushOfflineRegistryPersist,
+  hydrateOfflineRegistry,
+  offlineRegistryAtom,
+  registerOfflineSermon,
+  removeOfflineSermon,
+} from './offlineSermonsRegistry'
 export {
   resolveCacheState,
   type ResolveCacheStateInput,

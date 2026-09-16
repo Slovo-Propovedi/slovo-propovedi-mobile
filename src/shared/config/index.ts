@@ -3,6 +3,8 @@ export {
   CACHED_SECTIONS,
   CACHED_SERMON_SEARCH,
   CACHED_SERMON_SEARCH_INDEX,
+  OFFLINE_SERMONS_REGISTRY,
+  OFFLINE_SERMONS_REGISTRY_SEEDED,
 } from './cache-storage-keys'
 export { DEFAULT_API_URL } from './config'
 export { debugConfig } from './debug'

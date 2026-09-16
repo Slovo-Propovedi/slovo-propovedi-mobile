@@ -1,4 +1,5 @@
 import { action, atom } from '@reatom/framework'
+import { clearOfflineRegistry, removeOfflineSermon } from './audio-cache/offlineSermonsRegistry'
 
 // Atom for triggering cache updates across the app
 // This is a shared atom that can be imported by any layer
@@ -56,6 +57,8 @@ export const markUrlCached = action((ctx, url: string) => {
 }, 'markUrlCached')
 
 // Action to forget a URL that was removed from the cache this session.
+// Also drops the persistent offline registry entry so the Offline screen
+// stops showing the sermon once its audio file is gone.
 export const markUrlEvicted = action((ctx, url: string) => {
   cachedUrlsAtom(ctx, prev => {
     if (!Object.hasOwn(prev, url)) return prev
@@ -63,13 +66,16 @@ export const markUrlEvicted = action((ctx, url: string) => {
     delete next[url]
     return next
   })
+  removeOfflineSermon(ctx, url)
   return url
 }, 'markUrlEvicted')
 
 // Action to drop the whole session overlay (e.g. a full cache clear).
+// Also wipes the persistent offline registry.
 export const clearCachedUrls = action(ctx => {
   cachedUrlsAtom(ctx, prev => {
     if (Object.keys(prev).length === 0) return prev
     return {}
   })
+  clearOfflineRegistry(ctx)
 }, 'clearCachedUrls')

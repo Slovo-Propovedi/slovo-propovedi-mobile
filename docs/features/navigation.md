@@ -15,12 +15,13 @@
 - `settings` — заголовок «Настройки»;
 - `about` — заголовок «О приложении»;
 - `history` — заголовок «История прослушивания», вход из вкладки «Еще» (`router.push('/history')`);
+- `offline` — заголовок «Офлайн», вход из вкладки «Еще» (`router.push('/offline')`);
 - `share` — заголовок «Поделиться приложением» (см. [`../screens/share.md`](../screens/share.md)).
 - цвет фона контента и шапки — из `currentTheme`; `headerTitleAlign: 'center'` в `screenOptions` — заголовок центрирован в шапке, а не прижат к кастомной кнопке «Назад» (см. ниже).
 
 **Кнопка «Назад» в шапке (`headerLeft`)** — кастомный `HeaderBackButton` (`src/widgets/sub-screen-header-back/ui/HeaderBackButton.tsx`) вместо стандартной кнопки react-navigation, используется в двух местах:
 
-- четыре под-экрана корневого стека (`settings`/`history`/`about`/`share`, `_RootLayout.tsx`) — фолбэк `/more` (таб «Еще», логический родитель всех четырёх);
+- пять под-экранов корневого стека (`settings`/`history`/`offline`/`about`/`share`, `_RootLayout.tsx`) — фолбэк `/more` (таб «Еще», логический родитель всех пяти);
 - стек «Слушать» (`playlist`/`playlist-list`, `app/(tabs)/listen/_layout.tsx`) — фолбэк `/listen`.
 
 Только иконка (`Ionicons 'chevron-back'`), без текста «Назад» рядом — раньше в стеке «Слушать» использовалась нативная кнопка с `headerBackTitle: 'Назад'` (текст виден только на iOS), теперь оба стека выглядят одинаково.
@@ -94,6 +95,7 @@
 | `/settings`                             | `SettingsScreen`     | `pages/settings`            |
 | `/about`                                | `AboutScreen`        | `pages/about`               |
 | `/history`                              | `HistoryScreen`      | `pages/history`             |
+| `/offline`                             | `OfflineScreen`      | `pages/offline`           |
 | `/share`                                | `ShareScreen`        | `pages/share`               |
 | `/read` (таб)                           | `ReadScreen`         | `pages/read` (заблокирован) |
 | `/read/book-reader`, `/read/books-list` | —                    | **не зарегистрированы**     |

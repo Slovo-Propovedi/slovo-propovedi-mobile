@@ -14,7 +14,7 @@
 
 - Заголовок: `APP_NAME` («Слово.Проповеди»), версия `v{APP_VERSION}` (из `shared/config`);
 - Описание: «Приложение для прослушивания и чтения проповедей»;
-- Пункты меню (`MoreMenuSettingsItem`): «История прослушивания» (иконка `time-outline`, первый в списке), «Настройки» (иконка `settings-outline`), «О приложении» (иконка `information-circle-outline`) и «Поделиться приложением» (иконка `share-social-outline`).
+- Пункты меню (`MoreMenuSettingsItem`): «Офлайн» (иконка `cloud-offline-outline`, первый в списке), «История прослушивания» (иконка `time-outline`), «Настройки» (иконка `settings-outline`), «О приложении» (иконка `information-circle-outline`) и «Поделиться приложением» (иконка `share-social-outline`).
 
 ## Откуда данные
 
@@ -22,6 +22,7 @@
 
 ## Куда можно перейти
 
+- «Офлайн» → `/offline` (`router.push('/offline')`).
 - «История прослушивания» → `/history` (`router.push('/history')`).
 - «Настройки» → `/settings` (`router.push('/settings')`).
 - «О приложении» → `/about` (`router.push('/about')`).
@@ -34,6 +35,7 @@
 ## Связанные документы
 
 - [screens/history.md](./history.md)
+- [screens/offline.md](./offline.md)
 - [screens/settings.md](./settings.md)
 - [screens/about.md](./about.md)
 - [screens/share.md](./share.md)

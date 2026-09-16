@@ -24,6 +24,7 @@
 | «Учиться» (таб)          | [study.md](./study.md)                 | заглушка     |
 | «Еще» (меню)             | [more.md](./more.md)                   | готов        |
 | История прослушивания    | [history.md](./history.md)             | готов        |
+| Офлайн                   | [offline.md](./offline.md)             | готов        |
 | Настройки                | [settings.md](./settings.md)           | готов        |
 | О приложении             | [about.md](./about.md)                 | готов        |
 | Поделиться приложением   | [share.md](./share.md)                 | готов        |

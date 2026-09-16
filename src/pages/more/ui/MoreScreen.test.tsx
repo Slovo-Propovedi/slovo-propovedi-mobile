@@ -41,6 +41,17 @@ describe('<MoreScreen>', () => {
     expect(getByText('Приложение для прослушивания и чтения проповедей')).toBeTruthy()
   })
 
+  test('renders offline menu item', async () => {
+    const { getByText } = await renderWithProviders(<MoreScreen />)
+    expect(getByText('Офлайн')).toBeTruthy()
+  })
+
+  test('offline item navigates to /offline on press', async () => {
+    const { getByText } = await renderWithProviders(<MoreScreen />)
+    await fireEvent.press(getByText('Офлайн'))
+    expect(mockPush).toHaveBeenCalledWith('/offline')
+  })
+
   test('renders history menu item', async () => {
     const { getByText } = await renderWithProviders(<MoreScreen />)
     expect(getByText('История прослушивания')).toBeTruthy()

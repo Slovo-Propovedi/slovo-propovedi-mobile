@@ -1,5 +1,7 @@
 import { createCtx } from '@reatom/framework'
+import { type PlaylistData, type SermonData } from 'shared/model'
 import type { Ctx } from '@reatom/framework'
+import { offlineRegistryAtom, registerOfflineSermon } from './audio-cache/offlineSermonsRegistry'
 import {
   cachedUrlsAtom,
   cacheUpdateTriggerAtom,
@@ -11,6 +13,24 @@ import {
   removeTrackDownloadProgress,
   setTrackDownloadProgress,
 } from './cache-triggers'
+
+const AUDIO_URL = 'https://example.com/audio.mp3'
+const OTHER_AUDIO_URL = 'https://example.com/other.mp3'
+
+const mockSermon: SermonData = {
+  artist: 'Artist',
+  artwork: 'https://example.com/art.jpg',
+  audioUrl: AUDIO_URL,
+  id: 'sermon-1',
+  title: 'Sermon 1',
+}
+
+const mockPlaylist: PlaylistData = {
+  artwork: 'https://example.com/playlist.jpg',
+  id: 'playlist-1',
+  sermons: [mockSermon],
+  title: 'Playlist 1',
+}
 
 describe('cacheUpdateTriggerAtom', () => {
   let ctx: Ctx
@@ -185,5 +205,46 @@ describe('cachedUrlsAtom registry', () => {
     const before = ctx.get(cachedUrlsAtom)
     clearCachedUrls(ctx)
     expect(ctx.get(cachedUrlsAtom)).toBe(before)
+  })
+})
+
+describe('offline registry sync on eviction', () => {
+  let ctx: Ctx
+
+  beforeEach(() => {
+    ctx = createCtx()
+  })
+
+  test('markUrlEvicted removes the registry entry for the URL', () => {
+    registerOfflineSermon(ctx, AUDIO_URL, mockSermon, mockPlaylist)
+    markUrlEvicted(ctx, AUDIO_URL)
+    expect(ctx.get(offlineRegistryAtom)).toEqual({})
+  })
+
+  test('markUrlEvicted keeps other registry entries untouched', () => {
+    registerOfflineSermon(ctx, AUDIO_URL, mockSermon, mockPlaylist)
+    registerOfflineSermon(ctx, OTHER_AUDIO_URL, mockSermon, mockPlaylist)
+    markUrlEvicted(ctx, AUDIO_URL)
+    expect(Object.keys(ctx.get(offlineRegistryAtom))).toEqual([OTHER_AUDIO_URL])
+  })
+
+  test('markUrlEvicted is a no-op for the registry when the URL is absent', () => {
+    registerOfflineSermon(ctx, AUDIO_URL, mockSermon, mockPlaylist)
+    const before = ctx.get(offlineRegistryAtom)
+    markUrlEvicted(ctx, OTHER_AUDIO_URL)
+    expect(ctx.get(offlineRegistryAtom)).toBe(before)
+  })
+
+  test('clearCachedUrls wipes the offline registry', () => {
+    registerOfflineSermon(ctx, AUDIO_URL, mockSermon, mockPlaylist)
+    registerOfflineSermon(ctx, OTHER_AUDIO_URL, mockSermon, mockPlaylist)
+    clearCachedUrls(ctx)
+    expect(ctx.get(offlineRegistryAtom)).toEqual({})
+  })
+
+  test('clearCachedUrls is a no-op for the registry when already empty', () => {
+    const before = ctx.get(offlineRegistryAtom)
+    clearCachedUrls(ctx)
+    expect(ctx.get(offlineRegistryAtom)).toBe(before)
   })
 })

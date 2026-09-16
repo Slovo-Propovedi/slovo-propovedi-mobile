@@ -78,7 +78,7 @@ export {
 export type { ListeningHistory, ListeningHistoryEntry }
 ```
 
-> `isHistoryLoadedAtom` — **внутренний** атом (не экспортируется из барреля): флаг того, что `loadHistoryAction` завершил чтение AsyncStorage (ставится `true` в `finally`, даже при ошибке чтения). Используется только внутри `useLastListeningEntry`, чтобы кнопка «Продолжить» не мигала disabled-состоянием на холодном старте.
+> `isHistoryLoadedAtom` — флаг того, что `loadHistoryAction` завершил чтение AsyncStorage (ставится `true` в `finally`, даже при ошибке чтения). Экспортируется из барреля (`entities/listening-history`): используется внутри `useLastListeningEntry`, чтобы кнопка «Продолжить» не мигала disabled-состоянием на холодном старте, и экраном «История» для скелетона загрузки (`HistoryScreen`).
 
 ### `useLastListeningEntry`
 
@@ -302,7 +302,8 @@ Per-sermon семантика вынесена в чистый хелпер `com
 | Место                          | Файл                                                                        | Как                                          |
 | ------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------- |
 | Список плейлиста               | `src/pages/playlist/ui/PlaylistTrackItem.tsx`                               | `useHistoryProgressMap()` + `getEntrySermon` |
-| Шторка очереди (мини-плейлист) | `src/widgets/expandable-player/ui/PlaylistBottomSheet/PlaylistSheetRow.tsx` | `useHistoryProgressMap()`                    |
+| Шторка очереди (мини-плейлист) | `src/widgets/expandable-player/ui/PlaylistBottomSheet/PlaylistSheetRow.tsx` | `useHistoryProgress(id)` (узкая per-row подписка) |
+| Экран «Офлайн»                 | `src/pages/offline/ui/OfflineRow.tsx`                                       | `useHistoryProgress(sermon.id)` (узкая per-row подписка) |
 | Результаты поиска              | `src/features/sermon-search/ui/SermonSearchResults.tsx`                     | `useHistoryProgressMap()` + `useHistorySermonIds()` (подписка на уровне списка, прокидывается в строки) |
 | Экран истории                  | `src/pages/history/ui/HistoryRow.tsx`                                       | inline-вывод из записи: `completed ? 1 : min(positionMs/durationMs, 1)` |
 
