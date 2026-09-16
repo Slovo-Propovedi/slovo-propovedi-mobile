@@ -31,6 +31,7 @@ interface PlaylistSheetListProps {
 }
 const keyExtractor = (item: TrackListItemData) => item.id
 
+// eslint-disable-next-line react-refresh/only-export-components -- Skeleton is attached via composition API
 const PlaylistSheetListComponent = ({
   cacheTrigger,
   currentAudioId,
@@ -106,8 +107,6 @@ const PlaylistSheetListComponent = ({
   )
 }
 
-const PlaylistSheetListWithSkeleton = Object.assign(memo(PlaylistSheetListComponent), {
+export const PlaylistSheetList = Object.assign(memo(PlaylistSheetListComponent), {
   Skeleton: TracksListSkeleton,
 })
-
-export const PlaylistSheetList = PlaylistSheetListWithSkeleton
