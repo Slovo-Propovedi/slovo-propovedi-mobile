@@ -21,7 +21,10 @@ export const ListenScreen = () => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentTheme.background }]}>
+    <SafeAreaView
+      edges={['top', 'left', 'right']}
+      style={[styles.safeArea, { backgroundColor: currentTheme.background }]}
+    >
       {isSearchOpen && (
         <View style={styles.searchHeader}>
           <SearchBar />
