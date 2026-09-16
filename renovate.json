@@ -11,6 +11,11 @@
   },
   "packageRules": [
     {
+      "description": "Cap Gradle wrapper below 9.4 — Gradle 9.4+ embeds Kotlin 2.3+, unreadable by KGP 2.1.20 (RN 0.86.3 / Expo SDK 57). Raise the cap when upgrading to RN >= 0.87 or Expo SDK 58.",
+      "matchManagers": ["gradle-wrapper"],
+      "allowedVersions": "<9.4"
+    },
+    {
       "description": "Major updates wait for a tick in the Dependency Dashboard.",
       "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true

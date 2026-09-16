@@ -83,6 +83,10 @@
 - [ ] `src/shared/api/books.ts` — TODO заменить на реальный вызов (см. Local DB → API migration).
 - [ ] **Require-циклы book-reader (pre-existing, warn-уровень).** `getParagraphElement.tsx` → `getElementsInBlockElement.ts` → `parseObjectToStylizedElements.ts` → `getParagraphElement.tsx` и `getBlockElement.tsx` → та же цепочка — `src/pages/book-reader/lib/*` — зафиксированы как warn в `.dependency-cruiser.cjs` (`no-circular-legacy-book-reader`); вернуться при рефакторинге book-reader (вынести общие хелперы).
 
+## Gradle wrapper
+
+- [ ] **Gradle wrapper запинён потолком 9.3.x (сейчас 9.3.1 — официальный пин RN 0.86.x и Expo SDK 57).** Gradle 9.4+ встраивает kotlin-stdlib 2.3+, которую Kotlin Gradle Plugin 2.1.20 (запинён RN 0.86.3 и expo-modules-autolinking) читать не умеет — сборка падает на компиляции `@react-native/gradle-plugin` и `expo-modules-autolinking` (метаданные до 2.2.x максимум) — `android/gradle/wrapper/gradle-wrapper.properties`. Renovate ограничен правилом `allowedVersions: "<9.4"` в `renovate.json`. Вернуться при апгрейде на RN >= 0.87 / Expo SDK 58 (там KGP 2.2.0+, RN-шаблон уже на gradle 9.4.1). Upstream-контекст — expo/expo#49550.
+
 ## Build flavors
 
 - [ ] **`expo prebuild --clean` сбрасывает flavors.** Если пересоздать нативную папку `android/` через `expo prebuild --clean` (или удалить `android/`), `build.gradle` и `strings.xml` перегенерируются из `app.json` — flavors, `applicationIdSuffix`, `debuggableVariants` и source-set имена будут потеряны, потребуется повторно применить изменения. `app.json` не содержит flavor-конфигурации. — `android/app/build.gradle`, `android/app/src/{dev,prod}/res/values/strings.xml` — вернуться, если переход на prebuild-per-build или добавление config-plugin для flavors понадобится. Сейчас bare workflow с отслеживаемой `android/` — flavours переживают обычную разработку.
