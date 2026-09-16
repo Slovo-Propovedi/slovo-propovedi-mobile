@@ -54,6 +54,12 @@
       ],
       "expo-router",
       "expo-status-bar",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
+        }
+      ],
       "expo-image",
       [
         "expo-splash-screen",

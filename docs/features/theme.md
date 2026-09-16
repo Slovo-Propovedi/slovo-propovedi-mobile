@@ -71,6 +71,14 @@ const styles = StyleSheet.create({
 
 `setThemeMode` и `loadThemeMode` вызывают `Appearance.setColorScheme?.(...)` (`'system'` → `'unspecified'`), чтобы системный статус-бар и нативные элементы соответствовали выбранному режиму. При `setSystemTheme` (смена системной темы) `currentThemeAtom` пересчитывается, а `Appearance` не трогается. Опциональный вызов (`?.`) — на `react-native-web` метода `setColorScheme` нет.
 
+## Системный навбар (Android)
+
+- Навбар **всегда прозрачный** (включая область жестовой полоски): фон задаётся edge-to-edge + `android:navigationBarColor` transparent в `styles.xml`, а системная контрастная подложка отключена атрибутами `android:enforceNavigationBarContrast` / `expoEnforceNavigationBarContrast` в `android/app/src/main/res/values/styles.xml` (это то, что генерирует плагин `expo-navigation-bar` на prebuild; `enforceContrast: false` в `app.json`).
+- Таб-бар полупрозрачно закрашивает область навбара: размытый `BlurView` (`CustomTabBar`) с `paddingBottom: Math.max(bottom, 30)` покрывает и ряд кнопок, и полосу инсета — контент скроллится под полупрозрачную полосу (glass-эффект).
+- Цвет кнопок/иконок следует теме приложения: тёмные глифы на светлой теме, светлые на тёмной. Реализовано в `ThemeProvider` (эффект по `isLight`): `NavigationBar.setStyle(isLight ? 'dark' : 'light')` — только Android, обёрнут в try-catch + `reportError` (косметика не должна ронять приложение).
+- Требует нативной пересборки (`yarn run:android` / EAS build) — модуль и плагин применяются на этапе prebuild; атрибуты контраста закоммичены в `android/` (см. выше), поэтому работают и без повторного prebuild.
+- **QA:** проверять на физическом устройстве — на эмуляторе Android 15 известный баг скрима (см. документацию `expo-navigation-bar`).
+
 ## Скроллбары на web
 
 `ThemeProvider` (эффект только при `Platform.OS === 'web'`) прокидывает цвета активной темы в CSS-переменные `--sp-scrollbar-thumb` (`currentTheme.textMuted`) и `--sp-scrollbar-thumb-hover` (`currentTheme.text`) на `document.documentElement`. Сами правила `::-webkit-scrollbar*` / `scrollbar-width` / `scrollbar-color` — в `public/index.html` (фолбэк — нейтральный серый). Переключение светлая/тёмная перекрашивает скроллбары автоматически. Подробнее — [web.md](./web.md#скроллбары).

@@ -1,7 +1,9 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
+import * as NavigationBar from 'expo-navigation-bar'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import { Appearance, Platform, StatusBar as RNStatusBar, useColorScheme } from 'react-native'
+import { reportError } from 'shared/model/error-dialog'
 import { updateCOLORS } from '../colors'
 import {
   currentThemeAtom,
@@ -57,6 +59,17 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       RNStatusBar.setBackgroundColor('transparent')
     }
   }, [])
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return
+    try {
+      // Sync wrapper over a native AsyncFunction: a native rejection escapes this try-catch as an
+      // unhandled rejection (acceptable — cosmetic call, no dialog/crash path on native)
+      NavigationBar.setStyle(isLight ? 'dark' : 'light')
+    } catch (error) {
+      reportError(error, 'Не удалось настроить системную навигационную панель')
+    }
+  }, [isLight])
 
   useEffect(() => {
     // Feed the active theme into the CSS scrollbar vars declared in public/index.html.
