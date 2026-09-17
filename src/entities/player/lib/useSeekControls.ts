@@ -4,7 +4,10 @@ interface SeekControls {
   isSeeking: boolean
   startSeek: (direction: 'backward' | 'forward') => void
   stopSeek: () => void
+  tapSeek: (direction: 'backward' | 'forward') => void
 }
+
+const TAP_SEEK_STEP_MS = 10_000
 
 interface UseSeekControlsParams {
   duration: number
@@ -36,6 +39,19 @@ export const useSeekControls = ({
     seekSpeedRef.current = 0
     setIsSeeking(false)
   }, [])
+
+  const tapSeek = useCallback(
+    (direction: 'backward' | 'forward') => {
+      if (!duration || duration <= 0) return
+
+      const maxPos = duration - 100
+      const delta = direction === 'forward' ? TAP_SEEK_STEP_MS : -TAP_SEEK_STEP_MS
+      const newPos = Math.max(0, Math.min(maxPos, positionRef.current + delta))
+      positionRef.current = newPos
+      void seekTo(newPos)
+    },
+    [duration, seekTo],
+  )
 
   const startSeek = useCallback(
     (direction: 'backward' | 'forward') => {
@@ -87,5 +103,5 @@ export const useSeekControls = ({
     [duration, seekTo, stopSeek],
   )
 
-  return { isSeeking, startSeek, stopSeek }
+  return { isSeeking, startSeek, stopSeek, tapSeek }
 }

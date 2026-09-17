@@ -50,7 +50,7 @@ export const DetailsOverlay = ({ audio, insetsTop, onClose, styles }: DetailsOve
 
   return (
     <View style={[styles.descriptionContainer, { marginTop: insetsTop + HEADER_OFFSET }]}>
-      <Pressable onPress={onClose} style={StyleSheet.absoluteFill} />
+      <Pressable tabIndex={-1} onPress={onClose} style={StyleSheet.absoluteFill} />
       <View style={styles.descriptionCard}>
         <ScrollView contentContainerStyle={localStyles.content}>
           {hasContent ? (

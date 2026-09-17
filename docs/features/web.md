@@ -85,6 +85,28 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 - `webMediaSession.ts` (+ `webMediaSessionSeek.ts`, `webMediaSessionState.ts`) — **Media Session API**: `setLockScreenMetadata` / `reassertLockScreenMetadata` / `clear` + `updatePlaybackState` / `updatePositionState`. Метаданные (название/художник/обложка через `MediaMetadata.artwork`) и элементы управления (play/pause/seekto/seekforward/seekbackward) видны в системном медиа-UI браузера (Chrome/Edge: popup с клавиатурными медиа-кнопками и hardware media keys). Обработчики действий вызывают методы `WebPlayerService` (`pause`/`play`/`seekTo`); `updatePositionState` пишет `duration`/`position`/`playbackRate` для прогресс-бара. Портировано из `expo-audio`'s `MediaSessionController.web.js`, не импортирует внутренности expo-audio. Позиция обновляется из событий `play`/`pause`/`timeupdate`/`durationchange` через `webAudioHandlers.ts`, а также напрямую из `seekTo`/`setPlaybackRate`/`setMetadata`. Нет слушателя `seeked`; `ended` не обновляет позицию. Все вызовы Media Session обёрнуты в try-catch (поддерживается не всеми браузерами; косметика не должна ронять воспроизведение).
 - `webPlayerState.ts` — локальный стейт плеера **зеркалит** `isPlaying` / `isBuffering` / `position` в общие Reatom-атомы (`setIsPlayingAction` и т.д.), которые читает UI (`usePlayerState`). Без этого кнопка play/pause на web не реагировала. `duration` остаётся за `webDurationWriter`. Аналог на нативе — status-листенеры expo-audio.
 
+### Клавиатура полноэкранного плеера (web)
+
+`usePlayerKeyboardSeek` (`widgets/expandable-player/ui/FullscreenContent/usePlayerKeyboardSeek.ts`) — web-only клавиатурное управление полноэкранным плеером. Гейты: `Platform.OS === 'web'` + `isPlayerExpandedAtom` (развёрнутый вид). Слушатели `keydown`/`keyup`/`blur` на `window`; хендлеры инжектятся пропсами (`tapSeek`/`startSeek`/`stopSeek` из `useSeekControls`, `togglePlay` из `useGuardedTogglePlay`, `collapsePlayer` — тот же `handleCollapsePress`, что у кнопки-шеврона). Чистые DOM-guards вынесены в `keyboardTargetGuards.ts`.
+
+Карта клавиш:
+
+- **`ArrowLeft`/`ArrowRight`** — тап: перемотка ±10с (`tapSeek`); удержание ≥ 500мс (`KEY_HOLD_DELAY_MS`) — long-press-перемотка (`startSeek`, как у экранных кнопок); `keyup`/`blur` останавливают (`stopSeek`). Смена направления при удержании останавливает текущий жест и начинает новый.
+- **`Space`** — play/pause (`togglePlay`).
+- **`Escape`** — сворачивание плеера (`collapsePlayer`): если открыта шторка плейлиста — сначала закрывает её, иначе сворачивает плеер (та же цепочка, что у кнопки-шеврона).
+
+Общие гейты:
+
+- **OS auto-repeat** (`event.repeat`) игнорируется — непрерывную перемотку ведёт hold-таймер.
+- **Модификаторы** (`ctrl`/`meta`/`alt`/`shift`) не перехватываются — не ломаем браузерные шорткаты (Ctrl+ArrowLeft — назад, Ctrl+Space и т.д.).
+- **Editable-таргеты** (`INPUT`/`TEXTAREA`/`contentEditable`) не перехватываются — стрелки работают в полях ввода, Esc не сворачивает плеер при вводе.
+- **Space на интерактивных таргетах** (`BUTTON`/`A`/`INPUT`/`TEXTAREA`/`SELECT`/интерактивный `role`/`contentEditable`) пропускается — сфокусированная кнопка активируется нативным Space, иначе было бы двойное срабатывание.
+- `preventDefault()` на стрелках — чтобы страница не скроллилась при перемотке; на `Escape` — чтобы браузер не выходил из нативного fullscreen.
+
+Экранные кнопки Next/Prev не затронуты: тап по-прежнему переключает трек, long-press — перемотка.
+
+**Фокусируемость средней области:** кликабельная средняя область полноэкранного плеера (`PlayerMiddleArea` → `Pressable styles.spacer`, а также backdrop оверлея «Подробнее» в `DetailsOverlay`) получает `tabIndex={-1}` — не попадает в Tab-навигацию, но остаётся кликабельной мышью/тачем. RNW-деталь: `focusable={false}` на `Pressable` **не работает** — `Pressable` всегда прокидывает явный `tabIndex` (0 по умолчанию), который в `createDOMProps` выигрывает у `focusable`; поэтому используется именно `tabIndex={-1}`.
+
 ## Десктопный layout
 
 `shared/ui/layout/appMaxWidth.ts` — `APP_MAX_CONTENT_WIDTH = 600` (только `Platform.OS === 'web'`, на нативе `undefined` → всё как было) + `getColumnSideInset(screenWidth, minInset)` (помечен `'worklet'` — используется и в reanimated-ворклете).

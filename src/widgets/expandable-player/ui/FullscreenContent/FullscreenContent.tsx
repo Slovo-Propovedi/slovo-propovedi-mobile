@@ -1,16 +1,17 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback } from 'react'
-import { Pressable, type ViewStyle } from 'react-native'
+import { type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { INDENTS } from 'shared/ui/theme'
 import { type createStyles } from '../ExpandablePlayer/styles'
 import { PlaylistBottomSheet } from '../PlaylistBottomSheet/PlaylistBottomSheet'
-import { DetailsOverlay } from './DetailsOverlay'
 import { gradientStyles } from './gradients'
 import { HeaderOverlay } from './HeaderOverlay'
 import { PlayerControlsSection } from './PlayerControlsSection'
+import { PlayerMiddleArea } from './PlayerMiddleArea'
 import { useFullscreenHandlers } from './useFullscreenHandlers'
+import { usePlayerKeyboardSeek } from './usePlayerKeyboardSeek'
 
 interface FullscreenContentProps {
   fullStyle: AnimatedStyle<ViewStyle>
@@ -39,26 +40,27 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
     showPlaylist,
     startSeek,
     stopSeek,
+    tapSeek,
     visualState,
   } = useFullscreenHandlers()
 
   const handleCollapsePress = () => {
-    if (showPlaylist) {
-      setShowPlaylist(false)
-      return
-    }
-    onClose()
-  }
-
-  const closePlaylistOnSwipe = () => {
     if (showPlaylist) setShowPlaylist(false)
+    else onClose()
   }
 
   // Stable identity so the memoized sheet skips re-renders on parent ticks.
   const handleClosePlaylist = useCallback(() => setShowPlaylist(false), [setShowPlaylist])
 
-  if (!audio) return null
-  if (!playlist) return null
+  usePlayerKeyboardSeek({
+    collapsePlayer: handleCollapsePress,
+    startSeek,
+    stopSeek,
+    tapSeek,
+    togglePlay: handleTogglePlay,
+  })
+
+  if (!audio || !playlist) return null
 
   const playlistList = playlist.sermons
   const currentIndex = playlistList.findIndex(t => t.id === audio.id)
@@ -76,7 +78,9 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
           collapseOnTap={handleCollapsePress}
           nextSermonTitle={nextSermon?.title}
           insetsTop={insets.top + INDENTS.low}
-          closePlaylistOnSwipe={closePlaylistOnSwipe}
+          closePlaylistOnSwipe={() => {
+            if (showPlaylist) setShowPlaylist(false)
+          }}
         />
         <LinearGradient
           pointerEvents='none'
@@ -88,16 +92,14 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
           style={gradientStyles.bottomGradient}
           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
         />
-        {showDetails ? (
-          <DetailsOverlay
-            audio={audio}
-            styles={styles}
-            insetsTop={insets.top}
-            onClose={() => setShowDetails(false)}
-          />
-        ) : (
-          <Pressable style={styles.spacer} onPress={() => void handleTogglePlay()} />
-        )}
+        <PlayerMiddleArea
+          audio={audio}
+          styles={styles}
+          insetsTop={insets.top}
+          showDetails={showDetails}
+          onTogglePlay={handleTogglePlay}
+          onCloseDetails={() => setShowDetails(false)}
+        />
         <PlayerControlsSection
           audio={audio}
           seekTo={seekTo}

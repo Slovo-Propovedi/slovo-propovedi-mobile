@@ -43,7 +43,7 @@ export const useFullscreenHandlers = () => {
   const [queue] = useAtom(cacheQueueAtom)
   const { seekTo } = usePlayer()
   const { togglePlay } = useGuardedTogglePlay()
-  const { startSeek, stopSeek } = useSeekControls({ duration, position, seekTo })
+  const { startSeek, stopSeek, tapSeek } = useSeekControls({ duration, position, seekTo })
   const [showMenu, setShowMenu] = useAtom(showMenuAtom)
   const [showPlaylist, setShowPlaylist] = useAtom(showPlaylistAtom)
   const [showDetails, setShowDetails] = useState(false)
@@ -113,6 +113,7 @@ export const useFullscreenHandlers = () => {
     showPlaylist,
     startSeek,
     stopSeek,
+    tapSeek,
     visualState,
   }
 }
