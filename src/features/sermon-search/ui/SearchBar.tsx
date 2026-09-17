@@ -1,13 +1,20 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { useEffect, useState } from 'react'
-import { Keyboard, StyleSheet, Text, TextInput, View } from 'react-native'
+import {
+  Keyboard,
+  Platform,
+  Text,
+  TextInput,
+  type TextInputKeyPressEvent,
+  View,
+} from 'react-native'
+import { isEscapeKey, useEscapeKey } from 'shared/lib/escape-key'
 import { IconButton } from 'shared/ui/icon-button'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
-import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useSearchAutofocus } from '../lib/useSearchAutofocus'
-import { useSearchEscapeKey } from '../lib/useSearchEscapeKey'
-import { closeSearch, resetSearchResults, searchQueryAtom } from '../model'
+import { closeSearch, isSearchOpenAtom, resetSearchResults, searchQueryAtom } from '../model'
 import { fetchDistinctValues } from '../model-distinctValues'
+import { styles } from './SearchBar.styles'
 import { SearchSuggestions } from './SearchSuggestions'
 
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
@@ -18,6 +25,7 @@ export const SearchBar = () => {
   const { currentTheme } = useTheme()
   const ctx = useCtx()
   const [, setQuery] = useAtom(searchQueryAtom)
+  const [isSearchOpen] = useAtom(isSearchOpenAtom)
   // Local state drives the input so async re-renders (spinner flips, results
   // landing) can never push a stale query back. Seeded from the atom at mount.
   const [inputValue, setInputValue] = useState(() => ctx.get(searchQueryAtom))
@@ -55,7 +63,22 @@ export const SearchBar = () => {
     void closeSearchAction()
   }
 
-  const handleKeyPress = useSearchEscapeKey(handleClear)
+  const handleKeyPress = (event: TextInputKeyPressEvent) => {
+    if (Platform.OS !== 'web') return
+    if (!isEscapeKey(event)) return
+    handleClear()
+  }
+
+  // RNW's TextInput stops propagation of its own keydown before the user's
+  // onKeyPress runs, so a focused input only ever reaches the input-scoped
+  // path above. When the input is NOT focused the event bubbles to document,
+  // where this listener (gated on search-open) handles it — the two paths are
+  // mutually exclusive by construction.
+  useEscapeKey({
+    enabled: Platform.OS === 'web' && isSearchOpen,
+    onEscape: handleClear,
+    scope: 'document',
+  })
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.surface }]}>
@@ -99,31 +122,3 @@ export const SearchBar = () => {
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  clearButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: INDENTS.medium,
-  },
-  clearIcon: {
-    fontSize: FONT_SIZES.lg,
-  },
-  container: {
-    borderRadius: RADIUSES.middle,
-    flex: 1,
-    flexDirection: 'row',
-    height: SEARCH_HEADER_HEIGHT - 2 * INDENTS.low,
-    marginHorizontal: INDENTS.medium,
-  },
-  input: {
-    borderRadius: RADIUSES.middle,
-    borderWidth: 1,
-    flex: 1,
-    fontSize: FONT_SIZES.md,
-    lineHeight: FONT_SIZES.md + INDENTS.lowest,
-    paddingHorizontal: INDENTS.medium,
-    paddingVertical: 0,
-    textAlignVertical: 'center',
-  },
-})

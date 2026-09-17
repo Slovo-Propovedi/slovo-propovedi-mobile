@@ -36,6 +36,9 @@ export const useEscapeKey = ({
     }
 
     const target = window[scope]
+    // No DOM target (SSR, tests) — nothing to attach to, skip silently.
+    if (!target) return
+
     target.addEventListener('keydown', handleKeyDown, { capture })
 
     return () => {

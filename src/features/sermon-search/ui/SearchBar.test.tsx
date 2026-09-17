@@ -49,6 +49,71 @@ const createEscapeKeyEvent = (
   shiftKey: modifiers.shiftKey ?? false,
 })
 
+interface KeyDownEventLike {
+  altKey: boolean
+  ctrlKey: boolean
+  key: string
+  metaKey: boolean
+  shiftKey: boolean
+  stopPropagation: () => void
+}
+
+const createKeyDownEvent = (
+  key: string,
+  modifiers: Partial<Pick<KeyDownEventLike, 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>> = {},
+): KeyDownEventLike => ({
+  altKey: modifiers.altKey ?? false,
+  ctrlKey: modifiers.ctrlKey ?? false,
+  key,
+  metaKey: modifiers.metaKey ?? false,
+  shiftKey: modifiers.shiftKey ?? false,
+  stopPropagation: jest.fn(),
+})
+
+// jest-expo runs in a node environment: there is no real DOM, and `window` is
+// aliased to `global`. This installs a fake `document` that records keydown
+// listeners and a `dispatchKeyDown` helper that simulates a window keydown
+// reaching those document listeners (as it would in a browser).
+const installFakeDom = () => {
+  const listeners: Array<{ handler: (event: KeyDownEventLike) => void; type: string }> = []
+  const fakeDocument = {
+    addEventListener: (type: string, handler: (event: KeyDownEventLike) => void) => {
+      listeners.push({ handler, type })
+    },
+    documentElement: { style: { setProperty: jest.fn() } },
+    removeEventListener: (type: string, handler: (event: KeyDownEventLike) => void) => {
+      const index = listeners.findIndex(l => l.handler === handler && l.type === type)
+      if (index !== -1) listeners.splice(index, 1)
+    },
+  }
+  const dispatchKeyDown = (event: KeyDownEventLike) => {
+    listeners.forEach(({ handler }) => handler(event))
+  }
+
+  Object.defineProperty(global, 'document', {
+    configurable: true,
+    value: fakeDocument,
+    writable: true,
+  })
+
+  return {
+    dispatchKeyDown,
+    restore: () => {
+      // Leave a no-op stub behind: React unmounts the tree after the test
+      // finishes, and the hook's effect cleanup calls document.removeEventListener.
+      Object.defineProperty(global, 'document', {
+        configurable: true,
+        value: {
+          addEventListener: jest.fn(),
+          documentElement: { style: { setProperty: jest.fn() } },
+          removeEventListener: jest.fn(),
+        },
+        writable: true,
+      })
+    },
+  }
+}
+
 const sermon: SermonData = {
   artist: 'Иван',
   artwork: 'https://example.com/a.jpg',
@@ -268,10 +333,74 @@ describe('<SearchBar>', () => {
     )
     expect(hideCall).toBeDefined()
 
-    act(() => {
+    await act(async () => {
       hideCall?.[1]()
     })
 
     expect(blurMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('<SearchBar> web Escape without input focus', () => {
+  test('Escape on document clears the query and keeps the search open when the query is non-empty', async () => {
+    const { dispatchKeyDown, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      searchQueryAtom(ctx, 'вера')
+      await renderWithProviders(<SearchBar />, { ctx })
+
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape'))
+      })
+
+      expect(ctx.get(searchQueryAtom)).toBe('')
+      expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
+  })
+
+  test('Escape on document closes the search when the query is empty', async () => {
+    const { dispatchKeyDown, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      await renderWithProviders(<SearchBar />, { ctx })
+
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape'))
+      })
+
+      await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+      expect(ctx.get(searchQueryAtom)).toBe('')
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
+  })
+
+  test('Escape with a modifier held on document does not clear or close the search', async () => {
+    const { dispatchKeyDown, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      searchQueryAtom(ctx, 'вера')
+      await renderWithProviders(<SearchBar />, { ctx })
+
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape', { ctrlKey: true }))
+      })
+
+      expect(ctx.get(searchQueryAtom)).toBe('вера')
+      expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
   })
 })
