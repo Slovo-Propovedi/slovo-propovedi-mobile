@@ -30,6 +30,10 @@
 - **Контекст-меню** — `TracksListItemContextMenu`: встроенный пункт «Добавить в офлайн / Удалить из офлайн / Остановить / Убрать из очереди» (`toggleCache`) + кастомные `menuActions`.
 - **Подсветка играющего** — заголовок/обложка primary + `AnimatedSoundBars` при `isAudioPlaying`.
 
+### Web-специфика: строка-ссылка и кнопка меню (три точки)
+
+На web react-native-web рендерит `accessibilityRole='link'` как `<div role="link" tabindex=0>` (без `<a>`-тега): строка получает Vimium-подсказки, Enter активирует, Space скроллит — семантика ссылки. Кнопка меню (три точки) — настоящий `<button>`: строка и кнопка используют `PressableButton` из `shared/ui/pressable-button` (role по умолчанию `button`), строка передаёт `accessibilityRole={ROW_ACCESSIBILITY_ROLE}` (`link` на web, `button` на нативе). На нативе строка и кнопка остаются `button`. **Не вкладывать кнопки друг в друга на web**: `<button>` внутри `<div role="link">` валиден, но `<button>` внутри `<button>` (или внутри другого элемента с role=button/link) — невалидный HTML и React-ошибка «`<button>` cannot be a descendant of `<button>`».
+
 ### FSD-правило
 
 `shared/ui/track-list` **не импортирует** `entities/*` и `features/*`. Воспроизведение, источники данных (entry/sermon), построение меню и **источники прогресса** (`useHistoryProgress`, математика entry, `progressMap`) остаются в обёртках.

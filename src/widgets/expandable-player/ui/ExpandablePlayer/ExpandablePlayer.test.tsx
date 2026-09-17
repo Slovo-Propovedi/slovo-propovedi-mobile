@@ -76,10 +76,10 @@ jest.mock('./styles', () => ({ createStyles: () => ({}) }))
 jest.mock('./miniStyles', () => ({ createMiniStyles: () => ({}) }))
 
 jest.mock('./MiniPlayer', () => {
-  const { Pressable } = jest.requireActual('react-native')
+  const { PressableButton } = jest.requireActual('../../../../shared/ui/pressable-button')
   return {
     MiniPlayer: ({ onPlayPause }: { onPlayPause: () => void }) => (
-      <Pressable onPress={onPlayPause} accessibilityRole='button' accessibilityLabel='play-pause' />
+      <PressableButton onPress={onPlayPause} accessibilityLabel='play-pause' />
     ),
   }
 })

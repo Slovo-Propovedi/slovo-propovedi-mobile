@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons'
 import { type ComponentProps } from 'react'
-import { Pressable, StyleSheet, Text } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
+import { PressableButton } from '../pressable-button'
 import { AnchoredDropdown, type AnchorRect } from './AnchoredDropdown'
 
 export interface MenuDropdownProps {
@@ -35,8 +36,7 @@ export const MenuDropdown = ({ anchor, items, onClose, testID, visible }: MenuDr
       menuStyle={[styles.menu, { backgroundColor: currentTheme.surface }]}
     >
       {items.map((item, index) => (
-        <Pressable
-          accessibilityRole='button'
+        <PressableButton
           key={`${item.text}-${index}`}
           style={[styles.item, item.disabled && styles.itemDisabled]}
           accessibilityState={item.disabled ? { disabled: true } : undefined}
@@ -58,7 +58,7 @@ export const MenuDropdown = ({ anchor, items, onClose, testID, visible }: MenuDr
             />
           )}
           <Text style={[styles.itemText, { color: currentTheme.text }]}>{item.text}</Text>
-        </Pressable>
+        </PressableButton>
       ))}
     </AnchoredDropdown>
   )

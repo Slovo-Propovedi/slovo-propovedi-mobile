@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
-import { type ColorValue, Pressable, StyleSheet, Text, View } from 'react-native'
+import { type ColorValue, StyleSheet, Text, View } from 'react-native'
+import { PressableButton } from '../pressable-button'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
@@ -32,12 +33,12 @@ export const ConfirmDialogButton = ({
   const textStyle = isConfirm ? styles.confirmButtonText : styles.cancelButtonText
 
   return (
-    <Pressable testID={testID} onPress={onPress} style={buttonStyle} accessibilityRole='button'>
+    <PressableButton testID={testID} onPress={onPress} style={buttonStyle}>
       <View style={styles.buttonContent}>
         {icon}
         <Text style={textStyle}>{text}</Text>
       </View>
-    </Pressable>
+    </PressableButton>
   )
 }
 

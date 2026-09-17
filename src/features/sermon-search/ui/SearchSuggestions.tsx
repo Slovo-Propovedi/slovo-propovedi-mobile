@@ -1,5 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native'
+import { ScrollView, StyleSheet, Text } from 'react-native'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
 import { getSuggestions, type Suggestion } from '../lib/suggestions'
@@ -58,9 +59,8 @@ const SuggestionRow = ({ onPress, suggestion }: SuggestionRowProps) => {
   const categoryLabel = suggestion.category === 'artist' ? ARTIST_LABEL : BOOK_LABEL
 
   return (
-    <Pressable
+    <PressableButton
       onPress={onPress}
-      accessibilityRole='button'
       accessibilityLabel={`${suggestion.value}, ${categoryLabel}`}
       style={({ pressed }) => [
         styles.row,
@@ -71,7 +71,7 @@ const SuggestionRow = ({ onPress, suggestion }: SuggestionRowProps) => {
         {suggestion.value}
       </Text>
       <Text style={[styles.category, { color: currentTheme.textMuted }]}>{categoryLabel}</Text>
-    </Pressable>
+    </PressableButton>
   )
 }
 

@@ -1,10 +1,11 @@
 import { useAtom } from '@reatom/npm-react'
-import { Pressable, StyleSheet, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { useEntryPlayback } from 'features/entry-playback'
 import { useLastListeningEntry } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom, usePlayer } from 'entities/player'
 import { dynamicSectionsAtom, isLoadingSectionsAtom } from 'entities/section'
 import { reportError } from 'shared/model/error-dialog'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { getFirstSectionLayout } from '../lib/first-section-layout'
 import { ContinueCircleButton } from './ContinueCircleButton'
 
@@ -57,10 +58,9 @@ export const ContinueListeningButton = () => {
       : START_LISTENING_LABEL
 
   return (
-    <Pressable
+    <PressableButton
       accessible
       disabled={isDisabled}
-      accessibilityRole='button'
       onPress={() => void handlePress()}
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: isDisabled }}
@@ -77,7 +77,7 @@ export const ContinueListeningButton = () => {
       <View style={styles.mainArea}>
         <ContinueCircleButton width={width} isPlaying={isPlaying} />
       </View>
-    </Pressable>
+    </PressableButton>
   )
 }
 

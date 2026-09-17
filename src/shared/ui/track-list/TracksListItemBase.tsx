@@ -1,12 +1,18 @@
 import { useRef, useState } from 'react'
-import { Pressable, type View } from 'react-native'
+import { Platform, type View } from 'react-native'
 import { type AnchorRect } from 'shared/ui/menu'
+import { PressableButton } from '../pressable-button'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { createTracksListStyles } from './styles'
 import { TracksListItemContent } from './TracksListItemContent'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
 import { type TracksListItemProps } from './types'
 import { useTrackItemCache } from './useTrackItemCache'
+
+// Web: the row renders as <div role="link" tabindex=0> (RNW maps 'link' to the
+// role attribute, no <a> tag) so Vimium hints work and Enter activates while
+// Space scrolls — link semantics. Native keeps the button role.
+const ROW_ACCESSIBILITY_ROLE = Platform.OS === 'web' ? 'link' : 'button'
 
 export const TracksListItemBase = ({
   artwork,
@@ -61,11 +67,11 @@ export const TracksListItemBase = ({
 
   return (
     <>
-      <Pressable
+      <PressableButton
         onPress={handleItemPress}
         testID='tracks-list-item'
-        accessibilityRole='button'
         onLongPress={handleToggleMenu}
+        accessibilityRole={ROW_ACCESSIBILITY_ROLE}
         style={[
           style,
           tracksListStyles.itemContainer,
@@ -87,7 +93,7 @@ export const TracksListItemBase = ({
           dotsOnPress={handleToggleMenu}
           isAudioPlaying={isAudioPlaying}
         />
-      </Pressable>
+      </PressableButton>
 
       <TracksListItemContextMenu
         isCached={isCached}

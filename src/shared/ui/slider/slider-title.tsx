@@ -1,6 +1,7 @@
 import { Entypo } from '@expo/vector-icons'
 import { Text } from 'react-native'
 import { type GestureResponderEvent } from 'react-native'
+import { PressableButton } from '../pressable-button'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { createSliderStyles as styles } from './slider.styles'
 
@@ -16,15 +17,18 @@ const INLINE_ARROW_GAP = '\u00A0'
 
 // Заголовок секции: текст переносится естественно на несколько строк, стрелка-
 // «показать все» рендерится инлайн внутри того же Text и приклеена к концу текста.
+// Pressable-обёртка даёт настоящую кнопку на web (Text с onPress — просто div).
 export const SliderTitle = ({ fontSize, onPress, title }: SliderTitleProps) => {
   const { currentTheme } = useTheme()
   const sliderStyles = styles(currentTheme)
 
   return (
-    <Text testID='title' onPress={onPress} style={[sliderStyles.title, { fontSize }]}>
-      {title}
-      {INLINE_ARROW_GAP}
-      <Entypo size={fontSize} name='chevron-right' color={currentTheme.text} />
-    </Text>
+    <PressableButton onPress={onPress} accessibilityLabel={title}>
+      <Text testID='title' style={[sliderStyles.title, { fontSize }]}>
+        {title}
+        {INLINE_ARROW_GAP}
+        <Entypo size={fontSize} name='chevron-right' color={currentTheme.text} />
+      </Text>
+    </PressableButton>
   )
 }

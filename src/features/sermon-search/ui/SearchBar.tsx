@@ -1,6 +1,7 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { useEffect, useState } from 'react'
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Keyboard, StyleSheet, Text, TextInput, View } from 'react-native'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
 import { useSearchAutofocus } from '../lib/useSearchAutofocus'
@@ -77,15 +78,14 @@ export const SearchBar = () => {
           },
         ]}
       />
-      <Pressable
+      <PressableButton
         hitSlop={INDENTS.low}
         onPress={handleClear}
-        accessibilityRole='button'
         style={styles.clearButton}
         accessibilityLabel={CLEAR_LABEL}
       >
         <Text style={[styles.clearIcon, { color: currentTheme.textMuted }]}>{CLEAR_SYMBOL}</Text>
-      </Pressable>
+      </PressableButton>
       {!hasSelectedSuggestion && (
         <SearchSuggestions
           query={inputValue}

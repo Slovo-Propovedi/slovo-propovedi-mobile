@@ -1,4 +1,5 @@
-import { Pressable, Modal as RNModal, StyleSheet, View } from 'react-native'
+import { Modal as RNModal, StyleSheet, View } from 'react-native'
+import { PressableButton } from './pressable-button'
 import { useTheme } from './theme/ThemeContext/useTheme'
 import { INDENTS } from './theme/themed'
 
@@ -13,15 +14,11 @@ export const Modal = ({ children, onBackdropPress, visible }: Props) => {
   return (
     <RNModal transparent visible={visible} animationType='fade' statusBarTranslucent>
       <View style={[styles.backdrop, { backgroundColor: currentTheme.backdrop }]}>
-        <Pressable
-          onPress={onBackdropPress}
-          accessibilityRole='button'
-          style={styles.backdropPressable}
-        >
+        <PressableButton onPress={onBackdropPress} style={styles.backdropPressable}>
           <View style={[styles.contentContainer, { backgroundColor: currentTheme.surface }]}>
             {children}
           </View>
-        </Pressable>
+        </PressableButton>
       </View>
     </RNModal>
   )

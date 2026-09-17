@@ -1,7 +1,8 @@
 import { Entypo } from '@expo/vector-icons'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { PLAYBACK_RATES, type PlaybackRate } from 'entities/player'
 import { formatPlaybackRate } from 'shared/lib/player'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './PlayerMenu.styles'
 
@@ -16,12 +17,7 @@ export const PlayerSpeedMenu = ({ currentRate, onBack, onSelect }: PlayerSpeedMe
 
   return (
     <View>
-      <Pressable
-        onPress={onBack}
-        accessibilityLabel='Назад'
-        accessibilityRole='button'
-        style={styles.speedHeader}
-      >
+      <PressableButton onPress={onBack} accessibilityLabel='Назад' style={styles.speedHeader}>
         <Entypo
           size={18}
           name='chevron-left'
@@ -31,13 +27,12 @@ export const PlayerSpeedMenu = ({ currentRate, onBack, onSelect }: PlayerSpeedMe
         <Text style={[styles.speedHeaderText, { color: currentTheme.text }]}>
           Скорость воспроизведения
         </Text>
-      </Pressable>
+      </PressableButton>
       {PLAYBACK_RATES.map(rate => {
         const isActive = rate === currentRate
         return (
-          <Pressable
+          <PressableButton
             key={rate}
-            accessibilityRole='button'
             onPress={() => onSelect(rate)}
             accessibilityState={{ selected: isActive }}
             style={[styles.menuItem, styles.menuItemRow]}
@@ -61,7 +56,7 @@ export const PlayerSpeedMenu = ({ currentRate, onBack, onSelect }: PlayerSpeedMe
                 style={styles.speedCheckIcon}
               />
             )}
-          </Pressable>
+          </PressableButton>
         )
       })}
     </View>

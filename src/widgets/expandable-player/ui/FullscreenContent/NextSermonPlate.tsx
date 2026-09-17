@@ -1,6 +1,6 @@
 import { Entypo } from '@expo/vector-icons'
 import { memo, useCallback, useEffect, useState } from 'react'
-import { PixelRatio, Pressable, Text, View } from 'react-native'
+import { PixelRatio, Text, View } from 'react-native'
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
 
@@ -82,9 +83,8 @@ export const NextSermonPlate = memo(
 
     return (
       <View pointerEvents='box-none' style={[styles.nextSermonAnchor, { top: insetsTop }]}>
-        <Pressable
+        <PressableButton
           onPress={toggleExpanded}
-          accessibilityRole='button'
           style={styles.nextSermonContainer}
           accessibilityLabel={accessibilityLabel}
           accessibilityState={{ expanded: isExpanded }}
@@ -105,7 +105,7 @@ export const NextSermonPlate = memo(
               </Text>
             </Animated.View>
           )}
-        </Pressable>
+        </PressableButton>
       </View>
     )
   },

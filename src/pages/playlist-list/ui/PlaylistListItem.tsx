@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
 import { CoverImage, MarqueeText } from 'shared/ui'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { type ThemeColors } from 'shared/ui/theme'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import type { PlaylistData } from 'shared/model'
@@ -52,7 +53,7 @@ export const PlaylistListItem = ({ onPress, playlist }: PlaylistListItemProps) =
   const styles = createStyles(currentTheme)
 
   return (
-    <Pressable onPress={onPress} style={styles.itemContainer}>
+    <PressableButton onPress={onPress} style={styles.itemContainer}>
       <View style={styles.albumArtContainer}>
         <CoverImage uri={playlist.artwork} style={styles.albumArt} />
       </View>
@@ -64,6 +65,6 @@ export const PlaylistListItem = ({ onPress, playlist }: PlaylistListItemProps) =
           </Text>
         ) : null}
       </View>
-    </Pressable>
+    </PressableButton>
   )
 }

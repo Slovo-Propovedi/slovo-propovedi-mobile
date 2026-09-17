@@ -3,6 +3,7 @@ import { Pressable, Text } from 'react-native'
 import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
 import { formatPlaybackRate } from 'shared/lib/player'
 import { isOnlineAtom } from 'shared/model'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
 import type { PlaybackRate } from 'entities/player'
 import { styles } from './PlayerMenu.styles'
@@ -50,11 +51,10 @@ export const PlayerMenuItems = ({
 
   return (
     <>
-      <Pressable onPress={onDetails} style={styles.menuItem} accessibilityRole='button'>
+      <PressableButton onPress={onDetails} style={styles.menuItem}>
         <Text style={[styles.menuItemText, { color: currentTheme.text }]}>Подробнее</Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole='button'
+      </PressableButton>
+      <PressableButton
         onPress={isCacheDisabled ? undefined : onToggleCache}
         accessibilityState={isCacheDisabled ? { disabled: true } : undefined}
         style={[styles.menuItem, isCacheDisabled && styles.menuItemDisabled]}
@@ -67,10 +67,9 @@ export const PlayerMenuItems = ({
         >
           {getCacheActionLabel(visualState, isCached ?? false)}
         </Text>
-      </Pressable>
-      <Pressable
+      </PressableButton>
+      <PressableButton
         onPress={onShowSpeed}
-        accessibilityRole='button'
         style={styles.menuItemRow}
         accessibilityLabel='Скорость воспроизведения'
       >
@@ -80,7 +79,7 @@ export const PlayerMenuItems = ({
         <Text style={[styles.menuItemValue, { color: currentTheme.textMuted, flexShrink: 0 }]}>
           {formatPlaybackRate(rate)}
         </Text>
-      </Pressable>
+      </PressableButton>
       <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
         <Text style={[styles.menuItemTextDisabled, { color: currentTheme.textMuted }]}>
           Добавить в плейлист

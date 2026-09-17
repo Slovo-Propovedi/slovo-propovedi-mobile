@@ -151,6 +151,18 @@ src/entities/player/lib/PlayerService/
 
 Web-специфика целиком (PWA, Service Worker, офлайн-кеш аудио на Cache Storage, десктопный layout, обход бага Metro lazy-bundling) — в [`features/web.md`](./features/web.md).
 
+## Почему `PressableButton` (shared/ui/pressable-button)
+
+Кликабельные элементы на `Pressable` используют обёртку `PressableButton` из `shared/ui/pressable-button` вместо прямого `<Pressable accessibilityRole='button'>`. Причины:
+
+- **Единая точка правды для role**: `PressableButton` по умолчанию ставит `accessibilityRole='button'`, поэтому на web react-native-web рендерит настоящий `<button>` (Vimium-подсказки, Enter+Space). Раньше `accessibilityRole='button'` дублировался в каждом файле и легко терялся при добавлении новых кнопок.
+- **Переопределение роли**: если нужна другая семантика (например, строка-ссылка в `track-list` с `ROW_ACCESSIBILITY_ROLE` = `link` на web / `button` на нативе), роль передаётся явно: `<PressableButton accessibilityRole={...}>`.
+- **Правила использования**:
+  - Импорт: `import { PressableButton } from 'shared/ui/pressable-button'`; внутри `shared/ui` — относительный путь (`../pressable-button`).
+  - Не использовать для `TouchableOpacity`-контролов (`shared/ui/button.tsx`, `radio.tsx`, `touchable-item.tsx` и т.п.) — они уже рендерят настоящие `<button>` на web.
+  - Конвертация `View`-кнопки внутри `GestureDetector` в `PressableButton` — осознанное решение: тап обрабатывает `onPress` у `Pressable`, а `GestureDetector` оставляет только Pan/прочие жесты (`Race(Tap, ·)` не должен сосуществовать с `onPress` — двойное срабатывание), press после pan нужно подавлять (см. `HeaderOverlay`). Шеврон в `HeaderOverlay` — живой пример корректного паттерна.
+  - Не вкладывать кнопки друг в друга на web: `<button>` внутри `<button>` — невалидный HTML и React-ошибка.
+
 ## Итоговая ASCII-диаграмма
 
 ```

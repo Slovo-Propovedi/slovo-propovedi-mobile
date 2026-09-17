@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { router } from 'expo-router'
-import { Pressable, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
+import { PressableButton } from 'shared/ui/pressable-button'
 import type { Href } from 'expo-router'
 import type { ColorValue } from 'react-native'
 
@@ -28,15 +29,14 @@ export const HeaderBackButton = ({
   }
 
   return (
-    <Pressable
+    <PressableButton
       hitSlop={8}
       onPress={handlePress}
       style={styles.container}
-      accessibilityRole='button'
       accessibilityLabel='Назад'
     >
       <Ionicons size={24} color={tintColor} name='chevron-back' />
-    </Pressable>
+    </PressableButton>
   )
 }
 

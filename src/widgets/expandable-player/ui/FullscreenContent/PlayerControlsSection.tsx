@@ -1,5 +1,5 @@
 import { Entypo } from '@expo/vector-icons'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlayerRepeatToggle, SermonPlayerControls } from 'entities/player'
 import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
@@ -7,6 +7,7 @@ import { formatSermonReference } from 'shared/lib/format'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { MovingText } from 'shared/ui'
+import { PressableButton } from 'shared/ui/pressable-button'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { getFullscreenPlayerBottomPadding } from '../../lib/getFullscreenPlayerBottomPadding'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
@@ -67,9 +68,9 @@ export const PlayerControlsSection = ({
           <Text style={styles.artistName}>{subtitle}</Text>
         </View>
         <View style={styles.menuContainer}>
-          <Pressable style={styles.menuButton} onPress={() => setShowMenu(true)}>
+          <PressableButton style={styles.menuButton} onPress={() => setShowMenu(true)}>
             <Entypo style={styles.menuIcon} name='dots-three-vertical' />
-          </Pressable>
+          </PressableButton>
           {showMenu && (
             <PlayerMenu
               isCached={isCached}
@@ -103,9 +104,9 @@ export const PlayerControlsSection = ({
             onPressOutSeek={stopSeek}
             onLongPressSeek={startSeek}
           />
-          <Pressable onPress={onOpenPlaylist} style={styles.sideControl}>
+          <PressableButton onPress={onOpenPlaylist} style={styles.sideControl}>
             <Entypo name='list' style={styles.controlIcon} />
-          </Pressable>
+          </PressableButton>
         </View>
       </View>
     </View>

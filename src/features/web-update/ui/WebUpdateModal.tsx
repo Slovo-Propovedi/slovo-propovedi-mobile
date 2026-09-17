@@ -1,4 +1,5 @@
-import { Modal, Platform, Pressable, Text, View } from 'react-native'
+import { Modal, Platform, Text, View } from 'react-native'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
 import { useWebUpdateWatcher } from '../lib/useWebUpdateWatcher'
 import { webUpdateModalStyles as styles } from './webUpdateModalStyles'
@@ -35,10 +36,9 @@ export const WebUpdateModal = () => {
           <Text style={[styles.title, { color: currentTheme.text }]}>{TITLE}</Text>
           <Text style={[styles.message, { color: currentTheme.textMuted }]}>{message}</Text>
           <View style={styles.buttons}>
-            <Pressable
+            <PressableButton
               onPress={apply}
               disabled={updateDisabled}
-              accessibilityRole='button'
               style={[
                 styles.primaryButton,
                 { backgroundColor: currentTheme.primary },
@@ -46,15 +46,14 @@ export const WebUpdateModal = () => {
               ]}
             >
               <Text style={styles.primaryButtonText}>{UPDATE_BUTTON_TEXT}</Text>
-            </Pressable>
-            <Pressable
+            </PressableButton>
+            <PressableButton
               onPress={dismiss}
               disabled={applying}
-              accessibilityRole='button'
               style={[styles.secondaryButton, applying && styles.disabledButton]}
             >
               <Text style={styles.secondaryButtonText}>{LATER_BUTTON_TEXT}</Text>
-            </Pressable>
+            </PressableButton>
           </View>
         </View>
       </View>
