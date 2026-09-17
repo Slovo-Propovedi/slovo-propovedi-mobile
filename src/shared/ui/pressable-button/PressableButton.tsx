@@ -5,7 +5,7 @@ import { Pressable, type PressableProps, type View } from 'react-native'
 // browser semantics depend on it) when accessibilityRole='button' is passed
 // explicitly, so defaulting it here keeps interactive controls hintable
 // without spelling the role at every call site.
-interface PressableButtonProps extends Omit<PressableProps, 'accessibilityRole'> {
+export interface PressableButtonProps extends Omit<PressableProps, 'accessibilityRole'> {
   accessibilityRole?: PressableProps['accessibilityRole']
 }
 

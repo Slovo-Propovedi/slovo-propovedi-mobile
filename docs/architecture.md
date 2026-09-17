@@ -164,6 +164,24 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
   - Не вкладывать кнопки друг в друга на web: `<button>` внутри `<button>` — невалидный HTML и React-ошибка.
   - Backdrop модалки (`shared/ui/modal.tsx`) — **осознанное исключение**: обычный `Pressable` без `accessibilityRole`. Backdrop — не кнопка; роль `button` обернула бы весь диалог в `<button>` на web (вложенные кнопки + скринридер объявляет весь диалог одной кнопкой). Закрытие по тапу сохраняется через `onPress`.
 
+### `IconButton` (shared/ui/icon-button) и `TouchableButton` (shared/ui/touchable-button)
+
+Две обёртки поверх базовых примитивов для частых случаев:
+
+- **`IconButton`** — кнопка только с иконкой (без текста). Базируется на `PressableButton`, но:
+  - иконка передаётся через проп `Icon` (children запрещены на уровне типов);
+  - `accessibilityLabel` **обязателен** на уровне типов — у иконочной кнопки нет текста, и label — единственный способ идентификации для скринридера и тестов;
+  - `testID` запрещён на уровне типов (`testID?: never`) — см. AGENTS.md → Testing Guidelines;
+  - встроенный press-фидбек вместо fade у `TouchableOpacity`: при нажатии добавляется `opacity: 0.6` (композиция с переданным `style`; поддерживает и статичный style, и функцию `({ pressed }) => …`).
+  - Импорт: `import { IconButton } from 'shared/ui/icon-button'`.
+- **`TouchableButton`** — зеркало `PressableButton` для `TouchableOpacity`: по умолчанию ставит `accessibilityRole='button'` (на web RNW рендерит настоящий `<button>`), роль можно переопределить явно. Нужен там, где сохраняется fade-фидбек `activeOpacity` (таб-бар, кнопки, radio, слайдер и т.п.).
+  - Импорт: `import { TouchableButton } from 'shared/ui/touchable-button'`.
+
+**Когда что использовать:**
+- иконочная кнопка (только иконка, без текста) → `IconButton` (label обязателен);
+- `TouchableOpacity`-контрол, которому нужен fade-фидбек → `TouchableButton`;
+- всё остальное на `Pressable` → `PressableButton`.
+
 ## Итоговая ASCII-диаграмма
 
 ```
