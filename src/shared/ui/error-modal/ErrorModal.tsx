@@ -31,6 +31,7 @@ export const ErrorModal = ({ error, onClose, showCopyButton = true, visible }: E
       icon={icon}
       title='Ошибка'
       visible={visible}
+      onEscape={onClose}
       onConfirm={onClose}
       confirmText='Закрыть'
       onCancel={handleCopy}

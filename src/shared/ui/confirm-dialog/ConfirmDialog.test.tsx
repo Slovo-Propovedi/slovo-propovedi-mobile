@@ -150,4 +150,23 @@ describe('<ConfirmDialog> web Escape handling', () => {
       restore()
     }
   })
+
+  test('explicit onEscape overrides the default onCancel', async () => {
+    const onEscapeMock = jest.fn()
+    const { dispatchKeyDown, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      await renderWithProviders(<ConfirmDialog {...defaultProps} onEscape={onEscapeMock} />)
+
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape'))
+      })
+
+      expect(onEscapeMock).toHaveBeenCalledTimes(1)
+      expect(onCancelMock).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
+  })
 })

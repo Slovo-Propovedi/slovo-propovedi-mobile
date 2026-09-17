@@ -1,5 +1,6 @@
-import { fireEvent, screen } from '@testing-library/react-native'
-import { Clipboard, Text as MockText } from 'react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
+import { Clipboard, Text as MockText, Platform } from 'react-native'
+import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { ErrorModal } from './ErrorModal'
 
@@ -102,5 +103,30 @@ describe('<ErrorModal>', () => {
     fireEvent.press(screen.getByText('Закрыть'))
 
     expect(onCloseMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('<ErrorModal> web Escape handling', () => {
+  beforeEach(() => {
+    onCloseMock.mockClear()
+    setStringSpy.mockClear()
+  })
+
+  test('Escape on web closes the modal via onClose and does not copy', async () => {
+    const { dispatchKeyDown, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      await renderWithProviders(<ErrorModal {...defaultProps} />)
+
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape'))
+      })
+
+      expect(onCloseMock).toHaveBeenCalledTimes(1)
+      expect(Clipboard.setString).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
   })
 })

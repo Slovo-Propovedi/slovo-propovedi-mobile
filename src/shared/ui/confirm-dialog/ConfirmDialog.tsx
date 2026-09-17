@@ -16,6 +16,7 @@ export interface ConfirmDialogProps {
   message: string | string[]
   onCancel: () => void
   onConfirm: () => void
+  onEscape?: () => void
   title: string
   visible: boolean
 }
@@ -31,6 +32,7 @@ export const ConfirmDialog = ({
   message,
   onCancel,
   onConfirm,
+  onEscape,
   title,
   visible,
 }: ConfirmDialogProps) => {
@@ -40,7 +42,8 @@ export const ConfirmDialog = ({
 
   useEscapeKey({
     enabled: Platform.OS === 'web' && visible,
-    onEscape: onCancel,
+    // Esc mirrors the dismissal path; callers with a non-dismissal onCancel override it explicitly
+    onEscape: onEscape ?? onCancel,
   })
 
   return (
