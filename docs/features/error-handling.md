@@ -33,6 +33,7 @@
 
 - `ErrorDialog.tsx` — презентационный Modal: иконка предупреждения, скроллируемое сообщение,
   моноширинные детали (selectable), кнопки «📋 Копировать» (expo-clipboard) и «Закрыть»;
+  на web закрывается по `Escape` (слой в общем стеке Escape, см. [web.md](./web.md));
 - `GlobalErrorDialog.tsx` — читает `globalErrorAtom` через `useAtom`, дисмисс через
   `useAction(dismissErrorAction)`. Рендерится в корневом layout `app/_RootLayout.tsx`
   рядом с `NetworkBanner` / `ServerErrorToast` / `UpdateDialogRoot`;

@@ -85,7 +85,7 @@ export const PlayerMenu = ({
   return (
     <>
       <Animated.View style={[styles.backdrop, backdropStyle]}>
-        <Pressable onPress={onClose} style={styles.backdropPressable} />
+        <Pressable tabIndex={-1} onPress={onClose} style={styles.backdropPressable} />
       </Animated.View>
       <Animated.View style={[styles.menuWrapper, wrapperStyle]}>
         <View

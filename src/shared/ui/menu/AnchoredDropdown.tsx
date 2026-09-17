@@ -1,5 +1,6 @@
 import { type ReactNode, useState } from 'react'
-import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native'
+import { Dimensions, Modal, Platform, Pressable, StyleSheet, View } from 'react-native'
+import { useEscapeKey } from 'shared/lib/escape-key'
 import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
 
 export interface AnchoredDropdownProps {
@@ -33,6 +34,11 @@ export const AnchoredDropdown = ({
 }: AnchoredDropdownProps) => {
   const [menuHeight, setMenuHeight] = useState(0)
 
+  useEscapeKey({
+    enabled: Platform.OS === 'web' && visible,
+    onEscape: onClose,
+  })
+
   if (!visible || !anchor) return null
 
   const { width: windowWidth } = Dimensions.get('window')
@@ -48,7 +54,7 @@ export const AnchoredDropdown = ({
 
   return (
     <Modal transparent animationType='none' onRequestClose={onClose}>
-      <Pressable onPress={onClose} style={styles.backdrop} testID={BACKDROP_TEST_ID}>
+      <Pressable tabIndex={-1} onPress={onClose} style={styles.backdrop} testID={BACKDROP_TEST_ID}>
         <View
           testID={testID}
           onLayout={handleLayout}

@@ -33,6 +33,7 @@ export const Modal = ({ children, onBackdropPress, visible }: Props) => {
             button role would wrap the whole dialog in <button> on web (nested buttons,
             screen readers announce the dialog as one button). */}
         <Pressable
+          tabIndex={-1}
           onPress={onBackdropPress}
           testID={BACKDROP_TEST_ID}
           style={styles.backdropPressable}

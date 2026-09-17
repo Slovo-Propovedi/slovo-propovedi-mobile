@@ -104,6 +104,16 @@ describe('<Modal>', () => {
     expect(onBackdropPressMock).toHaveBeenCalledTimes(1)
   })
 
+  test('backdrop is not keyboard-focusable', async () => {
+    await renderWithProviders(
+      <Modal visible onBackdropPress={onBackdropPressMock}>
+        <Text>{CHILDREN_TEXT}</Text>
+      </Modal>,
+    )
+
+    expect(screen.getByTestId(BACKDROP_TEST_ID).props.tabIndex).toBe(-1)
+  })
+
   test('does not render children when visible is false', async () => {
     await renderWithProviders(
       <Modal visible={false} onBackdropPress={onBackdropPressMock}>

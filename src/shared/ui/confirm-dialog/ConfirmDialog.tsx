@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
-import { type ColorValue, Modal, ScrollView, Text, View } from 'react-native'
+import { type ColorValue, Modal, Platform, ScrollView, Text, View } from 'react-native'
+import { useEscapeKey } from 'shared/lib/escape-key'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { ConfirmDialogButton } from './ConfirmDialogButton'
 import { styles } from './styles'
@@ -36,6 +37,11 @@ export const ConfirmDialog = ({
   const messages = Array.isArray(message) ? message : [message]
   const { currentTheme } = useTheme()
   const resolvedConfirmColor = confirmColor ?? currentTheme.primary
+
+  useEscapeKey({
+    enabled: Platform.OS === 'web' && visible,
+    onEscape: onCancel,
+  })
 
   return (
     <Modal

@@ -1,22 +1,11 @@
 import { Ionicons } from '@expo/vector-icons'
-import { setStringAsync } from 'expo-clipboard'
-import { useState } from 'react'
 import { Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useEscapeKey } from 'shared/lib/escape-key'
 import { Button } from '../button'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
-
-const useErrorCopy = (message: string, detail: string) => {
-  const [copied, setCopied] = useState(false)
-  const handleCopy = async () => {
-    const text = `ОШИБКА: ${message}\n\nДЕТАЛИ:\n${detail}`.trim()
-    await setStringAsync(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-  return { copied, handleCopy }
-}
+import { useErrorCopy } from './useErrorCopy'
 
 export interface ErrorDialogProps {
   detail: string
@@ -28,6 +17,11 @@ export interface ErrorDialogProps {
 export const ErrorDialog = ({ detail, message, onDismiss, visible }: ErrorDialogProps) => {
   const { currentTheme } = useTheme()
   const { copied, handleCopy } = useErrorCopy(message, detail)
+
+  useEscapeKey({
+    enabled: Platform.OS === 'web' && visible,
+    onEscape: onDismiss,
+  })
 
   return (
     <Modal transparent visible={visible} animationType='fade' onRequestClose={onDismiss}>
