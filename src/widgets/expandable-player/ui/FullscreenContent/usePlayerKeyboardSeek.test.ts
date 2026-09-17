@@ -28,6 +28,7 @@ interface KeyEventLike {
   preventDefault: () => void
   repeat: boolean
   shiftKey: boolean
+  stopPropagation: () => void
   target: unknown
 }
 
@@ -40,6 +41,7 @@ const mockTogglePlay = jest.fn()
 const mockCollapsePlayer = jest.fn()
 
 let mockWindowListeners: Record<string, WindowListener>
+let mockDocumentListeners: Record<string, WindowListener>
 
 const mockWindow = {
   addEventListener: jest.fn((type: string, handler: WindowListener) => {
@@ -47,6 +49,16 @@ const mockWindow = {
   }),
   removeEventListener: jest.fn((type: string) => {
     delete mockWindowListeners[type]
+  }),
+}
+
+const mockDocument = {
+  addEventListener: jest.fn((type: string, handler: WindowListener) => {
+    mockDocumentListeners[type] = handler
+  }),
+  documentElement: { style: { setProperty: jest.fn() } },
+  removeEventListener: jest.fn((type: string) => {
+    delete mockDocumentListeners[type]
   }),
 }
 
@@ -58,12 +70,17 @@ const createKeyEvent = (overrides: Partial<KeyEventLike> = {}): KeyEventLike => 
   preventDefault: jest.fn(),
   repeat: false,
   shiftKey: false,
+  stopPropagation: jest.fn(),
   target: null,
   ...overrides,
 })
 
 const fireKeyDown = (event: KeyEventLike) => {
   mockWindowListeners[KEYDOWN_EVENT]?.(event)
+}
+
+const fireDocumentKeyDown = (event: KeyEventLike) => {
+  mockDocumentListeners[KEYDOWN_EVENT]?.(event)
 }
 
 const fireKeyUp = (event: KeyEventLike) => {
@@ -92,7 +109,9 @@ describe('usePlayerKeyboardSeek', () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
     jest.replaceProperty(Platform, 'OS', 'web')
     mockWindowListeners = {}
+    mockDocumentListeners = {}
     ;(global as { window?: unknown }).window = mockWindow
+    ;(global as { document?: unknown }).document = mockDocument
     isPlayerExpandedAtom(ctx, false)
     jest.clearAllMocks()
   })
@@ -283,7 +302,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ key: ESCAPE_KEY })
-    fireKeyDown(event)
+    fireDocumentKeyDown(event)
 
     expect(mockCollapsePlayer).toHaveBeenCalledTimes(1)
     expect(event.preventDefault).toHaveBeenCalled()
@@ -294,7 +313,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ key: ESCAPE_KEY, target: { tagName: 'TEXTAREA' } })
-    fireKeyDown(event)
+    fireDocumentKeyDown(event)
 
     expect(mockCollapsePlayer).not.toHaveBeenCalled()
     expect(event.preventDefault).not.toHaveBeenCalled()

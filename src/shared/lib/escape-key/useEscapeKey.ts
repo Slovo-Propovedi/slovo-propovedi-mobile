@@ -1,22 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { Platform } from 'react-native'
-import { isEscapeKey } from './isEscapeKey'
+import { popEscapeLayer, pushEscapeLayer } from './escapeStack'
 
 interface UseEscapeKeyOptions {
-  capture?: boolean
   enabled: boolean
   onEscape: (event: KeyboardEvent) => void
-  scope?: 'document' | 'window'
 }
 
-const isKeyboardEvent = (event: Event): event is KeyboardEvent => 'key' in event
-
-export const useEscapeKey = ({
-  capture = false,
-  enabled,
-  onEscape,
-  scope = 'document',
-}: UseEscapeKeyOptions): void => {
+export const useEscapeKey = ({ enabled, onEscape }: UseEscapeKeyOptions): void => {
   const onEscapeRef = useRef(onEscape)
 
   useEffect(() => {
@@ -26,23 +17,10 @@ export const useEscapeKey = ({
   useEffect(() => {
     if (Platform.OS !== 'web' || !enabled) return
 
-    const handleKeyDown = (event: Event) => {
-      if (!isKeyboardEvent(event)) return
-      if (!isEscapeKey(event)) return
-      // A claimed Escape must not reach lower-priority bubble listeners —
-      // modal-first-then-player layering.
-      event.stopPropagation()
-      onEscapeRef.current(event)
-    }
-
-    const target = window[scope]
-    // No DOM target (SSR, tests) — nothing to attach to, skip silently.
-    if (!target) return
-
-    target.addEventListener('keydown', handleKeyDown, { capture })
+    const layerId = pushEscapeLayer(onEscapeRef)
 
     return () => {
-      target.removeEventListener('keydown', handleKeyDown, { capture })
+      popEscapeLayer(layerId)
     }
-  }, [enabled, scope, capture])
+  }, [enabled])
 }

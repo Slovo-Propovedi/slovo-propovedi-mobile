@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
 
 Компоненты — `src/pages/settings/ui/`:
 
-- `ThemeDialog.tsx` — модальное окно выбора темы (на web закрывается по `Escape` — общий механизм `shared/ui/modal.tsx`, см. [web.md](./web.md#клавиатура-полноэкранного-плеера-web));
+- `ThemeDialog.tsx` — модальное окно выбора темы (на web закрывается по `Escape` — слой в общем стеке Escape `shared/lib/escape-key`, см. [web.md](./web.md#клавиатура-полноэкранного-плеера-web));
 - `ThemeSelector.tsx` + `ThemeSelectorOption.tsx` + `themeOptions.ts` — список режимов (light/dark/system);
 - `DynamicColorsItem.tsx` — чекбокс Material You (рендерится только при `isMaterialYouSupported()`);
 - `SettingsScreen.tsx` собирает пункты настроек.

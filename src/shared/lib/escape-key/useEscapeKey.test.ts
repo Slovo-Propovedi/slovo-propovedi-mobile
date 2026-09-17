@@ -1,6 +1,7 @@
 import { act } from '@testing-library/react-native'
 import { Platform } from 'react-native'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
+import { popEscapeLayer, pushEscapeLayer } from './escapeStack'
 import { useEscapeKey } from './useEscapeKey'
 
 interface KeyEventLike {
@@ -27,6 +28,7 @@ const createKeyDownEvent = (
 interface FakeTarget {
   addEventListener: jest.Mock
   dispatchKeyDown: (event: KeyEventLike) => void
+  documentElement: { style: { setProperty: jest.Mock } }
   getListenerCount: () => number
   removeEventListener: jest.Mock
 }
@@ -41,6 +43,7 @@ const createFakeTarget = (): FakeTarget => {
     dispatchKeyDown: (event: KeyEventLike) => {
       listeners.forEach(handler => handler(event))
     },
+    documentElement: { style: { setProperty: jest.fn() } },
     getListenerCount: () => listeners.length,
     removeEventListener: jest.fn((_type: string, handler: (event: KeyEventLike) => void) => {
       const index = listeners.indexOf(handler)
@@ -49,19 +52,15 @@ const createFakeTarget = (): FakeTarget => {
   }
 }
 
-// jest-expo runs in a node environment: there is no real DOM, and `window` is
-// aliased to `global`. This installs a fake `window` (with a self-referencing
-// `window` property and a `document` property) that records keydown listeners,
-// mirroring the fake-DOM pattern from shared/ui/modal.test.tsx.
+// jest-expo runs in a node environment: there is no real DOM. This installs a
+// fake `document` that records keydown listeners, mirroring the fake-DOM
+// pattern from shared/ui/modal.test.tsx.
 const installFakeDom = () => {
   const documentTarget = createFakeTarget()
-  const windowTarget = createFakeTarget()
-  const fakeWindow: Record<string, unknown> = { ...windowTarget, document: documentTarget }
-  fakeWindow.window = fakeWindow
 
-  Object.defineProperty(global, 'window', {
+  Object.defineProperty(global, 'document', {
     configurable: true,
-    value: fakeWindow,
+    value: documentTarget,
     writable: true,
   })
 
@@ -70,21 +69,21 @@ const installFakeDom = () => {
     restore: () => {
       // Leave a no-op stub behind: React unmounts the tree after the test
       // finishes, and the hook's effect cleanup calls removeEventListener.
-      Object.defineProperty(global, 'window', {
+      Object.defineProperty(global, 'document', {
         configurable: true,
         value: {
-          document: { addEventListener: jest.fn(), removeEventListener: jest.fn() },
-          window: { addEventListener: jest.fn(), removeEventListener: jest.fn() },
+          addEventListener: jest.fn(),
+          documentElement: { style: { setProperty: jest.fn() } },
+          removeEventListener: jest.fn(),
         },
         writable: true,
       })
     },
-    windowTarget,
   }
 }
 
 describe('useEscapeKey', () => {
-  test('attaches a document keydown listener when enabled on web', async () => {
+  test('attaches a single document keydown listener when the first layer enables on web', async () => {
     const { documentTarget, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
@@ -93,15 +92,16 @@ describe('useEscapeKey', () => {
       expect(documentTarget.addEventListener).toHaveBeenCalledWith(
         'keydown',
         expect.any(Function),
-        { capture: false },
+        { capture: true },
       )
+      expect(documentTarget.getListenerCount()).toBe(1)
     } finally {
       restorePlatform.restore()
       restore()
     }
   })
 
-  test('detaches the listener when enabled flips to false', async () => {
+  test('detaches the listener when the last layer disables', async () => {
     const { documentTarget, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
@@ -122,7 +122,73 @@ describe('useEscapeKey', () => {
     }
   })
 
-  test('fires onEscape and stops propagation for a claimed Escape', async () => {
+  test('keeps a single listener across 0→1→2→1→0 layers', async () => {
+    const { documentTarget, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const first = await renderHookWithProviders(() =>
+        useEscapeKey({ enabled: true, onEscape: jest.fn() }),
+      )
+      expect(documentTarget.getListenerCount()).toBe(1)
+
+      const second = await renderHookWithProviders(() =>
+        useEscapeKey({ enabled: true, onEscape: jest.fn() }),
+      )
+      expect(documentTarget.getListenerCount()).toBe(1)
+
+      await act(async () => {
+        first.unmount()
+      })
+      expect(documentTarget.getListenerCount()).toBe(1)
+
+      await act(async () => {
+        second.unmount()
+      })
+      expect(documentTarget.getListenerCount()).toBe(0)
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
+  })
+
+  test('dispatches Escape to the topmost layer only (LIFO)', async () => {
+    const { documentTarget, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const olderOnEscape = jest.fn()
+      const newerOnEscape = jest.fn()
+      await renderHookWithProviders(() => useEscapeKey({ enabled: true, onEscape: olderOnEscape }))
+      const newer = await renderHookWithProviders(() =>
+        useEscapeKey({ enabled: true, onEscape: newerOnEscape }),
+      )
+
+      const event = createKeyDownEvent('Escape')
+      await act(async () => {
+        documentTarget.dispatchKeyDown(event)
+      })
+
+      expect(newerOnEscape).toHaveBeenCalledTimes(1)
+      expect(olderOnEscape).not.toHaveBeenCalled()
+      expect(event.stopPropagation).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        newer.unmount()
+      })
+
+      const secondEvent = createKeyDownEvent('Escape')
+      await act(async () => {
+        documentTarget.dispatchKeyDown(secondEvent)
+      })
+
+      expect(olderOnEscape).toHaveBeenCalledTimes(1)
+      expect(secondEvent.stopPropagation).toHaveBeenCalledTimes(1)
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
+  })
+
+  test('fires onEscape and stops propagation once for a claimed Escape', async () => {
     const { documentTarget, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
@@ -162,6 +228,26 @@ describe('useEscapeKey', () => {
     }
   })
 
+  test('ignores non-Escape keys', async () => {
+    const { documentTarget, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const onEscape = jest.fn()
+      await renderHookWithProviders(() => useEscapeKey({ enabled: true, onEscape }))
+
+      const event = createKeyDownEvent('Enter')
+      await act(async () => {
+        documentTarget.dispatchKeyDown(event)
+      })
+
+      expect(onEscape).not.toHaveBeenCalled()
+      expect(event.stopPropagation).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
+  })
+
   test('attaches no listener on native platforms', async () => {
     const { documentTarget, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
@@ -175,7 +261,7 @@ describe('useEscapeKey', () => {
     }
   })
 
-  test('uses the latest onEscape callback without re-subscribing', async () => {
+  test('uses the latest onEscape callback per layer without re-registering', async () => {
     const { documentTarget, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
@@ -207,42 +293,23 @@ describe('useEscapeKey', () => {
     }
   })
 
-  test('attaches to window when scope is window', async () => {
-    const { restore, windowTarget } = installFakeDom()
-    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
-    try {
-      const onEscape = jest.fn()
-      await renderHookWithProviders(() =>
-        useEscapeKey({ enabled: true, onEscape, scope: 'window' }),
-      )
-
-      expect(windowTarget.getListenerCount()).toBe(1)
-
-      const event = createKeyDownEvent('Escape')
-      await act(async () => {
-        windowTarget.dispatchKeyDown(event)
-      })
-
-      expect(onEscape).toHaveBeenCalledTimes(1)
-    } finally {
-      restorePlatform.restore()
-      restore()
-    }
-  })
-
-  test('passes the capture option through to addEventListener', async () => {
+  test('push/pop stays balanced under a double effect run (StrictMode-safe)', () => {
     const { documentTarget, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      await renderHookWithProviders(() =>
-        useEscapeKey({ capture: true, enabled: true, onEscape: jest.fn() }),
-      )
+      const onEscapeRef = { current: jest.fn() }
 
-      expect(documentTarget.addEventListener).toHaveBeenCalledWith(
-        'keydown',
-        expect.any(Function),
-        { capture: true },
-      )
+      const firstId = pushEscapeLayer(onEscapeRef)
+      expect(documentTarget.getListenerCount()).toBe(1)
+
+      popEscapeLayer(firstId)
+      expect(documentTarget.getListenerCount()).toBe(0)
+
+      const secondId = pushEscapeLayer(onEscapeRef)
+      expect(documentTarget.getListenerCount()).toBe(1)
+
+      popEscapeLayer(secondId)
+      expect(documentTarget.getListenerCount()).toBe(0)
     } finally {
       restorePlatform.restore()
       restore()

@@ -31,24 +31,6 @@ const flushAnimationFrame = async () => {
   })
 }
 
-interface KeyPressEventLike {
-  altKey: boolean
-  ctrlKey: boolean
-  key: string
-  metaKey: boolean
-  shiftKey: boolean
-}
-
-const createEscapeKeyEvent = (
-  modifiers: Partial<Pick<KeyPressEventLike, 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>> = {},
-): KeyPressEventLike => ({
-  altKey: modifiers.altKey ?? false,
-  ctrlKey: modifiers.ctrlKey ?? false,
-  key: 'Escape',
-  metaKey: modifiers.metaKey ?? false,
-  shiftKey: modifiers.shiftKey ?? false,
-})
-
 interface KeyDownEventLike {
   altKey: boolean
   ctrlKey: boolean
@@ -235,69 +217,84 @@ describe('<SearchBar>', () => {
   })
 
   test('Escape on web clears the query and keeps the search open when the query is non-empty', async () => {
-    const ctx = createCtx()
-    isSearchOpenAtom(ctx, true)
-    searchQueryAtom(ctx, 'вера')
+    const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
-      const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      searchQueryAtom(ctx, 'вера')
+      await renderWithProviders(<SearchBar />, { ctx })
 
-      await fireEvent(input, 'keyPress', createEscapeKeyEvent())
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape'))
+      })
 
       expect(ctx.get(searchQueryAtom)).toBe('')
       expect(ctx.get(isSearchOpenAtom)).toBe(true)
     } finally {
       restorePlatform.restore()
+      restore()
     }
   })
 
   test('Escape on web closes the search when the query is empty', async () => {
-    const ctx = createCtx()
-    isSearchOpenAtom(ctx, true)
+    const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
-      const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      await renderWithProviders(<SearchBar />, { ctx })
 
-      await fireEvent(input, 'keyPress', createEscapeKeyEvent())
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape'))
+      })
 
       await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
       expect(ctx.get(searchQueryAtom)).toBe('')
     } finally {
       restorePlatform.restore()
+      restore()
     }
   })
 
   test('Escape with a modifier held does not clear or close the search', async () => {
-    const ctx = createCtx()
-    isSearchOpenAtom(ctx, true)
-    searchQueryAtom(ctx, 'вера')
+    const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
-      const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      searchQueryAtom(ctx, 'вера')
+      await renderWithProviders(<SearchBar />, { ctx })
 
-      await fireEvent(input, 'keyPress', createEscapeKeyEvent({ ctrlKey: true }))
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape', { ctrlKey: true }))
+      })
 
       expect(ctx.get(searchQueryAtom)).toBe('вера')
       expect(ctx.get(isSearchOpenAtom)).toBe(true)
     } finally {
       restorePlatform.restore()
+      restore()
     }
   })
 
   test('Escape on native does not clear or close the search', async () => {
-    const ctx = createCtx()
-    isSearchOpenAtom(ctx, true)
-    searchQueryAtom(ctx, 'вера')
-    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
-    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+    const { dispatchKeyDown, restore } = installFakeDom()
+    try {
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      searchQueryAtom(ctx, 'вера')
+      await renderWithProviders(<SearchBar />, { ctx })
 
-    await fireEvent(input, 'keyPress', createEscapeKeyEvent())
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape'))
+      })
 
-    expect(ctx.get(searchQueryAtom)).toBe('вера')
-    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+      expect(ctx.get(searchQueryAtom)).toBe('вера')
+      expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    } finally {
+      restore()
+    }
   })
 
   test('shows suggestions again after typing a new query following a selection', async () => {

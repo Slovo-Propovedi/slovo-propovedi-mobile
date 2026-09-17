@@ -19,15 +19,11 @@ export const Modal = ({ children, onBackdropPress, visible }: Props) => {
     onBackdropPressRef.current = onBackdropPress
   })
 
-  // The fullscreen player listens for Escape on window (bubble phase) to
-  // collapse itself; a modal on top must win — document capture runs before
-  // window bubble listeners, and the hook's stopPropagation keeps the event
-  // from ever reaching the player's handler.
+  // The fullscreen player and search register their own Escape layers; a modal
+  // on top must win — the shared stack dispatches to the topmost layer only.
   useEscapeKey({
-    capture: true,
     enabled: Platform.OS === 'web' && visible,
     onEscape: () => onBackdropPressRef.current(),
-    scope: 'document',
   })
 
   return (

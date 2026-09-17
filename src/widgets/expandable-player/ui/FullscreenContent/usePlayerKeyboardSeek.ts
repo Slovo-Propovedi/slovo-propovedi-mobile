@@ -2,7 +2,7 @@ import { useAtom } from '@reatom/npm-react'
 import { useEffect, useRef } from 'react'
 import { Platform } from 'react-native'
 import { isPlayerExpandedAtom } from 'entities/player'
-import { hasModifier, isEscapeKey } from 'shared/lib/escape-key'
+import { hasModifier, useEscapeKey } from 'shared/lib/escape-key'
 import {
   getSeekDirection,
   isEditableTarget,
@@ -36,6 +36,17 @@ export const usePlayerKeyboardSeek = ({
 
   useEffect(() => {
     handlersRef.current = { collapsePlayer, startSeek, stopSeek, tapSeek, togglePlay }
+  })
+
+  // Escape is a layer in the shared escape stack (LIFO by open order), not a
+  // window-bubble listener: a modal or search opened after the player wins.
+  useEscapeKey({
+    enabled: Platform.OS === 'web' && expanded,
+    onEscape: event => {
+      if (isEditableTarget(event.target)) return
+      event.preventDefault()
+      handlersRef.current.collapsePlayer()
+    },
   })
 
   useEffect(() => {
@@ -92,11 +103,6 @@ export const usePlayerKeyboardSeek = ({
       if (event.key === SPACE_KEY) {
         handleSpaceKeyDown(event)
         return
-      }
-
-      if (isEscapeKey(event)) {
-        event.preventDefault()
-        handlersRef.current.collapsePlayer()
       }
     }
 

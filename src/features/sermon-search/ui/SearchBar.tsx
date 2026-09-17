@@ -1,14 +1,7 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { useEffect, useState } from 'react'
-import {
-  Keyboard,
-  Platform,
-  Text,
-  TextInput,
-  type TextInputKeyPressEvent,
-  View,
-} from 'react-native'
-import { isEscapeKey, useEscapeKey } from 'shared/lib/escape-key'
+import { Keyboard, Platform, Text, TextInput, View } from 'react-native'
+import { useEscapeKey } from 'shared/lib/escape-key'
 import { IconButton } from 'shared/ui/icon-button'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useSearchAutofocus } from '../lib/useSearchAutofocus'
@@ -63,21 +56,11 @@ export const SearchBar = () => {
     void closeSearchAction()
   }
 
-  const handleKeyPress = (event: TextInputKeyPressEvent) => {
-    if (Platform.OS !== 'web') return
-    if (!isEscapeKey(event)) return
-    handleClear()
-  }
-
-  // RNW's TextInput stops propagation of its own keydown before the user's
-  // onKeyPress runs, so a focused input only ever reaches the input-scoped
-  // path above. When the input is NOT focused the event bubbles to document,
-  // where this listener (gated on search-open) handles it — the two paths are
-  // mutually exclusive by construction.
+  // Esc goes through the shared escape stack: its capture listener on document
+  // sees the event before the focused input, so one path covers focus and blur.
   useEscapeKey({
     enabled: Platform.OS === 'web' && isSearchOpen,
     onEscape: handleClear,
-    scope: 'document',
   })
 
   return (
@@ -88,7 +71,6 @@ export const SearchBar = () => {
         autoCorrect={false}
         autoCapitalize='none'
         returnKeyType='search'
-        onKeyPress={handleKeyPress}
         onChangeText={handleChangeText}
         placeholder={SEARCH_PLACEHOLDER}
         onBlur={() => setIsFocused(false)}
