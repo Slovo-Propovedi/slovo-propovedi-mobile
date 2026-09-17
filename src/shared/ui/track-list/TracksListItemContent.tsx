@@ -90,6 +90,7 @@ export const TracksListItemContent = forwardRef<View, TracksListItemContentProps
           ref={ref}
           onPress={dotsOnPress}
           testID='tracks-list-item-menu'
+          accessibilityLabel='Меню трека'
           style={tracksListStyles.dotsButton}
         >
           <MaterialCommunityIcons size={20} name='dots-vertical' color={theme.textMuted} />

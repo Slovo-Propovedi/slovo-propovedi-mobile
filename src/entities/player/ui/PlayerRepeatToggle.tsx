@@ -28,6 +28,17 @@ const getRepeatIcon = (mode: RepeatMode, primaryColor: ColorValue): IconConfig =
   }
 }
 
+const getRepeatLabel = (mode: RepeatMode): string => {
+  switch (mode) {
+    case 'off':
+      return 'Повтор: выключен'
+    case 'queue':
+      return 'Повтор очереди'
+    case 'track':
+      return 'Повтор трека'
+  }
+}
+
 export const PlayerRepeatToggle = ({ style }: PlayerRepeatToggleProps) => {
   const { currentTheme } = useTheme()
   const [repeatMode] = useAtom(repeatModeAtom)
@@ -42,7 +53,11 @@ export const PlayerRepeatToggle = ({ style }: PlayerRepeatToggleProps) => {
   const iconConfig = getRepeatIcon(repeatMode, currentTheme.primary)
 
   return (
-    <PressableButton onPress={handlePress} style={[styles.container, style]}>
+    <PressableButton
+      onPress={handlePress}
+      style={[styles.container, style]}
+      accessibilityLabel={getRepeatLabel(repeatMode)}
+    >
       <MaterialCommunityIcons
         size={FONT_SIZES.xxl}
         name={iconConfig.name}

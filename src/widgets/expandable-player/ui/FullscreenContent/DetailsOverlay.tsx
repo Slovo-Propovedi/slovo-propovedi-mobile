@@ -1,5 +1,6 @@
 import { Entypo } from '@expo/vector-icons'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import type { AudioPlayerData } from 'shared/model'
@@ -72,9 +73,13 @@ export const DetailsOverlay = ({ audio, insetsTop, onClose, styles }: DetailsOve
             <Text style={localStyles.emptyMessage}>Нет информации</Text>
           )}
         </ScrollView>
-        <Pressable onPress={onClose} style={styles.descriptionCloseButton}>
+        <PressableButton
+          onPress={onClose}
+          accessibilityLabel='Закрыть детали'
+          style={styles.descriptionCloseButton}
+        >
           <Entypo name='cross' style={styles.descriptionCloseIcon} />
-        </Pressable>
+        </PressableButton>
       </View>
     </View>
   )

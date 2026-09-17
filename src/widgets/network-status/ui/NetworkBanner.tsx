@@ -1,13 +1,14 @@
 import { Feather } from '@expo/vector-icons'
 import { useAtom } from '@reatom/npm-react'
-import { Pressable, StyleSheet, Text } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { isOnlineAtom } from 'shared/model'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import { useNetworkIslandAnimation } from './useNetworkIslandAnimation'
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+const AnimatedPressable = Animated.createAnimatedComponent(PressableButton)
 
 export const NetworkBanner = () => {
   const [isOnline] = useAtom(isOnlineAtom)

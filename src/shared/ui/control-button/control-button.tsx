@@ -24,6 +24,14 @@ interface PlayerControlButtonProps {
   type: PlayerControlButtonType
 }
 
+const getControlLabel = (type: PlayerControlButtonType): string =>
+  match(type)
+    .with(PlayerControlButtonType.Next, () => 'Следующая проповедь')
+    .with(PlayerControlButtonType.Pause, () => 'Пауза')
+    .with(PlayerControlButtonType.Play, () => 'Воспроизвести')
+    .with(PlayerControlButtonType.Prev, () => 'Предыдущая проповедь')
+    .exhaustive()
+
 export const PlayerControlButton = ({
   color,
   isDisabled,
@@ -43,6 +51,7 @@ export const PlayerControlButton = ({
     onLongPress={onLongPress}
     accessibilityRole='button'
     disabled={Boolean(isDisabled)}
+    accessibilityLabel={getControlLabel(type)}
   >
     <Text>
       <Entypo
