@@ -8,6 +8,7 @@ interface SeekControls {
 }
 
 const TAP_SEEK_STEP_MS = 10_000
+const SEEK_END_BUFFER_MS = 100
 
 interface UseSeekControlsParams {
   duration: number
@@ -44,7 +45,7 @@ export const useSeekControls = ({
     (direction: 'backward' | 'forward') => {
       if (!duration || duration <= 0) return
 
-      const maxPos = duration - 100
+      const maxPos = duration - SEEK_END_BUFFER_MS
       const delta = direction === 'forward' ? TAP_SEEK_STEP_MS : -TAP_SEEK_STEP_MS
       const newPos = Math.max(0, Math.min(maxPos, positionRef.current + delta))
       positionRef.current = newPos
@@ -69,7 +70,7 @@ export const useSeekControls = ({
           seekDirectionRef.current === 'forward' ? seekSpeedRef.current : -seekSpeedRef.current
 
         // Calculate new position with proper clamping
-        const maxPos = duration - 100 // 100ms buffer before end
+        const maxPos = duration - SEEK_END_BUFFER_MS
         const newPos = Math.max(0, Math.min(maxPos, currentPos + delta))
         // Sync the base synchronously so the next 200ms tick computes from the
         // fresh position instead of the pre-render prop value (bounce fix).

@@ -304,12 +304,16 @@ describe('usePlayerKeyboardSeek', () => {
     isPlayerExpandedAtom(ctx, true)
     const { unmount } = await renderKeyboardSeek()
 
+    const keydownHandler = mockWindowListeners[KEYDOWN_EVENT]
+    const keyupHandler = mockWindowListeners[KEYUP_EVENT]
+    const blurHandler = mockWindowListeners[BLUR_EVENT]
+
     await act(async () => {
       unmount()
     })
 
-    expect(mockWindow.removeEventListener).toHaveBeenCalledWith(KEYDOWN_EVENT, expect.any(Function))
-    expect(mockWindow.removeEventListener).toHaveBeenCalledWith(KEYUP_EVENT, expect.any(Function))
-    expect(mockWindow.removeEventListener).toHaveBeenCalledWith(BLUR_EVENT, expect.any(Function))
+    expect(mockWindow.removeEventListener).toHaveBeenCalledWith(KEYDOWN_EVENT, keydownHandler)
+    expect(mockWindow.removeEventListener).toHaveBeenCalledWith(KEYUP_EVENT, keyupHandler)
+    expect(mockWindow.removeEventListener).toHaveBeenCalledWith(BLUR_EVENT, blurHandler)
   })
 })
