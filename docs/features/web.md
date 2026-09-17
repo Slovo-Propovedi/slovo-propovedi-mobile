@@ -112,16 +112,16 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 
 **Контейнер с вложенными кнопками (web):** если кликабельный контейнер сам содержит настоящую `<button>` (ряд мини-плеера — play/pause; строка трека — меню «три точки»), на web внешний контейнер рендерится как `<div role="link" tabindex=0>` (`accessibilityRole='link'`; RNW мапит `link` только в ARIA-атрибут, `<a>` не создаётся) — иначе `<button>` окажется внутри `<button>`, что невалидно и даёт React-ошибку «`<button>` cannot be a descendant of `<button>`». Паттерн задан в `TracksListItemBase` (`ROW_ACCESSIBILITY_ROLE`), тем же константным паттерном пользуется ряд `MiniPlayer` (`ROW_ACCESSIBILITY_ROLE`); на нативе контейнер остаётся `button`. Подробнее о строке — [track-list.md](./track-list.md).
 
-### Патч RNGH: `setPointerCapture` на web
+### Патч RNGH: `setPointerCapture` / `releasePointerCapture` на web
 
-`patches/react-native-gesture-handler+2.32.0.patch` оборачивает `target.setPointerCapture(pointerId)` в `PointerEventManager.pointerDownCallback` (обе сборки: `lib/module/` — web, `lib/commonjs/` — main-фолбэк) в try/catch. Без этого быстрый клик по кнопке внутри `GestureDetector` (весь полноэкранный плеер обёрнут в `Gesture.Pan()`, поэтому триггерится на любой клик) ронял в консоль:
+`patches/react-native-gesture-handler+2.32.0.patch` оборачивает вызовы `target.setPointerCapture(pointerId)` и `target.releasePointerCapture(pointerId)` в `PointerEventManager` (обе сборки: `lib/module/` — web, `lib/commonjs/` — main-фолбэк) в try/catch. Защищены все три call-site'а: `pointerDownCallback` (set), `pointerUpCallback` (release) и `pointerMoveCallback` (set). Без этого клик по кнопке внутри `GestureDetector` (весь полноэкранный плеер обёрнут в `Gesture.Pan()`, поэтому триггерится на любой клик) ронял в консоль:
 
 ```
-Web ERROR [NotFoundError: Failed to execute 'setPointerCapture' on 'Element': No active pointer with the given id is found.]
-pointerDownCallback (node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js:34)
+Web ERROR [NotFoundError: Failed to execute 'releasePointerCapture' on 'Element': No active pointer with the given id is found.]
+pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js:61)
 ```
 
-Причина — stale pointer id: к моменту обработки `pointerdown` указатель уже не активен, браузер кидает `NotFoundError`. Потеря capture косметическая — RNGH продолжает работать через per-element tracking. Патч применяется `postinstall: patch-package` (web-сборка резолвит `lib/module/` через mainFields `['browser', 'module', 'main']`). **Убрать патч, когда RNGH выпустит версию с апстрим-guard'ом** (см. [`../debt.md`](../debt.md)).
+Причина — stale/synthetic pointer id: к моменту обработки события указатель уже не активен (быстрый клик), либо события синтетические — браузерные расширения вроде Vimium (`f`-хинты) диспатчат pointer-события без активного OS-указателя, и браузер кидает `NotFoundError`. Потеря capture косметическая — RNGH продолжает работать через per-element tracking. Патч применяется `postinstall: patch-package` (web-сборка резолвит `lib/module/` через mainFields `['browser', 'module', 'main']`). **Убрать патч, когда RNGH выпустит версию с апстрим-guard'ом** (см. [`../debt.md`](../debt.md)).
 
 ## Десктопный layout
 

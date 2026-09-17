@@ -1,8 +1,8 @@
 diff --git a/node_modules/react-native-gesture-handler/lib/commonjs/web/tools/PointerEventManager.js b/node_modules/react-native-gesture-handler/lib/commonjs/web/tools/PointerEventManager.js
-index 76eb808..242b2fd 100644
+index 76eb808..602a0d0 100644
 --- a/node_modules/react-native-gesture-handler/lib/commonjs/web/tools/PointerEventManager.js
 +++ b/node_modules/react-native-gesture-handler/lib/commonjs/web/tools/PointerEventManager.js
-@@ -36,7 +36,12 @@ class PointerEventManager extends _EventManager.default {
+@@ -36,7 +36,13 @@ class PointerEventManager extends _EventManager.default {
      const adaptedEvent = this.mapEvent(event, _interfaces.EventTypes.DOWN);
      const target = event.target;
      if (!POINTER_CAPTURE_EXCLUDE_LIST.has(target.tagName)) {
@@ -10,17 +10,48 @@ index 76eb808..242b2fd 100644
 +      try {
 +        target.setPointerCapture(adaptedEvent.pointerId);
 +      } catch {
-+        // Stale pointer id on fast clicks throws NotFoundError; capture loss is
-+        // cosmetic — RNGH falls back to per-element tracking.
++        // Stale/synthetic pointer ids (Vimium hints, fast click races) throw
++        // NotFoundError; capture loss is cosmetic — RNGH falls back to
++        // per-element tracking.
 +      }
      }
      this.markAsInBounds(adaptedEvent.pointerId);
      this.trackedPointers.add(adaptedEvent.pointerId);
+@@ -58,7 +64,13 @@ class PointerEventManager extends _EventManager.default {
+     const adaptedEvent = this.mapEvent(event, _interfaces.EventTypes.UP);
+     const target = event.target;
+     if (!POINTER_CAPTURE_EXCLUDE_LIST.has(target.tagName)) {
+-      target.releasePointerCapture(adaptedEvent.pointerId);
++      try {
++        target.releasePointerCapture(adaptedEvent.pointerId);
++      } catch {
++        // Stale/synthetic pointer ids (Vimium hints, fast click races) throw
++        // NotFoundError; capture loss is cosmetic — RNGH falls back to
++        // per-element tracking.
++      }
+     }
+     this.markAsOutOfBounds(adaptedEvent.pointerId);
+     this.trackedPointers.delete(adaptedEvent.pointerId);
+@@ -86,7 +98,13 @@ class PointerEventManager extends _EventManager.default {
+     // pointer moves until it succeeds.
+     // God, I do love web development.
+     if (!target?.hasPointerCapture(event.pointerId) && !POINTER_CAPTURE_EXCLUDE_LIST.has(target.tagName)) {
+-      target.setPointerCapture(event.pointerId);
++      try {
++        target.setPointerCapture(event.pointerId);
++      } catch {
++        // Stale/synthetic pointer ids (Vimium hints, fast click races) throw
++        // NotFoundError; capture loss is cosmetic — RNGH falls back to
++        // per-element tracking.
++      }
+     }
+     const inBounds = (0, _utils.isPointerInBounds)(this.view, {
+       x: adaptedEvent.x,
 diff --git a/node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js b/node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js
-index 6ce3b8f..fdb5ab4 100644
+index 6ce3b8f..87a5691 100644
 --- a/node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js
 +++ b/node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js
-@@ -31,7 +31,12 @@ export default class PointerEventManager extends EventManager {
+@@ -31,7 +31,13 @@ export default class PointerEventManager extends EventManager {
      const adaptedEvent = this.mapEvent(event, EventTypes.DOWN);
      const target = event.target;
      if (!POINTER_CAPTURE_EXCLUDE_LIST.has(target.tagName)) {
@@ -28,9 +59,40 @@ index 6ce3b8f..fdb5ab4 100644
 +      try {
 +        target.setPointerCapture(adaptedEvent.pointerId);
 +      } catch {
-+        // Stale pointer id on fast clicks throws NotFoundError; capture loss is
-+        // cosmetic — RNGH falls back to per-element tracking.
++        // Stale/synthetic pointer ids (Vimium hints, fast click races) throw
++        // NotFoundError; capture loss is cosmetic — RNGH falls back to
++        // per-element tracking.
 +      }
      }
      this.markAsInBounds(adaptedEvent.pointerId);
      this.trackedPointers.add(adaptedEvent.pointerId);
+@@ -53,7 +59,13 @@ export default class PointerEventManager extends EventManager {
+     const adaptedEvent = this.mapEvent(event, EventTypes.UP);
+     const target = event.target;
+     if (!POINTER_CAPTURE_EXCLUDE_LIST.has(target.tagName)) {
+-      target.releasePointerCapture(adaptedEvent.pointerId);
++      try {
++        target.releasePointerCapture(adaptedEvent.pointerId);
++      } catch {
++        // Stale/synthetic pointer ids (Vimium hints, fast click races) throw
++        // NotFoundError; capture loss is cosmetic — RNGH falls back to
++        // per-element tracking.
++      }
+     }
+     this.markAsOutOfBounds(adaptedEvent.pointerId);
+     this.trackedPointers.delete(adaptedEvent.pointerId);
+@@ -81,7 +93,13 @@ export default class PointerEventManager extends EventManager {
+     // pointer moves until it succeeds.
+     // God, I do love web development.
+     if (!target?.hasPointerCapture(event.pointerId) && !POINTER_CAPTURE_EXCLUDE_LIST.has(target.tagName)) {
+-      target.setPointerCapture(event.pointerId);
++      try {
++        target.setPointerCapture(event.pointerId);
++      } catch {
++        // Stale/synthetic pointer ids (Vimium hints, fast click races) throw
++        // NotFoundError; capture loss is cosmetic — RNGH falls back to
++        // per-element tracking.
++      }
+     }
+     const inBounds = isPointerInBounds(this.view, {
+       x: adaptedEvent.x,
