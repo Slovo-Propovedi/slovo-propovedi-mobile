@@ -3,7 +3,8 @@ import pkg from './package.json'
 
 const appName = 'Слово.Проповеди'
 
-// Mirrors scripts/bump-version.mjs and CI's EXPECTED_CODE math (major*10000+minor*100+patch).
+// Mirrors scripts/bump-version.mjs and CI's EXPECTED_CODE math (major*10000+minor*100+patch);
+// feeds both android.versionCode and ios.buildNumber.
 const [major, minor, patch] = pkg.version.split('.').map(Number)
 const versionCode = major * 10000 + minor * 100 + patch
 
@@ -31,6 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: { router: {} },
   icon: './assets/icon.png',
   ios: {
+    buildNumber: String(versionCode),
     bundleIdentifier: appId,
     infoPlist: { UIBackgroundModes: ['audio'] },
     supportsTablet: true,
