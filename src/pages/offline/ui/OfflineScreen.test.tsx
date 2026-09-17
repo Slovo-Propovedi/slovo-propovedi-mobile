@@ -40,7 +40,7 @@ jest.mock('shared/ui/track-list', () => {
     <RNView testID='tracks-list-item'>
       <Text>{props.title}</Text>
       {props.subtitle && <Text>{props.subtitle}</Text>}
-      <Pressable onPress={props.onPress} testID='tracks-list-item-press'>
+      <Pressable onPress={props.onPress}>
         <Text>Play</Text>
       </Pressable>
     </RNView>
@@ -120,10 +120,10 @@ describe('<OfflineScreen>', () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
 
-    const { getByTestId } = await renderWithProviders(<OfflineScreen />)
+    const { getByText } = await renderWithProviders(<OfflineScreen />)
 
     await act(async () => {
-      fireEvent.press(getByTestId('tracks-list-item-press'))
+      fireEvent.press(getByText('Play'))
     })
 
     expect(playNewSermonMock).toHaveBeenCalledWith({

@@ -4,6 +4,10 @@ import { PlayerControls } from './PlayerControls'
 
 const PREVIEW_URL = 'https://test.com/preview1.mp3'
 const TEST_ARTIST = 'Test Artist'
+const PLAY_LABEL = 'Воспроизвести'
+const PAUSE_LABEL = 'Пауза'
+const NEXT_LABEL = 'Следующая проповедь'
+const PREV_LABEL = 'Предыдущая проповедь'
 
 jest.mock('../../lib/PlayerService', () => ({
   playerService: {
@@ -114,10 +118,10 @@ describe('<PlayerControls>', () => {
   })
 
   test('shows play button when not buffering and not downloading', async () => {
-    const { getByTestId, queryByTestId } = await renderWithProviders(
+    const { getByRole, queryByTestId } = await renderWithProviders(
       <PlayerControls {...mockPlayerControlsProps} />,
     )
-    expect(getByTestId('play-button')).toBeTruthy()
+    expect(getByRole('button', { name: PLAY_LABEL })).toBeTruthy()
     expect(queryByTestId('buffering-indicator')).toBeNull()
   })
 
@@ -131,10 +135,10 @@ describe('<PlayerControls>', () => {
       volume: 1,
     })
     mockEntypoSpy.mockClear()
-    const { getByTestId, queryByTestId } = await renderWithProviders(
+    const { getByRole, queryByTestId } = await renderWithProviders(
       <PlayerControls {...mockPlayerControlsProps} />,
     )
-    expect(getByTestId('play-button')).toBeTruthy()
+    expect(getByRole('button', { name: PAUSE_LABEL })).toBeTruthy()
     expect(queryByTestId('buffering-indicator')).toBeNull()
     const iconNames = mockEntypoSpy.mock.calls.map(
       (call: [Record<string, unknown>]) => call[0].name,
@@ -152,43 +156,39 @@ describe('<PlayerControls>', () => {
       position: 0,
       volume: 1,
     })
-    const { queryByTestId } = await renderWithProviders(
+    const { queryByRole, queryByTestId } = await renderWithProviders(
       <PlayerControls {...mockPlayerControlsProps} />,
     )
-    expect(queryByTestId('play-button')).toBeNull()
+    expect(queryByRole('button', { name: new RegExp(`${PLAY_LABEL}|${PAUSE_LABEL}`) })).toBeNull()
     expect(queryByTestId('buffering-indicator')).toBeTruthy()
   })
 
   test('fullscreen renders next button on last track (Issue #67)', async () => {
     mockPlayerControlsProps.currentAudio = currentPlaylist.sermons[2]
-    const { getByTestId } = await renderWithProviders(
+    const { getByRole } = await renderWithProviders(
       <PlayerControls {...mockPlayerControlsProps} variant='fullscreen' />,
     )
-    expect(getByTestId('next-button')).toBeTruthy()
+    expect(getByRole('button', { name: NEXT_LABEL })).toBeTruthy()
   })
 
   test('fullscreen renders prev button on first track (Issue #67)', async () => {
     mockPlayerControlsProps.currentAudio = currentPlaylist.sermons[0]
-    const { getByTestId } = await renderWithProviders(
+    const { getByRole } = await renderWithProviders(
       <PlayerControls {...mockPlayerControlsProps} variant='fullscreen' />,
     )
-    expect(getByTestId('prev-button')).toBeTruthy()
+    expect(getByRole('button', { name: PREV_LABEL })).toBeTruthy()
   })
 
   test('default variant keeps next button enabled on last track (Issue #67)', async () => {
     mockPlayerControlsProps.currentAudio = currentPlaylist.sermons[2]
-    const { getByTestId } = await renderWithProviders(
-      <PlayerControls {...mockPlayerControlsProps} />,
-    )
-    expect(getByTestId('next-button').props.disabled).toBeFalsy()
+    const { getByRole } = await renderWithProviders(<PlayerControls {...mockPlayerControlsProps} />)
+    expect(getByRole('button', { name: NEXT_LABEL }).props.disabled).toBeFalsy()
   })
 
   test('tap at playlist boundary is a no-op (Issue #67)', async () => {
     mockPlayerControlsProps.currentAudio = currentPlaylist.sermons[2]
-    const { getByTestId } = await renderWithProviders(
-      <PlayerControls {...mockPlayerControlsProps} />,
-    )
-    fireEvent.press(getByTestId('next-button'))
+    const { getByRole } = await renderWithProviders(<PlayerControls {...mockPlayerControlsProps} />)
+    fireEvent.press(getByRole('button', { name: NEXT_LABEL }))
     expect(mockPlayerControlsProps.setCurrentAudio).not.toHaveBeenCalled()
   })
 })

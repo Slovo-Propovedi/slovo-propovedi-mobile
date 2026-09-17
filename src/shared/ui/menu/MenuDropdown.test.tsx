@@ -3,10 +3,15 @@ import { renderWithProviders } from 'shared/mocks'
 import type { TestInstance } from 'test-renderer'
 import { MenuDropdown, type MenuItem } from './MenuDropdown'
 
+const mockIoniconsSpy = jest.fn()
+
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
   return {
-    Ionicons: (props: { name: string }) => <Text testID={`icon-${props.name}`}>{props.name}</Text>,
+    Ionicons: (props: { name: string }) => {
+      mockIoniconsSpy(props)
+      return <Text>{props.name}</Text>
+    },
   }
 })
 
@@ -59,7 +64,7 @@ describe('<MenuDropdown>', () => {
   test('renders icon when provided', async () => {
     await renderMenu({ items: [{ icon: 'trash-outline', onPress: jest.fn(), text: 'Пункт' }] })
 
-    expect(screen.getByTestId('icon-trash-outline')).toBeTruthy()
+    expect(mockIoniconsSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'trash-outline' }))
   })
 
   test('item press fires onPress and closes the menu', async () => {

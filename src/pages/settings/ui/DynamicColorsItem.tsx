@@ -15,10 +15,9 @@ import type { StyleProp, ViewStyle } from 'react-native'
 
 interface DynamicColorsItemProps {
   style?: StyleProp<ViewStyle>
-  testID?: string
 }
 
-export const DynamicColorsItem = ({ style, testID }: DynamicColorsItemProps) => {
+export const DynamicColorsItem = ({ style }: DynamicColorsItemProps) => {
   const [enabled] = useAtom(dynamicColorsEnabledAtom)
   const setEnabled = useAction(setDynamicColors)
   const { currentTheme } = useTheme()
@@ -29,7 +28,6 @@ export const DynamicColorsItem = ({ style, testID }: DynamicColorsItemProps) => 
 
   return (
     <TouchableItem
-      testID={testID}
       onPress={handleToggle}
       style={[styles.container, { backgroundColor: currentTheme.surface }, style]}
     >

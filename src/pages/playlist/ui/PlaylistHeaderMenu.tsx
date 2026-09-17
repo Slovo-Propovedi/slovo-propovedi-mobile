@@ -61,7 +61,7 @@ export const PlaylistHeaderMenu = ({
         <TouchableOpacity
           style={styles.button}
           onPress={handleOpenMenu}
-          testID='playlist-header-menu'
+          accessibilityRole='button'
           accessibilityLabel='Меню плейлиста'
           accessibilityHint='Нажмите чтобы открыть меню'
         >

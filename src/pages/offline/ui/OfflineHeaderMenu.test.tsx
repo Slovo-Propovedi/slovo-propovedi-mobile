@@ -24,7 +24,7 @@ jest.mock('shared/lib/audio-cache', () => {
 
 const mockedClearAudioCacheAction = jest.mocked(clearAudioCacheAction)
 
-const HEADER_MENU_TEST_ID = 'offline-header-menu'
+const HEADER_MENU_LABEL = 'Меню офлайн-библиотеки'
 const CLEAR_ITEM_TEXT = 'Очистить офлайн'
 const CONFIRM_TEXT = 'Очистить'
 
@@ -58,20 +58,20 @@ describe('<OfflineHeaderMenu>', () => {
   })
 
   test('opens the menu on button press', async () => {
-    const { getByTestId, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
+    const { getByRole, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
 
     await act(async () => {
-      fireEvent.press(getByTestId(HEADER_MENU_TEST_ID))
+      fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
     })
 
     expect(getByText(CLEAR_ITEM_TEXT)).toBeTruthy()
   })
 
   test('clear flow: select clear, confirm, clearAudioCacheAction called', async () => {
-    const { container, getByTestId, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
+    const { container, getByRole, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
 
     await act(async () => {
-      fireEvent.press(getByTestId(HEADER_MENU_TEST_ID))
+      fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
     })
     const clearMenuItem = await waitFor(() => getByText(CLEAR_ITEM_TEXT))
 
@@ -88,10 +88,10 @@ describe('<OfflineHeaderMenu>', () => {
     const ctx = createCtx()
     cacheQueueAtom(ctx, { 'http://example.com/1.mp3': { enqueuedAt: 0, source: 'manual' } })
 
-    const { getByRole, getByTestId } = await renderWithProviders(<OfflineHeaderMenu />, { ctx })
+    const { getByRole } = await renderWithProviders(<OfflineHeaderMenu />, { ctx })
 
     await act(async () => {
-      fireEvent.press(getByTestId(HEADER_MENU_TEST_ID))
+      fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
     })
 
     const clearItem = await waitFor(() =>
@@ -104,10 +104,10 @@ describe('<OfflineHeaderMenu>', () => {
     const ctx = createCtx()
     activeCacheUrlAtom(ctx, 'http://example.com/1.mp3')
 
-    const { getByRole, getByTestId } = await renderWithProviders(<OfflineHeaderMenu />, { ctx })
+    const { getByRole } = await renderWithProviders(<OfflineHeaderMenu />, { ctx })
 
     await act(async () => {
-      fireEvent.press(getByTestId(HEADER_MENU_TEST_ID))
+      fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
     })
 
     const clearItem = await waitFor(() =>
@@ -121,10 +121,10 @@ describe('<OfflineHeaderMenu>', () => {
     cacheQueueAtom(ctx, {})
     activeCacheUrlAtom(ctx, null)
 
-    const { getByRole, getByTestId } = await renderWithProviders(<OfflineHeaderMenu />, { ctx })
+    const { getByRole } = await renderWithProviders(<OfflineHeaderMenu />, { ctx })
 
     await act(async () => {
-      fireEvent.press(getByTestId(HEADER_MENU_TEST_ID))
+      fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
     })
 
     const clearItem = await waitFor(() =>
@@ -136,10 +136,10 @@ describe('<OfflineHeaderMenu>', () => {
   test('shows an error dialog when clearing fails', async () => {
     mockedClearAudioCacheAction.mockResolvedValue({ error: new Error('boom'), success: false })
 
-    const { container, getByTestId, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
+    const { container, getByRole, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
 
     await act(async () => {
-      fireEvent.press(getByTestId(HEADER_MENU_TEST_ID))
+      fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
     })
     const clearMenuItem = await waitFor(() => getByText(CLEAR_ITEM_TEXT))
     await measureMenu(container)
@@ -156,10 +156,10 @@ describe('<OfflineHeaderMenu>', () => {
   test('shows an error dialog when clearing throws', async () => {
     mockedClearAudioCacheAction.mockRejectedValue(new Error('boom'))
 
-    const { container, getByTestId, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
+    const { container, getByRole, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
 
     await act(async () => {
-      fireEvent.press(getByTestId(HEADER_MENU_TEST_ID))
+      fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
     })
     const clearMenuItem = await waitFor(() => getByText(CLEAR_ITEM_TEXT))
     await measureMenu(container)

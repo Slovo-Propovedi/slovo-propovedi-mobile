@@ -20,7 +20,6 @@ export const NetworkBanner = () => {
 
   return (
     <AnimatedPressable
-      testID='network-banner'
       hitSlop={isExpanded ? 0 : 16}
       onPress={() => (isExpanded ? collapse() : expand())}
       style={[styles.container, { top: insets.top + INDENTS.low }, containerStyle]}

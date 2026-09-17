@@ -17,7 +17,7 @@ const mockedUseAnimation = useNetworkIslandAnimation as jest.MockedFunction<
 >
 
 const STATUS_TEXT = 'Офлайн'
-const BANNER_TEST_ID = 'network-banner'
+const BANNER_ROLE_NAME = /Офлайн/
 const defaultHookReturn = {
   collapse: mockCollapse,
   containerStyle: {},
@@ -35,9 +35,9 @@ describe('<NetworkBanner>', () => {
     const ctx = createCtx()
     mockedUseAnimation.mockReturnValue(defaultHookReturn as never)
 
-    const { queryByTestId } = await renderWithProviders(<NetworkBanner />, { ctx })
+    const { queryByRole } = await renderWithProviders(<NetworkBanner />, { ctx })
 
-    expect(queryByTestId(BANNER_TEST_ID)).toBeNull()
+    expect(queryByRole('button', { name: BANNER_ROLE_NAME })).toBeNull()
   })
 
   test('renders the banner when offline', async () => {
@@ -45,9 +45,9 @@ describe('<NetworkBanner>', () => {
     isOnlineAtom(ctx, false)
     mockedUseAnimation.mockReturnValue({ ...defaultHookReturn, isExpanded: true } as never)
 
-    const { getByTestId } = await renderWithProviders(<NetworkBanner />, { ctx })
+    const { getByRole } = await renderWithProviders(<NetworkBanner />, { ctx })
 
-    expect(getByTestId(BANNER_TEST_ID)).toBeTruthy()
+    expect(getByRole('button', { name: BANNER_ROLE_NAME })).toBeTruthy()
   })
 
   test('shows offline text', async () => {
@@ -65,9 +65,9 @@ describe('<NetworkBanner>', () => {
     isOnlineAtom(ctx, false)
     mockedUseAnimation.mockReturnValue({ ...defaultHookReturn, isExpanded: true } as never)
 
-    const { getByTestId } = await renderWithProviders(<NetworkBanner />, { ctx })
+    const { getByRole } = await renderWithProviders(<NetworkBanner />, { ctx })
 
-    expect(getByTestId(BANNER_TEST_ID)).toHaveProp('hitSlop', 0)
+    expect(getByRole('button', { name: BANNER_ROLE_NAME })).toHaveProp('hitSlop', 0)
   })
 
   test('hitSlop is 16 when collapsed', async () => {
@@ -75,9 +75,9 @@ describe('<NetworkBanner>', () => {
     isOnlineAtom(ctx, false)
     mockedUseAnimation.mockReturnValue({ ...defaultHookReturn, isExpanded: false } as never)
 
-    const { getByTestId } = await renderWithProviders(<NetworkBanner />, { ctx })
+    const { getByRole } = await renderWithProviders(<NetworkBanner />, { ctx })
 
-    expect(getByTestId(BANNER_TEST_ID)).toHaveProp('hitSlop', 16)
+    expect(getByRole('button', { name: BANNER_ROLE_NAME })).toHaveProp('hitSlop', 16)
   })
 
   test('onPress calls collapse when expanded', async () => {
@@ -85,9 +85,9 @@ describe('<NetworkBanner>', () => {
     isOnlineAtom(ctx, false)
     mockedUseAnimation.mockReturnValue({ ...defaultHookReturn, isExpanded: true } as never)
 
-    const { getByTestId } = await renderWithProviders(<NetworkBanner />, { ctx })
+    const { getByRole } = await renderWithProviders(<NetworkBanner />, { ctx })
 
-    fireEvent.press(getByTestId(BANNER_TEST_ID))
+    fireEvent.press(getByRole('button', { name: BANNER_ROLE_NAME }))
     expect(mockCollapse).toHaveBeenCalledTimes(1)
     expect(mockExpand).not.toHaveBeenCalled()
   })
@@ -97,9 +97,9 @@ describe('<NetworkBanner>', () => {
     isOnlineAtom(ctx, false)
     mockedUseAnimation.mockReturnValue({ ...defaultHookReturn, isExpanded: false } as never)
 
-    const { getByTestId } = await renderWithProviders(<NetworkBanner />, { ctx })
+    const { getByRole } = await renderWithProviders(<NetworkBanner />, { ctx })
 
-    fireEvent.press(getByTestId(BANNER_TEST_ID))
+    fireEvent.press(getByRole('button', { name: BANNER_ROLE_NAME }))
     expect(mockExpand).toHaveBeenCalledTimes(1)
     expect(mockCollapse).not.toHaveBeenCalled()
   })

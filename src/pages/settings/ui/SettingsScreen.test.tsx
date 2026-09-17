@@ -3,16 +3,15 @@ import { fireEvent } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { SettingsScreen } from './SettingsScreen'
 
-const THEME_SETTINGS_ITEM_ID = 'theme-settings-item'
+const THEME_SETTINGS_TITLE = 'Тема оформления'
 
 describe('<SettingsScreen>', () => {
   test('renders the theme settings item', async () => {
     const ctx = createCtx()
 
-    const { getByTestId, getByText } = await renderWithProviders(<SettingsScreen />, { ctx })
+    const { getByText } = await renderWithProviders(<SettingsScreen />, { ctx })
 
-    expect(getByTestId(THEME_SETTINGS_ITEM_ID)).toBeTruthy()
-    expect(getByText('Тема оформления')).toBeTruthy()
+    expect(getByText(THEME_SETTINGS_TITLE)).toBeTruthy()
   })
 
   test('renders the server URL settings section', async () => {
@@ -26,9 +25,9 @@ describe('<SettingsScreen>', () => {
   test('theme settings item opens the theme dialog', async () => {
     const ctx = createCtx()
 
-    const { getByTestId, getByText } = await renderWithProviders(<SettingsScreen />, { ctx })
+    const { getByText } = await renderWithProviders(<SettingsScreen />, { ctx })
 
-    await fireEvent.press(getByTestId(THEME_SETTINGS_ITEM_ID))
+    await fireEvent.press(getByText(THEME_SETTINGS_TITLE))
     expect(getByText('Светлая')).toBeTruthy()
     expect(getByText('Тёмная')).toBeTruthy()
     expect(getByText('Как в системе')).toBeTruthy()

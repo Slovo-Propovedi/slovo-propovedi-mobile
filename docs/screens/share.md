@@ -22,7 +22,7 @@
 
 `ShareLinkCard` — общий блок для всех трёх секций: QR-код на белой карточке (QR всегда рендерится с тёмными модулями на светлом фоне, независимо от темы), текст ссылки (подчёркнутый, цвета `primary`, selectable), кнопка «Скопировать ссылку» (`CopyLinkButton`, иконка `copy-outline`); после успешного копирования на ~2 секунды меняется на «Скопировано» с иконкой `checkmark-circle-outline`. QR-код и текст ссылки обёрнуты в отдельные `Pressable` и открывают ссылку в браузере по тапу (`Linking.openURL`) — обычный `TouchableItem` не подошёл, у него зашита `width: '100%'`, из-за которой QR-карточка растягивалась на всю ширину строки.
 
-`CollapsibleSection` — контролируемый компонент (`isExpanded`/`onToggle` пропсами, состояние не хранит сам). Заголовок — `TouchableItem` с `testID={`share-section-header-${title}`}` (использован вместо accessible role/name — заголовок содержит декоративную иконку-глиф `Ionicons` рядом с текстом, из-за чего вычисляемое accessible-имя кнопки не совпадает точно с текстом заголовка; см. [`debt.md`](../debt.md) → Tests) и иконкой `chevron-up`/`chevron-down`.
+`CollapsibleSection` — контролируемый компонент (`isExpanded`/`onToggle` пропсами, состояние не хранит сам). Заголовок — `TouchableItem` (роль `button`, в тестах ищется по тексту заголовка) с декоративной иконкой-глифом `Ionicons` (`chevron-up`/`chevron-down`, скрытой от доступности через `accessibilityElementsHidden` + `importantForAccessibility='no'`).
 
 ## Откуда данные
 

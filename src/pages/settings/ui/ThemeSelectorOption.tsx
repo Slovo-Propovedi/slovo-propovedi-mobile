@@ -20,7 +20,6 @@ export const ThemeSelectorOption = ({
 }: ThemeSelectorOptionProps) => (
   <TouchableItem
     onPress={onPress}
-    testID={`theme-option-${option.value}`}
     style={[
       styles.optionContainer,
       {

@@ -73,6 +73,29 @@ jest.mock('shared/ui', () => {
   return { CoverImage: () => <View /> }
 })
 
+jest.mock('shared/ui/menu', () => {
+  const { View: MockView } = jest.requireActual('react-native')
+  return {
+    AnchoredDropdown: ({
+      children,
+      onClose,
+      visible,
+    }: {
+      children: React.ReactNode
+      onClose: () => void
+      visible: boolean
+    }) => {
+      if (!visible) return null
+      return (
+        <MockView testID='anchored-dropdown'>
+          <MockView testID='backdrop' onTouchEnd={onClose} />
+          {children}
+        </MockView>
+      )
+    },
+  }
+})
+
 jest.mock('expo-blur', () => {
   const { View } = jest.requireActual('react-native')
   return { BlurTargetView: View, BlurView: View }
@@ -153,7 +176,7 @@ const ADD_ALL_TO_OFFLINE_TEXT = 'Добавить все в офлайн'
 const ADD_ALL_TO_OFFLINE_CONFIRM_TEXT = 'Добавить весь плейлист в офлайн'
 const CACHE_DIALOG_TITLE = 'Добавление плейлиста в офлайн'
 const CLEAR_CACHE_TEXT = 'Удалить из офлайн все'
-const MENU_BUTTON_TEST_ID = 'playlist-header-menu'
+const MENU_BUTTON_LABEL = 'Меню плейлиста'
 const PLAYING_INDICATOR_PREFIX = 'playing-indicator-'
 
 const SERMON_1 = {
@@ -362,7 +385,7 @@ describe('<PlaylistScreen> header menu integration', () => {
 
   const openHeaderMenu = async (ctx: ReturnType<typeof createCtx>) => {
     const menu = await renderHeaderMenu(ctx)
-    await fireEvent.press(menu.getByTestId(MENU_BUTTON_TEST_ID))
+    await fireEvent.press(menu.getByRole('button', { name: MENU_BUTTON_LABEL }))
     await act(async () => {
       await new Promise(resolve => setTimeout(resolve, 0))
     })
@@ -388,7 +411,7 @@ describe('<PlaylistScreen> header menu integration', () => {
     await renderScreen(ctx)
     const menu = await openHeaderMenu(ctx)
 
-    await fireEvent(menu.getByText(ADD_ALL_TO_OFFLINE_TEXT), 'touchEnd')
+    await fireEvent.press(menu.getByText(ADD_ALL_TO_OFFLINE_TEXT))
 
     expect(menu.queryByText(CACHE_DIALOG_TITLE)).toBeNull()
   })
@@ -403,7 +426,7 @@ describe('<PlaylistScreen> header menu integration', () => {
     await renderScreen(ctx)
     const menu = await openHeaderMenu(ctx)
 
-    await fireEvent(menu.getByText(ADD_ALL_TO_OFFLINE_TEXT), 'touchEnd')
+    await fireEvent.press(menu.getByText(ADD_ALL_TO_OFFLINE_TEXT))
     expect(menu.getByText(CACHE_DIALOG_TITLE)).toBeTruthy()
 
     await fireEvent.press(menu.getByText(ADD_ALL_TO_OFFLINE_CONFIRM_TEXT))

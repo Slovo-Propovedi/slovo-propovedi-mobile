@@ -46,7 +46,7 @@ export const HistoryHeaderMenu = () => {
         <TouchableOpacity
           style={styles.button}
           onPress={handleOpenMenu}
-          testID='history-header-menu'
+          accessibilityRole='button'
           accessibilityLabel='Меню истории'
         >
           <MaterialCommunityIcons size={ICON_SIZE} name='dots-vertical' color={currentTheme.text} />

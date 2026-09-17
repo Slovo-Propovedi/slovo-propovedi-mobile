@@ -10,7 +10,6 @@ interface MoreMenuSettingsItemProps {
   icon?: keyof typeof Ionicons.glyphMap
   onPress: () => void
   style?: StyleProp<ViewStyle>
-  testID?: string
   title: string
 }
 
@@ -19,14 +18,12 @@ export const MoreMenuSettingsItem = ({
   icon,
   onPress,
   style,
-  testID,
   title,
 }: MoreMenuSettingsItemProps) => {
   const { currentTheme } = useTheme()
 
   return (
     <TouchableItem
-      testID={testID}
       onPress={onPress}
       style={[styles.itemContainer, { backgroundColor: currentTheme.surface }, style]}
     >

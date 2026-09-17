@@ -3,14 +3,18 @@ import { Text as MockText } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
 
+const mockIconSpy = jest.fn()
+
 jest.mock('@expo/vector-icons', () => ({
-  MaterialCommunityIcons: (props: { name: string }) => (
-    <MockText testID={`icon-${props.name}`}>{props.name}</MockText>
-  ),
+  MaterialCommunityIcons: (props: { name: string }) => {
+    mockIconSpy(props)
+    return <MockText>{props.name}</MockText>
+  },
 }))
 
-const CLOUD_DOWNLOAD_ICON = 'icon-cloud-download-outline'
-const CLOCK_ICON = 'icon-clock-outline'
+const CLOUD_DOWNLOAD_ICON = 'cloud-download-outline'
+const CLOCK_ICON = 'clock-outline'
+const PLAY_ICON = 'play'
 
 const mockTheme = {
   backdrop: 'rgba(0, 0, 0, 0.5)',
@@ -24,14 +28,23 @@ const mockTheme = {
   textMuted: '#666',
 }
 
+const expectIconRendered = (name: string) =>
+  expect(mockIconSpy).toHaveBeenCalledWith(expect.objectContaining({ name }))
+
+const expectIconNotRendered = (name: string) =>
+  expect(mockIconSpy).not.toHaveBeenCalledWith(expect.objectContaining({ name }))
+
 describe('<PlayingStatusOrChacheIcon>', () => {
+  beforeEach(() => {
+    mockIconSpy.mockClear()
+  })
+
   test('renders cloud-download-outline icon when isPlaying is false', async () => {
     await renderWithProviders(
       <PlayingStatusOrChacheIcon isPlaying={false} theme={mockTheme} isAudioPlaying={false} />,
     )
 
-    const icon = screen.getByTestId(CLOUD_DOWNLOAD_ICON)
-    expect(icon).toBeTruthy()
+    expectIconRendered(CLOUD_DOWNLOAD_ICON)
   })
 
   test('renders cloud-download-outline icon when isPlaying is false regardless of isAudioPlaying', async () => {
@@ -39,8 +52,7 @@ describe('<PlayingStatusOrChacheIcon>', () => {
       <PlayingStatusOrChacheIcon isPlaying={false} theme={mockTheme} isAudioPlaying={true} />,
     )
 
-    const icon = screen.getByTestId(CLOUD_DOWNLOAD_ICON)
-    expect(icon).toBeTruthy()
+    expectIconRendered(CLOUD_DOWNLOAD_ICON)
   })
 
   test('renders clock-outline icon when queued and not playing', async () => {
@@ -53,9 +65,8 @@ describe('<PlayingStatusOrChacheIcon>', () => {
       />,
     )
 
-    const icon = screen.getByTestId(CLOCK_ICON)
-    expect(icon).toBeTruthy()
-    expect(screen.queryByTestId(CLOUD_DOWNLOAD_ICON)).toBeNull()
+    expectIconRendered(CLOCK_ICON)
+    expectIconNotRendered(CLOUD_DOWNLOAD_ICON)
   })
 
   test('renders play icon when isPlaying is true and isAudioPlaying is false', async () => {
@@ -63,10 +74,8 @@ describe('<PlayingStatusOrChacheIcon>', () => {
       <PlayingStatusOrChacheIcon isPlaying={true} theme={mockTheme} isAudioPlaying={false} />,
     )
 
-    const playIcon = screen.getByTestId('icon-play')
-    expect(playIcon).toBeTruthy()
-
-    expect(screen.queryByTestId(CLOUD_DOWNLOAD_ICON)).toBeNull()
+    expectIconRendered(PLAY_ICON)
+    expectIconNotRendered(CLOUD_DOWNLOAD_ICON)
   })
 
   test('renders play icon over clock when playing and queued', async () => {
@@ -79,8 +88,8 @@ describe('<PlayingStatusOrChacheIcon>', () => {
       />,
     )
 
-    expect(screen.getByTestId('icon-play')).toBeTruthy()
-    expect(screen.queryByTestId(CLOCK_ICON)).toBeNull()
+    expectIconRendered(PLAY_ICON)
+    expectIconNotRendered(CLOCK_ICON)
   })
 
   test('renders AnimatedSoundBars when both isPlaying and isAudioPlaying are true', async () => {
@@ -91,7 +100,7 @@ describe('<PlayingStatusOrChacheIcon>', () => {
     const tree = screen.toJSON()
     expect(tree).toBeTruthy()
 
-    expect(screen.queryByTestId('icon-play')).toBeNull()
-    expect(screen.queryByTestId(CLOUD_DOWNLOAD_ICON)).toBeNull()
+    expectIconNotRendered(PLAY_ICON)
+    expectIconNotRendered(CLOUD_DOWNLOAD_ICON)
   })
 })

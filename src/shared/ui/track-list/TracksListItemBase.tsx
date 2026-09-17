@@ -69,7 +69,6 @@ export const TracksListItemBase = ({
     <>
       <PressableButton
         onPress={handleItemPress}
-        testID='tracks-list-item'
         onLongPress={handleToggleMenu}
         accessibilityRole={ROW_ACCESSIBILITY_ROLE}
         style={[

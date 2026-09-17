@@ -80,11 +80,11 @@ jest.mock('shared/ui/track-list', () => {
     <RNView testID='tracks-list-item'>
       <Text>{props.title}</Text>
       {props.subtitle && <Text>{props.subtitle}</Text>}
-      <Pressable onPress={props.onPress} testID='tracks-list-item-press'>
+      <Pressable onPress={props.onPress}>
         <Text>Play</Text>
       </Pressable>
       {props.menuActions?.map((action, i) => (
-        <Pressable key={i} onPress={action.onPress} testID={`menu-action-${i}`}>
+        <Pressable key={i} onPress={action.onPress}>
           <Text>{action.text}</Text>
         </Pressable>
       ))}
@@ -188,10 +188,10 @@ describe('<HistoryScreen>', () => {
 
     const ctx = seedHistory([mockEntry])
 
-    const { getByTestId } = await renderWithProviders(<HistoryScreen />, { ctx })
+    const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
 
     await act(async () => {
-      fireEvent.press(getByTestId('tracks-list-item-press'))
+      fireEvent.press(getByText('Play'))
     })
 
     expect(mockResolveEntryPlaylist).toHaveBeenCalledWith(mockEntry)
@@ -216,10 +216,10 @@ describe('<HistoryScreen>', () => {
 
     const ctx = seedHistory([mockEntry])
 
-    const { getByTestId } = await renderWithProviders(<HistoryScreen />, { ctx })
+    const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
 
     await act(async () => {
-      fireEvent.press(getByTestId('tracks-list-item-press'))
+      fireEvent.press(getByText('Play'))
     })
 
     expect(playNewSermonMock).toHaveBeenCalledWith({
@@ -236,9 +236,9 @@ describe('<HistoryScreen>', () => {
     }
     const ctx = seedHistory([completedEntry])
 
-    const { getByTestId } = await renderWithProviders(<HistoryScreen />, { ctx })
+    const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
 
-    fireEvent.press(getByTestId('menu-action-0'))
+    fireEvent.press(getByText('Удалить из истории'))
     expect(removeHistoryEntryAction).toHaveBeenCalledTimes(1)
     expect(jest.mocked(removeHistoryEntryAction).mock.calls[0][1]).toBe(MOCK_SERMON_ID)
   })
@@ -246,19 +246,19 @@ describe('<HistoryScreen>', () => {
   test('mark menu action calls markSermonListenedAction with sermon and entry playlist', async () => {
     const ctx = seedHistory([mockEntry])
 
-    const { getByTestId } = await renderWithProviders(<HistoryScreen />, { ctx })
+    const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
 
-    fireEvent.press(getByTestId('menu-action-0'))
+    fireEvent.press(getByText('Пометить прослушанной'))
     expect(markSermonListenedAction).toHaveBeenCalledTimes(1)
     expect(jest.mocked(markSermonListenedAction).mock.calls[0][1]).toEqual(mockSermon)
     expect(jest.mocked(markSermonListenedAction).mock.calls[0][2]).toEqual(mockEntry.playlist)
   })
 
   test('clear flow: open menu, select clear, confirm, clearHistoryAction called', async () => {
-    const { container, getByTestId, getByText } = await renderWithProviders(<HistoryHeaderMenu />)
+    const { container, getByRole, getByText } = await renderWithProviders(<HistoryHeaderMenu />)
 
     await act(async () => {
-      fireEvent.press(getByTestId('history-header-menu'))
+      fireEvent.press(getByRole('button', { name: 'Меню истории' }))
     })
     const clearMenuItem = await waitFor(() => getByText('Очистить историю'))
 

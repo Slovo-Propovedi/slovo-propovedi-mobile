@@ -42,7 +42,6 @@ export const ServerUrlSettings = () => {
         keyboardType='url'
         autoCorrect={false}
         autoCapitalize='none'
-        testID='server-url-input'
         onChangeText={setInputValue}
         placeholder='https://api.example.com'
         placeholderTextColor={currentTheme.textMuted}
@@ -57,7 +56,6 @@ export const ServerUrlSettings = () => {
       <View style={styles.buttons}>
         <TouchableItem
           onPress={handleSave}
-          testID='save-server-url'
           style={[
             styles.button,
             styles.saveButton,
@@ -71,7 +69,6 @@ export const ServerUrlSettings = () => {
         disabled={isDefault}
         noDisabledBackground
         onPress={handleReset}
-        testID='reset-server-url-link'
         style={{ opacity: isDefault ? 0.4 : 1 }}
       >
         <Text style={[styles.resetLink, { color: currentTheme.primary }]}>

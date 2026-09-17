@@ -15,7 +15,7 @@ export const QueueControls = ({ onPressPlayAll, onPressShuffle }: QueueControlsP
     <View style={queueControlsStyles.container}>
       <TouchableOpacity
         onPress={onPressPlayAll}
-        testID='queue-controls-play-all'
+        accessibilityRole='button'
         style={[queueControlsStyles.button, { backgroundColor: currentTheme.primary }]}
       >
         <MaterialCommunityIcons name='play' size={FONT_SIZES.base} color={COLORS.onPrimary} />
@@ -24,7 +24,7 @@ export const QueueControls = ({ onPressPlayAll, onPressShuffle }: QueueControlsP
       {onPressShuffle && (
         <TouchableOpacity
           onPress={onPressShuffle}
-          testID='queue-controls-shuffle'
+          accessibilityRole='button'
           style={[queueControlsStyles.button, { backgroundColor: currentTheme.primary }]}
         >
           <MaterialCommunityIcons

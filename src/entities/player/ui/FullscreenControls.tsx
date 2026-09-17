@@ -42,7 +42,6 @@ export const FullscreenControls = ({
           <PlayerControlButton
             size={buttonSize}
             color={COLORS.white}
-            testID='prev-button'
             onPressOut={onPressOutSeek}
             isDisabled={isTrackButtonDisabled}
             type={PlayerControlButtonType.Prev}
@@ -66,7 +65,6 @@ export const FullscreenControls = ({
             <PlayerControlButton
               color={COLORS.white}
               onPress={togglePlay}
-              testID='play-button'
               size={playButtonSize}
               type={isPlaying ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
             />
@@ -77,7 +75,6 @@ export const FullscreenControls = ({
           <PlayerControlButton
             size={buttonSize}
             color={COLORS.white}
-            testID='next-button'
             onPressOut={onPressOutSeek}
             isDisabled={isTrackButtonDisabled}
             type={PlayerControlButtonType.Next}

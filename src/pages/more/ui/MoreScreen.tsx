@@ -24,30 +24,25 @@ export const MoreScreen = () => {
         <View style={styles.menu}>
           <MoreMenuSettingsItem
             title='Офлайн'
-            testID='offline-item'
             icon='cloud-offline-outline'
             onPress={() => router.push('/offline')}
           />
           <MoreMenuSettingsItem
             icon='time-outline'
-            testID='history-item'
             title='История прослушивания'
             onPress={() => router.push('/history')}
           />
           <MoreMenuSettingsItem
             title='Настройки'
-            testID='settings-item'
             icon='settings-outline'
             onPress={() => router.push('/settings')}
           />
           <MoreMenuSettingsItem
-            testID='about-item'
             title='О приложении'
             icon='information-circle-outline'
             onPress={() => router.push('/about')}
           />
           <MoreMenuSettingsItem
-            testID='share-item'
             icon='share-social-outline'
             title='Поделиться приложением'
             onPress={() => router.push('/share')}

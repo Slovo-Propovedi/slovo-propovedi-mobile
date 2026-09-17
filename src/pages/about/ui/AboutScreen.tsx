@@ -51,14 +51,12 @@ export const AboutScreen = () => {
 
           <LinkButton
             icon='git-branch-outline'
-            testID='source-code-link'
             onPress={handleOpenSourceLink}
             title='Исходный код на Forgejo'
           />
         </View>
         <View style={styles.section}>
           <LinkButton
-            testID='license-link'
             icon='document-text-outline'
             onPress={handleOpenLicenseLink}
             title={`Лицензия ${LICENSE_NAME}`}

@@ -8,12 +8,17 @@ const REMOVE_CACHE_TEXT = 'Удалить из офлайн'
 const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
 const REMOVE_FROM_QUEUE_TEXT = 'Убрать из очереди'
 
-jest.mock('@expo/vector-icons', () => ({
-  Ionicons: (props: { name: string }) => {
-    const { Text } = jest.requireActual('react-native')
-    return <Text testID={`icon-${props.name}`}>{props.name}</Text>
-  },
-}))
+const mockIoniconsSpy = jest.fn()
+
+jest.mock('@expo/vector-icons', () => {
+  const { Text } = jest.requireActual('react-native')
+  return {
+    Ionicons: (props: { name: string }) => {
+      mockIoniconsSpy(props)
+      return <Text>{props.name}</Text>
+    },
+  }
+})
 
 jest.mock('shared/ui/theme', () => {
   const actual = jest.requireActual('shared/ui/theme')
@@ -58,14 +63,16 @@ describe('<TracksListItemContextMenu>', () => {
     await render(<TracksListItemContextMenu {...baseProps} visualState='cloud' />)
 
     expect(screen.getByText(ADD_TO_OFFLINE_TEXT)).toBeTruthy()
-    expect(screen.getByTestId('icon-cloud-download')).toBeTruthy()
+    expect(mockIoniconsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'cloud-download' }),
+    )
   })
 
   test('renders remove cache text when visualState is cached', async () => {
     await render(<TracksListItemContextMenu {...baseProps} isCached={true} visualState='cached' />)
 
     expect(screen.getByText(REMOVE_CACHE_TEXT)).toBeTruthy()
-    expect(screen.getByTestId('icon-trash-outline')).toBeTruthy()
+    expect(mockIoniconsSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'trash-outline' }))
   })
 
   test('renders stop caching text when visualState is downloading', async () => {
@@ -139,7 +146,7 @@ describe('<TracksListItemContextMenu>', () => {
     await render(<TracksListItemContextMenu {...baseProps} menuActions={customActions} />)
 
     expect(screen.getByText('Share')).toBeTruthy()
-    expect(screen.getByTestId('icon-share-outline')).toBeTruthy()
+    expect(mockIoniconsSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'share-outline' }))
   })
 
   test('renders cache item when menuActions is absent', async () => {

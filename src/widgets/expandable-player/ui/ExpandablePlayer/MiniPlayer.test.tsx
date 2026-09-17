@@ -46,8 +46,8 @@ const ARTWORK_URL = 'https://example.com/artwork.jpg'
 const APP_NAME = 'Слово.Проповеди'
 const REFERENCE_TEXT = 'Бытие 1:5'
 const BUFFERING_INDICATOR_TEST_ID = 'buffering-indicator'
-const PLAY_ICON = 'controller-play'
-const PAUSE_ICON = 'controller-paus'
+const PLAY_LABEL = 'Воспроизвести'
+const PAUSE_LABEL = 'Пауза'
 
 const AUDIO: AudioPlayerData = {
   artist: 'Автор',
@@ -128,27 +128,29 @@ describe('<MiniPlayer>', () => {
   test('pressing the play/pause button calls onPlayPause', async () => {
     const { getByRole } = await renderMiniPlayer()
 
-    await fireEvent.press(getByRole('button'))
+    await fireEvent.press(getByRole('button', { name: PLAY_LABEL }))
 
     expect(mockOnPlayPause).toHaveBeenCalledTimes(1)
   })
 
   test('shows the play icon when paused and the pause icon when playing', async () => {
     const paused = await renderMiniPlayer({ playing: false })
-    expect(paused.getByText(PLAY_ICON)).toBeTruthy()
+    expect(paused.getByRole('button', { name: PLAY_LABEL })).toBeTruthy()
 
     const playing = await renderMiniPlayer({ playing: true })
-    expect(playing.getByText(PAUSE_ICON)).toBeTruthy()
+    expect(playing.getByRole('button', { name: PAUSE_LABEL })).toBeTruthy()
   })
 
   test('gates the buffering spinner on showSpinner', async () => {
     const buffering = await renderMiniPlayer({ showSpinner: true })
     expect(buffering.getByTestId(BUFFERING_INDICATOR_TEST_ID)).toBeTruthy()
-    expect(buffering.queryByRole('button')).toBeNull()
+    expect(
+      buffering.queryByRole('button', { name: new RegExp(`${PLAY_LABEL}|${PAUSE_LABEL}`) }),
+    ).toBeNull()
 
     const ready = await renderMiniPlayer({ showSpinner: false })
     expect(ready.queryByTestId(BUFFERING_INDICATOR_TEST_ID)).toBeNull()
-    expect(ready.getByRole('button')).toBeTruthy()
+    expect(ready.getByRole('button', { name: PLAY_LABEL })).toBeTruthy()
   })
 
   test('keeps the spinner while buffering even when playing', async () => {
@@ -158,6 +160,6 @@ describe('<MiniPlayer>', () => {
     })
 
     expect(getByTestId(BUFFERING_INDICATOR_TEST_ID)).toBeTruthy()
-    expect(queryByRole('button')).toBeNull()
+    expect(queryByRole('button', { name: new RegExp(`${PLAY_LABEL}|${PAUSE_LABEL}`) })).toBeNull()
   })
 })

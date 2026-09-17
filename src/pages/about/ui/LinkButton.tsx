@@ -8,15 +8,13 @@ interface LinkButtonProps {
   icon: keyof typeof Ionicons.glyphMap
   onPress: () => void
   style?: StyleProp<ViewStyle>
-  testID?: string
   title: string
 }
 
-export const LinkButton = ({ icon, onPress, style, testID, title }: LinkButtonProps) => {
+export const LinkButton = ({ icon, onPress, style, title }: LinkButtonProps) => {
   const { currentTheme } = useTheme()
   return (
     <TouchableItem
-      testID={testID}
       onPress={onPress}
       style={[styles.linkButton, { backgroundColor: currentTheme.surface }, style]}
     >

@@ -61,9 +61,8 @@ jest.mock('../progress-bar/ProgressBar', () => {
 })
 
 const CONTEXT_MENU_TEST_ID = 'context-menu-visible'
-const DOTS_BUTTON_TEST_ID = 'tracks-list-item-menu'
+const DOTS_BUTTON_LABEL = 'Меню трека'
 const PROGRESS_BAR_TEST_ID = 'progress-bar'
-const TRACK_ITEM_TEST_ID = 'tracks-list-item'
 const AUDIO_URL = 'https://example.com/audio.mp3'
 const TEST_SUBTITLE = 'Test Subtitle'
 const TEST_TITLE = 'Test Title'
@@ -142,7 +141,7 @@ describe('<TracksListItem>', () => {
     const mockOnPress = jest.fn()
     await renderItem({ onPress: mockOnPress })
 
-    fireEvent.press(screen.getByTestId(TRACK_ITEM_TEST_ID))
+    fireEvent.press(screen.getByRole('button', { name: new RegExp(TEST_TITLE) }))
 
     expect(mockOnPress).toHaveBeenCalledTimes(1)
   })
@@ -152,7 +151,7 @@ describe('<TracksListItem>', () => {
 
     expect(screen.queryByTestId(CONTEXT_MENU_TEST_ID)).toBeNull()
 
-    fireEvent.press(screen.getByTestId(DOTS_BUTTON_TEST_ID))
+    fireEvent.press(screen.getByRole('button', { name: DOTS_BUTTON_LABEL }))
 
     await waitFor(() => {
       expect(screen.getByTestId(CONTEXT_MENU_TEST_ID)).toBeTruthy()
@@ -162,7 +161,7 @@ describe('<TracksListItem>', () => {
   test('anchors context menu to the dots button using measured geometry', async () => {
     await renderItem({ audioUrl: AUDIO_URL })
 
-    fireEvent.press(screen.getByTestId(DOTS_BUTTON_TEST_ID))
+    fireEvent.press(screen.getByRole('button', { name: DOTS_BUTTON_LABEL }))
 
     await waitFor(() => {
       expect(mockLastMenuAnchor).toEqual({
@@ -177,7 +176,7 @@ describe('<TracksListItem>', () => {
   test('pressing dots button does NOT open menu when audioUrl is empty', async () => {
     await renderItem()
 
-    fireEvent.press(screen.getByTestId(DOTS_BUTTON_TEST_ID))
+    fireEvent.press(screen.getByRole('button', { name: DOTS_BUTTON_LABEL }))
 
     expect(screen.queryByTestId(CONTEXT_MENU_TEST_ID)).toBeNull()
   })
@@ -195,7 +194,7 @@ describe('<TracksListItem>', () => {
 
     await renderItem({ audioUrl: AUDIO_URL })
 
-    fireEvent.press(screen.getByTestId(DOTS_BUTTON_TEST_ID))
+    fireEvent.press(screen.getByRole('button', { name: DOTS_BUTTON_LABEL }))
 
     await waitFor(() => {
       expect(screen.getByTestId(CONTEXT_MENU_TEST_ID)).toBeTruthy()

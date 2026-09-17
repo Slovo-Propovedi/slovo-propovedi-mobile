@@ -9,7 +9,6 @@ export interface MenuDropdownProps {
   anchor: AnchorRect | null
   items: ReadonlyArray<MenuItem>
   onClose: () => void
-  testID?: string
   visible: boolean
 }
 
@@ -24,13 +23,12 @@ const ICON_SIZE = 18
 const ICON_MARGIN_RIGHT = 8
 const MENU_MIN_WIDTH = 180
 
-export const MenuDropdown = ({ anchor, items, onClose, testID, visible }: MenuDropdownProps) => {
+export const MenuDropdown = ({ anchor, items, onClose, visible }: MenuDropdownProps) => {
   const { currentTheme } = useTheme()
 
   return (
     <AnchoredDropdown
       anchor={anchor}
-      testID={testID}
       onClose={onClose}
       visible={visible}
       menuStyle={[styles.menu, { backgroundColor: currentTheme.surface }]}

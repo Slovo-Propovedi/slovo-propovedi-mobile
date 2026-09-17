@@ -38,7 +38,6 @@ export const DefaultControls = ({
       {!excludedButtons[PlayerControlButtonType.Prev] && (
         <PlayerControlButton
           size={size}
-          testID='prev-button'
           isDisabled={isTrackButtonDisabled}
           type={PlayerControlButtonType.Prev}
           onPress={() => void toggleTrack('prev')}
@@ -56,7 +55,6 @@ export const DefaultControls = ({
           <PlayerControlButton
             size={size * 2}
             onPress={togglePlay}
-            testID='play-button'
             isDisabled={!hasCurrentAudio}
             type={isPlaying ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
           />
@@ -64,7 +62,6 @@ export const DefaultControls = ({
       {!excludedButtons[PlayerControlButtonType.Next] && (
         <PlayerControlButton
           size={size}
-          testID='next-button'
           isDisabled={isTrackButtonDisabled}
           type={PlayerControlButtonType.Next}
           onPress={() => void toggleTrack('next')}

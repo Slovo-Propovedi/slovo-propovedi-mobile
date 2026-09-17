@@ -3,10 +3,13 @@ import { Text as MockText, type StyleProp, type TextStyle } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { TracksListItemContent } from './TracksListItemContent'
 
+const mockIconSpy = jest.fn()
+
 jest.mock('@expo/vector-icons', () => ({
-  MaterialCommunityIcons: (props: { name: string }) => (
-    <MockText testID={`icon-${props.name}`}>{props.name}</MockText>
-  ),
+  MaterialCommunityIcons: (props: { name: string }) => {
+    mockIconSpy(props)
+    return <MockText>{props.name}</MockText>
+  },
 }))
 
 jest.mock('react-native-text-ticker', () => ({
@@ -16,8 +19,9 @@ jest.mock('react-native-text-ticker', () => ({
   ),
 }))
 
-const CLOUD_DOWNLOAD_ICON = 'icon-cloud-download-outline'
-const CLOCK_ICON = 'icon-clock-outline'
+const CLOUD_DOWNLOAD_ICON = 'cloud-download-outline'
+const CLOCK_ICON = 'clock-outline'
+const PLAY_ICON = 'play'
 const ARTWORK_TEST_ID = 'tracks-list-item-artwork'
 const TEST_TITLE = 'Test Title'
 
@@ -45,17 +49,23 @@ const baseProps = {
 }
 
 describe('<TracksListItemContent>', () => {
+  beforeEach(() => {
+    mockIconSpy.mockClear()
+  })
+
   test('renders cloud icon when not cached, not downloading, not queued', async () => {
     await renderWithProviders(<TracksListItemContent {...baseProps} />)
 
-    expect(screen.getByTestId(CLOUD_DOWNLOAD_ICON)).toBeTruthy()
+    expect(mockIconSpy).toHaveBeenCalledWith(expect.objectContaining({ name: CLOUD_DOWNLOAD_ICON }))
   })
 
   test('renders clock icon when queued', async () => {
     await renderWithProviders(<TracksListItemContent {...baseProps} isQueued={true} />)
 
-    expect(screen.getByTestId(CLOCK_ICON)).toBeTruthy()
-    expect(screen.queryByTestId(CLOUD_DOWNLOAD_ICON)).toBeNull()
+    expect(mockIconSpy).toHaveBeenCalledWith(expect.objectContaining({ name: CLOCK_ICON }))
+    expect(mockIconSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: CLOUD_DOWNLOAD_ICON }),
+    )
   })
 
   test('renders progress bar when downloading and no clock icon', async () => {
@@ -63,22 +73,26 @@ describe('<TracksListItemContent>', () => {
       <TracksListItemContent {...baseProps} progressValue={0.5} isDownloading={true} />,
     )
 
-    expect(screen.queryByTestId(CLOCK_ICON)).toBeNull()
-    expect(screen.queryByTestId(CLOUD_DOWNLOAD_ICON)).toBeNull()
+    expect(mockIconSpy).not.toHaveBeenCalledWith(expect.objectContaining({ name: CLOCK_ICON }))
+    expect(mockIconSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: CLOUD_DOWNLOAD_ICON }),
+    )
   })
 
   test('renders no icon when cached and not playing', async () => {
     await renderWithProviders(<TracksListItemContent {...baseProps} isCached={true} />)
 
-    expect(screen.queryByTestId(CLOUD_DOWNLOAD_ICON)).toBeNull()
-    expect(screen.queryByTestId(CLOCK_ICON)).toBeNull()
+    expect(mockIconSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: CLOUD_DOWNLOAD_ICON }),
+    )
+    expect(mockIconSpy).not.toHaveBeenCalledWith(expect.objectContaining({ name: CLOCK_ICON }))
   })
 
   test('renders play icon when playing and not audio playing', async () => {
     await renderWithProviders(<TracksListItemContent {...baseProps} isPlaying={true} />)
 
-    expect(screen.getByTestId('icon-play')).toBeTruthy()
-    expect(screen.queryByTestId(CLOCK_ICON)).toBeNull()
+    expect(mockIconSpy).toHaveBeenCalledWith(expect.objectContaining({ name: PLAY_ICON }))
+    expect(mockIconSpy).not.toHaveBeenCalledWith(expect.objectContaining({ name: CLOCK_ICON }))
   })
 
   test('dims title and artwork when progress is 1', async () => {

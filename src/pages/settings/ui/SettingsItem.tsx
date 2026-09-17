@@ -10,7 +10,6 @@ interface SettingsItemProps {
   icon?: keyof typeof Ionicons.glyphMap
   onPress: () => void
   style?: StyleProp<ViewStyle>
-  testID?: string
   title: string
 }
 
@@ -20,14 +19,12 @@ export const SettingsItem = ({
   icon,
   onPress,
   style,
-  testID,
   title,
 }: SettingsItemProps) => {
   const { currentTheme } = useTheme()
 
   return (
     <TouchableItem
-      testID={testID}
       onPress={onPress}
       disabled={disabled}
       style={[styles.container, { backgroundColor: currentTheme.surface }, style]}

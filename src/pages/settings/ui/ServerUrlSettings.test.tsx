@@ -5,7 +5,8 @@ import { renderWithProviders } from 'shared/mocks'
 import { ServerUrlSettings } from './ServerUrlSettings'
 
 const TEST_URL = 'https://test.example.com'
-const SAVE_BUTTON_ID = 'save-server-url'
+const SAVE_BUTTON_NAME = /Сохран/
+const INPUT_PLACEHOLDER = 'https://api.example.com'
 
 jest.mock('shared/api/axiosInstance', () => ({
   axiosInstance: { defaults: { baseURL: TEST_URL } },
@@ -15,22 +16,22 @@ describe('<ServerUrlSettings>', () => {
   test('renders server URL input with seeded value', async () => {
     const ctx = createCtx()
     serverUrlAtom(ctx, TEST_URL)
-    const { getByTestId } = await renderWithProviders(<ServerUrlSettings />, { ctx })
-    expect(getByTestId('server-url-input')).toBeTruthy()
+    const { getByPlaceholderText } = await renderWithProviders(<ServerUrlSettings />, { ctx })
+    expect(getByPlaceholderText(INPUT_PLACEHOLDER)).toBeTruthy()
   })
 
   test('renders save button', async () => {
     const ctx = createCtx()
     serverUrlAtom(ctx, TEST_URL)
-    const { getByTestId } = await renderWithProviders(<ServerUrlSettings />, { ctx })
-    expect(getByTestId(SAVE_BUTTON_ID)).toBeTruthy()
+    const { getByRole } = await renderWithProviders(<ServerUrlSettings />, { ctx })
+    expect(getByRole('button', { name: SAVE_BUTTON_NAME })).toBeTruthy()
   })
 
   test('pressing save does not crash', async () => {
     const ctx = createCtx()
     serverUrlAtom(ctx, TEST_URL)
-    const { getByTestId } = await renderWithProviders(<ServerUrlSettings />, { ctx })
-    fireEvent.press(getByTestId(SAVE_BUTTON_ID))
-    expect(getByTestId(SAVE_BUTTON_ID)).toBeTruthy()
+    const { getByRole } = await renderWithProviders(<ServerUrlSettings />, { ctx })
+    fireEvent.press(getByRole('button', { name: SAVE_BUTTON_NAME }))
+    expect(getByRole('button', { name: SAVE_BUTTON_NAME })).toBeTruthy()
   })
 })

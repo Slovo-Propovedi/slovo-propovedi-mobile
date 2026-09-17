@@ -16,13 +16,12 @@ export const SettingsScreen = () => {
         <SettingsItem
           title='Тема оформления'
           icon='color-palette-outline'
-          testID='theme-settings-item'
           description='Светлая, тёмная или как в системе'
           onPress={() => {
             setShowThemeDialog(true)
           }}
         />
-        {isMaterialYouSupported() && <DynamicColorsItem testID='dynamic-colors-item' />}
+        {isMaterialYouSupported() && <DynamicColorsItem />}
         <ServerUrlSettings />
       </ScrollView>
       <ThemeDialog

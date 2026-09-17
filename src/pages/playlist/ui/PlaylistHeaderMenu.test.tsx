@@ -94,12 +94,12 @@ const renderMenu = async () => {
   return { ...utils, ctx }
 }
 
-const MENU_BUTTON_TEST_ID = 'playlist-header-menu'
+const MENU_BUTTON_LABEL = 'Меню плейлиста'
 
 const openMenu = async () => {
   const utils = await renderMenu()
   await act(async () => {
-    fireEvent.press(screen.getByTestId(MENU_BUTTON_TEST_ID))
+    fireEvent.press(screen.getByRole('button', { name: MENU_BUTTON_LABEL }))
   })
   return utils
 }
@@ -127,7 +127,7 @@ describe('<PlaylistHeaderMenu>', () => {
     const ctx = createCtx()
     isCachingPlaylistAtom(ctx, true)
 
-    const { getByTestId } = await renderWithProviders(
+    const { getByRole } = await renderWithProviders(
       <PlaylistHeaderMenu tracksData={TRACKS} playlist={PLAYLIST} playlistTitle={PLAYLIST_TITLE} />,
       { ctx },
     )
@@ -136,7 +136,7 @@ describe('<PlaylistHeaderMenu>', () => {
       await Promise.resolve()
     })
 
-    const button = getByTestId(MENU_BUTTON_TEST_ID)
+    const button = getByRole('button', { name: MENU_BUTTON_LABEL })
     expect(button.props.accessibilityState?.disabled).not.toBe(true)
     expect(button.props.disabled).not.toBe(true)
   })
@@ -166,7 +166,7 @@ describe('<PlaylistHeaderMenu>', () => {
       { ctx },
     )
     await act(async () => {
-      fireEvent.press(screen.getByTestId(MENU_BUTTON_TEST_ID))
+      fireEvent.press(screen.getByRole('button', { name: MENU_BUTTON_LABEL }))
     })
 
     fireEvent.press(await waitFor(() => screen.getByText(MARK_ALL_TEXT)))
@@ -223,7 +223,7 @@ describe('<PlaylistHeaderMenu>', () => {
       { ctx },
     )
     await act(async () => {
-      fireEvent.press(screen.getByTestId(MENU_BUTTON_TEST_ID))
+      fireEvent.press(screen.getByRole('button', { name: MENU_BUTTON_LABEL }))
     })
 
     expect(screen.queryByText(MARK_ALL_TEXT)).toBeNull()

@@ -63,7 +63,7 @@ export const OfflineHeaderMenu = () => {
         <TouchableOpacity
           style={styles.button}
           onPress={handleOpenMenu}
-          testID='offline-header-menu'
+          accessibilityRole='button'
           accessibilityLabel='Меню офлайн-библиотеки'
         >
           <MaterialCommunityIcons size={ICON_SIZE} name='dots-vertical' color={currentTheme.text} />

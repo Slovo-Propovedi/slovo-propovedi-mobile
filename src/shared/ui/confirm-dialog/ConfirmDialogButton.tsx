@@ -10,7 +10,6 @@ export interface ConfirmDialogButtonProps {
   icon?: ReactNode
   isConfirm?: boolean
   onPress: () => void
-  testID?: string
   text: string
 }
 
@@ -19,7 +18,6 @@ export const ConfirmDialogButton = ({
   icon,
   isConfirm,
   onPress,
-  testID,
   text,
 }: ConfirmDialogButtonProps) => {
   const { currentTheme } = useTheme()
@@ -33,7 +31,7 @@ export const ConfirmDialogButton = ({
   const textStyle = isConfirm ? styles.confirmButtonText : styles.cancelButtonText
 
   return (
-    <PressableButton testID={testID} onPress={onPress} style={buttonStyle}>
+    <PressableButton onPress={onPress} style={buttonStyle}>
       <View style={styles.buttonContent}>
         {icon}
         <Text style={textStyle}>{text}</Text>
