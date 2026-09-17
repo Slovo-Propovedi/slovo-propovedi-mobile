@@ -54,6 +54,7 @@ export const TabButton = ({
     <TouchableOpacity
       key={routeKey}
       onPress={onPress}
+      accessibilityRole='button'
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
       onLayout={e =>
         onLayout({

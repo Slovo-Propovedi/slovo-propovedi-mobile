@@ -101,7 +101,7 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     const onStopCaching = jest.fn()
     await renderDropdown({ isCaching: true, onStopCaching })
 
-    fireEvent(screen.getByText(STOP_CACHING_TEXT), 'touchEnd')
+    fireEvent.press(screen.getByText(STOP_CACHING_TEXT))
 
     expect(onStopCaching).toHaveBeenCalledTimes(1)
   })
@@ -110,7 +110,7 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     const onStopCaching = jest.fn()
     await renderDropdown({ isAddAllToOfflineDisabled: true, isCaching: true, onStopCaching })
 
-    fireEvent(screen.getByText(STOP_CACHING_TEXT), 'touchEnd')
+    fireEvent.press(screen.getByText(STOP_CACHING_TEXT))
 
     expect(onStopCaching).toHaveBeenCalledTimes(1)
   })
@@ -119,7 +119,7 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     const onAddAllToOffline = jest.fn()
     await renderDropdown({ onAddAllToOffline })
 
-    fireEvent(screen.getByText(ADD_ALL_TO_OFFLINE_TEXT), 'touchEnd')
+    fireEvent.press(screen.getByText(ADD_ALL_TO_OFFLINE_TEXT))
 
     expect(onAddAllToOffline).toHaveBeenCalledTimes(1)
   })
@@ -128,7 +128,7 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     const onClearCache = jest.fn()
     await renderDropdown({ isClearCacheDisabled: true, onClearCache })
 
-    fireEvent(screen.getByText(CLEAR_CACHE_TEXT), 'touchEnd')
+    fireEvent.press(screen.getByText(CLEAR_CACHE_TEXT))
 
     expect(onClearCache).not.toHaveBeenCalled()
   })
@@ -137,7 +137,7 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     const onClearCache = jest.fn()
     await renderDropdown({ isClearCacheDisabled: false, onClearCache })
 
-    fireEvent(screen.getByText(CLEAR_CACHE_TEXT), 'touchEnd')
+    fireEvent.press(screen.getByText(CLEAR_CACHE_TEXT))
 
     expect(onClearCache).toHaveBeenCalledTimes(1)
   })
@@ -146,7 +146,7 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     const onClose = jest.fn()
     await renderDropdown({ isCaching: true, onClose })
 
-    fireEvent(screen.getByText(STOP_CACHING_TEXT), 'touchEnd')
+    fireEvent.press(screen.getByText(STOP_CACHING_TEXT))
 
     expect(onClose).not.toHaveBeenCalled()
   })
@@ -172,7 +172,7 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     expect(screen.getByText(MARK_ALL_TEXT)).toBeTruthy()
     expect(screen.queryByText(REMOVE_TEXT)).toBeNull()
 
-    fireEvent(screen.getByText(MARK_ALL_TEXT), 'touchEnd')
+    fireEvent.press(screen.getByText(MARK_ALL_TEXT))
     expect(onMarkAll).toHaveBeenCalledTimes(1)
   })
 
@@ -183,7 +183,7 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     expect(screen.getByText(REMOVE_TEXT)).toBeTruthy()
     expect(screen.queryByText(MARK_ALL_TEXT)).toBeNull()
 
-    fireEvent(screen.getByText(REMOVE_TEXT), 'touchEnd')
+    fireEvent.press(screen.getByText(REMOVE_TEXT))
     expect(onRemoveFromHistory).toHaveBeenCalledTimes(1)
   })
 
@@ -200,7 +200,7 @@ describe('<PlaylistOfflineMenuItem>', () => {
     const onPress = jest.fn()
     await render(<PlaylistOfflineMenuItem text='Cache' onPress={onPress} icon='cloud-download' />)
 
-    fireEvent(screen.getByText('Cache'), 'touchEnd')
+    fireEvent.press(screen.getByText('Cache'))
 
     expect(onPress).toHaveBeenCalledTimes(1)
   })
@@ -211,7 +211,7 @@ describe('<PlaylistOfflineMenuItem>', () => {
       <PlaylistOfflineMenuItem isDisabled text='Cache' onPress={onPress} icon='cloud-download' />,
     )
 
-    fireEvent(screen.getByText('Cache'), 'touchEnd')
+    fireEvent.press(screen.getByText('Cache'))
 
     expect(onPress).not.toHaveBeenCalled()
   })
@@ -224,7 +224,7 @@ describe('<PlaylistHistoryMenuItem>', () => {
       <PlaylistHistoryMenuItem text='Mark all' onPress={onPress} icon='checkmark-done' />,
     )
 
-    fireEvent(screen.getByText('Mark all'), 'touchEnd')
+    fireEvent.press(screen.getByText('Mark all'))
 
     expect(onPress).toHaveBeenCalledTimes(1)
   })

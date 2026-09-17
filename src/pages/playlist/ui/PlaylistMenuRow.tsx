@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { type ColorValue } from 'react-native'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 
 export interface PlaylistMenuRowProps {
@@ -25,8 +26,8 @@ export const PlaylistMenuRow = ({
   }
 
   return (
-    <View
-      onTouchEnd={handlePress}
+    <PressableButton
+      onPress={handlePress}
       style={[styles.dropdownItem, isDisabled && styles.dropdownItemDisabled]}
     >
       <View style={styles.dropdownIcon}>{icon}</View>
@@ -39,7 +40,7 @@ export const PlaylistMenuRow = ({
       >
         {text}
       </Text>
-    </View>
+    </PressableButton>
   )
 }
 

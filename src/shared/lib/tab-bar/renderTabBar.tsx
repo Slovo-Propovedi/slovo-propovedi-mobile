@@ -32,6 +32,7 @@ export const getRenderTabBar: GetRenderTabBar =
             <TouchableOpacity
               onPress={onPress}
               style={styles.tabItem}
+              accessibilityRole='button'
               key={`tab-bar-item-${route.key}`}
             >
               <Animated.Text style={{ opacity }}>{route.title}</Animated.Text>

@@ -94,6 +94,7 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 - **`ArrowLeft`/`ArrowRight`** — тап: перемотка ±10с (`tapSeek`); удержание ≥ 500мс (`KEY_HOLD_DELAY_MS`) — long-press-перемотка (`startSeek`, как у экранных кнопок); `keyup`/`blur` останавливают (`stopSeek`). Смена направления при удержании останавливает текущий жест и начинает новый.
 - **`Space`** — play/pause (`togglePlay`).
 - **`Escape`** — сворачивание плеера (`collapsePlayer`): если открыта шторка плейлиста — сначала закрывает её, иначе сворачивает плеер (та же цепочка, что у кнопки-шеврона).
+- **`Escape` поверх модалки** — закрывает верхнюю модалку (`shared/ui/modal.tsx`, web-only слушатель `keydown` на `document` в capture-фазе). Слоистость: при открытой модалке (например, выбор темы) Esc закрывает **только её** — `stopPropagation()` не даёт событию дойти до window-слушателя плеера (`usePlayerKeyboardSeek`), который иначе свернул бы плеер. Модификаторы (ctrl/meta/alt/shift) не перехватываются. На нативе модалку закрывает hardware-back через `onRequestClose` — изменений нет.
 
 Общие гейты:
 
@@ -106,6 +107,8 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 Экранные кнопки Next/Prev не затронуты: тап по-прежнему переключает трек, long-press — перемотка.
 
 **Фокусируемость средней области:** кликабельная средняя область полноэкранного плеера (`PlayerMiddleArea` → `Pressable styles.spacer`, а также backdrop оверлея «Подробнее» в `DetailsOverlay`) получает `tabIndex={-1}` — не попадает в Tab-навигацию, но остаётся кликабельной мышью/тачем. RNW-деталь: `focusable={false}` на `Pressable` **не работает** — `Pressable` всегда прокидывает явный `tabIndex` (0 по умолчанию), который в `createDOMProps` выигрывает у `focusable`; поэтому используется именно `tabIndex={-1}`.
+
+**Настоящие `<button>` для Vimium-хинтов:** интерактивные элементы без явного `accessibilityRole` RNW рендерит как `<div tabindex="0">` — Vimium `f`-хинты их не видят. Поэтому таб-бар (`TabButton`), ⋮-меню шапок (offline/history/playlist), контролы очереди («Воспроизвести все»/«Перемешать»), офлайн-баннер, мини-плеер, кнопка «✕» в оверлее «Подробнее» и строки меню плейлиста (`PlaylistMenuRow` → `PressableButton`) получают `accessibilityRole='button'` и рендерятся как настоящие `<button type="button">`. Backdrop'ы модалок/дропдаунов остаются role-less осознанно (см. [architecture.md](../architecture.md)).
 
 ### Патч RNGH: `setPointerCapture` на web
 

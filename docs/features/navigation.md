@@ -110,6 +110,8 @@
 
 Подписи табов не переносятся и почти не масштабируются шрифтом: в `TabButton.tsx` у текста заданы `numberOfLines={1}` и `maxFontSizeMultiplier={1.2}` (фикс «сломанного» таб-бара на узких экранах / крупном системном шрифте, Issue #53).
 
+На web кнопки табов (`TabButton`) и вложенный таб-бар (`shared/lib/tab-bar/renderTabBar.tsx`) рендерятся как настоящие `<button>` — у них задан `accessibilityRole='button'` (иначе RNW отдаёт `<div tabindex="0">`, который не получает Vimium-хинты). Подробнее — [web.md](./web.md#настоящие-button-для-vimium-хинтов).
+
 Нижний внутренний отступ таб-бара задаётся динамически: `Math.max(insets.bottom, MIN_TAB_BAR_BOTTOM_PADDING = 30)` через `useSafeAreaInsets` (`react-native-safe-area-context`; приложение рендерится edge-to-edge). На навигации жестами остаётся 30 (как и раньше), на 3-кнопочной навигации контент приподнимается над системными кнопками (Issue #56). Так как высота острова измеряется через `onLayout` (см. ниже), при росте таб-бара мини-плеер и экраны адаптируются автоматически — через `tabBarHeightAtom`.
 
 Тот же принцип применён к нижнему отступу контролов полноэкранного плеера: `Math.max(bottomInset, 30)` через `getFullscreenPlayerBottomPadding` (`widgets/expandable-player/lib/getFullscreenPlayerBottomPadding.ts`) — формула повторяет таб-бар, поэтому контролы встают на одном уровне с кнопками таб-бара и на жестовой навигации, и на 3-кнопочной (Issue #105).

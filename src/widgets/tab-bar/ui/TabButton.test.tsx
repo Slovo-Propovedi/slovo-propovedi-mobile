@@ -29,4 +29,10 @@ describe('<TabButton>', () => {
     expect(label.props.numberOfLines).toBe(1)
     expect(label.props.maxFontSizeMultiplier).toBe(1.2)
   })
+
+  test('renders as a button role so web renders a real <button>', async () => {
+    await renderTabButton('listen')
+
+    expect(screen.getByRole('button', { name: /Слушать/ })).toBeTruthy()
+  })
 })
