@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { type ComponentProps } from 'react'
-import { StyleSheet, Text } from 'react-native'
+import { Platform, StyleSheet, Text } from 'react-native'
+import { useEscapeKey } from 'shared/lib/escape-key'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { PressableButton } from '../pressable-button'
 import { AnchoredDropdown, type AnchorRect } from './AnchoredDropdown'
@@ -25,6 +26,12 @@ const MENU_MIN_WIDTH = 180
 
 export const MenuDropdown = ({ anchor, items, onClose, visible }: MenuDropdownProps) => {
   const { currentTheme } = useTheme()
+
+  // Esc behaves exactly like the backdrop/outside tap: it closes the menu.
+  useEscapeKey({
+    enabled: Platform.OS === 'web' && visible,
+    onEscape: onClose,
+  })
 
   return (
     <AnchoredDropdown
