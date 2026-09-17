@@ -334,6 +334,21 @@ jobs:
       - name: Prebuild native code
         run: npx expo prebuild --platform android --clean
 
+      - name: Verify prebuild versionCode
+        run: |
+          # expo prebuild regenerates android/app/build.gradle from app.config.ts
+          # (AndroidConfig.Version.withVersion defaults versionCode to 1 when
+          # android.versionCode is missing), so assert the regenerated value
+          # matches the tag before building.
+          VERSION="${{ needs.create-release.outputs.version }}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          EXPECTED_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+          GRADLE_VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | sed 's/.*versionCode \([0-9]*\).*/\1/')
+          if [ "$GRADLE_VERSION_CODE" != "$EXPECTED_CODE" ]; then
+            echo "::error::prebuild regenerated build.gradle with versionCode ($GRADLE_VERSION_CODE) that does not match tag ($EXPECTED_CODE) — check android.versionCode in app.config.ts"
+            exit 1
+          fi
+
       - name: Configure Gradle for CI
         run: |
           # expo prebuild regenerates android/gradle.properties from its template

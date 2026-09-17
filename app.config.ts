@@ -3,8 +3,16 @@ import pkg from './package.json'
 
 const appName = 'Слово.Проповеди'
 
+// Mirrors scripts/bump-version.mjs and CI's EXPECTED_CODE math (major*10000+minor*100+patch).
+const [major, minor, patch] = pkg.version.split('.').map(Number)
+const versionCode = major * 10000 + minor * 100 + patch
+
 const appId = 'ru.slovopropovedi'
-const splashImageProps = { image: './assets/splash.png', imageWidth: 152, resizeMode: 'contain' }
+const splashImageProps = {
+  image: './assets/splash.png',
+  imageWidth: 152,
+  resizeMode: 'contain',
+} as const
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -18,6 +26,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK',
       'android.permission.REQUEST_INSTALL_PACKAGES',
     ],
+    versionCode,
   },
   extra: { router: {} },
   icon: './assets/icon.png',

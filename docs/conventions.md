@@ -96,6 +96,7 @@
 
 - Версия управляется скриптом `node scripts/bump-version.mjs` (`yarn bump-version`). Также есть `version-major` / `version-minor` / `version-patch` (`yarn version --*`).
 - Версия приложения читается в рантайме из `expoConfig.version` (`src/shared/config/version.ts`), используется в UI («О приложении») и для проверки обновлений.
+- `android.versionCode` выводится из `pkg.version` в `app.config.ts` и проверяется в CI после prebuild.
 - Сборки нативных билдов: `build:android`, `build:ios`, `build:all` (EAS).
 
 ## Связанные документы
