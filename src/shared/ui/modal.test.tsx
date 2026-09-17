@@ -3,6 +3,7 @@ import { Text } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { Modal } from './modal'
 
+const BACKDROP_TEST_ID = 'modal-backdrop'
 const CHILDREN_TEXT = 'Modal Content'
 const onBackdropPressMock = jest.fn()
 
@@ -23,14 +24,16 @@ describe('<Modal>', () => {
     expect(content).toBeTruthy()
   })
 
-  test('calls onBackdropPress when backdrop is pressed', async () => {
+  test('backdrop is a role-less pressable that closes on press', async () => {
     await renderWithProviders(
       <Modal visible onBackdropPress={onBackdropPressMock}>
         <Text>{CHILDREN_TEXT}</Text>
       </Modal>,
     )
 
-    fireEvent.press(screen.getByRole('button'))
+    expect(screen.queryByRole('button')).toBeNull()
+
+    fireEvent.press(screen.getByTestId(BACKDROP_TEST_ID))
 
     expect(onBackdropPressMock).toHaveBeenCalledTimes(1)
   })

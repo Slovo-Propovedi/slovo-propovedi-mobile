@@ -1,7 +1,8 @@
-import { Modal as RNModal, StyleSheet, View } from 'react-native'
-import { PressableButton } from './pressable-button'
+import { Pressable, Modal as RNModal, StyleSheet, View } from 'react-native'
 import { useTheme } from './theme/ThemeContext/useTheme'
 import { INDENTS } from './theme/themed'
+
+const BACKDROP_TEST_ID = 'modal-backdrop'
 
 type Props = React.PropsWithChildren<{
   onBackdropPress: () => void
@@ -14,11 +15,18 @@ export const Modal = ({ children, onBackdropPress, visible }: Props) => {
   return (
     <RNModal transparent visible={visible} animationType='fade' statusBarTranslucent>
       <View style={[styles.backdrop, { backgroundColor: currentTheme.backdrop }]}>
-        <PressableButton onPress={onBackdropPress} style={styles.backdropPressable}>
+        {/* Backdrop is deliberately a role-less Pressable: it is not a button, and a
+            button role would wrap the whole dialog in <button> on web (nested buttons,
+            screen readers announce the dialog as one button). */}
+        <Pressable
+          onPress={onBackdropPress}
+          testID={BACKDROP_TEST_ID}
+          style={styles.backdropPressable}
+        >
           <View style={[styles.contentContainer, { backgroundColor: currentTheme.surface }]}>
             {children}
           </View>
-        </PressableButton>
+        </Pressable>
       </View>
     </RNModal>
   )

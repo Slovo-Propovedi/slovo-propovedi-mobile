@@ -162,6 +162,7 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
   - Не использовать для `TouchableOpacity`-контролов (`shared/ui/button.tsx`, `radio.tsx`, `touchable-item.tsx` и т.п.) — они уже рендерят настоящие `<button>` на web.
   - Конвертация `View`-кнопки внутри `GestureDetector` в `PressableButton` — осознанное решение: тап обрабатывает `onPress` у `Pressable`, а `GestureDetector` оставляет только Pan/прочие жесты (`Race(Tap, ·)` не должен сосуществовать с `onPress` — двойное срабатывание), press после pan нужно подавлять (см. `HeaderOverlay`). Шеврон в `HeaderOverlay` — живой пример корректного паттерна.
   - Не вкладывать кнопки друг в друга на web: `<button>` внутри `<button>` — невалидный HTML и React-ошибка.
+  - Backdrop модалки (`shared/ui/modal.tsx`) — **осознанное исключение**: обычный `Pressable` без `accessibilityRole`. Backdrop — не кнопка; роль `button` обернула бы весь диалог в `<button>` на web (вложенные кнопки + скринридер объявляет весь диалог одной кнопкой). Закрытие по тапу сохраняется через `onPress`.
 
 ## Итоговая ASCII-диаграмма
 
