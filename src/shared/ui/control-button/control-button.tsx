@@ -4,7 +4,6 @@ import {
   type OpaqueColorValue,
   type StyleProp,
   StyleSheet,
-  Text,
   type ViewStyle,
 } from 'react-native'
 import { match } from 'ts-pattern'
@@ -49,18 +48,16 @@ export const PlayerControlButton = ({
     disabled={Boolean(isDisabled)}
     accessibilityLabel={getControlLabel(type)}
     Icon={
-      <Text>
-        <Entypo
-          size={size}
-          style={[styles.icon, color ? { color } : null, isDisabled && styles.iconDisabled]}
-          name={match(type)
-            .with(PlayerControlButtonType.Next, () => 'controller-fast-forward' as const)
-            .with(PlayerControlButtonType.Pause, () => 'controller-paus' as const)
-            .with(PlayerControlButtonType.Play, () => 'controller-play' as const)
-            .with(PlayerControlButtonType.Prev, () => 'controller-fast-backward' as const)
-            .exhaustive()}
-        />
-      </Text>
+      <Entypo
+        size={size}
+        style={[styles.icon, color ? { color } : null, isDisabled && styles.iconDisabled]}
+        name={match(type)
+          .with(PlayerControlButtonType.Next, () => 'controller-fast-forward' as const)
+          .with(PlayerControlButtonType.Pause, () => 'controller-paus' as const)
+          .with(PlayerControlButtonType.Play, () => 'controller-play' as const)
+          .with(PlayerControlButtonType.Prev, () => 'controller-fast-backward' as const)
+          .exhaustive()}
+      />
     }
   />
 )
