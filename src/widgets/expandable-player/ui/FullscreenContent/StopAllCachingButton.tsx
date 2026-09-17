@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useEffect } from 'react'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
-import { PressableButton } from 'shared/ui/pressable-button'
+import { IconButton } from 'shared/ui/icon-button'
 import { INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { useStopAllCaching } from './useStopAllCaching'
@@ -29,13 +29,12 @@ export const StopAllCachingButton = ({ insetsTop, styles }: StopAllCachingButton
 
   return (
     <Animated.View style={[styles.stopAllButton, { top: insetsTop }, fadeStyle]}>
-      <PressableButton
+      <IconButton
         hitSlop={INDENTS.low}
         onPress={handleStopAllCaching}
         accessibilityLabel={ACCESSIBILITY_LABEL}
-      >
-        <MaterialCommunityIcons name='stop-circle-outline' style={styles.stopAllIcon} />
-      </PressableButton>
+        Icon={<MaterialCommunityIcons name='stop-circle-outline' style={styles.stopAllIcon} />}
+      />
     </Animated.View>
   )
 }

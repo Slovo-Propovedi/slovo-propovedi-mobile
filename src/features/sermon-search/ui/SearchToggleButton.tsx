@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useAction } from '@reatom/npm-react'
 import { StyleSheet } from 'react-native'
-import { PressableButton } from 'shared/ui/pressable-button'
+import { IconButton } from 'shared/ui/icon-button'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { openSearch } from '../model'
 
@@ -12,14 +12,13 @@ export const SearchToggleButton = () => {
   const openSearchAction = useAction(openSearch)
 
   return (
-    <PressableButton
+    <IconButton
       hitSlop={INDENTS.low}
       onPress={() => void openSearchAction()}
       accessibilityLabel={SEARCH_TOGGLE_LABEL}
+      Icon={<Ionicons size={24} name='search' color={currentTheme.text} />}
       style={({ pressed }) => [styles.button, { opacity: pressed ? 0.6 : 1 }]}
-    >
-      <Ionicons size={24} name='search' color={currentTheme.text} />
-    </PressableButton>
+    />
   )
 }
 

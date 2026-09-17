@@ -7,7 +7,7 @@ import { formatSermonReference } from 'shared/lib/format'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { MovingText } from 'shared/ui'
-import { PressableButton } from 'shared/ui/pressable-button'
+import { IconButton } from 'shared/ui/icon-button'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { getFullscreenPlayerBottomPadding } from '../../lib/getFullscreenPlayerBottomPadding'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
@@ -68,9 +68,12 @@ export const PlayerControlsSection = ({
           <Text style={styles.artistName}>{subtitle}</Text>
         </View>
         <View style={styles.menuContainer}>
-          <PressableButton style={styles.menuButton} onPress={() => setShowMenu(true)}>
-            <Entypo style={styles.menuIcon} name='dots-three-vertical' />
-          </PressableButton>
+          <IconButton
+            style={styles.menuButton}
+            accessibilityLabel='Меню плеера'
+            onPress={() => setShowMenu(true)}
+            Icon={<Entypo style={styles.menuIcon} name='dots-three-vertical' />}
+          />
           {showMenu && (
             <PlayerMenu
               isCached={isCached}
@@ -104,9 +107,12 @@ export const PlayerControlsSection = ({
             onPressOutSeek={stopSeek}
             onLongPressSeek={startSeek}
           />
-          <PressableButton onPress={onOpenPlaylist} style={styles.sideControl}>
-            <Entypo name='list' style={styles.controlIcon} />
-          </PressableButton>
+          <IconButton
+            onPress={onOpenPlaylist}
+            style={styles.sideControl}
+            accessibilityLabel='Открыть плейлист'
+            Icon={<Entypo name='list' style={styles.controlIcon} />}
+          />
         </View>
       </View>
     </View>

@@ -1,10 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useRef, useState } from 'react'
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { activeCacheUrlAtom, cacheQueueAtom, clearAudioCacheAction } from 'shared/lib/audio-cache'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { ErrorDialog, useErrorDialog } from 'shared/ui/error-dialog'
+import { IconButton } from 'shared/ui/icon-button'
 import { type AnchorRect, MenuDropdown } from 'shared/ui/menu'
 import { useTheme } from 'shared/ui/theme'
 
@@ -60,14 +61,18 @@ export const OfflineHeaderMenu = () => {
   return (
     <>
       <View ref={buttonRef} collapsable={false}>
-        <TouchableOpacity
+        <IconButton
           style={styles.button}
           onPress={handleOpenMenu}
-          accessibilityRole='button'
           accessibilityLabel='Меню офлайн-библиотеки'
-        >
-          <MaterialCommunityIcons size={ICON_SIZE} name='dots-vertical' color={currentTheme.text} />
-        </TouchableOpacity>
+          Icon={
+            <MaterialCommunityIcons
+              size={ICON_SIZE}
+              name='dots-vertical'
+              color={currentTheme.text}
+            />
+          }
+        />
       </View>
 
       <MenuDropdown

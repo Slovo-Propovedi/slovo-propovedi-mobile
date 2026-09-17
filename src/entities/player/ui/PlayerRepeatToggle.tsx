@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback } from 'react'
 import { type ColorValue, type StyleProp, StyleSheet, type ViewStyle } from 'react-native'
-import { PressableButton } from 'shared/ui/pressable-button'
+import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, useTheme } from 'shared/ui/theme'
 import { type RepeatMode, repeatModeAtom, setRepeatModeAction } from '../model'
 
@@ -53,17 +53,18 @@ export const PlayerRepeatToggle = ({ style }: PlayerRepeatToggleProps) => {
   const iconConfig = getRepeatIcon(repeatMode, currentTheme.primary)
 
   return (
-    <PressableButton
+    <IconButton
       onPress={handlePress}
       style={[styles.container, style]}
       accessibilityLabel={getRepeatLabel(repeatMode)}
-    >
-      <MaterialCommunityIcons
-        size={FONT_SIZES.xxl}
-        name={iconConfig.name}
-        color={iconConfig.color}
-      />
-    </PressableButton>
+      Icon={
+        <MaterialCommunityIcons
+          size={FONT_SIZES.xxl}
+          name={iconConfig.name}
+          color={iconConfig.color}
+        />
+      }
+    />
   )
 }
 

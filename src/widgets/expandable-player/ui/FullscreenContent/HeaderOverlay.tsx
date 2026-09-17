@@ -2,7 +2,7 @@ import { Entypo } from '@expo/vector-icons'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { PressableButton } from 'shared/ui/pressable-button'
+import { IconButton } from 'shared/ui/icon-button'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { NextSermonPlate } from './NextSermonPlate'
 import { StopAllCachingButton } from './StopAllCachingButton'
@@ -58,18 +58,17 @@ export const HeaderOverlay = ({
   return (
     <>
       <GestureDetector gesture={closePanGesture}>
-        <PressableButton
+        <IconButton
           accessibilityLabel='Свернуть плеер'
           style={[styles.closeButton, { top: insetsTop }]}
+          Icon={<Entypo name='chevron-down' style={styles.closeIcon} />}
           onPress={() => {
             // Pan activation marks the shared value; onPress checks it so a pointer-up after a
             // drag never collapses the player (web RNGH does not cancel Pressable press)
             if (isPanActive.value) return
             collapseOnTap()
           }}
-        >
-          <Entypo name='chevron-down' style={styles.closeIcon} />
-        </PressableButton>
+        />
       </GestureDetector>
       {hasNextSermon && nextSermonTitle && (
         <NextSermonPlate

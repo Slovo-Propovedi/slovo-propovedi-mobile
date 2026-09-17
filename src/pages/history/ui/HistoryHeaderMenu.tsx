@@ -1,9 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useCallback, useRef, useState } from 'react'
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { clearHistoryAction } from 'entities/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
+import { IconButton } from 'shared/ui/icon-button'
 import { type AnchorRect } from 'shared/ui/menu'
 import { useTheme } from 'shared/ui/theme'
 import { HistoryHeaderMenuDropdown } from './HistoryHeaderMenuDropdown'
@@ -43,14 +44,18 @@ export const HistoryHeaderMenu = () => {
   return (
     <>
       <View ref={buttonRef} collapsable={false}>
-        <TouchableOpacity
+        <IconButton
           style={styles.button}
           onPress={handleOpenMenu}
-          accessibilityRole='button'
           accessibilityLabel='Меню истории'
-        >
-          <MaterialCommunityIcons size={ICON_SIZE} name='dots-vertical' color={currentTheme.text} />
-        </TouchableOpacity>
+          Icon={
+            <MaterialCommunityIcons
+              size={ICON_SIZE}
+              name='dots-vertical'
+              color={currentTheme.text}
+            />
+          }
+        />
       </View>
 
       <HistoryHeaderMenuDropdown

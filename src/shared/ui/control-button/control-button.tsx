@@ -5,10 +5,10 @@ import {
   type StyleProp,
   StyleSheet,
   Text,
-  TouchableOpacity,
   type ViewStyle,
 } from 'react-native'
 import { match } from 'ts-pattern'
+import { IconButton } from '../icon-button'
 import { COLORS } from '../theme/colors'
 import { PlayerControlButtonType } from './control-button.types'
 
@@ -20,7 +20,6 @@ interface PlayerControlButtonProps {
   onPressOut?: (event: GestureResponderEvent) => void
   size?: number
   style?: StyleProp<ViewStyle>
-  testID?: string
   type: PlayerControlButtonType
 }
 
@@ -40,32 +39,30 @@ export const PlayerControlButton = ({
   onPressOut,
   size = 24,
   style,
-  testID,
   type,
 }: PlayerControlButtonProps) => (
-  <TouchableOpacity
+  <IconButton
     style={style}
-    testID={testID}
     onPress={onPress}
     onPressOut={onPressOut}
     onLongPress={onLongPress}
-    accessibilityRole='button'
     disabled={Boolean(isDisabled)}
     accessibilityLabel={getControlLabel(type)}
-  >
-    <Text>
-      <Entypo
-        size={size}
-        style={[styles.icon, color ? { color } : null, isDisabled && styles.iconDisabled]}
-        name={match(type)
-          .with(PlayerControlButtonType.Next, () => 'controller-fast-forward' as const)
-          .with(PlayerControlButtonType.Pause, () => 'controller-paus' as const)
-          .with(PlayerControlButtonType.Play, () => 'controller-play' as const)
-          .with(PlayerControlButtonType.Prev, () => 'controller-fast-backward' as const)
-          .exhaustive()}
-      />
-    </Text>
-  </TouchableOpacity>
+    Icon={
+      <Text>
+        <Entypo
+          size={size}
+          style={[styles.icon, color ? { color } : null, isDisabled && styles.iconDisabled]}
+          name={match(type)
+            .with(PlayerControlButtonType.Next, () => 'controller-fast-forward' as const)
+            .with(PlayerControlButtonType.Pause, () => 'controller-paus' as const)
+            .with(PlayerControlButtonType.Play, () => 'controller-play' as const)
+            .with(PlayerControlButtonType.Prev, () => 'controller-fast-backward' as const)
+            .exhaustive()}
+        />
+      </Text>
+    }
+  />
 )
 
 const styles = StyleSheet.create({

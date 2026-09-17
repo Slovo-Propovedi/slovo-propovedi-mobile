@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { type ColorValue } from 'react-native'
 import { type PlaylistData } from 'shared/model'
 import { ErrorModal } from 'shared/ui/error-modal'
+import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { type TrackToCache } from '../lib/PlaylistOfflineService'
 import { usePlaylistCacheError } from '../lib/usePlaylistCacheError'
@@ -58,19 +59,19 @@ export const PlaylistHeaderMenu = ({
   return (
     <>
       <View ref={buttonRef} collapsable={false}>
-        <TouchableOpacity
+        <IconButton
           style={styles.button}
           onPress={handleOpenMenu}
-          accessibilityRole='button'
           accessibilityLabel='Меню плейлиста'
           accessibilityHint='Нажмите чтобы открыть меню'
-        >
-          <MaterialCommunityIcons
-            size={ICON_SIZE}
-            name='dots-vertical'
-            color={iconColor ?? currentTheme.text}
-          />
-        </TouchableOpacity>
+          Icon={
+            <MaterialCommunityIcons
+              size={ICON_SIZE}
+              name='dots-vertical'
+              color={iconColor ?? currentTheme.text}
+            />
+          }
+        />
       </View>
 
       <PlaylistHeaderMenuDropdown

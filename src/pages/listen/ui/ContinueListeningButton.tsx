@@ -5,7 +5,7 @@ import { useLastListeningEntry } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom, usePlayer } from 'entities/player'
 import { dynamicSectionsAtom, isLoadingSectionsAtom } from 'entities/section'
 import { reportError } from 'shared/model/error-dialog'
-import { PressableButton } from 'shared/ui/pressable-button'
+import { IconButton } from 'shared/ui/icon-button'
 import { getFirstSectionLayout } from '../lib/first-section-layout'
 import { ContinueCircleButton } from './ContinueCircleButton'
 
@@ -58,13 +58,18 @@ export const ContinueListeningButton = () => {
       : START_LISTENING_LABEL
 
   return (
-    <PressableButton
+    <IconButton
       accessible
       disabled={isDisabled}
       onPress={() => void handlePress()}
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: isDisabled }}
       accessibilityHint={isPlaying ? PAUSE_HINT : undefined}
+      Icon={
+        <View style={styles.mainArea}>
+          <ContinueCircleButton width={width} isPlaying={isPlaying} />
+        </View>
+      }
       style={({ pressed }) => [
         styles.block,
         {
@@ -73,11 +78,7 @@ export const ContinueListeningButton = () => {
           width,
         },
       ]}
-    >
-      <View style={styles.mainArea}>
-        <ContinueCircleButton width={width} isPlaying={isPlaying} />
-      </View>
-    </PressableButton>
+    />
   )
 }
 

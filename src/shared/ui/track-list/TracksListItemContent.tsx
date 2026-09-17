@@ -2,8 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { forwardRef } from 'react'
 import { Text, View } from 'react-native'
 import { CoverImage } from '../cover-image'
+import { IconButton } from '../icon-button'
 import { MovingText } from '../MovingText'
-import { PressableButton } from '../pressable-button'
 import { ProgressBar } from '../progress-bar/ProgressBar'
 import { type ThemeColors } from '../theme'
 import { TITLE_ANIMATION_THRESHOLD } from './constants'
@@ -86,14 +86,13 @@ export const TracksListItemContent = forwardRef<View, TracksListItemContentProps
           />
           {subtitle ? <Text style={tracksListStyles.subtitle}>{subtitle}</Text> : null}
         </View>
-        <PressableButton
+        <IconButton
           ref={ref}
           onPress={dotsOnPress}
           accessibilityLabel='Меню трека'
           style={tracksListStyles.dotsButton}
-        >
-          <MaterialCommunityIcons size={20} name='dots-vertical' color={theme.textMuted} />
-        </PressableButton>
+          Icon={<MaterialCommunityIcons size={20} name='dots-vertical' color={theme.textMuted} />}
+        />
         {progress != null && progress > 0 && <ProgressBar progress={progress} />}
       </>
     )
