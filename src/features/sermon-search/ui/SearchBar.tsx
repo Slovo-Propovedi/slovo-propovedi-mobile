@@ -5,6 +5,7 @@ import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
 import { useSearchAutofocus } from '../lib/useSearchAutofocus'
+import { useSearchEscapeKey } from '../lib/useSearchEscapeKey'
 import { closeSearch, resetSearchResults, searchQueryAtom } from '../model'
 import { fetchDistinctValues } from '../model-distinctValues'
 import { SearchSuggestions } from './SearchSuggestions'
@@ -27,9 +28,7 @@ export const SearchBar = () => {
   const resetSearchResultsAction = useAction(resetSearchResults)
   const fetchDistinctValuesAction = useAction(fetchDistinctValues)
 
-  useEffect(() => {
-    void fetchDistinctValuesAction()
-  }, [fetchDistinctValuesAction])
+  useEffect(() => void fetchDistinctValuesAction(), [fetchDistinctValuesAction])
 
   const handleChangeText = (text: string) => {
     setInputValue(text)
@@ -56,6 +55,8 @@ export const SearchBar = () => {
     void closeSearchAction()
   }
 
+  const handleKeyPress = useSearchEscapeKey(handleClear)
+
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.surface }]}>
       <TextInput
@@ -64,6 +65,7 @@ export const SearchBar = () => {
         autoCorrect={false}
         autoCapitalize='none'
         returnKeyType='search'
+        onKeyPress={handleKeyPress}
         onChangeText={handleChangeText}
         placeholder={SEARCH_PLACEHOLDER}
         onBlur={() => setIsFocused(false)}

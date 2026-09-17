@@ -1,6 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
-import { Keyboard, TextInput } from 'react-native'
+import { Keyboard, Platform, TextInput } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
 import type { SermonData } from 'shared/model'
 import { isSearchingAtom, isSearchOpenAtom, searchQueryAtom, searchResultsAtom } from '../model'
@@ -30,6 +30,24 @@ const flushAnimationFrame = async () => {
     await new Promise(resolve => setTimeout(resolve, 0))
   })
 }
+
+interface KeyPressEventLike {
+  altKey: boolean
+  ctrlKey: boolean
+  key: string
+  metaKey: boolean
+  shiftKey: boolean
+}
+
+const createEscapeKeyEvent = (
+  modifiers: Partial<Pick<KeyPressEventLike, 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>> = {},
+): KeyPressEventLike => ({
+  altKey: modifiers.altKey ?? false,
+  ctrlKey: modifiers.ctrlKey ?? false,
+  key: 'Escape',
+  metaKey: modifiers.metaKey ?? false,
+  shiftKey: modifiers.shiftKey ?? false,
+})
 
 const sermon: SermonData = {
   artist: 'Иван',
@@ -149,6 +167,72 @@ describe('<SearchBar>', () => {
     const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
 
     expect(getByLabelText(CLEAR_LABEL)).toBeTruthy()
+  })
+
+  test('Escape on web clears the query and keeps the search open when the query is non-empty', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+      const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+      await fireEvent(input, 'keyPress', createEscapeKeyEvent())
+
+      expect(ctx.get(searchQueryAtom)).toBe('')
+      expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('Escape on web closes the search when the query is empty', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+      const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+      await fireEvent(input, 'keyPress', createEscapeKeyEvent())
+
+      await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+      expect(ctx.get(searchQueryAtom)).toBe('')
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('Escape with a modifier held does not clear or close the search', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+      const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+      await fireEvent(input, 'keyPress', createEscapeKeyEvent({ ctrlKey: true }))
+
+      expect(ctx.get(searchQueryAtom)).toBe('вера')
+      expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('Escape on native does not clear or close the search', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await fireEvent(input, 'keyPress', createEscapeKeyEvent())
+
+    expect(ctx.get(searchQueryAtom)).toBe('вера')
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
   })
 
   test('shows suggestions again after typing a new query following a selection', async () => {
