@@ -50,6 +50,3 @@ export const isInteractiveTarget = (target: EventTarget | null): boolean => {
   const role = getRole(target)
   return role !== null && INTERACTIVE_ROLES.has(role)
 }
-
-export const hasModifier = (event: KeyboardEvent): boolean =>
-  event.ctrlKey || event.metaKey || event.altKey || event.shiftKey

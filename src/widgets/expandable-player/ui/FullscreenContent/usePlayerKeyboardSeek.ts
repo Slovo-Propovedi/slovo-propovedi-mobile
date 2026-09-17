@@ -2,9 +2,9 @@ import { useAtom } from '@reatom/npm-react'
 import { useEffect, useRef } from 'react'
 import { Platform } from 'react-native'
 import { isPlayerExpandedAtom } from 'entities/player'
+import { hasModifier, isEscapeKey } from 'shared/lib/escape-key'
 import {
   getSeekDirection,
-  hasModifier,
   isEditableTarget,
   isInteractiveTarget,
   type SeekDirection,
@@ -20,7 +20,6 @@ interface PlayerKeyboardSeekProps {
 
 const KEY_HOLD_DELAY_MS = 500
 
-const ESCAPE_KEY = 'Escape'
 const SPACE_KEY = ' '
 
 export const usePlayerKeyboardSeek = ({
@@ -95,7 +94,7 @@ export const usePlayerKeyboardSeek = ({
         return
       }
 
-      if (event.key === ESCAPE_KEY) {
+      if (isEscapeKey(event)) {
         event.preventDefault()
         handlersRef.current.collapsePlayer()
       }

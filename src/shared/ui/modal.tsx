@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { Platform, Pressable, Modal as RNModal, StyleSheet, View } from 'react-native'
+import { useEscapeKey } from 'shared/lib/escape-key'
 import { useTheme } from './theme/ThemeContext/useTheme'
 import { INDENTS } from './theme/themed'
 
 const BACKDROP_TEST_ID = 'modal-backdrop'
-const ESCAPE_KEY = 'Escape'
 
 type Props = React.PropsWithChildren<{
   onBackdropPress: () => void
@@ -19,26 +19,16 @@ export const Modal = ({ children, onBackdropPress, visible }: Props) => {
     onBackdropPressRef.current = onBackdropPress
   })
 
-  useEffect(() => {
-    if (Platform.OS !== 'web' || !visible) return
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== ESCAPE_KEY) return
-      if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return
-      // The fullscreen player already listens for Escape on window (bubble
-      // phase) to collapse itself. A modal on top must win: document capture
-      // runs before window bubble listeners, and stopPropagation keeps the
-      // event from ever reaching the player's handler.
-      event.stopPropagation()
-      onBackdropPressRef.current()
-    }
-
-    document.addEventListener('keydown', handleKeyDown, { capture: true })
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown, { capture: true })
-    }
-  }, [visible])
+  // The fullscreen player listens for Escape on window (bubble phase) to
+  // collapse itself; a modal on top must win — document capture runs before
+  // window bubble listeners, and the hook's stopPropagation keeps the event
+  // from ever reaching the player's handler.
+  useEscapeKey({
+    capture: true,
+    enabled: Platform.OS === 'web' && visible,
+    onEscape: () => onBackdropPressRef.current(),
+    scope: 'document',
+  })
 
   return (
     <RNModal transparent visible={visible} animationType='fade' statusBarTranslucent>
