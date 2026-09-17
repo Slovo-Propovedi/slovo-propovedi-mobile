@@ -1,6 +1,7 @@
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
-import { Text, TouchableOpacity, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { useTheme } from 'shared/ui/theme'
+import { TouchableButton } from 'shared/ui/touchable-button'
 import { styles } from './styles'
 
 interface TabButtonProps {
@@ -51,10 +52,9 @@ export const TabButton = ({
           : 'Еще'
 
   return (
-    <TouchableOpacity
+    <TouchableButton
       key={routeKey}
       onPress={onPress}
-      accessibilityRole='button'
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
       onLayout={e =>
         onLayout({
@@ -69,6 +69,6 @@ export const TabButton = ({
           {displayName}
         </Text>
       </View>
-    </TouchableOpacity>
+    </TouchableButton>
   )
 }

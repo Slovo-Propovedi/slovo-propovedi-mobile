@@ -1,4 +1,5 @@
-import { Text, TouchableOpacity, View } from 'react-native'
+import { Text, View } from 'react-native'
+import { TouchableButton } from './touchable-button'
 
 type RadioButtonGroupProps = React.PropsWithChildren<object>
 
@@ -21,11 +22,11 @@ export const RadioButton = (props: RadioButtonProps) => {
   }
 
   return (
-    <TouchableOpacity disabled={disabled} onPress={handleOnPress} accessibilityRole='button'>
+    <TouchableButton disabled={disabled} onPress={handleOnPress}>
       <View>
         {label ? <Text>{label}</Text> : null}
         <View>{selected ? <View /> : null}</View>
       </View>
-    </TouchableOpacity>
+    </TouchableButton>
   )
 }

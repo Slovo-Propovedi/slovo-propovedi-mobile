@@ -4,10 +4,10 @@ import {
   type ImageStyle,
   type StyleProp,
   StyleSheet,
-  TouchableOpacity,
   type ViewStyle,
 } from 'react-native'
 import { CoverImage } from '../cover-image'
+import { TouchableButton } from '../touchable-button'
 
 interface TouchableImageBackgroundProps {
   children: ReactNode
@@ -26,12 +26,7 @@ export const TouchableImageBackground = ({
   style,
   testID,
 }: TouchableImageBackgroundProps) => (
-  <TouchableOpacity
-    testID={testID}
-    onPress={onPress}
-    activeOpacity={0.8}
-    accessibilityRole='button'
-  >
+  <TouchableButton testID={testID} onPress={onPress} activeOpacity={0.8}>
     <CoverImage
       uri={previewSrc}
       imageStyle={imageStyle}
@@ -40,7 +35,7 @@ export const TouchableImageBackground = ({
     >
       {children}
     </CoverImage>
-  </TouchableOpacity>
+  </TouchableButton>
 )
 
 const styles = StyleSheet.create({ item: { minHeight: 50, minWidth: 50 } })

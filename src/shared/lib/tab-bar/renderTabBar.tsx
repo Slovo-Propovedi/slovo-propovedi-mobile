@@ -1,6 +1,7 @@
-import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Animated, StyleSheet, View } from 'react-native'
 import { type NavigationState, type SceneRendererProps } from 'react-native-tab-view'
 import { INDENTS } from '../../ui/theme/themed'
+import { TouchableButton } from '../../ui/touchable-button'
 
 type GetRenderTabBar = (props: { setActiveTabIndex: (index: number) => void }) => RenderTabBar
 
@@ -29,14 +30,13 @@ export const getRenderTabBar: GetRenderTabBar =
           const onPress = () => setActiveTabIndex(i)
 
           return (
-            <TouchableOpacity
+            <TouchableButton
               onPress={onPress}
               style={styles.tabItem}
-              accessibilityRole='button'
               key={`tab-bar-item-${route.key}`}
             >
               <Animated.Text style={{ opacity }}>{route.title}</Animated.Text>
-            </TouchableOpacity>
+            </TouchableButton>
           )
         })}
       </View>

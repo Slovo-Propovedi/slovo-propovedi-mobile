@@ -1,6 +1,7 @@
-import { StyleSheet, TouchableOpacity } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
 import { COLORS } from './theme/colors'
+import { TouchableButton } from './touchable-button'
 
 export interface TouchableItemProps {
   children: React.ReactNode
@@ -26,15 +27,9 @@ export const TouchableItem = ({
   buttonStyles.push(style)
 
   return (
-    <TouchableOpacity
-      testID={testID}
-      onPress={onPress}
-      disabled={disabled}
-      style={buttonStyles}
-      accessibilityRole='button'
-    >
+    <TouchableButton testID={testID} onPress={onPress} disabled={disabled} style={buttonStyles}>
       {children}
-    </TouchableOpacity>
+    </TouchableButton>
   )
 }
 

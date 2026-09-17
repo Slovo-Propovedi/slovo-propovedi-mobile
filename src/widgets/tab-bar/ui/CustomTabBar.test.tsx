@@ -137,7 +137,7 @@ describe('<CustomTabBar>', () => {
     const { getByText } = await renderTabBar(0)
 
     const readButton = getByText('Читать')
-    // Disabled tabs should have a TouchableOpacity ancestor with disabledTabButton style
+    // Disabled tabs should have a TouchableButton ancestor with disabledTabButton style
     const touchable = readButton.parent?.parent
     expect(touchable).toHaveStyle({ opacity: 0.5 })
   })

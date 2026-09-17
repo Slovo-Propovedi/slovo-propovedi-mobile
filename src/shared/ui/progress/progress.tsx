@@ -1,15 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Animated,
-  type StyleProp,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  type ViewStyle,
-} from 'react-native'
+import { Animated, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
+import { TouchableButton } from '../touchable-button'
 
 interface ProgressProps {
   loaderValue?: Animated.Value
@@ -54,8 +48,7 @@ export const Progress = ({
 
   return (
     <GestureHandlerRootView testID='progress-bar-gesture-root'>
-      <TouchableOpacity
-        accessibilityRole='button'
+      <TouchableButton
         testID='progress-bar-touchable'
         onPress={({ nativeEvent: { locationX } }) => {
           calculateAndCallChangeProgressValue(locationX)
@@ -76,7 +69,7 @@ export const Progress = ({
             />
           </View>
         </PanGestureHandler>
-      </TouchableOpacity>
+      </TouchableButton>
     </GestureHandlerRootView>
   )
 }

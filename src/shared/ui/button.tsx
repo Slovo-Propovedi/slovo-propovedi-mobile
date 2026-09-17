@@ -1,7 +1,8 @@
-import { StyleSheet, Text, TouchableOpacity } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import { type ButtonProps, type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
 import { COLORS } from './theme/colors'
 import { FONT_SIZES, INDENTS, RADIUSES } from './theme/themed'
+import { TouchableButton } from './touchable-button'
 
 type CustomButtonProps = { style?: StyleProp<ViewStyle>; titleStyle?: TextStyle } & ButtonProps
 
@@ -20,9 +21,9 @@ export const Button = ({
   buttonStyles.push(style)
 
   return (
-    <TouchableOpacity disabled={disabled} style={buttonStyles} accessibilityRole='button' {...rest}>
+    <TouchableButton disabled={disabled} style={buttonStyles} {...rest}>
       <Text style={[styles.text, titleStyle, { color }]}>{title}</Text>
-    </TouchableOpacity>
+    </TouchableButton>
   )
 }
 

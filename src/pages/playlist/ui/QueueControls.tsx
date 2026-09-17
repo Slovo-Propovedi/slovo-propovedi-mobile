@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { Text, TouchableOpacity, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { COLORS, FONT_SIZES, useTheme } from 'shared/ui/theme'
+import { TouchableButton } from 'shared/ui/touchable-button'
 import { queueControlsStyles } from './styles'
 
 interface QueueControlsProps {
@@ -13,18 +14,16 @@ export const QueueControls = ({ onPressPlayAll, onPressShuffle }: QueueControlsP
 
   return (
     <View style={queueControlsStyles.container}>
-      <TouchableOpacity
+      <TouchableButton
         onPress={onPressPlayAll}
-        accessibilityRole='button'
         style={[queueControlsStyles.button, { backgroundColor: currentTheme.primary }]}
       >
         <MaterialCommunityIcons name='play' size={FONT_SIZES.base} color={COLORS.onPrimary} />
         <Text style={queueControlsStyles.buttonText}>Воспроизвести все</Text>
-      </TouchableOpacity>
+      </TouchableButton>
       {onPressShuffle && (
-        <TouchableOpacity
+        <TouchableButton
           onPress={onPressShuffle}
-          accessibilityRole='button'
           style={[queueControlsStyles.button, { backgroundColor: currentTheme.primary }]}
         >
           <MaterialCommunityIcons
@@ -33,7 +32,7 @@ export const QueueControls = ({ onPressPlayAll, onPressShuffle }: QueueControlsP
             color={COLORS.onPrimary}
           />
           <Text style={queueControlsStyles.buttonText}>Перемешать</Text>
-        </TouchableOpacity>
+        </TouchableButton>
       )}
     </View>
   )

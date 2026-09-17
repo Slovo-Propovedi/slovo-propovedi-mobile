@@ -1,7 +1,8 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { match } from 'ts-pattern'
 import { CoverImage } from '../../cover-image'
 import { RADIUSES } from '../../theme/themed'
+import { TouchableButton } from '../../touchable-button'
 import { SliderItemDescription } from '../slider-item-description/slider-item-description'
 import { SliderItemSkeleton } from './skeleton'
 import { getSliderItemWidth } from './slider-item.lib'
@@ -45,12 +46,7 @@ export const SliderItem = ({
     .exhaustive()
 
   return (
-    <TouchableOpacity
-      testID={testID}
-      onPress={onPress}
-      activeOpacity={0.8}
-      accessibilityRole='button'
-    >
+    <TouchableButton testID={testID} onPress={onPress} activeOpacity={0.8}>
       <View style={[styles.component, { width: conditionSize }, style]}>
         <CoverImage uri={artwork} style={[styles.imageBackground, { height: imageHeight }]}>
           {isVisibleDescriptionOnSlide && (
@@ -76,7 +72,7 @@ export const SliderItem = ({
           />
         )}
       </View>
-    </TouchableOpacity>
+    </TouchableButton>
   )
 }
 
