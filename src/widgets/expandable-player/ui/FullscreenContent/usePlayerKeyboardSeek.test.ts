@@ -2,6 +2,7 @@ import { act } from '@testing-library/react-native'
 import { Platform } from 'react-native'
 import { isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { createKeyEvent, type FakeDom, installFakeDom } from 'shared/lib/testing'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { usePlayerKeyboardSeek } from './usePlayerKeyboardSeek'
 
@@ -20,76 +21,13 @@ const ARROW_RIGHT_KEY = 'ArrowRight'
 const ESCAPE_KEY = 'Escape'
 const SPACE_KEY = ' '
 
-interface KeyEventLike {
-  altKey: boolean
-  ctrlKey: boolean
-  key: string
-  metaKey: boolean
-  preventDefault: () => void
-  repeat: boolean
-  shiftKey: boolean
-  stopPropagation: () => void
-  target: unknown
-}
-
-type WindowListener = (event?: unknown) => void
-
 const mockTapSeek = jest.fn()
 const mockStartSeek = jest.fn()
 const mockStopSeek = jest.fn()
 const mockTogglePlay = jest.fn()
 const mockCollapsePlayer = jest.fn()
 
-let mockWindowListeners: Record<string, WindowListener>
-let mockDocumentListeners: Record<string, WindowListener>
-
-const mockWindow = {
-  addEventListener: jest.fn((type: string, handler: WindowListener) => {
-    mockWindowListeners[type] = handler
-  }),
-  removeEventListener: jest.fn((type: string) => {
-    delete mockWindowListeners[type]
-  }),
-}
-
-const mockDocument = {
-  addEventListener: jest.fn((type: string, handler: WindowListener) => {
-    mockDocumentListeners[type] = handler
-  }),
-  documentElement: { style: { setProperty: jest.fn() } },
-  removeEventListener: jest.fn((type: string) => {
-    delete mockDocumentListeners[type]
-  }),
-}
-
-const createKeyEvent = (overrides: Partial<KeyEventLike> = {}): KeyEventLike => ({
-  altKey: false,
-  ctrlKey: false,
-  key: ARROW_RIGHT_KEY,
-  metaKey: false,
-  preventDefault: jest.fn(),
-  repeat: false,
-  shiftKey: false,
-  stopPropagation: jest.fn(),
-  target: null,
-  ...overrides,
-})
-
-const fireKeyDown = (event: KeyEventLike) => {
-  mockWindowListeners[KEYDOWN_EVENT]?.(event)
-}
-
-const fireDocumentKeyDown = (event: KeyEventLike) => {
-  mockDocumentListeners[KEYDOWN_EVENT]?.(event)
-}
-
-const fireKeyUp = (event: KeyEventLike) => {
-  mockWindowListeners[KEYUP_EVENT]?.(event)
-}
-
-const fireBlur = () => {
-  mockWindowListeners[BLUR_EVENT]?.()
-}
+let fakeDom: FakeDom
 
 const renderKeyboardSeek = () =>
   renderHookWithProviders(
@@ -108,10 +46,7 @@ describe('usePlayerKeyboardSeek', () => {
   beforeEach(() => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
     jest.replaceProperty(Platform, 'OS', 'web')
-    mockWindowListeners = {}
-    mockDocumentListeners = {}
-    ;(global as { window?: unknown }).window = mockWindow
-    ;(global as { document?: unknown }).document = mockDocument
+    fakeDom = installFakeDom()
     isPlayerExpandedAtom(ctx, false)
     jest.clearAllMocks()
   })
@@ -119,6 +54,8 @@ describe('usePlayerKeyboardSeek', () => {
   afterEach(() => {
     // NOTE: global.window is intentionally NOT deleted here — RNTL's auto-cleanup
     // unmounts the hook after this hook runs, and the unmount cleanup reads window.
+    // installFakeDom's restore() leaves no-op stubs behind for exactly this reason.
+    fakeDom.restore()
     jest.restoreAllMocks()
     jest.useRealTimers()
   })
@@ -126,7 +63,7 @@ describe('usePlayerKeyboardSeek', () => {
   test('attaches no listeners when the player is collapsed', async () => {
     await renderKeyboardSeek()
 
-    expect(mockWindow.addEventListener).not.toHaveBeenCalled()
+    expect(fakeDom.window.addEventListener).not.toHaveBeenCalled()
   })
 
   test('attaches no listeners on non-web platforms', async () => {
@@ -135,7 +72,7 @@ describe('usePlayerKeyboardSeek', () => {
 
     await renderKeyboardSeek()
 
-    expect(mockWindow.addEventListener).not.toHaveBeenCalled()
+    expect(fakeDom.window.addEventListener).not.toHaveBeenCalled()
   })
 
   test('attaches keydown, keyup and blur listeners when expanded on web', async () => {
@@ -143,9 +80,12 @@ describe('usePlayerKeyboardSeek', () => {
 
     await renderKeyboardSeek()
 
-    expect(mockWindow.addEventListener).toHaveBeenCalledWith(KEYDOWN_EVENT, expect.any(Function))
-    expect(mockWindow.addEventListener).toHaveBeenCalledWith(KEYUP_EVENT, expect.any(Function))
-    expect(mockWindow.addEventListener).toHaveBeenCalledWith(BLUR_EVENT, expect.any(Function))
+    expect(fakeDom.window.addEventListener).toHaveBeenCalledWith(
+      KEYDOWN_EVENT,
+      expect.any(Function),
+    )
+    expect(fakeDom.window.addEventListener).toHaveBeenCalledWith(KEYUP_EVENT, expect.any(Function))
+    expect(fakeDom.window.addEventListener).toHaveBeenCalledWith(BLUR_EVENT, expect.any(Function))
   })
 
   test('tapping ArrowRight seeks forward and prevents the default action', async () => {
@@ -153,7 +93,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent()
-    fireKeyDown(event)
+    fakeDom.fireKeyDown(event)
 
     expect(mockTapSeek).toHaveBeenCalledWith('forward')
     expect(event.preventDefault).toHaveBeenCalled()
@@ -164,13 +104,13 @@ describe('usePlayerKeyboardSeek', () => {
     isPlayerExpandedAtom(ctx, true)
     await renderKeyboardSeek()
 
-    fireKeyDown(createKeyEvent())
+    fakeDom.fireKeyDown(createKeyEvent())
     await act(async () => {
       jest.advanceTimersByTime(500)
     })
     expect(mockStartSeek).toHaveBeenCalledWith('forward')
 
-    fireKeyUp(createKeyEvent())
+    fakeDom.fireKeyUp(createKeyEvent())
     expect(mockStopSeek).toHaveBeenCalled()
   })
 
@@ -179,7 +119,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ repeat: true })
-    fireKeyDown(event)
+    fakeDom.fireKeyDown(event)
 
     expect(mockTapSeek).not.toHaveBeenCalled()
     expect(mockStartSeek).not.toHaveBeenCalled()
@@ -191,7 +131,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ target: { tagName: 'INPUT' } })
-    fireKeyDown(event)
+    fakeDom.fireKeyDown(event)
 
     expect(mockTapSeek).not.toHaveBeenCalled()
     expect(event.preventDefault).not.toHaveBeenCalled()
@@ -202,7 +142,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ ctrlKey: true })
-    fireKeyDown(event)
+    fakeDom.fireKeyDown(event)
 
     expect(mockTapSeek).not.toHaveBeenCalled()
     expect(event.preventDefault).not.toHaveBeenCalled()
@@ -212,13 +152,13 @@ describe('usePlayerKeyboardSeek', () => {
     isPlayerExpandedAtom(ctx, true)
     await renderKeyboardSeek()
 
-    fireKeyDown(createKeyEvent())
+    fakeDom.fireKeyDown(createKeyEvent())
     await act(async () => {
       jest.advanceTimersByTime(500)
     })
     expect(mockStartSeek).toHaveBeenCalledWith('forward')
 
-    fireBlur()
+    fakeDom.fireBlur()
     expect(mockStopSeek).toHaveBeenCalled()
   })
 
@@ -226,13 +166,13 @@ describe('usePlayerKeyboardSeek', () => {
     isPlayerExpandedAtom(ctx, true)
     await renderKeyboardSeek()
 
-    fireKeyDown(createKeyEvent({ key: ARROW_RIGHT_KEY }))
+    fakeDom.fireKeyDown(createKeyEvent({ key: ARROW_RIGHT_KEY }))
     await act(async () => {
       jest.advanceTimersByTime(500)
     })
     expect(mockStartSeek).toHaveBeenCalledWith('forward')
 
-    fireKeyDown(createKeyEvent({ key: ARROW_LEFT_KEY }))
+    fakeDom.fireKeyDown(createKeyEvent({ key: ARROW_LEFT_KEY }))
     expect(mockStopSeek).toHaveBeenCalled()
     expect(mockTapSeek).toHaveBeenLastCalledWith('backward')
 
@@ -247,7 +187,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ key: SPACE_KEY })
-    fireKeyDown(event)
+    fakeDom.fireKeyDown(event)
 
     expect(mockTogglePlay).toHaveBeenCalledTimes(1)
     expect(event.preventDefault).toHaveBeenCalled()
@@ -258,7 +198,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ key: SPACE_KEY, target: { tagName: 'BUTTON' } })
-    fireKeyDown(event)
+    fakeDom.fireKeyDown(event)
 
     expect(mockTogglePlay).not.toHaveBeenCalled()
     expect(event.preventDefault).not.toHaveBeenCalled()
@@ -269,7 +209,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ key: SPACE_KEY, target: { getAttribute: () => 'button' } })
-    fireKeyDown(event)
+    fakeDom.fireKeyDown(event)
 
     expect(mockTogglePlay).not.toHaveBeenCalled()
     expect(event.preventDefault).not.toHaveBeenCalled()
@@ -280,7 +220,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ key: SPACE_KEY, shiftKey: true })
-    fireKeyDown(event)
+    fakeDom.fireKeyDown(event)
 
     expect(mockTogglePlay).not.toHaveBeenCalled()
     expect(event.preventDefault).not.toHaveBeenCalled()
@@ -291,7 +231,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ key: SPACE_KEY, repeat: true })
-    fireKeyDown(event)
+    fakeDom.fireKeyDown(event)
 
     expect(mockTogglePlay).not.toHaveBeenCalled()
     expect(event.preventDefault).toHaveBeenCalled()
@@ -302,7 +242,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ key: ESCAPE_KEY })
-    fireDocumentKeyDown(event)
+    fakeDom.fireDocumentKeyDown(event)
 
     expect(mockCollapsePlayer).toHaveBeenCalledTimes(1)
     expect(event.preventDefault).toHaveBeenCalled()
@@ -313,7 +253,7 @@ describe('usePlayerKeyboardSeek', () => {
     await renderKeyboardSeek()
 
     const event = createKeyEvent({ key: ESCAPE_KEY, target: { tagName: 'TEXTAREA' } })
-    fireDocumentKeyDown(event)
+    fakeDom.fireDocumentKeyDown(event)
 
     expect(mockCollapsePlayer).not.toHaveBeenCalled()
     expect(event.preventDefault).not.toHaveBeenCalled()
@@ -323,16 +263,16 @@ describe('usePlayerKeyboardSeek', () => {
     isPlayerExpandedAtom(ctx, true)
     const { unmount } = await renderKeyboardSeek()
 
-    const keydownHandler = mockWindowListeners[KEYDOWN_EVENT]
-    const keyupHandler = mockWindowListeners[KEYUP_EVENT]
-    const blurHandler = mockWindowListeners[BLUR_EVENT]
+    const keydownHandler = fakeDom.window.getListeners(KEYDOWN_EVENT)[0]
+    const keyupHandler = fakeDom.window.getListeners(KEYUP_EVENT)[0]
+    const blurHandler = fakeDom.window.getListeners(BLUR_EVENT)[0]
 
     await act(async () => {
       unmount()
     })
 
-    expect(mockWindow.removeEventListener).toHaveBeenCalledWith(KEYDOWN_EVENT, keydownHandler)
-    expect(mockWindow.removeEventListener).toHaveBeenCalledWith(KEYUP_EVENT, keyupHandler)
-    expect(mockWindow.removeEventListener).toHaveBeenCalledWith(BLUR_EVENT, blurHandler)
+    expect(fakeDom.window.removeEventListener).toHaveBeenCalledWith(KEYDOWN_EVENT, keydownHandler)
+    expect(fakeDom.window.removeEventListener).toHaveBeenCalledWith(KEYUP_EVENT, keyupHandler)
+    expect(fakeDom.window.removeEventListener).toHaveBeenCalledWith(BLUR_EVENT, blurHandler)
   })
 })
