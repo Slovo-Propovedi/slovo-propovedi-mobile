@@ -1,8 +1,9 @@
 import { useNavigation } from 'expo-router'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { interpolate, useDerivedValue, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
+import { useHeaderTitle } from 'shared/routing'
 import { useTheme } from 'shared/ui/theme'
 import type { SharedValue } from 'react-native-reanimated'
 
@@ -33,13 +34,28 @@ export const useCollapsingNavbarDriver = ({
   const navigation = useNavigation()
   const { currentTheme } = useTheme()
   const [headerBgOpacity, setHeaderBgOpacity] = useState(0)
+  const setHeaderTitle = useHeaderTitle()
 
-  const updateHeaderTitle = useCallback(
-    (shouldShowTitle: boolean) => {
-      navigation.setOptions({ headerTitle: shouldShowTitle ? title : '' })
-    },
-    [navigation, title],
-  )
+  // Worklet-side mount guard: worklets can only read shared values, so the JS-side
+  // isMountedRef inside the callbacks is invisible to them. This shared value is
+  // flipped to true in useEffect (post-mount) and read inside the derived value.
+  const isMountedSv = useSharedValue(false)
+  // Execution-side guard: an already-scheduled callback no-ops after unmount.
+  const isMountedRef = useRef(false)
+
+  useEffect(() => {
+    isMountedSv.value = true
+    isMountedRef.current = true
+    return () => {
+      isMountedSv.value = false
+      isMountedRef.current = false
+    }
+  }, [isMountedSv])
+
+  const updateHeaderBgOpacity = useCallback((opacity: number) => {
+    if (!isMountedRef.current) return
+    setHeaderBgOpacity(opacity)
+  }, [])
 
   const wasAboveThreshold = useSharedValue<boolean | null>(null)
   const prevTitleSv = useSharedValue(title)
@@ -57,13 +73,13 @@ export const useCollapsingNavbarDriver = ({
       [0, 1],
       'clamp',
     )
-    scheduleOnRN(setHeaderBgOpacity, opacity)
+    if (isMountedSv.value) scheduleOnRN(updateHeaderBgOpacity, opacity)
     const crossed = scrollY.value > threshold.value
     if (wasAboveThreshold.value !== crossed) {
       wasAboveThreshold.value = crossed
-      scheduleOnRN(updateHeaderTitle, crossed)
+      if (isMountedSv.value) scheduleOnRN(setHeaderTitle, crossed ? title : '')
     }
-  }, [darkenStart, scrollY, threshold, updateHeaderTitle, title])
+  }, [darkenStart, scrollY, threshold, setHeaderTitle, title, updateHeaderBgOpacity])
 
   const headerBackground = useMemo(() => {
     const innerStyle = StyleSheet.create({
