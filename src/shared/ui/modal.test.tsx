@@ -205,4 +205,43 @@ describe('<Modal> web Escape handling', () => {
       restore()
     }
   })
+
+  test('removes the keydown listener when the modal hides and on unmount', async () => {
+    const { getListenerCount, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const { rerender, unmount } = await renderWithProviders(
+        <Modal visible onBackdropPress={onBackdropPressMock}>
+          <Text>{CHILDREN_TEXT}</Text>
+        </Modal>,
+      )
+
+      expect(getListenerCount()).toBe(1)
+
+      await rerender(
+        <Modal visible={false} onBackdropPress={onBackdropPressMock}>
+          <Text>{CHILDREN_TEXT}</Text>
+        </Modal>,
+      )
+
+      expect(getListenerCount()).toBe(0)
+
+      await rerender(
+        <Modal visible onBackdropPress={onBackdropPressMock}>
+          <Text>{CHILDREN_TEXT}</Text>
+        </Modal>,
+      )
+
+      expect(getListenerCount()).toBe(1)
+
+      await act(async () => {
+        unmount()
+      })
+
+      expect(getListenerCount()).toBe(0)
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
+  })
 })

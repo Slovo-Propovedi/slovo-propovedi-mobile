@@ -14,10 +14,10 @@ export const SearchToggleButton = () => {
   return (
     <IconButton
       hitSlop={INDENTS.low}
+      style={styles.button}
       onPress={() => void openSearchAction()}
       accessibilityLabel={SEARCH_TOGGLE_LABEL}
       Icon={<Ionicons size={24} name='search' color={currentTheme.text} />}
-      style={({ pressed }) => [styles.button, { opacity: pressed ? 0.6 : 1 }]}
     />
   )
 }

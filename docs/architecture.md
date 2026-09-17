@@ -172,7 +172,7 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
   - иконка передаётся через проп `Icon` (children запрещены на уровне типов);
   - `accessibilityLabel` **обязателен** на уровне типов — у иконочной кнопки нет текста, и label — единственный способ идентификации для скринридера и тестов;
   - `testID` запрещён на уровне типов (`testID?: never`) — см. AGENTS.md → Testing Guidelines;
-  - встроенный press-фидбек вместо fade у `TouchableOpacity`: при нажатии добавляется `opacity: 0.6` (композиция с переданным `style`; поддерживает и статичный style, и функцию `({ pressed }) => …`).
+  - встроенный press-фидбек вместо fade у `TouchableOpacity`: при нажатии добавляется `opacity: 0.6` (композиция с переданным `style`; поддерживает и статичный style, и функцию `({ pressed }) => …`). Стиль вызывающего перекрывает встроенную pressed-прозрачность (массив стилей: `pressed`-слой идёт первым, пользовательский — последним), поэтому намеренный override (например, `pressed ? 0.8` в `ContinueListeningButton`) переопределяет её, а дублировать `opacity: 0.6` в вызывающем не нужно.
   - Импорт: `import { IconButton } from 'shared/ui/icon-button'`.
 - **`TouchableButton`** — зеркало `PressableButton` для `TouchableOpacity`: по умолчанию ставит `accessibilityRole='button'` (на web RNW рендерит настоящий `<button>`), роль можно переопределить явно. Нужен там, где сохраняется fade-фидбек `activeOpacity` (таб-бар, кнопки, radio, слайдер и т.п.).
   - Импорт: `import { TouchableButton } from 'shared/ui/touchable-button'`.
