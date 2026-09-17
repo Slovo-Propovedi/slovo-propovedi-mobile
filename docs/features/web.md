@@ -107,6 +107,17 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 
 **Фокусируемость средней области:** кликабельная средняя область полноэкранного плеера (`PlayerMiddleArea` → `Pressable styles.spacer`, а также backdrop оверлея «Подробнее» в `DetailsOverlay`) получает `tabIndex={-1}` — не попадает в Tab-навигацию, но остаётся кликабельной мышью/тачем. RNW-деталь: `focusable={false}` на `Pressable` **не работает** — `Pressable` всегда прокидывает явный `tabIndex` (0 по умолчанию), который в `createDOMProps` выигрывает у `focusable`; поэтому используется именно `tabIndex={-1}`.
 
+### Патч RNGH: `setPointerCapture` на web
+
+`patches/react-native-gesture-handler+2.32.0.patch` оборачивает `target.setPointerCapture(pointerId)` в `PointerEventManager.pointerDownCallback` (обе сборки: `lib/module/` — web, `lib/commonjs/` — main-фолбэк) в try/catch. Без этого быстрый клик по кнопке внутри `GestureDetector` (весь полноэкранный плеер обёрнут в `Gesture.Pan()`, поэтому триггерится на любой клик) ронял в консоль:
+
+```
+Web ERROR [NotFoundError: Failed to execute 'setPointerCapture' on 'Element': No active pointer with the given id is found.]
+pointerDownCallback (node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js:34)
+```
+
+Причина — stale pointer id: к моменту обработки `pointerdown` указатель уже не активен, браузер кидает `NotFoundError`. Потеря capture косметическая — RNGH продолжает работать через per-element tracking. Патч применяется `postinstall: patch-package` (web-сборка резолвит `lib/module/` через mainFields `['browser', 'module', 'main']`). **Убрать патч, когда RNGH выпустит версию с апстрим-guard'ом** (см. [`../debt.md`](../debt.md)).
+
 ## Десктопный layout
 
 `shared/ui/layout/appMaxWidth.ts` — `APP_MAX_CONTENT_WIDTH = 600` (только `Platform.OS === 'web'`, на нативе `undefined` → всё как было) + `getColumnSideInset(screenWidth, minInset)` (помечен `'worklet'` — используется и в reanimated-ворклете).

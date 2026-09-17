@@ -1,0 +1,36 @@
+diff --git a/node_modules/react-native-gesture-handler/lib/commonjs/web/tools/PointerEventManager.js b/node_modules/react-native-gesture-handler/lib/commonjs/web/tools/PointerEventManager.js
+index 76eb808..242b2fd 100644
+--- a/node_modules/react-native-gesture-handler/lib/commonjs/web/tools/PointerEventManager.js
++++ b/node_modules/react-native-gesture-handler/lib/commonjs/web/tools/PointerEventManager.js
+@@ -36,7 +36,12 @@ class PointerEventManager extends _EventManager.default {
+     const adaptedEvent = this.mapEvent(event, _interfaces.EventTypes.DOWN);
+     const target = event.target;
+     if (!POINTER_CAPTURE_EXCLUDE_LIST.has(target.tagName)) {
+-      target.setPointerCapture(adaptedEvent.pointerId);
++      try {
++        target.setPointerCapture(adaptedEvent.pointerId);
++      } catch {
++        // Stale pointer id on fast clicks throws NotFoundError; capture loss is
++        // cosmetic — RNGH falls back to per-element tracking.
++      }
+     }
+     this.markAsInBounds(adaptedEvent.pointerId);
+     this.trackedPointers.add(adaptedEvent.pointerId);
+diff --git a/node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js b/node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js
+index 6ce3b8f..fdb5ab4 100644
+--- a/node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js
++++ b/node_modules/react-native-gesture-handler/lib/module/web/tools/PointerEventManager.js
+@@ -31,7 +31,12 @@ export default class PointerEventManager extends EventManager {
+     const adaptedEvent = this.mapEvent(event, EventTypes.DOWN);
+     const target = event.target;
+     if (!POINTER_CAPTURE_EXCLUDE_LIST.has(target.tagName)) {
+-      target.setPointerCapture(adaptedEvent.pointerId);
++      try {
++        target.setPointerCapture(adaptedEvent.pointerId);
++      } catch {
++        // Stale pointer id on fast clicks throws NotFoundError; capture loss is
++        // cosmetic — RNGH falls back to per-element tracking.
++      }
+     }
+     this.markAsInBounds(adaptedEvent.pointerId);
+     this.trackedPointers.add(adaptedEvent.pointerId);
