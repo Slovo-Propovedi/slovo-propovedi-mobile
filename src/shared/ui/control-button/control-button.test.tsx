@@ -1,5 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native'
-import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { fireEvent, render, screen } from '@testing-library/react-native'
 import { PlayerControlButton } from './control-button'
 import { PlayerControlButtonType } from './control-button.types'
 
@@ -17,7 +16,7 @@ jest.mock('@expo/vector-icons', () => {
 })
 
 const renderButton = (props = {}) =>
-  renderWithProviders(<PlayerControlButton type={PlayerControlButtonType.Play} {...props} />)
+  render(<PlayerControlButton type={PlayerControlButtonType.Play} {...props} />)
 
 const getLastIconProps = async (props = {}) => {
   mockEntypoSpy.mockClear()
@@ -43,7 +42,7 @@ describe('<PlayerControlButton>', () => {
 
     await renderButton({ onPress: onPressMock })
 
-    fireEvent.press(screen.getByRole('button'))
+    await fireEvent.press(screen.getByRole('button'))
 
     expect(onPressMock).toHaveBeenCalledTimes(1)
   })
@@ -53,7 +52,7 @@ describe('<PlayerControlButton>', () => {
 
     await renderButton({ onPressOut: onPressOutMock })
 
-    fireEvent(screen.getByRole('button'), 'pressOut')
+    await fireEvent(screen.getByRole('button'), 'pressOut')
 
     expect(onPressOutMock).toHaveBeenCalledTimes(1)
   })
@@ -63,7 +62,7 @@ describe('<PlayerControlButton>', () => {
 
     await renderButton({ onLongPress: onLongPressMock })
 
-    fireEvent(screen.getByRole('button'), 'longPress')
+    await fireEvent(screen.getByRole('button'), 'longPress')
 
     expect(onLongPressMock).toHaveBeenCalledTimes(1)
   })
@@ -81,7 +80,7 @@ describe('<PlayerControlButton>', () => {
 
     await renderButton({ isDisabled: true, onPress: onPressMock })
 
-    fireEvent.press(screen.getByRole('button'))
+    await fireEvent.press(screen.getByRole('button'))
 
     expect(onPressMock).not.toHaveBeenCalled()
   })

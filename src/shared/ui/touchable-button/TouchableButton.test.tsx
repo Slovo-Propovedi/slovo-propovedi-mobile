@@ -1,11 +1,10 @@
-import { screen } from '@testing-library/react-native'
+import { render, screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
-import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { TouchableButton } from './TouchableButton'
 
 describe('<TouchableButton>', () => {
   test('defaults to the button role', async () => {
-    await renderWithProviders(
+    await render(
       <TouchableButton onPress={jest.fn()}>
         <Text>tap</Text>
       </TouchableButton>,
@@ -15,7 +14,7 @@ describe('<TouchableButton>', () => {
   })
 
   test('accepts an explicit role override', async () => {
-    await renderWithProviders(
+    await render(
       <TouchableButton onPress={jest.fn()} accessibilityRole='link'>
         <Text>tap</Text>
       </TouchableButton>,

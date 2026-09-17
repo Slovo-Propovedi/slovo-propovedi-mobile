@@ -1,6 +1,5 @@
-import { screen, userEvent } from '@testing-library/react-native'
+import { render, screen, userEvent } from '@testing-library/react-native'
 import { Text } from 'react-native'
-import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { IconButton } from './IconButton'
 
 const LABEL = 'Test button'
@@ -8,7 +7,7 @@ const LABEL = 'Test button'
 // children and testID are rejected at the type level (IconButtonProps bans
 // them), so there is no runtime behaviour to assert for those props.
 const renderIconButton = (props = {}) =>
-  renderWithProviders(<IconButton Icon={<Text>icon</Text>} accessibilityLabel={LABEL} {...props} />)
+  render(<IconButton Icon={<Text>icon</Text>} accessibilityLabel={LABEL} {...props} />)
 
 describe('<IconButton>', () => {
   test('renders the Icon node', async () => {

@@ -1,5 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native'
-import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { fireEvent, render, screen } from '@testing-library/react-native'
 import { RadioButton } from './radio'
 
 const labelStub = 'Option One'
@@ -16,7 +15,7 @@ describe('<RadioButton>', () => {
   })
 
   test('renders the label text', async () => {
-    await renderWithProviders(<RadioButton {...defaultProps} />)
+    await render(<RadioButton {...defaultProps} />)
 
     expect(screen.getByText(labelStub)).toBeTruthy()
   })
@@ -24,11 +23,9 @@ describe('<RadioButton>', () => {
   test('calls onValueChange with true when pressed and selected is false', async () => {
     const onValueChange = jest.fn()
 
-    await renderWithProviders(
-      <RadioButton selected={false} label={labelStub} onValueChange={onValueChange} />,
-    )
+    await render(<RadioButton selected={false} label={labelStub} onValueChange={onValueChange} />)
 
-    fireEvent.press(screen.getByRole('button'))
+    await fireEvent.press(screen.getByRole('button'))
 
     expect(onValueChange).toHaveBeenCalledWith(true)
   })
@@ -36,11 +33,9 @@ describe('<RadioButton>', () => {
   test('calls onValueChange with false when pressed and selected is true', async () => {
     const onValueChange = jest.fn()
 
-    await renderWithProviders(
-      <RadioButton selected={true} label={labelStub} onValueChange={onValueChange} />,
-    )
+    await render(<RadioButton selected={true} label={labelStub} onValueChange={onValueChange} />)
 
-    fireEvent.press(screen.getByRole('button'))
+    await fireEvent.press(screen.getByRole('button'))
 
     expect(onValueChange).toHaveBeenCalledWith(false)
   })
@@ -48,17 +43,17 @@ describe('<RadioButton>', () => {
   test('does not call onValueChange when disabled', async () => {
     const onValueChange = jest.fn()
 
-    await renderWithProviders(
+    await render(
       <RadioButton disabled selected={false} label={labelStub} onValueChange={onValueChange} />,
     )
 
-    fireEvent.press(screen.getByRole('button'))
+    await fireEvent.press(screen.getByRole('button'))
 
     expect(onValueChange).not.toHaveBeenCalled()
   })
 
   test('renders without label when label is empty string', async () => {
-    const { queryByText } = await renderWithProviders(<RadioButton {...defaultProps} label='' />)
+    const { queryByText } = await render(<RadioButton {...defaultProps} label='' />)
 
     expect(queryByText(labelStub)).toBeNull()
     expect(screen.getByRole('button')).toBeTruthy()
