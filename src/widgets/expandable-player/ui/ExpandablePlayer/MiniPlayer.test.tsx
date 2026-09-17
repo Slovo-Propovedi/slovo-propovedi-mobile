@@ -125,6 +125,14 @@ describe('<MiniPlayer>', () => {
     expect(mockOnPress).toHaveBeenCalledTimes(1)
   })
 
+  test('keeps the row accessible as a button on native', async () => {
+    const { getByRole } = await renderMiniPlayer()
+
+    // The row keeps the button role on native (web switches to link so the inner
+    // play/pause button is not nested inside another <button>).
+    expect(getByRole('button', { name: new RegExp(AUDIO.title) })).toBeTruthy()
+  })
+
   test('pressing the play/pause button calls onPlayPause', async () => {
     const { getByRole } = await renderMiniPlayer()
 

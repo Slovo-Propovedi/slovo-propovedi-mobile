@@ -1,4 +1,4 @@
-import { ActivityIndicator, Text, View, type ViewStyle } from 'react-native'
+import { ActivityIndicator, Platform, Text, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { formatSermonReference } from 'shared/lib/format'
@@ -11,6 +11,12 @@ import type { ThemeColors } from 'shared/ui/theme'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
 
 const AnimatedPressable = Animated.createAnimatedComponent(PressableButton)
+
+// Web: the row renders as <div role="link" tabindex=0> (RNW maps 'link' to the
+// role attribute, no <a> tag) so the inner play/pause <button> is not nested
+// inside another <button> (validateDOMNesting error). Native keeps the button
+// role. Same container pattern as TracksListItemBase ROW_ACCESSIBILITY_ROLE.
+const ROW_ACCESSIBILITY_ROLE = Platform.OS === 'web' ? 'link' : 'button'
 
 interface MiniPlayerProps {
   audio: AudioPlayerData
@@ -46,6 +52,7 @@ export const MiniPlayer = ({
     <GestureDetector gesture={miniPan}>
       <AnimatedPressable
         onPress={onPress}
+        accessibilityRole={ROW_ACCESSIBILITY_ROLE}
         style={[miniStyles.miniContainer, miniStyle, { backgroundColor: currentTheme.surface }]}
       >
         <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
