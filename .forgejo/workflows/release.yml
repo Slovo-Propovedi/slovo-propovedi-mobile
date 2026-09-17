@@ -73,13 +73,6 @@ jobs:
             exit 1
           fi
 
-          APP_VERSION=$(node -p "require('./app.json').expo.version")
-          if [ "$APP_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::app.json version ($APP_VERSION) does not match tag ($TAG_VERSION)"
-            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
-            exit 1
-          fi
-
           GRADLE_VERSION_NAME=$(grep 'versionName' android/app/build.gradle | head -1 | sed 's/.*versionName "\([^"]*\)".*/\1/')
           GRADLE_VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | sed 's/.*versionCode \([0-9]*\).*/\1/')
           if [ "$GRADLE_VERSION_NAME" != "$TAG_VERSION" ]; then

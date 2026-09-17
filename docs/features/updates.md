@@ -153,7 +153,7 @@
 
 ### Разрешение и зависимость
 
-- **`REQUEST_INSTALL_PACKAGES`** объявлен в `app.json` (`android.permissions`) и в закоммиченном `android/app/src/main/AndroidManifest.xml` (CI `prebuild --clean` регенерирует манифест из `app.json`, локальные gradle-сборки используют закоммиченный).
+- **`REQUEST_INSTALL_PACKAGES`** объявлен в `app.config.ts` (`android.permissions`) и в закоммиченном `android/app/src/main/AndroidManifest.xml` (CI `prebuild --clean` регенерирует манифест из `app.config.ts`, локальные gradle-сборки используют закоммиченный).
 - **`react-native-zip-archive`** — распаковка ZIP-ассета (см. [`../decisions.md`](../decisions.md) → Approved stack → Обновления).
 - **`modules/apk-installer`** — локальный модуль для `PackageInstaller` (см. [`../decisions.md`](../decisions.md) → Approved stack → Обновления).
 

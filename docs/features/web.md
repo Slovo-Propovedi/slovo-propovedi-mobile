@@ -3,7 +3,7 @@
 **Слой:** `public/`, `shared/lib/audio-cache/*.web.ts`, `shared/ui/layout/appMaxWidth.ts`, `entities/player/lib/PlayerService/*.web.ts`, `features/web-update`, платформенные `.web.ts` по проекту
 **Статус:** рабочее (dev + `expo export`), без прод-хостинга
 
-Приложение собирается на web через Metro (`app.json` → `web.bundler: "metro"`, `web.output` не задан → SPA-режим `single`: один `index.html` + JS-бандл, клиентский роутинг expo-router). Нативные возможности, которых нет в браузере, закрыты платформенными файлами `*.web.ts` (паттерн — [`architecture.md`](../architecture.md#почему-платформенные-реализации-nativets--webts)).
+Приложение собирается на web через Metro (`app.config.ts` → `web.bundler: "metro"`, `web.output` не задан → SPA-режим `single`: один `index.html` + JS-бандл, клиентский роутинг expo-router). Нативные возможности, которых нет в браузере, закрыты платформенными файлами `*.web.ts` (паттерн — [`architecture.md`](../architecture.md#почему-платформенные-реализации-nativets--webts)).
 
 ## Команды
 
@@ -21,7 +21,7 @@
 
 - `public/manifest.webmanifest` — имя, иконки, `display: standalone`, `theme_color`/`background_color` `#f16031`.
 - `public/icons/*` — сгенерированы из `assets/icon.png` и `assets/adaptive-icon.png` (ImageMagick): `icon-192`, `icon-512`, `icon-maskable-512`, `apple-touch-icon` (180), `public/favicon.png` (48).
-- `app.json` → `web`: `lang: "ru"`, `name`, `shortName`, `description` (Expo подставляет `lang`/`description` в шаблон).
+- `app.config.ts` → `web`: `lang: "ru"`, `name`, `shortName`, `description` (Expo подставляет `lang`/`description` в шаблон).
 - Регистрация Service Worker — инлайн-скрипт в `public/index.html`: регистрирует `/sw.js` **только не на localhost**; на localhost, наоборот, снимает возможно оставшийся с прод-прогона SW (`getRegistrations().then(unregister)`), чтобы не мешать Metro/HMR.
 
 ### Service Worker (`public/sw.js`)

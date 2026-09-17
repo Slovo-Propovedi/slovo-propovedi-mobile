@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
 
 ## Системный навбар (Android)
 
-- Навбар **всегда прозрачный** (включая область жестовой полоски): фон задаётся edge-to-edge + `android:navigationBarColor` transparent в `styles.xml`, а системная контрастная подложка отключена атрибутами `android:enforceNavigationBarContrast` / `expoEnforceNavigationBarContrast` в `android/app/src/main/res/values/styles.xml` (это то, что генерирует плагин `expo-navigation-bar` на prebuild; `enforceContrast: false` в `app.json`).
+- Навбар **всегда прозрачный** (включая область жестовой полоски): фон задаётся edge-to-edge + `android:navigationBarColor` transparent в `styles.xml`, а системная контрастная подложка отключена атрибутами `android:enforceNavigationBarContrast` / `expoEnforceNavigationBarContrast` в `android/app/src/main/res/values/styles.xml` (это то, что генерирует плагин `expo-navigation-bar` на prebuild; `enforceContrast: false` в `app.config.ts`).
 - Таб-бар полупрозрачно закрашивает область навбара: размытый `BlurView` (`CustomTabBar`) с `paddingBottom: Math.max(bottom, 30)` покрывает и ряд кнопок, и полосу инсета — контент скроллится под полупрозрачную полосу (glass-эффект).
 - Цвет кнопок/иконок следует теме приложения: тёмные глифы на светлой теме, светлые на тёмной. Реализовано в `ThemeProvider` (эффект по `isLight`): `NavigationBar.setStyle(isLight ? 'dark' : 'light')` — только Android, обёрнут в try-catch + `reportError` (косметика не должна ронять приложение).
 - Требует нативной пересборки (`yarn run:android` / EAS build) — модуль и плагин применяются на этапе prebuild; атрибуты контраста закоммичены в `android/` (см. выше), поэтому работают и без повторного prebuild.

@@ -63,27 +63,20 @@ try {
   exitError(`File not found: ${gradlePath}`)
 }
 
-// --- Update all 5 files ---
+// --- Update all 4 files ---
 
 // 1. package.json
 pkg.version = newVersion
 writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 log('✓ Updated package.json', GREEN)
 
-// 2. app.json
-const appJsonPath = 'app.json'
-let appJson = readFileSync(appJsonPath, 'utf-8')
-appJson = appJson.replace(/"version": "\d+\.\d+\.\d+"/, `"version": "${newVersion}"`)
-writeFileSync(appJsonPath, appJson)
-log('✓ Updated app.json', GREEN)
-
-// 3. android/app/build.gradle
+// 2. android/app/build.gradle
 gradleContent = gradleContent.replace(/versionName "\d+\.\d+\.\d+"/, `versionName "${newVersion}"`)
 gradleContent = gradleContent.replace(/versionCode \d+/, `versionCode ${newVersionCode}`)
 writeFileSync(gradlePath, gradleContent)
 log('✓ Updated android/app/build.gradle', GREEN)
 
-// 4. ios/SlovoPropovedi.xcodeproj/project.pbxproj
+// 3. ios/SlovoPropovedi.xcodeproj/project.pbxproj
 const pbxprojPath = 'ios/SlovoPropovedi.xcodeproj/project.pbxproj'
 let pbxproj = readFileSync(pbxprojPath, 'utf-8')
 pbxproj = pbxproj.replace(/MARKETING_VERSION = [^;]+/g, `MARKETING_VERSION = ${newVersion}`)
@@ -91,7 +84,7 @@ pbxproj = pbxproj.replace(/CURRENT_PROJECT_VERSION = \d+/g, `CURRENT_PROJECT_VER
 writeFileSync(pbxprojPath, pbxproj)
 log('✓ Updated ios/SlovoPropovedi.xcodeproj/project.pbxproj', GREEN)
 
-// 5. fdroid/metadata/ru.slovopropovedi.yml
+// 4. fdroid/metadata/ru.slovopropovedi.yml
 const fdroidPath = 'fdroid/metadata/ru.slovopropovedi.yml'
 let fdroid = readFileSync(fdroidPath, 'utf-8')
 fdroid = fdroid.replace(/CurrentVersion: '\d+\.\d+\.\d+'/, `CurrentVersion: '${newVersion}'`)
