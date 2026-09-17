@@ -122,34 +122,33 @@ function isAudioRequest(request, url) {
  * @param {Response} cached
  * @returns {Promise<Response>}
  */
-function serveWithRange(request, cached) {
+async function serveWithRange(request, cached) {
   const rangeHeader = request.headers.get('range')
   if (!rangeHeader || cached.type === 'opaque') return Promise.resolve(cached)
 
   const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader)
   if (!match) return Promise.resolve(cached)
 
-  return cached.arrayBuffer().then((buffer) => {
-    const total = buffer.byteLength
-    const start = match[1] ? parseInt(match[1], 10) : 0
-    let end = match[2] ? parseInt(match[2], 10) : total - 1
-    if (Number.isNaN(start) || start >= total) {
-      return new Response(null, {
-        status: 416,
-        headers: { 'Content-Range': 'bytes */' + total },
-      })
-    }
-    end = Math.min(end, total - 1)
-    return new Response(buffer.slice(start, end + 1), {
-      status: 206,
-      statusText: 'Partial Content',
-      headers: {
-        'Accept-Ranges': 'bytes',
-        'Content-Type': cached.headers.get('Content-Type') || 'audio/mpeg',
-        'Content-Length': String(end - start + 1),
-        'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
-      },
+  const buffer = await cached.arrayBuffer()
+  const total = buffer.byteLength
+  const start = match[1] ? parseInt(match[1], 10) : 0
+  let end = match[2] ? parseInt(match[2], 10) : total - 1
+  if (Number.isNaN(start) || start >= total) {
+    return new Response(null, {
+      status: 416,
+      headers: { 'Content-Range': 'bytes */' + total },
     })
+  }
+  end = Math.min(end, total - 1)
+  return new Response(buffer.slice(start, end + 1), {
+    status: 206,
+    statusText: 'Partial Content',
+    headers: {
+      'Accept-Ranges': 'bytes',
+      'Content-Type': cached.headers.get('Content-Type') || 'audio/mpeg',
+      'Content-Length': String(end - start + 1),
+      'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
+    },
   })
 }
 
@@ -160,11 +159,10 @@ function serveWithRange(request, cached) {
  * @param {Cache} cache
  * @returns {Promise<Response>}
  */
-function serveCachedOrFetch(request, url, cache) {
-  return cache.match(url.href, { ignoreVary: true }).then((cached) => {
-    if (cached) return serveWithRange(request, cached)
-    return fetch(request)
-  })
+async function serveCachedOrFetch(request, url, cache) {
+  const cached = await cache.match(url.href, { ignoreVary: true })
+  if (cached) return serveWithRange(request, cached)
+  return await fetch(request)
 }
 
 /**
@@ -176,29 +174,25 @@ function serveCachedOrFetch(request, url, cache) {
  * @param {URL} url
  * @returns {Promise<Response>}
  */
-function audioStrategy(request, url) {
-  return caches.open(AUDIO_CACHE).then((cache) =>
-    cache.match(AUDIO_MANIFEST, { ignoreVary: true }).then((manifestEntry) => {
-      // Legacy fallback: no manifest yet (migration not run) — trust existing entries.
-      if (!manifestEntry) return serveCachedOrFetch(request, url, cache)
-
-      return manifestEntry.json().then(
-        (manifest) => {
-          // Guard: stored JSON may be null or missing the urls array (e.g.
-          // corrupted write). Treat both as "no manifest" — fall back to the
-          // legacy path instead of throwing inside this handler (the .catch
-          // below only covers the json() rejection).
-          if (!manifest || !Array.isArray(manifest.urls))
-            return serveCachedOrFetch(request, url, cache)
-          var committed = manifest.urls.indexOf(url.href) !== -1
-          if (!committed) return fetch(request)
-          return serveCachedOrFetch(request, url, cache)
-        },
-        // Unparseable manifest — fall back to the legacy path.
-        () => serveCachedOrFetch(request, url, cache),
-      )
-    }),
-  )
+async function audioStrategy(request, url) {
+  const cache = await caches.open(AUDIO_CACHE)
+  const manifestEntry = await cache.match(AUDIO_MANIFEST, { ignoreVary: true })
+  // Legacy fallback: no manifest yet (migration not run) — trust existing entries.
+  if (!manifestEntry) return serveCachedOrFetch(request, url, cache)
+  return await manifestEntry.json().then(
+    (manifest) => {
+      // Guard: stored JSON may be null or missing the urls array (e.g.
+      // corrupted write). Treat both as "no manifest" — fall back to the
+      // legacy path instead of throwing inside this handler (the .catch
+      // below only covers the json() rejection).
+      if (!manifest || !Array.isArray(manifest.urls))
+        return serveCachedOrFetch(request, url, cache)
+      var committed = manifest.urls.indexOf(url.href) !== -1
+      if (!committed) return fetch(request)
+      return serveCachedOrFetch(request, url, cache)
+    },
+    // Unparseable manifest — fall back to the legacy path.
+    () => serveCachedOrFetch(request, url, cache))
 }
 
 /**
@@ -208,13 +202,11 @@ function audioStrategy(request, url) {
  * @param {Request} request
  * @returns {Promise<Response>}
  */
-function navigationStrategy(request) {
-  return caches.open(PRECACHE).then((cache) =>
-    cache.match('/index.html', { ignoreSearch: true }).then((cached) => {
-      if (cached) return cached
-      return fetch(request)
-    }),
-  )
+async function navigationStrategy(request) {
+  const cache = await caches.open(PRECACHE)
+  const cached = await cache.match('/index.html', { ignoreSearch: true })
+  if (cached) return cached
+  return fetch(request)
 }
 
 /**
@@ -223,16 +215,13 @@ function navigationStrategy(request) {
  * @param {Request} request
  * @returns {Promise<Response>}
  */
-function cacheFirst(request) {
-  return caches.open(PRECACHE).then((cache) =>
-    cache.match(request).then((cached) => {
-      if (cached) return cached
-      return fetch(request).then((response) => {
-        if (response && response.ok) cache.put(request, response.clone()).catch(() => {})
-        return response
-      })
-    }),
-  )
+async function cacheFirst(request) {
+  const cache = await caches.open(PRECACHE)
+  const cached = await cache.match(request)
+  if (cached) return cached
+  const response = await fetch(request)
+  if (response && response.ok) cache.put(request, response.clone()).catch(() => { })
+  return response
 }
 
 sw.addEventListener('fetch', (event) => {
