@@ -7,10 +7,10 @@ import { currentAudioAtom, isPlayingAtom } from '../model'
 import { useGuardedTogglePlay } from './useGuardedTogglePlay'
 
 const mockPause = jest.fn().mockResolvedValue(undefined)
-const mockPlay = jest.fn().mockResolvedValue(undefined)
+const mockResumeAfterPause = jest.fn().mockResolvedValue(undefined)
 
 jest.mock('./usePlayer', () => ({
-  usePlayer: () => ({ pause: mockPause, play: mockPlay }),
+  usePlayer: () => ({ pause: mockPause, resumeAfterPause: mockResumeAfterPause }),
 }))
 
 jest.mock('./playOfflineGuard', () => ({
@@ -39,7 +39,7 @@ describe('useGuardedTogglePlay', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockPause.mockResolvedValue(undefined)
-    mockPlay.mockResolvedValue(undefined)
+    mockResumeAfterPause.mockResolvedValue(undefined)
     currentAudioAtom(ctx, null)
     isPlayingAtom(ctx, false)
     isOnlineAtom(ctx, true)
@@ -54,7 +54,7 @@ describe('useGuardedTogglePlay', () => {
     consoleErrorSpy.mockRestore()
   })
 
-  test('offline + uncached + paused → guard blocks, play() NOT called', async () => {
+  test('offline + uncached + paused → guard blocks, resumeAfterPause() NOT called', async () => {
     currentAudioAtom(ctx, mockAudio)
     isOnlineAtom(ctx, false)
     guardOfflinePlayback.mockResolvedValue(true)
@@ -66,11 +66,11 @@ describe('useGuardedTogglePlay', () => {
     })
 
     expect(guardOfflinePlayback).toHaveBeenCalledWith(AUDIO_URL, false)
-    expect(mockPlay).not.toHaveBeenCalled()
+    expect(mockResumeAfterPause).not.toHaveBeenCalled()
     expect(mockPause).not.toHaveBeenCalled()
   })
 
-  test('offline + cached → play() called', async () => {
+  test('offline + cached → resumeAfterPause() called', async () => {
     currentAudioAtom(ctx, mockAudio)
     isOnlineAtom(ctx, false)
 
@@ -81,10 +81,11 @@ describe('useGuardedTogglePlay', () => {
     })
 
     expect(guardOfflinePlayback).toHaveBeenCalledWith(AUDIO_URL, false)
-    expect(mockPlay).toHaveBeenCalledTimes(1)
+    expect(mockResumeAfterPause).toHaveBeenCalledTimes(1)
+    expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
   })
 
-  test('online + uncached → play() called', async () => {
+  test('online + uncached → resumeAfterPause() called', async () => {
     currentAudioAtom(ctx, mockAudio)
     isOnlineAtom(ctx, true)
 
@@ -95,7 +96,8 @@ describe('useGuardedTogglePlay', () => {
     })
 
     expect(guardOfflinePlayback).toHaveBeenCalledWith(AUDIO_URL, true)
-    expect(mockPlay).toHaveBeenCalledTimes(1)
+    expect(mockResumeAfterPause).toHaveBeenCalledTimes(1)
+    expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
   })
 
   test('playing → pause() called, guard NOT called, no dialog', async () => {
@@ -124,7 +126,7 @@ describe('useGuardedTogglePlay', () => {
     })
 
     expect(guardOfflinePlayback).not.toHaveBeenCalled()
-    expect(mockPlay).not.toHaveBeenCalled()
+    expect(mockResumeAfterPause).not.toHaveBeenCalled()
     expect(mockPause).not.toHaveBeenCalled()
   })
 
@@ -139,14 +141,14 @@ describe('useGuardedTogglePlay', () => {
     })
 
     expect(guardOfflinePlayback).not.toHaveBeenCalled()
-    expect(mockPlay).not.toHaveBeenCalled()
+    expect(mockResumeAfterPause).not.toHaveBeenCalled()
   })
 
-  test('play() rejects with AppState error → console.warn, reportError NOT called, swallowed', async () => {
+  test('resumeAfterPause() rejects with AppState error → console.warn, reportError NOT called, swallowed', async () => {
     currentAudioAtom(ctx, mockAudio)
     isOnlineAtom(ctx, true)
     const appStateError = new Error('play() failed because activity is no longer available')
-    mockPlay.mockRejectedValue(appStateError)
+    mockResumeAfterPause.mockRejectedValue(appStateError)
 
     const { result } = await renderHookWithProviders(() => useGuardedTogglePlay(), { ctx })
 
@@ -154,7 +156,7 @@ describe('useGuardedTogglePlay', () => {
       await result.current.togglePlay()
     })
 
-    expect(mockPlay).toHaveBeenCalledTimes(1)
+    expect(mockResumeAfterPause).toHaveBeenCalledTimes(1)
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       '[Player] Ignoring AppState-related error:',
       appStateError.message,
@@ -182,11 +184,11 @@ describe('useGuardedTogglePlay', () => {
     expect(reportError).not.toHaveBeenCalled()
   })
 
-  test('play() rejects with other error → reportError called and rejection rethrown', async () => {
+  test('resumeAfterPause() rejects with other error → reportError called and rejection rethrown', async () => {
     currentAudioAtom(ctx, mockAudio)
     isOnlineAtom(ctx, true)
     const genericError = new Error('boom')
-    mockPlay.mockRejectedValue(genericError)
+    mockResumeAfterPause.mockRejectedValue(genericError)
 
     const { result } = await renderHookWithProviders(() => useGuardedTogglePlay(), { ctx })
 

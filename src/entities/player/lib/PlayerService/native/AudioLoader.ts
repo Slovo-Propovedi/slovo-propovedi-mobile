@@ -20,6 +20,7 @@ class AudioLoader {
       this.playerInstance = null
     }
     const playUrl = await this.getPlaybackUrl(audioUrl)
+    this.lastResolvedUrl = playUrl
     // keepAudioSessionActive prevents iOS AVAudioSession deactivation at track end,
     // which otherwise stalls background auto-advance until the app is foregrounded
     const player = createAudioPlayer(
@@ -41,6 +42,7 @@ class AudioLoader {
     this.trackEndHandled = false
     if (!this.playerInstance) return this.loadAudio(audioUrl, initialPositionMs)
     const playUrl = await this.getPlaybackUrl(audioUrl)
+    this.lastResolvedUrl = playUrl
     try {
       // replace-in-place: same native player, same MediaSession, same foreground service.
       // Never pass null to replace() — it crashes the player (expo-audio #48219)
@@ -55,6 +57,7 @@ class AudioLoader {
   }
 
   public releaseAndReset(): void {
+    this.lastResolvedUrl = null
     if (!this.playerInstance) return
     this.playerInstance.release()
     this.playerInstance = null
@@ -62,6 +65,10 @@ class AudioLoader {
 
   public getPlayerInstance(): AudioPlayer | null {
     return this.playerInstance
+  }
+
+  public getLastResolvedUrl(): null | string {
+    return this.lastResolvedUrl
   }
 
   public resetTrackEndHandled(): void {
@@ -90,6 +97,7 @@ class AudioLoader {
 
   private playerInstance: AudioPlayer | null = null
   private trackEndHandled = false
+  private lastResolvedUrl: null | string = null
 }
 
 export const audioLoader = new AudioLoader()

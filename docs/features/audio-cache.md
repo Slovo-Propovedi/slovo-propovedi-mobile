@@ -141,6 +141,8 @@
 
 > **Web (Issue #81):** авто-кэш при воспроизведении теперь работает **на обеих платформах**. На web хук — `autoCacheOnPlay` (`src/entities/player/lib/PlayerService/web/autoCache.ts`), вызывается из `WebPlayerService.loadAudio` (покрывает и `replaceAudio`): проверяет `audioCacheService.isCached`, при отсутствии в кэше и онлайне (`isOnlineAtom`) запускает `startBackgroundCaching`. Fire-and-forget, воспроизведение не блокирует. Нативный путь через `AudioLoader.getPlaybackUrl` — без изменений.
 
+> **Resume (Issue #107):** путь resume (пауза → play) теперь тоже пере-резолвит кэш: `PlayerService.resumeAfterPause` проверяет `getCachedUri` и при наличии файла заменяет источник на `file://` (раньше кэш проверялся только при старте/смене трека через `AudioLoader.getPlaybackUrl`).
+
 ## Скачивание одного трека
 
 Все **три** ручные точки входа кеширования теперь проходят через глобальную очередь (`enqueueCache(ctx, url, 'manual', onProgress)`); общий helper `cacheAudioWithProgress` (`src/shared/lib/audio-cache/cacheAudioWithProgress.ts`) вызывается **раннером очереди** (а не самими точками входа) с единым протоколом: pre-set `0` перед стартом → тики `onProgress` → очистка записи в `finally` (успех, ошибка и skip-cached-путь, где `cacheAudio` резолвится без единого тика). Helper пишет/чистит `playlistDownloadProgressAtom` через `setTrackDownloadProgress`/`removeTrackDownloadProgress` из `shared/lib/cache-triggers` (Issue #82). Отмена идёт через `cancelCacheDownload` (снимает и очередь, и активную закачку).

@@ -12,7 +12,7 @@ import { usePlayer } from './usePlayer'
 import { usePlayTapGuard } from './usePlayTapGuard'
 
 export const usePlayNewSermon = () => {
-  const { play, replaceAudio, seekTo, setLockScreenMetadata } = usePlayer()
+  const { play, replaceAudio, resumeAfterPause, seekTo, setLockScreenMetadata } = usePlayer()
   const [isOnline] = useAtom(isOnlineAtom)
 
   const setCurrentAudio = useAction(setCurrentAudioAction)
@@ -37,6 +37,7 @@ export const usePlayNewSermon = () => {
         recordPlaybackStart,
         recordSermonSwitch,
         replaceAudio,
+        resumeAfterPause,
         seekTo,
         setCurrentAudio,
         setCurrentPlaylist,
@@ -53,6 +54,7 @@ export const usePlayNewSermon = () => {
       recordPlaybackStart,
       recordSermonSwitch,
       replaceAudio,
+      resumeAfterPause,
       seekTo,
       setCurrentAudio,
       setCurrentPlaylist,

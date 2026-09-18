@@ -55,6 +55,12 @@
 - **не блокирует воспроизведение**: проверка и запуск кэширования fire-and-forget (промис с молчаливым `catch` — сбой проверки кэша некритичен, стриминг продолжается из сети), паритет с Issue #73;
 - покрывает и начальный `loadAudio` (восстановление приложения), и `replaceAudio` (смена трека).
 
+### Resume со сменой источника на кэш (Issue #107)
+
+Если фоновая закачка завершилась посреди стриминга, а затем интернет пропал, resume (пауза → play) раньше молча не работал: нативный `AudioPlayer` оставался привязан к мёртвому серверному URI, потому что источник резолвился только в `AudioLoader.getPlaybackUrl` (вызывается из `loadAudio`/`replaceAudio` — старт/смена трека).
+
+Фикс — `PlayerService.resumeAfterPause(audioUrl)` (`src/entities/player/lib/PlayerService/native/resumeWithSourceSwap.ts`), вызывается из кнопки play (`useGuardedTogglePlay`) и из same-track ветки `playNewSermonAsync` (повторный тап на тот же трек). Метод проверяет `audioCacheService.getCachedUri`; если трек уже закэширован и текущий источник плеера — не `file://` (`AudioLoader.lastResolvedUrl`), делает `replaceAudio(audioUrl, positionAtom)` (позиция сохраняется из `positionAtom`) и затем `play()`. Replace-in-place сохраняет тот же `AudioPlayer`/MediaSession/foreground-service. `AudioLoader` теперь отслеживает последний разрешённый URL (`lastResolvedUrl`, сброс в `releaseAndReset`). Web — passthrough `play()` (см. [debt.md](../debt.md)).
+
 ### Офлайн-guard при воспроизведении (Issue #81)
 
 Общий guard `guardOfflinePlayback(audioUrl, isOnline)` (`src/entities/player/lib/playOfflineGuard.ts`) проверяет офлайн-ситуацию перед стартом воспроизведения:
@@ -121,7 +127,7 @@ Upstream-причины:
 
 В `src/entities/player/lib/`:
 
-- `usePlayer.ts` — обёртка над `playerService` (стабильный объект методов): `getStatus`, `getVolume`, `loadAudio`, `pause`, `play`, `reassertLockScreenMetadata`, `replaceAudio`, `seekTo`, `setLockScreenMetadata`, `setPlaybackRate`, `setVolume`, `stop`, `unload`.
+- `usePlayer.ts` — обёртка над `playerService` (стабильный объект методов): `getStatus`, `getVolume`, `loadAudio`, `pause`, `play`, `reassertLockScreenMetadata`, `replaceAudio`, `resumeAfterPause`, `seekTo`, `setLockScreenMetadata`, `setPlaybackRate`, `setVolume`, `stop`, `unload`.
 - `usePlaySermon.ts` — `usePlayNewSermon` — основной поток «тапнул на трек»: задаёт `currentAudio`/`currentPlaylist`, открывает полноэкранный плеер, при смене трека `replaceAudio`, `play()`, ставит lock-screen-метаданные. Содержит офлайн-guard (см. «Офлайн-guard при воспроизведении (Issue #81)»).
 - ~~`useQueueManagement.ts`~~ — **удалено 2026-09-10**: мёртвый хук локальной очереди (`playPlaylist`, `playTrack`, `shufflePlaylist`, `addToQueue`, `playNext`, `playPrevious`) — потребителей не было.
 - `useSeekControls.ts` — долгое удержание ±10с с ускорением (5с→30с, тик 200мс).

@@ -422,4 +422,32 @@ describe('AudioLoader', () => {
       expect(seekTo).toHaveBeenCalledWith(10)
     })
   })
+
+  describe('getLastResolvedUrl', () => {
+    test('returns the cached URI when the cache resolves one', async () => {
+      const cachedUri = 'file:///data/cache/audio.mp3'
+      mockGetCachedUri.mockResolvedValue(cachedUri)
+
+      await audioLoader.loadAudio(AUDIO_URL)
+
+      expect(audioLoader.getLastResolvedUrl()).toBe(cachedUri)
+    })
+
+    test('returns the network URL when the cache resolves null', async () => {
+      mockGetCachedUri.mockResolvedValue(null)
+
+      await audioLoader.loadAudio(AUDIO_URL)
+
+      expect(audioLoader.getLastResolvedUrl()).toBe(AUDIO_URL)
+    })
+
+    test('resets to null after releaseAndReset', async () => {
+      await audioLoader.loadAudio(AUDIO_URL)
+      expect(audioLoader.getLastResolvedUrl()).toBe(AUDIO_URL)
+
+      audioLoader.releaseAndReset()
+
+      expect(audioLoader.getLastResolvedUrl()).toBeNull()
+    })
+  })
 })

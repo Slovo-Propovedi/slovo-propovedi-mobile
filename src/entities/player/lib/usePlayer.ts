@@ -11,6 +11,7 @@ export const usePlayer = () =>
       play: playerService.play,
       reassertLockScreenMetadata: playerService.reassertLockScreenMetadata,
       replaceAudio: playerService.replaceAudio,
+      resumeAfterPause: playerService.resumeAfterPause,
       seekTo: playerService.seekTo,
       setLockScreenMetadata: playerService.setLockScreenMetadata,
       setPlaybackRate: playerService.setPlaybackRate,

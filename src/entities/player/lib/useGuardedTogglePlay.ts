@@ -11,11 +11,13 @@ const TOGGLE_PLAY_ERROR_MESSAGE = 'Ошибка при переключении 
 /**
  * Single guarded toggle-play for every play/pause button. Pause is never
  * blocked; pause → play passes through guardOfflinePlayback (offline +
- * uncached shows the dialog and blocks). Without a current audioUrl the tap
+ * uncached shows the dialog and blocks), then resumeAfterPause swaps the
+ * player source to the cached file when the background download completed
+ * after streaming started (issue #107). Without a current audioUrl the tap
  * is a no-op, matching usePlaySermon's early return.
  */
 export const useGuardedTogglePlay = () => {
-  const { pause, play } = usePlayer()
+  const { pause, resumeAfterPause } = usePlayer()
   const [isOnline] = useAtom(isOnlineAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
@@ -26,7 +28,7 @@ export const useGuardedTogglePlay = () => {
       const audioUrl = currentAudio?.audioUrl
       if (!audioUrl) return
       if (await guardOfflinePlayback(audioUrl, isOnline)) return
-      return await play()
+      return await resumeAfterPause(audioUrl)
     } catch (error) {
       if (error instanceof Error && error.message.includes('activity is no longer available'))
         console.warn('[Player] Ignoring AppState-related error:', error.message)
@@ -36,7 +38,7 @@ export const useGuardedTogglePlay = () => {
         throw error
       }
     }
-  }, [currentAudio, isOnline, isPlaying, pause, play])
+  }, [currentAudio, isOnline, isPlaying, pause, resumeAfterPause])
 
   return { togglePlay }
 }

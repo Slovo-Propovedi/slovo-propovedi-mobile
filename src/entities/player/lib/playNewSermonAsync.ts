@@ -29,6 +29,7 @@ export interface PlayNewSermonDeps {
     oldSermonId: string
   }) => Promise<unknown>
   replaceAudio: (url: string, positionMs: number) => Promise<unknown>
+  resumeAfterPause: (audioUrl: string) => Promise<unknown>
   seekTo: (ms: number) => Promise<unknown>
   setCurrentAudio: (audio: AudioPlayerData) => Promise<unknown>
   setCurrentPlaylist: (playlist: PlaylistData) => Promise<unknown>
@@ -90,6 +91,7 @@ export const playNewSermonAsync = async (
 
     if (currentAudio?.id !== sermonId) await deps.replaceAudio(newAudio.audioUrl, resumeMs)
     else {
+      await deps.resumeAfterPause(newAudio.audioUrl)
       const entry = history.find(e => getEntrySermon(e)?.id === sermonId)
 
       if (entry && resumeMs === 0) await deps.seekTo(0)

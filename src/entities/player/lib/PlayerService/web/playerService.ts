@@ -14,7 +14,6 @@ import { createStatusTracker } from './playerStatusTracker'
 
 export class WebPlayerService {
   public getState = () => this.state.getState()
-
   public subscribe = (listener: () => void) => this.pubsub.subscribe(listener)
 
   public play = async () => {
@@ -25,13 +24,15 @@ export class WebPlayerService {
     })
     this.statusTracker.start()
   }
-
   public pause = async () => {
     if (this.audioInstance) this.audioInstance.pause()
     this.resumeController.flushProgressAtCurrentTime()
     this.statusTracker.stop()
     this.state.setIsPlaying(false)
   }
+
+  // Web source-swap on resume is not implemented (see docs/debt.md)
+  public resumeAfterPause = async (): Promise<void> => this.play()
 
   public setLockScreenMetadata = (metadata: LockScreenMetadata): void => {
     this.mediaSession.setMetadata(metadata)

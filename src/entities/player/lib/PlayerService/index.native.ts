@@ -14,7 +14,8 @@ import { lockScreenControls } from './native/LockScreenControls'
 import { createAudioInterruptionHandler, setupPlayerListeners } from './native/nativePlayerHelpers'
 import { playbackController } from './native/PlaybackController'
 import { playerStatusListener } from './native/PlayerStatusListener'
-import { trackAutoAdvanceService } from './native/TrackAutoAdvanceService/TrackAutoAdvanceService'
+import { resumeWithSourceSwap } from './native/resumeWithSourceSwap'
+import { wireTrackAutoAdvance } from './native/wireTrackAutoAdvance'
 
 export class PlayerService {
   public getStatus = () => playbackController.getStatus(this.playerInstance)
@@ -50,6 +51,9 @@ export class PlayerService {
   public play = async (): Promise<void> => {
     await playbackController.play(this.playerInstance)
   }
+
+  public resumeAfterPause = async (audioUrl: string): Promise<void> =>
+    resumeWithSourceSwap({ play: this.play, replaceAudio: this.replaceAudio }, audioUrl)
 
   public replaceAudio = async (
     audioUrl: string,
@@ -122,9 +126,4 @@ export class PlayerService {
 
 export const playerService = new PlayerService()
 
-trackAutoAdvanceService.setPlayerActions({
-  pause: () => playerService.pause(),
-  play: () => playerService.play(),
-  replaceAudio: (audioUrl, initialPositionMs) =>
-    playerService.replaceAudio(audioUrl, initialPositionMs),
-})
+wireTrackAutoAdvance(playerService)

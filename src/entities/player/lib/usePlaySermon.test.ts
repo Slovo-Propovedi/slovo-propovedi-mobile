@@ -13,6 +13,7 @@ import { usePlayNewSermon } from './usePlaySermon'
 
 const mockPlay = jest.fn().mockResolvedValue(undefined)
 const mockReplaceAudio = jest.fn().mockResolvedValue(null)
+const mockResumeAfterPause = jest.fn().mockResolvedValue(undefined)
 const mockSeekTo = jest.fn().mockResolvedValue(undefined)
 const mockSetLockScreenMetadata = jest.fn()
 const mockGetResumePosition = jest.fn()
@@ -35,6 +36,7 @@ jest.mock('./usePlayer', () => ({
   usePlayer: () => ({
     play: mockPlay,
     replaceAudio: mockReplaceAudio,
+    resumeAfterPause: mockResumeAfterPause,
     seekTo: mockSeekTo,
     setLockScreenMetadata: mockSetLockScreenMetadata,
   }),
@@ -110,6 +112,7 @@ describe('usePlayNewSermon', () => {
     dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(1000)
     mockPlay.mockResolvedValue(undefined)
     mockReplaceAudio.mockResolvedValue(null)
+    mockResumeAfterPause.mockResolvedValue(undefined)
     mockSeekTo.mockResolvedValue(undefined)
     mockRecordPlaybackStart.mockResolvedValue(undefined)
     mockRecordSermonSwitch.mockResolvedValue(undefined)
@@ -187,6 +190,7 @@ describe('usePlayNewSermon', () => {
 
     expect(mockSeekTo).toHaveBeenCalledWith(0)
     expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
   })
 
   test('same sermon, mismatch >1s → seekTo(resume)', async () => {
