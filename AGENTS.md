@@ -137,6 +137,14 @@ src/entities/player/
 
 Полные правила ведения docs — в `docs/README.md` и `docs/conventions.md`. AGENTS.md и docs/ должны оставаться консистентными.
 
+## Agent Division of Labor: Plan vs Implement
+
+When work is delegated to a coding agent, the DELEGATOR owns analysis and planning; the CODING agent owns mechanical implementation only.
+
+- The delegator hands over a ready implementation plan: exact files to change, what to change in each, the chosen approach (no alternatives to weigh), verification commands, and a commit plan. Root-cause analysis, library/node_modules research, and design decisions happen BEFORE delegation.
+- The coding agent does NOT do open-ended exploration, architecture research, or option weighing. Allowed: reading the specific files named in the task (plus the minimal call-graph context needed to apply the change), running checks/tests, committing.
+- If the plan turns out to be wrong or a required fact is missing, the coding agent STOPS and reports back with the blocking fact instead of improvising a design.
+
 ## Barrel Export Rules
 
 - **One barrel per slice**: Each FSD slice should have only ONE barrel export file: `index.ts` at the slice root
