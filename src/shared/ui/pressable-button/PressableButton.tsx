@@ -1,5 +1,6 @@
 import { forwardRef } from 'react'
 import { Pressable, type PressableProps, type View } from 'react-native'
+import { hapticLight } from 'shared/lib/haptics'
 
 // On web react-native-web only renders a real <button> (Vimium hints and
 // browser semantics depend on it) when accessibilityRole='button' is passed
@@ -10,8 +11,17 @@ export interface PressableButtonProps extends Omit<PressableProps, 'accessibilit
 }
 
 export const PressableButton = forwardRef<View, PressableButtonProps>(
-  ({ accessibilityRole, ...props }, ref) => (
-    <Pressable {...props} ref={ref} accessibilityRole={accessibilityRole ?? 'button'} />
+  ({ accessibilityRole, disabled, onPressIn, ...props }, ref) => (
+    <Pressable
+      {...props}
+      ref={ref}
+      disabled={disabled}
+      accessibilityRole={accessibilityRole ?? 'button'}
+      onPressIn={event => {
+        if (!disabled) hapticLight()
+        onPressIn?.(event)
+      }}
+    />
   ),
 )
 PressableButton.displayName = 'PressableButton'

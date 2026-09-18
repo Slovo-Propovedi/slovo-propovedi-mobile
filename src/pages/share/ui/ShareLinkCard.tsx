@@ -1,5 +1,6 @@
-import { Linking, Pressable, Text } from 'react-native'
+import { Linking, Text } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
+import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
 import { CopyLinkButton } from './CopyLinkButton'
 import { styles } from './styles'
@@ -19,21 +20,21 @@ export const ShareLinkCard = ({ url }: ShareLinkCardProps) => {
 
   return (
     <>
-      <Pressable
+      <PressableButton
         accessibilityRole='link'
         onPress={() => openUrl(url)}
         style={[styles.qrCard, { backgroundColor: '#ffffff' }]}
       >
         <QRCode size={220} value={url} color='#000000' backgroundColor='#ffffff' />
-      </Pressable>
-      <Pressable accessibilityRole='link' onPress={() => openUrl(url)}>
+      </PressableButton>
+      <PressableButton accessibilityRole='link' onPress={() => openUrl(url)}>
         <Text
           selectable
           style={[styles.releaseUrl, styles.releaseUrlLink, { color: currentTheme.primary }]}
         >
           {url}
         </Text>
-      </Pressable>
+      </PressableButton>
       <CopyLinkButton url={url} style={styles.copyButton} />
     </>
   )

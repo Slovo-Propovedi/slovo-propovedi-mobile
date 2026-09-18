@@ -1,5 +1,6 @@
 import { Entypo } from '@expo/vector-icons'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { hapticLight } from 'shared/lib/haptics'
 import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
@@ -51,7 +52,12 @@ export const DetailsOverlay = ({ audio, insetsTop, onClose, styles }: DetailsOve
 
   return (
     <View style={[styles.descriptionContainer, { marginTop: insetsTop + HEADER_OFFSET }]}>
-      <Pressable tabIndex={-1} onPress={onClose} style={StyleSheet.absoluteFill} />
+      <Pressable
+        tabIndex={-1}
+        onPress={onClose}
+        onPressIn={hapticLight}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.descriptionCard}>
         <ScrollView contentContainerStyle={localStyles.content}>
           {hasContent ? (

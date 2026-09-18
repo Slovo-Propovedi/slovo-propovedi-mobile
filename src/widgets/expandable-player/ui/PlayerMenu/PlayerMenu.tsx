@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { type PlaybackRate, usePlaybackRate } from 'entities/player'
 import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
+import { hapticLight } from 'shared/lib/haptics'
 import { reportError } from 'shared/model/error-dialog'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './PlayerMenu.styles'
@@ -85,7 +86,12 @@ export const PlayerMenu = ({
   return (
     <>
       <Animated.View style={[styles.backdrop, backdropStyle]}>
-        <Pressable tabIndex={-1} onPress={onClose} style={styles.backdropPressable} />
+        <Pressable
+          tabIndex={-1}
+          onPress={onClose}
+          onPressIn={hapticLight}
+          style={styles.backdropPressable}
+        />
       </Animated.View>
       <Animated.View style={[styles.menuWrapper, wrapperStyle]}>
         <View

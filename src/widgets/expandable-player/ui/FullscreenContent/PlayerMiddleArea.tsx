@@ -1,4 +1,5 @@
 import { Pressable } from 'react-native'
+import { hapticLight } from 'shared/lib/haptics'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import type { AudioPlayerData } from 'shared/model'
 import { DetailsOverlay } from './DetailsOverlay'
@@ -23,5 +24,10 @@ export const PlayerMiddleArea = ({
   showDetails ? (
     <DetailsOverlay audio={audio} styles={styles} insetsTop={insetsTop} onClose={onCloseDetails} />
   ) : (
-    <Pressable tabIndex={-1} style={styles.spacer} onPress={() => void onTogglePlay()} />
+    <Pressable
+      tabIndex={-1}
+      style={styles.spacer}
+      onPressIn={hapticLight}
+      onPress={() => void onTogglePlay()}
+    />
   )

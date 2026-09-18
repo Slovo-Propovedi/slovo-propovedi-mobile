@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Platform, Pressable, Modal as RNModal, StyleSheet, View } from 'react-native'
 import { useEscapeKey } from 'shared/lib/escape-key'
+import { hapticLight } from 'shared/lib/haptics'
 import { useTheme } from './theme/ThemeContext/useTheme'
 import { INDENTS } from './theme/themed'
 
@@ -34,6 +35,7 @@ export const Modal = ({ children, onBackdropPress, visible }: Props) => {
             screen readers announce the dialog as one button). */}
         <Pressable
           tabIndex={-1}
+          onPressIn={hapticLight}
           onPress={onBackdropPress}
           testID={BACKDROP_TEST_ID}
           style={styles.backdropPressable}
