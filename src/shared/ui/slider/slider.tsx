@@ -3,6 +3,7 @@ import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'reac
 import { ScrollView } from 'react-native-gesture-handler'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES } from '../theme/themed'
+import { useMouseDragScroll } from './lib/useMouseDragScroll'
 import { SliderItem } from './slider-item/slider-item'
 import {
   SliderItemSize,
@@ -79,6 +80,7 @@ export const Slider = <D extends object>({
 }: SliderProps<D>) => {
   const { currentTheme } = useTheme()
   const sliderStyles = styles(currentTheme)
+  const wrapperRef = useMouseDragScroll()
 
   if (!items?.length) return null
 
@@ -88,32 +90,34 @@ export const Slider = <D extends object>({
   return (
     <View style={[sliderStyles.slider, { marginTop: titleFontSize / 2 }, { marginBottom }, style]}>
       <SliderTitle title={title} onPress={onPressTitle} fontSize={titleFontSize} />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={sliderStyles.contentContainer}
-      >
-        {itemsByRows.map((row, i) => (
-          <View key={`row-${i}`} testID='slider-row' style={sliderStyles.row}>
-            {row.map(({ artwork, data, description }, index) => (
-              <SliderItem
-                key={index}
-                size={itemsSize}
-                artwork={artwork}
-                testID='slider-item'
-                transform={transform}
-                descriptionTitle={description}
-                onPress={event => onPressItem?.(data, event)}
-                whereIsSlideTitleLocated={whereIsSlideTitleLocated}
-                descriptionTitleTextAlign={descriptionTitleTextAlign}
-                descriptionBackgroundStyle={descriptionBackgroundStyle}
-                descriptionSubTitleTextAlign={descriptionSubTitleTextAlign}
-                isDescriptionTitleOnSlideLarge={isDescriptionTitleOnSlideLarge}
-              />
-            ))}
-          </View>
-        ))}
-      </ScrollView>
+      <View ref={wrapperRef} style={sliderStyles.flexFill}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={sliderStyles.contentContainer}
+        >
+          {itemsByRows.map((row, i) => (
+            <View key={`row-${i}`} testID='slider-row' style={sliderStyles.row}>
+              {row.map(({ artwork, data, description }, index) => (
+                <SliderItem
+                  key={index}
+                  size={itemsSize}
+                  artwork={artwork}
+                  testID='slider-item'
+                  transform={transform}
+                  descriptionTitle={description}
+                  onPress={event => onPressItem?.(data, event)}
+                  whereIsSlideTitleLocated={whereIsSlideTitleLocated}
+                  descriptionTitleTextAlign={descriptionTitleTextAlign}
+                  descriptionBackgroundStyle={descriptionBackgroundStyle}
+                  descriptionSubTitleTextAlign={descriptionSubTitleTextAlign}
+                  isDescriptionTitleOnSlideLarge={isDescriptionTitleOnSlideLarge}
+                />
+              ))}
+            </View>
+          ))}
+        </ScrollView>
+      </View>
     </View>
   )
 }

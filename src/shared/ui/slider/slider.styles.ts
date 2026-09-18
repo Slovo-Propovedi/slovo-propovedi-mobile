@@ -8,6 +8,7 @@ export const createSliderStyles = (theme: ThemeColors) =>
       flexDirection: 'column-reverse',
       gap: INDENTS.middle,
     },
+    flexFill: { flex: 1 },
     row: {
       flexDirection: 'row',
       gap: INDENTS.middle,
