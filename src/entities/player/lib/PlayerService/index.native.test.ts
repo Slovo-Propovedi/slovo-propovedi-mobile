@@ -1,27 +1,27 @@
 import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isSeekingAtom, seekTargetPositionAtom } from '../../model'
-import { audioLoader } from './AudioLoader'
 import { playerService } from './index.native'
-import { playbackController } from './PlaybackController'
-import { playerStatusListener } from './PlayerStatusListener'
+import { audioLoader } from './native/AudioLoader'
+import { playbackController } from './native/PlaybackController'
+import { playerStatusListener } from './native/PlayerStatusListener'
 
-jest.mock('./AudioLoader', () => ({
+jest.mock('./native/AudioLoader', () => ({
   audioLoader: { loadAudio: jest.fn(), replaceAudio: jest.fn() },
 }))
 
-jest.mock('./AudioModeManager', () => ({ audioModeManager: { configure: jest.fn() } }))
+jest.mock('./native/AudioModeManager', () => ({ audioModeManager: { configure: jest.fn() } }))
 
-jest.mock('./LockScreenControls', () => ({ lockScreenControls: {} }))
+jest.mock('./native/LockScreenControls', () => ({ lockScreenControls: {} }))
 
-jest.mock('./nativePlayerHelpers', () => ({
+jest.mock('./native/nativePlayerHelpers', () => ({
   createAudioInterruptionHandler: jest.fn(() => jest.fn()),
   setupPlayerListeners: jest.fn(),
 }))
 
-jest.mock('./PlayerStatusListener', () => ({ playerStatusListener: { cleanup: jest.fn() } }))
+jest.mock('./native/PlayerStatusListener', () => ({ playerStatusListener: { cleanup: jest.fn() } }))
 
-jest.mock('./TrackAutoAdvanceService/TrackAutoAdvanceService', () => ({
+jest.mock('./native/TrackAutoAdvanceService/TrackAutoAdvanceService', () => ({
   trackAutoAdvanceService: { setPlayerActions: jest.fn() },
 }))
 

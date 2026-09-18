@@ -64,15 +64,15 @@
 | ------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `entities/listening-history/lib/loadHistory.ts`                     | Не удалось загрузить историю прослушивания                     |
 | `entities/listening-history/lib/historyStorage.ts`                  | Не удалось сохранить историю прослушивания                     |
-| `entities/player/lib/PlayerService/PlaybackController.ts`           | Ошибка при перемотке аудио                                     |
+| `entities/player/lib/PlayerService/native/PlaybackController.ts`           | Ошибка при перемотке аудио                                     |
 | `entities/player/lib/initializePlayer.ts`                           | Ошибка при восстановлении плеера                               |
-| `entities/player/lib/PlayerService/AudioLoader.ts` (load)           | Ошибка при загрузке аудио                                      |
-| `entities/player/lib/PlayerService/AudioLoader.ts` (cache)          | Ошибка при проверке кэша аудио                                 |
-| `entities/player/lib/PlayerService/TrackAutoAdvanceService`         | Ошибка при автоматическом переходе / завершении записи истории |
-| `entities/player/lib/PlayerService/TrackAutoAdvanceService` (parse) | Не удалось прочитать данные проповеди/плейлиста из хранилища   |
+| `entities/player/lib/PlayerService/native/AudioLoader.ts` (load)           | Ошибка при загрузке аудио                                      |
+| `entities/player/lib/PlayerService/native/AudioLoader.ts` (cache)          | Ошибка при проверке кэша аудио                                 |
+| `entities/player/lib/PlayerService/native/TrackAutoAdvanceService`         | Ошибка при автоматическом переходе / завершении записи истории |
+| `entities/player/lib/PlayerService/native/TrackAutoAdvanceService` (parse) | Не удалось прочитать данные проповеди/плейлиста из хранилища   |
 | `entities/player/lib/PlayerService/index.web.ts`                    | Ошибка при воспроизведении аудио                               |
 | `entities/player/lib/PlayerService/BackgroundCachingService`        | Ошибка при фоновом кэшировании аудио                           |
-| `entities/player/lib/PlayerService/LockScreenControls.ts`           | Не удалось обновить данные плеера на экране блокировки         |
+| `entities/player/lib/PlayerService/native/LockScreenControls.ts`           | Не удалось обновить данные плеера на экране блокировки         |
 | `entities/player/ui/PlayerControls/PlayerControls.tsx`              | Ошибка при переключении воспроизведения                        |
 
 Ошибки, связанные с AppState («activity is no longer available»), диалог не поднимают —

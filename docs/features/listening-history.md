@@ -240,7 +240,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 ### Авто-переход (TrackAutoAdvanceService)
 
-`playNextTrack` и `playFirstTrackInQueue` (`src/entities/player/lib/PlayerService/TrackAutoAdvanceService/playback.ts`) вычисляют resume через `ctx.get(historyAtom)` + `getResumePosition(history, nextTrackId)` и передают в `playTrackWithMetadata`. `repeatCurrentTrack` **всегда** передаёт 0 (режим повтора — воспроизведение с начала).
+`playNextTrack` и `playFirstTrackInQueue` (`src/entities/player/lib/PlayerService/native/TrackAutoAdvanceService/playback.ts`) вычисляют resume через `ctx.get(historyAtom)` + `getResumePosition(history, nextTrackId)` и передают в `playTrackWithMetadata`. `repeatCurrentTrack` **всегда** передаёт 0 (режим повтора — воспроизведение с начала).
 
 ## Запись прогресса
 

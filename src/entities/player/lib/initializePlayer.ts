@@ -20,7 +20,7 @@ import {
 import { playbackRateSchema } from '../playback-rate'
 import { playbackProgressSchema } from './playbackProgress'
 import { playerService } from './PlayerService'
-import { audioModeManager } from './PlayerService/AudioModeManager'
+import { audioModeManager } from './PlayerService/native/AudioModeManager'
 import {
   readStartupAttempts,
   resetStartupAttempts,

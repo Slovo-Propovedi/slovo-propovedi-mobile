@@ -6,7 +6,7 @@
 
 ## expo-audio контракт
 
-`AudioPlayer.setActiveForLockScreen` (`src/entities/player/lib/PlayerService/LockScreenControls.ts`) — **синхронный JSI-вызов**. Поле `artworkUrl` нативно кастуется в `java.net.URL`; значение без протокола → `MalformedURLException` → `CodedError`, который **бросается синхронно**. Непойманный throw (в т.ч. из колбэка `setInterval`) — фатальный краш приложения (uncaught exception на native-потоке `mqt_v_native`).
+`AudioPlayer.setActiveForLockScreen` (`src/entities/player/lib/PlayerService/native/LockScreenControls.ts`) — **синхронный JSI-вызов**. Поле `artworkUrl` нативно кастуется в `java.net.URL`; значение без протокола → `MalformedURLException` → `CodedError`, который **бросается синхронно**. Непойманный throw (в т.ч. из колбэка `setInterval`) — фатальный краш приложения (uncaught exception на native-потоке `mqt_v_native`).
 
 Реальный crash log:
 
@@ -52,4 +52,4 @@ stack: CodedError ← applyMetadata ← anonymous (setInterval retry callback)
 - [../features/player.md](../features/player.md) — плеер; **Баг 3** — crash loop и применённый фикс
 - [../features/error-handling.md](../features/error-handling.md) — `reportError`, глобальный диалог ошибок, ErrorBoundary, GlobalErrorHandler
 - [storage.md](./storage.md) — AsyncStorage (ключи плеера, crash-guard старта, жизненный цикл)
-- Код: `src/entities/player/lib/PlayerService/LockScreenControls.ts`, `src/shared/lib/app-icon.ts`, `src/entities/player/lib/startupGuard.ts`
+- Код: `src/entities/player/lib/PlayerService/native/LockScreenControls.ts`, `src/shared/lib/app-icon.ts`, `src/entities/player/lib/startupGuard.ts`

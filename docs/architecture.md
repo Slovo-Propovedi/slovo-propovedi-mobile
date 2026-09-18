@@ -144,10 +144,12 @@ app/
 src/entities/player/lib/PlayerService/
 ├── index.ts        # TS-фолбэк: export { playerService } from './index.native'
 ├── index.native.ts # реализация на expo-audio (PlayerService)
-└── index.web.ts    # реализация на HTMLAudioElement (WebPlayerService)
+├── index.web.ts    # реализация на HTMLAudioElement (WebPlayerService)
+├── native/         # нативные вспомогательные модули (expo-audio)
+└── web/            # веб-вспомогательные модули (HTMLAudioElement, Media Session API)
 ```
 
-Общий `index.ts` резолвится бандлером в нужную платформенную реализацию автоматически. Наружу слайс экспортирует один и тот же контракт (`playerService`), поэтому потребители (`src/entities/player/lib/usePlayer.ts`) не знают о платформе.
+Общий `index.ts` резолвится бандлером в нужную платформенную реализацию автоматически. Наружу слайс экспортирует один и тот же контракт (`playerService`), поэтому потребители (`src/entities/player/lib/usePlayer.ts`) не знают о платформе. Платформенные точки входа `index.native.ts`/`index.web.ts` обязаны оставаться в корне `PlayerService/` — этого требует platform-resolution Metro; вспомогательные модули разложены по подпапкам `native/` и `web/`.
 
 Web-специфика целиком (PWA, Service Worker, офлайн-кеш аудио на Cache Storage, десктопный layout, обход бага Metro lazy-bundling) — в [`features/web.md`](./features/web.md).
 

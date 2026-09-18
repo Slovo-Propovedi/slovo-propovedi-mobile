@@ -8,13 +8,13 @@ import {
   setPauseTypeAction,
   setPositionAction,
 } from '../../model'
-import { audioLoader } from './AudioLoader'
-import { audioModeManager } from './AudioModeManager'
-import { lockScreenControls } from './LockScreenControls'
-import { createAudioInterruptionHandler, setupPlayerListeners } from './nativePlayerHelpers'
-import { playbackController } from './PlaybackController'
-import { playerStatusListener } from './PlayerStatusListener'
-import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdvanceService'
+import { audioLoader } from './native/AudioLoader'
+import { audioModeManager } from './native/AudioModeManager'
+import { lockScreenControls } from './native/LockScreenControls'
+import { createAudioInterruptionHandler, setupPlayerListeners } from './native/nativePlayerHelpers'
+import { playbackController } from './native/PlaybackController'
+import { playerStatusListener } from './native/PlayerStatusListener'
+import { trackAutoAdvanceService } from './native/TrackAutoAdvanceService/TrackAutoAdvanceService'
 
 export class PlayerService {
   public getStatus = () => playbackController.getStatus(this.playerInstance)

@@ -8,7 +8,7 @@ import {
 } from 'shared/config'
 import { initializePlayer } from './initializePlayer'
 import { playerService } from './PlayerService'
-import { audioModeManager } from './PlayerService/AudioModeManager'
+import { audioModeManager } from './PlayerService/native/AudioModeManager'
 import { parseStartupAttempts, shouldSkipRestore } from './startupGuard'
 
 jest.mock('./PlayerService', () => ({
@@ -20,7 +20,7 @@ jest.mock('./PlayerService', () => ({
   },
 }))
 
-jest.mock('./PlayerService/AudioModeManager', () => ({
+jest.mock('./PlayerService/native/AudioModeManager', () => ({
   audioModeManager: {
     configure: jest.fn().mockResolvedValue(undefined),
   },
