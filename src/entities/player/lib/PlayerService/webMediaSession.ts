@@ -5,10 +5,12 @@ import type { LockScreenMetadata } from './types'
 import { currentAudioAtom } from '../../model'
 import { guardOfflinePlayback } from '../playOfflineGuard'
 import { type GetAudio, type MediaSessionPlayer, registerSeekHandlers } from './webMediaSessionSeek'
+import { applyMetadata, createSetHandler } from './webMediaSessionShared'
 import { updatePlaybackState, updatePositionState } from './webMediaSessionState'
 
 export interface WebMediaSession {
   clear: () => void
+  reassert: () => void
   setMetadata: (metadata: LockScreenMetadata) => void
   updatePlaybackState: () => void
   updatePositionState: () => void
@@ -16,34 +18,10 @@ export interface WebMediaSession {
 
 const NOOP_MEDIA_SESSION: WebMediaSession = {
   clear: () => {},
+  reassert: () => {},
   setMetadata: () => {},
   updatePlaybackState: () => {},
   updatePositionState: () => {},
-}
-
-const createSetHandler =
-  (ns: MediaSession | undefined) =>
-  (action: MediaSessionAction, handler: MediaSessionActionHandler | null): void => {
-    try {
-      ns?.setActionHandler(action, handler)
-    } catch {
-      // Unsupported action in this browser — ignore silently.
-    }
-  }
-
-const applyMetadata = (metadata: LockScreenMetadata | null): void => {
-  if (!metadata) {
-    navigator.mediaSession.metadata = null
-    return
-  }
-
-  const artwork = metadata.artworkUrl ? [{ src: metadata.artworkUrl }] : []
-  navigator.mediaSession.metadata = new MediaMetadata({
-    album: metadata.albumTitle ?? '',
-    artist: metadata.artist ?? '',
-    artwork,
-    title: metadata.title ?? '',
-  })
 }
 
 export const createWebMediaSession = (
@@ -105,6 +83,12 @@ export const createWebMediaSession = (
     setHandler('previoustrack', null)
   }
 
+  const reassert = (): void => {
+    registerActionHandlers()
+    updatePlaybackState(getAudio())
+    updatePositionState(getAudio())
+  }
+
   const setMetadata = (metadata: LockScreenMetadata): void => {
     try {
       applyMetadata(metadata)
@@ -119,6 +103,7 @@ export const createWebMediaSession = (
 
   return {
     clear,
+    reassert,
     setMetadata,
     updatePlaybackState: () => updatePlaybackState(getAudio()),
     updatePositionState: () => updatePositionState(getAudio()),

@@ -212,6 +212,28 @@ describe('createWebMediaSession', () => {
     expect(mock.playbackState).toBe('paused')
   })
 
+  test('reassert re-registers action handlers and refreshes playback and position state', () => {
+    const mock = makeMediaSessionMock()
+    const audio = makeAudio({ currentTime: 30, paused: false })
+    const { controller } = makeController(audio)
+
+    controller.setMetadata(METADATA)
+    mock.setActionHandler.mockClear()
+    mock.setPositionState.mockClear()
+
+    controller.reassert()
+
+    expect(mock.setActionHandler).toHaveBeenCalledWith('play', expect.any(Function))
+    expect(mock.setActionHandler).toHaveBeenCalledWith('pause', expect.any(Function))
+    expect(mock.setActionHandler).toHaveBeenCalledWith('seekto', expect.any(Function))
+    expect(mock.playbackState).toBe('playing')
+    expect(mock.setPositionState).toHaveBeenCalledWith({
+      duration: 100,
+      playbackRate: 1,
+      position: 30,
+    })
+  })
+
   test('clear resets metadata, playback state and action handlers', () => {
     const mock = makeMediaSessionMock()
     const { controller } = makeController(makeAudio())
@@ -268,6 +290,7 @@ describe('createWebMediaSession', () => {
 
     expect(() => controller.setMetadata(METADATA)).not.toThrow()
     expect(() => controller.updatePositionState()).not.toThrow()
+    expect(() => controller.reassert()).not.toThrow()
     expect(player.seekTo).not.toHaveBeenCalled()
   })
 })

@@ -365,6 +365,15 @@ Web-длительность синхронизируется в общий `dur
 
 Веб-сервис покрыт юнит-тестами (`index.web.test.ts`, импорт по явному пути `./index.web` в обход jest-expo platform-resolution): identity-guard пауз-листенера, гейт `state.isPlaying`, flush-пути stop/unload/seekTo, no-op guard'ы `flushProgressAtCurrentTime`, duration-bridge (включая сброс длительности при replace до прихода реальной длительности).
 
+### Web-прерывание: восстановление позиции (Issue #106)
+
+iOS Safari при системном прерывании (звонок, Siri, переключение приложений) сбрасывает `currentTime` HTMLAudioElement в 0 и «забывает» позицию. `webInterruptionResume.ts` (`createInterruptionResume`) хранит снапшот позиции и восстанавливает её при возврате:
+
+- **Снапшот** — `noteLivePosition(ms)` пишется из каждого `timeupdate` (`webAudioHandlers.ts`), но значения ≤ 1с игнорируются (guard `RESUME_GUARD_MIN_MS = 1000` — не запоминать стартовый ноль); `noteExplicitPosition(ms)` фиксирует явный seek (`seekTo`), отрицательные клампаются в 0; `reset(ms)` ставит снапшот при `loadAudio`/`stop`/`unload`.
+- **Восстановление** — `maybeRestore(audio)` вызывается из `play()` и из visibility-колбэка (`webVisibilityWatcher.ts`): если снапшот > 1с и `audio.currentTime` всё ещё < 1с (браузер сбросил позицию), применяется `applyRestore` — `audio.currentTime = snapshot`, `state.setPosition`, `mediaSession.updatePositionState()`. При `readyState === 0` (метаданные ещё не загружены) вешается **одноразовый** `loadedmetadata`-листенер, который повторяет `currentTime` только если браузер так и не продвинул позицию за 1с.
+- **Flush** — `flushProgressAtCurrentTime` пишет `max(currentTime, snapshot)`, чтобы пауза/stop/unload после сброса не затёрли историю нулём.
+- **Media Session reassert** — `webMediaSession.reassert()` перерегистрирует action-хендлеры и обновляет playback/position state; вызывается из visibility-колбэка и `play`-события (`webAudioHandlers.ts`), потому что iOS Safari теряет media-session-хендлеры при прерывании.
+
 Подробнее — [listening-history.md](./listening-history.md).
 
 ## Известные баги (Issue #45)
