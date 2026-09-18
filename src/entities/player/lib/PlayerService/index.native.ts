@@ -14,6 +14,7 @@ import { lockScreenControls } from './native/LockScreenControls'
 import { createAudioInterruptionHandler, setupPlayerListeners } from './native/nativePlayerHelpers'
 import { playbackController } from './native/PlaybackController'
 import { playerStatusListener } from './native/PlayerStatusListener'
+import { recoverStreamAfterReconnect as healStreamAfterReconnect } from './native/reconnectHeal'
 import { resumeWithSourceSwap } from './native/resumeWithSourceSwap'
 import { wireTrackAutoAdvance } from './native/wireTrackAutoAdvance'
 
@@ -55,6 +56,9 @@ export class PlayerService {
   public resumeAfterPause = async (audioUrl: string): Promise<void> =>
     resumeWithSourceSwap({ play: this.play, replaceAudio: this.replaceAudio }, audioUrl)
 
+  public recoverStreamAfterReconnect = (audioUrl: string): Promise<void> =>
+    healStreamAfterReconnect(this, audioUrl)
+
   public replaceAudio = async (
     audioUrl: string,
     initialPositionMs = 0,
@@ -67,7 +71,6 @@ export class PlayerService {
     // Replace-in-place strategy: the same AudioPlayer (and thus the same MediaSession,
     // foreground service and notification ID) survives the track switch. Tearing down
     // the lock-screen session here stopped the Android foreground service mid-transition,
-    // freezing background auto-advance (issue #50) and orphaning duplicate notifications.
     await audioModeManager.configure()
 
     const player = await audioLoader.replaceAudio(audioUrl, initialPositionMs)
@@ -103,9 +106,7 @@ export class PlayerService {
   }
 
   public unload = async (): Promise<void> => {
-    // No lockScreenControls.clear() here: release() while the session is still
-    // active removes the notification natively and reliably, while deactivating
-    // first can silently no-op mid-BINDING and orphan a duplicate notification.
+    // No lockScreenControls.clear(): release() removes the notification natively (issue #50).
     playerStatusListener.cleanup()
     audioLoader.releaseAndReset()
     this.playerInstance = null
@@ -117,8 +118,8 @@ export class PlayerService {
   }
 
   private handleAudioInterruption = createAudioInterruptionHandler({
-    pause: (...args) => this.pause(...args),
-    play: () => this.play(),
+    pause: this.pause,
+    play: this.play,
   })
 
   private playerInstance: AudioPlayer | null = null

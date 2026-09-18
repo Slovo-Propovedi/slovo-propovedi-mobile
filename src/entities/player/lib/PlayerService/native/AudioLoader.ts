@@ -11,6 +11,7 @@ const REPLACE_AUDIO_ERROR_MESSAGE = 'Ошибка при замене аудио
 class AudioLoader {
   public async loadAudio(audioUrl: string, initialPositionMs = 0): Promise<AudioPlayer | null> {
     if (!audioUrl) return null
+    this.loaded = false
     void setIsBufferingAction(ctx, true)
     void setPositionAction(ctx, 0)
     this.trackEndHandled = false
@@ -28,16 +29,22 @@ class AudioLoader {
       { downloadFirst: false, keepAudioSessionActive: true },
     )
     this.playerInstance = player
-    return waitForLoaded(player, initialPositionMs, p => p === this.playerInstance).catch(error => {
-      console.error('[AudioLoader] loadAudio: Promise rejected with error:', error)
-      reportError(error, 'Ошибка при загрузке аудио')
-      void setIsBufferingAction(ctx, false)
-      return null
-    })
+    return waitForLoaded(player, initialPositionMs, p => p === this.playerInstance)
+      .then(loaded => {
+        this.loaded = loaded !== null
+        return loaded
+      })
+      .catch(error => {
+        console.error('[AudioLoader] loadAudio: Promise rejected with error:', error)
+        reportError(error, 'Ошибка при загрузке аудио')
+        void setIsBufferingAction(ctx, false)
+        return null
+      })
   }
 
   public async replaceAudio(audioUrl: string, initialPositionMs = 0): Promise<AudioPlayer | null> {
     if (!audioUrl) return null
+    this.loaded = false
     void setIsBufferingAction(ctx, true)
     this.trackEndHandled = false
     if (!this.playerInstance) return this.loadAudio(audioUrl, initialPositionMs)
@@ -53,10 +60,18 @@ class AudioLoader {
       void setIsBufferingAction(ctx, false)
       return null
     }
-    return waitForLoaded(this.playerInstance, initialPositionMs, p => p === this.playerInstance)
+    return waitForLoaded(
+      this.playerInstance,
+      initialPositionMs,
+      p => p === this.playerInstance,
+    ).then(loaded => {
+      this.loaded = loaded !== null
+      return loaded
+    })
   }
 
   public releaseAndReset(): void {
+    this.loaded = false
     this.lastResolvedUrl = null
     if (!this.playerInstance) return
     this.playerInstance.release()
@@ -69,6 +84,10 @@ class AudioLoader {
 
   public getLastResolvedUrl(): null | string {
     return this.lastResolvedUrl
+  }
+
+  public isPlayerLoaded(): boolean {
+    return this.loaded
   }
 
   public resetTrackEndHandled(): void {
@@ -98,6 +117,7 @@ class AudioLoader {
   private playerInstance: AudioPlayer | null = null
   private trackEndHandled = false
   private lastResolvedUrl: null | string = null
+  private loaded = false
 }
 
 export const audioLoader = new AudioLoader()

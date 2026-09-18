@@ -2,10 +2,13 @@ interface WebAudioEventHandlers {
   onDuration: (durationMs: number) => void
   onDurationChange?: (durationMs: number) => void
   onEnded: () => void
+  onError: () => void
   onLoaded: () => void
   onPause: () => void
   onPlay: () => void
+  onPlaying: () => void
   onPosition: (positionMs: number) => void
+  onWaiting: () => void
 }
 
 export const attachWebAudioEvents = (
@@ -39,6 +42,9 @@ export const attachWebAudioEvents = (
   const handlePause = () => handlers.onPause()
   const handleTimeUpdate = () => handlers.onPosition(Math.floor(audio.currentTime * 1000))
   const handleEnded = () => handlers.onEnded()
+  const handleError = () => handlers.onError()
+  const handleWaiting = () => handlers.onWaiting()
+  const handlePlaying = () => handlers.onPlaying()
 
   audio.addEventListener('loadedmetadata', handleLoadedMetadata)
   audio.addEventListener('durationchange', handleDurationChange)
@@ -46,6 +52,9 @@ export const attachWebAudioEvents = (
   audio.addEventListener('pause', handlePause)
   audio.addEventListener('timeupdate', handleTimeUpdate)
   audio.addEventListener('ended', handleEnded)
+  audio.addEventListener('error', handleError)
+  audio.addEventListener('waiting', handleWaiting)
+  audio.addEventListener('playing', handlePlaying)
 
   return () => {
     audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
@@ -54,5 +63,8 @@ export const attachWebAudioEvents = (
     audio.removeEventListener('pause', handlePause)
     audio.removeEventListener('timeupdate', handleTimeUpdate)
     audio.removeEventListener('ended', handleEnded)
+    audio.removeEventListener('error', handleError)
+    audio.removeEventListener('waiting', handleWaiting)
+    audio.removeEventListener('playing', handlePlaying)
   }
 }

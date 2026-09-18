@@ -1,13 +1,24 @@
 import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { isSeekingAtom, seekTargetPositionAtom } from '../../model'
+import {
+  isBufferingAtom,
+  isPlayingAtom,
+  isSeekingAtom,
+  positionAtom,
+  seekTargetPositionAtom,
+} from '../../model'
 import { playerService } from './index.native'
 import { audioLoader } from './native/AudioLoader'
 import { playbackController } from './native/PlaybackController'
 import { playerStatusListener } from './native/PlayerStatusListener'
 
 jest.mock('./native/AudioLoader', () => ({
-  audioLoader: { loadAudio: jest.fn(), replaceAudio: jest.fn() },
+  audioLoader: {
+    getLastResolvedUrl: jest.fn(),
+    isPlayerLoaded: jest.fn(),
+    loadAudio: jest.fn(),
+    replaceAudio: jest.fn(),
+  },
 }))
 
 jest.mock('./native/AudioModeManager', () => ({ audioModeManager: { configure: jest.fn() } }))
@@ -93,5 +104,103 @@ describe('PlayerService volume restore', () => {
     await playerService.replaceAudio('https://example.com/next.mp3')
 
     expect(player.volume).toBe(0.4)
+  })
+})
+
+describe('PlayerService.recoverStreamAfterReconnect', () => {
+  const NETWORK_URL = 'https://example.com/audio.mp3'
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    isPlayingAtom(ctx, false)
+    isBufferingAtom(ctx, false)
+    positionAtom(ctx, 0)
+    ;(audioLoader.getLastResolvedUrl as jest.Mock).mockReturnValue(NETWORK_URL)
+    ;(audioLoader.isPlayerLoaded as jest.Mock).mockReturnValue(true)
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test('null URL does nothing', async () => {
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect('')
+
+    expect(replaceSpy).not.toHaveBeenCalled()
+    expect(loadSpy).not.toHaveBeenCalled()
+    expect(playSpy).not.toHaveBeenCalled()
+  })
+
+  test('local file source does nothing', async () => {
+    ;(audioLoader.getLastResolvedUrl as jest.Mock).mockReturnValue('file:///cache/abc.mp3')
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).not.toHaveBeenCalled()
+    expect(loadSpy).not.toHaveBeenCalled()
+    expect(playSpy).not.toHaveBeenCalled()
+  })
+
+  test('healthy playing stream does nothing', async () => {
+    isPlayingAtom(ctx, true)
+    isBufferingAtom(ctx, false)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).not.toHaveBeenCalled()
+    expect(loadSpy).not.toHaveBeenCalled()
+    expect(playSpy).not.toHaveBeenCalled()
+  })
+
+  test('paused stream swaps source without resuming', async () => {
+    positionAtom(ctx, 42000)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).toHaveBeenCalledWith(NETWORK_URL, 42000)
+    expect(loadSpy).not.toHaveBeenCalled()
+    expect(playSpy).not.toHaveBeenCalled()
+  })
+
+  test('stalled stream swaps source and resumes', async () => {
+    isPlayingAtom(ctx, true)
+    isBufferingAtom(ctx, true)
+    positionAtom(ctx, 1000)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).toHaveBeenCalledWith(NETWORK_URL, 1000)
+    expect(loadSpy).not.toHaveBeenCalled()
+    expect(playSpy).toHaveBeenCalled()
+  })
+
+  test('never-loaded player routes through loadAudio', async () => {
+    ;(audioLoader.isPlayerLoaded as jest.Mock).mockReturnValue(false)
+    positionAtom(ctx, 5000)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(loadSpy).toHaveBeenCalledWith(NETWORK_URL, 5000)
+    expect(replaceSpy).not.toHaveBeenCalled()
+    expect(playSpy).not.toHaveBeenCalled()
   })
 })

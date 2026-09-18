@@ -1,16 +1,16 @@
 import { ctx } from 'shared/lib/reatom-ctx'
-import { reportError } from 'shared/model/error-dialog'
 import type { LockScreenMetadata } from '../types'
 import { type PlaybackRate, setPlaybackRateAction } from '../../../playback-rate'
 import { scheduleHistoryFlush } from '../progressFlusher'
 import { createWebAudioElement } from './audioElement'
-import { attachWebAudioHandlers } from './audioHandlers'
+import { attachWebAudioHandlers, reportPlayError } from './audioHandlers'
 import { resetWebDuration } from './durationWriter'
 import { createInterruptionResumeController } from './interruptionResumeController'
 import { createWebMediaSession } from './mediaSession'
 import { createPubSub } from './playerPubSub'
 import { createWebPlayerState } from './playerState'
 import { createStatusTracker } from './playerStatusTracker'
+import { recoverStreamAfterReconnect as healStreamAfterReconnect } from './reconnectHeal'
 
 export class WebPlayerService {
   public getState = () => this.state.getState()
@@ -18,10 +18,7 @@ export class WebPlayerService {
 
   public play = async () => {
     if (this.audioInstance) this.resume.maybeRestore(this.audioInstance)
-    this.audioInstance?.play().catch(error => {
-      console.error('[WebPlayerService] play failed:', error)
-      reportError(error, 'Ошибка при воспроизведении аудио')
-    })
+    this.audioInstance?.play().catch(reportPlayError)
     this.statusTracker.start()
   }
   public pause = async () => {
@@ -33,6 +30,9 @@ export class WebPlayerService {
 
   // Web source-swap on resume is not implemented (see docs/debt.md)
   public resumeAfterPause = async (): Promise<void> => this.play()
+
+  public recoverStreamAfterReconnect = (audioUrl: string): Promise<void> =>
+    this.audioInstance ? healStreamAfterReconnect(this, audioUrl) : Promise.resolve()
 
   public setLockScreenMetadata = (metadata: LockScreenMetadata): void => {
     this.mediaSession.setMetadata(metadata)

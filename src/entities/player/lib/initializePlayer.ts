@@ -21,6 +21,7 @@ import { playbackRateSchema } from '../playback-rate'
 import { playbackProgressSchema } from './playbackProgress'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/native/AudioModeManager'
+import { setupReconnectRecovery } from './reconnectRecovery'
 import {
   readStartupAttempts,
   resetStartupAttempts,
@@ -33,6 +34,9 @@ const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 const parsePlaybackProgress = getParseJsonWithSchema(playbackProgressSchema)
 
 export const initializePlayer = async () => {
+  // Must run before the skip-restore early return: reconnect recovery also
+  // re-caches the current track when restore is skipped.
+  setupReconnectRecovery()
   try {
     const startupAttempts = await readStartupAttempts()
 
