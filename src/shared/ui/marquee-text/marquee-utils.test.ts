@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import {
   clampMarqueeOffset,
   MARQUEE_EPSILON_PX,
@@ -103,5 +105,19 @@ describe('shouldArmMarquee', () => {
     expect(shouldArmMarquee(10)).toBe(true)
     expect(shouldArmMarquee(10)).toBe(true)
     expect(shouldArmMarquee(0)).toBe(false)
+  })
+})
+
+describe('worklet directives', () => {
+  test('marquee worklet functions retain the worklet directive in source', () => {
+    // The reanimated babel plugin strips the 'worklet' directive from the
+    // transpiled output, so Function.prototype.toString() cannot see it. Read
+    // the source instead: a stripped directive passes JS tests but crashes
+    // native (Reanimated requires the directive to run on the UI thread).
+    const source = readFileSync(join(__dirname, 'marquee-utils.ts'), 'utf8')
+
+    expect(source).toMatch(/export const clampMarqueeOffset[\s\S]*?'worklet'/)
+    expect(source).toMatch(/export const shouldMarquee[\s\S]*?'worklet'/)
+    expect(source).toMatch(/export const shouldArmMarquee[\s\S]*?'worklet'/)
   })
 })

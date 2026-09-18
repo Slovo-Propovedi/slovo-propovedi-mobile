@@ -50,4 +50,13 @@ export const createMarqueeGesture = (
       // not a drag: keep the click alive so the parent pressable navigates.
       if (!isArmed) didDrag.value = false
     })
+    .onFinalize((_e, success) => {
+      'worklet'
+      // A cancelled/failed gesture never ran the normal onEnd path, so didDrag
+      // would stay armed and swallow the next legitimate click. Reset it only
+      // on failure — a successful drag must keep didDrag armed until the
+      // browser's post-drag `click` fires (the click guard reads it at click
+      // time, which on web is after onFinalize).
+      if (!success) didDrag.value = false
+    })
 }

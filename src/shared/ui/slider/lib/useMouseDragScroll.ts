@@ -33,6 +33,7 @@ export const useMouseDragScroll = () => {
     let startX = 0
     let movedDistance = 0
     let previousCursor = ''
+    let previousUserSelect = ''
     let clickGuard: ((e: Event) => void) | null = null
 
     const resolveScrollable = () => {
@@ -73,18 +74,25 @@ export const useMouseDragScroll = () => {
     }
 
     const endDrag = () => {
-      if (scrollable) scrollable.style.cursor = previousCursor
+      if (scrollable) {
+        scrollable.style.cursor = previousCursor
+        scrollable.style.userSelect = previousUserSelect
+      }
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
       window.removeEventListener('pointercancel', handlePointerCancel)
     }
 
     const handlePointerDown = (e: PointerEvent) => {
+      // A fresh pointerdown clears any stale click guard left by a previous
+      // drag whose pointerup landed outside the wrapper (the click then fired
+      // on a common ancestor above the wrapper and never reached the guard).
+      removeClickGuard()
+      if (e.pointerType !== 'mouse' || e.button !== 0) return
       // A drag that starts on a marquee title must scrub only the title, not
       // the row: the marquee's own pan gesture owns that pointer.
       const target = e.target
       if (isElementWithClosest(target) && target.closest(MARQUEE_DRAG_SELECTOR)) return
-      if (e.pointerType !== 'mouse' || e.button !== 0) return
       const targetNode = resolveScrollable()
       if (!targetNode) return
       scrollable = targetNode
@@ -92,7 +100,9 @@ export const useMouseDragScroll = () => {
       startX = e.clientX
       movedDistance = 0
       previousCursor = targetNode.style.cursor
+      previousUserSelect = targetNode.style.userSelect
       targetNode.style.cursor = 'grabbing'
+      targetNode.style.userSelect = 'none'
       window.addEventListener('pointermove', handlePointerMove)
       window.addEventListener('pointerup', handlePointerUp)
       window.addEventListener('pointercancel', handlePointerCancel)

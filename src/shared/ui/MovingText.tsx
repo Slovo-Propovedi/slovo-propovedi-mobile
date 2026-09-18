@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { type StyleProp, type TextStyle, View } from 'react-native'
+import { Platform, type StyleProp, type TextStyle, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSharedValue } from 'react-native-reanimated'
 import TextTicker from 'react-native-text-ticker'
@@ -39,9 +39,17 @@ export const MovingText = ({ style, testID, text }: MovingTextProps) => {
     setArmed(false)
   }
 
-  const pan = Gesture.Pan()
-    .activateAfterLongPress(HOLD_MS)
-    .shouldCancelWhenOutside(false)
+  const pan = Gesture.Pan().shouldCancelWhenOutside(false)
+
+  // Desktop users press-and-drag immediately; long-press activation loses the
+  // race with touch-slop failure (PanGestureHandler.tryBegin cancels activation
+  // when the pointer moves > touch slop within the hold window). minDistance(10)
+  // activates on the first real movement — no 250ms wait before scrubbing.
+  // Native keeps the long-press so a slow click still navigates.
+  if (Platform.OS === 'web') pan.minDistance(10).failOffsetY([-14, 14])
+  else pan.activateAfterLongPress(HOLD_MS)
+
+  pan
     .onBegin(() => {
       'worklet'
       // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value reset in worklet

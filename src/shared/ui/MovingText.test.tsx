@@ -1,5 +1,7 @@
 import { act, screen } from '@testing-library/react-native'
+import { Platform } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { HOLD_MS } from './marquee-text'
 import { MovingText } from './MovingText'
 
 const { __gestureMock } = jest.requireMock('react-native-gesture-handler') as {
@@ -155,6 +157,27 @@ describe('<MovingText />', () => {
     await fireDragEnd(0)
 
     expect(getCapturedProps().marqueeOnMount).toBe(false)
+  })
+
+  test('uses minDistance activation on web (no long-press hold)', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      await renderWithProviders(<MovingText text='Some text' />)
+
+      expect(__gestureMock.pan().minDistance).toBe(10)
+      expect(__gestureMock.pan().failOffsetY).toEqual([-14, 14])
+      expect(__gestureMock.pan().activateAfterLongPress).toBeUndefined()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('keeps long-press activation on native', async () => {
+    await renderWithProviders(<MovingText text='Some text' />)
+
+    expect(__gestureMock.pan().activateAfterLongPress).toBe(HOLD_MS)
+    expect(__gestureMock.pan().minDistance).toBeUndefined()
+    expect(__gestureMock.pan().failOffsetY).toBeUndefined()
   })
 
   test('disarms on text change', async () => {

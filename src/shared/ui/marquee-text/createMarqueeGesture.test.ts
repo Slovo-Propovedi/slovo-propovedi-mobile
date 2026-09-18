@@ -55,6 +55,26 @@ describe('createMarqueeGesture', () => {
     expect(startIdleMarquee).toHaveBeenCalled()
   })
 
+  test('resets didDrag on finalize after a cancelled gesture', () => {
+    createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+
+    __gestureMock.pan().onStart?.({})
+    __gestureMock.pan().onEnd?.({ translationX: 5 }, false)
+    __gestureMock.pan().onFinalize?.({}, false)
+
+    expect(didDrag.value).toBe(false)
+  })
+
+  test('keeps didDrag armed on finalize after a successful drag', () => {
+    createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+
+    __gestureMock.pan().onStart?.({})
+    __gestureMock.pan().onEnd?.({ translationX: 5 }, true)
+    __gestureMock.pan().onFinalize?.({}, true)
+
+    expect(didDrag.value).toBe(true)
+  })
+
   test('uses minDistance activation on web (no long-press hold)', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {

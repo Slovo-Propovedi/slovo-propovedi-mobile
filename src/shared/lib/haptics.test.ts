@@ -67,4 +67,20 @@ describe('hapticLight', () => {
       restorePlatform.restore()
     }
   })
+
+  test('swallows impactAsync rejection (no unhandled rejection)', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      jest.setSystemTime(4000)
+      mockedImpactAsync.mockRejectedValueOnce(new Error('haptic failed'))
+
+      hapticLight()
+      // Flush the microtask queue: an unhandled rejection would fail the test.
+      await Promise.resolve()
+
+      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Light)
+    } finally {
+      restorePlatform.restore()
+    }
+  })
 })

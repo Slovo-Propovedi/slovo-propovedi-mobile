@@ -7,7 +7,7 @@ type PointerHandler = (event: unknown) => void
 
 const createScrollableNode = () => ({
   scrollLeft: 0,
-  style: { cursor: '' },
+  style: { cursor: '', userSelect: '' },
 })
 
 const createFakeWrapper = (scrollable: ReturnType<typeof createScrollableNode>) => {
@@ -20,7 +20,12 @@ const createFakeWrapper = (scrollable: ReturnType<typeof createScrollableNode>) 
       listeners[type]?.forEach(handler => handler(event))
     },
     firstElementChild: scrollable,
-    removeEventListener: jest.fn(),
+    removeEventListener: jest.fn((type: string, handler: PointerHandler) => {
+      const typeListeners = listeners[type]
+      if (!typeListeners) return
+      const index = typeListeners.indexOf(handler)
+      if (index !== -1) typeListeners.splice(index, 1)
+    }),
   }
 }
 
@@ -40,6 +45,10 @@ const fireWindowPointerMove = (fakeDom: FakeDom, clientX: number) => {
 
 const fireWindowPointerUp = (fakeDom: FakeDom) => {
   fakeDom.window.getListeners('pointerup').forEach(handler => handler())
+}
+
+const fireWindowPointerCancel = (fakeDom: FakeDom) => {
+  fakeDom.window.getListeners('pointercancel').forEach(handler => handler())
 }
 
 describe('useMouseDragScroll', () => {
@@ -68,6 +77,7 @@ describe('useMouseDragScroll', () => {
       wrapper.dispatch('pointerdown', { button: 0, clientX: 100, pointerType: 'mouse' })
     })
     expect(scrollable.style.cursor).toBe('grabbing')
+    expect(scrollable.style.userSelect).toBe('none')
 
     await act(async () => {
       fireWindowPointerMove(fakeDom, 120)
@@ -83,6 +93,7 @@ describe('useMouseDragScroll', () => {
       fireWindowPointerUp(fakeDom)
     })
     expect(scrollable.style.cursor).toBe('')
+    expect(scrollable.style.userSelect).toBe('')
   })
 
   test('swallows the click after a drag over the threshold', async () => {
@@ -111,6 +122,123 @@ describe('useMouseDragScroll', () => {
 
     expect(clickEvent.preventDefault).toHaveBeenCalled()
     expect(clickEvent.stopPropagation).toHaveBeenCalled()
+  })
+
+  test('clears a stale click guard on the next pointerdown', async () => {
+    const wrapperRef = await renderHook()
+    const scrollable = createScrollableNode()
+    const wrapper = createFakeWrapper(scrollable)
+
+    await act(async () => {
+      wrapperRef?.(wrapper)
+    })
+
+    // First drag installs the guard, then pointerup WITHOUT any click —
+    // simulating a release outside the wrapper, where the click fires on a
+    // common ancestor above the wrapper and the guard never sees it.
+    await act(async () => {
+      wrapper.dispatch('pointerdown', { button: 0, clientX: 100, pointerType: 'mouse' })
+    })
+    await act(async () => {
+      fireWindowPointerMove(fakeDom, 110)
+    })
+    await act(async () => {
+      fireWindowPointerUp(fakeDom)
+    })
+
+    // A fresh tap's own pointerdown clears the stale guard before its click.
+    await act(async () => {
+      wrapper.dispatch('pointerdown', { button: 0, clientX: 200, pointerType: 'mouse' })
+    })
+    await act(async () => {
+      fireWindowPointerUp(fakeDom)
+    })
+
+    const clickEvent = { preventDefault: jest.fn(), stopPropagation: jest.fn() }
+    await act(async () => {
+      wrapper.dispatch('click', clickEvent)
+    })
+
+    expect(clickEvent.preventDefault).not.toHaveBeenCalled()
+    expect(clickEvent.stopPropagation).not.toHaveBeenCalled()
+  })
+
+  test('ignores non-left-button pointerdown', async () => {
+    const wrapperRef = await renderHook()
+    const scrollable = createScrollableNode()
+    const wrapper = createFakeWrapper(scrollable)
+
+    await act(async () => {
+      wrapperRef?.(wrapper)
+    })
+
+    await act(async () => {
+      wrapper.dispatch('pointerdown', { button: 2, clientX: 100, pointerType: 'mouse' })
+    })
+
+    expect(fakeDom.window.addEventListener).not.toHaveBeenCalledWith(
+      'pointermove',
+      expect.any(Function),
+    )
+    expect(scrollable.style.cursor).toBe('')
+  })
+
+  test('lets the click pass through after a sub-threshold drag', async () => {
+    const wrapperRef = await renderHook()
+    const scrollable = createScrollableNode()
+    const wrapper = createFakeWrapper(scrollable)
+
+    await act(async () => {
+      wrapperRef?.(wrapper)
+    })
+
+    await act(async () => {
+      wrapper.dispatch('pointerdown', { button: 0, clientX: 100, pointerType: 'mouse' })
+    })
+    await act(async () => {
+      fireWindowPointerMove(fakeDom, 105)
+    })
+    await act(async () => {
+      fireWindowPointerUp(fakeDom)
+    })
+
+    const clickEvent = { preventDefault: jest.fn(), stopPropagation: jest.fn() }
+    await act(async () => {
+      wrapper.dispatch('click', clickEvent)
+    })
+
+    expect(clickEvent.preventDefault).not.toHaveBeenCalled()
+    expect(clickEvent.stopPropagation).not.toHaveBeenCalled()
+  })
+
+  test('pointercancel ends the drag and removes the click guard', async () => {
+    const wrapperRef = await renderHook()
+    const scrollable = createScrollableNode()
+    const wrapper = createFakeWrapper(scrollable)
+
+    await act(async () => {
+      wrapperRef?.(wrapper)
+    })
+
+    await act(async () => {
+      wrapper.dispatch('pointerdown', { button: 0, clientX: 100, pointerType: 'mouse' })
+    })
+    await act(async () => {
+      fireWindowPointerMove(fakeDom, 110)
+    })
+    await act(async () => {
+      fireWindowPointerCancel(fakeDom)
+    })
+
+    expect(scrollable.style.cursor).toBe('')
+
+    const clickEvent = { preventDefault: jest.fn(), stopPropagation: jest.fn() }
+    await act(async () => {
+      wrapper.dispatch('click', clickEvent)
+    })
+
+    expect(clickEvent.preventDefault).not.toHaveBeenCalled()
+    expect(clickEvent.stopPropagation).not.toHaveBeenCalled()
   })
 
   test('ignores touch pointerdown', async () => {
