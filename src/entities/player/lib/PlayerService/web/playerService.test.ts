@@ -3,10 +3,11 @@ import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
-import { currentAudioAtom, durationAtom, setDurationAction } from '../../model'
-import { startBackgroundCaching } from './BackgroundCachingService'
-import { playerService } from './index.web'
-import { flushProgress, scheduleHistoryFlush } from './progressFlusher'
+import { currentAudioAtom, durationAtom, setDurationAction } from '../../../model'
+import { startBackgroundCaching } from '../BackgroundCachingService'
+import { playerService } from '../index.web'
+import { flushProgress, scheduleHistoryFlush } from '../progressFlusher'
+import { audioStubs, removeGlobalAudioStub, setupWebPlayerTest } from './testHelpers'
 
 jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
 
@@ -18,11 +19,11 @@ jest.mock('shared/lib/audio-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
 }))
 
-jest.mock('./BackgroundCachingService', () => ({
+jest.mock('../BackgroundCachingService', () => ({
   startBackgroundCaching: jest.fn(),
 }))
 
-jest.mock('../../model', () => ({
+jest.mock('../../../model', () => ({
   currentAudioAtom: jest.fn(),
   durationAtom: jest.fn(),
   setDurationAction: jest.fn(),
@@ -31,9 +32,9 @@ jest.mock('../../model', () => ({
   setPositionAction: jest.fn(),
 }))
 
-jest.mock('../../playback-rate', () => ({ setPlaybackRateAction: jest.fn() }))
+jest.mock('../../../playback-rate', () => ({ setPlaybackRateAction: jest.fn() }))
 
-jest.mock('./progressFlusher', () => ({
+jest.mock('../progressFlusher', () => ({
   flushProgress: jest.fn(),
   scheduleHistoryFlush: jest.fn(),
 }))
@@ -50,55 +51,6 @@ const AUDIO_EVENT_TYPES = [
   'timeupdate',
   'ended',
 ] as const
-
-interface AudioElementLike {
-  addEventListener: (type: string, handler: () => void) => void
-  currentTime: number
-  duration: number
-  pause: () => void
-  play: () => Promise<void>
-  playbackRate: number
-  readyState: number
-  removeEventListener: (type: string, handler: () => void) => void
-  src: string
-}
-
-interface AudioElementStub {
-  element: AudioElementLike
-  fireEvent: (type: string) => void
-  pause: jest.Mock
-  play: jest.Mock
-}
-
-const createAudioElementStub = (overrides: Partial<AudioElementLike> = {}): AudioElementStub => {
-  const listeners = new Map<string, Set<() => void>>()
-  const pause = jest.fn()
-  const play = jest.fn().mockResolvedValue(undefined)
-  const addEventListener = jest.fn((type: string, handler: () => void) => {
-    const set = listeners.get(type) ?? new Set<() => void>()
-    set.add(handler)
-    listeners.set(type, set)
-  })
-  const removeEventListener = jest.fn((type: string, handler: () => void) => {
-    listeners.get(type)?.delete(handler)
-  })
-  const element: AudioElementLike = {
-    addEventListener,
-    currentTime: 0,
-    duration: 0,
-    pause,
-    play,
-    playbackRate: 1,
-    readyState: 4,
-    removeEventListener,
-    src: '',
-    ...overrides,
-  }
-  const fireEvent = (type: string) => {
-    listeners.get(type)?.forEach(handler => handler())
-  }
-  return { element, fireEvent, pause, play }
-}
 
 const mockSermonContext = () => {
   ;(ctx.get as jest.Mock).mockImplementation(atom => {
@@ -120,24 +72,14 @@ const flushAutoCache = () =>
     setImmediate(resolve)
   })
 
-let audioStubs: AudioElementStub[]
-
 beforeEach(async () => {
-  audioStubs = []
-  ;(global as { Audio: unknown }).Audio = jest.fn(() => {
-    const stub = createAudioElementStub()
-    audioStubs.push(stub)
-    return stub.element
-  })
   jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
-  await playerService.unload()
-  await playerService.pause()
-  jest.clearAllMocks()
+  await setupWebPlayerTest(playerService)
   ;(ctx.get as jest.Mock).mockReset()
 })
 
 afterEach(() => {
-  delete (global as { Audio?: unknown }).Audio
+  removeGlobalAudioStub()
 })
 
 describe('WebPlayerService pause flush', () => {
@@ -354,57 +296,5 @@ describe('WebPlayerService auto-cache on play', () => {
     await flushAutoCache()
 
     expect(startBackgroundCaching).toHaveBeenCalledWith(AUDIO_URL)
-  })
-})
-
-describe('WebPlayerService interruption resume', () => {
-  afterEach(async () => {
-    await playerService.unload()
-  })
-
-  test('play restores the snapshot after the browser reset the element', async () => {
-    await playerService.loadAudio(AUDIO_URL, 120000)
-    audioStubs[0].element.currentTime = 0
-
-    await playerService.play()
-
-    expect(audioStubs[0].element.currentTime).toBe(120)
-  })
-
-  test('pause flushes the snapshot instead of the reset currentTime', async () => {
-    await playerService.loadAudio(AUDIO_URL, 120000)
-    audioStubs[0].element.currentTime = 0
-
-    await playerService.pause()
-
-    expect(flushProgress).toHaveBeenCalledWith(120000)
-  })
-
-  test('stop clears the snapshot so a later play stays at 0', async () => {
-    await playerService.loadAudio(AUDIO_URL, 120000)
-    await playerService.stop()
-
-    await playerService.play()
-
-    expect(audioStubs[0].element.currentTime).toBe(0)
-  })
-
-  test('play restores an explicit seek position after the browser reset the element', async () => {
-    await playerService.loadAudio(AUDIO_URL)
-    await playerService.seekTo(30000)
-    audioStubs[0].element.currentTime = 0
-
-    await playerService.play()
-
-    expect(audioStubs[0].element.currentTime).toBe(30)
-  })
-
-  test('play does not restore a sub-second snapshot', async () => {
-    await playerService.loadAudio(AUDIO_URL, 500)
-    audioStubs[0].element.currentTime = 0
-
-    await playerService.play()
-
-    expect(audioStubs[0].element.currentTime).toBe(0)
   })
 })
