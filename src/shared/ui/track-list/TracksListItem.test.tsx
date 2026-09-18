@@ -27,11 +27,6 @@ jest.mock('@expo/vector-icons', () => ({
   ),
 }))
 
-jest.mock('react-native-text-ticker', () => ({
-  __esModule: true,
-  default: (props: { children: string }) => <MockText>{props.children}</MockText>,
-}))
-
 let mockLastMenuAnchor: { height: number; width: number; x: number; y: number } | null = null
 let mockLastCacheDisabled: boolean | undefined = undefined
 
@@ -67,9 +62,9 @@ const AUDIO_URL = 'https://example.com/audio.mp3'
 const TEST_SUBTITLE = 'Test Subtitle'
 const TEST_TITLE = 'Test Title'
 
-// Fixed geometry returned by the mocked View.prototype.measure
-const MOCK_MEASURE_PAGE_X = 200
-const MOCK_MEASURE_PAGE_Y = 300
+// Fixed geometry returned by the mocked View.prototype.measureInWindow
+const MOCK_MEASURE_WINDOW_X = 200
+const MOCK_MEASURE_WINDOW_Y = 300
 const MOCK_MEASURE_WIDTH = 36
 const MOCK_MEASURE_HEIGHT = 36
 
@@ -87,32 +82,14 @@ describe('<TracksListItem>', () => {
     jest.clearAllMocks()
     mockLastMenuAnchor = null
     mockLastCacheDisabled = undefined
-    // In Jest, host-component measure never fires its callback, so the menu
-    // would never receive a position. Mock the measurement with fixed geometry.
+    // In Jest, host-component measureInWindow never fires its callback, so the
+    // menu would never receive a position. Mock the measurement with fixed geometry.
     jest
-      .spyOn(View.prototype, 'measure')
-      .mockImplementation(
-        (
-          cb: (
-            x: number,
-            y: number,
-            width: number,
-            height: number,
-            pageX: number,
-            pageY: number,
-          ) => void,
-        ) => {
-          cb(
-            0,
-            0,
-            MOCK_MEASURE_WIDTH,
-            MOCK_MEASURE_HEIGHT,
-            MOCK_MEASURE_PAGE_X,
-            MOCK_MEASURE_PAGE_Y,
-          )
-          return undefined
-        },
-      )
+      .spyOn(View.prototype, 'measureInWindow')
+      .mockImplementation((cb: (x: number, y: number, width: number, height: number) => void) => {
+        cb(MOCK_MEASURE_WINDOW_X, MOCK_MEASURE_WINDOW_Y, MOCK_MEASURE_WIDTH, MOCK_MEASURE_HEIGHT)
+        return undefined
+      })
   })
 
   afterEach(() => {
@@ -167,8 +144,8 @@ describe('<TracksListItem>', () => {
       expect(mockLastMenuAnchor).toEqual({
         height: MOCK_MEASURE_HEIGHT,
         width: MOCK_MEASURE_WIDTH,
-        x: MOCK_MEASURE_PAGE_X,
-        y: MOCK_MEASURE_PAGE_Y,
+        x: MOCK_MEASURE_WINDOW_X,
+        y: MOCK_MEASURE_WINDOW_Y,
       })
     })
   })

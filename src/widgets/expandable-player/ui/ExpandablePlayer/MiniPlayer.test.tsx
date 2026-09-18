@@ -7,16 +7,6 @@ import type { GestureType } from 'react-native-gesture-handler'
 import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
 
-jest.mock('react-native-text-ticker', () => {
-  const { Text } = jest.requireActual('react-native')
-  return {
-    __esModule: true,
-    default: (props: { children: string; style?: unknown }) => (
-      <Text style={props.style as never}>{props.children}</Text>
-    ),
-  }
-})
-
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
   return {

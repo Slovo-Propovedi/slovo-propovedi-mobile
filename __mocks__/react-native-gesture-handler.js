@@ -3,12 +3,27 @@ jest.mock('react-native-gesture-handler', () => {
   const TouchableOpacity = require('react-native').TouchableOpacity
   const { ScrollView } = require('react-native')
 
+  const gestureCallbacks = {}
+
   const chainableStub = new Proxy(
     {},
     {
-      get: (target, prop) => {
+      get: (_target, prop) => {
         if (prop === 'then') return undefined
         return () => chainableStub
+      },
+    },
+  )
+
+  const pan = new Proxy(
+    {},
+    {
+      get: (_target, prop) => {
+        if (prop === 'then') return undefined
+        return callback => {
+          gestureCallbacks[String(prop)] = callback
+          return pan
+        }
       },
     },
   )
@@ -16,7 +31,7 @@ jest.mock('react-native-gesture-handler', () => {
   return {
     Gesture: {
       Native: () => chainableStub,
-      Pan: () => chainableStub,
+      Pan: () => pan,
     },
     GestureDetector: ({ children }) => children,
     GestureHandlerRootView: View,
@@ -27,5 +42,11 @@ jest.mock('react-native-gesture-handler', () => {
     State: {},
     TouchableOpacity: TouchableOpacity,
     gestureHandlerRootHOC: component => component,
+    __gestureMock: {
+      pan: () => gestureCallbacks,
+      reset: () => {
+        Object.keys(gestureCallbacks).forEach(key => delete gestureCallbacks[key])
+      },
+    },
   }
 })
