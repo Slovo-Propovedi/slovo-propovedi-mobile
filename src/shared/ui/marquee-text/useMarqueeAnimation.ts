@@ -23,24 +23,32 @@ export const useMarqueeAnimation = (
   textWidth: SharedValue<number>,
   needsMarquee: SharedValue<boolean>,
   text: string,
+  isWeb: boolean,
+  centerWhenStatic: boolean,
 ) => {
   const translateX = useSharedValue(0)
   const startX = useSharedValue(0)
+  const marqueeArmed = useSharedValue(false)
 
   useEffect(() => {
     cancelAnimation(translateX)
     translateX.value = 0
     startX.value = 0
+    marqueeArmed.value = false
   }, [text])
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-    width: needsMarquee.value ? textWidth.value * 2 + REPEAT_SPACER : textWidth.value || undefined,
-  }))
+  const animatedStyle = useAnimatedStyle(() => {
+    const staticWidth = isWeb ? '100%' : textWidth.value || undefined
+    return {
+      justifyContent: !needsMarquee.value && centerWhenStatic ? 'center' : 'flex-start',
+      transform: [{ translateX: translateX.value }],
+      width: needsMarquee.value ? textWidth.value * 2 + REPEAT_SPACER : staticWidth,
+    }
+  })
 
   const startIdleMarquee = () => {
     'worklet'
-    if (!needsMarquee.value) {
+    if (!needsMarquee.value || !marqueeArmed.value) {
       // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value reset in worklet to stop animation
       translateX.value = 0
       return
@@ -62,5 +70,5 @@ export const useMarqueeAnimation = (
     )
   }
 
-  return { animatedStyle, startIdleMarquee, startX, translateX }
+  return { animatedStyle, marqueeArmed, startIdleMarquee, startX, translateX }
 }

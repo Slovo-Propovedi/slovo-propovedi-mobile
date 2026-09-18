@@ -6,7 +6,6 @@ import { IconButton } from '../icon-button'
 import { MovingText } from '../MovingText'
 import { ProgressBar } from '../progress-bar/ProgressBar'
 import { type ThemeColors } from '../theme'
-import { TITLE_ANIMATION_THRESHOLD } from './constants'
 import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
 import { createTracksListStyles } from './styles'
 
@@ -77,7 +76,6 @@ export const TracksListItemContent = forwardRef<View, TracksListItemContentProps
         <View style={tracksListStyles.textContainer}>
           <MovingText
             text={title}
-            animationThreshold={TITLE_ANIMATION_THRESHOLD}
             style={[
               tracksListStyles.title,
               isCompleted && tracksListStyles.titleCompleted,

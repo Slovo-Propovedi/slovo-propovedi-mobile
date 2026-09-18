@@ -1,1 +1,0 @@
-export const TITLE_ANIMATION_THRESHOLD = 30

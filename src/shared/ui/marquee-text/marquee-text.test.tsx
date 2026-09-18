@@ -1,5 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native'
-import { StyleSheet } from 'react-native'
+import { Platform, StyleSheet } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { MarqueeText } from './marquee-text'
 
@@ -24,7 +25,17 @@ const fireTextLayout = async (text: string, width: number) => {
   })
 }
 
+const fireMeasurerLayout = async (text: string, width: number) => {
+  const texts = screen.getAllByText(text)
+  await fireEvent(texts[texts.length - 1], 'layout', {
+    nativeEvent: { layout: { width } },
+  })
+}
+
 describe('<MarqueeText />', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
   test('returns null when text is empty', async () => {
     const { queryByTestId } = await renderWithProviders(<MarqueeText text='' />)
     expect(queryByTestId(TEST_ID)).toBeNull()
@@ -121,6 +132,33 @@ describe('<MarqueeText />', () => {
     expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
   })
 
+  test('renders a duplicate copy for a short overflowing title (geometric eligibility)', async () => {
+    // The reported bug: a title with few characters but wide glyphs overflows
+    // geometrically (maxOffset > 0) yet never marqueed because its character
+    // length was below the old animation threshold. Eligibility is now purely
+    // geometric — overflow alone arms the duplicate copy, regardless of length.
+    const shortWideText = 'Короткий'
+
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={shortWideText} />)
+
+    await fireContainerLayout(100)
+    await fireTextLayout(shortWideText, 300)
+
+    expect(screen.getAllByText(shortWideText)).toHaveLength(3)
+  })
+
+  test('keeps the title static before any drag', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 300)
+
+    const animatedView = screen.getAllByText(propsStub.text)[0].parent
+    const style = StyleSheet.flatten(animatedView?.props.style)
+    expect(style.transform).toEqual([{ translateX: 0 }])
+    expect(withTiming).not.toHaveBeenCalled()
+  })
+
   test('re-evaluates the need for a duplicate when the text changes', async () => {
     const shortText = 'Short'
     const longText = 'A much longer text that overflows the container'
@@ -152,5 +190,115 @@ describe('<MarqueeText />', () => {
     await fireContainerLayout(400)
     await fireTextLayout(propsStub.text, 300)
     expect(screen.getAllByText(propsStub.text)).toHaveLength(2)
+  })
+
+  test('measures text width via onLayout on web', async () => {
+    jest.replaceProperty(Platform, 'OS', 'web')
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(100)
+    await fireMeasurerLayout(propsStub.text, 300)
+
+    expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
+  })
+
+  test('uses max-content width for the web measurer', async () => {
+    // Regression: an absolutely positioned element's shrink-to-fit width clamps
+    // to the container, so the measurer reported ~containerWidth and overflowing
+    // titles never became marquee-eligible. width: 'max-content' makes the
+    // measurer report the full text width.
+    jest.replaceProperty(Platform, 'OS', 'web')
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    const texts = screen.getAllByText(propsStub.text)
+    const measurer = texts[texts.length - 1]
+    const style = StyleSheet.flatten(measurer.props.style)
+    expect(style.width).toBe('max-content')
+    expect(style.whiteSpace).toBe('nowrap')
+  })
+
+  test('uses full container width for static text on web', async () => {
+    // Regression: the static branch sized the animated view to the measured
+    // text width, so fitting titles got a spurious ellipsis. On web the static
+    // view must span the full container.
+    jest.replaceProperty(Platform, 'OS', 'web')
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    const animatedView = screen.getAllByText(propsStub.text)[0].parent
+    const style = StyleSheet.flatten(animatedView?.props.style)
+    expect(style.width).toBe('100%')
+  })
+
+  test('centers static text on web when centerWhenStatic is set', async () => {
+    jest.replaceProperty(Platform, 'OS', 'web')
+    await renderWithProviders(
+      <MarqueeText centerWhenStatic testID={TEST_ID} text={propsStub.text} />,
+    )
+
+    const animatedView = screen.getAllByText(propsStub.text)[0].parent
+    const style = StyleSheet.flatten(animatedView?.props.style)
+    expect(style.justifyContent).toBe('center')
+  })
+
+  test('visible copies never ellipsize on web (no line-clamp, nowrap, clip)', async () => {
+    // The reported bug: RNW maps numberOfLines={1} to textOverflow: 'ellipsis',
+    // so a scrolling copy whose allocated width is a hair smaller than the
+    // rendered text shows "…". On web the copies must drop numberOfLines
+    // entirely — whiteSpace: 'nowrap' forces the single line, the container's
+    // overflow: 'hidden' does the clipping.
+    jest.replaceProperty(Platform, 'OS', 'web')
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    const visible = screen.getAllByText(propsStub.text)[0]
+    expect(visible.props.numberOfLines).toBeUndefined()
+    expect(visible.props.ellipsizeMode).toBe('clip')
+    expect(StyleSheet.flatten(visible.props.style).whiteSpace).toBe('nowrap')
+  })
+
+  test('marquee copies never ellipsize on web', async () => {
+    jest.replaceProperty(Platform, 'OS', 'web')
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(100)
+    await fireMeasurerLayout(propsStub.text, 300)
+
+    const texts = screen.getAllByText(propsStub.text)
+    expect(texts).toHaveLength(3)
+    for (const copy of texts.slice(0, 2)) {
+      expect(copy.props.numberOfLines).toBeUndefined()
+      expect(copy.props.ellipsizeMode).toBe('clip')
+      expect(StyleSheet.flatten(copy.props.style).whiteSpace).toBe('nowrap')
+    }
+  })
+
+  test('visible copies clip without ellipsis on native', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    const visible = screen.getAllByText(propsStub.text)[0]
+    expect(visible.props.numberOfLines).toBe(1)
+    expect(visible.props.ellipsizeMode).toBe('clip')
+  })
+
+  test('stops the loop and returns to static when the container grows to fit', async () => {
+    // The reported bug: a fitting title scrolled because needsMarquee stayed
+    // true while maxOffset dropped to ~0 (transient layout / sub-pixel). When
+    // the container grows past the text, the duplicate copy must disappear and
+    // the static branch (centered) must be restored.
+    await renderWithProviders(
+      <MarqueeText centerWhenStatic testID={TEST_ID} text={propsStub.text} />,
+    )
+
+    await fireContainerLayout(200)
+    await fireTextLayout(propsStub.text, 250)
+    expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
+    expect(
+      StyleSheet.flatten(screen.getAllByText(propsStub.text)[0].parent?.props.style).alignSelf,
+    ).toBe('flex-start')
+
+    await fireContainerLayout(260)
+    expect(screen.getAllByText(propsStub.text)).toHaveLength(2)
+    expect(
+      StyleSheet.flatten(screen.getAllByText(propsStub.text)[0].parent?.props.style).alignSelf,
+    ).toBe('center')
   })
 })

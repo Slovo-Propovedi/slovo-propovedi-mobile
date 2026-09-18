@@ -64,7 +64,7 @@ export const PlayerControlsSection = ({
     >
       <View style={styles.trackInfoRow}>
         <View style={styles.trackInfoTextContainer}>
-          <MovingText animationThreshold={30} text={audio.title || ''} style={styles.trackTitle} />
+          <MovingText text={audio.title || ''} style={styles.trackTitle} />
           <Text style={styles.artistName}>{subtitle}</Text>
         </View>
         <View style={styles.menuContainer}>

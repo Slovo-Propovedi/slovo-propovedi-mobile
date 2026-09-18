@@ -1,36 +1,40 @@
-import { screen } from '@testing-library/react-native'
-import { type StyleProp, Text, type TextStyle } from 'react-native'
-import TextTicker from 'react-native-text-ticker'
+import { act, screen } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { MovingText } from './MovingText'
 
-jest.mock('react-native-text-ticker', () => ({
-  __esModule: true,
-  default: jest.fn(),
-}))
+const { __gestureMock } = jest.requireMock('react-native-gesture-handler') as {
+  __gestureMock: {
+    pan: () => Record<string, ((...args: unknown[]) => unknown) | undefined>
+    reset: () => void
+  }
+}
+
+const { __textTickerMock } = jest.requireMock('react-native-text-ticker') as {
+  __textTickerMock: {
+    lastProps: () => Record<string, unknown> | undefined
+    reset: () => void
+  }
+}
 
 const TEST_ID = 'moving-text'
-
-let capturedProps: null | Record<string, unknown> = null
-
-const MockedTextTicker = jest.mocked(TextTicker)
+const LONG_TEXT = 'This text is definitely longer than twenty five chars'
 
 const getCapturedProps = () => {
-  expect(capturedProps).not.toBeNull()
-  return capturedProps as Record<string, unknown>
+  const props = __textTickerMock.lastProps()
+  if (!props) throw new Error('Expected TextTicker to render, but no props were captured')
+  return props
+}
+
+const fireDragEnd = async (translationX: number) => {
+  await act(async () => {
+    __gestureMock.pan().onEnd?.({ translationX })
+  })
 }
 
 describe('<MovingText />', () => {
   beforeEach(() => {
-    capturedProps = null
-    MockedTextTicker.mockImplementation(((props: Record<string, unknown>) => {
-      capturedProps = { ...props }
-      return (
-        <Text testID={props.testID as string} style={props.style as StyleProp<TextStyle>}>
-          {props.children as string}
-        </Text>
-      )
-    }) as never)
+    __gestureMock.reset()
+    __textTickerMock.reset()
   })
 
   test('renders the provided text', async () => {
@@ -40,20 +44,23 @@ describe('<MovingText />', () => {
     expect(screen.getByText(text)).toBeTruthy()
   })
 
-  test('short text renders with non-animated props', async () => {
-    const text = 'Hello World'
+  test('short text renders through the gated ticker (no length threshold)', async () => {
+    const text = 'Short' // length 5 — below the old DEFAULT_THRESHOLD of 25
     await renderWithProviders(<MovingText text={text} />)
 
     const props = getCapturedProps()
-    expect(props.duration).toBe(0)
-    expect(props.loop).toBe(false)
+    expect(props.loop).toBe(true)
     expect(props.bounce).toBe(false)
     expect(props.isInteraction).toBe(false)
-    expect(props.marqueeDelay).toBe(0)
+    expect(props.scrollSpeed).toBe(30)
+    expect(props.numberOfLines).toBe(1)
+    expect(props.repeatSpacer).toBe(50)
+    expect(props.marqueeDelay).toBe(2000)
+    expect(props.marqueeOnMount).toBe(false)
   })
 
-  test('long text renders with animated props', async () => {
-    const text = 'This text is definitely longer than twenty five chars'
+  test('long text renders through the gated ticker', async () => {
+    const text = LONG_TEXT
     await renderWithProviders(<MovingText text={text} />)
 
     const props = getCapturedProps()
@@ -66,22 +73,29 @@ describe('<MovingText />', () => {
     expect(props.marqueeDelay).toBe(2000)
   })
 
-  test('custom threshold: text above threshold animates', async () => {
-    const text = '123456789012345'
-    await renderWithProviders(<MovingText text={text} animationThreshold={10} />)
+  test('short-but-wide text arms the ticker after a real drag (reported bug)', async () => {
+    // The reported bug: a title with few characters but wide glyphs fell into
+    // the static duration={0} branch (text.length < threshold) and showed
+    // ellipsis forever — drag did nothing. Now every text goes through the
+    // gated ticker, so a real drag arms it regardless of character length.
+    const text = 'Short'
+    await renderWithProviders(<MovingText text={text} />)
 
-    const props = getCapturedProps()
-    expect(props.loop).toBe(true)
-    expect(props.scrollSpeed).toBe(30)
+    expect(getCapturedProps().marqueeOnMount).toBe(false)
+
+    await fireDragEnd(5)
+
+    expect(getCapturedProps().marqueeOnMount).toBe(true)
   })
 
-  test('custom threshold: text below threshold does not animate', async () => {
-    const text = '123456789012'
-    await renderWithProviders(<MovingText text={text} animationThreshold={15} />)
+  test('genuinely fitting text stays static without a drag', async () => {
+    // The ticker itself is inert for non-overflowing text: react-native-text-
+    // ticker measures contentFits and skips the animation, so the component
+    // contract is simply "static until armed by a real drag".
+    const text = 'Short'
+    await renderWithProviders(<MovingText text={text} />)
 
-    const props = getCapturedProps()
-    expect(props.loop).toBe(false)
-    expect(props.duration).toBe(0)
+    expect(getCapturedProps().marqueeOnMount).toBe(false)
   })
 
   test('theme color is applied to TextTicker style', async () => {
@@ -116,5 +130,43 @@ describe('<MovingText />', () => {
     expect(styleArray).toEqual(
       expect.arrayContaining([expect.objectContaining({ color: expect.any(String) }), customStyle]),
     )
+  })
+
+  test('long text stays static before any drag', async () => {
+    const text = LONG_TEXT
+    await renderWithProviders(<MovingText text={text} />)
+
+    expect(getCapturedProps().marqueeOnMount).toBe(false)
+  })
+
+  test('arms the ticker after a real drag', async () => {
+    const text = LONG_TEXT
+    await renderWithProviders(<MovingText text={text} />)
+
+    await fireDragEnd(5)
+
+    expect(getCapturedProps().marqueeOnMount).toBe(true)
+  })
+
+  test('long-press without movement does not arm the ticker', async () => {
+    const text = LONG_TEXT
+    await renderWithProviders(<MovingText text={text} />)
+
+    await fireDragEnd(0)
+
+    expect(getCapturedProps().marqueeOnMount).toBe(false)
+  })
+
+  test('disarms on text change', async () => {
+    const firstText = LONG_TEXT
+    const secondText = 'Another very long title that definitely overflows the container'
+    const { rerender } = await renderWithProviders(<MovingText text={firstText} />)
+
+    await fireDragEnd(5)
+    expect(getCapturedProps().marqueeOnMount).toBe(true)
+
+    await rerender(<MovingText text={secondText} />)
+
+    expect(getCapturedProps().marqueeOnMount).toBe(false)
   })
 })

@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react-native'
-import { Text as MockText, type StyleProp, type TextStyle } from 'react-native'
+import { Text as MockText } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { TracksListItemContent } from './TracksListItemContent'
 
@@ -10,13 +10,6 @@ jest.mock('@expo/vector-icons', () => ({
     mockIconSpy(props)
     return <MockText>{props.name}</MockText>
   },
-}))
-
-jest.mock('react-native-text-ticker', () => ({
-  __esModule: true,
-  default: (props: { children: string; style?: StyleProp<TextStyle> }) => (
-    <MockText style={props.style}>{props.children}</MockText>
-  ),
 }))
 
 const CLOUD_DOWNLOAD_ICON = 'cloud-download-outline'
