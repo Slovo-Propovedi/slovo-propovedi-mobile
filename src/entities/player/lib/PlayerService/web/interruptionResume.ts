@@ -7,6 +7,7 @@ interface InterruptionResumeDeps {
 
 export const createInterruptionResume = (deps: InterruptionResumeDeps) => {
   let snapshotMs = 0
+  let cancelPendingReapply: (() => void) | null = null
 
   const getSnapshotMs = (): number => snapshotMs
 
@@ -16,19 +17,26 @@ export const createInterruptionResume = (deps: InterruptionResumeDeps) => {
 
   const noteExplicitPosition = (ms: number): void => {
     snapshotMs = Math.max(0, ms)
+    cancelPendingReapply?.()
+    cancelPendingReapply = null
   }
 
   const reset = (ms = 0): void => {
     snapshotMs = ms
+    cancelPendingReapply?.()
+    cancelPendingReapply = null
   }
 
   const applyRestore = (audio: HTMLAudioElement, ms: number): void => {
+    cancelPendingReapply?.()
+    cancelPendingReapply = null
     if (audio.readyState === 0) {
       const reapplyAfterLoad = (): void => {
         audio.removeEventListener('loadedmetadata', reapplyAfterLoad)
         if (audio.currentTime * 1000 < RESUME_GUARD_MIN_MS) audio.currentTime = ms / 1000
       }
       audio.addEventListener('loadedmetadata', reapplyAfterLoad)
+      cancelPendingReapply = () => audio.removeEventListener('loadedmetadata', reapplyAfterLoad)
     }
     audio.currentTime = ms / 1000
     deps.state.setPosition(ms)

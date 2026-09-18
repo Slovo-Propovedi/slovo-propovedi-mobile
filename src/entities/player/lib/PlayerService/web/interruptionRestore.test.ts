@@ -4,6 +4,16 @@ import { playerService } from '../index.web'
 import { flushProgress } from '../progressFlusher'
 import { audioStubs, removeGlobalAudioStub, setupWebPlayerTest } from './testHelpers'
 
+const mockUnwatch = jest.fn()
+let mockVisibilityCallback: (() => void) | null
+
+jest.mock('./visibilityWatcher', () => ({
+  watchPageVisibility: jest.fn((cb: () => void) => {
+    mockVisibilityCallback = cb
+    return () => mockUnwatch()
+  }),
+}))
+
 jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
@@ -35,11 +45,13 @@ jest.mock('../progressFlusher', () => ({
 }))
 
 const AUDIO_URL = 'https://example.com/audio.mp3'
+const OTHER_AUDIO_URL = 'https://example.com/other.mp3'
 
 beforeEach(async () => {
   jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
   await setupWebPlayerTest(playerService)
   ;(ctx.get as jest.Mock).mockReset()
+  mockUnwatch.mockClear()
 })
 
 afterEach(() => {
@@ -94,6 +106,28 @@ describe('WebPlayerService interruption resume', () => {
 
     await playerService.play()
 
+    expect(audioStubs[0].element.currentTime).toBe(0)
+  })
+})
+
+describe('WebPlayerService visibility watcher', () => {
+  test('unload does not remove the visibility watcher', async () => {
+    await playerService.loadAudio(AUDIO_URL, 120000)
+    await playerService.unload()
+
+    expect(mockUnwatch).not.toHaveBeenCalled()
+
+    await playerService.loadAudio(OTHER_AUDIO_URL, 120000)
+    mockVisibilityCallback?.()
+
+    expect(audioStubs[1].element.currentTime).toBe(120)
+  })
+
+  test('visibility callback is a safe no-op after unload', async () => {
+    await playerService.loadAudio(AUDIO_URL, 120000)
+    await playerService.unload()
+
+    expect(() => mockVisibilityCallback?.()).not.toThrow()
     expect(audioStubs[0].element.currentTime).toBe(0)
   })
 })

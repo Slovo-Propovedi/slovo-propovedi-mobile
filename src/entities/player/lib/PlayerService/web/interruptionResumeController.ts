@@ -20,12 +20,12 @@ export const createInterruptionResumeController = (deps: InterruptionResumeContr
     flushProgress(Math.max(Math.floor(audio.currentTime * 1000), resume.getSnapshotMs()))
   }
 
-  const unwatchVisibility = watchPageVisibility(() => {
+  watchPageVisibility(() => {
     const audio = deps.getAudio()
     if (!audio) return
     deps.mediaSession.reassert()
     resume.maybeRestore(audio)
   })
 
-  return { flushProgressAtCurrentTime, resume, unwatchVisibility }
+  return { flushProgressAtCurrentTime, resume }
 }

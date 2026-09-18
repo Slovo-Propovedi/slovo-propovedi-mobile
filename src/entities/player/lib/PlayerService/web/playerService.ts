@@ -106,7 +106,6 @@ export class WebPlayerService {
     this.audioInstance?.pause()
     this.audioInstance = null
     this.resume.reset(0)
-    this.resumeController.unwatchVisibility?.()
     this.mediaSession.clear()
   }
 

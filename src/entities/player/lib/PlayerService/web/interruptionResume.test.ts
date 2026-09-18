@@ -129,4 +129,50 @@ describe('createInterruptionResume', () => {
 
     expect(audio.currentTime).toBe(5)
   })
+
+  test('noteExplicitPosition cancels a pending loadedmetadata reapply', () => {
+    const resume = createInterruptionResume(createDeps())
+    const audio = createAudio({ currentTime: 0, readyState: 0 })
+
+    resume.reset(120000)
+    expect(resume.maybeRestore(asAudio(audio))).toBe(true)
+
+    const [, listener] = audio.addEventListener.mock.calls[0]
+    resume.noteExplicitPosition(0)
+
+    expect(audio.removeEventListener).toHaveBeenCalledWith('loadedmetadata', listener)
+  })
+
+  test('reset cancels a pending loadedmetadata reapply', () => {
+    const resume = createInterruptionResume(createDeps())
+    const audio = createAudio({ currentTime: 0, readyState: 0 })
+
+    resume.reset(120000)
+    expect(resume.maybeRestore(asAudio(audio))).toBe(true)
+
+    const [, listener] = audio.addEventListener.mock.calls[0]
+    resume.reset(0)
+
+    expect(audio.removeEventListener).toHaveBeenCalledWith('loadedmetadata', listener)
+  })
+
+  test('a second applyRestore replaces the pending listener', () => {
+    const resume = createInterruptionResume(createDeps())
+    const audio = createAudio({ currentTime: 0, readyState: 0 })
+
+    resume.reset(120000)
+    expect(resume.maybeRestore(asAudio(audio))).toBe(true)
+    audio.currentTime = 0
+    expect(resume.maybeRestore(asAudio(audio))).toBe(true)
+
+    expect(audio.addEventListener).toHaveBeenCalledTimes(2)
+
+    const [, firstListener] = audio.addEventListener.mock.calls[0]
+    const [, secondListener] = audio.addEventListener.mock.calls[1]
+    audio.currentTime = 0
+    firstListener()
+    secondListener()
+
+    expect(audio.currentTime).toBe(120)
+  })
 })
