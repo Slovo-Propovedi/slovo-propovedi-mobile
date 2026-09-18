@@ -19,9 +19,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   android: {
     adaptiveIcon: { backgroundColor: '#f16031', foregroundImage: './assets/adaptive-icon.png' },
+    // RECORD_AUDIO (microphone) is unused — playback-only via expo-audio. Stripped from the final
+    // manifest even if a library/plugin re-adds it (expo-audio plugin injects it by default).
+    blockedPermissions: ['android.permission.RECORD_AUDIO'],
     package: appId,
     permissions: [
-      'android.permission.RECORD_AUDIO',
       'android.permission.MODIFY_AUDIO_SETTINGS',
       'android.permission.FOREGROUND_SERVICE',
       'android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK',
@@ -41,7 +43,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   owner: 'egoreast',
   plugins: [
-    ['expo-audio', { enableBackgroundPlayback: true }],
+    ['expo-audio', { enableBackgroundPlayback: true, recordAudioAndroid: false }],
     'expo-asset',
     ['expo-notifications', { color: '#f16031', icon: './assets/notification-icon.png' }],
     'expo-router',
