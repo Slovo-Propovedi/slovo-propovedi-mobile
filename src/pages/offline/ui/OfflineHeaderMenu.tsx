@@ -77,6 +77,7 @@ export const OfflineHeaderMenu = () => {
 
       <MenuDropdown
         anchor={menuAnchor}
+        anchorRef={buttonRef}
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
         items={[

@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
-import { Dimensions, Platform, StyleSheet, Text } from 'react-native'
+import { createRef } from 'react'
+import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native'
 import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
 import { AnchoredDropdown } from './AnchoredDropdown'
 
@@ -80,12 +81,94 @@ describe('<AnchoredDropdown>', () => {
     expect(getMenuStyle()).toMatchObject({ right: 46, top: 90 })
   })
 
-  test('keeps menu ABOVE at the exact boundary', async () => {
+  test('clamps menu top to the gap at the exact above/below boundary', async () => {
     await renderMenu({ anchor: { height: 36, width: 44, x: 300, y: 104 } })
 
     await measureMenu(100)
 
-    expect(getMenuStyle()).toMatchObject({ right: 46, top: 0 })
+    expect(getMenuStyle()).toMatchObject({ right: 46, top: 4 })
+  })
+
+  test('clamps menu top so a tall menu stays inside the window', async () => {
+    await renderMenu({ anchor: { height: 36, width: 44, x: 300, y: 500 } })
+
+    await measureMenu(800)
+
+    // 500 < 804 → flips below: 500+36+4 = 540; clamp max = 844-800-4 = 40
+    expect(getMenuStyle()).toMatchObject({ top: 40 })
+  })
+
+  test('clamps menu right so it stays inside the window on the left edge', async () => {
+    await renderMenu({ anchor: { height: 36, width: 44, x: 0, y: 500 } })
+
+    await measureMenu(100)
+
+    // preferredRight = 390-0-44 = 346; clamp max = 390-160-4 = 226
+    expect(getMenuStyle()).toMatchObject({ right: 226 })
+  })
+
+  test('clamps menu right so it stays inside the window on the right edge', async () => {
+    await renderMenu({ anchor: { height: 36, width: 44, x: 346, y: 500 } })
+
+    await measureMenu(100)
+
+    // preferredRight = 390-346-44 = 0; clamp min = 4
+    expect(getMenuStyle()).toMatchObject({ right: 4 })
+  })
+
+  test('re-anchors to the button when the window resizes', async () => {
+    const anchorRef = createRef<View>()
+    const measureInWindow = jest
+      .spyOn(View.prototype, 'measureInWindow')
+      .mockImplementation((cb: (x: number, y: number, width: number, height: number) => void) => {
+        cb(300, 500, 44, 36)
+        return undefined
+      })
+
+    await render(
+      <View ref={anchorRef} collapsable={false}>
+        <Text>Trigger</Text>
+        <AnchoredDropdown
+          visible
+          anchor={baseAnchor}
+          onClose={jest.fn()}
+          anchorRef={anchorRef}
+          testID={MENU_TEST_ID}
+        >
+          <Text>Menu item</Text>
+        </AnchoredDropdown>
+      </View>,
+    )
+    await measureMenu(100)
+
+    expect(getMenuStyle()).toMatchObject({ right: 46, top: 396 })
+
+    measureInWindow.mockImplementation(
+      (cb: (x: number, y: number, width: number, height: number) => void) => {
+        cb(150, 300, 44, 36)
+        return undefined
+      },
+    )
+
+    // useWindowDimensions re-syncs from Dimensions.get on every change, so the
+    // mock must return the new window before the resize event fires.
+    jest.spyOn(Dimensions, 'get').mockReturnValue({
+      fontScale: 1,
+      height: 900,
+      scale: 1,
+      width: 500,
+    })
+
+    await act(async () => {
+      Dimensions.set({
+        screen: { fontScale: 1, height: 900, scale: 1, width: 500 },
+        window: { fontScale: 1, height: 900, scale: 1, width: 500 },
+      })
+    })
+
+    // Button moved to x=150, y=300 in a 500×900 window:
+    // preferredRight = 500-150-44 = 306; top = 300-100-4 = 196
+    expect(getMenuStyle()).toMatchObject({ right: 306, top: 196 })
   })
 
   test('backdrop press calls onClose', async () => {

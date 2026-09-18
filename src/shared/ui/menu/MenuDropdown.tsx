@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons'
-import { type ComponentProps } from 'react'
-import { Platform, StyleSheet, Text } from 'react-native'
-import { useEscapeKey } from 'shared/lib/escape-key'
+import { type ComponentProps, type RefObject } from 'react'
+import { StyleSheet, Text, type View } from 'react-native'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { PressableButton } from '../pressable-button'
 import { AnchoredDropdown, type AnchorRect } from './AnchoredDropdown'
 
 export interface MenuDropdownProps {
   anchor: AnchorRect | null
+  anchorRef?: RefObject<null | View>
   items: ReadonlyArray<MenuItem>
   onClose: () => void
   visible: boolean
@@ -24,24 +24,21 @@ const ICON_SIZE = 18
 const ICON_MARGIN_RIGHT = 8
 const MENU_MIN_WIDTH = 180
 
-export const MenuDropdown = ({ anchor, items, onClose, visible }: MenuDropdownProps) => {
+export const MenuDropdown = ({ anchor, anchorRef, items, onClose, visible }: MenuDropdownProps) => {
   const { currentTheme } = useTheme()
 
-  // Esc behaves exactly like the backdrop/outside tap: it closes the menu.
-  useEscapeKey({
-    enabled: Platform.OS === 'web' && visible,
-    onEscape: onClose,
-  })
-
+  // Esc handling lives in the AnchoredDropdown primitive (shared by all menus).
   return (
     <AnchoredDropdown
       anchor={anchor}
       onClose={onClose}
       visible={visible}
+      anchorRef={anchorRef}
       menuStyle={[styles.menu, { backgroundColor: currentTheme.surface }]}
     >
       {items.map((item, index) => (
         <PressableButton
+          disabled={item.disabled}
           key={`${item.text}-${index}`}
           style={[styles.item, item.disabled && styles.itemDisabled]}
           accessibilityState={item.disabled ? { disabled: true } : undefined}

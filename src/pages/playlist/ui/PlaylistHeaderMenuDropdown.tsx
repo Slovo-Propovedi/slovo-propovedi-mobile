@@ -1,3 +1,4 @@
+import { type RefObject } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { AnchoredDropdown, type AnchorRect } from 'shared/ui/menu'
 import { COLORS, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
@@ -7,6 +8,7 @@ import { PlaylistOfflineMenuItem } from './PlaylistOfflineMenuItem'
 export interface PlaylistHeaderMenuDropdownProps {
   allCached: boolean
   anchor: AnchorRect | null
+  anchorRef?: RefObject<null | View>
   canMarkAll: boolean
   canRemoveFromHistory: boolean
   isAddAllToOfflineDisabled: boolean
@@ -24,6 +26,7 @@ export interface PlaylistHeaderMenuDropdownProps {
 export const PlaylistHeaderMenuDropdown = ({
   allCached,
   anchor,
+  anchorRef,
   canMarkAll,
   canRemoveFromHistory,
   isAddAllToOfflineDisabled,
@@ -45,6 +48,7 @@ export const PlaylistHeaderMenuDropdown = ({
       anchor={anchor}
       visible={visible}
       onClose={onClose}
+      anchorRef={anchorRef}
       menuStyle={[styles.dropdown, { backgroundColor: currentTheme.surface }]}
     >
       {isCaching ? (

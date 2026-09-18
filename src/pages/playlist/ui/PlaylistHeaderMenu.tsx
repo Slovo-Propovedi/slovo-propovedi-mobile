@@ -76,6 +76,7 @@ export const PlaylistHeaderMenu = ({
 
       <PlaylistHeaderMenuDropdown
         anchor={menuAnchor}
+        anchorRef={buttonRef}
         visible={menuVisible}
         allCached={allCached}
         isCaching={isCaching}

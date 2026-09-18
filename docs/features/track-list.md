@@ -27,7 +27,7 @@
 - **Per-URL состояние скачивания** — `useTrackItemCache` (`useTrackItemCache.ts`) подписывается на `playlistDownloadProgressAtom` (shared) с Object.is-bailout: при тике прогресса ре-рендерится только строка с совпадающим URL. `isDownloading`/`isQueued`/`progressValue` выводятся из общих атомов очереди и прогресса — обёртки **не** передают их вниз. По завершении закачки (переход «качается → не качается») внутренний триггер перепроверяет кэш.
 - **Индикатор кэша/очереди/облака** — `PlayingStatusOrChacheIcon` по `visualState` из `resolveCacheState` (`playing → downloading → cached → queued → cloud`).
 - **Прогресс-бар скачивания** — поверх обложки при `isDownloading`.
-- **Контекст-меню** — `TracksListItemContextMenu`: встроенный пункт «Добавить в офлайн / Удалить из офлайн / Остановить / Убрать из очереди» (`toggleCache`) + кастомные `menuActions`.
+- **Контекст-меню** — `TracksListItemContextMenu`: встроенный пункт «Добавить в офлайн / Удалить из офлайн / Остановить / Убрать из очереди» (`toggleCache`) + кастомные `menuActions`. Якорь меню измеряется **viewport-координатами** через `measureInWindow()` (не `measure()`): меню рендерится в viewport-fixed `Modal`-портале, а `measure()` на web отдаёт page-координаты со сдвигом на скролл — на прокрученной странице меню улетало бы. Подробнее — [web.md](./web.md) → «Позиционирование меню (дропдауны) на web».
 - **Подсветка играющего** — заголовок/обложка primary + `AnimatedSoundBars` при `isAudioPlaying`.
 
 ### Web-специфика: строка-ссылка и кнопка меню (три точки)

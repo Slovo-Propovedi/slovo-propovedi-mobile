@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useCtx } from '@reatom/npm-react'
 import { useCallback, useRef, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { clearHistoryAction } from 'entities/listening-history'
-import { ctx } from 'shared/lib/reatom-ctx'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { IconButton } from 'shared/ui/icon-button'
 import { type AnchorRect } from 'shared/ui/menu'
@@ -19,6 +19,7 @@ const CLEAR_CONFIRM_TEXT = 'Очистить'
 
 export const HistoryHeaderMenu = () => {
   const { currentTheme } = useTheme()
+  const ctx = useCtx()
   const [menuVisible, setMenuVisible] = useState(false)
   const [dialogVisible, setDialogVisible] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<AnchorRect | null>(null)
@@ -39,7 +40,7 @@ export const HistoryHeaderMenu = () => {
   const handleClearConfirm = useCallback(() => {
     setDialogVisible(false)
     void clearHistoryAction(ctx)
-  }, [])
+  }, [ctx])
 
   return (
     <>
@@ -60,6 +61,7 @@ export const HistoryHeaderMenu = () => {
 
       <HistoryHeaderMenuDropdown
         anchor={menuAnchor}
+        anchorRef={buttonRef}
         visible={menuVisible}
         onClear={handleClearOption}
         onClose={() => setMenuVisible(false)}

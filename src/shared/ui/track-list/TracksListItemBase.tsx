@@ -43,9 +43,12 @@ export const TracksListItemBase = ({
     visualState,
   } = useTrackItemCache(audioUrl, externalCacheTrigger)
 
+  // The menu renders in a viewport-fixed Modal portal, so the anchor must be
+  // measured in viewport coords. measure() returns page coords on web (offset
+  // by scroll) and would fly the menu away on a scrolled page.
   const measureButton = () => {
-    dotsButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) =>
-      setMenuAnchor({ height, width, x: pageX, y: pageY }),
+    dotsButtonRef.current?.measureInWindow((x, y, width, height) =>
+      setMenuAnchor({ height, width, x, y }),
     )
   }
 
