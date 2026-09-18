@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { type StyleProp, type TextStyle, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSharedValue } from 'react-native-reanimated'
 import TextTicker from 'react-native-text-ticker'
 import { scheduleOnRN } from 'react-native-worklets'
-import { HOLD_MS, shouldArmMarquee, useMarqueeClickGuard } from './marquee-text'
+import { HOLD_MS, shouldArmMarquee, useMarqueeClickGuard, useNativeDragGuard } from './marquee-text'
 import { useTheme } from './theme/ThemeContext/useTheme'
 
 interface MovingTextProps {
@@ -18,7 +18,19 @@ export const MovingText = ({ style, testID, text }: MovingTextProps) => {
   const [armed, setArmed] = useState(false)
   const [prevText, setPrevText] = useState(text)
   const didDrag = useSharedValue(false)
-  const containerRef = useMarqueeClickGuard(didDrag)
+  const clickGuardRef = useMarqueeClickGuard(didDrag)
+  const dragGuardRef = useNativeDragGuard()
+
+  // The container view hosts both web-only DOM guards: the click guard swallows
+  // the post-drag click, the native-drag guard blocks the browser's HTML5
+  // `dragstart` that would hijack mouse drags on `<img>` descendants.
+  const containerRef = useCallback(
+    (instance: unknown) => {
+      clickGuardRef(instance)
+      dragGuardRef(instance)
+    },
+    [clickGuardRef, dragGuardRef],
+  )
 
   // A new title is static until the next real drag (parity with MarqueeText).
   // Reset during render so the remounted ticker never starts with the old arm.

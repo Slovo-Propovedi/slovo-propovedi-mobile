@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { Gesture } from 'react-native-gesture-handler'
 import { cancelAnimation } from 'react-native-reanimated'
 import type { SharedValue } from 'react-native-reanimated'
@@ -10,11 +11,18 @@ export const createMarqueeGesture = (
   startIdleMarquee: () => void,
   didDrag: SharedValue<boolean>,
   marqueeArmed: SharedValue<boolean>,
-) =>
-  Gesture.Pan()
-    .activateAfterLongPress(HOLD_MS)
-    .shouldCancelWhenOutside(false)
-    .activeCursor('grabbing')
+) => {
+  const pan = Gesture.Pan().shouldCancelWhenOutside(false).activeCursor('grabbing')
+
+  // Desktop users press-and-drag immediately; long-press activation loses the
+  // race with touch-slop failure (PanGestureHandler.tryBegin cancels activation
+  // when the pointer moves > touch slop within the hold window). minDistance(10)
+  // activates on the first real movement — no 250ms wait before scrubbing.
+  // Native keeps the long-press so a slow click still navigates.
+  if (Platform.OS === 'web') pan.minDistance(10).failOffsetY([-14, 14])
+  else pan.activateAfterLongPress(HOLD_MS)
+
+  return pan
     .onBegin(() => {
       'worklet'
       didDrag.value = false
@@ -42,3 +50,4 @@ export const createMarqueeGesture = (
       // not a drag: keep the click alive so the parent pressable navigates.
       if (!isArmed) didDrag.value = false
     })
+}

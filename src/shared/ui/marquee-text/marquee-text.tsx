@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { Platform, type StyleProp, Text, type TextStyle, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useAnimatedReaction, useSharedValue } from 'react-native-reanimated'
@@ -8,6 +9,7 @@ import { MarqueeTextSkeleton } from './skeleton'
 import { useMarqueeAnimation } from './useMarqueeAnimation'
 import { useMarqueeClickGuard } from './useMarqueeClickGuard'
 import { useMarqueeMeasurement } from './useMarqueeMeasurement'
+import { useNativeDragGuard } from './useNativeDragGuard'
 
 export interface MarqueeTextProps {
   centerWhenStatic?: boolean
@@ -26,7 +28,19 @@ export const MarqueeText = ({
 }: MarqueeTextProps) => {
   const isWeb = Platform.OS === 'web'
   const didDrag = useSharedValue(false)
-  const containerRef = useMarqueeClickGuard(didDrag)
+  const clickGuardRef = useMarqueeClickGuard(didDrag)
+  const dragGuardRef = useNativeDragGuard()
+
+  // The container view hosts both web-only DOM guards: the click guard swallows
+  // the post-drag click, the native-drag guard blocks the browser's HTML5
+  // `dragstart` that would hijack mouse drags on `<img>` descendants.
+  const containerRef = useCallback(
+    (instance: unknown) => {
+      clickGuardRef(instance)
+      dragGuardRef(instance)
+    },
+    [clickGuardRef, dragGuardRef],
+  )
   const {
     containerWidth,
     handleContainerLayout,

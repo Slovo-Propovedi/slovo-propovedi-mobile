@@ -1,5 +1,7 @@
+import { Platform } from 'react-native'
 import type { SharedValue } from 'react-native-reanimated'
 import { createMarqueeGesture } from './createMarqueeGesture'
+import { HOLD_MS } from './marquee-utils'
 
 const { __gestureMock } = jest.requireMock('react-native-gesture-handler') as {
   __gestureMock: {
@@ -51,5 +53,26 @@ describe('createMarqueeGesture', () => {
     expect(didDrag.value).toBe(true)
     expect(marqueeArmed.value).toBe(true)
     expect(startIdleMarquee).toHaveBeenCalled()
+  })
+
+  test('uses minDistance activation on web (no long-press hold)', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+
+      expect(__gestureMock.pan().minDistance).toBe(10)
+      expect(__gestureMock.pan().failOffsetY).toEqual([-14, 14])
+      expect(__gestureMock.pan().activateAfterLongPress).toBeUndefined()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('keeps long-press activation on native', () => {
+    createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+
+    expect(__gestureMock.pan().activateAfterLongPress).toBe(HOLD_MS)
+    expect(__gestureMock.pan().minDistance).toBeUndefined()
+    expect(__gestureMock.pan().failOffsetY).toBeUndefined()
   })
 })
