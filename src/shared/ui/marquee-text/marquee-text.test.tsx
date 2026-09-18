@@ -217,12 +217,15 @@ describe('<MarqueeText />', () => {
     expect(style.whiteSpace).toBe('nowrap')
   })
 
-  test('uses full container width for static text on web', async () => {
-    // Regression: the static branch sized the animated view to the measured
-    // text width, so fitting titles got a spurious ellipsis. On web the static
-    // view must span the full container.
+  test('keeps the full container width for centered static text on web', async () => {
+    // The default static path reuses the marquee geometry (2*textWidth +
+    // REPEAT_SPACER) on every platform; only centerWhenStatic keeps the web
+    // static row at '100%' (staticWidth) so the centered text spans the
+    // container.
     jest.replaceProperty(Platform, 'OS', 'web')
-    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+    await renderWithProviders(
+      <MarqueeText centerWhenStatic testID={TEST_ID} text={propsStub.text} />,
+    )
 
     const animatedView = screen.getAllByText(propsStub.text)[0].parent
     const style = StyleSheet.flatten(animatedView?.props.style)
