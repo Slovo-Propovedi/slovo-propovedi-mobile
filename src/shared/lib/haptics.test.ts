@@ -1,16 +1,8 @@
-import {
-  AndroidHaptics,
-  impactAsync,
-  ImpactFeedbackStyle,
-  performAndroidHapticsAsync,
-} from 'expo-haptics'
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics'
 import { Platform } from 'react-native'
 import { hapticLight } from './haptics'
 
 const mockedImpactAsync = impactAsync as jest.MockedFunction<typeof impactAsync>
-const mockedPerformAndroidHapticsAsync = performAndroidHapticsAsync as jest.MockedFunction<
-  typeof performAndroidHapticsAsync
->
 
 describe('hapticLight', () => {
   beforeEach(() => {
@@ -28,21 +20,19 @@ describe('hapticLight', () => {
       hapticLight()
 
       expect(mockedImpactAsync).not.toHaveBeenCalled()
-      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
   })
 
-  test('triggers a context click on Android', () => {
+  test('triggers a light impact on Android', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     try {
       // Explicit clock beats the module-level throttle from earlier tests.
       jest.setSystemTime(1000)
       hapticLight()
 
-      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Context_Click)
-      expect(mockedImpactAsync).not.toHaveBeenCalled()
+      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Light)
     } finally {
       restorePlatform.restore()
     }
@@ -55,7 +45,6 @@ describe('hapticLight', () => {
       hapticLight()
 
       expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Light)
-      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
@@ -68,12 +57,12 @@ describe('hapticLight', () => {
       hapticLight()
       hapticLight()
 
-      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledTimes(1)
+      expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
 
       jest.setSystemTime(3050)
       hapticLight()
 
-      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledTimes(2)
+      expect(mockedImpactAsync).toHaveBeenCalledTimes(2)
     } finally {
       restorePlatform.restore()
     }
