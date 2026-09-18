@@ -61,6 +61,11 @@
 
 Фикс — `PlayerService.resumeAfterPause(audioUrl)` (`src/entities/player/lib/PlayerService/native/resumeWithSourceSwap.ts`), вызывается из кнопки play (`useGuardedTogglePlay`) и из same-track ветки `playNewSermonAsync` (повторный тап на тот же трек). Метод проверяет `audioCacheService.getCachedUri`; если трек уже закэширован и текущий источник плеера — не `file://` (`AudioLoader.lastResolvedUrl`), делает `replaceAudio(audioUrl, positionAtom)` (позиция сохраняется из `positionAtom`) и затем `play()`. Replace-in-place сохраняет тот же `AudioPlayer`/MediaSession/foreground-service. `AudioLoader` теперь отслеживает последний разрешённый URL (`lastResolvedUrl`, сброс в `releaseAndReset`). Web — passthrough `play()` (см. [debt.md](../debt.md)).
 
+**Известные ограничения:** не все пути resume проходят через `resumeAfterPause` — два входа остаются «незалеченными» (см. [debt.md](../debt.md)):
+
+- кнопка play в lock-screen/уведомлении действует на `AudioPlayer` нативно и никогда не доходит до `resumeAfterPause` — устаревший серверный URI всё ещё не работает после завершения кэша посреди трека (`src/entities/player/lib/PlayerService/native/LockScreenControls.ts`);
+- авто-resume после прерывания вызывает `playerService.play` напрямую и минует смену источника на кэш (`src/entities/player/lib/PlayerService/native/nativePlayerHelpers.ts`, `createAudioInterruptionHandler`) — пересматривать вместе с обработкой `status.error` в `PlayerStatusListener`.
+
 ### Офлайн-guard при воспроизведении (Issue #81)
 
 Общий guard `guardOfflinePlayback(audioUrl, isOnline)` (`src/entities/player/lib/playOfflineGuard.ts`) проверяет офлайн-ситуацию перед стартом воспроизведения:
