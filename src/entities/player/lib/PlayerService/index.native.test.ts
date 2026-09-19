@@ -44,6 +44,8 @@ jest.mock('./native/TrackAutoAdvanceService/TrackAutoAdvanceService', () => ({
 
 const createPlayerStub = (): AudioPlayer => ({ isLoaded: true }) as unknown as AudioPlayer
 
+const NEXT_AUDIO_URL = 'https://example.com/next.mp3'
+
 const flushMicrotasks = async () => {
   await Promise.resolve()
   await Promise.resolve()
@@ -56,16 +58,40 @@ describe('PlayerService.replaceAudio', () => {
     seekTargetPositionAtom(ctx, null)
   })
 
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   test('resets the seek guard so the new track position events are not ignored', async () => {
     isSeekingAtom(ctx, true)
     seekTargetPositionAtom(ctx, 60000)
     ;(audioLoader.replaceAudio as jest.Mock).mockResolvedValue(createPlayerStub())
 
-    await playerService.replaceAudio('https://example.com/next.mp3')
+    await playerService.replaceAudio(NEXT_AUDIO_URL)
     await flushMicrotasks()
 
     expect(ctx.get(isSeekingAtom)).toBe(false)
     expect(ctx.get(seekTargetPositionAtom)).toBe(null)
+  })
+
+  test('default replaceAudio resets the seek guard', async () => {
+    const resetSpy = jest.spyOn(playbackController, 'resetSeekGuard')
+    ;(audioLoader.replaceAudio as jest.Mock).mockResolvedValue(createPlayerStub())
+
+    await playerService.replaceAudio(NEXT_AUDIO_URL)
+
+    expect(resetSpy).toHaveBeenCalled()
+  })
+
+  test('preserveSeekGuard option skips the seek guard reset', async () => {
+    const resetSpy = jest.spyOn(playbackController, 'resetSeekGuard')
+    ;(audioLoader.replaceAudio as jest.Mock).mockResolvedValue(createPlayerStub())
+
+    await playerService.replaceAudio(NEXT_AUDIO_URL, 0, {
+      preserveSeekGuard: true,
+    })
+
+    expect(resetSpy).not.toHaveBeenCalled()
   })
 })
 
@@ -107,7 +133,7 @@ describe('PlayerService volume restore', () => {
     ;(audioLoader.replaceAudio as jest.Mock).mockResolvedValue(player)
 
     await playerService.setVolume(0.4)
-    await playerService.replaceAudio('https://example.com/next.mp3')
+    await playerService.replaceAudio(NEXT_AUDIO_URL)
 
     expect(player.volume).toBe(0.4)
   })

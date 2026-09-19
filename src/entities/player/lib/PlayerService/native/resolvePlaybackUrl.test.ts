@@ -1,4 +1,4 @@
-import { audioCacheService, deletePartialFile, getPartialFileUri } from 'shared/lib/audio-cache'
+import { audioCacheService, getPartialFileUri } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { startBackgroundCaching } from '../BackgroundCachingService'
@@ -10,7 +10,6 @@ const PARTIAL_URI = 'file:///data/cache/abc.cache.mp3'
 
 jest.mock('shared/lib/audio-cache', () => ({
   audioCacheService: { getCachedUri: jest.fn() },
-  deletePartialFile: jest.fn(),
   getPartialFileUri: jest.fn(),
 }))
 
@@ -23,7 +22,6 @@ jest.mock('shared/model/network', () => ({ isOnlineAtom: {} }))
 jest.mock('../BackgroundCachingService', () => ({ startBackgroundCaching: jest.fn() }))
 
 const mockedGetCachedUri = jest.mocked(audioCacheService.getCachedUri)
-const mockedDeletePartialFile = jest.mocked(deletePartialFile)
 const mockedGetPartialFileUri = jest.mocked(getPartialFileUri)
 const mockedStartBackgroundCaching = jest.mocked(startBackgroundCaching)
 const mockedReportError = jest.mocked(reportError)
@@ -71,28 +69,15 @@ describe('resolvePlaybackUrl', () => {
 
     expect(result).toBe(PARTIAL_URI)
     expect(mockedStartBackgroundCaching).toHaveBeenCalledWith(AUDIO_URL)
-    expect(mockedDeletePartialFile).not.toHaveBeenCalled()
   })
 
-  test('deletes the partial and returns the network URL when online', async () => {
+  test('does not delete the partial and returns the network URL when online', async () => {
     mockedGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
 
     const result = await resolvePlaybackUrl(AUDIO_URL)
 
     expect(result).toBe(AUDIO_URL)
-    expect(mockedDeletePartialFile).toHaveBeenCalledWith(AUDIO_URL)
     expect(mockedStartBackgroundCaching).toHaveBeenCalledWith(AUDIO_URL)
-  })
-
-  test('a throwing deletePartialFile does not break resolve', async () => {
-    mockedGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
-    mockedDeletePartialFile.mockImplementation(() => {
-      throw new Error('delete failed')
-    })
-
-    const result = await resolvePlaybackUrl(AUDIO_URL)
-
-    expect(result).toBe(AUDIO_URL)
   })
 
   test('returns the network URL when nothing local exists', async () => {

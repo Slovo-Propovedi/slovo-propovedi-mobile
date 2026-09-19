@@ -57,9 +57,10 @@ export class PlayerService {
   public replaceAudio = async (
     audioUrl: string,
     initialPositionMs = 0,
+    options?: { preserveSeekGuard?: boolean },
   ): Promise<AudioPlayer | null> => {
     if (!audioUrl) return null
-    playbackController.resetSeekGuard()
+    if (!options?.preserveSeekGuard) playbackController.resetSeekGuard()
     playerStatusListener.cleanup()
 
     // Replace-in-place strategy: the same AudioPlayer (and thus the same MediaSession,

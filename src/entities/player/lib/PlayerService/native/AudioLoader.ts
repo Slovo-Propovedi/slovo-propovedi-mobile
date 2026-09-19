@@ -27,8 +27,7 @@ class AudioLoader {
     const playUrl = await resolvePlaybackUrl(audioUrl)
     this.lastResolvedUrl = playUrl
     const partial = this.isPartialSource()
-    // keepAudioSessionActive prevents iOS AVAudioSession deactivation at track end,
-    // which otherwise stalls background auto-advance until the app is foregrounded
+    // keepAudioSessionActive prevents iOS AVAudioSession deactivation at track end (background auto-advance)
     const player = createAudioPlayer(
       { uri: playUrl },
       { downloadFirst: false, keepAudioSessionActive: true },
@@ -58,7 +57,8 @@ class AudioLoader {
     const playUrl = await resolvePlaybackUrl(audioUrl)
     this.lastResolvedUrl = playUrl
     const partial = this.isPartialSource()
-    if (!partial) void setDurationAction(ctx, 0)
+    // Same-track seek-swaps (position > 0) keep the known duration; track switches (0) reset it.
+    if (!partial && initialPositionMs === 0) void setDurationAction(ctx, 0)
     try {
       // replace-in-place: same native player, same MediaSession, same foreground service.
       // Never pass null to replace() — it crashes the player (expo-audio #48219)

@@ -192,15 +192,26 @@ describe('AudioLoader', () => {
       expect(mockedSetDurationAction).not.toHaveBeenCalledWith(ctx, 0)
     })
 
-    test('zeros the duration when replacing with a non-partial source', async () => {
+    test('zeros the duration when replacing with a non-partial source at position 0', async () => {
       const { player: existingPlayer } = createPlayerStub()
       mockedCreateAudioPlayer.mockReturnValueOnce(existingPlayer)
 
       await audioLoader.loadAudio(AUDIO_URL)
       mockedSetDurationAction.mockClear()
-      await audioLoader.replaceAudio(SECOND_AUDIO_URL)
+      await audioLoader.replaceAudio(SECOND_AUDIO_URL, 0)
 
       expect(mockedSetDurationAction).toHaveBeenCalledWith(ctx, 0)
+    })
+
+    test('keeps the known duration when replacing with a non-partial source at a seek position', async () => {
+      const { player: existingPlayer } = createPlayerStub()
+      mockedCreateAudioPlayer.mockReturnValueOnce(existingPlayer)
+
+      await audioLoader.loadAudio(AUDIO_URL)
+      mockedSetDurationAction.mockClear()
+      await audioLoader.replaceAudio(SECOND_AUDIO_URL, 60000)
+
+      expect(mockedSetDurationAction).not.toHaveBeenCalledWith(ctx, 0)
     })
 
     test('falls back to loadAudio when no player instance exists yet', async () => {

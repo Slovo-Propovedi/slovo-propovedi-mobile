@@ -17,12 +17,15 @@ export const armSeekSwap = (clampedPosition: number): void => {
   void setPositionAction(ctx, clampedPosition)
   scheduleHistoryFlush(clampedPosition)
 }
-export const handleSeekSwapFailure = (error: unknown, tag: string): void => {
-  console.error(`${tag} source swap failed:`, error)
-  reportError(error, 'Ошибка при перемотке аудио')
+const clearSeekSwapState = (): void => {
   seekGuard.clear()
   void setIsSeekingAction(ctx, false)
   void setSeekTargetAction(ctx, null)
+}
+export const handleSeekSwapFailure = (error: unknown, tag: string): void => {
+  console.error(`${tag} source swap failed:`, error)
+  reportError(error, 'Ошибка при перемотке аудио')
+  clearSeekSwapState()
 }
 
 /**
@@ -45,8 +48,12 @@ export const swapSourceForSeek = async (
   if (ctx.get(currentAudioAtom)?.audioUrl !== audioUrl) return
   armSeekSwap(clampedPosition)
   try {
-    await sourceSwap.replaceAudio(audioUrl, clampedPosition)
+    // Keep the seek guard armed through the swap: the same native player keeps
+    // firing its already-attached status listeners, and a cleared guard would
+    // leak the new source's currentTime≈0 into positionAtom (progress flash).
+    await sourceSwap.replaceAudio(audioUrl, clampedPosition, { preserveSeekGuard: true })
     if (resumePlayback) await sourceSwap.play()
+    clearSeekSwapState()
   } catch (error) {
     handleSeekSwapFailure(error, logTag)
   }

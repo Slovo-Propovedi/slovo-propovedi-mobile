@@ -85,9 +85,25 @@ describe('PlaybackController offline seek via partial source', () => {
 
     await playbackController.seekTo(player, 60000, sourceSwap)
 
-    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000)
+    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000, {
+      preserveSeekGuard: true,
+    })
     expect(sourceSwap.play).toHaveBeenCalledTimes(1)
     expect(player.seekTo).not.toHaveBeenCalled()
+  })
+
+  test('successful swap clears the seek state (guard lifecycle owned by the swap)', async () => {
+    isOnlineAtom(ctx, false)
+    currentAudioAtom(ctx, mockAudio)
+    isPlayingAtom(ctx, true)
+    mockedGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
+    const player = createPlayerStub()
+    const sourceSwap = createSourceSwap()
+
+    await playbackController.seekTo(player, 60000, sourceSwap)
+
+    expect(ctx.get(isSeekingAtom)).toBe(false)
+    expect(ctx.get(seekTargetPositionAtom)).toBe(null)
   })
 
   test('offline + network source + partial + stall-paused → replaceAudio then play, no native seek', async () => {
@@ -100,7 +116,9 @@ describe('PlaybackController offline seek via partial source', () => {
 
     await playbackController.seekTo(player, 60000, sourceSwap)
 
-    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000)
+    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000, {
+      preserveSeekGuard: true,
+    })
     expect(sourceSwap.play).toHaveBeenCalledTimes(1)
     expect(player.seekTo).not.toHaveBeenCalled()
   })
@@ -114,7 +132,9 @@ describe('PlaybackController offline seek via partial source', () => {
 
     await playbackController.seekTo(player, 60000, sourceSwap)
 
-    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000)
+    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000, {
+      preserveSeekGuard: true,
+    })
     expect(sourceSwap.play).not.toHaveBeenCalled()
     expect(player.seekTo).not.toHaveBeenCalled()
   })
@@ -195,7 +215,9 @@ describe('PlaybackController offline seek via partial source', () => {
 
     await playbackController.seekTo(player, 60000, sourceSwap)
 
-    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000)
+    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000, {
+      preserveSeekGuard: true,
+    })
     expect(sourceSwap.play).toHaveBeenCalledTimes(1)
     expect(player.seekTo).not.toHaveBeenCalled()
   })
@@ -209,7 +231,9 @@ describe('PlaybackController offline seek via partial source', () => {
 
     await playbackController.seekTo(player, 60000, sourceSwap)
 
-    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000)
+    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000, {
+      preserveSeekGuard: true,
+    })
     expect(sourceSwap.play).not.toHaveBeenCalled()
     expect(player.seekTo).not.toHaveBeenCalled()
   })
@@ -265,7 +289,9 @@ describe('PlaybackController offline seek via partial source', () => {
 
     await playbackController.seekTo(player, 60000, sourceSwap)
 
-    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000)
+    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000, {
+      preserveSeekGuard: true,
+    })
     expect(sourceSwap.play).toHaveBeenCalledTimes(1)
     expect(player.seekTo).not.toHaveBeenCalled()
   })
@@ -279,7 +305,9 @@ describe('PlaybackController offline seek via partial source', () => {
 
     await playbackController.seekTo(player, 60000, sourceSwap)
 
-    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000)
+    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000, {
+      preserveSeekGuard: true,
+    })
     expect(sourceSwap.play).not.toHaveBeenCalled()
     expect(player.seekTo).not.toHaveBeenCalled()
   })

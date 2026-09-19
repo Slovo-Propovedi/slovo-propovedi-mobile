@@ -57,7 +57,11 @@ export interface SeekSourceSwap {
   /** Resumes playback on the current (possibly swapped) player instance. */
   play: () => Promise<void>
   /** Replaces the player source at the given position in milliseconds. */
-  replaceAudio: (audioUrl: string, initialPositionMs: number) => Promise<unknown>
+  replaceAudio: (
+    audioUrl: string,
+    initialPositionMs: number,
+    options?: { preserveSeekGuard?: boolean },
+  ) => Promise<unknown>
 }
 
 /**
