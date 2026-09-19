@@ -1,19 +1,15 @@
 import { audioCacheService, getPartialFileUri, PART_SUFFIX } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { reportError } from 'shared/model/error-dialog'
 import { isOnlineAtom } from 'shared/model/network'
-import {
-  currentAudioAtom,
-  isPlayingAtom,
-  setIsSeekingAction,
-  setPositionAction,
-  setSeekTargetAction,
-} from '../../../model'
+import { currentAudioAtom, isPlayingAtom } from '../../../model'
 import { isStalledOfflineAtom } from '../../stalledOffline'
-import { scheduleHistoryFlush } from '../progressFlusher'
 import { type SeekSourceSwap } from '../types'
 import { audioLoader } from './AudioLoader'
-import { seekGuard } from './SeekGuard'
+import { swapSourceForSeek } from './seekSourceSwapCore'
+import {
+  shouldSwapPartialForNetworkSeek,
+  swapPartialForNetworkSeek,
+} from './swapPartialForNetworkSeek'
 
 const CACHE_URI_PREFIX = 'file://'
 
@@ -40,21 +36,6 @@ export const shouldSwapPartialForCachedSeek = async (): Promise<null | string> =
   return audioUrl
 }
 
-const armSeekSwap = (clampedPosition: number): void => {
-  seekGuard.arm()
-  void setIsSeekingAction(ctx, true)
-  void setSeekTargetAction(ctx, clampedPosition)
-  void setPositionAction(ctx, clampedPosition)
-  scheduleHistoryFlush(clampedPosition)
-}
-const handleSeekSwapFailure = (error: unknown, tag: string): void => {
-  console.error(`${tag} source swap failed:`, error)
-  reportError(error, 'Ошибка при перемотке аудио')
-  seekGuard.clear()
-  void setIsSeekingAction(ctx, false)
-  void setSeekTargetAction(ctx, null)
-}
-
 /**
  * Swaps the stalled network source to the retained partial file at the tapped
  * position.
@@ -67,19 +48,16 @@ export const seekViaPartialSource = async (
   audioUrl: string,
   clampedPosition: number,
 ): Promise<void> => {
-  // Race guard: the track may have switched while the partial URI was being
-  // resolved — never swap the new track at the old track's target.
-  if (ctx.get(currentAudioAtom)?.audioUrl !== audioUrl) return
   const wasPlaying = ctx.get(isPlayingAtom)
   const stalledOffline = ctx.get(isStalledOfflineAtom)
   const shouldResume = wasPlaying || stalledOffline
-  armSeekSwap(clampedPosition)
-  try {
-    await sourceSwap.replaceAudio(audioUrl, clampedPosition)
-    if (shouldResume) await sourceSwap.play()
-  } catch (error) {
-    handleSeekSwapFailure(error, '[seekViaPartialSource]')
-  }
+  await swapSourceForSeek(
+    sourceSwap,
+    audioUrl,
+    clampedPosition,
+    shouldResume,
+    '[seekViaPartialSource]',
+  )
 }
 
 /**
@@ -94,20 +72,20 @@ export const swapPartialForCachedSeek = async (
   audioUrl: string,
   clampedPosition: number,
 ): Promise<void> => {
-  if (ctx.get(currentAudioAtom)?.audioUrl !== audioUrl) return
   const wasPlaying = ctx.get(isPlayingAtom)
-  armSeekSwap(clampedPosition)
-  try {
-    await sourceSwap.replaceAudio(audioUrl, clampedPosition)
-    if (wasPlaying) await sourceSwap.play()
-  } catch (error) {
-    handleSeekSwapFailure(error, '[swapPartialForCachedSeek]')
-  }
+  await swapSourceForSeek(
+    sourceSwap,
+    audioUrl,
+    clampedPosition,
+    wasPlaying,
+    '[swapPartialForCachedSeek]',
+  )
 }
 
 /**
  * Combined seek-swap decision: tries the offline partial fallback first, then
- * the partial→cached swap, and executes the applicable path.
+ * the partial→cached swap, then the partial→network swap, and executes the
+ * applicable path.
  * @param sourceSwap - Player control actions used to swap the source and resume.
  * @param clampedPosition - Target position in milliseconds to continue from.
  */
@@ -123,6 +101,11 @@ export const seekWithSourceSwap = async (
   const cachedAudioUrl = await shouldSwapPartialForCachedSeek()
   if (cachedAudioUrl) {
     await swapPartialForCachedSeek(sourceSwap, cachedAudioUrl, clampedPosition)
+    return true
+  }
+  const networkAudioUrl = await shouldSwapPartialForNetworkSeek()
+  if (networkAudioUrl) {
+    await swapPartialForNetworkSeek(sourceSwap, networkAudioUrl, clampedPosition)
     return true
   }
   return false
