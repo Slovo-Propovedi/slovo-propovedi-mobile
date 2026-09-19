@@ -50,6 +50,17 @@ export interface PlaybackStatus {
 }
 
 /**
+ * Player control actions used to swap the source and resume playback.
+ * Mirrors the SourceSwapPlayer shape passed to resumeWithSourceSwap.
+ */
+export interface SeekSourceSwap {
+  /** Resumes playback on the current (possibly swapped) player instance. */
+  play: () => Promise<void>
+  /** Replaces the player source at the given position in milliseconds. */
+  replaceAudio: (audioUrl: string, initialPositionMs: number) => Promise<unknown>
+}
+
+/**
  * Listener type for web player state changes.
  * @returns Cleanup function to unsubscribe.
  */

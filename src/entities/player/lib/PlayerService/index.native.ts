@@ -54,7 +54,7 @@ export class PlayerService {
   }
 
   public resumeAfterPause = async (audioUrl: string): Promise<void> =>
-    resumeWithSourceSwap({ play: this.play, replaceAudio: this.replaceAudio }, audioUrl)
+    resumeWithSourceSwap(this.sourceSwap, audioUrl)
 
   public recoverStreamAfterReconnect = (audioUrl: string): Promise<void> =>
     healStreamAfterReconnect(this, audioUrl)
@@ -81,7 +81,7 @@ export class PlayerService {
   }
 
   public seekTo = async (newPositionMs: number): Promise<void> => {
-    await playbackController.seekTo(this.playerInstance, newPositionMs)
+    await playbackController.seekTo(this.playerInstance, newPositionMs, this.sourceSwap)
   }
 
   public setLockScreenMetadata = (metadata: LockScreenMetadata): void => {
@@ -123,8 +123,8 @@ export class PlayerService {
   })
 
   private playerInstance: AudioPlayer | null = null
+  private sourceSwap = { play: this.play, replaceAudio: this.replaceAudio }
 }
 
 export const playerService = new PlayerService()
-
 wireTrackAutoAdvance(playerService)

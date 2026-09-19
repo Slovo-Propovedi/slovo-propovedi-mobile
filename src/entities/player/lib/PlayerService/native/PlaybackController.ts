@@ -9,9 +9,10 @@ import {
 } from '../../../model'
 import { type PlaybackRate } from '../../../playback-rate'
 import { flushProgress, scheduleHistoryFlush } from '../progressFlusher'
-import { type PlaybackStatus } from '../types'
+import { type PlaybackStatus, type SeekSourceSwap } from '../types'
 import { playbackPreferences } from './playbackPreferences'
 import { seekGuard } from './SeekGuard'
+import { seekViaPartialSource, shouldSeekViaPartialSource } from './seekViaPartialSource'
 
 const DEFAULT_PLAYBACK_STATUS: PlaybackStatus = {
   duration: 0,
@@ -54,11 +55,19 @@ class PlaybackController {
     flushProgress(positionMs)
   }
 
-  public seekTo = async (player: AudioPlayer | null, positionMs: number): Promise<void> => {
+  public seekTo = async (
+    player: AudioPlayer | null,
+    positionMs: number,
+    sourceSwap?: SeekSourceSwap,
+  ): Promise<void> => {
     if (!player) return
+    const clampedPosition = Math.max(0, positionMs)
+    if (sourceSwap && (await shouldSeekViaPartialSource())) {
+      await seekViaPartialSource(sourceSwap, clampedPosition)
+      return
+    }
     seekGuard.arm()
 
-    const clampedPosition = Math.max(0, positionMs)
     void setIsSeekingAction(ctx, true)
     void setSeekTargetAction(ctx, clampedPosition)
     void setPositionAction(ctx, clampedPosition)

@@ -7,6 +7,10 @@ import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { currentAudioAtom, durationAtom } from '../../../model'
 import { playbackController } from './PlaybackController'
 
+jest.mock('./AudioLoader', () => ({
+  audioLoader: { getLastResolvedUrl: jest.fn() },
+}))
+
 const createPlayerStub = (): AudioPlayer =>
   ({ isLoaded: true, seekTo: jest.fn().mockResolvedValue(undefined) }) as unknown as AudioPlayer
 

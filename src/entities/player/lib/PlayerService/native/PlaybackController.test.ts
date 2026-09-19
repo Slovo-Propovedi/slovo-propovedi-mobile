@@ -23,6 +23,10 @@ jest.mock('../../../playback-rate', () => ({ setPlaybackRateAction: jest.fn() })
 
 jest.mock('../../playbackProgress', () => ({ savePlaybackProgress: jest.fn() }))
 
+jest.mock('./AudioLoader', () => ({
+  audioLoader: { getLastResolvedUrl: jest.fn() },
+}))
+
 jest.mock('entities/listening-history/@x/player', () => ({
   flushHistoryProgressAction: jest.fn(),
 }))
