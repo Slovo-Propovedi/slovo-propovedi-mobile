@@ -1,6 +1,5 @@
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
-import { isOnlineAtom } from 'shared/model/network'
 import type { WebMediaSession } from './mediaSession'
 import type { WebPlayerState } from './playerState'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
@@ -36,9 +35,10 @@ export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) 
     onError: () => {
       if (!deps.isCurrentAudio(deps.audio)) return
       deps.state.setIsPlaying(false)
-      // A stream error while offline is the web analog of the native stall:
-      // remember it so the reconnect heal can auto-resume (Issue #109).
-      if (!ctx.get(isOnlineAtom)) void setIsStalledOfflineAction(ctx, true)
+      // A stream error while buffering is the web analog of the native stall:
+      // remember it so the reconnect heal can auto-resume (Issue #109). The
+      // online signal may lag the underrun, so buffering is the discriminator.
+      if (deps.state.getState().isBuffering) void setIsStalledOfflineAction(ctx, true)
     },
     onLoaded: () => {
       deps.state.setIsBuffering(false)

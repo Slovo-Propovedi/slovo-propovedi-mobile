@@ -27,8 +27,10 @@ export const guardOfflinePlayback = async (
   if (isOnline) return false
   const isCached = await audioCacheService.isCached(audioUrl).catch(() => false)
   if (isCached) return false
-  const buffered = ctx.get(bufferedProgressStateAtom)
-  if (allowPartiallyBuffered && buffered?.url === audioUrl && buffered.progress > 0) return false
+  if (allowPartiallyBuffered) {
+    const buffered = ctx.get(bufferedProgressStateAtom)
+    if (buffered?.url === audioUrl && buffered.progress > 0) return false
+  }
   showInfo(OFFLINE_PLAYBACK_MESSAGE)
   return true
 }

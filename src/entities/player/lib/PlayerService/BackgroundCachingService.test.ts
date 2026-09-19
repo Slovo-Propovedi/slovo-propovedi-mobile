@@ -214,9 +214,21 @@ describe('BackgroundCachingService', () => {
 
       startBackgroundCaching(TEST_URL)
       controlled.onProgress?.(0.25)
-      controlled.onProgress?.(0.75)
+      expect(mockCtx.get(bufferedProgressStateAtom)).toEqual({ progress: 0.25, url: TEST_URL })
 
+      controlled.onProgress?.(0.75)
       expect(mockCtx.get(bufferedProgressStateAtom)).toEqual({ progress: 0.75, url: TEST_URL })
+    })
+
+    test('zero tick does not clobber the frozen buffered snapshot (Issue #109)', () => {
+      const controlled = createControlledEnqueue()
+
+      startBackgroundCaching(TEST_URL)
+      controlled.onProgress?.(0.4)
+      controlled.onProgress?.(0)
+
+      expect(mockCtx.get(bufferedProgressStateAtom)).toEqual({ progress: 0.4, url: TEST_URL })
+      expect(mockCtx.get(downloadProgressAtom)).toBe(0)
     })
 
     test('clears the buffered state on successful completion', async () => {

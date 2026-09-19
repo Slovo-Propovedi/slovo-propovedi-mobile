@@ -38,6 +38,9 @@ const OTHER_AUDIO = {
   title: 'Other Sermon',
 }
 
+const SETTLE_POLL_INTERVAL_MS = 1000
+const SETTLE_POLL_TIMEOUT_MS = 5 * 60 * 1000
+
 const flushMicrotasks = async () => {
   await Promise.resolve()
   await Promise.resolve()
@@ -158,25 +161,109 @@ describe('reconnectRecovery', () => {
     }
   })
 
-  test('url already queued is not re-enqueued but is still healed', async () => {
-    cacheQueueAtom(ctx, { [AUDIO.audioUrl]: { enqueuedAt: Date.now(), source: 'auto' } })
-    currentAudioAtom(ctx, AUDIO)
-    isOnlineAtom(ctx, false)
-    isOnlineAtom(ctx, true)
-    await flushMicrotasks()
+  describe('settle-then-retry (Issue #109)', () => {
+    beforeEach(() => {
+      jest.useFakeTimers()
+    })
 
-    expect(startBackgroundCaching).not.toHaveBeenCalled()
-    expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
-  })
+    afterEach(() => {
+      jest.useRealTimers()
+    })
 
-  test('active download is not re-enqueued but is still healed', async () => {
-    activeCacheUrlAtom(ctx, AUDIO.audioUrl)
-    currentAudioAtom(ctx, AUDIO)
-    isOnlineAtom(ctx, false)
-    isOnlineAtom(ctx, true)
-    await flushMicrotasks()
+    test('active at edge + settled-failed afterwards re-enqueues the download', async () => {
+      activeCacheUrlAtom(ctx, AUDIO.audioUrl)
+      currentAudioAtom(ctx, AUDIO)
+      isOnlineAtom(ctx, false)
+      isOnlineAtom(ctx, true)
+      await flushMicrotasks()
 
-    expect(startBackgroundCaching).not.toHaveBeenCalled()
-    expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
+      // The failing download settles (releases the URL) after the edge fired.
+      activeCacheUrlAtom(ctx, null)
+      await jest.advanceTimersByTimeAsync(SETTLE_POLL_INTERVAL_MS)
+      await flushMicrotasks()
+
+      expect(startBackgroundCaching).toHaveBeenCalledWith(AUDIO.audioUrl)
+      expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
+    })
+
+    test('active at edge + settled and now cached does not re-enqueue', async () => {
+      jest
+        .mocked(audioCacheService.isCached)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true)
+      activeCacheUrlAtom(ctx, AUDIO.audioUrl)
+      currentAudioAtom(ctx, AUDIO)
+      isOnlineAtom(ctx, false)
+      isOnlineAtom(ctx, true)
+      await flushMicrotasks()
+
+      activeCacheUrlAtom(ctx, null)
+      await jest.advanceTimersByTimeAsync(SETTLE_POLL_INTERVAL_MS)
+      await flushMicrotasks()
+
+      expect(startBackgroundCaching).not.toHaveBeenCalled()
+      expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
+    })
+
+    test('track switched during the settle wait does not re-enqueue', async () => {
+      activeCacheUrlAtom(ctx, AUDIO.audioUrl)
+      currentAudioAtom(ctx, AUDIO)
+      isOnlineAtom(ctx, false)
+      isOnlineAtom(ctx, true)
+      await flushMicrotasks()
+
+      currentAudioAtom(ctx, OTHER_AUDIO)
+      activeCacheUrlAtom(ctx, null)
+      await jest.advanceTimersByTimeAsync(SETTLE_POLL_INTERVAL_MS)
+      await flushMicrotasks()
+
+      expect(startBackgroundCaching).not.toHaveBeenCalled()
+      expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
+    })
+
+    test('still queued at settle timeout warns and does not re-enqueue', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      cacheQueueAtom(ctx, { [AUDIO.audioUrl]: { enqueuedAt: Date.now(), source: 'auto' } })
+      currentAudioAtom(ctx, AUDIO)
+      isOnlineAtom(ctx, false)
+      isOnlineAtom(ctx, true)
+      await flushMicrotasks()
+
+      await jest.advanceTimersByTimeAsync(SETTLE_POLL_TIMEOUT_MS)
+      await flushMicrotasks()
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[reconnectRecovery] download still active after settle timeout:',
+        AUDIO.audioUrl,
+      )
+      expect(startBackgroundCaching).not.toHaveBeenCalled()
+      expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
+      warnSpy.mockRestore()
+    })
+
+    test('isCached rejection during the settle re-check is caught and logged', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      jest
+        .mocked(audioCacheService.isCached)
+        .mockResolvedValueOnce(false)
+        .mockRejectedValueOnce(new Error('cache check failed'))
+      activeCacheUrlAtom(ctx, AUDIO.audioUrl)
+      currentAudioAtom(ctx, AUDIO)
+      isOnlineAtom(ctx, false)
+      isOnlineAtom(ctx, true)
+      await flushMicrotasks()
+
+      activeCacheUrlAtom(ctx, null)
+      await jest.advanceTimersByTimeAsync(SETTLE_POLL_INTERVAL_MS)
+      await flushMicrotasks()
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[reconnectRecovery] re-enqueue check failed:',
+        expect.any(Error),
+      )
+      expect(startBackgroundCaching).not.toHaveBeenCalled()
+      expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
+      warnSpy.mockRestore()
+    })
   })
 })

@@ -32,7 +32,10 @@ export const startBackgroundCaching = (audioUrl: string): void => {
     }
     if (ctx.get(downloadingAudioUrlAtom) === audioUrl) {
       void setDownloadProgressAction(ctx, progress)
-      void setBufferedProgressStateAction(ctx, { progress, url: audioUrl })
+      // Zero ticks arrive at every attempt restart (cacheDownloader) — they must
+      // not clobber the frozen buffered snapshot that keeps the bar visible
+      // through an outage (Issue #109).
+      if (progress > 0) void setBufferedProgressStateAction(ctx, { progress, url: audioUrl })
     }
   })
     .then(() => {

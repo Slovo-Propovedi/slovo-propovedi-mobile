@@ -166,13 +166,13 @@ describe('createAudioInterruptionHandler offline stall flag (Issue #109)', () =>
     expect(ctx.get(isStalledOfflineAtom)).toBe(false)
   })
 
-  test('does not set the flag when buffering while online', async () => {
+  test('sets the flag when buffering while online (NetInfo lags the underrun)', async () => {
     isBufferingAtom(ctx, true)
     const handler = createAudioInterruptionHandler({ pause: jest.fn(), play: jest.fn() })
 
     handler(true)
     await flushMicrotasks()
 
-    expect(ctx.get(isStalledOfflineAtom)).toBe(false)
+    expect(ctx.get(isStalledOfflineAtom)).toBe(true)
   })
 })

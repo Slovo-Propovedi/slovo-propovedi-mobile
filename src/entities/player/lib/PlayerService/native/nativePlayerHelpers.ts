@@ -1,5 +1,4 @@
 import { ctx } from 'shared/lib/reatom-ctx'
-import { isOnlineAtom } from 'shared/model/network'
 import type { AudioPlayer } from 'expo-audio'
 import {
   isBufferingAtom,
@@ -60,11 +59,12 @@ export const createAudioInterruptionHandler = (callbacks: InterruptionCallbacks)
   return (isInterrupted: boolean): void => {
     if (isInterrupted) {
       wasPlayingBeforeInterruption = true
-      // A stall while offline (buffering with no network) is the signal for
-      // auto-resume on reconnect (Issue #109). Manual pause also routes here, but
-      // then isBuffering is false — the flag stays untouched.
-      if (ctx.get(isBufferingAtom) && !ctx.get(isOnlineAtom))
-        void setIsStalledOfflineAction(ctx, true)
+      // A buffering stall is stream starvation regardless of the NetInfo-reported
+      // state — the NetInfo flip lags the buffer underrun (Issue #109). Manual
+      // pause also routes here, but then isBuffering is false — the flag stays
+      // untouched. The flag is cleared by AudioLoader chokepoints and consumed
+      // only by the reconnect heal.
+      if (ctx.get(isBufferingAtom)) void setIsStalledOfflineAction(ctx, true)
 
       void callbacks.pause('auto')
       return

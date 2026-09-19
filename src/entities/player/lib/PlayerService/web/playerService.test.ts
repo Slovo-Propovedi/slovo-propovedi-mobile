@@ -432,18 +432,21 @@ describe('WebPlayerService element error/waiting/playing events', () => {
     expect(setIsPlayingAction).toHaveBeenCalledWith(expect.anything(), false)
   })
 
-  test("dispatching 'error' while offline sets the stall flag", async () => {
-    mockOnlineStatus(false)
+  test("dispatching 'error' while buffering sets the stall flag even when online", async () => {
+    mockOnlineStatus(true)
     await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
     audioStubs[0].fireEvent(PLAY_EVENT)
+    audioStubs[0].fireEvent('waiting')
     audioStubs[0].fireEvent('error')
 
     expect(setIsStalledOfflineAction).toHaveBeenCalledWith(expect.anything(), true)
   })
 
-  test("dispatching 'error' while online does not set the stall flag", async () => {
-    mockOnlineStatus(true)
+  test("dispatching 'error' without buffering does not set the stall flag", async () => {
+    mockOnlineStatus(false)
     await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
     audioStubs[0].fireEvent(PLAY_EVENT)
     audioStubs[0].fireEvent('error')
 
