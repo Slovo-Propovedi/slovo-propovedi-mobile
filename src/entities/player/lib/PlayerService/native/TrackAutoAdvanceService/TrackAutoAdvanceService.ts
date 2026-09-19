@@ -9,6 +9,7 @@ import type { OldTrackFlush } from './playback'
 import type { PlayerActions } from './types'
 import { durationAtom, positionAtom, RepeatMode, repeatModeSchema } from '../../../../model'
 import { guardOfflinePlayback } from '../../../playOfflineGuard'
+import { audioLoader } from '../AudioLoader'
 import {
   findCurrentTrackIndex,
   getNextTrack,
@@ -53,6 +54,11 @@ export class TrackAutoAdvanceService {
 
   public async handleTrackEnd(): Promise<void> {
     try {
+      // Partial download end = buffer edge — pause; advance only after FULL recording finishes.
+      if (audioLoader.isPartialSource()) {
+        await this.ensurePlayerActions().pause()
+        return
+      }
       await this.advanceToNextTrack()
     } catch (error) {
       console.error('[TrackAutoAdvanceService] handleTrackEnd failed:', error)
@@ -61,12 +67,9 @@ export class TrackAutoAdvanceService {
   }
 
   private async advanceToNextTrack(): Promise<void> {
-    const stored = await AsyncStorage.multiGet([
-      CURRENT_AUDIO,
-      CURRENT_PLAYLIST,
-      CURRENT_REPEAT_MODE,
-    ])
-    const storedMap = Object.fromEntries(stored)
+    const storedMap = Object.fromEntries(
+      await AsyncStorage.multiGet([CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE]),
+    )
     const storedCurrentAudio = storedMap[CURRENT_AUDIO]
     const storedCurrentPlaylist = storedMap[CURRENT_PLAYLIST]
     const storedRepeatMode = storedMap[CURRENT_REPEAT_MODE]

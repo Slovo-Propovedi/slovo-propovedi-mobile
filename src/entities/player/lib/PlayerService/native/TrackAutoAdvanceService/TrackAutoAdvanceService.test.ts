@@ -10,6 +10,7 @@ const mockRepeatCurrentTrack = jest.fn().mockResolvedValue(undefined)
 const mockPlayFirstTrackInQueue = jest.fn().mockResolvedValue(undefined)
 const mockMarkHistoryCompleted = jest.fn()
 const mockCtxGet = jest.fn()
+const mockIsPartialSource = jest.fn()
 
 jest.mock('shared/lib/reatom-ctx', () => ({
   ctx: {
@@ -41,6 +42,10 @@ jest.mock('entities/listening-history/@x/player', () => ({
 
 jest.mock('../../../playOfflineGuard', () => ({
   guardOfflinePlayback: (...args: unknown[]) => mockGuardOfflinePlayback(...args),
+}))
+
+jest.mock('../AudioLoader', () => ({
+  audioLoader: { isPartialSource: (...args: unknown[]) => mockIsPartialSource(...args) },
 }))
 
 jest.mock('./playback', () => ({
@@ -104,6 +109,7 @@ describe('TrackAutoAdvanceService offline guard', () => {
     jest.clearAllMocks()
     await AsyncStorage.clear()
     trackAutoAdvanceService.setPlayerActions(playerActions)
+    mockIsPartialSource.mockReturnValue(false)
   })
 
   test('blocks auto-advance when offline and next track not cached', async () => {
@@ -203,6 +209,29 @@ describe('TrackAutoAdvanceService offline guard', () => {
     expect(mockPlayFirstTrackInQueue).toHaveBeenCalled()
     expect(mockGuardOfflinePlayback).toHaveBeenCalledTimes(1)
     expect(playerActions.pause).not.toHaveBeenCalled()
+    expect(mockMarkHistoryCompleted).not.toHaveBeenCalled()
+  })
+})
+
+describe('TrackAutoAdvanceService partial-source edge', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks()
+    await AsyncStorage.clear()
+    trackAutoAdvanceService.setPlayerActions(playerActions)
+    mockIsPartialSource.mockReturnValue(true)
+  })
+
+  test('pauses instead of advancing when the source is a partial download', async () => {
+    setOnline(true)
+    mockGuardOfflinePlayback.mockResolvedValue(false)
+    await seedStorage()
+
+    await trackAutoAdvanceService.handleTrackEnd()
+
+    expect(playerActions.pause).toHaveBeenCalledTimes(1)
+    expect(mockPlayNextTrack).not.toHaveBeenCalled()
+    expect(mockRepeatCurrentTrack).not.toHaveBeenCalled()
+    expect(mockPlayFirstTrackInQueue).not.toHaveBeenCalled()
     expect(mockMarkHistoryCompleted).not.toHaveBeenCalled()
   })
 })
