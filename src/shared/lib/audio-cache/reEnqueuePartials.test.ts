@@ -149,4 +149,28 @@ describe('reEnqueuePartialDownloads', () => {
 
     expect(mockedEnqueueCacheMany).toHaveBeenCalledWith(ctx, [AUDIO_URL, OTHER_AUDIO_URL], 'auto')
   })
+
+  test('ignores legacy .mp3.part files (only .cache.mp3 partials are processed)', async () => {
+    registerOfflineSermon(ctx, AUDIO_URL, mockSermon, mockPlaylist)
+    const legacyFile = new File(mockCacheDir, `${getUrlHash(AUDIO_URL)}.mp3.part`)
+    ;(mockCacheDir.list as jest.Mock).mockReturnValue([legacyFile])
+
+    await reEnqueuePartialDownloads(ctx)
+
+    expect(mockedEnqueueCacheMany).not.toHaveBeenCalled()
+    expect(mockedDeletePartialFile).not.toHaveBeenCalled()
+  })
+
+  test('is safe to call twice and re-enqueues the same URL set', async () => {
+    registerOfflineSermon(ctx, AUDIO_URL, mockSermon, mockPlaylist)
+    const partialFile = new File(mockCacheDir, partialFileName(AUDIO_URL))
+    ;(mockCacheDir.list as jest.Mock).mockReturnValue([partialFile])
+
+    await reEnqueuePartialDownloads(ctx)
+    await reEnqueuePartialDownloads(ctx)
+
+    expect(mockedEnqueueCacheMany).toHaveBeenCalledTimes(2)
+    expect(mockedEnqueueCacheMany).toHaveBeenNthCalledWith(1, ctx, [AUDIO_URL], 'auto')
+    expect(mockedEnqueueCacheMany).toHaveBeenNthCalledWith(2, ctx, [AUDIO_URL], 'auto')
+  })
 })

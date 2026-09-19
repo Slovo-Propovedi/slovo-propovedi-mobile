@@ -10,7 +10,7 @@ import { scheduleHistoryFlush } from '../progressFlusher'
 import { type SeekSourceSwap } from '../types'
 import { seekGuard } from './SeekGuard'
 
-export const armSeekSwap = (clampedPosition: number): void => {
+const armSeekSwap = (clampedPosition: number): void => {
   seekGuard.arm()
   void setIsSeekingAction(ctx, true)
   void setSeekTargetAction(ctx, clampedPosition)
@@ -22,7 +22,7 @@ const clearSeekSwapState = (): void => {
   void setIsSeekingAction(ctx, false)
   void setSeekTargetAction(ctx, null)
 }
-export const handleSeekSwapFailure = (error: unknown, tag: string): void => {
+const handleSeekSwapFailure = (error: unknown, tag: string): void => {
   console.error(`${tag} source swap failed:`, error)
   reportError(error, 'Ошибка при перемотке аудио')
   clearSeekSwapState()

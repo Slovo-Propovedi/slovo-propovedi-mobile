@@ -5,7 +5,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { loadHistoryAction } from 'entities/listening-history'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
 import { initServerUrlAction } from 'entities/settings'
-import { cleanupOrphanedDownloads, reEnqueuePartialDownloads } from 'shared/lib/audio-cache'
+import {
+  cleanupOrphanedDownloads,
+  hydrateOfflineRegistry,
+  reEnqueuePartialDownloads,
+} from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
 import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
@@ -38,13 +42,15 @@ const RootLayoutWithProvider = () => (
   </reatomContext.Provider>
 )
 
-// Purge orphaned legacy .mp3.part files and re-enqueue stale .cache.mp3
-// partials BEFORE player restore: both sweeps are best-effort and never
-// throw — ordering before initializePlayer is kept as a cheap safety.
+// Purge orphaned legacy .mp3.part files, hydrate the offline registry, restore
+// the player, then re-enqueue stale .cache.mp3 partials. Sweeping after restore
+// keeps the current track's partial alive for an offline resolve; a same-URL
+// enqueue joins the existing queue entry.
 void cleanupOrphanedDownloads()
   .catch(error => console.error('[audio-cache] orphan cleanup failed:', error))
-  .then(() => reEnqueuePartialDownloads(ctx))
+  .then(() => hydrateOfflineRegistry(ctx))
   .then(() => initializePlayer())
+  .then(() => reEnqueuePartialDownloads(ctx))
 scheduleStartupGuardReset()
 void initServerUrlAction(ctx)
 void loadHistoryAction(ctx)
