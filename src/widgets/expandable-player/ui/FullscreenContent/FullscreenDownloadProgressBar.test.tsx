@@ -1,5 +1,10 @@
 import { createCtx } from '@reatom/framework'
-import { downloadingAudioUrlAtom, downloadProgressAtom, isDownloadingAtom } from 'entities/player'
+import {
+  bufferedProgressStateAtom,
+  downloadingAudioUrlAtom,
+  downloadProgressAtom,
+  isDownloadingAtom,
+} from 'entities/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { FullscreenDownloadProgressBar } from './FullscreenDownloadProgressBar'
 
@@ -11,6 +16,7 @@ jest.mock('entities/player', () => {
   const downloadModel = jest.requireActual('entities/player/lib/download-model')
   const { Text } = jest.requireActual('react-native')
   return {
+    bufferedProgressStateAtom: downloadModel.bufferedProgressStateAtom,
     downloadingAudioUrlAtom: downloadModel.downloadingAudioUrlAtom,
     downloadProgressAtom: downloadModel.downloadProgressAtom,
     isDownloadingAtom: downloadModel.isDownloadingAtom,
@@ -58,5 +64,23 @@ describe('<FullscreenDownloadProgressBar>', () => {
     const { getByText } = await renderBar(ctx)
 
     expect(getByText('0.5')).toBeTruthy()
+  })
+
+  test('passes the frozen buffered amount when the download failed offline', async () => {
+    const ctx = createCtx()
+    bufferedProgressStateAtom(ctx, { progress: 0.5, url: AUDIO_URL })
+
+    const { getByText } = await renderBar(ctx)
+
+    expect(getByText('0.5')).toBeTruthy()
+  })
+
+  test('passes 0 when both download and buffered progress are zero', async () => {
+    const ctx = createCtx()
+    bufferedProgressStateAtom(ctx, { progress: 0, url: AUDIO_URL })
+
+    const { getByText } = await renderBar(ctx)
+
+    expect(getByText('0')).toBeTruthy()
   })
 })

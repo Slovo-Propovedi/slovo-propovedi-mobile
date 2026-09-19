@@ -3,7 +3,12 @@ import { enqueueCache } from 'shared/lib/audio-cache'
 import { CacheCancelledError } from 'shared/lib/audio-cache/CacheCancelledError'
 import { incrementCacheTrigger } from 'shared/lib/cache-triggers'
 import { reportError } from 'shared/model/error-dialog'
-import { downloadingAudioUrlAtom, downloadProgressAtom, isDownloadingAtom } from '../download-model'
+import {
+  bufferedProgressStateAtom,
+  downloadingAudioUrlAtom,
+  downloadProgressAtom,
+  isDownloadingAtom,
+} from '../download-model'
 import { startBackgroundCaching } from './BackgroundCachingService'
 
 const TEST_URL = 'https://example.com/audio.mp3'
@@ -200,6 +205,40 @@ describe('BackgroundCachingService', () => {
 
       expect(warnSpy).toHaveBeenCalled()
       expect(console.error).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('buffered progress state (Issue #109)', () => {
+    test('writes the buffered state on every progress tick', () => {
+      const controlled = createControlledEnqueue()
+
+      startBackgroundCaching(TEST_URL)
+      controlled.onProgress?.(0.25)
+      controlled.onProgress?.(0.75)
+
+      expect(mockCtx.get(bufferedProgressStateAtom)).toEqual({ progress: 0.75, url: TEST_URL })
+    })
+
+    test('clears the buffered state on successful completion', async () => {
+      const controlled = createControlledEnqueue()
+
+      startBackgroundCaching(TEST_URL)
+      controlled.onProgress?.(0.5)
+      controlled.resolve(CACHED_URI)
+      await flushPromises()
+
+      expect(mockCtx.get(bufferedProgressStateAtom)).toBeNull()
+    })
+
+    test('preserves the buffered state when the download fails', async () => {
+      const controlled = createControlledEnqueue()
+
+      startBackgroundCaching(TEST_URL)
+      controlled.onProgress?.(0.5)
+      controlled.reject(DOWNLOAD_ERROR)
+      await flushPromises()
+
+      expect(mockCtx.get(bufferedProgressStateAtom)).toEqual({ progress: 0.5, url: TEST_URL })
     })
   })
 

@@ -19,10 +19,14 @@ jest.mock('@expo/vector-icons', () => {
 // via jest.requireActual — creating fresh atoms here would break identity, and the hook
 // would subscribe to different atoms than the test writes to.
 jest.mock('entities/player', () => {
-  const { downloadingAudioUrlAtom, downloadProgressAtom, isDownloadingAtom } = jest.requireActual(
-    'entities/player/lib/download-model',
-  )
+  const {
+    bufferedProgressStateAtom,
+    downloadingAudioUrlAtom,
+    downloadProgressAtom,
+    isDownloadingAtom,
+  } = jest.requireActual('entities/player/lib/download-model')
   return {
+    bufferedProgressStateAtom,
     downloadingAudioUrlAtom,
     downloadProgressAtom,
     isDownloadingAtom,

@@ -3,6 +3,7 @@ import { incrementCacheTrigger } from 'shared/lib/cache-triggers'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {
   downloadingAudioUrlAtom,
+  setBufferedProgressStateAction,
   setDownloadingUrlAction,
   setDownloadProgressAction,
   setIsDownloadingAction,
@@ -29,11 +30,17 @@ export const startBackgroundCaching = (audioUrl: string): void => {
       void setIsDownloadingAction(ctx, true)
       void setDownloadingUrlAction(ctx, audioUrl)
     }
-    if (ctx.get(downloadingAudioUrlAtom) === audioUrl) void setDownloadProgressAction(ctx, progress)
+    if (ctx.get(downloadingAudioUrlAtom) === audioUrl) {
+      void setDownloadProgressAction(ctx, progress)
+      void setBufferedProgressStateAction(ctx, { progress, url: audioUrl })
+    }
   })
     .then(() => {
       void incrementCacheTrigger(ctx)
-      if (ctx.get(downloadingAudioUrlAtom) === audioUrl) void setDownloadProgressAction(ctx, 1)
+      if (ctx.get(downloadingAudioUrlAtom) === audioUrl) {
+        void setDownloadProgressAction(ctx, 1)
+        void setBufferedProgressStateAction(ctx, null)
+      }
     })
     .catch(error => {
       // Background caching is an automatic, invisible optimization (Issue #73):

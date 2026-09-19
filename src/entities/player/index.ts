@@ -1,7 +1,9 @@
 export {
+  bufferedProgressStateAtom,
   downloadingAudioUrlAtom,
   downloadProgressAtom,
   isDownloadingAtom,
+  setBufferedProgressStateAction,
 } from './lib/download-model'
 export { initializePlayer } from './lib/initializePlayer'
 export { guardOfflinePlayback } from './lib/playOfflineGuard'

@@ -1,6 +1,7 @@
 import { View } from 'react-native'
 import type { createMiniStyles } from './miniStyles'
 import type { ThemeColors } from 'shared/ui/theme'
+import { useBufferedProgressForUrl } from '../../model/useBufferedProgressForUrl'
 import { useDownloadProgressForUrl } from '../../model/useDownloadProgressForUrl'
 
 interface MiniDownloadProgressProps {
@@ -15,8 +16,10 @@ export const MiniDownloadProgress = ({
   miniStyles,
 }: MiniDownloadProgressProps) => {
   const downloadProgress = useDownloadProgressForUrl(audioUrl)
+  const bufferedProgress = useBufferedProgressForUrl(audioUrl)
+  const displayProgress = downloadProgress > 0 ? downloadProgress : bufferedProgress
 
-  if (downloadProgress <= 0) return null
+  if (displayProgress <= 0) return null
 
   return (
     <View style={miniStyles.downloadTrack}>
@@ -25,7 +28,7 @@ export const MiniDownloadProgress = ({
           miniStyles.downloadFill,
           {
             backgroundColor: currentTheme.primary,
-            width: `${downloadProgress * 100}%`,
+            width: `${displayProgress * 100}%`,
           },
         ]}
       />
