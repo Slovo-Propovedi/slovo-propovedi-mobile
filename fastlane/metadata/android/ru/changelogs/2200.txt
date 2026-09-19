@@ -1,0 +1,8 @@
+Hydrate offline registry before startup partial sweep (#109)
+Stop killing in-flight partial downloads on seek and progress flash (#109)
+Delete superseded partials and re-download stale ones (#109)
+Stream network on seek past partial while downloading (#109)
+Swap partial source for cached file on seek (#109)
+Keep full duration stable across partial source swaps (#109)
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

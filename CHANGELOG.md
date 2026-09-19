@@ -5,6 +5,97 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0] - 2026-09-19
+
+### Added
+
+- Delete superseded partials and re-download stale ones (#109)
+- Stream network on seek past partial while downloading (#109)
+- Play partial source on offline seek (#109)
+- Pause at partial-buffer edge instead of advancing (#109)
+- Treat partial downloads as offline-only fallback with full timeline (#109)
+- Play partially downloaded tracks offline (#109)
+- Auto-resume playback after network restore when stream stalled offline (#109)
+- Keep buffered download progress visible while offline (#109)
+- Mouse drag scrolling for content slider
+- Add tactile feedback to interactive elements
+- Context menus close on escape
+- Dialogs join the escape stack and backdrops lose focus
+- Lifo escape layering via shared escape stack
+- Esc closes search regardless of input focus
+- Esc clears query before closing search
+- Add IconButton and TouchableButton primitives
+- Real buttons for Vimium hints and Esc closes modals
+- Keyboard controls for fullscreen player (web)
+- Add PressableButton and migrate role-button Pressables
+- Add reusable useHeaderTitle hook
+- Let Listen screen content scroll under nav bar inset
+- Transparent Android navigation bar with theme-following glyphs
+- Add offline sermons screen with download registry
+- Add track list skeleton loading states
+
+### Changed
+
+- Drop unused barrel export and pin web heal ordering (#109)
+- Split PlayerService into native and web folders
+- Convert service worker promise chains to async/await
+- Extract shared escape-key hook and predicate
+- Reviewer follow-ups for button primitives
+- Drop redundant Text wrapper around control button icon
+- Adopt TouchableButton across TouchableOpacity call sites
+- Migrate icon-only buttons to IconButton
+- Migrate remaining role-buttons to PressableButton and label icon buttons
+- Extract seek end-buffer constant and harden unmount test
+- Simplify skeleton attachment to single expression
+- Inline cache action item literals
+- Reuse CACHE_ACTION_ITEMS for playing menu item
+- Expose skeletons via composition API
+- Gate sheet reveal on scroll convergence
+- Make TracksListItem the single base row
+- Rebrand cache wording and icons to offline
+- Relocate clear-cache action to shared audio-cache
+- Extract shared MenuDropdown component
+
+### Fixed
+
+- Hydrate offline registry before startup partial sweep (#109)
+- Stop killing in-flight partial downloads on seek and progress flash (#109)
+- Swap partial source for cached file on seek (#109)
+- Keep full duration stable across partial source swaps (#109)
+- Key offline-seek resume on stall flag and playing state (#109)
+- Swap partial source for completed file on resume (#109)
+- Retain partials across sessions and sweep legacy part files (#109)
+- Align stall-flag docs and guard isCached rejection (#109)
+- Keep buffering bar alive and auto-recover after network restore (#109)
+- Keep download bar monotonic across download restart (#109)
+- Allow offline playback of partially buffered sermon (#109)
+- Re-assert lock screen metadata after reconnect heal (#109)
+- Cap jest workers and linter concurrency for low-resource machines
+- Honor internet reachability for online signal and reconnect re-caching (#109)
+- Resume auto-caching and heal stream on network restore (#109)
+- Keep MarqueeText static row at marquee width to stop word-wrap vanishing
+- Resume from cached file when download completed mid-track (#107)
+- Cancel stale resume reapply and keep visibility watcher alive (#106)
+- Align expo packages with SDK 57 expectations
+- Restore position and media session after iOS interruption (#106)
+- Harden drag guards and unify marquee web activation
+- Make marquee titles draggable with mouse on desktop
+- Use vibrator-based light impact on Android
+- Mark marquee predicates as worklets
+- Document the web:preview port change to 4173
+- Strip unused RECORD_AUDIO permission on Android
+- Anchor dropdowns in viewport coords and clamp to window
+- Gate auto-scroll behind a real drag, geometric eligibility
+- Error modal closes on escape instead of copying
+- Derive ios.buildNumber in Expo config
+- Derive android versionCode in Expo config and assert it in CI
+- Guard RNGH pointer release against stale pointer ids
+- Un-nest mini player row from inner buttons
+- Make modal backdrop a role-less pressable
+- Guard RNGH pointer capture against stale pointer ids
+- Real button + pan-guard for fullscreen close chevron
+- Align fullscreen controls with tab bar bottom padding (#105)
+
 ## [0.21.2] - 2026-09-15
 
 ### Added
@@ -660,6 +751,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.22.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.22.0
 [0.21.2]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.2
 [0.21.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.1
 [0.21.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.0
