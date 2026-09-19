@@ -67,6 +67,8 @@
 
 Нативное лечение заменяет экземпляр `AudioPlayer`, поэтому после успешного `replaceAudio`/`loadAudio` повторно выставляет метаданные lock screen (`reassertLockScreenMetadata`) — зеркало foreground-реассерции (`useAppStatePlayback`). Без этого медиа-уведомление показывает иконку приложения вместо обложки плейлиста.
 
+**Авто-resume после офлайн-зависания (Issue #109 follow-up):** лечение резюмирует не только когда трек «завис» во время воспроизведения (`isPlaying && isBuffering`), но и когда выставлен `isStalledOfflineAtom` (`shouldResume = isPlaying || stalledOffline`). Флаг выставляется на нативе в `createAudioInterruptionHandler` при прерывании с `isBuffering && !isOnline` (дискриминатор надёжнее `pauseTypeAtom` — ручная пауза тоже пишет `'auto'`), на web — в `onError` при `!isOnline`; сбрасывается на загрузке нового источника (`AudioLoader`) и на web-событии `playing`. Нативный heal флаг **не** сбрасывает сам — `AudioLoader` делает это при `loadAudio`/`replaceAudio`; web-heal сбрасывает сразу после чтения (chokepoint'а нет). Принятый trade-off: пауза **во время** офлайн-зависания тоже приведёт к авто-resume; пауза до зависания — нет. Подробнее — [audio-cache.md](./audio-cache.md) → «Авто-resume после восстановления сети».
+
 **Известные ограничения:** не все пути resume проходят через `resumeAfterPause` — два входа остаются «незалеченными» (см. [debt.md](../debt.md)):
 
 - кнопка play в lock-screen/уведомлении действует на `AudioPlayer` нативно и никогда не доходит до `resumeAfterPause` — устаревший серверный URI всё ещё не работает после завершения кэша посреди трека (`src/entities/player/lib/PlayerService/native/LockScreenControls.ts`);

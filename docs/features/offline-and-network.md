@@ -126,7 +126,7 @@ Guard проверяет `isOnlineAtom` (NetInfo) и `audioCacheService.isCached
 
 ## Поток: offline ↔ online
 
-- **Offline:** `NetInfo` → `isOnlineAtom = false` → показывается `NetworkBanner`; API-вызовы падают с сетевой ошибкой → `reportServerUnreachable` → `ServerErrorToast`; `fetchAllSections` показывает кэш секций; поиск проповедей показывает per-query кэш (`cachedSermonSearch:<query>`), если он есть; подсказки поиска берутся из кэша `cachedDistinctValues`, если он есть (иначе скрываются); аудио играет из кэша.
+- **Offline:** `NetInfo` → `isOnlineAtom = false` → показывается `NetworkBanner`; API-вызовы падают с сетевой ошибкой → `reportServerUnreachable` → `ServerErrorToast`; `fetchAllSections` показывает кэш секций; поиск проповедей показывает per-query кэш (`cachedSermonSearch:<query>`), если он есть; подсказки поиска берутся из кэша `cachedDistinctValues`, если он есть (иначе скрываются); аудио играет из кэша. Если стрим оборвался посреди закачки, прогресс-бары плеера продолжают показывать замороженный объём буферизации (`bufferedProgressStateAtom`, Issue #109 follow-up), а зависший офлайн трек автоматически возобновится при возврате сети (`isStalledOfflineAtom`).
 - **Online:** `isOnlineAtom = true` → баннер скрывается; `useOfflineRetry` немедленно перезапрашивает данные; успешные ответы → `reportServerReachable`; поиск пишет свежие результаты в кэш; `reconnectRecovery` (Issue #109) пере-ставит фоновое кэширование текущего трека и «вылечит» стрим (см. [audio-cache.md](./audio-cache.md) → «Возобновление после восстановления сети»).
 
 ### Различие баннера и тоста
