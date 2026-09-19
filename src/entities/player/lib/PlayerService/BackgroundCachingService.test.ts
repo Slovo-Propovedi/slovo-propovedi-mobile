@@ -231,6 +231,17 @@ describe('BackgroundCachingService', () => {
       expect(mockCtx.get(downloadProgressAtom)).toBe(0)
     })
 
+    test('zero first tick still claims the downloader but writes no buffered snapshot', () => {
+      const controlled = createControlledEnqueue()
+
+      startBackgroundCaching(TEST_URL)
+      controlled.onProgress?.(0)
+
+      expect(mockCtx.get(isDownloadingAtom)).toBe(true)
+      expect(mockCtx.get(downloadingAudioUrlAtom)).toBe(TEST_URL)
+      expect(mockCtx.get(bufferedProgressStateAtom)).toBeNull()
+    })
+
     test('clears the buffered state on successful completion', async () => {
       const controlled = createControlledEnqueue()
 

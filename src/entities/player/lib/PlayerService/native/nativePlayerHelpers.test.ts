@@ -145,7 +145,7 @@ describe('createAudioInterruptionHandler offline stall flag (Issue #109)', () =>
     isStalledOfflineAtom(ctx, false)
   })
 
-  test('sets the flag when buffering while offline', async () => {
+  test('sets the flag when buffering', async () => {
     isBufferingAtom(ctx, true)
     isOnlineAtom(ctx, false)
     const handler = createAudioInterruptionHandler({ pause: jest.fn(), play: jest.fn() })

@@ -45,11 +45,16 @@ const restartCachingWhenSettled = async (audioUrl: string): Promise<void> => {
 export const recoverAfterReconnect = async (): Promise<void> => {
   const audioUrl = ctx.get(currentAudioAtom)?.audioUrl
   if (!audioUrl) return
-  const isCached = await audioCacheService.isCached(audioUrl)
+  let isCached: boolean | null = null
+  try {
+    isCached = await audioCacheService.isCached(audioUrl)
+  } catch (error) {
+    console.warn('[reconnectRecovery] cache check failed:', error)
+  }
   // Track may have switched while the cache check was in flight
   if (ctx.get(currentAudioAtom)?.audioUrl !== audioUrl) return
-  if (!isCached && !isUrlQueuedOrActive(audioUrl)) startBackgroundCaching(audioUrl)
-  else if (!isCached) void restartCachingWhenSettled(audioUrl)
+  if (isCached === false && !isUrlQueuedOrActive(audioUrl)) startBackgroundCaching(audioUrl)
+  else if (isCached === false) void restartCachingWhenSettled(audioUrl)
   try {
     await playerService.recoverStreamAfterReconnect(audioUrl)
   } catch (error) {
