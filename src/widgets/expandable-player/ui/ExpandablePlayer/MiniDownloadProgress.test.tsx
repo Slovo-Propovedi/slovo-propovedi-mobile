@@ -1,4 +1,5 @@
 import { createCtx } from '@reatom/framework'
+import { act } from '@testing-library/react-native'
 import {
   bufferedProgressStateAtom,
   downloadingAudioUrlAtom,
@@ -88,5 +89,22 @@ describe('<MiniDownloadProgress>', () => {
     const { container } = await renderLeaf(ctx)
 
     expect(queryProgressFill(container, 0)).toHaveLength(0)
+  })
+
+  test('keeps the frozen width when a restarted download reports a smaller tick', async () => {
+    const ctx = createCtx()
+    bufferedProgressStateAtom(ctx, { progress: 0.4, url: AUDIO_URL })
+
+    const { container } = await renderLeaf(ctx)
+    expect(queryProgressFill(container, 0.4)).toHaveLength(1)
+
+    await act(async () => {
+      isDownloadingAtom(ctx, true)
+      downloadingAudioUrlAtom(ctx, AUDIO_URL)
+      downloadProgressAtom(ctx, 0.05)
+    })
+
+    expect(queryProgressFill(container, 0.4)).toHaveLength(1)
+    expect(queryProgressFill(container, 0.05)).toHaveLength(0)
   })
 })

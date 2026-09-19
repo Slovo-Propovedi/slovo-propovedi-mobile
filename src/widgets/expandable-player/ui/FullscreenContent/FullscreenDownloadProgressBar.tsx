@@ -1,7 +1,6 @@
 import { type StyleProp, type ViewStyle } from 'react-native'
 import { PlayerProgressBar } from 'entities/player'
-import { useBufferedProgressForUrl } from '../../model/useBufferedProgressForUrl'
-import { useDownloadProgressForUrl } from '../../model/useDownloadProgressForUrl'
+import { useDisplayedDownloadProgress } from '../../model/useDisplayedDownloadProgress'
 
 interface FullscreenDownloadProgressBarProps {
   audioUrl: string
@@ -20,9 +19,7 @@ export const FullscreenDownloadProgressBar = ({
   position,
   style,
 }: FullscreenDownloadProgressBarProps) => {
-  const downloadProgress = useDownloadProgressForUrl(audioUrl)
-  const bufferedProgress = useBufferedProgressForUrl(audioUrl)
-  const displayProgress = downloadProgress > 0 ? downloadProgress : bufferedProgress
+  const displayProgress = useDisplayedDownloadProgress(audioUrl)
 
   return (
     <PlayerProgressBar
