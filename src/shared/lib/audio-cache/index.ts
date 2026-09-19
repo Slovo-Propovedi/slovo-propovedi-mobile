@@ -32,6 +32,7 @@ export {
   registerOfflineSermon,
   removeOfflineSermon,
 } from './offlineSermonsRegistry'
+export { getPartialFileUri } from './partialFile'
 export {
   resolveCacheState,
   type ResolveCacheStateInput,

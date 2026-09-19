@@ -8,11 +8,16 @@ import {
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 import { inflightCache, resetInflightCache } from './inflightCache'
 import { createInflightDownload, joinInflightDownload } from './inflightDownload'
+import { getPartialFile } from './partialFile'
 
 export interface CacheInfo {
   fileCount: number
   totalSize: number
 }
+
+const LEGACY_PART_SUFFIX = '.mp3.part'
+const isPartialFileName = (name: string): boolean =>
+  name.endsWith(PART_SUFFIX) || name.endsWith(LEGACY_PART_SUFFIX)
 
 export const _resetInflightCacheForTesting = (): void => {
   resetInflightCache()
@@ -48,7 +53,7 @@ class AudioCacheService {
       if (!cacheDir.exists) return { fileCount: 0, totalSize: 0 }
       const cachedFiles = cacheDir
         .list()
-        .filter((file): file is File => file instanceof File && !file.name.endsWith(PART_SUFFIX))
+        .filter((file): file is File => file instanceof File && !isPartialFileName(file.name))
       const totalSize = cachedFiles.reduce((sum, file) => sum + (file.size ?? 0), 0)
       return { fileCount: cachedFiles.length, totalSize }
     } catch (error) {
@@ -106,6 +111,9 @@ class AudioCacheService {
       const cachedFile = getCachedFile(audioUrl)
       if (cachedFile.exists) {
         cachedFile.delete()
+        // Best-effort cleanup of the retained partial (offline playback source).
+        const partialFile = getPartialFile(audioUrl)
+        if (partialFile.exists) partialFile.delete()
         return true
       }
       return false

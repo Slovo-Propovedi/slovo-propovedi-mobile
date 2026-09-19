@@ -14,6 +14,7 @@ jest.mock('expo-file-system', () => ({
       this.delete = jest.fn()
       this.rename = jest.fn()
       this.size = 1024
+      mockFileInstances.push(this)
     }
 
     public static downloadFileAsync = jest.fn()
@@ -38,6 +39,7 @@ jest.mock('./downloadRetryPolicy', () => ({
 }))
 
 const mockFileState = { exists: false }
+const mockFileInstances: Array<{ delete: jest.Mock; name: string }> = []
 
 jest.mock('./getAudioCacheDirectory', () => ({
   getAudioCacheDirectory: jest.fn().mockReturnValue(mockCacheDir),
@@ -59,6 +61,7 @@ describe('AudioCacheService', () => {
     jest.clearAllMocks()
     _resetInflightCacheForTesting()
     mockFileState.exists = false
+    mockFileInstances.length = 0
     mockCacheDir.exists = true
     ;(mockCacheDir.list as jest.Mock).mockReturnValue([])
     mockedGetAudioCacheDirectory.mockReturnValue(mockCacheDir)
@@ -328,6 +331,20 @@ describe('AudioCacheService', () => {
       expect(result).toBe(true)
     })
 
+    test('deletes both the final and the partial file when they exist', async () => {
+      mockFileState.exists = true
+
+      const result = await audioCacheService.removeFromCache(EXAMPLE_URL)
+
+      expect(result).toBe(true)
+      const finalFile = mockFileInstances.find(
+        file => file.name.endsWith('.mp3') && !file.name.endsWith('.cache.mp3'),
+      )
+      const partialFile = mockFileInstances.find(file => file.name.endsWith('.cache.mp3'))
+      expect(finalFile?.delete).toHaveBeenCalled()
+      expect(partialFile?.delete).toHaveBeenCalled()
+    })
+
     test('returns false when file does not exist', async () => {
       mockFileState.exists = false
       const result = await audioCacheService.removeFromCache(EXAMPLE_URL)
@@ -336,10 +353,11 @@ describe('AudioCacheService', () => {
   })
 
   describe('getCacheInfo', () => {
-    test('excludes .mp3.part files from count and size', async () => {
+    test('excludes partial files (.cache.mp3 and legacy .mp3.part) from count and size', async () => {
       const mp3File = new File(mockCacheDir, 'abc.mp3')
-      const partFile = new File(mockCacheDir, 'abc.mp3.part')
-      ;(mockCacheDir.list as jest.Mock).mockReturnValue([mp3File, partFile])
+      const partFile = new File(mockCacheDir, 'abc.cache.mp3')
+      const legacyPartFile = new File(mockCacheDir, 'def.mp3.part')
+      ;(mockCacheDir.list as jest.Mock).mockReturnValue([mp3File, partFile, legacyPartFile])
 
       const result = await audioCacheService.getCacheInfo()
 
@@ -348,7 +366,7 @@ describe('AudioCacheService', () => {
 
     test('counts only committed .mp3 files', async () => {
       const mp3File = new File(mockCacheDir, 'abc.mp3')
-      const partFile = new File(mockCacheDir, 'def.mp3.part')
+      const partFile = new File(mockCacheDir, 'def.cache.mp3')
       ;(mockCacheDir.list as jest.Mock).mockReturnValue([mp3File, partFile])
 
       const result = await audioCacheService.getCacheInfo()

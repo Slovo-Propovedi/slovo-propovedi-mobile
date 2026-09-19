@@ -13,11 +13,13 @@ jest.mock('expo-audio', () => ({
 }))
 
 const mockGetCachedUri = jest.fn<Promise<null | string>, [string]>()
+const mockGetPartialFileUri = jest.fn<Promise<null | string>, [string]>()
 
 jest.mock('shared/lib/audio-cache', () => ({
   audioCacheService: {
     getCachedUri: (url: string) => mockGetCachedUri(url),
   },
+  getPartialFileUri: (url: string) => mockGetPartialFileUri(url),
 }))
 
 jest.mock('shared/lib/reatom-ctx', () => ({ ctx: {} }))
@@ -91,6 +93,7 @@ describe('AudioLoader', () => {
     jest.clearAllMocks()
     jest.spyOn(console, 'error').mockImplementation(() => {})
     mockGetCachedUri.mockResolvedValue(null)
+    mockGetPartialFileUri.mockResolvedValue(null)
     mockedCreateAudioPlayer.mockImplementation(() => createPlayerStub().player)
   })
 

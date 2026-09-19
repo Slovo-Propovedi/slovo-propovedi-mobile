@@ -23,7 +23,7 @@ const sourceAlreadyServesCache = (sourceUrl: null | string): boolean =>
  * track is already cached.
  * @param player - Player control actions used to swap the source and resume.
  * @param audioUrl - Network URL of the track being resumed. Always pass the original server URL —
- * replaceAudio re-resolves it through AudioLoader.getPlaybackUrl; passing a resolved file:// URI
+ * replaceAudio re-resolves it through AudioLoader → resolvePlaybackUrl; passing a resolved file:// URI
  * would miss the cache key and enqueue a bogus re-download.
  */
 export const resumeWithSourceSwap = async (

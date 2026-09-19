@@ -11,7 +11,7 @@ import {
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 
 const CACHED_EXTENSION = '.mp3'
-export const PART_SUFFIX = '.mp3.part'
+export const PART_SUFFIX = '.cache.mp3'
 export const PROGRESS_TICK_MIN_INTERVAL_MS = 250
 
 export const getUrlHash = (url: string): string => {
@@ -71,10 +71,12 @@ const throwIfCancelled = (audioUrl: string, tempFile: File, externalSignal?: Abo
  * Downloads a track into the audio cache with retries:
  * up to MAX_DOWNLOAD_ATTEMPTS attempts; between attempts waits for
  * connectivity (bounded) and applies a backoff delay. A stall guard aborts
- * an attempt that stops receiving progress bytes. The `.part` file is kept
- * between attempts and deleted only after the final failed attempt.
- * Cancellation via `externalSignal` is never retried: the `.part` file is
- * dropped and CacheCancelledError is thrown immediately.
+ * an attempt that stops receiving progress bytes. The `.cache.mp3` partial
+ * file is kept between attempts AND after the final failed attempt — it is a
+ * playable local source for offline partial playback (see partialFile.ts).
+ * Cancellation via `externalSignal` is never retried: the partial file is
+ * dropped and CacheCancelledError is thrown immediately. A fresh download
+ * attempt drops any stale partial left by a killed app.
  * @param audioUrl - Source audio URL to download into the cache.
  * @param onProgress - Optional callback receiving progress as a 0..1 fraction.
  * @param externalSignal - Optional signal that cancels the download.
@@ -123,7 +125,6 @@ export const downloadToCache = async (
     }
   }
 
-  deletePartFile(tempFile)
   console.error('[AudioCacheService] Error caching audio:', lastError)
   throw lastError
 }

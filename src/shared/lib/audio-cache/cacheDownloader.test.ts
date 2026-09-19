@@ -39,7 +39,7 @@ jest.mock('expo-file-system', () => ({
     public uri: string
 
     public get exists(): boolean {
-      return this.uri.includes('.part') ? mockFileState.part : mockFileState.cached
+      return this.uri.includes('.cache.mp3') ? mockFileState.part : mockFileState.cached
     }
   },
 }))
@@ -71,7 +71,7 @@ const createStalledDownload = (signal: AbortSignal): Promise<unknown> => {
   return stalled
 }
 
-const getPartFile = () => mockFileInstances.find(file => file.uri.includes('.part'))
+const getPartFile = () => mockFileInstances.find(file => file.uri.includes('.cache.mp3'))
 
 describe('downloadToCache', () => {
   let consoleErrorSpy: jest.SpyInstance
@@ -142,14 +142,16 @@ describe('downloadToCache', () => {
     expect(result).toContain('file://cache/')
   })
 
-  test('throws last error and deletes .part after all attempts exhausted', async () => {
+  test('throws last error and retains the partial file after all attempts exhausted', async () => {
     mockFileState.part = true
     ;(File.downloadFileAsync as jest.Mock).mockRejectedValue(new Error('download failed'))
 
     await expect(downloadToCache(EXAMPLE_URL)).rejects.toThrow('download failed')
 
     expect(File.downloadFileAsync).toHaveBeenCalledTimes(3)
-    expect(getPartFile()?.delete).toHaveBeenCalled()
+    // Only the stale-partial drop at start deletes; the final failure retains
+    // the partial for offline playback.
+    expect(getPartFile()?.delete).toHaveBeenCalledTimes(1)
     expect(consoleErrorSpy).toHaveBeenCalled()
   })
 
@@ -184,7 +186,9 @@ describe('downloadToCache', () => {
 
     await rejectionAssertion
     expect(File.downloadFileAsync).toHaveBeenCalledTimes(3)
-    expect(getPartFile()?.delete).toHaveBeenCalled()
+    // Only the stale-partial drop at start deletes; the final failure retains
+    // the partial for offline playback.
+    expect(getPartFile()?.delete).toHaveBeenCalledTimes(1)
   })
 
   test('cancels mid-attempt: one attempt, .part deleted, rejects with CacheCancelledError', async () => {

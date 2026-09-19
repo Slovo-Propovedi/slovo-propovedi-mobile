@@ -1,4 +1,4 @@
-import { audioCacheService } from 'shared/lib/audio-cache'
+import { audioCacheService, getPartialFileUri } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { showInfo } from 'shared/model/info-dialog'
 import { bufferedProgressStateAtom } from './download-model'
@@ -11,6 +11,9 @@ const OFFLINE_PLAYBACK_MESSAGE =
  * cached, shows a friendly informational dialog (side effect) and returns
  * true (blocking). When online or cached, returns false (allowing playback).
  * A cache-check failure is treated as "not cached".
+ * A retained partial download (`.cache.mp3` on disk) is a playable local
+ * source, so offline playback is allowed without a dialog on both native
+ * paths regardless of the flag; web resolves null and keeps current behavior.
  * When allowPartiallyBuffered is set, an offline track that was already
  * partially buffered in this session (bufferedProgressStateAtom matches the
  * URL with progress > 0) is allowed — the player's media buffer still holds
@@ -27,6 +30,9 @@ export const guardOfflinePlayback = async (
   if (isOnline) return false
   const isCached = await audioCacheService.isCached(audioUrl).catch(() => false)
   if (isCached) return false
+  const partialUri = await getPartialFileUri(audioUrl)
+
+  if (partialUri) return false
   if (allowPartiallyBuffered) {
     const buffered = ctx.get(bufferedProgressStateAtom)
     if (buffered?.url === audioUrl && buffered.progress > 0) return false

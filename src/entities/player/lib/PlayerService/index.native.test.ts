@@ -165,6 +165,19 @@ describe('PlayerService.recoverStreamAfterReconnect', () => {
     expect(playSpy).not.toHaveBeenCalled()
   })
 
+  test('partial file source (file:// .cache.mp3) does nothing', async () => {
+    ;(audioLoader.getLastResolvedUrl as jest.Mock).mockReturnValue('file:///cache/abc.cache.mp3')
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).not.toHaveBeenCalled()
+    expect(loadSpy).not.toHaveBeenCalled()
+    expect(playSpy).not.toHaveBeenCalled()
+  })
+
   test('healthy playing stream does nothing', async () => {
     isPlayingAtom(ctx, true)
     isBufferingAtom(ctx, false)

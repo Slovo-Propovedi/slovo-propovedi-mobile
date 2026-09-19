@@ -1,10 +1,9 @@
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio'
-import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { setIsBufferingAction, setPositionAction } from '../../../model'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
-import { startBackgroundCaching } from '../BackgroundCachingService'
+import { resolvePlaybackUrl } from './resolvePlaybackUrl'
 import { waitForLoaded } from './waitForLoaded'
 
 const REPLACE_AUDIO_ERROR_MESSAGE = 'Ошибка при замене аудио'
@@ -24,7 +23,7 @@ class AudioLoader {
       this.playerInstance.release()
       this.playerInstance = null
     }
-    const playUrl = await this.getPlaybackUrl(audioUrl)
+    const playUrl = await resolvePlaybackUrl(audioUrl)
     this.lastResolvedUrl = playUrl
     // keepAudioSessionActive prevents iOS AVAudioSession deactivation at track end,
     // which otherwise stalls background auto-advance until the app is foregrounded
@@ -53,7 +52,7 @@ class AudioLoader {
     void setIsBufferingAction(ctx, true)
     this.trackEndHandled = false
     if (!this.playerInstance) return this.loadAudio(audioUrl, initialPositionMs)
-    const playUrl = await this.getPlaybackUrl(audioUrl)
+    const playUrl = await resolvePlaybackUrl(audioUrl)
     this.lastResolvedUrl = playUrl
     try {
       // replace-in-place: same native player, same MediaSession, same foreground service.
@@ -105,18 +104,6 @@ class AudioLoader {
 
   public markTrackEndHandled(): void {
     this.trackEndHandled = true
-  }
-
-  private async getPlaybackUrl(audioUrl: string): Promise<string> {
-    try {
-      const cachedUri = await audioCacheService.getCachedUri(audioUrl)
-      if (cachedUri) return cachedUri
-    } catch (error) {
-      console.error('[AudioLoader] getPlaybackUrl: Error checking cache:', error)
-      reportError(error, 'Ошибка при проверке офлайн-копии аудио')
-    }
-    startBackgroundCaching(audioUrl)
-    return audioUrl
   }
 
   private playerInstance: AudioPlayer | null = null

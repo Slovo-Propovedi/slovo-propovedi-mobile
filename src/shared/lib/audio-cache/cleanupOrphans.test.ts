@@ -20,7 +20,7 @@ jest.mock('./getAudioCacheDirectory', () => ({
 
 const mockedGetAudioCacheDirectory = jest.mocked(getAudioCacheDirectory)
 
-const PART_FILE_NAME = 'abc.mp3.part'
+const PART_FILE_NAME = 'abc.cache.mp3'
 
 const mockCacheDir = {
   exists: true,
@@ -42,7 +42,7 @@ describe('cleanupOrphanedDownloads (native)', () => {
     consoleErrorSpy.mockRestore()
   })
 
-  test('deletes .mp3.part files', async () => {
+  test('deletes .cache.mp3 files', async () => {
     const partFile = new File(mockCacheDir, PART_FILE_NAME)
     ;(mockCacheDir.list as jest.Mock).mockReturnValue([partFile])
 
@@ -93,7 +93,7 @@ describe('cleanupOrphanedDownloads (native)', () => {
     ;(failingPart.delete as jest.Mock).mockImplementation(() => {
       throw new Error('delete failed')
     })
-    const okPart = new File(mockCacheDir, 'def.mp3.part')
+    const okPart = new File(mockCacheDir, 'def.cache.mp3')
     ;(mockCacheDir.list as jest.Mock).mockReturnValue([failingPart, okPart])
 
     await expect(cleanupOrphanedDownloads()).resolves.toBeUndefined()

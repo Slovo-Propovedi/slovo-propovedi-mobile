@@ -26,6 +26,7 @@ jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
 
 jest.mock('shared/lib/audio-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
+  getPartialFileUri: jest.fn().mockResolvedValue(null),
 }))
 
 const OTHER_SERMON_ID = 'other-sermon'

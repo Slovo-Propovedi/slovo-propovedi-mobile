@@ -1,4 +1,4 @@
-import { audioCacheService } from 'shared/lib/audio-cache'
+import { audioCacheService, getPartialFileUri } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { showInfo } from 'shared/model/info-dialog'
 import { bufferedProgressStateAtom } from './download-model'
@@ -6,6 +6,7 @@ import { guardOfflinePlayback } from './playOfflineGuard'
 
 jest.mock('shared/lib/audio-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
+  getPartialFileUri: jest.fn(),
 }))
 
 jest.mock('shared/model/info-dialog', () => ({
@@ -20,6 +21,7 @@ describe('guardOfflinePlayback', () => {
     jest.clearAllMocks()
     bufferedProgressStateAtom(ctx, null)
     jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
+    jest.mocked(getPartialFileUri).mockResolvedValue(null)
   })
 
   test('online → allowed, cache not checked', async () => {
@@ -41,6 +43,14 @@ describe('guardOfflinePlayback', () => {
     await expect(guardOfflinePlayback(AUDIO_URL, false)).resolves.toBe(true)
 
     expect(showInfo).toHaveBeenCalledTimes(1)
+  })
+
+  test('offline + uncached + retained partial → allowed without dialog (no flag)', async () => {
+    jest.mocked(getPartialFileUri).mockResolvedValue('file:///data/cache/abc.cache.mp3')
+
+    await expect(guardOfflinePlayback(AUDIO_URL, false)).resolves.toBe(false)
+
+    expect(showInfo).not.toHaveBeenCalled()
   })
 
   test('offline + uncached + partially buffered → allowed without dialog', async () => {

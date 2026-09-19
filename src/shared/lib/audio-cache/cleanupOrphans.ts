@@ -3,8 +3,10 @@ import { PART_SUFFIX } from './cacheDownloader'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 
 /**
- * Delete orphaned `.mp3.part` temp files left behind when the app is killed
- * mid-download. Runs once at startup; best-effort, never throws.
+ * Delete orphaned `.cache.mp3` partial files left behind when the app is
+ * killed mid-download. Runs once at startup; best-effort, never throws.
+ * Legacy `.mp3.part` orphans from older app versions are intentionally not
+ * swept (only a full cache clear removes them).
  */
 export const cleanupOrphanedDownloads = async (): Promise<void> => {
   try {
