@@ -62,8 +62,9 @@ class PlaybackController {
   ): Promise<void> => {
     if (!player) return
     const clampedPosition = Math.max(0, positionMs)
-    if (sourceSwap && (await shouldSeekViaPartialSource())) {
-      await seekViaPartialSource(sourceSwap, clampedPosition)
+    const partialAudioUrl = sourceSwap ? await shouldSeekViaPartialSource() : null
+    if (partialAudioUrl && sourceSwap) {
+      await seekViaPartialSource(sourceSwap, partialAudioUrl, clampedPosition)
       return
     }
     seekGuard.arm()
