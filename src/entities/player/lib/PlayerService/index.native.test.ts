@@ -288,4 +288,61 @@ describe('PlayerService.recoverStreamAfterReconnect', () => {
       title: AUDIO_DATA.title,
     })
   })
+
+  test('stalled-stream heal re-asserts lock screen metadata after replaceAudio and play resolve', async () => {
+    isPlayingAtom(ctx, true)
+    isBufferingAtom(ctx, true)
+    currentAudioAtom(ctx, AUDIO_DATA)
+    const replaceSpy = jest
+      .spyOn(playerService, 'replaceAudio')
+      .mockResolvedValue(createPlayerStub())
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).toHaveBeenCalled()
+    expect(playSpy).toHaveBeenCalled()
+    expect(reassertMetadataSpy).toHaveBeenCalledTimes(1)
+    expect(reassertMetadataSpy.mock.invocationCallOrder[0]).toBeGreaterThan(
+      replaceSpy.mock.invocationCallOrder[0],
+    )
+    expect(reassertMetadataSpy.mock.invocationCallOrder[0]).toBeGreaterThan(
+      playSpy.mock.invocationCallOrder[0],
+    )
+  })
+
+  test('loadAudio heal re-asserts lock screen metadata after loadAudio resolves', async () => {
+    ;(audioLoader.isPlayerLoaded as jest.Mock).mockReturnValue(false)
+    currentAudioAtom(ctx, AUDIO_DATA)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(createPlayerStub())
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(loadSpy).toHaveBeenCalled()
+    expect(reassertMetadataSpy).toHaveBeenCalledTimes(1)
+    expect(reassertMetadataSpy.mock.invocationCallOrder[0]).toBeGreaterThan(
+      loadSpy.mock.invocationCallOrder[0],
+    )
+  })
+
+  test('replace heal failure (null player) does not re-assert lock screen metadata', async () => {
+    currentAudioAtom(ctx, AUDIO_DATA)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).toHaveBeenCalled()
+    expect(reassertMetadataSpy).not.toHaveBeenCalled()
+  })
+
+  test('loadAudio heal failure (null player) does not re-assert lock screen metadata', async () => {
+    ;(audioLoader.isPlayerLoaded as jest.Mock).mockReturnValue(false)
+    currentAudioAtom(ctx, AUDIO_DATA)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(null)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(loadSpy).toHaveBeenCalled()
+    expect(reassertMetadataSpy).not.toHaveBeenCalled()
+  })
 })
