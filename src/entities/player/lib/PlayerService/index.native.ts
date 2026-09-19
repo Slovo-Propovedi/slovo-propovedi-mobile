@@ -2,12 +2,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import type { LockScreenMetadata } from './types'
 import type { PlaybackRate } from '../../playback-rate'
 import type { AudioPlayer } from 'expo-audio'
-import {
-  setDurationAction,
-  setIsBufferingAction,
-  setPauseTypeAction,
-  setPositionAction,
-} from '../../model'
+import { setIsBufferingAction, setPauseTypeAction, setPositionAction } from '../../model'
 import { audioLoader } from './native/AudioLoader'
 import { audioModeManager } from './native/AudioModeManager'
 import { lockScreenControls } from './native/LockScreenControls'
@@ -64,7 +59,6 @@ export class PlayerService {
     initialPositionMs = 0,
   ): Promise<AudioPlayer | null> => {
     if (!audioUrl) return null
-    void setDurationAction(ctx, 0)
     playbackController.resetSeekGuard()
     playerStatusListener.cleanup()
 

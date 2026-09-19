@@ -177,6 +177,32 @@ describe('AudioLoader', () => {
       expect(mockedSetIsStalledOfflineAction).toHaveBeenCalledWith(ctx, false)
     })
 
+    test('does NOT zero the duration when replacing with a partial source', async () => {
+      mockGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
+      mockedCtxGet.mockReturnValue(false)
+      const { player: existingPlayer } = createPlayerStub()
+      mockedCreateAudioPlayer.mockReturnValueOnce(existingPlayer)
+
+      await audioLoader.loadAudio(AUDIO_URL)
+      // Seed a non-zero duration (as persisted from the online period)
+      mockedSetDurationAction(ctx, 600000)
+      mockedSetDurationAction.mockClear()
+      await audioLoader.replaceAudio(SECOND_AUDIO_URL)
+
+      expect(mockedSetDurationAction).not.toHaveBeenCalledWith(ctx, 0)
+    })
+
+    test('zeros the duration when replacing with a non-partial source', async () => {
+      const { player: existingPlayer } = createPlayerStub()
+      mockedCreateAudioPlayer.mockReturnValueOnce(existingPlayer)
+
+      await audioLoader.loadAudio(AUDIO_URL)
+      mockedSetDurationAction.mockClear()
+      await audioLoader.replaceAudio(SECOND_AUDIO_URL)
+
+      expect(mockedSetDurationAction).toHaveBeenCalledWith(ctx, 0)
+    })
+
     test('falls back to loadAudio when no player instance exists yet', async () => {
       const result = await audioLoader.replaceAudio(AUDIO_URL)
 
@@ -486,7 +512,7 @@ describe('AudioLoader', () => {
 
       await audioLoader.loadAudio(AUDIO_URL)
 
-      expect(mockedApplyPartialDuration).toHaveBeenCalledWith(120000)
+      expect(mockedApplyPartialDuration).toHaveBeenCalledWith()
     })
 
     test('does not persist the truncated duration when the source is a partial', async () => {

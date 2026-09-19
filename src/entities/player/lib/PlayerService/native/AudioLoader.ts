@@ -2,7 +2,7 @@ import { type AudioPlayer, createAudioPlayer } from 'expo-audio'
 import { PART_SUFFIX } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
-import { setIsBufferingAction, setPositionAction } from '../../../model'
+import { setDurationAction, setIsBufferingAction, setPositionAction } from '../../../model'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { applyPartialDuration } from './partialDuration'
 import { resolvePlaybackUrl } from './resolvePlaybackUrl'
@@ -14,8 +14,7 @@ class AudioLoader {
   public async loadAudio(audioUrl: string, initialPositionMs = 0): Promise<AudioPlayer | null> {
     if (!audioUrl) return null
     this.loaded = false
-    // A new source invalidates any previous offline stall — the heal must not
-    // auto-resume a track the user has already switched away from.
+    // A new source invalidates any previous offline stall — the heal must not auto-resume a switched-away track.
     void setIsStalledOfflineAction(ctx, false)
     void setIsBufferingAction(ctx, true)
     void setPositionAction(ctx, 0)
@@ -59,6 +58,7 @@ class AudioLoader {
     const playUrl = await resolvePlaybackUrl(audioUrl)
     this.lastResolvedUrl = playUrl
     const partial = this.isPartialSource()
+    if (!partial) void setDurationAction(ctx, 0)
     try {
       // replace-in-place: same native player, same MediaSession, same foreground service.
       // Never pass null to replace() — it crashes the player (expo-audio #48219)
@@ -119,7 +119,7 @@ class AudioLoader {
 
   private applyPartialDurationIfNeeded(partial: boolean, loaded: AudioPlayer | null): void {
     if (!partial || !loaded) return
-    applyPartialDuration(Math.floor(loaded.duration * 1000))
+    applyPartialDuration()
   }
 
   private playerInstance: AudioPlayer | null = null
