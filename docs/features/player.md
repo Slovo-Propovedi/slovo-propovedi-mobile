@@ -65,6 +65,8 @@
 
 `reconnectRecovery` (`src/entities/player/lib/reconnectRecovery.ts`) расширяет восстановление устаревшего источника на случай незакэшированного/мёртвого стрима: при возврате сети (false→true по `isOnlineAtom`) `recoverStreamAfterReconnect` на нативе делает `replaceAudio` на сохранённой позиции (или `loadAudio`, если плеер никогда не загружался), на web — создаёт новый `HTMLAudioElement` на сохранённой позиции. Подробнее — [audio-cache.md](./audio-cache.md) → «Возобновление после восстановления сети (Issue #109)».
 
+Нативное лечение заменяет экземпляр `AudioPlayer`, поэтому после успешного `replaceAudio`/`loadAudio` повторно выставляет метаданные lock screen (`reassertLockScreenMetadata`) — зеркало foreground-реассерции (`useAppStatePlayback`). Без этого медиа-уведомление показывает иконку приложения вместо обложки плейлиста.
+
 **Известные ограничения:** не все пути resume проходят через `resumeAfterPause` — два входа остаются «незалеченными» (см. [debt.md](../debt.md)):
 
 - кнопка play в lock-screen/уведомлении действует на `AudioPlayer` нативно и никогда не доходит до `resumeAfterPause` — устаревший серверный URI всё ещё не работает после завершения кэша посреди трека (`src/entities/player/lib/PlayerService/native/LockScreenControls.ts`);

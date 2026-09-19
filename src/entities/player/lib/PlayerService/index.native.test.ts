@@ -1,6 +1,8 @@
 import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {
+  currentAudioAtom,
+  currentPlaylistAtom,
   isBufferingAtom,
   isPlayingAtom,
   isSeekingAtom,
@@ -9,6 +11,7 @@ import {
 } from '../../model'
 import { playerService } from './index.native'
 import { audioLoader } from './native/AudioLoader'
+import { lockScreenControls } from './native/LockScreenControls'
 import { playbackController } from './native/PlaybackController'
 import { playerStatusListener } from './native/PlayerStatusListener'
 
@@ -23,7 +26,9 @@ jest.mock('./native/AudioLoader', () => ({
 
 jest.mock('./native/AudioModeManager', () => ({ audioModeManager: { configure: jest.fn() } }))
 
-jest.mock('./native/LockScreenControls', () => ({ lockScreenControls: {} }))
+jest.mock('./native/LockScreenControls', () => ({
+  lockScreenControls: { reassertMetadata: jest.fn() },
+}))
 
 jest.mock('./native/nativePlayerHelpers', () => ({
   createAudioInterruptionHandler: jest.fn(() => jest.fn()),
@@ -109,9 +114,19 @@ describe('PlayerService volume restore', () => {
 
 describe('PlayerService.recoverStreamAfterReconnect', () => {
   const NETWORK_URL = 'https://example.com/audio.mp3'
+  const AUDIO_DATA = {
+    artist: 'Author',
+    artwork: null,
+    audioUrl: NETWORK_URL,
+    id: 'sermon-1',
+    title: 'Test Sermon',
+  }
+  const reassertMetadataSpy = jest.mocked(lockScreenControls.reassertMetadata)
 
   beforeEach(() => {
     jest.clearAllMocks()
+    currentAudioAtom(ctx, null)
+    currentPlaylistAtom(ctx, null)
     isPlayingAtom(ctx, false)
     isBufferingAtom(ctx, false)
     positionAtom(ctx, 0)
@@ -202,5 +217,75 @@ describe('PlayerService.recoverStreamAfterReconnect', () => {
     expect(loadSpy).toHaveBeenCalledWith(NETWORK_URL, 5000)
     expect(replaceSpy).not.toHaveBeenCalled()
     expect(playSpy).not.toHaveBeenCalled()
+  })
+
+  test('successful replace heal re-asserts lock screen metadata after replaceAudio', async () => {
+    currentAudioAtom(ctx, AUDIO_DATA)
+    currentPlaylistAtom(ctx, {
+      artwork: null,
+      id: 'playlist-1',
+      sermons: [],
+      title: 'Test Playlist',
+    })
+    const replaceSpy = jest
+      .spyOn(playerService, 'replaceAudio')
+      .mockResolvedValue(createPlayerStub())
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).toHaveBeenCalled()
+    expect(playSpy).not.toHaveBeenCalled()
+    expect(reassertMetadataSpy).toHaveBeenCalledTimes(1)
+    expect(reassertMetadataSpy.mock.calls[0][1]).toEqual({
+      albumTitle: 'Test Playlist',
+      artist: AUDIO_DATA.artist,
+      artworkUrl: null,
+      title: AUDIO_DATA.title,
+    })
+    expect(reassertMetadataSpy.mock.invocationCallOrder[0]).toBeGreaterThan(
+      replaceSpy.mock.invocationCallOrder[0],
+    )
+  })
+
+  test('healthy playing stream does not re-assert lock screen metadata', async () => {
+    isPlayingAtom(ctx, true)
+    isBufferingAtom(ctx, false)
+    const replaceSpy = jest
+      .spyOn(playerService, 'replaceAudio')
+      .mockResolvedValue(createPlayerStub())
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).not.toHaveBeenCalled()
+    expect(reassertMetadataSpy).not.toHaveBeenCalled()
+  })
+
+  test('local file source does not re-assert lock screen metadata', async () => {
+    ;(audioLoader.getLastResolvedUrl as jest.Mock).mockReturnValue('file:///cache/abc.mp3')
+    const replaceSpy = jest
+      .spyOn(playerService, 'replaceAudio')
+      .mockResolvedValue(createPlayerStub())
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).not.toHaveBeenCalled()
+    expect(reassertMetadataSpy).not.toHaveBeenCalled()
+  })
+
+  test('loadAudio heal success re-asserts lock screen metadata', async () => {
+    ;(audioLoader.isPlayerLoaded as jest.Mock).mockReturnValue(false)
+    currentAudioAtom(ctx, AUDIO_DATA)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(createPlayerStub())
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(loadSpy).toHaveBeenCalled()
+    expect(reassertMetadataSpy).toHaveBeenCalledTimes(1)
+    expect(reassertMetadataSpy.mock.calls[0][1]).toEqual({
+      artist: AUDIO_DATA.artist,
+      artworkUrl: null,
+      title: AUDIO_DATA.title,
+    })
   })
 })
