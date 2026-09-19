@@ -3,6 +3,7 @@ import { audioCacheService } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { setIsBufferingAction, setPositionAction } from '../../../model'
+import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { startBackgroundCaching } from '../BackgroundCachingService'
 import { waitForLoaded } from './waitForLoaded'
 
@@ -12,6 +13,9 @@ class AudioLoader {
   public async loadAudio(audioUrl: string, initialPositionMs = 0): Promise<AudioPlayer | null> {
     if (!audioUrl) return null
     this.loaded = false
+    // A new source invalidates any previous offline stall — the heal must not
+    // auto-resume a track the user has already switched away from.
+    void setIsStalledOfflineAction(ctx, false)
     void setIsBufferingAction(ctx, true)
     void setPositionAction(ctx, 0)
     this.trackEndHandled = false
@@ -45,6 +49,7 @@ class AudioLoader {
   public async replaceAudio(audioUrl: string, initialPositionMs = 0): Promise<AudioPlayer | null> {
     if (!audioUrl) return null
     this.loaded = false
+    void setIsStalledOfflineAction(ctx, false)
     void setIsBufferingAction(ctx, true)
     this.trackEndHandled = false
     if (!this.playerInstance) return this.loadAudio(audioUrl, initialPositionMs)

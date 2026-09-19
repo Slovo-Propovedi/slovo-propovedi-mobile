@@ -10,6 +10,7 @@ import {
   setIsBufferingAction,
   setIsPlayingAction,
 } from '../../../model'
+import { isStalledOfflineAtom, setIsStalledOfflineAction } from '../../stalledOffline'
 import { startBackgroundCaching } from '../BackgroundCachingService'
 import { playerService } from '../index.web'
 import { flushProgress, scheduleHistoryFlush } from '../progressFlusher'
@@ -39,6 +40,11 @@ jest.mock('../../../model', () => ({
 }))
 
 jest.mock('../../../playback-rate', () => ({ setPlaybackRateAction: jest.fn() }))
+
+jest.mock('../../stalledOffline', () => ({
+  isStalledOfflineAtom: jest.fn(),
+  setIsStalledOfflineAction: jest.fn(),
+}))
 
 jest.mock('../progressFlusher', () => ({
   flushProgress: jest.fn(),
@@ -72,6 +78,13 @@ const mockSermonContext = () => {
 const mockOnlineStatus = (online: boolean) => {
   ;(ctx.get as jest.Mock).mockImplementation(atom => {
     if (atom === isOnlineAtom) return online
+    return undefined
+  })
+}
+
+const mockStalledOffline = (stalled: boolean) => {
+  ;(ctx.get as jest.Mock).mockImplementation(atom => {
+    if (atom === isStalledOfflineAtom) return stalled
     return undefined
   })
 }
@@ -364,6 +377,35 @@ describe('WebPlayerService recoverStreamAfterReconnect', () => {
     expect(playSpy).toHaveBeenCalled()
   })
 
+  test('offline-stalled stream (flag set, isPlaying false) swaps source and resumes', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
+    audioStubs[0].element.currentTime = 12
+    audioStubs[0].fireEvent('timeupdate')
+    mockStalledOffline(true)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(AUDIO_URL)
+
+    expect(replaceSpy).toHaveBeenCalledWith(AUDIO_URL, 12000)
+    expect(playSpy).toHaveBeenCalled()
+  })
+
+  test('offline-stalled heal clears the flag after capture', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
+    mockStalledOffline(true)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(AUDIO_URL)
+
+    expect(replaceSpy).toHaveBeenCalled()
+    expect(playSpy).toHaveBeenCalled()
+    expect(setIsStalledOfflineAction).toHaveBeenCalledWith(expect.anything(), false)
+  })
+
   test('no audio instance returns early', async () => {
     const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
     const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
@@ -377,11 +419,30 @@ describe('WebPlayerService recoverStreamAfterReconnect', () => {
 
 describe('WebPlayerService element error/waiting/playing events', () => {
   test("dispatching 'error' sets state isPlaying=false", async () => {
+    mockOnlineStatus(true)
     await playerService.loadAudio(AUDIO_URL)
     audioStubs[0].fireEvent(PLAY_EVENT)
     audioStubs[0].fireEvent('error')
 
     expect(setIsPlayingAction).toHaveBeenCalledWith(expect.anything(), false)
+  })
+
+  test("dispatching 'error' while offline sets the stall flag", async () => {
+    mockOnlineStatus(false)
+    await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].fireEvent(PLAY_EVENT)
+    audioStubs[0].fireEvent('error')
+
+    expect(setIsStalledOfflineAction).toHaveBeenCalledWith(expect.anything(), true)
+  })
+
+  test("dispatching 'error' while online does not set the stall flag", async () => {
+    mockOnlineStatus(true)
+    await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].fireEvent(PLAY_EVENT)
+    audioStubs[0].fireEvent('error')
+
+    expect(setIsStalledOfflineAction).not.toHaveBeenCalled()
   })
 
   test("dispatching 'waiting' sets isBuffering=true", async () => {
@@ -392,13 +453,14 @@ describe('WebPlayerService element error/waiting/playing events', () => {
     expect(setIsBufferingAction).toHaveBeenCalledWith(expect.anything(), true)
   })
 
-  test("dispatching 'playing' clears isBuffering", async () => {
+  test("dispatching 'playing' clears isBuffering and the stall flag", async () => {
     await playerService.loadAudio(AUDIO_URL)
     audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
     audioStubs[0].fireEvent('waiting')
     audioStubs[0].fireEvent('playing')
 
     expect(setIsBufferingAction).toHaveBeenCalledWith(expect.anything(), false)
+    expect(setIsStalledOfflineAction).toHaveBeenCalledWith(expect.anything(), false)
   })
 
   test('events from a stale (detached) element do not mutate state', async () => {
@@ -408,8 +470,10 @@ describe('WebPlayerService element error/waiting/playing events', () => {
 
     const mockedSetIsPlaying = jest.mocked(setIsPlayingAction)
     const mockedSetIsBuffering = jest.mocked(setIsBufferingAction)
+    const mockedSetIsStalledOffline = jest.mocked(setIsStalledOfflineAction)
     mockedSetIsPlaying.mockClear()
     mockedSetIsBuffering.mockClear()
+    mockedSetIsStalledOffline.mockClear()
 
     audioStubs[0].fireEvent('error')
     audioStubs[0].fireEvent('waiting')
@@ -417,5 +481,6 @@ describe('WebPlayerService element error/waiting/playing events', () => {
 
     expect(mockedSetIsPlaying).not.toHaveBeenCalled()
     expect(mockedSetIsBuffering).not.toHaveBeenCalled()
+    expect(mockedSetIsStalledOffline).not.toHaveBeenCalled()
   })
 })

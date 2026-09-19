@@ -7,6 +7,7 @@ import {
   isPlayingAtom,
   positionAtom,
 } from '../../../model'
+import { isStalledOfflineAtom } from '../../stalledOffline'
 import { audioLoader } from './AudioLoader'
 
 interface HealablePlayerService {
@@ -51,7 +52,11 @@ export const recoverStreamAfterReconnect = async (
   const isPlaying = ctx.get(isPlayingAtom)
   const isBuffering = ctx.get(isBufferingAtom)
   if (isPlaying && !isBuffering) return
-  const shouldResume = isPlaying
+  // A stall while offline auto-paused playback (Issue #109); the flag survives
+  // until AudioLoader clears it on the next loadAudio/replaceAudio, so the heal
+  // resumes exactly the track that stalled.
+  const stalledOffline = ctx.get(isStalledOfflineAtom)
+  const shouldResume = isPlaying || stalledOffline
   const player = await service.replaceAudio(audioUrl, ctx.get(positionAtom))
   if (shouldResume) await service.play()
   if (player) reassertMetadata(service)

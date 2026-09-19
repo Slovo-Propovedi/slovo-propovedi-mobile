@@ -1,6 +1,9 @@
+import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
+import { isOnlineAtom } from 'shared/model/network'
 import type { WebMediaSession } from './mediaSession'
 import type { WebPlayerState } from './playerState'
+import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { attachWebAudioEvents } from './audioEvents'
 import { writeWebDuration } from './durationWriter'
 
@@ -31,7 +34,11 @@ export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) 
     onDurationChange: () => deps.mediaSession.updatePositionState(),
     onEnded: () => deps.onTrackEnd?.(),
     onError: () => {
-      if (deps.isCurrentAudio(deps.audio)) deps.state.setIsPlaying(false)
+      if (!deps.isCurrentAudio(deps.audio)) return
+      deps.state.setIsPlaying(false)
+      // A stream error while offline is the web analog of the native stall:
+      // remember it so the reconnect heal can auto-resume (Issue #109).
+      if (!ctx.get(isOnlineAtom)) void setIsStalledOfflineAction(ctx, true)
     },
     onLoaded: () => {
       deps.state.setIsBuffering(false)
@@ -56,7 +63,10 @@ export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) 
       deps.mediaSession.updatePlaybackState()
       deps.mediaSession.updatePositionState()
     },
-    onPlaying: () => deps.state.setIsBuffering(false),
+    onPlaying: () => {
+      deps.state.setIsBuffering(false)
+      void setIsStalledOfflineAction(ctx, false)
+    },
     onPosition: (positionMs: number) => {
       deps.noteLivePosition(positionMs)
       deps.state.setPosition(positionMs)

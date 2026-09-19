@@ -9,6 +9,7 @@ import {
   positionAtom,
   seekTargetPositionAtom,
 } from '../../model'
+import { isStalledOfflineAtom } from '../stalledOffline'
 import { playerService } from './index.native'
 import { audioLoader } from './native/AudioLoader'
 import { lockScreenControls } from './native/LockScreenControls'
@@ -130,6 +131,7 @@ describe('PlayerService.recoverStreamAfterReconnect', () => {
     isPlayingAtom(ctx, false)
     isBufferingAtom(ctx, false)
     positionAtom(ctx, 0)
+    isStalledOfflineAtom(ctx, false)
     ;(audioLoader.getLastResolvedUrl as jest.Mock).mockReturnValue(NETWORK_URL)
     ;(audioLoader.isPlayerLoaded as jest.Mock).mockReturnValue(true)
   })
@@ -203,6 +205,41 @@ describe('PlayerService.recoverStreamAfterReconnect', () => {
     expect(replaceSpy).toHaveBeenCalledWith(NETWORK_URL, 1000)
     expect(loadSpy).not.toHaveBeenCalled()
     expect(playSpy).toHaveBeenCalled()
+  })
+
+  test('offline-stalled stream (flag set, isPlaying false) swaps source and resumes', async () => {
+    isStalledOfflineAtom(ctx, true)
+    positionAtom(ctx, 2000)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const loadSpy = jest.spyOn(playerService, 'loadAudio').mockResolvedValue(null)
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).toHaveBeenCalledWith(NETWORK_URL, 2000)
+    expect(loadSpy).not.toHaveBeenCalled()
+    expect(playSpy).toHaveBeenCalled()
+  })
+
+  test('offline-stalled heal re-asserts lock screen metadata after replaceAudio and play resolve', async () => {
+    isStalledOfflineAtom(ctx, true)
+    currentAudioAtom(ctx, AUDIO_DATA)
+    const replaceSpy = jest
+      .spyOn(playerService, 'replaceAudio')
+      .mockResolvedValue(createPlayerStub())
+    const playSpy = jest.spyOn(playerService, 'play').mockResolvedValue(undefined)
+
+    await playerService.recoverStreamAfterReconnect(NETWORK_URL)
+
+    expect(replaceSpy).toHaveBeenCalled()
+    expect(playSpy).toHaveBeenCalled()
+    expect(reassertMetadataSpy).toHaveBeenCalledTimes(1)
+    expect(reassertMetadataSpy.mock.invocationCallOrder[0]).toBeGreaterThan(
+      replaceSpy.mock.invocationCallOrder[0],
+    )
+    expect(reassertMetadataSpy.mock.invocationCallOrder[0]).toBeGreaterThan(
+      playSpy.mock.invocationCallOrder[0],
+    )
   })
 
   test('never-loaded player routes through loadAudio', async () => {

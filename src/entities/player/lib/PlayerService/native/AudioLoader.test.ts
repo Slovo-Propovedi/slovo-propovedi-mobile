@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio'
 import { reportError } from 'shared/model/error-dialog'
 import { setDurationAction, setIsBufferingAction, setPositionAction } from '../../../model'
+import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { audioLoader } from './AudioLoader'
 
 const AUDIO_URL = 'https://example.com/audio.mp3'
@@ -31,6 +32,8 @@ jest.mock('../../../model', () => ({
   setPositionAction: jest.fn(),
 }))
 
+jest.mock('../../stalledOffline', () => ({ setIsStalledOfflineAction: jest.fn() }))
+
 jest.mock('../BackgroundCachingService', () => ({ startBackgroundCaching: jest.fn() }))
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -42,6 +45,7 @@ const mockedSetItem = jest.mocked(AsyncStorage.setItem)
 const mockedSetDurationAction = jest.mocked(setDurationAction)
 const mockedSetIsBufferingAction = jest.mocked(setIsBufferingAction)
 const mockedSetPositionAction = jest.mocked(setPositionAction)
+const mockedSetIsStalledOfflineAction = jest.mocked(setIsStalledOfflineAction)
 
 type ListenerCallback = (status: { error?: string; isLoaded: boolean }) => void
 
@@ -123,6 +127,12 @@ describe('AudioLoader', () => {
       expect(mockedCreateAudioPlayer).not.toHaveBeenCalled()
     })
 
+    test('clears the offline-stall flag on a new source load', async () => {
+      await audioLoader.loadAudio(AUDIO_URL)
+
+      expect(mockedSetIsStalledOfflineAction).toHaveBeenCalledWith({}, false)
+    })
+
     test('persists the loaded duration', async () => {
       await audioLoader.loadAudio(AUDIO_URL)
 
@@ -142,6 +152,17 @@ describe('AudioLoader', () => {
       expect(mockedCreateAudioPlayer).toHaveBeenCalledTimes(1)
       expect(release).not.toHaveBeenCalled()
       expect(result).toBe(existingPlayer)
+    })
+
+    test('clears the offline-stall flag on replaceAudio', async () => {
+      const { player: existingPlayer } = createPlayerStub()
+      mockedCreateAudioPlayer.mockReturnValueOnce(existingPlayer)
+
+      await audioLoader.loadAudio(AUDIO_URL)
+      mockedSetIsStalledOfflineAction.mockClear()
+      await audioLoader.replaceAudio(SECOND_AUDIO_URL)
+
+      expect(mockedSetIsStalledOfflineAction).toHaveBeenCalledWith({}, false)
     })
 
     test('falls back to loadAudio when no player instance exists yet', async () => {
