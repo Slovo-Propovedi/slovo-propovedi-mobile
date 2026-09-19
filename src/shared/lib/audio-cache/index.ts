@@ -23,6 +23,7 @@ export {
 export { cleanupOrphanedDownloads } from './cleanupOrphans'
 export { clearAudioCacheAction } from './clearAudioCacheAction'
 export { hasInflightCacheDownloads } from './inflightCache'
+export { isUrlQueuedOrActive } from './isUrlQueuedOrActive'
 export {
   clearOfflineRegistry,
   flushOfflineRegistryPersist,

@@ -1,12 +1,13 @@
 import NetInfo from '@react-native-community/netinfo'
+import { isNetInfoOnline } from './isNetInfoOnline'
 
 const POLL_INTERVAL_MS = 1000
 
 const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms))
 
 /**
- * Waits until the device reports connectivity, polling NetInfo every second.
- * Does an immediate first check (no initial delay).
+ * Waits until the device reports real internet reachability, polling NetInfo
+ * every second. Does an immediate first check (no initial delay).
  * Resolves `true` as soon as the device is online, or `false` if `timeoutMs`
  * elapses while still offline. Total sleeping never exceeds `timeoutMs`.
  * When an AbortSignal is provided, the loop checks it each tick and returns
@@ -21,7 +22,7 @@ export const waitForOnline = async (timeoutMs: number, signal?: AbortSignal): Pr
   while (true) {
     if (signal?.aborted) return false
     const state = await NetInfo.fetch()
-    if (state.isConnected) return true
+    if (isNetInfoOnline(state)) return true
     if (waitedMs >= timeoutMs) return false
     await sleep(POLL_INTERVAL_MS)
     waitedMs += POLL_INTERVAL_MS

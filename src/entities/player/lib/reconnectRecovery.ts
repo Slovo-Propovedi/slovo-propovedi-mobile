@@ -1,4 +1,4 @@
-import { audioCacheService } from 'shared/lib/audio-cache'
+import { audioCacheService, isUrlQueuedOrActive } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
 import { currentAudioAtom } from '../model'
@@ -11,7 +11,7 @@ export const recoverAfterReconnect = async (): Promise<void> => {
   const isCached = await audioCacheService.isCached(audioUrl)
   // Track may have switched while the cache check was in flight
   if (ctx.get(currentAudioAtom)?.audioUrl !== audioUrl) return
-  if (!isCached) startBackgroundCaching(audioUrl)
+  if (!isCached && !isUrlQueuedOrActive(audioUrl)) startBackgroundCaching(audioUrl)
   try {
     await playerService.recoverStreamAfterReconnect(audioUrl)
   } catch (error) {

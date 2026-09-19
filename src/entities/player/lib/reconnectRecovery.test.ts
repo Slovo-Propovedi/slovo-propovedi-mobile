@@ -1,4 +1,4 @@
-import { audioCacheService } from 'shared/lib/audio-cache'
+import { activeCacheUrlAtom, audioCacheService, cacheQueueAtom } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
 import { currentAudioAtom } from '../model'
@@ -10,9 +10,13 @@ jest.mock('./PlayerService', () => ({
   playerService: { recoverStreamAfterReconnect: jest.fn() },
 }))
 
-jest.mock('shared/lib/audio-cache', () => ({
-  audioCacheService: { isCached: jest.fn() },
-}))
+jest.mock('shared/lib/audio-cache', () => {
+  const actual = jest.requireActual('shared/lib/audio-cache')
+  return {
+    ...actual,
+    audioCacheService: { isCached: jest.fn() },
+  }
+})
 
 jest.mock('./PlayerService/BackgroundCachingService', () => ({
   startBackgroundCaching: jest.fn(),
@@ -47,6 +51,8 @@ describe('reconnectRecovery', () => {
     jest.clearAllMocks()
     isOnlineAtom(ctx, true)
     currentAudioAtom(ctx, null)
+    cacheQueueAtom(ctx, {})
+    activeCacheUrlAtom(ctx, null)
     jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
     unsubscribe = setupReconnectRecovery()
   })
@@ -150,5 +156,27 @@ describe('reconnectRecovery', () => {
     } finally {
       errorSpy.mockRestore()
     }
+  })
+
+  test('url already queued is not re-enqueued but is still healed', async () => {
+    cacheQueueAtom(ctx, { [AUDIO.audioUrl]: { enqueuedAt: Date.now(), source: 'auto' } })
+    currentAudioAtom(ctx, AUDIO)
+    isOnlineAtom(ctx, false)
+    isOnlineAtom(ctx, true)
+    await flushMicrotasks()
+
+    expect(startBackgroundCaching).not.toHaveBeenCalled()
+    expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
+  })
+
+  test('active download is not re-enqueued but is still healed', async () => {
+    activeCacheUrlAtom(ctx, AUDIO.audioUrl)
+    currentAudioAtom(ctx, AUDIO)
+    isOnlineAtom(ctx, false)
+    isOnlineAtom(ctx, true)
+    await flushMicrotasks()
+
+    expect(startBackgroundCaching).not.toHaveBeenCalled()
+    expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
   })
 })

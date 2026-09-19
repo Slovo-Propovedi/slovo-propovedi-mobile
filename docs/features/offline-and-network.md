@@ -8,6 +8,18 @@
 - `subscribeToNetwork` (`src/shared/lib/network/networkSubscription.ts`) — подписка на `@react-native-community/netinfo`; на каждое изменение пишет `isOnlineAtom` (`src/shared/model/network.ts`). Вызывается модульно в `app/_RootLayout.tsx`.
 - `NetworkBanner` (`src/widgets/network-status/ui/NetworkBanner.tsx`) — пилюля «Офлайн» поверх экрана (кнопка с видимым текстом «Офлайн», в тестах ищется по `getByRole('button', { name: /Офлайн/ })`); появляется при `!isOnline`, анимация разворота — `useNetworkIslandAnimation.ts`. При возврате онлайн скрывается.
 
+### Семантика `isOnlineAtom` (Issue #109 follow-up)
+
+`isOnlineAtom` отражает **реальную достижимость интернета**, а не только поднятый сетевой интерфейс. Сигнал — helper `isNetInfoOnline(state)` (`src/shared/lib/network/isNetInfoOnline.ts`):
+
+```
+isInternetReachable ?? isConnected
+```
+
+- `isInternetReachable` — результат reachability-проверки NetInfo (реальный доступ в интернет). Пока он `false`, Wi-Fi «без интернета» (подключён к роутеру, но наружу нет) считается **офлайном**: `NetworkBanner` показывается, офлайн-guard'ы (`guardOfflinePlayback`, дизейбл «добавить в офлайн») блокируют сетевые действия, `useOfflineRetry` не перезапрашивает.
+- `isInternetReachable === null` — значение ещё неизвестно (cold-start) или платформа не даёт reachability (web). В этом случае фолбэк на `isConnected` сохраняет прежнее поведение: web и холодный старт считаются онлайн по интерфейсу.
+- `waitForOnline` использует **тот же** сигнал (`isNetInfoOnline`), поэтому retry-цикл кэша ждёт честного возврата интернета, а не просто поднятия интерфейса — это чинит «сожжённые» попытки скачивания на Wi-Fi-без-интернета.
+
 ## Доступность сервера
 
 `src/shared/model/network.ts`:
@@ -25,7 +37,7 @@
 
 ## Ожидание сети
 
-`waitForOnline(timeoutMs)` (`src/shared/lib/network/waitForOnline.ts`) — асинхронное ограниченное ожидание подключения: сразу (без начальной задержки) опрашивает `NetInfo.fetch()`, при офлайне повторяет опрос раз в секунду; резолвится `true` при первом же «онлайн»-ответе или `false`, если истёк `timeoutMs`. Используется:
+`waitForOnline(timeoutMs)` (`src/shared/lib/network/waitForOnline.ts`) — асинхронное ограниченное ожидание подключения: сразу (без начальной задержки) опрашивает `NetInfo.fetch()`, при офлайне повторяет опрос раз в секунду; резолвится `true` при первом же «онлайн»-ответе или `false`, если истёк `timeoutMs`. Онлайн определяется через `isNetInfoOnline` — **реальную достижимость интернета** (`isInternetReachable ?? isConnected`), а не только поднятый интерфейс: Wi-Fi без интернета продолжает опрашиваться до честного возврата сети. Используется:
 
 - в retry-цикле скачивания кэша (`src/shared/lib/audio-cache/cacheDownloader.ts`) — ожидание сети до 60с перед каждой повторной попыткой;
 - в скачивании плейлиста (`src/pages/playlist/lib/runPlaylistCaching.ts`) — проверка перед каждым треком; если сеть не вернулась за 60с, весь прогон прерывается ошибкой «Нет подключения к интернету».
