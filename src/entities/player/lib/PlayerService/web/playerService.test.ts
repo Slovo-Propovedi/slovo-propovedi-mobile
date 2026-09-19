@@ -404,6 +404,11 @@ describe('WebPlayerService recoverStreamAfterReconnect', () => {
     expect(replaceSpy).toHaveBeenCalled()
     expect(playSpy).toHaveBeenCalled()
     expect(setIsStalledOfflineAction).toHaveBeenCalledWith(expect.anything(), false)
+    // The flag must already be cleared at the moment replaceAudio is invoked —
+    // a regression moving the clear after replaceAudio would fail this pin.
+    expect(jest.mocked(setIsStalledOfflineAction).mock.invocationCallOrder[0]).toBeLessThan(
+      replaceSpy.mock.invocationCallOrder[0],
+    )
   })
 
   test('no audio instance returns early', async () => {
