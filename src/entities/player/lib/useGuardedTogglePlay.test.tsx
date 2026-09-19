@@ -65,7 +65,7 @@ describe('useGuardedTogglePlay', () => {
       await result.current.togglePlay()
     })
 
-    expect(guardOfflinePlayback).toHaveBeenCalledWith(AUDIO_URL, false)
+    expect(guardOfflinePlayback).toHaveBeenCalledWith(AUDIO_URL, false, true)
     expect(mockResumeAfterPause).not.toHaveBeenCalled()
     expect(mockPause).not.toHaveBeenCalled()
   })
@@ -80,7 +80,7 @@ describe('useGuardedTogglePlay', () => {
       await result.current.togglePlay()
     })
 
-    expect(guardOfflinePlayback).toHaveBeenCalledWith(AUDIO_URL, false)
+    expect(guardOfflinePlayback).toHaveBeenCalledWith(AUDIO_URL, false, true)
     expect(mockResumeAfterPause).toHaveBeenCalledTimes(1)
     expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
   })
@@ -95,7 +95,7 @@ describe('useGuardedTogglePlay', () => {
       await result.current.togglePlay()
     })
 
-    expect(guardOfflinePlayback).toHaveBeenCalledWith(AUDIO_URL, true)
+    expect(guardOfflinePlayback).toHaveBeenCalledWith(AUDIO_URL, true, true)
     expect(mockResumeAfterPause).toHaveBeenCalledTimes(1)
     expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
   })

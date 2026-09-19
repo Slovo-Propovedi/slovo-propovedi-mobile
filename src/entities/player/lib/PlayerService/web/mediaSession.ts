@@ -64,7 +64,7 @@ export const createWebMediaSession = (
       }
       const audioUrl = ctx.get(currentAudioAtom)?.audioUrl
       if (!audioUrl) return
-      void guardOfflinePlayback(audioUrl, ctx.get(isOnlineAtom))
+      void guardOfflinePlayback(audioUrl, ctx.get(isOnlineAtom), true)
         .then(blocked => {
           if (!blocked) player.play()
         })
