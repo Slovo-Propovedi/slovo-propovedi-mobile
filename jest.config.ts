@@ -14,6 +14,9 @@ const config: Config = {
     '!__mocks__/**',
   ],
   preset: 'jest-expo',
+  // Cap workers to a quarter of the machine's cores so test runs stay
+  // responsive on low-resource machines (slower is fine, freezing is not).
+  maxWorkers: '25%',
   // Recycle a worker once its resident memory crosses this threshold
   // (checked between test files). Primary OOM cap is --maxWorkers=2 in CI;
   // this prevents RSS accumulation across heavy jest-expo/RN suites.
