@@ -1,4 +1,8 @@
-import { audioCacheService, isUrlQueuedOrActive } from 'shared/lib/audio-cache'
+import {
+  audioCacheService,
+  isUrlQueuedOrActive,
+  reEnqueuePartialDownloads,
+} from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
 import { currentAudioAtom } from '../model'
@@ -60,6 +64,7 @@ export const recoverAfterReconnect = async (): Promise<void> => {
   } catch (error) {
     console.error('[reconnectRecovery] stream heal failed:', error)
   }
+  void reEnqueuePartialDownloads(ctx)
 }
 
 export const setupReconnectRecovery = (): (() => void) => {

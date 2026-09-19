@@ -34,6 +34,7 @@ export {
   removeOfflineSermon,
 } from './offlineSermonsRegistry'
 export { deletePartialFile, getPartialFileUri } from './partialFile'
+export { reEnqueuePartialDownloads } from './reEnqueuePartials'
 export {
   resolveCacheState,
   type ResolveCacheStateInput,

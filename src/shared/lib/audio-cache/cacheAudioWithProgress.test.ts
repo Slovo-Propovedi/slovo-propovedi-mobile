@@ -3,7 +3,14 @@ import { cachedUrlsAtom, playlistDownloadProgressAtom } from '../cache-triggers'
 import { audioCacheService } from './AudioCacheService'
 import { cacheAudioWithProgress } from './cacheAudioWithProgress'
 import { CacheCancelledError } from './CacheCancelledError'
+import { deletePartialFile } from './partialFile'
 import { resolveCacheState } from './resolveCacheState'
+
+jest.mock('./partialFile', () => ({
+  deletePartialFile: jest.fn(),
+}))
+
+const mockedDeletePartialFile = jest.mocked(deletePartialFile)
 
 const AUDIO_URL = 'http://example.com/sermon.mp3'
 const CACHED_URI = 'file:///cached.mp3'
@@ -15,6 +22,7 @@ describe('cacheAudioWithProgress', () => {
   beforeEach(() => {
     ctx = createCtx()
     cacheAudioSpy = jest.spyOn(audioCacheService, 'cacheAudio')
+    jest.clearAllMocks()
   })
 
   afterEach(() => {
@@ -171,5 +179,21 @@ describe('cacheAudioWithProgress', () => {
     expect(overlayIndex).toBeGreaterThan(-1)
     expect(progressGoneIndex).toBeGreaterThan(-1)
     expect(overlayIndex).toBeLessThan(progressGoneIndex)
+  })
+
+  test('deletes the partial file on success', async () => {
+    cacheAudioSpy.mockResolvedValue(CACHED_URI)
+
+    await cacheAudioWithProgress(ctx, AUDIO_URL)
+
+    expect(mockedDeletePartialFile).toHaveBeenCalledWith(AUDIO_URL)
+  })
+
+  test('does not delete the partial file on failure', async () => {
+    cacheAudioSpy.mockRejectedValue(new Error('download failed'))
+
+    await expect(cacheAudioWithProgress(ctx, AUDIO_URL)).rejects.toThrow('download failed')
+
+    expect(mockedDeletePartialFile).not.toHaveBeenCalled()
   })
 })

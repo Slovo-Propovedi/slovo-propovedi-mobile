@@ -5,6 +5,7 @@ import {
   setTrackDownloadProgress,
 } from '../cache-triggers'
 import { audioCacheService } from './AudioCacheService'
+import { deletePartialFile } from './partialFile'
 
 /**
  * Caches one track while reporting per-URL download progress through the shared
@@ -18,6 +19,10 @@ import { audioCacheService } from './AudioCacheService'
  *    no intermediate 'cloud' frame;
  * 4. Drop the progress entry in `finally` — on success, on failure, and on the
  *    skip-cached path where `cacheAudio` resolves without ever calling `onProgress`.
+ * 5. On success the superseding final file exists, so the retained partial is
+ *    deleted (best-effort; safe even if a player still holds the partial loaded —
+ *    POSIX open-FD precedent). This also covers the skip-cached path (stale
+ *    partial + final present).
  *
  * Rejections propagate to the caller.
  * Note: this helper does NOT increment `cacheUpdateTriggerAtom`. Registry write
@@ -47,6 +52,7 @@ export const cacheAudioWithProgress = async (
       signal,
     )
     markUrlCached(ctx, audioUrl)
+    void deletePartialFile(audioUrl)
     return uri
   } finally {
     removeTrackDownloadProgress(ctx, audioUrl)

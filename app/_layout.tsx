@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { loadHistoryAction } from 'entities/listening-history'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
 import { initServerUrlAction } from 'entities/settings'
-import { cleanupOrphanedDownloads } from 'shared/lib/audio-cache'
+import { cleanupOrphanedDownloads, reEnqueuePartialDownloads } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
 import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
@@ -38,11 +38,12 @@ const RootLayoutWithProvider = () => (
   </reatomContext.Provider>
 )
 
-// Purge orphaned legacy .mp3.part files BEFORE player restore: the sweep
-// deletes only pre-rename orphans and never touches .cache.mp3 partials —
-// ordering before initializePlayer is kept as a cheap safety, not a race guard.
+// Purge orphaned legacy .mp3.part files and re-enqueue stale .cache.mp3
+// partials BEFORE player restore: both sweeps are best-effort and never
+// throw — ordering before initializePlayer is kept as a cheap safety.
 void cleanupOrphanedDownloads()
   .catch(error => console.error('[audio-cache] orphan cleanup failed:', error))
+  .then(() => reEnqueuePartialDownloads(ctx))
   .then(() => initializePlayer())
 scheduleStartupGuardReset()
 void initServerUrlAction(ctx)
