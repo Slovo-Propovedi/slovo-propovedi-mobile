@@ -12,7 +12,7 @@ import { flushProgress, scheduleHistoryFlush } from '../progressFlusher'
 import { type PlaybackStatus, type SeekSourceSwap } from '../types'
 import { playbackPreferences } from './playbackPreferences'
 import { seekGuard } from './SeekGuard'
-import { seekViaPartialSource, shouldSeekViaPartialSource } from './seekViaPartialSource'
+import { seekWithSourceSwap } from './seekViaPartialSource'
 
 const DEFAULT_PLAYBACK_STATUS: PlaybackStatus = {
   duration: 0,
@@ -62,10 +62,9 @@ class PlaybackController {
   ): Promise<void> => {
     if (!player) return
     const clampedPosition = Math.max(0, positionMs)
-    const partialAudioUrl = sourceSwap ? await shouldSeekViaPartialSource() : null
-    if (partialAudioUrl && sourceSwap) {
-      await seekViaPartialSource(sourceSwap, partialAudioUrl, clampedPosition)
-      return
+    if (sourceSwap) {
+      const swapped = await seekWithSourceSwap(sourceSwap, clampedPosition)
+      if (swapped) return
     }
     seekGuard.arm()
 

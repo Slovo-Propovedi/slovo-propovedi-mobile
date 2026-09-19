@@ -1,5 +1,5 @@
 import { type AudioPlayer } from 'expo-audio'
-import { getPartialFileUri } from 'shared/lib/audio-cache'
+import { audioCacheService, getPartialFileUri } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { isOnlineAtom } from 'shared/model/network'
@@ -12,9 +12,13 @@ import {
 import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { audioLoader } from './AudioLoader'
 import { playbackController } from './PlaybackController'
-import { seekViaPartialSource } from './seekViaPartialSource'
+import { seekViaPartialSource, swapPartialForCachedSeek } from './seekViaPartialSource'
 
-jest.mock('shared/lib/audio-cache', () => ({ getPartialFileUri: jest.fn() }))
+jest.mock('shared/lib/audio-cache', () => ({
+  audioCacheService: { isCached: jest.fn() },
+  getPartialFileUri: jest.fn(),
+  PART_SUFFIX: '.cache.mp3',
+}))
 
 jest.mock('./AudioLoader', () => ({
   audioLoader: { getLastResolvedUrl: jest.fn() },
@@ -45,6 +49,7 @@ const mockAudio = {
 
 const mockedGetLastResolvedUrl = jest.mocked(audioLoader.getLastResolvedUrl)
 const mockedGetPartialFileUri = jest.mocked(getPartialFileUri)
+const mockedIsCached = jest.mocked(audioCacheService.isCached)
 
 const createPlayerStub = (): AudioPlayer =>
   ({ isLoaded: true, seekTo: jest.fn().mockResolvedValue(undefined) }) as unknown as AudioPlayer
@@ -66,6 +71,7 @@ describe('PlaybackController offline seek via partial source', () => {
     setIsStalledOfflineAction(ctx, false)
     mockedGetLastResolvedUrl.mockReturnValue(AUDIO_URL)
     mockedGetPartialFileUri.mockResolvedValue(null)
+    mockedIsCached.mockResolvedValue(false)
   })
 
   test('offline + network source + partial + playing → replaceAudio then play, no native seek', async () => {
@@ -176,5 +182,75 @@ describe('PlaybackController offline seek via partial source', () => {
     expect(reportError).toHaveBeenCalled()
     expect(ctx.get(isSeekingAtom)).toBe(false)
     expect(ctx.get(seekTargetPositionAtom)).toBe(null)
+  })
+
+  test('partial source + full cached + playing → replaceAudio then play, no native seek', async () => {
+    currentAudioAtom(ctx, mockAudio)
+    isPlayingAtom(ctx, true)
+    mockedGetLastResolvedUrl.mockReturnValue(PARTIAL_URI)
+    mockedIsCached.mockResolvedValue(true)
+    const player = createPlayerStub()
+    const sourceSwap = createSourceSwap()
+
+    await playbackController.seekTo(player, 60000, sourceSwap)
+
+    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000)
+    expect(sourceSwap.play).toHaveBeenCalledTimes(1)
+    expect(player.seekTo).not.toHaveBeenCalled()
+  })
+
+  test('partial source + full cached + paused → replaceAudio, no play, no native seek', async () => {
+    currentAudioAtom(ctx, mockAudio)
+    mockedGetLastResolvedUrl.mockReturnValue(PARTIAL_URI)
+    mockedIsCached.mockResolvedValue(true)
+    const player = createPlayerStub()
+    const sourceSwap = createSourceSwap()
+
+    await playbackController.seekTo(player, 60000, sourceSwap)
+
+    expect(sourceSwap.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 60000)
+    expect(sourceSwap.play).not.toHaveBeenCalled()
+    expect(player.seekTo).not.toHaveBeenCalled()
+  })
+
+  test('partial source + full not cached → normal seek path, no source swap', async () => {
+    isOnlineAtom(ctx, false)
+    currentAudioAtom(ctx, mockAudio)
+    mockedGetLastResolvedUrl.mockReturnValue(PARTIAL_URI)
+    mockedIsCached.mockResolvedValue(false)
+    const player = createPlayerStub()
+    const sourceSwap = createSourceSwap()
+
+    await playbackController.seekTo(player, 60000, sourceSwap)
+
+    expect(player.seekTo).toHaveBeenCalledWith(60)
+    expect(sourceSwap.replaceAudio).not.toHaveBeenCalled()
+  })
+
+  test('case-B swap failure → no unhandled rejection, seek state cleared', async () => {
+    currentAudioAtom(ctx, mockAudio)
+    isPlayingAtom(ctx, true)
+    mockedGetLastResolvedUrl.mockReturnValue(PARTIAL_URI)
+    mockedIsCached.mockResolvedValue(true)
+    const player = createPlayerStub()
+    const sourceSwap = createSourceSwap()
+    sourceSwap.replaceAudio.mockRejectedValue(new Error('swap failed'))
+
+    await expect(playbackController.seekTo(player, 60000, sourceSwap)).resolves.toBeUndefined()
+
+    expect(sourceSwap.play).not.toHaveBeenCalled()
+    expect(reportError).toHaveBeenCalled()
+    expect(ctx.get(isSeekingAtom)).toBe(false)
+    expect(ctx.get(seekTargetPositionAtom)).toBe(null)
+  })
+
+  test('race: track switched while checking cache → no source swap', async () => {
+    currentAudioAtom(ctx, mockAudio)
+    const sourceSwap = createSourceSwap()
+
+    await swapPartialForCachedSeek(sourceSwap, OTHER_URL, 60000)
+
+    expect(sourceSwap.replaceAudio).not.toHaveBeenCalled()
+    expect(sourceSwap.play).not.toHaveBeenCalled()
   })
 })
