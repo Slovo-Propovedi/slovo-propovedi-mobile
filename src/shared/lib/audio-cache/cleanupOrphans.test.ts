@@ -20,7 +20,8 @@ jest.mock('./getAudioCacheDirectory', () => ({
 
 const mockedGetAudioCacheDirectory = jest.mocked(getAudioCacheDirectory)
 
-const PART_FILE_NAME = 'abc.cache.mp3'
+const LEGACY_PART_FILE_NAME = 'abc.mp3.part'
+const PARTIAL_FILE_NAME = 'abc.cache.mp3'
 
 const mockCacheDir = {
   exists: true,
@@ -42,13 +43,22 @@ describe('cleanupOrphanedDownloads (native)', () => {
     consoleErrorSpy.mockRestore()
   })
 
-  test('deletes .cache.mp3 files', async () => {
-    const partFile = new File(mockCacheDir, PART_FILE_NAME)
-    ;(mockCacheDir.list as jest.Mock).mockReturnValue([partFile])
+  test('deletes legacy .mp3.part files', async () => {
+    const legacyPartFile = new File(mockCacheDir, LEGACY_PART_FILE_NAME)
+    ;(mockCacheDir.list as jest.Mock).mockReturnValue([legacyPartFile])
 
     await cleanupOrphanedDownloads()
 
-    expect(partFile.delete).toHaveBeenCalledTimes(1)
+    expect(legacyPartFile.delete).toHaveBeenCalledTimes(1)
+  })
+
+  test('keeps .cache.mp3 partial files', async () => {
+    const partialFile = new File(mockCacheDir, PARTIAL_FILE_NAME)
+    ;(mockCacheDir.list as jest.Mock).mockReturnValue([partialFile])
+
+    await cleanupOrphanedDownloads()
+
+    expect(partialFile.delete).not.toHaveBeenCalled()
   })
 
   test('keeps .mp3 files', async () => {
@@ -78,22 +88,22 @@ describe('cleanupOrphanedDownloads (native)', () => {
   })
 
   test('never throws when a delete fails', async () => {
-    const partFile = new File(mockCacheDir, PART_FILE_NAME)
-    ;(partFile.delete as jest.Mock).mockImplementation(() => {
+    const legacyPartFile = new File(mockCacheDir, LEGACY_PART_FILE_NAME)
+    ;(legacyPartFile.delete as jest.Mock).mockImplementation(() => {
       throw new Error('delete failed')
     })
-    ;(mockCacheDir.list as jest.Mock).mockReturnValue([partFile])
+    ;(mockCacheDir.list as jest.Mock).mockReturnValue([legacyPartFile])
 
     await expect(cleanupOrphanedDownloads()).resolves.toBeUndefined()
     expect(consoleErrorSpy).toHaveBeenCalled()
   })
 
   test('a failing delete does not stop the sweep of remaining part files', async () => {
-    const failingPart = new File(mockCacheDir, PART_FILE_NAME)
+    const failingPart = new File(mockCacheDir, LEGACY_PART_FILE_NAME)
     ;(failingPart.delete as jest.Mock).mockImplementation(() => {
       throw new Error('delete failed')
     })
-    const okPart = new File(mockCacheDir, 'def.cache.mp3')
+    const okPart = new File(mockCacheDir, 'def.mp3.part')
     ;(mockCacheDir.list as jest.Mock).mockReturnValue([failingPart, okPart])
 
     await expect(cleanupOrphanedDownloads()).resolves.toBeUndefined()

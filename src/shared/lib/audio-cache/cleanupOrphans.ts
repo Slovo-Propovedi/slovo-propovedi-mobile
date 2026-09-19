@@ -1,12 +1,14 @@
 import { File } from 'expo-file-system'
-import { PART_SUFFIX } from './cacheDownloader'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
 
+const LEGACY_PART_SUFFIX = '.mp3.part'
+
 /**
- * Delete orphaned `.cache.mp3` partial files left behind when the app is
- * killed mid-download. Runs once at startup; best-effort, never throws.
- * Legacy `.mp3.part` orphans from older app versions are intentionally not
- * swept (only a full cache clear removes them).
+ * Delete legacy `.mp3.part` orphan files left behind by app versions before
+ * the `.cache.mp3` rename. Current `.cache.mp3` partials are intentional
+ * (offline partial playback) and persist until the track is re-downloaded,
+ * removed via removeFromCache, or the cache is cleared. Runs once at startup;
+ * best-effort, never throws.
  */
 export const cleanupOrphanedDownloads = async (): Promise<void> => {
   try {
@@ -14,7 +16,9 @@ export const cleanupOrphanedDownloads = async (): Promise<void> => {
     if (!cacheDir.exists) return
     const partFiles = cacheDir
       .list()
-      .filter((item): item is File => item instanceof File && item.name.endsWith(PART_SUFFIX))
+      .filter(
+        (item): item is File => item instanceof File && item.name.endsWith(LEGACY_PART_SUFFIX),
+      )
     for (const partFile of partFiles)
       try {
         partFile.delete()
