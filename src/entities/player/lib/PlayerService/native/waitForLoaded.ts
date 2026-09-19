@@ -16,14 +16,18 @@ const STALE_POLL_TOLERANCE_MS = 1500
  * @param initialPositionMs - Target position in milliseconds to seek to after load.
  * @param isCurrentPlayer - Guard: returns true if the player is still the active one
  *   (avoids stale writes when a newer load supersedes or releaseAndReset runs).
+ * @param skipDurationWrite - When true, skips the durationAtom write: a partial
+ *   source reports a truncated duration, so applyPartialDuration governs the timeline.
  */
 export const waitForLoaded = (
   player: AudioPlayer,
   initialPositionMs: number,
   isCurrentPlayer: (p: AudioPlayer) => boolean,
+  skipDurationWrite = false,
 ): Promise<AudioPlayer | null> => {
   // Sync fast-path: already loaded — no listeners, no timers, immediate resolution.
-  if (player.isLoaded) return completeLoad(player, initialPositionMs, isCurrentPlayer)
+  if (player.isLoaded)
+    return completeLoad(player, initialPositionMs, isCurrentPlayer, skipDurationWrite)
 
   return new Promise<AudioPlayer | null>(resolve => {
     let resolved = false
@@ -33,7 +37,10 @@ export const waitForLoaded = (
       resolved = true
       clearTimeout(timeout)
       subscription.remove()
-      if (result) void completeLoad(result, initialPositionMs, isCurrentPlayer).then(resolve)
+      if (result)
+        void completeLoad(result, initialPositionMs, isCurrentPlayer, skipDurationWrite).then(
+          resolve,
+        )
       else {
         // Stale: skip clear-buffering — do not touch global state from a superseded wait
         if (isCurrentPlayer(player)) void setIsBufferingAction(ctx, false)
@@ -62,11 +69,12 @@ const completeLoad = (
   player: AudioPlayer,
   initialPositionMs: number,
   isCurrentPlayer: (p: AudioPlayer) => boolean,
+  skipDurationWrite = false,
 ): Promise<AudioPlayer> => {
   if (!isCurrentPlayer(player)) return Promise.resolve(player)
 
   const dur = Math.floor(player.duration * 1000)
-  void setDurationAction(ctx, dur)
+  if (!skipDurationWrite) void setDurationAction(ctx, dur)
   void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
   void setIsBufferingAction(ctx, false)
 

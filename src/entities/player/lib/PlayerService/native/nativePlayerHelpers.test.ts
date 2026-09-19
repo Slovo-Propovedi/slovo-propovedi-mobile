@@ -2,6 +2,7 @@ import { type AudioPlayer, type AudioStatus } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
 import {
+  durationAtom,
   isBufferingAtom,
   isSeekingAtom,
   pauseTypeAtom,
@@ -9,7 +10,12 @@ import {
   seekTargetPositionAtom,
 } from '../../../model'
 import { isStalledOfflineAtom } from '../../stalledOffline'
+import { audioLoader } from './AudioLoader'
 import { createAudioInterruptionHandler, setupPlayerListeners } from './nativePlayerHelpers'
+
+jest.mock('./AudioLoader', () => ({
+  audioLoader: { isPartialSource: jest.fn() },
+}))
 
 type StatusUpdateHandler = (status: AudioStatus) => void
 
@@ -103,6 +109,37 @@ describe('setupPlayerListeners position sync during seek', () => {
     await flushMicrotasks()
 
     expect(ctx.get(positionAtom)).toBe(42000)
+  })
+})
+
+describe('setupPlayerListeners duration sync for partial sources', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    durationAtom(ctx, 0)
+    ;(audioLoader.isPartialSource as jest.Mock).mockReturnValue(false)
+  })
+
+  test('duration event from a full source updates durationAtom', async () => {
+    const player = createPlayerStub()
+    setupPlayerListeners(player, jest.fn())
+    const handler = getPlaybackStatusHandler(player)
+
+    handler(statusWith({ duration: 45 }))
+    await flushMicrotasks()
+
+    expect(ctx.get(durationAtom)).toBe(45000)
+  })
+
+  test('duration event from a partial source does not update durationAtom', async () => {
+    ;(audioLoader.isPartialSource as jest.Mock).mockReturnValue(true)
+    const player = createPlayerStub()
+    setupPlayerListeners(player, jest.fn())
+    const handler = getPlaybackStatusHandler(player)
+
+    handler(statusWith({ duration: 45 }))
+    await flushMicrotasks()
+
+    expect(ctx.get(durationAtom)).toBe(0)
   })
 })
 

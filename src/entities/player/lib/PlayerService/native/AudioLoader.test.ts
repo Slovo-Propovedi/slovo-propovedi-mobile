@@ -1,9 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio'
+import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { setDurationAction, setIsBufferingAction, setPositionAction } from '../../../model'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { audioLoader } from './AudioLoader'
+import { applyPartialDuration } from './partialDuration'
 
 const AUDIO_URL = 'https://example.com/audio.mp3'
 const SECOND_AUDIO_URL = 'https://example.com/audio2.mp3'
@@ -20,9 +22,10 @@ jest.mock('shared/lib/audio-cache', () => ({
     getCachedUri: (url: string) => mockGetCachedUri(url),
   },
   getPartialFileUri: (url: string) => mockGetPartialFileUri(url),
+  PART_SUFFIX: '.cache.mp3',
 }))
 
-jest.mock('shared/lib/reatom-ctx', () => ({ ctx: {} }))
+jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
@@ -38,16 +41,20 @@ jest.mock('../../stalledOffline', () => ({ setIsStalledOfflineAction: jest.fn() 
 
 jest.mock('../BackgroundCachingService', () => ({ startBackgroundCaching: jest.fn() }))
 
+jest.mock('./partialDuration', () => ({ applyPartialDuration: jest.fn() }))
+
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(() => Promise.resolve()),
 }))
 
 const mockedCreateAudioPlayer = jest.mocked(createAudioPlayer)
+const mockedCtxGet = jest.mocked(ctx.get)
 const mockedSetItem = jest.mocked(AsyncStorage.setItem)
 const mockedSetDurationAction = jest.mocked(setDurationAction)
 const mockedSetIsBufferingAction = jest.mocked(setIsBufferingAction)
 const mockedSetPositionAction = jest.mocked(setPositionAction)
 const mockedSetIsStalledOfflineAction = jest.mocked(setIsStalledOfflineAction)
+const mockedApplyPartialDuration = jest.mocked(applyPartialDuration)
 
 type ListenerCallback = (status: { error?: string; isLoaded: boolean }) => void
 
@@ -94,6 +101,7 @@ describe('AudioLoader', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
     mockGetCachedUri.mockResolvedValue(null)
     mockGetPartialFileUri.mockResolvedValue(null)
+    mockedCtxGet.mockReturnValue(true)
     mockedCreateAudioPlayer.mockImplementation(() => createPlayerStub().player)
   })
 
@@ -133,7 +141,7 @@ describe('AudioLoader', () => {
     test('clears the offline-stall flag on a new source load', async () => {
       await audioLoader.loadAudio(AUDIO_URL)
 
-      expect(mockedSetIsStalledOfflineAction).toHaveBeenCalledWith({}, false)
+      expect(mockedSetIsStalledOfflineAction).toHaveBeenCalledWith(ctx, false)
     })
 
     test('persists the loaded duration', async () => {
@@ -165,7 +173,7 @@ describe('AudioLoader', () => {
       mockedSetIsStalledOfflineAction.mockClear()
       await audioLoader.replaceAudio(SECOND_AUDIO_URL)
 
-      expect(mockedSetIsStalledOfflineAction).toHaveBeenCalledWith({}, false)
+      expect(mockedSetIsStalledOfflineAction).toHaveBeenCalledWith(ctx, false)
     })
 
     test('falls back to loadAudio when no player instance exists yet', async () => {
@@ -317,7 +325,7 @@ describe('AudioLoader', () => {
       expect(result).toBeNull()
 
       // isBuffering cleared (setIsBuffering false)
-      expect(mockedSetIsBufferingAction).toHaveBeenCalledWith({}, false)
+      expect(mockedSetIsBufferingAction).toHaveBeenCalledWith(ctx, false)
 
       // Subscription removed
       const subscription = addListener.mock.results[0].value
@@ -409,7 +417,7 @@ describe('AudioLoader', () => {
       await audioLoader.loadAudio(AUDIO_URL)
 
       // setIsBufferingAction is called with (ctx, true) at start and (ctx, false) after load
-      expect(mockedSetIsBufferingAction).toHaveBeenCalledWith({}, false)
+      expect(mockedSetIsBufferingAction).toHaveBeenCalledWith(ctx, false)
     })
 
     test('resolves null on error status without hanging 30s', async () => {
@@ -427,7 +435,7 @@ describe('AudioLoader', () => {
       expect(result).toBeNull()
 
       // isBuffering cleared
-      expect(mockedSetIsBufferingAction).toHaveBeenCalledWith({}, false)
+      expect(mockedSetIsBufferingAction).toHaveBeenCalledWith(ctx, false)
 
       // Subscription removed (no leak)
       const subscription = addListener.mock.results[0].value
@@ -444,6 +452,46 @@ describe('AudioLoader', () => {
       await audioLoader.loadAudio(AUDIO_URL, 15000)
 
       expect(seekTo).toHaveBeenCalledWith(10)
+    })
+  })
+
+  describe('isPartialSource', () => {
+    test('is true after loading a partial URI (offline fallback)', async () => {
+      mockGetPartialFileUri.mockResolvedValue('file:///data/cache/abc.cache.mp3')
+      mockedCtxGet.mockReturnValue(false)
+
+      await audioLoader.loadAudio(AUDIO_URL)
+
+      expect(audioLoader.isPartialSource()).toBe(true)
+    })
+
+    test('is false after loading a network URL', async () => {
+      await audioLoader.loadAudio(AUDIO_URL)
+
+      expect(audioLoader.isPartialSource()).toBe(false)
+    })
+
+    test('is false after loading a cached file URI', async () => {
+      mockGetCachedUri.mockResolvedValue('file:///data/cache/audio.mp3')
+
+      await audioLoader.loadAudio(AUDIO_URL)
+
+      expect(audioLoader.isPartialSource()).toBe(false)
+    })
+
+    test('applies the full-file duration when the source is a partial', async () => {
+      mockGetPartialFileUri.mockResolvedValue('file:///data/cache/abc.cache.mp3')
+      mockedCtxGet.mockReturnValue(false)
+
+      await audioLoader.loadAudio(AUDIO_URL)
+
+      expect(mockedApplyPartialDuration).toHaveBeenCalledWith(120000)
+    })
+
+    test('does not apply the partial duration for a network source', async () => {
+      await audioLoader.loadAudio(AUDIO_URL)
+
+      expect(mockedApplyPartialDuration).not.toHaveBeenCalled()
     })
   })
 

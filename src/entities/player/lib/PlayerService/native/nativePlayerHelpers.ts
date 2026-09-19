@@ -14,6 +14,7 @@ import {
   setSeekTargetAction,
 } from '../../../model'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
+import { audioLoader } from './AudioLoader'
 import { playerStatusListener } from './PlayerStatusListener'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdvanceService'
 
@@ -27,7 +28,11 @@ export const setupPlayerListeners = (
   playerStatusListener.setupListeners(player, {
     onAudioInterruption,
     onBufferingChange: isBuffering => void setIsBufferingAction(ctx, isBuffering),
-    onDurationChange: durationMs => void setDurationAction(ctx, durationMs),
+    // A partial source reports the truncated duration; the timeline is governed
+    // by applyPartialDuration instead.
+    onDurationChange: durationMs => {
+      if (!audioLoader.isPartialSource()) void setDurationAction(ctx, durationMs)
+    },
     onPlayingChange: isPlaying => void setIsPlayingAction(ctx, isPlaying),
     onPositionChange: positionMs => {
       if (ctx.get(isSeekingAtom)) {

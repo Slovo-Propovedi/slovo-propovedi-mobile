@@ -9,6 +9,7 @@ export {
 export { audioCacheService, removeFromCache } from './AudioCacheService'
 export { cacheAudioWithProgress } from './cacheAudioWithProgress'
 export { isCacheCancelledError } from './CacheCancelledError'
+export { PART_SUFFIX } from './cacheDownloader'
 export { cancelAllCacheDownloads, cancelCacheDownload, removeFromQueueBySource } from './cacheQueue'
 export { enqueueCache } from './cacheQueueEnqueue'
 export { enqueueCacheMany } from './cacheQueueEnqueueMany'
@@ -32,7 +33,7 @@ export {
   registerOfflineSermon,
   removeOfflineSermon,
 } from './offlineSermonsRegistry'
-export { getPartialFileUri } from './partialFile'
+export { deletePartialFile, getPartialFileUri } from './partialFile'
 export {
   resolveCacheState,
   type ResolveCacheStateInput,

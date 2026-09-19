@@ -29,3 +29,19 @@ export const getPartialFileUri = async (audioUrl: string): Promise<null | string
     return null
   }
 }
+
+/**
+ * Deletes the retained partial download for a track URL. Used when an online
+ * re-request supersedes the partial — the full audio is re-fetched, so the
+ * stale buffered part must not linger on disk.
+ * @param audioUrl - Network URL of the track.
+ */
+export const deletePartialFile = (audioUrl: string): void => {
+  if (!audioUrl) return
+  try {
+    const file = getPartialFile(audioUrl)
+    if (file.exists) file.delete()
+  } catch (error) {
+    console.warn('[partialFile] delete failed:', error)
+  }
+}

@@ -1,6 +1,6 @@
 import { type Directory } from 'expo-file-system'
 import { getAudioCacheDirectory } from './getAudioCacheDirectory'
-import { getPartialFileUri } from './partialFile'
+import { deletePartialFile, getPartialFileUri } from './partialFile'
 
 jest.mock('expo-file-system', () => ({
   File: class MockFile {
@@ -9,6 +9,7 @@ jest.mock('expo-file-system', () => ({
       this.uri = `file://cache/${fileName}`
     }
 
+    public delete = mockFileState.delete
     public exists = mockFileState.exists
     public size = mockFileState.size
     public uri: string
@@ -25,7 +26,7 @@ jest.mock('./cacheDownloader', () => ({
   PART_SUFFIX: '.cache.mp3',
 }))
 
-const mockFileState = { exists: false, size: 0 }
+const mockFileState = { delete: jest.fn(), exists: false, size: 0 }
 
 const mockCacheDir = {} as unknown as Directory
 
@@ -87,5 +88,48 @@ describe('getPartialFileUri', () => {
     const result = await getPartialFileUri('')
 
     expect(result).toBeNull()
+  })
+})
+
+describe('deletePartialFile', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockFileState.exists = false
+    mockFileState.size = 0
+    mockedGetAudioCacheDirectory.mockReturnValue(mockCacheDir)
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test('deletes the partial file when it exists', () => {
+    mockFileState.exists = true
+
+    deletePartialFile(EXAMPLE_URL)
+
+    expect(mockFileState.delete).toHaveBeenCalled()
+  })
+
+  test('does nothing when the partial file is missing', () => {
+    deletePartialFile(EXAMPLE_URL)
+
+    expect(mockFileState.delete).not.toHaveBeenCalled()
+  })
+
+  test('does nothing for an empty url', () => {
+    deletePartialFile('')
+
+    expect(mockFileState.delete).not.toHaveBeenCalled()
+  })
+
+  test('swallows a throwing delete (web safety)', () => {
+    mockFileState.exists = true
+    mockFileState.delete.mockImplementation(() => {
+      throw new Error('file system is not available on web')
+    })
+
+    expect(() => deletePartialFile(EXAMPLE_URL)).not.toThrow()
   })
 })

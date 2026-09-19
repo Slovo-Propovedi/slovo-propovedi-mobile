@@ -1,8 +1,10 @@
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio'
+import { PART_SUFFIX } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { setIsBufferingAction, setPositionAction } from '../../../model'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
+import { applyPartialDuration } from './partialDuration'
 import { resolvePlaybackUrl } from './resolvePlaybackUrl'
 import { waitForLoaded } from './waitForLoaded'
 
@@ -25,6 +27,7 @@ class AudioLoader {
     }
     const playUrl = await resolvePlaybackUrl(audioUrl)
     this.lastResolvedUrl = playUrl
+    const partial = this.isPartialSource()
     // keepAudioSessionActive prevents iOS AVAudioSession deactivation at track end,
     // which otherwise stalls background auto-advance until the app is foregrounded
     const player = createAudioPlayer(
@@ -32,9 +35,10 @@ class AudioLoader {
       { downloadFirst: false, keepAudioSessionActive: true },
     )
     this.playerInstance = player
-    return waitForLoaded(player, initialPositionMs, p => p === this.playerInstance)
+    return waitForLoaded(player, initialPositionMs, p => p === this.playerInstance, partial)
       .then(loaded => {
         this.loaded = loaded !== null
+        this.applyPartialDurationIfNeeded(partial, loaded)
         return loaded
       })
       .catch(error => {
@@ -54,6 +58,7 @@ class AudioLoader {
     if (!this.playerInstance) return this.loadAudio(audioUrl, initialPositionMs)
     const playUrl = await resolvePlaybackUrl(audioUrl)
     this.lastResolvedUrl = playUrl
+    const partial = this.isPartialSource()
     try {
       // replace-in-place: same native player, same MediaSession, same foreground service.
       // Never pass null to replace() — it crashes the player (expo-audio #48219)
@@ -68,10 +73,16 @@ class AudioLoader {
       this.playerInstance,
       initialPositionMs,
       p => p === this.playerInstance,
+      partial,
     ).then(loaded => {
       this.loaded = loaded !== null
+      this.applyPartialDurationIfNeeded(partial, loaded)
       return loaded
     })
+  }
+
+  public isPartialSource(): boolean {
+    return this.lastResolvedUrl?.endsWith(PART_SUFFIX) ?? false
   }
 
   public releaseAndReset(): void {
@@ -106,10 +117,14 @@ class AudioLoader {
     this.trackEndHandled = true
   }
 
+  private applyPartialDurationIfNeeded(partial: boolean, loaded: AudioPlayer | null): void {
+    if (!partial || !loaded) return
+    applyPartialDuration(Math.floor(loaded.duration * 1000))
+  }
+
   private playerInstance: AudioPlayer | null = null
   private trackEndHandled = false
   private lastResolvedUrl: null | string = null
   private loaded = false
 }
-
 export const audioLoader = new AudioLoader()

@@ -38,9 +38,9 @@ const RootLayoutWithProvider = () => (
   </reatomContext.Provider>
 )
 
-// Purge orphaned .part files / stale entries BEFORE player restore: a restored
-// track auto-starts a background download that would race the sweep and get
-// its active .part deleted (review finding — startup race).
+// Purge orphaned legacy .mp3.part files BEFORE player restore: the sweep
+// deletes only pre-rename orphans and never touches .cache.mp3 partials —
+// ordering before initializePlayer is kept as a cheap safety, not a race guard.
 void cleanupOrphanedDownloads()
   .catch(error => console.error('[audio-cache] orphan cleanup failed:', error))
   .then(() => initializePlayer())

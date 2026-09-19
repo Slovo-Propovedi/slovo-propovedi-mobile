@@ -1,29 +1,40 @@
-import { audioCacheService, getPartialFileUri } from 'shared/lib/audio-cache'
+import { audioCacheService, deletePartialFile, getPartialFileUri } from 'shared/lib/audio-cache'
+import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { startBackgroundCaching } from '../BackgroundCachingService'
 import { resolvePlaybackUrl } from './resolvePlaybackUrl'
 
 const AUDIO_URL = 'https://example.com/audio.mp3'
+const CACHED_URI = 'file:///data/cache/audio.mp3'
+const PARTIAL_URI = 'file:///data/cache/abc.cache.mp3'
 
 jest.mock('shared/lib/audio-cache', () => ({
   audioCacheService: { getCachedUri: jest.fn() },
+  deletePartialFile: jest.fn(),
   getPartialFileUri: jest.fn(),
 }))
 
+jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
+
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
+
+jest.mock('shared/model/network', () => ({ isOnlineAtom: {} }))
 
 jest.mock('../BackgroundCachingService', () => ({ startBackgroundCaching: jest.fn() }))
 
 const mockedGetCachedUri = jest.mocked(audioCacheService.getCachedUri)
+const mockedDeletePartialFile = jest.mocked(deletePartialFile)
 const mockedGetPartialFileUri = jest.mocked(getPartialFileUri)
 const mockedStartBackgroundCaching = jest.mocked(startBackgroundCaching)
 const mockedReportError = jest.mocked(reportError)
+const mockedCtxGet = jest.mocked(ctx.get)
 
 describe('resolvePlaybackUrl', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockedGetCachedUri.mockResolvedValue(null)
     mockedGetPartialFileUri.mockResolvedValue(null)
+    mockedCtxGet.mockReturnValue(true)
     jest.spyOn(console, 'error').mockImplementation(() => {})
   })
 
@@ -32,24 +43,56 @@ describe('resolvePlaybackUrl', () => {
   })
 
   test('returns the cached URI and skips background caching', async () => {
-    const cachedUri = 'file:///data/cache/audio.mp3'
-    mockedGetCachedUri.mockResolvedValue(cachedUri)
+    mockedGetCachedUri.mockResolvedValue(CACHED_URI)
 
     const result = await resolvePlaybackUrl(AUDIO_URL)
 
-    expect(result).toBe(cachedUri)
+    expect(result).toBe(CACHED_URI)
     expect(mockedStartBackgroundCaching).not.toHaveBeenCalled()
     expect(mockedGetPartialFileUri).not.toHaveBeenCalled()
   })
 
-  test('returns the partial URI when cache misses and a partial exists', async () => {
-    const partialUri = 'file:///data/cache/abc.cache.mp3'
-    mockedGetPartialFileUri.mockResolvedValue(partialUri)
+  test('cached URI wins over an offline partial', async () => {
+    mockedGetCachedUri.mockResolvedValue(CACHED_URI)
+    mockedGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
+    mockedCtxGet.mockReturnValue(false)
 
     const result = await resolvePlaybackUrl(AUDIO_URL)
 
-    expect(result).toBe(partialUri)
+    expect(result).toBe(CACHED_URI)
+    expect(mockedGetPartialFileUri).not.toHaveBeenCalled()
+  })
+
+  test('returns the partial URI when offline and a partial exists', async () => {
+    mockedGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
+    mockedCtxGet.mockReturnValue(false)
+
+    const result = await resolvePlaybackUrl(AUDIO_URL)
+
+    expect(result).toBe(PARTIAL_URI)
     expect(mockedStartBackgroundCaching).toHaveBeenCalledWith(AUDIO_URL)
+    expect(mockedDeletePartialFile).not.toHaveBeenCalled()
+  })
+
+  test('deletes the partial and returns the network URL when online', async () => {
+    mockedGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
+
+    const result = await resolvePlaybackUrl(AUDIO_URL)
+
+    expect(result).toBe(AUDIO_URL)
+    expect(mockedDeletePartialFile).toHaveBeenCalledWith(AUDIO_URL)
+    expect(mockedStartBackgroundCaching).toHaveBeenCalledWith(AUDIO_URL)
+  })
+
+  test('a throwing deletePartialFile does not break resolve', async () => {
+    mockedGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
+    mockedDeletePartialFile.mockImplementation(() => {
+      throw new Error('delete failed')
+    })
+
+    const result = await resolvePlaybackUrl(AUDIO_URL)
+
+    expect(result).toBe(AUDIO_URL)
   })
 
   test('returns the network URL when nothing local exists', async () => {
