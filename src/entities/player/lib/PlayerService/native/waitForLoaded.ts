@@ -16,8 +16,9 @@ const STALE_POLL_TOLERANCE_MS = 1500
  * @param initialPositionMs - Target position in milliseconds to seek to after load.
  * @param isCurrentPlayer - Guard: returns true if the player is still the active one
  *   (avoids stale writes when a newer load supersedes or releaseAndReset runs).
- * @param skipDurationWrite - When true, skips the durationAtom write: a partial
- *   source reports a truncated duration, so applyPartialDuration governs the timeline.
+ * @param skipDurationWrite - When true, skips duration writes (durationAtom and
+ *   AsyncStorage): a partial source reports a truncated duration, so
+ *   applyPartialDuration governs the timeline.
  */
 export const waitForLoaded = (
   player: AudioPlayer,
@@ -74,8 +75,10 @@ const completeLoad = (
   if (!isCurrentPlayer(player)) return Promise.resolve(player)
 
   const dur = Math.floor(player.duration * 1000)
-  if (!skipDurationWrite) void setDurationAction(ctx, dur)
-  void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
+  if (!skipDurationWrite) {
+    void setDurationAction(ctx, dur)
+    void AsyncStorage.setItem(CURRENT_SOUND_DURATION, String(dur))
+  }
   void setIsBufferingAction(ctx, false)
 
   // currentMs is read from the sync player.currentTime getter (proven in production);

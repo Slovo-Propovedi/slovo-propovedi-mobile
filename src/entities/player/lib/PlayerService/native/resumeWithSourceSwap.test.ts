@@ -12,6 +12,7 @@ jest.mock('shared/lib/audio-cache', () => ({
   audioCacheService: {
     getCachedUri: (url: string) => mockGetCachedUri(url),
   },
+  PART_SUFFIX: '.cache.mp3',
 }))
 
 jest.mock('./AudioLoader', () => ({
@@ -58,6 +59,18 @@ describe('resumeWithSourceSwap', () => {
 
     expect(player.play).toHaveBeenCalledTimes(1)
     expect(player.replaceAudio).not.toHaveBeenCalled()
+  })
+
+  test('cached + lastResolvedUrl partial file:// → replaceAudio with position then play', async () => {
+    const player = createPlayerStub()
+    mockGetCachedUri.mockResolvedValue('file:///data/cache/audio-final.mp3')
+    mockedGetLastResolvedUrl.mockReturnValue('file:///data/cache/audio-hash.cache.mp3')
+    positionAtom(ctx, 123456)
+
+    await resumeWithSourceSwap(player, AUDIO_URL)
+
+    expect(player.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 123456)
+    expect(player.play).toHaveBeenCalledTimes(1)
   })
 
   test('cached + lastResolvedUrl network URL → replaceAudio with position then play', async () => {

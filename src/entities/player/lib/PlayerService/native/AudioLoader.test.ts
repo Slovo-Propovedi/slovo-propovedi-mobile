@@ -9,6 +9,7 @@ import { applyPartialDuration } from './partialDuration'
 
 const AUDIO_URL = 'https://example.com/audio.mp3'
 const SECOND_AUDIO_URL = 'https://example.com/audio2.mp3'
+const PARTIAL_URI = 'file:///data/cache/abc.cache.mp3'
 
 jest.mock('expo-audio', () => ({
   createAudioPlayer: jest.fn(),
@@ -457,7 +458,7 @@ describe('AudioLoader', () => {
 
   describe('isPartialSource', () => {
     test('is true after loading a partial URI (offline fallback)', async () => {
-      mockGetPartialFileUri.mockResolvedValue('file:///data/cache/abc.cache.mp3')
+      mockGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
       mockedCtxGet.mockReturnValue(false)
 
       await audioLoader.loadAudio(AUDIO_URL)
@@ -480,12 +481,21 @@ describe('AudioLoader', () => {
     })
 
     test('applies the full-file duration when the source is a partial', async () => {
-      mockGetPartialFileUri.mockResolvedValue('file:///data/cache/abc.cache.mp3')
+      mockGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
       mockedCtxGet.mockReturnValue(false)
 
       await audioLoader.loadAudio(AUDIO_URL)
 
       expect(mockedApplyPartialDuration).toHaveBeenCalledWith(120000)
+    })
+
+    test('does not persist the truncated duration when the source is a partial', async () => {
+      mockGetPartialFileUri.mockResolvedValue(PARTIAL_URI)
+      mockedCtxGet.mockReturnValue(false)
+
+      await audioLoader.loadAudio(AUDIO_URL)
+
+      expect(mockedSetItem).not.toHaveBeenCalledWith('currentSoundDuration', expect.any(String))
     })
 
     test('does not apply the partial duration for a network source', async () => {

@@ -1,4 +1,4 @@
-import { audioCacheService } from 'shared/lib/audio-cache'
+import { audioCacheService, PART_SUFFIX } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { positionAtom } from '../../../model'
 import { audioLoader } from './AudioLoader'
@@ -13,14 +13,15 @@ const CACHE_URI_PREFIX = 'file://'
 const isLocalFileUri = (sourceUrl: string): boolean => sourceUrl.startsWith(CACHE_URI_PREFIX)
 
 const sourceAlreadyServesCache = (sourceUrl: null | string): boolean =>
-  sourceUrl !== null && isLocalFileUri(sourceUrl)
+  sourceUrl !== null && isLocalFileUri(sourceUrl) && !sourceUrl.endsWith(PART_SUFFIX)
 
 /**
  * Resumes playback after pause, swapping the player source to the cached file
  * when the background download finished after the track had started streaming
  * from the server (issue #107). Without the swap the AudioPlayer stays bound
  * to the dead server URI and pressing play silently fails even though the
- * track is already cached.
+ * track is already cached. A local PARTIAL uri (still downloading) must also
+ * be swapped for the completed final file once the download finishes.
  * @param player - Player control actions used to swap the source and resume.
  * @param audioUrl - Network URL of the track being resumed. Always pass the original server URL —
  * replaceAudio re-resolves it through AudioLoader → resolvePlaybackUrl; passing a resolved file:// URI
