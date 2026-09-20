@@ -1,6 +1,37 @@
 ---
 description: Expert code reviewer for security, performance, and philosophy compliance
 mode: subagent
+permissions:
+  - action: edit
+    resource: '*'
+    effect: deny
+  - action: shell
+    resource: '*'
+    effect: deny
+  - action: shell
+    resource: 'git diff*'
+    effect: allow
+  - action: shell
+    resource: 'git log*'
+    effect: allow
+  - action: shell
+    resource: 'git show*'
+    effect: allow
+  - action: shell
+    resource: 'git blame*'
+    effect: allow
+  - action: shell
+    resource: 'rg *'
+    effect: allow
+  - action: plan_read
+    resource: '*'
+    effect: allow
+  - action: delegation_read
+    resource: '*'
+    effect: allow
+  - action: delegation_list
+    resource: '*'
+    effect: allow
 ---
 
 # Code Review Agent

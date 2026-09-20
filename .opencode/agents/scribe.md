@@ -1,6 +1,19 @@
 ---
 description: Human-facing content specialist for documentation and prose
 mode: subagent
+permissions:
+  - action: plan_read
+    resource: '*'
+    effect: deny
+  - action: todoread
+    resource: '*'
+    effect: deny
+  - action: shell
+    resource: '*'
+    effect: deny
+  - action: edit
+    resource: '*'
+    effect: allow
 ---
 
 # Scribe Agent

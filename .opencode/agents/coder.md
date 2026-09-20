@@ -1,6 +1,31 @@
 ---
 description: Technical implementation specialist for writing and modifying code
 mode: subagent
+permissions:
+  - action: webfetch
+    resource: '*'
+    effect: deny
+  - action: context7_*
+    resource: '*'
+    effect: deny
+  - action: exa_*
+    resource: '*'
+    effect: deny
+  - action: gh_grep_*
+    resource: '*'
+    effect: deny
+  - action: plan_read
+    resource: '*'
+    effect: deny
+  - action: todoread
+    resource: '*'
+    effect: deny
+  - action: edit
+    resource: '*'
+    effect: allow
+  - action: shell
+    resource: '*'
+    effect: allow
 ---
 
 # Coder Agent

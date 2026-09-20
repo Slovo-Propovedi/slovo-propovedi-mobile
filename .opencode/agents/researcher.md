@@ -1,6 +1,142 @@
 ---
 description: Knowledge architect for external research and documentation
 mode: subagent
+permissions:
+  - action: edit
+    resource: '*'
+    effect: deny
+  - action: plan_read
+    resource: '*'
+    effect: deny
+  - action: todoread
+    resource: '*'
+    effect: deny
+  - action: kagi_*
+    resource: '*'
+    effect: deny
+  - action: shell
+    resource: '*'
+    effect: deny
+  - action: shell
+    resource: 'gh repo view*'
+    effect: allow
+  - action: shell
+    resource: 'gh pr view*'
+    effect: allow
+  - action: shell
+    resource: 'gh pr list*'
+    effect: allow
+  - action: shell
+    resource: 'gh issue view*'
+    effect: allow
+  - action: shell
+    resource: 'gh issue list*'
+    effect: allow
+  - action: shell
+    resource: 'gh release view*'
+    effect: allow
+  - action: shell
+    resource: 'gh release list*'
+    effect: allow
+  - action: shell
+    resource: 'gh run view*'
+    effect: allow
+  - action: shell
+    resource: 'gh run list*'
+    effect: allow
+  - action: shell
+    resource: 'gh workflow list*'
+    effect: allow
+  - action: shell
+    resource: 'gh search *'
+    effect: allow
+  - action: shell
+    resource: 'npm view*'
+    effect: allow
+  - action: shell
+    resource: 'npm info*'
+    effect: allow
+  - action: shell
+    resource: 'npm show*'
+    effect: allow
+  - action: shell
+    resource: 'pip show*'
+    effect: allow
+  - action: shell
+    resource: 'pip index*'
+    effect: allow
+  - action: shell
+    resource: 'cargo search*'
+    effect: allow
+  - action: shell
+    resource: 'cargo info*'
+    effect: allow
+  - action: shell
+    resource: 'man *'
+    effect: allow
+  - action: shell
+    resource: 'tldr *'
+    effect: allow
+  - action: shell
+    resource: 'dig *'
+    effect: allow
+  - action: shell
+    resource: 'nslookup *'
+    effect: allow
+  - action: shell
+    resource: 'whois *'
+    effect: allow
+  - action: shell
+    resource: 'host *'
+    effect: allow
+  - action: shell
+    resource: 'jq *'
+    effect: allow
+  - action: shell
+    resource: 'head *'
+    effect: allow
+  - action: shell
+    resource: 'tail *'
+    effect: allow
+  - action: shell
+    resource: 'base64 *'
+    effect: allow
+  - action: shell
+    resource: 'grep *'
+    effect: allow
+  - action: shell
+    resource: 'rg *'
+    effect: allow
+  - action: shell
+    resource: 'wc *'
+    effect: allow
+  - action: shell
+    resource: 'sort *'
+    effect: allow
+  - action: shell
+    resource: 'uniq *'
+    effect: allow
+  - action: shell
+    resource: 'cut *'
+    effect: allow
+  - action: shell
+    resource: 'awk *'
+    effect: allow
+  - action: shell
+    resource: 'tr *'
+    effect: allow
+  - action: context7_*
+    resource: '*'
+    effect: allow
+  - action: exa_*
+    resource: '*'
+    effect: allow
+  - action: gh_grep_*
+    resource: '*'
+    effect: allow
+  - action: webfetch
+    resource: '*'
+    effect: allow
 ---
 
 # Researcher Agent
