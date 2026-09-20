@@ -1,8 +1,16 @@
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics'
+import {
+  AndroidHaptics,
+  impactAsync,
+  ImpactFeedbackStyle,
+  performAndroidHapticsAsync,
+} from 'expo-haptics'
 import { Platform } from 'react-native'
 import { hapticLight } from './haptics'
 
 const mockedImpactAsync = impactAsync as jest.MockedFunction<typeof impactAsync>
+const mockedPerformAndroidHapticsAsync = performAndroidHapticsAsync as jest.MockedFunction<
+  typeof performAndroidHapticsAsync
+>
 
 describe('hapticLight', () => {
   beforeEach(() => {
@@ -20,19 +28,21 @@ describe('hapticLight', () => {
       hapticLight()
 
       expect(mockedImpactAsync).not.toHaveBeenCalled()
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
   })
 
-  test('triggers a light impact on Android', () => {
+  test('triggers a system haptic on Android', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     try {
       // Explicit clock beats the module-level throttle from earlier tests.
       jest.setSystemTime(1000)
       hapticLight()
 
-      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Light)
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Virtual_Key)
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
@@ -45,6 +55,7 @@ describe('hapticLight', () => {
       hapticLight()
 
       expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Light)
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
@@ -57,28 +68,28 @@ describe('hapticLight', () => {
       hapticLight()
       hapticLight()
 
-      expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledTimes(1)
 
       jest.setSystemTime(3050)
       hapticLight()
 
-      expect(mockedImpactAsync).toHaveBeenCalledTimes(2)
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledTimes(2)
     } finally {
       restorePlatform.restore()
     }
   })
 
-  test('swallows impactAsync rejection (no unhandled rejection)', async () => {
+  test('swallows Android haptic rejection (no unhandled rejection)', async () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     try {
       jest.setSystemTime(4000)
-      mockedImpactAsync.mockRejectedValueOnce(new Error('haptic failed'))
+      mockedPerformAndroidHapticsAsync.mockRejectedValueOnce(new Error('haptic failed'))
 
       hapticLight()
       // Flush the microtask queue: an unhandled rejection would fail the test.
       await Promise.resolve()
 
-      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Light)
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Virtual_Key)
     } finally {
       restorePlatform.restore()
     }

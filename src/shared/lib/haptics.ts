@@ -1,15 +1,23 @@
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics'
+import {
+  AndroidHaptics,
+  impactAsync,
+  ImpactFeedbackStyle,
+  performAndroidHapticsAsync,
+} from 'expo-haptics'
 import { Platform } from 'react-native'
 
 const HAPTIC_THROTTLE_MS = 45
 
 let lastHapticAt = 0
 
-// Fire-and-forget press feedback: light impact on both mobile platforms, silent
-// no-op on web. Cosmetic by design — a haptic must never crash the app, so the
-// rejected promise is swallowed intentionally. Android uses the Vibrator API
-// (impactAsync) instead of View.performHapticFeedback: MIUI suppresses the
-// latter via system settings, while the Vibrator is felt regardless.
+// Fire-and-forget press feedback: light impact on iOS (system Taptic Engine),
+// system haptic on Android, silent no-op on web. Cosmetic by design — a haptic
+// must never crash the app, so the rejected promise is swallowed intentionally.
+// Android uses the system haptic engine (performAndroidHapticsAsync →
+// View.performHapticFeedback, VIRTUAL_KEY), so the response follows the
+// device's system settings (short/strong as configured by the user); known
+// trade-off — when the system vibration feedback is disabled (typical on MIUI),
+// no vibration happens inside the app.
 export const hapticLight = (): void => {
   if (Platform.OS === 'web') return
 
@@ -17,5 +25,11 @@ export const hapticLight = (): void => {
   if (now - lastHapticAt < HAPTIC_THROTTLE_MS) return
 
   lastHapticAt = now
+
+  if (Platform.OS === 'android') {
+    void performAndroidHapticsAsync(AndroidHaptics.Virtual_Key).catch(() => {})
+    return
+  }
+
   void impactAsync(ImpactFeedbackStyle.Light).catch(() => {})
 }
