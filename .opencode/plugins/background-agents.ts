@@ -12,11 +12,10 @@
 import * as fs from "node:fs/promises"
 import * as os from "node:os"
 import * as path from "node:path"
-import { type Plugin, type ToolContext, tool } from "@opencode-ai/plugin"
-import type { Event, Message, Part, TextPart } from "@opencode-ai/sdk"
+import { Plugin } from "@opencode/plugin"
 import { adjectives, animals, colors, uniqueNamesGenerator } from "unique-names-generator"
-import { getProjectId } from "./kdco-primitives/get-project-id"
-import type { OpencodeClient } from "./kdco-primitives/types"
+import { getProjectId } from "../lib/kdco-primitives/get-project-id"
+import type { OpencodeClient } from "../lib/kdco-primitives/types"
 
 // ==========================================
 // READABLE ID GENERATION
@@ -41,8 +40,15 @@ interface GeneratedMetadata {
 }
 
 /**
- * Generate title and description from result content using small_model
- * Falls back to truncation if small_model unavailable
+ * Generate title and description from result content using a model.
+ * Falls back to truncation if no default model is available.
+ *
+ * TODO(port): V1 gated this on the `small_model` config key and prompted the
+ * small model through a dedicated child session. V2 has no plugin-visible
+ * `small_model` setting, so the selected default model is used via
+ * `ctx.generate.text` (which needs no session). The `parentID` argument is
+ * retained for signature compatibility and is unused in V2 (session creation
+ * no longer accepts a parentID).
  */
 async function generateMetadata(
 	client: OpencodeClient,
@@ -50,6 +56,8 @@ async function generateMetadata(
 	parentID: string,
 	debugLog: (msg: string) => Promise<void>,
 ): Promise<GeneratedMetadata> {
+	void parentID
+
 	const fallbackMetadata = (): GeneratedMetadata => {
 		// Fallback: truncate first line/paragraph
 		const firstLine =
@@ -61,31 +69,17 @@ async function generateMetadata(
 	}
 
 	try {
-		// Get config to check for small_model
-		const config = await client.config.get()
-		const configData = config.data as { small_model?: string } | undefined
+		// Get the default model selection (V1: config.small_model gate)
+		const defaultModelResult = await client.model.default()
+		const model = defaultModelResult.data
 
-		if (!configData?.small_model) {
-			await debugLog("generateMetadata: No small_model configured, using fallback")
+		if (!model) {
+			await debugLog("generateMetadata: No default model available, using fallback")
 			return fallbackMetadata()
 		}
 
-		await debugLog(`generateMetadata: Using small_model ${configData.small_model}`)
+		await debugLog(`generateMetadata: Using model ${model.providerID}/${model.id}`)
 
-		// Create a session for metadata generation
-		const session = await client.session.create({
-			body: {
-				title: "Metadata Generation",
-				parentID,
-			},
-		})
-
-		if (!session.data?.id) {
-			await debugLog("generateMetadata: Failed to create session")
-			return fallbackMetadata()
-		}
-
-		// Prompt the small model for metadata
 		const prompt = `Generate a title and description for this research result.
 
 RULES:
@@ -98,32 +92,29 @@ ${resultContent.slice(0, 2000)}
 Respond with ONLY valid JSON in this exact format:
 {"title": "Your Title Here", "description": "Your description here."}`
 
-		// Await prompt response directly with timeout safety net
+		// Generate directly without a session, with a timeout safety net
 		const PROMPT_TIMEOUT_MS = 30000
 		const result = await Promise.race([
-			client.session.prompt({
-				path: { id: session.data.id },
-				body: {
-					parts: [{ type: "text", text: prompt }],
-				},
+			client.generate.text({
+				prompt,
+				model: { providerID: model.providerID, id: model.id },
 			}),
 			new Promise<never>((_, reject) =>
 				setTimeout(() => reject(new Error("Prompt timeout after 30s")), PROMPT_TIMEOUT_MS),
 			),
 		])
 
-		// Extract text from the response
-		const responseParts = result.data?.parts as TextPart[] | undefined
-		const textPart = responseParts?.find((p): p is TextPart => p.type === "text")
-		if (!textPart) {
-			await debugLog("generateMetadata: No text part in response")
+		// Extract the response text (V1 read text parts from the session prompt response)
+		const text = result.text
+		if (!text) {
+			await debugLog("generateMetadata: No text in response")
 			return fallbackMetadata()
 		}
 
 		// Parse JSON response
-		const jsonMatch = textPart.text.match(/\{[\s\S]*\}/)
+		const jsonMatch = text.match(/\{[\s\S]*\}/)
 		if (!jsonMatch) {
-			await debugLog(`generateMetadata: No JSON found in response: ${textPart.text}`)
+			await debugLog(`generateMetadata: No JSON found in response: ${text}`)
 			return fallbackMetadata()
 		}
 
@@ -150,14 +141,27 @@ Respond with ONLY valid JSON in this exact format:
 // TYPE DEFINITIONS
 // ==========================================
 
-interface SessionMessageItem {
-	info: Message
-	parts: Part[]
+/**
+ * V2 session message subset used for result extraction.
+ * V1 used `{ info: Message; parts: Part[] }` items from `client.session.messages`;
+ * V2 `ctx.session.context` returns a flat list of discriminated message objects
+ * where assistant text lives in `content`.
+ */
+interface V2AssistantMessage {
+	type: "assistant"
+	content: ReadonlyArray<{ type: string; text?: string }>
 }
 
-interface AssistantSessionMessageItem {
-	info: Message & { role: "assistant" }
-	parts: Part[]
+type V2SessionMessage = { type: string; content?: ReadonlyArray<{ type: string; text?: string }> }
+
+/**
+ * V2 agent permission rule (from AgentInfo.permissions).
+ * V1 read permission records from config (`{ edit: "deny", bash: { "*": "deny" } }`).
+ */
+interface V2PermissionRule {
+	action: string
+	resource: string
+	effect: "allow" | "ask" | "deny"
 }
 
 type DelegationStatus = "registered" | "running" | "complete" | "error" | "cancelled" | "timeout"
@@ -269,12 +273,24 @@ interface DelegationManagerOptions {
 // ==========================================
 
 /**
- * Create a structured logger that sends messages to OpenCode's log API.
- * Catches errors silently to avoid disrupting tool execution.
+ * Create a structured logger.
+ *
+ * TODO(port): V1 sent log lines to `client.app.log` (OpenCode UI log panel);
+ * the V2 plugin context has no logging domain, so log output goes to the
+ * console (server console output lands in the OpenCode log file).
  */
-function createLogger(client: OpencodeClient) {
-	const log = (level: "debug" | "info" | "warn" | "error", message: string) =>
-		client.app.log({ body: { service: "background-agents", level, message } }).catch(() => {})
+function createLogger(_client: OpencodeClient) {
+	const log = (level: "debug" | "info" | "warn" | "error", message: string) => {
+		if (level === "debug") {
+			console.log(`[background-agents] ${level}: ${message}`)
+		} else if (level === "info") {
+			console.info(`[background-agents] ${level}: ${message}`)
+		} else if (level === "warn") {
+			console.warn(`[background-agents] ${level}: ${message}`)
+		} else {
+			console.error(`[background-agents] ${level}: ${message}`)
+		}
+	}
 	return {
 		debug: (msg: string) => log("debug", msg),
 		info: (msg: string) => log("info", msg),
@@ -299,7 +315,7 @@ async function parseAgentMode(
 	log: Logger,
 ): Promise<{ isSubAgent: boolean }> {
 	try {
-		const result = await client.app.agents({})
+		const result = await client.agent.list()
 		const agents = (result.data ?? []) as { name: string; mode?: string }[]
 		const agent = agents.find((a) => a.name === agentName)
 		return { isSubAgent: agent?.mode === "subagent" }
@@ -314,20 +330,24 @@ async function parseAgentMode(
 }
 
 /**
- * Permission entry type: simple value or pattern object.
- * Matches CLI schema: z.union([z.enum(["ask", "allow", "deny"]), z.record(z.enum(...))])
+ * Check if a V2 agent permission ruleset denies an action globally.
+ *
+ * TODO(port): V1 read permission records from config, shaped like
+ * `{ edit: "deny", bash: { "*": "deny" } }` and checked `entry === "deny"` or
+ * `entry["*"] === "deny"`. V2 exposes the effective ruleset on AgentInfo as
+ * `{ action, resource, effect }` rules; the wildcard gate is the last rule
+ * whose resource is `"*"` (or `"**"`), mirroring the V1 `entry["*"]` check
+ * ("last matching rule wins").
  */
-type PermissionEntry = "ask" | "allow" | "deny" | Record<string, "ask" | "allow" | "deny">
-
-/**
- * Check if a permission entry denies access (Law 4: Fail Fast).
- * Handles both simple values ("deny") and pattern objects ({ "*": "deny" }).
- */
-function isPermissionDenied(entry: PermissionEntry | undefined): boolean {
-	if (entry === undefined) return false
-	if (entry === "deny") return true
-	if (typeof entry === "object" && entry["*"] === "deny") return true
-	return false
+function isActionGloballyDenied(rules: V2PermissionRule[], action: string): boolean {
+	let denied = false
+	for (const rule of rules) {
+		if (rule.action !== action) continue
+		if (rule.resource === "*" || rule.resource === "**") {
+			denied = rule.effect === "deny"
+		}
+	}
+	return denied
 }
 
 /**
@@ -343,27 +363,21 @@ async function parseAgentWriteCapability(
 	log: Logger,
 ): Promise<{ isReadOnly: boolean }> {
 	try {
-		const config = await client.config.get()
-		const configData = config.data as {
-			agent?: Record<
-				string,
-				{
-					permission?: Record<string, PermissionEntry>
-				}
-			>
-		}
-		const permission = configData?.agent?.[agentName]?.permission ?? {}
+		const result = await client.agent.list()
+		const agents = (result.data ?? []) as Array<{ name: string; permissions?: V2PermissionRule[] }>
+		const agent = agents.find((a) => a.name === agentName)
+		const permission = agent?.permissions ?? []
 
-		const editDenied = isPermissionDenied(permission.edit)
-		const writeDenied = isPermissionDenied(permission.write)
-		const bashDenied = isPermissionDenied(permission.bash)
+		const editDenied = isActionGloballyDenied(permission, "edit")
+		const writeDenied = isActionGloballyDenied(permission, "write")
+		const bashDenied = isActionGloballyDenied(permission, "bash")
 
 		return { isReadOnly: editDenied && writeDenied && bashDenied }
 	} catch (error) {
-		// Fail-safe: Config errors shouldn't block task calls
+		// Fail-safe: Agent permission errors shouldn't block task calls
 		// Fail-loud: Log for observability
 		log.warn(
-			`Config fetch failed for "${agentName}", assuming write-capable: ${error instanceof Error ? error.message : String(error)}`,
+			`Agent permission fetch failed for "${agentName}", assuming write-capable: ${error instanceof Error ? error.message : String(error)}`,
 		)
 		return { isReadOnly: false }
 	}
@@ -440,15 +454,13 @@ class DelegationManager {
 		// Prevent infinite loops with max depth
 		for (let depth = 0; depth < 10; depth++) {
 			try {
-				const session = await this.client.session.get({
-					path: { id: currentID },
-				})
+				const session = await this.client.session.get({ sessionID: currentID })
 
-				if (!session.data?.parentID) {
+				if (!session.parentID) {
 					return currentID
 				}
 
-				currentID = session.data.parentID
+				currentID = session.parentID
 			} catch {
 				// If we can't fetch the session, assume current is root or best effort
 				return currentID
@@ -781,22 +793,24 @@ class DelegationManager {
 
 		try {
 			await this.debugLog(
-				`parent notification sending for ${parentSessionID} noReply=${noReply} async=${Boolean(
-					session.promptAsync,
-				)}`,
+				`parent notification sending for ${parentSessionID} noReply=${noReply} kind=${
+					noReply ? "synthetic" : "prompt"
+				}`,
 			)
 
+			// V1 used session.promptAsync({ body: { noReply, agent, parts } }).
+			// V2 port: noReply=false -> session.prompt (admits a user prompt);
+			// noReply=true -> session.synthetic (records the message without
+			// triggering a parent agent reply, preserving V1 noReply semantics).
+			// TODO(port): V1 set the parent agent per prompt; V2 prompts have no
+			// per-request agent override, so the session's own agent is used.
+			void parentAgent
+			const request = noReply
+				? session.synthetic({ sessionID: parentSessionID, text: notification })
+				: session.prompt({ sessionID: parentSessionID, text: notification })
+
 			const result = await Promise.race<"sent" | "timed-out">([
-				session
-					.promptAsync({
-						path: { id: parentSessionID },
-						body: {
-							noReply,
-							agent: parentAgent,
-							parts: [{ type: "text", text: notification }],
-						},
-					})
-					.then(() => "sent" as const),
+				request.then(() => "sent" as const),
 				new Promise<"timed-out">((resolve) => {
 					timeout = setTimeout(() => resolve("timed-out"), PARENT_NOTIFICATION_TIMEOUT_MS)
 				}),
@@ -822,25 +836,21 @@ class DelegationManager {
 		}
 	}
 
-	injectPendingNotificationsIntoChatMessage(
-		output: { parts?: Array<{ type: string; text?: string }> },
-		sessionID: string,
-	): void {
+	/**
+	 * Deliver queued notifications on the next admitted user prompt.
+	 *
+	 * V2 port of `injectPendingNotificationsIntoChatMessage` (V1 mutated the
+	 * `chat.message` hook's `output.parts`); the V2 session "prompt" hook
+	 * exposes the admitted prompt draft, so the notification text is prepended
+	 * to the prompt text.
+	 */
+	injectPendingNotificationsIntoPrompt(prompt: { text: string }, sessionID: string): void {
 		const pending = this.pendingNotifications.get(sessionID)
 		if (!pending || pending.length === 0) return
 
 		this.pendingNotifications.delete(sessionID)
 		const notificationText = pending.join("\n\n")
-		const parts = output.parts ?? []
-		const firstTextPart = parts.find((part) => part.type === "text")
-
-		if (firstTextPart) {
-			firstTextPart.text = `${notificationText}\n\n${firstTextPart.text ?? ""}`
-			output.parts = parts
-			return
-		}
-
-		output.parts = [{ type: "text", text: notificationText }, ...parts]
+		prompt.text = `${notificationText}\n\n${prompt.text}`
 	}
 
 	private markRetrieved(id: string, readerSessionID: string): DelegationRecord | undefined {
@@ -1068,8 +1078,18 @@ class DelegationManager {
 	 * Delegate a task to an agent
 	 */
 	async delegate(input: DelegateInput): Promise<DelegationRecord> {
+		// Anti-recursion guard (V2 port): V1 disabled task/delegate/todowrite/
+		// plan_save on delegation sessions via prompt-level `tools` overrides,
+		// which V2 prompts no longer support. `delegate` recursion is blocked at
+		// the source; see the TODO(port) note at the prompt call below.
+		if (this.getDelegationBySession(input.parentSessionID)) {
+			throw new Error(
+				"Nested delegation is not supported: this session is itself a delegation.",
+			)
+		}
+
 		// Validate agent exists before creating session
-		const agentsResult = await this.client.app.agents({})
+		const agentsResult = await this.client.agent.list()
 		const agents = (agentsResult.data ?? []) as {
 			name: string
 			description?: string
@@ -1106,24 +1126,28 @@ class DelegationManager {
 
 		await this.debugLog(`delegate() called, generated stable ID: ${stableId}`)
 
-		// Create isolated session for delegation
+		// Create isolated session for delegation.
+		// The agent is bound at creation time - V2 prompts have no per-request
+		// agent override, so this preserves the V1 "Agent param is critical for
+		// MCP tools" behaviour.
+		// TODO(port): V1 also linked the child session via `parentID`; V2 session
+		// creation no longer accepts a parentID (the plugin tracks the parent in
+		// DelegationRecord instead).
 		const sessionResult = await this.client.session.create({
-			body: {
-				title: `Delegation: ${stableId}`,
-				parentID: input.parentSessionID,
-			},
+			title: `Delegation: ${stableId}`,
+			agent: input.agent,
 		})
 
-		await this.debugLog(`session.create result: ${JSON.stringify(sessionResult.data)}`)
+		await this.debugLog(`session.create result: ${JSON.stringify(sessionResult)}`)
 
-		if (!sessionResult.data?.id) {
+		if (!sessionResult?.id) {
 			throw new Error("Failed to create delegation session")
 		}
 
 		const delegation = this.registerDelegation({
 			id: stableId,
 			rootSessionID,
-			sessionID: sessionResult.data.id,
+			sessionID: sessionResult.id,
 			parentSessionID: input.parentSessionID,
 			parentMessageID: input.parentMessageID,
 			parentAgent: input.parentAgent,
@@ -1136,23 +1160,17 @@ class DelegationManager {
 		this.scheduleTimeout(delegation.id)
 		this.markStarted(delegation.id)
 
-		// Fire the prompt (using prompt() instead of promptAsync() to properly initialize agent loop)
-		// Agent param is critical for MCP tools - tells OpenCode which agent's config to use
-		// Anti-recursion: disable nested delegations and state-modifying tools via tools config
+		// Fire the prompt. V1 awaited client.session.prompt(...) resolution to
+		// detect agent-loop completion; V2 session.prompt returns after durable
+		// admission, so completion is awaited with session.wait(...) and is also
+		// observed via the session.idle event (whichever fires first wins, since
+		// finalizeDelegation is idempotent).
+		// TODO(port): V1 disabled task/delegate/todowrite/plan_save on this prompt
+		// via body.tools; V2 prompts expose no per-request tool overrides, so only
+		// the delegate guard above is enforced.
 		this.client.session
-			.prompt({
-				path: { id: delegation.sessionID },
-				body: {
-					agent: input.agent,
-					parts: [{ type: "text", text: input.prompt }],
-					tools: {
-						task: false,
-						delegate: false,
-						todowrite: false,
-						plan_save: false,
-					},
-				},
-			})
+			.prompt({ sessionID: delegation.sessionID, text: input.prompt })
+			.then(() => this.client.session.wait({ sessionID: delegation.sessionID }))
 			.then(() => {
 				void this.finalizeDelegation(delegation.id, "complete")
 			})
@@ -1172,11 +1190,12 @@ class DelegationManager {
 
 		await this.debugLog(`handleTimeout for delegation ${delegation.id}`)
 
-		// Try to cancel the session
+		// Try to cancel the session.
+		// TODO(port): V1 removed the child session (client.session.delete); the V2
+		// plugin session domain exposes no remove/delete, so the running session
+		// is interrupted instead (continue: false prevents auto-continuation).
 		try {
-			await this.client.session.delete({
-				path: { id: delegation.sessionID },
-			})
+			await this.client.session.interrupt({ sessionID: delegation.sessionID, resume: false })
 		} catch {
 			// Ignore
 		}
@@ -1204,11 +1223,12 @@ class DelegationManager {
 	 */
 	private async getResult(delegation: DelegationRecord): Promise<string> {
 		try {
-			const messages = await this.client.session.messages({
-				path: { id: delegation.sessionID },
-			})
-
-			const messageData = messages.data as SessionMessageItem[] | undefined
+			// V2 port: client.session.messages({ path }) -> ctx.session.context,
+			// which returns a flat list of message objects (assistant text lives
+			// in `content` instead of a separate parts array).
+			const messageData = (await this.client.session.context({
+				sessionID: delegation.sessionID,
+			})) as readonly V2SessionMessage[]
 
 			if (!messageData || messageData.length === 0) {
 				await this.debugLog(`getResult: No messages found for session ${delegation.sessionID}`)
@@ -1216,18 +1236,18 @@ class DelegationManager {
 			}
 
 			await this.debugLog(
-				`getResult: Found ${messageData.length} messages. Roles: ${messageData.map((m) => m.info.role).join(", ")}`,
+				`getResult: Found ${messageData.length} messages. Types: ${messageData.map((m) => m.type).join(", ")}`,
 			)
 
 			// Find the last message from the assistant/model
-			const isAssistantMessage = (m: SessionMessageItem): m is AssistantSessionMessageItem =>
-				m.info.role === "assistant"
+			const isAssistantMessage = (m: V2SessionMessage): m is V2AssistantMessage =>
+				m.type === "assistant"
 
 			const assistantMessages = messageData.filter(isAssistantMessage)
 
 			if (assistantMessages.length === 0) {
 				await this.debugLog(
-					`getResult: No assistant messages found in ${JSON.stringify(messageData.map((m) => ({ role: m.info.role, keys: Object.keys(m) })))}`,
+					`getResult: No assistant messages found in ${JSON.stringify(messageData.map((m) => ({ type: m.type })))}`,
 				)
 				return `Delegation "${delegation.description}" completed but produced no assistant response.`
 			}
@@ -1235,8 +1255,9 @@ class DelegationManager {
 			const lastMessage = assistantMessages[assistantMessages.length - 1]
 
 			// Extract text parts from the message
-			const isTextPart = (p: Part): p is TextPart => p.type === "text"
-			const textParts = lastMessage.parts.filter(isTextPart)
+			const textParts = lastMessage.content.filter(
+				(part) => part.type === "text" && typeof part.text === "string",
+			)
 
 			if (textParts.length === 0) {
 				await this.debugLog(
@@ -1245,7 +1266,9 @@ class DelegationManager {
 				return `Delegation "${delegation.description}" completed but produced no text content.`
 			}
 
-			return textParts.map((p) => p.text).join("\n")
+			return textParts
+				.map((part) => part.text as string)
+				.join("\n")
 		} catch (error) {
 			await this.debugLog(
 				`getResult error: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -1459,12 +1482,12 @@ ${description}
 
 		if (delegation) {
 			if (isActiveStatus(delegation.status)) {
+				// TODO(port): V1 removed the session (client.session.delete); the V2
+				// plugin session domain exposes no remove/delete, so it is interrupted.
 				try {
-					await this.client.session.delete({
-						path: { id: delegation.sessionID },
-					})
+					await this.client.session.interrupt({ sessionID: delegation.sessionID, resume: false })
 				} catch {
-					// Session may already be deleted
+					// Session may already be interrupted
 				}
 				this.markTerminal(delegation.id, "cancelled", "Delegation deleted by cleanup")
 			}
@@ -1575,8 +1598,31 @@ interface DelegateArgs {
 	agent: string
 }
 
-function createDelegate(manager: DelegationManager): ReturnType<typeof tool> {
-	return tool({
+/**
+ * V2 tool execution context subset used by the delegation tools.
+ * (V2 ToolContext carries readonly sessionID/agent/messageID plus progress().)
+ */
+interface DelegationToolContext {
+	readonly sessionID?: string
+	readonly messageID?: string
+	readonly agent?: string
+}
+
+/**
+ * V2 port of the V1 `tool()` helper: tools are plain definitions registered
+ * through `ctx.tool.transform(editor => editor.add(...))`, args use JSON
+ * Schema, and string results are returned as `{ content }`.
+ */
+interface DelegationToolDefinition {
+	name: "delegate" | "delegation_read" | "delegation_list"
+	description: string
+	input: Record<string, unknown>
+	execute: (input: unknown, toolCtx: unknown) => Promise<{ content: string }>
+}
+
+function createDelegate(manager: DelegationManager): DelegationToolDefinition {
+	return {
+		name: "delegate",
 		description: `Delegate a task to an agent. Returns immediately with a readable ID.
 
 Use this for:
@@ -1586,29 +1632,38 @@ Use this for:
 
 On completion, a notification will arrive with the ID and terminal summary.
 Use \`delegation_read\` with the ID to retrieve full persisted output (including after compaction).`,
-		args: {
-			prompt: tool.schema
-				.string()
-				.describe("The full detailed prompt for the agent. Must be in English."),
-			agent: tool.schema
-				.string()
-				.describe(
-					'Agent to delegate to. Must be a read-only sub-agent (edit/write/bash denied), such as "researcher" or "explore".',
-				),
+		input: {
+			type: "object",
+			properties: {
+				prompt: {
+					type: "string",
+					description: "The full detailed prompt for the agent. Must be in English.",
+				},
+				agent: {
+					type: "string",
+					description:
+						'Agent to delegate to. Must be a read-only sub-agent (edit/write/bash denied), such as "researcher" or "explore".',
+				},
+			},
+			required: ["prompt", "agent"],
+			additionalProperties: false,
 		},
-		async execute(args: DelegateArgs, toolCtx: ToolContext): Promise<string> {
+		async execute(rawInput, rawToolCtx) {
+			const args = rawInput as DelegateArgs
+			const toolCtx = rawToolCtx as DelegationToolContext
+
 			if (!toolCtx?.sessionID) {
-				return "❌ delegate requires sessionID. This is a system error."
+				return { content: "❌ delegate requires sessionID. This is a system error." }
 			}
 			if (!toolCtx?.messageID) {
-				return "❌ delegate requires messageID. This is a system error."
+				return { content: "❌ delegate requires messageID. This is a system error." }
 			}
 
 			try {
 				const delegation = await manager.delegate({
 					parentSessionID: toolCtx.sessionID,
 					parentMessageID: toolCtx.messageID,
-					parentAgent: toolCtx.agent,
+					parentAgent: toolCtx.agent ?? "",
 					prompt: args.prompt,
 					agent: args.agent,
 				})
@@ -1623,46 +1678,64 @@ Use \`delegation_read\` with the ID to retrieve full persisted output (including
 				}
 				response += `\nYou WILL be notified when ${totalActive > 1 ? "ALL complete" : "complete"}. Do NOT poll.`
 
-				return response
+				return { content: response }
 			} catch (error) {
 				// Return validation errors as guidance, not exceptions
-				return `❌ Delegation failed:\n\n${error instanceof Error ? error.message : "Unknown error"}`
+				return {
+					content: `❌ Delegation failed:\n\n${error instanceof Error ? error.message : "Unknown error"}`,
+				}
 			}
 		},
-	})
+	}
 }
 
-function createDelegationRead(manager: DelegationManager): ReturnType<typeof tool> {
-	return tool({
+function createDelegationRead(manager: DelegationManager): DelegationToolDefinition {
+	return {
+		name: "delegation_read",
 		description: `Read the output of a delegation by its ID.
 Use this to retrieve results from delegated tasks if the inline notification was lost during compaction.`,
-		args: {
-			id: tool.schema.string().describe("The delegation ID (e.g., 'elegant-blue-tiger')"),
+		input: {
+			type: "object",
+			properties: {
+				id: { type: "string", description: "The delegation ID (e.g., 'elegant-blue-tiger')" },
+			},
+			required: ["id"],
+			additionalProperties: false,
 		},
-		async execute(args: { id: string }, toolCtx: ToolContext): Promise<string> {
+		async execute(rawInput, rawToolCtx) {
+			const args = rawInput as { id: string }
+			const toolCtx = rawToolCtx as DelegationToolContext
+
 			if (!toolCtx?.sessionID) {
-				return "❌ delegation_read requires sessionID. This is a system error."
+				return { content: "❌ delegation_read requires sessionID. This is a system error." }
 			}
 
-			return await manager.readOutput(toolCtx.sessionID, args.id)
+			return { content: await manager.readOutput(toolCtx.sessionID, args.id) }
 		},
-	})
+	}
 }
 
-function createDelegationList(manager: DelegationManager): ReturnType<typeof tool> {
-	return tool({
+function createDelegationList(manager: DelegationManager): DelegationToolDefinition {
+	return {
+		name: "delegation_list",
 		description: `List all delegations for the current session.
 Shows both running and completed delegations.`,
-		args: {},
-		async execute(_args: Record<string, never>, toolCtx: ToolContext): Promise<string> {
+		input: {
+			type: "object",
+			properties: {},
+			additionalProperties: false,
+		},
+		async execute(_rawInput, rawToolCtx) {
+			const toolCtx = rawToolCtx as DelegationToolContext
+
 			if (!toolCtx?.sessionID) {
-				return "❌ delegation_list requires sessionID. This is a system error."
+				return { content: "❌ delegation_list requires sessionID. This is a system error." }
 			}
 
 			const delegations = await manager.listDelegations(toolCtx.sessionID)
 
 			if (delegations.length === 0) {
-				return "No delegations found for this session."
+				return { content: "No delegations found for this session." }
 			}
 
 			const lines = delegations.map((d) => {
@@ -1672,9 +1745,9 @@ Shows both running and completed delegations.`,
 				return `- **${d.id}**${titlePart} [${d.status}]${unreadPart}${descPart}`
 			})
 
-			return `## Delegations\n\n${lines.join("\n")}`
+			return { content: `## Delegations\n\n${lines.join("\n")}` }
 		},
-	})
+	}
 }
 
 // ==========================================
@@ -1816,63 +1889,55 @@ function formatDelegationContext(
 // PLUGIN EXPORT
 // ==========================================
 
-/**
- * Expected input for experimental.chat.system.transform hook.
- */
-interface SystemTransformInput {
-	agent?: string
-	sessionID?: string
-}
+export default Plugin.define({
+	id: "kdco.background-agents",
+	async setup(ctx) {
+		// V2 port: V1 input.client / input.directory -> the plugin context
+		const client: OpencodeClient = ctx
+		const directory = ctx.location.directory
 
-const BackgroundAgentsPlugin: Plugin = async (ctx) => {
-	const { client, directory } = ctx
+		// Create logger early for all components
+		const log = createLogger(client)
 
-	// Create logger early for all components
-	const log = createLogger(client as OpencodeClient)
+		// Project-level storage directory (shared across sessions)
+		// Uses git root commit hash for cross-worktree consistency
+		const projectId = await getProjectId(directory)
+		const baseDir = path.join(os.homedir(), ".local", "share", "opencode", "delegations", projectId)
 
-	// Project-level storage directory (shared across sessions)
-	// Uses git root commit hash for cross-worktree consistency
-	const projectId = await getProjectId(directory)
-	const baseDir = path.join(os.homedir(), ".local", "share", "opencode", "delegations", projectId)
+		// Ensure base directory exists (for debug logs etc)
+		await fs.mkdir(baseDir, { recursive: true })
 
-	// Ensure base directory exists (for debug logs etc)
-	await fs.mkdir(baseDir, { recursive: true })
+		const manager = new DelegationManager(client, baseDir, log)
 
-	const manager = new DelegationManager(client as OpencodeClient, baseDir, log)
+		await manager.debugLog("BackgroundAgentsPlugin initialized with delegation system")
 
-	await manager.debugLog("BackgroundAgentsPlugin initialized with delegation system")
-
-	return {
-		tool: {
-			delegate: createDelegate(manager),
-			delegation_read: createDelegationRead(manager),
-			delegation_list: createDelegationList(manager),
-		},
+		// V1 `tool` map -> V2 ctx.tool.transform editor registrations.
+		await ctx.tool.transform((editor) => {
+			editor.add(createDelegate(manager))
+			editor.add(createDelegationRead(manager))
+			editor.add(createDelegationList(manager))
+		})
 
 		// Prevent read-only agents from using native task tool (symmetric to delegate enforcement)
-		"tool.execute.before": async (
-			input: { tool: string },
-			output: { args?: { subagent_type?: string } },
-		) => {
+		// V1 "tool.execute.before" -> V2 ctx.tool.hook("execute.before");
+		// V1 input.callID -> event.id, V1 output.args -> event.input.
+		await ctx.tool.hook("execute.before", async (event) => {
 			// Guard: Only intercept task tool
-			if (input.tool !== "task") return
+			if (event.tool !== "task") return
 
 			// Guard: Require agent name
-			const agentName = output.args?.subagent_type
+			const args = event.input as { subagent_type?: string } | undefined
+			const agentName = args?.subagent_type
 			if (!agentName) return
 
 			// Parse boundary 1: Check agent mode
-			const { isSubAgent } = await parseAgentMode(client as OpencodeClient, agentName, log)
+			const { isSubAgent } = await parseAgentMode(client, agentName, log)
 
 			// Guard: Allow non-sub-agents (main/built-in)
 			if (!isSubAgent) return
 
 			// Parse boundary 2: Check write capability (only for sub-agents)
-			const { isReadOnly } = await parseAgentWriteCapability(
-				client as OpencodeClient,
-				agentName,
-				log,
-			)
+			const { isReadOnly } = await parseAgentWriteCapability(client, agentName, log)
 
 			// Guard: Allow write-capable agents
 			if (!isReadOnly) return
@@ -1884,28 +1949,26 @@ const BackgroundAgentsPlugin: Plugin = async (ctx) => {
 					`Use delegate for read-only sub-agents.\n` +
 					`Use task for write-capable sub-agents.`,
 			)
-		},
+		})
 
 		// Inject delegation rules into system prompt
-		"experimental.chat.system.transform": async (_input: SystemTransformInput, output) => {
-			output.system.push(DELEGATION_RULES)
-		},
+		// V1 "experimental.chat.system.transform" -> V2 ctx.session.hook("context").
+		await ctx.session.hook("context", (event) => {
+			event.system.push({ type: "text", text: DELEGATION_RULES })
+		})
 
 		// Deliver queued parent notifications on the next user turn if direct delivery failed.
-		"chat.message": async (
-			input: { sessionID?: string },
-			output: { parts?: Array<{ type: string; text?: string }> },
-		) => {
-			if (!input.sessionID) return
-			manager.injectPendingNotificationsIntoChatMessage(output, input.sessionID)
-		},
+		// V1 "chat.message" -> V2 ctx.session.hook("prompt").
+		await ctx.session.hook("prompt", (event) => {
+			manager.injectPendingNotificationsIntoPrompt(event.prompt, event.sessionID)
+		})
 
 		// Compaction hook - inject delegation context for context recovery
-		"experimental.session.compacting": async (
-			input: { sessionID: string },
-			output: { context: string[]; prompt?: string },
-		) => {
-			const rootSessionID = await manager.getRootSessionID(input.sessionID)
+		// V1 "experimental.session.compacting" (output.context strings appended to
+		// the compaction prompt) -> V2 ctx.session.hook("compaction"); the same
+		// context is pushed as a system part of the compaction request.
+		await ctx.session.hook("compaction", async (event) => {
+			const rootSessionID = await manager.getRootSessionID(event.sessionID)
 
 			// Running delegations in this root session tree
 			const running = manager.getRunningDelegations(rootSessionID).map((d) => ({
@@ -1932,52 +1995,66 @@ const BackgroundAgentsPlugin: Plugin = async (ctx) => {
 			// Early exit if nothing to inject
 			if (running.length === 0 && unreadCompleted.length === 0) return
 
-			output.context.push(formatDelegationContext(running, unreadCompleted))
-		},
+			event.system.push({
+				type: "text",
+				text: formatDelegationContext(running, unreadCompleted),
+			})
+		})
 
-		// Event hook
-		event: async ({ event }: { event: Event }): Promise<void> => {
-			if (event.type === "session.status") {
-				const statusType = event.properties.status?.type
-				const sessionID = event.properties.sessionID
-				if (statusType === "idle" && sessionID) {
-					await manager.handleSessionIdle(sessionID)
+		// V1 `event` hook -> V2 ctx.event.subscribe() over the server event stream.
+		// V2 events carry their payload in `data` (V1 used `properties`).
+		const controller = new AbortController()
+		void (async () => {
+			for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+				if (event.type === "session.status") {
+					const data = event.data as { sessionID?: string; status?: { type?: string } }
+					const statusType = data.status?.type
+					const sessionID = data.sessionID
+					if (statusType === "idle" && sessionID) {
+						await manager.handleSessionIdle(sessionID)
+					}
+				}
+
+				if (event.type === "session.idle") {
+					const data = event.data as { sessionID?: string }
+					const sessionID = data.sessionID
+					if (sessionID) {
+						await manager.handleSessionIdle(sessionID)
+					}
+				}
+
+				if (event.type === "session.text.ended") {
+					// TODO(port): V1 tracked progress via "message.updated" (full assistant
+					// message + parts); V2 removed that event. "session.text.ended" is the
+					// closest stream event carrying completed assistant text.
+					const data = event.data as { sessionID?: string; text?: string }
+					const sessionID = data.sessionID
+					if (sessionID) {
+						const messageText = data.text || undefined
+						manager.handleMessageEvent(sessionID, messageText)
+					}
 				}
 			}
+		})().catch((error: unknown) => {
+			console.error(
+				`[background-agents] event subscription failed: ${error instanceof Error ? error.message : String(error)}`,
+			)
+		})
 
-			if (event.type === "session.idle") {
-				const sessionID = event.properties.sessionID
-				if (sessionID) {
-					await manager.handleSessionIdle(sessionID)
-				}
-			}
-
-			if (event.type === "message.updated") {
-				const eventProperties = event.properties as {
-					info: { sessionID?: string; role?: string }
-					parts?: Part[]
-				}
-				const sessionID = eventProperties.info.sessionID
-				if (sessionID) {
-					const messageText =
-						eventProperties.info.role === "assistant"
-							? (eventProperties.parts
-									?.filter((part) => part.type === "text")
-									.map((part) => part.text)
-									.join("\n") ?? undefined)
-							: undefined
-					manager.handleMessageEvent(sessionID, messageText)
-				}
-			}
-		},
-	}
-}
-
-const BackgroundAgentsPluginWithInternals = Object.assign(BackgroundAgentsPlugin, {
-	testInternals: {
-		DelegationManager,
-		formatDelegationContext,
+		// Cleanup: abort the event stream when the plugin unloads.
+		return () => {
+			controller.abort()
+		}
 	},
-} as const)
+})
 
-export default BackgroundAgentsPluginWithInternals
+/**
+ * V2 port note: V1 attached `testInternals` to the exported plugin function
+ * (`Object.assign(BackgroundAgentsPlugin, { testInternals })`). V2 requires
+ * the default export to be a `Plugin.define` definition, so the test internals
+ * are now a named export.
+ */
+export const testInternals = {
+	DelegationManager,
+	formatDelegationContext,
+} as const

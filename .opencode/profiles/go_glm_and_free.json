@@ -1,0 +1,12 @@
+{
+  "primary": "opencode-go/glm-5.3-flash",
+  "agents": {
+    "plan": "opencode-go/glm-5.3-flash",
+    "build": "opencode-go/glm-5.3-flash",
+    "researcher": "opencode-go/glm-5.3-flash",
+    "coder": "opencode/big-pickle",
+    "explore": "opencode/big-pickle",
+    "scribe": "opencode/big-pickle",
+    "reviewer": "opencode-go/glm-5.3"
+  }
+}

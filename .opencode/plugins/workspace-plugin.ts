@@ -1,9 +1,9 @@
 import * as fs from "node:fs/promises"
 import * as os from "node:os"
 import * as path from "node:path"
-import { type Plugin, tool } from "@opencode-ai/plugin"
+import { Plugin } from "@opencode/plugin"
 import { z } from "zod"
-import { getProjectId } from "./kdco-primitives/get-project-id"
+import { getProjectId } from "../lib/kdco-primitives/get-project-id"
 
 // ==========================================
 // PLAN SCHEMA & VALIDATION
@@ -272,16 +272,6 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
 }
 
 /**
- * Expected input for experimental.chat.system.transform hook.
- * Note: The official SDK types this as {}, but runtime provides these properties.
- * See: https://github.com/sst/opencode/issues/6142
- */
-interface SystemTransformInput {
-	agent?: string
-	sessionID?: string
-}
-
-/**
  * KDCO Workspace Plugin
  *
  * Provides plan management and targeted rule injection.
@@ -299,17 +289,26 @@ const activeCoderCalls = new Map<string, { startTime: number }>()
 /** Stale call timeout - matches MAX_RUN_TIME_MS in background-agents.ts */
 const STALE_CALL_TIMEOUT_MS = 15 * 60 * 1000
 
-/** Periodic cleanup of orphaned callIDs (runs every 60s) */
-const cleanupInterval = setInterval(() => {
-	const now = Date.now()
-	for (const [callID, data] of activeCoderCalls) {
-		if (now - data.startTime > STALE_CALL_TIMEOUT_MS) {
-			activeCoderCalls.delete(callID)
-		}
+/**
+ * Append text to a successful tool result.
+ * V2 port of the V1 `output.output += ...` mutation in tool.execute.after.
+ */
+function appendToToolResult(
+	result: { content?: string | readonly unknown[] },
+	text: string,
+): void {
+	if (typeof result.content === "string") {
+		result.content = `${result.content}${text}`
+		return
 	}
-}, 60_000)
-// Prevent interval from keeping process alive
-cleanupInterval.unref?.()
+
+	if (Array.isArray(result.content)) {
+		result.content = [...result.content, { type: "text", text }]
+		return
+	}
+
+	result.content = text
+}
 
 // ==========================================
 // RULES FOR INJECTION
@@ -512,49 +511,72 @@ Review triggers:
 </code-review-protocol>
 </system-reminder>`
 
-const WorkspacePlugin: Plugin = async (ctx) => {
-	const { directory } = ctx
+export default Plugin.define({
+	id: "kdco.workspace",
+	async setup(ctx) {
+		// V2 port: V1 input.directory -> ctx.location.directory
+		const directory = ctx.location.directory
 
-	// Use git root commit hash for cross-worktree consistency
-	const projectId = await getProjectId(directory)
-	const baseDir = path.join(os.homedir(), ".local", "share", "opencode", "workspace", projectId)
+		// Use git root commit hash for cross-worktree consistency
+		const projectId = await getProjectId(directory)
+		const baseDir = path.join(os.homedir(), ".local", "share", "opencode", "workspace", projectId)
 
-	/**
-	 * Resolves the root session ID by walking up the parent chain.
-	 */
-	async function getRootSessionID(sessionID?: string): Promise<string> {
-		if (!sessionID) {
-			throw new Error("sessionID is required to resolve root session scope")
-		}
-
-		let currentID = sessionID
-		for (let depth = 0; depth < 10; depth++) {
-			const session = await ctx.client.session.get({
-				path: { id: currentID },
-			})
-
-			if (!session.data?.parentID) {
-				return currentID
+		/**
+		 * Resolves the root session ID by walking up the parent chain.
+		 */
+		async function getRootSessionID(sessionID?: string): Promise<string> {
+			if (!sessionID) {
+				throw new Error("sessionID is required to resolve root session scope")
 			}
 
-			currentID = session.data.parentID
+			let currentID = sessionID
+			for (let depth = 0; depth < 10; depth++) {
+				const session = await ctx.session.get({ sessionID: currentID })
+
+				if (!session.parentID) {
+					return currentID
+				}
+
+				currentID = session.parentID
+			}
+
+			throw new Error("Failed to resolve root session: maximum traversal depth exceeded")
 		}
 
-		throw new Error("Failed to resolve root session: maximum traversal depth exceeded")
-	}
+		// Periodic cleanup of orphaned callIDs (runs every 60s).
+		// V2 port: previously a module-level interval; now scoped to the plugin
+		// lifecycle and cleared on unload.
+		const cleanupInterval = setInterval(() => {
+			const now = Date.now()
+			for (const [callID, data] of activeCoderCalls) {
+				if (now - data.startTime > STALE_CALL_TIMEOUT_MS) {
+					activeCoderCalls.delete(callID)
+				}
+			}
+		}, 60_000)
+		// Prevent interval from keeping process alive
+		cleanupInterval.unref?.()
 
-	return {
-		tool: {
-			plan_save: tool({
+		// V1 `tool` map -> V2 ctx.tool.transform editor registrations.
+		await ctx.tool.transform((editor) => {
+			editor.add({
+				name: "plan_save",
 				description:
 					"Save the implementation plan as markdown. Must include citations (ref:delegation-id) for decisions based on research. Plan is validated before saving.",
-				args: {
-					content: tool.schema.string().describe("The full plan in markdown format"),
+				input: {
+					type: "object",
+					properties: {
+						content: { type: "string", description: "The full plan in markdown format" },
+					},
+					required: ["content"],
+					additionalProperties: false,
 				},
-				async execute(args, toolCtx) {
+				async execute(input, toolCtx) {
+					const args = input as { content: string }
+
 					// Guard 1: Session required (Law 1: Early Exit)
 					if (!toolCtx?.sessionID) {
-						return "❌ plan_save requires sessionID. This is a system error."
+						return { content: "❌ plan_save requires sessionID. This is a system error." }
 					}
 
 					const rootID = await getRootSessionID(toolCtx.sessionID)
@@ -564,7 +586,7 @@ const WorkspacePlugin: Plugin = async (ctx) => {
 					// Guard 2: Parse and validate at boundary (Law 2: Parse Don't Validate)
 					const result = parsePlanMarkdown(args.content)
 					if (!result.ok) {
-						return formatParseError(result.error, result.hint)
+						return { content: formatParseError(result.error, result.hint) }
 					}
 
 					// Happy path: save
@@ -573,103 +595,126 @@ const WorkspacePlugin: Plugin = async (ctx) => {
 					const warningText =
 						warningCount > 0 ? ` (${warningCount} warnings: ${result.warnings?.join(", ")})` : ""
 
-					return `Plan saved.${warningText}`
+					return { content: `Plan saved.${warningText}` }
 				},
-			}),
+			})
 
-			plan_read: tool({
+			editor.add({
+				name: "plan_read",
 				description: "Read the current implementation plan for this session.",
-				args: {
-					reason: tool.schema
-						.string()
-						.describe("Brief explanation of why you are calling this tool"),
+				input: {
+					type: "object",
+					properties: {
+						reason: {
+							type: "string",
+							description: "Brief explanation of why you are calling this tool",
+						},
+					},
+					required: ["reason"],
+					additionalProperties: false,
 				},
-				async execute(_args, toolCtx) {
+				async execute(_input, toolCtx) {
 					// Guard: Session required (Law 1: Early Exit)
 					if (!toolCtx?.sessionID) {
-						return "❌ plan_read requires sessionID. This is a system error."
+						return { content: "❌ plan_read requires sessionID. This is a system error." }
 					}
 					const rootID = await getRootSessionID(toolCtx.sessionID)
 					const planPath = path.join(baseDir, rootID, "plan.md")
 					try {
-						return await fs.readFile(planPath, "utf8")
+						return { content: await fs.readFile(planPath, "utf8") }
 					} catch (error) {
-						if (isNodeError(error) && error.code === "ENOENT") return "No plan found."
+						if (isNodeError(error) && error.code === "ENOENT") return { content: "No plan found." }
 						throw error
 					}
 				},
-			}),
-		},
+			})
+		})
 
 		// Targeted Rule Injection
-		"experimental.chat.system.transform": async (input: SystemTransformInput, output) => {
-			const agent = input.agent
+		// V1 "experimental.chat.system.transform" -> V2 ctx.session.hook("context").
+		// V1 pushed plain strings onto output.system; V2 system entries are SystemParts.
+		await ctx.session.hook("context", (event) => {
+			const agent = event.agent
 
 			// Universal date awareness (all agents) - Law 2: Parse intent, not just data
 			const today = new Date().toISOString().split("T")[0]
-			output.system.push(`<date-awareness>
+			event.system.push({
+				type: "text",
+				text: `<date-awareness>
 Today is ${today}. When searching for documentation, APIs, or external resources, use the current year (${new Date().getFullYear()}). Do not default to outdated years from training data.
-</date-awareness>`)
+</date-awareness>`,
+			})
 
 			// Agent-specific rules
 			if (agent === "plan") {
-				output.system.push(PLAN_RULES)
+				event.system.push({ type: "text", text: PLAN_RULES })
 			} else if (agent === "build") {
-				output.system.push(BUILD_RULES)
+				event.system.push({ type: "text", text: BUILD_RULES })
 			}
-		},
+		})
 
 		// Track coder task starts for review trigger
-		"tool.execute.before": async (
-			input: { tool: string; callID?: string },
-			output: { args?: { subagent_type?: string } },
-		) => {
-			if (input.tool !== "task") return
-			if (!input.callID) return
-			if (output.args?.subagent_type !== "coder") return
+		// V1 "tool.execute.before" -> V2 ctx.tool.hook("execute.before");
+		// V1 input.callID -> event.id, V1 output.args -> event.input.
+		await ctx.tool.hook("execute.before", (event) => {
+			if (event.tool !== "task") return
+			if (!event.id) return
+			const args = event.input as { subagent_type?: string } | undefined
+			if (args?.subagent_type !== "coder") return
 
-			activeCoderCalls.set(input.callID, { startTime: Date.now() })
-		},
+			activeCoderCalls.set(event.id, { startTime: Date.now() })
+		})
 
 		// Trigger review reminder when plan_save or all coder tasks complete
-		"tool.execute.after": async (
-			input: { tool: string; sessionID: string; callID: string },
-			output: { title: string; output: string; metadata: unknown },
-		) => {
+		// V1 "tool.execute.after" -> V2 ctx.tool.hook("execute.after");
+		// V1 output.output string append -> event.result content append.
+		await ctx.tool.hook("execute.after", (event) => {
 			// Plan save triggers reviewer delegation reminder
-			if (input.tool === "plan_save") {
-				output.output += `\n\n<system-reminder>
+			if (event.tool === "plan_save") {
+				if (event.status === "completed") {
+					appendToToolResult(
+						event.result,
+						`
+
+<system-reminder>
 Plan saved successfully. You MUST now delegate to the reviewer:
 1. Use the \`delegate\` tool to send the plan to the \`reviewer\` agent
 2. The reviewer will load \`plan-review\` and \`code-philosophy\` skills
 3. Use \`plan_read\` to get the plan content for the delegation prompt
 4. This is NON-BLOCKING - continue work while review runs in background
-</system-reminder>`
+</system-reminder>`,
+					)
+				}
 				return
 			}
 
 			// Coder task completion tracking
-			if (!input.callID) return
-			if (!activeCoderCalls.has(input.callID)) return
+			if (!event.id) return
+			if (!activeCoderCalls.has(event.id)) return
 
-			activeCoderCalls.delete(input.callID)
+			activeCoderCalls.delete(event.id)
 
-			if (activeCoderCalls.size === 0) {
-				output.output += `\n\n<system-reminder>
+			if (activeCoderCalls.size === 0 && event.status === "completed") {
+				appendToToolResult(
+					event.result,
+					`
+
+<system-reminder>
 Coder task complete. Proceed to code review:
 1. Delegate to \`reviewer\` agent with the changed files
 2. Include findings in your completion report
 3. Offer to fix any critical/major issues found
-</system-reminder>`
+</system-reminder>`,
+				)
 			}
-		},
+		})
 
 		// Compaction Hook - Inject plan context when session is compacted
-		"experimental.session.compacting": async (
-			input: { sessionID: string },
-			output: { context: string[]; prompt?: string },
-		) => {
-			const rootID = await getRootSessionID(input.sessionID)
+		// V1 "experimental.session.compacting" (output.context strings appended to the
+		// compaction prompt) -> V2 ctx.session.hook("compaction"); the same context is
+		// pushed as a system part of the compaction request.
+		await ctx.session.hook("compaction", async (event) => {
+			const rootID = await getRootSessionID(event.sessionID)
 			const planPath = path.join(baseDir, rootID, "plan.md")
 
 			let planContent: string | null = null
@@ -690,7 +735,9 @@ Coder task complete. Proceed to code review:
 				currentTask = planContent.slice(start, end).match(/\d+\.\d+ [^\n←]+/)?.[0] ?? null
 			}
 
-			output.context.push(`<workspace-context>
+			event.system.push({
+				type: "text",
+				text: `<workspace-context>
 ## Current Plan
 ${planContent}
 
@@ -699,9 +746,13 @@ ${currentTask ? `Current task: ${currentTask}` : "No task marked as CURRENT"}
 
 ## Verification
 To verify any cited decision, use \`delegation_read("ref:id")\`.
-</workspace-context>`)
-		},
-	}
-}
+</workspace-context>`,
+			})
+		})
 
-export default WorkspacePlugin
+		// Cleanup: stop the orphaned-callID sweeper when the plugin unloads.
+		return () => {
+			clearInterval(cleanupInterval)
+		}
+	},
+})

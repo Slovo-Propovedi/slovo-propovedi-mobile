@@ -22,31 +22,30 @@
 import * as fs from "node:fs/promises"
 import * as os from "node:os"
 import * as path from "node:path"
-import type { Plugin } from "@opencode-ai/plugin"
-import type { Event } from "@opencode-ai/sdk"
-// @ts-expect-error - installed at runtime by OCX
+import { Plugin } from "@opencode/plugin"
+// @ts-expect-error - no type declarations shipped for detect-terminal
 import detectTerminal from "detect-terminal"
-// @ts-expect-error - installed at runtime by OCX
+// @ts-expect-error - no type declarations shipped for node-notifier
 import notifier from "node-notifier"
-import type { OpencodeClient } from "./kdco-primitives/types"
+import type { OpencodeClient } from "../lib/kdco-primitives/types"
 import {
 	buildNodeNotifierOptions,
 	sendDesktopNotificationByPlatform,
 	sendNotificationWithFallback,
-} from "./notify/backend"
+} from "../lib/notify/backend"
 import {
 	clearCmuxStatus,
 	resolveCmuxNotificationCommand,
 	sendCmuxNotification,
 	sendCmuxStatus,
-} from "./notify/cmux"
+} from "../lib/notify/cmux"
 import {
 	buildCmuxSessionStatusTransitionForEvent,
 	buildCmuxSessionStatusTransitionForQuestionTool,
 	type CmuxSessionStatusTransition,
 	getCmuxSessionStatusText,
-} from "./notify/status"
-import { parseOscTitleContext, writeOscTitleBestEffort } from "./notify/title"
+} from "../lib/notify/status"
+import { parseOscTitleContext, writeOscTitleBestEffort } from "../lib/notify/title"
 
 interface NotifyConfig {
 	/** Notify for child/sub-session events (default: false) */
@@ -238,9 +237,9 @@ function isQuietHours(config: NotifyConfig): boolean {
 
 async function isParentSession(client: OpencodeClient, sessionID: string): Promise<boolean> {
 	try {
-		const session = await client.session.get({ path: { id: sessionID } })
+		const session = await client.session.get({ sessionID })
 		// No parentID means this IS the parent/root session
-		return !session.data?.parentID
+		return !session.parentID
 	} catch {
 		// If we can't fetch, assume it's a parent to be safe (notify rather than miss)
 		return true
@@ -467,9 +466,9 @@ async function handleSessionIdle(
 	// Get session info for context
 	let sessionTitle = "Task"
 	try {
-		const session = await client.session.get({ path: { id: sessionID } })
-		if (session.data?.title) {
-			sessionTitle = session.data.title.slice(0, 50)
+		const session = await client.session.get({ sessionID })
+		if (session.title) {
+			sessionTitle = session.title.slice(0, 50)
 		}
 	} catch {
 		// Use default title
@@ -571,8 +570,11 @@ async function handleQuestionAsked(
 // PLUGIN EXPORT
 // ==========================================
 
-const NotifyPlugin: Plugin = async (ctx) => {
-	const { client } = ctx
+export default Plugin.define({
+	id: "kdco.notify",
+	async setup(ctx) {
+		// V2 port: the plugin context replaces the V1 client input.
+		const client: OpencodeClient = ctx
 
 	// Load config once at startup
 	const config = await loadConfig()
@@ -966,20 +968,26 @@ const NotifyPlugin: Plugin = async (ctx) => {
 		await handlePermissionUpdated(config, terminalInfo, notificationRuntime)
 	}
 
-	return {
-		"tool.execute.before": async (input: { tool: string; sessionID: string; callID: string }) => {
-			if (input.tool === "question") {
-				applyRuntimeSessionStatusTransition(
-					buildCmuxSessionStatusTransitionForQuestionTool(input.sessionID),
-				)
-				await notifyQuestionIfNeeded(buildQuestionToolDedupeKey(input.sessionID, input.callID))
-			}
-		},
-		event: async ({ event }: { event: Event }): Promise<void> => {
-			const runtimeEvent = event as { type: string; properties: Record<string, unknown> }
+	// V1 hook "tool.execute.before" -> V2 ctx.tool.hook("execute.before").
+	// V1 input.callID is carried by the V2 event as `id`.
+	await ctx.tool.hook("execute.before", async (event) => {
+		if (event.tool === "question") {
+			applyRuntimeSessionStatusTransition(
+				buildCmuxSessionStatusTransitionForQuestionTool(event.sessionID),
+			)
+			await notifyQuestionIfNeeded(buildQuestionToolDedupeKey(event.sessionID, event.id))
+		}
+	})
+
+	// V1 `event` hook -> V2 ctx.event.subscribe() over the server event stream.
+	// V2 events carry their payload in `data` (V1 used `properties`).
+	const controller = new AbortController()
+	void (async () => {
+		for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+			const runtimeEvent = event as { type: string; data: Record<string, unknown> }
 			const runtimeSessionStatusTransition = buildCmuxSessionStatusTransitionForEvent(
 				runtimeEvent.type,
-				runtimeEvent.properties,
+				runtimeEvent.data,
 			)
 			applyRuntimeSessionStatusTransition(runtimeSessionStatusTransition)
 
@@ -991,9 +999,12 @@ const NotifyPlugin: Plugin = async (ctx) => {
 					}
 					break
 				}
+				// TODO(port): V2 removed the "session.error" event; the closest V2
+				// stream events are "session.step.failed" / "session.execution.failed"
+				// with a different payload shape. Handler kept for parity.
 				case "session.error": {
-					const sessionID = toNonEmptyString(runtimeEvent.properties.sessionID)
-					const error = runtimeEvent.properties.error
+					const sessionID = toNonEmptyString(runtimeEvent.data.sessionID)
+					const error = runtimeEvent.data.error
 					const errorMessage = typeof error === "string" ? error : error ? String(error) : undefined
 					if (sessionID) {
 						await handleSessionError(
@@ -1008,19 +1019,28 @@ const NotifyPlugin: Plugin = async (ctx) => {
 					break
 				}
 
-				case "permission.updated":
+				case "permission.updated": // TODO(port): "permission.updated" no longer exists in V2; "permission.asked" is the V2 event.
 				case "permission.asked": {
-					await notifyPermissionIfNeeded(runtimeEvent.properties)
+					await notifyPermissionIfNeeded(runtimeEvent.data)
 					break
 				}
 				case "question.asked": {
-					const dedupeKey = buildQuestionEventDedupeKey(runtimeEvent.properties)
+					// TODO(port): "question.asked" no longer exists in the V2 event stream.
+					const dedupeKey = buildQuestionEventDedupeKey(runtimeEvent.data)
 					await notifyQuestionIfNeeded(dedupeKey)
 					break
 				}
 			}
-		},
-	}
-}
+		}
+	})().catch((error: unknown) => {
+		console.error("[kdco.notify] event subscription failed:", error)
+	})
 
-export default NotifyPlugin
+	// Cleanup: abort the event stream when the plugin unloads.
+	return () => {
+		controller.abort()
+		stopTitleBusySpinnerTicker()
+		stopBusyAnimationTicker()
+	}
+	},
+})

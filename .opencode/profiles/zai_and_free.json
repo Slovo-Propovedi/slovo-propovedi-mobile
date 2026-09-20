@@ -1,0 +1,12 @@
+{
+  "primary": "zai-coding-plan/glm-5.3-flash",
+  "agents": {
+    "plan": "zai-coding-plan/glm-5.3-flash",
+    "build": "zai-coding-plan/glm-5.3-flash",
+    "researcher": "zai-coding-plan/glm-5.3-flash",
+    "coder": "opencode/big-pickle",
+    "explore": "opencode/big-pickle",
+    "scribe": "opencode/big-pickle",
+    "reviewer": "zai-coding-plan/glm-5.3"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "primary": "opencode-go/glm-5.3-flash",
+  "agents": {
+    "plan": "opencode-go/glm-5.3-flash",
+    "build": "opencode-go/glm-5.3-flash",
+    "researcher": "opencode-go/glm-5.3-flash",
+    "coder": "opencode-go/deepseek-v4.1-flash",
+    "explore": "opencode-go/deepseek-v4.1-flash",
+    "scribe": "opencode-go/deepseek-v4.1-flash",
+    "reviewer": "opencode-go/glm-5.3"
+  }
+}

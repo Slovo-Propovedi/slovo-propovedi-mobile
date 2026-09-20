@@ -16,9 +16,8 @@ import { constants as fsConstants } from "node:fs"
 import { access, copyFile, cp, lstat, mkdir, realpath, rm, stat, symlink } from "node:fs/promises"
 import * as os from "node:os"
 import * as path from "node:path"
-import { type Plugin, tool } from "@opencode-ai/plugin"
-import type { Event } from "@opencode-ai/sdk"
-import type { OpencodeClient } from "./kdco-primitives/types"
+import { Plugin } from "@opencode/plugin"
+import type { OpencodeClient } from "../lib/kdco-primitives/types"
 
 /** Logger interface for structured logging */
 interface Logger {
@@ -31,14 +30,14 @@ interface Logger {
 import { parse as parseJsonc } from "jsonc-parser"
 import { z } from "zod"
 
-import { getProjectId } from "./kdco-primitives/get-project-id"
+import { getProjectId } from "../lib/kdco-primitives/get-project-id"
 import {
 	type ActiveLaunchContext,
 	buildSessionLaunchArgv,
 	parseActiveLaunchContext,
 	serializePersistedLaunchMetadata,
 	toPersistedLaunchMetadata,
-} from "./worktree/launch-context"
+} from "../lib/worktree/launch-context"
 import {
 	addSession,
 	clearPendingDelete,
@@ -48,8 +47,8 @@ import {
 	initStateDb,
 	removeSession,
 	setPendingDelete,
-} from "./worktree/state"
-import { openTerminal, type TerminalResult } from "./worktree/terminal"
+} from "../lib/worktree/state"
+import { openTerminal, type TerminalResult } from "../lib/worktree/terminal"
 
 /** Maximum retries for database initialization */
 const DB_MAX_RETRIES = 3
@@ -349,6 +348,22 @@ interface ForkResult {
 	delegationsCopied: boolean
 }
 
+/**
+ * TODO(port): The V2 plugin session domain (a Pick<SessionApi, ...>) omits
+ * `fork` and `remove`, which the V1 plugin called on the raw SDK client. The
+ * runtime session object still exposes them, so they are accessed structurally
+ * with graceful fallbacks (fork -> create, remove -> interrupt) if the host
+ * narrows the object in a future release.
+ */
+interface FullSessionApi {
+	fork(input: { sessionID: string }): Promise<{ id: string }>
+	remove(input: { sessionID: string }): Promise<void>
+}
+
+function sessionExtras(session: OpencodeClient["session"]): Partial<FullSessionApi> {
+	return session as Partial<FullSessionApi>
+}
+
 interface FinalizeWorktreeLaunchOptions {
 	database: Database
 	worktreePath: string
@@ -409,6 +424,7 @@ async function forkWithContext(
 	sessionId: string,
 	projectId: string,
 	getRootSessionIdFn: (sessionId: string) => Promise<string>,
+	log: Logger,
 ): Promise<ForkResult> {
 	// Guard clauses (Law 1)
 	if (!client) throw new WorktreeError("client is required", "forkWithContext")
@@ -423,12 +439,18 @@ async function forkWithContext(
 		throw new WorktreeError("Failed to get root session ID", "forkWithContext", e)
 	}
 
-	// Fork session
-	const forkedSessionResponse = await client.session.fork({
-		path: { id: sessionId },
-		body: {},
-	})
-	const forkedSession = forkedSessionResponse.data
+	// Fork session (V2 port: the plugin session domain omits `fork`; accessed
+	// structurally, falling back to a fresh session if unavailable)
+	let forkedSession: { id: string }
+	const extras = sessionExtras(client.session)
+	if (typeof extras.fork === "function") {
+		forkedSession = await extras.fork({ sessionID: sessionId })
+	} else {
+		// TODO(port): fallback for hosts without session.fork - the new session
+		// does not carry the original session history.
+		log.warn("session.fork unavailable on the plugin session domain; creating a fresh session instead of forking")
+		forkedSession = await client.session.create({})
+	}
 	if (!forkedSession?.id) {
 		throw new WorktreeError("Failed to fork session: no session data returned", "forkWithContext")
 	}
@@ -456,52 +478,34 @@ async function forkWithContext(
 		const srcDelegations = path.join(delegationsBase, projectId, rootSessionId)
 		delegationsCopied = await copyDirIfExists(srcDelegations, destDelegationsDir)
 	} catch (error) {
-		client.app
-			.log({
-				body: {
-					service: "worktree",
-					level: "error",
-					message: `forkWithContext: Copy failed, cleaning up forked session: ${error}`,
-				},
-			})
-			.catch(() => {})
+		// TODO(port): V1 logged via client.app.log; the V2 context has no logging
+		// domain, so the console is used (server console output lands in the log file).
+		log.error(
+			`forkWithContext: Copy failed, cleaning up forked session: ${error}`,
+		)
 		// Clean up orphaned directories
 		const workspaceBase = path.join(os.homedir(), ".local", "share", "opencode", "workspace")
 		const delegationsBase = path.join(os.homedir(), ".local", "share", "opencode", "delegations")
 		const destWorkspaceDir = path.join(workspaceBase, projectId, forkedSession.id)
 		const destDelegationsDir = path.join(delegationsBase, projectId, forkedSession.id)
 		await rm(destWorkspaceDir, { recursive: true, force: true }).catch((e) => {
-			client.app
-				.log({
-					body: {
-						service: "worktree",
-						level: "error",
-						message: `forkWithContext: Failed to clean up workspace dir ${destWorkspaceDir}: ${e}`,
-					},
-				})
-				.catch(() => {})
+			log.error(`forkWithContext: Failed to clean up workspace dir ${destWorkspaceDir}: ${e}`)
 		})
 		await rm(destDelegationsDir, { recursive: true, force: true }).catch((e) => {
-			client.app
-				.log({
-					body: {
-						service: "worktree",
-						level: "error",
-						message: `forkWithContext: Failed to clean up delegations dir ${destDelegationsDir}: ${e}`,
-					},
-				})
-				.catch(() => {})
+			log.error(`forkWithContext: Failed to clean up delegations dir ${destDelegationsDir}: ${e}`)
 		})
-		await client.session.delete({ path: { id: forkedSession.id } }).catch((e) => {
-			client.app
-				.log({
-					body: {
-						service: "worktree",
-						level: "error",
-						message: `forkWithContext: Failed to clean up forked session ${forkedSession.id}: ${e}`,
-					},
-				})
-				.catch(() => {})
+		await (async () => {
+			const cleanupExtras = sessionExtras(client.session)
+			if (typeof cleanupExtras.remove === "function") {
+				await cleanupExtras.remove({ sessionID: forkedSession.id })
+				return
+			}
+			// TODO(port): fallback for hosts without session.remove
+			await client.session.interrupt({ sessionID: forkedSession.id, resume: false })
+		})().catch((e) => {
+			log.error(
+				`forkWithContext: Failed to clean up forked session ${forkedSession.id}: ${e}`,
+			)
 		})
 		throw new WorktreeError(
 			`Failed to copy session data: ${error instanceof Error ? error.message : String(error)}`,
@@ -1045,57 +1049,82 @@ async function loadWorktreeConfig(
 // PLUGIN ENTRY
 // =============================================================================
 
-const WorktreePlugin: Plugin = async (ctx) => {
-	const { directory, client } = ctx
-
-	const log = {
-		debug: (msg: string) =>
-			client.app
-				.log({ body: { service: "worktree", level: "debug", message: msg } })
-				.catch(() => {}),
-		info: (msg: string) =>
-			client.app
-				.log({ body: { service: "worktree", level: "info", message: msg } })
-				.catch(() => {}),
-		warn: (msg: string) =>
-			client.app
-				.log({ body: { service: "worktree", level: "warn", message: msg } })
-				.catch(() => {}),
-		error: (msg: string) =>
-			client.app
-				.log({ body: { service: "worktree", level: "error", message: msg } })
-				.catch(() => {}),
+/**
+ * Create the structured logger.
+ *
+ * TODO(port): V1 forwarded log lines to `client.app.log` (OpenCode UI log
+ * panel); the V2 plugin context has no logging domain, so log output goes to
+ * the console (server console output lands in the OpenCode log file).
+ */
+function createWorktreeLogger(): Logger {
+	const log = (level: "debug" | "info" | "warn" | "error", msg: string) => {
+		if (level === "debug") {
+			console.log(`[worktree] ${level}: ${msg}`)
+		} else if (level === "info") {
+			console.info(`[worktree] ${level}: ${msg}`)
+		} else if (level === "warn") {
+			console.warn(`[worktree] ${level}: ${msg}`)
+		} else {
+			console.error(`[worktree] ${level}: ${msg}`)
+		}
 	}
-
-	// Initialize SQLite database
-	const database = await initDb(directory, log)
-
 	return {
-		tool: {
-			worktree_create: tool({
+		debug: (msg: string) => log("debug", msg),
+		info: (msg: string) => log("info", msg),
+		warn: (msg: string) => log("warn", msg),
+		error: (msg: string) => log("error", msg),
+	}
+}
+
+export default Plugin.define({
+	id: "kdco.worktree",
+	async setup(ctx) {
+		// V2 port: V1 input.directory / input.client -> ctx.location.directory / ctx domains
+		const directory = ctx.location.directory
+		const client: OpencodeClient = ctx
+		const log = createWorktreeLogger()
+
+		// Initialize SQLite database
+		const database = await initDb(directory, log)
+
+		// V1 `tool` map -> V2 ctx.tool.transform editor registrations.
+		// Tool execute results are Tool.Results: string output becomes `{ content }`.
+		await ctx.tool.transform((editor) => {
+			editor.add({
+				name: "worktree_create",
 				description:
 					"Create a new git worktree for isolated development. A new terminal will open with OpenCode in the worktree.",
-				args: {
-					branch: tool.schema
-						.string()
-						.describe("Branch name for the worktree (e.g., 'feature/dark-mode')"),
-					baseBranch: tool.schema
-						.string()
-						.optional()
-						.describe("Base branch to create from (defaults to HEAD)"),
+				input: {
+					type: "object",
+					properties: {
+						branch: {
+							type: "string",
+							description: "Branch name for the worktree (e.g., 'feature/dark-mode')",
+						},
+						baseBranch: {
+							type: "string",
+							description: "Base branch to create from (defaults to HEAD)",
+						},
+					},
+					required: ["branch"],
+					additionalProperties: false,
 				},
-				async execute(args, toolCtx) {
+				async execute(rawInput, toolCtx) {
+					const args = rawInput as { branch: string; baseBranch?: string }
+
 					// Validate branch name at boundary
 					const branchResult = branchNameSchema.safeParse(args.branch)
 					if (!branchResult.success) {
-						return `❌ Invalid branch name: ${branchResult.error.issues[0]?.message}`
+						return { content: `❌ Invalid branch name: ${branchResult.error.issues[0]?.message}` }
 					}
 
 					// Validate base branch name at boundary
 					if (args.baseBranch) {
 						const baseResult = branchNameSchema.safeParse(args.baseBranch)
 						if (!baseResult.success) {
-							return `❌ Invalid base branch name: ${baseResult.error.issues[0]?.message}`
+							return {
+								content: `❌ Invalid base branch name: ${baseResult.error.issues[0]?.message}`,
+							}
 						}
 					}
 
@@ -1110,7 +1139,7 @@ const WorktreePlugin: Plugin = async (ctx) => {
 						)
 						await ensureLaunchContextProfile(activeLaunchContext)
 					} catch (error) {
-						return `❌ ${error instanceof Error ? error.message : String(error)}`
+						return { content: `❌ ${error instanceof Error ? error.message : String(error)}` }
 					}
 
 					// Load config first so worktreePath is available for createWorktree
@@ -1124,7 +1153,7 @@ const WorktreePlugin: Plugin = async (ctx) => {
 						worktreeConfig.worktreePath,
 					)
 					if (!result.ok) {
-						return `Failed to create worktree: ${result.error}`
+						return { content: `Failed to create worktree: ${result.error}` }
 					}
 
 					const worktreePath = result.value
@@ -1157,12 +1186,13 @@ const WorktreePlugin: Plugin = async (ctx) => {
 							// Walk up parentID chain to find root session
 							let currentId = sid
 							for (let depth = 0; depth < MAX_SESSION_CHAIN_DEPTH; depth++) {
-								const session = await client.session.get({ path: { id: currentId } })
-								if (!session.data?.parentID) return currentId
-								currentId = session.data.parentID
+								const session = await client.session.get({ sessionID: currentId })
+								if (!session.parentID) return currentId
+								currentId = session.parentID
 							}
 							return currentId
 						},
+						log,
 					)
 
 					log.debug(
@@ -1189,92 +1219,124 @@ const WorktreePlugin: Plugin = async (ctx) => {
 						},
 						log,
 						deleteForkedSessionFn: async (sessionId: string) => {
-							await client.session.delete({ path: { id: sessionId } })
+							const launchExtras = sessionExtras(client.session)
+							if (typeof launchExtras.remove === "function") {
+								await launchExtras.remove({ sessionID: sessionId })
+								return
+							}
+							// TODO(port): fallback for hosts without session.remove
+							await client.session.interrupt({ sessionID: sessionId, resume: false })
 						},
 					})
 
 					if (!terminalResult.success) {
-						return `❌ Failed to launch worktree terminal: ${terminalResult.error ?? "unknown error"}\nWorktree created at ${worktreePath}. Verify launch settings and retry.`
+						return {
+							content: `❌ Failed to launch worktree terminal: ${terminalResult.error ?? "unknown error"}\nWorktree created at ${worktreePath}. Verify launch settings and retry.`,
+						}
 					}
 
-					return `Worktree created at ${worktreePath}\n\nA new terminal has been opened with OpenCode.`
+					return {
+						content: `Worktree created at ${worktreePath}\n\nA new terminal has been opened with OpenCode.`,
+					}
 				},
-			}),
+			})
 
-			worktree_delete: tool({
+			editor.add({
+				name: "worktree_delete",
 				description:
 					"Delete the current worktree and clean up. Changes will be committed before removal.",
-				args: {
-					reason: tool.schema
-						.string()
-						.describe("Brief explanation of why you are calling this tool"),
+				input: {
+					type: "object",
+					properties: {
+						reason: {
+							type: "string",
+							description: "Brief explanation of why you are calling this tool",
+						},
+					},
+					required: ["reason"],
+					additionalProperties: false,
 				},
-				async execute(_args, toolCtx) {
+				async execute(_rawInput, toolCtx) {
 					// Find current session's worktree
 					const session = getSession(database, toolCtx?.sessionID ?? "")
 					if (!session) {
-						return `No worktree associated with this session`
+						return { content: `No worktree associated with this session` }
 					}
 
 					// Set pending delete for session.idle (atomic operation)
 					setPendingDelete(database, { branch: session.branch, path: session.path }, client)
 
-					return `Worktree marked for cleanup. It will be removed when this session ends.`
+					return {
+						content: `Worktree marked for cleanup. It will be removed when this session ends.`,
+					}
 				},
-			}),
-		},
+			})
+		})
 
-		event: async ({ event }: { event: Event }): Promise<void> => {
-			if (event.type !== "session.idle") return
+		// V1 `event` hook -> V2 ctx.event.subscribe() over the server event stream.
+		const controller = new AbortController()
+		void (async () => {
+			for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+				if (event.type !== "session.idle") continue
 
-			// Handle pending delete
-			const pendingDelete = getPendingDelete(database)
-			if (pendingDelete) {
-				const { path: worktreePath, branch } = pendingDelete
+				// Handle pending delete
+				const pendingDelete = getPendingDelete(database)
+				if (pendingDelete) {
+					const { path: worktreePath, branch } = pendingDelete
 
-				// Run preDelete hooks before cleanup
-				const config = await loadWorktreeConfig(directory, log)
-				if (config.hooks.preDelete.length > 0) {
-					await runHooks(worktreePath, config.hooks.preDelete, log)
+					// Run preDelete hooks before cleanup
+					const config = await loadWorktreeConfig(directory, log)
+					if (config.hooks.preDelete.length > 0) {
+						await runHooks(worktreePath, config.hooks.preDelete, log)
+					}
+
+					// Commit any uncommitted changes
+					const addResult = await git(["add", "-A"], worktreePath)
+					if (!addResult.ok) log.warn(`[worktree] git add failed: ${addResult.error}`)
+
+					const commitResult = await git(
+						["commit", "-m", "chore(worktree): session snapshot", "--allow-empty"],
+						worktreePath,
+					)
+					if (!commitResult.ok) log.warn(`[worktree] git commit failed: ${commitResult.error}`)
+
+					// Remove worktree
+					const removeResult = await removeWorktree(directory, worktreePath)
+					if (!removeResult.ok) {
+						log.warn(`[worktree] Failed to remove worktree: ${removeResult.error}`)
+					}
+
+					// Clear pending delete atomically
+					clearPendingDelete(database)
+
+					// Remove session from database
+					removeSession(database, branch)
 				}
-
-				// Commit any uncommitted changes
-				const addResult = await git(["add", "-A"], worktreePath)
-				if (!addResult.ok) log.warn(`[worktree] git add failed: ${addResult.error}`)
-
-				const commitResult = await git(
-					["commit", "-m", "chore(worktree): session snapshot", "--allow-empty"],
-					worktreePath,
-				)
-				if (!commitResult.ok) log.warn(`[worktree] git commit failed: ${commitResult.error}`)
-
-				// Remove worktree
-				const removeResult = await removeWorktree(directory, worktreePath)
-				if (!removeResult.ok) {
-					log.warn(`[worktree] Failed to remove worktree: ${removeResult.error}`)
-				}
-
-				// Clear pending delete atomically
-				clearPendingDelete(database)
-
-				// Remove session from database
-				removeSession(database, branch)
 			}
-		},
-	}
-}
+		})().catch((error: unknown) => {
+			log.error(`event subscription failed: ${error instanceof Error ? error.message : String(error)}`)
+		})
 
-const WorktreePluginWithInternals = Object.assign(WorktreePlugin, {
-	testInternals: {
-		isPathLikeCommand,
-		copyFiles,
-		ensureLaunchContextExecutable,
-		validateOcxProfileAvailability,
-		ensureLaunchContextProfile,
-		finalizeWorktreeLaunch,
-		loadWorktreeConfig,
-		symlinkDirs,
+		// Cleanup: abort the event stream when the plugin unloads.
+		return () => {
+			controller.abort()
+		}
 	},
-} as const)
+})
 
-export default WorktreePluginWithInternals
+/**
+ * V2 port note: V1 attached `testInternals` to the exported plugin function
+ * (`Object.assign(WorktreePlugin, { testInternals })`). V2 requires the default
+ * export to be a `Plugin.define` definition, so the test internals are now a
+ * named export.
+ */
+export const testInternals = {
+	isPathLikeCommand,
+	copyFiles,
+	ensureLaunchContextExecutable,
+	validateOcxProfileAvailability,
+	ensureLaunchContextProfile,
+	finalizeWorktreeLaunch,
+	loadWorktreeConfig,
+	symlinkDirs,
+} as const
