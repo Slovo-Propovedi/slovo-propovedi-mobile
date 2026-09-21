@@ -26,3 +26,5 @@ web-build/
 .env.local
 /.omc/state
 /.opencode/.omc/state
+/.opencode/profile-fallback.log
+/.opencode/profile-fallback.json
