@@ -7,6 +7,18 @@ jest.mock('shared/config/screen-dimensions', () => ({
   SIZE_OF_MINIMUM_SIDE_OF_SCREEN: 320,
 }))
 
+jest.mock('entities/player', () => {
+  const { atom } = jest.requireActual('@reatom/framework')
+
+  return { isPlayerExpandedAtom: atom(false, 'testIsPlayerExpandedAtom') }
+})
+
+jest.mock('widgets/expandable-player', () => {
+  const { atom } = jest.requireActual('@reatom/framework')
+
+  return { isPlayerTransitioningAtom: atom(false, 'testIsPlayerTransitioningAtom') }
+})
+
 const mockScreenDimensions = jest.requireMock('shared/config/screen-dimensions') as {
   SCREEN_HEIGHT: number
   SCREEN_WIDTH: number

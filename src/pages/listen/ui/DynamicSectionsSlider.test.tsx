@@ -29,9 +29,18 @@ jest.mock('entities/section', () => {
   }
 })
 
-jest.mock('entities/player', () => ({
-  usePlayNewSermon: jest.fn(() => jest.fn()),
-}))
+jest.mock('entities/player', () => {
+  const { atom } = jest.requireActual('@reatom/framework')
+
+  return {
+    isPlayerExpandedAtom: atom(false, 'testIsPlayerExpandedAtom'),
+    usePlayNewSermon: jest.fn(() => jest.fn()),
+  }
+})
+
+jest.mock('widgets/expandable-player', () =>
+  jest.requireActual('widgets/expandable-player/model/isPlayerTransitioningAtom'),
+)
 
 jest.mock('shared/lib/network', () => ({
   useOfflineRetry: jest.fn(),

@@ -1,10 +1,26 @@
+import { createCtx } from '@reatom/framework'
 import { StyleSheet } from 'react-native'
+import * as Reanimated from 'react-native-reanimated'
+import { isPlayerTransitioningAtom } from 'widgets/expandable-player'
+import { isPlayerExpandedAtom } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks'
 import { ContinueCircleButton } from './ContinueCircleButton'
 
 jest.mock('expo-router', () => ({
   useIsFocused: () => true,
 }))
+
+jest.mock('entities/player', () => {
+  const { atom } = jest.requireActual('@reatom/framework')
+
+  return { isPlayerExpandedAtom: atom(false, 'mockIsPlayerExpandedAtom') }
+})
+
+jest.mock('widgets/expandable-player', () => {
+  const { atom } = jest.requireActual('@reatom/framework')
+
+  return { isPlayerTransitioningAtom: atom(false, 'mockIsPlayerTransitioningAtom') }
+})
 
 jest.mock('react-native-svg', () => {
   const { View } = jest.requireActual('react-native')
@@ -39,6 +55,10 @@ jest.mock('@expo/vector-icons', () => {
 describe('<ContinueCircleButton>', () => {
   beforeEach(() => {
     mockEntypoSpy.mockClear()
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   test('renders the play icon and the glow ring when paused', async () => {
@@ -90,5 +110,36 @@ describe('<ContinueCircleButton>', () => {
     // round(100 × 44 / 168) = round(26.19) = 26
     const iconSize = mockEntypoSpy.mock.calls.at(-1)?.[0].size
     expect(iconSize).toBe(26)
+  })
+
+  test('starts the glow loops while the player is collapsed', async () => {
+    const withRepeatSpy = jest.spyOn(Reanimated, 'withRepeat')
+    const ctx = createCtx()
+    isPlayerExpandedAtom(ctx, false)
+
+    await renderWithProviders(<ContinueCircleButton isPlaying={false} />, { ctx })
+
+    // spinCwLoop + spinCcwLoop + breatheLoop — все три стартуют на монтировании.
+    expect(withRepeatSpy).toHaveBeenCalled()
+  })
+
+  test('freezes the glow loops while the fullscreen player is expanded', async () => {
+    const withRepeatSpy = jest.spyOn(Reanimated, 'withRepeat')
+    const ctx = createCtx()
+    isPlayerExpandedAtom(ctx, true)
+
+    await renderWithProviders(<ContinueCircleButton isPlaying={false} />, { ctx })
+
+    expect(withRepeatSpy).not.toHaveBeenCalled()
+  })
+
+  test('freezes the glow loops while the player is transitioning', async () => {
+    const withRepeatSpy = jest.spyOn(Reanimated, 'withRepeat')
+    const ctx = createCtx()
+    isPlayerTransitioningAtom(ctx, true)
+
+    await renderWithProviders(<ContinueCircleButton isPlaying={false} />, { ctx })
+
+    expect(withRepeatSpy).not.toHaveBeenCalled()
   })
 })

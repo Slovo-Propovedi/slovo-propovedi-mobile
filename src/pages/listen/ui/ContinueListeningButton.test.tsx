@@ -57,10 +57,15 @@ jest.mock('entities/player', () => {
 
   return {
     currentAudioAtom: atom(null, 'currentAudioAtom'),
+    isPlayerExpandedAtom: atom(false, 'isPlayerExpandedAtom'),
     isPlayingAtom: atom(false, 'isPlayingAtom'),
     usePlayer: jest.fn(() => ({ pause: jest.fn() })),
   }
 })
+
+jest.mock('widgets/expandable-player', () =>
+  jest.requireActual('widgets/expandable-player/model/isPlayerTransitioningAtom'),
+)
 
 jest.mock('entities/section', () => {
   const { atom } = jest.requireActual('@reatom/framework')

@@ -2,6 +2,8 @@ import { Entypo } from '@expo/vector-icons'
 import { useAtom } from '@reatom/npm-react'
 import { useIsFocused } from 'expo-router'
 import { StyleSheet, View } from 'react-native'
+import { isPlayerTransitioningAtom } from 'widgets/expandable-player'
+import { isPlayerExpandedAtom } from 'entities/player'
 import { useTheme } from 'shared/ui/theme'
 import { useGlowVisibility } from '../lib/useGlowVisibility'
 import { isGlowVisibleAtom, isListenScrollingAtom } from '../model'
@@ -23,13 +25,16 @@ export const ContinueCircleButton = ({
   const { currentTheme } = useTheme()
   const [isScrolling] = useAtom(isListenScrollingAtom)
   const [isGlowVisible] = useAtom(isGlowVisibleAtom)
+  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
+  const [isPlayerTransitioning] = useAtom(isPlayerTransitioningAtom)
   const isFocused = useIsFocused()
   const { onLayout, ref } = useGlowVisibility({ isFocused })
 
-  // Свечение замирает, пока список скроллится, таб не в фокусе или кнопка целиком
-  // за кадром — GlowRing анимирует SVG-дерево на UI-потоке и конкурирует со
-  // скроллом на Android.
-  const isPaused = isScrolling || !isFocused || !isGlowVisible
+  // Свечение замирает, пока список скроллится, таб не в фокусе, кнопка целиком
+  // за кадром или плеер развёрнут/в движении — GlowRing анимирует SVG-дерево на
+  // UI-потоке и конкурирует со скроллом и переходом плеера на Android.
+  const isPaused =
+    isScrolling || !isFocused || !isGlowVisible || isPlayerExpanded || isPlayerTransitioning
 
   // Сначала сжимается «канва» свечения (glowSize = доступная ширина), а непрозрачный
   // круг остаётся INNER_SIZE. Только когда ширина падает ниже INNER_SIZE, круг и

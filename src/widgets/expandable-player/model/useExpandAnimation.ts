@@ -9,6 +9,7 @@ import { getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 import { useAppStateSnap } from './useAppStateSnap'
 import { useGeometrySharedValues } from './useGeometrySharedValues'
 import { useOpacityStyles } from './useOpacityStyles'
+import { usePlayerTransitioningMirror } from './usePlayerTransitioningMirror'
 import { useProgressAnimation } from './useProgressAnimation'
 
 const MINI_H = PLAYER_SIZES.miniPlayerHeight
@@ -55,6 +56,8 @@ export const useExpandAnimation = (
   useProgressAnimation(expanded, progress)
 
   useAppStateSnap(expanded, progress)
+
+  usePlayerTransitioningMirror(progress)
 
   const containerStyle = useAnimatedStyle(() => {
     // Register dependency: any write to geometryReapplyTick re-runs this worklet,
