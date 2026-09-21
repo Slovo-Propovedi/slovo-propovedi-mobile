@@ -7,22 +7,38 @@
  * persisted in ctx.storage (plugin storage) so it survives restarts.
  *
  * Semantics:
- * - Only agents with mode "subagent" (researcher/coder/explore/scribe/reviewer
- *   in this project) get their model written into the agent registry via
- *   ctx.agent.transform — they apply to subagents spawned AFTER the switch
- *   (registry-level, per-agent). "primary"-mode agents (plan/build) are
- *   deliberately SKIPPED here: opencode always prefers an agent's own
- *   registry-configured model over the session's live model, so pinning a
- *   primary agent would permanently defeat ctx.session.switchModel for it —
- *   every future /profile switch would silently stop changing that agent's
- *   model for the current session.
+ * - Subagents that have their own .opencode/agents/<id>.md file (researcher/
+ *   coder/scribe/reviewer in this project — see MARKDOWN_SUBAGENT_IDS) are
+ *   pinned by rewriting the `model:` key directly in that file's frontmatter.
+ *   This is load-bearing, not stylistic: opencode's markdown-agent loader
+ *   re-applies each agent's frontmatter AFTER plugin transforms run, so a
+ *   ctx.agent.transform pin on one of these gets silently discarded the
+ *   instant it's set — confirmed empirically (a canary written into the
+ *   transform survived on a built-in agent but was erased on every
+ *   markdown-defined one). Writing the file makes our pin the same
+ *   authoritative source the loader itself reads, so it survives.
+ * - Built-in subagents with no project .md override (explore — see
+ *   REGISTRY_SUBAGENT_IDS) have no frontmatter file to rewrite, so they're
+ *   still pinned the old way, via ctx.agent.transform. This does work for
+ *   them (nothing re-applies frontmatter over a built-in), and hand-writing
+ *   a fresh explore.md to move it onto the same mechanism as the others
+ *   would mean reconstructing its full accumulated permission set from
+ *   scratch — explore is deliberately read-only, and a slightly-wrong
+ *   reconstruction could silently loosen that. Not worth the risk for an
+ *   agent that already pins correctly.
+ * - "primary"-mode agents (plan/build) are deliberately left alone by both
+ *   mechanisms: opencode always prefers an agent's own configured model over
+ *   the session's live model, so pinning a primary agent would permanently
+ *   defeat ctx.session.switchModel for it — every future /profile switch
+ *   would silently stop changing that agent's model for the current session.
  * - The primary (orchestrator) model is applied to the CURRENT session via
  *   ctx.session.switchModel — this is per-session, exactly like the TUI model
  *   switcher, and is the ONLY mechanism that changes plan/build's model. It
- *   takes effect immediately; registry-pinned subagent models apply at the
- *   next subagent spawn, not retroactively.
+ *   takes effect immediately; the registry pin (explore) applies at the next
+ *   subagent spawn; the frontmatter pins (coder/scribe/researcher/reviewer)
+ *   apply as soon as the file write + ctx.agent.reload() below complete.
  * - No service restart is ever needed: the plugin reads the persisted profile
- *   at startup and /profile <name> re-applies the registry immediately.
+ *   at startup and /profile <name> re-applies both mechanisms immediately.
  *
  * Data source: .opencode/profiles/<name>.json — plain JSON files (no comments),
  * shape { "primary": "<provider/model>", "agents": { "<agent>": "<provider/model>" } }.
@@ -49,6 +65,29 @@ const STORAGE_KEY = "activeProfile"
 
 /** The 7 agent slots wired from a profile file, in display order. */
 const PROFILE_AGENTS = ["plan", "build", "researcher", "coder", "explore", "scribe", "reviewer"] as const
+
+/**
+ * Subagents defined by a project .opencode/agents/<id>.md file — pinned by
+ * rewriting that file's frontmatter (see writeAgentModelFrontmatter). Every
+ * PROFILE_AGENTS entry except plan/build (primary, unpinned by design) and
+ * explore (built-in, see REGISTRY_SUBAGENT_IDS).
+ */
+const MARKDOWN_SUBAGENT_IDS = new Set<string>(["researcher", "coder", "scribe", "reviewer"])
+
+/**
+ * Built-in subagents with no project .md file — pinned via the legacy
+ * ctx.agent.transform registry mutation instead, since there's no
+ * frontmatter to rewrite and reconstructing one from scratch risks losing
+ * accumulated permissions (see the file header for why this is fine here).
+ * Membership is hardcoded rather than read from editor.get(agentId).mode at
+ * transform time: an earlier version tried that live read and it raced
+ * against whichever transform merges an agent's own frontmatter into the
+ * registry — when this transform ran first it saw the registry's built-in
+ * default (mode: "primary" — see @opencode/schema's Agent.Info.default)
+ * instead of "subagent", silently skipping the pin. A static set has no
+ * ordering to race.
+ */
+const REGISTRY_SUBAGENT_IDS = new Set<string>(["explore"])
 
 /** A parsed "provider/model[#variant]" reference — the canonical Model.Ref, trusted after the boundary. */
 type ModelRef = Model.Ref
@@ -137,10 +176,72 @@ function isMissingFileError(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT"
 }
 
+/**
+ * Write (or update) the top-level `model:` key in a subagent's own
+ * .opencode/agents/<id>.md frontmatter, leaving everything else in the file
+ * byte-for-byte untouched — description, permissions, and the whole prompt
+ * body. The config schema accepts the same "provider/model[#variant]" string
+ * used everywhere else here (@opencode/schema's ConfigAgent.Info.model
+ * union), so formatRef's output can be written directly.
+ *
+ * Parses frontmatter by hand (not a YAML lib) since the shape here is known
+ * and simple: a fixed set of top-level scalar keys plus one indented
+ * `permissions:` list. A full YAML round-trip risks silently reformatting or
+ * reordering that list; this only ever touches a single top-level line.
+ *
+ * Returns false (no write) when the file already has the desired line.
+ */
+async function writeAgentModelFrontmatter(agentsDir: string, agentId: string, modelRef: ModelRef): Promise<boolean> {
+  const filePath = path.join(agentsDir, `${agentId}.md`)
+  const source = await fs.readFile(filePath, "utf8")
+  const match = source.match(/^(---\r?\n)([\s\S]*?)(\r?\n---\r?\n)/)
+  if (!match || match.index !== 0) {
+    throw new Error(`agent file "${filePath}" has no frontmatter block starting at the top of the file`)
+  }
+
+  const [whole, open, body, close] = match
+  const desiredLine = `model: ${formatRef(modelRef)}`
+  const lines = body.split(/\r?\n/)
+  const modelLineIndex = lines.findIndex((line) => /^model:\s/.test(line) || line === "model:")
+  if (modelLineIndex !== -1) {
+    if (lines[modelLineIndex] === desiredLine) return false
+    lines[modelLineIndex] = desiredLine
+  } else {
+    const modeLineIndex = lines.findIndex((line) => /^mode:\s/.test(line))
+    lines.splice(modeLineIndex !== -1 ? modeLineIndex + 1 : 0, 0, desiredLine)
+  }
+
+  const newSource = open + lines.join("\n") + close + source.slice(whole.length)
+  if (newSource === source) return false
+  await fs.writeFile(filePath, newSource, "utf8")
+  return true
+}
+
+/**
+ * Rewrite every MARKDOWN_SUBAGENT_IDS agent's frontmatter to match the given
+ * profile, best-effort per agent (one missing/malformed file shouldn't block
+ * the rest). Errors are collected and handed to the caller to report; this
+ * never throws.
+ */
+async function applyMarkdownFrontmatterPins(agentsDir: string, profile: ProfileData): Promise<string[]> {
+  const errors: string[] = []
+  for (const agentId of MARKDOWN_SUBAGENT_IDS) {
+    const modelRef = profile.agents[agentId]
+    if (!modelRef) continue
+    try {
+      await writeAgentModelFrontmatter(agentsDir, agentId, modelRef)
+    } catch (error) {
+      errors.push(`${agentId}: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+  return errors
+}
+
 export default Plugin.define({
   id: "profile",
   async setup(ctx) {
     const profilesDir = path.join(ctx.location.directory, ".opencode", "profiles")
+    const agentsDir = path.join(ctx.location.directory, ".opencode", "agents")
     const storedProfile = await ctx.storage.get(STORAGE_KEY)
     const warn = (message: string): void => {
       console.warn(`[profile] ${message}`)
@@ -154,6 +255,14 @@ export default Plugin.define({
       try {
         activeProfile = await loadProfile(profilesDir, storedProfile)
         activeProfileName = storedProfile
+        // Re-sync agent frontmatter with the persisted profile on every
+        // startup, not just on an explicit /profile switch — the .md files
+        // are the durable pin, so a plain server restart (no /profile call)
+        // must still leave coder/scribe/etc. on the right model.
+        const errors = await applyMarkdownFrontmatterPins(agentsDir, activeProfile)
+        if (errors.length > 0) {
+          warn(`profile "${storedProfile}": failed to sync agent frontmatter for ${errors.join(", ")}`)
+        }
       } catch (error) {
         warn(`stored profile "${storedProfile}" could not be loaded: ${toMessage(error)} — starting with defaults`)
         if (isMissingFileError(error)) {
@@ -162,24 +271,22 @@ export default Plugin.define({
       }
     }
 
+    // Only REGISTRY_SUBAGENT_IDS (built-ins with no .md file) go through
+    // this path — see the file header for why markdown-defined subagents
+    // are pinned via applyMarkdownFrontmatterPins instead: a registry pin on
+    // one of those gets silently discarded once its own frontmatter gets
+    // (re-)applied.
     await ctx.agent.transform((editor) => {
       if (!activeProfile) return
 
-      for (const [agentId, modelRef] of Object.entries(activeProfile.agents)) {
+      for (const agentId of REGISTRY_SUBAGENT_IDS) {
+        const modelRef = activeProfile.agents[agentId]
+        if (!modelRef) continue
         const agent = editor.get(agentId)
         if (!agent) {
           warn(`profile "${activeProfileName}" references unknown agent "${agentId}" — skipped`)
           continue
         }
-        // An agent with its own registry-configured model always wins over the
-        // session's live model (opencode resolves per-agent model before any
-        // session default). Pinning a "primary" agent here would permanently
-        // defeat ctx.session.switchModel below for it — plan/build must stay
-        // unpinned so switchModel remains the sole, immediate switch mechanism
-        // for the current session. Only true subagents get pinned: their model
-        // is resolved once, at spawn time, from the registry, with no session
-        // of their own for switchModel to target.
-        if (agent.mode !== "subagent") continue
         editor.update(agentId, (agent) => {
           agent.model = modelRef
         })
@@ -209,21 +316,31 @@ export default Plugin.define({
       ].join("\n")
     }
 
-    const buildSummaryMessage = (name: string): string => {
+    const buildSummaryMessage = (name: string, frontmatterErrors: readonly string[]): string => {
       const profile = activeProfile
       if (!profile) {
         return `✅ Profile "${name}" activated. Primary and subagent models are set.`
       }
       const subagentSummary = PROFILE_AGENTS.map((agentId) => {
         const modelRef = profile.agents[agentId]
-        return `    ${agentId}: ${modelRef ? formatRef(modelRef) : "(unset — skipped)"}`
+        if (!modelRef) return `    ${agentId}: (unset — skipped)`
+        const via = REGISTRY_SUBAGENT_IDS.has(agentId)
+          ? "next spawn, registry"
+          : MARKDOWN_SUBAGENT_IDS.has(agentId)
+            ? "now, frontmatter"
+            : "this session only, via switchModel"
+        return `    ${agentId}: ${formatRef(modelRef)} (${via})`
       }).join("\n")
-      return [
+      const lines = [
         `✅ Profile switched to "${name}".`,
         `  primary: ${formatRef(profile.primary)} (applied to this session now)`,
-        "  subagents (apply at next spawn):",
+        "  subagents:",
         subagentSummary,
-      ].join("\n")
+      ]
+      if (frontmatterErrors.length > 0) {
+        lines.push("", `⚠ failed to update agent frontmatter for: ${frontmatterErrors.join(", ")}`)
+      }
+      return lines.join("\n")
     }
 
     /** Shared by "/profile <name>" and each per-profile "/profile-<name>" command. */
@@ -248,9 +365,10 @@ export default Plugin.define({
       activeProfile = profile
       activeProfileName = name
       await ctx.storage.set(STORAGE_KEY, name)
+      const frontmatterErrors = await applyMarkdownFrontmatterPins(agentsDir, profile)
       await ctx.agent.reload()
       await ctx.session.switchModel({ sessionID, model: profile.primary })
-      await ctx.session.synthetic({ sessionID, text: buildSummaryMessage(name) })
+      await ctx.session.synthetic({ sessionID, text: buildSummaryMessage(name, frontmatterErrors) })
     }
 
     // Snapshot at startup (not re-read per keystroke): command.transform's

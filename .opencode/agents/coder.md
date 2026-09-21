@@ -1,6 +1,7 @@
 ---
 description: Technical implementation specialist for writing and modifying code
 mode: subagent
+model: opencode/big-pickle
 permissions:
   - action: webfetch
     resource: '*'

@@ -1,6 +1,7 @@
 ---
 description: Expert code reviewer for security, performance, and philosophy compliance
 mode: subagent
+model: zai-coding-plan/glm-5.3
 permissions:
   - action: edit
     resource: '*'

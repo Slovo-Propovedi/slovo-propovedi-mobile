@@ -1,6 +1,7 @@
 ---
 description: Human-facing content specialist for documentation and prose
 mode: subagent
+model: opencode/big-pickle
 permissions:
   - action: plan_read
     resource: '*'
