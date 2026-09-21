@@ -63,12 +63,14 @@ const fireWindowPointerCancel = (fakeDom: FakeDom) => {
 
 describe('useMouseDragScroll', () => {
   let fakeDom: FakeDom
+  let overflowX: string
 
   beforeEach(() => {
     jest.replaceProperty(Platform, 'OS', 'web')
     fakeDom = installFakeDom()
+    overflowX = 'auto'
     Object.assign(fakeDom.window, {
-      getComputedStyle: jest.fn(() => ({ overflowX: 'auto' })),
+      getComputedStyle: jest.fn(() => ({ overflowX })),
     })
   })
 
@@ -356,6 +358,27 @@ describe('useMouseDragScroll', () => {
       'pointermove',
       expect.any(Function),
     )
+  })
+
+  test('rejects an overflowing node whose overflow-x is hidden', async () => {
+    overflowX = 'hidden'
+    const wrapperRef = await renderHook()
+    const scrollable = createScrollableNode()
+    const wrapper = createFakeWrapper(scrollable)
+
+    await act(async () => {
+      wrapperRef?.(wrapper)
+    })
+
+    await act(async () => {
+      wrapper.dispatch('pointerdown', { button: 0, clientX: 100, pointerType: 'mouse' })
+    })
+
+    expect(fakeDom.window.addEventListener).not.toHaveBeenCalledWith(
+      'pointermove',
+      expect.any(Function),
+    )
+    expect(scrollable.style.cursor).toBe('')
   })
 
   test('does not attach listeners off web', async () => {

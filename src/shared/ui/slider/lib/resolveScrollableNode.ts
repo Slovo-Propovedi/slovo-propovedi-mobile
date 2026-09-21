@@ -13,7 +13,8 @@ const isScrollableNode = (child: unknown): child is HTMLElement => {
 
 // FlatList renders extra wrapper divs on web; 'scrollLeft' exists on every
 // HTMLElement so it cannot discriminate the real scroller. Prefer the direct
-// child, then walk all descendants and pick the first element that overflows.
+// child, then walk all descendants in document order; querySelectorAll('*')
+// yields ancestors before children, so the outermost scroller wins.
 export const resolveScrollableNode = (node: HTMLElement): HTMLElement | null => {
   const firstChild = node.firstElementChild
   if (isScrollableNode(firstChild)) return firstChild

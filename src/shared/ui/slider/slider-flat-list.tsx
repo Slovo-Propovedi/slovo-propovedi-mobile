@@ -44,7 +44,10 @@ export const SliderFlatList = <D extends object>({
   whereIsSlideTitleLocated,
 }: SliderFlatListProps<D>) => {
   const stride = getSliderItemStride(itemsSize)
-  const columnCount = Math.ceil(items.length / itemsRows)
+  // The mapper clamps itemsRows, but a rogue value must never reach layout
+  // arithmetic (Infinity/negative column counts would crash rendering).
+  const rows = Number.isFinite(itemsRows) && itemsRows >= 1 ? itemsRows : 1
+  const columnCount = Math.ceil(items.length / rows)
   const initialNumToRender = Math.ceil(SCREEN_WIDTH / stride) + 1
 
   // Contiguous slices keep the round-robin row order: column c holds items
@@ -52,10 +55,14 @@ export const SliderFlatList = <D extends object>({
   const columns = useMemo(
     () =>
       Array.from({ length: columnCount }, (_, columnIndex) =>
-        items.slice(columnIndex * itemsRows, columnIndex * itemsRows + itemsRows),
+        items.slice(columnIndex * rows, columnIndex * rows + rows),
       ),
-    [columnCount, items, itemsRows],
+    [columnCount, items, rows],
   )
+
+  // The last column has no trailing gap, so its width differs from the stride.
+  const getColumnWidth = (index: number) =>
+    index === columnCount - 1 ? getSliderItemWidth(itemsSize) : stride
 
   return (
     <FlatList
@@ -65,16 +72,13 @@ export const SliderFlatList = <D extends object>({
       showsHorizontalScrollIndicator={false}
       initialNumToRender={initialNumToRender}
       keyExtractor={(_, index) => String(index)}
-      getItemLayout={(_, index) => {
-        const isLastColumn = index === columnCount - 1
-        return {
-          index,
-          length: isLastColumn ? getSliderItemWidth(itemsSize) : stride,
-          offset: stride * index,
-        }
-      }}
+      getItemLayout={(_, index) => ({
+        index,
+        length: getColumnWidth(index),
+        offset: stride * index,
+      })}
       renderItem={({ index, item: column }) => {
-        const cellWidth = index === columnCount - 1 ? getSliderItemWidth(itemsSize) : stride
+        const cellWidth = getColumnWidth(index)
         return (
           <View style={{ width: cellWidth }}>
             <View style={styles.column}>
