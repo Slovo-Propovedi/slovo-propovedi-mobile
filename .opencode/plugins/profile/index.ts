@@ -7,12 +7,20 @@
  * persisted in ctx.storage (plugin storage) so it survives restarts.
  *
  * Semantics:
- * - Subagent models (plan/build/researcher/coder/explore/scribe/reviewer) are
- *   written into the agent registry via ctx.agent.transform — they apply to
- *   subagents spawned AFTER the switch (registry-level, per-agent).
+ * - Only agents with mode "subagent" (researcher/coder/explore/scribe/reviewer
+ *   in this project) get their model written into the agent registry via
+ *   ctx.agent.transform — they apply to subagents spawned AFTER the switch
+ *   (registry-level, per-agent). "primary"-mode agents (plan/build) are
+ *   deliberately SKIPPED here: opencode always prefers an agent's own
+ *   registry-configured model over the session's live model, so pinning a
+ *   primary agent would permanently defeat ctx.session.switchModel for it —
+ *   every future /profile switch would silently stop changing that agent's
+ *   model for the current session.
  * - The primary (orchestrator) model is applied to the CURRENT session via
  *   ctx.session.switchModel — this is per-session, exactly like the TUI model
- *   switcher. Agent models apply at the next subagent spawn, not retroactively.
+ *   switcher, and is the ONLY mechanism that changes plan/build's model. It
+ *   takes effect immediately; registry-pinned subagent models apply at the
+ *   next subagent spawn, not retroactively.
  * - No service restart is ever needed: the plugin reads the persisted profile
  *   at startup and /profile <name> re-applies the registry immediately.
  *
@@ -22,6 +30,14 @@
  * Values are parsed once at the file boundary (see loadProfile) into ModelRef;
  * nothing downstream re-parses or re-validates, so the apply path is
  * infallible by construction once a profile has loaded.
+ *
+ * No TUI dialog: a custom TUI-side plugin (context.ui.dialog.select, /models
+ * style) was attempted here and abandoned — context.ui.router.current() never
+ * reports `{type: "session"}` while actively chatting, on either opencode
+ * 2.0.8 or 2.0.11, and context.ui.tabs as a fallback didn't resolve it either.
+ * Without a reliable way for a TUI plugin to read "which session is this
+ * prompt in", the dialog can't target the right session. This command's plain
+ * list/switch (no picker) is the whole mechanism.
  */
 
 import * as fs from "node:fs/promises"
@@ -150,10 +166,20 @@ export default Plugin.define({
       if (!activeProfile) return
 
       for (const [agentId, modelRef] of Object.entries(activeProfile.agents)) {
-        if (!editor.get(agentId)) {
+        const agent = editor.get(agentId)
+        if (!agent) {
           warn(`profile "${activeProfileName}" references unknown agent "${agentId}" — skipped`)
           continue
         }
+        // An agent with its own registry-configured model always wins over the
+        // session's live model (opencode resolves per-agent model before any
+        // session default). Pinning a "primary" agent here would permanently
+        // defeat ctx.session.switchModel below for it — plan/build must stay
+        // unpinned so switchModel remains the sole, immediate switch mechanism
+        // for the current session. Only true subagents get pinned: their model
+        // is resolved once, at spawn time, from the registry, with no session
+        // of their own for switchModel to target.
+        if (agent.mode !== "subagent") continue
         editor.update(agentId, (agent) => {
           agent.model = modelRef
         })
@@ -200,6 +226,53 @@ export default Plugin.define({
       ].join("\n")
     }
 
+    /** Shared by "/profile <name>" and each per-profile "/profile-<name>" command. */
+    const applyProfileToSession = async (sessionID: string, name: string): Promise<void> => {
+      let profile: ProfileData
+      try {
+        profile = await loadProfile(profilesDir, name)
+      } catch (error) {
+        let valid: string
+        try {
+          valid = (await listProfiles(profilesDir)).join(", ")
+        } catch {
+          valid = "(unavailable — profile directory unreadable)"
+        }
+        await ctx.session.synthetic({
+          sessionID,
+          text: `❌ profile "${name}" could not be loaded: ${toMessage(error)} — valid profiles: ${valid}`,
+        })
+        return
+      }
+
+      activeProfile = profile
+      activeProfileName = name
+      await ctx.storage.set(STORAGE_KEY, name)
+      await ctx.agent.reload()
+      await ctx.session.switchModel({ sessionID, model: profile.primary })
+      await ctx.session.synthetic({ sessionID, text: buildSummaryMessage(name) })
+    }
+
+    // Snapshot at startup (not re-read per keystroke): command.transform's
+    // callback must be synchronous, so the profile list/descriptions used for
+    // the per-profile commands below are resolved once, here. A profile file
+    // added after this plugin started won't get its own /profile-<name>
+    // command until the next restart or hot-reload of this file — /profile
+    // <name> (typed) still picks it up immediately since it reads disk fresh.
+    const profileNames = await listProfiles(profilesDir).catch((error) => {
+      warn(`cannot list profiles for command registration: ${toMessage(error)}`)
+      return [] as string[]
+    })
+    const profileDescriptions = new Map<string, string>()
+    for (const name of profileNames) {
+      try {
+        const profile = await loadProfile(profilesDir, name)
+        profileDescriptions.set(name, `Switch to profile "${name}" (primary: ${formatRef(profile.primary)}).`)
+      } catch (error) {
+        profileDescriptions.set(name, `⚠ profile "${name}" is invalid: ${toMessage(error)}`)
+      }
+    }
+
     await ctx.command.transform((editor) => {
       editor.add({
         name: "profile",
@@ -213,31 +286,25 @@ export default Plugin.define({
             return
           }
 
-          let profile: ProfileData
-          try {
-            profile = await loadProfile(profilesDir, argument)
-          } catch (error) {
-            let valid: string
-            try {
-              valid = (await listProfiles(profilesDir)).join(", ")
-            } catch {
-              valid = "(unavailable — profile directory unreadable)"
-            }
-            await ctx.session.synthetic({
-              sessionID,
-              text: `❌ profile "${argument}" could not be loaded: ${toMessage(error)} — valid profiles: ${valid}`,
-            })
-            return
-          }
-
-          activeProfile = profile
-          activeProfileName = argument
-          await ctx.storage.set(STORAGE_KEY, argument)
-          await ctx.agent.reload()
-          await ctx.session.switchModel({ sessionID, model: profile.primary })
-          await ctx.session.synthetic({ sessionID, text: buildSummaryMessage(argument) })
+          await applyProfileToSession(sessionID, argument)
         },
       })
+
+      // One command per profile file, e.g. "profile-zai_and_free" — typing
+      // "/profile" and pausing shows all of these (with descriptions) via
+      // opencode's native by-name slash completion, giving a discoverable
+      // list of profiles without remembering exact names. This is the only
+      // "suggestions" mechanism the plugin API actually supports (see the
+      // "No TUI dialog" note above) — no picker, no keymap involved.
+      for (const name of profileNames) {
+        editor.add({
+          name: `profile-${name}`,
+          description: profileDescriptions.get(name) ?? `Switch to profile "${name}".`,
+          async execute({ sessionID }) {
+            await applyProfileToSession(sessionID, name)
+          },
+        })
+      }
     })
   },
 })
