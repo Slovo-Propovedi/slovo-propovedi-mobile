@@ -1,0 +1,327 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1789980025285,
+  "projectRoot": "/home/egoreast/Programming/slovo-propovedi-mobile",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "jest",
+        "version": "29.7.0",
+        "category": "testing"
+      },
+      {
+        "name": "react",
+        "version": "19.2.3",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.3",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "yarn",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": "yarn test",
+    "lintCommand": "yarn lint",
+    "devCommand": "yarn start",
+    "scripts": {
+      "api:generate": "yarn delete-generated-api-files && NODE_OPTIONS=--no-network-family-autoselection orval",
+      "build-local-debug:android": "cd android && ./gradlew assembleDevDebug",
+      "build-local-release:android": "cd android && ./gradlew assembleProdRelease",
+      "check:fsd": "steiger .",
+      "check:fsd-watch": "steiger . --watch",
+      "check:circular": "depcruise src --config .dependency-cruiser.cjs",
+      "check:types": "tsc -p tsconfig.json",
+      "check:types-open": "editor=$(printf 'nvim\\nnvim --remote-silent\\ncode -r' | fzf --prompt='Select editor: ') && files=($(tsc -p tsconfig.json 2>&1 | grep -oE '[^ (]+.tsx?' | sort -u)) && if [ ${#files[@]} -gt 0 ]; then $editor \"${files[@]}\"; else echo 'No files with errors found'; fi",
+      "check:types-open-windows": "tsc -p tsconfig.json 2>&1 | grep -oE '[^ (]+.tsx?' | sort -u | xargs code",
+      "check:unused": "knip",
+      "commitlint": "commitlint --edit $1",
+      "delete-generated-api-files": "del-cli \"src/shared/api/generated/*\" \"!src/shared/api/generated/index.ts\"",
+      "dev:launch": "adb reverse tcp:8081 tcp:8081 && adb shell am force-stop ru.slovopropovedi.dev && adb shell am start -n ru.slovopropovedi.dev/ru.slovopropovedi.MainActivity",
+      "lint": "eslint . --concurrency=off",
+      "lint-staged": "npx lint-staged",
+      "lint:fix": "eslint . --fix --concurrency=off",
+      "lint:staged": "lint-staged",
+      "postinstall": "patch-package",
+      "prepare": "husky",
+      "prettier:write": "prettier --write **/*.{js,ts,tsx,json}",
+      "run:android": "expo run:android --variant devDebug",
+      "run:android:prod": "expo run:android --variant prodDebug",
+      "run:ios": "expo run:ios",
+      "start": "expo start",
+      "web": "EXPO_NO_METRO_LAZY=1 expo start --web",
+      "web:build": "expo export -p web && node scripts/inject-sw-precache.mjs",
+      "web:preview": "yarn web:build && yarn serve -s dist -l 4173",
+      "test": "jest --watch --coverage=false --changedSince=origin/main",
+      "testDebug": "jest -o --watch --coverage=false",
+      "testFinal": "jest",
+      "updateSnapshots": "jest -u --coverage=false",
+      "bump-version": "node scripts/bump-version.mjs",
+      "version-major": "yarn version --major",
+      "version-minor": "yarn version --minor",
+      "version-patch": "yarn version --patch",
+      "visualize-deps": "npx fsd-cruise"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "feature-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "app",
+      "assets",
+      "docs",
+      "public",
+      "scripts",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "LICENSES": {
+      "path": "LICENSES",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1789980025265,
+      "keyFiles": [
+        "Apache-2.0.txt",
+        "GPL-3.0-or-later.txt"
+      ]
+    },
+    "__mocks__": {
+      "path": "__mocks__",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1789980025266,
+      "keyFiles": [
+        "apk-installer.js",
+        "expo-constants.js",
+        "expo-haptics.js",
+        "expo-image.js",
+        "react-native-gesture-handler.js"
+      ]
+    },
+    "android": {
+      "path": "android",
+      "purpose": null,
+      "fileCount": 6,
+      "lastAccessed": 1789980025272,
+      "keyFiles": [
+        "build.gradle",
+        "gradle.properties",
+        "gradlew",
+        "gradlew.bat",
+        "settings.gradle"
+      ]
+    },
+    "app": {
+      "path": "app",
+      "purpose": "Application code",
+      "fileCount": 8,
+      "lastAccessed": 1789980025273,
+      "keyFiles": [
+        "_RootLayout.tsx",
+        "_layout.tsx",
+        "about.tsx",
+        "history.tsx",
+        "index.tsx"
+      ]
+    },
+    "assets": {
+      "path": "assets",
+      "purpose": "Static assets",
+      "fileCount": 6,
+      "lastAccessed": 1789980025273,
+      "keyFiles": [
+        "adaptive-icon.png",
+        "fallback-artwork.png",
+        "favicon.jpg",
+        "icon.png",
+        "notification-icon.png"
+      ]
+    },
+    "coverage": {
+      "path": "coverage",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1789980025273,
+      "keyFiles": [
+        "clover.xml",
+        "coverage-final.json",
+        "lcov.info"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 6,
+      "lastAccessed": 1789980025273,
+      "keyFiles": [
+        "favicon.ico",
+        "favicon.png",
+        "index.html",
+        "manifest.webmanifest",
+        "metadata.json"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 7,
+      "lastAccessed": 1789980025274,
+      "keyFiles": [
+        "BUILD-LOCAL.md",
+        "MIGRATION-FROM-EXPO.md",
+        "README.md",
+        "architecture.md",
+        "conventions.md"
+      ]
+    },
+    "fastlane": {
+      "path": "fastlane",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1789980025278,
+      "keyFiles": []
+    },
+    "fdroid": {
+      "path": "fdroid",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1789980025278,
+      "keyFiles": []
+    },
+    "ios": {
+      "path": "ios",
+      "purpose": null,
+      "fileCount": 4,
+      "lastAccessed": 1789980025278,
+      "keyFiles": [
+        "Podfile",
+        "Podfile.properties.json"
+      ]
+    },
+    "modules": {
+      "path": "modules",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1789980025279,
+      "keyFiles": []
+    },
+    "patches": {
+      "path": "patches",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1789980025279,
+      "keyFiles": [
+        "expo-font+57.0.4.patch",
+        "expo-router+57.0.22.patch",
+        "react-native-gesture-handler+2.32.0.patch"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 4,
+      "lastAccessed": 1789980025280,
+      "keyFiles": [
+        "favicon.png",
+        "index.html",
+        "manifest.webmanifest",
+        "sw.js"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 10,
+      "lastAccessed": 1789980025280,
+      "keyFiles": [
+        "analyze-icon.mjs",
+        "bump-version.mjs",
+        "changelog-core.mjs",
+        "changelog-core.test.js",
+        "create-fallback-artwork.mjs"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1789980025281,
+      "keyFiles": []
+    },
+    "android/app": {
+      "path": "android/app",
+      "purpose": "Application code",
+      "fileCount": 3,
+      "lastAccessed": 1789980025282,
+      "keyFiles": [
+        "build.gradle",
+        "debug.keystore",
+        "proguard-rules.pro"
+      ]
+    },
+    "android/build": {
+      "path": "android/build",
+      "purpose": "Build output",
+      "fileCount": 0,
+      "lastAccessed": 1789980025283,
+      "keyFiles": []
+    },
+    "dist/assets": {
+      "path": "dist/assets",
+      "purpose": "Static assets",
+      "fileCount": 0,
+      "lastAccessed": 1789980025283,
+      "keyFiles": []
+    },
+    "src/pages": {
+      "path": "src/pages",
+      "purpose": "Page components",
+      "fileCount": 0,
+      "lastAccessed": 1789980025285,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": ".opencode/plugins/profile/index.ts",
+      "accessCount": 3,
+      "lastAccessed": 1789980591606,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

@@ -24,3 +24,5 @@ web-build/
 # Local env overrides (see .env.example)
 .env
 .env.local
+/.omc/state
+/.opencode/.omc/state
