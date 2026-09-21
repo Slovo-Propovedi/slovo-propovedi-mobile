@@ -77,6 +77,7 @@
 
 - [ ] **ListenScreen монтирует все элементы вертикального списка секций** (горизонтальные слайдеры секций теперь виртуализированы — горизонтальный `FlatList`; остаётся вертикальный `ScrollView` + map, вертикальный список секций сознательно НЕ виртуализирован — секций мало) — `src/pages/listen` — вернуться при проблемах с памятью; кандидаты: FlashList/virtualization.
 - [ ] **Колонки multi-row слайдеров выравниваются по натуральной высоте элементов** — `src/shared/ui/slider/slider-flat-list.tsx` — вернуться, если появятся multi-row секции с неоднородной высотой описаний (например subTitle на 1–2 строки): строки визуально рассинхронизируются; сегодняшние listen-секции однородны (MarqueeText однострочный, subTitle не передаётся).
+- [ ] **`first-section-layout` (pure-утилита) импортирует `TOTAL_SIZE` из UI-компонента `ContinueCircleButton`** — `src/pages/listen/lib/first-section-layout.ts`, `src/pages/listen/ui/ContinueCircleButton.tsx` — утилита должна не зависеть от компонентного модуля (тянет React-граф в чистый тест); вынести константу в `shared/config` или lib-файл при ближайшем касании.
 
 ## Прочее (найдено через grep TODO/FIXME/HACK/XXX в src/ и app/)
 
