@@ -845,18 +845,56 @@ const handleRetry = async (
 /** Provider statuses that mean "quota/billing wall" — the same failures the retry hook reacts to. */
 const HTTP_QUOTA_STATUSES: ReadonlySet<number> = new Set([402, 429])
 
-/** Bodies are only sniffed for a human message; 200 chars is plenty for a provider error. */
+/**
+ * Bodies are only sniffed for a human message, and the read is literally
+ * bounded: at most this many bytes leave the cloned stream before it is
+ * cancelled — plenty for the 200-char slice after UTF-8 decode.
+ */
+const HTTP_ERROR_BODY_LIMIT_BYTES = 2048
+
+/** Chars kept from the sniffed body; more than enough for a provider error. */
 const HTTP_ERROR_MESSAGE_MAX_CHARS = 200
+
+/** Reused UTF-8 decoder; default options tolerate a truncated trailing sequence. */
+const UTF8_DECODER = new TextDecoder()
+
+/** Join stream chunks into one buffer so multibyte chars spanning chunks decode correctly. */
+const concatBytes = (chunks: readonly Uint8Array[]): Uint8Array => {
+  const merged = new Uint8Array(chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0))
+  let offset = 0
+  for (const chunk of chunks) {
+    merged.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return merged
+}
 
 /**
  * Read a short message out of a response WITHOUT consuming it: clone first,
  * then read the clone, so the original one-shot body still reaches opencode
- * intact. A read failure degrades to a placeholder — the status code alone is
- * enough to trigger failover — and never throws out of the hook.
+ * intact. Reads at most HTTP_ERROR_BODY_LIMIT_BYTES from the clone, then
+ * cancels that branch — it is a tee, so opencode's own branch is untouched and
+ * a huge body is never buffered. A read failure degrades to a placeholder —
+ * the status code alone is enough to trigger failover — and never throws out
+ * of the hook.
  */
 const readResponseMessage = async (response: Response): Promise<string> => {
   try {
-    const text = await response.clone().text()
+    const reader = response.clone().body?.getReader()
+    if (!reader) return '(response body unavailable)'
+
+    const chunks: Uint8Array[] = []
+    let received = 0
+    while (received < HTTP_ERROR_BODY_LIMIT_BYTES) {
+      const { done, value } = await reader.read()
+      if (done || !value) break
+      chunks.push(value)
+      received += value.byteLength
+    }
+    // Drop the rest of the clone's stream instead of draining the whole body.
+    await reader.cancel().catch(() => {})
+
+    const text = UTF8_DECODER.decode(concatBytes(chunks))
     return text.slice(0, HTTP_ERROR_MESSAGE_MAX_CHARS).replace(/\s+/g, ' ').trim()
   } catch (error) {
     return `(unreadable response body: ${toMessage(error)})`
