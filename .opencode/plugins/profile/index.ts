@@ -56,15 +56,24 @@
  * list/switch (no picker) is the whole mechanism.
  */
 
-import * as fs from "node:fs/promises"
-import * as path from "node:path"
-import { Model, Plugin } from "@opencode/plugin"
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
+import { Model, Plugin } from '@opencode/plugin'
+import { installFailover, resolveAgentModel } from './failover'
 
 /** Plugin-scoped storage key holding the active profile name. */
-const STORAGE_KEY = "activeProfile"
+const STORAGE_KEY = 'activeProfile'
 
 /** The 7 agent slots wired from a profile file, in display order. */
-const PROFILE_AGENTS = ["plan", "build", "researcher", "coder", "explore", "scribe", "reviewer"] as const
+const PROFILE_AGENTS = [
+  'plan',
+  'build',
+  'researcher',
+  'coder',
+  'explore',
+  'scribe',
+  'reviewer',
+] as const
 
 /**
  * Subagents defined by a project .opencode/agents/<id>.md file — pinned by
@@ -72,7 +81,7 @@ const PROFILE_AGENTS = ["plan", "build", "researcher", "coder", "explore", "scri
  * PROFILE_AGENTS entry except plan/build (primary, unpinned by design) and
  * explore (built-in, see REGISTRY_SUBAGENT_IDS).
  */
-const MARKDOWN_SUBAGENT_IDS = new Set<string>(["researcher", "coder", "scribe", "reviewer"])
+const MARKDOWN_SUBAGENT_IDS = new Set<string>(['researcher', 'coder', 'scribe', 'reviewer'])
 
 /**
  * Built-in subagents with no project .md file — pinned via the legacy
@@ -87,7 +96,7 @@ const MARKDOWN_SUBAGENT_IDS = new Set<string>(["researcher", "coder", "scribe", 
  * instead of "subagent", silently skipping the pin. A static set has no
  * ordering to race.
  */
-const REGISTRY_SUBAGENT_IDS = new Set<string>(["explore"])
+const REGISTRY_SUBAGENT_IDS = new Set<string>(['explore'])
 
 /** A parsed "provider/model[#variant]" reference — the canonical Model.Ref, trusted after the boundary. */
 type ModelRef = Model.Ref
@@ -108,9 +117,9 @@ function formatRef(ref: ModelRef): string {
 
 /** Human-readable rendering of an arbitrary value for error messages. */
 function formatValue(value: unknown): string {
-  if (typeof value === "string") return `"${value}"`
-  if (value === null) return "null"
-  if (typeof value === "object") return JSON.stringify(value) ?? String(value)
+  if (typeof value === 'string') return `"${value}"`
+  if (value === null) return 'null'
+  if (typeof value === 'object') return JSON.stringify(value) ?? String(value)
   return String(value)
 }
 
@@ -127,7 +136,9 @@ function parseProfileRef(name: string, fieldPath: string, raw: string): ModelRef
   try {
     return parseModelRef(raw)
   } catch {
-    throw new Error(`profile "${name}" [${fieldPath}]: expected "provider/model[#variant]", got "${raw}"`)
+    throw new Error(
+      `profile "${name}" [${fieldPath}]: expected "provider/model[#variant]", got "${raw}"`,
+    )
   }
 }
 
@@ -138,42 +149,46 @@ function parseProfileRef(name: string, fieldPath: string, raw: string): ModelRef
  */
 async function loadProfile(profilesDir: string, name: string): Promise<ProfileData> {
   const filePath = path.join(profilesDir, `${name}.json`)
-  const source = await fs.readFile(filePath, "utf8")
+  const source = await fs.readFile(filePath, 'utf8')
   const parsed = JSON.parse(source) as { primary?: unknown; agents?: unknown }
 
-  if (typeof parsed.primary !== "string") {
-    throw new Error(`profile "${name}" [primary]: expected "provider/model[#variant]", got ${formatValue(parsed.primary)}`)
+  if (typeof parsed.primary !== 'string') {
+    throw new Error(
+      `profile "${name}" [primary]: expected "provider/model[#variant]", got ${formatValue(parsed.primary)}`,
+    )
   }
 
-  if (typeof parsed.agents !== "object" || !parsed.agents) {
-    throw new Error(`profile "${name}" [agents]: expected an object of agent models, got ${formatValue(parsed.agents)}`)
+  if (typeof parsed.agents !== 'object' || !parsed.agents) {
+    throw new Error(
+      `profile "${name}" [agents]: expected an object of agent models, got ${formatValue(parsed.agents)}`,
+    )
   }
 
   const agents: Record<string, ModelRef> = {}
   for (const [agentId, raw] of Object.entries(parsed.agents)) {
-    if (typeof raw !== "string") {
+    if (typeof raw !== 'string') {
       throw new Error(
-        `profile "${name}" [/agents "${agentId}"]: expected "provider/model[#variant]", got ${formatValue(raw)}`
+        `profile "${name}" [/agents "${agentId}"]: expected "provider/model[#variant]", got ${formatValue(raw)}`,
       )
     }
     agents[agentId] = parseProfileRef(name, `/agents "${agentId}"`, raw)
   }
 
-  return { primary: parseProfileRef(name, "primary", parsed.primary), agents }
+  return { primary: parseProfileRef(name, 'primary', parsed.primary), agents }
 }
 
 /** List profile names from the profiles directory (sorted, stable ordering). */
 async function listProfiles(profilesDir: string): Promise<string[]> {
   const entries = await fs.readdir(profilesDir)
   return entries
-    .filter((entry) => entry.endsWith(".json"))
-    .map((entry) => entry.replace(/\.json$/, ""))
+    .filter(entry => entry.endsWith('.json'))
+    .map(entry => entry.replace(/\.json$/, ''))
     .sort()
 }
 
 /** True when the error means "file does not exist on disk". */
 function isMissingFileError(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT"
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT'
 }
 
 /**
@@ -191,29 +206,35 @@ function isMissingFileError(error: unknown): boolean {
  *
  * Returns false (no write) when the file already has the desired line.
  */
-async function writeAgentModelFrontmatter(agentsDir: string, agentId: string, modelRef: ModelRef): Promise<boolean> {
+async function writeAgentModelFrontmatter(
+  agentsDir: string,
+  agentId: string,
+  modelRef: ModelRef,
+): Promise<boolean> {
   const filePath = path.join(agentsDir, `${agentId}.md`)
-  const source = await fs.readFile(filePath, "utf8")
+  const source = await fs.readFile(filePath, 'utf8')
   const match = source.match(/^(---\r?\n)([\s\S]*?)(\r?\n---\r?\n)/)
   if (!match || match.index !== 0) {
-    throw new Error(`agent file "${filePath}" has no frontmatter block starting at the top of the file`)
+    throw new Error(
+      `agent file "${filePath}" has no frontmatter block starting at the top of the file`,
+    )
   }
 
   const [whole, open, body, close] = match
   const desiredLine = `model: ${formatRef(modelRef)}`
   const lines = body.split(/\r?\n/)
-  const modelLineIndex = lines.findIndex((line) => /^model:\s/.test(line) || line === "model:")
+  const modelLineIndex = lines.findIndex(line => /^model:\s/.test(line) || line === 'model:')
   if (modelLineIndex !== -1) {
     if (lines[modelLineIndex] === desiredLine) return false
     lines[modelLineIndex] = desiredLine
   } else {
-    const modeLineIndex = lines.findIndex((line) => /^mode:\s/.test(line))
+    const modeLineIndex = lines.findIndex(line => /^mode:\s/.test(line))
     lines.splice(modeLineIndex !== -1 ? modeLineIndex + 1 : 0, 0, desiredLine)
   }
 
-  const newSource = open + lines.join("\n") + close + source.slice(whole.length)
+  const newSource = open + lines.join('\n') + close + source.slice(whole.length)
   if (newSource === source) return false
-  await fs.writeFile(filePath, newSource, "utf8")
+  await fs.writeFile(filePath, newSource, 'utf8')
   return true
 }
 
@@ -223,7 +244,10 @@ async function writeAgentModelFrontmatter(agentsDir: string, agentId: string, mo
  * the rest). Errors are collected and handed to the caller to report; this
  * never throws.
  */
-async function applyMarkdownFrontmatterPins(agentsDir: string, profile: ProfileData): Promise<string[]> {
+async function applyMarkdownFrontmatterPins(
+  agentsDir: string,
+  profile: ProfileData,
+): Promise<string[]> {
   const errors: string[] = []
   for (const agentId of MARKDOWN_SUBAGENT_IDS) {
     const modelRef = profile.agents[agentId]
@@ -238,10 +262,10 @@ async function applyMarkdownFrontmatterPins(agentsDir: string, profile: ProfileD
 }
 
 export default Plugin.define({
-  id: "profile",
+  id: 'profile',
   async setup(ctx) {
-    const profilesDir = path.join(ctx.location.directory, ".opencode", "profiles")
-    const agentsDir = path.join(ctx.location.directory, ".opencode", "agents")
+    const profilesDir = path.join(ctx.location.directory, '.opencode', 'profiles')
+    const agentsDir = path.join(ctx.location.directory, '.opencode', 'agents')
     const storedProfile = await ctx.storage.get(STORAGE_KEY)
     const warn = (message: string): void => {
       console.warn(`[profile] ${message}`)
@@ -251,7 +275,7 @@ export default Plugin.define({
     let activeProfile: ProfileData | null = null
     let activeProfileName: string | null = null
 
-    if (typeof storedProfile === "string" && storedProfile) {
+    if (typeof storedProfile === 'string' && storedProfile) {
       try {
         activeProfile = await loadProfile(profilesDir, storedProfile)
         activeProfileName = storedProfile
@@ -261,33 +285,53 @@ export default Plugin.define({
         // must still leave coder/scribe/etc. on the right model.
         const errors = await applyMarkdownFrontmatterPins(agentsDir, activeProfile)
         if (errors.length > 0) {
-          warn(`profile "${storedProfile}": failed to sync agent frontmatter for ${errors.join(", ")}`)
+          warn(
+            `profile "${storedProfile}": failed to sync agent frontmatter for ${errors.join(', ')}`,
+          )
         }
       } catch (error) {
-        warn(`stored profile "${storedProfile}" could not be loaded: ${toMessage(error)} — starting with defaults`)
+        warn(
+          `stored profile "${storedProfile}" could not be loaded: ${toMessage(error)} — starting with defaults`,
+        )
         if (isMissingFileError(error)) {
           await ctx.storage.remove(STORAGE_KEY)
         }
       }
     }
 
+    // Failover is mounted before the registry transform so a persisted overlay
+    // is re-applied (and the module's overlay state recovered) before the base
+    // transform below can read it via resolveAgentModel.
+    const failover = await installFailover(ctx, {
+      directory: ctx.location.directory,
+      getActiveProfile: () => activeProfile,
+      writeAgentModelFrontmatter: (agentId, modelRef) =>
+        writeAgentModelFrontmatter(agentsDir, agentId, modelRef),
+      applyProfilePins: profile => applyMarkdownFrontmatterPins(agentsDir, profile),
+      agentIds: PROFILE_AGENTS,
+      markdownAgentIds: MARKDOWN_SUBAGENT_IDS,
+      registryAgentIds: REGISTRY_SUBAGENT_IDS,
+      warn,
+    })
+
     // Only REGISTRY_SUBAGENT_IDS (built-ins with no .md file) go through
     // this path — see the file header for why markdown-defined subagents
     // are pinned via applyMarkdownFrontmatterPins instead: a registry pin on
     // one of those gets silently discarded once its own frontmatter gets
-    // (re-)applied.
-    await ctx.agent.transform((editor) => {
+    // (re-)applied. resolveAgentModel makes the effective model overlay-aware
+    // (a live failover override wins over the profile value).
+    await ctx.agent.transform(editor => {
       if (!activeProfile) return
 
       for (const agentId of REGISTRY_SUBAGENT_IDS) {
-        const modelRef = activeProfile.agents[agentId]
+        const modelRef = resolveAgentModel(activeProfile, agentId)
         if (!modelRef) continue
         const agent = editor.get(agentId)
         if (!agent) {
           warn(`profile "${activeProfileName}" references unknown agent "${agentId}" — skipped`)
           continue
         }
-        editor.update(agentId, (agent) => {
+        editor.update(agentId, agent => {
           agent.model = modelRef
         })
       }
@@ -301,19 +345,19 @@ export default Plugin.define({
         return `❌ profile plugin: cannot read ${profilesDir}: ${toMessage(error)}`
       }
 
-      const lines = names.map((name) => {
-        const marker = name === activeProfileName ? " (active)" : ""
+      const lines = names.map(name => {
+        const marker = name === activeProfileName ? ' (active)' : ''
         return `  ${name}${marker}`
       })
       return [
-        "Available profiles (model combos):",
-        "",
+        'Available profiles (model combos):',
+        '',
         ...lines,
-        "",
-        "Usage:",
-        "  /profile            list profiles + active one",
-        "  /profile <name>     switch to that profile (persisted across restarts)",
-      ].join("\n")
+        '',
+        'Usage:',
+        '  /profile            list profiles + active one',
+        '  /profile <name>     switch to that profile (persisted across restarts)',
+      ].join('\n')
     }
 
     const buildSummaryMessage = (name: string, frontmatterErrors: readonly string[]): string => {
@@ -321,26 +365,26 @@ export default Plugin.define({
       if (!profile) {
         return `✅ Profile "${name}" activated. Primary and subagent models are set.`
       }
-      const subagentSummary = PROFILE_AGENTS.map((agentId) => {
+      const subagentSummary = PROFILE_AGENTS.map(agentId => {
         const modelRef = profile.agents[agentId]
         if (!modelRef) return `    ${agentId}: (unset — skipped)`
         const via = REGISTRY_SUBAGENT_IDS.has(agentId)
-          ? "next spawn, registry"
+          ? 'next spawn, registry'
           : MARKDOWN_SUBAGENT_IDS.has(agentId)
-            ? "now, frontmatter"
-            : "this session only, via switchModel"
+            ? 'now, frontmatter'
+            : 'this session only, via switchModel'
         return `    ${agentId}: ${formatRef(modelRef)} (${via})`
-      }).join("\n")
+      }).join('\n')
       const lines = [
         `✅ Profile switched to "${name}".`,
         `  primary: ${formatRef(profile.primary)} (applied to this session now)`,
-        "  subagents:",
+        '  subagents:',
         subagentSummary,
       ]
       if (frontmatterErrors.length > 0) {
-        lines.push("", `⚠ failed to update agent frontmatter for: ${frontmatterErrors.join(", ")}`)
+        lines.push('', `⚠ failed to update agent frontmatter for: ${frontmatterErrors.join(', ')}`)
       }
-      return lines.join("\n")
+      return lines.join('\n')
     }
 
     /** Shared by "/profile <name>" and each per-profile "/profile-<name>" command. */
@@ -351,9 +395,9 @@ export default Plugin.define({
       } catch (error) {
         let valid: string
         try {
-          valid = (await listProfiles(profilesDir)).join(", ")
+          valid = (await listProfiles(profilesDir)).join(', ')
         } catch {
-          valid = "(unavailable — profile directory unreadable)"
+          valid = '(unavailable — profile directory unreadable)'
         }
         await ctx.session.synthetic({
           sessionID,
@@ -364,6 +408,9 @@ export default Plugin.define({
 
       activeProfile = profile
       activeProfileName = name
+      // A manual profile switch supersedes any failover overlay: clear it
+      // (delete the state file, dispose pins, log reset) before re-applying.
+      await failover.reset()
       await ctx.storage.set(STORAGE_KEY, name)
       const frontmatterErrors = await applyMarkdownFrontmatterPins(agentsDir, profile)
       await ctx.agent.reload()
@@ -377,7 +424,7 @@ export default Plugin.define({
     // added after this plugin started won't get its own /profile-<name>
     // command until the next restart or hot-reload of this file — /profile
     // <name> (typed) still picks it up immediately since it reads disk fresh.
-    const profileNames = await listProfiles(profilesDir).catch((error) => {
+    const profileNames = await listProfiles(profilesDir).catch(error => {
       warn(`cannot list profiles for command registration: ${toMessage(error)}`)
       return [] as string[]
     })
@@ -385,19 +432,22 @@ export default Plugin.define({
     for (const name of profileNames) {
       try {
         const profile = await loadProfile(profilesDir, name)
-        profileDescriptions.set(name, `Switch to profile "${name}" (primary: ${formatRef(profile.primary)}).`)
+        profileDescriptions.set(
+          name,
+          `Switch to profile "${name}" (primary: ${formatRef(profile.primary)}).`,
+        )
       } catch (error) {
         profileDescriptions.set(name, `⚠ profile "${name}" is invalid: ${toMessage(error)}`)
       }
     }
 
-    await ctx.command.transform((editor) => {
+    await ctx.command.transform(editor => {
       editor.add({
-        name: "profile",
+        name: 'profile',
         description:
-          "Switch model profiles in-session. No args: list profiles. With a name: activate it (persisted across restarts).",
+          'Switch model profiles in-session. No args: list profiles. With a name: activate it (persisted across restarts).',
         async execute({ sessionID, prompt }) {
-          const argument = prompt.text.trim().split(/\s+/)[0] ?? ""
+          const argument = prompt.text.trim().split(/\s+/)[0] ?? ''
 
           if (!argument) {
             await ctx.session.synthetic({ sessionID, text: await buildListMessage() })
@@ -405,6 +455,16 @@ export default Plugin.define({
           }
 
           await applyProfileToSession(sessionID, argument)
+        },
+      })
+
+      editor.add({
+        name: 'profile-failover-test',
+        description:
+          'Simulate a quota error for a model (default: current session model) and run the failover path; prefix with "dry" to rehearse without applying.',
+        async execute({ sessionID, prompt }) {
+          const text = await failover.runTest({ sessionID, argText: prompt.text })
+          await ctx.session.synthetic({ sessionID, text })
         },
       })
 
