@@ -6,11 +6,20 @@ import { useMouseDragScroll } from './useMouseDragScroll'
 type PointerHandler = (event: unknown) => void
 
 const createScrollableNode = () => ({
+  clientWidth: 100,
   scrollLeft: 0,
+  scrollWidth: 200,
   style: { cursor: '', userSelect: '' },
 })
 
-const createFakeWrapper = (scrollable: ReturnType<typeof createScrollableNode>) => {
+const createNonScrollableNode = () => ({
+  clientWidth: 200,
+  scrollLeft: 0,
+  scrollWidth: 200,
+  style: { cursor: '', userSelect: '' },
+})
+
+const createFakeWrapper = (firstElementChild: unknown, descendants: unknown[] = []) => {
   const listeners: Record<string, PointerHandler[]> = {}
   return {
     addEventListener: jest.fn((type: string, handler: PointerHandler, _opts?: unknown) => {
@@ -19,7 +28,8 @@ const createFakeWrapper = (scrollable: ReturnType<typeof createScrollableNode>) 
     dispatch: (type: string, event: unknown) => {
       listeners[type]?.forEach(handler => handler(event))
     },
-    firstElementChild: scrollable,
+    firstElementChild,
+    querySelectorAll: jest.fn(() => descendants),
     removeEventListener: jest.fn((type: string, handler: PointerHandler) => {
       const typeListeners = listeners[type]
       if (!typeListeners) return
@@ -57,6 +67,9 @@ describe('useMouseDragScroll', () => {
   beforeEach(() => {
     jest.replaceProperty(Platform, 'OS', 'web')
     fakeDom = installFakeDom()
+    Object.assign(fakeDom.window, {
+      getComputedStyle: jest.fn(() => ({ overflowX: 'auto' })),
+    })
   })
 
   afterEach(() => {
@@ -302,6 +315,47 @@ describe('useMouseDragScroll', () => {
     })
 
     expect(dragEvent.preventDefault).toHaveBeenCalled()
+  })
+
+  test('falls back to a scrollable descendant when the first child is not scrollable', async () => {
+    const wrapperRef = await renderHook()
+    const scroller = createScrollableNode()
+    const wrapper = createFakeWrapper(createNonScrollableNode(), [scroller])
+
+    await act(async () => {
+      wrapperRef?.(wrapper)
+    })
+
+    expect(wrapper.querySelectorAll).not.toHaveBeenCalled()
+
+    await act(async () => {
+      wrapper.dispatch('pointerdown', { button: 0, clientX: 100, pointerType: 'mouse' })
+    })
+    expect(scroller.style.cursor).toBe('grabbing')
+    expect(wrapper.querySelectorAll).toHaveBeenCalledWith('*')
+
+    await act(async () => {
+      fireWindowPointerMove(fakeDom, 120)
+    })
+    expect(scroller.scrollLeft).toBe(-20)
+  })
+
+  test('does not scroll when no scrollable node exists', async () => {
+    const wrapperRef = await renderHook()
+    const wrapper = createFakeWrapper(createNonScrollableNode())
+
+    await act(async () => {
+      wrapperRef?.(wrapper)
+    })
+
+    await act(async () => {
+      wrapper.dispatch('pointerdown', { button: 0, clientX: 100, pointerType: 'mouse' })
+    })
+
+    expect(fakeDom.window.addEventListener).not.toHaveBeenCalledWith(
+      'pointermove',
+      expect.any(Function),
+    )
   })
 
   test('does not attach listeners off web', async () => {

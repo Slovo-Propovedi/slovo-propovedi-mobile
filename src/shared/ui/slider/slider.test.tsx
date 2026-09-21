@@ -1,13 +1,33 @@
 import { fireEvent, screen } from '@testing-library/react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { Slider } from './slider'
+import { getSliderItemStride } from './slider-item/slider-item.lib'
+import { SliderItemSize } from './slider-item/slider-item.types'
 
 const SLIDER_ITEM_ID = 'slider-item'
+const MOCK_SCREEN_WIDTH = 400
+
+// SCREEN_WIDTH is narrowed so the virtualized slider mounts a preview of the
+// columns, not every item. Item geometry (SIZE_OF_MINIMUM_SIDE_OF_SCREEN)
+// stays real because getSliderItemWidth depends on it. The width is inlined:
+// hoisted jest.mock factories cannot reference module-level constants.
+jest.mock('shared/config', () => {
+  const actual = jest.requireActual('shared/config')
+  return { ...actual, SCREEN_WIDTH: 400 }
+})
 
 const itemStub = { artwork: 'https//:vk.com', data: {} }
 const sliderStub = { items: [itemStub], title: 'title' }
 const mockData: { text: null | string } = { text: null }
-const sliderRowId = 'slider-row'
+
+const createItems = (count: number) =>
+  Array.from({ length: count }, (_, index) => ({
+    artwork: 'https://example.com/image.png',
+    data: { id: index },
+  }))
+
+const getInitialNumToRender = (size: SliderItemSize) =>
+  Math.ceil(MOCK_SCREEN_WIDTH / getSliderItemStride(size)) + 1
 
 describe('<Slider/>', () => {
   beforeEach(() => {
@@ -89,20 +109,38 @@ describe('<Slider/>', () => {
     expect(mockData.text).toEqual('new value')
   })
 
-  test('length of rows elements is equal to itemsRows props', async () => {
-    const { rerender } = await renderWithProviders(
-      <Slider items={[itemStub, itemStub, itemStub, itemStub]} />,
+  test('renders every item and calls onPressItem with the pressed data in multi-row mode', async () => {
+    const pressedItems: { id: number }[] = []
+    const items = createItems(5)
+
+    await renderWithProviders(
+      <Slider
+        items={items}
+        itemsRows={2}
+        onPressItem={data => {
+          pressedItems.push(data)
+        }}
+      />,
     )
-    expect(screen.getAllByTestId(sliderRowId).length).toEqual(1)
-    let itemsRows = 2
-    await rerender(
-      <Slider itemsRows={itemsRows} items={[itemStub, itemStub, itemStub, itemStub]} />,
+
+    const renderedItems = screen.getAllByTestId(SLIDER_ITEM_ID)
+    expect(renderedItems).toHaveLength(5)
+
+    fireEvent.press(renderedItems[4])
+    expect(pressedItems).toEqual([{ id: 4 }])
+  })
+
+  test('mounts only a virtualized preview of the items, not all of them', async () => {
+    const items = createItems(20)
+
+    await renderWithProviders(<Slider items={items} />)
+
+    const expectedMountedColumns = Math.min(
+      getInitialNumToRender(SliderItemSize.Small),
+      items.length,
     )
-    expect(screen.getAllByTestId(sliderRowId).length).toEqual(itemsRows)
-    itemsRows++
-    await rerender(
-      <Slider itemsRows={itemsRows} items={[itemStub, itemStub, itemStub, itemStub]} />,
-    )
-    expect(screen.getAllByTestId(sliderRowId).length).toEqual(itemsRows)
+    const renderedItems = screen.getAllByTestId(SLIDER_ITEM_ID)
+    expect(renderedItems.length).toBeLessThan(items.length)
+    expect(renderedItems.length).toEqual(expectedMountedColumns)
   })
 })

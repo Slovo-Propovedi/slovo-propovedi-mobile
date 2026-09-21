@@ -4,17 +4,7 @@ import { type ThemeColors } from '../theme/types'
 
 export const createSliderStyles = (theme: ThemeColors) =>
   StyleSheet.create({
-    contentContainer: {
-      flexDirection: 'column-reverse',
-      gap: INDENTS.middle,
-    },
     flexFill: { flex: 1 },
-    row: {
-      flexDirection: 'row',
-      gap: INDENTS.middle,
-      maxWidth: '100%',
-      width: '100%',
-    },
     slider: { maxWidth: '100%' },
     title: {
       color: theme.text,

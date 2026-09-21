@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Platform } from 'react-native'
+import { resolveScrollableNode } from './resolveScrollableNode'
 
 const DRAG_CLICK_THRESHOLD_PX = 5
 
@@ -7,9 +8,6 @@ const MARQUEE_DRAG_SELECTOR = '[data-marquee-drag]'
 
 const isDomNode = (node: unknown): node is HTMLElement =>
   typeof node === 'object' && node !== null && 'addEventListener' in node
-
-const isScrollableNode = (child: unknown): child is HTMLElement =>
-  typeof child === 'object' && child !== null && 'scrollLeft' in child
 
 const isElementWithClosest = (target: unknown): target is Element =>
   typeof target === 'object' && target !== null && 'closest' in target
@@ -35,13 +33,6 @@ export const useMouseDragScroll = () => {
     let previousCursor = ''
     let previousUserSelect = ''
     let clickGuard: ((e: Event) => void) | null = null
-
-    const resolveScrollable = () => {
-      if (!scrollable && isScrollableNode(node.firstElementChild))
-        scrollable = node.firstElementChild
-
-      return scrollable
-    }
 
     const removeClickGuard = () => {
       if (!clickGuard) return
@@ -93,7 +84,7 @@ export const useMouseDragScroll = () => {
       // the row: the marquee's own pan gesture owns that pointer.
       const target = e.target
       if (isElementWithClosest(target) && target.closest(MARQUEE_DRAG_SELECTOR)) return
-      const targetNode = resolveScrollable()
+      const targetNode = resolveScrollableNode(node)
       if (!targetNode) return
       scrollable = targetNode
       startScrollLeft = targetNode.scrollLeft

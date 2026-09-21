@@ -37,3 +37,9 @@ export interface SliderItemProps {
   transform?: SliderItemTransform
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
 }
+
+export interface SliderItemsElement<D extends object> {
+  artwork: null | string | undefined
+  data: D
+  description?: string
+}
