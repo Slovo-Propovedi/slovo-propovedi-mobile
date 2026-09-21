@@ -18,7 +18,9 @@
  * restarts (state parsed at the file boundary into a trusted FailoverState;
  * malformed state is warned about and treated as absent). A tail of decisions
  * is appended to .opencode/profile-fallback.log — one line per event; the log
- * is rotated to .log.1 once it exceeds 1 MB (MAX_LOG_BYTES).
+ * is rotated to .log.1 once it exceeds 1 MB (MAX_LOG_BYTES). Only a REAL
+ * activation additionally notifies the triggering session with a synthetic
+ * message (dry-runs and skips stay silent), so a rehearsal never spams it.
  *
  * Hydrology:
  *   A HARD quota/billing failure (status 429, or text matching quota/
@@ -787,6 +789,17 @@ const activateFailoverInner = async (
       buildLogLine('activate', targetName, trigger.source, target, trigger.reason),
       deps.warn,
     )
+  }
+
+  // Best-effort session notification: only a real activation reaches here (the
+  // dry-run/skip paths returned earlier), and a notification failure must never
+  // undo an activation that already committed — warn and carry on.
+  const untilLabel = new Date(nextState.until).toLocaleTimeString()
+  const text = `⚠️ failover: ${formatRef(trigger.source)} → ${formatRef(target)} (${switchedTargets.join(', ')}) until ${untilLabel} — ${trigger.reason}`
+  try {
+    await ctx.session.synthetic({ sessionID: trigger.sessionID, text })
+  } catch (error) {
+    deps.warn(`failover: could not notify session: ${toMessage(error)}`)
   }
 
   return {
