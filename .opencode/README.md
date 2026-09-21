@@ -14,7 +14,8 @@
 - `profiles/` — 4 JSON-файла профилей моделей — **единственный источник
   данных** для плагина `/profile`
 - `plugins/profile/index.ts` — плагин `/profile` (in-session переключатель
-  профилей; единственный механизм смены профилей)
+  профилей; единственный механизм смены профилей) + файловер моделей при
+  лимитах (см. «Фейловер моделей» ниже)
 - `agents/` — определения агентов (`build`, `coder`, `researcher`, `reviewer`,
   `scribe`) со своими permissions во frontmatter
 - `skills/` — скиллы (`code-philosophy`, `code-review`, `frontend-philosophy`,
@@ -37,6 +38,45 @@
 
 Плагины `profile` и `kdco.worktree` / `kdco.workspace` /
 `kdco.background-agents` / `kdco.notify` — см. `plugins/` и `lib/`.
+
+## Фейловер моделей при лимитах (profile-failover)
+
+Плагин `profile` следит за ретраями сессии и при ошибках квоты/лимита
+автоматически переключает запрошенные модели на запасные:
+
+- **Триггер**: ошибка квоты/лимита (`status 429` или текст про
+  `quota`/`insufficient`/`credits`/`rate limit`/`billing`/`payment`) на
+  **втором и последующих** ретраях (`attempt >= 2`). Первый ретрай не
+  активирует фейловер, а логируется как `skip ... first attempt` — чтобы не
+  дёргаться на разовых сбоях. Ошибка на уже активной **запасной** модели
+  никогда не откатывает фейловер — только логируется.
+- **Пары** (source → fallback):
+
+  | Source                          | Fallback                          |
+  | ------------------------------- | --------------------------------- |
+  | `zai-coding-plan/glm-5.3-flash` | `opencode-go/glm-5.3-flash`       |
+  | `zai-coding-plan/glm-5.3`       | `opencode-go/glm-5.3`             |
+  | `opencode/big-pickle`           | `opencode-go/deepseek-v4.1-flash` |
+
+- **Что переключается**: субагенты под failing-моделью (frontmatter для
+  markdown-агентов + registry-пин для `explore`) и primary текущей сессии,
+  если её живая модель (в т.ч. переключённая вручную через `/models`)
+  совпадает с failing-моделью.
+- **Состояние**: файл `.opencode/profile-fallback.json` (overlay или
+  dry-run-маркер) — переживает рестарты; при старте живой overlay
+  переприменяется, истёкший overlay откатывается с cooldown, устаревший
+  dry-run-маркер просто удаляется (без cooldown).
+- **TTL**: 30 минут — затем авто-revert и повторное применение профиля.
+  **Cooldown**: 5 минут между revert и следующей активацией.
+- **Лог**: `.opencode/profile-fallback.log` — одна строка на событие; при
+  превышении 1 MB ротируется в `.log.1` (перезапись). Skip-строки
+  дедуплицируются (не чаще раза за cooldown-окно на пару «причина + модель»).
+- **Репетиция**: `/profile-failover-test dry [modelRef]` — только логирует
+  (`dry-run`), ничего не применяет. Реальный тест: `/profile-failover-test
+[modelRef]` (по умолчанию — модель текущей сессии).
+- **Ручное переключение профиля** (`/profile <имя>`) сбрасывает overlay
+  (reset). При hot-reload плагина cleanup отписывает retry-хук, диспоузит
+  registry-пины и снимает TTL-таймер.
 
 ## V1-плагины, не переносимые в V2
 

@@ -17,20 +17,34 @@
  * The overlay is persisted to .opencode/profile-fallback.json so it survives
  * restarts (state parsed at the file boundary into a trusted FailoverState;
  * malformed state is warned about and treated as absent). A tail of decisions
- * is appended to .opencode/profile-fallback.log — one line per event, never
- * truncated.
+ * is appended to .opencode/profile-fallback.log — one line per event; the log
+ * is rotated to .log.1 once it exceeds 1 MB (MAX_LOG_BYTES).
  *
  * Hydrology:
- *   activate (quota on a source model) → overrides recorded + applied for 30
- *   min (FAILOVER_TTL_MS), then auto-reverted (re-apply the stored profile).
+ *   A quota/rate-limit error on the SECOND attempt or later (attempt >= 2)
+ *   triggers activation — overrides recorded + applied for 30 min
+ *   (FAILOVER_TTL_MS), then auto-reverted (re-apply the stored profile).
  *   A 5 min cooldown (COOLDOWN_MS) suppresses re-activation flapping after a
- *   revert. A quota error on an already-active FALLBACK model never triggers
- *   an auto-revert — it is only logged.
+ *   revert; skip decisions are logged at most once per episode (no spam).
+ *   A quota error on an already-active FALLBACK model never triggers an
+ *   auto-revert — it is only logged. All mutations are serialized through a
+ *   promise-chain mutex (withMutex), so a manual reset can never be
+ *   resurrected by an in-flight activation, and plugin hot-reload disposes
+ *   every hook it registered (see installFailover's cleanup).
  */
 
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { Model, Plugin } from '@opencode/plugin'
+import { Plugin } from '@opencode/plugin'
+import {
+  formatRef,
+  formatValue,
+  isMissingFileError,
+  parseModelRef,
+  toMessage,
+  type ModelRef,
+  type ModelRefShape,
+} from './shared'
 
 /** How long a failover activation stays applied before auto-revert (ms). */
 export const FAILOVER_TTL_MS = 30 * 60_000
@@ -41,12 +55,10 @@ export const COOLDOWN_MS = 5 * 60_000
 const STATE_FILENAME = 'profile-fallback.json'
 const LOG_FILENAME = 'profile-fallback.log'
 
-const QUOTA_PATTERN = /(quota|insufficient|credits?|rate.?limit|exceeded|billing|payment)/i
+/** Rotate the audit log when it exceeds this size (bytes). */
+const MAX_LOG_BYTES = 1024 * 1024
 
-type ModelRef = Model.Ref
-
-/** Boundary shape of a model ref (SessionInfo.model is the plain, unbranded form). */
-type ModelRefShape = { providerID: string; id: string; variant?: string }
+const QUOTA_PATTERN = /(quota|insufficient|credits?|rate.?limit|billing|payment)/i
 
 /** The profile shape failover consumes (structurally compatible with index.ts). */
 export interface ActiveProfile {
@@ -90,6 +102,7 @@ export interface FailoverTestInput {
 export interface FailoverAPI {
   reset: () => Promise<void>
   runTest: (input: FailoverTestInput) => Promise<string>
+  cleanup: () => Promise<void>
 }
 
 interface FailoverTrigger {
@@ -127,20 +140,30 @@ let state: FailoverState | null = null
 let ttlTimer: ReturnType<typeof setTimeout> | null = null
 let cooldownMemory = 0
 let transformRegistrations: Array<{ dispose: () => Promise<void> }> = []
+let lastSkipKey: string | null = null
+let lastSkipAt = 0
+
+/**
+ * Serializes every mutating entry point (activation, revert, reset, dry-run
+ * arm/disarm). Each op enqueues after the previous one (previous.then(run,
+ * run)), so ops never interleave: a manual reset either runs before an
+ * activation commits (and is then cleared by the exact same activation
+ * attempt's re-check) or after it (and clears it) — never in between, so an
+ * in-flight activation can't resurrect an overlay the reset removed.
+ */
+let mutex: Promise<unknown> = Promise.resolve()
+
+const withMutex = <T>(run: () => Promise<T>): Promise<T> => {
+  const op = mutex.then(run, run)
+  mutex = op.then(
+    () => undefined,
+    () => undefined,
+  )
+  return op
+}
 
 /** "providerID/id" — the canonical key a pair matches on (variant ignored). */
 const refKey = (ref: ModelRefShape): string => `${ref.providerID}/${ref.id}`
-
-/** Render a model ref back to its "provider/model[#variant]" string form. */
-const formatRef = (ref: ModelRefShape): string =>
-  ref.variant ? `${ref.providerID}/${ref.id}#${ref.variant}` : `${ref.providerID}/${ref.id}`
-
-const parseModelRef = (raw: string): ModelRef => Model.Ref.parse(raw)
-
-const toMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error))
-
-const isMissingFileError = (error: unknown): boolean =>
-  typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT'
 
 /**
  * Model alternatives: <source> -> <fallback>, matched on providerID+id
@@ -167,7 +190,10 @@ const isQuotaError = (error: { type: string; message: string; status?: number })
  * profile's own value. Used by the profile plugin's base registry transform
  * AND by failover re-apply, so both paths agree on the overlay.
  */
-export const resolveAgentModel = (profile: ActiveProfile, agentId: string): ModelRef | undefined => {
+export const resolveAgentModel = (
+  profile: ActiveProfile,
+  agentId: string,
+): ModelRef | undefined => {
   const override = state?.overrides[agentId]
   if (override) return override.to
   return profile.agents[agentId]
@@ -184,13 +210,6 @@ const parseIsoTime = (value: unknown, field: string): number => {
     throw new Error(`${field}: "${value}" is not a valid ISO timestamp`)
   }
   return time
-}
-
-const formatValue = (value: unknown): string => {
-  if (typeof value === 'string') return `"${value}"`
-  if (value === null) return 'null'
-  if (typeof value === 'object') return JSON.stringify(value) ?? String(value)
-  return String(value)
 }
 
 const parseOverride = (agentId: string, raw: unknown): FailoverOverride => {
@@ -211,7 +230,10 @@ const parseOverride = (agentId: string, raw: unknown): FailoverOverride => {
  * Malformed content is warned about and treated as absent (returns null) —
  * a corrupt overlay must never crash the plugin or wedge the profile.
  */
-const parseDurableState = (source: string, warn: (message: string) => void): FailoverState | null => {
+const parseDurableState = (
+  source: string,
+  warn: (message: string) => void,
+): FailoverState | null => {
   let raw: unknown
   try {
     raw = JSON.parse(source)
@@ -229,7 +251,8 @@ const parseDurableState = (source: string, warn: (message: string) => void): Fai
     for (const [agentId, overrideRaw] of Object.entries(overridesRaw)) {
       overrides[agentId] = parseOverride(agentId, overrideRaw)
     }
-    const primaryFrom = typeof parsed.primaryFrom === 'string' ? parseModelRef(parsed.primaryFrom) : null
+    const primaryFrom =
+      typeof parsed.primaryFrom === 'string' ? parseModelRef(parsed.primaryFrom) : null
     const primaryTo = typeof parsed.primaryTo === 'string' ? parseModelRef(parsed.primaryTo) : null
     return {
       active: parsed.active === true,
@@ -268,7 +291,7 @@ const serializeState = (state: FailoverState): string =>
     2,
   )
 
-// ─── Log (append-only audit trail) ───
+// ─── Log (append-only audit trail, rotated at install when too large) ───
 
 type LogEvent = 'activate' | 'skip' | 'revert' | 'dry-run' | 'reset' | 'test-inject'
 
@@ -286,7 +309,7 @@ const buildLogLine = (
     from ? formatRef(from) : '-',
     '->',
     to ? formatRef(to) : '-',
-    reason,
+    reason.replace(/\r?\n/g, '; '),
   ].join(' ')
 
 const appendLog = async (
@@ -299,6 +322,40 @@ const appendLog = async (
   } catch (error) {
     warn(`failover: could not append to ${LOG_FILENAME}: ${toMessage(error)}`)
   }
+}
+
+/** Move a too-large audit log aside (rotated file is overwritten). */
+const rotateLogIfLarge = async (
+  logFilePath: string,
+  warn: (message: string) => void,
+): Promise<void> => {
+  try {
+    const { size } = await fs.stat(logFilePath)
+    if (size <= MAX_LOG_BYTES) return
+    await fs.rename(logFilePath, `${logFilePath}.1`)
+  } catch (error) {
+    if (isMissingFileError(error)) return
+    warn(`failover: could not rotate ${LOG_FILENAME}: ${toMessage(error)}`)
+  }
+}
+
+/**
+ * Log a skip decision, deduped per (reason, source-model) episode: at most one
+ * line per cooldown window, so a flapping quota error cannot spam the log.
+ */
+const logSkip = async (
+  logFilePath: string,
+  warn: (message: string) => void,
+  source: ModelRef | null,
+  target: ModelRef | null,
+  reason: string,
+): Promise<void> => {
+  const dedupKey = `${reason}\u0000${source ? refKey(source) : ''}`
+  const now = Date.now()
+  if (lastSkipKey === dedupKey && now - lastSkipAt < COOLDOWN_MS) return
+  lastSkipKey = dedupKey
+  lastSkipAt = now
+  await appendLog(logFilePath, buildLogLine('skip', null, source, target, reason), warn)
 }
 
 // ─── Decisions ───
@@ -314,7 +371,13 @@ const isFallbackModel = (state: FailoverState, modelKey: string): boolean =>
 const isCooldownActive = (now: number): boolean =>
   now < Math.max(state?.cooldownUntil ?? 0, cooldownMemory)
 
-const computeFailoverPlan = (deps: FailoverDeps, source: ModelRef, target: ModelRef): FailoverPlan => {
+const computeFailoverPlan = async (
+  ctx: Plugin.Context,
+  deps: FailoverDeps,
+  source: ModelRef,
+  target: ModelRef,
+  sessionID: string,
+): Promise<FailoverPlan> => {
   const sourceKey = refKey(source)
   const profile = deps.getActiveProfile()
   if (!profile) return { agentSwitches: [], primarySwitched: false }
@@ -326,7 +389,22 @@ const computeFailoverPlan = (deps: FailoverDeps, source: ModelRef, target: Model
       agentSwitches.push({ agentId, to: target })
     }
   }
-  return { agentSwitches, primarySwitched: refKey(profile.primary) === sourceKey }
+
+  // Compare the failing source against the SESSION's live model (not just the
+  // profile's primary), so a session switched via the TUI /models command
+  // onto a failing model also gets failover. If the session cannot be read,
+  // no primary switch is planned — safer than guessing.
+  let primarySwitched = false
+  try {
+    const info = await ctx.session.get({ sessionID })
+    if (info?.model) {
+      primarySwitched = refKey(parseModelRef(formatRef(info.model))) === sourceKey
+    }
+  } catch (error) {
+    deps.warn(`failover: could not read session model to plan primary switch: ${toMessage(error)}`)
+  }
+
+  return { agentSwitches, primarySwitched }
 }
 
 /** Merge the new switches into any existing overlay (activations accumulate per agent). */
@@ -355,6 +433,13 @@ const buildActivatedState = (
 
 // ─── Apply (same mechanisms as the profile plugin) ───
 
+/**
+ * Apply agent targets. Registry pins created during THIS attempt live in a
+ * local list and are merged into the global overlay only on success — if
+ * ctx.agent.reload() fails mid-way, the partial pins are disposed here so a
+ * failed activation leaves no half-applied registry mutation behind (the
+ * exposure is logged; markdown frontmatter writes stay as best-effort).
+ */
 const applyAgentTargets = async (
   ctx: Plugin.Context,
   deps: FailoverDeps,
@@ -362,6 +447,7 @@ const applyAgentTargets = async (
   context: string,
 ): Promise<void> => {
   const errors: string[] = []
+  const localRegistrations: Array<{ dispose: () => Promise<void> }> = []
 
   for (const { agentId, to } of targets) {
     if (!deps.markdownAgentIds.has(agentId)) continue
@@ -383,10 +469,28 @@ const applyAgentTargets = async (
         })
       }
     })
-    transformRegistrations.push(registration)
+    localRegistrations.push(registration)
   }
 
-  await ctx.agent.reload()
+  try {
+    await ctx.agent.reload()
+  } catch (error) {
+    for (const registration of localRegistrations) {
+      try {
+        await registration.dispose()
+      } catch (disposeError) {
+        deps.warn(
+          `failover (${context}): could not dispose partial agent transform: ${toMessage(disposeError)}`,
+        )
+      }
+    }
+    deps.warn(`failover (${context}): partial apply exposed then rolled back — ${toMessage(error)}`)
+    throw error
+  }
+
+  // Success: the registrations are now part of the durable overlay and are
+  // disposed by revert/reset/cleanup together with any previously applied ones.
+  transformRegistrations.push(...localRegistrations)
   if (errors.length > 0) {
     deps.warn(`failover (${context}): agent frontmatter errors: ${errors.join(', ')}`)
   }
@@ -414,7 +518,9 @@ const persistState = async (
   warn: (message: string) => void,
 ): Promise<void> => {
   try {
-    await fs.writeFile(stateFilePath, serializeState(nextState), 'utf8')
+    const tmpPath = `${stateFilePath}.tmp`
+    await fs.writeFile(tmpPath, serializeState(nextState), 'utf8')
+    await fs.rename(tmpPath, stateFilePath)
   } catch (error) {
     warn(`failover: could not persist ${STATE_FILENAME}: ${toMessage(error)}`)
   }
@@ -445,13 +551,13 @@ const disposeRegistrations = async (deps: FailoverDeps, context: string): Promis
   transformRegistrations = []
 }
 
-const scheduleTtlRevert = async (
+const scheduleTtlRevert = (
   deps: FailoverDeps,
   ctx: Plugin.Context,
   stateFilePath: string,
   logFilePath: string,
   nextState: FailoverState,
-): Promise<void> => {
+): void => {
   if (ttlTimer) {
     clearTimeout(ttlTimer)
     ttlTimer = null
@@ -467,7 +573,7 @@ const scheduleTtlRevert = async (
  * registry pins, and re-apply the stored profile so its frontmatter wins again.
  * The session primary follows on the next session — switchModel is per-session.
  */
-const revertFailover = async (
+const revertFailoverInner = async (
   deps: FailoverDeps,
   ctx: Plugin.Context,
   stateFilePath: string,
@@ -495,29 +601,35 @@ const revertFailover = async (
   cooldownMemory = Date.now() + COOLDOWN_MS
 }
 
+const revertFailover = (
+  deps: FailoverDeps,
+  ctx: Plugin.Context,
+  stateFilePath: string,
+  logFilePath: string,
+  reason: string,
+): Promise<void> =>
+  withMutex(() => revertFailoverInner(deps, ctx, stateFilePath, logFilePath, reason))
+
 // ─── Activation (shared by the retry hook and the test command) ───
 
-const activateFailover = async (
+const activateFailoverInner = async (
   ctx: Plugin.Context,
   deps: FailoverDeps,
   stateFilePath: string,
   logFilePath: string,
   trigger: FailoverTrigger,
 ): Promise<FailoverOutcome> => {
+  const entryState = state
   const sourceKey = refKey(trigger.source)
   const target = findFailoverTarget(trigger.source)
   const now = Date.now()
 
   if (!target) {
-    await appendLog(
-      logFilePath,
-      buildLogLine('skip', null, trigger.source, null, `no failover pair for ${sourceKey}`),
-      deps.warn,
-    )
+    await logSkip(logFilePath, deps.warn, trigger.source, null, `no failover pair for ${sourceKey}`)
     return { kind: 'skipped', cause: `no failover pair for ${sourceKey}` }
   }
 
-  const plan = computeFailoverPlan(deps, trigger.source, target)
+  const plan = await computeFailoverPlan(ctx, deps, trigger.source, target, trigger.sessionID)
   const switchedTargets = [
     ...(plan.primarySwitched ? ['primary'] : []),
     ...plan.agentSwitches.map(({ agentId }) => agentId),
@@ -527,7 +639,13 @@ const activateFailover = async (
     for (const targetName of switchedTargets.length > 0 ? switchedTargets : [null]) {
       await appendLog(
         logFilePath,
-        buildLogLine('dry-run', targetName, trigger.source, target, `would switch (${trigger.reason})`),
+        buildLogLine(
+          'dry-run',
+          targetName,
+          trigger.source,
+          target,
+          `would switch (${trigger.reason})`,
+        ),
         deps.warn,
       )
     }
@@ -541,37 +659,39 @@ const activateFailover = async (
   }
 
   if (isCooldownActive(now)) {
-    await appendLog(
-      logFilePath,
-      buildLogLine('skip', null, trigger.source, target, 'cooldown active — waiting'),
-      deps.warn,
-    )
+    await logSkip(logFilePath, deps.warn, trigger.source, target, 'cooldown active — waiting')
     return { kind: 'skipped', cause: 'cooldown active' }
   }
 
   if (state && isSourceAlreadyFailedOver(state, sourceKey)) {
-    await appendLog(
+    await logSkip(
       logFilePath,
-      buildLogLine('skip', null, trigger.source, target, `fallback already active for ${sourceKey}`),
       deps.warn,
+      trigger.source,
+      target,
+      `fallback already active for ${sourceKey}`,
     )
     return { kind: 'skipped', cause: `fallback already active for ${sourceKey}` }
   }
 
   if (state && isFallbackModel(state, sourceKey)) {
-    await appendLog(
+    await logSkip(
       logFilePath,
-      buildLogLine('skip', null, trigger.source, target, 'error on fallback model — no auto-revert'),
       deps.warn,
+      trigger.source,
+      target,
+      'error on fallback model — no auto-revert',
     )
     return { kind: 'skipped', cause: 'error on fallback model — no auto-revert' }
   }
 
   if (!plan.primarySwitched && plan.agentSwitches.length === 0) {
-    await appendLog(
+    await logSkip(
       logFilePath,
-      buildLogLine('skip', null, trigger.source, target, `no agents or primary run ${sourceKey}`),
       deps.warn,
+      trigger.source,
+      target,
+      `no agents or primary run ${sourceKey}`,
     )
     return { kind: 'skipped', cause: `no agents or primary run ${sourceKey}` }
   }
@@ -583,16 +703,33 @@ const activateFailover = async (
   } catch (error) {
     // Never commit an overlay that was not actually applied: keep the previous
     // state (in-process + file) and only log.
-    await appendLog(
+    await logSkip(
       logFilePath,
-      buildLogLine('skip', null, trigger.source, target, `activation failed: ${toMessage(error)}`),
       deps.warn,
+      trigger.source,
+      target,
+      `activation failed: ${toMessage(error)}`,
     )
     return { kind: 'skipped', cause: `activation failed: ${toMessage(error)}` }
   }
+
+  // The mutex guarantees no other op ran between entryState capture and here,
+  // so this check is a cheap defensive invariant: if a future path mutates
+  // state outside the mutex, a stale activation must not overwrite a newer
+  // overlay (including one put in place by a manual reset).
+  if (state !== entryState) {
+    await logSkip(
+      logFilePath,
+      deps.warn,
+      trigger.source,
+      target,
+      'state changed mid-activation — not committing',
+    )
+    return { kind: 'skipped', cause: 'state changed mid-activation' }
+  }
   state = nextState
   await persistState(stateFilePath, nextState, deps.warn)
-  await scheduleTtlRevert(deps, ctx, stateFilePath, logFilePath, nextState)
+  scheduleTtlRevert(deps, ctx, stateFilePath, logFilePath, nextState)
 
   for (const targetName of switchedTargets) {
     await appendLog(
@@ -611,6 +748,15 @@ const activateFailover = async (
   }
 }
 
+const activateFailover = (
+  ctx: Plugin.Context,
+  deps: FailoverDeps,
+  stateFilePath: string,
+  logFilePath: string,
+  trigger: FailoverTrigger,
+): Promise<FailoverOutcome> =>
+  withMutex(() => activateFailoverInner(ctx, deps, stateFilePath, logFilePath, trigger))
+
 // ─── Retry hook (the real trigger) ───
 
 const handleRetry = async (
@@ -618,10 +764,22 @@ const handleRetry = async (
   deps: FailoverDeps,
   stateFilePath: string,
   logFilePath: string,
-  event: { sessionID: string; model: ModelRef; error: { type: string; message: string; status?: number } },
+  event: {
+    sessionID: string
+    model: ModelRef
+    error: { type: string; message: string; status?: number }
+    attempt: number
+  },
 ): Promise<void> => {
   // Not a quota/limit error — leave opencode's retry decision untouched.
   if (!isQuotaError(event.error)) return
+
+  // The first attempt may be transient; only start failover once the request
+  // failed on the second attempt or later (attempt >= 2).
+  if (event.attempt < 2) {
+    await logSkip(logFilePath, deps.warn, event.model, null, 'first attempt')
+    return
+  }
 
   await activateFailover(ctx, deps, stateFilePath, logFilePath, {
     source: event.model,
@@ -636,10 +794,7 @@ const buildTestReport = (outcome: FailoverOutcome): string => {
   if (outcome.kind === 'skipped') {
     return `⏭️  failover test skipped: ${outcome.cause}`
   }
-  const targets = [
-    ...(outcome.primarySwitched ? ['primary'] : []),
-    ...outcome.agentsSwitched,
-  ]
+  const targets = [...(outcome.primarySwitched ? ['primary'] : []), ...outcome.agentsSwitched]
   const list = targets.length > 0 ? targets.join(', ') : '(none)'
   if (outcome.kind === 'dry-run') {
     return `🧪 failover test (dry-run): would switch ${list} ${formatRef(outcome.from)} -> ${formatRef(outcome.to)} — nothing applied, nothing persisted`
@@ -668,10 +823,12 @@ const persistDryRunMarker = async (
 
 /**
  * Arm rehearsal mode in-process: store the marker, write it durably, and
- * schedule its TTL lapse so real failover resumes on its own. Never armed
- * over a live overlay — a rehearsal must not clobber real failover state.
+ * schedule its TTL lapse so real failover resumes on its own. The guard that
+ * refuses to arm over a live overlay lives INSIDE the mutex (not at the test
+ * call site), so a rehearsal can never clobber real failover state even when
+ * an activation was enqueued just before this op.
  */
-const armDryRunMarker = async (
+const armDryRunMarkerInner = async (
   ctx: Plugin.Context,
   deps: FailoverDeps,
   stateFilePath: string,
@@ -684,25 +841,46 @@ const armDryRunMarker = async (
   }
   const marker = await persistDryRunMarker(stateFilePath, deps.warn)
   state = marker
-  await scheduleTtlRevert(deps, ctx, stateFilePath, logFilePath, marker)
+  scheduleTtlRevert(deps, ctx, stateFilePath, logFilePath, marker)
 }
 
-/** An explicit real test disarms a rehearsal marker (file + in-process). */
-const disarmDryRunMarker = async (
+const armDryRunMarker = (
+  ctx: Plugin.Context,
+  deps: FailoverDeps,
+  stateFilePath: string,
+  logFilePath: string,
+): Promise<void> => withMutex(() => armDryRunMarkerInner(ctx, deps, stateFilePath, logFilePath))
+
+/**
+ * An explicit real test disarms a rehearsal marker (file + in-process). Like
+ * arming, the "was it actually in dry-run mode" check happens inside the mutex.
+ */
+const disarmDryRunMarkerInner = async (
   deps: FailoverDeps,
   stateFilePath: string,
   logFilePath: string,
 ): Promise<void> => {
+  if (!state?.dryRun) return
   if (ttlTimer) {
     clearTimeout(ttlTimer)
     ttlTimer = null
   }
   await disposeRegistrations(deps, 'test disarm')
   await removeStateFile(stateFilePath, deps.warn)
-  await appendLog(logFilePath, buildLogLine('reset', null, null, null, 'test disarm — dry-run mode cleared'), deps.warn)
+  await appendLog(
+    logFilePath,
+    buildLogLine('reset', null, null, null, 'test disarm — dry-run mode cleared'),
+    deps.warn,
+  )
   state = null
   cooldownMemory = 0
 }
+
+const disarmDryRunMarker = (
+  deps: FailoverDeps,
+  stateFilePath: string,
+  logFilePath: string,
+): Promise<void> => withMutex(() => disarmDryRunMarkerInner(deps, stateFilePath, logFilePath))
 
 const runFailoverTest = async (
   ctx: Plugin.Context,
@@ -742,9 +920,9 @@ const runFailoverTest = async (
   // quota events only log — a rehearsal until the marker lapses or a real
   // activation overwrites it. An explicit real test disarms the marker so a
   // `dry` rehearsal followed by a real test actually activates.
-  if (dry && state?.active !== true) {
+  if (dry) {
     await armDryRunMarker(ctx, deps, stateFilePath, logFilePath)
-  } else if (!dry && state?.dryRun === true) {
+  } else {
     await disarmDryRunMarker(deps, stateFilePath, logFilePath)
   }
 
@@ -758,7 +936,7 @@ const runFailoverTest = async (
   return buildTestReport(outcome)
 }
 
-const resetFailover = async (
+const resetFailoverInner = async (
   deps: FailoverDeps,
   stateFilePath: string,
   logFilePath: string,
@@ -770,11 +948,21 @@ const resetFailover = async (
   await disposeRegistrations(deps, 'reset')
   const removed = await removeStateFile(stateFilePath, deps.warn)
   if (removed) {
-    await appendLog(logFilePath, buildLogLine('reset', null, null, null, 'manual profile switch — failover cleared'), deps.warn)
+    await appendLog(
+      logFilePath,
+      buildLogLine('reset', null, null, null, 'manual profile switch — failover cleared'),
+      deps.warn,
+    )
   }
   state = null
   cooldownMemory = 0
 }
+
+const resetFailover = (
+  deps: FailoverDeps,
+  stateFilePath: string,
+  logFilePath: string,
+): Promise<void> => withMutex(() => resetFailoverInner(deps, stateFilePath, logFilePath))
 
 const reapplyPersistedState = async (
   ctx: Plugin.Context,
@@ -789,8 +977,12 @@ const reapplyPersistedState = async (
 }
 
 /**
- * Mount the failover machinery: recover persisted state on startup, register
- * the retry hook, and expose the reset/test API for the profile plugin.
+ * Mount the failover machinery: rotate the log if too large, recover persisted
+ * state on startup, register the retry hook, and expose the reset/test API for
+ * the profile plugin. Returns a cleanup — the plugin's setup hands it to the
+ * SDK — that clears the TTL timer, disposes every agent transform this module
+ * registered, and unregisters the retry hook, so hot-reload leaves nothing
+ * behind.
  */
 export const installFailover = async (
   ctx: Plugin.Context,
@@ -798,6 +990,8 @@ export const installFailover = async (
 ): Promise<FailoverAPI> => {
   const stateFilePath = path.join(deps.directory, '.opencode', STATE_FILENAME)
   const logFilePath = path.join(deps.directory, '.opencode', LOG_FILENAME)
+
+  await rotateLogIfLarge(logFilePath, deps.warn)
 
   let persisted: FailoverState | null = null
   try {
@@ -811,24 +1005,52 @@ export const installFailover = async (
 
   if (persisted) {
     const now = Date.now()
-    if (persisted.dryRun && now < persisted.until) {
-      // A rehearsal marker: keep dry-run mode in-process until it lapses.
-      state = persisted
-      await scheduleTtlRevert(deps, ctx, stateFilePath, logFilePath, persisted)
-    } else if (persisted.active && now < persisted.until) {
+    if (persisted.active && now < persisted.until) {
       // A live overlay survives restarts: re-apply it verbatim.
       state = persisted
       await reapplyPersistedState(ctx, deps, persisted)
-      await scheduleTtlRevert(deps, ctx, stateFilePath, logFilePath, persisted)
-    } else {
+      scheduleTtlRevert(deps, ctx, stateFilePath, logFilePath, persisted)
+    } else if (persisted.dryRun && now < persisted.until) {
+      // A rehearsal marker: keep dry-run mode in-process until it lapses.
+      state = persisted
+      scheduleTtlRevert(deps, ctx, stateFilePath, logFilePath, persisted)
+    } else if (persisted.active) {
+      // An expired live overlay: revert (forget + re-apply the profile) and
+      // enter cooldown so activation cannot immediately flap again.
       await revertFailover(deps, ctx, stateFilePath, logFilePath, 'expired at startup')
+    } else if (persisted.dryRun) {
+      // A stale rehearsal marker: delete it and log, but do NOT enter
+      // cooldown — a rehearsal that lapsed must not delay real failover.
+      await removeStateFile(stateFilePath, deps.warn)
+      await appendLog(
+        logFilePath,
+        buildLogLine('dry-run', null, null, null, 'dry-run-expired'),
+        deps.warn,
+      )
+      state = null
     }
   }
 
-  await ctx.session.hook('retry', event => handleRetry(ctx, deps, stateFilePath, logFilePath, event))
+  const retryRegistration = await ctx.session.hook('retry', event =>
+    handleRetry(ctx, deps, stateFilePath, logFilePath, event),
+  )
+
+  const cleanup = async (): Promise<void> => {
+    if (ttlTimer) {
+      clearTimeout(ttlTimer)
+      ttlTimer = null
+    }
+    await disposeRegistrations(deps, 'cleanup')
+    try {
+      await retryRegistration.dispose()
+    } catch (error) {
+      deps.warn(`failover: could not dispose retry hook: ${toMessage(error)}`)
+    }
+  }
 
   return {
     reset: () => resetFailover(deps, stateFilePath, logFilePath),
     runTest: input => runFailoverTest(ctx, deps, stateFilePath, logFilePath, input),
+    cleanup,
   }
 }

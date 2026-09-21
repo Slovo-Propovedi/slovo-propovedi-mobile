@@ -58,8 +58,16 @@
 
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { Model, Plugin } from '@opencode/plugin'
+import { Plugin } from '@opencode/plugin'
 import { installFailover, resolveAgentModel } from './failover'
+import {
+  formatRef,
+  formatValue,
+  isMissingFileError,
+  parseModelRef,
+  toMessage,
+  type ModelRef,
+} from './shared'
 
 /** Plugin-scoped storage key holding the active profile name. */
 const STORAGE_KEY = 'activeProfile'
@@ -98,37 +106,9 @@ const MARKDOWN_SUBAGENT_IDS = new Set<string>(['researcher', 'coder', 'scribe', 
  */
 const REGISTRY_SUBAGENT_IDS = new Set<string>(['explore'])
 
-/** A parsed "provider/model[#variant]" reference — the canonical Model.Ref, trusted after the boundary. */
-type ModelRef = Model.Ref
-
 interface ProfileData {
   primary: ModelRef
   agents: Record<string, ModelRef>
-}
-
-function toMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
-}
-
-/** Render a ModelRef back to its "provider/model[#variant]" string form. */
-function formatRef(ref: ModelRef): string {
-  return ref.variant ? `${ref.providerID}/${ref.id}#${ref.variant}` : `${ref.providerID}/${ref.id}`
-}
-
-/** Human-readable rendering of an arbitrary value for error messages. */
-function formatValue(value: unknown): string {
-  if (typeof value === 'string') return `"${value}"`
-  if (value === null) return 'null'
-  if (typeof value === 'object') return JSON.stringify(value) ?? String(value)
-  return String(value)
-}
-
-/**
- * Parse "provider/model#variant" into the canonical Model.Ref (Law 4: Fail Fast).
- * Throws for malformed values; callers add profile/field context.
- */
-function parseModelRef(raw: string): ModelRef {
-  return Model.Ref.parse(raw)
 }
 
 /** Wrap parseModelRef so malformed values carry the profile/field location. */
@@ -184,11 +164,6 @@ async function listProfiles(profilesDir: string): Promise<string[]> {
     .filter(entry => entry.endsWith('.json'))
     .map(entry => entry.replace(/\.json$/, ''))
     .sort()
-}
-
-/** True when the error means "file does not exist on disk". */
-function isMissingFileError(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT'
 }
 
 /**
@@ -255,7 +230,7 @@ async function applyMarkdownFrontmatterPins(
     try {
       await writeAgentModelFrontmatter(agentsDir, agentId, modelRef)
     } catch (error) {
-      errors.push(`${agentId}: ${error instanceof Error ? error.message : String(error)}`)
+      errors.push(`${agentId}: ${toMessage(error)}`)
     }
   }
   return errors
@@ -484,5 +459,9 @@ export default Plugin.define({
         })
       }
     })
+
+    // Failover cleanup (TTL timer, agent transforms, retry hook) is handed to
+    // the SDK so a hot-reload of this plugin never leaves stale hooks behind.
+    return failover.cleanup
   },
 })

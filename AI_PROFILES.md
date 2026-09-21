@@ -13,12 +13,12 @@
 
 ## Профили
 
-| Профиль              | Orchestrator (primary, `plan`, `build`, `researcher`) | Worker (`coder`, `explore`, `scribe`) | Reviewer (`reviewer`)     |
-| -------------------- | ----------------------------------------------------- | ------------------------------------- | ------------------------- |
-| `zai_and_free`       | `zai-coding-plan/glm-5.3-flash`                       | `opencode/big-pickle`                 | `zai-coding-plan/glm-5.3` |
-| `go_glm_and_free`    | `opencode-go/glm-5.3-flash`                           | `opencode/big-pickle`                 | `opencode-go/glm-5.3`     |
-| `go_glm_and_deepseek`| `opencode-go/glm-5.3-flash`                           | `opencode-go/deepseek-v4.1-flash`     | `opencode-go/glm-5.3`     |
-| `zai_and_go_deepseek`| `zai-coding-plan/glm-5.3-flash`                       | `opencode-go/deepseek-v4.1-flash`     | `zai-coding-plan/glm-5.3` |
+| Профиль               | Orchestrator (primary, `plan`, `build`, `researcher`) | Worker (`coder`, `explore`, `scribe`) | Reviewer (`reviewer`)     |
+| --------------------- | ----------------------------------------------------- | ------------------------------------- | ------------------------- |
+| `zai_and_free`        | `zai-coding-plan/glm-5.3-flash`                       | `opencode/big-pickle`                 | `zai-coding-plan/glm-5.3` |
+| `go_glm_and_free`     | `opencode-go/glm-5.3-flash`                           | `opencode/big-pickle`                 | `opencode-go/glm-5.3`     |
+| `go_glm_and_deepseek` | `opencode-go/glm-5.3-flash`                           | `opencode-go/deepseek-v4.1-flash`     | `opencode-go/glm-5.3`     |
+| `zai_and_go_deepseek` | `zai-coding-plan/glm-5.3-flash`                       | `opencode-go/deepseek-v4.1-flash`     | `zai-coding-plan/glm-5.3` |
 
 ## Быстрый старт
 
@@ -88,6 +88,25 @@ opencode покажет список всех `.opencode/profiles/*.json` с о�
   `zai_and_go_deepseek`).
 - `zai_and_free` — исходная связка; когда квоты восстановились, вернитесь:
   `/profile zai_and_free`.
+
+## Автоматический фейловер при лимитах
+
+Помимо ручного переключения, плагин следит за ретраями и при ошибке
+квоты/лимита (**`status 429`** или текст `quota`/`insufficient`/`credits`/
+`rate limit`/`billing`/`payment`) на **втором и последующих** ретраях
+(`attempt >= 2`) автоматически переводит модели на запасные:
+
+- `zai-coding-plan/glm-5.3-flash` → `opencode-go/glm-5.3-flash`
+- `zai-coding-plan/glm-5.3` → `opencode-go/glm-5.3`
+- `opencode/big-pickle` → `opencode-go/deepseek-v4.1-flash`
+
+Overlay живёт 30 минут (TTL) и затем откатывается; между revert и следующей
+активацией — cooldown 5 минут. Состояние — `.opencode/profile-fallback.json`,
+аудит-лог — `.opencode/profile-fallback.log` (ротация при 1 MB). Репетиция
+без применения — `/profile-failover-test dry [modelRef]`; реальный тест —
+`/profile-failover-test [modelRef]`. Любое ручное `/profile <имя>` сбрасывает
+overlay. Подробности — в `.opencode/README.md` → «Фейловер моделей при
+лимитах».
 
 ## Структура файлов
 
