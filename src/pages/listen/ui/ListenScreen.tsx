@@ -11,6 +11,7 @@ import {
 } from 'features/sermon-search'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { useScrollActivity } from '../lib/useScrollActivity'
 import { ContinueListeningButton } from './ContinueListeningButton'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 
@@ -19,6 +20,7 @@ export const ListenScreen = () => {
   const isSearchOpen = useIsSearchOpen()
   const isSearchActive = useIsSearchActive()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { onScroll } = useScrollActivity()
 
   return (
     <SafeAreaView
@@ -34,6 +36,7 @@ export const ListenScreen = () => {
         <SermonSearchResults />
       ) : (
         <ScrollView
+          onScroll={onScroll}
           keyboardDismissMode='on-drag'
           keyboardShouldPersistTaps='handled'
           style={[styles.scroll, { backgroundColor: currentTheme.background }]}

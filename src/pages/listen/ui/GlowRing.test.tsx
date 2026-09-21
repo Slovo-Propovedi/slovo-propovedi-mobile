@@ -35,6 +35,20 @@ describe('<GlowRing>', () => {
     expect(getAllByTestId('glow-blob')).toHaveLength(14)
   })
 
+  test('freezes the ring while paused (scroll / tab unfocused) and resumes when unpaused', async () => {
+    const { getAllByTestId, getByTestId, rerender } = await renderWithProviders(
+      <GlowRing isPaused={true} isPlaying={false} />,
+    )
+
+    expect(getByTestId('glow-ring')).toBeTruthy()
+    expect(getAllByTestId('glow-blob')).toHaveLength(14)
+
+    // isPaused flips back to false — the effect restarts the loops like a play toggle.
+    rerender(<GlowRing isPaused={false} isPlaying={false} />)
+    expect(getByTestId('glow-ring')).toBeTruthy()
+    expect(getAllByTestId('glow-blob')).toHaveLength(14)
+  })
+
   test('applies the passed size to the Svg canvas', async () => {
     const { getByTestId } = await renderWithProviders(<GlowRing size={150} isPlaying={false} />)
 

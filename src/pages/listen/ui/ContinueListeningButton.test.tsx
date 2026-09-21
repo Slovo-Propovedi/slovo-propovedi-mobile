@@ -35,6 +35,10 @@ jest.mock('react-native-svg', () => {
   }
 })
 
+jest.mock('expo-router', () => ({
+  useIsFocused: () => true,
+}))
+
 const mockEntypoSpy = jest.fn()
 
 jest.mock('@expo/vector-icons', () => {

@@ -1,6 +1,10 @@
 import { Entypo } from '@expo/vector-icons'
+import { useAtom } from '@reatom/npm-react'
+import { useIsFocused } from 'expo-router'
 import { StyleSheet, View } from 'react-native'
 import { useTheme } from 'shared/ui/theme'
+import { useGlowVisibility } from '../lib/useGlowVisibility'
+import { isGlowVisibleAtom, isListenScrollingAtom } from '../model'
 import { GlowRing } from './GlowRing'
 
 export const TOTAL_SIZE = 224 // MUST match GlowRing.RING_SIZE (224) — both define the same overlay
@@ -17,6 +21,15 @@ export const ContinueCircleButton = ({
   width = TOTAL_SIZE,
 }: ContinueCircleButtonProps) => {
   const { currentTheme } = useTheme()
+  const [isScrolling] = useAtom(isListenScrollingAtom)
+  const [isGlowVisible] = useAtom(isGlowVisibleAtom)
+  const isFocused = useIsFocused()
+  const { onLayout, ref } = useGlowVisibility({ isFocused })
+
+  // Свечение замирает, пока список скроллится, таб не в фокусе или кнопка целиком
+  // за кадром — GlowRing анимирует SVG-дерево на UI-потоке и конкурирует со
+  // скроллом на Android.
+  const isPaused = isScrolling || !isFocused || !isGlowVisible
 
   // Сначала сжимается «канва» свечения (glowSize = доступная ширина), а непрозрачный
   // круг остаётся INNER_SIZE. Только когда ширина падает ниже INNER_SIZE, круг и
@@ -31,10 +44,12 @@ export const ContinueCircleButton = ({
 
   return (
     <View
+      ref={ref}
+      onLayout={onLayout}
       testID='continue-circle-wrapper'
       style={[styles.wrapper, { height: glowSize, width: glowSize }]}
     >
-      <GlowRing size={glowSize} isPlaying={isPlaying} />
+      <GlowRing size={glowSize} isPaused={isPaused} isPlaying={isPlaying} />
       <View
         testID='continue-circle-inner'
         style={[

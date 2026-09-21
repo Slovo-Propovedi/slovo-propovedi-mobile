@@ -21,9 +21,11 @@ import {
 import { GlowLayer } from './GlowLayer'
 
 export const GlowRing = ({
+  isPaused = false,
   isPlaying,
   size = RING_SIZE,
 }: {
+  isPaused?: boolean
   isPlaying: boolean
   size?: number
 }) => {
@@ -42,14 +44,16 @@ export const GlowRing = ({
     }
 
     // «Постоянно в движении когда на паузе» (issue #72): играет — свечение замирает.
-    if (isPlaying) return stop
+    // Паузу навешивает и скролл списка / потеря фокуса таба: анимация SVG-дерева
+    // на 60fps конкурирует со скроллом на UI-потоке Android.
+    if (isPlaying || isPaused) return stop
 
     cw.value = spinCwLoop()
     ccw.value = spinCcwLoop()
     breathe.value = breatheLoop()
 
     return stop
-  }, [isPlaying, breathe, ccw, cw])
+  }, [isPaused, isPlaying, breathe, ccw, cw])
 
   const cwProps = useAnimatedProps<GlowLayerAnimated>(() => ({
     transform: [{ rotate: `${cwAngle(cw.value)}deg` }, { scale: 1 + breathe.value * 0.08 }],

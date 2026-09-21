@@ -2,6 +2,10 @@ import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { ContinueCircleButton } from './ContinueCircleButton'
 
+jest.mock('expo-router', () => ({
+  useIsFocused: () => true,
+}))
+
 jest.mock('react-native-svg', () => {
   const { View } = jest.requireActual('react-native')
 
