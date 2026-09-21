@@ -595,7 +595,17 @@ const revertFailoverInner = async (
       deps.warn(`failover (revert): frontmatter errors: ${errors.join(', ')}`)
     }
   }
-  await ctx.agent.reload()
+
+  // Reload is best-effort here: if it throws, the TTL call site's `void
+  // revertFailover(...)` would turn it into an unhandled rejection and —
+  // worse — state/cooldown below would never be set, wedging the in-memory
+  // overlay (stale registry pin, "fallback already active" forever, no TTL
+  // ever again). Warn and clear anyway.
+  try {
+    await ctx.agent.reload()
+  } catch (error) {
+    deps.warn(`failover (revert): could not reload agents — ${toMessage(error)}`)
+  }
 
   state = null
   cooldownMemory = Date.now() + COOLDOWN_MS
@@ -1006,9 +1016,18 @@ export const installFailover = async (
   if (persisted) {
     const now = Date.now()
     if (persisted.active && now < persisted.until) {
-      // A live overlay survives restarts: re-apply it verbatim.
+      // A live overlay survives restarts: re-apply it verbatim. Failure here
+      // (e.g. a broken agent reload) degrades to an unapplied overlay — warn
+      // and continue, so a startup re-apply hiccup can never reject the
+      // plugin setup; the TTL revert still cleans the stale overlay up.
       state = persisted
-      await reapplyPersistedState(ctx, deps, persisted)
+      try {
+        await reapplyPersistedState(ctx, deps, persisted)
+      } catch (error) {
+        deps.warn(
+          `failover: could not re-apply persisted overlay at startup — ${toMessage(error)}; overlay left unapplied`,
+        )
+      }
       scheduleTtlRevert(deps, ctx, stateFilePath, logFilePath, persisted)
     } else if (persisted.dryRun && now < persisted.until) {
       // A rehearsal marker: keep dry-run mode in-process until it lapses.
