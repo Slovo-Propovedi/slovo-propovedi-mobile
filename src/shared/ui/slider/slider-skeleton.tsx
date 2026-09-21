@@ -1,6 +1,8 @@
 import { Entypo } from '@expo/vector-icons'
 import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
+import Animated from 'react-native-reanimated'
+import { useSkeletonPulse } from '../skeleton/useSkeletonPulse'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 import { SliderItemSkeleton } from './slider-item/skeleton'
@@ -9,6 +11,7 @@ import {
   type SliderItemTransform,
   WhereIsSlideTitleLocated,
 } from './slider-item/slider-item.types'
+import { getItemsByRows, getMarginBottom } from './slider-skeleton.lib'
 
 interface SliderSkeletonProps {
   borderRadius?: boolean
@@ -19,26 +22,6 @@ interface SliderSkeletonProps {
   titleFontSize?: number
   transform?: SliderItemTransform
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
-}
-
-const getMarginBottom = (itemsSize: SliderItemSize, titleFontSize: number): number =>
-  ({
-    [SliderItemSize.Large]: titleFontSize * 2,
-    [SliderItemSize.Middle]: titleFontSize,
-    [SliderItemSize.Small]: titleFontSize,
-    [SliderItemSize.XLarge]: titleFontSize * 2,
-  })[itemsSize]
-
-const getItemsByRows = (itemsCount: number, itemsRows: number): number[] => {
-  const rows: number[] = []
-  let rowIndex = 0
-  for (let i = 0; i < itemsCount; i++) {
-    if (!rows[rowIndex]) rows[rowIndex] = 0
-    rows[rowIndex]++
-    rowIndex++
-    if (rowIndex >= itemsRows) rowIndex = 0
-  }
-  return rows
 }
 
 export const SliderSkeleton = ({
@@ -52,6 +35,7 @@ export const SliderSkeleton = ({
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderSkeletonProps) => {
   const { currentTheme } = useTheme()
+  const { pulseStyle } = useSkeletonPulse()
   const marginBottom = getMarginBottom(itemsSize, titleFontSize)
   const itemsByRows = getItemsByRows(itemsCount, itemsRows)
   const sectionStyle = {
@@ -70,10 +54,11 @@ export const SliderSkeleton = ({
       ]}
     >
       <View testID='title' style={styles.title}>
-        <View
+        <Animated.View
           style={[
             styles.titleBar,
             { backgroundColor: currentTheme.skeleton, height: titleFontSize },
+            pulseStyle,
           ]}
         />
         <Entypo name='chevron-right' size={titleFontSize} color={currentTheme.skeleton} />

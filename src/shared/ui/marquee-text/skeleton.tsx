@@ -1,4 +1,6 @@
-import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
+import { type StyleProp, StyleSheet, type ViewStyle } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useSkeletonPulse } from '../skeleton/useSkeletonPulse'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, RADIUSES } from '../theme/themed'
 
@@ -14,10 +16,17 @@ export const MarqueeTextSkeleton = ({
   testID,
 }: MarqueeTextSkeletonProps) => {
   const { currentTheme } = useTheme()
+  const { pulseStyle } = useSkeletonPulse()
+
   return (
-    <View
+    <Animated.View
       testID={testID}
-      style={[styles.skeleton, { backgroundColor: currentTheme.skeleton, height: fontSize }, style]}
+      style={[
+        styles.skeleton,
+        { backgroundColor: currentTheme.skeleton, height: fontSize },
+        pulseStyle,
+        style,
+      ]}
     />
   )
 }

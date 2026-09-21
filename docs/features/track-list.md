@@ -56,6 +56,8 @@
 
 Скелетоны доступны через **composition API** как свойства компонентов. Из барреля экспортируется только самостоятельный список-скелетон `TracksListSkeleton` (для экранов без отдельного компонента списка и для прикрепления к компоненту списка):
 
+Все скелетоны shared (`TracksListItemSkeleton`, `MarqueeTextSkeleton`, `SliderItemSkeleton`, `SliderSkeleton`) пульсируют через общий хук `useSkeletonPulse` (`src/shared/ui/skeleton/useSkeletonPulse.ts`): opacity 0.5↔1 за ~700ms (withRepeat + withTiming, cancelAnimation при размонтировании), результат — `pulseStyle`, который прикладывается к `Animated.View` скелетона.
+
 - `TracksListItem.Skeleton` — одна пульсирующая строка-карточка (обложка + две полосы текста), повторяет геометрию реальной строки (`TRACK_LIST_ITEM_SIZES`), пульс opacity 0.5↔1 ~700ms. Роу-скелетон доступен только как свойство строки.
 - `TracksListSkeleton` — стек из N строк с разделителями. Пропсы: `rowCount` (по умолчанию 6), `rowStyle` (например `marginHorizontal: INDENTS.medium`), `showDividers` (по умолчанию true). Список-скелетон прикрепляется к **компоненту списка**, когда такой существует (`PlaylistSheetList.Skeleton`); если отдельного компонента списка нет (экран рендерит инлайн-`FlatList`), импортируется напрямую из барреля.
 

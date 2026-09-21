@@ -1,5 +1,7 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { match } from 'ts-pattern'
+import { useSkeletonPulse } from '../../skeleton/useSkeletonPulse'
 import { useTheme } from '../../theme/ThemeContext/useTheme'
 import { INDENTS, RADIUSES } from '../../theme/themed'
 import { SliderItemDescriptionSkeleton } from '../slider-item-description/skeleton'
@@ -20,6 +22,7 @@ export const SliderItemSkeleton = ({
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderItemSkeletonProps) => {
   const { currentTheme } = useTheme()
+  const { pulseStyle } = useSkeletonPulse()
 
   const itemWidth = getSliderItemWidth(size)
 
@@ -40,13 +43,17 @@ export const SliderItemSkeleton = ({
   return (
     <TouchableOpacity testID={testID} activeOpacity={0.8}>
       <View style={[styles.component, { width: itemWidth }]}>
-        <View
-          style={[styles.image, { backgroundColor: currentTheme.skeleton, height: imageHeight }]}
+        <Animated.View
+          style={[
+            styles.image,
+            { backgroundColor: currentTheme.skeleton, height: imageHeight },
+            pulseStyle,
+          ]}
         >
           {isVisibleDescriptionOnSlide && (
             <SliderItemDescriptionSkeleton style={styles.descriptionOnSlide} />
           )}
-        </View>
+        </Animated.View>
         {isVisibleDescriptionUnderSlide && (
           <SliderItemDescriptionSkeleton style={styles.descriptionUnderSlide} />
         )}
