@@ -10,9 +10,15 @@ export const useScrollActivity = () => {
 
   useEffect(
     () => () => {
-      if (idleTimerRef.current !== null) clearTimeout(idleTimerRef.current)
+      if (idleTimerRef.current !== null) {
+        clearTimeout(idleTimerRef.current)
+        idleTimerRef.current = null
+        // Скроллвью размонтировался на середине серии скролла: без сброса флаг
+        // завис бы в true и свечение замерло до следующего события.
+        setIsListenScrolling(false)
+      }
     },
-    [],
+    [setIsListenScrolling],
   )
 
   const onScroll = useCallback(() => {

@@ -52,6 +52,22 @@ describe('useScrollActivity', () => {
     expect(ctx.get(isListenScrollingAtom)).toBe(false)
   })
 
+  test('unmounting mid-scroll resets the flag instead of leaving it stuck', async () => {
+    const { ctx, result, unmount } = await renderHookWithProviders(() => useScrollActivity())
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+
+    await act(async () => {
+      result.current.onScroll()
+    })
+    expect(ctx.get(isListenScrollingAtom)).toBe(true)
+
+    // The ScrollView is swapped out (e.g. search-activated SermonSearchResults)
+    // while the idle timer is still pending — cleanup must reset the flag.
+    await unmount()
+
+    expect(ctx.get(isListenScrollingAtom)).toBe(false)
+  })
+
   test('unmounting leaves no timer behind (flag stays idle-stable)', async () => {
     const { ctx, result, unmount } = await renderHookWithProviders(() => useScrollActivity())
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })
