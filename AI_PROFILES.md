@@ -91,10 +91,13 @@ opencode покажет список всех `.opencode/profiles/*.json` с о�
 
 ## Автоматический фейловер при лимитах
 
-Помимо ручного переключения, плагин следит за ретраями и при ошибке
-квоты/лимита (**`status 429`** или текст `quota`/`insufficient`/`credits`/
-`rate limit`/`billing`/`payment`) на **втором и последующих** ретраях
-(`attempt >= 2`) автоматически переводит модели на запасные:
+Помимо ручного переключения, плагин следит за ошибками квоты/лимита по двум
+каналам (retry-хук и `http.response`) и автоматически переводит модели на
+запасные. **Жёсткий** лимит (**`status 429`** или текст `quota`/`insufficient`/
+`credits`/`billing`/`payment`) ретраем не лечится и активируется сразу, уже на
+первой попытке (в т.ч. по сырому ответу `429`/`402`); **мягкий** (только
+`rate limit`/`too many requests`) — на **втором и последующих** ретраях
+(`attempt >= 2`). Запасные модели:
 
 - `zai-coding-plan/glm-5.3-flash` → `opencode-go/glm-5.3-flash`
 - `zai-coding-plan/glm-5.3` → `opencode-go/glm-5.3`
@@ -104,7 +107,8 @@ Overlay живёт 30 минут (TTL) и затем откатывается; �
 активацией — cooldown 5 минут. Состояние — `.opencode/profile-fallback.json`,
 аудит-лог — `.opencode/profile-fallback.log` (ротация при 1 MB). Репетиция
 без применения — `/profile-failover-test dry [modelRef]`; реальный тест —
-`/profile-failover-test [modelRef]`. Любое ручное `/profile <имя>` сбрасывает
+`/profile-failover-test [modelRef]` — единственный путь в обход cooldown
+(форс-прогон сразу после revert). Любое ручное `/profile <имя>` сбрасывает
 overlay. Подробности — в `.opencode/README.md` → «Фейловер моделей при
 лимитах».
 

@@ -2,10 +2,10 @@
  * failover — adaptive model failover for the profile plugin.
  *
  * Mounted by plugins/profile/index.ts (installFailover). Watches the session
- * retry hook for QUOTA/rate-limit failures and — when the failing model has a
- * configured alternative (FAILOVER_PAIRS) — switches EVERY agent that is
- * running that model to the alternative, using the same apply mechanisms the
- * profile plugin already owns:
+ * retry hook AND the raw http.response hook for QUOTA/rate-limit failures and
+ * — when the failing model has a configured alternative (FAILOVER_PAIRS) —
+ * switches EVERY agent that is running that model to the alternative, using
+ * the same apply mechanisms the profile plugin already owns:
  *   - markdown-defined subagents (researcher/coder/scribe/reviewer): rewrite
  *     their .opencode/agents/<id>.md frontmatter + ctx.agent.reload()
  *   - built-in registry subagents (explore): a fresh ctx.agent.transform pin
@@ -21,16 +21,22 @@
  * is rotated to .log.1 once it exceeds 1 MB (MAX_LOG_BYTES).
  *
  * Hydrology:
- *   A quota/rate-limit error on the SECOND attempt or later (attempt >= 2)
- *   triggers activation — overrides recorded + applied for 30 min
- *   (FAILOVER_TTL_MS), then auto-reverted (re-apply the stored profile).
- *   A 5 min cooldown (COOLDOWN_MS) suppresses re-activation flapping after a
- *   revert; skip decisions are logged at most once per episode (no spam).
- *   A quota error on an already-active FALLBACK model never triggers an
- *   auto-revert — it is only logged. All mutations are serialized through a
- *   promise-chain mutex (withMutex), so a manual reset can never be
- *   resurrected by an in-flight activation, and plugin hot-reload disposes
- *   every hook it registered (see installFailover's cleanup).
+ *   A HARD quota/billing failure (status 429, or text matching quota/
+ *   insufficient/credits/billing/payment) will not recover on retry and
+ *   activates immediately — even on attempt 1 — from either the retry hook or
+ *   the http.response hook (429/402). A SOFT rate-limit failure (rate-limit/
+ *   too-many-requests text with no 429) may clear up, so it only activates
+ *   once the retry hook sees it on the SECOND attempt or later (attempt >= 2).
+ *   Activation records + applies overrides for 30 min (FAILOVER_TTL_MS), then
+ *   auto-reverts (re-apply the stored profile). A 5 min cooldown (COOLDOWN_MS)
+ *   suppresses re-activation flapping after a revert; skip decisions are
+ *   logged at most once per episode (no spam). A quota error on an
+ *   already-active FALLBACK model never triggers an auto-revert — it is only
+ *   logged. Both trigger channels funnel through one promise-chain mutex
+ *   (withMutex) and the already-failed-over guard, so the same failure can
+ *   only activate once. A manual reset can never be resurrected by an
+ *   in-flight activation, and plugin hot-reload disposes every hook it
+ *   registered (see installFailover's cleanup).
  */
 
 import * as fs from 'node:fs/promises'
@@ -58,7 +64,18 @@ const LOG_FILENAME = 'profile-fallback.log'
 /** Rotate the audit log when it exceeds this size (bytes). */
 const MAX_LOG_BYTES = 1024 * 1024
 
-const QUOTA_PATTERN = /(quota|insufficient|credits?|rate.?limit|billing|payment)/i
+/**
+ * HARD quota/billing failures: the subscription wall is hit, so retrying the
+ * same model cannot recover — activate on the first attempt.
+ */
+const HARD_QUOTA_PATTERN = /(quota|insufficient|credits?|billing|payment)/i
+
+/**
+ * SOFT rate-limit failures: may be transient, so they only activate once a
+ * retry has already failed (attempt >= 2). Kept separate from the hard pattern
+ * so "too many requests" does not fail over prematurely.
+ */
+const SOFT_QUOTA_PATTERN = /(rate.?limit|too many requests)/i
 
 /** The profile shape failover consumes (structurally compatible with index.ts). */
 export interface ActiveProfile {
@@ -110,6 +127,12 @@ interface FailoverTrigger {
   sessionID: string
   reason: string
   dryRun?: boolean
+  /**
+   * Skip the post-revert cooldown gate. Used only by the explicit
+   * /profile-failover-test command, which must be able to force a run even
+   * right after a revert; real trigger paths always honour the cooldown.
+   */
+  bypassCooldown?: boolean
 }
 
 type FailoverOutcome =
@@ -182,8 +205,25 @@ const findFailoverTarget = (source: ModelRef): ModelRef | null => {
   return pair ? pair.target : null
 }
 
-const isQuotaError = (error: { type: string; message: string; status?: number }): boolean =>
-  error.status === 429 || QUOTA_PATTERN.test(`${error.type} ${error.message}`)
+/** How recoverable a quota-ish error is: `hard` fails over now, `soft` waits for a retry. */
+type QuotaSeverity = 'hard' | 'soft' | 'none'
+
+/**
+ * Classify a provider error into hard/soft/none. `hard` covers status 429 and
+ * quota/billing text (no retry can clear a subscription wall); `soft` covers
+ * rate-limit/too-many-requests text that a backoff may clear.
+ */
+const classifyQuotaError = (error: {
+  type: string
+  message: string
+  status?: number
+}): QuotaSeverity => {
+  if (error.status === 429) return 'hard'
+  const haystack = `${error.type} ${error.message}`
+  if (HARD_QUOTA_PATTERN.test(haystack)) return 'hard'
+  if (SOFT_QUOTA_PATTERN.test(haystack)) return 'soft'
+  return 'none'
+}
 
 /**
  * The effective model for an agent: a live failover override wins over the
@@ -668,7 +708,7 @@ const activateFailoverInner = async (
     }
   }
 
-  if (isCooldownActive(now)) {
+  if (!trigger.bypassCooldown && isCooldownActive(now)) {
     await logSkip(logFilePath, deps.warn, trigger.source, target, 'cooldown active — waiting')
     return { kind: 'skipped', cause: 'cooldown active' }
   }
@@ -782,11 +822,13 @@ const handleRetry = async (
   },
 ): Promise<void> => {
   // Not a quota/limit error — leave opencode's retry decision untouched.
-  if (!isQuotaError(event.error)) return
+  const severity = classifyQuotaError(event.error)
+  if (severity === 'none') return
 
-  // The first attempt may be transient; only start failover once the request
-  // failed on the second attempt or later (attempt >= 2).
-  if (event.attempt < 2) {
+  // A hard quota/billing failure cannot recover on retry, so it fails over on
+  // the first attempt. A soft rate limit may be transient: only start failover
+  // once the request failed on the second attempt or later (attempt >= 2).
+  if (severity === 'soft' && event.attempt < 2) {
     await logSkip(logFilePath, deps.warn, event.model, null, 'first attempt')
     return
   }
@@ -795,6 +837,62 @@ const handleRetry = async (
     source: event.model,
     sessionID: event.sessionID,
     reason: [event.error.type, event.error.status ?? null].filter(Boolean).join(' '),
+  })
+}
+
+// ─── http.response hook (second trigger channel) ───
+
+/** Provider statuses that mean "quota/billing wall" — the same failures the retry hook reacts to. */
+const HTTP_QUOTA_STATUSES: ReadonlySet<number> = new Set([402, 429])
+
+/** Bodies are only sniffed for a human message; 200 chars is plenty for a provider error. */
+const HTTP_ERROR_MESSAGE_MAX_CHARS = 200
+
+/**
+ * Read a short message out of a response WITHOUT consuming it: clone first,
+ * then read the clone, so the original one-shot body still reaches opencode
+ * intact. A read failure degrades to a placeholder — the status code alone is
+ * enough to trigger failover — and never throws out of the hook.
+ */
+const readResponseMessage = async (response: Response): Promise<string> => {
+  try {
+    const text = await response.clone().text()
+    return text.slice(0, HTTP_ERROR_MESSAGE_MAX_CHARS).replace(/\s+/g, ' ').trim()
+  } catch (error) {
+    return `(unreadable response body: ${toMessage(error)})`
+  }
+}
+
+/**
+ * Second trigger channel: the retry hook only sees failures opencode actually
+ * retries, so a hard quota wall it gives up on would never activate failover.
+ * Sniffing the raw response catches 429/402 immediately, even on attempt 1.
+ * Both channels call the same mutex-serialized activation, and the second one
+ * sees the first one's committed overlay via isSourceAlreadyFailedOver — so a
+ * single failure can only activate once. The body is only touched on 429/402,
+ * leaving normal (2xx) streaming responses untouched.
+ */
+const handleHttpResponse = async (
+  ctx: Plugin.Context,
+  deps: FailoverDeps,
+  stateFilePath: string,
+  logFilePath: string,
+  event: {
+    sessionID: string
+    model: ModelRef
+    response: Response
+  },
+): Promise<void> => {
+  if (!HTTP_QUOTA_STATUSES.has(event.response.status)) return
+
+  const message = await readResponseMessage(event.response)
+  const error = { status: event.response.status, type: 'provider.quota', message }
+  if (classifyQuotaError(error) === 'none') return
+
+  await activateFailover(ctx, deps, stateFilePath, logFilePath, {
+    source: event.model,
+    sessionID: event.sessionID,
+    reason: `${error.type} ${error.status}`,
   })
 }
 
@@ -941,6 +1039,9 @@ const runFailoverTest = async (
     sessionID: input.sessionID,
     reason: 'injected test error',
     dryRun: dry,
+    // An explicit test must run even right after a revert — it is the one path
+    // allowed to jump the cooldown gate.
+    bypassCooldown: true,
   })
 
   return buildTestReport(outcome)
@@ -988,11 +1089,11 @@ const reapplyPersistedState = async (
 
 /**
  * Mount the failover machinery: rotate the log if too large, recover persisted
- * state on startup, register the retry hook, and expose the reset/test API for
- * the profile plugin. Returns a cleanup — the plugin's setup hands it to the
- * SDK — that clears the TTL timer, disposes every agent transform this module
- * registered, and unregisters the retry hook, so hot-reload leaves nothing
- * behind.
+ * state on startup, register the retry + http.response hooks, and expose the
+ * reset/test API for the profile plugin. Returns a cleanup — the plugin's setup
+ * hands it to the SDK — that clears the TTL timer, disposes every agent
+ * transform this module registered, and unregisters both hooks, so hot-reload
+ * leaves nothing behind.
  */
 export const installFailover = async (
   ctx: Plugin.Context,
@@ -1054,6 +1155,10 @@ export const installFailover = async (
     handleRetry(ctx, deps, stateFilePath, logFilePath, event),
   )
 
+  const httpResponseRegistration = await ctx.session.hook('http.response', event =>
+    handleHttpResponse(ctx, deps, stateFilePath, logFilePath, event),
+  )
+
   const cleanup = async (): Promise<void> => {
     if (ttlTimer) {
       clearTimeout(ttlTimer)
@@ -1064,6 +1169,11 @@ export const installFailover = async (
       await retryRegistration.dispose()
     } catch (error) {
       deps.warn(`failover: could not dispose retry hook: ${toMessage(error)}`)
+    }
+    try {
+      await httpResponseRegistration.dispose()
+    } catch (error) {
+      deps.warn(`failover: could not dispose http.response hook: ${toMessage(error)}`)
     }
   }
 
