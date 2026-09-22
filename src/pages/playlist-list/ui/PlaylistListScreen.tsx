@@ -10,11 +10,10 @@ import { tabBarHeightAtom } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import type { PlaylistData, SectionData } from 'shared/model'
 import { resolveSectionFromCache } from '../lib/resolveSectionFromCache'
-import { useCollapsingHeader } from '../lib/useCollapsingHeader'
+import { TITLE_TOP_GAP, useCollapsingHeader } from '../lib/useCollapsingHeader'
 import { PlaylistListItem } from './PlaylistListItem'
 import { PlaylistListSeparator } from './PlaylistListSeparator'
 
-const TITLE_TOP_GAP = 80
 const INITIAL_NUM_TO_RENDER = 12
 
 export const PlaylistListScreen = () => {
