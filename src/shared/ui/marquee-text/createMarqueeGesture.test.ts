@@ -67,6 +67,49 @@ describe('createMarqueeGesture', () => {
     expect(startIdleMarquee).not.toHaveBeenCalled()
   })
 
+  test('resumes an armed loop after sub-threshold finger jitter', () => {
+    // A slow tap (long-press, <3px) on an armed title activates the pan and
+    // pauses the clock in onStart; onEnd must resume it from phase 0 instead
+    // of leaving the loop frozen forever.
+    marqueeArmed.value = true
+    createMarqueeGesture(
+      translateX,
+      startX,
+      maxOffset,
+      startIdleMarquee,
+      didDrag,
+      marqueeArmed,
+      clockPaused,
+    )
+
+    __gestureMock.pan().onStart?.({})
+    __gestureMock.pan().onEnd?.({ translationX: 2 })
+
+    expect(didDrag.value).toBe(false)
+    expect(startIdleMarquee).toHaveBeenCalled()
+  })
+
+  test('resumes an armed loop when the gesture is cancelled', () => {
+    // onFinalize(!success) otherwise only resets didDrag, leaving the onStart
+    // pause in place (e.g. an outer handler steals the pointer).
+    marqueeArmed.value = true
+    createMarqueeGesture(
+      translateX,
+      startX,
+      maxOffset,
+      startIdleMarquee,
+      didDrag,
+      marqueeArmed,
+      clockPaused,
+    )
+
+    __gestureMock.pan().onStart?.({})
+    __gestureMock.pan().onFinalize?.({}, false)
+
+    expect(didDrag.value).toBe(false)
+    expect(startIdleMarquee).toHaveBeenCalled()
+  })
+
   test('arms the gate and starts the loop after a real drag', () => {
     createMarqueeGesture(
       translateX,

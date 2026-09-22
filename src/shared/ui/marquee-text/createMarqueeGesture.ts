@@ -46,10 +46,15 @@ export const createMarqueeGesture = (
       if (isArmed) {
         marqueeArmed.value = true
         startIdleMarquee()
+        return
       }
       // A slow click (held ≥ HOLD_MS, zero movement) activates the pan but is
       // not a drag: keep the click alive so the parent pressable navigates.
-      if (!isArmed) didDrag.value = false
+      didDrag.value = false
+      // Resume-on-jitter: an armed row (autoStart or a previous drag) must not
+      // stay frozen by the onStart pause — restart its loop from phase 0. A
+      // never-armed gated row stays paused at the scrub position (spec).
+      if (marqueeArmed.value) startIdleMarquee()
     })
     .onFinalize((_e, success) => {
       'worklet'
@@ -58,6 +63,11 @@ export const createMarqueeGesture = (
       // on failure — a successful drag must keep didDrag armed until the
       // browser's post-drag `click` fires (the click guard reads it at click
       // time, which on web is after onFinalize).
-      if (!success) didDrag.value = false
+      if (!success) {
+        didDrag.value = false
+        // Likewise resume an armed row: the onStart pause would otherwise
+        // freeze the loop after an outer handler (e.g. miniPan) cancels.
+        if (marqueeArmed.value) startIdleMarquee()
+      }
     })
 }
