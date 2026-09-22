@@ -56,6 +56,7 @@ export const TabButton = ({
       key={routeKey}
       onPress={onPress}
       hapticDisabled={isActive}
+      activeOpacity={isActive ? 1 : undefined}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
       onLayout={e =>
         onLayout({

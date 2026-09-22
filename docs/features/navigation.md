@@ -110,7 +110,7 @@
 
 Подписи табов не переносятся и почти не масштабируются шрифтом: в `TabButton.tsx` у текста заданы `numberOfLines={1}` и `maxFontSizeMultiplier={1.2}` (фикс «сломанного» таб-бара на узких экранах / крупном системном шрифте, Issue #53).
 
-Тап по уже активному табу не вызывает хаптик-отклик: `TabButton` передаёт `hapticDisabled` в `TouchableButton`, когда таб активен; навигация для активного таба и так пропускается в `useTabPress`.
+Тап по уже активному табу полностью «молчалив»: без хаптик-отклика и без нажимного затемнения (blink) — `TabButton` передаёт `hapticDisabled` в `TouchableButton` и `activeOpacity={1}` для активного таба; навигация для активного таба и так пропускается в `useTabPress`.
 
 На web кнопки табов (`TabButton`) и вложенный таб-бар (`shared/lib/tab-bar/renderTabBar.tsx`) рендерятся как настоящие `<button>` — у них задан `accessibilityRole='button'` (иначе RNW отдаёт `<div tabindex="0">`, который не получает Vimium-хинты). Подробнее — [web.md](./web.md#настоящие-button-для-vimium-хинтов).
 
