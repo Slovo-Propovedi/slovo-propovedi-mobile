@@ -1,10 +1,29 @@
 import { createCtx } from '@reatom/framework'
+import { fireEvent } from '@testing-library/react-native'
 import { StyleSheet, Text } from 'react-native'
 import { dynamicSectionsAtom, isLoadingSectionsAtom, sectionDataSourceAtom } from 'entities/section'
 import { renderWithProviders } from 'shared/mocks'
-import type { SectionData } from 'shared/model'
+import type { PlaylistData, SectionData } from 'shared/model'
 import type { TestInstance } from 'test-renderer'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
+
+const mockNavigateToPlaylist = jest.fn()
+const mockNavigateToPlaylistList = jest.fn()
+const mockPlayNewSermon = jest.fn()
+
+const MOCK_PLAYLIST_SINGLE: PlaylistData = {
+  artwork: null,
+  id: 'single-playlist',
+  sermons: [
+    {
+      artist: 'Artist',
+      artwork: null,
+      id: 'sermon-1',
+      title: 'Sermon 1',
+    },
+  ],
+  title: 'Single playlist',
+}
 
 jest.mock('shared/config/screen-dimensions', () => ({
   SCREEN_HEIGHT: 640,
@@ -34,7 +53,7 @@ jest.mock('entities/player', () => {
 
   return {
     isPlayerExpandedAtom: atom(false, 'testIsPlayerExpandedAtom'),
-    usePlayNewSermon: jest.fn(() => jest.fn()),
+    usePlayNewSermon: jest.fn(() => mockPlayNewSermon),
   }
 })
 
@@ -48,8 +67,8 @@ jest.mock('shared/lib/network', () => ({
 
 jest.mock('shared/routing', () => ({
   useListenNavigation: () => ({
-    navigateToPlaylist: jest.fn(),
-    navigateToPlaylistList: jest.fn(),
+    navigateToPlaylist: mockNavigateToPlaylist,
+    navigateToPlaylistList: mockNavigateToPlaylistList,
   }),
 }))
 
@@ -67,7 +86,13 @@ jest.mock('./renderSection', () => {
   const { Text: RNText } = jest.requireActual('react-native')
 
   return {
-    renderSection: ({ index }: { index: number }) => <RNText>Section {index}</RNText>,
+    renderSection: ({
+      index,
+      onItemPress,
+    }: {
+      index: number
+      onItemPress: (p: unknown) => void
+    }) => <RNText onPress={() => onItemPress(MOCK_PLAYLIST_SINGLE)}>Section {index}</RNText>,
   }
 })
 
@@ -112,6 +137,7 @@ const getRowContainer = (getByText: (text: string) => TestInstance): TestInstanc
 
 describe('<DynamicSectionsSlider>', () => {
   beforeEach(() => {
+    jest.clearAllMocks()
     mockScreenDimensions.SCREEN_WIDTH = 320
     mockScreenDimensions.SIZE_OF_MINIMUM_SIDE_OF_SCREEN = 320
   })
@@ -127,6 +153,20 @@ describe('<DynamicSectionsSlider>', () => {
     expect(getByText('Section 0')).toBeTruthy()
     expect(getByText('Section 1')).toBeTruthy()
     expect(queryByText(LEADING_LABEL)).toBeNull()
+  })
+
+  test('opens the playlist page on tap even for a single-sermon playlist', async () => {
+    const ctx = createCtx()
+    dynamicSectionsAtom(ctx, [makeSection('a')])
+    isLoadingSectionsAtom(ctx, false)
+    sectionDataSourceAtom(ctx, 'network')
+
+    const { getByText } = await renderWithProviders(<DynamicSectionsSlider />, { ctx })
+
+    fireEvent.press(getByText('Section 0'))
+
+    expect(mockNavigateToPlaylist).toHaveBeenCalledWith(MOCK_PLAYLIST_SINGLE)
+    expect(mockPlayNewSermon).not.toHaveBeenCalled()
   })
 
   test('places the first section next to leadingElement and the rest full-width', async () => {

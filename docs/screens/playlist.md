@@ -1,6 +1,6 @@
 # Экран плейлиста
 
-**Маршрут:** `/listen/playlist?playlist=<PlaylistData JSON>`
+**Маршрут:** `/listen/playlist?playlist=<id плейлиста>`
 **Файлы:** `app/(tabs)/listen/playlist.tsx` → `export { PlaylistScreen as default }` из `pages/playlist`
 **Статус:** готов
 
@@ -21,7 +21,7 @@
 
 ## Откуда данные
 
-- Параметр маршрута `playlist` (`useLocalSearchParams<{ playlist: string }>`), парсится через `getParseJsonWithSchema(playlistDataSchema)`; при отсутствии/ошибке используется пустой плейлист-заглушка.
+- Параметр маршрута `playlist` — **id плейлиста** (`useLocalSearchParams<{ playlist: string }>`). Резолвится в полный `PlaylistData` хуком `usePlaylistById` (`src/pages/playlist/lib/usePlaylistById.ts`): сначала поиск по live `dynamicSectionsAtom`, при промахе — фолбэк на кэш (`resolvePlaylistFromCache`, ключ `sections-cache`); пока идёт резолв — `isLoading`, при отсутствии плейлиста в секциях и кэше — `notFound`.
 - Плеер: `currentAudioAtom`, `isPlayingAtom`, `usePlayNewSermon` из `entities/player`. Индикация скачивания — внутри базовой строки `TracksListItem` (`useTrackItemCache` подписывается на `playlistDownloadProgressAtom` по URL трека); обёртки `PlaylistTrackItem`/`PlaylistSheetRow` не подписываются на скачивание. Прогресс-бар строки — через подписку на `playlistDownloadProgressAtom` (по URL трека).
 - Кэш: `cacheUpdateTriggerAtom` (`shared/lib/cache-triggers`), `isCachingPlaylistAtom`/`playlistCacheProgressAtom` из `src/pages/playlist/model.ts`.
 - Скачивание: `PlaylistOfflineService` (`src/pages/playlist/lib/PlaylistOfflineService.ts`), меню `PlaylistHeaderMenu`/`PlaylistHeaderMenuDropdown` (`src/pages/playlist/ui/`).
@@ -33,10 +33,10 @@
 
 ## Состояния
 
-- Загрузка: данные приходят из параметра маршрута (загрузка как таковая отсутствует).
+- Загрузка: пока `usePlaylistById` резолвит плейлист из секций или кэша (`isLoading`) — `PlaylistStatusView` (спиннер).
 - Пусто: `ListEmptyComponent` — «В плейлисте нет записей».
 - Офлайн: зависит от кэша треков (`cacheTrigger`); скачивание в офлайне недоступно — перед каждым треком проверяется подключение (`waitForOnline`, до 60с, signal-aware), при его отсутствии прогон прерывается уведомлением «Нет подключения к интернету». Пункт «Добавить все в офлайн» в меню кэша дизейблится при офлайне **или** когда все треки уже закэшированы (`isAddAllToOfflineDisabled = allCached || !isOnline`); **во время кеширования меню не блокируется** — вместо «Добавить все в офлайн» показывается «Остановить добавление в офлайн» (активно и офлайн). «Удалить из офлайн все» доступно офлайн (см. матрицу disabled выше).
-- Ошибка: некорректный JSON плейлиста → заглушка; ошибки скачивания логируются и отображаются через диалоги/уведомления; одиночный трек ретраится (до 3 попыток, см. [features/audio-cache.md](../features/audio-cache.md)).
+- Ошибка: плейлист не найден (нет в секциях и в кэше) → `PlaylistStatusView` с `notFound` (заглушка); ошибки скачивания логируются и отображаются через диалоги/уведомления; одиночный трек ретраится (до 3 попыток, см. [features/audio-cache.md](../features/audio-cache.md)).
 
 ## Связанные документы
 

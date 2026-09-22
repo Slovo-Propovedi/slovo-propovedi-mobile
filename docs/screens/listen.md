@@ -130,7 +130,7 @@
 
 ## Куда можно перейти
 
-- Тап на плейлист: если треков `< 2` — сразу запуск воспроизведения (`usePlayNewSermon`); иначе → `/listen/playlist?playlist=<JSON PlaylistData>` (`navigateToPlaylist` из `src/shared/routing/useListenNavigation.ts`).
+- Тап на плейлист всегда открывает страницу плейлиста → `/listen/playlist?playlist=<id плейлиста>` (`navigateToPlaylist` из `src/shared/routing/useListenNavigation.ts`) — даже если в плейлисте одна проповедь.
 - Тап на заголовок секции → `/listen/playlist-list?sectionId=<id секции>&title=<строка>` (`navigateToPlaylistList`).
 - Тап на проповедь в результатах поиска — запуск воспроизведения (без перехода). Тап на уже играющую проповедь — no-op (Issue #99): воспроизведение не перезапускается, полноэкранный плеер не открывается.
 

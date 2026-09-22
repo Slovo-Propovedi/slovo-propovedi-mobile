@@ -1,6 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type ReactElement, useEffect } from 'react'
-import { usePlayNewSermon } from 'entities/player'
 import {
   dynamicSectionsAtom,
   fetchAllSections,
@@ -21,7 +20,6 @@ interface DynamicSectionsSliderProps {
 }
 
 export const DynamicSectionsSlider = ({ leadingElement }: DynamicSectionsSliderProps) => {
-  const playNewSermon = usePlayNewSermon()
   const { navigateToPlaylist, navigateToPlaylistList } = useListenNavigation()
   const [sections] = useAtom(dynamicSectionsAtom)
   const [isLoading] = useAtom(isLoadingSectionsAtom)
@@ -40,9 +38,6 @@ export const DynamicSectionsSlider = ({ leadingElement }: DynamicSectionsSliderP
   })
 
   const onItemPress = (playlist: PlaylistData) => {
-    if (playlist.sermons.length && playlist.sermons.length < 2)
-      return playNewSermon({ playlist, sermon: playlist.sermons[0] })
-
     navigateToPlaylist(playlist)
   }
 
