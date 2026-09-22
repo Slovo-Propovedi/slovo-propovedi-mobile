@@ -3,15 +3,21 @@ import { MarqueeText } from './marquee-text/marquee-text'
 import { useTheme } from './theme/ThemeContext/useTheme'
 
 interface MovingTextProps {
+  autoStart?: boolean
   style?: StyleProp<TextStyle>
   testID?: string
   text: string
 }
 
-export const MovingText = ({ style, testID, text }: MovingTextProps) => {
+export const MovingText = ({ autoStart, style, testID, text }: MovingTextProps) => {
   const { currentTheme } = useTheme()
 
   return (
-    <MarqueeText text={text} testID={testID} textStyle={[{ color: currentTheme.text }, style]} />
+    <MarqueeText
+      text={text}
+      testID={testID}
+      autoStart={autoStart}
+      textStyle={[{ color: currentTheme.text }, style]}
+    />
   )
 }

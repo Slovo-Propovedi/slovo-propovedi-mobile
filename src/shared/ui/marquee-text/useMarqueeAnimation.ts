@@ -28,15 +28,20 @@ export const useMarqueeAnimation = (
   text: string,
   isWeb: boolean,
   centerWhenStatic: boolean,
+  autoStart: boolean,
 ) => {
   const translateX = useSharedValue(0)
   const startX = useSharedValue(0)
+  // Gated consumers (sliders, track lists) start disarmed and only arm the
+  // loop after a real drag; autoStart consumers (player titles) arm upfront.
+  const marqueeArmed = useSharedValue(autoStart)
 
   useEffect(() => {
     cancelAnimation(translateX)
     translateX.value = 0
     startX.value = 0
-  }, [text])
+    marqueeArmed.value = autoStart
+  }, [text, autoStart])
 
   const animatedStyle = useAnimatedStyle(() => {
     // The visible Text keeps numberOfLines={1} on native, so ANY width smaller
@@ -65,7 +70,7 @@ export const useMarqueeAnimation = (
 
   const startIdleMarquee = () => {
     'worklet'
-    if (!needsMarquee.value) {
+    if (!needsMarquee.value || !marqueeArmed.value) {
       // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value reset in worklet to stop animation
       translateX.value = 0
       return
@@ -87,5 +92,5 @@ export const useMarqueeAnimation = (
     )
   }
 
-  return { animatedStyle, startIdleMarquee, startX, translateX }
+  return { animatedStyle, marqueeArmed, startIdleMarquee, startX, translateX }
 }

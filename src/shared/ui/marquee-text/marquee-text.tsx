@@ -12,6 +12,8 @@ import { useMarqueeMeasurement } from './useMarqueeMeasurement'
 import { useNativeDragGuard } from './useNativeDragGuard'
 
 export interface MarqueeTextProps {
+  /** Arms the loop immediately on overflow (player titles); others stay drag-gated. */
+  autoStart?: boolean
   centerWhenStatic?: boolean
   style?: StyleProp<ViewStyle>
   testID?: string
@@ -20,6 +22,7 @@ export interface MarqueeTextProps {
 }
 
 export const MarqueeText = ({
+  autoStart = false,
   centerWhenStatic = false,
   style,
   testID,
@@ -32,8 +35,7 @@ export const MarqueeText = ({
   const dragGuardRef = useNativeDragGuard()
 
   // The container view hosts both web-only DOM guards: the click guard swallows
-  // the post-drag click, the native-drag guard blocks the browser's HTML5
-  // `dragstart` that would hijack mouse drags on `<img>` descendants.
+  // the post-drag click and the native-drag guard blocks HTML5 `dragstart`.
   const containerRef = useCallback(
     (instance: unknown) => {
       clickGuardRef(instance)
@@ -52,13 +54,14 @@ export const MarqueeText = ({
     textWidth,
   } = useMarqueeMeasurement()
 
-  const { animatedStyle, startIdleMarquee, startX, translateX } = useMarqueeAnimation(
+  const { animatedStyle, marqueeArmed, startIdleMarquee, startX, translateX } = useMarqueeAnimation(
     containerWidth,
     textWidth,
     needsMarquee,
     text,
     isWeb,
     centerWhenStatic,
+    autoStart,
   )
 
   useAnimatedReaction(
@@ -69,7 +72,14 @@ export const MarqueeText = ({
     },
   )
 
-  const pan = createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag)
+  const pan = createMarqueeGesture(
+    translateX,
+    startX,
+    maxOffset,
+    startIdleMarquee,
+    didDrag,
+    marqueeArmed,
+  )
 
   if (!text) return null
 

@@ -54,7 +54,7 @@ export const MiniPlayer = ({
       >
         <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
         <View style={miniStyles.miniTextContainer}>
-          <MovingText text={audio.title || ''} style={miniStyles.miniTrackTitle} />
+          <MovingText autoStart text={audio.title || ''} style={miniStyles.miniTrackTitle} />
           <Text numberOfLines={1} style={miniStyles.miniPlaylistName}>
             {subtitle}
           </Text>

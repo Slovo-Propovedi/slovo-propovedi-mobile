@@ -61,7 +61,7 @@ export const PlayerControlsSection = ({
     >
       <View style={styles.trackInfoRow}>
         <View style={styles.trackInfoTextContainer}>
-          <MovingText text={audio.title || ''} style={styles.trackTitle} />
+          <MovingText autoStart text={audio.title || ''} style={styles.trackTitle} />
           <Text style={styles.artistName}>{subtitle}</Text>
         </View>
         <View style={styles.menuContainer}>

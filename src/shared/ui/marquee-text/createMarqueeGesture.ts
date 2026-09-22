@@ -10,6 +10,7 @@ export const createMarqueeGesture = (
   maxOffset: SharedValue<number>,
   startIdleMarquee: () => void,
   didDrag: SharedValue<boolean>,
+  marqueeArmed: SharedValue<boolean>,
 ) => {
   const pan = Gesture.Pan().shouldCancelWhenOutside(false).activeCursor('grabbing')
 
@@ -40,10 +41,14 @@ export const createMarqueeGesture = (
     .onEnd(e => {
       'worklet'
       startX.value = translateX.value
+      const isArmed = isRealDrag(e.translationX)
+      if (isArmed) {
+        marqueeArmed.value = true
+        startIdleMarquee()
+      }
       // A slow click (held ≥ HOLD_MS, zero movement) activates the pan but is
       // not a drag: keep the click alive so the parent pressable navigates.
-      if (isRealDrag(e.translationX)) startIdleMarquee()
-      else didDrag.value = false
+      if (!isArmed) didDrag.value = false
     })
     .onFinalize((_e, success) => {
       'worklet'

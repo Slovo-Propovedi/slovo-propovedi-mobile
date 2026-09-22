@@ -6,7 +6,12 @@ import { MovingText } from './MovingText'
 let mockLastProps: Record<string, unknown> | undefined
 
 jest.mock('./marquee-text/marquee-text', () => ({
-  MarqueeText: (props: { testID?: string; text: string; textStyle?: unknown }) => {
+  MarqueeText: (props: {
+    autoStart?: boolean
+    testID?: string
+    text: string
+    textStyle?: unknown
+  }) => {
     mockLastProps = { ...props }
     return <MockText testID={props.testID}>{props.text}</MockText>
   },
@@ -43,6 +48,18 @@ describe('<MovingText />', () => {
 
     expect(getCapturedProps().testID).toBe(TEST_ID)
     expect(screen.getByTestId(TEST_ID)).toBeTruthy()
+  })
+
+  test('forwards autoStart as undefined by default (drag-gated)', async () => {
+    await renderWithProviders(<MovingText text='Some text' />)
+
+    expect(getCapturedProps().autoStart).toBeUndefined()
+  })
+
+  test('forwards autoStart when set', async () => {
+    await renderWithProviders(<MovingText autoStart text='Some text' />)
+
+    expect(getCapturedProps().autoStart).toBe(true)
   })
 
   test('applies the theme text color via textStyle', async () => {

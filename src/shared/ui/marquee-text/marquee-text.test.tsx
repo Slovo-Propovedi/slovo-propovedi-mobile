@@ -3,6 +3,7 @@ import { Platform, StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { MarqueeText } from './marquee-text'
+import * as marqueeAnimation from './useMarqueeAnimation'
 
 const TEST_ID = 'marquee-text'
 
@@ -157,6 +158,22 @@ describe('<MarqueeText />', () => {
     const style = StyleSheet.flatten(animatedView?.props.style)
     expect(style.transform).toEqual([{ translateX: 0 }])
     expect(withTiming).not.toHaveBeenCalled()
+  })
+
+  test('defaults autoStart to the drag-gated behavior', async () => {
+    const spy = jest.spyOn(marqueeAnimation, 'useMarqueeAnimation')
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    expect(spy).toHaveBeenCalled()
+    expect(spy.mock.calls.at(-1)?.[6]).toBe(false)
+  })
+
+  test('forwards autoStart to the animation hook when set', async () => {
+    const spy = jest.spyOn(marqueeAnimation, 'useMarqueeAnimation')
+    await renderWithProviders(<MarqueeText autoStart testID={TEST_ID} text={propsStub.text} />)
+
+    expect(spy).toHaveBeenCalled()
+    expect(spy.mock.calls.at(-1)?.[6]).toBe(true)
   })
 
   test('re-evaluates the need for a duplicate when the text changes', async () => {
