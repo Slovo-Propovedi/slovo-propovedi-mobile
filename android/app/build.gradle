@@ -136,6 +136,17 @@ android {
         jniLibs {
             def enableLegacyPackaging = findProperty('expo.useLegacyPackaging') ?: 'false'
             useLegacyPackaging enableLegacyPackaging.toBoolean()
+            // expo-modules-core resolves react-native-worklets through a CMake
+            // IMPORTED target (prefab) and re-packages libworklets.so next to the
+            // worklets module's own copy, so AGP's native-libs merger sees the same
+            // library twice. Resolve it deterministically instead of failing with
+            // "2 files found with path ..." (jniLibs vs IMPORTED targets).
+            pickFirsts += [
+                'lib/arm64-v8a/libworklets.so',
+                'lib/armeabi-v7a/libworklets.so',
+                'lib/x86/libworklets.so',
+                'lib/x86_64/libworklets.so',
+            ]
         }
     }
     androidResources {
