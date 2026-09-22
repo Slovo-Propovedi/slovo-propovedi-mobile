@@ -1,7 +1,12 @@
 import { useNavigation } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { StyleSheet, View } from 'react-native'
-import { interpolate, useDerivedValue, useSharedValue } from 'react-native-reanimated'
+import { StyleSheet } from 'react-native'
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+} from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { useHeaderTitle } from 'shared/routing'
 import { useTheme } from 'shared/ui/theme'
@@ -23,8 +28,14 @@ interface UseCollapsingNavbarDriverResult {
   headerBgOpacity: number
 }
 
+// React state only needs coarse steps: consumers (icon tint hysteresis at 0.7/0.4) act on
+// thresholds, not on per-frame values. Quantizing to 0.05 collapses ~95% of state updates.
+const OPACITY_STATE_STEP = 0.05
+
 // Drives a collapsing navbar: fades the header background over [darkenStart, threshold] and toggles the
 // header title (the SOLE writer of headerTitle via navigation.setOptions) when scroll crosses the threshold.
+// The background opacity itself is animated on the UI thread (useAnimatedStyle) — the previous
+// per-frame scheduleOnRN → setState → setOptions chain was the visible darkening lag.
 export const useCollapsingNavbarDriver = ({
   darkenStart,
   scrollY,
@@ -59,8 +70,10 @@ export const useCollapsingNavbarDriver = ({
 
   const wasAboveThreshold = useSharedValue<boolean | null>(null)
   const prevTitleSv = useSharedValue(title)
+  // Last quantized step reported to React state; skips scheduleOnRN when the step is unchanged.
+  const lastReportedStep = useSharedValue(-1)
 
-  useDerivedValue(() => {
+  const bgOpacity = useDerivedValue(() => {
     // Reset threshold tracking when title changes (guard clause)
     if (prevTitleSv.value !== title) {
       prevTitleSv.value = title
@@ -73,20 +86,35 @@ export const useCollapsingNavbarDriver = ({
       [0, 1],
       'clamp',
     )
-    if (isMountedSv.value) scheduleOnRN(updateHeaderBgOpacity, opacity)
+    // Coarse state update only: state feeds consumer coupling (icon hysteresis), the visible
+    // opacity runs on the UI thread via bgOpacity → useAnimatedStyle.
+    const step = Math.round(opacity / OPACITY_STATE_STEP)
+    if (step !== lastReportedStep.value) {
+      lastReportedStep.value = step
+      if (isMountedSv.value) scheduleOnRN(updateHeaderBgOpacity, step * OPACITY_STATE_STEP)
+    }
     const crossed = scrollY.value > threshold.value
     if (wasAboveThreshold.value !== crossed) {
       wasAboveThreshold.value = crossed
       if (isMountedSv.value) scheduleOnRN(setHeaderTitle, crossed ? title : '')
     }
+    return opacity
   }, [darkenStart, scrollY, threshold, setHeaderTitle, title, updateHeaderBgOpacity])
 
-  const headerBackground = useMemo(() => {
-    const innerStyle = StyleSheet.create({
-      bg: { backgroundColor: currentTheme.background, flex: 1, opacity: headerBgOpacity },
-    })
-    return () => <View style={innerStyle.bg} />
-  }, [headerBgOpacity, currentTheme.background])
+  const bgStyle = useAnimatedStyle(() => ({ opacity: bgOpacity.value }), [bgOpacity])
+
+  const bgStyles = useMemo(
+    () => StyleSheet.create({ bg: { backgroundColor: currentTheme.background, flex: 1 } }),
+    [currentTheme.background],
+  )
+  // Stable identity: navigation.setOptions fires only on theme change / unmount, never per frame.
+  // Animated.View is required for useAnimatedStyle to drive opacity on the UI thread (plain View
+  // ignores animated styles). No hooks inside — safe whether react-navigation renders it as a
+  // component or calls it as a function.
+  const headerBackground = useCallback(
+    () => <Animated.View style={[bgStyles.bg, bgStyle]} />,
+    [bgStyles, bgStyle],
+  )
 
   useEffect(() => {
     navigation.setOptions({ headerBackground })
