@@ -3,6 +3,7 @@ import { Gesture } from 'react-native-gesture-handler'
 import { useSharedValue, withTiming } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import type { SharedValue } from 'react-native-reanimated'
+import { showDetailsAtom } from '../model/showDetailsAtom'
 import { showPlaylistAtom } from '../model/showPlaylistAtom'
 import { COLLAPSE_DURATION_MS, EXPAND_DURATION_MS } from './expandDurations'
 
@@ -22,11 +23,12 @@ export const useFullscreenPanGesture = ({
   screenHeight,
 }: UseFullscreenPanGestureParams) => {
   const [showPlaylist, setShowPlaylist] = useAtom(showPlaylistAtom)
+  const [showDetails] = useAtom(showDetailsAtom)
   const startY = useSharedValue(0)
 
   return expanded && !disabled
     ? Gesture.Pan()
-        .enabled(!showPlaylist)
+        .enabled(!showPlaylist && !showDetails)
         .activeOffsetY(15)
         .onStart(() => {
           'worklet'
@@ -34,18 +36,19 @@ export const useFullscreenPanGesture = ({
             scheduleOnRN(setShowPlaylist, false)
             return
           }
+          if (showDetails) return
           startY.value = progress.value
         })
         .onUpdate(e => {
           'worklet'
-          if (showPlaylist) return
+          if (showPlaylist || showDetails) return
           const dragProgress = e.translationY / (screenHeight - 100)
           // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in gesture worklet
           progress.value = Math.max(0, 1 - dragProgress)
         })
         .onEnd(e => {
           'worklet'
-          if (showPlaylist) return
+          if (showPlaylist || showDetails) return
           if (e.velocityY > 500 || progress.value < 0.5) {
             // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in gesture worklet
             progress.value = withTiming(0, { duration: COLLAPSE_DURATION_MS })

@@ -1,5 +1,5 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
@@ -27,6 +27,7 @@ import {
 } from 'shared/lib/cache-triggers'
 import { isOnlineAtom } from 'shared/model'
 import type BottomSheet from '@gorhom/bottom-sheet'
+import { showDetailsAtom } from '../../model/showDetailsAtom'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { showPlaylistAtom } from '../../model/showPlaylistAtom'
 
@@ -46,7 +47,7 @@ export const useFullscreenHandlers = () => {
   const { startSeek, stopSeek, tapSeek } = useSeekControls({ duration, position, seekTo })
   const [showMenu, setShowMenu] = useAtom(showMenuAtom)
   const [showPlaylist, setShowPlaylist] = useAtom(showPlaylistAtom)
-  const [showDetails, setShowDetails] = useState(false)
+  const [showDetails, setShowDetails] = useAtom(showDetailsAtom)
   const playlistSheetRef = useRef<BottomSheet>(null)
 
   const isCached = useIsCached(audio?.audioUrl ?? null, cacheTrigger)
