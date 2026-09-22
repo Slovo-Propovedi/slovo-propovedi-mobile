@@ -38,7 +38,8 @@
 Константы вёрстки — `src/shared/ui/theme/themed.ts`:
 
 - `COLORS` (мутируемые слоты темы + статичные цвета),
-- `FONT_SIZES`, `INDENTS`, `RADIUSES`, `SCREEN_PADDING`, `PLAYER_SIZES`.
+- `FONT_SIZES`, `INDENTS`, `RADIUSES`, `SCREEN_PADDING`, `PLAYER_SIZES`,
+- `MIN_TOUCH_TARGET` (`48`) — минимальный размер доступной touch-зоны иконочных кнопок (Apple HIG 44pt / Android Material 48dp). Применяется централизованно в `shared/ui/icon-button` базовым стилем (`minWidth`/`minHeight` + центрирование иконки); вызывающий стиль идёт после базового и может переопределить размер.
 
 Пример использования в стилях:
 

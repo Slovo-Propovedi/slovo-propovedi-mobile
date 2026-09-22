@@ -24,6 +24,6 @@ export type { ThemeContextValue } from './ThemeContext/ThemeContext'
 
 export { ThemeProvider } from './ThemeContext/ThemeProvider'
 export { useTheme } from './ThemeContext/useTheme'
-export { FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from './themed'
+export { FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, PLAYER_SIZES, RADIUSES } from './themed'
 
 export { type ThemeColors, type ThemedColors, ThemeMode } from './types'

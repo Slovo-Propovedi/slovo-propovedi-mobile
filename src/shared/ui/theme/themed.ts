@@ -29,6 +29,10 @@ export const SCREEN_PADDING = {
   vertical: 12,
 } as const
 
+// Minimum accessible touch target for icon buttons (Apple HIG 44pt / Android
+// Material 48dp). Enforced centrally by shared/ui/icon-button.
+export const MIN_TOUCH_TARGET = 48
+
 export const PLAYER_SIZES = {
   albumArtLarge: '45%',
   albumArtMini: 40,

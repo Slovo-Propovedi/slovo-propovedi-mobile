@@ -5,6 +5,9 @@ import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
 export const styles = StyleSheet.create({
   clearButton: {
     alignItems: 'center',
+    // The container is shorter than the 48pt touch target; centering keeps the
+    // icon on the input's vertical axis instead of pushing it down.
+    alignSelf: 'center',
     justifyContent: 'center',
     paddingHorizontal: INDENTS.medium,
   },

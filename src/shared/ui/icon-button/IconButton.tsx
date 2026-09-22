@@ -1,5 +1,6 @@
 import { forwardRef, type ReactNode } from 'react'
 import { StyleSheet, type View } from 'react-native'
+import { MIN_TOUCH_TARGET } from 'shared/ui/theme'
 import { PressableButton, type PressableButtonProps } from '../pressable-button'
 
 // Icon-only buttons must carry a mandatory accessibilityLabel and take their
@@ -19,6 +20,7 @@ export const IconButton = forwardRef<View, IconButtonProps>(
       ref={ref}
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [
+        styles.base,
         pressed && styles.pressed,
         typeof style === 'function' ? style({ pressed }) : style,
       ]}
@@ -30,6 +32,12 @@ export const IconButton = forwardRef<View, IconButtonProps>(
 IconButton.displayName = 'IconButton'
 
 const styles = StyleSheet.create({
+  base: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: MIN_TOUCH_TARGET,
+    minWidth: MIN_TOUCH_TARGET,
+  },
   pressed: {
     opacity: 0.6,
   },
