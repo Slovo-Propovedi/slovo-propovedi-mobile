@@ -43,11 +43,10 @@ jest.mock('../lib/resolveSectionFromCache', () => ({
 }))
 
 jest.mock('shared/ui', () => {
-  const { Text, View } = jest.requireActual('react-native')
+  const { View } = jest.requireActual('react-native')
 
   return {
     CoverImage: () => <View />,
-    MarqueeText: ({ text }: { text: string }) => <Text>{text}</Text>,
   }
 })
 
