@@ -40,10 +40,11 @@ export const shouldMarquee = (maxOffset: number): boolean => {
 // parent press on activation; this restores that behavior on web.
 export const shouldSwallowClick = (didDrag: boolean): boolean => didDrag
 
-// The marquee loop only starts after the user actually dragged the title once
-// (a long-press without movement must not arm it). The pan-end translation is
-// the total gesture distance; anything below the threshold is finger jitter.
-export const shouldArmMarquee = (translationX: number): boolean => {
+// The pan-end translation is the total gesture distance. A slow click (held
+// ≥ HOLD_MS, zero movement) activates the pan but is not a drag; anything below
+// the threshold is finger jitter, so the click stays alive. A real drag keeps
+// the post-drag click guard armed and (re)starts the marquee loop.
+export const isRealDrag = (translationX: number): boolean => {
   'worklet'
   return Math.abs(translationX) >= DRAG_ACTIVATION_THRESHOLD_PX
 }

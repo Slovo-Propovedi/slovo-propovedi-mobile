@@ -99,7 +99,7 @@ describe('<TracksListItem>', () => {
   test('renders the title text', async () => {
     await renderItem()
 
-    expect(screen.getByText(TEST_TITLE)).toBeTruthy()
+    expect(screen.getAllByText(TEST_TITLE)[0]).toBeTruthy()
   })
 
   test('renders subtitle text when subtitle prop is provided', async () => {

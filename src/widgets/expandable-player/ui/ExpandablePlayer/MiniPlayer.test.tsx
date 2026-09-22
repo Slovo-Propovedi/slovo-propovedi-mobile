@@ -88,9 +88,9 @@ describe('<MiniPlayer>', () => {
   })
 
   test('renders the track title and artwork', async () => {
-    const { container, getByText } = await renderMiniPlayer()
+    const { container, getAllByText } = await renderMiniPlayer()
 
-    expect(getByText(AUDIO.title)).toBeTruthy()
+    expect(getAllByText(AUDIO.title)[0]).toBeTruthy()
 
     const artwork = container.queryAll(node => node.props.source?.uri === ARTWORK_URL)
     expect(artwork).toHaveLength(1)
@@ -130,9 +130,9 @@ describe('<MiniPlayer>', () => {
   })
 
   test('pressing the mini player calls the expand callback', async () => {
-    const { getByText } = await renderMiniPlayer()
+    const { getByRole } = await renderMiniPlayer()
 
-    await fireEvent.press(getByText(AUDIO.title))
+    await fireEvent.press(getByRole('button', { name: new RegExp(AUDIO.title) }))
 
     expect(mockOnPress).toHaveBeenCalledTimes(1)
   })

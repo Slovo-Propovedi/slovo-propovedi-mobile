@@ -91,7 +91,7 @@ describe('<TracksListItemContent>', () => {
   test('dims title and artwork when progress is 1', async () => {
     await renderWithProviders(<TracksListItemContent {...baseProps} progress={1} />)
 
-    expect(screen.getByText(TEST_TITLE)).toHaveStyle({ color: mockTheme.textMuted })
+    expect(screen.getAllByText(TEST_TITLE)[0]).toHaveStyle({ color: mockTheme.textMuted })
     expect(screen.getByTestId(ARTWORK_TEST_ID)).toHaveStyle({ opacity: 0.5 })
   })
 
@@ -100,15 +100,15 @@ describe('<TracksListItemContent>', () => {
       <TracksListItemContent {...baseProps} progress={1} isPlaying={true} />,
     )
 
-    expect(screen.getByText(TEST_TITLE)).toHaveStyle({ color: mockTheme.primary })
-    expect(screen.getByText(TEST_TITLE)).not.toHaveStyle({ color: mockTheme.textMuted })
+    expect(screen.getAllByText(TEST_TITLE)[0]).toHaveStyle({ color: mockTheme.primary })
+    expect(screen.getAllByText(TEST_TITLE)[0]).not.toHaveStyle({ color: mockTheme.textMuted })
     expect(screen.getByTestId(ARTWORK_TEST_ID)).toHaveStyle({ opacity: 0.6 })
   })
 
   test('does not dim when progress is below 1', async () => {
     await renderWithProviders(<TracksListItemContent {...baseProps} progress={0.5} />)
 
-    expect(screen.getByText(TEST_TITLE)).not.toHaveStyle({ color: mockTheme.textMuted })
+    expect(screen.getAllByText(TEST_TITLE)[0]).not.toHaveStyle({ color: mockTheme.textMuted })
     expect(screen.getByTestId(ARTWORK_TEST_ID)).not.toHaveStyle({ opacity: 0.5 })
   })
 })

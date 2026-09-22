@@ -2,7 +2,7 @@ import { Platform } from 'react-native'
 import { Gesture } from 'react-native-gesture-handler'
 import { cancelAnimation } from 'react-native-reanimated'
 import type { SharedValue } from 'react-native-reanimated'
-import { clampMarqueeOffset, HOLD_MS, shouldArmMarquee } from './marquee-utils'
+import { clampMarqueeOffset, HOLD_MS, isRealDrag } from './marquee-utils'
 
 export const createMarqueeGesture = (
   translateX: SharedValue<number>,
@@ -42,7 +42,7 @@ export const createMarqueeGesture = (
       startX.value = translateX.value
       // A slow click (held ≥ HOLD_MS, zero movement) activates the pan but is
       // not a drag: keep the click alive so the parent pressable navigates.
-      if (shouldArmMarquee(e.translationX)) startIdleMarquee()
+      if (isRealDrag(e.translationX)) startIdleMarquee()
       else didDrag.value = false
     })
     .onFinalize((_e, success) => {

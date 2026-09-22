@@ -191,14 +191,14 @@ describe('<ListenScreen>', () => {
     searchQueryAtom(ctx, 'вера')
     searchResultsAtom(ctx, sermons)
     isSearchingAtom(ctx, false)
-    const { getByPlaceholderText, getByText, queryByText } = await renderWithProviders(
+    const { getAllByText, getByPlaceholderText, queryByText } = await renderWithProviders(
       <ListenScreen />,
       { ctx },
     )
 
     expect(hasScrollAncestor(getByPlaceholderText(SEARCH_PLACEHOLDER))).toBe(false)
     expect(queryByText(SECTIONS_MOCK)).toBeNull()
-    expect(getByText(SERMON_TITLE)).toBeTruthy()
+    expect(getAllByText(SERMON_TITLE)[0]).toBeTruthy()
   })
 
   test('clears the query via ✕ and returns sections while the search stays open and pinned', async () => {
@@ -277,13 +277,13 @@ describe('<ListenScreen>', () => {
     searchResultsAtom(ctx, sermons)
     isSearchingAtom(ctx, false)
 
-    const { getByPlaceholderText, getByText, queryByText } = await renderWithProviders(
+    const { getAllByText, getByPlaceholderText, queryByText } = await renderWithProviders(
       <ListenScreen />,
       { ctx },
     )
 
     expect(hasScrollAncestor(getByPlaceholderText(SEARCH_PLACEHOLDER))).toBe(false)
-    expect(getByText(SERMON_TITLE)).toBeTruthy()
+    expect(getAllByText(SERMON_TITLE)[0]).toBeTruthy()
     expect(queryByText(SECTIONS_MOCK)).toBeNull()
     expect(queryByText(CONTINUE_BUTTON_MOCK)).toBeNull()
   })
@@ -313,12 +313,10 @@ describe('<ListenScreen>', () => {
     searchResultsAtom(ctx, sermons)
     isSearchingAtom(ctx, false)
 
-    const { getByPlaceholderText, getByText, queryByText } = await renderWithProviders(
-      <ListenScreen />,
-      { ctx },
-    )
+    const { getAllByText, getByPlaceholderText, getByText, queryByText } =
+      await renderWithProviders(<ListenScreen />, { ctx })
 
-    expect(getByText(SERMON_TITLE)).toBeTruthy()
+    expect(getAllByText(SERMON_TITLE)[0]).toBeTruthy()
 
     await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'в')
 

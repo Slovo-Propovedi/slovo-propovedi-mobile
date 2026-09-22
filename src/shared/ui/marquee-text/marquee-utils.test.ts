@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   clampMarqueeOffset,
+  isRealDrag,
   MARQUEE_EPSILON_PX,
-  shouldArmMarquee,
   shouldMarquee,
   shouldSwallowClick,
 } from './marquee-utils'
@@ -87,24 +87,24 @@ describe('shouldSwallowClick', () => {
   })
 })
 
-describe('shouldArmMarquee', () => {
+describe('isRealDrag', () => {
   test('returns false below the activation threshold', () => {
-    expect(shouldArmMarquee(0)).toBe(false)
-    expect(shouldArmMarquee(2)).toBe(false)
-    expect(shouldArmMarquee(-2)).toBe(false)
+    expect(isRealDrag(0)).toBe(false)
+    expect(isRealDrag(2)).toBe(false)
+    expect(isRealDrag(-2)).toBe(false)
   })
 
   test('returns true at or above the activation threshold', () => {
-    expect(shouldArmMarquee(3)).toBe(true)
-    expect(shouldArmMarquee(50)).toBe(true)
-    expect(shouldArmMarquee(-3)).toBe(true)
-    expect(shouldArmMarquee(-50)).toBe(true)
+    expect(isRealDrag(3)).toBe(true)
+    expect(isRealDrag(50)).toBe(true)
+    expect(isRealDrag(-3)).toBe(true)
+    expect(isRealDrag(-50)).toBe(true)
   })
 
   test('is a pure predicate: repeated calls do not change the outcome', () => {
-    expect(shouldArmMarquee(10)).toBe(true)
-    expect(shouldArmMarquee(10)).toBe(true)
-    expect(shouldArmMarquee(0)).toBe(false)
+    expect(isRealDrag(10)).toBe(true)
+    expect(isRealDrag(10)).toBe(true)
+    expect(isRealDrag(0)).toBe(false)
   })
 })
 
@@ -118,6 +118,6 @@ describe('worklet directives', () => {
 
     expect(source).toMatch(/export const clampMarqueeOffset[\s\S]*?'worklet'/)
     expect(source).toMatch(/export const shouldMarquee[\s\S]*?'worklet'/)
-    expect(source).toMatch(/export const shouldArmMarquee[\s\S]*?'worklet'/)
+    expect(source).toMatch(/export const isRealDrag[\s\S]*?'worklet'/)
   })
 })
