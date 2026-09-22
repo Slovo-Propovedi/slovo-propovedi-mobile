@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { Platform, type StyleProp, Text, type TextStyle, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useAnimatedReaction, useSharedValue } from 'react-native-reanimated'
@@ -7,9 +6,8 @@ import { NATIVE_MEASURER_STYLE, WEB_MEASURER_STYLE, WEB_TEXT_STYLE } from './mar
 import { REPEAT_SPACER } from './marquee-utils'
 import { MarqueeTextSkeleton } from './skeleton'
 import { useMarqueeAnimation } from './useMarqueeAnimation'
-import { useMarqueeClickGuard } from './useMarqueeClickGuard'
+import { useMarqueeContainerRef } from './useMarqueeContainerRef'
 import { useMarqueeMeasurement } from './useMarqueeMeasurement'
-import { useNativeDragGuard } from './useNativeDragGuard'
 
 export interface MarqueeTextProps {
   /** Arms the loop immediately on overflow (player titles); others stay drag-gated. */
@@ -31,18 +29,7 @@ export const MarqueeText = ({
 }: MarqueeTextProps) => {
   const isWeb = Platform.OS === 'web'
   const didDrag = useSharedValue(false)
-  const clickGuardRef = useMarqueeClickGuard(didDrag)
-  const dragGuardRef = useNativeDragGuard()
-
-  // The container view hosts both web-only DOM guards: the click guard swallows
-  // the post-drag click and the native-drag guard blocks HTML5 `dragstart`.
-  const containerRef = useCallback(
-    (instance: unknown) => {
-      clickGuardRef(instance)
-      dragGuardRef(instance)
-    },
-    [clickGuardRef, dragGuardRef],
-  )
+  const containerRef = useMarqueeContainerRef(didDrag)
   const {
     containerWidth,
     handleContainerLayout,
@@ -54,15 +41,17 @@ export const MarqueeText = ({
     textWidth,
   } = useMarqueeMeasurement()
 
-  const { animatedStyle, marqueeArmed, startIdleMarquee, startX, translateX } = useMarqueeAnimation(
-    containerWidth,
-    textWidth,
-    needsMarquee,
-    text,
-    isWeb,
-    centerWhenStatic,
-    autoStart,
-  )
+  const { animatedStyle, clockPaused, marqueeArmed, startIdleMarquee, startX, translateX } =
+    useMarqueeAnimation(
+      containerWidth,
+      textWidth,
+      needsMarquee,
+      text,
+      isWeb,
+      centerWhenStatic,
+      autoStart,
+      needsRepeat,
+    )
 
   useAnimatedReaction(
     () => ({ container: containerWidth.value, text: textWidth.value }),
@@ -79,6 +68,7 @@ export const MarqueeText = ({
     startIdleMarquee,
     didDrag,
     marqueeArmed,
+    clockPaused,
   )
 
   if (!text) return null
@@ -97,7 +87,10 @@ export const MarqueeText = ({
       style={[{ overflow: 'hidden' }, style]}
     >
       <GestureDetector gesture={pan}>
-        <Animated.View style={[animatedStyle, { alignSelf, flexDirection: 'row' }]}>
+        <Animated.View
+          renderToHardwareTextureAndroid
+          style={[animatedStyle, { alignSelf, flexDirection: 'row' }]}
+        >
           <Text ellipsizeMode='clip' style={visibleTextStyle} numberOfLines={isWeb ? undefined : 1}>
             {text}
           </Text>

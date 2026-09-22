@@ -1,22 +1,7 @@
-import { useEffect } from 'react'
-import {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated'
+import { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import type { SharedValue } from 'react-native-reanimated'
-import {
-  MARQUEE_MS_PER_PX,
-  MARQUEE_MS_PER_PX_NARROW,
-  MARQUEE_PAUSE,
-  NARROW_WIDTH_THRESHOLD,
-  REPEAT_SPACER,
-} from './marquee-utils'
+import { REPEAT_SPACER } from './marquee-utils'
+import { useMarqueeFrameClock } from './useMarqueeFrameClock'
 
 // Absorbs Yoga pixel-grid rounding when sizing a static centered row.
 const STATIC_WIDTH_SAFETY_PX = 2
@@ -29,6 +14,7 @@ export const useMarqueeAnimation = (
   isWeb: boolean,
   centerWhenStatic: boolean,
   autoStart: boolean,
+  needsRepeat: boolean,
 ) => {
   const translateX = useSharedValue(0)
   const startX = useSharedValue(0)
@@ -36,12 +22,17 @@ export const useMarqueeAnimation = (
   // loop after a real drag; autoStart consumers (player titles) arm upfront.
   const marqueeArmed = useSharedValue(autoStart)
 
-  useEffect(() => {
-    cancelAnimation(translateX)
-    translateX.value = 0
-    startX.value = 0
-    marqueeArmed.value = autoStart
-  }, [text, autoStart])
+  const { clockPaused, frameCallback, startIdleMarquee } = useMarqueeFrameClock({
+    autoStart,
+    containerWidth,
+    marqueeArmed,
+    needsMarquee,
+    needsRepeat,
+    startX,
+    text,
+    textWidth,
+    translateX,
+  })
 
   const animatedStyle = useAnimatedStyle(() => {
     // The visible Text keeps numberOfLines={1} on native, so ANY width smaller
@@ -68,29 +59,13 @@ export const useMarqueeAnimation = (
     }
   })
 
-  const startIdleMarquee = () => {
-    'worklet'
-    if (!needsMarquee.value || !marqueeArmed.value) {
-      // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value reset in worklet to stop animation
-      translateX.value = 0
-      return
-    }
-    const loopDistance = textWidth.value + REPEAT_SPACER
-    const msPerPx =
-      containerWidth.value < NARROW_WIDTH_THRESHOLD ? MARQUEE_MS_PER_PX_NARROW : MARQUEE_MS_PER_PX
-    translateX.value = 0
-    translateX.value = withRepeat(
-      withSequence(
-        withDelay(
-          MARQUEE_PAUSE,
-          withTiming(-loopDistance, { duration: loopDistance * msPerPx, easing: Easing.linear }),
-        ),
-        withTiming(0, { duration: 0 }),
-      ),
-      -1,
-      false,
-    )
+  return {
+    animatedStyle,
+    clockPaused,
+    frameCallback,
+    marqueeArmed,
+    startIdleMarquee,
+    startX,
+    translateX,
   }
-
-  return { animatedStyle, marqueeArmed, startIdleMarquee, startX, translateX }
 }

@@ -1,8 +1,13 @@
 jest.mock('react-native-reanimated', () => {
   const { FlatList, View } = require('react-native')
 
+  // Registrations are exposed so tests can drive frames through the callback
+  // returned by the hook (mirrors the real FrameCallbackRegistry).
+  const frameCallbacks = []
+
   return {
     __esModule: true,
+    __frameCallbacks: frameCallbacks,
     default: { FlatList, View, createAnimatedComponent: Component => Component },
     cancelAnimation: () => {},
     createAnimatedComponent: Component => Component,
@@ -24,6 +29,18 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedProps: fn => (typeof fn === 'function' ? fn() : {}),
     useAnimatedStyle: fn => (typeof fn === 'function' ? fn() : {}),
     useDerivedValue: fn => ({ value: typeof fn === 'function' ? fn() : undefined }),
+    useFrameCallback: (callback, autostart = true) => {
+      const frameCallback = {
+        callback,
+        callbackId: frameCallbacks.length,
+        isActive: autostart,
+        setActive: jest.fn(isActive => {
+          frameCallback.isActive = isActive
+        }),
+      }
+      frameCallbacks.push(frameCallback)
+      return frameCallback
+    },
     useSharedValue: init => ({ value: init }),
     withDelay: (_delay, value) => value,
     withRepeat: value => value,

@@ -1,6 +1,5 @@
 import { Platform } from 'react-native'
 import { Gesture } from 'react-native-gesture-handler'
-import { cancelAnimation } from 'react-native-reanimated'
 import type { SharedValue } from 'react-native-reanimated'
 import { clampMarqueeOffset, HOLD_MS, isRealDrag } from './marquee-utils'
 
@@ -11,6 +10,7 @@ export const createMarqueeGesture = (
   startIdleMarquee: () => void,
   didDrag: SharedValue<boolean>,
   marqueeArmed: SharedValue<boolean>,
+  clockPaused: SharedValue<boolean>,
 ) => {
   const pan = Gesture.Pan().shouldCancelWhenOutside(false).activeCursor('grabbing')
 
@@ -30,7 +30,8 @@ export const createMarqueeGesture = (
     .onStart(() => {
       'worklet'
       didDrag.value = true
-      cancelAnimation(translateX)
+      // Pause the frame clock: otherwise it would fight the scrub every frame.
+      clockPaused.value = true
       startX.value = translateX.value
     })
     .onChange(e => {

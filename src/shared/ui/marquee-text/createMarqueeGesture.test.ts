@@ -16,36 +16,67 @@ describe('createMarqueeGesture', () => {
   const maxOffset = { value: 100 } as SharedValue<number>
   const didDrag = { value: false } as SharedValue<boolean>
   const marqueeArmed = { value: false } as SharedValue<boolean>
+  const clockPaused = { value: true } as SharedValue<boolean>
   const startIdleMarquee = jest.fn()
 
   beforeEach(() => {
     didDrag.value = false
     marqueeArmed.value = false
+    clockPaused.value = true
     startIdleMarquee.mockClear()
     __gestureMock.reset()
   })
 
-  test('marks a drag on pan activation', () => {
-    createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+  test('marks a drag and pauses the clock on pan activation', () => {
+    // The running frame clock must be paused on activation, otherwise it would
+    // fight the scrub every frame (the withRepeat loop used to be cancelled).
+    clockPaused.value = false
+    createMarqueeGesture(
+      translateX,
+      startX,
+      maxOffset,
+      startIdleMarquee,
+      didDrag,
+      marqueeArmed,
+      clockPaused,
+    )
 
     __gestureMock.pan().onStart?.({})
 
     expect(didDrag.value).toBe(true)
+    expect(clockPaused.value).toBe(true)
   })
 
   test('neither arms nor starts the loop for sub-threshold finger jitter', () => {
-    createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+    createMarqueeGesture(
+      translateX,
+      startX,
+      maxOffset,
+      startIdleMarquee,
+      didDrag,
+      marqueeArmed,
+      clockPaused,
+    )
 
     __gestureMock.pan().onStart?.({})
     __gestureMock.pan().onEnd?.({ translationX: 2 })
 
     expect(didDrag.value).toBe(false)
     expect(marqueeArmed.value).toBe(false)
+    expect(clockPaused.value).toBe(true)
     expect(startIdleMarquee).not.toHaveBeenCalled()
   })
 
   test('arms the gate and starts the loop after a real drag', () => {
-    createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+    createMarqueeGesture(
+      translateX,
+      startX,
+      maxOffset,
+      startIdleMarquee,
+      didDrag,
+      marqueeArmed,
+      clockPaused,
+    )
 
     __gestureMock.pan().onStart?.({})
     __gestureMock.pan().onEnd?.({ translationX: 5 })
@@ -56,7 +87,15 @@ describe('createMarqueeGesture', () => {
   })
 
   test('resets didDrag on finalize after a cancelled gesture', () => {
-    createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+    createMarqueeGesture(
+      translateX,
+      startX,
+      maxOffset,
+      startIdleMarquee,
+      didDrag,
+      marqueeArmed,
+      clockPaused,
+    )
 
     __gestureMock.pan().onStart?.({})
     __gestureMock.pan().onEnd?.({ translationX: 5 }, false)
@@ -66,7 +105,15 @@ describe('createMarqueeGesture', () => {
   })
 
   test('keeps didDrag armed on finalize after a successful drag', () => {
-    createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+    createMarqueeGesture(
+      translateX,
+      startX,
+      maxOffset,
+      startIdleMarquee,
+      didDrag,
+      marqueeArmed,
+      clockPaused,
+    )
 
     __gestureMock.pan().onStart?.({})
     __gestureMock.pan().onEnd?.({ translationX: 5 }, true)
@@ -78,7 +125,15 @@ describe('createMarqueeGesture', () => {
   test('uses minDistance activation on web (no long-press hold)', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+      createMarqueeGesture(
+        translateX,
+        startX,
+        maxOffset,
+        startIdleMarquee,
+        didDrag,
+        marqueeArmed,
+        clockPaused,
+      )
 
       expect(__gestureMock.pan().minDistance).toBe(10)
       expect(__gestureMock.pan().failOffsetY).toEqual([-14, 14])
@@ -89,7 +144,15 @@ describe('createMarqueeGesture', () => {
   })
 
   test('keeps long-press activation on native', () => {
-    createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag, marqueeArmed)
+    createMarqueeGesture(
+      translateX,
+      startX,
+      maxOffset,
+      startIdleMarquee,
+      didDrag,
+      marqueeArmed,
+      clockPaused,
+    )
 
     expect(__gestureMock.pan().activateAfterLongPress).toBe(HOLD_MS)
     expect(__gestureMock.pan().minDistance).toBeUndefined()
