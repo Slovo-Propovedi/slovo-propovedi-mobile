@@ -27,6 +27,7 @@ jest.mock('shared/ui/collapsing-navbar-driver', () => ({
 }))
 
 jest.mock('../lib/useCollapsingHeader', () => ({
+  TITLE_TOP_GAP: 80,
   useCollapsingHeader: () => ({
     darkenStart: { value: 0 },
     headerHeight: 100,
