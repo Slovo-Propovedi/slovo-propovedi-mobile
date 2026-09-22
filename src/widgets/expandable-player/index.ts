@@ -1,4 +1,5 @@
 export { isPlayerTransitioningAtom } from './model/isPlayerTransitioningAtom'
+export { showDetailsAtom } from './model/showDetailsAtom'
 export { showMenuAtom } from './model/showMenuAtom'
 export { showPlaylistAtom } from './model/showPlaylistAtom'
 export { ExpandablePlayer } from './ui/ExpandablePlayer/ExpandablePlayer'

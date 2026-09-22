@@ -2,7 +2,7 @@ import { useAction } from '@reatom/npm-react'
 import { router, Stack } from 'expo-router'
 import { useEffect } from 'react'
 import { BackHandler, InteractionManager, View } from 'react-native'
-import { showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
+import { showDetailsAtom, showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
@@ -48,10 +48,18 @@ const RootLayout = () => {
 
   useEffect(() => {
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+      const currentShowDetails = ctx.get(showDetailsAtom)
       const currentShowMenu = ctx.get(showMenuAtom)
       const currentShowPlaylist = ctx.get(showPlaylistAtom)
       const currentIsPlayerExpanded = ctx.get(isPlayerExpandedAtom)
       const canGoBack = router.canGoBack()
+
+      if (currentShowDetails) {
+        void ctx.schedule(() => {
+          showDetailsAtom(ctx, false)
+        })
+        return true
+      }
 
       if (currentShowMenu) {
         void ctx.schedule(() => {

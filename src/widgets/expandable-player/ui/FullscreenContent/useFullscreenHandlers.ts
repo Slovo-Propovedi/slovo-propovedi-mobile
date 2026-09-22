@@ -60,6 +60,15 @@ export const useFullscreenHandlers = () => {
     isQueued,
   })
 
+  const handleCollapse = (onClose: () => void) => {
+    // Details is the topmost layer: close it first, and always clear it on collapse.
+    setShowDetails(false)
+
+    if (showDetails) return
+    if (showPlaylist) setShowPlaylist(false)
+    else onClose()
+  }
+
   const handleOpenPlaylist = () => {
     setShowPlaylist(true)
   }
@@ -97,6 +106,7 @@ export const useFullscreenHandlers = () => {
   return {
     audio,
     duration,
+    handleCollapse,
     handleOpenPlaylist,
     handleToggleCache,
     handleTogglePlay: togglePlay,

@@ -24,6 +24,7 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
   const {
     audio,
     duration,
+    handleCollapse,
     handleOpenPlaylist,
     handleToggleCache,
     handleTogglePlay,
@@ -44,10 +45,7 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
     visualState,
   } = useFullscreenHandlers()
 
-  const handleCollapsePress = () => {
-    if (showPlaylist) setShowPlaylist(false)
-    else onClose()
-  }
+  const handleCollapsePress = () => handleCollapse(onClose)
 
   // Stable identity so the memoized sheet skips re-renders on parent ticks.
   const handleClosePlaylist = useCallback(() => setShowPlaylist(false), [setShowPlaylist])

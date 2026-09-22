@@ -35,11 +35,12 @@
 
 **Аппаратная кнопка «Назад» (Android)** — обработчик `BackHandler.addEventListener('hardwareBackPress', ...)` с каскадом:
 
-1. открыто меню плеера (`showMenuAtom`) → закрыть;
-2. открыта плейлист-шторка (`showPlaylistAtom`) → закрыть;
-3. развёрнут плеер (`isPlayerExpandedAtom`) → `closePlayerSheetAction`;
-4. есть история (`router.canGoBack()`) → `router.back()`;
-5. иначе — ничего (возврат `false`).
+1. открыт оверлей «Подробнее» (`showDetailsAtom`) → закрыть;
+2. открыто меню плеера (`showMenuAtom`) → закрыть;
+3. открыта плейлист-шторка (`showPlaylistAtom`) → закрыть;
+4. развёрнут плеер (`isPlayerExpandedAtom`) → `closePlayerSheetAction`;
+5. есть история (`router.canGoBack()`) → `router.back()`;
+6. иначе — ничего (возврат `false`).
 
 В `_RootLayout.tsx` также: подписка `subscribeToNetwork()` (модульный вызов), `checkForUpdateAction` после `InteractionManager`, персист позиции каждые 5с, `useUpdateNotificationResponse()`.
 

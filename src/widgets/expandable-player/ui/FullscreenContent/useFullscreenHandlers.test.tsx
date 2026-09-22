@@ -20,6 +20,11 @@ jest.mock('shared/lib/audio-cache', () => {
   }
 })
 
+jest.mock('../../model/showDetailsAtom', () => {
+  const { atom } = jest.requireActual('@reatom/framework')
+  return { showDetailsAtom: atom(false, 'mockShowDetailsAtom') }
+})
+
 jest.mock('../../model/showMenuAtom', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return { showMenuAtom: atom(false, 'mockShowMenuAtom') }
