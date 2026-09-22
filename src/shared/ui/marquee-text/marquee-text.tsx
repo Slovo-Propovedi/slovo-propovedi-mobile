@@ -52,7 +52,7 @@ export const MarqueeText = ({
     textWidth,
   } = useMarqueeMeasurement()
 
-  const { animatedStyle, marqueeArmed, startIdleMarquee, startX, translateX } = useMarqueeAnimation(
+  const { animatedStyle, startIdleMarquee, startX, translateX } = useMarqueeAnimation(
     containerWidth,
     textWidth,
     needsMarquee,
@@ -69,14 +69,7 @@ export const MarqueeText = ({
     },
   )
 
-  const pan = createMarqueeGesture(
-    translateX,
-    startX,
-    maxOffset,
-    startIdleMarquee,
-    didDrag,
-    marqueeArmed,
-  )
+  const pan = createMarqueeGesture(translateX, startX, maxOffset, startIdleMarquee, didDrag)
 
   if (!text) return null
 

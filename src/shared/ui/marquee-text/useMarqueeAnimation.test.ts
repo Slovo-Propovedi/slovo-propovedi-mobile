@@ -18,7 +18,6 @@ describe('useMarqueeAnimation', () => {
       useMarqueeAnimation(containerWidth, textWidth, needsMarquee, 'text', false, false),
     )
 
-    result.current.marqueeArmed.value = true
     result.current.startIdleMarquee()
     expect(jest.mocked(withTiming)).toHaveBeenCalled()
 

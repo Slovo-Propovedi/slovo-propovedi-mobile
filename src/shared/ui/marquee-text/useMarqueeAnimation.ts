@@ -31,13 +31,11 @@ export const useMarqueeAnimation = (
 ) => {
   const translateX = useSharedValue(0)
   const startX = useSharedValue(0)
-  const marqueeArmed = useSharedValue(false)
 
   useEffect(() => {
     cancelAnimation(translateX)
     translateX.value = 0
     startX.value = 0
-    marqueeArmed.value = false
   }, [text])
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -67,7 +65,7 @@ export const useMarqueeAnimation = (
 
   const startIdleMarquee = () => {
     'worklet'
-    if (!needsMarquee.value || !marqueeArmed.value) {
+    if (!needsMarquee.value) {
       // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value reset in worklet to stop animation
       translateX.value = 0
       return
@@ -89,5 +87,5 @@ export const useMarqueeAnimation = (
     )
   }
 
-  return { animatedStyle, marqueeArmed, startIdleMarquee, startX, translateX }
+  return { animatedStyle, startIdleMarquee, startX, translateX }
 }
