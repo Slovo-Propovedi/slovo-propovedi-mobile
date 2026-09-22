@@ -5,11 +5,11 @@ import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 export const expandedControlsStyles = StyleSheet.create({
   closeButton: {
     alignItems: 'center',
-    height: 40,
+    height: 48,
     justifyContent: 'center',
     left: INDENTS.medium,
     position: 'absolute',
-    width: 40,
+    width: 48,
     zIndex: 300,
   },
 
@@ -69,11 +69,11 @@ export const expandedControlsStyles = StyleSheet.create({
 
   stopAllButton: {
     alignItems: 'center',
-    height: 40,
+    height: 48,
     justifyContent: 'center',
     position: 'absolute',
     right: INDENTS.medium,
-    width: 40,
+    width: 48,
     zIndex: 300,
   },
 

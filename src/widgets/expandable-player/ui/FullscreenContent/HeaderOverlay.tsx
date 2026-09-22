@@ -40,6 +40,7 @@ export const HeaderOverlay = ({
 
   const closePanGesture = Gesture.Pan()
     .activeOffsetY(15)
+    .hitSlop(4)
     .onStart(() => {
       'worklet'
       scheduleOnRN(markPanActive)

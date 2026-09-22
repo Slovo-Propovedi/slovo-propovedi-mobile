@@ -30,7 +30,6 @@ export const HeaderBackButton = ({
 
   return (
     <IconButton
-      hitSlop={8}
       onPress={handlePress}
       style={styles.container}
       accessibilityLabel='Назад'
@@ -43,5 +42,9 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
+    height: 48,
+    justifyContent: 'center',
+    marginLeft: -8,
+    width: 48,
   },
 })

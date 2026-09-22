@@ -24,7 +24,7 @@
 - пять под-экранов корневого стека (`settings`/`history`/`offline`/`about`/`share`, `_RootLayout.tsx`) — фолбэк `/more` (таб «Еще», логический родитель всех пяти);
 - стек «Слушать» (`playlist`/`playlist-list`, `app/(tabs)/listen/_layout.tsx`) — фолбэк `/listen`.
 
-Только иконка (`Ionicons 'chevron-back'`), без текста «Назад» рядом — раньше в стеке «Слушать» использовалась нативная кнопка с `headerBackTitle: 'Назад'` (текст виден только на iOS), теперь оба стека выглядят одинаково.
+Только иконка (`Ionicons 'chevron-back'`), без текста «Назад» рядом — раньше в стеке «Слушать» использовалась нативная кнопка с `headerBackTitle: 'Назад'` (текст виден только на iOS), теперь оба стека выглядят одинаково. Контейнер 48×48 (без `hitSlop`) даёт полноразмерную область нажатия и frame для скринридеров без изменения размера иконки (24); `marginLeft: -8` сохраняет визуальное положение шеврона.
 
 - Проп `fallbackRoute` (по умолчанию `'/more'`) задаёт, куда уходить, если истории нет — каждый стек передаёт свой через `headerLeft: props => <HeaderBackButton tintColor={props.tintColor} fallbackRoute='...' />`.
 - По нажатию: если `router.canGoBack()` — `router.back()`; иначе — `router.replace(fallbackRoute)`.
