@@ -21,7 +21,7 @@
 
 ## Откуда данные
 
-- Параметр маршрута `playlist` — **id плейлиста** (`useLocalSearchParams<{ playlist: string }>`). Резолвится в полный `PlaylistData` хуком `usePlaylistById` (`src/pages/playlist/lib/usePlaylistById.ts`): сначала поиск по live `dynamicSectionsAtom`, при промахе — фолбэк на кэш (`resolvePlaylistFromCache`, ключ `sections-cache`); пока идёт резолв — `isLoading`, при отсутствии плейлиста в секциях и кэше — `notFound`.
+- Параметр маршрута `playlist` — **id плейлиста** (`useLocalSearchParams<{ playlist: string }>`). Резолвится в полный `PlaylistData` хуком `usePlaylistById` (`src/pages/playlist/lib/usePlaylistById.ts`): сначала поиск по live `dynamicSectionsAtom`, при промахе — фолбэк на кэш (`resolvePlaylistFromCache` через `getCachedSections`, ключ `cachedSections`); пока идёт резолв — `isLoading`, при отсутствии плейлиста в секциях и кэше — `notFound`.
 - Плеер: `currentAudioAtom`, `isPlayingAtom`, `usePlayNewSermon` из `entities/player`. Индикация скачивания — внутри базовой строки `TracksListItem` (`useTrackItemCache` подписывается на `playlistDownloadProgressAtom` по URL трека); обёртки `PlaylistTrackItem`/`PlaylistSheetRow` не подписываются на скачивание. Прогресс-бар строки — через подписку на `playlistDownloadProgressAtom` (по URL трека).
 - Кэш: `cacheUpdateTriggerAtom` (`shared/lib/cache-triggers`), `isCachingPlaylistAtom`/`playlistCacheProgressAtom` из `src/pages/playlist/model.ts`.
 - Скачивание: `PlaylistOfflineService` (`src/pages/playlist/lib/PlaylistOfflineService.ts`), меню `PlaylistHeaderMenu`/`PlaylistHeaderMenuDropdown` (`src/pages/playlist/ui/`).
