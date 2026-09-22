@@ -6,10 +6,13 @@ import {
 import { ctx } from 'shared/lib/reatom-ctx'
 import { type AudioPlayerData, type PlaylistData, type SermonData } from 'shared/model'
 import type { LockScreenMetadata } from './PlayerService/types'
-import { currentAudioAtom, durationAtom, positionAtom } from '../model'
+import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
 import { guardOfflinePlayback } from './playOfflineGuard'
 
 const SAME_SERMON_TOLERANCE_MS = 1000
+
+const isSameSermonPlaying = (sermonId: string) =>
+  ctx.get(currentAudioAtom)?.id === sermonId && ctx.get(isPlayingAtom)
 
 export interface PlayNewSermonDeps {
   clearSuppressionOnError: (sermonId: string) => void
@@ -48,6 +51,9 @@ export const playNewSermonAsync = async (
   if (!audioUrl) return
 
   const sermonId = id
+
+  // Issue #99: tapping the sermon that is already playing is a no-op
+  if (isSameSermonPlaying(sermonId)) return
 
   if (deps.isRepeatTapSuppressed(sermonId)) return
 

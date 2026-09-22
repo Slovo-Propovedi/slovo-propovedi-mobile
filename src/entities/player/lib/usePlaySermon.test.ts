@@ -8,7 +8,7 @@ import { reportError } from 'shared/model/error-dialog'
 import { showInfo } from 'shared/model/info-dialog'
 import { isOnlineAtom } from 'shared/model/network'
 import type { ListeningHistory } from 'entities/listening-history/@x/player'
-import { currentAudioAtom, durationAtom, positionAtom } from '../model'
+import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
 import { usePlayNewSermon } from './usePlaySermon'
 
 const mockPlay = jest.fn().mockResolvedValue(undefined)
@@ -98,11 +98,13 @@ const COMPLETED_ENTRY = {
 const setAtomState = async (opts: {
   currentAudio?: { id: string }
   history?: ListeningHistory
+  isPlaying?: boolean
   position?: number
 }) => {
   await act(async () => {
     if (opts.currentAudio) currentAudioAtom(ctx, opts.currentAudio as AudioPlayerData)
     if (opts.history) mockHistoryAtom(ctx, opts.history)
+    if (opts.isPlaying !== undefined) isPlayingAtom(ctx, opts.isPlaying)
     if (opts.position !== undefined) positionAtom(ctx, opts.position)
   })
 }
@@ -120,6 +122,7 @@ describe('usePlayNewSermon', () => {
     currentAudioAtom(ctx, null)
     positionAtom(ctx, 0)
     durationAtom(ctx, 5678)
+    isPlayingAtom(ctx, false)
     mockHistoryAtom(ctx, [])
     isOnlineAtom(ctx, true)
     jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
@@ -228,6 +231,49 @@ describe('usePlayNewSermon', () => {
 
     expect(mockSeekTo).not.toHaveBeenCalled()
     expect(mockReplaceAudio).not.toHaveBeenCalled()
+  })
+
+  test('same sermon already playing → full no-op (no restart, no seek, no history writes)', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
+      currentAudio: { id: SERMON_ID },
+      history: [PARTIAL_ENTRY],
+      isPlaying: true,
+      position: RESUME_MS + 500,
+    })
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(mockResumeAfterPause).not.toHaveBeenCalled()
+    expect(mockSeekTo).not.toHaveBeenCalled()
+    expect(mockPlay).not.toHaveBeenCalled()
+    expect(mockSetLockScreenMetadata).not.toHaveBeenCalled()
+    expect(mockRecordPlaybackStart).not.toHaveBeenCalled()
+    expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
+  })
+
+  test('same sermon paused → resume still proceeds', async () => {
+    mockGetResumePosition.mockReturnValue(RESUME_MS)
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
+      currentAudio: { id: SERMON_ID },
+      history: [PARTIAL_ENTRY],
+      isPlaying: false,
+      position: RESUME_MS + 500,
+    })
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+    })
+
+    expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
+    expect(mockPlay).toHaveBeenCalledTimes(1)
   })
 
   test('first play (no old audio) → recordPlaybackStartAction called', async () => {
