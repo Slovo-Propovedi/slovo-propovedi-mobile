@@ -80,12 +80,14 @@ export const MarqueeText = memo(function MarqueeTextComponent({
   // @ts-expect-error - web-only whiteSpace is not in RN TextStyle
   const visibleTextStyle: StyleProp<TextStyle> = isWeb ? [textStyle, WEB_TEXT_STYLE] : textStyle
 
+  // alignSelf:'stretch' overrides a parent's alignItems:'center'; without it the
+  // container shrink-wraps to the row's explicit width (maxOffset=0, overflow).
   return (
     <View
       testID={testID}
       ref={containerRef}
       onLayout={handleContainerLayout}
-      style={[{ overflow: 'hidden' }, style]}
+      style={[{ alignSelf: 'stretch', overflow: 'hidden' }, style]}
     >
       <GestureDetector gesture={pan}>
         <Animated.View

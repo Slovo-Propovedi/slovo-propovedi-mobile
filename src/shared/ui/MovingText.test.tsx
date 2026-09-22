@@ -10,6 +10,7 @@ let mockMarqueeRenderCount = 0
 jest.mock('./marquee-text/marquee-text', () => ({
   MarqueeText: (props: {
     autoStart?: boolean
+    centerWhenStatic?: boolean
     testID?: string
     text: string
     textStyle?: unknown
@@ -73,6 +74,18 @@ describe('<MovingText />', () => {
     await renderWithProviders(<MovingText autoStart text='Some text' />)
 
     expect(getCapturedProps().autoStart).toBe(true)
+  })
+
+  test('forwards centerWhenStatic as undefined by default', async () => {
+    await renderWithProviders(<MovingText text='Some text' />)
+
+    expect(getCapturedProps().centerWhenStatic).toBeUndefined()
+  })
+
+  test('forwards centerWhenStatic when set', async () => {
+    await renderWithProviders(<MovingText centerWhenStatic text='Some text' />)
+
+    expect(getCapturedProps().centerWhenStatic).toBe(true)
   })
 
   test('does not re-render MarqueeText when props are identical (memoized)', async () => {

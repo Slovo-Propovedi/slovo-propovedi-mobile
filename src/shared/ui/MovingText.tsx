@@ -5,12 +5,19 @@ import { useTheme } from './theme/ThemeContext/useTheme'
 
 interface MovingTextProps {
   autoStart?: boolean
+  centerWhenStatic?: boolean
   style?: StyleProp<TextStyle>
   testID?: string
   text: string
 }
 
-const MovingTextComponent = ({ autoStart, style, testID, text }: MovingTextProps) => {
+const MovingTextComponent = ({
+  autoStart,
+  centerWhenStatic,
+  style,
+  testID,
+  text,
+}: MovingTextProps) => {
   const { currentTheme } = useTheme()
 
   return (
@@ -18,6 +25,7 @@ const MovingTextComponent = ({ autoStart, style, testID, text }: MovingTextProps
       text={text}
       testID={testID}
       autoStart={autoStart}
+      centerWhenStatic={centerWhenStatic}
       textStyle={[{ color: currentTheme.text }, style]}
     />
   )

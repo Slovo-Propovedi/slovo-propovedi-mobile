@@ -60,6 +60,16 @@ describe('<MarqueeText />', () => {
     expect(screen.getByTestId(propsStub.testID)).toBeTruthy()
   })
 
+  test('stretches the container so a centering parent cannot shrink-wrap it', async () => {
+    // Regression (fullscreen native): a parent with alignItems:'center' used to
+    // shrink-wrap the container to the marquee row's explicit width, measuring a
+    // huge containerWidth (maxOffset=0) and overflowing both screen edges.
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    const style = StyleSheet.flatten(screen.getByTestId(TEST_ID).props.style)
+    expect(style.alignSelf).toBe('stretch')
+  })
+
   test('renders a Text node with the title', async () => {
     await renderWithProviders(<MarqueeText text={propsStub.text} />)
 
