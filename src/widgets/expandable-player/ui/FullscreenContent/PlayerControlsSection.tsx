@@ -3,13 +3,13 @@ import { Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlayerRepeatToggle, SermonPlayerControls } from 'entities/player'
 import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
-import { formatSermonReference } from 'shared/lib/format'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { MovingText } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { getFullscreenPlayerBottomPadding } from '../../lib/getFullscreenPlayerBottomPadding'
+import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
 import { BoundaryHint } from './BoundaryHint'
 import { FullscreenDownloadProgressBar } from './FullscreenDownloadProgressBar'
@@ -50,10 +50,7 @@ export const PlayerControlsSection = ({
   visualState,
 }: PlayerControlsSectionProps) => {
   const { bottom } = useSafeAreaInsets()
-  const subtitle =
-    formatSermonReference({ book: audio.book, chapter: audio.chapter, verse: audio.verse }) ??
-    playlist?.title ??
-    'Слово.Проповеди'
+  const subtitle = getPlayerSubtitle(audio, playlist)
 
   return (
     <View

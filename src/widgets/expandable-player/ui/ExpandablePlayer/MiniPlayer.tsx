@@ -1,13 +1,13 @@
 import { ActivityIndicator, Platform, Text, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
-import { formatSermonReference } from 'shared/lib/format'
 import { type AudioPlayerData, type PlaylistData } from 'shared/model'
 import { CoverImage, MovingText, PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
 import type { createMiniStyles } from './miniStyles'
 import type { GestureType } from 'react-native-gesture-handler'
 import type { ThemeColors } from 'shared/ui/theme'
+import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
 
 const AnimatedPressable = Animated.createAnimatedComponent(PressableButton)
@@ -43,10 +43,7 @@ export const MiniPlayer = ({
   playlist,
   showSpinner,
 }: MiniPlayerProps) => {
-  const subtitle =
-    formatSermonReference({ book: audio.book, chapter: audio.chapter, verse: audio.verse }) ??
-    playlist?.title ??
-    'Слово.Проповеди'
+  const subtitle = getPlayerSubtitle(audio, playlist)
 
   return (
     <GestureDetector gesture={miniPan}>

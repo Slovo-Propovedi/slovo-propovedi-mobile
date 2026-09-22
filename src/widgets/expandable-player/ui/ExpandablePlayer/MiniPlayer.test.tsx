@@ -42,6 +42,7 @@ const REFERENCE_TEXT = 'Бытие 1:5'
 const BUFFERING_INDICATOR_TEST_ID = 'buffering-indicator'
 const PLAY_LABEL = 'Воспроизвести'
 const PAUSE_LABEL = 'Пауза'
+const SECTION_TITLE = 'Раздел'
 
 const AUDIO: AudioPlayerData = {
   artist: 'Автор',
@@ -109,6 +110,23 @@ describe('<MiniPlayer>', () => {
 
     const withoutPlaylist = await renderMiniPlayer({ audio: noReferenceAudio })
     expect(withoutPlaylist.getByText(APP_NAME)).toBeTruthy()
+  })
+
+  test('prefers the section name when the playlist has a single sermon', async () => {
+    const noReferenceAudio = { ...AUDIO, book: null, chapter: null, verse: null }
+    const singleSermonPlaylist: PlaylistData = {
+      ...PLAYLIST,
+      sections: [{ itemsSize: 'middle', title: SECTION_TITLE, transform: 'short' }],
+      sermons: [AUDIO],
+    }
+
+    const { getByText, queryByText } = await renderMiniPlayer({
+      audio: noReferenceAudio,
+      playlist: singleSermonPlaylist,
+    })
+
+    expect(getByText(SECTION_TITLE)).toBeTruthy()
+    expect(queryByText(PLAYLIST.title)).toBeNull()
   })
 
   test('pressing the mini player calls the expand callback', async () => {
