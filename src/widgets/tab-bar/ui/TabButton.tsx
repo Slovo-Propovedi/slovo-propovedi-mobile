@@ -55,6 +55,7 @@ export const TabButton = ({
     <TouchableButton
       key={routeKey}
       onPress={onPress}
+      hapticDisabled={isActive}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
       onLayout={e =>
         onLayout({

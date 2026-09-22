@@ -41,4 +41,29 @@ describe('<TouchableButton>', () => {
 
     expect(mockedImpactAsync).not.toHaveBeenCalled()
   })
+
+  test('hapticDisabled button does not trigger haptics on press-in', async () => {
+    await render(
+      <TouchableButton hapticDisabled onPress={jest.fn()}>
+        <Text>tap</Text>
+      </TouchableButton>,
+    )
+
+    fireEvent(screen.getByRole('button', { name: 'tap' }), 'pressIn')
+
+    expect(mockedImpactAsync).not.toHaveBeenCalled()
+  })
+
+  test('hapticDisabled button still fires onPressIn', async () => {
+    const onPressIn = jest.fn()
+    await render(
+      <TouchableButton hapticDisabled onPress={jest.fn()} onPressIn={onPressIn}>
+        <Text>tap</Text>
+      </TouchableButton>,
+    )
+
+    fireEvent(screen.getByRole('button', { name: 'tap' }), 'pressIn')
+
+    expect(onPressIn).toHaveBeenCalledTimes(1)
+  })
 })

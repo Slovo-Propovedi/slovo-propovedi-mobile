@@ -8,19 +8,21 @@ import { hapticLight } from 'shared/lib/haptics'
 // hintable without spelling the role at every call site.
 export interface TouchableButtonProps extends Omit<TouchableOpacityProps, 'accessibilityRole'> {
   accessibilityRole?: TouchableOpacityProps['accessibilityRole']
+  /** Skips the built-in press-in haptic (for already-selected tabs). */
+  hapticDisabled?: boolean
 }
 
 export const TouchableButton = forwardRef<
   ComponentRef<typeof TouchableOpacity>,
   TouchableButtonProps
->(({ accessibilityRole, disabled, onPressIn, ...props }, ref) => (
+>(({ accessibilityRole, disabled, hapticDisabled, onPressIn, ...props }, ref) => (
   <TouchableOpacity
     {...props}
     ref={ref}
     disabled={disabled}
     accessibilityRole={accessibilityRole ?? 'button'}
     onPressIn={event => {
-      if (!disabled) hapticLight()
+      if (!disabled && !hapticDisabled) hapticLight()
       onPressIn?.(event)
     }}
   />
