@@ -6,6 +6,9 @@ import type { SharedValue } from 'react-native-reanimated'
 
 const ESTIMATED_HEADER_HEIGHT = 100
 
+// Navbar bg darkens over the last 80px before the title-appear threshold (same mechanic as the playlist screen).
+const DARKEN_START_OFFSET = 80
+
 interface UseCollapsingHeaderResult {
   darkenStart: SharedValue<number>
   headerHeight: number
@@ -29,10 +32,14 @@ export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
 
   // Threshold: the title's BOTTOM edge reaches the navbar bottom.
   // The navbar bg reaches full opacity AND the navbar title appears at this same scrollY.
+  // The bg stays fully transparent until DARKEN_START_OFFSET px before the threshold.
   useEffect(() => {
-    if (titleLayout.height > 0)
-      titleAppearThreshold.value = titleLayout.top + titleLayout.height - headerHeight
-  }, [titleLayout, headerHeight, titleAppearThreshold])
+    if (titleLayout.height > 0) {
+      const threshold = titleLayout.top + titleLayout.height - headerHeight
+      titleAppearThreshold.value = threshold
+      darkenStart.value = Math.max(0, threshold - DARKEN_START_OFFSET)
+    }
+  }, [titleLayout, headerHeight, titleAppearThreshold, darkenStart])
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {

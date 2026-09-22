@@ -1,6 +1,6 @@
 # Экран «Список плейлистов секции»
 
-**Маршрут:** `/listen/playlist-list?sectionId=<строка>&title=<строка>`
+**Маршрут:** `/listen/playlist-list?sectionId=<строка>`
 **Файлы:** `app/(tabs)/listen/playlist-list.tsx` → `export { PlaylistListScreen as default }` из `pages/playlist-list`
 **Статус:** готов
 
@@ -10,7 +10,7 @@
 
 ## Что показывается
 
-- Схлопывающаяся шапка с заголовком секции (`useCollapsingHeader` из `src/pages/playlist-list/lib/useCollapsingHeader.ts` + `useCollapsingNavbarDriver` из `shared/ui/collapsing-navbar-driver`).
+- Схлопывающаяся шапка с заголовком секции (`useCollapsingHeader` из `src/pages/playlist-list/lib/useCollapsingHeader.ts` + `useCollapsingNavbarDriver` из `shared/ui/collapsing-navbar-driver`). Фон навбара полностью прозрачен, пока список не прокручен, и плавно проявляется на последних 80px до порога появления заголовка (как на экране плейлиста); заголовок навбара появляется при пересечении порога.
 - Вертикальный список плейлистов — `PlaylistListItem` (`src/pages/playlist-list/ui/PlaylistListItem.tsx`): обложка через `CoverImage` (при отсутствии artwork — фолбэк иконкой приложения), название через `MarqueeText` (`shared/ui/marquee-text`) — авто-скролл при переполнении **стартует только после первого перетаскивания** (до этого заголовок статичен; на web — измерение через `onLayout`, см. [features/web.md](../features/web.md) → «Marquee-текст»); описание — одна строка с обрезанием.
 
 ## Откуда данные
@@ -24,7 +24,7 @@
 
 ## Куда можно перейти
 
-- Тап на плейлист → `/listen/playlist?playlist=<JSON PlaylistData>` (`handlePlaylistPress` → `router.push`).
+- Тап на плейлист → `/listen/playlist?playlist=<id плейлиста>` (`handlePlaylistPress` → `router.push`).
 
 ## Состояния
 
