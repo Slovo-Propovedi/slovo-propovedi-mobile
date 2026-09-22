@@ -197,6 +197,35 @@ describe('useMarqueeAnimation', () => {
     expect(result.current.translateX.value).toBe(0)
   })
 
+  test('keeps the frame callback referentially stable across re-renders', async () => {
+    // useFrameCallback re-registers whenever [callback, autostart] change; an
+    // unstable inline arrow would unregister/re-register the native clock on
+    // every parent re-render (fullscreen player: audio-position ticks ~2/s).
+    const containerWidth = { value: 200 } as SharedValue<number>
+    const textWidth = { value: 250 } as SharedValue<number>
+    const needsMarquee = { value: true } as SharedValue<boolean>
+    const { rerender } = await renderHook(
+      ({ text }: { text: string }) =>
+        useMarqueeAnimation(
+          containerWidth,
+          textWidth,
+          needsMarquee,
+          text,
+          false,
+          false,
+          true,
+          true,
+        ),
+      { initialProps: { text: 'first' } },
+    )
+
+    const firstCallback = latestFrameCallback().callback
+
+    await rerender({ text: 'second' })
+
+    expect(latestFrameCallback().callback).toBe(firstCallback)
+  })
+
   test('keeps the default static row at marquee width (2x textWidth + spacer)', async () => {
     // The static state reuses the marquee geometry on every platform so the row
     // is always wide enough for the full single-line text; the container's

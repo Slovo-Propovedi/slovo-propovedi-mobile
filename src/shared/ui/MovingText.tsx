@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { StyleProp, TextStyle } from 'react-native'
 import { MarqueeText } from './marquee-text/marquee-text'
 import { useTheme } from './theme/ThemeContext/useTheme'
@@ -9,7 +10,7 @@ interface MovingTextProps {
   text: string
 }
 
-export const MovingText = ({ autoStart, style, testID, text }: MovingTextProps) => {
+const MovingTextComponent = ({ autoStart, style, testID, text }: MovingTextProps) => {
   const { currentTheme } = useTheme()
 
   return (
@@ -21,3 +22,8 @@ export const MovingText = ({ autoStart, style, testID, text }: MovingTextProps) 
     />
   )
 }
+
+// Player call sites pass stable StyleSheet styles; memo keeps audio-position
+// ticks (~2/s) from re-running MarqueeText when the title/style are unchanged.
+export const MovingText = memo(MovingTextComponent)
+MovingText.displayName = 'MovingText'

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/immutability -- Reanimated shared values are intentionally mutated in frame worklets and reset effects */
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useFrameCallback, useSharedValue } from 'react-native-reanimated'
-import type { SharedValue } from 'react-native-reanimated'
+import type { FrameInfo, SharedValue } from 'react-native-reanimated'
 import {
   MARQUEE_MS_PER_PX,
   MARQUEE_MS_PER_PX_NARROW,
@@ -49,7 +49,11 @@ export const useMarqueeFrameClock = ({
   // active, but this freezes the phase during scrubs and while the gate is off.
   const clockPaused = useSharedValue(!autoStart)
 
-  const frameCallback = useFrameCallback(frameInfo => {
+  // Empty deps: the worklet reads only shared values and module constants, so
+  // a stable identity keeps `useFrameCallback`'s [callback, autostart] effect
+  // from re-registering the native frame callback on parent re-renders (audio
+  // position ticks ~2/s used to unregister/re-register the clock each tick).
+  const handleFrame = useCallback((frameInfo: FrameInfo) => {
     'worklet'
     if (!needsMarquee.value || !marqueeArmed.value || clockPaused.value) return
 
@@ -83,7 +87,9 @@ export const useMarqueeFrameClock = ({
       cycleElapsed.value = 0
       translateX.value = 0
     }
-  }, false)
+  }, [])
+
+  const frameCallback = useFrameCallback(handleFrame, false)
 
   // JS-side lifecycle: only overflowing rows activate the frame callback, so a
   // fitting title keeps the clock fully stopped. Drag pauses flip `clockPaused`
@@ -101,7 +107,9 @@ export const useMarqueeFrameClock = ({
     clockPaused.value = !autoStart
   }, [text, autoStart])
 
-  const startIdleMarquee = () => {
+  // Stable identity (reads shared values only): lets `marquee-text.tsx`
+  // memoize the pan gesture once per instance instead of rebuilding it.
+  const startIdleMarquee = useCallback(() => {
     'worklet'
     if (!needsMarquee.value || !marqueeArmed.value) {
       // Keep the clock paused: a fitting or still-gated row stays static. Reset
@@ -113,7 +121,7 @@ export const useMarqueeFrameClock = ({
     cycleElapsed.value = 0
     translateX.value = 0
     clockPaused.value = false
-  }
+  }, [])
 
   return { clockPaused, frameCallback, startIdleMarquee }
 }

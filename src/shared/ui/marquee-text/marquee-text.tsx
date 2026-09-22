@@ -1,12 +1,13 @@
+import { memo } from 'react'
 import { Platform, type StyleProp, Text, type TextStyle, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useAnimatedReaction, useSharedValue } from 'react-native-reanimated'
-import { createMarqueeGesture } from './createMarqueeGesture'
 import { NATIVE_MEASURER_STYLE, WEB_MEASURER_STYLE, WEB_TEXT_STYLE } from './marquee-styles'
 import { REPEAT_SPACER } from './marquee-utils'
 import { MarqueeTextSkeleton } from './skeleton'
 import { useMarqueeAnimation } from './useMarqueeAnimation'
 import { useMarqueeContainerRef } from './useMarqueeContainerRef'
+import { useMarqueeGesture } from './useMarqueeGesture'
 import { useMarqueeMeasurement } from './useMarqueeMeasurement'
 
 export interface MarqueeTextProps {
@@ -19,14 +20,14 @@ export interface MarqueeTextProps {
   textStyle?: StyleProp<TextStyle>
 }
 
-export const MarqueeText = ({
+export const MarqueeText = memo(function MarqueeTextComponent({
   autoStart = false,
   centerWhenStatic = false,
   style,
   testID,
   text,
   textStyle,
-}: MarqueeTextProps) => {
+}: MarqueeTextProps) {
   const isWeb = Platform.OS === 'web'
   const didDrag = useSharedValue(false)
   const containerRef = useMarqueeContainerRef(didDrag)
@@ -61,15 +62,15 @@ export const MarqueeText = ({
     },
   )
 
-  const pan = createMarqueeGesture(
-    translateX,
-    startX,
-    maxOffset,
-    startIdleMarquee,
+  const pan = useMarqueeGesture({
+    clockPaused,
     didDrag,
     marqueeArmed,
-    clockPaused,
-  )
+    maxOffset,
+    startIdleMarquee,
+    startX,
+    translateX,
+  })
 
   if (!text) return null
 
@@ -118,6 +119,8 @@ export const MarqueeText = ({
       </Text>
     </View>
   )
-}
+})
 
-MarqueeText.Skeleton = MarqueeTextSkeleton
+MarqueeText.displayName = 'MarqueeText'
+
+Object.assign(MarqueeText, { Skeleton: MarqueeTextSkeleton })
