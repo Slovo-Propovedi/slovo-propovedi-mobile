@@ -140,7 +140,17 @@
     "typescript-eslint": "8.70.0"
   },
   "private": true,
+  "reanimated": {
+    "staticFeatureFlags": {
+      "ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS": true
+    }
+  },
   "resolutions": {
     "punycode": "2.3.1"
+  },
+  "worklets": {
+    "staticFeatureFlags": {
+      "ENABLE_CROSS_RUNTIME_STACK_TRACES": false
+    }
   }
 }
