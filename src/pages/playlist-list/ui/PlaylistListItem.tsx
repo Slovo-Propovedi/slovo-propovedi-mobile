@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { CoverImage, MarqueeText } from 'shared/ui'
+import { CoverImage } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { type ThemeColors } from 'shared/ui/theme'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
@@ -58,7 +58,7 @@ export const PlaylistListItem = ({ onPress, playlist }: PlaylistListItemProps) =
         <CoverImage uri={playlist.artwork} style={styles.albumArt} />
       </View>
       <View style={styles.textContainer}>
-        <MarqueeText text={playlist.title} textStyle={styles.title} />
+        <Text style={styles.title}>{playlist.title}</Text>
         {playlist.description ? (
           <Text numberOfLines={1} style={styles.description}>
             {playlist.description}

@@ -4,16 +4,16 @@ import type { PlaylistData } from 'shared/model'
 import { PlaylistListItem } from './PlaylistListItem'
 
 jest.mock('shared/ui', () => {
-  const { Text, View } = jest.requireActual('react-native')
+  const { View } = jest.requireActual('react-native')
 
   return {
     CoverImage: () => <View />,
-    MarqueeText: ({ text }: { text: string }) => <Text>{text}</Text>,
   }
 })
 
 const PLAYLIST_TITLE = 'Плейлист о вере'
 const PLAYLIST_DESCRIPTION = 'Описание плейлиста'
+const LONG_PLAYLIST_TITLE = 'Очень длинное название плейлиста '.repeat(5)
 
 const makePlaylist = (overrides: Partial<PlaylistData> = {}): PlaylistData => ({
   artwork: null,
@@ -30,6 +30,17 @@ describe('<PlaylistListItem>', () => {
     )
 
     expect(getByText(PLAYLIST_TITLE)).toBeTruthy()
+  })
+
+  test('renders a long multiline title fully', async () => {
+    const { getByText } = await renderWithProviders(
+      <PlaylistListItem
+        onPress={jest.fn()}
+        playlist={makePlaylist({ title: LONG_PLAYLIST_TITLE })}
+      />,
+    )
+
+    expect(getByText(LONG_PLAYLIST_TITLE)).toBeTruthy()
   })
 
   test('renders the description when present', async () => {
