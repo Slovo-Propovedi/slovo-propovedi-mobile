@@ -93,6 +93,27 @@ src/entities/player/
     └── PlayerControls.test.tsx
 ```
 
+## Expo Prebuild (native regeneration)
+
+`android/` (and `ios/` once it is used) is plugin-GENERATED output. NEVER hand-edit native files (`build.gradle`, `AndroidManifest.xml`, `res/`, …) — every change belongs in `app.config.ts` or a config plugin under `plugins/*.ts`. Manual native edits are silently wiped by the next prebuild.
+
+Run `npx expo prebuild --platform android --clean` ONLY when:
+
+- `app.config.ts` or `plugins/*.ts` changed;
+- a package with a config plugin or native module was added, removed, or upgraded;
+- Expo SDK / React Native was upgraded;
+- app icon / adaptive icon / splash / notification icon assets changed.
+
+Do NOT run prebuild for pure JS/TS changes under `src/` or `app/`, docs-only changes, or CI edits.
+
+After prebuild:
+
+1. verify `git status android/` shows only expected churn;
+2. run a gradle build (`yarn build-local-debug:android` or `yarn build-local-release:android`);
+3. COMMIT the regenerated `android/` in the same PR.
+
+See [`docs/BUILD-LOCAL.md`](docs/BUILD-LOCAL.md) → «Prebuild и config-плагины» for the full policy (what is committed from `android/`, wrapper jar, `NODE_BINARY`).
+
 ## Documentation (docs/)
 
 В папке `docs/` лежит подробная документация функционала приложения на русском. Это **первоисточник знаний о проекте** для агентов (opencode, Claude Code, Cursor).

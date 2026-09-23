@@ -37,6 +37,7 @@ export default defineConfig(
   {
     ignores: [
       '**/*.{html,snap}',
+      '.opencode/**',
       '__mocks__/**/*',
       'babel.config.js',
       'metro.config.js',

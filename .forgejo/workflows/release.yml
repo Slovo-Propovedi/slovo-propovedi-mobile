@@ -419,7 +419,7 @@ jobs:
           # conservative floor now that the job-container limit is raised.
           NODE_OPTIONS: --max-old-space-size=1536
           CI_METRO_MAX_WORKERS: '2'
-          # Inlined into the JS bundle by Metro when assembleRelease triggers
+          # Inlined into the JS bundle by Metro when assembleProdRelease triggers
           # createBundleReleaseJsAndAssets (see src/shared/config/config.ts,
           # src/pages/share/lib/constants.ts).
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
@@ -428,12 +428,17 @@ jobs:
         run: |
           cd android
           free -h
-          nice -n 19 ionice -c 3 ./gradlew assembleRelease --no-daemon -Dorg.gradle.parallel=false --init-script ../scripts/gradle/disable-lint-vital.gradle
+          # Product flavors (dev/prod) are applied by local config plugins
+          # (plugins/withAndroidFlavors.ts) during `expo prebuild`, so release
+          # artifacts build the prod variant assembled by assembleProdRelease.
+          # The --init-script is belt-and-suspenders: the config plugin already
+          # disables lintVital* tasks via the root build.gradle subprojects block.
+          nice -n 19 ionice -c 3 ./gradlew assembleProdRelease --no-daemon -Dorg.gradle.parallel=false --init-script ../scripts/gradle/disable-lint-vital.gradle
           df -h /
 
       - name: Rename and zip APK
         run: |
-          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
+          APK_PATH=$(find android/app/build/outputs/apk/prod/release -name "*.apk" | head -1)
           APK_DIR=$(dirname "$APK_PATH")
           VERSION="${{ needs.create-release.outputs.version }}"
           RENAMED="Slovo.Propovedi v${VERSION}.apk"

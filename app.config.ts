@@ -1,5 +1,14 @@
 import { type ConfigContext, type ExpoConfig } from 'expo/config'
+import { type ConfigPlugin } from 'expo/config-plugins'
 import pkg from './package.json'
+import { withAndroidBuildMaintenance } from './plugins/withAndroidBuildMaintenance.ts'
+import { withAndroidFlavors } from './plugins/withAndroidFlavors.ts'
+import { withAndroidManifestCleanup } from './plugins/withAndroidManifestCleanup.ts'
+
+type AppConfig = { plugins?: AppPlugin[] } & Omit<ExpoConfig, 'plugins'>
+// Expo's config types only allow string/array plugin entries, but app.config
+// may register local config plugins as function references — widen the list.
+type AppPlugin = ConfigPlugin | NonNullable<ExpoConfig['plugins']>[number]
 
 const appName = 'Слово.Проповеди'
 
@@ -15,7 +24,7 @@ const splashImageProps = {
   resizeMode: 'contain',
 } as const
 
-export default ({ config }: ConfigContext): ExpoConfig => ({
+export default ({ config }: ConfigContext): AppConfig => ({
   ...config,
   android: {
     adaptiveIcon: { backgroundColor: '#f16031', foregroundImage: './assets/adaptive-icon.png' },
@@ -27,6 +36,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.MODIFY_AUDIO_SETTINGS',
       'android.permission.FOREGROUND_SERVICE',
       'android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK',
+      'android.permission.POST_NOTIFICATIONS',
       'android.permission.REQUEST_INSTALL_PACKAGES',
     ],
     versionCode,
@@ -43,6 +53,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   owner: 'egoreast',
   plugins: [
+    // Runs last at mod-compile time: Expo executes manifest mods in reverse
+    // registration order, so registering first makes the cleanup the final pass
+    // (after expo-notifications injects the Firebase meta-data).
+    withAndroidManifestCleanup,
     ['expo-audio', { enableBackgroundPlayback: true, recordAudioAndroid: false }],
     'expo-asset',
     ['expo-notifications', { color: '#f16031', icon: './assets/notification-icon.png' }],
@@ -58,6 +72,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         ...splashImageProps,
       },
     ],
+    withAndroidFlavors,
+    withAndroidBuildMaintenance,
   ],
   scheme: 'slovo-propovedi',
   slug: 'slovo-propovedi-mobile',

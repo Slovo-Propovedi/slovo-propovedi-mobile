@@ -123,18 +123,27 @@ development build separate from the production app on the same device:
 | `dev`  | `ru.slovopropovedi.dev` | Dev Слово.Проповеди | `devDebug`, `devRelease`   |
 | `prod` | `ru.slovopropovedi`     | Слово.Проповеди     | `prodDebug`, `prodRelease` |
 
-The `dev` flavor adds an `applicationIdSuffix` (`.dev`) and a
-`versionNameSuffix` (`-dev`). Both flavors share the same launcher icon
-(from `src/main/res`); per-flavor overrides can be added later under
-`android/app/src/dev/res/` and `android/app/src/prod/res/`.
+Both flavors are applied on every `expo prebuild` by a local config plugin
+(see [Prebuild и config-плагины](#prebuild-и-config-плагины) below), so the
+committed `android/` folder is plugin-generated output rather than a
+hand-maintained source tree.
+
+- The `dev` flavor adds an `applicationIdSuffix` (`.dev`) and a
+  `versionNameSuffix` (`-dev`), plus a per-flavor `app_name` string
+  (`android/app/src/{dev,prod}/res/values/strings.xml`: «Dev
+  Слово.Проповеди» / «Слово.Проповеди»).
+- `debuggableVariants = ["devDebug", "prodDebug"]` — these variants run
+  JS from Metro instead of embedding a bundle. Release variants bundle
+  JS normally.
+- `lint { checkReleaseBuilds = false }` disables release-build linting.
+
+Both flavors share the same launcher icon (from `src/main/res`);
+per-flavor overrides can be added later under `android/app/src/dev/res/`
+and `android/app/src/prod/res/`.
 
 `yarn run:android` builds the `devDebug` variant by default — it installs
 as a separate app and never overwrites the production build. To run the
 prod variant locally: `yarn run:android:prod`.
-
-`debuggableVariants` (in `android/app/build.gradle`, `react { }` block)
-lists `devDebug` and `prodDebug` — these variants run JS from Metro
-instead of embedding a bundle. Release variants bundle JS normally.
 
 ### Relaunching the Dev App (`yarn dev:launch`)
 
@@ -158,6 +167,53 @@ This runs, in order:
 
 Prerequisite: Metro must be running (`yarn start` in another terminal).
 This works only for the dev flavor (package `ru.slovopropovedi.dev`).
+
+## Prebuild и config-плагины
+
+`npx expo prebuild --platform android --clean` полностью регенерирует
+`android/` из `app.config.ts` + плагинов — ручные правки в `android/`
+делать НЕ нужно (и бессмысленно: затрутся). Все нативные кастомизации
+Android воспроизводятся локальными config-плагинами:
+
+- `plugins/withAndroidFlavors.ts` — product flavors `dev`/`prod`
+  (`applicationIdSuffix ".dev"`, `versionNameSuffix "-dev"`),
+  `debuggableVariants = ["devDebug", "prodDebug"]`,
+  `lint { checkReleaseBuilds = false }`, `pickFirsts` для `libworklets.so`
+  (4 ABI; конфликт из-за CMake IMPORTED target expo-modules-core) и
+  per-flavor `strings.xml` («Dev Слово.Проповеди» / «Слово.Проповеди»).
+- `plugins/withAndroidBuildMaintenance.ts` — отключение lint/lintVital\*
+  для library-проектов в корневом `build.gradle`,
+  `org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=2g`, строка `.kotlin/`
+  в `android/.gitignore`.
+
+Все инъекции идемпотентны; повторный `prebuild --clean` даёт идентичное
+дерево.
+
+После prebuild манифест не содержит `expo.modules.updates.*` meta-data
+(их инжектирует unversioned-плагин `@expo/prebuild-config` независимо от
+наличия `expo-updates` — пакет фактически не установлен, его нет в
+`yarn.lock`) и `com.google.firebase.messaging.*` meta-data: оба набора
+удаляет `plugins/withAndroidManifestCleanup.ts`. Плагин зарегистрирован
+первым в `app.config.ts`, т.к. manifest-моды применяются в обратном
+порядке регистрации — так он выполняется после `expo-notifications` и
+срезает его meta-data. `expo.autolinking.exclude: ["expo-updates"]` в
+`package.json` оставлен как страховка (сейчас no-op). Разрешение
+`POST_NOTIFICATIONS` объявлено явно в `android.permissions` в
+`app.config.ts`.
+
+`NODE_BINARY` — машинно-специфичная настройка, в плагин НЕ входит. Если
+Gradle не видит node, добавить `NODE_BINARY=/usr/bin/node` (путь от
+`which node`) в `~/.gradle/gradle.properties`.
+
+> **Внимание:** свойства из `~/.gradle/gradle.properties` имеют приоритет
+> над проектным `android/gradle.properties` — не задавайте там
+> `org.gradle.jvmargs`, иначе локальное значение молча перекроет
+> плагиновое.
+
+CI: в `release.yml` шаг «Configure Gradle for CI» выполняется ПОСЛЕ
+prebuild и перекрывает `jvmargs` значениями под 4 ГБ раннер; Android-релиз
+собирается задачей `assembleProdRelease` из
+`android/app/build/outputs/apk/prod/release/`.
 
 ## Troubleshooting
 
