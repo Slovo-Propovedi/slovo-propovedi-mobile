@@ -2,15 +2,17 @@
 
 <h1 align="center">Слово.Проповеди</h1>
 
-<p align="center">
-  <a href="https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases"><img src="https://img.shields.io/badge/release-latest-orange?style=flat-square" alt="Релиз" /></a>
-  <img src="https://img.shields.io/badge/platform-Android%20%7C%20Web%2FPWA-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Платформы" />
-  <a href="https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square" alt="Лицензия" /></a>
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/README.en.md">English</a> | <b>Русский</b>
-</p>
+[![Релиз](https://img.shields.io/badge/release-latest-orange?style=flat-square)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases) ![Платформы](https://img.shields.io/badge/platform-Android%20%7C%20Web%2FPWA-3DDC84?style=flat-square&logo=android&logoColor=white) [![Лицензия](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
+
+</div>
+
+<div align="center">
+
+[English](README.en.md) | **Русский**
+
+</div>
 
 <p align="center">
   Приложение для прослушивания христианских проповедей онлайн и офлайн.<br/>
