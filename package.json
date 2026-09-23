@@ -127,7 +127,7 @@
     "jest-expo": "~57.0.5",
     "knip": "^6.32.2",
     "lint-staged": "^17.3.0",
-    "orval": "8.33.0",
+    "orval": "8.36.0",
     "patch-package": "^8.0.1",
     "prettier": "^3.9.6",
     "react-native-web": "^0.21.2",
