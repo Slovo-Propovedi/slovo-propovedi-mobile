@@ -20,6 +20,7 @@ const UNCOMMENTED_DEBUGGABLE_VARIANTS = /^\s*debuggableVariants\s*=\s*\[/m
 // detect our own previously-injected blocks, not generic Gradle vocabulary that
 // a future Expo template could legitimately contain.
 const APP_FLAVORS_MARKER = 'applicationIdSuffix ".dev"'
+const APP_LINT_MARKER = 'checkReleaseBuilds = false'
 const WORKLETS_PICK_FIRSTS_MARKER = 'lib/arm64-v8a/libworklets.so'
 
 const insertBefore = (contents: string, anchor: string, block: string): string => {
@@ -51,7 +52,7 @@ const applyAppFlavors = (contents: string): string => {
     ? contents
     : insertBefore(contents, PACKAGING_OPTIONS_ANCHOR, APP_FLAVORS_BLOCK)
 
-  return withFlavors.includes('checkReleaseBuilds')
+  return withFlavors.includes(APP_LINT_MARKER)
     ? withFlavors
     : insertAfter(withFlavors, ANDROID_RESOURCES_BLOCK, APP_LINT_BLOCK)
 }
