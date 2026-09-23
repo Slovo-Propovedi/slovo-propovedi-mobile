@@ -16,6 +16,12 @@ import {
 
 const UNCOMMENTED_DEBUGGABLE_VARIANTS = /^\s*debuggableVariants\s*=\s*\[/m
 
+// Verbatim markers unique to this plugin's injected output. The guards must
+// detect our own previously-injected blocks, not generic Gradle vocabulary that
+// a future Expo template could legitimately contain.
+const APP_FLAVORS_MARKER = 'applicationIdSuffix ".dev"'
+const WORKLETS_PICK_FIRSTS_MARKER = 'lib/arm64-v8a/libworklets.so'
+
 const insertBefore = (contents: string, anchor: string, block: string): string => {
   if (!contents.includes(anchor))
     throw new Error(`withAndroidFlavors: anchor not found in generated Gradle file: ${anchor}`)
@@ -41,7 +47,7 @@ const applyDebuggableVariants = (contents: string): string => {
 }
 
 const applyAppFlavors = (contents: string): string => {
-  const withFlavors = contents.includes('productFlavors')
+  const withFlavors = contents.includes(APP_FLAVORS_MARKER)
     ? contents
     : insertBefore(contents, PACKAGING_OPTIONS_ANCHOR, APP_FLAVORS_BLOCK)
 
@@ -51,7 +57,7 @@ const applyAppFlavors = (contents: string): string => {
 }
 
 const applyWorkletsPickFirsts = (contents: string): string => {
-  if (contents.includes('libworklets')) return contents
+  if (contents.includes(WORKLETS_PICK_FIRSTS_MARKER)) return contents
   return insertAfter(contents, LEGACY_PACKAGING_ANCHOR, WORKLETS_PICK_FIRSTS_BLOCK)
 }
 
