@@ -82,7 +82,7 @@ export const NextSermonPlate = memo(
       : 'Следующая проповедь'
 
     return (
-      <View pointerEvents='box-none' style={[styles.nextSermonAnchor, { top: insetsTop }]}>
+      <View style={[styles.nextSermonAnchor, { top: insetsTop }]}>
         <PressableButton
           onPress={toggleExpanded}
           style={styles.nextSermonContainer}

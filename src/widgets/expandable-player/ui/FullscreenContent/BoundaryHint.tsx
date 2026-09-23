@@ -56,11 +56,10 @@ export const BoundaryHint = ({ styles }: BoundaryHintProps) => {
   if (!visible || !notice) return null
 
   return (
-    <View pointerEvents='box-none' style={styles.boundaryHintAnchor}>
+    <View style={styles.boundaryHintAnchor}>
       <Animated.View
-        pointerEvents='none'
         accessibilityLiveRegion='polite'
-        style={[styles.boundaryHint, animatedStyle]}
+        style={[styles.boundaryHint, animatedStyle, { pointerEvents: 'none' }]}
       >
         <Text style={styles.boundaryHintText}>{noticeText(notice)}</Text>
       </Animated.View>

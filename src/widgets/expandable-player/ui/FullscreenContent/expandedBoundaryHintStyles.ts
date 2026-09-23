@@ -14,6 +14,9 @@ export const expandedBoundaryHintStyles = StyleSheet.create({
     bottom: '100%',
     left: 0,
     marginBottom: INDENTS.low,
+    // In StyleSheet.create (not inline): web RNW has no CSS value 'box-none', it only
+    // polyfills box-none/box-only when compiling styles to classes (see web.md).
+    pointerEvents: 'box-none',
     position: 'absolute',
     right: 0,
   },

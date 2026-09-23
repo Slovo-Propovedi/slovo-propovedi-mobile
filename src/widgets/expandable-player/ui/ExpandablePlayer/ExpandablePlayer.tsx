@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { type StyleProp, StyleSheet, View } from 'react-native'
+import { type StyleProp, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import {
   closePlayerSheetAction,
@@ -78,10 +78,13 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyl
   if (!audio || !isTabBarMeasured) return null
 
   return (
-    <View key={recoveryKey} pointerEvents='box-none' style={StyleSheet.absoluteFill}>
+    <View key={recoveryKey} style={styles.recoveryOverlay}>
       <Animated.View
-        pointerEvents='none'
-        style={[styles.backdrop, backdropStyle, { height: screenHeight, width: screenWidth }]}
+        style={[
+          styles.backdrop,
+          backdropStyle,
+          { height: screenHeight, pointerEvents: 'none', width: screenWidth },
+        ]}
       />
       {!expanded && (
         <MiniPlayer

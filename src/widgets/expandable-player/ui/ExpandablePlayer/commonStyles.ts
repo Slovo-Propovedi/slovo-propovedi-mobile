@@ -17,4 +17,14 @@ export const createCommonStyles = (theme: ThemeColors) =>
       position: 'absolute',
       zIndex: 200,
     },
+    // Full-screen wrapper for the whole widget (background-recovery remount subtree).
+    // pointerEvents must live inside StyleSheet.create (NOT inline): on web RNW only
+    // polyfills the non-CSS values 'box-none'/'box-only' when it compiles a style to
+    // classes; inline style.pointerEvents:'box-none' would emit the invalid CSS value
+    // `pointer-events: box-none`, the browser drops it, the wrapper becomes
+    // pointer-events:auto and swallows every touch on the page below the player.
+    recoveryOverlay: {
+      ...StyleSheet.absoluteFill,
+      pointerEvents: 'box-none',
+    },
   })
