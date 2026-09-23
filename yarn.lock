@@ -6998,6 +6998,14 @@ expo-symbols@^57.0.3:
     "@expo-google-fonts/material-symbols" "^0.4.1"
     sf-symbols-typescript "^2.0.0"
 
+expo-system-ui@~57.0.4:
+  version "57.0.4"
+  resolved "https://registry.yarnpkg.com/expo-system-ui/-/expo-system-ui-57.0.4.tgz#e70154f9b9e2e2d28d94b6bfa05992e200ba6b6d"
+  integrity sha512-z//rxQJzhTNA1PcKrUtWmrd21jAS3nEDu1b0n8B/7LTTR933OcsZYP1HnbaZifuo2ZH/h7nce2Ow61WZ1Ig2bg==
+  dependencies:
+    "@react-native/normalize-colors" "0.86.3"
+    debug "^4.3.2"
+
 expo-task-manager@~57.0.19:
   version "57.0.19"
   resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.19.tgz#fe20d76ea1474b3c736c08e8bcd11c5870613641"
