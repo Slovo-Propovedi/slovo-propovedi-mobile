@@ -1,7 +1,7 @@
 import { useAction } from '@reatom/npm-react'
 import { router, Stack } from 'expo-router'
 import { useEffect } from 'react'
-import { BackHandler, InteractionManager, View } from 'react-native'
+import { BackHandler, View } from 'react-native'
 import { showDetailsAtom, showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
@@ -40,10 +40,8 @@ const RootLayout = () => {
   useOfflineRegistrySync()
 
   useEffect(() => {
-    const handle = InteractionManager.runAfterInteractions(() => {
-      void checkForUpdate()
-    })
-    return () => handle.cancel()
+    const timer = setTimeout(() => void checkForUpdate(), 0)
+    return () => clearTimeout(timer)
   }, [checkForUpdate])
 
   useEffect(() => {

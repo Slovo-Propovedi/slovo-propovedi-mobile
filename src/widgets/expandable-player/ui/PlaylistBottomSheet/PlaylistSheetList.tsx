@@ -96,10 +96,13 @@ const PlaylistSheetListComponent = ({
         onContentSizeChange={handleContentSizeChange}
         onScroll={isRevealed ? undefined : handleScrollEvent}
         contentContainerStyle={[styles.listContent, !isRevealed && styles.hiddenContent]}
-        ListFooterComponent={<View pointerEvents='none' style={{ height: footerHeight }} />}
+        ListFooterComponent={<View style={{ height: footerHeight, pointerEvents: 'none' }} />}
       />
       {!isRevealed && (
-        <View pointerEvents='none' testID='playlist-skeleton' style={styles.skeletonOverlay}>
+        <View
+          testID='playlist-skeleton'
+          style={[styles.skeletonOverlay, { pointerEvents: 'none' }]}
+        >
           <PlaylistSheetList.Skeleton rowCount={SKELETON_ROWS_COUNT} />
         </View>
       )}

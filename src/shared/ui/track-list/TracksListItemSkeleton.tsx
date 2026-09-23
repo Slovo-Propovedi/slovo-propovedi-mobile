@@ -14,9 +14,14 @@ export const TracksListItemSkeleton = ({ style }: TracksListItemSkeletonProps) =
 
   return (
     <Animated.View
-      pointerEvents='none'
       testID='tracks-list-item-skeleton'
-      style={[styles.card, { backgroundColor: currentTheme.skeleton }, pulseStyle, style]}
+      style={[
+        styles.card,
+        { backgroundColor: currentTheme.skeleton },
+        pulseStyle,
+        style,
+        { pointerEvents: 'none' },
+      ]}
     >
       <View style={[styles.art, { backgroundColor: currentTheme.card }]} />
       <View style={styles.textColumn}>

@@ -81,10 +81,9 @@ const styles = StyleSheet.create({
   },
   menu: {
     borderRadius: RADIUSES.middle,
+    boxShadow: '0px 0px 8px rgba(0,0,0,0.25)',
     elevation: 101,
     minWidth: MENU_MIN_WIDTH,
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
     zIndex: 101,
   },
 })

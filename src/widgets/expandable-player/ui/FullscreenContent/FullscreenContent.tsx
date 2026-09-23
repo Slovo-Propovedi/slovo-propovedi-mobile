@@ -81,14 +81,12 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
           }}
         />
         <LinearGradient
-          pointerEvents='none'
-          style={gradientStyles.topGradient}
           colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
+          style={[gradientStyles.topGradient, { pointerEvents: 'none' }]}
         />
         <LinearGradient
-          pointerEvents='none'
-          style={gradientStyles.bottomGradient}
           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
+          style={[gradientStyles.bottomGradient, { pointerEvents: 'none' }]}
         />
         <PlayerMiddleArea
           audio={audio}

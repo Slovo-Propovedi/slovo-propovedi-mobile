@@ -57,9 +57,9 @@ describe('<ServerErrorToast>', () => {
 
     const { getByText } = await renderWithProviders(<ServerErrorToast />, { ctx })
 
-    // Animated.View with pointerEvents='none' is the grandparent of the text
+    // Animated.View with style.pointerEvents='none' is the grandparent of the text
     const container = getByText(TOAST_TEXT).parent?.parent
-    expect(container?.props.pointerEvents).toBe('none')
+    expect(container).toHaveStyle({ pointerEvents: 'none' })
   })
 
   test('has absolute positioning style on container', async () => {

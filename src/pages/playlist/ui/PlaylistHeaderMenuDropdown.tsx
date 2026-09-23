@@ -101,13 +101,10 @@ export const PlaylistHeaderMenuDropdown = ({
 const styles = StyleSheet.create({
   dropdown: {
     borderRadius: RADIUSES.low,
+    boxShadow: '0px 4px 8px rgba(0,0,0,0.3)',
     elevation: 8,
     minWidth: 180,
     paddingVertical: INDENTS.lowest,
-    shadowColor: '#000',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   dropdownDivider: {
     height: 1,

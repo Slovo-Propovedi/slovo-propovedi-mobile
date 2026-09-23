@@ -1,5 +1,6 @@
 import { type Ctx } from '@reatom/framework'
 import { File } from 'expo-file-system'
+import { Platform } from 'react-native'
 import { audioCacheService } from './AudioCacheService'
 import { getUrlHash, PART_SUFFIX } from './cacheDownloader'
 import { enqueueCacheMany } from './cacheQueueEnqueueMany'
@@ -14,6 +15,10 @@ import { deletePartialFile } from './partialFile'
  * @param ctx - Reatom context for atom updates.
  */
 export const reEnqueuePartialDownloads = async (ctx: Ctx): Promise<void> => {
+  // expo-file-system has no web implementation; the web sweep is a no-op and
+  // the guard inside getAudioCacheDirectory would only surface as noise.
+  if (Platform.OS === 'web') return
+
   try {
     const cacheDir = getAudioCacheDirectory()
     if (!cacheDir.exists) return

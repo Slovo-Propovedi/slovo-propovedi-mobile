@@ -112,7 +112,6 @@ export const MarqueeText = memo(function MarqueeTextComponent({
         </Animated.View>
       </GestureDetector>
       <Text
-        pointerEvents='none'
         style={[textStyle, measurerStyle]}
         onLayout={isWeb ? handleMeasurerLayout : undefined}
         onTextLayout={isWeb ? undefined : handleTextLayout}

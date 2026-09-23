@@ -36,13 +36,10 @@ const styles = StyleSheet.create({
   container: {
     alignSelf: 'center',
     backgroundColor: COLORS.error,
+    boxShadow: '0px 2px 4px rgba(0,0,0,0.25)',
     elevation: 5,
     overflow: 'hidden',
     position: 'absolute',
-    shadowColor: COLORS.black,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
     zIndex: 100,
   },
   pill: {

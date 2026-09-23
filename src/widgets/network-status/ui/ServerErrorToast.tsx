@@ -27,8 +27,11 @@ export const ServerErrorToast = () => {
 
   return (
     <Animated.View
-      pointerEvents='none'
-      style={[styles.container, animatedStyle, { top: insets.top + INDENTS.medium }]}
+      style={[
+        styles.container,
+        animatedStyle,
+        { pointerEvents: 'none', top: insets.top + INDENTS.medium },
+      ]}
     >
       <View style={styles.toast}>
         <Ionicons size={16} name='alert-circle' color={COLORS.white} />

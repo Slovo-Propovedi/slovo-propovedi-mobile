@@ -61,11 +61,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     borderRadius: 16,
+    boxShadow: '0px 4px 8px rgba(0,0,0,0.3)',
     elevation: 8,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
 })

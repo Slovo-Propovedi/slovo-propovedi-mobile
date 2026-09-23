@@ -29,13 +29,10 @@ export const styles = StyleSheet.create({
   },
   qrCard: {
     borderRadius: RADIUSES.high,
+    boxShadow: '0px 1px 4px rgba(0,0,0,0.1)',
     elevation: 2,
     marginTop: INDENTS.high,
     padding: INDENTS.medium,
-    shadowColor: '#000000',
-    shadowOffset: { height: 1, width: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   releaseName: {
     fontSize: FONT_SIZES.lg,

@@ -8,6 +8,7 @@ type WebTextStyle = {
 export const WEB_MEASURER_STYLE: WebTextStyle = {
   left: 0,
   opacity: 0,
+  pointerEvents: 'none',
   position: 'absolute',
   top: 0,
   whiteSpace: 'nowrap',

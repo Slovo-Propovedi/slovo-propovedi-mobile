@@ -62,7 +62,7 @@ describe('<TracksListItemSkeleton>', () => {
     await renderWithProviders(<TracksListItemSkeleton />)
 
     const { skeleton } = getSkeletonParts()
-    expect(skeleton.props.pointerEvents).toBe('none')
+    expect(skeleton).toHaveStyle({ pointerEvents: 'none' })
   })
 
   test('applies the consumer row style last so screen margins win', async () => {

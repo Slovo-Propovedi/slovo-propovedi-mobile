@@ -50,21 +50,16 @@ export const PlayerProgressBar = ({
         style={progressBarStyles.trackContainer}
         hitSlop={{ bottom: 20, left: 0, right: 0, top: 20 }}
       >
-        <View pointerEvents='none' style={progressBarStyles.track}>
-          <View pointerEvents='none' style={progressBarStyles.trackBackground} />
+        <View style={progressBarStyles.track}>
+          <View style={progressBarStyles.trackBackground} />
           <View
-            pointerEvents='none'
             style={[
               progressBarStyles.downloadProgress,
               { width: `${downloadProgressFraction * 100}%` },
             ]}
           />
+          <View style={[progressBarStyles.progress, { width: `${progress * 100}%` }]} />
           <View
-            pointerEvents='none'
-            style={[progressBarStyles.progress, { width: `${progress * 100}%` }]}
-          />
-          <View
-            pointerEvents='none'
             style={[progressBarStyles.thumb, { left: progress * trackWidth - THUMB_SIZE / 2 }]}
           />
         </View>

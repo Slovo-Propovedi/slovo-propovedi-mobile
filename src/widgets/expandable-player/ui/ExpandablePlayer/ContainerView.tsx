@@ -79,7 +79,7 @@ export const ContainerView = ({
         <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
           <CoverImage eager uri={audio.artwork} style={styles.backgroundImage} />
         </Animated.View>
-        <Animated.View pointerEvents='none' style={[miniOverlay, miniOverlayStyle]} />
+        <Animated.View style={[miniOverlay, miniOverlayStyle, { pointerEvents: 'none' }]} />
         {expanded && <StatusBar style='light' />}
         {isFullscreenContentMounted && (
           <FullscreenContent styles={styles} fullStyle={fullStyle} onClose={closeFullscreen} />
