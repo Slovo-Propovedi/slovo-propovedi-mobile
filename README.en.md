@@ -5,11 +5,11 @@
 <p align="center">
   <a href="https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases"><img src="https://img.shields.io/badge/release-latest-orange?style=flat-square" alt="Release" /></a>
   <img src="https://img.shields.io/badge/platform-Android%20%7C%20Web%2FPWA-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Platforms" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square" alt="License" /></a>
+  <a href="https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square" alt="License" /></a>
 </p>
 
 <p align="center">
-  <b>English</b> | <a href="README.md">Русский</a>
+  <b>English</b> | <a href="https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/README.md">Русский</a>
 </p>
 
 <p align="center">
