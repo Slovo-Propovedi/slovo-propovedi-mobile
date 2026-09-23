@@ -45,7 +45,4 @@ export const styles = StyleSheet.create({
     marginTop: INDENTS.medium,
     textDecorationLine: 'underline',
   },
-  saveButton: {
-    backgroundColor: COLORS.primary,
-  },
 })

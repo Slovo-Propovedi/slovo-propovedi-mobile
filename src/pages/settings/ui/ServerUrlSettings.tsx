@@ -58,8 +58,10 @@ export const ServerUrlSettings = () => {
           onPress={handleSave}
           style={[
             styles.button,
-            styles.saveButton,
-            { opacity: isDirty && isValidUrl(inputValue.trim()) ? 1 : 0.5 },
+            {
+              backgroundColor: currentTheme.primary,
+              opacity: isDirty && isValidUrl(inputValue.trim()) ? 1 : 0.5,
+            },
           ]}
         >
           <Text style={styles.buttonText}>{saved ? 'Сохранено!' : 'Сохранить'}</Text>

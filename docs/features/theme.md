@@ -31,6 +31,8 @@
 - `useTheme` — `src/shared/ui/theme/ThemeContext/useTheme.ts`, возвращает `{ currentTheme, isLight }`.
 - Также есть мутируемый объект `COLORS` + `updateCOLORS()` — `src/shared/ui/theme/colors.ts` (инициализируется `initializeCOLORS(ctx)` в `themed.ts`).
 
+**Правило:** мутируемые слоты темы (`primary`, `background`, `card`, `surface`, `text`, `textMuted`, `skeleton`, `icon`, `backdrop`, `tabBarActive`) **никогда** не захватываются внутри `StyleSheet.create` — `StyleSheet.create` фиксирует примитив на момент вычисления модуля, и цвет перестаёт следовать за сменой темы/динамических цветов. Цвета темы задавай через `useTheme()` + инлайн-стиль; `COLORS.<slot>` в styles-файлах допустим только для статичных слотов (`white`, `black`, `disabled` и т.п.).
+
 ## Токены
 
 Интерфейс `ThemeColors` (`src/shared/ui/theme/types.ts`): `backdrop, background, card, icon, primary, skeleton, surface, text, textMuted`. Объекты `LightTheme`/`DarkTheme` — `src/shared/ui/theme/constants.ts`.
