@@ -3,14 +3,16 @@ import {
   impactAsync,
   ImpactFeedbackStyle,
   performAndroidHapticsAsync,
+  selectionAsync,
 } from 'expo-haptics'
 import { Platform } from 'react-native'
-import { hapticLight } from './haptics'
+import { hapticLight, hapticTick } from './haptics'
 
 const mockedImpactAsync = impactAsync as jest.MockedFunction<typeof impactAsync>
 const mockedPerformAndroidHapticsAsync = performAndroidHapticsAsync as jest.MockedFunction<
   typeof performAndroidHapticsAsync
 >
+const mockedSelectionAsync = selectionAsync as jest.MockedFunction<typeof selectionAsync>
 
 describe('hapticLight', () => {
   beforeEach(() => {
@@ -90,6 +92,49 @@ describe('hapticLight', () => {
       await Promise.resolve()
 
       expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Virtual_Key)
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+})
+
+describe('hapticTick', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('is a no-op on web', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      hapticTick()
+
+      expect(mockedSelectionAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('triggers a selection tick on native', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      hapticTick()
+
+      expect(mockedSelectionAsync).toHaveBeenCalledTimes(1)
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('swallows selection rejection (no unhandled rejection)', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      mockedSelectionAsync.mockRejectedValueOnce(new Error('haptic failed'))
+
+      hapticTick()
+      // Flush the microtask queue: an unhandled rejection would fail the test.
+      await Promise.resolve()
+
+      expect(mockedSelectionAsync).toHaveBeenCalledTimes(1)
     } finally {
       restorePlatform.restore()
     }

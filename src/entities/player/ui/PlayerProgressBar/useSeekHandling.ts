@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { hapticLight } from 'shared/lib/haptics'
+import { hapticTick } from 'shared/lib/haptics'
 
 interface SeekHandling {
   isDragging: boolean
@@ -60,7 +60,7 @@ export const useSeekHandling = (
     const second = Math.floor(pos / 1000)
     if (lastHapticSecondRef.current !== second) {
       lastHapticSecondRef.current = second
-      hapticLight()
+      hapticTick()
     }
   }, [])
 

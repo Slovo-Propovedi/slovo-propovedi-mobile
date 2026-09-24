@@ -3,6 +3,7 @@ import {
   impactAsync,
   ImpactFeedbackStyle,
   performAndroidHapticsAsync,
+  selectionAsync,
 } from 'expo-haptics'
 import { Platform } from 'react-native'
 
@@ -32,4 +33,15 @@ export const hapticLight = (): void => {
   }
 
   void impactAsync(ImpactFeedbackStyle.Light).catch(() => {})
+}
+
+// Lighter selection tick (iOS UISelectionFeedbackGenerator / Android CLOCK_TICK)
+// intended for continuous value scrubbing (seek slider) — much softer than the
+// VIRTUAL_KEY press haptic, so per-second ticks don't buzz. No throttle: scrub
+// ticks are >=1s apart by design. Cosmetic like hapticLight — rejected promise
+// is swallowed so it can never crash the app; no-op on web.
+export const hapticTick = (): void => {
+  if (Platform.OS === 'web') return
+
+  void selectionAsync().catch(() => {})
 }
