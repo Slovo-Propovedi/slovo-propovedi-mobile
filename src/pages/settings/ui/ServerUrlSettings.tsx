@@ -1,82 +1,39 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { Ionicons } from '@expo/vector-icons'
+import { useAtom } from '@reatom/npm-react'
 import { useState } from 'react'
-import { Text, TextInput, View } from 'react-native'
-import { serverUrlAtom, setServerUrlAction } from 'entities/settings'
-import { DEFAULT_API_URL } from 'shared/config'
+import { Text, View } from 'react-native'
+import { serverUrlAtom } from 'entities/settings'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
+import { ServerUrlForm } from './ServerUrlForm'
 import { styles } from './ServerUrlSettings.styles'
 
-const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url)
-
 export const ServerUrlSettings = () => {
+  const [expanded, setExpanded] = useState(false)
   const [currentUrl] = useAtom(serverUrlAtom)
-  const [inputValue, setInputValue] = useState(currentUrl)
-  const [saved, setSaved] = useState(false)
-  const setServerUrl = useAction(setServerUrlAction)
   const { currentTheme } = useTheme()
 
-  const handleSave = () => {
-    const trimmed = inputValue.trim()
-    if (!isValidUrl(trimmed)) return
-    void setServerUrl(trimmed).then(() => {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    })
-  }
-
-  const handleReset = () => {
-    setInputValue(DEFAULT_API_URL)
-    void setServerUrl(DEFAULT_API_URL)
-  }
-
-  const isDefault = currentUrl === DEFAULT_API_URL
-  const isDirty = inputValue.trim() !== currentUrl
+  const handleToggle = () => setExpanded(prev => !prev)
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.surface }]}>
-      <Text style={[styles.label, { color: currentTheme.text }]}>URL сервера API</Text>
-      <Text style={[styles.current, { color: currentTheme.textMuted }]}>Текущий: {currentUrl}</Text>
-      <TextInput
-        value={inputValue}
-        keyboardType='url'
-        autoCorrect={false}
-        autoCapitalize='none'
-        onChangeText={setInputValue}
-        placeholder='https://api.example.com'
-        placeholderTextColor={currentTheme.textMuted}
-        style={[
-          styles.input,
-          {
-            borderColor: currentTheme.textMuted,
-            color: currentTheme.text,
-          },
-        ]}
-      />
-      <View style={styles.buttons}>
-        <TouchableItem
-          onPress={handleSave}
-          style={[
-            styles.button,
-            {
-              backgroundColor: currentTheme.primary,
-              opacity: isDirty && isValidUrl(inputValue.trim()) ? 1 : 0.5,
-            },
-          ]}
-        >
-          <Text style={styles.buttonText}>{saved ? 'Сохранено!' : 'Сохранить'}</Text>
-        </TouchableItem>
-      </View>
-      <TouchableItem
-        disabled={isDefault}
-        noDisabledBackground
-        onPress={handleReset}
-        style={{ opacity: isDefault ? 0.4 : 1 }}
-      >
-        <Text style={[styles.resetLink, { color: currentTheme.primary }]}>
-          Сбросить к значению по умолчанию
-        </Text>
+      <TouchableItem onPress={handleToggle}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerText}>
+            <Text style={[styles.title, { color: currentTheme.text }]}>URL сервера API</Text>
+            <Text style={[styles.current, { color: currentTheme.textMuted }]}>
+              Текущий: {currentUrl}
+            </Text>
+          </View>
+          <Ionicons
+            size={20}
+            style={styles.headerChevron}
+            color={currentTheme.textMuted}
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+          />
+        </View>
       </TouchableItem>
+      {expanded ? <ServerUrlForm /> : null}
     </View>
   )
 }

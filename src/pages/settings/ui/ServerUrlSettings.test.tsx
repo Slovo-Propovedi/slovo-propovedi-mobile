@@ -1,10 +1,11 @@
 import { createCtx } from '@reatom/framework'
-import { fireEvent } from '@testing-library/react-native'
+import { userEvent } from '@testing-library/react-native'
 import { serverUrlAtom } from 'entities/settings'
 import { renderWithProviders } from 'shared/mocks'
 import { ServerUrlSettings } from './ServerUrlSettings'
 
 const TEST_URL = 'https://test.example.com'
+const ROW_BUTTON_NAME = /URL сервера API/
 const SAVE_BUTTON_NAME = /Сохран/
 const INPUT_PLACEHOLDER = 'https://api.example.com'
 
@@ -12,26 +13,49 @@ jest.mock('shared/api/axiosInstance', () => ({
   axiosInstance: { defaults: { baseURL: TEST_URL } },
 }))
 
+const renderWithCtx = async () => {
+  const ctx = createCtx()
+  serverUrlAtom(ctx, TEST_URL)
+  return renderWithProviders(<ServerUrlSettings />, { ctx })
+}
+
 describe('<ServerUrlSettings>', () => {
-  test('renders server URL input with seeded value', async () => {
-    const ctx = createCtx()
-    serverUrlAtom(ctx, TEST_URL)
-    const { getByPlaceholderText } = await renderWithProviders(<ServerUrlSettings />, { ctx })
+  test('is collapsed by default and expands on row press', async () => {
+    const user = userEvent.setup()
+    const { getByRole, queryByPlaceholderText } = await renderWithCtx()
+
+    expect(queryByPlaceholderText(INPUT_PLACEHOLDER)).toBeNull()
+
+    await user.press(getByRole('button', { name: ROW_BUTTON_NAME }))
+
+    expect(queryByPlaceholderText(INPUT_PLACEHOLDER)).toBeTruthy()
+  })
+
+  test('renders server URL input with seeded value after expand', async () => {
+    const user = userEvent.setup()
+    const { getByPlaceholderText, getByRole } = await renderWithCtx()
+
+    await user.press(getByRole('button', { name: ROW_BUTTON_NAME }))
+
     expect(getByPlaceholderText(INPUT_PLACEHOLDER)).toBeTruthy()
   })
 
-  test('renders save button', async () => {
-    const ctx = createCtx()
-    serverUrlAtom(ctx, TEST_URL)
-    const { getByRole } = await renderWithProviders(<ServerUrlSettings />, { ctx })
+  test('renders save button after expand', async () => {
+    const user = userEvent.setup()
+    const { getByRole } = await renderWithCtx()
+
+    await user.press(getByRole('button', { name: ROW_BUTTON_NAME }))
+
     expect(getByRole('button', { name: SAVE_BUTTON_NAME })).toBeTruthy()
   })
 
   test('pressing save does not crash', async () => {
-    const ctx = createCtx()
-    serverUrlAtom(ctx, TEST_URL)
-    const { getByRole } = await renderWithProviders(<ServerUrlSettings />, { ctx })
-    fireEvent.press(getByRole('button', { name: SAVE_BUTTON_NAME }))
+    const user = userEvent.setup()
+    const { getByRole } = await renderWithCtx()
+
+    await user.press(getByRole('button', { name: ROW_BUTTON_NAME }))
+    await user.press(getByRole('button', { name: SAVE_BUTTON_NAME }))
+
     expect(getByRole('button', { name: SAVE_BUTTON_NAME })).toBeTruthy()
   })
 })

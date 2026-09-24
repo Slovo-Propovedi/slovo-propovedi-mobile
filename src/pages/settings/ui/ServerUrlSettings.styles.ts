@@ -25,24 +25,34 @@ export const styles = StyleSheet.create({
   },
   current: {
     fontSize: FONT_SIZES.sm,
-    marginBottom: INDENTS.low,
+  },
+  headerChevron: {
+    marginLeft: INDENTS.low,
+  },
+  headerContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  headerText: {
+    flex: 1,
   },
   input: {
     borderRadius: 8,
     borderWidth: 1,
     fontSize: FONT_SIZES.base,
+    marginTop: INDENTS.low,
     paddingHorizontal: INDENTS.medium,
     paddingVertical: INDENTS.middle,
-  },
-  label: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
-    marginBottom: INDENTS.low,
   },
   resetLink: {
     alignSelf: 'flex-start',
     fontSize: FONT_SIZES.sm,
     marginTop: INDENTS.medium,
     textDecorationLine: 'underline',
+  },
+  title: {
+    fontSize: FONT_SIZES.base,
+    fontWeight: '600',
+    marginBottom: INDENTS.low,
   },
 })
