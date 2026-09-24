@@ -42,6 +42,7 @@ export {
   serverUnreachableAtom,
   setOnlineStatus,
 } from './network'
+export { hapticsEnabledAtom, loadHapticsEnabled, setHapticsEnabled } from './settings'
 export {
   checkForUpdateAction,
   latestVersionAtom,

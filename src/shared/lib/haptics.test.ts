@@ -7,12 +7,18 @@ import {
 } from 'expo-haptics'
 import { Platform } from 'react-native'
 import { hapticLight, hapticTick } from './haptics'
+import { ctx } from './reatom-ctx'
+
+jest.mock('./reatom-ctx', () => ({
+  ctx: { get: jest.fn(() => true) },
+}))
 
 const mockedImpactAsync = impactAsync as jest.MockedFunction<typeof impactAsync>
 const mockedPerformAndroidHapticsAsync = performAndroidHapticsAsync as jest.MockedFunction<
   typeof performAndroidHapticsAsync
 >
 const mockedSelectionAsync = selectionAsync as jest.MockedFunction<typeof selectionAsync>
+const mockedCtxGet = ctx.get as jest.Mock
 
 describe('hapticLight', () => {
   beforeEach(() => {
@@ -96,6 +102,20 @@ describe('hapticLight', () => {
       restorePlatform.restore()
     }
   })
+
+  test('is a no-op when haptics are disabled', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      mockedCtxGet.mockReturnValue(false)
+      hapticLight()
+
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      mockedCtxGet.mockReturnValue(true)
+    }
+  })
 })
 
 describe('hapticTick', () => {
@@ -137,6 +157,19 @@ describe('hapticTick', () => {
       expect(mockedSelectionAsync).toHaveBeenCalledTimes(1)
     } finally {
       restorePlatform.restore()
+    }
+  })
+
+  test('is a no-op when haptics are disabled', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      mockedCtxGet.mockReturnValue(false)
+      hapticTick()
+
+      expect(mockedSelectionAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      mockedCtxGet.mockReturnValue(true)
     }
   })
 })

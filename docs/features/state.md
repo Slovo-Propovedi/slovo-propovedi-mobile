@@ -22,6 +22,7 @@
 | shared/ui/theme   | `src/shared/ui/theme/model.ts`              | `themeModeAtom`, `currentThemeAtom`, `systemThemeAtom`, `dynamicColorsEnabledAtom` + `setThemeMode`, `loadThemeMode`, `setSystemTheme`, `setDynamicColors`, `loadDynamicColors`, `updateThemeBasedOnMode` | тема и Material You                                  |
 | shared/ui/layout  | `src/shared/ui/layout/model.ts`             | `tabBarHeightAtom`, `setTabBarHeight`                                                                                                                                                                     | измеренная высота таб-бара (onLayout в CustomTabBar) |
 | shared/model      | `src/shared/model/network.ts`               | `isOnlineAtom`, `serverUnreachableAtom`, `setOnlineStatus`, `reportServerReachable`, `reportServerUnreachable`                                                                                            | сеть и доступность сервера                           |
+| shared/model      | `src/shared/model/settings.ts`              | `hapticsEnabledAtom` + `setHapticsEnabled`, `loadHapticsEnabled`                                                                                                                                        | включён ли виброотклик (haptic feedback)             |
 | shared/model      | `src/shared/model/update.ts`                | `latestVersionAtom`, `releaseUrlAtom`, `checkForUpdateAction`                                                                                                                                             | проверка обновлений                                  |
 | shared/model      | `src/shared/model/updateInstall.ts` + `updateInstallFlow.ts` | `updateStateAtom`, `updateProgressAtom`, `updateErrorAtom`, `updateDialogVisibleAtom`, `startUpdateAction`, `resumeUpdateAfterPermissionAction`, `resetUpdateAction` | самообновление (in-app)                              |
 | shared/model      | `src/shared/model/app.ts`                   | `isAudioPlayerMountedAtom`, `isPlayerFullscreenAtom`, `setIsAudioPlayerMounted`, `setPlayerFullscreen`                                                                                                    | глобальные флаги плеера                              |
@@ -64,6 +65,7 @@ ctx.get(cacheUpdateTriggerAtom) // чтение триггера
 - `initializePlayer()` (`src/entities/player/lib/initializePlayer.ts`) — восстановление состояния плеера при старте.
 - `initServerUrlAction(ctx)` (`src/entities/settings/model.ts`) — восстановление URL сервера (синхронизирует `axiosInstance.baseURL`).
 - `loadThemeMode` / `loadDynamicColors` (`src/shared/ui/theme/model.ts`) — восстановление темы.
+- `loadHapticsEnabled` (`src/shared/model/settings.ts`) — восстановление настройки виброотклика (дефолт `true`).
 - `fetchAllSections` (`src/pages/listen/model.ts`) — загрузка секций (сеть → кэш).
 
 Вызываются модульно или в `app/_layout.tsx` до/после монтирования провайдера.

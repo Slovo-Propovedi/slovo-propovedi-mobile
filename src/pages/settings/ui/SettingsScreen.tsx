@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { INDENTS, isMaterialYouSupported, useTheme } from 'shared/ui/theme'
 import { DynamicColorsItem } from './DynamicColorsItem'
+import { HapticsSettingsItem } from './HapticsSettingsItem'
 import { ServerUrlSettings } from './ServerUrlSettings'
 import { SettingsItem } from './SettingsItem'
 import { ThemeDialog } from './ThemeDialog'
@@ -22,6 +23,7 @@ export const SettingsScreen = () => {
           }}
         />
         {isMaterialYouSupported() && <DynamicColorsItem />}
+        <HapticsSettingsItem />
         <ServerUrlSettings />
       </ScrollView>
       <ThemeDialog

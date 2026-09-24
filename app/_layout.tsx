@@ -11,6 +11,7 @@ import {
   reEnqueuePartialDownloads,
 } from 'shared/lib/audio-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { loadHapticsEnabled } from 'shared/model'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
 import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
 import RootLayout from './_RootLayout'
@@ -53,6 +54,7 @@ void cleanupOrphanedDownloads()
   .then(() => reEnqueuePartialDownloads(ctx))
 scheduleStartupGuardReset()
 void initServerUrlAction(ctx)
+void loadHapticsEnabled(ctx)
 void loadHistoryAction(ctx)
 
 export default RootLayoutWithProvider

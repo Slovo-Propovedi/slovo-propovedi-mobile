@@ -6,7 +6,7 @@
 
 ## Что делает
 
-Управление настройками приложения: тема оформления, динамические цвета, адрес сервера API.
+Управление настройками приложения: тема оформления, динамические цвета, виброотклик, адрес сервера API.
 
 ## Что показывается
 
@@ -14,11 +14,13 @@
 
 - **Тема оформления** — `ThemeDialog` + `ThemeSelector` (`src/pages/settings/ui/ThemeDialog.tsx`, `ThemeSelector.tsx`, `ThemeSelectorOption.tsx`, `themeOptions.ts`): светлая / тёмная / как в системе.
 - **Динамические цвета** — `DynamicColorsItem` (`src/pages/settings/ui/DynamicColorsItem.tsx`), Material You; показывается только если `isMaterialYouSupported()` (Android).
+- **Виброотклик** — `HapticsSettingsItem` (`src/pages/settings/ui/HapticsSettingsItem.tsx`): включение/выключение вибрации при перемотке и нажатиях.
 - **URL сервера API** — `ServerUrlSettings` (`src/pages/settings/ui/ServerUrlSettings.tsx`): изменение/сброс адреса сервера, валидация `http(s)://`, индикатор «Сохранено!».
 
 ## Откуда данные
 
 - Тема: `themeModeAtom`, `dynamicColorsEnabledAtom` (из `shared/ui/theme`, слой `shared`).
+- Виброотклик: `hapticsEnabledAtom` (из `shared/model`).
 - URL сервера: `serverUrlAtom`, `setServerUrlAction` (из `entities/settings`), дефолт `DEFAULT_API_URL` из `src/shared/config`.
 
 ## Куда можно перейти

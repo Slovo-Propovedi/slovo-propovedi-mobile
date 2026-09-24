@@ -6,6 +6,8 @@ import {
   selectionAsync,
 } from 'expo-haptics'
 import { Platform } from 'react-native'
+import { hapticsEnabledAtom } from '../model/settings'
+import { ctx } from './reatom-ctx'
 
 const HAPTIC_THROTTLE_MS = 45
 
@@ -21,6 +23,7 @@ let lastHapticAt = 0
 // no vibration happens inside the app.
 export const hapticLight = (): void => {
   if (Platform.OS === 'web') return
+  if (!ctx.get(hapticsEnabledAtom)) return
 
   const now = Date.now()
   if (now - lastHapticAt < HAPTIC_THROTTLE_MS) return
@@ -42,6 +45,7 @@ export const hapticLight = (): void => {
 // is swallowed so it can never crash the app; no-op on web.
 export const hapticTick = (): void => {
   if (Platform.OS === 'web') return
+  if (!ctx.get(hapticsEnabledAtom)) return
 
   void selectionAsync().catch(() => {})
 }
