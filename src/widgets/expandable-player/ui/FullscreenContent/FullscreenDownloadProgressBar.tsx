@@ -6,6 +6,7 @@ interface FullscreenDownloadProgressBarProps {
   audioUrl: string
   duration: number
   hideTime?: boolean
+  onPreviewChange?: (position: null | number) => void
   onSeek?: (position: number) => void
   position: number
   style?: StyleProp<ViewStyle>
@@ -15,6 +16,7 @@ export const FullscreenDownloadProgressBar = ({
   audioUrl,
   duration,
   hideTime,
+  onPreviewChange,
   onSeek,
   position,
   style,
@@ -28,6 +30,7 @@ export const FullscreenDownloadProgressBar = ({
       hideTime={hideTime}
       duration={duration}
       position={position}
+      onPreviewChange={onPreviewChange}
       downloadProgress={displayProgress}
     />
   )

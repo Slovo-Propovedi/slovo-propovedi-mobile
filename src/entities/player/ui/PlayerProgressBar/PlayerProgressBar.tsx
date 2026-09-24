@@ -9,6 +9,7 @@ interface PlayerProgressBarProps {
   downloadProgress?: number
   duration: number
   hideTime?: boolean
+  onPreviewChange?: (position: null | number) => void
   onSeek?: (position: number) => void
   position: number
   style?: StyleProp<ViewStyle>
@@ -18,6 +19,7 @@ export const PlayerProgressBar = ({
   downloadProgress = 0,
   duration,
   hideTime = false,
+  onPreviewChange,
   onSeek,
   position,
   style,
@@ -26,7 +28,7 @@ export const PlayerProgressBar = ({
   const progressBarStyles = createProgressBarStyles(currentTheme)
 
   const { isDragging, onSeekCancel, onSeekEnd, onSeekStart, onSeekUpdate, previewPosition } =
-    useSeekHandling(position, onSeek)
+    useSeekHandling(position, onSeek, onPreviewChange)
   const { containerRef, handleLayout, panResponder, trackWidth } = useProgressPanResponder(
     duration,
     {

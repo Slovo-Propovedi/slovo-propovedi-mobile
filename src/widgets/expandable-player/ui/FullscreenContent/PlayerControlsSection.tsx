@@ -1,4 +1,5 @@
 import { Entypo } from '@expo/vector-icons'
+import { useState } from 'react'
 import { Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PlayerRepeatToggle, SermonPlayerControls } from 'entities/player'
@@ -51,6 +52,7 @@ export const PlayerControlsSection = ({
 }: PlayerControlsSectionProps) => {
   const { bottom } = useSafeAreaInsets()
   const subtitle = getPlayerSubtitle(audio, playlist)
+  const [previewPosition, setPreviewPosition] = useState<null | number>(null)
 
   return (
     <View
@@ -88,7 +90,9 @@ export const PlayerControlsSection = ({
         </View>
       </View>
       <View style={styles.progressRow}>
-        <Text style={styles.timeText}>{millisToMinutesAndSeconds(position)}</Text>
+        <Text style={styles.timeText}>
+          {millisToMinutesAndSeconds(previewPosition ?? position)}
+        </Text>
         <View style={styles.progressBarContainer}>
           <FullscreenDownloadProgressBar
             hideTime
@@ -96,6 +100,7 @@ export const PlayerControlsSection = ({
             position={position}
             audioUrl={audio.audioUrl}
             onSeek={p => void seekTo(p)}
+            onPreviewChange={setPreviewPosition}
           />
         </View>
         <Text style={styles.timeText}>{millisToMinutesAndSeconds(duration)}</Text>

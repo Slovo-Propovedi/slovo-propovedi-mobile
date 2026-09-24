@@ -13,6 +13,7 @@ interface SeekHandling {
 export const useSeekHandling = (
   position: number,
   onSeek?: (position: number) => void,
+  onPreviewChange?: (position: null | number) => void,
 ): SeekHandling => {
   const [isDragging, setIsDragging] = useState(false)
   const [previewPosition, setPreviewPosition] = useState(position)
@@ -20,12 +21,17 @@ export const useSeekHandling = (
   const isDraggingRef = useRef(false)
   const previewPositionRef = useRef(position)
   const onSeekRef = useRef(onSeek)
+  const onPreviewChangeRef = useRef(onPreviewChange)
   const pendingSeekPositionRef = useRef<null | number>(null)
   const lastHapticSecondRef = useRef<null | number>(null)
 
   useEffect(() => {
     onSeekRef.current = onSeek
   }, [onSeek])
+
+  useEffect(() => {
+    onPreviewChangeRef.current = onPreviewChange
+  }, [onPreviewChange])
 
   useEffect(() => {
     if (position < 1000 && previewPositionRef.current > 5000) {
@@ -51,6 +57,7 @@ export const useSeekHandling = (
     isDraggingRef.current = true
     previewPositionRef.current = pos
     lastHapticSecondRef.current = Math.floor(pos / 1000)
+    onPreviewChangeRef.current?.(pos)
   }, [])
 
   const onSeekUpdate = useCallback((pos: number) => {
@@ -62,15 +69,18 @@ export const useSeekHandling = (
       lastHapticSecondRef.current = second
       hapticTick()
     }
+    onPreviewChangeRef.current?.(pos)
   }, [])
 
   const onSeekEnd = useCallback(() => {
+    onPreviewChangeRef.current?.(null)
     if (isDraggingRef.current && onSeekRef.current) onSeekRef.current(previewPositionRef.current)
 
     pendingSeekPositionRef.current = previewPositionRef.current
   }, [])
 
   const onSeekCancel = useCallback(() => {
+    onPreviewChangeRef.current?.(null)
     setIsDragging(false)
     isDraggingRef.current = false
     pendingSeekPositionRef.current = null
