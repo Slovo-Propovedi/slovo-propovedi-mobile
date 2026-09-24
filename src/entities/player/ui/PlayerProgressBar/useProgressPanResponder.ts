@@ -1,6 +1,8 @@
 import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { type LayoutChangeEvent, PanResponder, type View } from 'react-native'
 
+const MIN_MOVE_PX = 5
+
 interface LayoutInfo {
   containerPageX: number
   width: number
@@ -28,6 +30,7 @@ export const useProgressPanResponder = (
 ): UseProgressPanResponderResult => {
   const [layoutInfo, setLayoutInfo] = useState<LayoutInfo | null>(null)
   const containerRef = useRef<null | View>(null)
+  const lastAcceptedXRef = useRef<null | number>(null)
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout
@@ -39,6 +42,24 @@ export const useProgressPanResponder = (
     })
   }, [])
 
+  const beginTracking = useCallback((pageX: number) => {
+    lastAcceptedXRef.current = pageX
+  }, [])
+
+  const acceptMove = useCallback((pageX: number) => {
+    const lastAcceptedX = lastAcceptedXRef.current
+
+    // Ignore sub-threshold jitter: a micro-movement of the finger right before
+    // lifting would otherwise nudge the preview to a slightly different
+    // position, making the seek "jump" at release.
+    if (lastAcceptedX !== null && Math.abs(pageX - lastAcceptedX) < MIN_MOVE_PX) return false
+
+    lastAcceptedXRef.current = pageX
+
+    return true
+  }, [])
+
+  /* eslint-disable react-hooks/refs -- intentional: the last-accepted-X ref is only read/written inside PanResponder gesture callbacks, never during render */
   const panResponder = useMemo(() => {
     const getPos = (pageX: number) => {
       if (!layoutInfo || duration === 0) return null
@@ -51,6 +72,8 @@ export const useProgressPanResponder = (
     return PanResponder.create({
       onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > Math.abs(gs.dy) || gs.dx > 5,
       onPanResponderGrant: evt => {
+        beginTracking(evt.nativeEvent.pageX)
+
         const pos = getPos(evt.nativeEvent.pageX)
 
         if (pos === null) return
@@ -58,7 +81,11 @@ export const useProgressPanResponder = (
         onSeekStart(pos)
       },
       onPanResponderMove: evt => {
-        const pos = getPos(evt.nativeEvent.pageX)
+        const pageX = evt.nativeEvent.pageX
+
+        if (!acceptMove(pageX)) return
+
+        const pos = getPos(pageX)
 
         if (pos === null) return
 
@@ -73,7 +100,17 @@ export const useProgressPanResponder = (
       onPanResponderTerminationRequest: () => true,
       onStartShouldSetPanResponder: () => true,
     })
-  }, [duration, layoutInfo, onSeekCancel, onSeekEnd, onSeekStart, onSeekUpdate])
+  }, [
+    acceptMove,
+    beginTracking,
+    duration,
+    layoutInfo,
+    onSeekCancel,
+    onSeekEnd,
+    onSeekStart,
+    onSeekUpdate,
+  ])
+  /* eslint-enable react-hooks/refs -- re-enabling after PanResponder ref block */
 
   const trackWidth = layoutInfo?.width ?? 0
 
