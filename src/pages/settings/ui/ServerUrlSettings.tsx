@@ -17,7 +17,7 @@ export const ServerUrlSettings = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.surface }]}>
-      <TouchableItem onPress={handleToggle}>
+      <TouchableItem onPress={handleToggle} accessibilityState={{ expanded }}>
         <View style={styles.headerContent}>
           <View style={styles.headerText}>
             <Text style={[styles.title, { color: currentTheme.text }]}>URL сервера API</Text>
@@ -33,7 +33,9 @@ export const ServerUrlSettings = () => {
           />
         </View>
       </TouchableItem>
-      {expanded ? <ServerUrlForm /> : null}
+      <View style={expanded ? undefined : styles.hidden}>
+        <ServerUrlForm />
+      </View>
     </View>
   )
 }

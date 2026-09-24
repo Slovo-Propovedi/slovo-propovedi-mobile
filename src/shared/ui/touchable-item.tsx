@@ -1,9 +1,15 @@
 import { StyleSheet } from 'react-native'
-import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
+import {
+  type AccessibilityState,
+  type GestureResponderEvent,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native'
 import { COLORS } from './theme/colors'
 import { TouchableButton } from './touchable-button'
 
 export interface TouchableItemProps {
+  accessibilityState?: AccessibilityState
   children: React.ReactNode
   disabled?: boolean
   noDisabledBackground?: boolean
@@ -13,6 +19,7 @@ export interface TouchableItemProps {
 }
 
 export const TouchableItem = ({
+  accessibilityState,
   children,
   disabled = false,
   noDisabledBackground = false,
@@ -27,7 +34,13 @@ export const TouchableItem = ({
   buttonStyles.push(style)
 
   return (
-    <TouchableButton testID={testID} onPress={onPress} disabled={disabled} style={buttonStyles}>
+    <TouchableButton
+      testID={testID}
+      onPress={onPress}
+      disabled={disabled}
+      style={buttonStyles}
+      accessibilityState={accessibilityState}
+    >
       {children}
     </TouchableButton>
   )

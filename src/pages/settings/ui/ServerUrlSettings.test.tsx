@@ -5,6 +5,7 @@ import { renderWithProviders } from 'shared/mocks'
 import { ServerUrlSettings } from './ServerUrlSettings'
 
 const TEST_URL = 'https://test.example.com'
+const DRAFT_URL = 'https://draft.example.com'
 const ROW_BUTTON_NAME = /URL сервера API/
 const SAVE_BUTTON_NAME = /Сохран/
 const INPUT_PLACEHOLDER = 'https://api.example.com'
@@ -23,11 +24,14 @@ describe('<ServerUrlSettings>', () => {
   test('is collapsed by default and expands on row press', async () => {
     const user = userEvent.setup()
     const { getByRole, queryByPlaceholderText } = await renderWithCtx()
+    const row = getByRole('button', { name: ROW_BUTTON_NAME })
 
+    expect(row).toBeCollapsed()
     expect(queryByPlaceholderText(INPUT_PLACEHOLDER)).toBeNull()
 
-    await user.press(getByRole('button', { name: ROW_BUTTON_NAME }))
+    await user.press(row)
 
+    expect(row).toBeExpanded()
     expect(queryByPlaceholderText(INPUT_PLACEHOLDER)).toBeTruthy()
   })
 
@@ -57,5 +61,21 @@ describe('<ServerUrlSettings>', () => {
     await user.press(getByRole('button', { name: SAVE_BUTTON_NAME }))
 
     expect(getByRole('button', { name: SAVE_BUTTON_NAME })).toBeTruthy()
+  })
+
+  test('preserves the unsaved draft across collapse and reopen', async () => {
+    const user = userEvent.setup()
+    const { getByPlaceholderText, getByRole } = await renderWithCtx()
+    const row = getByRole('button', { name: ROW_BUTTON_NAME })
+
+    await user.press(row)
+    const input = getByPlaceholderText(INPUT_PLACEHOLDER)
+    await user.clear(input)
+    await user.type(input, DRAFT_URL)
+
+    await user.press(row)
+    await user.press(row)
+
+    expect(getByPlaceholderText(INPUT_PLACEHOLDER)).toHaveDisplayValue(DRAFT_URL)
   })
 })

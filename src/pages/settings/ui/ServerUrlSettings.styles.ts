@@ -36,6 +36,9 @@ export const styles = StyleSheet.create({
   headerText: {
     flex: 1,
   },
+  hidden: {
+    display: 'none',
+  },
   input: {
     borderRadius: 8,
     borderWidth: 1,

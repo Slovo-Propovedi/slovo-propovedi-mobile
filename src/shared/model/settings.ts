@@ -20,9 +20,11 @@ export const loadHapticsEnabled = action(async rootCtx => {
     const saved = await AsyncStorage.getItem(HAPTICS_ENABLED_KEY)
     if (saved === null) return undefined
 
-    hapticsEnabledAtom(rootCtx, saved === 'true')
+    const enabled = saved === 'true'
 
-    return saved === 'true'
+    hapticsEnabledAtom(rootCtx, enabled)
+
+    return enabled
   } catch (error) {
     console.error('Failed to load haptics enabled:', error)
 
