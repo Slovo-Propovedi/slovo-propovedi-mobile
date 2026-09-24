@@ -290,6 +290,10 @@ Upstream-причины:
 - **Long-press ±10с** — через `onLongPressSeek`/`onPressOutSeek` в `PlayerControls`. Работает независимо от позиции в плейлисте (кнопки не отключаются на границах, Issue #67).
 - **Клавиатура (web)** — `usePlayerKeyboardSeek` в полноэкранном плеере: `ArrowLeft`/`ArrowRight` — тап ±10с (`tapSeek`), удержание ≥ 500мс — long-press-перемотка с ускорением 5с→30с (как у экранных кнопок); OS auto-repeat (`event.repeat`) игнорируется — непрерывную перемотку ведёт hold-таймер; `Space` — play/pause (пропускается, если фокус на интерактивном элементе — кнопка активируется нативным Space, иначе было бы двойное срабатывание); `Escape` — сворачивание (при открытом оверлее «Подробнее» — сначала закрывает его, при открытой шторке плейлиста — сначала закрывает её). Только web + развёрнутый плеер. Подробнее — [web.md](./web.md) → «Плеер на web».
 
+### Виброотклик
+
+Чекбокс «Виброотклик» в Настройках (`hapticsEnabledAtom` из `shared/model/settings`) гейтит **только** app-level виброотклик — press-feedback кнопок (`hapticLight`) и тик перемотки (`hapticTick`), оба в `src/shared/lib/haptics.ts`. Системную настройку виброотклика ОС учитывает сама: на Android `performAndroidHapticsAsync` → `View.performHapticFeedback` сверяется с системным флагом `HAPTIC_FEEDBACK_ENABLED`; на iOS UIKit-генераторы молча дропаются при выключенных System Haptics. Прочитать системное состояние из JS нельзя (в `expo-haptics` нет API; на iOS — невозможно by design), поэтому чекбокс в приложении **никогда не дизейблится** по этому признаку — решение зафиксировано 2026-09: нативный модуль детекции не добавляем.
+
 ## Метаданные lock screen
 
 `playerService.setLockScreenMetadata({ albumTitle, artist, artworkUrl, title })` → `LockScreenControls.setMetadata` → два пути:
