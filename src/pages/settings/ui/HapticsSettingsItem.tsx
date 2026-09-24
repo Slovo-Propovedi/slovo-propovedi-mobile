@@ -41,6 +41,7 @@ export const HapticsSettingsItem = ({ style }: HapticsSettingsItemProps) => {
         <Checkbox
           value={enabled}
           style={styles.checkbox}
+          aria-label='Виброотклик'
           onValueChange={handleToggle}
           color={enabled ? currentTheme.primary : undefined}
         />

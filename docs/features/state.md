@@ -65,7 +65,7 @@ ctx.get(cacheUpdateTriggerAtom) // чтение триггера
 - `initializePlayer()` (`src/entities/player/lib/initializePlayer.ts`) — восстановление состояния плеера при старте.
 - `initServerUrlAction(ctx)` (`src/entities/settings/model.ts`) — восстановление URL сервера (синхронизирует `axiosInstance.baseURL`).
 - `loadThemeMode` / `loadDynamicColors` (`src/shared/ui/theme/model.ts`) — восстановление темы.
-- `loadHapticsEnabled` (`src/shared/model/settings.ts`) — восстановление настройки виброотклика (дефолт `true`).
+- `loadHapticsEnabled` (`src/shared/model/settings.ts`) — восстановление глобальной настройки виброотклика (дефолт `true`).
 - `fetchAllSections` (`src/pages/listen/model.ts`) — загрузка секций (сеть → кэш).
 
 Вызываются модульно или в `app/_layout.tsx` до/после монтирования провайдера.

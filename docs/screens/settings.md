@@ -14,7 +14,7 @@
 
 - **Тема оформления** — `ThemeDialog` + `ThemeSelector` (`src/pages/settings/ui/ThemeDialog.tsx`, `ThemeSelector.tsx`, `ThemeSelectorOption.tsx`, `themeOptions.ts`): светлая / тёмная / как в системе.
 - **Динамические цвета** — `DynamicColorsItem` (`src/pages/settings/ui/DynamicColorsItem.tsx`), Material You; показывается только если `isMaterialYouSupported()` (Android).
-- **Виброотклик** — `HapticsSettingsItem` (`src/pages/settings/ui/HapticsSettingsItem.tsx`): включение/выключение вибрации при перемотке и нажатиях.
+- **Виброотклик** — `HapticsSettingsItem` (`src/pages/settings/ui/HapticsSettingsItem.tsx`): глобальный переключатель вибрации при перемотке и нажатиях.
 - **URL сервера API** — `ServerUrlSettings` (`src/pages/settings/ui/ServerUrlSettings.tsx`): аккордеон, свёрнут по умолчанию (заголовок + «Текущий: …» + шеврон), тап по строке разворачивает форму (`ServerUrlForm.tsx`): изменение/сброс адреса сервера, валидация `http(s)://`, индикатор «Сохранено!». Форма остаётся смонтированной (`display:none`) в свёрнутом виде, поэтому черновик ввода не теряется при сворачивании аккордеона. Заголовок-строка отдаёт `accessibilityState={{ expanded }}`.
 
 ## Откуда данные

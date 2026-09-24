@@ -55,7 +55,7 @@
 - **Мини-снапшот прогресса** (`listeningProgressSnapshot`): **LEGACY** — больше не пишется при воспроизведении (писатель `writeLiveProgressSnapshot` из `usePlaybackProgressSaver` удалён; каталог `listeningHistory` теперь единственный источник). Хранится только для одноразовой миграции старых on-disk снапшотов при гидрации (`reconcileOnHydration`): мержится в совпадающую запись каталога (только если запись не завершена), `durationMs = max(entry, snapshot)`; осиротевший снапшот дропается. Чистится при каждом **реальном** flush каталога (`flushHistoryProgressAction`; no-op flush — позиция/длительность не изменились — выходит раньше и пропускает и запись, и очистку) и при reconcile/remove/clear — инвариант: «снапшот всегда не новее каталога; каждый реальный flush каталога чистит снапшот». Логика — `src/entities/listening-history/lib/liveProgressStorage.ts`, `reconcileOnHydration.ts`.
 - **Сервер URL** (`server-url`): пишется при смене в Настройках, читается при старте (`initServerUrlAction`).
 - **Тема** (`theme_mode`, `dynamic_colors`): пишутся при изменении, читаются при старте (`loadThemeMode`, `loadDynamicColors`).
-- **Виброотклик** (`haptics_enabled`): пишется при переключении в Настройках (`setHapticsEnabled`), читается при старте (`loadHapticsEnabled`).
+- **Виброотклик** (`haptics_enabled`): пишется при переключении в Настройках (`setHapticsEnabled`), читается при старте (`loadHapticsEnabled`). Глобальный переключатель: выключает и тик перемотки, и haptic-отклик кнопок.
 - **Версия уведомления об обновлении**: пишется после показа, читается перед проверкой.
 
 ## Миграции

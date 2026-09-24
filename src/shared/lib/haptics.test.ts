@@ -129,43 +129,58 @@ describe('hapticTick', () => {
       hapticTick()
 
       expect(mockedSelectionAsync).not.toHaveBeenCalled()
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
   })
 
-  test('triggers a selection tick on native', () => {
+  test('triggers a Context_Click tick on Android', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      hapticTick()
+
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Context_Click)
+      expect(mockedSelectionAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('triggers a selection tick on iOS', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
     try {
       hapticTick()
 
       expect(mockedSelectionAsync).toHaveBeenCalledTimes(1)
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
   })
 
-  test('swallows selection rejection (no unhandled rejection)', async () => {
+  test('swallows Android haptic rejection (no unhandled rejection)', async () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     try {
-      mockedSelectionAsync.mockRejectedValueOnce(new Error('haptic failed'))
+      mockedPerformAndroidHapticsAsync.mockRejectedValueOnce(new Error('haptic failed'))
 
       hapticTick()
       // Flush the microtask queue: an unhandled rejection would fail the test.
       await Promise.resolve()
 
-      expect(mockedSelectionAsync).toHaveBeenCalledTimes(1)
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Context_Click)
     } finally {
       restorePlatform.restore()
     }
   })
 
   test('is a no-op when haptics are disabled', () => {
-    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     try {
       mockedCtxGet.mockReturnValue(false)
       hapticTick()
 
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
       expect(mockedSelectionAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
