@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { hapticLight } from 'shared/lib/haptics'
 
 interface SeekHandling {
   isDragging: boolean
@@ -20,6 +21,7 @@ export const useSeekHandling = (
   const previewPositionRef = useRef(position)
   const onSeekRef = useRef(onSeek)
   const pendingSeekPositionRef = useRef<null | number>(null)
+  const lastHapticSecondRef = useRef<null | number>(null)
 
   useEffect(() => {
     onSeekRef.current = onSeek
@@ -48,11 +50,18 @@ export const useSeekHandling = (
     setPreviewPosition(pos)
     isDraggingRef.current = true
     previewPositionRef.current = pos
+    lastHapticSecondRef.current = Math.floor(pos / 1000)
   }, [])
 
   const onSeekUpdate = useCallback((pos: number) => {
     setPreviewPosition(pos)
     previewPositionRef.current = pos
+
+    const second = Math.floor(pos / 1000)
+    if (lastHapticSecondRef.current !== second) {
+      lastHapticSecondRef.current = second
+      hapticLight()
+    }
   }, [])
 
   const onSeekEnd = useCallback(() => {
