@@ -42,6 +42,8 @@ npm run build:ios            # Build iOS with EAS
 npm run build:all            # Build all platforms
 ```
 
+**Running tests (agents):** run tests only via `yarn test` (add `--watch=false` for a single terminating run). Never call `yarn jest <paths>` or `yarn testFinal` directly — the dedicated script carries test optimizations, and raw full jest runs overload the machine and can hang it.
+
 ## Project Architecture
 
 This project follows Feature-Sliced Design (FSD) architecture with Expo Router for navigation.
