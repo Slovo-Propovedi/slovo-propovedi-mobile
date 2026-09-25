@@ -20,7 +20,7 @@ export {
 // Re-export Context-related from ThemeContext subfolder
 export { ThemeContext } from './ThemeContext/themeContext'
 
-export type { ThemeContextValue } from './ThemeContext/ThemeContext'
+export type { ThemeContextValue } from './ThemeContext/ThemeContextValue'
 
 export { ThemeProvider } from './ThemeContext/ThemeProvider'
 export { useTheme } from './ThemeContext/useTheme'

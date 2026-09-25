@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react-native'
 import { DarkTheme } from '../constants'
-import { type ThemeContextValue } from './ThemeContext'
 import { ThemeContext } from './themeContext'
+import { type ThemeContextValue } from './ThemeContextValue'
 import { useTheme } from './useTheme'
 
 const CONTEXT_VALUE: ThemeContextValue = {

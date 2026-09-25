@@ -29,6 +29,8 @@
 
 - `ThemeProvider` — `src/shared/ui/theme/ThemeContext/ThemeProvider.tsx`, монтируется в `app/_layout.tsx`.
 - `useTheme` — `src/shared/ui/theme/ThemeContext/useTheme.ts`, возвращает `{ currentTheme, isLight }`.
+- `ThemeContext` (React-контекст) — `src/shared/ui/theme/ThemeContext/themeContext.tsx`; тип значения контекста `ThemeContextValue` — `src/shared/ui/theme/ThemeContext/ThemeContextValue.ts` (тип-only файл).
+- **Правило именования:** в `ThemeContext/` нет двух файлов, отличающихся только регистром имени (`ThemeContext.ts` переименован в `ThemeContextValue.ts`): на case-insensitive ФС (macOS по умолчанию) `./themeContext` резолвится в `themeContext.ts` → case-insensitive матчинг с типом-only `ThemeContext.ts`, ломая tsc (TS1149/TS2305), jest (`Cannot read properties of undefined (reading 'Provider')`) и typed-линт. Новые файлы не должны отличаться от соседей только регистром.
 - Также есть мутируемый объект `COLORS` + `updateCOLORS()` — `src/shared/ui/theme/colors.ts` (инициализируется `initializeCOLORS(ctx)` в `themed.ts`).
 
 **Правило:** мутируемые слоты темы (`primary`, `background`, `card`, `surface`, `text`, `textMuted`, `skeleton`, `icon`, `backdrop`, `tabBarActive`) **никогда** не захватываются внутри `StyleSheet.create` — `StyleSheet.create` фиксирует примитив на момент вычисления модуля, и цвет перестаёт следовать за сменой темы/динамических цветов. Цвета темы задавай через `useTheme()` + инлайн-стиль; `COLORS.<slot>` в styles-файлах допустим только для статичных слотов (`white`, `black`, `disabled` и т.п.).
