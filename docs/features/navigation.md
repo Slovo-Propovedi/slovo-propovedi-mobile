@@ -70,16 +70,20 @@
 
 ## Передача параметров
 
-Параметры передаются **JSON-строками** через `router.push({ pathname, params })`:
+Параметры передаются **строками** через `router.push({ pathname, params })` (не JSON — полный объект экран резолвит сам):
 
-- `/listen/playlist?playlist=<JSON PlaylistData>` — `navigateToPlaylist`;
-- `/listen/playlist-list?sectionId=<строка>&title=<строка>` — `navigateToPlaylistList`.
+- `/listen/playlist?playlist=<UUID>` — `navigateToPlaylist` передаёт только `playlist.id`, полный `PlaylistData` экран достаёт через `usePlaylistById` (секции → кэш → API, см. [../screens/playlist.md](../screens/playlist.md));
+- `/listen/playlist-list?sectionId=<строка>` — `navigateToPlaylistList` (параметр `title` в URL не передаётся, заголовок берётся из резолвнутого раздела).
 
 Хелперы — `src/shared/routing/`:
 
 - `useListenNavigation.ts` — `navigateToPlaylist`, `navigateToPlaylistList`;
 - `useReadNavigation.ts` — `navigateToBookReader` (`/read/book-reader`), `navigateToBooksList` (`/read/books-list`);
 - `base.ts` — тип `BaseParamList`.
+
+## Android App Links
+
+Хост `https://app.slovo-propovedi.ru` заявлен через App Links: точные пути `/listen` и `/listen/playlist` открывают приложение (холодный старт или поверх запущенного — работает «из коробки» через expo-router, без кастомной linking-конфигурации), остальные маршруты остаются в браузере. Подробности (конфиг, assetlinks.json, nginx, adb-тесты, ограничения) — [deep-links.md](./deep-links.md).
 
 ## Незарегистрированные маршруты
 

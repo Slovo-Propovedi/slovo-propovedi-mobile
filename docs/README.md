@@ -39,6 +39,7 @@
 | [`features/images.md`](./features/images.md)                           | Кэширование и рендеринг изображений (expo-image)                         |
 | [`features/web.md`](./features/web.md)                                 | Web-платформа: PWA, Service Worker, офлайн-кеш аудио, десктопный layout  |
 | [`features/navigation.md`](./features/navigation.md)                   | Навигация expo-router: табы, стеки, маршруты                             |
+| [`features/deep-links.md`](./features/deep-links.md)                   | Android App Links: intentFilters, assetlinks.json, nginx, тестирование  |
 | [`features/state.md`](./features/state.md)                             | Reatom: атомы, экшены, `ctx`                                             |
 | [`features/theme.md`](./features/theme.md)                             | Тема, цвета, Material You                                                |
 | [`features/offline-and-network.md`](./features/offline-and-network.md) | Сеть, офлайн, баннеры, авто-refresh токенов                              |

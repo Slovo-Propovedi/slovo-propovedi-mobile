@@ -5,13 +5,14 @@ Local builds are the FLOSS-compliant path — no proprietary services required.
 
 ## Prerequisites
 
-| Tool        | Version | Notes                                                 |
-| ----------- | ------- | ----------------------------------------------------- |
-| Node.js     | >= 22.x | Current LTS. Check with `node --version`.             |
-| Yarn        | 1.22.x  | Classic Yarn. No `dlx` support.                       |
-| JDK         | >= 17   | OpenJDK 17 or newer. Expo SDK 57 + React Native 0.86. |
-| Android SDK | API 35+ | Install via Android Studio or `sdkmanager`.           |
-| Xcode       | 16+     | macOS only. Required for iOS builds.                  |
+| Tool        | Version        | Notes                                                 |
+| ----------- | -------------- | ----------------------------------------------------- |
+| Node.js     | >= 22.x        | Current LTS. Check with `node --version`.             |
+| Yarn        | 1.22.x         | Classic Yarn. No `dlx` support.                       |
+| JDK         | >= 17          | OpenJDK 17 or newer. Expo SDK 57 + React Native 0.86. |
+| Android SDK | API 35+        | Install via Android Studio or `sdkmanager`.           |
+| NDK         | 27.1.12297006  | Pinned by React Native 0.86 (`react-native/gradle/libs.versions.toml`). Install via `sdkmanager "ndk;27.1.12297006"`. |
+| Xcode       | 16+            | macOS only. Required for iOS builds.                  |
 
 ## Android Release Build
 
