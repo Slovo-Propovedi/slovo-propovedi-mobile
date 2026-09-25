@@ -36,6 +36,13 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="slovo-propovedi"/>
       </intent-filter>
+      <intent-filter android:autoVerify="true" data-generated="true">
+        <action android:name="android.intent.action.VIEW"/>
+        <data android:host="app.slovo-propovedi.ru" android:path="/listen" android:scheme="https"/>
+        <data android:host="app.slovo-propovedi.ru" android:path="/listen/playlist" android:scheme="https"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
     </activity>
   </application>
 </manifest>

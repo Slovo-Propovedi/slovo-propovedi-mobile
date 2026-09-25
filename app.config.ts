@@ -31,6 +31,17 @@ export default ({ config }: ConfigContext): AppConfig => ({
     // RECORD_AUDIO (microphone) is unused — playback-only via expo-audio. Stripped from the final
     // manifest even if a library/plugin re-adds it (expo-audio plugin injects it by default).
     blockedPermissions: ['android.permission.RECORD_AUDIO'],
+    intentFilters: [
+      {
+        action: 'VIEW',
+        autoVerify: true,
+        category: ['BROWSABLE', 'DEFAULT'],
+        data: [
+          { host: 'app.slovo-propovedi.ru', path: '/listen', scheme: 'https' },
+          { host: 'app.slovo-propovedi.ru', path: '/listen/playlist', scheme: 'https' },
+        ],
+      },
+    ],
     package: appId,
     permissions: [
       'android.permission.MODIFY_AUDIO_SETTINGS',
