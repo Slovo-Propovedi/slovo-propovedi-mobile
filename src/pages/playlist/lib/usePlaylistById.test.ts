@@ -42,6 +42,12 @@ const PLAYLIST_2: PlaylistData = {
   title: 'Плейлист 2',
 }
 
+// Distinct object with the same id as PLAYLIST_1 — lets tests tell which tier won
+const PLAYLIST_1_SECTIONS: PlaylistData = {
+  ...PLAYLIST_1,
+  title: 'From sections',
+}
+
 const makeSection = (playlists: PlaylistData[]): SectionData => ({
   id: 'section-1',
   itemsSize: 'small',
@@ -150,7 +156,7 @@ describe('usePlaylistById', () => {
     expect(result.current.notFound).toBe(false)
   })
 
-  test('surfaces a late sections hit over an already resolved lower tier', async () => {
+  test('surfaces a late sections hit over an already resolved cache tier', async () => {
     const ctx = createCtx()
     mockResolvePlaylistFromCache.mockResolvedValue(PLAYLIST_1)
 
@@ -159,11 +165,32 @@ describe('usePlaylistById', () => {
     expect(result.current.playlist).toBe(PLAYLIST_1)
 
     await act(async () => {
-      dynamicSectionsAtom(ctx, [makeSection([PLAYLIST_1])])
+      dynamicSectionsAtom(ctx, [makeSection([PLAYLIST_1_SECTIONS])])
     })
 
-    expect(result.current.playlist).toBe(PLAYLIST_1)
+    expect(result.current.playlist).toBe(PLAYLIST_1_SECTIONS)
     expect(result.current.isLoading).toBe(false)
     expect(result.current.notFound).toBe(false)
+    expect(mockResolvePlaylistFromApi).not.toHaveBeenCalled()
+  })
+
+  test('surfaces a late sections hit over an already resolved api tier without refetching', async () => {
+    const ctx = createCtx()
+    mockResolvePlaylistFromCache.mockResolvedValue(undefined)
+    mockResolvePlaylistFromApi.mockResolvedValue(PLAYLIST_1)
+
+    const { result } = await renderHookWithProviders(() => usePlaylistById('pl-1'), { ctx })
+    await act(async () => {})
+    expect(result.current.playlist).toBe(PLAYLIST_1)
+
+    await act(async () => {
+      dynamicSectionsAtom(ctx, [makeSection([PLAYLIST_1_SECTIONS])])
+    })
+
+    expect(result.current.playlist).toBe(PLAYLIST_1_SECTIONS)
+    expect(result.current.isLoading).toBe(false)
+    expect(result.current.notFound).toBe(false)
+    expect(mockResolvePlaylistFromApi).toHaveBeenCalledTimes(1)
+    expect(mockResolvePlaylistFromCache).toHaveBeenCalledTimes(1)
   })
 })

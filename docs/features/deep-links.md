@@ -100,7 +100,7 @@ location ^~ /.well-known/ {
 
 Локальная проверка деплоя: `yarn web:build` → `dist/.well-known/assetlinks.json` существует → `yarn web:preview` отдаёт его с `200` + `application/json`.
 
-**Прод-деплой не выполнен** — `scripts/vps-deploy-web.sh` запускается на VPS из Forgejo release-воркфлоу. После деплоя вручную проверить:
+**Прод-деплой не выполнен** — `scripts/vps-deploy-web.sh` запускается на VPS из Forgejo release-воркфлоу (общий флоу деплоя веб-приложения — [web.md](./web.md) → «Деплой»). После деплоя вручную проверить:
 
 ```bash
 curl -sI https://app.slovo-propovedi.ru/.well-known/assetlinks.json   # 200, application/json, без редиректа
