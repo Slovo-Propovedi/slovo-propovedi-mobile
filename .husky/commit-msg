@@ -25,7 +25,9 @@ fi
 
 # Strip any existing Signed-off-by lines (user may have added them manually
 # without proper blank-line separator, which fails DCO on the server).
-sed -i '/^Signed-off-by:/d' "$MSG_FILE"
+# `-i.bak` instead of `-i`: BSD sed (macOS) requires a suffix after -i
+# and rejects GNU's bare `-i`, failing every commit on macOS.
+sed -i.bak '/^Signed-off-by:/d' "$MSG_FILE" && rm -f "$MSG_FILE.bak"
 
 # Remove trailing blank lines and ensure exactly one trailing newline.
 # sed '/^$/d' removes ALL blank lines which is too aggressive — we only
