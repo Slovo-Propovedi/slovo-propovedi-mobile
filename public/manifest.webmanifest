@@ -4,10 +4,12 @@
   "description": "Аудио проповеди: слушайте онлайн и офлайн",
   "lang": "ru",
   "dir": "ltr",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
+  "launch_handler": { "client_mode": "navigate-existing" },
   "background_color": "#f16031",
   "theme_color": "#f16031",
   "icons": [
