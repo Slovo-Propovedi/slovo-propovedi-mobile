@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import z from 'zod'
 import { playlistDataSchema } from 'entities/playlist/@x/player'
-import { audioPlayerDataSchema } from 'entities/sermon'
+import { audioPlayerDataSchema } from 'entities/sermon/@x/player'
 import {
   CURRENT_AUDIO,
   CURRENT_PLAYBACK_RATE,

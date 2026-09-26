@@ -1,5 +1,5 @@
 import { type PlaylistData } from 'entities/playlist/@x/player'
-import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon'
+import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon/@x/player'
 import { RepeatMode } from '../../../../model'
 
 export const findCurrentTrackIndex = (

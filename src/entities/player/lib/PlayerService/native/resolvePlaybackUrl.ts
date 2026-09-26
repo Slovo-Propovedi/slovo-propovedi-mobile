@@ -1,4 +1,4 @@
-import { audioCacheService, getPartialFileUri } from 'entities/offline-cache'
+import { audioCacheService, getPartialFileUri } from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { isOnlineAtom } from 'shared/model/network'

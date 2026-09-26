@@ -18,7 +18,7 @@ jest.mock('expo-audio', () => ({
 const mockGetCachedUri = jest.fn<Promise<null | string>, [string]>()
 const mockGetPartialFileUri = jest.fn<Promise<null | string>, [string]>()
 
-jest.mock('entities/offline-cache', () => ({
+jest.mock('entities/offline-cache/@x/player', () => ({
   audioCacheService: {
     getCachedUri: (url: string) => mockGetCachedUri(url),
   },

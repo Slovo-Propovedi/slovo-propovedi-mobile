@@ -104,7 +104,7 @@ generated/
 | --------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
 | `mapAllSectionsResponse`                            | `AllSectionsResponse` → `SectionData[]`        | ✅ живой (`src/entities/section/lib/fetchAllSections.ts:25`)        |
 | `mapSectionEntityToSectionData`                     | `SectionEntity` → `SectionData`                | ✅ живой (через `mapAllSectionsResponse`; `entities/section`)       |
-| `mapSectionPlaylistToPlaylistData`                  | `SectionPlaylist` → `PlaylistData`             | ✅ живой (транзитивно; `entities/playlist`)                         |
+| `mapSectionPlaylistToPlaylistData`                  | `SectionPlaylist` → `PlaylistData`             | ✅ живой (транзитивно; `entities/section`)                          |
 | `mapPlaylistSermonToSermonShape`                    | `PlaylistSermon` → `SermonShape`               | ✅ живой (транзитивно; `entities/playlist`)                         |
 | `mapSectionRefToSectionData`                        | `SectionRef` → `SectionData`                   | ✅ живой (транзитивно; `entities/section`)                          |
 | `mapAllSermonsResponse`                             | `AllSermonsResponse` → `SermonData[]`          | ✅ живой (`src/features/sermon-search/model.ts:67`; `entities/sermon`) |

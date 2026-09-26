@@ -1,6 +1,7 @@
 import { type Atom, createCtx } from '@reatom/framework'
 import {
   activeCacheUrlAtom,
+  CacheCancelledError,
   cacheUpdateTriggerAtom,
   cancelAllCacheDownloads,
   cancelCacheDownload,
@@ -9,7 +10,6 @@ import {
   playlistDownloadProgressAtom,
   removeFromQueueBySource,
 } from 'entities/offline-cache'
-import { CacheCancelledError } from 'entities/offline-cache/lib/CacheCancelledError'
 import { waitForOnline } from 'shared/lib/network'
 import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
@@ -34,14 +34,14 @@ jest.mock('entities/offline-cache', () => {
   return {
     __stoppers: stoppers,
     activeCacheUrlAtom: reatomAtom(null, 'activeCacheUrlAtom'),
+    CacheCancelledError: actual.CacheCancelledError,
     cacheUpdateTriggerAtom: actual.cacheUpdateTriggerAtom,
     cancelAllCacheDownloads: jest.fn(),
     cancelCacheDownload: jest.fn(),
     enqueueCache: jest.fn(),
     enqueueCacheMany: jest.fn(),
     getCacheRequesters: jest.fn(() => new Set()),
-    isCacheCancelledError: jest.requireActual('entities/offline-cache/lib/CacheCancelledError')
-      .isCacheCancelledError,
+    isCacheCancelledError: actual.isCacheCancelledError,
     playlistDownloadProgressAtom: actual.playlistDownloadProgressAtom,
     registerPlaylistRunStopper: jest.fn((stopper: () => void) => {
       stoppers.add(stopper)

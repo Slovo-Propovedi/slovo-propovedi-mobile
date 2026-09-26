@@ -3,7 +3,7 @@ import { type Ctx } from '@reatom/framework'
 import { act, renderHook } from '@testing-library/react-native'
 import { AppState, type AppStateStatus } from 'react-native'
 import { type PlaylistData } from 'entities/playlist/@x/player'
-import type { AudioPlayerData } from 'entities/sermon'
+import type { AudioPlayerData } from 'entities/sermon/@x/player'
 import {
   currentAudioAtom,
   currentPlaylistAtom,

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { audioCacheService } from 'entities/offline-cache'
+import { audioCacheService } from 'entities/offline-cache/@x/player'
 import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
@@ -22,7 +22,7 @@ jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
 jest.mock('shared/model/network', () => ({ isOnlineAtom: jest.fn() }))
 
-jest.mock('entities/offline-cache', () => ({
+jest.mock('entities/offline-cache/@x/player', () => ({
   audioCacheService: { isCached: jest.fn() },
 }))
 

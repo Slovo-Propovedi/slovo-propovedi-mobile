@@ -1,5 +1,5 @@
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio'
-import { PART_SUFFIX } from 'entities/offline-cache'
+import { PART_SUFFIX } from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { setDurationAction, setIsBufferingAction, setPositionAction } from '../../../model'

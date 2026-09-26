@@ -1,4 +1,4 @@
-import { audioCacheService, getPartialFileUri } from 'entities/offline-cache'
+import { audioCacheService, getPartialFileUri } from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { showInfo } from 'shared/model/info-dialog'
 import { bufferedProgressStateAtom } from './download-model'

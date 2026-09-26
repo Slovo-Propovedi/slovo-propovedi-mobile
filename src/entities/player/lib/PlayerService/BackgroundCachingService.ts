@@ -1,4 +1,8 @@
-import { enqueueCache, incrementCacheTrigger, isCacheCancelledError } from 'entities/offline-cache'
+import {
+  enqueueCache,
+  incrementCacheTrigger,
+  isCacheCancelledError,
+} from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {
   downloadingAudioUrlAtom,

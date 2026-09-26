@@ -1,5 +1,5 @@
 import { type PlaylistData } from 'entities/playlist/@x/listening-history'
-import type { AudioPlayerData } from 'entities/sermon'
+import type { AudioPlayerData } from 'entities/sermon/@x/listening-history'
 import { type ListeningHistoryEntry } from '../model/types'
 
 export const buildSanitizedSermon = (audio: AudioPlayerData) => {

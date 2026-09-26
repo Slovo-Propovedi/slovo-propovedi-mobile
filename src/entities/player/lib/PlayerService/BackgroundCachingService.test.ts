@@ -1,6 +1,9 @@
 import { createCtx, type Ctx } from '@reatom/framework'
-import { enqueueCache, incrementCacheTrigger } from 'entities/offline-cache'
-import { CacheCancelledError } from 'entities/offline-cache/lib/CacheCancelledError'
+import {
+  CacheCancelledError,
+  enqueueCache,
+  incrementCacheTrigger,
+} from 'entities/offline-cache/@x/player'
 import { reportError } from 'shared/model/error-dialog'
 import {
   bufferedProgressStateAtom,
@@ -27,8 +30,8 @@ jest.mock('shared/model/error-dialog', () => ({
   reportError: jest.fn(),
 }))
 
-jest.mock('entities/offline-cache', () => {
-  const actual = jest.requireActual('entities/offline-cache')
+jest.mock('entities/offline-cache/@x/player', () => {
+  const actual = jest.requireActual('entities/offline-cache/@x/player')
   return {
     ...actual,
     enqueueCache: jest.fn(),

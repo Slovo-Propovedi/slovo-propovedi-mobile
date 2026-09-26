@@ -4,7 +4,7 @@ import { historyAtom, type ListeningHistory } from 'entities/listening-history/@
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { LISTENING_HISTORY } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { AudioPlayerData } from 'entities/sermon'
+import type { AudioPlayerData } from 'entities/sermon/@x/player'
 import { currentAudioAtom, durationAtom } from '../../../model'
 import { playbackController } from './PlaybackController'
 

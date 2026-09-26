@@ -6,7 +6,7 @@ import {
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import type { PlayerActions } from './types'
-import type { AudioPlayerData } from 'entities/sermon'
+import type { AudioPlayerData } from 'entities/sermon/@x/player'
 import { setCurrentAudioAction } from '../../../../model'
 import { savePlaybackProgress } from '../../../playbackProgress'
 import { lockScreenControls } from '../LockScreenControls'

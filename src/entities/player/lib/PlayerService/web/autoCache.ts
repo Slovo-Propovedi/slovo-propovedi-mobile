@@ -1,4 +1,4 @@
-import { audioCacheService } from 'entities/offline-cache'
+import { audioCacheService } from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
 import { startBackgroundCaching } from '../BackgroundCachingService'

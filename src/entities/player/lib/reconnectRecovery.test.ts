@@ -1,4 +1,8 @@
-import { activeCacheUrlAtom, audioCacheService, cacheQueueAtom } from 'entities/offline-cache'
+import {
+  activeCacheUrlAtom,
+  audioCacheService,
+  cacheQueueAtom,
+} from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
 import { currentAudioAtom } from '../model'
@@ -10,8 +14,8 @@ jest.mock('./PlayerService', () => ({
   playerService: { recoverStreamAfterReconnect: jest.fn() },
 }))
 
-jest.mock('entities/offline-cache', () => {
-  const actual = jest.requireActual('entities/offline-cache')
+jest.mock('entities/offline-cache/@x/player', () => {
+  const actual = jest.requireActual('entities/offline-cache/@x/player')
   return {
     ...actual,
     audioCacheService: { isCached: jest.fn() },

@@ -1,7 +1,7 @@
 import { type PlaylistData } from 'entities/playlist/@x/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { type MenuItem } from 'shared/ui/menu'
-import type { AudioPlayerData } from 'entities/sermon'
+import type { AudioPlayerData } from 'entities/sermon/@x/listening-history'
 import { markSermonListenedAction } from './markSermonListened'
 import { removeHistoryEntryAction } from './removeHistoryEntry'
 
