@@ -9,6 +9,7 @@ import { type TrackToCache } from '../lib/PlaylistOfflineService'
 import { usePlaylistCacheError } from '../lib/usePlaylistCacheError'
 import { usePlaylistHistoryMenu } from '../lib/usePlaylistHistoryMenu'
 import { usePlaylistOfflineMenu } from '../lib/usePlaylistOfflineMenu'
+import { usePlaylistShare } from '../lib/usePlaylistShare'
 import { PlaylistHeaderMenuDropdown } from './PlaylistHeaderMenuDropdown'
 import { PlaylistHistoryDialogs } from './PlaylistHistoryDialogs'
 import { PlaylistOfflineDialogs } from './PlaylistOfflineDialogs'
@@ -55,6 +56,7 @@ export const PlaylistHeaderMenu = ({
 
   const historyMenu = usePlaylistHistoryMenu(playlist, () => setMenuVisible(false))
   const { error, handleErrorClose } = usePlaylistCacheError(cacheDialogVisible)
+  const { handleShare } = usePlaylistShare(playlist, () => setMenuVisible(false))
 
   return (
     <>
@@ -80,6 +82,7 @@ export const PlaylistHeaderMenu = ({
         visible={menuVisible}
         allCached={allCached}
         isCaching={isCaching}
+        onShare={handleShare}
         onStopCaching={handleStopCaching}
         canMarkAll={historyMenu.canMarkAll}
         onClearCache={handleClearCacheOption}

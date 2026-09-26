@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native'
 import { PlaylistHeaderMenuDropdown } from './PlaylistHeaderMenuDropdown'
 import { PlaylistHistoryMenuItem } from './PlaylistHistoryMenuItem'
 import { PlaylistOfflineMenuItem } from './PlaylistOfflineMenuItem'
+import { PlaylistShareMenuItem } from './PlaylistShareMenuItem'
 
 jest.mock('shared/ui/theme', () => {
   const actual = jest.requireActual('shared/ui/theme')
@@ -49,6 +50,7 @@ const ALL_CACHED_TEXT = 'Плейлист в офлайне'
 const CLEAR_CACHE_TEXT = 'Удалить из офлайн все'
 const MARK_ALL_TEXT = 'Пометить все прослушанными'
 const REMOVE_TEXT = 'Удалить проповеди из истории'
+const SHARE_TEXT = 'Поделиться плейлистом'
 
 const defaultProps = {
   allCached: false,
@@ -63,6 +65,7 @@ const defaultProps = {
   onClose: jest.fn(),
   onMarkAll: jest.fn(),
   onRemoveFromHistory: jest.fn(),
+  onShare: jest.fn(),
   onStopCaching: jest.fn(),
   visible: true,
 }
@@ -158,6 +161,21 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     expect(screen.getByText(CLEAR_CACHE_TEXT)).toBeTruthy()
   })
 
+  test('always renders the share item', async () => {
+    await renderDropdown()
+
+    expect(screen.getByText(SHARE_TEXT)).toBeTruthy()
+  })
+
+  test('fires onShare when the share item is pressed', async () => {
+    const onShare = jest.fn()
+    await renderDropdown({ onShare })
+
+    fireEvent.press(screen.getByText(SHARE_TEXT))
+
+    expect(onShare).toHaveBeenCalledTimes(1)
+  })
+
   test('hides history items when both flags are false', async () => {
     await renderDropdown()
 
@@ -225,6 +243,17 @@ describe('<PlaylistHistoryMenuItem>', () => {
     )
 
     fireEvent.press(screen.getByText('Mark all'))
+
+    expect(onPress).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('<PlaylistShareMenuItem>', () => {
+  test('calls onPress', async () => {
+    const onPress = jest.fn()
+    await render(<PlaylistShareMenuItem text='Share' onPress={onPress} />)
+
+    fireEvent.press(screen.getByText('Share'))
 
     expect(onPress).toHaveBeenCalledTimes(1)
   })

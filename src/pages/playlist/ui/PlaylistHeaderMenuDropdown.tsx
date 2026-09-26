@@ -4,6 +4,7 @@ import { AnchoredDropdown, type AnchorRect } from 'shared/ui/menu'
 import { COLORS, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { PlaylistHistoryMenuItem } from './PlaylistHistoryMenuItem'
 import { PlaylistOfflineMenuItem } from './PlaylistOfflineMenuItem'
+import { PlaylistShareMenuItem } from './PlaylistShareMenuItem'
 
 export interface PlaylistHeaderMenuDropdownProps {
   allCached: boolean
@@ -19,6 +20,7 @@ export interface PlaylistHeaderMenuDropdownProps {
   onClose: () => void
   onMarkAll: () => void
   onRemoveFromHistory: () => void
+  onShare: () => void
   onStopCaching: () => void
   visible: boolean
 }
@@ -37,6 +39,7 @@ export const PlaylistHeaderMenuDropdown = ({
   onClose,
   onMarkAll,
   onRemoveFromHistory,
+  onShare,
   onStopCaching,
   visible,
 }: PlaylistHeaderMenuDropdownProps) => {
@@ -51,6 +54,10 @@ export const PlaylistHeaderMenuDropdown = ({
       anchorRef={anchorRef}
       menuStyle={[styles.dropdown, { backgroundColor: currentTheme.surface }]}
     >
+      <PlaylistShareMenuItem onPress={onShare} text='Поделиться плейлистом' />
+
+      <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
+
       {isCaching ? (
         <PlaylistOfflineMenuItem
           onPress={onStopCaching}
