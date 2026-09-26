@@ -22,6 +22,9 @@ const config: Config = {
   // this prevents RSS accumulation across heavy jest-expo/RN suites.
   workerIdleMemoryLimit: '1GB',
   setupFiles: [
+    // Must stay first: src/shared/config/env.ts validates EXPO_PUBLIC_* at module
+    // load, and jest does not load .env.
+    './__mocks__/env.js',
     './__mocks__/@react-native-async-storage/async-storage.js',
     './__mocks__/apk-installer.js',
     './__mocks__/expo-constants.js',
@@ -35,7 +38,9 @@ const config: Config = {
     '^.+\\.mjs$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|ky|standard-navigation|debounce|@faker-js)',
+    // uuid resolves to its ESM build under jest-expo's custom export conditions
+    // (['require', 'react-native']), so babel must transform it for jest's CJS runtime.
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|ky|standard-navigation|debounce|@faker-js|uuid)',
   ],
 }
 

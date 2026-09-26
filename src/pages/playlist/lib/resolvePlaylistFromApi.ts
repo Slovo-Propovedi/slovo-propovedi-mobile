@@ -1,11 +1,7 @@
 import axios from 'axios'
+import { validate as uuidValidate } from 'uuid'
 import { mapPlaylistEntityToPlaylistData, playlistsApi } from 'shared/api'
 import { type PlaylistData } from 'shared/model'
-
-// Каноническая форма UUID: 8-4-4-4-12 hex-цифр, например 123e4567-e89b-12d3-a456-426614174000
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-const isUuid = (value: string): boolean => UUID_PATTERN.test(value)
 
 export const resolvePlaylistFromApi = async (
   playlistId: string,
@@ -13,7 +9,7 @@ export const resolvePlaylistFromApi = async (
   // id приходит из внешнего URL-query (?playlist=...), поэтому перед подстановкой
   // в путь API (/playlists/{id}) он обязан выглядеть как UUID. Malformed-ссылка —
   // ожидаемый вход: не звоним в сеть, резолвимся в notFound (см. docs/features/deep-links.md).
-  if (!isUuid(playlistId)) return undefined
+  if (!uuidValidate(playlistId)) return undefined
 
   try {
     const entity = await playlistsApi.getPlaylists().playlistControllerFindOne(playlistId)

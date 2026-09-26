@@ -52,12 +52,15 @@ jobs:
             SHORT_SHA=$(git show -s --format='%h' "$COMMIT")
             SUBJECT=$(git show -s --format='%s' "$COMMIT")
 
-            # Extract Signed-off-by trailers from commit body
-            SOB_TRAILERS=$(git show -s --format='%b' "$COMMIT" | grep -i '^Signed-off-by:')
+            # Extract Signed-off-by trailers from commit body. The `|| true` is
+            # required: grep exits 1 when nothing matches and `set -e` would
+            # abort the script here — before the offending commit is reported.
+            SOB_TRAILERS=$(git show -s --format='%b' "$COMMIT" | grep -i '^Signed-off-by:' || true)
 
             # Check 1: Signed-off-by trailer must exist
             if [ -z "$SOB_TRAILERS" ]; then
-              echo "::error::Commit $SHORT_SHA ($SUBJECT) is missing a Signed-off-by trailer"
+              echo "::error::commit $SHORT_SHA: missing Signed-off-by trailer"
+              echo "  Subject: $SUBJECT"
               echo "  Author: $AUTHOR_NAME <$AUTHOR_EMAIL>"
               echo "  Fix with: git rebase --signoff HEAD~1"
               FAILED=1
@@ -68,7 +71,7 @@ jobs:
             MATCH_FOUND=0
             while IFS= read -r line; do
               # Extract email from "Signed-off-by: Name <email>"
-              SOB_EMAIL=$(echo "$line" | sed -n 's/.*<\(.*\)>.*/\1/p')
+              SOB_EMAIL=$(printf '%s\n' "$line" | sed -n 's/.*<\(.*\)>.*/\1/p' || true)
               if [ "$SOB_EMAIL" = "$AUTHOR_EMAIL" ]; then
                 MATCH_FOUND=1
                 break
@@ -76,7 +79,8 @@ jobs:
             done <<< "$SOB_TRAILERS"
 
             if [ "$MATCH_FOUND" -eq 0 ]; then
-              echo "::error::Commit $SHORT_SHA ($SUBJECT) has Signed-off-by trailers, but none match the author email $AUTHOR_EMAIL"
+              echo "::error::commit $SHORT_SHA: no Signed-off-by email matches author $AUTHOR_EMAIL"
+              echo "  Subject: $SUBJECT"
               echo "  Found trailers: $SOB_TRAILERS"
               FAILED=1
             fi

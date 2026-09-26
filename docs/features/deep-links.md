@@ -5,7 +5,7 @@
 
 ## Обзор
 
-Приложение заявляет **Android App Links** для хоста `https://app.slovo-propovedi.ru` — по клику на ссылку этого домена открывается установленное приложение вместо браузера. Экспо-роутер навигирует сам, без кастомной linking-конфигурации: заявленные пути совпадают с маршрутами `app/`, параметры приходят через `useLocalSearchParams`, как при обычной внутренней навигации.
+Приложение заявляет **Android App Links** для хоста `https://app.slovo-propovedi.ru` — по клику на ссылку этого домена открывается установленное приложение вместо браузера. Хост **не захардкожен**: он берётся из обязательной переменной `EXPO_PUBLIC_WEB_HOSTNAME` (валидируется zod в `src/shared/config/env.ts`, без значения по умолчанию — при незаданной переменной приложение падает fail-fast). Значение обязано совпадать с доменом, на котором задеплоен `assetlinks.json` (prod: `app.slovo-propovedi.ru`); CI инжектит его и в prebuild-, и в gradle-шаг `release.yml`. Экспо-роутер навигирует сам, без кастомной linking-конфигурации: заявленные пути совпадают с маршрутами `app/`, параметры приходят через `useLocalSearchParams`, как при обычной внутренней навигации.
 
 Механика (Android):
 
@@ -13,19 +13,29 @@
 2. **assetlinks.json** на том же хосте подтверждает связку `<package_name, отпечаток подписи>` — только при совпадении система считает заявку **verified** и открывает ссылки без системного диалога;
 3. Оба артефакта генерируются в репозитории: манифест — prebuild'ом из `app.config.ts`, assetlinks.json — лежит в `public/` и попадает в веб-дистрибутив.
 
-Старая кастомная схема `slovo-propovedi://` **не тронута** — остаётся в манифесте отдельным `<intent-filter>` (без `autoVerify`, см. `android/app/src/main/AndroidManifest.xml:33-38`).
+Кастомная схема теперь **per-flavor**: main-манифест схемы не содержит (поле `scheme` убрано из `app.config.ts`), `plugins/withAndroidFlavors.ts` пишет source-set манифесты с аддитивным VIEW-фильтром — prod `slovo-propovedi://`, dev `slovo-propovedi-dev://` — чтобы параллельная установка dev+prod не конфликтовала за одну схему (фильтры без `autoVerify`).
 
 ## Конфиг: `app.config.ts`
 
 ```typescript
+import { ENV } from './src/shared/config/env.ts'
+
+// Android App Links host, validated together with the rest of the EXPO_PUBLIC_*
+// config in src/shared/config/env.ts (zod, no defaults — a missing var must fail
+// prebuild rather than emit an unverifiable App Links host). Relative import (the
+// Expo config evaluator resolves neither tsconfig path aliases nor extensionless
+// specifiers, hence the explicit .ts — same as the ./plugins/*.ts imports below).
+// CI prebuild injects the env (see .forgejo/workflows/release.yml).
+const webHostname = ENV.webHostname
+
 intentFilters: [
   {
     action: 'VIEW',
     autoVerify: true,
     category: ['BROWSABLE', 'DEFAULT'],
     data: [
-      { host: 'app.slovo-propovedi.ru', path: '/listen', scheme: 'https' },
-      { host: 'app.slovo-propovedi.ru', path: '/listen/playlist', scheme: 'https' },
+      { host: webHostname, path: '/listen', scheme: 'https' },
+      { host: webHostname, path: '/listen/playlist', scheme: 'https' },
     ],
   },
 ],
@@ -73,10 +83,27 @@ intentFilters: [
 ## Файл верификации: `public/.well-known/assetlinks.json`
 
 ```json
-[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"ru.slovopropovedi","sha256_cert_fingerprints":["FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"]}}]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ru.slovopropovedi",
+      "sha256_cert_fingerprints": ["FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ru.slovopropovedi.dev",
+      "sha256_cert_fingerprints": ["FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"]
+    }
+  }
+]
 ```
 
-- `package_name` — prod-пакет `ru.slovopropovedi` (не dev);
+- массив из двух statements: prod-пакет `ru.slovopropovedi` и dev-пакет `ru.slovopropovedi.dev`. Оба flavor подписаны одним `android/app/debug.keystore`, поэтому отпечатки совпадают — dev-сборки теперь **проходят** автоматическую верификацию App Links наравне с prod;
 - отпечаток — SHA256 ключа, которым подписывается `assembleProdRelease`: сейчас это `android/app/debug.keystore` (alias `androiddebugkey`), см. [../BUILD-LOCAL.md](../BUILD-LOCAL.md) → «Android Release Build» («By default, release builds use the debug keystore»);
 - лежит в `public/`, поэтому `yarn web:build` (`expo export -p web`) копирует его в `dist/.well-known/assetlinks.json` автоматически.
 
@@ -112,8 +139,11 @@ curl -sI https://app.slovo-propovedi.ru/.well-known/does-not-exist    # 404, Н�
 `pm get-app-links` доступен с Android 12 — тестировать на Android 12+.
 
 ```bash
-# Статус верификации (минимум ~20с после установки — система проверяет в фоне):
+# Статус верификации prod (минимум ~20с после установки — система проверяет в фоне):
 adb shell pm get-app-links ru.slovopropovedi
+# ожидаем: app.slovo-propovedi.ru: verified
+# dev-флейвор заявляет тот же домен и верифицируется так же (мультипакетный assetlinks.json):
+adb shell pm get-app-links ru.slovopropovedi.dev
 # ожидаем: app.slovo-propovedi.ru: verified
 ```
 
@@ -139,7 +169,7 @@ adb shell am start -a android.intent.action.VIEW -c android.intent.category.BROW
 
 - **URL, набранный вручную в адресной строке браузера, НИКОГДА не открывает приложение** — это поведение платформы: App Links работают только по клику на ссылку (из другого приложения/поиска), а не из адресной строки.
 - **Expo Go не поддерживает App Links** — проверять только по локальным сборкам (`yarn build-local-debug:android` и prod-вариант).
-- **dev-флейвор `ru.slovopropovedi.dev`** получает тот же `<intent-filter>` (манифест общий у обоих flavor), но его пакета **нет** в продовом `assetlinks.json` → автоматическая верификация не пройдёт, `pm get-app-links` покажет не-verified. Dev-сборки открывать принудительно через `adb shell am start` (команда выше).
+- **dev-флейвор `ru.slovopropovedi.dev`** получает тот же `<intent-filter>` (https-фильтр лежит в общем `src/main`; кастомные схемы — per-flavor, см. выше) и **верифицируется так же, как prod**: его пакет добавлен вторым statement'ом в `assetlinks.json` (см. выше), поэтому `adb shell pm get-app-links ru.slovopropovedi.dev` тоже показывает `verified`. Нюанс: при **параллельной установке dev + prod** обе сборки заявляют один домен — система может показать выбор приложения (chooser) или открыть то, что назначено по умолчанию; назначить дефолт можно в системных настройках App Links (Settings → Open by default / «Открывать по умолчанию»).
 - **Android < 12** — `pm get-app-links` недоступен; верификацию наблюдать по факту открытия ссылки.
 - Верификация происходит при **установке** обновления приложения: после смены подписи/assetlinks.json нужно переустановить (или `pm clear`) и подождать ≥20с; `--re-verify` форсирует.
 

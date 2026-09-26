@@ -13,7 +13,7 @@
 `ShareScreen` (`src/pages/share/ui/ShareScreen.tsx`, стили `src/pages/share/ui/styles.ts`) — три `CollapsibleSection` (`src/pages/share/ui/CollapsibleSection.tsx`), управляемые одним состоянием `expandedSection: 'landing' | 'webApp' | 'release' | null` в `ShareScreen`; при открытии одной секции другая закрывается (нажатие на уже открытую секцию сворачивает её, оставляя обе закрытыми).
 
 - **«Сайт»** — открыта по умолчанию (`expandedSection` инициализируется `'landing'`). Содержимое — `ShareLinkCard` (`src/pages/share/ui/ShareLinkCard.tsx`) со статической ссылкой `LANDING_URL` (`src/pages/share/lib/constants.ts` — `https://slovo-propovedi.ru/`).
-- **«Веб-версия»** — свёрнута по умолчанию. Содержимое — `ShareLinkCard` со статической ссылкой `WEB_APP_URL` (`src/pages/share/lib/constants.ts` — `https://app.slovo-propovedi.ru/`, тот же web-билд приложения, см. [features/web.md](../features/web.md)).
+- **«Веб-версия»** — свёрнута по умолчанию. Содержимое — `ShareLinkCard` со ссылкой `WEB_APP_URL` (`src/pages/share/lib/constants.ts` — ссылка собирается из `ENV.webHostname`: env `EXPO_PUBLIC_WEB_HOSTNAME`, prod `app.slovo-propovedi.ru`; тот же web-билд приложения, см. [features/web.md](../features/web.md)).
 - **«Приложение»** — свёрнута по умолчанию. Содержимое зависит от `useLatestReleaseUrl`:
   - Загрузка: центрированный `ActivityIndicator`;
   - Ошибка: текст «Не удалось загрузить информацию о релизе» + кнопка «Повторить» (повторный запрос);

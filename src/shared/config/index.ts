@@ -8,6 +8,7 @@ export {
 } from './cache-storage-keys'
 export { DEFAULT_API_URL } from './config'
 export { debugConfig } from './debug'
+export { ENV } from './env'
 export { LISTENING_HISTORY, LISTENING_PROGRESS_SNAPSHOT } from './history-storage-keys'
 export { COPYRIGHT_HOLDER, COPYRIGHT_YEAR, LICENSE_NAME, LICENSE_URL, PROJECT_URL } from './license'
 export {

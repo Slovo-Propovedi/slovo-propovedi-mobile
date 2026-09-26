@@ -4,6 +4,7 @@ import pkg from './package.json'
 import { withAndroidBuildMaintenance } from './plugins/withAndroidBuildMaintenance.ts'
 import { withAndroidFlavors } from './plugins/withAndroidFlavors.ts'
 import { withAndroidManifestCleanup } from './plugins/withAndroidManifestCleanup.ts'
+import { ENV } from './src/shared/config/env.ts'
 
 type AppConfig = { plugins?: AppPlugin[] } & Omit<ExpoConfig, 'plugins'>
 // Expo's config types only allow string/array plugin entries, but app.config
@@ -18,6 +19,13 @@ const [major, minor, patch] = pkg.version.split('.').map(Number)
 const versionCode = major * 10000 + minor * 100 + patch
 
 const appId = 'ru.slovopropovedi'
+// Android App Links host, validated together with the rest of the EXPO_PUBLIC_*
+// config in src/shared/config/env.ts (zod, no defaults — a missing var must fail
+// prebuild rather than emit an unverifiable App Links host). Relative import (the
+// Expo config evaluator resolves neither tsconfig path aliases nor extensionless
+// specifiers, hence the explicit .ts — same as the ./plugins/*.ts imports below).
+// CI prebuild injects the env (see .forgejo/workflows/release.yml).
+const webHostname = ENV.webHostname
 const splashImageProps = {
   image: './assets/splash.png',
   imageWidth: 152,
@@ -37,8 +45,8 @@ export default ({ config }: ConfigContext): AppConfig => ({
         autoVerify: true,
         category: ['BROWSABLE', 'DEFAULT'],
         data: [
-          { host: 'app.slovo-propovedi.ru', path: '/listen', scheme: 'https' },
-          { host: 'app.slovo-propovedi.ru', path: '/listen/playlist', scheme: 'https' },
+          { host: webHostname, path: '/listen', scheme: 'https' },
+          { host: webHostname, path: '/listen/playlist', scheme: 'https' },
         ],
       },
     ],
@@ -86,7 +94,6 @@ export default ({ config }: ConfigContext): AppConfig => ({
     withAndroidFlavors,
     withAndroidBuildMaintenance,
   ],
-  scheme: 'slovo-propovedi',
   slug: 'slovo-propovedi-mobile',
   userInterfaceStyle: 'automatic',
   // Version comes from package.json (single source of truth); scripts/bump-version.mjs
