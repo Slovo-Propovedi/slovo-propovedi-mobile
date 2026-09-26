@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { userEvent } from '@testing-library/react-native'
-import { serverUrlAtom } from 'entities/settings'
 import { renderWithProviders } from 'shared/mocks'
+import { serverUrlAtom } from 'shared/model'
 import { ServerUrlSettings } from './ServerUrlSettings'
 
 const TEST_URL = 'https://test.example.com'

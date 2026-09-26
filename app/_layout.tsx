@@ -9,9 +9,8 @@ import {
   reEnqueuePartialDownloads,
 } from 'entities/offline-cache'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
-import { initServerUrlAction } from 'entities/settings'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { loadHapticsEnabled } from 'shared/model'
+import { initServerUrlAction, loadHapticsEnabled } from 'shared/model'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
 import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
 import RootLayout from './_RootLayout'

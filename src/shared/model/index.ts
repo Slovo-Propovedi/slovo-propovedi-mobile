@@ -16,7 +16,14 @@ export {
   serverUnreachableAtom,
   setOnlineStatus,
 } from './network'
-export { hapticsEnabledAtom, loadHapticsEnabled, setHapticsEnabled } from './settings'
+export {
+  hapticsEnabledAtom,
+  initServerUrlAction,
+  loadHapticsEnabled,
+  serverUrlAtom,
+  setHapticsEnabled,
+  setServerUrlAction,
+} from './settings'
 export { showToast, toastAtom } from './toast'
 export {
   checkForUpdateAction,

@@ -10,7 +10,7 @@ export const ACCESS_TOKEN_KEY = '@access_token'
 export const REFRESH_TOKEN_KEY = '@refresh_token'
 
 // Динамический base URL: инициализируется DEFAULT_API_URL и обновляется
-// экшенами entities/settings (setServerUrlAction, initServerUrlAction),
+// экшенами shared/model (setServerUrlAction, initServerUrlAction),
 // когда пользователь меняет или восстанавливает адрес сервера.
 export const axiosInstance = axios.create({
   baseURL: DEFAULT_API_URL,

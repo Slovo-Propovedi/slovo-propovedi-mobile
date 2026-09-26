@@ -66,7 +66,7 @@ jest.mock('shared/lib/network', () => ({
   useOfflineRetry: jest.fn(),
 }))
 
-jest.mock('shared/routing', () => ({
+jest.mock('../lib/useListenNavigation', () => ({
   useListenNavigation: () => ({
     navigateToPlaylist: mockNavigateToPlaylist,
     navigateToPlaylistList: mockNavigateToPlaylistList,
