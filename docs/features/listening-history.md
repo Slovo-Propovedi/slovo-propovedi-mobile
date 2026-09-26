@@ -311,7 +311,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 ### Затемнение завершённых
 
-В `TracksListItemContent` (`src/entities/track-list/`) завершённая строка (`progress >= 1`) затемняется: обложка получает `albumArtCompleted` (opacity 0.5), заголовок — `titleCompleted` (приглушённый цвет). Правило: `isCompleted = progress != null && progress >= 1`. Строка истории (`HistoryRow`) дополнительно передаёт полный прогресс-бар (`storedProgress = 1`) для завершённых записей.
+В `TracksListItemContent` (`src/entities/track-list/ui/TracksListItemContent.tsx`) завершённая строка (`progress >= 1`) затемняется: обложка получает `albumArtCompleted` (opacity 0.5), заголовок — `titleCompleted` (приглушённый цвет). Правило: `isCompleted = progress != null && progress >= 1`. Строка истории (`HistoryRow`) дополнительно передаёт полный прогресс-бар (`storedProgress = 1`) для завершённых записей.
 
 ## Экран истории
 
