@@ -3,6 +3,7 @@ import { memo, useCallback } from 'react'
 import { StyleSheet } from 'react-native'
 import { type OfflineSermonItem } from 'features/offline-sermons'
 import { useHistoryProgress } from 'entities/listening-history'
+import { useTrackItemCache } from 'entities/offline-cache'
 import { currentAudioAtom, usePlayNewSermon } from 'entities/player'
 import { reportError } from 'shared/model/error-dialog'
 import { INDENTS } from 'shared/ui/theme'
@@ -24,6 +25,7 @@ export const OfflineRow = memo(({ isPlaying, item }: OfflineRowProps) => {
   const [currentAudio] = useAtom(currentAudioAtom)
   const isCurrentAudio = currentAudio?.id === item.sermon.id
   const storedProgress = useHistoryProgress(item.sermon.id)
+  const cacheState = useTrackItemCache(item.sermon.audioUrl)
 
   const handlePress = useCallback(async () => {
     try {
@@ -37,6 +39,7 @@ export const OfflineRow = memo(({ isPlaying, item }: OfflineRowProps) => {
     <TracksListItem
       style={styles.row}
       onPress={handlePress}
+      cacheState={cacheState}
       title={item.sermon.title}
       progress={storedProgress}
       isPlaying={isCurrentAudio}

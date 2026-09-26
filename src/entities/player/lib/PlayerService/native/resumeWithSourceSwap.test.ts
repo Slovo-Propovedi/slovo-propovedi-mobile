@@ -8,7 +8,7 @@ const CACHED_URI = 'file:///data/cache/audio.mp3'
 
 const mockGetCachedUri = jest.fn<Promise<null | string>, [string]>()
 
-jest.mock('shared/lib/audio-cache', () => ({
+jest.mock('entities/offline-cache', () => ({
   audioCacheService: {
     getCachedUri: (url: string) => mockGetCachedUri(url),
   },

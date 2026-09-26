@@ -3,14 +3,9 @@ import { act, fireEvent } from '@testing-library/react-native'
 import { type ComponentType } from 'react'
 import { View as RNView } from 'react-native'
 import { dynamicSectionsAtom } from 'entities/section'
+import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
-import {
-  type AudioPlayerData,
-  isOnlineAtom,
-  type PlaylistData,
-  type SectionData,
-  toAudioPlayerData,
-} from 'shared/model'
+import { isOnlineAtom, type PlaylistData, type SectionData } from 'shared/model'
 import { PlaylistScreen } from './PlaylistScreen'
 
 /* ── Mocks ─────────────────────────────────────────────────────────── */
@@ -48,14 +43,23 @@ jest.mock('entities/listening-history', () => ({
   useHistorySermonIds: jest.fn(() => new Set()),
 }))
 
-jest.mock('shared/lib/audio-cache', () => {
-  const actual = jest.requireActual('shared/lib/audio-cache')
+jest.mock('entities/offline-cache', () => {
+  const actual = jest.requireActual('entities/offline-cache')
   return {
     ...actual,
     audioCacheService: {
       ...actual.audioCacheService,
       isCached: jest.fn().mockResolvedValue(false),
     },
+    useTrackItemCache: jest.fn(() => ({
+      isCached: false,
+      isCacheDisabled: false,
+      isDownloading: false,
+      isQueued: false,
+      progressValue: -1,
+      toggleCache: jest.fn(),
+      visualState: 'cloud',
+    })),
   }
 })
 

@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
+import { audioCacheService, offlineRegistryAtom } from 'entities/offline-cache'
 import { CACHED_SECTIONS, CACHED_SERMON_SEARCH, LISTENING_HISTORY } from 'shared/config'
-import { audioCacheService, offlineRegistryAtom } from 'shared/lib/audio-cache'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import { loadOfflineSermons, offlineSermonsAtom } from './model'
 
-jest.mock('shared/lib/audio-cache', () => {
+jest.mock('entities/offline-cache', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
     audioCacheService: { isCached: jest.fn() },

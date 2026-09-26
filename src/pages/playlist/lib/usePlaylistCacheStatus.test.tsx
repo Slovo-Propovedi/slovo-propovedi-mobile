@@ -1,11 +1,10 @@
 import { act } from '@testing-library/react-native'
-import { audioCacheService } from 'shared/lib/audio-cache'
-import { markUrlCached } from 'shared/lib/cache-triggers'
+import { audioCacheService, markUrlCached } from 'entities/offline-cache'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { usePlaylistCacheStatus } from './usePlaylistCacheStatus'
 
-jest.mock('shared/lib/audio-cache', () => {
-  const actual = jest.requireActual('shared/lib/audio-cache')
+jest.mock('entities/offline-cache', () => {
+  const actual = jest.requireActual('entities/offline-cache')
   return {
     ...actual,
     audioCacheService: {

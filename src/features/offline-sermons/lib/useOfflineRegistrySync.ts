@@ -1,6 +1,6 @@
 import { useCtx } from '@reatom/npm-react'
 import { useEffect, useRef } from 'react'
-import { cachedUrlsAtom, hydrateOfflineRegistry } from 'shared/lib/audio-cache'
+import { cachedUrlsAtom, hydrateOfflineRegistry } from 'entities/offline-cache'
 import { seedOfflineSermons } from './seedOfflineSermons'
 import { syncOfflineSermon } from './syncOfflineSermon'
 

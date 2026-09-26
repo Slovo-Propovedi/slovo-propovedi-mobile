@@ -1,4 +1,3 @@
-import { type FetchedBooksGroupName, type FetchedSermonsGroupName } from '../../model/domain/bible'
 import { isThereAnUnforgivableSinBooks } from './bookLists/topicalAndThematic/isThereAnUnforgivableSinBookList'
 import { stephensSpeechBeforeSanhedrinBookList } from './bookLists/topicalAndThematic/stephensSpeechBeforeSanhedrinBookList'
 import { unionWithChristBookList } from './bookLists/topicalAndThematic/unionWithChristBookList'
@@ -34,7 +33,7 @@ export const db = {
   books: [
     {
       books: [...actsBookList, ...markBookList, ...johnBookList, ...lukeBookList],
-      groupName: 'notesForPreachers' as FetchedBooksGroupName,
+      groupName: 'notesForPreachers',
     },
     {
       books: [
@@ -48,7 +47,7 @@ export const db = {
         ...ephesiansBookList,
         ...firstAndSecondThessaloniansBookList,
       ],
-      groupName: 'verseByVerse' as FetchedBooksGroupName,
+      groupName: 'verseByVerse',
     },
     {
       books: [
@@ -56,12 +55,12 @@ export const db = {
         ...isThereAnUnforgivableSinBooks,
         ...stephensSpeechBeforeSanhedrinBookList,
       ],
-      groupName: 'topicalAndThematic' as FetchedBooksGroupName,
+      groupName: 'topicalAndThematic',
     },
   ],
   sermons: [
     {
-      groupName: 'new' as FetchedSermonsGroupName,
+      groupName: 'new',
       playlists: [
         unionWithChristPlaylist,
         isThereAnUnforgivableSinPlaylist,
@@ -72,7 +71,7 @@ export const db = {
       ],
     },
     {
-      groupName: 'onBible' as FetchedSermonsGroupName,
+      groupName: 'onBible',
       playlists: [
         markPlaylist,
         lukePlaylist,
@@ -92,7 +91,7 @@ export const db = {
       ],
     },
     {
-      groupName: 'topical' as FetchedSermonsGroupName,
+      groupName: 'topical',
       playlists: [
         unionWithChristPlaylist,
         isThereAnUnforgivableSinPlaylist,

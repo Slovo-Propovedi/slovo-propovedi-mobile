@@ -1,4 +1,4 @@
-import { audioCacheService } from 'shared/lib/audio-cache'
+import { audioCacheService } from 'entities/offline-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { playerService } from '../index.web'
 import { flushProgress } from '../progressFlusher'
@@ -20,7 +20,7 @@ jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
 jest.mock('shared/model/network', () => ({ isOnlineAtom: jest.fn() }))
 
-jest.mock('shared/lib/audio-cache', () => ({
+jest.mock('entities/offline-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
 }))
 

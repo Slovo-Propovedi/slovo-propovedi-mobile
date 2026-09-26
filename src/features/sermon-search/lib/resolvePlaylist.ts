@@ -1,4 +1,5 @@
-import type { PlaylistData, SermonData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { SermonData } from 'entities/sermon'
 
 export const resolvePlaylist = (sermon: SermonData): PlaylistData =>
   sermon.playlists?.[0] ?? {

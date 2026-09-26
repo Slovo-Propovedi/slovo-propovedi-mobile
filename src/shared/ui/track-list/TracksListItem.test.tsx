@@ -1,22 +1,19 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { Text as MockText, View } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { type TrackCacheState } from './trackCacheState'
 import { TracksListItem } from './TracksListItem'
-import { useTrackItemCache } from './useTrackItemCache'
 
-jest.mock('./useTrackItemCache', () => ({
-  useTrackItemCache: jest.fn(() => ({
-    isCached: false,
-    isCacheDisabled: false,
-    isDownloading: false,
-    isQueued: false,
-    progressValue: -1,
-    toggleCache: jest.fn(),
-    visualState: 'cloud',
-  })),
-}))
-
-const mockedUseTrackItemCache = useTrackItemCache as jest.MockedFunction<typeof useTrackItemCache>
+const createCacheState = (overrides: Partial<TrackCacheState> = {}): TrackCacheState => ({
+  isCached: false,
+  isCacheDisabled: false,
+  isDownloading: false,
+  isQueued: false,
+  progressValue: -1,
+  toggleCache: jest.fn(),
+  visualState: 'cloud',
+  ...overrides,
+})
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: (props: { name: string }) => (
@@ -75,7 +72,9 @@ const defaultProps = {
 }
 
 const renderItem = async (props?: Partial<React.ComponentProps<typeof TracksListItem>>) =>
-  renderWithProviders(<TracksListItem {...defaultProps} {...props} />)
+  renderWithProviders(
+    <TracksListItem {...defaultProps} cacheState={createCacheState()} {...props} />,
+  )
 
 describe('<TracksListItem>', () => {
   beforeEach(() => {
@@ -158,18 +157,11 @@ describe('<TracksListItem>', () => {
     expect(screen.queryByTestId(CONTEXT_MENU_TEST_ID)).toBeNull()
   })
 
-  test('passes isCacheDisabled from hook to context menu when offline and uncached', async () => {
-    mockedUseTrackItemCache.mockReturnValue({
-      isCached: false,
-      isCacheDisabled: true,
-      isDownloading: false,
-      isQueued: false,
-      progressValue: -1,
-      toggleCache: jest.fn(),
-      visualState: 'cloud',
+  test('passes isCacheDisabled from cacheState to context menu when offline and uncached', async () => {
+    await renderItem({
+      audioUrl: AUDIO_URL,
+      cacheState: createCacheState({ isCacheDisabled: true }),
     })
-
-    await renderItem({ audioUrl: AUDIO_URL })
 
     fireEvent.press(screen.getByRole('button', { name: DOTS_BUTTON_LABEL }))
 
@@ -198,24 +190,15 @@ describe('<TracksListItem>', () => {
     expect(screen.queryByTestId(PROGRESS_BAR_TEST_ID)).toBeNull()
   })
 
-  test('owns per-URL downloading state through useTrackItemCache', async () => {
-    await renderItem({ audioUrl: AUDIO_URL, cacheTrigger: 3 })
-
-    expect(mockedUseTrackItemCache).toHaveBeenCalledWith(AUDIO_URL, 3)
-  })
-
-  test('renders the downloading progress bar from the internal cache state', async () => {
-    mockedUseTrackItemCache.mockReturnValue({
-      isCached: false,
-      isCacheDisabled: false,
-      isDownloading: true,
-      isQueued: false,
-      progressValue: 0.5,
-      toggleCache: jest.fn(),
-      visualState: 'downloading',
+  test('renders the downloading progress bar from the cacheState prop', async () => {
+    const { container } = await renderItem({
+      audioUrl: AUDIO_URL,
+      cacheState: createCacheState({
+        isDownloading: true,
+        progressValue: 0.5,
+        visualState: 'downloading',
+      }),
     })
-
-    const { container } = await renderItem({ audioUrl: AUDIO_URL })
 
     const downloadBars = container.queryAll(node => node.props.style?.height === 3)
     expect(downloadBars.length).toBeGreaterThan(0)

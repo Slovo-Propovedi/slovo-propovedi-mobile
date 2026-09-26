@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
+import { cacheUpdateTriggerAtom } from 'entities/offline-cache'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
-import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 
 export const usePlaylistPlayerState = () => {
   const [currentAudio] = useAtom(currentAudioAtom)

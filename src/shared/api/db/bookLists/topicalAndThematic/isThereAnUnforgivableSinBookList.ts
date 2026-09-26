@@ -1,7 +1,7 @@
-import { type FetchedBookData } from '../../../../model/fetched/fetched-data'
+import type { SermonShape } from '../../../../model/domain/common'
 import { DEFAULT_ARTIST } from '../../constants'
 
-export const isThereAnUnforgivableSinBooks: FetchedBookData[] = [
+export const isThereAnUnforgivableSinBooks: SermonShape[] = [
   {
     artist: DEFAULT_ARTIST,
     artwork:

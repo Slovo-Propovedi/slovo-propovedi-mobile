@@ -7,7 +7,6 @@ import { createTracksListStyles } from './styles'
 import { TracksListItemContent } from './TracksListItemContent'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
 import { type TracksListItemProps } from './types'
-import { useTrackItemCache } from './useTrackItemCache'
 
 // Web: the row renders as <div role="link" tabindex=0> (RNW maps 'link' to the
 // role attribute, no <a> tag) so Vimium hints work and Enter activates while
@@ -17,7 +16,7 @@ const ROW_ACCESSIBILITY_ROLE = Platform.OS === 'web' ? 'link' : 'button'
 export const TracksListItemBase = ({
   artwork,
   audioUrl,
-  cacheTrigger: externalCacheTrigger,
+  cacheState,
   isAudioPlaying = false,
   isPlaying,
   menuActions,
@@ -41,7 +40,7 @@ export const TracksListItemBase = ({
     progressValue,
     toggleCache,
     visualState,
-  } = useTrackItemCache(audioUrl, externalCacheTrigger)
+  } = cacheState
 
   // The menu renders in a viewport-fixed Modal portal, so the anchor must be
   // measured in viewport coords. measure() returns page coords on web (offset

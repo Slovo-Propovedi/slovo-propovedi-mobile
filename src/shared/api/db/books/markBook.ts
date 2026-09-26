@@ -1,9 +1,9 @@
-import { type FetchedBookData } from '../../../model/fetched/fetched-data'
+import type { SermonShape } from '../../../model/domain/common'
 import { DEFAULT_ARTIST } from '../constants'
 
 const markBookPreviewUrl = 'https://slovo-istini.com/image/categories/22/marka_(1).jpg'
 
-export const markBook: FetchedBookData[] = [
+export const markBook: SermonShape[] = [
   {
     artist: DEFAULT_ARTIST,
     artwork: markBookPreviewUrl,

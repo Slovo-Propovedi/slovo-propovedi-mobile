@@ -1,4 +1,4 @@
-import { audioCacheService, getPartialFileUri } from 'shared/lib/audio-cache'
+import { audioCacheService, getPartialFileUri } from 'entities/offline-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { startBackgroundCaching } from '../BackgroundCachingService'
@@ -8,7 +8,7 @@ const AUDIO_URL = 'https://example.com/audio.mp3'
 const CACHED_URI = 'file:///data/cache/audio.mp3'
 const PARTIAL_URI = 'file:///data/cache/abc.cache.mp3'
 
-jest.mock('shared/lib/audio-cache', () => ({
+jest.mock('entities/offline-cache', () => ({
   audioCacheService: { getCachedUri: jest.fn() },
   getPartialFileUri: jest.fn(),
 }))

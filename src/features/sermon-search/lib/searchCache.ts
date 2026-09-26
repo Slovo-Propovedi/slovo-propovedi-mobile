@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import z from 'zod'
+import { type SermonData, sermonSchema } from 'entities/sermon'
 import { CACHED_SERMON_SEARCH, CACHED_SERMON_SEARCH_INDEX } from 'shared/config'
 import { getCachedJson, setCachedJson } from 'shared/lib/cache'
-import { getParseJsonWithSchema, type SermonData, sermonSchema } from 'shared/model'
+import { getParseJsonWithSchema } from 'shared/model'
 
 export const MAX_CACHED_SEARCH_QUERIES = 30
 

@@ -5,13 +5,11 @@ import {
   activeCacheUrlAtom,
   audioCacheService,
   cacheQueueAtom,
-  hasInflightCacheDownloads,
-} from 'shared/lib/audio-cache'
-import {
   cacheUpdateTriggerAtom,
   clearCachedUrls,
+  hasInflightCacheDownloads,
   incrementCacheTrigger,
-} from 'shared/lib/cache-triggers'
+} from 'entities/offline-cache'
 import { isOnlineAtom } from 'shared/model'
 import { type AnchorRect } from 'shared/ui/menu'
 import { isCachingPlaylistAtom } from '../model'

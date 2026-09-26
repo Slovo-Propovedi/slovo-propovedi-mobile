@@ -1,8 +1,9 @@
-import { audioCacheService } from 'shared/lib/audio-cache'
-import { type PlaylistData, type SermonData } from 'shared/model'
+import { audioCacheService } from 'entities/offline-cache'
+import { type PlaylistData } from 'shared/model'
+import type { SermonData } from 'entities/sermon'
 import { filterCachedSermons } from './filterCachedSermons'
 
-jest.mock('shared/lib/audio-cache', () => ({
+jest.mock('entities/offline-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
 }))
 

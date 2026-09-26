@@ -1,7 +1,10 @@
 import { type Ctx } from '@reatom/framework'
 import z from 'zod'
-import { OFFLINE_SERMONS_REGISTRY_SEEDED } from 'shared/config'
-import { flushOfflineRegistryPersist, registerOfflineSermon } from 'shared/lib/audio-cache'
+import {
+  flushOfflineRegistryPersist,
+  OFFLINE_SERMONS_REGISTRY_SEEDED,
+  registerOfflineSermon,
+} from 'entities/offline-cache'
 import { getCachedJson, setCachedJson } from 'shared/lib/cache'
 import { reportError } from 'shared/model/error-dialog'
 import { collectSermonItems } from './collectSermonItems'

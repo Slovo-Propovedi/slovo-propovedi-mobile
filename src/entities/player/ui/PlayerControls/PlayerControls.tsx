@@ -1,6 +1,7 @@
+import { type PlaylistData } from 'shared/model'
 import type { ControlsNames } from './PlayerControls.types'
+import type { AudioPlayerData } from 'entities/sermon'
 import type { StyleProp, ViewStyle } from 'react-native'
-import type { AudioPlayerData, PlaylistData } from 'shared/model'
 import { useGuardedTogglePlay } from '../../lib/useGuardedTogglePlay'
 import { usePlayer } from '../../lib/usePlayer'
 import { usePlayerState } from '../../lib/usePlayerState'

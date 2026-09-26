@@ -1,16 +1,20 @@
 import { act } from '@testing-library/react-native'
+import {
+  cacheQueueAtom,
+  cacheUpdateTriggerAtom,
+  cancelCacheDownload,
+  enqueueCache,
+} from 'entities/offline-cache'
 import { currentAudioAtom } from 'entities/player'
-import { cacheQueueAtom, cancelCacheDownload, enqueueCache } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
 import { useFullscreenHandlers } from './useFullscreenHandlers'
 
-const AUDIO_CACHE_MODULE = 'shared/lib/audio-cache'
+const AUDIO_CACHE_MODULE = 'entities/offline-cache'
 
-jest.mock('shared/lib/audio-cache', () => {
-  const actual = jest.requireActual('shared/lib/audio-cache')
+jest.mock('entities/offline-cache', () => {
+  const actual = jest.requireActual('entities/offline-cache')
   return {
     ...actual,
     cancelCacheDownload: jest.fn(),

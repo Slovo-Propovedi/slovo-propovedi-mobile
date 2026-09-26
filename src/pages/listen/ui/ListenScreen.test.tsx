@@ -10,9 +10,22 @@ import {
   searchResultsAtom,
 } from 'features/sermon-search/model'
 import { renderWithProviders } from 'shared/mocks'
-import type { SermonData } from 'shared/model'
+import type { SermonData } from 'entities/sermon'
 import type { TestInstance } from 'test-renderer'
 import { ListenScreen } from './ListenScreen'
+
+jest.mock('entities/offline-cache', () => ({
+  ...jest.requireActual('entities/offline-cache'),
+  useTrackItemCache: jest.fn(() => ({
+    isCached: false,
+    isCacheDisabled: false,
+    isDownloading: false,
+    isQueued: false,
+    progressValue: -1,
+    toggleCache: jest.fn(),
+    visualState: 'cloud',
+  })),
+}))
 
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')

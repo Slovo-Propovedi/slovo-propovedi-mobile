@@ -4,7 +4,8 @@ import {
   historyAtom,
   recordSermonSwitchAction,
 } from 'entities/listening-history/@x/player'
-import { type AudioPlayerData, type PlaylistData, toAudioPlayerData } from 'shared/model'
+import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon'
+import { type PlaylistData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { savePlaybackProgress } from '../../lib/playbackProgress'
 import { currentAudioAtom, durationAtom, positionAtom } from '../../model'

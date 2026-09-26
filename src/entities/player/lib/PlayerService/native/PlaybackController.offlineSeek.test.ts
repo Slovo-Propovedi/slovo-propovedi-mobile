@@ -1,5 +1,5 @@
 import { type AudioPlayer } from 'expo-audio'
-import { audioCacheService, getPartialFileUri } from 'shared/lib/audio-cache'
+import { audioCacheService, getPartialFileUri } from 'entities/offline-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { isOnlineAtom } from 'shared/model/network'
@@ -15,7 +15,7 @@ import { playbackController } from './PlaybackController'
 import { seekViaPartialSource, swapPartialForCachedSeek } from './seekViaPartialSource'
 import { swapPartialForNetworkSeek } from './swapPartialForNetworkSeek'
 
-jest.mock('shared/lib/audio-cache', () => ({
+jest.mock('entities/offline-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
   getPartialFileUri: jest.fn(),
   PART_SUFFIX: '.cache.mp3',

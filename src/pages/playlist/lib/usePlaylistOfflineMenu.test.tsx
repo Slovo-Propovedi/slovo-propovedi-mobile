@@ -6,16 +6,16 @@ import {
   cacheQueueAtom,
   type CacheQueueEntry,
   hasInflightCacheDownloads,
-} from 'shared/lib/audio-cache'
-import { cachedUrlsAtom, cacheUpdateTriggerAtom, markUrlCached } from 'shared/lib/cache-triggers'
+} from 'entities/offline-cache'
+import { cachedUrlsAtom, cacheUpdateTriggerAtom, markUrlCached } from 'entities/offline-cache'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
 import { isCachingPlaylistAtom } from '../model'
 import { playlistOfflineService } from './PlaylistOfflineService'
 import { usePlaylistOfflineMenu } from './usePlaylistOfflineMenu'
 
-jest.mock('shared/lib/audio-cache', () => {
-  const actual = jest.requireActual('shared/lib/audio-cache')
+jest.mock('entities/offline-cache', () => {
+  const actual = jest.requireActual('entities/offline-cache')
   return {
     ...actual,
     audioCacheService: {

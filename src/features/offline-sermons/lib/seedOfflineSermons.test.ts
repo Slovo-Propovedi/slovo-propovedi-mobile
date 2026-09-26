@@ -1,13 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
-import { OFFLINE_SERMONS_REGISTRY_SEEDED } from 'shared/config'
-import { registerOfflineSermon } from 'shared/lib/audio-cache'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { OFFLINE_SERMONS_REGISTRY_SEEDED, registerOfflineSermon } from 'entities/offline-cache'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import { collectSermonItems } from './collectSermonItems'
 import { filterCachedSermons } from './filterCachedSermons'
 import { seedOfflineSermons } from './seedOfflineSermons'
 
-jest.mock('shared/lib/audio-cache', () => ({
+jest.mock('entities/offline-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
   flushOfflineRegistryPersist: jest.fn(() => Promise.resolve()),
   registerOfflineSermon: jest.fn(),

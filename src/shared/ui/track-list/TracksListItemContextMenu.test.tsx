@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
-import type { TrackCacheVisualState } from 'shared/lib/audio-cache'
+import type { TrackCacheVisualState } from './trackCacheState'
 import type { TestInstance } from 'test-renderer'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
 

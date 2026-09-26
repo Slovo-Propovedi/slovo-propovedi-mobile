@@ -1,10 +1,13 @@
-import { type FetchedBooksGroupName } from '../model/domain/bible'
-import { type SermonData } from '../model/domain/common'
+import { type SermonShape } from '../model/domain/common'
 import { db } from './db/db'
 
+interface LocalDBBookGroup {
+  books: SermonShape[]
+  groupName: string
+}
+
 export const localDB = {
-  getBooks: (): Array<{
-    books: SermonData[]
-    groupName: FetchedBooksGroupName
-  }> => db.books,
+  getBooks: (): LocalDBBookGroup[] => db.books,
+  getBooksByGroup: (groupName: string): SermonShape[] | undefined =>
+    db.books.find(item => item.groupName === groupName)?.books,
 }

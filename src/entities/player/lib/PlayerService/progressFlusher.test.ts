@@ -6,7 +6,8 @@ import {
 } from 'entities/listening-history/@x/player'
 import { CURRENT_SOUND_POSITION, LISTENING_HISTORY } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import { currentAudioAtom, currentPlaylistAtom, durationAtom } from '../../model'
 import { cancelScheduledHistoryFlush, flushProgress, scheduleHistoryFlush } from './progressFlusher'
 

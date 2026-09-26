@@ -3,13 +3,13 @@ import { type SuspenseFallbackProps } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { loadHistoryAction } from 'entities/listening-history'
-import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
-import { initServerUrlAction } from 'entities/settings'
 import {
   cleanupOrphanedDownloads,
   hydrateOfflineRegistry,
   reEnqueuePartialDownloads,
-} from 'shared/lib/audio-cache'
+} from 'entities/offline-cache'
+import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
+import { initServerUrlAction } from 'entities/settings'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { loadHapticsEnabled } from 'shared/model'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'

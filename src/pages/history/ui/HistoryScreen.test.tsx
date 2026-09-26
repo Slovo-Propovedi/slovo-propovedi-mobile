@@ -15,6 +15,19 @@ import { type PlaylistData } from 'shared/model'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
 import { HistoryScreen } from './HistoryScreen'
 
+jest.mock('entities/offline-cache', () => ({
+  ...jest.requireActual('entities/offline-cache'),
+  useTrackItemCache: jest.fn(() => ({
+    isCached: false,
+    isCacheDisabled: false,
+    isDownloading: false,
+    isQueued: false,
+    progressValue: -1,
+    toggleCache: jest.fn(),
+    visualState: 'cloud',
+  })),
+}))
+
 const mockResolveEntryPlaylist = jest.fn()
 
 jest.mock('@expo/vector-icons', () => {

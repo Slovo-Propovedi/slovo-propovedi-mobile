@@ -3,6 +3,18 @@ import { useEntryPlayback } from 'features/entry-playback'
 import { type ListeningHistoryEntry } from 'entities/listening-history'
 import { HistoryRow } from './HistoryRow'
 
+jest.mock('entities/offline-cache', () => ({
+  useTrackItemCache: jest.fn(() => ({
+    isCached: false,
+    isCacheDisabled: false,
+    isDownloading: false,
+    isQueued: false,
+    progressValue: -1,
+    toggleCache: jest.fn(),
+    visualState: 'cloud',
+  })),
+}))
+
 interface CapturedTrackItemProps {
   menuActions?: Array<{ onPress: () => void; text: string }>
   onPress: () => void

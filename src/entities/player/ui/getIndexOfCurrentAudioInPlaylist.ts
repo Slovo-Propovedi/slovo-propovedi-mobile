@@ -1,4 +1,5 @@
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 
 export const getIndexOfCurrentAudioInPlaylist = (
   currentAudio: AudioPlayerData | null,

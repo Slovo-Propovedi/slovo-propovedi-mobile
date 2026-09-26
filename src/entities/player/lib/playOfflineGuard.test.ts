@@ -1,10 +1,10 @@
-import { audioCacheService, getPartialFileUri } from 'shared/lib/audio-cache'
+import { audioCacheService, getPartialFileUri } from 'entities/offline-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { showInfo } from 'shared/model/info-dialog'
 import { bufferedProgressStateAtom } from './download-model'
 import { guardOfflinePlayback } from './playOfflineGuard'
 
-jest.mock('shared/lib/audio-cache', () => ({
+jest.mock('entities/offline-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
   getPartialFileUri: jest.fn(),
 }))

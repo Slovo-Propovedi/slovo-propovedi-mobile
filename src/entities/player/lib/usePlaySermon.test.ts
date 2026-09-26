@@ -1,13 +1,13 @@
 import { type Ctx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
-import { audioCacheService } from 'shared/lib/audio-cache'
+import { audioCacheService } from 'entities/offline-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
-import { type AudioPlayerData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { showInfo } from 'shared/model/info-dialog'
 import { isOnlineAtom } from 'shared/model/network'
 import type { ListeningHistory } from 'entities/listening-history/@x/player'
+import type { AudioPlayerData } from 'entities/sermon'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
 import { usePlayNewSermon } from './usePlaySermon'
 
@@ -24,7 +24,7 @@ jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
 jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
 
-jest.mock('shared/lib/audio-cache', () => ({
+jest.mock('entities/offline-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
   getPartialFileUri: jest.fn().mockResolvedValue(null),
 }))

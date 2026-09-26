@@ -1,28 +1,16 @@
-import { type FetchedBooksGroupName } from '../model/domain/bible'
-import { type SermonData } from '../model/domain/common'
+import { type SermonShape } from '../model/domain/common'
 import { localDB } from './localBD'
 
 /**
  * Получить книги по группе.
  * @param tabName - Название группы книг.
- * @returns Книги группы или null.
+ * @returns Структурные данные группы или null. Валидация в доменный
+ * `BookData`/`SermonData` выполняется парсерами entities/sermon у потребителей.
  *
  * TODO: Заменить на вызов getAllSermons из Orval когда бэкенд будет готов.
  */
-const getBooksOnBooksGroup = async (
-  tabName: FetchedBooksGroupName,
-): Promise<null | SermonData[]> => {
-  const sermons = localDB.getBooks()
-  const content = sermons.find(el => el.groupName === tabName)
-
-  if (!content) return null
-
-  return content.books
-
-  // Реализация с бэкендом (когда будет готов):
-  // const response = await getAllSermons()
-  // return mapAllSermonsResponse(response)
-}
+const getBooksOnBooksGroup = async (tabName: string): Promise<null | SermonShape[]> =>
+  localDB.getBooksByGroup(tabName) ?? null
 
 export const booksAPI = {
   getBooksOnBooksGroup,

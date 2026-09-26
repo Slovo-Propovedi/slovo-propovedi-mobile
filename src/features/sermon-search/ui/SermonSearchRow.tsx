@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { buildHistoryMenuActions } from 'entities/listening-history'
-import { type SermonData, toAudioPlayerData } from 'shared/model'
+import { useTrackItemCache } from 'entities/offline-cache'
+import { type SermonData, toAudioPlayerData } from 'entities/sermon'
 import { TracksListItem } from 'shared/ui/track-list'
 import { formatScripture } from '../lib/formatScripture'
 
@@ -14,6 +15,7 @@ interface SermonSearchRowProps {
 export const SermonSearchRow = memo(
   ({ inHistory = false, onPress, progress, sermon }: SermonSearchRowProps) => {
     const audio = toAudioPlayerData(sermon)
+    const cacheState = useTrackItemCache(audio?.audioUrl)
     const subtitle = [sermon.artist, formatScripture(sermon)].filter(Boolean).join(' • ')
 
     const menuActions = audio
@@ -32,6 +34,7 @@ export const SermonSearchRow = memo(
         subtitle={subtitle}
         progress={progress}
         title={sermon.title}
+        cacheState={cacheState}
         artwork={sermon.artwork}
         menuActions={menuActions}
         audioUrl={audio?.audioUrl}

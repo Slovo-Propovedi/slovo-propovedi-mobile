@@ -1,5 +1,4 @@
-import { formatSermonReference } from 'shared/lib/format'
-import type { SermonData } from 'shared/model'
+import { formatSermonReference, type SermonData } from 'entities/sermon'
 
 export const formatScripture = (sermon: SermonData): null | string => {
   // Preserve legacy UI behavior: hide the scripture line when there is no book name

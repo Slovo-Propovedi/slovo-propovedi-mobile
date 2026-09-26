@@ -1,7 +1,6 @@
 import { createCtx, type Ctx } from '@reatom/framework'
-import { enqueueCache } from 'shared/lib/audio-cache'
-import { CacheCancelledError } from 'shared/lib/audio-cache/CacheCancelledError'
-import { incrementCacheTrigger } from 'shared/lib/cache-triggers'
+import { enqueueCache, incrementCacheTrigger } from 'entities/offline-cache'
+import { CacheCancelledError } from 'entities/offline-cache/lib/CacheCancelledError'
 import { reportError } from 'shared/model/error-dialog'
 import {
   bufferedProgressStateAtom,
@@ -24,20 +23,15 @@ jest.mock('shared/lib/reatom-ctx', () => ({
   },
 }))
 
-jest.mock('shared/lib/audio-cache', () => ({
-  enqueueCache: jest.fn(),
-  isCacheCancelledError: jest.requireActual('shared/lib/audio-cache/CacheCancelledError')
-    .isCacheCancelledError,
-}))
-
 jest.mock('shared/model/error-dialog', () => ({
   reportError: jest.fn(),
 }))
 
-jest.mock('shared/lib/cache-triggers', () => {
-  const actual = jest.requireActual('shared/lib/cache-triggers')
+jest.mock('entities/offline-cache', () => {
+  const actual = jest.requireActual('entities/offline-cache')
   return {
     ...actual,
+    enqueueCache: jest.fn(),
     incrementCacheTrigger: jest.fn(actual.incrementCacheTrigger),
   }
 })

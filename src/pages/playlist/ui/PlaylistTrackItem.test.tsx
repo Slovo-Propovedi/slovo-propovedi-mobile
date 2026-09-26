@@ -2,6 +2,18 @@ import { screen } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { PlaylistTrackItem } from './PlaylistTrackItem'
 
+jest.mock('entities/offline-cache', () => ({
+  useTrackItemCache: jest.fn(() => ({
+    isCached: false,
+    isCacheDisabled: false,
+    isDownloading: false,
+    isQueued: false,
+    progressValue: -1,
+    toggleCache: jest.fn(),
+    visualState: 'cloud',
+  })),
+}))
+
 jest.mock('shared/ui/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
   return {

@@ -4,8 +4,9 @@ import {
   historyAtom,
 } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type AudioPlayerData, type PlaylistData, type SermonData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
 import type { LockScreenMetadata } from './PlayerService/types'
+import type { AudioPlayerData, SermonData } from 'entities/sermon'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
 import { guardOfflinePlayback } from './playOfflineGuard'
 

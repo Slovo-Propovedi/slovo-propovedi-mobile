@@ -1,5 +1,5 @@
-import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
 import { type AnchorRect, MenuDropdown, type MenuItem } from 'shared/ui/menu'
+import { type TrackCacheVisualState } from './trackCacheState'
 
 export type MenuAction = MenuItem
 

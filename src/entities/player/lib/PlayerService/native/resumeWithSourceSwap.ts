@@ -1,4 +1,4 @@
-import { audioCacheService, PART_SUFFIX } from 'shared/lib/audio-cache'
+import { audioCacheService, PART_SUFFIX } from 'entities/offline-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { positionAtom } from '../../../model'
 import { audioLoader } from './AudioLoader'

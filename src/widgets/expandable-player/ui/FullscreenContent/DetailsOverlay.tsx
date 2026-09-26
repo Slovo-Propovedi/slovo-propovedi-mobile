@@ -4,7 +4,7 @@ import { hapticLight } from 'shared/lib/haptics'
 import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
-import type { AudioPlayerData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 
 interface DetailsOverlayProps {
   audio: AudioPlayerData

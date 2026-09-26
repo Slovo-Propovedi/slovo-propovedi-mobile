@@ -1,5 +1,5 @@
 import { type Ctx } from '@reatom/framework'
-import { audioCacheService, registerOfflineSermon } from 'shared/lib/audio-cache'
+import { audioCacheService, registerOfflineSermon } from 'entities/offline-cache'
 import { reportError } from 'shared/model/error-dialog'
 import { collectSermonItems } from './collectSermonItems'
 

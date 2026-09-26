@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { markHistoryCompletedAction } from 'entities/listening-history/@x/player'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { audioPlayerDataSchema, getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { isOnlineAtom } from 'shared/model/network'
 import type { OldTrackFlush } from './playback'
@@ -17,10 +16,8 @@ import {
   shouldRepeatTrack,
   shouldRestartQueue,
 } from './navigation'
+import { parseAudioPlayerData, parsePlaylistData } from './parsers'
 import { playFirstTrackInQueue, playNextTrack, repeatCurrentTrack } from './playback'
-
-const parseAudioPlayerData = getParseJsonWithSchema(audioPlayerDataSchema)
-const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
 
 const buildOldFlush = (sermonId: string): OldTrackFlush => ({
   oldDurationMs: ctx.get(durationAtom),

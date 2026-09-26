@@ -1,12 +1,33 @@
 import z from 'zod'
 
 /**
- * Доменные типы приложения.
- * Все типы извлекаются из Zod схем в этом файле.
- * Схемы структурно совпадают с API-типами (APITypes),
- * поэтому данные с сервера можно использовать без преобразования.
- * Zod используется для валидации данных при восстановлении из AsyncStorage.
+ * Доменные типы секций и плейлистов приложения.
+ * Проповеди/книги/треки переехали в entities/sermon (Phase 1 рефакторинга).
+ *
+ * До переноса `playlistSchema`/`sectionSchema` в entities здесь остаётся
+ * структурный `SermonShape` — минимальная loose-типизация границы для
+ * playlist/section (валидацию содержимого проповедей выполняет entities/sermon).
  */
+
+/**
+ * Структурная форма проповеди на границе shared-слоя.
+ * Канонический доменный тип — `SermonData` из entities/sermon; structural —
+ * чтобы shared (playlist/section, mappers, mock db) не импортировал entities.
+ */
+export interface SermonShape {
+  artist: string
+  artwork: null | string
+  audioUrl?: null | string | undefined
+  book?: null | string | undefined
+  chapter?: null | number | number[] | undefined
+  description?: string | undefined
+  id: string
+  playlists?: PlaylistDataDef[] | undefined
+  textFileUrl?: null | string | undefined
+  title: string
+  verse?: (number | number[])[] | null | number | number[] | undefined
+  youtubeUrl?: null | string | undefined
+}
 
 /** Интерфейс для плейлиста (PlaylistData). Используется для опережающего объявления типов. */
 interface PlaylistDataDef {
@@ -14,7 +35,7 @@ interface PlaylistDataDef {
   description?: string | undefined
   id: string
   sections?: SectionDataDef[] | undefined
-  sermons: SermonDataDef[]
+  sermons: SermonShape[]
   title: string
 }
 
@@ -30,22 +51,6 @@ interface SectionDataDef {
   title?: string | undefined
   transform: 'high' | 'middle' | 'short'
   whereIsSlideTitleLocated?: 'bothOnAndUnder' | 'on' | 'under' | undefined
-}
-
-/** Интерфейс для проповеди (SermonData). Используется для опережающего объявления типов. */
-interface SermonDataDef {
-  artist: string
-  artwork: null | string
-  audioUrl?: null | string | undefined
-  book?: null | string | undefined
-  chapter?: null | number | number[] | undefined
-  description?: string | undefined
-  id: string
-  playlists?: PlaylistDataDef[] | undefined
-  textFileUrl?: null | string | undefined
-  title: string
-  verse?: (number | number[])[] | null | number | number[] | undefined
-  youtubeUrl?: null | string | undefined
 }
 
 /** Схема для секции (SectionData). */
@@ -65,54 +70,25 @@ export const sectionSchema = z.object({
 /** Тип секции (извлекается из схемы). */
 export type SectionData = z.infer<typeof sectionSchema>
 
-/** Схема для проповеди (SermonData). */
-export const sermonSchema = z.object({
-  artist: z.string(),
-  // API может вернуть null (несмотря на OpenAPI-спеку) — оставляем null как есть
-  artwork: z.string().nullable(),
-  audioUrl: z.string().nullable().optional(),
-  book: z.string().nullish(),
-  chapter: z.union([z.number(), z.array(z.number())]).nullish(),
-  description: z.string().optional(),
-  id: z.string(),
-  playlists: z.lazy((): z.ZodType<PlaylistDataDef[]> => z.array(playlistSchema)).optional(),
-  textFileUrl: z.string().nullable().optional(),
-  title: z.string(),
-  verse: z
-    .union([z.number(), z.array(z.number()), z.array(z.union([z.number(), z.array(z.number())]))])
-    .nullish(),
-  youtubeUrl: z.string().nullable().optional(),
-})
-
-/** Тип проповеди (извлекается из схемы). */
-export type SermonData = z.infer<typeof sermonSchema>
-
-/** Схема для плейлиста (PlaylistData). */
+/**
+ * Схема для плейлиста (PlaylistData).
+ * Содержимое проповедей не валидируется здесь (loose-граница до переноса
+ * playlist/section в entities): валидатор проповеди живёт в entities/sermon.
+ */
 export const playlistSchema = z.object({
   artwork: z.string().nullable(),
   description: z.string().optional(),
   id: z.string(),
   sections: z.lazy((): z.ZodType<SectionDataDef[]> => z.array(sectionSchema)).optional(),
-  sermons: z.array(sermonSchema),
+  sermons: z.array(z.custom<SermonShape>()),
   title: z.string(),
 })
 
 /** Тип плейлиста (извлекается из схемы). */
 export type PlaylistData = z.infer<typeof playlistSchema>
 
-/** Схема для книги (BookData). Книга - это тоже проповедь. */
-export const bookSchema = sermonSchema
-
-/** Тип книги (извлекается из схемы). */
-export type BookData = SermonData
-
-/** Схема для массива книг (BookData[]). */
-export const booksArraySchema = z.array(bookSchema)
-
 /** Схема для массива плейлистов (PlaylistData[]). */
 export const playlistsArraySchema = z.array(playlistSchema)
 
-// Алиасы для обратной совместимости
-export const sermonDataSchema = sermonSchema
+// Алиас для обратной совместимости
 export const playlistDataSchema = playlistSchema
-export const bookDataSchema = bookSchema

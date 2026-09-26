@@ -1,10 +1,10 @@
-import { type FetchedBookData } from '../../../../model/fetched/fetched-data'
+import type { SermonShape } from '../../../../model/domain/common'
 import { DEFAULT_ARTIST } from '../../constants'
 
 const artwork =
   'https://slovo-istini.com/image/cache/image/pages/1221/image-19-08-23-02-50_700x1000.png'
 
-export const stephensSpeechBeforeSanhedrinBookList: FetchedBookData[] = [
+export const stephensSpeechBeforeSanhedrinBookList: SermonShape[] = [
   {
     artist: DEFAULT_ARTIST,
     artwork,

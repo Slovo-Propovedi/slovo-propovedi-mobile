@@ -7,6 +7,7 @@ import {
   isEntryCompleted,
   type ListeningHistoryEntry,
 } from 'entities/listening-history'
+import { useTrackItemCache } from 'entities/offline-cache'
 import { formatRelativeDate } from 'shared/lib/format'
 import { INDENTS } from 'shared/ui/theme'
 import { TracksListItem } from 'shared/ui/track-list'
@@ -26,6 +27,7 @@ interface HistoryRowProps {
 export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRowProps) => {
   const playEntry = useEntryPlayback(PLAYBACK_ERROR_MESSAGE)
   const sermon = getEntrySermon(entry)
+  const cacheState = useTrackItemCache(sermon?.audioUrl)
   const completed = isEntryCompleted(entry)
 
   const storedProgress = completed
@@ -58,6 +60,7 @@ export const HistoryRow = memo(({ entry, isAudioPlaying, isPlaying }: HistoryRow
       title={sermon.title}
       isPlaying={isPlaying}
       onPress={handlePress}
+      cacheState={cacheState}
       artwork={sermon.artwork}
       menuActions={menuActions}
       progress={storedProgress}

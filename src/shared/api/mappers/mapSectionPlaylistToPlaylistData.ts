@@ -1,6 +1,6 @@
 import { type PlaylistData } from '../../model/domain/common'
 import { type APITypes } from '../generated'
-import { mapPlaylistSermonToSermonData } from './mapPlaylistSermonToSermonData'
+import { mapPlaylistSermonToSermonShape } from './mapPlaylistSermonToSermonShape'
 import { mapSectionRefToSectionData } from './mapSectionRefToSectionData'
 
 /**
@@ -14,6 +14,6 @@ export const mapSectionPlaylistToPlaylistData = (
   description: apiPlaylist.description,
   id: apiPlaylist.id,
   sections: apiPlaylist.sections.map(mapSectionRefToSectionData),
-  sermons: apiPlaylist.sermons.map(mapPlaylistSermonToSermonData),
+  sermons: apiPlaylist.sermons.map(mapPlaylistSermonToSermonShape),
   title: apiPlaylist.title,
 })

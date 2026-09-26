@@ -1,10 +1,11 @@
 import { createCtx } from '@reatom/framework'
-import { audioCacheService, registerOfflineSermon } from 'shared/lib/audio-cache'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { audioCacheService, registerOfflineSermon } from 'entities/offline-cache'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import { collectSermonItems } from './collectSermonItems'
 import { syncOfflineSermon } from './syncOfflineSermon'
 
-jest.mock('shared/lib/audio-cache', () => ({
+jest.mock('entities/offline-cache', () => ({
   audioCacheService: { isCached: jest.fn() },
   registerOfflineSermon: jest.fn(),
 }))

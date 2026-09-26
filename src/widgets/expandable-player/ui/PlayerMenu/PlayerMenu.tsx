@@ -6,8 +6,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { type TrackCacheVisualState } from 'entities/offline-cache'
 import { type PlaybackRate, usePlaybackRate } from 'entities/player'
-import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
 import { hapticLight } from 'shared/lib/haptics'
 import { reportError } from 'shared/model/error-dialog'
 import { useTheme } from 'shared/ui/theme'

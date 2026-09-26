@@ -2,6 +2,18 @@ import { screen } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { PlaylistSheetRow } from './PlaylistSheetRow'
 
+jest.mock('entities/offline-cache', () => ({
+  useTrackItemCache: jest.fn(() => ({
+    isCached: false,
+    isCacheDisabled: false,
+    isDownloading: false,
+    isQueued: false,
+    progressValue: -1,
+    toggleCache: jest.fn(),
+    visualState: 'cloud',
+  })),
+}))
+
 const mockedUseHistoryProgress = jest.fn(
   (_sermonId: string | undefined) => undefined as number | undefined,
 )

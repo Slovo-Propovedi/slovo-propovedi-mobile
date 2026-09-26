@@ -1,14 +1,15 @@
 import { type Atom, createCtx } from '@reatom/framework'
 import {
   activeCacheUrlAtom,
+  cacheUpdateTriggerAtom,
   cancelAllCacheDownloads,
   cancelCacheDownload,
   enqueueCacheMany,
   getCacheRequesters,
+  playlistDownloadProgressAtom,
   removeFromQueueBySource,
-} from 'shared/lib/audio-cache'
-import { CacheCancelledError } from 'shared/lib/audio-cache/CacheCancelledError'
-import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from 'shared/lib/cache-triggers'
+} from 'entities/offline-cache'
+import { CacheCancelledError } from 'entities/offline-cache/lib/CacheCancelledError'
 import { waitForOnline } from 'shared/lib/network'
 import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
@@ -21,24 +22,27 @@ jest.mock('shared/lib/network', () => ({
 
 // Simulates the real stopper registry: stoppers registered by playlist runs,
 // invoked by the global stop.
-const __stoppers = (jest.requireMock('shared/lib/audio-cache') as { __stoppers: Set<() => void> })
+const __stoppers = (jest.requireMock('entities/offline-cache') as { __stoppers: Set<() => void> })
   .__stoppers
 
-jest.mock('shared/lib/audio-cache', () => {
+jest.mock('entities/offline-cache', () => {
   const { atom: reatomAtom } = jest.requireActual('@reatom/framework') as {
     atom: (init: null | string, name?: string) => Atom<null | string>
   }
   const stoppers = new Set<() => void>()
+  const actual = jest.requireActual('entities/offline-cache')
   return {
     __stoppers: stoppers,
     activeCacheUrlAtom: reatomAtom(null, 'activeCacheUrlAtom'),
+    cacheUpdateTriggerAtom: actual.cacheUpdateTriggerAtom,
     cancelAllCacheDownloads: jest.fn(),
     cancelCacheDownload: jest.fn(),
     enqueueCache: jest.fn(),
     enqueueCacheMany: jest.fn(),
     getCacheRequesters: jest.fn(() => new Set()),
-    isCacheCancelledError: jest.requireActual('shared/lib/audio-cache/CacheCancelledError')
+    isCacheCancelledError: jest.requireActual('entities/offline-cache/lib/CacheCancelledError')
       .isCacheCancelledError,
+    playlistDownloadProgressAtom: actual.playlistDownloadProgressAtom,
     registerPlaylistRunStopper: jest.fn((stopper: () => void) => {
       stoppers.add(stopper)
     }),

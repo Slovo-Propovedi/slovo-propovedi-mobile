@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { AppState } from 'react-native'
 import { flushHistoryProgressAction } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import {
   currentAudioAtom,
   currentPlaylistAtom,

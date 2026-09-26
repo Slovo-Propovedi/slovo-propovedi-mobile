@@ -1,6 +1,18 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { useRef } from 'react'
 import {
+  cacheQueueAtom,
+  cacheUpdateTriggerAtom,
+  cancelCacheDownload,
+  enqueueCache,
+  incrementCacheTrigger,
+  isCacheCancelledError,
+  markUrlEvicted,
+  removeFromCache,
+  resolveCacheState,
+  useIsCached,
+} from 'entities/offline-cache'
+import {
   currentAudioAtom,
   currentPlaylistAtom,
   downloadingAudioUrlAtom,
@@ -11,20 +23,6 @@ import {
   usePlayer,
   useSeekControls,
 } from 'entities/player'
-import {
-  cacheQueueAtom,
-  cancelCacheDownload,
-  enqueueCache,
-  isCacheCancelledError,
-  removeFromCache,
-  resolveCacheState,
-  useIsCached,
-} from 'shared/lib/audio-cache'
-import {
-  cacheUpdateTriggerAtom,
-  incrementCacheTrigger,
-  markUrlEvicted,
-} from 'shared/lib/cache-triggers'
 import { isOnlineAtom } from 'shared/model'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import { showDetailsAtom } from '../../model/showDetailsAtom'

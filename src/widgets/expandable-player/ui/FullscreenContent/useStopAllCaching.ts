@@ -1,6 +1,6 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { useCallback } from 'react'
-import { activeCacheUrlAtom, cacheQueueAtom, cancelAllCacheDownloads } from 'shared/lib/audio-cache'
+import { activeCacheUrlAtom, cacheQueueAtom, cancelAllCacheDownloads } from 'entities/offline-cache'
 
 /**
  * Reactive "is any caching active" state plus the global stop action behind the

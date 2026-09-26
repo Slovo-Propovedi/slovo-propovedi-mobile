@@ -1,5 +1,5 @@
 import { type Ctx } from '@reatom/framework'
-import { offlineRegistryAtom } from 'shared/lib/audio-cache'
+import { offlineRegistryAtom } from 'entities/offline-cache'
 import { type SermonCandidate } from '../model'
 
 export const collectOfflineRegistryCandidates = (ctx: Ctx): SermonCandidate[] => {

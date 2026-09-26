@@ -2,7 +2,7 @@ import {
   audioCacheService,
   isUrlQueuedOrActive,
   reEnqueuePartialDownloads,
-} from 'shared/lib/audio-cache'
+} from 'entities/offline-cache'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
 import { currentAudioAtom } from '../model'

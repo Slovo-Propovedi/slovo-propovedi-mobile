@@ -1,5 +1,5 @@
-import { audioCacheService } from 'shared/lib/audio-cache'
-import { toAudioPlayerData } from 'shared/model'
+import { audioCacheService } from 'entities/offline-cache'
+import { toAudioPlayerData } from 'entities/sermon'
 import { type OfflineSermonItem } from '../model'
 import { type MergedSermonCandidate } from './mergeSermonCandidates'
 

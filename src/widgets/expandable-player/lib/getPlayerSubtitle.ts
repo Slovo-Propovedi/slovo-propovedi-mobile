@@ -1,5 +1,5 @@
-import { formatSermonReference } from 'shared/lib/format'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type AudioPlayerData, formatSermonReference } from 'entities/sermon'
+import { type PlaylistData } from 'shared/model'
 
 const APP_NAME = 'Слово.Проповеди'
 

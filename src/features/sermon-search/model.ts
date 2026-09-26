@@ -1,6 +1,6 @@
 import { action, atom } from '@reatom/framework'
-import { mapAllSermonsResponse, sermonsApi } from 'shared/api'
-import type { SermonData } from 'shared/model'
+import { mapAllSermonsResponse, type SermonData } from 'entities/sermon'
+import { sermonsApi } from 'shared/api'
 import { getCachedSearchResults, setCachedSearchResults } from './lib/searchCache'
 
 export const MIN_QUERY_LENGTH = 2

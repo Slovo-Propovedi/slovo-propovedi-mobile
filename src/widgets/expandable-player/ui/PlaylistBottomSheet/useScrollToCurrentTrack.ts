@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type PlaylistData } from 'shared/model'
 import type { ScrollToIndexFailedInfo } from './scrollGuards'
-import type { AudioPlayerData, PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import { scheduleEstimateRetry } from './scrollGuards'
 import { createScrollScheduler } from './scrollScheduler'
 import { isOffsetNegligible } from './useListReveal'

@@ -1,4 +1,5 @@
-import { type PlaylistData, type SermonData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { SermonData } from 'entities/sermon'
 import { mergeSermonCandidates } from './mergeSermonCandidates'
 
 jest.mock('entities/section/@x/listening-history', () => {

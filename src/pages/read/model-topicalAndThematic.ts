@@ -1,7 +1,6 @@
 import { action, atom } from '@reatom/framework'
+import { type BookData, booksArraySchema, FetchedBooksGroupName } from 'entities/sermon'
 import { API } from 'shared/api'
-import { FetchedBooksGroupName } from 'shared/model'
-import type { BookData } from 'shared/model'
 
 export const topicalAndThematicBooksSliderAtom = atom<BookData[]>(
   [],
@@ -12,7 +11,7 @@ export const getTopicalAndThematicBooksSlider = action(async ctx => {
   try {
     const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.TopicalAndThematic)
 
-    const result = list || []
+    const result = list ? booksArraySchema.parse(list) : []
 
     await ctx.schedule(() => {
       topicalAndThematicBooksSliderAtom(ctx, result)

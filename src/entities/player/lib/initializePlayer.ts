@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import z from 'zod'
+import { audioPlayerDataSchema } from 'entities/sermon'
 import {
   CURRENT_AUDIO,
   CURRENT_PLAYBACK_RATE,
@@ -9,7 +10,7 @@ import {
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { audioPlayerDataSchema, getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
+import { getParseJsonWithSchema, playlistDataSchema } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import {
   repeatModeSchema,

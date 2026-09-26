@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useFocusEffect } from 'expo-router'
 import { useCallback } from 'react'
-import { cacheUpdateTriggerAtom } from 'shared/lib/audio-cache'
+import { cacheUpdateTriggerAtom } from 'entities/offline-cache'
 import { isLoadingOfflineSermonsAtom, loadOfflineSermons, offlineSermonsAtom } from '../model'
 
 export const useOfflineSermons = () => {

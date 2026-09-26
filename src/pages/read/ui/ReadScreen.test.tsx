@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks'
-import type { BookData } from 'shared/model'
+import type { BookData } from 'entities/sermon'
 import {
   getNotesForPreachersBooksSlider,
   notesForPreachersBooksSliderAtom,
@@ -16,7 +16,7 @@ import { ReadScreen } from './ReadScreen'
 const mockNavigateToBookReader = jest.fn()
 const mockNavigateToBooksList = jest.fn()
 
-jest.mock('shared/routing', () => ({
+jest.mock('../lib/useReadNavigation', () => ({
   useReadNavigation: () => ({
     navigateToBookReader: mockNavigateToBookReader,
     navigateToBooksList: mockNavigateToBooksList,

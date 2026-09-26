@@ -1,5 +1,6 @@
 import { memo, useCallback } from 'react'
 import { StyleSheet } from 'react-native'
+import { useTrackItemCache } from 'entities/offline-cache'
 import { INDENTS } from 'shared/ui/theme'
 import { type MenuAction, TracksListItem } from 'shared/ui/track-list'
 
@@ -34,6 +35,7 @@ export const PlaylistTrackItem = memo(
     title,
   }: PlaylistTrackItemProps) => {
     const handlePress = useCallback(() => onPress(index), [index, onPress])
+    const cacheState = useTrackItemCache(audioUrl ?? undefined, cacheTrigger)
 
     return (
       <TracksListItem
@@ -42,9 +44,9 @@ export const PlaylistTrackItem = memo(
         style={styles.row}
         subtitle={subtitle}
         onPress={handlePress}
+        cacheState={cacheState}
         progress={storedProgress}
         menuActions={menuActions}
-        cacheTrigger={cacheTrigger}
         audioUrl={audioUrl ?? undefined}
         isPlaying={currentAudioId === id}
         isAudioPlaying={currentAudioId === id && isPlaying}

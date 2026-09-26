@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { formatSermonReference } from 'shared/lib/format'
+import { formatSermonReference } from 'entities/sermon'
 import type { PlaylistData } from 'shared/model'
 import { type createStyles } from './PlaylistBottomSheet.styles'
 import { PlaylistSheetRow } from './PlaylistSheetRow'

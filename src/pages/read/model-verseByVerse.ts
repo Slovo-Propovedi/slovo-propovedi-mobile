@@ -1,7 +1,6 @@
 import { action, atom } from '@reatom/framework'
+import { type BookData, booksArraySchema, FetchedBooksGroupName } from 'entities/sermon'
 import { API } from 'shared/api'
-import { FetchedBooksGroupName } from 'shared/model'
-import type { BookData } from 'shared/model'
 
 export const verseByVerseBooksSliderAtom = atom<BookData[]>([], 'verseByVerseBooksSliderAtom')
 
@@ -9,7 +8,7 @@ export const getVerseByVerseBooksSlider = action(async ctx => {
   try {
     const list = await API.books.getBooksOnBooksGroup(FetchedBooksGroupName.VerseByVerse)
 
-    const result = list || []
+    const result = list ? booksArraySchema.parse(list) : []
 
     await ctx.schedule(() => {
       verseByVerseBooksSliderAtom(ctx, result)

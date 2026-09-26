@@ -1,5 +1,5 @@
 import { act, fireEvent } from '@testing-library/react-native'
-import { activeCacheUrlAtom, cacheQueueAtom } from 'shared/lib/audio-cache'
+import { activeCacheUrlAtom, cacheQueueAtom } from 'entities/offline-cache'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
 import type { createStyles } from '../ExpandablePlayer/styles'

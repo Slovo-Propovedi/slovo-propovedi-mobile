@@ -1,5 +1,4 @@
 import { type Ctx } from '@reatom/framework'
-import { debugConfig } from 'shared/config'
 import {
   activeCacheUrlAtom,
   cancelCacheDownload,
@@ -7,7 +6,8 @@ import {
   registerPlaylistRunStopper,
   removeFromQueueBySource,
   unregisterPlaylistRunStopper,
-} from 'shared/lib/audio-cache'
+} from 'entities/offline-cache'
+import { debugConfig } from 'shared/config'
 import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
 import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'

@@ -1,5 +1,6 @@
 import { action } from '@reatom/framework'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import { commitHistory } from '../model/commitHistory'
 import { historyAtom } from '../model/historyAtom'
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'

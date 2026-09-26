@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { View } from 'react-native'
-import { activeCacheUrlAtom, cacheQueueAtom, clearAudioCacheAction } from 'shared/lib/audio-cache'
+import { activeCacheUrlAtom, cacheQueueAtom, clearAudioCacheAction } from 'entities/offline-cache'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import type { TestInstance } from 'test-renderer'
 import { OfflineHeaderMenu } from './OfflineHeaderMenu'
@@ -14,8 +14,8 @@ jest.mock('@expo/vector-icons', () => {
   }
 })
 
-jest.mock('shared/lib/audio-cache', () => {
-  const actual = jest.requireActual('shared/lib/audio-cache')
+jest.mock('entities/offline-cache', () => {
+  const actual = jest.requireActual('entities/offline-cache')
   return {
     ...actual,
     clearAudioCacheAction: jest.fn(),

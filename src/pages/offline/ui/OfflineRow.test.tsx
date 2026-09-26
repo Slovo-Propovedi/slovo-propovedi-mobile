@@ -6,6 +6,18 @@ import { currentAudioAtom, usePlayNewSermon } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { OfflineRow } from './OfflineRow'
 
+jest.mock('entities/offline-cache', () => ({
+  useTrackItemCache: jest.fn(() => ({
+    isCached: false,
+    isCacheDisabled: false,
+    isDownloading: false,
+    isQueued: false,
+    progressValue: -1,
+    toggleCache: jest.fn(),
+    visualState: 'cloud',
+  })),
+}))
+
 interface CapturedTrackItemProps {
   artwork?: null | string
   audioUrl?: string

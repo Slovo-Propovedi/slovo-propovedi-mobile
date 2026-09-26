@@ -1,5 +1,5 @@
 import { memo, type NamedExoticComponent } from 'react'
-import type { SermonData } from 'shared/model'
+import type { SermonData } from 'entities/sermon'
 import { SermonSearchRow } from './SermonSearchRow'
 
 interface SearchResultsRowProps {

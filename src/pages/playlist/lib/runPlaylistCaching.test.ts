@@ -1,6 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { enqueueCacheMany } from 'shared/lib/audio-cache'
-import { cacheUpdateTriggerAtom } from 'shared/lib/cache-triggers'
+import { cacheUpdateTriggerAtom, enqueueCacheMany } from 'entities/offline-cache'
 import { waitForOnline } from 'shared/lib/network'
 import { playlistCacheProgressAtom } from '../model'
 import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
@@ -10,11 +9,13 @@ jest.mock('shared/lib/network', () => ({
   waitForOnline: jest.fn(),
 }))
 
-jest.mock('shared/lib/audio-cache', () => ({
-  enqueueCacheMany: jest.fn(),
-  isCacheCancelledError: jest.requireActual('shared/lib/audio-cache/CacheCancelledError')
-    .isCacheCancelledError,
-}))
+jest.mock('entities/offline-cache', () => {
+  const actual = jest.requireActual('entities/offline-cache')
+  return {
+    ...actual,
+    enqueueCacheMany: jest.fn(),
+  }
+})
 
 jest.mock('./PlaylistOfflineNotifications', () => ({
   playlistOfflineNotifications: {

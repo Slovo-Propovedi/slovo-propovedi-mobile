@@ -5,6 +5,19 @@ import { usePlayNewSermon } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { OfflineScreen } from './OfflineScreen'
 
+jest.mock('entities/offline-cache', () => ({
+  ...jest.requireActual('entities/offline-cache'),
+  useTrackItemCache: jest.fn(() => ({
+    isCached: false,
+    isCacheDisabled: false,
+    isDownloading: false,
+    isQueued: false,
+    progressValue: -1,
+    toggleCache: jest.fn(),
+    visualState: 'cloud',
+  })),
+}))
+
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
   return {

@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { Pressable, Text } from 'react-native'
-import { type TrackCacheVisualState } from 'shared/lib/audio-cache'
+import { type TrackCacheVisualState } from 'entities/offline-cache'
 import { formatPlaybackRate } from 'shared/lib/player'
 import { isOnlineAtom } from 'shared/model'
 import { PressableButton } from 'shared/ui/pressable-button'

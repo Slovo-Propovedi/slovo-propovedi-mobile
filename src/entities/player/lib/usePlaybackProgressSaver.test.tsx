@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type Ctx } from '@reatom/framework'
 import { act, renderHook } from '@testing-library/react-native'
 import { AppState, type AppStateStatus } from 'react-native'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import {
   currentAudioAtom,
   currentPlaylistAtom,

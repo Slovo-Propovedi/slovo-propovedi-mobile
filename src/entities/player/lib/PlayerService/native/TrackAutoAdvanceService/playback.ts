@@ -4,8 +4,9 @@ import {
   recordSermonSwitchAction,
 } from 'entities/listening-history/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
 import type { PlayerActions } from './types'
+import type { AudioPlayerData } from 'entities/sermon'
 import { setCurrentAudioAction } from '../../../../model'
 import { savePlaybackProgress } from '../../../playbackProgress'
 import { lockScreenControls } from '../LockScreenControls'

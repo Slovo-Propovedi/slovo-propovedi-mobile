@@ -1,5 +1,5 @@
 import { type Ctx } from '@reatom/framework'
-import { enqueueCacheMany, isCacheCancelledError } from 'shared/lib/audio-cache'
+import { enqueueCacheMany, isCacheCancelledError } from 'entities/offline-cache'
 import { waitForOnline } from 'shared/lib/network'
 import { playlistCacheProgressAtom } from '../model'
 import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'

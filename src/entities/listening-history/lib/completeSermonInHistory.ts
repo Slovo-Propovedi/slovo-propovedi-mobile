@@ -1,4 +1,5 @@
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'
 import { buildHistoryEntry } from './buildHistoryEntry'
 import { MANUAL_LISTENED_DURATION_MS } from './constants'

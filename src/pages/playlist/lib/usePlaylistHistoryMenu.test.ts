@@ -1,4 +1,5 @@
-import { type PlaylistData, type SermonData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { SermonData } from 'entities/sermon'
 import { computePlaylistHistoryFlags } from './usePlaylistHistoryMenu'
 
 jest.mock('entities/listening-history', () => ({

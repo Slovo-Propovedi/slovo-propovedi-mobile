@@ -6,7 +6,8 @@ import {
   useHistoryProgressMap,
   useHistorySermonIds,
 } from 'entities/listening-history'
-import { type AudioPlayerData, type PlaylistData, toAudioPlayerData } from 'shared/model'
+import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon'
+import { type PlaylistData } from 'shared/model'
 
 interface PlaylistHistoryFlags {
   canMarkAll: boolean

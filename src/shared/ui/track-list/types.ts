@@ -1,11 +1,12 @@
 import { type StyleProp, type ViewStyle } from 'react-native'
+import { type TrackCacheState } from './trackCacheState'
 import { type MenuAction } from './TracksListItemContextMenu'
 
 export interface TracksListItemProps {
   artwork?: null | string
   audioUrl?: string
-  /** Incrementing value to trigger cache status refresh from outside (e.g. Batch caching). */
-  cacheTrigger?: number
+  /** Кэш-состояние строки, посчитанное вызывающим слоем через entities/offline-cache. */
+  cacheState: TrackCacheState
   isAudioPlaying?: boolean
   isPlaying: boolean
   /** Custom context-menu actions. Added after the default cache toggle. */

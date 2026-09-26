@@ -28,8 +28,8 @@ jest.mock('shared/ui/menu', () => {
   }
 })
 
-jest.mock('shared/lib/audio-cache', () => {
-  const actual = jest.requireActual('shared/lib/audio-cache')
+jest.mock('entities/offline-cache', () => {
+  const actual = jest.requireActual('entities/offline-cache')
   return {
     ...actual,
     audioCacheService: {

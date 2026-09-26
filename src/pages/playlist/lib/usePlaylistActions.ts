@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
 import { buildHistoryMenuActions } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
-import { type PlaylistData, type SermonData, toAudioPlayerData } from 'shared/model'
+import { type SermonData, toAudioPlayerData } from 'entities/sermon'
+import { type PlaylistData } from 'shared/model'
 import { type MenuAction } from 'shared/ui/track-list'
 
 /**

@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import z from 'zod'
+import { sermonSchema } from 'entities/sermon'
 import { CACHED_SERMON_SEARCH, CACHED_SERMON_SEARCH_INDEX } from 'shared/config'
 import { getCachedJson } from 'shared/lib/cache'
-import { sermonSchema } from 'shared/model'
 import { type SermonCandidate } from '../model'
 
 const sermonsArraySchema = z.array(sermonSchema)

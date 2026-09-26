@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
-import { type AudioPlayerData, type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'shared/model'
+import type { AudioPlayerData } from 'entities/sermon'
 import { historyAtom } from '../model/historyAtom'
 import { type ListeningHistoryEntry } from '../model/types'
 import { flushHistoryProgressAction } from './flushHistoryProgress'
