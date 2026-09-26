@@ -5,6 +5,7 @@ import { buildPlaylistShareUrl } from './buildPlaylistShareUrl'
 import { sharePlaylist } from './sharePlaylist'
 
 const COPIED_MESSAGE = 'Ссылка скопирована'
+const SHARE_ERROR_MESSAGE = 'Не удалось поделиться. Попробуйте ещё раз'
 
 export const usePlaylistShare = (playlist: PlaylistData, onCloseMenu: () => void) => {
   const canShare = uuidValidate(playlist.id)
@@ -15,6 +16,7 @@ export const usePlaylistShare = (playlist: PlaylistData, onCloseMenu: () => void
     const url = buildPlaylistShareUrl(playlist.id)
     const result = await sharePlaylist({ text: `${playlist.title} — ${url}`, url })
     if (result === 'copied') showToastAction(COPIED_MESSAGE)
+    if (result === 'error') showToastAction(SHARE_ERROR_MESSAGE)
     onCloseMenu()
   }
 

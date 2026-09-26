@@ -14,6 +14,7 @@ jest.mock('./sharePlaylist', () => ({
 const VALID_UUID = '0f0e8d6c-1a2b-4c3d-9e8f-001122334455'
 const PLAYLIST_TITLE = 'Плейлист'
 const COPIED_MESSAGE = 'Ссылка скопирована'
+const SHARE_ERROR_MESSAGE = 'Не удалось поделиться. Попробуйте ещё раз'
 const TOAST_DURATION_MS = 2000
 
 const makePlaylist = (id: string): PlaylistData => ({
@@ -76,7 +77,7 @@ describe('usePlaylistShare', () => {
     })
   })
 
-  test.each(['shared', 'dismissed', 'error'])(
+  test.each(['shared', 'dismissed'])(
     'closes the menu without a toast when sharing resolves "%s"',
     async outcome => {
       mockSharePlaylist.mockResolvedValue(outcome)
@@ -88,6 +89,23 @@ describe('usePlaylistShare', () => {
       expect(ctx.get(toastAtom)).toBeNull()
     },
   )
+
+  test('closes the menu and shows the share-error toast when sharing fails', async () => {
+    mockSharePlaylist.mockResolvedValue('error')
+    const { ctx, onCloseMenu, result } = await renderShare(VALID_UUID)
+
+    jest.useFakeTimers()
+    await invokeHandleShare(result.current.handleShare)
+
+    expect(onCloseMenu).toHaveBeenCalledTimes(1)
+    expect(ctx.get(toastAtom)).toBe(SHARE_ERROR_MESSAGE)
+
+    await act(async () => {
+      jest.advanceTimersByTime(TOAST_DURATION_MS)
+    })
+
+    expect(ctx.get(toastAtom)).toBeNull()
+  })
 
   test('closes the menu and shows the copied-link toast on a web copy', async () => {
     mockSharePlaylist.mockResolvedValue('copied')
