@@ -1,6 +1,6 @@
 # Web-платформа (PWA)
 
-**Слой:** `public/`, `shared/lib/audio-cache/*.web.ts`, `shared/ui/layout/appMaxWidth.ts`, `entities/player/lib/PlayerService/web/*`, `features/web-update`, платформенные `.web.ts` по проекту
+**Слой:** `public/`, `entities/offline-cache/lib/*.web.ts`, `shared/ui/layout/appMaxWidth.ts`, `entities/player/lib/PlayerService/web/*`, `features/web-update`, платформенные `.web.ts` по проекту
 **Статус:** рабочее (dev + `expo export`), без прод-хостинга
 
 Приложение собирается на web через Metro (`app.config.ts` → `web.bundler: "metro"`, `web.output` не задан → SPA-режим `single`: один `index.html` + JS-бандл, клиентский роутинг expo-router). Нативные возможности, которых нет в браузере, закрыты платформенными файлами `*.web.ts` (паттерн — [`architecture.md`](../architecture.md#почему-платформенные-реализации-nativets--webts)).
@@ -68,14 +68,14 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 
 | Файл | Роль |
 | --- | --- |
-| `shared/lib/audio-cache/AudioCacheService.web.ts` | Тот же публичный API, что у нативного (`isCached` / `cacheAudio` / `clearCache` / `removeFromCache` / `getCacheInfo` / `getCachedUri`). Дедуп параллельных загрузок — общий `inflightCache`. `getCachedUri` → `null` (воспроизведением занимается SW прозрачно). Скачивание делегируется `downloadAndStoreAudio` из `webCacheApi.ts` |
-| `shared/lib/audio-cache/webCacheApi.ts` | Низкоуровневые операции Cache Storage + feature-detect `isCacheStorageAvailable()` + `hasCompleteAudio` + `downloadAndStoreAudio` (skip-cached → дроп stale → fetch → put → commit) |
-| `shared/lib/audio-cache/openAudioCache.ts` | Recovery-хелпер открытия бакета (при сбое `caches.open` → `caches.delete` → reopen) + первоисточник `AUDIO_CACHE_NAME` |
-| `shared/lib/audio-cache/webCacheManifest.ts` | Commit-манифест `__manifest__`: `commitAudioUrl`/`uncommitAudioUrl`/`ensureManifest` (сериализованный read-modify-write) |
-| `shared/lib/audio-cache/webDownloadJournal.ts` | AsyncStorage-журнал активных загрузок (`audio-cache/active-downloads`, web-only): записи `{ url, sessionId, lastSeenAt }` + heartbeat (10с) для multi-tab-безопасной очистки орфанов |
-| `shared/lib/audio-cache/cleanupOrphans.web.ts` | Стартовый sweep орфанов (незакоммиченных записей после аварийного завершения) по журналу, без перечисления бакета |
-| `shared/lib/audio-cache/webAudioDownload.ts` | `fetchAudioForCache`: сначала CORS-запрос (реальный прогресс 0..1 по `Content-Length`), при отказе — opaque `no-cors` (прогресс скачет 0→1, размер неизвестен) |
-| `shared/lib/audio-cache/getAudioCacheDirectory.ts` | Кидает явную ошибку при `Platform.OS === 'web'` — страховка на случай устаревшего кеша Metro (иначе загадочный `this.validatePath`) |
+| `entities/offline-cache/lib/AudioCacheService.web.ts` | Тот же публичный API, что у нативного (`isCached` / `cacheAudio` / `clearCache` / `removeFromCache` / `getCacheInfo` / `getCachedUri`). Дедуп параллельных загрузок — общий `inflightCache`. `getCachedUri` → `null` (воспроизведением занимается SW прозрачно). Скачивание делегируется `downloadAndStoreAudio` из `webCacheApi.ts` |
+| `entities/offline-cache/lib/webCacheApi.ts` | Низкоуровневые операции Cache Storage + feature-detect `isCacheStorageAvailable()` + `hasCompleteAudio` + `downloadAndStoreAudio` (skip-cached → дроп stale → fetch → put → commit) |
+| `entities/offline-cache/lib/openAudioCache.ts` | Recovery-хелпер открытия бакета (при сбое `caches.open` → `caches.delete` → reopen) + первоисточник `AUDIO_CACHE_NAME` |
+| `entities/offline-cache/lib/webCacheManifest.ts` | Commit-манифест `__manifest__`: `commitAudioUrl`/`uncommitAudioUrl`/`ensureManifest` (сериализованный read-modify-write) |
+| `entities/offline-cache/lib/webDownloadJournal.ts` | AsyncStorage-журнал активных загрузок (`audio-cache/active-downloads`, web-only): записи `{ url, sessionId, lastSeenAt }` + heartbeat (10с) для multi-tab-безопасной очистки орфанов |
+| `entities/offline-cache/lib/cleanupOrphans.web.ts` | Стартовый sweep орфанов (незакоммиченных записей после аварийного завершения) по журналу, без перечисления бакета |
+| `entities/offline-cache/lib/webAudioDownload.ts` | `fetchAudioForCache`: сначала CORS-запрос (реальный прогресс 0..1 по `Content-Length`), при отказе — opaque `no-cors` (прогресс скачет 0→1, размер неизвестен) |
+| `entities/offline-cache/lib/getAudioCacheDirectory.ts` | Кидает явную ошибку при `Platform.OS === 'web'` — страховка на случай устаревшего кеша Metro (иначе загадочный `this.validatePath`) |
 
 `BackgroundCachingService` платформенно-нейтрален и переиспользуется как есть.
 

@@ -77,14 +77,11 @@
 - `/listen/playlist?playlist=<UUID>` — `navigateToPlaylist` передаёт только `playlist.id`, полный `PlaylistData` экран достаёт через `usePlaylistById` (секции → кэш → API, см. [../screens/playlist.md](../screens/playlist.md));
 - `/listen/playlist-list?sectionId=<строка>` — `navigateToPlaylistList` (параметр `title` в URL не передаётся, заголовок берётся из резолвнутого раздела).
 
-Хелперы — `src/shared/routing/`:
+Хелперы навигации:
 
-- `useListenNavigation.ts` — `navigateToPlaylist`, `navigateToPlaylistList`;
-- `useReadNavigation.ts` — `navigateToBookReader` (`/read/book-reader`), `navigateToBooksList` (`/read/books-list`);
-- `useColdStartLinkRecovery.ts` — Android-only safety net холодного старта (см. «Android App Links» ниже);
-- `launchPath.ts` — pure-хелперы разбора launch URL (`extractLaunchPath`, `shouldAttemptRecovery`);
-- `rootStackScreens.ts` — `SUB_SCREENS` корневого стека;
-- `base.ts` — тип `BaseParamList`.
+- `useListenNavigation.ts` (`src/pages/listen/lib/`) — `navigateToPlaylist`, `navigateToPlaylistList`;
+- `useReadNavigation.ts` (`src/pages/read/lib/`) — `navigateToBookReader` (`/read/book-reader`), `navigateToBooksList` (`/read/books-list`);
+- `src/shared/routing/` — `useColdStartLinkRecovery.ts` (Android-only safety net холодного старта, см. «Android App Links» ниже), `launchPath.ts` (pure-хелперы разбора launch URL: `extractLaunchPath`, `shouldAttemptRecovery`), `rootStackScreens.ts` (`SUB_SCREENS` корневого стека), `useHeaderTitle.ts`, `base.ts` (тип `BaseParamList`).
 
 ## Android App Links
 

@@ -21,7 +21,7 @@
 
 - Тема: `themeModeAtom`, `dynamicColorsEnabledAtom` (из `shared/ui/theme`, слой `shared`).
 - Виброотклик: `hapticsEnabledAtom` (из `shared/model`).
-- URL сервера: `serverUrlAtom`, `setServerUrlAction` (из `entities/settings`), дефолт `DEFAULT_API_URL` из `src/shared/config`.
+- URL сервера: `serverUrlAtom`, `setServerUrlAction` (из `shared/model`, файл `src/shared/model/settings.ts`), дефолт `DEFAULT_API_URL` из `src/shared/config`.
 
 ## Куда можно перейти
 

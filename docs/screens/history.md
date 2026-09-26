@@ -10,7 +10,7 @@
 
 ## Что показывается
 
-- `FlatList` записей истории; каждая строка — `HistoryRow` (`src/pages/history/ui/HistoryRow.tsx`), рендерящий `TracksListItem` (`shared/ui/track-list`):
+- `FlatList` записей истории; каждая строка — `HistoryRow` (`src/pages/history/ui/HistoryRow.tsx`), рендерящий `TracksListItem` (`entities/track-list`):
   - заголовок — название проповеди;
   - сабтайтл — `formatRelativeDate(lastPlayedAt)` (относительная дата прослушивания);
   - обложка — через `CoverImage` с фолбэком `IMAGE_PLACEHOLDER`;
@@ -35,7 +35,7 @@
 
 ## Состояния
 
-- Загрузка: пока `isHistoryLoadedAtom` (`entities/listening-history`) ещё `false` и история пуста — скелетоны `TracksListSkeleton` (`shared/ui/track-list`, 6 строк с разделителями); скелетон повторяет форму элемента списка (та же карточка-строка с обложкой и двумя полосами текста, с теми же отступами), поэтому при загрузке ничего не сдвигается; после загрузки из AsyncStorage атом становится `true`.
+- Загрузка: пока `isHistoryLoadedAtom` (`entities/listening-history`) ещё `false` и история пуста — скелетоны `TracksListSkeleton` (`entities/track-list`, 6 строк с разделителями); скелетон повторяет форму элемента списка (та же карточка-строка с обложкой и двумя полосами текста, с теми же отступами), поэтому при загрузке ничего не сдвигается; после загрузки из AsyncStorage атом становится `true`.
 - Пусто: «История пуста».
 - Очистка: подтверждение через `ConfirmDialog`.
 

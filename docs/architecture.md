@@ -11,8 +11,8 @@ app/           → точка входа, реэкспорт экранов (т�
 pages/         → экраны, композиция UI
 widgets/       → составные UI-блоки (плавающий плеер, таб-бар, баннеры)
 features/      → пользовательские взаимодействия и бизнес-логика
-entities/      → доменные модели и сущности (player, settings)
-shared/        → переиспользуемые утилиты, UI-компоненты, типы
+entities/      → доменные сущности (sermon, playlist, section, player, listening-history, offline-cache, track-list)
+shared/        → переиспользуемые утилиты, UI-компоненты, инфраструктура и структурные формы типов
 ```
 
 **Мотивация.** Каждый слой отвечает только за свою зону ответственности. Это даёт:
@@ -53,6 +53,21 @@ src/entities/listening-history/
 - **Изоляция изменений** — расширение полного barrel (`index.ts`) не ломает кросс-слойных импортов, если `@x` не изменён.
 
 **Не путать с barrel-файлами:** `@x/` — это НЕ сегментные barrel-файлы (которые запрещены). Barrel в корне слайса (`index.ts`) един и служит внешним потребителям. `@x/` — это дополнительные, узкие точки входа, создаваемые по мере необходимости при кросс-слойных связях.
+
+### Доменные сущности и структурные формы на границе `shared`
+
+Канонические доменные типы и их zod-схемы живут в `entities`:
+
+- `entities/sermon` — `SermonData`/`BookData` (`sermonSchema`, `bookSchema`, `booksArraySchema`), `AudioPlayerData` (`audioPlayerDataSchema`, `toAudioPlayerData`), перечисления групп Библии (`FetchedBooksGroupName`/`FetchedSermonsGroupName`), структурные `Fetched*`-типы, `formatSermonReference` и мапперы API → домен (`lib/mappers/`);
+- `entities/playlist` — `PlaylistData` (`playlistSchema`/`playlistsArraySchema`) и мапперы;
+- `entities/section` — `SectionData` (`sectionSchema`/`sectionsArraySchema`), `sections-cache` (`getCachedSections`/`setCachedSections` + ключ `CACHED_SECTIONS`), `fetchAllSections`, атомы секций и мапперы;
+- `entities/player`, `entities/listening-history`, `entities/offline-cache` (кэш аудио, глобальная очередь закачек, персистентный реестр офлайн-проповедей), `entities/track-list` (строки списков проповедей).
+
+**`shared` этот домен не импортирует.** `src/shared/model/domain/common.ts` держит только **структурные формы границы** — `SermonShape`, `PlaylistShape`, `SectionShape`: loose-интерфейсы для мест внутри `shared` (mock-БД `src/shared/api/db/`, `localBD`, `booksAPI`), которым нужна форма проповеди/плейлиста, но которые не могут тянуть `entities`. Канонические схемы и типы — в `entities`, а не в `shared`.
+
+**Жёсткий инвариант: ноль импортов `entities` (и выше) в `shared`.** `shared` — нижний слой, любая зависимость вверх запрещена, **в том числе через `@x`**. Если внутри `shared` нужна форма домена — используется структурная форма из `shared/model/domain`. Инвариант защищён архитектурным линтером (`yarn check:fsd`, steiger `fsd/forbidden-imports`) и код-ревью.
+
+Так же устроены кросс-связи между сущностями одного уровня: `entities/sermon` ↔ `entities/playlist` ↔ `entities/section` ↔ `entities/listening-history` ↔ `entities/offline-cache` общаются **только через `@x`-точки** (`entities/sermon/@x/*`, `entities/playlist/@x/*`, `entities/section/@x/*`), а не через основные barrel'ы.
 
 ### Запрет реэкспортов `shared/*` через верхние слои
 
@@ -198,7 +213,8 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
 ├────────────────────────────────────────────────────────────┤
 │ features/ update-notification                               │
 ├────────────────────────────────────────────────────────────┤
-│ entities/ player  listening-history  settings                   │
+│ entities/ sermon  playlist  section  player                     │
+│           listening-history  offline-cache  track-list          │
 ├────────────────────────────────────────────────────────────┤
 │ shared/   api  config  lib  mocks  model  routing  ui       │
 └────────────────────────────────────────────────────────────┘

@@ -5,11 +5,11 @@
 
 ## Статус
 
-> **В РАЗРАБОТКЕ.** Маршруты `/read/book-reader` и `/read/books-list` **НЕ зарегистрированы** в роутере (`app/`), хотя `useReadNavigation` (`src/shared/routing/useReadNavigation.ts`) на них навигирует. Таб «Читать» заблокирован диалогом «Скоро будет доступно» (`CustomTabBar` — `src/widgets/tab-bar/ui/CustomTabBar.tsx`). Код парсинга FB2 написан и покрыт типами, но экраны не смонтированы.
+> **В РАЗРАБОТКЕ.** Маршруты `/read/book-reader` и `/read/books-list` **НЕ зарегистрированы** в роутере (`app/`), хотя `useReadNavigation` (`src/pages/read/lib/useReadNavigation.ts`) на них навигирует. Таб «Читать» заблокирован диалогом «Скоро будет доступно» (`CustomTabBar` — `src/widgets/tab-bar/ui/CustomTabBar.tsx`). Код парсинга FB2 написан и покрыт типами, но экраны не смонтированы.
 
 ## Группы книг
 
-Перечисление `FetchedBooksGroupName` — `src/shared/model/domain/bible.ts`:
+Перечисление `FetchedBooksGroupName` — `src/entities/sermon/model/bible.ts`:
 
 - `NotesForPreachers` — «Конспекты для проповедников»;
 - `VerseByVerse` — «По библии. Стих за стихом»;
@@ -19,7 +19,7 @@
 
 ## Тип данных
 
-`BookData = SermonData` — **книга = проповедь** (поля `id, title, artist, artwork, book, chapter, verse, description, textFileUrl, audioUrl, youtubeUrl`). Определено в `src/shared/model/domain/common.ts` (`bookSchema = sermonSchema`, `BookData = SermonData`, `booksArraySchema`). В ходе миграции на спецификацию API v0.15.1 доменные `chapter`/`verse` расширяются до диапазонов (число | массив чисел | список отрезков), см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи».
+`BookData = SermonData` — **книга = проповедь** (поля `id, title, artist, artwork, book, chapter, verse, description, textFileUrl, audioUrl, youtubeUrl`). Определено в `src/entities/sermon/model/sermon.ts` (`bookSchema = sermonSchema`, `BookData = SermonData`, `booksArraySchema`). В ходе миграции на спецификацию API v0.15.1 доменные `chapter`/`verse` расширяются до диапазонов (число | массив чисел | список отрезков), см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи».
 
 ## Локальная БД книг
 

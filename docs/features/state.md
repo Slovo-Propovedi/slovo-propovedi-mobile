@@ -18,18 +18,17 @@
 | entities/player   | `src/entities/player/playback-rate.ts`      | `playbackRateAtom` + `setPlaybackRateAction`                                                                                                                                                               | скорость воспроизведения                             |
 | entities/player   | `src/entities/player/playerSheet.ts`        | `isPlayerExpandedAtom`, `openPlayerSheetAction`, `closePlayerSheetAction`                                                                                                                                 | развёрнут/свёрнут плеер                              |
 | entities/player   | `src/entities/player/lib/download-model.ts` | `downloadProgressAtom`, `isDownloadingAtom`, `downloadingAudioUrlAtom` + set-экшены                                                                                                                       | скачивание трека                                     |
-| entities/settings | `src/entities/settings/model.ts`            | `serverUrlAtom`, `setServerUrlAction`, `initServerUrlAction`                                                                                                                                              | URL сервера (синхронизирует `axiosInstance.baseURL`) |
 | shared/ui/theme   | `src/shared/ui/theme/model.ts`              | `themeModeAtom`, `currentThemeAtom`, `systemThemeAtom`, `dynamicColorsEnabledAtom` + `setThemeMode`, `loadThemeMode`, `setSystemTheme`, `setDynamicColors`, `loadDynamicColors`, `updateThemeBasedOnMode` | тема и Material You                                  |
 | shared/ui/layout  | `src/shared/ui/layout/model.ts`             | `tabBarHeightAtom`, `setTabBarHeight`                                                                                                                                                                     | измеренная высота таб-бара (onLayout в CustomTabBar) |
 | shared/model      | `src/shared/model/network.ts`               | `isOnlineAtom`, `serverUnreachableAtom`, `setOnlineStatus`, `reportServerReachable`, `reportServerUnreachable`                                                                                            | сеть и доступность сервера                           |
-| shared/model      | `src/shared/model/settings.ts`              | `hapticsEnabledAtom` + `setHapticsEnabled`, `loadHapticsEnabled`                                                                                                                                        | включён ли виброотклик (haptic feedback)             |
+| shared/model      | `src/shared/model/settings.ts`              | `hapticsEnabledAtom` + `setHapticsEnabled`, `loadHapticsEnabled`, `serverUrlAtom` + `setServerUrlAction`, `initServerUrlAction`                                                                                                                                        | виброотклик; URL сервера (синхронизирует `axiosInstance.baseURL`)             |
 | shared/model      | `src/shared/model/toast.ts`                 | `toastAtom`, `showToast`                                                                                                                                                                                  | транзиентный тост (авто-скрытие через 2 с)           |
 | shared/model      | `src/shared/model/update.ts`                | `latestVersionAtom`, `releaseUrlAtom`, `checkForUpdateAction`                                                                                                                                             | проверка обновлений                                  |
 | shared/model      | `src/shared/model/updateInstall.ts` + `updateInstallFlow.ts` | `updateStateAtom`, `updateProgressAtom`, `updateErrorAtom`, `updateDialogVisibleAtom`, `startUpdateAction`, `resumeUpdateAfterPermissionAction`, `resetUpdateAction` | самообновление (in-app)                              |
 | shared/model      | `src/shared/model/app.ts`                   | `isAudioPlayerMountedAtom`, `isPlayerFullscreenAtom`, `setIsAudioPlayerMounted`, `setPlayerFullscreen`                                                                                                    | глобальные флаги плеера                              |
-| pages/listen      | `src/pages/listen/model.ts`                 | `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom`, `fetchAllSections`                                                                                                               | секции главного экрана                               |
+| entities/section  | `src/entities/section/model.ts` + `src/entities/section/lib/fetchAllSections.ts`| `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom`, `fetchAllSections`                                                                                                               | секции главного экрана                               |
 | pages/playlist    | `src/pages/playlist/model.ts`               | `isCachingPlaylistAtom`, `playlistCacheProgressAtom`, `playlistCacheErrorAtom`                                                                                                                            | скачивание плейлиста                                 |
-| shared/lib        | `src/shared/lib/cache-triggers.ts`          | `cacheUpdateTriggerAtom`, `incrementCacheTrigger`, `playlistDownloadProgressAtom`, `setTrackDownloadProgress`, `removeTrackDownloadProgress`                                                              | триггеры обновления кэша                             |
+| entities/offline-cache | `src/entities/offline-cache/model.ts`      | `cacheUpdateTriggerAtom`, `incrementCacheTrigger`, `playlistDownloadProgressAtom`, `setTrackDownloadProgress`, `removeTrackDownloadProgress`                                                              | триггеры обновления кэша                             |
 
 ## Паттерны
 
@@ -64,16 +63,16 @@ ctx.get(cacheUpdateTriggerAtom) // чтение триггера
 ## Ключевые экшены-инициализаторы
 
 - `initializePlayer()` (`src/entities/player/lib/initializePlayer.ts`) — восстановление состояния плеера при старте.
-- `initServerUrlAction(ctx)` (`src/entities/settings/model.ts`) — восстановление URL сервера (синхронизирует `axiosInstance.baseURL`).
+- `initServerUrlAction(ctx)` (`src/shared/model/settings.ts`) — восстановление URL сервера (синхронизирует `axiosInstance.baseURL`).
 - `loadThemeMode` / `loadDynamicColors` (`src/shared/ui/theme/model.ts`) — восстановление темы.
 - `loadHapticsEnabled` (`src/shared/model/settings.ts`) — восстановление глобальной настройки виброотклика (дефолт `true`).
-- `fetchAllSections` (`src/pages/listen/model.ts`) — загрузка секций (сеть → кэш).
+- `fetchAllSections` (`src/entities/section/lib/fetchAllSections.ts`) — загрузка секций (сеть → кэш).
 
 Вызываются модульно или в `app/_layout.tsx` до/после монтирования провайдера.
 
 ## Когда использовать `ctx.schedule`
 
-Обновления атомов из асинхронных экшенов оборачиваются в `ctx.schedule(() => atom(ctx, value))`, чтобы записать значение в текущем актуальном транзакционном контексте. Простые синхронные обновления (например, в `cache-triggers.ts`) могут записывать атом напрямую без `schedule`.
+Обновления атомов из асинхронных экшенов оборачиваются в `ctx.schedule(() => atom(ctx, value))`, чтобы записать значение в текущем актуальном транзакционном контексте. Простые синхронные обновления (например, в `src/entities/offline-cache/model.ts`) могут записывать атом напрямую без `schedule`.
 
 ## Публичные API срезов (barrel)
 

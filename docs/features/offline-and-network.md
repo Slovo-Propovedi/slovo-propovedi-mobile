@@ -1,6 +1,6 @@
 # Офлайн и сеть
 
-**Слой:** `shared/lib/network`, `shared/model/network`, `shared/lib/sections-cache`, `widgets/network-status`
+**Слой:** `shared/lib/network`, `shared/model/network`, `entities/section`, `entities/offline-cache`, `widgets/network-status`
 **Статус:** готов
 
 ## Мониторинг сети
@@ -40,7 +40,7 @@ isInternetReachable ?? isConnected
 
 `waitForOnline(timeoutMs)` (`src/shared/lib/network/waitForOnline.ts`) — асинхронное ограниченное ожидание подключения: сразу (без начальной задержки) опрашивает `NetInfo.fetch()`, при офлайне повторяет опрос раз в секунду; резолвится `true` при первом же «онлайн»-ответе или `false`, если истёк `timeoutMs`. Онлайн определяется через `isNetInfoOnline` — **реальную достижимость интернета** (`isInternetReachable ?? isConnected`), а не только поднятый интерфейс: Wi-Fi без интернета продолжает опрашиваться до честного возврата сети. Используется:
 
-- в retry-цикле скачивания кэша (`src/shared/lib/audio-cache/cacheDownloader.ts`) — ожидание сети до 60с перед каждой повторной попыткой;
+- в retry-цикле скачивания кэша (`src/entities/offline-cache/lib/cacheDownloader.ts`) — ожидание сети до 60с перед каждой повторной попыткой;
 - в скачивании плейлиста (`src/pages/playlist/lib/runPlaylistCaching.ts`) — проверка перед каждым треком; если сеть не вернулась за 60с, весь прогон прерывается ошибкой «Нет подключения к интернету».
 
 ## Офлайн-повтор запроса
@@ -49,9 +49,9 @@ isInternetReachable ?? isConnected
 
 ## Кэш секций
 
-`src/shared/lib/sections-cache/` — `getCachedSections` / `setCachedSections`, ключ `CACHED_SECTIONS` (`src/shared/config/cache-storage-keys.ts`).
+`src/entities/section/lib/sections-cache/` — `getCachedSections` / `setCachedSections`, ключ `CACHED_SECTIONS` (`src/entities/section/lib/sections-cache/cacheKey.ts`).
 
-Поток `fetchAllSections` (`src/pages/listen/model.ts`):
+Поток `fetchAllSections` (`src/entities/section/lib/fetchAllSections.ts`, вызывается экраном «Слушать»):
 
 1. запрос `sectionsApi.getSections().sectionControllerFindAll()` (сеть);
 2. при сетевой ошибке — чтение кэша (`getCachedSections`), источник `'cache'`;
@@ -120,7 +120,7 @@ Guard проверяет `isOnlineAtom` (NetInfo) и `audioCacheService.isCached
 При `!isOnline` все действия «добавить в офлайн» недоступны (требуют интернета), а «удалить из офлайн» работает офлайн:
 
 - «Добавить все в офлайн» на экране плейлиста — `usePlaylistOfflineMenu` (`src/pages/playlist/lib/usePlaylistOfflineMenu.ts`): `isAddAllToOfflineDisabled` включает `!isOnline`;
-- «Добавить в офлайн» в контекстном меню строки трека — `useTrackItemCache.isCacheDisabled` (`src/shared/ui/track-list/useTrackItemCache.ts`) + no-op guard в `toggleCache`;
+- «Добавить в офлайн» в контекстном меню строки трека — `useTrackItemCache.isCacheDisabled` (`src/entities/offline-cache/ui/useTrackItemCache.ts`) + no-op guard в `toggleCache`;
 - «Добавить в офлайн» в меню полноэкранного плеера — `PlayerMenuItems.isCacheDisabled` (`src/widgets/expandable-player/ui/PlayerMenu/PlayerMenuItems.tsx`).
 
 Подробнее — [audio-cache.md](./audio-cache.md) → «Офлайн: добавление в офлайн недоступно».
@@ -139,7 +139,7 @@ Guard проверяет `isOnlineAtom` (NetInfo) и `audioCacheService.isCached
 
 - `widgets/network-status` — `NetworkBanner`, `ServerErrorToast`, `useNetworkIslandAnimation` (анимация пилюли). Экспорт — `src/widgets/network-status/index.ts`.
 - Оба виджета рендерятся в корневом стеке `app/_RootLayout.tsx` поверх навигации и не перекрывают контент (position: absolute, zIndex 100).
-- Внешние зависимости: `@react-native-community/netinfo` (мониторинг), `expo-file-system` + `shared/lib/audio-cache` (офлайн-аудио).
+- Внешние зависимости: `@react-native-community/netinfo` (мониторинг), `expo-file-system` + `entities/offline-cache` (офлайн-аудио).
 
 ### Константы повторов
 

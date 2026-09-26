@@ -94,7 +94,7 @@
   - запрос непустой → `resetSearchResults` (сброс `searchResultsAtom`/`isSearchingAtom` + инвалидация in-flight запросов через bump `latestRequestId`) и очистка поля (секции возвращаются, поиск остаётся открытым, фокус сохраняется);
   - запрос пустой → закрывает поиск целиком (`closeSearch`, клавиатура скрывается).
 - **`Escape` в поиске (web-only)** — та же цепочка, что у «✕»: при непустом запросе очищает поле и оставляет поиск открытым (фокус сохраняется), при пустом — закрывает поиск. Работает **независимо от фокуса поля**: слой в общем стеке Escape (`useEscapeKey`, гейт `Platform.OS === 'web' && isSearchOpenAtom`), capture-слушатель на `document` видит событие раньше инпута — отдельный input-scoped `onKeyPress` не нужен. На нативе не работает (гейт `Platform.OS === 'web'`). Слоистость с плеером и модалками — см. [features/web.md](../features/web.md) → «Клавиатура полноэкранного плеера (web)».
-- `SermonSearchResults` (`src/features/sermon-search/ui/SermonSearchResults.tsx`) — рендерится вместо секций, когда поиск открыт и `useIsSearchActive()` истинно (длина обрезанного запроса `≥ MIN_QUERY_LENGTH = 2`). `FlatList` строк `SermonSearchRow` (каждая рендерит `TracksListItem` из `shared/ui/track-list`: обложка через `CoverImage` с фолбэком `IMAGE_PLACEHOLDER`, заголовок жирным, сабтайтл «проповедник • книга+глава+стих» через `formatScripture`); под заголовком каждого результата — тонкая полоса прогресса прослушивания (сохранённая позиция из `entities/listening-history` через `useHistoryProgressMap`); полоса обновляется **только по событиям** — без live-тикания в реальном времени (live-чтение убрано). Завершённые результаты (`progress >= 1`) затемняются (см. [features/listening-history.md](../features/listening-history.md) → «Затемнение завершённых»). Контекст-меню строки (три точки / long-press) — `buildHistoryMenuActions`: «Пометить прослушанной» (для незавершённых) и «Удалить из истории» (если проповедь в истории). Пустое состояние/спиннер — `ListEmptyComponent`. В ходе миграции на спецификацию API v0.15.1 `formatScripture` расширяется на диапазоны глав/стихов (см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи»). Строка поиска **не входит** в список: она закреплена над скролл-областью на уровне экрана (`ListenScreen.tsx`), а список скроллится под ней.
+- `SermonSearchResults` (`src/features/sermon-search/ui/SermonSearchResults.tsx`) — рендерится вместо секций, когда поиск открыт и `useIsSearchActive()` истинно (длина обрезанного запроса `≥ MIN_QUERY_LENGTH = 2`). `FlatList` строк `SermonSearchRow` (каждая рендерит `TracksListItem` из `entities/track-list`: обложка через `CoverImage` с фолбэком `IMAGE_PLACEHOLDER`, заголовок жирным, сабтайтл «проповедник • книга+глава+стих» через `formatScripture`); под заголовком каждого результата — тонкая полоса прогресса прослушивания (сохранённая позиция из `entities/listening-history` через `useHistoryProgressMap`); полоса обновляется **только по событиям** — без live-тикания в реальном времени (live-чтение убрано). Завершённые результаты (`progress >= 1`) затемняются (см. [features/listening-history.md](../features/listening-history.md) → «Затемнение завершённых»). Контекст-меню строки (три точки / long-press) — `buildHistoryMenuActions`: «Пометить прослушанной» (для незавершённых) и «Удалить из истории» (если проповедь в истории). Пустое состояние/спиннер — `ListEmptyComponent`. В ходе миграции на спецификацию API v0.15.1 `formatScripture` расширяется на диапазоны глав/стихов (см. [contracts/rest-api.md](../contracts/rest-api.md) → «Главы и стихи»). Строка поиска **не входит** в список: она закреплена над скролл-областью на уровне экрана (`ListenScreen.tsx`), а список скроллится под ней.
 - Тап по результату запускает воспроизведение: `usePlayNewSermon` из `entities/player` с `resolvePlaylist(sermon)` (первый плейлист проповеди или минимальный fallback из полей самой проповеди).
 
 ### Подсказки (автодополнение)
@@ -109,7 +109,7 @@
 
 - `searchQueryAtom`, `searchResultsAtom`, `isSearchingAtom`, `isSearchOpenAtom` в `src/features/sermon-search/model.ts`; действия `openSearch`, `closeSearch`, `resetSearchResults`, `fetchSearchResults`.
 - `useDebouncedSearch` (`src/features/sermon-search/lib/useDebouncedSearch.ts`): при активном запросе (`≥ 2` символа) — дебаунс 400 мс и вызов `fetchSearchResults`. Сброс результатов при очистке выполняется в `SearchBar` (✕ → `resetSearchResults`), а не здесь: при падении запроса ниже порога компонент результатов размонтируется в том же коммите, и эффект хука не успевает выполниться.
-- `fetchSearchResults`: `sermonsApi.getSermons().sermonControllerFindAll({ search, take: 20 })` → маппинг через `mapAllSermonsResponse` (`shared/api`). Защита от устаревших ответов: `latestRequestId` — ответ старого запроса игнорируется (в т.ч. медленное чтение кэша не перезаписывает более свежий результат).
+- `fetchSearchResults`: `sermonsApi.getSermons().sermonControllerFindAll({ search, take: 20 })` → маппинг через `mapAllSermonsResponse` (`entities/sermon`). Защита от устаревших ответов: `latestRequestId` — ответ старого запроса игнорируется (в т.ч. медленное чтение кэша не перезаписывает более свежий результат).
 - Порог `MIN_QUERY_LENGTH = 2`: один символ слишком шумный для поиска по русскому тексту, двух символов достаточно для осмысленных совпадений.
 
 ### Состояния
@@ -121,16 +121,16 @@
 
 ## Откуда данные
 
-- `fetchAllSections` из `src/pages/listen/model.ts`:
+- `fetchAllSections` из `src/entities/section/lib/fetchAllSections.ts`:
   - сначала `sectionsApi.getSections().sectionControllerFindAll()` (сеть);
-  - при ошибке сети — кэш из AsyncStorage (`getCachedSections`, ключ `CACHED_SECTIONS` из `src/shared/config/cache-storage-keys.ts`);
+  - при ошибке сети — кэш из AsyncStorage (`getCachedSections`, ключ `CACHED_SECTIONS` из `src/entities/section/lib/sections-cache/cacheKey.ts`);
   - успешный ответ всегда пишется в кэш (fire-and-forget `setCachedSections`).
-- Атомы: `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom` (`'cache' | 'network' | 'unknown'`).
+- Атомы: `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom` (`'cache' | 'network' | 'unknown'`) — `entities/section/model.ts`.
 - Хук `useOfflineRetry` (`src/shared/lib/network/useOfflineRetry.ts`) перезапрашивает при возврате онлайн/в foreground/по таймеру, если последний ответ был не из сети.
 
 ## Куда можно перейти
 
-- Тап на плейлист всегда открывает страницу плейлиста → `/listen/playlist?playlist=<id плейлиста>` (`navigateToPlaylist` из `src/shared/routing/useListenNavigation.ts`) — даже если в плейлисте одна проповедь.
+- Тап на плейлист всегда открывает страницу плейлиста → `/listen/playlist?playlist=<id плейлиста>` (`navigateToPlaylist` из `src/pages/listen/lib/useListenNavigation.ts`) — даже если в плейлисте одна проповедь.
 - Тап на заголовок секции → `/listen/playlist-list?sectionId=<id секции>&title=<строка>` (`navigateToPlaylistList`).
 - Тап на проповедь в результатах поиска — запуск воспроизведения (без перехода). Тап на уже играющую проповедь — no-op (Issue #99): воспроизведение не перезапускается, полноэкранный плеер не открывается.
 

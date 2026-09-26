@@ -135,7 +135,7 @@ export { type ListeningHistory } from '../model/types'
 
 **Импорт из `entities/section` (тоже через @x):** `resolveEntryPlaylist` читает live-секции через `dynamicSectionsAtom`, импортируя его из @x-точки `entities/section/@x/listening-history` (а не из основного barrel `entities/section`) — по тому же правилу @x для кросс-слойных импортов между сущностями одного уровня.
 
-> Обратной зависимости у listening-history на player больше нет: контракт `AudioPlayerData` (`audioPlayerDataSchema`, тип, `toAudioPlayerData`) живёт в `shared/model/domain/audioPlayerData.ts` и импортируется из `shared/model`. Это устранило require-цикл `entities/player` ↔ `entities/listening-history` (бывшая запись в debt.md). Направление player → history через `@x/player` сохранено.
+> Обратной зависимости у listening-history на player больше нет: контракт `AudioPlayerData` (`audioPlayerDataSchema`, тип, `toAudioPlayerData`) живёт в `entities/sermon` и импортируется через @x-точку `entities/sermon/@x/listening-history`. Это устранило require-цикл `entities/player` ↔ `entities/listening-history` (бывшая запись в debt.md). Направление player → history через `@x/player` сохранено.
 
 ## Типы данных
 
@@ -150,7 +150,7 @@ export { type ListeningHistory } from '../model/types'
 }
 ```
 
-Записи **slim**: top-level поля `sermon` нет — снапшот проповеди живёт в `playlist.sermons[0]` (buildHistoryEntry кладёт санитизированную копию без `playlists`). Доступ к проповеди — через `getEntrySermon(entry)` (`entry.sermon ?? toAudioPlayerData(entry.playlist.sermons[0])`, где `toAudioPlayerData` — `shared/model`; возвращает `null`, если у проповеди нет `audioUrl`). В `types.ts` поле `sermon` оставлено опциональным для совместимости чтения старых записей (легаси-формат с top-level sermon).
+Записи **slim**: top-level поля `sermon` нет — снапшот проповеди живёт в `playlist.sermons[0]` (buildHistoryEntry кладёт санитизированную копию без `playlists`). Доступ к проповеди — через `getEntrySermon(entry)` (`entry.sermon ?? toAudioPlayerData(entry.playlist.sermons[0])`, где `toAudioPlayerData` — `entities/sermon`; возвращает `null`, если у проповеди нет `audioUrl`). В `types.ts` поле `sermon` оставлено опциональным для совместимости чтения старых записей (легаси-формат с top-level sermon).
 
 > ✅ **Issue #45 (Phase 1, safety nets): `getEntrySermon` возвращает `AudioPlayerData | null`.**
 >
@@ -203,7 +203,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 ## Меню строк списков (контекстное меню)
 
-Пункты, относящиеся к истории, для строк списков строятся через `buildHistoryMenuActions({ inHistory, isCompleted, playlist, sermon })` (`src/entities/listening-history/lib/buildHistoryMenuActions.ts`). Возвращает `MenuAction[]` (`shared/ui/track-list`), **аддитивно** по состоянию. Инвариант: `isCompleted` учитывается только при `inHistory === true` — состояние «прослушано, но не в истории» исключено по построению, поэтому строка без записи в истории всегда предлагает «Пометить прослушанной».
+Пункты, относящиеся к истории, для строк списков строятся через `buildHistoryMenuActions({ inHistory, isCompleted, playlist, sermon })` (`src/entities/listening-history/lib/buildHistoryMenuActions.ts`). Возвращает `MenuItem[]` (`shared/ui/menu`), **аддитивно** по состоянию. Инвариант: `isCompleted` учитывается только при `inHistory === true` — состояние «прослушано, но не в истории» исключено по построению, поэтому строка без записи в истории всегда предлагает «Пометить прослушанной».
 
 | Условие          | Пункт                       | Иконка          | Экшен                                                        |
 | ---------------- | --------------------------- | --------------- | ------------------------------------------------------------ |
@@ -311,7 +311,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 ### Затемнение завершённых
 
-В `TracksListItemContent` (`src/shared/ui/track-list/`) завершённая строка (`progress >= 1`) затемняется: обложка получает `albumArtCompleted` (opacity 0.5), заголовок — `titleCompleted` (приглушённый цвет). Правило: `isCompleted = progress != null && progress >= 1`. Строка истории (`HistoryRow`) дополнительно передаёт полный прогресс-бар (`storedProgress = 1`) для завершённых записей.
+В `TracksListItemContent` (`src/entities/track-list/`) завершённая строка (`progress >= 1`) затемняется: обложка получает `albumArtCompleted` (opacity 0.5), заголовок — `titleCompleted` (приглушённый цвет). Правило: `isCompleted = progress != null && progress >= 1`. Строка истории (`HistoryRow`) дополнительно передаёт полный прогресс-бар (`storedProgress = 1`) для завершённых записей.
 
 ## Экран истории
 

@@ -36,7 +36,7 @@ db/
     └── ...
 ```
 
-Данные-элементы — объекты типа `SermonData`/`FetchedBookData` (структурно совпадают с доменным `SermonData` из `src/shared/model/domain/common.ts`): поля `id, title, artist, artwork, chapter, verse, description, textFileUrl`, иногда `audioUrl`, `youtubeUrl`. Пример записей — `src/shared/api/db/books/markBook.ts`. В локальной БД `chapter`/`verse` хранятся в простых формах (число или массив чисел); доменный `SermonData` в ходе миграции на спецификацию v0.15.1 расширяется до диапазонов (см. [rest-api.md](./rest-api.md) → «Главы и стихи»).
+Данные-элементы — объекты типа `SermonData`/`FetchedBookData` (структурно совпадают с доменным `SermonData` из `src/entities/sermon/model/sermon.ts`): поля `id, title, artist, artwork, chapter, verse, description, textFileUrl`, иногда `audioUrl`, `youtubeUrl`. Пример записей — `src/shared/api/db/books/markBook.ts`. В локальной БД `chapter`/`verse` хранятся в простых формах (число или массив чисел); доменный `SermonData` в ходе миграции на спецификацию v0.15.1 расширяется до диапазонов (см. [rest-api.md](./rest-api.md) → «Главы и стихи»).
 
 ## API
 
@@ -46,7 +46,7 @@ db/
 
 ## Группы
 
-Перечисления — `src/shared/model/domain/bible.ts`:
+Перечисления — `src/entities/sermon/model/bible.ts`:
 
 - **`FetchedBooksGroupName`**: `notesForPreachers`, `topicalAndThematic`, `verseByVerse`.
 - **`FetchedSermonsGroupName`**: `new`, `onBible`, `topical`.
