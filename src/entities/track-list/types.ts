@@ -1,6 +1,6 @@
 import { type StyleProp, type ViewStyle } from 'react-native'
+import { type MenuItem } from 'shared/ui/menu'
 import { type TrackCacheState } from './trackCacheState'
-import { type MenuAction } from './TracksListItemContextMenu'
 
 export interface TracksListItemProps {
   artwork?: null | string
@@ -10,7 +10,7 @@ export interface TracksListItemProps {
   isAudioPlaying?: boolean
   isPlaying: boolean
   /** Custom context-menu actions. Added after the default cache toggle. */
-  menuActions?: MenuAction[]
+  menuActions?: MenuItem[]
   onPress: () => void
   /** Listening progress 0..1, renders a thin bar along the row bottom edge. A value of 1 dims the row (listened). */
   progress?: number

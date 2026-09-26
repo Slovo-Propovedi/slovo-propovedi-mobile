@@ -1,14 +1,12 @@
 import { type AnchorRect, MenuDropdown, type MenuItem } from 'shared/ui/menu'
 import { type TrackCacheVisualState } from './trackCacheState'
 
-export type MenuAction = MenuItem
-
 export interface TracksListItemContextMenuProps {
   anchor: AnchorRect | null
   isCached: boolean
   isCacheDisabled?: boolean
   isMenuOpen: boolean
-  menuActions?: MenuAction[]
+  menuActions?: MenuItem[]
   onClose: () => void
   onToggleCache: () => void
   visualState: TrackCacheVisualState

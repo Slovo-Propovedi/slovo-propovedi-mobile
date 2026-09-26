@@ -8,9 +8,9 @@ import {
   type ListeningHistoryEntry,
 } from 'entities/listening-history'
 import { useTrackItemCache } from 'entities/offline-cache'
+import { TracksListItem } from 'entities/track-list'
 import { formatRelativeDate } from 'shared/lib/format'
 import { INDENTS } from 'shared/ui/theme'
-import { TracksListItem } from 'shared/ui/track-list'
 
 const PLAYBACK_ERROR_MESSAGE = 'Не удалось воспроизвести проповедь из истории'
 

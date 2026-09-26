@@ -16,7 +16,7 @@ jest.mock('entities/offline-cache', () => ({
   })),
 }))
 
-jest.mock('shared/ui/track-list', () => {
+jest.mock('entities/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
   return {
     TracksListItem: (props: {

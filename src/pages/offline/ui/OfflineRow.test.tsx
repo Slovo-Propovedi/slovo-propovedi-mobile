@@ -49,7 +49,7 @@ jest.mock('shared/model/error-dialog', () => ({
   reportError: (...args: unknown[]) => mockReportError(...args),
 }))
 
-jest.mock('shared/ui/track-list', () => {
+jest.mock('entities/track-list', () => {
   const { View } = jest.requireActual('react-native')
   return {
     TracksListItem: (props: CapturedTrackItemProps) => {

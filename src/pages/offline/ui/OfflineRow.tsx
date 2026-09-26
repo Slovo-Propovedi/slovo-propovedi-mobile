@@ -5,9 +5,9 @@ import { type OfflineSermonItem } from 'features/offline-sermons'
 import { useHistoryProgress } from 'entities/listening-history'
 import { useTrackItemCache } from 'entities/offline-cache'
 import { currentAudioAtom, usePlayNewSermon } from 'entities/player'
+import { TracksListItem } from 'entities/track-list'
 import { reportError } from 'shared/model/error-dialog'
 import { INDENTS } from 'shared/ui/theme'
-import { TracksListItem } from 'shared/ui/track-list'
 
 const PLAYBACK_ERROR_MESSAGE = 'Не удалось воспроизвести офлайн-проповедь'
 

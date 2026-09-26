@@ -1,7 +1,7 @@
 import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import Animated from 'react-native-reanimated'
+import { useSkeletonPulse } from 'shared/ui/skeleton/useSkeletonPulse'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
-import { useSkeletonPulse } from '../skeleton/useSkeletonPulse'
 import { TRACK_LIST_ITEM_SIZES } from './styles'
 
 interface TracksListItemSkeletonProps {

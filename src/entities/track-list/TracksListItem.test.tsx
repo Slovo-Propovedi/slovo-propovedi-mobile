@@ -40,7 +40,7 @@ jest.mock('./TracksListItemContextMenu', () => ({
   },
 }))
 
-jest.mock('../progress-bar/ProgressBar', () => {
+jest.mock('shared/ui/progress-bar/ProgressBar', () => {
   const { View: RNView } = jest.requireActual('react-native')
   return {
     ProgressBar: (props: { progress: number }) => (

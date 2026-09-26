@@ -7,8 +7,8 @@ import {
   type ViewStyle,
 } from 'react-native'
 import { match } from 'ts-pattern'
-import { IconButton } from '../icon-button'
-import { COLORS } from '../theme/colors'
+import { IconButton } from 'shared/ui/icon-button'
+import { COLORS } from 'shared/ui/theme/colors'
 import { PlayerControlButtonType } from './control-button.types'
 
 interface PlayerControlButtonProps {

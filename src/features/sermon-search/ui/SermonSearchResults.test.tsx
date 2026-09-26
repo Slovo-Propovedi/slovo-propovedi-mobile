@@ -38,7 +38,7 @@ jest.mock('entities/listening-history', () => ({
   useHistorySermonIds: jest.fn(() => new Set()),
 }))
 
-jest.mock('shared/ui/track-list', () => {
+jest.mock('entities/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
   const { CoverImage } = jest.requireActual('shared/ui')
   return {

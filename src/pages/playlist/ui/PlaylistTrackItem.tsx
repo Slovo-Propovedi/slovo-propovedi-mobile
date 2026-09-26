@@ -1,8 +1,9 @@
 import { memo, useCallback } from 'react'
 import { StyleSheet } from 'react-native'
 import { useTrackItemCache } from 'entities/offline-cache'
+import { TracksListItem } from 'entities/track-list'
+import { type MenuItem } from 'shared/ui/menu'
 import { INDENTS } from 'shared/ui/theme'
-import { type MenuAction, TracksListItem } from 'shared/ui/track-list'
 
 interface PlaylistTrackItemProps {
   artwork: null | string
@@ -12,7 +13,7 @@ interface PlaylistTrackItemProps {
   id: string | undefined
   index: number
   isPlaying: boolean
-  menuActions?: MenuAction[]
+  menuActions?: MenuItem[]
   onPress: (index: number) => void
   storedProgress?: number
   subtitle?: string

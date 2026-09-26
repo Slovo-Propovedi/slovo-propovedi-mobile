@@ -26,11 +26,19 @@ jest.mock('entities/player', () => {
     downloadProgressAtom,
     isDownloadingAtom,
   } = jest.requireActual('entities/player/lib/download-model')
+  const { PlayerControlButton } = jest.requireActual(
+    'entities/player/ui/control-button/control-button',
+  )
+  const { PlayerControlButtonType } = jest.requireActual(
+    'entities/player/ui/control-button/control-button.types',
+  )
   return {
     bufferedProgressStateAtom,
     downloadingAudioUrlAtom,
     downloadProgressAtom,
     isDownloadingAtom,
+    PlayerControlButton,
+    PlayerControlButtonType,
   }
 })
 

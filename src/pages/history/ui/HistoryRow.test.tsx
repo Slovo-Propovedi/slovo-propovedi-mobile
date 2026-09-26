@@ -37,7 +37,7 @@ jest.mock('entities/section/@x/listening-history', () => {
   }
 })
 
-jest.mock('shared/ui/track-list', () => {
+jest.mock('entities/track-list', () => {
   const { View } = jest.requireActual('react-native')
   return {
     TracksListItem: (props: CapturedTrackItemProps) => {

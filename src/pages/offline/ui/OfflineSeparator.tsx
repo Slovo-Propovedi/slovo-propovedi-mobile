@@ -1,6 +1,6 @@
 import { View } from 'react-native'
+import { createTracksListStyles } from 'entities/track-list'
 import { useTheme } from 'shared/ui/theme'
-import { createTracksListStyles } from 'shared/ui/track-list'
 
 export const OfflineSeparator = () => {
   const { currentTheme } = useTheme()

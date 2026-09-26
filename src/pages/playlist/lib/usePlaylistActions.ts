@@ -3,7 +3,7 @@ import { buildHistoryMenuActions } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
 import { type SermonData, toAudioPlayerData } from 'entities/sermon'
-import { type MenuAction } from 'shared/ui/track-list'
+import { type MenuItem } from 'shared/ui/menu'
 
 /**
  * Composes the playlist screen's per-item actions: press-to-play, play-all and
@@ -31,7 +31,7 @@ export const usePlaylistActions = (
   )
 
   const buildMenuActions = useCallback(
-    (index: number): MenuAction[] | undefined => {
+    (index: number): MenuItem[] | undefined => {
       const sermon = list[index]
       const audio = sermon ? toAudioPlayerData(sermon) : null
       if (!audio) return undefined

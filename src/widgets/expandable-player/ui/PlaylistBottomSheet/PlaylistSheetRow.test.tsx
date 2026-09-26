@@ -22,7 +22,7 @@ jest.mock('entities/listening-history', () => ({
   useHistoryProgress: (sermonId: string | undefined) => mockedUseHistoryProgress(sermonId),
 }))
 
-jest.mock('shared/ui/track-list', () => {
+jest.mock('entities/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
   return {
     TracksListItem: (props: {

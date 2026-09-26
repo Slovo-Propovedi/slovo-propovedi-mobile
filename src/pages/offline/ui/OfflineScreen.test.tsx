@@ -47,7 +47,7 @@ jest.mock('entities/listening-history', () => ({
   useHistoryProgress: jest.fn(() => undefined),
 }))
 
-jest.mock('shared/ui/track-list', () => {
+jest.mock('entities/track-list', () => {
   const { Pressable, StyleSheet, Text, View: RNView } = jest.requireActual('react-native')
   const TracksListItem = (props: { onPress: () => void; subtitle?: string; title: string }) => (
     <RNView testID='tracks-list-item'>

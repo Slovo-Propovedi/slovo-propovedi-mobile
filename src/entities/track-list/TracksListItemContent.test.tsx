@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native'
 import { Text as MockText } from 'react-native'
-import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { TracksListItemContent } from './TracksListItemContent'
 
 const mockIconSpy = jest.fn()

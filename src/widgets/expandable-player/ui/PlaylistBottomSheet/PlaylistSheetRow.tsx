@@ -1,8 +1,7 @@
 import { memo, useCallback } from 'react'
 import { useHistoryProgress } from 'entities/listening-history'
 import { useTrackItemCache } from 'entities/offline-cache'
-import { TracksListItem } from 'shared/ui/track-list'
-import type { TracksListItemProps } from 'shared/ui/track-list/types'
+import { TracksListItem, type TracksListItemProps } from 'entities/track-list'
 
 interface PlaylistSheetRowProps extends Omit<
   TracksListItemProps,

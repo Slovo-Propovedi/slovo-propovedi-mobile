@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef } from 'react'
 import { buildHistoryMenuActions, useHistorySermonIds } from 'entities/listening-history'
 import { type PlaylistData } from 'entities/playlist'
 import { toAudioPlayerData } from 'entities/sermon'
-import { type MenuAction } from 'shared/ui/track-list'
+import { type MenuItem } from 'shared/ui/menu'
 
 /**
  * Builds per-row context-menu actions for the queue sheet.
@@ -16,7 +16,7 @@ import { type MenuAction } from 'shared/ui/track-list'
 export const useSheetMenuActions = (
   playlist: PlaylistData,
   progressMap: Map<string, number>,
-): ((itemId: string) => MenuAction[] | undefined) => {
+): ((itemId: string) => MenuItem[] | undefined) => {
   const historySermonIds = useHistorySermonIds()
   const sermonById = useMemo(
     () => new Map(playlist.sermons.map(sermon => [sermon.id, sermon] as const)),
@@ -26,11 +26,11 @@ export const useSheetMenuActions = (
   // progress) and would rebuild their menu actions every time. The cache is
   // cleared synchronously when any dependency changes, so stale entries never
   // leak into a render.
-  const actionsCacheRef = useRef(new Map<string, MenuAction[] | undefined>())
+  const actionsCacheRef = useRef(new Map<string, MenuItem[] | undefined>())
   const cacheDepsRef = useRef<readonly unknown[]>([])
 
   return useCallback(
-    (itemId: string): MenuAction[] | undefined => {
+    (itemId: string): MenuItem[] | undefined => {
       const deps: readonly unknown[] = [historySermonIds, playlist, progressMap, sermonById]
       const prevDeps = cacheDepsRef.current
       if (prevDeps.length !== deps.length || deps.some((dep, i) => dep !== prevDeps[i])) {

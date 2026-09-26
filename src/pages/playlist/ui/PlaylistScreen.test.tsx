@@ -107,7 +107,7 @@ jest.mock('expo-blur', () => {
   return { BlurTargetView: View, BlurView: View }
 })
 
-jest.mock('shared/ui/track-list', () => {
+jest.mock('entities/track-list', () => {
   const { Pressable, Text, View } = jest.requireActual('react-native')
   return {
     createTracksListStyles: () => ({ container: {}, divider: {} }),

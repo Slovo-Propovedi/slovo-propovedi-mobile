@@ -107,7 +107,7 @@ jest.mock('entities/listening-history', () => ({
   useHistorySermonIds: () => new Set<string>(),
 }))
 
-jest.mock('shared/ui/track-list', () => {
+jest.mock('entities/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
   const TracksListItem = ({ title }: { title: string }) => (
     <View testID='tracks-list-item'>

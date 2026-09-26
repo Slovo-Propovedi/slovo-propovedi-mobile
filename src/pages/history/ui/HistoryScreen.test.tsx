@@ -83,7 +83,7 @@ jest.mock('entities/player', () => {
   }
 })
 
-jest.mock('shared/ui/track-list', () => {
+jest.mock('entities/track-list', () => {
   const { Pressable, StyleSheet, Text, View: RNView } = jest.requireActual('react-native')
   const TracksListItem = (props: {
     menuActions?: Array<{ onPress: () => void; text: string }>

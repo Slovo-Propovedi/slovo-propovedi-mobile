@@ -1,6 +1,6 @@
 import { type PlaylistData } from 'entities/playlist/@x/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type MenuAction } from 'shared/ui/track-list'
+import { type MenuItem } from 'shared/ui/menu'
 import type { AudioPlayerData } from 'entities/sermon'
 import { markSermonListenedAction } from './markSermonListened'
 import { removeHistoryEntryAction } from './removeHistoryEntry'
@@ -18,12 +18,12 @@ export const buildHistoryMenuActions = ({
   isCompleted,
   playlist,
   sermon,
-}: BuildHistoryMenuActionsParams): MenuAction[] => {
+}: BuildHistoryMenuActionsParams): MenuItem[] => {
   // Invariant: completion without a history entry is an impossible state by
   // design — only an in-history row can be marked completed.
   const completed = inHistory && isCompleted
 
-  const actions: MenuAction[] = []
+  const actions: MenuItem[] = []
 
   if (!completed)
     actions.push({

@@ -2,7 +2,7 @@ import { memo } from 'react'
 import { buildHistoryMenuActions } from 'entities/listening-history'
 import { useTrackItemCache } from 'entities/offline-cache'
 import { type SermonData, toAudioPlayerData } from 'entities/sermon'
-import { TracksListItem } from 'shared/ui/track-list'
+import { TracksListItem } from 'entities/track-list'
 import { formatScripture } from '../lib/formatScripture'
 
 interface SermonSearchRowProps {

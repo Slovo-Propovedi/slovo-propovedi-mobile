@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native'
+import { TRACK_LIST_ITEM_SIZES } from 'entities/track-list'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
-import { TRACK_LIST_ITEM_SIZES } from 'shared/ui/track-list'
 import type { ThemeColors } from 'shared/ui/theme'
 
 export const createStyles = (themeColors: ThemeColors) =>

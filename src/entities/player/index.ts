@@ -33,6 +33,8 @@ export { closePlayerSheetAction, isPlayerExpandedAtom, openPlayerSheetAction } f
 
 export { type TrackToggleNotice, trackToggleNoticeAtom } from './trackToggleNotice'
 
+export { PlayerControlButton } from './ui/control-button/control-button'
+export { PlayerControlButtonType } from './ui/control-button/control-button.types'
 export { PlayerProgressBar } from './ui/PlayerProgressBar/PlayerProgressBar'
 export { PlayerRepeatToggle } from './ui/PlayerRepeatToggle'
 export { SermonPlayerControls } from './ui/SermonPlayerControls'
