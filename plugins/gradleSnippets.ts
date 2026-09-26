@@ -81,3 +81,36 @@ export const PROD_APP_NAME_STRINGS = `<resources>
   <string name="app_name">Слово.Проповеди</string>
 </resources>
 `
+
+// Per-flavor custom URL schemes. The intent-filter is additive: the manifest
+// merger folds it into the `.MainActivity` declared in the main manifest, so the
+// fully-qualified name is required (flavor manifests cannot rely on relative
+// names). Dev and prod must not share a scheme or a parallel install makes the
+// OS resolve `slovo-propovedi://` ambiguously.
+export const DEV_FLAVOR_MANIFEST = `<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <activity android:name="ru.slovopropovedi.MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="slovo-propovedi-dev"/>
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>
+`
+
+export const PROD_FLAVOR_MANIFEST = `<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <activity android:name="ru.slovopropovedi.MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="slovo-propovedi"/>
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>
+`

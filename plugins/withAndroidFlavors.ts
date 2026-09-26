@@ -8,9 +8,11 @@ import {
   DEBUGGABLE_VARIANTS_ACTIVE,
   DEBUGGABLE_VARIANTS_COMMENTED,
   DEV_APP_NAME_STRINGS,
+  DEV_FLAVOR_MANIFEST,
   LEGACY_PACKAGING_ANCHOR,
   PACKAGING_OPTIONS_ANCHOR,
   PROD_APP_NAME_STRINGS,
+  PROD_FLAVOR_MANIFEST,
   WORKLETS_PICK_FIRSTS_BLOCK,
 } from './gradleSnippets.ts'
 
@@ -22,6 +24,9 @@ const UNCOMMENTED_DEBUGGABLE_VARIANTS = /^\s*debuggableVariants\s*=\s*\[/m
 const APP_FLAVORS_MARKER = 'applicationIdSuffix ".dev"'
 const APP_LINT_MARKER = 'checkReleaseBuilds = false'
 const WORKLETS_PICK_FIRSTS_MARKER = 'lib/arm64-v8a/libworklets.so'
+
+const APP_NAME_PATH = 'res/values/strings.xml'
+const MANIFEST_PATH = 'AndroidManifest.xml'
 
 const insertBefore = (contents: string, anchor: string, block: string): string => {
   if (!contents.includes(anchor))
@@ -73,14 +78,19 @@ const withFlavoredAppBuildGradle: ConfigPlugin = config =>
     return gradleConfig
   })
 
-const writeFlavorAppName = (projectRoot: string, flavor: string, xml: string): void => {
-  const filePath = path.join(projectRoot, 'app', 'src', flavor, 'res', 'values', 'strings.xml')
+const writeFlavorSourceSetFile = (
+  projectRoot: string,
+  flavor: string,
+  relativePath: string,
+  content: string,
+): void => {
+  const filePath = path.join(projectRoot, 'app', 'src', flavor, relativePath)
   const existingContent = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : ''
 
-  if (existingContent === xml) return
+  if (existingContent === content) return
 
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
-  fs.writeFileSync(filePath, xml)
+  fs.writeFileSync(filePath, content)
 }
 
 const withFlavorAppNames: ConfigPlugin = config =>
@@ -89,15 +99,32 @@ const withFlavorAppNames: ConfigPlugin = config =>
     dangerousConfig => {
       const { platformProjectRoot } = dangerousConfig.modRequest
 
-      writeFlavorAppName(platformProjectRoot, 'dev', DEV_APP_NAME_STRINGS)
-      writeFlavorAppName(platformProjectRoot, 'prod', PROD_APP_NAME_STRINGS)
+      writeFlavorSourceSetFile(platformProjectRoot, 'dev', APP_NAME_PATH, DEV_APP_NAME_STRINGS)
+      writeFlavorSourceSetFile(platformProjectRoot, 'prod', APP_NAME_PATH, PROD_APP_NAME_STRINGS)
 
       return dangerousConfig
     },
   ])
 
-// Adds the dev/prod product flavors, per-flavor application names and the
-// worklets pickFirsts that local + CI Android builds rely on. Runs during
-// `expo prebuild` so a wiped android/ directory is restored automatically.
+// Dev and prod used to share the one scheme Expo generated from app.config
+// `scheme`, so a parallel install resolved `slovo-propovedi://` ambiguously.
+// Main now carries no scheme; the merger folds these additive filters in.
+const withFlavorSchemes: ConfigPlugin = config =>
+  withDangerousMod(config, [
+    'android',
+    dangerousConfig => {
+      const { platformProjectRoot } = dangerousConfig.modRequest
+
+      writeFlavorSourceSetFile(platformProjectRoot, 'dev', MANIFEST_PATH, DEV_FLAVOR_MANIFEST)
+      writeFlavorSourceSetFile(platformProjectRoot, 'prod', MANIFEST_PATH, PROD_FLAVOR_MANIFEST)
+
+      return dangerousConfig
+    },
+  ])
+
+// Adds the dev/prod product flavors, per-flavor application names, per-flavor
+// custom URL schemes and the worklets pickFirsts that local + CI Android builds
+// rely on. Runs during `expo prebuild` so a wiped android/ directory is restored
+// automatically.
 export const withAndroidFlavors: ConfigPlugin = config =>
-  withFlavorAppNames(withFlavoredAppBuildGradle(config))
+  withFlavorSchemes(withFlavorAppNames(withFlavoredAppBuildGradle(config)))

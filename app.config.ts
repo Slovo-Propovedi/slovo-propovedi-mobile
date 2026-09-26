@@ -94,7 +94,6 @@ export default ({ config }: ConfigContext): AppConfig => ({
     withAndroidFlavors,
     withAndroidBuildMaintenance,
   ],
-  scheme: 'slovo-propovedi',
   slug: 'slovo-propovedi-mobile',
   userInterfaceStyle: 'automatic',
   // Version comes from package.json (single source of truth); scripts/bump-version.mjs

@@ -13,7 +13,7 @@
 2. **assetlinks.json** на том же хосте подтверждает связку `<package_name, отпечаток подписи>` — только при совпадении система считает заявку **verified** и открывает ссылки без системного диалога;
 3. Оба артефакта генерируются в репозитории: манифест — prebuild'ом из `app.config.ts`, assetlinks.json — лежит в `public/` и попадает в веб-дистрибутив.
 
-Старая кастомная схема `slovo-propovedi://` **не тронута** — остаётся в манифесте отдельным `<intent-filter>` (без `autoVerify`, см. `android/app/src/main/AndroidManifest.xml:33-38`).
+Кастомная схема теперь **per-flavor**: main-манифест схемы не содержит (поле `scheme` убрано из `app.config.ts`), `plugins/withAndroidFlavors.ts` пишет source-set манифесты с аддитивным VIEW-фильтром — prod `slovo-propovedi://`, dev `slovo-propovedi-dev://` — чтобы параллельная установка dev+prod не конфликтовала за одну схему (фильтры без `autoVerify`).
 
 ## Конфиг: `app.config.ts`
 
