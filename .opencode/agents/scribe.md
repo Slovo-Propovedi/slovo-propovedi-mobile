@@ -1,7 +1,7 @@
 ---
 description: Human-facing content specialist for documentation and prose
 mode: subagent
-model: opencode/big-pickle
+model: opencode-go/deepseek-v4.1-flash
 permissions:
   - action: plan_read
     resource: '*'

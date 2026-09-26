@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.1] - 2026-09-26
+
+### Changed
+
+- Route cross-entity imports through @x seams
+- Move listen navigation into pages and dissolve settings entity
+- Move player and track-list domain UI out of shared/ui
+- Extract playlist and section domains into entities
+- Extract sermon and offline-cache entities from shared
+
+### Fixed
+
+- Ignore expo-dev-client launch URLs in cold-start link recovery
+- Add structural predicate for nested playlist sermons validation
+- Harden share cancel taxonomy, time-box pending guard, fix triple-scheme path parse
+- Recover cold-start deep links lost to expo-router's 150ms race
+- Replace built-in Unmatched screen to fix resolveScheme crash
+- Prefer share sheet over clipboard when Web Share API exists
+
 ## [0.23.0] - 2026-09-26
 
 ### Added
@@ -838,6 +857,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.23.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.23.1
 [0.23.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.23.0
 [0.22.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.22.0
 [0.21.2]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.2

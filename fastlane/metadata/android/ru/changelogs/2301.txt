@@ -1,0 +1,7 @@
+Ignore expo-dev-client launch URLs in cold-start link recovery
+Add structural predicate for nested playlist sermons validation
+Harden share cancel taxonomy, time-box pending guard, fix triple-scheme path parse
+Recover cold-start deep links lost to expo-router's 150ms race
+Replace built-in Unmatched screen to fix resolveScheme crash
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
