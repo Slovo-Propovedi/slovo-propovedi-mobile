@@ -3,6 +3,19 @@ const HOST_BASED_SCHEMES = ['http', 'https']
 const FALLBACK_LANDING_ROUTES = ['/', '/listen'] as const
 
 /**
+ * Normalizes the path of a custom-scheme URL: `app:///foo` and `app://foo`
+ * both yield `/foo`; a scheme with nothing after it yields null.
+ * @param afterScheme - Everything the URL carries after `://`.
+ * @returns Router path with exactly one leading slash, or null when empty.
+ */
+const normalizeCustomSchemePath = (afterScheme: string): null | string => {
+  const segments = afterScheme.replace(/^\/+/, '')
+  if (segments === '') return null
+
+  return `/${segments}`
+}
+
+/**
  * Extracts the router path and query string from a launch URL.
  *
  * Parsing starts at `://` instead of using `new URL`, because custom-scheme
@@ -29,7 +42,8 @@ export const extractLaunchPath = (url: string): null | string => {
 
   const pathWithQuery = isHostBased
     ? afterScheme.slice(afterScheme.indexOf('/'))
-    : `/${afterScheme}`
+    : normalizeCustomSchemePath(afterScheme)
+  if (pathWithQuery === null) return null
 
   const hashIndex = pathWithQuery.indexOf('#')
   if (hashIndex === -1) return pathWithQuery

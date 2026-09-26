@@ -76,6 +76,22 @@ describe('useColdStartLinkRecovery', () => {
     }
   })
 
+  test('logs an error and does not push when reading the initial URL rejects', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(Linking, 'getInitialURL').mockRejectedValue(new Error('read failed'))
+    try {
+      await renderHook(() => useColdStartLinkRecovery())
+
+      await advanceToRecovery()
+
+      expect(mockPush).not.toHaveBeenCalled()
+      expect(errorSpy).toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
   test('pushes the launch path once and not again after a remount', async () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     jest.spyOn(Linking, 'getInitialURL').mockResolvedValue(PLAYLIST_URL)

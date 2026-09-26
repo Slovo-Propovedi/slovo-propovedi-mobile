@@ -2,6 +2,7 @@ import { sharePlaylist } from './sharePlaylist.web'
 
 const SHARE_TEXT = 'Плейлист — ссылка'
 const SHARE_URL = 'https://example.test/listen/playlist?playlist=pl-1'
+const PENDING_STALE_MS = 30_000
 
 const defineNavigatorValue = (key: 'clipboard' | 'share', value: unknown) => {
   Object.defineProperty(navigator, key, { configurable: true, value })
@@ -22,6 +23,7 @@ describe('sharePlaylist (web)', () => {
 
   afterEach(() => {
     jest.restoreAllMocks()
+    jest.useRealTimers()
   })
 
   test('returns "shared" and forwards text/url to navigator.share when available', async () => {
@@ -45,13 +47,53 @@ describe('sharePlaylist (web)', () => {
     expect(clipboard.writeText).not.toHaveBeenCalled()
   })
 
-  test('returns "error" without a clipboard fallback on an AbortError with another message', async () => {
+  test('maps an AbortError with an unknown message to "dismissed" (WebKit cancellation)', async () => {
+    const clipboard = makeClipboard()
+    defineNavigatorValue('clipboard', clipboard)
+    defineNavigatorValue(
+      'share',
+      jest.fn().mockRejectedValue(makeDomException('AbortError', 'The user aborted a request')),
+    )
+
+    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+
+    expect(result).toBe('dismissed')
+    expect(clipboard.writeText).not.toHaveBeenCalled()
+  })
+
+  test('maps an AbortError with an empty message to "dismissed"', async () => {
+    const clipboard = makeClipboard()
+    defineNavigatorValue('clipboard', clipboard)
+    defineNavigatorValue('share', jest.fn().mockRejectedValue(makeDomException('AbortError', '')))
+
+    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+
+    expect(result).toBe('dismissed')
+    expect(clipboard.writeText).not.toHaveBeenCalled()
+  })
+
+  test('returns "error" without a clipboard fallback on a Chromium internal AbortError', async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {})
     const clipboard = makeClipboard()
     defineNavigatorValue('clipboard', clipboard)
     defineNavigatorValue(
       'share',
       jest.fn().mockRejectedValue(makeDomException('AbortError', 'Share failed')),
+    )
+
+    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+
+    expect(result).toBe('error')
+    expect(clipboard.writeText).not.toHaveBeenCalled()
+  })
+
+  test('returns "error" on a Chromium "Permission denied" AbortError', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const clipboard = makeClipboard()
+    defineNavigatorValue('clipboard', clipboard)
+    defineNavigatorValue(
+      'share',
+      jest.fn().mockRejectedValue(makeDomException('AbortError', 'Permission denied')),
     )
 
     const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
@@ -118,6 +160,32 @@ describe('sharePlaylist (web)', () => {
     expect(share).toHaveBeenCalledTimes(1)
 
     resolveFirstShare()
+    await expect(firstAttempt).resolves.toBe('shared')
+  })
+
+  test('retries after the pending guard goes stale (never-settling share promise)', async () => {
+    jest.useFakeTimers()
+    const resolvers: Array<() => void> = []
+    const share = jest.fn(
+      () =>
+        new Promise<void>(resolve => {
+          resolvers.push(resolve)
+        }),
+    )
+    defineNavigatorValue('share', share)
+
+    const firstAttempt = sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+
+    await jest.advanceTimersByTimeAsync(PENDING_STALE_MS)
+
+    const retryAttempt = sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+
+    expect(share).toHaveBeenCalledTimes(2)
+
+    resolvers[1]()
+    await expect(retryAttempt).resolves.toBe('shared')
+
+    resolvers[0]()
     await expect(firstAttempt).resolves.toBe('shared')
   })
 })

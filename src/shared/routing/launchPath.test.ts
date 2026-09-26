@@ -4,6 +4,8 @@ const HTTPS_PLAYLIST_URL = 'https://app.slovo-propovedi.ru/listen/playlist?playl
 const HTTPS_HOST = 'https://app.slovo-propovedi.ru'
 const CUSTOM_SCHEME_URL = 'slovo-propovedi://foo/bar?a=1'
 const CUSTOM_SCHEME_HOST = 'slovo-propovedi://'
+const TRIPLE_SLASH_PLAYLIST_URL = 'slovo-propovedi:///listen/playlist?playlist=x'
+const TRIPLE_SLASH_ROOT_URL = 'slovo-propovedi:///'
 
 describe('extractLaunchPath', () => {
   test('extracts path and query from an https URL', () => {
@@ -20,6 +22,14 @@ describe('extractLaunchPath', () => {
 
   test('returns null for a host-only custom-scheme URL', () => {
     expect(extractLaunchPath(CUSTOM_SCHEME_HOST)).toBeNull()
+  })
+
+  test('normalizes an empty authority in a triple-slash custom-scheme URL', () => {
+    expect(extractLaunchPath(TRIPLE_SLASH_PLAYLIST_URL)).toBe('/listen/playlist?playlist=x')
+  })
+
+  test('returns null for a triple-slash custom-scheme root', () => {
+    expect(extractLaunchPath(TRIPLE_SLASH_ROOT_URL)).toBeNull()
   })
 
   test('returns null for garbage', () => {

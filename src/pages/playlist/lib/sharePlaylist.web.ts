@@ -2,16 +2,23 @@ import { type SharePlaylistInput, type ShareResult } from './sharePlaylist'
 
 export { type SharePlaylistInput, type ShareResult } from './sharePlaylist'
 
-// Chromium maps a genuine user dismissal to an AbortError with this exact
-// message; internal share failures reuse AbortError with a different message
-// ("Share failed"), so only this message means "the user closed the sheet".
-const CANCELLED_SHARE_MESSAGE = 'Share cancelled'
+// Chromium maps both a genuine user dismissal ("Share cancelled") and internal
+// share failures ("Share failed", "Permission denied") to AbortError; WebKit
+// rejects a dismissal with AbortError and a varying or empty message. So every
+// AbortError means "the user closed the sheet" except these two known Chromium
+// internal-failure messages.
+const CHROMIUM_INTERNAL_ABORT_MESSAGES = ['Share failed', 'Permission denied']
 
 // Serializes share attempts for the page lifetime. On Android (notably Firefox)
 // the previous navigator.share promise can stay pending for a long time, and a
 // concurrent call throws InvalidStateError — later taps become no-ops instead
-// of silently copying to the clipboard.
+// of silently copying to the clipboard. The guard is time-boxed because that
+// promise can also never settle (Firefox Android), which would otherwise wedge
+// sharing for the whole page session.
+const PENDING_STALE_MS = 30_000
+
 let isSharePending = false
+let pendingSince = 0
 
 interface NamedError {
   message?: unknown
@@ -24,10 +31,11 @@ const isNamedError = (error: unknown): error is NamedError =>
 const describeError = (error: unknown): string =>
   isNamedError(error) ? `${String(error.name)}: ${String(error.message)}` : String(error)
 
+const isChromiumInternalAbort = (error: DOMException): boolean =>
+  CHROMIUM_INTERNAL_ABORT_MESSAGES.some(message => message === error.message)
+
 const isUserCancellation = (error: unknown): boolean =>
-  error instanceof DOMException &&
-  error.name === 'AbortError' &&
-  error.message === CANCELLED_SHARE_MESSAGE
+  error instanceof DOMException && error.name === 'AbortError' && !isChromiumInternalAbort(error)
 
 const copyUrlToClipboard = async (url: string): Promise<ShareResult> => {
   try {
@@ -52,14 +60,17 @@ const shareViaWebShareApi = async ({ text, url }: SharePlaylistInput): Promise<S
 }
 
 export const sharePlaylist = async (input: SharePlaylistInput): Promise<ShareResult> => {
-  if (isSharePending) return 'dismissed'
+  const isPendingFresh = isSharePending && Date.now() - pendingSince < PENDING_STALE_MS
+  if (isPendingFresh) return 'dismissed'
 
   if (typeof navigator.share !== 'function') return copyUrlToClipboard(input.url)
 
   isSharePending = true
+  pendingSince = Date.now()
   try {
     return await shareViaWebShareApi(input)
   } finally {
     isSharePending = false
+    pendingSince = 0
   }
 }
