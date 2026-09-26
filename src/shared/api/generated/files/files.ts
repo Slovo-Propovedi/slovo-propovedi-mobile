@@ -5,16 +5,20 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.17.0
+ * OpenAPI spec version: 0.18.1
  */
 import type {
   AllFilesResponse,
+  AppControllerGetOrphanedFilesParams,
   AppControllerUploadFileBody,
+  CleanupOrphansResponse,
   IFileResponseDto,
+  OrphanedFilesResponse,
+  StatusFileResponse,
   StreamUrlResponse,
-} from '../api.schemas'
+} from '../api.schemas.ts'
 
-import { customInstance } from '../../axiosInstance'
+import { customInstance } from '../../axiosInstance.ts'
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
@@ -50,6 +54,31 @@ export const getFiles = () => {
     return customInstance<AllFilesResponse>({ url: `/files`, method: 'GET' }, options)
   }
   /**
+   * Возвращает объекты bucket (изображения и аудио/текст), не привязанные ни к одной проповеди (audioUrl/textFileUrl) и не используемые как обложки (artwork проповедей и плейлистов). Скан bucket стримится и останавливается, как только собрано `limit` осиротевших файлов, поэтому ответ ограничен `limit`, а память не растёт с размером bucket.
+   * @summary Получить список осиротевших файлов
+   */
+  const appControllerGetOrphanedFiles = (
+    params?: AppControllerGetOrphanedFilesParams,
+    options?: SecondParameter<typeof customInstance<OrphanedFilesResponse>>,
+  ) => {
+    return customInstance<OrphanedFilesResponse>(
+      { url: `/files/orphans`, method: 'GET', params },
+      options,
+    )
+  }
+  /**
+   * Идемпотентно удаляет ТОЛЬКО осиротевшие аудио/текстовые объекты (.mp3, .pdf, .fb2). Изображения не удаляются никогда — обложками управляют вручную из каталога. Ошибка удаления отдельного объекта не роняет запрос (best-effort).
+   * @summary Удалить осиротевшие аудио и текстовые файлы
+   */
+  const appControllerCleanupOrphanedFiles = (
+    options?: SecondParameter<typeof customInstance<CleanupOrphansResponse>>,
+  ) => {
+    return customInstance<CleanupOrphansResponse>(
+      { url: `/files/orphans/cleanup`, method: 'POST' },
+      options,
+    )
+  }
+  /**
    * @summary Получить URL потока для файла
    */
   const appControllerGetStreamUrl = (
@@ -70,7 +99,28 @@ export const getFiles = () => {
   ) => {
     return customInstance<IFileResponseDto>({ url: `/files/${fileName}`, method: 'GET' }, options)
   }
-  return { appControllerUploadFile, getFiles, appControllerGetStreamUrl, appControllerGetFile }
+  /**
+   * Удаляет объект-изображение (JPEG/PNG/WebP) из bucket. Если изображение используется как обложка (artwork) проповеди или плейлиста — 409 Conflict.
+   * @summary Удалить файл-изображение
+   */
+  const appControllerRemoveFile = (
+    fileName: string,
+    options?: SecondParameter<typeof customInstance<StatusFileResponse>>,
+  ) => {
+    return customInstance<StatusFileResponse>(
+      { url: `/files/${fileName}`, method: 'DELETE' },
+      options,
+    )
+  }
+  return {
+    appControllerUploadFile,
+    getFiles,
+    appControllerGetOrphanedFiles,
+    appControllerCleanupOrphanedFiles,
+    appControllerGetStreamUrl,
+    appControllerGetFile,
+    appControllerRemoveFile,
+  }
 }
 export type AppControllerUploadFileResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerUploadFile']>>
@@ -78,9 +128,18 @@ export type AppControllerUploadFileResult = NonNullable<
 export type GetFilesResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getFiles>['getFiles']>>
 >
+export type AppControllerGetOrphanedFilesResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerGetOrphanedFiles']>>
+>
+export type AppControllerCleanupOrphanedFilesResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerCleanupOrphanedFiles']>>
+>
 export type AppControllerGetStreamUrlResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerGetStreamUrl']>>
 >
 export type AppControllerGetFileResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerGetFile']>>
+>
+export type AppControllerRemoveFileResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getFiles>['appControllerRemoveFile']>>
 >

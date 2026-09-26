@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.17.0
+ * OpenAPI spec version: 0.18.1
  */
 import * as zod from 'zod'
 
@@ -205,6 +205,9 @@ export const PlaylistControllerCreate200Response = zod.object({
 
 export const playlistControllerFindAllQueryLimitMax = 100
 
+export const playlistControllerFindAllQuerySortDefault = `date`
+export const playlistControllerFindAllQueryOrderDefault = `desc`
+
 export const PlaylistControllerFindAllQueryParams = zod.object({
   search: zod.string().min(1).optional().describe('Поисковый запрос по названию и описанию'),
   page: zod.int().min(1).optional().describe('Номер страницы для оффсетной пагинации'),
@@ -214,6 +217,18 @@ export const PlaylistControllerFindAllQueryParams = zod.object({
     .max(playlistControllerFindAllQueryLimitMax)
     .optional()
     .describe('Размер страницы; если указан без page, используется первая страница'),
+  sort: zod
+    .enum(['date', 'title', 'section'])
+    .default(playlistControllerFindAllQuerySortDefault)
+    .describe(
+      'Вариант сортировки. `date` — по убыванию id (порядок загрузки), `title` — по названию, `section` — по названию раздела (плейлисты без раздела — в конце). Игнорируется при поиске (сортировка по релевантности). Применяется только к страничной выдаче (page/limit) и полной выдаче; несовместимо с take/cursor.',
+    ),
+  order: zod
+    .enum(['asc', 'desc'])
+    .default(playlistControllerFindAllQueryOrderDefault)
+    .describe(
+      'Направление сортировки. Для `sort=date` по умолчанию `desc`, для остальных — `asc`.',
+    ),
 })
 
 export const playlistControllerFindAll200ResponsePlaylistsItemSectionsItemIsDescriptionTitleOnSlideLargeDefault = false

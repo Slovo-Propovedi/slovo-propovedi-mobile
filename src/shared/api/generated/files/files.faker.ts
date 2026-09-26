@@ -5,11 +5,18 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.17.0
+ * OpenAPI spec version: 0.18.1
  */
 import { faker } from '@faker-js/faker'
 
-import type { AllFilesResponse, IFileResponseDto, StreamUrlResponse } from '../api.schemas'
+import type {
+  AllFilesResponse,
+  CleanupOrphansResponse,
+  IFileResponseDto,
+  OrphanedFilesResponse,
+  StatusFileResponse,
+  StreamUrlResponse,
+} from '../api.schemas'
 
 export const getAppControllerUploadFileResponseMock = (
   overrideResponse: Partial<Extract<IFileResponseDto, object>> = {},
@@ -39,6 +46,7 @@ export const getGetFilesResponseMock = (
       null,
     ]),
     size: faker.helpers.arrayElement([faker.number.int(), null]),
+    used: faker.datatype.boolean(),
   })),
   ...overrideResponse,
 })
@@ -55,7 +63,76 @@ export const getGetFilesResponseMock200 = (
       null,
     ]),
     size: faker.helpers.arrayElement([faker.number.int(), null]),
+    used: faker.datatype.boolean(),
   })),
+  ...overrideResponse,
+})
+
+export const getAppControllerGetOrphanedFilesResponseMock = (
+  overrideResponse: Partial<Extract<OrphanedFilesResponse, object>> = {},
+): OrphanedFilesResponse => ({
+  count: faker.number.int(),
+  orphaned: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      fileName: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      fileUrl: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      lastModified: faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + 'Z',
+        null,
+      ]),
+      size: faker.helpers.arrayElement([faker.number.int(), null]),
+      used: faker.datatype.boolean(),
+    }),
+  ),
+  ...overrideResponse,
+})
+
+export const getAppControllerGetOrphanedFilesResponseMock200 = (
+  overrideResponse: Partial<Extract<OrphanedFilesResponse, object>> = {},
+): OrphanedFilesResponse => ({
+  count: faker.number.int(),
+  orphaned: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      fileName: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      fileUrl: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      lastModified: faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + 'Z',
+        null,
+      ]),
+      size: faker.helpers.arrayElement([faker.number.int(), null]),
+      used: faker.datatype.boolean(),
+    }),
+  ),
+  ...overrideResponse,
+})
+
+export const getAppControllerCleanupOrphanedFilesResponseMock = (
+  overrideResponse: Partial<Extract<CleanupOrphansResponse, object>> = {},
+): CleanupOrphansResponse => ({
+  deleted: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ),
+  failed: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      fileName: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      reason: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    }),
+  ),
+  ...overrideResponse,
+})
+
+export const getAppControllerCleanupOrphanedFilesResponseMock200 = (
+  overrideResponse: Partial<Extract<CleanupOrphansResponse, object>> = {},
+): CleanupOrphansResponse => ({
+  deleted: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ),
+  failed: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      fileName: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      reason: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    }),
+  ),
   ...overrideResponse,
 })
 
@@ -86,5 +163,19 @@ export const getAppControllerGetFileResponseMock200 = (
 ): IFileResponseDto => ({
   fileName: faker.string.alpha({ length: { min: 10, max: 20 } }),
   fileUrl: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+})
+
+export const getAppControllerRemoveFileResponseMock = (
+  overrideResponse: Partial<Extract<StatusFileResponse, object>> = {},
+): StatusFileResponse => ({
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+})
+
+export const getAppControllerRemoveFileResponseMock200 = (
+  overrideResponse: Partial<Extract<StatusFileResponse, object>> = {},
+): StatusFileResponse => ({
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   ...overrideResponse,
 })

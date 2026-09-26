@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.17.0
+ * OpenAPI spec version: 0.18.1
  */
 import type {
   AuthResponse,
@@ -14,9 +14,9 @@ import type {
   RefreshTokenDto,
   SignInRequestDto,
   UserResponse,
-} from '../api.schemas'
+} from '../api.schemas.ts'
 
-import { customInstance } from '../../axiosInstance'
+import { customInstance } from '../../axiosInstance.ts'
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 

@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.17.0
+ * OpenAPI spec version: 0.18.1
  */
 export interface HealthResponse {
   status: string
@@ -27,6 +27,28 @@ export interface FileMetadataDto {
   lastModified: string | null
   /** @nullable */
   size: number | null
+  /** true, если объект используется как обложка (artwork) какой-либо проповеди или плейлиста */
+  used: boolean
+}
+
+export interface OrphanedFilesResponse {
+  count: number
+  orphaned: FileMetadataDto[]
+}
+
+export type CleanupOrphansResponseFailedItem = {
+  fileName: string
+  reason: string
+}
+
+export interface CleanupOrphansResponse {
+  /** Имена удалённых объектов */
+  deleted: string[]
+  failed: CleanupOrphansResponseFailedItem[]
+}
+
+export interface StatusFileResponse {
+  status: string
 }
 
 export interface AllFilesResponse {
@@ -414,6 +436,15 @@ export type AppControllerUploadFileBody = {
   file?: Blob | File
 }
 
+export type AppControllerGetOrphanedFilesParams = {
+  /**
+   * Максимальное число возвращаемых осиротевших файлов; скан bucket останавливается при достижении лимита. По умолчанию 500, максимум 5000.
+   * @minimum 1
+   * @maximum 5000
+   */
+  limit?: number
+}
+
 export type PlaylistControllerFindAllParams = {
   /**
    * Поисковый запрос по названию и описанию
@@ -431,7 +462,32 @@ export type PlaylistControllerFindAllParams = {
    * @maximum 100
    */
   limit?: number
+  /**
+   * Вариант сортировки. `date` — по убыванию id (порядок загрузки), `title` — по названию, `section` — по названию раздела (плейлисты без раздела — в конце). Игнорируется при поиске (сортировка по релевантности). Применяется только к страничной выдаче (page/limit) и полной выдаче; несовместимо с take/cursor.
+   */
+  sort?: PlaylistControllerFindAllSort
+  /**
+   * Направление сортировки. Для `sort=date` по умолчанию `desc`, для остальных — `asc`.
+   */
+  order?: PlaylistControllerFindAllOrder
 }
+
+export type PlaylistControllerFindAllSort =
+  (typeof PlaylistControllerFindAllSort)[keyof typeof PlaylistControllerFindAllSort]
+
+export const PlaylistControllerFindAllSort = {
+  date: 'date',
+  title: 'title',
+  section: 'section',
+} as const
+
+export type PlaylistControllerFindAllOrder =
+  (typeof PlaylistControllerFindAllOrder)[keyof typeof PlaylistControllerFindAllOrder]
+
+export const PlaylistControllerFindAllOrder = {
+  asc: 'asc',
+  desc: 'desc',
+} as const
 
 export type SermonControllerFindAllParams = {
   /**
@@ -456,7 +512,33 @@ export type SermonControllerFindAllParams = {
    * @maximum 100
    */
   limit?: number
+  /**
+   * Вариант сортировки. `date` — по убыванию id (порядок загрузки), `title` — по названию, `artist` — по автору, `playlist` — по названию плейлиста (проповеди без плейлиста — в конце). Игнорируется при поиске (сортировка по релевантности). Применяется только к страничной выдаче (page/limit) и полной выдаче; несовместимо с take/cursor.
+   */
+  sort?: SermonControllerFindAllSort
+  /**
+   * Направление сортировки. Для `sort=date` по умолчанию `desc`, для остальных — `asc`.
+   */
+  order?: SermonControllerFindAllOrder
 }
+
+export type SermonControllerFindAllSort =
+  (typeof SermonControllerFindAllSort)[keyof typeof SermonControllerFindAllSort]
+
+export const SermonControllerFindAllSort = {
+  date: 'date',
+  title: 'title',
+  artist: 'artist',
+  playlist: 'playlist',
+} as const
+
+export type SermonControllerFindAllOrder =
+  (typeof SermonControllerFindAllOrder)[keyof typeof SermonControllerFindAllOrder]
+
+export const SermonControllerFindAllOrder = {
+  asc: 'asc',
+  desc: 'desc',
+} as const
 
 export type UsersControllerFindAllParams = {
   /**

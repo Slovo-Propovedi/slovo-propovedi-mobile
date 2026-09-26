@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.17.0
+ * OpenAPI spec version: 0.18.1
  */
 import * as zod from 'zod'
 
@@ -312,6 +312,9 @@ export const sermonControllerFindAllQueryTakeMax = 100
 
 export const sermonControllerFindAllQueryLimitMax = 100
 
+export const sermonControllerFindAllQuerySortDefault = `date`
+export const sermonControllerFindAllQueryOrderDefault = `desc`
+
 export const SermonControllerFindAllQueryParams = zod.object({
   take: zod.int().min(1).max(sermonControllerFindAllQueryTakeMax).optional(),
   cursor: zod.uuid().optional(),
@@ -334,6 +337,18 @@ export const SermonControllerFindAllQueryParams = zod.object({
     .optional()
     .describe(
       'Размер страницы; если указан без page, используется первая страница; взаимоисключителен с take и cursor (одновременное использование → 400)',
+    ),
+  sort: zod
+    .enum(['date', 'title', 'artist', 'playlist'])
+    .default(sermonControllerFindAllQuerySortDefault)
+    .describe(
+      'Вариант сортировки. `date` — по убыванию id (порядок загрузки), `title` — по названию, `artist` — по автору, `playlist` — по названию плейлиста (проповеди без плейлиста — в конце). Игнорируется при поиске (сортировка по релевантности). Применяется только к страничной выдаче (page/limit) и полной выдаче; несовместимо с take/cursor.',
+    ),
+  order: zod
+    .enum(['asc', 'desc'])
+    .default(sermonControllerFindAllQueryOrderDefault)
+    .describe(
+      'Направление сортировки. Для `sort=date` по умолчанию `desc`, для остальных — `asc`.',
     ),
 })
 

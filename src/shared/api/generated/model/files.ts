@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.17.0
+ * OpenAPI spec version: 0.18.1
  */
 import * as zod from 'zod'
 
@@ -14,12 +14,7 @@ import * as zod from 'zod'
  * @summary Загрузить файл (изображение, аудио MP3, PDF, FB2)
  */
 export const AppControllerUploadFileBody = zod.object({
-  file: zod
-    .instanceof(Blob)
-    .optional()
-    .describe(
-      'Допустимые форматы — JPEG, PNG, WebP, MP3, PDF, FB2. Другие форматы будут отклонены.',
-    ),
+  file: zod.instanceof(Blob).optional(),
 })
 
 export const AppControllerUploadFile200Response = zod.object({
@@ -38,9 +33,63 @@ export const GetFiles200Response = zod.object({
       fileUrl: zod.string(),
       size: zod.int().nullable(),
       lastModified: zod.iso.datetime({ offset: true }).nullable(),
+      used: zod
+        .boolean()
+        .describe(
+          'true, если объект используется как обложка (artwork) какой-либо проповеди или плейлиста',
+        ),
     }),
   ),
   count: zod.int(),
+})
+
+/**
+ * Возвращает объекты bucket (изображения и аудио/текст), не привязанные ни к одной проповеди (audioUrl/textFileUrl) и не используемые как обложки (artwork проповедей и плейлистов). Скан bucket стримится и останавливается, как только собрано `limit` осиротевших файлов, поэтому ответ ограничен `limit`, а память не растёт с размером bucket.
+ * @summary Получить список осиротевших файлов
+ */
+export const appControllerGetOrphanedFilesQueryLimitDefault = 500
+export const appControllerGetOrphanedFilesQueryLimitMax = 5000
+
+export const AppControllerGetOrphanedFilesQueryParams = zod.object({
+  limit: zod
+    .int()
+    .min(1)
+    .max(appControllerGetOrphanedFilesQueryLimitMax)
+    .default(appControllerGetOrphanedFilesQueryLimitDefault)
+    .describe(
+      'Максимальное число возвращаемых осиротевших файлов; скан bucket останавливается при достижении лимита. По умолчанию 500, максимум 5000.',
+    ),
+})
+
+export const AppControllerGetOrphanedFiles200Response = zod.object({
+  orphaned: zod.array(
+    zod.object({
+      fileName: zod.string(),
+      fileUrl: zod.string(),
+      size: zod.int().nullable(),
+      lastModified: zod.iso.datetime({ offset: true }).nullable(),
+      used: zod
+        .boolean()
+        .describe(
+          'true, если объект используется как обложка (artwork) какой-либо проповеди или плейлиста',
+        ),
+    }),
+  ),
+  count: zod.int(),
+})
+
+/**
+ * Идемпотентно удаляет ТОЛЬКО осиротевшие аудио/текстовые объекты (.mp3, .pdf, .fb2). Изображения не удаляются никогда — обложками управляют вручную из каталога. Ошибка удаления отдельного объекта не роняет запрос (best-effort).
+ * @summary Удалить осиротевшие аудио и текстовые файлы
+ */
+export const AppControllerCleanupOrphanedFiles200Response = zod.object({
+  deleted: zod.array(zod.string()).describe('Имена удалённых объектов'),
+  failed: zod.array(
+    zod.object({
+      fileName: zod.string(),
+      reason: zod.string(),
+    }),
+  ),
 })
 
 /**
@@ -65,3 +114,17 @@ export const AppControllerGetFile200Response = zod.object({
   fileName: zod.string(),
   fileUrl: zod.string(),
 })
+
+/**
+ * Удаляет объект-изображение (JPEG/PNG/WebP) из bucket. Если изображение используется как обложка (artwork) проповеди или плейлиста — 409 Conflict.
+ * @summary Удалить файл-изображение
+ */
+export const AppControllerRemoveFileParams = zod.object({
+  fileName: zod.string(),
+})
+
+export const AppControllerRemoveFile200Response = zod.object({
+  status: zod.string(),
+})
+
+export const AppControllerRemoveFile409Response = zod.unknown()
