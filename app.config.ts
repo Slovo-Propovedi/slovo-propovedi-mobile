@@ -4,6 +4,8 @@ import pkg from './package.json'
 import { withAndroidBuildMaintenance } from './plugins/withAndroidBuildMaintenance.ts'
 import { withAndroidFlavors } from './plugins/withAndroidFlavors.ts'
 import { withAndroidManifestCleanup } from './plugins/withAndroidManifestCleanup.ts'
+import { withDebugKeystore } from './plugins/withDebugKeystore.ts'
+import { withDevClientScheme } from './plugins/withDevClientScheme.ts'
 import { ENV } from './src/shared/config/env.ts'
 
 type AppConfig = { plugins?: AppPlugin[] } & Omit<ExpoConfig, 'plugins'>
@@ -76,6 +78,7 @@ export default ({ config }: ConfigContext): AppConfig => ({
     // registration order, so registering first makes the cleanup the final pass
     // (after expo-notifications injects the Firebase meta-data).
     withAndroidManifestCleanup,
+    withDevClientScheme,
     ['expo-audio', { enableBackgroundPlayback: true, recordAudioAndroid: false }],
     'expo-asset',
     ['expo-notifications', { color: '#f16031', icon: './assets/notification-icon.png' }],
@@ -93,6 +96,7 @@ export default ({ config }: ConfigContext): AppConfig => ({
     ],
     withAndroidFlavors,
     withAndroidBuildMaintenance,
+    withDebugKeystore,
   ],
   slug: 'slovo-propovedi-mobile',
   userInterfaceStyle: 'automatic',

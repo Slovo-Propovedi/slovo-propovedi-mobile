@@ -82,11 +82,18 @@ export const PROD_APP_NAME_STRINGS = `<resources>
 </resources>
 `
 
-// Per-flavor custom URL schemes. The intent-filter is additive: the manifest
-// merger folds it into the `.MainActivity` declared in the main manifest, so the
-// fully-qualified name is required (flavor manifests cannot rely on relative
-// names). Dev and prod must not share a scheme or a parallel install makes the
-// OS resolve `slovo-propovedi://` ambiguously.
+// Per-flavor custom URL schemes. The intent-filter is additive: the merger folds
+// it into main's `.MainActivity`, so the fully-qualified name is required (flavor
+// manifests cannot use relative names). Dev/prod must not share a scheme or a
+// parallel install resolves `slovo-propovedi://` ambiguously.
+//
+// Dev is ALSO in the main manifest (withDevClientScheme): Expo CLI reads the
+// dev-client launch scheme only from there. Prod strips it with the SECOND filter
+// below — the merger coalesces filters whose action/category/data sets are
+// identical (tools: attrs ignored), so it folds into main's dev filter and the
+// data-level `tools:node="remove"` fires inside the merged filter, removing the
+// <data>. The leftover VIEW filter (action/category, no data) is inert: VIEW
+// without <data> matches no URI. The `slovo-propovedi` filter is untouched.
 export const DEV_FLAVOR_MANIFEST = `<manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <application>
     <activity android:name="ru.slovopropovedi.MainActivity">
@@ -101,7 +108,7 @@ export const DEV_FLAVOR_MANIFEST = `<manifest xmlns:android="http://schemas.andr
 </manifest>
 `
 
-export const PROD_FLAVOR_MANIFEST = `<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+export const PROD_FLAVOR_MANIFEST = `<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
   <application>
     <activity android:name="ru.slovopropovedi.MainActivity">
       <intent-filter>
@@ -109,6 +116,12 @@ export const PROD_FLAVOR_MANIFEST = `<manifest xmlns:android="http://schemas.and
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="slovo-propovedi"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="slovo-propovedi-dev" tools:node="remove"/>
       </intent-filter>
     </activity>
   </application>

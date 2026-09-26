@@ -146,6 +146,25 @@ and `android/app/src/prod/res/`.
 as a separate app and never overwrites the production build. To run the
 prod variant locally: `yarn run:android:prod`.
 
+> **Важно (запуск нужного флейвора):** Expo CLI берёт схему dev-client
+> (`scheme://expo-development-client/?url=...`) только из главного
+> `AndroidManifest.xml`. Раньше кастомные схемы переехали во флейворные
+> манифесты, и CLI, не найдя схемы, запускал базовый prod-пакет. Теперь
+> `slovo-propovedi-dev` объявлена в главном манифесте через
+> `plugins/withDevClientScheme.ts`. Чтобы вычистить её из prod, prod-флейворный
+> манифест (`plugins/gradleSnippets.ts`) добавляет ВТОРОЙ intent-filter,
+> попиксельно повторяющий main-фильтр dev-схемы, но с `tools:node="remove"`
+> на его `<data>`: merger схлопывает фильтры с одинаковым набором
+> action/category/data (tools-атрибуты на идентичность не влияют), поэтому в
+> prod-merge оба фильтра сливаются в один и data-level remove срабатывает
+> внутри него, убирая `<data>`. От слитого фильтра остаются только
+> action/category — VIEW без `<data>` не матчит ни одного URI, т.е. фильтр
+> инертен. VIEW-фильтр prod'а с `slovo-propovedi` removal не задевает, поэтому
+> при параллельной установке схема однозначно резолвится в dev-приложение. Как
+> следствие `yarn run:android` открывает dev-сборку и reload по `r` работает, а
+> `yarn run:android:prod` — prod-сборку; явный `adb shell am start` больше не
+> нужен.
+
 ### Relaunching the Dev App (`yarn dev:launch`)
 
 The dev flavor loads JS from Metro over `localhost:8081`, which requires
@@ -186,6 +205,25 @@ Android воспроизводятся локальными config-плагин�
   для library-проектов в корневом `build.gradle`,
   `org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=2g`, строка `.kotlin/`
   в `android/.gitignore`.
+- `plugins/withDevClientScheme.ts` — добавление схемы
+  `slovo-propovedi-dev` в отдельный VIEW + DEFAULT + BROWSABLE-фильтр
+  `.MainActivity` главного манифеста (нужна Expo CLI для запуска dev-client;
+  на MAIN/LAUNCHER-фильтр её вешать нельзя — `<data>` сузил бы launcher-интент
+  до URI и иконка пропала бы). Prod-флейвор
+  (`plugins/gradleSnippets.ts`) вычищает эту схему фильтром-близнецом main-фильтра
+  с `tools:node="remove"` на `<data>`: merger схлопывает фильтры с одинаковым
+  набором action/category/data, remove срабатывает внутри слитого фильтра, и от
+  него остаётся инертный VIEW-фильтр без `<data>` (VIEW без data не матчит ни
+  одного URI). VIEW-фильтр prod'а с `slovo-propovedi` не задет.
+- `plugins/withDebugKeystore.ts` — восстановление канонического `debug.keystore`
+  из корня репозитория (`debug.keystore`, вне `android/`, поэтому переживает
+  `prebuild --clean`) в `android/app/debug.keystore`. Без этого `--clean`
+  сгенерировал бы новый отладочный ключ → сменилась бы подпись → Expo CLI
+  удалял бы уже установленную debug-сборку (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`),
+  задевая оба флейвора сразу. Если корневой файл отсутствует, плагин падает с
+  ошибкой `withDebugKeystore:` и НЕ даёт Expo молча сгенерировать новый ключ.
+  Ротация ключа осознанно = принудительное удаление обеих (dev и prod)
+  debug-установок.
 
 Все инъекции идемпотентны; повторный `prebuild --clean` даёт идентичное
 дерево.

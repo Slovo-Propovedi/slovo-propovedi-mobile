@@ -107,8 +107,8 @@ const withFlavorAppNames: ConfigPlugin = config =>
   ])
 
 // Dev and prod used to share the one scheme Expo generated from app.config
-// `scheme`, so a parallel install resolved `slovo-propovedi://` ambiguously.
-// Main now carries no scheme; the merger folds these additive filters in.
+// `scheme`. Main now carries `slovo-propovedi-dev` (via withDevClientScheme);
+// per-flavor VIEW schemes stay separate so parallel installs stay unambiguous.
 const withFlavorSchemes: ConfigPlugin = config =>
   withDangerousMod(config, [
     'android',

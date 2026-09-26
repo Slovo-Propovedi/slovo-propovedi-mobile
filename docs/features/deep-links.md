@@ -13,7 +13,7 @@
 2. **assetlinks.json** на том же хосте подтверждает связку `<package_name, отпечаток подписи>` — только при совпадении система считает заявку **verified** и открывает ссылки без системного диалога;
 3. Оба артефакта генерируются в репозитории: манифест — prebuild'ом из `app.config.ts`, assetlinks.json — лежит в `public/` и попадает в веб-дистрибутив.
 
-Кастомная схема теперь **per-flavor**: main-манифест схемы не содержит (поле `scheme` убрано из `app.config.ts`), `plugins/withAndroidFlavors.ts` пишет source-set манифесты с аддитивным VIEW-фильтром — prod `slovo-propovedi://`, dev `slovo-propovedi-dev://` — чтобы параллельная установка dev+prod не конфликтовала за одну схему (фильтры без `autoVerify`).
+Кастомная схема **per-flavor**: поле `scheme` убрано из `app.config.ts`, а `plugins/withAndroidFlavors.ts` пишет source-set манифесты с аддитивным VIEW-фильтром — prod `slovo-propovedi://`, dev `slovo-propovedi-dev://` — чтобы параллельная установка dev+prod не конфликтовала за одну схему (фильтры без `autoVerify`). При этом main-манифест несёт `slovo-propovedi-dev` в отдельном VIEW + DEFAULT + BROWSABLE-фильтре (плагин `plugins/withDevClientScheme.ts`): Expo CLI читает схему dev-client только из главного манифеста, а per-flavor остаётся разведённым по VIEW-фильтрам. Чтобы dev-схема не «протекла» в prod, prod-флейворный манифест добавляет фильтр-близнец main-фильтра с `tools:node="remove"` на `<data>`: merger схлопывает фильтры с одинаковой сигнатурой action/category/data, remove срабатывает внутри слитого фильтра и убирает `<data>` — остаётся инертный VIEW-фильтр без data (VIEW без data не матчит ни одного URI). VIEW-фильтр prod'а с `slovo-propovedi` не задет.
 
 ## Конфиг: `app.config.ts`
 
