@@ -5,6 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0] - 2026-09-26
+
+### Added
+
+- Web share fallback and placeholder guard for playlist sharing
+- Add share playlist menu item with web deeplink
+- Pin web app id and launch_handler for link capture
+- Haptic seek feedback, slider UX and settings improvements
+- Collapsible server URL accordion
+- Haptic feedback toggle
+- Live time preview while dragging seek slider
+- Lighter selection haptic for seek slider tick
+- Haptic tick while dragging fullscreen seek slider
+- Serve android app links verification file on web
+- Claim app.slovo-propovedi.ru app links for listen routes
+- Resolve playlist by id from api on app link cold start
+- Apply native customizations via config plugins
+- Auto-start player titles only; sliders keep drag-gated marquee
+- Auto-start marquee on overflow, drop drag-arm gate
+- Notify session when model failover activates
+- Production failover — hard-quota attempt-1 activation via retry+http.response hooks
+- Adaptive model failover for profile plugin (quota errors)
+- Add pulse animation to all skeleton components
+- In-session /profile switcher plugin
+
+### Changed
+
+- Validate playlist id via uuid.validate
+- Validate EXPO_PUBLIC env with zod, drop defaults
+- Address review minors
+- Tighten lint-block guard to own output
+- Key prebuild idempotency guards on own output
+- Enable Reanimated sync UI-props fast path
+- Stabilize marquee against player position re-renders
+- Replace react-native-text-ticker with MarqueeText wrapper
+- Drive collapsing navbar bg opacity on the UI thread
+- Pause glow ring while fullscreen player is expanded or animating
+- Pause glow ring animation while scrolling, unfocused, or offscreen
+- Virtualize horizontal sliders in shared Slider component
+
+### Fixed
+
+- Actualize generated schemas
+- Restore dev-client scheme launch and pin debug keystore across prebuild
+- Format gobal mock files
+- Per-flavor custom schemes to avoid dev/prod conflict
+- Verify dev flavor via multi-package assetlinks
+- Ignore micro-movements while dragging seek slider
+- Harden playlist deep-link id validation and resolver errors
+- Make commit-msg hook sed portable across GNU and BSD
+- Resolve ThemeContext casing collision breaking tsc and jest
+- Make settings save button follow theme toggles
+- Keep box-none overlays pointer-transparent so page and tab bar stay interactive
+- Replace deprecated React Native APIs in dev warnings sweep
+- Add expo-system-ui package
+- Reset details overlay state on collapse and back navigation
+- Prevent swipe-to-collapse when details overlay is open
+- Resume marquee clock after jitter or cancelled gesture
+- Marquee container stretch-invariant; centered fullscreen titles
+- Smooth marquee on Android via frame-clock loop
+- Restore search toggle position after touch-target change
+- Enforce 48x48 minimum touch target for all icon buttons
+- Enlarge back and player-collapse tap targets to 48x48
+- Clean up stale MarqueeText references after #98
+- Make playlist list item title multiline (#98)
+- Use section name in player subtitle for single-sermon playlists
+- Always open playlist page on tap, even for single-sermon playlists (#96)
+- No press dim blink on already active tab
+- No haptic feedback on already active tab
+- Ignore tap on already playing sermon (#99)
+- Hand over playlist-list navbar title at title center like playlist (#108)
+- Compute playlist-list title threshold without layout y (#108)
+- Change reviewer model in opencode profile configs
+- Show playlist-list navbar bg only near title threshold (#108)
+- Reset scroll flag on unmount and harden glow pause tests
+- Bound failover error-body read to 2KB
+- Guard reload failures in failover revert and startup
+- Harden profile failover (review fixes)
+- Clamp section itemsRows and harden slider flat-list
+- Pin markdown-defined subagents via frontmatter, not registry
+- Add omc config
+- Keep plan/build on switchModel; add /profile-<name> hints
+- Migrate config to V2-native schema; move agent permissions to markdown agents
+- Ignore kotlin build artifacts
+- Use system Virtual_Key haptic on Android
+- Add ocx and opencode configs
+
 ## [0.22.0] - 2026-09-19
 
 ### Added
@@ -751,6 +838,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.23.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.23.0
 [0.22.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.22.0
 [0.21.2]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.2
 [0.21.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.21.1

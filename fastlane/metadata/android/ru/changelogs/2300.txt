@@ -1,0 +1,8 @@
+Restore dev-client scheme launch and pin debug keystore across prebuild
+Web share fallback and placeholder guard for playlist sharing
+Add share playlist menu item with web deeplink
+Per-flavor custom schemes to avoid dev/prod conflict
+Pin web app id and launch_handler for link capture
+Verify dev flavor via multi-package assetlinks
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
