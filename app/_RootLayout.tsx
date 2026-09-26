@@ -21,7 +21,6 @@ import { Toast } from 'shared/ui'
 import { GlobalConfirmDialog } from 'shared/ui/confirm-dialog'
 import { GlobalErrorDialog } from 'shared/ui/error-dialog'
 import { useTheme } from 'shared/ui/theme'
-
 // Module-level: subscribes once for the app lifetime
 subscribeToNetwork()
 
@@ -102,6 +101,7 @@ const RootLayout = () => {
       >
         <Stack.Screen name='index' options={{ headerShown: false }} />
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Screen name='+not-found' options={{ headerShown: false }} />
         {SUB_SCREENS.map(({ name, title }) => (
           <Stack.Screen
             key={name}

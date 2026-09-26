@@ -72,6 +72,7 @@ intentFilters: [
 ## Поведение незаявленных путей
 
 - **Приложение установлено** — система сравнивает URL с заявленными путями: совпадение → открыть приложение (`launchMode="singleTask"`, холодный старт или поверх запущенного), несовпадение → открыть в браузере.
+- **Кастомная схема** (`slovo-propovedi://<любой путь>`, dev `slovo-propovedi-dev://`) — всегда перехватывается приложением (per-flavor VIEW-фильтр без ограничения пути, см. выше) независимо от заявленных http-путей. Незнакомый путь открывается на собственном экране `+not-found` (`app/+not-found.tsx` → `src/pages/not-found`, см. [screens/not-found.md](../screens/not-found.md)) с заголовком «Страница не найдена», нераспознанным путём и кнопкой «На главный экран». Это также устраняет падение release-сборки: встроенный экран Unmatched из expo-router вызывал `Linking.createURL(pathname)` → `expo-linking`/`resolveScheme` бросал `Cannot make a deep link into a standalone app with no custom scheme defined` (в `app.config.ts` нет поля `scheme` — схемы per-flavor инжектит `plugins/withAndroidFlavors.ts`, см. выше). Свой `app/+not-found.tsx` заменяет системный маршрут (`getRoutesCore.js` → `appendNotFoundRoute`), `RootUnmatched` не монтируется, и единственный падающий `createURL`-call-site исчезает.
 - **Приложение не установлено** — браузер открывает веб-SPA как обычно (`try_files`-фолбэк nginx отдаёт индекс).
 
 ## Порядок расширения заявки
