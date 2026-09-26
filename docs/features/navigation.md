@@ -19,6 +19,8 @@
 - `share` — заголовок «Поделиться приложением» (см. [`../screens/share.md`](../screens/share.md)).
 - цвет фона контента и шапки — из `currentTheme`; `headerTitleAlign: 'center'` в `screenOptions` — заголовок центрирован в шапке, а не прижат к кастомной кнопке «Назад» (см. ниже).
 
+Список пяти под-экранов (`settings`/`history`/`offline`/`about`/`share`) — константа `SUB_SCREENS` в `src/shared/routing/rootStackScreens.ts` (вынесена из `_RootLayout.tsx`, чтобы файл уложился в лимит 130 строк ESLint).
+
 **Кнопка «Назад» в шапке (`headerLeft`)** — кастомный `HeaderBackButton` (`src/widgets/sub-screen-header-back/ui/HeaderBackButton.tsx`) вместо стандартной кнопки react-navigation, используется в двух местах:
 
 - пять под-экранов корневого стека (`settings`/`history`/`offline`/`about`/`share`, `_RootLayout.tsx`) — фолбэк `/more` (таб «Еще», логический родитель всех пяти);
@@ -79,11 +81,16 @@
 
 - `useListenNavigation.ts` — `navigateToPlaylist`, `navigateToPlaylistList`;
 - `useReadNavigation.ts` — `navigateToBookReader` (`/read/book-reader`), `navigateToBooksList` (`/read/books-list`);
+- `useColdStartLinkRecovery.ts` — Android-only safety net холодного старта (см. «Android App Links» ниже);
+- `launchPath.ts` — pure-хелперы разбора launch URL (`extractLaunchPath`, `shouldAttemptRecovery`);
+- `rootStackScreens.ts` — `SUB_SCREENS` корневого стека;
 - `base.ts` — тип `BaseParamList`.
 
 ## Android App Links
 
 Хост `https://app.slovo-propovedi.ru` заявлен через App Links: точные пути `/listen` и `/listen/playlist` открывают приложение (холодный старт или поверх запущенного — работает «из коробки» через expo-router, без кастомной linking-конфигурации), остальные маршруты остаются в браузере. Подробности (конфиг, assetlinks.json, nginx, adb-тесты, ограничения) — [deep-links.md](./deep-links.md).
+
+Дополнительно приложение подстраховывает **холодный старт на Android**: expo-router может потерять launch-ссылку в гонке 150 мс и оставить приложение на `/listen` — хук `useColdStartLinkRecovery` (`src/shared/routing/`, вызов из `_RootLayout.tsx`) через ~1 с повторно читает launch intent и восстанавливает переход; корректно обработанные ссылки, ручная навигация и iOS не затрагиваются. Подробности — [deep-links.md](./deep-links.md) → «Android: гонка 150 мс при холодном старте».
 
 ## Незарегистрированные маршруты
 

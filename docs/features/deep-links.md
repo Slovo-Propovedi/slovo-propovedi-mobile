@@ -176,6 +176,12 @@ adb shell am start -a android.intent.action.VIEW -c android.intent.category.BROW
 - **Android < 12** — `pm get-app-links` недоступен; верификацию наблюдать по факту открытия ссылки.
 - Верификация происходит при **установке** обновления приложения: после смены подписи/assetlinks.json нужно переустановить (или `pm clear`) и подождать ≥20с; `--re-verify` форсирует.
 
+### Android: гонка 150 мс при холодном старте (safety net)
+
+Expo-router на Android резолвит launch intent через `Linking.getInitialURL()`, обёрнутый в `Promise.race` с жёстким таймаутом **150 мс** (`node_modules/expo-router/build/fork/useLinking.native.js` → `getInitialURLWithTimeout`). На медленном холодном старте (первый запуск после обновления APK) нативная сторона не успевает ответить за это окно → роутер откатывается на корневой URL, приложение оказывается на `/listen` (через `app/index.tsx` → `<Redirect href='/listen' />`), и диплинк молча теряется. **iOS не затронут** — там `ExpoLinking.getLinkingURL()` синхронный; **тёплые ссылки** приходят через url-events и тоже работают как раньше.
+
+Safety net от приложения: `src/shared/routing/useColdStartLinkRecovery.ts` (вызывается из `app/_RootLayout.tsx`). Только на Android, через `RECOVERY_DELAY_MS = 1000` мс после маунта хук повторно читает launch intent (`Linking.getInitialURL()` — без таймаута; на Android отдаёт исходный intent в любой момент), парсит путь (`extractLaunchPath`, `src/shared/routing/launchPath.ts`) и делает `router.push`, если приложение всё ещё на корневом фолбэке (`/` или `/listen`) и путь отличается (`shouldAttemptRecovery`). На один launch — одна попытка (module-level guard переживает remount/Fast Refresh); корректно обработанная expo-router ссылка и ручная навигация не перехватываются. Хук удаляется после устранения гонки в апстриме — см. [debt.md](../debt.md) → Navigation.
+
 ## Задел iOS (не реализовано)
 
 Краткий план на будущее (iOS App Links / Universal Links):

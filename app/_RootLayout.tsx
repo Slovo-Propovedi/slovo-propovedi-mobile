@@ -17,6 +17,7 @@ import {
 import { subscribeToNetwork } from 'shared/lib/network'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { checkForUpdateAction } from 'shared/model'
+import { SUB_SCREENS, useColdStartLinkRecovery } from 'shared/routing'
 import { Toast } from 'shared/ui'
 import { GlobalConfirmDialog } from 'shared/ui/confirm-dialog'
 import { GlobalErrorDialog } from 'shared/ui/error-dialog'
@@ -24,20 +25,13 @@ import { useTheme } from 'shared/ui/theme'
 // Module-level: subscribes once for the app lifetime
 subscribeToNetwork()
 
-const SUB_SCREENS = [
-  { name: 'settings', title: 'Настройки' },
-  { name: 'history', title: 'История прослушивания' },
-  { name: 'offline', title: 'Офлайн' },
-  { name: 'about', title: 'О приложении' },
-  { name: 'share', title: 'Поделиться приложением' },
-] as const
-
 const RootLayout = () => {
   const { currentTheme } = useTheme()
   const checkForUpdate = useAction(checkForUpdateAction)
   useUpdateNotificationResponse()
   usePlaybackProgressSaver()
   useOfflineRegistrySync()
+  useColdStartLinkRecovery()
 
   useEffect(() => {
     const timer = setTimeout(() => void checkForUpdate(), 0)
