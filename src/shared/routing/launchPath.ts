@@ -1,6 +1,7 @@
 const SCHEME_SEPARATOR = '://'
 const HOST_BASED_SCHEMES = ['http', 'https']
 const FALLBACK_LANDING_ROUTES = ['/', '/listen'] as const
+const DEV_CLIENT_PATH_SEGMENT = '/expo-development-client'
 
 /**
  * Normalizes the path of a custom-scheme URL: `app:///foo` and `app://foo`
@@ -56,6 +57,8 @@ export const extractLaunchPath = (url: string): null | string => {
  *
  * Recovery only fires while the app still shows a redirect fallback route, so a
  * link that expo-router already handled or a manual navigation is never hijacked.
+ * Expo dev client launch URLs (`/expo-development-client/?url=...`) are not app
+ * routes, so they must never be replayed.
  * @param currentPathname - Route the app currently shows.
  * @param launchPath - Path parsed from the launch URL, or null.
  * @returns True when the launch path must be pushed onto the router.
@@ -65,6 +68,7 @@ export const shouldAttemptRecovery = (
   launchPath: null | string,
 ): boolean => {
   if (launchPath === null) return false
+  if (launchPath.startsWith(DEV_CLIENT_PATH_SEGMENT)) return false
   if (launchPath === currentPathname) return false
 
   return FALLBACK_LANDING_ROUTES.some(route => route === currentPathname)

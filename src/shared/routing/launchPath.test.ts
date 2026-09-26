@@ -6,6 +6,9 @@ const CUSTOM_SCHEME_URL = 'slovo-propovedi://foo/bar?a=1'
 const CUSTOM_SCHEME_HOST = 'slovo-propovedi://'
 const TRIPLE_SLASH_PLAYLIST_URL = 'slovo-propovedi:///listen/playlist?playlist=x'
 const TRIPLE_SLASH_ROOT_URL = 'slovo-propovedi:///'
+const DEV_CLIENT_URL =
+  'slovo-propovedi-dev://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
+const DEV_CLIENT_PATH = '/expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081'
 
 describe('extractLaunchPath', () => {
   test('extracts path and query from an https URL', () => {
@@ -44,6 +47,10 @@ describe('extractLaunchPath', () => {
   test('returns the root path unchanged', () => {
     expect(extractLaunchPath(`${HTTPS_HOST}/listen`)).toBe('/listen')
   })
+
+  test('extracts the dev-client path from an expo dev client launch URL', () => {
+    expect(extractLaunchPath(DEV_CLIENT_URL)).toBe(DEV_CLIENT_PATH)
+  })
 })
 
 describe('shouldAttemptRecovery', () => {
@@ -65,5 +72,13 @@ describe('shouldAttemptRecovery', () => {
 
   test('does not hijack user navigation away from the fallback', () => {
     expect(shouldAttemptRecovery('/settings', '/listen/playlist')).toBe(false)
+  })
+
+  test('does not recover a dev-client launch path with a query', () => {
+    expect(shouldAttemptRecovery('/listen', DEV_CLIENT_PATH)).toBe(false)
+  })
+
+  test('does not recover a bare dev-client launch path', () => {
+    expect(shouldAttemptRecovery('/', '/expo-development-client')).toBe(false)
   })
 })
