@@ -60,6 +60,7 @@ const defaultProps = {
   isAddAllToOfflineDisabled: false,
   isCaching: false,
   isClearCacheDisabled: false,
+  isShareDisabled: false,
   onAddAllToOffline: jest.fn(),
   onClearCache: jest.fn(),
   onClose: jest.fn(),
@@ -176,6 +177,15 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     expect(onShare).toHaveBeenCalledTimes(1)
   })
 
+  test('does not fire onShare when the share item is disabled', async () => {
+    const onShare = jest.fn()
+    await renderDropdown({ isShareDisabled: true, onShare })
+
+    fireEvent.press(screen.getByText(SHARE_TEXT))
+
+    expect(onShare).not.toHaveBeenCalled()
+  })
+
   test('hides history items when both flags are false', async () => {
     await renderDropdown()
 
@@ -249,12 +259,21 @@ describe('<PlaylistHistoryMenuItem>', () => {
 })
 
 describe('<PlaylistShareMenuItem>', () => {
-  test('calls onPress', async () => {
+  test('calls onPress when not disabled', async () => {
     const onPress = jest.fn()
     await render(<PlaylistShareMenuItem text='Share' onPress={onPress} />)
 
     fireEvent.press(screen.getByText('Share'))
 
     expect(onPress).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not call onPress when disabled', async () => {
+    const onPress = jest.fn()
+    await render(<PlaylistShareMenuItem isDisabled text='Share' onPress={onPress} />)
+
+    fireEvent.press(screen.getByText('Share'))
+
+    expect(onPress).not.toHaveBeenCalled()
   })
 })

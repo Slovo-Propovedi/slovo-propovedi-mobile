@@ -21,6 +21,7 @@ export {
   SliderItemTransform,
   WhereIsSlideTitleLocated,
 } from './slider/slider-item/slider-item.types'
+export { Toast } from './toast/Toast'
 export { TouchableItem } from './touchable-item'
 export {
   OnPressTouchableListItem,

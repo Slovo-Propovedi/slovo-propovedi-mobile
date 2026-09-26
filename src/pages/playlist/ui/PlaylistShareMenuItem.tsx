@@ -5,6 +5,8 @@ import { PlaylistMenuRow } from './PlaylistMenuRow'
 const ICON_SIZE = 18
 const SHARE_ICON = 'share-outline'
 
+export const SHARE_TEXT = 'Поделиться плейлистом'
+
 export interface PlaylistShareMenuItemProps {
   isDisabled?: boolean
   onPress: () => void

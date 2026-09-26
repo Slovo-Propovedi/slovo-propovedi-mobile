@@ -62,7 +62,7 @@ intentFilters: [
 
 **Query-строка в сравнении путей не участвует** — `/listen/playlist?playlist=<uuid>` матчится по `path`, а сам параметр expo-router передаёт в `useLocalSearchParams`.
 
-Приложение **само делится плейлистами этой же ссылкой**: пункт «Поделиться плейлистом» в меню шапки экрана плейлиста формирует `https://<webHostname>/listen/playlist?playlist=<id>` (`src/pages/playlist/lib/buildPlaylistShareUrl.ts`) и отдаёт её в системный share-sheet. Получатель по клику проходит ровно тот же App Links-перехват, что и любой внешний диплинк (при незаданном id — сетевой резолв плейлиста, см. [screens/playlist.md](../screens/playlist.md)).
+Приложение **само делится плейлистами этой же ссылкой**: пункт «Поделиться плейлистом» в меню шапки экрана плейлиста формирует `https://<webHostname>/listen/playlist?playlist=<id>` (`src/pages/playlist/lib/buildPlaylistShareUrl.ts`) и отдаёт её в системный share-sheet (на web — `navigator.share` на мобильных браузерах, иначе копирование ссылки в буфер обмена с подсказкой «Ссылка скопирована»; `src/pages/playlist/lib/sharePlaylist.web.ts`). Пункт неактивен, пока плейлист не загружен (id не UUID). Получатель по клику проходит ровно тот же App Links-перехват, что и любой внешний диплинк (при незаданном id — сетевой резолв плейлиста, см. [screens/playlist.md](../screens/playlist.md)).
 
 Всё, что не совпадает точно, **остаётся в браузере** (веб-SPA открывается как раньше):
 

@@ -1,17 +1,22 @@
-import { Share } from 'react-native'
-import { type PlaylistData } from 'shared/model'
+import { useAction } from '@reatom/npm-react'
+import { validate as uuidValidate } from 'uuid'
+import { type PlaylistData, showToast } from 'shared/model'
 import { buildPlaylistShareUrl } from './buildPlaylistShareUrl'
+import { sharePlaylist } from './sharePlaylist'
 
-export const usePlaylistShare = (playlist: PlaylistData, onBeforeShare: () => void) => {
+const COPIED_MESSAGE = 'Ссылка скопирована'
+
+export const usePlaylistShare = (playlist: PlaylistData, onCloseMenu: () => void) => {
+  const canShare = uuidValidate(playlist.id)
+  const showToastAction = useAction(showToast)
+
   const handleShare = async () => {
-    onBeforeShare()
+    if (!canShare) return
     const url = buildPlaylistShareUrl(playlist.id)
-    try {
-      await Share.share({ message: `${playlist.title} — ${url}`, url })
-    } catch (caughtError) {
-      console.warn('Share playlist failed:', caughtError)
-    }
+    const result = await sharePlaylist({ text: `${playlist.title} — ${url}`, url })
+    if (result === 'copied') showToastAction(COPIED_MESSAGE)
+    onCloseMenu()
   }
 
-  return { handleShare }
+  return { canShare, handleShare }
 }

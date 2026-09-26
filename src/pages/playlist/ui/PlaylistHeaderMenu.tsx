@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { StyleSheet, View } from 'react-native'
-import { type ColorValue } from 'react-native'
+import { type ColorValue, StyleSheet, View } from 'react-native'
 import { type PlaylistData } from 'shared/model'
 import { ErrorModal } from 'shared/ui/error-modal'
 import { IconButton } from 'shared/ui/icon-button'
@@ -54,9 +53,10 @@ export const PlaylistHeaderMenu = ({
     setMenuVisible,
   } = usePlaylistOfflineMenu(tracksData, playlistTitle)
 
-  const historyMenu = usePlaylistHistoryMenu(playlist, () => setMenuVisible(false))
+  const closeMenu = () => setMenuVisible(false)
+  const historyMenu = usePlaylistHistoryMenu(playlist, closeMenu)
   const { error, handleErrorClose } = usePlaylistCacheError(cacheDialogVisible)
-  const { handleShare } = usePlaylistShare(playlist, () => setMenuVisible(false))
+  const { canShare, handleShare } = usePlaylistShare(playlist, closeMenu)
 
   return (
     <>
@@ -78,15 +78,16 @@ export const PlaylistHeaderMenu = ({
 
       <PlaylistHeaderMenuDropdown
         anchor={menuAnchor}
+        onClose={closeMenu}
         anchorRef={buttonRef}
         visible={menuVisible}
         allCached={allCached}
         isCaching={isCaching}
         onShare={handleShare}
+        isShareDisabled={!canShare}
         onStopCaching={handleStopCaching}
         canMarkAll={historyMenu.canMarkAll}
         onClearCache={handleClearCacheOption}
-        onClose={() => setMenuVisible(false)}
         onMarkAll={historyMenu.handleMarkAllOption}
         isClearCacheDisabled={isClearCacheDisabled}
         onAddAllToOffline={handleAddAllToOfflineOption}
