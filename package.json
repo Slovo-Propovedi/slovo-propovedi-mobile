@@ -90,6 +90,7 @@
     "react-native-zip-archive": "^9.4.0",
     "ts-pattern": "^5.9.0",
     "typescript": "~6.0.3",
+    "uuid": "^11",
     "xml-js": "^1.6.11",
     "zod": "^4.4.3"
   },

@@ -74,6 +74,26 @@ describe('resolvePlaylistFromApi', () => {
     expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
+  test('returns undefined for a UUID with an invalid variant without calling the API', async () => {
+    const result = await resolvePlaylistFromApi('123e4567-e89b-12d3-c456-426614174000')
+
+    expect(result).toBeUndefined()
+    expect(mockFindOne).not.toHaveBeenCalled()
+    expect(consoleErrorSpy).not.toHaveBeenCalled()
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
+  })
+
+  test('accepts the nil UUID and calls the API', async () => {
+    const NIL_UUID = '00000000-0000-0000-0000-000000000000'
+    mockFindOne.mockResolvedValue(ENTITY)
+    mockMapPlaylistEntityToPlaylistData.mockReturnValue(PLAYLIST)
+
+    const result = await resolvePlaylistFromApi(NIL_UUID)
+
+    expect(result).toBe(PLAYLIST)
+    expect(mockFindOne).toHaveBeenCalledWith(NIL_UUID)
+  })
+
   test('warns and returns undefined on a 404, without logging an error', async () => {
     mockFindOne.mockRejectedValue(axios404Error)
 
