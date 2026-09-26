@@ -1,5 +1,5 @@
-import { type PlaylistData } from '../../model/domain/common'
-import { type APITypes } from '../generated'
+import { type APITypes } from 'shared/api'
+import { type PlaylistData } from '../../model'
 
 /**
  * Маппер: PlaylistSermonPlaylistsItem (API) -> PlaylistData (App).

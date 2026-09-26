@@ -1,4 +1,4 @@
-import { getCachedSections } from 'shared/lib/sections-cache'
+import { getCachedSections } from 'entities/section'
 import { type SermonCandidate } from '../model'
 
 export const collectSectionCandidates = async (): Promise<SermonCandidate[]> => {

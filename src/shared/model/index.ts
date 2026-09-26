@@ -4,14 +4,8 @@ export {
   setIsAudioPlayerMounted,
   setPlayerFullscreen,
 } from './app'
-// Реэкспорт типов из схем
-export {
-  playlistDataSchema,
-  playlistsArraySchema,
-  sectionSchema,
-  type SermonShape,
-} from './domain/common'
-export { type PlaylistData, type SectionData } from './domain/common'
+// Структурные формы на границе shared-слоя (см. domain/common)
+export { type PlaylistShape, type SectionShape, type SermonShape } from './domain/common'
 export { type FetchedPlaylist } from './fetched/fetched-data'
 export { MimeType } from './file/mimeTypes'
 export { getParseJsonWithSchema } from './getParseJsonWithSchema'

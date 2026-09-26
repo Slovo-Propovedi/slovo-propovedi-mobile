@@ -1,4 +1,4 @@
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist/@x/player'
 import type { ControlsNames } from './PlayerControls.types'
 import type { AudioPlayerData } from 'entities/sermon'
 import type { StyleProp, ViewStyle } from 'react-native'

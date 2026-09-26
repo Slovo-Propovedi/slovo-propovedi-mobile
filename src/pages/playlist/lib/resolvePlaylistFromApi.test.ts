@@ -5,11 +5,14 @@ const mockFindOne = jest.fn()
 const mockMapPlaylistEntityToPlaylistData = jest.fn()
 
 jest.mock('shared/api', () => ({
-  mapPlaylistEntityToPlaylistData: (...args: unknown[]) =>
-    mockMapPlaylistEntityToPlaylistData(...args),
   playlistsApi: {
     getPlaylists: (...args: unknown[]) => mockGetPlaylists(...args),
   },
+}))
+
+jest.mock('entities/playlist', () => ({
+  mapPlaylistEntityToPlaylistData: (...args: unknown[]) =>
+    mockMapPlaylistEntityToPlaylistData(...args),
 }))
 
 const UUID = '123e4567-e89b-12d3-a456-426614174000'

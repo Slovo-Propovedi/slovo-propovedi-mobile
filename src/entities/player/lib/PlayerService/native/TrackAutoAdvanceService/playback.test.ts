@@ -1,5 +1,5 @@
 import { type AudioPlayer } from 'expo-audio'
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist/@x/player'
 import type { AudioPlayerData } from 'entities/sermon'
 import { lockScreenControls } from '../LockScreenControls'
 import {

@@ -1,7 +1,7 @@
 import { ActivityIndicator, Platform, Text, View, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist'
 import { CoverImage, MovingText, PlayerControlButton, PlayerControlButtonType } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
 import type { createMiniStyles } from './miniStyles'

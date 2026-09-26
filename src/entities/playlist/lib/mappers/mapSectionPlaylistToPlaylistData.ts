@@ -1,7 +1,7 @@
-import { type PlaylistData } from '../../model/domain/common'
-import { type APITypes } from '../generated'
+import { mapSectionRefToSectionData } from 'entities/section/@x/playlist'
+import { type APITypes } from 'shared/api'
+import { type PlaylistData } from '../../model'
 import { mapPlaylistSermonToSermonShape } from './mapPlaylistSermonToSermonShape'
-import { mapSectionRefToSectionData } from './mapSectionRefToSectionData'
 
 /**
  * Маппер: SectionPlaylist (API) -> PlaylistData (App).

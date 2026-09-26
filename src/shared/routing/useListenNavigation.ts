@@ -1,10 +1,17 @@
 import { useRouter } from 'expo-router'
-import { type PlaylistData } from '../model/domain/common'
+
+/**
+ * Минимальная структурная форма плейлиста, нужная навигации.
+ * Shared не импортирует entities, поэтому принимаем только id.
+ */
+interface NavigablePlaylist {
+  id: string
+}
 
 export const useListenNavigation = () => {
   const router = useRouter()
 
-  const navigateToPlaylist = (playlist: PlaylistData) => {
+  const navigateToPlaylist = (playlist: NavigablePlaylist) => {
     router.push({
       params: { playlist: playlist.id },
       pathname: '/listen/playlist',

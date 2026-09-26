@@ -1,18 +1,51 @@
-import z from 'zod'
+/**
+ * Структурные формы доменных типов на границе shared-слоя.
+ *
+ * Канонические доменные типы и их zod-схемы живут в entities:
+ *  - `SermonData`/`BookData` — entities/sermon;
+ *  - `PlaylistData` — entities/playlist;
+ *  - `SectionData` — entities/section.
+ *
+ * Здесь остаётся только минимальная loose-типизация тех мест внутри shared,
+ * которым эти типы нужны, но которые не могут импортировать entities
+ * (mock-БД и мапперы, работающие со `SermonShape`).
+ */
 
 /**
- * Доменные типы секций и плейлистов приложения.
- * Проповеди/книги/треки переехали в entities/sermon (Phase 1 рефакторинга).
- *
- * До переноса `playlistSchema`/`sectionSchema` в entities здесь остаётся
- * структурный `SermonShape` — минимальная loose-типизация границы для
- * playlist/section (валидацию содержимого проповедей выполняет entities/sermon).
+ * Структурная форма плейлиста на границе shared-слоя.
+ * Канонический доменный тип — `PlaylistData` из entities/playlist.
+ * Используется mock-БД (`FetchedPlaylist`) и структурной формой проповеди.
  */
+export interface PlaylistShape {
+  artwork: null | string
+  description?: string | undefined
+  id: string
+  sections?: SectionShape[] | undefined
+  sermons: SermonShape[]
+  title: string
+}
+
+/**
+ * Структурная форма секции на границе shared-слоя.
+ * Канонический доменный тип — `SectionData` из entities/section.
+ */
+export interface SectionShape {
+  borderRadius?: boolean | undefined
+  description?: null | string | undefined
+  id?: string | undefined
+  isDescriptionTitleOnSlideLarge?: boolean | undefined
+  itemsRows?: null | number | undefined
+  itemsSize: 'large' | 'middle' | 'small' | 'xLarge'
+  playlists?: PlaylistShape[] | undefined
+  title?: string | undefined
+  transform: 'high' | 'middle' | 'short'
+  whereIsSlideTitleLocated?: 'bothOnAndUnder' | 'on' | 'under' | undefined
+}
 
 /**
  * Структурная форма проповеди на границе shared-слоя.
  * Канонический доменный тип — `SermonData` из entities/sermon; structural —
- * чтобы shared (playlist/section, mappers, mock db) не импортировал entities.
+ * чтобы shared (mock-БД, мапперы) не импортировал entities.
  */
 export interface SermonShape {
   artist: string
@@ -22,73 +55,9 @@ export interface SermonShape {
   chapter?: null | number | number[] | undefined
   description?: string | undefined
   id: string
-  playlists?: PlaylistDataDef[] | undefined
+  playlists?: PlaylistShape[] | undefined
   textFileUrl?: null | string | undefined
   title: string
   verse?: (number | number[])[] | null | number | number[] | undefined
   youtubeUrl?: null | string | undefined
 }
-
-/** Интерфейс для плейлиста (PlaylistData). Используется для опережающего объявления типов. */
-interface PlaylistDataDef {
-  artwork: null | string
-  description?: string | undefined
-  id: string
-  sections?: SectionDataDef[] | undefined
-  sermons: SermonShape[]
-  title: string
-}
-
-/** Интерфейс для секции (SectionData). Используется для опережающего объявления типов. */
-interface SectionDataDef {
-  borderRadius?: boolean | undefined
-  description?: null | string | undefined
-  id?: string | undefined
-  isDescriptionTitleOnSlideLarge?: boolean | undefined
-  itemsRows?: null | number | undefined
-  itemsSize: 'large' | 'middle' | 'small' | 'xLarge'
-  playlists?: PlaylistDataDef[] | undefined
-  title?: string | undefined
-  transform: 'high' | 'middle' | 'short'
-  whereIsSlideTitleLocated?: 'bothOnAndUnder' | 'on' | 'under' | undefined
-}
-
-/** Схема для секции (SectionData). */
-export const sectionSchema = z.object({
-  borderRadius: z.boolean().optional(),
-  description: z.string().nullable().optional(),
-  id: z.string().optional(),
-  isDescriptionTitleOnSlideLarge: z.boolean().optional(),
-  itemsRows: z.number().nullable().optional(),
-  itemsSize: z.enum(['large', 'middle', 'small', 'xLarge']),
-  playlists: z.lazy((): z.ZodType<PlaylistDataDef[]> => z.array(playlistSchema)).optional(),
-  title: z.string().optional(),
-  transform: z.enum(['high', 'short', 'middle']),
-  whereIsSlideTitleLocated: z.enum(['bothOnAndUnder', 'on', 'under']).optional(),
-})
-
-/** Тип секции (извлекается из схемы). */
-export type SectionData = z.infer<typeof sectionSchema>
-
-/**
- * Схема для плейлиста (PlaylistData).
- * Содержимое проповедей не валидируется здесь (loose-граница до переноса
- * playlist/section в entities): валидатор проповеди живёт в entities/sermon.
- */
-export const playlistSchema = z.object({
-  artwork: z.string().nullable(),
-  description: z.string().optional(),
-  id: z.string(),
-  sections: z.lazy((): z.ZodType<SectionDataDef[]> => z.array(sectionSchema)).optional(),
-  sermons: z.array(z.custom<SermonShape>()),
-  title: z.string(),
-})
-
-/** Тип плейлиста (извлекается из схемы). */
-export type PlaylistData = z.infer<typeof playlistSchema>
-
-/** Схема для массива плейлистов (PlaylistData[]). */
-export const playlistsArraySchema = z.array(playlistSchema)
-
-// Алиас для обратной совместимости
-export const playlistDataSchema = playlistSchema

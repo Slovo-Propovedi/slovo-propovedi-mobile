@@ -1,4 +1,4 @@
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist/@x/listening-history'
 import type { AudioPlayerData } from 'entities/sermon'
 import { type ListeningHistoryEntry } from '../model/types'
 

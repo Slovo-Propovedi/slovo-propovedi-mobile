@@ -1,6 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { audioCacheService, registerOfflineSermon } from 'entities/offline-cache'
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist'
 import type { AudioPlayerData } from 'entities/sermon'
 import { collectSermonItems } from './collectSermonItems'
 import { syncOfflineSermon } from './syncOfflineSermon'

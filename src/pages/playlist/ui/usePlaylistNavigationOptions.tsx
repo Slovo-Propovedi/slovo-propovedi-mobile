@@ -1,8 +1,8 @@
 import { useNavigation } from 'expo-router'
 import { useEffect } from 'react'
 import { type ColorValue } from 'react-native'
+import { type PlaylistData } from 'entities/playlist'
 import { formatSermonReference, type SermonData } from 'entities/sermon'
-import { type PlaylistData } from 'shared/model'
 import { PlaylistHeaderMenu } from './PlaylistHeaderMenu'
 
 export type TracksListData = ReturnType<typeof buildTracksListData>

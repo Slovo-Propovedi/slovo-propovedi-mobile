@@ -1,8 +1,8 @@
 import { action, atom, type Ctx } from '@reatom/framework'
 import z from 'zod'
+import { type PlaylistData, playlistDataSchema } from 'entities/playlist/@x/offline-cache'
 import { type SermonData, sermonDataSchema } from 'entities/sermon/@x/offline-cache'
 import { getCachedJson, setCachedJson } from 'shared/lib/cache'
-import { type PlaylistData, playlistDataSchema } from 'shared/model'
 import { OFFLINE_SERMONS_REGISTRY } from './storageKeys'
 
 export const offlineSermonEntrySchema = z.object({

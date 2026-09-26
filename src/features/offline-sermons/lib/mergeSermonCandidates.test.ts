@@ -1,10 +1,13 @@
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist'
 import type { SermonData } from 'entities/sermon'
 import { mergeSermonCandidates } from './mergeSermonCandidates'
 
 jest.mock('entities/section/@x/listening-history', () => {
   const { atom } = jest.requireActual('@reatom/framework')
-  return { dynamicSectionsAtom: atom([], 'testDynamicSectionsAtom') }
+  return {
+    dynamicSectionsAtom: atom([], 'testDynamicSectionsAtom'),
+    getCachedSections: jest.fn(),
+  }
 })
 
 const sermonA: SermonData = {

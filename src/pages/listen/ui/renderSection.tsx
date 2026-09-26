@@ -1,6 +1,7 @@
+import { type PlaylistData } from 'entities/playlist'
+import { type SectionData } from 'entities/section'
 import { Slider } from 'shared/ui'
 import { INDENTS, RADIUSES } from 'shared/ui/theme'
-import type { PlaylistData, SectionData } from 'shared/model'
 import { mapItemsSize } from '../lib/mapItemsSize'
 import { mapTransform } from '../lib/mapTransform'
 import { mapWhereIsTitleLocated } from '../lib/mapWhereIsTitleLocated'

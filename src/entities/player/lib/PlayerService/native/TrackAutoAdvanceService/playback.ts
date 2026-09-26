@@ -3,8 +3,8 @@ import {
   historyAtom,
   recordSermonSwitchAction,
 } from 'entities/listening-history/@x/player'
+import { type PlaylistData } from 'entities/playlist/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type PlaylistData } from 'shared/model'
 import type { PlayerActions } from './types'
 import type { AudioPlayerData } from 'entities/sermon'
 import { setCurrentAudioAction } from '../../../../model'

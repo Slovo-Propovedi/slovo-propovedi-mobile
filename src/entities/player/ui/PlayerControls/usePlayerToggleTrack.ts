@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
+import { type PlaylistData } from 'entities/playlist/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type PlaylistData } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { isOnlineAtom } from 'shared/model/network'
 import type { AudioPlayerData } from 'entities/sermon'

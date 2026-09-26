@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { OFFLINE_SERMONS_REGISTRY_SEEDED, registerOfflineSermon } from 'entities/offline-cache'
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist'
 import type { AudioPlayerData } from 'entities/sermon'
 import { collectSermonItems } from './collectSermonItems'
 import { filterCachedSermons } from './filterCachedSermons'

@@ -1,7 +1,8 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
+import { type PlaylistData } from 'entities/playlist'
 import { renderHookWithProviders } from 'shared/mocks'
-import { type PlaylistData, toastAtom } from 'shared/model'
+import { toastAtom } from 'shared/model'
 import { buildPlaylistShareUrl } from './buildPlaylistShareUrl'
 import { usePlaylistShare } from './usePlaylistShare'
 

@@ -1,15 +1,10 @@
-import { playlistSchema } from './common'
+import { playlistDataSchema, playlistsArraySchema, playlistSchema } from './model'
 
 const validSermon = {
   artist: 'Pastor John',
   artwork: 'https://example.com/artwork.jpg',
   id: 'sermon-1',
   title: 'Grace of God',
-}
-
-const validSection = {
-  itemsSize: 'large' as const,
-  transform: 'high' as const,
 }
 
 const validPlaylist = {
@@ -31,7 +26,7 @@ describe('playlistSchema', () => {
     const playlist = {
       ...validPlaylist,
       description: 'Best sermons',
-      sections: [validSection],
+      sections: [{ itemsSize: 'large', transform: 'high' }],
     }
     const result = playlistSchema.parse(playlist)
     expect(result.description).toBe('Best sermons')
@@ -52,5 +47,24 @@ describe('playlistSchema', () => {
   test('throws on missing required field: sermons', () => {
     const { sermons: _, ...rest } = validPlaylist
     expect(() => playlistSchema.parse(rest)).toThrow()
+  })
+})
+
+describe('playlistDataSchema alias', () => {
+  test('parses valid playlist', () => {
+    const result = playlistDataSchema.parse(validPlaylist)
+    expect(result.id).toBe(validPlaylist.id)
+  })
+})
+
+describe('playlistsArraySchema', () => {
+  test('parses array of playlists', () => {
+    const result = playlistsArraySchema.parse([validPlaylist])
+    expect(result).toHaveLength(1)
+  })
+
+  test('throws on invalid item', () => {
+    const invalid = [{ artwork: 'url', id: '1', title: 't' }]
+    expect(() => playlistsArraySchema.parse(invalid)).toThrow()
   })
 })

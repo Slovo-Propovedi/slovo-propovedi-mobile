@@ -3,9 +3,6 @@ const mockGetCachedSearchResults = jest.fn()
 const mockSetCachedSearchResults = jest.fn()
 
 jest.mock('shared/api', () => ({
-  mapPlaylistEntityToPlaylistData: jest.requireActual(
-    'shared/api/mappers/mapPlaylistEntityToPlaylistData',
-  ).mapPlaylistEntityToPlaylistData,
   sermonsApi: {
     getSermons: () => ({
       sermonControllerFindAll: mockSermonControllerFindAll,

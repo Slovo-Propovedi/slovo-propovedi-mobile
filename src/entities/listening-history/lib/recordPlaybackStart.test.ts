@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
+import { type PlaylistData } from 'entities/playlist/@x/listening-history'
 import { LISTENING_HISTORY } from 'shared/config'
-import { type PlaylistData } from 'shared/model'
 import type { AudioPlayerData } from 'entities/sermon'
 import { historyAtom } from '../model/historyAtom'
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'

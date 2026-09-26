@@ -1,4 +1,4 @@
-import { getCachedSections } from 'shared/lib/sections-cache'
+import { getCachedSections } from 'entities/section'
 
 export const resolvePlaylistFromCache = async (playlistId: string) => {
   const cachedSections = await getCachedSections()

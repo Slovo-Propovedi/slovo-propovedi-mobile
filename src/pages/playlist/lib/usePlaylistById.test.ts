@@ -1,9 +1,10 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { type ReactNode } from 'react'
+import { type PlaylistData } from 'entities/playlist'
 import { dynamicSectionsAtom } from 'entities/section'
+import { type SectionData } from 'entities/section'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
-import { type PlaylistData, type SectionData } from 'shared/model'
 import { usePlaylistById } from './usePlaylistById'
 
 const mockResolvePlaylistFromCache = jest.fn()

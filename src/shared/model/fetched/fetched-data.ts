@@ -1,5 +1,5 @@
-import { type PlaylistData } from '../domain/common'
+import { type PlaylistShape } from '../domain/common'
 
-// Плейлист-часть fetched-модели остаётся в shared до переноса playlist/section
-// в entities. Проповеди/книги переехали в entities/sermon (Phase 1).
-export type FetchedPlaylist = PlaylistData
+// Структурная форма плейлиста для mock-БД shared. Канонический доменный тип
+// `PlaylistData` живёт в entities/playlist.
+export type FetchedPlaylist = PlaylistShape

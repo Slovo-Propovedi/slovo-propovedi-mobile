@@ -1,12 +1,12 @@
-import { type SermonShape } from '../../model/domain/common'
-import { type APITypes } from '../generated'
+import { type APITypes } from 'shared/api'
+import { type SermonShape } from 'shared/model'
 import { mapPlaylistSermonPlaylistsItemToPlaylistData } from './mapPlaylistSermonPlaylistsItemToPlaylistData'
 
 /**
- * Маппер: PlaylistSermon (API) -> SermonShape (структурная граница shared).
+ * Маппер: PlaylistSermon (API) -> SermonShape (структурная граница домена).
  * Проповедь внутри плейлиста: playlists содержит только лёгкие ссылки на плейлисты.
- * Канонический доменный `SermonData` живёт в entities/sermon; здесь — только
- * структурная форма, чтобы shared не импортировал entities.
+ * Канонический доменный `SermonData` живёт в entities/sermon; здесь — структурная
+ * форма, чтобы playlist/section не тянули сущность проповеди.
  * @param apiSermon - Проповедь из плейлиста в API.
  */
 export const mapPlaylistSermonToSermonShape = (

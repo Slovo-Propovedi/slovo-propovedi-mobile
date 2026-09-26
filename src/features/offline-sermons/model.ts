@@ -1,5 +1,5 @@
 import { action, atom, type Ctx } from '@reatom/framework'
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist'
 import { reportError } from 'shared/model/error-dialog'
 import type { AudioPlayerData, SermonData } from 'entities/sermon'
 import { collectSermonItems } from './lib/collectSermonItems'

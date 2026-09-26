@@ -1,5 +1,5 @@
-import { type SectionData } from '../../model/domain/common'
-import { type APITypes } from '../generated'
+import { type APITypes } from 'shared/api'
+import { type SectionData } from '../../model'
 import { mapSectionEntityToSectionData } from './mapSectionEntityToSectionData'
 
 /**

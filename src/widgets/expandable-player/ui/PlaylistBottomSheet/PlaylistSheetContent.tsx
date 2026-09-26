@@ -1,7 +1,7 @@
 import { type BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
 import { memo } from 'react'
 import { Text } from 'react-native'
-import type { PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist'
 import { type createStyles } from './PlaylistBottomSheet.styles'
 import { PlaylistSheetList } from './PlaylistSheetList'
 

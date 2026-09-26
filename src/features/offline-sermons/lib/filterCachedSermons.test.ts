@@ -1,5 +1,5 @@
 import { audioCacheService } from 'entities/offline-cache'
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist'
 import type { SermonData } from 'entities/sermon'
 import { filterCachedSermons } from './filterCachedSermons'
 

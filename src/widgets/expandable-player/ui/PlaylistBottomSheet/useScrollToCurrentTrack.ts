@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { type PlaylistData } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist'
 import type { ScrollToIndexFailedInfo } from './scrollGuards'
 import type { AudioPlayerData } from 'entities/sermon'
 import { scheduleEstimateRetry } from './scrollGuards'

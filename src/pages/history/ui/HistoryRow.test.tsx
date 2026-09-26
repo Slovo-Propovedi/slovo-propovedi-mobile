@@ -33,6 +33,7 @@ jest.mock('entities/section/@x/listening-history', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
     dynamicSectionsAtom: atom([], 'testDynamicSectionsAtom'),
+    getCachedSections: jest.fn(),
   }
 })
 

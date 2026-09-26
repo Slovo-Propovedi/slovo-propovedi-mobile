@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import type { SectionData } from '../../model/domain/common'
-import { CACHED_SECTIONS } from '../../config/cache-storage-keys'
+import { type SectionData } from '../../model'
+import { CACHED_SECTIONS } from './cacheKey'
 import { getCachedSections } from './getCachedSections'
 
 const validSection: SectionData = { itemsSize: 'small', transform: 'high' }

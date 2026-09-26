@@ -1,6 +1,6 @@
 import { fireEvent } from '@testing-library/react-native'
+import { type PlaylistData } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks'
-import type { PlaylistData } from 'shared/model'
 import { PlaylistListItem } from './PlaylistListItem'
 
 jest.mock('shared/ui', () => {

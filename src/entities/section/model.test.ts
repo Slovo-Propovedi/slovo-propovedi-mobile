@@ -1,4 +1,4 @@
-import { sectionSchema } from './common'
+import { sectionSchema } from './model'
 
 const validSection = {
   itemsSize: 'large' as const,

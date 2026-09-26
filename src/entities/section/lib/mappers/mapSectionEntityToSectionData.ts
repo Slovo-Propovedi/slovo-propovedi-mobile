@@ -1,6 +1,6 @@
-import { type SectionData } from '../../model/domain/common'
-import { type APITypes } from '../generated'
-import { mapSectionPlaylistToPlaylistData } from './mapSectionPlaylistToPlaylistData'
+import { mapSectionPlaylistToPlaylistData } from 'entities/playlist/@x/section'
+import { type APITypes } from 'shared/api'
+import { type SectionData } from '../../model'
 
 /**
  * Нормализует itemsRows из API перед передачей в слайдер.

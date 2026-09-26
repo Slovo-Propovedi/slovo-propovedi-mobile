@@ -1,4 +1,4 @@
-import { type APITypes } from '../generated'
+import { type APITypes } from 'shared/api'
 import { mapSectionEntityToSectionData, normalizeItemsRows } from './mapSectionEntityToSectionData'
 
 const createSectionEntity = (itemsRows: null | number): APITypes.SectionEntity => ({

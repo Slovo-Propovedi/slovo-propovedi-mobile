@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useEffect, useMemo, useState } from 'react'
+import { type PlaylistData } from 'entities/playlist'
 import { dynamicSectionsAtom } from 'entities/section'
-import { type PlaylistData } from 'shared/model'
 import { resolvePlaylistFromApi } from './resolvePlaylistFromApi'
 import { resolvePlaylistFromCache } from './resolvePlaylistFromCache'
 

@@ -1,5 +1,4 @@
 import { renderHook } from '@testing-library/react-native'
-import { type PlaylistData } from '../model/domain/common'
 import { useListenNavigation } from './useListenNavigation'
 
 const mockPush = jest.fn()
@@ -7,7 +6,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }))
 
-const mockPlaylist: PlaylistData = {
+const mockPlaylist = {
   artwork: 'https://example.com/artwork.jpg',
   id: '1',
   sermons: [],

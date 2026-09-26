@@ -1,5 +1,5 @@
 import z from 'zod'
-import { playlistDataSchema } from 'shared/model'
+import { playlistDataSchema } from 'entities/playlist/@x/sermon'
 
 /**
  * Схема проповеди (SermonData). Книга — тоже проповедь: bookSchema = sermonSchema.

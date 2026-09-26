@@ -10,8 +10,8 @@ import {
   removeHistoryEntryAction,
 } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
+import { type PlaylistData } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { type PlaylistData } from 'shared/model'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
 import { HistoryScreen } from './HistoryScreen'
 
@@ -46,6 +46,7 @@ jest.mock('entities/section/@x/listening-history', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
     dynamicSectionsAtom: atom([], 'testDynamicSectionsAtom'),
+    getCachedSections: jest.fn(),
   }
 })
 

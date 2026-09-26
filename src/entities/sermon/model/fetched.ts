@@ -1,6 +1,6 @@
+import { type PlaylistData } from 'entities/playlist/@x/sermon'
 import type { FetchedBooksGroupName, FetchedSermonsGroupName } from './bible'
 import type { SermonData } from './sermon'
-import type { PlaylistData } from 'shared/model'
 
 export interface DB {
   books: Array<{

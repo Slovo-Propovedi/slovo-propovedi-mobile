@@ -1,6 +1,7 @@
 import { useAction } from '@reatom/npm-react'
 import { validate as uuidValidate } from 'uuid'
-import { type PlaylistData, showToast } from 'shared/model'
+import { type PlaylistData } from 'entities/playlist'
+import { showToast } from 'shared/model'
 import { buildPlaylistShareUrl } from './buildPlaylistShareUrl'
 import { sharePlaylist } from './sharePlaylist'
 

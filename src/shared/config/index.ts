@@ -1,6 +1,5 @@
 export {
   CACHED_DISTINCT_VALUES,
-  CACHED_SECTIONS,
   CACHED_SERMON_SEARCH,
   CACHED_SERMON_SEARCH_INDEX,
 } from './cache-storage-keys'

@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native'
+import { type PlaylistData } from 'entities/playlist'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
 import { CoverImage } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { type ThemeColors } from 'shared/ui/theme'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
-import type { PlaylistData } from 'shared/model'
 
 export const ALBUM_ART_SIZE = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25
 

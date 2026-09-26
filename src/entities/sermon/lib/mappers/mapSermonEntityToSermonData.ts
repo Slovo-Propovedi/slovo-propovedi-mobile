@@ -1,4 +1,5 @@
-import { type APITypes, mapPlaylistEntityToPlaylistData } from 'shared/api'
+import { mapPlaylistEntityToPlaylistData } from 'entities/playlist/@x/sermon'
+import { type APITypes } from 'shared/api'
 import { type SermonData } from '../../model/sermon'
 
 /**

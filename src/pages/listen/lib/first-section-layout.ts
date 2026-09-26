@@ -1,7 +1,7 @@
+import { type SectionData } from 'entities/section'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { getSliderItemWidth } from 'shared/ui'
 import { INDENTS } from 'shared/ui/theme'
-import type { SectionData } from 'shared/model'
 import { TOTAL_SIZE } from '../ui/ContinueCircleButton'
 import { FIRST_SKELETON_SECTION_SIZE } from '../ui/skeleton.constants'
 import { mapItemsSize } from './mapItemsSize'

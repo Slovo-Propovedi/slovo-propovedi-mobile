@@ -1,6 +1,6 @@
 import { buildManualPlaylist } from 'entities/listening-history'
+import { type PlaylistData } from 'entities/playlist'
 import { type SermonData, toAudioPlayerData } from 'entities/sermon'
-import { type PlaylistData } from 'shared/model'
 import { type SermonCandidate } from '../model'
 
 export interface MergedSermonCandidate {

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { type PlaylistData } from 'entities/playlist/@x/player'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/config'
-import { type PlaylistData } from 'shared/model'
 import { isOnlineAtom } from 'shared/model/network'
 import type { AudioPlayerData } from 'entities/sermon'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService'

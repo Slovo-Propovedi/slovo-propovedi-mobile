@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
+import { type PlaylistData } from 'entities/playlist'
 import { formatSermonReference } from 'entities/sermon'
-import type { PlaylistData } from 'shared/model'
 import { type createStyles } from './PlaylistBottomSheet.styles'
 import { PlaylistSheetRow } from './PlaylistSheetRow'
 import { useScrollGuarantee } from './useScrollGuarantee'

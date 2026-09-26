@@ -3,8 +3,8 @@ import {
   getResumePosition,
   historyAtom,
 } from 'entities/listening-history/@x/player'
+import { type PlaylistData } from 'entities/playlist/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type PlaylistData } from 'shared/model'
 import type { LockScreenMetadata } from './PlayerService/types'
 import type { AudioPlayerData, SermonData } from 'entities/sermon'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'

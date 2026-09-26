@@ -2,10 +2,12 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent } from '@testing-library/react-native'
 import { type ComponentType } from 'react'
 import { View as RNView } from 'react-native'
+import { type PlaylistData } from 'entities/playlist'
 import { dynamicSectionsAtom } from 'entities/section'
+import { type SectionData } from 'entities/section'
 import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
-import { isOnlineAtom, type PlaylistData, type SectionData } from 'shared/model'
+import { isOnlineAtom } from 'shared/model'
 import { PlaylistScreen } from './PlaylistScreen'
 
 /* ── Mocks ─────────────────────────────────────────────────────────── */

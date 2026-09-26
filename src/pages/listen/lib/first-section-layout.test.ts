@@ -1,4 +1,4 @@
-import type { SectionData } from 'shared/model'
+import { type SectionData } from 'entities/section'
 import { getFirstSectionLayout } from './first-section-layout'
 
 jest.mock('shared/config/screen-dimensions', () => ({
