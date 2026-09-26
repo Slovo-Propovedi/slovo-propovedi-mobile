@@ -332,6 +332,12 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Prebuild native code
+        # app.config.ts validates these (zod, no defaults) while generating the
+        # manifest — a missing var must fail the prebuild, not emit a bad host.
+        env:
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
         run: npx expo prebuild --platform android --clean
 
       - name: Verify prebuild versionCode
