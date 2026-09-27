@@ -12,6 +12,13 @@ export const createStyles = (themeColors: ThemeColors) =>
       marginLeft: TRACK_LIST_ITEM_SIZES.leftOffset,
       marginVertical: INDENTS.low,
     },
+    headerRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      paddingBottom: INDENTS.medium,
+      paddingLeft: INDENTS.medium,
+      paddingRight: INDENTS.low,
+    },
     hiddenContent: { opacity: 0 },
     indicator: { backgroundColor: themeColors.textMuted },
     listContent: {
@@ -26,9 +33,8 @@ export const createStyles = (themeColors: ThemeColors) =>
     },
     title: {
       color: themeColors.text,
+      flex: 1,
       fontSize: FONT_SIZES.h2,
       fontWeight: 'bold',
-      paddingBottom: INDENTS.medium,
-      paddingHorizontal: INDENTS.medium,
     },
   })

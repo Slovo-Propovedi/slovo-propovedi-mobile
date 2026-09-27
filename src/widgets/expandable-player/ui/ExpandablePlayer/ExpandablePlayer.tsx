@@ -17,13 +17,19 @@ import { showMenuAtom } from '../../model/showMenuAtom'
 import { useBackgroundRecovery } from '../../model/useBackgroundRecovery'
 import { useContainerGeometryGuard } from '../../model/useContainerGeometryGuard'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
+import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
 import { ContainerView, type NonGeometricStyle } from './ContainerView'
 import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
 import { createStyles } from './styles'
 import { useExpandablePlayerGesture } from './useExpandablePlayerGesture'
 
-export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyle> }) => {
+interface ExpandablePlayerProps {
+  playlistMenuComponent?: PlaylistMenuSlot
+  style?: StyleProp<NonGeometricStyle>
+}
+
+export const ExpandablePlayer = ({ playlistMenuComponent, style }: ExpandablePlayerProps) => {
   const { currentTheme } = useTheme()
 
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -114,6 +120,7 @@ export const ExpandablePlayer = ({ style }: { style?: StyleProp<NonGeometricStyl
         miniOverlay={miniStyles.miniOverlay}
         backgroundImageStyle={backgroundImageStyle}
         restingContainerStyle={restingContainerStyle}
+        playlistMenuComponent={playlistMenuComponent}
         closeFullscreen={gesture.handleCloseFullscreen}
       />
     </View>

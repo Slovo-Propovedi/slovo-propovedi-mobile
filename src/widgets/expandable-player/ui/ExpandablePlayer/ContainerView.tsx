@@ -8,6 +8,7 @@ import type { AudioPlayerData } from 'entities/sermon'
 import type { ThemeColors } from 'shared/ui/theme'
 import { useFullscreenContentMount } from '../../model/useFullscreenContentMount'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
+import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
 
 /** Consumer style must not carry geometry keys — enforced by compiler (Issue #63 invariant). */
 export type NonGeometricStyle = Omit<ViewStyle, 'bottom' | 'height' | 'left' | 'top' | 'width'>
@@ -24,6 +25,7 @@ interface ContainerViewProps {
   miniOverlayStyle: AnimatedStyle<ViewStyle>
   onLayout: (event: LayoutChangeEvent) => void
   panGesture: GestureType
+  playlistMenuComponent?: PlaylistMenuSlot
   restingContainerStyle: ViewStyle
   style?: StyleProp<NonGeometricStyle>
   styles: ReturnType<typeof createStyles>
@@ -41,6 +43,7 @@ export const ContainerView = ({
   miniOverlayStyle,
   onLayout,
   panGesture,
+  playlistMenuComponent,
   restingContainerStyle,
   style,
   styles,
@@ -82,7 +85,12 @@ export const ContainerView = ({
         <Animated.View style={[miniOverlay, miniOverlayStyle, { pointerEvents: 'none' }]} />
         {expanded && <StatusBar style='light' />}
         {isFullscreenContentMounted && (
-          <FullscreenContent styles={styles} fullStyle={fullStyle} onClose={closeFullscreen} />
+          <FullscreenContent
+            styles={styles}
+            fullStyle={fullStyle}
+            onClose={closeFullscreen}
+            playlistMenuComponent={playlistMenuComponent}
+          />
         )}
       </Animated.View>
     </GestureDetector>

@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { type ColorValue, StyleSheet, View } from 'react-native'
+import { type ColorValue, View } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
 import { ErrorModal } from 'shared/ui/error-modal'
 import { IconButton } from 'shared/ui/icon-button'
@@ -12,11 +12,17 @@ import { usePlaylistShare } from '../lib/usePlaylistShare'
 import { PlaylistHeaderMenuDropdown } from './PlaylistHeaderMenuDropdown'
 import { PlaylistHistoryDialogs } from './PlaylistHistoryDialogs'
 import { PlaylistOfflineDialogs } from './PlaylistOfflineDialogs'
+import { headerMenuButtonStyles } from './styles'
 
 const ICON_SIZE = 24
-const BUTTON_SIZE = 44
+const DEFAULT_MENU_LABEL = 'Меню плейлиста'
 
 export interface PlaylistHeaderMenuProps {
+  /**
+   * Screen-reader name of the trigger: callers that show a second menu button
+   *  on the same screen (the player sheet) pass a contextual label.
+   */
+  accessibilityLabel?: string
   iconColor?: ColorValue
   playlist: PlaylistData
   playlistTitle: string
@@ -24,6 +30,7 @@ export interface PlaylistHeaderMenuProps {
 }
 
 export const PlaylistHeaderMenu = ({
+  accessibilityLabel = DEFAULT_MENU_LABEL,
   iconColor,
   playlist,
   playlistTitle,
@@ -62,9 +69,9 @@ export const PlaylistHeaderMenu = ({
     <>
       <View ref={buttonRef} collapsable={false}>
         <IconButton
-          style={styles.button}
           onPress={handleOpenMenu}
-          accessibilityLabel='Меню плейлиста'
+          style={headerMenuButtonStyles.button}
+          accessibilityLabel={accessibilityLabel}
           accessibilityHint='Нажмите чтобы открыть меню'
           Icon={
             <MaterialCommunityIcons
@@ -119,11 +126,3 @@ export const PlaylistHeaderMenu = ({
     </>
   )
 }
-const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    height: BUTTON_SIZE,
-    justifyContent: 'center',
-    width: BUTTON_SIZE,
-  },
-})

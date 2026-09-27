@@ -1,14 +1,16 @@
-import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback } from 'react'
 import { type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { INDENTS } from 'shared/ui/theme'
 import { type createStyles } from '../ExpandablePlayer/styles'
-import { PlaylistBottomSheet } from '../PlaylistBottomSheet/PlaylistBottomSheet'
-import { gradientStyles } from './gradients'
+import {
+  PlaylistBottomSheet,
+  type PlaylistMenuSlot,
+} from '../PlaylistBottomSheet/PlaylistBottomSheet'
 import { HeaderOverlay } from './HeaderOverlay'
 import { PlayerControlsSection } from './PlayerControlsSection'
+import { PlayerEdgeFades } from './PlayerEdgeFades'
 import { PlayerMiddleArea } from './PlayerMiddleArea'
 import { useFullscreenHandlers } from './useFullscreenHandlers'
 import { usePlayerKeyboardSeek } from './usePlayerKeyboardSeek'
@@ -16,10 +18,16 @@ import { usePlayerKeyboardSeek } from './usePlayerKeyboardSeek'
 interface FullscreenContentProps {
   fullStyle: AnimatedStyle<ViewStyle>
   onClose: () => void
+  playlistMenuComponent?: PlaylistMenuSlot
   styles: ReturnType<typeof createStyles>
 }
 
-export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenContentProps) => {
+export const FullscreenContent = ({
+  fullStyle,
+  onClose,
+  playlistMenuComponent,
+  styles,
+}: FullscreenContentProps) => {
   const insets = useSafeAreaInsets()
   const {
     audio,
@@ -80,14 +88,7 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
             if (showPlaylist) setShowPlaylist(false)
           }}
         />
-        <LinearGradient
-          colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
-          style={[gradientStyles.topGradient, { pointerEvents: 'none' }]}
-        />
-        <LinearGradient
-          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
-          style={[gradientStyles.bottomGradient, { pointerEvents: 'none' }]}
-        />
+        <PlayerEdgeFades />
         <PlayerMiddleArea
           audio={audio}
           styles={styles}
@@ -119,6 +120,7 @@ export const FullscreenContent = ({ fullStyle, onClose, styles }: FullscreenCont
           playlist={playlist}
           sheetRef={playlistSheetRef}
           onClose={handleClosePlaylist}
+          playlistMenuComponent={playlistMenuComponent}
         />
       )}
     </>

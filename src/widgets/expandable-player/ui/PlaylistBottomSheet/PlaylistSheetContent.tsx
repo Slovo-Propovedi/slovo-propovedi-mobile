@@ -1,7 +1,8 @@
 import { type BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
 import { memo } from 'react'
-import { Text } from 'react-native'
+import { Text, View } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
+import { type PlaylistMenuSlot } from './PlaylistBottomSheet'
 import { type createStyles } from './PlaylistBottomSheet.styles'
 import { PlaylistSheetList } from './PlaylistSheetList'
 
@@ -20,13 +21,15 @@ interface PlaylistSheetContentProps {
   onScroll: (y: number) => void
   onScrollToIndexFailed: (info: { averageItemLength: number; index: number }) => void
   playlist: PlaylistData
+  playlistMenuComponent?: PlaylistMenuSlot
   progressMap: Map<string, number>
   settleTick: number
   sheetTop: number
   styles: ReturnType<typeof createStyles>
 }
 
-// The sheet's inner composition: the playlist title above the track list.
+// The sheet's inner composition: a header row (playlist title plus the optional
+// injected header menu) above the track list.
 export const PlaylistSheetContent = memo(
   ({
     cacheTrigger,
@@ -43,13 +46,17 @@ export const PlaylistSheetContent = memo(
     onScroll,
     onScrollToIndexFailed,
     playlist,
+    playlistMenuComponent: PlaylistMenuComponent,
     progressMap,
     settleTick,
     sheetTop,
     styles,
   }: PlaylistSheetContentProps) => (
     <>
-      <Text style={styles.title}>{playlist.title}</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>{playlist.title}</Text>
+        {PlaylistMenuComponent ? <PlaylistMenuComponent playlist={playlist} /> : null}
+      </View>
       <PlaylistSheetList
         styles={styles}
         listRef={listRef}

@@ -1,5 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
+import { type ComponentType } from 'react'
+import { Text } from 'react-native'
 import { currentAudioAtom } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -108,10 +110,10 @@ jest.mock('entities/listening-history', () => ({
 }))
 
 jest.mock('entities/track-list', () => {
-  const { Text, View } = jest.requireActual('react-native')
+  const { Text: MockText, View } = jest.requireActual('react-native')
   const TracksListItem = ({ title }: { title: string }) => (
     <View testID='tracks-list-item'>
-      <Text>{title}</Text>
+      <MockText>{title}</MockText>
     </View>
   )
   const TracksListSkeleton = () => null
@@ -146,7 +148,11 @@ const makePlaylist = (sermons: SermonData[]): PlaylistData => ({
   title: 'Test Playlist',
 })
 
-const renderSheet = async (ctx: ReturnType<typeof createCtx>, playlist: PlaylistData) => {
+const renderSheet = async (
+  ctx: ReturnType<typeof createCtx>,
+  playlist: PlaylistData,
+  playlistMenuComponent?: ComponentType<{ playlist: PlaylistData }>,
+) => {
   const sheetRef = {
     current: {
       close: mockClose,
@@ -158,7 +164,12 @@ const renderSheet = async (ctx: ReturnType<typeof createCtx>, playlist: Playlist
     },
   } as React.RefObject<BottomSheet | null>
   return renderWithProviders(
-    <PlaylistBottomSheet playlist={playlist} sheetRef={sheetRef} onClose={jest.fn()} />,
+    <PlaylistBottomSheet
+      playlist={playlist}
+      sheetRef={sheetRef}
+      onClose={jest.fn()}
+      playlistMenuComponent={playlistMenuComponent}
+    />,
     { ctx },
   )
 }
@@ -858,5 +869,29 @@ describe('<PlaylistBottomSheet>', () => {
 
     expect(mockContentContainerStyle).not.toEqual(expect.arrayContaining([{ opacity: 0 }]))
     expect(queryByTestId(SKELETON_TEST_ID)).toBeNull()
+  })
+
+  test('renders the injected menu slot with the playlist', async () => {
+    const ctx = createCtx()
+    const sermons = [makeSermon('s1'), makeSermon('s2')]
+    currentAudioAtom(ctx, makeAudio('s1'))
+
+    const MenuStub = ({ playlist }: { playlist: PlaylistData }) => (
+      <Text>{`menu-stub ${playlist.title}`}</Text>
+    )
+    const { getByText } = await renderSheet(ctx, makePlaylist(sermons), MenuStub)
+
+    expect(getByText('menu-stub Test Playlist')).toBeTruthy()
+  })
+
+  test('renders the title without a menu when no component is injected', async () => {
+    const ctx = createCtx()
+    const sermons = [makeSermon('s1'), makeSermon('s2')]
+    currentAudioAtom(ctx, makeAudio('s1'))
+
+    const { getByText, queryByText } = await renderSheet(ctx, makePlaylist(sermons))
+
+    expect(getByText('Test Playlist')).toBeTruthy()
+    expect(queryByText(/menu-stub/)).toBeNull()
   })
 })

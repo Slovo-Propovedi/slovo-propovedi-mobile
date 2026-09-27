@@ -1,6 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { type ComponentType, memo, useCallback, useMemo, useRef, useState } from 'react'
 import { useHistoryProgressMap } from 'entities/listening-history'
 import { cacheUpdateTriggerAtom } from 'entities/offline-cache'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
@@ -14,10 +14,13 @@ import { FINAL_SNAP_INDEX, useQueueSheetSnapMetrics } from './useQueueSheetSnapM
 import { useScrollToCurrentTrack } from './useScrollToCurrentTrack'
 import { useSheetLifecycle } from './useSheetLifecycle'
 
+export type PlaylistMenuSlot = ComponentType<{ playlist: PlaylistData }>
+
 interface PlaylistBottomSheetProps {
   closeOnBack?: boolean
   onClose: () => void
   playlist: null | PlaylistData
+  playlistMenuComponent?: PlaylistMenuSlot
   sheetRef: React.RefObject<BottomSheet | null>
 }
 
@@ -25,6 +28,7 @@ const PlaylistBottomSheetComponent = ({
   closeOnBack = true,
   onClose,
   playlist,
+  playlistMenuComponent,
   sheetRef,
 }: PlaylistBottomSheetProps) => {
   const [currentAudio] = useAtom(currentAudioAtom)
@@ -116,6 +120,7 @@ const PlaylistBottomSheetComponent = ({
         onMomentumEnd={handleMomentumEnd}
         onDragStart={handleDragStartWithReveal}
         initialNumToRender={initialNumToRender}
+        playlistMenuComponent={playlistMenuComponent}
         onMomentumStart={handleMomentumStartWithReveal}
         onScrollToIndexFailed={handleScrollToIndexFailed}
       />

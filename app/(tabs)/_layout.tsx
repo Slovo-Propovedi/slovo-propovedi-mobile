@@ -2,6 +2,7 @@ import { useAtom } from '@reatom/npm-react'
 import { type SuspenseFallbackProps, Tabs } from 'expo-router'
 import { useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
+import { PlaylistSheetMenu } from 'pages/playlist'
 import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
 import { isPlayerExpandedAtom } from 'entities/player'
@@ -56,7 +57,7 @@ const Layout = () => {
         <Tabs.Screen name='study' options={{ title: 'Учиться' }} />
         <Tabs.Screen name='more' options={{ title: 'Еще' }} />
       </Tabs>
-      <ExpandablePlayer />
+      <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
     </View>
   )
 }

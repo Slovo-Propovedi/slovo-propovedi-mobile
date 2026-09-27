@@ -100,3 +100,14 @@ export const queueControlsStyles = StyleSheet.create({
     tintColor: COLORS.onPrimary,
   },
 })
+
+const MENU_BUTTON_SIZE = 44
+
+export const headerMenuButtonStyles = StyleSheet.create({
+  button: {
+    alignItems: 'center',
+    height: MENU_BUTTON_SIZE,
+    justifyContent: 'center',
+    width: MENU_BUTTON_SIZE,
+  },
+})
