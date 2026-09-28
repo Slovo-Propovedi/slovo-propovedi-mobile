@@ -104,7 +104,7 @@
 2. платформа не Android (iOS) → открыть страницу релизов в браузере;
 3. офлайн (`!isOnlineAtom`) → `updateErrorAtom = «Нет подключения к интернету»`, состояние `error`, диалог видим;
 4. нет `zipDownloadUrlAtom` → открыть страницу релизов в браузере;
-5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с классифицированными `updateErrorKindAtom` + `updateErrorAtom` и записью сырой ошибки в глобальный обработчик (`reportError`).
+5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с классифицированными `updateErrorKindAtom` + `updateErrorAtom` и записью сырой ошибки в глобальный обработчик (`reportError`), **кроме `install-aborted`** (намеренная отмена установщика — только `console.error`, без глобального диалога).
 
 **Тайминг очистки:** `cleanupUpdateFiles()` вызывается в **начале** потока (перед скачиванием — чистит остатки прошлого запуска), а НЕ в `finally`. Файлы никогда не удаляются, пока сессия `PackageInstaller` может их читать (раньше `finally` удалял APK сразу после старта интента установщика — причина «Возникла проблема с файлом приложения»).
 
@@ -122,19 +122,19 @@
 | Условие в сообщении                                                                 | `kind`                                          | Текст ошибки                                                                                         |
 | ----------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE`                                                | `install-signature`                             | подписи установленной и новой версии различаются — удалите приложение и установите заново             |
+| `Нет подключения к интернету`                                                       | `offline`                                       | «Нет подключения к интернету»                                                                        |
+| `ERR_DOWNLOAD` / `Network request failed`                                           | `download`                                      | «Не удалось скачать обновление. Проверьте подключение и попробуйте снова»                             |
+| `No .apk file found` / `Extracted APK is missing` / `unzip`                         | `extract`                                       | «Не удалось распаковать обновление. Повторите попытку или скачайте его из браузера»                  |
 | `STATUS_FAILURE_ABORTED`                                                            | `install-aborted`                               | «Установка отменена»                                                                                 |
 | `STATUS_FAILURE_BLOCKED`                                                            | `install-blocked`                               | «Установка заблокирована системой»                                                                   |
 | `STATUS_FAILURE_CONFLICT`                                                           | `install-conflict`                              | «Конфликт версий: обновление несовместимо с установленной версией»                                    |
 | `STATUS_FAILURE_INCOMPATIBLE`                                                       | `install-incompatible`                          | «Обновление несовместимо с этим устройством или версией Android»                                      |
 | `STATUS_FAILURE_INVALID`                                                            | `install-invalid`                               | «Файл обновления повреждён»                                                                          |
 | `STATUS_FAILURE_STORAGE`                                                            | `install-storage`                               | «Недостаточно места для установки обновления»                                                         |
-| `Нет подключения к интернету`                                                       | `offline`                                       | «Нет подключения к интернету»                                                                        |
-| `ERR_DOWNLOAD` / `Network request failed`                                           | `download`                                      | «Не удалось скачать обновление. Проверьте подключение и попробуйте снова»                             |
-| `No .apk file found` / `Extracted APK is missing` / `unzip`                         | `extract`                                       | «Не удалось распаковать обновление. Повторите попытку или скачайте его из браузера»                  |
 | `STATUS_FAILURE` (generic) или любая другая `Error`                                 | `install-generic`                               | «Не удалось установить обновление»                                                                   |
 | вход не `Error` (или `Error` без сообщения)                                         | `unknown`                                       | «Не удалось установить обновление»                                                                   |
 
-Сырая ошибка при этом логируется через `reportError(installError, 'Ошибка обновления приложения')` (`shared/model/error-dialog`) — и в `performUpdate`, и в `resumeUpdateAfterPermissionAction`, чтобы сбои на устройстве были диагностируемы.
+Сырая ошибка при этом **всегда** логируется через `console.error` (диагностика), а в глобальный обработчик `reportError(installError, 'Ошибка обновления приложения')` (`shared/model/error-dialog`) она попадает **кроме намеренной отмены установщика** (`kind === 'install-aborted'`): отмена пользователем — не сбой, и её не нужно накладывать поверх дружелюбного «Установка отменена» сырым диалогом `STATUS_FAILURE_ABORTED`. Логика живёт в `handleUpdateFailure` (`src/shared/model/updateInstallFlow.ts`) и вызывается и из `performUpdate`, и из `resumeUpdateAfterPermissionAction`.
 
 ### Действия в диалоге ошибки
 

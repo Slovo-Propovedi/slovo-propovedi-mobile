@@ -26,9 +26,14 @@ let pendingApkPath: null | string = null
 
 const handleUpdateFailure = async (ctx: Ctx, error: unknown): Promise<void> => {
   console.error('[updateInstall] Update failed:', error)
-  reportError(error, UPDATE_ERROR_REPORT_MESSAGE)
 
   const { kind, message } = classifyUpdateError(error)
+
+  // A deliberate cancel of the system installer is not a failure worth the
+  // global error dialog — surfacing it would stack the raw
+  // "STATUS_FAILURE_ABORTED" report on top of the friendly «Установка отменена».
+  if (kind !== 'install-aborted') reportError(error, UPDATE_ERROR_REPORT_MESSAGE)
+
   await ctx.schedule(() => {
     updateErrorKindAtom(ctx, kind)
     updateErrorAtom(ctx, message)

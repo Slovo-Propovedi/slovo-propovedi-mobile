@@ -204,14 +204,18 @@ describe('<UpdateDialog>', () => {
   })
 
   test('prefers opening the browser for a signature error', async () => {
-    const { getByRole } = await renderDialog(true, {
+    const { getAllByRole } = await renderDialog(true, {
       error: 'Подписи различаются',
       errorKind: 'install-signature',
       updateState: 'error',
     })
 
-    expect(getByRole('button', { name: OPEN_BROWSER_BUTTON_TEXT })).toBeTruthy()
-    expect(getByRole('button', { name: RETRY_BUTTON_TEXT })).toBeTruthy()
-    expect(getByRole('button', { name: CLOSE_BUTTON_TEXT })).toBeTruthy()
+    const buttons = getAllByRole('button')
+
+    expect(buttons).toHaveLength(3)
+    // The browser action is the primary (first/leftmost) button, retry is secondary.
+    expect(buttons[0]).toHaveTextContent(OPEN_BROWSER_BUTTON_TEXT)
+    expect(buttons[1]).toHaveTextContent(RETRY_BUTTON_TEXT)
+    expect(buttons[2]).toHaveTextContent(CLOSE_BUTTON_TEXT)
   })
 })

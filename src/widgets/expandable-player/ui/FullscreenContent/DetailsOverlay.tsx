@@ -5,6 +5,7 @@ import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import type { AudioPlayerData } from 'entities/sermon'
+import { DescriptionWithTimecodes } from './DescriptionWithTimecodes'
 
 interface DetailsOverlayProps {
   audio: AudioPlayerData
@@ -24,12 +25,6 @@ const localStyles = StyleSheet.create({
 
   content: {
     gap: INDENTS.medium,
-  },
-
-  descriptionText: {
-    color: '#fff',
-    fontSize: FONT_SIZES.lg,
-    lineHeight: FONT_SIZES.lg * 1.5,
   },
 
   emptyMessage: {
@@ -65,7 +60,7 @@ export const DetailsOverlay = ({ audio, insetsTop, onClose, styles }: DetailsOve
               {audio.description ? (
                 <View>
                   <Text style={localStyles.label}>Описание</Text>
-                  <Text style={localStyles.descriptionText}>{audio.description}</Text>
+                  <DescriptionWithTimecodes description={audio.description} />
                 </View>
               ) : null}
               {audio.artist ? (
