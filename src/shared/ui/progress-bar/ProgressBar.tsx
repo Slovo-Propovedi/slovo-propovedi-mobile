@@ -3,6 +3,8 @@ import { useTheme } from '../theme/ThemeContext/useTheme'
 
 const BAR_HEIGHT = 2
 const TRACK_OPACITY = 0.3
+const TRACK_BOTTOM_OFFSET = 4
+const TRACK_HORIZONTAL_INSET = 10
 
 interface ProgressBarProps {
   progress: number
@@ -31,10 +33,10 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   track: {
-    bottom: 0,
+    bottom: TRACK_BOTTOM_OFFSET,
     height: BAR_HEIGHT,
-    left: 0,
+    left: TRACK_HORIZONTAL_INSET,
     position: 'absolute',
-    right: 0,
+    right: TRACK_HORIZONTAL_INSET,
   },
 })
