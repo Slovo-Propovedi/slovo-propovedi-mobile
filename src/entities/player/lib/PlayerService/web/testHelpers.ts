@@ -8,6 +8,7 @@ export interface AudioElementLike {
   readyState: number
   removeEventListener: (type: string, handler: () => void) => void
   src: string
+  volume: number
 }
 
 export interface AudioElementStub {
@@ -41,6 +42,7 @@ export const createAudioElementStub = (
     readyState: 4,
     removeEventListener,
     src: '',
+    volume: 1,
     ...overrides,
   }
   const fireEvent = (type: string) => {

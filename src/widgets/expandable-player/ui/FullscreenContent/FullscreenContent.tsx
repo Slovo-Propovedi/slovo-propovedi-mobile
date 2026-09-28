@@ -3,11 +3,10 @@ import { type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { INDENTS } from 'shared/ui/theme'
+import { getNextSermonInfo } from '../../lib/getNextSermonInfo'
 import { type createStyles } from '../ExpandablePlayer/styles'
-import {
-  PlaylistBottomSheet,
-  type PlaylistMenuSlot,
-} from '../PlaylistBottomSheet/PlaylistBottomSheet'
+import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
+import { FullscreenSheets } from './FullscreenSheets'
 import { HeaderOverlay } from './HeaderOverlay'
 import { PlayerControlsSection } from './PlayerControlsSection'
 import { PlayerEdgeFades } from './PlayerEdgeFades'
@@ -44,9 +43,11 @@ export const FullscreenContent = ({
     setShowDetails,
     setShowMenu,
     setShowPlaylist,
+    setShowSoundSettings,
     showDetails,
     showMenu,
     showPlaylist,
+    showSoundSettings,
     startSeek,
     stopSeek,
     tapSeek,
@@ -57,6 +58,10 @@ export const FullscreenContent = ({
 
   // Stable identity so the memoized sheet skips re-renders on parent ticks.
   const handleClosePlaylist = useCallback(() => setShowPlaylist(false), [setShowPlaylist])
+  const handleCloseSoundSettings = useCallback(
+    () => setShowSoundSettings(false),
+    [setShowSoundSettings],
+  )
 
   usePlayerKeyboardSeek({
     collapsePlayer: handleCollapsePress,
@@ -68,10 +73,7 @@ export const FullscreenContent = ({
 
   if (!audio || !playlist) return null
 
-  const playlistList = playlist.sermons
-  const currentIndex = playlistList.findIndex(t => t.id === audio.id)
-  const nextSermon = playlistList[currentIndex + 1]
-  const hasNextSermon = currentIndex >= 0 && currentIndex < playlistList.length - 1
+  const nextSermon = getNextSermonInfo(playlist, audio.id)
 
   return (
     <>
@@ -79,14 +81,12 @@ export const FullscreenContent = ({
         <HeaderOverlay
           styles={styles}
           currentAudioId={audio.id}
-          hasNextSermon={hasNextSermon}
+          hasNextSermon={nextSermon.hasNext}
+          nextSermonTitle={nextSermon.title}
           collapseOnPan={handleCollapsePress}
           collapseOnTap={handleCollapsePress}
-          nextSermonTitle={nextSermon?.title}
           insetsTop={insets.top + INDENTS.low}
-          closePlaylistOnSwipe={() => {
-            if (showPlaylist) setShowPlaylist(false)
-          }}
+          closePlaylistOnSwipe={() => showPlaylist && setShowPlaylist(false)}
         />
         <PlayerEdgeFades />
         <PlayerMiddleArea
@@ -113,16 +113,18 @@ export const FullscreenContent = ({
           onToggleCache={handleToggleCache}
           onOpenPlaylist={handleOpenPlaylist}
           onShowDetails={() => setShowDetails(true)}
+          onOpenSoundSettings={() => setShowSoundSettings(true)}
         />
       </Animated.View>
-      {showPlaylist && (
-        <PlaylistBottomSheet
-          playlist={playlist}
-          sheetRef={playlistSheetRef}
-          onClose={handleClosePlaylist}
-          playlistMenuComponent={playlistMenuComponent}
-        />
-      )}
+      <FullscreenSheets
+        playlist={playlist}
+        showPlaylist={showPlaylist}
+        closePlaylist={handleClosePlaylist}
+        playlistSheetRef={playlistSheetRef}
+        showSoundSettings={showSoundSettings}
+        closeSoundSettings={handleCloseSoundSettings}
+        playlistMenuComponent={playlistMenuComponent}
+      />
     </>
   )
 }

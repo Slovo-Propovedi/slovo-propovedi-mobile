@@ -4,6 +4,7 @@ import { playerService } from './PlayerService'
 export const usePlayer = () =>
   useMemo(
     () => ({
+      applyVolume: playerService.applyVolume,
       getStatus: playerService.getStatus,
       getVolume: playerService.getVolume,
       loadAudio: playerService.loadAudio,

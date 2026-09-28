@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { usePlayNewSermon } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
 import type BottomSheet from '@gorhom/bottom-sheet'
-import { FINAL_SNAP_INDEX } from './useQueueSheetSnapMetrics'
+import { FINAL_SNAP_INDEX } from '../../lib/useSheetSnapMetrics'
 
 interface UseSheetLifecycleParams {
   closeOnBack: boolean

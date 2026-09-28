@@ -18,6 +18,7 @@ import { PlayerSpeedMenu } from './PlayerSpeedMenu'
 interface PlayerMenuProps {
   isCached?: boolean
   onClose: () => void
+  onOpenSoundSettings: () => void
   onShowDetails: () => void
   onToggleCache: () => void
   visualState: TrackCacheVisualState
@@ -26,6 +27,7 @@ interface PlayerMenuProps {
 export const PlayerMenu = ({
   isCached,
   onClose,
+  onOpenSoundSettings,
   onShowDetails,
   onToggleCache,
   visualState,
@@ -56,6 +58,11 @@ export const PlayerMenu = ({
 
   const handleDetailsPress = () => {
     onShowDetails()
+    onClose()
+  }
+
+  const handleSoundSettingsPress = () => {
+    onOpenSoundSettings()
     onClose()
   }
 
@@ -106,6 +113,7 @@ export const PlayerMenu = ({
               onDetails={handleDetailsPress}
               onToggleCache={handleToggleCache}
               onShowSpeed={() => setView('speed')}
+              onOpenSoundSettings={handleSoundSettingsPress}
             />
           ) : (
             <PlayerSpeedMenu

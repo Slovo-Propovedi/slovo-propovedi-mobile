@@ -1,0 +1,32 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'ru.slovopropovedi'
+version = '0.1.0'
+
+android {
+  namespace "ru.slovopropovedi.audioeffects"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  // expo-audio is consumed as a prebuilt AAR (no `:expo-audio` gradle project exists),
+  // so depend on its maven coordinates — the repository is auto-linked by expo
+  // autolinking (`expo-audio/local-maven-repo`) for every project in the build.
+  implementation "expo.modules.audio:expo.modules.audio:57.0.5"
+
+  // Explicit media3 copies so this module compiles against ExoPlayer types even
+  // if the expo-audio publication stops exposing them as `api`.
+  def androidxMedia3Version = "1.9.0"
+  implementation "androidx.media3:media3-common:$androidxMedia3Version"
+  implementation "androidx.media3:media3-exoplayer:$androidxMedia3Version"
+}

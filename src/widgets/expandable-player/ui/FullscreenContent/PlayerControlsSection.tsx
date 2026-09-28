@@ -12,15 +12,16 @@ import type { createStyles } from '../ExpandablePlayer/styles'
 import type { AudioPlayerData } from 'entities/sermon'
 import { getFullscreenPlayerBottomPadding } from '../../lib/getFullscreenPlayerBottomPadding'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
-import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
 import { BoundaryHint } from './BoundaryHint'
 import { FullscreenDownloadProgressBar } from './FullscreenDownloadProgressBar'
+import { PlayerMenuAnchor } from './PlayerMenuAnchor'
 
 interface PlayerControlsSectionProps {
   audio: AudioPlayerData
   duration: number
   isCached: boolean
   onOpenPlaylist: () => void
+  onOpenSoundSettings: () => void
   onShowDetails: () => void
   onToggleCache: () => void
   playlist: PlaylistData
@@ -39,6 +40,7 @@ export const PlayerControlsSection = ({
   duration,
   isCached,
   onOpenPlaylist,
+  onOpenSoundSettings,
   onShowDetails,
   onToggleCache,
   playlist,
@@ -72,23 +74,17 @@ export const PlayerControlsSection = ({
           />
           <Text style={styles.artistName}>{subtitle}</Text>
         </View>
-        <View style={styles.menuContainer}>
-          <IconButton
-            style={styles.menuButton}
-            accessibilityLabel='Меню плеера'
-            onPress={() => setShowMenu(true)}
-            Icon={<Entypo style={styles.menuIcon} name='dots-three-vertical' />}
-          />
-          {showMenu && (
-            <PlayerMenu
-              isCached={isCached}
-              visualState={visualState}
-              onToggleCache={onToggleCache}
-              onShowDetails={onShowDetails}
-              onClose={() => setShowMenu(false)}
-            />
-          )}
-        </View>
+        <PlayerMenuAnchor
+          styles={styles}
+          isCached={isCached}
+          showMenu={showMenu}
+          setShowMenu={setShowMenu}
+          visualState={visualState}
+          onShowDetails={onShowDetails}
+          onToggleCache={onToggleCache}
+          onOpenMenu={() => setShowMenu(true)}
+          onOpenSoundSettings={onOpenSoundSettings}
+        />
       </View>
       <View style={styles.progressRow}>
         <Text style={styles.timeText}>

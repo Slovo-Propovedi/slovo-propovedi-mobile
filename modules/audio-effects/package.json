@@ -1,0 +1,11 @@
+{
+  "name": "audio-effects",
+  "version": "0.1.0",
+  "description": "Local Expo module for Android audio effects (balance, equalizer, pitch) on top of the expo-audio ExoPlayer instance",
+  "main": "index.ts",
+  "license": "GPL-3.0-or-later",
+  "peerDependencies": {
+    "expo": "*",
+    "expo-audio": "*"
+  }
+}

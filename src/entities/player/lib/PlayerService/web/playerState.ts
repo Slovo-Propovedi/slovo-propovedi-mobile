@@ -1,9 +1,12 @@
 import { ctx } from 'shared/lib/reatom-ctx'
+import type { PlaybackStatus } from '../types'
 import type { PubSub } from './playerPubSub'
 import { setIsBufferingAction, setIsPlayingAction, setPositionAction } from '../../../model'
 
 export interface WebPlayerState {
   getState: () => WebPlayerStateData
+  /** PlaybackStatus projection (duration/isPlaying/position) the UI consumes. */
+  getStatus: () => PlaybackStatus
   setDuration: (value: number) => void
   setIsBuffering: (value: boolean) => void
   setIsPlaying: (value: boolean) => void
@@ -40,6 +43,11 @@ export const createWebPlayerState = (pubsub: PubSub): WebPlayerState => {
 
   return {
     getState: () => ({ ...state }),
+    getStatus: () => ({
+      duration: state.duration,
+      isPlaying: state.isPlaying,
+      position: state.position,
+    }),
     setDuration: value => update({ duration: value }),
     setIsBuffering: value => update({ isBuffering: value }),
     setIsPlaying: value => update({ isPlaying: value }),

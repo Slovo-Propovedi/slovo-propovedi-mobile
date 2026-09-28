@@ -1,27 +1,22 @@
 import { useAction } from '@reatom/npm-react'
-import { router, Stack } from 'expo-router'
+import { Stack } from 'expo-router'
 import { useEffect } from 'react'
-import { BackHandler, View } from 'react-native'
-import { showDetailsAtom, showMenuAtom, showPlaylistAtom } from 'widgets/expandable-player'
+import { View } from 'react-native'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
 import { useOfflineRegistrySync } from 'features/offline-sermons'
 import { useUpdateNotificationResponse } from 'features/update-notification'
 import { WebUpdateModal } from 'features/web-update'
-import {
-  closePlayerSheetAction,
-  isPlayerExpandedAtom,
-  usePlaybackProgressSaver,
-} from 'entities/player'
+import { usePlaybackProgressSaver } from 'entities/player'
 import { subscribeToNetwork } from 'shared/lib/network'
-import { ctx } from 'shared/lib/reatom-ctx'
 import { checkForUpdateAction } from 'shared/model'
 import { SUB_SCREENS, useColdStartLinkRecovery } from 'shared/routing'
 import { Toast } from 'shared/ui'
 import { GlobalConfirmDialog } from 'shared/ui/confirm-dialog'
 import { GlobalErrorDialog } from 'shared/ui/error-dialog'
 import { useTheme } from 'shared/ui/theme'
+import { useHardwareBackCascade } from './_useHardwareBackCascade'
 // Module-level: subscribes once for the app lifetime
 subscribeToNetwork()
 
@@ -32,58 +27,12 @@ const RootLayout = () => {
   usePlaybackProgressSaver()
   useOfflineRegistrySync()
   useColdStartLinkRecovery()
+  useHardwareBackCascade()
 
   useEffect(() => {
     const timer = setTimeout(() => void checkForUpdate(), 0)
     return () => clearTimeout(timer)
   }, [checkForUpdate])
-
-  useEffect(() => {
-    const listener = BackHandler.addEventListener('hardwareBackPress', () => {
-      const currentShowDetails = ctx.get(showDetailsAtom)
-      const currentShowMenu = ctx.get(showMenuAtom)
-      const currentShowPlaylist = ctx.get(showPlaylistAtom)
-      const currentIsPlayerExpanded = ctx.get(isPlayerExpandedAtom)
-      const canGoBack = router.canGoBack()
-
-      if (currentShowDetails) {
-        void ctx.schedule(() => {
-          showDetailsAtom(ctx, false)
-        })
-        return true
-      }
-
-      if (currentShowMenu) {
-        void ctx.schedule(() => {
-          showMenuAtom(ctx, false)
-        })
-        return true
-      }
-
-      if (currentShowPlaylist) {
-        void ctx.schedule(() => {
-          showPlaylistAtom(ctx, false)
-        })
-        return true
-      }
-
-      if (currentIsPlayerExpanded) {
-        void ctx.schedule(() => {
-          void closePlayerSheetAction(ctx)
-        })
-        return true
-      }
-
-      if (canGoBack) {
-        router.back()
-        return true
-      }
-
-      return false
-    })
-
-    return () => listener.remove()
-  }, [])
 
   return (
     <View style={{ flex: 1 }}>

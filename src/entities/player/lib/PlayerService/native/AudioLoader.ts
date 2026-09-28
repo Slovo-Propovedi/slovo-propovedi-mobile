@@ -4,6 +4,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { setDurationAction, setIsBufferingAction, setPositionAction } from '../../../model'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
+import { audioEffectsAttach } from './audioEffectsAttach'
 import { applyPartialDuration } from './partialDuration'
 import { resolvePlaybackUrl } from './resolvePlaybackUrl'
 import { waitForLoaded } from './waitForLoaded'
@@ -20,6 +21,8 @@ class AudioLoader {
     void setPositionAction(ctx, 0)
     this.trackEndHandled = false
     if (this.playerInstance) {
+      // Release the effects chain before the player dies with its audio session.
+      audioEffectsAttach.detach()
       // release() (not remove()) — remove() leaks the native player (expo-audio #41852)
       this.playerInstance.release()
       this.playerInstance = null
@@ -33,18 +36,12 @@ class AudioLoader {
       { downloadFirst: false, keepAudioSessionActive: true },
     )
     this.playerInstance = player
-    return waitForLoaded(player, initialPositionMs, p => p === this.playerInstance, partial)
-      .then(loaded => {
-        this.loaded = loaded !== null
-        this.applyPartialDurationIfNeeded(partial, loaded)
-        return loaded
-      })
-      .catch(error => {
-        console.error('[AudioLoader] loadAudio: Promise rejected with error:', error)
-        reportError(error, 'Ошибка при загрузке аудио')
-        void setIsBufferingAction(ctx, false)
-        return null
-      })
+    return this.awaitLoaded(player, initialPositionMs, partial).catch(error => {
+      console.error('[AudioLoader] loadAudio: Promise rejected with error:', error)
+      reportError(error, 'Ошибка при загрузке аудио')
+      void setIsBufferingAction(ctx, false)
+      return null
+    })
   }
 
   public async replaceAudio(audioUrl: string, initialPositionMs = 0): Promise<AudioPlayer | null> {
@@ -69,16 +66,7 @@ class AudioLoader {
       void setIsBufferingAction(ctx, false)
       return null
     }
-    return waitForLoaded(
-      this.playerInstance,
-      initialPositionMs,
-      p => p === this.playerInstance,
-      partial,
-    ).then(loaded => {
-      this.loaded = loaded !== null
-      this.applyPartialDurationIfNeeded(partial, loaded)
-      return loaded
-    })
+    return this.awaitLoaded(this.playerInstance, initialPositionMs, partial)
   }
 
   public isPartialSource(): boolean {
@@ -89,6 +77,7 @@ class AudioLoader {
     this.loaded = false
     this.lastResolvedUrl = null
     if (!this.playerInstance) return
+    audioEffectsAttach.detach()
     this.playerInstance.release()
     this.playerInstance = null
   }
@@ -117,9 +106,16 @@ class AudioLoader {
     this.trackEndHandled = true
   }
 
-  private applyPartialDurationIfNeeded(partial: boolean, loaded: AudioPlayer | null): void {
-    if (!partial || !loaded) return
-    applyPartialDuration()
+  // Shared tail of loadAudio/replaceAudio: remember whether the player finished
+  // loading and apply the partial-source duration quirk.
+  private awaitLoaded(player: AudioPlayer, initialPositionMs: number, partial: boolean) {
+    return waitForLoaded(player, initialPositionMs, p => p === this.playerInstance, partial).then(
+      loaded => {
+        this.loaded = loaded !== null
+        if (partial && loaded) applyPartialDuration()
+        return loaded
+      },
+    )
   }
 
   private playerInstance: AudioPlayer | null = null

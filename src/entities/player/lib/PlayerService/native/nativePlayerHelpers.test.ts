@@ -5,10 +5,10 @@ import {
   durationAtom,
   isBufferingAtom,
   isSeekingAtom,
-  pauseTypeAtom,
   positionAtom,
   seekTargetPositionAtom,
 } from '../../../model'
+import { pauseTypeAtom } from '../../../pauseType'
 import { isStalledOfflineAtom } from '../../stalledOffline'
 import { audioLoader } from './AudioLoader'
 import { createAudioInterruptionHandler, setupPlayerListeners } from './nativePlayerHelpers'

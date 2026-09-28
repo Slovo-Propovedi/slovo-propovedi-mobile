@@ -4,9 +4,13 @@ import { playlistDataSchema } from 'entities/playlist/@x/player'
 import { audioPlayerDataSchema } from 'entities/sermon/@x/player'
 import {
   CURRENT_AUDIO,
+  CURRENT_EQUALIZER_ENABLED,
+  CURRENT_EQUALIZER_GAINS,
   CURRENT_PLAYBACK_RATE,
   CURRENT_PLAYLIST,
   CURRENT_REPEAT_MODE,
+  CURRENT_SOUND_BALANCE,
+  CURRENT_SOUND_PITCH,
   CURRENT_SOUND_POSITION,
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
@@ -24,6 +28,7 @@ import { playbackProgressSchema } from './playbackProgress'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/native/AudioModeManager'
 import { setupReconnectRecovery } from './reconnectRecovery'
+import { restoreAudioSettings } from './restoreAudioSettings'
 import {
   readStartupAttempts,
   resetStartupAttempts,
@@ -65,6 +70,10 @@ export const initializePlayer = async () => {
       CURRENT_SOUND_VOLUME,
       CURRENT_REPEAT_MODE,
       CURRENT_PLAYBACK_RATE,
+      CURRENT_SOUND_BALANCE,
+      CURRENT_EQUALIZER_ENABLED,
+      CURRENT_EQUALIZER_GAINS,
+      CURRENT_SOUND_PITCH,
     ])
     const storedMap = Object.fromEntries(stored)
     const storedCurrentAudio = storedMap[CURRENT_AUDIO]
@@ -85,6 +94,7 @@ export const initializePlayer = async () => {
 
     if (volumeResult.success) await playerService.setVolume(volumeResult.data)
     if (validRate) await playerService.setPlaybackRate(validRate)
+    restoreAudioSettings(storedMap)
     if (parsedRepeat) await setRepeatModeAction(ctx, parsedRepeat)
 
     if (audio) {

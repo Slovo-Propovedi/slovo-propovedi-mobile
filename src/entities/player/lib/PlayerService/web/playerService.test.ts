@@ -116,6 +116,64 @@ afterEach(() => {
   removeGlobalAudioStub()
 })
 
+describe('WebPlayerService volume', () => {
+  test('applyVolume clamps and applies to the loaded element', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+
+    playerService.applyVolume(0.3)
+
+    expect(audioStubs[0].element.volume).toBe(0.3)
+
+    playerService.applyVolume(7)
+
+    expect(audioStubs[0].element.volume).toBe(1)
+    expect(playerService.getVolume()).toBe(1)
+  })
+
+  test('loadAudio re-applies the stored volume to the fresh element', async () => {
+    playerService.applyVolume(0.5)
+
+    await playerService.loadAudio(AUDIO_URL)
+
+    expect(audioStubs[0].element.volume).toBe(0.5)
+  })
+
+  test('setVolume resolves and applies like applyVolume', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+
+    await playerService.setVolume(0.25)
+
+    expect(audioStubs[0].element.volume).toBe(0.25)
+  })
+
+  test('volume survives unload as a preference', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+    playerService.applyVolume(0.4)
+
+    await playerService.unload()
+    await playerService.loadAudio(AUDIO_URL)
+
+    expect(audioStubs[1].element.volume).toBe(0.4)
+  })
+})
+
+describe('WebPlayerService getStatus', () => {
+  test('projects duration/isPlaying/position from the web player state', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].element.duration = 120
+    audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
+    audioStubs[0].element.currentTime = 30
+    audioStubs[0].fireEvent('timeupdate')
+    audioStubs[0].fireEvent(PLAY_EVENT)
+
+    expect(playerService.getStatus()).toEqual({
+      duration: 120000,
+      isPlaying: true,
+      position: 30000,
+    })
+  })
+})
+
 describe('WebPlayerService pause flush', () => {
   test('pause event from a replaced element does not flush progress', async () => {
     mockSermonContext()
@@ -445,7 +503,7 @@ describe('WebPlayerService recoverStreamAfterReconnect', () => {
 })
 
 describe('WebPlayerService element error/waiting/playing events', () => {
-  test("dispatching 'error' sets state isPlaying=false", async () => {
+  test('dispatching error sets state isPlaying=false', async () => {
     mockOnlineStatus(true)
     await playerService.loadAudio(AUDIO_URL)
     audioStubs[0].fireEvent(PLAY_EVENT)
@@ -454,7 +512,7 @@ describe('WebPlayerService element error/waiting/playing events', () => {
     expect(setIsPlayingAction).toHaveBeenCalledWith(expect.anything(), false)
   })
 
-  test("dispatching 'error' while buffering sets the stall flag even when online", async () => {
+  test('dispatching error while buffering sets the stall flag even when online', async () => {
     mockOnlineStatus(true)
     await playerService.loadAudio(AUDIO_URL)
     audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
@@ -465,7 +523,7 @@ describe('WebPlayerService element error/waiting/playing events', () => {
     expect(setIsStalledOfflineAction).toHaveBeenCalledWith(expect.anything(), true)
   })
 
-  test("dispatching 'error' without buffering does not set the stall flag", async () => {
+  test('dispatching error without buffering does not set the stall flag', async () => {
     mockOnlineStatus(false)
     await playerService.loadAudio(AUDIO_URL)
     audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
@@ -475,7 +533,7 @@ describe('WebPlayerService element error/waiting/playing events', () => {
     expect(setIsStalledOfflineAction).not.toHaveBeenCalled()
   })
 
-  test("dispatching 'waiting' sets isBuffering=true", async () => {
+  test('dispatching waiting sets isBuffering=true', async () => {
     await playerService.loadAudio(AUDIO_URL)
     audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
     audioStubs[0].fireEvent('waiting')
@@ -483,7 +541,7 @@ describe('WebPlayerService element error/waiting/playing events', () => {
     expect(setIsBufferingAction).toHaveBeenCalledWith(expect.anything(), true)
   })
 
-  test("dispatching 'playing' clears isBuffering and the stall flag", async () => {
+  test('dispatching playing clears isBuffering and the stall flag', async () => {
     await playerService.loadAudio(AUDIO_URL)
     audioStubs[0].fireEvent(LOADED_METADATA_EVENT)
     audioStubs[0].fireEvent('waiting')

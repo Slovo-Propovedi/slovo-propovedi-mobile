@@ -11,6 +11,7 @@ import { styles } from './PlayerMenu.styles'
 interface PlayerMenuItemsProps {
   isCached?: boolean
   onDetails: () => void
+  onOpenSoundSettings: () => void
   onShowSpeed: () => void
   onToggleCache: () => void
   rate: PlaybackRate
@@ -21,6 +22,7 @@ const ADD_TO_OFFLINE_TEXT = 'Добавить в офлайн'
 const REMOVE_CACHE_TEXT = 'Удалить из офлайн'
 const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
 const REMOVE_FROM_QUEUE_TEXT = 'Убрать из очереди'
+const SOUND_SETTINGS_TEXT = 'Настройки звука'
 
 const OFFLINE_ACTION_LABELS: Record<TrackCacheVisualState, string> = {
   cached: REMOVE_CACHE_TEXT,
@@ -38,6 +40,7 @@ const getCacheActionLabel = (visualState: TrackCacheVisualState, isCached: boole
 export const PlayerMenuItems = ({
   isCached,
   onDetails,
+  onOpenSoundSettings,
   onShowSpeed,
   onToggleCache,
   rate,
@@ -90,11 +93,15 @@ export const PlayerMenuItems = ({
           Добавить в плейлист
         </Text>
       </Pressable>
-      <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
-        <Text style={[styles.menuItemTextDisabled, { color: currentTheme.textMuted }]}>
-          Настройки звука
+      <PressableButton
+        style={styles.menuItemRow}
+        onPress={onOpenSoundSettings}
+        accessibilityLabel={SOUND_SETTINGS_TEXT}
+      >
+        <Text style={[styles.menuItemText, { color: currentTheme.text, flexShrink: 1 }]}>
+          {SOUND_SETTINGS_TEXT}
         </Text>
-      </Pressable>
+      </PressableButton>
       <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
         <Text style={[styles.menuItemTextDisabled, { color: currentTheme.textMuted }]}>
           Поделиться

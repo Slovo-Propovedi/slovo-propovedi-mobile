@@ -9,6 +9,7 @@ jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
 jest.mock('../../../model', () => ({
+  applyVolumeAction: jest.fn(),
   currentAudioAtom: jest.fn(),
   durationAtom: jest.fn(),
   isSeekingAtom: jest.fn(),

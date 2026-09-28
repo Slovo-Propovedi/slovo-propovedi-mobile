@@ -7,12 +7,14 @@ export {
 export { initializePlayer } from './lib/initializePlayer'
 export { guardOfflinePlayback } from './lib/playOfflineGuard'
 export { scheduleStartupGuardReset } from './lib/startupGuard'
+export { useAudioSettings } from './lib/useAudioSettings'
 export { useGuardedTogglePlay } from './lib/useGuardedTogglePlay'
 export { usePlaybackProgressSaver } from './lib/usePlaybackProgressSaver'
 export { usePlaybackRate } from './lib/usePlaybackRate'
 export { usePlayer } from './lib/usePlayer'
 export { usePlayNewSermon } from './lib/usePlaySermon'
 export { useSeekControls } from './lib/useSeekControls'
+export { useVolume } from './lib/useVolume'
 
 export {
   currentAudioAtom,

@@ -1,6 +1,6 @@
 import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { setVolumeAction } from '../../../model'
+import { applyVolumeAction, setVolumeAction } from '../../../model'
 import { type PlaybackRate, setPlaybackRateAction } from '../../../playback-rate'
 
 const MIN_VOLUME = 0
@@ -21,12 +21,19 @@ class PlaybackPreferences {
     void setPlaybackRateAction(ctx, rate)
   }
 
+  // Commit path: live-apply plus the AsyncStorage write (slider release, reset).
   public setVolume = (player: AudioPlayer | null, volume: number): void => {
+    this.applyVolume(player, volume)
+    void setVolumeAction(ctx, this.volume)
+  }
+
+  // Live path: native volume + sync atom update on every drag tick, no persist.
+  public applyVolume = (player: AudioPlayer | null, volume: number): void => {
     this.volume = Math.max(MIN_VOLUME, Math.min(MAX_VOLUME, volume))
 
     if (player?.isLoaded) player.volume = this.volume
 
-    void setVolumeAction(ctx, this.volume)
+    applyVolumeAction(ctx, this.volume)
   }
 
   public applyPlaybackRate = (player: AudioPlayer | null): void => {
@@ -36,7 +43,7 @@ class PlaybackPreferences {
     player.setPlaybackRate(this.playbackRate, 'high')
   }
 
-  public applyVolume = (player: AudioPlayer | null): void => {
+  public reassertVolume = (player: AudioPlayer | null): void => {
     if (this.volume === DEFAULT_VOLUME) return
     if (!player?.isLoaded) return
 

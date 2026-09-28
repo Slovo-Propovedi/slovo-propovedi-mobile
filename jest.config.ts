@@ -27,6 +27,7 @@ const config: Config = {
     './__mocks__/env.js',
     './__mocks__/@react-native-async-storage/async-storage.js',
     './__mocks__/apk-installer.js',
+    './__mocks__/audio-effects.js',
     './__mocks__/expo-constants.js',
     './__mocks__/expo-haptics.js',
     './__mocks__/expo-image.js',

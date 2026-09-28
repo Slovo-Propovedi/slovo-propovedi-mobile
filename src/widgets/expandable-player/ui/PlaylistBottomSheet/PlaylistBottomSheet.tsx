@@ -1,16 +1,18 @@
 import BottomSheet from '@gorhom/bottom-sheet'
 import { useAtom } from '@reatom/npm-react'
-import { type ComponentType, memo, useCallback, useMemo, useRef, useState } from 'react'
+import { type ComponentType, memo, useMemo, useRef, useState } from 'react'
 import { useHistoryProgressMap } from 'entities/listening-history'
 import { cacheUpdateTriggerAtom } from 'entities/offline-cache'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
 import { useTheme } from 'shared/ui/theme'
+import { FINAL_SNAP_INDEX } from '../../lib/useSheetSnapMetrics'
 import { createStyles } from './PlaylistBottomSheet.styles'
 import { PlaylistSheetBackdrop } from './PlaylistSheetBackdrop'
 import { PlaylistSheetContent } from './PlaylistSheetContent'
 import { useListReveal } from './useListReveal'
-import { FINAL_SNAP_INDEX, useQueueSheetSnapMetrics } from './useQueueSheetSnapMetrics'
+import { useQueueSheetSnapMetrics } from './useQueueSheetSnapMetrics'
+import { useRevealGestureHandlers } from './useRevealGestureHandlers'
 import { useScrollToCurrentTrack } from './useScrollToCurrentTrack'
 import { useSheetLifecycle } from './useSheetLifecycle'
 
@@ -63,16 +65,11 @@ const PlaylistBottomSheetComponent = ({
     hasPendingScroll,
     intendedOffsetRef,
   })
-  // User touch = show the real list immediately; the auto-scroll retries stop
-  // fighting the finger (scrollGuards drops them while dragging/flinging).
-  const handleDragStartWithReveal = useCallback(() => {
-    revealNow()
-    handleDragStart()
-  }, [handleDragStart, revealNow])
-  const handleMomentumStartWithReveal = useCallback(() => {
-    revealNow()
-    handleMomentumStart()
-  }, [handleMomentumStart, revealNow])
+  const { handleDragStartWithReveal, handleMomentumStartWithReveal } = useRevealGestureHandlers({
+    handleDragStart,
+    handleMomentumStart,
+    revealNow,
+  })
   const { handleAnimate, handlePressItem, handleSheetChanges, sheetIndex } = useSheetLifecycle({
     closeOnBack,
     noteScrollScheduled,

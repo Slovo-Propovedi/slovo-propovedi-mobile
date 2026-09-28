@@ -51,6 +51,7 @@
     "@reatom/npm-react": "^3.10.6",
     "@types/jest": "29.5.14",
     "apk-installer": "file:./modules/apk-installer",
+    "audio-effects": "file:./modules/audio-effects",
     "axios": "^1.19.0",
     "debounce": "^3.0.0",
     "expo": "~57.0.25",

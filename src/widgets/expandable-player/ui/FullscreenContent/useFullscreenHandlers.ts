@@ -9,7 +9,6 @@ import {
   isCacheCancelledError,
   markUrlEvicted,
   removeFromCache,
-  resolveCacheState,
   useIsCached,
 } from 'entities/offline-cache'
 import {
@@ -25,9 +24,8 @@ import {
 } from 'entities/player'
 import { isOnlineAtom } from 'shared/model'
 import type BottomSheet from '@gorhom/bottom-sheet'
-import { showDetailsAtom } from '../../model/showDetailsAtom'
-import { showMenuAtom } from '../../model/showMenuAtom'
-import { showPlaylistAtom } from '../../model/showPlaylistAtom'
+import { getFullscreenVisualState } from '../../lib/getFullscreenVisualState'
+import { useCollapseCascade } from './useCollapseCascade'
 
 export const useFullscreenHandlers = () => {
   const ctx = useCtx()
@@ -43,33 +41,29 @@ export const useFullscreenHandlers = () => {
   const { seekTo } = usePlayer()
   const { togglePlay } = useGuardedTogglePlay()
   const { startSeek, stopSeek, tapSeek } = useSeekControls({ duration, position, seekTo })
-  const [showMenu, setShowMenu] = useAtom(showMenuAtom)
-  const [showPlaylist, setShowPlaylist] = useAtom(showPlaylistAtom)
-  const [showDetails, setShowDetails] = useAtom(showDetailsAtom)
+  const {
+    handleCollapse,
+    setShowDetails,
+    setShowMenu,
+    setShowPlaylist,
+    setShowSoundSettings,
+    showDetails,
+    showMenu,
+    showPlaylist,
+    showSoundSettings,
+  } = useCollapseCascade()
   const playlistSheetRef = useRef<BottomSheet>(null)
 
   const isCached = useIsCached(audio?.audioUrl ?? null, cacheTrigger)
   const isCurrentAudioDownloading = isDownloading && downloadingAudioUrl === audio?.audioUrl
   const isQueued = audio?.audioUrl ? Object.hasOwn(queue, audio.audioUrl) : false
-  const visualState = resolveCacheState({
+  const visualState = getFullscreenVisualState({
     isCached,
-    isDownloading: isCurrentAudioDownloading,
-    isPlaying: false,
+    isCurrentAudioDownloading,
     isQueued,
   })
 
-  const handleCollapse = (onClose: () => void) => {
-    // Details is the topmost layer: close it first, and always clear it on collapse.
-    setShowDetails(false)
-
-    if (showDetails) return
-    if (showPlaylist) setShowPlaylist(false)
-    else onClose()
-  }
-
-  const handleOpenPlaylist = () => {
-    setShowPlaylist(true)
-  }
+  const handleOpenPlaylist = () => setShowPlaylist(true)
 
   const handleToggleCache = async () => {
     if (!audio?.audioUrl) return
@@ -117,9 +111,11 @@ export const useFullscreenHandlers = () => {
     setShowDetails,
     setShowMenu,
     setShowPlaylist,
+    setShowSoundSettings,
     showDetails,
     showMenu,
     showPlaylist,
+    showSoundSettings,
     startSeek,
     stopSeek,
     tapSeek,

@@ -3,16 +3,15 @@ import type { AudioPlayer } from 'expo-audio'
 import {
   isBufferingAtom,
   isSeekingAtom,
-  pauseTypeAtom,
   seekTargetPositionAtom,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
   setIsSeekingAction,
-  setPauseTypeAction,
   setPositionAction,
   setSeekTargetAction,
 } from '../../../model'
+import { pauseTypeAtom, setPauseTypeAction } from '../../../pauseType'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { audioLoader } from './AudioLoader'
 import { playerStatusListener } from './PlayerStatusListener'

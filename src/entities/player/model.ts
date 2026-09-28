@@ -22,15 +22,6 @@ export const isBufferingAtom = atom(false, 'isBufferingAtom')
 export const isSeekingAtom = atom(false, 'isSeekingAtom')
 export const seekTargetPositionAtom = atom<null | number>(null, 'seekTargetPositionAtom')
 
-// Pause type: 'auto' = interrupted by system (phone call), 'manual' = user paused
-export const PauseType = {
-  Auto: 'auto',
-  Manual: 'manual',
-} as const
-export type PauseType = (typeof PauseType)[keyof typeof PauseType]
-
-export const pauseTypeAtom = atom<null | PauseType>(null, 'pauseTypeAtom')
-
 export const RepeatMode = {
   Off: 'off',
   Queue: 'queue',
@@ -103,6 +94,13 @@ export const setVolumeAction = action(async (ctx, volume: number) => {
   return volume
 }, 'setVolume')
 
+// Live-preview path for the volume slider drag: sync atom update, no
+// AsyncStorage write (persistence happens once per gesture in setVolumeAction).
+export const applyVolumeAction = action((ctx, volume: number) => {
+  volumeAtom(ctx, volume)
+  return volume
+}, 'applyVolume')
+
 export const setIsBufferingAction = action(async (ctx, buffering: boolean) => {
   if (ctx.get(isBufferingAtom) === buffering) return buffering
   await ctx.schedule(() => {
@@ -110,13 +108,6 @@ export const setIsBufferingAction = action(async (ctx, buffering: boolean) => {
   })
   return buffering
 }, 'setIsBuffering')
-
-export const setPauseTypeAction = action(async (ctx, pauseType: null | PauseType) => {
-  await ctx.schedule(() => {
-    pauseTypeAtom(ctx, pauseType)
-  })
-  return pauseType
-}, 'setPauseType')
 
 export const setRepeatModeAction = action(async (ctx, mode: RepeatMode) => {
   await AsyncStorage.setItem(CURRENT_REPEAT_MODE, mode)

@@ -10,15 +10,12 @@ import {
 import { type PlaybackRate } from '../../../playback-rate'
 import { flushProgress, scheduleHistoryFlush } from '../progressFlusher'
 import { type PlaybackStatus, type SeekSourceSwap } from '../types'
+import { audioEffectsAttach } from './audioEffectsAttach'
+import { audioEffectsPreferences } from './audioEffectsPreferences'
 import { playbackPreferences } from './playbackPreferences'
+import { resolvePlaybackStatus } from './playbackStatus'
 import { seekGuard } from './SeekGuard'
 import { seekWithSourceSwap } from './seekViaPartialSource'
-
-const DEFAULT_PLAYBACK_STATUS: PlaybackStatus = {
-  duration: 0,
-  isPlaying: false,
-  position: 0,
-}
 
 /**
  * PlaybackController handles core playback operations.
@@ -91,34 +88,37 @@ class PlaybackController {
     rate: PlaybackRate,
   ): Promise<void> => {
     playbackPreferences.setPlaybackRate(player, rate)
+    // Rate changes reset pitch natively (expo-audio queues PlaybackParameters(
+    // rate, 1f) on the main queue); re-assert ours with the same rate — the
+    // native pitch setter is dispatched to that queue right after the rate
+    // reset, so FIFO ordering makes PlaybackParameters(rate, pitch) win.
+    audioEffectsPreferences.reassertPitch()
   }
 
   public setVolume = async (player: AudioPlayer | null, volume: number): Promise<void> => {
     playbackPreferences.setVolume(player, volume)
   }
 
+  public applyVolume = (player: AudioPlayer | null, volume: number): void => {
+    playbackPreferences.applyVolume(player, volume)
+  }
+
   public applyPreferences = (player: AudioPlayer | null): void => {
     this.applyPlaybackRate(player)
-    this.applyVolume(player)
+    this.reassertVolume(player)
+    // Attach last: rate application resets pitch, attach re-applies the stored one.
+    audioEffectsAttach.attach(audioEffectsPreferences, player)
   }
 
   public applyPlaybackRate = (player: AudioPlayer | null): void => {
     playbackPreferences.applyPlaybackRate(player)
   }
 
-  public applyVolume = (player: AudioPlayer | null): void => {
-    playbackPreferences.applyVolume(player)
+  public reassertVolume = (player: AudioPlayer | null): void => {
+    playbackPreferences.reassertVolume(player)
   }
 
-  public getStatus = (player: AudioPlayer | null): PlaybackStatus => {
-    if (!player?.isLoaded) return DEFAULT_PLAYBACK_STATUS
-
-    return {
-      duration: Math.floor(player.duration * 1000),
-      isPlaying: player.playing,
-      position: Math.floor(player.currentTime * 1000),
-    }
-  }
+  public getStatus = (player: AudioPlayer | null): PlaybackStatus => resolvePlaybackStatus(player)
 
   public getPlaybackRate = (): PlaybackRate => playbackPreferences.getPlaybackRate()
 

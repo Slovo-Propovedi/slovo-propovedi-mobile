@@ -13,6 +13,7 @@ const mockOnShowDetails = jest.fn()
 const mockOnToggleCache = jest.fn()
 const mockSetPlaybackRate = jest.fn().mockResolvedValue(undefined)
 const mockOnShowSpeed = jest.fn()
+const mockOnOpenSoundSettings = jest.fn()
 const mockOnSelect = jest.fn()
 const mockOnBack = jest.fn()
 
@@ -24,6 +25,7 @@ jest.mock('entities/player', () => ({
 }))
 
 const SPEED_LABEL = 'Скорость воспроизведения'
+const SOUND_SETTINGS_LABEL = 'Настройки звука'
 
 const triggerOnLayout = async (container: TestInstance) => {
   const layoutView = container.queryAll(node => node.props.onLayout !== undefined, {
@@ -49,6 +51,7 @@ describe('<PlayerMenu>', () => {
         visualState={CLOUD_STATE}
         onShowDetails={mockOnShowDetails}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     expect(toJSON()).toBeTruthy()
@@ -61,6 +64,7 @@ describe('<PlayerMenu>', () => {
         visualState={CLOUD_STATE}
         onShowDetails={mockOnShowDetails}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
 
@@ -84,6 +88,30 @@ describe('<PlayerMenu>', () => {
     const onCloseOrder = mockOnClose.mock.invocationCallOrder[0]
     expect(setRateOrder).toBeLessThan(onCloseOrder)
   })
+
+  test('pressing sound settings opens the sheet, then closes the menu', async () => {
+    const { container, getByText } = await renderWithProviders(
+      <PlayerMenu
+        onClose={mockOnClose}
+        visualState={CLOUD_STATE}
+        onShowDetails={mockOnShowDetails}
+        onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
+      />,
+    )
+
+    await triggerOnLayout(container)
+
+    await act(async () => {
+      fireEvent.press(getByText(SOUND_SETTINGS_LABEL))
+    })
+
+    expect(mockOnOpenSoundSettings).toHaveBeenCalledTimes(1)
+
+    const openOrder = mockOnOpenSoundSettings.mock.invocationCallOrder[0]
+    const onCloseOrder = mockOnClose.mock.invocationCallOrder[0]
+    expect(openOrder).toBeLessThan(onCloseOrder)
+  })
 })
 
 describe('<PlayerMenuItems>', () => {
@@ -99,6 +127,7 @@ describe('<PlayerMenuItems>', () => {
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     expect(getByText('Скорость воспроизведения')).toBeTruthy()
@@ -113,6 +142,7 @@ describe('<PlayerMenuItems>', () => {
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     expect(getByText('1.5x')).toBeTruthy()
@@ -126,10 +156,26 @@ describe('<PlayerMenuItems>', () => {
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     fireEvent.press(getByRole('button', { name: SPEED_LABEL }))
     expect(mockOnShowSpeed).toHaveBeenCalledTimes(1)
+  })
+
+  test('sound settings row is active and calls onOpenSoundSettings', async () => {
+    const { getByRole } = await renderWithProviders(
+      <PlayerMenuItems
+        rate={1}
+        visualState={CLOUD_STATE}
+        onDetails={mockOnShowDetails}
+        onShowSpeed={mockOnShowSpeed}
+        onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
+      />,
+    )
+    fireEvent.press(getByRole('button', { name: SOUND_SETTINGS_LABEL }))
+    expect(mockOnOpenSoundSettings).toHaveBeenCalledTimes(1)
   })
 
   test('pressing details calls onDetails', async () => {
@@ -140,6 +186,7 @@ describe('<PlayerMenuItems>', () => {
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     fireEvent.press(getByText('Подробнее'))
@@ -154,6 +201,7 @@ describe('<PlayerMenuItems>', () => {
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     await act(async () => {
@@ -172,6 +220,7 @@ describe('<PlayerMenuItems>', () => {
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     await act(async () => {
@@ -189,6 +238,7 @@ describe('<PlayerMenuItems>', () => {
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     expect(getByText('Остановить добавление в офлайн')).toBeTruthy()
@@ -202,6 +252,7 @@ describe('<PlayerMenuItems>', () => {
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     expect(getByText('Убрать из очереди')).toBeTruthy()
@@ -215,6 +266,7 @@ describe('<PlayerMenuItems>', () => {
         onDetails={mockOnShowDetails}
         onShowSpeed={mockOnShowSpeed}
         onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
       />,
     )
     await act(async () => {
