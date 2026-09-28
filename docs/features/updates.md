@@ -104,7 +104,7 @@
 2. платформа не Android (iOS) → открыть страницу релизов в браузере;
 3. офлайн (`!isOnlineAtom`) → `updateErrorAtom = «Нет подключения к интернету»`, состояние `error`, диалог видим;
 4. нет `zipDownloadUrlAtom` → открыть страницу релизов в браузере;
-5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с классифицированными `updateErrorKindAtom` + `updateErrorAtom` и записью сырой ошибки в глобальный обработчик (`reportError`), **кроме `install-aborted`** (намеренная отмена установщика — только `console.error`, без глобального диалога).
+5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с классифицированными `updateErrorKindAtom` + `updateErrorAtom`; сырая ошибка уходит в глобальный обработчик (`reportError`) **только для непредвиденных видов** (`unknown` / `install-generic`, см. «Диагностика ошибок обновления»), предвиденные виды показываются лишь человекочитаемым текстом в диалоге.
 
 **Тайминг очистки:** `cleanupUpdateFiles()` вызывается в **начале** потока (перед скачиванием — чистит остатки прошлого запуска), а НЕ в `finally`. Файлы никогда не удаляются, пока сессия `PackageInstaller` может их читать (раньше `finally` удалял APK сразу после старта интента установщика — причина «Возникла проблема с файлом приложения»).
 
@@ -134,7 +134,7 @@
 | `STATUS_FAILURE` (generic) или любая другая `Error`                                 | `install-generic`                               | «Не удалось установить обновление»                                                                   |
 | вход не `Error` (или `Error` без сообщения)                                         | `unknown`                                       | «Не удалось установить обновление»                                                                   |
 
-Сырая ошибка при этом **всегда** логируется через `console.error` (диагностика), а в глобальный обработчик `reportError(installError, 'Ошибка обновления приложения')` (`shared/model/error-dialog`) она попадает **кроме намеренной отмены установщика** (`kind === 'install-aborted'`): отмена пользователем — не сбой, и её не нужно накладывать поверх дружелюбного «Установка отменена» сырым диалогом `STATUS_FAILURE_ABORTED`. Логика живёт в `handleUpdateFailure` (`src/shared/model/updateInstallFlow.ts`) и вызывается и из `performUpdate`, и из `resumeUpdateAfterPermissionAction`.
+Сырая ошибка при этом **всегда** логируется через `console.error` (диагностика), а в глобальный обработчик `reportError(installError, 'Ошибка обновления приложения')` (`shared/model/error-dialog`) она попадает **только для непредвиденных видов** (`isUnexpectedUpdateError(kind) === true`, т.е. `kind === 'unknown' || kind === 'install-generic'`). Предвиденные виды (все остальные: `download`, `extract`, `offline`, `install-signature`, `install-aborted`, `install-blocked`, `install-conflict`, `install-incompatible`, `install-invalid`, `install-storage`) уже имеют курируемый русский текст в диалоге, и глобальная модалка только накладывала бы поверх него сырой технический текст. Намеренная отмена установщика (`install-aborted`) — предвиденный вид, поэтому глобального диалога не вызывает (как и раньше). Предикат `isUnexpectedUpdateError(kind)` (`src/shared/lib/update-service/installErrorMessage.ts`) построен на явном allowlist «предвиденных» видов: вид, добавленный позже, по умолчанию считается непредвиденным, пока его сообщение не откурировано, — так новая неисследованная ошибка не потеряется для диагностики. Логика живёт в `handleUpdateFailure` (`src/shared/model/updateInstallFlow.ts`) и вызывается и из `performUpdate`, и из `resumeUpdateAfterPermissionAction`.
 
 ### Действия в диалоге ошибки
 
@@ -144,6 +144,15 @@
 - `install-signature | install-blocked | install-conflict | install-incompatible | install-invalid | install-storage` — primary **«Открыть в браузере»** (повтор часто бесполезен: проблема в подписи/устройстве/месте), secondary «Повторить», tertiary «Закрыть».
 
 `UpdateDialog` передаёт `errorKind ?? 'unknown'` и `errorMessage ?? GENERIC_ERROR_MESSAGE` — модалка всегда показывает человекочитаемый текст.
+
+### Диагностика ошибок обновления (две ветки UX)
+
+Ошибки самообновления делятся на две ветки:
+
+- **Предвиденные** (`isUnexpectedUpdateError(kind) === false`): показываются **только** внутри диалога обновления человекочитаемым русским текстом (`updateErrorAtom`). Никакого глобального диалога и никакого сырого технического текста — текущее поведение сохраняется.
+- **Непредвиденные** (`kind === 'unknown' || 'install-generic'`): причина неизвестна, поэтому **дополнительно** открывается глобальная модалка ошибки (`reportError(error, 'Ошибка обновления приложения')`), где пользователь видит сырые детали и может снять скриншот / отправить разработчику. Диалог обновления при этом продолжает показывать свой общий текст (`GENERIC_ERROR_MESSAGE`) и действия поверх глобальной модалки.
+
+Глобальная модалка (`ErrorDialog`) рендерит поле «Детали ошибки» из `getErrorDetail` (`shared/lib/error-utils.ts`): для `Error` — `error.stack || error.message` (полный стек), для строки — саму строку, для объекта — `JSON.stringify`. То есть пользователю доступен не только текст, но и стек/имя ошибки. Кнопка «Копировать» копирует сообщение и детали целиком.
 
 ### Разрешение установки из этого источника
 

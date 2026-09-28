@@ -1,4 +1,8 @@
-import { classifyUpdateError } from './installErrorMessage'
+import {
+  classifyUpdateError,
+  isUnexpectedUpdateError,
+  type UpdateErrorKind,
+} from './installErrorMessage'
 
 const GENERIC_MESSAGE = 'Не удалось установить обновление'
 const SIGNATURE_MESSAGE =
@@ -13,6 +17,7 @@ const DOWNLOAD_MESSAGE = 'Не удалось скачать обновлени�
 const OFFLINE_MESSAGE = 'Нет подключения к интернету'
 const EXTRACT_MESSAGE =
   'Не удалось распаковать обновление. Повторите попытку или скачайте его из браузера'
+const INSTALL_GENERIC_KIND: UpdateErrorKind = 'install-generic'
 
 const nativeInstallError = (statusName: string, statusMessage = 'null'): Error =>
   new Error(`Install failed: ${statusName}, message=${statusMessage}, legacyStatus=-1`)
@@ -89,15 +94,39 @@ describe('classifyUpdateError', () => {
 
   test('classifies a generic STATUS_FAILURE as a generic install error', () => {
     expect(classifyUpdateError(nativeInstallError('STATUS_FAILURE'))).toEqual({
-      kind: 'install-generic',
+      kind: INSTALL_GENERIC_KIND,
       message: GENERIC_MESSAGE,
     })
   })
 
   test('classifies an unrecognised Error as a generic install error', () => {
     expect(classifyUpdateError(new Error('Something went wrong'))).toEqual({
-      kind: 'install-generic',
+      kind: INSTALL_GENERIC_KIND,
       message: GENERIC_MESSAGE,
     })
+  })
+})
+
+describe('isUnexpectedUpdateError', () => {
+  test.each<UpdateErrorKind>(['unknown', INSTALL_GENERIC_KIND])(
+    'treats %s as unexpected (no curated cause → global report)',
+    kind => {
+      expect(isUnexpectedUpdateError(kind)).toBe(true)
+    },
+  )
+
+  test.each<UpdateErrorKind>([
+    'download',
+    'extract',
+    'install-aborted',
+    'install-blocked',
+    'install-conflict',
+    'install-incompatible',
+    'install-invalid',
+    'install-signature',
+    'install-storage',
+    'offline',
+  ])('treats %s as foreseen (curated message → dialog only)', kind => {
+    expect(isUnexpectedUpdateError(kind)).toBe(false)
   })
 })

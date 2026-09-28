@@ -19,6 +19,28 @@ export type UpdateErrorKind =
 
 export const GENERIC_ERROR_MESSAGE = 'Не удалось установить обновление'
 
+// Foreseen kinds carry a curated Russian message, so the in-dialog text is
+// enough. `unknown` / `install-generic` mean classification found no known
+// cause. An explicit allowlist (not a denylist of `unknown` + `install-generic`)
+// is deliberate: a kind added later defaults to "unexpected" until someone
+// curates it, so a not-yet-understood failure is never silently withheld from
+// the global error report used for user-submitted diagnostics.
+const FORESEEN_UPDATE_ERROR_KINDS: ReadonlySet<UpdateErrorKind> = new Set([
+  'download',
+  'extract',
+  'install-aborted',
+  'install-blocked',
+  'install-conflict',
+  'install-incompatible',
+  'install-invalid',
+  'install-signature',
+  'install-storage',
+  'offline',
+])
+
+export const isUnexpectedUpdateError = (kind: UpdateErrorKind): boolean =>
+  !FORESEEN_UPDATE_ERROR_KINDS.has(kind)
+
 const SIGNATURE_MISMATCH_HINT = 'INSTALL_FAILED_UPDATE_INCOMPATIBLE'
 const SIGNATURE_MISMATCH_MESSAGE =
   'Обновление несовместимо: подписи установленной и новой версии различаются. Удалите приложение и установите его заново'

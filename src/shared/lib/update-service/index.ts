@@ -2,6 +2,7 @@ export {
   type ClassifiedUpdateError,
   classifyUpdateError,
   GENERIC_ERROR_MESSAGE,
+  isUnexpectedUpdateError,
   type UpdateErrorKind,
 } from './installErrorMessage'
 export {

@@ -6,6 +6,7 @@ import {
   cleanupUpdateFiles,
   extractApkFromZip,
   installApk,
+  isUnexpectedUpdateError,
 } from 'shared/lib/update-service'
 import { reportError } from './error-dialog'
 import {
@@ -29,10 +30,12 @@ const handleUpdateFailure = async (ctx: Ctx, error: unknown): Promise<void> => {
 
   const { kind, message } = classifyUpdateError(error)
 
-  // A deliberate cancel of the system installer is not a failure worth the
-  // global error dialog — surfacing it would stack the raw
-  // "STATUS_FAILURE_ABORTED" report on top of the friendly «Установка отменена».
-  if (kind !== 'install-aborted') reportError(error, UPDATE_ERROR_REPORT_MESSAGE)
+  // Foreseen kinds (download, extract, install-*, offline) already carry a
+  // curated Russian message in the dialog, so the global error dialog would
+  // only stack raw tech text on top. Unexpected kinds (`unknown`,
+  // `install-generic`) have no known cause — surface the raw detail globally
+  // so the user can screenshot/send it to the developer.
+  if (isUnexpectedUpdateError(kind)) reportError(error, UPDATE_ERROR_REPORT_MESSAGE)
 
   await ctx.schedule(() => {
     updateErrorKindAtom(ctx, kind)
