@@ -17,6 +17,7 @@ const mockedUseUpdateInstall = useUpdateInstall as jest.MockedFunction<typeof us
 
 const buildHookReturn = (overrides?: Partial<ReturnType<typeof useUpdateInstall>>) => ({
   error: null,
+  errorKind: null,
   progress: 0,
   reset: jest.fn(),
   startUpdate: jest.fn(),

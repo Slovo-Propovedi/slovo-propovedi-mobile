@@ -37,6 +37,7 @@ export {
   type PermissionResumeDecision,
   updateDialogVisibleAtom,
   updateErrorAtom,
+  updateErrorKindAtom,
   updateProgressAtom,
   type UpdateState,
   updateStateAtom,

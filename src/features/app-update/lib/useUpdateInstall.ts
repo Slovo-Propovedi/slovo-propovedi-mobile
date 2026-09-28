@@ -2,11 +2,13 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import debounce from 'debounce'
 import { useEffect } from 'react'
 import { AppState, type AppStateStatus } from 'react-native'
+import { type UpdateErrorKind } from 'shared/lib/update-service'
 import {
   resetUpdateAction,
   resumeUpdateAfterPermissionAction,
   startUpdateAction,
   updateErrorAtom,
+  updateErrorKindAtom,
   updateProgressAtom,
   type UpdateState,
   updateStateAtom,
@@ -16,6 +18,7 @@ const PERMISSION_RESUME_DELAY_MS = 500
 
 interface UseUpdateInstallResult {
   error: null | string
+  errorKind: null | UpdateErrorKind
   progress: number
   reset: () => void
   startUpdate: () => Promise<void>
@@ -26,6 +29,7 @@ export const useUpdateInstall = (): UseUpdateInstallResult => {
   const [updateState] = useAtom(updateStateAtom)
   const [progress] = useAtom(updateProgressAtom)
   const [error] = useAtom(updateErrorAtom)
+  const [errorKind] = useAtom(updateErrorKindAtom)
 
   const reset = useAction(resetUpdateAction)
   const startUpdate = useAction(startUpdateAction)
@@ -47,5 +51,5 @@ export const useUpdateInstall = (): UseUpdateInstallResult => {
     }
   }, [resumeUpdate])
 
-  return { error, progress, reset, startUpdate, updateState }
+  return { error, errorKind, progress, reset, startUpdate, updateState }
 }

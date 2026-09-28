@@ -52,7 +52,8 @@
 
 - `updateStateAtom` (`UpdateState`): `'idle' | 'downloading' | 'extracting' | 'installing' | 'permission' | 'error'` — этап самообновления;
 - `updateProgressAtom` (number 0–100): процент загрузки ZIP;
-- `updateErrorAtom` (`null | string`): текст ошибки для диалога;
+- `updateErrorAtom` (`null | string`): текст ошибки для диалога (всегда человекочитаемый);
+- `updateErrorKindAtom` (`null | UpdateErrorKind`): структурный тип ошибки (`download`, `extract`, `offline`, `install-*`, `install-generic`, `unknown`) — см. «Классификация ошибок обновления»;
 - `updateDialogVisibleAtom` (boolean): видимость диалога обновления;
 - `startUpdateAction` — запуск самообновления (см. ниже);
 - `resumeUpdateAfterPermissionAction` — продолжение после возврата из настроек разрешения (см. ниже);
@@ -77,7 +78,7 @@
 | `extracting`  | «Обновление»           | «Распаковка...»                                                                                   |
 | `installing`  | «Обновление»           | «Запуск установки...»                                                                             |
 | `permission`  | «Требуется разрешение» | объяснение + кнопки «Открыть настройки» / «Не сейчас»                                             |
-| `error`       | «Ошибка обновления»    | текст ошибки, кнопки «Открыть в браузере» / «Закрыть»                                             |
+| `error`       | «Ошибка обновления»    | текст ошибки, кнопки «Повторить» / «Открыть в браузере» / «Закрыть» (порядок и акцент зависят от `updateErrorKindAtom`) |
 
 - «Обновить» → `startUpdate()`; во время загрузки закрытие диалога заблокировано (`onRequestClose` — no-op).
 - Закрытие («Не обновлять», «Закрыть», «Не сейчас», back) вызывает `reset()` хука и `onClose`.
@@ -93,7 +94,7 @@
 
 ### Фича app-update
 
-`src/features/app-update/lib/useUpdateInstall.ts` — хук `useUpdateInstall()`, тонкая обёртка над общим состоянием из `shared/model/updateInstall.ts`. Публичный API хука не изменился: `{ error, progress, reset, startUpdate, updateState }`. Атомы и логика переехали в `shared/model`, чтобы и `features/update-notification` (обработчик push), и `widgets/update-status` (диалог) могли их использовать без нарушения FSD (импорт features → features запрещён).
+`src/features/app-update/lib/useUpdateInstall.ts` — хук `useUpdateInstall()`, тонкая обёртка над общим состоянием из `shared/model/updateInstall.ts`. Публичный API хука: `{ error, errorKind, progress, reset, startUpdate, updateState }`. Атомы и логика переехали в `shared/model`, чтобы и `features/update-notification` (обработчик push), и `widgets/update-status` (диалог) могли их использовать без нарушения FSD (импорт features → features запрещён).
 
 Хук также подписывается на `AppState` (`change` → `active`, debounce 500 мс) и вызывает `resumeUpdateAfterPermissionAction` — это продолжает установку, когда пользователь вернулся из системных настроек разрешения.
 
@@ -103,11 +104,46 @@
 2. платформа не Android (iOS) → открыть страницу релизов в браузере;
 3. офлайн (`!isOnlineAtom`) → `updateErrorAtom = «Нет подключения к интернету»`, состояние `error`, диалог видим;
 4. нет `zipDownloadUrlAtom` → открыть страницу релизов в браузере;
-5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с текстом ошибки.
+5. иначе: `updateDialogVisibleAtom = true`, `updateProgressAtom = 0`, `updateErrorAtom = null`, последовательно `downloading` → `extracting` → `installing`; любой шаг упал — состояние `error` с классифицированными `updateErrorKindAtom` + `updateErrorAtom` и записью сырой ошибки в глобальный обработчик (`reportError`).
 
 **Тайминг очистки:** `cleanupUpdateFiles()` вызывается в **начале** потока (перед скачиванием — чистит остатки прошлого запуска), а НЕ в `finally`. Файлы никогда не удаляются, пока сессия `PackageInstaller` может их читать (раньше `finally` удалял APK сразу после старта интента установщика — причина «Возникла проблема с файлом приложения»).
 
 **Фолбэк скачивания (GitHub mirror):** если `downloadUpdateZip` упал (Forgejo ответил при проверке, но «умер» до тапа «Обновить»), `downloadUpdateZipWithFallback` (`src/shared/model/updateInstallFallback.ts`) один раз перезапрашивает `fetchLatestRelease()` и, если у свежего релиза `zipDownloadUrl` **отличается** от упавшего URL **и версия не старше** упавшей (`compareVersions(release.version, failedVersion) >= 0`, где `failedVersion` — `latestVersionAtom`), сбрасывает `updateProgressAtom` в 0, обновляет `latestVersionAtom`/`releaseUrlAtom`/`zipDownloadUrlAtom` (ссылка «Открыть в браузере» в диалоге ошибки ведёт на живую страницу) и повторяет скачивание с новым URL. Ретрай ровно один, без циклов. Если релиз недоступен, `zipDownloadUrl` пуст/совпадает с упавшим URL, версия фолбэка старше упавшей или повторное скачивание тоже упало — пробрасывается исходная ошибка (существующий поток `setErrorState`). Решение о ретрае — чистый хелпер `getFallbackDownloadUrl(failedUrl, failedVersion, release)` (тесты рядом, `updateInstallFallback.test.ts`). Фолбэк применяется **только** к шагу скачивания: ошибки распаковки/установки обрабатываются как раньше. Таймаут-ошибка скачивания — легитимный триггер ретрая: `downloadFileWithTimeout` бросает её после 10-минутного бюджета, и фолбэк перезапрашивает свежий релиз с GitHub-зеркала так же, как при любой другой ошибке скачивания.
+
+### Классификация ошибок обновления
+
+Ошибки самообновления классифицируются структурно в `src/shared/lib/update-service/installErrorMessage.ts`:
+
+- `classifyUpdateError(rawError)` → `{ kind, message }`, где `kind` — `UpdateErrorKind`, а `message` — всегда непустой человекочитаемый русский текст;
+- `GENERIC_ERROR_MESSAGE` — общий текст для неклассифицируемых ошибок.
+
+`kind` (порядок проверки в `classifyUpdateError`):
+
+| Условие в сообщении                                                                 | `kind`                                          | Текст ошибки                                                                                         |
+| ----------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE`                                                | `install-signature`                             | подписи установленной и новой версии различаются — удалите приложение и установите заново             |
+| `STATUS_FAILURE_ABORTED`                                                            | `install-aborted`                               | «Установка отменена»                                                                                 |
+| `STATUS_FAILURE_BLOCKED`                                                            | `install-blocked`                               | «Установка заблокирована системой»                                                                   |
+| `STATUS_FAILURE_CONFLICT`                                                           | `install-conflict`                              | «Конфликт версий: обновление несовместимо с установленной версией»                                    |
+| `STATUS_FAILURE_INCOMPATIBLE`                                                       | `install-incompatible`                          | «Обновление несовместимо с этим устройством или версией Android»                                      |
+| `STATUS_FAILURE_INVALID`                                                            | `install-invalid`                               | «Файл обновления повреждён»                                                                          |
+| `STATUS_FAILURE_STORAGE`                                                            | `install-storage`                               | «Недостаточно места для установки обновления»                                                         |
+| `Нет подключения к интернету`                                                       | `offline`                                       | «Нет подключения к интернету»                                                                        |
+| `ERR_DOWNLOAD` / `Network request failed`                                           | `download`                                      | «Не удалось скачать обновление. Проверьте подключение и попробуйте снова»                             |
+| `No .apk file found` / `Extracted APK is missing` / `unzip`                         | `extract`                                       | «Не удалось распаковать обновление. Повторите попытку или скачайте его из браузера»                  |
+| `STATUS_FAILURE` (generic) или любая другая `Error`                                 | `install-generic`                               | «Не удалось установить обновление»                                                                   |
+| вход не `Error` (или `Error` без сообщения)                                         | `unknown`                                       | «Не удалось установить обновление»                                                                   |
+
+Сырая ошибка при этом логируется через `reportError(installError, 'Ошибка обновления приложения')` (`shared/model/error-dialog`) — и в `performUpdate`, и в `resumeUpdateAfterPermissionAction`, чтобы сбои на устройстве были диагностируемы.
+
+### Действия в диалоге ошибки
+
+`src/widgets/update-status/ui/UpdateDialogError.tsx` получает `errorKind`, `errorMessage`, `onRetry`, `onOpenReleases`, `onClose`:
+
+- `download | extract | offline | install-aborted | install-generic | unknown` — primary-кнопка **«Повторить»** (`startUpdate`), secondary «Открыть в браузере», tertiary «Закрыть»;
+- `install-signature | install-blocked | install-conflict | install-incompatible | install-invalid | install-storage` — primary **«Открыть в браузере»** (повтор часто бесполезен: проблема в подписи/устройстве/месте), secondary «Повторить», tertiary «Закрыть».
+
+`UpdateDialog` передаёт `errorKind ?? 'unknown'` и `errorMessage ?? GENERIC_ERROR_MESSAGE` — модалка всегда показывает человекочитаемый текст.
 
 ### Разрешение установки из этого источника
 

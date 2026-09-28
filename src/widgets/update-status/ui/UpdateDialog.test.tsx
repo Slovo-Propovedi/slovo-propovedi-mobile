@@ -11,6 +11,9 @@ const RELEASE_URL = 'https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/r
 const LATEST_VERSION = '0.4.0'
 const CONFIRM_BUTTON_TEXT = 'Обновить'
 const RELEASES_LINK_TEXT = 'Все версии обновлений'
+const RETRY_BUTTON_TEXT = 'Повторить'
+const OPEN_BROWSER_BUTTON_TEXT = 'Открыть в браузере'
+const CLOSE_BUTTON_TEXT = 'Закрыть'
 
 jest.mock('features/app-update', () => ({
   useUpdateInstall: jest.fn(),
@@ -20,6 +23,7 @@ const mockedUseUpdateInstall = useUpdateInstall as jest.MockedFunction<typeof us
 
 const buildHookReturn = (overrides?: Partial<ReturnType<typeof useUpdateInstall>>) => ({
   error: null,
+  errorKind: null,
   progress: 0,
   reset: jest.fn(),
   startUpdate: jest.fn(),
@@ -154,12 +158,15 @@ describe('<UpdateDialog>', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
-  test('shows the error message and fallback actions in the error state', async () => {
+  test('shows the error message with retry actions in the error state', async () => {
     const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     const reset = jest.fn()
+    const startUpdate = jest.fn()
     const { getByRole, getByText } = await renderDialog(true, {
       error: 'Ошибка сети',
+      errorKind: 'download',
       reset,
+      startUpdate,
       updateState: 'error',
     })
 
@@ -167,12 +174,44 @@ describe('<UpdateDialog>', () => {
     expect(getByText('Ошибка сети')).toBeTruthy()
 
     await act(async () => {
-      fireEvent.press(getByRole('button', { name: 'Открыть в браузере' }))
+      fireEvent.press(getByRole('button', { name: RETRY_BUTTON_TEXT }))
+    })
+    expect(startUpdate).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      fireEvent.press(getByRole('button', { name: OPEN_BROWSER_BUTTON_TEXT }))
     })
     expect(openURLSpy).toHaveBeenCalledWith(RELEASE_URL)
 
-    fireEvent.press(getByRole('button', { name: 'Закрыть' }))
+    await act(async () => {
+      fireEvent.press(getByRole('button', { name: CLOSE_BUTTON_TEXT }))
+    })
     expect(reset).toHaveBeenCalledTimes(1)
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  test('offers retry and browser actions for an unclassified error', async () => {
+    const { getByRole, getByText } = await renderDialog(true, {
+      error: 'Что-то пошло не так',
+      errorKind: null,
+      updateState: 'error',
+    })
+
+    expect(getByText('Что-то пошло не так')).toBeTruthy()
+    expect(getByRole('button', { name: RETRY_BUTTON_TEXT })).toBeTruthy()
+    expect(getByRole('button', { name: OPEN_BROWSER_BUTTON_TEXT })).toBeTruthy()
+    expect(getByRole('button', { name: CLOSE_BUTTON_TEXT })).toBeTruthy()
+  })
+
+  test('prefers opening the browser for a signature error', async () => {
+    const { getByRole } = await renderDialog(true, {
+      error: 'Подписи различаются',
+      errorKind: 'install-signature',
+      updateState: 'error',
+    })
+
+    expect(getByRole('button', { name: OPEN_BROWSER_BUTTON_TEXT })).toBeTruthy()
+    expect(getByRole('button', { name: RETRY_BUTTON_TEXT })).toBeTruthy()
+    expect(getByRole('button', { name: CLOSE_BUTTON_TEXT })).toBeTruthy()
   })
 })

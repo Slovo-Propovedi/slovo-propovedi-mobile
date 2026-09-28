@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { Modal, Text, View } from 'react-native'
 import { useUpdateInstall } from 'features/app-update'
-import { openInstallPermissionSettings } from 'shared/lib/update-service'
+import { GENERIC_ERROR_MESSAGE, openInstallPermissionSettings } from 'shared/lib/update-service'
 import {
   isBusyUpdateState,
   latestVersionAtom,
@@ -39,7 +39,7 @@ export const UpdateDialog = ({ onClose, visible }: UpdateDialogProps) => {
   const { currentTheme } = useTheme()
   const [latestVersion] = useAtom(latestVersionAtom)
   const [releaseUrl] = useAtom(releaseUrlAtom)
-  const { error, progress, reset, startUpdate, updateState } = useUpdateInstall()
+  const { error, errorKind, progress, reset, startUpdate, updateState } = useUpdateInstall()
 
   if (!visible) return null
 
@@ -56,9 +56,11 @@ export const UpdateDialog = ({ onClose, visible }: UpdateDialogProps) => {
     if (updateState === 'error')
       return (
         <UpdateDialogError
-          errorMessage={error}
           onClose={handleClose}
+          onRetry={startUpdate}
+          errorKind={errorKind ?? 'unknown'}
           onOpenReleases={handleOpenReleases}
+          errorMessage={error ?? GENERIC_ERROR_MESSAGE}
         />
       )
 

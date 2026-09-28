@@ -1,43 +1,39 @@
 import { action, type Ctx } from '@reatom/framework'
-import { Linking, Platform } from 'react-native'
 import {
   apkFileExists,
   canRequestPackageInstalls,
+  classifyUpdateError,
   cleanupUpdateFiles,
   extractApkFromZip,
-  getInstallErrorMessage,
   installApk,
 } from 'shared/lib/update-service'
-import { isOnlineAtom } from './network'
-import { releaseUrlAtom, zipDownloadUrlAtom } from './update'
+import { reportError } from './error-dialog'
 import {
   decidePermissionResume,
-  isBusyUpdateState,
   updateDialogVisibleAtom,
   updateErrorAtom,
+  updateErrorKindAtom,
   updateProgressAtom,
   updateStateAtom,
 } from './updateInstall'
 import { downloadUpdateZipWithFallback } from './updateInstallFallback'
+import { getStartDecision } from './updateInstallStartDecision'
 
-const OFFLINE_ERROR_MESSAGE = 'Нет подключения к интернету'
+const UPDATE_ERROR_REPORT_MESSAGE = 'Ошибка обновления приложения'
 
 // Path of the extracted APK waiting for the install-permission grant.
 let pendingApkPath: null | string = null
 
-const setErrorState = async (ctx: Ctx, error: unknown): Promise<void> => {
-  const message = getInstallErrorMessage(error)
+const handleUpdateFailure = async (ctx: Ctx, error: unknown): Promise<void> => {
+  console.error('[updateInstall] Update failed:', error)
+  reportError(error, UPDATE_ERROR_REPORT_MESSAGE)
+
+  const { kind, message } = classifyUpdateError(error)
   await ctx.schedule(() => {
+    updateErrorKindAtom(ctx, kind)
     updateErrorAtom(ctx, message)
     updateStateAtom(ctx, 'error')
   })
-}
-
-const openReleaseInBrowser = async (releaseUrl: null | string): Promise<void> => {
-  if (!releaseUrl) return
-  await Linking.openURL(releaseUrl).catch(error =>
-    console.error('[updateInstall] Failed to open release URL:', error),
-  )
 }
 
 const performUpdate = async (ctx: Ctx, zipDownloadUrl: string): Promise<void> => {
@@ -57,32 +53,8 @@ const performUpdate = async (ctx: Ctx, zipDownloadUrl: string): Promise<void> =>
     await ctx.schedule(() => updateStateAtom(ctx, 'installing'))
     await installApk(apkPath)
   } catch (installError) {
-    console.error('[updateInstall] Update failed:', installError)
-    await setErrorState(ctx, installError)
+    await handleUpdateFailure(ctx, installError)
   }
-}
-
-const getStartDecision = async (ctx: Ctx): Promise<null | string> => {
-  if (isBusyUpdateState(ctx.get(updateStateAtom))) {
-    updateDialogVisibleAtom(ctx, true)
-    return null
-  }
-  if (Platform.OS !== 'android') {
-    await openReleaseInBrowser(ctx.get(releaseUrlAtom))
-    return null
-  }
-  if (!ctx.get(isOnlineAtom)) {
-    updateErrorAtom(ctx, OFFLINE_ERROR_MESSAGE)
-    updateStateAtom(ctx, 'error')
-    updateDialogVisibleAtom(ctx, true)
-    return null
-  }
-  const zipDownloadUrl = ctx.get(zipDownloadUrlAtom)
-  if (!zipDownloadUrl) {
-    await openReleaseInBrowser(ctx.get(releaseUrlAtom))
-    return null
-  }
-  return zipDownloadUrl
 }
 
 export const startUpdateAction = action(async ctx => {
@@ -91,6 +63,7 @@ export const startUpdateAction = action(async ctx => {
 
   updateDialogVisibleAtom(ctx, true)
   updateProgressAtom(ctx, 0)
+  updateErrorKindAtom(ctx, null)
   updateErrorAtom(ctx, null)
   updateStateAtom(ctx, 'downloading')
 
@@ -114,8 +87,7 @@ export const resumeUpdateAfterPermissionAction = action(async ctx => {
     await ctx.schedule(() => updateStateAtom(ctx, 'installing'))
     await installApk(apkPath)
   } catch (installError) {
-    console.error('[updateInstall] Update failed:', installError)
-    await setErrorState(ctx, installError)
+    await handleUpdateFailure(ctx, installError)
   }
 }, 'resumeUpdateAfterPermissionAction')
 
@@ -124,5 +96,6 @@ export const resetUpdateAction = action(ctx => {
   updateDialogVisibleAtom(ctx, false)
   updateStateAtom(ctx, 'idle')
   updateProgressAtom(ctx, 0)
+  updateErrorKindAtom(ctx, null)
   updateErrorAtom(ctx, null)
 }, 'resetUpdateAction')

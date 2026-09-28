@@ -1,4 +1,5 @@
 import { atom } from '@reatom/framework'
+import { type UpdateErrorKind } from 'shared/lib/update-service'
 
 export type PermissionResumeDecision = 'install' | 'restart' | 'wait'
 
@@ -8,6 +9,10 @@ export type UpdateState =
 export const updateStateAtom = atom<UpdateState>('idle', 'updateInstall.updateStateAtom')
 export const updateProgressAtom = atom(0, 'updateInstall.updateProgressAtom')
 export const updateErrorAtom = atom<null | string>(null, 'updateInstall.updateErrorAtom')
+export const updateErrorKindAtom = atom<null | UpdateErrorKind>(
+  null,
+  'updateInstall.updateErrorKindAtom',
+)
 export const updateDialogVisibleAtom = atom(false, 'updateInstall.updateDialogVisibleAtom')
 
 export const isBusyUpdateState = (updateState: UpdateState): boolean =>

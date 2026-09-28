@@ -1,24 +1,84 @@
-const GENERIC_ERROR_MESSAGE = 'Не удалось установить обновление'
+export interface ClassifiedUpdateError {
+  kind: UpdateErrorKind
+  message: string
+}
+
+export type UpdateErrorKind =
+  | 'download'
+  | 'extract'
+  | 'install-aborted'
+  | 'install-blocked'
+  | 'install-conflict'
+  | 'install-generic'
+  | 'install-incompatible'
+  | 'install-invalid'
+  | 'install-signature'
+  | 'install-storage'
+  | 'offline'
+  | 'unknown'
+
+export const GENERIC_ERROR_MESSAGE = 'Не удалось установить обновление'
 
 const SIGNATURE_MISMATCH_HINT = 'INSTALL_FAILED_UPDATE_INCOMPATIBLE'
 const SIGNATURE_MISMATCH_MESSAGE =
-  'Обновление несовместимо: подписи установленной и новой версии различаются'
+  'Обновление несовместимо: подписи установленной и новой версии различаются. Удалите приложение и установите его заново'
 
-// STATUS_FAILURE (generic) intentionally falls through to GENERIC_ERROR_MESSAGE.
-const STATUS_MESSAGES: Record<string, string> = {
-  STATUS_FAILURE_ABORTED: 'Установка отменена',
-  STATUS_FAILURE_BLOCKED: 'Установка заблокирована системой',
-  STATUS_FAILURE_CONFLICT: 'Конфликт версий: обновление несовместимо с установленной версией',
-  STATUS_FAILURE_INCOMPATIBLE: 'Обновление несовместимо с этим устройством или версией Android',
-  STATUS_FAILURE_INVALID: 'Файл обновления повреждён',
-  STATUS_FAILURE_STORAGE: 'Недостаточно места для установки обновления',
+const OFFLINE_HINT = 'Нет подключения к интернету'
+const OFFLINE_MESSAGE = 'Нет подключения к интернету'
+
+const DOWNLOAD_HINTS = [
+  'ERR_DOWNLOAD',
+  'Network request failed',
+  'Download failed or was cancelled',
+  'Update download timed out',
+]
+const DOWNLOAD_MESSAGE = 'Не удалось скачать обновление. Проверьте подключение и попробуйте снова'
+
+const EXTRACT_HINTS = ['No .apk file found', 'Extracted APK is missing', 'unzip']
+const EXTRACT_MESSAGE =
+  'Не удалось распаковать обновление. Повторите попытку или скачайте его из браузера'
+
+// Generic STATUS_FAILURE intentionally falls through to GENERIC_ERROR_MESSAGE.
+const STATUS_ERRORS: Record<string, ClassifiedUpdateError> = {
+  STATUS_FAILURE_ABORTED: { kind: 'install-aborted', message: 'Установка отменена' },
+  STATUS_FAILURE_BLOCKED: { kind: 'install-blocked', message: 'Установка заблокирована системой' },
+  STATUS_FAILURE_CONFLICT: {
+    kind: 'install-conflict',
+    message: 'Конфликт версий: обновление несовместимо с установленной версией',
+  },
+  STATUS_FAILURE_INCOMPATIBLE: {
+    kind: 'install-incompatible',
+    message: 'Обновление несовместимо с этим устройством или версией Android',
+  },
+  STATUS_FAILURE_INVALID: { kind: 'install-invalid', message: 'Файл обновления повреждён' },
+  STATUS_FAILURE_STORAGE: {
+    kind: 'install-storage',
+    message: 'Недостаточно места для установки обновления',
+  },
 }
 
-export const getInstallErrorMessage = (rawError: unknown): string => {
-  if (!(rawError instanceof Error) || !rawError.message) return GENERIC_ERROR_MESSAGE
+const includesAny = (message: string, hints: string[]): boolean =>
+  hints.some(hint => message.includes(hint))
 
-  if (rawError.message.includes(SIGNATURE_MISMATCH_HINT)) return SIGNATURE_MISMATCH_MESSAGE
+const findStatusError = (message: string): ClassifiedUpdateError | null => {
+  const statusName = Object.keys(STATUS_ERRORS).find(status => message.includes(status))
+  return statusName ? STATUS_ERRORS[statusName] : null
+}
 
-  const statusName = Object.keys(STATUS_MESSAGES).find(status => rawError.message.includes(status))
-  return statusName ? STATUS_MESSAGES[statusName] : GENERIC_ERROR_MESSAGE
+export const classifyUpdateError = (rawError: unknown): ClassifiedUpdateError => {
+  if (!(rawError instanceof Error) || !rawError.message)
+    return { kind: 'unknown', message: GENERIC_ERROR_MESSAGE }
+
+  const { message } = rawError
+
+  if (message.includes(SIGNATURE_MISMATCH_HINT))
+    return { kind: 'install-signature', message: SIGNATURE_MISMATCH_MESSAGE }
+
+  if (message.includes(OFFLINE_HINT)) return { kind: 'offline', message: OFFLINE_MESSAGE }
+
+  if (includesAny(message, DOWNLOAD_HINTS)) return { kind: 'download', message: DOWNLOAD_MESSAGE }
+
+  if (includesAny(message, EXTRACT_HINTS)) return { kind: 'extract', message: EXTRACT_MESSAGE }
+
+  return findStatusError(message) ?? { kind: 'install-generic', message: GENERIC_ERROR_MESSAGE }
 }
