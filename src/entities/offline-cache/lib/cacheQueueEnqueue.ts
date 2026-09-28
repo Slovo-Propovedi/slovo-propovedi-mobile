@@ -11,6 +11,7 @@ import {
   pendingPromises,
 } from './cacheQueueState'
 import { inflightCache } from './inflightCache'
+import { sermonCachingEnabledAtom } from './sermonCachingSetting'
 
 export const joinInflight = (
   url: string,
@@ -81,7 +82,10 @@ const joinQueued = (
 
 /**
  * Enqueues a cache request, deduplicating a URL that is already queued or
- * downloading by joining the existing promise.
+ * downloading by joining the existing promise. A no-op while sermon caching is
+ * disabled (setting `sermon_caching_enabled`): the returned promise resolves
+ * with the requested URL and nothing is queued, so EVERY source ('auto',
+ * 'manual', 'playlist', startup partial re-enqueue) is gated in one place.
  * @param onProgress - Progress callback (0..1): retroactive seed for an
  * inflight join, forwarded once the runner starts a queued entry.
  */
@@ -93,6 +97,7 @@ export const enqueueCache = action(
     onProgress?: (progress: number) => void,
   ): Promise<string> => {
     if (!url) throw new Error('[cacheQueue] audioUrl is required')
+    if (!ctx.get(sermonCachingEnabledAtom)) return Promise.resolve(url)
     return joinQueued(ctx, url, source, onProgress)
   },
   'enqueueCache',

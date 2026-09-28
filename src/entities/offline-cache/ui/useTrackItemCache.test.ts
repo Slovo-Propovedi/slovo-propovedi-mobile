@@ -6,6 +6,7 @@ import { CacheCancelledError } from '../lib/CacheCancelledError'
 import { cancelCacheDownload } from '../lib/cacheQueue'
 import { enqueueCache } from '../lib/cacheQueueEnqueue'
 import { cacheQueueAtom } from '../lib/cacheQueueState'
+import { sermonCachingEnabledAtom } from '../lib/sermonCachingSetting'
 import { cacheUpdateTriggerAtom, playlistDownloadProgressAtom } from '../model'
 import { useTrackItemCache } from './useTrackItemCache'
 
@@ -64,6 +65,7 @@ describe('useTrackItemCache', () => {
       expect(result.current.isCached).toBe(false)
       expect(result.current.isDownloading).toBe(false)
       expect(result.current.isQueued).toBe(false)
+      expect(result.current.isSermonCachingEnabled).toBe(true)
       expect(result.current.progressValue).toBe(-1)
       expect(result.current.visualState).toBe('cloud')
     })
@@ -411,7 +413,7 @@ describe('useTrackItemCache', () => {
         await result.current.toggleCache()
       })
 
-      expect(warnSpy).toHaveBeenCalledWith('[useTrackItemCache] Error enqueuing cache:', error)
+      expect(warnSpy).toHaveBeenCalledWith('[toggleTrackCache] Error enqueuing cache:', error)
       warnSpy.mockRestore()
     })
 
@@ -544,6 +546,85 @@ describe('useTrackItemCache', () => {
       })
 
       expect(mockedIsCached).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('sermon caching disabled (Issue #77)', () => {
+    test('reports isSermonCachingEnabled false when the setting is off, true by default', async () => {
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
+
+      expect(result.current.isSermonCachingEnabled).toBe(true)
+
+      await act(async () => {
+        sermonCachingEnabledAtom(ctx, false)
+      })
+
+      expect(result.current.isSermonCachingEnabled).toBe(false)
+    })
+
+    test('forces the cloud visual state even when the file is cached', async () => {
+      mockedIsCached.mockResolvedValue(true)
+
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
+      expect(result.current.visualState).toBe('cached')
+
+      await act(async () => {
+        sermonCachingEnabledAtom(ctx, false)
+      })
+
+      expect(result.current.visualState).toBe('cloud')
+    })
+
+    test('disables the cloud action even while online', async () => {
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
+
+      await act(async () => {
+        isOnlineAtom(ctx, true)
+      })
+      expect(result.current.isCacheDisabled).toBe(false)
+
+      await act(async () => {
+        sermonCachingEnabledAtom(ctx, false)
+      })
+
+      expect(result.current.isCacheDisabled).toBe(true)
+    })
+
+    test('toggleCache is a no-op: nothing is enqueued, removed or cancelled', async () => {
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
+
+      await act(async () => {
+        isOnlineAtom(ctx, true)
+        sermonCachingEnabledAtom(ctx, false)
+      })
+
+      await act(async () => {
+        await result.current.toggleCache()
+      })
+
+      expect(mockedEnqueueCache).not.toHaveBeenCalled()
+      expect(mockedRemoveFromCache).not.toHaveBeenCalled()
+      expect(mockedCancelCacheDownload).not.toHaveBeenCalled()
+    })
+
+    test('toggleCache does not even cancel a queued download', async () => {
+      const { ctx, result } = await renderHookWithProviders(() => useTrackItemCache(AUDIO_URL))
+
+      await act(async () => {
+        cacheQueueAtom(ctx, { [AUDIO_URL]: { enqueuedAt: 0, source: 'manual' } })
+        sermonCachingEnabledAtom(ctx, false)
+      })
+
+      await act(async () => {
+        await result.current.toggleCache()
+      })
+
+      expect(mockedCancelCacheDownload).not.toHaveBeenCalled()
+      expect(mockedEnqueueCache).not.toHaveBeenCalled()
     })
   })
 })

@@ -15,6 +15,7 @@ export interface PlaylistHeaderMenuDropdownProps {
   isAddAllToOfflineDisabled: boolean
   isCaching: boolean
   isClearCacheDisabled?: boolean
+  isOfflineItemsVisible?: boolean
   isShareDisabled: boolean
   onAddAllToOffline: () => void
   onClearCache: () => void
@@ -35,6 +36,7 @@ export const PlaylistHeaderMenuDropdown = ({
   isAddAllToOfflineDisabled,
   isCaching,
   isClearCacheDisabled = false,
+  isOfflineItemsVisible = true,
   isShareDisabled,
   onAddAllToOffline,
   onClearCache,
@@ -58,33 +60,37 @@ export const PlaylistHeaderMenuDropdown = ({
     >
       <PlaylistShareMenuItem onPress={onShare} text={SHARE_TEXT} isDisabled={isShareDisabled} />
 
-      <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
+      {isOfflineItemsVisible && (
+        <>
+          <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
 
-      {isCaching ? (
-        <PlaylistOfflineMenuItem
-          onPress={onStopCaching}
-          icon='stop-circle-outline'
-          text='Остановить добавление в офлайн'
-        />
-      ) : (
-        <PlaylistOfflineMenuItem
-          onPress={onAddAllToOffline}
-          isDisabled={isAddAllToOfflineDisabled}
-          icon={allCached ? 'check-circle-outline' : 'cloud-download'}
-          text={allCached ? 'Плейлист в офлайне' : 'Добавить все в офлайн'}
-        />
+          {isCaching ? (
+            <PlaylistOfflineMenuItem
+              onPress={onStopCaching}
+              icon='stop-circle-outline'
+              text='Остановить добавление в офлайн'
+            />
+          ) : (
+            <PlaylistOfflineMenuItem
+              onPress={onAddAllToOffline}
+              isDisabled={isAddAllToOfflineDisabled}
+              icon={allCached ? 'check-circle-outline' : 'cloud-download'}
+              text={allCached ? 'Плейлист в офлайне' : 'Добавить все в офлайн'}
+            />
+          )}
+
+          <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
+
+          <PlaylistOfflineMenuItem
+            icon='delete-outline'
+            onPress={onClearCache}
+            text='Удалить из офлайн все'
+            isDisabled={isClearCacheDisabled}
+            textColor={isClearCacheDisabled ? COLORS.disabled : undefined}
+            iconColor={isClearCacheDisabled ? COLORS.disabled : currentTheme.text}
+          />
+        </>
       )}
-
-      <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
-
-      <PlaylistOfflineMenuItem
-        icon='delete-outline'
-        onPress={onClearCache}
-        text='Удалить из офлайн все'
-        isDisabled={isClearCacheDisabled}
-        textColor={isClearCacheDisabled ? COLORS.disabled : undefined}
-        iconColor={isClearCacheDisabled ? COLORS.disabled : currentTheme.text}
-      />
 
       {showHistoryItems && (
         <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />

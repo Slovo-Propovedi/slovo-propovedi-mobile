@@ -29,6 +29,7 @@
 | entities/section  | `src/entities/section/model.ts` + `src/entities/section/lib/fetchAllSections.ts`| `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom`, `fetchAllSections`                                                                                                               | секции главного экрана                               |
 | pages/playlist    | `src/pages/playlist/model.ts`               | `isCachingPlaylistAtom`, `playlistCacheProgressAtom`, `playlistCacheErrorAtom`                                                                                                                            | скачивание плейлиста                                 |
 | entities/offline-cache | `src/entities/offline-cache/model.ts`      | `cacheUpdateTriggerAtom`, `incrementCacheTrigger`, `playlistDownloadProgressAtom`, `setTrackDownloadProgress`, `removeTrackDownloadProgress`                                                              | триггеры обновления кэша                             |
+| entities/offline-cache | `src/entities/offline-cache/lib/sermonCachingSetting.ts` | `sermonCachingEnabledAtom` + `setSermonCachingEnabled`, `loadSermonCachingEnabled`                                                                                              | настройка «Кеширование проповедей» (Issue #77)       |
 
 ## Паттерны
 

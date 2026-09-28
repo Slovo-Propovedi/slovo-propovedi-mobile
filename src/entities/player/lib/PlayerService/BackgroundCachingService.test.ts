@@ -3,6 +3,7 @@ import {
   CacheCancelledError,
   enqueueCache,
   incrementCacheTrigger,
+  sermonCachingEnabledAtom,
 } from 'entities/offline-cache/@x/player'
 import { reportError } from 'shared/model/error-dialog'
 import {
@@ -259,6 +260,20 @@ describe('BackgroundCachingService', () => {
       await flushPromises()
 
       expect(mockCtx.get(bufferedProgressStateAtom)).toEqual({ progress: 0.5, url: TEST_URL })
+    })
+  })
+
+  describe('sermon caching disabled (Issue #77)', () => {
+    test('never enqueues, so the cache trigger never fires for a skipped download', async () => {
+      sermonCachingEnabledAtom(mockCtx, false)
+
+      startBackgroundCaching(TEST_URL)
+      await flushPromises()
+
+      expect(mockEnqueueCache).not.toHaveBeenCalled()
+      expect(mockIncrementCacheTrigger).not.toHaveBeenCalled()
+      expect(mockCtx.get(isDownloadingAtom)).toBe(false)
+      expect(mockCtx.get(downloadingAudioUrlAtom)).toBeNull()
     })
   })
 

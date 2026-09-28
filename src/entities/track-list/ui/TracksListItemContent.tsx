@@ -17,6 +17,7 @@ interface TracksListItemContentProps {
   isDownloading: boolean
   isPlaying: boolean
   isQueued?: boolean
+  isSermonCachingEnabled: boolean
   progress?: number
   progressValue: number
   subtitle?: string
@@ -34,6 +35,7 @@ export const TracksListItemContent = forwardRef<View, TracksListItemContentProps
       isDownloading,
       isPlaying,
       isQueued = false,
+      isSermonCachingEnabled,
       progress,
       progressValue,
       subtitle,
@@ -70,6 +72,7 @@ export const TracksListItemContent = forwardRef<View, TracksListItemContentProps
               isQueued={isQueued}
               isPlaying={isPlaying}
               isAudioPlaying={isAudioPlaying}
+              isSermonCachingEnabled={isSermonCachingEnabled}
             />
           )}
         </View>

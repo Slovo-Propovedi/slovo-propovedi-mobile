@@ -1,18 +1,16 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { useEffect, useRef, useState } from 'react'
 import { isOnlineAtom } from 'shared/model'
-import { removeFromCache } from '../lib/AudioCacheService'
-import { isCacheCancelledError } from '../lib/CacheCancelledError'
-import { cancelCacheDownload } from '../lib/cacheQueue'
-import { enqueueCache } from '../lib/cacheQueueEnqueue'
 import { cacheQueueAtom } from '../lib/cacheQueueState'
 import {
   resolveCacheState,
   type ResolveCacheStateInput,
   type TrackCacheVisualState,
 } from '../lib/resolveCacheState'
+import { sermonCachingEnabledAtom } from '../lib/sermonCachingSetting'
+import { toggleTrackCache } from '../lib/toggleTrackCache'
 import { useIsCached } from '../lib/useIsCached'
-import { incrementCacheTrigger, markUrlEvicted, playlistDownloadProgressAtom } from '../model'
+import { incrementCacheTrigger, playlistDownloadProgressAtom } from '../model'
 
 /**
  * Owns the per-row cache/download state of a track: cached/queued/downloading
@@ -26,6 +24,7 @@ export const useTrackItemCache = (
 ) => {
   const ctx = useCtx()
   const [isOnline] = useAtom(isOnlineAtom)
+  const [isSermonCachingEnabled] = useAtom(sermonCachingEnabledAtom)
   const internalCacheTriggerRef = useRef(0)
   const prevIsDownloadingRef = useRef(false)
 
@@ -67,44 +66,29 @@ export const useTrackItemCache = (
     return ctx.subscribe(cacheQueueAtom, readQueued)
   }, [ctx, audioUrl])
 
-  const toggleCache = async () => {
-    if (!audioUrl) return
-
-    // Cancel: active download or queued — cancel unconditionally
-    if (isDownloadingByProgress || isQueued) {
-      cancelCacheDownload(ctx, audioUrl)
-      return
-    }
-
-    // Remove from cache
-    if (isCached) {
-      try {
-        await removeFromCache(audioUrl)
-        markUrlEvicted(ctx, audioUrl)
-        internalCacheTriggerRef.current += 1
-        incrementCacheTrigger(ctx)
-      } catch (error) {
-        console.warn('[useTrackItemCache] Error removing from cache:', error)
-      }
-      return
-    }
-
-    // Cloud → enqueue (don't block on download)
-    if (!isOnline) return
-    void enqueueCache(ctx, audioUrl, 'manual')
-      .then(() => {
-        internalCacheTriggerRef.current += 1
-        incrementCacheTrigger(ctx)
-      })
-      .catch(error => {
-        if (!isCacheCancelledError(error))
-          console.warn('[useTrackItemCache] Error enqueuing cache:', error)
-      })
+  const handleCacheChanged = () => {
+    internalCacheTriggerRef.current += 1
+    incrementCacheTrigger(ctx)
   }
 
-  // isCacheDisabled: stop/remove-from-queue items must be ENABLED;
-  // only disable the cloud branch (starting a download while offline)
-  const isCacheDisabled = !isOnline && !isCached && !isDownloadingByProgress && !isQueued
+  const toggleCache = () =>
+    toggleTrackCache({
+      audioUrl,
+      ctx,
+      isCached,
+      isDownloading: isDownloadingByProgress,
+      isOnline,
+      isQueued,
+      isSermonCachingEnabled,
+      onCacheChanged: handleCacheChanged,
+    })
+
+  // isCacheDisabled: stop/remove-from-queue items must be ENABLED; only the
+  // cloud branch (starting a download while offline) is disabled. Caching off
+  // in settings disables every branch — the row must not offer a download the
+  // queue would refuse anyway.
+  const isCacheDisabled =
+    !isSermonCachingEnabled || (!isOnline && !isCached && !isDownloadingByProgress && !isQueued)
 
   const stateInput: ResolveCacheStateInput = {
     isCached,
@@ -112,13 +96,17 @@ export const useTrackItemCache = (
     isPlaying: false,
     isQueued,
   }
-  const visualState: TrackCacheVisualState = resolveCacheState(stateInput)
+  // Caching off: no cached/downloading/queued indicator survives the row.
+  const visualState: TrackCacheVisualState = isSermonCachingEnabled
+    ? resolveCacheState(stateInput)
+    : 'cloud'
 
   return {
     isCached,
     isCacheDisabled,
     isDownloading: isDownloadingByProgress,
     isQueued,
+    isSermonCachingEnabled,
     progressValue: effectiveProgress,
     toggleCache,
     visualState,

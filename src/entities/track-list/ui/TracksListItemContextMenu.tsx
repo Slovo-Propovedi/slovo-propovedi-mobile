@@ -6,6 +6,8 @@ export interface TracksListItemContextMenuProps {
   isCached: boolean
   isCacheDisabled?: boolean
   isMenuOpen: boolean
+  /** Global sermon-caching setting; when off, the cache action is omitted. */
+  isSermonCachingEnabled: boolean
   menuActions?: MenuItem[]
   onClose: () => void
   onToggleCache: () => void
@@ -41,19 +43,26 @@ export const TracksListItemContextMenu = ({
   isCached,
   isCacheDisabled = false,
   isMenuOpen,
+  isSermonCachingEnabled,
   menuActions,
   onClose,
   onToggleCache,
   visualState,
 }: TracksListItemContextMenuProps) => {
   const cacheAction = getCacheActionItem(visualState, isCached)
+  // Caching off in settings: the cache action is meaningless, so the row menu
+  // keeps only its non-cache items.
   const items: MenuItem[] = [
-    {
-      disabled: isCacheDisabled,
-      icon: cacheAction.icon,
-      onPress: onToggleCache,
-      text: cacheAction.text,
-    },
+    ...(isSermonCachingEnabled
+      ? [
+          {
+            disabled: isCacheDisabled,
+            icon: cacheAction.icon,
+            onPress: onToggleCache,
+            text: cacheAction.text,
+          },
+        ]
+      : []),
     ...(menuActions ?? []),
   ]
 

@@ -86,6 +86,7 @@
 - `activeCacheUrlAtom: Atom<null | string>` — **реактивный** источник активной закачки: URL, который обрабатывает раннер очереди, или `null` при простое. UI, которому нужно отражать «идёт закачка» реактивно, подписывается на него (напр. `usePlaylistOfflineMenu.isClearCacheDisabled`, `useStopAllCaching`).
 - `getCacheRequesters(url): ReadonlySet<source>` — read-only сет источников, ждущих/качающих URL.
 - `hasInflightCacheDownloads(): boolean` — есть ли хоть одна идущая закачка. **НЕ реактивен** (plain-Map). С Issue #83 реактивный источник — `activeCacheUrlAtom`; этот геттер остаётся **только press-time guard'ом** на деструктивных операциях (перепроверка на нажатии «Удалить из офлайн все»), а не источником для UI.
+- `waitForInflightCacheDownloads(): Promise<void>` — дожидается всех идущих закачек через `Promise.allSettled` по снапшоту `inflightCache` на момент вызова. Не бросает: rejection отменённой закачки обрабатывается здесь же (unhandled rejection исключён). После выключения настройки гейты очереди инертны (атом переключён первым), поэтому новых записей после снапшота не появляется и ожидание конечно — это позволяет очищать кэш безусловно (см. «Очистка кэша при выключении»).
 - `registerPlaylistRunStopper(stopper)` / `unregisterPlaylistRunStopper(stopper)` / `invokePlaylistRunStopper()` — реестр стопперов плейлист-прогонов (см. «Глобальный стоп» ниже).
 
 ### Раннер (`cacheQueueRunner.ts`)
@@ -243,6 +244,70 @@ UI и хуки — `src/pages/playlist/lib/`:
 В меню шапки экрана «Офлайн» (`src/pages/offline/ui/OfflineHeaderMenu.tsx`) пункт «Очистить офлайн» → `ConfirmDialog` → `clearAudioCacheAction` (`src/entities/offline-cache/lib/clearAudioCacheAction.ts`) → `audioCacheService.clearCache()`. После очистки action сбрасывает optimistic-реестр (`clearCachedUrls`) и инкрементирует `cacheUpdateTriggerAtom` (строки/плейлист перепроверяют состояние). Пункт реактивно дизейблится, пока очередь непуста или идёт активная закачка (`cacheQueueAtom` + `activeCacheUrlAtom`); `clearAudioCacheAction` дополнительно перепроверяет `hasInflightCacheDownloads()` на нажатии — press-time guard, defense-in-depth (паритет с меню плейлиста).
 
 > **Примечание:** Кэш изображений (`expo-image`, `cachePolicy='memory-disk'`) физически отделён от `document/audio-cache` и этими операциями не затрагивается. Подробнее — [features/images.md](./images.md).
+
+## Отключение кеширования (#77)
+
+Настройка «Кеширование проповедей» — переключатель в шапке экрана [«Офлайн»](../screens/offline.md) (`SermonCachingHeaderSwitch`, `src/pages/offline/ui/SermonCachingHeaderSwitch.tsx`) — выключает скачивание аудио целиком: мотивация — освобождение памяти устройства. Раньше это была строка `SermonCachingSettingsItem` на экране [«Настройки»](../screens/settings.md); экран «Настройки» её больше не содержит. Хранится как `sermon_caching_enabled` (`'true'`/`'false'`, дефолт — включено) в `src/entities/offline-cache/lib/sermonCachingSetting.ts`: атом `sermonCachingEnabledAtom`, экшены `setSermonCachingEnabled` / `loadSermonCachingEnabled`. Значение грузится при старте **внутри** цепочки `app/_layout.tsx` и **до** `initializePlayer()`:
+
+```
+cleanupOrphanedDownloads → hydrateOfflineRegistry → loadSermonCachingEnabled → initializePlayer → reEnqueuePartialDownloads
+```
+
+Порядок обязателен: оба следующих шага ставят закачки через гейт очереди — восстановление плеера (`resolvePlaybackUrl` → `startBackgroundCaching` → `enqueueCache`) и возобновление частичных загрузок (`reEnqueuePartialDownloads`). Гейт читает атом, поэтому при дефолтном `true` холодный старт детерминированно запускал бы фоновую закачку, даже если настройка выключена (а `false`, загруженный после плеера, не успевал бы остановить частичные загрузки).
+
+### Гейты очереди (chokepoints)
+
+Обе точки входа в глобальную очередь возвращают no-op при выключенной настройке — обе они в `entities/offline-cache/lib/`:
+
+- `enqueueCache` (`cacheQueueEnqueue.ts`) — после проверки непустого URL: `if (!ctx.get(sermonCachingEnabledAtom)) return Promise.resolve(url)`. Очередь, `pendingPromises` и requester-регистры не трогаются; промис резолвится, поэтому все вызывающие (`.then` / `void`) остаются валидными.
+- `enqueueCacheMany` (`cacheQueueEnqueueMany.ts`) — та же проверка после pre-валидации массива: возвращает `urls.map(url => Promise.resolve(url))`.
+
+Через эти две функции проходят **все** источники, поэтому отдельных гейтов не требуется: `'manual'` (строка трека, меню плеера), `'playlist'` (`runPlaylistCaching`), `'auto'` (`BackgroundCachingService` → нативный `AudioLoader` и web `autoCacheOnPlay`), стартовый `reEnqueuePartialDownloads` (частичные `.cache.mp3`) и пере-постановка закачек при восстановлении сети (`setupReconnectRecovery`).
+
+Два источника `'auto'` дополнительно проверяют атом **до** постановки, чтобы no-op не стоил работы:
+
+- `startBackgroundCaching` (`src/entities/player/lib/PlayerService/BackgroundCachingService.ts`) — выход сразу, без `enqueueCache`. Иначе резолвнувшийся no-op всё равно выполнил бы `.then(incrementCacheTrigger)` — лишнее пересканирование каталога кэша ради закачки, которой не будет. Проверка здесь — оптимизация; единственным источником истины остаётся гейт в `enqueueCache`.
+- `autoCacheOnPlay` (`.../web/autoCache.ts`) — выход до `audioCacheService.isCached(url)`, то есть web не делает даже `File.exists` вхолостую.
+
+### Очистка кэша при выключении
+
+`setSermonCachingEnabled` переключает атом **синхронно и оптимистично — до** `AsyncStorage.setItem`, поэтому очередь инертна, а UI показывает новое состояние сразу, не дожидаясь storage-round-trip. Разрушительная очистка запускается не на каждом нажатии, а **дебонсится** (`TOGGLE_SETTLE_MS` = 800мс, см. «Гонки переключателя»): один раз после того, как пользователь перестал переключать, и только если осевшее значение — OFF. Тогда вызывается `cancelDownloadsAndClearCache` (`src/pages/offline/lib/cancelDownloadsAndClearCache.ts`):
+
+1. `await cancelAllCacheDownloads(ctx)` — очередь опустошается, активная закачка прерывается (вместе с остановкой плейлист-прогона, чтобы он не сообщил ложное «готово»). Без этого уже поставленные записи продолжили бы качаться в фоне, а кнопка «Остановить» при выключенной настройке скрыта.
+2. `await waitForInflightCacheDownloads()` — ожидание **самих промисов** идущих закачек (`Promise.allSettled` по снапшоту `inflightCache`, без опроса и потолка). Нормально прерванная закачка оседает быстро: abort доходит до платформенной загрузки, она отклоняется, `.part` удаляется в пути отмены (`throwIfCancelled` в `cacheDownloader.ts`), а inflight-запись вычищается на settle промиса (`AudioCacheService.cacheAudio`). Даже в гонке на Android (cancel приходит раньше, чем нативное хранилище зарегистрировало загрузку) `cancelDownloadAsync` становится no-op'ом, но закачка всё равно доигрывает — мы просто дожидаемся её промиса и чистим кэш после. Ожидание конечное: гейты очереди уже инертны (атом переключён первым), новых закачек не появится. Ждать обязательно: иначе очистка удалила бы `.part`, который пишет раннер.
+3. `await clearAudioCacheAction(ctx)` — чистит каталог аудио, сбрасывает optimistic-реестр и персистентный реестр офлайн-проповедей. Очистка **безусловна**: скипающего пути («не успел — пропустили») и потолка ожидания больше нет, повтор не нужен. Пока что-то inflight, `clearAudioCacheAction` — no-op (иначе очистка удалила бы `.part`, который пишет раннер), но после шага 2 это условие недостижимо (гейты очереди инертны, а все идущие закачки дождались). Неожиданный провал (например, бросок из `clearCache`) — `console.warn` с результатом, defense-in-depth: молчаливого провала нет.
+
+Включение по этой же строке только оптимистично переключает и персистит атом — никаких отмен и очисток.
+
+### Гонки переключателя (гидрация и дебаунс)
+
+Два защитных механизма, оба в `SermonCachingHeaderSwitch` / `src/entities/offline-cache/lib/sermonCachingSetting.ts`:
+
+- **Гонка гидрации.** Стартовая цепочка в `app/_layout.tsx` грузит настройку **после** двух awaited-шагов, поэтому её `AsyncStorage.getItem` может ещё висеть, когда пользователь уже на экране «Офлайн» и жмёт тумблер. Этот прочитанный (устаревший) `getItem` перезаписал бы атом свежим пользовательским значением — тумблер визуально «откатывался» назад. `setSermonCachingEnabled` выставляет per-ctx флаг `isSermonCachingUserTouchedAtom` **до** записи в хранилище (и до синхронного переключения атома); `loadSermonCachingEnabled` после чтения при флаге возвращает разобранное значение, но **не пишет атом**. Нажатие пользователя — свежайшее намерение, поэтому поздняя гидрация по определению протухла; флаг означает «трогали тумблер», а не «запись успешно сохранилась», так что откат при провале `setItem` тоже не даёт гидрации перезаписать атом. Ошибка чтения/пустое значение ведут себя как раньше (дефолт `true`).
+- **Дебаунс разрушительного эффекта.** Нажатие мгновенно и оптимистично переключает атом и запускает запись в хранилище; тумблер **никогда не блокируется**, поэтому быстрый обратный тап не «залипает». Тяжёлый побочный эффект выключения (отмена закачек, ожидание оседания, очистка каталога) запускается не на каждом нажатии, а **дебонсится**: таймер (`TOGGLE_SETTLE_MS` = 800мс) сбрасывается при каждом нажатии и запускает ровно один `cancelDownloadsAndClearCache` после того, как пользователь остановился, причём только если осевшее значение — OFF. Повторное включение до истечения таймера отменяет запланированную очистку. Цель выводится из атома **в момент нажатия** (`!ctx.get(sermonCachingEnabledAtom)`), а не из render-замыкания; благодаря оптимистичному (синхронному) переключению атома он уже содержит актуальное значение. Таймер снимается при размонтировании экрана, чтобы отложенная очистка не сработала после ухода. Отказ прогона/записи ловится `.catch` → `console.error` и не «залипает» переключатель.
+
+### Возобновление текущего трека после очистки
+
+Очистка кэша удаляет `file://`-файл, к которому уже привязан работающий `AudioPlayer`. `resumeWithSourceSwap` (`src/entities/player/lib/PlayerService/native/resumeWithSourceSwap.ts`) сравнивает два факта — «трек закеширован» (`getCachedUri`) и «плеер привязан к cache-файлу» (`sourceAlreadyServesCache(audioLoader.getLastResolvedUrl())`): если они совпадают (закеширован + cache-источник, или не закеширован + сетевой источник), источник валиден и хватает `play()`. При **расхождении** — в частности после выключения кеширования, когда `getCachedUri` уже `null`, а `lastResolvedUrl` указывает на удалённый cache-файл — источник перепривязывается: `player.replaceAudio(audioUrl, position)` → `AudioLoader.replaceAudio` → `resolvePlaybackUrl` (теперь кеш выключен → сетевой URL), и только затем `play()`. Без этого `PlaybackController.play` выходил бы рано по `!player.isLoaded`, и нажатие «play» молча ничего не делало. `AudioLoader.replaceAudio` перезаписывает `lastResolvedUrl` (`this.lastResolvedUrl = playUrl`), так что устаревшая memo не переживает перепривязку.
+
+Механика шапки: `headerRight` в `OfflineScreen` рендерит ряд `<SermonCachingHeaderSwitch />` + `<OfflineHeaderMenu />`. Переключатель собран как `PressableButton` (`accessibilityRole='switch'`, `accessibilityState={{ checked: enabled }}`, `accessibilityLabel='Кеширование проповедей'`, `minHeight/minWidth: MIN_TOUCH_TARGET` = 48pt), внутри которого `Switch` — только картинка: `pointerEvents: 'none'` **в стиле** (prop-форма на Fabric ненадёжна — нативный контроль получал бы тап и самопереключался бы с откатом), `scale 0.8`, цвета дорожки `currentTheme.primary` / `COLORS.disabled`. Именно обёртка, а не `Switch`, несёт `onPress` и тап-зону: RN не применяет `hitSlop` к `Switch` ни на Android (`hitSlop` работает только на `ReactViewGroup`), ни на iOS Fabric (`RCTSwitchComponentView` переключает через target-action `UISwitch`), поэтому уменьшенный переключатель (~41×25pt) иначе остался бы ниже минимума 44/48pt — для неподтверждаемого разрушительного действия это недопустимо. Прогресса и диалога при выключении нет: операция фоновая, результат виден по опустевшему списку на этом же экране. Тумблер никогда не блокируется, а разрушительная очистка при выключении дебонсится (см. «Гонки переключателя»).
+
+### Скрытые / отключённые поверхности UI
+
+При `sermonCachingEnabledAtom === false` в UI нет ни индикаторов, ни кнопок кэша. Флаг доходит до строки не прямым чтением атома, а полем `isSermonCachingEnabled` в `TrackCacheState` (его выставляет `useTrackItemCache`): `entities/track-list` остаётся презентационным и не импортирует `entities/offline-cache` (мост `entities/offline-cache/@x/track-list` удалён).
+
+| Поверхность                                                 | Поведение                                                                                                                          |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Строка трека — иконка `PlayingStatusOrChacheIcon`           | Не рисует облако и часы (`cacheState.isSermonCachingEnabled === false`); индикатор «сейчас играет» (play / sound bars) сохраняется |
+| Строка трека — контекстное меню `TracksListItemContextMenu` | Пункт кэша исключён из списка (`cacheState.isSermonCachingEnabled === false`; остаются `menuActions`)                              |
+| Строка трека — `useTrackItemCache`                          | `isSermonCachingEnabled` = `false`, `toggleCache` — no-op, `isCacheDisabled` принудительно `true`, `visualState` = `cloud`         |
+| Меню полноэкранного плеера `PlayerMenuItems`                | Строка «Добавить/Удалить из офлайн» не рендерится                                                                                  |
+| Полноэкранный плеер — `StopAllCachingButton`                | Скрыта (через `useStopAllCaching`: `isCachingActive && isSermonCachingEnabled`)                                                    |
+| Полноэкранный плеер — `FullscreenDownloadProgressBar`       | `downloadProgress` = 0 — серый слой закачки не виден, сам прогрессбар-плеер остаётся                                               |
+| Мини-плеер — `MiniDownloadProgress`                         | `displayProgress` = 0 → `null`                                                                                                     |
+| Меню плейлиста `PlaylistHeaderMenuDropdown`                 | Блок офлайна скрыт целиком: «Добавить все в офлайн» / «Остановить добавление…» / «Удалить из офлайн все» (`isOfflineItemsVisible`) |
+| Экран «Офлайн» — `OfflineHeaderMenu`                        | Без изменений: пункт «Очистить офлайн» остаётся (кэш и так пуст, действие безвредно)                                               |
+| Экран «Офлайн» — `OfflineEmptyState`                        | Пустое состояние объясняет причину: «Сохранение в офлайн отключено» + «Включите тумблер в шапке экрана»                            |
 
 ## Hooks
 

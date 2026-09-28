@@ -22,6 +22,15 @@ const sourceAlreadyServesCache = (sourceUrl: null | string): boolean =>
  * to the dead server URI and pressing play silently fails even though the
  * track is already cached. A local PARTIAL uri (still downloading) must also
  * be swapped for the completed final file once the download finishes.
+ *
+ * The swap is symmetric: the player may also be bound to a cache file that is
+ * GONE, and then it must be re-resolved too. Disabling sermon caching wipes the
+ * cache directory under the running player, leaving it pointing at a deleted
+ * `file://` source — `PlaybackController.play` returns early on the resulting
+ * unloaded instance, so a bare play silently does nothing. Rebinding through
+ * `replaceAudio` re-runs `AudioLoader` → `resolvePlaybackUrl`, which with caching
+ * off yields the network URL, and `AudioLoader.replaceAudio` overwrites
+ * `lastResolvedUrl` — the stale memo cannot outlive the rebind.
  * @param player - Player control actions used to swap the source and resume.
  * @param audioUrl - Network URL of the track being resumed. Always pass the original server URL —
  * replaceAudio re-resolves it through AudioLoader → resolvePlaybackUrl; passing a resolved file:// URI
@@ -37,9 +46,14 @@ export const resumeWithSourceSwap = async (
   } catch (error) {
     console.error('[resumeWithSourceSwap] cache check failed:', error)
   }
-  if (!cachedUri) return player.play()
 
-  if (sourceAlreadyServesCache(audioLoader.getLastResolvedUrl())) return player.play()
+  const isTrackCached = cachedUri !== null
+  const isPlayerBoundToCache = sourceAlreadyServesCache(audioLoader.getLastResolvedUrl())
+
+  // Agreement means the source the player is bound to still exists — the file is
+  // there, or no cache is involved at all. Anything else is a mismatch that only a
+  // re-resolve can fix.
+  if (isTrackCached === isPlayerBoundToCache) return player.play()
 
   await player.replaceAudio(audioUrl, ctx.get(positionAtom))
   return player.play()

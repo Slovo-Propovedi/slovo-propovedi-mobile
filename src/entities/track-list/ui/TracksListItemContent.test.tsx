@@ -36,6 +36,7 @@ const baseProps = {
   isCached: false,
   isDownloading: false,
   isPlaying: false,
+  isSermonCachingEnabled: true,
   progressValue: -1,
   theme: mockTheme,
   title: TEST_TITLE,
@@ -50,6 +51,17 @@ describe('<TracksListItemContent>', () => {
     await renderWithProviders(<TracksListItemContent {...baseProps} />)
 
     expect(mockIconSpy).toHaveBeenCalledWith(expect.objectContaining({ name: CLOUD_DOWNLOAD_ICON }))
+  })
+
+  test('renders no cloud/clock indicator when sermon caching is disabled', async () => {
+    await renderWithProviders(
+      <TracksListItemContent {...baseProps} isSermonCachingEnabled={false} />,
+    )
+
+    expect(mockIconSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: CLOUD_DOWNLOAD_ICON }),
+    )
+    expect(mockIconSpy).not.toHaveBeenCalledWith(expect.objectContaining({ name: CLOCK_ICON }))
   })
 
   test('renders clock icon when queued', async () => {

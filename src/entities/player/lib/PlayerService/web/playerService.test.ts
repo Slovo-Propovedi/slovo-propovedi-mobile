@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { audioCacheService } from 'entities/offline-cache/@x/player'
+import { audioCacheService, sermonCachingEnabledAtom } from 'entities/offline-cache/@x/player'
 import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
@@ -23,6 +23,7 @@ jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 jest.mock('shared/model/network', () => ({ isOnlineAtom: jest.fn() }))
 
 jest.mock('entities/offline-cache/@x/player', () => ({
+  ...jest.requireActual('entities/offline-cache/@x/player'),
   audioCacheService: { isCached: jest.fn() },
 }))
 
@@ -78,6 +79,16 @@ const mockSermonContext = () => {
 const mockOnlineStatus = (online: boolean) => {
   ;(ctx.get as jest.Mock).mockImplementation(atom => {
     if (atom === isOnlineAtom) return online
+    // Caching keeps its real default (enabled) unless a test turns it off.
+    if (atom === sermonCachingEnabledAtom) return true
+    return undefined
+  })
+}
+
+const mockSermonCachingEnabled = (enabled: boolean) => {
+  ;(ctx.get as jest.Mock).mockImplementation(atom => {
+    if (atom === isOnlineAtom) return true
+    if (atom === sermonCachingEnabledAtom) return enabled
     return undefined
   })
 }
@@ -319,6 +330,17 @@ describe('WebPlayerService auto-cache on play', () => {
     await flushAutoCache()
 
     expect(startBackgroundCaching).toHaveBeenCalledWith(AUDIO_URL)
+  })
+
+  test('caching off neither probes the cache nor triggers startBackgroundCaching (Issue #77)', async () => {
+    mockSermonCachingEnabled(false)
+    jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
+
+    await playerService.loadAudio(AUDIO_URL)
+    await flushAutoCache()
+
+    expect(audioCacheService.isCached).not.toHaveBeenCalled()
+    expect(startBackgroundCaching).not.toHaveBeenCalled()
   })
 })
 

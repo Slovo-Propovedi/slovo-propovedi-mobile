@@ -53,6 +53,7 @@ export const PlaylistHeaderMenu = ({
     isAddAllToOfflineDisabled,
     isCaching,
     isClearCacheDisabled,
+    isOfflineItemsVisible,
     menuAnchor,
     menuVisible,
     setCacheDialogVisible,
@@ -97,6 +98,7 @@ export const PlaylistHeaderMenu = ({
         onClearCache={handleClearCacheOption}
         onMarkAll={historyMenu.handleMarkAllOption}
         isClearCacheDisabled={isClearCacheDisabled}
+        isOfflineItemsVisible={isOfflineItemsVisible}
         onAddAllToOffline={handleAddAllToOfflineOption}
         onRemoveFromHistory={historyMenu.handleRemoveOption}
         isAddAllToOfflineDisabled={isAddAllToOfflineDisabled}

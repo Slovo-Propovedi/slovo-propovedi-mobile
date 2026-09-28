@@ -7,6 +7,7 @@ import { getCacheRequesters } from './cacheQueueRegistries'
 import { cacheQueueAtom } from './cacheQueueState'
 import { inflightCache, resetInflightCache } from './inflightCache'
 import { createInflightDownload } from './inflightDownload'
+import { sermonCachingEnabledAtom } from './sermonCachingSetting'
 
 jest.mock('./cacheAudioWithProgress', () => ({
   cacheAudioWithProgress: jest.fn(),
@@ -47,6 +48,20 @@ const createControlledDownload = (): ControlledDownload => {
 }
 
 let ctx: Ctx
+
+// Counts cacheQueueAtom writes after the subscription's initial fire.
+const countQueueWrites = (targetCtx: Ctx): (() => number) => {
+  let writes = 0
+  let isInitial = true
+  targetCtx.subscribe(cacheQueueAtom, () => {
+    if (isInitial) {
+      isInitial = false
+      return
+    }
+    writes++
+  })
+  return () => writes
+}
 
 beforeEach(() => {
   ctx = createCtx()
@@ -196,5 +211,56 @@ describe('enqueueCacheMany', () => {
     download.resolve(URL_A)
     await first
     await results[0]
+  })
+})
+
+describe('queue gate while sermon caching is disabled (Issue #77)', () => {
+  beforeEach(() => {
+    sermonCachingEnabledAtom(ctx, false)
+  })
+
+  test('enqueueCache resolves with the url and never writes the queue', async () => {
+    const getWrites = countQueueWrites(ctx)
+
+    await expect(enqueueCache(ctx, URL_A, MANUAL_SOURCE)).resolves.toBe(URL_A)
+
+    expect(getWrites()).toBe(0)
+    expect(ctx.get(cacheQueueAtom)).toEqual({})
+    expect(mockedCacheAudioWithProgress).not.toHaveBeenCalled()
+  })
+
+  test('enqueueCache registers no requester for a gated url', async () => {
+    await expect(enqueueCache(ctx, URL_A, PLAYLIST_SOURCE)).resolves.toBe(URL_A)
+
+    expect(getCacheRequesters(URL_A).size).toBe(0)
+  })
+
+  test('enqueueCacheMany resolves with every url and never writes the queue', async () => {
+    const getWrites = countQueueWrites(ctx)
+
+    const results = enqueueCacheMany(ctx, [URL_A, URL_B, URL_C], PLAYLIST_SOURCE)
+
+    await expect(Promise.all(results)).resolves.toEqual([URL_A, URL_B, URL_C])
+    expect(getWrites()).toBe(0)
+    expect(ctx.get(cacheQueueAtom)).toEqual({})
+    expect(mockedCacheAudioWithProgress).not.toHaveBeenCalled()
+  })
+
+  test('enqueueCacheMany still rejects an empty url (the gate never swallows bad input)', () => {
+    expect(() => enqueueCacheMany(ctx, [URL_A, ''], PLAYLIST_SOURCE)).toThrow(
+      '[cacheQueue] audioUrl is required',
+    )
+  })
+
+  test('enqueueCacheMany does not start downloads for a url already inflight', async () => {
+    const download = createControlledDownload()
+    const { entry } = createInflightDownload(undefined, undefined, () => download.promise)
+    inflightCache.set(URL_A, entry)
+
+    const results = enqueueCacheMany(ctx, [URL_A], PLAYLIST_SOURCE)
+
+    expect(mockedCacheAudioWithProgress).not.toHaveBeenCalled()
+    download.resolve(URL_A)
+    await expect(results[0]).resolves.toBe(URL_A)
   })
 })

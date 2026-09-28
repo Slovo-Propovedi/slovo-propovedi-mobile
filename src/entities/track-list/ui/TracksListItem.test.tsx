@@ -9,6 +9,7 @@ const createCacheState = (overrides: Partial<TrackCacheState> = {}): TrackCacheS
   isCacheDisabled: false,
   isDownloading: false,
   isQueued: false,
+  isSermonCachingEnabled: true,
   progressValue: -1,
   toggleCache: jest.fn(),
   visualState: 'cloud',
@@ -26,15 +27,18 @@ jest.mock('@expo/vector-icons', () => ({
 
 let mockLastMenuAnchor: { height: number; width: number; x: number; y: number } | null = null
 let mockLastCacheDisabled: boolean | undefined = undefined
+let mockLastSermonCachingEnabled: boolean | undefined = undefined
 
 jest.mock('./TracksListItemContextMenu', () => ({
   TracksListItemContextMenu: (props: {
     anchor: { height: number; width: number; x: number; y: number } | null
     isCacheDisabled?: boolean
     isMenuOpen: boolean
+    isSermonCachingEnabled: boolean
   }) => {
     mockLastMenuAnchor = props.anchor
     mockLastCacheDisabled = props.isCacheDisabled
+    mockLastSermonCachingEnabled = props.isSermonCachingEnabled
     if (!props.isMenuOpen) return null
     return <MockText testID='context-menu-visible'>Menu is open</MockText>
   },
@@ -81,6 +85,7 @@ describe('<TracksListItem>', () => {
     jest.clearAllMocks()
     mockLastMenuAnchor = null
     mockLastCacheDisabled = undefined
+    mockLastSermonCachingEnabled = undefined
     // In Jest, host-component measureInWindow never fires its callback, so the
     // menu would never receive a position. Mock the measurement with fixed geometry.
     jest
@@ -170,6 +175,21 @@ describe('<TracksListItem>', () => {
     })
 
     expect(mockLastCacheDisabled).toBe(true)
+  })
+
+  test('passes isSermonCachingEnabled from cacheState to context menu', async () => {
+    await renderItem({
+      audioUrl: AUDIO_URL,
+      cacheState: createCacheState({ isSermonCachingEnabled: false }),
+    })
+
+    fireEvent.press(screen.getByRole('button', { name: DOTS_BUTTON_LABEL }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId(CONTEXT_MENU_TEST_ID)).toBeTruthy()
+    })
+
+    expect(mockLastSermonCachingEnabled).toBe(false)
   })
 
   test('renders ProgressBar when progress is greater than 0', async () => {

@@ -105,4 +105,19 @@ describe('resumeWithSourceSwap', () => {
     expect(player.play).toHaveBeenCalledTimes(1)
     expect(player.replaceAudio).not.toHaveBeenCalled()
   })
+
+  // Disabling sermon caching wipes the cache directory under the running player,
+  // so `getCachedUri` answers null while the player stays bound to the deleted
+  // file:// source. A bare play is a silent no-op there — the source must be rebound.
+  test('uncached + lastResolvedUrl file:// → replaceAudio with position then play', async () => {
+    const player = createPlayerStub()
+    mockGetCachedUri.mockResolvedValue(null)
+    mockedGetLastResolvedUrl.mockReturnValue(CACHED_URI)
+    positionAtom(ctx, 123456)
+
+    await resumeWithSourceSwap(player, AUDIO_URL)
+
+    expect(player.replaceAudio).toHaveBeenCalledWith(AUDIO_URL, 123456)
+    expect(player.play).toHaveBeenCalledTimes(1)
+  })
 })

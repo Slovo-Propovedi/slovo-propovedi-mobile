@@ -41,7 +41,12 @@ describe('<PlayingStatusOrChacheIcon>', () => {
 
   test('renders cloud-download-outline icon when isPlaying is false', async () => {
     await renderWithProviders(
-      <PlayingStatusOrChacheIcon isPlaying={false} theme={mockTheme} isAudioPlaying={false} />,
+      <PlayingStatusOrChacheIcon
+        isPlaying={false}
+        theme={mockTheme}
+        isAudioPlaying={false}
+        isSermonCachingEnabled={true}
+      />,
     )
 
     expectIconRendered(CLOUD_DOWNLOAD_ICON)
@@ -49,7 +54,12 @@ describe('<PlayingStatusOrChacheIcon>', () => {
 
   test('renders cloud-download-outline icon when isPlaying is false regardless of isAudioPlaying', async () => {
     await renderWithProviders(
-      <PlayingStatusOrChacheIcon isPlaying={false} theme={mockTheme} isAudioPlaying={true} />,
+      <PlayingStatusOrChacheIcon
+        isPlaying={false}
+        theme={mockTheme}
+        isAudioPlaying={true}
+        isSermonCachingEnabled={true}
+      />,
     )
 
     expectIconRendered(CLOUD_DOWNLOAD_ICON)
@@ -62,6 +72,7 @@ describe('<PlayingStatusOrChacheIcon>', () => {
         isPlaying={false}
         theme={mockTheme}
         isAudioPlaying={false}
+        isSermonCachingEnabled={true}
       />,
     )
 
@@ -71,7 +82,12 @@ describe('<PlayingStatusOrChacheIcon>', () => {
 
   test('renders play icon when isPlaying is true and isAudioPlaying is false', async () => {
     await renderWithProviders(
-      <PlayingStatusOrChacheIcon isPlaying={true} theme={mockTheme} isAudioPlaying={false} />,
+      <PlayingStatusOrChacheIcon
+        isPlaying={true}
+        theme={mockTheme}
+        isAudioPlaying={false}
+        isSermonCachingEnabled={true}
+      />,
     )
 
     expectIconRendered(PLAY_ICON)
@@ -85,6 +101,7 @@ describe('<PlayingStatusOrChacheIcon>', () => {
         isPlaying={true}
         theme={mockTheme}
         isAudioPlaying={false}
+        isSermonCachingEnabled={true}
       />,
     )
 
@@ -94,13 +111,46 @@ describe('<PlayingStatusOrChacheIcon>', () => {
 
   test('renders AnimatedSoundBars when both isPlaying and isAudioPlaying are true', async () => {
     await renderWithProviders(
-      <PlayingStatusOrChacheIcon isPlaying={true} theme={mockTheme} isAudioPlaying={true} />,
+      <PlayingStatusOrChacheIcon
+        isPlaying={true}
+        theme={mockTheme}
+        isAudioPlaying={true}
+        isSermonCachingEnabled={true}
+      />,
     )
 
     const tree = screen.toJSON()
     expect(tree).toBeTruthy()
 
     expectIconNotRendered(PLAY_ICON)
+    expectIconNotRendered(CLOUD_DOWNLOAD_ICON)
+  })
+
+  test('renders no cloud/clock indicator when sermon caching is disabled', async () => {
+    await renderWithProviders(
+      <PlayingStatusOrChacheIcon
+        isPlaying={false}
+        theme={mockTheme}
+        isAudioPlaying={false}
+        isSermonCachingEnabled={false}
+      />,
+    )
+
+    expectIconNotRendered(CLOUD_DOWNLOAD_ICON)
+    expectIconNotRendered(CLOCK_ICON)
+  })
+
+  test('keeps the play indicator when sermon caching is disabled', async () => {
+    await renderWithProviders(
+      <PlayingStatusOrChacheIcon
+        isPlaying={true}
+        theme={mockTheme}
+        isAudioPlaying={false}
+        isSermonCachingEnabled={false}
+      />,
+    )
+
+    expectIconRendered(PLAY_ICON)
     expectIconNotRendered(CLOUD_DOWNLOAD_ICON)
   })
 })

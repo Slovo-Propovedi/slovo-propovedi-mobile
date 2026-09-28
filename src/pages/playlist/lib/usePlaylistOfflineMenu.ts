@@ -9,6 +9,7 @@ import {
   clearCachedUrls,
   hasInflightCacheDownloads,
   incrementCacheTrigger,
+  sermonCachingEnabledAtom,
 } from 'entities/offline-cache'
 import { isOnlineAtom } from 'shared/model'
 import { type AnchorRect } from 'shared/ui/menu'
@@ -19,6 +20,7 @@ import { usePlaylistCacheStatus } from './usePlaylistCacheStatus'
 export const usePlaylistOfflineMenu = (tracksData: TrackToCache[], playlistTitle: string) => {
   const ctx = useCtx()
   const [isOnline] = useAtom(isOnlineAtom)
+  const [isSermonCachingEnabled] = useAtom(sermonCachingEnabledAtom)
   const [isCaching] = useAtom(isCachingPlaylistAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)
   const [queue] = useAtom(cacheQueueAtom)
@@ -30,6 +32,9 @@ export const usePlaylistOfflineMenu = (tracksData: TrackToCache[], playlistTitle
   const buttonRef = useRef<View>(null)
 
   const { allCached, cachedCount } = usePlaylistCacheStatus(tracksData, cacheTrigger)
+  // Caching off in settings: the queue is inert and the cache was cleared, so
+  // the whole add/stop/clear block is meaningless — it is hidden, not disabled.
+  const isOfflineItemsVisible = isSermonCachingEnabled
   const isAddAllToOfflineDisabled = allCached || !isOnline
   const isQueueNonEmpty = Object.keys(queue).length > 0
   const isClearCacheDisabled = cachedCount === 0 || isQueueNonEmpty || activeUrl !== null
@@ -92,6 +97,7 @@ export const usePlaylistOfflineMenu = (tracksData: TrackToCache[], playlistTitle
     isAddAllToOfflineDisabled,
     isCaching,
     isClearCacheDisabled,
+    isOfflineItemsVisible,
     menuAnchor,
     menuVisible,
     setCacheDialogVisible,

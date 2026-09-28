@@ -14,6 +14,7 @@ import {
 } from './settings'
 
 const HAPTICS_ENABLED_KEY = 'haptics_enabled'
+const STORAGE_FAILURE_MESSAGE = 'storage failure'
 
 const mockedAxiosInstance = jest.requireMock('shared/api/axiosInstance').axiosInstance as {
   defaults: { baseURL: string }
@@ -104,7 +105,7 @@ describe('settings model', () => {
     })
 
     test('logs the error and keeps the atom unchanged when storage rejects', async () => {
-      ;(AsyncStorage.getItem as jest.Mock).mockRejectedValue(new Error('storage failure'))
+      ;(AsyncStorage.getItem as jest.Mock).mockRejectedValue(new Error(STORAGE_FAILURE_MESSAGE))
 
       await expect(loadHapticsEnabled(ctx)).resolves.toBeUndefined()
 

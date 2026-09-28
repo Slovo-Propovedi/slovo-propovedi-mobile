@@ -2,6 +2,7 @@ import {
   enqueueCache,
   incrementCacheTrigger,
   isCacheCancelledError,
+  sermonCachingEnabledAtom,
 } from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import {
@@ -22,6 +23,12 @@ import {
  */
 export const startBackgroundCaching = (audioUrl: string): void => {
   if (!audioUrl) return
+
+  // Sermon caching off (Issue #77): bail out before enqueueing. The queue gate
+  // stays the chokepoint for every other source, but bailing here also skips
+  // the .then below — a no-op enqueue resolves immediately and would rescan the
+  // cache directory for a download that will never start.
+  if (!ctx.get(sermonCachingEnabledAtom)) return
 
   let claimed = false
   void enqueueCache(ctx, audioUrl, 'auto', progress => {

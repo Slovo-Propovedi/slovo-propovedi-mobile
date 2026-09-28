@@ -22,6 +22,7 @@ jest.mock('entities/offline-cache', () => ({
     isCacheDisabled: false,
     isDownloading: false,
     isQueued: false,
+    isSermonCachingEnabled: true,
     progressValue: -1,
     toggleCache: jest.fn(),
     visualState: 'cloud',

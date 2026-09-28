@@ -1,4 +1,6 @@
+import { useAtom } from '@reatom/npm-react'
 import { type StyleProp, type ViewStyle } from 'react-native'
+import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { PlayerProgressBar } from 'entities/player'
 import { useDisplayedDownloadProgress } from '../../model/useDisplayedDownloadProgress'
 
@@ -21,7 +23,11 @@ export const FullscreenDownloadProgressBar = ({
   position,
   style,
 }: FullscreenDownloadProgressBarProps) => {
-  const displayProgress = useDisplayedDownloadProgress(audioUrl)
+  const [isSermonCachingEnabled] = useAtom(sermonCachingEnabledAtom)
+  const rawProgress = useDisplayedDownloadProgress(audioUrl)
+  // Caching off in settings: no grey download layer (0 width) over the
+  // playback bar — the bar itself must stay (it is the seek control).
+  const displayProgress = isSermonCachingEnabled ? rawProgress : 0
 
   return (
     <PlayerProgressBar

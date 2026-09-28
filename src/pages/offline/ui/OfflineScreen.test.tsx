@@ -1,6 +1,8 @@
+import { createCtx } from '@reatom/framework'
 import { act, fireEvent } from '@testing-library/react-native'
 import { useNavigation } from 'expo-router'
 import { type OfflineSermonItem, useOfflineSermons } from 'features/offline-sermons'
+import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { usePlayNewSermon } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { OfflineScreen } from './OfflineScreen'
@@ -12,6 +14,7 @@ jest.mock('entities/offline-cache', () => ({
     isCacheDisabled: false,
     isDownloading: false,
     isQueued: false,
+    isSermonCachingEnabled: true,
     progressValue: -1,
     toggleCache: jest.fn(),
     visualState: 'cloud',
@@ -73,6 +76,10 @@ jest.mock('entities/track-list', () => {
   }
 })
 
+const CACHING_OFF_HINT_TEXT = 'Включите тумблер в шапке экрана'
+const CACHING_OFF_TEXT = 'Сохранение в офлайн отключено'
+const NO_SERMONS_TEXT = 'Нет офлайн-проповедей'
+
 const mockSermon = {
   artist: 'Test Artist',
   artwork: 'https://example.com/art.jpg',
@@ -108,7 +115,19 @@ describe('<OfflineScreen>', () => {
 
     const { getByText } = await renderWithProviders(<OfflineScreen />)
 
-    expect(getByText('Нет офлайн-проповедей')).toBeTruthy()
+    expect(getByText(NO_SERMONS_TEXT)).toBeTruthy()
+  })
+
+  test('explains the empty list when offline saving is switched off', async () => {
+    jest.mocked(useOfflineSermons).mockReturnValue({ isLoading: false, items: [] })
+    const ctx = createCtx()
+    sermonCachingEnabledAtom(ctx, false)
+
+    const { getByText, queryByText } = await renderWithProviders(<OfflineScreen />, { ctx })
+
+    expect(getByText(CACHING_OFF_TEXT)).toBeTruthy()
+    expect(getByText(CACHING_OFF_HINT_TEXT)).toBeTruthy()
+    expect(queryByText(NO_SERMONS_TEXT)).toBeNull()
   })
 
   test('shows skeleton rows on first load instead of the empty state', async () => {
@@ -117,7 +136,7 @@ describe('<OfflineScreen>', () => {
     const { getAllByTestId, queryByText } = await renderWithProviders(<OfflineScreen />)
 
     expect(getAllByTestId('tracks-list-item-skeleton')).toHaveLength(6)
-    expect(queryByText('Нет офлайн-проповедей')).toBeNull()
+    expect(queryByText(NO_SERMONS_TEXT)).toBeNull()
   })
 
   test('sets the offline header menu as headerRight', async () => {

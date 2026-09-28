@@ -1,17 +1,25 @@
 import { useAtom } from '@reatom/npm-react'
 import { useNavigation } from 'expo-router'
 import { useLayoutEffect } from 'react'
-import { FlatList, StyleSheet, Text, View } from 'react-native'
+import { FlatList, StyleSheet, View } from 'react-native'
 import { useOfflineSermons } from 'features/offline-sermons'
+import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { isPlayingAtom } from 'entities/player'
 import { createTracksListStyles, TracksListSkeleton } from 'entities/track-list'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { OfflineEmptyState } from './OfflineEmptyState'
 import { OfflineHeaderMenu } from './OfflineHeaderMenu'
 import { OfflineRow } from './OfflineRow'
 import { OfflineSeparator } from './OfflineSeparator'
+import { SermonCachingHeaderSwitch } from './SermonCachingHeaderSwitch'
 
 const styles = StyleSheet.create({
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: INDENTS.lowest,
+  },
   skeletonList: {
     paddingTop: INDENTS.low,
   },
@@ -25,11 +33,19 @@ export const OfflineScreen = () => {
   const navigation = useNavigation()
   const { isLoading, items } = useOfflineSermons()
   const [isPlaying] = useAtom(isPlayingAtom)
+  const [isCachingEnabled] = useAtom(sermonCachingEnabledAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const tracksListStyles = createTracksListStyles(currentTheme)
 
   useLayoutEffect(() => {
-    navigation.setOptions({ headerRight: () => <OfflineHeaderMenu /> })
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerActions}>
+          <SermonCachingHeaderSwitch />
+          <OfflineHeaderMenu />
+        </View>
+      ),
+    })
     return () => {
       navigation.setOptions({ headerRight: undefined })
     }
@@ -51,23 +67,12 @@ export const OfflineScreen = () => {
         keyExtractor={item => item.sermon.id}
         ItemSeparatorComponent={OfflineSeparator}
         renderItem={({ item }) => <OfflineRow item={item} isPlaying={isPlaying} />}
+        ListEmptyComponent={<OfflineEmptyState isCachingEnabled={isCachingEnabled} />}
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: items.length === 0 ? 'center' : undefined,
           paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
         }}
-        ListEmptyComponent={
-          <Text
-            style={{
-              color: currentTheme.textMuted,
-              flex: 1,
-              fontSize: FONT_SIZES.lg,
-              textAlign: 'center',
-            }}
-          >
-            Нет офлайн-проповедей
-          </Text>
-        }
       />
     </View>
   )

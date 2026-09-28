@@ -27,3 +27,18 @@ export const resetInflightCache = (): void => {
  * press-time guard on «Удалить из офлайн все») and legacy callers.
  */
 export const hasInflightCacheDownloads = (): boolean => inflightCache.size > 0
+
+/**
+ * Awaits every download currently in-flight, regardless of outcome.
+ *
+ * `Promise.allSettled` never throws, so a cancelled download's rejection is
+ * handled here too (never an unhandled rejection). Snapshots the live entries at
+ * call time; once the sermon-caching setting is flipped off, the queue gates are
+ * inert, so no new entry can appear after that snapshot. Awaiting these promises
+ * is what lets the caller clear the cache unconditionally: in the rare Android
+ * race where the cancel is a no-op, we simply wait for the runaway download to
+ * finish instead of hitting a settle ceiling.
+ */
+export const waitForInflightCacheDownloads = async (): Promise<void> => {
+  await Promise.allSettled([...inflightCache.values()].map(entry => entry.promise))
+}

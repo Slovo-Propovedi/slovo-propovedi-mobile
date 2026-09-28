@@ -37,6 +37,7 @@ export const TracksListItemBase = ({
     isCacheDisabled,
     isDownloading,
     isQueued,
+    isSermonCachingEnabled,
     progressValue,
     toggleCache,
     visualState,
@@ -93,6 +94,7 @@ export const TracksListItemBase = ({
           progressValue={progressValue}
           dotsOnPress={handleToggleMenu}
           isAudioPlaying={isAudioPlaying}
+          isSermonCachingEnabled={isSermonCachingEnabled}
         />
       </PressableButton>
 
@@ -105,6 +107,7 @@ export const TracksListItemBase = ({
         onClose={handleToggleMenu}
         isCacheDisabled={isCacheDisabled}
         onToggleCache={handleToggleCache}
+        isSermonCachingEnabled={isSermonCachingEnabled}
       />
     </>
   )

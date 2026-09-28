@@ -6,6 +6,7 @@ import { loadHistoryAction } from 'entities/listening-history'
 import {
   cleanupOrphanedDownloads,
   hydrateOfflineRegistry,
+  loadSermonCachingEnabled,
   reEnqueuePartialDownloads,
 } from 'entities/offline-cache'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
@@ -45,10 +46,16 @@ const RootLayoutWithProvider = () => (
 // Purge orphaned legacy .mp3.part files, hydrate the offline registry, restore
 // the player, then re-enqueue stale .cache.mp3 partials. Sweeping after restore
 // keeps the current track's partial alive for an offline resolve; a same-URL
-// enqueue joins the existing queue entry.
+// enqueue joins the existing queue entry. The caching setting loads INSIDE the
+// chain and BEFORE the player restore: both downstream steps enqueue downloads
+// through the queue gate (restore → resolvePlaybackUrl → startBackgroundCaching →
+// enqueueCache, then reEnqueuePartialDownloads), and the gate reads the atom —
+// with the default `true` still in place a cold start would start a download on
+// every launch despite the setting being off.
 void cleanupOrphanedDownloads()
   .catch(error => console.error('[audio-cache] orphan cleanup failed:', error))
   .then(() => hydrateOfflineRegistry(ctx))
+  .then(() => loadSermonCachingEnabled(ctx))
   .then(() => initializePlayer())
   .then(() => reEnqueuePartialDownloads(ctx))
 scheduleStartupGuardReset()

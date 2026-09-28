@@ -19,7 +19,7 @@ export {
 } from './lib/cacheQueueState'
 export { cleanupOrphanedDownloads } from './lib/cleanupOrphans'
 export { clearAudioCacheAction } from './lib/clearAudioCacheAction'
-export { hasInflightCacheDownloads } from './lib/inflightCache'
+export { hasInflightCacheDownloads, waitForInflightCacheDownloads } from './lib/inflightCache'
 export { isUrlQueuedOrActive } from './lib/isUrlQueuedOrActive'
 export {
   clearOfflineRegistry,
@@ -36,6 +36,11 @@ export {
   type ResolveCacheStateInput,
   type TrackCacheVisualState,
 } from './lib/resolveCacheState'
+export {
+  loadSermonCachingEnabled,
+  sermonCachingEnabledAtom,
+  setSermonCachingEnabled,
+} from './lib/sermonCachingSetting'
 export { OFFLINE_SERMONS_REGISTRY, OFFLINE_SERMONS_REGISTRY_SEEDED } from './lib/storageKeys'
 export { useIsCached } from './lib/useIsCached'
 export {

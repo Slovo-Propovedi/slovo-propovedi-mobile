@@ -9,6 +9,7 @@ import {
   nextEnqueuedAt,
   pendingPromises,
 } from './cacheQueueState'
+import { sermonCachingEnabledAtom } from './sermonCachingSetting'
 
 /**
  * Enqueues many cache requests in a SINGLE cacheQueueAtom write (vs N writes for
@@ -17,6 +18,8 @@ import {
  * `enqueueCache`: joins an already-queued promise, joins a non-aborted inflight
  * download, else starts fresh. An aborted inflight entry is treated as fresh so
  * a re-enqueued URL is re-downloaded instead of joining the dying promise.
+ * A no-op while sermon caching is disabled (setting `sermon_caching_enabled`):
+ * every returned promise resolves with its input URL and the queue stays empty.
  * @returns A promise per input URL, in input order.
  */
 export const enqueueCacheMany = action(
@@ -34,6 +37,8 @@ export const enqueueCacheMany = action(
     // happens only after the loop — a mid-array empty URL must not leave earlier
     // URLs stranded forever on dead deferreds.
     for (const url of urls) if (!url) throw new Error('[cacheQueue] audioUrl is required')
+
+    if (!ctx.get(sermonCachingEnabledAtom)) return urls.map(url => Promise.resolve(url))
 
     for (const url of urls) {
       const queued = pendingPromises.get(url)

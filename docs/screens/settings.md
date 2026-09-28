@@ -17,6 +17,8 @@
 - **Виброотклик** — `HapticsSettingsItem` (`src/pages/settings/ui/HapticsSettingsItem.tsx`): глобальный переключатель вибрации при перемотке и нажатиях.
 - **URL сервера API** — `ServerUrlSettings` (`src/pages/settings/ui/ServerUrlSettings.tsx`): аккордеон, свёрнут по умолчанию (заголовок + «Текущий: …» + шеврон), тап по строке разворачивает форму (`ServerUrlForm.tsx`): изменение/сброс адреса сервера, валидация `http(s)://`, индикатор «Сохранено!». Форма остаётся смонтированной (`display:none`) в свёрнутом виде, поэтому черновик ввода не теряется при сворачивании аккордеона. Заголовок-строка отдаёт `accessibilityState={{ expanded }}`.
 
+> Переключателя «Кеширование проповедей» на этом экране нет: он живёт в шапке экрана [«Офлайн»](./offline.md) как переключатель-тумблер (`SermonCachingHeaderSwitch`) — рядом со списком скачанного, которым он и управляет.
+
 ## Откуда данные
 
 - Тема: `themeModeAtom`, `dynamicColorsEnabledAtom` (из `shared/ui/theme`, слой `shared`).
