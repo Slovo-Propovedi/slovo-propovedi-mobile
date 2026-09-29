@@ -575,6 +575,7 @@ describe('<PlayerControls>', () => {
 - Extended matchers (`toHaveStyle`, `toHaveTextContent`, `toBeDisabled`, `toBeExpanded`, `toBeSelected`, …) are built into `@testing-library/react-native` v12.4+ and auto-registered on import — no `extend-expect` import needed. `toHaveTextContent` defaults to an **exact** string match (jest-native defaulted to substring); pass `{ exact: false }` for a substring assert.
 - Mock external dependencies and hooks
 - Use `beforeEach` to reset mock state
+- **`yarn test` caveat:** the script filters with `--changedSince=origin/main`, so if the working diff contains no test files it reports "No tests found" — that is expected behavior, not a failure. The ban on calling `testFinal`/`jest` directly still stands.
 - **Server responses in tests come from the generated `<area>Mocks` namespace factories** (`sermonsMocks`, `playlistsMocks`, `sectionsMocks`, `filesMocks`, `usersMocks`, `authMocks`), imported through the `'shared/api/generated'` barrel; deep imports into `*.faker` modules are banned. Faker values are random (types are fixed, values are not): derive assertions FROM the mock instance (`expect(...).toEqual(dto)`, `getByText(dto.title)`) instead of hardcoding literals faker controls. Need a specific field (null artwork, exact duration, order)? Call the factory once, then override/mutate that field on the returned typed object — never hand-build a whole DTO. Each factory call yields a different random dataset: reuse one instance when the tested code fetches twice, or assert inequality deliberately.
 
   ```typescript

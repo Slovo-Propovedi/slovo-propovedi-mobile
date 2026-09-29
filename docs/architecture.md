@@ -140,7 +140,7 @@ app/
 
 ## Почему Reatom (а не Zustand/Redux)
 
-Для состояния выбран **Reatom** (`@reatom/core`, `@reatom/framework`, `@reatom/npm-react`). Причины:
+Для состояния выбран **Reatom** (`@reatom/npm-react`, `@reatom/framework`; `@reatom/core` подключается транзитивно через framework). Причины:
 
 - **Атомы** — минимальная единица состояния, легко читаются и переиспользуются. Пример: `src/entities/player/model.ts` (`isPlayingAtom`, `positionAtom`, `durationAtom`).
 - **Экшены** — асинхронные операции с явным `ctx` (контекстом транзакции). Эффекты (запись в AsyncStorage, сброс атома через `ctx.schedule`) оформлены прямо в экшене, что делает данные детерминированными.
