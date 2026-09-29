@@ -10,7 +10,7 @@ import { inflightCache, resetInflightCache } from './inflightCache'
 import { createInflightDownload, joinInflightDownload } from './inflightDownload'
 import { getPartialFile } from './partialFile'
 
-export interface CacheInfo {
+interface CacheInfo {
   fileCount: number
   totalSize: number
 }
@@ -126,5 +126,3 @@ class AudioCacheService {
 
 export const audioCacheService = new AudioCacheService()
 export const removeFromCache = audioCacheService.removeFromCache
-export const cacheAudio = audioCacheService.cacheAudio
-export const cancelAudioDownload = audioCacheService.cancelAudioDownload

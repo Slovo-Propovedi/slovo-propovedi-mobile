@@ -43,7 +43,7 @@ export const hasCompleteAudio = async (audioUrl: string): Promise<boolean> => {
   return isUrlCommitted(committed, audioUrl) && present
 }
 
-export const putAudioResponse = async (audioUrl: string, response: Response): Promise<void> => {
+const putAudioResponse = async (audioUrl: string, response: Response): Promise<void> => {
   if (!isCacheStorageAvailable()) return
   const cache = await openAudioCache()
   await cache.put(audioUrl, response)

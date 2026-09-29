@@ -5,15 +5,14 @@ import { type SermonData, sermonDataSchema } from 'entities/sermon/@x/offline-ca
 import { getCachedJson, setCachedJson } from 'shared/lib/cache'
 import { OFFLINE_SERMONS_REGISTRY } from './storageKeys'
 
-export const offlineSermonEntrySchema = z.object({
+const offlineSermonEntrySchema = z.object({
   playlist: playlistDataSchema.nullable(),
   registeredAt: z.number(),
   sermon: sermonDataSchema,
 })
 
-export const offlineSermonsRegistrySchema = z.record(z.string(), offlineSermonEntrySchema)
+const offlineSermonsRegistrySchema = z.record(z.string(), offlineSermonEntrySchema)
 
-export type OfflineSermonEntry = z.infer<typeof offlineSermonEntrySchema>
 export type OfflineSermonsRegistry = z.infer<typeof offlineSermonsRegistrySchema>
 
 // Persistent registry of cached audio URLs → sermon + playlist metadata.

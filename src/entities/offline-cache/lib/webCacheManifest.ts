@@ -10,7 +10,7 @@
  * excluded from cache summaries.
  */
 
-export const AUDIO_MANIFEST_KEY = '__manifest__'
+const AUDIO_MANIFEST_KEY = '__manifest__'
 
 interface Manifest {
   urls: string[]

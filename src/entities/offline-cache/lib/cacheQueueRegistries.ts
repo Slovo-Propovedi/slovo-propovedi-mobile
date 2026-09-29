@@ -1,10 +1,10 @@
 import { type CacheQueueSource } from './cacheQueueState'
 
 /** Sources that have enqueued a URL and whose download has not settled yet. */
-export const requesters = new Map<string, Set<CacheQueueSource>>()
+const requesters = new Map<string, Set<CacheQueueSource>>()
 
 /** Progress callbacks registered for queued entries, forwarded once the runner starts. */
-export const progressCallbacks = new Map<string, Set<(progress: number) => void>>()
+const progressCallbacks = new Map<string, Set<(progress: number) => void>>()
 
 const EMPTY_REQUESTERS: ReadonlySet<CacheQueueSource> = new Set()
 
