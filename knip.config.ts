@@ -1,6 +1,14 @@
 import type { KnipConfig } from 'knip'
 
 const config: KnipConfig = {
+  // Manually invoked asset-generation dev utilities — nothing imports them, and
+  // they would otherwise read as unused files (which in turn masks `sharp` usage).
+  entry: [
+    'scripts/analyze-icon.mjs',
+    'scripts/create-fallback-artwork.mjs',
+    'scripts/create-notification-icon.mjs',
+  ],
+
   expo: {
     entry: ['app/**/*.{ts,tsx}'],
   },
@@ -21,19 +29,19 @@ const config: KnipConfig = {
   // Dev utilities invoked from package.json scripts, never from JS.
   ignoreBinaries: ['fzf', 'adb'],
 
-  // Referenced only from app.config.ts (config plugins) and scripts/*.mjs, which sit
-  // outside the `project` globs below — knip cannot load app.config.ts at all without
-  // EXPO_PUBLIC_* env vars, so these would always read as unused.
+  // Referenced only from config files that live outside the `project` globs below —
+  // knip cannot load app.config.ts at all without EXPO_PUBLIC_* env vars, so these
+  // would always read as unused.
   ignoreDependencies: [
+    '@feature-sliced/steiger-plugin', // steiger.config.ts — FSD rule set
     'expo-splash-screen', // app.config.ts plugins[] — splash screen config
-    'expo-system-ui', // native module presence predates the custom Material You theme
-    'sharp', // scripts/{analyze-icon,create-fallback-artwork,create-notification-icon}.mjs
+    'ts-node', // jest loads jest.config.ts (TypeScript) through ts-node at runtime — implicit, not imported
     'xml-js', // FB2 parsing for the Read tab
   ],
 
   jest: true,
 
-  project: ['app/**/*.{ts,tsx}', 'src/**/*.{ts,js,tsx,jsx}'],
+  project: ['app/**/*.{ts,tsx}', 'scripts/**/*.{js,mjs}', 'src/**/*.{ts,js,tsx,jsx}'],
 
   rules: {
     dependencies: 'warn',

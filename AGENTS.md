@@ -645,7 +645,7 @@ Commit messages are English only (header and body) — see [`docs/conventions.md
 ## Key Dependencies
 
 - **Navigation:** expo-router, @react-navigation/\*
-- **State:** @reatom/core, @reatom/npm-react, @reatom/framework
+- **State:** @reatom/npm-react, @reatom/framework
 - **Audio:** expo-audio
 - **HTTP:** axios
 - **Storage:** @react-native-async-storage/async-storage
