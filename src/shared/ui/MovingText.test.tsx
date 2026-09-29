@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react-native'
 import { Text as MockText } from 'react-native'
 import { renderWithProviders } from '../mocks/renderWithProviders'
 import { MovingText } from './MovingText'
-import { DarkTheme, ThemeContext, type ThemeContextValue } from './theme'
+import { DarkTheme } from './theme/constants'
+import { ThemeContext } from './theme/ThemeContext/themeContext'
+import { type ThemeContextValue } from './theme/ThemeContext/ThemeContextValue'
 
 let mockLastProps: Record<string, unknown> | undefined
 let mockMarqueeRenderCount = 0

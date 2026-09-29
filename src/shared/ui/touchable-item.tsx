@@ -6,7 +6,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 import { COLORS } from './theme/colors'
-import { TouchableButton } from './touchable-button'
+import { TouchableButton } from './touchable-button/TouchableButton'
 
 export interface TouchableItemProps {
   accessibilityState?: AccessibilityState

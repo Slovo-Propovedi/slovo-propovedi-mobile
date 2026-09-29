@@ -1,4 +1,4 @@
-export { CoverImage } from './cover-image'
+export { CoverImage } from './cover-image/cover-image'
 export { EmptyState } from './empty-state'
 export { ListItemSize } from './list-item/list-item.types'
 export { MovingText } from './MovingText'

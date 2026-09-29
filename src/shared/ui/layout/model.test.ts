@@ -1,5 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { PLAYER_SIZES } from '../theme'
+import { PLAYER_SIZES } from '../theme/themed'
 import { isTabBarMeasuredAtom, setTabBarHeight, tabBarHeightAtom } from './model'
 
 describe('tabBarHeight model', () => {

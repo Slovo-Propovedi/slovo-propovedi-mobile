@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
 import { createRef } from 'react'
 import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native'
-import { createKeyDownEvent, installFakeDom } from '../../lib/testing'
+import { createKeyDownEvent } from '../../lib/testing/createKeyEvent'
+import { installFakeDom } from '../../lib/testing/installFakeDom'
 import { AnchoredDropdown } from './AnchoredDropdown'
 
 const BACKDROP_TEST_ID = 'anchored-dropdown-backdrop'

@@ -1,17 +1,16 @@
 const mockDownloadUpdateZip = jest.fn()
 const mockFetchLatestRelease = jest.fn()
 
-jest.mock('shared/lib/update-service', () => ({
+jest.mock('shared/lib/update-service/updateService', () => ({
   downloadUpdateZip: (...args: unknown[]) => mockDownloadUpdateZip(...args),
 }))
 
-jest.mock('shared/lib/version-check', () => ({
-  ...jest.requireActual('shared/lib/version-check'),
+jest.mock('shared/lib/version-check/fetchLatestRelease', () => ({
   fetchLatestRelease: (...args: unknown[]) => mockFetchLatestRelease(...args),
 }))
 
 import { createCtx } from '@reatom/framework'
-import type { LatestReleaseInfo } from '../lib/version-check'
+import type { LatestReleaseInfo } from '../lib/version-check/types'
 import { latestVersionAtom, releaseUrlAtom, zipDownloadUrlAtom } from './update'
 import { updateProgressAtom } from './updateInstall'
 import { downloadUpdateZipWithFallback, getFallbackDownloadUrl } from './updateInstallFallback'

@@ -11,8 +11,8 @@ const MOCK_SCREEN_WIDTH = 400
 // columns, not every item. Item geometry (SIZE_OF_MINIMUM_SIDE_OF_SCREEN)
 // stays real because getSliderItemWidth depends on it. The width is inlined:
 // hoisted jest.mock factories cannot reference module-level constants.
-jest.mock('shared/config', () => {
-  const actual = jest.requireActual('shared/config')
+jest.mock('../../config/screen-dimensions', () => {
+  const actual = jest.requireActual('../../config/screen-dimensions')
   return { ...actual, SCREEN_WIDTH: 400 }
 })
 

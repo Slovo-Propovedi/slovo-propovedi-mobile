@@ -1,7 +1,7 @@
 import { type ReactNode, type RefObject, useEffect, useState } from 'react'
 import { Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native'
 import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
-import { useEscapeKey } from '../../lib/escape-key'
+import { useEscapeKey } from '../../lib/escape-key/useEscapeKey'
 import { hapticLight } from '../../lib/haptics'
 import { computeMenuPosition } from './computeMenuPosition'
 

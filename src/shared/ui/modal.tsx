@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Platform, Pressable, Modal as RNModal, StyleSheet, View } from 'react-native'
-import { useEscapeKey } from '../lib/escape-key'
+import { useEscapeKey } from '../lib/escape-key/useEscapeKey'
 import { hapticLight } from '../lib/haptics'
 import { useTheme } from './theme/ThemeContext/useTheme'
 import { INDENTS } from './theme/themed'

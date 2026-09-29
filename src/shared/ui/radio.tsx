@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native'
-import { TouchableButton } from './touchable-button'
+import { TouchableButton } from './touchable-button/TouchableButton'
 
 export const RadioButton = (props: {
   disabled?: boolean

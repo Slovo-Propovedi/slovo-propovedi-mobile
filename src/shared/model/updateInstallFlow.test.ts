@@ -1,19 +1,12 @@
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
-jest.mock('shared/lib/update-service', () => {
-  const { classifyUpdateError, isUnexpectedUpdateError } = jest.requireActual(
-    'shared/lib/update-service/installErrorMessage',
-  )
-  return {
-    apkFileExists: jest.fn(),
-    canRequestPackageInstalls: jest.fn(),
-    classifyUpdateError,
-    cleanupUpdateFiles: jest.fn(),
-    extractApkFromZip: jest.fn(),
-    installApk: jest.fn(),
-    isUnexpectedUpdateError,
-  }
-})
+jest.mock('shared/lib/update-service/updateService', () => ({
+  apkFileExists: jest.fn(),
+  canRequestPackageInstalls: jest.fn(),
+  cleanupUpdateFiles: jest.fn(),
+  extractApkFromZip: jest.fn(),
+  installApk: jest.fn(),
+}))
 
 jest.mock('./updateInstallFallback', () => ({
   downloadUpdateZipWithFallback: jest.fn(),
@@ -29,7 +22,7 @@ import {
   cleanupUpdateFiles,
   extractApkFromZip,
   installApk,
-} from '../lib/update-service'
+} from '../lib/update-service/updateService'
 import { reportError } from './error-dialog'
 import { updateErrorAtom, updateErrorKindAtom, updateStateAtom } from './updateInstall'
 import { downloadUpdateZipWithFallback } from './updateInstallFallback'

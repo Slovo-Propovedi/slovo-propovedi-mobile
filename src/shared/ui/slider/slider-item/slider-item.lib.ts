@@ -1,5 +1,5 @@
 import { match } from 'ts-pattern'
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../../config'
+import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../../config/screen-dimensions'
 import { INDENTS } from '../../theme/themed'
 import { SliderItemSize } from './slider-item.types'
 

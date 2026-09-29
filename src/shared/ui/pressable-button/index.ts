@@ -1,1 +1,1 @@
-export { PressableButton, type PressableButtonProps } from './PressableButton'
+export { PressableButton } from './PressableButton'

@@ -1,7 +1,7 @@
 import { Entypo } from '@expo/vector-icons'
 import { Text } from 'react-native'
 import { type GestureResponderEvent } from 'react-native'
-import { PressableButton } from '../pressable-button'
+import { PressableButton } from '../pressable-button/PressableButton'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { createSliderStyles as styles } from './slider.styles'
 

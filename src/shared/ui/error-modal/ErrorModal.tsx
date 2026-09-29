@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { type ReactNode } from 'react'
 import { Clipboard } from 'react-native'
-import { ConfirmDialog } from '../confirm-dialog'
+import { ConfirmDialog } from '../confirm-dialog/ConfirmDialog'
 import { COLORS } from '../theme/colors'
 
 const ICON_SIZE = 24

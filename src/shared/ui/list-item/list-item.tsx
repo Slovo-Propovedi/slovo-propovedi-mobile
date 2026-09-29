@@ -1,7 +1,7 @@
 import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import { match } from 'ts-pattern'
 import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../config/screen-dimensions'
-import { CoverImage } from '../cover-image'
+import { CoverImage } from '../cover-image/cover-image'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'

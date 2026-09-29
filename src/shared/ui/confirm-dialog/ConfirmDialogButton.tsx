@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { type ColorValue, StyleSheet, Text, View } from 'react-native'
-import { PressableButton } from '../pressable-button'
+import { PressableButton } from '../pressable-button/PressableButton'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'

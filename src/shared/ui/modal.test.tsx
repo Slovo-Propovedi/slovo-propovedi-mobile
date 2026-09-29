@@ -1,6 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Platform, Text } from 'react-native'
-import { createKeyDownEvent, installFakeDom } from '../lib/testing'
+import { createKeyDownEvent } from '../lib/testing/createKeyEvent'
+import { installFakeDom } from '../lib/testing/installFakeDom'
 import { renderWithProviders } from '../mocks/renderWithProviders'
 import { Modal } from './modal'
 

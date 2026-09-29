@@ -3,7 +3,7 @@ import { Animated, type StyleProp, StyleSheet, View, type ViewStyle } from 'reac
 import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
-import { TouchableButton } from '../touchable-button'
+import { TouchableButton } from '../touchable-button/TouchableButton'
 
 export const Progress = ({
   loaderValue: loaderValueInitial,

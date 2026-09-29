@@ -1,5 +1,5 @@
 import { action, atom } from '@reatom/framework'
-import { PLAYER_SIZES } from '../theme'
+import { PLAYER_SIZES } from '../theme/themed'
 
 /** Approximation used only until the real tab bar height is measured via onLayout. */
 export const tabBarHeightAtom = atom<number>(PLAYER_SIZES.tabBarHeight, 'tabBarHeightAtom')

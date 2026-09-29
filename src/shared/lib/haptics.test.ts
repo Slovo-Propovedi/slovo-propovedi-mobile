@@ -7,9 +7,9 @@ import {
 } from 'expo-haptics'
 import { Platform } from 'react-native'
 import { hapticLight, hapticTick } from './haptics'
-import { ctx } from './reatom-ctx'
+import { ctx } from './reatom-ctx/ctx'
 
-jest.mock('./reatom-ctx', () => ({
+jest.mock('./reatom-ctx/ctx', () => ({
   ctx: { get: jest.fn(() => true) },
 }))
 

@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react-native'
 import { AppState } from 'react-native'
 import { renderHookWithProviders } from '../../mocks/renderWithProviders'
-import { isOnlineAtom } from '../../model'
+import { isOnlineAtom } from '../../model/network'
 import { useOfflineRetry } from './useOfflineRetry'
 
 type Opts = Parameters<typeof useOfflineRetry>[0]

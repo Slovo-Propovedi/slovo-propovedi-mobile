@@ -9,8 +9,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import type { SharedValue } from 'react-native-reanimated'
-import { useHeaderTitle } from '../../routing'
-import { useTheme } from '../theme'
+import { useHeaderTitle } from '../../routing/useHeaderTitle'
+import { useTheme } from '../theme/ThemeContext/useTheme'
 
 interface UseCollapsingNavbarDriverOptions {
   // Scroll offset where the navbar background STARTS darkening; it reaches full opacity at `threshold`.

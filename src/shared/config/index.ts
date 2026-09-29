@@ -22,6 +22,5 @@ export {
   CURRENT_SOUND_VOLUME,
   PLAYER_STARTUP_ATTEMPTS,
 } from './player-storage-keys'
-export { SCREEN_HEIGHT, SCREEN_WIDTH, SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from './screen-dimensions'
-export { SERVER_URL } from './server-storage-keys'
+export { SCREEN_HEIGHT, SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from './screen-dimensions'
 export { APP_NAME, APP_VERSION } from './version'

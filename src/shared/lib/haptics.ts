@@ -7,7 +7,7 @@ import {
 } from 'expo-haptics'
 import { Platform } from 'react-native'
 import { hapticsEnabledAtom } from '../model/settings'
-import { ctx } from './reatom-ctx'
+import { ctx } from './reatom-ctx/ctx'
 
 const HAPTIC_THROTTLE_MS = 45
 

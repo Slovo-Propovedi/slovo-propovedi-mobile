@@ -1,6 +1,8 @@
 import { type Ctx } from '@reatom/framework'
-import { downloadUpdateZip } from '../lib/update-service'
-import { compareVersions, fetchLatestRelease, type LatestReleaseInfo } from '../lib/version-check'
+import { downloadUpdateZip } from '../lib/update-service/updateService'
+import { compareVersions } from '../lib/version-check/compareVersions'
+import { fetchLatestRelease } from '../lib/version-check/fetchLatestRelease'
+import { type LatestReleaseInfo } from '../lib/version-check/types'
 import { latestVersionAtom, releaseUrlAtom, zipDownloadUrlAtom } from './update'
 import { updateProgressAtom } from './updateInstall'
 

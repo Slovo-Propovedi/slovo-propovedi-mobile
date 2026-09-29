@@ -3,8 +3,9 @@ import { useEffect } from 'react'
 import { StyleSheet, Text } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { toastAtom } from '../../model'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from '../theme'
+import { toastAtom } from '../../model/toast'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 
 const FADE_DURATION_MS = 300
 

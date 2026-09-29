@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
-import { COLORS, FONT_SIZES } from './theme'
+import { COLORS } from './theme/colors'
+import { FONT_SIZES } from './theme/themed'
 
 export const EmptyState = ({ message = 'Здесь ничего нет' }: { message?: string }) => (
   <View style={styles.container}>

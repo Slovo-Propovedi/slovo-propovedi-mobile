@@ -1,6 +1,6 @@
 import NetInfo, { type NetInfoState, NetInfoStateType } from '@react-native-community/netinfo'
 import { isOnlineAtom } from '../../model/network'
-import { ctx } from '../reatom-ctx'
+import { ctx } from '../reatom-ctx/ctx'
 import { subscribeToNetwork } from './networkSubscription'
 
 jest.mock('@react-native-community/netinfo', () => ({

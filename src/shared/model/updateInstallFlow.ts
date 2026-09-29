@@ -1,13 +1,15 @@
 import { action, type Ctx } from '@reatom/framework'
 import {
+  classifyUpdateError,
+  isUnexpectedUpdateError,
+} from '../lib/update-service/installErrorMessage'
+import {
   apkFileExists,
   canRequestPackageInstalls,
-  classifyUpdateError,
   cleanupUpdateFiles,
   extractApkFromZip,
   installApk,
-  isUnexpectedUpdateError,
-} from '../lib/update-service'
+} from '../lib/update-service/updateService'
 import { reportError } from './error-dialog'
 import {
   decidePermissionResume,

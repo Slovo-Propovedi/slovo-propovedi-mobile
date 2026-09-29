@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, type ThemeColors } from '../theme'
+import { COLORS } from '../theme/colors'
+import { type ThemeColors } from '../theme/types'
 
 export const THUMB_SIZE = 20
 const TRACK_HEIGHT = 4

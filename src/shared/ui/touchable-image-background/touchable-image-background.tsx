@@ -6,8 +6,8 @@ import {
   StyleSheet,
   type ViewStyle,
 } from 'react-native'
-import { CoverImage } from '../cover-image'
-import { TouchableButton } from '../touchable-button'
+import { CoverImage } from '../cover-image/cover-image'
+import { TouchableButton } from '../touchable-button/TouchableButton'
 
 export const TouchableImageBackground = ({
   children,
