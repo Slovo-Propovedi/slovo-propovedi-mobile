@@ -56,7 +56,7 @@ generated/
 └── model/                   # Zod-схемы для runtime-валидации (по модулям)
 ```
 
-Каждый модуль экспортирует фабрику (`getAuth()`, `getSermons()` и т.д.), возвращающую функции-обёртки над `customInstance` из `src/shared/api/axiosInstance.ts`. `customInstance` пробрасывает конфиг в `axiosInstance` и возвращает `response.data`. Для каждого модуля также генерируется `*.faker.ts` — фабрики мок-данных (см. «MSW-моки»).
+Каждый модуль экспортирует фабрику (`getAuth()`, `getSermons()` и т.д.), возвращающую функции-обёртки над `customInstance` из `src/shared/api/axiosInstance.ts`. `customInstance` пробрасывает конфиг в `axiosInstance` и возвращает `response.data`. Для каждого модуля также генерируется `*.faker.ts` — фабрики мок-данных (см. «Фабрики мок-данных (FAKER)»).
 
 > ⚠️ Фабрика `getBasic` (health) **не реэкспортируется** из `generated/index.ts` — недостижима из `shared/api`. Reorder-функции (`reorderSections`, `reorderPlaylistsInSection`) в отличие от прежней версии клиента живут **внутри модуля sections** (`getSections`) и через `sectionsApi` достижимы, но в рантайме не вызываются.
 
@@ -130,9 +130,9 @@ generated/
 - **Кэши** (per-query кэш поиска `cachedSermonSearch:<query>`, кэш секций `CACHED_SECTIONS`, плейлисты в параметрах маршрута) хранят `SermonData` с этими полями — расширенная схема валидации принимает и старые, и новые формы.
 - **DTO на запись** (`CreateSermonDto`/`UpdateSermonDto`) — `chapter`/`verse` стали опциональными.
 
-## MSW-моки
+## Фабрики мок-данных (FAKER)
 
-В `src/shared/api/generated/index.ts` экспортируются моки `authMocks`, `filesMocks`, `playlistsMocks`, `sectionsMocks`, `sermonsMocks`, `usersMocks` — фабрики мок-данных из модулей `*.faker.ts` (по одному на каждый API-модуль). Сгенерированы Orval (конфиг `mock.generators` → `FAKER` в `orval.config.ts`), в рантайме приложения не используются. <!-- TODO: MSW-обработчики не сгенерированы; при необходимости разработки без бэкенда — настроить подключение фейковых данных. -->
+В `src/shared/api/generated/index.ts` экспортируются `authMocks`, `filesMocks`, `playlistsMocks`, `sectionsMocks`, `sermonsMocks`, `usersMocks` — фабрики мок-данных из модулей `*.faker.ts` (по одному на каждый API-модуль), сгенерированные Orval (конфиг `mock.generators` → `FAKER` в `orval.config.ts`). Это единственный источник серверных ответов в тестах: данные берут через `<area>Mocks` (`get*ResponseMock`). MSW в проекте **не используется** — пакет не установлен, рантайм-мока нет; в рантайме приложения фабрики не применяются.
 
 ## Текущий статус (TODO)
 

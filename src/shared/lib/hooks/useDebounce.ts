@@ -12,7 +12,8 @@ import type { AnyFunction } from '../../model/aliases'
  * wrapper, the hook owns the identity. Omit `deps` (or pass `[]`) for an action
  * that closes over nothing reactive.
  * The returned function exposes `.clear()` for callers that need to cancel a
- * pending call explicitly (e.g. "going online cancels the pending resume").
+ * pending call explicitly (for example, connectivity returning cancels the
+ * island's pending auto-collapse in `widgets/network-status/ui/useNetworkIslandAnimation.ts`).
  * @param action - The function to debounce; every reactive input goes into deps.
  * @param delay - Quiet period in milliseconds before the action runs.
  * @param deps - Reactive inputs of the action, rebuilt when any of them changes.

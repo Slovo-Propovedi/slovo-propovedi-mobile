@@ -58,7 +58,6 @@
 - [ ] **Мёртвые данные `db.sermons` в db.ts:62-102** — после удаления localBD.getSermons нет ни одного runtime-читателя; массив держит в живых sermonsDB.ts → markPlaylist.ts → markBook; каскадное удаление массива потянет sermonsDB, markPlaylist, markBook и ~15 файлов db/playlists/* — вернуться при миграции таба «Читать» на API
 - [ ] **Нет UI-индикатора источника данных поиска.** `src/features/sermon-search/` — результаты, показанные из кэша при сетевой ошибке, визуально не отличаются от свежих (в отличие от секций с `sectionDataSourceAtom`). Вернуться при развитии offline-сценария.
 - [ ] **Пустые результаты поиска не кэшируются.** `src/features/sermon-search/lib/searchCache.ts` — `setCachedSearchResults` не пишет пустой массив (намеренно: кэш-хит означает «результаты есть», поведение при офлайне не меняется — всё равно «Ничего не найдено»). Пересмотреть, если понадобится отличать «запросили и пусто» от «не кэшировали».
-- [ ] **Моки API-клиента сгенерированы и экспортируются, но не используются.** `src/shared/api/generated/index.ts` экспортирует `authMocks`, `filesMocks`, `playlistsMocks`, `sectionsMocks`, `sermonsMocks`, `usersMocks` — фабрики мок-данных из `*.faker.ts` (Orval, `mock.generators` → `FAKER`). MSW-обработчики не настроены, в рантайме и в тестах моки не используются — документировать/подключить при внедрении моков (см. `docs/contracts/rest-api.md` → «MSW-моки»).
 
 ## Backend
 

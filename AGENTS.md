@@ -680,7 +680,7 @@ src/entities/player/lib/PlayerService/
 2. **Generated API Code:** everything under `src/shared/api/generated/` is auto-generated except `index.ts`, which is hand-written (orval skips it via `indexFiles: false`; the `delete-generated-api-files` script also preserves it). It includes:
    - Axios API functions (auth, sermons, playlists, sections, files, users)
    - Zod schemas for runtime validation
-   - MSW mocks for development
+   - Faker data factories (`get*ResponseMock`) — source of server responses in tests
    - TypeScript types (exported as APITypes)
 3. **Reanimated v4 worklets:** never call JS-side functions (React state setters, callbacks) synchronously from worklet/animation callbacks (`withTiming` completion, `useAnimatedReaction`, gesture handlers) — it throws "Tried to synchronously call a Remote Function". Use `scheduleOnRN` from `react-native-worklets`. `runOnJS` is DEPRECATED — do not use it in new code (see docs/conventions.md).
 
@@ -691,7 +691,7 @@ The project uses Orval for API code generation. The generated API is located in 
 - **APITypes**: All TypeScript types from the OpenAPI schema
 - **API Functions**: Axios-wrapped functions for all endpoints
 - **Zod Schemas**: Runtime validation schemas
-- **MSW Mocks**: Mock Service Worker handlers for development
+- **Faker data factories**: `get*ResponseMock` (Orval FAKER generator) — source of server responses in tests via `<area>Mocks`; MSW is not used (no dependency, no runtime mocking)
 
 ### Example Usage
 
