@@ -1,5 +1,5 @@
 import NetInfo, { type NetInfoState, NetInfoStateType } from '@react-native-community/netinfo'
-import { isOnlineAtom } from 'shared/model/network'
+import { isOnlineAtom } from '../../model/network'
 import { ctx } from '../reatom-ctx'
 import { subscribeToNetwork } from './networkSubscription'
 

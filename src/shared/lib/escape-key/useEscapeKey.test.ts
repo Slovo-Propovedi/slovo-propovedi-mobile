@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react-native'
 import { Platform } from 'react-native'
-import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
-import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
+import { renderHookWithProviders } from '../../mocks/renderWithProviders'
+import { createKeyDownEvent, installFakeDom } from '../testing'
 import { popEscapeLayer, pushEscapeLayer } from './escapeStack'
 import { useEscapeKey } from './useEscapeKey'
 

@@ -1,6 +1,6 @@
 import { action, atom } from '@reatom/framework'
-import { getErrorDetail, getErrorMessage } from 'shared/lib/error-utils'
-import { ctx as rootCtx } from 'shared/lib/reatom-ctx'
+import { getErrorDetail, getErrorMessage } from '../lib/error-utils'
+import { ctx as rootCtx } from '../lib/reatom-ctx'
 
 export interface GlobalError {
   detail: string

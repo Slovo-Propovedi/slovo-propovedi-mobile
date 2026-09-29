@@ -4,7 +4,7 @@ jest.mock('shared/api/axiosInstance', () => ({
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx, type Ctx } from '@reatom/framework'
-import { DEFAULT_API_URL, SERVER_URL } from 'shared/config'
+import { DEFAULT_API_URL, SERVER_URL } from '../config'
 import {
   hapticsEnabledAtom,
   loadHapticsEnabled,

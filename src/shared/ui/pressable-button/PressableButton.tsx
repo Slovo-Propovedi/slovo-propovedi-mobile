@@ -1,6 +1,6 @@
 import { forwardRef } from 'react'
 import { Pressable, type PressableProps, type View } from 'react-native'
-import { hapticLight } from 'shared/lib/haptics'
+import { hapticLight } from '../../lib/haptics'
 
 // On web react-native-web only renders a real <button> (Vimium hints and
 // browser semantics depend on it) when accessibilityRole='button' is passed

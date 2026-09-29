@@ -1,7 +1,7 @@
 import { forwardRef, type ReactNode } from 'react'
 import { StyleSheet, type View } from 'react-native'
-import { MIN_TOUCH_TARGET } from 'shared/ui/theme'
 import { PressableButton, type PressableButtonProps } from '../pressable-button'
+import { MIN_TOUCH_TARGET } from '../theme'
 
 // Icon-only buttons must carry a mandatory accessibilityLabel and take their
 // icon via the Icon prop (children are banned). testID is rejected at the type

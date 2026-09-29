@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react-native'
-import { APP_ICON_URI as IMAGE_PLACEHOLDER } from 'shared/lib/app-icon'
+import { APP_ICON_URI as IMAGE_PLACEHOLDER } from '../../../lib/app-icon'
 import { renderWithProviders } from '../../../mocks/renderWithProviders'
 import { SliderItem } from './slider-item'
 import { WhereIsSlideTitleLocated } from './slider-item.types'

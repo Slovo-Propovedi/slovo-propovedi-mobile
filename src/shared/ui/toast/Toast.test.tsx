@@ -1,6 +1,6 @@
 import { createCtx } from '@reatom/framework'
-import { renderWithProviders } from 'shared/mocks'
-import { toastAtom } from 'shared/model'
+import { renderWithProviders } from '../../mocks'
+import { toastAtom } from '../../model'
 import { Toast } from './Toast'
 
 const TOAST_MESSAGE = 'Ссылка скопирована'

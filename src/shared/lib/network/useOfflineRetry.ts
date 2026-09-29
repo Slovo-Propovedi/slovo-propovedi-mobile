@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
-import { isOnlineAtom } from 'shared/model'
+import { isOnlineAtom } from '../../model'
 import { RETRY_INTERVAL_CACHED_MS, RETRY_INTERVAL_NO_DATA_MS } from './constants'
 
 interface UseOfflineRetryOptions {

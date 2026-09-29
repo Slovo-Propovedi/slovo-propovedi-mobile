@@ -1,6 +1,6 @@
 import { act } from '@testing-library/react-native'
 import { Animated } from 'react-native'
-import { renderWithProviders } from 'shared/mocks'
+import { renderWithProviders } from '../../mocks'
 import { COLORS } from '../theme/colors'
 import { Progress } from './progress'
 

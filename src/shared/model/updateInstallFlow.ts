@@ -7,7 +7,7 @@ import {
   extractApkFromZip,
   installApk,
   isUnexpectedUpdateError,
-} from 'shared/lib/update-service'
+} from '../lib/update-service'
 import { reportError } from './error-dialog'
 import {
   decidePermissionResume,

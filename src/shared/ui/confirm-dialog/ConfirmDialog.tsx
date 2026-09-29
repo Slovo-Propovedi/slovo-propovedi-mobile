@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { type ColorValue, Modal, Platform, ScrollView, Text, View } from 'react-native'
-import { useEscapeKey } from 'shared/lib/escape-key'
+import { useEscapeKey } from '../../lib/escape-key'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { ConfirmDialogButton } from './ConfirmDialogButton'
 import { styles } from './styles'

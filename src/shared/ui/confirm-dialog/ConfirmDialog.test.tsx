@@ -1,7 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Platform } from 'react-native'
-import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
-import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { createKeyDownEvent, installFakeDom } from '../../lib/testing'
+import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { ConfirmDialog } from './ConfirmDialog'
 
 const TITLE = 'Confirm Action'

@@ -1,5 +1,5 @@
 import { action, atom } from '@reatom/framework'
-import { ctx as rootCtx } from 'shared/lib/reatom-ctx'
+import { ctx as rootCtx } from '../lib/reatom-ctx'
 
 export interface GlobalInfo {
   message: string

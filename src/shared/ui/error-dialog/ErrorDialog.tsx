@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { useEscapeKey } from 'shared/lib/escape-key'
+import { useEscapeKey } from '../../lib/escape-key'
 import { Button } from '../button'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'

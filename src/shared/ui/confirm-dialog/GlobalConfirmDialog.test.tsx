@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
-import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { globalInfoAtom } from 'shared/model/info-dialog'
+import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { globalInfoAtom } from '../../model/info-dialog'
 import { GlobalConfirmDialog } from './GlobalConfirmDialog'
 
 const DEFAULT_TITLE = 'Информация'

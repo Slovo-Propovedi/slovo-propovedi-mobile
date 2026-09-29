@@ -3,7 +3,7 @@ import * as NavigationBar from 'expo-navigation-bar'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import { Appearance, Platform, StatusBar as RNStatusBar, useColorScheme } from 'react-native'
-import { reportError } from 'shared/model/error-dialog'
+import { reportError } from '../../../model/error-dialog'
 import { updateCOLORS } from '../colors'
 import {
   currentThemeAtom,

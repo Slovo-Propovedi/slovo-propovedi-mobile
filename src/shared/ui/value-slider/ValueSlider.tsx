@@ -1,5 +1,5 @@
 import { type AccessibilityActionEvent, View } from 'react-native'
-import { useTheme } from 'shared/ui/theme'
+import { useTheme } from '../theme'
 import { quantize, useSliderPanResponder } from './useSliderPanResponder'
 import { createValueSliderStyles, THUMB_SIZE } from './valueSlider.styles'
 

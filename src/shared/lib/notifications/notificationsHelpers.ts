@@ -1,5 +1,5 @@
 import { Platform } from 'react-native'
-import { isExpoGo } from 'shared/lib/isExpoEnvironment'
+import { isExpoGo } from '../isExpoEnvironment'
 import { ensureNotifications } from './ensureNotifications'
 import { setupUpdateNotificationCategory } from './notificationActions'
 

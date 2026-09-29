@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons'
 import { type ComponentProps, type RefObject } from 'react'
 import { StyleSheet, Text, type View } from 'react-native'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { PressableButton } from '../pressable-button'
+import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from '../theme'
 import { AnchoredDropdown, type AnchorRect } from './AnchoredDropdown'
 
 export interface MenuItem {

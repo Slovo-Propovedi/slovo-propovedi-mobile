@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native'
-import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import type { TestInstance } from 'test-renderer'
+import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { ValueSlider } from './ValueSlider'
 
 const VOLUME_LABEL = 'Громкость'

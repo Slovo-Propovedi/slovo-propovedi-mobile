@@ -29,8 +29,8 @@ import {
   cleanupUpdateFiles,
   extractApkFromZip,
   installApk,
-} from 'shared/lib/update-service'
-import { reportError } from 'shared/model/error-dialog'
+} from '../lib/update-service'
+import { reportError } from './error-dialog'
 import { updateErrorAtom, updateErrorKindAtom, updateStateAtom } from './updateInstall'
 import { downloadUpdateZipWithFallback } from './updateInstallFallback'
 import { startUpdateAction } from './updateInstallFlow'

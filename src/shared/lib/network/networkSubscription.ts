@@ -1,5 +1,5 @@
 import NetInfo from '@react-native-community/netinfo'
-import { setOnlineStatus } from 'shared/model/network'
+import { setOnlineStatus } from '../../model/network'
 import { ctx } from '../reatom-ctx'
 import { isNetInfoOnline } from './isNetInfoOnline'
 

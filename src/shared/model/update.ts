@@ -1,13 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, atom } from '@reatom/framework'
 import { Platform } from 'react-native'
-import { APP_VERSION } from 'shared/config'
-import { requestPermissions, scheduleNotification } from 'shared/lib/notifications'
-import {
-  compareVersions,
-  fetchLatestRelease,
-  type LatestReleaseInfo,
-} from 'shared/lib/version-check'
+import { APP_VERSION } from '../config'
+import { requestPermissions, scheduleNotification } from '../lib/notifications'
+import { compareVersions, fetchLatestRelease, type LatestReleaseInfo } from '../lib/version-check'
 import { isOnlineAtom } from './network'
 import { updateDialogVisibleAtom } from './updateInstall'
 

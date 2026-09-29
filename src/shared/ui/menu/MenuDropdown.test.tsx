@@ -1,8 +1,8 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Platform } from 'react-native'
-import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
-import { renderWithProviders } from 'shared/mocks'
 import type { TestInstance } from 'test-renderer'
+import { createKeyDownEvent, installFakeDom } from '../../lib/testing'
+import { renderWithProviders } from '../../mocks'
 import { MenuDropdown, type MenuItem } from './MenuDropdown'
 
 const mockIoniconsSpy = jest.fn()

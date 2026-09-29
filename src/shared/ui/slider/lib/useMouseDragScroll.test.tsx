@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react-native'
 import { Platform } from 'react-native'
-import { type FakeDom, installFakeDom } from 'shared/lib/testing'
+import { type FakeDom, installFakeDom } from '../../../lib/testing'
 import { useMouseDragScroll } from './useMouseDragScroll'
 
 type PointerHandler = (event: unknown) => void
