@@ -5,12 +5,13 @@ import { EQ_PRESETS, type EqualizerPreset } from './eqPresets'
 
 const PRESET_LABEL_PREFIX = 'Пресет'
 
-interface EqPresetChipsProps {
+export const EqPresetChips = ({
+  activePresetId,
+  onSelect,
+}: {
   activePresetId: null | string
   onSelect: (preset: EqualizerPreset) => void
-}
-
-export const EqPresetChips = ({ activePresetId, onSelect }: EqPresetChipsProps) => {
+}) => {
   const { currentTheme } = useTheme()
 
   return (

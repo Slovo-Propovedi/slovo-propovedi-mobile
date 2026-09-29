@@ -5,19 +5,17 @@ import { TouchableItem } from 'shared/ui/touchable-item'
 import type { ReactNode } from 'react'
 import { styles } from './styles'
 
-interface CollapsibleSectionProps {
-  children: ReactNode
-  isExpanded: boolean
-  onToggle: () => void
-  title: string
-}
-
 export const CollapsibleSection = ({
   children,
   isExpanded,
   onToggle,
   title,
-}: CollapsibleSectionProps) => {
+}: {
+  children: ReactNode
+  isExpanded: boolean
+  onToggle: () => void
+  title: string
+}) => {
   const { currentTheme } = useTheme()
 
   return (

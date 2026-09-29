@@ -5,17 +5,15 @@ import type { createMiniStyles } from './miniStyles'
 import type { ThemeColors } from 'shared/ui/theme'
 import { useDisplayedDownloadProgress } from '../../model/useDisplayedDownloadProgress'
 
-interface MiniDownloadProgressProps {
-  audioUrl: string
-  currentTheme: ThemeColors
-  miniStyles: ReturnType<typeof createMiniStyles>
-}
-
 export const MiniDownloadProgress = ({
   audioUrl,
   currentTheme,
   miniStyles,
-}: MiniDownloadProgressProps) => {
+}: {
+  audioUrl: string
+  currentTheme: ThemeColors
+  miniStyles: ReturnType<typeof createMiniStyles>
+}) => {
   const [isSermonCachingEnabled] = useAtom(sermonCachingEnabledAtom)
   const rawProgress = useDisplayedDownloadProgress(audioUrl)
   // Caching off in settings: the thin strip is a download indicator, so it

@@ -6,20 +6,18 @@ import { TracksListItemSkeleton } from './TracksListItemSkeleton'
 
 const DEFAULT_ROW_COUNT = 6
 
-interface TracksListSkeletonProps {
+export const TracksListSkeleton = ({
+  rowCount = DEFAULT_ROW_COUNT,
+  rowStyle,
+  showDividers = true,
+}: {
   /** Number of placeholder rows to render. */
   rowCount?: number
   /** Style applied to every row (e.g. Screen horizontal margins). */
   rowStyle?: StyleProp<ViewStyle>
   /** Render the standard track-list divider between rows. */
   showDividers?: boolean
-}
-
-export const TracksListSkeleton = ({
-  rowCount = DEFAULT_ROW_COUNT,
-  rowStyle,
-  showDividers = true,
-}: TracksListSkeletonProps) => {
+}) => {
   const { currentTheme } = useTheme()
   const tracksListStyles = createTracksListStyles(currentTheme)
 

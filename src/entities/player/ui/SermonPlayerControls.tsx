@@ -6,15 +6,6 @@ import { type ControlsNames, type PlayerControlsSize } from './PlayerControls/Pl
 
 type PlayerControlsVariant = 'default' | 'fullscreen'
 
-interface SermonPlayerControlsProps {
-  excludeButtons?: ControlsNames[]
-  onLongPressSeek?: (direction: 'backward' | 'forward') => void
-  onPressOutSeek?: () => void
-  size?: PlayerControlsSize
-  style?: StyleProp<ViewStyle>
-  variant?: PlayerControlsVariant
-}
-
 export const SermonPlayerControls = ({
   excludeButtons,
   onLongPressSeek,
@@ -22,7 +13,14 @@ export const SermonPlayerControls = ({
   size,
   style,
   variant,
-}: SermonPlayerControlsProps) => {
+}: {
+  excludeButtons?: ControlsNames[]
+  onLongPressSeek?: (direction: 'backward' | 'forward') => void
+  onPressOutSeek?: () => void
+  size?: PlayerControlsSize
+  style?: StyleProp<ViewStyle>
+  variant?: PlayerControlsVariant
+}) => {
   const currentAudio = useAtom(currentAudioAtom)[0]
   const currentPlaylist = useAtom(currentPlaylistAtom)[0]
   const setCurrentAudio = useAction(setCurrentAudioAction)

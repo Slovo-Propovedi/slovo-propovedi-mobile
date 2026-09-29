@@ -8,15 +8,6 @@ import type { ReactElement } from 'react'
 import type { ListRenderItem, StyleProp, ViewStyle } from 'react-native'
 import type { useAnimatedScrollHandler } from 'react-native-reanimated'
 
-interface PlaylistTrackListProps {
-  data: TracksListData
-  headerElement: ReactElement
-  ItemSeparatorComponent: React.ComponentType
-  onScroll: ReturnType<typeof useAnimatedScrollHandler>
-  renderItem: ListRenderItem<TracksListData[number]>
-  style: StyleProp<ViewStyle>
-}
-
 export const PlaylistTrackList = ({
   data,
   headerElement,
@@ -24,7 +15,14 @@ export const PlaylistTrackList = ({
   onScroll,
   renderItem,
   style,
-}: PlaylistTrackListProps) => {
+}: {
+  data: TracksListData
+  headerElement: ReactElement
+  ItemSeparatorComponent: React.ComponentType
+  onScroll: ReturnType<typeof useAnimatedScrollHandler>
+  renderItem: ListRenderItem<TracksListData[number]>
+  style: StyleProp<ViewStyle>
+}) => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
 
   return (

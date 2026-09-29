@@ -4,16 +4,19 @@ import { Clipboard } from 'react-native'
 import { ConfirmDialog } from '../confirm-dialog'
 import { COLORS } from '../theme/colors'
 
-interface ErrorModalProps {
+const ICON_SIZE = 24
+
+export const ErrorModal = ({
+  error,
+  onClose,
+  showCopyButton = true,
+  visible,
+}: {
   error: Error | null
   onClose: () => void
   showCopyButton?: boolean
   visible: boolean
-}
-
-const ICON_SIZE = 24
-
-export const ErrorModal = ({ error, onClose, showCopyButton = true, visible }: ErrorModalProps) => {
+}) => {
   const handleCopy = () => {
     if (!error) return
 

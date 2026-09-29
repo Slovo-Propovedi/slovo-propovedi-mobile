@@ -2,17 +2,6 @@ import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { useTheme } from 'shared/ui/theme'
 import { type TrackToCache } from '../lib/PlaylistOfflineService'
 
-interface PlaylistOfflineDialogsProps {
-  cachedCount: number
-  cacheDialogVisible: boolean
-  clearDialogVisible: boolean
-  onAddAllToOfflineConfirm: () => void
-  onAddToOfflineCancel: () => void
-  onClearCacheConfirm: () => void
-  onClearCancel: () => void
-  tracksData: TrackToCache[]
-}
-
 export const PlaylistOfflineDialogs = ({
   cachedCount,
   cacheDialogVisible,
@@ -22,7 +11,16 @@ export const PlaylistOfflineDialogs = ({
   onClearCacheConfirm,
   onClearCancel,
   tracksData,
-}: PlaylistOfflineDialogsProps) => {
+}: {
+  cachedCount: number
+  cacheDialogVisible: boolean
+  clearDialogVisible: boolean
+  onAddAllToOfflineConfirm: () => void
+  onAddToOfflineCancel: () => void
+  onClearCacheConfirm: () => void
+  onClearCancel: () => void
+  tracksData: TrackToCache[]
+}) => {
   const { currentTheme } = useTheme()
 
   return (

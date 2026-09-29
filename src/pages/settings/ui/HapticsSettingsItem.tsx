@@ -7,11 +7,7 @@ import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
 
-interface HapticsSettingsItemProps {
-  style?: StyleProp<ViewStyle>
-}
-
-export const HapticsSettingsItem = ({ style }: HapticsSettingsItemProps) => {
+export const HapticsSettingsItem = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const [enabled] = useAtom(hapticsEnabledAtom)
   const setEnabled = useAction(setHapticsEnabled)
   const { currentTheme } = useTheme()

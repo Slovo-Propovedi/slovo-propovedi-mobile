@@ -4,15 +4,6 @@ import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
 
-interface SettingsItemProps {
-  description?: string
-  disabled?: boolean
-  icon?: keyof typeof Ionicons.glyphMap
-  onPress: () => void
-  style?: StyleProp<ViewStyle>
-  title: string
-}
-
 export const SettingsItem = ({
   description,
   disabled,
@@ -20,7 +11,14 @@ export const SettingsItem = ({
   onPress,
   style,
   title,
-}: SettingsItemProps) => {
+}: {
+  description?: string
+  disabled?: boolean
+  icon?: keyof typeof Ionicons.glyphMap
+  onPress: () => void
+  style?: StyleProp<ViewStyle>
+  title: string
+}) => {
   const { currentTheme } = useTheme()
 
   return (

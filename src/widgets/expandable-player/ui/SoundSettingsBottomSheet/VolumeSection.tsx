@@ -6,19 +6,17 @@ import { formatPercent } from './soundSettingsFormat'
 
 const VOLUME_LABEL = 'Громкость'
 
-interface VolumeSectionProps {
-  onReset: () => void
-  onVolumeApply: (volume: number) => void
-  onVolumeChange: (volume: number) => void
-  volume: number
-}
-
 export const VolumeSection = ({
   onReset,
   onVolumeApply,
   onVolumeChange,
   volume,
-}: VolumeSectionProps) => (
+}: {
+  onReset: () => void
+  onVolumeApply: (volume: number) => void
+  onVolumeChange: (volume: number) => void
+  volume: number
+}) => (
   <View style={styles.section}>
     <SectionHeader onReset={onReset} title={VOLUME_LABEL} value={formatPercent(volume)} />
     <ValueSlider

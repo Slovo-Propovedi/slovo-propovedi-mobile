@@ -12,13 +12,6 @@ import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 import type { createStyles } from '../ExpandablePlayer/styles'
 
-interface NextSermonPlateProps {
-  currentAudioId: string
-  insetsTop: number
-  nextSermonTitle: string
-  styles: ReturnType<typeof createStyles>
-}
-
 const ANIMATION_DURATION = 220
 export const AUTO_COLLAPSE_DELAY_MS = 10_000
 const TITLE_LINES = 2
@@ -27,7 +20,17 @@ const TITLE_LINE_HEIGHT_FACTOR = 1.25
 const TITLE_WRAPPER_GAP = INDENTS.lowest
 
 export const NextSermonPlate = memo(
-  ({ currentAudioId, insetsTop, nextSermonTitle, styles }: NextSermonPlateProps) => {
+  ({
+    currentAudioId,
+    insetsTop,
+    nextSermonTitle,
+    styles,
+  }: {
+    currentAudioId: string
+    insetsTop: number
+    nextSermonTitle: string
+    styles: ReturnType<typeof createStyles>
+  }) => {
     const [isExpanded, setIsExpanded] = useState(false)
     const [isTitleMounted, setIsTitleMounted] = useState(false)
     const [prevAudioId, setPrevAudioId] = useState(currentAudioId)

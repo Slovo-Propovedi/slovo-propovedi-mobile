@@ -16,25 +16,6 @@ import { BoundaryHint } from './BoundaryHint'
 import { FullscreenDownloadProgressBar } from './FullscreenDownloadProgressBar'
 import { PlayerMenuAnchor } from './PlayerMenuAnchor'
 
-interface PlayerControlsSectionProps {
-  audio: AudioPlayerData
-  duration: number
-  isCached: boolean
-  onOpenPlaylist: () => void
-  onOpenSoundSettings: () => void
-  onShowDetails: () => void
-  onToggleCache: () => void
-  playlist: PlaylistData
-  position: number
-  seekTo: (position: number) => void
-  setShowMenu: (show: boolean) => void
-  showMenu: boolean
-  startSeek: (direction: 'backward' | 'forward') => void
-  stopSeek: () => void
-  styles: ReturnType<typeof createStyles>
-  visualState: TrackCacheVisualState
-}
-
 export const PlayerControlsSection = ({
   audio,
   duration,
@@ -52,7 +33,24 @@ export const PlayerControlsSection = ({
   stopSeek,
   styles,
   visualState,
-}: PlayerControlsSectionProps) => {
+}: {
+  audio: AudioPlayerData
+  duration: number
+  isCached: boolean
+  onOpenPlaylist: () => void
+  onOpenSoundSettings: () => void
+  onShowDetails: () => void
+  onToggleCache: () => void
+  playlist: PlaylistData
+  position: number
+  seekTo: (position: number) => void
+  setShowMenu: (show: boolean) => void
+  showMenu: boolean
+  startSeek: (direction: 'backward' | 'forward') => void
+  stopSeek: () => void
+  styles: ReturnType<typeof createStyles>
+  visualState: TrackCacheVisualState
+}) => {
   const { bottom } = useSafeAreaInsets()
   const subtitle = getPlayerSubtitle(audio, playlist)
   const [previewPosition, setPreviewPosition] = useState<null | number>(null)

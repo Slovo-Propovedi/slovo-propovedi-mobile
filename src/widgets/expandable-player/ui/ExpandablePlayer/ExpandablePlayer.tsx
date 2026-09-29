@@ -24,12 +24,13 @@ import { createMiniStyles } from './miniStyles'
 import { createStyles } from './styles'
 import { useExpandablePlayerGesture } from './useExpandablePlayerGesture'
 
-interface ExpandablePlayerProps {
+export const ExpandablePlayer = ({
+  playlistMenuComponent,
+  style,
+}: {
   playlistMenuComponent?: PlaylistMenuSlot
   style?: StyleProp<NonGeometricStyle>
-}
-
-export const ExpandablePlayer = ({ playlistMenuComponent, style }: ExpandablePlayerProps) => {
+}) => {
   const { currentTheme } = useTheme()
 
   const [tabBarHeight] = useAtom(tabBarHeightAtom)

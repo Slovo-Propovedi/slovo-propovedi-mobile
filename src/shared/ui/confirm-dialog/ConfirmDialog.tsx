@@ -5,22 +5,6 @@ import { useTheme } from '../theme/ThemeContext/useTheme'
 import { ConfirmDialogButton } from './ConfirmDialogButton'
 import { styles } from './styles'
 
-interface ConfirmDialogProps {
-  cancelIcon?: ReactNode
-  cancelText?: string
-  confirmColor?: ColorValue
-  confirmIcon?: ReactNode
-  confirmText?: string
-  hideCancel?: boolean
-  icon?: ReactNode
-  message: string | string[]
-  onCancel: () => void
-  onConfirm: () => void
-  onEscape?: () => void
-  title: string
-  visible: boolean
-}
-
 export const ConfirmDialog = ({
   cancelIcon,
   cancelText = 'Отмена',
@@ -35,7 +19,21 @@ export const ConfirmDialog = ({
   onEscape,
   title,
   visible,
-}: ConfirmDialogProps) => {
+}: {
+  cancelIcon?: ReactNode
+  cancelText?: string
+  confirmColor?: ColorValue
+  confirmIcon?: ReactNode
+  confirmText?: string
+  hideCancel?: boolean
+  icon?: ReactNode
+  message: string | string[]
+  onCancel: () => void
+  onConfirm: () => void
+  onEscape?: () => void
+  title: string
+  visible: boolean
+}) => {
   const messages = Array.isArray(message) ? message : [message]
   const { currentTheme } = useTheme()
   const resolvedConfirmColor = confirmColor ?? currentTheme.primary

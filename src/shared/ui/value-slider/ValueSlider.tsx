@@ -5,17 +5,6 @@ import { createValueSliderStyles, THUMB_SIZE } from './valueSlider.styles'
 
 const DEFAULT_STEP = 1
 
-interface ValueSliderProps {
-  accessibilityLabel: string
-  disabled?: boolean
-  max: number
-  min: number
-  onChange: (value: number) => void
-  onSlidingComplete?: (value: number) => void
-  step?: number
-  value: number
-}
-
 // Themed accessible value slider: tap-to-set and horizontal drag on a
 // track+thumb visual. Fully controlled — onChange fires on every gesture move
 // (cheap visual updates), onSlidingComplete fires once on release
@@ -29,7 +18,16 @@ export const ValueSlider = ({
   onSlidingComplete,
   step = DEFAULT_STEP,
   value,
-}: ValueSliderProps) => {
+}: {
+  accessibilityLabel: string
+  disabled?: boolean
+  max: number
+  min: number
+  onChange: (value: number) => void
+  onSlidingComplete?: (value: number) => void
+  step?: number
+  value: number
+}) => {
   const { currentTheme } = useTheme()
   const styles = createValueSliderStyles(currentTheme)
   const { containerRef, handleLayout, panResponder, trackWidth } = useSliderPanResponder({

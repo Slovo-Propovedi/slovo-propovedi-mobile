@@ -7,17 +7,6 @@ import { findActivePreset } from './eqPresets'
 
 const EQ_LABEL = 'Эквалайзер'
 
-interface EqualizerSectionProps {
-  bandCount: number
-  bandFrequencies: number[]
-  eqEnabled: boolean
-  eqGains: number[]
-  onApplyBandGain: (index: number, gainDb: number) => void
-  onSetBandGain: (index: number, gainDb: number) => void
-  onSetEnabled: (enabled: boolean) => void
-  range: [number, number]
-}
-
 // The persisted gains may still have the canonical length while the device
 // reports a different band count: pad zeros / truncate so the slider count
 // always equals eqInfo.bandCount.
@@ -33,7 +22,16 @@ export const EqualizerSection = ({
   onSetBandGain,
   onSetEnabled,
   range,
-}: EqualizerSectionProps) => {
+}: {
+  bandCount: number
+  bandFrequencies: number[]
+  eqEnabled: boolean
+  eqGains: number[]
+  onApplyBandGain: (index: number, gainDb: number) => void
+  onSetBandGain: (index: number, gainDb: number) => void
+  onSetEnabled: (enabled: boolean) => void
+  range: [number, number]
+}) => {
   const { currentTheme } = useTheme()
   const displayGains = normalizeGains(eqGains, bandCount)
   const activePreset = findActivePreset(displayGains)

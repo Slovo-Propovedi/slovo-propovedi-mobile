@@ -17,21 +17,19 @@ const RETRY_PRIMARY_KINDS: UpdateErrorKind[] = [
   'unknown',
 ]
 
-interface UpdateDialogErrorProps {
-  errorKind: UpdateErrorKind
-  errorMessage: string
-  onClose: () => void
-  onOpenReleases: () => void
-  onRetry: () => void
-}
-
 export const UpdateDialogError = ({
   errorKind,
   errorMessage,
   onClose,
   onOpenReleases,
   onRetry,
-}: UpdateDialogErrorProps) => {
+}: {
+  errorKind: UpdateErrorKind
+  errorMessage: string
+  onClose: () => void
+  onOpenReleases: () => void
+  onRetry: () => void
+}) => {
   const { currentTheme } = useTheme()
   const isRetryPrimary = RETRY_PRIMARY_KINDS.includes(errorKind)
 

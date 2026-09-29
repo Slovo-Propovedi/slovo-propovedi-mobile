@@ -10,18 +10,6 @@ import {
   type SliderItemDescriptionTextAlign,
 } from './slider-item-description.types'
 
-interface SliderItemDescriptionProps {
-  backgroundStyle?: SliderItemDescriptionBackgroundStyle
-  isTitleLarge?: boolean
-  style?: StyleProp<ViewStyle>
-  subTitle?: string
-  subTitleTextAlign?: SliderItemDescriptionTextAlign
-  testID?: string
-  title: string
-  titleStyle?: StyleProp<TextStyle>
-  titleTextAlign?: SliderItemDescriptionTextAlign
-}
-
 export const SliderItemDescription = ({
   backgroundStyle = SliderItemDescriptionBackgroundStyle.Transparent,
   isTitleLarge,
@@ -32,7 +20,17 @@ export const SliderItemDescription = ({
   title,
   titleStyle,
   titleTextAlign = 'left',
-}: SliderItemDescriptionProps) => {
+}: {
+  backgroundStyle?: SliderItemDescriptionBackgroundStyle
+  isTitleLarge?: boolean
+  style?: StyleProp<ViewStyle>
+  subTitle?: string
+  subTitleTextAlign?: SliderItemDescriptionTextAlign
+  testID?: string
+  title: string
+  titleStyle?: StyleProp<TextStyle>
+  titleTextAlign?: SliderItemDescriptionTextAlign
+}) => {
   const { currentTheme } = useTheme()
   if (!title) return null
 

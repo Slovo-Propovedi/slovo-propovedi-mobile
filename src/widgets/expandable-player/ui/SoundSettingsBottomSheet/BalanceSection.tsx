@@ -8,19 +8,17 @@ const BALANCE_LABEL = 'Баланс'
 const BALANCE_LEFT_LABEL = 'Левый'
 const BALANCE_RIGHT_LABEL = 'Правый'
 
-interface BalanceSectionProps {
-  balance: number
-  onBalanceApply: (balance: number) => void
-  onBalanceChange: (balance: number) => void
-  onReset: () => void
-}
-
 export const BalanceSection = ({
   balance,
   onBalanceApply,
   onBalanceChange,
   onReset,
-}: BalanceSectionProps) => {
+}: {
+  balance: number
+  onBalanceApply: (balance: number) => void
+  onBalanceChange: (balance: number) => void
+  onReset: () => void
+}) => {
   const { currentTheme } = useTheme()
 
   return (

@@ -4,12 +4,13 @@ import { COLORS, FONT_SIZES, useTheme } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
 import { queueControlsStyles } from './styles'
 
-interface QueueControlsProps {
+export const QueueControls = ({
+  onPressPlayAll,
+  onPressShuffle,
+}: {
   onPressPlayAll: () => void
   onPressShuffle?: () => void
-}
-
-export const QueueControls = ({ onPressPlayAll, onPressShuffle }: QueueControlsProps) => {
+}) => {
   const { currentTheme } = useTheme()
 
   return (

@@ -4,16 +4,6 @@ import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { PlayerProgressBar } from 'entities/player'
 import { useDisplayedDownloadProgress } from '../../model/useDisplayedDownloadProgress'
 
-interface FullscreenDownloadProgressBarProps {
-  audioUrl: string
-  duration: number
-  hideTime?: boolean
-  onPreviewChange?: (position: null | number) => void
-  onSeek?: (position: number) => void
-  position: number
-  style?: StyleProp<ViewStyle>
-}
-
 export const FullscreenDownloadProgressBar = ({
   audioUrl,
   duration,
@@ -22,7 +12,15 @@ export const FullscreenDownloadProgressBar = ({
   onSeek,
   position,
   style,
-}: FullscreenDownloadProgressBarProps) => {
+}: {
+  audioUrl: string
+  duration: number
+  hideTime?: boolean
+  onPreviewChange?: (position: null | number) => void
+  onSeek?: (position: number) => void
+  position: number
+  style?: StyleProp<ViewStyle>
+}) => {
   const [isSermonCachingEnabled] = useAtom(sermonCachingEnabledAtom)
   const rawProgress = useDisplayedDownloadProgress(audioUrl)
   // Caching off in settings: no grey download layer (0 width) over the

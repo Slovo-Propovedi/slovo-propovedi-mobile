@@ -8,12 +8,7 @@ import type { StyleProp, ViewStyle } from 'react-native'
 
 const COPIED_FEEDBACK_MS = 2000
 
-interface CopyLinkButtonProps {
-  style?: StyleProp<ViewStyle>
-  url: string
-}
-
-export const CopyLinkButton = ({ style, url }: CopyLinkButtonProps) => {
+export const CopyLinkButton = ({ style, url }: { style?: StyleProp<ViewStyle>; url: string }) => {
   const { currentTheme } = useTheme()
   const [isCopied, setIsCopied] = useState(false)
 

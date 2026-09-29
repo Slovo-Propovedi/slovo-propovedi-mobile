@@ -21,14 +21,10 @@ const styles = StyleSheet.create({
   },
 })
 
-interface OfflineEmptyStateProps {
-  isCachingEnabled: boolean
-}
-
 // Empty state of the offline list. With caching switched off nothing can land
 // here, so the list says WHY it is empty instead of a bare "empty" — and points
 // at the header toggle that brings downloading back.
-export const OfflineEmptyState = ({ isCachingEnabled }: OfflineEmptyStateProps) => {
+export const OfflineEmptyState = ({ isCachingEnabled }: { isCachingEnabled: boolean }) => {
   const { currentTheme } = useTheme()
 
   return (

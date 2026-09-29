@@ -18,21 +18,19 @@ import { useSheetLifecycle } from './useSheetLifecycle'
 
 export type PlaylistMenuSlot = ComponentType<{ playlist: PlaylistData }>
 
-interface PlaylistBottomSheetProps {
-  closeOnBack?: boolean
-  onClose: () => void
-  playlist: null | PlaylistData
-  playlistMenuComponent?: PlaylistMenuSlot
-  sheetRef: React.RefObject<BottomSheet | null>
-}
-
 const PlaylistBottomSheetComponent = ({
   closeOnBack = true,
   onClose,
   playlist,
   playlistMenuComponent,
   sheetRef,
-}: PlaylistBottomSheetProps) => {
+}: {
+  closeOnBack?: boolean
+  onClose: () => void
+  playlist: null | PlaylistData
+  playlistMenuComponent?: PlaylistMenuSlot
+  sheetRef: React.RefObject<BottomSheet | null>
+}) => {
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isAudioPlaying] = useAtom(isPlayingAtom)
   const [cacheTrigger] = useAtom(cacheUpdateTriggerAtom)

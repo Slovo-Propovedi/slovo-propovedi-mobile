@@ -7,13 +7,6 @@ import type { createStyles } from '../ExpandablePlayer/styles'
 import type { AudioPlayerData } from 'entities/sermon'
 import { DescriptionWithTimecodes } from './DescriptionWithTimecodes'
 
-interface DetailsOverlayProps {
-  audio: AudioPlayerData
-  insetsTop: number
-  onClose: () => void
-  styles: ReturnType<typeof createStyles>
-}
-
 const HEADER_OFFSET = 60
 
 const localStyles = StyleSheet.create({
@@ -42,7 +35,17 @@ const localStyles = StyleSheet.create({
   },
 })
 
-export const DetailsOverlay = ({ audio, insetsTop, onClose, styles }: DetailsOverlayProps) => {
+export const DetailsOverlay = ({
+  audio,
+  insetsTop,
+  onClose,
+  styles,
+}: {
+  audio: AudioPlayerData
+  insetsTop: number
+  onClose: () => void
+  styles: ReturnType<typeof createStyles>
+}) => {
   const hasContent = Boolean(audio.description) || Boolean(audio.artist)
 
   return (

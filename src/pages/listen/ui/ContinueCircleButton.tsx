@@ -13,15 +13,13 @@ export const TOTAL_SIZE = 224 // MUST match GlowRing.RING_SIZE (224) — both de
 const INNER_SIZE = 168
 const ICON_SIZE = 100
 
-interface ContinueCircleButtonProps {
-  isPlaying: boolean
-  width?: number
-}
-
 export const ContinueCircleButton = ({
   isPlaying,
   width = TOTAL_SIZE,
-}: ContinueCircleButtonProps) => {
+}: {
+  isPlaying: boolean
+  width?: number
+}) => {
   const { currentTheme } = useTheme()
   const [isScrolling] = useAtom(isListenScrollingAtom)
   const [isGlowVisible] = useAtom(isGlowVisibleAtom)

@@ -6,20 +6,6 @@ import { PlayerControlButton } from './control-button/control-button'
 import { PlayerControlButtonType } from './control-button/control-button.types'
 import { getExcludedButtons } from './getExcludedButtons'
 
-interface FullscreenControlsProps {
-  buttonSize: number
-  excludeButtons?: ControlsNames[]
-  isBuffering: boolean
-  isPlaying: boolean
-  isTrackButtonDisabled: boolean
-  onLongPressSeek?: (direction: 'backward' | 'forward') => void
-  onPressOutSeek?: () => void
-  playButtonSize: number
-  style?: StyleProp<ViewStyle>
-  togglePlay: () => Promise<void>
-  toggleTrack: (dir: 'next' | 'prev') => Promise<void>
-}
-
 export const FullscreenControls = ({
   buttonSize,
   excludeButtons,
@@ -32,7 +18,19 @@ export const FullscreenControls = ({
   style,
   togglePlay,
   toggleTrack,
-}: FullscreenControlsProps) => {
+}: {
+  buttonSize: number
+  excludeButtons?: ControlsNames[]
+  isBuffering: boolean
+  isPlaying: boolean
+  isTrackButtonDisabled: boolean
+  onLongPressSeek?: (direction: 'backward' | 'forward') => void
+  onPressOutSeek?: () => void
+  playButtonSize: number
+  style?: StyleProp<ViewStyle>
+  togglePlay: () => Promise<void>
+  toggleTrack: (dir: 'next' | 'prev') => Promise<void>
+}) => {
   const excludedButtons = getExcludedButtons(excludeButtons)
   const showSpinner = isBuffering
 

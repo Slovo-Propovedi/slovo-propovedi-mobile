@@ -5,15 +5,18 @@ import { type SermonData, toAudioPlayerData } from 'entities/sermon'
 import { TracksListItem } from 'entities/track-list'
 import { formatScripture } from '../lib/formatScripture'
 
-interface SermonSearchRowProps {
-  inHistory?: boolean
-  onPress: () => void
-  progress?: number
-  sermon: SermonData
-}
-
 export const SermonSearchRow = memo(
-  ({ inHistory = false, onPress, progress, sermon }: SermonSearchRowProps) => {
+  ({
+    inHistory = false,
+    onPress,
+    progress,
+    sermon,
+  }: {
+    inHistory?: boolean
+    onPress: () => void
+    progress?: number
+    sermon: SermonData
+  }) => {
     const audio = toAudioPlayerData(sermon)
     const cacheState = useTrackItemCache(audio?.audioUrl)
     const subtitle = [sermon.artist, formatScripture(sermon)].filter(Boolean).join(' • ')

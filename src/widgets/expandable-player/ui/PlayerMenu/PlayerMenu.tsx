@@ -15,15 +15,6 @@ import { styles } from './PlayerMenu.styles'
 import { PlayerMenuItems } from './PlayerMenuItems'
 import { PlayerSpeedMenu } from './PlayerSpeedMenu'
 
-interface PlayerMenuProps {
-  isCached?: boolean
-  onClose: () => void
-  onOpenSoundSettings: () => void
-  onShowDetails: () => void
-  onToggleCache: () => void
-  visualState: TrackCacheVisualState
-}
-
 export const PlayerMenu = ({
   isCached,
   onClose,
@@ -31,7 +22,14 @@ export const PlayerMenu = ({
   onShowDetails,
   onToggleCache,
   visualState,
-}: PlayerMenuProps) => {
+}: {
+  isCached?: boolean
+  onClose: () => void
+  onOpenSoundSettings: () => void
+  onShowDetails: () => void
+  onToggleCache: () => void
+  visualState: TrackCacheVisualState
+}) => {
   const { currentTheme } = useTheme()
   const { rate, setPlaybackRate } = usePlaybackRate()
   const [view, setView] = useState<'main' | 'speed'>('main')

@@ -7,12 +7,14 @@ import { INDENTS } from './theme/themed'
 
 const BACKDROP_TEST_ID = 'modal-backdrop'
 
-type Props = React.PropsWithChildren<{
+export const Modal = ({
+  children,
+  onBackdropPress,
+  visible,
+}: React.PropsWithChildren<{
   onBackdropPress: () => void
   visible: boolean
-}>
-
-export const Modal = ({ children, onBackdropPress, visible }: Props) => {
+}>) => {
   const { currentTheme } = useTheme()
   const onBackdropPressRef = useRef(onBackdropPress)
 

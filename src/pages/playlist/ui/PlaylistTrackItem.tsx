@@ -5,21 +5,6 @@ import { TracksListItem } from 'entities/track-list'
 import { type MenuItem } from 'shared/ui/menu'
 import { INDENTS } from 'shared/ui/theme'
 
-interface PlaylistTrackItemProps {
-  artwork: null | string
-  audioUrl?: null | string
-  cacheTrigger?: number
-  currentAudioId?: string
-  id: string | undefined
-  index: number
-  isPlaying: boolean
-  menuActions?: MenuItem[]
-  onPress: (index: number) => void
-  storedProgress?: number
-  subtitle?: string
-  title: string
-}
-
 export const PlaylistTrackItem = memo(
   ({
     artwork,
@@ -34,7 +19,20 @@ export const PlaylistTrackItem = memo(
     storedProgress,
     subtitle,
     title,
-  }: PlaylistTrackItemProps) => {
+  }: {
+    artwork: null | string
+    audioUrl?: null | string
+    cacheTrigger?: number
+    currentAudioId?: string
+    id: string | undefined
+    index: number
+    isPlaying: boolean
+    menuActions?: MenuItem[]
+    onPress: (index: number) => void
+    storedProgress?: number
+    subtitle?: string
+    title: string
+  }) => {
     const handlePress = useCallback(() => onPress(index), [index, onPress])
     const cacheState = useTrackItemCache(audioUrl ?? undefined, cacheTrigger)
 

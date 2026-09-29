@@ -6,28 +6,6 @@ import { type PlaylistMenuSlot } from './PlaylistBottomSheet'
 import { type createStyles } from './PlaylistBottomSheet.styles'
 import { PlaylistSheetList } from './PlaylistSheetList'
 
-interface PlaylistSheetContentProps {
-  cacheTrigger: number
-  currentAudioId?: string
-  initialNumToRender?: number
-  isAudioPlaying: boolean
-  isRevealed: boolean
-  listRef: React.RefObject<BottomSheetFlatListMethods | null>
-  onDragEnd: () => void
-  onDragStart: () => void
-  onMomentumEnd: () => void
-  onMomentumStart: () => void
-  onPress: (index: number) => void
-  onScroll: (y: number) => void
-  onScrollToIndexFailed: (info: { averageItemLength: number; index: number }) => void
-  playlist: PlaylistData
-  playlistMenuComponent?: PlaylistMenuSlot
-  progressMap: Map<string, number>
-  settleTick: number
-  sheetTop: number
-  styles: ReturnType<typeof createStyles>
-}
-
 // The sheet's inner composition: a header row (playlist title plus the optional
 // injected header menu) above the track list.
 export const PlaylistSheetContent = memo(
@@ -51,7 +29,27 @@ export const PlaylistSheetContent = memo(
     settleTick,
     sheetTop,
     styles,
-  }: PlaylistSheetContentProps) => (
+  }: {
+    cacheTrigger: number
+    currentAudioId?: string
+    initialNumToRender?: number
+    isAudioPlaying: boolean
+    isRevealed: boolean
+    listRef: React.RefObject<BottomSheetFlatListMethods | null>
+    onDragEnd: () => void
+    onDragStart: () => void
+    onMomentumEnd: () => void
+    onMomentumStart: () => void
+    onPress: (index: number) => void
+    onScroll: (y: number) => void
+    onScrollToIndexFailed: (info: { averageItemLength: number; index: number }) => void
+    playlist: PlaylistData
+    playlistMenuComponent?: PlaylistMenuSlot
+    progressMap: Map<string, number>
+    settleTick: number
+    sheetTop: number
+    styles: ReturnType<typeof createStyles>
+  }) => (
     <>
       <View style={styles.headerRow}>
         <Text style={styles.title}>{playlist.title}</Text>

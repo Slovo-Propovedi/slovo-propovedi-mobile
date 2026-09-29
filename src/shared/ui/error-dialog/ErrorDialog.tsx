@@ -7,14 +7,17 @@ import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 import { useErrorCopy } from './useErrorCopy'
 
-interface ErrorDialogProps {
+export const ErrorDialog = ({
+  detail,
+  message,
+  onDismiss,
+  visible,
+}: {
   detail: string
   message: string
   onDismiss: () => void
   visible: boolean
-}
-
-export const ErrorDialog = ({ detail, message, onDismiss, visible }: ErrorDialogProps) => {
+}) => {
   const { currentTheme } = useTheme()
   const { copied, handleCopy } = useErrorCopy(message, detail)
 

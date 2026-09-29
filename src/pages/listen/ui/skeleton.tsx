@@ -23,12 +23,7 @@ const SKELETON_SECTIONS: SkeletonSectionProps[] = [
   { itemsCount: 6, itemsSize: SliderItemSize.Middle, transform: SliderItemTransform.Short },
 ]
 
-interface SectionsSkeletonProps {
-  count?: number
-  from?: number
-}
-
-export const SectionsSkeleton = ({ count, from = 0 }: SectionsSkeletonProps) => {
+export const SectionsSkeleton = ({ count, from = 0 }: { count?: number; from?: number }) => {
   const sections = SKELETON_SECTIONS.slice(from, count === undefined ? undefined : from + count)
 
   return (

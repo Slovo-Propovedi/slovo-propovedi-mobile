@@ -15,38 +15,35 @@ const styles = StyleSheet.create({
   row: { marginHorizontal: INDENTS.medium },
 })
 
-interface OfflineRowProps {
-  isPlaying: boolean
-  item: OfflineSermonItem
-}
+export const OfflineRow = memo(
+  ({ isPlaying, item }: { isPlaying: boolean; item: OfflineSermonItem }) => {
+    const playNewSermon = usePlayNewSermon()
+    const [currentAudio] = useAtom(currentAudioAtom)
+    const isCurrentAudio = currentAudio?.id === item.sermon.id
+    const storedProgress = useHistoryProgress(item.sermon.id)
+    const cacheState = useTrackItemCache(item.sermon.audioUrl)
 
-export const OfflineRow = memo(({ isPlaying, item }: OfflineRowProps) => {
-  const playNewSermon = usePlayNewSermon()
-  const [currentAudio] = useAtom(currentAudioAtom)
-  const isCurrentAudio = currentAudio?.id === item.sermon.id
-  const storedProgress = useHistoryProgress(item.sermon.id)
-  const cacheState = useTrackItemCache(item.sermon.audioUrl)
+    const handlePress = useCallback(async () => {
+      try {
+        await playNewSermon({ playlist: item.playlist, sermon: item.sermon })
+      } catch (error) {
+        reportError(error, PLAYBACK_ERROR_MESSAGE)
+      }
+    }, [item, playNewSermon])
 
-  const handlePress = useCallback(async () => {
-    try {
-      await playNewSermon({ playlist: item.playlist, sermon: item.sermon })
-    } catch (error) {
-      reportError(error, PLAYBACK_ERROR_MESSAGE)
-    }
-  }, [item, playNewSermon])
-
-  return (
-    <TracksListItem
-      style={styles.row}
-      onPress={handlePress}
-      cacheState={cacheState}
-      title={item.sermon.title}
-      progress={storedProgress}
-      isPlaying={isCurrentAudio}
-      artwork={item.sermon.artwork}
-      subtitle={item.playlist.title}
-      audioUrl={item.sermon.audioUrl}
-      isAudioPlaying={isCurrentAudio && isPlaying}
-    />
-  )
-})
+    return (
+      <TracksListItem
+        style={styles.row}
+        onPress={handlePress}
+        cacheState={cacheState}
+        title={item.sermon.title}
+        progress={storedProgress}
+        isPlaying={isCurrentAudio}
+        artwork={item.sermon.artwork}
+        subtitle={item.playlist.title}
+        audioUrl={item.sermon.audioUrl}
+        isAudioPlaying={isCurrentAudio && isPlaying}
+      />
+    )
+  },
+)

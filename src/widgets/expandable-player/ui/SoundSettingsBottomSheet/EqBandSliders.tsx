@@ -4,21 +4,19 @@ import { ValueSlider } from 'shared/ui/value-slider'
 import { SectionHeader } from './SectionHeader'
 import { formatBandFrequency, formatGainDb } from './soundSettingsFormat'
 
-interface EqBandSlidersProps {
-  bandFrequencies: number[]
-  gains: number[]
-  onBandChange: (index: number, gain: number) => void
-  onBandComplete: (index: number, gain: number) => void
-  range: [number, number]
-}
-
 export const EqBandSliders = ({
   bandFrequencies,
   gains,
   onBandChange,
   onBandComplete,
   range,
-}: EqBandSlidersProps) => {
+}: {
+  bandFrequencies: number[]
+  gains: number[]
+  onBandChange: (index: number, gain: number) => void
+  onBandComplete: (index: number, gain: number) => void
+  range: [number, number]
+}) => {
   const [min, max] = range
 
   return (

@@ -6,13 +6,15 @@ import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './PlayerMenu.styles'
 
-interface PlayerSpeedMenuProps {
+export const PlayerSpeedMenu = ({
+  currentRate,
+  onBack,
+  onSelect,
+}: {
   currentRate: PlaybackRate
   onBack: () => void
   onSelect: (rate: PlaybackRate) => void
-}
-
-export const PlayerSpeedMenu = ({ currentRate, onBack, onSelect }: PlayerSpeedMenuProps) => {
+}) => {
   const { currentTheme } = useTheme()
 
   return (

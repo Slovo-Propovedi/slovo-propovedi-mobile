@@ -13,18 +13,15 @@ const BOOK_LABEL = 'книга'
 // so the dropdown starts right below the header when offset by the same amount.
 const SUGGESTIONS_TOP = SEARCH_HEADER_HEIGHT - INDENTS.low
 
-interface SearchSuggestionsProps {
+export const SearchSuggestions = ({
+  isFocused,
+  onSelect,
+  query,
+}: {
   isFocused: boolean
   onSelect: (value: string) => void
   query: string
-}
-
-interface SuggestionRowProps {
-  onPress: () => void
-  suggestion: Suggestion
-}
-
-export const SearchSuggestions = ({ isFocused, onSelect, query }: SearchSuggestionsProps) => {
+}) => {
   const { currentTheme } = useTheme()
   const [distinctValues] = useAtom(distinctValuesAtom)
 
@@ -54,7 +51,13 @@ export const SearchSuggestions = ({ isFocused, onSelect, query }: SearchSuggesti
   )
 }
 
-const SuggestionRow = ({ onPress, suggestion }: SuggestionRowProps) => {
+const SuggestionRow = ({
+  onPress,
+  suggestion,
+}: {
+  onPress: () => void
+  suggestion: Suggestion
+}) => {
   const { currentTheme } = useTheme()
   const categoryLabel = suggestion.category === 'artist' ? ARTIST_LABEL : BOOK_LABEL
 

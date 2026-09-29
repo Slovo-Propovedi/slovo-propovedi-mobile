@@ -7,17 +7,6 @@ import type { createStyles } from '../ExpandablePlayer/styles'
 import { NextSermonPlate } from './NextSermonPlate'
 import { StopAllCachingButton } from './StopAllCachingButton'
 
-interface HeaderOverlayProps {
-  closePlaylistOnSwipe: () => void
-  collapseOnPan: () => void
-  collapseOnTap: () => void
-  currentAudioId: string
-  hasNextSermon: boolean
-  insetsTop: number
-  nextSermonTitle: string | undefined
-  styles: ReturnType<typeof createStyles>
-}
-
 export const HeaderOverlay = ({
   closePlaylistOnSwipe,
   collapseOnPan,
@@ -27,7 +16,16 @@ export const HeaderOverlay = ({
   insetsTop,
   nextSermonTitle,
   styles,
-}: HeaderOverlayProps) => {
+}: {
+  closePlaylistOnSwipe: () => void
+  collapseOnPan: () => void
+  collapseOnTap: () => void
+  currentAudioId: string
+  hasNextSermon: boolean
+  insetsTop: number
+  nextSermonTitle: string | undefined
+  styles: ReturnType<typeof createStyles>
+}) => {
   const isPanActive = useSharedValue(false)
 
   const markPanActive = () => {

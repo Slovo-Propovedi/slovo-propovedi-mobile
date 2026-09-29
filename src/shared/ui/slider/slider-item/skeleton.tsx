@@ -8,19 +8,17 @@ import { SliderItemDescriptionSkeleton } from '../slider-item-description/skelet
 import { getSliderItemWidth } from './slider-item.lib'
 import { SliderItemSize, SliderItemTransform, WhereIsSlideTitleLocated } from './slider-item.types'
 
-interface SliderItemSkeletonProps {
-  size?: SliderItemSize
-  testID?: string
-  transform?: SliderItemTransform
-  whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
-}
-
 export const SliderItemSkeleton = ({
   size = SliderItemSize.Small,
   testID = 'slider-item',
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
-}: SliderItemSkeletonProps) => {
+}: {
+  size?: SliderItemSize
+  testID?: string
+  transform?: SliderItemTransform
+  whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
+}) => {
   const { currentTheme } = useTheme()
   const { pulseStyle } = useSkeletonPulse()
 

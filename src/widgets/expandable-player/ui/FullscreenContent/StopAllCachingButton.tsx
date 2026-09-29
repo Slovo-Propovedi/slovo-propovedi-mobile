@@ -5,15 +5,16 @@ import { IconButton } from 'shared/ui/icon-button'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { useStopAllCaching } from './useStopAllCaching'
 
-interface StopAllCachingButtonProps {
-  insetsTop: number
-  styles: ReturnType<typeof createStyles>
-}
-
 const ACCESSIBILITY_LABEL = 'Остановить все закачки'
 const FADE_IN_DURATION_MS = 150
 
-export const StopAllCachingButton = ({ insetsTop, styles }: StopAllCachingButtonProps) => {
+export const StopAllCachingButton = ({
+  insetsTop,
+  styles,
+}: {
+  insetsTop: number
+  styles: ReturnType<typeof createStyles>
+}) => {
   const { handleStopAllCaching, isStopAllCachingVisible } = useStopAllCaching()
   const opacity = useSharedValue(0)
 

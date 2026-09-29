@@ -4,11 +4,7 @@ import { useSkeletonPulse } from 'shared/ui/skeleton/useSkeletonPulse'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { TRACK_LIST_ITEM_SIZES } from './styles'
 
-interface TracksListItemSkeletonProps {
-  style?: StyleProp<ViewStyle>
-}
-
-export const TracksListItemSkeleton = ({ style }: TracksListItemSkeletonProps) => {
+export const TracksListItemSkeleton = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { currentTheme } = useTheme()
   const { pulseStyle } = useSkeletonPulse()
 

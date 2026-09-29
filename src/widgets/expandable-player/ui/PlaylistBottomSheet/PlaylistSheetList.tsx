@@ -9,26 +9,6 @@ import { type TrackListItemData, usePlaylistSheetList } from './usePlaylistSheet
 
 const SKELETON_ROWS_COUNT = 8
 
-interface PlaylistSheetListProps {
-  cacheTrigger: number
-  currentAudioId?: string
-  initialNumToRender?: number
-  isAudioPlaying: boolean
-  isRevealed: boolean
-  listRef: React.RefObject<BottomSheetFlatListMethods | null>
-  onDragEnd: () => void
-  onDragStart: () => void
-  onMomentumEnd: () => void
-  onMomentumStart: () => void
-  onPress: (index: number) => void
-  onScroll: (y: number) => void
-  onScrollToIndexFailed: (info: { averageItemLength: number; index: number }) => void
-  playlist: PlaylistData
-  progressMap: Map<string, number>
-  settleTick: number
-  sheetTop: number
-  styles: ReturnType<typeof createStyles>
-}
 const keyExtractor = (item: TrackListItemData) => item.id
 
 // eslint-disable-next-line react-refresh/only-export-components -- Skeleton is attached via composition API
@@ -51,7 +31,26 @@ const PlaylistSheetListComponent = ({
   settleTick,
   sheetTop,
   styles,
-}: PlaylistSheetListProps) => {
+}: {
+  cacheTrigger: number
+  currentAudioId?: string
+  initialNumToRender?: number
+  isAudioPlaying: boolean
+  isRevealed: boolean
+  listRef: React.RefObject<BottomSheetFlatListMethods | null>
+  onDragEnd: () => void
+  onDragStart: () => void
+  onMomentumEnd: () => void
+  onMomentumStart: () => void
+  onPress: (index: number) => void
+  onScroll: (y: number) => void
+  onScrollToIndexFailed: (info: { averageItemLength: number; index: number }) => void
+  playlist: PlaylistData
+  progressMap: Map<string, number>
+  settleTick: number
+  sheetTop: number
+  styles: ReturnType<typeof createStyles>
+}) => {
   const {
     footerHeight,
     handleContentSizeChange,

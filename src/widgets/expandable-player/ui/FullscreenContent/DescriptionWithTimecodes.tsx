@@ -4,10 +4,6 @@ import { parseTimecodeSegments } from 'shared/lib/player'
 import { reportError } from 'shared/model/error-dialog'
 import { COLORS, FONT_SIZES } from 'shared/ui/theme'
 
-interface DescriptionWithTimecodesProps {
-  description: string
-}
-
 const TIMECODE_SEEK_ERROR_MESSAGE = 'Ошибка при перемотке аудио'
 
 const localStyles = StyleSheet.create({
@@ -23,7 +19,7 @@ const localStyles = StyleSheet.create({
   },
 })
 
-export const DescriptionWithTimecodes = ({ description }: DescriptionWithTimecodesProps) => {
+export const DescriptionWithTimecodes = ({ description }: { description: string }) => {
   const { seekTo } = usePlayer()
   const segments = parseTimecodeSegments(description)
 

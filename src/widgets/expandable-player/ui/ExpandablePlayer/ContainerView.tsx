@@ -13,24 +13,6 @@ import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomShee
 /** Consumer style must not carry geometry keys — enforced by compiler (Issue #63 invariant). */
 export type NonGeometricStyle = Omit<ViewStyle, 'bottom' | 'height' | 'left' | 'top' | 'width'>
 
-interface ContainerViewProps {
-  audio: AudioPlayerData
-  backgroundImageStyle: AnimatedStyle<ViewStyle>
-  closeFullscreen: () => void
-  containerStyle: AnimatedStyle<ViewStyle>
-  currentTheme: ThemeColors
-  expanded: boolean
-  fullStyle: AnimatedStyle<ViewStyle>
-  miniOverlay: ViewStyle
-  miniOverlayStyle: AnimatedStyle<ViewStyle>
-  onLayout: (event: LayoutChangeEvent) => void
-  panGesture: GestureType
-  playlistMenuComponent?: PlaylistMenuSlot
-  restingContainerStyle: ViewStyle
-  style?: StyleProp<NonGeometricStyle>
-  styles: ReturnType<typeof createStyles>
-}
-
 export const ContainerView = ({
   audio,
   backgroundImageStyle,
@@ -47,7 +29,23 @@ export const ContainerView = ({
   restingContainerStyle,
   style,
   styles,
-}: ContainerViewProps) => {
+}: {
+  audio: AudioPlayerData
+  backgroundImageStyle: AnimatedStyle<ViewStyle>
+  closeFullscreen: () => void
+  containerStyle: AnimatedStyle<ViewStyle>
+  currentTheme: ThemeColors
+  expanded: boolean
+  fullStyle: AnimatedStyle<ViewStyle>
+  miniOverlay: ViewStyle
+  miniOverlayStyle: AnimatedStyle<ViewStyle>
+  onLayout: (event: LayoutChangeEvent) => void
+  panGesture: GestureType
+  playlistMenuComponent?: PlaylistMenuSlot
+  restingContainerStyle: ViewStyle
+  style?: StyleProp<NonGeometricStyle>
+  styles: ReturnType<typeof createStyles>
+}) => {
   // FullscreenContent stays mounted through the collapse animation so the exit
   // fade is visible, then unmounts to stop its per-tick re-render storm (Issue #100).
   const isFullscreenContentMounted = useFullscreenContentMount(expanded)

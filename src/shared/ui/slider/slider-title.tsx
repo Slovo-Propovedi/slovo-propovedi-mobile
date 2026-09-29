@@ -5,12 +5,6 @@ import { PressableButton } from '../pressable-button'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { createSliderStyles as styles } from './slider.styles'
 
-interface SliderTitleProps {
-  fontSize: number
-  onPress?: (event: GestureResponderEvent) => void
-  title?: string
-}
-
 // Неразрывный пробел перед стрелкой: заголовок переносится на несколько строк,
 // но стрелка всегда приклеена к последнему слову и не уезжает на отдельную строку.
 const INLINE_ARROW_GAP = '\u00A0'
@@ -18,7 +12,15 @@ const INLINE_ARROW_GAP = '\u00A0'
 // Заголовок секции: текст переносится естественно на несколько строк, стрелка-
 // «показать все» рендерится инлайн внутри того же Text и приклеена к концу текста.
 // Pressable-обёртка даёт настоящую кнопку на web (Text с onPress — просто div).
-export const SliderTitle = ({ fontSize, onPress, title }: SliderTitleProps) => {
+export const SliderTitle = ({
+  fontSize,
+  onPress,
+  title,
+}: {
+  fontSize: number
+  onPress?: (event: GestureResponderEvent) => void
+  title?: string
+}) => {
   const { currentTheme } = useTheme()
   const sliderStyles = styles(currentTheme)
 

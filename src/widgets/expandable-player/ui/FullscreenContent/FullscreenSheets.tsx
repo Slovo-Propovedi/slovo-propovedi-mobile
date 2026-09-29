@@ -7,16 +7,6 @@ import {
 } from '../PlaylistBottomSheet/PlaylistBottomSheet'
 import { SoundSettingsBottomSheet } from '../SoundSettingsBottomSheet/SoundSettingsBottomSheet'
 
-interface FullscreenSheetsProps {
-  closePlaylist: () => void
-  closeSoundSettings: () => void
-  playlist: PlaylistData
-  playlistMenuComponent?: PlaylistMenuSlot
-  playlistSheetRef: RefObject<BottomSheet | null>
-  showPlaylist: boolean
-  showSoundSettings: boolean
-}
-
 // Bottom sheets layered above the fullscreen player; mounted conditionally so
 // opening stays a single entrance animation (see docs/features/player.md).
 export const FullscreenSheets = ({
@@ -27,7 +17,15 @@ export const FullscreenSheets = ({
   playlistSheetRef,
   showPlaylist,
   showSoundSettings,
-}: FullscreenSheetsProps) => (
+}: {
+  closePlaylist: () => void
+  closeSoundSettings: () => void
+  playlist: PlaylistData
+  playlistMenuComponent?: PlaylistMenuSlot
+  playlistSheetRef: RefObject<BottomSheet | null>
+  showPlaylist: boolean
+  showSoundSettings: boolean
+}) => (
   <>
     {showPlaylist && (
       <PlaylistBottomSheet

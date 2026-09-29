@@ -6,10 +6,6 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { type TrackToggleNotice, trackToggleNoticeAtom } from 'entities/player'
 import type { createStyles } from '../ExpandablePlayer/styles'
 
-interface BoundaryHintProps {
-  styles: ReturnType<typeof createStyles>
-}
-
 export const HINT_DURATION_MS = 2000
 const FADE_DURATION_MS = 200
 const STALE_NOTICE_MAX_AGE_MS = 5000
@@ -25,7 +21,7 @@ const noticeText = (notice: TrackToggleNotice): string => {
   return notice.boundary === 'first' ? FIRST_BOUNDARY_TEXT : LAST_BOUNDARY_TEXT
 }
 
-export const BoundaryHint = ({ styles }: BoundaryHintProps) => {
+export const BoundaryHint = ({ styles }: { styles: ReturnType<typeof createStyles> }) => {
   const [notice] = useAtom(trackToggleNoticeAtom)
   const [activeAt, setActiveAt] = useState<null | number>(null)
   const [visible, setVisible] = useState(false)

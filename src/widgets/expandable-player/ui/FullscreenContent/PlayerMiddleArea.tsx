@@ -4,15 +4,6 @@ import type { createStyles } from '../ExpandablePlayer/styles'
 import type { AudioPlayerData } from 'entities/sermon'
 import { DetailsOverlay } from './DetailsOverlay'
 
-interface PlayerMiddleAreaProps {
-  audio: AudioPlayerData
-  insetsTop: number
-  onCloseDetails: () => void
-  onTogglePlay: () => void
-  showDetails: boolean
-  styles: ReturnType<typeof createStyles>
-}
-
 export const PlayerMiddleArea = ({
   audio,
   insetsTop,
@@ -20,7 +11,14 @@ export const PlayerMiddleArea = ({
   onTogglePlay,
   showDetails,
   styles,
-}: PlayerMiddleAreaProps) =>
+}: {
+  audio: AudioPlayerData
+  insetsTop: number
+  onCloseDetails: () => void
+  onTogglePlay: () => void
+  showDetails: boolean
+  styles: ReturnType<typeof createStyles>
+}) =>
   showDetails ? (
     <DetailsOverlay audio={audio} styles={styles} insetsTop={insetsTop} onClose={onCloseDetails} />
   ) : (

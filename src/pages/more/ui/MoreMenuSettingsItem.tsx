@@ -5,21 +5,19 @@ import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { styles } from './styles'
 
-interface MoreMenuSettingsItemProps {
-  description?: string
-  icon?: keyof typeof Ionicons.glyphMap
-  onPress: () => void
-  style?: StyleProp<ViewStyle>
-  title: string
-}
-
 export const MoreMenuSettingsItem = ({
   description,
   icon,
   onPress,
   style,
   title,
-}: MoreMenuSettingsItemProps) => {
+}: {
+  description?: string
+  icon?: keyof typeof Ionicons.glyphMap
+  onPress: () => void
+  style?: StyleProp<ViewStyle>
+  title: string
+}) => {
   const { currentTheme } = useTheme()
 
   return (

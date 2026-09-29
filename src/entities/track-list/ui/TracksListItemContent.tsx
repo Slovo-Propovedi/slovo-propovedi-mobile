@@ -9,23 +9,24 @@ import { type ThemeColors } from 'shared/ui/theme'
 import { PlayingStatusOrChacheIcon } from './PlayingStatusOrChacheIcon'
 import { createTracksListStyles } from './styles'
 
-interface TracksListItemContentProps {
-  artwork?: null | string
-  dotsOnPress: () => void
-  isAudioPlaying: boolean
-  isCached: boolean
-  isDownloading: boolean
-  isPlaying: boolean
-  isQueued?: boolean
-  isSermonCachingEnabled: boolean
-  progress?: number
-  progressValue: number
-  subtitle?: string
-  theme: ThemeColors
-  title: string
-}
-
-export const TracksListItemContent = forwardRef<View, TracksListItemContentProps>(
+export const TracksListItemContent = forwardRef<
+  View,
+  {
+    artwork?: null | string
+    dotsOnPress: () => void
+    isAudioPlaying: boolean
+    isCached: boolean
+    isDownloading: boolean
+    isPlaying: boolean
+    isQueued?: boolean
+    isSermonCachingEnabled: boolean
+    progress?: number
+    progressValue: number
+    subtitle?: string
+    theme: ThemeColors
+    title: string
+  }
+>(
   (
     {
       artwork,

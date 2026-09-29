@@ -8,15 +8,13 @@ const NOT_NOW_TEXT = 'Не сейчас'
 const EXPLAINER_TEXT =
   'Чтобы приложение могло обновляться самостоятельно, разрешите установку из этого источника в настройках'
 
-interface UpdateDialogPermissionProps {
-  onClose: () => void
-  onOpenSettings: () => void
-}
-
 export const UpdateDialogPermission = ({
   onClose,
   onOpenSettings,
-}: UpdateDialogPermissionProps) => {
+}: {
+  onClose: () => void
+  onOpenSettings: () => void
+}) => {
   const { currentTheme } = useTheme()
 
   return (

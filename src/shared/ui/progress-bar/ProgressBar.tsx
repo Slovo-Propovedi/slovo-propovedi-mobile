@@ -6,11 +6,7 @@ const TRACK_OPACITY = 0.3
 const TRACK_BOTTOM_OFFSET = 4
 const TRACK_HORIZONTAL_INSET = 10
 
-interface ProgressBarProps {
-  progress: number
-}
-
-export const ProgressBar = ({ progress }: ProgressBarProps) => {
+export const ProgressBar = ({ progress }: { progress: number }) => {
   const { currentTheme } = useTheme()
   const clampedProgress = Math.min(Math.max(progress, 0), 1)
 

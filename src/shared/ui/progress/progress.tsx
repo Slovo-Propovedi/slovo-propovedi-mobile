@@ -5,21 +5,19 @@ import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { TouchableButton } from '../touchable-button'
 
-interface ProgressProps {
-  loaderValue?: Animated.Value
-  onChangeProgressValue?: (newProgressValue: number) => void
-  progress: number
-  style?: StyleProp<ViewStyle>
-  total: number
-}
-
 export const Progress = ({
   loaderValue: loaderValueInitial,
   onChangeProgressValue,
   progress,
   style,
   total,
-}: ProgressProps) => {
+}: {
+  loaderValue?: Animated.Value
+  onChangeProgressValue?: (newProgressValue: number) => void
+  progress: number
+  style?: StyleProp<ViewStyle>
+  total: number
+}) => {
   const { currentTheme } = useTheme()
   const [loaderValue] = useState(() => loaderValueInitial || new Animated.Value(0))
 

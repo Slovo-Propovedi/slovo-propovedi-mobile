@@ -7,16 +7,6 @@ import { type ThemeColors } from 'shared/ui/theme'
 import { createHeaderStyles } from './headerStyles'
 import { QueueControls } from './QueueControls'
 
-interface PlaylistHeaderProps {
-  artwork: null | string | undefined
-  description?: string
-  headerImageHeight: number
-  imageOpacityStyle: ReturnType<typeof useAnimatedStyle>
-  onPressPlayAll: () => void
-  theme: ThemeColors
-  title: string
-}
-
 export const PlaylistHeader = ({
   artwork,
   description,
@@ -25,7 +15,15 @@ export const PlaylistHeader = ({
   onPressPlayAll,
   theme,
   title,
-}: PlaylistHeaderProps) => {
+}: {
+  artwork: null | string | undefined
+  description?: string
+  headerImageHeight: number
+  imageOpacityStyle: ReturnType<typeof useAnimatedStyle>
+  onPressPlayAll: () => void
+  theme: ThemeColors
+  title: string
+}) => {
   const headerStyles = createHeaderStyles(theme)
   const blurTargetRef = useRef<View>(null)
 

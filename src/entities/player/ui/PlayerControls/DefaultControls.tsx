@@ -7,18 +7,6 @@ import { PlayerControlButtonType } from '../control-button/control-button.types'
 import { getExcludedButtons } from '../getExcludedButtons'
 import { playerControlsStyles as styles } from './PlayerControls.styles'
 
-interface DefaultControlsProps {
-  excludeButtons?: ControlsNames[]
-  hasCurrentAudio: boolean
-  isBuffering: boolean
-  isPlaying: boolean
-  isTrackButtonDisabled: boolean
-  size: PlayerControlsSize
-  style?: StyleProp<ViewStyle>
-  togglePlay: () => Promise<void>
-  toggleTrack: (dir: 'next' | 'prev') => Promise<void>
-}
-
 export const DefaultControls = ({
   excludeButtons,
   hasCurrentAudio,
@@ -29,7 +17,17 @@ export const DefaultControls = ({
   style,
   togglePlay,
   toggleTrack,
-}: DefaultControlsProps) => {
+}: {
+  excludeButtons?: ControlsNames[]
+  hasCurrentAudio: boolean
+  isBuffering: boolean
+  isPlaying: boolean
+  isTrackButtonDisabled: boolean
+  size: PlayerControlsSize
+  style?: StyleProp<ViewStyle>
+  togglePlay: () => Promise<void>
+  toggleTrack: (dir: 'next' | 'prev') => Promise<void>
+}) => {
   const { currentTheme } = useTheme()
   const excludedButtons = getExcludedButtons(excludeButtons)
   const showSpinner = isBuffering

@@ -3,10 +3,6 @@ import { type PlaylistData } from 'entities/playlist'
 import { PlaylistHeaderMenu } from './PlaylistHeaderMenu'
 import { buildTracksListData } from './usePlaylistNavigationOptions'
 
-interface PlaylistSheetMenuProps {
-  playlist: PlaylistData
-}
-
 /**
  * Mounts the playlist page header menu inside the player's playlist sheet.
  * The sheet lives in widgets, which may not import pages — the app layer
@@ -14,7 +10,7 @@ interface PlaylistSheetMenuProps {
  * @param root0 - Menu slot properties.
  * @param root0.playlist - Playlist whose header menu is opened.
  */
-export const PlaylistSheetMenu = ({ playlist }: PlaylistSheetMenuProps) => {
+export const PlaylistSheetMenu = ({ playlist }: { playlist: PlaylistData }) => {
   const tracksData = useMemo(
     () => buildTracksListData(playlist.sermons, playlist.artwork),
     [playlist],

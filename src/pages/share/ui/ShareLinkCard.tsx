@@ -5,17 +5,13 @@ import { useTheme } from 'shared/ui/theme'
 import { CopyLinkButton } from './CopyLinkButton'
 import { styles } from './styles'
 
-interface ShareLinkCardProps {
-  url: string
-}
-
 const openUrl = (url: string) => {
   Linking.openURL(url).catch((error: unknown) => {
     console.error('[share] Failed to open URL:', error)
   })
 }
 
-export const ShareLinkCard = ({ url }: ShareLinkCardProps) => {
+export const ShareLinkCard = ({ url }: { url: string }) => {
   const { currentTheme } = useTheme()
 
   return (

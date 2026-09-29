@@ -10,15 +10,13 @@ import type { ColorValue } from 'react-native'
 // `fallbackRoute` (the parent of the sub-screen) when there is nowhere to go back to.
 const DEFAULT_FALLBACK_ROUTE = '/more'
 
-interface HeaderBackButtonProps {
-  fallbackRoute?: Href
-  tintColor?: ColorValue
-}
-
 export const HeaderBackButton = ({
   fallbackRoute = DEFAULT_FALLBACK_ROUTE,
   tintColor,
-}: HeaderBackButtonProps) => {
+}: {
+  fallbackRoute?: Href
+  tintColor?: ColorValue
+}) => {
   const handlePress = () => {
     if (router.canGoBack()) {
       router.back()

@@ -3,21 +3,19 @@ import type { StyleProp, TextStyle } from 'react-native'
 import { MarqueeText } from './marquee-text/marquee-text'
 import { useTheme } from './theme/ThemeContext/useTheme'
 
-interface MovingTextProps {
-  autoStart?: boolean
-  centerWhenStatic?: boolean
-  style?: StyleProp<TextStyle>
-  testID?: string
-  text: string
-}
-
 const MovingTextComponent = ({
   autoStart,
   centerWhenStatic,
   style,
   testID,
   text,
-}: MovingTextProps) => {
+}: {
+  autoStart?: boolean
+  centerWhenStatic?: boolean
+  style?: StyleProp<TextStyle>
+  testID?: string
+  text: string
+}) => {
   const { currentTheme } = useTheme()
 
   return (

@@ -13,11 +13,7 @@ import {
 import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
 
-interface DynamicColorsItemProps {
-  style?: StyleProp<ViewStyle>
-}
-
-export const DynamicColorsItem = ({ style }: DynamicColorsItemProps) => {
+export const DynamicColorsItem = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const [enabled] = useAtom(dynamicColorsEnabledAtom)
   const setEnabled = useAction(setDynamicColors)
   const { currentTheme } = useTheme()

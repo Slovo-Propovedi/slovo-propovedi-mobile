@@ -5,16 +5,6 @@ import { createProgressBarStyles, THUMB_SIZE } from './PlayerProgressBar.styles'
 import { useProgressPanResponder } from './useProgressPanResponder'
 import { useSeekHandling } from './useSeekHandling'
 
-interface PlayerProgressBarProps {
-  downloadProgress?: number
-  duration: number
-  hideTime?: boolean
-  onPreviewChange?: (position: null | number) => void
-  onSeek?: (position: number) => void
-  position: number
-  style?: StyleProp<ViewStyle>
-}
-
 export const PlayerProgressBar = ({
   downloadProgress = 0,
   duration,
@@ -23,7 +13,15 @@ export const PlayerProgressBar = ({
   onSeek,
   position,
   style,
-}: PlayerProgressBarProps) => {
+}: {
+  downloadProgress?: number
+  duration: number
+  hideTime?: boolean
+  onPreviewChange?: (position: null | number) => void
+  onSeek?: (position: number) => void
+  position: number
+  style?: StyleProp<ViewStyle>
+}) => {
   const { currentTheme } = useTheme()
   const progressBarStyles = createProgressBarStyles(currentTheme)
 

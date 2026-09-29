@@ -5,22 +5,20 @@ import { COLORS } from 'shared/ui/theme/colors'
 import { AnimatedSoundBars } from './AnimatedSoundBars'
 import { createTracksListStyles } from './styles'
 
-interface PlayingStatusOrCacheIconProps {
-  isAudioPlaying: boolean
-  isPlaying: boolean
-  isQueued?: boolean
-  /** Global sermon-caching setting; when off, no cloud/clock indicator is drawn. */
-  isSermonCachingEnabled: boolean
-  theme: ThemeColors
-}
-
 export const PlayingStatusOrChacheIcon = ({
   isAudioPlaying,
   isPlaying,
   isQueued = false,
   isSermonCachingEnabled,
   theme,
-}: PlayingStatusOrCacheIconProps) => {
+}: {
+  isAudioPlaying: boolean
+  isPlaying: boolean
+  isQueued?: boolean
+  /** Global sermon-caching setting; when off, no cloud/clock indicator is drawn. */
+  isSermonCachingEnabled: boolean
+  theme: ThemeColors
+}) => {
   const tracksListStyles = createTracksListStyles(theme)
   const icon = (() => {
     if (isPlaying && isAudioPlaying) return <AnimatedSoundBars />

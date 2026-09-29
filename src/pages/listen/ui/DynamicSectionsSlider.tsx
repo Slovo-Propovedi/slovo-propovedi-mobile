@@ -16,11 +16,7 @@ import { FirstSectionRow } from './FirstSectionRow'
 import { renderSection } from './renderSection'
 import { SectionsSkeleton } from './skeleton'
 
-interface DynamicSectionsSliderProps {
-  leadingElement?: ReactElement
-}
-
-export const DynamicSectionsSlider = ({ leadingElement }: DynamicSectionsSliderProps) => {
+export const DynamicSectionsSlider = ({ leadingElement }: { leadingElement?: ReactElement }) => {
   const { navigateToPlaylist, navigateToPlaylistList } = useListenNavigation()
   const [sections] = useAtom(dynamicSectionsAtom)
   const [isLoading] = useAtom(isLoadingSectionsAtom)

@@ -6,15 +6,6 @@ import { useTheme } from '../theme/ThemeContext/useTheme'
 
 const ImageWithChildren = Image as React.ComponentType<{ children?: ReactNode } & ImageProps>
 
-interface CoverImageProps {
-  children?: ReactNode
-  eager?: boolean
-  imageStyle?: StyleProp<ImageStyle>
-  style?: StyleProp<ViewStyle>
-  testID?: string
-  uri?: null | string
-}
-
 export const CoverImage = ({
   children,
   eager = false,
@@ -22,7 +13,14 @@ export const CoverImage = ({
   style,
   testID,
   uri,
-}: CoverImageProps) => {
+}: {
+  children?: ReactNode
+  eager?: boolean
+  imageStyle?: StyleProp<ImageStyle>
+  style?: StyleProp<ViewStyle>
+  testID?: string
+  uri?: null | string
+}) => {
   const { currentTheme } = useTheme()
 
   return (

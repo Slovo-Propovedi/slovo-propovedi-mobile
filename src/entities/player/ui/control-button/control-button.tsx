@@ -11,17 +11,6 @@ import { IconButton } from 'shared/ui/icon-button'
 import { COLORS } from 'shared/ui/theme/colors'
 import { PlayerControlButtonType } from './control-button.types'
 
-interface PlayerControlButtonProps {
-  color?: OpaqueColorValue | string
-  isDisabled?: boolean | null
-  onLongPress?: (event: GestureResponderEvent) => void
-  onPress?: (event: GestureResponderEvent) => void
-  onPressOut?: (event: GestureResponderEvent) => void
-  size?: number
-  style?: StyleProp<ViewStyle>
-  type: PlayerControlButtonType
-}
-
 const getControlLabel = (type: PlayerControlButtonType): string =>
   match(type)
     .with(PlayerControlButtonType.Next, () => 'Следующая проповедь')
@@ -39,7 +28,16 @@ export const PlayerControlButton = ({
   size = 24,
   style,
   type,
-}: PlayerControlButtonProps) => (
+}: {
+  color?: OpaqueColorValue | string
+  isDisabled?: boolean | null
+  onLongPress?: (event: GestureResponderEvent) => void
+  onPress?: (event: GestureResponderEvent) => void
+  onPressOut?: (event: GestureResponderEvent) => void
+  size?: number
+  style?: StyleProp<ViewStyle>
+  type: PlayerControlButtonType
+}) => (
   <IconButton
     style={style}
     onPress={onPress}

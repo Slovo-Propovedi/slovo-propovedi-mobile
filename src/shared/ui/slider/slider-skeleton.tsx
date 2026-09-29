@@ -13,17 +13,6 @@ import {
 } from './slider-item/slider-item.types'
 import { getItemsByRows, getMarginBottom } from './slider-skeleton.lib'
 
-interface SliderSkeletonProps {
-  borderRadius?: boolean
-  itemsCount?: number
-  itemsRows?: number
-  itemsSize?: SliderItemSize
-  style?: StyleProp<ViewStyle>
-  titleFontSize?: number
-  transform?: SliderItemTransform
-  whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
-}
-
 export const SliderSkeleton = ({
   borderRadius = false,
   itemsCount = 4,
@@ -33,7 +22,16 @@ export const SliderSkeleton = ({
   titleFontSize = FONT_SIZES.h2,
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
-}: SliderSkeletonProps) => {
+}: {
+  borderRadius?: boolean
+  itemsCount?: number
+  itemsRows?: number
+  itemsSize?: SliderItemSize
+  style?: StyleProp<ViewStyle>
+  titleFontSize?: number
+  transform?: SliderItemTransform
+  whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
+}) => {
   const { currentTheme } = useTheme()
   const { pulseStyle } = useSkeletonPulse()
   const marginBottom = getMarginBottom(itemsSize, titleFontSize)

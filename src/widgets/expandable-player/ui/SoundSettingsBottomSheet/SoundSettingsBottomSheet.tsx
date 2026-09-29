@@ -9,11 +9,7 @@ import { SoundSheetBackdrop } from './SoundSheetBackdrop'
 const TITLE = 'Настройки звука'
 const CLOSED_INDEX = -1
 
-interface SoundSettingsBottomSheetProps {
-  onClose: () => void
-}
-
-const SoundSettingsBottomSheetComponent = ({ onClose }: SoundSettingsBottomSheetProps) => {
+const SoundSettingsBottomSheetComponent = ({ onClose }: { onClose: () => void }) => {
   const { currentTheme } = useTheme()
   const sheetRef = useRef<BottomSheet>(null)
   // Snap detents + safe-area handling shared with the playlist sheet.

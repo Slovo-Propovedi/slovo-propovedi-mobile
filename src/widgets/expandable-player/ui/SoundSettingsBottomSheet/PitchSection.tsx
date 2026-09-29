@@ -6,19 +6,17 @@ import { SectionHeader } from './SectionHeader'
 
 const PITCH_LABEL = 'Высота тона'
 
-interface PitchSectionProps {
-  onPitchApply: (pitch: number) => void
-  onPitchChange: (pitch: number) => void
-  onReset: () => void
-  pitch: number
-}
-
 export const PitchSection = ({
   onPitchApply,
   onPitchChange,
   onReset,
   pitch,
-}: PitchSectionProps) => (
+}: {
+  onPitchApply: (pitch: number) => void
+  onPitchChange: (pitch: number) => void
+  onReset: () => void
+  pitch: number
+}) => (
   <View style={styles.section}>
     <SectionHeader onReset={onReset} title={PITCH_LABEL} value={formatPlaybackRate(pitch)} />
     <ValueSlider

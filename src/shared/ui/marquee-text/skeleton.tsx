@@ -4,17 +4,15 @@ import { useSkeletonPulse } from '../skeleton/useSkeletonPulse'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, RADIUSES } from '../theme/themed'
 
-interface MarqueeTextSkeletonProps {
-  fontSize?: number
-  style?: StyleProp<ViewStyle>
-  testID?: string
-}
-
 export const MarqueeTextSkeleton = ({
   fontSize = FONT_SIZES.base,
   style,
   testID,
-}: MarqueeTextSkeletonProps) => {
+}: {
+  fontSize?: number
+  style?: StyleProp<ViewStyle>
+  testID?: string
+}) => {
   const { currentTheme } = useTheme()
   const { pulseStyle } = useSkeletonPulse()
 

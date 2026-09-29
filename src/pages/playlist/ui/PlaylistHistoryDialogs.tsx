@@ -10,15 +10,6 @@ const REMOVE_MESSAGE =
   'Весь прогресс прослушивания проповедей этого плейлиста будет удалён из истории.'
 const REMOVE_CONFIRM_TEXT = 'Удалить'
 
-interface PlaylistHistoryDialogsProps {
-  markDialogVisible: boolean
-  onMarkCancel: () => void
-  onMarkConfirm: () => void
-  onRemoveCancel: () => void
-  onRemoveConfirm: () => void
-  removeDialogVisible: boolean
-}
-
 export const PlaylistHistoryDialogs = ({
   markDialogVisible,
   onMarkCancel,
@@ -26,7 +17,14 @@ export const PlaylistHistoryDialogs = ({
   onRemoveCancel,
   onRemoveConfirm,
   removeDialogVisible,
-}: PlaylistHistoryDialogsProps) => {
+}: {
+  markDialogVisible: boolean
+  onMarkCancel: () => void
+  onMarkConfirm: () => void
+  onRemoveCancel: () => void
+  onRemoveConfirm: () => void
+  removeDialogVisible: boolean
+}) => {
   const { currentTheme } = useTheme()
 
   return (

@@ -12,19 +12,23 @@ export interface MenuItem {
   text: string
 }
 
-interface MenuDropdownProps {
+const ICON_SIZE = 18
+const ICON_MARGIN_RIGHT = 8
+const MENU_MIN_WIDTH = 180
+
+export const MenuDropdown = ({
+  anchor,
+  anchorRef,
+  items,
+  onClose,
+  visible,
+}: {
   anchor: AnchorRect | null
   anchorRef?: RefObject<null | View>
   items: ReadonlyArray<MenuItem>
   onClose: () => void
   visible: boolean
-}
-
-const ICON_SIZE = 18
-const ICON_MARGIN_RIGHT = 8
-const MENU_MIN_WIDTH = 180
-
-export const MenuDropdown = ({ anchor, anchorRef, items, onClose, visible }: MenuDropdownProps) => {
+}) => {
   const { currentTheme } = useTheme()
 
   // Esc handling lives in the AnchoredDropdown primitive (shared by all menus).

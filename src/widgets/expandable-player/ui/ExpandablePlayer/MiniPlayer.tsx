@@ -20,19 +20,6 @@ const AnimatedPressable = Animated.createAnimatedComponent(PressableButton)
 // role. Same container pattern as TracksListItemBase ROW_ACCESSIBILITY_ROLE.
 const ROW_ACCESSIBILITY_ROLE = Platform.OS === 'web' ? 'link' : 'button'
 
-interface MiniPlayerProps {
-  audio: AudioPlayerData
-  currentTheme: ThemeColors
-  miniPan: GestureType
-  miniStyle: AnimatedStyle<ViewStyle>
-  miniStyles: ReturnType<typeof createMiniStyles>
-  onPlayPause: () => Promise<void>
-  onPress: () => void
-  playing: boolean
-  playlist: null | PlaylistData
-  showSpinner: boolean
-}
-
 export const MiniPlayer = ({
   audio,
   currentTheme,
@@ -44,7 +31,18 @@ export const MiniPlayer = ({
   playing,
   playlist,
   showSpinner,
-}: MiniPlayerProps) => {
+}: {
+  audio: AudioPlayerData
+  currentTheme: ThemeColors
+  miniPan: GestureType
+  miniStyle: AnimatedStyle<ViewStyle>
+  miniStyles: ReturnType<typeof createMiniStyles>
+  onPlayPause: () => Promise<void>
+  onPress: () => void
+  playing: boolean
+  playlist: null | PlaylistData
+  showSpinner: boolean
+}) => {
   const subtitle = getPlayerSubtitle(audio, playlist)
 
   return (

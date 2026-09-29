@@ -5,15 +5,16 @@ import { type Blob, BLOB_R, type GlowLayerAnimated, ORBIT } from './glowConfig'
 
 const AnimatedG = Animated.createAnimatedComponent(G)
 
-interface GlowLayerProps {
-  animatedProps: Partial<GlowLayerAnimated>
-  blobs: Blob[]
-}
-
 // Один вращающийся слой свечения — группа `<G>` с набором мягких клякс.
 // Координаты клякс отсчитываются от центра холста (0, 0) — за центрирование
 // отвечает `viewBox` в GlowRing, поэтому rotate/scale группы идут вокруг центра.
-export const GlowLayer = ({ animatedProps, blobs }: GlowLayerProps) => (
+export const GlowLayer = ({
+  animatedProps,
+  blobs,
+}: {
+  animatedProps: Partial<GlowLayerAnimated>
+  blobs: Blob[]
+}) => (
   // Каст: типы reanimated для `animatedProps` SVG-компонентов не моделируют
   // transform-массив, хотя рантайм его принимает.
   <AnimatedG animatedProps={animatedProps as ComponentProps<typeof AnimatedG>['animatedProps']}>

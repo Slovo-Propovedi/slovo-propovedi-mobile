@@ -5,21 +5,19 @@ import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 
-interface ConfirmDialogButtonProps {
-  color?: ColorValue
-  icon?: ReactNode
-  isConfirm?: boolean
-  onPress: () => void
-  text: string
-}
-
 export const ConfirmDialogButton = ({
   color,
   icon,
   isConfirm,
   onPress,
   text,
-}: ConfirmDialogButtonProps) => {
+}: {
+  color?: ColorValue
+  icon?: ReactNode
+  isConfirm?: boolean
+  onPress: () => void
+  text: string
+}) => {
   const { currentTheme } = useTheme()
 
   if (!onPress || !text) return null

@@ -2,19 +2,17 @@ import { type ReactElement } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { INDENTS } from 'shared/ui/theme'
 
-interface FirstSectionRowProps {
-  button: ReactElement
-  section: ReactElement
-  sectionMinWidth?: number
-  stacked?: boolean
-}
-
 export const FirstSectionRow = ({
   button,
   section,
   sectionMinWidth,
   stacked,
-}: FirstSectionRowProps) => {
+}: {
+  button: ReactElement
+  section: ReactElement
+  sectionMinWidth?: number
+  stacked?: boolean
+}) => {
   // В stacked-режиме секция идёт на всю ширину под кнопкой — без фиксированной ширины
   // и без flex: 1 (иначе в колонке flex: 1 занял бы вертикальное место).
   // В row-режиме секция гарантирует минимум одну полную карточку (minWidth), но растёт

@@ -4,15 +4,6 @@ import { useTheme } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
 import { styles } from './styles'
 
-interface TabButtonProps {
-  isActive: boolean
-  isDisabled?: boolean
-  onLayout: (layout: { width: number; x: number }) => void
-  onPress: () => void
-  routeKey: string
-  routeName: string
-}
-
 export const TabButton = ({
   isActive,
   isDisabled,
@@ -20,7 +11,14 @@ export const TabButton = ({
   onPress,
   routeKey,
   routeName,
-}: TabButtonProps) => {
+}: {
+  isActive: boolean
+  isDisabled?: boolean
+  onLayout: (layout: { width: number; x: number }) => void
+  onPress: () => void
+  routeKey: string
+  routeName: string
+}) => {
   const { currentTheme } = useTheme()
   const color = isActive ? currentTheme.primary : currentTheme.textMuted
 

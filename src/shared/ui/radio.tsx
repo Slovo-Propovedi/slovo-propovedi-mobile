@@ -1,14 +1,12 @@
 import { Text, View } from 'react-native'
 import { TouchableButton } from './touchable-button'
 
-interface RadioButtonProps {
+export const RadioButton = (props: {
   disabled?: boolean
   label: string
   onValueChange?: (selected: boolean) => void
   selected: boolean
-}
-
-export const RadioButton = (props: RadioButtonProps) => {
+}) => {
   const { disabled, label, onValueChange, selected } = props
 
   const handleOnPress = () => {

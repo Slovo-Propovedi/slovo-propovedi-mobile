@@ -14,19 +14,17 @@ import { PlayerMiddleArea } from './PlayerMiddleArea'
 import { useFullscreenHandlers } from './useFullscreenHandlers'
 import { usePlayerKeyboardSeek } from './usePlayerKeyboardSeek'
 
-interface FullscreenContentProps {
-  fullStyle: AnimatedStyle<ViewStyle>
-  onClose: () => void
-  playlistMenuComponent?: PlaylistMenuSlot
-  styles: ReturnType<typeof createStyles>
-}
-
 export const FullscreenContent = ({
   fullStyle,
   onClose,
   playlistMenuComponent,
   styles,
-}: FullscreenContentProps) => {
+}: {
+  fullStyle: AnimatedStyle<ViewStyle>
+  onClose: () => void
+  playlistMenuComponent?: PlaylistMenuSlot
+  styles: ReturnType<typeof createStyles>
+}) => {
   const insets = useSafeAreaInsets()
   const {
     audio,

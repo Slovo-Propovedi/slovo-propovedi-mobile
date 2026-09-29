@@ -7,19 +7,17 @@ const CONFIRM_TEXT = 'Обновить'
 const CANCEL_TEXT = 'Не обновлять'
 const RELEASES_LINK_TEXT = 'Все версии обновлений'
 
-interface UpdateDialogConfirmProps {
-  latestVersion: null | string
-  onCancel: () => void
-  onConfirm: () => void
-  onOpenReleases: () => void
-}
-
 export const UpdateDialogConfirm = ({
   latestVersion,
   onCancel,
   onConfirm,
   onOpenReleases,
-}: UpdateDialogConfirmProps) => {
+}: {
+  latestVersion: null | string
+  onCancel: () => void
+  onConfirm: () => void
+  onOpenReleases: () => void
+}) => {
   const { currentTheme } = useTheme()
 
   return (

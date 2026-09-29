@@ -1,14 +1,17 @@
 import { Animated } from 'react-native'
 import type { ColorValue } from 'react-native'
 
-interface TabIndicatorProps {
+export const TabIndicator = ({
+  color,
+  opacity,
+  position,
+  width,
+}: {
   color: ColorValue
   opacity: Animated.Value
   position: Animated.Value
   width: Animated.Value
-}
-
-export const TabIndicator = ({ color, opacity, position, width }: TabIndicatorProps) => (
+}) => (
   <Animated.View
     style={{
       backgroundColor: color,

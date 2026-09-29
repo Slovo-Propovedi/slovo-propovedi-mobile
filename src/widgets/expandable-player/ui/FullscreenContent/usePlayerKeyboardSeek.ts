@@ -10,14 +10,6 @@ import {
   type SeekDirection,
 } from './keyboardTargetGuards'
 
-interface PlayerKeyboardSeekProps {
-  collapsePlayer: () => void
-  startSeek: (direction: SeekDirection) => void
-  stopSeek: () => void
-  tapSeek: (direction: SeekDirection) => void
-  togglePlay: () => void
-}
-
 const KEY_HOLD_DELAY_MS = 500
 
 const SPACE_KEY = ' '
@@ -28,7 +20,13 @@ export const usePlayerKeyboardSeek = ({
   stopSeek,
   tapSeek,
   togglePlay,
-}: PlayerKeyboardSeekProps) => {
+}: {
+  collapsePlayer: () => void
+  startSeek: (direction: SeekDirection) => void
+  stopSeek: () => void
+  tapSeek: (direction: SeekDirection) => void
+  togglePlay: () => void
+}) => {
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const activeDirectionRef = useRef<null | SeekDirection>(null)
   const holdTimeoutRef = useRef<null | ReturnType<typeof setTimeout>>(null)

@@ -6,10 +6,6 @@ import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, useTheme } from 'shared/ui/theme'
 import { type RepeatMode, repeatModeAtom, setRepeatModeAction } from '../model'
 
-interface PlayerRepeatToggleProps {
-  style?: StyleProp<ViewStyle>
-}
-
 const REPEAT_MODES: RepeatMode[] = ['off', 'track', 'queue']
 
 interface IconConfig {
@@ -39,7 +35,7 @@ const getRepeatLabel = (mode: RepeatMode): string => {
   }
 }
 
-export const PlayerRepeatToggle = ({ style }: PlayerRepeatToggleProps) => {
+export const PlayerRepeatToggle = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { currentTheme } = useTheme()
   const [repeatMode] = useAtom(repeatModeAtom)
   const setRepeatMode = useAction(setRepeatModeAction)

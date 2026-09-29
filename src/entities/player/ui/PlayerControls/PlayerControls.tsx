@@ -13,18 +13,6 @@ import { usePlayerControlSizes } from './usePlayerControlSizes'
 import { usePlayerToggleTrack } from './usePlayerToggleTrack'
 import { usePlayerTrackState } from './usePlayerTrackState'
 
-interface PlayerControlsProps {
-  currentAudio: AudioPlayerData | null
-  currentPlaylist: null | PlaylistData
-  excludeButtons?: ControlsNames[]
-  onLongPressSeek?: (direction: 'backward' | 'forward') => void
-  onPressOutSeek?: () => void
-  setCurrentAudio: (audio: AudioPlayerData) => Promise<unknown>
-  size?: PlayerControlsSize
-  style?: StyleProp<ViewStyle>
-  variant?: PlayerControlsVariant
-}
-
 type PlayerControlsVariant = 'default' | 'fullscreen'
 
 export const PlayerControls = ({
@@ -37,7 +25,17 @@ export const PlayerControls = ({
   size = PlayerControlsSize.Large,
   style,
   variant = 'default',
-}: PlayerControlsProps) => {
+}: {
+  currentAudio: AudioPlayerData | null
+  currentPlaylist: null | PlaylistData
+  excludeButtons?: ControlsNames[]
+  onLongPressSeek?: (direction: 'backward' | 'forward') => void
+  onPressOutSeek?: () => void
+  setCurrentAudio: (audio: AudioPlayerData) => Promise<unknown>
+  size?: PlayerControlsSize
+  style?: StyleProp<ViewStyle>
+  variant?: PlayerControlsVariant
+}) => {
   const {
     getStatus,
     play,

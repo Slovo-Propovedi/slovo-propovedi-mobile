@@ -8,11 +8,6 @@ import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 
 export const ALBUM_ART_SIZE = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25
 
-interface PlaylistListItemProps {
-  onPress: () => void
-  playlist: PlaylistData
-}
-
 const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
     albumArt: {
@@ -48,7 +43,13 @@ const createStyles = (theme: ThemeColors) =>
     },
   })
 
-export const PlaylistListItem = ({ onPress, playlist }: PlaylistListItemProps) => {
+export const PlaylistListItem = ({
+  onPress,
+  playlist,
+}: {
+  onPress: () => void
+  playlist: PlaylistData
+}) => {
   const { currentTheme } = useTheme()
   const styles = createStyles(currentTheme)
 

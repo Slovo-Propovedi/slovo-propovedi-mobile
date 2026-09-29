@@ -4,11 +4,7 @@ import { INDENTS, setThemeMode, themeModeAtom, useTheme } from 'shared/ui/theme'
 import { themeOptions } from './themeOptions'
 import { ThemeSelectorOption } from './ThemeSelectorOption'
 
-interface ThemeSelectorProps {
-  onSelect?: () => void
-}
-
-export const ThemeSelector = ({ onSelect }: ThemeSelectorProps) => {
+export const ThemeSelector = ({ onSelect }: { onSelect?: () => void }) => {
   const [themeMode] = useAtom(themeModeAtom)
   const setThemeModeAction = useAction(setThemeMode)
   const { currentTheme } = useTheme()

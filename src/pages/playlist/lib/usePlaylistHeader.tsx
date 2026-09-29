@@ -5,12 +5,6 @@ import { useCollapsingNavbarDriver } from 'shared/ui/collapsing-navbar-driver'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import type { SharedValue } from 'react-native-reanimated'
 
-interface UsePlaylistHeaderProps {
-  scrollY: SharedValue<number>
-  title: string
-  titleAppearThreshold: number
-}
-
 // Navbar bg darkens over the last 80px before the title-appear threshold (cover-screen darkening window).
 const DARKEN_START_OFFSET = 80
 const ICON_DARK_THRESHOLD = 0.7
@@ -20,7 +14,11 @@ export const usePlaylistHeader = ({
   scrollY,
   title,
   titleAppearThreshold,
-}: UsePlaylistHeaderProps) => {
+}: {
+  scrollY: SharedValue<number>
+  title: string
+  titleAppearThreshold: number
+}) => {
   const { currentTheme, isLight } = useTheme()
 
   // Bridge the plain-number threshold into SharedValues consumed by the shared driver.

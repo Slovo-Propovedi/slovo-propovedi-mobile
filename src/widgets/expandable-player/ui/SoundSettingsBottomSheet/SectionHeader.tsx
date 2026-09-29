@@ -5,13 +5,15 @@ import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 const RESET_TEXT = 'Сбросить'
 const RESET_LABEL_PREFIX = 'Сбросить'
 
-interface SectionHeaderProps {
+export const SectionHeader = ({
+  onReset,
+  title,
+  value,
+}: {
   onReset?: () => void
   title: string
   value?: string
-}
-
-export const SectionHeader = ({ onReset, title, value }: SectionHeaderProps) => {
+}) => {
   const { currentTheme } = useTheme()
 
   return (

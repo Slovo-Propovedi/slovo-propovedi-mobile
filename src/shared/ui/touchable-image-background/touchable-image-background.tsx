@@ -9,15 +9,6 @@ import {
 import { CoverImage } from '../cover-image'
 import { TouchableButton } from '../touchable-button'
 
-interface TouchableImageBackgroundProps {
-  children: ReactNode
-  imageStyle?: StyleProp<ImageStyle>
-  onPress?: (event: GestureResponderEvent) => void
-  previewSrc: string
-  style?: StyleProp<ViewStyle>
-  testID?: string
-}
-
 export const TouchableImageBackground = ({
   children,
   imageStyle,
@@ -25,7 +16,14 @@ export const TouchableImageBackground = ({
   previewSrc,
   style,
   testID,
-}: TouchableImageBackgroundProps) => (
+}: {
+  children: ReactNode
+  imageStyle?: StyleProp<ImageStyle>
+  onPress?: (event: GestureResponderEvent) => void
+  previewSrc: string
+  style?: StyleProp<ViewStyle>
+  testID?: string
+}) => (
   <TouchableButton testID={testID} onPress={onPress} activeOpacity={0.8}>
     <CoverImage
       uri={previewSrc}

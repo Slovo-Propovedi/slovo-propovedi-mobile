@@ -13,12 +13,13 @@ const getStatusText = (updateState: UpdateState, progress: number): string => {
   return `${DOWNLOADING_TEMPLATE}${Math.round(progress)}%`
 }
 
-interface UpdateDialogProgressProps {
+export const UpdateDialogProgress = ({
+  progress,
+  updateState,
+}: {
   progress: number
   updateState: UpdateState
-}
-
-export const UpdateDialogProgress = ({ progress, updateState }: UpdateDialogProgressProps) => {
+}) => {
   const { currentTheme } = useTheme()
   const clampedProgress = Math.min(Math.max(progress, 0), 100)
 

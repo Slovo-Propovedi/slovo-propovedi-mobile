@@ -8,16 +8,6 @@ import { useTheme } from 'shared/ui/theme'
 import type { PlaybackRate } from 'entities/player'
 import { styles } from './PlayerMenu.styles'
 
-interface PlayerMenuItemsProps {
-  isCached?: boolean
-  onDetails: () => void
-  onOpenSoundSettings: () => void
-  onShowSpeed: () => void
-  onToggleCache: () => void
-  rate: PlaybackRate
-  visualState: TrackCacheVisualState
-}
-
 const ADD_TO_OFFLINE_TEXT = 'Добавить в офлайн'
 const REMOVE_CACHE_TEXT = 'Удалить из офлайн'
 const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
@@ -45,7 +35,15 @@ export const PlayerMenuItems = ({
   onToggleCache,
   rate,
   visualState,
-}: PlayerMenuItemsProps) => {
+}: {
+  isCached?: boolean
+  onDetails: () => void
+  onOpenSoundSettings: () => void
+  onShowSpeed: () => void
+  onToggleCache: () => void
+  rate: PlaybackRate
+  visualState: TrackCacheVisualState
+}) => {
   const { currentTheme } = useTheme()
   const [isOnline] = useAtom(isOnlineAtom)
   const [isSermonCachingEnabled] = useAtom(sermonCachingEnabledAtom)

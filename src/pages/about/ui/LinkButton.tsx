@@ -4,14 +4,17 @@ import { INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import type { StyleProp, ViewStyle } from 'react-native'
 
-interface LinkButtonProps {
+export const LinkButton = ({
+  icon,
+  onPress,
+  style,
+  title,
+}: {
   icon: keyof typeof Ionicons.glyphMap
   onPress: () => void
   style?: StyleProp<ViewStyle>
   title: string
-}
-
-export const LinkButton = ({ icon, onPress, style, title }: LinkButtonProps) => {
+}) => {
   const { currentTheme } = useTheme()
   return (
     <TouchableItem

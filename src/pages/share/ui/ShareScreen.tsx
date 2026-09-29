@@ -24,11 +24,7 @@ const LoadingState = () => {
   return <ActivityIndicator size='large' style={styles.loader} color={currentTheme.primary} />
 }
 
-interface ErrorStateProps {
-  onRetry: () => void
-}
-
-const ErrorState = ({ onRetry }: ErrorStateProps) => {
+const ErrorState = ({ onRetry }: { onRetry: () => void }) => {
   const { currentTheme } = useTheme()
 
   return (
@@ -43,13 +39,15 @@ const ErrorState = ({ onRetry }: ErrorStateProps) => {
   )
 }
 
-interface ReadyStateProps {
+const ReadyState = ({
+  htmlUrl,
+  name,
+  version,
+}: {
   htmlUrl: string
   name: string
   version: string
-}
-
-const ReadyState = ({ htmlUrl, name, version }: ReadyStateProps) => {
+}) => {
   const { currentTheme } = useTheme()
 
   return (

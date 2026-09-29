@@ -5,18 +5,6 @@ import { IconButton } from 'shared/ui/icon-button'
 import type { createStyles } from '../ExpandablePlayer/styles'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
 
-interface PlayerMenuAnchorProps {
-  isCached?: boolean
-  onOpenMenu: () => void
-  onOpenSoundSettings: () => void
-  onShowDetails: () => void
-  onToggleCache: () => void
-  setShowMenu: (show: boolean) => void
-  showMenu: boolean
-  styles: ReturnType<typeof createStyles>
-  visualState: TrackCacheVisualState
-}
-
 // The ⋮ anchor with the popover menu mounted right under it.
 export const PlayerMenuAnchor = ({
   isCached,
@@ -28,7 +16,17 @@ export const PlayerMenuAnchor = ({
   showMenu,
   styles,
   visualState,
-}: PlayerMenuAnchorProps) => (
+}: {
+  isCached?: boolean
+  onOpenMenu: () => void
+  onOpenSoundSettings: () => void
+  onShowDetails: () => void
+  onToggleCache: () => void
+  setShowMenu: (show: boolean) => void
+  showMenu: boolean
+  styles: ReturnType<typeof createStyles>
+  visualState: TrackCacheVisualState
+}) => (
   <View style={styles.menuContainer}>
     <IconButton
       onPress={onOpenMenu}
