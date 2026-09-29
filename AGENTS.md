@@ -245,6 +245,17 @@ import { localHelper } from './lib/helper'
 - No relative imports across layers (enforced by ESLint)
 - Imports are alphabetically sorted (perfectionist plugin)
 
+### Export on demand
+
+Never add an `export` — a declaration export or a barrel re-export line — until another module actually imports that symbol. Helpers, types, atoms, constants and components used only inside their own file stay module-private: an export without a consumer is dead API surface that gets deleted, not hoisted "for later". This extends the **Export only public API** barrel rule above to **every** file, not just barrels.
+
+```typescript
+// ❌ Nothing imports buildLabel — it stays module-private
+export const buildLabel = (name: string) => `Sermon: ${name}`
+```
+
+- **Enforcement:** `yarn check:unused` (knip) reports unused exports — treat every hit as a review error and delete the export (or the whole file when nothing is left to export). A deliberately kept "spare" export must be listed in `ignore` of `knip.config.ts` with a justifying comment, like a spare utility.
+
 ### Component Style
 
 ```typescript
@@ -346,6 +357,20 @@ export const COLORS = {
   primary: '#f16031',
   white: '#fff',
 } as const
+```
+
+### Inline props types unless reused
+
+If a component's props type is not reused anywhere else — no other component, no test building the props object — write it inline in the component signature instead of extracting a standalone `interface`/`type`. Extract it only when it is genuinely reused; a test that constructs the props object counts as reuse.
+
+```typescript
+// ❌ Single-use type: a named export nobody imports is dead API surface
+interface SermonCardProps {
+  title: string
+}
+
+// ✅ Inline until a second consumer appears
+export const SermonCard = ({ title }: { title: string }) => <Text>{title}</Text>
 ```
 
 ### Type Assertions (`as`)
