@@ -175,7 +175,7 @@ When work is delegated to a coding agent, the DELEGATOR owns analysis and planni
 - **Re-exports only in slice-root index.ts**: Re-export lines (`export … from`) live ONLY in the slice-root `index.ts`. No `export … from` in any other source file (exemptions: `@x` segments, `app/` router entries, platform-resolution `index.ts` like `entities/player/lib/PlayerService/index.ts`). A file that needs a symbol from a sibling module imports it directly (`import { X } from './cacheQueueState'`) instead of re-exporting it onward.
 - **Export only public API**: Export ONLY what's actually reused externally from other slices/layers. Internal implementation details (helper functions, internal components, atoms) should NOT be exported
 - **Named re-exports only — `export *` is banned**: Barrels must list their public symbols explicitly (`export { X } from './X'`). `export *` — including the `export * as NS` namespace form — hides the real public surface and defeats knip's unused-export detection. Re-export only symbols actually consumed outside the slice (`export *` also breaks the "Export on demand" rule below, because it drags dead surface back in automatically). **Exemption:** `src/shared/api/generated/**` barrels and the `shared/api/index.ts` re-export of them keep `export *` / `export * as NS` — that surface is orval-generated and machine-owned; hand-maintaining named lists over generated code is friction and drifts. The named-re-exports rule applies to all hand-written barrels.
-- **Internal imports must be relative**: Inside a slice, files import each other via relative paths (`./lib/usePlayer`, `../model`), NEVER through the slice's own barrel (`'entities/player'`). This keeps the source context visible while reading code and prevents circular imports through the barrel.
+- **Internal imports must be relative**: Inside a slice, files import each other via relative paths (`./lib/usePlayer`, `../model`), NEVER through the slice's own barrel (`'entities/player'`). This extends to the whole `shared` layer: inside `src/shared/**`, imports from one shared segment into another are also relative (`'../../model/network'`), never via the `'shared/*'` alias. The `'shared/*'` alias is the convention for OTHER layers importing shared, not for shared importing itself. This keeps the source context visible while reading code and prevents circular imports through barrels. Enforced by ESLint (`no-restricted-imports` override for `src/shared/**`).
 - **Public API example**: If only one component is reused externally, export only that component:
   ```typescript
   export { MyComponent } from './ui/MyComponent'
@@ -241,7 +241,7 @@ import type { PlaylistData } from 'shared/model'
 import { localHelper } from './lib/helper'
 ```
 
-- Use absolute imports for FSD layers: `'entities/*'`, `'features/*'`, `'shared/*'`, `'widgets/*'`, `'pages/*'`
+- Use absolute imports for FSD layers: `'entities/*'`, `'features/*'`, `'shared/*'`, `'widgets/*'`, `'pages/*'`. This absolute form is for OTHER layers importing `shared`. INSIDE `src/shared/**`, all shared-to-shared imports are relative (`'../../model/network'`), never `'shared/*'` — enforced by ESLint (`no-restricted-imports`).
 - Use inline type imports: `import { type Foo } from 'bar'`
 - No relative imports across layers (enforced by ESLint)
 - Imports are alphabetically sorted (perfectionist plugin)

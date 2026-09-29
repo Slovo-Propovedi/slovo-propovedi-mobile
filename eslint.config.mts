@@ -227,6 +227,26 @@ export default defineConfig(
       '@eslint-community/eslint-comments/require-description': ['error', { ignore: [] }],
     },
   },
+  // Inside the shared layer, shared-to-shared imports must be relative
+  // ('../../model/network'), never via the 'shared/*' alias. The alias is the
+  // cross-layer convention for OTHER layers importing shared.
+  {
+    files: ['src/shared/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['shared', 'shared/*'],
+              message:
+                'Inside shared, import relative to the segment (../../segment/...), never via the shared alias',
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Disable max-lines for test files (must come after main config to override)
   {
     files: [
