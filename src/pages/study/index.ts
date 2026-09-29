@@ -1,1 +1,1 @@
-export * from './ui'
+export { StudyScreen } from './ui'

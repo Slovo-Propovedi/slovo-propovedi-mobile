@@ -9,10 +9,7 @@
 ## Расположение
 
 - Директория: `src/shared/api/db/`.
-- Реэкспорт наружу через `src/shared/api/index.ts`:
-  - `export * from './db/constants'`
-  - `export * from './db/db'` (экспортирует `db`)
-  - `API = { books: booksAPI }` — точка доступа к книгам.
+- Наружу через `src/shared/api/index.ts` реэкспортируется только `API = { books: booksAPI }` — точка доступа к книгам. `db` и `DEFAULT_ARTIST` наружу не выводятся: они используются внутри `src/shared/api` по относительным импортам (`localBD.ts` → `db/db.ts`, данные БД → `db/constants.ts`).
 - `localDB` — в `src/shared/api/localBD.ts` (обёртка над `db`).
 
 ## Структура `src/shared/api/db/`

@@ -1,1 +1,1 @@
-export * from './renderTabBar'
+export { getRenderTabBar } from './renderTabBar'
