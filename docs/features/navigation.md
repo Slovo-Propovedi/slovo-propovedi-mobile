@@ -81,7 +81,7 @@
 
 - `useListenNavigation.ts` (`src/pages/listen/lib/`) — `navigateToPlaylist`, `navigateToPlaylistList`;
 - `useReadNavigation.ts` (`src/pages/read/lib/`) — `navigateToBookReader` (`/read/book-reader`), `navigateToBooksList` (`/read/books-list`);
-- `src/shared/routing/` — `useColdStartLinkRecovery.ts` (Android-only safety net холодного старта, см. «Android App Links» ниже), `launchPath.ts` (pure-хелперы разбора launch URL: `extractLaunchPath`, `shouldAttemptRecovery`), `rootStackScreens.ts` (`SUB_SCREENS` корневого стека), `useHeaderTitle.ts`, `base.ts` (тип `BaseParamList`).
+- `src/shared/routing/` — `useColdStartLinkRecovery.ts` (Android-only safety net холодного старта, см. «Android App Links» ниже), `launchPath.ts` (pure-хелперы разбора launch URL: `extractLaunchPath`, `shouldAttemptRecovery`), `rootStackScreens.ts` (`SUB_SCREENS` корневого стека), `useHeaderTitle.ts`.
 
 ## Android App Links
 
