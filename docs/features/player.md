@@ -551,7 +551,7 @@ const newAudio: AudioPlayerData = { ...nextTrack, artwork: playlist.artwork, aud
 
 Сильный кандидат на симптом «воспроизведение встаёт на паузу и больше не возобновляется» после долгих сессий. Корневая причина — расхождение (drift) между payload API и строгими zod-схемами.
 
-Фикс: `sermonSchema.artwork` изменён на `z.string().nullable()`, `playlistSchema.artwork` — тоже `z.string().nullable()`: доменный тип `artwork` теперь честный `string | null` вместо пустой строки-заглушки. Маппер нормализует на границе API (`apiSermon.artwork ?? null`). Потребители null: `CoverImage` подставляет `IMAGE_PLACEHOLDER`, lock screen — иконку приложения (`metadata.artworkUrl || getLocalAppIconUri()`).
+Фикс: `sermonSchema.artwork` изменён на `z.string().nullable()`, `playlistDataSchema.artwork` — тоже `z.string().nullable()`: доменный тип `artwork` теперь честный `string | null` вместо пустой строки-заглушки. Маппер нормализует на границе API (`apiSermon.artwork ?? null`). Потребители null: `CoverImage` подставляет `IMAGE_PLACEHOLDER`, lock screen — иконку приложения (`metadata.artworkUrl || getLocalAppIconUri()`).
 
 Дополнительно (observability): при будущем schema drift парсинг `CURRENT_AUDIO`/`CURRENT_PLAYLIST` в `advanceToNextTrack` логирует `console.error` и показывает глобальный диалог через `reportError` — авто-переход по-прежнему прерывается (safety net), но ошибка больше не молчит.
 

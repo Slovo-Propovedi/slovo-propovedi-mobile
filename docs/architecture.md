@@ -59,7 +59,7 @@ src/entities/listening-history/
 Канонические доменные типы и их zod-схемы живут в `entities`:
 
 - `entities/sermon` — `SermonData`/`BookData` (`sermonSchema`, `bookSchema`, `booksArraySchema`), `AudioPlayerData` (`audioPlayerDataSchema`, `toAudioPlayerData`), перечисления групп Библии (`FetchedBooksGroupName`/`FetchedSermonsGroupName`), структурные `Fetched*`-типы, `formatSermonReference` и мапперы API → домен (`lib/mappers/`);
-- `entities/playlist` — `PlaylistData` (`playlistSchema`/`playlistsArraySchema`) и мапперы;
+- `entities/playlist` — `PlaylistData` (`playlistDataSchema`/`playlistsArraySchema`) и мапперы;
 - `entities/section` — `SectionData` (`sectionSchema`/`sectionsArraySchema`), `sections-cache` (`getCachedSections`/`setCachedSections` + ключ `CACHED_SECTIONS`), `fetchAllSections`, атомы секций и мапперы;
 - `entities/player`, `entities/listening-history`, `entities/offline-cache` (кэш аудио, глобальная очередь закачек, персистентный реестр офлайн-проповедей), `entities/track-list` (строки списков проповедей).
 
