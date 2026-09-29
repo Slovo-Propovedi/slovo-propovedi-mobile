@@ -7,7 +7,8 @@ import {
   useHistorySermonIds,
 } from 'entities/listening-history'
 import { type PlaylistData } from 'entities/playlist'
-import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon'
+import { toAudioPlayerData } from 'entities/sermon'
+import { isNonNullable } from 'shared/lib/utils/isNonNullable'
 
 interface PlaylistHistoryFlags {
   canMarkAll: boolean
@@ -63,9 +64,7 @@ export const usePlaylistHistoryMenu = (playlist: PlaylistData, onMenuClose: () =
 
   const handleMarkAllConfirm = useCallback(() => {
     setMarkDialogVisible(false)
-    const audios = playlist.sermons
-      .map(toAudioPlayerData)
-      .filter((audio): audio is AudioPlayerData => audio !== null)
+    const audios = playlist.sermons.map(toAudioPlayerData).filter(isNonNullable)
     void markSermonsListenedAction(ctx, audios, playlist)
   }, [ctx, playlist])
 

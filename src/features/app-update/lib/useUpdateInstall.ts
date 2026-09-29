@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import debounce from 'debounce'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { AppState, type AppStateStatus } from 'react-native'
+import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { type UpdateErrorKind } from 'shared/lib/update-service'
 import {
   resetUpdateAction,
@@ -35,21 +35,21 @@ export const useUpdateInstall = (): UseUpdateInstallResult => {
   const startUpdate = useAction(startUpdateAction)
   const resumeUpdate = useAction(resumeUpdateAfterPermissionAction)
 
-  useEffect(() => {
-    const resumeAfterActive = debounce(() => {
+  const resumeAfterActive = useDebounce(
+    useCallback(() => {
       void resumeUpdate()
-    }, PERMISSION_RESUME_DELAY_MS)
+    }, [resumeUpdate]),
+    PERMISSION_RESUME_DELAY_MS,
+  )
 
+  useEffect(() => {
     const handleAppStateChange = (nextState: AppStateStatus) => {
       if (nextState === 'active') resumeAfterActive()
     }
 
     const subscription = AppState.addEventListener('change', handleAppStateChange)
-    return () => {
-      subscription.remove()
-      resumeAfterActive.clear()
-    }
-  }, [resumeUpdate])
+    return () => subscription.remove()
+  }, [resumeAfterActive])
 
   return { error, errorKind, progress, reset, startUpdate, updateState }
 }

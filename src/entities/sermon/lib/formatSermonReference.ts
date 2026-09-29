@@ -1,3 +1,4 @@
+import { isNonNullable } from 'shared/lib/utils/isNonNullable'
 import { type SermonData } from '../model/sermon'
 
 interface FormatSermonReferenceParams {
@@ -14,7 +15,7 @@ const formatRange = (range: number[]): string | undefined => {
 }
 
 const formatChapter = (chapter: SermonData['chapter']): string | undefined => {
-  if (chapter === null || chapter === undefined) return undefined
+  if (!isNonNullable(chapter)) return undefined
   if (typeof chapter === 'number') return String(chapter)
 
   return formatRange(chapter)
@@ -31,12 +32,12 @@ const isVerseRange = (verse: (number | number[])[]): verse is number[] =>
   verse.length === 2 && verse.every(item => typeof item === 'number')
 
 const formatVerse = (verse: SermonData['verse']): string | undefined => {
-  if (verse === null || verse === undefined) return undefined
+  if (!isNonNullable(verse)) return undefined
   if (typeof verse === 'number') return String(verse)
 
   if (isVerseRange(verse)) return formatRange(verse)
 
-  const items = verse.map(formatVerseItem).filter((item): item is string => item !== undefined)
+  const items = verse.map(formatVerseItem).filter(isNonNullable)
 
   return items.length === 0 ? undefined : items.join(', ')
 }

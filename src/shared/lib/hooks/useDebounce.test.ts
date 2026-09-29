@@ -103,6 +103,22 @@ describe('useDebounce', () => {
     expect(action).not.toHaveBeenCalled()
   })
 
+  test('unmounting cancels the pending invocation', async () => {
+    const action = jest.fn()
+    const { result, unmount } = await renderHook(() => useDebounce(action, 500))
+
+    await act(async () => {
+      result.current('hello')
+    })
+
+    await unmount()
+
+    // No component left to consume the result — the timer must not survive.
+    jest.advanceTimersByTime(500)
+
+    expect(action).not.toHaveBeenCalled()
+  })
+
   test('works with numeric arguments', async () => {
     const action = jest.fn()
     const { result } = await renderHook(() => useDebounce(action, 300))

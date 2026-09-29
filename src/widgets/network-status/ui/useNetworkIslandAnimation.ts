@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useWindowDimensions } from 'react-native'
 import {
   interpolate,
@@ -8,6 +8,7 @@ import {
   withTiming,
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
+import { useDebounce } from 'shared/lib/hooks/useDebounce'
 
 const DOT_SIZE = 12
 const PILL_WIDTH = 110
@@ -20,7 +21,6 @@ export const useNetworkIslandAnimation = (isOnline: boolean) => {
   const { width: screenWidth } = useWindowDimensions()
   const expandProgress = useSharedValue(1)
   const [isExpanded, setIsExpanded] = useState(true)
-  const timeoutRef = useRef<null | ReturnType<typeof setTimeout>>(null)
 
   const translateXCollapsed = screenWidth / 2 - DOT_SIZE / 2 - RIGHT_MARGIN
 
@@ -29,24 +29,18 @@ export const useNetworkIslandAnimation = (isOnline: boolean) => {
     expandProgress.value = withTiming(0, { duration: ANIMATION_DURATION })
   }, [expandProgress])
 
+  const collapseLater = useDebounce(collapse, AUTO_COLLAPSE_MS)
+
   const expand = useCallback(() => {
     // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in callback
     expandProgress.value = withTiming(1, { duration: ANIMATION_DURATION })
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    timeoutRef.current = setTimeout(() => collapse(), AUTO_COLLAPSE_MS)
-  }, [collapse, expandProgress])
+    collapseLater()
+  }, [collapseLater, expandProgress])
 
   useEffect(() => {
     if (!isOnline) expand()
-    else if (timeoutRef.current) clearTimeout(timeoutRef.current)
-  }, [expand, isOnline])
-
-  useEffect(
-    () => () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    },
-    [],
-  )
+    else collapseLater.clear()
+  }, [collapseLater, expand, isOnline])
 
   // Sync SharedValue progress to React state so consumers get JS-thread re-renders.
   // This avoids stale isExpanded when animations run on the UI thread.

@@ -1,7 +1,8 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
-import { useEffect, useRef } from 'react'
+import { useCallback } from 'react'
 import { StyleSheet, Switch } from 'react-native'
 import { sermonCachingEnabledAtom, setSermonCachingEnabled } from 'entities/offline-cache'
+import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { COLORS, INDENTS, MIN_TOUCH_TARGET, useTheme } from 'shared/ui/theme'
 import { cancelDownloadsAndClearCache } from '../lib/cancelDownloadsAndClearCache'
@@ -20,18 +21,20 @@ export const SermonCachingHeaderSwitch = () => {
   const [enabled] = useAtom(sermonCachingEnabledAtom)
   const setEnabled = useAction(setSermonCachingEnabled)
   const { currentTheme } = useTheme()
-  const settleTimerRef = useRef<null | ReturnType<typeof setTimeout>>(null)
 
-  // An unmounted screen must not fire a pending clear.
-  useEffect(
-    () => () => {
-      if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current)
-    },
-    [],
+  // An unmounted screen must not fire a pending clear — useDebounce drops the
+  // timer on unmount.
+  const runSettledClear = useDebounce(
+    useCallback(() => {
+      void cancelDownloadsAndClearCache(ctx).catch(error => {
+        console.error('[offline] Failed to clear the audio cache:', error)
+      })
+    }, [ctx]),
+    TOGGLE_SETTLE_MS,
   )
 
   const handleToggle = () => {
-    if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current)
+    runSettledClear.clear()
 
     // Target comes from the atom at PRESS time, not from the render closure: the
     // optimistic atom flip is synchronous, so it already holds the freshest
@@ -42,17 +45,12 @@ export const SermonCachingHeaderSwitch = () => {
       console.error('[offline] Failed to apply the sermon caching setting:', error)
     })
 
-    // Turning ON finishes immediately: the timer cleared above also cancels any
+    // Turning ON finishes immediately: the clear above also cancels any
     // scheduled OFF run. Turning OFF schedules the single destructive clear for
     // after the user stops toggling.
     if (nextEnabled) return
 
-    settleTimerRef.current = setTimeout(() => {
-      settleTimerRef.current = null
-      void cancelDownloadsAndClearCache(ctx).catch(error => {
-        console.error('[offline] Failed to clear the audio cache:', error)
-      })
-    }, TOGGLE_SETTLE_MS)
+    runSettledClear()
   }
 
   // The switch is only a picture: RN ignores hitSlop on it (Android applies it

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
+import { useDebounce } from 'shared/lib/hooks/useDebounce'
 
 const REVEAL_CEILING_MS = 1500
 // Row ≈ 50px art + paddings + separator — estimate for the upfront decision.
@@ -35,27 +36,27 @@ export const useListReveal = ({
     currentIndex <= 0 || isOffsetNegligible(currentIndex),
   )
   const isRevealedRef = useRef(isRevealed)
-  const ceilingTimerRef = useRef<null | ReturnType<typeof setTimeout>>(null)
-
-  const clearCeilingTimer = useCallback(() => {
-    if (ceilingTimerRef.current === null) return
-    clearTimeout(ceilingTimerRef.current)
-    ceilingTimerRef.current = null
-  }, [])
 
   const reveal = useCallback(() => {
-    clearCeilingTimer()
     if (isRevealedRef.current) return
     isRevealedRef.current = true
     setIsRevealed(true)
-  }, [clearCeilingTimer])
+  }, [])
+
+  // The ceiling: reveal even when no scroll event ever fires. useDebounce
+  // restarts the window on every re-arm and drops the pending one on unmount.
+  const revealWhenStalled = useDebounce(reveal, REVEAL_CEILING_MS)
+
+  const revealNow = useCallback(() => {
+    revealWhenStalled.clear()
+    reveal()
+  }, [reveal, revealWhenStalled])
 
   const noteScrollScheduled = useCallback(() => {
     if (currentIndex <= 0 || isOffsetNegligible(currentIndex)) return
     if (isRevealedRef.current) return
-    clearCeilingTimer()
-    ceilingTimerRef.current = setTimeout(reveal, REVEAL_CEILING_MS)
-  }, [currentIndex, clearCeilingTimer, reveal])
+    revealWhenStalled()
+  }, [currentIndex, revealWhenStalled])
 
   const handleListScroll = useCallback(
     (y: number) => {
@@ -68,19 +69,17 @@ export const useListReveal = ({
       // No estimate path (scrollToIndex landed first try): the scroll event
       // fires at the converged offset — reveal immediately.
       if (intendedOffset === null) {
-        reveal()
+        revealNow()
         return
       }
       // Estimate path: keep the skeleton until the list converges to the
       // intended offset AND no retries are pending — the estimate jump and
       // each backoff retry stay masked until the landing is stable.
       if (Math.abs(y - intendedOffset) <= REVEAL_CONVERGENCE_TOLERANCE_PX && !hasPendingScroll())
-        reveal()
+        revealNow()
     },
-    [hasPendingScroll, intendedOffsetRef, reveal],
+    [hasPendingScroll, intendedOffsetRef, revealNow],
   )
 
-  useEffect(() => clearCeilingTimer, [clearCeilingTimer])
-
-  return { handleListScroll, isRevealed, noteScrollScheduled, revealNow: reveal }
+  return { handleListScroll, isRevealed, noteScrollScheduled, revealNow }
 }

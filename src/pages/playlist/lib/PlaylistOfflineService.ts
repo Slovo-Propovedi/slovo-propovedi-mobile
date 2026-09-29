@@ -2,14 +2,15 @@ import { type Ctx } from '@reatom/framework'
 import {
   activeCacheUrlAtom,
   cancelCacheDownload,
-  getCacheRequesters,
   registerPlaylistRunStopper,
   removeFromQueueBySource,
   unregisterPlaylistRunStopper,
 } from 'entities/offline-cache'
 import { debugConfig } from 'shared/config'
+import { isNonNullable } from 'shared/lib/utils/isNonNullable'
 import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
+import { isOnlyPlaylistRequester } from './isOnlyPlaylistRequester'
 import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
 import { runPlaylistCaching } from './runPlaylistCaching'
 
@@ -41,8 +42,8 @@ class PlaylistOfflineService {
 
     if (ctx.get(isCachingPlaylistAtom)) return
 
-    const tracksToCache = tracks.filter(
-      (track): track is { audioUrl: string } & TrackToCache => track.audioUrl != null,
+    const tracksToCache = tracks.filter((track): track is { audioUrl: string } & TrackToCache =>
+      isNonNullable(track.audioUrl),
     )
     if (tracksToCache.length === 0) return
 
@@ -118,13 +119,6 @@ class PlaylistOfflineService {
   private runController: AbortController | null = null
   private currentError: Error | null = null
   private currentRunId = 0
-}
-
-const isOnlyPlaylistRequester = (url: string): boolean => {
-  const requesters = getCacheRequesters(url)
-  for (const source of requesters) if (source !== 'playlist') return false
-
-  return true
 }
 
 export const playlistOfflineService = new PlaylistOfflineService()
