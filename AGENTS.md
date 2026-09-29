@@ -208,6 +208,23 @@ Exemptions (NOT violations): `src/shared/**` itself; `app/` entry files re-expor
 
 Rationale: such re-exports hide real dependencies (the import path no longer shows the symbol lives in `shared`), pull heavy module graphs through barrels, and caused Metro require cycles (player ↔ listening-history incident, 2026-08: the shim `entities/player/lib/audioPlayerData.ts` had to be deleted and every consumer rewired to import directly from `shared/model`). See [`docs/architecture.md`](docs/architecture.md) → «Запрет реэкспортов shared через верхние слои». This ban is enforced by code review only — there is no automated guard (steiger cannot see shims because a shim is a legal downward import; depcruise only catches cycles that result).
 
+## Reuse Before You Write (Utilities Policy)
+
+Before writing typical or generic logic, search `shared/` **by concept, not by name** (`shared/lib`, `shared/ui`, `shared/model`). Then:
+
+1. **Reusable utility exists** → use it.
+2. **Missing, but the logic is generic** → add it to the appropriate `shared` slice with a co-located test, then use it.
+3. **Inline stays inline** only for truly one-off, context-bound logic.
+
+An inline re-implementation of an existing `shared` utility is a duplicate and must be refactored to the shared one.
+
+Typical categories that always trigger the search: debounce/throttle, timers/intervals (including deferred calls that auto-clear on unmount), `null`/`undefined` type guards, collection/object emptiness checks, random values, formatting/parsing (time, numbers).
+
+- **Enforcement:** process rule for agents and code review — there is no ESLint rule for it (yet).
+- **knip interplay:** a utility lives only while features actually use it. Deliberately kept "spare" utilities must be listed in `ignore` of `knip.config.ts` with a justifying comment. Hoarding unused code "for later" is not allowed.
+
+Full version (Russian): [`docs/conventions.md`](docs/conventions.md) → «Переиспользование утилит вместо инлайн-дублей».
+
 ## Code Style Guidelines
 
 ### Imports
