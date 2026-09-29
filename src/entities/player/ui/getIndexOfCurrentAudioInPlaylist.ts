@@ -1,5 +1,5 @@
 import { type PlaylistData } from 'entities/playlist/@x/player'
-import type { AudioPlayerData } from 'entities/sermon/@x/player'
+import { type AudioPlayerData } from 'entities/sermon/@x/player'
 
 export const getIndexOfCurrentAudioInPlaylist = (
   currentAudio: AudioPlayerData | null,

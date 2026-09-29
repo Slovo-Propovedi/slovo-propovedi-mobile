@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react-native'
 import { Platform } from 'react-native'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue } from 'react-native-reanimated'
 import { useMarqueeClickGuard } from './useMarqueeClickGuard'
 
 type ClickHandler = (event: unknown) => void

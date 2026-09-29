@@ -1,4 +1,4 @@
-import type { SermonShape } from '../../../../model/domain/common'
+import { type SermonShape } from '../../../../model/domain/common'
 import { DEFAULT_ARTIST } from '../../constants'
 
 export const actsBookList: SermonShape[] = [

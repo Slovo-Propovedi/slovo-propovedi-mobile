@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx, type Ctx } from '@reatom/framework'
 import { type PlaylistData } from 'entities/playlist/@x/offline-cache'
-import type { SermonData } from 'entities/sermon/@x/offline-cache'
+import { type SermonData } from 'entities/sermon/@x/offline-cache'
 import {
   clearOfflineRegistry,
   hydrateOfflineRegistry,

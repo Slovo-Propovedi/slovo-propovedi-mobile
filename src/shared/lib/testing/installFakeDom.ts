@@ -1,7 +1,7 @@
 // jest-expo runs in a node environment: there is no real DOM. This installs a
 // fake `window`/`document` that records event listeners and dispatches key
 // events to them, mirroring how a browser routes keydown to document listeners.
-import type { FakeKeyEvent } from './createKeyEvent'
+import { type FakeKeyEvent } from './createKeyEvent'
 
 export interface FakeDom {
   dispatchKeyDown: (event: FakeKeyEvent) => void

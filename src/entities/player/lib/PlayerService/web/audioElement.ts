@@ -1,4 +1,4 @@
-import type { PlaybackRate } from '../../../playback-rate'
+import { type PlaybackRate } from '../../../playback-rate'
 import { autoCacheOnPlay } from './autoCache'
 
 export const createWebAudioElement = (

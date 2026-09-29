@@ -2,13 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, atom } from '@reatom/framework'
 import z from 'zod'
 import { type PlaylistData } from 'entities/playlist/@x/player'
+import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import {
   CURRENT_AUDIO,
   CURRENT_PLAYLIST,
   CURRENT_REPEAT_MODE,
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
-import type { AudioPlayerData } from 'entities/sermon/@x/player'
 // Legacy atoms for backward compatibility
 export const currentAudioAtom = atom<AudioPlayerData | null>(null, 'currentAudioAtom')
 export const currentPlaylistAtom = atom<null | PlaylistData>(null, 'currentPlaylistAtom')

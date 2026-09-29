@@ -4,7 +4,7 @@ import { Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { type TrackToggleNotice, trackToggleNoticeAtom } from 'entities/player'
-import type { createStyles } from '../ExpandablePlayer/styles'
+import { type createStyles } from '../ExpandablePlayer/styles'
 
 export const HINT_DURATION_MS = 2000
 const FADE_DURATION_MS = 200

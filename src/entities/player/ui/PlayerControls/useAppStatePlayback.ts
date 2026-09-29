@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { AppState, type AppStateStatus } from 'react-native'
-import type { LockScreenMetadata, PlaybackStatus } from '../../lib/PlayerService/types'
+import { type LockScreenMetadata, type PlaybackStatus } from '../../lib/PlayerService/types'
 
 interface AppStatePlaybackParams {
   currentAudio: {

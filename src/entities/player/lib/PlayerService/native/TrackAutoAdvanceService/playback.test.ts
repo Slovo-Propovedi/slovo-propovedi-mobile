@@ -1,7 +1,6 @@
 import { type AudioPlayer } from 'expo-audio'
 import { type PlaylistData } from 'entities/playlist/@x/player'
-import type { OldTrackFlush } from './types'
-import type { AudioPlayerData } from 'entities/sermon/@x/player'
+import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { lockScreenControls } from '../LockScreenControls'
 import {
   playFirstTrackInQueue,
@@ -9,6 +8,7 @@ import {
   playTrackWithMetadata,
   repeatCurrentTrack,
 } from './playback'
+import { type OldTrackFlush } from './types'
 
 const mockRecordSermonSwitch = jest.fn().mockResolvedValue(undefined)
 const mockGetResumePosition = jest.fn().mockReturnValue(0)

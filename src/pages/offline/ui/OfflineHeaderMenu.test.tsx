@@ -1,9 +1,9 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { View } from 'react-native'
+import { type TestInstance } from 'test-renderer'
 import { activeCacheUrlAtom, cacheQueueAtom, clearAudioCacheAction } from 'entities/offline-cache'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import type { TestInstance } from 'test-renderer'
 import { OfflineHeaderMenu } from './OfflineHeaderMenu'
 
 jest.mock('@expo/vector-icons', () => {

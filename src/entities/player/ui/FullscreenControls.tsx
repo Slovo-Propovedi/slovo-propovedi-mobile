@@ -1,9 +1,9 @@
 import { ActivityIndicator, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import { COLORS, INDENTS } from 'shared/ui/theme'
-import type { ControlsNames } from './PlayerControls/PlayerControls.types'
 import { PlayerControlButton } from './control-button/control-button'
 import { PlayerControlButtonType } from './control-button/control-button.types'
 import { getExcludedButtons } from './getExcludedButtons'
+import { type ControlsNames } from './PlayerControls/PlayerControls.types'
 
 export const FullscreenControls = ({
   buttonSize,

@@ -1,7 +1,7 @@
 /* eslint-disable camelcase -- GitHub/Forgejo release API fields are snake_case */
 import axios from 'axios'
 import z from 'zod'
-import type { LatestReleaseInfo } from './types'
+import { type LatestReleaseInfo } from './types'
 
 const FORGEJO_API_URL =
   'https://git.lightnode.ru/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest'

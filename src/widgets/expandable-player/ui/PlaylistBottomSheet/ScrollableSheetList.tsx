@@ -1,5 +1,5 @@
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet'
-import type { BottomSheetFlatListProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetScrollable/types'
+import { type BottomSheetFlatListProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetScrollable/types'
 
 // gorhom 5.2.14's BottomSheetFlatListProps type omits `onScroll`, but the
 // runtime implementation destructures it and wires it into the scroll handler

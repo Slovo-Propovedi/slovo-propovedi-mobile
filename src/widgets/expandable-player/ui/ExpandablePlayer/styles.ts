@@ -1,4 +1,4 @@
-import type { ThemeColors } from 'shared/ui/theme'
+import { type ThemeColors } from 'shared/ui/theme'
 import { createExpandedStyles } from '../FullscreenContent/expandedStyles'
 import { createCommonStyles } from './commonStyles'
 

@@ -1,4 +1,4 @@
-import type { KnipConfig } from 'knip'
+import { type KnipConfig } from 'knip'
 
 const config: KnipConfig = {
   // Manually invoked asset-generation dev utilities — nothing imports them, and

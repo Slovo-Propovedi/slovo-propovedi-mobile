@@ -1,6 +1,6 @@
 import { audioCacheService } from 'entities/offline-cache'
 import { type PlaylistData } from 'entities/playlist'
-import type { SermonData } from 'entities/sermon'
+import { type SermonData } from 'entities/sermon'
 import { filterCachedSermons } from './filterCachedSermons'
 
 jest.mock('entities/offline-cache', () => ({

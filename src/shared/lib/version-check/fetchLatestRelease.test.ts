@@ -1,7 +1,7 @@
 /* eslint-disable camelcase -- GitHub/Forgejo release API fields are snake_case */
 import axios from 'axios'
-import type { LatestReleaseInfo } from './types'
 import { fetchLatestRelease } from './fetchLatestRelease'
+import { type LatestReleaseInfo } from './types'
 
 jest.mock('axios')
 

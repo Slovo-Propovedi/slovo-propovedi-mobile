@@ -177,6 +177,17 @@ export default defineConfig(
       ],
       '@typescript-eslint/no-empty-object-type': 'off',
 
+      // Named type imports must be inline (`import { type X } from '...'`).
+      // Standalone `import type { X }` is banned; `import type X` (default) and
+      // `import type * as NS` (namespace) remain the only standalone forms.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "ImportDeclaration[importKind='type']:has(ImportSpecifier)",
+          message: 'Named type imports must be inline: import { type X } from ...',
+        },
+      ],
+
       'import/no-named-as-default': 'off',
       'import/no-duplicates': ['error', { 'prefer-inline': true }],
       'import/order': [

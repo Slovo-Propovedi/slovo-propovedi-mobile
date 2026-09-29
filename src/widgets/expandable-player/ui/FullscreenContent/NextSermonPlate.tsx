@@ -10,7 +10,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
-import type { createStyles } from '../ExpandablePlayer/styles'
+import { type createStyles } from '../ExpandablePlayer/styles'
 
 const ANIMATION_DURATION = 220
 export const AUTO_COLLAPSE_DELAY_MS = 10_000

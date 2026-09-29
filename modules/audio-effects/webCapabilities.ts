@@ -1,4 +1,4 @@
-import type { AudioEffectsInfo } from './types'
+import { type AudioEffectsInfo } from './types'
 
 // Web band layout: fixed 5-band EQ matching the canonical UI band count and
 // `EQUALIZER_BAND_COUNT` on the JS side. Frequencies in Hz.

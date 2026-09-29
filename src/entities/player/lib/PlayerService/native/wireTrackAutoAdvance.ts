@@ -1,4 +1,4 @@
-import type { PlayerService } from '../index.native'
+import { type PlayerService } from '../index.native'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdvanceService'
 
 export const wireTrackAutoAdvance = (playerService: PlayerService): void => {

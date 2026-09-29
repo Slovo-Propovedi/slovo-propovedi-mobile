@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
+import { type TestInstance } from 'test-renderer'
 import {
   bufferedProgressStateAtom,
   downloadingAudioUrlAtom,
@@ -8,7 +9,6 @@ import {
 } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { LightTheme } from 'shared/ui/theme'
-import type { TestInstance } from 'test-renderer'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
 import { createMiniStyles } from './miniStyles'
 

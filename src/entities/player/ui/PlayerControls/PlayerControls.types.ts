@@ -1,4 +1,4 @@
-import type { PlayerControlButtonType } from '../control-button/control-button.types'
+import { type PlayerControlButtonType } from '../control-button/control-button.types'
 
 export enum PlayerControlsSize {
   Small = 20,

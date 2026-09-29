@@ -1,4 +1,4 @@
-import type { TextStyle } from 'react-native'
+import { type TextStyle } from 'react-native'
 
 type WebTextStyle = {
   whiteSpace?: 'normal' | 'nowrap' | 'pre-line' | 'pre-wrap' | 'pre'

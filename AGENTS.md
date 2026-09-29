@@ -237,13 +237,13 @@ import { useEffect } from 'react'
 import { View } from 'react-native'
 import { usePlayer } from 'entities/player'
 import { COLORS } from 'shared/ui/theme'
-import type { StyleProp, ViewStyle } from 'react-native'
-import type { PlaylistData } from 'shared/model'
+import { type StyleProp, type ViewStyle } from 'react-native'
+import { type PlaylistData } from 'shared/model'
 import { localHelper } from './lib/helper'
 ```
 
 - Use absolute imports for FSD layers: `'entities/*'`, `'features/*'`, `'shared/*'`, `'widgets/*'`, `'pages/*'`. This absolute form is for OTHER layers importing `shared`. INSIDE `src/shared/**`, all shared-to-shared imports are relative (`'../../model/network'`), never `'shared/*'` — enforced by ESLint (`no-restricted-imports`).
-- Type imports ride along value imports from the same module: `import { type Foo, bar } from 'some/module'`. A standalone `import type { … }` is only for modules imported purely for types (same for default type imports like `import type z from 'zod'`). Enforced by `@typescript-eslint/consistent-type-imports` (`fixStyle: 'inline-type-imports'`) together with `import/no-duplicates` (`prefer-inline: true`); `yarn lint:fix` merges split type/value imports.
+- **Named type imports are always inline**: `import { type Foo, bar } from 'some/module'` — including when the module is imported purely for types (`import { type Foo } from 'some/module'`). The standalone `import type { Foo } …` form is **banned**; a standalone `import type` remains ONLY for default (`import type z from 'zod'`) and namespace (`import type * as NS from 'some/module'`) type imports. Enforced by `@typescript-eslint/consistent-type-imports` (`fixStyle: 'inline-type-imports'`) with `import/no-duplicates` (`prefer-inline: true`), plus a `no-restricted-syntax` ban on `ImportDeclaration[importKind='type']:has(ImportSpecifier)`; `yarn lint:fix` merges split type/value imports.
 - No relative imports across layers (enforced by ESLint)
 - Imports are alphabetically sorted (perfectionist plugin)
 

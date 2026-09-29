@@ -1,5 +1,4 @@
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { LockScreenMetadata } from '../types'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
@@ -8,6 +7,7 @@ import {
   positionAtom,
 } from '../../../model'
 import { isStalledOfflineAtom } from '../../stalledOffline'
+import { type LockScreenMetadata } from '../types'
 import { audioLoader } from './AudioLoader'
 
 interface HealablePlayerService {

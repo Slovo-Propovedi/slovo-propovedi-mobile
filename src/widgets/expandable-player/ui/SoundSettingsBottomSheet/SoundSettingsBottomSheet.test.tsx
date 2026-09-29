@@ -1,7 +1,7 @@
 import { fireEvent } from '@testing-library/react-native'
 import { openAudioOutputSwitcher } from 'audio-effects'
+import { type ReactNode } from 'react'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import type { ReactNode } from 'react'
 import { SoundSettingsBottomSheet } from './SoundSettingsBottomSheet'
 
 jest.mock('@gorhom/bottom-sheet', () => {

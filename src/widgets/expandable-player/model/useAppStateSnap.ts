@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { AppState, type AppStateStatus } from 'react-native'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue } from 'react-native-reanimated'
 
 /**
  * Snap progress on foreground resume — cancels any in-flight withTiming

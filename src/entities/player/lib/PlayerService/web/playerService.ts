@@ -1,7 +1,7 @@
 import { registerWebAudioElement } from 'audio-effects'
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { LockScreenMetadata, PlaybackStatus } from '../types'
 import { type PlaybackRate, setPlaybackRateAction } from '../../../playback-rate'
+import { type LockScreenMetadata, type PlaybackStatus } from '../types'
 import { attachWebAudioHandlers } from './audioHandlers'
 import { resetWebDuration } from './durationWriter'
 import { createInterruptionResumeController } from './interruptionResumeController'

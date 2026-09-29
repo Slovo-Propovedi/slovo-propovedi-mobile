@@ -2,7 +2,7 @@ import { act, fireEvent } from '@testing-library/react-native'
 import { activeCacheUrlAtom, cacheQueueAtom } from 'entities/offline-cache'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
-import type { createStyles } from '../ExpandablePlayer/styles'
+import { type createStyles } from '../ExpandablePlayer/styles'
 import { StopAllCachingButton } from './StopAllCachingButton'
 
 const ACCESSIBILITY_LABEL = 'Остановить все закачки'

@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { type AudioPlayer } from 'expo-audio'
 import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
-import type { AudioPlayer } from 'expo-audio'
 import { setDurationAction, setIsBufferingAction, setPositionAction } from '../../../model'
 
 const LOAD_TIMEOUT_MS = 30000

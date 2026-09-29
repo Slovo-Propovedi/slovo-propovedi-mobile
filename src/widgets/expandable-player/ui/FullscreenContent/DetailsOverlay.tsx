@@ -1,10 +1,10 @@
 import { Entypo } from '@expo/vector-icons'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { type AudioPlayerData } from 'entities/sermon'
 import { hapticLight } from 'shared/lib/haptics'
 import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
-import type { createStyles } from '../ExpandablePlayer/styles'
-import type { AudioPlayerData } from 'entities/sermon'
+import { type createStyles } from '../ExpandablePlayer/styles'
 import { DescriptionWithTimecodes } from './DescriptionWithTimecodes'
 
 const HEADER_OFFSET = 60

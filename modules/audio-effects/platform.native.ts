@@ -1,6 +1,6 @@
+import { type AudioPlayer } from 'expo-audio'
 import { requireNativeModule } from 'expo-modules-core'
 import { Platform } from 'react-native'
-import type { AudioPlayer } from 'expo-audio'
 import {
   type AudioEffectsInfo,
   type AudioEffectsSettings,

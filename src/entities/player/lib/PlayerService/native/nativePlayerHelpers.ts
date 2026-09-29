@@ -1,5 +1,5 @@
+import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { AudioPlayer } from 'expo-audio'
 import {
   isBufferingAtom,
   isSeekingAtom,

@@ -4,9 +4,9 @@ import { type ComponentType } from 'react'
 import { Text } from 'react-native'
 import { currentAudioAtom } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
+import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import type BottomSheet from '@gorhom/bottom-sheet'
-import type { AudioPlayerData, SermonData } from 'entities/sermon'
 import { PlaylistBottomSheet } from './PlaylistBottomSheet'
 
 jest.mock('entities/offline-cache', () => ({

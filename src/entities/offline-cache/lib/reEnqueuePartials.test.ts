@@ -1,7 +1,7 @@
 import { createCtx, type Ctx } from '@reatom/framework'
 import { type Directory, File } from 'expo-file-system'
 import { type PlaylistData } from 'entities/playlist/@x/offline-cache'
-import type { SermonData } from 'entities/sermon/@x/offline-cache'
+import { type SermonData } from 'entities/sermon/@x/offline-cache'
 import { audioCacheService } from './AudioCacheService'
 import { getUrlHash, PART_SUFFIX } from './cacheDownloader'
 import { enqueueCacheMany } from './cacheQueueEnqueueMany'

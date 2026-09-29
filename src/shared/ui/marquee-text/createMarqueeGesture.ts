@@ -1,6 +1,6 @@
 import { Platform } from 'react-native'
 import { Gesture } from 'react-native-gesture-handler'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue } from 'react-native-reanimated'
 import { clampMarqueeOffset, HOLD_MS, isRealDrag } from './marquee-utils'
 
 export const createMarqueeGesture = (

@@ -3,13 +3,13 @@ import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { PlayerControlButton, PlayerControlButtonType } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
+import { type AudioPlayerData } from 'entities/sermon'
 import { CoverImage, MovingText } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
-import type { createMiniStyles } from './miniStyles'
-import type { AudioPlayerData } from 'entities/sermon'
-import type { ThemeColors } from 'shared/ui/theme'
+import { type ThemeColors } from 'shared/ui/theme'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
+import { type createMiniStyles } from './miniStyles'
 
 const AnimatedPressable = Animated.createAnimatedComponent(PressableButton)
 

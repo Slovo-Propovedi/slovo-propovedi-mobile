@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Platform } from 'react-native'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue } from 'react-native-reanimated'
 import { shouldSwallowClick } from './marquee-utils'
 
 const isDomNode = (node: unknown): node is HTMLElement =>

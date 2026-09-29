@@ -2,6 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { StyleSheet, TextInput } from 'react-native'
+import { type TestInstance } from 'test-renderer'
 import { SEARCH_HEADER_HEIGHT } from 'features/sermon-search'
 import {
   isSearchingAtom,
@@ -9,10 +10,9 @@ import {
   searchQueryAtom,
   searchResultsAtom,
 } from 'features/sermon-search/model'
+import { type SermonData } from 'entities/sermon'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import type { SermonData } from 'entities/sermon'
-import type { TestInstance } from 'test-renderer'
 import { ListenScreen } from './ListenScreen'
 
 // Jest hoists mock factories above imports, so the factory may only reference

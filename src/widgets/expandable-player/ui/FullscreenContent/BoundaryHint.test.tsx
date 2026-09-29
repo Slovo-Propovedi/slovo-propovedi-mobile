@@ -2,7 +2,7 @@ import { act } from '@testing-library/react-native'
 import { trackToggleNoticeAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import type { createStyles } from '../ExpandablePlayer/styles'
+import { type createStyles } from '../ExpandablePlayer/styles'
 import { BoundaryHint, HINT_DURATION_MS } from './BoundaryHint'
 
 jest.mock('entities/player', () => {

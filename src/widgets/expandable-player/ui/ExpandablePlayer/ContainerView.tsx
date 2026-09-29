@@ -2,13 +2,13 @@ import { StatusBar } from 'expo-status-bar'
 import { type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native'
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
+import { type AudioPlayerData } from 'entities/sermon'
 import { CoverImage } from 'shared/ui'
-import type { createStyles } from './styles'
-import type { AudioPlayerData } from 'entities/sermon'
-import type { ThemeColors } from 'shared/ui/theme'
+import { type ThemeColors } from 'shared/ui/theme'
 import { useFullscreenContentMount } from '../../model/useFullscreenContentMount'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
+import { type createStyles } from './styles'
 
 /** Consumer style must not carry geometry keys — enforced by compiler (Issue #63 invariant). */
 export type NonGeometricStyle = Omit<ViewStyle, 'bottom' | 'height' | 'left' | 'top' | 'width'>

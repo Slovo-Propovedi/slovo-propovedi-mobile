@@ -1,7 +1,7 @@
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { PlaybackStatus } from '../types'
-import type { PubSub } from './playerPubSub'
 import { setIsBufferingAction, setIsPlayingAction, setPositionAction } from '../../../model'
+import { type PlaybackStatus } from '../types'
+import { type PubSub } from './playerPubSub'
 
 export interface WebPlayerState {
   getState: () => WebPlayerStateData

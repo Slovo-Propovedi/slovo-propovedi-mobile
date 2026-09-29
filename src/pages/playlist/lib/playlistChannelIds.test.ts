@@ -1,5 +1,4 @@
 import { Platform } from 'react-native'
-import type { ensurePlaylistNotificationChannels as EnsureChannels } from './playlistChannelIds'
 import {
   ALERT_CHANNEL_ID,
   ALERT_CHANNEL_NAME,
@@ -8,6 +7,7 @@ import {
   SILENT_CHANNEL_ID,
   SILENT_CHANNEL_NAME,
 } from './notificationConstants'
+import { type ensurePlaylistNotificationChannels as EnsureChannels } from './playlistChannelIds'
 
 jest.mock('shared/lib/notifications', () => ({
   ensureNotifications: jest.fn(),

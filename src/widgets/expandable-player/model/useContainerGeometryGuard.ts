@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { LayoutChangeEvent } from 'react-native'
+import { type LayoutChangeEvent } from 'react-native'
 
 interface UseContainerGeometryGuardInput {
   /** Resting top the container should match (always collapsed geometry). */

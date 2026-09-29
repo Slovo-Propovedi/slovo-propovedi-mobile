@@ -1,4 +1,4 @@
-import type { AudioEffectsInfo, AudioEffectsSettings } from './types'
+import { type AudioEffectsInfo, type AudioEffectsSettings } from './types'
 import { WEB_AUDIO_EFFECTS_INFO } from './webCapabilities'
 import {
   applySettingsToGraph,

@@ -1,4 +1,4 @@
-import type { AudioPlayer } from 'expo-audio'
+import { type AudioPlayer } from 'expo-audio'
 
 export interface AudioEffectsInfo {
   balanceSupported: boolean

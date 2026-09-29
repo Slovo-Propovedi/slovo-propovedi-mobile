@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
 import { StyleSheet, Text } from 'react-native'
+import { type TestInstance } from 'test-renderer'
 import { type PlaylistData } from 'entities/playlist'
 import {
   dynamicSectionsAtom,
@@ -9,7 +10,6 @@ import {
   sectionDataSourceAtom,
 } from 'entities/section'
 import { renderWithProviders } from 'shared/mocks'
-import type { TestInstance } from 'test-renderer'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 
 const mockNavigateToPlaylist = jest.fn()

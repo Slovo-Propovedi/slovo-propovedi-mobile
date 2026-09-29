@@ -10,7 +10,7 @@ jest.mock('shared/lib/version-check/fetchLatestRelease', () => ({
 }))
 
 import { createCtx } from '@reatom/framework'
-import type { LatestReleaseInfo } from '../lib/version-check/types'
+import { type LatestReleaseInfo } from '../lib/version-check/types'
 import { latestVersionAtom, releaseUrlAtom, zipDownloadUrlAtom } from './update'
 import { updateProgressAtom } from './updateInstall'
 import { downloadUpdateZipWithFallback, getFallbackDownloadUrl } from './updateInstallFallback'

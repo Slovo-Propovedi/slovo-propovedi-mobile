@@ -1,10 +1,10 @@
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
-import type { WebMediaSession } from './mediaSession'
-import type { WebPlayerState } from './playerState'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { attachWebAudioEvents } from './audioEvents'
 import { writeWebDuration } from './durationWriter'
+import { type WebMediaSession } from './mediaSession'
+import { type WebPlayerState } from './playerState'
 
 export const reportPlayError = (error: unknown) => {
   console.error('[WebPlayerService] play failed:', error)

@@ -1,4 +1,4 @@
-import type { NotificationsApi } from './NotificationsApi'
+import { type NotificationsApi } from './NotificationsApi'
 
 /**
  * Web has no usable `expo-notifications` (no push tokens, no scheduled local

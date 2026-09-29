@@ -1,5 +1,5 @@
+import { type Ionicons } from '@expo/vector-icons'
 import { ThemeMode } from 'shared/ui/theme'
-import type { Ionicons } from '@expo/vector-icons'
 
 export interface ThemeSelectorOption {
   icon: keyof typeof Ionicons.glyphMap

@@ -1,10 +1,10 @@
 import { fireEvent } from '@testing-library/react-native'
 import { type ComponentProps } from 'react'
+import { type GestureType } from 'react-native-gesture-handler'
 import { type PlaylistData } from 'entities/playlist'
+import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { LightTheme } from 'shared/ui/theme'
-import type { AudioPlayerData } from 'entities/sermon'
-import type { GestureType } from 'react-native-gesture-handler'
 import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
 

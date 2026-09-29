@@ -1,6 +1,6 @@
-import type { ScrollScheduler } from './scrollScheduler'
-import type { BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
-import type { RefObject } from 'react'
+import { type BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
+import { type RefObject } from 'react'
+import { type ScrollScheduler } from './scrollScheduler'
 
 export interface ScrollGuards {
   currentIndexRef: RefObject<number>

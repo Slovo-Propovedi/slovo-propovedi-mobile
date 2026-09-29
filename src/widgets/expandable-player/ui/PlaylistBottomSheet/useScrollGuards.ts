@@ -1,6 +1,6 @@
+import { type BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
 import { useCallback, useMemo, useRef } from 'react'
-import type { ScrollGuards } from './scrollGuards'
-import type { BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
+import { type ScrollGuards } from './scrollGuards'
 
 // Owns the interaction refs and their setters for the auto-scroll pipeline:
 // the sheet snap, the user's drag/fling state, the current target index and

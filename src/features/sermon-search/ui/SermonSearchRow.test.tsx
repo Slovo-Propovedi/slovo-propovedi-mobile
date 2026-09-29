@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react-native'
 import { buildHistoryMenuActions } from 'entities/listening-history'
+import { type SermonData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import type { SermonData } from 'entities/sermon'
 import { SermonSearchRow } from './SermonSearchRow'
 
 jest.mock('entities/offline-cache', () => ({

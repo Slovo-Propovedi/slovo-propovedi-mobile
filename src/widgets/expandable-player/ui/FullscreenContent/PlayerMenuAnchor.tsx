@@ -2,7 +2,7 @@ import { Entypo } from '@expo/vector-icons'
 import { View } from 'react-native'
 import { type TrackCacheVisualState } from 'entities/offline-cache'
 import { IconButton } from 'shared/ui/icon-button'
-import type { createStyles } from '../ExpandablePlayer/styles'
+import { type createStyles } from '../ExpandablePlayer/styles'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
 
 // The ⋮ anchor with the popover menu mounted right under it.

@@ -1,7 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
+import { type TestInstance } from 'test-renderer'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import type { TrackCacheVisualState } from './trackCacheState'
-import type { TestInstance } from 'test-renderer'
+import { type TrackCacheVisualState } from './trackCacheState'
 import { TracksListItemContextMenu } from './TracksListItemContextMenu'
 
 const ADD_TO_OFFLINE_TEXT = 'Добавить в офлайн'

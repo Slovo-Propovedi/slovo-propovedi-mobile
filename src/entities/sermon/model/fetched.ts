@@ -1,7 +1,7 @@
 import { type playlistDataSchema } from 'entities/playlist/@x/sermon'
-import type { FetchedBooksGroupName, FetchedSermonsGroupName } from './bible'
-import type { SermonData } from './sermon'
 import type z from 'zod'
+import { type FetchedBooksGroupName, type FetchedSermonsGroupName } from './bible'
+import { type SermonData } from './sermon'
 
 export interface DB {
   books: Array<{

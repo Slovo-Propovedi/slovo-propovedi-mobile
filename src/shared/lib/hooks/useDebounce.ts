@@ -1,6 +1,6 @@
 import debounce from 'debounce'
 import { useCallback, useEffect } from 'react'
-import type { AnyFunction } from '../../model/aliases'
+import { type AnyFunction } from '../../model/aliases'
 
 /**
  * Trailing-edge debounced callback whose pending timer dies with the component.

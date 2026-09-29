@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { WebPlayerState } from './playerState'
 import { setDurationAction } from '../../../model'
+import { type WebPlayerState } from './playerState'
 
 export const writeWebDuration = (state: WebPlayerState, durationMs: number) => {
   void setDurationAction(ctx, durationMs)

@@ -1,6 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
+import { type BookData } from 'entities/sermon'
 import {
   Slider,
   SliderItemDescriptionBackgroundStyle,
@@ -9,7 +10,6 @@ import {
   WhereIsSlideTitleLocated,
 } from 'shared/ui'
 import { INDENTS } from 'shared/ui/theme'
-import type { BookData } from 'entities/sermon'
 import { useReadNavigation } from '../lib/useReadNavigation'
 import {
   getNotesForPreachersBooksSlider,

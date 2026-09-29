@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { StyleSheet, Text, View } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, type ThemeColors, ThemeMode } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
-import type { ThemeSelectorOption as ThemeSelectorOptionData } from './themeOptions'
+import { type ThemeSelectorOption as ThemeSelectorOptionData } from './themeOptions'
 
 export interface ThemeSelectorOptionProps {
   currentTheme: ThemeColors

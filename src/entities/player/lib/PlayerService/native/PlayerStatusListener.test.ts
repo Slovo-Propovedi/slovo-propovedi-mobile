@@ -1,5 +1,5 @@
-import type { StatusCallbacks } from '../types'
-import type { AudioPlayer, AudioStatus } from 'expo-audio'
+import { type AudioPlayer, type AudioStatus } from 'expo-audio'
+import { type StatusCallbacks } from '../types'
 import { playerStatusListener } from './PlayerStatusListener'
 
 type StatusUpdateHandler = (status: AudioStatus) => void

@@ -1,4 +1,4 @@
-import type { ThemeColors } from 'shared/ui/theme'
+import { type ThemeColors } from 'shared/ui/theme'
 import { expandedBoundaryHintStyles } from './expandedBoundaryHintStyles'
 import { expandedControlsStyles } from './expandedControlsStyles'
 import { expandedDescriptionStyles } from './expandedDescriptionStyles'

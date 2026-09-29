@@ -1,10 +1,10 @@
 import { useAtom } from '@reatom/npm-react'
+import { type ReactElement } from 'react'
 import { type ListRenderItem, type StyleProp, Text, type ViewStyle } from 'react-native'
 import Animated, { type useAnimatedScrollHandler } from 'react-native-reanimated'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
-import type { TracksListData } from './usePlaylistNavigationOptions'
-import type { ReactElement } from 'react'
+import { type TracksListData } from './usePlaylistNavigationOptions'
 
 export const PlaylistTrackList = ({
   data,

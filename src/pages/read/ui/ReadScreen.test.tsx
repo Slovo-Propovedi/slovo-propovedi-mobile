@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
+import { type BookData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
-import type { BookData } from 'entities/sermon'
 import {
   getNotesForPreachersBooksSlider,
   notesForPreachersBooksSliderAtom,

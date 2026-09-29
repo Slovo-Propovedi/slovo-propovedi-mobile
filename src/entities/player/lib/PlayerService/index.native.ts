@@ -1,9 +1,8 @@
+import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { LockScreenMetadata } from './types'
-import type { PlaybackRate } from '../../playback-rate'
-import type { AudioPlayer } from 'expo-audio'
 import { setIsBufferingAction, setPositionAction } from '../../model'
 import { setPauseTypeAction } from '../../pauseType'
+import { type PlaybackRate } from '../../playback-rate'
 import { audioLoader } from './native/AudioLoader'
 import { audioModeManager } from './native/AudioModeManager'
 import { lockScreenControls } from './native/LockScreenControls'
@@ -13,6 +12,7 @@ import { playerStatusListener } from './native/PlayerStatusListener'
 import { recoverStreamAfterReconnect as healStreamAfterReconnect } from './native/reconnectHeal'
 import { resumeWithSourceSwap } from './native/resumeWithSourceSwap'
 import { wireTrackAutoAdvance } from './native/wireTrackAutoAdvance'
+import { type LockScreenMetadata } from './types'
 
 export class PlayerService {
   public getStatus = () => playbackController.getStatus(this.playerInstance)

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue } from 'react-native-reanimated'
 import { createMarqueeGesture } from './createMarqueeGesture'
 
 interface MarqueeGestureParams {

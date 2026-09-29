@@ -1,9 +1,9 @@
 import { useAtom } from '@reatom/npm-react'
 import { View } from 'react-native'
 import { sermonCachingEnabledAtom } from 'entities/offline-cache'
-import type { createMiniStyles } from './miniStyles'
-import type { ThemeColors } from 'shared/ui/theme'
+import { type ThemeColors } from 'shared/ui/theme'
 import { useDisplayedDownloadProgress } from '../../model/useDisplayedDownloadProgress'
+import { type createMiniStyles } from './miniStyles'
 
 export const MiniDownloadProgress = ({
   audioUrl,

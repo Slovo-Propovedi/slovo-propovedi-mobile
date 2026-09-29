@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useEffect } from 'react'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { IconButton } from 'shared/ui/icon-button'
-import type { createStyles } from '../ExpandablePlayer/styles'
+import { type createStyles } from '../ExpandablePlayer/styles'
 import { useStopAllCaching } from './useStopAllCaching'
 
 const ACCESSIBILITY_LABEL = 'Остановить все закачки'

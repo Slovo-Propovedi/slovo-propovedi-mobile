@@ -1,6 +1,6 @@
+import { type RefObject } from 'react'
+import { type PlaylistData } from 'entities/playlist'
 import type BottomSheet from '@gorhom/bottom-sheet'
-import type { PlaylistData } from 'entities/playlist'
-import type { RefObject } from 'react'
 import {
   PlaylistBottomSheet,
   type PlaylistMenuSlot,

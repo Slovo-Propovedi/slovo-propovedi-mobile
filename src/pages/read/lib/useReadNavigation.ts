@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import type { BookData } from 'entities/sermon'
+import { type BookData } from 'entities/sermon'
 
 export const useReadNavigation = () => {
   const router = useRouter()

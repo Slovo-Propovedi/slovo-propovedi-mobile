@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-native'
-import type { BookData } from 'entities/sermon'
+import { type BookData } from 'entities/sermon'
 import { useReadNavigation } from './useReadNavigation'
 
 const mockPush = jest.fn()

@@ -2,7 +2,7 @@ import { act, fireEvent } from '@testing-library/react-native'
 import * as Clipboard from 'expo-clipboard'
 import { View as MockView } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
-import type { LatestReleaseState } from '../lib/useLatestReleaseUrl'
+import { type LatestReleaseState } from '../lib/useLatestReleaseUrl'
 import { ShareScreen } from './ShareScreen'
 
 const mockUseLatestReleaseUrl = jest.fn()

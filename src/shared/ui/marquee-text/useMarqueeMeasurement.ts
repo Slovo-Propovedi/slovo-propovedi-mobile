@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { type LayoutChangeEvent, type TextLayoutEvent } from 'react-native'
 import { useDerivedValue, useSharedValue } from 'react-native-reanimated'
-import type { LayoutChangeEvent, TextLayoutEvent } from 'react-native'
 import { shouldMarquee } from './marquee-utils'
 
 export const useMarqueeMeasurement = () => {

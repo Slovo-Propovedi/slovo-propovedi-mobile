@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { type ReactNode } from 'react'
 import { Text, View } from 'react-native'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
-import type { ReactNode } from 'react'
 import { styles } from './styles'
 
 export const CollapsibleSection = ({

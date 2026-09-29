@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import type { StyleProp, TextStyle } from 'react-native'
+import { type StyleProp, type TextStyle } from 'react-native'
 import { MarqueeText } from './marquee-text/marquee-text'
 import { useTheme } from './theme/ThemeContext/useTheme'
 

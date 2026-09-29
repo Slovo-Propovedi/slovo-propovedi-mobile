@@ -1,5 +1,5 @@
 import { Platform } from 'react-native'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue } from 'react-native-reanimated'
 import { createMarqueeGesture } from './createMarqueeGesture'
 import { HOLD_MS } from './marquee-utils'
 

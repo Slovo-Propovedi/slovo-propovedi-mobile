@@ -1,4 +1,4 @@
-import type { WebPlayerState } from './playerState'
+import { type WebPlayerState } from './playerState'
 
 interface StatusTracker {
   start: () => void

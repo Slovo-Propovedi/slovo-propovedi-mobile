@@ -1,5 +1,5 @@
 import { type PlaylistData } from 'entities/playlist/@x/listening-history'
-import type { AudioPlayerData } from 'entities/sermon/@x/listening-history'
+import { type AudioPlayerData } from 'entities/sermon/@x/listening-history'
 import { buildHistoryMenuActions } from './buildHistoryMenuActions'
 import { markSermonListenedAction } from './markSermonListened'
 import { removeHistoryEntryAction } from './removeHistoryEntry'

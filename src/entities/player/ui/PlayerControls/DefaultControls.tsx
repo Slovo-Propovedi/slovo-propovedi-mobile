@@ -1,10 +1,10 @@
 import { ActivityIndicator, type StyleProp, View, type ViewStyle } from 'react-native'
 import { useTheme } from 'shared/ui/theme'
-import type { ControlsNames, PlayerControlsSize } from './PlayerControls.types'
 import { PlayerControlButton } from '../control-button/control-button'
 import { PlayerControlButtonType } from '../control-button/control-button.types'
 import { getExcludedButtons } from '../getExcludedButtons'
 import { playerControlsStyles as styles } from './PlayerControls.styles'
+import { type ControlsNames, type PlayerControlsSize } from './PlayerControls.types'
 
 export const DefaultControls = ({
   excludeButtons,

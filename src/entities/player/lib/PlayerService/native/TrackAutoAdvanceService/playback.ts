@@ -4,13 +4,13 @@ import {
   recordSermonSwitchAction,
 } from 'entities/listening-history/@x/player'
 import { type PlaylistData } from 'entities/playlist/@x/player'
+import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { OldTrackFlush, PlayerActions } from './types'
-import type { AudioPlayerData } from 'entities/sermon/@x/player'
 import { setCurrentAudioAction } from '../../../../model'
 import { savePlaybackProgress } from '../../../playbackProgress'
 import { lockScreenControls } from '../LockScreenControls'
 import { getFirstTrack } from './navigation'
+import { type OldTrackFlush, type PlayerActions } from './types'
 
 /**
  * Plays a track after the previous one finished. The finished track's history

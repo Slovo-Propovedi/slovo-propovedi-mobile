@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, atom } from '@reatom/framework'
+import { type AudioEffectsInfo } from 'audio-effects'
 import z from 'zod'
 import {
   CURRENT_EQUALIZER_ENABLED,
@@ -7,7 +8,6 @@ import {
   CURRENT_SOUND_BALANCE,
   CURRENT_SOUND_PITCH,
 } from 'shared/config'
-import type { AudioEffectsInfo } from 'audio-effects'
 
 export const EQUALIZER_BAND_COUNT = 5
 

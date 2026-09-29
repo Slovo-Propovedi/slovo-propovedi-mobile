@@ -1,6 +1,6 @@
+import { type StyleProp, type ViewStyle } from 'react-native'
 import { type PlaylistData } from 'entities/playlist/@x/player'
-import type { AudioPlayerData } from 'entities/sermon/@x/player'
-import type { StyleProp, ViewStyle } from 'react-native'
+import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { useGuardedTogglePlay } from '../../lib/useGuardedTogglePlay'
 import { usePlayer } from '../../lib/usePlayer'
 import { usePlayerState } from '../../lib/usePlayerState'

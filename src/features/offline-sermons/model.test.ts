@@ -3,8 +3,8 @@ import { createCtx } from '@reatom/framework'
 import { audioCacheService, offlineRegistryAtom } from 'entities/offline-cache'
 import { type PlaylistData } from 'entities/playlist'
 import { CACHED_SECTIONS } from 'entities/section'
+import { type AudioPlayerData } from 'entities/sermon'
 import { CACHED_SERMON_SEARCH, LISTENING_HISTORY } from 'shared/config'
-import type { AudioPlayerData } from 'entities/sermon'
 import { loadOfflineSermons, offlineSermonsAtom } from './model'
 
 jest.mock('entities/offline-cache', () => {

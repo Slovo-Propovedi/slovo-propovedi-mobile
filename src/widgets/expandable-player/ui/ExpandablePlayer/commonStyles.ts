@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import type { ThemeColors } from 'shared/ui/theme'
+import { type ThemeColors } from 'shared/ui/theme'
 
 export const createCommonStyles = (theme: ThemeColors) =>
   StyleSheet.create({

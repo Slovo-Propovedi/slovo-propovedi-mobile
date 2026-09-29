@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue } from 'react-native-reanimated'
 import { useFullscreenPanGesture } from '../../model/useFullscreenPanGesture'
 import { useMiniPanGesture } from '../../model/useMiniPanGesture'
 

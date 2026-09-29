@@ -1,4 +1,4 @@
-import type { NotificationsApi } from './NotificationsApi'
+import { type NotificationsApi } from './NotificationsApi'
 
 /** Validates that all 7 methods used by this module are present as functions. */
 const REQUIRED_METHODS = [

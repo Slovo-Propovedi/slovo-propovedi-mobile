@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { type SermonData } from 'entities/sermon'
 import { CACHED_SERMON_SEARCH_INDEX } from 'shared/config'
-import type { SermonData } from 'entities/sermon'
 import {
   getCachedSearchResults,
   getSearchCacheKey,

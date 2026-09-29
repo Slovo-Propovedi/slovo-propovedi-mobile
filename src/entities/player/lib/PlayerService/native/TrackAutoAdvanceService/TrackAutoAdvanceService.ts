@@ -4,7 +4,6 @@ import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_REPEAT_MODE } from 'shared/con
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { isOnlineAtom } from 'shared/model/network'
-import type { OldTrackFlush, PlayerActions } from './types'
 import { durationAtom, positionAtom, RepeatMode, repeatModeSchema } from '../../../../model'
 import { guardOfflinePlayback } from '../../../playOfflineGuard'
 import { audioLoader } from '../AudioLoader'
@@ -17,6 +16,7 @@ import {
 } from './navigation'
 import { parseAudioPlayerData, parsePlaylistData } from './parsers'
 import { playFirstTrackInQueue, playNextTrack, repeatCurrentTrack } from './playback'
+import { type OldTrackFlush, type PlayerActions } from './types'
 
 const buildOldFlush = (sermonId: string): OldTrackFlush => ({
   oldDurationMs: ctx.get(durationAtom),

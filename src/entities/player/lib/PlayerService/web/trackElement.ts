@@ -1,5 +1,5 @@
 import { registerWebAudioElement } from 'audio-effects'
-import type { PlaybackRate } from '../../../playback-rate'
+import { type PlaybackRate } from '../../../playback-rate'
 import { createWebAudioElement } from './audioElement'
 
 /**

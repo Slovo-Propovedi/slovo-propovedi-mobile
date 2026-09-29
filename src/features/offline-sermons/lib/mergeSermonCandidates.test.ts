@@ -1,5 +1,5 @@
 import { type PlaylistData } from 'entities/playlist'
-import type { SermonData } from 'entities/sermon'
+import { type SermonData } from 'entities/sermon'
 import { mergeSermonCandidates } from './mergeSermonCandidates'
 
 jest.mock('entities/section/@x/listening-history', () => {

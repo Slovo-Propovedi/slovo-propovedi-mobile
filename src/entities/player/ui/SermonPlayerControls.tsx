@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import type { StyleProp, ViewStyle } from 'react-native'
+import { type StyleProp, type ViewStyle } from 'react-native'
 import { currentAudioAtom, currentPlaylistAtom, setCurrentAudioAction } from '../model'
 import { PlayerControls } from './PlayerControls/PlayerControls'
 import { type ControlsNames, type PlayerControlsSize } from './PlayerControls/PlayerControls.types'

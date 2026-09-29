@@ -1,6 +1,6 @@
 import { act } from '@testing-library/react-native'
+import { type LayoutChangeEvent } from 'react-native'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
-import type { LayoutChangeEvent } from 'react-native'
 import { useContainerGeometryGuard } from './useContainerGeometryGuard'
 
 const EXPECTED_TOP = 737.52

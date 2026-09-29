@@ -1,6 +1,6 @@
 import { action } from '@reatom/framework'
 import { type PlaylistData } from 'entities/playlist/@x/listening-history'
-import type { AudioPlayerData } from 'entities/sermon/@x/listening-history'
+import { type AudioPlayerData } from 'entities/sermon/@x/listening-history'
 import { commitHistory } from '../model/commitHistory'
 import { historyAtom } from '../model/historyAtom'
 import { clearLiveProgressSnapshot } from './liveProgressStorage'

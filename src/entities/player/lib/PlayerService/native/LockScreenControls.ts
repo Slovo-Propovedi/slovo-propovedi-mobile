@@ -2,7 +2,7 @@ import { type AudioPlayer } from 'expo-audio'
 import { getLocalAppIconUri, hasUriProtocol } from 'shared/lib/app-icon'
 import { isExpoGo } from 'shared/lib/isExpoEnvironment'
 import { reportError } from 'shared/model/error-dialog'
-import type { LockScreenMetadata } from '../types'
+import { type LockScreenMetadata } from '../types'
 
 const RETRY_INTERVAL_MS = 200
 const MAX_RETRY_ATTEMPTS = 10

@@ -1,7 +1,7 @@
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useCallback, useEffect, useState } from 'react'
+import { type LayoutChangeEvent } from 'react-native'
 import { type SharedValue, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated'
-import type { LayoutChangeEvent } from 'react-native'
 
 const ESTIMATED_HEADER_HEIGHT = 100
 // Estimated measured container height of the h1 title; only used until the first onTitleLayout measurement.

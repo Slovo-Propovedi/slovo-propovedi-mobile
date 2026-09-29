@@ -1,11 +1,11 @@
 import { useAtom } from '@reatom/npm-react'
 import { Pressable, Text } from 'react-native'
 import { sermonCachingEnabledAtom, type TrackCacheVisualState } from 'entities/offline-cache'
+import { type PlaybackRate } from 'entities/player'
 import { formatPlaybackRate } from 'shared/lib/player'
 import { isOnlineAtom } from 'shared/model'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
-import type { PlaybackRate } from 'entities/player'
 import { styles } from './PlayerMenu.styles'
 
 const ADD_TO_OFFLINE_TEXT = 'Добавить в офлайн'

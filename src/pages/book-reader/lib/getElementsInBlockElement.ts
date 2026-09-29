@@ -1,5 +1,5 @@
+import { type StyleProp, type TextStyle } from 'react-native'
 import { type ThemeColors } from 'shared/ui/theme'
-import type { StyleProp, TextStyle } from 'react-native'
 import { type XMLElement, XMLElementType } from '../model'
 import { getElementKey } from './getElementKey'
 import { getTextElement } from './getTextElement'

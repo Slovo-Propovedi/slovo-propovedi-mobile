@@ -1,4 +1,4 @@
-import type { LockScreenMetadata } from '../types'
+import { type LockScreenMetadata } from '../types'
 
 export const createSetHandler =
   (ns: MediaSession | undefined) =>

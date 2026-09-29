@@ -1,8 +1,8 @@
-import type { NotificationsApi } from './NotificationsApi'
 import {
   getMissingNotificationsApiMethods,
   isValidNotificationsApi,
 } from './isValidNotificationsApi'
+import { type NotificationsApi } from './NotificationsApi'
 
 let notificationsModule: NotificationsApi | null = null
 let isInitialized = false

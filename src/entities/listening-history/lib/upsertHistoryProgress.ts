@@ -1,5 +1,5 @@
 import { type PlaylistData } from 'entities/playlist/@x/listening-history'
-import type { AudioPlayerData } from 'entities/sermon/@x/listening-history'
+import { type AudioPlayerData } from 'entities/sermon/@x/listening-history'
 import { type ListeningHistory } from '../model/types'
 import { buildHistoryEntry } from './buildHistoryEntry'
 import { buildManualPlaylist } from './buildManualPlaylist'

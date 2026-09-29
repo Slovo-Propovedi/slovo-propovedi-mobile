@@ -1,9 +1,9 @@
-import type { createInterruptionResumeController } from './interruptionResumeController'
-import type { createWebMediaSession } from './mediaSession'
-import type { WebPlayerState } from './playerState'
-import type { createStatusTracker } from './playerStatusTracker'
 import { scheduleHistoryFlush } from '../progressFlusher'
 import { reportPlayError } from './audioHandlers'
+import { type createInterruptionResumeController } from './interruptionResumeController'
+import { type createWebMediaSession } from './mediaSession'
+import { type WebPlayerState } from './playerState'
+import { type createStatusTracker } from './playerStatusTracker'
 
 interface TransportDeps {
   flushProgressAtCurrentTime: () => void

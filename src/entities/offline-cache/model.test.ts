@@ -1,6 +1,6 @@
 import { createCtx, type Ctx } from '@reatom/framework'
 import { type PlaylistData } from 'entities/playlist/@x/offline-cache'
-import type { SermonData } from 'entities/sermon/@x/offline-cache'
+import { type SermonData } from 'entities/sermon/@x/offline-cache'
 import { offlineRegistryAtom, registerOfflineSermon } from './lib/offlineSermonsRegistry'
 import {
   cachedUrlsAtom,

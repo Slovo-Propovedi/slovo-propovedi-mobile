@@ -1,7 +1,7 @@
 import { Pressable } from 'react-native'
+import { type AudioPlayerData } from 'entities/sermon'
 import { hapticLight } from 'shared/lib/haptics'
-import type { createStyles } from '../ExpandablePlayer/styles'
-import type { AudioPlayerData } from 'entities/sermon'
+import { type createStyles } from '../ExpandablePlayer/styles'
 import { DetailsOverlay } from './DetailsOverlay'
 
 export const PlayerMiddleArea = ({

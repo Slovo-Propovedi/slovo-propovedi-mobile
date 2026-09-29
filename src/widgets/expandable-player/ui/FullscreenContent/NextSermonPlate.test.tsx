@@ -1,6 +1,6 @@
 import { act, fireEvent } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import type { createStyles } from '../ExpandablePlayer/styles'
+import { type createStyles } from '../ExpandablePlayer/styles'
 import { AUTO_COLLAPSE_DELAY_MS, NextSermonPlate } from './NextSermonPlate'
 
 const LABEL = 'следующая проповедь'

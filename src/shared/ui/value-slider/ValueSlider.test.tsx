@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react-native'
-import type { TestInstance } from 'test-renderer'
+import { type TestInstance } from 'test-renderer'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { ValueSlider } from './ValueSlider'
 

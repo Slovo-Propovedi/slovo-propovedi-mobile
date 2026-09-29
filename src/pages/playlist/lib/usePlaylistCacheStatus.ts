@@ -2,7 +2,7 @@ import { useCtx } from '@reatom/npm-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { audioCacheService, cachedUrlsAtom } from 'entities/offline-cache'
 import { isNonNullable } from 'shared/lib/utils/isNonNullable'
-import type { TrackToCache } from './PlaylistOfflineService'
+import { type TrackToCache } from './PlaylistOfflineService'
 
 const STATUS_REFRESH_DEBOUNCE_MS = 250
 

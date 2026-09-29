@@ -1,5 +1,5 @@
 import { memo, type NamedExoticComponent } from 'react'
-import type { SermonData } from 'entities/sermon'
+import { type SermonData } from 'entities/sermon'
 import { SermonSearchRow } from './SermonSearchRow'
 
 /**

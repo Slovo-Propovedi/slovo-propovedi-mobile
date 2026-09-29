@@ -1,8 +1,8 @@
 import { screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
+import { type TestInstance, type TestNode } from 'test-renderer'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { DarkTheme, INDENTS, RADIUSES } from 'shared/ui/theme'
-import type { TestInstance, TestNode } from 'test-renderer'
 import { TracksListItemSkeleton } from './TracksListItemSkeleton'
 
 jest.mock('shared/ui/theme', () => {

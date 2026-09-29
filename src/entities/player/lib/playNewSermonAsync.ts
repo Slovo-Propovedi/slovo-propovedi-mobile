@@ -4,10 +4,10 @@ import {
   historyAtom,
 } from 'entities/listening-history/@x/player'
 import { type PlaylistData } from 'entities/playlist/@x/player'
+import { type AudioPlayerData, type SermonData } from 'entities/sermon/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { LockScreenMetadata } from './PlayerService/types'
-import type { AudioPlayerData, SermonData } from 'entities/sermon/@x/player'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
+import { type LockScreenMetadata } from './PlayerService/types'
 import { guardOfflinePlayback } from './playOfflineGuard'
 
 const SAME_SERMON_TOLERANCE_MS = 1000

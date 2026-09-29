@@ -3,7 +3,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { IconButton } from 'shared/ui/icon-button'
-import type { createStyles } from '../ExpandablePlayer/styles'
+import { type createStyles } from '../ExpandablePlayer/styles'
 import { NextSermonPlate } from './NextSermonPlate'
 import { StopAllCachingButton } from './StopAllCachingButton'
 

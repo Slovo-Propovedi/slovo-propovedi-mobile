@@ -1,4 +1,4 @@
-import type { XMLElementName } from '../model'
+import { type XMLElementName } from '../model'
 
 interface GetElementKeyProps {
   endWith?: number | string

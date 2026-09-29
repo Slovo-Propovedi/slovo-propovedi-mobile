@@ -1,4 +1,4 @@
-import type { SermonShape } from '../../../model/domain/common'
+import { type SermonShape } from '../../../model/domain/common'
 import { DEFAULT_ARTIST } from '../constants'
 
 const markBookPreviewUrl = 'https://slovo-istini.com/image/categories/22/marka_(1).jpg'

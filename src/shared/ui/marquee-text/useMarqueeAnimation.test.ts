@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-native'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue } from 'react-native-reanimated'
 import { useMarqueeAnimation } from './useMarqueeAnimation'
 
 interface FrameRegistration {
