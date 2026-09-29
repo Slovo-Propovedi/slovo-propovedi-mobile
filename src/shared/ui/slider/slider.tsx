@@ -1,5 +1,4 @@
-import { View } from 'react-native'
-import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
+import { type GestureResponderEvent, type StyleProp, View, type ViewStyle } from 'react-native'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES } from '../theme/themed'
 import { useMouseDragScroll } from './lib/useMouseDragScroll'

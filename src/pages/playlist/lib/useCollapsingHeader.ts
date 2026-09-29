@@ -2,11 +2,11 @@ import { useHeaderHeight } from 'expo-router/react-navigation'
 import { Dimensions } from 'react-native'
 import {
   interpolate,
+  type SharedValue,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated'
-import type { SharedValue } from 'react-native-reanimated'
 
 const { height: windowHeight } = Dimensions.get('window')
 

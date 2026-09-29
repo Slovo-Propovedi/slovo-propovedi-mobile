@@ -1,12 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { booksArraySchema } from 'entities/sermon'
+import { type BookData, booksArraySchema } from 'entities/sermon'
 import { getParseJsonWithSchema } from 'shared/model'
-import { ListItemSize, TouchableListItem } from 'shared/ui'
+import { ListItemSize, type OnPressTouchableListItem, TouchableListItem } from 'shared/ui'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
-import type { BookData } from 'entities/sermon'
-import type { OnPressTouchableListItem } from 'shared/ui'
 
 const parseBooks = getParseJsonWithSchema(booksArraySchema)
 

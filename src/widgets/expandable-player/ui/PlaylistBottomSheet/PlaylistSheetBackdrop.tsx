@@ -1,5 +1,4 @@
-import { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
+import { BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
 
 // Dimmed backdrop behind the sheet: appears once the sheet lifts off the
 // closed snap, and a tap on it closes the sheet (pressBehavior='close').

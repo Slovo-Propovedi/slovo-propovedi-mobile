@@ -1,8 +1,8 @@
-import { StyleSheet } from 'react-native'
 import {
   type AccessibilityState,
   type GestureResponderEvent,
   type StyleProp,
+  StyleSheet,
   type ViewStyle,
 } from 'react-native'
 import { COLORS } from './theme/colors'

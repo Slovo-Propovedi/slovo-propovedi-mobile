@@ -1,7 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
-import { useAnimatedReaction } from 'react-native-reanimated'
+import { type SharedValue, useAnimatedReaction } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import type { SharedValue } from 'react-native-reanimated'
 import { isPlayerTransitioningAtom } from './isPlayerTransitioningAtom'
 
 // Границы «идёт переход»: строго между свёрнутым (0) и развёрнутым (1).

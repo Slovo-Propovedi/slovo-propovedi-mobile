@@ -1,9 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { router } from 'expo-router'
-import { StyleSheet } from 'react-native'
+import { type Href, router } from 'expo-router'
+import { type ColorValue, StyleSheet } from 'react-native'
 import { IconButton } from 'shared/ui/icon-button'
-import type { Href } from 'expo-router'
-import type { ColorValue } from 'react-native'
 
 // A reloaded web page has no navigation history, so react-navigation's own
 // back button never appears. This one always works, falling back to

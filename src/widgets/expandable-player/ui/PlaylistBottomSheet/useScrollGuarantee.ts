@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useWindowDimensions } from 'react-native'
-import type { LayoutChangeEvent, View } from 'react-native'
+import { type LayoutChangeEvent, useWindowDimensions, type View } from 'react-native'
 import {
   computeBelowScreenOffset,
   computeFooterHeight,

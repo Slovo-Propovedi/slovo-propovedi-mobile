@@ -1,6 +1,5 @@
 import { type ReactNode } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-import { type ColorValue } from 'react-native'
+import { type ColorValue, StyleSheet, Text, View } from 'react-native'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 

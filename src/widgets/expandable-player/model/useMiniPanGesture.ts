@@ -1,8 +1,7 @@
 import { Gesture } from 'react-native-gesture-handler'
-import { withTiming } from 'react-native-reanimated'
+import { type SharedValue, withTiming } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { SCREEN_HEIGHT } from 'shared/config'
-import type { SharedValue } from 'react-native-reanimated'
 import { getMiniPlayerBottom } from '../lib/getMiniPlayerBottom'
 import { COLLAPSE_DURATION_MS, EXPAND_DURATION_MS } from './expandDurations'
 

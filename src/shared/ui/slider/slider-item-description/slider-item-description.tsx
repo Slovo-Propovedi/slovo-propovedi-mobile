@@ -1,5 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native'
-import { type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
+import {
+  type StyleProp,
+  StyleSheet,
+  Text,
+  type TextStyle,
+  View,
+  type ViewStyle,
+} from 'react-native'
 import { MarqueeText } from '../../marquee-text/marquee-text'
 import { COLORS } from '../../theme/colors'
 import { useTheme } from '../../theme/ThemeContext/useTheme'

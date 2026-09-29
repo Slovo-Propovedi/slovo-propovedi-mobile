@@ -1,9 +1,13 @@
 import { useCallback, useMemo } from 'react'
 import { Dimensions, useWindowDimensions } from 'react-native'
-import { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import {
+  interpolate,
+  type SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated'
 import { getColumnSideInset } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
-import type { SharedValue } from 'react-native-reanimated'
 import { getMiniPlayerBottom } from '../lib/getMiniPlayerBottom'
 import { getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 import { useAppStateSnap } from './useAppStateSnap'

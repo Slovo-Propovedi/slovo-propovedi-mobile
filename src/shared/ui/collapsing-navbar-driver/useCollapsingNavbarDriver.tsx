@@ -3,12 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet } from 'react-native'
 import Animated, {
   interpolate,
+  type SharedValue,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import type { SharedValue } from 'react-native-reanimated'
 import { useHeaderTitle } from '../../routing/useHeaderTitle'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 

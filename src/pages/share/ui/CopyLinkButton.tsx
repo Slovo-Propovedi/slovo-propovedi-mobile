@@ -1,10 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import * as Clipboard from 'expo-clipboard'
 import { useEffect, useState } from 'react'
-import { StyleSheet, Text } from 'react-native'
+import { type StyleProp, StyleSheet, Text, type ViewStyle } from 'react-native'
 import { FONT_SIZES, RADIUSES, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
-import type { StyleProp, ViewStyle } from 'react-native'
 
 const COPIED_FEEDBACK_MS = 2000
 

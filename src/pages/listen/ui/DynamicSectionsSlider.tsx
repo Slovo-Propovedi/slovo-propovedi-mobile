@@ -5,9 +5,9 @@ import {
   dynamicSectionsAtom,
   fetchAllSections,
   isLoadingSectionsAtom,
+  type SectionData,
   sectionDataSourceAtom,
 } from 'entities/section'
-import { type SectionData } from 'entities/section'
 import { useOfflineRetry } from 'shared/lib/network'
 import { EmptyState } from 'shared/ui'
 import { getFirstSectionLayout } from '../lib/first-section-layout'

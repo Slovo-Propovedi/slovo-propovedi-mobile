@@ -5,18 +5,12 @@ import {
 } from 'entities/listening-history/@x/player'
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import type { PlayerActions } from './types'
+import type { OldTrackFlush, PlayerActions } from './types'
 import type { AudioPlayerData } from 'entities/sermon/@x/player'
 import { setCurrentAudioAction } from '../../../../model'
 import { savePlaybackProgress } from '../../../playbackProgress'
 import { lockScreenControls } from '../LockScreenControls'
 import { getFirstTrack } from './navigation'
-
-export interface OldTrackFlush {
-  oldDurationMs: number
-  oldPositionMs: number
-  oldSermonId: string
-}
 
 /**
  * Plays a track after the previous one finished. The finished track's history

@@ -1,6 +1,5 @@
 import { act } from '@testing-library/react-native'
-import { Text } from 'react-native'
-import { AppState, type AppStateStatus } from 'react-native'
+import { AppState, type AppStateStatus, Text } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'

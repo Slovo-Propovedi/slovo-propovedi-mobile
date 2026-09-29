@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { validate as uuidValidate } from 'uuid'
-import { mapPlaylistEntityToPlaylistData } from 'entities/playlist'
-import { type PlaylistData } from 'entities/playlist'
+import { mapPlaylistEntityToPlaylistData, type PlaylistData } from 'entities/playlist'
 import { playlistsApi } from 'shared/api'
 
 export const resolvePlaylistFromApi = async (

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { withTiming } from 'react-native-reanimated'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue, withTiming } from 'react-native-reanimated'
 import { COLLAPSE_DURATION_MS, EXPAND_DURATION_MS } from './expandDurations'
 
 /**

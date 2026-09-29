@@ -1,9 +1,8 @@
 import { useNavigation } from 'expo-router'
 import { useEffect, useRef } from 'react'
-import { useSharedValue } from 'react-native-reanimated'
+import { type SharedValue, useSharedValue } from 'react-native-reanimated'
 import { useCollapsingNavbarDriver } from 'shared/ui/collapsing-navbar-driver'
 import { COLORS, useTheme } from 'shared/ui/theme'
-import type { SharedValue } from 'react-native-reanimated'
 
 // Navbar bg darkens over the last 80px before the title-appear threshold (cover-screen darkening window).
 const DARKEN_START_OFFSET = 80

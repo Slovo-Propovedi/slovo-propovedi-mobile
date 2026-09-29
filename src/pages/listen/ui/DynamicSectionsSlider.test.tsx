@@ -2,8 +2,12 @@ import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
 import { StyleSheet, Text } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
-import { dynamicSectionsAtom, isLoadingSectionsAtom, sectionDataSourceAtom } from 'entities/section'
-import { type SectionData } from 'entities/section'
+import {
+  dynamicSectionsAtom,
+  isLoadingSectionsAtom,
+  type SectionData,
+  sectionDataSourceAtom,
+} from 'entities/section'
 import { renderWithProviders } from 'shared/mocks'
 import type { TestInstance } from 'test-renderer'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'

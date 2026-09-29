@@ -1,5 +1,4 @@
-import { interpolate, useAnimatedStyle } from 'react-native-reanimated'
-import type { SharedValue } from 'react-native-reanimated'
+import { interpolate, type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 
 // Opacity animated styles for the expandable player layers.
 // Extracted from useExpandAnimation to keep the main hook within the 130-line limit.

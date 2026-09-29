@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native'
 import { getColumnSideInset } from 'shared/ui/layout'
-import { FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
-import type { ThemeColors } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES, type ThemeColors } from 'shared/ui/theme'
 import { getMiniPlayerBottom } from '../../lib/getMiniPlayerBottom'
 
 export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number, screenWidth: number) => {

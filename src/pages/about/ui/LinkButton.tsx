@@ -1,8 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { StyleSheet, Text, View } from 'react-native'
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import { INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
-import type { StyleProp, ViewStyle } from 'react-native'
 
 export const LinkButton = ({
   icon,

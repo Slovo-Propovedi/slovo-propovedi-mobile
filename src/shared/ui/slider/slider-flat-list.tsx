@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
-import { FlatList, StyleSheet, View } from 'react-native'
-import { type GestureResponderEvent } from 'react-native'
+import { FlatList, type GestureResponderEvent, StyleSheet, View } from 'react-native'
 import { SCREEN_WIDTH } from '../../config/screen-dimensions'
 import { INDENTS } from '../theme/themed'
 import { SliderItem } from './slider-item/slider-item'

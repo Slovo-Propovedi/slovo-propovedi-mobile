@@ -1,5 +1,4 @@
-import { Animated } from 'react-native'
-import type { ColorValue } from 'react-native'
+import { Animated, type ColorValue } from 'react-native'
 
 export const TabIndicator = ({
   color,

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { Checkbox } from 'expo-checkbox'
-import { StyleSheet, Text, View } from 'react-native'
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import {
   COLORS,
   dynamicColorsEnabledAtom,
@@ -11,7 +11,6 @@ import {
   useTheme,
 } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
-import type { StyleProp, ViewStyle } from 'react-native'
 
 export const DynamicColorsItem = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const [enabled] = useAtom(dynamicColorsEnabledAtom)

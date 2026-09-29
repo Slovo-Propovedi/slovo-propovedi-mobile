@@ -1,8 +1,6 @@
 import { type StyleProp, StyleSheet, type TextStyle, type ViewStyle } from 'react-native'
-import { type ThemeColors } from 'shared/ui/theme'
-import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
-import type { XMLElementName } from '../model'
-import { BodyXMLElementName } from '../model'
+import { FONT_SIZES, INDENTS, type ThemeColors } from 'shared/ui/theme'
+import { BodyXMLElementName, type XMLElementName } from '../model'
 
 interface GetTextElementStylesReturnType {
   style?: StyleProp<ViewStyle>

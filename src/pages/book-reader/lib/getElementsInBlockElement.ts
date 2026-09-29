@@ -1,7 +1,6 @@
 import { type ThemeColors } from 'shared/ui/theme'
-import type { XMLElement } from '../model'
 import type { StyleProp, TextStyle } from 'react-native'
-import { XMLElementType } from '../model'
+import { type XMLElement, XMLElementType } from '../model'
 import { getElementKey } from './getElementKey'
 import { getTextElement } from './getTextElement'
 import { parseObjectToStylizedElements } from './parseObjectToStylizedElements'

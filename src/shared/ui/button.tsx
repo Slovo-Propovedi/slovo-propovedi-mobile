@@ -1,5 +1,11 @@
-import { StyleSheet, Text } from 'react-native'
-import { type ButtonProps, type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
+import {
+  type ButtonProps,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native'
 import { COLORS } from './theme/colors'
 import { FONT_SIZES, INDENTS, RADIUSES } from './theme/themed'
 import { TouchableButton } from './touchable-button/TouchableButton'

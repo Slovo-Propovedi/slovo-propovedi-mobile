@@ -1,6 +1,5 @@
 import { Color } from 'expo-router'
-import { Platform } from 'react-native'
-import { type ColorValue } from 'react-native'
+import { type ColorValue, Platform } from 'react-native'
 import { type ThemeColors } from './types'
 
 export const LightTheme = {

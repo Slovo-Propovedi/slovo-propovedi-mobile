@@ -1,5 +1,4 @@
-import { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
-import type { SharedValue } from 'react-native-reanimated'
+import { type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { REPEAT_SPACER } from './marquee-utils'
 import { useMarqueeFrameClock } from './useMarqueeFrameClock'
 

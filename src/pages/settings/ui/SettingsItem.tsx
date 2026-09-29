@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
-import { StyleSheet, Text, View } from 'react-native'
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
-import type { StyleProp, ViewStyle } from 'react-native'
 
 export const SettingsItem = ({
   description,

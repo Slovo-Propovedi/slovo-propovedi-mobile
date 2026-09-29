@@ -1,8 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent } from '@testing-library/react-native'
 import { type PlaylistData } from 'entities/playlist'
-import { dynamicSectionsAtom } from 'entities/section'
-import { type SectionData } from 'entities/section'
+import { dynamicSectionsAtom, type SectionData } from 'entities/section'
 import { renderWithProviders } from 'shared/mocks'
 import { PlaylistListScreen } from './PlaylistListScreen'
 

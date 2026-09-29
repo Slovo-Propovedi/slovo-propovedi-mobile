@@ -1,7 +1,11 @@
 /* eslint-disable react-hooks/immutability -- Reanimated shared values are intentionally mutated in frame worklets and reset effects */
 import { useCallback, useEffect } from 'react'
-import { useFrameCallback, useSharedValue } from 'react-native-reanimated'
-import type { FrameInfo, SharedValue } from 'react-native-reanimated'
+import {
+  type FrameInfo,
+  type SharedValue,
+  useFrameCallback,
+  useSharedValue,
+} from 'react-native-reanimated'
 import {
   MARQUEE_MS_PER_PX,
   MARQUEE_MS_PER_PX_NARROW,
@@ -49,10 +53,9 @@ export const useMarqueeFrameClock = ({
   // active, but this freezes the phase during scrubs and while the gate is off.
   const clockPaused = useSharedValue(!autoStart)
 
-  // Empty deps: the worklet reads only shared values and module constants, so
-  // a stable identity keeps `useFrameCallback`'s [callback, autostart] effect
-  // from re-registering the native frame callback on parent re-renders (audio
-  // position ticks ~2/s used to unregister/re-register the clock each tick).
+  // Empty deps: the worklet reads only shared values and module constants, so a
+  // stable identity stops `useFrameCallback`'s [callback, autostart] effect from
+  // re-registering the native frame callback on each render (audio ticks ~2/s).
   const handleFrame = useCallback((frameInfo: FrameInfo) => {
     'worklet'
     if (!needsMarquee.value || !marqueeArmed.value || clockPaused.value) return
