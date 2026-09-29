@@ -336,7 +336,9 @@ export const MyComponent = () => {
 }
 ```
 
-1. **Lint-fix escalation** (strictly in this order):
+**Mandatory `yarn check:unused`.** Alongside `yarn lint` and `yarn check:types`, every code change MUST run `yarn check:unused` (knip) and keep it at **zero findings**. Treat any finding as a review error: delete the export (or the whole file when nothing is left to export), or justify it via `ignore` in `knip.config.ts` with a comment. See «Export on demand» above.
+
+**Lint-fix escalation** (strictly in this order):
    - `yarn lint:fix` — auto-fix everything ESLint can
    - `yarn prettier:write` — formatting pass
    - Whatever still remains — manual fixes by the coding agent (following the decomposition rules above: extract components/helpers, do NOT squeeze lines or remove blank lines)
