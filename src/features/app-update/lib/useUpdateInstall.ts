@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { AppState, type AppStateStatus } from 'react-native'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { type UpdateErrorKind } from 'shared/lib/update-service'
@@ -36,10 +36,11 @@ export const useUpdateInstall = (): UseUpdateInstallResult => {
   const resumeUpdate = useAction(resumeUpdateAfterPermissionAction)
 
   const resumeAfterActive = useDebounce(
-    useCallback(() => {
+    () => {
       void resumeUpdate()
-    }, [resumeUpdate]),
+    },
     PERMISSION_RESUME_DELAY_MS,
+    [resumeUpdate],
   )
 
   useEffect(() => {

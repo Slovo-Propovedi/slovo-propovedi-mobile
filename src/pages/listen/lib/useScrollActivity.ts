@@ -8,20 +8,24 @@ export const SCROLL_IDLE_MS = 200
 export const useScrollActivity = () => {
   const [isScrolling, setIsListenScrolling] = useAtom(isListenScrollingAtom)
 
-  const markNotScrolling = useCallback(() => {
-    setIsListenScrolling(false)
-  }, [setIsListenScrolling])
-
-  const markIdle = useDebounce(markNotScrolling, SCROLL_IDLE_MS)
+  const markIdle = useDebounce(
+    () => {
+      setIsListenScrolling(false)
+    },
+    SCROLL_IDLE_MS,
+    [setIsListenScrolling],
+  )
 
   // The ScrollView is swapped mid-scroll (e.g. search-activated results). The
   // hook drops the pending timer on unmount, so without an explicit reset the
   // flag would stay true and the glow would freeze until the next event.
   useEffect(
     () => () => {
-      markNotScrolling()
+      // Скроллвью размонтировался на середине серии скролла: без сброса флаг
+      // завис бы в true и свечение замерло до следующего события.
+      setIsListenScrolling(false)
     },
-    [markNotScrolling],
+    [setIsListenScrolling],
   )
 
   const onScroll = useCallback(() => {

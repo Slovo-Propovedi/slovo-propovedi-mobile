@@ -119,6 +119,63 @@ describe('useDebounce', () => {
     expect(action).not.toHaveBeenCalled()
   })
 
+  test('keeps the same debounced action while the deps hold', async () => {
+    const action = jest.fn()
+    const { rerender, result } = await renderHook(
+      ({ value }: { value: number }) => useDebounce(() => action(value), 500, [value]),
+      { initialProps: { value: 1 } },
+    )
+
+    await act(async () => {
+      result.current()
+    })
+
+    const initial = result.current
+    await rerender({ value: 1 })
+
+    expect(result.current).toBe(initial)
+
+    // Unchanged deps — the pending call of the first render survives.
+    await act(async () => {
+      jest.advanceTimersByTime(500)
+    })
+
+    expect(action).toHaveBeenCalledWith(1)
+  })
+
+  test('rebuilds the debounced action and drops the pending call on a deps change', async () => {
+    const first = jest.fn()
+    const second = jest.fn()
+    const { rerender, result } = await renderHook(
+      ({ action, value }: { action: (value: number) => void; value: number }) =>
+        useDebounce(() => action(value), 500, [action, value]),
+      { initialProps: { action: first, value: 1 } },
+    )
+
+    await act(async () => {
+      result.current()
+    })
+
+    const beforeSwap = result.current
+    await rerender({ action: second, value: 2 })
+
+    expect(result.current).not.toBe(beforeSwap)
+
+    // The stale closure is gone with the old action: only the fresh one runs.
+    await act(async () => {
+      jest.advanceTimersByTime(500)
+    })
+
+    expect(first).not.toHaveBeenCalled()
+
+    await act(async () => {
+      result.current()
+      jest.advanceTimersByTime(500)
+    })
+
+    expect(second).toHaveBeenCalledWith(2)
+  })
+
   test('works with numeric arguments', async () => {
     const action = jest.fn()
     const { result } = await renderHook(() => useDebounce(action, 300))

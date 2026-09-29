@@ -1,5 +1,4 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
-import { useCallback } from 'react'
 import { StyleSheet, Switch } from 'react-native'
 import { sermonCachingEnabledAtom, setSermonCachingEnabled } from 'entities/offline-cache'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
@@ -25,12 +24,13 @@ export const SermonCachingHeaderSwitch = () => {
   // An unmounted screen must not fire a pending clear — useDebounce drops the
   // timer on unmount.
   const runSettledClear = useDebounce(
-    useCallback(() => {
+    () => {
       void cancelDownloadsAndClearCache(ctx).catch(error => {
         console.error('[offline] Failed to clear the audio cache:', error)
       })
-    }, [ctx]),
+    },
     TOGGLE_SETTLE_MS,
+    [ctx],
   )
 
   const handleToggle = () => {
