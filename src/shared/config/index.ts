@@ -1,9 +1,9 @@
+export { DEFAULT_API_URL } from './api-url'
 export {
   CACHED_DISTINCT_VALUES,
   CACHED_SERMON_SEARCH,
   CACHED_SERMON_SEARCH_INDEX,
 } from './cache-storage-keys'
-export { DEFAULT_API_URL } from './config'
 export { debugConfig } from './debug'
 export { ENV } from './env'
 export { LISTENING_HISTORY, LISTENING_PROGRESS_SNAPSHOT } from './history-storage-keys'

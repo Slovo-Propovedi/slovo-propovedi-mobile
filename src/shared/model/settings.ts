@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, atom } from '@reatom/framework'
 import { axiosInstance } from '../api/axiosInstance'
-import { DEFAULT_API_URL } from '../config/config'
+import { DEFAULT_API_URL } from '../config/api-url'
 import { SERVER_URL } from '../config/server-storage-keys'
 
 const HAPTICS_ENABLED_KEY = 'haptics_enabled'

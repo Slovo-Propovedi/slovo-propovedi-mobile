@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios, { type AxiosRequestConfig } from 'axios'
-import { DEFAULT_API_URL } from '../config/config'
+import { DEFAULT_API_URL } from '../config/api-url'
 import { ctx } from '../lib/reatom-ctx/ctx'
 import { reportServerReachable, reportServerUnreachable } from '../model/network'
 import { type RefreshResponse } from './generated/api.schemas'
