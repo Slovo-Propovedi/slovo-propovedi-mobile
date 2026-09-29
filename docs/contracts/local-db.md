@@ -9,7 +9,7 @@
 ## Расположение
 
 - Директория: `src/shared/api/db/`.
-- Наружу через `src/shared/api/index.ts` реэкспортируется только `API = { books: booksAPI }` — точка доступа к книгам. `db` и `DEFAULT_ARTIST` наружу не выводятся: они используются внутри `src/shared/api` по относительным импортам (`localBD.ts` → `db/db.ts`, данные БД → `db/constants.ts`).
+- Наружу через `src/shared/api/index.ts` реэкспортируются `API = { books: booksAPI }` (точка доступа к книгам) и сгенерированные Orval-модули (`export * from './generated'`). Локальная БД наружу не выводится: `db` и `DEFAULT_ARTIST` используются внутри `src/shared/api` по относительным импортам (`localBD.ts` → `db/db.ts`, данные БД → `db/constants.ts`).
 - `localDB` — в `src/shared/api/localBD.ts` (обёртка над `db`).
 
 ## Структура `src/shared/api/db/`
