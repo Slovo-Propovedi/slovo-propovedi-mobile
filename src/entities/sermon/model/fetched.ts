@@ -1,6 +1,7 @@
-import { type PlaylistData } from 'entities/playlist/@x/sermon'
+import { type playlistDataSchema } from 'entities/playlist/@x/sermon'
 import type { FetchedBooksGroupName, FetchedSermonsGroupName } from './bible'
 import type { SermonData } from './sermon'
+import type z from 'zod'
 
 export interface DB {
   books: Array<{
@@ -28,3 +29,6 @@ export interface FetchedSermonsGroup {
   groupName: FetchedSermonsGroupName
   playlists: PlaylistData[]
 }
+
+/** Тип плейлиста, выведенный из схемы entities/playlist (единственный источник правды). */
+type PlaylistData = z.infer<typeof playlistDataSchema>
