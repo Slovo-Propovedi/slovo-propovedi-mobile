@@ -2,11 +2,11 @@ import { StyleSheet } from 'react-native'
 import { COLORS, type ThemeColors } from 'shared/ui/theme'
 
 export const THUMB_SIZE = 20
-export const TRACK_HEIGHT = 4
+const TRACK_HEIGHT = 4
 
 // Effective touch area: container height + hitSlop in ValueSlider = 48dp
 // (see MIN_TOUCH_TARGET in shared/ui/theme).
-export const TRACK_CONTAINER_HEIGHT = 32
+const TRACK_CONTAINER_HEIGHT = 32
 
 export const createValueSliderStyles = (theme: ThemeColors) =>
   StyleSheet.create({

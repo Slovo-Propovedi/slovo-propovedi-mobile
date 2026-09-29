@@ -56,7 +56,7 @@ export const playTrackWithMetadata = async (
   })
 }
 
-export const playWithAppStateHandling = async (playerActions: PlayerActions): Promise<void> => {
+const playWithAppStateHandling = async (playerActions: PlayerActions): Promise<void> => {
   try {
     await playerActions.play()
   } catch (error) {

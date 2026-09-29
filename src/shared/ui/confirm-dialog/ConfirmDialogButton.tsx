@@ -5,7 +5,7 @@ import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 
-export interface ConfirmDialogButtonProps {
+interface ConfirmDialogButtonProps {
   color?: ColorValue
   icon?: ReactNode
   isConfirm?: boolean

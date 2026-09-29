@@ -15,7 +15,7 @@ export interface ScrollToIndexFailedInfo {
   index: number
 }
 
-export const scheduleRetry = (
+const scheduleRetry = (
   scheduler: ScrollScheduler,
   guards: ScrollGuards,
   finalSnapIndex: number,

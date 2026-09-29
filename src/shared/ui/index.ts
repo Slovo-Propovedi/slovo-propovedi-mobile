@@ -1,17 +1,8 @@
-export { GlobalConfirmDialog } from './confirm-dialog'
 export { CoverImage } from './cover-image'
 export { EmptyState } from './empty-state'
-export { ErrorBoundary, ErrorDialog, GlobalErrorHandler, useErrorDialog } from './error-dialog'
-export { ListItem } from './list-item/list-item'
 export { ListItemSize } from './list-item/list-item.types'
-export { Loading } from './loading'
-export { MarqueeText } from './marquee-text/marquee-text'
-export { Modal } from './modal'
 export { MovingText } from './MovingText'
-export { ProgressBar } from './progress-bar/ProgressBar'
-export { Progress } from './progress/progress'
 export { Slider } from './slider/slider'
-export { SliderItemDescription } from './slider/slider-item-description/slider-item-description'
 export { SliderItemDescriptionBackgroundStyle } from './slider/slider-item-description/slider-item-description.types'
 export { getSliderItemWidth } from './slider/slider-item/slider-item.lib'
 export {
@@ -20,7 +11,6 @@ export {
   WhereIsSlideTitleLocated,
 } from './slider/slider-item/slider-item.types'
 export { Toast } from './toast/Toast'
-export { TouchableItem } from './touchable-item'
 export {
   OnPressTouchableListItem,
   TouchableListItem,

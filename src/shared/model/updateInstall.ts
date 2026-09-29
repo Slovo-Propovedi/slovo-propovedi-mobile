@@ -1,10 +1,10 @@
 import { atom } from '@reatom/framework'
 import { type UpdateErrorKind } from 'shared/lib/update-service'
 
-export type PermissionResumeDecision = 'install' | 'restart' | 'wait'
-
 export type UpdateState =
   'downloading' | 'error' | 'extracting' | 'idle' | 'installing' | 'permission'
+
+type PermissionResumeDecision = 'install' | 'restart' | 'wait'
 
 export const updateStateAtom = atom<UpdateState>('idle', 'updateInstall.updateStateAtom')
 export const updateProgressAtom = atom(0, 'updateInstall.updateProgressAtom')

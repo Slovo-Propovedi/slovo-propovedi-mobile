@@ -1,12 +1,12 @@
-export interface TimecodeLinkSegment {
+interface TimecodeLinkSegment {
   ms: number
   type: 'timecode'
   value: string
 }
 
-export type TimecodeSegment = TimecodeLinkSegment | TimecodeTextSegment
+type TimecodeSegment = TimecodeLinkSegment | TimecodeTextSegment
 
-export interface TimecodeTextSegment {
+interface TimecodeTextSegment {
   type: 'text'
   value: string
 }
@@ -23,7 +23,7 @@ const TWO_DIGITS_REGEX = /^\d{2}$/
  * and the trailing word boundary keep `10:2345`, `112:30` and dates like
  * `2024:05` from matching.
  */
-export const TIMECODE_REGEX = /\b\d{1,2}(?::\d{2}){1,2}\b/
+const TIMECODE_REGEX = /\b\d{1,2}(?::\d{2}){1,2}\b/
 
 const parseNumericSegments = (parts: string[]): null | number[] => {
   const numbers: number[] = []

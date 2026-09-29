@@ -1,3 +1,2 @@
 export { mapPlaylistEntityToPlaylistData } from './lib/mappers/mapPlaylistEntityToPlaylistData'
 export { type PlaylistData } from './model'
-export { playlistDataSchema, playlistsArraySchema, playlistSchema } from './model'

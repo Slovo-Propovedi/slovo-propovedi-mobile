@@ -5,7 +5,6 @@ export {
   isDownloadingAtom,
 } from './lib/download-model'
 export { initializePlayer } from './lib/initializePlayer'
-export { guardOfflinePlayback } from './lib/playOfflineGuard'
 export { scheduleStartupGuardReset } from './lib/startupGuard'
 export { useAudioSettings } from './lib/useAudioSettings'
 export { useGuardedTogglePlay } from './lib/useGuardedTogglePlay'
@@ -23,10 +22,6 @@ export {
   isBufferingAtom,
   isPlayingAtom,
   positionAtom,
-  repeatModeSchema,
-  setCurrentAudioAction,
-  setCurrentPlaylistAction,
-  setRepeatModeAction,
 } from './model'
 
 export { PLAYBACK_RATES, type PlaybackRate } from './playback-rate'

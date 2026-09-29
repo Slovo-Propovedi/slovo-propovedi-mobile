@@ -6,7 +6,7 @@ export interface FakeRegistration {
   waiting: unknown
 }
 
-export interface FakeWorker {
+interface FakeWorker {
   addEventListener: (type: string, cb: () => void) => void
   state: string
 }

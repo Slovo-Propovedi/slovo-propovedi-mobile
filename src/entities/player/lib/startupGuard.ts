@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { PLAYER_STARTUP_ATTEMPTS } from 'shared/config'
 
-export const MAX_STARTUP_ATTEMPTS = 3
-export const STARTUP_GUARD_RESET_DELAY_MS = 30_000
+const MAX_STARTUP_ATTEMPTS = 3
+const STARTUP_GUARD_RESET_DELAY_MS = 30_000
 
 export const shouldSkipRestore = (attempts: number): boolean => attempts >= MAX_STARTUP_ATTEMPTS
 

@@ -1,4 +1,4 @@
-import { playlistDataSchema, playlistsArraySchema, playlistSchema } from './model'
+import { playlistDataSchema, playlistsArraySchema } from './model'
 
 const validSermon = {
   artist: 'Pastor John',
@@ -14,9 +14,9 @@ const validPlaylist = {
   title: 'Sunday Sermons',
 }
 
-describe('playlistSchema', () => {
+describe('playlistDataSchema', () => {
   test('parses valid playlist with required fields', () => {
-    const result = playlistSchema.parse(validPlaylist)
+    const result = playlistDataSchema.parse(validPlaylist)
     expect(result.id).toBe('playlist-1')
     expect(result.sermons).toHaveLength(1)
     expect(result.title).toBe('Sunday Sermons')
@@ -28,32 +28,25 @@ describe('playlistSchema', () => {
       description: 'Best sermons',
       sections: [{ itemsSize: 'large', transform: 'high' }],
     }
-    const result = playlistSchema.parse(playlist)
+    const result = playlistDataSchema.parse(playlist)
     expect(result.description).toBe('Best sermons')
     expect(result.sections).toHaveLength(1)
   })
 
   test('parses playlist with empty sermons array', () => {
     const playlist = { ...validPlaylist, sermons: [] }
-    const result = playlistSchema.parse(playlist)
+    const result = playlistDataSchema.parse(playlist)
     expect(result.sermons).toEqual([])
   })
 
   test('throws on missing required field: artwork', () => {
     const { artwork: _, ...rest } = validPlaylist
-    expect(() => playlistSchema.parse(rest)).toThrow()
+    expect(() => playlistDataSchema.parse(rest)).toThrow()
   })
 
   test('throws on missing required field: sermons', () => {
     const { sermons: _, ...rest } = validPlaylist
-    expect(() => playlistSchema.parse(rest)).toThrow()
-  })
-})
-
-describe('playlistDataSchema alias', () => {
-  test('parses valid playlist', () => {
-    const result = playlistDataSchema.parse(validPlaylist)
-    expect(result.id).toBe(validPlaylist.id)
+    expect(() => playlistDataSchema.parse(rest)).toThrow()
   })
 })
 

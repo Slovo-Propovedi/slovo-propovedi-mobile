@@ -3,11 +3,6 @@
 // events to them, mirroring how a browser routes keydown to document listeners.
 import type { FakeKeyEvent } from './createKeyEvent'
 
-export interface FakeDocument extends FakeEventTarget {
-  dispatchKeyDown: (event: FakeKeyEvent) => void
-  documentElement: { style: { setProperty: jest.Mock } }
-}
-
 export interface FakeDom {
   dispatchKeyDown: (event: FakeKeyEvent) => void
   document: FakeDocument
@@ -20,15 +15,20 @@ export interface FakeDom {
   window: FakeEventTarget
 }
 
-export interface FakeEventTarget {
+interface FakeDocument extends FakeEventTarget {
+  dispatchKeyDown: (event: FakeKeyEvent) => void
+  documentElement: { style: { setProperty: jest.Mock } }
+}
+
+type FakeEventListener = (event?: unknown) => void
+
+interface FakeEventTarget {
   addEventListener: jest.Mock
   getListenerCount: () => number
   getListeners: (type: string) => FakeEventListener[]
   listeners: Record<string, FakeEventListener[]>
   removeEventListener: jest.Mock
 }
-
-type FakeEventListener = (event?: unknown) => void
 
 const createFakeEventTarget = (): FakeEventTarget => {
   const listeners: Record<string, FakeEventListener[]> = {}

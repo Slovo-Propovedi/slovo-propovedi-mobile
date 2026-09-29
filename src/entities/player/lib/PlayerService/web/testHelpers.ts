@@ -1,4 +1,11 @@
-export interface AudioElementLike {
+export interface AudioElementStub {
+  element: AudioElementLike
+  fireEvent: (type: string) => void
+  pause: jest.Mock
+  play: jest.Mock
+}
+
+interface AudioElementLike {
   addEventListener: (type: string, handler: () => void) => void
   currentTime: number
   duration: number
@@ -11,16 +18,7 @@ export interface AudioElementLike {
   volume: number
 }
 
-export interface AudioElementStub {
-  element: AudioElementLike
-  fireEvent: (type: string) => void
-  pause: jest.Mock
-  play: jest.Mock
-}
-
-export const createAudioElementStub = (
-  overrides: Partial<AudioElementLike> = {},
-): AudioElementStub => {
+const createAudioElementStub = (overrides: Partial<AudioElementLike> = {}): AudioElementStub => {
   const listeners = new Map<string, Set<() => void>>()
   const pause = jest.fn()
   const play = jest.fn().mockResolvedValue(undefined)
@@ -53,7 +51,7 @@ export const createAudioElementStub = (
 
 export const audioStubs: AudioElementStub[] = []
 
-export const installGlobalAudioStub = () => {
+const installGlobalAudioStub = () => {
   ;(global as { Audio: unknown }).Audio = jest.fn(() => {
     const stub = createAudioElementStub()
     audioStubs.push(stub)

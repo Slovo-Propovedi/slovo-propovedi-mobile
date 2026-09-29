@@ -4,7 +4,7 @@ import { Clipboard } from 'react-native'
 import { ConfirmDialog } from '../confirm-dialog'
 import { COLORS } from '../theme/colors'
 
-export interface ErrorModalProps {
+interface ErrorModalProps {
   error: Error | null
   onClose: () => void
   showCopyButton?: boolean

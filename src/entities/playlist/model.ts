@@ -33,7 +33,7 @@ const isSermonShape = (value: unknown): value is SermonShape =>
  * Аннотация `SectionShape[]` не даёт типам секции и плейлиста замкнуться друг
  * на друга (см. Docs/architecture.md).
  */
-export const playlistSchema = z.object({
+export const playlistDataSchema = z.object({
   artwork: z.string().nullable(),
   description: z.string().optional(),
   id: z.string(),
@@ -43,10 +43,7 @@ export const playlistSchema = z.object({
 })
 
 /** Тип плейлиста (извлекается из схемы). */
-export type PlaylistData = z.infer<typeof playlistSchema>
+export type PlaylistData = z.infer<typeof playlistDataSchema>
 
 /** Схема для массива плейлистов (PlaylistData[]). */
-export const playlistsArraySchema = z.array(playlistSchema)
-
-// Алиас для обратной совместимости
-export const playlistDataSchema = playlistSchema
+export const playlistsArraySchema = z.array(playlistDataSchema)

@@ -13,7 +13,7 @@ export interface WebPlayerState {
   setPosition: (value: number) => void
 }
 
-export interface WebPlayerStateData {
+interface WebPlayerStateData {
   duration: number
   isBuffering: boolean
   isPlaying: boolean

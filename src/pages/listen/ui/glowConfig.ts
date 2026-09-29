@@ -60,8 +60,8 @@ export interface GlowLayerAnimated {
 // фаза]. Частоты целочисленны → на стыке цикла (phase 0 ≡ 1) и угол, и скорость
 // совпадают: переход бесшовный. Большие амплитуды дают то ускорение, то откат
 // назад — движение выглядит псевдослучайным, а не равномерным вращением.
-export const SPIN_CW_MS = 16000
-export const SPIN_CCW_MS = 23000
+const SPIN_CW_MS = 16000
+const SPIN_CCW_MS = 23000
 const WOBBLE_CW: readonly [number, number, number][] = [
   [2, 40, 0],
   [3, 24, 1.7],

@@ -2,14 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Platform } from 'react-native'
 import { applyWebUpdate } from './applyWebUpdate'
 
-export type WebUpdateStatus = 'idle' | 'installing' | 'ready'
-
 export interface WebUpdateWatcherState {
   apply: () => void
   applying: boolean
   dismiss: () => void
   status: WebUpdateStatus
 }
+
+type WebUpdateStatus = 'idle' | 'installing' | 'ready'
 
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000
 const VISIBILITY_THROTTLE_MS = 5 * 60 * 1000

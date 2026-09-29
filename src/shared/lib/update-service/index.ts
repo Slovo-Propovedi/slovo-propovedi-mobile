@@ -1,5 +1,4 @@
 export {
-  type ClassifiedUpdateError,
   classifyUpdateError,
   GENERIC_ERROR_MESSAGE,
   isUnexpectedUpdateError,

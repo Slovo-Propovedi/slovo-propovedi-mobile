@@ -4,7 +4,7 @@ import { getCachedJson, setCachedJson } from 'shared/lib/cache'
 
 // Keep in sync with the generated SermonControllerGetDistinctValues200Response
 // (src/shared/api/generated/model/sermons.ts) when the API is regenerated.
-export const distinctValuesSchema = z.object({
+const distinctValuesSchema = z.object({
   artists: z.array(z.string()),
   books: z.array(z.string()),
 })

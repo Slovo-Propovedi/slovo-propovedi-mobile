@@ -6,7 +6,7 @@ import { hapticLight } from 'shared/lib/haptics'
 // browser semantics depend on it) when accessibilityRole='button' is passed
 // explicitly, so defaulting it here keeps TouchableOpacity-based controls
 // hintable without spelling the role at every call site.
-export interface TouchableButtonProps extends Omit<TouchableOpacityProps, 'accessibilityRole'> {
+interface TouchableButtonProps extends Omit<TouchableOpacityProps, 'accessibilityRole'> {
   accessibilityRole?: TouchableOpacityProps['accessibilityRole']
   /** Skips the built-in press-in haptic (for already-selected tabs). */
   hapticDisabled?: boolean

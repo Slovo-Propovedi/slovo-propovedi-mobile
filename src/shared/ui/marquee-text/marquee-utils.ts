@@ -1,4 +1,4 @@
-export const DRAG_ACTIVATION_THRESHOLD_PX = 3
+const DRAG_ACTIVATION_THRESHOLD_PX = 3
 
 export const HOLD_MS = 250
 

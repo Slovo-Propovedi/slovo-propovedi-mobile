@@ -3,7 +3,7 @@ export interface Suggestion {
   value: string
 }
 
-export type SuggestionCategory = 'artist' | 'book'
+type SuggestionCategory = 'artist' | 'book'
 
 const CATEGORY_ORDER: Record<SuggestionCategory, number> = { artist: 0, book: 1 }
 

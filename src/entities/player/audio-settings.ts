@@ -19,8 +19,6 @@ const MAX_PERSISTED_BANDS = 32
 
 export const balanceSchema = z.number().min(-1).max(1)
 
-export const equalizerEnabledSchema = z.boolean()
-
 export const equalizerGainsSchema = z.array(z.number()).min(1).max(MAX_PERSISTED_BANDS)
 
 export const pitchSchema = z.number().min(0.5).max(2)

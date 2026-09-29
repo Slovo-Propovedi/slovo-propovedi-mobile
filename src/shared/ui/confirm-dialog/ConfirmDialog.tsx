@@ -5,7 +5,7 @@ import { useTheme } from '../theme/ThemeContext/useTheme'
 import { ConfirmDialogButton } from './ConfirmDialogButton'
 import { styles } from './styles'
 
-export interface ConfirmDialogProps {
+interface ConfirmDialogProps {
   cancelIcon?: ReactNode
   cancelText?: string
   confirmColor?: ColorValue

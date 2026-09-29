@@ -1,7 +1,7 @@
 import { type AudioPlayer } from 'expo-audio'
 import { type PlaybackStatus } from '../types'
 
-export const DEFAULT_PLAYBACK_STATUS: PlaybackStatus = {
+const DEFAULT_PLAYBACK_STATUS: PlaybackStatus = {
   duration: 0,
   isPlaying: false,
   position: 0,

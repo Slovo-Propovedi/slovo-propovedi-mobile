@@ -5,19 +5,19 @@ import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { PressableButton } from '../pressable-button'
 import { AnchoredDropdown, type AnchorRect } from './AnchoredDropdown'
 
-export interface MenuDropdownProps {
-  anchor: AnchorRect | null
-  anchorRef?: RefObject<null | View>
-  items: ReadonlyArray<MenuItem>
-  onClose: () => void
-  visible: boolean
-}
-
 export interface MenuItem {
   disabled?: boolean
   icon?: ComponentProps<typeof Ionicons>['name']
   onPress: () => void
   text: string
+}
+
+interface MenuDropdownProps {
+  anchor: AnchorRect | null
+  anchorRef?: RefObject<null | View>
+  items: ReadonlyArray<MenuItem>
+  onClose: () => void
+  visible: boolean
 }
 
 const ICON_SIZE = 18

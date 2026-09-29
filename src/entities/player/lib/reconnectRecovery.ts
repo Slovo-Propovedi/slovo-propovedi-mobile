@@ -46,7 +46,7 @@ const restartCachingWhenSettled = async (audioUrl: string): Promise<void> => {
   }
 }
 
-export const recoverAfterReconnect = async (): Promise<void> => {
+const recoverAfterReconnect = async (): Promise<void> => {
   const audioUrl = ctx.get(currentAudioAtom)?.audioUrl
   if (!audioUrl) return
   let isCached: boolean | null = null

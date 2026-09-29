@@ -18,10 +18,4 @@ export interface ThemeColors {
   textMuted: ColorValue
 }
 
-export type ThemedColors = {
-  icon: ColorValue
-  maximumTrackTintColor: ColorValue
-  minimumTrackTintColor: ColorValue
-} & ThemeColors
-
 export type ThemeMode = (typeof ThemeMode)[keyof typeof ThemeMode]

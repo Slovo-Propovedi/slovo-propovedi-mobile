@@ -38,7 +38,7 @@ const reportParseFailure = (
 const isAdvanceBlocked = (audioUrl: null | string | undefined): Promise<boolean> =>
   audioUrl ? guardOfflinePlayback(audioUrl, ctx.get(isOnlineAtom)) : Promise.resolve(false)
 
-export class TrackAutoAdvanceService {
+class TrackAutoAdvanceService {
   public ensurePlayerActions(): PlayerActions {
     if (!this.playerActions)
       throw new Error('PlayerActions not set. Call setPlayerActions() before using the service.')

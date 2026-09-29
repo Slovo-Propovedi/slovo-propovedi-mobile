@@ -2,7 +2,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { isSeekingAtom, setIsSeekingAction, setSeekTargetAction } from '../../../model'
 
 /** If no fresh position event arrives within this window, unblock the guard. */
-export const SEEK_SAFETY_TIMEOUT_MS = 2000
+const SEEK_SAFETY_TIMEOUT_MS = 2000
 
 class SeekGuard {
   public arm = (): void => {

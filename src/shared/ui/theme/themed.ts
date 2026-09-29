@@ -1,12 +1,8 @@
 import { ctx } from '../../lib/reatom-ctx/ctx'
-import { initializeCOLORS, updateCOLORS as updateThemeColors } from './colors'
+import { initializeCOLORS } from './colors'
 
 // Initialize theme colors on module load
 initializeCOLORS(ctx)
-
-export const updateCOLORS = () => {
-  updateThemeColors(ctx)
-}
 
 export const FONT_SIZES = {
   base: 14,
@@ -22,11 +18,6 @@ export const FONT_SIZES = {
   xs: 10,
   xxl: 24,
   xxxl: 30,
-} as const
-
-export const SCREEN_PADDING = {
-  horizontal: 16,
-  vertical: 12,
 } as const
 
 // Minimum accessible touch target for icon buttons (Apple HIG 44pt / Android

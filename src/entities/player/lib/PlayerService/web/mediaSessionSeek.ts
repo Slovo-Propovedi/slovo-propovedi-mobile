@@ -2,19 +2,19 @@ const DEFAULT_SKIP_SECONDS = 10
 
 export type GetAudio = () => HTMLAudioElement | null
 
-/**
- * Local typing for MediaSessionActionDetails — avoids `as` casts and
- * keeps the handler parameter properly typed even if lib.dom is stale.
- */
-export interface MediaSessionActionDetail {
-  seekOffset?: number
-  seekTime?: number
-}
-
 export interface MediaSessionPlayer {
   pause: () => void
   play: () => void
   seekTo: (positionMs: number) => void
+}
+
+/**
+ * Local typing for MediaSessionActionDetails — avoids `as` casts and
+ * keeps the handler parameter properly typed even if lib.dom is stale.
+ */
+interface MediaSessionActionDetail {
+  seekOffset?: number
+  seekTime?: number
 }
 
 export const registerSeekHandlers = (

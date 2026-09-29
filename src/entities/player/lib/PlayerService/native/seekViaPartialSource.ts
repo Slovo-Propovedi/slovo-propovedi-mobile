@@ -14,7 +14,7 @@ import {
 const CACHE_URI_PREFIX = 'file://'
 
 /** Offline seek fallback: swap the stalled network source to the retained partial file (issue #109). */
-export const shouldSeekViaPartialSource = async (): Promise<null | string> => {
+const shouldSeekViaPartialSource = async (): Promise<null | string> => {
   if (ctx.get(isOnlineAtom)) return null
   const resolvedUrl = audioLoader.getLastResolvedUrl()
   if (!resolvedUrl || resolvedUrl.startsWith(CACHE_URI_PREFIX)) return null
@@ -25,7 +25,7 @@ export const shouldSeekViaPartialSource = async (): Promise<null | string> => {
 }
 
 /** Seek swap for a loaded partial: swap to the completed cached file at the target position (issue #109). */
-export const shouldSwapPartialForCachedSeek = async (): Promise<null | string> => {
+const shouldSwapPartialForCachedSeek = async (): Promise<null | string> => {
   const resolvedUrl = audioLoader.getLastResolvedUrl()
   if (!resolvedUrl?.endsWith(PART_SUFFIX)) return null
   const audioUrl = ctx.get(currentAudioAtom)?.audioUrl

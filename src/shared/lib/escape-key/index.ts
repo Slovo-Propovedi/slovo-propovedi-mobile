@@ -1,2 +1,2 @@
-export { hasModifier, isEscapeKey } from './isEscapeKey'
+export { hasModifier } from './isEscapeKey'
 export { useEscapeKey } from './useEscapeKey'

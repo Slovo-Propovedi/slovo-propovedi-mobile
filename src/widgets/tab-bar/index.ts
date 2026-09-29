@@ -1,5 +1,1 @@
 export { CustomTabBar } from './ui/CustomTabBar'
-export { styles } from './ui/styles'
-export { TabButton } from './ui/TabButton'
-export { TabIndicator } from './ui/TabIndicator'
-export { useTabIndicator } from './ui/useTabIndicator'

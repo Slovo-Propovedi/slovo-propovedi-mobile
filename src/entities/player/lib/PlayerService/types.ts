@@ -3,24 +3,6 @@
  * Contains shared interfaces and types used across native and web implementations.
  */
 
-import type { AudioPlayer } from 'expo-audio'
-
-/**
- * Audio player instance type from expo-audio.
- * Used for native platform implementation.
- */
-export type AudioPlayerInstance = AudioPlayer
-
-/**
- * Options for loading audio into the player.
- */
-export interface LoadAudioOptions {
-  /** URL of the audio file to load. */
-  audioUrl: string
-  /** Initial playback position in milliseconds (default: 0). */
-  initialPositionMs?: number
-}
-
 /**
  * Metadata for lock screen / system media controls.
  * Used to display track information on device lock screen and media notifications.
@@ -65,12 +47,6 @@ export interface SeekSourceSwap {
 }
 
 /**
- * Listener type for web player state changes.
- * @returns Cleanup function to unsubscribe.
- */
-export type StateListener = () => void
-
-/**
  * Callbacks for playback status changes.
  * Used to sync player state with external state management (Reatom).
  */
@@ -87,19 +63,4 @@ export interface StatusCallbacks {
   onPositionChange: (positionMs: number) => void
   /** Called when track finishes playing. */
   onTrackEnd: () => void
-}
-
-/**
- * Web player state returned by getState().
- * Includes all playback information in a single object.
- */
-export interface WebPlayerState {
-  /** Total track duration in milliseconds. */
-  duration: number
-  /** Whether the player is buffering. */
-  isBuffering: boolean
-  /** Whether the player is currently playing. */
-  isPlaying: boolean
-  /** Current playback position in milliseconds. */
-  position: number
 }
