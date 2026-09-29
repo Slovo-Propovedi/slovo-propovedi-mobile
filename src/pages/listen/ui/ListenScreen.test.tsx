@@ -9,10 +9,16 @@ import {
   searchQueryAtom,
   searchResultsAtom,
 } from 'features/sermon-search/model'
+import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import type { SermonData } from 'entities/sermon'
 import type { TestInstance } from 'test-renderer'
 import { ListenScreen } from './ListenScreen'
+
+// Jest hoists mock factories above imports, so the factory may only reference
+// `mock`-prefixed bindings. This alias keeps the namespace import intact.
+const mockCreateDistinctValuesResponse =
+  sermonsMocks.getSermonControllerGetDistinctValuesResponseMock
 
 jest.mock('entities/offline-cache', () => ({
   ...jest.requireActual('entities/offline-cache'),
@@ -42,7 +48,9 @@ jest.mock('shared/api', () => ({
   sermonsApi: {
     getSermons: () => ({
       sermonControllerFindAll: jest.fn(),
-      sermonControllerGetDistinctValues: jest.fn().mockResolvedValue({ artists: [], books: [] }),
+      sermonControllerGetDistinctValues: jest
+        .fn()
+        .mockResolvedValue(mockCreateDistinctValuesResponse()),
     }),
   },
 }))

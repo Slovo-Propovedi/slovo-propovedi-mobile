@@ -16,6 +16,8 @@ jest.mock('./lib/searchCache', () => ({
 }))
 
 import { createCtx } from '@reatom/framework'
+import { mapAllSermonsResponse } from 'entities/sermon'
+import { sermonsMocks } from 'shared/api/generated'
 import {
   closeSearch,
   fetchSearchResults,
@@ -27,20 +29,13 @@ import {
   searchResultsAtom,
 } from './model'
 
-const sermonEntity = {
-  artist: 'Тестовый артист',
-  artwork: 'https://example.com/artwork.jpg',
-  audioUrl: 'https://example.com/audio.mp3',
-  book: null,
-  chapter: null,
-  description: 'Описание проповеди',
-  id: 'sermon-1',
-  playlists: [],
-  textFileUrl: null,
-  title: 'Проповедь о вере',
-  verse: null,
-  youtubeUrl: null,
-}
+type SermonEntity = ReturnType<typeof sermonsMocks.getSermonControllerFindOneResponseMock>
+
+const buildSermonsResponse = (sermons: SermonEntity[]) =>
+  sermonsMocks.getSermonControllerFindAllResponseMock({ sermons })
+
+const buildSermonData = (sermon: SermonEntity) =>
+  mapAllSermonsResponse(buildSermonsResponse([sermon]))[0]
 
 describe('sermon-search model', () => {
   beforeEach(() => {
@@ -55,40 +50,38 @@ describe('sermon-search model', () => {
   })
 
   test('fetchSearchResults maps results and updates atoms', async () => {
-    mockSermonControllerFindAll.mockResolvedValue({
-      count: 1,
-      nextCursor: null,
-      sermons: [sermonEntity],
-    })
+    const sermon = sermonsMocks.getSermonControllerFindOneResponseMock()
+    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
     const ctx = createCtx()
 
     await fetchSearchResults(ctx, '  вера  ')
 
     expect(mockSermonControllerFindAll).toHaveBeenCalledWith({ search: 'вера', take: 20 })
     expect(ctx.get(searchResultsAtom)).toHaveLength(1)
-    expect(ctx.get(searchResultsAtom)[0].id).toBe('sermon-1')
+    expect(ctx.get(searchResultsAtom)[0].id).toBe(sermon.id)
     expect(ctx.get(isSearchingAtom)).toBe(false)
   })
 
   test('fetchSearchResults writes successful results to the cache', async () => {
-    mockSermonControllerFindAll.mockResolvedValue({
-      count: 1,
-      nextCursor: null,
-      sermons: [sermonEntity],
-    })
+    const sermon = sermonsMocks.getSermonControllerFindOneResponseMock()
+    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
     const ctx = createCtx()
 
     await fetchSearchResults(ctx, 'вера')
 
     expect(mockSetCachedSearchResults).toHaveBeenCalledWith(
       'вера',
-      expect.arrayContaining([expect.objectContaining({ id: 'sermon-1' })]),
+      expect.arrayContaining([expect.objectContaining({ id: sermon.id })]),
     )
   })
 
   test('fetchSearchResults falls back to the cache on network error', async () => {
+    const cachedSermon = {
+      ...buildSermonData(sermonsMocks.getSermonControllerFindOneResponseMock()),
+      id: 'cached-1',
+    }
     mockSermonControllerFindAll.mockRejectedValue(new Error('network down'))
-    mockGetCachedSearchResults.mockResolvedValue([{ ...sermonEntity, id: 'cached-1' }])
+    mockGetCachedSearchResults.mockResolvedValue([cachedSermon])
     const ctx = createCtx()
 
     await fetchSearchResults(ctx, 'вера')
@@ -111,9 +104,15 @@ describe('sermon-search model', () => {
   })
 
   test('fetchSearchResults resets state for an empty query', async () => {
-    mockSermonControllerFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
+    mockSermonControllerFindAll.mockResolvedValue(
+      sermonsMocks.getSermonControllerFindAllResponseMock({
+        count: 0,
+        nextCursor: null,
+        sermons: [],
+      }),
+    )
     const ctx = createCtx()
-    searchResultsAtom(ctx, [{ ...sermonEntity }])
+    searchResultsAtom(ctx, [buildSermonData(sermonsMocks.getSermonControllerFindOneResponseMock())])
     isSearchingAtom(ctx, true)
 
     await fetchSearchResults(ctx, '   ')
@@ -124,6 +123,8 @@ describe('sermon-search model', () => {
   })
 
   test('fetchSearchResults ignores a stale response from an older request', async () => {
+    const staleSermon = sermonsMocks.getSermonControllerFindOneResponseMock()
+    const freshSermon = sermonsMocks.getSermonControllerFindOneResponseMock()
     let resolveFirst!: (value: unknown) => void
     let resolveSecond!: (value: unknown) => void
     mockSermonControllerFindAll
@@ -146,28 +147,23 @@ describe('sermon-search model', () => {
     const secondRequest = fetchSearchResults(ctx, 'любовь')
     await Promise.resolve()
 
-    resolveSecond({ count: 1, nextCursor: null, sermons: [{ ...sermonEntity, id: 'sermon-2' }] })
+    resolveSecond(buildSermonsResponse([freshSermon]))
     await secondRequest
 
-    resolveFirst({ count: 1, nextCursor: null, sermons: [sermonEntity] })
+    resolveFirst(buildSermonsResponse([staleSermon]))
     await firstRequest
 
     expect(ctx.get(searchResultsAtom)).toHaveLength(1)
-    expect(ctx.get(searchResultsAtom)[0].id).toBe('sermon-2')
+    expect(ctx.get(searchResultsAtom)[0].id).toBe(freshSermon.id)
     expect(ctx.get(isSearchingAtom)).toBe(false)
   })
 
   test('fetchSearchResults ignores a stale cache fallback from an older request', async () => {
+    const freshSermon = sermonsMocks.getSermonControllerFindOneResponseMock()
     let resolveCache!: (value: unknown) => void
     mockSermonControllerFindAll
       .mockImplementationOnce(() => Promise.reject(new Error('network down')))
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          count: 1,
-          nextCursor: null,
-          sermons: [{ ...sermonEntity, id: 'sermon-2' }],
-        }),
-      )
+      .mockImplementationOnce(() => Promise.resolve(buildSermonsResponse([freshSermon])))
     mockGetCachedSearchResults.mockImplementationOnce(
       () =>
         new Promise(resolve => {
@@ -186,18 +182,20 @@ describe('sermon-search model', () => {
     await Promise.resolve()
 
     await secondRequest
-    expect(ctx.get(searchResultsAtom)[0].id).toBe('sermon-2')
+    expect(ctx.get(searchResultsAtom)[0].id).toBe(freshSermon.id)
 
-    resolveCache([{ ...sermonEntity, id: 'stale' }])
+    resolveCache([
+      { ...buildSermonData(sermonsMocks.getSermonControllerFindOneResponseMock()), id: 'stale' },
+    ])
     await firstRequest
 
     expect(ctx.get(searchResultsAtom)).toHaveLength(1)
-    expect(ctx.get(searchResultsAtom)[0].id).toBe('sermon-2')
+    expect(ctx.get(searchResultsAtom)[0].id).toBe(freshSermon.id)
   })
 
   test('resetSearchResults resets results and the searching flag', async () => {
     const ctx = createCtx()
-    searchResultsAtom(ctx, [{ ...sermonEntity }])
+    searchResultsAtom(ctx, [buildSermonData(sermonsMocks.getSermonControllerFindOneResponseMock())])
     isSearchingAtom(ctx, true)
 
     await resetSearchResults(ctx)
@@ -221,7 +219,7 @@ describe('sermon-search model', () => {
 
     await resetSearchResults(ctx)
 
-    resolveRequest({ count: 1, nextCursor: null, sermons: [sermonEntity] })
+    resolveRequest(buildSermonsResponse([sermonsMocks.getSermonControllerFindOneResponseMock()]))
     await request
 
     expect(ctx.get(searchResultsAtom)).toEqual([])
@@ -244,7 +242,7 @@ describe('sermon-search model', () => {
 
     await closeSearch(ctx)
 
-    resolveRequest({ count: 1, nextCursor: null, sermons: [sermonEntity] })
+    resolveRequest(buildSermonsResponse([sermonsMocks.getSermonControllerFindOneResponseMock()]))
     await request
 
     expect(ctx.get(searchResultsAtom)).toEqual([])
@@ -255,7 +253,7 @@ describe('sermon-search model', () => {
   test('openSearch opens the search and closeSearch resets all search state', async () => {
     const ctx = createCtx()
     searchQueryAtom(ctx, 'вера')
-    searchResultsAtom(ctx, [{ ...sermonEntity }])
+    searchResultsAtom(ctx, [buildSermonData(sermonsMocks.getSermonControllerFindOneResponseMock())])
     isSearchingAtom(ctx, true)
 
     await openSearch(ctx)

@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { Keyboard, Platform, TextInput } from 'react-native'
+import { sermonsMocks } from 'shared/api/generated'
 import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
 import { renderWithProviders } from 'shared/mocks'
 import type { SermonData } from 'entities/sermon'
@@ -8,12 +9,19 @@ import { isSearchingAtom, isSearchOpenAtom, searchQueryAtom, searchResultsAtom }
 import { distinctValuesAtom } from '../model-distinctValues'
 import { SearchBar } from './SearchBar'
 
+// Jest hoists mock factories above imports, so the factory may only reference
+// `mock`-prefixed bindings. This alias keeps the namespace import intact.
+const mockCreateDistinctValuesResponse =
+  sermonsMocks.getSermonControllerGetDistinctValuesResponseMock
+
 jest.mock('shared/api', () => ({
   mapAllSermonsResponse: jest.fn(),
   sermonsApi: {
     getSermons: () => ({
       sermonControllerFindAll: jest.fn(),
-      sermonControllerGetDistinctValues: jest.fn().mockResolvedValue({ artists: [], books: [] }),
+      sermonControllerGetDistinctValues: jest
+        .fn()
+        .mockResolvedValue(mockCreateDistinctValuesResponse()),
     }),
   },
 }))
@@ -21,10 +29,10 @@ jest.mock('shared/api', () => ({
 const CLEAR_LABEL = 'Очистить поиск'
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
 const IVAN_ZLATOUST = 'Иван Златоуст'
-const DISTINCT_VALUES = {
+const DISTINCT_VALUES = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock({
   artists: [IVAN_ZLATOUST, 'Иоанн Кронштадтский'],
   books: ['Матфея', 'Иоанна'],
-}
+})
 
 const flushAnimationFrame = async () => {
   await act(async () => {

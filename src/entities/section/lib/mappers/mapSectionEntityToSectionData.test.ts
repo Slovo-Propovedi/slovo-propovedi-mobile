@@ -1,16 +1,8 @@
-import { type APITypes } from 'shared/api'
+import { sectionsMocks } from 'shared/api/generated'
 import { mapSectionEntityToSectionData, normalizeItemsRows } from './mapSectionEntityToSectionData'
 
-const createSectionEntity = (itemsRows: null | number): APITypes.SectionEntity => ({
-  description: null,
-  id: 'section-1',
-  itemsRows,
-  itemsSize: 'large',
-  playlists: [],
-  position: 0,
-  title: 'Section',
-  transform: 'high',
-})
+const createSectionEntity = (itemsRows: null | number) =>
+  sectionsMocks.getSectionControllerFindOneResponseMock({ itemsRows })
 
 describe('mapSectionEntityToSectionData', () => {
   describe('itemsRows normalization', () => {

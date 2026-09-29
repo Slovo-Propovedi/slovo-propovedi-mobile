@@ -16,9 +16,8 @@ jest.mock('./lib/distinctValuesCache', () => ({
 }))
 
 import { createCtx } from '@reatom/framework'
+import { sermonsMocks } from 'shared/api/generated'
 import { distinctValuesAtom, fetchDistinctValues } from './model-distinctValues'
-
-const VALUES = { artists: ['Иван Златоуст'], books: ['Матфея'] }
 
 describe('sermon-search distinct values model', () => {
   beforeEach(() => {
@@ -33,23 +32,25 @@ describe('sermon-search distinct values model', () => {
   })
 
   test('fetchDistinctValues loads values and writes the cache', async () => {
-    mockSermonControllerGetDistinctValues.mockResolvedValue(VALUES)
+    const values = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock()
+    mockSermonControllerGetDistinctValues.mockResolvedValue(values)
     const ctx = createCtx()
 
     await fetchDistinctValues(ctx)
 
-    expect(mockSetCachedDistinctValues).toHaveBeenCalledWith(VALUES)
-    expect(ctx.get(distinctValuesAtom)).toEqual(VALUES)
+    expect(mockSetCachedDistinctValues).toHaveBeenCalledWith(values)
+    expect(ctx.get(distinctValuesAtom)).toEqual(values)
   })
 
   test('fetchDistinctValues falls back to the cache on network error', async () => {
+    const cachedValues = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock()
     mockSermonControllerGetDistinctValues.mockRejectedValue(new Error('network down'))
-    mockGetCachedDistinctValues.mockResolvedValue({ artists: ['Пётр'], books: ['Иоанна'] })
+    mockGetCachedDistinctValues.mockResolvedValue(cachedValues)
     const ctx = createCtx()
 
     await fetchDistinctValues(ctx)
 
-    expect(ctx.get(distinctValuesAtom)).toEqual({ artists: ['Пётр'], books: ['Иоанна'] })
+    expect(ctx.get(distinctValuesAtom)).toEqual(cachedValues)
   })
 
   test('fetchDistinctValues keeps the atom empty on network error without cache', async () => {
@@ -63,7 +64,7 @@ describe('sermon-search distinct values model', () => {
 
   test('fetchDistinctValues does not refetch when values are already loaded', async () => {
     const ctx = createCtx()
-    distinctValuesAtom(ctx, VALUES)
+    distinctValuesAtom(ctx, sermonsMocks.getSermonControllerGetDistinctValuesResponseMock())
 
     await fetchDistinctValues(ctx)
 
@@ -71,6 +72,7 @@ describe('sermon-search distinct values model', () => {
   })
 
   test('fetchDistinctValues deduplicates concurrent calls', async () => {
+    const values = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock()
     let resolveRequest!: (value: unknown) => void
     mockSermonControllerGetDistinctValues.mockImplementationOnce(
       () =>
@@ -84,10 +86,10 @@ describe('sermon-search distinct values model', () => {
     const second = fetchDistinctValues(ctx)
     await Promise.resolve()
 
-    resolveRequest(VALUES)
+    resolveRequest(values)
     await Promise.all([first, second])
 
     expect(mockSermonControllerGetDistinctValues).toHaveBeenCalledTimes(1)
-    expect(ctx.get(distinctValuesAtom)).toEqual(VALUES)
+    expect(ctx.get(distinctValuesAtom)).toEqual(values)
   })
 })

@@ -575,6 +575,22 @@ describe('<PlayerControls>', () => {
 - Extended matchers (`toHaveStyle`, `toHaveTextContent`, `toBeDisabled`, `toBeExpanded`, `toBeSelected`, …) are built into `@testing-library/react-native` v12.4+ and auto-registered on import — no `extend-expect` import needed. `toHaveTextContent` defaults to an **exact** string match (jest-native defaulted to substring); pass `{ exact: false }` for a substring assert.
 - Mock external dependencies and hooks
 - Use `beforeEach` to reset mock state
+- **Server responses in tests come from the generated `<area>Mocks` namespace factories** (`sermonsMocks`, `playlistsMocks`, `sectionsMocks`, `filesMocks`, `usersMocks`, `authMocks`), imported through the `'shared/api/generated'` barrel; deep imports into `*.faker` modules are banned. Faker values are random (types are fixed, values are not): derive assertions FROM the mock instance (`expect(...).toEqual(dto)`, `getByText(dto.title)`) instead of hardcoding literals faker controls. Need a specific field (null artwork, exact duration, order)? Call the factory once, then override/mutate that field on the returned typed object — never hand-build a whole DTO. Each factory call yields a different random dataset: reuse one instance when the tested code fetches twice, or assert inequality deliberately.
+
+  ```typescript
+  // ❌ wrong
+  import { getSectionControllerFindOneResponseMock } from 'shared/api/generated/sections/sections.faker'
+
+  // ✅ right
+  import { sectionsMocks } from 'shared/api/generated'
+
+  const createSectionEntity = (itemsRows: null | number) =>
+    sectionsMocks.getSectionControllerFindOneResponseMock({ itemsRows })
+  ```
+
+  `jest.mock` factories are hoisted above imports and may only reference `mock`-prefixed bindings: alias the namespace factory with a `mock` prefix (e.g. `const mockCreateDistinctValuesResponse = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock`) instead of falling back to a deep import path.
+
+- Domain/UI fixtures (`SermonData`, `PlaylistData`, `SectionData`, `AudioPlayerData`) are not server DTOs — keep building them directly.
 
 ## Error Handling
 

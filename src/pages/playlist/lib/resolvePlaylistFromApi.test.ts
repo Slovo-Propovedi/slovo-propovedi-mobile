@@ -1,3 +1,4 @@
+import { playlistsMocks } from 'shared/api/generated'
 import { resolvePlaylistFromApi } from './resolvePlaylistFromApi'
 
 const mockGetPlaylists = jest.fn()
@@ -17,14 +18,7 @@ jest.mock('entities/playlist', () => ({
 
 const UUID = '123e4567-e89b-12d3-a456-426614174000'
 
-const ENTITY = {
-  artwork: '',
-  description: 'Описание',
-  id: 'pl-1',
-  sections: [],
-  sermons: [],
-  title: 'Плейлист',
-}
+const ENTITY = playlistsMocks.getPlaylistControllerFindOneResponseMock()
 
 const PLAYLIST = {
   artwork: null,
