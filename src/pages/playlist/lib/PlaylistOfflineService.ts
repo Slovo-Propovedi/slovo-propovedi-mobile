@@ -8,7 +8,7 @@ import {
 } from 'entities/offline-cache'
 import { debugConfig } from 'shared/config'
 import { isNonNullable } from 'shared/lib/utils/isNonNullable'
-import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
+import { isCachingPlaylistAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
 import { isOnlyPlaylistRequester } from './isOnlyPlaylistRequester'
 import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
@@ -84,10 +84,7 @@ class PlaylistOfflineService {
       const errorObj = error instanceof Error ? error : new Error(String(error))
       log('Fatal error during caching:', error)
 
-      if (!isNetworkError(errorObj)) {
-        this.currentError = errorObj
-        playlistCacheErrorAtom(ctx, errorObj)
-      }
+      if (!isNetworkError(errorObj)) this.currentError = errorObj
 
       await playlistOfflineNotifications.showErrorNotification(errorObj, playlistTitle)
     } finally {

@@ -5,7 +5,7 @@
 
 ## Мониторинг сети
 
-- `subscribeToNetwork` (`src/shared/lib/network/networkSubscription.ts`) — подписка на `@react-native-community/netinfo`; на каждое изменение пишет `isOnlineAtom` (`src/shared/model/network.ts`). Вызывается модульно в `app/_RootLayout.tsx`.
+- `subscribeToNetwork` (`src/shared/lib/network/networkSubscription.ts`) — подписка на `@react-native-community/netinfo`; на каждое изменение пишет `isOnlineAtom` (`src/shared/model/network.ts`) через экшен `setOnlineStatus(ctx, isNetInfoOnline(state))`. Прямая запись в `isOnlineAtom` из внешних модулей не используется — единственная точка входа. Вызывается модульно в `app/_RootLayout.tsx`.
 - `NetworkBanner` (`src/widgets/network-status/ui/NetworkBanner.tsx`) — пилюля «Офлайн» поверх экрана (кнопка с видимым текстом «Офлайн», в тестах ищется по `getByRole('button', { name: /Офлайн/ })`); появляется при `!isOnline`, анимация разворота — `useNetworkIslandAnimation.ts`. При возврате онлайн скрывается.
 
 ### Семантика `isOnlineAtom` (Issue #109 follow-up)

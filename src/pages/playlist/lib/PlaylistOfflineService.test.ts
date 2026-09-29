@@ -11,7 +11,7 @@ import {
   removeFromQueueBySource,
 } from 'entities/offline-cache'
 import { waitForOnline } from 'shared/lib/network'
-import { isCachingPlaylistAtom, playlistCacheErrorAtom } from '../model'
+import { isCachingPlaylistAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
 import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
 import { playlistOfflineService } from './PlaylistOfflineService'
@@ -191,7 +191,6 @@ describe('playlistOfflineService.addPlaylistToOffline', () => {
     expect(mockedEnqueueCacheMany).toHaveBeenCalledTimes(1)
     const reportedError = mockedNotifications.showErrorNotification.mock.calls[0][0]
     expect(reportedError.message).toBe('Нет подключения к интернету')
-    expect(ctx.get(playlistCacheErrorAtom)).toBeNull()
     expect(mockedNotifications.hideCachingNotification).toHaveBeenCalled()
   })
 

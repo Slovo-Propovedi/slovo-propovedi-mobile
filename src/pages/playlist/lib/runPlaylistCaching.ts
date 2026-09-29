@@ -1,11 +1,10 @@
 import { type Ctx } from '@reatom/framework'
 import { enqueueCacheMany, isCacheCancelledError } from 'entities/offline-cache'
 import { waitForOnline } from 'shared/lib/network'
-import { playlistCacheProgressAtom } from '../model'
 import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
 
 const WAIT_ONLINE_BEFORE_TRACK_MS = 60_000
-export const NETWORK_LOST_MESSAGE = 'Нет подключения к интернету'
+const NETWORK_LOST_MESSAGE = 'Нет подключения к интернету'
 
 interface CacheableTrack {
   audioUrl: string
@@ -19,7 +18,7 @@ interface CacheableTrack {
  * cancelled track (CacheCancelledError) is skipped; a cancelled run breaks the
  * loop early. The run does NOT increment `cacheUpdateTriggerAtom` — per-track
  * completion is reflected through the optimistic `cachedUrlsAtom` overlay
- * (written by cacheAudioWithProgress) plus progress/queue atoms.
+ * (written by cacheAudioWithProgress) plus the queue atoms.
  * @param ctx - Reatom context for atom updates.
  * @param tracks - Tracks with a non-null audioUrl to cache.
  * @param playlistTitle - Playlist title used in notification texts.
@@ -35,7 +34,6 @@ export const runPlaylistCaching = async (
 ): Promise<number> => {
   let failedCount = 0
 
-  playlistCacheProgressAtom(ctx, { current: 0, total: tracks.length })
   let notificationId = await playlistOfflineNotifications.showCachingNotification(playlistTitle)
 
   try {
@@ -65,7 +63,6 @@ export const runPlaylistCaching = async (
       if (signal.aborted) break
 
       const current = index + 1
-      playlistCacheProgressAtom(ctx, prev => ({ ...prev, current }))
       notificationId = await playlistOfflineNotifications.updateCachingNotification(
         notificationId,
         current,

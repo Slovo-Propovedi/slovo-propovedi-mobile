@@ -21,7 +21,6 @@ export interface PlayNewSermonDeps {
   isRepeatTapSuppressed: (sermonId: string) => boolean
   markPlayFinished: (sermonId: string) => void
   markPlayStarted: (sermonId: string) => void
-  openPlayerFullscreen: (expanded: boolean) => Promise<unknown>
   play: () => Promise<unknown>
   recordPlaybackStart: (audio: AudioPlayerData, playlist: PlaylistData) => Promise<unknown>
   recordSermonSwitch: (params: {
@@ -83,8 +82,6 @@ export const playNewSermonAsync = async (
 
     await deps.setCurrentAudio(newAudio)
     await deps.setCurrentPlaylist(playlist)
-
-    void deps.openPlayerFullscreen(true)
 
     if (oldAudio?.id && oldAudio.id !== sermonId)
       await deps.recordSermonSwitch({

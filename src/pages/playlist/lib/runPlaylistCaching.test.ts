@@ -1,7 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { cacheUpdateTriggerAtom, enqueueCacheMany } from 'entities/offline-cache'
 import { waitForOnline } from 'shared/lib/network'
-import { playlistCacheProgressAtom } from '../model'
 import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
 import { runPlaylistCaching } from './runPlaylistCaching'
 
@@ -50,12 +49,11 @@ describe('runPlaylistCaching', () => {
     expect(ctx.get(cacheUpdateTriggerAtom)).toBe(before)
   })
 
-  test('updates the playlist progress atom through the run', async () => {
+  test('updates the caching notification through the run', async () => {
     const ctx = createCtx()
 
     await runPlaylistCaching(ctx, TRACKS, 'Плейлист', new AbortController().signal)
 
-    expect(ctx.get(playlistCacheProgressAtom)).toEqual({ current: 2, total: 2 })
     expect(mockedNotifications.updateCachingNotification).toHaveBeenCalledTimes(2)
   })
 

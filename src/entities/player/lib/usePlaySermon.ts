@@ -4,7 +4,6 @@ import {
   recordPlaybackStartAction,
   recordSermonSwitchAction,
 } from 'entities/listening-history/@x/player'
-import { setPlayerFullscreen } from 'shared/model'
 import { isOnlineAtom } from 'shared/model/network'
 import { setCurrentAudioAction, setCurrentPlaylistAction } from '../model'
 import { playNewSermonAsync, type PlayNewSermonProps } from './playNewSermonAsync'
@@ -17,7 +16,6 @@ export const usePlayNewSermon = () => {
 
   const setCurrentAudio = useAction(setCurrentAudioAction)
   const setCurrentPlaylist = useAction(setCurrentPlaylistAction)
-  const openPlayerFullscreen = useAction(setPlayerFullscreen)
   const recordPlaybackStart = useAction(recordPlaybackStartAction)
   const recordSermonSwitch = useAction(recordSermonSwitchAction)
 
@@ -32,7 +30,6 @@ export const usePlayNewSermon = () => {
         isRepeatTapSuppressed,
         markPlayFinished,
         markPlayStarted,
-        openPlayerFullscreen,
         play,
         recordPlaybackStart,
         recordSermonSwitch,
@@ -49,7 +46,6 @@ export const usePlayNewSermon = () => {
       isRepeatTapSuppressed,
       markPlayFinished,
       markPlayStarted,
-      openPlayerFullscreen,
       play,
       recordPlaybackStart,
       recordSermonSwitch,

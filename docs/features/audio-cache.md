@@ -188,7 +188,7 @@
 `PlaylistOfflineService` — `src/pages/playlist/lib/PlaylistOfflineService.ts` (`playlistOfflineService`). Метод `addPlaylistToOffline(ctx, tracks, playlistTitle)`:
 
 - **re-entry guard**: если `isCachingPlaylistAtom` уже `true` — второй вызов игнорируется (возврат);
-- фильтрует треки без `audioUrl`; ставит `isCachingPlaylistAtom = true` и прогресс `playlistCacheProgressAtom = { current, total }`;
+- фильтрует треки без `audioUrl`; ставит `isCachingPlaylistAtom = true`;
 - делегирует прогон в `runPlaylistCaching` (`runPlaylistCaching.ts`): **сначала ставит ВСЕ треки в глобальную очередь одним батчем** (`enqueueCacheMany(ctx, urls, 'playlist')` — все строки сразу получают «часы»), затем **await-ит промисы по очереди** (в порядке треков);
 - перед каждым треком проверяет подключение (`waitForOnline`, до 60с, **signal-aware**: возвращает `false` на abort ДО сетевой ошибки) — если сеть не вернулась, прогон прерывается ошибкой «Нет подключения к интернету»; неудача одного трека не прерывает остальные;
 - после каждого `await` проверяет `if (signal.aborted) break` — отменённый прогон выходит из цикла раньше;
