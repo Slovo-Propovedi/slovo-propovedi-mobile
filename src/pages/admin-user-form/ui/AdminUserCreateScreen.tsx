@@ -13,9 +13,10 @@ const USERS_FALLBACK_ROUTE: Href = '/admin/users'
 export const AdminUserCreateScreen = () => {
   useRequireAdminRole()
   const { currentTheme } = useTheme()
-  const { error, isDirty, isSubmitting, onChange, save, values } = useUserFormController({
-    mode: 'create',
-  })
+  const { error, isDirty, isSubmitting, markTouched, onChange, save, touched, values } =
+    useUserFormController({
+      mode: 'create',
+    })
   const headerOptions = useAdminFormHeader({
     fallbackRoute: USERS_FALLBACK_ROUTE,
     isDirty,
@@ -27,7 +28,14 @@ export const AdminUserCreateScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <Stack.Screen options={headerOptions} />
-      <UserForm error={error} mode='create' values={values} onChange={onChange} />
+      <UserForm
+        error={error}
+        mode='create'
+        values={values}
+        touched={touched}
+        onChange={onChange}
+        markTouched={markTouched}
+      />
     </View>
   )
 }

@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { type APITypes, sermonsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { type TouchedMap, useFormTouched } from 'shared/lib/hooks/useFormTouched'
 import { isEmpty } from 'shared/lib/utils/isEmpty'
 import { omitEqualFields } from 'shared/lib/utils/omitEqualFields'
 import { showToast } from 'shared/model'
@@ -19,9 +20,11 @@ export interface SermonFormController {
   error: null | string
   isDirty: boolean
   isSubmitting: boolean
+  markTouched: (key: 'artist' | 'title') => void
   onChange: <K extends keyof SermonFormValues>(key: K, value: SermonFormValues[K]) => void
   onChapterEndChange: (value: string) => void
   save: () => Promise<void>
+  touched: TouchedMap<'artist' | 'title'>
   values: SermonFormValues
 }
 
@@ -29,6 +32,7 @@ const CREATE_SUCCESS_MESSAGE = 'Проповедь создана'
 const UPDATE_SUCCESS_MESSAGE = 'Проповедь сохранена'
 const TITLE_REQUIRED_MESSAGE = 'Укажите название проповеди'
 const ARTIST_REQUIRED_MESSAGE = 'Укажите проповедника'
+const REQUIRED_FIELDS = ['title', 'artist'] as const
 
 /**
  * Состояние формы проповеди и отправка create/update. Название и проповедник
@@ -54,6 +58,7 @@ export const useSermonFormController = ({
   const [values, setValues] = useState<SermonFormValues>(initialValues)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<null | string>(null)
+  const { markAllTouched, markTouched, touched } = useFormTouched<'artist' | 'title'>()
 
   const isDirty = !isEmpty(omitEqualFields(initialValues, values))
 
@@ -69,6 +74,7 @@ export const useSermonFormController = ({
   )
 
   const save = useCallback(async () => {
+    markAllTouched(REQUIRED_FIELDS)
     if (values.title.trim().length === 0) {
       setError(TITLE_REQUIRED_MESSAGE)
       showToastAction(TITLE_REQUIRED_MESSAGE)
@@ -99,7 +105,17 @@ export const useSermonFormController = ({
     } finally {
       setIsSubmitting(false)
     }
-  }, [id, mode, router, showToastAction, values])
+  }, [id, markAllTouched, mode, router, showToastAction, values])
 
-  return { error, isDirty, isSubmitting, onChange, onChapterEndChange, save, values }
+  return {
+    error,
+    isDirty,
+    isSubmitting,
+    markTouched,
+    onChange,
+    onChapterEndChange,
+    save,
+    touched,
+    values,
+  }
 }

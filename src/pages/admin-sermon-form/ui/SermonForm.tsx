@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 import { PlaylistPicker } from 'widgets/admin-form-pickers'
+import { type TouchedMap } from 'shared/lib/hooks/useFormTouched'
 import { FormScrollView } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type SermonFormValues } from '../lib/sermonFormInitialValues'
@@ -8,6 +9,9 @@ import { SermonFormMainFields } from './SermonFormMainFields'
 import { SermonMediaFields } from './SermonMediaFields'
 import { SermonScriptureFields } from './SermonScriptureFields'
 import { styles } from './styles'
+
+// Обязательные поля проповеди, помечаемые звёздочкой и inline-подсветкой.
+export type SermonRequiredField = 'artist' | 'title'
 
 type UpdateField = <K extends keyof SermonFormValues>(key: K, value: SermonFormValues[K]) => void
 
@@ -19,13 +23,17 @@ const toggleId = (ids: string[], id: string) =>
 // скроллится целиком — отдельного внутреннего скролла у пикеров нет.
 export const SermonForm = ({
   error,
+  markTouched,
   onChange,
   onChapterEndChange,
+  touched,
   values,
 }: {
   error: null | string
+  markTouched: (key: SermonRequiredField) => void
   onChange: UpdateField
   onChapterEndChange: (value: string) => void
+  touched: TouchedMap<SermonRequiredField>
   values: SermonFormValues
 }) => {
   const { currentTheme } = useTheme()
@@ -39,7 +47,14 @@ export const SermonForm = ({
         </View>
       ) : null}
 
-      <SermonFormMainFields books={books} values={values} artists={artists} onChange={onChange} />
+      <SermonFormMainFields
+        books={books}
+        values={values}
+        artists={artists}
+        touched={touched}
+        onChange={onChange}
+        markTouched={markTouched}
+      />
       <SermonScriptureFields
         values={values}
         onChange={onChange}

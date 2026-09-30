@@ -5,6 +5,7 @@ import { Modal } from '../modal'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { TouchableItem } from '../touchable-item'
 import { formStyles } from './formStyles'
+import { RequiredAsterisk } from './RequiredAsterisk'
 import { SelectOptionRow } from './SelectOptionRow'
 
 export interface SelectOption<T extends string> {
@@ -17,11 +18,13 @@ export const SelectField = <T extends string>({
   label,
   onChange,
   options,
+  required = false,
   value,
 }: {
   label: string
   onChange: (value: T) => void
   options: SelectOption<T>[]
+  required?: boolean
   value: T
 }) => {
   const { currentTheme } = useTheme()
@@ -35,7 +38,10 @@ export const SelectField = <T extends string>({
 
   return (
     <View style={formStyles.field}>
-      <Text style={[formStyles.fieldLabel, { color: currentTheme.text }]}>{label}</Text>
+      <Text style={[formStyles.fieldLabel, { color: currentTheme.text }]}>
+        {label}
+        {required ? <RequiredAsterisk /> : null}
+      </Text>
       <TouchableItem
         onPress={() => setIsOpen(true)}
         style={[formStyles.selectTrigger, { borderColor: currentTheme.textMuted }]}

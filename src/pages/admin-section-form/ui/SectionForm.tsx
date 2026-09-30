@@ -5,6 +5,7 @@ import { Text, View } from 'react-native'
 import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { type APITypes, sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { useFormTouched } from 'shared/lib/hooks/useFormTouched'
 import { isEmpty } from 'shared/lib/utils/isEmpty'
 import { omitEqualFields } from 'shared/lib/utils/omitEqualFields'
 import { showToast } from 'shared/model'
@@ -24,6 +25,7 @@ import { styles } from './styles'
 const CREATE_SUCCESS_MESSAGE = 'Раздел создан'
 const UPDATE_SUCCESS_MESSAGE = 'Раздел сохранён'
 const SECTIONS_FALLBACK_ROUTE: Href = '/admin/sections'
+const REQUIRED_FIELDS = ['title'] as const
 
 export const SectionForm = ({
   id = '',
@@ -41,6 +43,7 @@ export const SectionForm = ({
   const [values, setValues] = useState<SectionFormValues>(initialValues)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<null | string>(null)
+  const { markAllTouched, markTouched, touched } = useFormTouched<'title'>()
 
   const isEdit = mode === 'edit'
   const isDirty = !isEmpty(omitEqualFields(initialValues, values))
@@ -57,6 +60,7 @@ export const SectionForm = ({
     }))
 
   const handleSubmit = async () => {
+    markAllTouched(REQUIRED_FIELDS)
     if (title.length === 0) {
       const message = 'Укажите название раздела'
       setError(message)
@@ -103,7 +107,12 @@ export const SectionForm = ({
         </View>
       ) : null}
 
-      <SectionFormMainFields values={values} onChange={updateField} />
+      <SectionFormMainFields
+        values={values}
+        touched={touched}
+        onChange={updateField}
+        markTouched={markTouched}
+      />
       <SectionFormAppearanceFields values={values} onChange={updateField} />
 
       {isEdit ? (

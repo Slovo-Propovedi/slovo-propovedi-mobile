@@ -65,3 +65,12 @@ export const createValidationError = (values: UserFormValues): string =>
   isFilled(values.password)
     ? ''
     : 'Заполните все поля.'
+
+/**
+ * Есть ли среди изменённых обязательных полей (name/email/username) пустое.
+ * @param payload - Тело обновления, собранное из изменённых полей.
+ */
+export const hasBlankUpdateRequired = (payload: APITypes.UpdateUserRequest): boolean =>
+  (payload.name !== undefined && !isFilled(payload.name)) ||
+  (payload.email !== undefined && !isFilled(payload.email)) ||
+  (payload.username !== undefined && !isFilled(payload.username))

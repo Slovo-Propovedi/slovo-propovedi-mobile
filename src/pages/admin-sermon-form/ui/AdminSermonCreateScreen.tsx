@@ -11,8 +11,17 @@ const SERMONS_FALLBACK_ROUTE: Href = '/admin/sermons'
 // Экран создания проповеди: форма в режиме create + «Сохранить» в шапке.
 export const AdminSermonCreateScreen = () => {
   const { currentTheme } = useTheme()
-  const { error, isDirty, isSubmitting, onChange, onChapterEndChange, save, values } =
-    useSermonFormController({ mode: 'create' })
+  const {
+    error,
+    isDirty,
+    isSubmitting,
+    markTouched,
+    onChange,
+    onChapterEndChange,
+    save,
+    touched,
+    values,
+  } = useSermonFormController({ mode: 'create' })
   const headerOptions = useAdminFormHeader({
     fallbackRoute: SERMONS_FALLBACK_ROUTE,
     isDirty,
@@ -27,7 +36,9 @@ export const AdminSermonCreateScreen = () => {
       <SermonForm
         error={error}
         values={values}
+        touched={touched}
         onChange={onChange}
+        markTouched={markTouched}
         onChapterEndChange={onChapterEndChange}
       />
     </View>

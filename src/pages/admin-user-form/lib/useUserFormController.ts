@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { type APITypes, usersApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { type TouchedMap, useFormTouched } from 'shared/lib/hooks/useFormTouched'
 import { isEmpty } from 'shared/lib/utils/isEmpty'
 import { omitEqualFields } from 'shared/lib/utils/omitEqualFields'
 import { showToast } from 'shared/model'
@@ -10,6 +11,7 @@ import {
   buildCreateUserRequest,
   buildUpdateUserRequest,
   createValidationError,
+  hasBlankUpdateRequired,
   initialUserFormValues,
   type UserFormValues,
 } from './userFormState'
@@ -18,13 +20,20 @@ export interface UserFormController {
   error: null | string
   isDirty: boolean
   isSubmitting: boolean
+  markTouched: (key: UserRequiredField) => void
   onChange: <K extends keyof UserFormValues>(key: K, value: UserFormValues[K]) => void
   save: () => Promise<void>
+  touched: TouchedMap<UserRequiredField>
   values: UserFormValues
 }
 
+type UserRequiredField = 'email' | 'name' | 'password' | 'username'
+
 const CREATE_SUCCESS_MESSAGE = 'Пользователь создан'
 const UPDATE_SUCCESS_MESSAGE = 'Пользователь сохранён'
+const EDIT_REQUIRED_MESSAGE = 'Имя, email и логин не должны быть пустыми.'
+const CREATE_REQUIRED_FIELDS = ['name', 'email', 'username', 'password'] as const
+const EDIT_REQUIRED_FIELDS = ['name', 'email', 'username'] as const
 
 /**
  * Состояние формы пользователя и отправка create/update. В режиме edit шлются
@@ -49,6 +58,7 @@ export const useUserFormController = ({
   const [values, setValues] = useState<UserFormValues>(initialValues)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<null | string>(null)
+  const { markAllTouched, markTouched, touched } = useFormTouched<UserRequiredField>()
 
   const isDirty = !isEmpty(omitEqualFields(initialValues, values))
 
@@ -62,9 +72,15 @@ export const useUserFormController = ({
     const api = usersApi.getUsers()
 
     if (mode === 'edit' && initial) {
+      markAllTouched(EDIT_REQUIRED_FIELDS)
       const payload = buildUpdateUserRequest(values, initial)
       if (Object.keys(payload).length === 0) {
         router.back()
+        return
+      }
+      if (hasBlankUpdateRequired(payload)) {
+        setError(EDIT_REQUIRED_MESSAGE)
+        showToastAction(EDIT_REQUIRED_MESSAGE)
         return
       }
       setError(null)
@@ -81,6 +97,7 @@ export const useUserFormController = ({
       return
     }
 
+    markAllTouched(CREATE_REQUIRED_FIELDS)
     const validationError = createValidationError(values)
     if (validationError !== '') {
       setError(validationError)
@@ -98,7 +115,7 @@ export const useUserFormController = ({
     } finally {
       setIsSubmitting(false)
     }
-  }, [id, initial, mode, router, showToastAction, values])
+  }, [id, initial, markAllTouched, mode, router, showToastAction, values])
 
-  return { error, isDirty, isSubmitting, onChange, save, values }
+  return { error, isDirty, isSubmitting, markTouched, onChange, save, touched, values }
 }

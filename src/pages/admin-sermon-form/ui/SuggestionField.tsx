@@ -9,17 +9,23 @@ import { styles } from './styles'
 // ниже появляются тапабельные варианты, начинающиеся с введённого текста.
 export const SuggestionField = ({
   hint,
+  invalid = false,
   label,
+  onBlur,
   onChangeText,
   options,
   placeholder,
+  required = false,
   value,
 }: {
   hint?: string
+  invalid?: boolean
   label: string
+  onBlur?: () => void
   onChangeText: (text: string) => void
   options: string[]
   placeholder?: string
+  required?: boolean
   value: string
 }) => {
   const { currentTheme } = useTheme()
@@ -31,6 +37,9 @@ export const SuggestionField = ({
         hint={hint}
         label={label}
         value={value}
+        onBlur={onBlur}
+        invalid={invalid}
+        required={required}
         placeholder={placeholder}
         onChangeText={onChangeText}
       />

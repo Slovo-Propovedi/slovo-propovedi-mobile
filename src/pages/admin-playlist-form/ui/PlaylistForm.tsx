@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 import { CoverPicker } from 'widgets/admin-form-pickers'
+import { type TouchedMap } from 'shared/lib/hooks/useFormTouched'
 import { FormScrollView } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type PlaylistFormValues } from '../lib/playlistFormState'
@@ -21,11 +22,15 @@ const toggleId = (ids: string[], id: string) =>
 // Страница скроллится целиком — отдельного внутреннего скролла у пикеров нет.
 export const PlaylistForm = ({
   error,
+  markTouched,
   onChange,
+  touched,
   values,
 }: {
   error: null | string
+  markTouched: (key: 'title') => void
   onChange: UpdateField
+  touched: TouchedMap<'title'>
   values: PlaylistFormValues
 }) => {
   const { currentTheme } = useTheme()
@@ -38,7 +43,12 @@ export const PlaylistForm = ({
         </View>
       ) : null}
 
-      <PlaylistFormMainFields values={values} onChange={onChange} />
+      <PlaylistFormMainFields
+        values={values}
+        touched={touched}
+        onChange={onChange}
+        markTouched={markTouched}
+      />
       <CoverPicker value={values.artwork} onChange={value => onChange('artwork', value)} />
 
       <View style={styles.block}>
