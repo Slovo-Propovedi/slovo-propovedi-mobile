@@ -1,11 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { Platform, Pressable, Modal as RNModal, StyleSheet, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useEscapeKey } from '../lib/escape-key/useEscapeKey'
 import { hapticLight } from '../lib/haptics'
 import { useTheme } from './theme/ThemeContext/useTheme'
 import { INDENTS } from './theme/themed'
 
 const BACKDROP_TEST_ID = 'modal-backdrop'
+
+// Небольшой зазор между системной безопасной зоной и содержимым модалки.
+const SAFE_AREA_GAP = INDENTS.medium
 
 export const Modal = ({
   children,
@@ -16,6 +20,7 @@ export const Modal = ({
   visible: boolean
 }>) => {
   const { currentTheme } = useTheme()
+  const insets = useSafeAreaInsets()
   const onBackdropPressRef = useRef(onBackdropPress)
 
   useEffect(() => {
@@ -30,8 +35,25 @@ export const Modal = ({
   })
 
   return (
-    <RNModal transparent visible={visible} animationType='fade' statusBarTranslucent>
-      <View style={[styles.backdrop, { backgroundColor: currentTheme.backdrop }]}>
+    // onRequestClose closes the modal on Android hardware back (RN requires it
+    // when visible on Android). On web the same effect comes from onBackdropPress.
+    <RNModal
+      transparent
+      visible={visible}
+      animationType='fade'
+      statusBarTranslucent
+      onRequestClose={onBackdropPress}
+    >
+      <View
+        style={[
+          styles.backdrop,
+          {
+            backgroundColor: currentTheme.backdrop,
+            paddingBottom: insets.bottom + SAFE_AREA_GAP,
+            paddingTop: insets.top + SAFE_AREA_GAP,
+          },
+        ]}
+      >
         {/* Backdrop is deliberately a role-less Pressable: it is not a button, and a
             button role would wrap the whole dialog in <button> on web (nested buttons,
             screen readers announce the dialog as one button). */}
@@ -55,7 +77,7 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: 'center',
-    padding: INDENTS.high,
+    paddingHorizontal: INDENTS.high,
   },
   backdropPressable: {
     flex: 1,
@@ -65,6 +87,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     boxShadow: '0px 4px 8px rgba(0,0,0,0.3)',
     elevation: 8,
+    // On web leave a visible margin around the dialog instead of filling the
+    // whole viewport; native keeps the safe-area gap from the backdrop padding.
+    maxHeight: Platform.select({ default: '100%', web: '90%' }),
     overflow: 'hidden',
   },
 })

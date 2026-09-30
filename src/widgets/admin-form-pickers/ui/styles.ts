@@ -2,6 +2,12 @@ import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
+  // Строка действий «Выбрать из библиотеки» + «Загрузить …» в одну линию.
+  actionsRow: {
+    flexDirection: 'row',
+    gap: INDENTS.low,
+    marginTop: INDENTS.low,
+  },
   coverPreview: {
     borderRadius: RADIUSES.low,
     height: 140,
@@ -18,9 +24,6 @@ export const styles = StyleSheet.create({
     height: '100%',
     width: '100%',
   },
-  gridList: {
-    padding: INDENTS.medium,
-  },
   hint: {
     fontSize: FONT_SIZES.sm,
     marginTop: INDENTS.low,
@@ -28,15 +31,30 @@ export const styles = StyleSheet.create({
   libraryButton: {
     borderRadius: RADIUSES.low,
     borderWidth: 1,
+    flex: 1,
     justifyContent: 'center',
-    marginTop: INDENTS.low,
     minHeight: MIN_TOUCH_TARGET,
     paddingHorizontal: INDENTS.medium,
   },
+  libraryHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingLeft: INDENTS.medium,
+    paddingRight: INDENTS.low,
+  },
+  libraryList: {
+    flexGrow: 0,
+    padding: INDENTS.medium,
+  },
+  libraryRow: {
+    gap: INDENTS.low,
+  },
   modalTitle: {
+    flex: 1,
     fontSize: FONT_SIZES.lg,
     fontWeight: '700',
-    padding: INDENTS.medium,
+    paddingVertical: INDENTS.medium,
   },
   progressFill: {
     backgroundColor: COLORS.primary,
@@ -64,8 +82,8 @@ export const styles = StyleSheet.create({
   uploadButton: {
     alignItems: 'center',
     borderRadius: RADIUSES.low,
+    flex: 1,
     justifyContent: 'center',
-    marginTop: INDENTS.low,
     minHeight: MIN_TOUCH_TARGET,
     paddingHorizontal: INDENTS.medium,
   },

@@ -1,18 +1,16 @@
 import { useState } from 'react'
-import { ActivityIndicator, FlatList, Text, View } from 'react-native'
+import { ActivityIndicator, Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
-import { FormField } from 'shared/ui/form'
-import { Modal } from 'shared/ui/modal'
+import { EditableUrlField } from 'shared/ui/form'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { type AdminFileKind } from '../lib/fileKinds'
 import { useAdminFiles } from '../lib/useAdminFiles'
 import { useFileUpload } from '../lib/useFileUpload'
+import { FileLibraryModal } from './FileLibraryModal'
 import { styles } from './styles'
 
 const PICK_LABEL = 'Выбрать из библиотеки'
-const LOAD_ERROR = 'Не удалось загрузить файлы'
-const EMPTY = 'Файлов нет'
 
 const uploadLabel = (kind: AdminFileKind, hasValue: boolean) => {
   if (kind === 'audio') return hasValue ? 'Заменить аудио' : 'Загрузить аудио'
@@ -57,68 +55,56 @@ export const FileUploadField = ({
 
   return (
     <View>
-      <FormField
+      <EditableUrlField
         hint={hint}
         value={value}
         label={label}
         placeholder='https://…'
         onChangeText={onChange}
       />
-      <TouchableItem
-        disabled={isUploading}
-        onPress={() => void pickAndUpload()}
-        style={[styles.uploadButton, { backgroundColor: currentTheme.primary }]}
-      >
-        {isUploading ? (
-          <ActivityIndicator color={COLORS.white} />
-        ) : (
-          <Text style={styles.uploadButtonText}>{uploadLabel(kind, Boolean(value))}</Text>
-        )}
-      </TouchableItem>
+      <View style={styles.actionsRow}>
+        <TouchableItem
+          onPress={() => setIsOpen(true)}
+          style={[styles.libraryButton, { borderColor: currentTheme.textMuted }]}
+        >
+          <Text style={[styles.hint, { color: currentTheme.primary }]}>{PICK_LABEL}</Text>
+        </TouchableItem>
+        <TouchableItem
+          disabled={isUploading}
+          onPress={() => void pickAndUpload()}
+          style={[styles.uploadButton, { backgroundColor: currentTheme.primary }]}
+        >
+          {isUploading ? (
+            <ActivityIndicator color={COLORS.white} />
+          ) : (
+            <Text style={styles.uploadButtonText}>{uploadLabel(kind, Boolean(value))}</Text>
+          )}
+        </TouchableItem>
+      </View>
       {isUploading ? (
         <View style={[styles.progressTrack, { backgroundColor: currentTheme.surface }]}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
       ) : null}
       {error ? <Text style={[styles.hint, { color: currentTheme.primary }]}>{error}</Text> : null}
-      <TouchableItem
-        onPress={() => setIsOpen(true)}
-        style={[styles.libraryButton, { borderColor: currentTheme.textMuted }]}
-      >
-        <Text style={[styles.hint, { color: currentTheme.primary }]}>{PICK_LABEL}</Text>
-      </TouchableItem>
-      <Modal visible={isOpen} onBackdropPress={() => setIsOpen(false)}>
-        <View>
-          <Text style={[styles.modalTitle, { color: currentTheme.text }]}>
-            {libraryTitle(kind)}
-          </Text>
-          {isLoading ? (
-            <View style={styles.state}>
-              <ActivityIndicator color={COLORS.primary} />
-            </View>
-          ) : isError ? (
-            <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
-          ) : files.length === 0 ? (
-            <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{EMPTY}</Text>
-          ) : (
-            <FlatList
-              data={files}
-              keyExtractor={file => file.fileName}
-              contentContainerStyle={styles.gridList}
-              renderItem={({ item }) => (
-                <TouchableItem
-                  onPress={() => selectFile(item.fileUrl)}
-                  style={[styles.libraryButton, { borderColor: currentTheme.textMuted }]}
-                >
-                  <Text numberOfLines={1} style={[styles.hint, { color: currentTheme.text }]}>
-                    {fileLabel(item)}
-                  </Text>
-                </TouchableItem>
-              )}
-            />
-          )}
-        </View>
-      </Modal>
+      <FileLibraryModal
+        files={files}
+        visible={isOpen}
+        isError={isError}
+        isLoading={isLoading}
+        title={libraryTitle(kind)}
+        onClose={() => setIsOpen(false)}
+        renderFile={file => (
+          <TouchableItem
+            onPress={() => selectFile(file.fileUrl)}
+            style={[styles.libraryButton, { borderColor: currentTheme.textMuted }]}
+          >
+            <Text numberOfLines={1} style={[styles.hint, { color: currentTheme.text }]}>
+              {fileLabel(file)}
+            </Text>
+          </TouchableItem>
+        )}
+      />
     </View>
   )
 }
