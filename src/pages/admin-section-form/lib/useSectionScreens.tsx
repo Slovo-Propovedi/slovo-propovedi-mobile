@@ -22,7 +22,8 @@ const renderSectionsBack = (props: { tintColor?: ColorValue }) => (
 /**
  * Экраны разделов (создание/деталь/редактирование) вне таб-группы, в стеке
  * /admin. Заголовок детали подставляется динамически из самого экрана.
- * Отдельный хук держит `_layout.tsx` компактным (лимит 130 строк).
+ * Живёт в pages-слое (импортирует widget кнопки «Назад»), а `app/admin/_layout.tsx`
+ * остаётся тонкой обвязкой.
  */
 export const useSectionScreens = () => {
   const { currentTheme } = useTheme()

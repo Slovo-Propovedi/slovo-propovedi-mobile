@@ -3,6 +3,7 @@ import { Stack } from 'expo-router'
 import { useEffect, useMemo } from 'react'
 import { type ColorValue, View } from 'react-native'
 import { SettingsHeaderMenu } from 'pages/settings'
+import { useHardwareBackCascade } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
@@ -17,7 +18,6 @@ import { Toast } from 'shared/ui'
 import { GlobalConfirmDialog } from 'shared/ui/confirm-dialog'
 import { GlobalErrorDialog } from 'shared/ui/error-dialog'
 import { useTheme } from 'shared/ui/theme'
-import { useHardwareBackCascade } from './_useHardwareBackCascade'
 // Module-level: subscribes once for the app lifetime
 subscribeToNetwork()
 

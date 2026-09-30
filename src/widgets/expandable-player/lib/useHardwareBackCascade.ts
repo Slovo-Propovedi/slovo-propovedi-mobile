@@ -1,14 +1,12 @@
 import { router } from 'expo-router'
 import { useEffect } from 'react'
 import { BackHandler } from 'react-native'
-import {
-  showDetailsAtom,
-  showMenuAtom,
-  showPlaylistAtom,
-  showSoundSettingsAtom,
-} from 'widgets/expandable-player'
 import { closePlayerSheetAction, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { showDetailsAtom } from '../model/showDetailsAtom'
+import { showMenuAtom } from '../model/showMenuAtom'
+import { showPlaylistAtom } from '../model/showPlaylistAtom'
+import { showSoundSettingsAtom } from '../model/showSoundSettingsAtom'
 
 // Hardware-back cascade, topmost layer first: details → menu → sound
 // settings → playlist → expanded player → router history.
