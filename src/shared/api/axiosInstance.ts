@@ -1,12 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios, { type AxiosRequestConfig } from 'axios'
 import { DEFAULT_API_URL } from '../config/api-url'
 import { ctx } from '../lib/reatom-ctx/ctx'
 import { reportServerReachable, reportServerUnreachable } from '../model/network'
 import { type RefreshResponse } from './generated/api.schemas'
-
-export const ACCESS_TOKEN_KEY = '@access_token'
-export const REFRESH_TOKEN_KEY = '@refresh_token'
+import { secureTokenStorage } from './secureTokenStorage'
 
 // Динамический base URL: инициализируется DEFAULT_API_URL и обновляется
 // экшенами shared/model (setServerUrlAction, initServerUrlAction),
@@ -26,7 +23,7 @@ const REFRESH_ENDPOINT = '/auth/refresh'
 // поэтому проходит через оба интерцептора (guard isRefreshRequest
 // пропускает его без Authorization и без повторного refresh при 401)
 const performTokenRefresh = async () => {
-  const storedRefreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY)
+  const storedRefreshToken = await secureTokenStorage.getRefreshToken()
   if (!storedRefreshToken) throw new Error('No refresh token available')
 
   const { data } = await axiosInstance.post<RefreshResponse>(REFRESH_ENDPOINT, {
@@ -45,7 +42,7 @@ axiosInstance.interceptors.request.use(async config => {
   const isRefreshRequest = config.url?.includes(REFRESH_ENDPOINT)
   if (isRefreshRequest) return config
 
-  const token = await AsyncStorage.getItem(ACCESS_TOKEN_KEY)
+  const token = await secureTokenStorage.getAccessToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
 
   return config
@@ -79,9 +76,10 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest)
       } catch (refreshError) {
         // Если не удалось обновить токен - очищаем хранилище
-        await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY])
+        await secureTokenStorage.clearTokens()
 
-        // TODO: Здесь можно вызвать действие для перехода на экран логина
+        // TODO: Здесь можно вызвать действие для перехода на публичный экран логина
+        // (интерфейс администратора имеет собственный вход /admin/login).
         // Например: navigationRef.navigate('Login')
 
         return Promise.reject(refreshError)
@@ -102,16 +100,17 @@ export const customInstance = <T>(
     ...options,
   }).then(({ data }) => data)
 
-// Функции для работы с токенами
+// Функции для работы с токенами. Делегируют в secureTokenStorage
+// (expo-secure-store на native, AsyncStorage на web), сохраняя стабильный API
+// для существующих потребителей.
 export const tokenStorage = {
   clearTokens: async () => {
-    await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY])
+    await secureTokenStorage.clearTokens()
   },
 
-  getAccessToken: async () => AsyncStorage.getItem(ACCESS_TOKEN_KEY),
+  getAccessToken: async () => secureTokenStorage.getAccessToken(),
 
   setTokens: async (accessToken: string, refreshToken: string) => {
-    await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
-    await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+    await secureTokenStorage.setTokens(accessToken, refreshToken)
   },
 }
