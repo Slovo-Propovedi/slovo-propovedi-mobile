@@ -98,7 +98,7 @@
 - `app/admin/(tabs)/_layout.tsx` — `Tabs` с `headerShown: false` и тем же `CustomTabBar`, что и публичные табы: `index` (Главная), `sections`, `playlists`, `sermons`, `upload`, `media`, `users`. Таб `users` скрыт (`href: null`) для роли не-`admin`.
 - Файлы табов: `index.tsx` (admin-home), остальные — заглушки отдельных слайсов `pages/admin-sections` / `admin-playlists` / `admin-sermons` / `admin-upload` / `admin-media` / `admin-users`.
 
-Вход в зону — из шапки «Настроек» (`headerRight` в `app/_RootLayout.tsx` → `AdminEntryButton`) и с таба «Еще» (кнопка «В админ панель» → `AdminPanelButton`): обе точки используют хук `useAdminEntry` (`entities/auth`), который при `idle` восстанавливает сессию (`restoreSession`), затем пушит `/admin` (есть права) или `/admin/login`. Пункт «Настроек» `AdminAccountItem` показывает вход для неаутентифицированных и «Выйти из аккаунта админа» (`signOut`) для аутентифицированных.
+Вход в зону — из шапки «Настроек» (`headerRight` в `app/_RootLayout.tsx` → `AdminEntryButton`) и с таба «Еще» (кнопка «В админ панель» → `AdminPanelButton`). В «Настройках» и `AdminAccountItem` используется хук `useAdminEntry` (`entities/auth`): при `idle` восстанавливает сессию (`restoreSession`), затем пушит `/admin` (есть права) или `/admin/login`. На табе «Еще» кнопка «В админ панель» рендерится только для аутентифицированных `admin`/`moderator` (проверка `canAccessAdmin`; `MoreScreen` при монтировании вызывает `restoreSession`, если статус `idle`) и пушит `/admin`. Пункт «Настроек» `AdminAccountItem` показывает вход для неаутентифицированных и «Выйти из аккаунта админа» (`signOut`) для аутентифицированных.
 
 ## Незарегистрированные маршруты
 

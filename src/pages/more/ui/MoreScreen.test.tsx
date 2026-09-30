@@ -1,9 +1,13 @@
+import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
+import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
+import { authMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { MoreScreen } from './MoreScreen'
 
+const ADMIN_PANEL_TITLE = 'В админ панель'
+
 const mockPush = jest.fn()
-const mockOpenAdminInterface = jest.fn()
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({
@@ -12,8 +16,11 @@ jest.mock('expo-router', () => ({
 }))
 
 jest.mock('entities/auth', () => ({
-  useAdminEntry: () => ({ openAdminInterface: mockOpenAdminInterface }),
+  ...jest.requireActual('entities/auth'),
+  restoreSession: jest.fn(),
 }))
+
+const mockedRestoreSession = jest.mocked(restoreSession)
 
 jest.mock('shared/ui/theme', () => ({
   COLORS: { disabled: '#ccc', white: '#fff' },
@@ -36,10 +43,16 @@ jest.mock('shared/config', () => ({
   APP_VERSION: '1.0.0',
 }))
 
+const setAuthenticatedUser = (ctx: ReturnType<typeof createCtx>, role: 'admin' | 'moderator') => {
+  authUserAtom(ctx, authMocks.getAuthControllerGetProfileResponseMock({ role }))
+  authStatusAtom(ctx, 'authenticated')
+}
+
 describe('<MoreScreen>', () => {
   beforeEach(() => {
     mockPush.mockClear()
-    mockOpenAdminInterface.mockClear()
+    mockedRestoreSession.mockClear()
+    mockedRestoreSession.mockResolvedValue(null)
   })
 
   test('renders app name, version and description in the header', async () => {
@@ -49,15 +62,59 @@ describe('<MoreScreen>', () => {
     expect(getByText('Приложение для прослушивания и чтения проповедей')).toBeTruthy()
   })
 
-  test('renders the admin panel entry button', async () => {
-    const { getByText } = await renderWithProviders(<MoreScreen />)
-    expect(getByText('В админ панель')).toBeTruthy()
+  test('does not render the admin panel button when unauthenticated', async () => {
+    const ctx = createCtx()
+    authStatusAtom(ctx, 'unauthenticated')
+
+    const { queryByText } = await renderWithProviders(<MoreScreen />, { ctx })
+
+    expect(queryByText(ADMIN_PANEL_TITLE)).toBeNull()
   })
 
-  test('admin panel button opens the admin entry flow on press', async () => {
-    const { getByText } = await renderWithProviders(<MoreScreen />)
-    await fireEvent.press(getByText('В админ панель'))
-    expect(mockOpenAdminInterface).toHaveBeenCalledTimes(1)
+  test('does not render the admin panel button for a regular user', async () => {
+    const ctx = createCtx()
+    authUserAtom(ctx, authMocks.getAuthControllerGetProfileResponseMock({ role: 'user' }))
+    authStatusAtom(ctx, 'authenticated')
+
+    const { queryByText } = await renderWithProviders(<MoreScreen />, { ctx })
+
+    expect(queryByText(ADMIN_PANEL_TITLE)).toBeNull()
+  })
+
+  test('renders the admin panel button for an admin user', async () => {
+    const ctx = createCtx()
+    setAuthenticatedUser(ctx, 'admin')
+
+    const { getByText } = await renderWithProviders(<MoreScreen />, { ctx })
+
+    expect(getByText(ADMIN_PANEL_TITLE)).toBeTruthy()
+  })
+
+  test('renders the admin panel button for a moderator user', async () => {
+    const ctx = createCtx()
+    setAuthenticatedUser(ctx, 'moderator')
+
+    const { getByText } = await renderWithProviders(<MoreScreen />, { ctx })
+
+    expect(getByText(ADMIN_PANEL_TITLE)).toBeTruthy()
+  })
+
+  test('admin panel button navigates to /admin on press', async () => {
+    const ctx = createCtx()
+    setAuthenticatedUser(ctx, 'admin')
+
+    const { getByText } = await renderWithProviders(<MoreScreen />, { ctx })
+
+    await fireEvent.press(getByText(ADMIN_PANEL_TITLE))
+    expect(mockPush).toHaveBeenCalledWith('/admin')
+  })
+
+  test('restores the session on mount when auth status is idle', async () => {
+    const ctx = createCtx()
+
+    await renderWithProviders(<MoreScreen />, { ctx })
+
+    expect(mockedRestoreSession).toHaveBeenCalledTimes(1)
   })
 
   test('renders offline menu item', async () => {
