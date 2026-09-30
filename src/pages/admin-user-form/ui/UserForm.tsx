@@ -1,4 +1,5 @@
-import { ScrollView, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
+import { FormScrollView } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type UserFormValues } from '../lib/userFormState'
 import { styles } from './styles'
@@ -19,17 +20,13 @@ export const UserForm = ({
   const { currentTheme } = useTheme()
 
   return (
-    <ScrollView
-      keyboardShouldPersistTaps='handled'
-      contentContainerStyle={styles.formContent}
-      style={{ backgroundColor: currentTheme.background }}
-    >
+    <FormScrollView contentContainerStyle={styles.formContent}>
       {error ? (
         <View style={[styles.errorBanner, { backgroundColor: currentTheme.surface }]}>
           <Text style={[styles.errorText, { color: currentTheme.primary }]}>{error}</Text>
         </View>
       ) : null}
       <UserFormFields mode={mode} values={values} onChange={onChange} />
-    </ScrollView>
+    </FormScrollView>
   )
 }

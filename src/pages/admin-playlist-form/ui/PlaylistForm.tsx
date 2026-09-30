@@ -1,5 +1,6 @@
-import { ScrollView, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { CoverPicker } from 'widgets/admin-form-pickers'
+import { FormScrollView } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type PlaylistFormValues } from '../lib/playlistFormState'
 import { PlaylistFormMainFields } from './PlaylistFormMainFields'
@@ -30,11 +31,7 @@ export const PlaylistForm = ({
   const { currentTheme } = useTheme()
 
   return (
-    <ScrollView
-      keyboardShouldPersistTaps='handled'
-      contentContainerStyle={styles.formContent}
-      style={{ backgroundColor: currentTheme.background }}
-    >
+    <FormScrollView contentContainerStyle={styles.formContent}>
       {error ? (
         <View style={[styles.errorBanner, { backgroundColor: currentTheme.surface }]}>
           <Text style={[styles.errorText, { color: currentTheme.primary }]}>{error}</Text>
@@ -59,6 +56,6 @@ export const PlaylistForm = ({
           onToggle={id => onChange('selectedSermonIds', toggleId(values.selectedSermonIds, id))}
         />
       </View>
-    </ScrollView>
+    </FormScrollView>
   )
 }

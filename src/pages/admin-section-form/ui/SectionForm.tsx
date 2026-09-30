@@ -1,13 +1,14 @@
 import { useAction } from '@reatom/npm-react'
 import { type Href, Stack, useRouter } from 'expo-router'
 import { useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { type APITypes, sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
 import { isEmpty } from 'shared/lib/utils/isEmpty'
 import { omitEqualFields } from 'shared/lib/utils/omitEqualFields'
 import { showToast } from 'shared/model'
+import { FormScrollView } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import {
   buildCreateSectionDto,
@@ -93,11 +94,7 @@ export const SectionForm = ({
   })
 
   return (
-    <ScrollView
-      keyboardShouldPersistTaps='handled'
-      contentContainerStyle={styles.formContent}
-      style={{ backgroundColor: currentTheme.background }}
-    >
+    <FormScrollView contentContainerStyle={styles.formContent}>
       <Stack.Screen options={headerOptions} />
 
       {error ? (
@@ -115,6 +112,6 @@ export const SectionForm = ({
           <PlaylistPicker onToggle={togglePlaylist} selectedIds={values.selectedPlaylistIds} />
         </View>
       ) : null}
-    </ScrollView>
+    </FormScrollView>
   )
 }

@@ -1,5 +1,6 @@
-import { ScrollView, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { PlaylistPicker } from 'widgets/admin-form-pickers'
+import { FormScrollView } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type SermonFormValues } from '../lib/sermonFormInitialValues'
 import { useSermonSuggestions } from '../lib/useSermonSuggestions'
@@ -31,11 +32,7 @@ export const SermonForm = ({
   const { artists, books } = useSermonSuggestions()
 
   return (
-    <ScrollView
-      keyboardShouldPersistTaps='handled'
-      contentContainerStyle={styles.formContent}
-      style={{ backgroundColor: currentTheme.background }}
-    >
+    <FormScrollView contentContainerStyle={styles.formContent}>
       {error ? (
         <View style={[styles.errorBanner, { backgroundColor: currentTheme.surface }]}>
           <Text style={[styles.errorText, { color: currentTheme.primary }]}>{error}</Text>
@@ -57,6 +54,6 @@ export const SermonForm = ({
           onToggle={id => onChange('selectedPlaylistIds', toggleId(values.selectedPlaylistIds, id))}
         />
       </View>
-    </ScrollView>
+    </FormScrollView>
   )
 }
