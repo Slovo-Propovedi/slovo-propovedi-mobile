@@ -21,11 +21,25 @@ jest.mock('shared/api', () => ({
   },
 }))
 
-jest.mock('expo-router', () => ({
-  Stack: { Screen: () => null },
-  useLocalSearchParams: () => ({ id: 'u1' }),
-  useRouter: () => ({ back: mockBack, push: mockPush }),
-}))
+jest.mock('expo-router', () => {
+  const React = jest.requireActual('react') as {
+    createElement: (type: unknown, props: unknown, ...children: unknown[]) => unknown
+    Fragment: unknown
+  }
+
+  return {
+    Stack: {
+      // Delete now lives in the header (headerRight). Render it so the test can
+      // assert both its presence and its absence for the own account.
+      Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+        options?.headerRight
+          ? React.createElement(React.Fragment, null, options.headerRight())
+          : null,
+    },
+    useLocalSearchParams: () => ({ id: 'u1' }),
+    useRouter: () => ({ back: mockBack, push: mockPush }),
+  }
+})
 
 jest.mock('entities/auth', () => {
   const { atom } = jest.requireActual('@reatom/framework')
@@ -75,25 +89,26 @@ describe('<AdminUserDetailScreen>', () => {
     expect(await findByText('Пользователь не найден')).toBeTruthy()
   })
 
-  test('hides the delete action for the own account', async () => {
+  test('hides the delete action in the header for the own account', async () => {
     mockFindOne.mockResolvedValue(createUser())
     const ctx = createCtx()
     authUserAtom(ctx, createUser())
 
-    const { findAllByText, queryByText } = await renderWithProviders(<AdminUserDetailScreen />, {
-      ctx,
-    })
+    const { findAllByText, queryByLabelText } = await renderWithProviders(
+      <AdminUserDetailScreen />,
+      { ctx },
+    )
     await findAllByText('Цель')
 
-    expect(queryByText('Удалить')).toBeNull()
+    expect(queryByLabelText('Удалить')).toBeNull()
   })
 
-  test('shows the delete action for another account', async () => {
+  test('shows the delete action in the header for another account', async () => {
     mockFindOne.mockResolvedValue(createUser())
 
-    const { findByText } = await renderWithProviders(<AdminUserDetailScreen />)
+    const { findByLabelText } = await renderWithProviders(<AdminUserDetailScreen />)
 
-    expect(await findByText('Удалить')).toBeTruthy()
+    expect(await findByLabelText('Удалить')).toBeTruthy()
   })
 
   test('changes the password through the dedicated endpoint', async () => {
@@ -128,8 +143,10 @@ describe('<AdminUserDetailScreen>', () => {
   test('deletes another account after confirmation', async () => {
     mockFindOne.mockResolvedValue(createUser())
 
-    const { findByText, getAllByText } = await renderWithProviders(<AdminUserDetailScreen />)
-    fireEvent.press(await findByText('Удалить'))
+    const { findByLabelText, findByText, getAllByText } = await renderWithProviders(
+      <AdminUserDetailScreen />,
+    )
+    fireEvent.press(await findByLabelText('Удалить'))
 
     expect(await findByText('Удалить пользователя?')).toBeTruthy()
     const confirmButtons = getAllByText('Удалить', { includeHiddenElements: true })

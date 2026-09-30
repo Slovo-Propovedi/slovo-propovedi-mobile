@@ -19,11 +19,24 @@ jest.mock('shared/api', () => ({
   },
 }))
 
-jest.mock('expo-router', () => ({
-  Stack: { Screen: () => null },
-  useLocalSearchParams: () => ({ id: 'p1' }),
-  useRouter: () => ({ back: mockBack, push: mockPush }),
-}))
+jest.mock('expo-router', () => {
+  const React = jest.requireActual('react') as {
+    createElement: (type: unknown, props: unknown, ...children: unknown[]) => unknown
+    Fragment: unknown
+  }
+
+  return {
+    Stack: {
+      // Delete now lives in the header (headerRight). Render it so the test can press it.
+      Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+        options?.headerRight
+          ? React.createElement(React.Fragment, null, options.headerRight())
+          : null,
+    },
+    useLocalSearchParams: () => ({ id: 'p1' }),
+    useRouter: () => ({ back: mockBack, push: mockPush }),
+  }
+})
 
 // DraggableFlatList is a pure-JS reanimated list; a FlatList passthrough keeps
 // the row rendering under test without dragging internals.
@@ -85,8 +98,10 @@ describe('<AdminPlaylistDetailScreen>', () => {
   test('deletes the playlist and navigates back after confirmation', async () => {
     mockFindOne.mockResolvedValue(createPlaylist())
 
-    const { findByText, getAllByText } = await renderWithProviders(<AdminPlaylistDetailScreen />)
-    fireEvent.press(await findByText('Удалить'))
+    const { findByLabelText, findByText, getAllByText } = await renderWithProviders(
+      <AdminPlaylistDetailScreen />,
+    )
+    fireEvent.press(await findByLabelText('Удалить'))
 
     // The dialog mounts inside RN Modal; its confirm button shares the «Удалить»
     // label with the header action.

@@ -26,9 +26,9 @@
 
 **Файлы:** `src/pages/admin-user-detail/ui/AdminUserDetailScreen.tsx`, `UserStatGrid.tsx`, `PasswordDialog.tsx`, `lib/useAdminUserDetail.ts`
 
-- **Что показывается:** аватар-инициал, имя, email; действия «Сменить пароль», «Удалить» (последнее скрыто для собственного аккаунта); «Редактировать» — иконка в шапке (`headerRight`, `useAdminDetailHeader`); сетка статистики: Имя, Роль (`ROLE_LABELS`), Username, Email, ID.
+- **Что показывается:** аватар-инициал, имя, email; действие «Сменить пароль»; «Редактировать» и «Удалить» — иконки в шапке (`headerRight`, `useAdminDetailHeader`; «Удалить» скрыто для собственного аккаунта); сетка статистики: Имя, Роль (`ROLE_LABELS`), Username, Email, ID.
 - **Откуда данные:** `usersControllerFindOne` (`GET /users/{id}`).
-- **Собственный аккаунт:** кнопка «Удалить» рендерится только при `id !== authUser.id` (`authUserAtom` из `entities/auth`) — дублирует серверную защиту self-delete.
+- **Собственный аккаунт:** иконка «Удалить» в шапке рендерится только при `id !== authUser.id` (`authUserAtom` из `entities/auth`) — дублирует серверную защиту self-delete.
 - **Удаление:** `ConfirmDialog` «Удалить пользователя?» → `usersControllerRemove` (`DELETE /users/{id}`) → `router.back()`; ошибка — `reportError`.
 - **Смена пароля:** `PasswordDialog` (`Modal` + `FormField` с `secureTextEntry`) → `usersControllerChangePassword` (`PATCH /users/{id}/password`, тело `{ password }`). Пустой пароль блокируется на клиенте («Введите новый пароль.»); успех — тост «Пароль изменён» и закрытие модалки.
 - **Навигация:** иконка «Редактировать» в шапке → `/admin/users/[id]/edit`.

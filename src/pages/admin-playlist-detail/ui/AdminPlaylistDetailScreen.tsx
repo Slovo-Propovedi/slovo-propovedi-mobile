@@ -26,12 +26,6 @@ export const AdminPlaylistDetailScreen = () => {
   const { isDeleting, isNotFound, playlist, remove, reorder, sermons } = useAdminPlaylistDetail(id)
   const showToastAction = useAction(showToast)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  // Memoized so expo-router's setOptions does not see a fresh object each render.
-  const editRoute = useMemo<Href>(
-    () => ({ params: { id }, pathname: '/admin/playlists/[id]/edit' }),
-    [id],
-  )
-  const headerOptions = useAdminDetailHeader({ editRoute, title: playlist?.title ?? '' })
 
   const handleDelete = async () => {
     setIsDeleteOpen(false)
@@ -40,6 +34,17 @@ export const AdminPlaylistDetailScreen = () => {
       router.back()
     }
   }
+
+  // Memoized so expo-router's setOptions does not see a fresh object each render.
+  const editRoute = useMemo<Href>(
+    () => ({ params: { id }, pathname: '/admin/playlists/[id]/edit' }),
+    [id],
+  )
+  const headerOptions = useAdminDetailHeader({
+    editRoute,
+    onDelete: () => setIsDeleteOpen(true),
+    title: playlist?.title ?? '',
+  })
 
   const renderItem = ({ drag, isActive, item }: RenderItemParams<APITypes.PlaylistSermon>) => (
     <PlaylistDetailSermonRow
@@ -79,11 +84,7 @@ export const AdminPlaylistDetailScreen = () => {
         ListEmptyComponent={<EmptyState message='Проповедей пока нет' />}
         ListHeaderComponent={
           <View>
-            <PlaylistDetailHeader
-              playlist={playlist}
-              sermonsCount={sermons.length}
-              onDelete={() => setIsDeleteOpen(true)}
-            />
+            <PlaylistDetailHeader playlist={playlist} sermonsCount={sermons.length} />
             <Text style={[styles.sermonsTitle, { color: currentTheme.text }]}>
               {`Проповеди плейлиста (${sermons.length})`}
             </Text>

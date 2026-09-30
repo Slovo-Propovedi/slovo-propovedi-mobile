@@ -25,7 +25,7 @@
 
 **Файлы:** `src/pages/admin-section-detail/ui/AdminSectionDetailScreen.tsx`, `SectionDetailHeader.tsx`, `SectionDetailStats.tsx`, `SectionDetailStat.tsx`, `SectionDetailPlaylistRow.tsx`, `lib/useAdminSectionDetail.ts`
 
-- **Что показывается:** заголовок (динамически в шапке через `useAdminDetailHeader`), описание, действие «Удалить»; «Редактировать» — иконка в шапке (`headerRight`); сетка статистики (размер карточек, высота, расположение заголовка, строки, крупный заголовок, скруглённые углы); блок «Плейлисты раздела (N)» с drag-переупорядочиванием.
+- **Что показывается:** заголовок (динамически в шапке через `useAdminDetailHeader`), описание; «Редактировать» и «Удалить» — иконки в шапке (`headerRight`, `useAdminDetailHeader`); сетка статистики (размер карточек, высота, расположение заголовка, строки, крупный заголовок, скруглённые углы); блок «Плейлисты раздела (N)» с drag-переупорядочиванием.
 - **Откуда данные:** `sectionControllerFindOne` (`GET /section/{id}`); reorder — `reorderPlaylistsInSection` (`PATCH /section/{id}/playlists/reorder`, тело `{ playlistIds }`); удаление — `sectionControllerRemove` (`DELETE /section/{id}`).
 - **Навигация:** иконка «Редактировать» в шапке → `/admin/sections/[id]/edit`; тап по плейлисту → `/admin/playlists/[id]` (внутри админки, не в пользовательский плеер); после удаления — `router.back()` в список + тост.
 - **Удаление:** `ConfirmDialog` («Удалить раздел?») с подтверждением.

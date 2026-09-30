@@ -18,9 +18,9 @@ const PASSWORD_LABEL = 'Сменить пароль'
 const DELETE_LABEL = 'Удалить'
 const NOT_FOUND_MESSAGE = 'Пользователь не найден'
 
-// Деталь пользователя: статистика и действия (сменить пароль, удалить).
-// «Редактировать» живёт в шапке экрана (headerRight). Удаление собственного
-// аккаунта скрыто.
+// Деталь пользователя: статистика и действие «Сменить пароль».
+// «Редактировать» и «Удалить» живут в шапке экрана (headerRight). Удаление
+// собственного аккаунта скрыто — иконки удаления в шапке нет.
 export const AdminUserDetailScreen = () => {
   useRequireAdminRole()
   const router = useRouter()
@@ -31,16 +31,22 @@ export const AdminUserDetailScreen = () => {
     useAdminUserDetail(id)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isPasswordOpen, setIsPasswordOpen] = useState(false)
-  const editRoute = useMemo<Href>(
-    () => ({ params: { id }, pathname: '/admin/users/[id]/edit' }),
-    [id],
-  )
-  const headerOptions = useAdminDetailHeader({ editRoute, title: user?.name ?? '' })
 
   const handleDelete = async () => {
     setIsDeleteOpen(false)
     if (await remove()) router.back()
   }
+
+  // Own account: no delete icon in the header at all (mirrors the server guard).
+  const editRoute = useMemo<Href>(
+    () => ({ params: { id }, pathname: '/admin/users/[id]/edit' }),
+    [id],
+  )
+  const headerOptions = useAdminDetailHeader({
+    editRoute,
+    onDelete: isOwnAccount ? undefined : () => setIsDeleteOpen(true),
+    title: user?.name ?? '',
+  })
 
   if (!user)
     return (
@@ -77,17 +83,6 @@ export const AdminUserDetailScreen = () => {
               {PASSWORD_LABEL}
             </Text>
           </TouchableItem>
-          {isOwnAccount ? null : (
-            <TouchableItem
-              onPress={() => setIsDeleteOpen(true)}
-              style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}
-            >
-              <Ionicons size={18} name='trash-outline' color={currentTheme.textMuted} />
-              <Text style={[styles.actionText, { color: currentTheme.textMuted }]}>
-                {DELETE_LABEL}
-              </Text>
-            </TouchableItem>
-          )}
         </View>
 
         <UserStatGrid user={user} />

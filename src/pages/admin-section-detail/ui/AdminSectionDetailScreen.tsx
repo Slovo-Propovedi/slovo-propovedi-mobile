@@ -27,12 +27,6 @@ export const AdminSectionDetailScreen = () => {
   const { isDeleting, isNotFound, playlists, remove, reorder, section } = useAdminSectionDetail(id)
   const showToastAction = useAction(showToast)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  // Memoized so expo-router's setOptions does not see a fresh object each render.
-  const editRoute = useMemo<Href>(
-    () => ({ params: { id }, pathname: '/admin/sections/[id]/edit' }),
-    [id],
-  )
-  const headerOptions = useAdminDetailHeader({ editRoute, title: section?.title ?? '' })
 
   const handleDelete = async () => {
     setIsDeleteOpen(false)
@@ -41,6 +35,17 @@ export const AdminSectionDetailScreen = () => {
       router.back()
     }
   }
+
+  // Memoized so expo-router's setOptions does not see a fresh object each render.
+  const editRoute = useMemo<Href>(
+    () => ({ params: { id }, pathname: '/admin/sections/[id]/edit' }),
+    [id],
+  )
+  const headerOptions = useAdminDetailHeader({
+    editRoute,
+    onDelete: () => setIsDeleteOpen(true),
+    title: section?.title ?? '',
+  })
 
   const renderItem = ({ drag, isActive, item }: RenderItemParams<APITypes.SectionPlaylist>) => (
     <SectionDetailPlaylistRow
@@ -80,11 +85,7 @@ export const AdminSectionDetailScreen = () => {
         ListEmptyComponent={<EmptyState message='Плейлистов пока нет' />}
         ListHeaderComponent={
           <View>
-            <SectionDetailHeader
-              title={section.title}
-              description={section.description}
-              onDelete={() => setIsDeleteOpen(true)}
-            />
+            <SectionDetailHeader title={section.title} description={section.description} />
             <SectionDetailStats section={section} />
             <Text style={[styles.playlistsTitle, { color: currentTheme.text }]}>
               {`Плейлисты раздела (${playlists.length})`}

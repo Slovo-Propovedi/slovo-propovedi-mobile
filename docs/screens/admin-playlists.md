@@ -25,7 +25,7 @@
 
 **Файлы:** `src/pages/admin-playlist-detail/ui/AdminPlaylistDetailScreen.tsx`, `PlaylistDetailHeader.tsx`, `PlaylistDetailSermonRow.tsx`, `lib/useAdminPlaylistDetail.ts`
 
-- **Что показывается:** герой (обложка через `expo-image`, название, описание), плитки «Проповеди»/«Разделы», действие «Удалить»; «Редактировать» — иконка в шапке (`headerRight`, `useAdminDetailHeader`); блок «Проповеди плейлиста (N)» с drag-переупорядочиванием (ручка `reorder-three`).
+- **Что показывается:** герой (обложка через `expo-image`, название, описание), плитки «Проповеди»/«Разделы»; «Редактировать» и «Удалить» — иконки в шапке (`headerRight`, `useAdminDetailHeader`); блок «Проповеди плейлиста (N)» с drag-переупорядочиванием (ручка `reorder-three`).
 - **Откуда данные:** `playlistControllerFindOne` (`GET /playlists/{id}`); reorder — `reorderSermonsInPlaylist` (`PATCH /playlists/{id}/sermons/reorder`, тело `{ sermonIds }` — **полный** упорядоченный массив id); удаление — `playlistControllerRemove` (`DELETE /playlists/{id}`).
 - **Optimistic reorder:** локальное состояние перекрывает ответ сети; при ошибке — откат + `showToast`; запрос пропускается, если порядок не изменился (`hasOrderChanged`).
 - **Навигация:** иконка «Редактировать» в шапке → `/admin/playlists/[id]/edit`; тап по строке проповеди → `/admin/sermons/[id]`; после удаления — `router.back()` в список + тост.

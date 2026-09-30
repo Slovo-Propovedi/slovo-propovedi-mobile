@@ -2,23 +2,6 @@ import { StyleSheet } from 'react-native'
 import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
-  actionButton: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    flexDirection: 'row',
-    gap: INDENTS.low,
-    paddingHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.low,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: INDENTS.low,
-    marginTop: INDENTS.medium,
-  },
-  actionText: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
-  },
   artwork: {
     borderRadius: RADIUSES.middle,
     height: 140,

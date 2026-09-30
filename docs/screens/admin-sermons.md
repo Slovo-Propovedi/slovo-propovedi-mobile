@@ -26,7 +26,7 @@
 
 **Файлы:** `src/pages/admin-sermon-detail/ui/AdminSermonDetailScreen.tsx`, `SermonDetailHeader.tsx`, `SermonMediaCard.tsx`, `SermonAudioPreview.tsx`, `SermonPlaylistRow.tsx`, `lib/useAdminSermonDetail.ts`
 
-- **Что показывается:** герой (обложка, название, подпись «проповедник · Писание»), действие «Удалить»; «Редактировать» — иконка в шапке экрана (`headerRight`, `useAdminDetailHeader`); описание (если есть); карточка «Медиа» с аудио-превью (play/pause + позиция), ссылками «Смотреть на YouTube» и «Открыть текст проповеди»; блок «Плейлисты (N)» списком обложка+название.
+- **Что показывается:** герой (обложка, название, подпись «проповедник · Писание»); «Редактировать» и «Удалить» — иконки в шапке экрана (`headerRight`, `useAdminDetailHeader`); описание (если есть); карточка «Медиа» с аудио-превью (play/pause + позиция), ссылками «Смотреть на YouTube» и «Открыть текст проповеди»; блок «Плейлисты (N)» списком обложка+название.
 - **Откуда данные:** `sermonControllerFindOne` (`GET /sermons/{id}`); удаление — `sermonControllerRemove` (`DELETE /sermons/{id}`).
 - **Аудио:** локальное превью на `expo-audio` (`useAudioPlayer`/`useAudioPlayerStatus`) — глобальный singleton-плеер приложения сознательно не переиспользуется, чтобы предпросмотр не влиял на очередь воспроизведения.
 - **Внешние ссылки:** YouTube и текст открываются через `Linking.openURL` с проверкой протокола (`hasUriProtocol`) — URL с сервера недоверенный (см. [contracts/native-modules.md](../contracts/native-modules.md)).

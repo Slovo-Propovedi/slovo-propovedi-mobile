@@ -25,12 +25,6 @@ export const AdminSermonDetailScreen = () => {
   const { isDeleting, isNotFound, remove, sermon } = useAdminSermonDetail(id)
   const showToastAction = useAction(showToast)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  // Memoized so expo-router's setOptions does not see a fresh object each render.
-  const editRoute = useMemo<Href>(
-    () => ({ params: { id }, pathname: '/admin/sermons/[id]/edit' }),
-    [id],
-  )
-  const headerOptions = useAdminDetailHeader({ editRoute, title: sermon?.title ?? '' })
 
   const handleDelete = async () => {
     setIsDeleteOpen(false)
@@ -39,6 +33,17 @@ export const AdminSermonDetailScreen = () => {
       router.back()
     }
   }
+
+  // Memoized so expo-router's setOptions does not see a fresh object each render.
+  const editRoute = useMemo<Href>(
+    () => ({ params: { id }, pathname: '/admin/sermons/[id]/edit' }),
+    [id],
+  )
+  const headerOptions = useAdminDetailHeader({
+    editRoute,
+    onDelete: () => setIsDeleteOpen(true),
+    title: sermon?.title ?? '',
+  })
 
   if (!sermon)
     return (
@@ -61,7 +66,7 @@ export const AdminSermonDetailScreen = () => {
     >
       <Stack.Screen options={headerOptions} />
       <ScrollView contentContainerStyle={styles.listContent}>
-        <SermonDetailHeader sermon={sermon} onDelete={() => setIsDeleteOpen(true)} />
+        <SermonDetailHeader sermon={sermon} />
 
         {sermon.description ? (
           <View style={[styles.card, { backgroundColor: currentTheme.surface }]}>

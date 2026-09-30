@@ -1,9 +1,7 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
 import { CoverImage } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
 
 const pluralize = (count: number, forms: [string, string, string]) => {
@@ -15,14 +13,12 @@ const pluralize = (count: number, forms: [string, string, string]) => {
   return forms[2]
 }
 
-// Шапка детали плейлиста: обложка, название, описание, счётчик и удаление.
-// «Редактировать» живёт в шапке экрана (headerRight), не в теле.
+// Шапка детали плейлиста: обложка, название, описание и счётчик.
+// «Редактировать» и «Удалить» живут в шапке экрана (headerRight), не в теле.
 export const PlaylistDetailHeader = ({
-  onDelete,
   playlist,
   sermonsCount,
 }: {
-  onDelete: () => void
   playlist: APITypes.PlaylistEntity
   sermonsCount: number
 }) => {
@@ -50,15 +46,6 @@ export const PlaylistDetailHeader = ({
             {String(playlist.sections.length)}
           </Text>
         </View>
-      </View>
-      <View style={styles.actions}>
-        <TouchableItem
-          onPress={onDelete}
-          style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}
-        >
-          <Ionicons size={18} name='trash-outline' color={currentTheme.textMuted} />
-          <Text style={[styles.actionText, { color: currentTheme.textMuted }]}>Удалить</Text>
-        </TouchableItem>
       </View>
     </View>
   )
