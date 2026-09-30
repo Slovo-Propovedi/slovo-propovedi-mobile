@@ -4,21 +4,23 @@ import { formatSermonReference } from 'entities/sermon'
 import { type APITypes } from 'shared/api'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
+import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
 
 const DRAG_LABEL = 'Переместить проповедь'
 
 // Строка проповеди в детали плейлиста: название, подпись и ручка drag.
-// Тап по строке ничего не открывает (экрана проповеди в админке ещё нет),
-// поэтому строка — обычный View, а не кнопка.
+// Тап по строке открывает деталь проповеди внутри админки.
 export const PlaylistDetailSermonRow = ({
   drag,
   isActive,
   item,
+  onPress,
 }: {
   drag: () => void
   isActive: boolean
   item: APITypes.PlaylistSermon
+  onPress: () => void
 }) => {
   const { currentTheme } = useTheme()
   const reference = formatSermonReference({
@@ -29,7 +31,8 @@ export const PlaylistDetailSermonRow = ({
   const subtitle = [item.artist, reference].filter(Boolean).join(' · ')
 
   return (
-    <View
+    <TouchableItem
+      onPress={onPress}
       style={[
         styles.row,
         {
@@ -54,6 +57,6 @@ export const PlaylistDetailSermonRow = ({
         accessibilityLabel={DRAG_LABEL}
         Icon={<Ionicons size={26} name='reorder-three' color={currentTheme.textMuted} />}
       />
-    </View>
+    </TouchableItem>
   )
 }

@@ -27,7 +27,7 @@
 
 - **Что показывается:** заголовок (динамически в шапке через `Stack.Screen`), описание, действия «Редактировать» и «Удалить»; сетка статистики (размер карточек, высота, расположение заголовка, строки, крупный заголовок, скруглённые углы); блок «Плейлисты раздела (N)» с drag-переупорядочиванием.
 - **Откуда данные:** `sectionControllerFindOne` (`GET /section/{id}`); reorder — `reorderPlaylistsInSection` (`PATCH /section/{id}/playlists/reorder`, тело `{ playlistIds }`); удаление — `sectionControllerRemove` (`DELETE /section/{id}`).
-- **Навигация:** «Редактировать» → `/admin/sections/[id]/edit`; тап по плейлисту → `/listen/playlist`; после удаления — `router.back()` в список + тост.
+- **Навигация:** «Редактировать» → `/admin/sections/[id]/edit`; тап по плейлисту → `/admin/playlists/[id]` (внутри админки, не в пользовательский плеер); после удаления — `router.back()` в список + тост.
 - **Удаление:** `ConfirmDialog` («Удалить раздел?») с подтверждением.
 - **Состояния:** загрузка — `ActivityIndicator`; не найдено — `EmptyState` «Раздел не найден»; нет плейлистов — `EmptyState` «Плейлистов пока нет»; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
 

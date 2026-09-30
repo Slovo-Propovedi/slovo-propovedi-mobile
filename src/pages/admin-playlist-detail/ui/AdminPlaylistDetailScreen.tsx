@@ -37,7 +37,12 @@ export const AdminPlaylistDetailScreen = () => {
   }
 
   const renderItem = ({ drag, isActive, item }: RenderItemParams<APITypes.PlaylistSermon>) => (
-    <PlaylistDetailSermonRow item={item} drag={drag} isActive={isActive} />
+    <PlaylistDetailSermonRow
+      item={item}
+      drag={drag}
+      isActive={isActive}
+      onPress={() => router.push({ params: { id: item.id }, pathname: '/admin/sermons/[id]' })}
+    />
   )
 
   if (!playlist)

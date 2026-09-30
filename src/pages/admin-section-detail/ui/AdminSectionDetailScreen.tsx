@@ -42,7 +42,7 @@ export const AdminSectionDetailScreen = () => {
       item={item}
       drag={drag}
       isActive={isActive}
-      onPress={() => router.push({ params: { playlist: item.id }, pathname: '/listen/playlist' })}
+      onPress={() => router.push({ params: { id: item.id }, pathname: '/admin/playlists/[id]' })}
     />
   )
 

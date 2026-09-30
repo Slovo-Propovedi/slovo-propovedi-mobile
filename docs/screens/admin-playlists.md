@@ -28,7 +28,7 @@
 - **Что показывается:** герой (обложка через `expo-image`, название, описание), плитки «Проповеди»/«Разделы», действия «Редактировать» и «Удалить»; блок «Проповеди плейлиста (N)» с drag-переупорядочиванием (ручка `reorder-three`).
 - **Откуда данные:** `playlistControllerFindOne` (`GET /playlists/{id}`); reorder — `reorderSermonsInPlaylist` (`PATCH /playlists/{id}/sermons/reorder`, тело `{ sermonIds }` — **полный** упорядоченный массив id); удаление — `playlistControllerRemove` (`DELETE /playlists/{id}`).
 - **Optimistic reorder:** локальное состояние перекрывает ответ сети; при ошибке — откат + `showToast`; запрос пропускается, если порядок не изменился (`hasOrderChanged`).
-- **Навигация:** «Редактировать» → `/admin/playlists/[id]/edit`; после удаления — `router.back()` в список + тост. Строка проповеди не открывает экран (раздел «Проповеди» админки ещё не реализован).
+- **Навигация:** «Редактировать» → `/admin/playlists/[id]/edit`; тап по строке проповеди → `/admin/sermons/[id]`; после удаления — `router.back()` в список + тост.
 - **Удаление:** `ConfirmDialog` («Удалить плейлист?») с подтверждением.
 - **Состояния:** загрузка — `ActivityIndicator`; не найдено — `EmptyState` «Плейлист не найден»; нет проповедей — `EmptyState` «Проповедей пока нет»; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
 

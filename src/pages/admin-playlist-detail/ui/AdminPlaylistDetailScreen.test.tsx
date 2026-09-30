@@ -7,6 +7,7 @@ const mockFindOne = jest.fn()
 const mockRemove = jest.fn()
 const mockReorder = jest.fn()
 const mockBack = jest.fn()
+const mockPush = jest.fn()
 
 jest.mock('shared/api', () => ({
   playlistsApi: {
@@ -21,7 +22,7 @@ jest.mock('shared/api', () => ({
 jest.mock('expo-router', () => ({
   Stack: { Screen: () => null },
   useLocalSearchParams: () => ({ id: 'p1' }),
-  useRouter: () => ({ back: mockBack, push: jest.fn() }),
+  useRouter: () => ({ back: mockBack, push: mockPush }),
 }))
 
 // DraggableFlatList is a pure-JS reanimated list; a FlatList passthrough keeps
@@ -57,6 +58,20 @@ describe('<AdminPlaylistDetailScreen>', () => {
     expect(await findByText('Плейлист')).toBeTruthy()
     expect(await findByText('Описание')).toBeTruthy()
     expect(await findByText('Проповеди плейлиста (1)')).toBeTruthy()
+  })
+
+  test('opens the admin sermon detail when a sermon row is pressed', async () => {
+    const playlist = createPlaylist()
+    const sermon = playlist.sermons[0]
+    mockFindOne.mockResolvedValue(playlist)
+
+    const { findByText } = await renderWithProviders(<AdminPlaylistDetailScreen />)
+    fireEvent.press(await findByText(sermon.title))
+
+    expect(mockPush).toHaveBeenCalledWith({
+      params: { id: sermon.id },
+      pathname: '/admin/sermons/[id]',
+    })
   })
 
   test('shows the not-found state when the playlist is missing', async () => {
