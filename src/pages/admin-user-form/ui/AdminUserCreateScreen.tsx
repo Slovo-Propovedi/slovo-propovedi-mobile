@@ -1,18 +1,25 @@
-import { Stack } from 'expo-router'
+import { type Href, Stack } from 'expo-router'
 import { View } from 'react-native'
+import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { useRequireAdminRole } from 'entities/auth'
 import { useTheme } from 'shared/ui/theme'
 import { useUserFormController } from '../lib/useUserFormController'
-import { useUserFormHeader } from '../lib/useUserFormHeader'
 import { styles } from './styles'
 import { UserForm } from './UserForm'
+
+const USERS_FALLBACK_ROUTE: Href = '/admin/users'
 
 // Экран создания пользователя: форма в режиме create + «Сохранить» в шапке.
 export const AdminUserCreateScreen = () => {
   useRequireAdminRole()
   const { currentTheme } = useTheme()
   const { error, isSubmitting, onChange, save, values } = useUserFormController({ mode: 'create' })
-  const headerOptions = useUserFormHeader(isSubmitting, save)
+  const headerOptions = useAdminFormHeader({
+    fallbackRoute: USERS_FALLBACK_ROUTE,
+    isSubmitting,
+    onSave: save,
+    title: 'Создать пользователя',
+  })
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>

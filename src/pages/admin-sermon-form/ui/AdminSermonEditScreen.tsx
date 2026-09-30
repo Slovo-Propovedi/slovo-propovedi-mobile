@@ -1,13 +1,15 @@
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { type Href, Stack, useLocalSearchParams } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
+import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { type APITypes } from 'shared/api'
 import { EmptyState } from 'shared/ui'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { useAdminSermonEntity } from '../lib/useAdminSermonEntity'
 import { useSermonFormController } from '../lib/useSermonFormController'
-import { useSermonFormHeader } from '../lib/useSermonFormHeader'
 import { SermonForm } from './SermonForm'
 import { styles } from './styles'
+
+const SERMONS_FALLBACK_ROUTE: Href = '/admin/sermons'
 
 // Экран редактирования проповеди: грузит сущность и монтирует форму только
 // после успешной загрузки, чтобы пропсы initial оставались стабильными.
@@ -39,7 +41,12 @@ export const AdminSermonEditScreen = () => {
 const SermonEditForm = ({ id, initial }: { id: string; initial: APITypes.SermonEntity }) => {
   const { error, isSubmitting, onChange, onChapterEndChange, save, values } =
     useSermonFormController({ id, initial, mode: 'edit' })
-  const headerOptions = useSermonFormHeader(isSubmitting, save)
+  const headerOptions = useAdminFormHeader({
+    fallbackRoute: SERMONS_FALLBACK_ROUTE,
+    isSubmitting,
+    onSave: save,
+    title: 'Редактировать проповедь',
+  })
 
   return (
     <>

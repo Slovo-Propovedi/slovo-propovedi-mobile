@@ -1,13 +1,15 @@
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { type Href, Stack, useLocalSearchParams } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
+import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { type APITypes } from 'shared/api'
 import { EmptyState } from 'shared/ui'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { useAdminUserEntity } from '../lib/useAdminUserEntity'
 import { useUserFormController } from '../lib/useUserFormController'
-import { useUserFormHeader } from '../lib/useUserFormHeader'
 import { styles } from './styles'
 import { UserForm } from './UserForm'
+
+const USERS_FALLBACK_ROUTE: Href = '/admin/users'
 
 // Экран редактирования пользователя: грузит сущность и монтирует форму только
 // после успешной загрузки, чтобы пропсы initial оставались стабильными.
@@ -42,7 +44,12 @@ const UserEditForm = ({ id, initial }: { id: string; initial: APITypes.UserRespo
     initial,
     mode: 'edit',
   })
-  const headerOptions = useUserFormHeader(isSubmitting, save)
+  const headerOptions = useAdminFormHeader({
+    fallbackRoute: USERS_FALLBACK_ROUTE,
+    isSubmitting,
+    onSave: save,
+    title: 'Редактировать пользователя',
+  })
 
   return (
     <>

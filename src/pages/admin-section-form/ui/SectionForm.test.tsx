@@ -7,6 +7,8 @@ const mockCreate = jest.fn()
 const mockUpdate = jest.fn()
 const mockPlaylistFindAll = jest.fn()
 
+const SAVE_LABEL = 'Сохранить'
+
 jest.mock('shared/api', () => ({
   playlistsApi: {
     getPlaylists: () => ({ playlistControllerFindAll: mockPlaylistFindAll }),
@@ -19,9 +21,23 @@ jest.mock('shared/api', () => ({
   },
 }))
 
-jest.mock('expo-router', () => ({
-  useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
-}))
+jest.mock('expo-router', () => {
+  const React = jest.requireActual('react') as {
+    createElement: (type: unknown, props: unknown, ...children: unknown[]) => unknown
+    Fragment: unknown
+  }
+
+  return {
+    // Save now lives in the header (headerRight). Render it so the test can press it.
+    Stack: {
+      Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+        options?.headerRight
+          ? React.createElement(React.Fragment, null, options.headerRight())
+          : null,
+    },
+    useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
+  }
+})
 
 describe('<SectionForm>', () => {
   beforeEach(() => {
@@ -48,8 +64,8 @@ describe('<SectionForm>', () => {
     const { getByLabelText, getByRole } = await renderWithProviders(<SectionForm mode='create' />)
 
     fireEvent.changeText(getByLabelText('Название'), '  Новый раздел  ')
-    await waitFor(() => expect(getByRole('button', { name: 'Создать' })).toBeEnabled())
-    fireEvent.press(getByRole('button', { name: 'Создать' }))
+    await waitFor(() => expect(getByLabelText('Название').props.value).toBe('  Новый раздел  '))
+    fireEvent.press(getByRole('button', { name: SAVE_LABEL }))
 
     await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1))
     expect(mockCreate).toHaveBeenCalledWith(
@@ -61,11 +77,11 @@ describe('<SectionForm>', () => {
     const initial = sectionsMocks.getSectionControllerFindOneResponseMock({ title: 'Раздел' })
     const playlistIds = initial.playlists.map(playlist => playlist.id)
 
-    const { getByText } = await renderWithProviders(
+    const { getByRole } = await renderWithProviders(
       <SectionForm mode='edit' id='section-1' initial={initial} />,
     )
 
-    fireEvent.press(getByText('Сохранить'))
+    fireEvent.press(await waitFor(() => getByRole('button', { name: SAVE_LABEL })))
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1))
     expect(mockUpdate).toHaveBeenCalledWith(
@@ -77,7 +93,7 @@ describe('<SectionForm>', () => {
   test('does not submit an empty title', async () => {
     const { getByRole } = await renderWithProviders(<SectionForm mode='create' />)
 
-    fireEvent.press(getByRole('button', { name: 'Создать' }))
+    fireEvent.press(await waitFor(() => getByRole('button', { name: SAVE_LABEL })))
 
     expect(mockCreate).not.toHaveBeenCalled()
   })

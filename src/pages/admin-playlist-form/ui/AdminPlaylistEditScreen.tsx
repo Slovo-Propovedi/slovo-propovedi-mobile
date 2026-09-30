@@ -1,13 +1,15 @@
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { type Href, Stack, useLocalSearchParams } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
+import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { type APITypes } from 'shared/api'
 import { EmptyState } from 'shared/ui'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { useAdminPlaylistEntity } from '../lib/useAdminPlaylistEntity'
 import { usePlaylistFormController } from '../lib/usePlaylistFormController'
-import { usePlaylistFormHeader } from '../lib/usePlaylistFormHeader'
 import { PlaylistForm } from './PlaylistForm'
 import { styles } from './styles'
+
+const PLAYLISTS_FALLBACK_ROUTE: Href = '/admin/playlists'
 
 // Экран редактирования плейлиста: грузит сущность и монтирует форму только
 // после успешной загрузки, чтобы пропсы initial оставались стабильными.
@@ -42,7 +44,12 @@ const PlaylistEditForm = ({ id, initial }: { id: string; initial: APITypes.Playl
     initial,
     mode: 'edit',
   })
-  const headerOptions = usePlaylistFormHeader(isSubmitting, save)
+  const headerOptions = useAdminFormHeader({
+    fallbackRoute: PLAYLISTS_FALLBACK_ROUTE,
+    isSubmitting,
+    onSave: save,
+    title: 'Редактировать плейлист',
+  })
 
   return (
     <>

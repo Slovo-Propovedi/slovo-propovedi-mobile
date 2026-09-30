@@ -1,17 +1,24 @@
-import { Stack } from 'expo-router'
+import { type Href, Stack } from 'expo-router'
 import { View } from 'react-native'
+import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { useTheme } from 'shared/ui/theme'
 import { useSermonFormController } from '../lib/useSermonFormController'
-import { useSermonFormHeader } from '../lib/useSermonFormHeader'
 import { SermonForm } from './SermonForm'
 import { styles } from './styles'
+
+const SERMONS_FALLBACK_ROUTE: Href = '/admin/sermons'
 
 // Экран создания проповеди: форма в режиме create + «Сохранить» в шапке.
 export const AdminSermonCreateScreen = () => {
   const { currentTheme } = useTheme()
   const { error, isSubmitting, onChange, onChapterEndChange, save, values } =
     useSermonFormController({ mode: 'create' })
-  const headerOptions = useSermonFormHeader(isSubmitting, save)
+  const headerOptions = useAdminFormHeader({
+    fallbackRoute: SERMONS_FALLBACK_ROUTE,
+    isSubmitting,
+    onSave: save,
+    title: 'Загрузить проповедь',
+  })
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>

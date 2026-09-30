@@ -1,14 +1,16 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
+  // Группа верхнего уровня (Основное/Писание/Медиа/Плейлисты): крупный отступ
+  // между группами против малого отступа «заголовок → поля» внутри группы.
   block: {
-    marginTop: INDENTS.medium,
+    marginTop: INDENTS.high,
   },
   blockTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: '700',
-    marginBottom: INDENTS.medium,
+    marginBottom: INDENTS.low,
   },
   centered: {
     alignItems: 'center',
@@ -31,24 +33,15 @@ export const styles = StyleSheet.create({
     padding: INDENTS.medium,
     paddingBottom: INDENTS.highest,
   },
+  group: {
+    marginTop: INDENTS.high,
+  },
   rangeField: {
     flex: 1,
   },
   rangeRow: {
     flexDirection: 'row',
     gap: INDENTS.medium,
-  },
-  saveButton: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: INDENTS.medium,
-  },
-  saveButtonText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
   },
   suggestion: {
     borderRadius: RADIUSES.low,

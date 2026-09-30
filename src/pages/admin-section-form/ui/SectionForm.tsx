@@ -1,12 +1,12 @@
 import { useAction } from '@reatom/npm-react'
-import { useRouter } from 'expo-router'
+import { type Href, Stack, useRouter } from 'expo-router'
 import { useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
+import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { type APITypes, sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
 import { showToast } from 'shared/model'
-import { COLORS, useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
+import { useTheme } from 'shared/ui/theme'
 import {
   buildCreateSectionDto,
   buildUpdateSectionDto,
@@ -20,6 +20,7 @@ import { styles } from './styles'
 
 const CREATE_SUCCESS_MESSAGE = 'Раздел создан'
 const UPDATE_SUCCESS_MESSAGE = 'Раздел сохранён'
+const SECTIONS_FALLBACK_ROUTE: Href = '/admin/sections'
 
 export const SectionForm = ({
   id = '',
@@ -38,7 +39,7 @@ export const SectionForm = ({
   const [error, setError] = useState<null | string>(null)
 
   const isEdit = mode === 'edit'
-  const canSubmit = values.title.trim().length > 0 && !isSubmitting
+  const title = values.title.trim()
   const updateField = <K extends keyof SectionFormValues>(key: K, value: SectionFormValues[K]) =>
     setValues(prev => ({ ...prev, [key]: value }))
 
@@ -51,6 +52,14 @@ export const SectionForm = ({
     }))
 
   const handleSubmit = async () => {
+    if (title.length === 0) {
+      const message = 'Укажите название раздела'
+      setError(message)
+      showToastAction(message)
+      return
+    }
+    if (isSubmitting) return
+
     setError(null)
     setIsSubmitting(true)
     const api = sectionsApi.getSections()
@@ -71,12 +80,21 @@ export const SectionForm = ({
     }
   }
 
+  const headerOptions = useAdminFormHeader({
+    fallbackRoute: SECTIONS_FALLBACK_ROUTE,
+    isSubmitting,
+    onSave: () => void handleSubmit(),
+    title: isEdit ? 'Редактировать раздел' : 'Создать раздел',
+  })
+
   return (
     <ScrollView
       keyboardShouldPersistTaps='handled'
       contentContainerStyle={styles.formContent}
       style={{ backgroundColor: currentTheme.background }}
     >
+      <Stack.Screen options={headerOptions} />
+
       {error ? (
         <View style={[styles.errorBanner, { backgroundColor: currentTheme.surface }]}>
           <Text style={[styles.errorText, { color: currentTheme.primary }]}>{error}</Text>
@@ -92,21 +110,6 @@ export const SectionForm = ({
           <PlaylistPicker onToggle={togglePlaylist} selectedIds={values.selectedPlaylistIds} />
         </View>
       ) : null}
-
-      <TouchableItem
-        disabled={!canSubmit}
-        onPress={() => void handleSubmit()}
-        style={[
-          styles.submit,
-          { backgroundColor: currentTheme.primary, opacity: canSubmit ? 1 : 0.5 },
-        ]}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color={COLORS.white} />
-        ) : (
-          <Text style={styles.submitText}>{isEdit ? 'Сохранить' : 'Создать'}</Text>
-        )}
-      </TouchableItem>
     </ScrollView>
   )
 }

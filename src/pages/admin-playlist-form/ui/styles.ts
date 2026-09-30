@@ -1,20 +1,16 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
-  artwork: {
-    backgroundColor: COLORS.disabled,
-    borderRadius: RADIUSES.low,
-    height: 56,
-    width: 56,
-  },
+  // Группа верхнего уровня (Основное/Проповеди/Разделы): крупный отступ между
+  // группами против малого отступа «заголовок → поля» внутри группы.
   block: {
-    marginTop: INDENTS.medium,
+    marginTop: INDENTS.high,
   },
   blockTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: '700',
-    marginBottom: INDENTS.medium,
+    marginBottom: INDENTS.low,
   },
   centered: {
     alignItems: 'center',
@@ -23,12 +19,6 @@ export const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-  },
-  coverPreview: {
-    borderRadius: RADIUSES.low,
-    height: 140,
-    marginBottom: INDENTS.medium,
-    width: '100%',
   },
   errorBanner: {
     borderRadius: RADIUSES.low,
@@ -42,18 +32,8 @@ export const styles = StyleSheet.create({
     padding: INDENTS.medium,
     paddingBottom: INDENTS.highest,
   },
-  gridCell: {
-    aspectRatio: 1,
-    borderRadius: RADIUSES.low,
-    overflow: 'hidden',
-    width: '31%',
-  },
-  gridImage: {
-    height: '100%',
-    width: '100%',
-  },
-  gridList: {
-    padding: INDENTS.medium,
+  group: {
+    marginTop: INDENTS.high,
   },
   hint: {
     fontSize: FONT_SIZES.sm,
@@ -65,22 +45,5 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     paddingHorizontal: INDENTS.medium,
     paddingVertical: INDENTS.middle,
-  },
-  modalTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '700',
-    padding: INDENTS.medium,
-  },
-  saveButton: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: INDENTS.medium,
-  },
-  saveButtonText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
   },
 })

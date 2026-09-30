@@ -1,10 +1,12 @@
-import { Stack } from 'expo-router'
+import { type Href, Stack } from 'expo-router'
 import { View } from 'react-native'
+import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { useTheme } from 'shared/ui/theme'
 import { usePlaylistFormController } from '../lib/usePlaylistFormController'
-import { usePlaylistFormHeader } from '../lib/usePlaylistFormHeader'
 import { PlaylistForm } from './PlaylistForm'
 import { styles } from './styles'
+
+const PLAYLISTS_FALLBACK_ROUTE: Href = '/admin/playlists'
 
 // Экран создания плейлиста: форма в режиме create + «Сохранить» в шапке.
 export const AdminPlaylistCreateScreen = () => {
@@ -12,7 +14,12 @@ export const AdminPlaylistCreateScreen = () => {
   const { error, isSubmitting, onChange, save, values } = usePlaylistFormController({
     mode: 'create',
   })
-  const headerOptions = usePlaylistFormHeader(isSubmitting, save)
+  const headerOptions = useAdminFormHeader({
+    fallbackRoute: PLAYLISTS_FALLBACK_ROUTE,
+    isSubmitting,
+    onSave: save,
+    title: 'Создать плейлист',
+  })
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
