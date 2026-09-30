@@ -1,22 +1,7 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
-  adminButton: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.middle,
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    justifyContent: 'center',
-    marginBottom: INDENTS.high,
-    marginHorizontal: INDENTS.high,
-    paddingHorizontal: INDENTS.high,
-    paddingVertical: INDENTS.middle,
-  },
-  adminButtonLabel: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
-  },
   appDescription: {
     fontSize: FONT_SIZES.base,
     marginBottom: INDENTS.high,
@@ -36,9 +21,14 @@ export const styles = StyleSheet.create({
     paddingTop: INDENTS.high,
   },
   header: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: INDENTS.low,
     paddingHorizontal: INDENTS.high,
+  },
+  headerTexts: {
+    flexDirection: 'column',
   },
   itemContainer: {
     borderBottomColor: COLORS.disabled,

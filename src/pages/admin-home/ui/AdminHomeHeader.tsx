@@ -25,7 +25,7 @@ export const AdminHomeHeader = ({ user }: { user: APITypes.UserResponse | null }
         onPress={() => {
           router.replace('/listen')
         }}
-        Icon={<Ionicons size={24} name='arrow-back' color={currentTheme.text} />}
+        Icon={<Ionicons size={24} name='log-out-outline' color={currentTheme.text} />}
       />
     </View>
   )

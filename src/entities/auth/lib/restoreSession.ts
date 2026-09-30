@@ -3,6 +3,12 @@ import { authApi, secureTokenStorage } from 'shared/api'
 import { authStatusAtom, authUserAtom } from '../model'
 
 export const restoreSession = action(async ctx => {
+  // Idempotent: a resolved ('authenticated'/'unauthenticated') or in-flight
+  // ('loading') session must not be re-restored. Repeated calls (e.g. the
+  // admin area guard firing while a restore is already running) would flap
+  // the status back to 'loading' and force a re-render loop.
+  if (ctx.get(authStatusAtom) !== 'idle') return ctx.get(authUserAtom)
+
   await ctx.schedule(() => {
     authStatusAtom(ctx, 'loading')
   })

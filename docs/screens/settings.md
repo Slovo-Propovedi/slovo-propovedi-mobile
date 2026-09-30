@@ -12,11 +12,12 @@
 
 `SettingsScreen` (`src/pages/settings/ui/SettingsScreen.tsx`) — вертикальный `ScrollView` из пунктов:
 
-- **Админ-доступ** — `AdminAccountItem` (`src/pages/settings/ui/AdminAccountItem.tsx`), первый пункт: для неаутентифицированных — «Перейти в интерфейс администратора» (`shield-outline`) → `useAdminEntry` (`/admin` или `/admin/login`); для аутентифицированных — «Выйти из аккаунта админа» (`log-out-outline`) → `signOut` (`entities/auth`). В шапке экрана также есть иконка `AdminEntryButton` (`headerRight` в `app/_RootLayout.tsx`), открывающая тот же вход.
 - **Тема оформления** — `ThemeDialog` + `ThemeSelector` (`src/pages/settings/ui/ThemeDialog.tsx`, `ThemeSelector.tsx`, `ThemeSelectorOption.tsx`, `themeOptions.ts`): светлая / тёмная / как в системе.
 - **Динамические цвета** — `DynamicColorsItem` (`src/pages/settings/ui/DynamicColorsItem.tsx`), Material You; показывается только если `isMaterialYouSupported()` (Android).
 - **Виброотклик** — `HapticsSettingsItem` (`src/pages/settings/ui/HapticsSettingsItem.tsx`): глобальный переключатель вибрации при перемотке и нажатиях.
 - **URL сервера API** — `ServerUrlSettings` (`src/pages/settings/ui/ServerUrlSettings.tsx`): аккордеон, свёрнут по умолчанию (заголовок + «Текущий: …» + шеврон), тап по строке разворачивает форму (`ServerUrlForm.tsx`): изменение/сброс адреса сервера, валидация `http(s)://`, индикатор «Сохранено!». Форма остаётся смонтированной (`display:none`) в свёрнутом виде, поэтому черновик ввода не теряется при сворачивании аккордеона. Заголовок-строка отдаёт `accessibilityState={{ expanded }}`.
+
+В **теле экрана пункта админ-доступа нет**. Единственная точка входа — иконка-кебаб (`MaterialCommunityIcons` `dots-vertical`) в шапке (`SettingsHeaderMenu`, `src/pages/settings/ui/SettingsHeaderMenu.tsx`; подключается как `headerRight` для маршрута `settings` в `app/_RootLayout.tsx`). По нажатию открывается `MenuDropdown` (`shared/ui/menu`) с одним пунктом: для неаутентифицированных — «Войти в аккаунт администратора» (`shield-outline`) → `useAdminEntry` (`/admin` или `/admin/login`); для аутентифицированных — «Выйти из аккаунта админа» (`log-out-outline`) → `signOut` (`entities/auth`).
 
 > Переключателя «Кеширование проповедей» на этом экране нет: он живёт в шапке экрана [«Офлайн»](./offline.md) как переключатель-тумблер (`SermonCachingHeaderSwitch`) — рядом со списком скачанного, которым он и управляет.
 
@@ -28,7 +29,7 @@
 
 ## Куда можно перейти
 
-- **Админ-доступ** — `/admin` или `/admin/login` (или выход из аккаунта админа, без навигации).
+- **Админ-доступ** (кебаб-меню в шапке) — `/admin` или `/admin/login` (или выход из аккаунта админа, без навигации).
 - Внутри экрана — диалог темы, других переходов нет.
 
 ## Состояния

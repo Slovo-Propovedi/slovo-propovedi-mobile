@@ -1,28 +1,28 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAction } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { authUserAtom, signIn } from 'entities/auth'
+import { signIn } from 'entities/auth'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { showToast } from 'shared/model'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { AdminLoginField } from './AdminLoginField'
 import { styles } from './styles'
 
+const LOGIN_SUCCESS_MESSAGE = 'Вход выполнен'
+const MORE_ROUTE = '/more'
+
 export const AdminLoginScreen = () => {
   const router = useRouter()
   const signInAction = useAction(signIn)
-  const [user] = useAtom(authUserAtom)
+  const setToast = useAction(showToast)
   const { currentTheme } = useTheme()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<null | string>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (user) router.replace('/admin')
-  }, [user, router])
 
   const canSubmit = username.trim().length > 0 && password.length > 0 && !isSubmitting
 
@@ -32,7 +32,8 @@ export const AdminLoginScreen = () => {
 
     try {
       await signInAction({ password, username: username.trim() })
-      router.replace('/admin')
+      setToast(LOGIN_SUCCESS_MESSAGE)
+      router.replace(MORE_ROUTE)
     } catch (submitError) {
       setError(getErrorMessage(submitError))
     } finally {

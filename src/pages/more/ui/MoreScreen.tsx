@@ -29,14 +29,15 @@ export const MoreScreen = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={[styles.appName, { color: currentTheme.text }]}>{APP_NAME}</Text>
-          <Text style={styles.appVersion}>v{APP_VERSION}</Text>
+          <View style={styles.headerTexts}>
+            <Text style={[styles.appName, { color: currentTheme.text }]}>{APP_NAME}</Text>
+            <Text style={styles.appVersion}>v{APP_VERSION}</Text>
+          </View>
+          {canOpenAdminPanel && <AdminPanelButton />}
         </View>
         <Text style={[styles.appDescription, { color: currentTheme.textMuted }]}>
           Приложение для прослушивания и чтения проповедей
         </Text>
-
-        {canOpenAdminPanel && <AdminPanelButton />}
 
         <View style={styles.menu}>
           <MoreMenuSettingsItem

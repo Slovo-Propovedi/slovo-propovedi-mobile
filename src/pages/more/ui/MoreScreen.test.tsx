@@ -5,7 +5,7 @@ import { authMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { MoreScreen } from './MoreScreen'
 
-const ADMIN_PANEL_TITLE = 'В админ панель'
+const ADMIN_PANEL_LABEL = 'В админ панель'
 
 const mockPush = jest.fn()
 
@@ -66,9 +66,9 @@ describe('<MoreScreen>', () => {
     const ctx = createCtx()
     authStatusAtom(ctx, 'unauthenticated')
 
-    const { queryByText } = await renderWithProviders(<MoreScreen />, { ctx })
+    const { queryByLabelText } = await renderWithProviders(<MoreScreen />, { ctx })
 
-    expect(queryByText(ADMIN_PANEL_TITLE)).toBeNull()
+    expect(queryByLabelText(ADMIN_PANEL_LABEL)).toBeNull()
   })
 
   test('does not render the admin panel button for a regular user', async () => {
@@ -76,36 +76,36 @@ describe('<MoreScreen>', () => {
     authUserAtom(ctx, authMocks.getAuthControllerGetProfileResponseMock({ role: 'user' }))
     authStatusAtom(ctx, 'authenticated')
 
-    const { queryByText } = await renderWithProviders(<MoreScreen />, { ctx })
+    const { queryByLabelText } = await renderWithProviders(<MoreScreen />, { ctx })
 
-    expect(queryByText(ADMIN_PANEL_TITLE)).toBeNull()
+    expect(queryByLabelText(ADMIN_PANEL_LABEL)).toBeNull()
   })
 
   test('renders the admin panel button for an admin user', async () => {
     const ctx = createCtx()
     setAuthenticatedUser(ctx, 'admin')
 
-    const { getByText } = await renderWithProviders(<MoreScreen />, { ctx })
+    const { getByLabelText } = await renderWithProviders(<MoreScreen />, { ctx })
 
-    expect(getByText(ADMIN_PANEL_TITLE)).toBeTruthy()
+    expect(getByLabelText(ADMIN_PANEL_LABEL)).toBeTruthy()
   })
 
   test('renders the admin panel button for a moderator user', async () => {
     const ctx = createCtx()
     setAuthenticatedUser(ctx, 'moderator')
 
-    const { getByText } = await renderWithProviders(<MoreScreen />, { ctx })
+    const { getByLabelText } = await renderWithProviders(<MoreScreen />, { ctx })
 
-    expect(getByText(ADMIN_PANEL_TITLE)).toBeTruthy()
+    expect(getByLabelText(ADMIN_PANEL_LABEL)).toBeTruthy()
   })
 
   test('admin panel button navigates to /admin on press', async () => {
     const ctx = createCtx()
     setAuthenticatedUser(ctx, 'admin')
 
-    const { getByText } = await renderWithProviders(<MoreScreen />, { ctx })
+    const { getByLabelText } = await renderWithProviders(<MoreScreen />, { ctx })
 
-    await fireEvent.press(getByText(ADMIN_PANEL_TITLE))
+    await fireEvent.press(getByLabelText(ADMIN_PANEL_LABEL))
     expect(mockPush).toHaveBeenCalledWith('/admin')
   })
 
