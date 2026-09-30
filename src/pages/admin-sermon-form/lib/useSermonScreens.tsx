@@ -9,7 +9,7 @@ const SERMONS_FALLBACK_ROUTE: Href = '/admin/sermons'
 const SERMON_SCREENS = [
   { name: 'sermons/create', title: 'Загрузить проповедь' },
   { name: 'sermons/[id]', title: 'Проповедь' },
-  { name: 'sermons/[id]/edit', title: 'Редактировать' },
+  { name: 'sermons/[id]/edit', title: 'Редактировать проповедь' },
 ] as const
 
 // Стабильный рендерер: expo-router передаёт `options` в navigation.setOptions

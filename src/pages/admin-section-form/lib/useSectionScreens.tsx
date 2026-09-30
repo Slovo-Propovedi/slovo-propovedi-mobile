@@ -9,7 +9,7 @@ const SECTIONS_FALLBACK_ROUTE: Href = '/admin/sections'
 const SECTION_SCREENS = [
   { name: 'sections/create', title: 'Создать раздел' },
   { name: 'sections/[id]', title: 'Раздел' },
-  { name: 'sections/[id]/edit', title: 'Редактировать' },
+  { name: 'sections/[id]/edit', title: 'Редактировать раздел' },
 ] as const
 
 // Стабильный рендерер: expo-router передаёт `options` в navigation.setOptions

@@ -9,7 +9,7 @@ const PLAYLISTS_FALLBACK_ROUTE: Href = '/admin/playlists'
 const PLAYLIST_SCREENS = [
   { name: 'playlists/create', title: 'Создать плейлист' },
   { name: 'playlists/[id]', title: 'Плейлист' },
-  { name: 'playlists/[id]/edit', title: 'Редактировать' },
+  { name: 'playlists/[id]/edit', title: 'Редактировать плейлист' },
 ] as const
 
 // Стабильный рендерер: expo-router передаёт `options` в navigation.setOptions

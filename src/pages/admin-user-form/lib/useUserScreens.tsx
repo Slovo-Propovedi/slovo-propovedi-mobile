@@ -7,9 +7,9 @@ import { useTheme } from 'shared/ui/theme'
 const USERS_FALLBACK_ROUTE: Href = '/admin/users'
 
 const USER_SCREENS = [
-  { name: 'users/create', title: 'Новый пользователь' },
+  { name: 'users/create', title: 'Создать пользователя' },
   { name: 'users/[id]', title: 'Пользователь' },
-  { name: 'users/[id]/edit', title: 'Редактировать' },
+  { name: 'users/[id]/edit', title: 'Редактировать пользователя' },
 ] as const
 
 // Стабильный рендерер: expo-router передаёт `options` в navigation.setOptions
