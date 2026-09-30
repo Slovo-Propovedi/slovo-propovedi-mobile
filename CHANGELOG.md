@@ -5,6 +5,89 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.0] - 2026-09-30
+
+### Added
+
+- Required field markers and inline validation
+- Users screen header with create action
+- Media screen header, grid preview and orphans on top
+- Scrolling titles in list rows
+- Sort select and skeleton loading states
+- Navigate between related admin details and show playlist sections
+- Disable save button until form is dirty
+- Icons on library and upload picker buttons
+- User create/edit form with password change
+- Users list and detail
+- Media library with upload, delete and orphans cleanup
+- Sermon create/edit form with uploads
+- Sermon detail with media preview and delete
+- Sermons list with search, sort and pagination
+- Playlist create/edit form
+- Playlist detail with sermon reorder and delete
+- Playlists list with search, sort and pagination
+- Section create/edit form
+- Section detail with playlist reorder and delete
+- Sections list with drag reorder
+- Admin home screen and entry points
+- Admin login screen and /admin tab area
+- Secure token storage and auth entity
+- Add sound settings sheet with EQ, balance and pitch
+- Route unexpected update errors to the global error dialog
+- Tappable timecodes in sermon description seek the player
+- Classify update errors with dedicated error dialog actions
+- Add sermon caching toggle (#77)
+- Add playlist header menu to playlist bottom sheet
+
+### Changed
+
+- Remove upload tab, create sermons from lists
+- Remove active tab background indicator
+- Inline all named type imports and ban the standalone form
+- Rename config/config to api-url
+- Import final files instead of barrels within layers
+- Use relative imports inside shared layer
+- Derive PlaylistData from schema in fetched types, drop @x ignore
+- Drop dead re-export lines from read barrel
+- Restore generated api star exports without dead db re-exports
+- Keep star exports for generated api barrels (documented exemption)
+- Inline single-use props types per agent rules
+- Use named re-exports in barrels instead of star exports
+- Finish export cleanup in listening-history and offline-cache
+- Delete dead state machinery and wire setOnlineStatus
+- Prune unused exports across slices
+- Make useDebounce deps-driven and drop its useCallback wrappers
+- Delete utilities with no consumers or duplicates
+- Adopt useDebounce and isNonNullable instead of inline duplicates
+- Delete dead files reported by knip
+- Move track-list components into ui segment
+
+### Fixed
+
+- Safe-area on media and users tabs
+- Dim placeholders in picker search inputs
+- Keyboard-aware form scrolling
+- Dim placeholders and primary focus outline on inputs
+- Picker order, button label size and group spacing
+- Move delete actions into detail screen headers
+- Pickers safe-area, close button, back gesture and inline upload buttons
+- Detail screens header edit actions and stable shield icon
+- Editable URL fields with pencil toggle and muted placeholders
+- Floppy save icon, complete headers and group spacing in forms
+- Use full form titles in screen headers
+- Navigate within admin area from detail screens
+- Fix axios comment, tighten itemsRows parsing
+- Clear tokens only on 401/403 in restoreSession
+- Pin create button, add list bottom inset
+- Move underscore hooks out of app/ to stop route warnings
+- Settings kebab menu, render loop guard, compact admin entry and login flow
+- Show admin panel button only for authenticated admins
+- Enforce inline type imports and autofix violations
+- Forbid shared alias inside shared, document the rule
+- Address review nits (debt entry, docstring, import style)
+- Stop evaluating app.config.ts and treat read-tab WIP as entry
+- Ignore intentional keeps (generated api, read tab WIP) and stale entries
+
 ## [0.23.1] - 2026-09-26
 
 ### Changed
@@ -857,6 +940,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.24.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.24.0
 [0.23.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.23.1
 [0.23.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.23.0
 [0.22.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.22.0

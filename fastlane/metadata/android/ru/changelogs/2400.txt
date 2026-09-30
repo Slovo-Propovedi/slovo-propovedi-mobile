@@ -1,0 +1,11 @@
+Safe-area on media and users tabs
+Required field markers and inline validation
+Users screen header with create action
+Media screen header, grid preview and orphans on top
+Scrolling titles in list rows
+Sort select and skeleton loading states
+Navigate between related admin details and show playlist sections
+Dim placeholders in picker search inputs
+Keyboard-aware form scrolling
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
