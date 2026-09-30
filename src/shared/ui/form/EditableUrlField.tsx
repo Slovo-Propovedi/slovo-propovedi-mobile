@@ -29,8 +29,11 @@ export const EditableUrlField = ({
 }) => {
   const { currentTheme } = useTheme()
   const [isEditing, setIsEditing] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
 
-  const borderStyle = { borderColor: currentTheme.textMuted }
+  const borderStyle = isFocused
+    ? { borderColor: currentTheme.primary, borderWidth: 2 }
+    : { borderColor: currentTheme.textMuted, borderWidth: 1 }
 
   return (
     <View style={formStyles.field}>
@@ -43,15 +46,22 @@ export const EditableUrlField = ({
             placeholder={placeholder}
             accessibilityLabel={label}
             onChangeText={onChangeText}
-            onBlur={() => setIsEditing(false)}
-            placeholderTextColor={currentTheme.textMuted}
+            onFocus={() => setIsFocused(true)}
+            placeholderTextColor={currentTheme.placeholder}
             style={[styles.input, { color: currentTheme.text }]}
+            onBlur={() => {
+              setIsEditing(false)
+              setIsFocused(false)
+            }}
           />
         ) : (
           <Text
             numberOfLines={1}
             accessibilityLabel={label}
-            style={[styles.readOnly, { color: value ? currentTheme.text : currentTheme.textMuted }]}
+            style={[
+              styles.readOnly,
+              { color: value ? currentTheme.text : currentTheme.placeholder },
+            ]}
           >
             {value || EMPTY_PLACEHOLDER}
           </Text>

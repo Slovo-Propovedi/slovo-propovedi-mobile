@@ -11,6 +11,7 @@ export interface ThemeColors {
   background: ColorValue
   card: ColorValue
   icon: ColorValue
+  placeholder: ColorValue
   primary: ColorValue
   skeleton: ColorValue
   surface: ColorValue

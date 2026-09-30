@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { formStyles } from './formStyles'
@@ -23,6 +24,7 @@ export const FormField = ({
   value: string
 }) => {
   const { currentTheme } = useTheme()
+  const [isFocused, setIsFocused] = useState(false)
 
   return (
     <View style={formStyles.field}>
@@ -35,11 +37,16 @@ export const FormField = ({
         keyboardType={keyboardType}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
-        placeholderTextColor={currentTheme.textMuted}
+        onBlur={() => setIsFocused(false)}
+        onFocus={() => setIsFocused(true)}
+        placeholderTextColor={currentTheme.placeholder}
         style={[
           formStyles.input,
           multiline && formStyles.inputMultiline,
-          { borderColor: currentTheme.textMuted, color: currentTheme.text },
+          { color: currentTheme.text },
+          isFocused
+            ? { borderColor: currentTheme.primary, borderWidth: 2 }
+            : { borderColor: currentTheme.textMuted, borderWidth: 1 },
         ]}
       />
       {hint ? (

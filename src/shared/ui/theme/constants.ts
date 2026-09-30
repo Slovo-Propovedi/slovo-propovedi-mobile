@@ -7,6 +7,8 @@ export const LightTheme = {
   background: '#fff' as ColorValue,
   card: '#f5f5f5' as ColorValue,
   icon: '#000' as ColorValue,
+  // Dimmer than textMuted (#666) so placeholders read as hints, not real values.
+  placeholder: '#aaa' as ColorValue,
   primary: '#f16031' as ColorValue,
   skeleton: '#e0e0e0' as ColorValue,
   surface: '#e8e8e8' as ColorValue,
@@ -19,6 +21,8 @@ export const DarkTheme = {
   background: '#000' as ColorValue,
   card: '#151515' as ColorValue,
   icon: '#fff' as ColorValue,
+  // Dimmer than textMuted (#9ca3af) so placeholders read as hints, not real values.
+  placeholder: '#5c636e' as ColorValue,
   primary: '#f16031' as ColorValue,
   skeleton: '#333333' as ColorValue,
   surface: '#252525' as ColorValue,
@@ -36,6 +40,7 @@ export const buildDynamicTheme = (): null | ThemeColors => {
     background: Color.android.dynamic.background,
     card: Color.android.dynamic.surfaceContainerHighest,
     icon: Color.android.dynamic.onSurface,
+    placeholder: Color.android.dynamic.onSurfaceVariant,
     primary: Color.android.dynamic.primary,
     skeleton: Color.android.dynamic.surfaceVariant,
     surface: Color.android.dynamic.surfaceContainerHigh,
