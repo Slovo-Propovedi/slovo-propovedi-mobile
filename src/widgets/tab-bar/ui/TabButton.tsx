@@ -8,14 +8,12 @@ import { getTabLabel } from './tabLabels'
 export const TabButton = ({
   isActive,
   isDisabled,
-  onLayout,
   onPress,
   routeKey,
   routeName,
 }: {
   isActive: boolean
   isDisabled?: boolean
-  onLayout: (layout: { width: number; x: number }) => void
   onPress: () => void
   routeKey: string
   routeName: string
@@ -30,12 +28,6 @@ export const TabButton = ({
       hapticDisabled={isActive}
       activeOpacity={isActive ? 1 : undefined}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
-      onLayout={e =>
-        onLayout({
-          width: e.nativeEvent.layout.width,
-          x: e.nativeEvent.layout.x,
-        })
-      }
     >
       <View style={styles.tabItem}>
         <TabIcon color={color} isActive={isActive} routeName={routeName} />

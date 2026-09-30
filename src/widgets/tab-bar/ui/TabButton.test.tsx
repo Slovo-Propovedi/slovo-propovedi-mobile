@@ -11,13 +11,7 @@ const noop = () => {}
 
 const renderTabButton = async (routeName: string, isActive = false) =>
   await renderWithProviders(
-    <TabButton
-      onPress={noop}
-      onLayout={noop}
-      isActive={isActive}
-      routeKey={routeName}
-      routeName={routeName}
-    />,
+    <TabButton onPress={noop} isActive={isActive} routeKey={routeName} routeName={routeName} />,
   )
 
 describe('<TabButton>', () => {
@@ -59,5 +53,24 @@ describe('<TabButton>', () => {
     fireEvent(screen.getByRole('button', { name: /Слушать/ }), 'pressIn')
 
     expect(mockedHapticLight).not.toHaveBeenCalled()
+  })
+
+  test('active tab tints the label with the theme primary color', async () => {
+    await renderTabButton('listen', true)
+
+    expect(screen.getByText('Слушать')).toHaveStyle({ color: '#f16031' })
+  })
+
+  test('inactive tab tints the label with the muted text color', async () => {
+    await renderTabButton('listen', false)
+
+    expect(screen.getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
+  })
+
+  test('active tab has no background fill on the label', async () => {
+    await renderTabButton('listen', true)
+
+    const label = screen.getByText('Слушать')
+    expect(label).not.toHaveStyle({ backgroundColor: '#f16031' })
   })
 })

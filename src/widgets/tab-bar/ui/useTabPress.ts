@@ -12,7 +12,6 @@ interface TabRoute {
 
 interface UseTabPressParams {
   navigation: TabBarNavigation
-  setCurrentIndex: (index: number) => void
 }
 
 export const UNAVAILABLE_TAB_TITLE = 'Скоро будет доступно'
@@ -22,8 +21,8 @@ export const UNAVAILABLE_TAB_MESSAGE = 'Этот раздел будет реа�
 export const isUnavailableTabRoute = (routeName: string) =>
   routeName === 'read' || routeName === 'study'
 
-export const useTabPress = ({ navigation, setCurrentIndex }: UseTabPressParams) => {
-  const handleTabPress = (route: TabRoute, index: number, isActive: boolean) => {
+export const useTabPress = ({ navigation }: UseTabPressParams) => {
+  const handleTabPress = (route: TabRoute, isActive: boolean) => {
     if (isUnavailableTabRoute(route.name)) {
       showInfo(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
       return
@@ -36,8 +35,6 @@ export const useTabPress = ({ navigation, setCurrentIndex }: UseTabPressParams) 
     })
 
     if (!isActive && !event.defaultPrevented) navigation.navigate(route.name)
-
-    setCurrentIndex(index)
   }
 
   return { handleTabPress }

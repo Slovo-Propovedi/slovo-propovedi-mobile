@@ -1,17 +1,11 @@
 import { useAtom } from '@reatom/npm-react'
 import { type SuspenseFallbackProps, Tabs } from 'expo-router'
-import { useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { PlaylistSheetMenu } from 'pages/playlist'
 import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
 import { isPlayerExpandedAtom } from 'entities/player'
 import { COLORS, INDENTS, useTheme } from 'shared/ui/theme'
-
-interface TabLayout {
-  width: number
-  x: number
-}
 
 /**
  * Fallback component shown while the tab layout's route content is loading via Suspense.
@@ -29,28 +23,13 @@ export function SuspenseFallback(_props: SuspenseFallbackProps) {
 
 const Layout = () => {
   const { currentTheme } = useTheme()
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [tabLayouts, setTabLayoutsState] = useState<Record<string, TabLayout>>({})
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
-
-  const setTabLayout = (key: string, layout: TabLayout) => {
-    setTabLayoutsState(prev => ({ ...prev, [key]: layout }))
-  }
 
   return (
     <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
       <Tabs
         screenOptions={{ headerShown: false }}
-        tabBar={props => (
-          <CustomTabBar
-            {...props}
-            tabLayouts={tabLayouts}
-            currentIndex={currentIndex}
-            setTabLayout={setTabLayout}
-            setCurrentIndex={setCurrentIndex}
-            hideFloatingPlayer={isPlayerExpanded}
-          />
-        )}
+        tabBar={props => <CustomTabBar {...props} hideFloatingPlayer={isPlayerExpanded} />}
       >
         <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
         <Tabs.Screen name='read' options={{ title: 'Читать' }} />

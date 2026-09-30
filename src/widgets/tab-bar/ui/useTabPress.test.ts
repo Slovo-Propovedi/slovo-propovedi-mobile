@@ -19,43 +19,31 @@ describe('useTabPress', () => {
 
   test('shows info dialog for unavailable tab and does not navigate', async () => {
     const navigation = createNavigation()
-    const setCurrentIndex = jest.fn()
-    const { result } = await renderHookWithProviders(() =>
-      useTabPress({ navigation, setCurrentIndex }),
-    )
+    const { result } = await renderHookWithProviders(() => useTabPress({ navigation }))
 
-    result.current.handleTabPress({ key: 'read', name: 'read' }, 1, false)
+    result.current.handleTabPress({ key: 'read', name: 'read' }, false)
 
     expect(mockedShowInfo).toHaveBeenCalledWith(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
     expect(navigation.navigate).not.toHaveBeenCalled()
-    expect(setCurrentIndex).not.toHaveBeenCalled()
   })
 
   test('shows info dialog for study tab and does not navigate', async () => {
     const navigation = createNavigation()
-    const setCurrentIndex = jest.fn()
-    const { result } = await renderHookWithProviders(() =>
-      useTabPress({ navigation, setCurrentIndex }),
-    )
+    const { result } = await renderHookWithProviders(() => useTabPress({ navigation }))
 
-    result.current.handleTabPress({ key: 'study', name: 'study' }, 2, false)
+    result.current.handleTabPress({ key: 'study', name: 'study' }, false)
 
     expect(mockedShowInfo).toHaveBeenCalledWith(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
     expect(navigation.navigate).not.toHaveBeenCalled()
-    expect(setCurrentIndex).not.toHaveBeenCalled()
   })
 
   test('does not show info dialog for available tab', async () => {
     const navigation = createNavigation()
-    const setCurrentIndex = jest.fn()
-    const { result } = await renderHookWithProviders(() =>
-      useTabPress({ navigation, setCurrentIndex }),
-    )
+    const { result } = await renderHookWithProviders(() => useTabPress({ navigation }))
 
-    result.current.handleTabPress({ key: 'listen', name: 'listen' }, 0, false)
+    result.current.handleTabPress({ key: 'listen', name: 'listen' }, false)
 
     expect(mockedShowInfo).not.toHaveBeenCalled()
     expect(navigation.navigate).toHaveBeenCalledWith('listen')
-    expect(setCurrentIndex).toHaveBeenCalledWith(0)
   })
 })
