@@ -32,6 +32,7 @@
 | Админ: главная           | [admin-home.md](./admin-home.md)       | готов        |
 | Админ: разделы           | [admin-sections.md](./admin-sections.md) | готов      |
 | Админ: плейлисты         | [admin-playlists.md](./admin-playlists.md) | готов    |
+| Админ: проповеди         | [admin-sermons.md](./admin-sermons.md) | готов        |
 | «Страница не найдена»    | [not-found.md](./not-found.md)         | готов        |
 
 ## Шаблон файла экрана

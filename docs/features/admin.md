@@ -37,17 +37,45 @@
 - **Список плейлистов** пагинируется через `playlistControllerFindAll` (`GET /playlists`): `search` (дебаунс 300мс), `page`/`limit=20`, `sort` (`date`|`title`|`section`), `order` (`asc`|`desc`). Размер страницы — константа `PAGE_SIZE`.
 - **Форма плейлиста** — единственная форма админки с кнопкой «Сохранить» в шапке (`headerRight`): длинные пикеры (проповеди, разделы) не имеют отдельного внутреннего скролла, страница скроллится целиком, а сохранение всегда доступно. В пикерах выбранные элементы идут первыми (`orderSelectedFirst`).
 
+## Проповеди (sermons)
+
+Проповедь — единица контента: аудио/видео/текст, ссылка на Писание, обложка и связи с плейлистами. Экраны: [screens/admin-sermons.md](../screens/admin-sermons.md).
+
+### Нотация Писания
+
+`chapter`/`verse` на проводе — union-формы (см. [contracts/rest-api.md](../contracts/rest-api.md) → «Диапазоны Писания»). Разбор и сериализация полей формы — порт `parseVerseInput`/`parseChapter`/`serializeVerseInput` из Svelte-админки:
+
+- `entities/sermon/lib/scriptureNotation.ts` — типы (`Chapter`/`Verse`), `isVerseRangeTuple`, `parseChapter`, `parseVerseInput`. `parseVerseInput` разбирает свободный текст «16, 16–18, 9–18, 20»; два разрозненных одиночных стиха оборачиваются в `[n, n]`, чтобы не читаться на проводе как диапазон.
+- `entities/sermon/lib/scriptureSerialization.ts` — `serializeVerseInput` (обратное направление, зеркалит нормализацию отображения).
+- `entities/sermon/lib/sermonSubtitle.ts` — подпись «проповедник · ссылка на Писание» для строк списка/деталей (переиспользуется в списках админки и пикерах).
+
+Смена поля «Глава (по)» переключает режим стихов формы (`applyChapterEndChange` в `pages/admin-sermon-form/lib/sermonFormState.ts`): непустое «до» входит в режим диапазона и переносит введённое в пару «от/до», очистка — выходит обратно в свободный текст.
+
+### Автодополнение
+
+`GET /sermons/distinct-values` (`SermonDistinctValuesResponse` — `{artists, books}`) даёт ранее использованных проповедников и книги. Форма грузит их один раз (`useSermonSuggestions`) и показывает тапабельные подсказки под полями «Проповедник» и «Книга» (`SuggestionField`); ошибка загрузки тихо деградирует к пустому списку.
+
+### Загрузка файлов
+
+Аудио (только MP3) и текстовый файл грузятся `POST /files` (multipart) через `shared/api/uploadFile.ts` (`uploadSermonFile`) с прогрессом по `onUploadProgress` (axios). Файл оборачивается в `expo-file-system`'s `File` (реализует `Blob`), а `RN FormData` читает из него `uri`/`type` на рантайме. Проверка расширения до загрузки — `widgets/admin-form-pickers/lib/fileKinds.ts`: не-MP3 отклоняется с сообщением, до сети. Выбор обложки/файлов переиспользует виджеты `widgets/admin-form-pickers` (`CoverPicker`, `FileUploadField`, `PlaylistPicker`).
+
+### Редирект таба «Загрузить»
+
+Таб «Загрузить» (`app/admin/(tabs)/upload.tsx`) — короткий путь к форме: `<Redirect href='/admin/sermons/create' />`. Отдельного экрана загрузки нет; стандартный сценарий — форма создания проповеди с встроенными загрузками. Загрузка файлов «самих по себе» (медиа-библиотека, orphaned-files cleanup) — фаза 5 «Медиа».
+
 ## Drag-списки
 
 Переупорядочивание реализовано `react-native-draggable-flatlist` (pure JS). Обоснование выбора — [decisions.md](../decisions.md) → «Drag-списки админки». Компонент требует `react-native-reanimated` и `react-native-gesture-handler` (оба в стеке); `expo prebuild` не нужен.
 
 ## Реализованные / нереализованные разделы
 
-Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)). Заглушки — проповеди, загрузка, медиа, пользователи (см. [../debt.md](../debt.md), раздел «Auth flow»).
+Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)), «Проповеди» ([admin-sermons.md](../screens/admin-sermons.md)), а также таб «Загрузить» (редирект на создание проповеди). Заглушки — медиа, пользователи (см. [../debt.md](../debt.md), раздел «Auth flow»).
 
 ## Связанные документы
 
 - [../screens/admin-sections.md](../screens/admin-sections.md) — экраны разделов
+- [../screens/admin-playlists.md](../screens/admin-playlists.md) — экраны плейлистов
+- [../screens/admin-sermons.md](../screens/admin-sermons.md) — экраны проповедей
 - [../screens/admin-home.md](../screens/admin-home.md) — дашборд
 - [../contracts/rest-api.md](../contracts/rest-api.md) — section-эндпоинты
 - [state.md](./state.md) — состояние (Reatom)
