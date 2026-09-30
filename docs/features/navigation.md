@@ -89,6 +89,17 @@
 
 Дополнительно приложение подстраховывает **холодный старт на Android**: expo-router может потерять launch-ссылку в гонке 150 мс и оставить приложение на `/listen` — хук `useColdStartLinkRecovery` (`src/shared/routing/`, вызов из `_RootLayout.tsx`) через ~1 с повторно читает launch intent и восстанавливает переход; корректно обработанные ссылки, ручная навигация и iOS не затрагиваются. Подробности — [deep-links.md](./deep-links.md) → «Android: гонка 150 мс при холодном старте».
 
+## Зона администратора `/admin`
+
+Отдельный маршрут вне публичных табов (объявлен в корневом стеке как `admin` с `headerShown: false`):
+
+- `app/admin/_layout.tsx` — `Stack` зоны: при монтировании однократно вызывает `restoreSession` (`entities/auth`), показывает `ActivityIndicator`, редиректит неаутентифицированных на `/admin/login` (кроме самого login), а аутентифицированных с `/admin/login` — на `/admin`. Шапка есть только у `login` (`HeaderBackButton`, фолбэк `/settings`).
+- `app/admin/login.tsx` → `AdminLoginScreen` (`pages/admin-login`).
+- `app/admin/(tabs)/_layout.tsx` — `Tabs` с `headerShown: false` и тем же `CustomTabBar`, что и публичные табы: `index` (Главная), `sections`, `playlists`, `sermons`, `upload`, `media`, `users`. Таб `users` скрыт (`href: null`) для роли не-`admin`.
+- Файлы табов: `index.tsx` (admin-home), остальные — заглушки отдельных слайсов `pages/admin-sections` / `admin-playlists` / `admin-sermons` / `admin-upload` / `admin-media` / `admin-users`.
+
+Вход в зону — из шапки «Настроек» (`headerRight` в `app/_RootLayout.tsx` → `AdminEntryButton`) и с таба «Еще» (кнопка «В админ панель» → `AdminPanelButton`): обе точки используют хук `useAdminEntry` (`entities/auth`), который при `idle` восстанавливает сессию (`restoreSession`), затем пушит `/admin` (есть права) или `/admin/login`. Пункт «Настроек» `AdminAccountItem` показывает вход для неаутентифицированных и «Выйти из аккаунта админа» (`signOut`) для аутентифицированных.
+
 ## Незарегистрированные маршруты
 
 `useReadNavigation` навигирует на `/read/book-reader` и `/read/books-list`, но соответствующих папок нет ни в `app/(tabs)/read/`, ни в `app/read/`. Фича чтения книг **не подключена к роутеру** (см. [book-reader.md](./book-reader.md)). Экраны `BookReaderScreen`/`BooksListScreen` существуют в `src/pages/book-reader` и `src/pages/books-list`, но не смонтированы.
@@ -104,8 +115,10 @@
 | `/settings`                             | `SettingsScreen`     | `pages/settings`            |
 | `/about`                                | `AboutScreen`        | `pages/about`               |
 | `/history`                              | `HistoryScreen`      | `pages/history`             |
-| `/offline`                             | `OfflineScreen`      | `pages/offline`           |
+| `/offline`                              | `OfflineScreen`      | `pages/offline`             |
 | `/share`                                | `ShareScreen`        | `pages/share`               |
+| `/admin`                                | `AdminHomeScreen`    | `pages/admin-home`          |
+| `/admin/login`                          | `AdminLoginScreen`   | `pages/admin-login`         |
 | `/read` (таб)                           | `ReadScreen`         | `pages/read` (заблокирован) |
 | `/read/book-reader`, `/read/books-list` | —                    | **не зарегистрированы**     |
 

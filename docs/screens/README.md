@@ -28,6 +28,8 @@
 | Настройки                | [settings.md](./settings.md)           | готов        |
 | О приложении             | [about.md](./about.md)                 | готов        |
 | Поделиться приложением   | [share.md](./share.md)                 | готов        |
+| Админ: вход              | [admin-login.md](./admin-login.md)     | готов        |
+| Админ: главная           | [admin-home.md](./admin-home.md)       | готов        |
 | «Страница не найдена»    | [not-found.md](./not-found.md)         | готов        |
 
 ## Шаблон файла экрана

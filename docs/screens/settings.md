@@ -10,8 +10,9 @@
 
 ## Что показывается
 
-`SettingsScreen` (`src/pages/settings/ui/SettingsScreen.tsx`) — вертикальный `ScrollView` из пунктов `SettingsItem`:
+`SettingsScreen` (`src/pages/settings/ui/SettingsScreen.tsx`) — вертикальный `ScrollView` из пунктов:
 
+- **Админ-доступ** — `AdminAccountItem` (`src/pages/settings/ui/AdminAccountItem.tsx`), первый пункт: для неаутентифицированных — «Перейти в интерфейс администратора» (`shield-outline`) → `useAdminEntry` (`/admin` или `/admin/login`); для аутентифицированных — «Выйти из аккаунта админа» (`log-out-outline`) → `signOut` (`entities/auth`). В шапке экрана также есть иконка `AdminEntryButton` (`headerRight` в `app/_RootLayout.tsx`), открывающая тот же вход.
 - **Тема оформления** — `ThemeDialog` + `ThemeSelector` (`src/pages/settings/ui/ThemeDialog.tsx`, `ThemeSelector.tsx`, `ThemeSelectorOption.tsx`, `themeOptions.ts`): светлая / тёмная / как в системе.
 - **Динамические цвета** — `DynamicColorsItem` (`src/pages/settings/ui/DynamicColorsItem.tsx`), Material You; показывается только если `isMaterialYouSupported()` (Android).
 - **Виброотклик** — `HapticsSettingsItem` (`src/pages/settings/ui/HapticsSettingsItem.tsx`): глобальный переключатель вибрации при перемотке и нажатиях.
@@ -27,7 +28,8 @@
 
 ## Куда можно перейти
 
-- Внутри экрана — диалог темы, переходов на другие маршруты нет.
+- **Админ-доступ** — `/admin` или `/admin/login` (или выход из аккаунта админа, без навигации).
+- Внутри экрана — диалог темы, других переходов нет.
 
 ## Состояния
 

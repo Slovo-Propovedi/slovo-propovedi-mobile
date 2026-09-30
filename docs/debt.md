@@ -7,9 +7,9 @@
 
 ## Auth flow
 
-- [ ] **Отсутствует экран логина.** Токены работают только на уровне axios-интерцептора; при неудачном refresh токены очищаются, но переход на экран логина не выполнен — `src/shared/api/axiosInstance.ts` — TODO прямо в коде (строка «перейти на экран логина»). Вернуться при внедрении авторизации.
+- [ ] **Отсутствует публичный пользовательский экран логина.** Токены работают только на уровне axios-интерцептора; при неудачном refresh токены очищаются, но перехода на публичный экран логина нет — `src/shared/api/axiosInstance.ts` (комментарий «перейти на экран логина»). Интерфейс администратора уже имеет вход (`/admin/login`, `entities/auth`); вернуться при внедрении пользовательской авторизации.
+- [ ] **CRUD-разделы админки — заглушки «Раздел в разработке».** `src/pages/admin-sections/`, `admin-playlists/`, `admin-sermons/`, `admin-upload/`, `admin-media/`, `admin-users/` (по одному экрану в каждой), маршруты `app/admin/(tabs)/*.tsx` — реализовать реальные CRUD-экраны (разделы, плейлисты, проповеди, загрузка файлов, медиа, пользователи) поверх generated API (`sectionControllerCreate/Update/Remove`, `playlistController*`, `sermonController*`, `appControllerUploadFile`, `usersController*`). Вернуться в следующих фазах плана admin-foundation.
 - [ ] **Chunked transfer без `Content-Length` не показывает прогресс скачивания.** `AudioCacheService.cacheAudio` пропускает `onProgress` при `totalBytes ≤ 0` (сервер не отдал `Content-Length`). Прогресс скачивания недоступен для chunked-response файлов — индикация отсутствует. Вернуться, если понадобится приблизительный прогресс через `bytesWritten`.
-- [ ] **Экран логина/регистрации не спроектирован** — нет маршрута в `app/` и страницы в `src/pages/`. Связано с пунктом выше.
 
 ## Audio player
 

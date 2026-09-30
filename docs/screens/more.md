@@ -14,14 +14,17 @@
 
 - Заголовок: `APP_NAME` («Слово.Проповеди»), версия `v{APP_VERSION}` (из `shared/config`);
 - Описание: «Приложение для прослушивания и чтения проповедей»;
+- Кнопка **«В админ панель»** (`AdminPanelButton`, иконка `shield-outline`, фон `primary`) — **первой**, выше блока меню;
 - Пункты меню (`MoreMenuSettingsItem`): «Офлайн» (иконка `cloud-offline-outline`, первый в списке), «История прослушивания» (иконка `time-outline`), «Настройки» (иконка `settings-outline`), «О приложении» (иконка `information-circle-outline`) и «Поделиться приложением» (иконка `share-social-outline`).
 
 ## Откуда данные
 
 - Константы `APP_NAME`, `APP_VERSION` из `src/shared/config`.
+- Кнопка «В админ панель» — хук `useAdminEntry` (`entities/auth`): при `idle` восстанавливает сессию (`restoreSession`), затем пушит `/admin` (есть права) или `/admin/login`.
 
 ## Куда можно перейти
 
+- «В админ панель» → `/admin` либо `/admin/login` (см. `useAdminEntry`).
 - «Офлайн» → `/offline` (`router.push('/offline')`).
 - «История прослушивания» → `/history` (`router.push('/history')`).
 - «Настройки» → `/settings` (`router.push('/settings')`).
