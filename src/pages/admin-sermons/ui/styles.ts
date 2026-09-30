@@ -71,6 +71,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     flex: 1,
     fontSize: FONT_SIZES.base,
+    marginBottom: INDENTS.medium,
     paddingHorizontal: INDENTS.medium,
     paddingVertical: INDENTS.middle,
   },
