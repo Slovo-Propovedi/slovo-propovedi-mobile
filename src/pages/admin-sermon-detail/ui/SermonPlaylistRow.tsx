@@ -1,6 +1,6 @@
-import { Text } from 'react-native'
+import { View } from 'react-native'
 import { type APITypes } from 'shared/api'
-import { CoverImage } from 'shared/ui'
+import { CoverImage, MovingText } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
@@ -26,9 +26,9 @@ export const SermonPlaylistRow = ({
         style={styles.playlistArtwork}
         imageStyle={styles.playlistArtwork}
       />
-      <Text numberOfLines={1} style={[styles.playlistTitle, { color: currentTheme.text }]}>
-        {playlist.title}
-      </Text>
+      <View style={styles.playlistTitleWrap}>
+        <MovingText text={playlist.title} style={styles.playlistTitle} />
+      </View>
     </TouchableItem>
   )
 }

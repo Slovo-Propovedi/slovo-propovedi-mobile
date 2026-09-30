@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
+import { MovingText } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
@@ -21,9 +22,7 @@ export const PlaylistDetailSectionRow = ({
       style={[styles.row, { backgroundColor: currentTheme.surface }]}
     >
       <View style={styles.rowBody}>
-        <Text numberOfLines={1} style={[styles.rowTitle, { color: currentTheme.text }]}>
-          {section.title}
-        </Text>
+        <MovingText text={section.title} style={styles.rowTitle} />
         <Text numberOfLines={1} style={[styles.rowMeta, { color: currentTheme.textMuted }]}>
           {`${section.playlists.length} плейлистов`}
         </Text>

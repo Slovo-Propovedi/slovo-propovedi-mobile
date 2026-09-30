@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, View } from 'react-native'
 import { formatSermonReference } from 'entities/sermon'
 import { type APITypes } from 'shared/api'
+import { MovingText } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
@@ -43,9 +44,7 @@ export const PlaylistDetailSermonRow = ({
       ]}
     >
       <View style={styles.rowBody}>
-        <Text numberOfLines={1} style={[styles.rowTitle, { color: currentTheme.text }]}>
-          {item.title}
-        </Text>
+        <MovingText text={item.title} style={styles.rowTitle} />
         {subtitle ? (
           <Text numberOfLines={1} style={[styles.rowMeta, { color: currentTheme.textMuted }]}>
             {subtitle}

@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native'
 import { sermonSubtitle } from 'entities/sermon'
 import { type APITypes } from 'shared/api'
-import { CoverImage } from 'shared/ui'
+import { CoverImage, MovingText } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { SermonBadges } from './SermonBadges'
@@ -27,9 +27,7 @@ export const AdminSermonRow = ({
       <View style={styles.rowHeader}>
         <CoverImage uri={item.artwork} style={styles.artwork} imageStyle={styles.artwork} />
         <View style={styles.rowBody}>
-          <Text numberOfLines={1} style={[styles.rowTitle, { color: currentTheme.text }]}>
-            {item.title}
-          </Text>
+          <MovingText text={item.title} style={styles.rowTitle} />
           {subtitle ? (
             <Text numberOfLines={1} style={[styles.rowMeta, { color: currentTheme.textMuted }]}>
               {subtitle}

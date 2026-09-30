@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
+import { MovingText } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
@@ -35,9 +36,7 @@ export const SectionDetailPlaylistRow = ({
       ]}
     >
       <View style={styles.playlistBody}>
-        <Text numberOfLines={1} style={[styles.playlistTitle, { color: currentTheme.text }]}>
-          {item.title}
-        </Text>
+        <MovingText text={item.title} style={styles.playlistTitle} />
         <Text style={[styles.playlistSubtitle, { color: currentTheme.textMuted }]}>
           {item.sermons.length} проповедей
         </Text>

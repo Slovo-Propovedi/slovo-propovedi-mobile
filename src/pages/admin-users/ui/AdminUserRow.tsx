@@ -1,6 +1,7 @@
 import { Text, View } from 'react-native'
 import { ROLE_LABELS } from 'entities/auth'
 import { type APITypes } from 'shared/api'
+import { MovingText } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
@@ -26,9 +27,7 @@ export const AdminUserRow = ({
         <Text style={styles.avatarText}>{initial}</Text>
       </View>
       <View style={styles.rowBody}>
-        <Text numberOfLines={1} style={[styles.rowTitle, { color: currentTheme.text }]}>
-          {item.name}
-        </Text>
+        <MovingText text={item.name} style={styles.rowTitle} />
         <Text numberOfLines={1} style={[styles.rowMeta, { color: currentTheme.textMuted }]}>
           {item.email}
         </Text>

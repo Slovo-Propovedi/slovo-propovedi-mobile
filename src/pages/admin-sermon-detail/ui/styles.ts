@@ -87,9 +87,11 @@ export const styles = StyleSheet.create({
     padding: INDENTS.medium,
   },
   playlistTitle: {
-    flex: 1,
     fontSize: FONT_SIZES.base,
     fontWeight: '500',
+  },
+  playlistTitleWrap: {
+    flex: 1,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,

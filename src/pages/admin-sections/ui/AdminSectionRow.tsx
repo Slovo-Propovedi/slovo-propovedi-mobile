@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
+import { MovingText } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
@@ -47,9 +48,7 @@ export const AdminSectionRow = ({
       ]}
     >
       <View style={styles.rowBody}>
-        <Text numberOfLines={1} style={[styles.rowTitle, { color: currentTheme.text }]}>
-          {item.title}
-        </Text>
+        <MovingText text={item.title} style={styles.rowTitle} />
         <Text numberOfLines={1} style={[styles.rowSubtitle, { color: currentTheme.textMuted }]}>
           {subtitle}
         </Text>
