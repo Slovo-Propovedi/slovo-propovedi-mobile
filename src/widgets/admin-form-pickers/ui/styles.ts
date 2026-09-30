@@ -29,12 +29,18 @@ export const styles = StyleSheet.create({
     marginTop: INDENTS.low,
   },
   libraryButton: {
+    alignItems: 'center',
     borderRadius: RADIUSES.low,
     borderWidth: 1,
     flex: 1,
+    flexDirection: 'row',
+    gap: INDENTS.low,
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET,
     paddingHorizontal: INDENTS.medium,
+  },
+  libraryButtonLabel: {
+    fontSize: FONT_SIZES.sm,
   },
   libraryHeader: {
     alignItems: 'center',
@@ -86,6 +92,11 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET,
     paddingHorizontal: INDENTS.medium,
+  },
+  uploadButtonContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: INDENTS.low,
   },
   uploadButtonText: {
     color: COLORS.white,

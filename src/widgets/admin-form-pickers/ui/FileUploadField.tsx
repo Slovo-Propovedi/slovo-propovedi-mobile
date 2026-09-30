@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
@@ -67,7 +68,10 @@ export const FileUploadField = ({
           onPress={() => setIsOpen(true)}
           style={[styles.libraryButton, { borderColor: currentTheme.textMuted }]}
         >
-          <Text style={[styles.hint, { color: currentTheme.primary }]}>{PICK_LABEL}</Text>
+          <Ionicons size={20} name='albums-outline' color={currentTheme.primary} />
+          <Text style={[styles.libraryButtonLabel, { color: currentTheme.primary }]}>
+            {PICK_LABEL}
+          </Text>
         </TouchableItem>
         <TouchableItem
           disabled={isUploading}
@@ -77,7 +81,10 @@ export const FileUploadField = ({
           {isUploading ? (
             <ActivityIndicator color={COLORS.white} />
           ) : (
-            <Text style={styles.uploadButtonText}>{uploadLabel(kind, Boolean(value))}</Text>
+            <View style={styles.uploadButtonContent}>
+              <Ionicons size={20} color={COLORS.white} name='cloud-upload-outline' />
+              <Text style={styles.uploadButtonText}>{uploadLabel(kind, Boolean(value))}</Text>
+            </View>
           )}
         </TouchableItem>
       </View>

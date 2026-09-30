@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { CoverImage } from 'shared/ui'
@@ -53,7 +54,10 @@ export const CoverPicker = ({
           onPress={() => setIsOpen(true)}
           style={[styles.libraryButton, { borderColor: currentTheme.textMuted }]}
         >
-          <Text style={[styles.hint, { color: currentTheme.primary }]}>{PICK_LABEL}</Text>
+          <Ionicons size={20} name='albums-outline' color={currentTheme.primary} />
+          <Text style={[styles.libraryButtonLabel, { color: currentTheme.primary }]}>
+            {PICK_LABEL}
+          </Text>
         </TouchableItem>
         <TouchableItem
           disabled={isUploading}
@@ -63,7 +67,10 @@ export const CoverPicker = ({
           {isUploading ? (
             <ActivityIndicator color={COLORS.white} />
           ) : (
-            <Text style={styles.uploadButtonText}>{UPLOAD_LABEL}</Text>
+            <View style={styles.uploadButtonContent}>
+              <Ionicons size={20} color={COLORS.white} name='cloud-upload-outline' />
+              <Text style={styles.uploadButtonText}>{UPLOAD_LABEL}</Text>
+            </View>
           )}
         </TouchableItem>
       </View>
