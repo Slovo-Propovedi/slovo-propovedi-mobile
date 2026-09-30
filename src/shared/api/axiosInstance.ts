@@ -101,7 +101,8 @@ export const customInstance = <T>(
   }).then(({ data }) => data)
 
 // Функции для работы с токенами. Делегируют в secureTokenStorage
-// (expo-secure-store на native, AsyncStorage на web), сохраняя стабильный API
+// (expo-secure-store на native, зашифрованное IndexedDB-хранилище на web —
+// см. secureTokenStorage.web.ts / webSecureStore.ts), сохраняя стабильный API
 // для существующих потребителей.
 export const tokenStorage = {
   clearTokens: async () => {

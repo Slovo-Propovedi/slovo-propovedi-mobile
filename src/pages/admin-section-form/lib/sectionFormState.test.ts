@@ -81,6 +81,14 @@ describe('sectionFormState', () => {
       expect(buildCreateSectionDto({ ...BASE_VALUES, itemsRows: '' }).itemsRows).toBeNull()
       expect(buildCreateSectionDto({ ...BASE_VALUES, itemsRows: 'abc' }).itemsRows).toBeNull()
     })
+
+    test('accepts only positive integers for itemsRows', () => {
+      expect(buildCreateSectionDto({ ...BASE_VALUES, itemsRows: '2.5' }).itemsRows).toBeNull()
+      expect(buildCreateSectionDto({ ...BASE_VALUES, itemsRows: '1e3' }).itemsRows).toBeNull()
+      expect(buildCreateSectionDto({ ...BASE_VALUES, itemsRows: '-4' }).itemsRows).toBeNull()
+      expect(buildCreateSectionDto({ ...BASE_VALUES, itemsRows: '0' }).itemsRows).toBeNull()
+      expect(buildCreateSectionDto({ ...BASE_VALUES, itemsRows: '4' }).itemsRows).toEqual(4)
+    })
   })
 
   describe('buildUpdateSectionDto', () => {

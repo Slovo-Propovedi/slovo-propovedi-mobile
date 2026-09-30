@@ -24,12 +24,20 @@ export const initialFormValues = (initial?: APITypes.SectionEntity | null): Sect
   whereIsSlideTitleLocated: initial?.whereIsSlideTitleLocated ?? 'on',
 })
 
+const POSITIVE_INTEGER_PATTERN = /^\d+$/
+
 const parseItemsRows = (value: string): null | number => {
   const trimmed = value.trim()
   if (trimmed === '') return null
 
+  // Digit-only guard: `Number()` would accept decimals ("2.5"), exponents
+  // ("1e3") and whitespace-padded signs that must be rejected here.
+  if (!POSITIVE_INTEGER_PATTERN.test(trimmed)) return null
+
   const parsed = Number(trimmed)
-  return Number.isNaN(parsed) ? null : parsed
+
+  // "0" matches the digit pattern but no rows is a valid empty value, not zero.
+  return parsed > 0 ? parsed : null
 }
 
 const buildCommonFields = (values: SectionFormValues) => ({
