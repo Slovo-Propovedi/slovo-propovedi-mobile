@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, View } from 'react-native'
-import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
-import { styles } from './styles'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { TouchableItem } from '../touchable-item'
+import { formStyles } from './formStyles'
 
 // Строка варианта в списке выбора: подпись и радиометка.
 export const SelectOptionRow = ({
@@ -21,15 +21,15 @@ export const SelectOptionRow = ({
       onPress={onPress}
       accessibilityState={{ selected: isSelected }}
       style={[
-        styles.selectOption,
+        formStyles.selectOption,
         { borderColor: isSelected ? currentTheme.primary : 'transparent' },
       ]}
     >
-      <Text style={[styles.selectOptionLabel, { color: currentTheme.text }]}>{label}</Text>
+      <Text style={[formStyles.selectOptionLabel, { color: currentTheme.text }]}>{label}</Text>
       {isSelected ? (
         <Ionicons size={20} name='checkmark' color={currentTheme.primary} />
       ) : (
-        <View style={styles.selectOptionSpacer} />
+        <View style={formStyles.selectOptionSpacer} />
       )}
     </TouchableItem>
   )

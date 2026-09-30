@@ -1,6 +1,6 @@
 import { ITEMS_SIZE_LABELS, SLIDE_TITLE_LOCATION_LABELS, TRANSFORM_LABELS } from 'entities/section'
 import { type APITypes } from 'shared/api'
-import { type SelectOption } from '../ui/SelectField'
+import { type SelectOption } from 'shared/ui/form'
 
 export const ITEMS_SIZE_OPTIONS: SelectOption<APITypes.CreateSectionDtoItemsSize>[] = [
   { label: ITEMS_SIZE_LABELS.small, value: 'small' },

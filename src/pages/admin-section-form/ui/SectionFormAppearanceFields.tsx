@@ -1,12 +1,10 @@
+import { CheckboxField, FormField, SelectField } from 'shared/ui/form'
 import {
   ITEMS_SIZE_OPTIONS,
   SLIDE_TITLE_LOCATION_OPTIONS,
   TRANSFORM_OPTIONS,
 } from '../lib/sectionFormOptions'
 import { type SectionFormValues } from '../lib/sectionFormState'
-import { CheckboxField } from './CheckboxField'
-import { FormField } from './FormField'
-import { SelectField } from './SelectField'
 
 // Блок «Оформление» формы раздела: размеры, расположение заголовка, строки, чекбоксы.
 export const SectionFormAppearanceFields = ({

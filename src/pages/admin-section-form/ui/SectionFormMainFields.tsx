@@ -1,5 +1,5 @@
+import { FormField } from 'shared/ui/form'
 import { type SectionFormValues } from '../lib/sectionFormState'
-import { FormField } from './FormField'
 
 // Блок «Основное» формы раздела: название и описание.
 export const SectionFormMainFields = ({

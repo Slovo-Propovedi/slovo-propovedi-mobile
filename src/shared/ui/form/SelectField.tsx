@@ -1,11 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
 import { Text, View } from 'react-native'
-import { Modal } from 'shared/ui/modal'
-import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
+import { Modal } from '../modal'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { TouchableItem } from '../touchable-item'
+import { formStyles } from './formStyles'
 import { SelectOptionRow } from './SelectOptionRow'
-import { styles } from './styles'
 
 export interface SelectOption<T extends string> {
   label: string
@@ -34,19 +34,19 @@ export const SelectField = <T extends string>({
   }
 
   return (
-    <View style={styles.field}>
-      <Text style={[styles.fieldLabel, { color: currentTheme.text }]}>{label}</Text>
+    <View style={formStyles.field}>
+      <Text style={[formStyles.fieldLabel, { color: currentTheme.text }]}>{label}</Text>
       <TouchableItem
         onPress={() => setIsOpen(true)}
-        style={[styles.selectTrigger, { borderColor: currentTheme.textMuted }]}
+        style={[formStyles.selectTrigger, { borderColor: currentTheme.textMuted }]}
       >
-        <Text style={[styles.selectTriggerText, { color: currentTheme.text }]}>
+        <Text style={[formStyles.selectTriggerText, { color: currentTheme.text }]}>
           {selectedLabel}
         </Text>
         <Ionicons size={18} name='chevron-down' color={currentTheme.textMuted} />
       </TouchableItem>
       <Modal visible={isOpen} onBackdropPress={() => setIsOpen(false)}>
-        <View style={styles.selectModal}>
+        <View style={formStyles.selectModal}>
           {options.map(option => (
             <SelectOptionRow
               key={option.value}

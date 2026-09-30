@@ -1,6 +1,6 @@
 import { Text, TextInput, View } from 'react-native'
-import { useTheme } from 'shared/ui/theme'
-import { styles } from './styles'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { formStyles } from './formStyles'
 
 // Текстовое поле формы с подписью и необязательной подсказкой.
 export const FormField = ({
@@ -23,8 +23,8 @@ export const FormField = ({
   const { currentTheme } = useTheme()
 
   return (
-    <View style={styles.field}>
-      <Text style={[styles.fieldLabel, { color: currentTheme.text }]}>{label}</Text>
+    <View style={formStyles.field}>
+      <Text style={[formStyles.fieldLabel, { color: currentTheme.text }]}>{label}</Text>
       <TextInput
         value={value}
         multiline={multiline}
@@ -34,12 +34,14 @@ export const FormField = ({
         onChangeText={onChangeText}
         placeholderTextColor={currentTheme.textMuted}
         style={[
-          styles.input,
-          multiline && styles.inputMultiline,
+          formStyles.input,
+          multiline && formStyles.inputMultiline,
           { borderColor: currentTheme.textMuted, color: currentTheme.text },
         ]}
       />
-      {hint ? <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{hint}</Text> : null}
+      {hint ? (
+        <Text style={[formStyles.hint, { color: currentTheme.textMuted }]}>{hint}</Text>
+      ) : null}
     </View>
   )
 }

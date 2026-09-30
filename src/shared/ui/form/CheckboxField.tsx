@@ -1,8 +1,8 @@
 import { Checkbox } from 'expo-checkbox'
 import { Text } from 'react-native'
-import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
-import { styles } from './styles'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { TouchableItem } from '../touchable-item'
+import { formStyles } from './formStyles'
 
 // Чекбокс формы с подписью; тап по всей строке переключает значение.
 export const CheckboxField = ({
@@ -18,16 +18,16 @@ export const CheckboxField = ({
 
   return (
     <TouchableItem
-      style={styles.checkboxRow}
+      style={formStyles.checkboxRow}
       onPress={() => onChange(!value)}
       accessibilityState={{ checked: value }}
     >
       <Checkbox
         value={value}
-        style={styles.checkbox}
+        style={formStyles.checkbox}
         color={value ? currentTheme.primary : currentTheme.textMuted}
       />
-      <Text style={[styles.checkboxLabel, { color: currentTheme.text }]}>{label}</Text>
+      <Text style={[formStyles.checkboxLabel, { color: currentTheme.text }]}>{label}</Text>
     </TouchableItem>
   )
 }
