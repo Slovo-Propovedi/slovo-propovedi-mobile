@@ -1,6 +1,6 @@
 import { ActivityIndicator, Text, View } from 'react-native'
+import { orderSelectedFirst } from 'shared/lib/utils/orderSelectedFirst'
 import { COLORS, useTheme } from 'shared/ui/theme'
-import { orderSelectedFirst } from '../lib/orderSelectedFirst'
 import { useSectionOptions } from '../lib/useSectionOptions'
 import { pickerStyles } from './pickerStyles'
 import { SectionPickerRow } from './SectionPickerRow'

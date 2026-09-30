@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ActivityIndicator, Text, TextInput, View } from 'react-native'
+import { orderSelectedFirst } from 'shared/lib/utils/orderSelectedFirst'
 import { COLORS, useTheme } from 'shared/ui/theme'
-import { orderSelectedFirst } from '../lib/orderSelectedFirst'
 import { useSermonSearch } from '../lib/useSermonSearch'
 import { pickerStyles } from './pickerStyles'
 import { SermonPickerRow } from './SermonPickerRow'
