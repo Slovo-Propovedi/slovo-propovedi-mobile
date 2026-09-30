@@ -12,6 +12,7 @@ import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { useAdminPlaylistDetail } from '../lib/useAdminPlaylistDetail'
 import { PlaylistDetailHeader } from './PlaylistDetailHeader'
+import { PlaylistDetailSectionRow } from './PlaylistDetailSectionRow'
 import { PlaylistDetailSermonRow } from './PlaylistDetailSermonRow'
 import { styles } from './styles'
 
@@ -85,6 +86,22 @@ export const AdminPlaylistDetailScreen = () => {
         ListHeaderComponent={
           <View>
             <PlaylistDetailHeader playlist={playlist} sermonsCount={sermons.length} />
+            {playlist.sections.length > 0 ? (
+              <>
+                <Text style={[styles.sermonsTitle, { color: currentTheme.text }]}>
+                  {`Разделы (${playlist.sections.length})`}
+                </Text>
+                {playlist.sections.map(section => (
+                  <PlaylistDetailSectionRow
+                    key={section.id}
+                    section={section}
+                    onPress={() =>
+                      router.push({ params: { id: section.id }, pathname: '/admin/sections/[id]' })
+                    }
+                  />
+                ))}
+              </>
+            ) : null}
             <Text style={[styles.sermonsTitle, { color: currentTheme.text }]}>
               {`Проповеди плейлиста (${sermons.length})`}
             </Text>

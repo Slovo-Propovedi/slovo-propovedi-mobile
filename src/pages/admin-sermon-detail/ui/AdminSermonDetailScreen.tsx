@@ -92,7 +92,13 @@ export const AdminSermonDetailScreen = () => {
           </Text>
         ) : (
           sermon.playlists.map(playlist => (
-            <SermonPlaylistRow key={playlist.id} playlist={playlist} />
+            <SermonPlaylistRow
+              key={playlist.id}
+              playlist={playlist}
+              onPress={() =>
+                router.push({ params: { id: playlist.id }, pathname: '/admin/playlists/[id]' })
+              }
+            />
           ))
         )}
       </ScrollView>

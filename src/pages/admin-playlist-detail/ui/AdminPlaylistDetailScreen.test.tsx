@@ -52,6 +52,7 @@ const createPlaylist = () => {
     title: 'Плейлист',
   })
   playlist.sermons = [playlist.sermons[0]]
+  playlist.sections = [playlist.sections[0]]
 
   return playlist
 }
@@ -85,6 +86,41 @@ describe('<AdminPlaylistDetailScreen>', () => {
       params: { id: sermon.id },
       pathname: '/admin/sermons/[id]',
     })
+  })
+
+  test('renders the sections the playlist belongs to', async () => {
+    const playlist = createPlaylist()
+    mockFindOne.mockResolvedValue(playlist)
+
+    const { findByText } = await renderWithProviders(<AdminPlaylistDetailScreen />)
+
+    expect(await findByText('Разделы (1)')).toBeTruthy()
+    expect(await findByText(playlist.sections[0].title)).toBeTruthy()
+  })
+
+  test('opens the admin section detail when a section row is pressed', async () => {
+    const playlist = createPlaylist()
+    const section = playlist.sections[0]
+    mockFindOne.mockResolvedValue(playlist)
+
+    const { findByText } = await renderWithProviders(<AdminPlaylistDetailScreen />)
+    fireEvent.press(await findByText(section.title))
+
+    expect(mockPush).toHaveBeenCalledWith({
+      params: { id: section.id },
+      pathname: '/admin/sections/[id]',
+    })
+  })
+
+  test('omits the sections block when the playlist belongs to no sections', async () => {
+    const playlist = createPlaylist()
+    playlist.sections = []
+    mockFindOne.mockResolvedValue(playlist)
+
+    const { findByText, queryByText } = await renderWithProviders(<AdminPlaylistDetailScreen />)
+
+    expect(await findByText('Проповеди плейлиста (1)')).toBeTruthy()
+    expect(queryByText('Разделы (0)')).toBeNull()
   })
 
   test('shows the not-found state when the playlist is missing', async () => {

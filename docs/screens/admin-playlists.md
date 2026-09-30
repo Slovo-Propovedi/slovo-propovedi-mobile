@@ -23,14 +23,14 @@
 
 ## Деталь
 
-**Файлы:** `src/pages/admin-playlist-detail/ui/AdminPlaylistDetailScreen.tsx`, `PlaylistDetailHeader.tsx`, `PlaylistDetailSermonRow.tsx`, `lib/useAdminPlaylistDetail.ts`
+**Файлы:** `src/pages/admin-playlist-detail/ui/AdminPlaylistDetailScreen.tsx`, `PlaylistDetailHeader.tsx`, `PlaylistDetailSectionRow.tsx`, `PlaylistDetailSermonRow.tsx`, `lib/useAdminPlaylistDetail.ts`
 
-- **Что показывается:** герой (обложка через `expo-image`, название, описание), плитки «Проповеди»/«Разделы»; «Редактировать» и «Удалить» — иконки в шапке (`headerRight`, `useAdminDetailHeader`); блок «Проповеди плейлиста (N)» с drag-переупорядочиванием (ручка `reorder-three`).
-- **Откуда данные:** `playlistControllerFindOne` (`GET /playlists/{id}`); reorder — `reorderSermonsInPlaylist` (`PATCH /playlists/{id}/sermons/reorder`, тело `{ sermonIds }` — **полный** упорядоченный массив id); удаление — `playlistControllerRemove` (`DELETE /playlists/{id}`).
+- **Что показывается:** герой (обложка через `expo-image`, название, описание), плитки «Проповеди»/«Разделы»; «Редактировать» и «Удалить» — иконки в шапке (`headerRight`, `useAdminDetailHeader`); блок «Разделы (N)» (название раздела + счётчик плейлистов) над блоком «Проповеди плейлиста (N)» с drag-переупорядочиванием (ручка `reorder-three`). Порядок блоков повторяет форму плейлиста (сначала разделы, затем проповеди).
+- **Откуда данные:** `playlistControllerFindOne` (`GET /playlists/{id}`) — DTO уже содержит `sections` (полные сущности разделов), отдельный запрос за разделами не нужен; reorder — `reorderSermonsInPlaylist` (`PATCH /playlists/{id}/sermons/reorder`, тело `{ sermonIds }` — **полный** упорядоченный массив id); удаление — `playlistControllerRemove` (`DELETE /playlists/{id}`).
 - **Optimistic reorder:** локальное состояние перекрывает ответ сети; при ошибке — откат + `showToast`; запрос пропускается, если порядок не изменился (`hasOrderChanged`).
-- **Навигация:** иконка «Редактировать» в шапке → `/admin/playlists/[id]/edit`; тап по строке проповеди → `/admin/sermons/[id]`; после удаления — `router.back()` в список + тост.
+- **Навигация:** иконка «Редактировать» в шапке → `/admin/playlists/[id]/edit`; тап по строке проповеди → `/admin/sermons/[id]`; тап по строке раздела → `/admin/sections/[id]`; после удаления — `router.back()` в список + тост.
 - **Удаление:** `ConfirmDialog` («Удалить плейлист?») с подтверждением.
-- **Состояния:** загрузка — `ActivityIndicator`; не найдено — `EmptyState` «Плейлист не найден»; нет проповедей — `EmptyState` «Проповедей пока нет»; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
+- **Состояния:** загрузка — `ActivityIndicator`; не найдено — `EmptyState` «Плейлист не найден»; нет проповедей — `EmptyState` «Проповеди пока нет»; нет разделов — блок «Разделы» не рендерится; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
 
 ## Форма (создание / редактирование)
 

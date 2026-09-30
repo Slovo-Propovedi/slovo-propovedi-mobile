@@ -63,6 +63,13 @@ const buildSermon = (overrides = {}) =>
     ...overrides,
   })
 
+const buildSermonWithPlaylists = () => {
+  const sermon = buildSermon()
+  sermon.playlists = [sermon.playlists[0]]
+
+  return sermon
+}
+
 describe('<AdminSermonDetailScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -76,6 +83,20 @@ describe('<AdminSermonDetailScreen>', () => {
     expect(await findByText('Сила веры')).toBeTruthy()
     expect(await findByText('Иоанн · Иоанна 3:16')).toBeTruthy()
     expect(await findByText('Разбор текста')).toBeTruthy()
+  })
+
+  test('navigates to the playlist detail when a playlist row is pressed', async () => {
+    const sermon = buildSermonWithPlaylists()
+    const playlist = sermon.playlists[0]
+    mockFindOne.mockResolvedValue(sermon)
+
+    const { findByText } = await renderWithProviders(<AdminSermonDetailScreen />)
+    fireEvent.press(await findByText(playlist.title))
+
+    expect(mockPush).toHaveBeenCalledWith({
+      params: { id: playlist.id },
+      pathname: '/admin/playlists/[id]',
+    })
   })
 
   test('navigates to the edit screen from the header action', async () => {
