@@ -15,3 +15,10 @@ export const canAccessAdmin = (user: APITypes.UserResponse | null) =>
 
 // Управление пользователями доступно только роли admin.
 export const isAdminUser = (user: APITypes.UserResponse | null) => user?.role === 'admin'
+
+// Русские подписи ролей для бейджей и форм админки.
+export const ROLE_LABELS: Record<APITypes.UserRole, string> = {
+  admin: 'Администратор',
+  moderator: 'Модератор',
+  user: 'Пользователь',
+}

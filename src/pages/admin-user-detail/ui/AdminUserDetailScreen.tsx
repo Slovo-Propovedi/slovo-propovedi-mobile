@@ -1,0 +1,114 @@
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useMemo, useState } from 'react'
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { useRequireAdminRole } from 'entities/auth'
+import { EmptyState } from 'shared/ui'
+import { ConfirmDialog } from 'shared/ui/confirm-dialog'
+import { COLORS, useTheme } from 'shared/ui/theme'
+import { TouchableItem } from 'shared/ui/touchable-item'
+import { useAdminUserDetail } from '../lib/useAdminUserDetail'
+import { PasswordDialog } from './PasswordDialog'
+import { styles } from './styles'
+import { UserStatGrid } from './UserStatGrid'
+
+const DELETE_TITLE = 'Удалить пользователя?'
+const EDIT_LABEL = 'Редактировать'
+const PASSWORD_LABEL = 'Сменить пароль'
+const DELETE_LABEL = 'Удалить'
+const NOT_FOUND_MESSAGE = 'Пользователь не найден'
+
+// Деталь пользователя: статистика и действия (редактировать, сменить пароль,
+// удалить). Удаление собственного аккаунта скрыто.
+export const AdminUserDetailScreen = () => {
+  useRequireAdminRole()
+  const router = useRouter()
+  const { currentTheme } = useTheme()
+  const params = useLocalSearchParams<{ id: string }>()
+  const id = params.id ?? ''
+  const { changePassword, isChangingPassword, isDeleting, isNotFound, isOwnAccount, remove, user } =
+    useAdminUserDetail(id)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false)
+  const headerOptions = useMemo(() => ({ title: user?.name ?? '' }), [user?.name])
+
+  const handleDelete = async () => {
+    setIsDeleteOpen(false)
+    if (await remove()) router.back()
+  }
+
+  if (!user)
+    return (
+      <View style={[styles.centered, { backgroundColor: currentTheme.background }]}>
+        {isNotFound ? (
+          <EmptyState message={NOT_FOUND_MESSAGE} />
+        ) : (
+          <ActivityIndicator size='large' color={COLORS.primary} />
+        )}
+      </View>
+    )
+
+  return (
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+      <Stack.Screen options={headerOptions} />
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <View style={[styles.avatar, { backgroundColor: currentTheme.primary }]}>
+            <Text style={styles.avatarText}>{user.name.slice(0, 1).toUpperCase()}</Text>
+          </View>
+          <View style={styles.headerText}>
+            <Text style={[styles.title, { color: currentTheme.text }]}>{user.name}</Text>
+            <Text style={[styles.subtitle, { color: currentTheme.textMuted }]}>{user.email}</Text>
+          </View>
+        </View>
+
+        <View style={styles.actions}>
+          <TouchableItem
+            style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}
+            onPress={() => router.push({ params: { id }, pathname: '/admin/users/[id]/edit' })}
+          >
+            <Ionicons size={18} name='create-outline' color={currentTheme.primary} />
+            <Text style={[styles.actionText, { color: currentTheme.primary }]}>{EDIT_LABEL}</Text>
+          </TouchableItem>
+          <TouchableItem
+            onPress={() => setIsPasswordOpen(true)}
+            style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}
+          >
+            <Ionicons size={18} name='key-outline' color={currentTheme.textMuted} />
+            <Text style={[styles.actionText, { color: currentTheme.textMuted }]}>
+              {PASSWORD_LABEL}
+            </Text>
+          </TouchableItem>
+          {isOwnAccount ? null : (
+            <TouchableItem
+              onPress={() => setIsDeleteOpen(true)}
+              style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}
+            >
+              <Ionicons size={18} name='trash-outline' color={currentTheme.textMuted} />
+              <Text style={[styles.actionText, { color: currentTheme.textMuted }]}>
+                {DELETE_LABEL}
+              </Text>
+            </TouchableItem>
+          )}
+        </View>
+
+        <UserStatGrid user={user} />
+      </ScrollView>
+
+      <ConfirmDialog
+        title={DELETE_TITLE}
+        visible={isDeleteOpen}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setIsDeleteOpen(false)}
+        confirmText={isDeleting ? 'Удаление…' : DELETE_LABEL}
+        message={`Пользователь «${user.name}» будет удалён без возможности восстановления.`}
+      />
+      <PasswordDialog
+        visible={isPasswordOpen}
+        onSubmit={changePassword}
+        isSubmitting={isChangingPassword}
+        onClose={() => setIsPasswordOpen(false)}
+      />
+    </View>
+  )
+}

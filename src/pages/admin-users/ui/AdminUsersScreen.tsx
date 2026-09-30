@@ -1,42 +1,108 @@
-import { StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useAtom } from '@reatom/npm-react'
+import { useRouter } from 'expo-router'
+import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
 import { useRequireAdminRole } from 'entities/auth'
-import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
+import { EmptyState } from 'shared/ui'
+import { tabBarHeightAtom } from 'shared/ui/layout'
+import { COLORS, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { TouchableItem } from 'shared/ui/touchable-item'
+import { useAdminUsers } from '../lib/useAdminUsers'
+import { AdminUserRow } from './AdminUserRow'
+import { styles } from './styles'
 
-// Заглушка раздела админки, ещё не реализованного (см. docs/debt.md).
+const CREATE_ROUTE = '/admin/users/create'
+const CREATE_LABEL = 'Создать'
+const LOAD_MORE_LABEL = 'Загрузить ещё'
+const EMPTY_MESSAGE = 'Пользователей пока нет'
+const NOT_FOUND_MESSAGE = 'Ничего не найдено'
+const LOAD_ERROR = 'Не удалось загрузить пользователей'
+
+// Список пользователей админки (только для роли admin): поиск по загруженным
+// страницам, «загрузить ещё» и переход к детали/созданию.
 export const AdminUsersScreen = () => {
   useRequireAdminRole()
+  const router = useRouter()
   const { currentTheme } = useTheme()
+  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { hasMore, isError, isLoading, isLoadingMore, loadMore, onSearchChange, search, users } =
+    useAdminUsers()
+
+  const openUser = (id: string) => {
+    router.push({ params: { id }, pathname: '/admin/users/[id]' })
+  }
+
+  if (isLoading)
+    return (
+      <View style={[styles.centered, { backgroundColor: currentTheme.background }]}>
+        <ActivityIndicator size='large' color={COLORS.primary} />
+      </View>
+    )
+
+  const emptyMessage = search.trim() !== '' ? NOT_FOUND_MESSAGE : EMPTY_MESSAGE
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.container, { backgroundColor: currentTheme.background }]}
-    >
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: currentTheme.text }]}>Пользователи</Text>
-        <Text style={[styles.message, { color: currentTheme.textMuted }]}>Раздел в разработке</Text>
-      </View>
-    </SafeAreaView>
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+      <FlatList
+        data={users}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => <AdminUserRow item={item} onPress={() => openUser(item.id)} />}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
+        ]}
+        ListEmptyComponent={
+          isError ? (
+            <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
+          ) : (
+            <EmptyState message={emptyMessage} />
+          )
+        }
+        ListFooterComponent={
+          hasMore ? (
+            <TouchableItem
+              onPress={() => void loadMore()}
+              style={[styles.loadMore, { backgroundColor: currentTheme.surface }]}
+            >
+              {isLoadingMore ? (
+                <ActivityIndicator color={currentTheme.primary} />
+              ) : (
+                <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
+                  {LOAD_MORE_LABEL}
+                </Text>
+              )}
+            </TouchableItem>
+          ) : null
+        }
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <View style={styles.headerRow}>
+              <View style={styles.headerText}>
+                <Text style={[styles.title, { color: currentTheme.text }]}>Пользователи</Text>
+                <Text style={[styles.subtitle, { color: currentTheme.textMuted }]}>
+                  Управление администраторами системы.
+                </Text>
+              </View>
+              <TouchableItem
+                onPress={() => router.push(CREATE_ROUTE)}
+                style={[styles.createButton, { backgroundColor: currentTheme.primary }]}
+              >
+                <Text style={styles.createButtonText}>{CREATE_LABEL}</Text>
+              </TouchableItem>
+            </View>
+            <TextInput
+              value={search}
+              onChangeText={onSearchChange}
+              placeholder='Имя, email или логин…'
+              accessibilityLabel='Поиск пользователей'
+              placeholderTextColor={currentTheme.textMuted}
+              style={[
+                styles.input,
+                { borderColor: currentTheme.textMuted, color: currentTheme.text },
+              ]}
+            />
+          </View>
+        }
+      />
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    alignItems: 'center',
-    flex: 1,
-    gap: INDENTS.low,
-    justifyContent: 'center',
-    padding: INDENTS.high,
-  },
-  message: {
-    fontSize: FONT_SIZES.base,
-  },
-  title: {
-    fontSize: FONT_SIZES.xxl,
-    fontWeight: '700',
-  },
-})
