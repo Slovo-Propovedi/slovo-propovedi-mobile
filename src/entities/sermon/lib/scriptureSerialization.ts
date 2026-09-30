@@ -2,7 +2,7 @@ import { isVerseRangeTuple } from './scriptureNotation'
 
 // Значение стихов со стороны API: одиночное число, массив чисел или массив
 // отрезков (чисел и кортежей). Шире строгого `Verse` и принимается на границе.
-export type VerseInput = (number | number[])[] | null | number | number[] | undefined
+type VerseInput = (number | number[])[] | null | number | number[] | undefined
 
 // Приводит один отрезок стихов к отображаемой форме: схлопнутый [n, n]
 // читается как одиночный стих, широкий кортеж — как диапазон.

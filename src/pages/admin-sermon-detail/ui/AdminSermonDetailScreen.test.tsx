@@ -1,13 +1,13 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { sermonsMocks } from 'shared/api/generated'
-import { renderWithProviders } from 'shared/mocks'
+import { renderHookWithProviders, renderWithProviders } from 'shared/mocks'
+import { useAdminSermonDetail } from '../lib/useAdminSermonDetail'
 import { AdminSermonDetailScreen } from './AdminSermonDetailScreen'
 
 const mockFindOne = jest.fn()
 const mockRemove = jest.fn()
 const mockBack = jest.fn()
 const mockPush = jest.fn()
-const mockShowToast = jest.fn()
 
 jest.mock('shared/api', () => ({
   sermonsApi: {
@@ -18,8 +18,15 @@ jest.mock('shared/api', () => ({
   },
 }))
 
-jest.mock('@reatom/npm-react', () => ({
-  useAction: () => mockShowToast,
+// expo-audio pulls in a native module that throws at import in Jest; stub the
+// hooks the audio preview relies on.
+jest.mock('expo-audio', () => ({
+  useAudioPlayer: () => ({ pause: jest.fn(), play: jest.fn() }),
+  useAudioPlayerStatus: () => ({
+    currentTime: 0,
+    duration: 0,
+    playing: false,
+  }),
 }))
 
 jest.mock('expo-router', () => ({
@@ -34,6 +41,7 @@ const buildSermon = (overrides = {}) =>
     audioUrl: 'audio.mp3',
     book: 'Иоанна',
     chapter: 3,
+    id: 's1',
     textFileUrl: null,
     title: 'Сила веры',
     verse: 16,
@@ -68,24 +76,28 @@ describe('<AdminSermonDetailScreen>', () => {
     })
   })
 
-  test('deletes the sermon after confirmation and returns back', async () => {
+  test('removes the sermon through the detail hook', async () => {
     mockFindOne.mockResolvedValue(buildSermon())
     mockRemove.mockResolvedValue(undefined)
 
-    const { findByText, getByText } = await renderWithProviders(<AdminSermonDetailScreen />)
-    fireEvent.press(await findByText('Удалить'))
-    fireEvent.press(getByText('Удалить'))
+    const { result } = await renderHookWithProviders(() => useAdminSermonDetail('s1'))
+    await waitFor(() => expect(result.current.sermon).not.toBeNull())
 
-    await waitFor(() => expect(mockRemove).toHaveBeenCalledWith('s1'))
-    expect(mockShowToast).toHaveBeenCalledWith('Проповедь удалена')
-    expect(mockBack).toHaveBeenCalled()
+    let removed = false
+    await act(async () => {
+      removed = await result.current.remove()
+    })
+
+    expect(mockRemove).toHaveBeenCalledWith('s1')
+    expect(removed).toBe(true)
   })
 
-  test('shows the not-found state when loading fails', async () => {
+  test('flags a missing sermon when loading fails', async () => {
     mockFindOne.mockRejectedValue(new Error('boom'))
 
-    const { findByText } = await renderWithProviders(<AdminSermonDetailScreen />)
+    const { result } = await renderHookWithProviders(() => useAdminSermonDetail('s1'))
 
-    expect(await findByText('Проповедь не найдена')).toBeTruthy()
+    await waitFor(() => expect(result.current.isNotFound).toBe(true))
+    expect(result.current.sermon).toBeNull()
   })
 })

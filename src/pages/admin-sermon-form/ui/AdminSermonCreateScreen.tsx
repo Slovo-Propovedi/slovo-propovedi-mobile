@@ -1,0 +1,27 @@
+import { Stack } from 'expo-router'
+import { View } from 'react-native'
+import { useTheme } from 'shared/ui/theme'
+import { useSermonFormController } from '../lib/useSermonFormController'
+import { useSermonFormHeader } from '../lib/useSermonFormHeader'
+import { SermonForm } from './SermonForm'
+import { styles } from './styles'
+
+// Экран создания проповеди: форма в режиме create + «Сохранить» в шапке.
+export const AdminSermonCreateScreen = () => {
+  const { currentTheme } = useTheme()
+  const { error, isSubmitting, onChange, onChapterEndChange, save, values } =
+    useSermonFormController({ mode: 'create' })
+  const headerOptions = useSermonFormHeader(isSubmitting, save)
+
+  return (
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+      <Stack.Screen options={headerOptions} />
+      <SermonForm
+        error={error}
+        values={values}
+        onChange={onChange}
+        onChapterEndChange={onChapterEndChange}
+      />
+    </View>
+  )
+}

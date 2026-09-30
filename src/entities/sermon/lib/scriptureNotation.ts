@@ -7,14 +7,14 @@
 // диапазон «от–до»; массив кортежей или смесь целых и кортежей — список
 // разрозненных отрезков.
 
-/** Глава: одиночная или диапазон [от, до]. */
-export type Chapter = [number, number] | number
-
 /** Стихи: одиночный, диапазон или список разрозненных отрезков. */
 export type Verse = [number, number] | number | VerseSegment[]
 
+/** Глава: одиночная или диапазон [от, до]. */
+type Chapter = [number, number] | number
+
 /** Один отрезок стихов: одиночный стих или диапазон [от, до]. */
-export type VerseSegment = [number, number] | number
+type VerseSegment = [number, number] | number
 
 /**
  * Является ли значение диапазоном стихов: массив ровно из двух целых чисел.

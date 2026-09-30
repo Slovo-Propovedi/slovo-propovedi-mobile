@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react'
 import { ActivityIndicator, type ColorValue, StyleSheet, View } from 'react-native'
 import { usePlaylistScreens } from 'pages/admin-playlist-form'
 import { useSectionScreens } from 'pages/admin-section-form'
+import { useSermonScreens } from 'pages/admin-sermon-form'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { COLORS, useTheme } from 'shared/ui/theme'
@@ -26,6 +27,7 @@ const AdminLayout = () => {
   const { currentTheme } = useTheme()
   const sectionScreens = useSectionScreens()
   const playlistScreens = usePlaylistScreens()
+  const sermonScreens = useSermonScreens()
 
   // Стабильный объект options для экрана входа: держим идентичность между
   // рендерами, чтобы expo-router не переустанавливал опции на каждый кадр.
@@ -76,6 +78,7 @@ const AdminLayout = () => {
       <Stack.Screen name='login' options={loginOptions} />
       {sectionScreens}
       {playlistScreens}
+      {sermonScreens}
     </Stack>
   )
 }

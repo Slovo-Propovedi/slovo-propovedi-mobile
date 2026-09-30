@@ -84,13 +84,13 @@ describe('<AdminSermonsScreen>', () => {
   })
 
   test('navigates to the create screen from the header button', async () => {
-    mockFindAll.mockResolvedValue(sermonsMocks.getSermonControllerFindAllResponseMock())
+    mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
 
     const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
 
     fireEvent.press(await findByText('Загрузить проповедь'))
 
-    expect(mockPush).toHaveBeenCalledWith('/admin/sermons/create')
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/admin/sermons/create'))
   })
 
   test('shows the empty state when there are no sermons', async () => {
