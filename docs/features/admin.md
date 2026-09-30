@@ -27,13 +27,23 @@
 
 Двунаправленная: форма раздела управляет связью через `playlistsIds` (`UpdateSectionDto`), форма плейлиста — через `sectionsIds` (`UpdatePlaylistDto`). В `CreateSectionDto` связи нет — состав задаётся при редактировании.
 
+## Плейлисты (playlists)
+
+Плейлист — набор проповедей, который может входить в разделы главной страницы. Экраны: [screens/admin-playlists.md](../screens/admin-playlists.md).
+
+### Reorder проповедей
+
+- **Плейлист:** `reorderSermonsInPlaylist` (`PATCH /playlists/{id}/sermons/reorder`) — тело `{ sermonIds }`, **полный** упорядоченный массив id.
+- **Список плейлистов** пагинируется через `playlistControllerFindAll` (`GET /playlists`): `search` (дебаунс 300мс), `page`/`limit=20`, `sort` (`date`|`title`|`section`), `order` (`asc`|`desc`). Размер страницы — константа `PAGE_SIZE`.
+- **Форма плейлиста** — единственная форма админки с кнопкой «Сохранить» в шапке (`headerRight`): длинные пикеры (проповеди, разделы) не имеют отдельного внутреннего скролла, страница скроллится целиком, а сохранение всегда доступно. В пикерах выбранные элементы идут первыми (`orderSelectedFirst`).
+
 ## Drag-списки
 
 Переупорядочивание реализовано `react-native-draggable-flatlist` (pure JS). Обоснование выбора — [decisions.md](../decisions.md) → «Drag-списки админки». Компонент требует `react-native-reanimated` и `react-native-gesture-handler` (оба в стеке); `expo prebuild` не нужен.
 
 ## Реализованные / нереализованные разделы
 
-Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы». Заглушки — плейлисты, проповеди, загрузка, медиа, пользователи (см. [../debt.md](../debt.md), раздел «Auth flow»).
+Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)). Заглушки — проповеди, загрузка, медиа, пользователи (см. [../debt.md](../debt.md), раздел «Auth flow»).
 
 ## Связанные документы
 

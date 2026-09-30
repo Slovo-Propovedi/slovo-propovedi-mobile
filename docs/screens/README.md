@@ -31,6 +31,7 @@
 | Админ: вход              | [admin-login.md](./admin-login.md)     | готов        |
 | Админ: главная           | [admin-home.md](./admin-home.md)       | готов        |
 | Админ: разделы           | [admin-sections.md](./admin-sections.md) | готов      |
+| Админ: плейлисты         | [admin-playlists.md](./admin-playlists.md) | готов    |
 | «Страница не найдена»    | [not-found.md](./not-found.md)         | готов        |
 
 ## Шаблон файла экрана
