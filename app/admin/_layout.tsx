@@ -5,6 +5,7 @@ import { ActivityIndicator, type ColorValue, StyleSheet, View } from 'react-nati
 import { usePlaylistScreens } from 'pages/admin-playlist-form'
 import { useSectionScreens } from 'pages/admin-section-form'
 import { useSermonScreens } from 'pages/admin-sermon-form'
+import { useUserScreens } from 'pages/admin-user-form'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { COLORS, useTheme } from 'shared/ui/theme'
@@ -28,6 +29,7 @@ const AdminLayout = () => {
   const sectionScreens = useSectionScreens()
   const playlistScreens = usePlaylistScreens()
   const sermonScreens = useSermonScreens()
+  const userScreens = useUserScreens()
 
   // Стабильный объект options для экрана входа: держим идентичность между
   // рендерами, чтобы expo-router не переустанавливал опции на каждый кадр.
@@ -79,6 +81,7 @@ const AdminLayout = () => {
       {sectionScreens}
       {playlistScreens}
       {sermonScreens}
+      {userScreens}
     </Stack>
   )
 }
