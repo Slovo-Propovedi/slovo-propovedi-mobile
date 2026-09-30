@@ -3,10 +3,12 @@ import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/
 
 export const styles = StyleSheet.create({
   // Строка действий «Выбрать из библиотеки» + «Загрузить …» в одну линию.
+  // Нижний отступ отделяет пару от следующей группы полей — сама строка
+  // остаётся привязанной к URL-полю выше.
   actionsRow: {
     flexDirection: 'row',
     gap: INDENTS.low,
-    marginTop: INDENTS.low,
+    marginBottom: INDENTS.medium,
   },
   coverPreview: {
     borderRadius: RADIUSES.low,
