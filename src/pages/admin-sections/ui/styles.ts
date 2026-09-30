@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
   badge: {
@@ -24,10 +24,18 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  // TouchableItem's base style is `width: '100%'`; without an override the
+  // button claims the whole header row and stretches vertically. Pin it to a
+  // fixed height and let its content define the width instead.
   createButton: {
+    alignSelf: 'flex-start',
     borderRadius: RADIUSES.low,
+    flexGrow: 0,
+    flexShrink: 0,
+    height: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
     paddingHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.low,
+    width: 'auto',
   },
   createButtonText: {
     color: '#fff',

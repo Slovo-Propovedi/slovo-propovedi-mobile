@@ -1,10 +1,12 @@
+import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { EmptyState } from 'shared/ui'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { tabBarHeightAtom } from 'shared/ui/layout'
+import { COLORS, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useAdminSections } from '../lib/useAdminSections'
 import { AdminSectionRow } from './AdminSectionRow'
 import { AdminSectionsHeader } from './AdminSectionsHeader'
@@ -15,6 +17,7 @@ const CREATE_ROUTE = '/admin/sections/create'
 export const AdminSectionsScreen = () => {
   const router = useRouter()
   const { currentTheme } = useTheme()
+  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { isLoading, isReordering, reorder, sections } = useAdminSections()
 
   const openSection = (section: APITypes.SectionEntity) => {
@@ -49,12 +52,15 @@ export const AdminSectionsScreen = () => {
         data={sections}
         renderItem={renderItem}
         keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
         onDragEnd={({ data }) => void reorder(data)}
         ListEmptyComponent={<EmptyState message='Разделов пока нет' />}
         ListHeaderComponent={
           <AdminSectionsHeader count={sections.length} onCreate={() => router.push(CREATE_ROUTE)} />
         }
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
+        ]}
         ListFooterComponent={
           isReordering ? (
             <View style={styles.reordering}>

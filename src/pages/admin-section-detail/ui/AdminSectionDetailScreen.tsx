@@ -1,6 +1,6 @@
 import { useAction } from '@reatom/npm-react'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -26,6 +26,8 @@ export const AdminSectionDetailScreen = () => {
   const { isDeleting, isNotFound, playlists, remove, reorder, section } = useAdminSectionDetail(id)
   const showToastAction = useAction(showToast)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  // Memoized so expo-router's setOptions does not see a fresh object each render.
+  const headerOptions = useMemo(() => ({ title: section?.title ?? '' }), [section?.title])
 
   const handleDelete = async () => {
     setIsDeleteOpen(false)
@@ -63,7 +65,7 @@ export const AdminSectionDetailScreen = () => {
       edges={['bottom']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
-      <Stack.Screen options={{ title: section.title }} />
+      <Stack.Screen options={headerOptions} />
       <DraggableFlatList
         data={playlists}
         renderItem={renderItem}
