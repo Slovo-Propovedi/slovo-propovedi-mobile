@@ -1,0 +1,84 @@
+import { fireEvent, waitFor } from '@testing-library/react-native'
+import { playlistsMocks, sectionsMocks } from 'shared/api/generated'
+import { renderWithProviders } from 'shared/mocks'
+import { SectionForm } from './SectionForm'
+
+const mockCreate = jest.fn()
+const mockUpdate = jest.fn()
+const mockPlaylistFindAll = jest.fn()
+
+jest.mock('shared/api', () => ({
+  playlistsApi: {
+    getPlaylists: () => ({ playlistControllerFindAll: mockPlaylistFindAll }),
+  },
+  sectionsApi: {
+    getSections: () => ({
+      sectionControllerCreate: mockCreate,
+      sectionControllerUpdate: mockUpdate,
+    }),
+  },
+}))
+
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
+}))
+
+describe('<SectionForm>', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockCreate.mockResolvedValue({})
+    mockUpdate.mockResolvedValue({})
+    mockPlaylistFindAll.mockResolvedValue(playlistsMocks.getPlaylistControllerFindAllResponseMock())
+  })
+
+  test('renders the main and appearance fields', async () => {
+    const { getByLabelText, getByText } = await renderWithProviders(<SectionForm mode='create' />)
+
+    expect(getByLabelText('Название')).toBeTruthy()
+    expect(getByLabelText('Описание')).toBeTruthy()
+    expect(getByText('Размер карточек')).toBeTruthy()
+    expect(getByText('Высота карточек')).toBeTruthy()
+    expect(getByText('Расположение заголовка')).toBeTruthy()
+    expect(getByText('Строк')).toBeTruthy()
+    expect(getByText('Крупный заголовок описания на слайде')).toBeTruthy()
+    expect(getByText('Скруглённые углы карточек')).toBeTruthy()
+  })
+
+  test('create submits the built dto', async () => {
+    const { getByLabelText, getByRole } = await renderWithProviders(<SectionForm mode='create' />)
+
+    fireEvent.changeText(getByLabelText('Название'), '  Новый раздел  ')
+    await waitFor(() => expect(getByRole('button', { name: 'Создать' })).toBeEnabled())
+    fireEvent.press(getByRole('button', { name: 'Создать' }))
+
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1))
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ description: null, title: 'Новый раздел' }),
+    )
+  })
+
+  test('edit submits playlistsIds from the initial section', async () => {
+    const initial = sectionsMocks.getSectionControllerFindOneResponseMock({ title: 'Раздел' })
+    const playlistIds = initial.playlists.map(playlist => playlist.id)
+
+    const { getByText } = await renderWithProviders(
+      <SectionForm mode='edit' id='section-1' initial={initial} />,
+    )
+
+    fireEvent.press(getByText('Сохранить'))
+
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1))
+    expect(mockUpdate).toHaveBeenCalledWith(
+      'section-1',
+      expect.objectContaining({ playlistsIds: playlistIds }),
+    )
+  })
+
+  test('does not submit an empty title', async () => {
+    const { getByRole } = await renderWithProviders(<SectionForm mode='create' />)
+
+    fireEvent.press(getByRole('button', { name: 'Создать' }))
+
+    expect(mockCreate).not.toHaveBeenCalled()
+  })
+})

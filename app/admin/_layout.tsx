@@ -5,6 +5,7 @@ import { ActivityIndicator, type ColorValue, StyleSheet, View } from 'react-nati
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { COLORS, useTheme } from 'shared/ui/theme'
+import { useSectionScreens } from './_useSectionScreens'
 
 const LOGIN_ROUTE = '/admin/login'
 const ADMIN_FALLBACK_ROUTE: Href = '/settings'
@@ -22,6 +23,7 @@ const AdminLayout = () => {
   const [status] = useAtom(authStatusAtom)
   const [user] = useAtom(authUserAtom)
   const { currentTheme } = useTheme()
+  const sectionScreens = useSectionScreens()
 
   // Стабильный объект options для экрана входа: держим идентичность между
   // рендерами, чтобы expo-router не переустанавливал опции на каждый кадр.
@@ -70,6 +72,7 @@ const AdminLayout = () => {
     >
       <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
       <Stack.Screen name='login' options={loginOptions} />
+      {sectionScreens}
     </Stack>
   )
 }
