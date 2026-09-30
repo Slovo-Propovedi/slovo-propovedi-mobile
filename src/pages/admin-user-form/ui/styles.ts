@@ -22,6 +22,9 @@ export const styles = StyleSheet.create({
     padding: INDENTS.medium,
     paddingBottom: INDENTS.highest,
   },
+  formGroup: {
+    marginTop: INDENTS.highest,
+  },
   saveButton: {
     alignItems: 'center',
     borderRadius: RADIUSES.low,

@@ -36,48 +36,52 @@ export const UserFormFields = ({
 
   return (
     <View>
-      <Text style={[styles.title, { color: currentTheme.text }]}>
-        {isEdit ? TITLE_EDIT : TITLE_CREATE}
-      </Text>
-      <Text style={[styles.subtitle, { color: currentTheme.textMuted }]}>
-        {isEdit ? SUBTITLE_EDIT : SUBTITLE_CREATE}
-      </Text>
-      <FormField
-        label='Имя'
-        value={values.name}
-        placeholder='Например: Иван Петров'
-        onChangeText={text => onChange('name', text)}
-      />
-      <FormField
-        label='Email'
-        value={values.email}
-        keyboardType='email-address'
-        placeholder='admin@example.com'
-        onChangeText={text => onChange('email', text)}
-      />
-      <FormField
-        label='Логин'
-        hint={LOGIN_HINT}
-        value={values.username}
-        placeholder='Логин для входа в систему'
-        onChangeText={text => onChange('username', text)}
-      />
-      <SelectField
-        label='Роль'
-        value={values.role}
-        options={ROLE_OPTIONS}
-        onChange={value => onChange('role', value)}
-      />
-      {isEdit ? null : (
+      <View>
+        <Text style={[styles.title, { color: currentTheme.text }]}>
+          {isEdit ? TITLE_EDIT : TITLE_CREATE}
+        </Text>
+        <Text style={[styles.subtitle, { color: currentTheme.textMuted }]}>
+          {isEdit ? SUBTITLE_EDIT : SUBTITLE_CREATE}
+        </Text>
+      </View>
+      <View style={styles.formGroup}>
         <FormField
-          label='Пароль'
-          secureTextEntry
-          hint={PASSWORD_HINT}
-          placeholder='Пароль'
-          value={values.password}
-          onChangeText={text => onChange('password', text)}
+          label='Имя'
+          value={values.name}
+          placeholder='Например: Иван Петров'
+          onChangeText={text => onChange('name', text)}
         />
-      )}
+        <FormField
+          label='Email'
+          value={values.email}
+          keyboardType='email-address'
+          placeholder='admin@example.com'
+          onChangeText={text => onChange('email', text)}
+        />
+        <FormField
+          label='Логин'
+          hint={LOGIN_HINT}
+          value={values.username}
+          placeholder='Логин для входа в систему'
+          onChangeText={text => onChange('username', text)}
+        />
+        <SelectField
+          label='Роль'
+          value={values.role}
+          options={ROLE_OPTIONS}
+          onChange={value => onChange('role', value)}
+        />
+        {isEdit ? null : (
+          <FormField
+            label='Пароль'
+            secureTextEntry
+            hint={PASSWORD_HINT}
+            placeholder='Пароль'
+            value={values.password}
+            onChangeText={text => onChange('password', text)}
+          />
+        )}
+      </View>
     </View>
   )
 }

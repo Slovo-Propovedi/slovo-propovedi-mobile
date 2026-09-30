@@ -3,9 +3,9 @@ import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
   // Группа верхнего уровня (Основное/Писание/Медиа/Плейлисты): крупный отступ
-  // между группами против малого отступа «заголовок → поля» внутри группы.
+  // между группами (INDENTS.highest) против малого отступа «заголовок → поля».
   block: {
-    marginTop: INDENTS.high,
+    marginTop: INDENTS.highest,
   },
   blockTitle: {
     fontSize: FONT_SIZES.lg,
@@ -34,7 +34,7 @@ export const styles = StyleSheet.create({
     paddingBottom: INDENTS.highest,
   },
   group: {
-    marginTop: INDENTS.high,
+    marginTop: INDENTS.highest,
   },
   rangeField: {
     flex: 1,

@@ -45,18 +45,18 @@ export const PlaylistForm = ({
       <CoverPicker value={values.artwork} onChange={value => onChange('artwork', value)} />
 
       <View style={styles.block}>
-        <Text style={[styles.blockTitle, { color: currentTheme.text }]}>Проповеди</Text>
-        <SermonPicker
-          selectedIds={values.selectedSermonIds}
-          onToggle={id => onChange('selectedSermonIds', toggleId(values.selectedSermonIds, id))}
-        />
-      </View>
-
-      <View style={styles.block}>
         <Text style={[styles.blockTitle, { color: currentTheme.text }]}>Разделы</Text>
         <SectionPicker
           selectedIds={values.selectedSectionIds}
           onToggle={id => onChange('selectedSectionIds', toggleId(values.selectedSectionIds, id))}
+        />
+      </View>
+
+      <View style={styles.block}>
+        <Text style={[styles.blockTitle, { color: currentTheme.text }]}>Проповеди</Text>
+        <SermonPicker
+          selectedIds={values.selectedSermonIds}
+          onToggle={id => onChange('selectedSermonIds', toggleId(values.selectedSermonIds, id))}
         />
       </View>
     </ScrollView>

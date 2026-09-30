@@ -3,7 +3,7 @@ import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
   // Заголовок группы: малый отступ до полей внутри группы против крупного
-  // отступа между группами (см. `playlistsBlock`).
+  // отступа между группами (INDENTS.highest, см. `playlistsBlock`).
   blockTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: '700',
@@ -46,6 +46,6 @@ export const styles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   playlistsBlock: {
-    marginTop: INDENTS.high,
+    marginTop: INDENTS.highest,
   },
 })

@@ -40,7 +40,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: INDENTS.medium,
   },
   libraryButtonLabel: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.base,
   },
   libraryHeader: {
     alignItems: 'center',
