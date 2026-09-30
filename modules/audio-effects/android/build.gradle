@@ -29,4 +29,6 @@ dependencies {
   def androidxMedia3Version = "1.9.0"
   implementation "androidx.media3:media3-common:$androidxMedia3Version"
   implementation "androidx.media3:media3-exoplayer:$androidxMedia3Version"
+
+  testImplementation "junit:junit:4.13.2"
 }
