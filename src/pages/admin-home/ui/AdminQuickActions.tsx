@@ -20,10 +20,10 @@ export const AdminQuickActions = () => {
   return (
     <>
       <TouchableItem
-        onPress={() => {
-          router.push('/admin/upload')
-        }}
         style={[styles.actionRow, { backgroundColor: currentTheme.surface }]}
+        onPress={() => {
+          router.push('/admin/sermons/create')
+        }}
       >
         <Ionicons size={22} name='cloud-upload-outline' color={currentTheme.primary} />
         <Text style={[styles.actionLabel, { color: currentTheme.text }]}>Загрузить проповедь</Text>

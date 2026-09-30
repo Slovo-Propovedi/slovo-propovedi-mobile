@@ -73,6 +73,18 @@ describe('<HeaderBackButton>', () => {
     expect(mockRouter.replace).toHaveBeenCalledWith('/settings')
   })
 
+  test('runs the custom onPress instead of the router when provided', async () => {
+    const onPress = jest.fn()
+    mockRouter.canGoBack.mockReturnValue(true)
+    const { getByRole } = await render(<HeaderBackButton onPress={onPress} />)
+
+    await fireEvent.press(getByRole('button', { name: 'Назад' }))
+
+    expect(onPress).toHaveBeenCalledTimes(1)
+    expect(mockRouter.back).not.toHaveBeenCalled()
+    expect(mockRouter.replace).not.toHaveBeenCalled()
+  })
+
   test('passes tintColor through to the icon', async () => {
     await render(<HeaderBackButton tintColor='#f16031' />)
 

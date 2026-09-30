@@ -14,7 +14,7 @@
 
 - `AdminHomeHeader` — «Интерфейс администратора», имя пользователя (muted) и `IconButton` «Вернуться в приложение» (`log-out-outline` → `/listen`).
 - Три карточки `AdminStatCard`: «Разделы», «Плейлисты», «Проповеди» со счётчиками; каждая ведёт в свой таб (`/admin/sections`, `/admin/playlists`, `/admin/sermons`).
-- Блок «Быстрые действия» (`AdminQuickActions`): «Загрузить проповедь» → `/admin/upload`, «Выйти из аккаунта» (`signOut` → `/listen`).
+- Блок «Быстрые действия» (`AdminQuickActions`): «Загрузить проповедь» → `/admin/sermons/create`, «Выйти из аккаунта» (`signOut` → `/listen`).
 
 ## Откуда данные
 
@@ -24,7 +24,7 @@
 
 ## Куда можно перейти
 
-- `/admin/sections`, `/admin/playlists`, `/admin/sermons`, `/admin/upload` — табы админки.
+- `/admin/sections`, `/admin/playlists`, `/admin/sermons` — табы админки.
 - `/listen` — кнопка «Вернуться в приложение» и выход из аккаунта.
 
 ## Состояния

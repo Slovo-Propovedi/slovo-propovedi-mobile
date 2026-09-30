@@ -3,7 +3,7 @@
 **Маршруты:**
 
 - `/admin/sermons` — список проповедей с поиском, сортировкой и пагинацией (таб `app/admin/(tabs)/sermons.tsx` → `pages/admin-sermons`)
-- `/admin/sermons/create` — создание проповеди (`app/admin/sermons/create.tsx` → `pages/admin-sermon-form`); сюда же редиректит таб «Загрузить» (`app/admin/(tabs)/upload.tsx`)
+- `/admin/sermons/create` — создание проповеди (`app/admin/sermons/create.tsx` → `pages/admin-sermon-form`); открывается кнопкой «Загрузить проповедь» в шапке списка и быстрым действием на главной админки
 - `/admin/sermons/[id]` — деталь проповеди (`app/admin/sermons/[id].tsx` → `pages/admin-sermon-detail`)
 - `/admin/sermons/[id]/edit` — редактирование проповеди (`app/admin/sermons/[id]/edit.tsx` → `pages/admin-sermon-form`)
 
@@ -50,7 +50,7 @@
 
 ## Связанные документы
 
-- [../features/admin.md](../features/admin.md) — домен проповеди, нотация Писания, автодополнение, загрузка файлов, редирект таба «Загрузить»
+- [../features/admin.md](../features/admin.md) — домен проповеди, нотация Писания, автодополнение, загрузка файлов, точки входа создания
 - [../contracts/rest-api.md](../contracts/rest-api.md) — sermon-эндпоинты
 - [admin-playlists.md](./admin-playlists.md) — плейлисты (обратная сторона связи)
 - [README.md](./README.md) — индекс screens

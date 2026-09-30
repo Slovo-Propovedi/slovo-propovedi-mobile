@@ -16,7 +16,6 @@ const AdminTabsLayout = () => {
         <Tabs.Screen name='sections' options={{ title: 'Разделы' }} />
         <Tabs.Screen name='playlists' options={{ title: 'Плейлисты' }} />
         <Tabs.Screen name='sermons' options={{ title: 'Проповеди' }} />
-        <Tabs.Screen name='upload' options={{ title: 'Загрузить' }} />
         <Tabs.Screen name='media' options={{ title: 'Медиа' }} />
         <Tabs.Screen
           name='users'

@@ -1,6 +1,6 @@
 # Интерфейс администратора (admin)
 
-Зона `/admin` — отдельный стек внутри приложения (см. [navigation.md](./navigation.md) и [`../architecture.md`](../architecture.md)). Доступ — после входа в `/admin/login`; аутентификация — `entities/auth` (JWT в `expo-secure-store`). Табы: «Главная», «Разделы», «Плейлисты», «Проповеди», «Загрузить», «Медиа», «Пользователи» (последний — только для роли admin).
+Зона `/admin` — отдельный стек внутри приложения (см. [navigation.md](./navigation.md) и [`../architecture.md`](../architecture.md)). Доступ — после входа в `/admin/login`; аутентификация — `entities/auth` (JWT в `expo-secure-store`). Табы: «Главная», «Разделы», «Плейлисты», «Проповеди», «Медиа», «Пользователи» (последний — только для роли admin).
 
 Экраны админки оперируют **generated-типами** (`APITypes.*` из `shared/api`), а не доменными `SectionData`/`PlaylistData`: CRUD-формы работают с сущностями API напрямую.
 
@@ -45,6 +45,7 @@
 - **Детали (раздел/плейлист/проповедь/пользователь)** — действие «Редактировать» вынесено из тела страницы в шапку (`headerRight`, иконка `create-outline`, `accessibilityLabel='Редактировать'`) через `useAdminDetailHeader`; в теле остаются только удаление/смена пароля.
 - **URL-поля форм** — поле ввода ссылки (`EditableUrlField` из `shared/ui/form`) показывает значение read-only текстом с встроенной кнопкой-карандашом; тап переводит в режим ввода, blur/галочка возвращают read-only. Используется для YouTube, URL обложки и URL файлов аудио/текста.
 - **Плейсхолдеры и фокус полей** — общие примитивы `shared/ui/form` (`FormField`, `EditableUrlField`) красят `placeholderTextColor` в `currentTheme.placeholder` (тусклее `textMuted`, чтобы подсказка не читалась как значение) и дают сфокусированному `TextInput` рамку `currentTheme.primary` (`borderWidth: 2`, радиус из `RADIUSES.low`); в покое — прежняя тонкая рамка `textMuted`. Инлайн-рамка обязательна, т.к. цвета темы нельзя захватывать в `StyleSheet.create`.
+- **Обязательные поля: звёздочка + inline-подсветка.** Примитивы `shared/ui/form` (`FormField`, `SelectField`, `FormGroupTitle`) принимают `required` и рисуют красную звёздочку (`RequiredAsterisk`, `COLORS.error`) после подписи. Контроллеры форм отслеживают тронутые поля через общий `useFormTouched` (`shared/lib/hooks/useFormTouched`: `markTouched` на `onBlur`, `markAllTouched` при отправке) и красят пустое тронутое обязательное поле красной рамкой (`invalid`, цвет `COLORS.error`, `borderWidth: 2`) — до попытки отправки. Обязательные поля: раздел/плейлист — «Название»; проповедь — «Название», «Проповедник»; пользователь — «Имя», «Email», «Логин», «Пароль» (пароль только в create). Невалидную отправку по-прежнему блокирует валидация в контроллере с тостом — подсветка лишь дублирует её визуально.
 - **Keyboard-avoidance форм** — тело каждой формы (раздел/плейлист/проповедь/пользователь) скроллится через общий `FormScrollView` (`shared/ui/form`): на iOS это `KeyboardAvoidingView` (`behavior='padding'`, `keyboardVerticalOffset = safe-area.top + высота шапки стека`), на Android — обычный `ScrollView`. Отдельный Android-KAV не нужен: `MainActivity` объявлена с `windowSoftInputMode=adjustResize` (манифест из Expo prebuild), поэтому контент сам поднимается над клавиатурой. Кнопка «Сохранить» живёт в шапке (`headerRight`) и остаётся доступной при поднятой клавиатуре.
 
 ## Проповеди (sermons)
@@ -71,9 +72,9 @@
 
 `CoverPicker` виджета умеет и ручной URL (`EditableUrlField`), и галерею библиотеки, и прямую загрузку изображения (`appControllerUploadFile` с прогрессом) — им пользуются и форма проповеди, и форма плейлиста. Кнопки «Выбрать из библиотеки» и «Загрузить …» стоят в одну строку; у «Выбрать из библиотеки» слева иконка `Ionicons albums-outline`, у «Загрузить …» — `cloud-upload-outline` (цвет обложки — `currentTheme.primary` / `COLORS.white`, размер 20). Галерея выбора — общий `FileLibraryModal` (`widgets/admin-form-pickers`): заголовок + кнопка «Закрыть» (X), safe-area отступы, закрытие по фону/системному «назад» Android (общий `shared/ui/modal`).
 
-### Редирект таба «Загрузить»
+### Создание проповеди
 
-Таб «Загрузить» (`app/admin/(tabs)/upload.tsx`) — короткий путь к форме: `<Redirect href='/admin/sermons/create' />`. Отдельного экрана загрузки нет; стандартный сценарий — форма создания проповеди с встроенными загрузками.
+Отдельного экрана/таба загрузки нет: проповедь создаётся формой `/admin/sermons/create`. Точки входа — кнопка «Загрузить проповедь» в шапке списка проповедей (`AdminSermonsHeader` → `router.push('/admin/sermons/create')`) и быстрое действие «Загрузить проповедь» на главной админки (`AdminQuickActions`). «Назад» из формы возвращается на предыдущий админ-экран (`router.back()` при наличии истории), а при её отсутствии (web-reload, deep link) — `router.replace('/admin/sermons')` (`fallbackRoute` у `useAdminFormHeader`).
 
 ## Медиа (media)
 
@@ -99,7 +100,7 @@
 
 ## Реализованные / нереализованные разделы
 
-Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)), «Проповеди» ([admin-sermons.md](../screens/admin-sermons.md)), «Медиа» ([admin-media.md](../screens/admin-media.md)), «Пользователи» ([admin-users.md](../screens/admin-users.md)) — только для роли admin, а также таб «Загрузить» (редирект на создание проповеди).
+Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)), «Проповеди» ([admin-sermons.md](../screens/admin-sermons.md)), «Медиа» ([admin-media.md](../screens/admin-media.md)), «Пользователи» ([admin-users.md](../screens/admin-users.md)) — только для роли admin, Создание проповеди доступно из шапки списка проповедей и быстрых действий главной (см. «Создание проповеди»).
 
 ## Связанные документы
 

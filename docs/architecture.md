@@ -143,9 +143,9 @@ app/
 Отдельная зона вне публичных табов: `app/admin/` — собственный `Stack` (`app/admin/_layout.tsx`), который при входе однократно вызывает `restoreSession` (`entities/auth`), показывает индикатор загрузки, редиректит неаутентифицированных на `/admin/login`, а аутентифицированных с `/admin/login` — на `/admin`.
 
 - `app/admin/login.tsx` → `pages/admin-login` (вход, `signIn`).
-- `app/admin/(tabs)/` → `Tabs` с тем же `CustomTabBar` (`widgets/tab-bar`), что и основные табы: вкладки `index` (Главная), `sections`, `playlists`, `sermons`, `upload`, `media`, `users`. Таб `users` скрыт (`href: null`) для роли не-`admin`.
+- `app/admin/(tabs)/` → `Tabs` с тем же `CustomTabBar` (`widgets/tab-bar`), что и основные табы: вкладки `index` (Главная), `sections`, `playlists`, `sermons`, `media`, `users`. Таб `users` скрыт (`href: null`) для роли не-`admin`.
 - `pages/admin-home` — главная админки (счётчики сущностей через generated API, быстрые действия).
-- `pages/admin-sections` / `admin-playlists` / `admin-sermons` / `admin-upload` / `admin-media` / `admin-users` — отдельные слайсы-заглушки разделов CRUD («Раздел в разработке»), каждый со своим экраном (см. [`debt.md`](./debt.md)). `AdminUsersScreen` дополнительно вызывает `useRequireAdminRole` (`entities/auth`).
+- `pages/admin-sections` / `admin-playlists` / `admin-sermons` / `admin-media` / `admin-users` — отдельные слайсы разделов CRUD, каждый со своим экраном (см. [`debt.md`](./debt.md)). `AdminUsersScreen` дополнительно вызывает `useRequireAdminRole` (`entities/auth`).
 
 `CustomTabBar` обобщён: подписи берутся из `getTabLabel` (`widgets/tab-bar/ui/tabLabels.ts`), иконки — из `TabIcon`, поэтому один и тот же виджет обслуживает и публичные табы, и админские (поведение публичных табов не изменилось).
 
@@ -222,7 +222,7 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
 │ pages/    listen  playlist  playlist-list  read  study      │
 │           more  settings  about  book-reader  books-list    │
 │           admin-login  admin-home  admin-sections            │
-│           admin-playlists  admin-sermons  admin-upload        │
+│           admin-playlists  admin-sermons                      │
 │           admin-media  admin-users                            │
 ├────────────────────────────────────────────────────────────┤
 │ widgets/  expandable-player  tab-bar  network-status        │

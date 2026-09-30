@@ -1,10 +1,9 @@
-import { type Href, Stack } from 'expo-router'
+import { Stack } from 'expo-router'
 import { useMemo } from 'react'
 import { type ColorValue } from 'react-native'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { useTheme } from 'shared/ui/theme'
-
-const SERMONS_FALLBACK_ROUTE: Href = '/admin/sermons'
+import { goBackToAdmin } from './goBackToAdmin'
 
 const SERMON_SCREENS = [
   { name: 'sermons/create', title: 'Загрузить проповедь' },
@@ -16,7 +15,7 @@ const SERMON_SCREENS = [
 // при каждом изменении. Свежая inline-функция на каждый рендер делает options
 // «изменёнными» → setState → re-render → setState («Maximum update depth exceeded»).
 const renderSermonsBack = (props: { tintColor?: ColorValue }) => (
-  <HeaderBackButton tintColor={props.tintColor} fallbackRoute={SERMONS_FALLBACK_ROUTE} />
+  <HeaderBackButton onPress={goBackToAdmin} tintColor={props.tintColor} />
 )
 
 /**
