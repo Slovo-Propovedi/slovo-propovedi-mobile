@@ -31,6 +31,7 @@ const config: Config = {
     './__mocks__/expo-constants.js',
     './__mocks__/expo-haptics.js',
     './__mocks__/expo-image.js',
+    './__mocks__/expo-secure-store.js',
     './__mocks__/react-native-gesture-handler.js',
     './__mocks__/react-native-reanimated.js',
     './__mocks__/react-native-worklets.js',
