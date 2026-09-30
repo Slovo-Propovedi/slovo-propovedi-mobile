@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { INDENTS, isMaterialYouSupported, useTheme } from 'shared/ui/theme'
+import { AdminAccountItem } from './AdminAccountItem'
 import { DynamicColorsItem } from './DynamicColorsItem'
 import { HapticsSettingsItem } from './HapticsSettingsItem'
 import { ServerUrlSettings } from './ServerUrlSettings'
@@ -14,6 +15,7 @@ export const SettingsScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
+        <AdminAccountItem />
         <SettingsItem
           title='Тема оформления'
           icon='color-palette-outline'

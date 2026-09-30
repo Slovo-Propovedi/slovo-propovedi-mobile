@@ -3,6 +3,7 @@ import { ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { APP_NAME, APP_VERSION } from 'shared/config'
 import { useTheme } from 'shared/ui/theme'
+import { AdminPanelButton } from './AdminPanelButton'
 import { MoreMenuSettingsItem } from './MoreMenuSettingsItem'
 import { styles } from './styles'
 
@@ -20,6 +21,8 @@ export const MoreScreen = () => {
         <Text style={[styles.appDescription, { color: currentTheme.textMuted }]}>
           Приложение для прослушивания и чтения проповедей
         </Text>
+
+        <AdminPanelButton />
 
         <View style={styles.menu}>
           <MoreMenuSettingsItem

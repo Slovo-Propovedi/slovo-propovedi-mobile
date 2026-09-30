@@ -3,6 +3,7 @@ import { renderWithProviders } from 'shared/mocks'
 import { MoreScreen } from './MoreScreen'
 
 const mockPush = jest.fn()
+const mockOpenAdminInterface = jest.fn()
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({
@@ -10,13 +11,19 @@ jest.mock('expo-router', () => ({
   }),
 }))
 
+jest.mock('entities/auth', () => ({
+  useAdminEntry: () => ({ openAdminInterface: mockOpenAdminInterface }),
+}))
+
 jest.mock('shared/ui/theme', () => ({
-  COLORS: { disabled: '#ccc' },
+  COLORS: { disabled: '#ccc', white: '#fff' },
   FONT_SIZES: { base: 16, lg: 20, sm: 12 },
   INDENTS: { high: 16, low: 8, medium: 12 },
+  RADIUSES: { middle: 12 },
   useTheme: () => ({
     currentTheme: {
       background: '#ffffff',
+      primary: '#f16031',
       surface: '#f5f5f5',
       text: '#000000',
       textMuted: '#999999',
@@ -32,6 +39,7 @@ jest.mock('shared/config', () => ({
 describe('<MoreScreen>', () => {
   beforeEach(() => {
     mockPush.mockClear()
+    mockOpenAdminInterface.mockClear()
   })
 
   test('renders app name, version and description in the header', async () => {
@@ -39,6 +47,17 @@ describe('<MoreScreen>', () => {
     expect(getByText('TestApp')).toBeTruthy()
     expect(getByText('v1.0.0')).toBeTruthy()
     expect(getByText('Приложение для прослушивания и чтения проповедей')).toBeTruthy()
+  })
+
+  test('renders the admin panel entry button', async () => {
+    const { getByText } = await renderWithProviders(<MoreScreen />)
+    expect(getByText('В админ панель')).toBeTruthy()
+  })
+
+  test('admin panel button opens the admin entry flow on press', async () => {
+    const { getByText } = await renderWithProviders(<MoreScreen />)
+    await fireEvent.press(getByText('В админ панель'))
+    expect(mockOpenAdminInterface).toHaveBeenCalledTimes(1)
   })
 
   test('renders offline menu item', async () => {
