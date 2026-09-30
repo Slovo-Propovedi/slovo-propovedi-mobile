@@ -4,6 +4,8 @@ import { renderWithProviders } from 'shared/mocks'
 import { SettingsScreen } from './SettingsScreen'
 
 const THEME_SETTINGS_TITLE = 'Тема оформления'
+const SERVER_URL_TITLE = 'URL сервера API'
+const ADMIN_ENTRY_TITLE = 'Войти в аккаунт администратора'
 
 describe('<SettingsScreen>', () => {
   test('renders the theme settings item', async () => {
@@ -19,7 +21,7 @@ describe('<SettingsScreen>', () => {
 
     const { getByText } = await renderWithProviders(<SettingsScreen />, { ctx })
 
-    expect(getByText('URL сервера API')).toBeTruthy()
+    expect(getByText(SERVER_URL_TITLE)).toBeTruthy()
   })
 
   test('theme settings item opens the theme dialog', async () => {
@@ -31,5 +33,13 @@ describe('<SettingsScreen>', () => {
     expect(getByText('Светлая')).toBeTruthy()
     expect(getByText('Тёмная')).toBeTruthy()
     expect(getByText('Как в системе')).toBeTruthy()
+  })
+
+  test('does not render the admin entry on the screen body', async () => {
+    const ctx = createCtx()
+
+    const { queryByText } = await renderWithProviders(<SettingsScreen />, { ctx })
+
+    expect(queryByText(ADMIN_ENTRY_TITLE)).toBeNull()
   })
 })

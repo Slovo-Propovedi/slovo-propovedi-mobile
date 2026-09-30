@@ -40,6 +40,16 @@ stack: CodedError ← applyMetadata ← anonymous (setInterval retry callback)
 - **Ошибки:** failure-статусы (`STATUS_FAILURE*`) реджектят промис с описанием; `STATUS_PENDING_USER_ACTION` запускает системный диалог подтверждения без резолва.
 - **Разрешение:** `canRequestPackageInstalls()` / `openInstallPermissionSettings()` — проверка и открытие системного экрана «Разрешить установку из этого источника».
 
+## expo-secure-store контракт
+
+`src/shared/api/secureTokenStorage.native.ts` — JWT-токены и кэш профиля администратора.
+
+- **Ключи:** SecureStore допускает только `[A-Za-z0-9._-]`, поэтому legacy-ключи `@access_token`/`@refresh_token` не переиспользуются — новые ключи `slovo_access_token`/`slovo_refresh_token`/`slovo_auth_user` (`secureTokenStorageShared.ts`).
+- **`keychainService` фиксирован** (`SECURE_STORE_SERVICE = ru.slovopropovedi.auth`): Android маппит его на отдельный SharedPreferences-файл; изменение сервиса «теряет» уже записанные данные.
+- **Валидация на чтении:** значения из хранилища считаются untrusted (переживают апдейты и записывались старыми версиями). Токены проходят `toValidToken` (пустое/нестроковое → `null`), кэш профиля — zod `safeParse`; невалидное трактуется как отсутствующее.
+- **Миграция:** старые токены из AsyncStorage переносятся в SecureStore при первом чтении (и удаляются из AsyncStorage).
+- **Web:** SecureStore на web недоступен. `secureTokenStorage.web.ts` шифрует значения AES-GCM через WebCrypto (`crypto.subtle`), используя **неизвлекаемый** `CryptoKey` (сгенерирован с `extractable: false`), который хранится в IndexedDB (structured clone поддерживает `CryptoKey`); на диск попадает только шифротекст. При недоступности WebCrypto или IndexedDB хранилище деградирует до in-memory — открытый текст в localStorage не пишется. Примитивы — `webEncryption.ts`, индекс-хранилище — `webSecureStore.ts`. Generic-фолбэк — `secureTokenStorage.ts` (AsyncStorage, используется тулингом/type-check); `secureTokenStorageShared.ts` не импортирует нативные модули, чтобы фолбэк не тянул `expo-secure-store` на web.
+
 ## Общие правила границы JS→native (чек-лист)
 
 1. **Валидация на JS-границе.** Любое значение, уходящее в нативный модуль, проверяется до вызова. Для URI — `hasUriProtocol` (`src/shared/lib/app-icon.ts`); паттерн тот же, что в LockScreenControls.

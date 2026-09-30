@@ -1,64 +1,29 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAction } from '@reatom/npm-react'
 import { BlurView } from 'expo-blur'
-import { Color, type Tabs } from 'expo-router'
-import { Platform, View } from 'react-native'
+import { type Tabs } from 'expo-router'
+import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { setTabBarHeight } from 'shared/ui/layout'
-import { dynamicColorsEnabledAtom, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
-import { TabIndicator } from './TabIndicator'
-import { useTabIndicator } from './useTabIndicator'
 import { isUnavailableTabRoute, useTabPress } from './useTabPress'
-
-const ROUTES = [
-  { key: 'listen', name: 'Слушать' },
-  { key: 'read', name: 'Читать' },
-  { key: 'study', name: 'Учиться' },
-  { key: 'more', name: 'Еще' },
-]
 
 // Минимальный отступ снизу — зона жестов; на 3-кнопочной навигации берётся высота навбара
 // из safe-area insets (Issue #56)
 const MIN_TAB_BAR_BOTTOM_PADDING = 30
 
 interface CustomTabBarProps extends TabBarProps {
-  currentIndex: number
   hideFloatingPlayer?: boolean
-  setCurrentIndex: (index: number) => void
-  setTabLayout: (key: string, layout: { width: number; x: number }) => void
-  tabLayouts: Record<string, { width: number; x: number }>
 }
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0]
 
-export const CustomTabBar = ({
-  currentIndex,
-  hideFloatingPlayer: _,
-  navigation,
-  setCurrentIndex,
-  setTabLayout,
-  state,
-  tabLayouts,
-}: CustomTabBarProps) => {
-  const [dynamicEnabled] = useAtom(dynamicColorsEnabledAtom)
+export const CustomTabBar = ({ hideFloatingPlayer: _, navigation, state }: CustomTabBarProps) => {
   const setMeasuredTabBarHeight = useAction(setTabBarHeight)
-  const currentKey = ROUTES[currentIndex]?.key
   const { bottom } = useSafeAreaInsets()
   const { isLight } = useTheme()
-  const { handleTabPress } = useTabPress({
-    navigation,
-    setCurrentIndex,
-  })
-  const indicatorColor =
-    dynamicEnabled && Platform.OS === 'android'
-      ? Color.android.dynamic.primaryContainer
-      : 'rgba(241, 96, 49, 0.15)'
-  const { indicatorOpacity, indicatorPosition, indicatorWidth } = useTabIndicator(
-    currentIndex,
-    tabLayouts,
-    currentKey,
-  )
+  const { handleTabPress } = useTabPress({ navigation })
 
   return (
     <View style={styles.floatingContainer}>
@@ -77,12 +42,6 @@ export const CustomTabBar = ({
         <View
           style={[styles.tabBar, { paddingBottom: Math.max(bottom, MIN_TAB_BAR_BOTTOM_PADDING) }]}
         >
-          <TabIndicator
-            color={indicatorColor}
-            width={indicatorWidth}
-            opacity={indicatorOpacity}
-            position={indicatorPosition}
-          />
           {state.routes.map((route, index: number) => {
             const isActive = index === state.index
 
@@ -93,8 +52,7 @@ export const CustomTabBar = ({
                 routeKey={route.key}
                 routeName={route.name}
                 isDisabled={isUnavailableTabRoute(route.name)}
-                onLayout={layout => setTabLayout(route.key, layout)}
-                onPress={() => handleTabPress(route, index, isActive)}
+                onPress={() => handleTabPress(route, isActive)}
               />
             )
           })}

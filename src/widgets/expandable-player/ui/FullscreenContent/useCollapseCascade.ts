@@ -18,7 +18,7 @@ interface UseCollapseCascadeResult {
 
 /**
  * Collapse/Escape cascade for the fullscreen player layers, topmost first —
- * mirrors the hardware-back order in app/_useHardwareBackCascade.ts
+ * mirrors the hardware-back order in widgets/expandable-player/lib/useHardwareBackCascade.ts
  * (details → menu → sound settings → playlist → collapse): one call closes
  * exactly one layer, so web Escape never leaps straight to collapse.
  */

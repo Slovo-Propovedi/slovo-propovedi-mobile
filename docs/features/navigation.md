@@ -89,6 +89,17 @@
 
 Дополнительно приложение подстраховывает **холодный старт на Android**: expo-router может потерять launch-ссылку в гонке 150 мс и оставить приложение на `/listen` — хук `useColdStartLinkRecovery` (`src/shared/routing/`, вызов из `_RootLayout.tsx`) через ~1 с повторно читает launch intent и восстанавливает переход; корректно обработанные ссылки, ручная навигация и iOS не затрагиваются. Подробности — [deep-links.md](./deep-links.md) → «Android: гонка 150 мс при холодном старте».
 
+## Зона администратора `/admin`
+
+Отдельный маршрут вне публичных табов (объявлен в корневом стеке как `admin` с `headerShown: false`):
+
+- `app/admin/_layout.tsx` — `Stack` зоны: при монтировании однократно вызывает `restoreSession` (`entities/auth`) и показывает `ActivityIndicator`, пока сессия не разрешена (`idle`, а на защищённых маршрутах также `loading`); редиректит неаутентифицированных на `/admin/login` (кроме самого login). Аутентифицированного пользователя на `/admin/login` в `/admin` не уводит — после успешного входа возвращаемся на «Еще». Шапка есть только у `login` (`HeaderBackButton`, фолбэк `/settings`).
+- `app/admin/login.tsx` → `AdminLoginScreen` (`pages/admin-login`).
+- `app/admin/(tabs)/_layout.tsx` — `Tabs` с `headerShown: false` и тем же `CustomTabBar`, что и публичные табы: `index` (Главная), `sections`, `playlists`, `sermons`, `media`, `users`. Таб `users` скрыт (`href: null`) для роли не-`admin`.
+- Файлы табов: `index.tsx` (admin-home), остальные — экраны отдельных слайсов `pages/admin-sections` / `admin-playlists` / `admin-sermons` / `admin-media` / `admin-users`. Отдельного таба «Загрузить» нет: проповедь создаётся через `/admin/sermons/create` из шапки списка проповедей и быстрых действий главной.
+
+Вход в зону — из шапки «Настроек» (кебаб-меню `SettingsHeaderMenu` через `headerRight` в `app/_RootLayout.tsx`) и с таба «Еще» (компактная иконка-кнопка «В админ панель» → `AdminPanelButton`). В `SettingsHeaderMenu` используется хук `useAdminEntry` (`entities/auth`): при `idle` восстанавливает сессию (`restoreSession`), затем пушит `/admin` (есть права) или `/admin/login`; для аутентифицированных единственный пункт меню — «Выйти из аккаунта админа» (`signOut`). На табе «Еще» `AdminPanelButton` рендерится только для аутентифицированных `admin`/`moderator` (проверка `canAccessAdmin`; `MoreScreen` при монтировании вызывает `restoreSession`, если статус `idle`) и пушит `/admin`. После успешного входа на `/admin/login` показывается тост «Вход выполнен» и выполняется `router.replace('/more')`.
+
 ## Незарегистрированные маршруты
 
 `useReadNavigation` навигирует на `/read/book-reader` и `/read/books-list`, но соответствующих папок нет ни в `app/(tabs)/read/`, ни в `app/read/`. Фича чтения книг **не подключена к роутеру** (см. [book-reader.md](./book-reader.md)). Экраны `BookReaderScreen`/`BooksListScreen` существуют в `src/pages/book-reader` и `src/pages/books-list`, но не смонтированы.
@@ -104,8 +115,10 @@
 | `/settings`                             | `SettingsScreen`     | `pages/settings`            |
 | `/about`                                | `AboutScreen`        | `pages/about`               |
 | `/history`                              | `HistoryScreen`      | `pages/history`             |
-| `/offline`                             | `OfflineScreen`      | `pages/offline`           |
+| `/offline`                              | `OfflineScreen`      | `pages/offline`             |
 | `/share`                                | `ShareScreen`        | `pages/share`               |
+| `/admin`                                | `AdminHomeScreen`    | `pages/admin-home`          |
+| `/admin/login`                          | `AdminLoginScreen`   | `pages/admin-login`         |
 | `/read` (таб)                           | `ReadScreen`         | `pages/read` (заблокирован) |
 | `/read/book-reader`, `/read/books-list` | —                    | **не зарегистрированы**     |
 
@@ -115,7 +128,7 @@
 
 ## Кастомный таб-бар
 
-`CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`) — плавающий остров с `BlurView` и анимированным индикатором (`TabIndicator`, `useTabIndicator`). Учитывает `dynamicColorsEnabledAtom` для цвета индикатора (Material You) и скрывает плавающий плеер при развороте (`hideFloatingPlayer`).
+`CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`) — плавающий остров с `BlurView`. Активный таб не имеет фона/пилюли/индикатора: активное состояние выражается только цветом иконки и подписи (`currentTheme.primary`), неактивные — приглушённым `currentTheme.textMuted`. Скрывает плавающий плеер при развороте (`hideFloatingPlayer`).
 
 Подписи табов не переносятся и почти не масштабируются шрифтом: в `TabButton.tsx` у текста заданы `numberOfLines={1}` и `maxFontSizeMultiplier={1.2}` (фикс «сломанного» таб-бара на узких экранах / крупном системном шрифте, Issue #53).
 

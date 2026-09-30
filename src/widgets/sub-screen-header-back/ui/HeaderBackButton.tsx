@@ -10,12 +10,22 @@ const DEFAULT_FALLBACK_ROUTE = '/more'
 
 export const HeaderBackButton = ({
   fallbackRoute = DEFAULT_FALLBACK_ROUTE,
+  onPress,
   tintColor,
 }: {
   fallbackRoute?: Href
+  onPress?: () => void
   tintColor?: ColorValue
 }) => {
   const handlePress = () => {
+    // Экраны проповедей передают свой «назад», который гарантированно остаётся
+    // в /admin (см. useSermonScreens): headerLeft из Stack.Screen перекрывает
+    // options вложенного экрана, поэтому back-кнопка живёт здесь.
+    if (onPress) {
+      onPress()
+      return
+    }
+
     if (router.canGoBack()) {
       router.back()
       return

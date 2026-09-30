@@ -138,6 +138,19 @@ app/
 
 > ⚠️ В `AGENTS.md` показана вложенная папка `app/read/` с `book-reader.tsx`/`books-list.tsx`. **Фактически** таких маршрутов нет — есть только `read.tsx` (одиночный таб). Экраны `pages/book-reader` и `pages/books-list` существуют, но маршруты для них не зарегистрированы. Это долг — см. [`debt.md`](./debt.md).
 
+### Зона администратора `/admin`
+
+Отдельная зона вне публичных табов: `app/admin/` — собственный `Stack` (`app/admin/_layout.tsx`), который при входе однократно вызывает `restoreSession` (`entities/auth`), показывает индикатор загрузки, редиректит неаутентифицированных на `/admin/login`, а аутентифицированных с `/admin/login` — на `/admin`.
+
+- `app/admin/login.tsx` → `pages/admin-login` (вход, `signIn`).
+- `app/admin/(tabs)/` → `Tabs` с тем же `CustomTabBar` (`widgets/tab-bar`), что и основные табы: вкладки `index` (Главная), `sections`, `playlists`, `sermons`, `media`, `users`. Таб `users` скрыт (`href: null`) для роли не-`admin`.
+- `pages/admin-home` — главная админки (счётчики сущностей через generated API, быстрые действия).
+- `pages/admin-sections` / `admin-playlists` / `admin-sermons` / `admin-media` / `admin-users` — отдельные слайсы разделов CRUD, каждый со своим экраном (см. [`debt.md`](./debt.md)). `AdminUsersScreen` дополнительно вызывает `useRequireAdminRole` (`entities/auth`).
+
+`CustomTabBar` обобщён: подписи берутся из `getTabLabel` (`widgets/tab-bar/ui/tabLabels.ts`), иконки — из `TabIcon`, поэтому один и тот же виджет обслуживает и публичные табы, и админские (поведение публичных табов не изменилось).
+
+**Хранилище токенов админа.** Абстракция `secureTokenStorage` (`shared/api`) резолвится по платформе: native — `expo-secure-store` (`secureTokenStorage.native.ts`, шифрованный Keychain/Keystore), web — `secureTokenStorage.web.ts` (AES-GCM через WebCrypto, неизвлекаемый `CryptoKey` в IndexedDB; при недоступности WebCrypto/IndexedDB — только in-memory, без записи открытого текста). Общие ключи и валидация — `secureTokenStorageShared.ts`; generic-фолбэк — `secureTokenStorage.ts`. См. [`contracts/native-modules.md`](./contracts/native-modules.md) и [`contracts/storage.md`](./contracts/storage.md).
+
 ## Почему Reatom (а не Zustand/Redux)
 
 Для состояния выбран **Reatom** (`@reatom/npm-react`, `@reatom/framework`; `@reatom/core` подключается транзитивно через framework). Причины:
@@ -195,6 +208,7 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
   - Импорт: `import { TouchableButton } from 'shared/ui/touchable-button'`.
 
 **Когда что использовать:**
+
 - иконочная кнопка (только иконка, без текста) → `IconButton` (label обязателен);
 - `TouchableOpacity`-контрол, которому нужен fade-фидбек → `TouchableButton`;
 - всё остальное на `Pressable` → `PressableButton`.
@@ -207,6 +221,9 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
 ├────────────────────────────────────────────────────────────┤
 │ pages/    listen  playlist  playlist-list  read  study      │
 │           more  settings  about  book-reader  books-list    │
+│           admin-login  admin-home  admin-sections            │
+│           admin-playlists  admin-sermons                      │
+│           admin-media  admin-users                            │
 ├────────────────────────────────────────────────────────────┤
 │ widgets/  expandable-player  tab-bar  network-status        │
 │           update-status  sub-screen-header-back             │
@@ -214,7 +231,7 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
 │ features/ update-notification                               │
 ├────────────────────────────────────────────────────────────┤
 │ entities/ sermon  playlist  section  player                     │
-│           listening-history  offline-cache  track-list          │
+│           listening-history  offline-cache  track-list  auth    │
 ├────────────────────────────────────────────────────────────┤
 │ shared/   api  config  lib  mocks  model  routing  ui       │
 └────────────────────────────────────────────────────────────┘

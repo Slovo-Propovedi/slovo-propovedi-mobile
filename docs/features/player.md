@@ -335,7 +335,7 @@ Upstream-причины:
 
 - **Атом открытия** — `showSoundSettingsAtom` (`widgets/expandable-player/model/showSoundSettingsAtom.ts`, экспорт из barrel виджета): ставится из пункта меню (`useFullscreenHandlers` → `FullscreenContent` → `PlayerControlsSection`), шторка рендерится условно в `FullscreenSheets` — одна entrance-анимация без двойного перехода (как у шторки плейлиста). Закрытие: тап по затемнённому фону (`SoundSheetBackdrop`, `pressBehavior='close'`), свайп вниз (`enablePanDownToClose`) → `onChange(-1)` → `onClose`. Атом-состояние персистит между сворачиваниями/разворачиваниями плеера (как `showPlaylistAtom`).
 - **Жест-гейт:** `useFullscreenPanGesture` выключен, пока открыта шторка (`.enabled(!showPlaylist && !showDetails && !showSoundSettings)`) — свайп по плееру под шторкой не сворачивает плеер.
-- **Hardware back (Android):** каскад `app/_useHardwareBackCascade.ts` закрывает верхний слой по порядку **details → menu → sound settings → playlist → развёрнутый плеер → `router.back()`**.
+- **Hardware back (Android):** каскад `src/widgets/expandable-player/lib/useHardwareBackCascade.ts` (вызов из `app/_RootLayout.tsx`) закрывает верхний слой по порядку **details → menu → sound settings → playlist → развёрнутый плеер → `router.back()`**.
 - **Снапы:** два детента `['70%', windowHeight − topInset]` из общего хука `lib/useSheetSnapMetrics.ts` (`FINAL_SNAP_INDEX = 0` — открытие на 70%) — общая геометрия со шторкой плейлиста (см. «Снапы» выше).
 
 ### Модуль `modules/audio-effects`
