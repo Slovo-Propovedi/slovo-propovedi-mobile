@@ -78,11 +78,20 @@ describe('<AdminMediaScreen>', () => {
       canceled: false,
     })
 
-    const { findByText } = await renderWithProviders(<AdminMediaScreen />)
-    fireEvent.press(await findByText('Загрузить обложку'))
+    const { findByLabelText } = await renderWithProviders(<AdminMediaScreen />)
+    fireEvent.press(await findByLabelText('Загрузить файл'))
 
     await waitFor(() => expect(mockUpload).toHaveBeenCalledTimes(1))
     expect(mockUpload.mock.calls[0][0]).toMatchObject({ name: 'new.jpg' })
+  })
+
+  test('renders the media header with the upload action', async () => {
+    mockGetFiles.mockResolvedValue(catalogResponse([]))
+
+    const { findByLabelText, findByText } = await renderWithProviders(<AdminMediaScreen />)
+
+    expect(await findByText('Медиа')).toBeTruthy()
+    expect(await findByLabelText('Загрузить файл')).toBeTruthy()
   })
 
   test('deletes a file after confirmation', async () => {

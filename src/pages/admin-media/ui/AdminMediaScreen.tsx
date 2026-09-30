@@ -1,32 +1,38 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useState } from 'react'
-import { ActivityIndicator, FlatList, Text, View } from 'react-native'
+import { FlatList, Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
+import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { showToast } from 'shared/model'
 import { AdminMediaGridSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { COLORS, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useAdminMedia } from '../lib/useAdminMedia'
 import { usePickImage } from '../lib/usePickImage'
+import { AdminMediaHeader } from './AdminMediaHeader'
 import { MediaTile } from './MediaTile'
+import { MediaViewerModal } from './MediaViewerModal'
 import { OrphansSection } from './OrphansSection'
 import { styles } from './styles'
 
-const UPLOAD_LABEL = 'Загрузить обложку'
-const UPLOAD_BUSY_LABEL = 'Загрузка'
 const DELETE_TITLE = 'Удалить обложку?'
 const DELETE_CONFIRM_TEXT = 'Удалить'
 const DELETE_BUSY_TEXT = 'Удаление…'
 const EMPTY_MESSAGE = 'Обложек пока нет'
 const LOAD_ERROR = 'Не удалось загрузить файлы'
 
-const uploadLabel = (isUploading: boolean, progress: number) =>
-  isUploading ? `${UPLOAD_BUSY_LABEL} ${progress}%` : UPLOAD_LABEL
+// Целевой размер квадратной плитки: экран/плитка даёт 3 колонки на телефоне,
+// больше — на планшете. Число колонок всегда ≥1, чтобы не делить на ноль.
+const TARGET_TILE_SIZE = 120
+const LIST_PADDING = INDENTS.medium * 2
 
-// Каталог медиа-библиотеки: сетка изображений с загрузкой и удалением, а ниже —
-// блок осиротевших файлов. Удаление живого артворка сервер отклоняет (409).
+const numColumnsFor = (width: number) =>
+  Math.max(1, Math.floor((width - LIST_PADDING + INDENTS.low) / (TARGET_TILE_SIZE + INDENTS.low)))
+
+// Каталог медиа-библиотеки: шапка с загрузкой, сетка квадратных изображений
+// (тап — полноэкранный просмотр) и блок осиротевших файлов сверху. Удаление
+// живого артворка сервер отклоняет (409).
 export const AdminMediaScreen = () => {
   const { currentTheme } = useTheme()
   const showToastAction = useAction(showToast)
@@ -34,10 +40,16 @@ export const AdminMediaScreen = () => {
   const { files, isDeleting, isError, isLoading, isUploading, progress, remove, upload } =
     useAdminMedia()
   const [deleteTarget, setDeleteTarget] = useState<APITypes.FileMetadataDto | null>(null)
+  const [viewerTarget, setViewerTarget] = useState<APITypes.FileMetadataDto | null>(null)
 
   const { pickImage } = usePickImage(
     asset => void upload(asset, () => undefined),
     message => showToastAction(message),
+  )
+
+  const numColumns = numColumnsFor(SCREEN_WIDTH)
+  const tileSize = Math.floor(
+    (SCREEN_WIDTH - LIST_PADDING - INDENTS.low * (numColumns - 1)) / numColumns,
   )
 
   const handleDelete = async () => {
@@ -59,15 +71,22 @@ export const AdminMediaScreen = () => {
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <FlatList
         data={files}
-        numColumns={3}
-        columnWrapperStyle={styles.grid}
+        numColumns={numColumns}
+        key={`media-grid-${numColumns}`}
+        columnWrapperStyle={styles.gridRow}
         keyExtractor={item => item.fileName}
-        ListFooterComponent={<OrphansSection />}
-        renderItem={({ item }) => <MediaTile file={item} onDelete={() => setDeleteTarget(item)} />}
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
         ]}
+        renderItem={({ item }) => (
+          <MediaTile
+            file={item}
+            size={tileSize}
+            onPress={() => setViewerTarget(item)}
+            onDelete={() => setDeleteTarget(item)}
+          />
+        )}
         ListEmptyComponent={
           isError ? (
             <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
@@ -76,32 +95,14 @@ export const AdminMediaScreen = () => {
           )
         }
         ListHeaderComponent={
-          <View style={styles.header}>
-            <View style={styles.headerRow}>
-              <View style={styles.headerText}>
-                <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>Медиафайлы</Text>
-                <Text style={[styles.error, { color: currentTheme.textMuted }]}>
-                  Библиотека изображений: загрузка и удаление. Обложки переиспользуются в проповедях
-                  и плейлистах.
-                </Text>
-              </View>
-              <TouchableItem
-                disabled={isUploading}
-                onPress={() => void pickImage()}
-                style={[styles.primaryButton, { backgroundColor: currentTheme.primary }]}
-              >
-                {isUploading ? (
-                  <ActivityIndicator color={COLORS.white} />
-                ) : (
-                  <Text style={styles.primaryButtonText}>{uploadLabel(isUploading, progress)}</Text>
-                )}
-              </TouchableItem>
-            </View>
+          <View>
+            <AdminMediaHeader isUploading={isUploading} onUpload={() => void pickImage()} />
             {isUploading ? (
               <View style={[styles.progressTrack, { backgroundColor: currentTheme.surface }]}>
                 <View style={[styles.progressFill, { width: `${progress}%` }]} />
               </View>
             ) : null}
+            <OrphansSection />
           </View>
         }
       />
@@ -112,6 +113,12 @@ export const AdminMediaScreen = () => {
         onCancel={() => setDeleteTarget(null)}
         confirmText={isDeleting ? DELETE_BUSY_TEXT : DELETE_CONFIRM_TEXT}
         message={`Файл «${deleteTarget?.fileName ?? ''}» будет удалён из хранилища без возможности восстановления.`}
+      />
+      <MediaViewerModal
+        visible={viewerTarget !== null}
+        title={viewerTarget?.fileName ?? ''}
+        fileUrl={viewerTarget?.fileUrl ?? ''}
+        onClose={() => setViewerTarget(null)}
       />
     </View>
   )

@@ -10,16 +10,16 @@
 
 ## Каталог
 
-**Файлы:** `src/pages/admin-media/ui/AdminMediaScreen.tsx`, `MediaTile.tsx`, `lib/useAdminMedia.ts`, `lib/fileKind.ts`, `lib/usePickImage.ts`
+**Файлы:** `src/pages/admin-media/ui/AdminMediaScreen.tsx`, `AdminMediaHeader.tsx`, `MediaTile.tsx`, `MediaViewerModal.tsx`, `lib/useAdminMedia.ts`, `lib/fileKind.ts`, `lib/usePickImage.ts`
 
-- **Что показывается:** шапка «Медиафайлы» + кнопка «Загрузить обложку»; при загрузке — прогресс-бар и подпись «Загрузка N%». Сетка изображений (3 колонки, `FlatList numColumns={3}`): обложка через `expo-image`, имя файла, размер (`formatFileSize`) и бейдж «используется» при `used = true`. На каждой карточке — оверлейная кнопка удаления.
+- **Что показывается:** внутриэкранная шапка «Медиа» (`AdminMediaHeader`) с иконкой-кнопкой загрузки (`cloud-upload-outline`, `accessibilityLabel='Загрузить файл'`) справа; при загрузке — прогресс-бар. Наверху страницы — блок «Осиротевшие файлы» (скан/очистка), ниже — сетка квадратных плиток. Число колонок считается от ширины экрана (`numColumnsFor`, целевая плитка `TARGET_TILE_SIZE = 120`, минимум 1), промежутки — `INDENTS.low`. Плитка: обложка через `expo-image`, имя файла, размер (`formatFileSize`) и бейдж «используется» при `used = true`; оверлейная кнопка удаления.
 - **Откуда данные:** `getFiles` (`GET /files`) через `filesApi`; элемент — `FileMetadataDto { fileName, fileUrl, size, lastModified, used }`.
-- **Навигация:** отдельного экрана-детали нет — карточка не открывает просмотр.
+- **Навигация:** тап по плитке открывает полноэкранный просмотр (`MediaViewerModal`: `Modal` + `expo-image` `contentFit='contain'`, закрытие по X, тапу на фон и системному «назад» Android `onRequestClose`). Отдельного маршрута-детали нет.
 - **Состояния:** загрузка первичного каталога — скелетон-сетка (`AdminMediaGridSkeleton`); пусто — `EmptyState` «Обложек пока нет»; ошибка первичной загрузки — текст «Не удалось загрузить файлы» (`reportError`); ошибка загрузки — тост.
 
 ## Загрузка
 
-- Кнопка «Загрузить обложку» открывает системный пикер (`expo-document-picker`, `accept` = `image/*`), расширение проверяется `isAllowedExtension('image', …)` из `widgets/admin-form-pickers` (не-изображение отклоняется тостом, до сети).
+- Иконка-кнопка «Загрузить файл» в шапке открывает системный пикер (`expo-document-picker`, `accept` = `image/*`), расширение проверяется `isAllowedExtension('image', …)` из `widgets/admin-form-pickers` (не-изображение отклоняется тостом, до сети).
 - Загрузка идёт через `uploadSermonFile` (`shared/api/uploadFile.ts`, multipart `POST /files`) с прогрессом по `onUploadProgress` (axios).
 - **После успеха:** каталог перечитывается, тост «Обложка загружена». Новая обложка сразу доступна и в каталоге, и в пикерах форм.
 - **Ошибка:** `getErrorMessage` → тост.
