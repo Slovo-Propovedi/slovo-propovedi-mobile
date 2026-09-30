@@ -8,10 +8,10 @@ import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminUsers } from '../lib/useAdminUsers'
 import { AdminUserRow } from './AdminUserRow'
+import { AdminUsersHeader } from './AdminUsersHeader'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/users/create'
-const CREATE_LABEL = 'Создать'
 const LOAD_MORE_LABEL = 'Загрузить ещё'
 const EMPTY_MESSAGE = 'Пользователей пока нет'
 const NOT_FOUND_MESSAGE = 'Ничего не найдено'
@@ -77,20 +77,7 @@ export const AdminUsersScreen = () => {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <View style={styles.headerRow}>
-              <View style={styles.headerText}>
-                <Text style={[styles.title, { color: currentTheme.text }]}>Пользователи</Text>
-                <Text style={[styles.subtitle, { color: currentTheme.textMuted }]}>
-                  Управление администраторами системы.
-                </Text>
-              </View>
-              <TouchableItem
-                onPress={() => router.push(CREATE_ROUTE)}
-                style={[styles.createButton, { backgroundColor: currentTheme.primary }]}
-              >
-                <Text style={styles.createButtonText}>{CREATE_LABEL}</Text>
-              </TouchableItem>
-            </View>
+            <AdminUsersHeader onCreate={() => router.push(CREATE_ROUTE)} />
             <TextInput
               value={search}
               onChangeText={onSearchChange}

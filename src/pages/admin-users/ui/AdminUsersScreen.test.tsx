@@ -73,8 +73,10 @@ describe('<AdminUsersScreen>', () => {
   test('navigates to the create screen from the header button', async () => {
     mockFindAll.mockResolvedValue(createUsers(0))
 
-    const { findByText } = await renderWithProviders(<AdminUsersScreen />)
-    fireEvent.press(await findByText('Создать'))
+    const { findByLabelText, findByText } = await renderWithProviders(<AdminUsersScreen />)
+
+    expect(await findByText('Пользователи')).toBeTruthy()
+    fireEvent.press(await findByLabelText('Создать пользователя'))
 
     expect(mockPush).toHaveBeenCalledWith('/admin/users/create')
   })
