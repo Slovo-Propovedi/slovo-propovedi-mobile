@@ -4,7 +4,7 @@ export * from './generated'
 
 export { secureTokenStorage } from './secureTokenStorage'
 
-export { uploadSermonFile } from './uploadFile'
+export { type PickedUploadAsset, uploadSermonFile } from './uploadFile'
 
 export const API = {
   books: booksAPI,

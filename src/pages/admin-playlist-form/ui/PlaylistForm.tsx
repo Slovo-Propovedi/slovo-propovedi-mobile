@@ -1,7 +1,7 @@
 import { ScrollView, Text, View } from 'react-native'
+import { CoverPicker } from 'widgets/admin-form-pickers'
 import { useTheme } from 'shared/ui/theme'
 import { type PlaylistFormValues } from '../lib/playlistFormState'
-import { CoverPicker } from './CoverPicker'
 import { PlaylistFormMainFields } from './PlaylistFormMainFields'
 import { SectionPicker } from './SectionPicker'
 import { SermonPicker } from './SermonPicker'

@@ -34,16 +34,15 @@
 
 ## Форма (создание / редактирование)
 
-**Файлы:** `src/pages/admin-playlist-form/ui/PlaylistForm.tsx` (+ `AdminPlaylistCreateScreen.tsx`, `AdminPlaylistEditScreen.tsx`, `PlaylistFormMainFields.tsx`, `CoverPicker.tsx`, `SermonPicker.tsx`, `SermonPickerRow.tsx`, `SectionPicker.tsx`, `SectionPickerRow.tsx`, `PlaylistSaveButton.tsx`), `lib/playlistFormState.ts`, `lib/usePlaylistFormController.ts`, `lib/useSermonSearch.ts`, `lib/useSectionOptions.ts`, `lib/useFileImages.ts`, `lib/usePlaylistFormHeader.tsx`, `lib/orderSelectedFirst.ts`
+**Файлы:** `src/pages/admin-playlist-form/ui/PlaylistForm.tsx` (+ `AdminPlaylistCreateScreen.tsx`, `AdminPlaylistEditScreen.tsx`, `PlaylistFormMainFields.tsx`, `SermonPicker.tsx`, `SermonPickerRow.tsx`, `SectionPicker.tsx`, `SectionPickerRow.tsx`, `PlaylistSaveButton.tsx`), `lib/playlistFormState.ts`, `lib/usePlaylistFormController.ts`, `lib/useSermonSearch.ts`, `lib/useSectionOptions.ts`, `lib/usePlaylistFormHeader.tsx`, `lib/orderSelectedFirst.ts`
 
-- **Поля:** название (обязательно), описание (textarea, nullable); обложка — `CoverPicker` (ручной URL + галерея изображений из библиотеки); проповеди — поисковый список с чекбоксами и обложками (`GET /sermons?search`, дебаунс 300мс); разделы — чекбокс-список (`GET /section`).
+- **Поля:** название (обязательно), описание (textarea, nullable); обложка — `CoverPicker` из `widgets/admin-form-pickers` (ручной URL + галерея изображений + прямая multipart-загрузка с прогрессом); проповеди — поисковый список с чекбоксами и обложками (`GET /sermons?search`, дебаунс 300мс); разделы — чекбокс-список (`GET /section`).
 - **Порядок пикеров:** выбранные (отмеченные) элементы идут первыми, затем остальные — `orderSelectedFirst`; `selectedIds` — источник истины, переживает поиск.
 - **Кнопка «Сохранить» — в шапке экрана** (`headerRight`), всегда доступна при скролле страницы. Страница скроллится целиком, у пикеров нет отдельного внутреннего скролла. Опции шапки мемоизированы, обработчик сохранения держится в ref — чтобы expo-router не переустанавливал options каждый рендер (см. `usePlaylistFormHeader`).
 - **Мутации:** `playlistControllerCreate` (`POST /playlists`) / `playlistControllerUpdate` (`PATCH /playlists/{id}`); тело всегда содержит `sermonsIds` и `sectionsIds` (пустой массив очищает связь); очищенные nullable-поля уходят как `null`.
 - **Валидация:** название непустое; при пустом названии — inline-ошибка + тост, отправки нет; во время запроса кнопка показывает `ActivityIndicator`.
 - **После успеха:** тост и `router.back()`; ошибка — баннер в форме.
 - **Режим edit:** сущность грузится до монтирования формы (`useAdminPlaylistEntity`), пропсы формы стабильны.
-- **Отложено:** прямая загрузка файла-обложки (multipart) — фаза «Медиа» (см. [`../debt.md`](../debt.md)).
 
 ## Связанные документы
 

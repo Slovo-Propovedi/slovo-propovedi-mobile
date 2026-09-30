@@ -59,9 +59,29 @@
 
 Аудио (только MP3) и текстовый файл грузятся `POST /files` (multipart) через `shared/api/uploadFile.ts` (`uploadSermonFile`) с прогрессом по `onUploadProgress` (axios). Файл оборачивается в `expo-file-system`'s `File` (реализует `Blob`), а `RN FormData` читает из него `uri`/`type` на рантайме. Проверка расширения до загрузки — `widgets/admin-form-pickers/lib/fileKinds.ts`: не-MP3 отклоняется с сообщением, до сети. Выбор обложки/файлов переиспользует виджеты `widgets/admin-form-pickers` (`CoverPicker`, `FileUploadField`, `PlaylistPicker`).
 
+`CoverPicker` виджета умеет и ручной URL, и галерею библиотеки, и прямую загрузку изображения (`appControllerUploadFile` с прогрессом) — им пользуются и форма проповеди, и форма плейлиста.
+
 ### Редирект таба «Загрузить»
 
-Таб «Загрузить» (`app/admin/(tabs)/upload.tsx`) — короткий путь к форме: `<Redirect href='/admin/sermons/create' />`. Отдельного экрана загрузки нет; стандартный сценарий — форма создания проповеди с встроенными загрузками. Загрузка файлов «самих по себе» (медиа-библиотека, orphaned-files cleanup) — фаза 5 «Медиа».
+Таб «Загрузить» (`app/admin/(tabs)/upload.tsx`) — короткий путь к форме: `<Redirect href='/admin/sermons/create' />`. Отдельного экрана загрузки нет; стандартный сценарий — форма создания проповеди с встроенными загрузками.
+
+## Медиа (media)
+
+Библиотека файлов bucket: каталог изображений, загрузка обложек и очистка осиротевших файлов. Экран: [screens/admin-media.md](../screens/admin-media.md).
+
+- **Каталог:** `GET /files` (`AllFilesResponse` → `FileMetadataDto { fileName, fileUrl, size, lastModified, used }`); `used` — изображение уже является `artwork` проповеди/плейлиста (бейдж «используется»).
+- **Загрузка:** multipart `POST /files` через `shared/api/uploadFile.ts` (`uploadSermonFile`) с прогрессом; расширение проверяется до сети (`isAllowedExtension('image', …)`).
+- **Удаление:** `DELETE /files/{fileName}` — только изображения; **409** означает «используется как обложка» (тост «Обложка используется в проповедях/плейлистах», статус через `getHttpStatus`).
+- **Осиротевшие файлы:** `GET /files/orphans` (опциональный скан bucket, `limit`) и `POST /files/orphans/cleanup` — идемпотентная best-effort очистка **только** `.mp3/.pdf/.fb2`; изображения этой операцией не удаляются (убираются вручную из каталога). Результат `CleanupOrphansResponse { deleted, failed }` показывается баннером.
+- Загрузка «самих по себе» файлов из медиатеки и очистка висячих файлов после отменённой формы проповеди закрыты этим разделом.
+
+## Пользователи (users)
+
+Домен админ-аккаунтов. Экраны: [screens/admin-users.md](../screens/admin-users.md). Доступен **только роли admin** (таб скрывается для не-admin, экраны защищены `useRequireAdminRole`).
+
+- **Список:** `GET /users?page&limit=20` (`AllUsersResponse { users, count }`, офсетная пагинация); серверного `search` нет — клиентский фильтр по `name`/`email`/`username` (дебаунс 300мс) по загруженным страницам.
+- **Деталь:** `GET /users/{id}`; удаление `DELETE /users/{id}` (кнопка скрыта для собственного аккаунта, `id === authUser.id`); смена пароля `PATCH /users/{id}/password` (`{ password }`).
+- **Форма:** `POST /users` (name/email/username/password/role; `role` всегда) и `PATCH /users/{id}` (**только изменённые** поля name/email/username/role, без пароля). Роль по умолчанию — `user` (least-privilege). Подписи ролей — `ROLE_LABELS` из `entities/auth`.
 
 ## Drag-списки
 
@@ -69,13 +89,15 @@
 
 ## Реализованные / нереализованные разделы
 
-Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)), «Проповеди» ([admin-sermons.md](../screens/admin-sermons.md)), а также таб «Загрузить» (редирект на создание проповеди). Заглушки — медиа, пользователи (см. [../debt.md](../debt.md), раздел «Auth flow»).
+Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)), «Проповеди» ([admin-sermons.md](../screens/admin-sermons.md)), «Медиа» ([admin-media.md](../screens/admin-media.md)), «Пользователи» ([admin-users.md](../screens/admin-users.md)) — только для роли admin, а также таб «Загрузить» (редирект на создание проповеди).
 
 ## Связанные документы
 
 - [../screens/admin-sections.md](../screens/admin-sections.md) — экраны разделов
 - [../screens/admin-playlists.md](../screens/admin-playlists.md) — экраны плейлистов
 - [../screens/admin-sermons.md](../screens/admin-sermons.md) — экраны проповедей
+- [../screens/admin-media.md](../screens/admin-media.md) — медиа-библиотека и осиротевшие файлы
+- [../screens/admin-users.md](../screens/admin-users.md) — управление пользователями
 - [../screens/admin-home.md](../screens/admin-home.md) — дашборд
-- [../contracts/rest-api.md](../contracts/rest-api.md) — section-эндпоинты
+- [../contracts/rest-api.md](../contracts/rest-api.md) — эндпоинты section/playlist/sermon/files/users
 - [state.md](./state.md) — состояние (Reatom)

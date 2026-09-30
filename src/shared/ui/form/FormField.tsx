@@ -10,14 +10,16 @@ export const FormField = ({
   multiline = false,
   onChangeText,
   placeholder,
+  secureTextEntry = false,
   value,
 }: {
   hint?: string
-  keyboardType?: 'default' | 'number-pad'
+  keyboardType?: 'default' | 'email-address' | 'number-pad'
   label: string
   multiline?: boolean
   onChangeText: (text: string) => void
   placeholder?: string
+  secureTextEntry?: boolean
   value: string
 }) => {
   const { currentTheme } = useTheme()
@@ -32,6 +34,7 @@ export const FormField = ({
         accessibilityLabel={label}
         keyboardType={keyboardType}
         onChangeText={onChangeText}
+        secureTextEntry={secureTextEntry}
         placeholderTextColor={currentTheme.textMuted}
         style={[
           formStyles.input,
