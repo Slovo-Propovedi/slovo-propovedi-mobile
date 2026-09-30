@@ -1,6 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { FlatList, Text, TextInput, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRequireAdminRole } from 'entities/auth'
 import { AdminUserRowSkeleton, EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
@@ -43,7 +44,10 @@ export const AdminUsersScreen = () => {
   const emptyMessage = search.trim() !== '' ? NOT_FOUND_MESSAGE : EMPTY_MESSAGE
 
   return (
-    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+    <SafeAreaView
+      edges={['top']}
+      style={[styles.container, { backgroundColor: currentTheme.background }]}
+    >
       <FlatList
         data={isLoading ? [] : users}
         keyExtractor={item => item.id}
@@ -92,6 +96,6 @@ export const AdminUsersScreen = () => {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   )
 }

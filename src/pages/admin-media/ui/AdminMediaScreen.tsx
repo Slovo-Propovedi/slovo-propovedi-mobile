@@ -1,6 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useState } from 'react'
 import { FlatList, Text, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { showToast } from 'shared/model'
@@ -10,10 +11,9 @@ import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useAdminMedia } from '../lib/useAdminMedia'
 import { usePickImage } from '../lib/usePickImage'
-import { AdminMediaHeader } from './AdminMediaHeader'
+import { AdminMediaListHeader } from './AdminMediaListHeader'
 import { MediaTile } from './MediaTile'
 import { MediaViewerModal } from './MediaViewerModal'
-import { OrphansSection } from './OrphansSection'
 import { styles } from './styles'
 
 const DELETE_TITLE = 'Удалить обложку?'
@@ -60,15 +60,21 @@ export const AdminMediaScreen = () => {
 
   if (isLoading)
     return (
-      <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+      <SafeAreaView
+        edges={['top']}
+        style={[styles.container, { backgroundColor: currentTheme.background }]}
+      >
         <View style={styles.listContent}>
           <AdminMediaGridSkeleton />
         </View>
-      </View>
+      </SafeAreaView>
     )
 
   return (
-    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+    <SafeAreaView
+      edges={['top']}
+      style={[styles.container, { backgroundColor: currentTheme.background }]}
+    >
       <FlatList
         data={files}
         numColumns={numColumns}
@@ -79,6 +85,13 @@ export const AdminMediaScreen = () => {
           styles.listContent,
           { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
         ]}
+        ListHeaderComponent={
+          <AdminMediaListHeader
+            progress={progress}
+            isUploading={isUploading}
+            onUpload={() => void pickImage()}
+          />
+        }
         renderItem={({ item }) => (
           <MediaTile
             file={item}
@@ -93,17 +106,6 @@ export const AdminMediaScreen = () => {
           ) : (
             <EmptyState message={EMPTY_MESSAGE} />
           )
-        }
-        ListHeaderComponent={
-          <View>
-            <AdminMediaHeader isUploading={isUploading} onUpload={() => void pickImage()} />
-            {isUploading ? (
-              <View style={[styles.progressTrack, { backgroundColor: currentTheme.surface }]}>
-                <View style={[styles.progressFill, { width: `${progress}%` }]} />
-              </View>
-            ) : null}
-            <OrphansSection />
-          </View>
         }
       />
       <ConfirmDialog
@@ -120,6 +122,6 @@ export const AdminMediaScreen = () => {
         fileUrl={viewerTarget?.fileUrl ?? ''}
         onClose={() => setViewerTarget(null)}
       />
-    </View>
+    </SafeAreaView>
   )
 }
