@@ -3,6 +3,18 @@ import { playlistsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { AdminPlaylistDetailScreen } from './AdminPlaylistDetailScreen'
 
+// MarqueeText renders the title twice (visible + measurer), so a single-Text
+// stub keeps text queries unambiguous in list-row tests.
+jest.mock('shared/ui/marquee-text/marquee-text', () => {
+  const { Text } = jest.requireActual('react-native')
+
+  return {
+    MarqueeText: ({ testID, text }: { testID?: string; text: string }) => (
+      <Text testID={testID}>{text}</Text>
+    ),
+  }
+})
+
 const mockFindOne = jest.fn()
 const mockRemove = jest.fn()
 const mockReorder = jest.fn()

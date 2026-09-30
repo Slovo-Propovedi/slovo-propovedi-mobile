@@ -19,7 +19,7 @@
 - **Откуда данные:** `sectionControllerFindAll` (`GET /section`) через `sectionsApi`; reorder — `reorderSections` (`PATCH /section/reorder`, тело `{ ids }` — **полный** упорядоченный массив id).
 - **Навигация:** тап по карточке → `/admin/sections/[id]`; «Создать раздел» → `/admin/sections/create`.
 - **Optimistic reorder:** локальное состояние перекрывает ответ сети; на каждый `onDragEnd` сначала применяется новый порядок, при ошибке — откат к прежнему + `showToast`; запрос пропускается, если порядок не изменился (`hasOrderChanged`).
-- **Состояния:** загрузка — `ActivityIndicator`; пусто — `EmptyState` «Разделов пока нет»; ошибка загрузки — `reportError`; ошибка reorder — откат + тост.
+- **Состояния:** загрузка списка — скелетон-строки (`AdminSectionRowSkeleton`, шапка остаётся видимой; busy reorder — скелетон-строка в футере); пусто — `EmptyState` «Разделов пока нет»; ошибка загрузки — `reportError`; ошибка reorder — откат + тост.
 
 ## Деталь
 
@@ -29,7 +29,7 @@
 - **Откуда данные:** `sectionControllerFindOne` (`GET /section/{id}`); reorder — `reorderPlaylistsInSection` (`PATCH /section/{id}/playlists/reorder`, тело `{ playlistIds }`); удаление — `sectionControllerRemove` (`DELETE /section/{id}`).
 - **Навигация:** иконка «Редактировать» в шапке → `/admin/sections/[id]/edit`; тап по плейлисту → `/admin/playlists/[id]` (внутри админки, не в пользовательский плеер); после удаления — `router.back()` в список + тост.
 - **Удаление:** `ConfirmDialog` («Удалить раздел?») с подтверждением.
-- **Состояния:** загрузка — `ActivityIndicator`; не найдено — `EmptyState` «Раздел не найден»; нет плейлистов — `EmptyState` «Плейлистов пока нет»; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
+- **Состояния:** загрузка сущности — `AdminContentSkeleton`; не найдено — `EmptyState` «Раздел не найден»; нет плейлистов — `EmptyState` «Плейлистов пока нет»; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
 
 ## Форма (создание / редактирование)
 

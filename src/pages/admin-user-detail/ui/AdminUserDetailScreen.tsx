@@ -1,12 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { type Href, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { useAdminDetailHeader } from 'widgets/admin-form-header'
 import { useRequireAdminRole } from 'entities/auth'
-import { EmptyState } from 'shared/ui'
+import { AdminContentSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminUserDetail } from '../lib/useAdminUserDetail'
 import { PasswordDialog } from './PasswordDialog'
@@ -50,11 +50,15 @@ export const AdminUserDetailScreen = () => {
 
   if (!user)
     return (
-      <View style={[styles.centered, { backgroundColor: currentTheme.background }]}>
+      <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
         {isNotFound ? (
-          <EmptyState message={NOT_FOUND_MESSAGE} />
+          <View style={styles.centered}>
+            <EmptyState message={NOT_FOUND_MESSAGE} />
+          </View>
         ) : (
-          <ActivityIndicator size='large' color={COLORS.primary} />
+          <View style={styles.content}>
+            <AdminContentSkeleton />
+          </View>
         )}
       </View>
     )

@@ -1,11 +1,11 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, FlatList, Text } from 'react-native'
+import { FlatList, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
-import { EmptyState } from 'shared/ui'
+import { AdminPlaylistRowSkeleton, EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { COLORS, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminPlaylists } from '../lib/useAdminPlaylists'
 import { AdminPlaylistRow } from './AdminPlaylistRow'
@@ -14,6 +14,15 @@ import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/playlists/create'
 const LOAD_MORE_LABEL = 'Загрузить ещё'
+const SKELETON_ROWS = 6
+
+const PlaylistSkeletonList = () => (
+  <>
+    {Array.from({ length: SKELETON_ROWS }, (_, index) => (
+      <AdminPlaylistRowSkeleton key={index} />
+    ))}
+  </>
+)
 
 export const AdminPlaylistsScreen = () => {
   const router = useRouter()
@@ -38,24 +47,14 @@ export const AdminPlaylistsScreen = () => {
     router.push({ params: { id: playlist.id }, pathname: '/admin/playlists/[id]' })
   }
 
-  if (isLoading)
-    return (
-      <SafeAreaView
-        edges={['top']}
-        style={[styles.centered, { backgroundColor: currentTheme.background }]}
-      >
-        <ActivityIndicator size='large' color={COLORS.primary} />
-      </SafeAreaView>
-    )
-
   return (
     <SafeAreaView
       edges={['top']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
       <FlatList
-        data={playlists}
         keyExtractor={item => item.id}
+        data={isLoading ? [] : playlists}
         renderItem={({ item }) => (
           <AdminPlaylistRow item={item} onPress={() => openPlaylist(item)} />
         )}
@@ -64,7 +63,9 @@ export const AdminPlaylistsScreen = () => {
           { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
         ]}
         ListEmptyComponent={
-          isError ? (
+          isLoading ? (
+            <PlaylistSkeletonList />
+          ) : isError ? (
             <Text style={[styles.error, { color: currentTheme.textMuted }]}>
               Не удалось загрузить плейлисты
             </Text>
@@ -85,18 +86,16 @@ export const AdminPlaylistsScreen = () => {
           />
         }
         ListFooterComponent={
-          hasMore ? (
+          isLoadingMore ? (
+            <AdminPlaylistRowSkeleton />
+          ) : hasMore ? (
             <TouchableItem
               onPress={() => void loadMore()}
               style={[styles.loadMore, { backgroundColor: currentTheme.surface }]}
             >
-              {isLoadingMore ? (
-                <ActivityIndicator color={currentTheme.primary} />
-              ) : (
-                <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
-                  {LOAD_MORE_LABEL}
-                </Text>
-              )}
+              <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
+                {LOAD_MORE_LABEL}
+              </Text>
             </TouchableItem>
           ) : null
         }

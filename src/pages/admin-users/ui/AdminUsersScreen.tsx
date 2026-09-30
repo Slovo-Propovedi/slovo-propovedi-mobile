@@ -1,10 +1,10 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
+import { FlatList, Text, TextInput, View } from 'react-native'
 import { useRequireAdminRole } from 'entities/auth'
-import { EmptyState } from 'shared/ui'
+import { AdminUserRowSkeleton, EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { COLORS, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminUsers } from '../lib/useAdminUsers'
 import { AdminUserRow } from './AdminUserRow'
@@ -16,6 +16,15 @@ const LOAD_MORE_LABEL = 'Загрузить ещё'
 const EMPTY_MESSAGE = 'Пользователей пока нет'
 const NOT_FOUND_MESSAGE = 'Ничего не найдено'
 const LOAD_ERROR = 'Не удалось загрузить пользователей'
+const SKELETON_ROWS = 6
+
+const UserSkeletonList = () => (
+  <>
+    {Array.from({ length: SKELETON_ROWS }, (_, index) => (
+      <AdminUserRowSkeleton key={index} />
+    ))}
+  </>
+)
 
 // Список пользователей админки (только для роли admin): поиск по загруженным
 // страницам, «загрузить ещё» и переход к детали/созданию.
@@ -31,19 +40,12 @@ export const AdminUsersScreen = () => {
     router.push({ params: { id }, pathname: '/admin/users/[id]' })
   }
 
-  if (isLoading)
-    return (
-      <View style={[styles.centered, { backgroundColor: currentTheme.background }]}>
-        <ActivityIndicator size='large' color={COLORS.primary} />
-      </View>
-    )
-
   const emptyMessage = search.trim() !== '' ? NOT_FOUND_MESSAGE : EMPTY_MESSAGE
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <FlatList
-        data={users}
+        data={isLoading ? [] : users}
         keyExtractor={item => item.id}
         renderItem={({ item }) => <AdminUserRow item={item} onPress={() => openUser(item.id)} />}
         contentContainerStyle={[
@@ -51,25 +53,25 @@ export const AdminUsersScreen = () => {
           { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
         ]}
         ListEmptyComponent={
-          isError ? (
+          isLoading ? (
+            <UserSkeletonList />
+          ) : isError ? (
             <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
           ) : (
             <EmptyState message={emptyMessage} />
           )
         }
         ListFooterComponent={
-          hasMore ? (
+          isLoadingMore ? (
+            <AdminUserRowSkeleton />
+          ) : hasMore ? (
             <TouchableItem
               onPress={() => void loadMore()}
               style={[styles.loadMore, { backgroundColor: currentTheme.surface }]}
             >
-              {isLoadingMore ? (
-                <ActivityIndicator color={currentTheme.primary} />
-              ) : (
-                <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
-                  {LOAD_MORE_LABEL}
-                </Text>
-              )}
+              <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
+                {LOAD_MORE_LABEL}
+              </Text>
             </TouchableItem>
           ) : null
         }

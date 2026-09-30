@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router'
-import { ActivityIndicator, View } from 'react-native'
-import { EmptyState } from 'shared/ui'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { View } from 'react-native'
+import { AdminContentSkeleton, EmptyState } from 'shared/ui'
+import { useTheme } from 'shared/ui/theme'
 import { useAdminSectionEntity } from '../lib/useAdminSectionEntity'
 import { SectionForm } from './SectionForm'
 import { styles } from './styles'
@@ -22,11 +22,15 @@ export const AdminSectionEditScreen = () => {
     )
 
   return (
-    <View style={[styles.centered, { backgroundColor: currentTheme.background }]}>
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       {isLoading && !isNotFound ? (
-        <ActivityIndicator size='large' color={COLORS.primary} />
+        <View style={styles.formContent}>
+          <AdminContentSkeleton />
+        </View>
       ) : (
-        <EmptyState message='Раздел не найден' />
+        <View style={styles.centered}>
+          <EmptyState message='Раздел не найден' />
+        </View>
       )}
     </View>
   )

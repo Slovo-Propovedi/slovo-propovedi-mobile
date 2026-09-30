@@ -1,15 +1,15 @@
 import { useAction } from '@reatom/npm-react'
 import { type Href, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
-import { ActivityIndicator, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAdminDetailHeader } from 'widgets/admin-form-header'
 import { type APITypes } from 'shared/api'
 import { showToast } from 'shared/model'
-import { EmptyState } from 'shared/ui'
+import { AdminContentSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { useAdminSectionDetail } from '../lib/useAdminSectionDetail'
 import { SectionDetailHeader } from './SectionDetailHeader'
 import { SectionDetailPlaylistRow } from './SectionDetailPlaylistRow'
@@ -60,12 +60,16 @@ export const AdminSectionDetailScreen = () => {
     return (
       <SafeAreaView
         edges={['bottom']}
-        style={[styles.centered, { backgroundColor: currentTheme.background }]}
+        style={[styles.container, { backgroundColor: currentTheme.background }]}
       >
         {isNotFound ? (
-          <EmptyState message='Раздел не найден' />
+          <View style={styles.centered}>
+            <EmptyState message='Раздел не найден' />
+          </View>
         ) : (
-          <ActivityIndicator size='large' color={COLORS.primary} />
+          <View style={styles.listContent}>
+            <AdminContentSkeleton />
+          </View>
         )}
       </SafeAreaView>
     )

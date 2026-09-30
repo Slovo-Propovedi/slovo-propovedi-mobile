@@ -1,11 +1,11 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, FlatList, Text } from 'react-native'
+import { FlatList, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
-import { EmptyState } from 'shared/ui'
+import { AdminSermonRowSkeleton, EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { COLORS, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminSermons } from '../lib/useAdminSermons'
 import { AdminSermonRow } from './AdminSermonRow'
@@ -16,6 +16,15 @@ const CREATE_ROUTE = '/admin/sermons/create'
 const LOAD_MORE_LABEL = 'Загрузить ещё'
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить проповеди'
 const EMPTY_MESSAGE = 'Проповедей пока нет'
+const SKELETON_ROWS = 6
+
+const SermonSkeletonList = () => (
+  <>
+    {Array.from({ length: SKELETON_ROWS }, (_, index) => (
+      <AdminSermonRowSkeleton key={index} />
+    ))}
+  </>
+)
 
 export const AdminSermonsScreen = () => {
   const router = useRouter()
@@ -48,31 +57,23 @@ export const AdminSermonsScreen = () => {
     onOrderChange(nextSort === 'date' ? 'desc' : 'asc')
   }
 
-  if (isLoading)
-    return (
-      <SafeAreaView
-        edges={['top']}
-        style={[styles.centered, { backgroundColor: currentTheme.background }]}
-      >
-        <ActivityIndicator size='large' color={COLORS.primary} />
-      </SafeAreaView>
-    )
-
   return (
     <SafeAreaView
       edges={['top']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
       <FlatList
-        data={sermons}
         keyExtractor={item => item.id}
+        data={isLoading ? [] : sermons}
         renderItem={({ item }) => <AdminSermonRow item={item} onPress={() => openSermon(item)} />}
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
         ]}
         ListEmptyComponent={
-          isError ? (
+          isLoading ? (
+            <SermonSkeletonList />
+          ) : isError ? (
             <Text style={[styles.error, { color: currentTheme.textMuted }]}>
               {LOAD_ERROR_MESSAGE}
             </Text>
@@ -93,18 +94,16 @@ export const AdminSermonsScreen = () => {
           />
         }
         ListFooterComponent={
-          hasMore ? (
+          isLoadingMore ? (
+            <AdminSermonRowSkeleton />
+          ) : hasMore ? (
             <TouchableItem
               onPress={() => void loadMore()}
               style={[styles.loadMore, { backgroundColor: currentTheme.surface }]}
             >
-              {isLoadingMore ? (
-                <ActivityIndicator color={currentTheme.primary} />
-              ) : (
-                <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
-                  {LOAD_MORE_LABEL}
-                </Text>
-              )}
+              <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
+                {LOAD_MORE_LABEL}
+              </Text>
             </TouchableItem>
           ) : null
         }

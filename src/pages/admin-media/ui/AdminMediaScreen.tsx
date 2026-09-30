@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { ActivityIndicator, FlatList, Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
 import { showToast } from 'shared/model'
-import { EmptyState } from 'shared/ui'
+import { AdminMediaGridSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { COLORS, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
@@ -48,8 +48,10 @@ export const AdminMediaScreen = () => {
 
   if (isLoading)
     return (
-      <View style={[styles.centered, { backgroundColor: currentTheme.background }]}>
-        <ActivityIndicator size='large' color={COLORS.primary} />
+      <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+        <View style={styles.listContent}>
+          <AdminMediaGridSkeleton />
+        </View>
       </View>
     )
 

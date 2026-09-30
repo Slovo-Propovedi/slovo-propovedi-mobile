@@ -3,6 +3,18 @@ import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { AdminSermonsScreen } from './AdminSermonsScreen'
 
+// MarqueeText renders the title twice (visible + measurer), so a single-Text
+// stub keeps text queries unambiguous in list-row tests.
+jest.mock('shared/ui/marquee-text/marquee-text', () => {
+  const { Text } = jest.requireActual('react-native')
+
+  return {
+    MarqueeText: ({ testID, text }: { testID?: string; text: string }) => (
+      <Text testID={testID}>{text}</Text>
+    ),
+  }
+})
+
 const mockFindAll = jest.fn()
 const mockPush = jest.fn()
 
@@ -99,5 +111,30 @@ describe('<AdminSermonsScreen>', () => {
     const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
 
     expect(await findByText('Проповедей пока нет')).toBeTruthy()
+  })
+
+  test('shows skeleton rows in the list area while the first page loads', async () => {
+    mockFindAll.mockReturnValue(new Promise(() => undefined))
+
+    const { findAllByTestId, findByText } = await renderWithProviders(<AdminSermonsScreen />)
+
+    // Header stays visible; only the list body is a placeholder.
+    expect(await findByText('Проповеди')).toBeTruthy()
+    expect((await findAllByTestId('admin-skeleton-row')).length).toBeGreaterThan(0)
+  })
+
+  test('reloads the list sorted by title when picked from the sort select', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
+
+    const { findAllByText, findByText } = await renderWithProviders(<AdminSermonsScreen />)
+
+    fireEvent.press(await findByText('По дате'))
+    fireEvent.press((await findAllByText('По названию'))[0])
+
+    await waitFor(() =>
+      expect(mockFindAll).toHaveBeenLastCalledWith(
+        expect.objectContaining({ order: 'asc', sort: 'title' }),
+      ),
+    )
   })
 })

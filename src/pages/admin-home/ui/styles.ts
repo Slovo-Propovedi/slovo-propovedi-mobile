@@ -64,4 +64,8 @@ export const styles = StyleSheet.create({
     marginTop: INDENTS.highest,
     textTransform: 'uppercase',
   },
+  statCountBar: {
+    height: FONT_SIZES.xxl,
+    width: '50%',
+  },
 })

@@ -1,13 +1,13 @@
 import { useAction } from '@reatom/npm-react'
 import { type Href, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAdminDetailHeader } from 'widgets/admin-form-header'
 import { showToast } from 'shared/model'
-import { EmptyState } from 'shared/ui'
+import { AdminContentSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { useAdminSermonDetail } from '../lib/useAdminSermonDetail'
 import { SermonDetailHeader } from './SermonDetailHeader'
 import { SermonMediaCard } from './SermonMediaCard'
@@ -49,12 +49,16 @@ export const AdminSermonDetailScreen = () => {
     return (
       <SafeAreaView
         edges={['bottom']}
-        style={[styles.centered, { backgroundColor: currentTheme.background }]}
+        style={[styles.container, { backgroundColor: currentTheme.background }]}
       >
         {isNotFound ? (
-          <EmptyState message='Проповедь не найдена' />
+          <View style={styles.centered}>
+            <EmptyState message='Проповедь не найдена' />
+          </View>
         ) : (
-          <ActivityIndicator size='large' color={COLORS.primary} />
+          <View style={styles.listContent}>
+            <AdminContentSkeleton />
+          </View>
         )}
       </SafeAreaView>
     )

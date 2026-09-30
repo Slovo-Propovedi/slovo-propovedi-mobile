@@ -1,18 +1,27 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, View } from 'react-native'
+import { View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
-import { EmptyState } from 'shared/ui'
+import { AdminSectionRowSkeleton, EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { COLORS, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useAdminSections } from '../lib/useAdminSections'
 import { AdminSectionRow } from './AdminSectionRow'
 import { AdminSectionsHeader } from './AdminSectionsHeader'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/sections/create'
+const SKELETON_ROWS = 6
+
+const SectionSkeletonList = () => (
+  <>
+    {Array.from({ length: SKELETON_ROWS }, (_, index) => (
+      <AdminSectionRowSkeleton key={index} />
+    ))}
+  </>
+)
 
 export const AdminSectionsScreen = () => {
   const router = useRouter()
@@ -33,27 +42,19 @@ export const AdminSectionsScreen = () => {
     />
   )
 
-  if (isLoading)
-    return (
-      <SafeAreaView
-        edges={['top']}
-        style={[styles.centered, { backgroundColor: currentTheme.background }]}
-      >
-        <ActivityIndicator size='large' color={COLORS.primary} />
-      </SafeAreaView>
-    )
-
   return (
     <SafeAreaView
       edges={['top']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
       <DraggableFlatList
-        data={sections}
         renderItem={renderItem}
         keyExtractor={item => item.id}
+        data={isLoading ? [] : sections}
         onDragEnd={({ data }) => void reorder(data)}
-        ListEmptyComponent={<EmptyState message='Разделов пока нет' />}
+        ListEmptyComponent={
+          isLoading ? <SectionSkeletonList /> : <EmptyState message='Разделов пока нет' />
+        }
         ListHeaderComponent={
           <AdminSectionsHeader count={sections.length} onCreate={() => router.push(CREATE_ROUTE)} />
         }
@@ -64,7 +65,7 @@ export const AdminSectionsScreen = () => {
         ListFooterComponent={
           isReordering ? (
             <View style={styles.reordering}>
-              <ActivityIndicator color={currentTheme.primary} />
+              <AdminSectionRowSkeleton />
             </View>
           ) : null
         }

@@ -1,27 +1,18 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, TextInput, View } from 'react-native'
 import { type APITypes } from 'shared/api'
+import { AdminSelect, type AdminSelectOption } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
 
-const SORT_OPTIONS: { label: string; value: APITypes.SermonControllerFindAllSort }[] = [
+const SORT_OPTIONS: AdminSelectOption<APITypes.SermonControllerFindAllSort>[] = [
   { label: 'По дате', value: 'date' },
   { label: 'По названию', value: 'title' },
   { label: 'По автору', value: 'artist' },
   { label: 'По плейлисту', value: 'playlist' },
 ]
-
-const sortLabel = (sort: APITypes.SermonControllerFindAllSort) =>
-  SORT_OPTIONS.find(option => option.value === sort)?.label ?? ''
-
-// Следующий пункт сортировки по кругу: тап по кнопке листает варианты.
-const nextSort = (sort: APITypes.SermonControllerFindAllSort) => {
-  const index = SORT_OPTIONS.findIndex(option => option.value === sort)
-
-  return SORT_OPTIONS[(index + 1) % SORT_OPTIONS.length].value
-}
 
 // Шапка списка проповедей: заголовок, счётчик, поиск, сортировка, порядок и
 // кнопка загрузки.
@@ -71,14 +62,7 @@ export const AdminSermonsHeader = ({
         style={[styles.input, { borderColor: currentTheme.textMuted, color: currentTheme.text }]}
       />
       <View style={styles.controls}>
-        <TouchableItem
-          onPress={() => onSortChange(nextSort(sort))}
-          style={[styles.loadMore, { backgroundColor: currentTheme.surface }]}
-        >
-          <Text style={[styles.loadMoreText, { color: currentTheme.text }]}>
-            {`Сортировка: ${sortLabel(sort)}`}
-          </Text>
-        </TouchableItem>
+        <AdminSelect value={sort} options={SORT_OPTIONS} onChange={onSortChange} />
         <IconButton
           onPress={() => onOrderChange(order === 'asc' ? 'desc' : 'asc')}
           accessibilityLabel={order === 'asc' ? 'По возрастанию' : 'По убыванию'}

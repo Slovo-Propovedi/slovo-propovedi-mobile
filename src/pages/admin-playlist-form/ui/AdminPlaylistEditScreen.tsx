@@ -1,9 +1,9 @@
 import { type Href, Stack, useLocalSearchParams } from 'expo-router'
-import { ActivityIndicator, View } from 'react-native'
+import { View } from 'react-native'
 import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { type APITypes } from 'shared/api'
-import { EmptyState } from 'shared/ui'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { AdminContentSkeleton, EmptyState } from 'shared/ui'
+import { useTheme } from 'shared/ui/theme'
 import { useAdminPlaylistEntity } from '../lib/useAdminPlaylistEntity'
 import { usePlaylistFormController } from '../lib/usePlaylistFormController'
 import { PlaylistForm } from './PlaylistForm'
@@ -27,11 +27,15 @@ export const AdminPlaylistEditScreen = () => {
     )
 
   return (
-    <View style={[styles.centered, { backgroundColor: currentTheme.background }]}>
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       {isLoading && !isNotFound ? (
-        <ActivityIndicator size='large' color={COLORS.primary} />
+        <View style={styles.formContent}>
+          <AdminContentSkeleton />
+        </View>
       ) : (
-        <EmptyState message='Плейлист не найден' />
+        <View style={styles.centered}>
+          <EmptyState message='Плейлист не найден' />
+        </View>
       )}
     </View>
   )
