@@ -25,9 +25,9 @@
 
 **Файлы:** `src/pages/admin-section-detail/ui/AdminSectionDetailScreen.tsx`, `SectionDetailHeader.tsx`, `SectionDetailStats.tsx`, `SectionDetailStat.tsx`, `SectionDetailPlaylistRow.tsx`, `lib/useAdminSectionDetail.ts`
 
-- **Что показывается:** заголовок (динамически в шапке через `Stack.Screen`), описание, действия «Редактировать» и «Удалить»; сетка статистики (размер карточек, высота, расположение заголовка, строки, крупный заголовок, скруглённые углы); блок «Плейлисты раздела (N)» с drag-переупорядочиванием.
+- **Что показывается:** заголовок (динамически в шапке через `useAdminDetailHeader`), описание, действие «Удалить»; «Редактировать» — иконка в шапке (`headerRight`); сетка статистики (размер карточек, высота, расположение заголовка, строки, крупный заголовок, скруглённые углы); блок «Плейлисты раздела (N)» с drag-переупорядочиванием.
 - **Откуда данные:** `sectionControllerFindOne` (`GET /section/{id}`); reorder — `reorderPlaylistsInSection` (`PATCH /section/{id}/playlists/reorder`, тело `{ playlistIds }`); удаление — `sectionControllerRemove` (`DELETE /section/{id}`).
-- **Навигация:** «Редактировать» → `/admin/sections/[id]/edit`; тап по плейлисту → `/admin/playlists/[id]` (внутри админки, не в пользовательский плеер); после удаления — `router.back()` в список + тост.
+- **Навигация:** иконка «Редактировать» в шапке → `/admin/sections/[id]/edit`; тап по плейлисту → `/admin/playlists/[id]` (внутри админки, не в пользовательский плеер); после удаления — `router.back()` в список + тост.
 - **Удаление:** `ConfirmDialog` («Удалить раздел?») с подтверждением.
 - **Состояния:** загрузка — `ActivityIndicator`; не найдено — `EmptyState` «Раздел не найден»; нет плейлистов — `EmptyState` «Плейлистов пока нет»; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
 
@@ -38,7 +38,8 @@
 - **Поля:** название (обязательно), описание (textarea, nullable); размер карточек (`small/middle/large/xLarge`), высота (`high/middle/short`), расположение заголовка (`on/under/bothOnAndUnder`) — как `SelectField` в модалке; строки (number, nullable); чекбоксы «Крупный заголовок описания на слайде» и «Скруглённые углы карточек» (`expo-checkbox`).
 - **Режим edit** дополнительно: «Плейлисты раздела» — поисковый список с чекбоксами (`playlistControllerFindAll` с `search`/`sort=title`/`order=asc`, дебаунс 300мс); `selectedPlaylistIds` — источник истины, переживает поиск.
 - **Мутации:** `sectionControllerCreate` (`POST /section`) / `sectionControllerUpdate` (`PATCH /section/{id}`); в edit тело всегда содержит `playlistsIds` (пустой массив очищает состав); очищенные nullable-поля уходят как `null`.
-- **Валидация:** название непустое; кнопка отправки блокируется и показывает `ActivityIndicator` во время запроса.
+- **Кнопка «Сохранить» — в шапке экрана** (`headerRight`, иконка-дискета `SaveButton`, хук `useAdminFormHeader`), всегда доступна при скролле; нижней кнопки отправки в теле нет.
+- **Валидация:** название непустое (иначе inline-ошибка + тост); иконка сохранения блокируется и показывает `ActivityIndicator` во время запроса.
 - **После успеха:** тост и `router.back()`; ошибка — баннер в форме.
 - **Режим edit:** сущность грузится до монтирования формы (`useAdminSectionEntity`), пропсы формы стабильны.
 

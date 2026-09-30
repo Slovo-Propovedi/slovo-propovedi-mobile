@@ -26,12 +26,12 @@
 
 **Файлы:** `src/pages/admin-user-detail/ui/AdminUserDetailScreen.tsx`, `UserStatGrid.tsx`, `PasswordDialog.tsx`, `lib/useAdminUserDetail.ts`
 
-- **Что показывается:** аватар-инициал, имя, email; действия «Редактировать», «Сменить пароль», «Удалить» (последнее скрыто для собственного аккаунта); сетка статистики: Имя, Роль (`ROLE_LABELS`), Username, Email, ID.
+- **Что показывается:** аватар-инициал, имя, email; действия «Сменить пароль», «Удалить» (последнее скрыто для собственного аккаунта); «Редактировать» — иконка в шапке (`headerRight`, `useAdminDetailHeader`); сетка статистики: Имя, Роль (`ROLE_LABELS`), Username, Email, ID.
 - **Откуда данные:** `usersControllerFindOne` (`GET /users/{id}`).
 - **Собственный аккаунт:** кнопка «Удалить» рендерится только при `id !== authUser.id` (`authUserAtom` из `entities/auth`) — дублирует серверную защиту self-delete.
 - **Удаление:** `ConfirmDialog` «Удалить пользователя?» → `usersControllerRemove` (`DELETE /users/{id}`) → `router.back()`; ошибка — `reportError`.
 - **Смена пароля:** `PasswordDialog` (`Modal` + `FormField` с `secureTextEntry`) → `usersControllerChangePassword` (`PATCH /users/{id}/password`, тело `{ password }`). Пустой пароль блокируется на клиенте («Введите новый пароль.»); успех — тост «Пароль изменён» и закрытие модалки.
-- **Навигация:** «Редактировать» → `/admin/users/[id]/edit`.
+- **Навигация:** иконка «Редактировать» в шапке → `/admin/users/[id]/edit`.
 - **Состояния:** загрузка — `ActivityIndicator`; не найдено — `EmptyState` «Пользователь не найден».
 
 ## Форма (создание / редактирование)
@@ -39,7 +39,7 @@
 **Файлы:** `src/pages/admin-user-form/ui/UserForm.tsx` (+ `AdminUserCreateScreen.tsx`, `AdminUserEditScreen.tsx`, `UserFormFields.tsx`, `UserSaveButton.tsx`), `lib/userFormState.ts`, `lib/useUserFormController.ts`, `lib/useAdminUserEntity.ts`, `lib/useUserFormHeader.tsx`, `lib/useUserScreens.tsx`
 
 - **Общая форма** `UserForm` в двух режимах; поля: имя, email (`keyboardType='email-address'`), логин, роль (`SelectField` — `admin`/`moderator`/`user`, по умолчанию `user`), пароль (`secureTextEntry`, **только в режиме create**).
-- **Кнопка «Сохранить» — в шапке экрана** (`headerRight`), всегда доступна при скролле; опции шапки мемоизированы, обработчик держится в ref (см. `useUserFormHeader`).
+- **Кнопка «Сохранить» — в шапке экрана** (`headerRight`, иконка-дискета `SaveButton`); шапка собирается хуком `useAdminFormHeader` (`widgets/admin-form-header`), опции мемоизированы, обработчик держится в ref.
 - **Мутации:** `usersControllerCreate` (`POST /users`) — тело `{ name, email, username, password, role }` (`role` шлётся всегда); `usersControllerUpdate` (`PATCH /users/{id}`) — **только изменённые** поля из `name/email/username/role`, без пароля (пропущенные ключи = «не менять»). Если изменений нет — `router.back()` без запроса.
 - **Валидация (create):** имя/email/логин/пароль непустые, иначе inline-ошибка + тост «Заполните все поля.», отправки нет.
 - **После успеха:** тост («Пользователь создан»/«Пользователь сохранён») и `router.back()`; ошибка — баннер в форме.

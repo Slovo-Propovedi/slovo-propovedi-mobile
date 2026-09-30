@@ -1,9 +1,10 @@
 import { useAction } from '@reatom/npm-react'
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { type Href, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useAdminDetailHeader } from 'widgets/admin-form-header'
 import { type APITypes } from 'shared/api'
 import { showToast } from 'shared/model'
 import { EmptyState } from 'shared/ui'
@@ -27,7 +28,11 @@ export const AdminSectionDetailScreen = () => {
   const showToastAction = useAction(showToast)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   // Memoized so expo-router's setOptions does not see a fresh object each render.
-  const headerOptions = useMemo(() => ({ title: section?.title ?? '' }), [section?.title])
+  const editRoute = useMemo<Href>(
+    () => ({ params: { id }, pathname: '/admin/sections/[id]/edit' }),
+    [id],
+  )
+  const headerOptions = useAdminDetailHeader({ editRoute, title: section?.title ?? '' })
 
   const handleDelete = async () => {
     setIsDeleteOpen(false)
@@ -79,9 +84,6 @@ export const AdminSectionDetailScreen = () => {
               title={section.title}
               description={section.description}
               onDelete={() => setIsDeleteOpen(true)}
-              onEdit={() =>
-                router.push({ params: { id: section.id }, pathname: '/admin/sections/[id]/edit' })
-              }
             />
             <SectionDetailStats section={section} />
             <Text style={[styles.playlistsTitle, { color: currentTheme.text }]}>

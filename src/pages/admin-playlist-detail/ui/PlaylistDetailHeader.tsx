@@ -15,15 +15,14 @@ const pluralize = (count: number, forms: [string, string, string]) => {
   return forms[2]
 }
 
-// Шапка детали плейлиста: обложка, название, описание, счётчик и действия.
+// Шапка детали плейлиста: обложка, название, описание, счётчик и удаление.
+// «Редактировать» живёт в шапке экрана (headerRight), не в теле.
 export const PlaylistDetailHeader = ({
   onDelete,
-  onEdit,
   playlist,
   sermonsCount,
 }: {
   onDelete: () => void
-  onEdit: () => void
   playlist: APITypes.PlaylistEntity
   sermonsCount: number
 }) => {
@@ -53,13 +52,6 @@ export const PlaylistDetailHeader = ({
         </View>
       </View>
       <View style={styles.actions}>
-        <TouchableItem
-          onPress={onEdit}
-          style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}
-        >
-          <Ionicons size={18} name='create-outline' color={currentTheme.primary} />
-          <Text style={[styles.actionText, { color: currentTheme.primary }]}>Редактировать</Text>
-        </TouchableItem>
         <TouchableItem
           onPress={onDelete}
           style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}

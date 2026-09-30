@@ -1,9 +1,10 @@
 import { useAction } from '@reatom/npm-react'
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { type Href, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useAdminDetailHeader } from 'widgets/admin-form-header'
 import { type APITypes } from 'shared/api'
 import { showToast } from 'shared/model'
 import { EmptyState } from 'shared/ui'
@@ -26,7 +27,11 @@ export const AdminPlaylistDetailScreen = () => {
   const showToastAction = useAction(showToast)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   // Memoized so expo-router's setOptions does not see a fresh object each render.
-  const headerOptions = useMemo(() => ({ title: playlist?.title ?? '' }), [playlist?.title])
+  const editRoute = useMemo<Href>(
+    () => ({ params: { id }, pathname: '/admin/playlists/[id]/edit' }),
+    [id],
+  )
+  const headerOptions = useAdminDetailHeader({ editRoute, title: playlist?.title ?? '' })
 
   const handleDelete = async () => {
     setIsDeleteOpen(false)
@@ -78,9 +83,6 @@ export const AdminPlaylistDetailScreen = () => {
               playlist={playlist}
               sermonsCount={sermons.length}
               onDelete={() => setIsDeleteOpen(true)}
-              onEdit={() =>
-                router.push({ params: { id: playlist.id }, pathname: '/admin/playlists/[id]/edit' })
-              }
             />
             <Text style={[styles.sermonsTitle, { color: currentTheme.text }]}>
               {`Проповеди плейлиста (${sermons.length})`}

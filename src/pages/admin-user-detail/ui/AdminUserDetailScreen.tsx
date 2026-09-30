@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { type Href, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { useAdminDetailHeader } from 'widgets/admin-form-header'
 import { useRequireAdminRole } from 'entities/auth'
 import { EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
@@ -13,13 +14,13 @@ import { styles } from './styles'
 import { UserStatGrid } from './UserStatGrid'
 
 const DELETE_TITLE = 'Удалить пользователя?'
-const EDIT_LABEL = 'Редактировать'
 const PASSWORD_LABEL = 'Сменить пароль'
 const DELETE_LABEL = 'Удалить'
 const NOT_FOUND_MESSAGE = 'Пользователь не найден'
 
-// Деталь пользователя: статистика и действия (редактировать, сменить пароль,
-// удалить). Удаление собственного аккаунта скрыто.
+// Деталь пользователя: статистика и действия (сменить пароль, удалить).
+// «Редактировать» живёт в шапке экрана (headerRight). Удаление собственного
+// аккаунта скрыто.
 export const AdminUserDetailScreen = () => {
   useRequireAdminRole()
   const router = useRouter()
@@ -30,7 +31,11 @@ export const AdminUserDetailScreen = () => {
     useAdminUserDetail(id)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isPasswordOpen, setIsPasswordOpen] = useState(false)
-  const headerOptions = useMemo(() => ({ title: user?.name ?? '' }), [user?.name])
+  const editRoute = useMemo<Href>(
+    () => ({ params: { id }, pathname: '/admin/users/[id]/edit' }),
+    [id],
+  )
+  const headerOptions = useAdminDetailHeader({ editRoute, title: user?.name ?? '' })
 
   const handleDelete = async () => {
     setIsDeleteOpen(false)
@@ -63,13 +68,6 @@ export const AdminUserDetailScreen = () => {
         </View>
 
         <View style={styles.actions}>
-          <TouchableItem
-            style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}
-            onPress={() => router.push({ params: { id }, pathname: '/admin/users/[id]/edit' })}
-          >
-            <Ionicons size={18} name='create-outline' color={currentTheme.primary} />
-            <Text style={[styles.actionText, { color: currentTheme.primary }]}>{EDIT_LABEL}</Text>
-          </TouchableItem>
           <TouchableItem
             onPress={() => setIsPasswordOpen(true)}
             style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}

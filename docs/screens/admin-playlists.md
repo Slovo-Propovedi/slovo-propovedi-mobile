@@ -25,10 +25,10 @@
 
 **Файлы:** `src/pages/admin-playlist-detail/ui/AdminPlaylistDetailScreen.tsx`, `PlaylistDetailHeader.tsx`, `PlaylistDetailSermonRow.tsx`, `lib/useAdminPlaylistDetail.ts`
 
-- **Что показывается:** герой (обложка через `expo-image`, название, описание), плитки «Проповеди»/«Разделы», действия «Редактировать» и «Удалить»; блок «Проповеди плейлиста (N)» с drag-переупорядочиванием (ручка `reorder-three`).
+- **Что показывается:** герой (обложка через `expo-image`, название, описание), плитки «Проповеди»/«Разделы», действие «Удалить»; «Редактировать» — иконка в шапке (`headerRight`, `useAdminDetailHeader`); блок «Проповеди плейлиста (N)» с drag-переупорядочиванием (ручка `reorder-three`).
 - **Откуда данные:** `playlistControllerFindOne` (`GET /playlists/{id}`); reorder — `reorderSermonsInPlaylist` (`PATCH /playlists/{id}/sermons/reorder`, тело `{ sermonIds }` — **полный** упорядоченный массив id); удаление — `playlistControllerRemove` (`DELETE /playlists/{id}`).
 - **Optimistic reorder:** локальное состояние перекрывает ответ сети; при ошибке — откат + `showToast`; запрос пропускается, если порядок не изменился (`hasOrderChanged`).
-- **Навигация:** «Редактировать» → `/admin/playlists/[id]/edit`; тап по строке проповеди → `/admin/sermons/[id]`; после удаления — `router.back()` в список + тост.
+- **Навигация:** иконка «Редактировать» в шапке → `/admin/playlists/[id]/edit`; тап по строке проповеди → `/admin/sermons/[id]`; после удаления — `router.back()` в список + тост.
 - **Удаление:** `ConfirmDialog` («Удалить плейлист?») с подтверждением.
 - **Состояния:** загрузка — `ActivityIndicator`; не найдено — `EmptyState` «Плейлист не найден»; нет проповедей — `EmptyState` «Проповедей пока нет»; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
 
@@ -38,7 +38,7 @@
 
 - **Поля:** название (обязательно), описание (textarea, nullable); обложка — `CoverPicker` из `widgets/admin-form-pickers` (ручной URL + галерея изображений + прямая multipart-загрузка с прогрессом); проповеди — поисковый список с чекбоксами и обложками (`GET /sermons?search`, дебаунс 300мс); разделы — чекбокс-список (`GET /section`).
 - **Порядок пикеров:** выбранные (отмеченные) элементы идут первыми, затем остальные — `orderSelectedFirst`; `selectedIds` — источник истины, переживает поиск.
-- **Кнопка «Сохранить» — в шапке экрана** (`headerRight`), всегда доступна при скролле страницы. Страница скроллится целиком, у пикеров нет отдельного внутреннего скролла. Опции шапки мемоизированы, обработчик сохранения держится в ref — чтобы expo-router не переустанавливал options каждый рендер (см. `usePlaylistFormHeader`).
+- **Кнопка «Сохранить» — в шапке экрана** (`headerRight`, иконка-дискета `SaveButton`), всегда доступна при скролле страницы. Шапка формы собирается хуком `useAdminFormHeader` (`widgets/admin-form-header`). Страница скроллится целиком, у пикеров нет отдельного внутреннего скролла. Опции шапки мемоизированы, обработчик сохранения держится в ref — чтобы expo-router не переустанавливал options каждый рендер.
 - **Мутации:** `playlistControllerCreate` (`POST /playlists`) / `playlistControllerUpdate` (`PATCH /playlists/{id}`); тело всегда содержит `sermonsIds` и `sectionsIds` (пустой массив очищает связь); очищенные nullable-поля уходят как `null`.
 - **Валидация:** название непустое; при пустом названии — inline-ошибка + тост, отправки нет; во время запроса кнопка показывает `ActivityIndicator`.
 - **После успеха:** тост и `router.back()`; ошибка — баннер в форме.

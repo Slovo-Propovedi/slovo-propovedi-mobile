@@ -1,8 +1,9 @@
 import { useAction } from '@reatom/npm-react'
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { type Href, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useAdminDetailHeader } from 'widgets/admin-form-header'
 import { showToast } from 'shared/model'
 import { EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
@@ -25,7 +26,11 @@ export const AdminSermonDetailScreen = () => {
   const showToastAction = useAction(showToast)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   // Memoized so expo-router's setOptions does not see a fresh object each render.
-  const headerOptions = useMemo(() => ({ title: sermon?.title ?? '' }), [sermon?.title])
+  const editRoute = useMemo<Href>(
+    () => ({ params: { id }, pathname: '/admin/sermons/[id]/edit' }),
+    [id],
+  )
+  const headerOptions = useAdminDetailHeader({ editRoute, title: sermon?.title ?? '' })
 
   const handleDelete = async () => {
     setIsDeleteOpen(false)
@@ -56,13 +61,7 @@ export const AdminSermonDetailScreen = () => {
     >
       <Stack.Screen options={headerOptions} />
       <ScrollView contentContainerStyle={styles.listContent}>
-        <SermonDetailHeader
-          sermon={sermon}
-          onDelete={() => setIsDeleteOpen(true)}
-          onEdit={() =>
-            router.push({ params: { id: sermon.id }, pathname: '/admin/sermons/[id]/edit' })
-          }
-        />
+        <SermonDetailHeader sermon={sermon} onDelete={() => setIsDeleteOpen(true)} />
 
         {sermon.description ? (
           <View style={[styles.card, { backgroundColor: currentTheme.surface }]}>

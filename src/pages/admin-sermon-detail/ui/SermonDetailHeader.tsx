@@ -8,14 +8,12 @@ import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
 
 // Шапка детали проповеди: обложка, название, подпись (проповедник · Писание)
-// и действия «Редактировать» / «Удалить».
+// и действие «Удалить». «Редактировать» живёт в шапке экрана (headerRight).
 export const SermonDetailHeader = ({
   onDelete,
-  onEdit,
   sermon,
 }: {
   onDelete: () => void
-  onEdit: () => void
   sermon: APITypes.SermonEntity
 }) => {
   const { currentTheme } = useTheme()
@@ -29,13 +27,6 @@ export const SermonDetailHeader = ({
         <Text style={[styles.subtitle, { color: currentTheme.textMuted }]}>{subtitle}</Text>
       ) : null}
       <View style={styles.actions}>
-        <TouchableItem
-          onPress={onEdit}
-          style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}
-        >
-          <Ionicons size={18} name='create-outline' color={currentTheme.primary} />
-          <Text style={[styles.actionText, { color: currentTheme.primary }]}>Редактировать</Text>
-        </TouchableItem>
         <TouchableItem
           onPress={onDelete}
           style={[styles.actionButton, { backgroundColor: currentTheme.surface }]}

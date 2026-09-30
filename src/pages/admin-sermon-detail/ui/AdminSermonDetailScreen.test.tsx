@@ -29,11 +29,25 @@ jest.mock('expo-audio', () => ({
   }),
 }))
 
-jest.mock('expo-router', () => ({
-  Stack: { Screen: () => null },
-  useLocalSearchParams: () => ({ id: 's1' }),
-  useRouter: () => ({ back: mockBack, push: mockPush }),
-}))
+jest.mock('expo-router', () => {
+  const React = jest.requireActual('react') as {
+    createElement: (type: unknown, props: unknown, ...children: unknown[]) => unknown
+    Fragment: unknown
+  }
+
+  return {
+    router: { push: (...args: unknown[]) => mockPush(...args) },
+    // Edit now lives in the header (headerRight). Render it so the test can press it.
+    Stack: {
+      Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+        options?.headerRight
+          ? React.createElement(React.Fragment, null, options.headerRight())
+          : null,
+    },
+    useLocalSearchParams: () => ({ id: 's1' }),
+    useRouter: () => ({ back: mockBack, push: mockPush }),
+  }
+})
 
 const buildSermon = (overrides = {}) =>
   sermonsMocks.getSermonControllerFindOneResponseMock({
@@ -67,8 +81,8 @@ describe('<AdminSermonDetailScreen>', () => {
   test('navigates to the edit screen from the header action', async () => {
     mockFindOne.mockResolvedValue(buildSermon())
 
-    const { findByText } = await renderWithProviders(<AdminSermonDetailScreen />)
-    fireEvent.press(await findByText('Редактировать'))
+    const { findByLabelText } = await renderWithProviders(<AdminSermonDetailScreen />)
+    fireEvent.press(await findByLabelText('Редактировать'))
 
     expect(mockPush).toHaveBeenCalledWith({
       params: { id: 's1' },
