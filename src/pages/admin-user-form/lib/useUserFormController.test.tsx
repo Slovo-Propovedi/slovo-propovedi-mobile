@@ -75,6 +75,35 @@ describe('useUserFormController', () => {
     expect(result.current.error).toBe('Заполните все поля.')
   })
 
+  test('create is pristine until the first input', async () => {
+    const { result } = await renderHookWithProviders(() =>
+      useUserFormController({ mode: 'create' }),
+    )
+
+    expect(result.current.isDirty).toBe(false)
+
+    await act(async () => {
+      result.current.onChange('name', 'Новое')
+    })
+
+    expect(result.current.isDirty).toBe(true)
+  })
+
+  test('edit is pristine while untouched and dirty after a change', async () => {
+    const initial = createInitial()
+    const { result } = await renderHookWithProviders(() =>
+      useUserFormController({ id: 'u1', initial, mode: 'edit' }),
+    )
+
+    expect(result.current.isDirty).toBe(false)
+
+    await act(async () => {
+      result.current.onChange('name', 'Новое имя')
+    })
+
+    expect(result.current.isDirty).toBe(true)
+  })
+
   test('edit sends only the changed fields (no password)', async () => {
     const initial = createInitial()
     const { result } = await renderHookWithProviders(() =>

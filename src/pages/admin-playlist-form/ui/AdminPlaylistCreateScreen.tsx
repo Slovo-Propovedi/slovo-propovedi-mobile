@@ -11,11 +11,12 @@ const PLAYLISTS_FALLBACK_ROUTE: Href = '/admin/playlists'
 // Экран создания плейлиста: форма в режиме create + «Сохранить» в шапке.
 export const AdminPlaylistCreateScreen = () => {
   const { currentTheme } = useTheme()
-  const { error, isSubmitting, onChange, save, values } = usePlaylistFormController({
+  const { error, isDirty, isSubmitting, onChange, save, values } = usePlaylistFormController({
     mode: 'create',
   })
   const headerOptions = useAdminFormHeader({
     fallbackRoute: PLAYLISTS_FALLBACK_ROUTE,
+    isDirty,
     isSubmitting,
     onSave: save,
     title: 'Создать плейлист',

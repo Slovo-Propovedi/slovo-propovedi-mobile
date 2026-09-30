@@ -3,6 +3,8 @@ import { useRouter } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { type APITypes, sermonsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { isEmpty } from 'shared/lib/utils/isEmpty'
+import { omitEqualFields } from 'shared/lib/utils/omitEqualFields'
 import { showToast } from 'shared/model'
 import { initialFormValues, type SermonFormValues } from './sermonFormInitialValues'
 import {
@@ -15,6 +17,7 @@ import {
 
 export interface SermonFormController {
   error: null | string
+  isDirty: boolean
   isSubmitting: boolean
   onChange: <K extends keyof SermonFormValues>(key: K, value: SermonFormValues[K]) => void
   onChapterEndChange: (value: string) => void
@@ -47,9 +50,12 @@ export const useSermonFormController = ({
 }): SermonFormController => {
   const router = useRouter()
   const showToastAction = useAction(showToast)
-  const [values, setValues] = useState<SermonFormValues>(() => initialFormValues(initial))
+  const [initialValues] = useState<SermonFormValues>(() => initialFormValues(initial))
+  const [values, setValues] = useState<SermonFormValues>(initialValues)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<null | string>(null)
+
+  const isDirty = !isEmpty(omitEqualFields(initialValues, values))
 
   const onChange = useCallback(
     <K extends keyof SermonFormValues>(key: K, value: SermonFormValues[K]) =>
@@ -95,5 +101,5 @@ export const useSermonFormController = ({
     }
   }, [id, mode, router, showToastAction, values])
 
-  return { error, isSubmitting, onChange, onChapterEndChange, save, values }
+  return { error, isDirty, isSubmitting, onChange, onChapterEndChange, save, values }
 }

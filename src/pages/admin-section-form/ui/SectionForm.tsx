@@ -5,6 +5,8 @@ import { ScrollView, Text, View } from 'react-native'
 import { useAdminFormHeader } from 'widgets/admin-form-header'
 import { type APITypes, sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { isEmpty } from 'shared/lib/utils/isEmpty'
+import { omitEqualFields } from 'shared/lib/utils/omitEqualFields'
 import { showToast } from 'shared/model'
 import { useTheme } from 'shared/ui/theme'
 import {
@@ -34,11 +36,13 @@ export const SectionForm = ({
   const router = useRouter()
   const { currentTheme } = useTheme()
   const showToastAction = useAction(showToast)
-  const [values, setValues] = useState<SectionFormValues>(() => initialFormValues(initial))
+  const [initialValues] = useState<SectionFormValues>(() => initialFormValues(initial))
+  const [values, setValues] = useState<SectionFormValues>(initialValues)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<null | string>(null)
 
   const isEdit = mode === 'edit'
+  const isDirty = !isEmpty(omitEqualFields(initialValues, values))
   const title = values.title.trim()
   const updateField = <K extends keyof SectionFormValues>(key: K, value: SectionFormValues[K]) =>
     setValues(prev => ({ ...prev, [key]: value }))
@@ -82,6 +86,7 @@ export const SectionForm = ({
 
   const headerOptions = useAdminFormHeader({
     fallbackRoute: SECTIONS_FALLBACK_ROUTE,
+    isDirty,
     isSubmitting,
     onSave: () => void handleSubmit(),
     title: isEdit ? 'Редактировать раздел' : 'Создать раздел',

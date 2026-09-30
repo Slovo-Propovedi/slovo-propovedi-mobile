@@ -3,6 +3,8 @@ import { useRouter } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { type APITypes, usersApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { isEmpty } from 'shared/lib/utils/isEmpty'
+import { omitEqualFields } from 'shared/lib/utils/omitEqualFields'
 import { showToast } from 'shared/model'
 import {
   buildCreateUserRequest,
@@ -14,6 +16,7 @@ import {
 
 export interface UserFormController {
   error: null | string
+  isDirty: boolean
   isSubmitting: boolean
   onChange: <K extends keyof UserFormValues>(key: K, value: UserFormValues[K]) => void
   save: () => Promise<void>
@@ -42,9 +45,12 @@ export const useUserFormController = ({
 }): UserFormController => {
   const router = useRouter()
   const showToastAction = useAction(showToast)
-  const [values, setValues] = useState<UserFormValues>(() => initialUserFormValues(initial))
+  const [initialValues] = useState<UserFormValues>(() => initialUserFormValues(initial))
+  const [values, setValues] = useState<UserFormValues>(initialValues)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<null | string>(null)
+
+  const isDirty = !isEmpty(omitEqualFields(initialValues, values))
 
   const onChange = useCallback(
     <K extends keyof UserFormValues>(key: K, value: UserFormValues[K]) =>
@@ -94,5 +100,5 @@ export const useUserFormController = ({
     }
   }, [id, initial, mode, router, showToastAction, values])
 
-  return { error, isSubmitting, onChange, save, values }
+  return { error, isDirty, isSubmitting, onChange, save, values }
 }

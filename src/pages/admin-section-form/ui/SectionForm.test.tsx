@@ -73,13 +73,38 @@ describe('<SectionForm>', () => {
     )
   })
 
-  test('edit submits playlistsIds from the initial section', async () => {
+  test('disables the save button until the form is dirty', async () => {
+    const { getByLabelText, getByRole } = await renderWithProviders(<SectionForm mode='create' />)
+
+    const saveButton = await waitFor(() => getByRole('button', { name: SAVE_LABEL }))
+    expect(saveButton).toBeDisabled()
+
+    fireEvent.changeText(getByLabelText('Название'), 'Новый раздел')
+
+    await waitFor(() => expect(getByRole('button', { name: SAVE_LABEL })).toBeEnabled())
+  })
+
+  test('keeps the save button disabled for a pristine edit form', async () => {
     const initial = sectionsMocks.getSectionControllerFindOneResponseMock({ title: 'Раздел' })
-    const playlistIds = initial.playlists.map(playlist => playlist.id)
 
     const { getByRole } = await renderWithProviders(
       <SectionForm mode='edit' id='section-1' initial={initial} />,
     )
+
+    const saveButton = await waitFor(() => getByRole('button', { name: SAVE_LABEL }))
+    expect(saveButton).toBeDisabled()
+  })
+
+  test('edit submits playlistsIds from the initial section', async () => {
+    const initial = sectionsMocks.getSectionControllerFindOneResponseMock({ title: 'Раздел' })
+    const playlistIds = initial.playlists.map(playlist => playlist.id)
+
+    const { getByLabelText, getByRole } = await renderWithProviders(
+      <SectionForm mode='edit' id='section-1' initial={initial} />,
+    )
+
+    fireEvent.changeText(getByLabelText('Название'), 'Раздел обновлён')
+    await waitFor(() => expect(getByLabelText('Название').props.value).toBe('Раздел обновлён'))
 
     fireEvent.press(await waitFor(() => getByRole('button', { name: SAVE_LABEL })))
 
@@ -91,7 +116,10 @@ describe('<SectionForm>', () => {
   })
 
   test('does not submit an empty title', async () => {
-    const { getByRole } = await renderWithProviders(<SectionForm mode='create' />)
+    const { getByLabelText, getByRole } = await renderWithProviders(<SectionForm mode='create' />)
+
+    fireEvent.changeText(getByLabelText('Описание'), 'Описание')
+    await waitFor(() => expect(getByLabelText('Описание').props.value).toBe('Описание'))
 
     fireEvent.press(await waitFor(() => getByRole('button', { name: SAVE_LABEL })))
 

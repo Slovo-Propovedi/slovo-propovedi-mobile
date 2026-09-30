@@ -39,13 +39,14 @@ export const AdminUserEditScreen = () => {
 
 // Отдельный компонент: хук формы монтируется только когда сущность загружена.
 const UserEditForm = ({ id, initial }: { id: string; initial: APITypes.UserResponse }) => {
-  const { error, isSubmitting, onChange, save, values } = useUserFormController({
+  const { error, isDirty, isSubmitting, onChange, save, values } = useUserFormController({
     id,
     initial,
     mode: 'edit',
   })
   const headerOptions = useAdminFormHeader({
     fallbackRoute: USERS_FALLBACK_ROUTE,
+    isDirty,
     isSubmitting,
     onSave: save,
     title: 'Редактировать пользователя',

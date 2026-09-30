@@ -39,10 +39,11 @@ export const AdminSermonEditScreen = () => {
 
 // Отдельный компонент: хук формы монтируется только когда сущность загружена.
 const SermonEditForm = ({ id, initial }: { id: string; initial: APITypes.SermonEntity }) => {
-  const { error, isSubmitting, onChange, onChapterEndChange, save, values } =
+  const { error, isDirty, isSubmitting, onChange, onChapterEndChange, save, values } =
     useSermonFormController({ id, initial, mode: 'edit' })
   const headerOptions = useAdminFormHeader({
     fallbackRoute: SERMONS_FALLBACK_ROUTE,
+    isDirty,
     isSubmitting,
     onSave: save,
     title: 'Редактировать проповедь',

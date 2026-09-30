@@ -39,13 +39,14 @@ export const AdminPlaylistEditScreen = () => {
 
 // Отдельный компонент: хук формы монтируется только когда сущность загружена.
 const PlaylistEditForm = ({ id, initial }: { id: string; initial: APITypes.PlaylistEntity }) => {
-  const { error, isSubmitting, onChange, save, values } = usePlaylistFormController({
+  const { error, isDirty, isSubmitting, onChange, save, values } = usePlaylistFormController({
     id,
     initial,
     mode: 'edit',
   })
   const headerOptions = useAdminFormHeader({
     fallbackRoute: PLAYLISTS_FALLBACK_ROUTE,
+    isDirty,
     isSubmitting,
     onSave: save,
     title: 'Редактировать плейлист',

@@ -3,6 +3,8 @@ import { useRouter } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { type APITypes, playlistsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { isEmpty } from 'shared/lib/utils/isEmpty'
+import { omitEqualFields } from 'shared/lib/utils/omitEqualFields'
 import { showToast } from 'shared/model'
 import {
   buildCreatePlaylistDto,
@@ -13,6 +15,7 @@ import {
 
 export interface PlaylistFormController {
   error: null | string
+  isDirty: boolean
   isSubmitting: boolean
   onChange: <K extends keyof PlaylistFormValues>(key: K, value: PlaylistFormValues[K]) => void
   save: () => Promise<void>
@@ -42,9 +45,12 @@ export const usePlaylistFormController = ({
 }): PlaylistFormController => {
   const router = useRouter()
   const showToastAction = useAction(showToast)
-  const [values, setValues] = useState<PlaylistFormValues>(() => initialFormValues(initial))
+  const [initialValues] = useState<PlaylistFormValues>(() => initialFormValues(initial))
+  const [values, setValues] = useState<PlaylistFormValues>(initialValues)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<null | string>(null)
+
+  const isDirty = !isEmpty(omitEqualFields(initialValues, values))
 
   const onChange = useCallback(
     <K extends keyof PlaylistFormValues>(key: K, value: PlaylistFormValues[K]) =>
@@ -79,5 +85,5 @@ export const usePlaylistFormController = ({
     }
   }, [id, mode, router, showToastAction, values])
 
-  return { error, isSubmitting, onChange, save, values }
+  return { error, isDirty, isSubmitting, onChange, save, values }
 }

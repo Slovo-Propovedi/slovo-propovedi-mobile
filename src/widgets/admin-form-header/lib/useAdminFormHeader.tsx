@@ -22,6 +22,7 @@ const EDIT_LABEL = 'Редактировать'
  * @param options - Параметры шапки формы.
  * @param options.editRoute - Куда перейти по иконке «Редактировать» (для деталей).
  * @param options.fallbackRoute - Куда вернуться, если истории нет (web-reload).
+ * @param options.isDirty - Есть ли в форме изменения (кнопка «Сохранить» активна).
  * @param options.isSubmitting - Идёт ли отправка формы (только для форм).
  * @param options.onEdit - Обработчик иконки «Редактировать» (для деталей).
  * @param options.onSave - Обработчик сохранения формы.
@@ -30,6 +31,7 @@ const EDIT_LABEL = 'Редактировать'
 export const useAdminFormHeader = ({
   editRoute,
   fallbackRoute,
+  isDirty = false,
   isSubmitting = false,
   onEdit,
   onSave,
@@ -37,6 +39,7 @@ export const useAdminFormHeader = ({
 }: {
   editRoute?: Href
   fallbackRoute: Href
+  isDirty?: boolean
   isSubmitting?: boolean
   onEdit?: () => void
   onSave?: () => void
@@ -79,10 +82,11 @@ export const useAdminFormHeader = ({
   )
 
   const headerRight = useMemo(() => {
-    if (onSave) return () => <SaveButton onPress={handleSave} isSubmitting={isSubmitting} />
+    if (onSave)
+      return () => <SaveButton isDirty={isDirty} onPress={handleSave} isSubmitting={isSubmitting} />
 
     return renderEdit
-  }, [handleSave, isSubmitting, onSave, renderEdit])
+  }, [handleSave, isDirty, isSubmitting, onSave, renderEdit])
 
   return useMemo(
     () => ({ headerLeft: renderBack, headerRight, title }),

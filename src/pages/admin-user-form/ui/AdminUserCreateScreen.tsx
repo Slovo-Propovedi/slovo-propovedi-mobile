@@ -13,9 +13,12 @@ const USERS_FALLBACK_ROUTE: Href = '/admin/users'
 export const AdminUserCreateScreen = () => {
   useRequireAdminRole()
   const { currentTheme } = useTheme()
-  const { error, isSubmitting, onChange, save, values } = useUserFormController({ mode: 'create' })
+  const { error, isDirty, isSubmitting, onChange, save, values } = useUserFormController({
+    mode: 'create',
+  })
   const headerOptions = useAdminFormHeader({
     fallbackRoute: USERS_FALLBACK_ROUTE,
+    isDirty,
     isSubmitting,
     onSave: save,
     title: 'Создать пользователя',
