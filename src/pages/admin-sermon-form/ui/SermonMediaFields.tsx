@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native'
 import { CoverPicker, FileUploadField } from 'widgets/admin-form-pickers'
-import { FormField } from 'shared/ui/form'
+import { EditableUrlField } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type SermonFormValues } from '../lib/sermonFormInitialValues'
 import { styles } from './styles'
@@ -22,7 +22,7 @@ export const SermonMediaFields = ({
     <View style={styles.block}>
       <Text style={[styles.blockTitle, { color: currentTheme.text }]}>Медиа</Text>
       <CoverPicker value={values.artwork} onChange={value => onChange('artwork', value)} />
-      <FormField
+      <EditableUrlField
         label='YouTube (URL)'
         hint='Необязательно.'
         value={values.youtubeUrl}
