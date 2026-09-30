@@ -195,6 +195,7 @@
 - `canRequestPackageInstalls()` — `packageManager.canRequestPackageInstalls()` (API 26+; ниже — `true`).
 - `openInstallPermissionSettings()` — системный экран разрешения.
 - `isApkInstallerAvailable()` — безопасная проверка наличия нативного модуля (try/catch вокруг `requireNativeModule`; `false` в Expo Go / web).
+- Чистая логика статусов (`ApkInstallStatuses`) покрыта JVM-юнит-тестами (`modules/apk-installer/android/src/test/...`) — `yarn test:native` (см. [`../contracts/native-modules.md`](../contracts/native-modules.md) → «Unit-тесты нативного кода»).
 
 ### Разрешение и зависимость
 
