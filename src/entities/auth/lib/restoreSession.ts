@@ -1,6 +1,11 @@
 import { action } from '@reatom/framework'
 import { authApi, secureTokenStorage } from 'shared/api'
+import { getHttpStatus } from 'shared/lib/error-utils'
+import { reportError } from 'shared/model/error-dialog'
 import { authStatusAtom, authUserAtom } from '../model'
+
+const UNAUTHORIZED_STATUSES = [401, 403]
+const PROFILE_LOAD_ERROR_MESSAGE = 'Не удалось проверить сессию администратора'
 
 export const restoreSession = action(async ctx => {
   // Idempotent: a resolved ('authenticated'/'unauthenticated') or in-flight
@@ -55,9 +60,18 @@ export const restoreSession = action(async ctx => {
     })
 
     return user
-  } catch {
-    await secureTokenStorage.clearTokens()
-    await secureTokenStorage.clearCachedUser()
+  } catch (error) {
+    // Only an explicit auth rejection (401/403) means the tokens are dead.
+    // A transient failure (network, 5xx) must not sign the admin out: keep
+    // the tokens so the next launch retries, and surface the error instead.
+    const status = getHttpStatus(error)
+    const isAuthRejected = status !== undefined && UNAUTHORIZED_STATUSES.includes(status)
+
+    if (isAuthRejected) {
+      await secureTokenStorage.clearTokens()
+      await secureTokenStorage.clearCachedUser()
+    } else reportError(error, PROFILE_LOAD_ERROR_MESSAGE)
+
     await ctx.schedule(() => {
       authUserAtom(ctx, null)
       authStatusAtom(ctx, 'unauthenticated')
