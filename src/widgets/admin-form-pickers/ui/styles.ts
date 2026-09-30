@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
     gap: INDENTS.low,
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: INDENTS.medium,
+    paddingHorizontal: INDENTS.high,
   },
   libraryButtonLabel: {
     fontSize: FONT_SIZES.base,
@@ -91,7 +91,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: INDENTS.medium,
+    paddingHorizontal: INDENTS.high,
   },
   uploadButtonContent: {
     alignItems: 'center',
