@@ -67,7 +67,7 @@ export const AdminSermonsHeader = ({
         onChangeText={onSearchChange}
         accessibilityLabel='Поиск проповедей'
         placeholder='Название, проповедник, книга…'
-        placeholderTextColor={currentTheme.textMuted}
+        placeholderTextColor={currentTheme.placeholder}
         style={[styles.input, { borderColor: currentTheme.textMuted, color: currentTheme.text }]}
       />
       <View style={styles.controls}>

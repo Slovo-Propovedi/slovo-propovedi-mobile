@@ -31,7 +31,7 @@ export const PlaylistPicker = ({
         onChangeText={setSearch}
         placeholder='Поиск по названию'
         accessibilityLabel='Поиск плейлистов'
-        placeholderTextColor={currentTheme.textMuted}
+        placeholderTextColor={currentTheme.placeholder}
         style={[
           styles.searchInput,
           { borderColor: currentTheme.textMuted, color: currentTheme.text },

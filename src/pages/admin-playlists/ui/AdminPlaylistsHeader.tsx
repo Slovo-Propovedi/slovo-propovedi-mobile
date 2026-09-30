@@ -65,7 +65,7 @@ export const AdminPlaylistsHeader = ({
         onChangeText={onSearchChange}
         placeholder='Поиск по названию'
         accessibilityLabel='Поиск плейлистов'
-        placeholderTextColor={currentTheme.textMuted}
+        placeholderTextColor={currentTheme.placeholder}
         style={[styles.input, { borderColor: currentTheme.textMuted, color: currentTheme.text }]}
       />
       <View style={styles.controls}>

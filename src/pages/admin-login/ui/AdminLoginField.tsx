@@ -28,7 +28,7 @@ export const AdminLoginField = ({
         placeholder={placeholder}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
-        placeholderTextColor={currentTheme.textMuted}
+        placeholderTextColor={currentTheme.placeholder}
         style={[styles.input, { borderColor: currentTheme.textMuted, color: currentTheme.text }]}
       />
     </View>

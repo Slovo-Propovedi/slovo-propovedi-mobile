@@ -31,7 +31,7 @@ export const SermonPicker = ({
         onChangeText={setSearch}
         placeholder='Поиск по названию'
         accessibilityLabel='Поиск проповедей'
-        placeholderTextColor={currentTheme.textMuted}
+        placeholderTextColor={currentTheme.placeholder}
         style={[styles.input, { borderColor: currentTheme.textMuted, color: currentTheme.text }]}
       />
       <Text style={[styles.hint, { color: currentTheme.textMuted }]}>

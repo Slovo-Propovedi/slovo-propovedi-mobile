@@ -94,7 +94,7 @@ export const AdminUsersScreen = () => {
               onChangeText={onSearchChange}
               placeholder='Имя, email или логин…'
               accessibilityLabel='Поиск пользователей'
-              placeholderTextColor={currentTheme.textMuted}
+              placeholderTextColor={currentTheme.placeholder}
               style={[
                 styles.input,
                 { borderColor: currentTheme.textMuted, color: currentTheme.text },
