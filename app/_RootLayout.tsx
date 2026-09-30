@@ -1,7 +1,8 @@
 import { useAction } from '@reatom/npm-react'
 import { Stack } from 'expo-router'
 import { useEffect } from 'react'
-import { View } from 'react-native'
+import { type ColorValue, View } from 'react-native'
+import { AdminEntryButton } from 'pages/settings'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
@@ -29,6 +30,10 @@ const RootLayout = () => {
   useColdStartLinkRecovery()
   useHardwareBackCascade()
 
+  const renderAdminEntry = (props: { tintColor?: ColorValue }) => (
+    <AdminEntryButton tintColor={props.tintColor} />
+  )
+
   useEffect(() => {
     const timer = setTimeout(() => void checkForUpdate(), 0)
     return () => clearTimeout(timer)
@@ -44,6 +49,7 @@ const RootLayout = () => {
       >
         <Stack.Screen name='index' options={{ headerShown: false }} />
         <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+        <Stack.Screen name='admin' options={{ headerShown: false }} />
         <Stack.Screen name='+not-found' options={{ headerShown: false }} />
         {SUB_SCREENS.map(({ name, title }) => (
           <Stack.Screen
@@ -51,6 +57,7 @@ const RootLayout = () => {
             name={name}
             options={{
               headerLeft: props => <HeaderBackButton tintColor={props.tintColor} />,
+              headerRight: name === 'settings' ? renderAdminEntry : undefined,
               headerStyle: { backgroundColor: currentTheme.background },
               headerTintColor: currentTheme.text,
               headerTitleStyle: { color: currentTheme.text },

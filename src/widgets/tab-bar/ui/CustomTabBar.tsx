@@ -11,13 +11,6 @@ import { TabIndicator } from './TabIndicator'
 import { useTabIndicator } from './useTabIndicator'
 import { isUnavailableTabRoute, useTabPress } from './useTabPress'
 
-const ROUTES = [
-  { key: 'listen', name: 'Слушать' },
-  { key: 'read', name: 'Читать' },
-  { key: 'study', name: 'Учиться' },
-  { key: 'more', name: 'Еще' },
-]
-
 // Минимальный отступ снизу — зона жестов; на 3-кнопочной навигации берётся высота навбара
 // из safe-area insets (Issue #56)
 const MIN_TAB_BAR_BOTTOM_PADDING = 30
@@ -43,7 +36,7 @@ export const CustomTabBar = ({
 }: CustomTabBarProps) => {
   const [dynamicEnabled] = useAtom(dynamicColorsEnabledAtom)
   const setMeasuredTabBarHeight = useAction(setTabBarHeight)
-  const currentKey = ROUTES[currentIndex]?.key
+  const currentKey = state.routes[currentIndex]?.key
   const { bottom } = useSafeAreaInsets()
   const { isLight } = useTheme()
   const { handleTabPress } = useTabPress({

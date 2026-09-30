@@ -1,8 +1,9 @@
-import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { Text, View } from 'react-native'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
 import { styles } from './styles'
+import { TabIcon } from './TabIcon'
+import { getTabLabel } from './tabLabels'
 
 export const TabButton = ({
   isActive,
@@ -22,33 +23,6 @@ export const TabButton = ({
   const { currentTheme } = useTheme()
   const color = isActive ? currentTheme.primary : currentTheme.textMuted
 
-  const getIcon = () => {
-    if (routeName === 'study')
-      return (
-        <MaterialCommunityIcons
-          size={22}
-          color={color}
-          name={isActive ? 'notebook-edit' : 'notebook-edit-outline'}
-        />
-      )
-
-    if (routeName === 'listen') return <AntDesign size={22} color={color} name='play-circle' />
-
-    if (routeName === 'more')
-      return <MaterialCommunityIcons size={22} color={color} name='dots-vertical' />
-
-    return <Ionicons size={22} color={color} name={isActive ? 'book' : 'book-outline'} />
-  }
-
-  const displayName =
-    routeName === 'listen'
-      ? 'Слушать'
-      : routeName === 'read'
-        ? 'Читать'
-        : routeName === 'study'
-          ? 'Учиться'
-          : 'Еще'
-
   return (
     <TouchableButton
       key={routeKey}
@@ -64,9 +38,9 @@ export const TabButton = ({
       }
     >
       <View style={styles.tabItem}>
-        {getIcon()}
+        <TabIcon color={color} isActive={isActive} routeName={routeName} />
         <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={[styles.tabText, { color }]}>
-          {displayName}
+          {getTabLabel(routeName)}
         </Text>
       </View>
     </TouchableButton>
