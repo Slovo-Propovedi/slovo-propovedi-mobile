@@ -95,17 +95,17 @@ describe('<AdminPlaylistEditScreen>', () => {
       .mockResolvedValueOnce({ count: 2, nextCursor: null, sermons: [second] })
 
     mockFindOne.mockResolvedValue(
-      playlistsMocks.getPlaylistControllerFindOneResponseMock({ title: 'Плейлист' }),
+      playlistsMocks.getPlaylistControllerFindOneResponseMock({ sermons: [], title: 'Плейлист' }),
     )
 
     const { findByText, getByTestId } = await renderWithProviders(<AdminPlaylistEditScreen />)
-    await findByText('Первая')
+    await findByText(first.title)
 
     // The picker list does not scroll itself: pagination is triggered by the
     // outer form scroll approaching its end.
     fireEvent.scroll(getByTestId(FORM_SCROLL_TEST_ID), { nativeEvent: SCROLL_NEAR_END })
 
-    expect(await findByText('Вторая')).toBeTruthy()
+    expect(await findByText(second.title)).toBeTruthy()
     expect(mockSermonFindAll).toHaveBeenCalledWith(
       expect.objectContaining({ cursor: 'cursor-2', take: 20 }),
     )
