@@ -3,7 +3,6 @@ import { type StyleProp, Text, View, type ViewStyle } from 'react-native'
 import { MovingText } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
 import { ListItemArtwork } from './ListItemArtwork'
 import { ListItemDragHandle } from './ListItemDragHandle'
 import { createListItemBaseStyles } from './styles'
@@ -71,15 +70,6 @@ const ListItemBaseComponent = ({
     isSurface && isActive ? { borderColor: currentTheme.primary, opacity: 0.9 } : null,
     style,
   ]
-
-  if (isSurface)
-    return (
-      <TouchableItem onPress={onPress} style={containerStyle}>
-        {content}
-        {right}
-        {dragHandle}
-      </TouchableItem>
-    )
 
   return (
     <PressableButton onPress={onPress} style={containerStyle}>
