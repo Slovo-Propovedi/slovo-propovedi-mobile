@@ -1,6 +1,5 @@
 export { AdminSelect, type AdminSelectOption } from './admin-select'
 export {
-  AdminMediaGridSkeleton,
   AdminPlaylistRowSkeleton,
   AdminSectionRowSkeleton,
   AdminSermonRowSkeleton,

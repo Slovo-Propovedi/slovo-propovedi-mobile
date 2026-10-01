@@ -1,16 +1,17 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useState } from 'react'
-import { FlatList, Text, View } from 'react-native'
+import { FlatList, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { showToast } from 'shared/model'
-import { AdminMediaGridSkeleton, EmptyState } from 'shared/ui'
+import { EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminMedia } from '../lib/useAdminMedia'
 import { usePickImage } from '../lib/usePickImage'
+import { AdminMediaGridSkeleton } from './AdminMediaGridSkeleton'
 import { AdminMediaListHeader } from './AdminMediaListHeader'
 import { MediaTile } from './MediaTile'
 import { MediaViewerModal } from './MediaViewerModal'
@@ -58,18 +59,6 @@ export const AdminMediaScreen = () => {
     if (target) await remove(target)
   }
 
-  if (isLoading)
-    return (
-      <SafeAreaView
-        edges={['top']}
-        style={[styles.container, { backgroundColor: currentTheme.background }]}
-      >
-        <View style={styles.listContent}>
-          <AdminMediaGridSkeleton />
-        </View>
-      </SafeAreaView>
-    )
-
   return (
     <SafeAreaView
       edges={['top']}
@@ -98,7 +87,9 @@ export const AdminMediaScreen = () => {
           />
         )}
         ListEmptyComponent={
-          isError ? (
+          isLoading ? (
+            <AdminMediaGridSkeleton tileSize={tileSize} numColumns={numColumns} />
+          ) : isError ? (
             <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
           ) : (
             <EmptyState message={EMPTY_MESSAGE} />

@@ -4,6 +4,7 @@ import { type TouchedMap } from 'shared/lib/hooks/useFormTouched'
 import { FormScrollView } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type PlaylistFormValues } from '../lib/playlistFormState'
+import { type SermonOption } from '../lib/sermonOption'
 import { PlaylistFormMainFields } from './PlaylistFormMainFields'
 import { SectionPicker } from './SectionPicker'
 import { SermonPicker } from './SermonPicker'
@@ -24,12 +25,14 @@ export const PlaylistForm = ({
   error,
   markTouched,
   onChange,
+  selectedSermons,
   touched,
   values,
 }: {
   error: null | string
   markTouched: (key: 'title') => void
   onChange: UpdateField
+  selectedSermons: SermonOption[]
   touched: TouchedMap<'title'>
   values: PlaylistFormValues
 }) => {
@@ -62,6 +65,7 @@ export const PlaylistForm = ({
       <View style={styles.block}>
         <Text style={[styles.blockTitle, { color: currentTheme.text }]}>Проповеди</Text>
         <SermonPicker
+          selectedSermons={selectedSermons}
           selectedIds={values.selectedSermonIds}
           onToggle={id => onChange('selectedSermonIds', toggleId(values.selectedSermonIds, id))}
         />

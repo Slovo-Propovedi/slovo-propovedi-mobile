@@ -66,6 +66,7 @@ const PlaylistEditForm = ({ id, initial }: { id: string; initial: APITypes.Playl
         touched={touched}
         onChange={onChange}
         markTouched={markTouched}
+        selectedSermons={initial.sermons}
       />
     </>
   )

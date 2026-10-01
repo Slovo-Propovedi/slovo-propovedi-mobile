@@ -4,7 +4,7 @@ import { View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
-import { AdminSectionRowSkeleton, EmptyState } from 'shared/ui'
+import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminSections } from '../lib/useAdminSections'
@@ -18,7 +18,7 @@ const SKELETON_ROWS = 6
 const SectionSkeletonList = () => (
   <>
     {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-      <AdminSectionRowSkeleton key={index} />
+      <AdminSectionRow.Skeleton key={index} />
     ))}
   </>
 )
@@ -63,7 +63,7 @@ export const AdminSectionsScreen = () => {
         ListFooterComponent={
           isReordering ? (
             <View style={styles.reordering}>
-              <AdminSectionRowSkeleton />
+              <AdminSectionRow.Skeleton />
             </View>
           ) : null
         }

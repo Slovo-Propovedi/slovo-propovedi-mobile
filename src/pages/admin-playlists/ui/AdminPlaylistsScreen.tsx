@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router'
 import { FlatList, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
-import { AdminPlaylistRowSkeleton, EmptyState } from 'shared/ui'
+import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminPlaylists } from '../lib/useAdminPlaylists'
@@ -17,7 +17,7 @@ const SKELETON_ROWS = 6
 const PlaylistSkeletonList = () => (
   <>
     {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-      <AdminPlaylistRowSkeleton key={index} />
+      <AdminPlaylistRow.Skeleton key={index} />
     ))}
   </>
 )
@@ -54,7 +54,7 @@ export const AdminPlaylistsScreen = () => {
         keyExtractor={item => item.id}
         data={isLoading ? [] : playlists}
         onEndReached={() => void loadMore()}
-        ListFooterComponent={isLoadingMore ? <AdminPlaylistRowSkeleton /> : null}
+        ListFooterComponent={isLoadingMore ? <AdminPlaylistRow.Skeleton /> : null}
         contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
         renderItem={({ item }) => (
           <AdminPlaylistRow item={item} onPress={() => openPlaylist(item)} />

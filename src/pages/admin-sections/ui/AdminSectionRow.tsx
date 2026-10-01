@@ -1,5 +1,7 @@
+/* eslint-disable react-refresh/only-export-components -- Skeleton is attached via composition API */
 import { ListItemBase } from 'entities/list-item'
 import { type APITypes } from 'shared/api'
+import { AdminSectionRowSkeleton } from 'shared/ui'
 import { AdminSectionBadges } from './AdminSectionBadges'
 
 const DRAG_LABEL = 'Переместить раздел'
@@ -15,7 +17,7 @@ const pluralizePlaylists = (count: number) => {
 }
 
 // Строка раздела в списке админки: тап открывает деталь, ручка запускает drag.
-export const AdminSectionRow = ({
+const AdminSectionRowBase = ({
   drag,
   isActive,
   item,
@@ -38,3 +40,9 @@ export const AdminSectionRow = ({
     badges={<AdminSectionBadges itemsSize={item.itemsSize} transform={item.transform} />}
   />
 )
+
+// Скелетон прикреплён к строке как `AdminSectionRow.Skeleton` — единый источник
+// плейсхолдера для этой сущности.
+export const AdminSectionRow = Object.assign(AdminSectionRowBase, {
+  Skeleton: AdminSectionRowSkeleton,
+})

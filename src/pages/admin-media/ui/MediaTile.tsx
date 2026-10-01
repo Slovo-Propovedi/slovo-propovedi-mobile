@@ -1,8 +1,12 @@
+/* eslint-disable react-refresh/only-export-components -- Skeleton is attached via composition API */
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable, Text, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { type APITypes } from 'shared/api'
 import { CoverImage } from 'shared/ui'
+import { SkeletonBar } from 'shared/ui/admin-skeleton'
 import { PressableButton } from 'shared/ui/pressable-button/PressableButton'
+import { useSkeletonPulse } from 'shared/ui/skeleton/useSkeletonPulse'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { formatFileSize } from '../lib/fileKind'
 import { styles } from './styles'
@@ -12,7 +16,7 @@ const USED_BADGE = 'используется'
 // Квадратная плитка изображения в каталоге медиа: обложка, бейдж «используется»,
 // кнопка удаления и подпись с именем и размером. Тап по плитке открывает
 // полноэкранный просмотр; удаление — компактный оверлей на самой картинке.
-export const MediaTile = ({
+const MediaTileBase = ({
   file,
   onDelete,
   onPress,
@@ -61,3 +65,33 @@ export const MediaTile = ({
     </View>
   )
 }
+
+// Плейсхолдер плитки: та же геометрия, что у компонента (`styles.tile`,
+// `styles.tileImage`, `styles.tileBody`) — квадрат-обложка высотой `size` и две
+// строки подписи. Размер меняется только вместе с настоящей плиткой.
+const MediaTileSkeleton = ({ size }: { size: number }) => {
+  const { currentTheme } = useTheme()
+  const { pulseStyle } = useSkeletonPulse()
+
+  return (
+    <Animated.View
+      testID='admin-media-tile-skeleton'
+      style={[
+        styles.tile,
+        { backgroundColor: currentTheme.surface, width: size },
+        pulseStyle,
+        { pointerEvents: 'none' },
+      ]}
+    >
+      <SkeletonBar style={[styles.tileImage, { height: size }]} />
+      <View style={styles.tileBody}>
+        <SkeletonBar style={styles.tileNameBar} />
+        <SkeletonBar style={styles.tileMetaBar} />
+      </View>
+    </Animated.View>
+  )
+}
+
+// Скелетон живёт в одном файле с компонентом и прикреплён к нему как
+// `MediaTile.Skeleton`: геометрия не может «отъехать» от реальной плитки.
+export const MediaTile = Object.assign(MediaTileBase, { Skeleton: MediaTileSkeleton })

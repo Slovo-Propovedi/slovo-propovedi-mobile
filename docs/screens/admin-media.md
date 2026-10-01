@@ -10,12 +10,12 @@
 
 ## Каталог
 
-**Файлы:** `src/pages/admin-media/ui/AdminMediaScreen.tsx`, `AdminMediaHeader.tsx`, `MediaTile.tsx`, `MediaViewerModal.tsx`, `lib/useAdminMedia.ts`, `lib/fileKind.ts`, `lib/usePickImage.ts`
+**Файлы:** `src/pages/admin-media/ui/AdminMediaScreen.tsx`, `AdminMediaHeader.tsx`, `AdminMediaGridSkeleton.tsx`, `MediaTile.tsx`, `MediaViewerModal.tsx`, `lib/useAdminMedia.ts`, `lib/fileKind.ts`, `lib/usePickImage.ts`
 
 - **Что показывается:** внутриэкранная шапка «Медиа» (`AdminMediaHeader`) с иконкой-кнопкой загрузки (`cloud-upload-outline`, `accessibilityLabel='Загрузить файл'`) справа; при загрузке — прогресс-бар. Наверху страницы — блок «Осиротевшие файлы» (скан/очистка), ниже — сетка квадратных плиток. Число колонок считается от ширины экрана (`numColumnsFor`, целевая плитка `TARGET_TILE_SIZE = 120`, минимум 1), промежутки — `INDENTS.low`. Плитка: обложка через `expo-image`, имя файла, размер (`formatFileSize`) и бейдж «используется» при `used = true`; оверлейная кнопка удаления.
 - **Откуда данные:** `getFiles` (`GET /files`) через `filesApi`; элемент — `FileMetadataDto { fileName, fileUrl, size, lastModified, used }`.
 - **Навигация:** тап по плитке открывает полноэкранный просмотр (`MediaViewerModal`: `Modal` + `expo-image` `contentFit='contain'`, закрытие по X, тапу на фон и системному «назад» Android `onRequestClose`). Отдельного маршрута-детали нет.
-- **Состояния:** загрузка первичного каталога — скелетон-сетка (`AdminMediaGridSkeleton`); пусто — `EmptyState` «Обложек пока нет»; ошибка первичной загрузки — текст «Не удалось загрузить файлы» (`reportError`); ошибка загрузки — тост.
+- **Состояния:** загрузка первичного каталога — скелетон-сетка (`AdminMediaGridSkeleton`) в теле списка (`ListEmptyComponent` того же `FlatList`); шапка «Медиа» и блок осиротевших файлов видны сразу, полноэкранного раннего возврата нет. Плейсхолдер-плитка — `MediaTile.Skeleton` (composition API: скелетон объявлен в `MediaTile.tsx` и прикреплён `Object.assign(MediaTile, { Skeleton })`, геометрия берётся из тех же `styles.tile`/`styles.tileImage`/`styles.tileBody`): квадрат-обложка `tileSize`, тело с двумя строками, пульсация `useSkeletonPulse`; число плейсхолдеров — `numColumns × 4` при том же `numColumns`, что и у реального списка (без сдвига раскладки и смены числа колонок). Пусто — `EmptyState` «Обложек пока нет»; ошибка первичной загрузки — текст «Не удалось загрузить файлы» (`reportError`); ошибка загрузки — тост.
 
 ## Загрузка
 

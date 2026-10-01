@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router'
 import { FlatList, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRequireAdminRole } from 'entities/auth'
-import { AdminUserRowSkeleton, EmptyState } from 'shared/ui'
+import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminUsers } from '../lib/useAdminUsers'
@@ -20,7 +20,7 @@ const SKELETON_ROWS = 6
 const UserSkeletonList = () => (
   <>
     {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-      <AdminUserRowSkeleton key={index} />
+      <AdminUserRow.Skeleton key={index} />
     ))}
   </>
 )
@@ -51,7 +51,7 @@ export const AdminUsersScreen = () => {
         data={isLoading ? [] : users}
         keyExtractor={item => item.id}
         onEndReached={() => void loadMore()}
-        ListFooterComponent={isLoadingMore ? <AdminUserRowSkeleton /> : null}
+        ListFooterComponent={isLoadingMore ? <AdminUserRow.Skeleton /> : null}
         renderItem={({ item }) => <AdminUserRow item={item} onPress={() => openUser(item.id)} />}
         contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
         ListEmptyComponent={

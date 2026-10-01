@@ -31,6 +31,7 @@ export const AdminPlaylistCreateScreen = () => {
         values={values}
         touched={touched}
         onChange={onChange}
+        selectedSermons={[]}
         markTouched={markTouched}
       />
     </View>

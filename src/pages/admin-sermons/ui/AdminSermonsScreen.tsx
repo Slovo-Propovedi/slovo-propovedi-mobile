@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router'
 import { FlatList, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
-import { AdminSermonRowSkeleton, EmptyState } from 'shared/ui'
+import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminSermons } from '../lib/useAdminSermons'
@@ -19,7 +19,7 @@ const SKELETON_ROWS = 6
 const SermonSkeletonList = () => (
   <>
     {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-      <AdminSermonRowSkeleton key={index} />
+      <AdminSermonRow.Skeleton key={index} />
     ))}
   </>
 )
@@ -64,7 +64,7 @@ export const AdminSermonsScreen = () => {
         keyExtractor={item => item.id}
         data={isLoading ? [] : sermons}
         onEndReached={() => void loadMore()}
-        ListFooterComponent={isLoadingMore ? <AdminSermonRowSkeleton /> : null}
+        ListFooterComponent={isLoadingMore ? <AdminSermonRow.Skeleton /> : null}
         renderItem={({ item }) => <AdminSermonRow item={item} onPress={() => openSermon(item)} />}
         contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
         ListEmptyComponent={

@@ -26,6 +26,7 @@ export const styles = StyleSheet.create({
   },
   headerText: { flex: 1 },
   listContent: { padding: INDENTS.medium },
+  mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: INDENTS.low },
   orphanBadge: {
     borderRadius: RADIUSES.low,
     paddingHorizontal: INDENTS.low,
@@ -95,7 +96,9 @@ export const styles = StyleSheet.create({
   },
   tileImage: { borderRadius: RADIUSES.low, width: '100%' },
   tileMeta: { fontSize: FONT_SIZES.sm },
+  tileMetaBar: { height: FONT_SIZES.sm, marginTop: 6, width: '45%' },
   tileName: { fontSize: FONT_SIZES.sm, fontWeight: '600' },
+  tileNameBar: { height: FONT_SIZES.sm, width: '80%' },
   title: { fontSize: FONT_SIZES.h2, fontWeight: '700' },
   viewerBackdrop: { flex: 1 },
   viewerBody: { alignItems: 'center', flex: 1, justifyContent: 'center' },
