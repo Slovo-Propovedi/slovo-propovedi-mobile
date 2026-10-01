@@ -48,11 +48,14 @@ export const usePlaylistActions = (
     [historySermonIds, list, onAddToPlaylist, playlist, progressMap],
   )
 
-  const handlePressPlayAll = useCallback(async () => {
-    const firstSermon = list.find((s: SermonData) => s.audioUrl)
-    if (!firstSermon) return
-    await playNewSermon({ playlist, sermon: firstSermon })
-  }, [list, playNewSermon, playlist])
+  const handlePressPlayAll = useCallback(
+    async (target?: SermonData) => {
+      const sermon = target ?? list.find((s: SermonData) => s.audioUrl)
+      if (!sermon) return
+      await playNewSermon({ playlist, sermon })
+    },
+    [list, playNewSermon, playlist],
+  )
 
   return { buildMenuActions, handlePressItem, handlePressPlayAll }
 }

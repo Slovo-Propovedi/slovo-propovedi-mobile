@@ -6,7 +6,7 @@ import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
 import { type TracksListData } from './usePlaylistNavigationOptions'
 
-const DEFAULT_EMPTY_MESSAGE = 'В плейлисте нет записей'
+const DEFAULT_EMPTY_MESSAGE = 'Этот плейлист пустой'
 
 export const PlaylistTrackList = ({
   data,

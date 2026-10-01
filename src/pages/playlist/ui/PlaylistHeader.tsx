@@ -13,6 +13,7 @@ export const PlaylistHeader = ({
   headerImageHeight,
   imageOpacityStyle,
   onPressPlayAll,
+  playAllLabel,
   theme,
   title,
 }: {
@@ -21,6 +22,7 @@ export const PlaylistHeader = ({
   headerImageHeight: number
   imageOpacityStyle: ReturnType<typeof useAnimatedStyle>
   onPressPlayAll: () => void
+  playAllLabel: string
   theme: ThemeColors
   title: string
 }) => {
@@ -54,7 +56,7 @@ export const PlaylistHeader = ({
 
       <View style={headerStyles.contentSection}>
         {description ? <Text style={headerStyles.description}>{description}</Text> : null}
-        <QueueControls onPressPlayAll={onPressPlayAll} />
+        <QueueControls label={playAllLabel} onPressPlayAll={onPressPlayAll} />
       </View>
     </>
   )

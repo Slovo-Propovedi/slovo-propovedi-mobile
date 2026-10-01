@@ -11,6 +11,7 @@ import { useCollapsingHeader } from '../lib/useCollapsingHeader'
 import { usePlaylistActions } from '../lib/usePlaylistActions'
 import { usePlaylistById } from '../lib/usePlaylistById'
 import { usePlaylistHeader } from '../lib/usePlaylistHeader'
+import { usePlaylistPlaybackTarget } from '../lib/usePlaylistPlaybackTarget'
 import { usePlaylistPlayerState } from '../lib/usePlaylistPlayerState'
 import { PlaylistHeader } from './PlaylistHeader'
 import { PlaylistStatusView } from './PlaylistStatusView'
@@ -43,6 +44,8 @@ export const PlaylistScreen = () => {
   )
 
   const { cacheTrigger, currentAudio, isPlaying } = usePlaylistPlayerState()
+
+  const { label: playAllLabel, target: playAllTarget } = usePlaylistPlaybackTarget(playlist)
 
   const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader()
@@ -112,9 +115,10 @@ export const PlaylistScreen = () => {
             artwork={artwork}
             theme={currentTheme}
             description={description}
-            onPressPlayAll={handlePressPlayAll}
+            playAllLabel={playAllLabel}
             headerImageHeight={headerImageHeight}
             imageOpacityStyle={imageOpacityStyle}
+            onPressPlayAll={() => void handlePressPlayAll(playAllTarget ?? undefined)}
           />
         }
       />

@@ -1,6 +1,7 @@
 export { buildHistoryMenuActions } from './lib/buildHistoryMenuActions'
 export { buildManualPlaylist } from './lib/buildManualPlaylist'
 export { clearHistoryAction } from './lib/clearHistory'
+export { findLastListenedSermon } from './lib/findLastListenedSermon'
 export { getEntrySermon } from './lib/getEntrySermon'
 export { readHistory } from './lib/historyStorage'
 export { isEntryCompleted } from './lib/isEntryCompleted'
