@@ -5,10 +5,12 @@ import { TouchableButton } from 'shared/ui/touchable-button'
 import { queueControlsStyles } from './styles'
 
 export const QueueControls = ({
+  isDisabled = false,
   label,
   onPressPlayAll,
   onPressShuffle,
 }: {
+  isDisabled?: boolean
   label: string
   onPressPlayAll: () => void
   onPressShuffle?: () => void
@@ -18,6 +20,7 @@ export const QueueControls = ({
   return (
     <View style={queueControlsStyles.container}>
       <TouchableButton
+        disabled={isDisabled}
         onPress={onPressPlayAll}
         style={[queueControlsStyles.button, { backgroundColor: currentTheme.primary }]}
       >

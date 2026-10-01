@@ -118,6 +118,7 @@ export const PlaylistScreen = () => {
             playAllLabel={playAllLabel}
             headerImageHeight={headerImageHeight}
             imageOpacityStyle={imageOpacityStyle}
+            isPlayAllDisabled={playAllTarget === null}
             onPressPlayAll={() => void handlePressPlayAll(playAllTarget ?? undefined)}
           />
         }

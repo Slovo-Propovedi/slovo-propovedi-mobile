@@ -1,9 +1,8 @@
 import { createCtx } from '@reatom/framework'
-import { historyAtom } from 'entities/listening-history'
+import { historyAtom, type ListeningHistoryEntry } from 'entities/listening-history'
 import { type PlaylistData } from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
 import { renderHookWithProviders } from 'shared/mocks'
-import { type ListeningHistoryEntry } from '../../../entities/listening-history/model/types'
 import { usePlaylistPlaybackTarget } from './usePlaylistPlaybackTarget'
 
 const START_LABEL = 'Начать прослушивание плейлиста'

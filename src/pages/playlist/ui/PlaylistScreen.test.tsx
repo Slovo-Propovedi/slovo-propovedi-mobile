@@ -333,6 +333,25 @@ describe('<PlaylistScreen>', () => {
     expect(playNewSermon).toHaveBeenCalledWith({ playlist: PLAYLIST, sermon: SERMON_1 })
   })
 
+  test('disables play-all when the playlist has nothing playable', async () => {
+    const ctx = createCtx()
+    dynamicSectionsAtom(ctx, [makeSection({ playlists: [{ ...PLAYLIST, sermons: [] }] })])
+    const playNewSermon = jest.fn()
+    jest
+      .mocked(jest.requireMock('entities/player').usePlayNewSermon as () => jest.Mock)
+      .mockReturnValue(playNewSermon)
+
+    const { getByRole, getByText } = await renderScreen(ctx)
+    expect(getByText(PLAY_ALL_TEXT)).toBeTruthy()
+
+    const playAllButton = getByRole('button')
+
+    await fireEvent.press(playAllButton)
+
+    expect(playAllButton).toBeDisabled()
+    expect(playNewSermon).not.toHaveBeenCalled()
+  })
+
   test('sets the header right menu via navigation options', async () => {
     const ctx = createCtx()
     dynamicSectionsAtom(ctx, [makeSection()])
