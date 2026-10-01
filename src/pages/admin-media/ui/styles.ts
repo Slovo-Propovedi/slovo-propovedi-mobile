@@ -1,5 +1,9 @@
-import { StyleSheet } from 'react-native'
+import { Platform, StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
+
+// Web-десктоп: кнопка «Найти осиротевшие файлы» не растягивается на всю ширину
+// вьюпорта. На нативе cap не задаётся — кнопка остаётся на всю ширину, как раньше.
+const SCAN_BUTTON_MAX_WIDTH = 320
 
 export const styles = StyleSheet.create({
   banner: { borderRadius: RADIUSES.low, marginTop: INDENTS.medium, padding: INDENTS.medium },
@@ -66,6 +70,7 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUSES.low,
     borderWidth: 1,
     justifyContent: 'center',
+    maxWidth: Platform.OS === 'web' ? SCAN_BUTTON_MAX_WIDTH : undefined,
     minHeight: MIN_TOUCH_TARGET,
     paddingHorizontal: INDENTS.medium,
   },
