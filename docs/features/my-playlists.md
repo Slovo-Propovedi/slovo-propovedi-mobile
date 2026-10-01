@@ -17,9 +17,9 @@
 - `sermonIds` хранит **только идентификаторы** проповедей, не снапшоты: полные `SermonData`
   резолвятся по id на экране плейлиста (секции/кэш/сеть). Так локальные плейлисты переживают
   обновления каталога.
-- Значения `id` используют префикс `local:` (`FAVORITES_PLAYLIST.id = 'local:favorites'`) —
-  гарантия, что локальный id никогда не столкнётся с серверным (серверные id — UUID).
-- `FAVORITES_PLAYLIST` (`{ id: 'local:favorites', title: 'Избранные', sermonIds: [] }`) —
+- `FAVORITES_PLAYLIST.id = 'favorites'` — плоский id; серверные id — UUID, поэтому
+  столкновение невозможно.
+- `FAVORITES_PLAYLIST` (`{ id: 'favorites', title: 'Избранные', sermonIds: [] }`) —
   системный плейлист: **всегда присутствует и стоит первым** в списке. Инвариант обеспечивает
   `withFavoritesFirst` при гидратации.
 - `myPlaylistsAtom: LocalPlaylistData[]` — засеян `[FAVORITES_PLAYLIST]`, поэтому UI работает
@@ -49,7 +49,7 @@
 (через `Slider`/`SliderTitle`, как у серверных секций). Карточка — тот же `Slider` размером
 `SliderItemSize.Small`, что и соседние секции; вместо обложки передаётся `artworkIcon` (сердце
 `Ionicons 'heart'` цвета `currentTheme.primary`). Тап по карточке ведёт на
-`/listen/playlist?playlist=local:favorites`.
+`/listen/playlist?playlist=favorites`.
 
 `artworkIcon` — опциональный слот `SliderItem`/`SliderItemsElement`
 (`src/shared/ui/slider/slider-item/`): при наличии обложка не рендерится, вместо неё — нода

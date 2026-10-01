@@ -132,7 +132,7 @@
 ## Куда можно перейти
 
 - Тап на плейлист всегда открывает страницу плейлиста → `/listen/playlist?playlist=<id плейлиста>` (`navigateToPlaylist` из `src/pages/listen/lib/useListenNavigation.ts`) — даже если в плейлисте одна проповедь.
-- Тап на карточку «Избранные» в секции «Мои плейлисты» → `/listen/playlist?playlist=local:favorites` (локальный id; резолвится tier 0 без сети, см. [features/my-playlists.md](../features/my-playlists.md)).
+- Тап на карточку «Избранные» в секции «Мои плейлисты» → `/listen/playlist?playlist=favorites` (локальный id; резолвится tier 0 без сети, см. [features/my-playlists.md](../features/my-playlists.md)).
 - Тап на заголовок секции → `/listen/playlist-list?sectionId=<id секции>&title=<строка>` (`navigateToPlaylistList`).
 - Тап на проповедь в результатах поиска — запуск воспроизведения (без перехода). Тап на уже играющую проповедь — no-op (Issue #99): воспроизведение не перезапускается, полноэкранный плеер не открывается.
 

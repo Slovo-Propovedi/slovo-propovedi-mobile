@@ -70,8 +70,8 @@ const myPlaylistsArraySchema = z.array(localPlaylistDataSchema)
 /** Ключ AsyncStorage для локальных плейлистов. */
 const MY_PLAYLISTS = 'myPlaylists'
 
-// Префикс `local:` гарантирует, что локальный id не столкнётся с серверным.
-const FAVORITES_PLAYLIST_ID = 'local:favorites'
+// Плоский id: серверные id — UUID, столкновение с `favorites` невозможно.
+const FAVORITES_PLAYLIST_ID = 'favorites'
 
 /** Плейлист «Избранные»: всегда присутствует и стоит первым в списке. */
 export const FAVORITES_PLAYLIST: LocalPlaylistData = {
