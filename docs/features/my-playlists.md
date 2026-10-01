@@ -6,8 +6,9 @@
 
 - `src/entities/playlist/model.ts` — тип, схема, атом, гидратация, reorder
 - `src/entities/playlist/index.ts` — публичный API (`FAVORITES_PLAYLIST`, `myPlaylistsAtom`, `loadMyPlaylists`, `reorderMyPlaylists`)
-- `src/pages/listen/ui/MyPlaylistsSlider.tsx` — секция «Мои плейлисты» (заголовок + карточка «Избранные» + drag-список)
-- `src/pages/listen/ui/MyPlaylistsDragList.tsx` — горизонтальный `DraggableFlatList` карточек с drag-to-reorder
+- `src/pages/listen/ui/MyPlaylistsSlider.tsx` — секция «Мои плейлисты» (заголовок + карточка «Избранные» + drag-список), владелец режима редактирования
+- `src/pages/listen/ui/MyPlaylistsHeader.tsx` — шапка секции: заголовок + действия «Изменить порядок» / «Сохранить»
+- `src/pages/listen/ui/MyPlaylistsDragList.tsx` — горизонтальный `DraggableFlatList` карточек с drag-to-reorder (только в режиме редактирования)
 - `src/pages/playlist/lib/usePlaylistById.ts` — tier 0 (локальный резолв)
 - `src/pages/playlist/ui/PlaylistScreen.tsx`, `PlaylistTrackList.tsx` — пустое состояние «Избранного»
 
@@ -70,19 +71,38 @@
 
 `MyPlaylistsSlider` (`src/pages/listen/ui/MyPlaylistsSlider.tsx`) рендерится после
 `DynamicSectionsSlider` на экране «Слушать» — завершающая секция. Заголовок — «Мои плейлисты»
-(через `SliderTitle`). Первая карточка — «Избранные» (`SliderItemSize.Small`), вместо обложки
+(через `MyPlaylistsHeader`). Первая карточка — «Избранные» (`SliderItemSize.Small`), вместо обложки
 передаётся `artworkIcon` (сердце `Ionicons 'heart'` цвета `currentTheme.primary`). Тап по
 карточке ведёт на `/listen/playlist?playlist=favorites`.
 
+**Режим редактирования.** Перестановка карточек включается **явно** — двух состояний, обычного и
+редактирования, управляет локальный state `localOrderIds` (`null` — обычный режим; массив id —
+открытый режим). Шапка (`MyPlaylistsHeader`, `src/pages/listen/ui/MyPlaylistsHeader.tsx`) в
+обычном режиме показывает `IconButton` с карандашом (`Ionicons 'create-outline'`,
+`accessibilityLabel` «Изменить порядок»), в режиме редактирования рядом появляется `IconButton`
+с галочкой (`checkmark`, «Сохранить»). Карандаш работает как переключатель: повторный тап
+выходит из режима **без сохранения**.
+
+- **Обычный режим:** drag выключен — `MyPlaylistsDragList` получает `isDraggingEnabled = false`,
+  поэтому `onLongPress`, активирующий `drag`, не прокидывается, а тап по карточке навигирует.
+- **Режим редактирования:** drag включён (long-press тянет карточку целиком, native `drag` из
+  `renderItem`), тап по карточке **не** навигирует (и у «Избранного» тоже — карточка
+  нередактируемая). Перестановка меняет **локальную копию** порядка (`localOrderIds`), атом
+  `myPlaylistsAtom` не трогается. «Сохранить» один раз коммитит итог через `reorderMyPlaylists`
+  (полный порядок: `favorites` + локальный порядок; сущность пинит «Избранные» первыми) и
+  выходит из режима. Уход из режима без сохранения (повторный тап по карандашу) или уход с
+  экрана (размонтирование сбрасывает state) локальную копию отбрасывает.
+
+Пока идёт редактирование, `orderedRest` строится функцией `sortByLocalOrder` (id вне локального
+порядка — конкурентно добавленный плейлист — уезжают в конец); после сохранения источником
+истины снова становится `myPlaylistsAtom`.
+
 Остальные карточки рендерит `MyPlaylistsDragList` (`src/pages/listen/ui/MyPlaylistsDragList.tsx`) —
 горизонтальный `DraggableFlatList` (`react-native-draggable-flatlist`) поверх того же
-`SliderItem` (`SliderItemSize.Small`): карточка тянется полностью (native `drag` из `renderItem`,
-без отдельной ручки). `MyPlaylistsSlider` передаёт в список `playlists.slice(1)` — «Избранные»
-рендерятся только отдельной карточкой и в списке не дублируются. `onDragEnd` отдаёт итоговый
-порядок id; `MyPlaylistsSlider` вызывает
-`reorderMyPlaylists` только если `hasOrderChanged` (`shared/lib/utils`), иначе drag на месте —
-no-op. Это **локальный** reorder (без сервера), optimistic: порядок сразу в `myPlaylistsAtom`,
-запись в `myPlaylists` — внутри экшена. «Избранные» запиннены первыми и не перетаскиваются.
+`SliderItem` (`SliderItemSize.Small`). `MyPlaylistsSlider` передаёт в список `orderedRest`
+(`playlists.slice(1)` в обычном режиме) — «Избранные» рендерятся только отдельной карточкой и в
+списке не дублируются. `onDragEnd` отдаёт итоговый порядок id; в режиме редактирования он
+пишется в локальный state, а не в атом. «Избранные» запиннены первыми и не перетаскиваются.
 `onDragEnd` исполняется на JS-потоке (gesture-handler прокидывает завершение без вызова JS из
 worklet), поэтому `scheduleOnRN` не требуется.
 

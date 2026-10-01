@@ -6,12 +6,16 @@ import { INDENTS } from 'shared/ui/theme'
 
 // Слайдер карточек локальных плейлистов с drag-to-reorder. Тянется карточка
 // целиком (native `drag` из renderItem), поэтому отдельная ручка не нужна;
-// `onDragEnd` отдаёт итоговый порядок наверх.
+// `onDragEnd` отдаёт итоговый порядок наверх. Перетаскивание включается только
+// в режиме редактирования (`isDraggingEnabled`): вне него long-press не активирует
+// drag, а тап по карточке навигирует как обычно.
 export const MyPlaylistsDragList = ({
+  isDraggingEnabled,
   items,
   onDragEnd,
   onPressItem,
 }: {
+  isDraggingEnabled: boolean
   items: LocalPlaylistData[]
   onDragEnd: (orderedIds: string[]) => void
   onPressItem: (playlist: LocalPlaylistData) => void
@@ -26,11 +30,11 @@ export const MyPlaylistsDragList = ({
     renderItem={({ drag, isActive, item }: RenderItemParams<LocalPlaylistData>) => (
       <SliderItem
         artwork={null}
-        onLongPress={drag}
         size={SliderItemSize.Small}
         descriptionTitle={item.title}
-        onPress={() => onPressItem(item)}
         style={isActive ? styles.dragging : undefined}
+        onLongPress={isDraggingEnabled ? drag : undefined}
+        onPress={isDraggingEnabled ? undefined : () => onPressItem(item)}
       />
     )}
   />

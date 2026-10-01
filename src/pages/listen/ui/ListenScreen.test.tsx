@@ -110,6 +110,7 @@ const CLEAR_LABEL = 'Очистить поиск'
 const SERMON_TITLE = 'Проповедь о вере'
 const SECTIONS_MOCK = 'SECTIONS_MOCK'
 const CONTINUE_BUTTON_MOCK = 'CONTINUE_BUTTON_MOCK'
+const EDIT_ORDER_LABEL = 'Изменить порядок'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
 // A pinned element (the search bar) must not have any scroll container between
@@ -179,6 +180,12 @@ describe('<ListenScreen>', () => {
     expect(mockDynamicSectionsSliderProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ leadingElement: expect.anything() }),
     )
+  })
+
+  test('shows the my-playlists edit-order action', async () => {
+    const { getByLabelText } = await renderWithProviders(<ListenScreen />, {})
+
+    expect(getByLabelText(EDIT_ORDER_LABEL)).toBeTruthy()
   })
 
   test('keeps the continue button visible when the search is open but not active', async () => {
