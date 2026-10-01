@@ -10,6 +10,7 @@ import {
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
 import { toPersistedAudio } from './lib/persistedAudio'
+import { toPersistedPlaylist } from './lib/persistedPlaylist'
 // Legacy atoms for backward compatibility
 export const currentAudioAtom = atom<AudioPlayerData | null>(null, 'currentAudioAtom')
 export const currentPlaylistAtom = atom<null | PlaylistData>(null, 'currentPlaylistAtom')
@@ -44,12 +45,14 @@ export const setCurrentAudioAction = action(async (ctx, audio: AudioPlayerData) 
   return persisted
 }, 'setCurrentAudio')
 
+// Persisted playlist is normalized before writing — see `./lib/persistedPlaylist`.
 export const setCurrentPlaylistAction = action(async (ctx, playlist: PlaylistData) => {
-  await AsyncStorage.setItem(CURRENT_PLAYLIST, JSON.stringify(playlist))
+  const persisted = toPersistedPlaylist(playlist)
+  await AsyncStorage.setItem(CURRENT_PLAYLIST, JSON.stringify(persisted))
   await ctx.schedule(() => {
-    currentPlaylistAtom(ctx, playlist)
+    currentPlaylistAtom(ctx, persisted)
   })
-  return playlist
+  return persisted
 }, 'setCurrentPlaylist')
 
 export const setIsPlayingAction = action(async (ctx, playing: boolean) => {
