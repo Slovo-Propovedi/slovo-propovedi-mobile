@@ -1,0 +1,10 @@
+Themed colors for offline caching toggle
+Themed cross-platform colors for offline caching toggle
+Block favorites navigation in my playlists edit mode
+Admin-style edit mode for my playlists screen
+Local section appearance settings for my playlists
+Do not reseed local playlists storage on parse failure
+Preserve stored favorites content across hydration
+Favorites playlist shows its sermons
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
