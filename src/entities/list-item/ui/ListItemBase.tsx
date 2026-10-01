@@ -1,5 +1,5 @@
 import { memo, type ReactNode } from 'react'
-import { type StyleProp, Text, View, type ViewStyle } from 'react-native'
+import { Platform, type StyleProp, Text, View, type ViewStyle } from 'react-native'
 import { MovingText } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
@@ -9,6 +9,13 @@ import { createListItemBaseStyles } from './styles'
 import { type ListItemVariant } from './types'
 
 const DEFAULT_DRAG_LABEL = 'Переместить'
+
+// Web: a row that carries the drag-handle IconButton must not itself be a
+// <button> — RNW renders accessibilityRole='button' as a real <button>, so the
+// nested handle <button> is invalid DOM and React errors on it. Use the link
+// role on web (renders <div role="link" tabindex=0>); rows without a handle keep
+// the default button role. Same pattern as TracksListItemBase ROW_ACCESSIBILITY_ROLE.
+const DRAGGABLE_ROW_ROLE = Platform.OS === 'web' ? 'link' : 'button'
 
 const ListItemBaseComponent = ({
   artwork,
@@ -72,7 +79,11 @@ const ListItemBaseComponent = ({
   ]
 
   return (
-    <PressableButton onPress={onPress} style={containerStyle}>
+    <PressableButton
+      onPress={onPress}
+      style={containerStyle}
+      accessibilityRole={drag ? DRAGGABLE_ROW_ROLE : undefined}
+    >
       {content}
       {right}
       {dragHandle}
