@@ -52,9 +52,22 @@ describe('<FormField>', () => {
       </FormSubmitContext.Provider>,
     )
 
+    expect(getByLabelText('Название').props.returnKeyType).toBe('done')
     fireEvent(getByLabelText('Название'), 'submitEditing')
 
     expect(onSubmit).toHaveBeenCalledTimes(1)
+  })
+
+  test('stays inert outside a form provider', async () => {
+    const { getByLabelText } = await renderWithProviders(
+      <FormField value='' label='Название' onChangeText={jest.fn()} />,
+    )
+
+    const input = getByLabelText('Название')
+    expect(input.props.returnKeyType).toBeUndefined()
+    expect(input.props.onSubmitEditing).toBeUndefined()
+
+    fireEvent(input, 'submitEditing')
   })
 
   test('keeps newline behavior in a multiline field without submitting', async () => {

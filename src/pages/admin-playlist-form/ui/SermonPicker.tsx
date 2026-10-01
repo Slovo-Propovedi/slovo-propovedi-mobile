@@ -44,6 +44,7 @@ export const SermonPicker = ({
 
   return (
     <View>
+      {/* Поиск — это фильтр, а не поле формы: Enter здесь сознательно не отправляет. */}
       <TextInput
         value={search}
         onChangeText={onSearchChange}
