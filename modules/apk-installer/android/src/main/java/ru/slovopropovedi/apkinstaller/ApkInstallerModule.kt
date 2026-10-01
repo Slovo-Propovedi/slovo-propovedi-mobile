@@ -63,20 +63,11 @@ class ApkInstallerModule : Module() {
         PackageInstaller.STATUS_FAILURE_STORAGE -> {
           pendingPromise = null
           pendingSessionId = -1
-          val statusName = when (status) {
-            PackageInstaller.STATUS_FAILURE -> "STATUS_FAILURE"
-            PackageInstaller.STATUS_FAILURE_ABORTED -> "STATUS_FAILURE_ABORTED"
-            PackageInstaller.STATUS_FAILURE_BLOCKED -> "STATUS_FAILURE_BLOCKED"
-            PackageInstaller.STATUS_FAILURE_CONFLICT -> "STATUS_FAILURE_CONFLICT"
-            PackageInstaller.STATUS_FAILURE_INCOMPATIBLE -> "STATUS_FAILURE_INCOMPATIBLE"
-            PackageInstaller.STATUS_FAILURE_INVALID -> "STATUS_FAILURE_INVALID"
-            else -> "STATUS_FAILURE_STORAGE"
-          }
           val statusMessage = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
           val legacyStatus = intent.getIntExtra(EXTRA_LEGACY_STATUS, -1)
           promise.reject(
             "ERR_APK_INSTALL_FAILED",
-            "Install failed: $statusName, message=$statusMessage, legacyStatus=$legacyStatus",
+            ApkInstallStatuses.failureMessage(status, statusMessage, legacyStatus),
             null,
           )
         }

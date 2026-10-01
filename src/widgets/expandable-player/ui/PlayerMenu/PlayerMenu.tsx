@@ -1,29 +1,30 @@
-import { useEffect, useRef, useState } from 'react'
-import { type LayoutChangeEvent, Pressable, View } from 'react-native'
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated'
+import { useState } from 'react'
+import { Pressable, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { type TrackCacheVisualState } from 'entities/offline-cache'
 import { type PlaybackRate, usePlaybackRate } from 'entities/player'
+import { type AudioPlayerData } from 'entities/sermon'
 import { hapticLight } from 'shared/lib/haptics'
 import { reportError } from 'shared/model/error-dialog'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './PlayerMenu.styles'
 import { PlayerMenuItems } from './PlayerMenuItems'
 import { PlayerSpeedMenu } from './PlayerSpeedMenu'
+import { useMenuRevealAnimation } from './useMenuRevealAnimation'
 
 export const PlayerMenu = ({
+  audio,
   isCached,
+  onAddToPlaylist,
   onClose,
   onOpenSoundSettings,
   onShowDetails,
   onToggleCache,
   visualState,
 }: {
+  audio: AudioPlayerData
   isCached?: boolean
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onClose: () => void
   onOpenSoundSettings: () => void
   onShowDetails: () => void
@@ -33,26 +34,7 @@ export const PlayerMenu = ({
   const { currentTheme } = useTheme()
   const { rate, setPlaybackRate } = usePlaybackRate()
   const [view, setView] = useState<'main' | 'speed'>('main')
-  const [hasMeasured, setHasMeasured] = useState(false)
-  const lastLayoutHeightRef = useRef<null | number>(null)
-  const height = useSharedValue(0)
-  const opacity = useSharedValue(0)
-  const backdropOpacity = useSharedValue(0)
-  const isAnimating = useSharedValue(false)
-
-  const handleLayout = (event: LayoutChangeEvent) => {
-    const { height: layoutHeight } = event.nativeEvent.layout
-    if (layoutHeight <= 0) return
-    if (!hasMeasured) setHasMeasured(true)
-    if (isAnimating.value) return
-    if (lastLayoutHeightRef.current !== layoutHeight) {
-      lastLayoutHeightRef.current = layoutHeight
-      isAnimating.value = true
-      height.value = withTiming(layoutHeight, { duration: 200, easing: Easing.linear }, () => {
-        isAnimating.value = false
-      })
-    }
-  }
+  const { backdropStyle, handleLayout, wrapperStyle } = useMenuRevealAnimation()
 
   const handleDetailsPress = () => {
     onShowDetails()
@@ -69,24 +51,15 @@ export const PlayerMenu = ({
     onClose()
   }
 
+  const handleAddToPlaylistPress = () => {
+    onAddToPlaylist?.(audio)
+    onClose()
+  }
+
   const handleSpeedSelect = (selectedRate: PlaybackRate) => {
     void setPlaybackRate(selectedRate).catch(reportError)
     onClose()
   }
-
-  useEffect(() => {
-    opacity.value = withTiming(1, { duration: 150 })
-    backdropOpacity.value = withTiming(1, { duration: 150 })
-  }, [opacity, backdropOpacity])
-
-  const wrapperStyle = useAnimatedStyle(() => {
-    if (!hasMeasured) return { opacity: 0 }
-    return { height: height.value, opacity: opacity.value }
-  })
-
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: backdropOpacity.value,
-  }))
 
   return (
     <>
@@ -112,6 +85,7 @@ export const PlayerMenu = ({
               onToggleCache={handleToggleCache}
               onShowSpeed={() => setView('speed')}
               onOpenSoundSettings={handleSoundSettingsPress}
+              onAddToPlaylist={onAddToPlaylist ? handleAddToPlaylistPress : undefined}
             />
           ) : (
             <PlayerSpeedMenu

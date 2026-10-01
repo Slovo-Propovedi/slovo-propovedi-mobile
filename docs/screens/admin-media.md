@@ -10,12 +10,12 @@
 
 ## Каталог
 
-**Файлы:** `src/pages/admin-media/ui/AdminMediaScreen.tsx`, `AdminMediaHeader.tsx`, `MediaTile.tsx`, `MediaViewerModal.tsx`, `lib/useAdminMedia.ts`, `lib/fileKind.ts`, `lib/usePickImage.ts`
+**Файлы:** `src/pages/admin-media/ui/AdminMediaScreen.tsx`, `AdminMediaHeader.tsx`, `AdminMediaGridSkeleton.tsx`, `MediaTile.tsx`, `MediaViewerModal.tsx`, `lib/useAdminMedia.ts`, `lib/fileKind.ts`, `lib/usePickImage.ts`
 
 - **Что показывается:** внутриэкранная шапка «Медиа» (`AdminMediaHeader`) с иконкой-кнопкой загрузки (`cloud-upload-outline`, `accessibilityLabel='Загрузить файл'`) справа; при загрузке — прогресс-бар. Наверху страницы — блок «Осиротевшие файлы» (скан/очистка), ниже — сетка квадратных плиток. Число колонок считается от ширины экрана (`numColumnsFor`, целевая плитка `TARGET_TILE_SIZE = 120`, минимум 1), промежутки — `INDENTS.low`. Плитка: обложка через `expo-image`, имя файла, размер (`formatFileSize`) и бейдж «используется» при `used = true`; оверлейная кнопка удаления.
 - **Откуда данные:** `getFiles` (`GET /files`) через `filesApi`; элемент — `FileMetadataDto { fileName, fileUrl, size, lastModified, used }`.
 - **Навигация:** тап по плитке открывает полноэкранный просмотр (`MediaViewerModal`: `Modal` + `expo-image` `contentFit='contain'`, закрытие по X, тапу на фон и системному «назад» Android `onRequestClose`). Отдельного маршрута-детали нет.
-- **Состояния:** загрузка первичного каталога — скелетон-сетка (`AdminMediaGridSkeleton`); пусто — `EmptyState` «Обложек пока нет»; ошибка первичной загрузки — текст «Не удалось загрузить файлы» (`reportError`); ошибка загрузки — тост.
+- **Состояния:** загрузка первичного каталога — скелетон-сетка (`AdminMediaGridSkeleton`) в теле списка (`ListEmptyComponent` того же `FlatList`); шапка «Медиа» и блок осиротевших файлов видны сразу, полноэкранного раннего возврата нет. Плейсхолдер-плитка — `MediaTile.Skeleton` (composition API: скелетон объявлен в `MediaTile.tsx` и прикреплён `Object.assign(MediaTile, { Skeleton })`, геометрия берётся из тех же `styles.tile`/`styles.tileImage`/`styles.tileBody`): квадрат-обложка `tileSize`, тело с двумя строками, пульсация `useSkeletonPulse`; число плейсхолдеров — `numColumns × 4` при том же `numColumns`, что и у реального списка (без сдвига раскладки и смены числа колонок). Пусто — `EmptyState` «Обложек пока нет»; ошибка первичной загрузки — текст «Не удалось загрузить файлы» (`reportError`); ошибка загрузки — тост.
 
 ## Загрузка
 
@@ -34,7 +34,7 @@
 
 **Файлы:** `src/pages/admin-media/ui/OrphansSection.tsx`, `OrphansBody.tsx`, `OrphanRow.tsx`, `CleanupResultBanner.tsx`, `lib/useOrphanedFiles.ts`
 
-- Кнопка «Найти осиротевшие файлы» запускает скан; повторный клик пересканирует. Скан **опционален** — обходит весь bucket, поэтому не выполняется до запроса пользователя.
+- Кнопка «Найти осиротевшие файлы» запускает скан; повторный клик пересканирует. Скан **опционален** — обходит весь bucket, поэтому не выполняется до запроса пользователя. На web-десктопе кнопка не растягивается на всю ширину вьюпорта (`styles.secondaryButton` добавляет `maxWidth = SCAN_BUTTON_MAX_WIDTH = 320` **только** при `Platform.OS === 'web'`); на нативе cap не задаётся — кнопка остаётся на всю ширину, как раньше.
 - **Откуда данные:** `appControllerGetOrphanedFiles` (`GET /files/orphans`) → `{ orphaned, count }`; элементы — `FileMetadataDto` (`used` всегда `false`).
 - **Что показывается:** строки `OrphanRow` — бейдж типа (аудио/текст/изображение по расширению), имя, размер; у изображений пометка «удаляется вручную из каталога».
 - **Кнопка «Удалить (N)»:** `N` — число **удаляемых** осиротевших файлов (только аудио/текст; изображения не считаются). Появляется при `N > 0`.

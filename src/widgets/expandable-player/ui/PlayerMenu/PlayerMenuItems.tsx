@@ -13,6 +13,7 @@ const REMOVE_CACHE_TEXT = 'Удалить из офлайн'
 const STOP_CACHING_TEXT = 'Остановить добавление в офлайн'
 const REMOVE_FROM_QUEUE_TEXT = 'Убрать из очереди'
 const SOUND_SETTINGS_TEXT = 'Настройки звука'
+const ADD_TO_PLAYLIST_TEXT = 'Добавить в плейлист'
 
 const OFFLINE_ACTION_LABELS: Record<TrackCacheVisualState, string> = {
   cached: REMOVE_CACHE_TEXT,
@@ -29,6 +30,7 @@ const getCacheActionLabel = (visualState: TrackCacheVisualState, isCached: boole
 
 export const PlayerMenuItems = ({
   isCached,
+  onAddToPlaylist,
   onDetails,
   onOpenSoundSettings,
   onShowSpeed,
@@ -37,6 +39,7 @@ export const PlayerMenuItems = ({
   visualState,
 }: {
   isCached?: boolean
+  onAddToPlaylist?: () => void
   onDetails: () => void
   onOpenSoundSettings: () => void
   onShowSpeed: () => void
@@ -86,11 +89,19 @@ export const PlayerMenuItems = ({
           {formatPlaybackRate(rate)}
         </Text>
       </PressableButton>
-      <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
-        <Text style={[styles.menuItemTextDisabled, { color: currentTheme.textMuted }]}>
-          Добавить в плейлист
-        </Text>
-      </Pressable>
+      {onAddToPlaylist ? (
+        <PressableButton style={styles.menuItem} onPress={onAddToPlaylist}>
+          <Text style={[styles.menuItemText, { color: currentTheme.text }]}>
+            {ADD_TO_PLAYLIST_TEXT}
+          </Text>
+        </PressableButton>
+      ) : (
+        <Pressable style={[styles.menuItem, styles.menuItemDisabled]}>
+          <Text style={[styles.menuItemTextDisabled, { color: currentTheme.textMuted }]}>
+            {ADD_TO_PLAYLIST_TEXT}
+          </Text>
+        </Pressable>
+      )}
       <PressableButton
         style={styles.menuItemRow}
         onPress={onOpenSoundSettings}

@@ -67,7 +67,9 @@ export const UserFormFields = ({
           required
           label='Email'
           value={values.email}
+          autoComplete='email'
           keyboardType='email-address'
+          textContentType='emailAddress'
           placeholder='admin@example.com'
           onBlur={() => markTouched('email')}
           onChangeText={text => onChange('email', text)}
@@ -78,6 +80,8 @@ export const UserFormFields = ({
           label='Логин'
           hint={LOGIN_HINT}
           value={values.username}
+          autoComplete='username'
+          textContentType='username'
           onBlur={() => markTouched('username')}
           placeholder='Логин для входа в систему'
           onChangeText={text => onChange('username', text)}

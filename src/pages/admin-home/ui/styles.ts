@@ -35,7 +35,6 @@ export const styles = StyleSheet.create({
   },
   content: {
     padding: INDENTS.high,
-    paddingBottom: INDENTS.highest,
   },
   count: {
     fontSize: FONT_SIZES.xxl,

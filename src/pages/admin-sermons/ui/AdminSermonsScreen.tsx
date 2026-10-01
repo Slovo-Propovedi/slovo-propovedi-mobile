@@ -3,9 +3,9 @@ import { useRouter } from 'expo-router'
 import { FlatList, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
-import { AdminSermonRowSkeleton, EmptyState } from 'shared/ui'
+import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminSermons } from '../lib/useAdminSermons'
 import { AdminSermonRow } from './AdminSermonRow'
@@ -13,15 +13,16 @@ import { AdminSermonsHeader } from './AdminSermonsHeader'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/sermons/create'
-const LOAD_MORE_LABEL = 'Загрузить ещё'
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить проповеди'
+const LOAD_MORE_FAILED_LABEL = 'Повторить загрузку'
 const EMPTY_MESSAGE = 'Проповедей пока нет'
 const SKELETON_ROWS = 6
+const LIST_TEST_ID = 'admin-sermons-list'
 
 const SermonSkeletonList = () => (
   <>
     {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-      <AdminSermonRowSkeleton key={index} />
+      <AdminSermonRow.Skeleton key={index} />
     ))}
   </>
 )
@@ -31,11 +32,11 @@ export const AdminSermonsScreen = () => {
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const {
-    hasMore,
     isError,
     isLoading,
     isLoadingMore,
     loadMore,
+    loadMoreFailed,
     onOrderChange,
     onSearchChange,
     onSortChange,
@@ -63,13 +64,13 @@ export const AdminSermonsScreen = () => {
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
       <FlatList
+        testID={LIST_TEST_ID}
+        onEndReachedThreshold={0.5}
         keyExtractor={item => item.id}
         data={isLoading ? [] : sermons}
+        onEndReached={() => void loadMore()}
         renderItem={({ item }) => <AdminSermonRow item={item} onPress={() => openSermon(item)} />}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
-        ]}
+        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
         ListEmptyComponent={
           isLoading ? (
             <SermonSkeletonList />
@@ -95,14 +96,14 @@ export const AdminSermonsScreen = () => {
         }
         ListFooterComponent={
           isLoadingMore ? (
-            <AdminSermonRowSkeleton />
-          ) : hasMore ? (
+            <AdminSermonRow.Skeleton />
+          ) : loadMoreFailed ? (
             <TouchableItem
               onPress={() => void loadMore()}
-              style={[styles.loadMore, { backgroundColor: currentTheme.surface }]}
+              style={[styles.retry, { backgroundColor: currentTheme.surface }]}
             >
-              <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
-                {LOAD_MORE_LABEL}
+              <Text style={[styles.retryText, { color: currentTheme.primary }]}>
+                {LOAD_MORE_FAILED_LABEL}
               </Text>
             </TouchableItem>
           ) : null

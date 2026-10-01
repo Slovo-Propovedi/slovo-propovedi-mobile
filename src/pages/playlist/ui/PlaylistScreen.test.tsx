@@ -38,11 +38,15 @@ jest.mock('entities/player', () => {
   }
 })
 
-jest.mock('entities/listening-history', () => ({
-  buildHistoryMenuActions: jest.fn(() => []),
-  useHistoryProgressMap: jest.fn(() => new Map()),
-  useHistorySermonIds: jest.fn(() => new Set()),
-}))
+jest.mock('entities/listening-history', () => {
+  const actual = jest.requireActual('entities/listening-history')
+  return {
+    ...actual,
+    buildHistoryMenuActions: jest.fn(() => []),
+    useHistoryProgressMap: jest.fn(() => new Map()),
+    useHistorySermonIds: jest.fn(() => new Set()),
+  }
+})
 
 jest.mock('entities/offline-cache', () => {
   const actual = jest.requireActual('entities/offline-cache')
@@ -176,8 +180,8 @@ const PLAYLIST_TITLE = 'Плейлист о вере'
 const SECTION_ID = 'section-1'
 const SECTION_TITLE = 'Раздел'
 const NOT_FOUND_TEXT = 'Плейлист не найден'
-const EMPTY_TEXT = 'В плейлисте нет записей'
-const PLAY_ALL_TEXT = 'Воспроизвести все'
+const EMPTY_TEXT = 'Этот плейлист пустой'
+const PLAY_ALL_TEXT = 'Начать прослушивание плейлиста'
 const ADD_ALL_TO_OFFLINE_TEXT = 'Добавить все в офлайн'
 const ADD_ALL_TO_OFFLINE_CONFIRM_TEXT = 'Добавить весь плейлист в офлайн'
 const CACHE_DIALOG_TITLE = 'Добавление плейлиста в офлайн'

@@ -104,6 +104,40 @@ describe('startup crash guard', () => {
       expect(mockedSetItem).toHaveBeenCalledWith(PLAYER_STARTUP_ATTEMPTS, '2')
     })
 
+    test('resets counter to 0 after a successful restore', async () => {
+      await AsyncStorage.setItem(PLAYER_STARTUP_ATTEMPTS, '1')
+      await seedStoredAudio()
+
+      await initializePlayer()
+
+      expect(mockedSetItem).toHaveBeenCalledWith(PLAYER_STARTUP_ATTEMPTS, '2')
+      expect(mockedSetItem).toHaveBeenCalledWith(PLAYER_STARTUP_ATTEMPTS, '0')
+    })
+
+    test('resets counter when stored audio fails zod validation (mismatch is not a crash)', async () => {
+      await AsyncStorage.setItem(PLAYER_STARTUP_ATTEMPTS, '1')
+      await AsyncStorage.setItem(
+        CURRENT_AUDIO,
+        JSON.stringify({ artist: 'Author', artwork: null, id: 'sermon-1', title: 'Test' }),
+      )
+
+      await initializePlayer()
+
+      expect(mockedLoadAudio).not.toHaveBeenCalled()
+      expect(mockedSetItem).toHaveBeenCalledWith(PLAYER_STARTUP_ATTEMPTS, '0')
+    })
+
+    test('keeps counter incremented when restore throws', async () => {
+      await AsyncStorage.setItem(PLAYER_STARTUP_ATTEMPTS, '1')
+      await seedStoredAudio()
+      mockedLoadAudio.mockRejectedValueOnce(new Error('boom'))
+
+      await initializePlayer()
+
+      expect(mockedSetItem).toHaveBeenCalledWith(PLAYER_STARTUP_ATTEMPTS, '2')
+      expect(mockedSetItem).not.toHaveBeenCalledWith(PLAYER_STARTUP_ATTEMPTS, '0')
+    })
+
     test('restores position from bound format when sermonId matches', async () => {
       await seedStoredAudio()
       const bound = JSON.stringify({

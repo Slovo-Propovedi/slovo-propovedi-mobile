@@ -1,5 +1,6 @@
 export { formatSermonReference } from './lib/formatSermonReference'
 export { mapAllSermonsResponse } from './lib/mappers/mapAllSermonsResponse'
+export { mapSermonEntityToSermonData } from './lib/mappers/mapSermonEntityToSermonData'
 export {
   isVerseRangeTuple,
   parseChapter,

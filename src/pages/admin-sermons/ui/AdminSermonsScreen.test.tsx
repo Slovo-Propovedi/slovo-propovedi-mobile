@@ -28,6 +28,21 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }))
 
+const PAGE_SIZE = 20
+const LIST_TEST_ID = 'admin-sermons-list'
+const RETRY_LABEL = 'Повторить загрузку'
+
+// One faker sample is enough per page: generating a fresh DTO per row is slow.
+const buildSermons = (count: number, prefix: string) => {
+  const sample = sermonsMocks.getSermonControllerFindOneResponseMock()
+
+  return Array.from({ length: count }, (_, index) => ({
+    ...sample,
+    id: `${prefix}${index}`,
+    title: `${prefix} ${index}`,
+  }))
+}
+
 describe('<AdminSermonsScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -136,5 +151,32 @@ describe('<AdminSermonsScreen>', () => {
         expect.objectContaining({ order: 'asc', sort: 'title' }),
       ),
     )
+  })
+
+  test('shows a retry row after a failed loadMore and clears it on a successful retry', async () => {
+    mockFindAll
+      .mockResolvedValueOnce({
+        count: PAGE_SIZE + 1,
+        nextCursor: null,
+        sermons: buildSermons(PAGE_SIZE, 'page'),
+      })
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce({ count: 1, nextCursor: null, sermons: buildSermons(1, 'fresh') })
+
+    const { findByText, getByTestId, queryByText } = await renderWithProviders(
+      <AdminSermonsScreen />,
+    )
+    await findByText('page 0')
+
+    fireEvent(getByTestId(LIST_TEST_ID), 'onEndReached')
+
+    expect(await findByText(RETRY_LABEL)).toBeTruthy()
+
+    fireEvent.press(await findByText(RETRY_LABEL))
+
+    await waitFor(() => expect(queryByText(RETRY_LABEL)).toBeNull())
+    // The appended row is beyond FlatList's initial window, so assert the count
+    // (sermons.length) instead of the off-screen title.
+    expect(await findByText('Всего: 21')).toBeTruthy()
   })
 })

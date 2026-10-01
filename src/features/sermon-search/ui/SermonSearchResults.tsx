@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import { ActivityIndicator, type ColorValue, FlatList, StyleSheet, View } from 'react-native'
 import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
-import { type SermonData } from 'entities/sermon'
+import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
@@ -15,7 +15,11 @@ import { SearchRowSeparator } from './SearchRowSeparator'
 
 const NO_RESULTS_MESSAGE = 'Ничего не найдено'
 
-export const SermonSearchResults = () => {
+export const SermonSearchResults = ({
+  onAddToPlaylist,
+}: {
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
+}) => {
   useDebouncedSearch()
 
   const { currentTheme } = useTheme()
@@ -56,6 +60,7 @@ export const SermonSearchResults = () => {
         <SearchResultsRow
           sermon={item}
           onPress={handlePress}
+          onAddToPlaylist={onAddToPlaylist}
           progress={progressMap.get(item.id)}
           inHistory={historySermonIds.has(item.id)}
         />

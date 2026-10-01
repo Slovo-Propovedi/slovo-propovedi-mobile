@@ -38,6 +38,7 @@ jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
 
   return {
+    Entypo: (props: { name: string }) => <Text>{props.name}</Text>,
     Ionicons: (props: { name: string }) => <Text>{props.name}</Text>,
     MaterialCommunityIcons: (props: { name: string }) => <Text>{props.name}</Text>,
   }
@@ -64,6 +65,14 @@ jest.mock('entities/listening-history', () => ({
 jest.mock('entities/player', () => ({
   usePlayNewSermon: jest.fn(() => jest.fn()),
 }))
+
+// DraggableFlatList is a pure-JS reanimated list; a FlatList passthrough keeps
+// the MyPlaylistsSlider cards rendering without dragging internals.
+jest.mock('react-native-draggable-flatlist', () => {
+  const { FlatList } = jest.requireActual('react-native')
+
+  return { __esModule: true, default: FlatList }
+})
 
 jest.mock('features/sermon-search/lib/useDebouncedSearch', () => ({
   useDebouncedSearch: () => undefined,
@@ -101,6 +110,7 @@ const CLEAR_LABEL = 'Очистить поиск'
 const SERMON_TITLE = 'Проповедь о вере'
 const SECTIONS_MOCK = 'SECTIONS_MOCK'
 const CONTINUE_BUTTON_MOCK = 'CONTINUE_BUTTON_MOCK'
+const EDIT_ORDER_LABEL = 'Изменить порядок'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
 // A pinned element (the search bar) must not have any scroll container between
@@ -170,6 +180,12 @@ describe('<ListenScreen>', () => {
     expect(mockDynamicSectionsSliderProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ leadingElement: expect.anything() }),
     )
+  })
+
+  test('shows the my-playlists edit-order action', async () => {
+    const { getByLabelText } = await renderWithProviders(<ListenScreen />, {})
+
+    expect(getByLabelText(EDIT_ORDER_LABEL)).toBeTruthy()
   })
 
   test('keeps the continue button visible when the search is open but not active', async () => {

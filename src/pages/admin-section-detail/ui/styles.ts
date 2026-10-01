@@ -17,19 +17,13 @@ export const styles = StyleSheet.create({
   header: {
     paddingBottom: INDENTS.medium,
   },
-  listContent: {
-    padding: INDENTS.medium,
-  },
-  playlistBody: {
+  // DraggableFlatList renders its own wrapper without flex; on react-native-web
+  // that wrapper sizes to content and the inner ScrollView never scrolls, so the
+  // list tail gets clipped by body { overflow: hidden }.
+  listContainer: {
     flex: 1,
   },
-  playlistRow: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.middle,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    marginBottom: INDENTS.medium,
+  listContent: {
     padding: INDENTS.medium,
   },
   playlistsTitle: {
@@ -37,14 +31,6 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: INDENTS.medium,
     marginTop: INDENTS.medium,
-  },
-  playlistSubtitle: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: 2,
-  },
-  playlistTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
   },
   stat: {
     borderRadius: RADIUSES.low,

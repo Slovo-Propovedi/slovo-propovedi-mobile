@@ -22,7 +22,9 @@ npm run check:circular       # Check for circular dependencies (dependency-cruis
 
 # Testing
 npm run test                 # Jest in watch mode, changed files only (vs main)
-npm run testFinal            # Run all tests once
+npm run testFinal            # Run jest test suite once
+npm run testFinal:all        # testFinal + native Kotlin unit tests
+npm run test:native          # Native Kotlin unit tests via gradle
 npm run testDebug            # Run tests for locally changed files only
 npm run updateSnapshots      # Update test snapshots
 

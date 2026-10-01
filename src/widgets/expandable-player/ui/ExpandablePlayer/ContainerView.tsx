@@ -23,6 +23,7 @@ export const ContainerView = ({
   fullStyle,
   miniOverlay,
   miniOverlayStyle,
+  onAddToPlaylist,
   onLayout,
   panGesture,
   playlistMenuComponent,
@@ -39,6 +40,7 @@ export const ContainerView = ({
   fullStyle: AnimatedStyle<ViewStyle>
   miniOverlay: ViewStyle
   miniOverlayStyle: AnimatedStyle<ViewStyle>
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onLayout: (event: LayoutChangeEvent) => void
   panGesture: GestureType
   playlistMenuComponent?: PlaylistMenuSlot
@@ -87,6 +89,7 @@ export const ContainerView = ({
             styles={styles}
             fullStyle={fullStyle}
             onClose={closeFullscreen}
+            onAddToPlaylist={onAddToPlaylist}
             playlistMenuComponent={playlistMenuComponent}
           />
         )}

@@ -5,5 +5,4 @@ export {
   AdminSermonRowSkeleton,
   AdminUserRowSkeleton,
 } from './admin-list-skeleton'
-export { AdminMediaGridSkeleton } from './admin-media-grid-skeleton'
 export { SkeletonBar } from './admin-skeleton-row'

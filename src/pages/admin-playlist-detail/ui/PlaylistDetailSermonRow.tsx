@@ -1,12 +1,6 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { Text, View } from 'react-native'
+import { ListItemBase } from 'entities/list-item'
 import { formatSermonReference } from 'entities/sermon'
 import { type APITypes } from 'shared/api'
-import { MovingText } from 'shared/ui'
-import { IconButton } from 'shared/ui/icon-button'
-import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
-import { styles } from './styles'
 
 const DRAG_LABEL = 'Переместить проповедь'
 
@@ -23,7 +17,6 @@ export const PlaylistDetailSermonRow = ({
   item: APITypes.PlaylistSermon
   onPress: () => void
 }) => {
-  const { currentTheme } = useTheme()
   const reference = formatSermonReference({
     book: item.book,
     chapter: item.chapter,
@@ -32,30 +25,15 @@ export const PlaylistDetailSermonRow = ({
   const subtitle = [item.artist, reference].filter(Boolean).join(' · ')
 
   return (
-    <TouchableItem
+    <ListItemBase
+      drag={drag}
+      movingTitle
       onPress={onPress}
-      style={[
-        styles.row,
-        {
-          backgroundColor: currentTheme.surface,
-          borderColor: isActive ? currentTheme.primary : 'transparent',
-          opacity: isActive ? 0.9 : 1,
-        },
-      ]}
-    >
-      <View style={styles.rowBody}>
-        <MovingText text={item.title} style={styles.rowTitle} />
-        {subtitle ? (
-          <Text numberOfLines={1} style={[styles.rowMeta, { color: currentTheme.textMuted }]}>
-            {subtitle}
-          </Text>
-        ) : null}
-      </View>
-      <IconButton
-        onPressIn={drag}
-        accessibilityLabel={DRAG_LABEL}
-        Icon={<Ionicons size={26} name='reorder-three' color={currentTheme.textMuted} />}
-      />
-    </TouchableItem>
+      variant='surface'
+      title={item.title}
+      isActive={isActive}
+      subtitle={subtitle}
+      dragLabel={DRAG_LABEL}
+    />
   )
 }

@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { Text, View } from 'react-native'
 import { CoverPicker } from 'widgets/admin-form-pickers'
 import { type TouchedMap } from 'shared/lib/hooks/useFormTouched'
 import { FormScrollView } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type PlaylistFormValues } from '../lib/playlistFormState'
+import { type SermonOption } from '../lib/sermonOption'
+import { useSermonSearch } from '../lib/useSermonSearch'
 import { PlaylistFormMainFields } from './PlaylistFormMainFields'
 import { SectionPicker } from './SectionPicker'
 import { SermonPicker } from './SermonPicker'
@@ -24,19 +27,29 @@ export const PlaylistForm = ({
   error,
   markTouched,
   onChange,
+  onSubmit,
+  selectedSermons,
   touched,
   values,
 }: {
   error: null | string
   markTouched: (key: 'title') => void
   onChange: UpdateField
+  onSubmit?: () => void
+  selectedSermons: SermonOption[]
   touched: TouchedMap<'title'>
   values: PlaylistFormValues
 }) => {
   const { currentTheme } = useTheme()
+  const [sermonSearch, setSermonSearch] = useState('')
+  const sermonSearchState = useSermonSearch(sermonSearch)
 
   return (
-    <FormScrollView contentContainerStyle={styles.formContent}>
+    <FormScrollView
+      onSubmit={onSubmit}
+      contentContainerStyle={styles.formContent}
+      onNearEnd={() => void sermonSearchState.loadMore()}
+    >
       {error ? (
         <View style={[styles.errorBanner, { backgroundColor: currentTheme.surface }]}>
           <Text style={[styles.errorText, { color: currentTheme.primary }]}>{error}</Text>
@@ -62,6 +75,10 @@ export const PlaylistForm = ({
       <View style={styles.block}>
         <Text style={[styles.blockTitle, { color: currentTheme.text }]}>Проповеди</Text>
         <SermonPicker
+          search={sermonSearch}
+          searchState={sermonSearchState}
+          onSearchChange={setSermonSearch}
+          selectedSermons={selectedSermons}
           selectedIds={values.selectedSermonIds}
           onToggle={id => onChange('selectedSermonIds', toggleId(values.selectedSermonIds, id))}
         />

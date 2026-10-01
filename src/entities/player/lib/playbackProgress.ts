@@ -22,3 +22,21 @@ export const savePlaybackProgress = action(
   },
   'savePlaybackProgress',
 )
+
+/**
+ * Вычисляет позицию возобновления: 0, если сохранённый прогресс относится к
+ * другой проповеди; иначе позицию, ограниченную сохранённой длительностью.
+ * @param parsedProgress - Разобранный прогресс из хранилища.
+ * @param currentSermonId - Id восстанавливаемой проповеди.
+ */
+export const computeResumeMs = (
+  parsedProgress: undefined | z.infer<typeof playbackProgressSchema>,
+  currentSermonId: string,
+): number => {
+  if (!parsedProgress || parsedProgress.sermonId !== currentSermonId) return 0
+
+  const { durationMs: duration, positionMs } = parsedProgress
+
+  if (typeof duration === 'number' && duration > 0) return Math.min(positionMs, duration)
+  return positionMs
+}

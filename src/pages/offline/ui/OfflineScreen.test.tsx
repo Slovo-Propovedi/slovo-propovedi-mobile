@@ -4,6 +4,7 @@ import { useNavigation } from 'expo-router'
 import { type OfflineSermonItem, useOfflineSermons } from 'features/offline-sermons'
 import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { usePlayNewSermon } from 'entities/player'
+import { FAVORITES_PLAYLIST, myPlaylistsAtom } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { OfflineScreen } from './OfflineScreen'
 
@@ -52,13 +53,23 @@ jest.mock('entities/listening-history', () => ({
 
 jest.mock('entities/track-list', () => {
   const { Pressable, StyleSheet, Text, View: RNView } = jest.requireActual('react-native')
-  const TracksListItem = (props: { onPress: () => void; subtitle?: string; title: string }) => (
+  const TracksListItem = (props: {
+    menuActions?: Array<{ onPress: () => void; text: string }>
+    onPress: () => void
+    subtitle?: string
+    title: string
+  }) => (
     <RNView testID='tracks-list-item'>
       <Text>{props.title}</Text>
       {props.subtitle && <Text>{props.subtitle}</Text>}
       <Pressable onPress={props.onPress}>
         <Text>Play</Text>
       </Pressable>
+      {props.menuActions?.map((action, index) => (
+        <Pressable key={index} onPress={action.onPress}>
+          <Text>{action.text}</Text>
+        </Pressable>
+      ))}
     </RNView>
   )
   const TracksListSkeleton = ({ rowCount = 6 }: { rowCount?: number }) => (
@@ -146,6 +157,25 @@ describe('<OfflineScreen>', () => {
     await renderWithProviders(<OfflineScreen />)
 
     expect(setOptions).toHaveBeenCalledWith({ headerRight: expect.any(Function) })
+  })
+
+  test('row menu offers add-to-playlist and checks the playlist containing the sermon', async () => {
+    const ctx = createCtx()
+    myPlaylistsAtom(ctx, [
+      { ...FAVORITES_PLAYLIST, sermonIds: [] },
+      { id: 'pl-1', sermonIds: [mockSermon.id], title: 'Проповеди недели' },
+    ])
+
+    const { getAllByRole, getByText } = await renderWithProviders(<OfflineScreen />, { ctx })
+
+    await act(async () => {
+      fireEvent.press(getByText('Добавить в плейлист'))
+    })
+
+    const checkboxes = getAllByRole('checkbox')
+    expect(checkboxes).toHaveLength(2)
+    expect(checkboxes[0]).toBeChecked()
+    expect(checkboxes[1]).not.toBeChecked()
   })
 
   test('row press calls playNewSermon with item playlist and sermon', async () => {

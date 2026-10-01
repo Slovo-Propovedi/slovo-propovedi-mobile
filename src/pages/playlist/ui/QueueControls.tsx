@@ -5,9 +5,11 @@ import { TouchableButton } from 'shared/ui/touchable-button'
 import { queueControlsStyles } from './styles'
 
 export const QueueControls = ({
+  label,
   onPressPlayAll,
   onPressShuffle,
 }: {
+  label: string
   onPressPlayAll: () => void
   onPressShuffle?: () => void
 }) => {
@@ -20,7 +22,7 @@ export const QueueControls = ({
         style={[queueControlsStyles.button, { backgroundColor: currentTheme.primary }]}
       >
         <MaterialCommunityIcons name='play' size={FONT_SIZES.base} color={COLORS.onPrimary} />
-        <Text style={queueControlsStyles.buttonText}>Воспроизвести все</Text>
+        <Text style={queueControlsStyles.buttonText}>{label}</Text>
       </TouchableButton>
       {onPressShuffle && (
         <TouchableButton

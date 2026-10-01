@@ -2,13 +2,16 @@ import { useLocalSearchParams } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
+import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-history'
+import { FAVORITES_PLAYLIST } from 'entities/playlist'
 import { createTracksListStyles } from 'entities/track-list'
 import { useTheme } from 'shared/ui/theme'
 import { useCollapsingHeader } from '../lib/useCollapsingHeader'
 import { usePlaylistActions } from '../lib/usePlaylistActions'
 import { usePlaylistById } from '../lib/usePlaylistById'
 import { usePlaylistHeader } from '../lib/usePlaylistHeader'
+import { usePlaylistPlaybackTarget } from '../lib/usePlaylistPlaybackTarget'
 import { usePlaylistPlayerState } from '../lib/usePlaylistPlayerState'
 import { PlaylistHeader } from './PlaylistHeader'
 import { PlaylistStatusView } from './PlaylistStatusView'
@@ -18,6 +21,7 @@ import { createStyles } from './styles'
 import { buildTracksListData, usePlaylistNavigationOptions } from './usePlaylistNavigationOptions'
 
 const EMPTY_PLAYLIST = { artwork: null, description: '', id: 'default', sermons: [], title: '' }
+const FAVORITES_EMPTY_MESSAGE = 'В избранном пока пусто'
 
 export const PlaylistScreen = () => {
   const { currentTheme } = useTheme()
@@ -30,14 +34,18 @@ export const PlaylistScreen = () => {
 
   const progressMap = useHistoryProgressMap()
   const historySermonIds = useHistorySermonIds()
+  const { modal, openAddToPlaylist } = useAddToPlaylistModal()
   const { buildMenuActions, handlePressItem, handlePressPlayAll } = usePlaylistActions(
     list,
     playlist,
     historySermonIds,
     progressMap,
+    openAddToPlaylist,
   )
 
   const { cacheTrigger, currentAudio, isPlaying } = usePlaylistPlayerState()
+
+  const { label: playAllLabel, target: playAllTarget } = usePlaylistPlaybackTarget(playlist)
 
   const { headerImageHeight, imageOpacityStyle, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader()
@@ -100,18 +108,21 @@ export const PlaylistScreen = () => {
         onScroll={scrollHandler}
         style={tracksListStyles.container}
         ItemSeparatorComponent={ItemSeparator}
+        emptyMessage={playlist.id === FAVORITES_PLAYLIST.id ? FAVORITES_EMPTY_MESSAGE : undefined}
         headerElement={
           <PlaylistHeader
             title={title}
             artwork={artwork}
             theme={currentTheme}
             description={description}
-            onPressPlayAll={handlePressPlayAll}
+            playAllLabel={playAllLabel}
             headerImageHeight={headerImageHeight}
             imageOpacityStyle={imageOpacityStyle}
+            onPressPlayAll={() => void handlePressPlayAll(playAllTarget ?? undefined)}
           />
         }
       />
+      {modal}
     </View>
   )
 }

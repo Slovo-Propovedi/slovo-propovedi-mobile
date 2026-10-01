@@ -1,8 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type Ctx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { type ListeningHistory } from 'entities/listening-history/@x/player'
 import { audioCacheService } from 'entities/offline-cache/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
+import { PLAYER_STARTUP_ATTEMPTS } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { reportError } from 'shared/model/error-dialog'
@@ -164,6 +166,17 @@ describe('usePlayNewSermon', () => {
     })
 
     expect(mockReplaceAudio).toHaveBeenCalledWith(AUDIO_URL, RESUME_MS)
+  })
+
+  test('successful start resets the startup guard so a stuck guard unsticks', async () => {
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+
+    await act(async () => {
+      await result.current({ playlist: mockPlaylist, sermon: mockSermon })
+      await Promise.resolve()
+    })
+
+    expect(jest.mocked(AsyncStorage.setItem)).toHaveBeenCalledWith(PLAYER_STARTUP_ATTEMPTS, '0')
   })
 
   test('different sermon, completed entry → replaceAudio called with 0', async () => {
