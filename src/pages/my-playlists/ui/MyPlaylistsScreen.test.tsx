@@ -1,6 +1,11 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, userEvent, waitFor } from '@testing-library/react-native'
-import { FAVORITES_PLAYLIST, type LocalPlaylistData, myPlaylistsAtom } from 'entities/playlist'
+import {
+  FAVORITES_PLAYLIST,
+  type LocalPlaylistData,
+  myPlaylistsAtom,
+  sectionSettingsAtom,
+} from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks'
 import { MyPlaylistsScreen } from './MyPlaylistsScreen'
 
@@ -30,15 +35,16 @@ jest.mock('expo-router', () => {
   }
 })
 
-// The screen fires loadMyPlaylists on mount; a real storage read would clobber
-// the atom seeded per test. Replace it with a no-op reatom action so tests own
-// the atom while the real reorder action still runs.
+// The screen fires loadMyPlaylists/loadSectionSettings on mount; a real storage
+// read would clobber the atom seeded per test. Replace them with no-op reatom
+// actions so tests own the atom while the real reorder/update actions still run.
 jest.mock('entities/playlist', () => {
   const { action } = jest.requireActual('@reatom/framework')
 
   return {
     ...jest.requireActual('entities/playlist'),
     loadMyPlaylists: action(() => Promise.resolve([]), 'loadMyPlaylistsMock'),
+    loadSectionSettings: action(() => Promise.resolve(), 'loadSectionSettingsMock'),
   }
 })
 
@@ -193,12 +199,44 @@ describe('<MyPlaylistsScreen>', () => {
     expect(orderedIds(ctx)).toEqual(['favorites', 'a', 'b'])
   })
 
-  test('hides the edit affordance when only favorites exist', async () => {
+  test('shows the edit toggle even when only favorites exist', async () => {
     const ctx = createCtx()
     myPlaylistsAtom(ctx, [FAVORITES_PLAYLIST])
 
-    const { queryByLabelText } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
+    const { getByLabelText } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
 
-    expect(queryByLabelText(EDIT_LABEL)).toBeNull()
+    expect(getByLabelText(EDIT_LABEL)).toBeTruthy()
+  })
+
+  test('shows the appearance form and the section heading in edit mode', async () => {
+    const ctx = createCtx()
+    seedPlaylists(ctx)
+
+    const { getByLabelText, getByText } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
+    const user = userEvent.setup()
+
+    await user.press(getByLabelText(EDIT_LABEL))
+
+    expect(getByText('Оформление')).toBeTruthy()
+    expect(getByText('Плейлисты раздела')).toBeTruthy()
+    expect(getByText('Размер карточек')).toBeTruthy()
+    expect(getByText('Высота карточек')).toBeTruthy()
+    expect(getByText('Расположение заголовка')).toBeTruthy()
+    expect(getByText('Строк')).toBeTruthy()
+    expect(getByText('Крупный заголовок описания на слайде')).toBeTruthy()
+    expect(getByText('Скруглённые углы карточек')).toBeTruthy()
+  })
+
+  test('persists an appearance change immediately on toggle', async () => {
+    const ctx = createCtx()
+    seedPlaylists(ctx)
+
+    const { getByLabelText, getByText } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
+    const user = userEvent.setup()
+
+    await user.press(getByLabelText(EDIT_LABEL))
+    fireEvent.press(getByText('Скруглённые углы карточек'))
+
+    await waitFor(() => expect(ctx.get(sectionSettingsAtom).borderRadius).toBe(true))
   })
 })

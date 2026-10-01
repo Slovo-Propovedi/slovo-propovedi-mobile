@@ -5,7 +5,8 @@ const SCREEN_TITLE = 'Мои плейлисты'
 
 /**
  * Опции шапки экрана «Мои плейлисты»: заголовок секции и действия справа —
- * карандаш «Изменить порядок» и, в режиме редактирования, галочка «Сохранить».
+ * карандаш «Изменить порядок» (всегда активен) и, в режиме редактирования,
+ * галочка «Сохранить».
  *
  * Свежие обработчики держим в ref (синхронизация в эффекте, не во время
  * рендера): кнопки вызывают актуальные обработчики, но идентичность
@@ -14,18 +15,15 @@ const SCREEN_TITLE = 'Мои плейлисты'
  * memo: смена режима обязана пересобрать `headerRight` (иначе иконки шапки
  * не обновятся).
  * @param root0 Параметры шапки.
- * @param root0.isEditable Есть ли что редактировать (иначе действия скрыты).
  * @param root0.isEditing Открыт ли режим редактирования.
  * @param root0.onSave Коммит локального порядка.
  * @param root0.onToggleEdit Вход в режим редактирования / выход без сохранения.
  */
 export const useMyPlaylistsHeader = ({
-  isEditable,
   isEditing,
   onSave,
   onToggleEdit,
 }: {
-  isEditable: boolean
   isEditing: boolean
   onSave: () => void
   onToggleEdit: () => void
@@ -46,11 +44,10 @@ export const useMyPlaylistsHeader = ({
       <MyPlaylistsHeaderActions
         onSave={handleSave}
         isEditing={isEditing}
-        isEditable={isEditable}
         onToggleEdit={handleToggleEdit}
       />
     ),
-    [handleSave, handleToggleEdit, isEditable, isEditing],
+    [handleSave, handleToggleEdit, isEditing],
   )
 
   return useMemo(() => ({ headerRight, title: SCREEN_TITLE }), [headerRight])

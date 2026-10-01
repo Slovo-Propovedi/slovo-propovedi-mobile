@@ -1,6 +1,11 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
-import { FAVORITES_PLAYLIST, type LocalPlaylistData, myPlaylistsAtom } from 'entities/playlist'
+import {
+  FAVORITES_PLAYLIST,
+  type LocalPlaylistData,
+  myPlaylistsAtom,
+  sectionSettingsAtom,
+} from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks'
 import { MyPlaylistsSlider } from './MyPlaylistsSlider'
 
@@ -10,15 +15,16 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }))
 
-// The section fires loadMyPlaylists on mount; a real storage read would clobber
-// the atom seeded per test. Replace it with a no-op reatom action so tests own
-// the atom.
+// The section fires loadMyPlaylists/loadSectionSettings on mount; a real storage
+// read would clobber the atom seeded per test. Replace them with no-op reatom
+// actions so tests own the atom.
 jest.mock('entities/playlist', () => {
   const { action } = jest.requireActual('@reatom/framework')
 
   return {
     ...jest.requireActual('entities/playlist'),
     loadMyPlaylists: action(() => Promise.resolve([]), 'loadMyPlaylistsMock'),
+    loadSectionSettings: action(() => Promise.resolve(), 'loadSectionSettingsMock'),
   }
 })
 
@@ -120,5 +126,34 @@ describe('<MyPlaylistsSlider>', () => {
     expect(mockPush).toHaveBeenCalledWith(
       expect.objectContaining({ params: { playlist: FAVORITES_PLAYLIST.id } }),
     )
+  })
+
+  test('renders the under-slide description for the default title location', async () => {
+    const ctx = createCtx()
+    seedPlaylists(ctx)
+
+    const { getAllByTestId } = await renderWithProviders(<MyPlaylistsSlider />, { ctx })
+
+    expect(getAllByTestId('slider-item-description-under-slide').length).toBeGreaterThan(0)
+  })
+
+  test('maps the configured title location to the on-slide description', async () => {
+    const ctx = createCtx()
+    seedPlaylists(ctx)
+    sectionSettingsAtom(ctx, {
+      borderRadius: false,
+      isDescriptionTitleOnSlideLarge: false,
+      itemsRows: null,
+      itemsSize: 'small',
+      transform: 'middle',
+      whereIsSlideTitleLocated: 'on',
+    })
+
+    const { getAllByTestId, queryAllByTestId } = await renderWithProviders(<MyPlaylistsSlider />, {
+      ctx,
+    })
+
+    expect(getAllByTestId('slider-item-description-on-slide').length).toBeGreaterThan(0)
+    expect(queryAllByTestId('slider-item-description-under-slide')).toHaveLength(0)
   })
 })
