@@ -9,6 +9,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
 import { type LockScreenMetadata } from './PlayerService/types'
 import { guardOfflinePlayback } from './playOfflineGuard'
+import { resetStartupAttempts } from './startupGuard'
 
 const SAME_SERMON_TOLERANCE_MS = 1000
 
@@ -106,6 +107,12 @@ export const playNewSermonAsync = async (
     if (!oldAudio?.id || oldAudio.id === sermonId) void deps.recordPlaybackStart(newAudio, playlist)
 
     await deps.play()
+
+    // A manual playback start proves the player works: clear a stuck startup
+    // guard so the next cold start restores state again.
+    void resetStartupAttempts().catch(error => {
+      console.warn('[playNewSermon] failed to reset startup guard:', error)
+    })
 
     deps.setLockScreenMetadata({
       albumTitle: playlist.title,

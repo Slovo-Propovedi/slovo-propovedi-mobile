@@ -9,6 +9,7 @@ import {
   CURRENT_REPEAT_MODE,
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
+import { toPersistedAudio } from './lib/persistedAudio'
 // Legacy atoms for backward compatibility
 export const currentAudioAtom = atom<AudioPlayerData | null>(null, 'currentAudioAtom')
 export const currentPlaylistAtom = atom<null | PlaylistData>(null, 'currentPlaylistAtom')
@@ -33,12 +34,14 @@ export const repeatModeSchema = z.enum(Object.values(RepeatMode))
 
 export const repeatModeAtom = atom<RepeatMode>('off', 'repeatModeAtom')
 
+// Persisted audio is normalized before writing — see `./lib/persistedAudio`.
 export const setCurrentAudioAction = action(async (ctx, audio: AudioPlayerData) => {
-  await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(audio))
+  const persisted = toPersistedAudio(audio)
+  await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(persisted))
   await ctx.schedule(() => {
-    currentAudioAtom(ctx, audio)
+    currentAudioAtom(ctx, persisted)
   })
-  return audio
+  return persisted
 }, 'setCurrentAudio')
 
 export const setCurrentPlaylistAction = action(async (ctx, playlist: PlaylistData) => {

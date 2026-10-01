@@ -1,7 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import z from 'zod'
-import { playlistDataSchema } from 'entities/playlist/@x/player'
-import { audioPlayerDataSchema } from 'entities/sermon/@x/player'
 import {
   CURRENT_AUDIO,
   CURRENT_EQUALIZER_ENABLED,
@@ -15,7 +13,6 @@ import {
   CURRENT_SOUND_VOLUME,
 } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { getParseJsonWithSchema } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import {
   repeatModeSchema,
@@ -24,9 +21,14 @@ import {
   setRepeatModeAction,
 } from '../model'
 import { playbackRateSchema } from '../playback-rate'
-import { playbackProgressSchema } from './playbackProgress'
+import { computeResumeMs } from './playbackProgress'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/native/AudioModeManager'
+import {
+  parseAudioPlayerData,
+  parsePlaybackProgress,
+  parsePlaylistData,
+} from './playerStorageParsers'
 import { setupReconnectRecovery } from './reconnectRecovery'
 import { restoreAudioSettings } from './restoreAudioSettings'
 import {
@@ -35,10 +37,6 @@ import {
   shouldSkipRestore,
   writeStartupAttempts,
 } from './startupGuard'
-
-const parseAudioPlayerData = getParseJsonWithSchema(audioPlayerDataSchema)
-const parsePlaylistData = getParseJsonWithSchema(playlistDataSchema)
-const parsePlaybackProgress = getParseJsonWithSchema(playbackProgressSchema)
 
 export const initializePlayer = async () => {
   // Must run before the skip-restore early return: reconnect recovery also
@@ -110,21 +108,14 @@ export const initializePlayer = async () => {
     }
 
     if (playlist) await setCurrentPlaylistAction(ctx, playlist)
+
+    // A completed restore — even a partial one (no stored track, or a track that
+    // failed validation) — proves startup did not crash. Reset the guard so
+    // normal open/close cycles never accumulate to the skip threshold; only a
+    // thrown error (below) leaves the counter incremented.
+    await resetStartupAttempts()
   } catch (error) {
     console.error('Error initializing player data:', error)
     reportError(error, 'Ошибка при восстановлении плеера')
   }
-}
-
-const computeResumeMs = (
-  parsedProgress:
-    { durationMs?: number; positionMs: number; savedAtMs: number; sermonId: string } | undefined,
-  currentSermonId: string,
-): number => {
-  if (!parsedProgress || parsedProgress.sermonId !== currentSermonId) return 0
-
-  const { durationMs: duration, positionMs } = parsedProgress
-
-  if (typeof duration === 'number' && duration > 0) return Math.min(positionMs, duration)
-  return positionMs
 }

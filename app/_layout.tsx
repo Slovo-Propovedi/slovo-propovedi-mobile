@@ -12,6 +12,7 @@ import {
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { initServerUrlAction, loadHapticsEnabled } from 'shared/model'
+import { reportError } from 'shared/model/error-dialog'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
 import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
 import RootLayout from './_RootLayout'
@@ -52,12 +53,22 @@ const RootLayoutWithProvider = () => (
 // enqueueCache, then reEnqueuePartialDownloads), and the gate reads the atom —
 // with the default `true` still in place a cold start would start a download on
 // every launch despite the setting being off.
+// Each step is isolated: a failure in offline-registry hydration or in loading
+// the caching setting must not abort the chain before the player restore runs
+// (otherwise cold start silently leaves currentAudio empty). The terminal
+// catch reports any rejection that still escapes.
 void cleanupOrphanedDownloads()
   .catch(error => console.error('[audio-cache] orphan cleanup failed:', error))
   .then(() => hydrateOfflineRegistry(ctx))
+  .catch(error => console.error('[startup] offline registry hydration failed:', error))
   .then(() => loadSermonCachingEnabled(ctx))
+  .catch(error => console.error('[startup] caching setting load failed:', error))
   .then(() => initializePlayer())
   .then(() => reEnqueuePartialDownloads(ctx))
+  .catch(error => {
+    console.error('[startup] chain failed:', error)
+    reportError(error, 'Ошибка при инициализации приложения')
+  })
 scheduleStartupGuardReset()
 void initServerUrlAction(ctx)
 void loadHapticsEnabled(ctx)
