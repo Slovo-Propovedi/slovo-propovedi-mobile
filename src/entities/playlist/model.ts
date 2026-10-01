@@ -1,7 +1,7 @@
 import { action, atom } from '@reatom/framework'
 import z from 'zod'
 import { sectionSchema } from 'entities/section/@x/playlist'
-import { getCachedJson, setCachedJson } from 'shared/lib/cache'
+import { getCachedJson } from 'shared/lib/cache'
 import { type SectionShape, type SermonShape } from 'shared/model'
 import {
   FAVORITES_PLAYLIST,
@@ -10,6 +10,7 @@ import {
   myPlaylistsArraySchema,
   withFavoritesFirst,
 } from './localPlaylists'
+import { persistMyPlaylists } from './localPlaylistStorage'
 
 /**
  * Минимальная структурная проверка вложенной проповеди (SermonShape).
@@ -58,9 +59,6 @@ export type PlaylistData = z.infer<typeof playlistDataSchema>
 export const playlistsArraySchema = z.array(playlistDataSchema)
 
 export const myPlaylistsAtom = atom<LocalPlaylistData[]>([FAVORITES_PLAYLIST], 'myPlaylistsAtom')
-
-const persistMyPlaylists = (playlists: LocalPlaylistData[]) =>
-  setCachedJson(MY_PLAYLISTS, playlists)
 
 // Storage is untrusted and may reject (broken native module, quota, …). A
 // rejection must never surface to callers — `MyPlaylistsSlider` fires the action
