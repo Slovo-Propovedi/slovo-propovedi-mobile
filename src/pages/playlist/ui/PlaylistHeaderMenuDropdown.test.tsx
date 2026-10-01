@@ -128,6 +128,17 @@ describe('<PlaylistHeaderMenuDropdown>', () => {
     expect(onAddAllToOffline).toHaveBeenCalledTimes(1)
   })
 
+  test('add-all-to-offline item is disabled for an empty playlist', async () => {
+    const onAddAllToOffline = jest.fn()
+    await renderDropdown({ isAddAllToOfflineDisabled: true, onAddAllToOffline })
+
+    expect(screen.getByText(ADD_ALL_TO_OFFLINE_TEXT)).toBeTruthy()
+
+    fireEvent.press(screen.getByText(ADD_ALL_TO_OFFLINE_TEXT))
+
+    expect(onAddAllToOffline).not.toHaveBeenCalled()
+  })
+
   test('clear-all disabled when cachedCount===0', async () => {
     const onClearCache = jest.fn()
     await renderDropdown({ isClearCacheDisabled: true, onClearCache })

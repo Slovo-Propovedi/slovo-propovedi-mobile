@@ -177,6 +177,21 @@ describe('usePlaylistOfflineMenu', () => {
 
       expect(result.current.isAddAllToOfflineDisabled).toBe(false)
     })
+
+    test('is true when the playlist has no tracks', async () => {
+      const ctx = createCtx()
+      isOnlineAtom(ctx, true)
+      isCachingPlaylistAtom(ctx, false)
+      cacheQueueAtom(ctx, {})
+
+      const { result } = await renderHookWithProviders(
+        () => usePlaylistOfflineMenu([], 'Пустой плейлист'),
+        { ctx },
+      )
+      await settleCacheStatus()
+
+      expect(result.current.isAddAllToOfflineDisabled).toBe(true)
+    })
   })
 
   describe('handlers', () => {
