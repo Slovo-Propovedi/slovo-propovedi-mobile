@@ -201,7 +201,20 @@ jobs:
         run: yarn testFinal --maxWorkers=2
 
       - name: Run native unit tests
-        run: yarn test:native
+        env:
+          GRADLE_OPTS: >-
+            -Dorg.gradle.internal.http.connectionTimeout=120000
+            -Dorg.gradle.internal.http.socketTimeout=300000
+        run: |
+          cd android
+          for attempt in 1 2 3; do
+            ./gradlew :apk-installer:testDebugUnitTest :audio-effects:testDebugUnitTest --continue && exit 0
+            if [ "$attempt" -lt 3 ]; then
+              echo "Attempt $attempt failed, retrying in 30s..."
+              sleep 30
+            fi
+          done
+          exit 1
 
       # Clean up large directories to reduce runner storage usage
       - name: Cleanup workspace
