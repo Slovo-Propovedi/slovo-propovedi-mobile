@@ -144,6 +144,12 @@ jobs:
       - name: Lint (ESLint)
         run: yarn lint
 
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Run all tests (jest)
         # --maxWorkers=2 caps peak memory: heavy jest-expo + RN UI test suites
         # were triggering OOM (SIGKILL) when many workers ran in parallel.
