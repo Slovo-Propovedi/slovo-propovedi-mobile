@@ -12,8 +12,8 @@ import { mapPlaylistSermonToSermonShape } from './mapPlaylistSermonToSermonShape
 export const mapPlaylistEntityToPlaylistData = (
   apiPlaylist: APITypes.PlaylistEntity,
 ): PlaylistData => ({
-  artwork: apiPlaylist.artwork,
-  description: apiPlaylist.description,
+  artwork: apiPlaylist.artwork ?? null,
+  description: apiPlaylist.description ?? undefined,
   id: apiPlaylist.id,
   sections: apiPlaylist.sections.map(mapSectionEntityToSectionData),
   sermons: apiPlaylist.sermons.map(mapPlaylistSermonToSermonShape),

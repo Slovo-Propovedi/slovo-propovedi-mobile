@@ -46,6 +46,7 @@ jest.mock('entities/section', () => {
   const { atom } = jest.requireActual('@reatom/framework')
 
   return {
+    ...jest.requireActual('entities/section'),
     dynamicSectionsAtom: atom([], 'testDynamicSectionsAtom'),
     fetchAllSections: jest.fn(),
     isLoadingSectionsAtom: atom(false, 'testIsLoadingSectionsAtom'),

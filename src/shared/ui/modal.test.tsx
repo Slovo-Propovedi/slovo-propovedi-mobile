@@ -1,9 +1,14 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
-import { Platform, Text } from 'react-native'
+import { Platform, StyleSheet, Text } from 'react-native'
 import { createKeyDownEvent } from '../lib/testing/createKeyEvent'
 import { installFakeDom } from '../lib/testing/installFakeDom'
 import { renderWithProviders } from '../mocks/renderWithProviders'
 import { Modal } from './modal'
+
+// Platform.OS is read once at module load, so the cap can't be toggled by
+// replaceProperty; pin the constant to a numeric value to assert it is applied.
+const DESKTOP_COLUMN_WIDTH = 600
+jest.mock('./layout/appMaxWidth', () => ({ APP_MAX_CONTENT_WIDTH: DESKTOP_COLUMN_WIDTH }))
 
 const BACKDROP_TEST_ID = 'modal-backdrop'
 const CHILDREN_TEXT = 'Modal Content'
@@ -58,6 +63,21 @@ describe('<Modal>', () => {
     )
 
     expect(screen.queryByText(CHILDREN_TEXT)).toBeNull()
+  })
+
+  test('content container is capped to the shared desktop column width', async () => {
+    await renderWithProviders(
+      <Modal visible onBackdropPress={onBackdropPressMock}>
+        <Text>{CHILDREN_TEXT}</Text>
+      </Modal>,
+    )
+
+    const contentContainer = screen.getByText(CHILDREN_TEXT).parent
+    const style = StyleSheet.flatten(contentContainer?.props.style)
+
+    expect(style.maxWidth).toBe(DESKTOP_COLUMN_WIDTH)
+    expect(style.width).toBe('100%')
+    expect(style.alignSelf).toBe('center')
   })
 })
 

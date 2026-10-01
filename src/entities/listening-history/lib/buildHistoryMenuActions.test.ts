@@ -20,6 +20,9 @@ const mockSermon: AudioPlayerData = {
   title: 'Test Sermon',
 }
 
+const ADD_TO_PLAYLIST_TEXT = 'Добавить в плейлист'
+const MARK_ACTION_TEXT = 'Пометить прослушанной'
+
 const mockPlaylist: PlaylistData = {
   artwork: 'playlist.jpg',
   description: 'A test playlist',
@@ -43,7 +46,7 @@ describe('buildHistoryMenuActions', () => {
 
     expect(actions).toHaveLength(1)
     expect(actions[0].icon).toBe('checkmark-done')
-    expect(actions[0].text).toBe('Пометить прослушанной')
+    expect(actions[0].text).toBe(MARK_ACTION_TEXT)
   })
 
   test('returns mark and remove actions when sermon is in history and partial', () => {
@@ -55,7 +58,7 @@ describe('buildHistoryMenuActions', () => {
     })
 
     expect(actions).toHaveLength(2)
-    expect(actions[0].text).toBe('Пометить прослушанной')
+    expect(actions[0].text).toBe(MARK_ACTION_TEXT)
     expect(actions[1].text).toBe('Удалить из истории')
   })
 
@@ -82,7 +85,7 @@ describe('buildHistoryMenuActions', () => {
 
     expect(actions).toHaveLength(1)
     expect(actions[0].icon).toBe('checkmark-done')
-    expect(actions[0].text).toBe('Пометить прослушанной')
+    expect(actions[0].text).toBe(MARK_ACTION_TEXT)
   })
 
   test('mark action calls markSermonListenedAction with sermon and playlist', () => {
@@ -98,6 +101,35 @@ describe('buildHistoryMenuActions', () => {
     expect(markSermonListenedAction).toHaveBeenCalledTimes(1)
     expect(jest.mocked(markSermonListenedAction).mock.calls[0][1]).toEqual(mockSermon)
     expect(jest.mocked(markSermonListenedAction).mock.calls[0][2]).toEqual(mockPlaylist)
+  })
+
+  test('adds an add-to-playlist action first when a handler is provided', () => {
+    const onAddToPlaylist = jest.fn()
+
+    const actions = buildHistoryMenuActions({
+      inHistory: false,
+      isCompleted: false,
+      onAddToPlaylist,
+      playlist: mockPlaylist,
+      sermon: mockSermon,
+    })
+
+    expect(actions[0].icon).toBe('add-circle')
+    expect(actions[0].text).toBe(ADD_TO_PLAYLIST_TEXT)
+
+    actions[0].onPress()
+    expect(onAddToPlaylist).toHaveBeenCalledWith(mockSermon)
+  })
+
+  test('omits the add-to-playlist action when no handler is provided', () => {
+    const actions = buildHistoryMenuActions({
+      inHistory: false,
+      isCompleted: false,
+      playlist: mockPlaylist,
+      sermon: mockSermon,
+    })
+
+    expect(actions.some(action => action.text === ADD_TO_PLAYLIST_TEXT)).toBe(false)
   })
 
   test('remove action calls removeHistoryEntryAction with sermon id', () => {

@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
 import {
   type SliderItemDescriptionBackgroundStyle,
@@ -24,12 +25,15 @@ export enum WhereIsSlideTitleLocated {
 
 export interface SliderItemProps {
   artwork: null | string | undefined
+  /** Нода вместо обложки: рендерится поверх тематической подложки (иконка и т.п.). */
+  artworkIcon?: ReactNode
   descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle
   descriptionSubTitle?: string
   descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign
   descriptionTitle?: string
   descriptionTitleTextAlign?: SliderItemDescriptionTextAlign
   isDescriptionTitleOnSlideLarge?: boolean
+  onLongPress?: (event: GestureResponderEvent) => void
   onPress?: (event: GestureResponderEvent) => void
   size?: SliderItemSize
   style?: StyleProp<ViewStyle>
@@ -40,6 +44,8 @@ export interface SliderItemProps {
 
 export interface SliderItemsElement<D extends object> {
   artwork: null | string | undefined
+  /** Нода вместо обложки (иконка и т.п.); при наличии обложка не рендерится. */
+  artworkIcon?: ReactNode
   data: D
   description?: string
 }

@@ -84,6 +84,7 @@ export const AdminPlaylistDetailScreen = () => {
         data={sermons}
         renderItem={renderItem}
         keyExtractor={item => item.id}
+        containerStyle={styles.listContainer}
         contentContainerStyle={styles.listContent}
         onDragEnd={({ data }) => void reorder(data)}
         ListEmptyComponent={<EmptyState message='Проповедей пока нет' />}

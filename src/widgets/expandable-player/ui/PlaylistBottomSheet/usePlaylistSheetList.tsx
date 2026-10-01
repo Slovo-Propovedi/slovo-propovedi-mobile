@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
-import { formatSermonReference } from 'entities/sermon'
+import { type AudioPlayerData, formatSermonReference } from 'entities/sermon'
 import { type createStyles } from './PlaylistBottomSheet.styles'
 import { PlaylistSheetRow } from './PlaylistSheetRow'
 import { useScrollGuarantee } from './useScrollGuarantee'
@@ -19,6 +19,7 @@ interface UsePlaylistSheetListParams {
   cacheTrigger: number
   currentAudioId?: string
   isAudioPlaying: boolean
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onPress: (index: number) => void
   onScroll: (y: number) => void
   playlist: PlaylistData
@@ -34,6 +35,7 @@ export const usePlaylistSheetList = ({
   cacheTrigger,
   currentAudioId,
   isAudioPlaying,
+  onAddToPlaylist,
   onPress,
   onScroll,
   playlist,
@@ -69,7 +71,7 @@ export const usePlaylistSheetList = ({
     },
     [onScroll],
   )
-  const buildMenuActions = useSheetMenuActions(playlist, progressMap)
+  const buildMenuActions = useSheetMenuActions(playlist, progressMap, onAddToPlaylist)
   const renderItem = useCallback(
     ({ index, item }: { index: number; item: TrackListItemData }) => (
       <PlaylistSheetRow

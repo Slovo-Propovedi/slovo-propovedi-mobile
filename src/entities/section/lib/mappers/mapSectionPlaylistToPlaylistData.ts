@@ -15,8 +15,8 @@ import { mapSectionRefToSectionData } from './mapSectionRefToSectionData'
 export const mapSectionPlaylistToPlaylistData = (
   apiPlaylist: APITypes.SectionPlaylist,
 ): PlaylistData => ({
-  artwork: apiPlaylist.artwork,
-  description: apiPlaylist.description,
+  artwork: apiPlaylist.artwork ?? null,
+  description: apiPlaylist.description ?? undefined,
   id: apiPlaylist.id,
   sections: apiPlaylist.sections.map(mapSectionRefToSectionData),
   sermons: apiPlaylist.sermons.map(mapPlaylistSermonToSermonShape),

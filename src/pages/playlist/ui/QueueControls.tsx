@@ -5,9 +5,13 @@ import { TouchableButton } from 'shared/ui/touchable-button'
 import { queueControlsStyles } from './styles'
 
 export const QueueControls = ({
+  isDisabled = false,
+  label,
   onPressPlayAll,
   onPressShuffle,
 }: {
+  isDisabled?: boolean
+  label: string
   onPressPlayAll: () => void
   onPressShuffle?: () => void
 }) => {
@@ -16,11 +20,16 @@ export const QueueControls = ({
   return (
     <View style={queueControlsStyles.container}>
       <TouchableButton
+        disabled={isDisabled}
         onPress={onPressPlayAll}
-        style={[queueControlsStyles.button, { backgroundColor: currentTheme.primary }]}
+        style={[
+          queueControlsStyles.button,
+          { backgroundColor: currentTheme.primary },
+          isDisabled && queueControlsStyles.disabledButton,
+        ]}
       >
         <MaterialCommunityIcons name='play' size={FONT_SIZES.base} color={COLORS.onPrimary} />
-        <Text style={queueControlsStyles.buttonText}>Воспроизвести все</Text>
+        <Text style={queueControlsStyles.buttonText}>{label}</Text>
       </TouchableButton>
       {onPressShuffle && (
         <TouchableButton

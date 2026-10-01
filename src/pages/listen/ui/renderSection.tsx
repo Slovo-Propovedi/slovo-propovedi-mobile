@@ -1,10 +1,12 @@
 import { type PlaylistData } from 'entities/playlist'
-import { type SectionData } from 'entities/section'
+import {
+  mapItemsSize,
+  mapTransform,
+  mapWhereIsTitleLocated,
+  type SectionData,
+} from 'entities/section'
 import { Slider } from 'shared/ui'
 import { INDENTS, RADIUSES } from 'shared/ui/theme'
-import { mapItemsSize } from '../lib/mapItemsSize'
-import { mapTransform } from '../lib/mapTransform'
-import { mapWhereIsTitleLocated } from '../lib/mapWhereIsTitleLocated'
 
 export interface RenderSectionProps {
   index: number

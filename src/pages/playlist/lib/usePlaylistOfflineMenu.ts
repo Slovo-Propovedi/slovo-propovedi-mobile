@@ -35,7 +35,10 @@ export const usePlaylistOfflineMenu = (tracksData: TrackToCache[], playlistTitle
   // Caching off in settings: the queue is inert and the cache was cleared, so
   // the whole add/stop/clear block is meaningless — it is hidden, not disabled.
   const isOfflineItemsVisible = isSermonCachingEnabled
-  const isAddAllToOfflineDisabled = allCached || !isOnline
+  // An empty playlist has nothing to cache — the action is inert, so disable it
+  // instead of opening a dialog that would no-op.
+  const isEmpty = tracksData.length === 0
+  const isAddAllToOfflineDisabled = allCached || !isOnline || isEmpty
   const isQueueNonEmpty = Object.keys(queue).length > 0
   const isClearCacheDisabled = cachedCount === 0 || isQueueNonEmpty || activeUrl !== null
 

@@ -24,7 +24,7 @@
 **Кнопка «Назад» в шапке (`headerLeft`)** — кастомный `HeaderBackButton` (`src/widgets/sub-screen-header-back/ui/HeaderBackButton.tsx`) вместо стандартной кнопки react-navigation, используется в двух местах:
 
 - пять под-экранов корневого стека (`settings`/`history`/`offline`/`about`/`share`, `_RootLayout.tsx`) — фолбэк `/more` (таб «Еще», логический родитель всех пяти);
-- стек «Слушать» (`playlist`/`playlist-list`, `app/(tabs)/listen/_layout.tsx`) — фолбэк `/listen`.
+- стек «Слушать» (`playlist`/`playlist-list`/`my-playlists`, `app/(tabs)/listen/_layout.tsx`) — фолбэк `/listen`.
 
 Только иконка (`Ionicons 'chevron-back'`), без текста «Назад» рядом — раньше в стеке «Слушать» использовалась нативная кнопка с `headerBackTitle: 'Назад'` (текст виден только на iOS), теперь оба стека выглядят одинаково. Контейнер 48×48 (без `hitSlop`) даёт полноразмерную область нажатия и frame для скринридеров без изменения размера иконки (24); `marginLeft: -8` сохраняет визуальное положение шеврона.
 
@@ -65,21 +65,23 @@
 `app/(tabs)/listen/_layout.tsx` — `Stack` внутри таба:
 
 - `index` — без шапки (`headerShown: false`);
+- `my-playlists` — нативная шапка с заголовком «Мои плейлисты» и `headerRight` (действия редактирования порядка);
 - `playlist-list` — прозрачная шапка (`headerTransparent: true`, `title: ''`);
 - `playlist` — прозрачная шапка.
 
-Экраны реэкспортируются из `src/pages/` (`app/(tabs)/listen/index.tsx` → `ListenScreen`, `playlist.tsx` → `PlaylistScreen`, `playlist-list.tsx` → `PlaylistListScreen`).
+Экраны реэкспортируются из `src/pages/` (`app/(tabs)/listen/index.tsx` → `ListenScreen`, `my-playlists.tsx` → `MyPlaylistsScreen`, `playlist.tsx` → `PlaylistScreen`, `playlist-list.tsx` → `PlaylistListScreen`).
 
 ## Передача параметров
 
 Параметры передаются **строками** через `router.push({ pathname, params })` (не JSON — полный объект экран резолвит сам):
 
 - `/listen/playlist?playlist=<UUID>` — `navigateToPlaylist` передаёт только `playlist.id`, полный `PlaylistData` экран достаёт через `usePlaylistById` (секции → кэш → API, см. [../screens/playlist.md](../screens/playlist.md));
-- `/listen/playlist-list?sectionId=<строка>` — `navigateToPlaylistList` (параметр `title` в URL не передаётся, заголовок берётся из резолвнутого раздела).
+- `/listen/playlist-list?sectionId=<строка>` — `navigateToPlaylistList` (параметр `title` в URL не передаётся, заголовок берётся из резолвнутого раздела);
+- `/listen/my-playlists` — `navigateToMyPlaylists` (без параметров) — экран редактирования порядка локальных плейлистов.
 
 Хелперы навигации:
 
-- `useListenNavigation.ts` (`src/pages/listen/lib/`) — `navigateToPlaylist`, `navigateToPlaylistList`;
+- `useListenNavigation.ts` (`src/pages/listen/lib/`) — `navigateToPlaylist`, `navigateToPlaylistList`, `navigateToMyPlaylists`;
 - `useReadNavigation.ts` (`src/pages/read/lib/`) — `navigateToBookReader` (`/read/book-reader`), `navigateToBooksList` (`/read/books-list`);
 - `src/shared/routing/` — `useColdStartLinkRecovery.ts` (Android-only safety net холодного старта, см. «Android App Links» ниже), `launchPath.ts` (pure-хелперы разбора launch URL: `extractLaunchPath`, `shouldAttemptRecovery`), `rootStackScreens.ts` (`SUB_SCREENS` корневого стека), `useHeaderTitle.ts`.
 
@@ -112,6 +114,7 @@
 | `/listen`                               | `ListenScreen`       | `pages/listen`              |
 | `/listen/playlist`                      | `PlaylistScreen`     | `pages/playlist`            |
 | `/listen/playlist-list`                 | `PlaylistListScreen` | `pages/playlist-list`       |
+| `/listen/my-playlists`                  | `MyPlaylistsScreen`  | `pages/my-playlists`        |
 | `/settings`                             | `SettingsScreen`     | `pages/settings`            |
 | `/about`                                | `AboutScreen`        | `pages/about`               |
 | `/history`                              | `HistoryScreen`      | `pages/history`             |

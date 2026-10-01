@@ -81,13 +81,14 @@ export const SliderFlatList = <D extends object>({
         return (
           <View style={{ width: cellWidth }}>
             <View style={styles.column}>
-              {column.map(({ artwork, data, description }, itemIndex) => (
+              {column.map(({ artwork, artworkIcon, data, description }, itemIndex) => (
                 <SliderItem
                   key={itemIndex}
                   size={itemsSize}
                   artwork={artwork}
                   transform={transform}
                   testID={SLIDER_ITEM_ID}
+                  artworkIcon={artworkIcon}
                   descriptionTitle={description}
                   onPress={event => onPressItem?.(data, event)}
                   whereIsSlideTitleLocated={whereIsSlideTitleLocated}

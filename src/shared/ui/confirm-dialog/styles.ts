@@ -1,4 +1,5 @@
 import { Platform, StatusBar, StyleSheet } from 'react-native'
+import { APP_MAX_CONTENT_WIDTH } from '../layout/appMaxWidth'
 import { COLORS } from '../theme/colors'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 
@@ -50,11 +51,15 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   dialog: {
+    // Desktop-web: cap to the shared centered column; undefined on native.
+    alignSelf: 'center',
     backgroundColor: COLORS.surface,
     borderRadius: RADIUSES.middle,
     maxHeight: '85%',
+    maxWidth: APP_MAX_CONTENT_WIDTH,
     overflow: 'hidden',
     padding: INDENTS.high,
+    width: '100%',
   },
   iconContainer: { marginBottom: INDENTS.medium },
   message: {

@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent } from '@testing-library/react-native'
+import { Platform } from 'react-native'
 import { sermonCachingEnabledAtom, setSermonCachingEnabled } from 'entities/offline-cache'
 import { renderWithProviders } from 'shared/mocks'
+import { COLORS, LightTheme, withAlpha } from 'shared/ui/theme'
 import type * as OfflineCache from 'entities/offline-cache'
 import { cancelDownloadsAndClearCache } from '../lib/cancelDownloadsAndClearCache'
 import { SermonCachingHeaderSwitch, TOGGLE_SETTLE_MS } from './SermonCachingHeaderSwitch'
@@ -22,6 +24,18 @@ jest.mock('../lib/cancelDownloadsAndClearCache', () => ({
   cancelDownloadsAndClearCache: jest.fn().mockResolvedValue(true),
 }))
 
+// Pin the theme to LightTheme so the expected colors are derived from a value the
+// test controls (theme.primary), not from a frozen hex literal the component's
+// useTheme might disagree with. Everything else in the module stays actual.
+jest.mock('shared/ui/theme', () => {
+  const actual = jest.requireActual('shared/ui/theme')
+
+  return {
+    ...actual,
+    useTheme: () => ({ currentTheme: actual.LightTheme, isLight: true, themeMode: 'light' }),
+  }
+})
+
 const mockedSetSermonCachingEnabled = setSermonCachingEnabled as jest.MockedFunction<
   typeof setSermonCachingEnabled
 >
@@ -29,6 +43,13 @@ const mockedCancelDownloadsAndClearCache = jest.mocked(cancelDownloadsAndClearCa
 
 const SWITCH_LABEL = 'Кеширование проповедей'
 const SERMON_CACHING_KEY = 'sermon_caching_enabled'
+const ON_TRACK_OPACITY = 0.35
+// Derived from the same theme value `useTheme` hands the component above.
+const THEMED_PRIMARY = LightTheme.primary
+const THEMED_ON_TRACK = withAlpha(THEMED_PRIMARY, ON_TRACK_OPACITY)
+const OFF_TRACK = COLORS.disabled
+
+type RenderedSwitch = Awaited<ReturnType<typeof renderWithProviders>>
 
 const renderSwitch = async (enabled: boolean) => {
   const ctx = createCtx()
@@ -41,8 +62,6 @@ const renderSwitch = async (enabled: boolean) => {
 
   return result
 }
-
-type RenderedSwitch = Awaited<ReturnType<typeof renderWithProviders>>
 
 // The pressable wrapper is the only control: the inner Switch ignores touches.
 const pressSwitch = async (getByRole: RenderedSwitch['getByRole']) => {
@@ -58,6 +77,8 @@ const advanceSettle = async (ms: number = TOGGLE_SETTLE_MS) => {
 }
 
 describe('<SermonCachingHeaderSwitch>', () => {
+  const ORIGINAL_PLATFORM = Platform.OS
+
   beforeEach(() => {
     jest.clearAllMocks()
     mockedCancelDownloadsAndClearCache.mockResolvedValue(true)
@@ -65,6 +86,7 @@ describe('<SermonCachingHeaderSwitch>', () => {
 
   afterEach(() => {
     jest.useRealTimers()
+    Platform.OS = ORIGINAL_PLATFORM
   })
 
   test('reflects the persisted setting in the header switch', async () => {
@@ -195,5 +217,46 @@ describe('<SermonCachingHeaderSwitch>', () => {
       '[offline] Failed to apply the sermon caching setting:',
       expect.any(Error),
     )
+  })
+
+  test('on iOS the host switch paints the themed primary via the iOS-only props', async () => {
+    const { container } = await renderSwitch(true)
+
+    const iosSwitch = container.queryAll(
+      node => typeof node.type === 'string' && node.type === 'RCTSwitch',
+    )[0]
+
+    expect(iosSwitch.props.thumbTintColor).toBe(THEMED_PRIMARY)
+    expect(iosSwitch.props.onTintColor).toBe(THEMED_ON_TRACK)
+    expect(iosSwitch.props.tintColor).toBe(OFF_TRACK)
+  })
+
+  test('on Android the host switch carries the themed primary despite the iOS-only props', async () => {
+    // RN drops the iOS-only props on Android; without `thumbColor`/`trackColor`
+    // the host would fall back to the platform-default green. The JS Switch maps
+    // `thumbColor` -> native `thumbTintColor` and `trackColor` ->
+    // `trackColorForTrue`/`trackColorForFalse`, which is what the host asserts.
+    Platform.OS = 'android'
+
+    const { container } = await renderSwitch(true)
+
+    const androidSwitch = container.queryAll(
+      node => typeof node.type === 'string' && node.type === 'AndroidSwitch',
+    )[0]
+
+    expect(androidSwitch.props.thumbTintColor).toBe(THEMED_PRIMARY)
+    expect(androidSwitch.props.trackColorForTrue).toBe(THEMED_ON_TRACK)
+    expect(androidSwitch.props.trackColorForFalse).toBe(OFF_TRACK)
+  })
+
+  test('spreads the react-native-web prop family onto the host switch', async () => {
+    const { container } = await renderSwitch(true)
+
+    const hostSwitch = container.queryAll(
+      node => typeof node.type === 'string' && node.type === 'RCTSwitch',
+    )[0]
+
+    expect(hostSwitch.props.activeThumbColor).toBe(THEMED_PRIMARY)
+    expect(hostSwitch.props.activeTrackColor).toBe(THEMED_ON_TRACK)
   })
 })

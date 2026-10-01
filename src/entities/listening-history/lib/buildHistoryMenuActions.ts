@@ -9,13 +9,18 @@ interface BuildHistoryMenuActionsParams {
   inHistory: boolean
   /** Completion flag — honored only when `inHistory === true`. */
   isCompleted: boolean
+  /** Opens the add-to-playlist modal for the row's sermon. */
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   playlist?: PlaylistData
   sermon: AudioPlayerData
 }
 
+const ADD_TO_PLAYLIST_TEXT = 'Добавить в плейлист'
+
 export const buildHistoryMenuActions = ({
   inHistory,
   isCompleted,
+  onAddToPlaylist,
   playlist,
   sermon,
 }: BuildHistoryMenuActionsParams): MenuItem[] => {
@@ -24,6 +29,13 @@ export const buildHistoryMenuActions = ({
   const completed = inHistory && isCompleted
 
   const actions: MenuItem[] = []
+
+  if (onAddToPlaylist)
+    actions.push({
+      icon: 'add-circle',
+      onPress: () => onAddToPlaylist(sermon),
+      text: ADD_TO_PLAYLIST_TEXT,
+    })
 
   if (!completed)
     actions.push({

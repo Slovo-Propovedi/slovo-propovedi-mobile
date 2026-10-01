@@ -57,6 +57,15 @@ stack: CodedError ← applyMetadata ← anonymous (setInterval retry callback)
 3. **AsyncStorage — нелегитимный ввод (untrusted).** Значения из хранилища переживают апдейты приложения и могут быть записаны старыми версиями кода. Парсить/валидировать на границе чтения (zod + `hasUriProtocol` для URI), не доверять слепо.
 4. **Нативный краш не ловится сверху.** React ErrorBoundary и JS try-catch вышестоящих callers не перехватывают синхронный throw из JSI-вызова — только try-catch непосредственно вокруг вызова. Диагностика — `adb logcat -b crash` (crash-буфер).
 
+## Unit-тесты нативного кода
+
+Чистая логика нативных модулей вынесена в Kotlin-объекты **без Android-вызовов**, чтобы её можно было прогонять на JVM (обычный JUnit4, без Robolectric — SDK-константы `PackageInstaller.STATUS_*` инлайнятся на компиляции):
+
+- `ApkInstallStatuses` (`modules/apk-installer/android/src/main/java/ru/slovopropovedi/apkinstaller/ApkInstallStatuses.kt`) — маппинг `status → STATUS_FAILURE*` и формат `failureMessage` (`Install failed: <name>, message=<msg>, legacyStatus=<n>`), который разбирает JS-классификатор `installErrorMessage.ts`;
+- `AudioEffectsMath` (`modules/audio-effects/android/src/main/java/ru/slovopropovedi/audioeffects/AudioEffectsMath.kt`) — коэффициенты баланса, `linearToDb` (пол −60 dB), `gainToMillibels`, resize persisted gains, `milliHzToHz`.
+
+Тесты лежат рядом: `modules/<module>/android/src/test/java/...`. Запуск — `yarn test:native` (gradle-проекты `:apk-installer` и `:audio-effects`, задача `testDebugUnitTest` для обоих); `yarn testFinal:all` выполняет их после `yarn testFinal` (только jest). JS-границы модулей покрыты обычными jest-тестами (`modules/apk-installer/index.test.ts`, `modules/audio-effects/platform.native.test.ts`, `.../native/audioEffectsCapabilities.test.ts`).
+
 ## Связанные документы
 
 - [../features/player.md](../features/player.md) — плеер; **Баг 3** — crash loop и применённый фикс

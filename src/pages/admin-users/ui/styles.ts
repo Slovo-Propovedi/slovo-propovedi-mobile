@@ -77,14 +77,14 @@ export const styles = StyleSheet.create({
   listContent: {
     padding: INDENTS.medium,
   },
-  loadMore: {
+  retry: {
     alignItems: 'center',
     borderRadius: RADIUSES.low,
     justifyContent: 'center',
     marginTop: INDENTS.low,
     paddingVertical: INDENTS.medium,
   },
-  loadMoreText: {
+  retryText: {
     fontSize: FONT_SIZES.base,
     fontWeight: '600',
   },

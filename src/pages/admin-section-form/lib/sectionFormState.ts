@@ -1,4 +1,5 @@
 import { type APITypes } from 'shared/api'
+import { parseItemsRows } from 'shared/lib/utils/parseItemsRows'
 
 export interface SectionFormValues {
   borderRadius: boolean
@@ -23,22 +24,6 @@ export const initialFormValues = (initial?: APITypes.SectionEntity | null): Sect
   transform: initial?.transform ?? 'high',
   whereIsSlideTitleLocated: initial?.whereIsSlideTitleLocated ?? 'on',
 })
-
-const POSITIVE_INTEGER_PATTERN = /^\d+$/
-
-const parseItemsRows = (value: string): null | number => {
-  const trimmed = value.trim()
-  if (trimmed === '') return null
-
-  // Digit-only guard: `Number()` would accept decimals ("2.5"), exponents
-  // ("1e3") and whitespace-padded signs that must be rejected here.
-  if (!POSITIVE_INTEGER_PATTERN.test(trimmed)) return null
-
-  const parsed = Number(trimmed)
-
-  // "0" matches the digit pattern but no rows is a valid empty value, not zero.
-  return parsed > 0 ? parsed : null
-}
 
 const buildCommonFields = (values: SectionFormValues) => ({
   borderRadius: values.borderRadius,

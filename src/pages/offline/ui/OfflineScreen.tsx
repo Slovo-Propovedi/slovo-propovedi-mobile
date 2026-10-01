@@ -2,6 +2,7 @@ import { useAtom } from '@reatom/npm-react'
 import { useNavigation } from 'expo-router'
 import { useLayoutEffect } from 'react'
 import { FlatList, StyleSheet, View } from 'react-native'
+import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useOfflineSermons } from 'features/offline-sermons'
 import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { isPlayingAtom } from 'entities/player'
@@ -36,6 +37,7 @@ export const OfflineScreen = () => {
   const [isCachingEnabled] = useAtom(sermonCachingEnabledAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const tracksListStyles = createTracksListStyles(currentTheme)
+  const { modal, openAddToPlaylist } = useAddToPlaylistModal()
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -66,14 +68,17 @@ export const OfflineScreen = () => {
         data={items}
         keyExtractor={item => item.sermon.id}
         ItemSeparatorComponent={OfflineSeparator}
-        renderItem={({ item }) => <OfflineRow item={item} isPlaying={isPlaying} />}
         ListEmptyComponent={<OfflineEmptyState isCachingEnabled={isCachingEnabled} />}
+        renderItem={({ item }) => (
+          <OfflineRow item={item} isPlaying={isPlaying} onAddToPlaylist={openAddToPlaylist} />
+        )}
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: items.length === 0 ? 'center' : undefined,
           paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
         }}
       />
+      {modal}
     </View>
   )
 }

@@ -1,11 +1,8 @@
-import { Text, View } from 'react-native'
+import { ListItemBase } from 'entities/list-item'
 import { sermonSubtitle } from 'entities/sermon'
 import { type APITypes } from 'shared/api'
-import { CoverImage, MovingText } from 'shared/ui'
-import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
+import { AdminSermonRowSkeleton } from 'shared/ui'
 import { SermonBadges } from './SermonBadges'
-import { styles } from './styles'
 
 // Карточка проповеди в списке админки: обложка, название, подпись
 // (проповедник · ссылка на Писание) и бейджи наличия медиа.
@@ -15,31 +12,24 @@ export const AdminSermonRow = ({
 }: {
   item: APITypes.SermonEntity
   onPress: () => void
-}) => {
-  const { currentTheme } = useTheme()
-  const subtitle = sermonSubtitle(item)
-
-  return (
-    <TouchableItem
-      onPress={onPress}
-      style={[styles.row, { backgroundColor: currentTheme.surface }]}
-    >
-      <View style={styles.rowHeader}>
-        <CoverImage uri={item.artwork} style={styles.artwork} imageStyle={styles.artwork} />
-        <View style={styles.rowBody}>
-          <MovingText text={item.title} style={styles.rowTitle} />
-          {subtitle ? (
-            <Text numberOfLines={1} style={[styles.rowMeta, { color: currentTheme.textMuted }]}>
-              {subtitle}
-            </Text>
-          ) : null}
-        </View>
-      </View>
+}) => (
+  <ListItemBase
+    movingTitle
+    onPress={onPress}
+    variant='surface'
+    title={item.title}
+    artwork={item.artwork}
+    subtitle={sermonSubtitle(item)}
+    badges={
       <SermonBadges
         hasAudio={Boolean(item.audioUrl)}
         hasText={Boolean(item.textFileUrl)}
         hasYoutube={Boolean(item.youtubeUrl)}
       />
-    </TouchableItem>
-  )
-}
+    }
+  />
+)
+
+// Скелетон прикреплён к строке как `AdminSermonRow.Skeleton`: единый источник
+// плейсхолдера для этой сущности, а не отдельная копия рядом.
+AdminSermonRow.Skeleton = AdminSermonRowSkeleton

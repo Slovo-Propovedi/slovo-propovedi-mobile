@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native'
+import { APP_MAX_CONTENT_WIDTH } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const updateDialogStyles = StyleSheet.create({
@@ -12,8 +13,12 @@ export const updateDialogStyles = StyleSheet.create({
     gap: INDENTS.medium,
   },
   dialog: {
+    // Desktop-web: cap to the shared centered column; undefined on native.
+    alignSelf: 'center',
     borderRadius: RADIUSES.middle,
+    maxWidth: APP_MAX_CONTENT_WIDTH,
     padding: INDENTS.high,
+    width: '100%',
   },
   link: {
     fontSize: FONT_SIZES.sm,

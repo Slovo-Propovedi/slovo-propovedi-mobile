@@ -4,6 +4,7 @@ import { sermonCachingEnabledAtom, setSermonCachingEnabled } from 'entities/offl
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { COLORS, INDENTS, MIN_TOUCH_TARGET, useTheme } from 'shared/ui/theme'
+import { buildToggleColors } from '../lib/buildToggleColors'
 import { cancelDownloadsAndClearCache } from '../lib/cancelDownloadsAndClearCache'
 
 const CACHING_LABEL = 'Кеширование проповедей'
@@ -61,6 +62,15 @@ export const SermonCachingHeaderSwitch = () => {
   // inner switch is made inert through `pointerEvents: 'none'` in its STYLE — the
   // prop form is not reliably honoured on Fabric — so a tap reaches only the
   // wrapper.
+  //
+  // Android ignores the iOS-only `thumbTintColor`/`onTintColor`/`tintColor` and
+  // otherwise falls back to the platform-default green, so the themed colors must
+  // ride on every prop family at once (see buildToggleColors). The web build
+  // reads react-native-web's `thumbColor`/`trackColor`/`activeThumbColor`/
+  // `activeTrackColor`; RN drops the foreign props on each platform, so setting
+  // them all is safe.
+  const toggleColors = buildToggleColors(currentTheme)
+
   return (
     <PressableButton
       onPress={handleToggle}
@@ -71,12 +81,11 @@ export const SermonCachingHeaderSwitch = () => {
     >
       <Switch
         value={enabled}
-        thumbColor={COLORS.white}
+        {...toggleColors}
         accessibilityElementsHidden
         ios_backgroundColor={COLORS.disabled}
         style={[styles.switch, styles.switchInert]}
         importantForAccessibility='no-hide-descendants'
-        trackColor={{ false: COLORS.disabled, true: currentTheme.primary }}
       />
     </PressableButton>
   )

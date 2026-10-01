@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { screen } from '@testing-library/react-native'
+import { buildHistoryMenuActions } from 'entities/listening-history'
 import { type SermonData } from 'entities/sermon'
 import { APP_ICON_URI as IMAGE_PLACEHOLDER } from 'shared/lib/app-icon'
 import { renderWithProviders } from 'shared/mocks'
@@ -116,6 +117,19 @@ describe('<SermonSearchResults>', () => {
     expect(getByText('Проповедь о любви')).toBeTruthy()
     expect(getByText('Иван')).toBeTruthy()
     expect(getByText('Пётр • Матфея 5:3')).toBeTruthy()
+  })
+
+  test('threads onAddToPlaylist into each result row menu builder', async () => {
+    const ctx = createCtx()
+    const onAddToPlaylist = jest.fn()
+    searchQueryAtom(ctx, ACTIVE_QUERY)
+    searchResultsAtom(ctx, sermons)
+
+    await renderWithProviders(<SermonSearchResults onAddToPlaylist={onAddToPlaylist} />, { ctx })
+
+    expect(buildHistoryMenuActions).toHaveBeenCalledWith(
+      expect.objectContaining({ onAddToPlaylist }),
+    )
   })
 
   test('shows the empty state when no sermons match', async () => {

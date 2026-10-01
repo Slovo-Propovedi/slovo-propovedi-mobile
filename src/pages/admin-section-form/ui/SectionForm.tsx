@@ -17,9 +17,9 @@ import {
   initialFormValues,
   type SectionFormValues,
 } from '../lib/sectionFormState'
-import { PlaylistPicker } from './PlaylistPicker'
 import { SectionFormAppearanceFields } from './SectionFormAppearanceFields'
 import { SectionFormMainFields } from './SectionFormMainFields'
+import { SectionFormPlaylistsFields } from './SectionFormPlaylistsFields'
 import { styles } from './styles'
 
 const CREATE_SUCCESS_MESSAGE = 'Раздел создан'
@@ -50,14 +50,6 @@ export const SectionForm = ({
   const title = values.title.trim()
   const updateField = <K extends keyof SectionFormValues>(key: K, value: SectionFormValues[K]) =>
     setValues(prev => ({ ...prev, [key]: value }))
-
-  const togglePlaylist = (playlistId: string) =>
-    setValues(prev => ({
-      ...prev,
-      selectedPlaylistIds: prev.selectedPlaylistIds.includes(playlistId)
-        ? prev.selectedPlaylistIds.filter(currentId => currentId !== playlistId)
-        : [...prev.selectedPlaylistIds, playlistId],
-    }))
 
   const handleSubmit = async () => {
     markAllTouched(REQUIRED_FIELDS)
@@ -97,8 +89,13 @@ export const SectionForm = ({
     title: isEdit ? 'Редактировать раздел' : 'Создать раздел',
   })
 
+  // Enter повторяет «Сохранить»: та же доступность, что у кнопки в шапке.
+  const submitOnEnter = () => {
+    if (isDirty && !isSubmitting) void handleSubmit()
+  }
+
   return (
-    <FormScrollView contentContainerStyle={styles.formContent}>
+    <FormScrollView onSubmit={submitOnEnter} contentContainerStyle={styles.formContent}>
       <Stack.Screen options={headerOptions} />
 
       {error ? (
@@ -116,10 +113,10 @@ export const SectionForm = ({
       <SectionFormAppearanceFields values={values} onChange={updateField} />
 
       {isEdit ? (
-        <View style={styles.playlistsBlock}>
-          <Text style={[styles.blockTitle, { color: currentTheme.text }]}>Плейлисты раздела</Text>
-          <PlaylistPicker onToggle={togglePlaylist} selectedIds={values.selectedPlaylistIds} />
-        </View>
+        <SectionFormPlaylistsFields
+          selectedIds={values.selectedPlaylistIds}
+          onChange={ids => updateField('selectedPlaylistIds', ids)}
+        />
       ) : null}
     </FormScrollView>
   )

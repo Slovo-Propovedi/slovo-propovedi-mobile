@@ -1,4 +1,7 @@
 export { fetchAllSections } from './lib/fetchAllSections'
+export { mapItemsSize } from './lib/mapItemsSize'
+export { mapTransform } from './lib/mapTransform'
+export { mapWhereIsTitleLocated } from './lib/mapWhereIsTitleLocated'
 export {
   ITEMS_SIZE_LABELS,
   SLIDE_TITLE_LOCATION_LABELS,

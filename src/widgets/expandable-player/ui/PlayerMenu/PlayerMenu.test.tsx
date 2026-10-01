@@ -2,6 +2,7 @@ import { act, fireEvent } from '@testing-library/react-native'
 import { type TestInstance } from 'test-renderer'
 import { type TrackCacheVisualState } from 'entities/offline-cache'
 import { type PlaybackRate } from 'entities/player'
+import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
 import { PlayerMenu } from './PlayerMenu'
@@ -16,8 +17,17 @@ const mockOnShowSpeed = jest.fn()
 const mockOnOpenSoundSettings = jest.fn()
 const mockOnSelect = jest.fn()
 const mockOnBack = jest.fn()
+const mockOnAddToPlaylist = jest.fn()
 
 const CLOUD_STATE: TrackCacheVisualState = 'cloud'
+
+const MOCK_AUDIO: AudioPlayerData = {
+  artist: 'Author',
+  artwork: null,
+  audioUrl: 'https://example.com/audio.mp3',
+  id: 'sermon-1',
+  title: 'Sermon',
+}
 
 jest.mock('entities/player', () => ({
   PLAYBACK_RATES: [0.75, 1, 1.25, 1.5, 2],
@@ -26,6 +36,7 @@ jest.mock('entities/player', () => ({
 
 const SPEED_LABEL = 'Скорость воспроизведения'
 const SOUND_SETTINGS_LABEL = 'Настройки звука'
+const ADD_TO_PLAYLIST_LABEL = 'Добавить в плейлист'
 
 const triggerOnLayout = async (container: TestInstance) => {
   const layoutView = container.queryAll(node => node.props.onLayout !== undefined, {
@@ -47,6 +58,7 @@ describe('<PlayerMenu>', () => {
   test('renders without crashing', async () => {
     const { toJSON } = await renderWithProviders(
       <PlayerMenu
+        audio={MOCK_AUDIO}
         onClose={mockOnClose}
         visualState={CLOUD_STATE}
         onShowDetails={mockOnShowDetails}
@@ -57,9 +69,31 @@ describe('<PlayerMenu>', () => {
     expect(toJSON()).toBeTruthy()
   })
 
+  test('add-to-playlist row opens the modal with the current sermon and closes the menu', async () => {
+    const { container, getByText } = await renderWithProviders(
+      <PlayerMenu
+        audio={MOCK_AUDIO}
+        onClose={mockOnClose}
+        visualState={CLOUD_STATE}
+        onShowDetails={mockOnShowDetails}
+        onToggleCache={mockOnToggleCache}
+        onAddToPlaylist={mockOnAddToPlaylist}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
+      />,
+    )
+
+    await triggerOnLayout(container)
+
+    fireEvent.press(getByText(ADD_TO_PLAYLIST_LABEL))
+
+    expect(mockOnAddToPlaylist).toHaveBeenCalledWith(MOCK_AUDIO)
+    expect(mockOnClose).toHaveBeenCalledTimes(1)
+  })
+
   test('selecting a rate calls setPlaybackRate before onClose', async () => {
     const { container, getByText } = await renderWithProviders(
       <PlayerMenu
+        audio={MOCK_AUDIO}
         onClose={mockOnClose}
         visualState={CLOUD_STATE}
         onShowDetails={mockOnShowDetails}
@@ -92,6 +126,7 @@ describe('<PlayerMenu>', () => {
   test('pressing sound settings opens the sheet, then closes the menu', async () => {
     const { container, getByText } = await renderWithProviders(
       <PlayerMenu
+        audio={MOCK_AUDIO}
         onClose={mockOnClose}
         visualState={CLOUD_STATE}
         onShowDetails={mockOnShowDetails}
@@ -191,6 +226,37 @@ describe('<PlayerMenuItems>', () => {
     )
     fireEvent.press(getByText('Подробнее'))
     expect(mockOnShowDetails).toHaveBeenCalledTimes(1)
+  })
+
+  test('add-to-playlist row is active and calls onAddToPlaylist when provided', async () => {
+    const { getByText } = await renderWithProviders(
+      <PlayerMenuItems
+        rate={1}
+        visualState={CLOUD_STATE}
+        onDetails={mockOnShowDetails}
+        onShowSpeed={mockOnShowSpeed}
+        onToggleCache={mockOnToggleCache}
+        onAddToPlaylist={mockOnAddToPlaylist}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
+      />,
+    )
+    fireEvent.press(getByText(ADD_TO_PLAYLIST_LABEL))
+    expect(mockOnAddToPlaylist).toHaveBeenCalledTimes(1)
+  })
+
+  test('add-to-playlist row is disabled when no handler is provided', async () => {
+    const { getByText } = await renderWithProviders(
+      <PlayerMenuItems
+        rate={1}
+        visualState={CLOUD_STATE}
+        onDetails={mockOnShowDetails}
+        onShowSpeed={mockOnShowSpeed}
+        onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
+      />,
+    )
+    fireEvent.press(getByText(ADD_TO_PLAYLIST_LABEL))
+    expect(mockOnAddToPlaylist).not.toHaveBeenCalled()
   })
 
   test('does not call onToggleCache when offline and not cached', async () => {

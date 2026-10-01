@@ -94,6 +94,18 @@ describe('<AdminMediaScreen>', () => {
     expect(await findByLabelText('Загрузить файл')).toBeTruthy()
   })
 
+  test('keeps the header and skeleton visible while the catalog is loading', async () => {
+    mockGetFiles.mockReturnValue(new Promise(() => undefined))
+
+    const { findAllByTestId, findByLabelText, findByText } = await renderWithProviders(
+      <AdminMediaScreen />,
+    )
+
+    expect(await findByText('Медиа')).toBeTruthy()
+    expect(await findByLabelText('Загрузить файл')).toBeTruthy()
+    expect((await findAllByTestId('admin-media-tile-skeleton')).length).toBeGreaterThan(0)
+  })
+
   test('deletes a file after confirmation', async () => {
     mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
 

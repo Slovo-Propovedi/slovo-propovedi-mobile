@@ -130,7 +130,7 @@ app/
 ├── about.tsx            # реэкспорт pages/about
 └── (tabs)/
     ├── _layout.tsx      # таб-бар + плавающий плеер (ExpandablePlayer)
-    ├── listen/          # стек таба «Слушать»: index, playlist, playlist-list
+    ├── listen/          # стек таба «Слушать»: index, playlist, playlist-list, my-playlists
     ├── read.tsx         # реэкспорт pages/read (таб заблокирован)
     ├── study.tsx        # реэкспорт pages/study (заглушка)
     └── more.tsx         # реэкспорт pages/more

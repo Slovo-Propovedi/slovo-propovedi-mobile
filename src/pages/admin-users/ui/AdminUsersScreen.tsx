@@ -3,9 +3,9 @@ import { useRouter } from 'expo-router'
 import { FlatList, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRequireAdminRole } from 'entities/auth'
-import { AdminUserRowSkeleton, EmptyState } from 'shared/ui'
+import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminUsers } from '../lib/useAdminUsers'
 import { AdminUserRow } from './AdminUserRow'
@@ -13,29 +13,37 @@ import { AdminUsersHeader } from './AdminUsersHeader'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/users/create'
-const LOAD_MORE_LABEL = 'Загрузить ещё'
 const EMPTY_MESSAGE = 'Пользователей пока нет'
 const NOT_FOUND_MESSAGE = 'Ничего не найдено'
 const LOAD_ERROR = 'Не удалось загрузить пользователей'
+const LOAD_MORE_FAILED_LABEL = 'Повторить загрузку'
 const SKELETON_ROWS = 6
 
 const UserSkeletonList = () => (
   <>
     {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-      <AdminUserRowSkeleton key={index} />
+      <AdminUserRow.Skeleton key={index} />
     ))}
   </>
 )
 
 // Список пользователей админки (только для роли admin): поиск по загруженным
-// страницам, «загрузить ещё» и переход к детали/созданию.
+// страницам, автодозагрузка при достижении конца и переход к детали/созданию.
 export const AdminUsersScreen = () => {
   useRequireAdminRole()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const { hasMore, isError, isLoading, isLoadingMore, loadMore, onSearchChange, search, users } =
-    useAdminUsers()
+  const {
+    isError,
+    isLoading,
+    isLoadingMore,
+    loadMore,
+    loadMoreFailed,
+    onSearchChange,
+    search,
+    users,
+  } = useAdminUsers()
 
   const openUser = (id: string) => {
     router.push({ params: { id }, pathname: '/admin/users/[id]' })
@@ -49,13 +57,12 @@ export const AdminUsersScreen = () => {
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
       <FlatList
+        onEndReachedThreshold={0.5}
         data={isLoading ? [] : users}
         keyExtractor={item => item.id}
+        onEndReached={() => void loadMore()}
         renderItem={({ item }) => <AdminUserRow item={item} onPress={() => openUser(item.id)} />}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
-        ]}
+        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
         ListEmptyComponent={
           isLoading ? (
             <UserSkeletonList />
@@ -67,14 +74,14 @@ export const AdminUsersScreen = () => {
         }
         ListFooterComponent={
           isLoadingMore ? (
-            <AdminUserRowSkeleton />
-          ) : hasMore ? (
+            <AdminUserRow.Skeleton />
+          ) : loadMoreFailed ? (
             <TouchableItem
               onPress={() => void loadMore()}
-              style={[styles.loadMore, { backgroundColor: currentTheme.surface }]}
+              style={[styles.retry, { backgroundColor: currentTheme.surface }]}
             >
-              <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
-                {LOAD_MORE_LABEL}
+              <Text style={[styles.retryText, { color: currentTheme.primary }]}>
+                {LOAD_MORE_FAILED_LABEL}
               </Text>
             </TouchableItem>
           ) : null

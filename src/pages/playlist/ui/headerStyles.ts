@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, type ThemeColors } from 'shared/ui/theme'
+import { TITLE_TEXT_SHADOW } from './titleTextShadow'
 
 export const createHeaderStyles = (theme: ThemeColors) =>
   StyleSheet.create({
@@ -45,9 +46,7 @@ export const createHeaderStyles = (theme: ThemeColors) =>
       fontWeight: '700',
       paddingHorizontal: INDENTS.medium,
       textAlign: 'center',
-      textShadowColor: 'rgba(0, 0, 0, 0.75)',
-      textShadowOffset: { height: 2, width: 0 },
-      textShadowRadius: 4,
+      ...TITLE_TEXT_SHADOW,
     },
     titleContainer: {
       alignItems: 'center',

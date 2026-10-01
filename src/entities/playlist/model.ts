@@ -1,6 +1,10 @@
+import { action, atom } from '@reatom/framework'
 import z from 'zod'
 import { sectionSchema } from 'entities/section/@x/playlist'
 import { type SectionShape, type SermonShape } from 'shared/model'
+import { readStoredMyPlaylists } from './lib/readStoredMyPlaylists'
+import { FAVORITES_PLAYLIST, type LocalPlaylistData, withFavoritesFirst } from './localPlaylists'
+import { persistMyPlaylists } from './localPlaylistStorage'
 
 /**
  * Минимальная структурная проверка вложенной проповеди (SermonShape).
@@ -47,3 +51,58 @@ export type PlaylistData = z.infer<typeof playlistDataSchema>
 
 /** Схема для массива плейлистов (PlaylistData[]). */
 export const playlistsArraySchema = z.array(playlistDataSchema)
+
+export const myPlaylistsAtom = atom<LocalPlaylistData[]>([FAVORITES_PLAYLIST], 'myPlaylistsAtom')
+
+/**
+ * Гидратация локальных плейлистов из AsyncStorage.
+ *
+ * Хранилище недоверенное: читается через zod (`myPlaylistsArraySchema`),
+ * невалидные данные трактуются как отсутствующие. При первом чтении
+ * (ключ отсутствует) засеивается `FAVORITES_PLAYLIST`. Отказ самого
+ * хранилища (reject) логируется и трактуется так же — как отсутствие данных.
+ */
+export const loadMyPlaylists = action(async ctx => {
+  const playlists = await readStoredMyPlaylists()
+  await ctx.schedule(() => {
+    myPlaylistsAtom(ctx, playlists)
+  })
+  return playlists
+}, 'loadMyPlaylists')
+
+/**
+ * Переупорядочивание локальных плейлистов (drag-and-drop на экране «Мои плейлисты»).
+ *
+ * Сохраняет новый порядок в `myPlaylists` (локально, без сервера) и коммитит
+ * его в `myPlaylistsAtom`. `orderedIds` — желаемый порядок id; «Избранные»
+ * пинятся первыми через `withFavoritesFirst`, поэтому их нельзя сдвинуть с
+ * первой позиции. Неизвестные id молча отбрасываются, а id, присутствующие в
+ * атоме, но отсутствующие в `orderedIds`, дописываются в конец — конкурентное
+ * добавление плейлиста не теряется.
+ *
+ * Чтение атома → вычисление `nextPlaylists` → коммит идут без `await` между
+ * ними, поэтому конкурентные операции не теряют изменения друг друга.
+ *
+ * Запись в хранилище может отклониться (сломанный нативный модуль, квота, …);
+ * такой отказ логируется, но атом уже закоммичен — та же политика деградации,
+ * что и у `readStoredMyPlaylists`.
+ */
+export const reorderMyPlaylists = action(async (ctx, orderedIds: string[]) => {
+  const byId = new Map(ctx.get(myPlaylistsAtom).map(playlist => [playlist.id, playlist]))
+  const ordered = orderedIds.flatMap(id => {
+    const playlist = byId.get(id)
+    return playlist ? [playlist] : []
+  })
+  const seen = new Set(ordered.map(playlist => playlist.id))
+  const missing = [...byId.values()].filter(playlist => !seen.has(playlist.id))
+  const nextPlaylists = withFavoritesFirst([...ordered, ...missing])
+  await ctx.schedule(() => {
+    myPlaylistsAtom(ctx, nextPlaylists)
+  })
+  try {
+    await persistMyPlaylists(nextPlaylists)
+  } catch (error) {
+    console.error('[reorderMyPlaylists] failed to persist order:', error)
+  }
+  return nextPlaylists
+}, 'reorderMyPlaylists')

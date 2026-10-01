@@ -22,28 +22,14 @@ export const styles = StyleSheet.create({
   header: {
     paddingBottom: INDENTS.medium,
   },
-  listContent: {
-    padding: INDENTS.medium,
-  },
-  row: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.middle,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    marginBottom: INDENTS.medium,
-    padding: INDENTS.medium,
-  },
-  rowBody: {
+  // DraggableFlatList renders its own wrapper without flex; on react-native-web
+  // that wrapper sizes to content and the inner ScrollView never scrolls, so the
+  // list tail gets clipped by body { overflow: hidden }.
+  listContainer: {
     flex: 1,
   },
-  rowMeta: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: 2,
-  },
-  rowTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
+  listContent: {
+    padding: INDENTS.medium,
   },
   sermonsTitle: {
     fontSize: FONT_SIZES.lg,

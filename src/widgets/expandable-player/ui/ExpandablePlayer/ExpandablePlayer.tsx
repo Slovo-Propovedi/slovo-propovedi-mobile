@@ -1,28 +1,19 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type StyleProp, View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import {
-  closePlayerSheetAction,
-  currentAudioAtom,
-  currentPlaylistAtom,
-  isBufferingAtom,
-  isPlayerExpandedAtom,
-  isPlayingAtom,
-  openPlayerSheetAction,
-  useGuardedTogglePlay,
-} from 'entities/player'
-import { isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
-import { useTheme } from 'shared/ui/theme'
+import { useAddToPlaylistModal } from 'features/add-to-playlist'
+import { closePlayerSheetAction, openPlayerSheetAction } from 'entities/player'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { useBackgroundRecovery } from '../../model/useBackgroundRecovery'
 import { useContainerGeometryGuard } from '../../model/useContainerGeometryGuard'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
+import { CollapsedMiniPlayer } from './CollapsedMiniPlayer'
 import { ContainerView, type NonGeometricStyle } from './ContainerView'
-import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
 import { createStyles } from './styles'
 import { useExpandablePlayerGesture } from './useExpandablePlayerGesture'
+import { useExpandablePlayerState } from './useExpandablePlayerState'
 
 export const ExpandablePlayer = ({
   playlistMenuComponent,
@@ -31,21 +22,20 @@ export const ExpandablePlayer = ({
   playlistMenuComponent?: PlaylistMenuSlot
   style?: StyleProp<NonGeometricStyle>
 }) => {
-  const { currentTheme } = useTheme()
+  const {
+    audio,
+    currentTheme,
+    expanded,
+    isBuffering,
+    isTabBarMeasured,
+    playing,
+    playlist,
+    tabBarHeight,
+    togglePlay,
+  } = useExpandablePlayerState()
 
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const [audio] = useAtom(currentAudioAtom)
-  const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
-  const [playing] = useAtom(isPlayingAtom)
-  const [expanded] = useAtom(isPlayerExpandedAtom)
-  const [playlist] = useAtom(currentPlaylistAtom)
   const [showMenu] = useAtom(showMenuAtom)
-  const [isBuffering] = useAtom(isBufferingAtom)
-
   const styles = createStyles(currentTheme)
-
-  const { togglePlay } = useGuardedTogglePlay()
-
   const open = useAction(openPlayerSheetAction)
   const close = useAction(closePlayerSheetAction)
 
@@ -77,6 +67,8 @@ export const ExpandablePlayer = ({
 
   const recoveryKey = useBackgroundRecovery()
 
+  const { modal, openAddToPlaylist } = useAddToPlaylistModal()
+
   const { onLayout: guardedContainerLayout } = useContainerGeometryGuard({
     expectedTop: collapsedRestingContainerStyle.top,
     onMismatch: forceGeometryReapply,
@@ -94,7 +86,7 @@ export const ExpandablePlayer = ({
         ]}
       />
       {!expanded && (
-        <MiniPlayer
+        <CollapsedMiniPlayer
           audio={audio}
           playing={playing}
           playlist={playlist}
@@ -102,7 +94,7 @@ export const ExpandablePlayer = ({
           miniStyles={miniStyles}
           onPlayPause={togglePlay}
           miniPan={gesture.miniPan}
-          showSpinner={isBuffering}
+          isBuffering={isBuffering}
           currentTheme={currentTheme}
           onPress={gesture.handleMiniTap}
         />
@@ -118,12 +110,14 @@ export const ExpandablePlayer = ({
         panGesture={gesture.panGesture}
         onLayout={guardedContainerLayout}
         miniOverlayStyle={miniOverlayStyle}
+        onAddToPlaylist={openAddToPlaylist}
         miniOverlay={miniStyles.miniOverlay}
         backgroundImageStyle={backgroundImageStyle}
         restingContainerStyle={restingContainerStyle}
         playlistMenuComponent={playlistMenuComponent}
         closeFullscreen={gesture.handleCloseFullscreen}
       />
+      {modal}
     </View>
   )
 }

@@ -78,6 +78,21 @@ describe('usePlaylistActions', () => {
     })
   })
 
+  test('buildMenuActions threads onAddToPlaylist into the menu builder', async () => {
+    const onAddToPlaylist = jest.fn()
+
+    const { result } = await renderHookWithProviders(
+      () => usePlaylistActions([SERMON_1], PLAYLIST, new Set(), new Map(), onAddToPlaylist),
+      {},
+    )
+
+    result.current.buildMenuActions(0)
+
+    expect(buildHistoryMenuActions).toHaveBeenCalledWith(
+      expect.objectContaining({ onAddToPlaylist }),
+    )
+  })
+
   test('buildMenuActions returns undefined for sermon without audioUrl', async () => {
     const { result } = await renderHookWithProviders(
       () => usePlaylistActions([SERMON_2], PLAYLIST, new Set(), new Map()),
@@ -127,5 +142,19 @@ describe('usePlaylistActions', () => {
     await result.current.handlePressPlayAll()
 
     expect(playNewSermonMock).toHaveBeenCalledWith({ playlist: PLAYLIST, sermon: SERMON_1 })
+  })
+
+  test('handlePressPlayAll plays the provided target sermon', async () => {
+    const playNewSermonMock = jest.fn()
+    jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
+
+    const { result } = await renderHookWithProviders(
+      () => usePlaylistActions([SERMON_1, SERMON_2], PLAYLIST, new Set(), new Map()),
+      {},
+    )
+
+    await result.current.handlePressPlayAll(SERMON_2)
+
+    expect(playNewSermonMock).toHaveBeenCalledWith({ playlist: PLAYLIST, sermon: SERMON_2 })
   })
 })
