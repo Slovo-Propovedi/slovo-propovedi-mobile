@@ -10,7 +10,7 @@ import {
   removeHistoryEntryAction,
 } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
-import { type PlaylistData } from 'entities/playlist'
+import { FAVORITES_PLAYLIST, myPlaylistsAtom, type PlaylistData } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
 import { HistoryScreen } from './HistoryScreen'
@@ -256,6 +256,19 @@ describe('<HistoryScreen>', () => {
     fireEvent.press(getByText('Удалить из истории'))
     expect(removeHistoryEntryAction).toHaveBeenCalledTimes(1)
     expect(jest.mocked(removeHistoryEntryAction).mock.calls[0][1]).toBe(MOCK_SERMON_ID)
+  })
+
+  test('add-to-playlist menu action opens the modal with playlist membership rows', async () => {
+    const ctx = seedHistory([mockEntry])
+    myPlaylistsAtom(ctx, [{ ...FAVORITES_PLAYLIST, sermonIds: [] }])
+
+    const { getAllByRole, getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
+
+    await act(async () => {
+      fireEvent.press(getByText('Добавить в плейлист'))
+    })
+
+    expect(getAllByRole('checkbox')).toHaveLength(1)
   })
 
   test('mark menu action calls markSermonListenedAction with sermon and entry playlist', async () => {

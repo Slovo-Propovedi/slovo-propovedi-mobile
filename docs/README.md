@@ -36,6 +36,7 @@
 | [`features/player.md`](./features/player.md)                           | Как работает плеер (модель, PlayerService, кэш аудио)                       |
 | [`features/listening-history.md`](./features/listening-history.md)     | История прослушивания, resume-логика, прогресс в UI                         |
 | [`features/my-playlists.md`](./features/my-playlists.md)               | Локальные («Мои») плейлисты: «Избранные», хранилище, секция на «Слушать»   |
+| [`features/add-to-playlist.md`](./features/add-to-playlist.md)         | Добавление проповеди в плейлист: экшен сущности, модалка мультивыбора, поверхности |
 | [`features/audio-cache.md`](./features/audio-cache.md)                 | Кэширование аудио и секций (offline)                                        |
 | [`features/images.md`](./features/images.md)                           | Кэширование и рендеринг изображений (expo-image)                            |
 | [`features/web.md`](./features/web.md)                                 | Web-платформа: PWA, Service Worker, офлайн-кеш аудио, десктопный layout     |

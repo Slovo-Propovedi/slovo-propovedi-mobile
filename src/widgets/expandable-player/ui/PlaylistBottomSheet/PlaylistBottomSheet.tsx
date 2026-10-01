@@ -5,6 +5,7 @@ import { useHistoryProgressMap } from 'entities/listening-history'
 import { cacheUpdateTriggerAtom } from 'entities/offline-cache'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
+import { type AudioPlayerData } from 'entities/sermon'
 import { useTheme } from 'shared/ui/theme'
 import { FINAL_SNAP_INDEX } from '../../lib/useSheetSnapMetrics'
 import { createStyles } from './PlaylistBottomSheet.styles'
@@ -20,12 +21,14 @@ export type PlaylistMenuSlot = ComponentType<{ playlist: PlaylistData }>
 
 const PlaylistBottomSheetComponent = ({
   closeOnBack = true,
+  onAddToPlaylist,
   onClose,
   playlist,
   playlistMenuComponent,
   sheetRef,
 }: {
   closeOnBack?: boolean
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onClose: () => void
   playlist: null | PlaylistData
   playlistMenuComponent?: PlaylistMenuSlot
@@ -111,6 +114,7 @@ const PlaylistBottomSheetComponent = ({
         cacheTrigger={cacheTrigger}
         onScroll={handleListScroll}
         isAudioPlaying={isAudioPlaying}
+        onAddToPlaylist={onAddToPlaylist}
         currentAudioId={currentAudio?.id}
         onMomentumEnd={handleMomentumEnd}
         onDragStart={handleDragStartWithReveal}

@@ -1,1 +1,1 @@
-export { AddToPlaylistModal } from './ui/AddToPlaylistModal'
+export { useAddToPlaylistModal } from './lib/useAddToPlaylistModal'

@@ -78,6 +78,21 @@ describe('usePlaylistActions', () => {
     })
   })
 
+  test('buildMenuActions threads onAddToPlaylist into the menu builder', async () => {
+    const onAddToPlaylist = jest.fn()
+
+    const { result } = await renderHookWithProviders(
+      () => usePlaylistActions([SERMON_1], PLAYLIST, new Set(), new Map(), onAddToPlaylist),
+      {},
+    )
+
+    result.current.buildMenuActions(0)
+
+    expect(buildHistoryMenuActions).toHaveBeenCalledWith(
+      expect.objectContaining({ onAddToPlaylist }),
+    )
+  })
+
   test('buildMenuActions returns undefined for sermon without audioUrl', async () => {
     const { result } = await renderHookWithProviders(
       () => usePlaylistActions([SERMON_2], PLAYLIST, new Set(), new Map()),

@@ -1,13 +1,16 @@
 import { Entypo } from '@expo/vector-icons'
 import { View } from 'react-native'
 import { type TrackCacheVisualState } from 'entities/offline-cache'
+import { type AudioPlayerData } from 'entities/sermon'
 import { IconButton } from 'shared/ui/icon-button'
 import { type createStyles } from '../ExpandablePlayer/styles'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
 
 // The ⋮ anchor with the popover menu mounted right under it.
 export const PlayerMenuAnchor = ({
+  audio,
   isCached,
+  onAddToPlaylist,
   onOpenMenu,
   onOpenSoundSettings,
   onShowDetails,
@@ -17,7 +20,9 @@ export const PlayerMenuAnchor = ({
   styles,
   visualState,
 }: {
+  audio: AudioPlayerData
   isCached?: boolean
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onOpenMenu: () => void
   onOpenSoundSettings: () => void
   onShowDetails: () => void
@@ -36,10 +41,12 @@ export const PlayerMenuAnchor = ({
     />
     {showMenu && (
       <PlayerMenu
+        audio={audio}
         isCached={isCached}
         visualState={visualState}
         onToggleCache={onToggleCache}
         onShowDetails={onShowDetails}
+        onAddToPlaylist={onAddToPlaylist}
         onClose={() => setShowMenu(false)}
         onOpenSoundSettings={onOpenSoundSettings}
       />

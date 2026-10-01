@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { buildHistoryMenuActions } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
-import { type SermonData, toAudioPlayerData } from 'entities/sermon'
+import { type AudioPlayerData, type SermonData, toAudioPlayerData } from 'entities/sermon'
 import { type MenuItem } from 'shared/ui/menu'
 
 /**
@@ -12,12 +12,14 @@ import { type MenuItem } from 'shared/ui/menu'
  * @param playlist - The playlist being displayed.
  * @param historySermonIds - Sermon ids present in listening history.
  * @param progressMap - Stored listening progress by sermon id (0..1).
+ * @param onAddToPlaylist - Opens the add-to-playlist modal for a sermon.
  */
 export const usePlaylistActions = (
   list: SermonData[],
   playlist: PlaylistData,
   historySermonIds: Set<string>,
   progressMap: Map<string, number>,
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void,
 ) => {
   const playNewSermon = usePlayNewSermon()
 
@@ -38,11 +40,12 @@ export const usePlaylistActions = (
       return buildHistoryMenuActions({
         inHistory: historySermonIds.has(audio.id),
         isCompleted: progressMap.get(audio.id) === 1,
+        onAddToPlaylist,
         playlist,
         sermon: audio,
       })
     },
-    [historySermonIds, list, playlist, progressMap],
+    [historySermonIds, list, onAddToPlaylist, playlist, progressMap],
   )
 
   const handlePressPlayAll = useCallback(async () => {
