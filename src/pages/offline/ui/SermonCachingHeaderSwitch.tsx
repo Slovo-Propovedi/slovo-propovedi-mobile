@@ -3,11 +3,14 @@ import { StyleSheet, Switch } from 'react-native'
 import { sermonCachingEnabledAtom, setSermonCachingEnabled } from 'entities/offline-cache'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { PressableButton } from 'shared/ui/pressable-button'
-import { COLORS, INDENTS, MIN_TOUCH_TARGET, useTheme } from 'shared/ui/theme'
+import { COLORS, INDENTS, MIN_TOUCH_TARGET, useTheme, withAlpha } from 'shared/ui/theme'
 import { cancelDownloadsAndClearCache } from '../lib/cancelDownloadsAndClearCache'
 
 const CACHING_LABEL = 'Кеширование проповедей'
 const SWITCH_SCALE = 0.8
+// The thumb carries the full-strength primary; the track behind it is the same
+// hue at reduced opacity so the two do not blend into one solid pill.
+const ON_TRACK_OPACITY = 0.35
 
 // Turning caching OFF is destructive (cancel downloads + wipe the cache), so
 // rapid back-and-forth flipping must not start and stop that clear on every
@@ -71,12 +74,15 @@ export const SermonCachingHeaderSwitch = () => {
     >
       <Switch
         value={enabled}
-        thumbColor={COLORS.white}
+        thumbColor={COLORS.primary}
         accessibilityElementsHidden
         ios_backgroundColor={COLORS.disabled}
         style={[styles.switch, styles.switchInert]}
         importantForAccessibility='no-hide-descendants'
-        trackColor={{ false: COLORS.disabled, true: currentTheme.primary }}
+        trackColor={{
+          false: COLORS.disabled,
+          true: withAlpha(currentTheme.primary, ON_TRACK_OPACITY),
+        }}
       />
     </PressableButton>
   )

@@ -196,4 +196,14 @@ describe('<SermonCachingHeaderSwitch>', () => {
       expect.any(Error),
     )
   })
+
+  test('the informed switch paints a primary thumb over a dimmed primary track', async () => {
+    const { container } = await renderSwitch(true)
+
+    const switchNode = container.queryAll(node => node.props.thumbTintColor !== undefined)[0]
+
+    expect(switchNode.props.thumbTintColor).toBe('#f16031')
+    expect(switchNode.props.onTintColor).toBe('rgba(241, 96, 49, 0.35)')
+    expect(switchNode.props.tintColor).toBe('#d3d3d3')
+  })
 })
