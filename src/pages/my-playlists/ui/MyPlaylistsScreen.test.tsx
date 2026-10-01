@@ -167,6 +167,19 @@ describe('<MyPlaylistsScreen>', () => {
     )
   })
 
+  test('blocks favorites navigation while editing', async () => {
+    const ctx = createCtx()
+    seedPlaylists(ctx)
+
+    const { getByLabelText, getByText } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
+    const user = userEvent.setup()
+
+    await user.press(getByLabelText(EDIT_LABEL))
+    fireEvent.press(getByText(FAVORITES_TITLE))
+
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
   test('commits the local order once on save, favorites first', async () => {
     const ctx = createCtx()
     seedPlaylists(ctx)

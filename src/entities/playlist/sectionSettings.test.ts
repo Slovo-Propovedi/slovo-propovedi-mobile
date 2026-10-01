@@ -66,6 +66,18 @@ describe('loadSectionSettings', () => {
     expect(setItemSpy).not.toHaveBeenCalled()
     expect(await AsyncStorage.getItem(MY_PLAYLISTS_SECTION_SETTINGS)).toBe(corrupt)
   })
+
+  test('degrades to defaults without overwriting storage when reading rejects', async () => {
+    jest.spyOn(AsyncStorage, 'getItem').mockRejectedValueOnce(new Error('storage down'))
+
+    const setItemSpy = jest.spyOn(AsyncStorage, 'setItem').mockClear()
+    const ctx = createCtx()
+
+    await expect(loadSectionSettings(ctx)).resolves.toEqual(DEFAULT_SECTION_SETTINGS)
+
+    expect(ctx.get(sectionSettingsAtom)).toEqual(DEFAULT_SECTION_SETTINGS)
+    expect(setItemSpy).not.toHaveBeenCalled()
+  })
 })
 
 describe('updateSectionSettings', () => {

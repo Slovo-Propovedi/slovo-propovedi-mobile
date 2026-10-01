@@ -70,8 +70,10 @@ export const MyPlaylistsScreen = () => {
   const onPressPlaylist = (playlist: LocalPlaylistData) =>
     router.push({ params: { playlist: playlist.id }, pathname: '/listen/playlist' })
 
+  // В режиме редактирования тап по «Избранным» — no-op: навигация ушла бы с
+  // экрана, а blur отбросил бы незакоммиченный локальный порядок.
   const onPressFavorites = () => {
-    if (!favorites) return
+    if (isEditing || !favorites) return
     onPressPlaylist(favorites)
   }
 

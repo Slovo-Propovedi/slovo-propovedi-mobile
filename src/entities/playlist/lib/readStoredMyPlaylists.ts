@@ -32,7 +32,7 @@ export const readStoredMyPlaylists = async (): Promise<LocalPlaylistData[]> => {
     }
     return withFavoritesFirst(result.value.map(normalizeLocalPlaylist))
   } catch (error) {
-    console.error('[loadMyPlaylists] failed to hydrate from storage:', error)
+    console.error('[readStoredMyPlaylists] failed to hydrate from storage:', error)
     return SEEDED_PLAYLISTS
   }
 }

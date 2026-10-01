@@ -32,7 +32,7 @@ export const readStoredSectionSettings = async (): Promise<LocalSectionSettings>
     }
     return normalizeSectionSettings(result.value)
   } catch (error) {
-    console.error('[loadSectionSettings] failed to hydrate from storage:', error)
+    console.error('[readStoredSectionSettings] failed to hydrate from storage:', error)
     return DEFAULT_SECTION_SETTINGS
   }
 }
