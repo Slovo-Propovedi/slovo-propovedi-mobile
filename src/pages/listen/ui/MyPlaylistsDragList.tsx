@@ -1,7 +1,7 @@
+import { StyleSheet } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { type LocalPlaylistData } from 'entities/playlist'
-import { SliderItem } from 'shared/ui/slider/slider-item/slider-item'
-import { SliderItemSize } from 'shared/ui/slider/slider-item/slider-item.types'
+import { SliderItem, SliderItemSize } from 'shared/ui'
 import { INDENTS } from 'shared/ui/theme'
 
 // Слайдер карточек локальных плейлистов с drag-to-reorder. Тянется карточка
@@ -27,7 +27,6 @@ export const MyPlaylistsDragList = ({
       <SliderItem
         artwork={null}
         onLongPress={drag}
-        testID={SLIDER_ITEM_ID}
         size={SliderItemSize.Small}
         descriptionTitle={item.title}
         onPress={() => onPressItem(item)}
@@ -37,9 +36,7 @@ export const MyPlaylistsDragList = ({
   />
 )
 
-const SLIDER_ITEM_ID = 'slider-item'
-
-const styles = {
+const styles = StyleSheet.create({
   content: { gap: INDENTS.middle, paddingHorizontal: INDENTS.middle },
   dragging: { opacity: 0.8 },
-} as const
+})

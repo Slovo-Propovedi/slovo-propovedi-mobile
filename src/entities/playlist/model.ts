@@ -97,10 +97,16 @@ export const loadMyPlaylists = action(async ctx => {
 /**
  * Переупорядочивание локальных плейлистов (drag-and-drop на экране «Слушать»).
  *
- * Оптимистично пишет новый порядок в `myPlaylistsAtom` и сохраняет его в
- * `myPlaylists` (локально, без сервера). `orderedIds` — желаемый порядок id;
- * «Избранные» пинятся первыми через `withFavoritesFirst`, поэтому их нельзя
- * сдвинуть с первой позиции. Неизвестные id молча отбрасываются.
+ * Сохраняет новый порядок в `myPlaylists` (локально, без сервера) и коммитит
+ * его в `myPlaylistsAtom`. `orderedIds` — желаемый порядок id; «Избранные»
+ * пинятся первыми через `withFavoritesFirst`, поэтому их нельзя сдвинуть с
+ * первой позиции. Неизвестные id молча отбрасываются, а id, присутствующие в
+ * атоме, но отсутствующие в `orderedIds`, дописываются в конец — конкурентное
+ * добавление плейлиста не теряется.
+ *
+ * Запись в хранилище может отклониться (сломанный нативный модуль, квота, …);
+ * такой отказ логируется, но атом всё равно коммитится — та же политика
+ * деградации, что и у `readStoredMyPlaylists`.
  */
 export const reorderMyPlaylists = action(async (ctx, orderedIds: string[]) => {
   const byId = new Map(ctx.get(myPlaylistsAtom).map(playlist => [playlist.id, playlist]))
@@ -108,8 +114,14 @@ export const reorderMyPlaylists = action(async (ctx, orderedIds: string[]) => {
     const playlist = byId.get(id)
     return playlist ? [playlist] : []
   })
-  const nextPlaylists = withFavoritesFirst(ordered)
-  await persistMyPlaylists(nextPlaylists)
+  const seen = new Set(ordered.map(playlist => playlist.id))
+  const missing = [...byId.values()].filter(playlist => !seen.has(playlist.id))
+  const nextPlaylists = withFavoritesFirst([...ordered, ...missing])
+  try {
+    await persistMyPlaylists(nextPlaylists)
+  } catch (error) {
+    console.error('[reorderMyPlaylists] failed to persist order:', error)
+  }
   await ctx.schedule(() => {
     myPlaylistsAtom(ctx, nextPlaylists)
   })

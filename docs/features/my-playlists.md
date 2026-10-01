@@ -55,8 +55,14 @@
 
 1. собирает текущий порядок из `myPlaylistsAtom` в map `id → LocalPlaylistData`;
 2. фильтрует `orderedIds`, отбрасывая неизвестные id;
-3. приводит к инварианту `withFavoritesFirst` — «Избранные» всегда первые (пиннинг);
-4. сохраняет новый порядок в `myPlaylists` (`persistMyPlaylists`) и пишет его в `myPlaylistsAtom`.
+3. дописывает в конец id, которые есть в атоме, но отсутствуют в `orderedIds` (защита от
+   потери конкурентно добавленного плейлиста);
+4. приводит к инварианту `withFavoritesFirst` — «Избранные» всегда первые (пиннинг);
+5. пишет порядок в `myPlaylists` (`persistMyPlaylists`) и коммитит его в `myPlaylistsAtom`.
+
+Отказ записи в хранилище (reject) не пробрасывается наружу: логируется
+(`console.error('[reorderMyPlaylists] failed to persist order:', …)`), атом всё равно
+коммитится — та же политика деградации, что и при гидратации.
 
 Серверных вызовов нет — порядок локален и переживает перезапуск через AsyncStorage.
 
@@ -71,7 +77,9 @@
 Остальные карточки рендерит `MyPlaylistsDragList` (`src/pages/listen/ui/MyPlaylistsDragList.tsx`) —
 горизонтальный `DraggableFlatList` (`react-native-draggable-flatlist`) поверх того же
 `SliderItem` (`SliderItemSize.Small`): карточка тянется полностью (native `drag` из `renderItem`,
-без отдельной ручки). `onDragEnd` отдаёт итоговый порядок id; `MyPlaylistsSlider` вызывает
+без отдельной ручки). `MyPlaylistsSlider` передаёт в список `playlists.slice(1)` — «Избранные»
+рендерятся только отдельной карточкой и в списке не дублируются. `onDragEnd` отдаёт итоговый
+порядок id; `MyPlaylistsSlider` вызывает
 `reorderMyPlaylists` только если `hasOrderChanged` (`shared/lib/utils`), иначе drag на месте —
 no-op. Это **локальный** reorder (без сервера), optimistic: порядок сразу в `myPlaylistsAtom`,
 запись в `myPlaylists` — внутри экшена. «Избранные» запиннены первыми и не перетаскиваются.

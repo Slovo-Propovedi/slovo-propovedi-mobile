@@ -44,4 +44,25 @@ describe('reorderMyPlaylists', () => {
 
     expect(ctx.get(myPlaylistsAtom).map(item => item.id)).toEqual(['favorites', 'a'])
   })
+
+  test('keeps playlists missing from orderedIds by appending them at the end', async () => {
+    const ctx = createCtx()
+    myPlaylistsAtom(ctx, [FAVORITES_PLAYLIST, playlist('a'), playlist('b'), playlist('c')])
+
+    // `b` was added concurrently and is absent from the dragged order — it must
+    // survive (appended), not be erased.
+    await reorderMyPlaylists(ctx, ['c', 'a'])
+
+    expect(ctx.get(myPlaylistsAtom).map(item => item.id)).toEqual(['favorites', 'c', 'a', 'b'])
+  })
+
+  test('commits the reordered atom even when persisting fails', async () => {
+    jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('storage down'))
+    const ctx = createCtx()
+    myPlaylistsAtom(ctx, [FAVORITES_PLAYLIST, playlist('a'), playlist('b')])
+
+    await expect(reorderMyPlaylists(ctx, ['b', 'a'])).resolves.toBeDefined()
+
+    expect(ctx.get(myPlaylistsAtom).map(item => item.id)).toEqual(['favorites', 'b', 'a'])
+  })
 })

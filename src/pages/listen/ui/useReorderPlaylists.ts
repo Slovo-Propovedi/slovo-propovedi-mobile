@@ -5,9 +5,9 @@ import { hasOrderChanged } from 'shared/lib/utils/hasOrderChanged'
 /**
  * Обёртка drag-to-reorder для секции «Мои плейлисты».
  *
- * Читает актуальный порядок из `myPlaylistsAtom` в момент конца drag — список
- * меняется асинхронно после гидратации, поэтому снимок при рендере устаревает.
- * Пустой drag (порядок не изменился) — no-op.
+ * `playlists` — снимок порядка на момент рендера; сам `reorderMyPlaylists`
+ * перечитывает актуальный `myPlaylistsAtom` в момент срабатывания, поэтому
+ * снимок используется только для проверки «порядок не изменился» (no-op).
  */
 export const useReorderPlaylists = () => {
   const reorder = useAction(reorderMyPlaylists)

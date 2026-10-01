@@ -3,10 +3,7 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { loadMyPlaylists, type LocalPlaylistData, myPlaylistsAtom } from 'entities/playlist'
-import { SliderItem } from 'shared/ui/slider/slider-item/slider-item'
-import { getSliderItemWidth } from 'shared/ui/slider/slider-item/slider-item.lib'
-import { SliderItemSize } from 'shared/ui/slider/slider-item/slider-item.types'
-import { SliderTitle } from 'shared/ui/slider/slider-title'
+import { getSliderItemWidth, SliderItem, SliderItemSize, SliderTitle } from 'shared/ui'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { useListenNavigation } from '../lib/useListenNavigation'
 import { MyPlaylistsDragList } from './MyPlaylistsDragList'
@@ -26,8 +23,6 @@ export const MyPlaylistsSlider = () => {
   useEffect(() => {
     void loadPlaylists()
   }, [loadPlaylists])
-
-  if (!playlists.length) return null
 
   const iconSize = getSliderItemWidth(SliderItemSize.Small) * ICON_SIZE_RATIO
   const heartIcon = <Ionicons name='heart' size={iconSize} color={currentTheme.primary} />
@@ -52,9 +47,9 @@ export const MyPlaylistsSlider = () => {
         onPress={() => onPressPlaylist(favorites)}
       />
       <MyPlaylistsDragList
-        items={playlists}
         onDragEnd={reorderPlaylists}
         onPressItem={onPressPlaylist}
+        items={playlists.slice(FAVORITES_INDEX + 1)}
       />
     </View>
   )
