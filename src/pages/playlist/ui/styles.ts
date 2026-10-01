@@ -94,6 +94,9 @@ export const queueControlsStyles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingVertical: INDENTS.middle,
   },
+  disabledButton: {
+    opacity: 0.5,
+  },
   icon: {
     tintColor: COLORS.onPrimary,
   },

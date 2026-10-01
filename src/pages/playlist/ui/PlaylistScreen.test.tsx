@@ -349,6 +349,7 @@ describe('<PlaylistScreen>', () => {
     await fireEvent.press(playAllButton)
 
     expect(playAllButton).toBeDisabled()
+    expect(playAllButton).toHaveStyle({ opacity: 0.5 })
     expect(playNewSermon).not.toHaveBeenCalled()
   })
 

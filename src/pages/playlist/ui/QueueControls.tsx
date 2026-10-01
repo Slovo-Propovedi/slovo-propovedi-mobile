@@ -22,7 +22,11 @@ export const QueueControls = ({
       <TouchableButton
         disabled={isDisabled}
         onPress={onPressPlayAll}
-        style={[queueControlsStyles.button, { backgroundColor: currentTheme.primary }]}
+        style={[
+          queueControlsStyles.button,
+          { backgroundColor: currentTheme.primary },
+          isDisabled && queueControlsStyles.disabledButton,
+        ]}
       >
         <MaterialCommunityIcons name='play' size={FONT_SIZES.base} color={COLORS.onPrimary} />
         <Text style={queueControlsStyles.buttonText}>{label}</Text>
