@@ -27,12 +27,15 @@
 3. Строит новый список: `contained` — дописывает `sermonId` в конец `sermonIds`,
    иначе — фильтрует его. «Избранные» обрабатываются тем же кодом, что и любой
    другой плейлист.
-4. **Оптимистичная запись:** сначала `persistMyPlaylists(nextPlaylists)`
-   (тот же путь, что у `reorderMyPlaylists`), затем `ctx.schedule` коммитит
-   `myPlaylistsAtom`. Отказ хранилища не пробрасывается: логируется
+4. **Мгновенный коммит, затем запись:** чтение атома → вычисление
+   `nextPlaylists` → `ctx.schedule`, коммитящий `myPlaylistsAtom`, идут без
+   `await` между ними, поэтому два быстрых переключения не теряют изменение друг
+   друга (lost update); `persistMyPlaylists(nextPlaylists)` (тот же путь, что у
+   `reorderMyPlaylists`) выполняется уже после коммита. Отказ хранилища не
+   пробрасывается: логируется
    (`console.error('[togglePlaylistSermon] failed to persist membership:', …)`),
-   атом всё равно коммитится — та же политика деградации, что и при гидратации и
-   reorder (см. [my-playlists.md](./my-playlists.md)).
+   атом остаётся закоммиченным — та же политика деградации, что и при гидратации
+   и reorder (см. [my-playlists.md](./my-playlists.md)).
 
 ## Модалка
 

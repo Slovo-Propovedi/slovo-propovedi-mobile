@@ -20,12 +20,8 @@ export const useAddToPlaylistModal = () => {
   const closeAddToPlaylist = useCallback(() => setSermonId(null), [])
 
   return {
-    modal: (
-      <AddToPlaylistModal
-        visible={sermonId !== null}
-        onClose={closeAddToPlaylist}
-        sermon={{ id: sermonId ?? '' }}
-      />
+    modal: sermonId && (
+      <AddToPlaylistModal visible sermon={{ id: sermonId }} onClose={closeAddToPlaylist} />
     ),
     openAddToPlaylist,
   }

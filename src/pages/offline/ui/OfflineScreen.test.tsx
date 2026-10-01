@@ -159,9 +159,12 @@ describe('<OfflineScreen>', () => {
     expect(setOptions).toHaveBeenCalledWith({ headerRight: expect.any(Function) })
   })
 
-  test('row menu offers add-to-playlist and opens the modal', async () => {
+  test('row menu offers add-to-playlist and checks the playlist containing the sermon', async () => {
     const ctx = createCtx()
-    myPlaylistsAtom(ctx, [{ ...FAVORITES_PLAYLIST, sermonIds: [] }])
+    myPlaylistsAtom(ctx, [
+      { ...FAVORITES_PLAYLIST, sermonIds: [] },
+      { id: 'pl-1', sermonIds: [mockSermon.id], title: 'Проповеди недели' },
+    ])
 
     const { getAllByRole, getByText } = await renderWithProviders(<OfflineScreen />, { ctx })
 
@@ -169,7 +172,10 @@ describe('<OfflineScreen>', () => {
       fireEvent.press(getByText('Добавить в плейлист'))
     })
 
-    expect(getAllByRole('checkbox')).toHaveLength(1)
+    const checkboxes = getAllByRole('checkbox')
+    expect(checkboxes).toHaveLength(2)
+    expect(checkboxes[0]).toBeChecked()
+    expect(checkboxes[1]).not.toBeChecked()
   })
 
   test('row press calls playNewSermon with item playlist and sermon', async () => {

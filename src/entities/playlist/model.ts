@@ -102,9 +102,12 @@ export const loadMyPlaylists = action(async ctx => {
  * атоме, но отсутствующие в `orderedIds`, дописываются в конец — конкурентное
  * добавление плейлиста не теряется.
  *
+ * Чтение атома → вычисление `nextPlaylists` → коммит идут без `await` между
+ * ними, поэтому конкурентные операции не теряют изменения друг друга.
+ *
  * Запись в хранилище может отклониться (сломанный нативный модуль, квота, …);
- * такой отказ логируется, но атом всё равно коммитится — та же политика
- * деградации, что и у `readStoredMyPlaylists`.
+ * такой отказ логируется, но атом уже закоммичен — та же политика деградации,
+ * что и у `readStoredMyPlaylists`.
  */
 export const reorderMyPlaylists = action(async (ctx, orderedIds: string[]) => {
   const byId = new Map(ctx.get(myPlaylistsAtom).map(playlist => [playlist.id, playlist]))
@@ -115,13 +118,13 @@ export const reorderMyPlaylists = action(async (ctx, orderedIds: string[]) => {
   const seen = new Set(ordered.map(playlist => playlist.id))
   const missing = [...byId.values()].filter(playlist => !seen.has(playlist.id))
   const nextPlaylists = withFavoritesFirst([...ordered, ...missing])
+  await ctx.schedule(() => {
+    myPlaylistsAtom(ctx, nextPlaylists)
+  })
   try {
     await persistMyPlaylists(nextPlaylists)
   } catch (error) {
     console.error('[reorderMyPlaylists] failed to persist order:', error)
   }
-  await ctx.schedule(() => {
-    myPlaylistsAtom(ctx, nextPlaylists)
-  })
   return nextPlaylists
 }, 'reorderMyPlaylists')

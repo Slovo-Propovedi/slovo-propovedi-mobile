@@ -94,4 +94,38 @@ describe('togglePlaylistSermon', () => {
 
     expect(ctx.get(myPlaylistsAtom).find(p => p.id === 'a')?.sermonIds).toEqual(['sermon-1'])
   })
+
+  test('two rapid toggles both survive a slow first storage write', async () => {
+    const defaultSetItem = (AsyncStorage.setItem as jest.Mock).getMockImplementation()
+    if (!defaultSetItem) throw new Error('AsyncStorage.setItem mock is not implemented')
+    let releaseFirstWrite: () => void = () => {}
+    const firstWriteBlocked = new Promise<void>(resolve => {
+      releaseFirstWrite = resolve
+    })
+    jest
+      .spyOn(AsyncStorage, 'setItem')
+      .mockImplementationOnce(async () => firstWriteBlocked)
+      .mockImplementation((key, value) => defaultSetItem(key, value))
+    const ctx = createCtx()
+    myPlaylistsAtom(ctx, [FAVORITES_PLAYLIST, playlist('a')])
+
+    const firstToggle = togglePlaylistSermon(ctx, 'a', 'sermon-1', true)
+    const secondToggle = togglePlaylistSermon(ctx, 'a', 'sermon-2', true)
+
+    // The second toggle must compute from the first toggle's committed state,
+    // not from the stale atom the first read before its slow write.
+    expect(ctx.get(myPlaylistsAtom).find(p => p.id === 'a')?.sermonIds).toEqual([
+      'sermon-1',
+      'sermon-2',
+    ])
+
+    releaseFirstWrite()
+    await Promise.all([firstToggle, secondToggle])
+
+    const stored = JSON.parse((await AsyncStorage.getItem(MY_PLAYLISTS_KEY)) ?? '[]')
+    expect(stored.find((p: LocalPlaylistData) => p.id === 'a')?.sermonIds).toEqual([
+      'sermon-1',
+      'sermon-2',
+    ])
+  })
 })

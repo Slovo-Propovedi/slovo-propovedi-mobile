@@ -271,6 +271,27 @@ describe('<HistoryScreen>', () => {
     expect(getAllByRole('checkbox')).toHaveLength(1)
   })
 
+  test('add-to-playlist modal checks the playlist containing the tapped sermon', async () => {
+    const containingPlaylist = {
+      id: 'pl-1',
+      sermonIds: [MOCK_SERMON_ID],
+      title: 'Проповеди недели',
+    }
+    const ctx = seedHistory([mockEntry])
+    myPlaylistsAtom(ctx, [{ ...FAVORITES_PLAYLIST, sermonIds: [] }, containingPlaylist])
+
+    const { getAllByRole, getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
+
+    await act(async () => {
+      fireEvent.press(getByText('Добавить в плейлист'))
+    })
+
+    const checkboxes = getAllByRole('checkbox')
+    expect(checkboxes).toHaveLength(2)
+    expect(checkboxes[0]).toBeChecked()
+    expect(checkboxes[1]).not.toBeChecked()
+  })
+
   test('mark menu action calls markSermonListenedAction with sermon and entry playlist', async () => {
     const ctx = seedHistory([mockEntry])
 

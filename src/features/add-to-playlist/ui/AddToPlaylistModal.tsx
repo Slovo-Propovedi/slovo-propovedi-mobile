@@ -7,7 +7,6 @@ import { PlaylistMembershipList } from './PlaylistMembershipList'
 
 const TITLE = 'Добавить в плейлист'
 const DONE_LABEL = 'Готово'
-const EMPTY_LABEL = 'Нет плейлистов'
 
 /**
  * Модалка мультивыбора плейлистов для проповеди. Открытие/закрытие держит
@@ -36,11 +35,7 @@ export const AddToPlaylistModal = ({
     <Modal visible={visible} onBackdropPress={onClose}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: currentTheme.text }]}>{TITLE}</Text>
-        {playlists.length > 0 ? (
-          <PlaylistMembershipList items={playlists} sermonId={sermon.id} />
-        ) : (
-          <Text style={[styles.empty, { color: currentTheme.textMuted }]}>{EMPTY_LABEL}</Text>
-        )}
+        <PlaylistMembershipList items={playlists} sermonId={sermon.id} />
         <PressableButton
           onPress={onClose}
           style={[styles.done, { borderTopColor: currentTheme.skeleton }]}
@@ -65,11 +60,6 @@ const styles = StyleSheet.create({
   doneText: {
     fontSize: FONT_SIZES.md,
     fontWeight: '600',
-  },
-  empty: {
-    fontSize: FONT_SIZES.base,
-    padding: INDENTS.high,
-    textAlign: 'center',
   },
   title: {
     fontSize: FONT_SIZES.lg,
