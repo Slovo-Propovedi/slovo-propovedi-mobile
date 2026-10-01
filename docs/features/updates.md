@@ -38,6 +38,26 @@
 2. В настройках Forgejo-репозитория (`Settings → Actions → Secrets`) добавить секрет `MIRROR_GITHUB_TOKEN` со значением PAT.
 3. Тег `v*` должен быть запушен в GitHub (репозиторий зеркалируется) — если тега ещё нет, создание релиза упадёт с предупреждением, джоба продолжит работу.
 
+### Зеркалирование релиза в SourceCraft (CI)
+
+`.forgejo/workflows/release.yml` после GitHub-шага выполняет шаг **«Mirror release to SourceCraft»**: создаёт релиз в SourceCraft и прикладывает ZIP-ассет к тегу. Секрет `MIRROR_SOURCECRAFT_TOKEN` настроен в Forgejo-секретах репозитория, зеркалирование активно. Шаг сохраняет guard: без секрета он пропускается (`exit 0`), пайплайн остаётся зелёным. Любая ошибка SourceCraft API — `::warning::`, джоба не падает (релиз Forgejo — источник истины).
+
+API base: `https://api.sourcecraft.tech/repos/slovo-propovedi/slovo-propovedi-mobile`. Используемые эндпоинты:
+
+- `GET /releases/tag/{tag}` — проверка существования релиза и его ассетов (dedup загрузки; до загрузки проверяется, нет ли уже ассета с тем же именем);
+- `POST /releases` — создание релиза (тело `{tag, title, release_notes, publish: true}`; `target_branch` не задаётся — тег уже существует через git-зеркалирование);
+- `POST /releases/tag/{tag}/attachments` — загрузка ассета multipart-формой (`name`, `file`).
+
+Лимит ассета — 100 MB. Аутентификация обязательна даже для GET: заголовок `Authorization: Bearer <PAT>`.
+
+**SourceCraft — только CI-зеркало.** Приложение **не читает** релизы с SourceCraft: REST API (`api.sourcecraft.tech`) отвечает `401` на любой запрос без `Bearer`-токена, включая публичные репозитории (проверено 2026-10-01); анонимно доступна только HTML-страница релизов (SPA). Цепочка источников обновлений клиента остаётся **Forgejo → GitHub** (см. `src/shared/lib/version-check/fetchLatestRelease.ts`). Если в будущем понадобится третий источник — потребуется прокси на бэкенде с PAT.
+
+**Настройка:**
+
+1. Создать PAT на `sourcecraft.dev` → Home → Доступ → Персональные токены доступа; выдать права репозитория (роль repo) с write-доступом к релизам.
+2. В настройках Forgejo-репозитория (`Settings → Actions → Secrets`) добавить секрет `MIRROR_SOURCECRAFT_TOKEN` со значением PAT.
+3. Тег `v*` должен быть запушен в SourceCraft (репозиторий зеркалируется) — если тега ещё нет, создание релиза упадёт с предупреждением, джоба продолжит работу.
+
 ## Состояние
 
 `src/shared/model/update.ts`:
