@@ -104,3 +104,24 @@ describe('loadMyPlaylists favorites preservation', () => {
     expect(reloadedCtx.get(myPlaylistsAtom)[0].sermons).toEqual([SERMON])
   })
 })
+
+describe('loadMyPlaylists parse failure', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks()
+    await AsyncStorage.clear()
+  })
+
+  test('keeps the seed without overwriting corrupt storage', async () => {
+    const corrupt = '{not valid json}'
+    await AsyncStorage.setItem(MY_PLAYLISTS, corrupt)
+
+    const setItemSpy = jest.spyOn(AsyncStorage, 'setItem').mockClear()
+    const ctx = createCtx()
+
+    await loadMyPlaylists(ctx)
+
+    expect(ctx.get(myPlaylistsAtom)).toEqual([FAVORITES_PLAYLIST])
+    expect(setItemSpy).not.toHaveBeenCalled()
+    expect(await AsyncStorage.getItem(MY_PLAYLISTS)).toBe(corrupt)
+  })
+})
