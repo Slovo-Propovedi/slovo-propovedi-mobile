@@ -1,13 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { type PlaylistData, playlistDataSchema } from 'entities/playlist/@x/player'
-import { mapPlaylistEntityToPlaylistData } from 'entities/playlist/lib/mappers/mapPlaylistEntityToPlaylistData'
+import {
+  mapPlaylistEntityToPlaylistData,
+  type PlaylistData,
+  playlistDataSchema,
+} from 'entities/playlist'
+import { mapSermonEntityToSermonData } from 'entities/sermon'
 import { type AudioPlayerData, audioPlayerDataSchema } from 'entities/sermon/@x/player'
-import { mapSermonEntityToSermonData } from 'entities/sermon/lib/mappers/mapSermonEntityToSermonData'
 import { playlistsMocks, sermonsMocks } from 'shared/api/generated'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { getParseJsonWithSchema } from 'shared/model'
-import { setCurrentAudioAction, setCurrentPlaylistAction } from '../model'
+import {
+  currentAudioAtom,
+  currentPlaylistAtom,
+  setCurrentAudioAction,
+  setCurrentPlaylistAction,
+} from '../model'
 
 const parseStoredAudio = getParseJsonWithSchema(audioPlayerDataSchema)
 const parseStoredPlaylist = getParseJsonWithSchema(playlistDataSchema)
@@ -20,7 +28,7 @@ const BASE_AUDIO: AudioPlayerData = {
   title: 'Test Sermon',
 }
 
-const buildNestedPlaylist = () => ({
+const BASE_PLAYLIST: PlaylistData = {
   artwork: null,
   id: 'playlist-1',
   sermons: [
@@ -33,7 +41,9 @@ const buildNestedPlaylist = () => ({
     },
   ],
   title: 'Nested playlist',
-})
+}
+
+const getBaseSermon = (): PlaylistData['sermons'][number] => ({ ...BASE_PLAYLIST.sermons[0] })
 
 const readRaw = async (key: string): Promise<Record<string, unknown>> => {
   const stored = await AsyncStorage.getItem(key)
@@ -42,6 +52,7 @@ const readRaw = async (key: string): Promise<Record<string, unknown>> => {
 }
 
 // The writer persists, the reader parses: both must agree on the stored shape.
+// The atom must receive the same normalized shape the storage holds.
 const writeThenRestoreAudio = async (
   audio: AudioPlayerData,
 ): Promise<AudioPlayerData | undefined> => {
@@ -49,6 +60,25 @@ const writeThenRestoreAudio = async (
   const restored = parseStoredAudio(await AsyncStorage.getItem(CURRENT_AUDIO))
 
   expect(restored).toEqual(written)
+
+  ctx.schedule(() => {
+    expect(ctx.get(currentAudioAtom)).toEqual(written)
+  })
+
+  return restored
+}
+
+const writeThenRestorePlaylist = async (
+  playlist: PlaylistData,
+): Promise<PlaylistData | undefined> => {
+  const written = await setCurrentPlaylistAction(ctx, playlist)
+  const restored = parseStoredPlaylist(await AsyncStorage.getItem(CURRENT_PLAYLIST))
+
+  expect(restored).toEqual(written)
+
+  ctx.schedule(() => {
+    expect(ctx.get(currentPlaylistAtom)).toEqual(written)
+  })
 
   return restored
 }
@@ -58,7 +88,7 @@ describe('player storage round-trip (save ↔ restore)', () => {
     await AsyncStorage.clear()
   })
 
-  test('round-trips a minimal record with absent optional fields', async () => {
+  test('round-trips a minimal audio record with absent optional fields', async () => {
     expect(await writeThenRestoreAudio(BASE_AUDIO)).toEqual(BASE_AUDIO)
   })
 
@@ -79,7 +109,7 @@ describe('player storage round-trip (save ↔ restore)', () => {
   test('drops heavy nested playlists before persisting', async () => {
     const restored = await writeThenRestoreAudio({
       ...BASE_AUDIO,
-      playlists: [buildNestedPlaylist()],
+      playlists: [BASE_PLAYLIST],
     })
 
     expect(await readRaw(CURRENT_AUDIO)).not.toHaveProperty('playlists')
@@ -87,8 +117,9 @@ describe('player storage round-trip (save ↔ restore)', () => {
   })
 
   test('restores despite a nested playlist whose sermon lost its artwork key', async () => {
-    const nestedPlaylist = buildNestedPlaylist()
-    Reflect.deleteProperty(nestedPlaylist.sermons[0], 'artwork')
+    const nestedSermon = getBaseSermon()
+    Reflect.deleteProperty(nestedSermon, 'artwork')
+    const nestedPlaylist = { ...BASE_PLAYLIST, sermons: [nestedSermon] }
     const audio = { ...BASE_AUDIO, playlists: [nestedPlaylist] }
     const rawShape = audioPlayerDataSchema.safeParse(JSON.parse(JSON.stringify(audio)))
 
@@ -110,18 +141,49 @@ describe('player storage round-trip (save ↔ restore)', () => {
     expect((await writeThenRestoreAudio(audio))?.artwork).toBeNull()
   })
 
+  test('round-trips a minimal playlist', async () => {
+    expect(await writeThenRestorePlaylist(BASE_PLAYLIST)).toEqual(BASE_PLAYLIST)
+  })
+
+  test('keeps playlist null artwork as an honest null', async () => {
+    expect(
+      (await writeThenRestorePlaylist({ ...BASE_PLAYLIST, artwork: null }))?.artwork,
+    ).toBeNull()
+  })
+
+  test('normalizes missing playlist artwork to null so the required key survives JSON', async () => {
+    const playlist = { ...BASE_PLAYLIST }
+    Reflect.deleteProperty(playlist, 'artwork')
+
+    const restored = await writeThenRestorePlaylist(playlist)
+
+    expect(await readRaw(CURRENT_PLAYLIST)).toHaveProperty('artwork', null)
+    expect(restored?.artwork).toBeNull()
+  })
+
+  test('normalizes a nested sermon missing artwork so the required key survives JSON', async () => {
+    const sermon = getBaseSermon()
+    Reflect.deleteProperty(sermon, 'artwork')
+    const playlist = { ...BASE_PLAYLIST, sermons: [sermon] }
+    const rawShape = playlistDataSchema.safeParse(JSON.parse(JSON.stringify(playlist)))
+
+    // Persisting the raw shape would drop `artwork` and fail the restore parse.
+    expect(rawShape.success).toBe(false)
+
+    const restored = await writeThenRestorePlaylist(playlist)
+
+    expect(restored?.sermons[0]?.artwork).toBeNull()
+  })
+
   test('round-trips a mapped playlist whose sermon artwork the server omitted', async () => {
     const entity = playlistsMocks.getPlaylistControllerFindOneResponseMock()
     const firstSermon = entity.sermons[0]
     if (!firstSermon) throw new Error('faker must return at least one sermon')
-    Reflect.deleteProperty(firstSermon, 'artwork')
+    Object.assign(firstSermon, { artwork: null })
     Object.assign(entity, { description: null })
 
-    const written = await setCurrentPlaylistAction(ctx, mapPlaylistEntityToPlaylistData(entity))
-    const restored: PlaylistData | undefined = parseStoredPlaylist(
-      await AsyncStorage.getItem(CURRENT_PLAYLIST),
-    )
+    const restored = await writeThenRestorePlaylist(mapPlaylistEntityToPlaylistData(entity))
 
-    expect(restored).toEqual(written)
+    expect(restored).toBeDefined()
   })
 })
