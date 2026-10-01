@@ -14,6 +14,7 @@ import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useScrollActivity } from '../lib/useScrollActivity'
 import { ContinueListeningButton } from './ContinueListeningButton'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
+import { MyPlaylistsSlider } from './MyPlaylistsSlider'
 
 export const ListenScreen = () => {
   const { currentTheme } = useTheme()
@@ -46,6 +47,7 @@ export const ListenScreen = () => {
           <DynamicSectionsSlider
             leadingElement={!isSearchActive ? <ContinueListeningButton /> : undefined}
           />
+          <MyPlaylistsSlider />
         </ScrollView>
       )}
     </SafeAreaView>

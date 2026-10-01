@@ -13,6 +13,7 @@
 ## Что показывается
 
 - Вертикальный список секций; каждая секция рендерится через `renderSection` (`src/pages/listen/ui/renderSection.tsx`) в компонент `Slider` (заголовок секции + горизонтальный слайдер плейлистов с обложками). Рендеринг обложек — через `CoverImage` (`shared/ui/cover-image`), lazy-загрузка по умолчанию; при отсутствии `artwork` используется `IMAGE_PLACEHOLDER` (иконка приложения). Горизонтальные слайдеры секций виртуализированы при любом `itemsRows` (горизонтальный `FlatList`; данные группируются по колонкам — при `itemsRows > 1` колонка содержит элементы всех строк, порядок сохраняется; off-screen элементы плейлистов размонтируются — их обложки не монтируются и не грузятся на нативе, где lazy-загрузка expo-image не работает). Подробнее — [features/images.md](../features/images.md).
+- **Завершающая секция «Мои плейлисты»** (`MyPlaylistsSlider`, `src/pages/listen/ui/MyPlaylistsSlider.tsx`) — после динамических секций. Горизонтальный `Slider` с локальными плейлистами из `myPlaylistsAtom`; сейчас единственная карточка — системный «Избранные» (сердце `Ionicons 'heart'` вместо обложки через слот `artworkIcon`, заголовок «Избранные»). Гидратация — `loadMyPlaylists` при монтировании (см. [features/my-playlists.md](../features/my-playlists.md)).
 - **Заголовок секции переносится, стрелка приклеена к тексту**: заголовок (текст + иконка-стрелка «показать все») рендерится в `SliderTitle` (`src/shared/ui/slider/slider-title.tsx`) одним `Text` без `numberOfLines`/`ellipsizeMode` — длинный заголовок **переносится на несколько строк** естественно. Стрелка-«показать все» рендерится **инлайн внутри того же `Text`** сразу после текста, разделённая неразрывным пробелом (`\u00A0`, константа `INLINE_ARROW_GAP`): неразрывный пробел запрещает перенос строки на этом месте, поэтому стрелка **всегда приклеена к последнему слову** заголовка и никогда не уезжает на отдельную строку. Тап по заголовку (всему `Text`, включая стрелку) — открывает список плейлистов секции.
 - Параметры отображения секции (размер слайдов, трансформация, строки, скругление) приходят с сервера и мапятся в `src/pages/listen/lib/` (`mapItemsSize.ts`, `mapTransform.ts`, `mapWhereIsTitleLocated.ts`).
 - Тап на заголовок секции («показать все») открывает список плейлистов секции.
@@ -131,6 +132,7 @@
 ## Куда можно перейти
 
 - Тап на плейлист всегда открывает страницу плейлиста → `/listen/playlist?playlist=<id плейлиста>` (`navigateToPlaylist` из `src/pages/listen/lib/useListenNavigation.ts`) — даже если в плейлисте одна проповедь.
+- Тап на карточку «Избранные» в секции «Мои плейлисты» → `/listen/playlist?playlist=local:favorites` (локальный id; резолвится tier 0 без сети, см. [features/my-playlists.md](../features/my-playlists.md)).
 - Тап на заголовок секции → `/listen/playlist-list?sectionId=<id секции>&title=<строка>` (`navigateToPlaylistList`).
 - Тап на проповедь в результатах поиска — запуск воспроизведения (без перехода). Тап на уже играющую проповедь — no-op (Issue #99): воспроизведение не перезапускается, полноэкранный плеер не открывается.
 
@@ -145,5 +147,6 @@
 
 - [features/navigation.md](../features/navigation.md)
 - [features/offline-and-network.md](../features/offline-and-network.md)
+- [features/my-playlists.md](../features/my-playlists.md)
 - [screens/playlist.md](./playlist.md)
 - [screens/playlist-list.md](./playlist-list.md)

@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-history'
+import { FAVORITES_PLAYLIST } from 'entities/playlist'
 import { createTracksListStyles } from 'entities/track-list'
 import { useTheme } from 'shared/ui/theme'
 import { useCollapsingHeader } from '../lib/useCollapsingHeader'
@@ -18,6 +19,7 @@ import { createStyles } from './styles'
 import { buildTracksListData, usePlaylistNavigationOptions } from './usePlaylistNavigationOptions'
 
 const EMPTY_PLAYLIST = { artwork: null, description: '', id: 'default', sermons: [], title: '' }
+const FAVORITES_EMPTY_MESSAGE = 'В избранном пока пусто'
 
 export const PlaylistScreen = () => {
   const { currentTheme } = useTheme()
@@ -100,6 +102,7 @@ export const PlaylistScreen = () => {
         onScroll={scrollHandler}
         style={tracksListStyles.container}
         ItemSeparatorComponent={ItemSeparator}
+        emptyMessage={playlist.id === FAVORITES_PLAYLIST.id ? FAVORITES_EMPTY_MESSAGE : undefined}
         headerElement={
           <PlaylistHeader
             title={title}

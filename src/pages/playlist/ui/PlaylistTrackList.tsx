@@ -6,8 +6,11 @@ import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
 import { type TracksListData } from './usePlaylistNavigationOptions'
 
+const DEFAULT_EMPTY_MESSAGE = 'В плейлисте нет записей'
+
 export const PlaylistTrackList = ({
   data,
+  emptyMessage = DEFAULT_EMPTY_MESSAGE,
   headerElement,
   ItemSeparatorComponent,
   onScroll,
@@ -15,6 +18,7 @@ export const PlaylistTrackList = ({
   style,
 }: {
   data: TracksListData
+  emptyMessage?: string
   headerElement: ReactElement
   ItemSeparatorComponent: React.ComponentType
   onScroll: ReturnType<typeof useAnimatedScrollHandler>
@@ -33,7 +37,7 @@ export const PlaylistTrackList = ({
       ListHeaderComponent={headerElement}
       keyExtractor={item => item.id ?? ''}
       ItemSeparatorComponent={ItemSeparatorComponent}
-      ListEmptyComponent={<Text style={{ marginHorizontal: 'auto' }}>В плейлисте нет записей</Text>}
+      ListEmptyComponent={<Text style={{ marginHorizontal: 'auto' }}>{emptyMessage}</Text>}
       contentContainerStyle={{
         paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
       }}

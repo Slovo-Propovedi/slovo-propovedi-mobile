@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { useEffect, useMemo, useState } from 'react'
-import { type PlaylistData } from 'entities/playlist'
+import { FAVORITES_PLAYLIST, type PlaylistData } from 'entities/playlist'
 import { dynamicSectionsAtom } from 'entities/section'
 import { resolvePlaylistFromApi } from './resolvePlaylistFromApi'
 import { resolvePlaylistFromCache } from './resolvePlaylistFromCache'
@@ -13,7 +13,17 @@ interface PlaylistResolution {
 
 type ResolvedTier = 'api' | 'cache' | 'sections' | null
 
+// Tier 0: локальный «Избранные» резолвится сразу, без сети и кэша.
+const FAVORITES_PLAYLIST_DATA: PlaylistData = {
+  artwork: null,
+  description: '',
+  id: FAVORITES_PLAYLIST.id,
+  sermons: [],
+  title: FAVORITES_PLAYLIST.title,
+}
+
 export const usePlaylistById = (playlistId: string) => {
+  const isFavorites = playlistId === FAVORITES_PLAYLIST.id
   const [sections] = useAtom(dynamicSectionsAtom)
   const [resolution, setResolution] = useState<PlaylistResolution>({
     playlist: undefined,
@@ -27,7 +37,7 @@ export const usePlaylistById = (playlistId: string) => {
   )
 
   useEffect(() => {
-    if (!playlistId || playlistFromSections) return
+    if (!playlistId || playlistFromSections || isFavorites) return
     let cancelled = false
 
     void (async () => {
@@ -46,7 +56,9 @@ export const usePlaylistById = (playlistId: string) => {
     return () => {
       cancelled = true
     }
-  }, [playlistFromSections, playlistId])
+  }, [isFavorites, playlistFromSections, playlistId])
+
+  if (isFavorites) return { isLoading: false, notFound: false, playlist: FAVORITES_PLAYLIST_DATA }
 
   const currentResolution = resolution.playlistId === playlistId ? resolution : null
   const playlist = playlistFromSections ?? currentResolution?.playlist

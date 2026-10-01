@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native'
 import { match } from 'ts-pattern'
 import { CoverImage } from '../../cover-image/cover-image'
+import { useTheme } from '../../theme/ThemeContext/useTheme'
 import { RADIUSES } from '../../theme/themed'
 import { TouchableButton } from '../../touchable-button/TouchableButton'
 import { SliderItemDescription } from '../slider-item-description/slider-item-description'
@@ -15,6 +16,7 @@ import {
 
 export const SliderItem = ({
   artwork,
+  artworkIcon,
   descriptionBackgroundStyle,
   descriptionSubTitle,
   descriptionSubTitleTextAlign,
@@ -28,6 +30,7 @@ export const SliderItem = ({
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderItemProps) => {
+  const { currentTheme } = useTheme()
   const conditionSize = getSliderItemWidth(size)
 
   const isVisibleDescriptionOnSlide =
@@ -48,19 +51,30 @@ export const SliderItem = ({
   return (
     <TouchableButton testID={testID} onPress={onPress} activeOpacity={0.8}>
       <View style={[styles.component, { width: conditionSize }, style]}>
-        <CoverImage uri={artwork} style={[styles.imageBackground, { height: imageHeight }]}>
-          {isVisibleDescriptionOnSlide && (
-            <SliderItemDescription
-              title={descriptionTitle}
-              subTitle={descriptionSubTitle}
-              testID='slider-item-description-on-slide'
-              titleTextAlign={descriptionTitleTextAlign}
-              backgroundStyle={descriptionBackgroundStyle}
-              isTitleLarge={isDescriptionTitleOnSlideLarge}
-              subTitleTextAlign={descriptionSubTitleTextAlign}
-            />
-          )}
-        </CoverImage>
+        {artworkIcon ? (
+          <View
+            style={[
+              styles.iconBackground,
+              { backgroundColor: currentTheme.surface, height: imageHeight },
+            ]}
+          >
+            {artworkIcon}
+          </View>
+        ) : (
+          <CoverImage uri={artwork} style={[styles.imageBackground, { height: imageHeight }]}>
+            {isVisibleDescriptionOnSlide && (
+              <SliderItemDescription
+                title={descriptionTitle}
+                subTitle={descriptionSubTitle}
+                testID='slider-item-description-on-slide'
+                titleTextAlign={descriptionTitleTextAlign}
+                backgroundStyle={descriptionBackgroundStyle}
+                isTitleLarge={isDescriptionTitleOnSlideLarge}
+                subTitleTextAlign={descriptionSubTitleTextAlign}
+              />
+            )}
+          </CoverImage>
+        )}
         {isVisibleDescriptionUnderSlide && (
           <SliderItemDescription
             title={descriptionTitle}
@@ -80,5 +94,11 @@ SliderItem.Skeleton = SliderItemSkeleton
 
 const styles = StyleSheet.create({
   component: { borderRadius: RADIUSES.large, minHeight: 50, minWidth: 50 },
+  iconBackground: {
+    alignItems: 'center',
+    borderRadius: RADIUSES.large,
+    justifyContent: 'center',
+    width: '100%',
+  },
   imageBackground: { borderRadius: RADIUSES.large, justifyContent: 'flex-end', width: '100%' },
 })

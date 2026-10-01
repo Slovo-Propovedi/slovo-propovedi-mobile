@@ -38,6 +38,7 @@ jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
 
   return {
+    Entypo: (props: { name: string }) => <Text>{props.name}</Text>,
     Ionicons: (props: { name: string }) => <Text>{props.name}</Text>,
     MaterialCommunityIcons: (props: { name: string }) => <Text>{props.name}</Text>,
   }
