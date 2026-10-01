@@ -1,46 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { LIST_ITEM_CARD_ARTWORK_SIZE, ListItemBase } from 'entities/list-item'
 import { type PlaylistData } from 'entities/playlist'
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
-import { CoverImage } from 'shared/ui'
-import { PressableButton } from 'shared/ui/pressable-button'
-import { FONT_SIZES, INDENTS, RADIUSES, type ThemeColors, useTheme } from 'shared/ui/theme'
 
-export const ALBUM_ART_SIZE = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25
-
-const createStyles = (theme: ThemeColors) =>
-  StyleSheet.create({
-    albumArt: {
-      borderRadius: RADIUSES.low,
-      height: ALBUM_ART_SIZE,
-      width: ALBUM_ART_SIZE,
-    },
-    albumArtContainer: {
-      marginRight: INDENTS.medium,
-      position: 'relative',
-    },
-    description: {
-      color: theme.textMuted,
-      fontSize: FONT_SIZES.md,
-      marginTop: INDENTS.low,
-    },
-    itemContainer: {
-      alignItems: 'center',
-      backgroundColor: theme.card,
-      borderRadius: RADIUSES.middle,
-      flexDirection: 'row',
-      paddingHorizontal: INDENTS.medium,
-      paddingVertical: INDENTS.medium,
-    },
-    textContainer: {
-      flex: 1,
-      justifyContent: 'center',
-    },
-    title: {
-      color: theme.text,
-      fontSize: FONT_SIZES.h3,
-      fontWeight: '600',
-    },
-  })
+export const ALBUM_ART_SIZE = LIST_ITEM_CARD_ARTWORK_SIZE
 
 export const PlaylistListItem = ({
   onPress,
@@ -48,23 +9,11 @@ export const PlaylistListItem = ({
 }: {
   onPress: () => void
   playlist: PlaylistData
-}) => {
-  const { currentTheme } = useTheme()
-  const styles = createStyles(currentTheme)
-
-  return (
-    <PressableButton onPress={onPress} style={styles.itemContainer}>
-      <View style={styles.albumArtContainer}>
-        <CoverImage uri={playlist.artwork} style={styles.albumArt} />
-      </View>
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{playlist.title}</Text>
-        {playlist.description ? (
-          <Text numberOfLines={1} style={styles.description}>
-            {playlist.description}
-          </Text>
-        ) : null}
-      </View>
-    </PressableButton>
-  )
-}
+}) => (
+  <ListItemBase
+    onPress={onPress}
+    title={playlist.title}
+    artwork={playlist.artwork}
+    subtitle={playlist.description}
+  />
+)

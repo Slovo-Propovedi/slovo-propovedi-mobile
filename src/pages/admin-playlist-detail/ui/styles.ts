@@ -25,26 +25,6 @@ export const styles = StyleSheet.create({
   listContent: {
     padding: INDENTS.medium,
   },
-  row: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.middle,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    marginBottom: INDENTS.medium,
-    padding: INDENTS.medium,
-  },
-  rowBody: {
-    flex: 1,
-  },
-  rowMeta: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: 2,
-  },
-  rowTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
-  },
   sermonsTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: '700',

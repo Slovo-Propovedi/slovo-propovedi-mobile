@@ -73,25 +73,11 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     fontWeight: '600',
   },
-  playlistArtwork: {
-    borderRadius: RADIUSES.low,
-    height: 44,
-    width: 44,
-  },
   playlistRow: {
-    alignItems: 'center',
     borderRadius: RADIUSES.low,
-    flexDirection: 'row',
-    gap: INDENTS.medium,
+    borderWidth: 0,
+    marginBottom: 0,
     marginTop: INDENTS.low,
-    padding: INDENTS.medium,
-  },
-  playlistTitle: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: '500',
-  },
-  playlistTitleWrap: {
-    flex: 1,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,

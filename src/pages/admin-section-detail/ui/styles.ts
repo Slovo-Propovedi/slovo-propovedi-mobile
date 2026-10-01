@@ -20,31 +20,11 @@ export const styles = StyleSheet.create({
   listContent: {
     padding: INDENTS.medium,
   },
-  playlistBody: {
-    flex: 1,
-  },
-  playlistRow: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.middle,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    marginBottom: INDENTS.medium,
-    padding: INDENTS.medium,
-  },
   playlistsTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: '700',
     marginBottom: INDENTS.medium,
     marginTop: INDENTS.medium,
-  },
-  playlistSubtitle: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: 2,
-  },
-  playlistTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
   },
   stat: {
     borderRadius: RADIUSES.low,

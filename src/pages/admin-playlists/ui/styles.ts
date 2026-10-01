@@ -2,12 +2,6 @@ import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
-  artwork: {
-    backgroundColor: COLORS.disabled,
-    borderRadius: RADIUSES.low,
-    height: 56,
-    width: 56,
-  },
   centered: {
     alignItems: 'center',
     flex: 1,
@@ -81,26 +75,6 @@ export const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET,
     justifyContent: 'center',
     width: MIN_TOUCH_TARGET,
-  },
-  row: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.middle,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    marginBottom: INDENTS.medium,
-    padding: INDENTS.medium,
-  },
-  rowBody: {
-    flex: 1,
-  },
-  rowMeta: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: 2,
-  },
-  rowTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
   },
   subtitle: {
     fontSize: FONT_SIZES.sm,
