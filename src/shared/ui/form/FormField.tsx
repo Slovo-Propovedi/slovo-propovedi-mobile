@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Text, TextInput, View } from 'react-native'
+import { Text, TextInput, type TextInputProps, View } from 'react-native'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { formStyles } from './formStyles'
@@ -9,6 +9,7 @@ import { RequiredAsterisk } from './RequiredAsterisk'
 // поле помечается красной звёздочкой; `invalid` (тронутое пустое обязательное)
 // даёт красную рамку поверх состояния фокуса.
 export const FormField = ({
+  autoComplete,
   hint,
   invalid = false,
   keyboardType,
@@ -19,8 +20,10 @@ export const FormField = ({
   placeholder,
   required = false,
   secureTextEntry = false,
+  textContentType,
   value,
 }: {
+  autoComplete?: TextInputProps['autoComplete']
   hint?: string
   invalid?: boolean
   keyboardType?: 'default' | 'email-address' | 'number-pad'
@@ -31,6 +34,7 @@ export const FormField = ({
   placeholder?: string
   required?: boolean
   secureTextEntry?: boolean
+  textContentType?: TextInputProps['textContentType']
   value: string
 }) => {
   const { currentTheme } = useTheme()
@@ -53,9 +57,11 @@ export const FormField = ({
         multiline={multiline}
         placeholder={placeholder}
         accessibilityLabel={label}
+        autoComplete={autoComplete}
         keyboardType={keyboardType}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
+        textContentType={textContentType}
         onFocus={() => setIsFocused(true)}
         placeholderTextColor={currentTheme.placeholder}
         onBlur={() => {

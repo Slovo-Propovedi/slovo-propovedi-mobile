@@ -5,15 +5,13 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { AdminPlaylistRowSkeleton, EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminPlaylists } from '../lib/useAdminPlaylists'
 import { AdminPlaylistRow } from './AdminPlaylistRow'
 import { AdminPlaylistsHeader } from './AdminPlaylistsHeader'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/playlists/create'
-const LOAD_MORE_LABEL = 'Загрузить ещё'
 const SKELETON_ROWS = 6
 
 const PlaylistSkeletonList = () => (
@@ -29,7 +27,6 @@ export const AdminPlaylistsScreen = () => {
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const {
-    hasMore,
     isError,
     isLoading,
     isLoadingMore,
@@ -53,15 +50,15 @@ export const AdminPlaylistsScreen = () => {
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
       <FlatList
+        onEndReachedThreshold={0.5}
         keyExtractor={item => item.id}
         data={isLoading ? [] : playlists}
+        onEndReached={() => void loadMore()}
+        ListFooterComponent={isLoadingMore ? <AdminPlaylistRowSkeleton /> : null}
+        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
         renderItem={({ item }) => (
           <AdminPlaylistRow item={item} onPress={() => openPlaylist(item)} />
         )}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
-        ]}
         ListEmptyComponent={
           isLoading ? (
             <PlaylistSkeletonList />
@@ -84,20 +81,6 @@ export const AdminPlaylistsScreen = () => {
             onSearchChange={onSearchChange}
             onCreate={() => router.push(CREATE_ROUTE)}
           />
-        }
-        ListFooterComponent={
-          isLoadingMore ? (
-            <AdminPlaylistRowSkeleton />
-          ) : hasMore ? (
-            <TouchableItem
-              onPress={() => void loadMore()}
-              style={[styles.loadMore, { backgroundColor: currentTheme.surface }]}
-            >
-              <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
-                {LOAD_MORE_LABEL}
-              </Text>
-            </TouchableItem>
-          ) : null
         }
       />
     </SafeAreaView>

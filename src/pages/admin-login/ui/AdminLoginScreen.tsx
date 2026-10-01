@@ -63,7 +63,9 @@ export const AdminLoginScreen = () => {
         <AdminLoginField
           value={username}
           placeholder='admin'
+          autoComplete='username'
           label='Имя пользователя'
+          textContentType='username'
           onChangeText={setUsername}
         />
         <AdminLoginField
@@ -71,7 +73,9 @@ export const AdminLoginScreen = () => {
           secureTextEntry
           value={password}
           placeholder='••••••••'
+          textContentType='password'
           onChangeText={setPassword}
+          autoComplete='current-password'
         />
 
         <TouchableItem

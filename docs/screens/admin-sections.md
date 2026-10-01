@@ -20,6 +20,7 @@
 - **Навигация:** тап по карточке → `/admin/sections/[id]`; «Создать раздел» → `/admin/sections/create`.
 - **Optimistic reorder:** локальное состояние перекрывает ответ сети; на каждый `onDragEnd` сначала применяется новый порядок, при ошибке — откат к прежнему + `showToast`; запрос пропускается, если порядок не изменился (`hasOrderChanged`).
 - **Состояния:** загрузка списка — скелетон-строки (`AdminSectionRowSkeleton`, шапка остаётся видимой; busy reorder — скелетон-строка в футере); пусто — `EmptyState` «Разделов пока нет»; ошибка загрузки — `reportError`; ошибка reorder — откат + тост.
+- **Высота и отступ под таб-баром (web):** `DraggableFlatList` рендерит собственный контейнер без `flex` — на react-native-web он растягивается по контенту, и список не скроллится (низ обрезается `body { overflow: hidden }` из `public/index.html`). Поэтому контейнеру задан `containerStyle={styles.listContainer}` с `flex: 1`, а `paddingBottom: tabBarHeight + INDENTS.low` (без `PLAYER_SIZES.miniPlayerHeight` — в админке нет мини-плеера).
 
 ## Деталь
 
@@ -30,6 +31,7 @@
 - **Навигация:** иконка «Редактировать» в шапке → `/admin/sections/[id]/edit`; тап по плейлисту → `/admin/playlists/[id]` (внутри админки, не в пользовательский плеер); после удаления — `router.back()` в список + тост.
 - **Удаление:** `ConfirmDialog` («Удалить раздел?») с подтверждением.
 - **Состояния:** загрузка сущности — `AdminContentSkeleton`; не найдено — `EmptyState` «Раздел не найден»; нет плейлистов — `EmptyState` «Плейлистов пока нет»; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
+- **Высота и скролл (web):** список плейлистов раздела — тоже `DraggableFlatList`; его контейнеру задан `containerStyle={styles.listContainer}` с `flex: 1`, иначе на react-native-web список не скроллится и низ обрезается (`body { overflow: hidden }` из `public/index.html`). Экран вне таб-группы, поэтому низ закрывает `SafeAreaView` (`edges={['bottom']}`), а не таб-бар.
 
 ## Форма (создание / редактирование)
 

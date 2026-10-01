@@ -8,7 +8,7 @@ import { showToast } from 'shared/model'
 import { AdminMediaGridSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminMedia } from '../lib/useAdminMedia'
 import { usePickImage } from '../lib/usePickImage'
 import { AdminMediaListHeader } from './AdminMediaListHeader'
@@ -81,10 +81,7 @@ export const AdminMediaScreen = () => {
         key={`media-grid-${numColumns}`}
         columnWrapperStyle={styles.gridRow}
         keyExtractor={item => item.fileName}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
-        ]}
+        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
         ListHeaderComponent={
           <AdminMediaListHeader
             progress={progress}

@@ -72,17 +72,6 @@ export const styles = StyleSheet.create({
   listContent: {
     padding: INDENTS.medium,
   },
-  loadMore: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    justifyContent: 'center',
-    marginTop: INDENTS.low,
-    paddingVertical: INDENTS.medium,
-  },
-  loadMoreText: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
-  },
   subtitle: {
     fontSize: FONT_SIZES.sm,
     marginTop: INDENTS.lowest,

@@ -5,15 +5,13 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { AdminSermonRowSkeleton, EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminSermons } from '../lib/useAdminSermons'
 import { AdminSermonRow } from './AdminSermonRow'
 import { AdminSermonsHeader } from './AdminSermonsHeader'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/sermons/create'
-const LOAD_MORE_LABEL = 'Загрузить ещё'
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить проповеди'
 const EMPTY_MESSAGE = 'Проповедей пока нет'
 const SKELETON_ROWS = 6
@@ -31,7 +29,6 @@ export const AdminSermonsScreen = () => {
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const {
-    hasMore,
     isError,
     isLoading,
     isLoadingMore,
@@ -63,13 +60,13 @@ export const AdminSermonsScreen = () => {
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
       <FlatList
+        onEndReachedThreshold={0.5}
         keyExtractor={item => item.id}
         data={isLoading ? [] : sermons}
+        onEndReached={() => void loadMore()}
+        ListFooterComponent={isLoadingMore ? <AdminSermonRowSkeleton /> : null}
         renderItem={({ item }) => <AdminSermonRow item={item} onPress={() => openSermon(item)} />}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low },
-        ]}
+        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
         ListEmptyComponent={
           isLoading ? (
             <SermonSkeletonList />
@@ -92,20 +89,6 @@ export const AdminSermonsScreen = () => {
             onSearchChange={onSearchChange}
             onCreate={() => router.push(CREATE_ROUTE)}
           />
-        }
-        ListFooterComponent={
-          isLoadingMore ? (
-            <AdminSermonRowSkeleton />
-          ) : hasMore ? (
-            <TouchableItem
-              onPress={() => void loadMore()}
-              style={[styles.loadMore, { backgroundColor: currentTheme.surface }]}
-            >
-              <Text style={[styles.loadMoreText, { color: currentTheme.primary }]}>
-                {LOAD_MORE_LABEL}
-              </Text>
-            </TouchableItem>
-          ) : null
         }
       />
     </SafeAreaView>

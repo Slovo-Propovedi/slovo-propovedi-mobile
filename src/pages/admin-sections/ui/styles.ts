@@ -51,6 +51,12 @@ export const styles = StyleSheet.create({
   headerText: {
     flex: 1,
   },
+  // DraggableFlatList renders its own wrapper without flex; on react-native-web
+  // that wrapper sizes to content and the inner ScrollView never scrolls, so the
+  // list tail gets clipped by body { overflow: hidden }.
+  listContainer: {
+    flex: 1,
+  },
   listContent: {
     padding: INDENTS.medium,
   },
