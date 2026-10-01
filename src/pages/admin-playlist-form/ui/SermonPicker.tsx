@@ -1,12 +1,11 @@
-import { useState } from 'react'
 import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
 import { orderSelectedFirst } from 'shared/lib/utils/orderSelectedFirst'
-import { AdminSermonRowSkeleton } from 'shared/ui'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { mergeById } from '../lib/mergeById'
 import { type SermonOption } from '../lib/sermonOption'
-import { useSermonSearch } from '../lib/useSermonSearch'
+import { type SermonSearchState } from '../lib/useSermonSearch'
 import { pickerStyles } from './pickerStyles'
+import { SermonPickerFooter } from './SermonPickerFooter'
 import { SermonPickerRow } from './SermonPickerRow'
 import { styles } from './styles'
 
@@ -17,20 +16,26 @@ const LIST_TEST_ID = 'sermon-picker-list'
 // Поисковый список проповедей с чекбоксами и обложками. `selectedIds` — источник
 // истины; выбранные строки идут первыми и остаются видимыми, даже если не
 // попали в загруженную страницу (`selectedSermons` — снапшот уже включённых).
-// Список внутри скроллящейся формы, поэтому собственный скролл выключен, а
-// дозагрузка идёт по курсору при достижении конца.
+// Список внутри скроллящейся формы и собственного скролла не имеет, поэтому
+// дозагрузку по курсору запускает внешний скролл формы (`onNearEnd` в
+// `PlaylistForm` -> `FormScrollView`), а не `onEndReached` этого FlatList.
 export const SermonPicker = ({
+  onSearchChange,
   onToggle,
+  search,
+  searchState,
   selectedIds,
   selectedSermons,
 }: {
+  onSearchChange: (value: string) => void
   onToggle: (id: string) => void
+  search: string
+  searchState: SermonSearchState
   selectedIds: string[]
   selectedSermons: SermonOption[]
 }) => {
   const { currentTheme } = useTheme()
-  const [search, setSearch] = useState('')
-  const { isError, isLoading, isLoadingMore, loadMore, sermons } = useSermonSearch(search)
+  const { isError, isLoading, isLoadingMore, loadMore, loadMoreFailed, sermons } = searchState
   const options = orderSelectedFirst(
     mergeById<SermonOption>(sermons, selectedSermons),
     selectedIds,
@@ -41,7 +46,7 @@ export const SermonPicker = ({
     <View>
       <TextInput
         value={search}
-        onChangeText={setSearch}
+        onChangeText={onSearchChange}
         placeholder='Поиск по названию'
         accessibilityLabel='Поиск проповедей'
         placeholderTextColor={currentTheme.placeholder}
@@ -63,10 +68,14 @@ export const SermonPicker = ({
           data={options}
           testID={LIST_TEST_ID}
           scrollEnabled={false}
-          onEndReachedThreshold={0.5}
           keyExtractor={sermon => sermon.id}
-          onEndReached={() => void loadMore()}
-          ListFooterComponent={isLoadingMore ? <AdminSermonRowSkeleton /> : null}
+          ListFooterComponent={
+            <SermonPickerFooter
+              isLoadingMore={isLoadingMore}
+              loadMoreFailed={loadMoreFailed}
+              onRetry={() => void loadMore()}
+            />
+          }
           renderItem={({ item }) => (
             <SermonPickerRow
               sermon={item}

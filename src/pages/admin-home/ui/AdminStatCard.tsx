@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components -- Skeleton is attached via composition API */
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text } from 'react-native'
 import Animated from 'react-native-reanimated'
@@ -10,7 +9,7 @@ import { styles } from './styles'
 
 // Карточка статистики главной админки: иконка, число и подпись. Пока данные
 // грузятся, вместо числа пульсирует плейсхолдер-бар.
-const AdminStatCardBase = ({
+export const AdminStatCard = ({
   count,
   icon,
   isLoading,
@@ -53,7 +52,3 @@ const StatValue = ({ count, isLoading }: { count: null | number; isLoading: bool
     </Animated.View>
   )
 }
-
-// Скелетон прикреплён к карточке как `AdminStatCard.Skeleton` — плейсхолдер
-// живёт в одном файле с компонентом и не может от него отстать.
-export const AdminStatCard = Object.assign(AdminStatCardBase, { Skeleton: StatValue })

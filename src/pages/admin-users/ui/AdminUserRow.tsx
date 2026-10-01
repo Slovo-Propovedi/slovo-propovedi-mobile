@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components -- Skeleton is attached via composition API */
 import { Text, View } from 'react-native'
 import { ROLE_LABELS } from 'entities/auth'
 import { type APITypes } from 'shared/api'
@@ -9,7 +8,7 @@ import { styles } from './styles'
 
 // Карточка пользователя в списке админки: аватар-инициал, имя, email и бейджи
 // роли и логина.
-const AdminUserRowBase = ({
+export const AdminUserRow = ({
   item,
   onPress,
 }: {
@@ -49,6 +48,4 @@ const AdminUserRowBase = ({
 
 // Скелетон прикреплён к строке как `AdminUserRow.Skeleton` — единый источник
 // плейсхолдера для этой сущности.
-export const AdminUserRow = Object.assign(AdminUserRowBase, {
-  Skeleton: AdminUserRowSkeleton,
-})
+AdminUserRow.Skeleton = AdminUserRowSkeleton

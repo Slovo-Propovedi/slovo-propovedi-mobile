@@ -65,6 +65,17 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     width: MIN_TOUCH_TARGET,
   },
+  retry: {
+    alignItems: 'center',
+    borderRadius: RADIUSES.low,
+    justifyContent: 'center',
+    marginTop: INDENTS.low,
+    paddingVertical: INDENTS.medium,
+  },
+  retryText: {
+    fontSize: FONT_SIZES.base,
+    fontWeight: '600',
+  },
   subtitle: {
     fontSize: FONT_SIZES.sm,
     marginTop: INDENTS.lowest,

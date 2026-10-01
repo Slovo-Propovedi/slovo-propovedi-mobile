@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components -- Skeleton is attached via composition API */
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable, Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
@@ -16,7 +15,7 @@ const USED_BADGE = 'используется'
 // Квадратная плитка изображения в каталоге медиа: обложка, бейдж «используется»,
 // кнопка удаления и подпись с именем и размером. Тап по плитке открывает
 // полноэкранный просмотр; удаление — компактный оверлей на самой картинке.
-const MediaTileBase = ({
+export const MediaTile = ({
   file,
   onDelete,
   onPress,
@@ -94,4 +93,4 @@ const MediaTileSkeleton = ({ size }: { size: number }) => {
 
 // Скелетон живёт в одном файле с компонентом и прикреплён к нему как
 // `MediaTile.Skeleton`: геометрия не может «отъехать» от реальной плитки.
-export const MediaTile = Object.assign(MediaTileBase, { Skeleton: MediaTileSkeleton })
+MediaTile.Skeleton = MediaTileSkeleton

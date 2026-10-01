@@ -77,6 +77,17 @@ export const styles = StyleSheet.create({
   listContent: {
     padding: INDENTS.medium,
   },
+  retry: {
+    alignItems: 'center',
+    borderRadius: RADIUSES.low,
+    justifyContent: 'center',
+    marginTop: INDENTS.low,
+    paddingVertical: INDENTS.medium,
+  },
+  retryText: {
+    fontSize: FONT_SIZES.base,
+    fontWeight: '600',
+  },
   row: {
     alignItems: 'center',
     borderRadius: RADIUSES.middle,

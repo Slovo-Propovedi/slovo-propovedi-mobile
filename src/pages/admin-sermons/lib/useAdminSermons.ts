@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
-import { type APITypes, sermonsApi } from 'shared/api'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { type APITypes } from 'shared/api'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { reportError } from 'shared/model/error-dialog'
+import { fetchSermonsPage, SERMONS_PAGE_SIZE } from './fetchSermonsPage'
 
 export interface AdminSermonsState {
   hasMore: boolean
@@ -9,6 +10,7 @@ export interface AdminSermonsState {
   isLoading: boolean
   isLoadingMore: boolean
   loadMore: () => Promise<void>
+  loadMoreFailed: boolean
   onOrderChange: (order: APITypes.SermonControllerFindAllOrder) => void
   onSearchChange: (search: string) => void
   onSortChange: (sort: APITypes.SermonControllerFindAllSort) => void
@@ -18,30 +20,8 @@ export interface AdminSermonsState {
   sort: APITypes.SermonControllerFindAllSort
 }
 
-const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить проповеди'
-
-/**
- * Одна страница проповедей; `hasMore` — пришла ли полная страница.
- * @param query - Поисковый запрос (название, проповедник, книга, описание).
- * @param sort - Вариант сортировки.
- * @param order - Направление сортировки.
- * @param page - Номер страницы (с 1).
- */
-const fetchPage = async (
-  query: string,
-  sort: APITypes.SermonControllerFindAllSort,
-  order: APITypes.SermonControllerFindAllOrder,
-  page: number,
-): Promise<APITypes.AllSermonsResponse> =>
-  sermonsApi.getSermons().sermonControllerFindAll({
-    limit: PAGE_SIZE,
-    order,
-    page,
-    search: query || undefined,
-    sort,
-  })
 
 /**
  * Пагинированный список проповедей админки: поиск с дебаунсом 300мс,
@@ -58,6 +38,9 @@ export const useAdminSermons = (): AdminSermonsState => {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [isError, setIsError] = useState(false)
   const [hasMore, setHasMore] = useState(false)
+  const [loadMoreFailed, setLoadMoreFailed] = useState(false)
+
+  const generationRef = useRef(0)
 
   const debouncedSetQuery = useDebounce(setQuery, SEARCH_DEBOUNCE_MS, [])
 
@@ -68,20 +51,23 @@ export const useAdminSermons = (): AdminSermonsState => {
   useEffect(() => {
     let isActive = true
 
+    const generation = ++generationRef.current
+
     const load = async () => {
       setIsLoading(true)
       setIsError(false)
+      setLoadMoreFailed(false)
       try {
-        const response = await fetchPage(query, sort, order, 1)
-        if (!isActive) return
+        const response = await fetchSermonsPage(query, sort, order, 1)
+        if (!isActive || generationRef.current !== generation) return
         setSermons(response.sermons)
-        setHasMore(response.sermons.length === PAGE_SIZE)
+        setHasMore(response.sermons.length === SERMONS_PAGE_SIZE)
       } catch (error) {
-        if (!isActive) return
+        if (!isActive || generationRef.current !== generation) return
         setIsError(true)
         reportError(error, LOAD_ERROR_MESSAGE)
       } finally {
-        if (isActive) setIsLoading(false)
+        if (isActive && generationRef.current === generation) setIsLoading(false)
       }
     }
 
@@ -95,13 +81,18 @@ export const useAdminSermons = (): AdminSermonsState => {
   const loadMore = useCallback(async () => {
     if (isLoading || isLoadingMore || !hasMore) return
 
+    const generation = generationRef.current
     setIsLoadingMore(true)
+    setLoadMoreFailed(false)
     try {
-      const nextPage = Math.floor(sermons.length / PAGE_SIZE) + 1
-      const response = await fetchPage(query, sort, order, nextPage)
+      const nextPage = Math.floor(sermons.length / SERMONS_PAGE_SIZE) + 1
+      const response = await fetchSermonsPage(query, sort, order, nextPage)
+      if (generationRef.current !== generation) return
       setSermons(current => [...current, ...response.sermons])
-      setHasMore(response.sermons.length === PAGE_SIZE)
+      setHasMore(response.sermons.length === SERMONS_PAGE_SIZE)
     } catch (error) {
+      if (generationRef.current !== generation) return
+      setLoadMoreFailed(true)
       reportError(error, LOAD_ERROR_MESSAGE)
     } finally {
       setIsLoadingMore(false)
@@ -114,6 +105,7 @@ export const useAdminSermons = (): AdminSermonsState => {
     isLoading,
     isLoadingMore,
     loadMore,
+    loadMoreFailed,
     onOrderChange: setOrder,
     onSearchChange: setSearch,
     onSortChange: setSort,

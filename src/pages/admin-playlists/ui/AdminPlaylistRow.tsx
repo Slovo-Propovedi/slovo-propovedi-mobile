@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components -- Skeleton is attached via composition API */
 import { ListItemBase } from 'entities/list-item'
 import { type APITypes } from 'shared/api'
 import { AdminPlaylistRowSkeleton } from 'shared/ui'
@@ -19,7 +18,7 @@ const metaLabel = (sermons: number, sections: number) =>
   ].join(' · ')
 
 // Карточка плейлиста в списке админки: обложка, название и счётчики связей.
-const AdminPlaylistRowBase = ({
+export const AdminPlaylistRow = ({
   item,
   onPress,
 }: {
@@ -38,6 +37,4 @@ const AdminPlaylistRowBase = ({
 
 // Скелетон прикреплён к строке как `AdminPlaylistRow.Skeleton` — единый
 // источник плейсхолдера для этой сущности.
-export const AdminPlaylistRow = Object.assign(AdminPlaylistRowBase, {
-  Skeleton: AdminPlaylistRowSkeleton,
-})
+AdminPlaylistRow.Skeleton = AdminPlaylistRowSkeleton

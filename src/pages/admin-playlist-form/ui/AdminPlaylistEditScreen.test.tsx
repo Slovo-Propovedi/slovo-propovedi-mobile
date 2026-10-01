@@ -1,4 +1,5 @@
 import { fireEvent } from '@testing-library/react-native'
+import { type APITypes } from 'shared/api'
 import { playlistsMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { AdminPlaylistEditScreen } from './AdminPlaylistEditScreen'
@@ -26,26 +27,23 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
 }))
 
+const FORM_SCROLL_TEST_ID = 'form-scroll-view'
+const SCROLL_NEAR_END = {
+  contentOffset: { x: 0, y: 900 },
+  contentSize: { height: 1000, width: 400 },
+  layoutMeasurement: { height: 200, width: 400 },
+}
+
 const buildSermon = (title: string, id: string) =>
   sermonsMocks.getSermonControllerFindOneResponseMock({ id, title })
 
-const toPlaylistSermon = (
-  sermon: ReturnType<typeof sermonsMocks.getSermonControllerFindOneResponseMock>,
-) => ({
-  artist: sermon.artist,
-  artwork: sermon.artwork,
-  audioUrl: sermon.audioUrl,
-  book: sermon.book,
-  chapter: sermon.chapter,
-  description: sermon.description,
-  id: sermon.id,
-  playlists: [],
-  position: 0,
-  textFileUrl: sermon.textFileUrl,
-  title: sermon.title,
-  verse: sermon.verse,
-  youtubeUrl: sermon.youtubeUrl,
-})
+// A PlaylistSermon is only produced nested inside the playlist factory, so build
+// one from a factory sample and override the fields the test cares about.
+const buildPlaylistSermon = (title: string, id: string): APITypes.PlaylistSermon => {
+  const [sample] = playlistsMocks.getPlaylistControllerFindOneResponseMock().sermons
+
+  return { ...sample, id, title }
+}
 
 describe('<AdminPlaylistEditScreen>', () => {
   beforeEach(() => {
@@ -75,7 +73,7 @@ describe('<AdminPlaylistEditScreen>', () => {
     mockSermonFindAll.mockResolvedValue({ count: 1, nextCursor: null, sermons: [other] })
 
     const initial = playlistsMocks.getPlaylistControllerFindOneResponseMock({ title: 'Плейлист' })
-    initial.sermons = [toPlaylistSermon(selected)]
+    initial.sermons = [buildPlaylistSermon(selected.title, selected.id)]
     mockFindOne.mockResolvedValue(initial)
 
     const { findByText, getAllByRole, getAllByText } = await renderWithProviders(
@@ -103,7 +101,9 @@ describe('<AdminPlaylistEditScreen>', () => {
     const { findByText, getByTestId } = await renderWithProviders(<AdminPlaylistEditScreen />)
     await findByText('Первая')
 
-    fireEvent(getByTestId('sermon-picker-list'), 'onEndReached')
+    // The picker list does not scroll itself: pagination is triggered by the
+    // outer form scroll approaching its end.
+    fireEvent.scroll(getByTestId(FORM_SCROLL_TEST_ID), { nativeEvent: SCROLL_NEAR_END })
 
     expect(await findByText('Вторая')).toBeTruthy()
     expect(mockSermonFindAll).toHaveBeenCalledWith(

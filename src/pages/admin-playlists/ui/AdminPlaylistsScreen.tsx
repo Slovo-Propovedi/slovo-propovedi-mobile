@@ -6,12 +6,14 @@ import { type APITypes } from 'shared/api'
 import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
+import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminPlaylists } from '../lib/useAdminPlaylists'
 import { AdminPlaylistRow } from './AdminPlaylistRow'
 import { AdminPlaylistsHeader } from './AdminPlaylistsHeader'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/playlists/create'
+const LOAD_MORE_FAILED_LABEL = 'Повторить загрузку'
 const SKELETON_ROWS = 6
 
 const PlaylistSkeletonList = () => (
@@ -31,6 +33,7 @@ export const AdminPlaylistsScreen = () => {
     isLoading,
     isLoadingMore,
     loadMore,
+    loadMoreFailed,
     onOrderChange,
     onSearchChange,
     onSortChange,
@@ -54,7 +57,6 @@ export const AdminPlaylistsScreen = () => {
         keyExtractor={item => item.id}
         data={isLoading ? [] : playlists}
         onEndReached={() => void loadMore()}
-        ListFooterComponent={isLoadingMore ? <AdminPlaylistRow.Skeleton /> : null}
         contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
         renderItem={({ item }) => (
           <AdminPlaylistRow item={item} onPress={() => openPlaylist(item)} />
@@ -81,6 +83,20 @@ export const AdminPlaylistsScreen = () => {
             onSearchChange={onSearchChange}
             onCreate={() => router.push(CREATE_ROUTE)}
           />
+        }
+        ListFooterComponent={
+          isLoadingMore ? (
+            <AdminPlaylistRow.Skeleton />
+          ) : loadMoreFailed ? (
+            <TouchableItem
+              onPress={() => void loadMore()}
+              style={[styles.retry, { backgroundColor: currentTheme.surface }]}
+            >
+              <Text style={[styles.retryText, { color: currentTheme.primary }]}>
+                {LOAD_MORE_FAILED_LABEL}
+              </Text>
+            </TouchableItem>
+          ) : null
         }
       />
     </SafeAreaView>
