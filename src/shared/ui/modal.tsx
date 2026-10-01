@@ -3,6 +3,7 @@ import { Platform, Pressable, Modal as RNModal, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useEscapeKey } from '../lib/escape-key/useEscapeKey'
 import { hapticLight } from '../lib/haptics'
+import { APP_MAX_CONTENT_WIDTH } from './layout/appMaxWidth'
 import { useTheme } from './theme/ThemeContext/useTheme'
 import { INDENTS } from './theme/themed'
 
@@ -84,12 +85,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   contentContainer: {
+    // Desktop-web: cap the dialog to the same centered column as the rest of
+    // the UI (APP_MAX_CONTENT_WIDTH, web-only → undefined on native, so phones
+    // are unchanged). alignSelf centers it inside the full-width backdrop.
+    alignSelf: 'center',
     borderRadius: 16,
     boxShadow: '0px 4px 8px rgba(0,0,0,0.3)',
     elevation: 8,
     // On web leave a visible margin around the dialog instead of filling the
     // whole viewport; native keeps the safe-area gap from the backdrop padding.
     maxHeight: Platform.select({ default: '100%', web: '90%' }),
+    maxWidth: APP_MAX_CONTENT_WIDTH,
     overflow: 'hidden',
+    width: '100%',
   },
 })

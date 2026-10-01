@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useEscapeKey } from '../../lib/escape-key/useEscapeKey'
 import { Button } from '../button'
+import { APP_MAX_CONTENT_WIDTH } from '../layout/appMaxWidth'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
@@ -95,6 +96,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: RADIUSES.high,
     maxHeight: '85%',
+    // Desktop-web: cap to the shared column; parent `overlay` centers it.
+    maxWidth: APP_MAX_CONTENT_WIDTH,
     overflow: 'hidden',
     padding: INDENTS.high,
     width: '100%',

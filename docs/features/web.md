@@ -154,6 +154,8 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 - свёрнутая геометрия `ContainerView` — только эндпоинт `progress→0` в `getRestingContainerStyle.ts` и ворклете `useExpandAnimation.ts` (полноэкранный вид `progress→1` не тронут);
 - в полноэкранном плеере — ряд с тремя точками (`expandedLayoutStyles.trackInfoRow`) и блок кнопок (`expandedControlsStyles.controlsArea`). Прогресс-бар и `HeaderOverlay` остаются на всю ширину.
 
+Модалки тоже ограничены колонкой `APP_MAX_CONTENT_WIDTH`: общий примитив `shared/ui/modal.tsx` (`contentContainer`, инлайн `maxWidth` + `alignSelf: 'center'`) покрывает все диалоги на нём, а диалоги со своим `RNModal` (`ConfirmDialog`, `ErrorDialog`, `WebUpdateModal`, `UpdateDialog`) получают `maxWidth` + `alignSelf: 'center'` в своих стилях. На нативе `APP_MAX_CONTENT_WIDTH = undefined` — ширина не меняется. Полноэкранный просмотр изображения (`MediaViewerModal`) остаётся на всю ширину осознанно.
+
 ## Позиционирование меню (дропдауны) на web
 
 Все «якорные» меню — ⋮-меню шапок (offline/history/playlist), контекст-меню строки трека (`TracksListItemContextMenu`) — рендерятся в прозрачном `Modal` (`shared/ui/menu/AnchoredDropdown`). На web RNW-`Modal` — это **viewport-fixed** портал (позиционируется относительно окна браузера, не документа). Отсюда два требования:
