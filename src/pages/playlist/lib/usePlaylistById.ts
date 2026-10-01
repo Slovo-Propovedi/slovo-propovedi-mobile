@@ -51,7 +51,10 @@ export const usePlaylistById = (playlistId: string) => {
   })
 
   const favorites = useMemo(
-    () => (isFavorites ? buildFavoritesPlaylist(localPlaylists[0]) : undefined),
+    () =>
+      isFavorites
+        ? buildFavoritesPlaylist(localPlaylists.find(p => p.id === FAVORITES_PLAYLIST.id))
+        : undefined,
     [isFavorites, localPlaylists],
   )
 

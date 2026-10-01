@@ -68,7 +68,12 @@ export const FAVORITES_PLAYLIST: LocalPlaylistData = {
 }
 
 // Приводит список к инварианту «Избранные всегда первые».
-export const withFavoritesFirst = (playlists: LocalPlaylistData[]): LocalPlaylistData[] => [
-  FAVORITES_PLAYLIST,
-  ...playlists.filter(playlist => playlist.id !== FAVORITES_PLAYLIST_ID),
-]
+//
+// Первое stored-«Избранное» сохраняется как есть (его снапшоты не теряются при
+// гидратации и reorder); пустая константа — только фолбэк, когда записи нет.
+// Дубликаты favorites id отбрасываются: побеждает первый.
+export const withFavoritesFirst = (playlists: LocalPlaylistData[]): LocalPlaylistData[] => {
+  const storedFavorites = playlists.find(playlist => playlist.id === FAVORITES_PLAYLIST_ID)
+  const others = playlists.filter(playlist => playlist.id !== FAVORITES_PLAYLIST_ID)
+  return [storedFavorites ?? FAVORITES_PLAYLIST, ...others]
+}

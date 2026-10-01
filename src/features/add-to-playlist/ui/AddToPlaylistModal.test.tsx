@@ -31,9 +31,13 @@ const SERMON: SermonData = {
   title: 'Слово',
 }
 
-const seedPlaylists = (ctx: ReturnType<typeof createCtx>, favoritesSermonIds: string[]) => {
+const seedPlaylists = (ctx: ReturnType<typeof createCtx>, favoritesSermons: SermonData[]) => {
   myPlaylistsAtom(ctx, [
-    { ...FAVORITES_PLAYLIST, sermonIds: favoritesSermonIds },
+    {
+      ...FAVORITES_PLAYLIST,
+      sermonIds: favoritesSermons.map(sermon => sermon.id),
+      sermons: favoritesSermons,
+    },
     { id: 'pl-1', sermonIds: [], sermons: [], title: PLAIN_TITLE },
   ])
 }
@@ -53,7 +57,7 @@ describe('<AddToPlaylistModal>', () => {
 
   test('renders containing playlists first with checked boxes', async () => {
     const ctx = createCtx()
-    seedPlaylists(ctx, [SERMON_ID])
+    seedPlaylists(ctx, [SERMON])
 
     await renderModal(ctx)
 
@@ -74,7 +78,7 @@ describe('<AddToPlaylistModal>', () => {
 
   test('adds membership via the entity action when a plain row is pressed', async () => {
     const ctx = createCtx()
-    seedPlaylists(ctx, [SERMON_ID])
+    seedPlaylists(ctx, [SERMON])
 
     await renderModal(ctx)
     pressMembershipRow(1)
@@ -87,7 +91,7 @@ describe('<AddToPlaylistModal>', () => {
 
   test('removes membership for a contained playlist', async () => {
     const ctx = createCtx()
-    seedPlaylists(ctx, [SERMON_ID])
+    seedPlaylists(ctx, [SERMON])
 
     await renderModal(ctx)
     pressMembershipRow(0)
