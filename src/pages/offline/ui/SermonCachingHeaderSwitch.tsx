@@ -64,6 +64,19 @@ export const SermonCachingHeaderSwitch = () => {
   // inner switch is made inert through `pointerEvents: 'none'` in its STYLE — the
   // prop form is not reliably honoured on Fabric — so a tap reaches only the
   // wrapper.
+  //
+  // Android ignores the iOS-only `thumbTintColor`/`onTintColor`/`tintColor` and
+  // otherwise falls back to the platform-default green, so the themed colors must
+  // ride on BOTH prop families (`thumbColor`/`trackColor` for Android). RN drops
+  // the foreign props on each platform, so setting both is safe.
+  //
+  // With Material You (PlatformColor) primary, `withAlpha` passes the value
+  // through unchanged (it cannot parse a native color), so the ON track renders
+  // full-strength instead of dimmed — an accepted fallback documented in
+  // withAlpha.
+  const themedPrimary = currentTheme.primary
+  const dimmedTrack = withAlpha(themedPrimary, ON_TRACK_OPACITY)
+
   return (
     <PressableButton
       onPress={handleToggle}
@@ -74,15 +87,15 @@ export const SermonCachingHeaderSwitch = () => {
     >
       <Switch
         value={enabled}
-        thumbColor={COLORS.primary}
+        onTintColor={dimmedTrack}
+        thumbColor={themedPrimary}
         accessibilityElementsHidden
+        tintColor={COLORS.disabled}
+        thumbTintColor={themedPrimary}
         ios_backgroundColor={COLORS.disabled}
         style={[styles.switch, styles.switchInert]}
         importantForAccessibility='no-hide-descendants'
-        trackColor={{
-          false: COLORS.disabled,
-          true: withAlpha(currentTheme.primary, ON_TRACK_OPACITY),
-        }}
+        trackColor={{ false: COLORS.disabled, true: dimmedTrack }}
       />
     </PressableButton>
   )
