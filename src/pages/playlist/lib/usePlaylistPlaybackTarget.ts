@@ -10,7 +10,7 @@ import { type PlaylistData } from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
 
 const START_LABEL = 'Начать прослушивание плейлиста'
-const CONTINUE_LABEL = 'Продолжить после последнего прослушанного'
+const CONTINUE_LABEL = 'Продолжить прослушивание плейлиста'
 
 const isPlayable = (sermon: SermonData) => Boolean(sermon.audioUrl)
 

@@ -6,7 +6,7 @@ import { renderHookWithProviders } from 'shared/mocks'
 import { usePlaylistPlaybackTarget } from './usePlaylistPlaybackTarget'
 
 const START_LABEL = 'Начать прослушивание плейлиста'
-const CONTINUE_LABEL = 'Продолжить после последнего прослушанного'
+const CONTINUE_LABEL = 'Продолжить прослушивание плейлиста'
 
 const makeSermon = (
   id: string,
