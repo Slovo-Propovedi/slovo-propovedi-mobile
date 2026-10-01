@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
-import { userEvent, waitFor } from '@testing-library/react-native'
+import { fireEvent, userEvent, waitFor } from '@testing-library/react-native'
 import { useRouter } from 'expo-router'
+import { TextInput } from 'react-native'
 import { signIn } from 'entities/auth'
 import { authMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
@@ -70,6 +71,39 @@ describe('<AdminLoginScreen>', () => {
         username: USERNAME,
       })
     })
+  })
+
+  test('submits when Enter is pressed in the password field', async () => {
+    const ctx = createCtx()
+    const user = userEvent.setup()
+    mockedSignIn.mockResolvedValue(authMocks.getAuthControllerSignInResponseMock().user)
+
+    const { getByPlaceholderText } = await renderWithProviders(<AdminLoginScreen />, { ctx })
+
+    await user.type(getByPlaceholderText(USERNAME_PLACEHOLDER), USERNAME)
+    await user.type(getByPlaceholderText(PASSWORD_PLACEHOLDER), PASSWORD)
+    fireEvent(getByPlaceholderText(PASSWORD_PLACEHOLDER), 'submitEditing')
+
+    await waitFor(() => {
+      expect(mockedSignIn).toHaveBeenCalledWith(expect.anything(), {
+        password: PASSWORD,
+        username: USERNAME,
+      })
+    })
+  })
+
+  test('moves focus to the password field when Enter is pressed in the username field', async () => {
+    const ctx = createCtx()
+    const user = userEvent.setup()
+    const focusSpy = jest.spyOn(TextInput.prototype, 'focus')
+
+    const { getByPlaceholderText } = await renderWithProviders(<AdminLoginScreen />, { ctx })
+
+    await user.type(getByPlaceholderText(USERNAME_PLACEHOLDER), USERNAME)
+    fireEvent(getByPlaceholderText(USERNAME_PLACEHOLDER), 'submitEditing')
+
+    expect(focusSpy).toHaveBeenCalledTimes(1)
+    focusSpy.mockRestore()
   })
 
   test('on success shows a toast and navigates back to /more, not /admin', async () => {

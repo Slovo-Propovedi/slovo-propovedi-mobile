@@ -3,6 +3,7 @@ import { Text, TextInput, type TextInputProps, View } from 'react-native'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { formStyles } from './formStyles'
+import { useFormSubmit } from './formSubmitContext'
 import { RequiredAsterisk } from './RequiredAsterisk'
 
 // Текстовое поле формы с подписью и необязательной подсказкой. Обязательное
@@ -39,6 +40,10 @@ export const FormField = ({
 }) => {
   const { currentTheme } = useTheme()
   const [isFocused, setIsFocused] = useState(false)
+  const submitHandler = useFormSubmit()
+  // Enter отправляет форму только из однострочных полей: в multiline Enter
+  // обязан вставлять перенос строки.
+  const canSubmitOnEnter = submitHandler !== null && !multiline
 
   const borderStyle = invalid
     ? { borderColor: COLORS.error, borderWidth: 2 }
@@ -64,6 +69,8 @@ export const FormField = ({
         textContentType={textContentType}
         onFocus={() => setIsFocused(true)}
         placeholderTextColor={currentTheme.placeholder}
+        returnKeyType={canSubmitOnEnter ? 'done' : undefined}
+        onSubmitEditing={canSubmitOnEnter ? submitHandler : undefined}
         onBlur={() => {
           setIsFocused(false)
           onBlur?.()

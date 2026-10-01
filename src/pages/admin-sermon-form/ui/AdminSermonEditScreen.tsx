@@ -62,6 +62,11 @@ const SermonEditForm = ({ id, initial }: { id: string; initial: APITypes.SermonE
     title: 'Редактировать проповедь',
   })
 
+  // Enter повторяет «Сохранить»: та же доступность, что у кнопки в шапке.
+  const submitOnEnter = () => {
+    if (isDirty && !isSubmitting) void save()
+  }
+
   return (
     <>
       <Stack.Screen options={headerOptions} />
@@ -70,6 +75,7 @@ const SermonEditForm = ({ id, initial }: { id: string; initial: APITypes.SermonE
         values={values}
         touched={touched}
         onChange={onChange}
+        onSubmit={submitOnEnter}
         markTouched={markTouched}
         onChapterEndChange={onChapterEndChange}
       />

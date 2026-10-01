@@ -8,6 +8,7 @@ const mockUpdate = jest.fn()
 const mockPlaylistFindAll = jest.fn()
 
 const SAVE_LABEL = 'Сохранить'
+const ENTER_TITLE = 'Раздел с Enter'
 
 jest.mock('shared/api', () => ({
   playlistsApi: {
@@ -71,6 +72,27 @@ describe('<SectionForm>', () => {
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({ description: null, title: 'Новый раздел' }),
     )
+  })
+
+  test('create submits when Enter is pressed in a single-line field', async () => {
+    const { getByLabelText } = await renderWithProviders(<SectionForm mode='create' />)
+
+    fireEvent.changeText(getByLabelText('Название'), ENTER_TITLE)
+    await waitFor(() => expect(getByLabelText('Название').props.value).toBe(ENTER_TITLE))
+    fireEvent(getByLabelText('Название'), 'submitEditing')
+
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1))
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ title: ENTER_TITLE }))
+  })
+
+  test('does not submit when Enter is pressed in the multiline description', async () => {
+    const { getByLabelText } = await renderWithProviders(<SectionForm mode='create' />)
+
+    fireEvent.changeText(getByLabelText('Описание'), 'Описание')
+    await waitFor(() => expect(getByLabelText('Описание').props.value).toBe('Описание'))
+    fireEvent(getByLabelText('Описание'), 'submitEditing')
+
+    expect(mockCreate).not.toHaveBeenCalled()
   })
 
   test('disables the save button until the form is dirty', async () => {

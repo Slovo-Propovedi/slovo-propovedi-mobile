@@ -2,6 +2,7 @@ import { fireEvent } from '@testing-library/react-native'
 import { renderWithProviders } from '../../mocks'
 import { COLORS } from '../theme/colors'
 import { FormField } from './FormField'
+import { FormSubmitContext } from './formSubmitContext'
 
 describe('<FormField>', () => {
   test('renders a required marker after the label', async () => {
@@ -41,5 +42,31 @@ describe('<FormField>', () => {
     fireEvent(getByLabelText('Название'), 'blur')
 
     expect(onBlur).toHaveBeenCalledTimes(1)
+  })
+
+  test('submits on Enter from a single-line field inside a form', async () => {
+    const onSubmit = jest.fn()
+    const { getByLabelText } = await renderWithProviders(
+      <FormSubmitContext.Provider value={onSubmit}>
+        <FormField value='' label='Название' onChangeText={jest.fn()} />
+      </FormSubmitContext.Provider>,
+    )
+
+    fireEvent(getByLabelText('Название'), 'submitEditing')
+
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+  })
+
+  test('keeps newline behavior in a multiline field without submitting', async () => {
+    const onSubmit = jest.fn()
+    const { getByLabelText } = await renderWithProviders(
+      <FormSubmitContext.Provider value={onSubmit}>
+        <FormField value='' multiline label='Описание' onChangeText={jest.fn()} />
+      </FormSubmitContext.Provider>,
+    )
+
+    fireEvent(getByLabelText('Описание'), 'submitEditing')
+
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 })

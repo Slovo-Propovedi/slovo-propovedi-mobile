@@ -26,6 +26,7 @@ export const SermonForm = ({
   markTouched,
   onChange,
   onChapterEndChange,
+  onSubmit,
   touched,
   values,
 }: {
@@ -33,6 +34,7 @@ export const SermonForm = ({
   markTouched: (key: SermonRequiredField) => void
   onChange: UpdateField
   onChapterEndChange: (value: string) => void
+  onSubmit?: () => void
   touched: TouchedMap<SermonRequiredField>
   values: SermonFormValues
 }) => {
@@ -40,7 +42,7 @@ export const SermonForm = ({
   const { artists, books } = useSermonSuggestions()
 
   return (
-    <FormScrollView contentContainerStyle={styles.formContent}>
+    <FormScrollView onSubmit={onSubmit} contentContainerStyle={styles.formContent}>
       {error ? (
         <View style={[styles.errorBanner, { backgroundColor: currentTheme.surface }]}>
           <Text style={[styles.errorText, { color: currentTheme.primary }]}>{error}</Text>

@@ -57,6 +57,11 @@ const PlaylistEditForm = ({ id, initial }: { id: string; initial: APITypes.Playl
     title: 'Редактировать плейлист',
   })
 
+  // Enter повторяет «Сохранить»: та же доступность, что у кнопки в шапке.
+  const submitOnEnter = () => {
+    if (isDirty && !isSubmitting) void save()
+  }
+
   return (
     <>
       <Stack.Screen options={headerOptions} />
@@ -65,6 +70,7 @@ const PlaylistEditForm = ({ id, initial }: { id: string; initial: APITypes.Playl
         values={values}
         touched={touched}
         onChange={onChange}
+        onSubmit={submitOnEnter}
         markTouched={markTouched}
         selectedSermons={initial.sermons}
       />

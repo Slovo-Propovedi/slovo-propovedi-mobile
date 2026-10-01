@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../theme/ThemeContext/useTheme'
+import { FormSubmitContext } from './formSubmitContext'
 
 // Высота заголовка нативного стека без safe-area: iOS — 44pt (large title
 // выключен в этой навигации), Android — 56dp. Нужна для keyboardVerticalOffset
@@ -31,15 +32,19 @@ const SCROLL_TEST_ID = 'form-scroll-view'
  * @param props.contentContainerStyle - Внутренний отступ контейнера ScrollView формы.
  * @param props.onNearEnd - Вызывается при приближении к низу; повторно — только
  * после роста высоты контента (то есть после подгрузки новой порции).
+ * @param props.onSubmit - Отправка формы по Enter (hardware-клавиатура/web).
+ * Публикуется в `FormSubmitContext` для однострочных `FormField`.
  */
 export const FormScrollView = ({
   children,
   contentContainerStyle,
   onNearEnd,
+  onSubmit,
 }: {
   children: ReactNode
   contentContainerStyle?: StyleProp<ViewStyle>
   onNearEnd?: () => void
+  onSubmit?: () => void
 }) => {
   const { currentTheme } = useTheme()
   const insets = useSafeAreaInsets()
@@ -70,21 +75,23 @@ export const FormScrollView = ({
   }, [])
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={isIos ? 'padding' : undefined}
-      keyboardVerticalOffset={isIos ? insets.top + NAV_HEADER_HEIGHT : 0}
-    >
-      <ScrollView
-        testID={SCROLL_TEST_ID}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps='handled'
-        contentContainerStyle={contentContainerStyle}
-        style={{ backgroundColor: currentTheme.background }}
+    <FormSubmitContext.Provider value={onSubmit ?? null}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={isIos ? 'padding' : undefined}
+        keyboardVerticalOffset={isIos ? insets.top + NAV_HEADER_HEIGHT : 0}
       >
-        {children}
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <ScrollView
+          testID={SCROLL_TEST_ID}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps='handled'
+          contentContainerStyle={contentContainerStyle}
+          style={{ backgroundColor: currentTheme.background }}
+        >
+          {children}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </FormSubmitContext.Provider>
   )
 }

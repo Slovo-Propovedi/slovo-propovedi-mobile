@@ -98,7 +98,10 @@ export const SectionForm = ({
   })
 
   return (
-    <FormScrollView contentContainerStyle={styles.formContent}>
+    <FormScrollView
+      contentContainerStyle={styles.formContent}
+      onSubmit={() => isDirty && void handleSubmit()}
+    >
       <Stack.Screen options={headerOptions} />
 
       {error ? (

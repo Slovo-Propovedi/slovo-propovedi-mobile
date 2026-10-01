@@ -27,6 +27,7 @@ export const PlaylistForm = ({
   error,
   markTouched,
   onChange,
+  onSubmit,
   selectedSermons,
   touched,
   values,
@@ -34,6 +35,7 @@ export const PlaylistForm = ({
   error: null | string
   markTouched: (key: 'title') => void
   onChange: UpdateField
+  onSubmit?: () => void
   selectedSermons: SermonOption[]
   touched: TouchedMap<'title'>
   values: PlaylistFormValues
@@ -44,6 +46,7 @@ export const PlaylistForm = ({
 
   return (
     <FormScrollView
+      onSubmit={onSubmit}
       contentContainerStyle={styles.formContent}
       onNearEnd={() => void sermonSearchState.loadMore()}
     >

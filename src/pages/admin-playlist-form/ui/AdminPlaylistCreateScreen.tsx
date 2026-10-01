@@ -23,6 +23,11 @@ export const AdminPlaylistCreateScreen = () => {
     title: 'Создать плейлист',
   })
 
+  // Enter повторяет «Сохранить»: та же доступность, что у кнопки в шапке.
+  const submitOnEnter = () => {
+    if (isDirty && !isSubmitting) void save()
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <Stack.Screen options={headerOptions} />
@@ -32,6 +37,7 @@ export const AdminPlaylistCreateScreen = () => {
         touched={touched}
         onChange={onChange}
         selectedSermons={[]}
+        onSubmit={submitOnEnter}
         markTouched={markTouched}
       />
     </View>
