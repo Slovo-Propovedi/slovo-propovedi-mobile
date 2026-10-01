@@ -1,15 +1,9 @@
 import { action, atom } from '@reatom/framework'
 import z from 'zod'
 import { sectionSchema } from 'entities/section/@x/playlist'
-import { getCachedJson } from 'shared/lib/cache'
 import { type SectionShape, type SermonShape } from 'shared/model'
-import {
-  FAVORITES_PLAYLIST,
-  type LocalPlaylistData,
-  MY_PLAYLISTS,
-  myPlaylistsArraySchema,
-  withFavoritesFirst,
-} from './localPlaylists'
+import { readStoredMyPlaylists } from './lib/readStoredMyPlaylists'
+import { FAVORITES_PLAYLIST, type LocalPlaylistData, withFavoritesFirst } from './localPlaylists'
 import { persistMyPlaylists } from './localPlaylistStorage'
 
 /**
@@ -59,22 +53,6 @@ export type PlaylistData = z.infer<typeof playlistDataSchema>
 export const playlistsArraySchema = z.array(playlistDataSchema)
 
 export const myPlaylistsAtom = atom<LocalPlaylistData[]>([FAVORITES_PLAYLIST], 'myPlaylistsAtom')
-
-// Storage is untrusted and may reject (broken native module, quota, …). A
-// rejection must never surface to callers — `MyPlaylistsSlider` fires the action
-// fire-and-forget (`void loadPlaylists()`) — so any failure degrades to the
-// same "no stored data" path the invalid-JSON case already takes.
-const readStoredMyPlaylists = async (): Promise<LocalPlaylistData[]> => {
-  try {
-    const stored = await getCachedJson(MY_PLAYLISTS, myPlaylistsArraySchema)
-    const playlists = withFavoritesFirst(stored ?? [])
-    if (!stored) await persistMyPlaylists(playlists)
-    return playlists
-  } catch (error) {
-    console.error('[loadMyPlaylists] failed to hydrate from storage:', error)
-    return [FAVORITES_PLAYLIST]
-  }
-}
 
 /**
  * Гидратация локальных плейлистов из AsyncStorage.

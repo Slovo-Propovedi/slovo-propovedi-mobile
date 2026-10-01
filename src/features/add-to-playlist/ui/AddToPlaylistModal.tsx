@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
+import { type SermonData } from 'entities/sermon'
 import { Modal } from 'shared/ui/modal'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
@@ -15,8 +16,7 @@ const DONE_LABEL = 'Готово'
  * плейлистов за один заход; готовность подтверждается кнопкой «Готово».
  * @param root0 - Пропсы модалки.
  * @param root0.onClose - Закрыть модалку.
- * @param root0.sermon - Проповедь (достаточно id) для проверки принадлежности.
- * @param root0.sermon.id - Идентификатор проповеди.
+ * @param root0.sermon - Проповедь (id + снапшот для добавления в плейлист).
  * @param root0.visible - Открыта ли модалка.
  */
 export const AddToPlaylistModal = ({
@@ -25,7 +25,7 @@ export const AddToPlaylistModal = ({
   visible,
 }: {
   onClose: () => void
-  sermon: { id: string }
+  sermon: SermonData
   visible: boolean
 }) => {
   const { currentTheme } = useTheme()
@@ -35,7 +35,7 @@ export const AddToPlaylistModal = ({
     <Modal visible={visible} onBackdropPress={onClose}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: currentTheme.text }]}>{TITLE}</Text>
-        <PlaylistMembershipList items={playlists} sermonId={sermon.id} />
+        <PlaylistMembershipList sermon={sermon} items={playlists} />
         <PressableButton
           onPress={onClose}
           style={[styles.done, { borderTopColor: currentTheme.skeleton }]}

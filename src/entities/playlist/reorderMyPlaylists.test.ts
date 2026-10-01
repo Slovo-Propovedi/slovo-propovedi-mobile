@@ -5,7 +5,7 @@ import { myPlaylistsAtom, reorderMyPlaylists } from './model'
 
 const MY_PLAYLISTS_KEY = 'myPlaylists'
 
-const playlist = (id: string) => ({ id, sermonIds: [], title: id })
+const playlist = (id: string) => ({ id, sermonIds: [], sermons: [], title: id })
 
 describe('reorderMyPlaylists', () => {
   beforeEach(async () => {

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { type SermonData } from 'entities/sermon'
 import { AddToPlaylistModal } from '../ui/AddToPlaylistModal'
 
 /**
@@ -11,18 +12,16 @@ import { AddToPlaylistModal } from '../ui/AddToPlaylistModal'
  * затем `onAddToPlaylist: openAddToPlaylist` в меню и `{modal}` в разметке.
  */
 export const useAddToPlaylistModal = () => {
-  const [sermonId, setSermonId] = useState<null | string>(null)
+  const [sermon, setSermon] = useState<null | SermonData>(null)
 
-  const openAddToPlaylist = useCallback((sermon: { id: string }) => {
-    setSermonId(sermon.id)
+  const openAddToPlaylist = useCallback((next: SermonData) => {
+    setSermon(next)
   }, [])
 
-  const closeAddToPlaylist = useCallback(() => setSermonId(null), [])
+  const closeAddToPlaylist = useCallback(() => setSermon(null), [])
 
   return {
-    modal: sermonId && (
-      <AddToPlaylistModal visible sermon={{ id: sermonId }} onClose={closeAddToPlaylist} />
-    ),
+    modal: sermon && <AddToPlaylistModal visible sermon={sermon} onClose={closeAddToPlaylist} />,
     openAddToPlaylist,
   }
 }

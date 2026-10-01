@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent, screen } from '@testing-library/react-native'
+import { type SermonData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { AddToPlaylistModal } from './AddToPlaylistModal'
 
@@ -15,25 +16,30 @@ jest.mock('entities/playlist', () => {
 })
 
 const { FAVORITES_PLAYLIST, myPlaylistsAtom } = jest.requireActual('entities/playlist') as {
-  FAVORITES_PLAYLIST: { id: string; sermonIds: string[]; title: string }
+  FAVORITES_PLAYLIST: { id: string; sermonIds: string[]; sermons: unknown[]; title: string }
   myPlaylistsAtom: (ctx: unknown, value: unknown) => void
 }
 
 const SERMON_ID = 'sermon-1'
 const PLAIN_TITLE = 'Проповеди недели'
 
+const SERMON: SermonData = {
+  artist: 'Pastor',
+  artwork: null,
+  audioUrl: 'https://cdn/sermon-1.mp3',
+  id: SERMON_ID,
+  title: 'Слово',
+}
+
 const seedPlaylists = (ctx: ReturnType<typeof createCtx>, favoritesSermonIds: string[]) => {
   myPlaylistsAtom(ctx, [
     { ...FAVORITES_PLAYLIST, sermonIds: favoritesSermonIds },
-    { id: 'pl-1', sermonIds: [], title: PLAIN_TITLE },
+    { id: 'pl-1', sermonIds: [], sermons: [], title: PLAIN_TITLE },
   ])
 }
 
 const renderModal = async (ctx: ReturnType<typeof createCtx>) =>
-  renderWithProviders(
-    <AddToPlaylistModal visible onClose={jest.fn()} sermon={{ id: SERMON_ID }} />,
-    { ctx },
-  )
+  renderWithProviders(<AddToPlaylistModal visible sermon={SERMON} onClose={jest.fn()} />, { ctx })
 
 const pressMembershipRow = (index: number) => {
   const rows = screen.getAllByRole('button').filter(button => button.props.accessibilityState)
@@ -75,7 +81,7 @@ describe('<AddToPlaylistModal>', () => {
 
     expect(mockTogglePlaylistSermon).toHaveBeenCalledTimes(1)
     expect(mockTogglePlaylistSermon.mock.calls[0][1]).toBe('pl-1')
-    expect(mockTogglePlaylistSermon.mock.calls[0][2]).toBe(SERMON_ID)
+    expect(mockTogglePlaylistSermon.mock.calls[0][2]).toEqual(SERMON)
     expect(mockTogglePlaylistSermon.mock.calls[0][3]).toBe(true)
   })
 

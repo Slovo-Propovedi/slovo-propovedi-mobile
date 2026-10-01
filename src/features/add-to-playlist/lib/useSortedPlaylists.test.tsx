@@ -8,6 +8,7 @@ const SERMON_ID = 'sermon-1'
 const playlist = (id: string, sermonIds: string[] = []): LocalPlaylistData => ({
   id,
   sermonIds,
+  sermons: [],
   title: id,
 })
 
