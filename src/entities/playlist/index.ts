@@ -1,2 +1,2 @@
 export { mapPlaylistEntityToPlaylistData } from './lib/mappers/mapPlaylistEntityToPlaylistData'
-export { type PlaylistData } from './model'
+export { FAVORITES_PLAYLIST, loadMyPlaylists, myPlaylistsAtom, type PlaylistData } from './model'

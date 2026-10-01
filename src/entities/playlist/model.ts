@@ -1,5 +1,7 @@
+import { action, atom } from '@reatom/framework'
 import z from 'zod'
 import { sectionSchema } from 'entities/section/@x/playlist'
+import { getCachedJson, setCachedJson } from 'shared/lib/cache'
 import { type SectionShape, type SermonShape } from 'shared/model'
 
 /**
@@ -47,3 +49,61 @@ export type PlaylistData = z.infer<typeof playlistDataSchema>
 
 /** Схема для массива плейлистов (PlaylistData[]). */
 export const playlistsArraySchema = z.array(playlistDataSchema)
+
+/**
+ * Локальный (созданный пользователем) плейлист.
+ *
+ * Хранит только id проповедей, а не их снапшоты: полные `SermonData`
+ * резолвятся по id на экране плейлиста (секции/кэш/сеть). `sermonIds`
+ * позволяет переживать обновления каталога.
+ */
+const localPlaylistDataSchema = z.object({
+  id: z.string(),
+  sermonIds: z.array(z.string()),
+  title: z.string(),
+})
+
+type LocalPlaylistData = z.infer<typeof localPlaylistDataSchema>
+
+const myPlaylistsArraySchema = z.array(localPlaylistDataSchema)
+
+/** Ключ AsyncStorage для локальных плейлистов. */
+const MY_PLAYLISTS = 'myPlaylists'
+
+// Префикс `local:` гарантирует, что локальный id не столкнётся с серверным.
+const FAVORITES_PLAYLIST_ID = 'local:favorites'
+
+/** Плейлист «Избранные»: всегда присутствует и стоит первым в списке. */
+export const FAVORITES_PLAYLIST: LocalPlaylistData = {
+  id: FAVORITES_PLAYLIST_ID,
+  sermonIds: [],
+  title: 'Избранные',
+}
+
+export const myPlaylistsAtom = atom<LocalPlaylistData[]>([FAVORITES_PLAYLIST], 'myPlaylistsAtom')
+
+// Приводит список к инварианту «Избранные всегда первые».
+const withFavoritesFirst = (playlists: LocalPlaylistData[]): LocalPlaylistData[] => [
+  FAVORITES_PLAYLIST,
+  ...playlists.filter(playlist => playlist.id !== FAVORITES_PLAYLIST_ID),
+]
+
+const persistMyPlaylists = (playlists: LocalPlaylistData[]) =>
+  setCachedJson(MY_PLAYLISTS, playlists)
+
+/**
+ * Гидратация локальных плейлистов из AsyncStorage.
+ *
+ * Хранилище недоверенное: читается через zod (`myPlaylistsArraySchema`),
+ * невалидные данные трактуются как отсутствующие. При первом чтении
+ * (ключ отсутствует) засеивается `FAVORITES_PLAYLIST`.
+ */
+export const loadMyPlaylists = action(async ctx => {
+  const stored = await getCachedJson(MY_PLAYLISTS, myPlaylistsArraySchema)
+  const playlists = withFavoritesFirst(stored ?? [])
+  if (!stored) await persistMyPlaylists(playlists)
+  await ctx.schedule(() => {
+    myPlaylistsAtom(ctx, playlists)
+  })
+  return playlists
+}, 'loadMyPlaylists')
