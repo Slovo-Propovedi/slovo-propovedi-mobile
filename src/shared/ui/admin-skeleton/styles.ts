@@ -50,12 +50,6 @@ export const styles = StyleSheet.create({
     height: FONT_SIZES.h3,
     width: 26,
   },
-  gridRow: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: INDENTS.low,
-    marginBottom: INDENTS.low,
-  },
   mediaRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -71,11 +65,6 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: INDENTS.medium,
     padding: INDENTS.medium,
-  },
-  tile: {
-    aspectRatio: 1,
-    borderRadius: RADIUSES.low,
-    flex: 1,
   },
   titleBar: {
     height: FONT_SIZES.md,

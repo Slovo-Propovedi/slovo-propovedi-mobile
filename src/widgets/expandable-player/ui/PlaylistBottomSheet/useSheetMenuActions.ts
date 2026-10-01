@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react'
 import { buildHistoryMenuActions, useHistorySermonIds } from 'entities/listening-history'
 import { type PlaylistData } from 'entities/playlist'
-import { toAudioPlayerData } from 'entities/sermon'
+import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon'
 import { type MenuItem } from 'shared/ui/menu'
 
 /**
@@ -12,10 +12,12 @@ import { type MenuItem } from 'shared/ui/menu'
  * builder is only reached for playable sermons.
  * @param playlist - The queue playlist whose sermons back the rows.
  * @param progressMap - Stored listening progress by sermon id (0..1).
+ * @param onAddToPlaylist - Opens the add-to-playlist modal for a sermon.
  */
 export const useSheetMenuActions = (
   playlist: PlaylistData,
   progressMap: Map<string, number>,
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void,
 ): ((itemId: string) => MenuItem[] | undefined) => {
   const historySermonIds = useHistorySermonIds()
   const sermonById = useMemo(
@@ -31,7 +33,13 @@ export const useSheetMenuActions = (
 
   return useCallback(
     (itemId: string): MenuItem[] | undefined => {
-      const deps: readonly unknown[] = [historySermonIds, playlist, progressMap, sermonById]
+      const deps: readonly unknown[] = [
+        historySermonIds,
+        onAddToPlaylist,
+        playlist,
+        progressMap,
+        sermonById,
+      ]
       const prevDeps = cacheDepsRef.current
       if (prevDeps.length !== deps.length || deps.some((dep, i) => dep !== prevDeps[i])) {
         actionsCacheRef.current.clear()
@@ -44,6 +52,7 @@ export const useSheetMenuActions = (
         ? buildHistoryMenuActions({
             inHistory: historySermonIds.has(itemId),
             isCompleted: progressMap.get(itemId) === 1,
+            onAddToPlaylist,
             playlist,
             sermon: audio,
           })
@@ -51,6 +60,6 @@ export const useSheetMenuActions = (
       actionsCacheRef.current.set(itemId, actions)
       return actions
     },
-    [historySermonIds, playlist, progressMap, sermonById],
+    [historySermonIds, onAddToPlaylist, playlist, progressMap, sermonById],
   )
 }

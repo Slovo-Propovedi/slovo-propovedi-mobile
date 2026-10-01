@@ -11,3 +11,5 @@ export { useTheme } from './ThemeContext/useTheme'
 export { FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, PLAYER_SIZES, RADIUSES } from './themed'
 
 export { type ThemeColors, ThemeMode } from './types'
+
+export { withAlpha } from './withAlpha'

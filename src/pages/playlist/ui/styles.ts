@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES, type ThemeColors } from 'shared/ui/theme'
+import { TITLE_TEXT_SHADOW } from './titleTextShadow'
 
 export const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
@@ -59,9 +60,7 @@ export const createStyles = (theme: ThemeColors) =>
       fontWeight: '700',
       paddingHorizontal: INDENTS.medium,
       textAlign: 'center',
-      textShadowColor: 'rgba(0, 0, 0, 0.75)',
-      textShadowOffset: { height: 2, width: 0 },
-      textShadowRadius: 4,
+      ...TITLE_TEXT_SHADOW,
     },
     titleContainer: {
       alignItems: 'center',
@@ -94,6 +93,9 @@ export const queueControlsStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-start',
     paddingVertical: INDENTS.middle,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   icon: {
     tintColor: COLORS.onPrimary,

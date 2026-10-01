@@ -8,6 +8,7 @@ import {
   type ListeningHistoryEntry,
 } from 'entities/listening-history'
 import { useTrackItemCache } from 'entities/offline-cache'
+import { type SermonData } from 'entities/sermon'
 import { TracksListItem } from 'entities/track-list'
 import { formatRelativeDate } from 'shared/lib/format'
 import { INDENTS } from 'shared/ui/theme'
@@ -23,10 +24,12 @@ export const HistoryRow = memo(
     entry,
     isAudioPlaying,
     isPlaying,
+    onAddToPlaylist,
   }: {
     entry: ListeningHistoryEntry
     isAudioPlaying: boolean
     isPlaying: boolean
+    onAddToPlaylist?: (sermon: SermonData) => void
   }) => {
     const playEntry = useEntryPlayback(PLAYBACK_ERROR_MESSAGE)
     const sermon = getEntrySermon(entry)
@@ -49,11 +52,12 @@ export const HistoryRow = memo(
         ? buildHistoryMenuActions({
             inHistory: true,
             isCompleted: completed,
+            onAddToPlaylist,
             playlist: entry.playlist,
             sermon: memoizedSermon,
           })
         : []
-    }, [completed, entry])
+    }, [completed, entry, onAddToPlaylist])
 
     if (!sermon) return null
 

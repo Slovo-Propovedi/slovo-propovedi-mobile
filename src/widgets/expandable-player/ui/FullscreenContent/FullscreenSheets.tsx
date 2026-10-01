@@ -1,5 +1,6 @@
 import { type RefObject } from 'react'
 import { type PlaylistData } from 'entities/playlist'
+import { type AudioPlayerData } from 'entities/sermon'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import {
   PlaylistBottomSheet,
@@ -12,6 +13,7 @@ import { SoundSettingsBottomSheet } from '../SoundSettingsBottomSheet/SoundSetti
 export const FullscreenSheets = ({
   closePlaylist,
   closeSoundSettings,
+  onAddToPlaylist,
   playlist,
   playlistMenuComponent,
   playlistSheetRef,
@@ -20,6 +22,7 @@ export const FullscreenSheets = ({
 }: {
   closePlaylist: () => void
   closeSoundSettings: () => void
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   playlist: PlaylistData
   playlistMenuComponent?: PlaylistMenuSlot
   playlistSheetRef: RefObject<BottomSheet | null>
@@ -32,6 +35,7 @@ export const FullscreenSheets = ({
         playlist={playlist}
         onClose={closePlaylist}
         sheetRef={playlistSheetRef}
+        onAddToPlaylist={onAddToPlaylist}
         playlistMenuComponent={playlistMenuComponent}
       />
     )}

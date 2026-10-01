@@ -23,18 +23,12 @@ import expo.modules.kotlin.records.Record
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlin.math.log10
 
 private const val TAG = "AudioEffectsModule"
 
 /** Equalizer/DynamicsProcessing priority: 0 = normal priority, same as most media apps. */
 private const val EFFECT_PRIORITY = 0
 
-/** Floor for linear-to-dB conversion so that 0 gain maps to -60 dB instead of -Infinity. */
-private const val SILENCE_GAIN_DB = -60f
-
-private const val MILLIBELS_PER_DB = 100
-private const val MILLIHERTZ_PER_HZ = 1000
 private const val DEFAULT_MIN_BAND_DB = -15.0
 private const val DEFAULT_MAX_BAND_DB = 15.0
 private const val DEFAULT_BAND_GAIN_DB = 0f
@@ -200,8 +194,8 @@ class AudioEffectsModule : Module() {
     equalizer = try {
       Equalizer(EFFECT_PRIORITY, audioSessionId).also { created ->
         bandCount = created.numberOfBands.toInt()
-        val storedGains = bandGainsDb.toList()
-        bandGainsDb = MutableList(bandCount) { band -> storedGains.getOrElse(band) { DEFAULT_BAND_GAIN_DB } }
+        bandGainsDb = AudioEffectsMath.resizeGains(bandGainsDb, bandCount, DEFAULT_BAND_GAIN_DB)
+          .toMutableList()
       }
     } catch (error: Exception) {
       Log.e(TAG, "Equalizer is not available on this device", error)
@@ -214,8 +208,7 @@ class AudioEffectsModule : Module() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
     balanceProcessor = try {
       DynamicsProcessing(audioSessionId).also { processor ->
-        processor.setInputGainbyChannel(CHANNEL_LEFT, linearToDb(leftGainFactor()))
-        processor.setInputGainbyChannel(CHANNEL_RIGHT, linearToDb(rightGainFactor()))
+        applyChannelGains(processor)
         processor.setEnabled(true)
       }
     } catch (error: Exception) {
@@ -267,18 +260,24 @@ class AudioEffectsModule : Module() {
     val range = equalizer.bandLevelRange
     val minMillibels = range.getOrNull(0)?.toInt() ?: return null
     val maxMillibels = range.getOrNull(1)?.toInt() ?: return null
-    return (gainDb * MILLIBELS_PER_DB).toInt().coerceIn(minMillibels, maxMillibels)
+    return AudioEffectsMath.gainToMillibels(minMillibels, maxMillibels, gainDb)
   }
 
   private fun applyBalance() {
     val processor = balanceProcessor ?: return
     try {
-      processor.setInputGainbyChannel(CHANNEL_LEFT, linearToDb(leftGainFactor()))
-      processor.setInputGainbyChannel(CHANNEL_RIGHT, linearToDb(rightGainFactor()))
+      applyChannelGains(processor)
       processor.setEnabled(true)
     } catch (error: Exception) {
       Log.e(TAG, "Failed to apply balance $balance", error)
     }
+  }
+
+  private fun applyChannelGains(processor: DynamicsProcessing) {
+    val leftDb = AudioEffectsMath.linearToDb(AudioEffectsMath.leftGainFactor(balance))
+    val rightDb = AudioEffectsMath.linearToDb(AudioEffectsMath.rightGainFactor(balance))
+    processor.setInputGainbyChannel(CHANNEL_LEFT, leftDb)
+    processor.setInputGainbyChannel(CHANNEL_RIGHT, rightDb)
   }
 
   private fun applyPitch(pitch: Float) {
@@ -333,7 +332,7 @@ class AudioEffectsModule : Module() {
   }
 
   private fun readBandCenterHz(band: Int): Int = try {
-    equalizer?.getCenterFreq(band.toShort())?.div(MILLIHERTZ_PER_HZ) ?: 0
+    equalizer?.getCenterFreq(band.toShort())?.let(AudioEffectsMath::milliHzToHz) ?: 0
   } catch (error: Exception) {
     Log.e(TAG, "Failed to read center frequency of band $band", error)
     0
@@ -366,13 +365,6 @@ class AudioEffectsModule : Module() {
       Log.e(TAG, "Failed to release ${effect?.javaClass?.simpleName}", error)
     }
   }
-
-  private fun leftGainFactor(): Float = (1f - balance).coerceIn(0f, 1f)
-
-  private fun rightGainFactor(): Float = (1f + balance).coerceIn(0f, 1f)
-
-  private fun linearToDb(gain: Float): Float =
-    if (gain <= 0f) SILENCE_GAIN_DB else (20f * log10(gain.toDouble()).toFloat()).coerceAtLeast(SILENCE_GAIN_DB)
 
   /** Fire-and-forget main-queue job: errors stay logged, never thrown to JS. */
   private fun launchOnMain(block: () -> Unit) {

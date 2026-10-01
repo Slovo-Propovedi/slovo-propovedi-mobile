@@ -38,6 +38,7 @@ jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
 
   return {
+    Entypo: (props: { name: string }) => <Text>{props.name}</Text>,
     Ionicons: (props: { name: string }) => <Text>{props.name}</Text>,
     MaterialCommunityIcons: (props: { name: string }) => <Text>{props.name}</Text>,
   }
@@ -101,6 +102,7 @@ const CLEAR_LABEL = 'Очистить поиск'
 const SERMON_TITLE = 'Проповедь о вере'
 const SECTIONS_MOCK = 'SECTIONS_MOCK'
 const CONTINUE_BUTTON_MOCK = 'CONTINUE_BUTTON_MOCK'
+const MY_PLAYLISTS_TITLE = 'Мои плейлисты'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
 // A pinned element (the search bar) must not have any scroll container between
@@ -170,6 +172,12 @@ describe('<ListenScreen>', () => {
     expect(mockDynamicSectionsSliderProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ leadingElement: expect.anything() }),
     )
+  })
+
+  test('renders the my-playlists section title', async () => {
+    const { getByLabelText } = await renderWithProviders(<ListenScreen />, {})
+
+    expect(getByLabelText(MY_PLAYLISTS_TITLE)).toBeTruthy()
   })
 
   test('keeps the continue button visible when the search is open but not active', async () => {

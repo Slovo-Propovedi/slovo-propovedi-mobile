@@ -1,10 +1,10 @@
 import { Checkbox } from 'expo-checkbox'
 import { Text, View } from 'react-native'
 import { formatSermonReference } from 'entities/sermon'
-import { type APITypes } from 'shared/api'
 import { CoverImage } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
+import { type SermonOption } from '../lib/sermonOption'
 import { pickerStyles } from './pickerStyles'
 
 // Строка проповеди в поисковом списке выбора: обложка, название, подпись-ссылка.
@@ -15,7 +15,7 @@ export const SermonPickerRow = ({
 }: {
   isSelected: boolean
   onToggle: () => void
-  sermon: APITypes.SermonEntity
+  sermon: SermonOption
 }) => {
   const { currentTheme } = useTheme()
   const reference = formatSermonReference({

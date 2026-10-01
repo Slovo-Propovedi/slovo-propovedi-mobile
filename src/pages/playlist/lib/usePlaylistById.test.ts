@@ -18,6 +18,11 @@ jest.mock('entities/section', () => {
   return { dynamicSectionsAtom: atom([], 'testDynamicSectionsAtom') }
 })
 
+const { FAVORITES_PLAYLIST, myPlaylistsAtom } = jest.requireActual('entities/playlist') as {
+  FAVORITES_PLAYLIST: { id: string; title: string }
+  myPlaylistsAtom: (ctx: unknown, value: unknown) => void
+}
+
 jest.mock('./resolvePlaylistFromCache', () => ({
   resolvePlaylistFromCache: (...args: unknown[]) => mockResolvePlaylistFromCache(...args),
 }))
@@ -192,5 +197,44 @@ describe('usePlaylistById', () => {
     expect(result.current.notFound).toBe(false)
     expect(mockResolvePlaylistFromApi).toHaveBeenCalledTimes(1)
     expect(mockResolvePlaylistFromCache).toHaveBeenCalledTimes(1)
+  })
+
+  test('resolves favorites from local playlist sermons without touching cache or network', async () => {
+    const ctx = createCtx()
+    myPlaylistsAtom(ctx, [
+      {
+        id: FAVORITES_PLAYLIST.id,
+        sermonIds: ['s1'],
+        sermons: [
+          { artist: 'P', artwork: null, audioUrl: 'https://cdn/s1.mp3', id: 's1', title: 'S1' },
+        ],
+        title: FAVORITES_PLAYLIST.title,
+      },
+    ])
+
+    const { result } = await renderHookWithProviders(() => usePlaylistById(FAVORITES_PLAYLIST.id), {
+      ctx,
+    })
+
+    expect(result.current.playlist?.title).toBe(FAVORITES_PLAYLIST.title)
+    expect(result.current.playlist?.sermons).toHaveLength(1)
+    expect(result.current.playlist?.sermons[0].id).toBe('s1')
+    expect(mockResolvePlaylistFromCache).not.toHaveBeenCalled()
+    expect(mockResolvePlaylistFromApi).not.toHaveBeenCalled()
+  })
+
+  test('falls back to the empty favorites stub when local playlist has no sermons', async () => {
+    const ctx = createCtx()
+    myPlaylistsAtom(ctx, [
+      { id: FAVORITES_PLAYLIST.id, sermonIds: [], sermons: [], title: FAVORITES_PLAYLIST.title },
+    ])
+
+    const { result } = await renderHookWithProviders(() => usePlaylistById(FAVORITES_PLAYLIST.id), {
+      ctx,
+    })
+
+    expect(result.current.playlist?.sermons).toEqual([])
+    expect(result.current.playlist?.title).toBe(FAVORITES_PLAYLIST.title)
+    expect(mockResolvePlaylistFromCache).not.toHaveBeenCalled()
   })
 })

@@ -99,6 +99,10 @@ generated/
 
 > **Итог:** приложение работает на **сетевых эндпоинтах** `GET /section`, `GET /sermons` для поиска, `GET /sermons/distinct-values` для подсказок поиска, `GET /playlists/{id}` для deep-link резолва плейлиста, `POST /auth/refresh` (последний напрямую через `axiosInstance`, минуя generated-клиент) + локальной БД для раздела книг (см. [local-db.md](./local-db.md)); админка добавляет полный section-CRUD и оба reorder-эндпоинта разделов, полный playlist-CRUD + reorder проповедей, sermon-CRUD с загрузкой файлов, медиа-библиотеку (`GET/POST/DELETE /files`, orphans-скан и очистка) и полный users-CRUD (см. [`features/admin.md`](../features/admin.md)). Весь остальной CRUD-клиент заведён «на вырост».
 
+## Курсорная пагинация `GET /sermons`
+
+`AllSermonsResponse` (`{ count, nextCursor, sermons }`, см. `api.schemas.ts`) задаёт контракт последней страницы: `nextCursor` — `string | null`, и `null` означает **конец данных** (следующей страницы нет); клиент обязан трактовать `null` как остановку дозагрузки, а не как «попробовать снова с тем же курсором» (так делает `useSermonSearch`: `hasMore = nextCursor !== null`). Запрос пагинации ведётся либо курсором (`take` + `cursor`), либо офсетом (`page` + `limit`) — это **взаимоисключающие** режимы, смешивать их в одном запросе нельзя. В форме плейлиста используется курсорный режим (`take=20` + `cursor`); списки проповедей админки (`useAdminSermons`) — офсетный (`page`/`limit=20`).
+
 ## Мёртвый код
 
 Помимо неиспользуемых обёрток (см. таблицу выше), в `src/shared/api/` есть мёртвый код, не задействованный в рантайме:

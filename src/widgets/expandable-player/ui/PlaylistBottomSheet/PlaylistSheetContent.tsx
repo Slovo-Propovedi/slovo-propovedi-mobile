@@ -2,6 +2,7 @@ import { type BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
 import { memo } from 'react'
 import { Text, View } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
+import { type AudioPlayerData } from 'entities/sermon'
 import { type PlaylistMenuSlot } from './PlaylistBottomSheet'
 import { type createStyles } from './PlaylistBottomSheet.styles'
 import { PlaylistSheetList } from './PlaylistSheetList'
@@ -16,6 +17,7 @@ export const PlaylistSheetContent = memo(
     isAudioPlaying,
     isRevealed,
     listRef,
+    onAddToPlaylist,
     onDragEnd,
     onDragStart,
     onMomentumEnd,
@@ -36,6 +38,7 @@ export const PlaylistSheetContent = memo(
     isAudioPlaying: boolean
     isRevealed: boolean
     listRef: React.RefObject<BottomSheetFlatListMethods | null>
+    onAddToPlaylist?: (sermon: AudioPlayerData) => void
     onDragEnd: () => void
     onDragStart: () => void
     onMomentumEnd: () => void
@@ -71,6 +74,7 @@ export const PlaylistSheetContent = memo(
         onMomentumEnd={onMomentumEnd}
         isAudioPlaying={isAudioPlaying}
         currentAudioId={currentAudioId}
+        onAddToPlaylist={onAddToPlaylist}
         onMomentumStart={onMomentumStart}
         initialNumToRender={initialNumToRender}
         onScrollToIndexFailed={onScrollToIndexFailed}

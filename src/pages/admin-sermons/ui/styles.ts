@@ -2,12 +2,6 @@ import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
-  artwork: {
-    backgroundColor: COLORS.disabled,
-    borderRadius: RADIUSES.low,
-    height: 56,
-    width: 56,
-  },
   badge: {
     borderRadius: RADIUSES.low,
     paddingHorizontal: INDENTS.low,
@@ -78,37 +72,15 @@ export const styles = StyleSheet.create({
   listContent: {
     padding: INDENTS.medium,
   },
-  loadMore: {
+  retry: {
     alignItems: 'center',
     borderRadius: RADIUSES.low,
     justifyContent: 'center',
     marginTop: INDENTS.low,
     paddingVertical: INDENTS.medium,
   },
-  loadMoreText: {
+  retryText: {
     fontSize: FONT_SIZES.base,
-    fontWeight: '600',
-  },
-  row: {
-    borderRadius: RADIUSES.middle,
-    borderWidth: 1,
-    marginBottom: INDENTS.medium,
-    padding: INDENTS.medium,
-  },
-  rowBody: {
-    flex: 1,
-  },
-  rowHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-  },
-  rowMeta: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: 2,
-  },
-  rowTitle: {
-    fontSize: FONT_SIZES.lg,
     fontWeight: '600',
   },
   subtitle: {

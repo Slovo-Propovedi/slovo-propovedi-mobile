@@ -1,9 +1,5 @@
-import { View } from 'react-native'
+import { ListItemBase } from 'entities/list-item'
 import { type APITypes } from 'shared/api'
-import { MovingText } from 'shared/ui'
-import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
-import { styles } from './styles'
 
 // Строка раздела в детали плейлиста: только название.
 // Секции из DTO плейлиста не несут надёжного счётчика плейлистов, поэтому
@@ -15,17 +11,4 @@ export const PlaylistDetailSectionRow = ({
 }: {
   onPress: () => void
   section: APITypes.SectionEntity
-}) => {
-  const { currentTheme } = useTheme()
-
-  return (
-    <TouchableItem
-      onPress={onPress}
-      style={[styles.row, { backgroundColor: currentTheme.surface }]}
-    >
-      <View style={styles.rowBody}>
-        <MovingText text={section.title} style={styles.rowTitle} />
-      </View>
-    </TouchableItem>
-  )
-}
+}) => <ListItemBase movingTitle onPress={onPress} variant='surface' title={section.title} />

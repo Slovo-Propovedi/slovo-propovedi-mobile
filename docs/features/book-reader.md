@@ -61,7 +61,7 @@
    - остальные блочные (`title`, `section`, `subtitle`) → блоки (`getBlockElement`);
    - стили из `getTextElementStyles(name, theme)`, ключи из `getElementKey`.
 
-Сетевые мапперы и `mapWhereIsTitleLocated` (в `src/pages/listen/lib/`) к книгам не относятся — они для плейлистов главного экрана.
+Сетевые мапперы и `mapWhereIsTitleLocated` (в `src/entities/section/lib/`) к книгам не относятся — они для плейлистов главного экрана.
 
 ## Текущее ограничение
 

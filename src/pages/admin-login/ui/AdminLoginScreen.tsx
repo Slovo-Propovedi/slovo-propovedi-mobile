@@ -1,7 +1,7 @@
 import { useAction } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
-import { useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { useRef, useState } from 'react'
+import { ActivityIndicator, ScrollView, Text, type TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { signIn } from 'entities/auth'
 import { getErrorMessage } from 'shared/lib/error-utils'
@@ -23,6 +23,7 @@ export const AdminLoginScreen = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<null | string>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const passwordInputRef = useRef<TextInput>(null)
 
   const canSubmit = username.trim().length > 0 && password.length > 0 && !isSubmitting
 
@@ -63,15 +64,26 @@ export const AdminLoginScreen = () => {
         <AdminLoginField
           value={username}
           placeholder='admin'
+          returnKeyType='next'
+          autoComplete='username'
           label='Имя пользователя'
+          textContentType='username'
           onChangeText={setUsername}
+          onSubmitEditing={() => passwordInputRef.current?.focus()}
         />
         <AdminLoginField
           label='Пароль'
           secureTextEntry
           value={password}
+          returnKeyType='go'
           placeholder='••••••••'
+          textContentType='password'
           onChangeText={setPassword}
+          inputRef={passwordInputRef}
+          autoComplete='current-password'
+          onSubmitEditing={() => {
+            if (canSubmit) void handleSubmit()
+          }}
         />
 
         <TouchableItem

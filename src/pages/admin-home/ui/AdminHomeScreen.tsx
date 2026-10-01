@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router'
 import { ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { authUserAtom } from 'entities/auth'
-import { useTheme } from 'shared/ui/theme'
+import { tabBarHeightAtom } from 'shared/ui/layout'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminStats } from '../lib/useAdminStats'
 import { AdminHomeHeader } from './AdminHomeHeader'
 import { AdminQuickActions } from './AdminQuickActions'
@@ -13,6 +14,7 @@ import { styles } from './styles'
 export const AdminHomeScreen = () => {
   const router = useRouter()
   const [user] = useAtom(authUserAtom)
+  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { currentTheme } = useTheme()
   const stats = useAdminStats()
 
@@ -21,7 +23,9 @@ export const AdminHomeScreen = () => {
       edges={['top']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + INDENTS.low }]}
+      >
         <AdminHomeHeader user={user} />
 
         <View style={styles.cards}>

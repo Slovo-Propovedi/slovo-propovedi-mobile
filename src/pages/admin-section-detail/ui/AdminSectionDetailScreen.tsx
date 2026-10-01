@@ -84,6 +84,7 @@ export const AdminSectionDetailScreen = () => {
         data={playlists}
         renderItem={renderItem}
         keyExtractor={item => item.id}
+        containerStyle={styles.listContainer}
         contentContainerStyle={styles.listContent}
         onDragEnd={({ data }) => void reorder(data)}
         ListEmptyComponent={<EmptyState message='Плейлистов пока нет' />}

@@ -8,7 +8,7 @@ on:
 # Three jobs:
 #   create-release  — gate on CI, verify versions, cut the Forgejo Release
 #   web             — needs: create-release — export + deploy the web PWA + attach zip
-#   android         — needs: create-release — build APK + attach zip + mirror to GitHub
+#   android         — needs: create-release — build APK + attach zip + mirror to GitHub and SourceCraft
 # `web` and `android` depend only on `create-release`, never on each other, so
 # they run in whichever order the runner picks them up. Both are memory-heavy,
 # so they share the `memory-heavy-jobs` concurrency group (also on ci.yml's
@@ -549,6 +549,80 @@ jobs:
             echo "Asset $ZIP_FILE already exists on GitHub release $RELEASE_ID - skipping"
           else
             echo "::warning::GitHub mirror failed: asset upload returned status $UPLOAD_STATUS - $(jq -r .message /tmp/gh-upload.json 2>/dev/null || true)"
+          fi
+
+      - name: Mirror release to SourceCraft
+        env:
+          # SourceCraft PAT is passed via the MIRROR_SOURCECRAFT_TOKEN secret;
+          # auth is required even for GET requests.
+          MIRROR_SOURCECRAFT_TOKEN: ${{ secrets.MIRROR_SOURCECRAFT_TOKEN }}
+        run: |
+          if [ -z "${MIRROR_SOURCECRAFT_TOKEN:-}" ]; then
+            echo "MIRROR_SOURCECRAFT_TOKEN is not configured - skipping SourceCraft mirror"
+            exit 0
+          fi
+
+          TAG="${{ github.ref_name }}"
+          VERSION="${{ needs.create-release.outputs.version }}"
+          ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
+          API_BASE="https://api.sourcecraft.tech/repos/slovo-propovedi/slovo-propovedi-mobile"
+          AUTH_HEADER="Authorization: Bearer ${MIRROR_SOURCECRAFT_TOKEN}"
+
+          # The repo is git-mirrored, so the tag should already exist on SourceCraft
+          # (same assumption as the GitHub step). If the tag push has not landed yet,
+          # release creation fails below and the step degrades to a warning - the
+          # Forgejo release (source of truth) is already out.
+          SKIP_UPLOAD=false
+          RELEASE_STATUS=$(curl -s -o /tmp/sc-release.json -w "%{http_code}" \
+            -H "$AUTH_HEADER" \
+            "$API_BASE/releases/tag/$TAG" || true)
+
+          if [ "$RELEASE_STATUS" = "200" ]; then
+            ASSET_EXISTS=$(jq -r --arg n "$ZIP_FILE" '[.assets[]? | select(.name == $n)] | length > 0' /tmp/sc-release.json 2>/dev/null || echo false)
+            if [ "$ASSET_EXISTS" = "true" ]; then
+              echo "Asset $ZIP_FILE already attached to SourceCraft release $TAG - skipping upload"
+              SKIP_UPLOAD=true
+            else
+              echo "SourceCraft release for $TAG already exists - uploading asset"
+            fi
+          elif [ "$RELEASE_STATUS" = "404" ]; then
+            # The tag already exists via git mirroring, so target_branch is not set.
+            jq -n \
+              --arg tag "$TAG" \
+              --arg title "$TAG" \
+              --arg notes "$(cat release-body.md)" \
+              '{tag: $tag, title: $title, release_notes: $notes, publish: true}' > /tmp/sc-release-body.json
+            CREATE_STATUS=$(curl -s -o /tmp/sc-create.json -w "%{http_code}" -X POST \
+              -H "$AUTH_HEADER" -H "Content-Type: application/json" \
+              --data @/tmp/sc-release-body.json \
+              "$API_BASE/releases" || true)
+            CREATED_TAG=$(jq -r '.tag // .id' /tmp/sc-create.json 2>/dev/null || true)
+            if [ -z "$CREATED_TAG" ] || [ "$CREATED_TAG" = "null" ]; then
+              echo "::warning::SourceCraft mirror failed: could not create release for $TAG (status $CREATE_STATUS) - $(jq -r .message /tmp/sc-create.json 2>/dev/null || true)"
+              exit 0
+            fi
+            echo "Created SourceCraft release for $TAG (status $CREATE_STATUS)"
+          else
+            echo "::warning::SourceCraft mirror failed: unexpected status $RELEASE_STATUS for releases/tag/$TAG"
+            exit 0
+          fi
+
+          if [ "$SKIP_UPLOAD" = "true" ]; then
+            exit 0
+          fi
+
+          # Asset names are not documented as unique server-side, so the pre-check
+          # above is the dedup mechanism.
+          UPLOAD_STATUS=$(curl -s -o /tmp/sc-upload.json -w "%{http_code}" -X POST \
+            -H "$AUTH_HEADER" \
+            -F "name=$ZIP_FILE" \
+            -F "file=@$ZIP_FILE" \
+            "$API_BASE/releases/tag/$TAG/attachments" || true)
+
+          if [ "$UPLOAD_STATUS" = "201" ]; then
+            echo "Uploaded $ZIP_FILE to SourceCraft release $TAG"
+          else
+            echo "::warning::SourceCraft mirror failed: asset upload returned status $UPLOAD_STATUS - $(jq -r .message /tmp/sc-upload.json 2>/dev/null || true)"
           fi
 
       - name: Cleanup workspace

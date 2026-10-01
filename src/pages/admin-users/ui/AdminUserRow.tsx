@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native'
 import { ROLE_LABELS } from 'entities/auth'
 import { type APITypes } from 'shared/api'
-import { MovingText } from 'shared/ui'
+import { AdminUserRowSkeleton, MovingText } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
@@ -45,3 +45,7 @@ export const AdminUserRow = ({
     </TouchableItem>
   )
 }
+
+// Скелетон прикреплён к строке как `AdminUserRow.Skeleton` — единый источник
+// плейсхолдера для этой сущности.
+AdminUserRow.Skeleton = AdminUserRowSkeleton

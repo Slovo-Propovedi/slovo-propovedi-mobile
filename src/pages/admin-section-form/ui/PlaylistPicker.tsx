@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ActivityIndicator, Text, TextInput, View } from 'react-native'
+import { orderSelectedFirst } from 'shared/lib/utils/orderSelectedFirst'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { usePlaylistSearch } from '../lib/usePlaylistSearch'
 import { pickerStyles } from './pickerStyles'
@@ -10,7 +11,8 @@ const LOAD_ERROR = 'Не удалось загрузить плейлисты'
 const NO_RESULTS = 'Ничего не найдено'
 
 // Поисковый список плейлистов с чекбоксами. `selectedIds` — источник истины,
-// переживает поиск: выбранный плейлист остаётся выбранным, даже если скрыт.
+// переживает поиск: выбранный плейлист остаётся выбранным, даже если скрыт, и
+// идёт первым (`orderSelectedFirst`). Плейлисты грузятся целиком, без пагинации.
 export const PlaylistPicker = ({
   onToggle,
   selectedIds,
@@ -21,6 +23,7 @@ export const PlaylistPicker = ({
   const { currentTheme } = useTheme()
   const [search, setSearch] = useState('')
   const { isError, isLoading, isSearchActive, playlists } = usePlaylistSearch(search)
+  const orderedPlaylists = orderSelectedFirst(playlists, selectedIds, playlist => playlist.id)
 
   return (
     <View>
@@ -45,7 +48,7 @@ export const PlaylistPicker = ({
         <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{NO_RESULTS}</Text>
       ) : (
         <View style={pickerStyles.pickerList}>
-          {playlists.map(playlist => (
+          {orderedPlaylists.map(playlist => (
             <PlaylistPickerRow
               key={playlist.id}
               playlist={playlist}

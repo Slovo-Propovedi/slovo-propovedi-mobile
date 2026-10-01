@@ -2,6 +2,7 @@ import { useAtom } from '@reatom/npm-react'
 import { useNavigation } from 'expo-router'
 import { useLayoutEffect } from 'react'
 import { FlatList, StyleSheet, Text, View } from 'react-native'
+import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { getEntrySermon, historyAtom, isHistoryLoadedAtom } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
 import { createTracksListStyles, TracksListSkeleton } from 'entities/track-list'
@@ -29,6 +30,7 @@ export const HistoryScreen = () => {
   const [isPlaying] = useAtom(isPlayingAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const tracksListStyles = createTracksListStyles(currentTheme)
+  const { modal, openAddToPlaylist } = useAddToPlaylistModal()
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerRight: () => <HistoryHeaderMenu /> })
@@ -76,11 +78,13 @@ export const HistoryScreen = () => {
             <HistoryRow
               entry={item}
               isPlaying={isCurrentAudio}
+              onAddToPlaylist={openAddToPlaylist}
               isAudioPlaying={isCurrentAudio && isPlaying}
             />
           )
         }}
       />
+      {modal}
     </View>
   )
 }

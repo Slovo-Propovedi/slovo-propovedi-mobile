@@ -2,6 +2,7 @@ import { type BottomSheetFlatListMethods } from '@gorhom/bottom-sheet'
 import { memo } from 'react'
 import { View } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
+import { type AudioPlayerData } from 'entities/sermon'
 import { TracksListSkeleton } from 'entities/track-list'
 import { type createStyles } from './PlaylistBottomSheet.styles'
 import { ScrollableSheetList } from './ScrollableSheetList'
@@ -19,6 +20,7 @@ const PlaylistSheetListComponent = ({
   isAudioPlaying,
   isRevealed,
   listRef,
+  onAddToPlaylist,
   onDragEnd,
   onDragStart,
   onMomentumEnd,
@@ -38,6 +40,7 @@ const PlaylistSheetListComponent = ({
   isAudioPlaying: boolean
   isRevealed: boolean
   listRef: React.RefObject<BottomSheetFlatListMethods | null>
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onDragEnd: () => void
   onDragStart: () => void
   onMomentumEnd: () => void
@@ -65,6 +68,7 @@ const PlaylistSheetListComponent = ({
     cacheTrigger,
     currentAudioId,
     isAudioPlaying,
+    onAddToPlaylist,
     onPress,
     onScroll,
     playlist,

@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.0] - 2026-10-01
+
+### Added
+
+- Admin-style edit mode for my playlists screen
+- Local section appearance settings for my playlists
+- Store sermon snapshots in local playlists
+- My playlists screen with header edit mode
+- Smart continue-listening play-all in playlist
+- Add to playlist menu item in sermon menus
+- Add to playlist modal with multi-select
+- Playlist membership actions in local playlists domain
+- Edit mode for my playlists reordering
+- Submit forms with Enter key
+- Dnd reordering for my playlists section
+- My playlists section on listen screen
+- Local playlists domain with favorites entry
+- Mirror releases to SourceCraft
+
+### Changed
+
+- Debounce section settings persistence and sync form state
+- Compound skeletons, media skeleton fidelity, picker pagination
+- List rows use user-style press feedback without animation
+- Unify playlist/section/sermon list rows on shared ListItemBase
+
+### Fixed
+
+- Themed colors for offline caching toggle
+- Themed cross-platform colors for offline caching toggle
+- Block favorites navigation in my playlists edit mode
+- Do not reseed local playlists storage on parse failure
+- Preserve stored favorites content across hydration
+- Favorites playlist shows its sermons
+- Use textShadow shorthand to silence deprecation warning
+- Disable playlist play-all button when nothing is playable
+- Disable offline menu actions for empty playlist
+- Commit playlist membership before persist to close lost-update race
+- Avoid nested button in draggable list rows on web
+- Normalize enter-submit guard and cover form context edge cases
+- Picker pagination trigger, load-more retry, review cleanups
+- My playlists drag list duplicates and persist error handling
+- Normalize playlist persistence via toPersistedPlaylist
+- Guard loadMyPlaylists against storage rejections
+- Symmetric save/restore contract and startup-guard reset
+- Input autofill hints and web scroll/tab-bar clearance
+- Use favorites playlist id without local prefix
+
 ## [0.24.0] - 2026-09-30
 
 ### Added
@@ -940,6 +988,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.25.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.25.0
 [0.24.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.24.0
 [0.23.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.23.1
 [0.23.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.23.0

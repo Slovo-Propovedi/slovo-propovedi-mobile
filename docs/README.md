@@ -35,6 +35,8 @@
 | [`debt.md`](./debt.md)                                                 | Технический долг, срезанные углы                                            |
 | [`features/player.md`](./features/player.md)                           | Как работает плеер (модель, PlayerService, кэш аудио)                       |
 | [`features/listening-history.md`](./features/listening-history.md)     | История прослушивания, resume-логика, прогресс в UI                         |
+| [`features/my-playlists.md`](./features/my-playlists.md)               | Локальные («Мои») плейлисты: «Избранные», хранилище, секция на «Слушать»   |
+| [`features/add-to-playlist.md`](./features/add-to-playlist.md)         | Добавление проповеди в плейлист: экшен сущности, модалка мультивыбора, поверхности |
 | [`features/audio-cache.md`](./features/audio-cache.md)                 | Кэширование аудио и секций (offline)                                        |
 | [`features/images.md`](./features/images.md)                           | Кэширование и рендеринг изображений (expo-image)                            |
 | [`features/web.md`](./features/web.md)                                 | Web-платформа: PWA, Service Worker, офлайн-кеш аудио, десктопный layout     |
@@ -50,6 +52,7 @@
 | [`screens/listen.md`](./screens/listen.md)                             | Таб «Слушать» и его экраны                                                  |
 | [`screens/playlist.md`](./screens/playlist.md)                         | Экран плейлиста                                                             |
 | [`screens/playlist-list.md`](./screens/playlist-list.md)               | Экран списка плейлистов                                                     |
+| [`screens/my-playlists.md`](./screens/my-playlists.md)                 | Экран «Мои плейлисты» (редактирование порядка)                              |
 | [`screens/read.md`](./screens/read.md)                                 | Таб «Читать» (заблокирован)                                                 |
 | [`screens/study.md`](./screens/study.md)                               | Таб «Учиться» (заглушка)                                                    |
 | [`screens/more.md`](./screens/more.md)                                 | Таб «Еще»                                                                   |

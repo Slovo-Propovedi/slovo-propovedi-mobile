@@ -2,12 +2,6 @@ import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
-  artwork: {
-    backgroundColor: COLORS.disabled,
-    borderRadius: RADIUSES.low,
-    height: 56,
-    width: 56,
-  },
   centered: {
     alignItems: 'center',
     flex: 1,
@@ -64,17 +58,6 @@ export const styles = StyleSheet.create({
   listContent: {
     padding: INDENTS.medium,
   },
-  loadMore: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    justifyContent: 'center',
-    marginTop: INDENTS.low,
-    paddingVertical: INDENTS.medium,
-  },
-  loadMoreText: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
-  },
   orderButton: {
     alignItems: 'center',
     borderRadius: RADIUSES.low,
@@ -82,24 +65,15 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     width: MIN_TOUCH_TARGET,
   },
-  row: {
+  retry: {
     alignItems: 'center',
-    borderRadius: RADIUSES.middle,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    marginBottom: INDENTS.medium,
-    padding: INDENTS.medium,
+    borderRadius: RADIUSES.low,
+    justifyContent: 'center',
+    marginTop: INDENTS.low,
+    paddingVertical: INDENTS.medium,
   },
-  rowBody: {
-    flex: 1,
-  },
-  rowMeta: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: 2,
-  },
-  rowTitle: {
-    fontSize: FONT_SIZES.lg,
+  retryText: {
+    fontSize: FONT_SIZES.base,
     fontWeight: '600',
   },
   subtitle: {

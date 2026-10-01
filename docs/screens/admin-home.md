@@ -15,6 +15,7 @@
 - `AdminHomeHeader` — «Интерфейс администратора», имя пользователя (muted) и `IconButton` «Вернуться в приложение» (`log-out-outline` → `/listen`).
 - Три карточки `AdminStatCard`: «Разделы», «Плейлисты», «Проповеди» со счётчиками; каждая ведёт в свой таб (`/admin/sections`, `/admin/playlists`, `/admin/sermons`).
 - Блок «Быстрые действия» (`AdminQuickActions`): «Загрузить проповедь» → `/admin/sermons/create`, «Выйти из аккаунта» (`signOut` → `/listen`).
+- Скролл (`ScrollView`) резервирует место под плавающим таб-баром: `paddingBottom: tabBarHeight + INDENTS.low` (`tabBarHeightAtom`) — иначе последняя строка («Выйти из аккаунта») уходит под бар и недоступна (на web `body { overflow: hidden }`, документ не скроллится).
 
 ## Откуда данные
 

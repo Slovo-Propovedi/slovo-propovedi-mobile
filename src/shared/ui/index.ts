@@ -1,6 +1,5 @@
 export { AdminSelect, type AdminSelectOption } from './admin-select'
 export {
-  AdminMediaGridSkeleton,
   AdminPlaylistRowSkeleton,
   AdminSectionRowSkeleton,
   AdminSermonRowSkeleton,
@@ -15,6 +14,7 @@ export { Slider } from './slider/slider'
 export { SliderItemDescriptionBackgroundStyle } from './slider/slider-item-description/slider-item-description.types'
 export { getSliderItemWidth } from './slider/slider-item/slider-item.lib'
 export {
+  type SliderItemsElement,
   SliderItemSize,
   SliderItemTransform,
   WhereIsSlideTitleLocated,
