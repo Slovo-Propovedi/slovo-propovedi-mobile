@@ -3,14 +3,12 @@ import { StyleSheet, Switch } from 'react-native'
 import { sermonCachingEnabledAtom, setSermonCachingEnabled } from 'entities/offline-cache'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { PressableButton } from 'shared/ui/pressable-button'
-import { COLORS, INDENTS, MIN_TOUCH_TARGET, useTheme, withAlpha } from 'shared/ui/theme'
+import { COLORS, INDENTS, MIN_TOUCH_TARGET, useTheme } from 'shared/ui/theme'
+import { buildToggleColors } from '../lib/buildToggleColors'
 import { cancelDownloadsAndClearCache } from '../lib/cancelDownloadsAndClearCache'
 
 const CACHING_LABEL = 'Кеширование проповедей'
 const SWITCH_SCALE = 0.8
-// The thumb carries the full-strength primary; the track behind it is the same
-// hue at reduced opacity so the two do not blend into one solid pill.
-const ON_TRACK_OPACITY = 0.35
 
 // Turning caching OFF is destructive (cancel downloads + wipe the cache), so
 // rapid back-and-forth flipping must not start and stop that clear on every
@@ -67,15 +65,11 @@ export const SermonCachingHeaderSwitch = () => {
   //
   // Android ignores the iOS-only `thumbTintColor`/`onTintColor`/`tintColor` and
   // otherwise falls back to the platform-default green, so the themed colors must
-  // ride on BOTH prop families (`thumbColor`/`trackColor` for Android). RN drops
-  // the foreign props on each platform, so setting both is safe.
-  //
-  // With Material You (PlatformColor) primary, `withAlpha` passes the value
-  // through unchanged (it cannot parse a native color), so the ON track renders
-  // full-strength instead of dimmed — an accepted fallback documented in
-  // withAlpha.
-  const themedPrimary = currentTheme.primary
-  const dimmedTrack = withAlpha(themedPrimary, ON_TRACK_OPACITY)
+  // ride on every prop family at once (see buildToggleColors). The web build
+  // reads react-native-web's `thumbColor`/`trackColor`/`activeThumbColor`/
+  // `activeTrackColor`; RN drops the foreign props on each platform, so setting
+  // them all is safe.
+  const toggleColors = buildToggleColors(currentTheme)
 
   return (
     <PressableButton
@@ -87,15 +81,11 @@ export const SermonCachingHeaderSwitch = () => {
     >
       <Switch
         value={enabled}
-        onTintColor={dimmedTrack}
-        thumbColor={themedPrimary}
+        {...toggleColors}
         accessibilityElementsHidden
-        tintColor={COLORS.disabled}
-        thumbTintColor={themedPrimary}
         ios_backgroundColor={COLORS.disabled}
         style={[styles.switch, styles.switchInert]}
         importantForAccessibility='no-hide-descendants'
-        trackColor={{ false: COLORS.disabled, true: dimmedTrack }}
       />
     </PressableButton>
   )

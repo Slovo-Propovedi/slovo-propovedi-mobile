@@ -248,4 +248,15 @@ describe('<SermonCachingHeaderSwitch>', () => {
     expect(androidSwitch.props.trackColorForTrue).toBe(THEMED_ON_TRACK)
     expect(androidSwitch.props.trackColorForFalse).toBe(OFF_TRACK)
   })
+
+  test('spreads the react-native-web prop family onto the host switch', async () => {
+    const { container } = await renderSwitch(true)
+
+    const hostSwitch = container.queryAll(
+      node => typeof node.type === 'string' && node.type === 'RCTSwitch',
+    )[0]
+
+    expect(hostSwitch.props.activeThumbColor).toBe(THEMED_PRIMARY)
+    expect(hostSwitch.props.activeTrackColor).toBe(THEMED_ON_TRACK)
+  })
 })
