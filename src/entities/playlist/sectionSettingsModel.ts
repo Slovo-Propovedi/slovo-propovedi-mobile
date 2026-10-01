@@ -1,7 +1,7 @@
 import { action, atom } from '@reatom/framework'
 import { readStoredSectionSettings } from './lib/readStoredSectionSettings'
 import { DEFAULT_SECTION_SETTINGS, type LocalSectionSettings } from './localSectionSettings'
-import { persistSectionSettings } from './localSectionSettingsStorage'
+import { persistSectionSettings as persistSectionSettingsToStorage } from './localSectionSettingsStorage'
 
 /** Настройки оформления секции «Мои плейлисты»; засеяны дефолтом. */
 export const sectionSettingsAtom = atom<LocalSectionSettings>(
@@ -28,18 +28,33 @@ export const loadSectionSettings = action(async ctx => {
 /**
  * Мгновенное применение настроек оформления (instant-apply на экране).
  *
- * Коммит в атом идёт **до** записи в хранилище; отказ записи логируется, но
- * атом уже закоммичен — та же политика деградации, что у `loadSectionSettings`.
+ * Только коммит в атом — без записи в хранилище. Запись отделена намеренно:
+ * поле «Строк» меняется на каждое нажатие клавиши, и писать в AsyncStorage
+ * каждый раз незачем. Вызывающий планирует `persistSectionSettings` через
+ * дебаунс (см. `MyPlaylistsAppearanceForm`) и флашит его на blur/unmount.
  */
 export const updateSectionSettings = action(async (ctx, patch: Partial<LocalSectionSettings>) => {
   const nextSettings: LocalSectionSettings = { ...ctx.get(sectionSettingsAtom), ...patch }
   await ctx.schedule(() => {
     sectionSettingsAtom(ctx, nextSettings)
   })
-  try {
-    await persistSectionSettings(nextSettings)
-  } catch (error) {
-    console.error('[updateSectionSettings] failed to persist settings:', error)
-  }
   return nextSettings
 }, 'updateSectionSettings')
+
+/**
+ * Запись текущих настроек оформления в хранилище.
+ *
+ * Читает актуальное значение атома в момент вызова, поэтому схлопывает
+ * серию быстрых изменений в одну запись последнего состояния. Отказ записи
+ * логируется, но атом уже закоммичен — та же политика деградации, что у
+ * `loadSectionSettings`.
+ */
+export const persistSectionSettings = action(async ctx => {
+  const settings = ctx.get(sectionSettingsAtom)
+  try {
+    await persistSectionSettingsToStorage(settings)
+  } catch (error) {
+    console.error('[persistSectionSettings] failed to persist settings:', error)
+  }
+  return settings
+}, 'persistSectionSettings')

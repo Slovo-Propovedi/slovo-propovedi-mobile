@@ -1,7 +1,11 @@
 export { mapPlaylistEntityToPlaylistData } from './lib/mappers/mapPlaylistEntityToPlaylistData'
 export { togglePlaylistSermon } from './localPlaylistMembership'
 export { FAVORITES_PLAYLIST, type LocalPlaylistData } from './localPlaylists'
-export { type LocalSectionSettings } from './localSectionSettings'
+export {
+  DEFAULT_SECTION_SETTINGS,
+  type LocalSectionSettings,
+  MY_PLAYLISTS_SECTION_SETTINGS,
+} from './localSectionSettings'
 export {
   loadMyPlaylists,
   myPlaylistsAtom,
@@ -11,6 +15,7 @@ export {
 } from './model'
 export {
   loadSectionSettings,
+  persistSectionSettings,
   sectionSettingsAtom,
   updateSectionSettings,
 } from './sectionSettingsModel'

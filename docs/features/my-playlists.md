@@ -9,11 +9,11 @@
 - `src/entities/playlist/localPlaylistMembership.ts` — `togglePlaylistSermon` (снапшоты)
 - `src/entities/playlist/localSectionSettings.ts` — `LocalSectionSettings`, zod-черновик, дефолт, `normalizeSectionSettings`, ключ `MY_PLAYLISTS_SECTION_SETTINGS`
 - `src/entities/playlist/localSectionSettingsStorage.ts` — единственный путь записи настроек оформления
-- `src/entities/playlist/sectionSettingsModel.ts` — атом `sectionSettingsAtom`, `loadSectionSettings`, `updateSectionSettings`
+- `src/entities/playlist/sectionSettingsModel.ts` — атом `sectionSettingsAtom`, `loadSectionSettings`, `updateSectionSettings` (коммит атома), `persistSectionSettings` (запись в хранилище)
 - `src/entities/playlist/lib/readStoredMyPlaylists.ts` — чтение/гидратация плейлистов из AsyncStorage
 - `src/entities/playlist/lib/readStoredSectionSettings.ts` — чтение/гидратация настроек оформления
 - `src/entities/playlist/lib/sanitizeLocalPlaylistSermon.ts` — санитизация снапшота проповеди
-- `src/entities/playlist/index.ts` — публичный API (`FAVORITES_PLAYLIST`, `myPlaylistsAtom`, `loadMyPlaylists`, `reorderMyPlaylists`, `togglePlaylistSermon`, `sectionSettingsAtom`, `loadSectionSettings`, `updateSectionSettings`, `LocalSectionSettings`)
+- `src/entities/playlist/index.ts` — публичный API (`FAVORITES_PLAYLIST`, `myPlaylistsAtom`, `loadMyPlaylists`, `reorderMyPlaylists`, `togglePlaylistSermon`, `sectionSettingsAtom`, `loadSectionSettings`, `updateSectionSettings`, `persistSectionSettings`, `LocalSectionSettings`)
 - `src/entities/section/lib/mapItemsSize.ts`, `mapTransform.ts`, `mapWhereIsTitleLocated.ts` — мапперы полей оформления секции в `SliderItemSize`/`SliderItemTransform`/`WhereIsSlideTitleLocated` (перенесены из `pages/listen/lib`, чтобы их переиспользовали и слайдер, и экран «Мои плейлисты»); реэкспорт через `entities/section`
 - `src/pages/listen/ui/MyPlaylistsSlider.tsx` — секция «Мои плейлисты» на «Слушать»: рендерится через общий `Slider` с параметрами из `sectionSettingsAtom`
 - `src/pages/my-playlists/ui/MyPlaylistsScreen.tsx` — экран «Мои плейлисты» — владелец режима редактирования
@@ -128,10 +128,19 @@ reorder и персист принадлежности при toggle.
 3. все поля опциональны — частичная/legacy-запись дочитывается дефолтом (`normalizeSectionSettings`).
 
 `loadSectionSettings` — гидратация (вызывается из `MyPlaylistsSlider` и `MyPlaylistsScreen` fire-and-forget,
-как `loadMyPlaylists`). `updateSectionSettings(ctx, patch)` — **мгновенное применение**: коммитит
-объединённые настройки в `sectionSettingsAtom`, затем пишет в хранилище; отказ записи логируется, но атом
-уже закоммичен (политика деградации как у `reorderMyPlaylists`). Форма оформления вызывает его на каждое
-изменение поля (instant-apply), поэтому настройки переживают перезапуск без отдельной кнопки «Сохранить».
+как `loadMyPlaylists`). `updateSectionSettings(ctx, patch)` — **мгновенное применение только в памяти**:
+коммитит объединённые настройки в `sectionSettingsAtom` и **не пишет в хранилище**. Запись отделена
+намеренно: поле «Строк» меняется на каждое нажатие клавиши. `persistSectionSettings(ctx)` читает
+актуальное значение атома и пишет его в хранилище (схлопывает серию изменений в одну запись последнего
+состояния); отказ записи логируется, атом уже закоммичен (политика деградации как у `reorderMyPlaylists`).
+
+Форма оформления (`MyPlaylistsAppearanceForm`) на каждое изменение поля вызывает `updateSectionSettings`
+(атом — сразу), а `persistSectionSettings` планирует через `useDebounce` (500 мс, trailing) —
+`lib/useScheduleSectionSettingsPersist.ts`. Отложенная запись **флашится** на blur поля «Строк» и на
+размонтирование формы (`flushOnUnmount`), поэтому настройки переживают перезапуск без отдельной кнопки
+«Сохранить» и без записи на каждый символ. Локальный текст поля «Строк» синхронизируется с внешним
+изменением `settings.itemsRows` (React-паттерн «adjust state during render»), не перетирая уже набранное
+совпадающее значение.
 
 ## UI
 

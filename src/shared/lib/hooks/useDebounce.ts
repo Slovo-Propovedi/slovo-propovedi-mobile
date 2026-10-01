@@ -2,6 +2,16 @@ import debounce from 'debounce'
 import { useCallback, useEffect } from 'react'
 import { type AnyFunction } from '../../model/aliases'
 
+interface UseDebounceOptions {
+  /**
+   * Run a pending call on cleanup instead of dropping it. Use for work whose
+   * loss is unacceptable (a storage persist): the trailing call is flushed when
+   * the component unmounts or the debounced action is rebuilt.
+   * @default false
+   */
+  flushOnUnmount?: boolean
+}
+
 /**
  * Trailing-edge debounced callback whose pending timer dies with the component.
  *
@@ -17,12 +27,16 @@ import { type AnyFunction } from '../../model/aliases'
  * @param action - The function to debounce; every reactive input goes into deps.
  * @param delay - Quiet period in milliseconds before the action runs.
  * @param deps - Reactive inputs of the action, rebuilt when any of them changes.
+ * @param options - Lifecycle behavior; defaults to dropping a pending call on cleanup.
  */
 export const useDebounce = <F extends AnyFunction>(
   action: F,
   delay: number,
   deps?: React.DependencyList,
+  options?: UseDebounceOptions,
 ) => {
+  const flushOnUnmount = options?.flushOnUnmount ?? false
+
   // The dependency list comes from the caller, so the compiler rule cannot
   // verify it statically (it only accepts an inline array literal). The contract
   // documented above — deps mirror the action's reactive inputs — is the
@@ -30,7 +44,13 @@ export const useDebounce = <F extends AnyFunction>(
   // eslint-disable-next-line react-hooks/use-memo, react-hooks/exhaustive-deps -- caller-supplied deps array: mirror the action's reactive inputs
   const debounced = useCallback(debounce(action, delay), deps || [])
 
-  useEffect(() => () => debounced.clear(), [debounced])
+  useEffect(
+    () => () => {
+      if (flushOnUnmount) debounced.flush()
+      else debounced.clear()
+    },
+    [debounced, flushOnUnmount],
+  )
 
   return debounced
 }

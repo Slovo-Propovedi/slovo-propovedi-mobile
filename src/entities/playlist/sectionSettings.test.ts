@@ -3,6 +3,7 @@ import { createCtx } from '@reatom/framework'
 import { DEFAULT_SECTION_SETTINGS, MY_PLAYLISTS_SECTION_SETTINGS } from './localSectionSettings'
 import {
   loadSectionSettings,
+  persistSectionSettings,
   sectionSettingsAtom,
   updateSectionSettings,
 } from './sectionSettingsModel'
@@ -86,7 +87,7 @@ describe('updateSectionSettings', () => {
     await AsyncStorage.clear()
   })
 
-  test('commits the change and persists the merged settings', async () => {
+  test('commits the change to the atom without writing storage', async () => {
     const ctx = createCtx()
 
     await updateSectionSettings(ctx, { borderRadius: true, itemsSize: 'large' })
@@ -96,8 +97,54 @@ describe('updateSectionSettings', () => {
       borderRadius: true,
       itemsSize: 'large',
     })
+    expect(AsyncStorage.setItem).not.toHaveBeenCalled()
+  })
+})
+
+describe('persistSectionSettings', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks()
+    await AsyncStorage.clear()
+  })
+
+  test('writes the current atom value to storage', async () => {
+    const ctx = createCtx()
+    sectionSettingsAtom(ctx, {
+      ...DEFAULT_SECTION_SETTINGS,
+      borderRadius: true,
+      itemsSize: 'large',
+    })
+
+    await persistSectionSettings(ctx)
+
     expect(await AsyncStorage.getItem(MY_PLAYLISTS_SECTION_SETTINGS)).toBe(
       JSON.stringify({ ...DEFAULT_SECTION_SETTINGS, borderRadius: true, itemsSize: 'large' }),
+    )
+  })
+
+  test('persists the latest committed value when calls are coalesced', async () => {
+    const ctx = createCtx()
+
+    await updateSectionSettings(ctx, { itemsSize: 'large' })
+    await persistSectionSettings(ctx)
+    await updateSectionSettings(ctx, { itemsSize: 'xLarge' })
+    await persistSectionSettings(ctx)
+
+    expect(await AsyncStorage.getItem(MY_PLAYLISTS_SECTION_SETTINGS)).toBe(
+      JSON.stringify({ ...DEFAULT_SECTION_SETTINGS, itemsSize: 'xLarge' }),
+    )
+  })
+
+  test('a rejected write is logged', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('storage down'))
+    const ctx = createCtx()
+
+    await persistSectionSettings(ctx)
+
+    expect(console.error).toHaveBeenCalledWith(
+      '[persistSectionSettings] failed to persist settings:',
+      expect.any(Error),
     )
   })
 })

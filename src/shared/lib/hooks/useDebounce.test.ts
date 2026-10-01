@@ -119,6 +119,33 @@ describe('useDebounce', () => {
     expect(action).not.toHaveBeenCalled()
   })
 
+  test('flushOnUnmount runs the pending invocation on unmount instead of dropping it', async () => {
+    const action = jest.fn()
+    const { result, unmount } = await renderHook(() =>
+      useDebounce(action, 500, [], { flushOnUnmount: true }),
+    )
+
+    await act(async () => {
+      result.current('hello')
+    })
+
+    await unmount()
+
+    expect(action).toHaveBeenCalledWith('hello')
+    expect(action).toHaveBeenCalledTimes(1)
+  })
+
+  test('flushOnUnmount stays quiet when nothing is pending', async () => {
+    const action = jest.fn()
+    const { unmount } = await renderHook(() =>
+      useDebounce(action, 500, [], { flushOnUnmount: true }),
+    )
+
+    await unmount()
+
+    expect(action).not.toHaveBeenCalled()
+  })
+
   test('keeps the same debounced action while the deps hold', async () => {
     const action = jest.fn()
     const { rerender, result } = await renderHook(

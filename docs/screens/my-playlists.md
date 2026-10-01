@@ -35,8 +35,9 @@
   админке: `SelectField` ×3 («Размер карточек», «Высота карточек», «Расположение заголовка»),
   `FormField` «Строк» (`number-pad`, разбор через `parseItemsRows`), `CheckboxField` ×2 («Крупный
   заголовок описания на слайде», «Скруглённые углы карточек»). Поля названия нет.
-  **Каждое изменение применяется мгновенно** (`updateSectionSettings`: коммит `sectionSettingsAtom` +
-  запись в хранилище) — отдельной кнопки сохранения оформления нет; настройки переживают перезапуск
+  **Каждое изменение применяется мгновенно в памяти** (`updateSectionSettings`: коммит `sectionSettingsAtom`),
+  а запись в хранилище (`persistSectionSettings`) дебаунсится 500 мс и флашится на blur поля «Строк» и
+  на размонтирование формы — отдельной кнопки сохранения оформления нет; настройки переживают перезапуск
   и сразу влияют на секцию «Мои плейлисты» на «Слушать».
 - `FormGroupTitle` «Плейлисты раздела» + закреплённая строка «Избранные»; ниже — drag-список
   остальных плейлистов (`MyPlaylistsDragList`, drag всегда включён).
@@ -57,8 +58,8 @@
 
 - `myPlaylistsAtom` (`entities/playlist`); гидратация `loadMyPlaylists` при монтировании.
 - `sectionSettingsAtom` (`entities/playlist`); гидратация `loadSectionSettings` при монтировании,
-  изменение — `updateSectionSettings` (см. [features/my-playlists.md](../features/my-playlists.md) →
-  «Настройки оформления секции»).
+  изменение — `updateSectionSettings` + дебаунс-запись `persistSectionSettings`
+  (см. [features/my-playlists.md](../features/my-playlists.md) → «Настройки оформления секции»).
 - `reorderMyPlaylists` — обёртка `useReorderMyPlaylists` (`src/pages/my-playlists/lib/useReorderMyPlaylists.ts`)
   с no-op, если порядок не изменился (`hasOrderChanged`).
 - Порядок и настройки оформления локальны и переживают перезапуск через AsyncStorage
