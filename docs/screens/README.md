@@ -20,6 +20,7 @@
 | «Слушать» (главный)      | [listen.md](./listen.md)               | готов        |
 | Плейлист                 | [playlist.md](./playlist.md)           | готов        |
 | Список плейлистов секции | [playlist-list.md](./playlist-list.md) | готов        |
+| «Мои плейлисты»          | [my-playlists.md](./my-playlists.md)   | готов        |
 | «Читать» (таб)           | [read.md](./read.md)                   | заблокирован |
 | «Учиться» (таб)          | [study.md](./study.md)                 | заглушка     |
 | «Еще» (меню)             | [more.md](./more.md)                   | готов        |

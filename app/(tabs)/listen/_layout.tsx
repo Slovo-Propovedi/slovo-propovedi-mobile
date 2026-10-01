@@ -19,6 +19,7 @@ const ListenStackLayout = () => {
       }}
     >
       <Stack.Screen name='index' options={{ headerShown: false }} />
+      <Stack.Screen name='my-playlists' options={{ title: 'Мои плейлисты' }} />
       <Stack.Screen
         name='playlist-list'
         options={{

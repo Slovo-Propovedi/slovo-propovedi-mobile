@@ -3,13 +3,13 @@ import { myPlaylistsAtom, reorderMyPlaylists } from 'entities/playlist'
 import { hasOrderChanged } from 'shared/lib/utils/hasOrderChanged'
 
 /**
- * Обёртка drag-to-reorder для секции «Мои плейлисты».
+ * Обёртка drag-to-reorder для экрана «Мои плейлисты».
  *
  * `playlists` — снимок порядка на момент рендера; сам `reorderMyPlaylists`
  * перечитывает актуальный `myPlaylistsAtom` в момент срабатывания, поэтому
  * снимок используется только для проверки «порядок не изменился» (no-op).
  */
-export const useReorderPlaylists = () => {
+export const useReorderMyPlaylists = () => {
   const reorder = useAction(reorderMyPlaylists)
   const [playlists] = useAtom(myPlaylistsAtom)
 

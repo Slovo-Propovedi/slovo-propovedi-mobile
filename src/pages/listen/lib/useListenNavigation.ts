@@ -18,7 +18,12 @@ export const useListenNavigation = () => {
     })
   }
 
+  const navigateToMyPlaylists = () => {
+    router.push({ pathname: '/listen/my-playlists' })
+  }
+
   return {
+    navigateToMyPlaylists,
     navigateToPlaylist,
     navigateToPlaylistList,
   }

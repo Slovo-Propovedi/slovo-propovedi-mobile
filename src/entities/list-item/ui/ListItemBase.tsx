@@ -24,6 +24,7 @@ const ListItemBaseComponent = ({
   dragLabel = DEFAULT_DRAG_LABEL,
   isActive = false,
   movingTitle = false,
+  onLongPress,
   onPress,
   right,
   style,
@@ -37,6 +38,7 @@ const ListItemBaseComponent = ({
   dragLabel?: string
   isActive?: boolean
   movingTitle?: boolean
+  onLongPress?: () => void
   onPress: () => void
   right?: ReactNode
   style?: StyleProp<ViewStyle>
@@ -82,6 +84,7 @@ const ListItemBaseComponent = ({
     <PressableButton
       onPress={onPress}
       style={containerStyle}
+      onLongPress={onLongPress}
       accessibilityRole={drag ? DRAGGABLE_ROW_ROLE : undefined}
     >
       {content}

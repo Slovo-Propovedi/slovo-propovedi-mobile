@@ -1,35 +1,34 @@
 import { Ionicons } from '@expo/vector-icons'
 import { StyleSheet, View } from 'react-native'
-import { SliderTitle } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
-import { FONT_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 
 const EDIT_LABEL = 'Изменить порядок'
 const SAVE_LABEL = 'Сохранить'
 const ICON_SIZE = 22
 
-// Шапка секции «Мои плейлисты»: заголовок и действия справа. Карандаш
-// «Изменить порядок» переключает режим редактирования (повторный тап выходит из
-// него, отбрасывая локальный порядок). В режиме редактирования рядом — галочка
-// «Сохранить», которая коммитит порядок.
-export const MyPlaylistsHeader = ({
+// Действия шапки экрана «Мои плейлисты». Карандаш «Изменить порядок» включает
+// режим редактирования (повторный тап выходит из него, отбрасывая локальный
+// порядок); в режиме редактирования рядом появляется галочка «Сохранить»,
+// которая коммитит порядок. Когда редактировать нечего (только «Избранные»),
+// действия не рендерятся.
+export const MyPlaylistsHeaderActions = ({
+  isEditable,
   isEditing,
   onSave,
   onToggleEdit,
-  title,
 }: {
+  isEditable: boolean
   isEditing: boolean
   onSave: () => void
   onToggleEdit: () => void
-  title: string
 }) => {
   const { currentTheme } = useTheme()
 
+  if (!isEditable) return null
+
   return (
     <View style={styles.row}>
-      <View style={styles.title}>
-        <SliderTitle title={title} fontSize={FONT_SIZES.h2} />
-      </View>
       <IconButton
         onPress={onToggleEdit}
         accessibilityLabel={EDIT_LABEL}
@@ -47,6 +46,5 @@ export const MyPlaylistsHeader = ({
 }
 
 const styles = StyleSheet.create({
-  row: { alignItems: 'center', flexDirection: 'row', gap: 8 },
-  title: { flex: 1 },
+  row: { alignItems: 'center', flexDirection: 'row', gap: INDENTS.lowest },
 })

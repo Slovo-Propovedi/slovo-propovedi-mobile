@@ -1,14 +1,16 @@
 # Локальные плейлисты («Мои плейлисты»)
 
-Домен локальных (пользовательских) плейлистов и его отображение на экране «Слушать».
+Домен локальных (пользовательских) плейлистов, его секция на экране «Слушать» (только чтение) и экран редактирования порядка `/listen/my-playlists`.
 
 **Файлы:**
 
 - `src/entities/playlist/model.ts` — тип, схема, атом, гидратация, reorder
 - `src/entities/playlist/index.ts` — публичный API (`FAVORITES_PLAYLIST`, `myPlaylistsAtom`, `loadMyPlaylists`, `reorderMyPlaylists`)
-- `src/pages/listen/ui/MyPlaylistsSlider.tsx` — секция «Мои плейлисты» (заголовок + карточка «Избранные» + drag-список), владелец режима редактирования
-- `src/pages/listen/ui/MyPlaylistsHeader.tsx` — шапка секции: заголовок + действия «Изменить порядок» / «Сохранить»
-- `src/pages/listen/ui/MyPlaylistsDragList.tsx` — горизонтальный `DraggableFlatList` карточек с drag-to-reorder (только в режиме редактирования)
+- `src/pages/listen/ui/MyPlaylistsSlider.tsx` — секция «Мои плейлисты» **только для чтения**: заголовок (тап → экран редактирования) + карточка «Избранные» + горизонтальный список карточек
+- `src/pages/my-playlists/ui/MyPlaylistsScreen.tsx` — экран «Мои плейлисты» — владелец режима редактирования
+- `src/pages/my-playlists/ui/MyPlaylistsHeaderActions.tsx` — действия шапки экрана: «Изменить порядок» / «Сохранить»
+- `src/pages/my-playlists/ui/MyPlaylistsDragList.tsx` — вертикальный `DraggableFlatList` строк с drag-to-reorder (только в режиме редактирования)
+- `src/pages/my-playlists/lib/useReorderMyPlaylists.ts` — обёртка `reorderMyPlaylists` (no-op, если порядок не изменился)
 - `src/pages/playlist/lib/usePlaylistById.ts` — tier 0 (локальный резолв)
 - `src/pages/playlist/ui/PlaylistScreen.tsx`, `PlaylistTrackList.tsx` — пустое состояние «Избранного»
 
@@ -34,7 +36,7 @@
 `getCachedJson` + zod-схему (`myPlaylistsArraySchema`), невалидные данные трактуются как
 отсутствующие (см. [contracts/storage.md](../contracts/storage.md)).
 
-`loadMyPlaylists` (Reatom-экшен, вызывается из `MyPlaylistsSlider` при монтировании):
+`loadMyPlaylists` (Reatom-экшен, вызывается из `MyPlaylistsSlider` и `MyPlaylistsScreen` при монтировании):
 
 1. читает и валидирует `myPlaylists`;
 2. если ключа нет — засеивает `[FAVORITES_PLAYLIST]` (persistence выполняется внутренним
@@ -43,7 +45,7 @@
 
 Отказ самого хранилища (reject `AsyncStorage.getItem`/`setItem`, например сломанный
 нативный модуль) не пробрасывается наружу: экшен вызывается fire-and-forget
-(`void loadPlaylists()` в `MyPlaylistsSlider`), поэтому ошибка логируется
+(`void loadPlaylists()` в `MyPlaylistsSlider` и `MyPlaylistsScreen`), поэтому ошибка логируется
 (`console.error`) и трактуется так же, как невалидные данные — как отсутствие
 `myPlaylists`, атом получает засеянный `[FAVORITES_PLAYLIST]`, UI работает.
 
@@ -72,42 +74,53 @@ reorder и персист принадлежности при toggle.
 
 ## UI
 
+### Секция «Мои плейлисты» на экране «Слушать» (только для чтения)
+
 `MyPlaylistsSlider` (`src/pages/listen/ui/MyPlaylistsSlider.tsx`) рендерится после
 `DynamicSectionsSlider` на экране «Слушать» — завершающая секция. Заголовок — «Мои плейлисты»
-(через `MyPlaylistsHeader`). Первая карточка — «Избранные» (`SliderItemSize.Small`), вместо обложки
-передаётся `artworkIcon` (сердце `Ionicons 'heart'` цвета `currentTheme.primary`). Тап по
-карточке ведёт на `/listen/playlist?playlist=favorites`.
+(`SliderTitle`); **тап по заголовку** открывает отдельный экран `/listen/my-playlists`
+(`navigateToMyPlaylists`), где живёт режим редактирования. Первая карточка — «Избранные»
+(`SliderItemSize.Small`), вместо обложки передаётся `artworkIcon` (сердце `Ionicons 'heart'` цвета
+`currentTheme.primary`). Тап по карточке ведёт на `/listen/playlist?playlist=favorites`. Остальные
+локальные плейлисты — горизонтальный `FlatList` карточек `SliderItem`; тап навигирует на плейлист.
+Редактирования порядка в секции **нет** (ни карандаша, ни drag) — секция только читает
+`myPlaylistsAtom` и гидратирует его `loadMyPlaylists` при монтировании.
 
-**Режим редактирования.** Перестановка карточек включается **явно** — двух состояний, обычного и
+### Экран «Мои плейлисты» (редактирование порядка)
+
+`MyPlaylistsScreen` (`src/pages/my-playlists/ui/MyPlaylistsScreen.tsx`) — владелец режима
+редактирования; подробнее — [screens/my-playlists.md](../screens/my-playlists.md). Вертикальный
+список: первой строкой закреплённые «Избранные» (`MyPlaylistsFavoritesRow`, сердечко, не
+перетаскивается), ниже — карточные строки локальных плейлистов (`MyPlaylistsDragList` +
+`MyPlaylistsRow` поверх `ListItemBase`).
+
+**Режим редактирования.** Перестановка строк включается **явно** — двумя состояниями, обычным и
 редактирования, управляет локальный state `localOrderIds` (`null` — обычный режим; массив id —
-открытый режим). Шапка (`MyPlaylistsHeader`, `src/pages/listen/ui/MyPlaylistsHeader.tsx`) в
-обычном режиме показывает `IconButton` с карандашом (`Ionicons 'create-outline'`,
-`accessibilityLabel` «Изменить порядок»), в режиме редактирования рядом появляется `IconButton`
-с галочкой (`checkmark`, «Сохранить»). Карандаш работает как переключатель: повторный тап
-выходит из режима **без сохранения**.
+открытый режим). Опции шапки собирает `useMyPlaylistsHeader`
+(`src/pages/my-playlists/lib/useMyPlaylistsHeader.tsx`), действия рендерит `MyPlaylistsHeaderActions`
+(`src/pages/my-playlists/ui/MyPlaylistsHeaderActions.tsx`): в обычном режиме — `IconButton`
+с карандашом (`Ionicons 'create-outline'`, `accessibilityLabel` «Изменить порядок»), в режиме
+редактирования рядом появляется `IconButton` с галочкой (`checkmark`, «Сохранить»). Карандаш
+работает как переключатель: повторный тап выходит из режима **без сохранения**. Когда редактировать
+нечего (только «Избранные»), действия не рендерятся.
 
 - **Обычный режим:** drag выключен — `MyPlaylistsDragList` получает `isDraggingEnabled = false`,
-  поэтому `onLongPress`, активирующий `drag`, не прокидывается, а тап по карточке навигирует.
-- **Режим редактирования:** drag включён (long-press тянет карточку целиком, native `drag` из
-  `renderItem`), тап по карточке **не** навигирует (и у «Избранного» тоже — карточка
-  нередактируемая). Перестановка меняет **локальную копию** порядка (`localOrderIds`), атом
-  `myPlaylistsAtom` не трогается. «Сохранить» один раз коммитит итог через `reorderMyPlaylists`
-  (полный порядок: `favorites` + локальный порядок; сущность пинит «Избранные» первыми) и
-  выходит из режима. Уход из режима без сохранения (повторный тап по карандашу) или уход с
-  экрана (размонтирование сбрасывает state) локальную копию отбрасывает.
+  поэтому `onLongPress`, активирующий `drag`, не прокидывается, а тап по строке навигирует.
+- **Режим редактирования:** drag включён (long-press тянет строку целиком, native `drag` из
+  `renderItem`), тап по строкам **не** навигирует. Перестановка меняет **локальную копию** порядка
+  (`localOrderIds`), атом `myPlaylistsAtom` не трогается. «Сохранить» один раз коммитит итог через
+  `reorderMyPlaylists` (полный порядок: `favorites` + локальный порядок; сущность пинит «Избранные»
+  первыми) и выходит из режима. Уход из режима без сохранения (повторный тап по карандашу) или уход
+  с экрана (`useFocusEffect` cleanup) локальную копию отбрасывает.
 
-Пока идёт редактирование, `orderedRest` строится функцией `sortByLocalOrder` (id вне локального
-порядка — конкурентно добавленный плейлист — уезжают в конец); после сохранения источником
-истины снова становится `myPlaylistsAtom`.
-
-Остальные карточки рендерит `MyPlaylistsDragList` (`src/pages/listen/ui/MyPlaylistsDragList.tsx`) —
-горизонтальный `DraggableFlatList` (`react-native-draggable-flatlist`) поверх того же
-`SliderItem` (`SliderItemSize.Small`). `MyPlaylistsSlider` передаёт в список `orderedRest`
-(`playlists.slice(1)` в обычном режиме) — «Избранные» рендерятся только отдельной карточкой и в
-списке не дублируются. `onDragEnd` отдаёт итоговый порядок id; в режиме редактирования он
-пишется в локальный state, а не в атом. «Избранные» запиннены первыми и не перетаскиваются.
-`onDragEnd` исполняется на JS-потоке (gesture-handler прокидывает завершение без вызова JS из
-worklet), поэтому `scheduleOnRN` не требуется.
+Пока идёт редактирование, порядок строк строится функцией `sortByLocalOrder`
+(`src/pages/my-playlists/lib/sortByLocalOrder.ts`; id вне локального порядка — конкурентно
+добавленный плейлист — уезжают в конец); после сохранения источником истины снова становится
+`myPlaylistsAtom`. «Избранные» рендерятся только отдельной строкой и в drag-списке не дублируются,
+запиннены первыми и не перетаскиваются. `onDragEnd` отдаёт итоговый порядок id; в режиме
+редактирования он пишется в локальный state, а не в атом. `onDragEnd` исполняется на JS-потоке
+(gesture-handler прокидывает завершение без вызова JS из worklet), поэтому `scheduleOnRN`
+не требуется.
 
 `artworkIcon` — опциональный слот `SliderItem`/`SliderItemsElement` (`src/shared/ui/slider/slider-item/`):
 при наличии обложка не рендерится, вместо неё — нода поверх тематической подложки
@@ -145,5 +158,6 @@ on-slide-описание) заменяется на подложку с ико�
 ## Связанные документы
 
 - [screens/listen.md](../screens/listen.md)
+- [screens/my-playlists.md](../screens/my-playlists.md)
 - [screens/playlist.md](../screens/playlist.md)
 - [contracts/storage.md](../contracts/storage.md)

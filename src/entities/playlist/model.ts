@@ -93,7 +93,7 @@ export const loadMyPlaylists = action(async ctx => {
 }, 'loadMyPlaylists')
 
 /**
- * Переупорядочивание локальных плейлистов (drag-and-drop на экране «Слушать»).
+ * Переупорядочивание локальных плейлистов (drag-and-drop на экране «Мои плейлисты»).
  *
  * Сохраняет новый порядок в `myPlaylists` (локально, без сервера) и коммитит
  * его в `myPlaylistsAtom`. `orderedIds` — желаемый порядок id; «Избранные»
