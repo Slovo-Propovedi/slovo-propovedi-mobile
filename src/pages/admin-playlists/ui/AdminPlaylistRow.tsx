@@ -1,9 +1,6 @@
-import { Text, View } from 'react-native'
+import { ListItemBase } from 'entities/list-item'
 import { type APITypes } from 'shared/api'
-import { CoverImage, MovingText } from 'shared/ui'
-import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
-import { styles } from './styles'
+import { AdminPlaylistRowSkeleton } from 'shared/ui'
 
 const pluralize = (count: number, forms: [string, string, string]) => {
   const mod10 = count % 10
@@ -27,21 +24,17 @@ export const AdminPlaylistRow = ({
 }: {
   item: APITypes.PlaylistEntity
   onPress: () => void
-}) => {
-  const { currentTheme } = useTheme()
+}) => (
+  <ListItemBase
+    movingTitle
+    onPress={onPress}
+    variant='surface'
+    title={item.title}
+    artwork={item.artwork}
+    subtitle={metaLabel(item.sermons.length, item.sections.length)}
+  />
+)
 
-  return (
-    <TouchableItem
-      onPress={onPress}
-      style={[styles.row, { backgroundColor: currentTheme.surface }]}
-    >
-      <CoverImage uri={item.artwork} style={styles.artwork} imageStyle={styles.artwork} />
-      <View style={styles.rowBody}>
-        <MovingText text={item.title} style={styles.rowTitle} />
-        <Text numberOfLines={1} style={[styles.rowMeta, { color: currentTheme.textMuted }]}>
-          {metaLabel(item.sermons.length, item.sections.length)}
-        </Text>
-      </View>
-    </TouchableItem>
-  )
-}
+// Скелетон прикреплён к строке как `AdminPlaylistRow.Skeleton` — единый
+// источник плейсхолдера для этой сущности.
+AdminPlaylistRow.Skeleton = AdminPlaylistRowSkeleton

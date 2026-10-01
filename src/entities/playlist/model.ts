@@ -1,6 +1,16 @@
+import { action, atom } from '@reatom/framework'
 import z from 'zod'
 import { sectionSchema } from 'entities/section/@x/playlist'
+import { getCachedJson } from 'shared/lib/cache'
 import { type SectionShape, type SermonShape } from 'shared/model'
+import {
+  FAVORITES_PLAYLIST,
+  type LocalPlaylistData,
+  MY_PLAYLISTS,
+  myPlaylistsArraySchema,
+  withFavoritesFirst,
+} from './localPlaylists'
+import { persistMyPlaylists } from './localPlaylistStorage'
 
 /**
  * Минимальная структурная проверка вложенной проповеди (SermonShape).
@@ -47,3 +57,74 @@ export type PlaylistData = z.infer<typeof playlistDataSchema>
 
 /** Схема для массива плейлистов (PlaylistData[]). */
 export const playlistsArraySchema = z.array(playlistDataSchema)
+
+export const myPlaylistsAtom = atom<LocalPlaylistData[]>([FAVORITES_PLAYLIST], 'myPlaylistsAtom')
+
+// Storage is untrusted and may reject (broken native module, quota, …). A
+// rejection must never surface to callers — `MyPlaylistsSlider` fires the action
+// fire-and-forget (`void loadPlaylists()`) — so any failure degrades to the
+// same "no stored data" path the invalid-JSON case already takes.
+const readStoredMyPlaylists = async (): Promise<LocalPlaylistData[]> => {
+  try {
+    const stored = await getCachedJson(MY_PLAYLISTS, myPlaylistsArraySchema)
+    const playlists = withFavoritesFirst(stored ?? [])
+    if (!stored) await persistMyPlaylists(playlists)
+    return playlists
+  } catch (error) {
+    console.error('[loadMyPlaylists] failed to hydrate from storage:', error)
+    return [FAVORITES_PLAYLIST]
+  }
+}
+
+/**
+ * Гидратация локальных плейлистов из AsyncStorage.
+ *
+ * Хранилище недоверенное: читается через zod (`myPlaylistsArraySchema`),
+ * невалидные данные трактуются как отсутствующие. При первом чтении
+ * (ключ отсутствует) засеивается `FAVORITES_PLAYLIST`. Отказ самого
+ * хранилища (reject) логируется и трактуется так же — как отсутствие данных.
+ */
+export const loadMyPlaylists = action(async ctx => {
+  const playlists = await readStoredMyPlaylists()
+  await ctx.schedule(() => {
+    myPlaylistsAtom(ctx, playlists)
+  })
+  return playlists
+}, 'loadMyPlaylists')
+
+/**
+ * Переупорядочивание локальных плейлистов (drag-and-drop на экране «Слушать»).
+ *
+ * Сохраняет новый порядок в `myPlaylists` (локально, без сервера) и коммитит
+ * его в `myPlaylistsAtom`. `orderedIds` — желаемый порядок id; «Избранные»
+ * пинятся первыми через `withFavoritesFirst`, поэтому их нельзя сдвинуть с
+ * первой позиции. Неизвестные id молча отбрасываются, а id, присутствующие в
+ * атоме, но отсутствующие в `orderedIds`, дописываются в конец — конкурентное
+ * добавление плейлиста не теряется.
+ *
+ * Чтение атома → вычисление `nextPlaylists` → коммит идут без `await` между
+ * ними, поэтому конкурентные операции не теряют изменения друг друга.
+ *
+ * Запись в хранилище может отклониться (сломанный нативный модуль, квота, …);
+ * такой отказ логируется, но атом уже закоммичен — та же политика деградации,
+ * что и у `readStoredMyPlaylists`.
+ */
+export const reorderMyPlaylists = action(async (ctx, orderedIds: string[]) => {
+  const byId = new Map(ctx.get(myPlaylistsAtom).map(playlist => [playlist.id, playlist]))
+  const ordered = orderedIds.flatMap(id => {
+    const playlist = byId.get(id)
+    return playlist ? [playlist] : []
+  })
+  const seen = new Set(ordered.map(playlist => playlist.id))
+  const missing = [...byId.values()].filter(playlist => !seen.has(playlist.id))
+  const nextPlaylists = withFavoritesFirst([...ordered, ...missing])
+  await ctx.schedule(() => {
+    myPlaylistsAtom(ctx, nextPlaylists)
+  })
+  try {
+    await persistMyPlaylists(nextPlaylists)
+  } catch (error) {
+    console.error('[reorderMyPlaylists] failed to persist order:', error)
+  }
+  return nextPlaylists
+}, 'reorderMyPlaylists')

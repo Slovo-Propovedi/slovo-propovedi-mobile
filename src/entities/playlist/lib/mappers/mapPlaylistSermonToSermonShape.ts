@@ -13,11 +13,11 @@ export const mapPlaylistSermonToSermonShape = (
   apiSermon: APITypes.PlaylistSermon,
 ): SermonShape => ({
   artist: apiSermon.artist,
-  artwork: apiSermon.artwork,
+  artwork: apiSermon.artwork ?? null,
   audioUrl: apiSermon.audioUrl ?? null,
   book: apiSermon.book,
   chapter: apiSermon.chapter,
-  description: apiSermon.description,
+  description: apiSermon.description ?? undefined,
   id: apiSermon.id,
   playlists: apiSermon.playlists?.map(mapPlaylistSermonPlaylistsItemToPlaylistData),
   textFileUrl: apiSermon.textFileUrl ?? null,

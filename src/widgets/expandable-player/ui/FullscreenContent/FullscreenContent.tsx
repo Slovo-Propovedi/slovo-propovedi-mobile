@@ -1,7 +1,7 @@
-import { useCallback } from 'react'
 import { type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { type AudioPlayerData } from 'entities/sermon'
 import { INDENTS } from 'shared/ui/theme'
 import { getNextSermonInfo } from '../../lib/getNextSermonInfo'
 import { type createStyles } from '../ExpandablePlayer/styles'
@@ -11,16 +11,19 @@ import { HeaderOverlay } from './HeaderOverlay'
 import { PlayerControlsSection } from './PlayerControlsSection'
 import { PlayerEdgeFades } from './PlayerEdgeFades'
 import { PlayerMiddleArea } from './PlayerMiddleArea'
+import { useFullscreenContentHandlers } from './useFullscreenContentHandlers'
 import { useFullscreenHandlers } from './useFullscreenHandlers'
 import { usePlayerKeyboardSeek } from './usePlayerKeyboardSeek'
 
 export const FullscreenContent = ({
   fullStyle,
+  onAddToPlaylist,
   onClose,
   playlistMenuComponent,
   styles,
 }: {
   fullStyle: AnimatedStyle<ViewStyle>
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onClose: () => void
   playlistMenuComponent?: PlaylistMenuSlot
   styles: ReturnType<typeof createStyles>
@@ -52,14 +55,8 @@ export const FullscreenContent = ({
     visualState,
   } = useFullscreenHandlers()
 
-  const handleCollapsePress = () => handleCollapse(onClose)
-
-  // Stable identity so the memoized sheet skips re-renders on parent ticks.
-  const handleClosePlaylist = useCallback(() => setShowPlaylist(false), [setShowPlaylist])
-  const handleCloseSoundSettings = useCallback(
-    () => setShowSoundSettings(false),
-    [setShowSoundSettings],
-  )
+  const { handleClosePlaylist, handleCloseSoundSettings, handleCollapsePress } =
+    useFullscreenContentHandlers(handleCollapse, onClose, setShowPlaylist, setShowSoundSettings)
 
   usePlayerKeyboardSeek({
     collapsePlayer: handleCollapsePress,
@@ -108,6 +105,7 @@ export const FullscreenContent = ({
           startSeek={startSeek}
           setShowMenu={setShowMenu}
           visualState={visualState}
+          onAddToPlaylist={onAddToPlaylist}
           onToggleCache={handleToggleCache}
           onOpenPlaylist={handleOpenPlaylist}
           onShowDetails={() => setShowDetails(true)}
@@ -117,6 +115,7 @@ export const FullscreenContent = ({
       <FullscreenSheets
         playlist={playlist}
         showPlaylist={showPlaylist}
+        onAddToPlaylist={onAddToPlaylist}
         closePlaylist={handleClosePlaylist}
         playlistSheetRef={playlistSheetRef}
         showSoundSettings={showSoundSettings}

@@ -19,7 +19,8 @@
 - **Откуда данные:** `sectionControllerFindAll` (`GET /section`) через `sectionsApi`; reorder — `reorderSections` (`PATCH /section/reorder`, тело `{ ids }` — **полный** упорядоченный массив id).
 - **Навигация:** тап по карточке → `/admin/sections/[id]`; «Создать раздел» → `/admin/sections/create`.
 - **Optimistic reorder:** локальное состояние перекрывает ответ сети; на каждый `onDragEnd` сначала применяется новый порядок, при ошибке — откат к прежнему + `showToast`; запрос пропускается, если порядок не изменился (`hasOrderChanged`).
-- **Состояния:** загрузка списка — скелетон-строки (`AdminSectionRowSkeleton`, шапка остаётся видимой; busy reorder — скелетон-строка в футере); пусто — `EmptyState` «Разделов пока нет»; ошибка загрузки — `reportError`; ошибка reorder — откат + тост.
+- **Состояния:** загрузка списка — скелетон-строки (`AdminSectionRow.Skeleton`, шапка остаётся видимой; busy reorder — скелетон-строка в футере); пусто — `EmptyState` «Разделов пока нет»; ошибка загрузки — `reportError`; ошибка reorder — откат + тост.
+- **Высота и отступ под таб-баром (web):** `DraggableFlatList` рендерит собственный контейнер без `flex` — на react-native-web он растягивается по контенту, и список не скроллится (низ обрезается `body { overflow: hidden }` из `public/index.html`). Поэтому контейнеру задан `containerStyle={styles.listContainer}` с `flex: 1`, а `paddingBottom: tabBarHeight + INDENTS.low` (без `PLAYER_SIZES.miniPlayerHeight` — в админке нет мини-плеера).
 
 ## Деталь
 
@@ -30,13 +31,14 @@
 - **Навигация:** иконка «Редактировать» в шапке → `/admin/sections/[id]/edit`; тап по плейлисту → `/admin/playlists/[id]` (внутри админки, не в пользовательский плеер); после удаления — `router.back()` в список + тост.
 - **Удаление:** `ConfirmDialog` («Удалить раздел?») с подтверждением.
 - **Состояния:** загрузка сущности — `AdminContentSkeleton`; не найдено — `EmptyState` «Раздел не найден»; нет плейлистов — `EmptyState` «Плейлистов пока нет»; ошибка reorder — откат + тост; ошибка удаления — `reportError`.
+- **Высота и скролл (web):** список плейлистов раздела — тоже `DraggableFlatList`; его контейнеру задан `containerStyle={styles.listContainer}` с `flex: 1`, иначе на react-native-web список не скроллится и низ обрезается (`body { overflow: hidden }` из `public/index.html`). Экран вне таб-группы, поэтому низ закрывает `SafeAreaView` (`edges={['bottom']}`), а не таб-бар.
 
 ## Форма (создание / редактирование)
 
 **Файлы:** `src/pages/admin-section-form/ui/SectionForm.tsx` (+ `AdminSectionCreateScreen.tsx`, `AdminSectionEditScreen.tsx`, `FormField.tsx`, `SelectField.tsx`, `SelectOptionRow.tsx`, `CheckboxField.tsx`, `PlaylistPicker.tsx`, `PlaylistPickerRow.tsx`), `lib/sectionFormState.ts`, `lib/sectionFormOptions.ts`, `lib/usePlaylistSearch.ts`, `lib/useAdminSectionEntity.ts`
 
 - **Поля:** название (обязательно), описание (textarea, nullable); размер карточек (`small/middle/large/xLarge`), высота (`high/middle/short`), расположение заголовка (`on/under/bothOnAndUnder`) — как `SelectField` в модалке; строки (number, nullable); чекбоксы «Крупный заголовок описания на слайде» и «Скруглённые углы карточек» (`expo-checkbox`).
-- **Режим edit** дополнительно: «Плейлисты раздела» — поисковый список с чекбоксами (`playlistControllerFindAll` с `search`/`sort=title`/`order=asc`, дебаунс 300мс); `selectedPlaylistIds` — источник истины, переживает поиск.
+- **Режим edit** дополнительно: «Плейлисты раздела» — поисковый список с чекбоксами (`playlistControllerFindAll` с `search`/`sort=title`/`order=asc`, дебаунс 300мс); `selectedPlaylistIds` — источник истины, переживает поиск; выбранные плейлисты идут первыми (`orderSelectedFirst`), список грузится целиком, без пагинации.
 - **Мутации:** `sectionControllerCreate` (`POST /section`) / `sectionControllerUpdate` (`PATCH /section/{id}`); в edit тело всегда содержит `playlistsIds` (пустой массив очищает состав); очищенные nullable-поля уходят как `null`.
 - **Кнопка «Сохранить» — в шапке экрана** (`headerRight`, иконка-дискета `SaveButton`, хук `useAdminFormHeader`), всегда доступна при скролле; нижней кнопки отправки в теле нет. Кнопка **disabled, пока форма не изменена** (`isDirty` от `SectionForm`: в edit — сравнение с исходным снапшотом через `omitEqualFields`, в create — pristine-форма disabled).
 - **Валидация:** название непустое (иначе inline-ошибка + тост); иконка сохранения блокируется и показывает `ActivityIndicator` во время запроса.

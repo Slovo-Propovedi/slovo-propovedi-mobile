@@ -1,6 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import {
   SEARCH_HEADER_HEIGHT,
   SearchBar,
@@ -14,6 +15,7 @@ import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useScrollActivity } from '../lib/useScrollActivity'
 import { ContinueListeningButton } from './ContinueListeningButton'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
+import { MyPlaylistsSlider } from './MyPlaylistsSlider'
 
 export const ListenScreen = () => {
   const { currentTheme } = useTheme()
@@ -21,6 +23,7 @@ export const ListenScreen = () => {
   const isSearchActive = useIsSearchActive()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { onScroll } = useScrollActivity()
+  const { modal, openAddToPlaylist } = useAddToPlaylistModal()
 
   return (
     <SafeAreaView
@@ -33,7 +36,7 @@ export const ListenScreen = () => {
         </View>
       )}
       {isSearchOpen && isSearchActive ? (
-        <SermonSearchResults />
+        <SermonSearchResults onAddToPlaylist={openAddToPlaylist} />
       ) : (
         <ScrollView
           onScroll={onScroll}
@@ -46,8 +49,10 @@ export const ListenScreen = () => {
           <DynamicSectionsSlider
             leadingElement={!isSearchActive ? <ContinueListeningButton /> : undefined}
           />
+          <MyPlaylistsSlider />
         </ScrollView>
       )}
+      {modal}
     </SafeAreaView>
   )
 }

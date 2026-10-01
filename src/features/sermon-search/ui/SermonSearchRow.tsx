@@ -1,18 +1,20 @@
 import { memo } from 'react'
 import { buildHistoryMenuActions } from 'entities/listening-history'
 import { useTrackItemCache } from 'entities/offline-cache'
-import { type SermonData, toAudioPlayerData } from 'entities/sermon'
+import { type AudioPlayerData, type SermonData, toAudioPlayerData } from 'entities/sermon'
 import { TracksListItem } from 'entities/track-list'
 import { formatScripture } from '../lib/formatScripture'
 
 export const SermonSearchRow = memo(
   ({
     inHistory = false,
+    onAddToPlaylist,
     onPress,
     progress,
     sermon,
   }: {
     inHistory?: boolean
+    onAddToPlaylist?: (sermon: AudioPlayerData) => void
     onPress: () => void
     progress?: number
     sermon: SermonData
@@ -25,6 +27,7 @@ export const SermonSearchRow = memo(
       ? buildHistoryMenuActions({
           inHistory,
           isCompleted: progress === 1,
+          onAddToPlaylist,
           playlist: sermon.playlists?.[0],
           sermon: audio,
         })

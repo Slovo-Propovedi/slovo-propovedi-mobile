@@ -99,6 +99,16 @@ describe('<SermonSearchRow>', () => {
     expect(screen.getByText(MARK_ACTION_TEXT)).toBeTruthy()
   })
 
+  test('threads onAddToPlaylist into the menu builder', async () => {
+    const onAddToPlaylist = jest.fn()
+
+    await renderItem({ onAddToPlaylist })
+
+    expect(buildHistoryMenuActions).toHaveBeenCalledWith(
+      expect.objectContaining({ onAddToPlaylist }),
+    )
+  })
+
   test('builds menuActions with remove item for in-history sermon', async () => {
     await renderItem({ inHistory: true })
 

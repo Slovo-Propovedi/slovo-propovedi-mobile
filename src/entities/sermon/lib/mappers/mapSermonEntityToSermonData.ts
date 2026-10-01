@@ -12,7 +12,7 @@ export const mapSermonEntityToSermonData = (apiSermon: APITypes.SermonEntity): S
   audioUrl: apiSermon.audioUrl ?? null,
   book: apiSermon.book,
   chapter: apiSermon.chapter,
-  description: apiSermon.description,
+  description: apiSermon.description ?? undefined,
   id: apiSermon.id,
   playlists: apiSermon.playlists?.map(mapPlaylistEntityToPlaylistData),
   textFileUrl: apiSermon.textFileUrl ?? null,

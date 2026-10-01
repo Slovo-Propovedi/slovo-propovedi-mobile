@@ -23,10 +23,12 @@ export const HistoryRow = memo(
     entry,
     isAudioPlaying,
     isPlaying,
+    onAddToPlaylist,
   }: {
     entry: ListeningHistoryEntry
     isAudioPlaying: boolean
     isPlaying: boolean
+    onAddToPlaylist?: (sermon: { id: string }) => void
   }) => {
     const playEntry = useEntryPlayback(PLAYBACK_ERROR_MESSAGE)
     const sermon = getEntrySermon(entry)
@@ -49,11 +51,12 @@ export const HistoryRow = memo(
         ? buildHistoryMenuActions({
             inHistory: true,
             isCompleted: completed,
+            onAddToPlaylist,
             playlist: entry.playlist,
             sermon: memoizedSermon,
           })
         : []
-    }, [completed, entry])
+    }, [completed, entry, onAddToPlaylist])
 
     if (!sermon) return null
 

@@ -16,7 +16,7 @@
   - обложка — через `CoverImage` с фолбэком `IMAGE_PLACEHOLDER`;
   - активная строка подсвечивается (`isPlaying`/`isAudioPlaying` по `currentAudioAtom`/`isPlayingAtom`);
   - тонкая полоса прогресса прослушивания — `useHistoryProgress(sermon.id)` (`entities/listening-history`), как в остальных списках;
-  - контекстное меню — встроенное в `TracksListItem` (удаление из офлайн), кастомных пунктов нет.
+  - контекстное меню — встроенное в `TracksListItem` (удаление из офлайн) плюс кастомный пункт **«Добавить в плейлист»** (иконка `add-circle`): `OfflineRow` строит `menuActions` и вызывает колбэк экрана, который открывает модалку мультивыбора (`useAddToPlaylistModal` на `OfflineScreen`, одна на список — см. [features/add-to-playlist.md](../features/add-to-playlist.md)).
 - Тап по строке — воспроизведение проповеди в её плейлисте через `usePlayNewSermon` (`entities/player`), обёрнутое в try/catch → `reportError(error, 'Не удалось воспроизвести офлайн-проповедь')`.
 - Пустое состояние: «Нет офлайн-проповедей»; если скачивание выключено тумблером — «Сохранение в офлайн отключено» + подсказка «Включите тумблер в шапке экрана» (`OfflineEmptyState`, `src/pages/offline/ui/OfflineEmptyState.tsx`; текст по `sermonCachingEnabledAtom`).
 - Шапка — ряд из двух элементов (`headerRight` в `OfflineScreen`, `View` c `flexDirection: 'row'`):

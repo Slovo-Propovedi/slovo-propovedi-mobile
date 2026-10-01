@@ -20,6 +20,7 @@ export const PlayerControlsSection = ({
   audio,
   duration,
   isCached,
+  onAddToPlaylist,
   onOpenPlaylist,
   onOpenSoundSettings,
   onShowDetails,
@@ -37,6 +38,7 @@ export const PlayerControlsSection = ({
   audio: AudioPlayerData
   duration: number
   isCached: boolean
+  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onOpenPlaylist: () => void
   onOpenSoundSettings: () => void
   onShowDetails: () => void
@@ -73,6 +75,7 @@ export const PlayerControlsSection = ({
           <Text style={styles.artistName}>{subtitle}</Text>
         </View>
         <PlayerMenuAnchor
+          audio={audio}
           styles={styles}
           isCached={isCached}
           showMenu={showMenu}
@@ -80,6 +83,7 @@ export const PlayerControlsSection = ({
           visualState={visualState}
           onShowDetails={onShowDetails}
           onToggleCache={onToggleCache}
+          onAddToPlaylist={onAddToPlaylist}
           onOpenMenu={() => setShowMenu(true)}
           onOpenSoundSettings={onOpenSoundSettings}
         />

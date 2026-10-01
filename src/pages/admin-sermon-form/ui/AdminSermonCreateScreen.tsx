@@ -30,6 +30,11 @@ export const AdminSermonCreateScreen = () => {
     title: 'Загрузить проповедь',
   })
 
+  // Enter повторяет «Сохранить»: та же доступность, что у кнопки в шапке.
+  const submitOnEnter = () => {
+    if (isDirty && !isSubmitting) void save()
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <Stack.Screen options={headerOptions} />
@@ -38,6 +43,7 @@ export const AdminSermonCreateScreen = () => {
         values={values}
         touched={touched}
         onChange={onChange}
+        onSubmit={submitOnEnter}
         markTouched={markTouched}
         onChapterEndChange={onChapterEndChange}
       />
