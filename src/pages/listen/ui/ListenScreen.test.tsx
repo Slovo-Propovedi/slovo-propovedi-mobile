@@ -66,6 +66,14 @@ jest.mock('entities/player', () => ({
   usePlayNewSermon: jest.fn(() => jest.fn()),
 }))
 
+// DraggableFlatList is a pure-JS reanimated list; a FlatList passthrough keeps
+// the MyPlaylistsSlider cards rendering without dragging internals.
+jest.mock('react-native-draggable-flatlist', () => {
+  const { FlatList } = jest.requireActual('react-native')
+
+  return { __esModule: true, default: FlatList }
+})
+
 jest.mock('features/sermon-search/lib/useDebouncedSearch', () => ({
   useDebouncedSearch: () => undefined,
 }))

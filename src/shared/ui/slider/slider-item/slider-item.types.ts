@@ -33,6 +33,7 @@ export interface SliderItemProps {
   descriptionTitle?: string
   descriptionTitleTextAlign?: SliderItemDescriptionTextAlign
   isDescriptionTitleOnSlideLarge?: boolean
+  onLongPress?: (event: GestureResponderEvent) => void
   onPress?: (event: GestureResponderEvent) => void
   size?: SliderItemSize
   style?: StyleProp<ViewStyle>

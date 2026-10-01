@@ -23,6 +23,7 @@ export const SliderItem = ({
   descriptionTitle,
   descriptionTitleTextAlign,
   isDescriptionTitleOnSlideLarge,
+  onLongPress,
   onPress,
   size = SliderItemSize.Small,
   style,
@@ -49,7 +50,12 @@ export const SliderItem = ({
     .exhaustive()
 
   return (
-    <TouchableButton testID={testID} onPress={onPress} activeOpacity={0.8}>
+    <TouchableButton
+      testID={testID}
+      onPress={onPress}
+      activeOpacity={0.8}
+      onLongPress={onLongPress}
+    >
       <View style={[styles.component, { width: conditionSize }, style]}>
         {artworkIcon ? (
           <View

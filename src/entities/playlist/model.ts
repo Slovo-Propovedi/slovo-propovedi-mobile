@@ -3,6 +3,13 @@ import z from 'zod'
 import { sectionSchema } from 'entities/section/@x/playlist'
 import { getCachedJson, setCachedJson } from 'shared/lib/cache'
 import { type SectionShape, type SermonShape } from 'shared/model'
+import {
+  FAVORITES_PLAYLIST,
+  type LocalPlaylistData,
+  MY_PLAYLISTS,
+  myPlaylistsArraySchema,
+  withFavoritesFirst,
+} from './localPlaylists'
 
 /**
  * Минимальная структурная проверка вложенной проповеди (SermonShape).
@@ -50,43 +57,7 @@ export type PlaylistData = z.infer<typeof playlistDataSchema>
 /** Схема для массива плейлистов (PlaylistData[]). */
 export const playlistsArraySchema = z.array(playlistDataSchema)
 
-/**
- * Локальный (созданный пользователем) плейлист.
- *
- * Хранит только id проповедей, а не их снапшоты: полные `SermonData`
- * резолвятся по id на экране плейлиста (секции/кэш/сеть). `sermonIds`
- * позволяет переживать обновления каталога.
- */
-const localPlaylistDataSchema = z.object({
-  id: z.string(),
-  sermonIds: z.array(z.string()),
-  title: z.string(),
-})
-
-type LocalPlaylistData = z.infer<typeof localPlaylistDataSchema>
-
-const myPlaylistsArraySchema = z.array(localPlaylistDataSchema)
-
-/** Ключ AsyncStorage для локальных плейлистов. */
-const MY_PLAYLISTS = 'myPlaylists'
-
-// Плоский id: серверные id — UUID, столкновение с `favorites` невозможно.
-const FAVORITES_PLAYLIST_ID = 'favorites'
-
-/** Плейлист «Избранные»: всегда присутствует и стоит первым в списке. */
-export const FAVORITES_PLAYLIST: LocalPlaylistData = {
-  id: FAVORITES_PLAYLIST_ID,
-  sermonIds: [],
-  title: 'Избранные',
-}
-
 export const myPlaylistsAtom = atom<LocalPlaylistData[]>([FAVORITES_PLAYLIST], 'myPlaylistsAtom')
-
-// Приводит список к инварианту «Избранные всегда первые».
-const withFavoritesFirst = (playlists: LocalPlaylistData[]): LocalPlaylistData[] => [
-  FAVORITES_PLAYLIST,
-  ...playlists.filter(playlist => playlist.id !== FAVORITES_PLAYLIST_ID),
-]
 
 const persistMyPlaylists = (playlists: LocalPlaylistData[]) =>
   setCachedJson(MY_PLAYLISTS, playlists)
@@ -122,3 +93,25 @@ export const loadMyPlaylists = action(async ctx => {
   })
   return playlists
 }, 'loadMyPlaylists')
+
+/**
+ * Переупорядочивание локальных плейлистов (drag-and-drop на экране «Слушать»).
+ *
+ * Оптимистично пишет новый порядок в `myPlaylistsAtom` и сохраняет его в
+ * `myPlaylists` (локально, без сервера). `orderedIds` — желаемый порядок id;
+ * «Избранные» пинятся первыми через `withFavoritesFirst`, поэтому их нельзя
+ * сдвинуть с первой позиции. Неизвестные id молча отбрасываются.
+ */
+export const reorderMyPlaylists = action(async (ctx, orderedIds: string[]) => {
+  const byId = new Map(ctx.get(myPlaylistsAtom).map(playlist => [playlist.id, playlist]))
+  const ordered = orderedIds.flatMap(id => {
+    const playlist = byId.get(id)
+    return playlist ? [playlist] : []
+  })
+  const nextPlaylists = withFavoritesFirst(ordered)
+  await persistMyPlaylists(nextPlaylists)
+  await ctx.schedule(() => {
+    myPlaylistsAtom(ctx, nextPlaylists)
+  })
+  return nextPlaylists
+}, 'reorderMyPlaylists')

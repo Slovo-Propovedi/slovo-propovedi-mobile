@@ -4,9 +4,10 @@
 
 **Файлы:**
 
-- `src/entities/playlist/model.ts` — тип, схема, атом, гидратация
-- `src/entities/playlist/index.ts` — публичный API (`FAVORITES_PLAYLIST`, `myPlaylistsAtom`, `loadMyPlaylists`)
-- `src/pages/listen/ui/MyPlaylistsSlider.tsx` — секция «Мои плейлисты»
+- `src/entities/playlist/model.ts` — тип, схема, атом, гидратация, reorder
+- `src/entities/playlist/index.ts` — публичный API (`FAVORITES_PLAYLIST`, `myPlaylistsAtom`, `loadMyPlaylists`, `reorderMyPlaylists`)
+- `src/pages/listen/ui/MyPlaylistsSlider.tsx` — секция «Мои плейлисты» (заголовок + карточка «Избранные» + drag-список)
+- `src/pages/listen/ui/MyPlaylistsDragList.tsx` — горизонтальный `DraggableFlatList` карточек с drag-to-reorder
 - `src/pages/playlist/lib/usePlaylistById.ts` — tier 0 (локальный резолв)
 - `src/pages/playlist/ui/PlaylistScreen.tsx`, `PlaylistTrackList.tsx` — пустое состояние «Избранного»
 
@@ -21,7 +22,7 @@
   столкновение невозможно.
 - `FAVORITES_PLAYLIST` (`{ id: 'favorites', title: 'Избранные', sermonIds: [] }`) —
   системный плейлист: **всегда присутствует и стоит первым** в списке. Инвариант обеспечивает
-  `withFavoritesFirst` при гидратации.
+  `withFavoritesFirst` при гидратации и при reorder — «Избранные» нельзя перетащить с первой позиции.
 - `myPlaylistsAtom: LocalPlaylistData[]` — засеян `[FAVORITES_PLAYLIST]`, поэтому UI работает
   сразу, ещё до чтения хранилища.
 
@@ -45,22 +46,42 @@
 (`console.error`) и трактуется так же, как невалидные данные — как отсутствие
 `myPlaylists`, атом получает засеянный `[FAVORITES_PLAYLIST]`, UI работает.
 
-Для текущей итерации список только читается: мутирующего CRUD нет, единственная запись —
-сид «Избранного» при первом чтении.
+Для текущей итерации список только читается и переупорядочивается: мутирующего CRUD
+(создание/удаление/добавление проповедей) нет, единственные записи — сид «Избранного»
+при первом чтении и сохранение нового порядка при reorder.
+
+`reorderMyPlaylists(ctx, orderedIds)` (Reatom-экшен, публичный API сущности) — локальное
+переупорядочивание drag-and-drop:
+
+1. собирает текущий порядок из `myPlaylistsAtom` в map `id → LocalPlaylistData`;
+2. фильтрует `orderedIds`, отбрасывая неизвестные id;
+3. приводит к инварианту `withFavoritesFirst` — «Избранные» всегда первые (пиннинг);
+4. сохраняет новый порядок в `myPlaylists` (`persistMyPlaylists`) и пишет его в `myPlaylistsAtom`.
+
+Серверных вызовов нет — порядок локален и переживает перезапуск через AsyncStorage.
 
 ## UI
 
 `MyPlaylistsSlider` (`src/pages/listen/ui/MyPlaylistsSlider.tsx`) рендерится после
 `DynamicSectionsSlider` на экране «Слушать» — завершающая секция. Заголовок — «Мои плейлисты»
-(через `Slider`/`SliderTitle`, как у серверных секций). Карточка — тот же `Slider` размером
-`SliderItemSize.Small`, что и соседние секции; вместо обложки передаётся `artworkIcon` (сердце
-`Ionicons 'heart'` цвета `currentTheme.primary`). Тап по карточке ведёт на
-`/listen/playlist?playlist=favorites`.
+(через `SliderTitle`). Первая карточка — «Избранные» (`SliderItemSize.Small`), вместо обложки
+передаётся `artworkIcon` (сердце `Ionicons 'heart'` цвета `currentTheme.primary`). Тап по
+карточке ведёт на `/listen/playlist?playlist=favorites`.
 
-`artworkIcon` — опциональный слот `SliderItem`/`SliderItemsElement`
-(`src/shared/ui/slider/slider-item/`): при наличии обложка не рендерится, вместо неё — нода
-поверх тематической подложки (`currentTheme.surface`). API обратной совместимости: обычные
-слайдеры без `artworkIcon` не затрагиваются.
+Остальные карточки рендерит `MyPlaylistsDragList` (`src/pages/listen/ui/MyPlaylistsDragList.tsx`) —
+горизонтальный `DraggableFlatList` (`react-native-draggable-flatlist`) поверх того же
+`SliderItem` (`SliderItemSize.Small`): карточка тянется полностью (native `drag` из `renderItem`,
+без отдельной ручки). `onDragEnd` отдаёт итоговый порядок id; `MyPlaylistsSlider` вызывает
+`reorderMyPlaylists` только если `hasOrderChanged` (`shared/lib/utils`), иначе drag на месте —
+no-op. Это **локальный** reorder (без сервера), optimistic: порядок сразу в `myPlaylistsAtom`,
+запись в `myPlaylists` — внутри экшена. «Избранные» запиннены первыми и не перетаскиваются.
+`onDragEnd` исполняется на JS-потоке (gesture-handler прокидывает завершение без вызова JS из
+worklet), поэтому `scheduleOnRN` не требуется.
+
+`artworkIcon` — опциональный слот `SliderItem`/`SliderItemsElement` (`src/shared/ui/slider/slider-item/`):
+при наличии обложка не рендерится, вместо неё — нода поверх тематической подложки
+(`currentTheme.surface`). API обратной совместимости: обычные слайдеры без `artworkIcon` не
+затрагиваются.
 
 **Ограничение `artworkIcon`:** обёртка `CoverImage` (внутри которой рендерится
 on-slide-описание) заменяется на подложку с иконкой целиком, поэтому при заданном
@@ -83,10 +104,10 @@ on-slide-описание) заменяется на подложку с ико�
 ## Roadmap (следующая итерация — запланированная фича, не долг)
 
 - **Создание локального плейлиста** (форма ввода названия).
-- **DnD-переупорядочивание** списка «Мои плейлисты» (порядок серверных карточек не трогается).
 - **Добавление/удаление проповедей** в локальные плейлисты (`sermonIds`), в т.ч. наполнение
   «Избранного» из контекст-меню трека.
-- Мутирующий CRUD поверх `persistMyPlaylists` (сейчас приватный путь записи уже есть).
+- Мутирующий CRUD поверх `persistMyPlaylists` (сейчас приватный путь записи уже есть;
+  reorder использует его).
 
 ## Связанные документы
 
