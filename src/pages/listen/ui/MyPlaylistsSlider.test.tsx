@@ -38,8 +38,18 @@ const SAVE_LABEL = 'Сохранить'
 const SECTION_TITLE = 'Мои плейлисты'
 const FAVORITES_TITLE = FAVORITES_PLAYLIST.title
 
-const PLAYLIST_A: LocalPlaylistData = { id: 'a', sermonIds: [], title: PLAYLIST_A_TITLE }
-const PLAYLIST_B: LocalPlaylistData = { id: 'b', sermonIds: [], title: PLAYLIST_B_TITLE }
+const PLAYLIST_A: LocalPlaylistData = {
+  id: 'a',
+  sermonIds: [],
+  sermons: [],
+  title: PLAYLIST_A_TITLE,
+}
+const PLAYLIST_B: LocalPlaylistData = {
+  id: 'b',
+  sermonIds: [],
+  sermons: [],
+  title: PLAYLIST_B_TITLE,
+}
 
 const seedPlaylists = (ctx: ReturnType<typeof createCtx>) =>
   myPlaylistsAtom(ctx, [FAVORITES_PLAYLIST, PLAYLIST_A, PLAYLIST_B])

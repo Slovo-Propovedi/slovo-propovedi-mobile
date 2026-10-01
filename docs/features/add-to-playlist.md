@@ -17,15 +17,19 @@
 
 ## Экшен сущности
 
-`togglePlaylistSermon(ctx, playlistId, sermonId, contained)` (`entities/playlist`) —
-единственный мутирующий путь наполнения `sermonIds`.
+`togglePlaylistSermon(ctx, playlistId, sermon, contained)` (`entities/playlist`) —
+единственный мутирующий путь наполнения локального плейлиста. `sermon` — **полный
+снапшот** проповеди (`SermonShape`), а не только id: при добавлении кладётся
+санитизированный снапшот, при удалении — фильтрация по `sermon.id`.
 
 1. Находит плейлист в `myPlaylistsAtom`; **неизвестный id — no-op** (возвращает
    текущий список).
 2. **Идемпотентность:** если `contained` уже совпадает с фактическим состоянием —
    no-op (без записи и без коммита).
-3. Строит новый список: `contained` — дописывает `sermonId` в конец `sermonIds`,
-   иначе — фильтрует его. «Избранные» обрабатываются тем же кодом, что и любой
+3. Строит новый список: `contained` — дописывает санитизированный снапшот
+   (`toPersistedLocalSermon`: без `playlists`, `artwork ?? null`) в конец `sermons`,
+   иначе — фильтрует по `sermon.id`. `sermonIds` пересчитываются как производное
+   от `sermons`. «Избранные» обрабатываются тем же кодом, что и любой
    другой плейлист.
 4. **Мгновенный коммит, затем запись:** чтение атома → вычисление
    `nextPlaylists` → `ctx.schedule`, коммитящий `myPlaylistsAtom`, идут без
@@ -40,8 +44,8 @@
 ## Модалка
 
 `AddToPlaylistModal` — «глупый» компонент: `visible`/`onClose` держит
-вызывающий экран, `sermon` — `{ id }` (для проверки принадлежности достаточно
-id). Внутри:
+вызывающий экран, `sermon` — полная `SermonData` (для проверки принадлежности
+используется `sermon.id`, для добавления сохраняется снапшот). Внутри:
 
 - `useSortedPlaylists(sermonId)` подписан на `myPlaylistsAtom` и возвращает
   `{ isContained, playlist }[]`, отсортированный так: **сначала плейлисты,
@@ -52,7 +56,7 @@ id). Внутри:
 - `PlaylistMembershipList` — `FlatList` с ограничением `maxHeight` (360), чтобы
   длинный набор плейлистов скроллился, а не рос за экран.
 - `PlaylistMembershipRow` — `CheckboxField`: тап по строке вызывает
-  `togglePlaylistSermon(ctx, playlistId, sermonId, !isContained)` и **не
+  `togglePlaylistSermon(ctx, playlistId, sermon, !isContained)` и **не
   закрывает модалку** — так за один заход собирается набор плейлистов.
   Живой чекбокс: подписка `useSortedPlaylists` на атом мгновенно отражает
   оптимистичное переключение, а сортировка переставляет строку в группу

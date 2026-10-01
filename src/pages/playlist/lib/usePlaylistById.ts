@@ -1,6 +1,11 @@
 import { useAtom } from '@reatom/npm-react'
 import { useEffect, useMemo, useState } from 'react'
-import { FAVORITES_PLAYLIST, type PlaylistData } from 'entities/playlist'
+import {
+  FAVORITES_PLAYLIST,
+  type LocalPlaylistData,
+  myPlaylistsAtom,
+  type PlaylistData,
+} from 'entities/playlist'
 import { dynamicSectionsAtom } from 'entities/section'
 import { resolvePlaylistFromApi } from './resolvePlaylistFromApi'
 import { resolvePlaylistFromCache } from './resolvePlaylistFromCache'
@@ -13,7 +18,8 @@ interface PlaylistResolution {
 
 type ResolvedTier = 'api' | 'cache' | 'sections' | null
 
-// Tier 0: локальный «Избранные» резолвится сразу, без сети и кэша.
+// Tier 0: локальный «Избранные» резолвится сразу, без сети и кэша. Пустой
+// снапшот-лист падает в `FAVORITES_PLAYLIST_DATA` (пустой плейлист-заглушка).
 const FAVORITES_PLAYLIST_DATA: PlaylistData = {
   artwork: null,
   description: '',
@@ -22,14 +28,32 @@ const FAVORITES_PLAYLIST_DATA: PlaylistData = {
   title: FAVORITES_PLAYLIST.title,
 }
 
+const buildFavoritesPlaylist = (local: LocalPlaylistData | undefined): PlaylistData => {
+  const sermons = local?.sermons ?? []
+  if (sermons.length === 0) return FAVORITES_PLAYLIST_DATA
+  return {
+    artwork: null,
+    description: '',
+    id: FAVORITES_PLAYLIST.id,
+    sermons,
+    title: FAVORITES_PLAYLIST.title,
+  }
+}
+
 export const usePlaylistById = (playlistId: string) => {
   const isFavorites = playlistId === FAVORITES_PLAYLIST.id
   const [sections] = useAtom(dynamicSectionsAtom)
+  const [localPlaylists] = useAtom(myPlaylistsAtom)
   const [resolution, setResolution] = useState<PlaylistResolution>({
     playlist: undefined,
     playlistId: '',
     tier: null,
   })
+
+  const favorites = useMemo(
+    () => (isFavorites ? buildFavoritesPlaylist(localPlaylists[0]) : undefined),
+    [isFavorites, localPlaylists],
+  )
 
   const playlistFromSections = useMemo(
     () => sections.flatMap(s => s.playlists ?? []).find(p => p.id === playlistId),
@@ -58,7 +82,7 @@ export const usePlaylistById = (playlistId: string) => {
     }
   }, [isFavorites, playlistFromSections, playlistId])
 
-  if (isFavorites) return { isLoading: false, notFound: false, playlist: FAVORITES_PLAYLIST_DATA }
+  if (isFavorites) return { isLoading: false, notFound: false, playlist: favorites }
 
   const currentResolution = resolution.playlistId === playlistId ? resolution : null
   const playlist = playlistFromSections ?? currentResolution?.playlist

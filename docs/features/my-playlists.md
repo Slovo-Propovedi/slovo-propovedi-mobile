@@ -5,7 +5,11 @@
 **Файлы:**
 
 - `src/entities/playlist/model.ts` — тип, схема, атом, гидратация, reorder
-- `src/entities/playlist/index.ts` — публичный API (`FAVORITES_PLAYLIST`, `myPlaylistsAtom`, `loadMyPlaylists`, `reorderMyPlaylists`)
+- `src/entities/playlist/localPlaylists.ts` — `LocalPlaylistData`, zod-схема, `FAVORITES_PLAYLIST`
+- `src/entities/playlist/localPlaylistMembership.ts` — `togglePlaylistSermon` (снапшоты)
+- `src/entities/playlist/lib/readStoredMyPlaylists.ts` — чтение/гидратация из AsyncStorage
+- `src/entities/playlist/lib/sanitizeLocalPlaylistSermon.ts` — санитизация снапшота проповеди
+- `src/entities/playlist/index.ts` — публичный API (`FAVORITES_PLAYLIST`, `myPlaylistsAtom`, `loadMyPlaylists`, `reorderMyPlaylists`, `togglePlaylistSermon`)
 - `src/pages/listen/ui/MyPlaylistsSlider.tsx` — секция «Мои плейлисты» **только для чтения**: заголовок (тап → экран редактирования) + карточка «Избранные» + горизонтальный список карточек
 - `src/pages/my-playlists/ui/MyPlaylistsScreen.tsx` — экран «Мои плейлисты» — владелец режима редактирования
 - `src/pages/my-playlists/ui/MyPlaylistsHeaderActions.tsx` — действия шапки экрана: «Изменить порядок» / «Сохранить»
@@ -16,29 +20,45 @@
 
 ## Модель
 
-Локальный плейлист (`LocalPlaylistData`) — `{ id, title, sermonIds }`:
+Локальный плейлист (`LocalPlaylistData`) — `{ id, title, sermonIds, sermons }`:
 
-- `sermonIds` хранит **только идентификаторы** проповедей, не снапшоты: полные `SermonData`
-  резолвятся по id на экране плейлиста (секции/кэш/сеть). Так локальные плейлисты переживают
-  обновления каталога.
+- `sermons` хранит **снапшоты проповедей** (`SermonShape[]`), а не только id: снапшот делает
+  локальный плейлист рендерящимся и проигрываемым **офлайн**, без обращения к каталогу.
+  Перед записью проповедь санитизируется (`toPersistedLocalSermon`,
+  `src/entities/playlist/lib/sanitizeLocalPlaylistSermon.ts`): отбрасывается `playlists`
+  (тяжёлые серверные навигационные данные, источник zod-падений), `artwork` нормализуется в
+  `null | string` — снапшот обязан проходить схему при чтении.
+- `sermonIds` — **производное** от `sermons` (`sermons.map(s => s.id)`), остаётся в схеме как
+  поле для обратной совместимости чтения старых записей. При загрузке снапшоты выигрывают:
+  unmatched legacy ids молча отбрасываются (`normalizeLocalPlaylist`).
 - `FAVORITES_PLAYLIST.id = 'favorites'` — плоский id; серверные id — UUID, поэтому
   столкновение невозможно.
-- `FAVORITES_PLAYLIST` (`{ id: 'favorites', title: 'Избранные', sermonIds: [] }`) —
+- `FAVORITES_PLAYLIST` (`{ id: 'favorites', title: 'Избранные', sermonIds: [], sermons: [] }`) —
   системный плейлист: **всегда присутствует и стоит первым** в списке. Инвариант обеспечивает
   `withFavoritesFirst` при гидратации и при reorder — «Избранные» нельзя перетащить с первой позиции.
 - `myPlaylistsAtom: LocalPlaylistData[]` — засеян `[FAVORITES_PLAYLIST]`, поэтому UI работает
   сразу, ещё до чтения хранилища.
 
+Схема (`src/entities/playlist/localPlaylists.ts`) валидирует снапшот **структурной** формой
+`SermonShape` (`localSermonSchema`), а не `sermonDataSchema` из entities/sermon: прямой импорт
+последней замыкает require-цикл playlist ↔ sermon (`sermon.ts` уже тянет `playlistDataSchema`).
+Граница та же, что у `playlistDataSchema` в `model.ts`; каноническая валидация проповеди живёт
+в entities/sermon и применяется на верхнеуровневых границах.
+
 ## Хранилище
 
 Ключ `myPlaylists` (JSON `LocalPlaylistData[]`) объявлен и принадлежит сущности
-(`src/entities/playlist/model.ts`). Хранилище недоверенное: чтение — через
+(`src/entities/playlist/localPlaylists.ts`). Хранилище недоверенное: чтение — через
 `getCachedJson` + zod-схему (`myPlaylistsArraySchema`), невалидные данные трактуются как
-отсутствующие (см. [contracts/storage.md](../contracts/storage.md)).
+отсутствующие (см. [contracts/storage.md](../contracts/storage.md)). Legacy-записи, хранившие
+только `sermonIds` (или вообще без проповедей), читаются без падения: снапшотов у них нет,
+поэтому `sermons` и `sermonIds` деградируют в `[]` — рендерить по одним id нечем.
 
-`loadMyPlaylists` (Reatom-экшен, вызывается из `MyPlaylistsSlider` и `MyPlaylistsScreen` при монтировании):
+`loadMyPlaylists` (Reatom-экшен, вызывается из `MyPlaylistsSlider` и `MyPlaylistsScreen` при монтировании;
+чтение вынесено в `src/entities/playlist/lib/readStoredMyPlaylists.ts`):
 
-1. читает и валидирует `myPlaylists`;
+1. читает и валидирует `myPlaylists`, нормализует каждую запись (`normalizeLocalPlaylist` —
+   ids выводятся из `sermons`, legacy ids без снапшота отбрасываются);
 2. если ключа нет — засеивает `[FAVORITES_PLAYLIST]` (persistence выполняется внутренним
    `persistMyPlaylists` через `setCachedJson`);
 3. приводит список к инварианту «Избранные первые» и пишет в `myPlaylistsAtom`.
@@ -50,9 +70,11 @@
 `myPlaylists`, атом получает засеянный `[FAVORITES_PLAYLIST]`, UI работает.
 
 Для текущей итерации список читается и переупорядочивается, а наполнение
-`sermonIds` добавлено точечно: мутирующий CRUD создания/удаления плейлистов
+`sermons`/`sermonIds` добавлено точечно: мутирующий CRUD создания/удаления плейлистов
 по-прежнему отсутствует, но принадлежность проповеди переключается экшеном
-`togglePlaylistSermon` (см. [add-to-playlist.md](./add-to-playlist.md)). Прочие
+`togglePlaylistSermon` (см. [add-to-playlist.md](./add-to-playlist.md)). Экшен принимает
+**полный снапшот проповеди** (`SermonShape`), а не только id: при добавлении в плейлист
+кладётся санитизированный снапшот, при удалении — фильтруется по id. Прочие
 записи — сид «Избранного» при первом чтении, сохранение нового порядка при
 reorder и персист принадлежности при toggle.
 
@@ -136,10 +158,18 @@ on-slide-описание) заменяется на подложку с ико�
 
 ## Резолв на экране плейлиста (tier 0)
 
-`usePlaylistById` (`src/pages/playlist/lib/usePlaylistById.ts`) получил **tier 0**: если
-запрошенный id равен `FAVORITES_PLAYLIST.id`, сразу возвращается заглушка `PlaylistData`
-(title «Избранные», `sermons: []`, `artwork: null`) — без обращения к секциям, кэшу и сети.
-Остальные три tier'а (секции → кэш → сеть) не изменены и применяются ко всем прочим id.
+`usePlaylistById` (`src/pages/playlist/lib/usePlaylistById.ts`) имеет **tier 0**: если
+запрошенный id равен `FAVORITES_PLAYLIST.id`, плейлист собирается **из локального
+`myPlaylistsAtom`** — title «Избранные», `artwork: null`, `sermons` из снапшот-листа
+локального плейлиста — без обращения к секциям, кэшу и сети. Если у локального
+«Избранного» ещё нет снапшотов, возвращается пустая заглушка (`sermons: []`). Пустой
+плейлист-заглушка `FAVORITES_PLAYLIST_DATA` остаётся как fallback. Остальные три tier'а
+(секции → кэш → сеть) не изменены и применяются ко всем прочим id — порядок tier'ов
+сохранён.
+
+Благодаря снапшотам «Избранное» рендерится и **проигрывается офлайн**: `playNewSermon({ playlist, sermon })`
+получает полные `SermonShape` (с `audioUrl`), авто-переключение очереди работает по
+`playlist.sermons` без резолва по id.
 
 Пустое состояние: `PlaylistTrackList` принимает `emptyMessage`; `PlaylistScreen` передаёт
 «В избранном пока пусто» для `FAVORITES_PLAYLIST.id`, для остальных плейлистов показывается
@@ -150,9 +180,9 @@ on-slide-описание) заменяется на подложку с ико�
 - **Создание локального плейлиста** (форма ввода названия).
 - **Удаление локальных плейлистов** (мутирующий CRUD поверх `persistMyPlaylists`; сейчас
   приватный путь записи уже есть — reorder и `togglePlaylistSermon` используют его).
-- **Добавление/удаление проповедей** в локальные плейлисты (`sermonIds`) — «Избранное»
-  и наполнение из контекст-меню уже реализованы (`togglePlaylistSermon` + модалка
-  мультивыбора, см. [add-to-playlist.md](./add-to-playlist.md)); в этом пункте остаётся
+- **Добавление/удаление проповедей** в локальные плейлисты — «Избранное»
+  и наполнение из контекст-меню уже реализованы (`togglePlaylistSermon` со снапшотами +
+  модалка мультивыбора, см. [add-to-playlist.md](./add-to-playlist.md)); в этом пункте остаётся
   удаление/управление из самого экрана плейлиста, если понадобится.
 
 ## Связанные документы

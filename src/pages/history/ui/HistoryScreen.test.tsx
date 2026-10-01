@@ -275,6 +275,7 @@ describe('<HistoryScreen>', () => {
     const containingPlaylist = {
       id: 'pl-1',
       sermonIds: [MOCK_SERMON_ID],
+      sermons: [mockSermon],
       title: 'Проповеди недели',
     }
     const ctx = seedHistory([mockEntry])

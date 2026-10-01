@@ -163,7 +163,7 @@ describe('<OfflineScreen>', () => {
     const ctx = createCtx()
     myPlaylistsAtom(ctx, [
       { ...FAVORITES_PLAYLIST, sermonIds: [] },
-      { id: 'pl-1', sermonIds: [mockSermon.id], title: 'Проповеди недели' },
+      { id: 'pl-1', sermonIds: [mockSermon.id], sermons: [mockSermon], title: 'Проповеди недели' },
     ])
 
     const { getAllByRole, getByText } = await renderWithProviders(<OfflineScreen />, { ctx })

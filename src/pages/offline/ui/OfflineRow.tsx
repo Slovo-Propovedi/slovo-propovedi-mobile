@@ -5,6 +5,7 @@ import { type OfflineSermonItem } from 'features/offline-sermons'
 import { useHistoryProgress } from 'entities/listening-history'
 import { useTrackItemCache } from 'entities/offline-cache'
 import { currentAudioAtom, usePlayNewSermon } from 'entities/player'
+import { type SermonData } from 'entities/sermon'
 import { TracksListItem } from 'entities/track-list'
 import { reportError } from 'shared/model/error-dialog'
 import { type MenuItem } from 'shared/ui/menu'
@@ -25,7 +26,7 @@ export const OfflineRow = memo(
   }: {
     isPlaying: boolean
     item: OfflineSermonItem
-    onAddToPlaylist?: (sermon: { id: string }) => void
+    onAddToPlaylist?: (sermon: SermonData) => void
   }) => {
     const playNewSermon = usePlayNewSermon()
     const [currentAudio] = useAtom(currentAudioAtom)
