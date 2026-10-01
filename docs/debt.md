@@ -70,6 +70,7 @@
 ## Tests
 
 - [ ] **Глобальный мок `__mocks__/react-native-reanimated.js` не экспортирует `Animated.FlatList`** — `src/pages/playlist-list/ui/PlaylistListScreen.test.tsx` держит 35-строчный локальный override (`jest.mock('react-native-reanimated')` с FlatList-passthrough), потому что PlaylistListScreen рендерит `Animated.FlatList`. Кандидат на централизацию: добавить `Animated.FlatList` (RN FlatList passthrough) в глобальный мок; предварительно аудитить всех потребителей глобального мока, чтобы ничего не сломалось. — вернуться при следующем касании reanimated-моков.
+- [ ] Native Gradle unit tests (`:apk-installer`, `:audio-effects`) disabled in CI — .forgejo/workflows/ci.yml (checks job) — runner network can't reliably download Gradle deps from Maven Central (timeouts); re-enable when a mirror/cache or EU runner is available. Run locally via `yarn test:native`.
 
 ## UI performance
 
