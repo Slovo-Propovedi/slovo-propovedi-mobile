@@ -49,19 +49,26 @@
 
 Ключ `myPlaylists` (JSON `LocalPlaylistData[]`) объявлен и принадлежит сущности
 (`src/entities/playlist/localPlaylists.ts`). Хранилище недоверенное: чтение — через
-`getCachedJson` + zod-схему (`myPlaylistsArraySchema`), невалидные данные трактуются как
-отсутствующие (см. [contracts/storage.md](../contracts/storage.md)). Legacy-записи, хранившие
-только `sermonIds` (или вообще без проповедей), читаются без падения: снапшотов у них нет,
-поэтому `sermons` и `sermonIds` деградируют в `[]` — рендерить по одним id нечем.
+`getCachedJsonResult` + zod-схему (`myPlaylistsArraySchema`), который различает отсутствие
+ключа (`empty`) и провал парсинга (`invalid`/`error`) (см.
+[contracts/storage.md](../contracts/storage.md)). Legacy-записи, хранившие только `sermonIds`
+(или вообще без проповедей), читаются без падения: снапшотов у них нет, поэтому `sermons`
+и `sermonIds` деградируют в `[]` — рендерить по одним id нечем.
 
 `loadMyPlaylists` (Reatom-экшен, вызывается из `MyPlaylistsSlider` и `MyPlaylistsScreen` при монтировании;
 чтение вынесено в `src/entities/playlist/lib/readStoredMyPlaylists.ts`):
 
 1. читает и валидирует `myPlaylists`, нормализует каждую запись (`normalizeLocalPlaylist` —
    ids выводятся из `sermons`, legacy ids без снапшота отбрасываются);
-2. если ключа нет — засеивает `[FAVORITES_PLAYLIST]` (persistence выполняется внутренним
-   `persistMyPlaylists` через `setCachedJson`);
-3. приводит список к инварианту «Избранные первые» и пишет в `myPlaylistsAtom`.
+2. при **отсутствии** ключа (`empty`) — засеивает `[FAVORITES_PLAYLIST]` и персистит сид
+   (внутренний `persistMyPlaylists` через `setCachedJson`);
+3. при **невалидном/битом JSON** (`invalid`/`error`) — только `console.warn` и сид
+   «Избранного» в памяти: **хранилище не перезаписывается**, чтобы одна битая запись не
+   стёрла все плейлисты; восстановление произойдёт при следующей валидной записи
+   (reorder/toggle);
+4. приводит список к инварианту «Избранные первые» и пишет в `myPlaylistsAtom`. Инвариант
+   **пинит stored-«Избранное»** (`withFavoritesFirst`): его снапшоты переживают гидратацию,
+   а пустая константа `FAVORITES_PLAYLIST` — лишь фолбэк, когда записи нет.
 
 Отказ самого хранилища (reject `AsyncStorage.getItem`/`setItem`, например сломанный
 нативный модуль) не пробрасывается наружу: экшен вызывается fire-and-forget
