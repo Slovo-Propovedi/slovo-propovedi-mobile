@@ -181,21 +181,22 @@ reorder и персист принадлежности при toggle.
 редактирования, управляет локальный state `localOrderIds` (`null` — обычный режим; массив id —
 открытый режим). Опции шапки собирает `useMyPlaylistsHeader`
 (`src/pages/my-playlists/lib/useMyPlaylistsHeader.tsx`), действия рендерит `MyPlaylistsHeaderActions`
-(`src/pages/my-playlists/ui/MyPlaylistsHeaderActions.tsx`): `IconButton` с карандашом
-(`Ionicons 'create-outline'`, `accessibilityLabel` «Изменить порядок») и, в режиме редактирования,
-рядом `IconButton` с галочкой (`checkmark`, «Сохранить»). **Карандаш виден и активен всегда**, даже
-когда редактировать нечего (только «Избранные») — в этом случае форма оформления всё равно доступна.
-Карандаш работает как переключатель: повторный тап выходит из режима **без сохранения** порядка
-(изменения оформления уже применены).
+(`src/pages/my-playlists/ui/MyPlaylistsHeaderActions.tsx`): в обычном режиме `IconButton` с
+карандашом (`Ionicons 'create-outline'`, `accessibilityLabel` «Изменить порядок»), в режиме
+редактирования карандаш **скрывается** и остаётся только `IconButton` с галочкой (`checkmark`,
+«Сохранить»). **Карандаш виден и активен в обычном режиме**, даже когда редактировать нечего (только
+«Избранные») — в этом случае форма оформления всё равно доступна. Выйти из режима **без сохранения**
+порядка можно только уходом с экрана (`useFocusEffect` cleanup; изменения оформления уже применены).
 
 В режиме редактирования представление становится **админ-подобной формой** (шапка списка —
 `MyPlaylistsEditHeader`):
 
 - `FormGroupTitle` «Оформление» + `MyPlaylistsAppearanceForm` — те же поля, что у формы раздела в
   админке (`SelectField` ×3 → размер/высота/расположение заголовка, `FormField` «Строк» с
-  `number-pad` и разбором через `parseItemsRows`, `CheckboxField` ×2 → крупный заголовок описания и
-  скруглённые углы), **без поля названия**. Подписи — из `entities/section`
-  (`ITEMS_SIZE_LABELS`/`TRANSFORM_LABELS`/`SLIDE_TITLE_LOCATION_LABELS`). Каждое изменение поля
+  `number-pad` и разбором через `parseItemsRows`, `CheckboxField` ×2 → «Описание на карточке» и
+  «Скруглённые углы карточек»), **без поля названия**. Подписи — из `entities/section`
+  (`ITEMS_SIZE_LABELS`/`TRANSFORM_LABELS`/`SLIDE_TITLE_LOCATION_LABELS`; в select расположения
+  заголовка только `on`/`under`). Каждое изменение поля
   применяется **мгновенно** через `updateSectionSettings` (instant-apply, отдельной кнопки нет).
 - `FormGroupTitle` «Плейлисты раздела» + закреплённая строка «Избранные» (`MyPlaylistsFavoritesRow`),
   ниже — drag-список остальных плейлистов.

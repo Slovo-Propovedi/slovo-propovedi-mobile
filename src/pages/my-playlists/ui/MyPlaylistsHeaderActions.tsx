@@ -7,10 +7,10 @@ const EDIT_LABEL = 'Изменить порядок'
 const SAVE_LABEL = 'Сохранить'
 const ICON_SIZE = 22
 
-// Действия шапки экрана «Мои плейлисты». Карандаш «Изменить порядок» всегда
-// активен — включает режим редактирования (повторный тап выходит из него,
-// отбрасывая локальный порядок); в режиме редактирования рядом появляется
-// галочка «Сохранить», которая коммитит порядок.
+// Действия шапки экрана «Мои плейлисты». В обычном режиме виден карандаш
+// «Изменить порядок» — включает режим редактирования. В режиме редактирования
+// карандаш скрывается и остаётся только галочка «Сохранить», которая коммитит
+// порядок; незакоммиченный порядок отбрасывается при уходе с экрана.
 export const MyPlaylistsHeaderActions = ({
   isEditing,
   onSave,
@@ -24,11 +24,13 @@ export const MyPlaylistsHeaderActions = ({
 
   return (
     <View style={styles.row}>
-      <IconButton
-        onPress={onToggleEdit}
-        accessibilityLabel={EDIT_LABEL}
-        Icon={<Ionicons size={ICON_SIZE} name='create-outline' color={currentTheme.primary} />}
-      />
+      {!isEditing ? (
+        <IconButton
+          onPress={onToggleEdit}
+          accessibilityLabel={EDIT_LABEL}
+          Icon={<Ionicons size={ICON_SIZE} name='create-outline' color={currentTheme.primary} />}
+        />
+      ) : null}
       {isEditing ? (
         <IconButton
           onPress={onSave}
