@@ -34,6 +34,7 @@
 | [`decisions.md`](./decisions.md)                                       | Стек и решения: approved / rejected / superseded                            |
 | [`debt.md`](./debt.md)                                                 | Технический долг, срезанные углы                                            |
 | [`features/player.md`](./features/player.md)                           | Как работает плеер (модель, PlayerService, кэш аудио)                       |
+| [`features/player-widget.md`](./features/player-widget.md)             | **План будущей фичи:** home-screen виджет плеера для Android (не реализовано) |
 | [`features/listening-history.md`](./features/listening-history.md)     | История прослушивания, resume-логика, прогресс в UI                         |
 | [`features/my-playlists.md`](./features/my-playlists.md)               | Локальные («Мои») плейлисты: «Избранные», хранилище, секция на «Слушать»   |
 | [`features/add-to-playlist.md`](./features/add-to-playlist.md)         | Добавление проповеди в плейлист: экшен сущности, модалка мультивыбора, поверхности |
