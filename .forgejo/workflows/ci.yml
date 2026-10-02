@@ -144,10 +144,70 @@ jobs:
       - name: Lint (ESLint)
         run: yarn lint
 
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: /opt/android-sdk
+          # Version-pinned static key: the SDK content is fixed by the pinned
+          # commandlinetools version in "Setup Android SDK". Bump this key
+          # whenever the commandlinetools version (11076708) in that URL changes.
+          key: ${{ runner.os }}-android-sdk-11076708
+
+      - name: Setup Android SDK
+        env:
+          ANDROID_SDK_ROOT: /opt/android-sdk
+        run: |
+          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+          # Skip download/unzip/mv when the SDK was restored from cache; `mv`
+          # would otherwise fail because cmdline-tools/latest already exists.
+          [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest" ] || (
+            curl -sSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
+            mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+            rm cmdline-tools.zip
+          )
+
+          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+
+          # `yes` never exits on its own — it gets SIGPIPE once sdkmanager
+          # stops reading, and Actions runs steps with `bash -o pipefail`,
+          # so that expected SIGPIPE (141) would otherwise fail this step
+          # even though sdkmanager itself succeeds.
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platform-tools" > /dev/null
+
       - name: Run all tests (jest)
         # --maxWorkers=2 caps peak memory: heavy jest-expo + RN UI test suites
         # were triggering OOM (SIGKILL) when many workers ran in parallel.
         run: yarn testFinal --maxWorkers=2
+
+      - name: Run native unit tests
+        env:
+          GRADLE_OPTS: >-
+            -Dorg.gradle.internal.http.connectionTimeout=120000
+            -Dorg.gradle.internal.http.socketTimeout=300000
+        run: |
+          cd android
+          ./gradlew :apk-installer:testDebugUnitTest :audio-effects:testDebugUnitTest --continue
 
       # Clean up large directories to reduce runner storage usage
       - name: Cleanup workspace

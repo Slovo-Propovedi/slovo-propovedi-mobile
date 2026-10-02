@@ -2,6 +2,9 @@
 
 buildscript {
   repositories {
+    // withMavenCentralMirror: Aliyun proxies google()/mavenCentral(), fast from RU
+    maven { url 'https://maven.aliyun.com/repository/google' }
+    maven { url 'https://maven.aliyun.com/repository/central' }
     google()
     mavenCentral()
   }
@@ -14,6 +17,9 @@ buildscript {
 
 allprojects {
   repositories {
+    // withMavenCentralMirror: Aliyun proxies google()/mavenCentral(), fast from RU
+    maven { url 'https://maven.aliyun.com/repository/google' }
+    maven { url 'https://maven.aliyun.com/repository/central' }
     google()
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
