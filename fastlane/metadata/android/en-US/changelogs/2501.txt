@@ -1,0 +1,5 @@
+Rework section slider card display
+Show sermon form suggestions on field focus
+Use checkmark save icon and hide edit pencil in edit mode
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
