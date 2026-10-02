@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.18.1
+ * OpenAPI spec version: 0.18.2
  */
 import * as zod from 'zod'
 
@@ -19,7 +19,12 @@ export const SectionControllerCreateBody = zod.object({
   itemsRows: zod.number().nullable(),
   transform: zod.enum(['high', 'middle', 'short']),
   isDescriptionTitleOnSlideLarge: zod.boolean().optional(),
-  whereIsSlideTitleLocated: zod.enum(['on', 'under', 'bothOnAndUnder']).optional(),
+  whereIsSlideTitleLocated: zod
+    .enum(['on', 'under', 'bothOnAndUnder'])
+    .optional()
+    .describe(
+      'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
+    ),
   borderRadius: zod.boolean().optional(),
 })
 
@@ -48,7 +53,10 @@ export const SectionControllerCreate200Response = zod.object({
     .default(sectionControllerCreate200ResponseIsDescriptionTitleOnSlideLargeDefault),
   whereIsSlideTitleLocated: zod
     .enum(['on', 'under', 'bothOnAndUnder'])
-    .default(sectionControllerCreate200ResponseWhereIsSlideTitleLocatedDefault),
+    .default(sectionControllerCreate200ResponseWhereIsSlideTitleLocatedDefault)
+    .describe(
+      'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
+    ),
   borderRadius: zod.boolean().default(sectionControllerCreate200ResponseBorderRadiusDefault),
   playlists: zod.array(
     zod.object({
@@ -154,7 +162,10 @@ export const SectionControllerFindAll200Response = zod.object({
         ),
       whereIsSlideTitleLocated: zod
         .enum(['on', 'under', 'bothOnAndUnder'])
-        .default(sectionControllerFindAll200ResponseSectionsItemWhereIsSlideTitleLocatedDefault),
+        .default(sectionControllerFindAll200ResponseSectionsItemWhereIsSlideTitleLocatedDefault)
+        .describe(
+          'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
+        ),
       borderRadius: zod
         .boolean()
         .default(sectionControllerFindAll200ResponseSectionsItemBorderRadiusDefault),
@@ -285,7 +296,10 @@ export const SectionControllerFindOne200Response = zod.object({
     .default(sectionControllerFindOne200ResponseIsDescriptionTitleOnSlideLargeDefault),
   whereIsSlideTitleLocated: zod
     .enum(['on', 'under', 'bothOnAndUnder'])
-    .default(sectionControllerFindOne200ResponseWhereIsSlideTitleLocatedDefault),
+    .default(sectionControllerFindOne200ResponseWhereIsSlideTitleLocatedDefault)
+    .describe(
+      'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
+    ),
   borderRadius: zod.boolean().default(sectionControllerFindOne200ResponseBorderRadiusDefault),
   playlists: zod.array(
     zod.object({
@@ -374,7 +388,11 @@ export const SectionControllerUpdateBody = zod.object({
   itemsRows: zod.number().nullable(),
   transform: zod.enum(['high', 'middle', 'short']),
   isDescriptionTitleOnSlideLarge: zod.boolean(),
-  whereIsSlideTitleLocated: zod.enum(['on', 'under', 'bothOnAndUnder']),
+  whereIsSlideTitleLocated: zod
+    .enum(['on', 'under', 'bothOnAndUnder'])
+    .describe(
+      'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
+    ),
   borderRadius: zod.boolean(),
 })
 
@@ -403,7 +421,10 @@ export const SectionControllerUpdate200Response = zod.object({
     .default(sectionControllerUpdate200ResponseIsDescriptionTitleOnSlideLargeDefault),
   whereIsSlideTitleLocated: zod
     .enum(['on', 'under', 'bothOnAndUnder'])
-    .default(sectionControllerUpdate200ResponseWhereIsSlideTitleLocatedDefault),
+    .default(sectionControllerUpdate200ResponseWhereIsSlideTitleLocatedDefault)
+    .describe(
+      'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
+    ),
   borderRadius: zod.boolean().default(sectionControllerUpdate200ResponseBorderRadiusDefault),
   playlists: zod.array(
     zod.object({

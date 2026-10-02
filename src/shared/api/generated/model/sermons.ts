@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.18.1
+ * OpenAPI spec version: 0.18.2
  */
 import * as zod from 'zod'
 
@@ -162,6 +162,9 @@ export const SermonControllerCreate200Response = zod.object({
             .enum(['on', 'under', 'bothOnAndUnder'])
             .default(
               sermonControllerCreate200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault,
+            )
+            .describe(
+              'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
             ),
           borderRadius: zod
             .boolean()
@@ -449,6 +452,9 @@ export const SermonControllerFindAll200Response = zod.object({
                 .enum(['on', 'under', 'bothOnAndUnder'])
                 .default(
                   sermonControllerFindAll200ResponseSermonsItemPlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault,
+                )
+                .describe(
+                  'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
                 ),
               borderRadius: zod
                 .boolean()
@@ -729,6 +735,9 @@ export const SermonControllerFindOne200Response = zod.object({
             .enum(['on', 'under', 'bothOnAndUnder'])
             .default(
               sermonControllerFindOne200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault,
+            )
+            .describe(
+              'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
             ),
           borderRadius: zod
             .boolean()

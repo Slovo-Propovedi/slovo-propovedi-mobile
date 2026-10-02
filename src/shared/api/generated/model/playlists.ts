@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.18.1
+ * OpenAPI spec version: 0.18.2
  */
 import * as zod from 'zod'
 
@@ -62,7 +62,10 @@ export const PlaylistControllerCreate200Response = zod.object({
         ),
       whereIsSlideTitleLocated: zod
         .enum(['on', 'under', 'bothOnAndUnder'])
-        .default(playlistControllerCreate200ResponseSectionsItemWhereIsSlideTitleLocatedDefault),
+        .default(playlistControllerCreate200ResponseSectionsItemWhereIsSlideTitleLocatedDefault)
+        .describe(
+          'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
+        ),
       borderRadius: zod
         .boolean()
         .default(playlistControllerCreate200ResponseSectionsItemBorderRadiusDefault),
@@ -277,6 +280,9 @@ export const PlaylistControllerFindAll200Response = zod.object({
             .enum(['on', 'under', 'bothOnAndUnder'])
             .default(
               playlistControllerFindAll200ResponsePlaylistsItemSectionsItemWhereIsSlideTitleLocatedDefault,
+            )
+            .describe(
+              'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
             ),
           borderRadius: zod
             .boolean()
@@ -472,7 +478,10 @@ export const PlaylistControllerFindOne200Response = zod.object({
         ),
       whereIsSlideTitleLocated: zod
         .enum(['on', 'under', 'bothOnAndUnder'])
-        .default(playlistControllerFindOne200ResponseSectionsItemWhereIsSlideTitleLocatedDefault),
+        .default(playlistControllerFindOne200ResponseSectionsItemWhereIsSlideTitleLocatedDefault)
+        .describe(
+          'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
+        ),
       borderRadius: zod
         .boolean()
         .default(playlistControllerFindOne200ResponseSectionsItemBorderRadiusDefault),
@@ -666,7 +675,10 @@ export const PlaylistControllerUpdate200Response = zod.object({
         ),
       whereIsSlideTitleLocated: zod
         .enum(['on', 'under', 'bothOnAndUnder'])
-        .default(playlistControllerUpdate200ResponseSectionsItemWhereIsSlideTitleLocatedDefault),
+        .default(playlistControllerUpdate200ResponseSectionsItemWhereIsSlideTitleLocatedDefault)
+        .describe(
+          'Расположение заголовка на карточке. Значение `bothOnAndUnder` устарело и не используется: новые секции должны использовать `on` или `under`; существующие значения `bothOnAndUnder` клиент читает как `under`.',
+        ),
       borderRadius: zod
         .boolean()
         .default(playlistControllerUpdate200ResponseSectionsItemBorderRadiusDefault),
