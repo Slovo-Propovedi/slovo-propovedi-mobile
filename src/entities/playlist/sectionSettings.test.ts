@@ -9,9 +9,9 @@ import {
 } from './sectionSettingsModel'
 
 describe('section settings defaults', () => {
-  test('the default look matches the pre-settings section', () => {
+  test('the default look enables rounded corners and hides the on-card description', () => {
     expect(DEFAULT_SECTION_SETTINGS).toEqual({
-      borderRadius: false,
+      borderRadius: true,
       isDescriptionTitleOnSlideLarge: false,
       itemsRows: null,
       itemsSize: 'small',

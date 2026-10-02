@@ -4,8 +4,8 @@ import { StyleSheet } from 'react-native'
 import { type BookData } from 'entities/sermon'
 import {
   Slider,
-  SliderItemDescriptionBackgroundStyle,
   SliderItemSize,
+  SliderItemTextBackgroundStyle,
   SliderItemTransform,
   WhereIsSlideTitleLocated,
 } from 'shared/ui'
@@ -40,19 +40,19 @@ export const NotesForPreachersBooksSlider = () => {
     <Slider
       title={title}
       style={styles.slider}
+      titleTextAlign='center'
       onPressItem={onItemPress}
       itemsSize={SliderItemSize.Large}
-      descriptionTitleTextAlign='center'
       transform={SliderItemTransform.High}
       whereIsSlideTitleLocated={WhereIsSlideTitleLocated.On}
-      descriptionBackgroundStyle={SliderItemDescriptionBackgroundStyle.DarkBlur}
+      descriptionBackgroundStyle={SliderItemTextBackgroundStyle.DarkBlur}
       onPressTitle={() => {
         onPressTitle(notesForPreachersBooks)
       }}
       items={notesForPreachersBooks.map(item => ({
         artwork: item.artwork,
         data: item,
-        description: item.title,
+        title: item.title,
       }))}
     />
   )

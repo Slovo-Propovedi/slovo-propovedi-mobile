@@ -1,3 +1,4 @@
+import { mapWhereIsTitleLocated } from 'entities/section'
 import { type APITypes } from 'shared/api'
 import { parseItemsRows } from 'shared/lib/utils/parseItemsRows'
 
@@ -14,7 +15,7 @@ export interface SectionFormValues {
 }
 
 export const initialFormValues = (initial?: APITypes.SectionEntity | null): SectionFormValues => ({
-  borderRadius: initial?.borderRadius ?? false,
+  borderRadius: initial?.borderRadius ?? true,
   description: initial?.description ?? '',
   isDescriptionTitleOnSlideLarge: initial?.isDescriptionTitleOnSlideLarge ?? false,
   itemsRows: initial?.itemsRows == null ? '' : String(initial.itemsRows),
@@ -22,7 +23,9 @@ export const initialFormValues = (initial?: APITypes.SectionEntity | null): Sect
   selectedPlaylistIds: initial?.playlists.map(playlist => playlist.id) ?? [],
   title: initial?.title ?? '',
   transform: initial?.transform ?? 'high',
-  whereIsSlideTitleLocated: initial?.whereIsSlideTitleLocated ?? 'on',
+  whereIsSlideTitleLocated: initial?.whereIsSlideTitleLocated
+    ? mapWhereIsTitleLocated(initial.whereIsSlideTitleLocated)
+    : 'on',
 })
 
 const buildCommonFields = (values: SectionFormValues) => ({

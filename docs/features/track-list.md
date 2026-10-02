@@ -83,7 +83,7 @@ export const PlaylistSheetList = PlaylistSheetListWithSkeleton
 
 ### Конвенция «элемент + скелетон»
 
-Пара компонента и её скелетона живёт рядом: `element/element.tsx` + `element/elementSkeleton.tsx`. Скелетон **не** реэкспортируется из барреля слайса сам по себе, а прикрепляется к родительскому элементу как свойство (`Element.Skeleton = ElementSkeleton`). Это стандарт проекта: так же устроены `Slider.Skeleton`, `SliderItem.Skeleton`, `SliderItemDescription.Skeleton`, `MarqueeText.Skeleton`.
+Пара компонента и её скелетона живёт рядом: `element/element.tsx` + `element/elementSkeleton.tsx`. Скелетон **не** реэкспортируется из барреля слайса сам по себе, а прикрепляется к родительскому элементу как свойство (`Element.Skeleton = ElementSkeleton`). Это стандарт проекта: так же устроены `Slider.Skeleton`, `SliderItem.Skeleton`, `SliderItemText.Skeleton`, `MarqueeText.Skeleton` (канон — [`conventions.md`](../conventions.md) → «Скелетоны — только через Composition API»).
 
 Правило размещения скелетонов списка треков:
 

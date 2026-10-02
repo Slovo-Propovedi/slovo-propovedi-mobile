@@ -60,7 +60,7 @@ jest.mock('shared/ui', () => {
       onPressTitle,
       title,
     }: {
-      items: Array<{ data: BookData; description?: string }>
+      items: Array<{ data: BookData; title?: string }>
       onPressItem?: (data: BookData) => void
       onPressTitle?: () => void
       title?: string
@@ -73,19 +73,19 @@ jest.mock('shared/ui', () => {
         ) : null}
         {items.map((item, index) => (
           <Pressable key={index} onPress={() => onPressItem?.(item.data)}>
-            <Text>{item.description}</Text>
+            <Text>{item.title}</Text>
           </Pressable>
         ))}
       </View>
     ),
-    SliderItemDescriptionBackgroundStyle: {
+    SliderItemSize: { Large: 'large', Middle: 'middle', Small: 'small', XLarge: 'xLarge' },
+    SliderItemTextBackgroundStyle: {
       Dark: 'dark',
       DarkBlur: 'darkBlur',
       Transparent: 'transparent',
     },
-    SliderItemSize: { Large: 'large', Middle: 'middle', Small: 'small', XLarge: 'xLarge' },
     SliderItemTransform: { High: 'high', Middle: 'middle', Short: 'short' },
-    WhereIsSlideTitleLocated: { BothOnAndUnder: 'bothOnAndUnder', On: 'on', Under: 'under' },
+    WhereIsSlideTitleLocated: { On: 'on', Under: 'under' },
   }
 })
 

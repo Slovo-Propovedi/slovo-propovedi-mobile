@@ -6,7 +6,7 @@ import {
   type SectionData,
 } from 'entities/section'
 import { Slider } from 'shared/ui'
-import { INDENTS, RADIUSES } from 'shared/ui/theme'
+import { INDENTS } from 'shared/ui/theme'
 
 export interface RenderSectionProps {
   index: number
@@ -22,18 +22,14 @@ export const renderSection = ({
   section,
 }: RenderSectionProps) => {
   const playlists = section.playlists ?? []
-  const hasBorderRadius = section.borderRadius ?? false
-
-  const sliderStyle = {
-    paddingHorizontal: INDENTS.middle,
-    ...(hasBorderRadius ? { borderRadius: RADIUSES.low } : {}),
-  }
+  const sliderStyle = { paddingHorizontal: INDENTS.middle }
 
   return (
     <Slider
       style={sliderStyle}
       title={section.title}
       onPressItem={onItemPress}
+      borderRadius={section.borderRadius}
       key={section.id ?? section.title ?? index}
       itemsRows={section.itemsRows ?? undefined}
       itemsSize={mapItemsSize(section.itemsSize)}
@@ -43,7 +39,8 @@ export const renderSection = ({
       items={playlists.map(item => ({
         artwork: item.artwork,
         data: item,
-        description: item.title,
+        description: item.description,
+        title: item.title,
       }))}
       onPressTitle={() => {
         if (!section.id) {

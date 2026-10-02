@@ -57,7 +57,7 @@ describe('<SectionForm>', () => {
     expect(getByText('Высота карточек')).toBeTruthy()
     expect(getByText('Расположение заголовка')).toBeTruthy()
     expect(getByText('Строк')).toBeTruthy()
-    expect(getByText('Крупный заголовок описания на слайде')).toBeTruthy()
+    expect(getByText('Описание на карточке')).toBeTruthy()
     expect(getByText('Скруглённые углы карточек')).toBeTruthy()
   })
 

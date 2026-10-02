@@ -11,7 +11,7 @@ export { EmptyState } from './empty-state'
 export { ListItemSize } from './list-item/list-item.types'
 export { MovingText } from './MovingText'
 export { Slider } from './slider/slider'
-export { SliderItemDescriptionBackgroundStyle } from './slider/slider-item-description/slider-item-description.types'
+export { SliderItemTextBackgroundStyle } from './slider/slider-item-text/slider-item-text.types'
 export { getSliderItemWidth } from './slider/slider-item/slider-item.lib'
 export {
   type SliderItemsElement,

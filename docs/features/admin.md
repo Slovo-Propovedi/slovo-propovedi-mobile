@@ -16,13 +16,19 @@
 
 Раздел — слайдер с плейлистами на главной странице сайта. Экраны: [screens/admin-sections.md](../screens/admin-sections.md).
 
-### Enums оформления
+### Enums и поля оформления
 
 Значения приходят из OpenAPI (`CreateSectionDto` / `SectionEntity`), русские подписи — `entities/section/lib/sectionLabels.ts`:
 
 - `itemsSize`: `small` | `middle` | `large` | `xLarge` → «Маленький»/«Средний»/«Большой»/«Очень большой».
 - `transform`: `high` | `middle` | `short` → «Высокий»/«Средний»/«Низкий».
-- `whereIsSlideTitleLocated`: `on` | `under` | `bothOnAndUnder` → «На слайде»/«Под слайдом»/«И на, и под слайдом».
+- `whereIsSlideTitleLocated`: `on` | `under` → «На карточке»/«Под карточкой». Заголовок при `on`
+  рендерится оверлеем по центру карточки, при `under` — подписью под карточкой. Legacy-значение
+  `bothOnAndUnder` **удалено из выбора** и при чтении мапится в `under`.
+- `isDescriptionTitleOnSlideLarge`: переосмыслено как «описание плейлиста на карточке» (`true` —
+  показывать реальное описание `item.description`; `false` — скрыто; по умолчанию скрыто).
+  На icon-карточках не рендерится.
+- `borderRadius`: скруглённые углы карточек (checkbox «Скруглённые углы карточек»).
 
 ### Reorder
 

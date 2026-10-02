@@ -7,7 +7,7 @@ import { COLORS, FONT_SIZES } from 'shared/ui/theme'
 const TIMECODE_SEEK_ERROR_MESSAGE = 'Ошибка при перемотке аудио'
 
 const localStyles = StyleSheet.create({
-  descriptionText: {
+  description: {
     color: '#fff',
     fontSize: FONT_SIZES.lg,
     lineHeight: FONT_SIZES.lg * 1.5,
@@ -31,7 +31,7 @@ export const DescriptionWithTimecodes = ({ description }: { description: string 
   }
 
   return (
-    <Text style={localStyles.descriptionText}>
+    <Text style={localStyles.description}>
       {segments.map((segment, index) =>
         segment.type === 'timecode' ? (
           <Text

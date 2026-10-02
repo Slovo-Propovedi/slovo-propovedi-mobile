@@ -2,7 +2,7 @@ import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import { MarqueeTextSkeleton } from '../../marquee-text/skeleton'
 import { FONT_SIZES, INDENTS } from '../../theme/themed'
 
-export const SliderItemDescriptionSkeleton = ({
+export const SliderItemTextSkeleton = ({
   fontSize = FONT_SIZES.h3,
   style,
   testID,

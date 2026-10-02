@@ -10,19 +10,19 @@ import {
   WhereIsSlideTitleLocated,
 } from './slider-item/slider-item.types'
 import {
-  type SliderItemDescriptionBackgroundStyle,
-  type SliderItemDescriptionTextAlign,
-} from './slider-item-description/slider-item-description.types'
+  type SliderItemTextAlign,
+  type SliderItemTextBackgroundStyle,
+} from './slider-item-text/slider-item-text.types'
 import { SliderSkeleton } from './slider-skeleton'
+import { getMarginBottom } from './slider-skeleton.lib'
 import { SliderTitle } from './slider-title'
 import { createSliderStyles as styles } from './slider.styles'
 
 type FontSizes = typeof FONT_SIZES
 
 interface SliderProps<D extends object> {
-  descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle
-  descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign
-  descriptionTitleTextAlign?: SliderItemDescriptionTextAlign
+  borderRadius?: boolean
+  descriptionBackgroundStyle?: SliderItemTextBackgroundStyle
   isDescriptionTitleOnSlideLarge?: boolean
   items: SliderItemsElement<D>[]
   itemsRows?: number
@@ -32,22 +32,14 @@ interface SliderProps<D extends object> {
   style?: StyleProp<ViewStyle>
   title?: string
   titleFontSize?: FontSizes[keyof FontSizes]
+  titleTextAlign?: SliderItemTextAlign
   transform?: SliderItemTransform
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
 }
 
-const getMarginBottom = (itemsSize: SliderItemSize, titleFontSize: number): number =>
-  ({
-    [SliderItemSize.Large]: titleFontSize * 2,
-    [SliderItemSize.Middle]: titleFontSize,
-    [SliderItemSize.Small]: titleFontSize,
-    [SliderItemSize.XLarge]: titleFontSize * 2,
-  })[itemsSize]
-
 export const Slider = <D extends object>({
+  borderRadius,
   descriptionBackgroundStyle,
-  descriptionSubTitleTextAlign,
-  descriptionTitleTextAlign,
   isDescriptionTitleOnSlideLarge,
   items,
   itemsRows = 1,
@@ -57,6 +49,7 @@ export const Slider = <D extends object>({
   style,
   title,
   titleFontSize = FONT_SIZES.h2,
+  titleTextAlign,
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderProps<D>) => {
@@ -78,10 +71,10 @@ export const Slider = <D extends object>({
           itemsSize={itemsSize}
           transform={transform}
           onPressItem={onPressItem}
+          borderRadius={borderRadius}
+          titleTextAlign={titleTextAlign}
           whereIsSlideTitleLocated={whereIsSlideTitleLocated}
-          descriptionTitleTextAlign={descriptionTitleTextAlign}
           descriptionBackgroundStyle={descriptionBackgroundStyle}
-          descriptionSubTitleTextAlign={descriptionSubTitleTextAlign}
           isDescriptionTitleOnSlideLarge={isDescriptionTitleOnSlideLarge}
         />
       </View>

@@ -4,7 +4,8 @@ import { CoverImage } from '../../cover-image/cover-image'
 import { useTheme } from '../../theme/ThemeContext/useTheme'
 import { RADIUSES } from '../../theme/themed'
 import { TouchableButton } from '../../touchable-button/TouchableButton'
-import { SliderItemDescription } from '../slider-item-description/slider-item-description'
+import { SliderItemText } from '../slider-item-text/slider-item-text'
+import { CardOverlay, TITLE_ON_CARD_TEST_ID } from './card-overlay'
 import { SliderItemSkeleton } from './skeleton'
 import { getSliderItemWidth } from './slider-item.lib'
 import {
@@ -17,31 +18,28 @@ import {
 export const SliderItem = ({
   artwork,
   artworkIcon,
+  borderRadius,
+  description,
   descriptionBackgroundStyle,
-  descriptionSubTitle,
-  descriptionSubTitleTextAlign,
-  descriptionTitle,
-  descriptionTitleTextAlign,
   isDescriptionTitleOnSlideLarge,
   onLongPress,
   onPress,
   size = SliderItemSize.Small,
   style,
   testID,
+  title,
+  titleTextAlign,
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderItemProps) => {
   const { currentTheme } = useTheme()
   const conditionSize = getSliderItemWidth(size)
+  const radius = (borderRadius ?? true) ? RADIUSES.large : 0
 
-  const isVisibleDescriptionOnSlide =
-    (whereIsSlideTitleLocated === WhereIsSlideTitleLocated.On ||
-      whereIsSlideTitleLocated === WhereIsSlideTitleLocated.BothOnAndUnder) &&
-    descriptionTitle
-  const isVisibleDescriptionUnderSlide =
-    (whereIsSlideTitleLocated === WhereIsSlideTitleLocated.Under ||
-      whereIsSlideTitleLocated === WhereIsSlideTitleLocated.BothOnAndUnder) &&
-    descriptionTitle
+  const isTitleOnCard = whereIsSlideTitleLocated === WhereIsSlideTitleLocated.On && !!title
+  const isTitleUnderCard = whereIsSlideTitleLocated === WhereIsSlideTitleLocated.Under && !!title
+  const cardDescription =
+    isDescriptionTitleOnSlideLarge && !artworkIcon ? description?.trim() : undefined
 
   const imageHeight = match(transform)
     .with(SliderItemTransform.High, () => conditionSize * 1.3)
@@ -56,55 +54,73 @@ export const SliderItem = ({
       activeOpacity={0.8}
       onLongPress={onLongPress}
     >
-      <View style={[styles.component, { width: conditionSize }, style]}>
+      <View style={[styles.component, { borderRadius: radius, width: conditionSize }, style]}>
         {artworkIcon ? (
           <View
             style={[
               styles.iconBackground,
-              { backgroundColor: currentTheme.surface, height: imageHeight },
+              { backgroundColor: currentTheme.surface, borderRadius: radius, height: imageHeight },
             ]}
           >
             {artworkIcon}
+            {isTitleOnCard ? (
+              <View style={styles.titleOnIconCard} testID={TITLE_ON_CARD_TEST_ID}>
+                <SliderItemText
+                  title={title ?? ''}
+                  titleTextAlign={titleTextAlign}
+                  backgroundStyle={descriptionBackgroundStyle}
+                />
+              </View>
+            ) : null}
           </View>
         ) : (
-          <CoverImage uri={artwork} style={[styles.imageBackground, { height: imageHeight }]}>
-            {isVisibleDescriptionOnSlide && (
-              <SliderItemDescription
-                title={descriptionTitle}
-                subTitle={descriptionSubTitle}
-                testID='slider-item-description-on-slide'
-                titleTextAlign={descriptionTitleTextAlign}
+          <CoverImage
+            uri={artwork}
+            style={[styles.imageBackground, { borderRadius: radius, height: imageHeight }]}
+          >
+            {isTitleOnCard || cardDescription ? (
+              <CardOverlay
+                size={size}
+                title={title ?? ''}
+                description={cardDescription}
+                titleTextAlign={titleTextAlign}
                 backgroundStyle={descriptionBackgroundStyle}
-                isTitleLarge={isDescriptionTitleOnSlideLarge}
-                subTitleTextAlign={descriptionSubTitleTextAlign}
               />
-            )}
+            ) : null}
           </CoverImage>
         )}
-        {isVisibleDescriptionUnderSlide && (
-          <SliderItemDescription
-            title={descriptionTitle}
-            subTitle={descriptionSubTitle}
-            titleTextAlign={descriptionTitleTextAlign}
+        {isTitleUnderCard ? (
+          <SliderItemText
+            title={title ?? ''}
+            borderRadius={borderRadius}
+            titleTextAlign={titleTextAlign}
             backgroundStyle={descriptionBackgroundStyle}
-            testID='slider-item-description-under-slide'
-            subTitleTextAlign={descriptionSubTitleTextAlign}
           />
-        )}
+        ) : null}
       </View>
     </TouchableButton>
   )
 }
 
+// Скелетон прикреплён к элементу как `SliderItem.Skeleton` — единый источник
+// плейсхолдера (composition API), геометрия выводится из стилей элемента.
 SliderItem.Skeleton = SliderItemSkeleton
 
 const styles = StyleSheet.create({
-  component: { borderRadius: RADIUSES.large, minHeight: 50, minWidth: 50 },
+  component: { minHeight: 50, minWidth: 50 },
   iconBackground: {
     alignItems: 'center',
-    borderRadius: RADIUSES.large,
     justifyContent: 'center',
     width: '100%',
   },
-  imageBackground: { borderRadius: RADIUSES.large, justifyContent: 'flex-end', width: '100%' },
+  imageBackground: { justifyContent: 'flex-end', width: '100%' },
+  titleOnIconCard: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
 })

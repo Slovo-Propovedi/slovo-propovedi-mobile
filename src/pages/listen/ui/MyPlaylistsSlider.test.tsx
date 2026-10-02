@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
 import {
+  DEFAULT_SECTION_SETTINGS,
   FAVORITES_PLAYLIST,
   type LocalPlaylistData,
   myPlaylistsAtom,
@@ -43,6 +44,7 @@ const EDIT_LABEL = 'Изменить порядок'
 const SAVE_LABEL = 'Сохранить'
 const SECTION_TITLE = 'Мои плейлисты'
 const FAVORITES_TITLE = FAVORITES_PLAYLIST.title
+const TITLE_ON_CARD_TEST_ID = 'slider-item-title-on-card'
 
 const PLAYLIST_A: LocalPlaylistData = {
   id: 'a',
@@ -128,16 +130,29 @@ describe('<MyPlaylistsSlider>', () => {
     )
   })
 
-  test('renders the under-slide description for the default title location', async () => {
+  test('renders the card titles under the cards for the default title location', async () => {
     const ctx = createCtx()
     seedPlaylists(ctx)
 
-    const { getAllByTestId } = await renderWithProviders(<MyPlaylistsSlider />, { ctx })
+    const { getAllByText, queryAllByTestId } = await renderWithProviders(<MyPlaylistsSlider />, {
+      ctx,
+    })
 
-    expect(getAllByTestId('slider-item-description-under-slide').length).toBeGreaterThan(0)
+    expect(getAllByText(PLAYLIST_A_TITLE)[0]).toBeTruthy()
+    expect(queryAllByTestId(TITLE_ON_CARD_TEST_ID)).toHaveLength(0)
   })
 
-  test('maps the configured title location to the on-slide description', async () => {
+  test('still renders cards when borderRadius is off', async () => {
+    const ctx = createCtx()
+    seedPlaylists(ctx)
+    sectionSettingsAtom(ctx, { ...DEFAULT_SECTION_SETTINGS, borderRadius: false })
+
+    const { getAllByText } = await renderWithProviders(<MyPlaylistsSlider />, { ctx })
+
+    expect(getAllByText(PLAYLIST_A_TITLE)[0]).toBeTruthy()
+  })
+
+  test('maps the configured title location to the on-card title', async () => {
     const ctx = createCtx()
     seedPlaylists(ctx)
     sectionSettingsAtom(ctx, {
@@ -149,11 +164,10 @@ describe('<MyPlaylistsSlider>', () => {
       whereIsSlideTitleLocated: 'on',
     })
 
-    const { getAllByTestId, queryAllByTestId } = await renderWithProviders(<MyPlaylistsSlider />, {
+    const { getAllByTestId } = await renderWithProviders(<MyPlaylistsSlider />, {
       ctx,
     })
 
-    expect(getAllByTestId('slider-item-description-on-slide').length).toBeGreaterThan(0)
-    expect(queryAllByTestId('slider-item-description-under-slide')).toHaveLength(0)
+    expect(getAllByTestId(TITLE_ON_CARD_TEST_ID).length).toBeGreaterThan(0)
   })
 })

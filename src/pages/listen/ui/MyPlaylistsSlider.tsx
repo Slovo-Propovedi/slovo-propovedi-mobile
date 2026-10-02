@@ -25,7 +25,7 @@ const toSliderItem = (
   artwork: null,
   artworkIcon,
   data: playlist,
-  description: playlist.title,
+  title: playlist.title,
 })
 
 // Завершающая секция экрана «Слушать»: карточка «Избранные» и карточки
@@ -62,6 +62,7 @@ export const MyPlaylistsSlider = () => {
       title={SECTION_TITLE}
       onPressItem={onPressPlaylist}
       onPressTitle={navigateToMyPlaylists}
+      borderRadius={settings.borderRadius}
       itemsRows={settings.itemsRows ?? undefined}
       itemsSize={mapItemsSize(settings.itemsSize)}
       transform={mapTransform(settings.transform)}

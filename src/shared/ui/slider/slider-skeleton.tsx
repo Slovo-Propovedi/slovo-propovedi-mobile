@@ -5,7 +5,7 @@ import Animated from 'react-native-reanimated'
 import { useSkeletonPulse } from '../skeleton/useSkeletonPulse'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
-import { SliderItemSkeleton } from './slider-item/skeleton'
+import { SliderItem } from './slider-item/slider-item'
 import {
   SliderItemSize,
   type SliderItemTransform,
@@ -14,7 +14,7 @@ import {
 import { getItemsByRows, getMarginBottom } from './slider-skeleton.lib'
 
 export const SliderSkeleton = ({
-  borderRadius = false,
+  borderRadius = true,
   itemsCount = 4,
   itemsRows = 1,
   itemsSize = SliderItemSize.Small,
@@ -36,10 +36,7 @@ export const SliderSkeleton = ({
   const { pulseStyle } = useSkeletonPulse()
   const marginBottom = getMarginBottom(itemsSize, titleFontSize)
   const itemsByRows = getItemsByRows(itemsCount, itemsRows)
-  const sectionStyle = {
-    paddingHorizontal: INDENTS.middle,
-    ...(borderRadius ? { borderRadius: RADIUSES.low } : {}),
-  }
+  const sectionStyle = { paddingHorizontal: INDENTS.middle }
 
   return (
     <View
@@ -69,10 +66,11 @@ export const SliderSkeleton = ({
         {itemsByRows.map((count, rowIndex) => (
           <View key={rowIndex} style={styles.row} testID='slider-row'>
             {Array.from({ length: count }).map((_, itemIndex) => (
-              <SliderItemSkeleton
+              <SliderItem.Skeleton
                 key={itemIndex}
                 size={itemsSize}
                 transform={transform}
+                borderRadius={borderRadius}
                 whereIsSlideTitleLocated={whereIsSlideTitleLocated}
               />
             ))}

@@ -42,7 +42,7 @@ export const SectionFormAppearanceFields = ({
       onChangeText={text => onChange('itemsRows', text)}
     />
     <CheckboxField
-      label='Крупный заголовок описания на слайде'
+      label='Описание на карточке'
       value={values.isDescriptionTitleOnSlideLarge}
       onChange={value => onChange('isDescriptionTitleOnSlideLarge', value)}
     />

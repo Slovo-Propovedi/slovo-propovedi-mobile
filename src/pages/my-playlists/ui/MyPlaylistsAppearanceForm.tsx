@@ -15,7 +15,7 @@ const SLIDE_TITLE_LOCATION_LABEL = 'Расположение заголовка'
 const ITEMS_ROWS_LABEL = 'Строк'
 const ITEMS_ROWS_HINT = 'Необязательно.'
 const ITEMS_ROWS_PLACEHOLDER = 'Например: 2'
-const LARGE_DESCRIPTION_TITLE_LABEL = 'Крупный заголовок описания на слайде'
+const DESCRIPTION_ON_CARD_LABEL = 'Описание на карточке'
 const BORDER_RADIUS_LABEL = 'Скруглённые углы карточек'
 
 const toItemsRowsText = (itemsRows: null | number) => (itemsRows == null ? '' : String(itemsRows))
@@ -89,7 +89,7 @@ export const MyPlaylistsAppearanceForm = ({
         onChangeText={handleItemsRowsChange}
       />
       <CheckboxField
-        label={LARGE_DESCRIPTION_TITLE_LABEL}
+        label={DESCRIPTION_ON_CARD_LABEL}
         value={settings.isDescriptionTitleOnSlideLarge}
         onChange={value => applyChange({ isDescriptionTitleOnSlideLarge: value })}
       />

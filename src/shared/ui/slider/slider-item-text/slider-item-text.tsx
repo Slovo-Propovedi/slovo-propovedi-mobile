@@ -9,45 +9,46 @@ import {
 import { MarqueeText } from '../../marquee-text/marquee-text'
 import { COLORS } from '../../theme/colors'
 import { useTheme } from '../../theme/ThemeContext/useTheme'
-import { FONT_SIZES, INDENTS } from '../../theme/themed'
-import { SliderItemDescriptionSkeleton } from './skeleton'
-import {
-  SliderItemDescriptionBackgroundStyle,
-  type SliderItemDescriptionTextAlign,
-} from './slider-item-description.types'
+import { FONT_SIZES, INDENTS, RADIUSES } from '../../theme/themed'
+import { SliderItemTextSkeleton } from './skeleton'
+import { type SliderItemTextAlign, SliderItemTextBackgroundStyle } from './slider-item-text.types'
 
-export const SliderItemDescription = ({
-  backgroundStyle = SliderItemDescriptionBackgroundStyle.Transparent,
-  isTitleLarge,
+// Текст карточки: заголовок (MarqueeText) и необязательный подзаголовок. Пустой
+// заголовок не рендерит ничего — подзаголовок сам по себе не показывается.
+export const SliderItemText = ({
+  backgroundStyle = SliderItemTextBackgroundStyle.Transparent,
+  borderRadius,
   style,
   subTitle,
   subTitleTextAlign = 'left',
-  testID,
   title,
   titleStyle,
   titleTextAlign = 'left',
 }: {
-  backgroundStyle?: SliderItemDescriptionBackgroundStyle
-  isTitleLarge?: boolean
+  backgroundStyle?: SliderItemTextBackgroundStyle
+  borderRadius?: boolean
   style?: StyleProp<ViewStyle>
   subTitle?: string
-  subTitleTextAlign?: SliderItemDescriptionTextAlign
-  testID?: string
+  subTitleTextAlign?: SliderItemTextAlign
   title: string
   titleStyle?: StyleProp<TextStyle>
-  titleTextAlign?: SliderItemDescriptionTextAlign
+  titleTextAlign?: SliderItemTextAlign
 }) => {
   const { currentTheme } = useTheme()
   if (!title) return null
 
-  const isDarkBackground = backgroundStyle === SliderItemDescriptionBackgroundStyle.Dark
-  const isDarkBlurBackground = backgroundStyle === SliderItemDescriptionBackgroundStyle.DarkBlur
+  const isDarkBackground = backgroundStyle === SliderItemTextBackgroundStyle.Dark
+  const isDarkBlurBackground = backgroundStyle === SliderItemTextBackgroundStyle.DarkBlur
+  const isRounded = borderRadius ?? true
 
   return (
     <View
-      testID={testID}
       style={[
         styles.component,
+        {
+          borderBottomLeftRadius: isRounded ? RADIUSES.large : 0,
+          borderBottomRightRadius: isRounded ? RADIUSES.large : 0,
+        },
         isDarkBackground && styles.darkBackground,
         isDarkBlurBackground && styles.blurBackground,
         style,
@@ -55,10 +56,8 @@ export const SliderItemDescription = ({
     >
       <MarqueeText
         text={title}
-        testID='slider-item-description-title'
         textStyle={[
           styles.title,
-          isTitleLarge && styles.titleLarge,
           { color: isDarkBackground || isDarkBlurBackground ? COLORS.white : currentTheme.text },
           { textAlign: titleTextAlign },
           titleStyle,
@@ -67,7 +66,6 @@ export const SliderItemDescription = ({
       {subTitle ? (
         <Text
           numberOfLines={2}
-          testID='slider-item-description-sub-title'
           style={[
             styles.subTitle,
             {
@@ -85,14 +83,14 @@ export const SliderItemDescription = ({
   )
 }
 
-SliderItemDescription.Skeleton = SliderItemDescriptionSkeleton
+// Скелетон прикреплён к тексту как `SliderItemText.Skeleton` — составная часть
+// скелетона карточки (`SliderItem.Skeleton`), а не самостоятельный компонент.
+SliderItemText.Skeleton = SliderItemTextSkeleton
 
 const styles = StyleSheet.create({
   blurBackground: { backgroundColor: COLORS.black70 },
 
   component: {
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
     overflow: 'hidden',
     padding: INDENTS.middle,
   },
@@ -106,5 +104,4 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FONT_SIZES.h3,
   },
-  titleLarge: { fontSize: FONT_SIZES.h3 * 2, fontWeight: 'bold' },
 })

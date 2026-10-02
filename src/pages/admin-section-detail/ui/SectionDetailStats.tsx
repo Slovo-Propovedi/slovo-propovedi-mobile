@@ -17,7 +17,7 @@ export const SectionDetailStats = ({ section }: { section: APITypes.SectionEntit
       value: SLIDE_TITLE_LOCATION_LABELS[section.whereIsSlideTitleLocated ?? 'on'],
     },
     { label: 'Строк', value: section.itemsRows == null ? '—' : String(section.itemsRows) },
-    { label: 'Крупный заголовок', value: section.isDescriptionTitleOnSlideLarge ? YES : NO },
+    { label: 'Описание на карточке', value: section.isDescriptionTitleOnSlideLarge ? YES : NO },
     { label: 'Скруглённые углы', value: section.borderRadius ? YES : NO },
   ]
 

@@ -20,5 +20,4 @@ export const SLIDE_TITLE_LOCATION_OPTIONS: SelectOption<
 >[] = [
   { label: SLIDE_TITLE_LOCATION_LABELS.on, value: 'on' },
   { label: SLIDE_TITLE_LOCATION_LABELS.under, value: 'under' },
-  { label: SLIDE_TITLE_LOCATION_LABELS.bothOnAndUnder, value: 'bothOnAndUnder' },
 ]

@@ -134,6 +134,7 @@ describe('<MyPlaylistsScreen>', () => {
     await user.press(getByLabelText(EDIT_LABEL))
 
     expect(getByLabelText(SAVE_LABEL)).toBeTruthy()
+    expect(queryByLabelText(EDIT_LABEL)).toBeNull()
   })
 
   test('blocks row navigation while editing and restores it after leaving edit mode', async () => {
@@ -149,7 +150,7 @@ describe('<MyPlaylistsScreen>', () => {
     fireEvent.press(getAllByText(PLAYLIST_A_TITLE)[0])
     expect(mockPush).not.toHaveBeenCalled()
 
-    await user.press(getByLabelText(EDIT_LABEL))
+    await user.press(getByLabelText(SAVE_LABEL))
     fireEvent.press(getAllByText(PLAYLIST_A_TITLE)[0])
     expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({ params: { playlist: 'a' } }))
   })
@@ -200,14 +201,14 @@ describe('<MyPlaylistsScreen>', () => {
     const ctx = createCtx()
     seedPlaylists(ctx)
 
-    const { getByLabelText } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
+    const { getByLabelText, unmount } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
     const user = userEvent.setup()
 
     await user.press(getByLabelText(EDIT_LABEL))
     await act(async () => {
       mockCapturedOnDragEnd?.({ data: [PLAYLIST_B, PLAYLIST_A] })
     })
-    await user.press(getByLabelText(EDIT_LABEL))
+    unmount()
 
     expect(orderedIds(ctx)).toEqual(['favorites', 'a', 'b'])
   })
@@ -236,7 +237,7 @@ describe('<MyPlaylistsScreen>', () => {
     expect(getByText('Высота карточек')).toBeTruthy()
     expect(getByText('Расположение заголовка')).toBeTruthy()
     expect(getByText('Строк')).toBeTruthy()
-    expect(getByText('Крупный заголовок описания на слайде')).toBeTruthy()
+    expect(getByText('Описание на карточке')).toBeTruthy()
     expect(getByText('Скруглённые углы карточек')).toBeTruthy()
   })
 
@@ -250,6 +251,6 @@ describe('<MyPlaylistsScreen>', () => {
     await user.press(getByLabelText(EDIT_LABEL))
     fireEvent.press(getByText('Скруглённые углы карточек'))
 
-    await waitFor(() => expect(ctx.get(sectionSettingsAtom).borderRadius).toBe(true))
+    await waitFor(() => expect(ctx.get(sectionSettingsAtom).borderRadius).toBe(false))
   })
 })

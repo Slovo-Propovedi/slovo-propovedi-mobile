@@ -28,9 +28,9 @@ export interface LocalSectionSettings {
   whereIsSlideTitleLocated: 'bothOnAndUnder' | 'on' | 'under'
 }
 
-/** Дефолт = текущий вид секции до появления настроек. */
+/** Дефолт: скруглённые углы включены, описание плейлиста на карточке скрыто. */
 export const DEFAULT_SECTION_SETTINGS: LocalSectionSettings = {
-  borderRadius: false,
+  borderRadius: true,
   isDescriptionTitleOnSlideLarge: false,
   itemsRows: null,
   itemsSize: 'small',

@@ -1,3 +1,4 @@
+import { sectionsMocks } from 'shared/api/generated'
 import {
   buildCreateSectionDto,
   buildUpdateSectionDto,
@@ -58,6 +59,14 @@ describe('sectionFormState', () => {
       expect(values.itemsSize).toEqual('large')
     })
 
+    test('normalizes the legacy bothOnAndUnder title location to under', () => {
+      const section = sectionsMocks.getSectionControllerFindOneResponseMock({
+        whereIsSlideTitleLocated: 'bothOnAndUnder',
+      })
+
+      expect(initialFormValues(section).whereIsSlideTitleLocated).toEqual('under')
+    })
+
     test('falls back to defaults when there is no entity', () => {
       const values = initialFormValues(null)
 
@@ -65,6 +74,8 @@ describe('sectionFormState', () => {
       expect(values.title).toEqual('')
       expect(values.itemsSize).toEqual('middle')
       expect(values.transform).toEqual('high')
+      expect(values.borderRadius).toBe(true)
+      expect(values.isDescriptionTitleOnSlideLarge).toBe(false)
     })
   })
 

@@ -1,9 +1,9 @@
 import { type ReactNode } from 'react'
 import { type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native'
 import {
-  type SliderItemDescriptionBackgroundStyle,
-  type SliderItemDescriptionTextAlign,
-} from '../slider-item-description/slider-item-description.types'
+  type SliderItemTextAlign,
+  type SliderItemTextBackgroundStyle,
+} from '../slider-item-text/slider-item-text.types'
 
 export enum SliderItemSize {
   Large = 'large',
@@ -18,7 +18,6 @@ export enum SliderItemTransform {
 }
 
 export enum WhereIsSlideTitleLocated {
-  BothOnAndUnder = 'bothOnAndUnder',
   On = 'on',
   Under = 'under',
 }
@@ -27,17 +26,20 @@ export interface SliderItemProps {
   artwork: null | string | undefined
   /** Нода вместо обложки: рендерится поверх тематической подложки (иконка и т.п.). */
   artworkIcon?: ReactNode
-  descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle
-  descriptionSubTitle?: string
-  descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign
-  descriptionTitle?: string
-  descriptionTitleTextAlign?: SliderItemDescriptionTextAlign
+  /** Радиус карточки; `undefined` трактуется как `true`. */
+  borderRadius?: boolean
+  /** Описание плейлиста на карточке; пустая строка не рендерится. */
+  description?: string
+  descriptionBackgroundStyle?: SliderItemTextBackgroundStyle
   isDescriptionTitleOnSlideLarge?: boolean
   onLongPress?: (event: GestureResponderEvent) => void
   onPress?: (event: GestureResponderEvent) => void
   size?: SliderItemSize
   style?: StyleProp<ViewStyle>
   testID?: string
+  /** Заголовок карточки. */
+  title?: string
+  titleTextAlign?: SliderItemTextAlign
   transform?: SliderItemTransform
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
 }
@@ -47,5 +49,8 @@ export interface SliderItemsElement<D extends object> {
   /** Нода вместо обложки (иконка и т.п.); при наличии обложка не рендерится. */
   artworkIcon?: ReactNode
   data: D
+  /** Описание плейлиста: рендерится на карточке при включённом `isDescriptionTitleOnSlideLarge`. */
   description?: string
+  /** Заголовок карточки. */
+  title?: string
 }

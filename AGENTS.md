@@ -277,6 +277,7 @@ export const MyComponent = ({ prop1, prop2 }: MyComponentProps) => {
 - Self-closing components required: `<View />` not `<View></View>`
 - **UI components live in `ui/` segment:** Every slice (pages, widgets, features, entities) places its UI components and their co-located tests inside the `ui/` folder, never at the slice root
 - **One component or hook per file:** Each component and hook gets its own file — helper components (e.g. `HistorySeparator`, `SearchRowSeparator`) must not be declared inside another component's file
+- **Skeletons go through the Composition API:** a component's skeleton is attached as a static property next to its declaration (`Slider.Skeleton`, `SliderItem.Skeleton`, `SliderItemText.Skeleton`, `TracksListItem.Skeleton`, `AdminSermonRow.Skeleton`) and consumers use `Parent.Skeleton` — never a direct import of the skeleton file. Only the file declaring the static may import it (plus another skeleton composing it). See `docs/conventions.md` → «Скелетоны — только через Composition API».
 
 ### Formatting
 

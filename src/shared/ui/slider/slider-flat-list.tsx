@@ -11,19 +11,19 @@ import {
   type WhereIsSlideTitleLocated,
 } from './slider-item/slider-item.types'
 import {
-  type SliderItemDescriptionBackgroundStyle,
-  type SliderItemDescriptionTextAlign,
-} from './slider-item-description/slider-item-description.types'
+  type SliderItemTextAlign,
+  type SliderItemTextBackgroundStyle,
+} from './slider-item-text/slider-item-text.types'
 
 interface SliderFlatListProps<D extends object> {
-  descriptionBackgroundStyle?: SliderItemDescriptionBackgroundStyle
-  descriptionSubTitleTextAlign?: SliderItemDescriptionTextAlign
-  descriptionTitleTextAlign?: SliderItemDescriptionTextAlign
+  borderRadius?: boolean
+  descriptionBackgroundStyle?: SliderItemTextBackgroundStyle
   isDescriptionTitleOnSlideLarge?: boolean
   items: SliderItemsElement<D>[]
   itemsRows: number
   itemsSize: SliderItemSize
   onPressItem?: (data: D, event: GestureResponderEvent) => void
+  titleTextAlign?: SliderItemTextAlign
   transform?: SliderItemTransform
   whereIsSlideTitleLocated?: WhereIsSlideTitleLocated
 }
@@ -31,14 +31,14 @@ interface SliderFlatListProps<D extends object> {
 const SLIDER_ITEM_ID = 'slider-item'
 
 export const SliderFlatList = <D extends object>({
+  borderRadius,
   descriptionBackgroundStyle,
-  descriptionSubTitleTextAlign,
-  descriptionTitleTextAlign,
   isDescriptionTitleOnSlideLarge,
   items,
   itemsRows,
   itemsSize,
   onPressItem,
+  titleTextAlign,
   transform,
   whereIsSlideTitleLocated,
 }: SliderFlatListProps<D>) => {
@@ -81,20 +81,21 @@ export const SliderFlatList = <D extends object>({
         return (
           <View style={{ width: cellWidth }}>
             <View style={styles.column}>
-              {column.map(({ artwork, artworkIcon, data, description }, itemIndex) => (
+              {column.map(({ artwork, artworkIcon, data, description, title }, itemIndex) => (
                 <SliderItem
+                  title={title}
                   key={itemIndex}
                   size={itemsSize}
                   artwork={artwork}
                   transform={transform}
                   testID={SLIDER_ITEM_ID}
                   artworkIcon={artworkIcon}
-                  descriptionTitle={description}
+                  description={description}
+                  borderRadius={borderRadius}
+                  titleTextAlign={titleTextAlign}
                   onPress={event => onPressItem?.(data, event)}
                   whereIsSlideTitleLocated={whereIsSlideTitleLocated}
-                  descriptionTitleTextAlign={descriptionTitleTextAlign}
                   descriptionBackgroundStyle={descriptionBackgroundStyle}
-                  descriptionSubTitleTextAlign={descriptionSubTitleTextAlign}
                   isDescriptionTitleOnSlideLarge={isDescriptionTitleOnSlideLarge}
                 />
               ))}

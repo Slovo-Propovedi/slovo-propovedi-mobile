@@ -4,16 +4,18 @@ import { match } from 'ts-pattern'
 import { useSkeletonPulse } from '../../skeleton/useSkeletonPulse'
 import { useTheme } from '../../theme/ThemeContext/useTheme'
 import { INDENTS, RADIUSES } from '../../theme/themed'
-import { SliderItemDescriptionSkeleton } from '../slider-item-description/skeleton'
+import { SliderItemText } from '../slider-item-text/slider-item-text'
 import { getSliderItemWidth } from './slider-item.lib'
 import { SliderItemSize, SliderItemTransform, WhereIsSlideTitleLocated } from './slider-item.types'
 
 export const SliderItemSkeleton = ({
+  borderRadius,
   size = SliderItemSize.Small,
   testID = 'slider-item',
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: {
+  borderRadius?: boolean
   size?: SliderItemSize
   testID?: string
   transform?: SliderItemTransform
@@ -23,6 +25,7 @@ export const SliderItemSkeleton = ({
   const { pulseStyle } = useSkeletonPulse()
 
   const itemWidth = getSliderItemWidth(size)
+  const radius = (borderRadius ?? true) ? RADIUSES.large : 0
 
   const imageHeight = match(transform)
     .with(SliderItemTransform.High, () => itemWidth * 1.3)
@@ -30,31 +33,23 @@ export const SliderItemSkeleton = ({
     .with(undefined, () => itemWidth)
     .exhaustive()
 
-  const isVisibleDescriptionOnSlide =
-    whereIsSlideTitleLocated === WhereIsSlideTitleLocated.On ||
-    whereIsSlideTitleLocated === WhereIsSlideTitleLocated.BothOnAndUnder
+  const isTitleOnCard = whereIsSlideTitleLocated === WhereIsSlideTitleLocated.On
 
-  const isVisibleDescriptionUnderSlide =
-    whereIsSlideTitleLocated === WhereIsSlideTitleLocated.Under ||
-    whereIsSlideTitleLocated === WhereIsSlideTitleLocated.BothOnAndUnder
+  const isTitleUnderCard = whereIsSlideTitleLocated === WhereIsSlideTitleLocated.Under
 
   return (
     <TouchableOpacity testID={testID} activeOpacity={0.8}>
-      <View style={[styles.component, { width: itemWidth }]}>
+      <View style={[styles.component, { borderRadius: radius, width: itemWidth }]}>
         <Animated.View
           style={[
             styles.image,
-            { backgroundColor: currentTheme.skeleton, height: imageHeight },
+            { backgroundColor: currentTheme.skeleton, borderRadius: radius, height: imageHeight },
             pulseStyle,
           ]}
         >
-          {isVisibleDescriptionOnSlide && (
-            <SliderItemDescriptionSkeleton style={styles.descriptionOnSlide} />
-          )}
+          {isTitleOnCard && <SliderItemText.Skeleton style={styles.titleOnCard} />}
         </Animated.View>
-        {isVisibleDescriptionUnderSlide && (
-          <SliderItemDescriptionSkeleton style={styles.descriptionUnderSlide} />
-        )}
+        {isTitleUnderCard && <SliderItemText.Skeleton style={styles.titleUnderCard} />}
       </View>
     </TouchableOpacity>
   )
@@ -62,20 +57,18 @@ export const SliderItemSkeleton = ({
 
 const styles = StyleSheet.create({
   component: {
-    borderRadius: RADIUSES.large,
     minHeight: 50,
     minWidth: 50,
   },
-  descriptionOnSlide: {
+  image: {
+    justifyContent: 'flex-end',
+    width: '100%',
+  },
+  titleOnCard: {
     marginBottom: INDENTS.low,
     marginTop: 'auto',
   },
-  descriptionUnderSlide: {
+  titleUnderCard: {
     marginTop: INDENTS.low,
-  },
-  image: {
-    borderRadius: RADIUSES.large,
-    justifyContent: 'flex-end',
-    width: '100%',
   },
 })

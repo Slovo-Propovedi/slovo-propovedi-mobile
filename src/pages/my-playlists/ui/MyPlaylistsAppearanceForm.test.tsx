@@ -136,6 +136,12 @@ describe('<MyPlaylistsAppearanceForm>', () => {
     expect(getByLabelText(ITEMS_ROWS_LABEL)).toHaveProp('value', '4')
   })
 
+  test('shows the on-card description checkbox label', async () => {
+    const { getByText } = await renderForm()
+
+    expect(getByText('Описание на карточке')).toBeTruthy()
+  })
+
   test('keeps the typed text when the external value matches it', async () => {
     const { ctx, getByLabelText } = await renderForm()
     const input = getByLabelText(ITEMS_ROWS_LABEL)

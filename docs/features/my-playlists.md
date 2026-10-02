@@ -114,9 +114,11 @@ reorder и персист принадлежности при toggle.
 
 `LocalSectionSettings` (`src/entities/playlist/localSectionSettings.ts`) — локальные настройки внешнего
 вида секции «Мои плейлисты»; имена полей зеркалят DTO секции: `itemsSize` (`small`/`middle`/`large`/`xLarge`),
-`transform` (`high`/`middle`/`short`), `whereIsSlideTitleLocated` (`on`/`under`/`bothOnAndUnder`),
-`itemsRows` (`null | number`), `isDescriptionTitleOnSlideLarge`, `borderRadius`. Дефолт
-(`DEFAULT_SECTION_SETTINGS`) повторяет прежний вид секции: `small` / `middle` / `under` / `null` / `false` / `false`.
+`transform` (`high`/`middle`/`short`), `whereIsSlideTitleLocated` (`on`/`under`; legacy `bothOnAndUnder`
+читается как `under`), `itemsRows` (`null | number`), `isDescriptionTitleOnSlideLarge` (показывать
+описание плейлиста на карточке), `borderRadius` (скруглённые углы карточек). Дефолт
+(`DEFAULT_SECTION_SETTINGS`): `small` / `middle` / `under` / `null` / `false` / `true` — скруглённые
+углы включены, описание на карточке скрыто.
 
 Ключ `myPlaylistsSectionSettings` принадлежит сущности. Хранилище недоверенное: чтение — через
 `getCachedJsonResult` + `sectionSettingsDraftSchema` (`lib/readStoredSectionSettings.ts`), которое различает
@@ -152,22 +154,22 @@ reorder и персист принадлежности при toggle.
 общий `Slider` (`shared/ui`): карточки — `SliderItemsElement`, «Избранные» — первая карточка с
 `artworkIcon` (сердце `Ionicons 'heart'` цвета `currentTheme.primary`, размер из
 `getSliderItemWidth(itemsSize) * 0.4`), остальные локальные плейлисты — обычные карточки с
-`description = title`. Тап по карточке навигирует на `/listen/playlist?playlist=<id>`.
+`title = playlist.title`. Тап по карточке навигирует на `/listen/playlist?playlist=<id>`.
 Параметры отображения берутся из `sectionSettingsAtom` и прогоняются через мапперы
 `entities/section` (`mapItemsSize`/`mapTransform`/`mapWhereIsTitleLocated`):
-`itemsRows`/`itemsSize`/`transform`/`whereIsSlideTitleLocated`/`isDescriptionTitleOnSlideLarge`.
+`itemsRows`/`itemsSize`/`transform`/`whereIsSlideTitleLocated`/`isDescriptionTitleOnSlideLarge`/
+`borderRadius` (`borderRadius` уходит в `Slider` пропом, а не в прозрачную обёртку).
 Редактирования порядка в секции **нет** — секция только читает `myPlaylistsAtom` и
 `sectionSettingsAtom` и гидратирует их (`loadMyPlaylists`, `loadSectionSettings`) при монтировании.
 
-**Ограничение `artworkIcon`:** обёртка `CoverImage` (внутри которой рендерится on-slide-описание)
-заменяется на подложку с иконкой целиком, поэтому при заданном `artworkIcon` on-slide-описание
-**не показывается**; описание под обложкой (`whereIsSlideTitleLocated`) рендерится как обычно.
-Для карточки «Избранные» это незаметно только при `whereIsSlideTitleLocated` = `under`/`bothOnAndUnder`:
-там `description` дублируется подписью под слайдом. При `on` подпись не рендерится вообще —
-иконка заменяет обложку, которая служит подложкой для on-slide-описания, так что карточка
-«Избранные» остаётся без названия. Остальные карточки локальных плейлистов (`artworkIcon` не
-задан) следуют настройке `whereIsSlideTitleLocated` — при `on`/`bothOnAndUnder` описание
-показывается на подложке.
+**`artworkIcon` и заголовок:** при заданном `artworkIcon` обложка не рендерится — карточка
+получает тематическую подложку (`currentTheme.surface`). Заголовок карточки следует настройке
+`whereIsSlideTitleLocated`: при `on` рендерится оверлеем по центру подложки, при `under` —
+подписью под карточкой. Описание плейлиста (`isDescriptionTitleOnSlideLarge`) на icon-карточках
+не показывается — у них нет обложки, к низу которой оно прижимается. Остальные карточки
+локальных плейлистов (`artworkIcon` не задан) следуют обеим настройкам; впрочем локальные
+плейлисты (`LocalPlaylistData`) описания не хранят, поэтому блок описания на карточке
+рендерится только у серверных плейлистов (`renderSection`).
 
 ### Экран «Мои плейлисты» (админ-подобная форма оформления + порядок)
 
@@ -224,7 +226,8 @@ reorder и персист принадлежности при toggle.
 
 `artworkIcon` — опциональный слот `SliderItemsElement` (`src/shared/ui/slider/slider-item/`):
 при наличии обложка не рендерится, вместо неё — нода поверх тематической подложки
-(`currentTheme.surface`). API обратной совместимости: обычные слайдеры без `artworkIcon` не
+(`currentTheme.surface`). Заголовок и `whereIsSlideTitleLocated` работают и на icon-карточках
+(при `on` — оверлеем). API обратной совместимости: обычные слайдеры без `artworkIcon` не
 затрагиваются.
 
 ## Резолв на экране плейлиста (tier 0)
