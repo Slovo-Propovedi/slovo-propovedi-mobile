@@ -18,6 +18,7 @@ export const FormField = ({
   multiline = false,
   onBlur,
   onChangeText,
+  onFocus,
   placeholder,
   required = false,
   secureTextEntry = false,
@@ -32,6 +33,7 @@ export const FormField = ({
   multiline?: boolean
   onBlur?: () => void
   onChangeText: (text: string) => void
+  onFocus?: () => void
   placeholder?: string
   required?: boolean
   secureTextEntry?: boolean
@@ -67,13 +69,16 @@ export const FormField = ({
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
         textContentType={textContentType}
-        onFocus={() => setIsFocused(true)}
         placeholderTextColor={currentTheme.placeholder}
         returnKeyType={canSubmitOnEnter ? 'done' : undefined}
         onSubmitEditing={canSubmitOnEnter ? submitHandler : undefined}
         onBlur={() => {
           setIsFocused(false)
           onBlur?.()
+        }}
+        onFocus={() => {
+          setIsFocused(true)
+          onFocus?.()
         }}
         style={[
           formStyles.input,
