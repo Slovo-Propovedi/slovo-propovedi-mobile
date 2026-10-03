@@ -1,0 +1,50 @@
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
+index 992239b..d431d5f 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
+@@ -133,13 +133,16 @@ class AudioModule : Module() {
+   }
+ 
+   private fun shouldReleaseFocus(): Boolean {
+-    return allPlayables.none { it.isPlaying }
++    // PATCH(patch-package): keep audio focus during transient buffering — ExoPlayer reports isPlaying=false
++    // while buffering, which used to abandon focus permanently (upstream fixed in expo-audio 58, PR #49108)
++    return allPlayables.none { it.isPlaying || it.player.playbackState == Player.STATE_BUFFERING }
+   }
+ 
+   private fun shouldPlayInSilentMode(): Boolean {
+     return playsInSilentMode || audioManager.ringerMode == AudioManager.RINGER_MODE_NORMAL
+   }
+ 
++  // PATCH(patch-package): use permanent AUDIOFOCUS_GAIN + USAGE_MEDIA for doNotMix — transient focus lets other apps auto-resume over us (upstream fixed in expo-audio 58, PR #49101)
+   private fun requestAudioFocus() {
+     if (focusAcquired || !audioEnabled || interruptionMode == InterruptionMode.MIX_WITH_OTHERS) {
+       return
+@@ -148,15 +151,16 @@ class AudioModule : Module() {
+     val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+       val requestType = interruptionMode?.let {
+         if (it == InterruptionMode.DO_NOT_MIX) {
+-          AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
++          AudioManager.AUDIOFOCUS_GAIN
+         } else {
+           AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+         }
+-      } ?: AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
++      } ?: AudioManager.AUDIOFOCUS_GAIN
+       audioFocusRequest = AudioFocusRequest.Builder(requestType).run {
+         setAudioAttributes(
+           AudioAttributes.Builder()
+             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
++            .setUsage(AudioAttributes.USAGE_MEDIA)
+             .build()
+         )
+         setAcceptsDelayedFocusGain(true)
+@@ -169,7 +173,7 @@ class AudioModule : Module() {
+     } else {
+       @Suppress("DEPRECATION")
+       val requestType = if (interruptionMode == InterruptionMode.DO_NOT_MIX) {
+-        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
++        AudioManager.AUDIOFOCUS_GAIN
+       } else {
+         AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+       }

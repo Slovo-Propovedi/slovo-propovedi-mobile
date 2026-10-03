@@ -5,11 +5,22 @@
 
 ## Обзор
 
-Аудиоплеер построен на `expo-audio` (`~57.0.4`) и отвечает за воспроизведение проповедей, очередь, режимы повтора, lock-screen-управление и фоновое воспроизведение.
+Аудиоплеер построен на `expo-audio` (`~57.0.5`) и отвечает за воспроизведение проповедей, очередь, режимы повтора, lock-screen-управление и фоновое воспроизведение.
 
 - **iOS:** фоновое воспроизведение включено через `infoPlist.UIBackgroundModes: ["audio"]` и плагин `expo-audio` с `enableBackgroundPlayback: true` (`app.config.ts`).
 - **Android:** foreground-service через permission `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (`app.config.ts`).
 - Управление аудио-режимом — `src/entities/player/lib/PlayerService/native/AudioModeManager.ts` (`interruptionMode: 'doNotMix'`, `playsInSilentMode: true`, `shouldPlayInBackground: true`).
+
+### Нативный патч audio-focus (expo-audio 57.0.5)
+
+`expo-audio@57.0.5` содержит два Android-бага audio-focus (исправлены апстримом только в 58.0.0):
+
+- запрос фокуса для `doNotMix` использовал `AUDIOFOCUS_GAIN_TRANSIENT` и `USAGE_UNKNOWN` — временный фокус позволял другим приложениям (будильник, чужая музыка) автоматически возвращаться поверх нашей проповеди;
+- фокус освобождался при входе ExoPlayer в `STATE_BUFFERING` (на время буферизации `isPlaying` становится `false`) и больше не запрашивался — после первой перебуферизации воспроизведение становилось невидимым для focus-стека и микшировалось с другими приложениями.
+
+Патч `patches/expo-audio+57.0.5.patch` (файл `node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt`) меняет `requestAudioFocus()` на `AUDIOFOCUS_GAIN` + `USAGE_MEDIA` для `doNotMix` и `shouldReleaseFocus()` — не бросает фокус при `Player.STATE_BUFFERING`. Патч накладывается автоматически `postinstall`'ом (`patch-package`, см. `package.json`).
+
+Апстрим: `expo/expo#50072`, `expo/expo#48682`; исправлено в 58.0.0 (PR #49101, #49108). **Удалить/перепроверить при апгрейде `expo-audio` до 58** — тогда патч станет лишним.
 
 ## Архитектура PlayerService
 
