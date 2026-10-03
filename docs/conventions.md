@@ -7,7 +7,7 @@
 - **Ветки:** feature-ветки от `main`. Именование — на усмотрение команды, но MR должен быть маленьким и самодостаточным.
 - **Формат коммита:** conventional commits. Типы и правила — в [`AGENTS.md`](../AGENTS.md) → «Commit Convention» (`feat`, `fix`, `refactor`, `test`, `docs`, `style`, `chore`, `build`, `ci`, `perf`, `revert`). Заголовок — максимум 100 символов. Валидация — commitlint.
 - **Язык коммитов:** сообщения коммитов — только на английском (заголовок и body).
-- **Pre-commit:** Husky + lint-staged прогоняют `lint:staged` и `check:types` (см. [`AGENTS.md`](../AGENTS.md)).
+- **Pre-commit:** Husky + lint-staged прогоняют `lint:staged`, `check:types` и `check:patches` (см. [`AGENTS.md`](../AGENTS.md)). `check:patches` (`scripts/check-patches.mjs`) сверяет имена `patches/*.patch` с установленными версиями пакетов и проверяет, что нативный патч `expo-audio` реально применён (маркеры `PATCH(patch-package)`, `USAGE_MEDIA`, `STATE_BUFFERING`, отсутствие transient-фокуса для `doNotMix`); ко-локализованный тест — `scripts/check-patches.test.js`.
 - **MR-процесс:** каждый MR сопровождается описанием «что и зачем», ссылками на изменённые экраны/модули и на обновлённые документы `docs/`.
 
 ## Работа с AI-агентами

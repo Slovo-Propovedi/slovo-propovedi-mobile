@@ -19,6 +19,7 @@ npm run check:types          # TypeScript type checking
 npm run check:fsd            # FSD architecture linting (steiger)
 npm run check:fsd-watch      # FSD linting in watch mode
 npm run check:circular       # Check for circular dependencies (dependency-cruiser)
+npm run check:patches        # Verify patch-package patches match installed versions
 
 # Testing
 npm run test                 # Jest in watch mode, changed files only (vs main)
@@ -624,10 +625,10 @@ Husky + lint-staged runs on every commit:
 
 ```bash
 # .husky/pre-commit
-yarn lint:staged && yarn check:types
+yarn lint:staged && yarn check:types && yarn check:patches
 ```
 
-Runs ESLint fix + Prettier on staged files, then TypeScript check.
+Runs ESLint fix + Prettier on staged files, then TypeScript check, then the patch guard (`check:patches`).
 
 ## Commit Convention
 
