@@ -146,6 +146,7 @@
 
 - [ ] `yarn lint` — без ошибок;
 - [ ] `yarn check:types` — без ошибок;
+- [ ] `yarn check:patches` — патчи `patches/*.patch` совпадают с установленными версиями;
 - [ ] `yarn check:unused` (knip) — ноль находок (обязательно при каждом изменении кода);
 - [ ] `yarn check:fsd` (steiger) — без ошибок;
 - [ ] `yarn testFinal` — тесты проходят;

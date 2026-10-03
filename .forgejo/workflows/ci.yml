@@ -135,6 +135,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Check patch-package patches
+        run: yarn check:patches
+
       - name: Check types (tsc)
         run: yarn check:types
 
