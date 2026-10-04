@@ -81,6 +81,24 @@
 
 `CoverPicker` виджета умеет и ручной URL (`EditableUrlField`), и галерею библиотеки, и прямую загрузку изображения (`appControllerUploadFile` с прогрессом) — им пользуются и форма проповеди, и форма плейлиста. Кнопки «Выбрать из библиотеки» и «Загрузить …» стоят в одну строку; у «Выбрать из библиотеки» слева иконка `Ionicons albums-outline`, у «Загрузить …» — `cloud-upload-outline` (цвет обложки — `currentTheme.primary` / `COLORS.white`, размер 20). Галерея выбора — общий `FileLibraryModal` (`widgets/admin-form-pickers`): заголовок + кнопка «Закрыть» (X), safe-area отступы, закрытие по фону/системному «назад» Android (общий `shared/ui/modal`).
 
+### Импорт аудио из YouTube / Invidious
+
+Фича `src/features/sermon-audio-import` (публичный API — только `ImportFromYoutube`). Рендерится в `pages/admin-sermon-form/ui/SermonMediaFields.tsx` сразу под полем «YouTube (URL)»; кнопка активна, только если в поле непустая ссылка. На web блок не рендерится вовсе (`if (Platform.OS === 'web') return null` — хуки при этом вызываются, чтобы правила хуков не нарушались): InnerTube-шимы и файловые задачи на web не нужны, а админка на mobile-web — редкий сценарий.
+
+**Конвейер** (`lib/importAudio.ts`): `parseVideoId(url)` → `resolveAudio(settings, videoId)` → скачивание в кэш устройства (`downloadFileWithTimeout`, таймаут 15 минут) → загрузка на сервер (`uploadSermonFile`, `mimeType: 'audio/mp4'`) → `{ audioUrl, description, title }` подставляются в форму (поля `audioUrl`/`description`/`title`). Конвертации нет: на сервер уходит исходный **m4a** (AAC, itag 140) — он играется нативно и в вебе; mp3 потребовал бы нативного ffmpeg. Временный файл кэша (имя строится из заголовка видео, санитизированное, ≤ 80 символов — `lib/tempAudioFile.ts`) удаляется в `finally`, в том числе при падении; ошибка удаления не превращает успешный импорт в провал. Скачивание отменяется при размонтировании формы (`AbortController` в `lib/useAudioImport.ts`), отменённый импорт не показывает toast.
+
+**Источники.** Переключатель «YouTube | Invidious» (`ui/ImportSourcePicker.tsx`):
+
+- **Invidious** (по умолчанию) — `GET {base}/api/v1/videos/{videoId}?local=true` (`lib/invidiousSource.ts`), таймаут 15с, `Accept: application/json` и браузерный `User-Agent` (часть инстансов режет запросы без него). Формат выбирается по `mimeType` `audio/mp4`, приоритет itag `140`, иначе — самый высокобитрейтовый mp4-аудиоформат.
+- **YouTube** — приватный InnerTube API через `youtubei.js` (`lib/youtubeSource.ts`), клиент `ANDROID_VR` (единственный в 2026-м отдаёт потоки без PO-токена; WEB/ANDROID/IOS упираются в `LOGIN_REQUIRED`). Библиотека грузится **лениво** (`await import('youtubei.js')`), сессия InnerTube кешируется на процесс, неудачное создание не кешируется. В release лог библиотеки отключён (`Log.setLevel(Log.Level.NONE)` при `!__DEV__`).
+- **Шимы RN** (`lib/youtubeShims.ts`): `crypto.getRandomValues`/`randomUUID` из `expo-crypto` и собственный `eval` (`new Function`) для дешифровки форматов — в Hermes `eval` выключен. Шимы ставятся **после** загрузки библиотеки (её RN-платформа перезаписывает `eval` при инициализации) и только один раз на процесс.
+
+**Адрес инстанса** (`ui/ImportInstanceField.tsx`): два проверенных пресета-чипса (`https://inv.phobos.observer`, `https://invidious.f5.si`) и поле для своего адреса, который применяется по blur; разрешён `http://` (инстанс в локальной сети). Выбор источника и адрес сохраняются в AsyncStorage (`youtube_import_settings`, см. [contracts/storage.md](../contracts/storage.md) → «Все ключи»); значение переживает обновления приложения, поэтому читается через zod-схему (`importSettingsSchema`), невалидное значение = дефолт в памяти.
+
+**Ошибки.** Источники, скачивание и загрузка бросают только `ImportSourceError` с кодом из `ImportErrorCode`; UI показывает текст из `IMPORT_ERROR_MESSAGES` (`lib/sourceErrors.ts`): трансляция, вход/возраст, нет аудио, битая ссылка, недоступен сервис, не загрузился файл, видео недоступно. Неизвестная ошибка падает на `getErrorMessage`.
+
+Покрыт тестами: `lib/{parseVideoId,invidiousSource,importAudio,importSettings,tempAudioFile}.test.ts`, `ui/{ImportFromYoutube,ImportSourcePicker,ImportInstanceField}.test.tsx`.
+
 ### Создание проповеди
 
 Отдельного экрана/таба загрузки нет: проповедь создаётся формой `/admin/sermons/create`. Точки входа — кнопка «Загрузить проповедь» в шапке списка проповедей (`AdminSermonsHeader` → `router.push('/admin/sermons/create')`) и быстрое действие «Загрузить проповедь» на главной админки (`AdminQuickActions`). «Назад» из формы возвращается на предыдущий админ-экран (`router.back()` при наличии истории), а при её отсутствии (web-reload, deep link) — `router.replace('/admin/sermons')` (`fallbackRoute` у `useAdminFormHeader`).
