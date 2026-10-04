@@ -3,13 +3,13 @@ import { File } from 'expo-file-system'
 export const DOWNLOAD_TIMEOUT_MS = 600_000
 
 const createDownloadTimeoutError = (timeoutMs: number): Error =>
-  new Error(`[updateService] Update download timed out after ${timeoutMs / 1000}s`)
+  new Error(`Download timed out after ${timeoutMs / 1000}s`)
 
 const deleteFileBestEffort = (file: File): void => {
   try {
     if (file.exists) file.delete()
   } catch (error) {
-    console.warn('[updateService] Failed to delete partial download:', error)
+    console.warn('[downloadFileWithTimeout] Failed to delete partial download:', error)
   }
 }
 
@@ -27,14 +27,28 @@ const raceDownloadWithTimeout = <T>(
     }),
   ])
 
+/**
+ * Скачивает файл с таймаутом и (необязательным) внешним сигналом отмены,
+ * сообщая прогресс в процентах. При сбое частичный файл удаляется — вызывающий
+ * всегда получает либо готовый файл, либо ошибку без мусора на диске.
+ * @param url - Источник.
+ * @param destination - Куда скачивать (файл не перезаписывается).
+ * @param onProgress - Колбэк прогресса 0–100 либо `undefined`.
+ * @param timeoutMs - Таймаут скачивания.
+ * @param externalSignal - Сигнал отмены от вызывающего (например, размонтирование).
+ * @returns Скачанный файл либо `null`, если задача была приостановлена.
+ */
 export const downloadFileWithTimeout = async (
   url: string,
   destination: File,
   onProgress: ((progressPercent: number) => void) | undefined,
   timeoutMs: number,
+  externalSignal?: AbortSignal,
 ): Promise<File | null> => {
   const abortController = new AbortController()
   const timeoutId = setTimeout(() => abortController.abort(), timeoutMs)
+  const abortFromExternalSignal = () => abortController.abort()
+  externalSignal?.addEventListener('abort', abortFromExternalSignal, { once: true })
 
   try {
     const task = File.createDownloadTask(url, destination, {
@@ -54,5 +68,6 @@ export const downloadFileWithTimeout = async (
     throw error
   } finally {
     clearTimeout(timeoutId)
+    externalSignal?.removeEventListener('abort', abortFromExternalSignal)
   }
 }

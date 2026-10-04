@@ -3,7 +3,7 @@ import { Directory, File, Paths } from 'expo-file-system'
 import * as IntentLauncher from 'expo-intent-launcher'
 import { Platform } from 'react-native'
 import { listContents, unzip } from 'react-native-zip-archive'
-import { DOWNLOAD_TIMEOUT_MS, downloadFileWithTimeout } from './downloadFileWithTimeout'
+import { DOWNLOAD_TIMEOUT_MS, downloadFileWithTimeout } from '../fs/downloadFileWithTimeout'
 
 const APK_SAFE_NAME = 'update.apk'
 const APK_EXTENSION = '.apk'

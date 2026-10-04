@@ -53,7 +53,7 @@ let capturedSignal: AbortSignal | undefined
 const EXAMPLE_URL = 'https://example.com/slovo-propovedi-update.zip'
 const DOWNLOADED_URI = 'file:///cache/updates/slovo-propovedi-update.zip'
 const TIMEOUT_MS = 50
-const TIMEOUT_ERROR_MESSAGE = 'Update download timed out after 0.05s'
+const TIMEOUT_ERROR_MESSAGE = 'Download timed out after 0.05s'
 
 const mockDownloadTask = (downloadAsync: jest.Mock): void => {
   mockedCreateDownloadTask.mockImplementation((_url, _destination, options) => {
