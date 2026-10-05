@@ -54,7 +54,6 @@ describe('resolveInvidiousAudio', () => {
     expect(resolved).toEqual({
       audioUrl: FIRST_MP4_URL,
       description: DESCRIPTION,
-      durationSec: 2965,
       title: TITLE,
       videoId: VIDEO_ID,
     })

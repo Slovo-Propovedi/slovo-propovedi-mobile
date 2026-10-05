@@ -1,12 +1,9 @@
 /* eslint-disable camelcase -- Innertube.create options are snake_case in youtubei.js */
-import { type Innertube, type YT } from 'youtubei.js'
+import { type Innertube } from 'youtubei.js'
 import { type ResolvedAudio } from './importTypes'
 import { ImportSourceError } from './sourceErrors'
+import { assertVideoIsDownloadable, pickAudioFormat } from './youtubeFormat'
 import { installYoutubeShims } from './youtubeShims'
-
-// itag 140 — аудио в AAC/mp4: играется нативно и в вебе, в отличие от opus/webm.
-const PREFERRED_ITAG = 140
-const PREFERRED_MIME_TYPE = 'mp4'
 
 // ANDROID_VR — единственный клиент, который в 2026-м отдаёт потоки без
 // PO-токена; WEB/ANDROID/IOS требуют подписи и упираются в LOGIN_REQUIRED.
@@ -46,38 +43,22 @@ const getInnertube = async (): Promise<Innertube> => {
   }
 }
 
-const pickAudioFormat = (info: YT.VideoInfo) => {
-  const audioFormats = (info.streaming_data?.adaptive_formats ?? []).filter(
-    format =>
-      format.mime_type.startsWith('audio/') && format.mime_type.includes(PREFERRED_MIME_TYPE),
-  )
-
-  return (
-    audioFormats.find(format => format.itag === PREFERRED_ITAG) ??
-    [...audioFormats].sort((first, second) => second.bitrate - first.bitrate)[0]
-  )
-}
-
-const assertVideoIsDownloadable = (info: YT.VideoInfo): void => {
-  const status = info.playability_status?.status
-  if (status === 'LOGIN_REQUIRED') throw new ImportSourceError('login-required')
-  if (status !== undefined && status !== 'OK') throw new ImportSourceError('video-unavailable')
-  if (info.basic_info.is_live) throw new ImportSourceError('live')
-}
-
 const resolveFromYoutube = async (videoId: string): Promise<ResolvedAudio> => {
   const innertube = await getInnertube()
   const info = await innertube.getBasicInfo(videoId, { client: INNERTUBE_CLIENT })
 
-  assertVideoIsDownloadable(info)
+  assertVideoIsDownloadable({
+    isLive: Boolean(info.basic_info.is_live),
+    status: info.playability_status?.status as
+      ('ERROR' | 'LOGIN_REQUIRED' | 'OK' | 'UNPLAYABLE') | undefined,
+  })
 
-  const format = pickAudioFormat(info)
+  const format = pickAudioFormat(info.streaming_data?.adaptive_formats ?? [])
   if (!format) throw new ImportSourceError('no-audio')
 
   return {
     audioUrl: await format.decipher(innertube.session.player),
     description: info.basic_info.short_description ?? null,
-    durationSec: info.basic_info.duration ?? null,
     title: info.basic_info.title ?? '',
     videoId,
   }

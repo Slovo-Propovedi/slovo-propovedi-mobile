@@ -30,10 +30,9 @@ export const useAudioImport = ({
   url: string
 }) => {
   const showToastAction = useAction(showToast)
+  const [isImporting, setIsImporting] = useState(false)
   const [progress, setProgress] = useState<ImportPhaseProgress | null>(null)
   const abortController = useRef<AbortController | null>(null)
-
-  const isImporting = progress !== null
 
   useEffect(
     () => () => {
@@ -48,7 +47,10 @@ export const useAudioImport = ({
 
     const controller = new AbortController()
     abortController.current = controller
-    setProgress({ percent: 0, phase: 'download' })
+    // Импорт начался до первого отчёта источника: UI показывает «Поиск видео…»,
+    // пока фаза неизвестна.
+    setIsImporting(true)
+    setProgress(null)
 
     try {
       const data = await importAudio({
@@ -57,6 +59,9 @@ export const useAudioImport = ({
         signal: controller.signal,
         url,
       })
+      // Загрузка файла не отменяется, поэтому успех может прийти после размонтирования:
+      // toast и подстановку в форму в этом случае показывать уже некому.
+      if (controller.signal.aborted) return
       showToastAction(SUCCESS_MESSAGE)
       onImported(data)
     } catch (error) {
@@ -65,6 +70,7 @@ export const useAudioImport = ({
       showToastAction(getImportErrorMessage(error))
     } finally {
       if (abortController.current === controller) abortController.current = null
+      setIsImporting(false)
       setProgress(null)
     }
   }, [isImporting, onImported, settings, showToastAction, url])

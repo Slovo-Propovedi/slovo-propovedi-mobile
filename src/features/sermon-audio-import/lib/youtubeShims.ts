@@ -28,7 +28,12 @@ const defineIfMissing = (target: Record<string, unknown>, name: string, value: u
   target[name] = value
 }
 
-const installCryptoShims = (): void => {
+/**
+ * Ставит крипто-шимы на `globalThis.crypto`. Отдельно от загрузки платформы
+ * youtubei.js: это чистая часть, покрытая юнит-тестом — динамический import
+ * библиотеки в Jest не исполняется.
+ */
+export const installCryptoShims = (): void => {
   const crypto = readCrypto()
   defineIfMissing(crypto, 'getRandomValues', (array: Uint8Array) => Crypto.getRandomValues(array))
   defineIfMissing(crypto, 'randomUUID', () => Crypto.randomUUID())
@@ -47,10 +52,18 @@ const applyShims = async (): Promise<void> => {
 /**
  * Ставит RN-доработки окружения для youtubei.js. Вызывается уже после того, как
  * библиотека загружена: её платформа перезаписывает `eval` при инициализации,
- * поэтому наш шим должен идти вторым. Повторные вызовы переиспользуют первый.
+ * поэтому наш шим должен идти вторым. Повторные вызовы переиспользуют первый;
+ * неудача не кешируется — следующий импорт попробует поставить шимы снова.
  */
-export const installYoutubeShims = (): Promise<void> => {
+export const installYoutubeShims = async (): Promise<void> => {
   shimsPromise ??= applyShims()
 
-  return shimsPromise
+  try {
+    await shimsPromise
+  } catch (error) {
+    // Неудачную установку не кешируем: иначе один сбой загрузки платформы
+    // навсегда оставил бы импорт без расшифровки форматов.
+    shimsPromise = null
+    throw error
+  }
 }

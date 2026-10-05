@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { act, waitFor } from '@testing-library/react-native'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
-import { loadImportSettings, useImportSettings } from './importSettings'
+import { loadImportSettings, normalizeInvidiousBaseUrl, useImportSettings } from './importSettings'
 import { type ImportSettings } from './importTypes'
 
 const YOUTUBE_IMPORT_SETTINGS = 'youtube_import_settings'
@@ -69,6 +69,25 @@ describe('loadImportSettings', () => {
   })
 })
 
+describe('normalizeInvidiousBaseUrl', () => {
+  test('adds a scheme to a bare host of a lan instance', () => {
+    expect(normalizeInvidiousBaseUrl('192.168.1.10:8080')).toBe(LOCAL_INSTANCE)
+  })
+
+  test('keeps an explicit scheme as it is', () => {
+    expect(normalizeInvidiousBaseUrl(LOCAL_INSTANCE)).toBe(LOCAL_INSTANCE)
+    expect(normalizeInvidiousBaseUrl(DEFAULT_INSTANCE)).toBe(DEFAULT_INSTANCE)
+  })
+
+  test('trims whitespace and trailing slashes', () => {
+    expect(normalizeInvidiousBaseUrl(`  ${DEFAULT_INSTANCE}//  `)).toBe(DEFAULT_INSTANCE)
+  })
+
+  test('returns an empty string for a blank value', () => {
+    expect(normalizeInvidiousBaseUrl('   ')).toBe('')
+  })
+})
+
 describe('useImportSettings', () => {
   beforeEach(async () => {
     await AsyncStorage.clear()
@@ -85,6 +104,33 @@ describe('useImportSettings', () => {
         source: 'youtube',
       })
     })
+  })
+
+  test('round-trips a scheme-less instance through normalization', async () => {
+    const { result } = await renderHookWithProviders(() => useImportSettings())
+
+    await act(async () => {
+      result.current.updateSettings({ invidiousBaseUrl: '192.168.1.10:8080' })
+    })
+
+    // Хранилище обязано содержать адрес, который можно зафетчить: без схемы
+    // fetch не разберёт хост.
+    await waitFor(async () => {
+      await expect(loadImportSettings()).resolves.toEqual({
+        ...DEFAULT_SETTINGS,
+        invidiousBaseUrl: LOCAL_INSTANCE,
+      })
+    })
+  })
+
+  test('keeps the stored instance of a normalized commit unchanged', async () => {
+    const { result } = await renderHookWithProviders(() => useImportSettings())
+
+    await act(async () => {
+      result.current.updateSettings({ invidiousBaseUrl: LOCAL_INSTANCE })
+    })
+
+    expect(result.current.settings.invidiousBaseUrl).toBe(LOCAL_INSTANCE)
   })
 
   test('persists an update to storage', async () => {

@@ -45,6 +45,11 @@ export const downloadFileWithTimeout = async (
   timeoutMs: number,
   externalSignal?: AbortSignal,
 ): Promise<File | null> => {
+  // Сигнал мог отмениться ещё до вызова (размонтирование формы между рендерами):
+  // addEventListener на сработавшем сигнале уже не сработает, поэтому отменяем сразу
+  // и не создаём файл вовсе — так же поступает expo в wireNetworkTaskAbortSignal.
+  if (externalSignal?.aborted) throw createDownloadTimeoutError(timeoutMs)
+
   const abortController = new AbortController()
   const timeoutId = setTimeout(() => abortController.abort(), timeoutMs)
   const abortFromExternalSignal = () => abortController.abort()

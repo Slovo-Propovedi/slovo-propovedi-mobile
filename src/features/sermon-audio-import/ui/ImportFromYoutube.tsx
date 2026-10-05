@@ -12,6 +12,8 @@ const IMPORT_LABEL = 'Импортировать'
 const IMPORT_HINT =
   'Скачивает аудиодорожку с YouTube и подставляет её вместе с названием и описанием.'
 
+const _SEARCHING_LABEL = 'Поиск видео…'
+
 const PHASE_LABELS: Record<ImportPhase, string> = {
   download: 'Скачивание…',
   upload: 'Загрузка на сервер…',
@@ -44,6 +46,9 @@ export const ImportFromYoutube = ({
   })
 
   const handlePress = () => void startImport()
+
+  // Пока первый отчёт источника не пришёл, фаза неизвестна — показываем поиск видео,
+  // чтобы админ не смотрел на «Скачивание… 0%» во время запроса метаданных.
 
   if (Platform.OS === 'web') return null
 
@@ -78,9 +83,9 @@ export const ImportFromYoutube = ({
           </View>
         )}
       </PressableButton>
-      {progress ? (
+      {isImporting ? (
         <Text style={[styles.phase, { color: currentTheme.text }]}>
-          {PHASE_LABELS[progress.phase]} {progress.percent}%
+          {progress ? `${PHASE_LABELS[progress.phase]} ${progress.percent}%` : 'Поиск видео…'}
         </Text>
       ) : null}
     </View>

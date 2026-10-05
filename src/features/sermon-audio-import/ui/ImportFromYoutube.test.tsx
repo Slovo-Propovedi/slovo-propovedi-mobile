@@ -135,4 +135,27 @@ describe('<ImportFromYoutube>', () => {
     expect(await screen.findByText('Скачивание… 40%')).toBeTruthy()
     expect(screen.getByRole('button', { name: IMPORT_LABEL })).toBeDisabled()
   })
+
+  test('shows the upload progress of a late phase', async () => {
+    mockImportAudio.mockImplementation(
+      ({ onPhase }: { onPhase: (progress: { percent: number; phase: 'upload' }) => void }) =>
+        new Promise<ImportedSermonData>(() => {
+          onPhase({ percent: 80, phase: 'upload' })
+        }),
+    )
+
+    await renderImport()
+    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+
+    expect(await screen.findByText('Загрузка на сервер… 80%')).toBeTruthy()
+  })
+
+  test('shows searching while the source has not reported a phase yet', async () => {
+    mockImportAudio.mockImplementation(() => new Promise<ImportedSermonData>(() => {}))
+
+    await renderImport()
+    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+
+    expect(await screen.findByText('Поиск видео…')).toBeTruthy()
+  })
 })

@@ -45,6 +45,25 @@ describe('<ImportInstanceField>', () => {
     expect(mockOnChange).toHaveBeenCalledWith(LOCAL_INSTANCE)
   })
 
+  test('adds a scheme to a bare lan host on blur', async () => {
+    await renderField()
+
+    await fireEvent.changeText(screen.getByLabelText(INSTANCE_LABEL), ' 192.168.1.10:8080 ')
+    fireEvent(screen.getByLabelText(INSTANCE_LABEL), 'blur')
+
+    expect(mockOnChange).toHaveBeenCalledWith(LOCAL_INSTANCE)
+  })
+
+  test('discards an uncommitted draft when a preset is tapped', async () => {
+    await renderField()
+
+    await fireEvent.changeText(screen.getByLabelText(INSTANCE_LABEL), 'черновик инстанса')
+    fireEvent.press(screen.getByRole('button', { name: 'invidious.f5.si' }))
+
+    expect(mockOnChange).toHaveBeenCalledTimes(1)
+    expect(mockOnChange).toHaveBeenCalledWith(ALT_INSTANCE)
+  })
+
   test('keeps the stored instance when the field was not changed', async () => {
     await renderField()
 

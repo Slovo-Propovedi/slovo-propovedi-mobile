@@ -33,7 +33,6 @@ export type ImportSource = 'invidious' | 'youtube'
 export interface ResolvedAudio {
   audioUrl: string
   description: null | string
-  durationSec: null | number
   title: string
   videoId: string
 }

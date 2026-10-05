@@ -3,6 +3,7 @@ import { StyleSheet, Text, TextInput, View } from 'react-native'
 import { formStyles } from 'shared/ui/form/formStyles'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
+import { normalizeInvidiousBaseUrl } from '../lib/importSettings'
 
 // Инстансы, проверенные вручную 2026-10-05: первый — дефолтный, второй запасной
 // на случай, если первый лёг или закрылся от запросов.
@@ -30,10 +31,20 @@ export const ImportInstanceField = ({
   const [draft, setDraft] = useState<null | string>(null)
   const value = draft ?? invidiousBaseUrl
 
+  // Черновик в поле нельзя оставлять при выборе пресета: нажатие чипа сразу
+  // меняет адрес, но позже blur поля записал бы поверх него недописанный черновик.
+  const selectPreset = (preset: string) => {
+    setDraft(null)
+    if (preset !== invidiousBaseUrl) onChange(preset)
+  }
+
   const commit = () => {
     const trimmed = value.trim()
     setDraft(null)
-    if (trimmed && trimmed !== invidiousBaseUrl) onChange(trimmed)
+    if (trimmed === '') return
+
+    const normalized = normalizeInvidiousBaseUrl(trimmed)
+    if (normalized !== invidiousBaseUrl) onChange(normalized)
   }
 
   return (
@@ -45,7 +56,7 @@ export const ImportInstanceField = ({
           return (
             <PressableButton
               key={preset}
-              onPress={() => onChange(preset)}
+              onPress={() => selectPreset(preset)}
               accessibilityState={{ selected: isSelected }}
               style={[
                 styles.preset,

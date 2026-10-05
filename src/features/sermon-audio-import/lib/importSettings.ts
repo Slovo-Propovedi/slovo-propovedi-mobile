@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import z from 'zod'
 import { getCachedJson, setCachedJson } from 'shared/lib/cache'
 import { type ImportSettings } from './importTypes'
@@ -9,6 +9,27 @@ import { type ImportSettings } from './importTypes'
 const YOUTUBE_IMPORT_SETTINGS = 'youtube_import_settings'
 
 const DEFAULT_INVIDIOUS_BASE_URL = 'https://inv.phobos.observer'
+
+// Свой инстанс часто поднимают в локальной сети и вводят без схемы («192.168.1.10:8080»),
+// но хранить такой адрес нельзя: fetch без схемы не разберёт хост. Нормализуем адрес
+// на границе ввода (в коммиенте поля), поэтому в хранилище попадает только URL,
+// со схемой; схема в zod-схеме ниже остаётся страховкой для чужих/битых данных.
+const URL_WITH_SCHEME = /^https?:\/\//i
+const FALLBACK_SCHEME = 'http://'
+
+/**
+ * Приводит введённый адрес инстанса к URL со схемой: пустое значение и уже
+ * готовый URL меняет только схему, хвостовые слэши убирает.
+ * @param invidiousBaseUrl - Адрес инстанса, введённый администратором.
+ */
+export const normalizeInvidiousBaseUrl = (invidiousBaseUrl: string): string => {
+  const trimmed = invidiousBaseUrl.trim()
+
+  if (!trimmed) return ''
+  const withScheme = URL_WITH_SCHEME.test(trimmed) ? trimmed : `${FALLBACK_SCHEME}${trimmed}`
+
+  return withScheme.replace(/\/+$/, '')
+}
 
 const DEFAULT_SETTINGS: ImportSettings = {
   invidiousBaseUrl: DEFAULT_INVIDIOUS_BASE_URL,
@@ -54,13 +75,20 @@ const saveImportSettings = async (settings: ImportSettings): Promise<void> => {
  */
 export const useImportSettings = () => {
   const [settings, setSettings] = useState<ImportSettings>(DEFAULT_SETTINGS)
+  // Последние известные настройки держим ещё и в ref: апдейтер state обязан быть
+  // чистым (никаких записей в хранилище внутри setSettings), а сохранять нужно уже
+  // посчитанное значение. Пишет ref только код фичи — загрузка при монтировании и
+  // updateSettings, поэтому база патча всегда актуальна.
+  const settingsRef = useRef<ImportSettings>(DEFAULT_SETTINGS)
 
   useEffect(() => {
     let isMounted = true
 
     const load = async () => {
       const stored = await loadImportSettings()
-      if (isMounted) setSettings(stored)
+      if (!isMounted) return
+      settingsRef.current = stored
+      setSettings(stored)
     }
     void load()
 
@@ -70,12 +98,21 @@ export const useImportSettings = () => {
   }, [])
 
   const updateSettings = useCallback((patch: Partial<ImportSettings>) => {
-    setSettings(current => {
-      const next = { ...current, ...patch }
-      void saveImportSettings(next)
+    let next: ImportSettings = settingsRef.current
 
-      return next
-    })
+    if (patch.invidiousBaseUrl !== undefined) {
+      const normalized = normalizeInvidiousBaseUrl(patch.invidiousBaseUrl)
+      // Храним в хранилище нормализованное значение: пустой адрес не валиден по
+      // схеме, поэтому сохраняем только когда нормализация дала непустой результат.
+      if (normalized === '') return
+      next = { ...settingsRef.current, invidiousBaseUrl: normalized }
+    }
+
+    if (patch.source !== undefined) next = { ...next, source: patch.source }
+
+    settingsRef.current = next
+    setSettings(next)
+    void saveImportSettings(next)
   }, [])
 
   return { settings, updateSettings }

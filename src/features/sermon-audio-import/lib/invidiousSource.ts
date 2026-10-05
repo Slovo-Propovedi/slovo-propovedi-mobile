@@ -59,7 +59,6 @@ const toResolvedAudio = (
 ): ResolvedAudio => ({
   audioUrl: format.url,
   description: typeof payload.description === 'string' ? payload.description : null,
-  durationSec: Number(payload.lengthSeconds) || null,
   title: typeof payload.title === 'string' ? payload.title : '',
   videoId,
 })
