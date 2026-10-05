@@ -12,7 +12,7 @@ const IMPORT_LABEL = 'Импортировать'
 const IMPORT_HINT =
   'Скачивает аудиодорожку с YouTube и подставляет её вместе с названием и описанием.'
 
-const _SEARCHING_LABEL = 'Поиск видео…'
+const SEARCHING_LABEL = 'Поиск видео…'
 
 const PHASE_LABELS: Record<ImportPhase, string> = {
   download: 'Скачивание…',
@@ -85,7 +85,7 @@ export const ImportFromYoutube = ({
       </PressableButton>
       {isImporting ? (
         <Text style={[styles.phase, { color: currentTheme.text }]}>
-          {progress ? `${PHASE_LABELS[progress.phase]} ${progress.percent}%` : 'Поиск видео…'}
+          {progress ? `${PHASE_LABELS[progress.phase]} ${progress.percent}%` : SEARCHING_LABEL}
         </Text>
       ) : null}
     </View>

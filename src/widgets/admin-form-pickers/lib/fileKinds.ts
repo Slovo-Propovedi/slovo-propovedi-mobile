@@ -15,13 +15,14 @@ interface FileKindConfig {
 }
 
 const MP3_EXTENSION = 'mp3'
+const M4A_EXTENSION = 'm4a'
 
 const KIND_CONFIG: Record<AdminFileKind, FileKindConfig> = {
   audio: {
-    allowedExtensions: [MP3_EXTENSION],
-    libraryPattern: /\.mp3(\?.*)?$/i,
-    mimeTypes: ['audio/mpeg'],
-    rejectMessage: 'Допускается только формат MP3.',
+    allowedExtensions: [MP3_EXTENSION, M4A_EXTENSION],
+    libraryPattern: /\.(mp3|m4a)(\?.*)?$/i,
+    mimeTypes: ['audio/mpeg', 'audio/x-m4a', 'audio/mp4'],
+    rejectMessage: 'Допускается только формат MP3 или M4A.',
   },
   image: {
     allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
