@@ -4,11 +4,17 @@ import { ImportSourcePicker } from './ImportSourcePicker'
 
 const YOUTUBE_LABEL = 'YouTube'
 const INVIDIOUS_LABEL = 'Invidious'
+const DISABLED_HINT = 'На вебе доступен только источник Invidious'
 
 const mockOnSelect = jest.fn()
 
 const renderPicker = async (source: 'invidious' | 'youtube') =>
   renderWithProviders(<ImportSourcePicker source={source} onSelect={mockOnSelect} />)
+
+const renderDisabledYouTubePicker = async () =>
+  renderWithProviders(
+    <ImportSourcePicker source='invidious' onSelect={mockOnSelect} disabledSources={['youtube']} />,
+  )
 
 describe('<ImportSourcePicker>', () => {
   beforeEach(() => {
@@ -35,5 +41,21 @@ describe('<ImportSourcePicker>', () => {
     fireEvent.press(screen.getByRole('button', { name: YOUTUBE_LABEL }))
 
     expect(mockOnSelect).toHaveBeenCalledWith('youtube')
+  })
+
+  test('disables a listed source and exposes the hint', async () => {
+    await renderDisabledYouTubePicker()
+
+    expect(screen.getByRole('button', { name: YOUTUBE_LABEL })).toBeDisabled()
+    expect(screen.getByHintText(DISABLED_HINT)).toBeTruthy()
+    expect(screen.getByRole('button', { name: INVIDIOUS_LABEL })).toBeSelected()
+  })
+
+  test('does not report a disabled source when tapped', async () => {
+    await renderDisabledYouTubePicker()
+
+    fireEvent.press(screen.getByRole('button', { name: YOUTUBE_LABEL }))
+
+    expect(mockOnSelect).not.toHaveBeenCalled()
   })
 })

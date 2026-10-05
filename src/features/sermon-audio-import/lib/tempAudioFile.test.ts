@@ -28,27 +28,11 @@ jest.mock('expo-file-system', () => {
   return { File: MockFile, Paths: { cache: 'file:///cache' } }
 })
 
-const TITLE = 'Проповедь о покаянии'
+const FILE_NAME = 'Проповедь о покаянии.m4a'
 
 describe('createTempAudioFile', () => {
-  test('builds an m4a file in the cache from the video title', () => {
-    expect(createTempAudioFile(TITLE).uri).toBe(`file:///cache/${TITLE}.m4a`)
-  })
-
-  test('replaces path separators and forbidden characters', () => {
-    expect(createTempAudioFile('Проповедь: "о покаянии" / 1').name).toBe(
-      'Проповедь- -о покаянии- - 1.m4a',
-    )
-  })
-
-  test('falls back to a generic name for an empty title', () => {
-    expect(createTempAudioFile('   ').name).toBe('youtube-audio.m4a')
-  })
-
-  test('truncates an overly long title', () => {
-    const file = createTempAudioFile('я'.repeat(120))
-
-    expect(file.name).toBe(`${'я'.repeat(80)}.m4a`)
+  test('places the file in the cache under the given name', () => {
+    expect(createTempAudioFile(FILE_NAME).uri).toBe(`file:///cache/${FILE_NAME}`)
   })
 })
 
@@ -60,7 +44,7 @@ describe('removeTemporaryFile', () => {
   })
 
   test('deletes an existing file', () => {
-    removeTemporaryFile(createTempAudioFile(TITLE))
+    removeTemporaryFile(createTempAudioFile(FILE_NAME))
 
     expect(mockDeleteFile).toHaveBeenCalledTimes(1)
   })
@@ -68,7 +52,7 @@ describe('removeTemporaryFile', () => {
   test('does not touch a file that does not exist', () => {
     mockFileExists = false
 
-    removeTemporaryFile(createTempAudioFile(TITLE))
+    removeTemporaryFile(createTempAudioFile(FILE_NAME))
 
     expect(mockDeleteFile).not.toHaveBeenCalled()
   })
@@ -76,6 +60,6 @@ describe('removeTemporaryFile', () => {
   test('swallows a deletion failure', () => {
     mockDeleteThrows = true
 
-    expect(() => removeTemporaryFile(createTempAudioFile(TITLE))).not.toThrow()
+    expect(() => removeTemporaryFile(createTempAudioFile(FILE_NAME))).not.toThrow()
   })
 })

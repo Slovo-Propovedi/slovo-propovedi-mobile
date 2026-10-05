@@ -1,4 +1,4 @@
-import { File } from 'expo-file-system'
+import { File as ExpoFile } from 'expo-file-system'
 import { getErrorMessage } from '../lib/error-utils'
 import { filesApi } from './generated'
 
@@ -20,21 +20,16 @@ export interface UploadOptions {
 }
 
 const PROGRESS_MAX = 100
+const FALLBACK_AUDIO_MIME_TYPE = 'audio/mp4'
 
 /**
- * Загружает выбранный документ на сервер (`POST /files`, multipart) с
- * прогрессом. Файл оборачивается в `expo-file-system`'s `File` — он реализует
- * `Blob`, поэтому generated-функция принимает его типобезопасно, а RN FormData
- * читает из него `uri`/`type` на рантайме. Ошибки нормализуются в сообщение.
- * @param asset - Выбранный документ (uri, имя, mime-тип, размер).
+ * Общий путь загрузки части файла на сервер (`POST /files`, multipart): generated
+ * функция строит FormData сама, а ошибки нормализуются в сообщение.
+ * @param file - Blob/File для multipart-части.
  * @param options - Необязательный колбэк прогресса загрузки.
  */
-export const uploadSermonFile = async (
-  asset: PickedUploadAsset,
-  options: UploadOptions = {},
-): Promise<UploadedFile> => {
+const uploadFilePart = async (file: Blob | File, options: UploadOptions): Promise<UploadedFile> => {
   try {
-    const file = new File(asset.uri)
     const response = await filesApi.getFiles().appControllerUploadFile(
       { file },
       {
@@ -52,3 +47,33 @@ export const uploadSermonFile = async (
     throw new Error(getErrorMessage(error), { cause: error })
   }
 }
+
+/**
+ * Загружает выбранный документ на сервер (`POST /files`, multipart) с
+ * прогрессом. Файл оборачивается в `expo-file-system`'s `File` — он реализует
+ * `Blob`, поэтому generated-функция принимает его типобезопасно, а RN FormData
+ * читает из него `uri`/`type` на рантайме.
+ * @param asset - Выбранный документ (uri, имя, mime-тип, размер).
+ * @param options - Необязательный колбэк прогресса загрузки.
+ */
+export const uploadSermonFile = async (
+  asset: PickedUploadAsset,
+  options: UploadOptions = {},
+): Promise<UploadedFile> => uploadFilePart(new ExpoFile(asset.uri), options)
+
+/**
+ * Веб-путь загрузки: оборачивает скачанный аудио-Blob в браузерный `File` с
+ * именем и mime-типом, чтобы сервер получил корректное имя multipart-части.
+ * @param blob - Собранный в памяти аудио-Blob.
+ * @param fileName - Имя файла на сервере (`.m4a`).
+ * @param options - Необязательный колбэк прогресса загрузки.
+ */
+export const uploadAudioBlob = async (
+  blob: Blob,
+  fileName: string,
+  options: UploadOptions = {},
+): Promise<UploadedFile> =>
+  uploadFilePart(
+    new File([blob], fileName, { type: blob.type || FALLBACK_AUDIO_MIME_TYPE }),
+    options,
+  )

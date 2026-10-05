@@ -1,18 +1,21 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native'
-import { PressableButton } from 'shared/ui/pressable-button'
-import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES, useTheme } from 'shared/ui/theme'
+import { Platform, StyleSheet, Text, View } from 'react-native'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { useImportSettings } from '../lib/importSettings'
-import { type ImportedSermonData, type ImportPhase } from '../lib/importTypes'
+import { type ImportedSermonData, type ImportPhase, type ImportSource } from '../lib/importTypes'
 import { useAudioImport } from '../lib/useAudioImport'
+import { ImportButton } from './ImportButton'
 import { ImportInstanceField } from './ImportInstanceField'
 import { ImportSourcePicker } from './ImportSourcePicker'
 
-const IMPORT_LABEL = 'Импортировать'
 const IMPORT_HINT =
   'Скачивает аудиодорожку с YouTube и подставляет её вместе с названием и описанием.'
 
 const SEARCHING_LABEL = 'Поиск видео…'
+
+// На web InnerTube недоступен (шимы и `eval` в браузере не поддержаны), поэтому
+// YouTube-чип показан, но выключен, а импорт всегда идёт через Invidious.
+const WEB_DISABLED_SOURCES: readonly ImportSource[] = ['youtube']
+const NO_DISABLED_SOURCES: readonly ImportSource[] = []
 
 const PHASE_LABELS: Record<ImportPhase, string> = {
   download: 'Скачивание…',
@@ -22,7 +25,8 @@ const PHASE_LABELS: Record<ImportPhase, string> = {
 /**
  * Блок импорта проповеди из YouTube/Invidious под полем «YouTube (URL)»: выбор
  * источника, адрес инстанса Invidious, кнопка импорта с прогрессом по фазам.
- * Поддерживается только на native (в вебе источники недоступны).
+ * На native доступны оба источника; на web — только Invidious (YouTube-чип
+ * выключен), сохранённый выбор «YouTube» уходит в Invidious.
  * @param props - Пропсы блока импорта.
  * @param props.disabled - Импорт невозможен (например, не заполнен URL).
  * @param props.onImported - Получает аудио URL, заголовок и описание для формы.
@@ -47,42 +51,27 @@ export const ImportFromYoutube = ({
 
   const handlePress = () => void startImport()
 
-  // Пока первый отчёт источника не пришёл, фаза неизвестна — показываем поиск видео,
-  // чтобы админ не смотрел на «Скачивание… 0%» во время запроса метаданных.
-
-  if (Platform.OS === 'web') return null
-
+  // Пока первый отчёт источника не пришёл, фаза неизвестна — показываем поиск
+  // видео, чтобы админ не смотрел на «Скачивание… 0%».
+  const isWeb = Platform.OS === 'web'
+  const effectiveSource = isWeb ? 'invidious' : settings.source
   const isDisabled = disabled || isImporting
 
   return (
     <View style={styles.block}>
       <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{IMPORT_HINT}</Text>
       <ImportSourcePicker
-        source={settings.source}
+        source={effectiveSource}
         onSelect={source => updateSettings({ source })}
+        disabledSources={isWeb ? WEB_DISABLED_SOURCES : NO_DISABLED_SOURCES}
       />
-      {settings.source === 'invidious' ? (
+      {effectiveSource === 'invidious' ? (
         <ImportInstanceField
           invidiousBaseUrl={settings.invidiousBaseUrl}
           onChange={invidiousBaseUrl => updateSettings({ invidiousBaseUrl })}
         />
       ) : null}
-      <PressableButton
-        disabled={isDisabled}
-        onPress={handlePress}
-        accessibilityLabel={IMPORT_LABEL}
-        accessibilityState={{ disabled: isDisabled }}
-        style={[styles.button, { backgroundColor: currentTheme.primary }]}
-      >
-        {isImporting ? (
-          <ActivityIndicator color={COLORS.white} />
-        ) : (
-          <View style={styles.buttonContent}>
-            <Ionicons size={20} color={COLORS.white} name='download-outline' />
-            <Text style={styles.buttonLabel}>{IMPORT_LABEL}</Text>
-          </View>
-        )}
-      </PressableButton>
+      <ImportButton disabled={isDisabled} onPress={handlePress} isImporting={isImporting} />
       {isImporting ? (
         <Text style={[styles.phase, { color: currentTheme.text }]}>
           {progress ? `${PHASE_LABELS[progress.phase]} ${progress.percent}%` : SEARCHING_LABEL}
@@ -95,24 +84,6 @@ export const ImportFromYoutube = ({
 const styles = StyleSheet.create({
   block: {
     marginBottom: INDENTS.medium,
-  },
-  button: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    justifyContent: 'center',
-    marginTop: INDENTS.low,
-    minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: INDENTS.high,
-  },
-  buttonContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.low,
-  },
-  buttonLabel: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
   },
   hint: {
     fontSize: FONT_SIZES.sm,

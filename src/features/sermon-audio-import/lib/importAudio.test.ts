@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { importAudio } from './importAudio'
 import { type ImportPhaseProgress, type ImportSettings } from './importTypes'
 
@@ -96,6 +97,20 @@ describe('importAudio', () => {
 
     expect(mockResolveYoutubeAudio).toHaveBeenCalledWith(VIDEO_ID)
     expect(mockResolveInvidiousAudio).not.toHaveBeenCalled()
+  })
+
+  test('forces invidious on web even when the youtube source is stored', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    const { onPhase } = collectProgress()
+
+    try {
+      await importAudio({ onPhase, settings: { ...SETTINGS, source: 'youtube' }, url: VIDEO_URL })
+    } finally {
+      restorePlatform.restore()
+    }
+
+    expect(mockResolveInvidiousAudio).toHaveBeenCalledWith(SETTINGS.invidiousBaseUrl, VIDEO_ID)
+    expect(mockResolveYoutubeAudio).not.toHaveBeenCalled()
   })
 
   test('downloads, uploads and returns the imported sermon data', async () => {

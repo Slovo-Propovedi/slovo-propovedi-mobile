@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
+import { Platform } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { toastAtom } from 'shared/model/toast'
 import { type ImportedSermonData } from '../lib/importTypes'
@@ -9,7 +10,9 @@ import { ImportFromYoutube } from './ImportFromYoutube'
 const VIDEO_URL = 'https://www.youtube.com/watch?v=lV6YkF7ytxs'
 const IMPORT_LABEL = 'Импортировать'
 const INSTANCE_LABEL = 'Инстанс Invidious'
+const INVIDIOUS_LABEL = 'Invidious'
 const YOUTUBE_LABEL = 'YouTube'
+const DISABLED_SOURCE_HINT = 'На вебе доступен только источник Invidious'
 const SUCCESS_MESSAGE = 'Импортировано из YouTube'
 const VIDEO_UNAVAILABLE_MESSAGE = 'Видео недоступно'
 
@@ -157,5 +160,46 @@ describe('<ImportFromYoutube>', () => {
     await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
 
     expect(await screen.findByText('Поиск видео…')).toBeTruthy()
+  })
+})
+
+describe('<ImportFromYoutube> on web', () => {
+  let restorePlatform: { restore: () => void }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    // Even a stored "youtube" choice must fall back to Invidious on web.
+    mockSettings.source = 'youtube'
+    mockImportAudio.mockResolvedValue(IMPORTED)
+    restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+  })
+
+  afterEach(() => {
+    restorePlatform.restore()
+  })
+
+  test('disables YouTube but still imports through Invidious', async () => {
+    const { onImported } = await renderImport()
+
+    expect(screen.getByRole('button', { name: YOUTUBE_LABEL })).toBeDisabled()
+    expect(screen.getByHintText(DISABLED_SOURCE_HINT)).toBeTruthy()
+    expect(screen.getByRole('button', { name: INVIDIOUS_LABEL })).toBeSelected()
+    expect(screen.getByLabelText(INSTANCE_LABEL)).toBeTruthy()
+
+    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+
+    expect(mockImportAudio).toHaveBeenCalledWith(expect.objectContaining({ url: VIDEO_URL }))
+    await waitFor(() => {
+      expect(onImported).toHaveBeenCalledWith(IMPORTED)
+    })
+  })
+
+  test('does not switch to YouTube when its disabled chip is pressed', async () => {
+    await renderImport()
+
+    fireEvent.press(screen.getByRole('button', { name: YOUTUBE_LABEL }))
+
+    expect(mockUpdateSettings).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: INVIDIOUS_LABEL })).toBeSelected()
   })
 })
