@@ -33,53 +33,76 @@ android/app/build/outputs/apk/prod/release/app-prod-release.apk
 The exact file name may carry an `-unsigned` suffix depending on the
 signing configuration.
 
-> **Note:** By default, release builds use the debug keystore
-> (`android/app/debug.keystore`). This is fine for development and
-> testing, but **not accepted by Google Play or F-Droid**.
+> **Note:** When no release keystore is configured (see below), release
+> builds fall back to the debug keystore (`android/app/debug.keystore`).
+> That is fine for development and testing, but **not accepted by Google
+> Play or F-Droid** — and a debug-signed public release is forgeable.
 
 ### Signing for Production
 
-To publish to app stores, you need a **release keystore**. The current
-`android/app/build.gradle` only defines a `debug` signing config:
+Release signing is implemented by the local config plugin
+`plugins/withReleaseSigning.ts`, which patches the generated
+`android/app/build.gradle` on every `expo prebuild`. It adds a `release`
+signing config that reads four environment variables at Gradle
+*configuration* time:
 
-```groovy
-signingConfigs {
-    debug {
-        storeFile file('debug.keystore')
-        storePassword 'android'
-        keyAlias 'androiddebugkey'
-        keyPassword 'android'
-    }
-}
+| Variable                | Meaning                                            |
+| ----------------------- | -------------------------------------------------- |
+| `RELEASE_STORE_FILE`    | Path to the release keystore (`.keystore`/`.jks`)  |
+| `RELEASE_STORE_PASSWORD`| Keystore password                                  |
+| `RELEASE_KEY_ALIAS`     | Key alias inside the keystore                      |
+| `RELEASE_KEY_PASSWORD`  | Password for that key                              |
+
+When `RELEASE_STORE_FILE` is unset or empty, the `release` signing config
+stays empty and `buildTypes.release` keeps signing with
+`signingConfigs.debug` — local builds and CI without the release secret
+stay green. **Release builds signed with the debug key are dev-only.**
+
+#### Generate a release keystore
+
+```bash
+keytool -genkeypair -v -storetype PKCS12 \
+  -keystore release.keystore \
+  -alias my-key-alias \
+  -keyalg RSA -keysize 2048 \
+  -validity 10000
 ```
 
-To add a release signing config:
+Then export the four variables (or pass them inline) and build:
 
-1. Generate a keystore:
+```bash
+export RELEASE_STORE_FILE="$PWD/release.keystore"
+export RELEASE_STORE_PASSWORD='…'
+export RELEASE_KEY_ALIAS='my-key-alias'
+export RELEASE_KEY_PASSWORD='…'
+yarn build-local-release:android
+```
 
-   ```bash
-   keytool -genkeypair -v -storetype PKCS12 \
-     -keystore release.keystore \
-     -alias my-key-alias \
-     -keyalg RSA -keysize 2048 \
-     -validity 10000
-   ```
+The keystore file itself is git-ignored (`.gitignore`: `*.keystore`, with
+the two canonical debug keys re-included). Keep it out of the repository.
 
-2. Place `release.keystore` in `android/app/`.
+#### CI secrets (Forgejo)
 
-3. Add a `release` signing config to `android/app/build.gradle`:
+`release.yml` restores the keystore right after `expo prebuild --clean`
+and exports the `RELEASE_*` variables for the build step. Configure these
+repository secrets:
 
-   ```groovy
-   // inside signingConfigs { ... } in android/app/build.gradle
-   release {
-       storeFile file('release.keystore')
-       storePassword System.getenv("RELEASE_STORE_PASSWORD") ?: ''
-       keyAlias System.getenv("RELEASE_KEY_ALIAS") ?: ''
-       keyPassword System.getenv("RELEASE_KEY_PASSWORD") ?: ''
-   }
-   ```
+| Secret                          | Content                                            |
+| ------------------------------- | -------------------------------------------------- |
+| `ANDROID_KEYSTORE_BASE64`       | `base64 -w0 release.keystore` (the keystore bytes) |
+| `ANDROID_KEYSTORE_PASSWORD`     | Keystore password (`RELEASE_STORE_PASSWORD`)       |
+| `ANDROID_KEY_ALIAS`             | Key alias (`RELEASE_KEY_ALIAS`)                    |
+| `ANDROID_KEY_PASSWORD`          | Key password (`RELEASE_KEY_PASSWORD`)              |
 
-4. Set environment variables or use `android/keystore.properties`.
+If `ANDROID_KEYSTORE_BASE64` is absent the restore step warns and skips;
+the build then produces a debug-signed release instead of failing. No
+secret value is ever echoed.
+
+> **⚠️ One-time migration:** switching an existing installation from the
+> debug signature to a real release signature makes Android reject an
+> in-place update (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). Users on a
+> debug-signed release must reinstall the app once; only afterwards do
+> normal in-place updates work again.
 
 For full details, see the
 [Android signing guide](https://developer.android.com/build/publish/app-signing).
@@ -224,6 +247,12 @@ Android воспроизводятся локальными config-плагин�
   ошибкой `withDebugKeystore:` и НЕ даёт Expo молча сгенерировать новый ключ.
   Ротация ключа осознанно = принудительное удаление обеих (dev и prod)
   debug-установок.
+- `plugins/withReleaseSigning.ts` — добавляет в `signingConfigs` release-конфиг,
+  читающий `RELEASE_STORE_FILE`/`RELEASE_STORE_PASSWORD`/`RELEASE_KEY_ALIAS`/
+  `RELEASE_KEY_PASSWORD` на этапе конфигурации Gradle; `buildTypes.release`
+  использует release-ключ только если `RELEASE_STORE_FILE` задан, иначе
+  откатывается на debug. Идемпотентен (гварды по собственным маркерам),
+  debug-конфиг не трогает. См. «Signing for Production» выше.
 
 Все инъекции идемпотентны; повторный `prebuild --clean` даёт идентичное
 дерево.
