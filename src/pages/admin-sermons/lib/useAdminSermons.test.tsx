@@ -11,6 +11,19 @@ jest.mock('shared/api', () => ({
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
+// useFocusEffect: capture the latest callback so tests can simulate a re-focus
+// (returning to the list screen after editing a sermon).
+let mockFocusCallback: () => void = () => {}
+jest.mock('expo-router', () => ({
+  useFocusEffect: (callback: () => () => void | void) => {
+    const { useEffect } = jest.requireActual('react') as {
+      useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
+    }
+    mockFocusCallback = callback
+    useEffect(callback, [callback])
+  },
+}))
+
 const PAGE_SIZE = 20
 
 // One faker sample is enough for a page: only ids matter, and generating a fresh
@@ -49,5 +62,34 @@ describe('useAdminSermons', () => {
 
     expect(result.current.loadMoreFailed).toBe(false)
     expect(result.current.sermons).toHaveLength(PAGE_SIZE + 1)
+  })
+
+  test('refetches the first page when the screen regains focus', async () => {
+    const sample = sermonsMocks.getSermonControllerFindOneResponseMock()
+    mockFindAll
+      .mockResolvedValueOnce({
+        count: 1,
+        nextCursor: null,
+        sermons: [{ ...sample, id: 's1', title: 'Старое' }],
+      })
+      .mockResolvedValueOnce({
+        count: 1,
+        nextCursor: null,
+        sermons: [{ ...sample, id: 's1', title: 'Новое' }],
+      })
+
+    const { result } = await renderHookWithProviders(() => useAdminSermons())
+
+    await act(async () => {})
+
+    expect(result.current.sermons[0]?.title).toBe('Старое')
+
+    await act(async () => {
+      mockFocusCallback()
+    })
+    await act(async () => {})
+
+    expect(result.current.sermons[0]?.title).toBe('Новое')
+    expect(mockFindAll).toHaveBeenCalledTimes(2)
   })
 })

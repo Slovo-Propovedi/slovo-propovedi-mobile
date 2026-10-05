@@ -1,3 +1,4 @@
+import { useFocusEffect } from 'expo-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { type APITypes } from 'shared/api'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
@@ -41,6 +42,7 @@ export const useAdminSermons = (): AdminSermonsState => {
   const [loadMoreFailed, setLoadMoreFailed] = useState(false)
 
   const generationRef = useRef(0)
+  const hasLoadedRef = useRef(false)
 
   const debouncedSetQuery = useDebounce(setQuery, SEARCH_DEBOUNCE_MS, [])
 
@@ -48,35 +50,40 @@ export const useAdminSermons = (): AdminSermonsState => {
     debouncedSetQuery(search)
   }, [search, debouncedSetQuery])
 
-  useEffect(() => {
-    let isActive = true
-
+  const loadFirstPage = useCallback(async () => {
+    const showSkeleton = !hasLoadedRef.current
     const generation = ++generationRef.current
 
-    const load = async () => {
+    if (showSkeleton) {
       setIsLoading(true)
       setIsError(false)
       setLoadMoreFailed(false)
-      try {
-        const response = await fetchSermonsPage(query, sort, order, 1)
-        if (!isActive || generationRef.current !== generation) return
-        setSermons(response.sermons)
-        setHasMore(response.sermons.length === SERMONS_PAGE_SIZE)
-      } catch (error) {
-        if (!isActive || generationRef.current !== generation) return
-        setIsError(true)
-        reportError(error, LOAD_ERROR_MESSAGE)
-      } finally {
-        if (isActive && generationRef.current === generation) setIsLoading(false)
-      }
     }
 
-    void load()
-
-    return () => {
-      isActive = false
+    try {
+      const response = await fetchSermonsPage(query, sort, order, 1)
+      if (generationRef.current !== generation) return
+      setSermons(response.sermons)
+      setHasMore(response.sermons.length === SERMONS_PAGE_SIZE)
+      hasLoadedRef.current = true
+    } catch (error) {
+      if (generationRef.current !== generation) return
+      if (showSkeleton) setIsError(true)
+      reportError(error, LOAD_ERROR_MESSAGE)
+    } finally {
+      if (generationRef.current === generation && showSkeleton) setIsLoading(false)
     }
-  }, [query, sort, order])
+  }, [order, query, sort])
+
+  // Загрузка первой страницы на маунте и при смене поиска/сортировки, а также
+  // молчаливое обновление при возврате на экран. Скелетон показывается только
+  // до первой успешной загрузки, поэтому возврат с формы редактирования
+  // обновляет строку без мигания списка.
+  useFocusEffect(
+    useCallback(() => {
+      void loadFirstPage()
+    }, [loadFirstPage]),
+  )
 
   const loadMore = useCallback(async () => {
     if (isLoading || isLoadingMore || !hasMore) return
