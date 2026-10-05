@@ -4,7 +4,10 @@
     "target": {
       "namespace": "android_app",
       "package_name": "ru.slovopropovedi",
-      "sha256_cert_fingerprints": ["FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"]
+      "sha256_cert_fingerprints": [
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C",
+        "43:F8:DF:03:9D:37:AD:E8:1A:17:B7:AE:8E:DF:8E:43:1C:7F:D8:7B:A1:60:FD:8C:09:C6:28:1A:54:70:6D:9B"
+      ]
     }
   },
   {
@@ -12,7 +15,10 @@
     "target": {
       "namespace": "android_app",
       "package_name": "ru.slovopropovedi.dev",
-      "sha256_cert_fingerprints": ["FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"]
+      "sha256_cert_fingerprints": [
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C",
+        "43:F8:DF:03:9D:37:AD:E8:1A:17:B7:AE:8E:DF:8E:43:1C:7F:D8:7B:A1:60:FD:8C:09:C6:28:1A:54:70:6D:9B"
+      ]
     }
   }
 ]

@@ -9,6 +9,7 @@ const mockUpload = jest.fn()
 const mockGetOrphans = jest.fn()
 const mockCleanup = jest.fn()
 const mockPickDocument = jest.fn()
+const mockShowToast = jest.fn()
 
 jest.mock('shared/api', () => ({
   filesApi: {
@@ -20,6 +21,11 @@ jest.mock('shared/api', () => ({
     }),
   },
   uploadSermonFile: (...args: unknown[]) => mockUpload(...args),
+}))
+
+jest.mock('shared/model', () => ({
+  ...jest.requireActual('shared/model'),
+  showToast: (...args: unknown[]) => mockShowToast(...args),
 }))
 
 jest.mock('expo-document-picker', () => ({
@@ -42,6 +48,14 @@ const imageFile = (
   size: 2048,
   used: false,
   ...overrides,
+})
+
+const orphanFile = (fileName: string) => ({
+  fileName,
+  fileUrl: `https://cdn.test/${fileName}`,
+  lastModified: null,
+  size: 1024,
+  used: false,
 })
 
 describe('<AdminMediaScreen>', () => {
@@ -143,5 +157,48 @@ describe('<AdminMediaScreen>', () => {
     expect(await findByText('lost.mp3')).toBeTruthy()
     // Only the audio orphan is deletable, so the cleanup button counts 1.
     expect(await findByText('Удалить (1)')).toBeTruthy()
+  })
+
+  test('treats an m4a orphan as deletable audio, not an image', async () => {
+    mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
+    mockGetOrphans.mockResolvedValue({ count: 1, orphaned: [orphanFile('lost.m4a')] })
+
+    const { findByText } = await renderWithProviders(<AdminMediaScreen />)
+    fireEvent.press(await findByText('Найти осиротевшие файлы'))
+
+    expect(await findByText('lost.m4a')).toBeTruthy()
+    expect(await findByText('Удалить (1)')).toBeTruthy()
+  })
+
+  test('deletes a single orphaned audio file after confirmation', async () => {
+    mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
+    mockGetOrphans.mockResolvedValue({ count: 1, orphaned: [orphanFile('lost.mp3')] })
+
+    const { findByLabelText, findByText } = await renderWithProviders(<AdminMediaScreen />)
+    fireEvent.press(await findByText('Найти осиротевшие файлы'))
+    fireEvent.press(await findByLabelText('Удалить lost.mp3'))
+
+    expect(await findByText('Удалить файл?')).toBeTruthy()
+    fireEvent.press(await findByText('Удалить файл'))
+
+    await waitFor(() => expect(mockRemoveFile).toHaveBeenCalledWith('lost.mp3'))
+  })
+
+  test('shows the in-use message when an orphan is still referenced (409)', async () => {
+    mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
+    mockGetOrphans.mockResolvedValue({ count: 1, orphaned: [orphanFile('used.mp3')] })
+    mockRemoveFile.mockRejectedValue({ response: { status: 409 } })
+
+    const { findByLabelText, findByText } = await renderWithProviders(<AdminMediaScreen />)
+    fireEvent.press(await findByText('Найти осиротевшие файлы'))
+    fireEvent.press(await findByLabelText('Удалить used.mp3'))
+    fireEvent.press(await findByText('Удалить файл'))
+
+    await waitFor(() =>
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.anything(),
+        'Файл используется в проповедях',
+      ),
+    )
   })
 })

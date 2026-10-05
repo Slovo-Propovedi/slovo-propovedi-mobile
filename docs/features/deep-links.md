@@ -92,7 +92,10 @@ intentFilters: [
     "target": {
       "namespace": "android_app",
       "package_name": "ru.slovopropovedi",
-      "sha256_cert_fingerprints": ["FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"]
+      "sha256_cert_fingerprints": [
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C",
+        "43:F8:DF:03:9D:37:AD:E8:1A:17:B7:AE:8E:DF:8E:43:1C:7F:D8:7B:A1:60:FD:8C:09:C6:28:1A:54:70:6D:9B"
+      ]
     }
   },
   {
@@ -100,17 +103,21 @@ intentFilters: [
     "target": {
       "namespace": "android_app",
       "package_name": "ru.slovopropovedi.dev",
-      "sha256_cert_fingerprints": ["FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"]
+      "sha256_cert_fingerprints": [
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C",
+        "43:F8:DF:03:9D:37:AD:E8:1A:17:B7:AE:8E:DF:8E:43:1C:7F:D8:7B:A1:60:FD:8C:09:C6:28:1A:54:70:6D:9B"
+      ]
     }
   }
 ]
 ```
 
-- массив из двух statements: prod-пакет `ru.slovopropovedi` и dev-пакет `ru.slovopropovedi.dev`. Оба flavor подписаны одним `android/app/debug.keystore`, поэтому отпечатки совпадают — dev-сборки теперь **проходят** автоматическую верификацию App Links наравне с prod;
-- отпечаток — SHA256 ключа, которым подписывается `assembleProdRelease`: сейчас это `android/app/debug.keystore` (alias `androiddebugkey`), см. [../BUILD-LOCAL.md](../BUILD-LOCAL.md) → «Android Release Build» («By default, release builds use the debug keystore»);
+- массив из двух statements: prod-пакет `ru.slovopropovedi` и dev-пакет `ru.slovopropovedi.dev`. Каждый statement содержит **два** отпечатка — debug и release, поэтому автоматическую верификацию App Links проходят и dev-сборки, и релизные;
+- **debug** — `FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C` — SHA256 `android/app/debug.keystore` (alias `androiddebugkey`); им подписывались dev-сборки и ранние release-сборки (см. [../BUILD-LOCAL.md](../BUILD-LOCAL.md) → «Android Release Build»). Сохранён, чтобы уже установленные сборки не потеряли верификацию;
+- **release** — `43:F8:DF:03:9D:37:AD:E8:1A:17:B7:AE:8E:DF:8E:43:1C:7F:D8:7B:A1:60:FD:8C:09:C6:28:1A:54:70:6D:9B` — SHA256 release-ключа (сгенерирован 2026-10-05, alias `slovo-propovedi`; см. [../BUILD-LOCAL.md](../BUILD-LOCAL.md) → «Signing for Production»);
 - лежит в `public/`, поэтому `yarn web:build` (`expo export -p web`) копирует его в `dist/.well-known/assetlinks.json` автоматически.
 
-**Правило обновления при смене ключа подписи:** когда `release.keystore` заменит debug-подпись — **добавить** новый SHA256 **вторым элементом** массива `sha256_cert_fingerprints` (Android допускает несколько отпечатков) и передеплоить веб. Не заменять — иначе установленные ранее сборки перестанут верифицироваться.
+**Правило обновления при смене ключа подписи:** при генерации нового ключа — **добавить** его SHA256 **вторым (следующим) элементом** массива `sha256_cert_fingerprints` (Android допускает несколько отпечатков) и передеплоить веб. Не заменять — иначе установленные ранее сборки перестанут верифицироваться. Debug-отпечаток удалять только после того, как сборки на нём окончательно выйдут из обращения.
 
 ## nginx: `/.well-known/`
 
