@@ -56,6 +56,7 @@ export const downloadAudio: DownloadAudio = async (input, onProgress, signal) =>
 
   return {
     dispose: () => undefined,
+    size: audioBlob.size,
     upload: async onUpload => {
       const uploaded = await uploadAudioBlob(audioBlob, input.fileName, { onProgress: onUpload })
 

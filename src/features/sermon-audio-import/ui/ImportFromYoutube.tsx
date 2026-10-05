@@ -1,7 +1,11 @@
 import { Platform, StyleSheet, Text, View } from 'react-native'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { useImportSettings } from '../lib/importSettings'
-import { type ImportedSermonData, type ImportPhase, type ImportSource } from '../lib/importTypes'
+import {
+  type ImportedSermonMetadata,
+  type ImportPhase,
+  type ImportSource,
+} from '../lib/importTypes'
 import { useAudioImport } from '../lib/useAudioImport'
 import { ImportButton } from './ImportButton'
 import { ImportInstanceField } from './ImportInstanceField'
@@ -30,22 +34,30 @@ const PHASE_LABELS: Record<ImportPhase, string> = {
  * выключен), сохранённый выбор «YouTube» уходит в Invidious.
  * @param props - Пропсы блока импорта.
  * @param props.disabled - Импорт невозможен (например, не заполнен URL).
- * @param props.onImported - Получает аудио URL, заголовок и описание для формы.
+ * @param props.hasAudio - В форме уже есть аудио: скачивание не запускается.
+ * @param props.onAudioImported - Получает URL загруженного аудио для формы.
+ * @param props.onMetadata - Получает название и описание сразу после разбора ссылки.
  * @param props.youtubeUrl - Ссылка или ID видео из поля формы.
  */
 export const ImportFromYoutube = ({
   disabled,
-  onImported,
+  hasAudio,
+  onAudioImported,
+  onMetadata,
   youtubeUrl,
 }: {
   disabled: boolean
-  onImported: (data: ImportedSermonData) => void
+  hasAudio: boolean
+  onAudioImported: (audioUrl: string) => void
+  onMetadata: (metadata: ImportedSermonMetadata) => void
   youtubeUrl: string
 }) => {
   const { currentTheme } = useTheme()
   const { settings, updateSettings } = useImportSettings()
   const { isImporting, progress, startImport } = useAudioImport({
-    onImported,
+    hasAudio,
+    onAudioImported,
+    onMetadata,
     settings,
     url: youtubeUrl,
   })

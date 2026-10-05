@@ -4,7 +4,7 @@ import { Platform } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { reportError } from 'shared/model/error-dialog'
 import { toastAtom } from 'shared/model/toast'
-import { type ImportedSermonData } from '../lib/importTypes'
+import { type ImportedSermonData, type ImportedSermonMetadata } from '../lib/importTypes'
 import { ImportSourceError } from '../lib/sourceErrors'
 import { ImportFromYoutube } from './ImportFromYoutube'
 
@@ -32,25 +32,40 @@ jest.mock('../lib/importSettings', () => ({
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
-const IMPORTED: ImportedSermonData = {
-  audioUrl: 'https://cdn.test/sermon.m4a',
+const METADATA: ImportedSermonMetadata = {
   description: 'Текст проповеди',
   title: 'Проповедь о покаянии',
 }
 
+const IMPORTED: ImportedSermonData = { ...METADATA, audioUrl: 'https://cdn.test/sermon.m4a' }
+
 const renderImport = async ({
   disabled = false,
-  onImported = jest.fn(),
+  hasAudio = false,
+  onAudioImported = jest.fn(),
+  onMetadata = jest.fn(),
   url = VIDEO_URL,
-}: { disabled?: boolean; onImported?: (data: ImportedSermonData) => void; url?: string } = {}) => {
+}: {
+  disabled?: boolean
+  hasAudio?: boolean
+  onAudioImported?: (audioUrl: string) => void
+  onMetadata?: (metadata: ImportedSermonMetadata) => void
+  url?: string
+} = {}) => {
   const ctx = createCtx()
 
   const view = await renderWithProviders(
-    <ImportFromYoutube youtubeUrl={url} disabled={disabled} onImported={onImported} />,
+    <ImportFromYoutube
+      youtubeUrl={url}
+      disabled={disabled}
+      hasAudio={hasAudio}
+      onMetadata={onMetadata}
+      onAudioImported={onAudioImported}
+    />,
     { ctx },
   )
 
-  return { ...view, ctx, onImported }
+  return { ...view, ctx, onAudioImported, onMetadata }
 }
 
 // Импорт завершается сбросом прогресса уже после показа toast: ждём его в
@@ -94,15 +109,47 @@ describe('<ImportFromYoutube>', () => {
     expect(screen.getByRole('button', { name: IMPORT_LABEL })).toBeDisabled()
   })
 
-  test('imports the url from the form and reports the imported data', async () => {
-    const { onImported } = await renderImport()
+  test('imports the url and reports the metadata and the uploaded audio', async () => {
+    mockImportAudio.mockImplementation(
+      (args: { onMetadata?: (metadata: ImportedSermonMetadata) => void }) => {
+        args.onMetadata?.(METADATA)
+
+        return Promise.resolve(IMPORTED)
+      },
+    )
+    const { onAudioImported, onMetadata } = await renderImport()
 
     await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
 
     expect(mockImportAudio).toHaveBeenCalledWith(expect.objectContaining({ url: VIDEO_URL }))
     await waitFor(() => {
-      expect(onImported).toHaveBeenCalledWith(IMPORTED)
+      expect(onMetadata).toHaveBeenCalledWith(METADATA)
     })
+    await waitFor(() => {
+      expect(onAudioImported).toHaveBeenCalledWith(IMPORTED.audioUrl)
+    })
+  })
+
+  test('fills metadata without downloading when the form already has audio', async () => {
+    mockImportAudio.mockImplementation(
+      (args: { onMetadata?: (metadata: ImportedSermonMetadata) => void }) => {
+        args.onMetadata?.(METADATA)
+
+        return Promise.resolve({ ...METADATA, audioUrl: null })
+      },
+    )
+    const { ctx, onAudioImported, onMetadata } = await renderImport({ hasAudio: true })
+
+    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+
+    expect(mockImportAudio).toHaveBeenCalledWith(expect.objectContaining({ withAudio: false }))
+    await waitFor(() => {
+      expect(onMetadata).toHaveBeenCalledWith(METADATA)
+    })
+    await waitFor(() => {
+      expect(ctx.get(toastAtom)).toBe('Название и описание заполнены')
+    })
+    expect(onAudioImported).not.toHaveBeenCalled()
   })
 
   test('shows a success toast after the import', async () => {
@@ -201,7 +248,7 @@ describe('<ImportFromYoutube> on web', () => {
   })
 
   test('disables YouTube but still imports through Invidious', async () => {
-    const { onImported } = await renderImport()
+    const { onAudioImported } = await renderImport()
 
     expect(screen.getByRole('button', { name: YOUTUBE_LABEL })).toBeDisabled()
     expect(screen.getByHintText(DISABLED_SOURCE_HINT)).toBeTruthy()
@@ -212,7 +259,7 @@ describe('<ImportFromYoutube> on web', () => {
 
     expect(mockImportAudio).toHaveBeenCalledWith(expect.objectContaining({ url: VIDEO_URL }))
     await waitFor(() => {
-      expect(onImported).toHaveBeenCalledWith(IMPORTED)
+      expect(onAudioImported).toHaveBeenCalledWith(IMPORTED.audioUrl)
     })
   })
 

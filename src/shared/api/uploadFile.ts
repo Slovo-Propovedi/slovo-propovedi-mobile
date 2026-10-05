@@ -39,6 +39,9 @@ const uploadFilePart = async (file: Blob | File, options: UploadOptions): Promis
           const percent = total > 0 ? Math.round((event.loaded / total) * PROGRESS_MAX) : 0
           options.onProgress(percent)
         },
+        // Большие аудиофайлы загружаются минутами: снимаем любой унаследованный
+        // таймаут запроса, чтобы axios не оборвал передачу на середине.
+        timeout: 0,
       },
     )
 

@@ -11,6 +11,8 @@ export type DownloadAudio = (
 export interface DownloadedAudio {
   /** Освобождает ресурсы скачивания (на web — no-op). */
   dispose: () => void
+  /** Размер скачанного файла в байтах (диагностика загрузки). */
+  size: number
   /** Загружает скачанное аудио на сервер, сообщая прогресс; возвращает URL. */
   upload: (onProgress: DownloadProgress) => Promise<string>
 }

@@ -4,13 +4,14 @@ import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { importAudio } from './importAudio'
 import {
-  type ImportedSermonData,
+  type ImportedSermonMetadata,
   type ImportPhaseProgress,
   type ImportSettings,
 } from './importTypes'
 import { getImportErrorMessage, ImportSourceError } from './sourceErrors'
 
-const SUCCESS_MESSAGE = 'Импортировано из YouTube'
+const IMPORTED_MESSAGE = 'Импортировано из YouTube'
+const METADATA_MESSAGE = 'Название и описание заполнены'
 
 // Сбои загрузки файла и неожиданные ошибки требуют диагностики: их детали
 // (стек, статус) копируются из диалога. Известные пользовательские причины
@@ -23,17 +24,26 @@ const DIAGNOSTIC_CODES: readonly ImportSourceError['code'][] = ['upload-failed']
  * скачивание при размонтировании, показывает результат (успех — toast, известные
  * сбои — toast, диагностические — глобальный диалог с копируемыми деталями) и
  * отдаёт подставленные в форму данные наверх.
+ *
+ * Метаданные уходят в форму сразу после разбора ссылки; аудио скачивается и
+ * загружается только когда в форме ещё нет файла (`hasAudio`).
  * @param props - Аргументы импорта.
- * @param props.onImported - Получает аудио URL, заголовок и описание для формы.
+ * @param props.hasAudio - В форме уже есть аудиофайл: скачивание пропускается.
+ * @param props.onAudioImported - Получает URL загруженного аудио (после загрузки).
+ * @param props.onMetadata - Получает название и описание сразу после разбора ссылки.
  * @param props.settings - Источник и адрес инстанса Invidious.
  * @param props.url - Ссылка или ID видео YouTube из поля формы.
  */
 export const useAudioImport = ({
-  onImported,
+  hasAudio,
+  onAudioImported,
+  onMetadata,
   settings,
   url,
 }: {
-  onImported: (data: ImportedSermonData) => void
+  hasAudio: boolean
+  onAudioImported: (audioUrl: string) => void
+  onMetadata: (metadata: ImportedSermonMetadata) => void
   settings: ImportSettings
   url: string
 }) => {
@@ -62,16 +72,28 @@ export const useAudioImport = ({
 
     try {
       const data = await importAudio({
+        onMetadata: metadata => {
+          // Размонтирование между разбором ссылки и подстановкой — формы уже нет.
+          if (controller.signal.aborted) return
+          onMetadata(metadata)
+        },
         onPhase: setProgress,
         settings,
         signal: controller.signal,
         url,
+        withAudio: !hasAudio,
       })
       // Загрузка файла не отменяется, поэтому успех может прийти после размонтирования:
       // toast и подстановку в форму в этом случае показывать уже некому.
       if (controller.signal.aborted) return
-      showToastAction(SUCCESS_MESSAGE)
-      onImported(data)
+
+      if (data.audioUrl === null) {
+        showToastAction(METADATA_MESSAGE)
+        return
+      }
+
+      showToastAction(IMPORTED_MESSAGE)
+      onAudioImported(data.audioUrl)
     } catch (error) {
       // Отменённый размонтированием импорт не показываем пользователю.
       if (controller.signal.aborted) return
@@ -88,7 +110,7 @@ export const useAudioImport = ({
       setIsImporting(false)
       setProgress(null)
     }
-  }, [isImporting, onImported, settings, showToastAction, url])
+  }, [hasAudio, isImporting, onAudioImported, onMetadata, settings, showToastAction, url])
 
   return { isImporting, progress, startImport }
 }

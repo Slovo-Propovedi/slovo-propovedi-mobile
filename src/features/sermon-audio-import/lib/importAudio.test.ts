@@ -84,7 +84,7 @@ describe('importAudio', () => {
     const { onPhase } = collectProgress()
 
     await expect(
-      importAudio({ onPhase, settings: SETTINGS, url: 'https://vimeo.com/1' }),
+      importAudio({ onPhase, settings: SETTINGS, url: 'https://vimeo.com/1', withAudio: true }),
     ).rejects.toMatchObject({ code: 'parse' })
     expect(mockResolveInvidiousAudio).not.toHaveBeenCalled()
   })
@@ -93,7 +93,12 @@ describe('importAudio', () => {
     const { onPhase } = collectProgress()
     mockResolveYoutubeAudio.mockResolvedValue(RESOLVED)
 
-    await importAudio({ onPhase, settings: { ...SETTINGS, source: 'youtube' }, url: VIDEO_URL })
+    await importAudio({
+      onPhase,
+      settings: { ...SETTINGS, source: 'youtube' },
+      url: VIDEO_URL,
+      withAudio: true,
+    })
 
     expect(mockResolveYoutubeAudio).toHaveBeenCalledWith(VIDEO_ID)
     expect(mockResolveInvidiousAudio).not.toHaveBeenCalled()
@@ -104,7 +109,12 @@ describe('importAudio', () => {
     const { onPhase } = collectProgress()
 
     try {
-      await importAudio({ onPhase, settings: { ...SETTINGS, source: 'youtube' }, url: VIDEO_URL })
+      await importAudio({
+        onPhase,
+        settings: { ...SETTINGS, source: 'youtube' },
+        url: VIDEO_URL,
+        withAudio: true,
+      })
     } finally {
       restorePlatform.restore()
     }
@@ -116,7 +126,12 @@ describe('importAudio', () => {
   test('downloads, uploads and returns the imported sermon data', async () => {
     const { onPhase, phases } = collectProgress()
 
-    const imported = await importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL })
+    const imported = await importAudio({
+      onPhase,
+      settings: SETTINGS,
+      url: VIDEO_URL,
+      withAudio: true,
+    })
 
     expect(imported).toEqual({ audioUrl: FILE_URL, description: DESCRIPTION, title: TITLE })
     expect(mockCreateDownloadTask).toHaveBeenCalledWith(
@@ -135,6 +150,48 @@ describe('importAudio', () => {
     expect(phases).toEqual([{ percent: 50, phase: 'download' }])
   })
 
+  test('fills metadata without downloading or uploading when audio already exists', async () => {
+    const { onPhase, phases } = collectProgress()
+    const onMetadata = jest.fn()
+
+    const imported = await importAudio({
+      onMetadata,
+      onPhase,
+      settings: SETTINGS,
+      url: VIDEO_URL,
+      withAudio: false,
+    })
+
+    expect(imported).toEqual({ audioUrl: null, description: DESCRIPTION, title: TITLE })
+    expect(onMetadata).toHaveBeenCalledWith({ description: DESCRIPTION, title: TITLE })
+    expect(mockCreateDownloadTask).not.toHaveBeenCalled()
+    expect(mockUploadSermonFile).not.toHaveBeenCalled()
+    expect(phases).toEqual([])
+  })
+
+  test('reports metadata before the download starts', async () => {
+    const events: string[] = []
+    const onMetadata = jest.fn(() => {
+      events.push('metadata')
+    })
+    mockCreateDownloadTask.mockImplementation((_url, _destination, options) => {
+      events.push('download')
+      options.onProgress({ bytesWritten: 50, totalBytes: 100 })
+      return { downloadAsync: mockDownloadAsync }
+    })
+
+    await importAudio({
+      onMetadata,
+      onPhase: () => undefined,
+      settings: SETTINGS,
+      url: VIDEO_URL,
+      withAudio: true,
+    })
+
+    expect(onMetadata).toHaveBeenCalledWith({ description: DESCRIPTION, title: TITLE })
+    expect(events).toEqual(['metadata', 'download'])
+  })
+
   test('sanitizes the title of the temporary file', async () => {
     const { onPhase } = collectProgress()
     mockResolveInvidiousAudio.mockResolvedValue({
@@ -142,7 +199,7 @@ describe('importAudio', () => {
       title: 'Проповедь: "о покаянии" / 1',
     })
 
-    await importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL })
+    await importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL, withAudio: true })
 
     expect(mockUploadSermonFile).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Проповедь- -о покаянии- - 1.m4a' }),
@@ -157,7 +214,7 @@ describe('importAudio', () => {
       return Promise.resolve({ fileName: 'audio.m4a', fileUrl: FILE_URL })
     })
 
-    await importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL })
+    await importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL, withAudio: true })
 
     expect(phases).toEqual([
       { percent: 50, phase: 'download' },
@@ -170,7 +227,7 @@ describe('importAudio', () => {
     mockUploadSermonFile.mockRejectedValue(new Error('Request failed with status code 413'))
 
     await expect(
-      importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL }),
+      importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL, withAudio: true }),
     ).rejects.toMatchObject({
       code: 'upload-failed',
     })
@@ -181,7 +238,7 @@ describe('importAudio', () => {
     mockDownloadAsync.mockRejectedValue(new Error('Network request failed'))
 
     await expect(
-      importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL }),
+      importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL, withAudio: true }),
     ).rejects.toMatchObject({
       code: 'service-unavailable',
     })
@@ -191,7 +248,7 @@ describe('importAudio', () => {
   test('deletes the temporary file after the import', async () => {
     const { onPhase } = collectProgress()
 
-    await importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL })
+    await importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL, withAudio: true })
 
     expect(mockDeleteFile).toHaveBeenCalled()
   })
@@ -200,7 +257,9 @@ describe('importAudio', () => {
     const { onPhase } = collectProgress()
     mockUploadSermonFile.mockRejectedValue(new Error('nope'))
 
-    await expect(importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL })).rejects.toBeDefined()
+    await expect(
+      importAudio({ onPhase, settings: SETTINGS, url: VIDEO_URL, withAudio: true }),
+    ).rejects.toBeDefined()
 
     expect(mockDeleteFile).toHaveBeenCalled()
   })

@@ -32,9 +32,10 @@ export const SermonMediaFields = ({
       />
       <ImportFromYoutube
         youtubeUrl={values.youtubeUrl}
+        hasAudio={Boolean(values.audioUrl)}
         disabled={!values.youtubeUrl.trim()}
-        onImported={({ audioUrl, description, title }) => {
-          onChange('audioUrl', audioUrl)
+        onAudioImported={audioUrl => onChange('audioUrl', audioUrl)}
+        onMetadata={({ description, title }) => {
           onChange('description', description ?? '')
           onChange('title', title)
         }}

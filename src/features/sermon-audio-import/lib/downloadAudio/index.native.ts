@@ -10,6 +10,7 @@ const DOWNLOAD_TIMEOUT_MS = 15 * 60 * 1000
 
 const createDownloadedAudio = (destination: File, mimeType: string): DownloadedAudio => ({
   dispose: () => removeTemporaryFile(destination),
+  size: destination.size,
   upload: async onProgress => {
     // Скачивание могло завершиться без файла на диске — это не сбой загрузки,
     // а неготовый ресурс; иначе UI соврёт про «не удалось загрузить на сервер».

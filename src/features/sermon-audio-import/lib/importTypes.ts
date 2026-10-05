@@ -2,7 +2,14 @@
 // прогресса и результат, который подставляется в форму админки.
 
 export interface ImportedSermonData {
-  audioUrl: string
+  audioUrl: null | string
+  description: null | string
+  title: string
+}
+
+// Метаданные доступны сразу после разбора ссылки — до скачивания аудио. Их
+// форма принимает первой, чтобы админ видел название и описание без ожидания.
+export interface ImportedSermonMetadata {
   description: null | string
   title: string
 }

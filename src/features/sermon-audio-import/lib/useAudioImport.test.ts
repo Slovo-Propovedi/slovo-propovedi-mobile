@@ -2,7 +2,11 @@ import { act } from '@testing-library/react-native'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
-import { type ImportedSermonData, type ImportSettings } from './importTypes'
+import {
+  type ImportedSermonData,
+  type ImportedSermonMetadata,
+  type ImportSettings,
+} from './importTypes'
 import { ImportSourceError } from './sourceErrors'
 import { useAudioImport } from './useAudioImport'
 
@@ -24,11 +28,12 @@ const SETTINGS: ImportSettings = {
   source: 'invidious',
 }
 
-const IMPORTED: ImportedSermonData = {
-  audioUrl: 'https://cdn.test/sermon.m4a',
+const METADATA: ImportedSermonMetadata = {
   description: 'Текст проповеди',
   title: 'Проповедь о покаянии',
 }
+
+const IMPORTED: ImportedSermonData = { ...METADATA, audioUrl: 'https://cdn.test/sermon.m4a' }
 
 const VIDEO_URL = 'https://www.youtube.com/watch?v=lV6YkF7ytxs'
 
@@ -45,12 +50,20 @@ const ACTIONABLE_CODES = [
 
 // Импорт, который не завершается сам: сигнал отмены даёт тест сам, дёрнув abort
 // через переданный в хук signal.
-const renderImport = async (onImported = jest.fn()) => {
+const renderImport = async ({
+  hasAudio = false,
+  onAudioImported = jest.fn(),
+  onMetadata = jest.fn(),
+}: {
+  hasAudio?: boolean
+  onAudioImported?: (audioUrl: string) => void
+  onMetadata?: (metadata: ImportedSermonMetadata) => void
+} = {}) => {
   const view = await renderHookWithProviders(() =>
-    useAudioImport({ onImported, settings: SETTINGS, url: VIDEO_URL }),
+    useAudioImport({ hasAudio, onAudioImported, onMetadata, settings: SETTINGS, url: VIDEO_URL }),
   )
 
-  return { ...view, onImported }
+  return { ...view, onAudioImported, onMetadata }
 }
 
 const startImportRejecting = async (error: unknown) => {
@@ -81,7 +94,7 @@ describe('useAudioImport', () => {
     })
 
     expect(mockImportAudio).toHaveBeenCalledWith(
-      expect.objectContaining({ settings: SETTINGS, url: VIDEO_URL }),
+      expect.objectContaining({ settings: SETTINGS, url: VIDEO_URL, withAudio: true }),
     )
     expect(result.current.progress).toEqual({ percent: 30, phase: 'download' })
     expect(result.current.isImporting).toBe(true)
@@ -95,8 +108,8 @@ describe('useAudioImport', () => {
           resolveImport = resolve
         }),
     )
-    const onImported = jest.fn()
-    const { result, unmount } = await renderImport(onImported)
+    const onAudioImported = jest.fn()
+    const { result, unmount } = await renderImport({ onAudioImported })
 
     await act(async () => {
       void result.current.startImport()
@@ -108,20 +121,41 @@ describe('useAudioImport', () => {
       resolveImport?.(IMPORTED)
     })
 
-    expect(onImported).not.toHaveBeenCalled()
+    expect(onAudioImported).not.toHaveBeenCalled()
     expect(mockedShowToast).not.toHaveBeenCalled()
   })
 
-  test('shows a success toast and no error dialog on success', async () => {
+  test('shows a success toast and reports the uploaded audio on success', async () => {
     mockImportAudio.mockResolvedValue(IMPORTED)
-    const { result } = await renderImport()
+    const { onAudioImported, result } = await renderImport()
 
     await act(async () => {
       await result.current.startImport()
     })
 
     expect(mockedShowToast).toHaveBeenCalledWith(expect.anything(), 'Импортировано из YouTube')
+    expect(onAudioImported).toHaveBeenCalledWith(IMPORTED.audioUrl)
     expect(mockedReportError).not.toHaveBeenCalled()
+  })
+
+  test('fills metadata only and skips the download when the form already has audio', async () => {
+    mockImportAudio.mockImplementation(
+      (args: { onMetadata?: (metadata: ImportedSermonMetadata) => void }) => {
+        args.onMetadata?.(METADATA)
+
+        return Promise.resolve({ ...METADATA, audioUrl: null })
+      },
+    )
+    const { onAudioImported, onMetadata, result } = await renderImport({ hasAudio: true })
+
+    await act(async () => {
+      await result.current.startImport()
+    })
+
+    expect(mockImportAudio).toHaveBeenCalledWith(expect.objectContaining({ withAudio: false }))
+    expect(onMetadata).toHaveBeenCalledWith(METADATA)
+    expect(mockedShowToast).toHaveBeenCalledWith(expect.anything(), 'Название и описание заполнены')
+    expect(onAudioImported).not.toHaveBeenCalled()
   })
 
   test.each(ACTIONABLE_CODES)('shows a toast for the actionable %s failure', async code => {
