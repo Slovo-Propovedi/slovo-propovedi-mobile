@@ -1,6 +1,13 @@
-import { File as ExpoFile } from 'expo-file-system'
+import { Platform } from 'react-native'
 import { getErrorMessage } from '../lib/error-utils'
-import { filesApi } from './generated'
+import { axiosInstance } from './axiosInstance'
+import { type APITypes } from './generated'
+import {
+  reportProgress,
+  type UploadedFile,
+  uploadFilePart,
+  type UploadOptions,
+} from './uploadFilePart'
 
 export interface PickedUploadAsset {
   mimeType?: string
@@ -9,43 +16,56 @@ export interface PickedUploadAsset {
   uri: string
 }
 
-export interface UploadedFile {
-  fileName: string
-  fileUrl: string
-}
-
-export interface UploadOptions {
-  /** Вызывается с процентом загрузки 0–100. */
-  onProgress?: (percent: number) => void
-}
-
-const PROGRESS_MAX = 100
 const FALLBACK_AUDIO_MIME_TYPE = 'audio/mp4'
+const FALLBACK_MIME_TYPE = 'application/octet-stream'
+const UPLOAD_URL = '/files'
 
 /**
- * Общий путь загрузки части файла на сервер (`POST /files`, multipart): generated
- * функция строит FormData сама, а ошибки нормализуются в сообщение.
- * @param file - Blob/File для multipart-части.
+ * Веб-путь: документ-пикер отдаёт `blob:`-URI — читаем его через fetch и
+ * оборачиваем в браузерный `File`, чтобы сервер получил корректное имя и тип
+ * multipart-части (как в `uploadAudioBlob`).
+ * @param asset - Выбранный документ (uri, имя, mime-тип).
  * @param options - Необязательный колбэк прогресса загрузки.
  */
-const uploadFilePart = async (file: Blob | File, options: UploadOptions): Promise<UploadedFile> => {
-  try {
-    const response = await filesApi.getFiles().appControllerUploadFile(
-      { file },
-      {
-        onUploadProgress: event => {
-          if (!options.onProgress) return
-          const total = event.total ?? 0
-          const percent = total > 0 ? Math.round((event.loaded / total) * PROGRESS_MAX) : 0
-          options.onProgress(percent)
-        },
-        // Большие аудиофайлы загружаются минутами: снимаем любой унаследованный
-        // таймаут запроса, чтобы axios не оборвал передачу на середине.
-        timeout: 0,
-      },
-    )
+const uploadWebPickedFile = async (
+  asset: PickedUploadAsset,
+  options: UploadOptions,
+): Promise<UploadedFile> => {
+  const response = await fetch(asset.uri)
+  const blob = await response.blob()
+  const file = new File([blob], asset.name, { type: asset.mimeType ?? FALLBACK_MIME_TYPE })
 
-    return { fileName: response.fileName, fileUrl: response.fileUrl }
+  return uploadFilePart(file, options)
+}
+
+/**
+ * Нативный путь: собираем классическую RN multipart-часть `{ uri, name, type }` и
+ * шлём её напрямую через `axiosInstance` — сетевой слой RN сам выставляет
+ * boundary, а интерцептор `dropBoundarylessMultipartHeader` чистит Content-Type.
+ * @param asset - Выбранный документ (uri, имя, mime-тип).
+ * @param options - Необязательный колбэк прогресса загрузки.
+ */
+const uploadNativePickedFile = async (
+  asset: PickedUploadAsset,
+  options: UploadOptions,
+): Promise<UploadedFile> => {
+  const formData = new FormData()
+  // RN FormData принимает файловую часть-дескриптор `{ uri, name, type }`, но
+  // DOM-типизация `append` знает только `string | Blob` — приводим на границе
+  // нативного модуля (см. docs/contracts/native-modules.md).
+  formData.append('file', {
+    name: asset.name,
+    type: asset.mimeType ?? FALLBACK_MIME_TYPE,
+    uri: asset.uri,
+  } as unknown as Blob)
+
+  try {
+    const response = await axiosInstance.post<APITypes.IFileResponseDto>(UPLOAD_URL, formData, {
+      onUploadProgress: event => reportProgress(options, event),
+      timeout: 0,
+    })
+
+    return { fileName: response.data.fileName, fileUrl: response.data.fileUrl }
   } catch (error) {
     throw new Error(getErrorMessage(error), { cause: error })
   }
@@ -53,16 +73,18 @@ const uploadFilePart = async (file: Blob | File, options: UploadOptions): Promis
 
 /**
  * Загружает выбранный документ на сервер (`POST /files`, multipart) с
- * прогрессом. Файл оборачивается в `expo-file-system`'s `File` — он реализует
- * `Blob`, поэтому generated-функция принимает его типобезопасно, а RN FormData
- * читает из него `uri`/`type` на рантайме.
+ * прогрессом. На web пикер отдаёт `blob:`-URI (см. `uploadWebPickedFile`), на
+ * native — файловый `uri` (см. `uploadNativePickedFile`).
  * @param asset - Выбранный документ (uri, имя, mime-тип, размер).
  * @param options - Необязательный колбэк прогресса загрузки.
  */
-export const uploadSermonFile = async (
+export const uploadSermonFile = (
   asset: PickedUploadAsset,
   options: UploadOptions = {},
-): Promise<UploadedFile> => uploadFilePart(new ExpoFile(asset.uri), options)
+): Promise<UploadedFile> =>
+  Platform.OS === 'web'
+    ? uploadWebPickedFile(asset, options)
+    : uploadNativePickedFile(asset, options)
 
 /**
  * Веб-путь загрузки: оборачивает скачанный аудио-Blob в браузерный `File` с

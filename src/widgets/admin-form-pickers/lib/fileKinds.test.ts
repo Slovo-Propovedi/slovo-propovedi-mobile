@@ -31,4 +31,10 @@ describe('getFileKindConfig', () => {
     expect(libraryPattern.test('https://cdn.example.com/sermon.m4a?token=abc')).toBe(true)
     expect(libraryPattern.test('https://cdn.example.com/sermon.wav')).toBe(false)
   })
+
+  test('only the image kind supports the server media library', () => {
+    expect(getFileKindConfig('image').supportsLibrary).toBe(true)
+    expect(getFileKindConfig('audio').supportsLibrary).toBe(false)
+    expect(getFileKindConfig('text').supportsLibrary).toBe(false)
+  })
 })
