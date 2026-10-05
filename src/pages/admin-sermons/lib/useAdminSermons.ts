@@ -1,8 +1,7 @@
-import { useFocusEffect } from 'expo-router'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { type APITypes } from 'shared/api'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
-import { reportError } from 'shared/model/error-dialog'
+import { usePaginatedList } from 'shared/lib/hooks/usePaginatedList'
 import { fetchSermonsPage, SERMONS_PAGE_SIZE } from './fetchSermonsPage'
 
 export interface AdminSermonsState {
@@ -34,15 +33,6 @@ export const useAdminSermons = (): AdminSermonsState => {
   const [sort, setSort] = useState<APITypes.SermonControllerFindAllSort>('date')
   const [order, setOrder] = useState<APITypes.SermonControllerFindAllOrder>('desc')
   const [query, setQuery] = useState('')
-  const [sermons, setSermons] = useState<APITypes.SermonEntity[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [isError, setIsError] = useState(false)
-  const [hasMore, setHasMore] = useState(false)
-  const [loadMoreFailed, setLoadMoreFailed] = useState(false)
-
-  const generationRef = useRef(0)
-  const hasLoadedRef = useRef(false)
 
   const debouncedSetQuery = useDebounce(setQuery, SEARCH_DEBOUNCE_MS, [])
 
@@ -50,61 +40,24 @@ export const useAdminSermons = (): AdminSermonsState => {
     debouncedSetQuery(search)
   }, [search, debouncedSetQuery])
 
-  const loadFirstPage = useCallback(async () => {
-    const showSkeleton = !hasLoadedRef.current
-    const generation = ++generationRef.current
-
-    if (showSkeleton) {
-      setIsLoading(true)
-      setIsError(false)
-      setLoadMoreFailed(false)
-    }
-
-    try {
-      const response = await fetchSermonsPage(query, sort, order, 1)
-      if (generationRef.current !== generation) return
-      setSermons(response.sermons)
-      setHasMore(response.sermons.length === SERMONS_PAGE_SIZE)
-      hasLoadedRef.current = true
-    } catch (error) {
-      if (generationRef.current !== generation) return
-      if (showSkeleton) setIsError(true)
-      reportError(error, LOAD_ERROR_MESSAGE)
-    } finally {
-      if (generationRef.current === generation && showSkeleton) setIsLoading(false)
-    }
-  }, [order, query, sort])
-
-  // Загрузка первой страницы на маунте и при смене поиска/сортировки, а также
-  // молчаливое обновление при возврате на экран. Скелетон показывается только
-  // до первой успешной загрузки, поэтому возврат с формы редактирования
-  // обновляет строку без мигания списка.
-  useFocusEffect(
-    useCallback(() => {
-      void loadFirstPage()
-    }, [loadFirstPage]),
+  const fetchPage = useCallback(
+    (page: number) => fetchSermonsPage(query, sort, order, page).then(response => response.sermons),
+    [order, query, sort],
   )
 
-  const loadMore = useCallback(async () => {
-    if (isLoading || isLoadingMore || !hasMore) return
-
-    const generation = generationRef.current
-    setIsLoadingMore(true)
-    setLoadMoreFailed(false)
-    try {
-      const nextPage = Math.floor(sermons.length / SERMONS_PAGE_SIZE) + 1
-      const response = await fetchSermonsPage(query, sort, order, nextPage)
-      if (generationRef.current !== generation) return
-      setSermons(current => [...current, ...response.sermons])
-      setHasMore(response.sermons.length === SERMONS_PAGE_SIZE)
-    } catch (error) {
-      if (generationRef.current !== generation) return
-      setLoadMoreFailed(true)
-      reportError(error, LOAD_ERROR_MESSAGE)
-    } finally {
-      setIsLoadingMore(false)
-    }
-  }, [hasMore, isLoading, isLoadingMore, order, query, sermons.length, sort])
+  const {
+    hasMore,
+    isError,
+    isLoading,
+    isLoadingMore,
+    items: sermons,
+    loadMore,
+    loadMoreFailed,
+  } = usePaginatedList({
+    errorMessage: LOAD_ERROR_MESSAGE,
+    fetchPage,
+    pageSize: SERMONS_PAGE_SIZE,
+  })
 
   return {
     hasMore,
