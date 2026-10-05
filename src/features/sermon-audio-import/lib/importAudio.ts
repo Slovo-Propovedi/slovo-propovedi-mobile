@@ -45,7 +45,7 @@ const downloadResolvedAudio = async (
     // сетевого стека; коды самого источника (видео удалено и т. п.) сохраняем.
     if (error instanceof ImportSourceError) throw error
 
-    throw new ImportSourceError(SERVICE_UNAVAILABLE)
+    throw new ImportSourceError(SERVICE_UNAVAILABLE, error)
   }
 }
 
@@ -60,7 +60,11 @@ const uploadDownloadedAudio = async (
     // понятная ошибка вместо технического текста axios.
     if (error instanceof ImportSourceError) throw error
 
-    throw new ImportSourceError(UPLOAD_FAILED)
+    // Причина уходит и в лог, и в toast: без неё «upload-failed» неотличим от
+    // любой другой причины (например, multipart без boundary на web).
+    console.error('[audio-import] upload failed', error)
+
+    throw new ImportSourceError(UPLOAD_FAILED, error)
   }
 }
 

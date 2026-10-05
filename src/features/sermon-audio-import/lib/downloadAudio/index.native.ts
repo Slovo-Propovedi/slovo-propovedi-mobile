@@ -1,6 +1,7 @@
 import { type File } from 'expo-file-system'
 import { uploadSermonFile } from 'shared/api'
 import { downloadFileWithTimeout } from 'shared/lib/fs/downloadFileWithTimeout'
+import { ImportSourceError } from '../sourceErrors'
 import { createTempAudioFile, removeTemporaryFile } from '../tempAudioFile'
 import { type DownloadAudio, type DownloadedAudio } from './types'
 
@@ -10,6 +11,10 @@ const DOWNLOAD_TIMEOUT_MS = 15 * 60 * 1000
 const createDownloadedAudio = (destination: File, mimeType: string): DownloadedAudio => ({
   dispose: () => removeTemporaryFile(destination),
   upload: async onProgress => {
+    // Скачивание могло завершиться без файла на диске — это не сбой загрузки,
+    // а неготовый ресурс; иначе UI соврёт про «не удалось загрузить на сервер».
+    if (!destination.exists) throw new ImportSourceError('service-unavailable')
+
     const uploaded = await uploadSermonFile(
       { mimeType, name: destination.name, uri: destination.uri },
       { onProgress },

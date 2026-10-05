@@ -3,6 +3,7 @@ import { DEFAULT_API_URL } from '../config/api-url'
 import { ctx } from '../lib/reatom-ctx/ctx'
 import { reportServerReachable, reportServerUnreachable } from '../model/network'
 import { type RefreshResponse } from './generated/api.schemas'
+import { dropBoundarylessMultipartHeader } from './multipartHeaders'
 import { secureTokenStorage } from './secureTokenStorage'
 
 // Динамический base URL: инициализируется DEFAULT_API_URL и обновляется
@@ -37,6 +38,8 @@ const performTokenRefresh = async () => {
 
 // Request interceptor для добавления токенов
 axiosInstance.interceptors.request.use(async config => {
+  dropBoundarylessMultipartHeader(config)
+
   // Refresh-запрос аутентифицируется refresh-токеном из тела,
   // поэтому Authorization с просроченным access-токеном ему не нужен
   const isRefreshRequest = config.url?.includes(REFRESH_ENDPOINT)

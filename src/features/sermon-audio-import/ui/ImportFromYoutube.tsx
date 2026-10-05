@@ -5,6 +5,7 @@ import { type ImportedSermonData, type ImportPhase, type ImportSource } from '..
 import { useAudioImport } from '../lib/useAudioImport'
 import { ImportButton } from './ImportButton'
 import { ImportInstanceField } from './ImportInstanceField'
+import { ImportProgressBar } from './ImportProgressBar'
 import { ImportSourcePicker } from './ImportSourcePicker'
 
 const IMPORT_HINT =
@@ -73,9 +74,17 @@ export const ImportFromYoutube = ({
       ) : null}
       <ImportButton disabled={isDisabled} onPress={handlePress} isImporting={isImporting} />
       {isImporting ? (
-        <Text style={[styles.phase, { color: currentTheme.text }]}>
-          {progress ? `${PHASE_LABELS[progress.phase]} ${progress.percent}%` : SEARCHING_LABEL}
-        </Text>
+        <View style={styles.progress}>
+          <Text style={[styles.phase, { color: currentTheme.text }]}>
+            {progress ? `${PHASE_LABELS[progress.phase]} ${progress.percent}%` : SEARCHING_LABEL}
+          </Text>
+          {progress ? (
+            <ImportProgressBar
+              progress={progress.percent}
+              accessibilityLabel={PHASE_LABELS[progress.phase]}
+            />
+          ) : null}
+        </View>
       ) : null}
     </View>
   )
@@ -91,6 +100,9 @@ const styles = StyleSheet.create({
   },
   phase: {
     fontSize: FONT_SIZES.sm,
+    marginBottom: INDENTS.lowest,
+  },
+  progress: {
     marginTop: INDENTS.low,
   },
 })

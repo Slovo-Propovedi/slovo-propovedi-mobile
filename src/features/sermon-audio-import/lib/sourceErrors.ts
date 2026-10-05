@@ -14,25 +14,45 @@ const IMPORT_ERROR_MESSAGES: Record<ImportErrorCode, string> = {
   'video-unavailable': 'Видео недоступно',
 }
 
+// Для этих кодов техническая причина важна пользователю (и разработчику): без
+// неё «не удалось загрузить» неотличимо от «сервис недоступен».
+const CAUSE_DETAIL_CODES: readonly ImportErrorCode[] = ['service-unavailable', 'upload-failed']
+
 /**
  * Сбой источника импорта с машинным кодом: UI показывает сообщение по коду,
- * неизвестные ошибки провалятся на `getErrorMessage`.
+ * неизвестные ошибки провалятся на `getErrorMessage`. Исходная ошибка
+ * сохраняется в `rootCause`, чтобы toast назвал настоящую причину.
  * @param code - Причина сбоя.
+ * @param rootCause - Исходная ошибка, обёрнутая в этот код (если есть).
  */
 export class ImportSourceError extends Error {
-  public constructor(code: ImportErrorCode) {
+  public constructor(code: ImportErrorCode, rootCause?: unknown) {
     super(IMPORT_ERROR_MESSAGES[code])
     this.name = 'ImportSourceError'
     this.code = code
+    this.rootCause = rootCause
   }
 
   public code: ImportErrorCode
+  public rootCause?: unknown
+}
+
+const appendRootCause = (message: string, rootCause: unknown): string => {
+  if (rootCause == null) return message
+
+  return `${message}: ${getErrorMessage(rootCause)}`
 }
 
 /**
- * Русское сообщение для toast: для наших ошибок — по коду, для любых других —
- * текст исходной ошибки.
+ * Русское сообщение для toast: для наших ошибок — по коду (+ причина для
+ * сбоев загрузки/сервиса), для любых других — текст исходной ошибки.
  * @param error - Пойманная ошибка импорта.
  */
-export const getImportErrorMessage = (error: unknown): string =>
-  error instanceof ImportSourceError ? IMPORT_ERROR_MESSAGES[error.code] : getErrorMessage(error)
+export const getImportErrorMessage = (error: unknown): string => {
+  if (!(error instanceof ImportSourceError)) return getErrorMessage(error)
+
+  const message = IMPORT_ERROR_MESSAGES[error.code]
+  if (!CAUSE_DETAIL_CODES.includes(error.code)) return message
+
+  return appendRootCause(message, error.rootCause)
+}

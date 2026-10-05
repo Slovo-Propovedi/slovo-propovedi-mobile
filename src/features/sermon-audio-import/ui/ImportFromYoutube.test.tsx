@@ -15,6 +15,7 @@ const YOUTUBE_LABEL = 'YouTube'
 const DISABLED_SOURCE_HINT = 'На вебе доступен только источник Invidious'
 const SUCCESS_MESSAGE = 'Импортировано из YouTube'
 const VIDEO_UNAVAILABLE_MESSAGE = 'Видео недоступно'
+const DOWNLOAD_PHASE_LABEL = 'Скачивание…'
 
 const mockImportAudio = jest.fn()
 const mockUpdateSettings = jest.fn()
@@ -137,6 +138,22 @@ describe('<ImportFromYoutube>', () => {
 
     expect(await screen.findByText('Скачивание… 40%')).toBeTruthy()
     expect(screen.getByRole('button', { name: IMPORT_LABEL })).toBeDisabled()
+  })
+
+  test('renders a progress bar for the download phase while importing', async () => {
+    mockImportAudio.mockImplementation(
+      ({ onPhase }: { onPhase: (progress: { percent: number; phase: 'download' }) => void }) =>
+        new Promise<ImportedSermonData>(() => {
+          onPhase({ percent: 40, phase: 'download' })
+        }),
+    )
+
+    await renderImport()
+    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+
+    expect(
+      await screen.findByRole('progressbar', { name: DOWNLOAD_PHASE_LABEL }),
+    ).toHaveAccessibilityValue({ max: 100, min: 0, now: 40 })
   })
 
   test('shows the upload progress of a late phase', async () => {
