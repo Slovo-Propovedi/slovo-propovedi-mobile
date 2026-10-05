@@ -1,8 +1,9 @@
 import { act } from '@testing-library/react-native'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
-import { toastAtom } from 'shared/model'
+import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { type ImportedSermonData, type ImportSettings } from './importTypes'
+import { ImportSourceError } from './sourceErrors'
 import { useAudioImport } from './useAudioImport'
 
 const mockImportAudio = jest.fn()
@@ -11,7 +12,12 @@ jest.mock('./importAudio', () => ({
   importAudio: (...args: unknown[]) => mockImportAudio(...args),
 }))
 
+jest.mock('shared/model', () => ({ showToast: jest.fn() }))
+
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
+
+const mockedShowToast = showToast as jest.MockedFunction<typeof showToast>
+const mockedReportError = reportError as jest.MockedFunction<typeof reportError>
 
 const SETTINGS: ImportSettings = {
   invidiousBaseUrl: 'https://inv.phobos.observer',
@@ -26,6 +32,17 @@ const IMPORTED: ImportedSermonData = {
 
 const VIDEO_URL = 'https://www.youtube.com/watch?v=lV6YkF7ytxs'
 
+// Известные причины, которые пользователь решает сам (сменить ссылку/инстанс):
+// им достаточно короткого toast'а, а не диалога с копируемыми деталями.
+const ACTIONABLE_CODES = [
+  'parse',
+  'video-unavailable',
+  'login-required',
+  'live',
+  'no-audio',
+  'service-unavailable',
+] as const
+
 // Импорт, который не завершается сам: сигнал отмены даёт тест сам, дёрнув abort
 // через переданный в хук signal.
 const renderImport = async (onImported = jest.fn()) => {
@@ -34,6 +51,15 @@ const renderImport = async (onImported = jest.fn()) => {
   )
 
   return { ...view, onImported }
+}
+
+const startImportRejecting = async (error: unknown) => {
+  mockImportAudio.mockRejectedValue(error)
+  const { result } = await renderImport()
+
+  await act(async () => {
+    await result.current.startImport()
+  })
 }
 
 describe('useAudioImport', () => {
@@ -83,29 +109,43 @@ describe('useAudioImport', () => {
     })
 
     expect(onImported).not.toHaveBeenCalled()
+    expect(mockedShowToast).not.toHaveBeenCalled()
   })
 
   test('shows a success toast and no error dialog on success', async () => {
     mockImportAudio.mockResolvedValue(IMPORTED)
-    const { ctx, result } = await renderImport()
-
-    await act(async () => {
-      await result.current.startImport()
-    })
-
-    expect(ctx.get(toastAtom)).toBe('Импортировано из YouTube')
-    expect(reportError).not.toHaveBeenCalled()
-  })
-
-  test('reports a failed import in the global error dialog', async () => {
-    const error = new Error('boom')
-    mockImportAudio.mockRejectedValue(error)
     const { result } = await renderImport()
 
     await act(async () => {
       await result.current.startImport()
     })
 
-    expect(reportError).toHaveBeenCalledWith(error, expect.any(String))
+    expect(mockedShowToast).toHaveBeenCalledWith(expect.anything(), 'Импортировано из YouTube')
+    expect(mockedReportError).not.toHaveBeenCalled()
+  })
+
+  test.each(ACTIONABLE_CODES)('shows a toast for the actionable %s failure', async code => {
+    await startImportRejecting(new ImportSourceError(code))
+
+    expect(mockedShowToast).toHaveBeenCalledTimes(1)
+    expect(mockedReportError).not.toHaveBeenCalled()
+  })
+
+  test('shows a dialog for the upload-failed failure', async () => {
+    const error = new ImportSourceError('upload-failed', new Error('multipart'))
+
+    await startImportRejecting(error)
+
+    expect(mockedReportError).toHaveBeenCalledWith(error, expect.any(String))
+    expect(mockedShowToast).not.toHaveBeenCalled()
+  })
+
+  test('shows a dialog for an unexpected failure', async () => {
+    const error = new Error('boom')
+
+    await startImportRejecting(error)
+
+    expect(mockedReportError).toHaveBeenCalledWith(error, expect.any(String))
+    expect(mockedShowToast).not.toHaveBeenCalled()
   })
 })

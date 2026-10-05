@@ -116,16 +116,17 @@ describe('<ImportFromYoutube>', () => {
     await waitForImportToFinish()
   })
 
-  test('reports an import error in the global error dialog', async () => {
+  test('shows an actionable import error as a toast, not in the error dialog', async () => {
     const error = new ImportSourceError('video-unavailable')
     mockImportAudio.mockRejectedValue(error)
-    await renderImport()
+    const { ctx } = await renderImport()
 
     await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
 
     await waitFor(() => {
-      expect(reportError).toHaveBeenCalledWith(error, VIDEO_UNAVAILABLE_MESSAGE)
+      expect(ctx.get(toastAtom)).toBe(VIDEO_UNAVAILABLE_MESSAGE)
     })
+    expect(reportError).not.toHaveBeenCalled()
     await waitForImportToFinish()
   })
 

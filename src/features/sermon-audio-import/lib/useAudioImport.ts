@@ -8,15 +8,21 @@ import {
   type ImportPhaseProgress,
   type ImportSettings,
 } from './importTypes'
-import { getImportErrorMessage } from './sourceErrors'
+import { getImportErrorMessage, ImportSourceError } from './sourceErrors'
 
 const SUCCESS_MESSAGE = 'Импортировано из YouTube'
 
+// Сбои загрузки файла и неожиданные ошибки требуют диагностики: их детали
+// (стек, статус) копируются из диалога. Известные пользовательские причины
+// (битая ссылка, нет аудио, антибот и т. п.) решаются сменой ссылки/инстанса —
+// им достаточно короткого toast'а.
+const DIAGNOSTIC_CODES: readonly ImportSourceError['code'][] = ['upload-failed']
+
 /**
  * Импорт аудио и метаданных в форму проповеди: держит фазовый прогресс, отменяет
- * скачивание при размонтировании, показывает результат (успех — toast, ошибка —
- * глобальный диалог с копируемыми деталями) и отдаёт подставленные в форму данные
- * наверх.
+ * скачивание при размонтировании, показывает результат (успех — toast, известные
+ * сбои — toast, диагностические — глобальный диалог с копируемыми деталями) и
+ * отдаёт подставленные в форму данные наверх.
  * @param props - Аргументы импорта.
  * @param props.onImported - Получает аудио URL, заголовок и описание для формы.
  * @param props.settings - Источник и адрес инстанса Invidious.
@@ -69,7 +75,14 @@ export const useAudioImport = ({
     } catch (error) {
       // Отменённый размонтированием импорт не показываем пользователю.
       if (controller.signal.aborted) return
-      reportError(error, getImportErrorMessage(error))
+      const message = getImportErrorMessage(error)
+
+      if (error instanceof ImportSourceError && !DIAGNOSTIC_CODES.includes(error.code)) {
+        showToastAction(message)
+        return
+      }
+
+      reportError(error, message)
     } finally {
       if (abortController.current === controller) abortController.current = null
       setIsImporting(false)

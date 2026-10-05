@@ -74,7 +74,7 @@
 | `entities/player/lib/PlayerService/BackgroundCachingService`        | Ошибка при фоновом кэшировании аудио                           |
 | `entities/player/lib/PlayerService/native/LockScreenControls.ts`           | Не удалось обновить данные плеера на экране блокировки         |
 | `entities/player/ui/PlayerControls/PlayerControls.tsx`              | Ошибка при переключении воспроизведения                        |
-| `features/sermon-audio-import/lib/useAudioImport.ts`                | Сбой импорта аудио (текст по коду `ImportErrorCode`)           |
+| `features/sermon-audio-import/lib/useAudioImport.ts`                | Сбой импорта аудио — только `upload-failed`/неожиданные (остальные коды — toast) |
 
 Ошибки, связанные с AppState («activity is no longer available»), диалог не поднимают —
 только `console.warn`.

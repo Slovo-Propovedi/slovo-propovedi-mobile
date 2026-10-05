@@ -14,12 +14,16 @@ const DEFAULT_INVIDIOUS_BASE_URL = 'https://inv.phobos.observer'
 // но хранить такой адрес нельзя: fetch без схемы не разберёт хост. Нормализуем адрес
 // на границе ввода (в коммиенте поля), поэтому в хранилище попадает только URL,
 // со схемой; схема в zod-схеме ниже остаётся страховкой для чужих/битых данных.
+// Учётные данные (basic auth) допустимы: адрес вида «user:pass@host» нормализуется
+// в «http://user:pass@host», а сами креды остаются в хранилище (нужны для запроса)
+// и никогда не логируются.
 const URL_WITH_SCHEME = /^https?:\/\//i
 const FALLBACK_SCHEME = 'http://'
 
 /**
  * Приводит введённый адрес инстанса к URL со схемой: пустое значение и уже
- * готовый URL меняет только схему, хвостовые слэши убирает.
+ * готовый URL меняет только схему, хвостовые слэши убирает. Учётные данные
+ * (user:pass@host) сохраняются как часть URL.
  * @param invidiousBaseUrl - Адрес инстанса, введённый администратором.
  */
 export const normalizeInvidiousBaseUrl = (invidiousBaseUrl: string): string => {
@@ -38,7 +42,9 @@ const DEFAULT_SETTINGS: ImportSettings = {
 
 // Значение из хранилища — недоверенный ввод (оно переживает обновления
 // приложения), поэтому читаем его через схему, а не доверяя форме. http://
-// разрешён: инстанс часто поднимают локально в своей сети.
+// разрешён: инстанс часто поднимают локально в своей сети. `z.url()` принимает
+// и userinfo (basic auth: `https://user:pass@host`) — учётные данные легальны,
+// запрос уйдёт с заголовком Authorization.
 const importSettingsSchema = z.object({
   invidiousBaseUrl: z.url().refine(url => url.startsWith('http://') || url.startsWith('https://')),
   source: z.enum(['invidious', 'youtube']),

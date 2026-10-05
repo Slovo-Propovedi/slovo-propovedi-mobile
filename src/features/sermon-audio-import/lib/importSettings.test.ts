@@ -8,6 +8,7 @@ const YOUTUBE_IMPORT_SETTINGS = 'youtube_import_settings'
 const DEFAULT_INSTANCE = 'https://inv.phobos.observer'
 const ALT_INSTANCE = 'https://invidious.f5.si'
 const LOCAL_INSTANCE = 'http://192.168.1.10:8080'
+const CREDENTIALS_INSTANCE = 'https://admin:secret@inv.phobos.observer'
 
 const DEFAULT_SETTINGS: ImportSettings = {
   invidiousBaseUrl: DEFAULT_INSTANCE,
@@ -67,6 +68,15 @@ describe('loadImportSettings', () => {
       source: 'invidious',
     })
   })
+
+  test('reads an instance behind basic auth with credentials kept', async () => {
+    await writeStored({ invidiousBaseUrl: CREDENTIALS_INSTANCE, source: 'invidious' })
+
+    await expect(loadImportSettings()).resolves.toEqual({
+      invidiousBaseUrl: CREDENTIALS_INSTANCE,
+      source: 'invidious',
+    })
+  })
 })
 
 describe('normalizeInvidiousBaseUrl', () => {
@@ -81,6 +91,16 @@ describe('normalizeInvidiousBaseUrl', () => {
 
   test('trims whitespace and trailing slashes', () => {
     expect(normalizeInvidiousBaseUrl(`  ${DEFAULT_INSTANCE}//  `)).toBe(DEFAULT_INSTANCE)
+  })
+
+  test('keeps credentials and strips trailing slashes', () => {
+    expect(normalizeInvidiousBaseUrl(`  ${CREDENTIALS_INSTANCE}//  `)).toBe(CREDENTIALS_INSTANCE)
+  })
+
+  test('adds a fallback scheme to credentials without one', () => {
+    expect(normalizeInvidiousBaseUrl('admin:secret@192.168.1.10:8080')).toBe(
+      'http://admin:secret@192.168.1.10:8080',
+    )
   })
 
   test('returns an empty string for a blank value', () => {
@@ -131,6 +151,23 @@ describe('useImportSettings', () => {
     })
 
     expect(result.current.settings.invidiousBaseUrl).toBe(LOCAL_INSTANCE)
+  })
+
+  test('round-trips an instance with basic auth credentials', async () => {
+    const { result } = await renderHookWithProviders(() => useImportSettings())
+
+    await act(async () => {
+      result.current.updateSettings({ invidiousBaseUrl: `${CREDENTIALS_INSTANCE}/` })
+    })
+
+    expect(result.current.settings.invidiousBaseUrl).toBe(CREDENTIALS_INSTANCE)
+    // Креды остаются в хранилище: без них запрос к инстансу за nginx basic auth упадёт.
+    await waitFor(async () => {
+      await expect(loadImportSettings()).resolves.toEqual({
+        ...DEFAULT_SETTINGS,
+        invidiousBaseUrl: CREDENTIALS_INSTANCE,
+      })
+    })
   })
 
   test('persists an update to storage', async () => {

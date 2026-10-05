@@ -1,4 +1,5 @@
 import { type ImportErrorCode, type ResolvedAudio } from './importTypes'
+import { parseInvidiousBasicAuth } from './invidiousBasicAuth'
 import { parseJsonBody, readInstanceHost, toInstanceFailure } from './invidiousFailure'
 import { ImportSourceError } from './sourceErrors'
 
@@ -69,6 +70,8 @@ const toResolvedAudio = (
  * Invidious. Недоступность/сетевой сбой — «Сервис недоступен»; 401 —
  * «требует авторизацию», 403 или HTML-ответ (антибот) — «закрыт антиботом»;
  * сам инстанс сообщил об ошибке (видео удалено, приватное) — «Видео недоступно».
+ * Учётные данные из адреса (`user:pass@host`, basic auth) уходят заголовком
+ * `Authorization`, а не в URL; в текстах ошибок остаётся только хост.
  * @param invidiousBaseUrl - Адрес инстанса (с хвостовыми слэшами допустим).
  * @param videoId - ID видео YouTube.
  */
@@ -82,8 +85,15 @@ export const resolveInvidiousAudio = async (
   const timeout = setTimeout(() => abortController.abort(), REQUEST_TIMEOUT_MS)
 
   try {
-    const response = await fetch(`${base}/api/v1/videos/${videoId}?local=true`, {
-      headers: { Accept: 'application/json', 'User-Agent': INVIDIOUS_USER_AGENT },
+    const { authHeader, requestBase } = parseInvidiousBasicAuth(base)
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      'User-Agent': INVIDIOUS_USER_AGENT,
+    }
+    if (authHeader) headers.Authorization = authHeader
+
+    const response = await fetch(`${requestBase}/api/v1/videos/${videoId}?local=true`, {
+      headers,
       signal: abortController.signal,
     })
     const body = await response.text()

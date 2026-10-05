@@ -4,6 +4,8 @@ import { getImportErrorMessage, ImportSourceError } from './sourceErrors'
 
 const VIDEO_ID = 'lV6YkF7ytxs'
 const BASE_URL = 'https://inv.phobos.observer'
+const CREDENTIALS_BASE_URL = 'https://admin:secret@inv.phobos.observer'
+const BASIC_AUTH_HEADER = `Basic ${btoa('admin:secret')}`
 const FIRST_MP4_URL = 'https://inv.phobos.observer/videoplayback?audio=first'
 const SECOND_MP4_URL = 'https://inv.phobos.observer/videoplayback?audio=second'
 const OPUS_URL = 'https://inv.phobos.observer/videoplayback?audio=opus'
@@ -103,6 +105,19 @@ describe('resolveInvidiousAudio', () => {
     )
   })
 
+  test('sends basic auth header and keeps credentials out of the request url', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse(VIDEO_FIXTURE))
+
+    await resolveInvidiousAudio(CREDENTIALS_BASE_URL, VIDEO_ID)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE_URL}/api/v1/videos/${VIDEO_ID}?local=true`,
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: BASIC_AUTH_HEADER }),
+      }),
+    )
+  })
+
   test('falls back to the highest bitrate audio format', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue(
       jsonResponse({
@@ -143,6 +158,18 @@ describe('resolveInvidiousAudio', () => {
 
     expect(message).toContain('inv.phobos.observer')
     expect(message).toContain('требует авторизацию')
+  })
+
+  test('keeps credentials out of the error message host', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({}, false, 401))
+
+    const message = await captureFailureMessage(
+      resolveInvidiousAudio(CREDENTIALS_BASE_URL, VIDEO_ID),
+    )
+
+    expect(message).toContain('inv.phobos.observer')
+    expect(message).not.toContain('admin')
+    expect(message).not.toContain('secret')
   })
 
   test('names the instance when it is closed by an anti-bot on 403', async () => {
