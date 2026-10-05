@@ -18,7 +18,7 @@ const ASSET = { mimeType: MIME_TYPE, name: FILE_NAME, uri: 'file:///tmp/sermon.m
 const ORIGINAL_PLATFORM = Platform.OS
 const ORIGINAL_FORM_DATA = globalThis.FormData
 
-class CapturingFormData {
+class CapturingFormData extends FormData {
   public append(name: string, value: unknown): void {
     this.parts.push([name, value])
   }
@@ -26,7 +26,7 @@ class CapturingFormData {
   public readonly parts: Array<[string, unknown]> = []
 }
 
-const mockedGetFiles = filesApi.getFiles as unknown as jest.Mock
+const mockedGetFiles = filesApi.getFiles as jest.Mock
 
 describe('uploadSermonFile', () => {
   beforeEach(() => {
@@ -57,7 +57,7 @@ describe('uploadSermonFile', () => {
 
   test('native: sends an explicit { uri, name, type } multipart part', async () => {
     Platform.OS = 'ios'
-    globalThis.FormData = CapturingFormData as unknown as typeof FormData
+    globalThis.FormData = CapturingFormData
 
     await uploadSermonFile(ASSET)
 
@@ -72,7 +72,7 @@ describe('uploadSermonFile', () => {
 
   test('native: falls back to application/octet-stream without a mime type', async () => {
     Platform.OS = 'android'
-    globalThis.FormData = CapturingFormData as unknown as typeof FormData
+    globalThis.FormData = CapturingFormData
 
     await uploadSermonFile({ name: FILE_NAME, uri: ASSET.uri })
 

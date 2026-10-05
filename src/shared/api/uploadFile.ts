@@ -50,14 +50,13 @@ const uploadNativePickedFile = async (
   options: UploadOptions,
 ): Promise<UploadedFile> => {
   const formData = new FormData()
-  // RN FormData принимает файловую часть-дескриптор `{ uri, name, type }`, но
-  // DOM-типизация `append` знает только `string | Blob` — приводим на границе
-  // нативного модуля (см. docs/contracts/native-modules.md).
+  // Дескриптор `{ uri, name, type }` — штатный формат файловой части RN; его
+  // типизацию даёт ambient-оверлоад `append` (src/types/form-data.d.ts).
   formData.append('file', {
     name: asset.name,
     type: asset.mimeType ?? FALLBACK_MIME_TYPE,
     uri: asset.uri,
-  } as unknown as Blob)
+  })
 
   try {
     const response = await axiosInstance.post<APITypes.IFileResponseDto>(UPLOAD_URL, formData, {

@@ -1,11 +1,8 @@
 import { Platform, StyleSheet, Text, View } from 'react-native'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
+import { getImportPhaseLabel, getImportProgressText } from '../lib/importPhaseLabel'
 import { useImportSettings } from '../lib/importSettings'
-import {
-  type ImportedSermonMetadata,
-  type ImportPhase,
-  type ImportSource,
-} from '../lib/importTypes'
+import { type ImportedSermonMetadata, type ImportSource } from '../lib/importTypes'
 import { useAudioImport } from '../lib/useAudioImport'
 import { ImportButton } from './ImportButton'
 import { ImportInstanceField } from './ImportInstanceField'
@@ -21,11 +18,6 @@ const SEARCHING_LABEL = 'Поиск видео…'
 // YouTube-чип показан, но выключен, а импорт всегда идёт через Invidious.
 const WEB_DISABLED_SOURCES: readonly ImportSource[] = ['youtube']
 const NO_DISABLED_SOURCES: readonly ImportSource[] = []
-
-const PHASE_LABELS: Record<ImportPhase, string> = {
-  download: 'Скачивание…',
-  upload: 'Загрузка на сервер…',
-}
 
 /**
  * Блок импорта проповеди из YouTube/Invidious под полем «YouTube (URL)»: выбор
@@ -88,12 +80,12 @@ export const ImportFromYoutube = ({
       {isImporting ? (
         <View style={styles.progress}>
           <Text style={[styles.phase, { color: currentTheme.text }]}>
-            {progress ? `${PHASE_LABELS[progress.phase]} ${progress.percent}%` : SEARCHING_LABEL}
+            {progress ? getImportProgressText(progress) : SEARCHING_LABEL}
           </Text>
           {progress ? (
             <ImportProgressBar
               progress={progress.percent}
-              accessibilityLabel={PHASE_LABELS[progress.phase]}
+              accessibilityLabel={getImportPhaseLabel(progress)}
             />
           ) : null}
         </View>

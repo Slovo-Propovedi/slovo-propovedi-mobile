@@ -17,6 +17,7 @@ const DISABLED_SOURCE_HINT = 'На вебе доступен только ист
 const SUCCESS_MESSAGE = 'Импортировано из YouTube'
 const VIDEO_UNAVAILABLE_MESSAGE = 'Видео недоступно'
 const DOWNLOAD_PHASE_LABEL = 'Скачивание…'
+const PROCESSING_LABEL = 'Обработка на сервере…'
 
 const mockImportAudio = jest.fn()
 const mockUpdateSettings = jest.fn()
@@ -220,6 +221,26 @@ describe('<ImportFromYoutube>', () => {
     await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
 
     expect(await screen.findByText('Загрузка на сервер… 80%')).toBeTruthy()
+  })
+
+  test('shows server processing once the upload body is fully sent', async () => {
+    mockImportAudio.mockImplementation(
+      ({ onPhase }: { onPhase: (progress: { percent: number; phase: 'upload' }) => void }) =>
+        new Promise<ImportedSermonData>(() => {
+          onPhase({ percent: 100, phase: 'upload' })
+        }),
+    )
+
+    await renderImport()
+    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+
+    expect(await screen.findByText(PROCESSING_LABEL)).toBeTruthy()
+    expect(screen.queryByText('Загрузка на сервер… 100%')).toBeNull()
+    expect(screen.getByRole('progressbar', { name: PROCESSING_LABEL })).toHaveAccessibilityValue({
+      max: 100,
+      min: 0,
+      now: 100,
+    })
   })
 
   test('shows searching while the source has not reported a phase yet', async () => {
