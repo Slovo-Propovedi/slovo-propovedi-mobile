@@ -16,12 +16,14 @@ export const OrphansBody = ({
   hasScanned,
   isError,
   isScanning,
+  onDelete,
   orphaned,
 }: {
   cleanupResult: CleanupResult | null
   hasScanned: boolean
   isError: boolean
   isScanning: boolean
+  onDelete: (file: APITypes.FileMetadataDto) => void
   orphaned: APITypes.FileMetadataDto[]
 }) => {
   const { currentTheme } = useTheme()
@@ -41,7 +43,7 @@ export const OrphansBody = ({
   return (
     <>
       {orphaned.map(file => (
-        <OrphanRow file={file} key={file.fileName} />
+        <OrphanRow file={file} key={file.fileName} onDelete={() => onDelete(file)} />
       ))}
       {cleanupResult ? <CleanupResultBanner result={cleanupResult} /> : null}
     </>

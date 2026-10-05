@@ -8,7 +8,7 @@ const KIND_LABELS: Record<MediaFileKind, string> = {
   text: 'текст',
 }
 
-const AUDIO_EXTENSION = '.mp3'
+const AUDIO_EXTENSIONS = ['.mp3', '.m4a']
 const TEXT_EXTENSIONS = ['.pdf', '.fb2']
 
 // Осиротевший скан возвращает только медиа-расширения, поэтому всё, что не
@@ -16,7 +16,7 @@ const TEXT_EXTENSIONS = ['.pdf', '.fb2']
 // бейдж типа и разделение «удаляется» честными.
 export const getMediaFileKind = (fileName: string): MediaFileKind => {
   const lower = fileName.toLowerCase()
-  if (lower.endsWith(AUDIO_EXTENSION)) return 'audio'
+  if (AUDIO_EXTENSIONS.some(extension => lower.endsWith(extension))) return 'audio'
   if (TEXT_EXTENSIONS.some(extension => lower.endsWith(extension))) return 'text'
 
   return 'image'

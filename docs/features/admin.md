@@ -92,7 +92,7 @@
 - **Каталог:** `GET /files` (`AllFilesResponse` → `FileMetadataDto { fileName, fileUrl, size, lastModified, used }`); `used` — изображение уже является `artwork` проповеди/плейлиста (бейдж «используется»).
 - **Загрузка:** multipart `POST /files` через `shared/api/uploadFile.ts` (`uploadSermonFile`) с прогрессом; расширение проверяется до сети (`isAllowedExtension('image', …)`).
 - **Удаление:** `DELETE /files/{fileName}` — только изображения; **409** означает «используется как обложка» (тост «Обложка используется в проповедях/плейлистах», статус через `getHttpStatus`).
-- **Осиротевшие файлы:** `GET /files/orphans` (опциональный скан bucket, `limit`) и `POST /files/orphans/cleanup` — идемпотентная best-effort очистка **только** `.mp3/.pdf/.fb2`; изображения этой операцией не удаляются (убираются вручную из каталога). Результат `CleanupOrphansResponse { deleted, failed }` показывается баннером.
+- **Осиротевшие файлы:** `GET /files/orphans` (опциональный скан bucket, `limit`), `POST /files/orphans/cleanup` — идемпотентная best-effort очистка **только** `.mp3/.pdf/.fb2` (изображения этой операцией не удаляются — убираются вручную из каталога) и поштучное `DELETE /files/{fileName}` для аудио/текста, включая `.m4a` (**409**, если файл ещё используется в проповеди, — тост «Файл используется в проповедях»). Результат `CleanupOrphansResponse { deleted, failed }` показывается баннером.
 - Загрузка «самих по себе» файлов из медиатеки и очистка висячих файлов после отменённой формы проповеди закрыты этим разделом.
 
 ## Пользователи (users)
