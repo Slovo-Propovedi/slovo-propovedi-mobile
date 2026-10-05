@@ -18,6 +18,32 @@ export type YoutubePlayabilityStatus = 'ERROR' | 'LOGIN_REQUIRED' | 'OK' | 'UNPL
 const PREFERRED_ITAG = 140
 const PREFERRED_MIME_TYPE = 'mp4'
 
+// youtubei.js бросает InnertubeError с текстом «Request to … failed with status
+// code 403» — статус достаём из сообщения, чтобы отличить блокировку клиента от
+// сетевого сбоя.
+const HTTP_STATUS_PATTERN = /status code (\d{3})/
+
+/**
+ * HTTP-статус из ошибки youtubei.js, если он там есть.
+ * @param error - Ошибка клиента InnerTube.
+ * @returns Код ответа либо `undefined` для сетевых/прочих сбоев.
+ */
+export const readYoutubeHttpStatus = (error: unknown): number | undefined => {
+  if (!(error instanceof Error)) return undefined
+
+  const match = HTTP_STATUS_PATTERN.exec(error.message)
+
+  return match ? Number(match[1]) : undefined
+}
+
+/**
+ * Признак блокировки клиента InnerTube: 403 значит, что смена клиента может
+ * помочь (PO-токен/политика), в отличие от сетевого сбоя.
+ * @param error - Ошибка клиента InnerTube.
+ */
+export const isYoutubeForbiddenError = (error: unknown): boolean =>
+  readYoutubeHttpStatus(error) === 403
+
 /**
  * Код ошибки импорта для статуса проигрываемости видео.
  * @param status - Статус из `playability_status.status`.

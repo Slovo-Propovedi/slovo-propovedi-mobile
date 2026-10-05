@@ -2,6 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { Platform } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { reportError } from 'shared/model/error-dialog'
 import { toastAtom } from 'shared/model/toast'
 import { type ImportedSermonData } from '../lib/importTypes'
 import { ImportSourceError } from '../lib/sourceErrors'
@@ -28,6 +29,8 @@ jest.mock('../lib/importAudio', () => ({
 jest.mock('../lib/importSettings', () => ({
   useImportSettings: () => ({ settings: mockSettings, updateSettings: mockUpdateSettings }),
 }))
+
+jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
 const IMPORTED: ImportedSermonData = {
   audioUrl: 'https://cdn.test/sermon.m4a',
@@ -113,14 +116,15 @@ describe('<ImportFromYoutube>', () => {
     await waitForImportToFinish()
   })
 
-  test('maps an import error to a toast', async () => {
-    mockImportAudio.mockRejectedValue(new ImportSourceError('video-unavailable'))
-    const { ctx } = await renderImport()
+  test('reports an import error in the global error dialog', async () => {
+    const error = new ImportSourceError('video-unavailable')
+    mockImportAudio.mockRejectedValue(error)
+    await renderImport()
 
     await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
 
     await waitFor(() => {
-      expect(ctx.get(toastAtom)).toBe(VIDEO_UNAVAILABLE_MESSAGE)
+      expect(reportError).toHaveBeenCalledWith(error, VIDEO_UNAVAILABLE_MESSAGE)
     })
     await waitForImportToFinish()
   })

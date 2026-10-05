@@ -2,12 +2,14 @@
 import { type Innertube } from 'youtubei.js'
 import { type ResolvedAudio } from './importTypes'
 import { ImportSourceError } from './sourceErrors'
-import { assertVideoIsDownloadable, pickAudioFormat } from './youtubeFormat'
+import { resolveYoutubeAudioWithFallback } from './youtubeClients'
 import { installYoutubeShims } from './youtubeShims'
 
-// ANDROID_VR — единственный клиент, который в 2026-м отдаёт потоки без
-// PO-токена; WEB/ANDROID/IOS требуют подписи и упираются в LOGIN_REQUIRED.
-const INNERTUBE_CLIENT = 'ANDROID_VR'
+// UA скопирован из youtubei.js Constants.CLIENTS.ANDROID_VR (v18.1.0): клиент
+// обязан представляться тем же приложением, что и в client-контексте, иначе
+// YouTube отвечает 403.
+const ANDROID_VR_USER_AGENT =
+  'com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip'
 
 // Сессия Innertube тяжёлая (сеть + расшифровка плеера), поэтому одна на процесс.
 let innertubePromise: null | Promise<Innertube> = null
@@ -28,6 +30,7 @@ const createInnertube = async (): Promise<Innertube> => {
     enable_session_cache: false,
     lang: 'en',
     retrieve_player: true,
+    user_agent: ANDROID_VR_USER_AGENT,
   })
 }
 
@@ -45,23 +48,8 @@ const getInnertube = async (): Promise<Innertube> => {
 
 const resolveFromYoutube = async (videoId: string): Promise<ResolvedAudio> => {
   const innertube = await getInnertube()
-  const info = await innertube.getBasicInfo(videoId, { client: INNERTUBE_CLIENT })
 
-  assertVideoIsDownloadable({
-    isLive: Boolean(info.basic_info.is_live),
-    status: info.playability_status?.status as
-      ('ERROR' | 'LOGIN_REQUIRED' | 'OK' | 'UNPLAYABLE') | undefined,
-  })
-
-  const format = pickAudioFormat(info.streaming_data?.adaptive_formats ?? [])
-  if (!format) throw new ImportSourceError('no-audio')
-
-  return {
-    audioUrl: await format.decipher(innertube.session.player),
-    description: info.basic_info.short_description ?? null,
-    title: info.basic_info.title ?? '',
-    videoId,
-  }
+  return resolveYoutubeAudioWithFallback(innertube, videoId)
 }
 
 /**
@@ -76,6 +64,6 @@ export const resolveYoutubeAudio = async (videoId: string): Promise<ResolvedAudi
   } catch (error) {
     if (error instanceof ImportSourceError) throw error
 
-    throw new ImportSourceError('service-unavailable')
+    throw new ImportSourceError('service-unavailable', error)
   }
 }

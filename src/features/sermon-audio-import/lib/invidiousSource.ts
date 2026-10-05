@@ -1,4 +1,5 @@
 import { type ImportErrorCode, type ResolvedAudio } from './importTypes'
+import { parseJsonBody, readInstanceHost, toInstanceFailure } from './invidiousFailure'
 import { ImportSourceError } from './sourceErrors'
 
 const REQUEST_TIMEOUT_MS = 15_000
@@ -65,9 +66,9 @@ const toResolvedAudio = (
 
 /**
  * Достаёт метаданные и ссылку на аудиодорожку из публичного API инстанса
- * Invidious. Сеть недоступна, инстанс не ответил или ответил ошибкой —
- * «Сервис недоступен»; сам инстанс сообщил об ошибке (видео удалено, приватное) —
- * «Видео недоступно».
+ * Invidious. Недоступность/сетевой сбой — «Сервис недоступен»; 401 —
+ * «требует авторизацию», 403 или HTML-ответ (антибот) — «закрыт антиботом»;
+ * сам инстанс сообщил об ошибке (видео удалено, приватное) — «Видео недоступно».
  * @param invidiousBaseUrl - Адрес инстанса (с хвостовыми слэшами допустим).
  * @param videoId - ID видео YouTube.
  */
@@ -76,6 +77,7 @@ export const resolveInvidiousAudio = async (
   videoId: string,
 ): Promise<ResolvedAudio> => {
   const base = normalizeBaseUrl(invidiousBaseUrl)
+  const host = readInstanceHost(base)
   const abortController = new AbortController()
   const timeout = setTimeout(() => abortController.abort(), REQUEST_TIMEOUT_MS)
 
@@ -84,9 +86,12 @@ export const resolveInvidiousAudio = async (
       headers: { Accept: 'application/json', 'User-Agent': INVIDIOUS_USER_AGENT },
       signal: abortController.signal,
     })
+    const body = await response.text()
+    const failure = toInstanceFailure(response, body, host)
+    if (failure) throw failure
     if (!response.ok) throw new ImportSourceError(SERVICE_UNAVAILABLE)
 
-    const payload: unknown = await response.json()
+    const payload = parseJsonBody(body)
     if (!isRecord(payload)) throw new ImportSourceError(SERVICE_UNAVAILABLE)
     if (typeof payload.error === 'string') throw new ImportSourceError('video-unavailable')
 

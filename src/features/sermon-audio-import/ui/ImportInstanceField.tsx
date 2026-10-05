@@ -11,6 +11,8 @@ const PRESET_INSTANCES = ['https://inv.phobos.observer', 'https://invidious.f5.s
 
 const INSTANCE_LABEL = 'Инстанс Invidious'
 const INSTANCE_HINT = 'Публичный инстанс Invidious или свой в локальной сети.'
+const ANTIBOT_HINT =
+  'Публичные инстансы часто закрыты антиботом — надёжнее использовать свой инстанс.'
 
 /**
  * Адрес инстанса Invidious: два проверенных пресета-чипса и поле для своего
@@ -91,6 +93,7 @@ export const ImportInstanceField = ({
         style={[formStyles.input, { color: currentTheme.text }]}
       />
       <Text style={[formStyles.hint, { color: currentTheme.textMuted }]}>{INSTANCE_HINT}</Text>
+      <Text style={[formStyles.hint, { color: currentTheme.textMuted }]}>{ANTIBOT_HINT}</Text>
     </View>
   )
 }

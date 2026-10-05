@@ -1,6 +1,6 @@
 import { type ImportErrorCode } from './importTypes'
 import { resolveInvidiousAudio } from './invidiousSource'
-import { ImportSourceError } from './sourceErrors'
+import { getImportErrorMessage, ImportSourceError } from './sourceErrors'
 
 const VIDEO_ID = 'lV6YkF7ytxs'
 const BASE_URL = 'https://inv.phobos.observer'
@@ -34,11 +34,38 @@ const VIDEO_FIXTURE = {
   title: TITLE,
 }
 
-const jsonResponse = (payload: unknown, ok = true) =>
-  ({ json: async () => payload, ok }) as unknown as Response
+const jsonResponse = (payload: unknown, ok = true, status = ok ? 200 : 500) =>
+  ({
+    headers: { get: () => 'application/json' },
+    json: async () => payload,
+    ok,
+    status,
+    text: async () => JSON.stringify(payload),
+  }) as unknown as Response
+
+const htmlResponse = (status = 200) => {
+  const body = '<!DOCTYPE html><html><body>Anubis anti-bot challenge</body></html>'
+
+  return {
+    headers: { get: () => 'text/html; charset=utf-8' },
+    ok: status >= 200 && status < 300,
+    status,
+    text: async () => body,
+  } as unknown as Response
+}
 
 const expectFailure = async (importPromise: Promise<unknown>, code: ImportErrorCode) => {
   await expect(importPromise).rejects.toMatchObject({ code })
+}
+
+const captureFailureMessage = async (importPromise: Promise<unknown>): Promise<string> => {
+  try {
+    await importPromise
+  } catch (error) {
+    return getImportErrorMessage(error)
+  }
+
+  throw new Error('expected the import to fail')
 }
 
 describe('resolveInvidiousAudio', () => {
@@ -107,6 +134,49 @@ describe('resolveInvidiousAudio', () => {
     jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({}, false))
 
     await expectFailure(resolveInvidiousAudio(BASE_URL, VIDEO_ID), 'service-unavailable')
+  })
+
+  test('names the instance when it requires authorization', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({}, false, 401))
+
+    const message = await captureFailureMessage(resolveInvidiousAudio(BASE_URL, VIDEO_ID))
+
+    expect(message).toContain('inv.phobos.observer')
+    expect(message).toContain('требует авторизацию')
+  })
+
+  test('names the instance when it is closed by an anti-bot on 403', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({}, false, 403))
+
+    const message = await captureFailureMessage(resolveInvidiousAudio(BASE_URL, VIDEO_ID))
+
+    expect(message).toContain('inv.phobos.observer')
+    expect(message).toContain('закрыт антиботом')
+  })
+
+  test('detects an anti-bot HTML body served with 200', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(htmlResponse(200))
+
+    const message = await captureFailureMessage(resolveInvidiousAudio(BASE_URL, VIDEO_ID))
+
+    expect(message).toContain('inv.phobos.observer')
+    expect(message).toContain('закрыт антиботом')
+  })
+
+  test('detects an anti-bot HTML body served with 503', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(htmlResponse(503))
+
+    const message = await captureFailureMessage(resolveInvidiousAudio(BASE_URL, VIDEO_ID))
+
+    expect(message).toContain('закрыт антиботом')
+  })
+
+  test('keeps the plain service message for a JSON 500', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ error: 'oops' }, false, 500))
+
+    const message = await captureFailureMessage(resolveInvidiousAudio(BASE_URL, VIDEO_ID))
+
+    expect(message).toBe('Сервис недоступен')
   })
 
   test('reports a response without audio formats', async () => {

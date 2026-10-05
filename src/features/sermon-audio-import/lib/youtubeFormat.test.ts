@@ -1,7 +1,9 @@
 /* eslint-disable camelcase -- форматы InnerTube приходят в snake_case */
 import {
   assertVideoIsDownloadable,
+  isYoutubeForbiddenError,
   pickAudioFormat,
+  readYoutubeHttpStatus,
   toImportErrorCode,
   type YoutubeAudioFormat,
 } from './youtubeFormat'
@@ -55,6 +57,29 @@ describe('assertVideoIsDownloadable', () => {
   test('passes for a normal downloadable video', () => {
     expect(() => assertVideoIsDownloadable({ isLive: false, status: 'OK' })).not.toThrow()
     expect(() => assertVideoIsDownloadable({ isLive: false, status: undefined })).not.toThrow()
+  })
+})
+
+describe('readYoutubeHttpStatus', () => {
+  test('reads the status from a youtubei.js request error', () => {
+    const error = new Error(
+      'Request to https://youtubei.googleapis.com failed with status code 403',
+    )
+
+    expect(readYoutubeHttpStatus(error)).toBe(403)
+  })
+
+  test('returns undefined for network errors and non-errors', () => {
+    expect(readYoutubeHttpStatus(new Error('Network request failed'))).toBeUndefined()
+    expect(readYoutubeHttpStatus('403')).toBeUndefined()
+  })
+})
+
+describe('isYoutubeForbiddenError', () => {
+  test('is true only for a 403', () => {
+    expect(isYoutubeForbiddenError(new Error('failed with status code 403'))).toBe(true)
+    expect(isYoutubeForbiddenError(new Error('failed with status code 500'))).toBe(false)
+    expect(isYoutubeForbiddenError(new Error('Network request failed'))).toBe(false)
   })
 })
 

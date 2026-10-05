@@ -1,5 +1,7 @@
 import { act } from '@testing-library/react-native'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
+import { toastAtom } from 'shared/model'
+import { reportError } from 'shared/model/error-dialog'
 import { type ImportedSermonData, type ImportSettings } from './importTypes'
 import { useAudioImport } from './useAudioImport'
 
@@ -8,6 +10,8 @@ const mockImportAudio = jest.fn()
 jest.mock('./importAudio', () => ({
   importAudio: (...args: unknown[]) => mockImportAudio(...args),
 }))
+
+jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
 const SETTINGS: ImportSettings = {
   invidiousBaseUrl: 'https://inv.phobos.observer',
@@ -79,5 +83,29 @@ describe('useAudioImport', () => {
     })
 
     expect(onImported).not.toHaveBeenCalled()
+  })
+
+  test('shows a success toast and no error dialog on success', async () => {
+    mockImportAudio.mockResolvedValue(IMPORTED)
+    const { ctx, result } = await renderImport()
+
+    await act(async () => {
+      await result.current.startImport()
+    })
+
+    expect(ctx.get(toastAtom)).toBe('Импортировано из YouTube')
+    expect(reportError).not.toHaveBeenCalled()
+  })
+
+  test('reports a failed import in the global error dialog', async () => {
+    const error = new Error('boom')
+    mockImportAudio.mockRejectedValue(error)
+    const { result } = await renderImport()
+
+    await act(async () => {
+      await result.current.startImport()
+    })
+
+    expect(reportError).toHaveBeenCalledWith(error, expect.any(String))
   })
 })

@@ -1,6 +1,7 @@
 import { useAction } from '@reatom/npm-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { showToast } from 'shared/model'
+import { reportError } from 'shared/model/error-dialog'
 import { importAudio } from './importAudio'
 import {
   type ImportedSermonData,
@@ -13,8 +14,9 @@ const SUCCESS_MESSAGE = 'Импортировано из YouTube'
 
 /**
  * Импорт аудио и метаданных в форму проповеди: держит фазовый прогресс, отменяет
- * скачивание при размонтировании, показывает результат (успех или ошибку) в
- * toast и отдаёт подставленные в форму данные наверх.
+ * скачивание при размонтировании, показывает результат (успех — toast, ошибка —
+ * глобальный диалог с копируемыми деталями) и отдаёт подставленные в форму данные
+ * наверх.
  * @param props - Аргументы импорта.
  * @param props.onImported - Получает аудио URL, заголовок и описание для формы.
  * @param props.settings - Источник и адрес инстанса Invidious.
@@ -67,7 +69,7 @@ export const useAudioImport = ({
     } catch (error) {
       // Отменённый размонтированием импорт не показываем пользователю.
       if (controller.signal.aborted) return
-      showToastAction(getImportErrorMessage(error))
+      reportError(error, getImportErrorMessage(error))
     } finally {
       if (abortController.current === controller) abortController.current = null
       setIsImporting(false)
