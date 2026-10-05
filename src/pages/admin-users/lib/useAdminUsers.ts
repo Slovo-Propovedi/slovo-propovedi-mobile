@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { type APITypes, usersApi } from 'shared/api'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
-import { reportError } from 'shared/model/error-dialog'
+import { usePaginatedList } from 'shared/lib/hooks/usePaginatedList'
 
 export interface AdminUsersState {
   hasMore: boolean
@@ -33,14 +33,6 @@ const matchesSearch = (user: APITypes.UserResponse, term: string) =>
 export const useAdminUsers = (): AdminUsersState => {
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
-  const [users, setUsers] = useState<APITypes.UserResponse[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [isError, setIsError] = useState(false)
-  const [hasMore, setHasMore] = useState(false)
-  const [loadMoreFailed, setLoadMoreFailed] = useState(false)
-
-  const generationRef = useRef(0)
 
   const debouncedSetQuery = useDebounce(setQuery, SEARCH_DEBOUNCE_MS, [])
 
@@ -48,62 +40,24 @@ export const useAdminUsers = (): AdminUsersState => {
     debouncedSetQuery(search)
   }, [search, debouncedSetQuery])
 
-  useEffect(() => {
-    let isActive = true
+  const fetchPage = useCallback(
+    (page: number) =>
+      usersApi
+        .getUsers()
+        .usersControllerFindAll({ limit: PAGE_SIZE, page })
+        .then(r => r.users),
+    [],
+  )
 
-    const generation = ++generationRef.current
-
-    const load = async () => {
-      setIsLoading(true)
-      setIsError(false)
-      setLoadMoreFailed(false)
-      try {
-        const response = await usersApi.getUsers().usersControllerFindAll({
-          limit: PAGE_SIZE,
-          page: 1,
-        })
-        if (!isActive || generationRef.current !== generation) return
-        setUsers(response.users)
-        setHasMore(response.users.length === PAGE_SIZE)
-      } catch (error) {
-        if (!isActive || generationRef.current !== generation) return
-        setIsError(true)
-        reportError(error, LOAD_ERROR_MESSAGE)
-      } finally {
-        if (isActive && generationRef.current === generation) setIsLoading(false)
-      }
-    }
-
-    void load()
-
-    return () => {
-      isActive = false
-    }
-  }, [])
-
-  const loadMore = useCallback(async () => {
-    if (isLoading || isLoadingMore || !hasMore) return
-
-    const generation = generationRef.current
-    setIsLoadingMore(true)
-    setLoadMoreFailed(false)
-    try {
-      const nextPage = Math.floor(users.length / PAGE_SIZE) + 1
-      const response = await usersApi.getUsers().usersControllerFindAll({
-        limit: PAGE_SIZE,
-        page: nextPage,
-      })
-      if (generationRef.current !== generation) return
-      setUsers(current => [...current, ...response.users])
-      setHasMore(response.users.length === PAGE_SIZE)
-    } catch (error) {
-      if (generationRef.current !== generation) return
-      setLoadMoreFailed(true)
-      reportError(error, LOAD_ERROR_MESSAGE)
-    } finally {
-      setIsLoadingMore(false)
-    }
-  }, [hasMore, isLoading, isLoadingMore, users.length])
+  const {
+    hasMore,
+    isError,
+    isLoading,
+    isLoadingMore,
+    items: users,
+    loadMore,
+    loadMoreFailed,
+  } = usePaginatedList({ errorMessage: LOAD_ERROR_MESSAGE, fetchPage, pageSize: PAGE_SIZE })
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase()

@@ -92,4 +92,60 @@ describe('useAdminSermons', () => {
     expect(result.current.sermons[0]?.title).toBe('Новое')
     expect(mockFindAll).toHaveBeenCalledTimes(2)
   })
+
+  test('clears a failed loadMore flag when the screen regains focus', async () => {
+    mockFindAll
+      .mockResolvedValueOnce({ count: 40, nextCursor: null, sermons: buildPage() })
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce({ count: 40, nextCursor: null, sermons: buildPage() })
+
+    const { result } = await renderHookWithProviders(() => useAdminSermons())
+
+    await act(async () => {})
+
+    await act(async () => {
+      await result.current.loadMore()
+    })
+
+    expect(result.current.loadMoreFailed).toBe(true)
+
+    await act(async () => {
+      mockFocusCallback()
+    })
+    await act(async () => {})
+
+    expect(result.current.loadMoreFailed).toBe(false)
+  })
+
+  test('ignores loadMore while a silent focus refresh is in flight', async () => {
+    mockFindAll.mockResolvedValueOnce({ count: 40, nextCursor: null, sermons: buildPage() })
+
+    const { result } = await renderHookWithProviders(() => useAdminSermons())
+
+    await act(async () => {})
+
+    const initialIds = result.current.sermons.map(sermon => sermon.id)
+
+    let resolveRefresh: (response: unknown) => void = () => {}
+    mockFindAll.mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveRefresh = resolve
+      }),
+    )
+
+    await act(async () => {
+      mockFocusCallback()
+    })
+
+    await act(async () => {
+      await result.current.loadMore()
+    })
+
+    expect(mockFindAll).toHaveBeenCalledTimes(2)
+    expect(result.current.sermons.map(sermon => sermon.id)).toEqual(initialIds)
+
+    await act(async () => {
+      resolveRefresh({ count: 40, nextCursor: null, sermons: buildPage() })
+    })
+  })
 })

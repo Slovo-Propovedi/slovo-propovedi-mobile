@@ -84,6 +84,8 @@ export const useOrphanedFiles = (): OrphanedFilesState => {
 
   const remove = useCallback(
     async (file: APITypes.FileMetadataDto) => {
+      if (isRemoving) return
+
       setIsRemoving(true)
       try {
         await filesApi.getFiles().appControllerRemoveFile(file.fileName)
@@ -99,7 +101,7 @@ export const useOrphanedFiles = (): OrphanedFilesState => {
         setIsRemoving(false)
       }
     },
-    [showToastAction],
+    [isRemoving, showToastAction],
   )
 
   return {

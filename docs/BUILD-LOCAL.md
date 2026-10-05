@@ -48,7 +48,7 @@ signing config that reads four environment variables at Gradle
 
 | Variable                | Meaning                                            |
 | ----------------------- | -------------------------------------------------- |
-| `RELEASE_STORE_FILE`    | Path to the release keystore (`.keystore`/`.jks`)  |
+| `RELEASE_STORE_FILE`    | Path to the release keystore (`.keystore`/`.jks`; абсолютный путь или относительный от `android/app`) |
 | `RELEASE_STORE_PASSWORD`| Keystore password                                  |
 | `RELEASE_KEY_ALIAS`     | Key alias inside the keystore                      |
 | `RELEASE_KEY_PASSWORD`  | Password for that key                              |

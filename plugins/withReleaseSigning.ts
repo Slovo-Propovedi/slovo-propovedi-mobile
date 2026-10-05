@@ -51,13 +51,16 @@ const applyReleaseSigningConfig = (contents: string): string => {
 const applyReleaseBuildTypeSigning = (contents: string): string => {
   if (contents.includes(RELEASE_BUILD_TYPE_MARKER)) return contents
 
-  // Two occurrences exist: the debug buildType and the release buildType, in that
-  // order. The last one belongs to release.
-  const releaseSigningIndex = contents.lastIndexOf(DEBUG_SIGNING_LINE)
-  if (releaseSigningIndex === -1)
+  // Two occurrences must exist: the debug buildType and the release buildType, in
+  // that order. The last one belongs to release. Any other count means the
+  // generated Gradle drifted from the template this plugin patches.
+  const occurrences = contents.split(DEBUG_SIGNING_LINE).length - 1
+  if (occurrences !== 2)
     throw new Error(
-      'withReleaseSigning: release signingConfig line not found in android/app/build.gradle',
+      `withReleaseSigning: expected exactly 2 "${DEBUG_SIGNING_LINE.trim()}" lines in android/app/build.gradle (debug + release buildTypes), found ${occurrences}`,
     )
+
+  const releaseSigningIndex = contents.lastIndexOf(DEBUG_SIGNING_LINE)
 
   return (
     contents.slice(0, releaseSigningIndex) +
