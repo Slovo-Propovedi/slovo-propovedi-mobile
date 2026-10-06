@@ -2,6 +2,7 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { type Href, Redirect, Stack, usePathname } from 'expo-router'
 import { useEffect, useMemo } from 'react'
 import { ActivityIndicator, type ColorValue, StyleSheet, View } from 'react-native'
+import { useInvidiousScreens } from 'pages/admin-invidious'
 import { usePlaylistScreens } from 'pages/admin-playlist-form'
 import { useSectionScreens } from 'pages/admin-section-form'
 import { useSermonScreens } from 'pages/admin-sermon-form'
@@ -30,6 +31,7 @@ const AdminLayout = () => {
   const playlistScreens = usePlaylistScreens()
   const sermonScreens = useSermonScreens()
   const userScreens = useUserScreens()
+  const invidiousScreens = useInvidiousScreens()
 
   // Стабильный объект options для экрана входа: держим идентичность между
   // рендерами, чтобы expo-router не переустанавливал опции на каждый кадр.
@@ -82,6 +84,7 @@ const AdminLayout = () => {
       {playlistScreens}
       {sermonScreens}
       {userScreens}
+      {invidiousScreens}
     </Stack>
   )
 }

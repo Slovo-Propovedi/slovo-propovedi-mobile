@@ -8,7 +8,9 @@ import { type ImportSettings } from './importTypes'
 // shared/config, потому что принадлежит только этой фиче.
 const YOUTUBE_IMPORT_SETTINGS = 'youtube_import_settings'
 
-const DEFAULT_INVIDIOUS_BASE_URL = 'https://inv.phobos.observer'
+// Дефолтный адрес инстанса. Используется и как настройка по умолчанию, и как
+// единственный запасной пресет, если список с бэкенда не загрузился.
+export const DEFAULT_INVIDIOUS_BASE_URL = 'https://inv.phobos.observer'
 
 // Свой инстанс часто поднимают в локальной сети и вводят без схемы («192.168.1.10:8080»),
 // но хранить такой адрес нельзя: fetch без схемы не разберёт хост. Нормализуем адрес

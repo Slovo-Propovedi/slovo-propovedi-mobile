@@ -29,6 +29,7 @@ jest.mock('entities/auth', () => {
 
   return {
     authUserAtom: atom(null, 'testAuthUserAtom'),
+    isAdminUser: (user: { role?: string } | null) => user?.role === 'admin',
     signOut: jest.fn(),
   }
 })

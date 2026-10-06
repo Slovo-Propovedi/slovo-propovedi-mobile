@@ -4,6 +4,7 @@ import { getImportPhaseLabel, getImportProgressText } from '../lib/importPhaseLa
 import { useImportSettings } from '../lib/importSettings'
 import { type ImportedSermonMetadata, type ImportSource } from '../lib/importTypes'
 import { useAudioImport } from '../lib/useAudioImport'
+import { useInvidiousInstances } from '../lib/useInvidiousInstances'
 import { ImportButton } from './ImportButton'
 import { ImportInstanceField } from './ImportInstanceField'
 import { ImportProgressBar } from './ImportProgressBar'
@@ -46,6 +47,7 @@ export const ImportFromYoutube = ({
 }) => {
   const { currentTheme } = useTheme()
   const { settings, updateSettings } = useImportSettings()
+  const presets = useInvidiousInstances()
   const { isImporting, progress, startImport } = useAudioImport({
     hasAudio,
     onAudioImported,
@@ -72,6 +74,7 @@ export const ImportFromYoutube = ({
       />
       {effectiveSource === 'invidious' ? (
         <ImportInstanceField
+          presets={presets}
           invidiousBaseUrl={settings.invidiousBaseUrl}
           onChange={invidiousBaseUrl => updateSettings({ invidiousBaseUrl })}
         />

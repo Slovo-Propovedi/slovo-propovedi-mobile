@@ -4,14 +4,24 @@ import { ImportInstanceField } from './ImportInstanceField'
 
 const DEFAULT_INSTANCE = 'https://inv.phobos.observer'
 const ALT_INSTANCE = 'https://invidious.f5.si'
+const BACKEND_INSTANCE = 'https://backend.example'
 const LOCAL_INSTANCE = 'http://192.168.1.10:8080'
 const INSTANCE_LABEL = 'Инстанс Invidious'
 
+const PRESETS = [DEFAULT_INSTANCE, ALT_INSTANCE]
+
 const mockOnChange = jest.fn()
 
-const renderField = async (invidiousBaseUrl = DEFAULT_INSTANCE) =>
+const renderField = async (
+  invidiousBaseUrl = DEFAULT_INSTANCE,
+  presets: readonly string[] = PRESETS,
+) =>
   renderWithProviders(
-    <ImportInstanceField onChange={mockOnChange} invidiousBaseUrl={invidiousBaseUrl} />,
+    <ImportInstanceField
+      presets={presets}
+      onChange={mockOnChange}
+      invidiousBaseUrl={invidiousBaseUrl}
+    />,
   )
 
 describe('<ImportInstanceField>', () => {
@@ -32,6 +42,14 @@ describe('<ImportInstanceField>', () => {
     fireEvent.press(screen.getByRole('button', { name: 'invidious.f5.si' }))
 
     expect(mockOnChange).toHaveBeenCalledWith(ALT_INSTANCE)
+  })
+
+  test('renders the chips supplied by the backend', async () => {
+    await renderField(DEFAULT_INSTANCE, [BACKEND_INSTANCE])
+
+    fireEvent.press(screen.getByRole('button', { name: 'backend.example' }))
+
+    expect(mockOnChange).toHaveBeenCalledWith(BACKEND_INSTANCE)
   })
 
   test('commits a custom instance on blur', async () => {

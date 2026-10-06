@@ -31,6 +31,12 @@ jest.mock('../lib/importSettings', () => ({
   useImportSettings: () => ({ settings: mockSettings, updateSettings: mockUpdateSettings }),
 }))
 
+// Пресеты приходят с бэкенда; в тесте компонента список фиксирован — сам fetch
+// покрыт отдельным тестом useInvidiousInstances.
+jest.mock('../lib/useInvidiousInstances', () => ({
+  useInvidiousInstances: () => ['https://inv.phobos.observer'],
+}))
+
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
 const METADATA: ImportedSermonMetadata = {

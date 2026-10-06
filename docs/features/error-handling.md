@@ -75,9 +75,17 @@
 | `entities/player/lib/PlayerService/native/LockScreenControls.ts`           | Не удалось обновить данные плеера на экране блокировки         |
 | `entities/player/ui/PlayerControls/PlayerControls.tsx`              | Ошибка при переключении воспроизведения                        |
 | `features/sermon-audio-import/lib/useAudioImport.ts`                | Сбой импорта аудио — только `upload-failed`/неожиданные (остальные коды — toast) |
+| `pages/admin-invidious/lib/useInvidiousInstancesAdmin.ts`           | Не удалось загрузить источники импорта / Не удалось сохранить источники импорта |
 
 Ошибки, связанные с AppState («activity is no longer available»), диалог не поднимают —
 только `console.warn`.
+
+**Пресеты формы импорта** (`features/sermon-audio-import/lib/useInvidiousInstances.ts`)
+осознанно **не** поднимают диалог: сбой `GET /invidious-instances` (старый бэкенд `404`,
+сеть, `401/403`) деградирует к встроенному дефолту `https://inv.phobos.observer`, а
+причина уходит только в `console.warn` — импорт обязан работать без свежего бэкенда.
+Админ-экран (строка таблицы выше), наоборот, показывает диалог: там список — сама
+управляемая сущность, и молчаливый сбой ввёл бы админа в заблуждение.
 
 ### Известный источник ложных срабатываний `unhandledrejection` на web
 

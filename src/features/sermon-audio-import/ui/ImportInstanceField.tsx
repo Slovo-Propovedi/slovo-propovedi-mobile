@@ -5,29 +5,28 @@ import { PressableButton } from 'shared/ui/pressable-button'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { normalizeInvidiousBaseUrl } from '../lib/importSettings'
 
-// Инстансы, проверенные вручную 2026-10-05: первый — дефолтный, второй запасной
-// на случай, если первый лёг или закрылся от запросов.
-const PRESET_INSTANCES = ['https://inv.phobos.observer', 'https://invidious.f5.si'] as const
-
 const INSTANCE_LABEL = 'Инстанс Invidious'
 const INSTANCE_HINT = 'Публичный инстанс Invidious или свой в локальной сети.'
 const ANTIBOT_HINT =
   'Публичные инстансы часто закрыты антиботом — надёжнее использовать свой инстанс.'
 
 /**
- * Адрес инстанса Invidious: два проверенных пресета-чипса и поле для своего
- * адреса (в т.ч. Без https — инстанс в локальной сети). Пресет применяется сразу
- * по нажатию, свой адрес — по blur поля.
+ * Адрес инстанса Invidious: чипсы пресетов (приходят с бэкенда) и поле для
+ * своего адреса (в т.ч. Без https — инстанс в локальной сети). Пресет
+ * применяется сразу по нажатию, свой адрес — по blur поля.
  * @param props - Пропсы поля инстанса.
  * @param props.invidiousBaseUrl - Сохранённый адрес инстанса.
  * @param props.onChange - Вызывается с новым адресом инстанса.
+ * @param props.presets - Адреса пресетов-чипсов (в порядке отображения).
  */
 export const ImportInstanceField = ({
   invidiousBaseUrl,
   onChange,
+  presets,
 }: {
   invidiousBaseUrl: string
   onChange: (invidiousBaseUrl: string) => void
+  presets: readonly string[]
 }) => {
   const { currentTheme } = useTheme()
   const [draft, setDraft] = useState<null | string>(null)
@@ -52,7 +51,7 @@ export const ImportInstanceField = ({
   return (
     <View>
       <View style={styles.presetsRow}>
-        {PRESET_INSTANCES.map(preset => {
+        {presets.map(preset => {
           const isSelected = preset === invidiousBaseUrl
 
           return (
@@ -87,7 +86,7 @@ export const ImportInstanceField = ({
         keyboardType='url'
         autoCapitalize='none'
         onChangeText={setDraft}
-        placeholder={PRESET_INSTANCES[0]}
+        placeholder={presets[0]}
         accessibilityLabel={INSTANCE_LABEL}
         placeholderTextColor={currentTheme.placeholder}
         style={[formStyles.input, { color: currentTheme.text }]}
