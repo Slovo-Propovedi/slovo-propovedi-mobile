@@ -208,7 +208,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 | Условие          | Пункт                       | Иконка          | Экшен                                                        |
 | ---------------- | --------------------------- | --------------- | ------------------------------------------------------------ |
 | `!(inHistory && isCompleted)` | «Пометить прослушанной»     | `checkmark-done`| `markSermonListenedAction(ctx, sermon, playlist)`            |
-| `inHistory`      | «Удалить из истории»        | `trash-outline` | `removeHistoryEntryAction(ctx, sermon.id)`                   |
+| `inHistory`      | «Удалить из истории»        | `time-outline` | `removeHistoryEntryAction(ctx, sermon.id)`                   |
 
 Используется всеми строками списков (плейлист, история, шторка очереди, поиск). Строки-потребители подставляют в `buildHistoryMenuActions` `isCompleted` через `useHistoryProgressMap` (`progressMap.get(id) === 1`) и `inHistory` через `useHistorySermonIds`.
 

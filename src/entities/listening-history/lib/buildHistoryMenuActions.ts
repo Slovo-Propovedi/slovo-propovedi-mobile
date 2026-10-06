@@ -46,7 +46,7 @@ export const buildHistoryMenuActions = ({
 
   if (inHistory)
     actions.push({
-      icon: 'trash-outline',
+      icon: 'time-outline',
       onPress: () => void removeHistoryEntryAction(ctx, sermon.id),
       text: 'Удалить из истории',
     })

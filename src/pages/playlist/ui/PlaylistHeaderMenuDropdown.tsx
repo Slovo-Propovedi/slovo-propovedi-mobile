@@ -82,8 +82,8 @@ export const PlaylistHeaderMenuDropdown = ({
           <View style={[styles.dropdownDivider, { backgroundColor: currentTheme.textMuted }]} />
 
           <PlaylistOfflineMenuItem
-            icon='delete-outline'
             onPress={onClearCache}
+            icon='cloud-off-outline'
             text='Удалить из офлайн все'
             isDisabled={isClearCacheDisabled}
             textColor={isClearCacheDisabled ? COLORS.disabled : undefined}
@@ -104,7 +104,7 @@ export const PlaylistHeaderMenuDropdown = ({
       )}
       {canRemoveFromHistory && (
         <PlaylistHistoryMenuItem
-          icon='trash-outline'
+          icon='time-outline'
           onPress={onRemoveFromHistory}
           text='Удалить проповеди из истории'
         />

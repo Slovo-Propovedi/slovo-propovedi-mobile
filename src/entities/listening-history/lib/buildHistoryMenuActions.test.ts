@@ -71,7 +71,7 @@ describe('buildHistoryMenuActions', () => {
     })
 
     expect(actions).toHaveLength(1)
-    expect(actions[0].icon).toBe('trash-outline')
+    expect(actions[0].icon).toBe('time-outline')
     expect(actions[0].text).toBe('Удалить из истории')
   })
 
