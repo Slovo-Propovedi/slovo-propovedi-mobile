@@ -14,7 +14,7 @@
 
 - **Тема оформления** — `ThemeDialog` + `ThemeSelector` (`src/pages/settings/ui/ThemeDialog.tsx`, `ThemeSelector.tsx`, `ThemeSelectorOption.tsx`, `themeOptions.ts`): светлая / тёмная / как в системе.
 - **Динамические цвета** — `DynamicColorsItem` (`src/pages/settings/ui/DynamicColorsItem.tsx`), Material You; показывается только если `isMaterialYouSupported()` (Android).
-- **Виброотклик** — `HapticsSettingsItem` (`src/pages/settings/ui/HapticsSettingsItem.tsx`): глобальный переключатель вибрации при перемотке и нажатиях.
+- **Виброотклик** — `HapticsSettingsItem` (`src/pages/settings/ui/HapticsSettingsItem.tsx`): глобальный переключатель вибрации при перемотке и нажатиях. На web строка скрыта (`Platform.OS !== 'web'`) — вибрации в браузере нет, хук-обёртка `shared/lib/haptics` там no-op.
 - **URL сервера API** — `ServerUrlSettings` (`src/pages/settings/ui/ServerUrlSettings.tsx`): аккордеон, свёрнут по умолчанию (заголовок + «Текущий: …» + шеврон), тап по строке разворачивает форму (`ServerUrlForm.tsx`): изменение/сброс адреса сервера, валидация `http(s)://`, индикатор «Сохранено!». Форма остаётся смонтированной (`display:none`) в свёрнутом виде, поэтому черновик ввода не теряется при сворачивании аккордеона. Заголовок-строка отдаёт `accessibilityState={{ expanded }}`.
 
 В **теле экрана пункта админ-доступа нет**. Единственная точка входа — иконка-кебаб (`MaterialCommunityIcons` `dots-vertical`) в шапке (`SettingsHeaderMenu`, `src/pages/settings/ui/SettingsHeaderMenu.tsx`; подключается как `headerRight` для маршрута `settings` в `app/_RootLayout.tsx`). По нажатию открывается `MenuDropdown` (`shared/ui/menu`) с одним пунктом: для неаутентифицированных — «Войти в аккаунт администратора» (`shield-outline`) → `useAdminEntry` (`/admin` или `/admin/login`); для аутентифицированных — «Выйти из аккаунта админа» (`log-out-outline`) → `signOut` (`entities/auth`).
@@ -24,7 +24,7 @@
 ## Откуда данные
 
 - Тема: `themeModeAtom`, `dynamicColorsEnabledAtom` (из `shared/ui/theme`, слой `shared`).
-- Виброотклик: `hapticsEnabledAtom` (из `shared/model`).
+- Виброотклик: `hapticsEnabledAtom` (из `shared/model`); на web пункт не рендерится, значение остаётся в хранилище.
 - URL сервера: `serverUrlAtom`, `setServerUrlAction` (из `shared/model`, файл `src/shared/model/settings.ts`), дефолт `DEFAULT_API_URL` из `src/shared/config`.
 
 ## Куда можно перейти

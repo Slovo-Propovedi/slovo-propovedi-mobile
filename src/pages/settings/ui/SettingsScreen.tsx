@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import { Platform, ScrollView, StyleSheet, View } from 'react-native'
 import { INDENTS, isMaterialYouSupported, useTheme } from 'shared/ui/theme'
 import { DynamicColorsItem } from './DynamicColorsItem'
 import { HapticsSettingsItem } from './HapticsSettingsItem'
@@ -23,7 +23,7 @@ export const SettingsScreen = () => {
           }}
         />
         {isMaterialYouSupported() && <DynamicColorsItem />}
-        <HapticsSettingsItem />
+        {Platform.OS !== 'web' && <HapticsSettingsItem />}
         <ServerUrlSettings />
       </ScrollView>
       <ThemeDialog
