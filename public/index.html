@@ -29,6 +29,11 @@
       body {
         height: 100%;
         width: 100%;
+        /* Reset the UA body margin: keeps the first-frame layout viewport from
+           expanding (mobile shrink-to-fit) and recentering the fixed splash
+           before react-native-web injects its own margin reset at mount. */
+        margin: 0;
+        padding: 0;
         background-color: #f16031;
         overflow: hidden;
         overscroll-behavior: none;
