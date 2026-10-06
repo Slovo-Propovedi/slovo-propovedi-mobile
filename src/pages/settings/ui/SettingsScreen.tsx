@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Platform, ScrollView, StyleSheet, View } from 'react-native'
+import { isWebVibrationSupported } from 'shared/lib/haptics'
 import { INDENTS, isMaterialYouSupported, useTheme } from 'shared/ui/theme'
 import { DynamicColorsItem } from './DynamicColorsItem'
 import { HapticsSettingsItem } from './HapticsSettingsItem'
@@ -10,6 +11,7 @@ import { ThemeDialog } from './ThemeDialog'
 export const SettingsScreen = () => {
   const [showThemeDialog, setShowThemeDialog] = useState(false)
   const { currentTheme } = useTheme()
+  const showHapticsItem = Platform.OS !== 'web' || isWebVibrationSupported()
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
@@ -23,7 +25,7 @@ export const SettingsScreen = () => {
           }}
         />
         {isMaterialYouSupported() && <DynamicColorsItem />}
-        {Platform.OS !== 'web' && <HapticsSettingsItem />}
+        {showHapticsItem && <HapticsSettingsItem />}
         <ServerUrlSettings />
       </ScrollView>
       <ThemeDialog

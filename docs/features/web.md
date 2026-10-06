@@ -21,12 +21,19 @@
 
 - `public/manifest.webmanifest` — имя, иконки, `display: standalone`, `theme_color`/`background_color` `#f16031`.
 - `public/icons/*` — сгенерированы из `assets/icon.png` и `assets/adaptive-icon.png` (ImageMagick): `icon-192`, `icon-512`, `icon-maskable-512`, `apple-touch-icon` (180), `public/favicon.png` (48).
+- `public/splash.png` — копия `assets/splash.png` (307×307): картинка стартового сплэша, пока грузится JS-бандл (см. «Стартовый сплэш» ниже).
 - `app.config.ts` → `web`: `lang: "ru"`, `name`, `shortName`, `description` (Expo подставляет `lang`/`description` в шаблон).
 - Регистрация Service Worker — инлайн-скрипт в `public/index.html`: регистрирует `/sw.js` **только не на localhost**; на localhost, наоборот, снимает возможно оставшийся с прод-прогона SW (`getRegistrations().then(unregister)`), чтобы не мешать Metro/HMR.
 
 ### Сброс `html`/`body` в HTML-оболочке
 
 `public/index.html` → `#expo-reset` держит `html`/`body` на всю высоту (`height`/`width: 100%`) и запрещает документный скролл и резиновую прокрутку: `overflow: hidden` + `overscroll-behavior: none`. Фон сброса — статичный бренд-цвет `#f16031`, видимый **до** того, как JS нарисует тему (иначе тёмная тема мигала бы светлым при overscroll). `ThemeProvider` (web-only эффект) сразу после монтирования перекрашивает `documentElement` и `body` в `currentTheme.background`, перекрывая фолбэк — см. [theme.md](./theme.md#скроллбары-на-web).
+
+### Стартовый сплэш
+
+Пока на web грузится JS-бандл, показывается нативный по виду сплэш — как на iOS/Android. В `public/index.html` (body) объявлен `<div id="sp-splash">` с `<img src="/splash.png">`: **сиблинг `#root`** (React владеет только `#root` и сплэш не трогает), `position: fixed` на весь вьюпорт, `z-index` выше всего, фон — бренд-цвет `#f16031` (тёмный вариант через `@media (prefers-color-scheme: dark)` → `#000000`). Картинка центрируется, `width/height: 152px`, `object-fit: contain` — как у нативного сплэша.
+
+`ThemeProvider` (тот же web-only эффект, что красит фон/скроллбары) при первом монтировании гасит `#sp-splash`: ставит `opacity: 0` (CSS-переход 300 мс), затем удаляет элемент из DOM — отдельного inline-скрипта в `index.html` для этого нет. Дополнительной сборки не требуется: `public/splash.png` — копия `assets/splash.png`, `public/` копируется в `dist/` как есть.
 
 ### Перехват ссылок в установленное PWA
 
@@ -173,6 +180,12 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 
 - `PlayerMenu.styles.ts` → `menuWrapper` использует `overflow: 'hidden'` (не `'scroll'` — на web `'scroll'` даёт постоянные пустые скроллбары по обеим осям).
 - Тема скроллбаров — глобальный CSS в `public/index.html` (`::-webkit-scrollbar*` + `scrollbar-width`/`scrollbar-color`) на CSS-переменных `--sp-scrollbar-thumb` / `--sp-scrollbar-thumb-hover`. `ThemeProvider` (web-only эффект) прокидывает в них цвета активной темы (`textMuted` / `text`), так что при переключении светлая/тёмная скроллбар перекрашивается. Фолбэк — нейтральный серый (SSG / до JS).
+
+## Виброотклик на web (Vibration API)
+
+`shared/lib/haptics` на web использует `navigator.vibrate` вместо раннего `return`: `hapticLight` → короткий импульс ~12 мс (с тем же троттлингом 45 мс, что и натив), `hapticTick` → ~10 мс. Гейт `hapticsEnabledAtom` сохранён.
+
+Поддержка определяется хелпером `isWebVibrationSupported()` (`Platform.OS === 'web'` + наличие `navigator.vibrate`). В браузерах без Vibration API (большинство десктопов, iOS Safari) вызовы — тихий no-op, а строка «Виброотклик» в [«Настройках»](../screens/settings.md) скрыта (`Platform.OS !== 'web' || isWebVibrationSupported()`).
 
 ## pointerEvents на web (ловушка `box-none`/`box-only`)
 

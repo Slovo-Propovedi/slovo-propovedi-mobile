@@ -16,6 +16,23 @@ import {
 } from '../model'
 import { ThemeContext } from './themeContext'
 
+const SPLASH_FADE_MS = 300
+
+// The web splash shell (public/index.html, #sp-splash) sits next to #root and
+// covers the app until React mounts. Fade it out, then drop it from the DOM so
+// it stops intercepting pointer events.
+const dismissWebSplash = () => {
+  // Escape-key/modal tests install a partial `document` stub; only touch the DOM
+  // when the real query API is present.
+  if (typeof document.getElementById !== 'function') return
+
+  const splash = document.getElementById('sp-splash')
+  if (!splash) return
+
+  splash.style.opacity = '0'
+  setTimeout(() => splash.remove(), SPLASH_FADE_MS)
+}
+
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentTheme] = useAtom(currentThemeAtom)
   const [themeMode] = useAtom(themeModeAtom)
@@ -82,6 +99,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const background = String(currentTheme.background)
     root.backgroundColor = background
     if (document.body) document.body.style.backgroundColor = background
+    dismissWebSplash()
   }, [currentTheme])
 
   return (

@@ -39,6 +39,30 @@
         height: 100%;
         flex: 1;
       }
+      /* Web startup splash: mirrors the native splash (image centered on the
+         brand accent) while the JS bundle loads. It is a sibling of #root so
+         React never touches it; ThemeProvider removes it once the app boots. */
+      #sp-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f16031;
+        opacity: 1;
+        transition: opacity 300ms ease;
+      }
+      #sp-splash img {
+        width: 152px;
+        height: 152px;
+        object-fit: contain;
+      }
+      @media (prefers-color-scheme: dark) {
+        #sp-splash {
+          background-color: #000000;
+        }
+      }
     </style>
 
     <style id="sp-scrollbars">
@@ -80,6 +104,10 @@
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
+    <!-- Startup splash (native-like): removed by ThemeProvider once the app boots. -->
+    <div id="sp-splash">
+      <img src="/splash.png" alt="" />
+    </div>
 
     <script>
       // Register the service worker (versioned precache + audio cache). Skipped
