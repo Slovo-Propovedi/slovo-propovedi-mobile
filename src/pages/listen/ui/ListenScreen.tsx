@@ -60,6 +60,7 @@ export const ListenScreen = () => {
       ) : (
         <ScrollView
           onScroll={onScroll}
+          scrollEventThrottle={16}
           keyboardDismissMode='on-drag'
           keyboardShouldPersistTaps='handled'
           style={[styles.scroll, { backgroundColor: currentTheme.background }]}
