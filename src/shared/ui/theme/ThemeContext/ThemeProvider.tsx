@@ -19,8 +19,11 @@ import { ThemeContext } from './themeContext'
 const SPLASH_FADE_MS = 300
 
 // The web splash shell (public/index.html, #sp-splash) sits next to #root and
-// covers the app until React mounts. Fade it out, then drop it from the DOM so
-// it stops intercepting pointer events.
+// covers the app until React mounts. `html.has-splash` keeps #root invisible, so
+// the fading (opaque) splash only ever reveals the themed background — never the
+// mounted app with its layout/scrollbars. Fade the splash, then drop it and
+// reveal #root in the same tick: the app appears without shifting the splash,
+// which is already transparent by then.
 const dismissWebSplash = () => {
   // Escape-key/modal tests install a partial `document` stub; only touch the DOM
   // when the real query API is present.
@@ -30,7 +33,10 @@ const dismissWebSplash = () => {
   if (!splash) return
 
   splash.style.opacity = '0'
-  setTimeout(() => splash.remove(), SPLASH_FADE_MS)
+  setTimeout(() => {
+    splash.remove()
+    document.documentElement.classList.remove('has-splash')
+  }, SPLASH_FADE_MS)
 }
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {

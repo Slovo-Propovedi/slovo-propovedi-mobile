@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="%LANG_ISO_CODE%">
+<html lang="%LANG_ISO_CODE%" class="has-splash">
   <head>
     <meta charset="utf-8" />
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -39,6 +39,14 @@
         height: 100%;
         flex: 1;
       }
+      /* While the startup splash owns the screen, the app stays invisible: its
+         layout/scrollbars can never show through the splash or shift the fixed
+         splash when the viewport changes on mount. The class is set on <html>
+         statically (no JS race) and removed by ThemeProvider in the same tick
+         it drops #sp-splash. */
+      html.has-splash #root {
+        visibility: hidden;
+      }
       /* Web startup splash: mirrors the native splash (image centered on the
          brand accent) while the JS bundle loads. It is a sibling of #root so
          React never touches it; ThemeProvider removes it once the app boots. */
@@ -46,13 +54,15 @@
         position: fixed;
         inset: 0;
         z-index: 2147483647;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: grid;
+        place-items: center;
         background-color: #f16031;
         opacity: 1;
         transition: opacity 300ms ease;
       }
+      /* Explicit fixed box (source is a square 307×307 PNG scaled to 152×152).
+         Never derive the size from layout: keep the splash pixel-identical
+         through mount, regardless of viewport/scrollbar changes. */
       #sp-splash img {
         width: 152px;
         height: 152px;
