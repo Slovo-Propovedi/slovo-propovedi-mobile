@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { InvidiousInstanceError, validateInvidiousInstance } from './validateInvidiousInstance'
 
 const BASE_URL = 'https://inv.phobos.observer'
@@ -130,6 +131,26 @@ describe('validateInvidiousInstance', () => {
 
     await expect(validateInvidiousInstance(BASE_URL)).rejects.not.toBeInstanceOf(
       InvidiousInstanceError,
+    )
+  })
+})
+
+describe('validateInvidiousInstance on web', () => {
+  let restorePlatform: { restore: () => void }
+
+  beforeEach(() => {
+    restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+  })
+
+  afterEach(() => {
+    restorePlatform.restore()
+  })
+
+  test('reports a browser fetch block as a known failure with an actionable message', async () => {
+    jest.spyOn(global, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'))
+
+    await expect(validateInvidiousInstance(BASE_URL)).rejects.toThrow(
+      'Браузер не смог обратиться к API инстанса (CORS или инстанс недоступен) — импорт из браузера для этого инстанса работать не будет',
     )
   })
 })

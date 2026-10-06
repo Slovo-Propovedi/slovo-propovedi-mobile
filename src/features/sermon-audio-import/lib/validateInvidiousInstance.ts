@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { parseInvidiousBasicAuth } from './invidiousBasicAuth'
 import { isHtmlBody, parseJsonBody } from './invidiousFailure'
 import { INVIDIOUS_USER_AGENT, normalizeBaseUrl } from './invidiousSource'
@@ -10,6 +11,11 @@ const TEST_VIDEO_ID = 'dQw4w9WgXcQ'
 const ANTIBOT_MESSAGE = 'Инстанс закрыт антиботом — API недоступен'
 const AUTH_REQUIRED_MESSAGE = 'Инстанс требует авторизацию — API недоступен'
 const NO_AUDIO_MESSAGE = 'API инстанса не отдаёт аудио для тестового видео'
+// На web кросс-доменный запрос без CORS-заголовков (или недоступный хост) падает
+// TypeError'ом до чтения статуса: известный сбой с готовым текстом, а не диагнос-
+// тический диалог — импорт из браузера для такого инстанса всё равно не заработает.
+const BROWSER_BLOCK_MESSAGE =
+  'Браузер не смог обратиться к API инстанса (CORS или инстанс недоступен) — импорт из браузера для этого инстанса работать не будет'
 
 // Известный сбой проверки инстанса с готовым текстом для админа. Всё, что не
 // этот класс, вызывающий уводит в копируемый диалог `reportError`.
@@ -22,6 +28,12 @@ export class InvidiousInstanceError extends Error {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
+
+// Браузерный fetch не даёт прочитать статус при CORS/сетевом блоке и бросает
+// TypeError('Failed to fetch'). Только на web это ожидаемый известный сбой; на
+// нативной платформе такой TypeError остаётся неизвестной сетевой ошибкой.
+const isBrowserFetchBlock = (error: unknown): boolean =>
+  Platform.OS === 'web' && error instanceof TypeError && error.message.includes('Failed to fetch')
 
 const hasMp4Audio = (payload: Record<string, unknown>): boolean => {
   if (!Array.isArray(payload.adaptiveFormats)) return false
@@ -40,9 +52,10 @@ const hasMp4Audio = (payload: Record<string, unknown>): boolean => {
  * Проверяет, что инстанс Invidious отвечает по API и отдаёт аудио для тестового
  * видео. Запрос идёт с клиента: именно с устройства (на web — ещё и с проверкой
  * CORS) реально скачивается аудио, поэтому серверная проба показала бы не тот
- * сетевой путь. Известные сбои (антибот, авторизация, нет аудио) приходят как
- * `InvidiousInstanceError` с готовым текстом; сеть, не-JSON без HTML-маркеров и
- * таймауты пробрасываются как есть — вызывающий открывает копируемый диалог.
+ * сетевой путь. Известные сбои (антибот, авторизация, нет аудио, браузерный
+ * CORS-блок) приходят как `InvidiousInstanceError` с готовым текстом; сеть,
+ * не-JSON без HTML-маркеров и таймауты пробрасываются как есть — вызывающий
+ * открывает копируемый диалог.
  * @param url - Адрес инстанса (хвостовые слэши допустимы).
  * @param signal - Отмена запроса (необязательно).
  */
@@ -60,6 +73,9 @@ export const validateInvidiousInstance = async (
   const response = await fetch(`${requestBase}/api/v1/videos/${TEST_VIDEO_ID}?local=true`, {
     headers,
     signal,
+  }).catch(error => {
+    if (isBrowserFetchBlock(error)) throw new InvidiousInstanceError(BROWSER_BLOCK_MESSAGE)
+    throw error
   })
   const body = await response.text()
 
