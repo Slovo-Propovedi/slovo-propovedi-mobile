@@ -20,6 +20,9 @@ export const styles = StyleSheet.create({
     gap: INDENTS.low,
     marginBottom: INDENTS.medium,
   },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
   container: {
     flex: 1,
   },
@@ -49,13 +52,15 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: RADIUSES.middle,
     flexDirection: 'row',
-    gap: INDENTS.low,
-    marginBottom: INDENTS.low,
+    gap: INDENTS.medium,
+    marginBottom: INDENTS.medium,
     minHeight: MIN_TOUCH_TARGET,
-    paddingLeft: INDENTS.medium,
+    padding: INDENTS.medium,
+  },
+  rowText: {
+    flex: 1,
   },
   rowTitle: {
-    flex: 1,
     fontSize: FONT_SIZES.md,
   },
   saveButton: {
@@ -63,9 +68,6 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUSES.low,
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET,
-  },
-  saveButtonDisabled: {
-    opacity: 0.5,
   },
   saveButtonText: {
     color: COLORS.white,

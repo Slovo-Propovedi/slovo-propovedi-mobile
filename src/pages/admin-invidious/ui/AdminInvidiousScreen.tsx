@@ -1,14 +1,13 @@
-import { useAction } from '@reatom/npm-react'
 import { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRequireAdminRole } from 'entities/auth'
-import { showToast } from 'shared/model'
 import { AdminContentSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { COLORS, useTheme } from 'shared/ui/theme'
-import { type AddInstanceResult, INSTANCE_URL_PREFIX } from '../lib/instanceUrl'
+import { INSTANCE_URL_PREFIX } from '../lib/instanceUrl'
+import { useAddInstance } from '../lib/useAddInstance'
 import { useInvidiousInstancesAdmin } from '../lib/useInvidiousInstancesAdmin'
 import { InvidiousInstanceRow } from './InvidiousInstanceRow'
 import { styles } from './styles'
@@ -23,30 +22,16 @@ const DELETE_TITLE = 'Удалить инстанс?'
 const EMPTY_MESSAGE = 'Источников пока нет'
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить источники импорта'
 
-const ADD_ERRORS: Record<Exclude<AddInstanceResult, 'ok'>, string> = {
-  duplicate: 'Такой инстанс уже добавлен',
-  invalid: `Адрес должен начинаться с ${INSTANCE_URL_PREFIX}`,
-}
-
 // Управление админ-списком Invidious-инстансов: список приходит с бэкенда,
-// правки (добавить/удалить) живут в памяти, сохранение — полная замена (PUT).
+// добавление сразу сохраняется (после проверки API), удаление — локально до
+// нажатия «Сохранить» (полная замена через PUT).
 export const AdminInvidiousScreen = () => {
   useRequireAdminRole()
-  const showToastAction = useAction(showToast)
   const { currentTheme } = useTheme()
-  const { addUrl, instances, isDirty, isLoading, isSaving, loadFailed, removeUrl, save } =
+  const { addAndSave, instances, isDirty, isLoading, isSaving, loadFailed, removeUrl, save } =
     useInvidiousInstancesAdmin()
-  const [draft, setDraft] = useState('')
+  const { draft, handleAdd, isValidating, setDraft } = useAddInstance({ addAndSave, instances })
   const [pendingRemoval, setPendingRemoval] = useState<null | string>(null)
-
-  const handleAdd = () => {
-    const result = addUrl(draft)
-    if (result !== 'ok') {
-      showToastAction(ADD_ERRORS[result])
-      return
-    }
-    setDraft('')
-  }
 
   const handleConfirmRemoval = () => {
     if (pendingRemoval) removeUrl(pendingRemoval)
@@ -67,9 +52,9 @@ export const AdminInvidiousScreen = () => {
             keyboardType='url'
             autoCapitalize='none'
             onChangeText={setDraft}
-            onSubmitEditing={handleAdd}
             accessibilityLabel={INPUT_LABEL}
             placeholder={INSTANCE_URL_PREFIX}
+            onSubmitEditing={() => void handleAdd()}
             placeholderTextColor={currentTheme.placeholder}
             style={[
               styles.input,
@@ -77,10 +62,19 @@ export const AdminInvidiousScreen = () => {
             ]}
           />
           <PressableButton
-            onPress={handleAdd}
-            style={[styles.addButton, { backgroundColor: currentTheme.primary }]}
+            disabled={isValidating}
+            onPress={() => void handleAdd()}
+            style={[
+              styles.addButton,
+              { backgroundColor: currentTheme.primary },
+              isValidating && styles.buttonDisabled,
+            ]}
           >
-            <Text style={styles.addButtonText}>{ADD_LABEL}</Text>
+            {isValidating ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <Text style={styles.addButtonText}>{ADD_LABEL}</Text>
+            )}
           </PressableButton>
         </View>
 
@@ -106,7 +100,7 @@ export const AdminInvidiousScreen = () => {
           style={[
             styles.saveButton,
             { backgroundColor: currentTheme.primary },
-            (!isDirty || isSaving) && styles.saveButtonDisabled,
+            (!isDirty || isSaving) && styles.buttonDisabled,
           ]}
         >
           {isSaving ? (

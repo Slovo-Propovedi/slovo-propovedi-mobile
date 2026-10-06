@@ -3,21 +3,20 @@ import { useCallback, useEffect, useState } from 'react'
 import { invidiousApi } from 'shared/api'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
-import { type AddInstanceResult, validateInstanceUrl } from './instanceUrl'
 
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить источники импорта'
 const SAVE_ERROR_MESSAGE = 'Не удалось сохранить источники импорта'
 const SAVED_MESSAGE = 'Источники импорта сохранены'
 
 interface InvidiousInstancesAdminState {
-  addUrl: (url: string) => AddInstanceResult
+  addAndSave: (url: string) => Promise<void>
   instances: string[]
   isDirty: boolean
   isLoading: boolean
   isSaving: boolean
   loadFailed: boolean
   removeUrl: (url: string) => void
-  save: () => Promise<boolean>
+  save: () => Promise<void>
 }
 
 const areEqual = (first: readonly string[], second: readonly string[]): boolean =>
@@ -64,44 +63,47 @@ export const useInvidiousInstancesAdmin = (): InvidiousInstancesAdminState => {
     }
   }, [])
 
-  const addUrl = useCallback(
-    (url: string): AddInstanceResult => {
-      const result = validateInstanceUrl(url, instances)
-      if (result === 'ok') setInstances(previous => [...previous, url.trim()])
+  // Полная замена списка (`PUT`) — единственный путь сохранения правок.
+  const putInstances = useCallback(
+    async (next: string[]): Promise<void> => {
+      setIsSaving(true)
+      try {
+        const response = await invidiousApi
+          .getInvidious()
+          .invidiousInstancesControllerReplace({ urls: next })
 
-      return result
+        const saved = response.map(instance => instance.url)
+        setInstances(saved)
+        setSavedInstances(saved)
+        showToastAction(SAVED_MESSAGE)
+      } catch (error) {
+        reportError(error, SAVE_ERROR_MESSAGE)
+      } finally {
+        setIsSaving(false)
+      }
     },
-    [instances],
+    [showToastAction],
+  )
+
+  const save = useCallback((): Promise<void> => putInstances(instances), [instances, putInstances])
+
+  // Добавление сразу сохраняет список: админ не должен забыть нажать
+  // «Сохранить», а неудачный PUT оставляет локальную правку (isDirty).
+  const addAndSave = useCallback(
+    async (url: string): Promise<void> => {
+      const next = [...instances, url.trim()]
+      setInstances(next)
+      await putInstances(next)
+    },
+    [instances, putInstances],
   )
 
   const removeUrl = useCallback((url: string) => {
     setInstances(previous => previous.filter(instance => instance !== url))
   }, [])
 
-  const save = useCallback(async (): Promise<boolean> => {
-    setIsSaving(true)
-    try {
-      const response = await invidiousApi
-        .getInvidious()
-        .invidiousInstancesControllerReplace({ urls: instances })
-
-      const saved = response.map(instance => instance.url)
-      setInstances(saved)
-      setSavedInstances(saved)
-      showToastAction(SAVED_MESSAGE)
-
-      return true
-    } catch (error) {
-      reportError(error, SAVE_ERROR_MESSAGE)
-
-      return false
-    } finally {
-      setIsSaving(false)
-    }
-  }, [instances, showToastAction])
-
   return {
-    addUrl,
+    addAndSave,
     instances,
     isDirty: !areEqual(instances, savedInstances),
     isLoading,

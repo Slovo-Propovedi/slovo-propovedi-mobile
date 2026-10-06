@@ -5,8 +5,11 @@ import { ImportSourceError } from './sourceErrors'
 
 const REQUEST_TIMEOUT_MS = 15_000
 
-// Некоторые инстансы режут запросы без похожего на браузер User-Agent.
-const INVIDIOUS_USER_AGENT = 'Mozilla/5.0 (Linux; Android 13; rv:120.0) Gecko/120.0 Firefox/120.0'
+// Некоторые инстансы режут запросы без похожего на браузер User-Agent. Тот же
+// заголовок использует проверка доступности инстанса при добавлении (см.
+// validateInvidiousInstance), чтобы проба шла по тому же пути, что и скачивание.
+export const INVIDIOUS_USER_AGENT =
+  'Mozilla/5.0 (Linux; Android 13; rv:120.0) Gecko/120.0 Firefox/120.0'
 
 // itag 140 — аудио в AAC/mp4: играется нативно и в вебе, в отличие от opus/webm.
 const PREFERRED_ITAG = '140'
@@ -26,7 +29,7 @@ interface InvidiousFormat {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
-const normalizeBaseUrl = (invidiousBaseUrl: string): string =>
+export const normalizeBaseUrl = (invidiousBaseUrl: string): string =>
   invidiousBaseUrl.trim().replace(/\/+$/, '')
 
 const readFormats = (payload: Record<string, unknown>): InvidiousFormat[] => {

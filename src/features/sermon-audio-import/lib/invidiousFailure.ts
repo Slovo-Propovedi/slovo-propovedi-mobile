@@ -35,8 +35,9 @@ export const readInstanceHost = (base: string): string => {
 }
 
 // Антибот отдаёт HTML-страницу вызова (иногда со статусом 200/5xx), поэтому
-// смотрим и content-type, и ведущий «<».
-const isHtmlBody = (response: Response, body: string): boolean => {
+// смотрим и content-type, и ведущий «<». Общий для скачивания и проверки
+// доступности инстанса.
+export const isHtmlBody = (response: Response, body: string): boolean => {
   const contentType = response.headers.get('content-type') ?? ''
 
   return contentType.includes('text/html') || body.trimStart().startsWith('<')
