@@ -46,6 +46,8 @@ jest.mock('../progressFlusher', () => ({
 
 const AUDIO_URL = 'https://example.com/audio.mp3'
 const OTHER_AUDIO_URL = 'https://example.com/other.mp3'
+const PAUSE_EVENT = 'pause'
+const PLAY_EVENT = 'play'
 
 beforeEach(async () => {
   jest.mocked(audioCacheService.isCached).mockResolvedValue(false)
@@ -129,5 +131,88 @@ describe('WebPlayerService visibility watcher', () => {
 
     expect(() => mockVisibilityCallback?.()).not.toThrow()
     expect(audioStubs[0].element.currentTime).toBe(0)
+  })
+})
+
+describe('WebPlayerService interruption auto-resume', () => {
+  afterEach(async () => {
+    await playerService.unload()
+  })
+
+  test('resumes after a pause edge that hit while actually playing', async () => {
+    await playerService.loadAudio(AUDIO_URL, 120000)
+    audioStubs[0].fireEvent(PLAY_EVENT)
+    audioStubs[0].element.paused = true
+    audioStubs[0].fireEvent(PAUSE_EVENT)
+
+    mockVisibilityCallback?.()
+
+    expect(audioStubs[0].play).toHaveBeenCalledTimes(1)
+  })
+
+  test('the play event alone does not arm the resume intent', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].fireEvent(PLAY_EVENT)
+    // OS suspended playback without firing a 'pause' edge — per platform
+    // limits no auto-resume is attempted (play alone must not arm intent).
+    audioStubs[0].element.paused = true
+
+    mockVisibilityCallback?.()
+
+    expect(audioStubs[0].play).not.toHaveBeenCalled()
+  })
+
+  test('does not resume after an explicit user pause', async () => {
+    await playerService.loadAudio(AUDIO_URL, 120000)
+    audioStubs[0].fireEvent(PLAY_EVENT)
+    await playerService.pause()
+    audioStubs[0].element.paused = true
+
+    mockVisibilityCallback?.()
+
+    expect(audioStubs[0].play).not.toHaveBeenCalled()
+  })
+
+  test('an explicit user pause wins over the pause-edge intent', async () => {
+    await playerService.loadAudio(AUDIO_URL, 120000)
+    audioStubs[0].fireEvent(PLAY_EVENT)
+    // Real browsers also fire the element 'pause' edge during a user pause.
+    audioStubs[0].fireEvent(PAUSE_EVENT)
+    await playerService.pause()
+    audioStubs[0].element.paused = true
+
+    mockVisibilityCallback?.()
+
+    expect(audioStubs[0].play).not.toHaveBeenCalled()
+  })
+
+  test('does not restart playback that is still running', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].fireEvent(PLAY_EVENT)
+    audioStubs[0].element.paused = false
+
+    mockVisibilityCallback?.()
+
+    expect(audioStubs[0].play).not.toHaveBeenCalled()
+  })
+
+  test('does not resume a track that never started playing', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].element.paused = true
+
+    mockVisibilityCallback?.()
+
+    expect(audioStubs[0].play).not.toHaveBeenCalled()
+  })
+
+  test('stop clears the intent so visibility cannot revive the track', async () => {
+    await playerService.loadAudio(AUDIO_URL)
+    audioStubs[0].fireEvent(PLAY_EVENT)
+    await playerService.stop()
+    audioStubs[0].element.paused = true
+
+    mockVisibilityCallback?.()
+
+    expect(audioStubs[0].play).not.toHaveBeenCalled()
   })
 })

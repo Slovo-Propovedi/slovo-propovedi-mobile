@@ -2,6 +2,7 @@ import { scheduleHistoryFlush } from '../progressFlusher'
 import { reportPlayError } from './audioHandlers'
 import { type createInterruptionResumeController } from './interruptionResumeController'
 import { type createWebMediaSession } from './mediaSession'
+import { markUserPause } from './pauseIntent'
 import { type WebPlayerState } from './playerState'
 import { type createStatusTracker } from './playerStatusTracker'
 
@@ -23,6 +24,10 @@ interface TransportDeps {
 export const createTransport = (deps: TransportDeps) => ({
   pause: async (): Promise<void> => {
     deps.getAudio()?.pause()
+    // Explicit pause (in-app button or system media pause) clears the resume
+    // intent. Must run after audio.pause(): the resulting 'pause' edge may have
+    // just armed it as an interruption, and this clear must win.
+    markUserPause()
     deps.flushProgressAtCurrentTime()
     deps.statusTracker.stop()
     deps.state.setIsPlaying(false)
@@ -55,6 +60,7 @@ export const createTransport = (deps: TransportDeps) => ({
 
     const audio = deps.getAudio()
     audio?.pause()
+    markUserPause()
     if (audio) audio.currentTime = 0
 
     deps.resume.reset(0)
