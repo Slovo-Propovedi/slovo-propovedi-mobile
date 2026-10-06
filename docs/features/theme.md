@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
 
 ## Скроллбары на web
 
-`ThemeProvider` (эффект только при `Platform.OS === 'web'`) прокидывает цвета активной темы в CSS-переменные `--sp-scrollbar-thumb` (`currentTheme.textMuted`) и `--sp-scrollbar-thumb-hover` (`currentTheme.text`) на `document.documentElement`. Сами правила `::-webkit-scrollbar*` / `scrollbar-width` / `scrollbar-color` — в `public/index.html` (фолбэк — нейтральный серый). Переключение светлая/тёмная перекрашивает скроллбары автоматически. Подробнее — [web.md](./web.md#скроллбары).
+`ThemeProvider` (эффект только при `Platform.OS === 'web'`) прокидывает цвета активной темы в CSS-переменные `--sp-scrollbar-thumb` (`currentTheme.textMuted`) и `--sp-scrollbar-thumb-hover` (`currentTheme.text`) на `document.documentElement`. Там же он красит фон `documentElement` и `body` в `currentTheme.background` — перекрывая статичный бренд-фолбэк `#f16031` из `public/index.html`, чтобы тёмная тема не мигала светлым в зоне overscroll. Сами правила `::-webkit-scrollbar*` / `scrollbar-width` / `scrollbar-color` и сброс `html`/`body` (`overflow: hidden`, `overscroll-behavior: none`) — в `public/index.html` (фолбэк — нейтральный серый / бренд-цвет). Переключение светлая/тёмная перекрашивает скроллбары и фон автоматически. Подробнее — [web.md](./web.md#скроллбары).
 
 ## Настройки
 

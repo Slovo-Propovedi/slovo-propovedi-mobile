@@ -77,6 +77,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const root = document.documentElement.style
     root.setProperty('--sp-scrollbar-thumb', String(currentTheme.textMuted))
     root.setProperty('--sp-scrollbar-thumb-hover', String(currentTheme.text))
+    // Paint the overscroll/reset area (html/body) with the active theme so a dark
+    // theme never flashes the static light fallback from public/index.html.
+    const background = String(currentTheme.background)
+    root.backgroundColor = background
+    if (document.body) document.body.style.backgroundColor = background
   }, [currentTheme])
 
   return (

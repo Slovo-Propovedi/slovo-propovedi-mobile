@@ -21,14 +21,17 @@
 
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
-      /* These styles make the body full-height */
+      /* These styles make html/body full-height and paint the reset area with the
+         app brand colour. ThemeProvider overrides the background at runtime with
+         the active theme, so a dark theme does not flash this light fallback on
+         overscroll. `overscroll-behavior: none` kills the rubber-band area. */
       html,
       body {
         height: 100%;
-      }
-      /* These styles disable body scrolling if you are using <ScrollView> */
-      body {
+        width: 100%;
+        background-color: #f16031;
         overflow: hidden;
+        overscroll-behavior: none;
       }
       /* These styles make the root element full-height */
       #root {

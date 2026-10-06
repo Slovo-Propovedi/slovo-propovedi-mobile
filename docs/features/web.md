@@ -24,6 +24,10 @@
 - `app.config.ts` → `web`: `lang: "ru"`, `name`, `shortName`, `description` (Expo подставляет `lang`/`description` в шаблон).
 - Регистрация Service Worker — инлайн-скрипт в `public/index.html`: регистрирует `/sw.js` **только не на localhost**; на localhost, наоборот, снимает возможно оставшийся с прод-прогона SW (`getRegistrations().then(unregister)`), чтобы не мешать Metro/HMR.
 
+### Сброс `html`/`body` в HTML-оболочке
+
+`public/index.html` → `#expo-reset` держит `html`/`body` на всю высоту (`height`/`width: 100%`) и запрещает документный скролл и резиновую прокрутку: `overflow: hidden` + `overscroll-behavior: none`. Фон сброса — статичный бренд-цвет `#f16031`, видимый **до** того, как JS нарисует тему (иначе тёмная тема мигала бы светлым при overscroll). `ThemeProvider` (web-only эффект) сразу после монтирования перекрашивает `documentElement` и `body` в `currentTheme.background`, перекрывая фолбэк — см. [theme.md](./theme.md#скроллбары-на-web).
+
 ### Перехват ссылок в установленное PWA
 
 Поведение платформенное — флага манифеста для него нет (`capture_links` / `url_handlers` / `handle_links` — мёртвые proposals, не использовать).
