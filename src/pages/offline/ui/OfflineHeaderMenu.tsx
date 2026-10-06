@@ -83,7 +83,7 @@ export const OfflineHeaderMenu = () => {
         items={[
           {
             disabled: isClearCacheBusy,
-            icon: 'trash-outline',
+            icon: 'cloud-offline-outline',
             onPress: handleClearOption,
             text: 'Очистить офлайн',
           },

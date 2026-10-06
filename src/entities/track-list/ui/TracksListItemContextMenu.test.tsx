@@ -76,7 +76,9 @@ describe('<TracksListItemContextMenu>', () => {
     )
 
     expect(screen.getByText(REMOVE_CACHE_TEXT)).toBeTruthy()
-    expect(mockIoniconsSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'trash-outline' }))
+    expect(mockIoniconsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'cloud-offline-outline' }),
+    )
   })
 
   test('renders stop caching text when visualState is downloading', async () => {

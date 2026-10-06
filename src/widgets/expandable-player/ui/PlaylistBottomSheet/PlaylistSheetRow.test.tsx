@@ -95,7 +95,7 @@ describe('<PlaylistSheetRow>', () => {
 
   test('forwards menuActions to TracksListItem', async () => {
     const menuActions = [
-      { icon: 'trash-outline' as const, onPress: jest.fn(), text: REMOVE_ACTION_TEXT },
+      { icon: 'time-outline' as const, onPress: jest.fn(), text: REMOVE_ACTION_TEXT },
     ]
 
     await renderItem({ menuActions })

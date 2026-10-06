@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 import { CoverPicker, FileUploadField } from 'widgets/admin-form-pickers'
+import { ImportFromYoutube } from 'features/sermon-audio-import'
 import { EditableUrlField } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type SermonFormValues } from '../lib/sermonFormInitialValues'
@@ -7,8 +8,8 @@ import { styles } from './styles'
 
 type UpdateField = <K extends keyof SermonFormValues>(key: K, value: SermonFormValues[K]) => void
 
-// Блок «Медиа» формы проповеди: обложка, ссылка на YouTube, аудиофайл (MP3) и
-// текстовый файл. Аудио и текст грузятся multipart-загрузкой с прогрессом.
+// Блок «Медиа» формы проповеди: обложка, ссылка на YouTube, аудиофайл (MP3/M4A)
+// и текстовый файл. Аудио и текст грузятся multipart-загрузкой с прогрессом.
 export const SermonMediaFields = ({
   onChange,
   values,
@@ -29,12 +30,24 @@ export const SermonMediaFields = ({
         placeholder='https://youtube.com/…'
         onChangeText={text => onChange('youtubeUrl', text)}
       />
+      <View style={styles.importBlock}>
+        <ImportFromYoutube
+          youtubeUrl={values.youtubeUrl}
+          hasAudio={Boolean(values.audioUrl)}
+          disabled={!values.youtubeUrl.trim()}
+          onAudioImported={audioUrl => onChange('audioUrl', audioUrl)}
+          onMetadata={({ description, title }) => {
+            onChange('description', description ?? '')
+            onChange('title', title)
+          }}
+        />
+      </View>
       <FileUploadField
         kind='audio'
-        label='Аудио (MP3)'
         value={values.audioUrl}
-        hint='Только формат MP3.'
+        label='Аудио (MP3, M4A)'
         onChange={value => onChange('audioUrl', value)}
+        hint='MP3 или M4A. M4A появляется при импорте из YouTube/Invidious.'
       />
       <FileUploadField
         kind='text'

@@ -12,28 +12,34 @@ interface FileKindConfig {
   mimeTypes: string[]
   /** Сообщение об отказе по расширению. */
   rejectMessage: string
+  /** Есть ли у вида серверная библиотека (`GET /files` отдаёт только изображения). */
+  supportsLibrary: boolean
 }
 
 const MP3_EXTENSION = 'mp3'
+const M4A_EXTENSION = 'm4a'
 
 const KIND_CONFIG: Record<AdminFileKind, FileKindConfig> = {
   audio: {
-    allowedExtensions: [MP3_EXTENSION],
-    libraryPattern: /\.mp3(\?.*)?$/i,
-    mimeTypes: ['audio/mpeg'],
-    rejectMessage: 'Допускается только формат MP3.',
+    allowedExtensions: [MP3_EXTENSION, M4A_EXTENSION],
+    libraryPattern: /\.(mp3|m4a)(\?.*)?$/i,
+    mimeTypes: ['audio/mpeg', 'audio/x-m4a', 'audio/mp4'],
+    rejectMessage: 'Допускается только формат MP3 или M4A.',
+    supportsLibrary: false,
   },
   image: {
     allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
     libraryPattern: /\.(jpe?g|png|webp)(\?.*)?$/i,
     mimeTypes: ['image/*'],
     rejectMessage: 'Допускаются только изображения (JPEG, PNG, WebP).',
+    supportsLibrary: true,
   },
   text: {
     allowedExtensions: [],
     libraryPattern: /\.(pdf|fb2|txt)(\?.*)?$/i,
     mimeTypes: ['application/pdf', 'text/plain', 'application/xml'],
     rejectMessage: '',
+    supportsLibrary: false,
   },
 }
 

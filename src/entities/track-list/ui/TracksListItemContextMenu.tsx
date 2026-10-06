@@ -20,7 +20,7 @@ interface CacheActionItem {
 }
 
 const CACHE_ACTION_ITEMS: Record<Exclude<TrackCacheVisualState, 'playing'>, CacheActionItem> = {
-  cached: { icon: 'trash-outline', text: 'Удалить из офлайн' },
+  cached: { icon: 'cloud-offline-outline', text: 'Удалить из офлайн' },
   cloud: { icon: 'cloud-download', text: 'Добавить в офлайн' },
   downloading: { text: 'Остановить добавление в офлайн' },
   queued: { text: 'Убрать из очереди' },

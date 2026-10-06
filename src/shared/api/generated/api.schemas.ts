@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.18.2
+ * OpenAPI spec version: 0.19.0
  */
 export interface HealthResponse {
   status: string
@@ -443,8 +443,20 @@ export interface RefreshResponse {
   refreshToken: string
 }
 
+export interface InvidiousInstance {
+  /** Идентификатор записи */
+  id: number
+  /** Полный https-адрес Invidious-инстанса */
+  url: string
+}
+
+export interface ReplaceInvidiousInstancesRequest {
+  /** Полные https-адреса инстансов; порядок соответствует порядку в UI, дубликаты запрещены */
+  urls: string[]
+}
+
 export type AppControllerUploadFileBody = {
-  /** Допустимые форматы — JPEG, PNG, WebP, MP3, PDF, FB2. Другие форматы будут отклонены. */
+  /** Допустимые форматы — JPEG, PNG, WebP, MP3, M4A, PDF, FB2. Другие форматы будут отклонены. */
   file?: Blob | File
 }
 

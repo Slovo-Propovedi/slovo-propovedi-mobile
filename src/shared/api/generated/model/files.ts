@@ -5,13 +5,13 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.18.2
+ * OpenAPI spec version: 0.19.0
  */
 import * as zod from 'zod'
 
 /**
- * Файл сохраняется в MinIO. Допустимые форматы: JPEG, PNG, WebP (изображения), MP3 (аудио), PDF, FB2 (документы).
- * @summary Загрузить файл (изображение, аудио MP3, PDF, FB2)
+ * Файл сохраняется в MinIO. Допустимые форматы: JPEG, PNG, WebP (изображения), MP3/M4A (аудио), PDF, FB2 (документы).
+ * @summary Загрузить файл (изображение, аудио MP3/M4A, PDF, FB2)
  */
 export const AppControllerUploadFileBody = zod.object({
   file: zod.instanceof(Blob).optional(),
@@ -79,7 +79,7 @@ export const AppControllerGetOrphanedFiles200Response = zod.object({
 })
 
 /**
- * Идемпотентно удаляет ТОЛЬКО осиротевшие аудио/текстовые объекты (.mp3, .pdf, .fb2). Изображения не удаляются никогда — обложками управляют вручную из каталога. Ошибка удаления отдельного объекта не роняет запрос (best-effort).
+ * Идемпотентно удаляет ТОЛЬКО осиротевшие аудио/текстовые объекты (.mp3, .m4a, .pdf, .fb2). Изображения не удаляются никогда — обложками управляют вручную из каталога. Ошибка удаления отдельного объекта не роняет запрос (best-effort).
  * @summary Удалить осиротевшие аудио и текстовые файлы
  */
 export const AppControllerCleanupOrphanedFiles200Response = zod.object({

@@ -207,6 +207,8 @@ API base: `https://api.sourcecraft.tech/repos/slovo-propovedi/slovo-propovedi-mo
 
 Все функции установки бросают ошибку при вызове не на Android (`assertAndroid`) — Fail Fast.
 
+Утилита скачивания с таймаутом вынесена в `src/shared/lib/fs/downloadFileWithTimeout.ts` и стала общей: её использует и `downloadUpdateZip` (10-минутный бюджет), и импорт аудио из YouTube/Invidious (15 минут, отмена при размонтировании формы через внешний `AbortSignal`) — см. [features/admin.md](./admin.md) → «Импорт аудио из YouTube / Invidious». Сообщение таймаута намеренно нейтральное — `Download timed out after <Xs>`, без префикса `[updateService]`; классификатор ошибок обновления (`installErrorMessage.ts`, `DOWNLOAD_HINTS`) узнаёт его по подстроке `'Download timed out'`, поэтому вид `download` и его русский текст не изменились.
+
 ### Локальный модуль apk-installer
 
 `modules/apk-installer` — локальный Expo-модуль (Kotlin, `expo-modules-core`), подключён через `"apk-installer": "file:./modules/apk-installer"` в корневом `package.json`. API:

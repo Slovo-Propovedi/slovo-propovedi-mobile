@@ -22,6 +22,6 @@ export const HistoryHeaderMenuDropdown = ({
     visible={visible}
     onClose={onClose}
     anchorRef={anchorRef}
-    items={[{ icon: 'trash-outline', onPress: onClear, text: 'Очистить историю' }]}
+    items={[{ icon: 'time-outline', onPress: onClear, text: 'Очистить историю' }]}
   />
 )
