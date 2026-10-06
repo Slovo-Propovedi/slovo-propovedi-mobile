@@ -2,6 +2,7 @@ import { useAction } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
 import { type APITypes, sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
 import { hasOrderChanged } from 'shared/lib/utils/hasOrderChanged'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
@@ -23,26 +24,43 @@ export const useAdminSections = (): AdminSectionsState => {
   const [isLoading, setIsLoading] = useState(true)
   const [isReordering, setIsReordering] = useState(false)
 
+  const fetchSections = useCallback(
+    () =>
+      sectionsApi
+        .getSections()
+        .sectionControllerFindAll()
+        .then(response => response.sections),
+    [],
+  )
+
   useEffect(() => {
     let isActive = true
 
-    const load = async () => {
-      try {
-        const response = await sectionsApi.getSections().sectionControllerFindAll()
-        if (isActive) setSections(response.sections)
-      } catch (error) {
-        reportError(error, LOAD_ERROR_MESSAGE)
-      } finally {
+    fetchSections()
+      .then(nextSections => {
+        if (isActive) setSections(nextSections)
+      })
+      .catch(error => {
+        if (isActive) reportError(error, LOAD_ERROR_MESSAGE)
+      })
+      .finally(() => {
         if (isActive) setIsLoading(false)
-      }
-    }
-
-    void load()
+      })
 
     return () => {
       isActive = false
     }
-  }, [])
+  }, [fetchSections])
+
+  useSilentRefetchOnFocus(
+    useCallback(async () => {
+      try {
+        setSections(await fetchSections())
+      } catch (error) {
+        reportError(error, LOAD_ERROR_MESSAGE)
+      }
+    }, [fetchSections]),
+  )
 
   const reorder = useCallback(
     async (nextOrder: APITypes.SectionEntity[]) => {

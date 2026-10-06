@@ -29,6 +29,12 @@ jest.mock('shared/api', () => ({
 }))
 
 jest.mock('expo-router', () => ({
+  useFocusEffect: (callback: () => () => void | void) => {
+    const { useEffect } = jest.requireActual('react') as {
+      useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
+    }
+    useEffect(callback, [callback])
+  },
   useRouter: () => ({ push: mockPush }),
 }))
 

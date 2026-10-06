@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { authUserAtom } from 'entities/auth'
 import { type APITypes, usersApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 
@@ -32,17 +33,19 @@ export const useAdminUserDetail = (id: string): AdminUserDetailState => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
 
+  const fetchUser = useCallback(() => usersApi.getUsers().usersControllerFindOne(id), [id])
+
   useEffect(() => {
     let isActive = true
 
     const load = async () => {
       if (!id) {
-        setIsNotFound(true)
+        if (isActive) setIsNotFound(true)
         return
       }
 
       try {
-        const entity = await usersApi.getUsers().usersControllerFindOne(id)
+        const entity = await fetchUser()
         if (isActive) setUser(entity)
       } catch (error) {
         if (isActive) {
@@ -57,7 +60,19 @@ export const useAdminUserDetail = (id: string): AdminUserDetailState => {
     return () => {
       isActive = false
     }
-  }, [id])
+  }, [fetchUser, id])
+
+  useSilentRefetchOnFocus(
+    useCallback(async () => {
+      if (!id) return
+
+      try {
+        setUser(await fetchUser())
+      } catch (error) {
+        reportError(error, LOAD_ERROR_MESSAGE)
+      }
+    }, [fetchUser, id]),
+  )
 
   const remove = useCallback(async () => {
     setIsDeleting(true)

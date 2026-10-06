@@ -2,6 +2,7 @@ import { useAction } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
 import { type APITypes, filesApi, type PickedUploadAsset, uploadSermonFile } from 'shared/api'
 import { getErrorMessage, getHttpStatus } from 'shared/lib/error-utils'
+import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 
@@ -74,6 +75,7 @@ export const useAdminMedia = (): AdminMediaState => {
       reportError(error, LOAD_ERROR_MESSAGE)
     }
   }, [])
+  useSilentRefetchOnFocus(reloadQuietly)
 
   const upload = useCallback(
     async (asset: PickedUploadAsset, onUpload: (fileName: string) => void) => {

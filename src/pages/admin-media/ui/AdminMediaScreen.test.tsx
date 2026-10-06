@@ -32,6 +32,17 @@ jest.mock('expo-document-picker', () => ({
   getDocumentAsync: (...args: unknown[]) => mockPickDocument(...args),
 }))
 
+// The media catalog refetches silently on focus; keep the hook inert in tests
+// (no navigation container is mounted).
+jest.mock('expo-router', () => ({
+  useFocusEffect: (callback: () => () => void | void) => {
+    const { useEffect } = jest.requireActual('react') as {
+      useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
+    }
+    useEffect(callback, [callback])
+  },
+}))
+
 const catalogResponse = (
   files: ReturnType<typeof filesMocks.getGetFilesResponseMock>['files'],
 ) => ({
