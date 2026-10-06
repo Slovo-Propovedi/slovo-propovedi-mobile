@@ -13,7 +13,7 @@ import {
 } from 'features/sermon-search'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, MIN_TOUCH_TARGET, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useScrollActivity } from '../lib/useScrollActivity'
 import { AdminShieldButton } from './AdminShieldButton'
 import { ContinueListeningButton } from './ContinueListeningButton'
@@ -79,9 +79,10 @@ export const ListenScreen = () => {
 
 const styles = StyleSheet.create({
   adminButtonSlot: {
+    // Center the 48pt shield on the pinned search row (SEARCH_HEADER_HEIGHT).
     position: 'absolute',
-    right: INDENTS.low,
-    top: 0,
+    right: INDENTS.medium,
+    top: (SEARCH_HEADER_HEIGHT - MIN_TOUCH_TARGET) / 2,
     zIndex: 2,
   },
   safeArea: {

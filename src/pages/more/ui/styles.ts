@@ -18,7 +18,8 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingTop: INDENTS.high,
+    // The header row aligns with Listen's pinned search row, which also starts at 0.
+    paddingTop: 0,
   },
   header: {
     alignItems: 'center',
