@@ -177,7 +177,9 @@ reorder и персист принадлежности при toggle.
 редактирования; подробнее — [screens/my-playlists.md](../screens/my-playlists.md). Обычный режим
 (`MyPlaylistsNormalView`): первой строкой закреплённые «Избранные» (`MyPlaylistsFavoritesRow`,
 сердечко, не перетаскивается), ниже — карточные строки локальных плейлистов (`MyPlaylistsDragList` +
-`MyPlaylistsRow` поверх `ListItemBase`).
+`MyPlaylistsRow` поверх `ListItemBase`). Список резервирует нижний отступ под плавающий мини-плеер и
+таб-бар (`tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low`, как в `PlaylistTrackList`),
+поэтому последние строки доступны для скролла и в режиме редактирования.
 
 **Режим редактирования.** Перестановка строк включается **явно** — двумя состояниями, обычным и
 редактирования, управляет локальный state `localOrderIds` (`null` — обычный режим; массив id —
