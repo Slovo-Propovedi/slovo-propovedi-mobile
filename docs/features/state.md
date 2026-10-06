@@ -66,7 +66,7 @@ ctx.get(cacheUpdateTriggerAtom) // чтение триггера
 - `initServerUrlAction(ctx)` (`src/shared/model/settings.ts`) — восстановление URL сервера (синхронизирует `axiosInstance.baseURL`).
 - `loadThemeMode` / `loadDynamicColors` (`src/shared/ui/theme/model.ts`) — восстановление темы.
 - `loadHapticsEnabled` (`src/shared/model/settings.ts`) — восстановление глобальной настройки виброотклика (дефолт `true`).
-- `fetchAllSections` (`src/entities/section/lib/fetchAllSections.ts`) — загрузка секций (сеть → кэш).
+- `fetchAllSections` (`src/entities/section/lib/fetchAllSections.ts`) — загрузка секций (кэш → сеть, stale-while-revalidate).
 
 Вызываются модульно или в `app/_layout.tsx` до/после монтирования провайдера.
 

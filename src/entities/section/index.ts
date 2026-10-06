@@ -1,4 +1,5 @@
 export { fetchAllSections } from './lib/fetchAllSections'
+export { hydrateCachedSections } from './lib/hydrateCachedSections'
 export { mapItemsSize } from './lib/mapItemsSize'
 export { mapTransform } from './lib/mapTransform'
 export { mapWhereIsTitleLocated } from './lib/mapWhereIsTitleLocated'

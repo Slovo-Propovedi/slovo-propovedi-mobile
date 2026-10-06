@@ -10,6 +10,7 @@ import {
   reEnqueuePartialDownloads,
 } from 'entities/offline-cache'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
+import { hydrateCachedSections } from 'entities/section'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { initServerUrlAction, loadHapticsEnabled } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
@@ -73,6 +74,7 @@ scheduleStartupGuardReset()
 void initServerUrlAction(ctx)
 void loadHapticsEnabled(ctx)
 void loadHistoryAction(ctx)
+void hydrateCachedSections(ctx)
 
 export default RootLayoutWithProvider
 

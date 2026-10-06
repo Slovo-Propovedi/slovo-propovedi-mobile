@@ -123,10 +123,13 @@
 
 ## Откуда данные
 
-- `fetchAllSections` из `src/entities/section/lib/fetchAllSections.ts`:
-  - сначала `sectionsApi.getSections().sectionControllerFindAll()` (сеть);
-  - при ошибке сети — кэш из AsyncStorage (`getCachedSections`, ключ `CACHED_SECTIONS` из `src/entities/section/lib/sections-cache/cacheKey.ts`);
-  - успешный ответ всегда пишется в кэш (fire-and-forget `setCachedSections`).
+- `fetchAllSections` из `src/entities/section/lib/fetchAllSections.ts` (stale-while-revalidate):
+  - сначала отдаёт непустой кэш из AsyncStorage (`getCachedSections`, ключ `CACHED_SECTIONS` из `src/entities/section/lib/sections-cache/cacheKey.ts`) — `sectionDataSourceAtom = 'cache'`, скелетон не показывается;
+  - затем **всегда** делает сетевой запрос `sectionsApi.getSections().sectionControllerFindAll()`; успешный непустой ответ перезаписывает атомы (`'network'`) и кэш (fire-and-forget `setCachedSections`);
+  - пустой сетевой ответ при непустом кэше оставляет кэш на экране (кэш не затирается);
+  - при ошибке сети без кэша — прежнее поведение (пустой список, `'unknown'`);
+  - latest-wins guard (module-scoped `requestId`) защищает от гонки mount-эффекта и `useOfflineRetry`.
+- При старте приложения `hydrateCachedSections` (`app/_layout.tsx`, рядом с `loadHistoryAction`) прогревает атомы кэшем секций до монтирования таба — скелетон не мигает на тёплом старте.
 - Атомы: `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom` (`'cache' | 'network' | 'unknown'`) — `entities/section/model.ts`.
 - Хук `useOfflineRetry` (`src/shared/lib/network/useOfflineRetry.ts`) перезапрашивает при возврате онлайн/в foreground/по таймеру, если последний ответ был не из сети.
 
@@ -141,10 +144,10 @@
 
 ## Состояния
 
-- Загрузка: `SectionsSkeleton` (`src/pages/listen/ui/skeleton.tsx`) — пока идёт загрузка и секций ещё нет. При наличии `leadingElement` (кнопка «Продолжить») скелетон **сплитится**: первая строка = первая (самая узкая, Small) секция скелетона слева (`count={1}`) + кнопка справа, а остальные секции скелетона (`from={1}`) рендерятся ниже на всю ширину. Так кнопка растягивается только на высоту первой строки (~239px), а не на весь скелетон (~1255px). `SectionsSkeleton` принимает пропсы `from` (индекс, по умолчанию 0) и `count` (сколько секций, по умолчанию все) → `SKELETON_SECTIONS.slice(from, count ? from + count : undefined)`.
+- Загрузка: `SectionsSkeleton` (`src/pages/listen/ui/skeleton.tsx`) — пока идёт загрузка и секций ещё нет. Скелетон показывается **только** на честном холодном старте (кэша нет и `isLoadingSectionsAtom === true`); при непустом кэше контент появляется мгновенно, а фоновый рефетч скелетон не включает. При наличии `leadingElement` (кнопка «Продолжить») скелетон **сплитится**: первая строка = первая (самая узкая, Small) секция скелетона слева (`count={1}`) + кнопка справа, а остальные секции скелетона (`from={1}`) рендерятся ниже на всю ширину. Так кнопка растягивается только на высоту первой строки (~239px), а не на весь скелетон (~1255px). `SectionsSkeleton` принимает пропсы `from` (индекс, по умолчанию 0) и `count` (сколько секций, по умолчанию все) → `SKELETON_SECTIONS.slice(from, count ? from + count : undefined)`.
 - Пусто: `EmptyState` (`shared/ui`), когда загрузка завершена, а секций нет.
-- Офлайн: показывается кэш (`sectionDataSourceAtom === 'cache'`), фоновые повторы через `useOfflineRetry`; при отсутствии кэша — `EmptyState`.
-- Ошибка: сетевые ошибки логируются (`console.error`), при наличии кэша он показывается.
+- Офлайн/тёплый старт: показывается кэш (`sectionDataSourceAtom === 'cache'`) — мгновенно из `hydrateCachedSections`/`fetchAllSections`, фоновые повторы через `useOfflineRetry` держат `dataSource !== 'network'`; при отсутствии кэша — `EmptyState`.
+- Ошибка: сетевые ошибки логируются (`console.error`), при наличии кэша он показывается; пустой сетевой ответ не затирает непустой кэш.
 
 ## Связанные документы
 
