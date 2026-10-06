@@ -65,7 +65,7 @@ export const ImportFromYoutube = ({
   const isDisabled = disabled || isImporting
 
   return (
-    <View style={styles.block}>
+    <View>
       <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{IMPORT_HINT}</Text>
       <ImportSourcePicker
         source={effectiveSource}
@@ -98,9 +98,6 @@ export const ImportFromYoutube = ({
 }
 
 const styles = StyleSheet.create({
-  block: {
-    marginBottom: INDENTS.medium,
-  },
   hint: {
     fontSize: FONT_SIZES.sm,
     marginBottom: INDENTS.low,
@@ -109,7 +106,9 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     marginBottom: INDENTS.lowest,
   },
+  // Статус прилипает к группе аплоада малым зазором, а внешний отступ до
+  // следующего поля даёт страница (SermonMediaFields) — под статусом.
   progress: {
-    marginTop: INDENTS.low,
+    marginTop: INDENTS.lowest,
   },
 })

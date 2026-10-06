@@ -36,6 +36,11 @@ export const styles = StyleSheet.create({
   group: {
     marginTop: INDENTS.highest,
   },
+  // Блок импорта: отступ до следующего поля «Аудио» лежит на странице, а не в
+  // фиче, поэтому он оказывается под статусом импорта, когда тот виден.
+  importBlock: {
+    marginBottom: INDENTS.medium,
+  },
   rangeField: {
     flex: 1,
   },

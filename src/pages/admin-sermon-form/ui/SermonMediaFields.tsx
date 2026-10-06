@@ -30,16 +30,18 @@ export const SermonMediaFields = ({
         placeholder='https://youtube.com/…'
         onChangeText={text => onChange('youtubeUrl', text)}
       />
-      <ImportFromYoutube
-        youtubeUrl={values.youtubeUrl}
-        hasAudio={Boolean(values.audioUrl)}
-        disabled={!values.youtubeUrl.trim()}
-        onAudioImported={audioUrl => onChange('audioUrl', audioUrl)}
-        onMetadata={({ description, title }) => {
-          onChange('description', description ?? '')
-          onChange('title', title)
-        }}
-      />
+      <View style={styles.importBlock}>
+        <ImportFromYoutube
+          youtubeUrl={values.youtubeUrl}
+          hasAudio={Boolean(values.audioUrl)}
+          disabled={!values.youtubeUrl.trim()}
+          onAudioImported={audioUrl => onChange('audioUrl', audioUrl)}
+          onMetadata={({ description, title }) => {
+            onChange('description', description ?? '')
+            onChange('title', title)
+          }}
+        />
+      </View>
       <FileUploadField
         kind='audio'
         value={values.audioUrl}
