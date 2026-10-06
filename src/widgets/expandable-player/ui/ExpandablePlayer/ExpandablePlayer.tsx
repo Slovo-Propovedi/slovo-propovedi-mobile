@@ -82,7 +82,11 @@ export const ExpandablePlayer = ({
         style={[
           styles.backdrop,
           backdropStyle,
-          { height: screenHeight, pointerEvents: 'none', width: screenWidth },
+          {
+            height: Math.floor(screenHeight),
+            pointerEvents: 'none',
+            width: Math.floor(screenWidth),
+          },
         ]}
       />
       {!expanded && (

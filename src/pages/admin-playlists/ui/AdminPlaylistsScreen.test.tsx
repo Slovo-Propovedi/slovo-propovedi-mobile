@@ -1,4 +1,5 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { type TestInstance } from 'test-renderer'
 import { playlistsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { AdminPlaylistsScreen } from './AdminPlaylistsScreen'
@@ -33,6 +34,19 @@ jest.mock('expo-router', () => ({
   },
   useRouter: () => ({ push: mockPush }),
 }))
+
+const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+
+const findRefreshControl = (element: TestInstance) => {
+  let current: null | TestInstance = element
+
+  while (current !== null) {
+    if (SCROLL_HOST_TYPES.has(String(current.type))) return current.props.refreshControl
+    current = current.parent
+  }
+
+  throw new Error('Expected a scroll host ancestor, none found')
+}
 
 describe('<AdminPlaylistsScreen>', () => {
   beforeEach(() => {
@@ -126,5 +140,18 @@ describe('<AdminPlaylistsScreen>', () => {
     await waitFor(() =>
       expect(mockFindAll).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'title' })),
     )
+  })
+
+  test('reloads the first page when pulled to refresh', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, playlists: [] })
+
+    const { findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
+    const refreshControl = findRefreshControl(await findByText('Плейлисты'))
+
+    await act(async () => {
+      await refreshControl.props.onRefresh()
+    })
+
+    await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
   })
 })

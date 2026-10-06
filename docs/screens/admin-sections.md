@@ -21,6 +21,7 @@
 - **Optimistic reorder:** локальное состояние перекрывает ответ сети; на каждый `onDragEnd` сначала применяется новый порядок, при ошибке — откат к прежнему + `showToast`; запрос пропускается, если порядок не изменился (`hasOrderChanged`).
 - **Состояния:** загрузка списка — скелетон-строки (`AdminSectionRow.Skeleton`, шапка остаётся видимой; busy reorder — скелетон-строка в футере); пусто — `EmptyState` «Разделов пока нет»; ошибка загрузки — `reportError`; ошибка reorder — откат + тост.
 - **Высота и отступ под таб-баром (web):** `DraggableFlatList` рендерит собственный контейнер без `flex` — на react-native-web он растягивается по контенту, и список не скроллится (низ обрезается `body { overflow: hidden }` из `public/index.html`). Поэтому контейнеру задан `containerStyle={styles.listContainer}` с `flex: 1`, а `paddingBottom: tabBarHeight + INDENTS.low` (без `PLAYER_SIZES.miniPlayerHeight` — в админке нет мини-плеера).
+- **Pull-to-refresh:** потягивание вниз перезагружает разделы (`useAdminSections.reload`, спиннер `isRefreshing`); фоновое обновление по фокусу остаётся молчаливым. На web — собственный тач-жест `PullToRefresh` (см. [features/web.md](../features/web.md)).
 
 ## Деталь
 

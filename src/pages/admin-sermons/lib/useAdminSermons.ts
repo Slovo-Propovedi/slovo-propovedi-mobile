@@ -9,12 +9,14 @@ export interface AdminSermonsState {
   isError: boolean
   isLoading: boolean
   isLoadingMore: boolean
+  isRefreshing: boolean
   loadMore: () => Promise<void>
   loadMoreFailed: boolean
   onOrderChange: (order: APITypes.SermonControllerFindAllOrder) => void
   onSearchChange: (search: string) => void
   onSortChange: (sort: APITypes.SermonControllerFindAllSort) => void
   order: APITypes.SermonControllerFindAllOrder
+  refresh: () => Promise<void>
   search: string
   sermons: APITypes.SermonEntity[]
   sort: APITypes.SermonControllerFindAllSort
@@ -50,9 +52,11 @@ export const useAdminSermons = (): AdminSermonsState => {
     isError,
     isLoading,
     isLoadingMore,
+    isRefreshing,
     items: sermons,
     loadMore,
     loadMoreFailed,
+    refresh,
   } = usePaginatedList({
     errorMessage: LOAD_ERROR_MESSAGE,
     fetchPage,
@@ -64,12 +68,14 @@ export const useAdminSermons = (): AdminSermonsState => {
     isError,
     isLoading,
     isLoadingMore,
+    isRefreshing,
     loadMore,
     loadMoreFailed,
     onOrderChange: setOrder,
     onSearchChange: setSearch,
     onSortChange: setSort,
     order,
+    refresh,
     search,
     sermons,
     sort,

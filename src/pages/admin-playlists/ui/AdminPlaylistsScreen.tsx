@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router'
 import { FlatList, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
-import { EmptyState } from 'shared/ui'
+import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
@@ -32,6 +32,7 @@ export const AdminPlaylistsScreen = () => {
     isError,
     isLoading,
     isLoadingMore,
+    isRefreshing,
     loadMore,
     loadMoreFailed,
     onOrderChange,
@@ -39,6 +40,7 @@ export const AdminPlaylistsScreen = () => {
     onSortChange,
     order,
     playlists,
+    refresh,
     search,
     sort,
   } = useAdminPlaylists()
@@ -52,53 +54,59 @@ export const AdminPlaylistsScreen = () => {
       edges={['top']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
-      <FlatList
-        onEndReachedThreshold={0.5}
-        keyExtractor={item => item.id}
-        data={isLoading ? [] : playlists}
-        onEndReached={() => void loadMore()}
-        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
-        renderItem={({ item }) => (
-          <AdminPlaylistRow item={item} onPress={() => openPlaylist(item)} />
-        )}
-        ListEmptyComponent={
-          isLoading ? (
-            <PlaylistSkeletonList />
-          ) : isError ? (
-            <Text style={[styles.error, { color: currentTheme.textMuted }]}>
-              Не удалось загрузить плейлисты
-            </Text>
-          ) : (
-            <EmptyState message='Плейлистов пока нет' />
-          )
-        }
-        ListHeaderComponent={
-          <AdminPlaylistsHeader
-            sort={sort}
-            order={order}
-            search={search}
-            count={playlists.length}
-            onSortChange={onSortChange}
-            onOrderChange={onOrderChange}
-            onSearchChange={onSearchChange}
-            onCreate={() => router.push(CREATE_ROUTE)}
-          />
-        }
-        ListFooterComponent={
-          isLoadingMore ? (
-            <AdminPlaylistRow.Skeleton />
-          ) : loadMoreFailed ? (
-            <TouchableItem
-              onPress={() => void loadMore()}
-              style={[styles.retry, { backgroundColor: currentTheme.surface }]}
-            >
-              <Text style={[styles.retryText, { color: currentTheme.primary }]}>
-                {LOAD_MORE_FAILED_LABEL}
+      <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+        <FlatList
+          onEndReachedThreshold={0.5}
+          keyExtractor={item => item.id}
+          data={isLoading ? [] : playlists}
+          onEndReached={() => void loadMore()}
+          refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+          renderItem={({ item }) => (
+            <AdminPlaylistRow item={item} onPress={() => openPlaylist(item)} />
+          )}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: tabBarHeight + INDENTS.low },
+          ]}
+          ListEmptyComponent={
+            isLoading ? (
+              <PlaylistSkeletonList />
+            ) : isError ? (
+              <Text style={[styles.error, { color: currentTheme.textMuted }]}>
+                Не удалось загрузить плейлисты
               </Text>
-            </TouchableItem>
-          ) : null
-        }
-      />
+            ) : (
+              <EmptyState message='Плейлистов пока нет' />
+            )
+          }
+          ListHeaderComponent={
+            <AdminPlaylistsHeader
+              sort={sort}
+              order={order}
+              search={search}
+              count={playlists.length}
+              onSortChange={onSortChange}
+              onOrderChange={onOrderChange}
+              onSearchChange={onSearchChange}
+              onCreate={() => router.push(CREATE_ROUTE)}
+            />
+          }
+          ListFooterComponent={
+            isLoadingMore ? (
+              <AdminPlaylistRow.Skeleton />
+            ) : loadMoreFailed ? (
+              <TouchableItem
+                onPress={() => void loadMore()}
+                style={[styles.retry, { backgroundColor: currentTheme.surface }]}
+              >
+                <Text style={[styles.retryText, { color: currentTheme.primary }]}>
+                  {LOAD_MORE_FAILED_LABEL}
+                </Text>
+              </TouchableItem>
+            ) : null
+          }
+        />
+      </PullToRefresh>
     </SafeAreaView>
   )
 }

@@ -51,11 +51,15 @@ isInternetReachable ?? isConnected
 
 `src/entities/section/lib/sections-cache/` — `getCachedSections` / `setCachedSections`, ключ `CACHED_SECTIONS` (`src/entities/section/lib/sections-cache/cacheKey.ts`).
 
-Поток `fetchAllSections` (`src/entities/section/lib/fetchAllSections.ts`, вызывается экраном «Слушать»):
+Поток `fetchAllSections` (`src/entities/section/lib/fetchAllSections.ts`, вызывается экраном «Слушать») — **stale-while-revalidate**:
 
-1. запрос `sectionsApi.getSections().sectionControllerFindAll()` (сеть);
-2. при сетевой ошибке — чтение кэша (`getCachedSections`), источник `'cache'`;
-3. успешный сетевой ответ всегда пишется в кэш (fire-and-forget `setCachedSections`).
+1. сначала читается кэш (`getCachedSections`). Непустой кэш **мгновенно** коммитится в атомы (секции + `sectionDataSourceAtom = 'cache'` + `isLoadingSectionsAtom = false`) — экран показывает контент без скелетона. Флаг загрузки включается только когда кэша нет (честный холодный старт).
+2. затем **всегда** идёт сетевой запрос `sectionsApi.getSections().sectionControllerFindAll()`; успешный непустой ответ перезаписывает атомы (`'network'`) и кэш (`setCachedSections`, fire-and-forget).
+3. **guard пустого ответа**: если сеть вернула пустой список, а кэш был непустым — атомы не трогаются (на экране остаётся кэш, `dataSource = 'cache'`), а кэш не затирается пустотой (не мигаем пустым состоянием).
+4. при сетевой ошибке: если кэш был — он остаётся на экране; если кэша не было — прежнее поведение (пустой список, `dataSource = 'unknown'`, `isLoadingSectionsAtom = false`).
+5. **latest-wins guard**: module-scoped счётчик `requestId` — медленный устаревший ответ не перезапишет более свежий (гонка mount-эффекта и `useOfflineRetry`); проверка после каждого `await`.
+
+При старте приложения `hydrateCachedSections` (`src/entities/section/lib/hydrateCachedSections.ts`, вызывается в `app/_layout.tsx` рядом с `loadHistoryAction`) читает кэш и коммитит его в атомы, если он непустой — таб «Слушать» не мигает скелетоном на тёплом старте. Коммит атомарен (read+write в одном `ctx.schedule`) и не затирает более свежий источник.
 
 Источник фиксируется в `sectionDataSourceAtom` (`'cache' | 'network' | 'unknown'`). На главном экране `useOfflineRetry` (в `src/pages/listen/`) перезапрашивает, если последний ответ был не из сети.
 

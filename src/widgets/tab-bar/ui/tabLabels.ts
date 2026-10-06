@@ -5,7 +5,7 @@ const TAB_LABELS: Record<string, string> = {
   index: 'Главная',
   listen: 'Слушать',
   media: 'Медиа',
-  more: 'Еще',
+  more: 'Ещё',
   playlists: 'Плейлисты',
   read: 'Читать',
   sections: 'Разделы',

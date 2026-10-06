@@ -23,7 +23,7 @@
 | «Мои плейлисты»          | [my-playlists.md](./my-playlists.md)   | готов        |
 | «Читать» (таб)           | [read.md](./read.md)                   | заблокирован |
 | «Учиться» (таб)          | [study.md](./study.md)                 | заглушка     |
-| «Еще» (меню)             | [more.md](./more.md)                   | готов        |
+| «Ещё» (меню)             | [more.md](./more.md)                   | готов        |
 | История прослушивания    | [history.md](./history.md)             | готов        |
 | Офлайн                   | [offline.md](./offline.md)             | готов        |
 | Настройки                | [settings.md](./settings.md)           | готов        |

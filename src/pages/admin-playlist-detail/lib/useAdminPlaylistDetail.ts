@@ -2,6 +2,7 @@ import { useAction } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
 import { type APITypes, playlistsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
 import { hasOrderChanged } from 'shared/lib/utils/hasOrderChanged'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
@@ -31,17 +32,22 @@ export const useAdminPlaylistDetail = (id: string): AdminPlaylistDetailState => 
   const [isNotFound, setIsNotFound] = useState(false)
   const [isReordering, setIsReordering] = useState(false)
 
+  const fetchPlaylist = useCallback(
+    () => playlistsApi.getPlaylists().playlistControllerFindOne(id),
+    [id],
+  )
+
   useEffect(() => {
     let isActive = true
 
     const load = async () => {
       if (!id) {
-        setIsNotFound(true)
+        if (isActive) setIsNotFound(true)
         return
       }
 
       try {
-        const entity = await playlistsApi.getPlaylists().playlistControllerFindOne(id)
+        const entity = await fetchPlaylist()
         if (!isActive) return
         setPlaylist(entity)
         setSermons(entity.sermons)
@@ -58,7 +64,21 @@ export const useAdminPlaylistDetail = (id: string): AdminPlaylistDetailState => 
     return () => {
       isActive = false
     }
-  }, [id])
+  }, [fetchPlaylist, id])
+
+  useSilentRefetchOnFocus(
+    useCallback(async () => {
+      if (!id) return
+
+      try {
+        const entity = await fetchPlaylist()
+        setPlaylist(entity)
+        setSermons(entity.sermons)
+      } catch (error) {
+        reportError(error, LOAD_ERROR_MESSAGE)
+      }
+    }, [fetchPlaylist, id]),
+  )
 
   const reorder = useCallback(
     async (nextOrder: APITypes.PlaylistSermon[]) => {

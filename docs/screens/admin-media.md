@@ -16,6 +16,7 @@
 - **Откуда данные:** `getFiles` (`GET /files`) через `filesApi`; элемент — `FileMetadataDto { fileName, fileUrl, size, lastModified, used }`.
 - **Навигация:** тап по плитке открывает полноэкранный просмотр (`MediaViewerModal`: `Modal` + `expo-image` `contentFit='contain'`, закрытие по X, тапу на фон и системному «назад» Android `onRequestClose`). Отдельного маршрута-детали нет.
 - **Состояния:** загрузка первичного каталога — скелетон-сетка (`AdminMediaGridSkeleton`) в теле списка (`ListEmptyComponent` того же `FlatList`); шапка «Медиа» и блок осиротевших файлов видны сразу, полноэкранного раннего возврата нет. Плейсхолдер-плитка — `MediaTile.Skeleton` (composition API: скелетон объявлен в `MediaTile.tsx` и прикреплён `Object.assign(MediaTile, { Skeleton })`, геометрия берётся из тех же `styles.tile`/`styles.tileImage`/`styles.tileBody`): квадрат-обложка `tileSize`, тело с двумя строками, пульсация `useSkeletonPulse`; число плейсхолдеров — `numColumns × 4` при том же `numColumns`, что и у реального списка (без сдвига раскладки и смены числа колонок). Пусто — `EmptyState` «Обложек пока нет»; ошибка первичной загрузки — текст «Не удалось загрузить файлы» (`reportError`); ошибка загрузки — тост.
+- **Pull-to-refresh:** потягивание вниз перезагружает каталог (`useAdminMedia.refresh`, спиннер `isRefreshing`; очищается в `finally` загрузчика). На web — собственный тач-жест `PullToRefresh` (см. [features/web.md](../features/web.md)).
 
 ## Загрузка
 

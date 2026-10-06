@@ -17,6 +17,7 @@
 - **Заголовок секции переносится, стрелка приклеена к тексту**: заголовок (текст + иконка-стрелка «показать все») рендерится в `SliderTitle` (`src/shared/ui/slider/slider-title.tsx`) одним `Text` без `numberOfLines`/`ellipsizeMode` — длинный заголовок **переносится на несколько строк** естественно. Стрелка-«показать все» рендерится **инлайн внутри того же `Text`** сразу после текста, разделённая неразрывным пробелом (`\u00A0`, константа `INLINE_ARROW_GAP`): неразрывный пробел запрещает перенос строки на этом месте, поэтому стрелка **всегда приклеена к последнему слову** заголовка и никогда не уезжает на отдельную строку. Тап по заголовку (всему `Text`, включая стрелку) — открывает список плейлистов секции.
 - Параметры отображения секции приходят с сервера и мапятся в `src/entities/section/lib/` (`mapItemsSize.ts`, `mapTransform.ts`, `mapWhereIsTitleLocated.ts`; реэкспорт через `entities/section` — мапперы переиспользует и экран «Мои плейлисты»). Семантика: `whereIsSlideTitleLocated` — заголовок карточки оверлеем по центру обложки (`on`) или подписью под карточкой (`under`; legacy `bothOnAndUnder` читается как `under`); `isDescriptionTitleOnSlideLarge` — показывать реальное описание плейлиста (`item.description`) тёмной полупрозрачной плашкой внизу карточки; `borderRadius` — скругление карточек (пробрасывается в `Slider` пропом, `undefined` = скруглённые).
 - Тап на заголовок секции («показать все») открывает список плейлистов секции.
+- **Кнопка админки (щит)** — в правом верхнем углу, **по центру закреплённой поисковой строки** (`AdminShieldButton`, `src/pages/listen/ui/AdminShieldButton.tsx`): `IconButton` с `Ionicons 'shield-outline'` и `accessibilityLabel` «Админка», тап → `/admin`. Слот кнопки (`adminButtonSlot` в `ListenScreen.tsx`) позиционирован абсолютно: `top = (SEARCH_HEADER_HEIGHT − MIN_TOUCH_TARGET) / 2 = 4`, `right = INDENTS.medium` (16) — по правому краю инпута поиска, который имеет `marginHorizontal: INDENTS.medium`. Показывается только аутентифицированным admin/moderator (`authStatusAtom` + `canAccessAdmin(authUser)`; сессия восстанавливается на монтировании, как в `MoreScreen`) и скрывается, пока открыт поиск. Переиспользует тот же путь и гвард видимости, что и кнопка админки на «Ещё».
 
 ## Кнопка «Продолжить» (ContinueListeningButton)
 
@@ -122,12 +123,21 @@
 
 ## Откуда данные
 
-- `fetchAllSections` из `src/entities/section/lib/fetchAllSections.ts`:
-  - сначала `sectionsApi.getSections().sectionControllerFindAll()` (сеть);
-  - при ошибке сети — кэш из AsyncStorage (`getCachedSections`, ключ `CACHED_SECTIONS` из `src/entities/section/lib/sections-cache/cacheKey.ts`);
-  - успешный ответ всегда пишется в кэш (fire-and-forget `setCachedSections`).
+- `fetchAllSections` из `src/entities/section/lib/fetchAllSections.ts` (stale-while-revalidate):
+  - сначала отдаёт непустой кэш из AsyncStorage (`getCachedSections`, ключ `CACHED_SECTIONS` из `src/entities/section/lib/sections-cache/cacheKey.ts`) — `sectionDataSourceAtom = 'cache'`, скелетон не показывается;
+  - затем **всегда** делает сетевой запрос `sectionsApi.getSections().sectionControllerFindAll()`; успешный непустой ответ перезаписывает атомы (`'network'`) и кэш (fire-and-forget `setCachedSections`);
+  - пустой сетевой ответ при непустом кэше оставляет кэш на экране (кэш не затирается);
+  - при ошибке сети без кэша — прежнее поведение (пустой список, `'unknown'`);
+  - latest-wins guard (module-scoped `requestId`) защищает от гонки mount-эффекта и `useOfflineRetry`.
+- При старте приложения `hydrateCachedSections` (`app/_layout.tsx`, рядом с `loadHistoryAction`) прогревает атомы кэшем секций до монтирования таба — скелетон не мигает на тёплом старте.
 - Атомы: `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom` (`'cache' | 'network' | 'unknown'`) — `entities/section/model.ts`.
 - Хук `useOfflineRetry` (`src/shared/lib/network/useOfflineRetry.ts`) перезапрашивает при возврате онлайн/в foreground/по таймеру, если последний ответ был не из сети.
+
+## Обновление (pull-to-refresh)
+
+- Потягивание вниз на основном скролле (`ScrollView`) перезагружает всё содержимое экрана разом: `fetchAllSections` (секции, cache-first + фоновый revalidate), `loadMyPlaylists` и `loadSectionSettings` (локальные плейлисты и настройки оформления) через `Promise.all` (`usePullToRefresh`, `src/pages/listen/lib/usePullToRefresh.ts`). Спиннер — нативный `RefreshControl` (`tintColor`/`colors` = `currentTheme.primary`).
+- **Антидребезг:** пока запрос в полёте, повторное потягивание игнорируется; второй жест в пределах `REFRESH_MIN_INTERVAL_MS = 2000` мс не запускает даже спиннер — защита сервера от серии случайных жестов. Метка времени последнего обновления хранится в ref компонента. Константа `REFRESH_MIN_INTERVAL_MS` — общая (`shared/ui/refresh-control/pull-to-refresh.lib.ts`), её же использует web-жест `PullToRefresh`.
+- **Web:** `RefreshControl` — no-op, жест реализует собственный `PullToRefresh` (тач-события, порог, тот же дебаунс 2 с) — см. [features/web.md](../features/web.md).
 
 ## Куда можно перейти
 
@@ -135,14 +145,15 @@
 - Тап на карточку «Избранные» в секции «Мои плейлисты» → `/listen/playlist?playlist=favorites` (локальный id; резолвится tier 0 без сети, см. [features/my-playlists.md](../features/my-playlists.md)).
 - Тап на заголовок секции «Мои плейлисты» → `/listen/my-playlists` (`navigateToMyPlaylists` из `src/pages/listen/lib/useListenNavigation.ts`) — отдельный экран редактирования порядка, см. [screens/my-playlists.md](./my-playlists.md).
 - Тап на заголовок секции → `/listen/playlist-list?sectionId=<id секции>&title=<строка>` (`navigateToPlaylistList`).
+- Тап на кнопку-щит (только для admin/moderator) → `/admin`.
 - Тап на проповедь в результатах поиска — запуск воспроизведения (без перехода). Тап на уже играющую проповедь — no-op (Issue #99): воспроизведение не перезапускается, полноэкранный плеер не открывается.
 
 ## Состояния
 
-- Загрузка: `SectionsSkeleton` (`src/pages/listen/ui/skeleton.tsx`) — пока идёт загрузка и секций ещё нет. При наличии `leadingElement` (кнопка «Продолжить») скелетон **сплитится**: первая строка = первая (самая узкая, Small) секция скелетона слева (`count={1}`) + кнопка справа, а остальные секции скелетона (`from={1}`) рендерятся ниже на всю ширину. Так кнопка растягивается только на высоту первой строки (~239px), а не на весь скелетон (~1255px). `SectionsSkeleton` принимает пропсы `from` (индекс, по умолчанию 0) и `count` (сколько секций, по умолчанию все) → `SKELETON_SECTIONS.slice(from, count ? from + count : undefined)`.
+- Загрузка: `SectionsSkeleton` (`src/pages/listen/ui/skeleton.tsx`) — пока идёт загрузка и секций ещё нет. Скелетон показывается **только** на честном холодном старте (кэша нет и `isLoadingSectionsAtom === true`); при непустом кэше контент появляется мгновенно, а фоновый рефетч скелетон не включает. При наличии `leadingElement` (кнопка «Продолжить») скелетон **сплитится**: первая строка = первая (самая узкая, Small) секция скелетона слева (`count={1}`) + кнопка справа, а остальные секции скелетона (`from={1}`) рендерятся ниже на всю ширину. Так кнопка растягивается только на высоту первой строки (~239px), а не на весь скелетон (~1255px). `SectionsSkeleton` принимает пропсы `from` (индекс, по умолчанию 0) и `count` (сколько секций, по умолчанию все) → `SKELETON_SECTIONS.slice(from, count ? from + count : undefined)`.
 - Пусто: `EmptyState` (`shared/ui`), когда загрузка завершена, а секций нет.
-- Офлайн: показывается кэш (`sectionDataSourceAtom === 'cache'`), фоновые повторы через `useOfflineRetry`; при отсутствии кэша — `EmptyState`.
-- Ошибка: сетевые ошибки логируются (`console.error`), при наличии кэша он показывается.
+- Офлайн/тёплый старт: показывается кэш (`sectionDataSourceAtom === 'cache'`) — мгновенно из `hydrateCachedSections`/`fetchAllSections`, фоновые повторы через `useOfflineRetry` держат `dataSource !== 'network'`; при отсутствии кэша — `EmptyState`.
+- Ошибка: сетевые ошибки логируются (`console.error`), при наличии кэша он показывается; пустой сетевой ответ не затирает непустой кэш.
 
 ## Связанные документы
 

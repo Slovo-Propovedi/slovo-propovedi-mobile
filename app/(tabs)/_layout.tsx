@@ -34,7 +34,7 @@ const Layout = () => {
         <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
         <Tabs.Screen name='read' options={{ title: 'Читать' }} />
         <Tabs.Screen name='study' options={{ title: 'Учиться' }} />
-        <Tabs.Screen name='more' options={{ title: 'Еще' }} />
+        <Tabs.Screen name='more' options={{ title: 'Ещё' }} />
       </Tabs>
       <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
     </View>

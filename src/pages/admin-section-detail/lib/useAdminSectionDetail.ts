@@ -2,6 +2,7 @@ import { useAction } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
 import { type APITypes, sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
 import { hasOrderChanged } from 'shared/lib/utils/hasOrderChanged'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
@@ -31,17 +32,22 @@ export const useAdminSectionDetail = (id: string): AdminSectionDetailState => {
   const [isNotFound, setIsNotFound] = useState(false)
   const [isReordering, setIsReordering] = useState(false)
 
+  const fetchSection = useCallback(
+    () => sectionsApi.getSections().sectionControllerFindOne(id),
+    [id],
+  )
+
   useEffect(() => {
     let isActive = true
 
     const load = async () => {
       if (!id) {
-        setIsNotFound(true)
+        if (isActive) setIsNotFound(true)
         return
       }
 
       try {
-        const entity = await sectionsApi.getSections().sectionControllerFindOne(id)
+        const entity = await fetchSection()
         if (!isActive) return
         setSection(entity)
         setPlaylists(entity.playlists)
@@ -58,7 +64,21 @@ export const useAdminSectionDetail = (id: string): AdminSectionDetailState => {
     return () => {
       isActive = false
     }
-  }, [id])
+  }, [fetchSection, id])
+
+  useSilentRefetchOnFocus(
+    useCallback(async () => {
+      if (!id) return
+
+      try {
+        const entity = await fetchSection()
+        setSection(entity)
+        setPlaylists(entity.playlists)
+      } catch (error) {
+        reportError(error, LOAD_ERROR_MESSAGE)
+      }
+    }, [fetchSection, id]),
+  )
 
   const reorder = useCallback(
     async (nextOrder: APITypes.SectionPlaylist[]) => {

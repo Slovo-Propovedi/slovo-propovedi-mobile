@@ -1,4 +1,4 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { AdminSermonsScreen } from './AdminSermonsScreen'
@@ -157,6 +157,20 @@ describe('<AdminSermonsScreen>', () => {
         expect.objectContaining({ order: 'asc', sort: 'title' }),
       ),
     )
+  })
+
+  test('reloads the first page when pulled to refresh', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
+
+    const { findByText, getByTestId } = await renderWithProviders(<AdminSermonsScreen />)
+    await findByText('Проповеди')
+
+    const { onRefresh } = getByTestId(LIST_TEST_ID).props.refreshControl.props
+    await act(async () => {
+      await onRefresh()
+    })
+
+    await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
   })
 
   test('shows a retry row after a failed loadMore and clears it on a successful retry', async () => {

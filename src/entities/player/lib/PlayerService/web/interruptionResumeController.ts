@@ -1,5 +1,7 @@
 import { flushProgress } from '../progressFlusher'
+import { resumeInterruptedPlayback } from './interruptionAutoResume'
 import { createInterruptionResume } from './interruptionResume'
+import { wasPlaying } from './pauseIntent'
 import { watchPageVisibility } from './visibilityWatcher'
 
 interface InterruptionResumeControllerDeps {
@@ -25,6 +27,7 @@ export const createInterruptionResumeController = (deps: InterruptionResumeContr
     if (!audio) return
     deps.mediaSession.reassert()
     resume.maybeRestore(audio)
+    resumeInterruptedPlayback(audio, wasPlaying)
   })
 
   return { flushProgressAtCurrentTime, resume }

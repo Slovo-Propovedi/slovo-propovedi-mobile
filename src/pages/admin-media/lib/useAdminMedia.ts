@@ -1,27 +1,24 @@
-import { useAction } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
-import { type APITypes, filesApi, type PickedUploadAsset, uploadSermonFile } from 'shared/api'
-import { getErrorMessage, getHttpStatus } from 'shared/lib/error-utils'
-import { showToast } from 'shared/model'
+import { type APITypes, filesApi, type PickedUploadAsset } from 'shared/api'
+import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
 import { reportError } from 'shared/model/error-dialog'
+import { useAdminMediaMutations } from './useAdminMediaMutations'
 
 export interface AdminMediaState {
   files: APITypes.FileMetadataDto[]
   isDeleting: boolean
   isError: boolean
   isLoading: boolean
+  isRefreshing: boolean
   isUploading: boolean
   progress: number
+  refresh: () => void
   reload: () => void
   remove: (file: APITypes.FileMetadataDto) => Promise<void>
   upload: (asset: PickedUploadAsset, onUpload: (fileName: string) => void) => Promise<void>
 }
 
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить файлы'
-const DELETE_SUCCESS_MESSAGE = 'Обложка удалена'
-const UPLOAD_SUCCESS_MESSAGE = 'Обложка загружена'
-const DELETE_IN_USE_MESSAGE = 'Обложка используется в проповедях/плейлистах'
-const HTTP_CONFLICT = 409
 
 /**
  * Каталог медиа-библиотеки (`GET /files`): загрузка изображения с прогрессом и
@@ -29,13 +26,10 @@ const HTTP_CONFLICT = 409
  * явное сообщение, а не сырой текст ошибки.
  */
 export const useAdminMedia = (): AdminMediaState => {
-  const showToastAction = useAction(showToast)
   const [files, setFiles] = useState<APITypes.FileMetadataDto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isError, setIsError] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [progress, setProgress] = useState(0)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [reloadToken, setReloadToken] = useState(0)
 
   useEffect(() => {
@@ -53,7 +47,10 @@ export const useAdminMedia = (): AdminMediaState => {
           reportError(error, LOAD_ERROR_MESSAGE)
         }
       } finally {
-        if (isActive) setIsLoading(false)
+        if (isActive) {
+          setIsLoading(false)
+          setIsRefreshing(false)
+        }
       }
     }
 
@@ -66,6 +63,13 @@ export const useAdminMedia = (): AdminMediaState => {
 
   const reload = useCallback(() => setReloadToken(token => token + 1), [])
 
+  // Pull-to-refresh: `reload` is synchronous (token bump), so the spinner is
+  // cleared by the loader's `finally` once the catalog finishes refetching.
+  const refresh = useCallback(() => {
+    setIsRefreshing(true)
+    reload()
+  }, [reload])
+
   const reloadQuietly = useCallback(async () => {
     try {
       const response = await filesApi.getFiles().getFiles()
@@ -74,55 +78,17 @@ export const useAdminMedia = (): AdminMediaState => {
       reportError(error, LOAD_ERROR_MESSAGE)
     }
   }, [])
+  useSilentRefetchOnFocus(reloadQuietly)
 
-  const upload = useCallback(
-    async (asset: PickedUploadAsset, onUpload: (fileName: string) => void) => {
-      if (isUploading) return
-
-      setIsUploading(true)
-      setProgress(0)
-      try {
-        const uploaded = await uploadSermonFile(asset, { onProgress: setProgress })
-        onUpload(uploaded.fileName)
-        showToastAction(UPLOAD_SUCCESS_MESSAGE)
-        await reloadQuietly()
-      } catch (error) {
-        showToastAction(getErrorMessage(error))
-      } finally {
-        setIsUploading(false)
-        setProgress(0)
-      }
-    },
-    [isUploading, reloadQuietly, showToastAction],
-  )
-
-  const remove = useCallback(
-    async (file: APITypes.FileMetadataDto) => {
-      setIsDeleting(true)
-      try {
-        await filesApi.getFiles().appControllerRemoveFile(file.fileName)
-        showToastAction(DELETE_SUCCESS_MESSAGE)
-        await reloadQuietly()
-      } catch (error) {
-        showToastAction(
-          getHttpStatus(error) === HTTP_CONFLICT ? DELETE_IN_USE_MESSAGE : getErrorMessage(error),
-        )
-      } finally {
-        setIsDeleting(false)
-      }
-    },
-    [reloadQuietly, showToastAction],
-  )
+  const mutations = useAdminMediaMutations(reloadQuietly)
 
   return {
+    ...mutations,
     files,
-    isDeleting,
     isError,
     isLoading,
-    isUploading,
-    progress,
+    isRefreshing,
+    refresh,
     reload,
-    remove,
-    upload,
   }
 }

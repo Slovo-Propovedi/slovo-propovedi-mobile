@@ -1,4 +1,4 @@
-# Таб «Еще»
+# Таб «Ещё»
 
 **Маршрут:** `/more` (таб)
 **Файлы:** `app/(tabs)/more.tsx` → `export { MoreMenu as default }` из `pages/more`
@@ -12,7 +12,7 @@
 
 `MoreScreen` (`src/pages/more/ui.tsx`, стили `src/pages/more/styles.ts`):
 
-- Заголовок: `APP_NAME` («Слово.Проповеди»), версия `v{APP_VERSION}` (из `shared/config`) — слева; справа в той же строке — компактная иконка-кнопка **«В админ панель»** (`AdminPanelButton`, `IconButton` с иконкой `shield-outline`, `accessibilityLabel='В админ панель'`). Показывается **только** аутентифицированному пользователю с ролью `admin`/`moderator` (проверка `canAccessAdmin`, `entities/auth`); при `idle`/`loading` или у обычного пользователя кнопки нет;
+- Заголовок: `APP_NAME` («Слово.Проповеди»), версия `v{APP_VERSION}` (из `shared/config`) — слева; справа в той же строке — компактная иконка-кнопка **«В админ панель»** (`AdminPanelButton`, `IconButton` с иконкой `shield-outline`, `accessibilityLabel='В админ панель'`). Показывается **только** аутентифицированному пользователю с ролью `admin`/`moderator` (проверка `canAccessAdmin`, `entities/auth`); при `idle`/`loading` или у обычного пользователя кнопки нет. Строка заголовка выровнена по верхнему краю с поисковой строкой таба «Слушать»: `content.paddingTop = 0`, а `SafeAreaView` (края по умолчанию, включая верхний инсет) даёт тот же верхний отступ, что и `edges={['top', …]}` на «Слушать»;
 - Описание: «Приложение для прослушивания и чтения проповедей»;
 - Пункты меню (`MoreMenuSettingsItem`): «Офлайн» (иконка `cloud-offline-outline`, первый в списке), «История прослушивания» (иконка `time-outline`), «Настройки» (иконка `settings-outline`), «О приложении» (иконка `information-circle-outline`) и «Поделиться приложением» (иконка `share-social-outline`).
 

@@ -42,7 +42,11 @@ export const useExpandAnimation = (
   const progress = useSharedValue(0)
   const geometryReapplyTick = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
-  const fullScreenHeight = Dimensions.get('screen').height
+  // On web `Dimensions.get('screen')` is the physical `window.screen.height`,
+  // larger than the viewport; absolute player geometry would overshoot and spawn
+  // a document-level vertical scrollbar. Clamp to the viewport height. On native
+  // window == screen (edge-to-edge); native keyboard-resize transiently shrinks it, clamp self-heals.
+  const fullScreenHeight = Math.min(Dimensions.get('screen').height, screenHeight)
   const miniBottom = getMiniPlayerBottom(tabBarHeight)
   const { fullScreenHeightShared, miniBottomShared, screenWidthShared } = useGeometrySharedValues(
     miniBottom,

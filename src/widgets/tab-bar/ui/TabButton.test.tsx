@@ -23,7 +23,7 @@ describe('<TabButton>', () => {
     ['listen', 'Слушать'],
     ['read', 'Читать'],
     ['study', 'Учиться'],
-    ['more', 'Еще'],
+    ['more', 'Ещё'],
   ])('renders single-line label for %s', async (routeName, displayName) => {
     await renderTabButton(routeName)
 

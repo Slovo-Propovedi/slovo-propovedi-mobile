@@ -5,7 +5,7 @@ import { useTheme } from 'shared/ui/theme'
 
 const ICON_SIZE = 22
 
-// Компактная кнопка входа в интерфейс администратора в шапке таба «Еще».
+// Компактная кнопка входа в интерфейс администратора в шапке таба «Ещё».
 // Рендерится только для аутентифицированных admin/moderator (см. MoreScreen).
 export const AdminPanelButton = () => {
   const router = useRouter()

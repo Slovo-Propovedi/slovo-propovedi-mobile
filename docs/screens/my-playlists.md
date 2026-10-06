@@ -20,6 +20,15 @@
   `MyPlaylistsHeaderActions` (`src/pages/my-playlists/ui/MyPlaylistsHeaderActions.tsx`).
   **Карандаш виден и активен в обычном режиме**, даже когда редактировать нечего (только
   «Избранные»).
+- Список (`MyPlaylistsDragList`) резервирует снизу место под плавающий мини-плеер и таб-бар
+  (`paddingBottom = tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low`, как в
+  `PlaylistTrackList`) — и в обычном режиме, и в режиме редактирования последние строки
+  доскролливаются и не прячутся за плеером.
+- **Высота и скролл (web):** `DraggableFlatList` рендерит собственный контейнер без `flex` — на
+  react-native-web он растягивается по контенту, и список не скроллится (низ обрезается
+  `body { overflow: hidden }` из `public/index.html`). Поэтому контейнеру задан
+  `containerStyle={styles.listContainer}` с `flex: 1` (как у `DraggableFlatList` админки, см.
+  [features/admin.md](../features/admin.md)).
 - **Обычный режим** (`MyPlaylistsNormalView`, `src/pages/my-playlists/ui/MyPlaylistsNormalView.tsx`):
   первой строкой — закреплённые «Избранные» (`MyPlaylistsFavoritesRow`: сердце `Ionicons 'heart'`
   цвета `currentTheme.primary`, не перетаскивается); ниже — карточные строки локальных плейлистов

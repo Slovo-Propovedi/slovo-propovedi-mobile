@@ -10,6 +10,7 @@ interface AudioElementLike {
   currentTime: number
   duration: number
   pause: () => void
+  paused: boolean
   play: () => Promise<void>
   playbackRate: number
   readyState: number
@@ -35,6 +36,7 @@ const createAudioElementStub = (overrides: Partial<AudioElementLike> = {}): Audi
     currentTime: 0,
     duration: 0,
     pause,
+    paused: false,
     play,
     playbackRate: 1,
     readyState: 4,

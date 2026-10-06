@@ -4,7 +4,7 @@ import { View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
-import { EmptyState } from 'shared/ui'
+import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminSections } from '../lib/useAdminSections'
@@ -27,7 +27,7 @@ export const AdminSectionsScreen = () => {
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const { isLoading, isReordering, reorder, sections } = useAdminSections()
+  const { isLoading, isRefreshing, isReordering, reload, reorder, sections } = useAdminSections()
 
   const openSection = (section: APITypes.SectionEntity) => {
     router.push({ params: { id: section.id }, pathname: '/admin/sections/[id]' })
@@ -47,27 +47,36 @@ export const AdminSectionsScreen = () => {
       edges={['top']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
-      <DraggableFlatList
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        data={isLoading ? [] : sections}
-        containerStyle={styles.listContainer}
-        onDragEnd={({ data }) => void reorder(data)}
-        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
-        ListEmptyComponent={
-          isLoading ? <SectionSkeletonList /> : <EmptyState message='Разделов пока нет' />
-        }
-        ListHeaderComponent={
-          <AdminSectionsHeader count={sections.length} onCreate={() => router.push(CREATE_ROUTE)} />
-        }
-        ListFooterComponent={
-          isReordering ? (
-            <View style={styles.reordering}>
-              <AdminSectionRow.Skeleton />
-            </View>
-          ) : null
-        }
-      />
+      <PullToRefresh onRefresh={reload} refreshing={isRefreshing}>
+        <DraggableFlatList
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          data={isLoading ? [] : sections}
+          containerStyle={styles.listContainer}
+          onDragEnd={({ data }) => void reorder(data)}
+          refreshControl={createRefreshControl(isRefreshing, reload, currentTheme.primary)}
+          ListEmptyComponent={
+            isLoading ? <SectionSkeletonList /> : <EmptyState message='Разделов пока нет' />
+          }
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: tabBarHeight + INDENTS.low },
+          ]}
+          ListHeaderComponent={
+            <AdminSectionsHeader
+              count={sections.length}
+              onCreate={() => router.push(CREATE_ROUTE)}
+            />
+          }
+          ListFooterComponent={
+            isReordering ? (
+              <View style={styles.reordering}>
+                <AdminSectionRow.Skeleton />
+              </View>
+            ) : null
+          }
+        />
+      </PullToRefresh>
     </SafeAreaView>
   )
 }

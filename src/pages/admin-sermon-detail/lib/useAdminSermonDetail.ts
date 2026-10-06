@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { type APITypes, sermonsApi } from 'shared/api'
+import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
 import { reportError } from 'shared/model/error-dialog'
 
 export interface AdminSermonDetailState {
@@ -21,17 +22,19 @@ export const useAdminSermonDetail = (id: string): AdminSermonDetailState => {
   const [isNotFound, setIsNotFound] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  const fetchSermon = useCallback(() => sermonsApi.getSermons().sermonControllerFindOne(id), [id])
+
   useEffect(() => {
     let isActive = true
 
     const load = async () => {
       if (!id) {
-        setIsNotFound(true)
+        if (isActive) setIsNotFound(true)
         return
       }
 
       try {
-        const entity = await sermonsApi.getSermons().sermonControllerFindOne(id)
+        const entity = await fetchSermon()
         if (isActive) setSermon(entity)
       } catch (error) {
         if (isActive) {
@@ -46,7 +49,19 @@ export const useAdminSermonDetail = (id: string): AdminSermonDetailState => {
     return () => {
       isActive = false
     }
-  }, [id])
+  }, [fetchSermon, id])
+
+  useSilentRefetchOnFocus(
+    useCallback(async () => {
+      if (!id) return
+
+      try {
+        setSermon(await fetchSermon())
+      } catch (error) {
+        reportError(error, LOAD_ERROR_MESSAGE)
+      }
+    }, [fetchSermon, id]),
+  )
 
   const remove = useCallback(async () => {
     setIsDeleting(true)

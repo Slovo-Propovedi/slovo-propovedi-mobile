@@ -21,8 +21,19 @@
 
 - `public/manifest.webmanifest` — имя, иконки, `display: standalone`, `theme_color`/`background_color` `#f16031`.
 - `public/icons/*` — сгенерированы из `assets/icon.png` и `assets/adaptive-icon.png` (ImageMagick): `icon-192`, `icon-512`, `icon-maskable-512`, `apple-touch-icon` (180), `public/favicon.png` (48).
+- `public/splash.png` — копия `assets/splash.png` (307×307): картинка стартового сплэша, пока грузится JS-бандл (см. «Стартовый сплэш» ниже).
 - `app.config.ts` → `web`: `lang: "ru"`, `name`, `shortName`, `description` (Expo подставляет `lang`/`description` в шаблон).
 - Регистрация Service Worker — инлайн-скрипт в `public/index.html`: регистрирует `/sw.js` **только не на localhost**; на localhost, наоборот, снимает возможно оставшийся с прод-прогона SW (`getRegistrations().then(unregister)`), чтобы не мешать Metro/HMR.
+
+### Сброс `html`/`body` в HTML-оболочке
+
+`public/index.html` → `#expo-reset` держит `html`/`body` на всю высоту (`height`/`width: 100%`) и запрещает документный скролл и резиновую прокрутку: `overflow: hidden` + `overscroll-behavior: none`. Фон сброса — статичный бренд-цвет `#f16031`, видимый **до** того, как JS нарисует тему (иначе тёмная тема мигала бы светлым при overscroll). `ThemeProvider` (web-only эффект) сразу после монтирования перекрашивает `documentElement` и `body` в `currentTheme.background`, перекрывая фолбэк — см. [theme.md](./theme.md#скроллбары-на-web).
+
+### Стартовый сплэш
+
+Пока на web грузится JS-бандл, показывается нативный по виду сплэш — как на iOS/Android. В `public/index.html` (body) объявлен `<div id="sp-splash">` с `<img src="/splash.png">`: **сиблинг `#root`** (React владеет только `#root` и сплэш не трогает), `position: fixed` на весь вьюпорт, `z-index` выше всего, фон — бренд-цвет `#f16031` (тёмный вариант через `@media (prefers-color-scheme: dark)` → `#000000`). Центрирование — `display: grid` + `place-items: center` (не зависит от потока `#root`). Картинка — в **явном** боксе `width/height: 152px`, `object-fit: contain` (исходник `assets/splash.png` — квадрат 307×307): размер никогда не выводится из layout, поэтому сплэш пиксель-в-пиксель идентичен до самого удаления. Пока сплэш жив, на `<html>` статически (в разметке, без JS-гонки) стоит класс `has-splash`, а правило `html.has-splash #root { visibility: hidden }` скрывает приложение — его layout/скроллбары/`SuspenseFallback` не видны и не могут сдвинуть fixed-сплэш при монтировании. Сброс `html`/`body` в `#expo-reset` дополнительно включает `margin: 0; padding: 0` — это снимает UA-дефолт `body { margin: 8px }` уже на первом кадре: до того, как react-native-web вставит собственный `margin: 0` при монтировании, mobile-браузер не расширяет layout-вьюпорт (shrink-to-fit) и fixed-сплэш не перецентрируется.
+
+`ThemeProvider` (тот же web-only эффект, что красит фон/скроллбары) при первом монтировании гасит `#sp-splash`: ставит `opacity: 0` (CSS-переход 300 мс). Сплэш непрозрачный, а под ним — скрытый `#root` и перекрашенный в тему фон `html`/`body`, поэтому во время фейда наружу ничего лишнего не проступает. По завершении перехода (тот же тик) `ThemeProvider` удаляет элемент из DOM **и** снимает `has-splash` — приложение показывается только когда сплэш уже полностью прозрачен, так что видимого сдвига/появления скроллбаров нет. Отдельного inline-скрипта для этого нет. Дополнительной сборки не требуется: `public/splash.png` — копия `assets/splash.png`, `public/` копируется в `dist/` как есть.
 
 ### Перехват ссылок в установленное PWA
 
@@ -169,6 +180,21 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 
 - `PlayerMenu.styles.ts` → `menuWrapper` использует `overflow: 'hidden'` (не `'scroll'` — на web `'scroll'` даёт постоянные пустые скроллбары по обеим осям).
 - Тема скроллбаров — глобальный CSS в `public/index.html` (`::-webkit-scrollbar*` + `scrollbar-width`/`scrollbar-color`) на CSS-переменных `--sp-scrollbar-thumb` / `--sp-scrollbar-thumb-hover`. `ThemeProvider` (web-only эффект) прокидывает в них цвета активной темы (`textMuted` / `text`), так что при переключении светлая/тёмная скроллбар перекрашивается. Фолбэк — нейтральный серый (SSG / до JS).
+
+## Pull-to-refresh
+
+`RefreshControl` на web — no-op: react-native-web рендерит простой `View` и никогда не вызывает `onRefresh`. Поэтому на нативе pull-to-refresh отдаёт `createRefreshControl` (`shared/ui/refresh-control`), а на web его реализует собственный компонент.
+
+- **`PullToRefresh`** (`shared/ui/refresh-control/PullToRefresh.tsx`, платформенная пара `PullToRefresh.native.tsx` — пасsthrough с нативным `RefreshControl` внутри скролла). Обёртка вокруг скролла (Listen + 6 админ-экранов). На web слушает DOM-события `touchstart`/`touchmove`/`touchend`/`touchcancel` на обёртке и перетаскивает контент вниз только когда ближайший вертикальный скролл-контейнер (`overflow-y: auto/scroll` + переполнение) стоит на самом верху. Сопротивление `0.4`, порог `64px` видимого протяга (≈160px пальцем), дальше — спиннер в верхнем слоте (`ActivityIndicator`, подсвечивается `currentTheme.primary`). Отпускание анимирует контент назад за 200 мс.
+- **Дебаунс** — не чаще одного раза в `REFRESH_MIN_INTERVAL_MS` (2000 мс, `pull-to-refresh.lib.ts`; та же константа переиспользуется хуком `usePullToRefresh` на экране «Слушать»). Во время активного `refreshing` повторный протяг игнорируется.
+- **Мышь:** жест только тач-событиями; drag мышью refresh не запускает (эмуляция тача в DevTools работает). Скролл не ломается: при `scrollTop > 0` события проходят мимо, `preventDefault` не вызывается.
+
+
+## Виброотклик на web (Vibration API)
+
+`shared/lib/haptics` на web использует `navigator.vibrate` вместо раннего `return`: `hapticLight` → короткий импульс ~12 мс (с тем же троттлингом 45 мс, что и натив), `hapticTick` → ~10 мс. Гейт `hapticsEnabledAtom` сохранён.
+
+Поддержка определяется хелпером `isWebVibrationSupported()` (`Platform.OS === 'web'` + наличие `navigator.vibrate`). В браузерах без Vibration API (большинство десктопов, iOS Safari) вызовы — тихий no-op, а строка «Виброотклик» в [«Настройках»](../screens/settings.md) скрыта (`Platform.OS !== 'web' || isWebVibrationSupported()`).
 
 ## pointerEvents на web (ловушка `box-none`/`box-only`)
 

@@ -1,4 +1,5 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { type TestInstance } from 'test-renderer'
 import { type filesMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { AdminMediaScreen } from './AdminMediaScreen'
@@ -32,12 +33,36 @@ jest.mock('expo-document-picker', () => ({
   getDocumentAsync: (...args: unknown[]) => mockPickDocument(...args),
 }))
 
+// The media catalog refetches silently on focus; keep the hook inert in tests
+// (no navigation container is mounted).
+jest.mock('expo-router', () => ({
+  useFocusEffect: (callback: () => () => void | void) => {
+    const { useEffect } = jest.requireActual('react') as {
+      useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
+    }
+    useEffect(callback, [callback])
+  },
+}))
+
 const catalogResponse = (
   files: ReturnType<typeof filesMocks.getGetFilesResponseMock>['files'],
 ) => ({
   count: files.length,
   files,
 })
+
+const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+
+const findRefreshControl = (element: TestInstance) => {
+  let current: null | TestInstance = element
+
+  while (current !== null) {
+    if (SCROLL_HOST_TYPES.has(String(current.type))) return current.props.refreshControl
+    current = current.parent
+  }
+
+  throw new Error('Expected a scroll host ancestor, none found')
+}
 
 const imageFile = (
   overrides: Partial<ReturnType<typeof filesMocks.getGetFilesResponseMock>['files'][number]>,
@@ -106,6 +131,19 @@ describe('<AdminMediaScreen>', () => {
 
     expect(await findByText('Медиа')).toBeTruthy()
     expect(await findByLabelText('Загрузить файл')).toBeTruthy()
+  })
+
+  test('reloads the catalog when pulled to refresh', async () => {
+    mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
+
+    const { findByText } = await renderWithProviders(<AdminMediaScreen />)
+    const refreshControl = findRefreshControl(await findByText('Медиа'))
+
+    await act(async () => {
+      await refreshControl.props.onRefresh()
+    })
+
+    await waitFor(() => expect(mockGetFiles).toHaveBeenCalledTimes(2))
   })
 
   test('keeps the header and skeleton visible while the catalog is loading', async () => {

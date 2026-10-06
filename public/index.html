@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="%LANG_ISO_CODE%">
+<html lang="%LANG_ISO_CODE%" class="has-splash">
   <head>
     <meta charset="utf-8" />
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -21,20 +21,62 @@
 
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
-      /* These styles make the body full-height */
+      /* These styles make html/body full-height and paint the reset area with the
+         app brand colour. ThemeProvider overrides the background at runtime with
+         the active theme, so a dark theme does not flash this light fallback on
+         overscroll. `overscroll-behavior: none` kills the rubber-band area. */
       html,
       body {
         height: 100%;
-      }
-      /* These styles disable body scrolling if you are using <ScrollView> */
-      body {
+        width: 100%;
+        /* Reset the UA body margin: keeps the first-frame layout viewport from
+           expanding (mobile shrink-to-fit) and recentering the fixed splash
+           before react-native-web injects its own margin reset at mount. */
+        margin: 0;
+        padding: 0;
+        background-color: #f16031;
         overflow: hidden;
+        overscroll-behavior: none;
       }
       /* These styles make the root element full-height */
       #root {
         display: flex;
         height: 100%;
         flex: 1;
+      }
+      /* While the startup splash owns the screen, the app stays invisible: its
+         layout/scrollbars can never show through the splash or shift the fixed
+         splash when the viewport changes on mount. The class is set on <html>
+         statically (no JS race) and removed by ThemeProvider in the same tick
+         it drops #sp-splash. */
+      html.has-splash #root {
+        visibility: hidden;
+      }
+      /* Web startup splash: mirrors the native splash (image centered on the
+         brand accent) while the JS bundle loads. It is a sibling of #root so
+         React never touches it; ThemeProvider removes it once the app boots. */
+      #sp-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: grid;
+        place-items: center;
+        background-color: #f16031;
+        opacity: 1;
+        transition: opacity 300ms ease;
+      }
+      /* Explicit fixed box (source is a square 307×307 PNG scaled to 152×152).
+         Never derive the size from layout: keep the splash pixel-identical
+         through mount, regardless of viewport/scrollbar changes. */
+      #sp-splash img {
+        width: 152px;
+        height: 152px;
+        object-fit: contain;
+      }
+      @media (prefers-color-scheme: dark) {
+        #sp-splash {
+          background-color: #000000;
+        }
       }
     </style>
 
@@ -77,6 +119,10 @@
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
+    <!-- Startup splash (native-like): removed by ThemeProvider once the app boots. -->
+    <div id="sp-splash">
+      <img src="/splash.png" alt="" />
+    </div>
 
     <script>
       // Register the service worker (versioned precache + audio cache). Skipped

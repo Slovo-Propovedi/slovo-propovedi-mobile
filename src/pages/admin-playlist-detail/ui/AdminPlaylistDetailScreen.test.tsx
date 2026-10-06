@@ -45,6 +45,12 @@ jest.mock('expo-router', () => {
           ? React.createElement(React.Fragment, null, options.headerRight())
           : null,
     },
+    useFocusEffect: (callback: () => () => void | void) => {
+      const { useEffect } = jest.requireActual('react') as {
+        useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
+      }
+      useEffect(callback, [callback])
+    },
     useLocalSearchParams: () => ({ id: 'p1' }),
     useRouter: () => ({ back: mockBack, push: mockPush }),
   }

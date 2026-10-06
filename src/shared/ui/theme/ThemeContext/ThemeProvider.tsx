@@ -16,6 +16,29 @@ import {
 } from '../model'
 import { ThemeContext } from './themeContext'
 
+const SPLASH_FADE_MS = 300
+
+// The web splash shell (public/index.html, #sp-splash) sits next to #root and
+// covers the app until React mounts. `html.has-splash` keeps #root invisible, so
+// the fading (opaque) splash only ever reveals the themed background — never the
+// mounted app with its layout/scrollbars. Fade the splash, then drop it and
+// reveal #root in the same tick: the app appears without shifting the splash,
+// which is already transparent by then.
+const dismissWebSplash = () => {
+  // Escape-key/modal tests install a partial `document` stub; only touch the DOM
+  // when the real query API is present.
+  if (typeof document.getElementById !== 'function') return
+
+  const splash = document.getElementById('sp-splash')
+  if (!splash) return
+
+  splash.style.opacity = '0'
+  setTimeout(() => {
+    splash.remove()
+    document.documentElement.classList.remove('has-splash')
+  }, SPLASH_FADE_MS)
+}
+
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentTheme] = useAtom(currentThemeAtom)
   const [themeMode] = useAtom(themeModeAtom)
@@ -77,6 +100,12 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const root = document.documentElement.style
     root.setProperty('--sp-scrollbar-thumb', String(currentTheme.textMuted))
     root.setProperty('--sp-scrollbar-thumb-hover', String(currentTheme.text))
+    // Paint the overscroll/reset area (html/body) with the active theme so a dark
+    // theme never flashes the static light fallback from public/index.html.
+    const background = String(currentTheme.background)
+    root.backgroundColor = background
+    if (document.body) document.body.style.backgroundColor = background
+    dismissWebSplash()
   }, [currentTheme])
 
   return (

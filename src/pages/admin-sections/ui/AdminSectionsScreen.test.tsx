@@ -1,4 +1,5 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { type TestInstance } from 'test-renderer'
 import { sectionsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { AdminSectionsScreen } from './AdminSectionsScreen'
@@ -29,6 +30,12 @@ jest.mock('shared/api', () => ({
 }))
 
 jest.mock('expo-router', () => ({
+  useFocusEffect: (callback: () => () => void | void) => {
+    const { useEffect } = jest.requireActual('react') as {
+      useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
+    }
+    useEffect(callback, [callback])
+  },
   useRouter: () => ({ push: mockPush }),
 }))
 
@@ -39,6 +46,19 @@ jest.mock('react-native-draggable-flatlist', () => {
 
   return { __esModule: true, default: FlatList }
 })
+
+const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+
+const findRefreshControl = (element: TestInstance) => {
+  let current: null | TestInstance = element
+
+  while (current !== null) {
+    if (SCROLL_HOST_TYPES.has(String(current.type))) return current.props.refreshControl
+    current = current.parent
+  }
+
+  throw new Error('Expected a scroll host ancestor, none found')
+}
 
 const createSection = () =>
   sectionsMocks.getSectionControllerFindOneResponseMock({
@@ -85,5 +105,16 @@ describe('<AdminSectionsScreen>', () => {
     fireEvent.press(await findByText('Создать раздел'))
 
     expect(mockPush).toHaveBeenCalledWith('/admin/sections/create')
+  })
+
+  test('reloads sections when pulled to refresh', async () => {
+    const { findByText } = await renderWithProviders(<AdminSectionsScreen />)
+    const refreshControl = findRefreshControl(await findByText('Первый'))
+
+    await act(async () => {
+      await refreshControl.props.onRefresh()
+    })
+
+    await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
   })
 })

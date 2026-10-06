@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { showToast } from 'shared/model'
-import { EmptyState } from 'shared/ui'
+import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
@@ -38,8 +38,18 @@ export const AdminMediaScreen = () => {
   const { currentTheme } = useTheme()
   const showToastAction = useAction(showToast)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const { files, isDeleting, isError, isLoading, isUploading, progress, remove, upload } =
-    useAdminMedia()
+  const {
+    files,
+    isDeleting,
+    isError,
+    isLoading,
+    isRefreshing,
+    isUploading,
+    progress,
+    refresh,
+    remove,
+    upload,
+  } = useAdminMedia()
   const [deleteTarget, setDeleteTarget] = useState<APITypes.FileMetadataDto | null>(null)
   const [viewerTarget, setViewerTarget] = useState<APITypes.FileMetadataDto | null>(null)
 
@@ -54,9 +64,8 @@ export const AdminMediaScreen = () => {
   )
 
   const handleDelete = async () => {
-    const target = deleteTarget
     setDeleteTarget(null)
-    if (target) await remove(target)
+    if (deleteTarget) await remove(deleteTarget)
   }
 
   return (
@@ -64,38 +73,44 @@ export const AdminMediaScreen = () => {
       edges={['top']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
-      <FlatList
-        data={files}
-        numColumns={numColumns}
-        key={`media-grid-${numColumns}`}
-        columnWrapperStyle={styles.gridRow}
-        keyExtractor={item => item.fileName}
-        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
-        ListHeaderComponent={
-          <AdminMediaListHeader
-            progress={progress}
-            isUploading={isUploading}
-            onUpload={() => void pickImage()}
-          />
-        }
-        renderItem={({ item }) => (
-          <MediaTile
-            file={item}
-            size={tileSize}
-            onPress={() => setViewerTarget(item)}
-            onDelete={() => setDeleteTarget(item)}
-          />
-        )}
-        ListEmptyComponent={
-          isLoading ? (
-            <AdminMediaGridSkeleton tileSize={tileSize} numColumns={numColumns} />
-          ) : isError ? (
-            <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
-          ) : (
-            <EmptyState message={EMPTY_MESSAGE} />
-          )
-        }
-      />
+      <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+        <FlatList
+          data={files}
+          numColumns={numColumns}
+          key={`media-grid-${numColumns}`}
+          columnWrapperStyle={styles.gridRow}
+          keyExtractor={item => item.fileName}
+          refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: tabBarHeight + INDENTS.low },
+          ]}
+          ListHeaderComponent={
+            <AdminMediaListHeader
+              progress={progress}
+              isUploading={isUploading}
+              onUpload={() => void pickImage()}
+            />
+          }
+          renderItem={({ item }) => (
+            <MediaTile
+              file={item}
+              size={tileSize}
+              onPress={() => setViewerTarget(item)}
+              onDelete={() => setDeleteTarget(item)}
+            />
+          )}
+          ListEmptyComponent={
+            isLoading ? (
+              <AdminMediaGridSkeleton tileSize={tileSize} numColumns={numColumns} />
+            ) : isError ? (
+              <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
+            ) : (
+              <EmptyState message={EMPTY_MESSAGE} />
+            )
+          }
+        />
+      </PullToRefresh>
       <ConfirmDialog
         title={DELETE_TITLE}
         visible={deleteTarget !== null}

@@ -56,7 +56,7 @@
 | [`screens/my-playlists.md`](./screens/my-playlists.md)                 | Экран «Мои плейлисты» (редактирование порядка)                              |
 | [`screens/read.md`](./screens/read.md)                                 | Таб «Читать» (заблокирован)                                                 |
 | [`screens/study.md`](./screens/study.md)                               | Таб «Учиться» (заглушка)                                                    |
-| [`screens/more.md`](./screens/more.md)                                 | Таб «Еще»                                                                   |
+| [`screens/more.md`](./screens/more.md)                                 | Таб «Ещё»                                                                   |
 | [`screens/settings.md`](./screens/settings.md)                         | Экран «Настройки»                                                           |
 | [`screens/about.md`](./screens/about.md)                               | Экран «О приложении»                                                        |
 | [`screens/admin-login.md`](./screens/admin-login.md)                   | Вход в интерфейс администратора                                             |

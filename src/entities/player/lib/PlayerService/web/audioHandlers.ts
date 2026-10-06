@@ -4,6 +4,7 @@ import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { attachWebAudioEvents } from './audioEvents'
 import { writeWebDuration } from './durationWriter'
 import { type WebMediaSession } from './mediaSession'
+import { markInterruptedWhilePlaying, markUserPause } from './pauseIntent'
 import { type WebPlayerState } from './playerState'
 
 export const reportPlayError = (error: unknown) => {
@@ -48,9 +49,17 @@ export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) 
       deps.state.setPosition(deps.initialPositionMs)
     },
     onPause: () => {
+      // A pause edge that hit while playback was actually running is an OS
+      // interruption (phone call) — arm the resume intent for the visibility
+      // watcher. A pause while already stopped merely clears it. An explicit
+      // transport.pause()/stop() calls markUserPause() right after this
+      // handler, which wins for user-initiated pauses.
+      const wasActivelyPlaying = deps.state.getState().isPlaying
+      if (wasActivelyPlaying) markInterruptedWhilePlaying()
+      else markUserPause()
+
       deps.stopStatusTracker()
-      if (deps.isCurrentAudio(deps.audio) && deps.state.getState().isPlaying)
-        deps.flushProgressAtCurrentTime()
+      if (deps.isCurrentAudio(deps.audio) && wasActivelyPlaying) deps.flushProgressAtCurrentTime()
       deps.state.setIsPlaying(false)
       deps.mediaSession.updatePlaybackState()
       deps.mediaSession.updatePositionState()
