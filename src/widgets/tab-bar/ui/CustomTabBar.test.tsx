@@ -62,14 +62,14 @@ describe('<CustomTabBar>', () => {
     expect(getByText('Слушать')).toBeTruthy()
     expect(getByText('Читать')).toBeTruthy()
     expect(getByText('Учиться')).toBeTruthy()
-    expect(getByText('Еще')).toBeTruthy()
+    expect(getByText('Ещё')).toBeTruthy()
   })
 
   test('uses the tint (not a background fill) to mark the active tab', async () => {
     const { getByText } = await renderTabBar(0)
 
     expect(getByText('Слушать')).toHaveStyle({ color: '#f16031' })
-    expect(getByText('Еще')).not.toHaveStyle({ color: '#f16031' })
+    expect(getByText('Ещё')).not.toHaveStyle({ color: '#f16031' })
   })
 
   test('tapping a disabled tab shows info dialog and does not navigate', async () => {
@@ -93,7 +93,7 @@ describe('<CustomTabBar>', () => {
   test('tapping an allowed inactive tab navigates to that route', async () => {
     const { getByText } = await renderTabBar(0)
 
-    await fireEvent.press(getByText('Еще'))
+    await fireEvent.press(getByText('Ещё'))
 
     expect(mockNavigate).toHaveBeenCalledWith('more')
   })
@@ -101,7 +101,7 @@ describe('<CustomTabBar>', () => {
   test('does not show info dialog when tapping an active allowed tab', async () => {
     const { getByText } = await renderTabBar(3)
 
-    await fireEvent.press(getByText('Еще'))
+    await fireEvent.press(getByText('Ещё'))
 
     expect(mockedShowInfo).not.toHaveBeenCalled()
     expect(mockNavigate).not.toHaveBeenCalled()

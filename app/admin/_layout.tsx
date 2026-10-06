@@ -66,7 +66,7 @@ const AdminLayout = () => {
     )
 
   // Аутентифицированного пользователя на /admin/login НЕ уводим в /admin:
-  // после входа мы явно возвращаемся на «Еще» (см. AdminLoginScreen).
+  // после входа мы явно возвращаемся на «Ещё» (см. AdminLoginScreen).
   if (!user && !isOnLoginRoute) return <Redirect href='/admin/login' />
 
   return (
