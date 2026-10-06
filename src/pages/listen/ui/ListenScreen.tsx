@@ -1,4 +1,5 @@
-import { useAtom } from '@reatom/npm-react'
+import { useAction, useAtom } from '@reatom/npm-react'
+import { useEffect } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
@@ -10,9 +11,11 @@ import {
   useIsSearchActive,
   useIsSearchOpen,
 } from 'features/sermon-search'
+import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useScrollActivity } from '../lib/useScrollActivity'
+import { AdminShieldButton } from './AdminShieldButton'
 import { ContinueListeningButton } from './ContinueListeningButton'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 import { MyPlaylistsSlider } from './MyPlaylistsSlider'
@@ -22,14 +25,31 @@ export const ListenScreen = () => {
   const isSearchOpen = useIsSearchOpen()
   const isSearchActive = useIsSearchActive()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const [authStatus] = useAtom(authStatusAtom)
+  const [authUser] = useAtom(authUserAtom)
+  const restore = useAction(restoreSession)
   const { onScroll } = useScrollActivity()
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
+
+  useEffect(() => {
+    if (authStatus !== 'idle') return
+
+    void restore()
+  }, [authStatus, restore])
+
+  const canOpenAdminPanel = authStatus === 'authenticated' && canAccessAdmin(authUser)
+  const showAdminButton = canOpenAdminPanel && !isSearchOpen
 
   return (
     <SafeAreaView
       edges={['top', 'left', 'right']}
       style={[styles.safeArea, { backgroundColor: currentTheme.background }]}
     >
+      {showAdminButton && (
+        <View style={styles.adminButtonSlot}>
+          <AdminShieldButton />
+        </View>
+      )}
       {isSearchOpen && (
         <View style={styles.searchHeader}>
           <SearchBar />
@@ -58,6 +78,12 @@ export const ListenScreen = () => {
 }
 
 const styles = StyleSheet.create({
+  adminButtonSlot: {
+    position: 'absolute',
+    right: INDENTS.low,
+    top: 0,
+    zIndex: 2,
+  },
   safeArea: {
     flex: 1,
   },

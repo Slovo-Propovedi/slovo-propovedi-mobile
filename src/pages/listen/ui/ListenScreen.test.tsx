@@ -10,10 +10,26 @@ import {
   searchQueryAtom,
   searchResultsAtom,
 } from 'features/sermon-search/model'
+import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { type SermonData } from 'entities/sermon'
-import { sermonsMocks } from 'shared/api/generated'
+import { authMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { ListenScreen } from './ListenScreen'
+
+const mockPush = jest.fn()
+
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}))
+
+jest.mock('entities/auth', () => ({
+  ...jest.requireActual('entities/auth'),
+  restoreSession: jest.fn(),
+}))
+
+const mockedRestoreSession = restoreSession as jest.MockedFunction<typeof restoreSession>
 
 // Jest hoists mock factories above imports, so the factory may only reference
 // `mock`-prefixed bindings. This alias keeps the namespace import intact.
@@ -103,6 +119,7 @@ const SERMON_TITLE = 'Проповедь о вере'
 const SECTIONS_MOCK = 'SECTIONS_MOCK'
 const CONTINUE_BUTTON_MOCK = 'CONTINUE_BUTTON_MOCK'
 const MY_PLAYLISTS_TITLE = 'Мои плейлисты'
+const ADMIN_BUTTON_LABEL = 'Админка'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
 // A pinned element (the search bar) must not have any scroll container between
@@ -153,7 +170,18 @@ const renderWithOpenSearch = async (query = '') => {
   return renderWithProviders(<ListenScreen />, { ctx })
 }
 
+const setAuthenticatedUser = (ctx: ReturnType<typeof createCtx>, role: 'admin' | 'moderator') => {
+  authUserAtom(ctx, authMocks.getAuthControllerGetProfileResponseMock({ role }))
+  authStatusAtom(ctx, 'authenticated')
+}
+
 describe('<ListenScreen>', () => {
+  beforeEach(() => {
+    mockPush.mockClear()
+    mockedRestoreSession.mockClear()
+    mockedRestoreSession.mockResolvedValue(null)
+  })
+
   test('shows sections and the magnifier inside the scroll content by default, without the search bar', async () => {
     const { getByLabelText, getByText, queryByPlaceholderText } = await renderWithProviders(
       <ListenScreen />,
@@ -354,5 +382,66 @@ describe('<ListenScreen>', () => {
     expect(getByText(CONTINUE_BUTTON_MOCK)).toBeTruthy()
     expect(queryByText(SERMON_TITLE)).toBeNull()
     expect(hasScrollAncestor(getByPlaceholderText(SEARCH_PLACEHOLDER))).toBe(false)
+  })
+
+  test('does not render the admin button when unauthenticated', async () => {
+    const ctx = createCtx()
+    authStatusAtom(ctx, 'unauthenticated')
+
+    const { queryByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+
+    expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
+  })
+
+  test('does not render the admin button for a regular user', async () => {
+    const ctx = createCtx()
+    authUserAtom(ctx, authMocks.getAuthControllerGetProfileResponseMock({ role: 'user' }))
+    authStatusAtom(ctx, 'authenticated')
+
+    const { queryByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+
+    expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
+  })
+
+  test('renders the admin button for an admin user and navigates to /admin', async () => {
+    const ctx = createCtx()
+    setAuthenticatedUser(ctx, 'admin')
+
+    const { getByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+
+    await fireEvent.press(getByLabelText(ADMIN_BUTTON_LABEL))
+    expect(mockPush).toHaveBeenCalledWith('/admin')
+  })
+
+  test('renders the admin button for a moderator user', async () => {
+    const ctx = createCtx()
+    setAuthenticatedUser(ctx, 'moderator')
+
+    const { getByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+
+    expect(getByLabelText(ADMIN_BUTTON_LABEL)).toBeTruthy()
+  })
+
+  test('hides the admin button while search is open and active', async () => {
+    const ctx = createCtx()
+    setAuthenticatedUser(ctx, 'admin')
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    searchResultsAtom(ctx, sermons)
+    isSearchingAtom(ctx, false)
+
+    const { queryByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+
+    expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
+  })
+
+  test('hides the admin button while search is open but not active', async () => {
+    const ctx = createCtx()
+    setAuthenticatedUser(ctx, 'admin')
+    isSearchOpenAtom(ctx, true)
+
+    const { queryByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+
+    expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
   })
 })

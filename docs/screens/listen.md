@@ -17,6 +17,7 @@
 - **Заголовок секции переносится, стрелка приклеена к тексту**: заголовок (текст + иконка-стрелка «показать все») рендерится в `SliderTitle` (`src/shared/ui/slider/slider-title.tsx`) одним `Text` без `numberOfLines`/`ellipsizeMode` — длинный заголовок **переносится на несколько строк** естественно. Стрелка-«показать все» рендерится **инлайн внутри того же `Text`** сразу после текста, разделённая неразрывным пробелом (`\u00A0`, константа `INLINE_ARROW_GAP`): неразрывный пробел запрещает перенос строки на этом месте, поэтому стрелка **всегда приклеена к последнему слову** заголовка и никогда не уезжает на отдельную строку. Тап по заголовку (всему `Text`, включая стрелку) — открывает список плейлистов секции.
 - Параметры отображения секции приходят с сервера и мапятся в `src/entities/section/lib/` (`mapItemsSize.ts`, `mapTransform.ts`, `mapWhereIsTitleLocated.ts`; реэкспорт через `entities/section` — мапперы переиспользует и экран «Мои плейлисты»). Семантика: `whereIsSlideTitleLocated` — заголовок карточки оверлеем по центру обложки (`on`) или подписью под карточкой (`under`; legacy `bothOnAndUnder` читается как `under`); `isDescriptionTitleOnSlideLarge` — показывать реальное описание плейлиста (`item.description`) тёмной полупрозрачной плашкой внизу карточки; `borderRadius` — скругление карточек (пробрасывается в `Slider` пропом, `undefined` = скруглённые).
 - Тап на заголовок секции («показать все») открывает список плейлистов секции.
+- **Кнопка админки (щит)** — в правом верхнем углу экрана (`AdminShieldButton`, `src/pages/listen/ui/AdminShieldButton.tsx`): `IconButton` с `Ionicons 'shield-outline'` и `accessibilityLabel` «Админка», тап → `/admin`. Показывается только аутентифицированным admin/moderator (`authStatusAtom` + `canAccessAdmin(authUser)`; сессия восстанавливается на монтировании, как в `MoreScreen`) и скрывается, пока открыт поиск. Переиспользует тот же путь и гвард видимости, что и кнопка админки на «Ещё».
 
 ## Кнопка «Продолжить» (ContinueListeningButton)
 
@@ -135,6 +136,7 @@
 - Тап на карточку «Избранные» в секции «Мои плейлисты» → `/listen/playlist?playlist=favorites` (локальный id; резолвится tier 0 без сети, см. [features/my-playlists.md](../features/my-playlists.md)).
 - Тап на заголовок секции «Мои плейлисты» → `/listen/my-playlists` (`navigateToMyPlaylists` из `src/pages/listen/lib/useListenNavigation.ts`) — отдельный экран редактирования порядка, см. [screens/my-playlists.md](./my-playlists.md).
 - Тап на заголовок секции → `/listen/playlist-list?sectionId=<id секции>&title=<строка>` (`navigateToPlaylistList`).
+- Тап на кнопку-щит (только для admin/moderator) → `/admin`.
 - Тап на проповедь в результатах поиска — запуск воспроизведения (без перехода). Тап на уже играющую проповедь — no-op (Issue #99): воспроизведение не перезапускается, полноэкранный плеер не открывается.
 
 ## Состояния
