@@ -16,6 +16,7 @@
 - Три карточки `AdminStatCard`: «Разделы», «Плейлисты», «Проповеди» со счётчиками; каждая ведёт в свой таб (`/admin/sections`, `/admin/playlists`, `/admin/sermons`).
 - Блок «Быстрые действия» (`AdminQuickActions`): «Загрузить проповедь» → `/admin/sermons/create`, «Выйти из аккаунта» (`signOut` → `/listen`).
 - Скролл (`ScrollView`) резервирует место под плавающим таб-баром: `paddingBottom: tabBarHeight + INDENTS.low` (`tabBarHeightAtom`) — иначе последняя строка («Выйти из аккаунта») уходит под бар и недоступна (на web `body { overflow: hidden }`, документ не скроллится).
+- **Pull-to-refresh:** потягивание вниз перезагружает счётчики (`useAdminStats.reload`, спиннер `isRefreshing`); сбойные поля не затирают прежние значения (`mergeStats`). На web — собственный тач-жест `PullToRefresh` (см. [features/web.md](../features/web.md)).
 
 ## Откуда данные
 

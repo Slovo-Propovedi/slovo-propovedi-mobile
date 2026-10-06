@@ -181,6 +181,15 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 - `PlayerMenu.styles.ts` → `menuWrapper` использует `overflow: 'hidden'` (не `'scroll'` — на web `'scroll'` даёт постоянные пустые скроллбары по обеим осям).
 - Тема скроллбаров — глобальный CSS в `public/index.html` (`::-webkit-scrollbar*` + `scrollbar-width`/`scrollbar-color`) на CSS-переменных `--sp-scrollbar-thumb` / `--sp-scrollbar-thumb-hover`. `ThemeProvider` (web-only эффект) прокидывает в них цвета активной темы (`textMuted` / `text`), так что при переключении светлая/тёмная скроллбар перекрашивается. Фолбэк — нейтральный серый (SSG / до JS).
 
+## Pull-to-refresh
+
+`RefreshControl` на web — no-op: react-native-web рендерит простой `View` и никогда не вызывает `onRefresh`. Поэтому на нативе pull-to-refresh отдаёт `createRefreshControl` (`shared/ui/refresh-control`), а на web его реализует собственный компонент.
+
+- **`PullToRefresh`** (`shared/ui/refresh-control/PullToRefresh.tsx`, платформенная пара `PullToRefresh.native.tsx` — пасsthrough с нативным `RefreshControl` внутри скролла). Обёртка вокруг скролла (Listen + 6 админ-экранов). На web слушает DOM-события `touchstart`/`touchmove`/`touchend`/`touchcancel` на обёртке и перетаскивает контент вниз только когда ближайший вертикальный скролл-контейнер (`overflow-y: auto/scroll` + переполнение) стоит на самом верху. Сопротивление `0.4`, порог `64px` видимого протяга (≈160px пальцем), дальше — спиннер в верхнем слоте (`ActivityIndicator`, подсвечивается `currentTheme.primary`). Отпускание анимирует контент назад за 200 мс.
+- **Дебаунс** — не чаще одного раза в `REFRESH_MIN_INTERVAL_MS` (2000 мс, `pull-to-refresh.lib.ts`; та же константа переиспользуется хуком `usePullToRefresh` на экране «Слушать»). Во время активного `refreshing` повторный протяг игнорируется.
+- **Мышь:** жест только тач-событиями; drag мышью refresh не запускает (эмуляция тача в DevTools работает). Скролл не ломается: при `scrollTop > 0` события проходят мимо, `preventDefault` не вызывается.
+
+
 ## Виброотклик на web (Vibration API)
 
 `shared/lib/haptics` на web использует `navigator.vibrate` вместо раннего `return`: `hapticLight` → короткий импульс ~12 мс (с тем же троттлингом 45 мс, что и натив), `hapticTick` → ~10 мс. Гейт `hapticsEnabledAtom` сохранён.

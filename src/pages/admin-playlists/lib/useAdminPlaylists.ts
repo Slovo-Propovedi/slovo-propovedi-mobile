@@ -9,6 +9,7 @@ export interface AdminPlaylistsState {
   isError: boolean
   isLoading: boolean
   isLoadingMore: boolean
+  isRefreshing: boolean
   loadMore: () => Promise<void>
   loadMoreFailed: boolean
   onOrderChange: (order: APITypes.PlaylistControllerFindAllOrder) => void
@@ -16,6 +17,7 @@ export interface AdminPlaylistsState {
   onSortChange: (sort: APITypes.PlaylistControllerFindAllSort) => void
   order: APITypes.PlaylistControllerFindAllOrder
   playlists: APITypes.PlaylistEntity[]
+  refresh: () => Promise<void>
   search: string
   sort: APITypes.PlaylistControllerFindAllSort
 }
@@ -51,9 +53,11 @@ export const useAdminPlaylists = (): AdminPlaylistsState => {
     isError,
     isLoading,
     isLoadingMore,
+    isRefreshing,
     items: playlists,
     loadMore,
     loadMoreFailed,
+    refresh,
   } = usePaginatedList({
     errorMessage: LOAD_ERROR_MESSAGE,
     fetchPage,
@@ -65,6 +69,7 @@ export const useAdminPlaylists = (): AdminPlaylistsState => {
     isError,
     isLoading,
     isLoadingMore,
+    isRefreshing,
     loadMore,
     loadMoreFailed,
     onOrderChange: setOrder,
@@ -72,6 +77,7 @@ export const useAdminPlaylists = (): AdminPlaylistsState => {
     onSortChange: setSort,
     order,
     playlists,
+    refresh,
     search,
     sort,
   }

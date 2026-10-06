@@ -1,4 +1,5 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { type TestInstance } from 'test-renderer'
 import { usersMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { AdminUsersScreen } from './AdminUsersScreen'
@@ -33,6 +34,19 @@ jest.mock('expo-router', () => ({
   },
   useRouter: () => ({ push: mockPush, replace: jest.fn() }),
 }))
+
+const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+
+const findRefreshControl = (element: TestInstance) => {
+  let current: null | TestInstance = element
+
+  while (current !== null) {
+    if (SCROLL_HOST_TYPES.has(String(current.type))) return current.props.refreshControl
+    current = current.parent
+  }
+
+  throw new Error('Expected a scroll host ancestor, none found')
+}
 
 const createUsers = (count: number) =>
   usersMocks.getUsersControllerFindAllResponseMock({
@@ -111,5 +125,18 @@ describe('<AdminUsersScreen>', () => {
     fireEvent.press(await findByText('Пользователь 0'))
 
     expect(mockPush).toHaveBeenCalledWith({ params: { id: 'u0' }, pathname: '/admin/users/[id]' })
+  })
+
+  test('reloads the first page when pulled to refresh', async () => {
+    mockFindAll.mockResolvedValue(createUsers(0))
+
+    const { findByText } = await renderWithProviders(<AdminUsersScreen />)
+    const refreshControl = findRefreshControl(await findByText('Пользователи'))
+
+    await act(async () => {
+      await refreshControl.props.onRefresh()
+    })
+
+    await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
   })
 })

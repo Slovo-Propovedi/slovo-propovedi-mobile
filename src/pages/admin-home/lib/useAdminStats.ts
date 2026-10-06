@@ -2,11 +2,16 @@ import { useCallback, useEffect, useState } from 'react'
 import { playlistsApi, sectionsApi, sermonsApi } from 'shared/api'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
 
-export interface AdminStats {
+interface AdminStats {
   isLoading: boolean
   playlists: null | number
   sections: null | number
   sermons: null | number
+}
+
+interface AdminStatsState extends AdminStats {
+  isRefreshing: boolean
+  reload: () => Promise<void>
 }
 
 const INITIAL_STATS: AdminStats = {
@@ -31,8 +36,9 @@ const mergeStats = (previous: AdminStats, next: AdminStats): AdminStats => ({
 })
 
 /** Счётчики сущностей для главной админки: каждый запрос независим (allSettled). */
-export const useAdminStats = (): AdminStats => {
+export const useAdminStats = (): AdminStatsState => {
   const [stats, setStats] = useState(INITIAL_STATS)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const fetchStats = useCallback(async (): Promise<AdminStats> => {
     const [sections, playlists, sermons] = await Promise.allSettled([
@@ -71,5 +77,15 @@ export const useAdminStats = (): AdminStats => {
     }, [fetchStats]),
   )
 
-  return stats
+  const reload = useCallback(async () => {
+    setIsRefreshing(true)
+    try {
+      const next = await fetchStats()
+      setStats(previous => mergeStats(previous, next))
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [fetchStats])
+
+  return { ...stats, isRefreshing, reload }
 }

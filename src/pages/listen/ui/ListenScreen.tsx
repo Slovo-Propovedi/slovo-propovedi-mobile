@@ -12,8 +12,10 @@ import {
   useIsSearchOpen,
 } from 'features/sermon-search'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
+import { createRefreshControl, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, MIN_TOUCH_TARGET, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { usePullToRefresh } from '../lib/usePullToRefresh'
 import { useScrollActivity } from '../lib/useScrollActivity'
 import { AdminShieldButton } from './AdminShieldButton'
 import { ContinueListeningButton } from './ContinueListeningButton'
@@ -30,6 +32,7 @@ export const ListenScreen = () => {
   const restore = useAction(restoreSession)
   const { onScroll } = useScrollActivity()
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
+  const { isRefreshing, refresh } = usePullToRefresh()
 
   useEffect(() => {
     if (authStatus !== 'idle') return
@@ -58,20 +61,25 @@ export const ListenScreen = () => {
       {isSearchOpen && isSearchActive ? (
         <SermonSearchResults onAddToPlaylist={openAddToPlaylist} />
       ) : (
-        <ScrollView
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          keyboardDismissMode='on-drag'
-          keyboardShouldPersistTaps='handled'
-          style={[styles.scroll, { backgroundColor: currentTheme.background }]}
-          contentContainerStyle={[{ paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight }]}
-        >
-          {!isSearchOpen && <SearchToggleButton />}
-          <DynamicSectionsSlider
-            leadingElement={!isSearchActive ? <ContinueListeningButton /> : undefined}
-          />
-          <MyPlaylistsSlider />
-        </ScrollView>
+        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+          <ScrollView
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            keyboardDismissMode='on-drag'
+            keyboardShouldPersistTaps='handled'
+            style={[styles.scroll, { backgroundColor: currentTheme.background }]}
+            refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+            contentContainerStyle={[
+              { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
+            ]}
+          >
+            {!isSearchOpen && <SearchToggleButton />}
+            <DynamicSectionsSlider
+              leadingElement={!isSearchActive ? <ContinueListeningButton /> : undefined}
+            />
+            <MyPlaylistsSlider />
+          </ScrollView>
+        </PullToRefresh>
       )}
       {modal}
     </SafeAreaView>

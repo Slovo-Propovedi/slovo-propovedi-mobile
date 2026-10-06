@@ -8,9 +8,11 @@ export interface AdminUsersState {
   isError: boolean
   isLoading: boolean
   isLoadingMore: boolean
+  isRefreshing: boolean
   loadMore: () => Promise<void>
   loadMoreFailed: boolean
   onSearchChange: (search: string) => void
+  refresh: () => Promise<void>
   search: string
   users: APITypes.UserResponse[]
 }
@@ -54,9 +56,11 @@ export const useAdminUsers = (): AdminUsersState => {
     isError,
     isLoading,
     isLoadingMore,
+    isRefreshing,
     items: users,
     loadMore,
     loadMoreFailed,
+    refresh,
   } = usePaginatedList({ errorMessage: LOAD_ERROR_MESSAGE, fetchPage, pageSize: PAGE_SIZE })
 
   const filtered = useMemo(() => {
@@ -71,9 +75,11 @@ export const useAdminUsers = (): AdminUsersState => {
     isError,
     isLoading,
     isLoadingMore,
+    isRefreshing,
     loadMore,
     loadMoreFailed,
     onSearchChange: setSearch,
+    refresh,
     search,
     users: filtered,
   }

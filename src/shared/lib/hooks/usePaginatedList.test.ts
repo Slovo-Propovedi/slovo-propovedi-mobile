@@ -99,4 +99,32 @@ describe('usePaginatedList', () => {
       resolveRefresh(['c', 'd'])
     })
   })
+
+  test('refresh reloads the first page and drives the isRefreshing spinner', async () => {
+    mockFetchPage.mockResolvedValueOnce(['a', 'b'])
+
+    const { result } = await renderList()
+    await act(async () => {})
+
+    let resolveRefresh: (ids: string[]) => void = () => {}
+    mockFetchPage.mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveRefresh = resolve
+      }),
+    )
+
+    await act(async () => {
+      void result.current.refresh()
+    })
+
+    expect(result.current.isRefreshing).toBe(true)
+    expect(mockFetchPage).toHaveBeenCalledTimes(2)
+
+    await act(async () => {
+      resolveRefresh(['c', 'd'])
+    })
+
+    expect(result.current.isRefreshing).toBe(false)
+    expect(result.current.items).toEqual(['c', 'd'])
+  })
 })

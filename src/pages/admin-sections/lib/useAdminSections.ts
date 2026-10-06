@@ -1,5 +1,5 @@
 import { useAction } from '@reatom/npm-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { type APITypes, sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
@@ -9,7 +9,9 @@ import { reportError } from 'shared/model/error-dialog'
 
 export interface AdminSectionsState {
   isLoading: boolean
+  isRefreshing: boolean
   isReordering: boolean
+  reload: () => Promise<void>
   reorder: (nextOrder: APITypes.SectionEntity[]) => Promise<void>
   sections: APITypes.SectionEntity[]
 }
@@ -22,7 +24,10 @@ export const useAdminSections = (): AdminSectionsState => {
   const showToastAction = useAction(showToast)
   const [sections, setSections] = useState<APITypes.SectionEntity[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [isReordering, setIsReordering] = useState(false)
+
+  const generationRef = useRef(0)
 
   const fetchSections = useCallback(
     () =>
@@ -35,13 +40,14 @@ export const useAdminSections = (): AdminSectionsState => {
 
   useEffect(() => {
     let isActive = true
+    const generation = ++generationRef.current
 
     fetchSections()
       .then(nextSections => {
-        if (isActive) setSections(nextSections)
+        if (isActive && generationRef.current === generation) setSections(nextSections)
       })
       .catch(error => {
-        if (isActive) reportError(error, LOAD_ERROR_MESSAGE)
+        if (isActive && generationRef.current === generation) reportError(error, LOAD_ERROR_MESSAGE)
       })
       .finally(() => {
         if (isActive) setIsLoading(false)
@@ -54,13 +60,28 @@ export const useAdminSections = (): AdminSectionsState => {
 
   useSilentRefetchOnFocus(
     useCallback(async () => {
+      const generation = ++generationRef.current
       try {
-        setSections(await fetchSections())
+        const nextSections = await fetchSections()
+        if (generationRef.current === generation) setSections(nextSections)
       } catch (error) {
-        reportError(error, LOAD_ERROR_MESSAGE)
+        if (generationRef.current === generation) reportError(error, LOAD_ERROR_MESSAGE)
       }
     }, [fetchSections]),
   )
+
+  const reload = useCallback(async () => {
+    const generation = ++generationRef.current
+    setIsRefreshing(true)
+    try {
+      const nextSections = await fetchSections()
+      if (generationRef.current === generation) setSections(nextSections)
+    } catch (error) {
+      if (generationRef.current === generation) reportError(error, LOAD_ERROR_MESSAGE)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [fetchSections])
 
   const reorder = useCallback(
     async (nextOrder: APITypes.SectionEntity[]) => {
@@ -83,5 +104,5 @@ export const useAdminSections = (): AdminSectionsState => {
     [sections, showToastAction],
   )
 
-  return { isLoading, isReordering, reorder, sections }
+  return { isLoading, isRefreshing, isReordering, reload, reorder, sections }
 }

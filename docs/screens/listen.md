@@ -133,6 +133,12 @@
 - Атомы: `dynamicSectionsAtom`, `isLoadingSectionsAtom`, `sectionDataSourceAtom` (`'cache' | 'network' | 'unknown'`) — `entities/section/model.ts`.
 - Хук `useOfflineRetry` (`src/shared/lib/network/useOfflineRetry.ts`) перезапрашивает при возврате онлайн/в foreground/по таймеру, если последний ответ был не из сети.
 
+## Обновление (pull-to-refresh)
+
+- Потягивание вниз на основном скролле (`ScrollView`) перезагружает всё содержимое экрана разом: `fetchAllSections` (секции, cache-first + фоновый revalidate), `loadMyPlaylists` и `loadSectionSettings` (локальные плейлисты и настройки оформления) через `Promise.all` (`usePullToRefresh`, `src/pages/listen/lib/usePullToRefresh.ts`). Спиннер — нативный `RefreshControl` (`tintColor`/`colors` = `currentTheme.primary`).
+- **Антидребезг:** пока запрос в полёте, повторное потягивание игнорируется; второй жест в пределах `REFRESH_MIN_INTERVAL_MS = 2000` мс не запускает даже спиннер — защита сервера от серии случайных жестов. Метка времени последнего обновления хранится в ref компонента. Константа `REFRESH_MIN_INTERVAL_MS` — общая (`shared/ui/refresh-control/pull-to-refresh.lib.ts`), её же использует web-жест `PullToRefresh`.
+- **Web:** `RefreshControl` — no-op, жест реализует собственный `PullToRefresh` (тач-события, порог, тот же дебаунс 2 с) — см. [features/web.md](../features/web.md).
+
 ## Куда можно перейти
 
 - Тап на плейлист всегда открывает страницу плейлиста → `/listen/playlist?playlist=<id плейлиста>` (`navigateToPlaylist` из `src/pages/listen/lib/useListenNavigation.ts`) — даже если в плейлисте одна проповедь.

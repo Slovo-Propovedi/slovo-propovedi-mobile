@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router'
 import { FlatList, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRequireAdminRole } from 'entities/auth'
-import { EmptyState } from 'shared/ui'
+import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
@@ -38,9 +38,11 @@ export const AdminUsersScreen = () => {
     isError,
     isLoading,
     isLoadingMore,
+    isRefreshing,
     loadMore,
     loadMoreFailed,
     onSearchChange,
+    refresh,
     search,
     users,
   } = useAdminUsers()
@@ -56,53 +58,59 @@ export const AdminUsersScreen = () => {
       edges={['top']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
-      <FlatList
-        onEndReachedThreshold={0.5}
-        data={isLoading ? [] : users}
-        keyExtractor={item => item.id}
-        onEndReached={() => void loadMore()}
-        renderItem={({ item }) => <AdminUserRow item={item} onPress={() => openUser(item.id)} />}
-        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + INDENTS.low }]}
-        ListEmptyComponent={
-          isLoading ? (
-            <UserSkeletonList />
-          ) : isError ? (
-            <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
-          ) : (
-            <EmptyState message={emptyMessage} />
-          )
-        }
-        ListFooterComponent={
-          isLoadingMore ? (
-            <AdminUserRow.Skeleton />
-          ) : loadMoreFailed ? (
-            <TouchableItem
-              onPress={() => void loadMore()}
-              style={[styles.retry, { backgroundColor: currentTheme.surface }]}
-            >
-              <Text style={[styles.retryText, { color: currentTheme.primary }]}>
-                {LOAD_MORE_FAILED_LABEL}
-              </Text>
-            </TouchableItem>
-          ) : null
-        }
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <AdminUsersHeader onCreate={() => router.push(CREATE_ROUTE)} />
-            <TextInput
-              value={search}
-              onChangeText={onSearchChange}
-              placeholder='Имя, email или логин…'
-              accessibilityLabel='Поиск пользователей'
-              placeholderTextColor={currentTheme.placeholder}
-              style={[
-                styles.input,
-                { borderColor: currentTheme.textMuted, color: currentTheme.text },
-              ]}
-            />
-          </View>
-        }
-      />
+      <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+        <FlatList
+          onEndReachedThreshold={0.5}
+          data={isLoading ? [] : users}
+          keyExtractor={item => item.id}
+          onEndReached={() => void loadMore()}
+          refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+          renderItem={({ item }) => <AdminUserRow item={item} onPress={() => openUser(item.id)} />}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: tabBarHeight + INDENTS.low },
+          ]}
+          ListEmptyComponent={
+            isLoading ? (
+              <UserSkeletonList />
+            ) : isError ? (
+              <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
+            ) : (
+              <EmptyState message={emptyMessage} />
+            )
+          }
+          ListFooterComponent={
+            isLoadingMore ? (
+              <AdminUserRow.Skeleton />
+            ) : loadMoreFailed ? (
+              <TouchableItem
+                onPress={() => void loadMore()}
+                style={[styles.retry, { backgroundColor: currentTheme.surface }]}
+              >
+                <Text style={[styles.retryText, { color: currentTheme.primary }]}>
+                  {LOAD_MORE_FAILED_LABEL}
+                </Text>
+              </TouchableItem>
+            ) : null
+          }
+          ListHeaderComponent={
+            <View style={styles.header}>
+              <AdminUsersHeader onCreate={() => router.push(CREATE_ROUTE)} />
+              <TextInput
+                value={search}
+                onChangeText={onSearchChange}
+                placeholder='Имя, email или логин…'
+                accessibilityLabel='Поиск пользователей'
+                placeholderTextColor={currentTheme.placeholder}
+                style={[
+                  styles.input,
+                  { borderColor: currentTheme.textMuted, color: currentTheme.text },
+                ]}
+              />
+            </View>
+          }
+        />
+      </PullToRefresh>
     </SafeAreaView>
   )
 }

@@ -82,6 +82,23 @@ jest.mock('entities/player', () => ({
   usePlayNewSermon: jest.fn(() => jest.fn()),
 }))
 
+const mockFetchAllSections = jest.fn()
+const mockLoadMyPlaylists = jest.fn()
+const mockLoadSectionSettings = jest.fn()
+
+// Reatom `useAction` accepts a plain function in tests; these wrappers keep the
+// real slice exports (atoms, mappers) while letting the refresh test observe calls.
+jest.mock('entities/section', () => ({
+  ...jest.requireActual('entities/section'),
+  fetchAllSections: (...args: unknown[]) => mockFetchAllSections(...args),
+}))
+
+jest.mock('entities/playlist', () => ({
+  ...jest.requireActual('entities/playlist'),
+  loadMyPlaylists: (...args: unknown[]) => mockLoadMyPlaylists(...args),
+  loadSectionSettings: (...args: unknown[]) => mockLoadSectionSettings(...args),
+}))
+
 jest.mock('features/sermon-search/lib/useDebouncedSearch', () => ({
   useDebouncedSearch: () => undefined,
 }))
@@ -146,6 +163,19 @@ const findAncestorWithHeight = (element: TestInstance, height: number): TestInst
   throw new Error(`Expected an ancestor with height ${height}, none found`)
 }
 
+// The refresh control is a prop of the scroll host (iOS renders it as a child
+// too, but the host keeps the original prop), so walk up to the ScrollView.
+const findRefreshControl = (element: TestInstance) => {
+  let current: null | TestInstance = element
+
+  while (current !== null) {
+    if (SCROLL_HOST_TYPES.has(String(current.type))) return current.props.refreshControl
+    current = current.parent
+  }
+
+  throw new Error('Expected a scroll host ancestor, none found')
+}
+
 const flushAnimationFrame = async () => {
   await act(async () => {
     await new Promise(resolve => setTimeout(resolve, 0))
@@ -206,6 +236,39 @@ describe('<ListenScreen>', () => {
     const { getByLabelText } = await renderWithProviders(<ListenScreen />, {})
 
     expect(getByLabelText(MY_PLAYLISTS_TITLE)).toBeTruthy()
+  })
+
+  test('reloads sections, playlists and settings when pulled to refresh', async () => {
+    const { getByText } = await renderWithProviders(<ListenScreen />, {})
+    const refreshControl = findRefreshControl(getByText(SECTIONS_MOCK))
+
+    mockFetchAllSections.mockClear()
+    mockLoadMyPlaylists.mockClear()
+    mockLoadSectionSettings.mockClear()
+
+    await act(async () => {
+      await refreshControl.props.onRefresh()
+    })
+
+    expect(mockFetchAllSections).toHaveBeenCalledTimes(1)
+    expect(mockLoadMyPlaylists).toHaveBeenCalledTimes(1)
+    expect(mockLoadSectionSettings).toHaveBeenCalledTimes(1)
+  })
+
+  test('ignores a second pull-to-refresh within the minimum interval', async () => {
+    const { getByText } = await renderWithProviders(<ListenScreen />, {})
+    const refreshControl = findRefreshControl(getByText(SECTIONS_MOCK))
+
+    mockFetchAllSections.mockClear()
+
+    await act(async () => {
+      await refreshControl.props.onRefresh()
+    })
+    await act(async () => {
+      await refreshControl.props.onRefresh()
+    })
+
+    expect(mockFetchAllSections).toHaveBeenCalledTimes(1)
   })
 
   test('keeps the continue button visible when the search is open but not active', async () => {

@@ -16,9 +16,11 @@ interface PaginatedListState<T> {
   isError: boolean
   isLoading: boolean
   isLoadingMore: boolean
+  isRefreshing: boolean
   items: T[]
   loadMore: () => Promise<void>
   loadMoreFailed: boolean
+  refresh: () => Promise<void>
 }
 
 // Пагинированный список с автодозагрузкой (`loadMore`) и молчаливым обновлением
@@ -30,6 +32,8 @@ interface PaginatedListState<T> {
 // `onEndReached` дописал бы страницу со старым офсетом поверх заменяемого списка.
 // Смена фильтров — это смена identity `fetchPage`, и она тоже перезагружает первую
 // страницу.
+// `refresh` — ручной pull-to-refresh: тот же перезагруз первой страницы, но
+// `isRefreshing` питает спиннер `RefreshControl` (фокус обновляет молча).
 export const usePaginatedList = <T>({
   errorMessage,
   fetchPage,
@@ -41,6 +45,7 @@ export const usePaginatedList = <T>({
   const [isError, setIsError] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [loadMoreFailed, setLoadMoreFailed] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const generationRef = useRef(0)
   const hasLoadedRef = useRef(false)
@@ -106,5 +111,20 @@ export const usePaginatedList = <T>({
     }
   }, [errorMessage, fetchPage, hasMore, isLoading, isLoadingMore, items.length, pageSize])
 
-  return { hasMore, isError, isLoading, isLoadingMore, items, loadMore, loadMoreFailed }
+  const refresh = useCallback(() => {
+    setIsRefreshing(true)
+    return loadFirstPage().finally(() => setIsRefreshing(false))
+  }, [loadFirstPage])
+
+  return {
+    hasMore,
+    isError,
+    isLoading,
+    isLoadingMore,
+    isRefreshing,
+    items,
+    loadMore,
+    loadMoreFailed,
+    refresh,
+  }
 }
