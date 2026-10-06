@@ -7,6 +7,7 @@ import { withAndroidManifestCleanup } from './plugins/withAndroidManifestCleanup
 import { withDebugKeystore } from './plugins/withDebugKeystore.ts'
 import { withDevClientScheme } from './plugins/withDevClientScheme.ts'
 import { withMavenCentralMirror } from './plugins/withMavenCentralMirror.ts'
+import { withReleaseSigning } from './plugins/withReleaseSigning.ts'
 import { ENV } from './src/shared/config/env.ts'
 
 type AppConfig = { plugins?: AppPlugin[] } & Omit<ExpoConfig, 'plugins'>
@@ -99,6 +100,7 @@ export default ({ config }: ConfigContext): AppConfig => ({
     withAndroidBuildMaintenance,
     withMavenCentralMirror,
     withDebugKeystore,
+    withReleaseSigning,
   ],
   slug: 'slovo-propovedi-mobile',
   userInterfaceStyle: 'automatic',

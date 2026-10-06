@@ -8,6 +8,11 @@ npm-debug.*
 *.key
 *.mobileprovision
 *.orig.*
+
+# Release keystores are never committed; only the canonical debug keys are trackable.
+*.keystore
+!debug.keystore
+!android/app/debug.keystore
 web-build/
 
 # macOS

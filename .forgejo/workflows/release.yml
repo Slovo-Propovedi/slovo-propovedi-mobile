@@ -355,6 +355,30 @@ jobs:
             exit 1
           fi
 
+      - name: Restore release keystore
+        # prebuild --clean wipes android/; the keystore must land here (before the
+        # build) and the RELEASE_* env vars are exported to later steps only when
+        # the secret is present. With RELEASE_STORE_FILE unset the Gradle release
+        # buildType falls back to the debug key, so a missing secret keeps the
+        # build green (debug-signed, dev-only).
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "${ANDROID_KEYSTORE_BASE64:-}" ]; then
+            echo "::warning::ANDROID_KEYSTORE_BASE64 is not configured — building a debug-signed release (dev-only)"
+            exit 0
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          {
+            echo "RELEASE_STORE_FILE=$GITHUB_WORKSPACE/android/app/release.keystore"
+            echo "RELEASE_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
+            echo "RELEASE_KEY_ALIAS=$ANDROID_KEY_ALIAS"
+            echo "RELEASE_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+
       - name: Configure Gradle for CI
         run: |
           # expo prebuild regenerates android/gradle.properties from its template
