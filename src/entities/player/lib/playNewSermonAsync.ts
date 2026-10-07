@@ -1,60 +1,36 @@
-import {
-  getEntrySermon,
-  getResumePosition,
-  historyAtom,
-} from 'entities/listening-history/@x/player'
-import { type PlaylistData } from 'entities/playlist/@x/player'
-import { type AudioPlayerData, type SermonData } from 'entities/sermon/@x/player'
+import { getResumePosition, historyAtom } from 'entities/listening-history/@x/player'
+import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
-import { type LockScreenMetadata } from './PlayerService/types'
+import {
+  currentAudioAtom,
+  currentPlaylistAtom,
+  durationAtom,
+  isPlayingAtom,
+  positionAtom,
+} from '../model'
+import { type PlayNewSermonDeps, type PlayNewSermonProps } from './playNewSermonTypes'
 import { guardOfflinePlayback } from './playOfflineGuard'
+import { startSermonPlayback } from './startSermonPlayback'
 import { resetStartupAttempts } from './startupGuard'
 
-const SAME_SERMON_TOLERANCE_MS = 1000
-
-const isSameSermonPlaying = (sermonId: string) =>
-  ctx.get(currentAudioAtom)?.id === sermonId && ctx.get(isPlayingAtom)
-
-export interface PlayNewSermonDeps {
-  clearSuppressionOnError: (sermonId: string) => void
-  isOnline: boolean
-  isRepeatTapSuppressed: (sermonId: string) => boolean
-  markPlayFinished: (sermonId: string) => void
-  markPlayStarted: (sermonId: string) => void
-  play: () => Promise<unknown>
-  recordPlaybackStart: (audio: AudioPlayerData, playlist: PlaylistData) => Promise<unknown>
-  recordSermonSwitch: (params: {
-    markOldCompleted: boolean
-    newAudio: AudioPlayerData
-    newPlaylist: PlaylistData
-    oldDurationMs: number
-    oldPositionMs: number
-    oldSermonId: string
-  }) => Promise<unknown>
-  replaceAudio: (url: string, positionMs: number) => Promise<unknown>
-  resumeAfterPause: (audioUrl: string) => Promise<unknown>
-  seekTo: (ms: number) => Promise<unknown>
-  setCurrentAudio: (audio: AudioPlayerData) => Promise<unknown>
-  setCurrentPlaylist: (playlist: PlaylistData) => Promise<unknown>
-  setLockScreenMetadata: (metadata: LockScreenMetadata) => void
-}
-
-export interface PlayNewSermonProps {
-  playlist: PlaylistData
-  sermon: SermonData
-}
-
 export const playNewSermonAsync = async (
-  { playlist, sermon: { artist, audioUrl, id, title, ...other } }: PlayNewSermonProps,
+  { playlist, sermon: { artist, artwork, audioUrl, id, title, ...other } }: PlayNewSermonProps,
   deps: PlayNewSermonDeps,
 ) => {
   if (!audioUrl) return
 
   const sermonId = id
 
-  // Issue #99: tapping the sermon that is already playing is a no-op
-  if (isSameSermonPlaying(sermonId)) return
+  const currentAudio = ctx.get(currentAudioAtom)
+  const currentPlaylist = ctx.get(currentPlaylistAtom)
+  const isSameSermon = currentAudio?.id === sermonId
+  // A known, different playlist context is a real switch request; an unknown
+  // current playlist keeps the Issue #99 no-op.
+  const playlistChanged = currentPlaylist !== null && currentPlaylist.id !== playlist.id
+  const isSameSermonPlaying = isSameSermon && ctx.get(isPlayingAtom)
+
+  // Issue #99: tapping the sermon that is already playing in the same playlist is a no-op.
+  if (isSameSermonPlaying && !playlistChanged) return
 
   if (deps.isRepeatTapSuppressed(sermonId)) return
 
@@ -62,24 +38,21 @@ export const playNewSermonAsync = async (
 
   try {
     if (await guardOfflinePlayback(audioUrl, deps.isOnline)) return
-    const currentAudio = ctx.get(currentAudioAtom)
     const currentPosition = ctx.get(positionAtom)
     const currentDuration = ctx.get(durationAtom)
     const history = ctx.get(historyAtom)
-    const resumeMs = getResumePosition(history, sermonId)
 
+    // Artwork rule: the sermon's own artwork wins, the playlist's is the fallback.
     const newAudio: AudioPlayerData = {
       ...other,
       artist,
-      artwork: playlist.artwork,
+      artwork: artwork ?? playlist.artwork,
       audioUrl,
       id: sermonId,
       title,
     }
 
     const oldAudio = currentAudio
-    const oldPositionMs = currentPosition
-    const oldDurationMs = currentDuration
 
     await deps.setCurrentAudio(newAudio)
     await deps.setCurrentPlaylist(playlist)
@@ -89,24 +62,29 @@ export const playNewSermonAsync = async (
         markOldCompleted: false,
         newAudio,
         newPlaylist: playlist,
-        oldDurationMs,
-        oldPositionMs: Math.max(0, oldPositionMs),
+        oldDurationMs: currentDuration,
+        oldPositionMs: Math.max(0, currentPosition),
         oldSermonId: oldAudio.id,
       })
 
-    if (currentAudio?.id !== sermonId) await deps.replaceAudio(newAudio.audioUrl, resumeMs)
-    else {
-      await deps.resumeAfterPause(newAudio.audioUrl)
-      const entry = history.find(e => getEntrySermon(e)?.id === sermonId)
-
-      if (entry && resumeMs === 0) await deps.seekTo(0)
-      else if (resumeMs > 0 && Math.abs(currentPosition - resumeMs) > SAME_SERMON_TOLERANCE_MS)
-        await deps.seekTo(resumeMs)
-    }
+    // Same sermon already playing + different playlist: the context (artwork,
+    // playlist/queue, lock screen) is swapped above and playback keeps running
+    // from the current position — no restart, no re-play.
+    await startSermonPlayback({
+      currentPosition,
+      history,
+      isSameSermon,
+      isSameSermonPlaying,
+      newAudio,
+      play: deps.play,
+      replaceAudio: deps.replaceAudio,
+      resumeAfterPause: deps.resumeAfterPause,
+      resumeMs: getResumePosition(history, sermonId),
+      seekTo: deps.seekTo,
+      sermonId,
+    })
 
     if (!oldAudio?.id || oldAudio.id === sermonId) void deps.recordPlaybackStart(newAudio, playlist)
-
-    await deps.play()
 
     // A manual playback start proves the player works: clear a stuck startup
     // guard so the next cold start restores state again.

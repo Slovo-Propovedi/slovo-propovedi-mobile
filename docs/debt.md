@@ -13,7 +13,7 @@
 
 ## Audio player
 
-- [ ] **Двойной старт воспроизведения при запуске проповеди (cut corner, вне скоупа этой задачи).** `src/entities/player/lib/playNewSermonAsync.ts` — в конце всегда вызывается `deps.play()`, тогда как ранее по пути уже могли произойти `replaceAudio`/`resumeAfterPause`; на web `transport.play()` (`src/entities/player/lib/PlayerService/web/transport.ts`) ещё раз зовёт `audio.play()`, что может приводить к повторному старту. Не исправлялось намеренно (не входило в задачу). Вернуться при репортах о двойном старте/рассинхроне.
+
 
 - [ ] **Fire-and-forget `downloadAsync` иконки-фолбэка может опоздать к первому `setMetadata`.** `src/shared/lib/app-icon.ts`, `src/entities/player/lib/PlayerService/native/LockScreenControls.ts` — до завершения загрузки lock screen/уведомление создаётся без артворка (следующий `setMetadata` поправит). Валидация URI (протокол) и try-catch вокруг `setActiveForLockScreen` применены (Issue #45, Баг 3) — остаётся только тайминг. Вернуться, если понадобится гарантированный артворк с первого показа (дождаться загрузки при инициализации плеера или ретраить `setMetadata`).
 - [ ] **Неудачные при скачивании треки плейлиста не подсвечиваются в UI списка.** `src/pages/playlist/lib/runPlaylistCaching.ts`, `src/pages/playlist/ui/PlaylistTrackItem.tsx` — после частичной неудачи скачивания плейлиста (Issue #49 fix) провалившиеся треки молча возвращаются к иконке «облако»; о количестве известно только из финального уведомления («Не удалось скачать X из N»), без per-track отметки в списке и без кнопки «повторить только неудачные». Низкий приоритет — вернуться при развитии офлайн-скачивания.

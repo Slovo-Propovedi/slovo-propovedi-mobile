@@ -3,6 +3,7 @@ import { type Ctx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { type ListeningHistory } from 'entities/listening-history/@x/player'
 import { audioCacheService } from 'entities/offline-cache/@x/player'
+import { type PlaylistData } from 'entities/playlist/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { PLAYER_STARTUP_ATTEMPTS } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
@@ -10,7 +11,13 @@ import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { reportError } from 'shared/model/error-dialog'
 import { showInfo } from 'shared/model/info-dialog'
 import { isOnlineAtom } from 'shared/model/network'
-import { currentAudioAtom, durationAtom, isPlayingAtom, positionAtom } from '../model'
+import {
+  currentAudioAtom,
+  currentPlaylistAtom,
+  durationAtom,
+  isPlayingAtom,
+  positionAtom,
+} from '../model'
 import { usePlayNewSermon } from './usePlaySermon'
 
 const mockPlay = jest.fn().mockResolvedValue(undefined)
@@ -99,12 +106,14 @@ const COMPLETED_ENTRY = {
 
 const setAtomState = async (opts: {
   currentAudio?: { id: string }
+  currentPlaylist?: PlaylistData
   history?: ListeningHistory
   isPlaying?: boolean
   position?: number
 }) => {
   await act(async () => {
     if (opts.currentAudio) currentAudioAtom(ctx, opts.currentAudio as AudioPlayerData)
+    if (opts.currentPlaylist) currentPlaylistAtom(ctx, opts.currentPlaylist)
     if (opts.history) mockHistoryAtom(ctx, opts.history)
     if (opts.isPlaying !== undefined) isPlayingAtom(ctx, opts.isPlaying)
     if (opts.position !== undefined) positionAtom(ctx, opts.position)
@@ -122,6 +131,7 @@ describe('usePlayNewSermon', () => {
     mockRecordPlaybackStart.mockResolvedValue(undefined)
     mockRecordSermonSwitch.mockResolvedValue(undefined)
     currentAudioAtom(ctx, null)
+    currentPlaylistAtom(ctx, null)
     positionAtom(ctx, 0)
     durationAtom(ctx, 5678)
     isPlayingAtom(ctx, false)
@@ -252,6 +262,7 @@ describe('usePlayNewSermon', () => {
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
     await setAtomState({
       currentAudio: { id: SERMON_ID },
+      currentPlaylist: mockPlaylist,
       history: [PARTIAL_ENTRY],
       isPlaying: true,
       position: RESUME_MS + 500,
@@ -286,7 +297,84 @@ describe('usePlayNewSermon', () => {
     })
 
     expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
-    expect(mockPlay).toHaveBeenCalledTimes(1)
+    expect(mockPlay).not.toHaveBeenCalled()
+  })
+
+  test('same sermon playing, different playlist → context/artwork switch without re-playing', async () => {
+    const otherPlaylist = {
+      ...mockPlaylist,
+      artwork: 'other-artwork.jpg',
+      id: 'playlist-2',
+      title: 'Other Playlist',
+    }
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
+      currentAudio: { id: SERMON_ID },
+      currentPlaylist: mockPlaylist,
+      history: [PARTIAL_ENTRY],
+      isPlaying: true,
+      position: RESUME_MS + 500,
+    })
+
+    await act(async () => {
+      await result.current({ playlist: otherPlaylist, sermon: mockSermon })
+    })
+
+    expect(ctx.get(currentPlaylistAtom)).toEqual(expect.objectContaining({ id: 'playlist-2' }))
+    // The sermon's own artwork wins over the chosen playlist artwork.
+    expect(ctx.get(currentAudioAtom)).toEqual(expect.objectContaining({ artwork: 'artwork.jpg' }))
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(mockResumeAfterPause).not.toHaveBeenCalled()
+    expect(mockPlay).not.toHaveBeenCalled()
+    expect(mockSeekTo).not.toHaveBeenCalled()
+    expect(mockSetLockScreenMetadata).toHaveBeenCalledWith(
+      expect.objectContaining({ albumTitle: 'Other Playlist', artworkUrl: 'artwork.jpg' }),
+    )
+  })
+
+  test('same sermon switch uses the chosen playlist artwork when the sermon has none', async () => {
+    const bareSermon = { ...mockSermon, artwork: null }
+    const otherPlaylist = { ...mockPlaylist, artwork: 'other-artwork.jpg', id: 'playlist-2' }
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
+      currentAudio: { id: SERMON_ID },
+      currentPlaylist: mockPlaylist,
+      history: [PARTIAL_ENTRY],
+      isPlaying: true,
+      position: RESUME_MS,
+    })
+
+    await act(async () => {
+      await result.current({ playlist: otherPlaylist, sermon: bareSermon })
+    })
+
+    expect(ctx.get(currentAudioAtom)).toEqual(
+      expect.objectContaining({ artwork: 'other-artwork.jpg' }),
+    )
+  })
+
+  test('same sermon paused, different playlist → playlist switches and resumes', async () => {
+    const otherPlaylist = { ...mockPlaylist, id: 'playlist-2' }
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
+      currentAudio: { id: SERMON_ID },
+      currentPlaylist: mockPlaylist,
+      history: [PARTIAL_ENTRY],
+      isPlaying: false,
+      position: RESUME_MS + 500,
+    })
+
+    await act(async () => {
+      await result.current({ playlist: otherPlaylist, sermon: mockSermon })
+    })
+
+    expect(ctx.get(currentPlaylistAtom)).toEqual(expect.objectContaining({ id: 'playlist-2' }))
+    expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
+    expect(mockReplaceAudio).not.toHaveBeenCalled()
+    expect(mockPlay).not.toHaveBeenCalled()
   })
 
   test('first play (no old audio) → recordPlaybackStartAction called', async () => {
@@ -451,7 +539,7 @@ describe('usePlayNewSermon', () => {
 
     expect(mockReplaceAudio).toHaveBeenCalledTimes(1)
     expect(mockSeekTo).toHaveBeenCalledWith(RESUME_MS)
-    expect(mockPlay).toHaveBeenCalledTimes(1)
+    expect(mockPlay).not.toHaveBeenCalled()
   })
 
   test('same sermon within 1000ms window after completion → suppressed', async () => {
@@ -491,9 +579,10 @@ describe('usePlayNewSermon', () => {
       await result.current({ playlist: mockPlaylist, sermon: mockSermon })
     })
 
-    expect(mockPlay).toHaveBeenCalledTimes(2)
+    expect(mockPlay).toHaveBeenCalledTimes(1)
     expect(mockRecordPlaybackStart).toHaveBeenCalledTimes(2)
     expect(mockSeekTo).toHaveBeenCalledWith(RESUME_MS)
+    expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
   })
 
   describe('offline playback guard', () => {

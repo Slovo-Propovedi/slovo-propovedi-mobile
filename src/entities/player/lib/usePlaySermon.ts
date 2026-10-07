@@ -6,7 +6,8 @@ import {
 } from 'entities/listening-history/@x/player'
 import { isOnlineAtom } from 'shared/model/network'
 import { setCurrentAudioAction, setCurrentPlaylistAction } from '../model'
-import { playNewSermonAsync, type PlayNewSermonProps } from './playNewSermonAsync'
+import { playNewSermonAsync } from './playNewSermonAsync'
+import { type PlayNewSermonProps } from './playNewSermonTypes'
 import { usePlayer } from './usePlayer'
 import { usePlayTapGuard } from './usePlayTapGuard'
 
