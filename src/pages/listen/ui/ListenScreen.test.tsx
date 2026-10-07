@@ -483,6 +483,9 @@ describe('<ListenScreen>', () => {
     const { getByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
 
     expect(getByLabelText(ADMIN_BUTTON_LABEL)).toBeTruthy()
+    // Guards the web pull-to-refresh translation fix: the shield must stay
+    // outside the scroll content so it is not translated along with it.
+    expect(hasScrollAncestor(getByLabelText(ADMIN_BUTTON_LABEL))).toBe(false)
   })
 
   test('hides the admin button while search is open and active', async () => {

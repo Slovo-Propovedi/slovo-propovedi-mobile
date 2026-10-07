@@ -48,11 +48,6 @@ export const ListenScreen = () => {
       edges={['top', 'left', 'right']}
       style={[styles.safeArea, { backgroundColor: currentTheme.background }]}
     >
-      {showAdminButton && (
-        <View style={styles.adminButtonSlot}>
-          <AdminShieldButton />
-        </View>
-      )}
       {isSearchOpen && (
         <View style={styles.searchHeader}>
           <SearchBar />
@@ -62,6 +57,11 @@ export const ListenScreen = () => {
         <SermonSearchResults onAddToPlaylist={openAddToPlaylist} />
       ) : (
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+          {showAdminButton && (
+            <View style={styles.adminButtonSlot}>
+              <AdminShieldButton />
+            </View>
+          )}
           <ScrollView
             onScroll={onScroll}
             scrollEventThrottle={16}
@@ -89,6 +89,7 @@ export const ListenScreen = () => {
 const styles = StyleSheet.create({
   adminButtonSlot: {
     // Center the 48pt shield on the pinned search row (SEARCH_HEADER_HEIGHT).
+    // `top` is valid because showAdminButton requires !isSearchOpen (search header unmounted).
     position: 'absolute',
     right: INDENTS.medium,
     top: (SEARCH_HEADER_HEIGHT - MIN_TOUCH_TARGET) / 2,
