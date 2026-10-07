@@ -77,7 +77,7 @@
   экрана.
 - **Результаты поиска** (`features/sermon-search` + `pages/listen`):
   `ListenScreen` владеет хуком и передаёт `onAddToPlaylist` пропом через
-  `SermonSearchResults` → `SearchResultsRow` → `SermonSearchRow` →
+  `SearchGroupedResults` → `SearchSermonGroup` → `SearchResultsRow` → `SermonSearchRow` →
   `buildHistoryMenuActions`. Кросс-фичевого импорта нет.
 - **Полноэкранный плеер и шторка очереди** (`widgets/expandable-player`):
   `ExpandablePlayer` владеет хуком (одна модалка). Колбэк идёт в меню трека

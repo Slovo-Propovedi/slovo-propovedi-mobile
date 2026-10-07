@@ -21,6 +21,7 @@
 | Плейлист                 | [playlist.md](./playlist.md)           | готов        |
 | Список плейлистов секции | [playlist-list.md](./playlist-list.md) | готов        |
 | «Мои плейлисты»          | [my-playlists.md](./my-playlists.md)   | готов        |
+| Результаты поиска        | [search-results.md](./search-results.md) | готов      |
 | «Читать» (таб)           | [read.md](./read.md)                   | заблокирован |
 | «Учиться» (таб)          | [study.md](./study.md)                 | заглушка     |
 | «Ещё» (меню)             | [more.md](./more.md)                   | готов        |

@@ -77,12 +77,18 @@ isInternetReachable ?? isConnected
 
 Поток `fetchSearchResults` (`src/features/sermon-search/model.ts`):
 
-1. запрос `sermonsApi.getSermons().sermonControllerFindAll({ search, take: 20 })` (сеть);
-2. успешный ответ всегда пишется в кэш (fire-and-forget `setCachedSearchResults`);
-3. при сетевой ошибке — чтение кэша (`getCachedSearchResults`); при непустом результате он показывается, иначе — пустое состояние «Ничего не найдено»;
-4. защита от устаревших ответов: кэш-фолбэк применяется, только если `requestId === latestRequestId` (медленное чтение кэша не перезаписывает более свежий поиск).
+1. одна сессия поиска делает **параллельно** два запроса: проповеди (`sermonsApi.getSermons().sermonControllerFindAll({ search, take: 20 })`) и плейлисты по названию/описанию (`playlistsApi.getPlaylists().playlistControllerFindAll({ search, limit: 50 })`);
+2. успешный ответ каждой ветки пишется в свой per-query кэш (fire-and-forget `setCachedSearchResults` / `setCachedPlaylistSearch`); сетевые запросы и фолбэки — `src/features/sermon-search/lib/searchSources.ts`;
+3. при сетевой ошибке каждой ветки — чтение её кэша; ветка проповедей задаёт выдачу, ветка плейлистов может вернуть пусто;
+4. защита от устаревших ответов общая: результаты (атомы + кэш-записи) применяются, только если `requestId === latestRequestId` (медленное чтение кэша не перезаписывает более свежий поиск).
+
+Результаты сводятся в группы (см. [screens/listen.md](../screens/listen.md) → «Поиск»): плейлисты — сначала совпадения по названию из `playlistControllerFindAll`, затем плейлисты из встроенных `playlists[]` найденных проповедей (дедуп по id, `mergePlaylistResults`); проповедники — уникальные `artist` найденных проповедей, содержащие запрос (`collectMatchingPreachers`), оба в `src/features/sermon-search/lib/composeSearchResults.ts`.
 
 `useOfflineRetry` для поиска **не** используется (нет UI-индикатора источника данных — см. `docs/debt.md`).
+
+## Кэш поиска плейлистов
+
+`src/features/sermon-search/lib/playlistSearchCache.ts` — `getCachedPlaylistSearch` / `setCachedPlaylistSearch`, ключи `cachedPlaylistSearch:<query>` + индекс `cachedPlaylistSearch:index` (`src/shared/config/cache-storage-keys.ts`). Повторяет семантику кэша проповедей: нормализация ключа (`trim` + `toLowerCase`), пустые результаты не кэшируются, индекс до 30 последних ключей с само-лечением повреждённого индекса, сериализованная очередь записей. Zod-валидация при чтении через `playlistsArraySchema` (`playlistDataSchema[]`). `useOfflineRetry` не используется (ветка живёт в той же сессии, что и поиск проповедей).
 
 ## Кэш подсказок поиска
 

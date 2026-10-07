@@ -6,8 +6,8 @@ import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import {
   SEARCH_HEADER_HEIGHT,
   SearchBar,
+  SearchGroupedResults,
   SearchToggleButton,
-  SermonSearchResults,
   useIsSearchActive,
   useIsSearchOpen,
 } from 'features/sermon-search'
@@ -15,6 +15,7 @@ import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'en
 import { createRefreshControl, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { useListenSearchNavigation } from '../lib/useListenSearchNavigation'
 import { usePullToRefresh } from '../lib/usePullToRefresh'
 import { useScrollActivity } from '../lib/useScrollActivity'
 import { AdminShieldButton } from './AdminShieldButton'
@@ -33,6 +34,7 @@ export const ListenScreen = () => {
   const { onScroll } = useScrollActivity()
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
   const { isRefreshing, refresh } = usePullToRefresh()
+  const { onPlaylistPress, onPreacherPress, onShowAllGroup } = useListenSearchNavigation()
 
   useEffect(() => {
     if (authStatus !== 'idle') return
@@ -54,7 +56,12 @@ export const ListenScreen = () => {
         </View>
       )}
       {isSearchOpen && isSearchActive ? (
-        <SermonSearchResults onAddToPlaylist={openAddToPlaylist} />
+        <SearchGroupedResults
+          onShowAllGroup={onShowAllGroup}
+          onPlaylistPress={onPlaylistPress}
+          onPreacherPress={onPreacherPress}
+          onAddToPlaylist={openAddToPlaylist}
+        />
       ) : (
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
           <ScrollView

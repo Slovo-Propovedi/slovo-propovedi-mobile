@@ -1,13 +1,19 @@
 import { action, atom } from '@reatom/framework'
-import { mapAllSermonsResponse, type SermonData } from 'entities/sermon'
-import { sermonsApi } from 'shared/api'
-import { getCachedSearchResults, setCachedSearchResults } from './lib/searchCache'
+import { type PlaylistData } from 'entities/playlist'
+import { type SermonData } from 'entities/sermon'
+import { collectMatchingPreachers, mergePlaylistResults } from './lib/composeSearchResults'
+import {
+  fetchPlaylistTitleMatches,
+  fetchSermonResults,
+  persistSearchResults,
+} from './lib/searchSources'
 
 export const MIN_QUERY_LENGTH = 2
-const SEARCH_TAKE = 20
 
 export const searchQueryAtom = atom('', 'searchQueryAtom')
 export const searchResultsAtom = atom<SermonData[]>([], 'searchResultsAtom')
+export const searchPlaylistsAtom = atom<PlaylistData[]>([], 'searchPlaylistsAtom')
+export const searchPreachersAtom = atom<string[]>([], 'searchPreachersAtom')
 export const isSearchingAtom = atom(false, 'isSearchingAtom')
 export const isSearchOpenAtom = atom(false, 'isSearchOpenAtom')
 
@@ -16,6 +22,8 @@ let latestRequestId = 0
 const cancelInFlightFetches = (): void => {
   latestRequestId += 1
 }
+
+const isCurrentRequest = (requestId: number): boolean => requestId === latestRequestId
 
 export const openSearch = action(async ctx => {
   await ctx.schedule(() => {
@@ -27,6 +35,8 @@ export const resetSearchResults = action(async ctx => {
   cancelInFlightFetches()
   await ctx.schedule(() => {
     searchResultsAtom(ctx, [])
+    searchPlaylistsAtom(ctx, [])
+    searchPreachersAtom(ctx, [])
     isSearchingAtom(ctx, false)
   })
 }, 'resetSearchResults')
@@ -36,6 +46,8 @@ export const closeSearch = action(async ctx => {
   await ctx.schedule(() => {
     searchQueryAtom(ctx, '')
     searchResultsAtom(ctx, [])
+    searchPlaylistsAtom(ctx, [])
+    searchPreachersAtom(ctx, [])
     isSearchingAtom(ctx, false)
     isSearchOpenAtom(ctx, false)
   })
@@ -48,6 +60,8 @@ export const fetchSearchResults = action(async (ctx, rawQuery: string) => {
   if (!query) {
     await ctx.schedule(() => {
       searchResultsAtom(ctx, [])
+      searchPlaylistsAtom(ctx, [])
+      searchPreachersAtom(ctx, [])
       isSearchingAtom(ctx, false)
     })
     return
@@ -58,36 +72,21 @@ export const fetchSearchResults = action(async (ctx, rawQuery: string) => {
   })
 
   try {
-    const response = await sermonsApi.getSermons().sermonControllerFindAll({
-      search: query,
-      take: SEARCH_TAKE,
-    })
-    if (requestId !== latestRequestId) return
+    const [sermonResult, playlistResult] = await Promise.all([
+      fetchSermonResults(query),
+      fetchPlaylistTitleMatches(query),
+    ])
+    if (!isCurrentRequest(requestId)) return
 
-    const sermons = mapAllSermonsResponse(response)
-    void setCachedSearchResults(query, sermons).catch(error =>
-      console.error('Search cache write failed:', error),
-    )
-    await ctx.schedule(() => {
-      searchResultsAtom(ctx, sermons)
-    })
-  } catch (error) {
-    console.error('fetchSearchResults network failed:', error)
-    if (requestId !== latestRequestId) return
-
-    let cachedSermons: SermonData[] | undefined
-    try {
-      cachedSermons = await getCachedSearchResults(query)
-    } catch (cacheError) {
-      console.error('Search cache read failed:', cacheError)
-    }
-    if (requestId !== latestRequestId) return
+    persistSearchResults(query, sermonResult, playlistResult)
 
     await ctx.schedule(() => {
-      searchResultsAtom(ctx, cachedSermons ?? [])
+      searchResultsAtom(ctx, sermonResult.data)
+      searchPlaylistsAtom(ctx, mergePlaylistResults(playlistResult.data, sermonResult.data))
+      searchPreachersAtom(ctx, collectMatchingPreachers(sermonResult.data, query))
     })
   } finally {
-    if (requestId === latestRequestId)
+    if (isCurrentRequest(requestId))
       await ctx.schedule(() => {
         isSearchingAtom(ctx, false)
       })

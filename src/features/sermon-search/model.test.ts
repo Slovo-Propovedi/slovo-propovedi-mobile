@@ -1,8 +1,16 @@
 const mockSermonControllerFindAll = jest.fn()
+const mockPlaylistControllerFindAll = jest.fn()
 const mockGetCachedSearchResults = jest.fn()
 const mockSetCachedSearchResults = jest.fn()
+const mockGetCachedPlaylistSearch = jest.fn()
+const mockSetCachedPlaylistSearch = jest.fn()
 
 jest.mock('shared/api', () => ({
+  playlistsApi: {
+    getPlaylists: () => ({
+      playlistControllerFindAll: mockPlaylistControllerFindAll,
+    }),
+  },
   sermonsApi: {
     getSermons: () => ({
       sermonControllerFindAll: mockSermonControllerFindAll,
@@ -15,9 +23,15 @@ jest.mock('./lib/searchCache', () => ({
   setCachedSearchResults: (...args: unknown[]) => mockSetCachedSearchResults(...args),
 }))
 
+jest.mock('./lib/playlistSearchCache', () => ({
+  getCachedPlaylistSearch: (...args: unknown[]) => mockGetCachedPlaylistSearch(...args),
+  setCachedPlaylistSearch: (...args: unknown[]) => mockSetCachedPlaylistSearch(...args),
+}))
+
 import { createCtx } from '@reatom/framework'
+import { mapPlaylistEntityToPlaylistData } from 'entities/playlist'
 import { mapAllSermonsResponse } from 'entities/sermon'
-import { sermonsMocks } from 'shared/api/generated'
+import { playlistsMocks, sermonsMocks } from 'shared/api/generated'
 import {
   closeSearch,
   fetchSearchResults,
@@ -25,17 +39,25 @@ import {
   isSearchOpenAtom,
   openSearch,
   resetSearchResults,
+  searchPlaylistsAtom,
+  searchPreachersAtom,
   searchQueryAtom,
   searchResultsAtom,
 } from './model'
 
+type PlaylistEntity = ReturnType<typeof playlistsMocks.getPlaylistControllerCreateResponseMock>
 type SermonEntity = ReturnType<typeof sermonsMocks.getSermonControllerFindOneResponseMock>
 
 const buildSermonsResponse = (sermons: SermonEntity[]) =>
   sermonsMocks.getSermonControllerFindAllResponseMock({ sermons })
 
+const buildPlaylistsResponse = (playlists: PlaylistEntity[]) =>
+  playlistsMocks.getPlaylistControllerFindAllResponseMock({ playlists })
+
 const buildSermonData = (sermon: SermonEntity) =>
   mapAllSermonsResponse(buildSermonsResponse([sermon]))[0]
+
+const buildPlaylistData = (playlist: PlaylistEntity) => mapPlaylistEntityToPlaylistData(playlist)
 
 describe('sermon-search model', () => {
   beforeEach(() => {
@@ -43,6 +65,11 @@ describe('sermon-search model', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
     mockGetCachedSearchResults.mockResolvedValue(undefined)
     mockSetCachedSearchResults.mockResolvedValue(undefined)
+    mockGetCachedPlaylistSearch.mockResolvedValue(undefined)
+    mockSetCachedPlaylistSearch.mockResolvedValue(undefined)
+    mockPlaylistControllerFindAll.mockResolvedValue(
+      playlistsMocks.getPlaylistControllerFindAllResponseMock({ playlists: [] }),
+    )
   })
 
   afterEach(() => {
@@ -120,6 +147,7 @@ describe('sermon-search model', () => {
     expect(ctx.get(searchResultsAtom)).toEqual([])
     expect(ctx.get(isSearchingAtom)).toBe(false)
     expect(mockSermonControllerFindAll).not.toHaveBeenCalled()
+    expect(mockPlaylistControllerFindAll).not.toHaveBeenCalled()
   })
 
   test('fetchSearchResults ignores a stale response from an older request', async () => {
@@ -196,11 +224,17 @@ describe('sermon-search model', () => {
   test('resetSearchResults resets results and the searching flag', async () => {
     const ctx = createCtx()
     searchResultsAtom(ctx, [buildSermonData(sermonsMocks.getSermonControllerFindOneResponseMock())])
+    searchPlaylistsAtom(ctx, [
+      buildPlaylistData(playlistsMocks.getPlaylistControllerCreateResponseMock()),
+    ])
+    searchPreachersAtom(ctx, ['Иван'])
     isSearchingAtom(ctx, true)
 
     await resetSearchResults(ctx)
 
     expect(ctx.get(searchResultsAtom)).toEqual([])
+    expect(ctx.get(searchPlaylistsAtom)).toEqual([])
+    expect(ctx.get(searchPreachersAtom)).toEqual([])
     expect(ctx.get(isSearchingAtom)).toBe(false)
   })
 
@@ -254,6 +288,10 @@ describe('sermon-search model', () => {
     const ctx = createCtx()
     searchQueryAtom(ctx, 'вера')
     searchResultsAtom(ctx, [buildSermonData(sermonsMocks.getSermonControllerFindOneResponseMock())])
+    searchPlaylistsAtom(ctx, [
+      buildPlaylistData(playlistsMocks.getPlaylistControllerCreateResponseMock()),
+    ])
+    searchPreachersAtom(ctx, ['Иван'])
     isSearchingAtom(ctx, true)
 
     await openSearch(ctx)
@@ -265,6 +303,77 @@ describe('sermon-search model', () => {
     expect(ctx.get(isSearchOpenAtom)).toBe(false)
     expect(ctx.get(searchQueryAtom)).toBe('')
     expect(ctx.get(searchResultsAtom)).toEqual([])
+    expect(ctx.get(searchPlaylistsAtom)).toEqual([])
+    expect(ctx.get(searchPreachersAtom)).toEqual([])
     expect(ctx.get(isSearchingAtom)).toBe(false)
+  })
+
+  test('fetchSearchResults merges title playlist matches before sermon-content matches', async () => {
+    const titlePlaylist = playlistsMocks.getPlaylistControllerCreateResponseMock({
+      id: 'title-playlist',
+    })
+    const contentPlaylist = playlistsMocks.getPlaylistControllerCreateResponseMock({
+      id: 'content-playlist',
+    })
+    const sermon = sermonsMocks.getSermonControllerFindOneResponseMock({
+      artist: 'Иван',
+      playlists: [contentPlaylist],
+    })
+    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
+    mockPlaylistControllerFindAll.mockResolvedValue(buildPlaylistsResponse([titlePlaylist]))
+    const ctx = createCtx()
+
+    await fetchSearchResults(ctx, 'иван')
+
+    expect(mockPlaylistControllerFindAll).toHaveBeenCalledWith({ limit: 50, search: 'иван' })
+    expect(ctx.get(searchPlaylistsAtom).map(playlist => playlist.id)).toEqual([
+      'title-playlist',
+      'content-playlist',
+    ])
+    expect(ctx.get(searchPreachersAtom)).toEqual(['Иван'])
+  })
+
+  test('fetchSearchResults does not duplicate a playlist matched by title and content', async () => {
+    const sharedPlaylist = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'shared' })
+    const sermon = sermonsMocks.getSermonControllerFindOneResponseMock({
+      playlists: [sharedPlaylist],
+    })
+    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
+    mockPlaylistControllerFindAll.mockResolvedValue(buildPlaylistsResponse([sharedPlaylist]))
+    const ctx = createCtx()
+
+    await fetchSearchResults(ctx, 'иван')
+
+    expect(ctx.get(searchPlaylistsAtom).map(playlist => playlist.id)).toEqual(['shared'])
+  })
+
+  test('fetchSearchResults writes playlist title matches to the playlist cache', async () => {
+    const playlist = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-1' })
+    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([]))
+    mockPlaylistControllerFindAll.mockResolvedValue(buildPlaylistsResponse([playlist]))
+    const ctx = createCtx()
+
+    await fetchSearchResults(ctx, 'вера')
+
+    expect(mockSetCachedPlaylistSearch).toHaveBeenCalledWith(
+      'вера',
+      expect.arrayContaining([expect.objectContaining({ id: 'pl-1' })]),
+    )
+  })
+
+  test('fetchSearchResults falls back to the playlist cache on network error', async () => {
+    const cachedPlaylist = {
+      ...buildPlaylistData(playlistsMocks.getPlaylistControllerCreateResponseMock()),
+      id: 'cached-playlist',
+    }
+    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([]))
+    mockPlaylistControllerFindAll.mockRejectedValue(new Error('network down'))
+    mockGetCachedPlaylistSearch.mockResolvedValue([cachedPlaylist])
+    const ctx = createCtx()
+
+    await fetchSearchResults(ctx, 'вера')
+
+    expect(mockGetCachedPlaylistSearch).toHaveBeenCalledWith('вера')
+    expect(ctx.get(searchPlaylistsAtom).map(playlist => playlist.id)).toEqual(['cached-playlist'])
   })
 })

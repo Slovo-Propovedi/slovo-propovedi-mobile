@@ -304,7 +304,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 | Список плейлиста               | `src/pages/playlist/ui/PlaylistTrackItem.tsx`                               | `useHistoryProgressMap()` + `getEntrySermon` |
 | Шторка очереди (мини-плейлист) | `src/widgets/expandable-player/ui/PlaylistBottomSheet/PlaylistSheetRow.tsx` | `useHistoryProgress(id)` (узкая per-row подписка) |
 | Экран «Офлайн»                 | `src/pages/offline/ui/OfflineRow.tsx`                                       | `useHistoryProgress(sermon.id)` (узкая per-row подписка) |
-| Результаты поиска              | `src/features/sermon-search/ui/SermonSearchResults.tsx`                     | `useHistoryProgressMap()` + `useHistorySermonIds()` (подписка на уровне списка, прокидывается в строки) |
+| Результаты поиска              | `src/features/sermon-search/ui/SearchGroupedResults.tsx`                    | `useHistoryProgressMap()` + `useHistorySermonIds()` (подписка на уровне списка, прокидывается в строки) |
 | Экран истории                  | `src/pages/history/ui/HistoryRow.tsx`                                       | inline-вывод из записи: `completed ? 1 : min(positionMs/durationMs, 1)` |
 
 Все строки показывают только **сохранённый** прогресс (stored, событийно обновляемый). Полоса текущей (сейчас воспроизводимой) проповеди не «тикает» в реальном времени — она обновится на ближайшем событии (пауза, переключение и т.д.).

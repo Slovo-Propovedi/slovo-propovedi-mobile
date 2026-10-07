@@ -54,6 +54,7 @@
 | [`screens/playlist.md`](./screens/playlist.md)                         | Экран плейлиста                                                             |
 | [`screens/playlist-list.md`](./screens/playlist-list.md)               | Экран списка плейлистов                                                     |
 | [`screens/my-playlists.md`](./screens/my-playlists.md)                 | Экран «Мои плейлисты» (редактирование порядка)                              |
+| [`screens/search-results.md`](./screens/search-results.md)             | Экран «Результаты поиска» (полные списки групп)                             |
 | [`screens/read.md`](./screens/read.md)                                 | Таб «Читать» (заблокирован)                                                 |
 | [`screens/study.md`](./screens/study.md)                               | Таб «Учиться» (заглушка)                                                    |
 | [`screens/more.md`](./screens/more.md)                                 | Таб «Ещё»                                                                   |
