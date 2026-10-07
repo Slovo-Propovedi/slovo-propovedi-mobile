@@ -1,4 +1,5 @@
 import { deleteAudioEntry, hasCompleteAudio } from './webCacheApi'
+import { wasDownloadCompleted } from './webCompletedDownloads'
 
 /**
  * Web has no local file URI: playback streams through the service worker, which
@@ -9,13 +10,14 @@ import { deleteAudioEntry, hasCompleteAudio } from './webCacheApi'
 export const getPartialFileUri = async (_audioUrl: string): Promise<null | string> => null
 
 /**
- * Deletes the web equivalent of a partial file: an uncommitted Cache Storage
- * entry left behind by a cancelled/killed download. A committed entry is the
- * final cached audio and must be kept, so it is left untouched.
+ * Deletes a genuinely partial web entry: an uncommitted Cache Storage entry that
+ * this session did not complete a download for (e.g. A stale leftover). A
+ * committed entry, or one whose `cache.put` completed this session even if the
+ * manifest commit failed, is complete data and must be kept — the orphan sweep
+ * reconciles the rest.
  *
  * Best-effort and never throws (mirrors the native variant): callers use it
- * fire-and-forget. On a successful download the entry is committed, so this is
- * a no-op; only genuinely partial data is removed.
+ * fire-and-forget.
  * @param audioUrl - Network URL of the track.
  */
 export const deletePartialFile = (audioUrl: string): void => {
@@ -23,6 +25,7 @@ export const deletePartialFile = (audioUrl: string): void => {
 
   void (async () => {
     try {
+      if (wasDownloadCompleted(audioUrl)) return
       if (await hasCompleteAudio(audioUrl)) return
       await deleteAudioEntry(audioUrl)
     } catch (error) {

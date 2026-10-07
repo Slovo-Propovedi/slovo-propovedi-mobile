@@ -106,7 +106,7 @@ isInternetReachable ?? isConnected
 
 Офлайн-прослушивание обеспечивает кэш аудио — [audio-cache.md](./audio-cache.md). При старте трека `AudioLoader` сначала берёт закэшированный файл, иначе стартует фоновое кэширование.
 
-На web отдельного «частичного файла» нет: его эквивалент — **незакоммиченный** entry в Cache Storage (скачивание, прерванное cancel/kill до коммита в манифест). `deletePartialFile` (`src/entities/offline-cache/lib/partialFile.web.ts`) удаляет именно такой entry и не трогает закоммиченный (финальный) кэш; нативный `deletePartialFile` удаляет `.cache.mp3`. Вызов общий (`cacheAudioWithProgress.ts`), без `Platform`-гейта. Web-плеер понижает `AbortError` из `audio.play()` (отменённый сменой источника) до `console.warn` без диалога — `src/entities/player/lib/PlayerService/web/audioHandlers.ts`.
+На web отдельного «частичного файла» нет: его эквивалент — **незакоммиченный** entry в Cache Storage (скачивание, прерванное cancel/kill до коммита в манифест). `deletePartialFile` (`src/entities/offline-cache/lib/partialFile.web.ts`) удаляет только заведомо частичные записи: он пропускает закоммиченный (финальный) кэш **и** запись, чей `cache.put` завершился в этой сессии, даже если коммит в манифест упал (`wasDownloadCompleted`, `webCacheApi.ts`) — это полные данные, их не трогаем, остальное согласует orphan-sweep. Нативный `deletePartialFile` удаляет `.cache.mp3`. Вызов общий (`cacheAudioWithProgress.ts`), без `Platform`-гейта. Web-плеер понижает `AbortError` из `audio.play()` (отменённый сменой источника) до `console.warn` без диалога — `src/entities/player/lib/PlayerService/web/audioHandlers.ts`.
 
 ## Офлайн-guard при воспроизведении (Issue #81)
 

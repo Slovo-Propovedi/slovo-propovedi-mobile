@@ -13,6 +13,7 @@ import {
   readCommittedUrls,
   uncommitAudioUrl,
 } from './webCacheManifest'
+import { rememberCompletedDownload } from './webCompletedDownloads'
 import {
   addActiveDownloadWithHeartbeat,
   clearActiveDownloads,
@@ -96,6 +97,7 @@ export const downloadAndStoreAudio = async (
   try {
     const response = await fetchAudioForCache(audioUrl, onProgress, signal)
     await putAudioResponse(audioUrl, response)
+    rememberCompletedDownload(audioUrl)
     try {
       // A commit failure only means a re-download next session — never fail the download.
       await commitAudioUrl(await openAudioCache(), audioUrl)
