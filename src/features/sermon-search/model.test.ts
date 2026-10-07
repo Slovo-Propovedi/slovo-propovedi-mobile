@@ -308,7 +308,7 @@ describe('sermon-search model', () => {
     expect(ctx.get(isSearchingAtom)).toBe(false)
   })
 
-  test('fetchSearchResults merges title playlist matches before sermon-content matches', async () => {
+  test('fetchSearchResults keeps only playlist title matches, ignoring sermon content', async () => {
     const titlePlaylist = playlistsMocks.getPlaylistControllerCreateResponseMock({
       id: 'title-playlist',
     })
@@ -326,25 +326,8 @@ describe('sermon-search model', () => {
     await fetchSearchResults(ctx, 'иван')
 
     expect(mockPlaylistControllerFindAll).toHaveBeenCalledWith({ limit: 50, search: 'иван' })
-    expect(ctx.get(searchPlaylistsAtom).map(playlist => playlist.id)).toEqual([
-      'title-playlist',
-      'content-playlist',
-    ])
+    expect(ctx.get(searchPlaylistsAtom).map(playlist => playlist.id)).toEqual(['title-playlist'])
     expect(ctx.get(searchPreachersAtom)).toEqual(['Иван'])
-  })
-
-  test('fetchSearchResults does not duplicate a playlist matched by title and content', async () => {
-    const sharedPlaylist = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'shared' })
-    const sermon = sermonsMocks.getSermonControllerFindOneResponseMock({
-      playlists: [sharedPlaylist],
-    })
-    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
-    mockPlaylistControllerFindAll.mockResolvedValue(buildPlaylistsResponse([sharedPlaylist]))
-    const ctx = createCtx()
-
-    await fetchSearchResults(ctx, 'иван')
-
-    expect(ctx.get(searchPlaylistsAtom).map(playlist => playlist.id)).toEqual(['shared'])
   })
 
   test('fetchSearchResults writes playlist title matches to the playlist cache', async () => {

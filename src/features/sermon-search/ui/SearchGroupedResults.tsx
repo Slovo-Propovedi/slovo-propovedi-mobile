@@ -2,14 +2,13 @@ import { useAtom } from '@reatom/npm-react'
 import { useCallback } from 'react'
 import { ScrollView, StyleSheet } from 'react-native'
 import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-history'
-import { usePlayNewSermon } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
-import { type AudioPlayerData, type SermonData } from 'entities/sermon'
+import { type AudioPlayerData } from 'entities/sermon'
 import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
-import { resolvePlaylist } from '../lib/resolvePlaylist'
 import { useDebouncedSearch } from '../lib/useDebouncedSearch'
+import { useSermonPlayback } from '../lib/useSermonPlayback'
 import {
   isSearchingAtom,
   MIN_QUERY_LENGTH,
@@ -48,16 +47,11 @@ export const SearchGroupedResults = ({
   const [preachers] = useAtom(searchPreachersAtom)
   const [isSearching] = useAtom(isSearchingAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const playNewSermon = usePlayNewSermon()
+  const { modal, onSermonPress } = useSermonPlayback()
   const progressMap = useHistoryProgressMap()
   const historySermonIds = useHistorySermonIds()
 
   const trimmedQuery = query.trim()
-
-  const handleSermonPress = useCallback(
-    (sermon: SermonData) => void playNewSermon({ playlist: resolvePlaylist(sermon), sermon }),
-    [playNewSermon],
-  )
 
   const handlePreacherPress = useCallback(
     (artist: string) => onPreacherPress?.(artist),
@@ -74,47 +68,50 @@ export const SearchGroupedResults = ({
   const isEmpty = sermons.length === 0 && playlists.length === 0 && preachers.length === 0
 
   return (
-    <ScrollView
-      keyboardDismissMode='on-drag'
-      keyboardShouldPersistTaps='handled'
-      style={[styles.scroll, { backgroundColor: currentTheme.background }]}
-      contentContainerStyle={[
-        styles.listContent,
-        { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
-      ]}
-    >
-      {isSearching ? (
-        <SearchGroupedResultsSkeleton />
-      ) : isEmpty ? (
-        <EmptyState message={NO_RESULTS_MESSAGE} />
-      ) : (
-        <>
-          <SearchSermonGroup
-            sermons={sermons}
-            progressMap={progressMap}
-            onPress={handleSermonPress}
-            onAddToPlaylist={onAddToPlaylist}
-            historySermonIds={historySermonIds}
-            onShowAll={handleShowAllGroup('sermons')}
-          />
-          <SearchPlaylistGroup
-            playlists={playlists}
-            onPress={onPlaylistPress}
-            onShowAll={handleShowAllGroup('playlists')}
-          />
-          <SearchPreacherGroup
-            preachers={preachers}
-            onPress={handlePreacherPress}
-            onShowAll={handleShowAllGroup('preachers')}
-          />
-        </>
-      )}
-    </ScrollView>
+    <>
+      <ScrollView
+        keyboardDismissMode='on-drag'
+        keyboardShouldPersistTaps='handled'
+        style={[styles.scroll, { backgroundColor: currentTheme.background }]}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
+        ]}
+      >
+        {isSearching ? (
+          <SearchGroupedResults.Skeleton />
+        ) : isEmpty ? (
+          <EmptyState message={NO_RESULTS_MESSAGE} />
+        ) : (
+          <>
+            <SearchSermonGroup
+              sermons={sermons}
+              onPress={onSermonPress}
+              progressMap={progressMap}
+              onAddToPlaylist={onAddToPlaylist}
+              historySermonIds={historySermonIds}
+              onShowAll={handleShowAllGroup('sermons')}
+            />
+            <SearchPlaylistGroup
+              playlists={playlists}
+              onPress={onPlaylistPress}
+              onShowAll={handleShowAllGroup('playlists')}
+            />
+            <SearchPreacherGroup
+              preachers={preachers}
+              onPress={handlePreacherPress}
+              onShowAll={handleShowAllGroup('preachers')}
+            />
+          </>
+        )}
+      </ScrollView>
+      {modal}
+    </>
   )
 }
 
-// The single-group skeleton hangs off the public component; the full-results
-// screen renders it while its list loads.
+// Skeletons hang off the public component (Composition API).
+SearchGroupedResults.Skeleton = SearchGroupedResultsSkeleton
 SearchGroupedResults.GroupSkeleton = SearchGroupSkeleton
 
 const styles = StyleSheet.create({

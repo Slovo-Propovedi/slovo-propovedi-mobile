@@ -1,7 +1,7 @@
 import { action, atom } from '@reatom/framework'
 import { type PlaylistData } from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
-import { collectMatchingPreachers, mergePlaylistResults } from './lib/composeSearchResults'
+import { collectMatchingPreachers } from './lib/composeSearchResults'
 import {
   fetchPlaylistTitleMatches,
   fetchSermonResults,
@@ -82,7 +82,7 @@ export const fetchSearchResults = action(async (ctx, rawQuery: string) => {
 
     await ctx.schedule(() => {
       searchResultsAtom(ctx, sermonResult.data)
-      searchPlaylistsAtom(ctx, mergePlaylistResults(playlistResult.data, sermonResult.data))
+      searchPlaylistsAtom(ctx, playlistResult.data)
       searchPreachersAtom(ctx, collectMatchingPreachers(sermonResult.data, query))
     })
   } finally {

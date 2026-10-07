@@ -65,7 +65,12 @@ jest.mock('entities/track-list', () => {
   }
 })
 
+// RN render + async search fetch make each case several seconds in this
+// environment; the default 5s Jest timeout is too tight for this suite.
+jest.setTimeout(30_000)
+
 const QUERY = 'вера'
+const PICKER_TITLE = 'Выберите плейлист'
 
 const buildSermonsResponse = (
   sermons: ReturnType<typeof sermonsMocks.getSermonControllerFindOneResponseMock>[],
@@ -97,18 +102,6 @@ describe('<SearchResultsScreen>', () => {
     expect(mockSermonControllerFindAll).toHaveBeenCalledWith({ search: QUERY, take: 100 })
   })
 
-  test('plays a sermon on tap', async () => {
-    const sermon = sermonsMocks.getSermonControllerFindOneResponseMock()
-    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
-    await renderWithParams({ query: QUERY, type: 'sermons' })
-
-    await fireEvent.press(await screen.findByText(sermon.title))
-
-    expect(mockPlayNewSermon).toHaveBeenCalledWith(
-      expect.objectContaining({ sermon: expect.objectContaining({ id: sermon.id }) }),
-    )
-  })
-
   test('navigates to the playlist screen on playlist tap', async () => {
     const playlist = playlistsMocks.getPlaylistControllerCreateResponseMock()
     mockPlaylistControllerFindAll.mockResolvedValue(buildPlaylistsResponse([playlist]))
@@ -122,20 +115,39 @@ describe('<SearchResultsScreen>', () => {
     })
   })
 
-  test('includes a playlist matched only by sermon content on the playlists screen', async () => {
-    const contentPlaylist = playlistsMocks.getPlaylistControllerCreateResponseMock({
-      id: 'content-playlist',
-    })
+  test('opens the playlist picker for a sermon in several playlists and plays the chosen one', async () => {
+    const playlistA = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-a' })
+    const playlistB = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-b' })
     const sermon = sermonsMocks.getSermonControllerFindOneResponseMock({
-      playlists: [contentPlaylist],
+      playlists: [playlistA, playlistB],
     })
     mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
-    mockPlaylistControllerFindAll.mockResolvedValue(buildPlaylistsResponse([]))
+    await renderWithParams({ query: QUERY, type: 'sermons' })
 
-    await renderWithParams({ query: QUERY, type: 'playlists' })
+    await fireEvent.press(await screen.findByText(sermon.title))
 
-    expect(await screen.findByText(contentPlaylist.title)).toBeTruthy()
-    expect(mockSermonControllerFindAll).toHaveBeenCalledWith({ search: QUERY, take: 100 })
+    expect(screen.getByText(PICKER_TITLE)).toBeTruthy()
+    expect(mockPlayNewSermon).not.toHaveBeenCalled()
+
+    await fireEvent.press(screen.getByText(playlistA.title))
+
+    expect(mockPlayNewSermon).toHaveBeenCalledWith(
+      expect.objectContaining({ playlist: expect.objectContaining({ id: 'pl-a' }) }),
+    )
+  })
+
+  test('plays a single-playlist sermon immediately without a picker', async () => {
+    const playlist = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-1' })
+    const sermon = sermonsMocks.getSermonControllerFindOneResponseMock({ playlists: [playlist] })
+    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
+    await renderWithParams({ query: QUERY, type: 'sermons' })
+
+    await fireEvent.press(await screen.findByText(sermon.title))
+
+    expect(screen.queryByText(PICKER_TITLE)).toBeNull()
+    expect(mockPlayNewSermon).toHaveBeenCalledWith(
+      expect.objectContaining({ playlist: expect.objectContaining({ id: 'pl-1' }) }),
+    )
   })
 
   test('navigates to sermons of a preacher on preacher tap', async () => {

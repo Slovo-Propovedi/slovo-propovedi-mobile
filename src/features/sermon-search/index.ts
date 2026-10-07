@@ -1,6 +1,5 @@
-export { collectMatchingPreachers, mergePlaylistResults } from './lib/composeSearchResults'
+export { collectMatchingPreachers } from './lib/composeSearchResults'
 export { SEARCH_HEADER_HEIGHT } from './lib/constants'
-export { resolvePlaylist } from './lib/resolvePlaylist'
 export {
   fetchPlaylistTitleMatches,
   fetchSermonResults,
@@ -9,6 +8,7 @@ export {
 } from './lib/searchSources'
 export { useIsSearchActive } from './lib/useIsSearchActive'
 export { useIsSearchOpen } from './lib/useIsSearchOpen'
+export { useSermonPlayback } from './lib/useSermonPlayback'
 export { SearchBar } from './ui/SearchBar'
 export { SearchGroupedResults } from './ui/SearchGroupedResults'
 export { SearchPlaylistRow } from './ui/SearchPlaylistRow'

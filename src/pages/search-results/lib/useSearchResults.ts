@@ -3,7 +3,6 @@ import {
   collectMatchingPreachers,
   fetchPlaylistTitleMatches,
   fetchSermonResults,
-  mergePlaylistResults,
   persistPlaylistSearchResults,
   persistSermonSearchResults,
 } from 'features/sermon-search'
@@ -37,14 +36,10 @@ export const useSearchResults = (type: SearchResultsType, query: string) => {
       setIsLoading(true)
 
       if (type === 'playlists') {
-        const [sermonResult, playlistResult] = await Promise.all([
-          fetchSermonResults(query, FULL_SERMONS_TAKE),
-          fetchPlaylistTitleMatches(query, FULL_PLAYLISTS_LIMIT),
-        ])
+        const result = await fetchPlaylistTitleMatches(query, FULL_PLAYLISTS_LIMIT)
         if (cancelled) return
-        persistSermonSearchResults(query, sermonResult)
-        persistPlaylistSearchResults(query, playlistResult)
-        setPlaylists(mergePlaylistResults(playlistResult.data, sermonResult.data))
+        persistPlaylistSearchResults(query, result)
+        setPlaylists(result.data)
         return
       }
 

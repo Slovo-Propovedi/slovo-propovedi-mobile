@@ -1,14 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect } from 'react'
 import {
-  resolvePlaylist,
   SearchGroupedResults,
   SearchPlaylistRow,
   SearchPreacherRow,
+  useSermonPlayback,
 } from 'features/sermon-search'
-import { usePlayNewSermon } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
-import { type SermonData } from 'entities/sermon'
 import { useHeaderTitle } from 'shared/routing/useHeaderTitle'
 import { parseSearchResultsParams } from '../lib/parseSearchResultsParams'
 import { buildSearchResultsTitle } from '../lib/searchResultsTitle'
@@ -23,7 +21,7 @@ export const SearchResultsScreen = () => {
   const parsed = parseSearchResultsParams(params)
   const setHeaderTitle = useHeaderTitle()
   const router = useRouter()
-  const playNewSermon = usePlayNewSermon()
+  const { modal, onSermonPress } = useSermonPlayback()
 
   const parsedType = parsed?.type
   const parsedQuery = parsed?.query
@@ -36,11 +34,6 @@ export const SearchResultsScreen = () => {
     if (!parsedType || !parsedQuery) return
     setHeaderTitle(buildSearchResultsTitle(parsedType, parsedQuery))
   }, [parsedQuery, parsedType, setHeaderTitle])
-
-  const handleSermonPress = useCallback(
-    (sermon: SermonData) => void playNewSermon({ playlist: resolvePlaylist(sermon), sermon }),
-    [playNewSermon],
-  )
 
   const handlePlaylistPress = useCallback(
     (playlist: PlaylistData) => {
@@ -65,11 +58,14 @@ export const SearchResultsScreen = () => {
 
   if (parsedType === 'sermons')
     return (
-      <ResultsList
-        data={sermons}
-        keyExtractor={sermon => sermon.id}
-        renderItem={({ item }) => <SermonResultRow sermon={item} onPress={handleSermonPress} />}
-      />
+      <>
+        <ResultsList
+          data={sermons}
+          keyExtractor={sermon => sermon.id}
+          renderItem={({ item }) => <SermonResultRow sermon={item} onPress={onSermonPress} />}
+        />
+        {modal}
+      </>
     )
 
   if (parsedType === 'playlists')

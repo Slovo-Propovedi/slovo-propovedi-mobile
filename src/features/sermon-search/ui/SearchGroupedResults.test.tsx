@@ -1,7 +1,8 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent, screen } from '@testing-library/react-native'
 import { type PlaylistData } from 'entities/playlist'
-import { type SermonData } from 'entities/sermon'
+import { mapAllSermonsResponse, type SermonData } from 'entities/sermon'
+import { playlistsMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import {
   isSearchingAtom,
@@ -11,6 +12,8 @@ import {
   searchResultsAtom,
 } from '../model'
 import { SearchGroupedResults } from './SearchGroupedResults'
+
+const mockPlayNewSermon = jest.fn()
 
 jest.mock('entities/offline-cache', () => ({
   useTrackItemCache: jest.fn(() => ({
@@ -35,7 +38,7 @@ jest.mock('shared/api', () => ({
 }))
 
 jest.mock('entities/player', () => ({
-  usePlayNewSermon: jest.fn(() => jest.fn()),
+  usePlayNewSermon: () => mockPlayNewSermon,
 }))
 
 jest.mock('entities/listening-history', () => ({
@@ -86,12 +89,17 @@ jest.mock('../lib/useDebouncedSearch', () => ({
   useDebouncedSearch: () => undefined,
 }))
 
+// RN render + playlist-picker modal make several cases run for multiple seconds
+// under parallel load; the default 5s Jest timeout is too tight.
+jest.setTimeout(30_000)
+
 const ACTIVE_QUERY = 'вера'
 const SHORT_QUERY = 'в'
 const NO_RESULTS_MESSAGE = 'Ничего не найдено'
 const SERMONS_LABEL = 'Проповеди'
 const PLAYLISTS_LABEL = 'Плейлисты'
 const PREACHERS_LABEL = 'Проповедники'
+const PICKER_TITLE = 'Выберите плейлист'
 
 const buildSermon = (index: number): SermonData => ({
   artist: `Проповедник ${index}`,
@@ -100,6 +108,13 @@ const buildSermon = (index: number): SermonData => ({
   id: `sermon-${index}`,
   title: `Проповедь ${index}`,
 })
+
+const buildSermonData = (
+  sermon: ReturnType<typeof sermonsMocks.getSermonControllerFindOneResponseMock>,
+): SermonData =>
+  mapAllSermonsResponse(
+    sermonsMocks.getSermonControllerFindAllResponseMock({ sermons: [sermon] }),
+  )[0]
 
 const buildPlaylist = (index: number): PlaylistData => ({
   artwork: null,
@@ -211,6 +226,68 @@ describe('<SearchGroupedResults>', () => {
     await fireEvent.press(screen.getByText('Иван'))
 
     expect(onPreacherPress).toHaveBeenCalledWith('Иван')
+  })
+
+  test('plays a single-playlist sermon immediately without a picker', async () => {
+    const playlist = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-1' })
+    const sermon = buildSermonData(
+      sermonsMocks.getSermonControllerFindOneResponseMock({ playlists: [playlist] }),
+    )
+    const ctx = createCtx()
+    searchQueryAtom(ctx, ACTIVE_QUERY)
+    searchResultsAtom(ctx, [sermon])
+    await renderWithProviders(<SearchGroupedResults onPlaylistPress={jest.fn()} />, { ctx })
+
+    await fireEvent.press(screen.getByText(sermon.title))
+
+    expect(screen.queryByText(PICKER_TITLE)).toBeNull()
+    expect(mockPlayNewSermon).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playlist: expect.objectContaining({ id: 'pl-1' }),
+        sermon: expect.objectContaining({ id: sermon.id }),
+      }),
+    )
+  })
+
+  test('opens the playlist picker for a multi-playlist sermon and plays the chosen playlist', async () => {
+    const playlistA = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-a' })
+    const playlistB = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-b' })
+    const sermon = buildSermonData(
+      sermonsMocks.getSermonControllerFindOneResponseMock({ playlists: [playlistA, playlistB] }),
+    )
+    const ctx = createCtx()
+    searchQueryAtom(ctx, ACTIVE_QUERY)
+    searchResultsAtom(ctx, [sermon])
+    await renderWithProviders(<SearchGroupedResults onPlaylistPress={jest.fn()} />, { ctx })
+
+    await fireEvent.press(screen.getByText(sermon.title))
+
+    expect(screen.getByText(PICKER_TITLE)).toBeTruthy()
+    expect(mockPlayNewSermon).not.toHaveBeenCalled()
+
+    await fireEvent.press(screen.getByText(playlistA.title))
+
+    expect(mockPlayNewSermon).toHaveBeenCalledWith(
+      expect.objectContaining({ playlist: expect.objectContaining({ id: 'pl-a' }) }),
+    )
+  })
+
+  test('dismisses the picker without playing when the backdrop is pressed', async () => {
+    const playlistA = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-a' })
+    const playlistB = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-b' })
+    const sermon = buildSermonData(
+      sermonsMocks.getSermonControllerFindOneResponseMock({ playlists: [playlistA, playlistB] }),
+    )
+    const ctx = createCtx()
+    searchQueryAtom(ctx, ACTIVE_QUERY)
+    searchResultsAtom(ctx, [sermon])
+    await renderWithProviders(<SearchGroupedResults onPlaylistPress={jest.fn()} />, { ctx })
+
+    await fireEvent.press(screen.getByText(sermon.title))
+    await fireEvent.press(screen.getByTestId('modal-backdrop'))
+
+    expect(screen.queryByText(PICKER_TITLE)).toBeNull()
+    expect(mockPlayNewSermon).not.toHaveBeenCalled()
   })
 
   test('forwards onAddToPlaylist with the sermon when the add-to-playlist action fires', async () => {
