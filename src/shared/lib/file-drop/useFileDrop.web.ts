@@ -23,9 +23,21 @@ export const useFileDrop = (onFiles: DropHandler) => {
 
   useEffect(() => {
     const tracker = createDropTracker()
+    let lastIsDragActive = tracker.isDragActive
+    let lastDraggedMimeTypes = tracker.draggedMimeTypes
+
     const syncDragState = () => {
-      setIsDragActive(tracker.isDragActive)
-      setDraggedMimeTypes(tracker.draggedMimeTypes)
+      const nextIsDragActive = tracker.isDragActive
+      const nextDraggedMimeTypes = tracker.draggedMimeTypes
+      const isUnchanged =
+        nextIsDragActive === lastIsDragActive &&
+        nextDraggedMimeTypes.join() === lastDraggedMimeTypes.join()
+      if (isUnchanged) return
+
+      lastIsDragActive = nextIsDragActive
+      lastDraggedMimeTypes = nextDraggedMimeTypes
+      setIsDragActive(nextIsDragActive)
+      setDraggedMimeTypes(nextDraggedMimeTypes)
     }
 
     const onDragEnter = (event: DragEvent) => {

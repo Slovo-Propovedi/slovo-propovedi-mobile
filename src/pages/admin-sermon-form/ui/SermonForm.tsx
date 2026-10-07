@@ -83,12 +83,7 @@ export const SermonForm = ({
           onChange={onChange}
           onChapterEndChange={onChapterEndChange}
         />
-        <SermonMediaFields
-          values={values}
-          status={status}
-          onChange={onChange}
-          isDragActive={isDragActive}
-        />
+        <SermonMediaFields values={values} status={status} onChange={onChange} />
 
         <View style={styles.block}>
           <Text style={[styles.blockTitle, { color: currentTheme.text }]}>Плейлисты</Text>

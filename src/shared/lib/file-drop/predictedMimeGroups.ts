@@ -5,7 +5,7 @@
 
 type MimeGroup = 'audio' | 'image' | 'text'
 
-const TEXT_MIME_TYPES = ['application/pdf', 'application/xml', 'text/plain']
+const TEXT_MIME_TYPES = ['application/pdf', 'application/xml', 'text/plain', 'text/xml']
 
 const mimeGroup = (mimeType: string): MimeGroup | null => {
   if (mimeType.startsWith('image/')) return 'image'

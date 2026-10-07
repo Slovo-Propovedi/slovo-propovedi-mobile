@@ -9,6 +9,10 @@ describe('predictedMimeGroups', () => {
     ).toEqual(['audio', 'image', 'text'])
   })
 
+  test('maps XML/FB2 MIME types (application/xml, text/xml) to text', () => {
+    expect(sorted(predictedMimeGroups(['application/xml', 'text/xml']))).toEqual(['text'])
+  })
+
   test('deduplicates repeated groups', () => {
     expect(sorted(predictedMimeGroups(['image/png', 'image/webp']))).toEqual(['image'])
   })

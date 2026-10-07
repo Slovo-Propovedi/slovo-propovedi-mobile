@@ -37,12 +37,7 @@ const IDLE_STATUS = { currentFileName: null, error: null, isUploading: false, pr
 
 const renderFields = (values: SermonFormValues, onChange = jest.fn()) =>
   renderWithProviders(
-    <SermonMediaFields
-      values={values}
-      onChange={onChange}
-      isDragActive={false}
-      status={IDLE_STATUS}
-    />,
+    <SermonMediaFields values={values} onChange={onChange} status={IDLE_STATUS} />,
   )
 
 const lastImportProps = () => mockedImportFromYoutube.mock.calls[0][0]

@@ -123,6 +123,27 @@ describe('createDropTracker', () => {
     expect(tracker.draggedMimeTypes).toEqual([AUDIO_MIME])
   })
 
+  test('keeps the same MIME array reference across repeated identical dragover', () => {
+    const tracker = createDropTracker()
+    tracker.dragEnter(fileDrag([], { items: [item('file', AUDIO_MIME)] }))
+    const first = tracker.draggedMimeTypes
+
+    tracker.dragOver(fileDrag([], { items: [item('file', AUDIO_MIME)] }))
+
+    expect(tracker.draggedMimeTypes).toBe(first)
+  })
+
+  test('replaces the MIME array when the dragged kinds change', () => {
+    const tracker = createDropTracker()
+    tracker.dragEnter(fileDrag([], { items: [item('file', AUDIO_MIME)] }))
+    const first = tracker.draggedMimeTypes
+
+    tracker.dragOver(fileDrag([], { items: [item('file', 'image/png')] }))
+
+    expect(tracker.draggedMimeTypes).toEqual(['image/png'])
+    expect(tracker.draggedMimeTypes).not.toBe(first)
+  })
+
   test('clears MIME types when the last nested drag leaves', () => {
     const tracker = createDropTracker()
     tracker.dragEnter(fileDrag([], { items: [item('file', AUDIO_MIME)] }))

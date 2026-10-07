@@ -14,12 +14,10 @@ type UpdateField = <K extends keyof SermonFormValues>(key: K, value: SermonFormV
 // На web файлы можно ещё и перетащить на страницу — за это отвечает
 // родительский `SermonForm` (оверлей drop), а сюда приходит только статус.
 export const SermonMediaFields = ({
-  isDragActive,
   onChange,
   status,
   values,
 }: {
-  isDragActive: boolean
   onChange: UpdateField
   status: {
     currentFileName: null | string
@@ -68,7 +66,7 @@ export const SermonMediaFields = ({
         hint='Необязательно. PDF, FB2 или TXT.'
         onChange={value => onChange('textFileUrl', value)}
       />
-      <DropStatusLine {...status} isDragActive={isDragActive} />
+      <DropStatusLine {...status} />
     </View>
   )
 }

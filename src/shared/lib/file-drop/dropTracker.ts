@@ -46,7 +46,9 @@ const collectFileMimeTypes = ({ dataTransfer }: DragPayload): string[] =>
  * отдаёт список файлов и сбрасывает состояние; пустой (без файлов) — возвращает
  * `null`, не перехватывая событие. `draggedMimeTypes` собирается из items на
  * enter/over, хранит последнее непустое значение, пока перетаскивание активно,
- * и очищается вместе с состоянием.
+ * и очищается вместе с состоянием. Пока виды не изменились, массив не
+ * пересоздаётся — иначе каждый `dragover` давал бы потребителю новый reference
+ * и лишний ререндер.
  */
 export const createDropTracker = (): DropTracker => {
   let dragDepth = 0
@@ -55,7 +57,10 @@ export const createDropTracker = (): DropTracker => {
 
   const rememberMimeTypes = (event: DragPayload) => {
     const mimeTypes = collectFileMimeTypes(event)
-    if (mimeTypes.length > 0) draggedMimeTypes = mimeTypes
+    if (mimeTypes.length === 0) return
+    if (mimeTypes.join() === draggedMimeTypes.join()) return
+
+    draggedMimeTypes = mimeTypes
   }
 
   const deactivate = () => {

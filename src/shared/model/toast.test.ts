@@ -2,6 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { showToast, toastAtom } from './toast'
 
 const TOAST_MESSAGE = 'Ссылка скопирована'
+const SECOND_TOAST_MESSAGE = 'Текст скопирован'
 const TOAST_DURATION_MS = 2000
 
 describe('toast model', () => {
@@ -32,6 +33,19 @@ describe('toast model', () => {
 
     jest.advanceTimersByTime(TOAST_DURATION_MS)
 
+    expect(ctx.get(toastAtom)).toBeNull()
+  })
+
+  test('keeps a back-to-back toast visible for its own full duration', () => {
+    showToast(ctx, TOAST_MESSAGE)
+    jest.advanceTimersByTime(TOAST_DURATION_MS / 2)
+    showToast(ctx, SECOND_TOAST_MESSAGE)
+
+    // Таймер первого тоста не должен досрочно гасить второй.
+    jest.advanceTimersByTime(TOAST_DURATION_MS / 2)
+    expect(ctx.get(toastAtom)).toBe(SECOND_TOAST_MESSAGE)
+
+    jest.advanceTimersByTime(TOAST_DURATION_MS / 2)
     expect(ctx.get(toastAtom)).toBeNull()
   })
 })

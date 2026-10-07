@@ -13,8 +13,8 @@ interface DropEntry {
   description: string
 }
 
-// `pointerEvents: 'none'` — оверлей не должен перехватывать события: drop целевым
-// элементом становится оверлей, но слушатели `useFileDrop` висят на `window`,
+// `pointerEvents: 'none'` — оверлей не перехватывает события: они проходят сквозь
+// него к элементам под ним и всплывают до window-слушателей `useFileDrop`,
 // поэтому файл всё равно доходит до обработчика. Строки уже смаплены вызывающим
 // в готовый текст, `active` подсвечивает предугаданные по MIME виды. Ничего не
 // рендерит, пока `visible` = false.
@@ -23,7 +23,6 @@ export const DropOverlay = ({
   visible,
 }: {
   entries: ReadonlyArray<DropEntry>
-  testLabel?: never
   visible: boolean
 }) => {
   const { currentTheme } = useTheme()
