@@ -40,7 +40,7 @@
 
 ## Состояния
 
-- Загрузка: скелетон группы `SearchGroupedResults.GroupSkeleton` (Composition API) с `rowKind='track'` для `sermons` и `'list'` для остальных типов — рендерится, пока `isLoading`.
+- Загрузка: скелетон группы `SearchGroupedResults.GroupSkeleton` (Composition API) — единый `TracksListItem.Skeleton` для всех типов (его геометрия совпадает с реальными строками, `SearchListItem` тоже выровнен по `TracksListItem`), рендерится, пока `isLoading`.
 - Пусто: `EmptyState` «Ничего не найдено» (`ListEmptyComponent` в `ResultsList`).
 - Офлайн: per-query кэш поиска (`cachedSermonSearch:q:<query>` / `cachedPlaylistSearch:q:<query>`); при отсутствии кэша — пустое состояние. UI-индикатора источника данных нет (см. [debt.md](../debt.md)).
 - Ошибка сети: `console.error` в `searchSources.ts`, затем фолбэк на кэш; ошибки не пробрасываются (функции `fetch*` не реджектят).

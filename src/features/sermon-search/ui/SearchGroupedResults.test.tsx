@@ -239,7 +239,6 @@ describe('<SearchGroupedResults>', () => {
     await renderWithState({ isSearching: true })
 
     expect(screen.getAllByTestId('tracks-list-item-skeleton').length).toBeGreaterThan(0)
-    expect(screen.getAllByTestId('search-row-skeleton').length).toBeGreaterThan(0)
     expect(screen.queryByText(NO_RESULTS_MESSAGE)).toBeNull()
   })
 })

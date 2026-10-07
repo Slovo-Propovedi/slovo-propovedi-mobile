@@ -61,10 +61,7 @@ export const SearchResultsScreen = () => {
 
   if (!parsedType) return null
 
-  if (isLoading)
-    return (
-      <SearchGroupedResults.GroupSkeleton rowKind={parsedType === 'sermons' ? 'track' : 'list'} />
-    )
+  if (isLoading) return <SearchGroupedResults.GroupSkeleton />
 
   if (parsedType === 'sermons')
     return (
