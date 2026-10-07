@@ -1,6 +1,7 @@
 import { act } from '@testing-library/react-native'
+import { type AdminFileKind } from 'shared/lib/file-drop'
 import { renderHookWithProviders } from 'shared/mocks'
-import { type AdminFileKind, getFileKindConfig } from './fileKinds'
+import { getFileKindConfig } from './fileKinds'
 import { useFileUpload } from './useFileUpload'
 
 const REJECTED_NAME = 'cover.gif'

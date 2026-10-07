@@ -4,7 +4,7 @@ import { FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
-import { predictedMimeGroups, useFileDrop } from 'shared/lib/file-drop'
+import { predictDropKinds, useFileDrop } from 'shared/lib/file-drop'
 import { showToast } from 'shared/model'
 import { createRefreshControl, DropOverlay, PullToRefresh } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
@@ -51,12 +51,12 @@ export const AdminMediaScreen = () => {
     message => showToastAction(message),
   )
   const { handleFiles } = useDroppedImageUpload(upload, isUploading)
-  const { draggedMimeTypes, isDragActive } = useFileDrop(handleFiles)
+  const { draggedItems, isDragActive } = useFileDrop(handleFiles)
 
   const { numColumns, tileSize } = measureMediaGrid(SCREEN_WIDTH)
   const dropEntries = [
     {
-      active: predictedMimeGroups(draggedMimeTypes).has('image'),
+      active: predictDropKinds(draggedItems).has('image'),
       description: 'Изображение (JPEG, PNG, WebP) → загрузка в библиотеку обложек',
     },
   ]

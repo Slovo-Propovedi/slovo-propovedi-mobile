@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { type APITypes, filesApi } from 'shared/api'
-import { type AdminFileKind, getFileKindConfig } from './fileKinds'
+import { type AdminFileKind } from 'shared/lib/file-drop'
+import { getFileKindConfig } from './fileKinds'
 
 export interface AdminFilesState {
   files: APITypes.FileMetadataDto[]

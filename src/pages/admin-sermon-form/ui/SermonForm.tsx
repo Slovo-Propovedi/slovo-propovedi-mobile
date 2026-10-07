@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native'
 import { PlaylistPicker } from 'widgets/admin-form-pickers'
-import { predictedMimeGroups, useFileDrop } from 'shared/lib/file-drop'
+import { predictDropKinds, useFileDrop } from 'shared/lib/file-drop'
 import { type TouchedMap } from 'shared/lib/hooks/useFormTouched'
 import { DropOverlay } from 'shared/ui'
 import { FormScrollView } from 'shared/ui/form'
@@ -19,7 +19,7 @@ export type SermonRequiredField = 'artist' | 'title'
 type UpdateField = <K extends keyof SermonFormValues>(key: K, value: SermonFormValues[K]) => void
 
 // Строки оверлея drop: текст готов заранее, `group` совпадает со строками
-// `AdminFileKind`, чтобы подсветить предугаданные по MIME виды.
+// `AdminFileKind`, чтобы подсветить предугаданные виды.
 const DROP_ENTRIES = [
   { description: 'Изображение (JPEG, PNG, WebP) → обложка', group: 'image' },
   { description: 'Аудио (MP3, M4A) → аудиофайл', group: 'audio' },
@@ -54,10 +54,10 @@ export const SermonForm = ({
   const { currentTheme } = useTheme()
   const { artists, books } = useSermonSuggestions()
   const { handleFiles, status } = useDroppedMediaUpload(onChange)
-  const { draggedMimeTypes, isDragActive } = useFileDrop(handleFiles)
-  const predictedGroups = predictedMimeGroups(draggedMimeTypes)
+  const { draggedItems, isDragActive } = useFileDrop(handleFiles)
+  const predictedKinds = predictDropKinds(draggedItems)
   const dropEntries = DROP_ENTRIES.map(entry => ({
-    active: predictedGroups.has(entry.group),
+    active: predictedKinds.has(entry.group),
     description: entry.description,
   }))
 

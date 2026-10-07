@@ -1,5 +1,5 @@
+import { type AdminFileKind } from 'shared/lib/file-drop'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { type AdminFileKind } from '../lib/fileKinds'
 import { useAdminFiles } from '../lib/useAdminFiles'
 import { useFileUpload } from '../lib/useFileUpload'
 import { FileUploadField } from './FileUploadField'

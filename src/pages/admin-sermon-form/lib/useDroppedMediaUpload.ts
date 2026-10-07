@@ -1,14 +1,13 @@
 import { useAction } from '@reatom/npm-react'
 import { useCallback, useRef, useState } from 'react'
 import {
-  type AdminFileKind,
-  detectFileKind,
   getFileKindConfig,
   getFileKindSuccessMessage,
   isAllowedExtension,
 } from 'widgets/admin-form-pickers'
 import { uploadSermonFile } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { type AdminFileKind, detectFileKind } from 'shared/lib/file-drop'
 import { showToast } from 'shared/model'
 import { type SermonFormValues } from './sermonFormInitialValues'
 

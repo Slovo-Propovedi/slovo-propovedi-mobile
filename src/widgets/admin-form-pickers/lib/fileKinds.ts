@@ -1,7 +1,9 @@
 // Виды файлов в формах админки: фильтры для каталога библиотеки, системного
-// пикера документов и проверки расширения перед загрузкой.
+// пикера документов и проверки расширения перед загрузкой. Сама классификация
+// файла (расширение → MIME) живёт в `shared/lib/file-drop/fileKinds.ts`, чтобы
+// предугадывание до drop и формы делили один источник правды.
 
-export type AdminFileKind = 'audio' | 'image' | 'text'
+import { type AdminFileKind } from 'shared/lib/file-drop'
 
 interface FileKindConfig {
   /** Расширения, допустимые к загрузке; пусто — загрузка без ограничения. */
@@ -71,45 +73,4 @@ export const isAllowedExtension = (kind: AdminFileKind, fileName: string): boole
   const lowerName = fileName.toLowerCase()
 
   return allowedExtensions.some(extension => lowerName.endsWith(`.${extension}`))
-}
-
-const AUDIO_KIND: AdminFileKind = 'audio'
-const IMAGE_KIND: AdminFileKind = 'image'
-const TEXT_KIND: AdminFileKind = 'text'
-
-const EXTENSION_KIND: Partial<Record<string, AdminFileKind>> = {
-  fb2: TEXT_KIND,
-  jpeg: IMAGE_KIND,
-  jpg: IMAGE_KIND,
-  m4a: AUDIO_KIND,
-  mp3: AUDIO_KIND,
-  pdf: TEXT_KIND,
-  png: IMAGE_KIND,
-  txt: TEXT_KIND,
-  webp: IMAGE_KIND,
-}
-
-const TEXT_MIME_TYPES = ['application/pdf', 'text/plain', 'application/xml']
-
-const extensionOf = (fileName: string): string => {
-  const dotIndex = fileName.lastIndexOf('.')
-
-  return dotIndex === -1 ? '' : fileName.slice(dotIndex + 1).toLowerCase()
-}
-
-/**
- * Определяет вид админского файла по расширению, а при его отсутствии — по
- * MIME-типу. Неизвестные файлы возвращают null и игнорируются наверху.
- * @param fileName - Имя файла.
- * @param mimeType - MIME-тип от браузера (необязательно).
- */
-export const detectFileKind = (fileName: string, mimeType?: string): AdminFileKind | null => {
-  const kindByExtension = EXTENSION_KIND[extensionOf(fileName)]
-  if (kindByExtension) return kindByExtension
-  if (mimeType === undefined) return null
-  if (mimeType.startsWith('image/')) return IMAGE_KIND
-  if (mimeType.startsWith('audio/')) return AUDIO_KIND
-  if (TEXT_MIME_TYPES.includes(mimeType)) return TEXT_KIND
-
-  return null
 }

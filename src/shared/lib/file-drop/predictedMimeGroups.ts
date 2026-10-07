@@ -1,13 +1,13 @@
-// Предугадывание видов перетаскиваемых файлов до drop: имена файлов браузер не
-// отдаёт до самого drop, поэтому группируем по MIME-типам (`dataTransfer.items`).
-// Группы совпадают со строками `AdminFileKind` виджетов админки, но shared не
-// зависит от widgets — потребитель тривиально мапит группу в вид.
+// Группировка MIME-типов перетаскиваемых файлов до drop. Основной путь
+// предугадывания — имя файла через `webkitGetAsEntry` (`predictDropKinds`);
+// MIME-группа — запасной вариант, когда имени нет. Группы совпадают со
+// строками `AdminFileKind` (`shared/lib/file-drop/fileKinds.ts`).
 
 type MimeGroup = 'audio' | 'image' | 'text'
 
-// `application/octet-stream` — лучшая догадка для FB2: OS часто не отдаёт точный
-// MIME для `.fb2` и присылает generic octet-stream. Ложная подсветка безвредна:
-// финальная классификация всегда идёт по расширению на drop.
+// `application/octet-stream` — запасной вариант, когда браузер не отдал ни имя,
+// ни точный MIME. Ложная подсветка безвредна: финальная классификация всегда
+// идёт по расширению на drop.
 const TEXT_MIME_TYPES = [
   'application/octet-stream',
   'application/pdf',

@@ -3,13 +3,9 @@ import { getDocumentAsync } from 'expo-document-picker'
 import { useCallback, useState } from 'react'
 import { uploadSermonFile } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { type AdminFileKind } from 'shared/lib/file-drop'
 import { showToast } from 'shared/model'
-import {
-  type AdminFileKind,
-  getFileKindConfig,
-  getFileKindSuccessMessage,
-  isAllowedExtension,
-} from './fileKinds'
+import { getFileKindConfig, getFileKindSuccessMessage, isAllowedExtension } from './fileKinds'
 
 export interface FileUploadState {
   error: null | string

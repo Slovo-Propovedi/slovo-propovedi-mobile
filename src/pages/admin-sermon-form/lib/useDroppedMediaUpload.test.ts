@@ -22,11 +22,16 @@ jest.mock('shared/api', () => ({
   uploadSermonFile: (...args: unknown[]) => mockUploadSermonFile(...args),
 }))
 
+jest.mock('shared/lib/file-drop', () => {
+  const fileKinds = jest.requireActual('shared/lib/file-drop/fileKinds')
+
+  return { detectFileKind: fileKinds.detectFileKind }
+})
+
 jest.mock('widgets/admin-form-pickers', () => {
   const fileKinds = jest.requireActual('widgets/admin-form-pickers/lib/fileKinds')
 
   return {
-    detectFileKind: fileKinds.detectFileKind,
     getFileKindConfig: fileKinds.getFileKindConfig,
     getFileKindSuccessMessage: fileKinds.getFileKindSuccessMessage,
     isAllowedExtension: fileKinds.isAllowedExtension,

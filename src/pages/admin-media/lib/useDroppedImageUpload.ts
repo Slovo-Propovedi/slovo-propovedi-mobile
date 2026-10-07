@@ -1,7 +1,8 @@
 import { useAction } from '@reatom/npm-react'
 import { useCallback } from 'react'
-import { detectFileKind, getFileKindConfig, isAllowedExtension } from 'widgets/admin-form-pickers'
+import { getFileKindConfig, isAllowedExtension } from 'widgets/admin-form-pickers'
 import { type PickedUploadAsset } from 'shared/api'
+import { detectFileKind } from 'shared/lib/file-drop'
 import { showToast } from 'shared/model'
 
 const NOOP_UPLOAD_CALLBACK = () => undefined
