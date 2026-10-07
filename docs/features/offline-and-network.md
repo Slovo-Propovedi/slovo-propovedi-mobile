@@ -106,7 +106,7 @@ isInternetReachable ?? isConnected
 
 Офлайн-прослушивание обеспечивает кэш аудио — [audio-cache.md](./audio-cache.md). При старте трека `AudioLoader` сначала берёт закэшированный файл, иначе стартует фоновое кэширование.
 
-На web удаление частичного файла после успешного кэширования пропускается (`Platform.OS !== 'web'` — expo-file-system недоступен, иначе `deletePartialFile` только пишет warn) — `src/entities/offline-cache/lib/cacheAudioWithProgress.ts`; web-плеер понижает `AbortError` из `audio.play()` (отменённый сменой источника) до `console.warn` без диалога — `src/entities/player/lib/PlayerService/web/audioHandlers.ts`.
+На web отдельного «частичного файла» нет: его эквивалент — **незакоммиченный** entry в Cache Storage (скачивание, прерванное cancel/kill до коммита в манифест). `deletePartialFile` (`src/entities/offline-cache/lib/partialFile.web.ts`) удаляет именно такой entry и не трогает закоммиченный (финальный) кэш; нативный `deletePartialFile` удаляет `.cache.mp3`. Вызов общий (`cacheAudioWithProgress.ts`), без `Platform`-гейта. Web-плеер понижает `AbortError` из `audio.play()` (отменённый сменой источника) до `console.warn` без диалога — `src/entities/player/lib/PlayerService/web/audioHandlers.ts`.
 
 ## Офлайн-guard при воспроизведении (Issue #81)
 

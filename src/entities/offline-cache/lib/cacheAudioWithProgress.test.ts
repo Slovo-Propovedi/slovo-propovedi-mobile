@@ -190,14 +190,14 @@ describe('cacheAudioWithProgress', () => {
     expect(mockedDeletePartialFile).toHaveBeenCalledWith(AUDIO_URL)
   })
 
-  test('skips deleting the partial file on web (no file system)', async () => {
+  test('deletes the partial file on web too (web variant handles cache storage)', async () => {
     const platformSpy = jest.replaceProperty(Platform, 'OS', 'web')
     try {
       cacheAudioSpy.mockResolvedValue(CACHED_URI)
 
       await cacheAudioWithProgress(ctx, AUDIO_URL)
 
-      expect(mockedDeletePartialFile).not.toHaveBeenCalled()
+      expect(mockedDeletePartialFile).toHaveBeenCalledWith(AUDIO_URL)
     } finally {
       platformSpy.restore()
     }
