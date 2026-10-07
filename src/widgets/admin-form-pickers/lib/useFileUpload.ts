@@ -50,6 +50,7 @@ export const useFileUpload = (
     const asset = result.assets[0]
     if (!isAllowedExtension(kind, asset.name)) {
       setError(rejectMessage)
+      showToastAction(rejectMessage)
       return
     }
 
@@ -60,7 +61,9 @@ export const useFileUpload = (
       onUploaded(uploaded.fileUrl)
       showToastAction(getFileKindSuccessMessage(kind))
     } catch (uploadError) {
-      setError(getErrorMessage(uploadError))
+      const message = getErrorMessage(uploadError)
+      setError(message)
+      showToastAction(message)
     } finally {
       setIsUploading(false)
       setProgress(0)
