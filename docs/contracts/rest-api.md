@@ -137,6 +137,8 @@ generated/
 
 > Мапперы — внутренние детали сущностей. Наружу через barrel'ы экспортируются только нужные потребителям: `entities/sermon` → `mapAllSermonsResponse`, `entities/playlist` → `mapPlaylistEntityToPlaylistData`, `entities/section` → `mapSectionEntityToSectionData`; остальные (`mapAllSectionsResponse`, `mapSectionPlaylistToPlaylistData`, `mapPlaylistSermonToSermonShape` и т.д.) — внутренние, доступны другим сущностям только через `@x`-точки. `src/shared/api/index.ts` их больше не реэкспортирует.
 
+> **Артворк: API может вернуть `''`.** `SermonEntity.artwork`/`PlaylistEntity.artwork` в OpenAPI типизированы как `string` (не nullable), но бэкенд отдаёт **пустую строку** для «нет артворка». Мапперы нормализуют её в `null` через `nullIfEmpty` (`src/shared/lib/utils/nullIfEmpty.ts`): `mapSermonEntityToSermonData`, `mapPlaylistEntityToPlaylistData`, `mapPlaylistSermonToSermonShape`, `mapSectionPlaylistToPlaylistData`. Без этого `sermon.artwork ?? playlist.artwork` не сработал бы (`'' ?? x` = `''`) — плеер показывал бы плейсхолдер вместо обложки плейлиста. `mapPlaylistSermonPlaylistsItemToPlaylistData` (лёгкие ссылки) и так кладёт `artwork: null`.
+
 ## Главы и стихи: диапазоны и списки
 
 С версии спецификации 0.15.1 поля `chapter` и `verse` в `SermonEntity` и `PlaylistSermon` расширены с одиночного числа до «диапазонов» (примеры — в `src/shared/api/generated/api.schemas.ts`):

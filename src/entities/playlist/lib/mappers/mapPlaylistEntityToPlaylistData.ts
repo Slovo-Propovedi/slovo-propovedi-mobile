@@ -1,5 +1,6 @@
 import { mapSectionEntityToSectionData } from 'entities/section/@x/playlist'
 import { type APITypes } from 'shared/api'
+import { nullIfEmpty } from 'shared/lib/utils/nullIfEmpty'
 import { type PlaylistData } from '../../model'
 import { mapPlaylistSermonToSermonShape } from './mapPlaylistSermonToSermonShape'
 
@@ -12,7 +13,7 @@ import { mapPlaylistSermonToSermonShape } from './mapPlaylistSermonToSermonShape
 export const mapPlaylistEntityToPlaylistData = (
   apiPlaylist: APITypes.PlaylistEntity,
 ): PlaylistData => ({
-  artwork: apiPlaylist.artwork ?? null,
+  artwork: nullIfEmpty(apiPlaylist.artwork),
   description: apiPlaylist.description ?? undefined,
   id: apiPlaylist.id,
   sections: apiPlaylist.sections.map(mapSectionEntityToSectionData),

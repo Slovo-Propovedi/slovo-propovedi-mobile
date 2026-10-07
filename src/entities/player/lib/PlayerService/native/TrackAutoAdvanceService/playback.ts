@@ -22,6 +22,8 @@ import { type OldTrackFlush, type PlayerActions } from './types'
  * @param audioUrl - URL of the new audio file.
  * @param initialPositionMs - Position to start the new audio at.
  * @param oldFlush - Snapshot of the finished track taken before playback advanced.
+ * @param historyArtwork - The sermon's OWN artwork stored in history (defaults to the
+ * resolved audio artwork) so a later playlist switch re-resolves the cover.
  */
 export const playTrackWithMetadata = async (
   playerActions: PlayerActions,
@@ -30,12 +32,13 @@ export const playTrackWithMetadata = async (
   audioUrl: string,
   initialPositionMs = 0,
   oldFlush: OldTrackFlush,
+  historyArtwork: null | string = audio.artwork,
 ): Promise<void> => {
   await savePlaybackProgress(ctx, { positionMs: initialPositionMs, sermonId: audio.id })
 
   void recordSermonSwitchAction(ctx, {
     markOldCompleted: true,
-    newAudio: audio,
+    newAudio: { ...audio, artwork: historyArtwork },
     newPlaylist: playlist,
     ...oldFlush,
   })
@@ -83,7 +86,15 @@ export const playNextTrack = async (
   await setCurrentAudioAction(ctx, newAudio)
   const history = ctx.get(historyAtom)
   const resumeMs = getResumePosition(history, nextTrack.id)
-  await playTrackWithMetadata(playerActions, newAudio, playlist, audioUrl, resumeMs, oldFlush)
+  await playTrackWithMetadata(
+    playerActions,
+    newAudio,
+    playlist,
+    audioUrl,
+    resumeMs,
+    oldFlush,
+    nextTrack.artwork,
+  )
 }
 
 export const playFirstTrackInQueue = async (
@@ -105,5 +116,6 @@ export const playFirstTrackInQueue = async (
     firstTrack.audioUrl,
     resumeMs,
     oldFlush,
+    firstTrack.artwork,
   )
 }

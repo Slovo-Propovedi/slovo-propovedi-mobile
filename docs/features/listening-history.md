@@ -152,6 +152,8 @@ export { type ListeningHistory } from '../model/types'
 
 Записи **slim**: top-level поля `sermon` нет — снапшот проповеди живёт в `playlist.sermons[0]` (buildHistoryEntry кладёт санитизированную копию без `playlists`). Доступ к проповеди — через `getEntrySermon(entry)` (`entry.sermon ?? toAudioPlayerData(entry.playlist.sermons[0])`, где `toAudioPlayerData` — `entities/sermon`; возвращает `null`, если у проповеди нет `audioUrl`). В `types.ts` поле `sermon` оставлено опциональным для совместимости чтения старых записей (легаси-формат с top-level sermon).
 
+**Снапшот хранит СОБСТВЕННЫЙ артворк проповеди, не разрешённую обложку плейлиста.** В истории `playlist.sermons[0].artwork` — это артворк самой проповеди (`null`, если его нет), а не `sermon.artwork ?? playlist.artwork`. Иначе запись истории запоминала бы обложку текущего плейлиста как «свою», и последующий выбор другого плейлиста (пикер поиска, next/prev) не менял бы обложку: `sermon.artwork ?? newPlaylist.artwork` возвращал бы старую. Поэтому все пути записи истории (`playNewSermonAsync`, `executeTrackSwitch`, `playTrackWithMetadata` для next/first) передают в `recordPlaybackStart`/`recordSermonSwitch` «history-аудио» с собственным артворком, тогда как `setCurrentAudio` получает разрешённый. Легаси-записи могут нести разрешённую обложку — читаются через zod как есть, без миграции (одноразовое наследие, перезапишется при следующем реальном старте записи).
+
 > ✅ **Issue #45 (Phase 1, safety nets): `getEntrySermon` возвращает `AudioPlayerData | null`.**
 >
 > Если `entry.sermon` равен `undefined` **и** `entry.playlist.sermons` — пустой массив (валидно по zod-схеме), функция возвращает `null` вместо краша. Все вызывающие места обрабатывают `null`:

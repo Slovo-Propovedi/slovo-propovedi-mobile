@@ -1,4 +1,5 @@
 import { type APITypes } from 'shared/api'
+import { nullIfEmpty } from 'shared/lib/utils/nullIfEmpty'
 import { type SermonShape } from 'shared/model'
 import { mapPlaylistSermonPlaylistsItemToPlaylistData } from './mapPlaylistSermonPlaylistsItemToPlaylistData'
 
@@ -13,7 +14,7 @@ export const mapPlaylistSermonToSermonShape = (
   apiSermon: APITypes.PlaylistSermon,
 ): SermonShape => ({
   artist: apiSermon.artist,
-  artwork: apiSermon.artwork ?? null,
+  artwork: nullIfEmpty(apiSermon.artwork),
   audioUrl: apiSermon.audioUrl ?? null,
   book: apiSermon.book,
   chapter: apiSermon.chapter,

@@ -1,5 +1,6 @@
 import { mapPlaylistEntityToPlaylistData } from 'entities/playlist/@x/sermon'
 import { type APITypes } from 'shared/api'
+import { nullIfEmpty } from 'shared/lib/utils/nullIfEmpty'
 import { type SermonData } from '../../model/sermon'
 
 /**
@@ -8,7 +9,7 @@ import { type SermonData } from '../../model/sermon'
  */
 export const mapSermonEntityToSermonData = (apiSermon: APITypes.SermonEntity): SermonData => ({
   artist: apiSermon.artist,
-  artwork: apiSermon.artwork ?? null,
+  artwork: nullIfEmpty(apiSermon.artwork),
   audioUrl: apiSermon.audioUrl ?? null,
   book: apiSermon.book,
   chapter: apiSermon.chapter,

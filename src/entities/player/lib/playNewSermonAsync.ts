@@ -1,6 +1,7 @@
 import { getResumePosition, historyAtom } from 'entities/listening-history/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { nullIfEmpty } from 'shared/lib/utils/nullIfEmpty'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
@@ -55,13 +56,18 @@ export const playNewSermonAsync = async (
 
     const oldAudio = currentAudio
 
+    // History snapshots keep the sermon's OWN artwork, never the resolved
+    // playlist fallback: a later playlist-context play must re-resolve the
+    // cover instead of inheriting this playlist's artwork as the sermon's own.
+    const historyAudio: AudioPlayerData = { ...newAudio, artwork: nullIfEmpty(artwork) }
+
     await deps.setCurrentAudio(newAudio)
     await deps.setCurrentPlaylist(playlist)
 
     if (oldAudio?.id && oldAudio.id !== sermonId)
       await deps.recordSermonSwitch({
         markOldCompleted: false,
-        newAudio,
+        newAudio: historyAudio,
         newPlaylist: playlist,
         oldDurationMs: currentDuration,
         oldPositionMs: Math.max(0, currentPosition),
@@ -85,7 +91,8 @@ export const playNewSermonAsync = async (
       sermonId,
     })
 
-    if (!oldAudio?.id || oldAudio.id === sermonId) void deps.recordPlaybackStart(newAudio, playlist)
+    if (!oldAudio?.id || oldAudio.id === sermonId)
+      void deps.recordPlaybackStart(historyAudio, playlist)
 
     // A manual playback start proves the player works: clear a stuck startup
     // guard so the next cold start restores state again.

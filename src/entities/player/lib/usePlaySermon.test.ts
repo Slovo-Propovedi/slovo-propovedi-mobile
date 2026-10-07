@@ -4,7 +4,9 @@ import { act } from '@testing-library/react-native'
 import { type ListeningHistory } from 'entities/listening-history/@x/player'
 import { audioCacheService } from 'entities/offline-cache/@x/player'
 import { type PlaylistData } from 'entities/playlist/@x/player'
+import { mapAllSermonsResponse } from 'entities/sermon'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
+import { playlistsMocks, sermonsMocks } from 'shared/api/generated'
 import { PLAYER_STARTUP_ATTEMPTS } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
@@ -104,6 +106,31 @@ const PARTIAL_ENTRY = {
 const COMPLETED_ENTRY = {
   ...PARTIAL_ENTRY,
   positionMs: 100000,
+}
+
+const COVER_URL = 'https://example.org/cover.jpg'
+
+// End-to-end fixture: the API returns '' for the sermon's missing artwork and a
+// real cover on its playlist; the mapper must normalize '' to null so the
+// player can fall back to the playlist cover.
+const buildMappedSermonWithCover = () => {
+  const coverPlaylist = playlistsMocks.getPlaylistControllerCreateResponseMock({
+    artwork: COVER_URL,
+    id: 'cover-playlist',
+  })
+  const apiSermon = sermonsMocks.getSermonControllerFindOneResponseMock({
+    artwork: '',
+    audioUrl: AUDIO_URL,
+    id: SERMON_ID,
+    playlists: [coverPlaylist],
+  })
+  const sermon = mapAllSermonsResponse(
+    sermonsMocks.getSermonControllerFindAllResponseMock({ sermons: [apiSermon] }),
+  )[0]
+  const cover = sermon.playlists?.[0]
+  if (!cover) throw new Error('expected the mapped sermon to keep its playlist')
+
+  return { cover, sermon }
 }
 
 const setAtomState = async (opts: {
@@ -378,6 +405,48 @@ describe('usePlayNewSermon', () => {
     expect(mockResumeAfterPause).toHaveBeenCalledWith(AUDIO_URL)
     expect(mockReplaceAudio).not.toHaveBeenCalled()
     expect(mockPlay).not.toHaveBeenCalled()
+  })
+
+  test('empty-string sermon artwork falls back to the chosen playlist cover', async () => {
+    const { cover, sermon } = buildMappedSermonWithCover()
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
+      currentAudio: { id: SERMON_ID },
+      currentPlaylist: mockPlaylist,
+      history: [PARTIAL_ENTRY],
+      isPlaying: true,
+      position: RESUME_MS,
+    })
+
+    await act(async () => {
+      await result.current({ playlist: cover, sermon })
+    })
+
+    expect(ctx.get(currentAudioAtom)).toEqual(expect.objectContaining({ artwork: COVER_URL }))
+  })
+
+  test('history snapshot keeps the sermon own artwork instead of the playlist cover', async () => {
+    const { cover, sermon } = buildMappedSermonWithCover()
+
+    const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
+    await setAtomState({
+      currentAudio: { id: SERMON_ID },
+      currentPlaylist: mockPlaylist,
+      history: [PARTIAL_ENTRY],
+      isPlaying: true,
+      position: RESUME_MS,
+    })
+
+    await act(async () => {
+      await result.current({ playlist: cover, sermon })
+    })
+
+    expect(mockRecordPlaybackStart).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ artwork: null }),
+      cover,
+    )
   })
 
   test('first play (no old audio) → recordPlaybackStartAction called', async () => {
