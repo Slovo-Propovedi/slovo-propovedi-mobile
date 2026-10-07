@@ -4,12 +4,16 @@ import { ImportFromYoutube } from 'features/sermon-audio-import'
 import { EditableUrlField } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type SermonFormValues } from '../lib/sermonFormInitialValues'
+import { useDroppedMediaUpload } from '../lib/useDroppedMediaUpload'
+import { useSermonFileDrop } from '../lib/useSermonFileDrop'
+import { DropStatusLine } from './DropStatusLine'
 import { styles } from './styles'
 
 type UpdateField = <K extends keyof SermonFormValues>(key: K, value: SermonFormValues[K]) => void
 
 // Блок «Медиа» формы проповеди: обложка, ссылка на YouTube, аудиофайл (MP3/M4A)
 // и текстовый файл. Аудио и текст грузятся multipart-загрузкой с прогрессом.
+// На web файлы можно ещё и перетащить на страницу — они раскладываются по видам.
 export const SermonMediaFields = ({
   onChange,
   values,
@@ -18,6 +22,8 @@ export const SermonMediaFields = ({
   values: SermonFormValues
 }) => {
   const { currentTheme } = useTheme()
+  const { handleFiles, status } = useDroppedMediaUpload(onChange)
+  const { isDragActive } = useSermonFileDrop(handleFiles)
 
   return (
     <View style={styles.block}>
@@ -56,6 +62,7 @@ export const SermonMediaFields = ({
         hint='Необязательно. PDF, FB2 или TXT.'
         onChange={value => onChange('textFileUrl', value)}
       />
+      <DropStatusLine {...status} isDragActive={isDragActive} />
     </View>
   )
 }

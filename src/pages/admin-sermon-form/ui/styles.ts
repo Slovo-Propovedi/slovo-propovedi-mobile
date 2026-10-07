@@ -20,6 +20,10 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  dropStatus: {
+    fontSize: FONT_SIZES.sm,
+    marginTop: INDENTS.low,
+  },
   errorBanner: {
     borderRadius: RADIUSES.low,
     marginBottom: INDENTS.medium,
