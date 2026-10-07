@@ -1,12 +1,15 @@
+import { useAction } from '@reatom/npm-react'
 import { useCallback, useRef, useState } from 'react'
 import {
   type AdminFileKind,
   detectFileKind,
   getFileKindConfig,
+  getFileKindSuccessMessage,
   isAllowedExtension,
 } from 'widgets/admin-form-pickers'
 import { uploadSermonFile } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
+import { showToast } from 'shared/model'
 import { type SermonFormValues } from './sermonFormInitialValues'
 
 interface ClassifiedFile {
@@ -57,6 +60,7 @@ const collectClassifiedFiles = (files: File[]): ClassifiedFile[] => {
  * @param onChange - Сеттер поля формы, принимающий URL загруженного файла.
  */
 export const useDroppedMediaUpload = (onChange: UpdateField) => {
+  const showToastAction = useAction(showToast)
   const [status, setStatus] = useState<DroppedMediaUploadStatus>(IDLE_STATUS)
   const isUploadingRef = useRef(false)
 
@@ -69,7 +73,9 @@ export const useDroppedMediaUpload = (onChange: UpdateField) => {
 
       const rejected = classified.find(({ file, kind }) => !isAllowedExtension(kind, file.name))
       if (rejected) {
-        setStatus({ ...IDLE_STATUS, error: getFileKindConfig(rejected.kind).rejectMessage })
+        const message = getFileKindConfig(rejected.kind).rejectMessage
+        setStatus({ ...IDLE_STATUS, error: message })
+        showToastAction(message)
         return
       }
 
@@ -87,18 +93,21 @@ export const useDroppedMediaUpload = (onChange: UpdateField) => {
               { onProgress: progress => setStatus(previous => ({ ...previous, progress })) },
             )
             onChange(FIELD_BY_KIND[kind], uploaded.fileUrl)
+            showToastAction(getFileKindSuccessMessage(kind))
           } finally {
             URL.revokeObjectURL(objectUrl)
           }
         }
         setStatus(IDLE_STATUS)
       } catch (uploadError) {
-        setStatus({ ...IDLE_STATUS, error: getErrorMessage(uploadError) })
+        const message = getErrorMessage(uploadError)
+        setStatus({ ...IDLE_STATUS, error: message })
+        showToastAction(message)
       } finally {
         isUploadingRef.current = false
       }
     },
-    [onChange],
+    [onChange, showToastAction],
   )
 
   return { handleFiles, status }

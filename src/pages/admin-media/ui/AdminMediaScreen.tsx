@@ -4,9 +4,9 @@ import { FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
-import { useFileDrop } from 'shared/lib/file-drop'
+import { predictedMimeGroups, useFileDrop } from 'shared/lib/file-drop'
 import { showToast } from 'shared/model'
-import { createRefreshControl, PullToRefresh } from 'shared/ui'
+import { createRefreshControl, DropOverlay, PullToRefresh } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
@@ -51,9 +51,15 @@ export const AdminMediaScreen = () => {
     message => showToastAction(message),
   )
   const { handleFiles } = useDroppedImageUpload(upload, isUploading)
-  const { isDragActive } = useFileDrop(handleFiles)
+  const { draggedMimeTypes, isDragActive } = useFileDrop(handleFiles)
 
   const { numColumns, tileSize } = measureMediaGrid(SCREEN_WIDTH)
+  const dropEntries = [
+    {
+      active: predictedMimeGroups(draggedMimeTypes).has('image'),
+      description: 'Изображение (JPEG, PNG, WebP) → загрузка в библиотеку обложек',
+    },
+  ]
 
   const handleDelete = async () => {
     setDeleteTarget(null)
@@ -77,6 +83,13 @@ export const AdminMediaScreen = () => {
             styles.listContent,
             { paddingBottom: tabBarHeight + INDENTS.low },
           ]}
+          ListHeaderComponent={
+            <AdminMediaListHeader
+              progress={progress}
+              isUploading={isUploading}
+              onUpload={() => void pickImage()}
+            />
+          }
           ListEmptyComponent={
             <MediaGridEmpty
               isError={isError}
@@ -93,14 +106,6 @@ export const AdminMediaScreen = () => {
               onDelete={() => setDeleteTarget(item)}
             />
           )}
-          ListHeaderComponent={
-            <AdminMediaListHeader
-              progress={progress}
-              isUploading={isUploading}
-              isDragActive={isDragActive}
-              onUpload={() => void pickImage()}
-            />
-          }
         />
       </PullToRefresh>
       <ConfirmDialog
@@ -117,6 +122,7 @@ export const AdminMediaScreen = () => {
         fileUrl={viewerTarget?.fileUrl ?? ''}
         onClose={() => setViewerTarget(null)}
       />
+      <DropOverlay entries={dropEntries} visible={isDragActive} />
     </SafeAreaView>
   )
 }

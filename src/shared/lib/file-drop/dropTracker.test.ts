@@ -2,10 +2,22 @@ import { createDropTracker } from './dropTracker'
 
 const file = (name: string) => ({ name }) as unknown as File
 
-const fileDrag = (files: File[] = [file('a.mp3')]) => ({
-  dataTransfer: { files, types: ['Files'] },
+const item = (kind: string, type: string) => ({ kind, type })
+
+interface DragEventInit {
+  items?: ReturnType<typeof item>[]
+  types?: string[]
+}
+
+const dragEvent = (files: File[] = [], { items, types = ['Files'] }: DragEventInit = {}) => ({
+  dataTransfer: { files, items, types },
   preventDefault: jest.fn(),
 })
+
+const fileDrag = (files: File[] = [file('a.mp3')], init: DragEventInit = {}) =>
+  dragEvent(files, init)
+
+const AUDIO_MIME = 'audio/mpeg'
 
 const textDrag = () => ({
   dataTransfer: { files: [], types: ['text/plain'] },
@@ -88,5 +100,48 @@ describe('createDropTracker', () => {
     expect(tracker.isDragActive).toBe(false)
     tracker.dragLeave()
     expect(tracker.isDragActive).toBe(false)
+  })
+
+  test('collects file MIME types on enter and ignores non-file or empty items', () => {
+    const tracker = createDropTracker()
+
+    tracker.dragEnter(
+      fileDrag([], {
+        items: [item('string', 'text/plain'), item('file', ''), item('file', 'image/png')],
+      }),
+    )
+
+    expect(tracker.draggedMimeTypes).toEqual(['image/png'])
+  })
+
+  test('keeps the last known MIME types while the drag stays active', () => {
+    const tracker = createDropTracker()
+    tracker.dragEnter(fileDrag([], { items: [item('file', AUDIO_MIME)] }))
+
+    tracker.dragOver(fileDrag([], { items: [] }))
+
+    expect(tracker.draggedMimeTypes).toEqual([AUDIO_MIME])
+  })
+
+  test('clears MIME types when the last nested drag leaves', () => {
+    const tracker = createDropTracker()
+    tracker.dragEnter(fileDrag([], { items: [item('file', AUDIO_MIME)] }))
+
+    tracker.dragLeave()
+
+    expect(tracker.draggedMimeTypes).toEqual([])
+  })
+
+  test('clears MIME types on drop and reset', () => {
+    const tracker = createDropTracker()
+    tracker.dragEnter(fileDrag([], { items: [item('file', 'image/jpeg')] }))
+    tracker.drop(fileDrag())
+
+    expect(tracker.draggedMimeTypes).toEqual([])
+
+    tracker.dragEnter(fileDrag([], { items: [item('file', 'image/jpeg')] }))
+    tracker.reset()
+
+    expect(tracker.draggedMimeTypes).toEqual([])
   })
 })

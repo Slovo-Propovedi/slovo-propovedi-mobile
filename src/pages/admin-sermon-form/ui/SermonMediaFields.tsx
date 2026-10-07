@@ -1,11 +1,9 @@
 import { Text, View } from 'react-native'
 import { CoverPicker, FileUploadField } from 'widgets/admin-form-pickers'
 import { ImportFromYoutube } from 'features/sermon-audio-import'
-import { useFileDrop } from 'shared/lib/file-drop'
 import { EditableUrlField } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type SermonFormValues } from '../lib/sermonFormInitialValues'
-import { useDroppedMediaUpload } from '../lib/useDroppedMediaUpload'
 import { DropStatusLine } from './DropStatusLine'
 import { styles } from './styles'
 
@@ -13,17 +11,25 @@ type UpdateField = <K extends keyof SermonFormValues>(key: K, value: SermonFormV
 
 // Блок «Медиа» формы проповеди: обложка, ссылка на YouTube, аудиофайл (MP3/M4A)
 // и текстовый файл. Аудио и текст грузятся multipart-загрузкой с прогрессом.
-// На web файлы можно ещё и перетащить на страницу — они раскладываются по видам.
+// На web файлы можно ещё и перетащить на страницу — за это отвечает
+// родительский `SermonForm` (оверлей drop), а сюда приходит только статус.
 export const SermonMediaFields = ({
+  isDragActive,
   onChange,
+  status,
   values,
 }: {
+  isDragActive: boolean
   onChange: UpdateField
+  status: {
+    currentFileName: null | string
+    error: null | string
+    isUploading: boolean
+    progress: number
+  }
   values: SermonFormValues
 }) => {
   const { currentTheme } = useTheme()
-  const { handleFiles, status } = useDroppedMediaUpload(onChange)
-  const { isDragActive } = useFileDrop(handleFiles)
 
   return (
     <View style={styles.block}>

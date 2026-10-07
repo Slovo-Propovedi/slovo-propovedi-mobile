@@ -1,20 +1,17 @@
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 import { useTheme } from 'shared/ui/theme'
 import { AdminMediaHeader } from './AdminMediaHeader'
 import { OrphansSection } from './OrphansSection'
 import { styles } from './styles'
 
-const DROP_HINT = 'Отпустите изображение, чтобы загрузить'
-
-// Шапка списка медиа-библиотеки: заголовок с загрузкой, полоса прогресса,
-// подсказка drag & drop и блок осиротевших файлов.
+// Шапка списка медиа-библиотеки: заголовок с загрузкой, полоса прогресса и
+// блок осиротевших файлов. Подсказку drag & drop показывает полноэкранный
+// оверлей (`DropOverlay`), поэтому отдельной строки здесь нет.
 export const AdminMediaListHeader = ({
-  isDragActive,
   isUploading,
   onUpload,
   progress,
 }: {
-  isDragActive?: boolean
   isUploading: boolean
   onUpload: () => void
   progress: number
@@ -28,9 +25,6 @@ export const AdminMediaListHeader = ({
         <View style={[styles.progressTrack, { backgroundColor: currentTheme.surface }]}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
-      ) : null}
-      {isDragActive ? (
-        <Text style={[styles.dropHint, { color: currentTheme.textMuted }]}>{DROP_HINT}</Text>
       ) : null}
       <OrphansSection />
     </View>

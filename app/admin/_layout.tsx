@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type Href, Redirect, Stack, usePathname } from 'expo-router'
 import { useEffect, useMemo } from 'react'
-import { ActivityIndicator, type ColorValue, StyleSheet, View } from 'react-native'
+import { type ColorValue } from 'react-native'
 import { useInvidiousScreens } from 'pages/admin-invidious'
 import { usePlaylistScreens } from 'pages/admin-playlist-form'
 import { useSectionScreens } from 'pages/admin-section-form'
@@ -9,7 +9,8 @@ import { useSermonScreens } from 'pages/admin-sermon-form'
 import { useUserScreens } from 'pages/admin-user-form'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { AdminShellSkeleton } from 'shared/ui'
+import { useTheme } from 'shared/ui/theme'
 
 const LOGIN_ROUTE = '/admin/login'
 const ADMIN_FALLBACK_ROUTE: Href = '/settings'
@@ -56,16 +57,13 @@ const AdminLayout = () => {
     void restore()
   }, [status, restore])
 
-  // Пока сессия не разрешена и мы не на экране входа — показываем спиннер.
-  // На /admin/login спиннер не подменяет форму во время входа (status='loading'),
-  // иначе экран входа размонтировался бы прямо во время submit.
+  // Пока сессия не разрешена и мы не на экране входа — показываем скелетон
+  // оболочки админки (те же строки списка, что появятся после restore), а не
+  // полноэкранный спиннер. На /admin/login скелетон не подменяет форму во время
+  // входа (status='loading'), иначе экран входа размонтировался бы прямо во
+  // время submit.
   const isOnLoginRoute = pathname === LOGIN_ROUTE
-  if (status === 'idle' || (status === 'loading' && !isOnLoginRoute))
-    return (
-      <View style={[styles.loading, { backgroundColor: currentTheme.background }]}>
-        <ActivityIndicator size='large' color={COLORS.primary} />
-      </View>
-    )
+  if (status === 'idle' || (status === 'loading' && !isOnLoginRoute)) return <AdminShellSkeleton />
 
   // Аутентифицированного пользователя на /admin/login НЕ уводим в /admin:
   // после входа мы явно возвращаемся на «Ещё» (см. AdminLoginScreen).
@@ -90,11 +88,3 @@ const AdminLayout = () => {
 }
 
 export default AdminLayout
-
-const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-})

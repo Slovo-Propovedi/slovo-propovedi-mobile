@@ -1,8 +1,15 @@
+import { useAction } from '@reatom/npm-react'
 import { getDocumentAsync } from 'expo-document-picker'
 import { useCallback, useState } from 'react'
 import { uploadSermonFile } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
-import { type AdminFileKind, getFileKindConfig, isAllowedExtension } from './fileKinds'
+import { showToast } from 'shared/model'
+import {
+  type AdminFileKind,
+  getFileKindConfig,
+  getFileKindSuccessMessage,
+  isAllowedExtension,
+} from './fileKinds'
 
 export interface FileUploadState {
   error: null | string
@@ -22,6 +29,7 @@ export const useFileUpload = (
   kind: AdminFileKind,
   onUploaded: (url: string) => void,
 ): FileUploadState => {
+  const showToastAction = useAction(showToast)
   const [isUploading, setIsUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<null | string>(null)
@@ -50,13 +58,14 @@ export const useFileUpload = (
     try {
       const uploaded = await uploadSermonFile(asset, { onProgress: setProgress })
       onUploaded(uploaded.fileUrl)
+      showToastAction(getFileKindSuccessMessage(kind))
     } catch (uploadError) {
       setError(getErrorMessage(uploadError))
     } finally {
       setIsUploading(false)
       setProgress(0)
     }
-  }, [isUploading, kind, onUploaded])
+  }, [isUploading, kind, onUploaded, showToastAction])
 
   return { error, isUploading, pickAndUpload, progress }
 }

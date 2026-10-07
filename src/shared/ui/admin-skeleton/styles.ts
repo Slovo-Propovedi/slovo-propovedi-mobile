@@ -66,6 +66,15 @@ export const styles = StyleSheet.create({
     marginBottom: INDENTS.medium,
     padding: INDENTS.medium,
   },
+  shell: {
+    flex: 1,
+    padding: INDENTS.medium,
+  },
+  shellTitle: {
+    height: FONT_SIZES.h2,
+    marginBottom: INDENTS.medium,
+    width: '40%',
+  },
   titleBar: {
     height: FONT_SIZES.md,
     width: '60%',

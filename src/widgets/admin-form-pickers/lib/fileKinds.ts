@@ -45,6 +45,18 @@ const KIND_CONFIG: Record<AdminFileKind, FileKindConfig> = {
 
 export const getFileKindConfig = (kind: AdminFileKind): FileKindConfig => KIND_CONFIG[kind]
 
+const KIND_SUCCESS_MESSAGE: Record<AdminFileKind, string> = {
+  audio: 'Аудиофайл загружен',
+  image: 'Обложка загружена',
+  text: 'Текстовый файл загружен',
+}
+
+/**
+ * Короткое сообщение об успешной загрузке файла данного вида.
+ * @param kind - Вид загруженного файла.
+ */
+export const getFileKindSuccessMessage = (kind: AdminFileKind): string => KIND_SUCCESS_MESSAGE[kind]
+
 /**
  * Проверяет расширение файла на соответствие виду. Для видов без ограничений
  * (`text`) возвращает true всегда.

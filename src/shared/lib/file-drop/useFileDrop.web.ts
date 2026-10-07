@@ -8,11 +8,13 @@ type DropHandler = (files: File[]) => void
  * брошенные файлы наверх. Машина состояний — `createDropTracker`: счётчик
  * вложенных dragenter/dragleave даёт `isDragActive`, а не-файловое
  * перетаскивание (текст, ссылки) полностью игнорируется, чтобы не ломать
- * браузерные перетаскивания и не мигать подсказкой.
+ * браузерные перетаскивания и не мигать подсказкой. `draggedMimeTypes` —
+ * предугаданные до drop MIME-типы (виды файлов), нужные оверлею-подсказке.
  * @param onFiles - Потребитель брошенных файлов.
  */
 export const useFileDrop = (onFiles: DropHandler) => {
   const [isDragActive, setIsDragActive] = useState(false)
+  const [draggedMimeTypes, setDraggedMimeTypes] = useState<readonly string[]>([])
   const onFilesRef = useRef(onFiles)
 
   useEffect(() => {
@@ -21,28 +23,34 @@ export const useFileDrop = (onFiles: DropHandler) => {
 
   useEffect(() => {
     const tracker = createDropTracker()
-    const syncDragActive = () => setIsDragActive(tracker.isDragActive)
+    const syncDragState = () => {
+      setIsDragActive(tracker.isDragActive)
+      setDraggedMimeTypes(tracker.draggedMimeTypes)
+    }
 
     const onDragEnter = (event: DragEvent) => {
       tracker.dragEnter(event)
-      syncDragActive()
+      syncDragState()
     }
 
-    const onDragOver = (event: DragEvent) => tracker.dragOver(event)
+    const onDragOver = (event: DragEvent) => {
+      tracker.dragOver(event)
+      syncDragState()
+    }
 
     const onDragLeave = () => {
       tracker.dragLeave()
-      syncDragActive()
+      syncDragState()
     }
 
     const onDragEnd = () => {
       tracker.reset()
-      syncDragActive()
+      syncDragState()
     }
 
     const onDrop = (event: DragEvent) => {
       const files = tracker.drop(event)
-      syncDragActive()
+      syncDragState()
       if (files?.length) onFilesRef.current(files)
     }
 
@@ -61,5 +69,5 @@ export const useFileDrop = (onFiles: DropHandler) => {
     }
   }, [])
 
-  return { isDragActive }
+  return { draggedMimeTypes, isDragActive }
 }

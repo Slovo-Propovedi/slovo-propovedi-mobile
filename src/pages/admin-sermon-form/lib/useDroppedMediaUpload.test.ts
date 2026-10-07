@@ -26,6 +26,7 @@ jest.mock('widgets/admin-form-pickers', () => {
   return {
     detectFileKind: fileKinds.detectFileKind,
     getFileKindConfig: fileKinds.getFileKindConfig,
+    getFileKindSuccessMessage: fileKinds.getFileKindSuccessMessage,
     isAllowedExtension: fileKinds.isAllowedExtension,
   }
 })
