@@ -62,6 +62,7 @@
 
 | Место                                                               | Сообщение                                                      |
 | ------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `entities/auth/lib/restoreSession.ts`                               | Не удалось проверить сессию администратора — только для неожиданных HTTP-ошибок (5xx и т. п.) |
 | `entities/listening-history/lib/loadHistory.ts`                     | Не удалось загрузить историю прослушивания                     |
 | `entities/listening-history/lib/historyStorage.ts`                  | Не удалось сохранить историю прослушивания                     |
 | `entities/player/lib/PlayerService/native/PlaybackController.ts`           | Ошибка при перемотке аудио                                     |
@@ -76,6 +77,14 @@
 | `entities/player/ui/PlayerControls/PlayerControls.tsx`              | Ошибка при переключении воспроизведения                        |
 | `features/sermon-audio-import/lib/useAudioImport.ts`                | Сбой импорта аудио — только `upload-failed`/неожиданные (остальные коды — toast) |
 | `pages/admin-invidious/lib/useInvidiousInstancesAdmin.ts`           | Не удалось загрузить источники импорта / Не удалось сохранить источники импорта |
+
+`entities/auth/lib/restoreSession.ts` — особый случай. Проверка профиля при восстановлении
+сессии различает **сетевой сбой** и HTTP-ошибку через `getHttpStatus` (см. `shared/lib/error-utils`):
+сбой без ответа (`undefined` — сеть/CORS) показывается коротким **тостом** («Нет соединения:
+не удалось проверить сессию»), а не модалкой — состояние транзиентное, подробный стек не нужен,
+токены сохраняются. Диалог `reportError` остаётся только для неожиданных HTTP-ошибок (5xx и т. п.),
+где диагностика по стеку уместна. Явный отказ авторизации (401/403) и раньше не поднимал диалог —
+токены чистятся молча.
 
 Ошибки, связанные с AppState («activity is no longer available»), диалог не поднимают —
 только `console.warn`.

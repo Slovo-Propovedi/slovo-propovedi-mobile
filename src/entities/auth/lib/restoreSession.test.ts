@@ -11,6 +11,11 @@ const mockSetCachedUser = jest.fn()
 const mockClearTokens = jest.fn()
 const mockClearCachedUser = jest.fn()
 const mockReportError = jest.fn()
+const mockShowToast = jest.fn()
+
+jest.mock('shared/model', () => ({
+  showToast: (...args: unknown[]) => mockShowToast(...args),
+}))
 
 jest.mock('shared/api', () => ({
   authApi: {
@@ -72,14 +77,19 @@ describe('restoreSession', () => {
     expect(mockReportError).not.toHaveBeenCalled()
   })
 
-  test('keeps the tokens and reports the error on a network failure', async () => {
+  test('keeps the tokens and toasts instead of dialog on a network failure', async () => {
     mockGetProfile.mockRejectedValue(networkError())
 
     await runRestore()
 
     expect(mockClearTokens).not.toHaveBeenCalled()
     expect(mockClearCachedUser).not.toHaveBeenCalled()
-    expect(mockReportError).toHaveBeenCalledTimes(1)
+    expect(mockReportError).not.toHaveBeenCalled()
+    expect(mockShowToast).toHaveBeenCalledTimes(1)
+    expect(mockShowToast).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining('соединени'),
+    )
   })
 
   test('keeps the tokens and reports the error on a 5xx response', async () => {
@@ -90,6 +100,7 @@ describe('restoreSession', () => {
     expect(mockClearTokens).not.toHaveBeenCalled()
     expect(mockClearCachedUser).not.toHaveBeenCalled()
     expect(mockReportError).toHaveBeenCalledTimes(1)
+    expect(mockShowToast).not.toHaveBeenCalled()
   })
 
   test('authenticates and caches the profile for an admin user', async () => {
