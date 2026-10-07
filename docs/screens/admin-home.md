@@ -14,7 +14,7 @@
 
 - `AdminHomeHeader` — «Интерфейс администратора», имя пользователя (muted) и `IconButton` «Вернуться в приложение» (`log-out-outline` → `/listen`).
 - Три карточки `AdminStatCard`: «Разделы», «Плейлисты», «Проповеди» со счётчиками; каждая ведёт в свой таб (`/admin/sections`, `/admin/playlists`, `/admin/sermons`).
-- Блок «Быстрые действия» (`AdminQuickActions`): «Загрузить проповедь» → `/admin/sermons/create`, «Выйти из аккаунта» (`signOut` → `/listen`).
+- Блок «Быстрые действия» (`AdminQuickActions`): «Загрузить проповедь» → `/admin/sermons/create`, «Источники импорта» → `/admin/invidious` (только для роли admin, `isAdminUser`), «Выйти из аккаунта» (`signOut` → `/listen`).
 - Скролл (`ScrollView`) резервирует место под плавающим таб-баром: `paddingBottom: tabBarHeight + INDENTS.low` (`tabBarHeightAtom`) — иначе последняя строка («Выйти из аккаунта») уходит под бар и недоступна (на web `body { overflow: hidden }`, документ не скроллится).
 - **Pull-to-refresh:** потягивание вниз перезагружает счётчики (`useAdminStats.reload`, спиннер `isRefreshing`); сбойные поля не затирают прежние значения (`mergeStats`). На web — собственный тач-жест `PullToRefresh` (см. [features/web.md](../features/web.md)).
 
@@ -27,6 +27,7 @@
 ## Куда можно перейти
 
 - `/admin/sections`, `/admin/playlists`, `/admin/sermons` — табы админки.
+- `/admin/invidious` — быстрое действие «Источники импорта» (только роль admin).
 - `/listen` — кнопка «Вернуться в приложение» и выход из аккаунта.
 
 ## Состояния
@@ -39,4 +40,4 @@
 
 - [admin-login.md](./admin-login.md)
 - [../architecture.md](../architecture.md) — зона `/admin`
-- [../debt.md](../debt.md) — нереализованные CRUD-разделы админки
+- [../debt.md](../debt.md) — технический долг админки
