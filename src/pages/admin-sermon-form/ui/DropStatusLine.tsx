@@ -1,38 +1,30 @@
 import { Text } from 'react-native'
-import { useTheme } from 'shared/ui/theme'
+import { COLORS, useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
 
 const DROP_HINT = 'Отпустите файлы, чтобы прикрепить их'
 
-interface DropStatus {
-  currentFileName: null | string
-  error: null | string
-  isDragActive: boolean
-  isUploading: boolean
-  progress: number
-}
-
-const statusMessage = ({
+// Подсказка о drag & drop и статусе фоновой загрузки брошенных файлов.
+export const DropStatusLine = ({
   currentFileName,
   error,
   isDragActive,
   isUploading,
   progress,
-}: DropStatus): null | string => {
-  if (error) return error
-  if (isUploading) return `Загрузка ${currentFileName ?? ''}… ${progress}%`
-  if (isDragActive) return DROP_HINT
+}: {
+  currentFileName: null | string
+  error: null | string
+  isDragActive: boolean
+  isUploading: boolean
+  progress: number
+}) => {
+  const { currentTheme } = useTheme()
+  const hintStyle = [styles.dropStatus, { color: currentTheme.textMuted }]
+
+  if (error) return <Text style={[styles.dropStatus, { color: COLORS.error }]}>{error}</Text>
+  if (isUploading)
+    return <Text style={hintStyle}>{`Загрузка ${currentFileName ?? ''}… ${progress}%`}</Text>
+  if (isDragActive) return <Text style={hintStyle}>{DROP_HINT}</Text>
 
   return null
-}
-
-// Подсказка о drag & drop и статусе фоновой загрузки брошенных файлов.
-export const DropStatusLine = (status: DropStatus) => {
-  const { currentTheme } = useTheme()
-  const message = statusMessage(status)
-  if (!message) return null
-
-  const color = status.error ? currentTheme.primary : currentTheme.textMuted
-
-  return <Text style={[styles.dropStatus, { color }]}>{message}</Text>
 }

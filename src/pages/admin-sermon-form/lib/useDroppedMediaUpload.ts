@@ -79,16 +79,17 @@ export const useDroppedMediaUpload = (onChange: UpdateField) => {
       try {
         for (const { file, kind } of classified) {
           setStatus(previous => ({ ...previous, currentFileName: file.name, progress: 0 }))
-          const uploaded = await uploadSermonFile(
-            {
-              mimeType: file.type,
-              name: file.name,
-              size: file.size,
-              uri: URL.createObjectURL(file),
-            },
-            { onProgress: progress => setStatus(previous => ({ ...previous, progress })) },
-          )
-          onChange(FIELD_BY_KIND[kind], uploaded.fileUrl)
+          const objectUrl = URL.createObjectURL(file)
+
+          try {
+            const uploaded = await uploadSermonFile(
+              { mimeType: file.type, name: file.name, size: file.size, uri: objectUrl },
+              { onProgress: progress => setStatus(previous => ({ ...previous, progress })) },
+            )
+            onChange(FIELD_BY_KIND[kind], uploaded.fileUrl)
+          } finally {
+            URL.revokeObjectURL(objectUrl)
+          }
         }
         setStatus(IDLE_STATUS)
       } catch (uploadError) {

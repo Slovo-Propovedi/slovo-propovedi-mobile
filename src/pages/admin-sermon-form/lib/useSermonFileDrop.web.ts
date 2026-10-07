@@ -1,65 +1,62 @@
 import { useEffect, useRef, useState } from 'react'
+import { createDropTracker } from './dropTracker'
 
 type DropHandler = (files: File[]) => void
 
 /**
  * Веб-реализация drop: слушает перетаскивание файлов на уровне окна и отдаёт
- * брошенные файлы наверх. Счётчик dragenter/dragleave различает вход и выход
- * курсора с учётом вложенных элементов, чтобы подсказка не мигала; dragend и
- * drop сбрасывают счётчик.
+ * брошенные файлы наверх. Машина состояний — `createDropTracker`: счётчик
+ * вложенных dragenter/dragleave даёт `isDragActive`, а не-файловое
+ * перетаскивание (текст, ссылки) полностью игнорируется, чтобы не ломать
+ * браузерные перетаскивания и не мигать подсказкой.
  * @param onFiles - Потребитель брошенных файлов.
  */
 export const useSermonFileDrop = (onFiles: DropHandler) => {
   const [isDragActive, setIsDragActive] = useState(false)
   const onFilesRef = useRef(onFiles)
-  const dragDepthRef = useRef(0)
 
   useEffect(() => {
     onFilesRef.current = onFiles
   }, [onFiles])
 
   useEffect(() => {
+    const tracker = createDropTracker()
+    const syncDragActive = () => setIsDragActive(tracker.isDragActive)
+
     const onDragEnter = (event: DragEvent) => {
-      event.preventDefault()
-      dragDepthRef.current += 1
-      setIsDragActive(true)
+      tracker.dragEnter(event)
+      syncDragActive()
     }
 
-    const onDragOver = (event: DragEvent) => {
-      event.preventDefault()
-    }
+    const onDragOver = (event: DragEvent) => tracker.dragOver(event)
 
     const onDragLeave = () => {
-      dragDepthRef.current = Math.max(0, dragDepthRef.current - 1)
-      if (dragDepthRef.current === 0) setIsDragActive(false)
+      tracker.dragLeave()
+      syncDragActive()
     }
 
-    const reset = () => {
-      dragDepthRef.current = 0
-      setIsDragActive(false)
+    const onDragEnd = () => {
+      tracker.reset()
+      syncDragActive()
     }
 
     const onDrop = (event: DragEvent) => {
-      reset()
-
-      const files = Array.from(event.dataTransfer?.files ?? [])
-      if (files.length === 0) return
-
-      event.preventDefault()
-      onFilesRef.current(files)
+      const files = tracker.drop(event)
+      syncDragActive()
+      if (files?.length) onFilesRef.current(files)
     }
 
     window.addEventListener('dragenter', onDragEnter)
     window.addEventListener('dragover', onDragOver)
     window.addEventListener('dragleave', onDragLeave)
-    window.addEventListener('dragend', reset)
+    window.addEventListener('dragend', onDragEnd)
     window.addEventListener('drop', onDrop)
 
     return () => {
       window.removeEventListener('dragenter', onDragEnter)
       window.removeEventListener('dragover', onDragOver)
       window.removeEventListener('dragleave', onDragLeave)
-      window.removeEventListener('dragend', reset)
+      window.removeEventListener('dragend', onDragEnd)
       window.removeEventListener('drop', onDrop)
     }
   }, [])

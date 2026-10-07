@@ -14,6 +14,7 @@ const TEXT_MIME = 'text/plain'
 
 const mockUploadSermonFile = jest.fn()
 const mockCreateObjectURL = jest.fn((file: File) => `blob:mock/${file.name}`)
+const mockRevokeObjectURL = jest.fn()
 
 jest.mock('shared/api', () => ({
   uploadSermonFile: (...args: unknown[]) => mockUploadSermonFile(...args),
@@ -35,6 +36,11 @@ beforeAll(() => {
     value: mockCreateObjectURL,
     writable: true,
   })
+  Object.defineProperty(URL, 'revokeObjectURL', {
+    configurable: true,
+    value: mockRevokeObjectURL,
+    writable: true,
+  })
 })
 
 const droppedFile = (name: string, type: string) => ({ name, size: 1, type }) as unknown as File
@@ -48,6 +54,7 @@ describe('useDroppedMediaUpload', () => {
   beforeEach(() => {
     mockUploadSermonFile.mockReset()
     mockCreateObjectURL.mockClear()
+    mockRevokeObjectURL.mockClear()
   })
 
   test('uploads image, audio and text from a batch and writes each to its field', async () => {
@@ -73,6 +80,7 @@ describe('useDroppedMediaUpload', () => {
     expect(onChange).toHaveBeenCalledWith('audioUrl', fileUrl(AUDIO_NAME))
     expect(onChange).toHaveBeenCalledWith('textFileUrl', fileUrl(TEXT_NAME))
     expect(result.current.status.isUploading).toBe(false)
+    expect(mockRevokeObjectURL).toHaveBeenCalledTimes(3)
   })
 
   test('ignores unknown files without an error', async () => {
