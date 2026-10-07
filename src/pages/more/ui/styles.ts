@@ -18,18 +18,21 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    // The header row aligns with Listen's pinned search row, which also starts at 0.
-    paddingTop: 0,
+    // Matches Listen's visual top spacing: its pinned search row starts at 0 but
+    // the search toggle inside it adds its own INDENTS.medium padding.
+    paddingTop: INDENTS.medium,
   },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: INDENTS.low,
-    // Reserve the icon's height up front so the header does not shift when the
-    // admin shield button appears after the auth check resolves.
+    // Match Listen's pinned search row height so the absolutely positioned shield
+    // (see adminButtonSlot) lands on the same line as the title row.
     minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: INDENTS.high,
+    // Asymmetric on purpose: paddingLeft sets the title's inset, while the tighter
+    // paddingRight keeps the row balanced now that the shield lives outside it.
+    paddingLeft: INDENTS.medium,
+    paddingRight: INDENTS.low,
   },
   headerTexts: {
     flexDirection: 'column',
