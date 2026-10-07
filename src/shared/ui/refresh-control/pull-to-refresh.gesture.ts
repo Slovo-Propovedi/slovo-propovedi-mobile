@@ -4,7 +4,6 @@ import {
   computeDisplayedPull,
   findVerticalScrollableAncestor,
   shouldTriggerRefresh,
-  SPINNER_SLOT_HEIGHT,
   TRIGGER_DISTANCE,
 } from './pull-to-refresh.lib'
 
@@ -105,7 +104,7 @@ export const attachPullGesture = (node: HTMLElement, refs: PullGestureRefs) => {
 
     refs.lastTriggerAt.current = Date.now()
     refs.onPending(true)
-    settle(refs.content.current, refs.spinner.current, SPINNER_SLOT_HEIGHT, 1)
+    settle(refs.content.current, refs.spinner.current, TRIGGER_DISTANCE, 1)
     void Promise.resolve()
       .then(() => refs.onRefresh.current())
       .catch(reportError)

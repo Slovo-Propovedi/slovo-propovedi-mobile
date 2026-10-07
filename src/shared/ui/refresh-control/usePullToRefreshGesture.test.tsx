@@ -1,7 +1,7 @@
 import { act, render } from '@testing-library/react-native'
 import { Platform } from 'react-native'
 import { type FakeDom, installFakeDom } from '../../lib/testing/installFakeDom'
-import { SPINNER_SLOT_HEIGHT } from './pull-to-refresh.lib'
+import { computeSpinnerTranslate, TRIGGER_DISTANCE } from './pull-to-refresh.lib'
 import { usePullToRefreshGesture } from './usePullToRefreshGesture'
 
 interface FakeScrollable {
@@ -114,18 +114,25 @@ describe('usePullToRefreshGesture', () => {
     await act(async () => {
       wrapper.dispatch('touchmove', touch(target, 300))
     })
-    expect(content.style.transform).toBe('translateY(80px)')
+    expect(content.style.transform).toBe(`translateY(${TRIGGER_DISTANCE}px)`)
+    expect(spinner.style.transform).toBe(
+      `translateY(${computeSpinnerTranslate(TRIGGER_DISTANCE)}px)`,
+    )
 
     await act(async () => {
       wrapper.dispatch('touchend', touch(target, 300))
     })
     expect(onRefresh).toHaveBeenCalledTimes(1)
-    expect(content.style.transform).toBe(`translateY(${SPINNER_SLOT_HEIGHT}px)`)
+    expect(content.style.transform).toBe(`translateY(${TRIGGER_DISTANCE}px)`)
+    expect(spinner.style.transform).toBe(
+      `translateY(${computeSpinnerTranslate(TRIGGER_DISTANCE)}px)`,
+    )
 
     await act(async () => {
       resolveRefresh()
     })
     expect(content.style.transform).toBe(ZERO_TRANSFORM)
+    expect(spinner.style.transform).toBe(ZERO_TRANSFORM)
   })
 
   test('does not trigger below the threshold', async () => {
@@ -142,6 +149,8 @@ describe('usePullToRefreshGesture', () => {
     await act(async () => {
       wrapper.dispatch('touchmove', touch(target, 200))
     })
+    expect(content.style.transform).toBe('translateY(40px)')
+
     await act(async () => {
       wrapper.dispatch('touchend', touch(target, 200))
     })
@@ -195,15 +204,18 @@ describe('usePullToRefreshGesture', () => {
     expect(onRefresh).toHaveBeenCalledTimes(1)
   })
 
-  test('settles the spinner at the top slot while refreshing', async () => {
+  test('centers the spinner in the freed gap while refreshing', async () => {
     const getGesture = await renderGesture(jest.fn(), true)
     const wrapper = createFakeWrapper()
     const content = createStyleNode()
     const spinner = createStyleNode()
     await attachNodes(getGesture(), wrapper, content, spinner)
 
-    expect(content.style.transform).toBe(`translateY(${SPINNER_SLOT_HEIGHT}px)`)
+    expect(content.style.transform).toBe(`translateY(${TRIGGER_DISTANCE}px)`)
     expect(spinner.style.opacity).toBe('1')
+    expect(spinner.style.transform).toBe(
+      `translateY(${computeSpinnerTranslate(TRIGGER_DISTANCE)}px)`,
+    )
   })
 
   test('touchcancel does not trigger a refresh', async () => {

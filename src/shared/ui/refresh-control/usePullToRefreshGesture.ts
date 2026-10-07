@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Platform } from 'react-native'
 import { isDomNode, settle } from './pull-to-refresh.dom'
 import { attachPullGesture } from './pull-to-refresh.gesture'
-import { SPINNER_SLOT_HEIGHT } from './pull-to-refresh.lib'
+import { TRIGGER_DISTANCE } from './pull-to-refresh.lib'
 import { type PullToRefreshProps } from './pull-to-refresh.types'
 
 /**
@@ -58,7 +58,7 @@ export const usePullToRefreshGesture = ({
     settle(
       contentNodeRef.current,
       spinnerNodeRef.current,
-      isActive ? SPINNER_SLOT_HEIGHT : 0,
+      isActive ? TRIGGER_DISTANCE : 0,
       isActive ? 1 : 0,
     )
   }, [isPending, refreshing, wrapperNode])

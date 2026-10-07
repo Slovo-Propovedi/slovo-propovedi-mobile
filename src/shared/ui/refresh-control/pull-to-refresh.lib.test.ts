@@ -1,8 +1,10 @@
 import {
   computeDisplayedPull,
+  computeSpinnerTranslate,
   findVerticalScrollableAncestor,
   REFRESH_MIN_INTERVAL_MS,
   shouldTriggerRefresh,
+  SPINNER_SLOT_HEIGHT,
   TRIGGER_DISTANCE,
 } from './pull-to-refresh.lib'
 
@@ -31,6 +33,26 @@ describe('computeDisplayedPull', () => {
 
   test('clamps upward movement to zero', () => {
     expect(computeDisplayedPull(-50)).toBe(0)
+  })
+
+  test('clamps the displayed pull to the trigger distance', () => {
+    expect(computeDisplayedPull(1000)).toBe(TRIGGER_DISTANCE)
+  })
+})
+
+describe('computeSpinnerTranslate', () => {
+  test('centers the spinner in the freed gap', () => {
+    expect(computeSpinnerTranslate(TRIGGER_DISTANCE)).toBe(
+      (TRIGGER_DISTANCE - SPINNER_SLOT_HEIGHT) / 2,
+    )
+  })
+
+  test('keeps the spinner at the top when the gap is shorter than the slot', () => {
+    expect(computeSpinnerTranslate(SPINNER_SLOT_HEIGHT - 1)).toBe(0)
+  })
+
+  test('never returns a negative offset', () => {
+    expect(computeSpinnerTranslate(0)).toBe(0)
   })
 })
 
