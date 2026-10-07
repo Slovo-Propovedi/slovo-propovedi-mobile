@@ -16,6 +16,9 @@ export const searchPlaylistsAtom = atom<PlaylistData[]>([], 'searchPlaylistsAtom
 export const searchPreachersAtom = atom<string[]>([], 'searchPreachersAtom')
 export const isSearchingAtom = atom(false, 'isSearchingAtom')
 export const isSearchOpenAtom = atom(false, 'isSearchOpenAtom')
+// Last query a fetch was started for; lets `useDebouncedSearch` skip a duplicate
+// debounced fetch when the query was already fetched (e.g. web deep-link seed).
+export const lastFetchedQueryAtom = atom('', 'lastFetchedQueryAtom')
 
 let latestRequestId = 0
 
@@ -38,6 +41,7 @@ export const resetSearchResults = action(async ctx => {
     searchPlaylistsAtom(ctx, [])
     searchPreachersAtom(ctx, [])
     isSearchingAtom(ctx, false)
+    lastFetchedQueryAtom(ctx, '')
   })
 }, 'resetSearchResults')
 
@@ -50,12 +54,17 @@ export const closeSearch = action(async ctx => {
     searchPreachersAtom(ctx, [])
     isSearchingAtom(ctx, false)
     isSearchOpenAtom(ctx, false)
+    lastFetchedQueryAtom(ctx, '')
   })
 }, 'closeSearch')
 
 export const fetchSearchResults = action(async (ctx, rawQuery: string) => {
   const query = rawQuery.trim()
   const requestId = ++latestRequestId
+
+  // Mark synchronously: a caller that already fetched this query (deep-link
+  // seed) prevents `useDebouncedSearch` from scheduling a duplicate fetch.
+  lastFetchedQueryAtom(ctx, query)
 
   if (!query) {
     await ctx.schedule(() => {

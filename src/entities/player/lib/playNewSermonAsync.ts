@@ -91,7 +91,10 @@ export const playNewSermonAsync = async (
       sermonId,
     })
 
-    if (!oldAudio?.id || oldAudio.id === sermonId)
+    // A context-only switch keeps playback running, so it must not re-record a
+    // playback start (which can rebuild the entry at position 0). Playback did
+    // not restart, so the history entry is left as is.
+    if ((!oldAudio?.id || oldAudio.id === sermonId) && !isContextOnlySwitch)
       void deps.recordPlaybackStart(historyAudio, playlist)
 
     // A manual playback start proves the player works: clear a stuck startup

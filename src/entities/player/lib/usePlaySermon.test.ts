@@ -79,6 +79,10 @@ const AUDIO_URL = 'https://example.com/audio.mp3'
 const OTHER_AUDIO_URL = 'https://example.com/other.mp3'
 const RESUME_MS = 50000
 
+// RN render + async player deps make several cases run for multiple seconds
+// under parallel load; the default 5s Jest timeout is too tight for this suite.
+jest.setTimeout(30_000)
+
 const mockSermon = {
   artist: 'Author',
   artwork: 'artwork.jpg',
@@ -361,6 +365,9 @@ describe('usePlayNewSermon', () => {
       expect.objectContaining({ albumTitle: 'Other Playlist', artworkUrl: 'artwork.jpg' }),
     )
     expect(mockSetLockScreenMetadata).not.toHaveBeenCalled()
+    // Playback did not restart, so no playback-start history write (which could
+    // reset the recorded position to 0).
+    expect(mockRecordPlaybackStart).not.toHaveBeenCalled()
   })
 
   test('same sermon switch uses the chosen playlist artwork when the sermon has none', async () => {
@@ -429,14 +436,8 @@ describe('usePlayNewSermon', () => {
   test('history snapshot keeps the sermon own artwork instead of the playlist cover', async () => {
     const { cover, sermon } = buildMappedSermonWithCover()
 
+    // Fresh play (no current audio) so `recordPlaybackStart` records the entry.
     const { result } = await renderHookWithProviders(() => usePlayNewSermon(), { ctx })
-    await setAtomState({
-      currentAudio: { id: SERMON_ID },
-      currentPlaylist: mockPlaylist,
-      history: [PARTIAL_ENTRY],
-      isPlaying: true,
-      position: RESUME_MS,
-    })
 
     await act(async () => {
       await result.current({ playlist: cover, sermon })

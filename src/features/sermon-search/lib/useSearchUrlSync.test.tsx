@@ -1,8 +1,10 @@
 import { createCtx } from '@reatom/framework'
 import { act, waitFor } from '@testing-library/react-native'
 import { Platform } from 'react-native'
-import { renderHookWithProviders } from 'shared/mocks'
+import { renderHookWithProviders, renderWithProviders } from 'shared/mocks'
 import { isSearchOpenAtom, searchQueryAtom } from '../model'
+import { fetchSermonResults } from './searchSources'
+import { useDebouncedSearch } from './useDebouncedSearch'
 import { useSearchUrlSync } from './useSearchUrlSync'
 
 const mockReplace = jest.fn()
@@ -87,5 +89,22 @@ describe('useSearchUrlSync', () => {
 
     expect(ctx.get(searchQueryAtom)).toBe('')
     expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  test('deep-link seed fetches exactly once (no duplicate debounced fetch)', async () => {
+    mockParams = { search: 'вера' }
+    const ctx = createCtx()
+    const Probe = () => {
+      useSearchUrlSync()
+      useDebouncedSearch()
+      return null
+    }
+
+    await renderWithProviders(<Probe />, { ctx })
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 500))
+    })
+
+    expect(jest.mocked(fetchSermonResults)).toHaveBeenCalledTimes(1)
   })
 })
