@@ -10,6 +10,7 @@ import {
   SearchToggleButton,
   useIsSearchActive,
   useIsSearchOpen,
+  useSearchUrlSync,
 } from 'features/sermon-search'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { createRefreshControl, PullToRefresh } from 'shared/ui'
@@ -27,6 +28,7 @@ export const ListenScreen = () => {
   const { currentTheme } = useTheme()
   const isSearchOpen = useIsSearchOpen()
   const isSearchActive = useIsSearchActive()
+  useSearchUrlSync()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const [authStatus] = useAtom(authStatusAtom)
   const [authUser] = useAtom(authUserAtom)

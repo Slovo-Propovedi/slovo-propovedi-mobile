@@ -8,6 +8,7 @@ export {
 } from './lib/searchSources'
 export { useIsSearchActive } from './lib/useIsSearchActive'
 export { useIsSearchOpen } from './lib/useIsSearchOpen'
+export { useSearchUrlSync } from './lib/useSearchUrlSync'
 export { useSermonPlayback } from './lib/useSermonPlayback'
 export { SearchBar } from './ui/SearchBar'
 export { SearchGroupedResults } from './ui/SearchGroupedResults'

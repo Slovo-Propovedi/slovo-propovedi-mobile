@@ -19,6 +19,7 @@ import { ListenScreen } from './ListenScreen'
 const mockPush = jest.fn()
 
 jest.mock('expo-router', () => ({
+  useLocalSearchParams: () => ({}),
   useRouter: () => ({
     push: mockPush,
   }),
