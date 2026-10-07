@@ -18,6 +18,8 @@ interface FileKindConfig {
 
 const MP3_EXTENSION = 'mp3'
 const M4A_EXTENSION = 'm4a'
+const PDF_EXTENSION = 'pdf'
+const FB2_EXTENSION = 'fb2'
 
 const KIND_CONFIG: Record<AdminFileKind, FileKindConfig> = {
   audio: {
@@ -35,10 +37,10 @@ const KIND_CONFIG: Record<AdminFileKind, FileKindConfig> = {
     supportsLibrary: true,
   },
   text: {
-    allowedExtensions: [],
+    allowedExtensions: [PDF_EXTENSION, FB2_EXTENSION],
     libraryPattern: /\.(pdf|fb2|txt)(\?.*)?$/i,
     mimeTypes: ['application/pdf', 'text/plain', 'application/xml'],
-    rejectMessage: '',
+    rejectMessage: 'Допускаются только файлы PDF или FB2.',
     supportsLibrary: false,
   },
 }
@@ -58,8 +60,7 @@ const KIND_SUCCESS_MESSAGE: Record<AdminFileKind, string> = {
 export const getFileKindSuccessMessage = (kind: AdminFileKind): string => KIND_SUCCESS_MESSAGE[kind]
 
 /**
- * Проверяет расширение файла на соответствие виду. Для видов без ограничений
- * (`text`) возвращает true всегда.
+ * Проверяет расширение файла на соответствие виду.
  * @param kind - Вид файла, задающий допустимые расширения.
  * @param fileName - Имя проверяемого файла.
  */

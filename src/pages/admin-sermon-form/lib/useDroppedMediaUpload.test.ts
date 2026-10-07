@@ -5,12 +5,14 @@ import { useDroppedMediaUpload } from './useDroppedMediaUpload'
 
 const COVER_NAME = 'cover.png'
 const AUDIO_NAME = 'sermon.mp3'
-const TEXT_NAME = 'notes.txt'
+const TEXT_NAME = 'notes.pdf'
+const TXT_NAME = 'notes.txt'
 const FIRST_IMAGE_NAME = 'first.png'
 const SECOND_IMAGE_NAME = 'second.png'
 const IMAGE_MIME = 'image/png'
 const AUDIO_MIME = 'audio/mpeg'
-const TEXT_MIME = 'text/plain'
+const TEXT_MIME = 'application/pdf'
+const TXT_MIME = 'text/plain'
 
 const mockUploadSermonFile = jest.fn()
 const mockCreateObjectURL = jest.fn((file: File) => `blob:mock/${file.name}`)
@@ -106,6 +108,17 @@ describe('useDroppedMediaUpload', () => {
 
     expect(mockUploadSermonFile).not.toHaveBeenCalled()
     expect(result.current.status.error).toBe(getFileKindConfig('image').rejectMessage)
+  })
+
+  test('rejects a dropped txt file with the text kind message', async () => {
+    const { result } = await renderDrop()
+
+    await act(async () => {
+      await result.current.handleFiles([droppedFile(TXT_NAME, TXT_MIME)])
+    })
+
+    expect(mockUploadSermonFile).not.toHaveBeenCalled()
+    expect(result.current.status.error).toBe(getFileKindConfig('text').rejectMessage)
   })
 
   test('keeps only the first file of the same kind', async () => {

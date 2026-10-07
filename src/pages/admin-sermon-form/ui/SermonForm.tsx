@@ -23,7 +23,7 @@ type UpdateField = <K extends keyof SermonFormValues>(key: K, value: SermonFormV
 const DROP_ENTRIES = [
   { description: 'Изображение (JPEG, PNG, WebP) → обложка', group: 'image' },
   { description: 'Аудио (MP3, M4A) → аудиофайл', group: 'audio' },
-  { description: 'Текст (PDF, FB2, TXT) → текстовый файл', group: 'text' },
+  { description: 'Текст (PDF, FB2) → текстовый файл', group: 'text' },
 ] as const
 
 const toggleId = (ids: string[], id: string) =>

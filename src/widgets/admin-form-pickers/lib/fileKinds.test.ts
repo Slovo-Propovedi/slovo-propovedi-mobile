@@ -30,8 +30,11 @@ describe('isAllowedExtension', () => {
     expect(isAllowedExtension('audio', 'sermon.wav')).toBe(false)
   })
 
-  test('accepts any extension for the text kind (no restriction)', () => {
-    expect(isAllowedExtension('text', 'sermon.docx')).toBe(true)
+  test('accepts only pdf and fb2 for the text kind and rejects txt', () => {
+    expect(isAllowedExtension('text', 'sermon.pdf')).toBe(true)
+    expect(isAllowedExtension('text', 'sermon.fb2')).toBe(true)
+    expect(isAllowedExtension('text', 'notes.txt')).toBe(false)
+    expect(isAllowedExtension('text', 'sermon.docx')).toBe(false)
   })
 
   test('accepts common image extensions for the image kind', () => {

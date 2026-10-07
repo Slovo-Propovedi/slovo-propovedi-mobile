@@ -63,7 +63,7 @@ export const SermonMediaFields = ({
         kind='text'
         label='Текст (файл)'
         value={values.textFileUrl}
-        hint='Необязательно. PDF, FB2 или TXT.'
+        hint='Необязательно. PDF или FB2.'
         onChange={value => onChange('textFileUrl', value)}
       />
       <DropStatusLine {...status} />
