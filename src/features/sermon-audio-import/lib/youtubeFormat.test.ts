@@ -104,6 +104,31 @@ describe('pickAudioFormat', () => {
     expect(pickAudioFormat([low, high])).toBe(high)
   })
 
+  test('prefers the original track over a dubbed track with the same itag', () => {
+    const dubbed = buildFormat({ audio_track: { display_name: 'French dubbed' } })
+    const original = buildFormat({ audio_track: { display_name: 'English (US) original' } })
+
+    expect(pickAudioFormat([dubbed, original])).toBe(original)
+  })
+
+  test('treats a format without audio_track as the original single track', () => {
+    const dubbed = buildFormat({ audio_track: { display_name: 'French dubbed' } })
+    const untagged = buildFormat({ itag: 139 })
+
+    expect(pickAudioFormat([dubbed, untagged])).toBe(untagged)
+  })
+
+  test('keeps the plain itag/bitrate logic when every track is dubbed', () => {
+    const dubbed140 = buildFormat({ audio_track: { display_name: 'French dubbed' } })
+    const dubbedHigh = buildFormat({
+      audio_track: { display_name: 'German dubbed' },
+      bitrate: 192_000,
+      itag: 141,
+    })
+
+    expect(pickAudioFormat([dubbed140, dubbedHigh])).toBe(dubbed140)
+  })
+
   test('returns null without audio/mp4 formats', () => {
     expect(pickAudioFormat([buildFormat({ mime_type: OPUS_AUDIO })])).toBeNull()
     expect(pickAudioFormat([buildFormat({ mime_type: MP4_VIDEO })])).toBeNull()

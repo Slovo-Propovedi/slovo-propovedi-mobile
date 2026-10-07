@@ -6,22 +6,31 @@ const VIDEO_ID = 'lV6YkF7ytxs'
 const BASE_URL = 'https://inv.phobos.observer'
 const CREDENTIALS_BASE_URL = 'https://admin:secret@inv.phobos.observer'
 const BASIC_AUTH_HEADER = `Basic ${btoa('admin:secret')}`
-const FIRST_MP4_URL = 'https://inv.phobos.observer/videoplayback?audio=first'
-const SECOND_MP4_URL = 'https://inv.phobos.observer/videoplayback?audio=second'
-const OPUS_URL = 'https://inv.phobos.observer/videoplayback?audio=opus'
+const ORIGINAL_MP4_URL =
+  'https://inv.phobos.observer/videoplayback?itag=140&xtags=acont%3Doriginal%3Alang%3Dru'
+const DUBBED_MP4_URL =
+  'https://inv.phobos.observer/videoplayback?itag=140&xtags=acont%3Ddubbed-auto%3Alang%3Den'
+const OPUS_URL =
+  'https://inv.phobos.observer/videoplayback?itag=251&xtags=acont%3Ddubbed-auto%3Alang%3Den'
 
 const TITLE = 'Проповедь о покаянии'
 const DESCRIPTION = 'Текст проповеди из YouTube'
 
-// Форма ответа инстанса: числовые поля приходят строками, itag 140 дублируется.
+// Форма ответа инстанса: числовые поля приходят строками, itag 140 дублируется:
+// первым идёт дубль с большим битрейтом, за ним — оригинал (xtags=acont=original).
 const VIDEO_FIXTURE = {
   adaptiveFormats: [
-    { bitrate: '133546', itag: '140', type: 'audio/mp4; codecs="mp4a.40.2"', url: FIRST_MP4_URL },
     {
       bitrate: '133549',
       itag: '140',
       type: 'audio/mp4; codecs="mp4a.40.2"',
-      url: SECOND_MP4_URL,
+      url: DUBBED_MP4_URL,
+    },
+    {
+      bitrate: '133546',
+      itag: '140',
+      type: 'audio/mp4; codecs="mp4a.40.2"',
+      url: ORIGINAL_MP4_URL,
     },
     { bitrate: '139480', itag: '251', type: 'audio/webm; codecs="opus"', url: OPUS_URL },
     {
@@ -75,13 +84,13 @@ describe('resolveInvidiousAudio', () => {
     jest.restoreAllMocks()
   })
 
-  test('takes the first itag 140 mp4 format and maps the metadata', async () => {
+  test('prefers the original itag 140 mp4 format over a higher-bitrate dub and maps the metadata', async () => {
     const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse(VIDEO_FIXTURE))
 
     const resolved = await resolveInvidiousAudio(BASE_URL, VIDEO_ID)
 
     expect(resolved).toEqual({
-      audioUrl: FIRST_MP4_URL,
+      audioUrl: ORIGINAL_MP4_URL,
       description: DESCRIPTION,
       title: TITLE,
       videoId: VIDEO_ID,
@@ -92,6 +101,28 @@ describe('resolveInvidiousAudio', () => {
         headers: expect.objectContaining({ Accept: 'application/json' }),
       }),
     )
+  })
+
+  test('falls back to the plain itag 140 preference when no original track exists', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      jsonResponse({
+        adaptiveFormats: [
+          {
+            bitrate: '133549',
+            itag: '140',
+            type: 'audio/mp4; codecs="mp4a.40.2"',
+            url: DUBBED_MP4_URL,
+          },
+          { bitrate: '139480', itag: '251', type: 'audio/webm; codecs="opus"', url: OPUS_URL },
+        ],
+        lengthSeconds: '10',
+        title: TITLE,
+      }),
+    )
+
+    const resolved = await resolveInvidiousAudio(BASE_URL, VIDEO_ID)
+
+    expect(resolved.audioUrl).toBe(DUBBED_MP4_URL)
   })
 
   test('trims trailing slashes of the instance url', async () => {

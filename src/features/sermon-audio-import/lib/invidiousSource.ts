@@ -44,17 +44,28 @@ const readFormats = (payload: Record<string, unknown>): InvidiousFormat[] => {
   }))
 }
 
+// Invidious не отдаёт метаданных дорожки: оригинал опознаём по xtags (`acont=original` либо нет acont).
+const isOriginalAudioTrack = (url: string): boolean => {
+  const xtags = new URLSearchParams(url.slice(url.indexOf('?') + 1)).get('xtags')
+  const acont = xtags?.split(':').find(segment => segment.startsWith('acont='))
+
+  return acont === undefined || acont === 'acont=original'
+}
+
 const pickFormat = (formats: InvidiousFormat[]): InvidiousFormat => {
   const audioFormats = formats.filter(format => format.mimeType.startsWith('audio/'))
   if (audioFormats.length === 0) throw new ImportSourceError('no-audio')
 
+  const originalFormats = audioFormats.filter(format => isOriginalAudioTrack(format.url))
+  const candidates = originalFormats.length > 0 ? originalFormats : audioFormats
+
   // В ответе бывают дубли itag 140 — берём первый подходящий.
-  const preferred = audioFormats.find(
+  const preferred = candidates.find(
     format => format.itag === PREFERRED_ITAG && format.mimeType.includes(PREFERRED_MIME_TYPE),
   )
   if (preferred) return preferred
 
-  return [...audioFormats].sort((first, second) => second.bitrate - first.bitrate)[0]
+  return [...candidates].sort((first, second) => second.bitrate - first.bitrate)[0]
 }
 
 const toResolvedAudio = (

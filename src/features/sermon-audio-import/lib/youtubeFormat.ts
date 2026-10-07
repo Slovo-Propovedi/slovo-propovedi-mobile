@@ -6,6 +6,11 @@ import { ImportSourceError } from './sourceErrors'
 
 /** Формат аудиодорожки в терминах InnerTube (snake_case приходит из библиотеки). */
 export interface YoutubeAudioFormat {
+  audio_track?: {
+    audio_is_default?: boolean
+    display_name?: string
+    id?: string
+  }
   bitrate: number
   itag: number
   mime_type: string
@@ -78,10 +83,17 @@ export const assertVideoIsDownloadable = ({
   if (isLive) throw new ImportSourceError('live')
 }
 
+// Оригинал опознаём по display_name («original», эвристика yt-dlp): id дорожки —
+// числовой дискриминатор без смысла, а audio_is_default у YouTube может указывать
+// на дубль. Отсутствие audio_track — однодорожечное (оригинальное) видео.
+const isOriginalAudioTrack = (format: YoutubeAudioFormat): boolean =>
+  !format.audio_track ||
+  Boolean(format.audio_track.display_name?.toLowerCase().includes('original'))
+
 /**
  * Выбирает аудиодорожку в AAC/mp4: сначала itag 140 (совместим с плеером), иначе
  * самый высокобитрейтовый mp4-формат. При itag 140 берётся первый — в ответе
- * бывают дубли.
+ * бывают дубли. Приоритет отдаётся оригинальным дорожкам, а не дублям/ASR.
  * @param formats - Все форматы видео из InnerTube.
  * @returns Выбранный формат либо `null`, если mp4-аудио нет.
  */
@@ -91,9 +103,12 @@ export const pickAudioFormat = <T extends YoutubeAudioFormat>(formats: T[]): nul
       format.mime_type.startsWith('audio/') && format.mime_type.includes(PREFERRED_MIME_TYPE),
   )
 
+  const originalFormats = audioFormats.filter(isOriginalAudioTrack)
+  const candidates = originalFormats.length > 0 ? originalFormats : audioFormats
+
   return (
-    audioFormats.find(format => format.itag === PREFERRED_ITAG) ??
-    [...audioFormats].sort((first, second) => second.bitrate - first.bitrate)[0] ??
+    candidates.find(format => format.itag === PREFERRED_ITAG) ??
+    [...candidates].sort((first, second) => second.bitrate - first.bitrate)[0] ??
     null
   )
 }
