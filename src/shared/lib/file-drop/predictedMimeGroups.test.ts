@@ -13,6 +13,12 @@ describe('predictedMimeGroups', () => {
     expect(sorted(predictedMimeGroups(['application/xml', 'text/xml']))).toEqual(['text'])
   })
 
+  test('maps FB2 MIME types (application/x-fictionbook[+xml]) to text', () => {
+    expect(
+      sorted(predictedMimeGroups(['application/x-fictionbook', 'application/x-fictionbook+xml'])),
+    ).toEqual(['text'])
+  })
+
   test('maps generic application/octet-stream (best-effort for FB2) to text', () => {
     expect(sorted(predictedMimeGroups(['application/octet-stream']))).toEqual(['text'])
   })

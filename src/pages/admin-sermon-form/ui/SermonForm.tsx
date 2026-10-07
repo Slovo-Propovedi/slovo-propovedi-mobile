@@ -56,6 +56,7 @@ export const SermonForm = ({
   const { handleFiles, status } = useDroppedMediaUpload(onChange)
   const { draggedItems, isDragActive } = useFileDrop(handleFiles)
   const predictedKinds = predictDropKinds(draggedItems)
+
   const dropEntries = DROP_ENTRIES.map(entry => ({
     active: predictedKinds.has(entry.group),
     description: entry.description,

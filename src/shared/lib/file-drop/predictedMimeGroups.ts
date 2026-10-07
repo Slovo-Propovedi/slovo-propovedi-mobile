@@ -11,6 +11,8 @@ type MimeGroup = 'audio' | 'image' | 'text'
 const TEXT_MIME_TYPES = [
   'application/octet-stream',
   'application/pdf',
+  'application/x-fictionbook', // FB2 (алиас)
+  'application/x-fictionbook+xml', // FB2
   'application/xml',
   'text/plain',
   'text/xml',

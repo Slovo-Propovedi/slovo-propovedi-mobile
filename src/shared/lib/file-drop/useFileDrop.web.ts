@@ -4,25 +4,23 @@ import { createDropTracker, type DraggedItem } from './dropTracker'
 type DropHandler = (files: File[]) => void
 
 // Имя файла доступно до drop через entry-API (Chrome/Edge/Firefox/Safari).
-// Некоторые окружения/типы элементов его не отдают — тогда null, и вид
-// предугадывается по MIME.
-const itemName = (item: DataTransferItem): null | string => {
+// `webkitGetAsEntry` вызывается ровно один раз на элемент: Chrome отдаёт null
+// при повторном вызове, и имя пропадает. Некоторые окружения entry не отдают —
+// тогда имя null, и вид предугадывается по MIME.
+const toDragItem = (item: DataTransferItem) => {
+  let entry: FileSystemEntry | null
   try {
-    return item.webkitGetAsEntry()?.name ?? null
+    entry = item.webkitGetAsEntry()
   } catch {
-    return null
+    entry = null
   }
+
+  return { kind: item.kind, name: entry?.name ?? null, type: item.type }
 }
 
 const toDragPayload = (event: DragEvent) => {
   const { dataTransfer } = event
-  const items = dataTransfer
-    ? Array.from(dataTransfer.items).map(item => ({
-        kind: item.kind,
-        name: itemName(item),
-        type: item.type,
-      }))
-    : undefined
+  const items = dataTransfer ? Array.from(dataTransfer.items).map(toDragItem) : undefined
 
   return {
     dataTransfer: dataTransfer
