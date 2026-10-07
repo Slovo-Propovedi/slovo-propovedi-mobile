@@ -20,6 +20,12 @@ jest.mock('entities/auth', () => ({
   restoreSession: jest.fn(),
 }))
 
+// MoreScreen's styles import SEARCH_HEADER_HEIGHT from the sermon-search barrel,
+// which transitively pulls the player graph; expo-audio cannot load under jest.
+jest.mock('entities/player', () => ({
+  usePlayNewSermon: jest.fn(() => jest.fn()),
+}))
+
 const mockedRestoreSession = jest.mocked(restoreSession)
 
 jest.mock('shared/ui/theme', () => ({
