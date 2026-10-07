@@ -13,8 +13,9 @@
 - Плоский вертикальный список строк (не карточки), разделённых тонким сепаратором `ResultsListSeparator` (`src/pages/search-results/ui/ResultsListSeparator.tsx`): высота 1px, цвет `currentTheme.surface`, горизонтальный отступ `INDENTS.medium`.
 - Тип строки зависит от `type`:
   - `sermons` → `SermonResultRow` (`src/pages/search-results/ui/SermonResultRow.tsx`) на `TracksListItem` из `entities/track-list`: обложка, заголовок, сабтайтл `sermonSubtitle` (проповедник + книга/глава/стих), бейдж кэша (`useTrackItemCache`). `isPlaying` всегда `false` — строка не отражает текущее воспроизведение (в отличие от строк на «Слушать», здесь нет полосы прогресса прослушивания).
-  - `playlists` → `SearchPlaylistRow` (`src/features/sermon-search/ui/SearchPlaylistRow.tsx`) на `ListItemBase`: artwork, название, описание.
-  - `preachers` → `SearchPreacherRow` (`src/features/sermon-search/ui/SearchPreacherRow.tsx`) на `ListItemBase` только с именем, без обложки.
+  - `playlists` → `SearchPlaylistRow` (`src/features/sermon-search/ui/SearchPlaylistRow.tsx`) на `SearchListItem`: artwork, название, описание.
+  - `preachers` → `SearchPreacherRow` (`src/features/sermon-search/ui/SearchPreacherRow.tsx`) на `SearchListItem` только с именем, без обложки.
+  - Обе строки делят один `SearchListItem` (`src/features/sermon-search/ui/SearchListItem.tsx`), чья геометрия (отступы `INDENTS.middle`, радиус `RADIUSES.middle`, обложка `TRACK_LIST_ITEM_SIZES.albumArtSize`, типографика `FONT_SIZES.md`/`FONT_SIZES.base`, минимальная высота 50 + отступы) совпадает с `TracksListItem`, поэтому все три группы поиска имеют одинаковую высоту строки. Кэш-бейдж и меню «три точки» строки трека сюда не тянутся — они не применимы к плейлистам/проповедникам.
 - Список рендерит `ResultsList` (`src/pages/search-results/ui/ResultsList.tsx`) — `FlatList` с `keyboardDismissMode='on-drag'`, `keyboardShouldPersistTaps='handled'` и нижним отступом `tabBarHeight + PLAYER_SIZES.miniPlayerHeight` (последний элемент очищается от таб-бара и мини-плеера).
 
 ## Откуда данные

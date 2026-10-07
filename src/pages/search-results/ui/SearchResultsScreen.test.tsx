@@ -59,7 +59,10 @@ jest.mock('entities/track-list', () => {
     </View>
   )
   TracksListItem.Skeleton = () => <View testID='tracks-list-item-skeleton' />
-  return { TracksListItem }
+  return {
+    TRACK_LIST_ITEM_SIZES: jest.requireActual('entities/track-list').TRACK_LIST_ITEM_SIZES,
+    TracksListItem,
+  }
 })
 
 const QUERY = 'вера'

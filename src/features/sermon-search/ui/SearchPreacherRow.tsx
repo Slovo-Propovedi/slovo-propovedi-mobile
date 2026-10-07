@@ -1,8 +1,8 @@
 import { memo } from 'react'
-import { ListItemBase } from 'entities/list-item'
+import { SearchListItem } from './SearchListItem'
 
 export const SearchPreacherRow = memo(
   ({ artist, onPress }: { artist: string; onPress: (artist: string) => void }) => (
-    <ListItemBase title={artist} onPress={() => onPress(artist)} />
+    <SearchListItem title={artist} onPress={() => onPress(artist)} />
   ),
 )

@@ -1,6 +1,6 @@
 import { memo } from 'react'
-import { ListItemBase } from 'entities/list-item'
 import { type PlaylistData } from 'entities/playlist'
+import { SearchListItem } from './SearchListItem'
 
 export const SearchPlaylistRow = memo(
   ({
@@ -10,7 +10,7 @@ export const SearchPlaylistRow = memo(
     onPress: (playlist: PlaylistData) => void
     playlist: PlaylistData
   }) => (
-    <ListItemBase
+    <SearchListItem
       title={playlist.title}
       artwork={playlist.artwork}
       subtitle={playlist.description}
