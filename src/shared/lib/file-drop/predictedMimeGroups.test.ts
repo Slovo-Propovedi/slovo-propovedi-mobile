@@ -13,6 +13,10 @@ describe('predictedMimeGroups', () => {
     expect(sorted(predictedMimeGroups(['application/xml', 'text/xml']))).toEqual(['text'])
   })
 
+  test('maps generic application/octet-stream (best-effort for FB2) to text', () => {
+    expect(sorted(predictedMimeGroups(['application/octet-stream']))).toEqual(['text'])
+  })
+
   test('deduplicates repeated groups', () => {
     expect(sorted(predictedMimeGroups(['image/png', 'image/webp']))).toEqual(['image'])
   })

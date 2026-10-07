@@ -5,7 +5,16 @@
 
 type MimeGroup = 'audio' | 'image' | 'text'
 
-const TEXT_MIME_TYPES = ['application/pdf', 'application/xml', 'text/plain', 'text/xml']
+// `application/octet-stream` — лучшая догадка для FB2: OS часто не отдаёт точный
+// MIME для `.fb2` и присылает generic octet-stream. Ложная подсветка безвредна:
+// финальная классификация всегда идёт по расширению на drop.
+const TEXT_MIME_TYPES = [
+  'application/octet-stream',
+  'application/pdf',
+  'application/xml',
+  'text/plain',
+  'text/xml',
+]
 
 const mimeGroup = (mimeType: string): MimeGroup | null => {
   if (mimeType.startsWith('image/')) return 'image'
