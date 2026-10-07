@@ -1,0 +1,6 @@
+Allow blob: URLs in CSP connect-src for file uploads
+Prefer original audio track when importing from YouTube/Invidious
+Show toast instead of error dialog on session-restore network errors
+Move admin shield buttons into normal-flow header rows
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
