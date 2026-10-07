@@ -1,50 +1,82 @@
+import { useAtom } from '@reatom/npm-react'
 import { useCallback, useState } from 'react'
 import { usePlayNewSermon } from 'entities/player'
-import { type PlaylistData } from 'entities/playlist'
+import {
+  FAVORITES_PLAYLIST,
+  type LocalPlaylistData,
+  myPlaylistsAtom,
+  type PlaylistData,
+} from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
 import { SermonPlaylistPicker } from '../ui/SermonPlaylistPicker'
 import { resolvePlaylist } from './resolvePlaylist'
 
+interface PendingChoice {
+  localPlaylists: PlaylistData[]
+  sermon: SermonData
+}
+
+const toPlaylistData = (local: LocalPlaylistData): PlaylistData => ({
+  artwork: null,
+  id: local.id,
+  sermons: local.sermons,
+  title: local.title,
+})
+
+const containsSermon = (playlist: LocalPlaylistData, sermonId: string): boolean =>
+  playlist.sermons.some(snapshot => snapshot.id === sermonId)
+
 /**
- * Shared sermon-play chain for search results. A sermon that belongs to several
- * playlists opens a picker (no auto-play before the choice); 0/1 playlists play
- * immediately through `usePlayNewSermon`. Returns the modal element to render on
- * the screen, mirroring `useAddToPlaylistModal`.
+ * Shared sermon-play chain for search results. When the tapped sermon belongs to
+ * several playlists (server playlists plus local custom playlists such as
+ * «Избранные»), a picker opens and playback waits for the choice; otherwise it
+ * plays immediately. The built-in favorites playlist is the default context and
+ * does not by itself make the choice ambiguous. Returns the modal element to
+ * render on the screen, mirroring `useAddToPlaylistModal`.
  */
 export const useSermonPlayback = () => {
   const playNewSermon = usePlayNewSermon()
-  const [pendingSermon, setPendingSermon] = useState<null | SermonData>(null)
+  const [myPlaylists] = useAtom(myPlaylistsAtom)
+  const [pending, setPending] = useState<null | PendingChoice>(null)
 
   const onSermonPress = useCallback(
     (sermon: SermonData) => {
-      if ((sermon.playlists?.length ?? 0) > 1) {
-        setPendingSermon(sermon)
+      const serverPlaylists = sermon.playlists ?? []
+      const localPlaylists = myPlaylists
+        .filter(playlist => containsSermon(playlist, sermon.id))
+        .map(toPlaylistData)
+      const thresholdCount =
+        serverPlaylists.length +
+        localPlaylists.filter(playlist => playlist.id !== FAVORITES_PLAYLIST.id).length
+
+      if (thresholdCount >= 2) {
+        setPending({ localPlaylists, sermon })
         return
       }
 
-      void playNewSermon({ playlist: resolvePlaylist(sermon), sermon })
+      void playNewSermon({ playlist: localPlaylists[0] ?? resolvePlaylist(sermon), sermon })
     },
-    [playNewSermon],
+    [myPlaylists, playNewSermon],
   )
 
-  const closePicker = useCallback(() => setPendingSermon(null), [])
+  const closePicker = useCallback(() => setPending(null), [])
 
   const onSelectPlaylist = useCallback(
     (playlist: PlaylistData) => {
-      if (!pendingSermon) return
+      if (!pending) return
 
-      setPendingSermon(null)
-      void playNewSermon({ playlist, sermon: pendingSermon })
+      setPending(null)
+      void playNewSermon({ playlist, sermon: pending.sermon })
     },
-    [pendingSermon, playNewSermon],
+    [pending, playNewSermon],
   )
 
-  const modal = pendingSermon ? (
+  const modal = pending ? (
     <SermonPlaylistPicker
       visible
       onClose={closePicker}
       onSelect={onSelectPlaylist}
-      playlists={pendingSermon.playlists ?? []}
+      playlists={[...(pending.sermon.playlists ?? []), ...pending.localPlaylists]}
     />
   ) : null
 

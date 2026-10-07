@@ -1,4 +1,5 @@
 import { createCtx } from '@reatom/framework'
+import { Platform } from 'react-native'
 import { cachedUrlsAtom, playlistDownloadProgressAtom } from '../model'
 import { audioCacheService } from './AudioCacheService'
 import { cacheAudioWithProgress } from './cacheAudioWithProgress'
@@ -187,6 +188,19 @@ describe('cacheAudioWithProgress', () => {
     await cacheAudioWithProgress(ctx, AUDIO_URL)
 
     expect(mockedDeletePartialFile).toHaveBeenCalledWith(AUDIO_URL)
+  })
+
+  test('skips deleting the partial file on web (no file system)', async () => {
+    const platformSpy = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      cacheAudioSpy.mockResolvedValue(CACHED_URI)
+
+      await cacheAudioWithProgress(ctx, AUDIO_URL)
+
+      expect(mockedDeletePartialFile).not.toHaveBeenCalled()
+    } finally {
+      platformSpy.restore()
+    }
   })
 
   test('does not delete the partial file on failure', async () => {

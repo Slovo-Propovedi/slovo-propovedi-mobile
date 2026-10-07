@@ -1,4 +1,5 @@
 import { type Ctx } from '@reatom/framework'
+import { Platform } from 'react-native'
 import { markUrlCached, removeTrackDownloadProgress, setTrackDownloadProgress } from '../model'
 import { audioCacheService } from './AudioCacheService'
 import { deletePartialFile } from './partialFile'
@@ -48,7 +49,9 @@ export const cacheAudioWithProgress = async (
       signal,
     )
     markUrlCached(ctx, audioUrl)
-    void deletePartialFile(audioUrl)
+    // expo-file-system has no web implementation; deleting a partial there only
+    // logs noise, so skip it (same guard as reEnqueuePartials).
+    if (Platform.OS !== 'web') void deletePartialFile(audioUrl)
     return uri
   } finally {
     removeTrackDownloadProgress(ctx, audioUrl)

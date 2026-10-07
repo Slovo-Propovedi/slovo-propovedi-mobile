@@ -106,6 +106,8 @@ isInternetReachable ?? isConnected
 
 Офлайн-прослушивание обеспечивает кэш аудио — [audio-cache.md](./audio-cache.md). При старте трека `AudioLoader` сначала берёт закэшированный файл, иначе стартует фоновое кэширование.
 
+На web удаление частичного файла после успешного кэширования пропускается (`Platform.OS !== 'web'` — expo-file-system недоступен, иначе `deletePartialFile` только пишет warn) — `src/entities/offline-cache/lib/cacheAudioWithProgress.ts`; web-плеер понижает `AbortError` из `audio.play()` (отменённый сменой источника) до `console.warn` без диалога — `src/entities/player/lib/PlayerService/web/audioHandlers.ts`.
+
 ## Офлайн-guard при воспроизведении (Issue #81)
 
 Общий guard `guardOfflinePlayback(audioUrl, isOnline)` (`src/entities/player/lib/playOfflineGuard.ts`) проверяет сеть и кэш перед стартом воспроизведения:

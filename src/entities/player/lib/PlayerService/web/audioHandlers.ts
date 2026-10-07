@@ -3,11 +3,19 @@ import { reportError } from 'shared/model/error-dialog'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { attachWebAudioEvents } from './audioEvents'
 import { writeWebDuration } from './durationWriter'
+import { getErrorName } from './errorName'
 import { type WebMediaSession } from './mediaSession'
 import { markInterruptedWhilePlaying, markUserPause } from './pauseIntent'
 import { type WebPlayerState } from './playerState'
 
 export const reportPlayError = (error: unknown) => {
+  // A play() aborted by a superseding load/seek is benign (mirrors
+  // interruptionAutoResume): warn only, never surface a dialog.
+  if (getErrorName(error) === 'AbortError') {
+    console.warn('[WebPlayerService] play aborted:', error)
+    return
+  }
+
   console.error('[WebPlayerService] play failed:', error)
   reportError(error, 'Ошибка при воспроизведении аудио')
 }

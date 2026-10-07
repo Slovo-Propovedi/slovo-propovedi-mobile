@@ -1,6 +1,11 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent, screen } from '@testing-library/react-native'
-import { type PlaylistData } from 'entities/playlist'
+import {
+  FAVORITES_PLAYLIST,
+  type LocalPlaylistData,
+  myPlaylistsAtom,
+  type PlaylistData,
+} from 'entities/playlist'
 import { mapAllSermonsResponse, type SermonData } from 'entities/sermon'
 import { playlistsMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
@@ -115,6 +120,13 @@ const buildSermonData = (
   mapAllSermonsResponse(
     sermonsMocks.getSermonControllerFindAllResponseMock({ sermons: [sermon] }),
   )[0]
+
+const favoritesWith = (sermon: SermonData): LocalPlaylistData => ({
+  id: FAVORITES_PLAYLIST.id,
+  sermonIds: [sermon.id],
+  sermons: [sermon],
+  title: FAVORITES_PLAYLIST.title,
+})
 
 const buildPlaylist = (index: number): PlaylistData => ({
   artwork: null,
@@ -288,6 +300,47 @@ describe('<SearchGroupedResults>', () => {
 
     expect(screen.queryByText(PICKER_TITLE)).toBeNull()
     expect(mockPlayNewSermon).not.toHaveBeenCalled()
+  })
+
+  test('plays a one-server-playlist sermon immediately in favorites when favorited', async () => {
+    const playlist = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-1' })
+    const sermon = buildSermonData(
+      sermonsMocks.getSermonControllerFindOneResponseMock({ playlists: [playlist] }),
+    )
+    const ctx = createCtx()
+    searchQueryAtom(ctx, ACTIVE_QUERY)
+    searchResultsAtom(ctx, [sermon])
+    myPlaylistsAtom(ctx, [favoritesWith(sermon)])
+    await renderWithProviders(<SearchGroupedResults onPlaylistPress={jest.fn()} />, { ctx })
+
+    await fireEvent.press(screen.getByText(sermon.title))
+
+    expect(screen.queryByText(PICKER_TITLE)).toBeNull()
+    expect(mockPlayNewSermon).toHaveBeenCalledWith(
+      expect.objectContaining({ playlist: expect.objectContaining({ id: FAVORITES_PLAYLIST.id }) }),
+    )
+  })
+
+  test('offers favorites in the picker and plays within favorites when chosen', async () => {
+    const playlistA = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-a' })
+    const playlistB = playlistsMocks.getPlaylistControllerCreateResponseMock({ id: 'pl-b' })
+    const sermon = buildSermonData(
+      sermonsMocks.getSermonControllerFindOneResponseMock({ playlists: [playlistA, playlistB] }),
+    )
+    const ctx = createCtx()
+    searchQueryAtom(ctx, ACTIVE_QUERY)
+    searchResultsAtom(ctx, [sermon])
+    myPlaylistsAtom(ctx, [favoritesWith(sermon)])
+    await renderWithProviders(<SearchGroupedResults onPlaylistPress={jest.fn()} />, { ctx })
+
+    await fireEvent.press(screen.getByText(sermon.title))
+
+    expect(screen.getByText(PICKER_TITLE)).toBeTruthy()
+    await fireEvent.press(screen.getByText(FAVORITES_PLAYLIST.title))
+
+    expect(mockPlayNewSermon).toHaveBeenCalledWith(
+      expect.objectContaining({ playlist: expect.objectContaining({ id: FAVORITES_PLAYLIST.id }) }),
+    )
   })
 
   test('forwards onAddToPlaylist with the sermon when the add-to-playlist action fires', async () => {

@@ -1,13 +1,9 @@
 import { reportError } from 'shared/model/error-dialog'
+import { getErrorName } from './errorName'
 
 const ABORT_RETRY_DELAY_MS = 75
 const AUTOPLAY_BLOCKED_MESSAGE = 'Браузер заблокировал автоматическое возобновление воспроизведения'
 const RESUME_FAILED_MESSAGE = 'Не удалось возобновить воспроизведение после прерывания'
-
-const getErrorName = (error: unknown): string => {
-  if (typeof error !== 'object' || error === null || !('name' in error)) return ''
-  return String(error.name)
-}
 
 const reportResumeFailure = (error: unknown): void => {
   const message =

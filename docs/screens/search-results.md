@@ -34,7 +34,7 @@
 
 ## Куда можно перейти
 
-- `sermons`: тап по строке запускает воспроизведение (перехода нет) через общий `useSermonPlayback` (`features/sermon-search`): при 2+ плейлистах — пикер `SermonPlaylistPicker` (выбор играет проповедь в выбранном плейлисте, backdrop закрывает без воспроизведения), при 0/1 — сразу `usePlayNewSermon({ playlist: resolvePlaylist(sermon), sermon })`.
+- `sermons`: тап по строке запускает воспроизведение (перехода нет) через общий `useSermonPlayback` (`features/sermon-search`): при неоднозначном выборе (серверных плейлистов ≥ 2 или пользовательских локальных ≥ 2) — пикер `SermonPlaylistPicker` со **серверными и локальными** плейлистами проповеди (включая «Избранные»); выбор играет проповедь в выбранном плейлисте, backdrop закрывает без воспроизведения. Иначе (в т.ч. 1 серверный + «Избранные», только «Избранные», 0 совпадений) — сразу `usePlayNewSermon({ playlist: resolvePlaylist(sermon), sermon })` с локальным плейлистом, если проповедь в нём.
 - `playlists`: тап → `/listen/playlist?playlist=<id плейлиста>` (`router.push`; полный `PlaylistData` экран плейлиста резолвит сам).
 - `preachers`: тап → `/listen/search-results?type=sermons&query=<имя проповедника>` — открывает уже полный список проповедей этого проповедника.
 
