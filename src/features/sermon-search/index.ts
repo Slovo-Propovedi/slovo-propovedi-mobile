@@ -1,4 +1,4 @@
-export { collectMatchingPreachers } from './lib/composeSearchResults'
+export { collectMatchingPreachers, mergePlaylistResults } from './lib/composeSearchResults'
 export { SEARCH_HEADER_HEIGHT } from './lib/constants'
 export { resolvePlaylist } from './lib/resolvePlaylist'
 export {

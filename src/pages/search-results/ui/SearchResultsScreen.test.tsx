@@ -119,6 +119,22 @@ describe('<SearchResultsScreen>', () => {
     })
   })
 
+  test('includes a playlist matched only by sermon content on the playlists screen', async () => {
+    const contentPlaylist = playlistsMocks.getPlaylistControllerCreateResponseMock({
+      id: 'content-playlist',
+    })
+    const sermon = sermonsMocks.getSermonControllerFindOneResponseMock({
+      playlists: [contentPlaylist],
+    })
+    mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
+    mockPlaylistControllerFindAll.mockResolvedValue(buildPlaylistsResponse([]))
+
+    await renderWithParams({ query: QUERY, type: 'playlists' })
+
+    expect(await screen.findByText(contentPlaylist.title)).toBeTruthy()
+    expect(mockSermonControllerFindAll).toHaveBeenCalledWith({ search: QUERY, take: 100 })
+  })
+
   test('navigates to sermons of a preacher on preacher tap', async () => {
     const sermon = sermonsMocks.getSermonControllerFindOneResponseMock()
     mockSermonControllerFindAll.mockResolvedValue(buildSermonsResponse([sermon]))
