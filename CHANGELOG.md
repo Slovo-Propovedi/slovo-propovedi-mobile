@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0] - 2026-10-07
+
+### Added
+
+- Reuse player progress bar, polish import block layout and hints
+- Pull-to-refresh on Listen and admin screens
+- Stale-while-revalidate for Listen sections
+- Auto-resume playback after interruption when it was active
+- Add admin shield button to the Listen screen
+- Rebrand cache and history menu icons
+- Validate invidious api on add, restore url marquee, fix row layout
+- Backend-driven invidious instance presets and admin management
+- Stage import metadata before audio and harden uploads
+- Trust release signing key in app links
+- Import sermons from invidious instances
+- Sign release builds with configurable release keystore
+- Accept m4a in admin audio picker
+- Import sermon audio and metadata from YouTube or Invidious
+
+### Fixed
+
+- Align More shield with Listen shield position
+- Clamp pull distance and center refresh spinner
+- Adjust More screen header paddings
+- Eager-load slider covers restored from cache
+- Move admin shield with pull-to-refresh content
+- Update packages
+- Restamp patches for installed package versions
+- Reset body margin to keep startup splash centered
+- Add scrollEventThrottle to Listen ScrollView
+- Replace "Еще" with "Ещё" across UI labels and docs
+- Align More header with Listen search row and center shield button
+- Keep splash size stable and hide app beneath it
+- My-playlists scroll, startup splash and Vibration API haptics
+- Hide haptics toggle in settings (no-op on web)
+- Keep my-playlists content above the mini-player
+- Eliminate 1px overflow, stray scrollbars and overscroll flash
+- Refresh admin data silently on screen focus
+- Rebrand bulk clear actions icons
+- Treat browser fetch-block as known invidious failure
+- Address review findings for admin lists and release signing
+- Refresh admin playlist/sermon lists on focus after edits
+- Type native multipart descriptor and add server-processing state
+- Classify m4a orphans as audio in admin media
+- Fix file uploads on web and native pickers, images-only library
+- Route import errors to dialog only for diagnostics, add invidious basic auth
+- Use error dialog for import failures, youtube client fallback, instance hints
+- Surface upload errors and add import progress bar
+- Document release signing env in .env.example
+- Harden sermon audio import after review
+- Add patch guard script and test for expo-audio audio-focus patch
+- Patch expo-audio android audio focus to keep focus and pause others
+
 ## [0.25.1] - 2026-10-02
 
 ### Added
@@ -1001,6 +1054,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.26.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.26.0
 [0.25.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.25.1
 [0.25.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.25.0
 [0.24.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.24.0

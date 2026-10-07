@@ -1,0 +1,10 @@
+Align More shield with Listen shield position
+Clamp pull distance and center refresh spinner
+Adjust More screen header paddings
+Eager-load slider covers restored from cache
+Move admin shield with pull-to-refresh content
+Reuse player progress bar, polish import block layout and hints
+Pull-to-refresh on Listen and admin screens
+Stale-while-revalidate for Listen sections
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
