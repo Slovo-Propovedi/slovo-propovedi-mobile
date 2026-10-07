@@ -6,6 +6,7 @@ import {
   SearchPreacherRow,
   useSermonPlayback,
 } from 'features/sermon-search'
+import { useHistoryProgressMap } from 'entities/listening-history'
 import { type PlaylistData } from 'entities/playlist'
 import { useHeaderTitle } from 'shared/routing/useHeaderTitle'
 import { parseSearchResultsParams } from '../lib/parseSearchResultsParams'
@@ -22,6 +23,7 @@ export const SearchResultsScreen = () => {
   const setHeaderTitle = useHeaderTitle()
   const router = useRouter()
   const { modal, onSermonPress } = useSermonPlayback()
+  const progressMap = useHistoryProgressMap()
 
   const parsedType = parsed?.type
   const parsedQuery = parsed?.query
@@ -62,7 +64,13 @@ export const SearchResultsScreen = () => {
         <ResultsList
           data={sermons}
           keyExtractor={sermon => sermon.id}
-          renderItem={({ item }) => <SermonResultRow sermon={item} onPress={onSermonPress} />}
+          renderItem={({ item }) => (
+            <SermonResultRow
+              sermon={item}
+              onPress={onSermonPress}
+              progress={progressMap.get(item.id)}
+            />
+          )}
         />
         {modal}
       </>
