@@ -26,18 +26,17 @@ export const MoreScreen = () => {
   const canOpenAdminPanel = status === 'authenticated' && canAccessAdmin(user)
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
-      {canOpenAdminPanel && (
-        <View style={styles.adminButtonSlot}>
-          <AdminPanelButton />
-        </View>
-      )}
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView
+      edges={['top', 'left', 'right']}
+      style={[styles.container, { backgroundColor: currentTheme.background }]}
+    >
+      <ScrollView>
         <View style={styles.header}>
           <View style={styles.headerTexts}>
             <Text style={[styles.appName, { color: currentTheme.text }]}>{APP_NAME}</Text>
             <Text style={styles.appVersion}>v{APP_VERSION}</Text>
           </View>
+          {canOpenAdminPanel && <AdminPanelButton />}
         </View>
         <Text style={[styles.appDescription, { color: currentTheme.textMuted }]}>
           Приложение для прослушивания и чтения проповедей

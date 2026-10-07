@@ -14,7 +14,7 @@ import {
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { createRefreshControl, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, MIN_TOUCH_TARGET, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { usePullToRefresh } from '../lib/usePullToRefresh'
 import { useScrollActivity } from '../lib/useScrollActivity'
 import { AdminShieldButton } from './AdminShieldButton'
@@ -57,11 +57,6 @@ export const ListenScreen = () => {
         <SermonSearchResults onAddToPlaylist={openAddToPlaylist} />
       ) : (
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
-          {showAdminButton && (
-            <View style={styles.adminButtonSlot}>
-              <AdminShieldButton />
-            </View>
-          )}
           <ScrollView
             onScroll={onScroll}
             scrollEventThrottle={16}
@@ -73,7 +68,12 @@ export const ListenScreen = () => {
               { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
             ]}
           >
-            {!isSearchOpen && <SearchToggleButton />}
+            {!isSearchOpen && (
+              <View style={styles.topRow}>
+                <SearchToggleButton />
+                {showAdminButton && <AdminShieldButton />}
+              </View>
+            )}
             <DynamicSectionsSlider
               leadingElement={!isSearchActive ? <ContinueListeningButton /> : undefined}
             />
@@ -87,14 +87,6 @@ export const ListenScreen = () => {
 }
 
 const styles = StyleSheet.create({
-  adminButtonSlot: {
-    // Center the 48pt shield on the pinned search row (SEARCH_HEADER_HEIGHT).
-    // `top` is valid because showAdminButton requires !isSearchOpen (search header unmounted).
-    position: 'absolute',
-    right: INDENTS.medium,
-    top: (SEARCH_HEADER_HEIGHT - MIN_TOUCH_TARGET) / 2,
-    zIndex: 2,
-  },
   safeArea: {
     flex: 1,
   },
@@ -106,5 +98,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: SEARCH_HEADER_HEIGHT,
     zIndex: 1,
+  },
+  topRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingRight: INDENTS.low,
   },
 })

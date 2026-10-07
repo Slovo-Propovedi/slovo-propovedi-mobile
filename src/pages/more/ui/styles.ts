@@ -1,19 +1,13 @@
 import { StyleSheet } from 'react-native'
-import { SEARCH_HEADER_HEIGHT } from 'features/sermon-search'
 import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET } from 'shared/ui/theme'
 
+// Listen's top row (SearchToggleButton: 24pt icon + INDENTS.medium padding) is
+// effectively 56pt tall and centers its content at ≈28pt below the top inset.
+// Padding this header by half the difference puts title and shield on that line.
+const LISTEN_TOP_ROW_HEIGHT = 56
+const HEADER_TOP_OFFSET = (LISTEN_TOP_ROW_HEIGHT - MIN_TOUCH_TARGET) / 2
+
 export const styles = StyleSheet.create({
-  adminButtonSlot: {
-    // Same alignment formula as Listen's adminButtonSlot: center the 48pt shield
-    // on the pinned search row (SEARCH_HEADER_HEIGHT), so both screens show it at
-    // the same height. `top` is relative to the SafeAreaView, so the slot is
-    // independent of the header paddings. Horizontal offset uses INDENTS.medium;
-    // the ±scrollbar-width gap on web is environmental and not compensated here.
-    position: 'absolute',
-    right: INDENTS.medium,
-    top: (SEARCH_HEADER_HEIGHT - MIN_TOUCH_TARGET) / 2,
-    zIndex: 2,
-  },
   appDescription: {
     fontSize: FONT_SIZES.base,
     marginBottom: INDENTS.high,
@@ -29,24 +23,22 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    // Matches Listen's visual top spacing: its pinned search row starts at 0 but
-    // the search toggle inside it adds its own INDENTS.medium padding.
-    paddingTop: INDENTS.medium,
-  },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
     marginBottom: INDENTS.low,
-    // Match Listen's pinned search row height so the absolutely positioned shield
-    // (see adminButtonSlot) lands on the same line as the title row.
+    // The in-flow shield's 48pt touch target keeps the padded content box 48pt
+    // tall; pairing it with paddingTop puts the title and shield centers on the
+    // same ≈28pt line as Listen's 56pt top row.
     minHeight: MIN_TOUCH_TARGET,
-    // Asymmetric on purpose: paddingLeft sets the title's inset, while the tighter
-    // paddingRight keeps the row balanced now that the shield lives outside it.
+    // paddingLeft sets the title's inset; the tighter paddingRight is the right
+    // inset for the shield, which is an in-flow row sibling (no absolute slot).
     paddingLeft: INDENTS.medium,
     paddingRight: INDENTS.low,
+    paddingTop: HEADER_TOP_OFFSET,
   },
   headerTexts: {
+    flex: 1,
     flexDirection: 'column',
   },
   itemContainer: {
