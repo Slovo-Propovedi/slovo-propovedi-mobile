@@ -32,6 +32,9 @@ export const useSearchResults = (type: SearchResultsType, query: string) => {
     let cancelled = false
 
     const load = async () => {
+      if (cancelled) return
+      setIsLoading(true)
+
       if (type === 'playlists') {
         const result = await fetchPlaylistTitleMatches(query, FULL_PLAYLISTS_LIMIT)
         if (cancelled) return

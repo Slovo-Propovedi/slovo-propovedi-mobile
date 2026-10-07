@@ -148,7 +148,7 @@ generated/
 
 - **Доменная модель** `src/entities/sermon/model/sermon.ts` — `sermonSchema` расширяется под новые union-формы `chapter`/`verse`, чтобы валидировать данные и с сервера, и из кэша (структурная форма `SermonShape` — `src/shared/model/domain/common.ts`). Старые значения (одиночное число / `null`) остаются валидными подмножеством новых форм.
 - **Форматтеры ссылок на Писание** — `formatSermonReference` (`src/entities/sermon/lib/formatSermonReference.ts`) и `formatScripture` (`src/features/sermon-search/lib/formatScripture.ts`) расширяются: диапазон `[a, b]` выводится как «a-b», список отрезков — через запятую. Используются в подписях плейлиста, мини/полноэкранного плеера и в строках результатов поиска.
-- **Кэши** (per-query кэш поиска `cachedSermonSearch:<query>`, кэш секций `CACHED_SECTIONS`, плейлисты в параметрах маршрута) хранят `SermonData` с этими полями — расширенная схема валидации принимает и старые, и новые формы.
+- **Кэши** (per-query кэш поиска `cachedSermonSearch:q:<query>`, кэш секций `CACHED_SECTIONS`, плейлисты в параметрах маршрута) хранят `SermonData` с этими полями — расширенная схема валидации принимает и старые, и новые формы.
 - **DTO на запись** (`CreateSermonDto`/`UpdateSermonDto`) — `chapter`/`verse` стали опциональными.
 
 ## Фабрики мок-данных (FAKER)
@@ -158,7 +158,7 @@ generated/
 ## Текущий статус (TODO)
 
 - Главный экран («Слушать») берёт данные секций с сервера через `sectionControllerFindAll` (`src/entities/section/lib/fetchAllSections.ts`) + кэш как офлайн-фолбэк (`setCachedSections`/`getCachedSections` в `src/entities/section/lib/sections-cache/`).
-- **Поиск проповедей** ходит на `GET /sermons` через `sermonControllerFindAll` (`src/features/sermon-search/lib/searchSources.ts`) с `{search, take: 20}`; успешный ответ пишется в per-query кэш (`cachedSermonSearch:<query>`), при сетевой ошибке — фолбэк на кэш. Параллельно поиск ходит на `GET /playlists` за плейлистами по названию/описанию (`{search, limit: 50}`, per-query кэш `cachedPlaylistSearch:<query>`).
+- **Поиск проповедей** ходит на `GET /sermons` через `sermonControllerFindAll` (`src/features/sermon-search/lib/searchSources.ts`) с `{search, take: 20}`; успешный ответ пишется в per-query кэш (`cachedSermonSearch:q:<query>`), при сетевой ошибке — фолбэк на кэш. Параллельно поиск ходит на `GET /playlists` за плейлистами по названию/описанию (`{search, limit: 50}`, per-query кэш `cachedPlaylistSearch:q:<query>`).
 - **Плеер** получает `audioUrl`/`textFileUrl` из `SermonEntity` (пришедшей через `GET /section` или поиск) и играет напрямую; `sermonControllerGetStreamUrl` не используется.
 - **Раздел книг `/read`** (таб заблокирован) использует локальную БД через `API.books.getBooksOnBooksGroup` → `localDB.getBooks()` → `db.books` (`src/shared/api/books.ts:15`). TODO в `books.ts:10`: заменить на реальный API-вызов, когда бэкенд для книг будет готов — см. [../debt.md](../debt.md).
 - **Аутентификация** реализована для интерфейса администратора: `entities/auth` (`signIn`/`restoreSession`/`signOut`) использует `authControllerSignIn`/`authControllerGetProfile`/`authControllerLogout`; токены — в `secureTokenStorage`. Публичного пользовательского логина по-прежнему нет (таб-бар остаётся публичным), вход в `/admin` защищён.

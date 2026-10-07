@@ -39,17 +39,40 @@ jest.mock('entities/player', () => ({
 }))
 
 jest.mock('entities/listening-history', () => ({
-  buildHistoryMenuActions: jest.fn(() => []),
+  buildHistoryMenuActions: jest.fn(
+    ({
+      onAddToPlaylist,
+      sermon,
+    }: {
+      onAddToPlaylist?: (sermon: unknown) => void
+      sermon: unknown
+    }) => [
+      {
+        icon: 'add-circle',
+        onPress: () => onAddToPlaylist?.(sermon),
+        text: 'Добавить в плейлист',
+      },
+    ],
+  ),
   useHistoryProgressMap: jest.fn(() => new Map()),
   useHistorySermonIds: jest.fn(() => new Set()),
 }))
 
 jest.mock('entities/track-list', () => {
   const { Text, View } = jest.requireActual('react-native')
-  const TracksListItem = (props: { subtitle?: string; title: string }) => (
+  const TracksListItem = (props: {
+    menuActions?: Array<{ onPress: () => void; text: string }>
+    subtitle?: string
+    title: string
+  }) => (
     <View>
       <Text>{props.title}</Text>
       {props.subtitle && <Text>{props.subtitle}</Text>}
+      {props.menuActions?.map(action => (
+        <Text key={action.text} onPress={action.onPress}>
+          {action.text}
+        </Text>
+      ))}
     </View>
   )
   TracksListItem.Skeleton = () => <View testID='tracks-list-item-skeleton' />
@@ -185,6 +208,21 @@ describe('<SearchGroupedResults>', () => {
     await fireEvent.press(screen.getByText('Иван'))
 
     expect(onPreacherPress).toHaveBeenCalledWith('Иван')
+  })
+
+  test('forwards onAddToPlaylist with the sermon when the add-to-playlist action fires', async () => {
+    const ctx = createCtx()
+    const onAddToPlaylist = jest.fn()
+    searchQueryAtom(ctx, ACTIVE_QUERY)
+    searchResultsAtom(ctx, [buildSermon(1)])
+    await renderWithProviders(
+      <SearchGroupedResults onPlaylistPress={jest.fn()} onAddToPlaylist={onAddToPlaylist} />,
+      { ctx },
+    )
+
+    await fireEvent.press(screen.getByText('Добавить в плейлист'))
+
+    expect(onAddToPlaylist).toHaveBeenCalledWith(expect.objectContaining({ id: 'sermon-1' }))
   })
 
   test('renders nothing when the query is below the minimum length', async () => {

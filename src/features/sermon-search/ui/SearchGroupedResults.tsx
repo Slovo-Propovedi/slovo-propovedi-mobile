@@ -113,9 +113,8 @@ export const SearchGroupedResults = ({
   )
 }
 
-// Skeletons hang off the public component: grouped for the compact search, and a
-// single-group variant for the full-results screen.
-SearchGroupedResults.Skeleton = SearchGroupedResultsSkeleton
+// The single-group skeleton hangs off the public component; the full-results
+// screen renders it while its list loads.
 SearchGroupedResults.GroupSkeleton = SearchGroupSkeleton
 
 const styles = StyleSheet.create({

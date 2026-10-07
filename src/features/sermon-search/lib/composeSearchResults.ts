@@ -38,6 +38,7 @@ export const collectMatchingPreachers = (sermons: SermonData[], query: string): 
   const seen = new Set<string>()
 
   for (const { artist } of sermons) {
+    if (!artist) continue
     if (!artist.toLowerCase().includes(normalizedQuery)) continue
     if (seen.has(artist)) continue
     seen.add(artist)

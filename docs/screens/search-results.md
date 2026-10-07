@@ -21,8 +21,8 @@
 
 - Параметры маршрута валидируются оборонительно в `parseSearchResultsParams` (`src/pages/search-results/lib/parseSearchResultsParams.ts`): `type` обязан быть одним из `sermons` / `playlists` / `preachers`, `query` — непустая строка (обрезается `trim`). Любое несоответствие → функция возвращает `undefined`, и экран рендерит `null` (шапка/заголовок тоже не ставятся).
 - `useSearchResults(type, query)` (`src/pages/search-results/lib/useSearchResults.ts`) при монтировании **всегда** запрашивает полный список из сети (network-first), с защитой от гонок (`cancelled`-флаг в `useEffect`); офлайн-фолбэк — per-query кэши фичи поиска (`src/features/sermon-search/lib/searchSources.ts`):
-  - `sermons`: `sermonsApi.getSermons().sermonControllerFindAll({ search: query, take: 100 })` → `fetchSermonResults(query, 100)`; фолбэк при ошибке сети — `getCachedSearchResults(query)` (ключ `cachedSermonSearch:<query>`).
-  - `playlists`: `playlistsApi.getPlaylists().playlistControllerFindAll({ limit: 100, search: query })` → `fetchPlaylistTitleMatches(query, 100)`; фолбэк — `getCachedPlaylistSearch(query)` (ключ `cachedPlaylistSearch:<query>`).
+  - `sermons`: `sermonsApi.getSermons().sermonControllerFindAll({ search: query, take: 100 })` → `fetchSermonResults(query, 100)`; фолбэк при ошибке сети — `getCachedSearchResults(query)` (ключ `cachedSermonSearch:q:<query>`).
+  - `playlists`: `playlistsApi.getPlaylists().playlistControllerFindAll({ limit: 100, search: query })` → `fetchPlaylistTitleMatches(query, 100)`; фолбэк — `getCachedPlaylistSearch(query)` (ключ `cachedPlaylistSearch:q:<query>`).
   - `preachers`: производные **клиент-сайд** от тех же 100 проповедей — `collectMatchingPreachers(result.data, query)` (`src/features/sermon-search/lib/composeSearchResults.ts`): уникальные `artist` найденных проповедей, чьё имя содержит запрос (case-insensitive), в порядке первого появления. Отдельного сетевого запроса нет.
 - Загруженный результат пишется обратно в общий per-query кэш (`persistSermonSearchResults` / `persistPlaylistSearchResults`) — только если данные пришли из сети (`fromNetwork`), fire-and-forget.
 
@@ -41,7 +41,7 @@
 
 - Загрузка: скелетон группы `SearchGroupedResults.GroupSkeleton` (Composition API) с `rowKind='track'` для `sermons` и `'list'` для остальных типов — рендерится, пока `isLoading`.
 - Пусто: `EmptyState` «Ничего не найдено» (`ListEmptyComponent` в `ResultsList`).
-- Офлайн: per-query кэш поиска (`cachedSermonSearch:<query>` / `cachedPlaylistSearch:<query>`); при отсутствии кэша — пустое состояние. UI-индикатора источника данных нет (см. [debt.md](../debt.md)).
+- Офлайн: per-query кэш поиска (`cachedSermonSearch:q:<query>` / `cachedPlaylistSearch:q:<query>`); при отсутствии кэша — пустое состояние. UI-индикатора источника данных нет (см. [debt.md](../debt.md)).
 - Ошибка сети: `console.error` в `searchSources.ts`, затем фолбэк на кэш; ошибки не пробрасываются (функции `fetch*` не реджектят).
 - Невалидные параметры (`type` не из списка, пустой `query`, массив вместо строки): экран рендерит `null`.
 

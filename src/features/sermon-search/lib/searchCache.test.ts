@@ -24,7 +24,7 @@ describe('searchCache', () => {
 
   describe('getSearchCacheKey', () => {
     test('normalizes the query with trim and lowercase', () => {
-      expect(getSearchCacheKey('  ВеРА ')).toBe('cachedSermonSearch:вера')
+      expect(getSearchCacheKey('  ВеРА ')).toBe('cachedSermonSearch:q:вера')
     })
   })
 
@@ -50,7 +50,7 @@ describe('searchCache', () => {
 
       await setCachedSearchResults('  ВеРА ', [sermon])
 
-      expect(setItemSpy).toHaveBeenCalledWith('cachedSermonSearch:вера', JSON.stringify([sermon]))
+      expect(setItemSpy).toHaveBeenCalledWith('cachedSermonSearch:q:вера', JSON.stringify([sermon]))
     })
 
     test('does not cache an empty result array', async () => {
@@ -58,7 +58,20 @@ describe('searchCache', () => {
 
       await setCachedSearchResults('вера', [])
 
-      expect(setItemSpy).not.toHaveBeenCalledWith('cachedSermonSearch:вера', expect.any(String))
+      expect(setItemSpy).not.toHaveBeenCalledWith('cachedSermonSearch:q:вера', expect.any(String))
+    })
+  })
+
+  describe('index-key collision', () => {
+    test('does not let the "index" query collide with the index key', async () => {
+      await setCachedSearchResults('вера', [sermon])
+      await setCachedSearchResults('index', [sermon])
+
+      const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
+
+      expect(index).toEqual(['cachedSermonSearch:q:вера', 'cachedSermonSearch:q:index'])
+      expect(await getCachedSearchResults('вера')).toEqual([sermon])
+      expect(await getCachedSearchResults('index')).toEqual([sermon])
     })
   })
 
@@ -68,7 +81,7 @@ describe('searchCache', () => {
 
       const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
 
-      expect(index).toEqual(['cachedSermonSearch:запрос-1'])
+      expect(index).toEqual(['cachedSermonSearch:q:запрос-1'])
     })
 
     test('keeps only the newest queries and removes the oldest via multiRemove', async () => {
@@ -78,16 +91,16 @@ describe('searchCache', () => {
       const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
 
       expect(index).toHaveLength(MAX_CACHED_SEARCH_QUERIES)
-      expect(index[0]).toBe('cachedSermonSearch:запрос-4')
+      expect(index[0]).toBe('cachedSermonSearch:q:запрос-4')
       expect(index[index.length - 1]).toBe(
-        `cachedSermonSearch:запрос-${MAX_CACHED_SEARCH_QUERIES + 3}`,
+        `cachedSermonSearch:q:запрос-${MAX_CACHED_SEARCH_QUERIES + 3}`,
       )
-      expect(await AsyncStorage.getItem('cachedSermonSearch:запрос-1')).toBeNull()
-      expect(await AsyncStorage.getItem('cachedSermonSearch:запрос-2')).toBeNull()
-      expect(await AsyncStorage.getItem('cachedSermonSearch:запрос-3')).toBeNull()
-      expect(await AsyncStorage.getItem('cachedSermonSearch:запрос-4')).not.toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:q:запрос-1')).toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:q:запрос-2')).toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:q:запрос-3')).toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:q:запрос-4')).not.toBeNull()
       expect(
-        await AsyncStorage.getItem(`cachedSermonSearch:запрос-${MAX_CACHED_SEARCH_QUERIES + 3}`),
+        await AsyncStorage.getItem(`cachedSermonSearch:q:запрос-${MAX_CACHED_SEARCH_QUERIES + 3}`),
       ).not.toBeNull()
     })
 
@@ -97,8 +110,8 @@ describe('searchCache', () => {
       for (let i = 1; i <= MAX_CACHED_SEARCH_QUERIES + 2; i++)
         await setCachedSearchResults(`запрос-${i}`, [sermon])
 
-      expect(multiRemoveSpy).toHaveBeenNthCalledWith(1, ['cachedSermonSearch:запрос-1'])
-      expect(multiRemoveSpy).toHaveBeenNthCalledWith(2, ['cachedSermonSearch:запрос-2'])
+      expect(multiRemoveSpy).toHaveBeenNthCalledWith(1, ['cachedSermonSearch:q:запрос-1'])
+      expect(multiRemoveSpy).toHaveBeenNthCalledWith(2, ['cachedSermonSearch:q:запрос-2'])
     })
 
     test('moves an existing query to the end of the index without duplicating it', async () => {
@@ -108,7 +121,7 @@ describe('searchCache', () => {
 
       const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
 
-      expect(index).toEqual(['cachedSermonSearch:запрос-2', 'cachedSermonSearch:запрос-1'])
+      expect(index).toEqual(['cachedSermonSearch:q:запрос-2', 'cachedSermonSearch:q:запрос-1'])
     })
   })
 
@@ -122,7 +135,7 @@ describe('searchCache', () => {
       const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
 
       expect(index).toEqual(
-        expect.arrayContaining(['cachedSermonSearch:запрос-1', 'cachedSermonSearch:запрос-2']),
+        expect.arrayContaining(['cachedSermonSearch:q:запрос-1', 'cachedSermonSearch:q:запрос-2']),
       )
       expect(index).toHaveLength(2)
     })
@@ -138,9 +151,9 @@ describe('searchCache', () => {
 
       expect(await AsyncStorage.getItem('cachedSermonSearch:old-1')).toBeNull()
       expect(await AsyncStorage.getItem('cachedSermonSearch:old-2')).toBeNull()
-      expect(await AsyncStorage.getItem('cachedSermonSearch:new-query')).not.toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:q:new-query')).not.toBeNull()
       const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
-      expect(index).toEqual(['cachedSermonSearch:new-query'])
+      expect(index).toEqual(['cachedSermonSearch:q:new-query'])
     })
 
     test('does not clean when index is valid', async () => {
@@ -153,7 +166,7 @@ describe('searchCache', () => {
       await setCachedSearchResults('new-query', [sermon])
 
       expect(await AsyncStorage.getItem('cachedSermonSearch:existing')).not.toBeNull()
-      expect(await AsyncStorage.getItem('cachedSermonSearch:new-query')).not.toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:q:new-query')).not.toBeNull()
     })
 
     test('leaves index corrupted on cleanup failure so next call retries', async () => {
@@ -171,10 +184,10 @@ describe('searchCache', () => {
       await setCachedSearchResults('retry-query', [sermon])
 
       expect(await AsyncStorage.getItem('cachedSermonSearch:orphan')).toBeNull()
-      expect(await AsyncStorage.getItem('cachedSermonSearch:new-query')).toBeNull()
-      expect(await AsyncStorage.getItem('cachedSermonSearch:retry-query')).not.toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:q:new-query')).toBeNull()
+      expect(await AsyncStorage.getItem('cachedSermonSearch:q:retry-query')).not.toBeNull()
       const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
-      expect(index).toEqual(['cachedSermonSearch:retry-query'])
+      expect(index).toEqual(['cachedSermonSearch:q:retry-query'])
     })
 
     test('keeps concurrent writes alive when the index is corrupt', async () => {
@@ -192,7 +205,7 @@ describe('searchCache', () => {
 
       const index = JSON.parse((await AsyncStorage.getItem(CACHED_SERMON_SEARCH_INDEX)) ?? '[]')
       expect(index).toEqual(
-        expect.arrayContaining(['cachedSermonSearch:query-a', 'cachedSermonSearch:query-b']),
+        expect.arrayContaining(['cachedSermonSearch:q:query-a', 'cachedSermonSearch:q:query-b']),
       )
       for (const key of index) expect(await AsyncStorage.getItem(key)).not.toBeNull()
     })

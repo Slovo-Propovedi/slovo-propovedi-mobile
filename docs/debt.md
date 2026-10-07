@@ -72,6 +72,10 @@
 
 - [ ] **Глобальный мок `__mocks__/react-native-reanimated.js` не экспортирует `Animated.FlatList`** — `src/pages/playlist-list/ui/PlaylistListScreen.test.tsx` держит 35-строчный локальный override (`jest.mock('react-native-reanimated')` с FlatList-passthrough), потому что PlaylistListScreen рендерит `Animated.FlatList`. Кандидат на централизацию: добавить `Animated.FlatList` (RN FlatList passthrough) в глобальный мок; предварительно аудитить всех потребителей глобального мока, чтобы ничего не сломалось. — вернуться при следующем касании reanimated-моков.
 
+## Cache
+
+- [ ] **Legacy-ключи per-query кэшей поиска не вычищаются проактивно после перехода на схему `<prefix>:q:<query>`.** `src/shared/lib/cache/createQueryCache.ts` — старые ключи `cachedSermonSearch:<query>` / `cachedPlaylistSearch:<query>` (до фикса коллизии с индексом) остаются в AsyncStorage до первого срабатывания self-heal при повреждённом индексе; проактивной миграции/чистки при обновлении нет (до ~30 мелких записей на кэш). Вернуться, если понадобится гарантированная очистка (например, one-time prune по префиксу при старте).
+
 ## UI performance
 
 - [ ] **ListenScreen монтирует все элементы вертикального списка секций** (горизонтальные слайдеры секций теперь виртуализированы — горизонтальный `FlatList`; остаётся вертикальный `ScrollView` + map, вертикальный список секций сознательно НЕ виртуализирован — секций мало) — `src/pages/listen` — вернуться при проблемах с памятью; кандидаты: FlashList/virtualization.
