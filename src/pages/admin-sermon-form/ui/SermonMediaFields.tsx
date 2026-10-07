@@ -1,11 +1,11 @@
 import { Text, View } from 'react-native'
 import { CoverPicker, FileUploadField } from 'widgets/admin-form-pickers'
 import { ImportFromYoutube } from 'features/sermon-audio-import'
+import { useFileDrop } from 'shared/lib/file-drop'
 import { EditableUrlField } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
 import { type SermonFormValues } from '../lib/sermonFormInitialValues'
 import { useDroppedMediaUpload } from '../lib/useDroppedMediaUpload'
-import { useSermonFileDrop } from '../lib/useSermonFileDrop'
 import { DropStatusLine } from './DropStatusLine'
 import { styles } from './styles'
 
@@ -23,7 +23,7 @@ export const SermonMediaFields = ({
 }) => {
   const { currentTheme } = useTheme()
   const { handleFiles, status } = useDroppedMediaUpload(onChange)
-  const { isDragActive } = useSermonFileDrop(handleFiles)
+  const { isDragActive } = useFileDrop(handleFiles)
 
   return (
     <View style={styles.block}>

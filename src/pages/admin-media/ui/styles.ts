@@ -16,6 +16,7 @@ export const styles = StyleSheet.create({
     gap: INDENTS.low,
     marginBottom: INDENTS.medium,
   },
+  dropHint: { fontSize: FONT_SIZES.sm, marginTop: INDENTS.low },
   error: { fontSize: FONT_SIZES.sm, marginBottom: INDENTS.medium },
   failedList: { marginTop: INDENTS.low },
   failedRow: { fontSize: FONT_SIZES.sm, marginTop: INDENTS.lowest },

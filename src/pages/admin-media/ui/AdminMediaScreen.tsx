@@ -1,18 +1,21 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useState } from 'react'
-import { FlatList, Text } from 'react-native'
+import { FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
+import { useFileDrop } from 'shared/lib/file-drop'
 import { showToast } from 'shared/model'
-import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
+import { createRefreshControl, PullToRefresh } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
+import { measureMediaGrid } from '../lib/mediaGrid'
 import { useAdminMedia } from '../lib/useAdminMedia'
+import { useDroppedImageUpload } from '../lib/useDroppedImageUpload'
 import { usePickImage } from '../lib/usePickImage'
-import { AdminMediaGridSkeleton } from './AdminMediaGridSkeleton'
 import { AdminMediaListHeader } from './AdminMediaListHeader'
+import { MediaGridEmpty } from './MediaGridEmpty'
 import { MediaTile } from './MediaTile'
 import { MediaViewerModal } from './MediaViewerModal'
 import { styles } from './styles'
@@ -20,16 +23,6 @@ import { styles } from './styles'
 const DELETE_TITLE = 'Удалить обложку?'
 const DELETE_CONFIRM_TEXT = 'Удалить'
 const DELETE_BUSY_TEXT = 'Удаление…'
-const EMPTY_MESSAGE = 'Обложек пока нет'
-const LOAD_ERROR = 'Не удалось загрузить файлы'
-
-// Целевой размер квадратной плитки: экран/плитка даёт 3 колонки на телефоне,
-// больше — на планшете. Число колонок всегда ≥1, чтобы не делить на ноль.
-const TARGET_TILE_SIZE = 120
-const LIST_PADDING = INDENTS.medium * 2
-
-const numColumnsFor = (width: number) =>
-  Math.max(1, Math.floor((width - LIST_PADDING + INDENTS.low) / (TARGET_TILE_SIZE + INDENTS.low)))
 
 // Каталог медиа-библиотеки: шапка с загрузкой, сетка квадратных изображений
 // (тап — полноэкранный просмотр) и блок осиротевших файлов сверху. Удаление
@@ -57,11 +50,10 @@ export const AdminMediaScreen = () => {
     asset => void upload(asset, () => undefined),
     message => showToastAction(message),
   )
+  const { handleFiles } = useDroppedImageUpload(upload, isUploading)
+  const { isDragActive } = useFileDrop(handleFiles)
 
-  const numColumns = numColumnsFor(SCREEN_WIDTH)
-  const tileSize = Math.floor(
-    (SCREEN_WIDTH - LIST_PADDING - INDENTS.low * (numColumns - 1)) / numColumns,
-  )
+  const { numColumns, tileSize } = measureMediaGrid(SCREEN_WIDTH)
 
   const handleDelete = async () => {
     setDeleteTarget(null)
@@ -85,11 +77,12 @@ export const AdminMediaScreen = () => {
             styles.listContent,
             { paddingBottom: tabBarHeight + INDENTS.low },
           ]}
-          ListHeaderComponent={
-            <AdminMediaListHeader
-              progress={progress}
-              isUploading={isUploading}
-              onUpload={() => void pickImage()}
+          ListEmptyComponent={
+            <MediaGridEmpty
+              isError={isError}
+              tileSize={tileSize}
+              isLoading={isLoading}
+              numColumns={numColumns}
             />
           }
           renderItem={({ item }) => (
@@ -100,14 +93,13 @@ export const AdminMediaScreen = () => {
               onDelete={() => setDeleteTarget(item)}
             />
           )}
-          ListEmptyComponent={
-            isLoading ? (
-              <AdminMediaGridSkeleton tileSize={tileSize} numColumns={numColumns} />
-            ) : isError ? (
-              <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
-            ) : (
-              <EmptyState message={EMPTY_MESSAGE} />
-            )
+          ListHeaderComponent={
+            <AdminMediaListHeader
+              progress={progress}
+              isUploading={isUploading}
+              isDragActive={isDragActive}
+              onUpload={() => void pickImage()}
+            />
           }
         />
       </PullToRefresh>

@@ -11,7 +11,7 @@ type DropHandler = (files: File[]) => void
  * браузерные перетаскивания и не мигать подсказкой.
  * @param onFiles - Потребитель брошенных файлов.
  */
-export const useSermonFileDrop = (onFiles: DropHandler) => {
+export const useFileDrop = (onFiles: DropHandler) => {
   const [isDragActive, setIsDragActive] = useState(false)
   const onFilesRef = useRef(onFiles)
 

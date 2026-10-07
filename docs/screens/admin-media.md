@@ -10,7 +10,7 @@
 
 ## Каталог
 
-**Файлы:** `src/pages/admin-media/ui/AdminMediaScreen.tsx`, `AdminMediaHeader.tsx`, `AdminMediaGridSkeleton.tsx`, `MediaTile.tsx`, `MediaViewerModal.tsx`, `lib/useAdminMedia.ts`, `lib/fileKind.ts`, `lib/usePickImage.ts`
+**Файлы:** `src/pages/admin-media/ui/AdminMediaScreen.tsx`, `AdminMediaHeader.tsx`, `AdminMediaGridSkeleton.tsx`, `MediaTile.tsx`, `MediaViewerModal.tsx`, `lib/useAdminMedia.ts`, `lib/fileKind.ts`, `lib/usePickImage.ts`, `lib/useDroppedImageUpload.ts`
 
 - **Что показывается:** внутриэкранная шапка «Медиа» (`AdminMediaHeader`) с иконкой-кнопкой загрузки (`cloud-upload-outline`, `accessibilityLabel='Загрузить файл'`) справа; при загрузке — прогресс-бар. Наверху страницы — блок «Осиротевшие файлы» (скан/очистка), ниже — сетка квадратных плиток. Число колонок считается от ширины экрана (`numColumnsFor`, целевая плитка `TARGET_TILE_SIZE = 120`, минимум 1), промежутки — `INDENTS.low`. Плитка: обложка через `expo-image`, имя файла, размер (`formatFileSize`) и бейдж «используется» при `used = true`; оверлейная кнопка удаления.
 - **Откуда данные:** `getFiles` (`GET /files`) через `filesApi`; элемент — `FileMetadataDto { fileName, fileUrl, size, lastModified, used }`.
@@ -24,6 +24,7 @@
 - Загрузка идёт через `uploadSermonFile` (`shared/api/uploadFile.ts`, multipart `POST /files`) с прогрессом по `onUploadProgress` (axios).
 - **После успеха:** каталог перечитывается, тост «Обложка загружена». Новая обложка сразу доступна и в каталоге, и в пикерах форм.
 - **Ошибка:** `getErrorMessage` → тост.
+- **Drag & drop (только web):** на web изображение можно перетащить на страницу — грузится первое изображение из пачки (`lib/useDroppedImageUpload.ts`, тот же `uploadSermonFile`), остальные файлы игнорируются молча; если изображений среди брошенных нет — тост «Допускаются только изображения (JPEG, PNG, WebP).». При перетаскивании шапка показывает подсказку «Отпустите изображение, чтобы загрузить» (`AdminMediaListHeader`), во время активной загрузки дроп игнорируется. Слушатели `window` — общий `shared/lib/file-drop` (`useFileDrop`), тот же, что у формы проповеди.
 
 ## Удаление
 
