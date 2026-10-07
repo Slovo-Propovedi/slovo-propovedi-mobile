@@ -25,6 +25,7 @@ const mockReplaceAudio = jest.fn().mockResolvedValue(null)
 const mockResumeAfterPause = jest.fn().mockResolvedValue(undefined)
 const mockSeekTo = jest.fn().mockResolvedValue(undefined)
 const mockSetLockScreenMetadata = jest.fn()
+const mockReassertLockScreenMetadata = jest.fn()
 const mockGetResumePosition = jest.fn()
 const mockRecordPlaybackStart = jest.fn().mockResolvedValue(undefined)
 const mockRecordSermonSwitch = jest.fn().mockResolvedValue(undefined)
@@ -45,6 +46,7 @@ let dateNowSpy: jest.SpyInstance
 jest.mock('./usePlayer', () => ({
   usePlayer: () => ({
     play: mockPlay,
+    reassertLockScreenMetadata: mockReassertLockScreenMetadata,
     replaceAudio: mockReplaceAudio,
     resumeAfterPause: mockResumeAfterPause,
     seekTo: mockSeekTo,
@@ -328,9 +330,10 @@ describe('usePlayNewSermon', () => {
     expect(mockResumeAfterPause).not.toHaveBeenCalled()
     expect(mockPlay).not.toHaveBeenCalled()
     expect(mockSeekTo).not.toHaveBeenCalled()
-    expect(mockSetLockScreenMetadata).toHaveBeenCalledWith(
+    expect(mockReassertLockScreenMetadata).toHaveBeenCalledWith(
       expect.objectContaining({ albumTitle: 'Other Playlist', artworkUrl: 'artwork.jpg' }),
     )
+    expect(mockSetLockScreenMetadata).not.toHaveBeenCalled()
   })
 
   test('same sermon switch uses the chosen playlist artwork when the sermon has none', async () => {

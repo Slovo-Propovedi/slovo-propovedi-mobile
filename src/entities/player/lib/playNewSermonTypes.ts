@@ -9,6 +9,7 @@ export interface PlayNewSermonDeps {
   markPlayFinished: (sermonId: string) => void
   markPlayStarted: (sermonId: string) => void
   play: () => Promise<unknown>
+  reassertLockScreenMetadata: (metadata: LockScreenMetadata) => void
   recordPlaybackStart: (audio: AudioPlayerData, playlist: PlaylistData) => Promise<unknown>
   recordSermonSwitch: (params: {
     markOldCompleted: boolean

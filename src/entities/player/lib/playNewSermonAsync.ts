@@ -28,6 +28,7 @@ export const playNewSermonAsync = async (
   // current playlist keeps the Issue #99 no-op.
   const playlistChanged = currentPlaylist !== null && currentPlaylist.id !== playlist.id
   const isSameSermonPlaying = isSameSermon && ctx.get(isPlayingAtom)
+  const isContextOnlySwitch = isSameSermonPlaying && playlistChanged
 
   // Issue #99: tapping the sermon that is already playing in the same playlist is a no-op.
   if (isSameSermonPlaying && !playlistChanged) return
@@ -92,12 +93,18 @@ export const playNewSermonAsync = async (
       console.warn('[playNewSermon] failed to reset startup guard:', error)
     })
 
-    deps.setLockScreenMetadata({
+    const lockScreenMetadata = {
       albumTitle: playlist.title,
       artist: newAudio.artist,
       artworkUrl: newAudio.artwork,
       title: newAudio.title,
-    })
+    }
+
+    // A context-only switch keeps the same player instance, so an in-place
+    // metadata update can be dropped (notably the artwork). Re-assert through
+    // the full activation path so the notification/lock screen show the new art.
+    if (isContextOnlySwitch) deps.reassertLockScreenMetadata(lockScreenMetadata)
+    else deps.setLockScreenMetadata(lockScreenMetadata)
   } catch (error) {
     deps.clearSuppressionOnError(sermonId)
     throw error
