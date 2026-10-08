@@ -2,6 +2,7 @@ import { reatomContext } from '@reatom/npm-react'
 import { type SuspenseFallbackProps } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context'
 import { loadHistoryAction } from 'entities/listening-history'
 import {
   cleanupOrphanedDownloads,
@@ -34,14 +35,16 @@ export function SuspenseFallback(_props: SuspenseFallbackProps) {
 
 const RootLayoutWithProvider = () => (
   <reatomContext.Provider value={ctx}>
-    <ThemeProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ErrorBoundary>
-          <GlobalErrorHandler />
-          <RootLayout />
-        </ErrorBoundary>
-      </GestureHandlerRootView>
-    </ThemeProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <ThemeProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <ErrorBoundary>
+            <GlobalErrorHandler />
+            <RootLayout />
+          </ErrorBoundary>
+        </GestureHandlerRootView>
+      </ThemeProvider>
+    </SafeAreaProvider>
   </reatomContext.Provider>
 )
 
