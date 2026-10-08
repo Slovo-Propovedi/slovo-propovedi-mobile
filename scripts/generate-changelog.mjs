@@ -8,7 +8,7 @@ import { generateChangelogSection, getUserFacingCommits } from './changelog-core
 // Normalize a git remote URL to its web form: strip the ssh:// prefix and
 // leading username, convert scp-like git@host:path syntax, drop the .git
 // suffix, and guarantee an https:// prefix.
-export const normalizeRemoteUrl = (remote) =>
+const normalizeRemoteUrl = (remote) =>
   remote
     .replace(/^ssh:\/\/git@/, 'https://')
     .replace(/^git@([^:]+):/, 'https://$1/')
@@ -17,7 +17,7 @@ export const normalizeRemoteUrl = (remote) =>
 
 // Sole source of truth: `git remote get-url origin`. Fails fast when the
 // script is run outside the repository or no `origin` remote is configured.
-export const resolveRepoUrl = () => {
+const resolveRepoUrl = () => {
   let remote
   try {
     remote = execSync('git remote get-url origin', { encoding: 'utf-8' }).trim()

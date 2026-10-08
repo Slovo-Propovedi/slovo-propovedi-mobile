@@ -1,4 +1,17 @@
 export {
+  balanceAtom,
+  balanceSchema,
+  eqEnabledAtom,
+  eqGainsAtom,
+  equalizerGainsSchema,
+  pitchAtom,
+  pitchSchema,
+  setBalanceAction,
+  setEqEnabledAction,
+  setEqGainsAction,
+  setPitchAction,
+} from './audio-settings'
+export {
   bufferedProgressStateAtom,
   downloadingAudioUrlAtom,
   downloadProgressAtom,
@@ -13,6 +26,7 @@ export { usePlaybackRate } from './lib/usePlaybackRate'
 export { usePlayer } from './lib/usePlayer'
 export { usePlayNewSermon } from './lib/usePlaySermon'
 export { useSeekControls } from './lib/useSeekControls'
+
 export { useVolume } from './lib/useVolume'
 
 export {
@@ -22,9 +36,18 @@ export {
   isBufferingAtom,
   isPlayingAtom,
   positionAtom,
+  repeatModeAtom,
+  repeatModeSchema,
+  setRepeatModeAction,
 } from './model'
 
-export { PLAYBACK_RATES, type PlaybackRate } from './playback-rate'
+export {
+  PLAYBACK_RATES,
+  type PlaybackRate,
+  playbackRateAtom,
+  playbackRateSchema,
+  setPlaybackRateAction,
+} from './playback-rate'
 
 export { closePlayerSheetAction, isPlayerExpandedAtom, openPlayerSheetAction } from './playerSheet'
 

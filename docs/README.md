@@ -49,6 +49,7 @@
 | [`features/track-list.md`](./features/track-list.md)                   | Строки списков проповедей и скелетоны (entities/track-list)                 |
 | [`features/error-handling.md`](./features/error-handling.md)           | Глобальный диалог ошибок, reportError, ErrorBoundary, информационный диалог |
 | [`features/updates.md`](./features/updates.md)                         | Проверка обновлений и уведомления                                           |
+| [`features/settings-backup.md`](./features/settings-backup.md)         | Резервная копия: экспорт/импорт настроек и локальных данных                 |
 | [`features/book-reader.md`](./features/book-reader.md)                 | Чтение FB2-книг (в разработке)                                              |
 | [`screens/listen.md`](./screens/listen.md)                             | Таб «Слушать» и его экраны                                                  |
 | [`screens/playlist.md`](./screens/playlist.md)                         | Экран плейлиста                                                             |

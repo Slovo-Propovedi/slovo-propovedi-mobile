@@ -163,6 +163,10 @@ See [`docs/BUILD-LOCAL.md`](docs/BUILD-LOCAL.md) → «Prebuild и config-пла
 
 Полные правила ведения docs — в `docs/README.md` и `docs/conventions.md`. AGENTS.md и docs/ должны оставаться консистентными.
 
+### Обязательное покрытие резервной копией
+
+Любые новые настройки приложения и пользовательские данные (новые ключи AsyncStorage, локальные базы, избранное, история и т.п.) обязаны добавляться в payload функции резервного копирования — `src/features/settings-backup/` (`model/backupPayload.ts` + `lib/readScalars.ts` / `lib/buildPayload.ts` / `lib/applyImport.ts`) — и корректно восстанавливаться при импорте в обоих режимах (`replace` и `merge`). При добавлении новой настройки обнови схему бэкапа и его тесты в том же PR; формат и семантика — в [`docs/features/settings-backup.md`](docs/features/settings-backup.md).
+
 ## Agent Division of Labor: Plan vs Implement
 
 When work is delegated to a coding agent, the DELEGATOR owns analysis and planning; the CODING agent owns mechanical implementation only.

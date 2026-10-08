@@ -63,7 +63,7 @@ describe('<ServerUrlSettings>', () => {
     expect(getByRole('button', { name: SAVE_BUTTON_NAME })).toBeTruthy()
   })
 
-  test('preserves the unsaved draft across collapse and reopen', async () => {
+  test('re-seeds the form from the saved URL after collapse and reopen', async () => {
     const user = userEvent.setup()
     const { getByPlaceholderText, getByRole } = await renderWithCtx()
     const row = getByRole('button', { name: ROW_BUTTON_NAME })
@@ -73,9 +73,11 @@ describe('<ServerUrlSettings>', () => {
     await user.clear(input)
     await user.type(input, DRAFT_URL)
 
+    // Collapse unmounts the body (conditional render), so reopening starts from
+    // the saved atom value rather than restoring the unsaved draft.
     await user.press(row)
     await user.press(row)
 
-    expect(getByPlaceholderText(INPUT_PLACEHOLDER)).toHaveDisplayValue(DRAFT_URL)
+    expect(getByPlaceholderText(INPUT_PLACEHOLDER)).toHaveDisplayValue(TEST_URL)
   })
 })

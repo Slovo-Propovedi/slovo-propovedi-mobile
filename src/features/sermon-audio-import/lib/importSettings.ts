@@ -47,34 +47,36 @@ const DEFAULT_SETTINGS: ImportSettings = {
 // разрешён: инстанс часто поднимают локально в своей сети. `z.url()` принимает
 // и userinfo (basic auth: `https://user:pass@host`) — учётные данные легальны,
 // запрос уйдёт с заголовком Authorization.
-const importSettingsSchema = z.object({
+export const importSettingsSchema = z.object({
   invidiousBaseUrl: z.url().refine(url => url.startsWith('http://') || url.startsWith('https://')),
   source: z.enum(['invidious', 'youtube']),
 })
 
-/**
- * Читает настройки импорта из хранилища. Отсутствующее или невалидное значение
- * (битый JSON, чужой источник, не-URL адрес) — дефолты в памяти, хранилище при
- * этом не перезаписывается.
- */
-export const loadImportSettings = async (): Promise<ImportSettings> => {
+/** Читает настройки импорта как есть: отсутствие/невалидность → `undefined`. */
+export const readImportSettings = async (): Promise<ImportSettings | undefined> => {
   try {
-    const stored = await getCachedJson(YOUTUBE_IMPORT_SETTINGS, importSettingsSchema)
-
-    return stored ?? DEFAULT_SETTINGS
+    return await getCachedJson(YOUTUBE_IMPORT_SETTINGS, importSettingsSchema)
   } catch (error) {
-    console.warn('Failed to load youtube import settings', error)
-    return DEFAULT_SETTINGS
+    console.warn('Failed to read youtube import settings', error)
+    return undefined
   }
 }
 
-const saveImportSettings = async (settings: ImportSettings): Promise<void> => {
+/**
+ * Единственный путь записи настроек импорта в AsyncStorage (владелец ключа).
+ * @param settings - Настройки для записи в хранилище.
+ */
+export const persistImportSettings = async (settings: ImportSettings): Promise<void> => {
   try {
     await setCachedJson(YOUTUBE_IMPORT_SETTINGS, settings)
   } catch (error) {
     console.warn('Failed to save youtube import settings', error)
   }
 }
+
+/** Настройки импорта из хранилища; при отсутствии/невалидности — дефолт. */
+export const loadImportSettings = async (): Promise<ImportSettings> =>
+  (await readImportSettings()) ?? DEFAULT_SETTINGS
 
 /**
  * Настройки источника импорта с ленивой загрузкой из хранилища: в памяти держим
@@ -120,7 +122,7 @@ export const useImportSettings = () => {
 
     settingsRef.current = next
     setSettings(next)
-    void saveImportSettings(next)
+    void persistImportSettings(next)
   }, [])
 
   return { settings, updateSettings }

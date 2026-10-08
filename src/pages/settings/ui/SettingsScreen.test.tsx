@@ -3,6 +3,11 @@ import { fireEvent } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { SettingsScreen } from './SettingsScreen'
 
+// Секция бэкапа тянет экспорт/импорт (нативный expo-audio) — изолируем экран.
+jest.mock('features/settings-backup', () => ({
+  BackupSection: () => null,
+}))
+
 const THEME_SETTINGS_TITLE = 'Тема оформления'
 const SERVER_URL_TITLE = 'URL сервера API'
 const ADMIN_ENTRY_TITLE = 'Войти в аккаунт администратора'
