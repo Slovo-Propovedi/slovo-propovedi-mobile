@@ -95,6 +95,7 @@
 - Режим без папки: iOS — системный share sheet (`expo-sharing.shareAsync`, «Сохранить в Файлы») и `expo-document-picker.getDocumentAsync`; web — скачивание через `<a download>` (`webFallback.downloadBackupFile`) и `<input type="file">` (`webFallback.pickBackupFileText`). Импортированный текст всё равно проходит `parseBackupFile` — без упрощений.
 - URI папки — недоверенный legacy-ввод: перед передачей в нативный модуль проверяется схема (`hasUriProtocol`, принимает и `content://`); недоступный путь сбрасывается (`useFolderAvailability` + `clearBackupFolder`).
 - Доступность папки определяется **оптимистично**: на web хендл в IndexedDB = папка доступна; `queryPermission` не гейтит (Chromium может отдавать `'prompt'` при фактически активном гранте), недоступность — только при явном `'denied'`. Реальная потеря разрешения (после рестарта браузера; для Firefox/Safari не применимо — папки там нет) проявляется реактивно: операция бросает `FolderPermissionLostError`, и UI переходит в состояние повторного выбора.
+- Запись на Android SAF идёт не через `File.write` (он не создаёт документ под `content://`, а `DocumentsContract.createDocument` падает на уже существующем имени): `writeFile` удаляет существующий документ с тем же именем (best-effort) и создаёт новый через `Directory.createFile(name, 'application/json')`, затем пишет содержимое (`lib/fileIo/writeBackupFile.ts`). Единый путь для ручного экспорта и автосинхронизации.
 - `folderLabel` показывает последний сегмент пути (на web — имя handle из `web-dir:<name>`).
 
 ## Экспорт

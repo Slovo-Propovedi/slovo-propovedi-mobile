@@ -3,6 +3,7 @@ import { Platform } from 'react-native'
 import { hasUriProtocol } from 'shared/lib/app-icon'
 import { reportError } from 'shared/model/error-dialog'
 import { decodeFolderLabel } from './folderLabel'
+import { writeBackupFile } from './writeBackupFile'
 
 export { exportViaFilePicker, importViaFilePicker } from './nativeFilePicker'
 
@@ -37,7 +38,7 @@ export const writeFile = async (
   json: string,
 ): Promise<void> => {
   try {
-    new File(requireFolderUri(folderUri), name).write(json)
+    writeBackupFile(new Directory(requireFolderUri(folderUri)), name, json)
   } catch (error) {
     reportError(error, 'Не удалось сохранить резервную копию')
     throw error
