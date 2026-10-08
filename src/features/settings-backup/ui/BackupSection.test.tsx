@@ -3,6 +3,7 @@ import { createCtx } from '@reatom/framework'
 import { fireEvent, waitFor } from '@testing-library/react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { reportError } from 'shared/model/error-dialog'
+import { backupAutosyncEnabledAtom } from '../model/backupFolder'
 import { BackupSection } from './BackupSection'
 
 const BACKUP_DIR_URI_KEY = 'backup_dir_uri'
@@ -237,6 +238,127 @@ describe('<BackupSection>', () => {
         expect.objectContaining({}),
         'merge',
       )
+    })
+  })
+
+  describe('autosync enable', () => {
+    const AUTO_FILE = 'slovo-backup-auto.json'
+    const OVERWRITE_LABEL = 'Перезаписать бэкап'
+    const IMPORT_MERGE_LABEL = 'Импортировать (объединить)'
+    const IMPORT_REPLACE_LABEL = 'Импортировать (заменить)'
+    const CANCEL_LABEL = 'Отмена'
+
+    test('enables autosync immediately when no auto file exists', async () => {
+      const { ctx, getByRole, queryByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('checkbox'))
+
+      await waitFor(() => {
+        expect(ctx.get(backupAutosyncEnabledAtom)).toBe(true)
+      })
+      expect(queryByText(IMPORT_MERGE_LABEL)).toBeNull()
+    })
+
+    test('asks what to do when the auto file already exists', async () => {
+      mockListFiles.mockResolvedValue([AUTO_FILE])
+      const { getByRole, getByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('checkbox'))
+
+      await waitFor(() => {
+        expect(getByText(IMPORT_MERGE_LABEL)).toBeTruthy()
+      })
+      expect(getByText(IMPORT_REPLACE_LABEL)).toBeTruthy()
+      expect(getByText(OVERWRITE_LABEL)).toBeTruthy()
+    })
+
+    test('overwrites the auto file and enables autosync', async () => {
+      mockListFiles.mockResolvedValue([AUTO_FILE])
+      const { ctx, getByRole, getByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('checkbox'))
+      await waitFor(() => {
+        expect(getByText(OVERWRITE_LABEL)).toBeTruthy()
+      })
+
+      await fireEvent.press(getByText(OVERWRITE_LABEL))
+
+      await waitFor(() => {
+        expect(mockWriteFile).toHaveBeenCalledWith(FOLDER_URI, AUTO_FILE, expect.any(String))
+        expect(ctx.get(backupAutosyncEnabledAtom)).toBe(true)
+      })
+    })
+
+    test('merges the existing auto file and enables autosync', async () => {
+      mockListFiles.mockResolvedValue([AUTO_FILE])
+      const { ctx, getByRole, getByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('checkbox'))
+      await waitFor(() => {
+        expect(getByText(IMPORT_MERGE_LABEL)).toBeTruthy()
+      })
+
+      await fireEvent.press(getByText(IMPORT_MERGE_LABEL))
+
+      await waitFor(() => {
+        expect(mockApplyImport).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({}),
+          'merge',
+        )
+        expect(ctx.get(backupAutosyncEnabledAtom)).toBe(true)
+      })
+    })
+
+    test('replaces with the existing auto file and enables autosync', async () => {
+      mockListFiles.mockResolvedValue([AUTO_FILE])
+      const { ctx, getByRole, getByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('checkbox'))
+      await waitFor(() => {
+        expect(getByText(IMPORT_REPLACE_LABEL)).toBeTruthy()
+      })
+
+      await fireEvent.press(getByText(IMPORT_REPLACE_LABEL))
+
+      await waitFor(() => {
+        expect(mockApplyImport).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({}),
+          'replace',
+        )
+        expect(ctx.get(backupAutosyncEnabledAtom)).toBe(true)
+      })
+    })
+
+    test('leaves autosync disabled when the dialog is dismissed', async () => {
+      mockListFiles.mockResolvedValue([AUTO_FILE])
+      const { ctx, getByRole, getByText, queryByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('checkbox'))
+      await waitFor(() => {
+        expect(getByText(CANCEL_LABEL)).toBeTruthy()
+      })
+
+      await fireEvent.press(getByText(CANCEL_LABEL))
+
+      await waitFor(() => {
+        expect(queryByText(IMPORT_MERGE_LABEL)).toBeNull()
+      })
+      expect(ctx.get(backupAutosyncEnabledAtom)).toBe(false)
+    })
+
+    test('offers only overwrite when the auto file is corrupted', async () => {
+      mockListFiles.mockResolvedValue([AUTO_FILE])
+      mockReadFile.mockResolvedValue('{not-json')
+      const { getByRole, getByText, queryByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('checkbox'))
+
+      await waitFor(() => {
+        expect(getByText(OVERWRITE_LABEL)).toBeTruthy()
+      })
+      expect(queryByText(IMPORT_MERGE_LABEL)).toBeNull()
     })
   })
 

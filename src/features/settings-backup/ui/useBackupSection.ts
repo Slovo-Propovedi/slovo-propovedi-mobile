@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { serverUrlAtom, showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { buildManualBackupFileName } from '../lib/backupFiles'
-import { buildPayload } from '../lib/buildPayload'
+import { buildValidatedPayloadJson } from '../lib/buildValidatedPayload'
 import {
   exportViaFilePicker,
   folderExists,
@@ -13,33 +13,36 @@ import {
 } from '../lib/fileIo'
 import { isFolderPermissionLostError } from '../lib/fileIo/folderErrors'
 import {
-  backupAutosyncEnabledAtom,
   backupFolderUriAtom,
   clearBackupFolder,
   loadBackupFolder,
-  setAutosyncEnabled,
   setBackupFolder,
 } from '../model/backupFolder'
-import { backupFileSchema } from '../model/backupPayload'
 import { useAutoBackupSync } from './useAutoBackupSync'
+import { useAutosyncToggle } from './useAutosyncToggle'
 import { useBackupImport } from './useBackupImport'
 import { useFolderAvailability } from './useFolderAvailability'
 
 /** Состояние и обработчики секции «Резервная копия» (экспорт/импорт/автосинхрон). */
 export const useBackupSection = () => {
   const [folderUri] = useAtom(backupFolderUriAtom)
-  const [autosyncEnabled] = useAtom(backupAutosyncEnabledAtom)
   const [serverUrl] = useAtom(serverUrlAtom)
 
   const loadFolder = useAction(loadBackupFolder)
   const saveFolder = useAction(setBackupFolder)
   const clearFolder = useAction(clearBackupFolder)
-  const saveAutosync = useAction(setAutosyncEnabled)
   const notify = useAction(showToast)
   const scheduleAutoBackup = useAutoBackupSync()
 
   const { isFolderUsable, markFolderUnusable } = useFolderAvailability(folderUri)
   const importState = useBackupImport(folderUri, serverUrl, scheduleAutoBackup, markFolderUnusable)
+  const autosyncState = useAutosyncToggle(
+    folderUri,
+    isFolderUsable,
+    importState.applyBackup,
+    markFolderUnusable,
+    scheduleAutoBackup,
+  )
 
   useEffect(() => {
     void loadFolder()
@@ -62,20 +65,9 @@ export const useBackupSection = () => {
     }
   }
 
-  // Общая сборка и валидация payload; `null` — уже сообщено пользователю.
-  const buildValidatedJson = async (): Promise<null | string> => {
-    const validated = backupFileSchema.safeParse(await buildPayload())
-    if (!validated.success) {
-      reportError(validated.error, 'Не удалось собрать резервную копию')
-      return null
-    }
-
-    return JSON.stringify(validated.data)
-  }
-
   const exportBackup = async () => {
     try {
-      const json = await buildValidatedJson()
+      const json = await buildValidatedPayloadJson()
       if (json === null) return
 
       await writeFile(folderUri, buildManualBackupFileName(new Date()), json)
@@ -89,7 +81,7 @@ export const useBackupSection = () => {
 
   const exportFromPicker = async () => {
     try {
-      const json = await buildValidatedJson()
+      const json = await buildValidatedPayloadJson()
       if (json === null) return
 
       await exportViaFilePicker(buildManualBackupFileName(new Date()), json)
@@ -101,13 +93,12 @@ export const useBackupSection = () => {
 
   return {
     ...importState,
-    autosyncEnabled,
+    ...autosyncState,
     canFolderSync: supportsFolderSync(),
     chooseFolder,
     exportBackup,
     exportFromPicker,
     folderUri,
     isFolderUsable,
-    toggleAutosync: (value: boolean) => void saveAutosync(value),
   }
 }

@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { Modal } from 'shared/ui/modal'
-import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
+import { choiceDialogStyles as styles } from './choiceDialog.styles'
 
 const CHOICE_TITLE = 'Применить резервную копию'
 const CHOICE_MESSAGE = 'Объединить с текущими данными или заменить их?'
@@ -37,34 +38,3 @@ export const BackupImportModeDialog = ({
     </Modal>
   )
 }
-
-const styles = StyleSheet.create({
-  choice: {
-    alignItems: 'center',
-    borderRadius: 8,
-    justifyContent: 'center',
-    marginTop: INDENTS.medium,
-    paddingVertical: INDENTS.middle,
-  },
-  choiceText: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: 'bold',
-  },
-  container: {
-    padding: INDENTS.high,
-  },
-  message: {
-    fontSize: FONT_SIZES.sm,
-    marginBottom: INDENTS.low,
-  },
-  primaryText: {
-    color: COLORS.onPrimary,
-    fontSize: FONT_SIZES.base,
-    fontWeight: 'bold',
-  },
-  title: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: 'bold',
-    marginBottom: INDENTS.low,
-  },
-})

@@ -5,6 +5,7 @@ import { CollapsibleGroup } from 'shared/ui/collapsible-group'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { folderLabel } from '../lib/fileIo'
+import { AutosyncConflictDialog } from './AutosyncConflictDialog'
 import { BackupImportModeDialog } from './BackupImportModeDialog'
 import { styles } from './BackupSection.styles'
 import { ServerUrlChangeDialog } from './ServerUrlChangeDialog'
@@ -21,8 +22,10 @@ export const BackupSection = () => {
     autosyncEnabled,
     cancelServerUrlChange,
     canFolderSync,
+    canImportConflict,
     chooseFolder,
     confirmServerUrlChange,
+    conflictVisible,
     dismissPending,
     exportBackup,
     exportFromPicker,
@@ -31,6 +34,10 @@ export const BackupSection = () => {
     importFromPicker,
     isDialogVisible,
     isFolderUsable,
+    onDismissConflict,
+    onImportMerge,
+    onImportReplace,
+    onOverwrite,
     pendingServerUrl,
     toggleAutosync,
   } = useBackupSection()
@@ -101,6 +108,14 @@ export const BackupSection = () => {
         onCancel={cancelServerUrlChange}
         visible={pendingServerUrl !== null}
         onConfirm={() => void confirmServerUrlChange()}
+      />
+      <AutosyncConflictDialog
+        visible={conflictVisible}
+        onOverwrite={onOverwrite}
+        canImport={canImportConflict}
+        onDismiss={onDismissConflict}
+        onImportMerge={onImportMerge}
+        onImportReplace={onImportReplace}
       />
     </>
   )
