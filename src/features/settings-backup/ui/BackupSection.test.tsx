@@ -10,12 +10,12 @@ const BACKUP_DIR_URI_KEY = 'backup_dir_uri'
 const FOLDER_URI = 'file:///backups'
 const NEW_SERVER_URL = 'https://new.example.com'
 const IMPORT_LABEL = 'Импортировать'
-const EXPORT_LABEL = 'Экспортировать'
+const EXPORT_LABEL = 'Создать новый экспорт'
 const DOWNLOAD_LABEL = 'Скачать копию'
 const UPLOAD_LABEL = 'Загрузить из файла'
 const MERGE_LABEL = 'Объединить'
 const EMPTY_FOLDER_LABEL = 'Папка не выбрана'
-const HEADER_NAME = /Резервная копия/
+const HEADER_NAME = /Резервная копия данных/
 const AUTO_FILE = 'slovo-backup-auto.json'
 const MANUAL_FILE = 'slovo-backup-2026-01-01_10-00.json'
 const SECOND_MANUAL_FILE = 'slovo-backup-2026-01-02_11-30.json'
@@ -168,6 +168,35 @@ describe('<BackupSection>', () => {
         expect.any(String),
       )
     })
+  })
+
+  test('picks a folder then exports when none is chosen yet', async () => {
+    const PICKED_URI = 'content://com.android.externalstorage.documents/tree/primary%3ABackups'
+    mockPickBackupFolder.mockResolvedValue(PICKED_URI)
+    const { getByRole } = await renderExpanded()
+
+    await fireEvent.press(getByRole('button', { name: EXPORT_LABEL }))
+
+    await waitFor(() => {
+      expect(mockPickBackupFolder).toHaveBeenCalled()
+      expect(mockWriteFile).toHaveBeenCalledWith(
+        PICKED_URI,
+        expect.stringMatching(/^slovo-backup-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.json$/),
+        expect.any(String),
+      )
+    })
+  })
+
+  test('does nothing when the folder pick for export is cancelled', async () => {
+    mockPickBackupFolder.mockResolvedValue(null)
+    const { getByRole } = await renderExpanded()
+
+    await fireEvent.press(getByRole('button', { name: EXPORT_LABEL }))
+
+    await waitFor(() => {
+      expect(mockPickBackupFolder).toHaveBeenCalled()
+    })
+    expect(mockWriteFile).not.toHaveBeenCalled()
   })
 
   test('imports a single manual backup without the chooser', async () => {
@@ -441,7 +470,7 @@ describe('<BackupSection>', () => {
       const { getByRole, getByText, queryByRole, queryByText } = await renderExpanded()
 
       await waitFor(() => {
-        expect(getByText('Резервная копия')).toBeTruthy()
+        expect(getByText('Резервная копия данных')).toBeTruthy()
       })
       expect(queryByText('Выбрать папку')).toBeNull()
       expect(queryByText('Сменить папку')).toBeNull()

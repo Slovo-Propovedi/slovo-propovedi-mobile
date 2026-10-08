@@ -13,7 +13,7 @@ import { ServerUrlChangeDialog } from './ServerUrlChangeDialog'
 import { useBackupSection } from './useBackupSection'
 
 const UNAVAILABLE_FOLDER_LABEL = 'Папка недоступна — выберите заново'
-const TITLE = 'Резервная копия'
+const TITLE = 'Резервная копия данных'
 
 export const BackupSection = () => {
   const { currentTheme } = useTheme()
@@ -73,7 +73,7 @@ export const BackupSection = () => {
           )}
           <TouchableItem style={actionStyle} onPress={handleExport}>
             <Text style={actionTextStyle}>
-              {canFolderSync ? 'Экспортировать' : 'Скачать копию'}
+              {canFolderSync ? 'Создать новый экспорт' : 'Скачать копию'}
             </Text>
           </TouchableItem>
           <TouchableItem style={actionStyle} onPress={handleImport}>
