@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { AdminSermonRowSkeleton } from './admin-list-skeleton'
 import { SkeletonBar } from './admin-skeleton-row'
@@ -13,11 +13,11 @@ export const AdminShellSkeleton = () => {
   const { currentTheme } = useTheme()
 
   return (
-    <View style={[styles.shell, { backgroundColor: currentTheme.background }]}>
+    <SafeAreaView style={[styles.shell, { backgroundColor: currentTheme.background }]}>
       <SkeletonBar style={styles.shellTitle} />
       {Array.from({ length: ROW_COUNT }, (_, index) => (
         <AdminSermonRowSkeleton key={index} />
       ))}
-    </View>
+    </SafeAreaView>
   )
 }
