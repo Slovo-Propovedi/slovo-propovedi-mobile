@@ -6,6 +6,20 @@ import {
 
 const pad = (value: number): string => String(value).padStart(2, '0')
 
+const MANUAL_NAME_PATTERN = /^slovo-backup-(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})\.json$/
+const AUTO_LABEL = `Автосинхронизация · ${AUTO_BACKUP_FILE_NAME}`
+const AUTO_SORT_KEY = Number.POSITIVE_INFINITY
+
+/** Файл резервной копии, доступный для выбора при импорте. */
+export interface BackupFileOption {
+  fileName: string
+  label: string
+}
+
+interface BackupFileCandidate extends BackupFileOption {
+  sortKey: number
+}
+
 /**
  * Имя ручной резервной копии: `slovo-backup-YYYY-MM-DD_HH-MM.json`.
  *
@@ -20,17 +34,37 @@ export const buildManualBackupFileName = (date: Date): string => {
   return `${MANUAL_BACKUP_PREFIX}${datePart}_${timePart}${MANUAL_BACKUP_EXTENSION}`
 }
 
-const isManualBackupFileName = (name: string): boolean =>
-  name.startsWith(MANUAL_BACKUP_PREFIX) &&
-  name.endsWith(MANUAL_BACKUP_EXTENSION) &&
-  name !== AUTO_BACKUP_FILE_NAME
+const parseManualBackupDate = (name: string): Date | null => {
+  const match = MANUAL_NAME_PATTERN.exec(name)
+  if (!match) return null
+
+  const [, year, month, day, hour, minute] = match
+  return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute))
+}
+
+const formatBackupDate = (date: Date): string =>
+  `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}, ${pad(date.getHours())}:${pad(date.getMinutes())}`
 
 /**
- * Выбирает самый свежий ручной бэкап из списка имён в папке.
+ * Собирает список доступных файлов резервных копий из имён в папке.
+ *
+ * Автофайл идёт первым (подпись «Автосинхронизация» + имя), ручные — по убыванию
+ * распарсенной из имени даты. Посторонние имена игнорируются.
  * @param names - Имена файлов в выбранной папке.
- * @returns Имя самого нового ручного бэкапа или `null`, если таких файлов нет.
+ * @returns Опции для диалога выбора (файл + подпись).
  */
-export const pickNewestManualBackupName = (names: string[]): null | string => {
-  const manualNames = names.filter(isManualBackupFileName).sort((a, b) => b.localeCompare(a))
-  return manualNames[0] ?? null
+export const listBackupFileOptions = (names: string[]): BackupFileOption[] => {
+  const candidates = names.flatMap<BackupFileCandidate>(name => {
+    if (name === AUTO_BACKUP_FILE_NAME)
+      return [{ fileName: name, label: AUTO_LABEL, sortKey: AUTO_SORT_KEY }]
+
+    const date = parseManualBackupDate(name)
+    if (!date) return []
+
+    return [{ fileName: name, label: formatBackupDate(date), sortKey: date.getTime() }]
+  })
+
+  return candidates
+    .sort((a, b) => b.sortKey - a.sortKey)
+    .map(({ fileName, label }) => ({ fileName, label }))
 }

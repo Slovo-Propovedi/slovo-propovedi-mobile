@@ -16,6 +16,12 @@ const UPLOAD_LABEL = 'Загрузить из файла'
 const MERGE_LABEL = 'Объединить'
 const EMPTY_FOLDER_LABEL = 'Папка не выбрана'
 const HEADER_NAME = /Резервная копия/
+const AUTO_FILE = 'slovo-backup-auto.json'
+const MANUAL_FILE = 'slovo-backup-2026-01-01_10-00.json'
+const SECOND_MANUAL_FILE = 'slovo-backup-2026-01-02_11-30.json'
+const SECOND_MANUAL_LABEL = '02.01.2026, 11:30'
+const CHOOSER_TITLE = 'Выберите резервную копию'
+const CANCEL_LABEL = 'Отмена'
 
 const VALID_BACKUP = {
   data: {},
@@ -164,14 +170,15 @@ describe('<BackupSection>', () => {
     })
   })
 
-  test('imports the newest manual backup and applies the chosen mode', async () => {
-    mockListFiles.mockResolvedValue(['slovo-backup-2026-01-01_10-00.json'])
-    const { getByRole, getByText } = await renderWithFolder()
+  test('imports a single manual backup without the chooser', async () => {
+    mockListFiles.mockResolvedValue([MANUAL_FILE])
+    const { getByRole, getByText, queryByText } = await renderWithFolder()
 
     await fireEvent.press(getByRole('button', { name: IMPORT_LABEL }))
     await waitFor(() => {
       expect(getByText(MERGE_LABEL)).toBeTruthy()
     })
+    expect(queryByText(CHOOSER_TITLE)).toBeNull()
 
     await fireEvent.press(getByRole('button', { name: MERGE_LABEL }))
 
@@ -185,6 +192,7 @@ describe('<BackupSection>', () => {
   })
 
   test('reports a corrupted backup file instead of crashing', async () => {
+    mockListFiles.mockResolvedValue([MANUAL_FILE])
     mockReadFile.mockResolvedValue('{not-json')
     const { getByRole } = await renderWithFolder()
 
@@ -197,6 +205,7 @@ describe('<BackupSection>', () => {
   })
 
   test('reports a backup made by a newer app version', async () => {
+    mockListFiles.mockResolvedValue([MANUAL_FILE])
     mockReadFile.mockResolvedValue(
       JSON.stringify({ data: {}, kind: 'slovo-propovedi-backup', version: 2 }),
     )
@@ -213,6 +222,7 @@ describe('<BackupSection>', () => {
   })
 
   test('asks for confirmation before changing the server URL', async () => {
+    mockListFiles.mockResolvedValue([MANUAL_FILE])
     mockReadFile.mockResolvedValue(
       JSON.stringify({ ...VALID_BACKUP, data: { settings: { serverUrl: NEW_SERVER_URL } } }),
     )
@@ -241,12 +251,70 @@ describe('<BackupSection>', () => {
     })
   })
 
+  describe('file chooser', () => {
+    test('lists all backup files and imports the chosen one', async () => {
+      mockListFiles.mockResolvedValue([MANUAL_FILE, AUTO_FILE, SECOND_MANUAL_FILE])
+      const { getByRole, getByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('button', { name: IMPORT_LABEL }))
+      await waitFor(() => {
+        expect(getByText(CHOOSER_TITLE)).toBeTruthy()
+      })
+
+      await fireEvent.press(getByRole('button', { name: SECOND_MANUAL_LABEL }))
+
+      await waitFor(() => {
+        expect(mockReadFile).toHaveBeenCalledWith(FOLDER_URI, SECOND_MANUAL_FILE)
+        expect(getByText(MERGE_LABEL)).toBeTruthy()
+      })
+    })
+
+    test('does not open the chooser for a single backup file', async () => {
+      mockListFiles.mockResolvedValue([MANUAL_FILE])
+      const { getByRole, getByText, queryByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('button', { name: IMPORT_LABEL }))
+
+      await waitFor(() => {
+        expect(getByText(MERGE_LABEL)).toBeTruthy()
+      })
+      expect(queryByText(CHOOSER_TITLE)).toBeNull()
+    })
+
+    test('does nothing when the chooser is dismissed', async () => {
+      mockListFiles.mockResolvedValue([MANUAL_FILE, AUTO_FILE])
+      const { getByRole, getByText, queryByText } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('button', { name: IMPORT_LABEL }))
+      await waitFor(() => {
+        expect(getByText(CHOOSER_TITLE)).toBeTruthy()
+      })
+
+      await fireEvent.press(getByText(CANCEL_LABEL))
+
+      await waitFor(() => {
+        expect(queryByText(CHOOSER_TITLE)).toBeNull()
+      })
+      expect(mockApplyImport).not.toHaveBeenCalled()
+    })
+
+    test('reports an error when the folder has no backup files', async () => {
+      mockListFiles.mockResolvedValue([])
+      const { getByRole } = await renderWithFolder()
+
+      await fireEvent.press(getByRole('button', { name: IMPORT_LABEL }))
+
+      await waitFor(() => {
+        expect(mockReportError).toHaveBeenCalled()
+      })
+      expect(mockApplyImport).not.toHaveBeenCalled()
+    })
+  })
+
   describe('autosync enable', () => {
-    const AUTO_FILE = 'slovo-backup-auto.json'
     const OVERWRITE_LABEL = 'Перезаписать бэкап'
     const IMPORT_MERGE_LABEL = 'Импортировать (объединить)'
     const IMPORT_REPLACE_LABEL = 'Импортировать (заменить)'
-    const CANCEL_LABEL = 'Отмена'
 
     test('enables autosync immediately when no auto file exists', async () => {
       const { ctx, getByRole, queryByText } = await renderWithFolder()

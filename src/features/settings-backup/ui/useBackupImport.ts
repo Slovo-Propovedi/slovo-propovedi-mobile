@@ -3,12 +3,10 @@ import { useState } from 'react'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { applyImport } from '../lib/applyImport'
-import { pickNewestManualBackupName } from '../lib/backupFiles'
-import { importViaFilePicker, listFiles, readFile } from '../lib/fileIo'
-import { isFolderPermissionLostError } from '../lib/fileIo/folderErrors'
+import { importViaFilePicker } from '../lib/fileIo'
 import { parseBackupFile } from '../lib/parseBackupFile'
 import { type BackupFile, type BackupImportMode } from '../model/backupPayload'
-import { AUTO_BACKUP_FILE_NAME } from '../model/backupScalars'
+import { useFolderImport } from './useFolderImport'
 
 interface PendingConfirmation {
   file: BackupFile
@@ -61,6 +59,8 @@ export const useBackupImport = (
     setPendingFile(parsed.file)
   }
 
+  const folderImport = useFolderImport(folderUri, handleRawBackup, markFolderUnusable)
+
   const runApply = async ({ file, mode, onApplied }: PendingConfirmation) => {
     try {
       await apply(file.data, mode)
@@ -90,17 +90,6 @@ export const useBackupImport = (
     await applyBackup(pendingFile, mode)
   }
 
-  const importBackup = async () => {
-    try {
-      const names = await listFiles(folderUri)
-      const target = pickNewestManualBackupName(names) ?? AUTO_BACKUP_FILE_NAME
-      handleRawBackup(await readFile(folderUri, target))
-    } catch (error) {
-      if (isFolderPermissionLostError(error)) markFolderUnusable()
-      reportError(error, 'Не удалось прочитать резервную копию')
-    }
-  }
-
   const importFromPicker = async () => {
     try {
       const raw = await importViaFilePicker()
@@ -112,6 +101,7 @@ export const useBackupImport = (
   }
 
   return {
+    ...folderImport,
     applyBackup,
     applyPending,
     cancelServerUrlChange: () => {
@@ -122,7 +112,6 @@ export const useBackupImport = (
       if (pendingConfirmation) await runApply(pendingConfirmation)
     },
     dismissPending: () => setPendingFile(null),
-    importBackup,
     importFromPicker,
     isDialogVisible: pendingFile !== null && pendingConfirmation === null,
     pendingServerUrl: pendingConfirmation?.file.data.settings?.serverUrl ?? null,

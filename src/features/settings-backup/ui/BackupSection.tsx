@@ -6,6 +6,7 @@ import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { folderLabel } from '../lib/fileIo'
 import { AutosyncConflictDialog } from './AutosyncConflictDialog'
+import { BackupFileChooserDialog } from './BackupFileChooserDialog'
 import { BackupImportModeDialog } from './BackupImportModeDialog'
 import { styles } from './BackupSection.styles'
 import { ServerUrlChangeDialog } from './ServerUrlChangeDialog'
@@ -20,12 +21,14 @@ export const BackupSection = () => {
   const {
     applyPending,
     autosyncEnabled,
+    backupFileOptions,
     cancelServerUrlChange,
     canFolderSync,
     canImportConflict,
     chooseFolder,
     confirmServerUrlChange,
     conflictVisible,
+    dismissFileChooser,
     dismissPending,
     exportBackup,
     exportFromPicker,
@@ -39,6 +42,7 @@ export const BackupSection = () => {
     onImportReplace,
     onOverwrite,
     pendingServerUrl,
+    selectBackupFile,
     toggleAutosync,
   } = useBackupSection()
 
@@ -47,12 +51,8 @@ export const BackupSection = () => {
   const folderText = isFolderUsable ? folderLabel(folderUri) : UNAVAILABLE_FOLDER_LABEL
   const subtitle = canFolderSync ? folderText : undefined
 
-  const handleExport = () => {
-    void (canFolderSync ? exportBackup() : exportFromPicker())
-  }
-  const handleImport = () => {
-    void (canFolderSync ? importBackup() : importFromPicker())
-  }
+  const handleExport = () => void (canFolderSync ? exportBackup() : exportFromPicker())
+  const handleImport = () => void (canFolderSync ? importBackup() : importFromPicker())
 
   return (
     <>
@@ -116,6 +116,12 @@ export const BackupSection = () => {
         onDismiss={onDismissConflict}
         onImportMerge={onImportMerge}
         onImportReplace={onImportReplace}
+      />
+      <BackupFileChooserDialog
+        onDismiss={dismissFileChooser}
+        options={backupFileOptions ?? []}
+        visible={backupFileOptions !== null}
+        onSelect={fileName => void selectBackupFile(fileName)}
       />
     </>
   )
