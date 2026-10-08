@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Platform, ScrollView, StyleSheet, View } from 'react-native'
+import { BackupSection } from 'features/settings-backup'
 import { isWebVibrationSupported } from 'shared/lib/haptics'
 import { INDENTS, isMaterialYouSupported, useTheme } from 'shared/ui/theme'
 import { DynamicColorsItem } from './DynamicColorsItem'
@@ -26,6 +27,7 @@ export const SettingsScreen = () => {
         />
         {isMaterialYouSupported() && <DynamicColorsItem />}
         {showHapticsItem && <HapticsSettingsItem />}
+        <BackupSection />
         <ServerUrlSettings />
       </ScrollView>
       <ThemeDialog
