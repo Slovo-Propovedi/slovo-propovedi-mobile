@@ -5,7 +5,40 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import { generateChangelogSection, getUserFacingCommits } from './changelog-core.mjs'
 
-const REPO_URL = 'https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile'
+// Normalize a git remote URL to its web form: strip the ssh:// prefix and
+// leading username, convert scp-like git@host:path syntax, drop the .git
+// suffix, and guarantee an https:// prefix.
+export const normalizeRemoteUrl = (remote) =>
+  remote
+    .replace(/^ssh:\/\/git@/, 'https://')
+    .replace(/^git@([^:]+):/, 'https://$1/')
+    .replace(/\.git$/, '')
+    .replace(/^http:\/\//, 'https://')
+
+// Sole source of truth: `git remote get-url origin`. Fails fast when the
+// script is run outside the repository or no `origin` remote is configured.
+export const resolveRepoUrl = () => {
+  let remote
+  try {
+    remote = execSync('git remote get-url origin', { encoding: 'utf-8' }).trim()
+  } catch {
+    throw new Error(
+      'Cannot determine repository URL: `git remote get-url origin` failed. ' +
+        'Run the script from within the repository and make sure a git `origin` remote is set.',
+    )
+  }
+
+  if (!remote) {
+    throw new Error(
+      'Cannot determine repository URL: git `origin` remote is empty. ' +
+        'Set it with `git remote add origin <url>` and re-run.',
+    )
+  }
+
+  return normalizeRemoteUrl(remote)
+}
+
+const REPO_URL = resolveRepoUrl()
 
 const FASTLANE_EN_LINK = `Full changelog: ${REPO_URL}/src/branch/main/CHANGELOG.md`
 const FASTLANE_RU_LINK = `Полный список изменений: ${REPO_URL}/src/branch/main/CHANGELOG.md`

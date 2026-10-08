@@ -10,8 +10,8 @@ name: Renovate
 # against data.forgejo.org (which mirrors actions/* only).
 #
 # DCO: ci.yml requires a Signed-off-by trailer whose email matches the commit
-# author on every PR commit. RENOVATE_GIT_AUTHOR + the `commitBody` in
-# renovate.json supply a matching "Renovate Bot <renovate@slovo-propovedi.ru>".
+# author on every PR commit. RENOVATE_GIT_AUTHOR (org/repo var) + the
+# `commitBody` in renovate.json supply the matching author/email pair.
 #
 # Requires the org- or repo-level secret RENOVATE_TOKEN — a Forgejo PAT with
 # scopes: write:repository, write:issue, read:user, read:organization.
@@ -53,6 +53,9 @@ jobs:
           RENOVATE_AUTODISCOVER: "false"
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           RENOVATE_ONBOARDING: "false"
-          RENOVATE_GIT_AUTHOR: "Renovate Bot <renovate@slovo-propovedi.ru>"
+          # Org/repo-level var (e.g. "Renovate Bot <renovate@example.com>").
+          # The email must match the DCO requirement in ci.yml together with the
+          # `commitBody` in renovate.json.
+          RENOVATE_GIT_AUTHOR: ${{ vars.RENOVATE_GIT_AUTHOR }}
           GITHUB_COM_TOKEN: ${{ secrets.RENOVATE_GITHUB_COM_TOKEN }}
           LOG_LEVEL: info

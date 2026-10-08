@@ -146,6 +146,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Fail fast: all prod hostnames must come from Forgejo org/repo vars.
+      # Without this a missing var would silently build the app with an empty
+      # EXPO_PUBLIC_* value (or fail much later, mid-build).
+      - name: Validate required vars
+        env:
+          BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+        run: |
+          set -e
+          missing=0
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
+              missing=1
+            fi
+          done
+          exit $missing
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -269,6 +288,23 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # Same fail-fast gate as the `web` job — see the comment there.
+      - name: Validate required vars
+        env:
+          BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+        run: |
+          set -e
+          missing=0
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
+              missing=1
+            fi
+          done
+          exit $missing
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

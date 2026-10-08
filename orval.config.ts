@@ -6,7 +6,18 @@ import {
   PropertySortOrder,
 } from 'orval'
 
-const OPENAPI_SPEC_URL = `https://${process.env.DOCS_HOSTNAME ?? 'docs.slovo-propovedi.ru'}/openAPI.yaml`
+// Required build-time config: the OpenAPI spec host. No fallback — a missing
+// var must fail fast with a clear message instead of silently generating the
+// client against the production docs host. See .env.example.
+const docsHostname = process.env.DOCS_HOSTNAME
+
+if (!docsHostname) {
+  throw new Error(
+    'DOCS_HOSTNAME is not set. Copy .env.example to .env (or export DOCS_HOSTNAME=<bare hostname>) and re-run.',
+  )
+}
+
+const OPENAPI_SPEC_URL = `https://${docsHostname}/openAPI.yaml`
 
 export default defineConfig({
   // Output 1: Axios API функции с mutator и MSW моками
