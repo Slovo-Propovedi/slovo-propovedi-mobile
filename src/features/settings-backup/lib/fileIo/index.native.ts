@@ -2,6 +2,7 @@ import { Directory, File } from 'expo-file-system'
 import { Platform } from 'react-native'
 import { hasUriProtocol } from 'shared/lib/app-icon'
 import { reportError } from 'shared/model/error-dialog'
+import { findExistingFile } from './findExistingFile'
 import { decodeFolderLabel } from './folderLabel'
 import { writeBackupFile } from './writeBackupFile'
 
@@ -47,7 +48,15 @@ export const writeFile = async (
 
 export const readFile = async (folderUri: null | string, name: string): Promise<string> => {
   try {
-    return await new File(requireFolderUri(folderUri), name).text()
+    const directory = new Directory(requireFolderUri(folderUri))
+    const file = findExistingFile(
+      directory.list(),
+      name,
+      (entry): entry is File => entry instanceof File,
+    )
+    if (!file) throw new Error('Файл резервной копии не найден')
+
+    return await file.text()
   } catch (error) {
     reportError(error, 'Не удалось прочитать резервную копию')
     throw error

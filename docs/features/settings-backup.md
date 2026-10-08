@@ -96,6 +96,7 @@
 - URI папки — недоверенный legacy-ввод: перед передачей в нативный модуль проверяется схема (`hasUriProtocol`, принимает и `content://`); недоступный путь сбрасывается (`useFolderAvailability` + `clearBackupFolder`).
 - Доступность папки определяется **оптимистично**: на web хендл в IndexedDB = папка доступна; `queryPermission` не гейтит (Chromium может отдавать `'prompt'` при фактически активном гранте), недоступность — только при явном `'denied'`. Реальная потеря разрешения (после рестарта браузера; для Firefox/Safari не применимо — папки там нет) проявляется реактивно: операция бросает `FolderPermissionLostError`, и UI переходит в состояние повторного выбора.
 - Запись на Android SAF идёт не через `File.write` (он не создаёт документ под `content://`, а `DocumentsContract.createDocument` падает на уже существующем имени): `writeFile` удаляет существующий документ с тем же именем (best-effort) и создаёт новый через `Directory.createFile(name, 'application/json')`, затем пишет содержимое (`lib/fileIo/writeBackupFile.ts`). Единый путь для ручного экспорта и автосинхронизации.
+- Чтение (`readFile`) тоже не строит путь из имени (`new File(directory, name)`), а находит существующий дочерний документ через `Directory.list()` (`lib/fileIo/findExistingFile.ts`) и читает уже разрешённый `File` — иначе SAF-путь пытается создать документ и падает на конфликте имени.
 - `folderLabel` показывает последний сегмент пути (на web — имя handle из `web-dir:<name>`).
 
 ## Экспорт
