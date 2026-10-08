@@ -11,6 +11,7 @@ export const ServerUrlSettings = () => {
   return (
     <CollapsibleGroup
       expanded={expanded}
+      icon='link-outline'
       title='URL сервера API'
       subtitle={`Текущий: ${currentUrl}`}
       onToggle={() => setExpanded(prev => !prev)}
