@@ -67,6 +67,7 @@ export const AdminLoginScreen = () => {
           returnKeyType='next'
           autoComplete='username'
           label='Имя пользователя'
+          importantForAutofill='yes'
           textContentType='username'
           onChangeText={setUsername}
           onSubmitEditing={() => passwordInputRef.current?.focus()}
@@ -78,6 +79,7 @@ export const AdminLoginScreen = () => {
           returnKeyType='go'
           placeholder='••••••••'
           textContentType='password'
+          importantForAutofill='yes'
           onChangeText={setPassword}
           inputRef={passwordInputRef}
           autoComplete='current-password'
