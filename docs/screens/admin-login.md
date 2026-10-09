@@ -15,6 +15,7 @@
 - заголовок «Вход в интерфейс администратора» и подсказка;
 - поля `AdminLoginField` (`AdminLoginField.tsx`): «Имя пользователя» и «Пароль» (`secureTextEntry`); поле «Имя пользователя» получает авто-фокус при открытии экрана (`autoFocus`), клавиатура показывается сразу;
 - поле «Пароль» использует Android-специфичный токен `autoComplete='password'` вместо `'current-password'`: нативный Android-менеджер не знает `'current-password'` и исключает поле из системного автозаполнения (KeePassDX и др.);
+- при возврате фокуса на экран оба поля перемонтируются через `<View key>` (хук `useAndroidAutofillRemountKey`, `src/pages/admin-login/lib/useAndroidAutofillRemountKey.ts`) — обход бага [react-native-screens#3130](https://github.com/software-mansion/react-native-screens/issues/3130): на Fabric сфокусированный `EditText` пропадает из `AssistStructure` после навигации и системное автозаполнение не срабатывает; обход можно удалить после фикса апстрима (см. `docs/debt.md`);
 - баннер ошибки (красный текст) при неудачном входе или отсутствии прав;
 - кнопка «Войти» (primary-цвет, `ActivityIndicator` во время отправки, неактивна при пустых полях).
 

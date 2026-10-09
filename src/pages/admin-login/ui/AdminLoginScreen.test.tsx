@@ -10,7 +10,15 @@ import { AdminLoginScreen } from './AdminLoginScreen'
 
 const mockReplace = jest.fn()
 
-jest.mock('expo-router', () => ({ useRouter: jest.fn() }))
+jest.mock('expo-router', () => ({
+  useFocusEffect: (callback: () => () => void | void) => {
+    const { useEffect } = jest.requireActual('react') as {
+      useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
+    }
+    useEffect(callback, [callback])
+  },
+  useRouter: jest.fn(),
+}))
 
 jest.mock('shared/model', () => ({
   showToast: jest.fn(),

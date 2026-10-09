@@ -8,6 +8,7 @@ import { getErrorMessage } from 'shared/lib/error-utils'
 import { showToast } from 'shared/model'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
+import { useAndroidAutofillRemountKey } from '../lib/useAndroidAutofillRemountKey'
 import { AdminLoginField } from './AdminLoginField'
 import { styles } from './styles'
 
@@ -24,6 +25,7 @@ export const AdminLoginScreen = () => {
   const [error, setError] = useState<null | string>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const passwordInputRef = useRef<TextInput>(null)
+  const autofillRemountKey = useAndroidAutofillRemountKey()
 
   const canSubmit = username.trim().length > 0 && password.length > 0 && !isSubmitting
 
@@ -61,33 +63,37 @@ export const AdminLoginScreen = () => {
           </View>
         ) : null}
 
-        <AdminLoginField
-          autoFocus
-          value={username}
-          placeholder='admin'
-          returnKeyType='next'
-          autoComplete='username'
-          label='Имя пользователя'
-          importantForAutofill='yes'
-          textContentType='username'
-          onChangeText={setUsername}
-          onSubmitEditing={() => passwordInputRef.current?.focus()}
-        />
-        <AdminLoginField
-          label='Пароль'
-          secureTextEntry
-          value={password}
-          returnKeyType='go'
-          placeholder='••••••••'
-          textContentType='password'
-          importantForAutofill='yes'
-          onChangeText={setPassword}
-          inputRef={passwordInputRef}
-          autoComplete='current-password'
-          onSubmitEditing={() => {
-            if (canSubmit) void handleSubmit()
-          }}
-        />
+        <View key={`username-${autofillRemountKey}`}>
+          <AdminLoginField
+            autoFocus
+            value={username}
+            placeholder='admin'
+            returnKeyType='next'
+            autoComplete='username'
+            label='Имя пользователя'
+            importantForAutofill='yes'
+            textContentType='username'
+            onChangeText={setUsername}
+            onSubmitEditing={() => passwordInputRef.current?.focus()}
+          />
+        </View>
+        <View key={`password-${autofillRemountKey}`}>
+          <AdminLoginField
+            label='Пароль'
+            secureTextEntry
+            value={password}
+            returnKeyType='go'
+            placeholder='••••••••'
+            textContentType='password'
+            importantForAutofill='yes'
+            onChangeText={setPassword}
+            inputRef={passwordInputRef}
+            autoComplete='current-password'
+            onSubmitEditing={() => {
+              if (canSubmit) void handleSubmit()
+            }}
+          />
+        </View>
 
         <TouchableItem
           disabled={!canSubmit}
