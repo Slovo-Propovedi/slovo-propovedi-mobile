@@ -12,6 +12,7 @@ const PASSWORD_AUTOCOMPLETE: TextInputProps['autoComplete'] =
 // Поле ввода формы входа в интерфейс администратора.
 export const AdminLoginField = ({
   autoComplete,
+  autoFocus,
   importantForAutofill,
   inputRef,
   label,
@@ -24,6 +25,7 @@ export const AdminLoginField = ({
   value,
 }: {
   autoComplete?: TextInputProps['autoComplete']
+  autoFocus?: boolean
   importantForAutofill?: TextInputProps['importantForAutofill']
   inputRef?: RefObject<null | TextInput>
   label: string
@@ -45,6 +47,7 @@ export const AdminLoginField = ({
         ref={inputRef}
         autoCorrect={false}
         autoCapitalize='none'
+        autoFocus={autoFocus}
         placeholder={placeholder}
         accessibilityLabel={label}
         onChangeText={onChangeText}

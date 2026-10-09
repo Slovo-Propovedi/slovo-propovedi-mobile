@@ -62,6 +62,7 @@ export const AdminLoginScreen = () => {
         ) : null}
 
         <AdminLoginField
+          autoFocus
           value={username}
           placeholder='admin'
           returnKeyType='next'

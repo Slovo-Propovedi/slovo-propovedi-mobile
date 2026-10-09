@@ -13,7 +13,7 @@
 `AdminLoginScreen` (`src/pages/admin-login/ui/AdminLoginScreen.tsx`):
 
 - заголовок «Вход в интерфейс администратора» и подсказка;
-- поля `AdminLoginField` (`AdminLoginField.tsx`): «Имя пользователя» и «Пароль» (`secureTextEntry`);
+- поля `AdminLoginField` (`AdminLoginField.tsx`): «Имя пользователя» и «Пароль» (`secureTextEntry`); поле «Имя пользователя» получает авто-фокус при открытии экрана (`autoFocus`), клавиатура показывается сразу;
 - поле «Пароль» использует Android-специфичный токен `autoComplete='password'` вместо `'current-password'`: нативный Android-менеджер не знает `'current-password'` и исключает поле из системного автозаполнения (KeePassDX и др.);
 - баннер ошибки (красный текст) при неудачном входе или отсутствии прав;
 - кнопка «Войти» (primary-цвет, `ActivityIndicator` во время отправки, неактивна при пустых полях).
