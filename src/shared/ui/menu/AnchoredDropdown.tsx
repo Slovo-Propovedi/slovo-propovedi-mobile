@@ -13,6 +13,7 @@ import {
 import { useEscapeKey } from '../../lib/escape-key/useEscapeKey'
 import { hapticLight } from '../../lib/haptics'
 import { computeMenuPosition } from './computeMenuPosition'
+import { useViewportSync } from './useViewportSync'
 
 export interface AnchoredDropdownProps {
   anchor: AnchorRect | null
@@ -49,6 +50,11 @@ export const AnchoredDropdown = ({
   const [anchorRect, setAnchorRect] = useState<AnchorRect | null>(anchor)
   const [prevAnchor, setPrevAnchor] = useState<AnchorRect | null>(anchor)
   const { height: windowHeight, width: windowWidth } = useWindowDimensions()
+  const { tick, viewport } = useViewportSync({
+    height: windowHeight,
+    visible,
+    width: windowWidth,
+  })
 
   // Adjust state during render (React-documented pattern): when the parent
   // re-measures the button (menu re-opened at a new position), adopt the fresh
@@ -72,15 +78,15 @@ export const AnchoredDropdown = ({
     anchorRef.current.measureInWindow((x: number, y: number, width: number, height: number) => {
       setAnchorRect({ height, width, x, y })
     })
-  }, [anchorRef, visible, windowHeight, windowWidth])
+  }, [anchorRef, visible, windowHeight, windowWidth, tick])
 
   if (!visible || !anchorRect) return null
 
   const isMeasured = menuSize.height > 0
   const { right, top } = computeMenuPosition(
-    anchorRect,
+    { ...anchorRect, x: anchorRect.x + viewport.dx, y: anchorRect.y + viewport.dy },
     menuSize,
-    { height: windowHeight, width: windowWidth },
+    viewport,
     gap,
   )
 
