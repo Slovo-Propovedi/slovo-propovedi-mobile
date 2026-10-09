@@ -106,6 +106,14 @@
 
 **Исключение — `MarqueeText`:** компонент собран через `memo`, его скелетон прикреплён через `Object.assign` и не выводится системой типов, поэтому `SliderItemTextSkeleton` импортирует `MarqueeTextSkeleton` напрямую (по аналогии со «двухконстантной формой» из [`features/track-list.md`](./features/track-list.md) → «Конвенция «элемент + скелетон»»).
 
+## Верхний safe-area инсет на полноэкранных экранах
+
+На полноэкранных экранах со списком (табы «Слушать»/«Ещё», экраны админки, `AdminShellSkeleton`) верхний safe-area инсет применяется **стилем** — `paddingTop: insets.top` (`useSafeAreaInsets`) на корневом `View`/`SafeAreaView`, а верхний край у `SafeAreaView` **отключён**: `edges={['left', 'right']}` вместо `['top', 'left', 'right']`.
+
+**Почему:** нативная `SafeAreaView` (Fabric) проставляет свой padding на кадр позже, чем применяется `style`-padding. На холодном старте, пока реальные инсеты ещё не пришли, это даёт видимый «прыжок» первых кадров — контент стартует edge-to-edge под системным статус-баром и лишь затем сдвигается вниз. `paddingTop` из `useSafeAreaInsets` попадает в тот же рендер, что и остальной стиль, поэтому экран рисуется в финальной позиции сразу.
+
+Экран должен быть обёрнут **одним** `SafeAreaProvider`: его держит сам `expo-router` (`ExpoRoot`), поэтому отдельная root-обёртка в `app/_layout.tsx` не нужна — лишний вложенный провайдер с `initialWindowMetrics` мог отдать нулевые инсеты на dev-client cold start и давал тот же «прыжок».
+
 ## Barrel-файлы
 
 - **Один barrel на слайс** (`index.ts` в корне слайса). Сегментные barrel-файлы (`ui/index.ts`, `lib/index.ts`) запрещены.

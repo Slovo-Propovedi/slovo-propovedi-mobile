@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { authUserAtom } from 'entities/auth'
 import { createRefreshControl, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
@@ -13,6 +13,7 @@ import { AdminStatCard } from './AdminStatCard'
 import { styles } from './styles'
 
 export const AdminHomeScreen = () => {
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const [user] = useAtom(authUserAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -20,9 +21,11 @@ export const AdminHomeScreen = () => {
   const stats = useAdminStats()
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.container, { backgroundColor: currentTheme.background }]}
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: currentTheme.background, paddingTop: insets.top },
+      ]}
     >
       <PullToRefresh onRefresh={stats.reload} refreshing={stats.isRefreshing}>
         <ScrollView
@@ -71,6 +74,6 @@ export const AdminHomeScreen = () => {
           <AdminQuickActions />
         </ScrollView>
       </PullToRefresh>
-    </SafeAreaView>
+    </View>
   )
 }

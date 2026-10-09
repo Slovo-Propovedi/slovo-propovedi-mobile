@@ -2,7 +2,7 @@ import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
@@ -24,6 +24,7 @@ const SectionSkeletonList = () => (
 )
 
 export const AdminSectionsScreen = () => {
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -43,9 +44,11 @@ export const AdminSectionsScreen = () => {
   )
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.container, { backgroundColor: currentTheme.background }]}
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: currentTheme.background, paddingTop: insets.top },
+      ]}
     >
       <PullToRefresh onRefresh={reload} refreshing={isRefreshing}>
         <DraggableFlatList
@@ -77,6 +80,6 @@ export const AdminSectionsScreen = () => {
           }
         />
       </PullToRefresh>
-    </SafeAreaView>
+    </View>
   )
 }

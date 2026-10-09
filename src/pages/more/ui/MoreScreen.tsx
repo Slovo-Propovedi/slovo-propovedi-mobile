@@ -2,7 +2,7 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import { ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { APP_NAME, APP_VERSION } from 'shared/config'
 import { useTheme } from 'shared/ui/theme'
@@ -11,6 +11,7 @@ import { MoreMenuSettingsItem } from './MoreMenuSettingsItem'
 import { styles } from './styles'
 
 export const MoreScreen = () => {
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const restore = useAction(restoreSession)
@@ -27,8 +28,11 @@ export const MoreScreen = () => {
 
   return (
     <SafeAreaView
-      edges={['top', 'left', 'right']}
-      style={[styles.container, { backgroundColor: currentTheme.background }]}
+      edges={['left', 'right']}
+      style={[
+        styles.container,
+        { backgroundColor: currentTheme.background, paddingTop: insets.top },
+      ]}
     >
       <ScrollView>
         <View style={styles.header}>

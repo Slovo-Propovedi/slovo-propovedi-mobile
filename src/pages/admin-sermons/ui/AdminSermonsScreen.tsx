@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
-import { FlatList, Text } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { FlatList, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
@@ -28,6 +28,7 @@ const SermonSkeletonList = () => (
 )
 
 export const AdminSermonsScreen = () => {
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -61,9 +62,11 @@ export const AdminSermonsScreen = () => {
   }
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.container, { backgroundColor: currentTheme.background }]}
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: currentTheme.background, paddingTop: insets.top },
+      ]}
     >
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
@@ -117,6 +120,6 @@ export const AdminSermonsScreen = () => {
           }
         />
       </PullToRefresh>
-    </SafeAreaView>
+    </View>
   )
 }

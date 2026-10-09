@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useState } from 'react'
-import { FlatList } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { FlatList, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { predictDropKinds, useFileDrop } from 'shared/lib/file-drop'
@@ -28,6 +28,7 @@ const DELETE_BUSY_TEXT = 'Удаление…'
 // (тап — полноэкранный просмотр) и блок осиротевших файлов сверху. Удаление
 // живого артворка сервер отклоняет (409).
 export const AdminMediaScreen = () => {
+  const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const showToastAction = useAction(showToast)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -66,11 +67,10 @@ export const AdminMediaScreen = () => {
     if (deleteTarget) await remove(deleteTarget)
   }
 
+  const containerStyle = { backgroundColor: currentTheme.background, paddingTop: insets.top }
+
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.container, { backgroundColor: currentTheme.background }]}
-    >
+    <View style={[styles.container, containerStyle]}>
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
           data={files}
@@ -123,6 +123,6 @@ export const AdminMediaScreen = () => {
         onClose={() => setViewerTarget(null)}
       />
       <DropOverlay entries={dropEntries} visible={isDragActive} />
-    </SafeAreaView>
+    </View>
   )
 }

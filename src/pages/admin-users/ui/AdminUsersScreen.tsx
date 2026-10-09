@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { FlatList, Text, TextInput, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRequireAdminRole } from 'entities/auth'
 import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
@@ -31,6 +31,7 @@ const UserSkeletonList = () => (
 // страницам, автодозагрузка при достижении конца и переход к детали/созданию.
 export const AdminUsersScreen = () => {
   useRequireAdminRole()
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -54,9 +55,11 @@ export const AdminUsersScreen = () => {
   const emptyMessage = search.trim() !== '' ? NOT_FOUND_MESSAGE : EMPTY_MESSAGE
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.container, { backgroundColor: currentTheme.background }]}
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: currentTheme.background, paddingTop: insets.top },
+      ]}
     >
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
@@ -111,6 +114,6 @@ export const AdminUsersScreen = () => {
           }
         />
       </PullToRefresh>
-    </SafeAreaView>
+    </View>
   )
 }

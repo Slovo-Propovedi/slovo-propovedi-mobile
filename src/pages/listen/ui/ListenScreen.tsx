@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import {
   SEARCH_HEADER_HEIGHT,
@@ -25,6 +25,7 @@ import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 import { MyPlaylistsSlider } from './MyPlaylistsSlider'
 
 export const ListenScreen = () => {
+  const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const isSearchOpen = useIsSearchOpen()
   const isSearchActive = useIsSearchActive()
@@ -49,8 +50,11 @@ export const ListenScreen = () => {
 
   return (
     <SafeAreaView
-      edges={['top', 'left', 'right']}
-      style={[styles.safeArea, { backgroundColor: currentTheme.background }]}
+      edges={['left', 'right']}
+      style={[
+        styles.safeArea,
+        { backgroundColor: currentTheme.background, paddingTop: insets.top },
+      ]}
     >
       {isSearchOpen && (
         <View style={styles.searchHeader}>
