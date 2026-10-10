@@ -5,7 +5,7 @@ import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocu
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 
-export interface AdminFlagDetailState {
+interface AdminFlagDetailState {
   clearOverride: (userId: string) => Promise<void>
   flag: APITypes.FeatureFlag | null
   isDeleting: boolean

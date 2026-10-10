@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from 'react'
 import { type APITypes, featureFlagsApi } from 'shared/api'
 import { reportError } from 'shared/model/error-dialog'
 
-export interface AdminFlagsState {
+interface AdminFlagsState {
   flags: APITypes.FeatureFlag[]
   isError: boolean
   isLoading: boolean
