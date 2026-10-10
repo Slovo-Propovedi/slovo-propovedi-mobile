@@ -7,12 +7,14 @@ const mockFindAll = jest.fn()
 const mockRemove = jest.fn()
 const mockSetOverride = jest.fn()
 const mockDeleteOverride = jest.fn()
+const mockFindOverrides = jest.fn()
 
 jest.mock('shared/api', () => ({
   featureFlagsApi: {
     getFeatureFlags: () => ({
       featureFlagsControllerDeleteOverride: mockDeleteOverride,
       featureFlagsControllerFindAll: mockFindAll,
+      featureFlagsControllerFindOverrides: mockFindOverrides,
       featureFlagsControllerRemove: mockRemove,
       featureFlagsControllerSetOverride: mockSetOverride,
     }),
@@ -47,6 +49,7 @@ describe('useAdminFlagDetail', () => {
     mockRemove.mockResolvedValue(undefined)
     mockSetOverride.mockResolvedValue(undefined)
     mockDeleteOverride.mockResolvedValue(undefined)
+    mockFindOverrides.mockResolvedValue({ overrides: [] })
   })
 
   test('loads the requested flag out of the full list', async () => {
@@ -95,6 +98,24 @@ describe('useAdminFlagDetail', () => {
     })
 
     expect(mockDeleteOverride).toHaveBeenCalledWith('read', 'u1')
+  })
+
+  test('refetches overrides after setting and clearing one', async () => {
+    mockFindAll.mockResolvedValue(buildList(['read']))
+    const { result } = await renderHookWithProviders(() => useAdminFlagDetail('read'))
+
+    await act(async () => {})
+    expect(mockFindOverrides).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await result.current.setOverride('u1', 'grant')
+    })
+    expect(mockFindOverrides).toHaveBeenCalledTimes(2)
+
+    await act(async () => {
+      await result.current.clearOverride('u1')
+    })
+    expect(mockFindOverrides).toHaveBeenCalledTimes(3)
   })
 
   test('remove deletes the flag', async () => {

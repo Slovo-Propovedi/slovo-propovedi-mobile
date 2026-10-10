@@ -11,6 +11,7 @@ export interface OverrideUsersState {
   loadMoreFailed: boolean
   onSearchChange: (search: string) => void
   search: string
+  userById: Map<string, APITypes.UserResponse>
   users: APITypes.UserResponse[]
 }
 
@@ -61,6 +62,8 @@ export const useOverrideUsers = (): OverrideUsersState => {
     return items.filter(user => matchesSearch(user, term))
   }, [query, items])
 
+  const userById = useMemo(() => new Map(items.map(user => [user.id, user])), [items])
+
   return {
     isError,
     isLoading,
@@ -69,6 +72,7 @@ export const useOverrideUsers = (): OverrideUsersState => {
     loadMoreFailed,
     onSearchChange: setSearch,
     search,
+    userById,
     users: filtered,
   }
 }

@@ -5,13 +5,14 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.20.0
+ * OpenAPI spec version: 0.21.0
  */
 import type {
   CreateFeatureFlagRequest,
   EffectiveFeatureFlagListResponse,
   FeatureFlag,
   FeatureFlagListResponse,
+  FeatureFlagOverrideListResponse,
   SetFeatureFlagOverrideRequest,
   UpdateFeatureFlagRequest,
 } from '../api.schemas.ts'
@@ -93,6 +94,19 @@ export const getFeatureFlags = () => {
     return customInstance<void>({ url: `/feature-flags/${id}`, method: 'DELETE' }, options)
   }
   /**
+   * Возвращает все исключения grant/deny для указанного флага. Пустой список — валидный ответ 200. Отсутствующий флаг → 404. Доступно только администраторам.
+   * @summary Список пер-пользовательских исключений флага
+   */
+  const featureFlagsControllerFindOverrides = (
+    id: string,
+    options?: SecondParameter<typeof customInstance<FeatureFlagOverrideListResponse>>,
+  ) => {
+    return customInstance<FeatureFlagOverrideListResponse>(
+      { url: `/feature-flags/${id}/overrides`, method: 'GET' },
+      options,
+    )
+  }
+  /**
    * Upsert исключения grant/deny для пары (флаг, пользователь): повторный вызов обновляет значение. Отсутствующий флаг или пользователь → 404. Доступно только администраторам.
    * @summary Задать пер-пользовательское исключение
    */
@@ -132,6 +146,7 @@ export const getFeatureFlags = () => {
     featureFlagsControllerCreate,
     featureFlagsControllerUpdate,
     featureFlagsControllerRemove,
+    featureFlagsControllerFindOverrides,
     featureFlagsControllerSetOverride,
     featureFlagsControllerDeleteOverride,
   }
@@ -150,6 +165,9 @@ export type FeatureFlagsControllerUpdateResult = NonNullable<
 >
 export type FeatureFlagsControllerRemoveResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getFeatureFlags>['featureFlagsControllerRemove']>>
+>
+export type FeatureFlagsControllerFindOverridesResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getFeatureFlags>['featureFlagsControllerFindOverrides']>>
 >
 export type FeatureFlagsControllerSetOverrideResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getFeatureFlags>['featureFlagsControllerSetOverride']>>

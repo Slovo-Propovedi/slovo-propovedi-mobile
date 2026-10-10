@@ -40,6 +40,11 @@ export const styles = StyleSheet.create({
     padding: INDENTS.medium,
     paddingBottom: INDENTS.highest,
   },
+  currentValue: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+    marginTop: 2,
+  },
   error: {
     fontSize: FONT_SIZES.sm,
     marginBottom: INDENTS.medium,
@@ -63,6 +68,15 @@ export const styles = StyleSheet.create({
   keyText: {
     fontSize: FONT_SIZES.sm,
     marginTop: 2,
+  },
+  overrideRow: {
+    alignItems: 'center',
+    borderRadius: RADIUSES.middle,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: INDENTS.medium,
+    marginBottom: INDENTS.medium,
+    padding: INDENTS.medium,
   },
   retry: {
     alignItems: 'center',

@@ -1,26 +1,31 @@
 import { Text, TextInput, View } from 'react-native'
 import { type APITypes } from 'shared/api'
 import { useTheme } from 'shared/ui/theme'
+import { type FlagOverridesState } from '../lib/useFlagOverrides'
+import { FlagOverridesSection } from './FlagOverridesSection'
 import { styles } from './styles'
 
 const ENABLED_LABEL = 'Включён'
 const DISABLED_LABEL = 'Выключен'
-const SECTION_TITLE = 'Исключения'
 const HINT =
-  'Включите или выключите флаг для конкретного пользователя. Сервер не отдаёт список существующих исключений — действие применяется сразу.'
+  'Включите или выключите флаг для конкретного пользователя — действие применяется сразу.'
 const SEARCH_PLACEHOLDER = 'Имя, email или логин…'
 const SEARCH_LABEL = 'Поиск пользователей'
 
 // Шапка тела детали фича-флага: карточка с названием/ключом и бейджем состояния,
-// заголовок блока исключений, подсказка и поиск пользователей.
+// блок существующих исключений и поиск пользователей для назначения нового.
 export const FlagDetailHeader = ({
   flag,
   onSearchChange,
+  overridesState,
   search,
+  userById,
 }: {
   flag: APITypes.FeatureFlag
   onSearchChange: (search: string) => void
+  overridesState: FlagOverridesState
   search: string
+  userById: Map<string, APITypes.UserResponse>
 }) => {
   const { currentTheme } = useTheme()
 
@@ -44,7 +49,7 @@ export const FlagDetailHeader = ({
           </View>
         </View>
       </View>
-      <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>{SECTION_TITLE}</Text>
+      <FlagOverridesSection userById={userById} overridesState={overridesState} />
       <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{HINT}</Text>
       <TextInput
         value={search}

@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.20.0
+ * OpenAPI spec version: 0.21.0
  */
 export interface HealthResponse {
   status: string
@@ -469,6 +469,29 @@ export interface FeatureFlag {
 
 export interface FeatureFlagListResponse {
   flags: FeatureFlag[]
+}
+
+/**
+ * grant — включить флаг пользователю, deny — выключить
+ */
+export type FeatureFlagOverrideValue =
+  (typeof FeatureFlagOverrideValue)[keyof typeof FeatureFlagOverrideValue]
+
+export const FeatureFlagOverrideValue = {
+  grant: 'grant',
+  deny: 'deny',
+} as const
+
+export interface FeatureFlagOverride {
+  createdAt: string
+  flagId: string
+  userId: string
+  /** grant — включить флаг пользователю, deny — выключить */
+  value: FeatureFlagOverrideValue
+}
+
+export interface FeatureFlagOverrideListResponse {
+  overrides: FeatureFlagOverride[]
 }
 
 export interface CreateFeatureFlagRequest {

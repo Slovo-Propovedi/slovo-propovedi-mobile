@@ -4,12 +4,14 @@ import { type APITypes, featureFlagsApi } from 'shared/api'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
+import { type FlagOverridesState, useFlagOverrides } from './useFlagOverrides'
 
 interface AdminFlagDetailState {
   clearOverride: (userId: string) => Promise<void>
   flag: APITypes.FeatureFlag | null
   isDeleting: boolean
   isNotFound: boolean
+  overridesState: FlagOverridesState
   remove: () => Promise<boolean>
   setOverride: (userId: string, value: APITypes.SetFeatureFlagOverrideRequestValue) => Promise<void>
 }
@@ -23,8 +25,7 @@ const OVERRIDE_CLEARED_MESSAGE = 'Исключение снято'
 
 /**
  * Деталь фича-флага: загрузка, удаление и пер-пользовательские исключения
- * (grant/deny/clear). Отдельного `GET /feature-flags/{id}` нет — флаг выбирается
- * из общего списка.
+ * (grant/deny/clear). Отдельного `GET /feature-flags/{id}` нет — флаг выбирается из общего списка.
  * @param id — идентификатор флага.
  */
 export const useAdminFlagDetail = (id: string): AdminFlagDetailState => {
@@ -32,6 +33,8 @@ export const useAdminFlagDetail = (id: string): AdminFlagDetailState => {
   const [flag, setFlag] = useState<APITypes.FeatureFlag | null>(null)
   const [isNotFound, setIsNotFound] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const overridesState = useFlagOverrides(id)
+  const refetchOverrides = overridesState.refetch
 
   const fetchFlag = useCallback(async () => {
     const response = await featureFlagsApi.getFeatureFlags().featureFlagsControllerFindAll()
@@ -102,11 +105,12 @@ export const useAdminFlagDetail = (id: string): AdminFlagDetailState => {
           .getFeatureFlags()
           .featureFlagsControllerSetOverride(id, userId, { value })
         showToastAction(value === 'grant' ? OVERRIDE_GRANTED_MESSAGE : OVERRIDE_DENIED_MESSAGE)
+        await refetchOverrides()
       } catch (error) {
         reportError(error, OVERRIDE_ERROR_MESSAGE)
       }
     },
-    [id, showToastAction],
+    [id, refetchOverrides, showToastAction],
   )
 
   const clearOverride = useCallback(
@@ -114,12 +118,13 @@ export const useAdminFlagDetail = (id: string): AdminFlagDetailState => {
       try {
         await featureFlagsApi.getFeatureFlags().featureFlagsControllerDeleteOverride(id, userId)
         showToastAction(OVERRIDE_CLEARED_MESSAGE)
+        await refetchOverrides()
       } catch (error) {
         reportError(error, OVERRIDE_ERROR_MESSAGE)
       }
     },
-    [id, showToastAction],
+    [id, refetchOverrides, showToastAction],
   )
 
-  return { clearOverride, flag, isDeleting, isNotFound, remove, setOverride }
+  return { clearOverride, flag, isDeleting, isNotFound, overridesState, remove, setOverride }
 }

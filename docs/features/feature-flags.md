@@ -77,12 +77,12 @@ return flags?.[key] ?? false
 - **Список** (`GET /feature-flags`): простой `FlatList` без пагинации/поиска (флагов мало); название, ключ, бейдж глобального состояния; тихое обновление при возврате на экран; скелетон-строки `AdminFlagRow.Skeleton`.
 - **Форма** (`POST /feature-flags`, `PATCH /feature-flags/{id}`): ключ (только create; паттерн `^[a-z][a-z0-9-]*$`), название, тумблер «Включён». Ключ неизменяем в edit (read-only, в тело не шлётся). Сервер создаёт флаг **выключенным** (`CreateFeatureFlagRequest` без `enabled`) — если тумблер включён, после создания форма досылает `PATCH { enabled: true }`. Кнопка «Сохранить» в шапке (`useAdminFormHeader`), disabled пока форма не изменена (`omitEqualFields`).
 - **Удаление** (`DELETE /feature-flags/{id}`): подтверждение `ConfirmDialog` в шапке детали (`useAdminDetailHeader`).
-- **Исключения** (`PUT`/`DELETE /feature-flags/{id}/overrides/{userId}`): на детали флага — поиск пользователей и действия grant/deny/clear по каждому. **Сервер не отдаёт список существующих исключений и эффективное состояние для пользователя**, поэтому показать их нельзя — доступна только запись, результат подтверждается тостом (ограничение в [debt.md](../debt.md)).
+- **Исключения** (`GET`/`PUT`/`DELETE /feature-flags/{id}/overrides...`): на детали флага — блок существующих исключений (пользователь, значение «Включён»/«Исключён», дата создания) + поиск пользователей и действия grant/deny/clear по каждому. Список читается `featureFlagsControllerFindOverrides` (`GET /feature-flags/{id}/overrides`; пустой список — валидный ответ) и перезагружается после каждой успешной мутации, поэтому текущее значение отражается и в списке, и в строках поиска.
 - **Отдельного `GET /feature-flags/{id}` нет** — деталь и форма edit выбирают флаг из общего списка `GET /feature-flags`.
 
 ## API
 
-`GET /feature-flags/me` → `EffectiveFeatureFlagListResponse` `{ flags: [{ key, enabled }] }` (bearer). admin/moderator всегда видят все флаги включёнными. Админ-управление (только admin): `GET /feature-flags`, `POST /feature-flags`, `PATCH /feature-flags/{id}`, `DELETE /feature-flags/{id}`, `PUT`/`DELETE /feature-flags/{id}/overrides/{userId}`. Подробнее — [contracts/rest-api.md](../contracts/rest-api.md).
+`GET /feature-flags/me` → `EffectiveFeatureFlagListResponse` `{ flags: [{ key, enabled }] }` (bearer). admin/moderator всегда видят все флаги включёнными. Админ-управление (только admin): `GET /feature-flags`, `POST /feature-flags`, `PATCH /feature-flags/{id}`, `DELETE /feature-flags/{id}`, `GET /feature-flags/{id}/overrides`, `PUT`/`DELETE /feature-flags/{id}/overrides/{userId}`. Подробнее — [contracts/rest-api.md](../contracts/rest-api.md).
 
 ## Тесты
 
@@ -93,7 +93,8 @@ return flags?.[key] ?? false
 - `src/pages/read/ui/ReadScreen.test.tsx`, `src/pages/study/ui.test.tsx` — экран рендерит контент при включённом флаге и ничего при выключенном.
 - `src/pages/admin-flags/lib/useAdminFlags.test.tsx`, `ui/AdminFlagsScreen.test.tsx` — список: загрузка, фокус-обновление, навигация, пустое состояние.
 - `src/pages/admin-flag-form/lib/useFlagFormController.test.tsx`, `ui/AdminFlagCreateScreen.test.tsx` — create/update, двухшаговое включение, валидация ключа.
-- `src/pages/admin-flag-detail/lib/useAdminFlagDetail.test.tsx`, `ui/AdminFlagDetailScreen.test.tsx` — выбор флага из списка, grant/deny/clear, удаление.
+- `src/pages/admin-flag-detail/lib/useAdminFlagDetail.test.tsx`, `ui/AdminFlagDetailScreen.test.tsx` — выбор флага из списка, grant/deny/clear, удаление; чтение и показ существующих исключений (имя пользователя, значение, дата), пустой список и ошибка загрузки.
+- `src/pages/admin-flag-detail/lib/useFlagOverrides.test.tsx` — загрузка списка исключений, повторное чтение после мутации, пустой список, ошибка.
 
 ## Связанные документы
 
@@ -101,4 +102,3 @@ return flags?.[key] ?? false
 - [state.md](./state.md) — Reatom-паттерны
 - [navigation.md](./navigation.md) — табы и блокировка
 - [contracts/rest-api.md](../contracts/rest-api.md) — эндпоинты
-- [debt.md](../debt.md) — отсутствие чтения исключений

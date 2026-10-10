@@ -9,17 +9,21 @@ import { styles } from './styles'
 const GRANT_LABEL = 'Включить'
 const DENY_LABEL = 'Выключить'
 const CLEAR_LABEL = 'Сбросить'
+const GRANTED_LABEL = 'Включён'
+const DENIED_LABEL = 'Исключён'
+const CURRENT_PREFIX = 'Сейчас: '
 
-// Строка пользователя в блоке исключений фича-флага: имя/email и три действия —
-// включить (grant), выключить (deny) и сбросить (clear) пер-пользовательское
-// исключение. Текущее исключение сервер не отдаёт, поэтому строка показывает
-// только действия, а результат подтверждается тостом.
+// Строка пользователя в блоке исключений фича-флага: имя/email, текущее значение
+// (если пользователь есть в списке существующих исключений) и три действия —
+// включить (grant), выключить (deny) и сбросить (clear) исключение.
 export const OverrideUserRow = ({
+  currentValue,
   item,
   onClear,
   onDeny,
   onGrant,
 }: {
+  currentValue: APITypes.FeatureFlagOverrideValue | null
   item: APITypes.UserResponse
   onClear: () => void
   onDeny: () => void
@@ -36,6 +40,11 @@ export const OverrideUserRow = ({
         <Text numberOfLines={1} style={[styles.userMeta, { color: currentTheme.textMuted }]}>
           {item.email}
         </Text>
+        {currentValue ? (
+          <Text numberOfLines={1} style={[styles.currentValue, { color: currentTheme.text }]}>
+            {`${CURRENT_PREFIX}${currentValue === 'grant' ? GRANTED_LABEL : DENIED_LABEL}`}
+          </Text>
+        ) : null}
       </View>
       <View style={styles.actions}>
         <PressableButton

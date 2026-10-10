@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.20.0
+ * OpenAPI spec version: 0.21.0
  */
 import { faker } from '@faker-js/faker'
 
@@ -13,6 +13,7 @@ import type {
   EffectiveFeatureFlagListResponse,
   FeatureFlag,
   FeatureFlagListResponse,
+  FeatureFlagOverrideListResponse,
 } from '../api.schemas'
 
 export const getFeatureFlagsControllerGetEffectiveForMeResponseMock = (
@@ -108,5 +109,33 @@ export const getFeatureFlagsControllerUpdateResponseMock200 = (
   key: faker.string.alpha({ length: { min: 10, max: 20 } }),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   updatedAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  ...overrideResponse,
+})
+
+export const getFeatureFlagsControllerFindOverridesResponseMock = (
+  overrideResponse: Partial<Extract<FeatureFlagOverrideListResponse, object>> = {},
+): FeatureFlagOverrideListResponse => ({
+  overrides: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+      flagId: faker.string.uuid(),
+      userId: faker.string.uuid(),
+      value: faker.helpers.arrayElement(['grant', 'deny'] as const),
+    }),
+  ),
+  ...overrideResponse,
+})
+
+export const getFeatureFlagsControllerFindOverridesResponseMock200 = (
+  overrideResponse: Partial<Extract<FeatureFlagOverrideListResponse, object>> = {},
+): FeatureFlagOverrideListResponse => ({
+  overrides: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
+      flagId: faker.string.uuid(),
+      userId: faker.string.uuid(),
+      value: faker.helpers.arrayElement(['grant', 'deny'] as const),
+    }),
+  ),
   ...overrideResponse,
 })
