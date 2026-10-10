@@ -141,7 +141,7 @@
 
 - **Список:** `GET /feature-flags` (только admin) — простой `FlatList` без пагинации/поиска (флагов мало); название, ключ, бейдж глобального состояния.
 - **Форма:** `POST /feature-flags` (тело `{ key, title }`; флаг создаётся выключенным, при включённом тумблере форма досылает `PATCH { enabled: true }`), `PATCH /feature-flags/{id}` (только изменённые title/enabled; ключ неизменяем), `DELETE /feature-flags/{id}`.
-- **Исключения:** `PUT`/`DELETE /feature-flags/{id}/overrides/{userId}` (grant/deny/clear) с детали флага; **сервер не отдаёт список существующих исключений** — доступна только запись (см. [feature-flags.md](./feature-flags.md), [debt.md](../debt.md)).
+- **Исключения:** чтение и запись — `GET /feature-flags/{id}/overrides` (список существующих исключений) и `PUT`/`DELETE /feature-flags/{id}/overrides/{userId}` (grant/deny/clear) с детали флага; `useFlagOverrides` перечитывает список после каждой мутации, поэтому блок исключений и строки поиска остаются актуальными (см. [feature-flags.md](./feature-flags.md), [screens/admin-flags.md](../screens/admin-flags.md)).
 
 ## Drag-списки
 
