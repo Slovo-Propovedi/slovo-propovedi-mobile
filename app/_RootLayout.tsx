@@ -10,6 +10,7 @@ import { UpdateDialogRoot } from 'widgets/update-status'
 import { useOfflineRegistrySync } from 'features/offline-sermons'
 import { useUpdateNotificationResponse } from 'features/update-notification'
 import { WebUpdateModal } from 'features/web-update'
+import { useFeatureFlagsRefetchOnForeground } from 'entities/feature-flags'
 import { usePlaybackProgressSaver } from 'entities/player'
 import { subscribeToNetwork } from 'shared/lib/network'
 import { checkForUpdateAction } from 'shared/model'
@@ -38,6 +39,7 @@ const RootLayout = () => {
   const checkForUpdate = useAction(checkForUpdateAction)
   useUpdateNotificationResponse()
   usePlaybackProgressSaver()
+  useFeatureFlagsRefetchOnForeground()
   useOfflineRegistrySync()
   useColdStartLinkRecovery()
   useHardwareBackCascade()

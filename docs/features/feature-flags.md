@@ -13,7 +13,8 @@
 | ----------------------- | -------------------------------------- | -------------------------- |
 | `model.ts`              | `featureFlagsAtom`, `fetchMyFeatureFlags` | состояние и загрузка флагов |
 | `lib/useFeatureFlag.ts` | `useFeatureFlag(key)`                  | доступ к значению флага    |
-| `index.ts`              | `fetchMyFeatureFlags`, `useFeatureFlag` | публичный API среза        |
+| `lib/useFeatureFlagsRefetchOnForeground.ts` | `useFeatureFlagsRefetchOnForeground()` | рефетч флагов при возврате в foreground |
+| `index.ts`              | `fetchMyFeatureFlags`, `useFeatureFlag`, `useFeatureFlagsRefetchOnForeground` | публичный API среза        |
 
 ### `featureFlagsAtom`
 
@@ -31,6 +32,15 @@
 3. Записывает карту в `featureFlagsAtom` через `ctx.schedule`.
 4. При ошибке — `console.error` + `reportError`, атом остаётся `null` (доступ не открывается).
 
+### `useFeatureFlagsRefetchOnForeground()`
+
+Хук без параметров, вызывается один раз на всё время жизни приложения (в `app/_RootLayout.tsx` рядом с прочими lifecycle-хуками). Подписывается на `AppState` и при переходе в `'active'` вызывает `fetchMyFeatureFlags` через `useAction`. Токен-guard остаётся внутри экшена, поэтому для анонима возврат в foreground — тихий no-op (без запроса и без ошибки). Никакого polling'а и интервалов нет.
+
+Это закрывает два случая, которые не покрывает стартовая загрузка:
+
+1. **Транзиентная ошибка сети на старте** — атом остаётся `null`; следующий возврат в foreground повторяет запрос.
+2. **Токен появился после старта** (вход пользователя, включая admin/moderator) — флаги подтягиваются при следующем возврате в foreground, без перезапуска приложения.
+
 ### `useFeatureFlag(key)`
 
 ```ts
@@ -42,7 +52,9 @@ return flags?.[key] ?? false
 
 ## Триггер загрузки
 
-`void fetchMyFeatureFlags(ctx)` — модульно в `app/_layout.tsx` рядом с прочими стартовыми экшенами (`initServerUrlAction`, `loadHistoryAction`, …). Публичного пользовательского логина в приложении пока нет, поэтому флаг грузится на старте приложения и только при наличии access-токена (guard внутри экшена). Рефетч после входа пользователя — в [debt.md](../debt.md).
+`void fetchMyFeatureFlags(ctx)` — модульно в `app/_layout.tsx` рядом с прочими стартовыми экшенами (`initServerUrlAction`, `loadHistoryAction`, …). Публичного пользовательского логина в приложении пока нет, поэтому флаг грузится на старте приложения и только при наличии access-токена (guard внутри экшена).
+
+Стартовая загрузка дополняется рефетчем при возврате в foreground — хук `useFeatureFlagsRefetchOnForeground` (`entities/feature-flags/lib`), смонтированный в `app/_RootLayout.tsx`. Он повторяет запрос при `AppState → 'active'`, закрывая транзиентные сетевые сбои и случай появления токена после старта.
 
 ## Гейтинг табов
 
@@ -75,6 +87,7 @@ return flags?.[key] ?? false
 ## Тесты
 
 - `src/entities/feature-flags/lib/useFeatureFlag.test.tsx` — null → false, загруженные `true`/`false`, отсутствующий ключ.
+- `src/entities/feature-flags/lib/useFeatureFlagsRefetchOnForeground.test.tsx` — рефетч на `AppState → 'active'`, отсутствие запроса без токена и на неактивных состояниях.
 - `src/entities/feature-flags/model.test.ts` — guard без токена, преобразование списка, обработка ошибки.
 - `src/widgets/tab-bar/ui/useTabPress.test.ts` — таб открывается по флагу, заблокирован без флага.
 - `src/pages/read/ui/ReadScreen.test.tsx`, `src/pages/study/ui.test.tsx` — экран рендерит контент при включённом флаге и ничего при выключенном.
@@ -88,4 +101,4 @@ return flags?.[key] ?? false
 - [state.md](./state.md) — Reatom-паттерны
 - [navigation.md](./navigation.md) — табы и блокировка
 - [contracts/rest-api.md](../contracts/rest-api.md) — эндпоинты
-- [debt.md](../debt.md) — рефетч при входе, отсутствие чтения исключений
+- [debt.md](../debt.md) — отсутствие чтения исключений
