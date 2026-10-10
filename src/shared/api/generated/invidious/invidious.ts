@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.21.0
+ * OpenAPI spec version: 0.21.2
  */
 import type { InvidiousInstance, ReplaceInvidiousInstancesRequest } from '../api.schemas.ts'
 

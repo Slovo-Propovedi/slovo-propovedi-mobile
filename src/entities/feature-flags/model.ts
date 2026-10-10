@@ -1,10 +1,10 @@
 import { action, atom } from '@reatom/framework'
-import { featureFlagsApi, secureTokenStorage } from 'shared/api'
+import { featureFlagsApi } from 'shared/api'
 import { showToast } from 'shared/model'
 
 const FEATURE_FLAGS_LOAD_ERROR_MESSAGE = 'Не удалось загрузить фича-флаги'
 
-// null = флаги ещё не загружены (нет токена, запрос в полёте или ошибка).
+// null = флаги ещё не загружены (запрос в полёте или ошибка).
 // Потребители трактуют null как «доступ закрыт» — см. useFeatureFlag.
 export const featureFlagsAtom = atom<null | Record<string, boolean>>(null, 'featureFlagsAtom')
 
@@ -12,10 +12,10 @@ export const featureFlagsAtom = atom<null | Record<string, boolean>>(null, 'feat
 // only on the success→failure transition instead of on every foreground refetch.
 const flagsFetchFailedAtom = atom<boolean>(false, 'flagsFetchFailedAtom')
 
+// GET /feature-flags/me has optional auth: anonymous callers receive the global
+// flag state, authenticated ones their effective flags (the Authorization header
+// is attached by the axios request interceptor when a token exists). Always fetch.
 export const fetchMyFeatureFlags = action(async ctx => {
-  const accessToken = await secureTokenStorage.getAccessToken()
-  if (!accessToken) return
-
   try {
     const { flags } = await featureFlagsApi
       .getFeatureFlags()

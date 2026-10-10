@@ -34,15 +34,16 @@ describe('fetchMyFeatureFlags', () => {
     })
   })
 
-  test('does not call the API without an access token', async () => {
+  test('fetches and stores global flags without an access token', async () => {
     mockedGetAccessToken.mockResolvedValue(null)
+    setFlagsResponse([{ enabled: true, key: 'read' }])
     const ctx = createCtx()
 
     await fetchMyFeatureFlags(ctx)
 
-    expect(mockedGetEffectiveForMe).not.toHaveBeenCalled()
+    expect(mockedGetEffectiveForMe).toHaveBeenCalledTimes(1)
     expect(mockedShowToast).not.toHaveBeenCalled()
-    expect(ctx.get(featureFlagsAtom)).toBeNull()
+    expect(ctx.get(featureFlagsAtom)).toEqual({ read: true })
   })
 
   test('maps the flags list into a record keyed by flag key', async () => {

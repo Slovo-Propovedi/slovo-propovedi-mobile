@@ -5,9 +5,9 @@ import { fetchMyFeatureFlags } from '../model'
 
 /**
  * Refetches feature flags whenever the app returns to the foreground. Covers the
- * two cases the startup-only fetch misses: a transient network failure at launch
- * and a token that appeared after startup (post-login). The token guard lives
- * inside `fetchMyFeatureFlags`, so an anonymous foreground is a silent no-op.
+ * cases the startup-only fetch misses: a transient network failure at launch and
+ * a token that appeared after startup (post-login). Anonymous foregrounds also
+ * refetch, picking up the latest global flag state.
  */
 export const useFeatureFlagsRefetchOnForeground = (): void => {
   const refetch = useAction(fetchMyFeatureFlags)

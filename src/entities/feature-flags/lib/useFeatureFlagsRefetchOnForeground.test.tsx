@@ -50,8 +50,9 @@ describe('useFeatureFlagsRefetchOnForeground', () => {
     expect(mockedGetEffectiveForMe).toHaveBeenCalledTimes(1)
   })
 
-  test('does not call the API without an access token', async () => {
+  test('refetches flags without an access token', async () => {
     mockedGetAccessToken.mockResolvedValue(null)
+    mockedGetEffectiveForMe.mockResolvedValue({ flags: [] })
 
     await renderHookWithProviders(() => useFeatureFlagsRefetchOnForeground())
 
@@ -59,7 +60,7 @@ describe('useFeatureFlagsRefetchOnForeground', () => {
       appStateHandler('active')
     })
 
-    expect(mockedGetEffectiveForMe).not.toHaveBeenCalled()
+    expect(mockedGetEffectiveForMe).toHaveBeenCalledTimes(1)
   })
 
   test('does not refetch while the app is not active', async () => {

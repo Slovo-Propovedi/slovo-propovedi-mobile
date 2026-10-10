@@ -5,7 +5,7 @@
 
 ## Что делает
 
-Клиентская проверка эффективных фича-флагов пользователя. Табы «Читать» и «Учиться» открываются только если соответствующий флаг (`read` / `study`) включён для текущего пользователя.
+Клиентская проверка фича-флагов. Табы «Читать» и «Учиться» открываются только если соответствующий флаг (`read` / `study`) включён. Для аутентифицированного пользователя сервер отдаёт его эффективные флаги (глобальное состояние + пер-пользовательские исключения), для анонима — глобальное состояние (аутентификация опциональна, `GET /feature-flags/me` никогда не возвращает 401).
 
 ## Срез `entities/feature-flags`
 
@@ -20,14 +20,14 @@
 
 `atom<null | Record<string, boolean>>(null, 'featureFlagsAtom')` — карта «ключ флага → включён».
 
-- `null` — флаги **не загружены** (нет токена, запрос в полёте, ошибка).
-- Загруженное значение — `Record<string, boolean>`.
+- `null` — флаги **не загружены** (запрос в полёте, ошибка).
+- Загруженное значение — `Record<string, boolean>` (глобальные флаги для анонима или эффективные для аутентифицированного пользователя).
 
 ### `fetchMyFeatureFlags`
 
 Экшен (`action`) вызывает `GET /feature-flags/me` через `featureFlagsApi.getFeatureFlags().featureFlagsControllerGetEffectiveForMe()`.
 
-1. **Guard:** читает access-токен (`secureTokenStorage.getAccessToken()`); без токена — выходит, атом остаётся `null` (анонимному пользователю флаги не нужны).
+1. Запрос выполняется **всегда**: аутентификация эндпоинта опциональна. При наличии access-токена `Authorization`-заголовок подставляет axios-интерцептор (`shared/api/axiosInstance.ts`), и сервер возвращает эффективные флаги пользователя; без токена (или с невалидным/просроченным) — глобальное состояние флагов. Отдельной проверки токена в экшене нет.
 2. Преобразует список `[{ key, enabled }]` в `Record<string, boolean>` (`Object.fromEntries`).
 3. Записывает карту в `featureFlagsAtom` через `ctx.schedule`.
 4. При ошибке — `console.error` + короткий тост (`showToast`), атом остаётся `null` (доступ не открывается). Глобальная модалка ошибки не показывается: это фоновый, некритичный запрос, который к тому же повторяется при каждом возврате в foreground.
@@ -36,12 +36,13 @@
 
 ### `useFeatureFlagsRefetchOnForeground()`
 
-Хук без параметров, вызывается один раз на всё время жизни приложения (в `app/_RootLayout.tsx` рядом с прочими lifecycle-хуками). Подписывается на `AppState` и при переходе в `'active'` вызывает `fetchMyFeatureFlags` через `useAction`. Токен-guard остаётся внутри экшена, поэтому для анонима возврат в foreground — тихий no-op (без запроса и без ошибки). Никакого polling'а и интервалов нет.
+Хук без параметров, вызывается один раз на всё время жизни приложения (в `app/_RootLayout.tsx` рядом с прочими lifecycle-хуками). Подписывается на `AppState` и при переходе в `'active'` вызывает `fetchMyFeatureFlags` через `useAction`. Проверки токена нет — анонимный возврат в foreground тоже рефетчит и подтягивает глобальное состояние флагов. Никакого polling'а и интервалов нет.
 
-Это закрывает два случая, которые не покрывает стартовая загрузка:
+Это закрывает случаи, которые не покрывает стартовая загрузка:
 
 1. **Транзиентная ошибка сети на старте** — атом остаётся `null`; следующий возврат в foreground повторяет запрос.
-2. **Токен появился после старта** (вход пользователя, включая admin/moderator) — флаги подтягиваются при следующем возврате в foreground, без перезапуска приложения.
+2. **Токен появился после старта** (вход пользователя, включая admin/moderator) — при следующем возврате в foreground запрос уйдёт уже с токеном и подтянет персональные флаги, без перезапуска приложения.
+3. **Глобальное состояние флага изменилось** (в т.ч. для анонима) — возврат в foreground подтягивает актуальные значения.
 
 ### `useFeatureFlag(key)`
 
@@ -50,13 +51,13 @@ const [flags] = useAtom(featureFlagsAtom)
 return flags?.[key] ?? false
 ```
 
-**Семантика (безопасный дефолт):** пока `featureFlagsAtom === null` (флаги не загружены / аноним / ошибка) и для отсутствующего ключа — `false`. То есть гейтед-табы по умолчанию закрыты и открываются только по явному `true` с сервера.
+**Семантика (безопасный дефолт):** пока `featureFlagsAtom === null` (флаги ещё не загружены / ошибка) и для отсутствующего ключа — `false`. То есть гейтед-табы по умолчанию закрыты и открываются только по явному `true` с сервера.
 
 ## Триггер загрузки
 
-`void fetchMyFeatureFlags(ctx)` — модульно в `app/_layout.tsx` рядом с прочими стартовыми экшенами (`initServerUrlAction`, `loadHistoryAction`, …). Публичного пользовательского логина в приложении пока нет, поэтому флаг грузится на старте приложения и только при наличии access-токена (guard внутри экшена).
+`void fetchMyFeatureFlags(ctx)` — модульно в `app/_layout.tsx` рядом с прочими стартовыми экшенами (`initServerUrlAction`, `loadHistoryAction`, …). Публичного пользовательского логина в приложении пока нет, поэтому флаг грузится на старте приложения всегда: аноним получает глобальное состояние, а если access-токен уже есть — персональные флаги (заголовок подставляет axios-интерцептор).
 
-Стартовая загрузка дополняется рефетчем при возврате в foreground — хук `useFeatureFlagsRefetchOnForeground` (`entities/feature-flags/lib`), смонтированный в `app/_RootLayout.tsx`. Он повторяет запрос при `AppState → 'active'`, закрывая транзиентные сетевые сбои и случай появления токена после старта.
+Стартовая загрузка дополняется рефетчем при возврате в foreground — хук `useFeatureFlagsRefetchOnForeground` (`entities/feature-flags/lib`), смонтированный в `app/_RootLayout.tsx`. Он повторяет запрос при `AppState → 'active'`, закрывая транзиентные сетевые сбои, изменения глобального состояния и случай появления токена после старта.
 
 ## Гейтинг табов
 
@@ -84,13 +85,13 @@ return flags?.[key] ?? false
 
 ## API
 
-`GET /feature-flags/me` → `EffectiveFeatureFlagListResponse` `{ flags: [{ key, enabled }] }` (bearer). admin/moderator всегда видят все флаги включёнными. Админ-управление (только admin): `GET /feature-flags`, `POST /feature-flags`, `PATCH /feature-flags/{id}`, `DELETE /feature-flags/{id}`, `GET /feature-flags/{id}/overrides`, `PUT`/`DELETE /feature-flags/{id}/overrides/{userId}`. Подробнее — [contracts/rest-api.md](../contracts/rest-api.md).
+`GET /feature-flags/me` → `EffectiveFeatureFlagListResponse` `{ flags: [{ key, enabled }] }`. Аутентификация опциональна: без токена (или с невалидным/просроченным) — глобальное состояние флагов; с валидным токеном — эффективные флаги по единому правилу `(глобально включён И нет deny-исключения) ИЛИ grant-исключение`. Правило одинаково для всех ролей, включая admin и moderator (админ-байпаса нет). Админ-управление (только admin): `GET /feature-flags`, `POST /feature-flags`, `PATCH /feature-flags/{id}`, `DELETE /feature-flags/{id}`, `GET /feature-flags/{id}/overrides`, `PUT`/`DELETE /feature-flags/{id}/overrides/{userId}`. Подробнее — [contracts/rest-api.md](../contracts/rest-api.md).
 
 ## Тесты
 
 - `src/entities/feature-flags/lib/useFeatureFlag.test.tsx` — null → false, загруженные `true`/`false`, отсутствующий ключ.
-- `src/entities/feature-flags/lib/useFeatureFlagsRefetchOnForeground.test.tsx` — рефетч на `AppState → 'active'`, отсутствие запроса без токена и на неактивных состояниях.
-- `src/entities/feature-flags/model.test.ts` — guard без токена, преобразование списка, обработка ошибки (тост вместо глобальной модалки, без `reportError`), дедупликация тоста при повторных падениях и повторный тост после восстановления.
+- `src/entities/feature-flags/lib/useFeatureFlagsRefetchOnForeground.test.tsx` — рефетч на `AppState → 'active'` (в том числе без токена) и отсутствие запроса на неактивных состояниях.
+- `src/entities/feature-flags/model.test.ts` — запрос без токена (глобальные флаги), преобразование списка, обработка ошибки (тост вместо глобальной модалки, без `reportError`), дедупликация тоста при повторных падениях и повторный тост после восстановления.
 - `src/widgets/tab-bar/ui/useTabPress.test.ts` — таб открывается по флагу, заблокирован без флага.
 - `src/pages/read/ui/ReadScreen.test.tsx`, `src/pages/study/ui.test.tsx` — экран рендерит контент при включённом флаге и ничего при выключенном.
 - `src/pages/admin-flags/lib/useAdminFlags.test.tsx`, `ui/AdminFlagsScreen.test.tsx` — список: загрузка, фокус-обновление, навигация, пустое состояние.
