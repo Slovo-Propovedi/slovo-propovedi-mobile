@@ -9,12 +9,13 @@
 
 ## Срез `entities/feature-flags`
 
-| Файл                                        | Экспорт                                                                       | Назначение                              |
-| ------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------- |
-| `model.ts`                                  | `featureFlagsAtom`, `fetchMyFeatureFlags`                                     | состояние и загрузка флагов             |
-| `lib/useFeatureFlag.ts`                     | `useFeatureFlag(key)`                                                         | доступ к значению флага                 |
-| `lib/useFeatureFlagsRefetchOnForeground.ts` | `useFeatureFlagsRefetchOnForeground()`                                        | рефетч флагов при возврате в foreground |
-| `index.ts`                                  | `fetchMyFeatureFlags`, `useFeatureFlag`, `useFeatureFlagsRefetchOnForeground` | публичный API среза                     |
+| Файл                                        | Экспорт                                                                       | Назначение                                                   |
+| ------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `model.ts`                                  | `featureFlagsAtom`, `fetchMyFeatureFlags`                                     | состояние и загрузка флагов                                  |
+| `lib/useFeatureFlag.ts`                     | `useFeatureFlag(key)`                                                         | доступ к значению флага                                      |
+| `lib/useFeatureFlagsRefetchOnForeground.ts` | `useFeatureFlagsRefetchOnForeground()`                                        | рефетч флагов при возврате в foreground                      |
+| `@x/auth.ts`                                | `fetchMyFeatureFlags`                                                         | кросс-импорт для `entities/auth` (рефетч после входа/выхода) |
+| `index.ts`                                  | `fetchMyFeatureFlags`, `useFeatureFlag`, `useFeatureFlagsRefetchOnForeground` | публичный API среза                                          |
 
 ### `featureFlagsAtom`
 
@@ -41,7 +42,7 @@
 Это закрывает случаи, которые не покрывает стартовая загрузка:
 
 1. **Транзиентная ошибка сети на старте** — атом остаётся `null`; следующий возврат в foreground повторяет запрос.
-2. **Токен появился после старта** (вход пользователя, включая admin/moderator) — при следующем возврате в foreground запрос уйдёт уже с токеном и подтянет персональные флаги, без перезапуска приложения.
+2. **Токен изменился после старта** (вход/выход) — это уже закрывает рефетч внутри `signIn`/`signOut` (см. «Триггеры загрузки»); foreground остаётся страховкой, если смена токена произошла вне этих экшенов.
 3. **Глобальное состояние флага изменилось** (в т.ч. для анонима) — возврат в foreground подтягивает актуальные значения.
 
 ### `useFeatureFlag(key)`
@@ -53,11 +54,16 @@ return flags?.[key] ?? false
 
 **Семантика (безопасный дефолт):** пока `featureFlagsAtom === null` (флаги ещё не загружены / ошибка) и для отсутствующего ключа — `false`. То есть гейтед-табы по умолчанию закрыты и открываются только по явному `true` с сервера.
 
-## Триггер загрузки
+## Триггеры загрузки
 
-`void fetchMyFeatureFlags(ctx)` — модульно в `app/_layout.tsx` рядом с прочими стартовыми экшенами (`initServerUrlAction`, `loadHistoryAction`, …). Публичного пользовательского логина в приложении пока нет, поэтому флаг грузится на старте приложения всегда: аноним получает глобальное состояние, а если access-токен уже есть — персональные флаги (заголовок подставляет axios-интерцептор).
+Флаги загружаются в четырёх точках:
 
-Стартовая загрузка дополняется рефетчем при возврате в foreground — хук `useFeatureFlagsRefetchOnForeground` (`entities/feature-flags/lib`), смонтированный в `app/_RootLayout.tsx`. Он повторяет запрос при `AppState → 'active'`, закрывая транзиентные сетевые сбои, изменения глобального состояния и случай появления токена после старта.
+1. **Старт приложения** — `void fetchMyFeatureFlags(ctx)` модульно в `app/_layout.tsx` рядом с прочими стартовыми экшенами (`initServerUrlAction`, `loadHistoryAction`, …). Публичного пользовательского логина в приложении пока нет, поэтому флаг грузится на старте всегда: аноним получает глобальное состояние, а если access-токен уже есть — персональные флаги (заголовок подставляет axios-интерцептор).
+2. **Возврат в foreground** — хук `useFeatureFlagsRefetchOnForeground` (`entities/feature-flags/lib`), смонтированный в `app/_RootLayout.tsx`. Повторяет запрос при `AppState → 'active'`, закрывая транзиентные сетевые сбои, изменения глобального состояния и появление токена после старта.
+3. **Успешный вход** — `signIn` (`entities/auth/lib/signIn.ts`) после сохранения токенов вызывает `void fetchMyFeatureFlags(ctx)` (через `@x/auth`-точку среза). Axios-интерцептор тут же подставляет свежий access-токен, поэтому атом сразу получает **персональный** срез — без ожидания foreground.
+4. **Выход** — `signOut` (`entities/auth/lib/signOut.ts`) после очистки токенов так же рефетчит флаги: запрос уходит анонимно, и атом возвращается к **глобальному** срезу, а не сохраняет персональные флаги вышедшего пользователя.
+
+Вход/выход и рефетч флагов связаны в одном экшене намеренно: `signIn`/`signOut` — единственная точка смены токена, поэтому все call-sites (`AdminLoginScreen`, `SettingsHeaderMenu`, `AdminQuickActions`) получают актуальные флаги автоматически. Связь оформлена кросс-импортом `entities/feature-flags/@x/auth` (FSD `@x` для связей одного слоя, см. [architecture.md](../architecture.md) → «@x cross-import»), а не через публичный barrel `feature-flags`.
 
 ## Гейтинг табов
 
@@ -92,6 +98,8 @@ return flags?.[key] ?? false
 - `src/entities/feature-flags/lib/useFeatureFlag.test.tsx` — null → false, загруженные `true`/`false`, отсутствующий ключ.
 - `src/entities/feature-flags/lib/useFeatureFlagsRefetchOnForeground.test.tsx` — рефетч на `AppState → 'active'` (в том числе без токена) и отсутствие запроса на неактивных состояниях.
 - `src/entities/feature-flags/model.test.ts` — запрос без токена (глобальные флаги), преобразование списка, обработка ошибки (тост вместо глобальной модалки, без `reportError`), дедупликация тоста при повторных падениях и повторный тост после восстановления.
+- `src/entities/auth/lib/signIn.test.ts` — рефетч флагов после успешного входа и его отсутствие при отказе в доступе/ошибке запроса.
+- `src/entities/auth/lib/signOut.test.ts` — рефетч флагов после выхода, в том числе когда серверная ревокация падает.
 - `src/widgets/tab-bar/ui/useTabPress.test.ts` — таб открывается по флагу, заблокирован без флага.
 - `src/pages/read/ui/ReadScreen.test.tsx`, `src/pages/study/ui.test.tsx` — экран рендерит контент при включённом флаге и ничего при выключенном.
 - `src/pages/admin-flags/lib/useAdminFlags.test.tsx`, `ui/AdminFlagsScreen.test.tsx` — список: загрузка, фокус-обновление, навигация, пустое состояние.

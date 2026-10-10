@@ -1,4 +1,5 @@
 import { action } from '@reatom/framework'
+import { fetchMyFeatureFlags } from 'entities/feature-flags/@x/auth'
 import { type APITypes, authApi, secureTokenStorage } from 'shared/api'
 import { ADMIN_ACCESS_DENIED_MESSAGE, authStatusAtom, authUserAtom } from '../model'
 
@@ -23,6 +24,10 @@ export const signIn = action(async (ctx, credentials: APITypes.SignInRequestDto)
       authUserAtom(ctx, response.user)
       authStatusAtom(ctx, 'authenticated')
     })
+
+    // The fresh token is now attached by the axios interceptor, so refetch the
+    // flags to get the personalized slice instead of waiting for a foreground.
+    void fetchMyFeatureFlags(ctx)
 
     return response.user
   } catch (error) {

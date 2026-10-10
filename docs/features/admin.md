@@ -1,6 +1,6 @@
 # Интерфейс администратора (admin)
 
-Зона `/admin` — отдельный стек внутри приложения (см. [navigation.md](./navigation.md) и [`../architecture.md`](../architecture.md)). Доступ — после входа в `/admin/login`; аутентификация — `entities/auth` (JWT в `expo-secure-store`). Табы: «Главная», «Разделы», «Плейлисты», «Проповеди», «Медиа», «Флаги» (только admin), «Пользователи» (только admin).
+Зона `/admin` — отдельный стек внутри приложения (см. [navigation.md](./navigation.md) и [`../architecture.md`](../architecture.md)). Доступ — после входа в `/admin/login`; аутентификация — `entities/auth` (JWT в `expo-secure-store`). После успешного входа `signIn` сразу рефетчит фича-флаги (см. [feature-flags.md](./feature-flags.md)), поэтому гейтед-табы открываются по персональному срезу без возврата в foreground. Табы: «Главная», «Разделы», «Плейлисты», «Проповеди», «Медиа», «Флаги» (только admin), «Пользователи» (только admin).
 
 Экраны админки оперируют **generated-типами** (`APITypes.*` из `shared/api`), а не доменными `SectionData`/`PlaylistData`: CRUD-формы работают с сущностями API напрямую.
 

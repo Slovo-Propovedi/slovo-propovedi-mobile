@@ -1,4 +1,5 @@
 import { action } from '@reatom/framework'
+import { fetchMyFeatureFlags } from 'entities/feature-flags/@x/auth'
 import { authApi, secureTokenStorage } from 'shared/api'
 import { authStatusAtom, authUserAtom } from '../model'
 
@@ -34,4 +35,8 @@ export const signOut = action(async ctx => {
     authUserAtom(ctx, null)
     authStatusAtom(ctx, 'unauthenticated')
   })
+
+  // Tokens are cleared, so this refetch returns the global (anonymous) slice
+  // instead of keeping the signed-in user's personalized flags.
+  void fetchMyFeatureFlags(ctx)
 }, 'signOut')
