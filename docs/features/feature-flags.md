@@ -9,12 +9,12 @@
 
 ## Срез `entities/feature-flags`
 
-| Файл                    | Экспорт                                | Назначение                 |
-| ----------------------- | -------------------------------------- | -------------------------- |
-| `model.ts`              | `featureFlagsAtom`, `fetchMyFeatureFlags` | состояние и загрузка флагов |
-| `lib/useFeatureFlag.ts` | `useFeatureFlag(key)`                  | доступ к значению флага    |
-| `lib/useFeatureFlagsRefetchOnForeground.ts` | `useFeatureFlagsRefetchOnForeground()` | рефетч флагов при возврате в foreground |
-| `index.ts`              | `fetchMyFeatureFlags`, `useFeatureFlag`, `useFeatureFlagsRefetchOnForeground` | публичный API среза        |
+| Файл                                        | Экспорт                                                                       | Назначение                              |
+| ------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------- |
+| `model.ts`                                  | `featureFlagsAtom`, `fetchMyFeatureFlags`                                     | состояние и загрузка флагов             |
+| `lib/useFeatureFlag.ts`                     | `useFeatureFlag(key)`                                                         | доступ к значению флага                 |
+| `lib/useFeatureFlagsRefetchOnForeground.ts` | `useFeatureFlagsRefetchOnForeground()`                                        | рефетч флагов при возврате в foreground |
+| `index.ts`                                  | `fetchMyFeatureFlags`, `useFeatureFlag`, `useFeatureFlagsRefetchOnForeground` | публичный API среза                     |
 
 ### `featureFlagsAtom`
 
@@ -80,7 +80,7 @@ return flags?.[key] ?? false
 - **Список** (`GET /feature-flags`): простой `FlatList` без пагинации/поиска (флагов мало); название, ключ, бейдж глобального состояния; тихое обновление при возврате на экран; скелетон-строки `AdminFlagRow.Skeleton`.
 - **Форма** (`POST /feature-flags`, `PATCH /feature-flags/{id}`): ключ (только create; паттерн `^[a-z][a-z0-9-]*$`), название, тумблер «Включён». Ключ неизменяем в edit (read-only, в тело не шлётся). Сервер создаёт флаг **выключенным** (`CreateFeatureFlagRequest` без `enabled`) — если тумблер включён, после создания форма досылает `PATCH { enabled: true }`. Кнопка «Сохранить» в шапке (`useAdminFormHeader`), disabled пока форма не изменена (`omitEqualFields`).
 - **Удаление** (`DELETE /feature-flags/{id}`): подтверждение `ConfirmDialog` в шапке детали (`useAdminDetailHeader`).
-- **Исключения** (`GET`/`PUT`/`DELETE /feature-flags/{id}/overrides...`): на детали флага — блок существующих исключений (пользователь, значение «Включён»/«Исключён», дата создания) + поиск пользователей и действия grant/deny/clear по каждому. Список читается `featureFlagsControllerFindOverrides` (`GET /feature-flags/{id}/overrides`; пустой список — валидный ответ) и перезагружается после каждой успешной мутации, поэтому текущее значение отражается и в списке, и в строках поиска. `useFlagOverrides` секвенирует запросы: новый запрос (фокус или мутация) отменяет предыдущий через `AbortController`, поэтому устаревший ответ не перезатирает свежие данные (last-started-wins). При ошибке рефетча предыдущий список сохраняется, а над ним показывается инлайн-строка ошибки; полноэкранный текст ошибки — только когда данных нет.
+- **Исключения** (`GET`/`PUT`/`DELETE /feature-flags/{id}/overrides...`): на детали флага — блок существующих исключений (пользователь, значение «Включён»/«Исключён», дата создания) + поиск пользователей и **один тумблер эффективного состояния** в каждой строке. Тумблер показывает эффективное состояние: `grant` → ON, `deny` → OFF, без исключения → глобальное `enabled`. По флипу вычисляется минимальное действие (`resolveOverrideAction`): желаемое совпало с глобальным → `DELETE` (наследуем глобальное), иначе `PUT` с `grant`/`deny`. Подпись рядом с тумблером показывает «Включено»/«Выключено», а при наличии явного исключения добавляет пометку «исключение» — так админ отличает «включён глобально» от «включён grant-исключением». Список читается `featureFlagsControllerFindOverrides` (`GET /feature-flags/{id}/overrides`; пустой список — валидный ответ) и перезагружается после каждой успешной мутации, поэтому тумблер и блок существующих исключений остаются в синке. `useFlagOverrides` секвенирует запросы: новый запрос (фокус или мутация) отменяет предыдущий через `AbortController`, поэтому устаревший ответ не перезатирает свежие данные (last-started-wins). При ошибке рефетча предыдущий список сохраняется, а над ним показывается инлайн-строка ошибки; полноэкранный текст ошибки — только когда данных нет.
 - **Отдельного `GET /feature-flags/{id}` нет** — деталь и форма edit выбирают флаг из общего списка `GET /feature-flags`.
 
 ## API
@@ -96,7 +96,8 @@ return flags?.[key] ?? false
 - `src/pages/read/ui/ReadScreen.test.tsx`, `src/pages/study/ui.test.tsx` — экран рендерит контент при включённом флаге и ничего при выключенном.
 - `src/pages/admin-flags/lib/useAdminFlags.test.tsx`, `ui/AdminFlagsScreen.test.tsx` — список: загрузка, фокус-обновление, навигация, пустое состояние.
 - `src/pages/admin-flag-form/lib/useFlagFormController.test.tsx`, `ui/AdminFlagCreateScreen.test.tsx` — create/update, двухшаговое включение, валидация ключа.
-- `src/pages/admin-flag-detail/lib/useAdminFlagDetail.test.tsx`, `ui/AdminFlagDetailScreen.test.tsx` — выбор флага из списка, grant/deny/clear, удаление; чтение и показ существующих исключений (имя пользователя, значение, дата), пустой список и ошибка загрузки; сохранение устаревшего списка с инлайн-ошибкой при провале рефетча.
+- `src/pages/admin-flag-detail/lib/overrideAction.test.ts` — эффективное состояние (grant/deny/без исключения) и минимальное действие для всех четырёх комбинаций «желаемое × глобальное» (grant/deny/clear).
+- `src/pages/admin-flag-detail/lib/useAdminFlagDetail.test.tsx`, `ui/AdminFlagDetailScreen.test.tsx` — выбор флага из списка, тумблер эффективного состояния (grant/deny/clear по глобальному значению), удаление; чтение и показ существующих исключений (имя пользователя, значение, дата), пометка «исключение» в подписи тумблера, пустой список и ошибка загрузки; сохранение устаревшего списка с инлайн-ошибкой при провале рефетча.
 - `src/pages/admin-flag-detail/lib/useFlagOverrides.test.tsx` — загрузка списка исключений, повторное чтение после мутации, пустой список, ошибка; отмена устаревшего запроса (last-started-wins), чтобы медленный ответ не перезатёр свежие данные.
 
 ## Связанные документы

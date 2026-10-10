@@ -23,7 +23,7 @@ export const AdminFlagDetailScreen = () => {
   const { currentTheme } = useTheme()
   const params = useLocalSearchParams<{ id: string }>()
   const id = params.id ?? ''
-  const { clearOverride, flag, isDeleting, isNotFound, overridesState, remove, setOverride } =
+  const { applyOverride, flag, isDeleting, isNotFound, overridesState, remove } =
     useAdminFlagDetail(id)
   const usersState = useOverrideUsers()
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -65,8 +65,7 @@ export const AdminFlagDetailScreen = () => {
         flag={flag}
         usersState={usersState}
         overridesState={overridesState}
-        onClearOverride={userId => void clearOverride(userId)}
-        onSetOverride={(userId, value) => void setOverride(userId, value)}
+        onApplyOverride={(userId, desiredEnabled) => void applyOverride(userId, desiredEnabled)}
       />
 
       <ConfirmDialog

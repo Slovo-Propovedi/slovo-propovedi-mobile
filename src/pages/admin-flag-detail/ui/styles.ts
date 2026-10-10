@@ -1,24 +1,7 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
-  actionButton: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: INDENTS.middle,
-  },
-  actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: INDENTS.low,
-    marginTop: INDENTS.low,
-  },
-  actionText: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: '600',
-  },
   badge: {
     borderRadius: RADIUSES.low,
     paddingHorizontal: INDENTS.low,
@@ -39,11 +22,6 @@ export const styles = StyleSheet.create({
   content: {
     padding: INDENTS.medium,
     paddingBottom: INDENTS.highest,
-  },
-  currentValue: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: '600',
-    marginTop: 2,
   },
   error: {
     fontSize: FONT_SIZES.sm,

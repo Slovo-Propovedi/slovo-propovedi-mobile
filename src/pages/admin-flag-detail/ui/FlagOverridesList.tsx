@@ -4,6 +4,7 @@ import { type APITypes } from 'shared/api'
 import { EmptyState } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
+import { resolveEffectiveEnabled } from '../lib/overrideAction'
 import { type FlagOverridesState } from '../lib/useFlagOverrides'
 import { type OverrideUsersState } from '../lib/useOverrideUsers'
 import { FlagDetailHeader } from './FlagDetailHeader'
@@ -25,17 +26,15 @@ const OverrideSkeletonList = () => (
 )
 
 // Тело детали фича-флага: карточка флага, существующие исключения, поиск
-// пользователей и список строк с действиями grant/deny/clear.
+// пользователей и список строк с тумблером эффективного состояния.
 export const FlagOverridesList = ({
   flag,
-  onClearOverride,
-  onSetOverride,
+  onApplyOverride,
   overridesState,
   usersState,
 }: {
   flag: APITypes.FeatureFlag
-  onClearOverride: (userId: string) => void
-  onSetOverride: (userId: string, value: APITypes.SetFeatureFlagOverrideRequestValue) => void
+  onApplyOverride: (userId: string, desiredEnabled: boolean) => void
   overridesState: FlagOverridesState
   usersState: OverrideUsersState
 }) => {
@@ -84,15 +83,18 @@ export const FlagOverridesList = ({
           <EmptyState message={emptyMessage} />
         )
       }
-      renderItem={({ item }) => (
-        <OverrideUserRow
-          item={item}
-          onClear={() => onClearOverride(item.id)}
-          onDeny={() => onSetOverride(item.id, 'deny')}
-          onGrant={() => onSetOverride(item.id, 'grant')}
-          currentValue={overrideValueByUserId.get(item.id) ?? null}
-        />
-      )}
+      renderItem={({ item }) => {
+        const overrideValue = overrideValueByUserId.get(item.id) ?? null
+
+        return (
+          <OverrideUserRow
+            item={item}
+            hasOverride={overrideValue !== null}
+            onToggle={desiredEnabled => onApplyOverride(item.id, desiredEnabled)}
+            effectiveEnabled={resolveEffectiveEnabled(overrideValue, flag.enabled)}
+          />
+        )
+      }}
       ListFooterComponent={
         isLoadingMore ? (
           <OverrideUserRow.Skeleton />

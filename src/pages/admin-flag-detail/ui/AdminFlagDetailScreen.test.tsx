@@ -55,17 +55,22 @@ jest.mock('expo-router', () => {
 
 jest.mock('entities/auth', () => ({ useRequireAdminRole: () => undefined }))
 
-const buildFlags = () =>
+const buildFlags = (enabled = true) =>
   featureFlagsMocks.getFeatureFlagsControllerFindAllResponseMock({
     flags: [
       featureFlagsMocks.getFeatureFlagsControllerCreateResponseMock({
-        enabled: true,
+        enabled,
         id: 'read',
         key: 'read',
         title: 'Читать',
       }),
     ],
   })
+
+const buildOverride = (value: 'deny' | 'grant') =>
+  featureFlagsMocks.getFeatureFlagsControllerFindOverridesResponseMock({
+    overrides: [{ createdAt: '2024-01-01T00:00:00Z', flagId: 'read', userId: 'u1', value }],
+  }).overrides[0]
 
 const buildUsers = () =>
   usersMocks.getUsersControllerFindAllResponseMock({
@@ -94,29 +99,15 @@ describe('<AdminFlagDetailScreen>', () => {
   })
 
   test('renders existing overrides with the resolved user, value and date', async () => {
-    const override = featureFlagsMocks.getFeatureFlagsControllerFindOverridesResponseMock({
-      overrides: [
-        { createdAt: '2024-01-01T00:00:00Z', flagId: 'read', userId: 'u1', value: 'grant' },
-      ],
-    }).overrides[0]
+    const override = buildOverride('grant')
     mockFindOverrides.mockResolvedValue({ overrides: [override] })
-    mockFindFlags.mockResolvedValue(
-      featureFlagsMocks.getFeatureFlagsControllerFindAllResponseMock({
-        flags: [
-          featureFlagsMocks.getFeatureFlagsControllerCreateResponseMock({
-            enabled: false,
-            id: 'read',
-            key: 'read',
-            title: 'Читать',
-          }),
-        ],
-      }),
-    )
+    mockFindFlags.mockResolvedValue(buildFlags(false))
 
     const { findAllByText, findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
 
     expect(await findByText('Включён')).toBeTruthy()
     expect(await findByText(formatRelativeDate(Date.parse(override.createdAt)))).toBeTruthy()
+    expect(await findByText('Включено · исключение')).toBeTruthy()
     expect(await findAllByText('Иван')).toHaveLength(2)
   })
 
@@ -134,56 +125,58 @@ describe('<AdminFlagDetailScreen>', () => {
     expect(await findByText('Не удалось загрузить исключения')).toBeTruthy()
   })
 
-  test('keeps the stale overrides list and shows an inline error when refetch fails', async () => {
-    const override = featureFlagsMocks.getFeatureFlagsControllerFindOverridesResponseMock({
-      overrides: [
-        { createdAt: '2024-01-01T00:00:00Z', flagId: 'read', userId: 'u1', value: 'grant' },
-      ],
-    }).overrides[0]
-    mockFindOverrides
-      .mockResolvedValueOnce({ overrides: [override] })
-      .mockRejectedValueOnce(new Error('boom'))
-    mockFindFlags.mockResolvedValue(
-      featureFlagsMocks.getFeatureFlagsControllerFindAllResponseMock({
-        flags: [
-          featureFlagsMocks.getFeatureFlagsControllerCreateResponseMock({
-            enabled: false,
-            id: 'read',
-            key: 'read',
-            title: 'Читать',
-          }),
-        ],
-      }),
-    )
+  test('marks an explicit deny override in the state label', async () => {
+    mockFindOverrides.mockResolvedValue({ overrides: [buildOverride('deny')] })
 
-    const { findByLabelText, findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
+    const { findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
+
+    expect(await findByText('Выключено · исключение')).toBeTruthy()
+  })
+
+  test('keeps the stale overrides list and shows an inline error when refetch fails', async () => {
+    mockFindOverrides
+      .mockResolvedValueOnce({ overrides: [buildOverride('grant')] })
+      .mockRejectedValueOnce(new Error('boom'))
+    mockFindFlags.mockResolvedValue(buildFlags(false))
+
+    const { findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
 
     expect(await findByText('Включён')).toBeTruthy()
 
-    fireEvent.press(await findByLabelText('Включить: Иван'))
+    fireEvent.press(await findByText('Включено · исключение'))
 
     expect(await findByText('Не удалось загрузить исключения')).toBeTruthy()
     expect(await findByText('Включён')).toBeTruthy()
   })
 
-  test('grant and deny set the override for a user', async () => {
-    const { findByLabelText } = await renderWithProviders(<AdminFlagDetailScreen />)
+  test('toggles a user on by granting when the flag is globally disabled', async () => {
+    mockFindFlags.mockResolvedValue(buildFlags(false))
 
-    fireEvent.press(await findByLabelText('Включить: Иван'))
+    const { findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
+
+    fireEvent.press(await findByText('Выключено'))
+
     await waitFor(() =>
       expect(mockSetOverride).toHaveBeenCalledWith('read', 'u1', { value: 'grant' }),
     )
+  })
 
-    fireEvent.press(await findByLabelText('Выключить: Иван'))
+  test('toggles a user off by denying when the flag is globally enabled', async () => {
+    const { findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
+
+    fireEvent.press(await findByText('Включено'))
+
     await waitFor(() =>
       expect(mockSetOverride).toHaveBeenCalledWith('read', 'u1', { value: 'deny' }),
     )
   })
 
-  test('clear removes the override for a user', async () => {
-    const { findByLabelText } = await renderWithProviders(<AdminFlagDetailScreen />)
+  test('toggles a user on by clearing the override when the flag is globally enabled', async () => {
+    mockFindOverrides.mockResolvedValue({ overrides: [buildOverride('deny')] })
 
-    fireEvent.press(await findByLabelText('Сбросить: Иван'))
+    const { findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
+
+    fireEvent.press(await findByText('Выключено · исключение'))
 
     await waitFor(() => expect(mockDeleteOverride).toHaveBeenCalledWith('read', 'u1'))
   })

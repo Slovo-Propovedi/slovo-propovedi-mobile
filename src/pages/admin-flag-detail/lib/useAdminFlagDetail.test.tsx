@@ -32,16 +32,18 @@ jest.mock('expo-router', () => ({
   },
 }))
 
-const createFlag = (id: string) =>
+const createFlag = (id: string, enabled: boolean) =>
   featureFlagsMocks.getFeatureFlagsControllerCreateResponseMock({
-    enabled: false,
+    enabled,
     id,
     key: id,
     title: `Флаг ${id}`,
   })
 
-const buildList = (ids: string[]) =>
-  featureFlagsMocks.getFeatureFlagsControllerFindAllResponseMock({ flags: ids.map(createFlag) })
+const buildList = (ids: string[], enabled = false) =>
+  featureFlagsMocks.getFeatureFlagsControllerFindAllResponseMock({
+    flags: ids.map(id => createFlag(id, enabled)),
+  })
 
 describe('useAdminFlagDetail', () => {
   beforeEach(() => {
@@ -74,33 +76,59 @@ describe('useAdminFlagDetail', () => {
     expect(result.current.isNotFound).toBe(true)
   })
 
-  test('grant and deny call the override endpoint', async () => {
+  test('toggling on while globally disabled grants the user', async () => {
     mockFindAll.mockResolvedValue(buildList(['read']))
     const { result } = await renderHookWithProviders(() => useAdminFlagDetail('read'))
 
     await act(async () => {})
     await act(async () => {
-      await result.current.setOverride('u1', 'grant')
-      await result.current.setOverride('u1', 'deny')
+      await result.current.applyOverride('u1', true)
     })
 
-    expect(mockSetOverride).toHaveBeenNthCalledWith(1, 'read', 'u1', { value: 'grant' })
-    expect(mockSetOverride).toHaveBeenNthCalledWith(2, 'read', 'u1', { value: 'deny' })
+    expect(mockSetOverride).toHaveBeenCalledWith('read', 'u1', { value: 'grant' })
+    expect(mockDeleteOverride).not.toHaveBeenCalled()
   })
 
-  test('clear removes the override', async () => {
-    mockFindAll.mockResolvedValue(buildList(['read']))
+  test('toggling off while globally enabled denies the user', async () => {
+    mockFindAll.mockResolvedValue(buildList(['read'], true))
     const { result } = await renderHookWithProviders(() => useAdminFlagDetail('read'))
 
     await act(async () => {})
     await act(async () => {
-      await result.current.clearOverride('u1')
+      await result.current.applyOverride('u1', false)
+    })
+
+    expect(mockSetOverride).toHaveBeenCalledWith('read', 'u1', { value: 'deny' })
+    expect(mockDeleteOverride).not.toHaveBeenCalled()
+  })
+
+  test('toggling on while globally enabled clears the override to inherit', async () => {
+    mockFindAll.mockResolvedValue(buildList(['read'], true))
+    const { result } = await renderHookWithProviders(() => useAdminFlagDetail('read'))
+
+    await act(async () => {})
+    await act(async () => {
+      await result.current.applyOverride('u1', true)
     })
 
     expect(mockDeleteOverride).toHaveBeenCalledWith('read', 'u1')
+    expect(mockSetOverride).not.toHaveBeenCalled()
   })
 
-  test('refetches overrides after setting and clearing one', async () => {
+  test('toggling off while globally disabled clears the override to inherit', async () => {
+    mockFindAll.mockResolvedValue(buildList(['read']))
+    const { result } = await renderHookWithProviders(() => useAdminFlagDetail('read'))
+
+    await act(async () => {})
+    await act(async () => {
+      await result.current.applyOverride('u1', false)
+    })
+
+    expect(mockDeleteOverride).toHaveBeenCalledWith('read', 'u1')
+    expect(mockSetOverride).not.toHaveBeenCalled()
+  })
+
+  test('refetches overrides after applying one', async () => {
     mockFindAll.mockResolvedValue(buildList(['read']))
     const { result } = await renderHookWithProviders(() => useAdminFlagDetail('read'))
 
@@ -108,12 +136,12 @@ describe('useAdminFlagDetail', () => {
     expect(mockFindOverrides).toHaveBeenCalledTimes(1)
 
     await act(async () => {
-      await result.current.setOverride('u1', 'grant')
+      await result.current.applyOverride('u1', true)
     })
     expect(mockFindOverrides).toHaveBeenCalledTimes(2)
 
     await act(async () => {
-      await result.current.clearOverride('u1')
+      await result.current.applyOverride('u1', false)
     })
     expect(mockFindOverrides).toHaveBeenCalledTimes(3)
   })

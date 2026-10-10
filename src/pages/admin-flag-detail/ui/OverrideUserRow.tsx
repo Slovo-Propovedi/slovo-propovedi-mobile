@@ -1,33 +1,34 @@
 import { Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
 import { AdminUserRowSkeleton } from 'shared/ui'
-import { PressableButton } from 'shared/ui/pressable-button'
+import { CheckboxField } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
-import { COLORS } from 'shared/ui/theme/colors'
 import { styles } from './styles'
 
-const GRANT_LABEL = 'Включить'
-const DENY_LABEL = 'Выключить'
-const CLEAR_LABEL = 'Сбросить'
-const GRANTED_LABEL = 'Включён'
-const DENIED_LABEL = 'Исключён'
-const CURRENT_PREFIX = 'Сейчас: '
+const ENABLED_LABEL = 'Включено'
+const DISABLED_LABEL = 'Выключено'
+const OVERRIDE_HINT = 'исключение'
 
-// Строка пользователя в блоке исключений фича-флага: имя/email, текущее значение
-// (если пользователь есть в списке существующих исключений) и три действия —
-// включить (grant), выключить (deny) и сбросить (clear) исключение.
+const buildStateLabel = (effectiveEnabled: boolean, hasOverride: boolean) => {
+  const state = effectiveEnabled ? ENABLED_LABEL : DISABLED_LABEL
+
+  return hasOverride ? `${state} · ${OVERRIDE_HINT}` : state
+}
+
+// Строка пользователя в блоке исключений: имя/email и один тумблер эффективного
+// состояния. ON — флаг включён для пользователя (глобально или grant-исключением),
+// OFF — выключен (глобально или deny-исключением). Подпись рядом показывает
+// состояние и помечает наличие явного исключения («исключение»).
 export const OverrideUserRow = ({
-  currentValue,
+  effectiveEnabled,
+  hasOverride,
   item,
-  onClear,
-  onDeny,
-  onGrant,
+  onToggle,
 }: {
-  currentValue: APITypes.FeatureFlagOverrideValue | null
+  effectiveEnabled: boolean
+  hasOverride: boolean
   item: APITypes.UserResponse
-  onClear: () => void
-  onDeny: () => void
-  onGrant: () => void
+  onToggle: (desiredEnabled: boolean) => void
 }) => {
   const { currentTheme } = useTheme()
 
@@ -40,35 +41,12 @@ export const OverrideUserRow = ({
         <Text numberOfLines={1} style={[styles.userMeta, { color: currentTheme.textMuted }]}>
           {item.email}
         </Text>
-        {currentValue ? (
-          <Text numberOfLines={1} style={[styles.currentValue, { color: currentTheme.text }]}>
-            {`${CURRENT_PREFIX}${currentValue === 'grant' ? GRANTED_LABEL : DENIED_LABEL}`}
-          </Text>
-        ) : null}
       </View>
-      <View style={styles.actions}>
-        <PressableButton
-          onPress={onGrant}
-          accessibilityLabel={`${GRANT_LABEL}: ${item.name}`}
-          style={[styles.actionButton, { backgroundColor: currentTheme.primary }]}
-        >
-          <Text style={[styles.actionText, { color: COLORS.white }]}>{GRANT_LABEL}</Text>
-        </PressableButton>
-        <PressableButton
-          onPress={onDeny}
-          accessibilityLabel={`${DENY_LABEL}: ${item.name}`}
-          style={[styles.actionButton, { backgroundColor: currentTheme.skeleton }]}
-        >
-          <Text style={[styles.actionText, { color: currentTheme.text }]}>{DENY_LABEL}</Text>
-        </PressableButton>
-        <PressableButton
-          onPress={onClear}
-          accessibilityLabel={`${CLEAR_LABEL}: ${item.name}`}
-          style={[styles.actionButton, { borderColor: currentTheme.textMuted, borderWidth: 1 }]}
-        >
-          <Text style={[styles.actionText, { color: currentTheme.textMuted }]}>{CLEAR_LABEL}</Text>
-        </PressableButton>
-      </View>
+      <CheckboxField
+        onChange={onToggle}
+        value={effectiveEnabled}
+        label={buildStateLabel(effectiveEnabled, hasOverride)}
+      />
     </View>
   )
 }
