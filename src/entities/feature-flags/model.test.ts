@@ -1,30 +1,28 @@
 import { createCtx } from '@reatom/framework'
-import { featureFlagsApi, secureTokenStorage } from 'shared/api'
+import { featureFlagsApi } from 'shared/api'
+import { featureFlagsMocks } from 'shared/api/generated'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { featureFlagsAtom, fetchMyFeatureFlags } from './model'
 
 jest.mock('shared/api', () => ({
   featureFlagsApi: { getFeatureFlags: jest.fn() },
-  secureTokenStorage: { getAccessToken: jest.fn() },
 }))
 
 jest.mock('shared/model', () => ({ showToast: jest.fn() }))
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
-const mockedGetAccessToken = secureTokenStorage.getAccessToken as jest.MockedFunction<
-  typeof secureTokenStorage.getAccessToken
->
 const mockedShowToast = jest.mocked(showToast)
 const mockedReportError = jest.mocked(reportError)
 const mockedGetEffectiveForMe = jest.fn()
 
-const ACCESS_TOKEN = 'access-token'
 const NETWORK_ERROR = new Error('network down')
 
 const setFlagsResponse = (flags: Array<{ enabled: boolean; key: string }>) =>
-  mockedGetEffectiveForMe.mockResolvedValue({ flags })
+  mockedGetEffectiveForMe.mockResolvedValue(
+    featureFlagsMocks.getFeatureFlagsControllerGetEffectiveForMeResponseMock({ flags }),
+  )
 
 describe('fetchMyFeatureFlags', () => {
   beforeEach(() => {
@@ -34,8 +32,7 @@ describe('fetchMyFeatureFlags', () => {
     })
   })
 
-  test('fetches and stores global flags without an access token', async () => {
-    mockedGetAccessToken.mockResolvedValue(null)
+  test('stores global flags when the server returns them (anonymous)', async () => {
     setFlagsResponse([{ enabled: true, key: 'read' }])
     const ctx = createCtx()
 
@@ -46,8 +43,7 @@ describe('fetchMyFeatureFlags', () => {
     expect(ctx.get(featureFlagsAtom)).toEqual({ read: true })
   })
 
-  test('maps the flags list into a record keyed by flag key', async () => {
-    mockedGetAccessToken.mockResolvedValue(ACCESS_TOKEN)
+  test('stores personalized flags for an authenticated response', async () => {
     setFlagsResponse([
       { enabled: true, key: 'read' },
       { enabled: false, key: 'study' },
@@ -60,7 +56,6 @@ describe('fetchMyFeatureFlags', () => {
   })
 
   test('keeps flags null and shows a toast instead of the global error on failure', async () => {
-    mockedGetAccessToken.mockResolvedValue(ACCESS_TOKEN)
     mockedGetEffectiveForMe.mockRejectedValue(NETWORK_ERROR)
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     const ctx = createCtx()
@@ -74,7 +69,6 @@ describe('fetchMyFeatureFlags', () => {
   })
 
   test('does not show a second toast while the failure keeps repeating', async () => {
-    mockedGetAccessToken.mockResolvedValue(ACCESS_TOKEN)
     mockedGetEffectiveForMe.mockRejectedValue(NETWORK_ERROR)
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     const ctx = createCtx()
@@ -87,7 +81,6 @@ describe('fetchMyFeatureFlags', () => {
   })
 
   test('shows a toast again when a new failure follows a recovery', async () => {
-    mockedGetAccessToken.mockResolvedValue(ACCESS_TOKEN)
     mockedGetEffectiveForMe.mockRejectedValue(NETWORK_ERROR)
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     const ctx = createCtx()

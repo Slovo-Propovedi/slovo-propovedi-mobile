@@ -1,19 +1,16 @@
 import { act } from '@testing-library/react-native'
 import { AppState, type AppStateStatus } from 'react-native'
-import { featureFlagsApi, secureTokenStorage } from 'shared/api'
+import { featureFlagsApi } from 'shared/api'
+import { featureFlagsMocks } from 'shared/api/generated'
 import { renderHookWithProviders } from 'shared/mocks'
 import { useFeatureFlagsRefetchOnForeground } from './useFeatureFlagsRefetchOnForeground'
 
 jest.mock('shared/api', () => ({
   featureFlagsApi: { getFeatureFlags: jest.fn() },
-  secureTokenStorage: { getAccessToken: jest.fn() },
 }))
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
-const mockedGetAccessToken = secureTokenStorage.getAccessToken as jest.MockedFunction<
-  typeof secureTokenStorage.getAccessToken
->
 const mockedGetEffectiveForMe = jest.fn()
 
 describe('useFeatureFlagsRefetchOnForeground', () => {
@@ -34,9 +31,10 @@ describe('useFeatureFlagsRefetchOnForeground', () => {
     jest.restoreAllMocks()
   })
 
-  test('refetches flags when the app returns to the foreground', async () => {
-    mockedGetAccessToken.mockResolvedValue('access-token')
-    mockedGetEffectiveForMe.mockResolvedValue({ flags: [{ enabled: true, key: 'read' }] })
+  test('refetches personalized flags for an authenticated server response', async () => {
+    mockedGetEffectiveForMe.mockResolvedValue(
+      featureFlagsMocks.getFeatureFlagsControllerGetEffectiveForMeResponseMock(),
+    )
 
     await renderHookWithProviders(() => useFeatureFlagsRefetchOnForeground())
 
@@ -50,9 +48,10 @@ describe('useFeatureFlagsRefetchOnForeground', () => {
     expect(mockedGetEffectiveForMe).toHaveBeenCalledTimes(1)
   })
 
-  test('refetches flags without an access token', async () => {
-    mockedGetAccessToken.mockResolvedValue(null)
-    mockedGetEffectiveForMe.mockResolvedValue({ flags: [] })
+  test('refetches global flags for an anonymous server response', async () => {
+    mockedGetEffectiveForMe.mockResolvedValue(
+      featureFlagsMocks.getFeatureFlagsControllerGetEffectiveForMeResponseMock({ flags: [] }),
+    )
 
     await renderHookWithProviders(() => useFeatureFlagsRefetchOnForeground())
 
@@ -64,8 +63,6 @@ describe('useFeatureFlagsRefetchOnForeground', () => {
   })
 
   test('does not refetch while the app is not active', async () => {
-    mockedGetAccessToken.mockResolvedValue('access-token')
-
     await renderHookWithProviders(() => useFeatureFlagsRefetchOnForeground())
 
     await act(async () => {
