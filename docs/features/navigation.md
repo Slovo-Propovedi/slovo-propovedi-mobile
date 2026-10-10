@@ -58,7 +58,7 @@
 
 - 4 таба: `listen` «Слушать», `read` «Читать», `study` «Учиться», `more` «Ещё» (`title` в `_layout.tsx`; в `CustomTabBar` ROUTES — «Учиться»).
 - `tabBar` → `CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`) + `ExpandablePlayer` рендерится поверх на всех табах.
-- **ВАЖНО:** «Читать» и «Учиться» заблокированы — при тапе `CustomTabBar` показывает глобальный информационный диалог через `showInfo` («Скоро будет доступно», `useTabPress` → `shared/model/info-dialog`) (`isDisabled={isUnavailableTabRoute(route.name)}`). Реальные экраны табов (`app/(tabs)/read.tsx`, `study.tsx`) существуют и рендерят `ReadScreen`/`StudyScreen`, но переход к ним блокируется.
+- **ВАЖНО:** «Читать» и «Учиться» гейтятся фича-флагами `read`/`study` — при выключенном/незагруженном флаге `CustomTabBar` показывает глобальный информационный диалог через `showInfo` («Скоро будет доступно», `useTabPress` → `shared/model/info-dialog`) и не навигирует (`isDisabled={!isTabAvailable(route.name)}`). Реальные экраны табов (`app/(tabs)/read.tsx`, `study.tsx`) рендерят `ReadScreen`/`StudyScreen`; они дополнительно проверяют флаг через `useFeatureFlag` и при `false` рендерят `null` (см. [feature-flags.md](./feature-flags.md)).
 
 ## Стек раздела «Слушать»
 

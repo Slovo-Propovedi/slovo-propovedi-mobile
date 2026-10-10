@@ -11,6 +11,7 @@
 - [ ] **Прогресс загрузки файла в форме проповеди не защищён от `total = 0`.** При отсутствии `Content-Length` (chunked upload) прогресс-бар показывает 0% до завершения. — `src/shared/api/uploadFile.ts` — приемлемо (загрузки админки обычно с известным размером); вернуться, если появятся репорты о «замершем» прогрессе.
 - [ ] **Chunked transfer без `Content-Length` не показывает прогресс скачивания.** `AudioCacheService.cacheAudio` пропускает `onProgress` при `totalBytes ≤ 0` (сервер не отдал `Content-Length`). Прогресс скачивания недоступен для chunked-response файлов — индикация отсутствует. Вернуться, если понадобится приблизительный прогресс через `bytesWritten`.
 - [ ] **Обход бага react-native-screens#3130 (Android autofill) — удалить после апстрим-фикса.** `src/pages/admin-login/lib/useAndroidAutofillRemountKey.ts`, `src/pages/admin-login/ui/AdminLoginScreen.tsx` — на Fabric сфокусированный `EditText` пропадает из `AssistStructure` после навигации, из-за чего системное автозаполнение (KeePassDX и др.) не срабатывает на экране входа администратора; поля перемонтируются по смене `key` при возврате фокуса. Затронуты react-native-screens ~4.26, issue [software-mansion/react-native-screens#3130](https://github.com/software-mansion/react-native-screens/issues/3130) открыт. Вернуться при обновлении react-native-screens: если фикс вошёл — удалить хук и обёртки `<View key>` в `AdminLoginScreen.tsx`, обновив `docs/screens/admin-login.md`.
+- [ ] **Фича-флаги грузятся только на старте, без рефетча после входа пользователя.** `app/_layout.tsx` (`void fetchMyFeatureFlags(ctx)`), `src/entities/feature-flags/model.ts` — guard читает access-токен один раз при запуске приложения: если пользователь входит после старта (в т.ч. admin/moderator, для которых сервер всегда отдаёт флаги включёнными), `featureFlagsAtom` остаётся `null` и табы «Читать»/«Учиться» не открываются до перезапуска. Вернуться при внедрении публичной авторизации или рефетча по событию входа — см. [features/feature-flags.md](./features/feature-flags.md).
 
 ## Audio player
 
@@ -45,15 +46,15 @@
 ## Read tab / FB2 reader
 
 - [ ] **Функционал чтения книг частично готов, но не подключён.** `src/pages/book-reader/` (парсинг FB2, стилизация элементов) и `src/pages/books-list/` существуют, но маршруты не зарегистрированы — рендерится тестовая FB2 (`src/pages/book-reader/testFiles/`). Вернуться при подключении таба «Читать».
-- [ ] **Таб «Читать» заблокирован** — `src/widgets/tab-bar/ui/CustomTabBar.tsx` — открывается диалог «Скоро будет доступно». Разблокировать при готовности FB2-ридера.
+- [ ] **Таб «Читать» гейтится фича-флагом `read`** — `src/widgets/tab-bar/ui/useTabPress.ts`, `src/pages/read/ui/ReadScreen.tsx` — при выключенном/незагруженном флаге `CustomTabBar` показывает диалог «Скоро будет доступно», а `ReadScreen` рендерит `null`. Включить флаг `read` для пользователя при готовности FB2-ридера (см. [features/feature-flags.md](./features/feature-flags.md)).
 
 ## Study tab
 
-- [ ] **Таб «Учиться» — заглушка.** `src/pages/study/` — два пустых маршрута-сцены (Богословие, Душепопечение) через `react-native-tab-view`. Таб заблокирован в `src/widgets/tab-bar/ui/CustomTabBar.tsx`. Заполнить контентом при разработке раздела.
+- [ ] **Таб «Учиться» — заглушка, гейтится фича-флагом `study`.** `src/pages/study/` — два пустых маршрута-сцены (Богословие, Душепопечение) через `react-native-tab-view`; при выключенном/незагруженном флаге `CustomTabBar` блокирует переход, `StudyScreen` рендерит `null`. Заполнить контентом и включить флаг `study` при разработке раздела (см. [features/feature-flags.md](./features/feature-flags.md)).
 
 ## Tab bar
 
-- [ ] **Табы «Читать» и «Учиться» заблокированы диалогом «Скоро будет доступно»** — `src/widgets/tab-bar/ui/CustomTabBar.tsx` — разблокировать по мере готовности разделов (см. Read tab / Study tab).
+- [ ] **Табы «Читать» и «Учиться» гейтятся фича-флагами `read`/`study`** — `src/widgets/tab-bar/ui/useTabPress.ts` — при выключенном/незагруженном флаге показывается диалог «Скоро будет доступно»; открывать по мере готовности разделов (см. Read tab / Study tab, [features/feature-flags.md](./features/feature-flags.md)).
 
 ## Local DB → API migration
 

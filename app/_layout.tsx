@@ -2,6 +2,7 @@ import { reatomContext } from '@reatom/npm-react'
 import { type SuspenseFallbackProps } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { fetchMyFeatureFlags } from 'entities/feature-flags'
 import { loadHistoryAction } from 'entities/listening-history'
 import {
   cleanupOrphanedDownloads,
@@ -75,6 +76,7 @@ void initServerUrlAction(ctx)
 void loadHapticsEnabled(ctx)
 void loadHistoryAction(ctx)
 void hydrateCachedSections(ctx)
+void fetchMyFeatureFlags(ctx)
 
 export default RootLayoutWithProvider
 

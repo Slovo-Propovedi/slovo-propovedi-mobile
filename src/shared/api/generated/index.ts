@@ -1,5 +1,6 @@
 // Импортируем все сгенерированные функции из Orval
 export * as authApi from './auth/auth'
+export * as featureFlagsApi from './feature-flags/feature-flags'
 export * as filesApi from './files/files'
 export * as invidiousApi from './invidious/invidious'
 export * as playlistsApi from './playlists/playlists'
@@ -8,6 +9,7 @@ export * as sermonsApi from './sermons/sermons'
 export * as usersApi from './users/users'
 
 export * as authMocks from './auth/auth.faker'
+export * as featureFlagsMocks from './feature-flags/feature-flags.faker'
 export * as filesMocks from './files/files.faker'
 export * as invidiousMocks from './invidious/invidious.faker'
 export * as playlistsMocks from './playlists/playlists.faker'

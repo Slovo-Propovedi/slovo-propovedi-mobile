@@ -1,6 +1,9 @@
 import { act, fireEvent } from '@testing-library/react-native'
+import { useFeatureFlag } from 'entities/feature-flags'
 import { renderWithProviders } from 'shared/mocks'
 import { StudyScreen } from './ui'
+
+jest.mock('entities/feature-flags', () => ({ useFeatureFlag: jest.fn() }))
 
 jest.mock('./scene-routes', () => {
   const { Text } = jest.requireActual('react-native')
@@ -10,6 +13,8 @@ jest.mock('./scene-routes', () => {
     SecondRoute: () => <Text>SECOND_SCENE</Text>,
   }
 })
+
+const mockedUseFeatureFlag = useFeatureFlag as jest.MockedFunction<typeof useFeatureFlag>
 
 const FIRST_SCENE_LABEL = 'FIRST_SCENE'
 const SECOND_SCENE_LABEL = 'SECOND_SCENE'
@@ -23,6 +28,21 @@ const flushTimers = async () => {
 }
 
 describe('<StudyScreen>', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockedUseFeatureFlag.mockReturnValue(true)
+  })
+
+  test('renders nothing when the study feature flag is disabled', async () => {
+    mockedUseFeatureFlag.mockReturnValue(false)
+
+    const { queryByText } = await renderWithProviders(<StudyScreen />)
+    await flushTimers()
+
+    expect(queryByText('Богословие')).toBeNull()
+    expect(queryByText(FIRST_SCENE_LABEL)).toBeNull()
+  })
+
   test('renders both tab titles', async () => {
     const { getByText } = await renderWithProviders(<StudyScreen />)
     await flushTimers()

@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
+import { useFeatureFlag } from 'entities/feature-flags'
 import { type BookData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
 import {
@@ -15,6 +16,10 @@ import { ReadScreen } from './ReadScreen'
 
 const mockNavigateToBookReader = jest.fn()
 const mockNavigateToBooksList = jest.fn()
+
+jest.mock('entities/feature-flags', () => ({ useFeatureFlag: jest.fn() }))
+
+const mockedUseFeatureFlag = useFeatureFlag as jest.MockedFunction<typeof useFeatureFlag>
 
 jest.mock('../lib/useReadNavigation', () => ({
   useReadNavigation: () => ({
@@ -103,6 +108,17 @@ const makeBook = (id: string, title: string): BookData => ({
 describe('<ReadScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockedUseFeatureFlag.mockReturnValue(true)
+  })
+
+  test('renders nothing when the read feature flag is disabled', async () => {
+    mockedUseFeatureFlag.mockReturnValue(false)
+
+    const { queryByText } = await renderWithProviders(<ReadScreen />)
+
+    expect(queryByText(NOTES_TITLE)).toBeNull()
+    expect(queryByText(VERSE_TITLE)).toBeNull()
+    expect(queryByText(TOPICAL_TITLE)).toBeNull()
   })
 
   test('renders all three slider titles', async () => {

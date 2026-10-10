@@ -1,4 +1,5 @@
 import { type Tabs } from 'expo-router'
+import { useFeatureFlag } from 'entities/feature-flags'
 import { showInfo } from 'shared/model/info-dialog'
 
 type TabBarNavigation = Parameters<
@@ -17,13 +18,22 @@ interface UseTabPressParams {
 export const UNAVAILABLE_TAB_TITLE = 'Скоро будет доступно'
 export const UNAVAILABLE_TAB_MESSAGE = 'Этот раздел будет реализован в будущих обновлениях'
 
-// Табы «Читать» и «Учиться» заблокированы до готовности разделов
-export const isUnavailableTabRoute = (routeName: string) =>
-  routeName === 'read' || routeName === 'study'
-
 export const useTabPress = ({ navigation }: UseTabPressParams) => {
+  // Табы «Читать» и «Учиться» открываются по фича-флагу. Пока флаги не
+  // загружены, доступ закрыт (useFeatureFlag → false), то есть поведение
+  // сохраняется прежним.
+  const isReadEnabled = useFeatureFlag('read')
+  const isStudyEnabled = useFeatureFlag('study')
+
+  const isTabAvailable = (routeName: string) => {
+    if (routeName === 'read') return isReadEnabled
+    if (routeName === 'study') return isStudyEnabled
+
+    return true
+  }
+
   const handleTabPress = (route: TabRoute, isActive: boolean) => {
-    if (isUnavailableTabRoute(route.name)) {
+    if (!isTabAvailable(route.name)) {
       showInfo(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
       return
     }
@@ -37,5 +47,5 @@ export const useTabPress = ({ navigation }: UseTabPressParams) => {
     if (!isActive && !event.defaultPrevented) navigation.navigate(route.name)
   }
 
-  return { handleTabPress }
+  return { handleTabPress, isTabAvailable }
 }

@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.19.0
+ * OpenAPI spec version: 0.20.0
  */
 export interface HealthResponse {
   status: string
@@ -453,6 +453,65 @@ export interface InvidiousInstance {
 export interface ReplaceInvidiousInstancesRequest {
   /** Полные https-адреса инстансов; порядок соответствует порядку в UI, дубликаты запрещены */
   urls: string[]
+}
+
+export interface FeatureFlag {
+  createdAt: string
+  /** Глобальный дефолт флага (до пер-пользовательских исключений) */
+  enabled: boolean
+  id: string
+  /** Стабильный ключ флага (lowercase kebab-case) */
+  key: string
+  /** Человекочитаемое название флага */
+  title: string
+  updatedAt: string
+}
+
+export interface FeatureFlagListResponse {
+  flags: FeatureFlag[]
+}
+
+export interface CreateFeatureFlagRequest {
+  /**
+   * Уникальный ключ флага (lowercase kebab-case)
+   * @pattern ^[a-z][a-z0-9-]*$
+   */
+  key: string
+  /** @minLength 1 */
+  title: string
+}
+
+export interface UpdateFeatureFlagRequest {
+  enabled?: boolean
+  /** @pattern ^[a-z][a-z0-9-]*$ */
+  key?: string
+  /** @minLength 1 */
+  title?: string
+}
+
+/**
+ * grant — включить флаг пользователю, deny — выключить
+ */
+export type SetFeatureFlagOverrideRequestValue =
+  (typeof SetFeatureFlagOverrideRequestValue)[keyof typeof SetFeatureFlagOverrideRequestValue]
+
+export const SetFeatureFlagOverrideRequestValue = {
+  grant: 'grant',
+  deny: 'deny',
+} as const
+
+export interface SetFeatureFlagOverrideRequest {
+  /** grant — включить флаг пользователю, deny — выключить */
+  value: SetFeatureFlagOverrideRequestValue
+}
+
+export interface EffectiveFeatureFlag {
+  enabled: boolean
+  key: string
+}
+
+export interface EffectiveFeatureFlagListResponse {
+  flags: EffectiveFeatureFlag[]
 }
 
 export type AppControllerUploadFileBody = {

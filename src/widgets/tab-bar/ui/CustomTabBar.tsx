@@ -7,7 +7,7 @@ import { setTabBarHeight } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
-import { isUnavailableTabRoute, useTabPress } from './useTabPress'
+import { useTabPress } from './useTabPress'
 
 // Минимальный отступ снизу — зона жестов; на 3-кнопочной навигации берётся высота навбара
 // из safe-area insets (Issue #56)
@@ -23,7 +23,7 @@ export const CustomTabBar = ({ hideFloatingPlayer: _, navigation, state }: Custo
   const setMeasuredTabBarHeight = useAction(setTabBarHeight)
   const { bottom } = useSafeAreaInsets()
   const { isLight } = useTheme()
-  const { handleTabPress } = useTabPress({ navigation })
+  const { handleTabPress, isTabAvailable } = useTabPress({ navigation })
 
   return (
     <View style={styles.floatingContainer}>
@@ -51,7 +51,7 @@ export const CustomTabBar = ({ hideFloatingPlayer: _, navigation, state }: Custo
                 isActive={isActive}
                 routeKey={route.key}
                 routeName={route.name}
-                isDisabled={isUnavailableTabRoute(route.name)}
+                isDisabled={!isTabAvailable(route.name)}
                 onPress={() => handleTabPress(route, isActive)}
               />
             )
