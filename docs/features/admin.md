@@ -1,6 +1,6 @@
 # Интерфейс администратора (admin)
 
-Зона `/admin` — отдельный стек внутри приложения (см. [navigation.md](./navigation.md) и [`../architecture.md`](../architecture.md)). Доступ — после входа в `/admin/login`; аутентификация — `entities/auth` (JWT в `expo-secure-store`). Табы: «Главная», «Разделы», «Плейлисты», «Проповеди», «Медиа», «Пользователи» (последний — только для роли admin).
+Зона `/admin` — отдельный стек внутри приложения (см. [navigation.md](./navigation.md) и [`../architecture.md`](../architecture.md)). Доступ — после входа в `/admin/login`; аутентификация — `entities/auth` (JWT в `expo-secure-store`). Табы: «Главная», «Разделы», «Плейлисты», «Проповеди», «Медиа», «Флаги» (только admin), «Пользователи» (только admin).
 
 Экраны админки оперируют **generated-типами** (`APITypes.*` из `shared/api`), а не доменными `SectionData`/`PlaylistData`: CRUD-формы работают с сущностями API напрямую.
 
@@ -135,13 +135,21 @@
 - **Деталь:** `GET /users/{id}`; удаление `DELETE /users/{id}` (кнопка скрыта для собственного аккаунта, `id === authUser.id`); смена пароля `PATCH /users/{id}/password` (`{ password }`).
 - **Форма:** `POST /users` (name/email/username/password/role; `role` всегда) и `PATCH /users/{id}` (**только изменённые** поля name/email/username/role, без пароля). Роль по умолчанию — `user` (least-privilege). Подписи ролей — `ROLE_LABELS` из `entities/auth`.
 
+## Фича-флаги (feature-flags)
+
+Управление фича-флагами приложения. Экраны: [screens/admin-flags.md](../screens/admin-flags.md). Доступно **только роли admin** (эндпоинты `/feature-flags` — под админ-токеном): таб «Флаги» скрыт для не-admin, экраны защищены `useRequireAdminRole`. Клиентский гейтинг табов — в [feature-flags.md](./feature-flags.md).
+
+- **Список:** `GET /feature-flags` (только admin) — простой `FlatList` без пагинации/поиска (флагов мало); название, ключ, бейдж глобального состояния.
+- **Форма:** `POST /feature-flags` (тело `{ key, title }`; флаг создаётся выключенным, при включённом тумблере форма досылает `PATCH { enabled: true }`), `PATCH /feature-flags/{id}` (только изменённые title/enabled; ключ неизменяем), `DELETE /feature-flags/{id}`.
+- **Исключения:** `PUT`/`DELETE /feature-flags/{id}/overrides/{userId}` (grant/deny/clear) с детали флага; **сервер не отдаёт список существующих исключений** — доступна только запись (см. [feature-flags.md](./feature-flags.md), [debt.md](../debt.md)).
+
 ## Drag-списки
 
 Переупорядочивание реализовано `react-native-draggable-flatlist` (pure JS). Обоснование выбора — [decisions.md](../decisions.md) → «Drag-списки админки». Компонент требует `react-native-reanimated` и `react-native-gesture-handler` (оба в стеке); `expo prebuild` не нужен.
 
 ## Реализованные / нереализованные разделы
 
-Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)), «Проповеди» ([admin-sermons.md](../screens/admin-sermons.md)), «Медиа» ([admin-media.md](../screens/admin-media.md)), «Пользователи» ([admin-users.md](../screens/admin-users.md)) — только для роли admin, Создание проповеди доступно из шапки списка проповедей и быстрых действий главной (см. «Создание проповеди»).
+Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)), «Проповеди» ([admin-sermons.md](../screens/admin-sermons.md)), «Медиа» ([admin-media.md](../screens/admin-media.md)), «Флаги» ([admin-flags.md](../screens/admin-flags.md)) и «Пользователи» ([admin-users.md](../screens/admin-users.md)) — последние два только для роли admin, Создание проповеди доступно из шапки списка проповедей и быстрых действий главной (см. «Создание проповеди»).
 
 ## Связанные документы
 
@@ -150,6 +158,7 @@
 - [../screens/admin-sermons.md](../screens/admin-sermons.md) — экраны проповедей
 - [../screens/admin-media.md](../screens/admin-media.md) — медиа-библиотека и осиротевшие файлы
 - [../screens/admin-users.md](../screens/admin-users.md) — управление пользователями
+- [../screens/admin-flags.md](../screens/admin-flags.md) — управление фича-флагами
 - [../screens/admin-invidious.md](../screens/admin-invidious.md) — источники импорта (Invidious-инстансы)
 - [../screens/admin-home.md](../screens/admin-home.md) — дашборд
 - [../contracts/rest-api.md](../contracts/rest-api.md) — эндпоинты section/playlist/sermon/files/users/invidious-instances

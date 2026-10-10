@@ -1,5 +1,6 @@
 export { AdminContentSkeleton } from './admin-content-skeleton'
 export {
+  AdminFlagRowSkeleton,
   AdminPlaylistRowSkeleton,
   AdminSectionRowSkeleton,
   AdminSermonRowSkeleton,

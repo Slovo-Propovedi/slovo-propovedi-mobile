@@ -37,6 +37,7 @@
 | Админ: проповеди         | [admin-sermons.md](./admin-sermons.md) | готов        |
 | Админ: медиа             | [admin-media.md](./admin-media.md)     | готов        |
 | Админ: пользователи      | [admin-users.md](./admin-users.md)     | готов        |
+| Админ: флаги             | [admin-flags.md](./admin-flags.md)     | готов        |
 | Админ: источники импорта | [admin-invidious.md](./admin-invidious.md) | готов    |
 | «Страница не найдена»    | [not-found.md](./not-found.md)         | готов        |
 

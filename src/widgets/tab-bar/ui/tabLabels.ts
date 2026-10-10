@@ -2,6 +2,7 @@
 // и админские (index/sections/playlists/sermons/upload/media/users), поэтому
 // CustomTabBar остаётся общим для обоих наборов маршрутов.
 const TAB_LABELS: Record<string, string> = {
+  flags: 'Флаги',
   index: 'Главная',
   listen: 'Слушать',
   media: 'Медиа',

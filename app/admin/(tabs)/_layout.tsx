@@ -18,6 +18,10 @@ const AdminTabsLayout = () => {
         <Tabs.Screen name='sermons' options={{ title: 'Проповеди' }} />
         <Tabs.Screen name='media' options={{ title: 'Медиа' }} />
         <Tabs.Screen
+          name='flags'
+          options={{ href: isAdminUser(user) ? undefined : null, title: 'Флаги' }}
+        />
+        <Tabs.Screen
           name='users'
           options={{ href: isAdminUser(user) ? undefined : null, title: 'Пользователи' }}
         />

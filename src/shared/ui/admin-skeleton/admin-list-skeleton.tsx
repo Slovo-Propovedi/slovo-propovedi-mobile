@@ -69,3 +69,16 @@ export const AdminUserRowSkeleton = () => (
     </View>
   </AdminSkeletonRow>
 )
+
+// Плейсхолдер строки фича-флага: название, ключ и бейдж состояния.
+export const AdminFlagRowSkeleton = () => (
+  <AdminSkeletonRow>
+    <View style={styles.body}>
+      <PlaceholderTitle />
+      <PlaceholderMeta />
+      <View style={styles.badgeRow}>
+        <SkeletonBar style={styles.badge} />
+      </View>
+    </View>
+  </AdminSkeletonRow>
+)
