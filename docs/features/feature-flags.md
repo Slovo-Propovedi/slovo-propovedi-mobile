@@ -30,7 +30,9 @@
 1. **Guard:** читает access-токен (`secureTokenStorage.getAccessToken()`); без токена — выходит, атом остаётся `null` (анонимному пользователю флаги не нужны).
 2. Преобразует список `[{ key, enabled }]` в `Record<string, boolean>` (`Object.fromEntries`).
 3. Записывает карту в `featureFlagsAtom` через `ctx.schedule`.
-4. При ошибке — `console.error` + `reportError`, атом остаётся `null` (доступ не открывается).
+4. При ошибке — `console.error` + короткий тост (`showToast`), атом остаётся `null` (доступ не открывается). Глобальная модалка ошибки не показывается: это фоновый, некритичный запрос, который к тому же повторяется при каждом возврате в foreground.
+
+**Дедупликация тоста (только на смене исхода).** Тост показывается при переходе `success → failure`: приватный атом `flagsFetchFailedAtom` помечает, что предыдущая загрузка уже упала, и повторные падения (в том числе на каждый `AppState → 'active'`) молчат. Успешная загрузка сбрасывает флаг, поэтому после восстановления новая ошибка снова покажет тост один раз. Это та же схема, что в `shared/model/network` (`serverErrorShownAtom`), — она защищает от «нагнетания» тостов при постоянном сбое бэкенда. Первая загрузка при недоступном бэкенде тост покажет: пользователь должен понимать, почему гейтед-табы закрыты.
 
 ### `useFeatureFlagsRefetchOnForeground()`
 
@@ -88,7 +90,7 @@ return flags?.[key] ?? false
 
 - `src/entities/feature-flags/lib/useFeatureFlag.test.tsx` — null → false, загруженные `true`/`false`, отсутствующий ключ.
 - `src/entities/feature-flags/lib/useFeatureFlagsRefetchOnForeground.test.tsx` — рефетч на `AppState → 'active'`, отсутствие запроса без токена и на неактивных состояниях.
-- `src/entities/feature-flags/model.test.ts` — guard без токена, преобразование списка, обработка ошибки.
+- `src/entities/feature-flags/model.test.ts` — guard без токена, преобразование списка, обработка ошибки (тост вместо глобальной модалки, без `reportError`), дедупликация тоста при повторных падениях и повторный тост после восстановления.
 - `src/widgets/tab-bar/ui/useTabPress.test.ts` — таб открывается по флагу, заблокирован без флага.
 - `src/pages/read/ui/ReadScreen.test.tsx`, `src/pages/study/ui.test.tsx` — экран рендерит контент при включённом флаге и ничего при выключенном.
 - `src/pages/admin-flags/lib/useAdminFlags.test.tsx`, `ui/AdminFlagsScreen.test.tsx` — список: загрузка, фокус-обновление, навигация, пустое состояние.
