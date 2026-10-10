@@ -134,6 +134,38 @@ describe('<AdminFlagDetailScreen>', () => {
     expect(await findByText('Не удалось загрузить исключения')).toBeTruthy()
   })
 
+  test('keeps the stale overrides list and shows an inline error when refetch fails', async () => {
+    const override = featureFlagsMocks.getFeatureFlagsControllerFindOverridesResponseMock({
+      overrides: [
+        { createdAt: '2024-01-01T00:00:00Z', flagId: 'read', userId: 'u1', value: 'grant' },
+      ],
+    }).overrides[0]
+    mockFindOverrides
+      .mockResolvedValueOnce({ overrides: [override] })
+      .mockRejectedValueOnce(new Error('boom'))
+    mockFindFlags.mockResolvedValue(
+      featureFlagsMocks.getFeatureFlagsControllerFindAllResponseMock({
+        flags: [
+          featureFlagsMocks.getFeatureFlagsControllerCreateResponseMock({
+            enabled: false,
+            id: 'read',
+            key: 'read',
+            title: 'Читать',
+          }),
+        ],
+      }),
+    )
+
+    const { findByLabelText, findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
+
+    expect(await findByText('Включён')).toBeTruthy()
+
+    fireEvent.press(await findByLabelText('Включить: Иван'))
+
+    expect(await findByText('Не удалось загрузить исключения')).toBeTruthy()
+    expect(await findByText('Включён')).toBeTruthy()
+  })
+
   test('grant and deny set the override for a user', async () => {
     const { findByLabelText } = await renderWithProviders(<AdminFlagDetailScreen />)
 

@@ -37,7 +37,9 @@ describe('useFlagOverrides', () => {
 
     await act(async () => {})
 
-    expect(mockFindOverrides).toHaveBeenCalledWith('read')
+    expect(mockFindOverrides).toHaveBeenCalledWith('read', {
+      signal: expect.any(AbortSignal),
+    })
     expect(result.current.overrides).toEqual(response.overrides)
     expect(result.current.isLoading).toBe(false)
     expect(result.current.isError).toBe(false)
@@ -67,6 +69,44 @@ describe('useFlagOverrides', () => {
 
     expect(result.current.overrides).toEqual([])
     expect(result.current.isError).toBe(false)
+  })
+
+  test('a slow earlier request does not overwrite a newer one', async () => {
+    const stale = buildOverrides()
+    const fresh = buildOverrides()
+    const signals: AbortSignal[] = []
+    let resolveStale: (value: ReturnType<typeof buildOverrides>) => void = () => {}
+
+    mockFindOverrides
+      .mockImplementationOnce((_id: string, options: { signal: AbortSignal }) => {
+        signals.push(options.signal)
+
+        return new Promise(resolve => {
+          resolveStale = resolve
+        })
+      })
+      .mockImplementationOnce((_id: string, options: { signal: AbortSignal }) => {
+        signals.push(options.signal)
+
+        return Promise.resolve(fresh)
+      })
+
+    const { result } = await renderHookWithProviders(() => useFlagOverrides('read'))
+
+    // The focus-triggered request is still pending; the mutation-triggered refetch supersedes it.
+    await act(async () => {
+      await result.current.refetch()
+    })
+
+    expect(result.current.overrides).toEqual(fresh.overrides)
+    expect(signals[0].aborted).toBe(true)
+
+    // The stale response arrives last and must be ignored.
+    await act(async () => {
+      resolveStale(stale)
+    })
+
+    expect(result.current.overrides).toEqual(fresh.overrides)
   })
 
   test('a failed request marks the error state', async () => {

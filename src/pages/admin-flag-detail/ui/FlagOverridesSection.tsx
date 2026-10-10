@@ -30,17 +30,27 @@ export const FlagOverridesSection = ({
 }) => {
   const { currentTheme } = useTheme()
   const { isError, isLoading, overrides } = overridesState
+  const hasOverrides = overrides.length > 0
 
   const body = isLoading ? (
     <OverrideSkeletonList />
+  ) : hasOverrides ? (
+    <>
+      {isError ? (
+        <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR_MESSAGE}</Text>
+      ) : null}
+      {overrides.map(override => (
+        <OverrideRow
+          override={override}
+          key={override.userId}
+          user={userById.get(override.userId)}
+        />
+      ))}
+    </>
   ) : isError ? (
     <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR_MESSAGE}</Text>
-  ) : overrides.length === 0 ? (
-    <EmptyState message={EMPTY_MESSAGE} />
   ) : (
-    overrides.map(override => (
-      <OverrideRow override={override} key={override.userId} user={userById.get(override.userId)} />
-    ))
+    <EmptyState message={EMPTY_MESSAGE} />
   )
 
   return (
