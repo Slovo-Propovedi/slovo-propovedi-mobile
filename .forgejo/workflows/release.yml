@@ -427,10 +427,19 @@ jobs:
       - name: Prebuild native code
         # app.config.ts validates these (zod, no defaults) while generating the
         # manifest — a missing var must fail the prebuild, not emit a bad host.
+        # The four OTA vars are different: ota.config.ts is all-or-nothing, so if
+        # any is missing the generated manifest simply gets `updates.enabled: false`
+        # (the APK ships with self-update off — safe, no guard needed).
         env:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # OTA deployment values (Forgejo org/repo vars) — embedded as
+          # expo.modules.updates.* meta-data in the generated AndroidManifest.
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
         run: |
           start=$EPOCHSECONDS
           npx expo prebuild --platform android --clean
@@ -552,6 +561,13 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Same all-or-nothing OTA values as the prebuild step: app.config is
+          # re-evaluated by expo export:embed, and a missing value just turns
+          # updates off in this build (no guard needed).
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
         run: |
           cd android
           free -h
@@ -975,15 +991,32 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # xprem deployment values (Forgejo org/repo vars): `eoas publish` runs
+          # `expo export`, which evaluates app.config.ts — without these the
+          # exported bundle would carry `updates.enabled: false` and deliver
+          # nothing. These are not secrets; move them to `secrets.` only if the
+          # project decides to restrict who can read them.
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
           # Same Metro memory caps as the APK build — the 4 GB host is shared.
           NODE_OPTIONS: --max-old-space-size=1536
           CI_METRO_MAX_WORKERS: '2'
           XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
-          if [ -z "${XPREM_EOO_TOKEN:-}" ]; then
-            echo "::warning::XPREM_EOO_TOKEN is not configured — skipping OTA publish"
-            summary_row "- OTA (xprem): ⏭️ skipped (XPREM_EOO_TOKEN not set)"
+          missing=0
+          missing_list=""
+          for v in XPREM_EOO_TOKEN EXPO_PUBLIC_OTA_URL EXPO_PUBLIC_XPREM_APP_ID EXPO_PUBLIC_XPREM_CHANNEL_NAME EXPO_PUBLIC_XPREM_BRANCH_NAME; do
+            if [ -z "${!v:-}" ]; then
+              echo "::warning::$v is not configured"
+              missing=1
+              missing_list="$missing_list \`$v\`"
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            printf '%s\n' "- OTA (xprem): ⏭️ skipped (missing$missing_list)" | scripts/ci/step-summary.sh
             exit 0
           fi
 
@@ -996,9 +1029,9 @@ jobs:
           # Any failure is non-fatal: the APK release is the primary channel.
           if yarn install --frozen-lockfile && \
              EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes eoas@3.2.6 publish \
-               --branch production --platform android --nonInteractive; then
-            echo "Published OTA update to branch production (android)"
-            summary_row "- OTA (xprem): ✅ branch \`production\` (android)"
+               --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive; then
+            echo "Published OTA update to branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
+            summary_row "- OTA (xprem): ✅ branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\` (android)"
           else
             echo "::warning::OTA publish failed — continuing, the APK release is already published"
             summary_row "- OTA (xprem): ⚠️ failed (see log)"
