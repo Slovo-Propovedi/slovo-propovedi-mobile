@@ -289,6 +289,15 @@ jobs:
             -H "Content-Type: application/json" \
             --data @release.json)
 
+          # Forgejo answers 409 (body: "release already exists") when the tag
+          # already has a release — a full pipeline re-run must not die here.
+          # Same tolerance as the GitHub mirror's duplicate-asset handling.
+          if [ "$HTTP_CODE" = "409" ] || { [ "$HTTP_CODE" -ge 400 ] && grep -qi 'already exists' release-response.json; }; then
+            echo "::warning::Forgejo Release ${{ github.ref_name }} already exists — continuing"
+            summary_row "- Forgejo release: [${{ github.ref_name }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}) ♻️ already exists"
+            exit 0
+          fi
+
           if [ "$HTTP_CODE" -ge 400 ]; then
             echo "::error::Failed to create Forgejo Release (HTTP $HTTP_CODE)"
             cat release-response.json
@@ -1163,6 +1172,18 @@ jobs:
 
       - name: Enable Corepack
         run: corepack enable
+
+      - name: Get yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
 
       - name: Publish OTA update to xprem
         env:
