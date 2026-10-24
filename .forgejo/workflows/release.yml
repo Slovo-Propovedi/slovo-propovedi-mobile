@@ -5,19 +5,128 @@ on:
     tags:
       - 'v*'
 
-# Three jobs:
-#   create-release  — gate on CI, verify versions, cut the Forgejo Release
+# Three release modes, decided by the `changes` job from the diff against the
+# previous tag:
+#   native   — android/, ios/, plugins/, modules/, package.json, yarn.lock,
+#              app.config.ts or ota.config.ts changed (or no previous tag):
+#              build the APK (ZIP + SHA256SUMS), mirror it to GitHub and
+#              Codeberg, and attach it to the Forgejo release.
+#   JS-only  — only JS/TS/assets changed: publish the bundle to xprem (OTA) and
+#              cut a notes-only Forgejo release without APK assets. The app
+#              tolerates `zipDownloadUrl: null` and applies the OTA silently.
+#   web      — ALWAYS released on every tag, independent of native/JS-only:
+#              export the PWA, attach the web zip, deploy it to the VPS.
+#
+# `changes` also guards RUNTIME_VERSION: a native diff without a bumped literal
+# in ota.config.ts fails the pipeline (an OTA bundle built for an old runtime
+# must never reach a new native build). `create-release` needs `changes`, so a
+# failed guard blocks the whole release.
+#
+# Jobs:
+#   changes         — detect native-vs-JS mode + RUNTIME_VERSION guard (light)
+#   create-release  — needs: changes — gate on CI, verify versions, cut the
+#                     Forgejo Release (notes-only; `android` attaches assets)
 #   web             — needs: create-release — export + deploy the web PWA + attach zip
-#   android         — needs: create-release — build APK + attach zip + mirror to GitHub and Codeberg
-# `web` and `android` depend only on `create-release`, never on each other, so
-# they run in whichever order the runner picks them up. Both are memory-heavy,
-# so they share the `memory-heavy-jobs` concurrency group (also on ci.yml's
-# `checks`) and queue on the 4 GB host instead of overlapping.
+#   android         — needs: [changes, create-release], native only — build APK +
+#                     attach zip + mirror to GitHub and Codeberg
+#   ota             — needs: [changes, create-release], JS-only — publish the OTA
+#                     bundle to xprem
+# `web`, `android` and `ota` depend only on `create-release` (+ `changes`),
+# never on each other, so they run in whichever order the runner picks them up.
+# The memory-heavy ones share the `memory-heavy-jobs` concurrency group (also on
+# ci.yml's `checks`) and queue on the 4 GB host instead of overlapping.
 # create-release stays OUT of that group: it waits for `CI / checks`, which is
 # in the group — sharing it would deadlock.
 
 jobs:
+  changes:
+    runs-on: ubuntu-24.04
+
+    outputs:
+      native: ${{ steps.detect.outputs.native }}
+      rv_now: ${{ steps.detect.outputs.rv_now }}
+      rv_prev: ${{ steps.detect.outputs.rv_prev }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history + tags: the previous tag is the diff base, and
+          # RUNTIME_VERSION is read from two different commits.
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Detect release mode
+        id: detect
+        run: |
+          set -e
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
+
+          {
+            echo "## Release ${{ github.ref_name }} — changes"
+            echo ''
+          } | scripts/ci/step-summary.sh
+
+          # Previous tag by creator date, excluding the tag being released.
+          # `|| true`: grep exits 1 when nothing is left (first ever tag).
+          PREV=$(git tag --sort=-creatordate | grep -v -x "${{ github.ref_name }}" | sed -n '1p' || true)
+
+          if [ -z "$PREV" ]; then
+            # No diff base: build the APK — the safest default (a JS-only
+            # publish would reach no installed build anyway).
+            echo "No previous tag found — treating this release as native"
+            NATIVE=true
+          else
+            echo "Previous tag: $PREV"
+            CHANGED=$(git diff --name-only "$PREV..${{ github.ref_name }}" -- \
+              android ios plugins modules package.json yarn.lock app.config.ts ota.config.ts)
+            if [ -n "$CHANGED" ]; then
+              NATIVE=true
+              echo "Native paths changed since $PREV:"
+              printf '%s\n' "$CHANGED"
+            else
+              NATIVE=false
+              echo "No native paths changed since $PREV — JS-only release"
+            fi
+          fi
+
+          # RUNTIME_VERSION is a hardcoded literal in ota.config.ts. Read it at
+          # both refs; a missing file (pre-OTA history) yields an empty string.
+          read_runtime_version() {
+            git show "$1:ota.config.ts" 2>/dev/null \
+              | grep -E '^const RUNTIME_VERSION' \
+              | sed -E "s/.*'([^']+)'.*/\1/" || true
+          }
+          RV_NOW=$(read_runtime_version "${{ github.ref_name }}")
+          if [ -n "$PREV" ]; then
+            RV_PREV=$(read_runtime_version "$PREV")
+          else
+            RV_PREV=""
+          fi
+
+          echo "RUNTIME_VERSION: current='$RV_NOW' previous='$RV_PREV'"
+          echo "native=$NATIVE" >> "$GITHUB_OUTPUT"
+          echo "rv_now=$RV_NOW" >> "$GITHUB_OUTPUT"
+          echo "rv_prev=$RV_PREV" >> "$GITHUB_OUTPUT"
+          if [ "$NATIVE" = "true" ]; then
+            MODE=native
+          else
+            MODE=js-only
+          fi
+          summary_row "- Mode: \`$MODE\` · RUNTIME_VERSION \`$RV_PREV\` → \`$RV_NOW\`"
+
+      - name: Guard RUNTIME_VERSION bump for native changes
+        # Native paths changed but the runtime gate did not move: the APK would
+        # carry a new native build under the old runtimeVersion, so a JS bundle
+        # published later could land on an incompatible binary. Fail the release.
+        if: steps.detect.outputs.native == 'true' && steps.detect.outputs.rv_now == steps.detect.outputs.rv_prev
+        run: |
+          echo "::error::Native paths changed but RUNTIME_VERSION (ota.config.ts) was not bumped — bump it in the same PR"
+          printf '%s\n' "- RUNTIME_VERSION guard: ❌ native diff without a bump — release blocked" | scripts/ci/step-summary.sh
+          exit 1
+
   create-release:
+    needs: changes
     runs-on: ubuntu-24.04
 
     outputs:
@@ -322,7 +431,10 @@ jobs:
           find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
 
   android:
-    needs: create-release
+    # Native mode only: JS-only releases keep the previous APK (same runtime)
+    # and go out through the `ota` job instead.
+    needs: [changes, create-release]
+    if: needs.changes.outputs.native == 'true'
     runs-on: ubuntu-24.04
 
     concurrency:
@@ -983,6 +1095,38 @@ jobs:
 
           summary_row "- Codeberg prune: kept newest $KEPT zips, pruned $PRUNED"
 
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          rm -rf node_modules .yarn/cache .expo jest-cache dist android/app/build 2>/dev/null || true
+          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
+          find . -name '.cache' -type d -delete 2>/dev/null || true
+
+  ota:
+    # JS-only mode: no native diff since the previous tag, so the installed APK
+    # (same runtimeVersion) stays valid and the release is delivered through
+    # expo-updates. Native releases ship a new APK and a new runtimeVersion,
+    # which OTA could not deliver to already-installed builds.
+    needs: [changes, create-release]
+    if: needs.changes.outputs.native == 'false'
+    runs-on: ubuntu-24.04
+
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Publish OTA update to xprem
         env:
           # Inlined into the exported JS bundle (see src/shared/config/config.ts,
@@ -1004,9 +1148,9 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=1536
           CI_METRO_MAX_WORKERS: '2'
           XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
-          # Set, because the job modifies tracked files before publishing: the
-          # release job sed-patches android/gradle.properties and re-runs
-          # prebuild, so the tree is dirty and eoas would abort the publish.
+          # Belt-and-suspenders: eoas aborts a non-interactive publish from a
+          # dirty tracked tree. This job does not modify sources, but the flag
+          # keeps the publish robust against future build steps.
           EAS_NO_VCS: '1'
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
@@ -1024,24 +1168,25 @@ jobs:
             exit 0
           fi
 
-          # Silent JS/assets update for already-installed APKs (expo-updates, Expo
-          # Updates protocol v1 against our own xprem server). Native changes still
-          # ship through the APK above — OTA is an addition, not a replacement.
-          # Keep the eoas CLI version in sync with the xprem server version.
-          # Any failure is non-fatal: the APK release is the primary channel.
+          # JS-only release: the APK (and its runtimeVersion) is unchanged, so
+          # the whole release is delivered silently through expo-updates
+          # (protocol v1 against our own xprem server); installed builds pick
+          # the bundle up on the next cold start. Keep the eoas CLI version in
+          # sync with the xprem server version. Any failure is non-fatal
+          # (`::warning::`) — the notes-only Forgejo release is already out.
           if yarn install --frozen-lockfile && \
              EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes eoas@3.2.6 publish \
                --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive; then
             echo "Published OTA update to branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
             summary_row "- OTA (xprem): ✅ branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\` (android)"
           else
-            echo "::warning::OTA publish failed — continuing, the APK release is already published"
+            echo "::warning::OTA publish failed — continuing, the notes-only release is already published"
             summary_row "- OTA (xprem): ⚠️ failed (see log)"
           fi
 
       - name: Cleanup workspace
         if: always()
         run: |
-          rm -rf node_modules .yarn/cache .expo jest-cache dist android/app/build 2>/dev/null || true
+          rm -rf node_modules .yarn/cache .expo jest-cache dist 2>/dev/null || true
           find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
           find . -name '.cache' -type d -delete 2>/dev/null || true
