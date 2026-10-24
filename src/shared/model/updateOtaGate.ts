@@ -44,3 +44,16 @@ export const isReleaseNewerThanRunning = (
   releaseVersion: string,
   runningVersion: string,
 ): boolean => compareVersions(releaseVersion, runningVersion) === 1
+
+// Whether the newer release needs the APK dialog. When a bundle for the running
+// runtimeVersion is already published on the OTA server, the release arrives
+// silently on the next cold start — prompting would only push a pointless APK
+// download. Unknown OTA availability (a failed check) is passed as `false`, so
+// the dialog stays the safe fallback.
+export const decideUpdatePrompt = ({
+  otaAvailable,
+  releaseIsNewer,
+}: {
+  otaAvailable: boolean
+  releaseIsNewer: boolean
+}): boolean => releaseIsNewer && !otaAvailable

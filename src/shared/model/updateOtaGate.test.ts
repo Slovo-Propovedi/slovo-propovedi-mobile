@@ -1,4 +1,5 @@
 import {
+  decideUpdatePrompt,
   getRunningManifestVersion,
   isReleaseNewerThanRunning,
   resolveEffectiveAppVersion,
@@ -134,5 +135,26 @@ describe('OTA-aware update gate', () => {
         }),
       ).toBe(false)
     }
+  })
+})
+
+describe('decideUpdatePrompt', () => {
+  test('skips the APK dialog when the newer release is also available over OTA', () => {
+    expect(decideUpdatePrompt({ otaAvailable: true, releaseIsNewer: true })).toBe(false)
+  })
+
+  test('prompts when the newer release has no OTA bundle for this runtime', () => {
+    expect(decideUpdatePrompt({ otaAvailable: false, releaseIsNewer: true })).toBe(true)
+  })
+
+  test('never prompts when the release is not newer, whatever OTA says', () => {
+    expect(decideUpdatePrompt({ otaAvailable: true, releaseIsNewer: false })).toBe(false)
+    expect(decideUpdatePrompt({ otaAvailable: false, releaseIsNewer: false })).toBe(false)
+  })
+
+  test('prompts when OTA availability is unknown (failed check is passed as false)', () => {
+    // checkForUpdateAsync throwing maps to `otaAvailable: false` in
+    // checkForUpdateAction: fail open to the dialog instead of dropping the release.
+    expect(decideUpdatePrompt({ otaAvailable: false, releaseIsNewer: true })).toBe(true)
   })
 })
