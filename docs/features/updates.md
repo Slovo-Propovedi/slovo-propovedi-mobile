@@ -19,9 +19,9 @@
 `ota.config.ts` задаёт `runtimeVersion` **строковым литералом** (не `pkg.version`): литерал гейтит доставку — манифест с другим `runtimeVersion` устройству не предлагается.
 
 - **Меняется только вместе с нативным кодом:** апгрейд Expo SDK / React Native, добавление-обновление нативной зависимости, изменение конфиг-плагинов (`plugins/*.ts`), разрешений, иконок/сплэша. Тогда же выпускается новый APK.
-- **Чек-лист релиза с нативными изменениями:** если PR трогает `android/`, `plugins/`, Expo SDK или нативные пакеты — поднять `RUNTIME_VERSION` в `ota.config.ts` в том же PR.
 - **Не меняется для JS-only правок** (экраны, логика, стили, тексты): такой бандл уходит по OTA и совместим с уже установленными сборками.
-- Забыть поднять литерал при нативной правке = отдать несовместимый JS на старую нативку.
+- **Подъём при нативной правке проверяет CI, а не память.** Job `changes` в `.forgejo/workflows/release.yml` диффит тег против предыдущего: если затронуты нативные пути (`android/`, `ios/`, `plugins/`, `modules/`, `package.json`, `yarn.lock`, `app.config.ts`, `ota.config.ts`), а `RUNTIME_VERSION` не изменился — job падает с `::error::Native paths changed but RUNTIME_VERSION (ota.config.ts) was not bumped — bump it in the same PR`. `create-release` зависит от `changes`, поэтому красный guard блокирует весь релиз: забыть поднять литерал теперь нельзя — это красный пайплайн, а не тихая несовместимость.
+- `ota.config.ts` в списке нативных путей намеренно: его блок `updates.*` и сам `RUNTIME_VERSION` запекаются в бинарник.
 
 ### Поведение проверки на устройстве
 
@@ -33,13 +33,30 @@
 
 Встроенный бандл (`Updates.isEmbeddedLaunch === true`) остаётся рабочим всегда: если сервер недоступен, приложение просто запускается на том, что есть. На web OTA не работает вовсе — PWA обновляется через Service Worker (`expo-updates` импортируется лениво и в web-сборке не вычисляется, см. «OTA-aware гейт»).
 
-### Публикация (release.yml → eoas)
+### Релизные режимы (release.yml)
 
-`.forgejo/workflows/release.yml`, job `android`, шаг **«Publish OTA update to xprem»** — после загрузки APK и зеркалирования релиза:
+`.forgejo/workflows/release.yml` определяет режим в job `changes` (полная история: `fetch-depth: 0` + теги) по диффу `PREV..$GITHUB_REF_NAME`, где `PREV` — предыдущий тег по `creatordate`. Если предыдущего тега нет — режим `native` (сборка APK, самый безопасный дефолт).
+
+| Режим     | Когда                                                                                                                                                 | Что делает пайплайн                                                                                                                              |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `native`  | дифф затронул `android/`, `ios/`, `plugins/`, `modules/`, `package.json`, `yarn.lock`, `app.config.ts` или `ota.config.ts` (или предыдущего тега нет) | job `android`: keystore-гейт, prebuild с четырьмя `EXPO_PUBLIC_*`, gradle APK, ZIP + `SHA256SUMS.txt` в Forgejo-релиз, зеркала GitHub и Codeberg |
+| `js-only` | нативных путей в диффе нет                                                                                                                            | job `ota`: публикация бандла в xprem; Forgejo-релиз остаётся **notes-only**, без APK-ассетов                                                     |
+| `web`     | всегда, независимо от режима                                                                                                                          | job `web`: экспорт PWA, web-zip в релиз, деплой на VPS                                                                                           |
+
+**Релиз в Forgejo создаётся в обоих режимах** (job `create-release`, он же гейт по CI и версиям), поэтому нумерация тегов непрерывна. В `js-only` у релиза нет APK-ассетов — это штатно: клиент допускает `zipDownloadUrl: null` (см. «Валидация ответа релиза»), а обновление приезжает по OTA.
+
+**Зеркала GitHub и Codeberg — только в `native`**: они зеркалируют APK-ассеты, notes-only релиз там не нужен (клиентская цепочка источников останавливается на Forgejo — см. «Проверка версии»).
+
+**Web релизится всегда**: у job `web` нет условия по режиму (только `needs: create-release`), поэтому PWA выходит на каждом теге.
+
+### Публикация OTA (job `ota` → eoas)
+
+Job `ota` запускается только в `js-only` режиме (`if: needs.changes.outputs.native == 'false'`):
 
 - шаг требует **все** четыре OTA-переменные (см. «Окружение OTA») и секрет `XPREM_EOO_TOKEN`; если хотя бы одна из них пуста, шаг печатает `::warning::` с именами отсутствующих и выходит с `exit 0` — пайплайн остаётся зелёным без настройки. Причина строгого гейта: `eoas publish` выполняет `expo export`, который вычисляет `app.config.ts`; без переменных экспортированный бандл получил бы `updates.enabled: false` и ничего бы не доставил;
 - иначе: `yarn install --frozen-lockfile`, затем `eoas publish --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive` (CLI `eoas` из npm, версия держится **синхронно с версией сервера xprem**; токен — в `EOO_TOKEN`). Ветка берётся из `EXPO_PUBLIC_XPREM_BRANCH_NAME` — та же переменная, что встроена в APK заголовком `xprem-branch`, поэтому публикация и клиент не расходятся;
-- любая ошибка публикации — `::warning::`, джоба продолжается: APK-релиз — основной канал, OTA — дополнение. `EAS_NO_VCS=1` задан в шаге постоянно: к моменту публикации джоба уже правила отслеживаемые файлы (`android/gradle.properties` + перегенерированный prebuild'ом `android/`), и `eoas` в неинтерактивном режиме иначе отказывается публиковать из грязного дерева;
+- `yarn install` выполняется внутри самого шага: job `ota` не наследует установку из `android` (джобы не делят шаги);
+- любая ошибка публикации — `::warning::`, джоба продолжается. В `js-only` режиме провал означает, что релиз не доставлен ничем — строка `⚠️ failed` в summary требует ручного разбора. `EAS_NO_VCS=1` задан постоянно: `eoas` в неинтерактивном режиме иначе отказывается публиковать из грязного дерева;
 - бандл экспортируется с теми же `EXPO_PUBLIC_*` переменными, что и APK, иначе OTA-бандл указывал бы на неверные хосты.
 
 Сервер сверяет `runtimeVersion` манифеста с запрошенным устройством и публикует манифест с `extra.expoClient.version` (версия из `app.config.ts`/`package.json` на момент публикации) — именно её читает клиентский гейт.
@@ -59,7 +76,7 @@
 
 Где живут значения:
 
-- **CI** — Forgejo org/repo `vars` с теми же именами; job `android` прокидывает их в prebuild, сборку APK и шаг публикации OTA (`.forgejo/workflows/release.yml`). Это не секреты (URL, app id, канал, ветка); при желании их можно перенести в `secrets.` без изменения кода.
+- **CI** — Forgejo org/repo `vars` с теми же именами; job `android` прокидывает их в prebuild и сборку APK, job `ota` — в `eoas publish` (`.forgejo/workflows/release.yml`). Это не секреты (URL, app id, канал, ветка); при желании их можно перенести в `secrets.` без изменения кода.
 - **Локально** — `.env` (скопировать `.env.example`); без него локальная сборка получит `updates.enabled: false`.
 
 `runtimeVersion` при этом остаётся **литералом** в `ota.config.ts`: это версионирование (гейт совместимости), а не deployment-конфиг, поэтому он сознательно не вынесен в env (см. «runtimeVersion — фиксированный литерал»).
@@ -84,9 +101,12 @@
 
 - `getRunningManifestVersion(manifest)` → `string | null` — `extra.expoClient.version` запущенного манифеста; отсутствие `extra`, `expoClient` или нестроковое значение трактуются как «версии нет»;
 - `resolveEffectiveAppVersion({ appVersion, isEmbeddedLaunch, manifestVersion })` → `string` — при встроенном запуске версия из APK, при OTA-запуске версия из манифеста с фолбэком на версию APK;
-- `isReleaseNewerThanRunning(releaseVersion, runningVersion)` → `boolean` — тот же `compareVersions`, но относительно **фактически запущенного** кода.
+- `isReleaseNewerThanRunning(releaseVersion, runningVersion)` → `boolean` — тот же `compareVersions`, но относительно **фактически запущенного** кода;
+- `decideUpdatePrompt({ releaseIsNewer, otaAvailable })` → `boolean` — показывать ли диалог APK.
 
-`checkForUpdateAction` (`src/shared/model/update.ts`) сравнивает релиз с эффективной версией, поэтому после тихого OTA диалог и push-уведомление не появляются, если исправление уже приехало бандлом. `expo-updates` импортируется **динамически внутри нативной ветки** (после ранних выходов для web/офлайна) — web-сборка модуль не загружает; ошибка импорта (Expo Go, web) откатывает гейт к `APP_VERSION`.
+**Правило подавления диалога:** APK-диалог показывается, только если для текущего runtimeVersion **нет** OTA-пути. Когда релиз новее, `checkForUpdateAction` дополнительно спрашивает `Updates.checkForUpdateAsync()` (тот же лениво импортированный `expo-updates`, внутри своего `try/catch`): `isAvailable === true` → пропускаются **и диалог, и push-уведомление** — бандл применится молча на следующем холодном старте, после чего запущенная версия совпадёт с релизом и гейт замолчит. Любое исключение из `checkForUpdateAsync` трактуется как `otaAvailable = false` (fail open — диалог остаётся безопасным фолбэком). Запрос выполняется только на редком пути «релиз новее»; собственный запрос манифеста от `checkForUpdateAsync` приемлем — `expo-updates` и так проверяет манифест при загрузке.
+
+`checkForUpdateAction` (`src/shared/model/update.ts`) сравнивает релиз с эффективной версией, поэтому после тихого OTA диалог и push-уведомление не появляются, если исправление уже приехало бандлом. Чтение состояния `expo-updates` вынесено во внутренний `src/shared/model/updateOtaStatus.ts`; модуль импортируется **динамически внутри нативной ветки** (после ранних выходов для web/офлайна) — web-сборка его не загружает; ошибка импорта (Expo Go, web) откатывает гейт к `APP_VERSION`.
 
 ### F-Droid
 
@@ -99,7 +119,8 @@
 - выходит, если `Platform.OS === 'web'` — веб-версия обновляется сама через Service Worker; применение новой версии — через модалку подтверждения (features/web-update, см. [web.md](./web.md) → PWA), диалог «скачать APK» там не имеет смысла;
 - выходит, если `!ctx.get(isOnlineAtom)`;
 - получает последний релиз через `fetchLatestRelease()`; если нет — выходит;
-- сравнивает `compareVersions(release.version, <эффективная версия>)` через `isReleaseNewerThanRunning` — эффективная версия учитывает запущенный OTA-бандл (см. «OTA-aware гейт диалога APK»); если релиз новее — планирует уведомление и открывает диалог обновления.
+- сравнивает `compareVersions(release.version, <эффективная версия>)` через `isReleaseNewerThanRunning` — эффективная версия учитывает запущенный OTA-бандл (см. «OTA-aware гейт диалога APK»);
+- если релиз новее — спрашивает OTA (`checkForUpdateAsync`): при `isAvailable === true` выходит без уведомления и диалога (бандл приедет сам), иначе планирует уведомление и открывает диалог обновления.
 
 `src/shared/lib/version-check/`:
 
@@ -116,7 +137,7 @@
 - отклоняет `prerelease === true`;
 - отклоняет теги, содержащие `-` (например, `v0.4.0-rc1`);
 - `version` берётся из `tag_name` с отрезанной ведущей `v`;
-- `zipDownloadUrl` — первый ассет с расширением `.zip` (может быть `null`). Релизный пайплайн (`.forgejo/workflows/release.yml`) загружает единственный ассет `slovo-propovedi-v<версия>.zip`, внутри которого лежит APK `Slovo.Propovedi v<версия>.apk`.
+- `zipDownloadUrl` — первый ассет с расширением `.zip` (может быть `null`). В native-режиме релизный пайплайн (`.forgejo/workflows/release.yml`) загружает единственный ассет `slovo-propovedi-v<версия>.zip`, внутри которого лежит APK `Slovo.Propovedi v<версия>.apk`; в js-only режиме релиз notes-only, поэтому `zipDownloadUrl` — `null` (клиент это допускает и обновляется по OTA).
 - `sha256SumsDownloadUrl` — URL ассета `SHA256SUMS.txt` (точное имя, регистронезависимо; может быть `null`/отсутствовать у старых релизов). Используется для проверки целостности скачанного ZIP.
 - Сетевые ошибки логируются (`console.warn`) и не прерывают `checkForUpdateAction`.
 
