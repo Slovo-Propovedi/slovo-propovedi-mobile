@@ -23,6 +23,11 @@ const config: KnipConfig = {
     entry: ['app/**/*.{ts,tsx}'],
   },
 
+  // expo-router reuses expo's config patterns, so it must skip app.config.ts too.
+  'expo-router': {
+    config: [],
+  },
+
   ignore: [
     // Read tab WIP — intentionally kept, not routed from app/ yet.
     'src/pages/book-reader/**',
