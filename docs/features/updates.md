@@ -124,7 +124,8 @@ Job `ota` запускается только в `js-only` режиме (`if: ne
 
 `src/shared/lib/version-check/`:
 
-- `fetchLatestRelease.ts` — цепочка источников **Forgejo → Codeberg → GitHub**: `git.lightnode.ru/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest`, при провале — `codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest`, при провале — `api.github.com/repos/Slovo-Propovedi/...`. Отбрасывает prerelease и теги с дефисом; извлекает `.zip`-ассет и ассет `SHA256SUMS.txt` (точное имя, регистронезависимо).
+- `fetchLatestRelease.ts` — цепочка источников **Forgejo → Codeberg → GitHub**: `git.lightnode.ru/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest`, при провале — `codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest`, при провале — `api.github.com/repos/Slovo-Propovedi/...`. Отбрасывает prerelease и теги с дефисом; извлекает APK-ассет `slovo-propovedi-v<версия>.zip` и ассет `SHA256SUMS.txt` (точное имя, регистронезависимо).
+- `isApkZipAssetName.ts` — якорный matcher имени APK-ассета (`^slovo-propovedi-v[0-9][^/]*\.zip$`), отсекает веб-экспорт `slovo-propovedi-web-v<версия>.zip` (как в landing-скрипте).
 - `compareVersions.ts` — сем-вер сравнение (`a`/`b` → `-1 | 0 | 1`).
 - `types.ts` — `LatestReleaseInfo` (`version`, `htmlUrl`, `zipDownloadUrl`, `sha256SumsDownloadUrl`, `body`, ...).
 
@@ -137,7 +138,7 @@ Job `ota` запускается только в `js-only` режиме (`if: ne
 - отклоняет `prerelease === true`;
 - отклоняет теги, содержащие `-` (например, `v0.4.0-rc1`);
 - `version` берётся из `tag_name` с отрезанной ведущей `v`;
-- `zipDownloadUrl` — первый ассет с расширением `.zip` (может быть `null`). В native-режиме релизный пайплайн (`.forgejo/workflows/release.yml`) загружает единственный ассет `slovo-propovedi-v<версия>.zip`, внутри которого лежит APK `Slovo.Propovedi v<версия>.apk`; в js-only режиме релиз notes-only, поэтому `zipDownloadUrl` — `null` (клиент это допускает и обновляется по OTA).
+- `zipDownloadUrl` — URL APK-ассета, имя которого матчится якорным regex `^slovo-propovedi-v[0-9][^/]*\.zip$` (может быть `null`). В native-режиме релизный пайплайн (`.forgejo/workflows/release.yml`) загружает единственный такой ассет `slovo-propovedi-v<версия>.zip`, внутри которого лежит APK `Slovo.Propovedi v<версия>.apk`. В js-only режиме релиз notes-only, но на нём всегда есть веб-экспорт `slovo-propovedi-web-v<версия>.zip` — он **не** является обновлением приложения, поэтому не матчится и `zipDownloadUrl` остаётся `null` (клиент это допускает и обновляется по OTA).
 - `sha256SumsDownloadUrl` — URL ассета `SHA256SUMS.txt` (точное имя, регистронезависимо; может быть `null`/отсутствовать у старых релизов). Используется для проверки целостности скачанного ZIP.
 - Сетевые ошибки логируются (`console.warn`) и не прерывают `checkForUpdateAction`.
 

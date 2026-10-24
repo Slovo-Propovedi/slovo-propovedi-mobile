@@ -1,6 +1,7 @@
 /* eslint-disable camelcase -- GitHub/Forgejo release API fields are snake_case */
 import axios from 'axios'
 import z from 'zod'
+import { isApkZipAssetName } from './isApkZipAssetName'
 import { type LatestReleaseInfo } from './types'
 
 const FORGEJO_API_URL =
@@ -39,7 +40,9 @@ const parseRelease = (data: unknown): LatestReleaseInfo | null => {
   if (release.prerelease) return null
   if (release.tag_name.includes('-')) return null
 
-  const zipAsset = release.assets.find(asset => asset.name.endsWith('.zip'))
+  // Anchored on the APK naming: a JS-only release also carries the web export
+  // (`slovo-propovedi-web-v<version>.zip`), which is not an app update.
+  const zipAsset = release.assets.find(asset => isApkZipAssetName(asset.name))
   const checksumAsset = release.assets.find(
     asset => asset.name.toLowerCase() === CHECKSUM_ASSET_NAME.toLowerCase(),
   )

@@ -14,7 +14,14 @@ const CODEBERG_API_URL =
 const GITHUB_API_URL =
   'https://api.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile/releases/latest'
 const ZIP_DOWNLOAD_URL = 'https://example.com/releases/download/v0.3.0/slovo-propovedi-v0.3.0.zip'
+const WEB_ZIP_DOWNLOAD_URL =
+  'https://example.com/releases/download/v0.3.0/slovo-propovedi-web-v0.3.0.zip'
 const SUMS_DOWNLOAD_URL = 'https://example.com/releases/download/v0.3.0/SHA256SUMS.txt'
+const APK_ZIP_ASSET = { browser_download_url: ZIP_DOWNLOAD_URL, name: 'slovo-propovedi-v0.3.0.zip' }
+const WEB_ZIP_ASSET = {
+  browser_download_url: WEB_ZIP_DOWNLOAD_URL,
+  name: 'slovo-propovedi-web-v0.3.0.zip',
+}
 const RELEASE_BODY = 'Release notes\r\nSecond line'
 const FORGEJO_RELEASE_HTML_URL =
   'https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/tag/v0.3.0'
@@ -27,10 +34,7 @@ const RELEASE_PUBLISHED_AT = '2026-08-01T00:00:00Z'
 const RELEASE_TAG = 'v0.3.0'
 
 const validRelease = {
-  assets: [
-    { browser_download_url: ZIP_DOWNLOAD_URL, name: 'slovo-propovedi-v0.3.0.zip' },
-    { browser_download_url: SUMS_DOWNLOAD_URL, name: 'SHA256SUMS.txt' },
-  ],
+  assets: [APK_ZIP_ASSET, { browser_download_url: SUMS_DOWNLOAD_URL, name: 'SHA256SUMS.txt' }],
   body: RELEASE_BODY,
   draft: false,
   html_url: FORGEJO_RELEASE_HTML_URL,
@@ -141,14 +145,35 @@ describe('fetchLatestRelease', () => {
   })
 
   test('returns a null checksum URL for a legacy release without the sums asset', async () => {
-    const release = {
-      ...validRelease,
-      assets: [{ browser_download_url: ZIP_DOWNLOAD_URL, name: 'slovo-propovedi-v0.3.0.zip' }],
-    }
+    const release = { ...validRelease, assets: [APK_ZIP_ASSET] }
     mockedAxios.get.mockResolvedValueOnce({ data: release })
 
     const result = await fetchLatestRelease()
 
     expect(result?.sha256SumsDownloadUrl).toBeNull()
+  })
+
+  test('returns a null zip URL when only the web export asset is attached', async () => {
+    const release = {
+      ...validRelease,
+      assets: [WEB_ZIP_ASSET, { browser_download_url: SUMS_DOWNLOAD_URL, name: 'SHA256SUMS.txt' }],
+    }
+    mockedAxios.get.mockResolvedValueOnce({ data: release })
+
+    const result = await fetchLatestRelease()
+
+    expect(result?.zipDownloadUrl).toBeNull()
+    expect(result?.sha256SumsDownloadUrl).toBe(SUMS_DOWNLOAD_URL)
+  })
+
+  test.each([
+    { assets: [WEB_ZIP_ASSET, APK_ZIP_ASSET], label: 'web export first' },
+    { assets: [APK_ZIP_ASSET, WEB_ZIP_ASSET], label: 'APK first' },
+  ])('selects the APK zip when the web export is also attached ($label)', async ({ assets }) => {
+    mockedAxios.get.mockResolvedValueOnce({ data: { ...validRelease, assets } })
+
+    const result = await fetchLatestRelease()
+
+    expect(result?.zipDownloadUrl).toBe(ZIP_DOWNLOAD_URL)
   })
 })
