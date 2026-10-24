@@ -77,6 +77,14 @@ describe('getRunningManifestVersion', () => {
   test('treats a non-string version as absent', () => {
     expect(getRunningManifestVersion({ extra: { expoClient: { version: 42 } } })).toBeNull()
   })
+
+  test('returns null when expoClient is null', () => {
+    expect(getRunningManifestVersion({ extra: { expoClient: null } })).toBeNull()
+  })
+
+  test('returns null when extra is an array', () => {
+    expect(getRunningManifestVersion({ extra: [] })).toBeNull()
+  })
 })
 
 describe('OTA-aware update gate', () => {
@@ -111,5 +119,20 @@ describe('OTA-aware update gate', () => {
         releaseVersion: BAKED_VERSION,
       }),
     ).toBe(false)
+  })
+
+  test('falls back to the baked version for malformed manifest shapes', () => {
+    for (const manifest of [{ extra: { expoClient: null } }, { extra: [] }]) {
+      const manifestVersion = getRunningManifestVersion(manifest)
+
+      expect(isGateOpen({ isEmbeddedLaunch: false, manifestVersion })).toBe(true)
+      expect(
+        isGateOpen({
+          isEmbeddedLaunch: false,
+          manifestVersion,
+          releaseVersion: BAKED_VERSION,
+        }),
+      ).toBe(false)
+    }
   })
 })

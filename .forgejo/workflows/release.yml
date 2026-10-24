@@ -1004,6 +1004,10 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=1536
           CI_METRO_MAX_WORKERS: '2'
           XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
+          # Set, because the job modifies tracked files before publishing: the
+          # release job sed-patches android/gradle.properties and re-runs
+          # prebuild, so the tree is dirty and eoas would abort the publish.
+          EAS_NO_VCS: '1'
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
           missing=0
@@ -1024,8 +1028,6 @@ jobs:
           # Updates protocol v1 against our own xprem server). Native changes still
           # ship through the APK above — OTA is an addition, not a replacement.
           # Keep the eoas CLI version in sync with the xprem server version.
-          # eoas refuses to publish from a dirty git tree; the checkout here is
-          # clean, and EAS_NO_VCS=1 is the escape hatch if that check ever trips.
           # Any failure is non-fatal: the APK release is the primary channel.
           if yarn install --frozen-lockfile && \
              EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes eoas@3.2.6 publish \
