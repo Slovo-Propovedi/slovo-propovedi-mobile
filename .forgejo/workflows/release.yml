@@ -7,10 +7,15 @@ on:
 
 # Three release modes, decided by the `changes` job from the diff against the
 # previous tag:
-#   native   — android/, ios/, plugins/, modules/, package.json, yarn.lock,
-#              app.config.ts or ota.config.ts changed (or no previous tag):
-#              build the APK (ZIP + SHA256SUMS), mirror it to GitHub and
-#              Codeberg, and attach it to the Forgejo release.
+#   native   — a native path changed (or no previous tag): any file under
+#              android/, ios/, plugins/, modules/, or a change to yarn.lock,
+#              app.config.ts, ota.config.ts. Version metadata ALONE does not
+#              count — scripts/bump-version.mjs rewrites package.json, gradle
+#              versionName/versionCode and the pbxproj MARKETING_VERSION/
+#              CURRENT_PROJECT_VERSION on every release, so those files are
+#              judged by content (see the `changes` job). Native builds the APK
+#              (ZIP + SHA256SUMS), mirrors it to GitHub and Codeberg, and
+#              attaches it to the Forgejo release.
 #   JS-only  — only JS/TS/assets changed: publish the bundle to xprem (OTA) and
 #              cut a notes-only Forgejo release without APK assets. The app
 #              tolerates `zipDownloadUrl: null` and applies the OTA silently.
@@ -78,15 +83,47 @@ jobs:
             NATIVE=true
           else
             echo "Previous tag: $PREV"
-            CHANGED=$(git diff --name-only "$PREV..${{ github.ref_name }}" -- \
-              android ios plugins modules package.json yarn.lock app.config.ts ota.config.ts)
-            if [ -n "$CHANGED" ]; then
+            # scripts/bump-version.mjs rewrites version metadata on EVERY
+            # release: package.json `version`, android/app/build.gradle
+            # `versionName`/`versionCode` and the ios *.pbxproj
+            # `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`. A name-only check
+            # over those paths would flag every release as native and starve the
+            # OTA path, so they are judged by CONTENT instead:
+            #   - package.json is dropped entirely: a dependency change always
+            #     moves yarn.lock, and a version-only bump is not native;
+            #   - build.gradle / *.pbxproj are excluded from the name-only list
+            #     and inspected below — only added/removed lines beyond version
+            #     metadata count.
+            # Any other file under android/, ios/, plugins/, modules/ still
+            # counts by name alone (new native module, manifest, plugin, ...).
+            NAME_CHANGED=$(git diff --name-only "$PREV..${{ github.ref_name }}" -- \
+              android ios plugins modules yarn.lock app.config.ts ota.config.ts \
+              ':(exclude)android/app/build.gradle' \
+              ':(exclude,glob)ios/**/*.pbxproj' || true)
+
+            # Drop diff headers/hunks (---/+++/@@/index) and +/- lines that are
+            # pure version metadata; whatever is left is real native churn. The
+            # trailing `|| true` keeps `set -e` happy when the diff is empty.
+            CONTENT_CHANGED=$(git diff "$PREV..${{ github.ref_name }}" -- \
+                android/app/build.gradle ':(glob)ios/**/*.pbxproj' \
+              | grep -E '^[+-]' \
+              | grep -Ev '^(\+\+\+|---)' \
+              | grep -Ev '^[+-].*(versionName|versionCode|MARKETING_VERSION|CURRENT_PROJECT_VERSION)' \
+              || true)
+
+            if [ -n "$NAME_CHANGED" ] || [ -n "$CONTENT_CHANGED" ]; then
               NATIVE=true
-              echo "Native paths changed since $PREV:"
-              printf '%s\n' "$CHANGED"
+              echo "Native changes since $PREV:"
+              if [ -n "$NAME_CHANGED" ]; then
+                printf '%s\n' "$NAME_CHANGED"
+              fi
+              if [ -n "$CONTENT_CHANGED" ]; then
+                echo "Non-version edits in build.gradle / *.pbxproj:"
+                printf '%s\n' "$CONTENT_CHANGED"
+              fi
             else
               NATIVE=false
-              echo "No native paths changed since $PREV — JS-only release"
+              echo "Only JS/TS/assets and version metadata changed since $PREV — JS-only release"
             fi
           fi
 
@@ -95,7 +132,7 @@ jobs:
           read_runtime_version() {
             git show "$1:ota.config.ts" 2>/dev/null \
               | grep -E '^const RUNTIME_VERSION' \
-              | sed -E "s/.*'([^']+)'.*/\1/" || true
+              | sed -E "s/^const RUNTIME_VERSION = '([^']+)'.*/\1/" || true
           }
           RV_NOW=$(read_runtime_version "${{ github.ref_name }}")
           if [ -n "$PREV" ]; then
