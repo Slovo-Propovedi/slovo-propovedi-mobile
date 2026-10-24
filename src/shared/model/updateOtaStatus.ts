@@ -1,13 +1,15 @@
 import { APP_VERSION } from '../config/version'
+import { loadExpoUpdates } from './loadExpoUpdates'
 import { getRunningManifestVersion, resolveEffectiveAppVersion } from './updateOtaGate'
 
-// expo-updates is native-only, so it is imported lazily: web builds must never
-// evaluate it (see the Platform.OS guard in checkForUpdateAction — the PWA updates
-// itself through the service worker). A failed import (Expo Go, web bundle) falls
-// back to the baked version, i.e. the pre-OTA behavior.
+// expo-updates is native-only, so it is imported lazily through
+// loadExpoUpdates: web builds must never evaluate it (see the Platform.OS guard
+// in checkForUpdateAction — the PWA updates itself through the service worker).
+// A failed import (Expo Go, web bundle) falls back to the baked version, i.e.
+// the pre-OTA behavior.
 export const readRunningAppVersion = async (): Promise<string> => {
   try {
-    const { isEmbeddedLaunch, manifest } = await import('expo-updates')
+    const { isEmbeddedLaunch, manifest } = await loadExpoUpdates()
 
     return resolveEffectiveAppVersion({
       appVersion: APP_VERSION,
@@ -26,7 +28,7 @@ export const readRunningAppVersion = async (): Promise<string> => {
 // failure counts as "no OTA" — the APK dialog is the safe fallback.
 export const isOtaUpdateAvailable = async (): Promise<boolean> => {
   try {
-    const { checkForUpdateAsync } = await import('expo-updates')
+    const { checkForUpdateAsync } = await loadExpoUpdates()
     const { isAvailable } = await checkForUpdateAsync()
 
     return isAvailable
