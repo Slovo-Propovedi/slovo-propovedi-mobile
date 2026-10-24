@@ -3,11 +3,15 @@ import { action, atom } from '@reatom/framework'
 import { Platform } from 'react-native'
 import { APP_VERSION } from '../config/version'
 import { requestPermissions, scheduleNotification } from '../lib/notifications/notificationsHelpers'
-import { compareVersions } from '../lib/version-check/compareVersions'
 import { fetchLatestRelease } from '../lib/version-check/fetchLatestRelease'
 import { type LatestReleaseInfo } from '../lib/version-check/types'
 import { isOnlineAtom } from './network'
 import { updateDialogVisibleAtom } from './updateInstall'
+import {
+  getRunningManifestVersion,
+  isReleaseNewerThanRunning,
+  resolveEffectiveAppVersion,
+} from './updateOtaGate'
 
 const LAST_UPDATE_NOTIFIED_KEY = 'last-update-notified-version'
 const UPDATE_NOTIFICATION_ID = 'app-update-notification'
@@ -58,6 +62,25 @@ const scheduleUpdateNotification = async (release: LatestReleaseInfo): Promise<v
   await writeLastNotifiedVersion(release.version)
 }
 
+// expo-updates is native-only, so it is imported lazily: web builds must never
+// evaluate it (see the Platform.OS guard in checkForUpdateAction — the PWA updates
+// itself through the service worker). A failed import (Expo Go, web bundle) falls
+// back to the baked version, i.e. the pre-OTA behavior.
+const readRunningAppVersion = async (): Promise<string> => {
+  try {
+    const { isEmbeddedLaunch, manifest } = await import('expo-updates')
+
+    return resolveEffectiveAppVersion({
+      appVersion: APP_VERSION,
+      isEmbeddedLaunch,
+      manifestVersion: getRunningManifestVersion(manifest),
+    })
+  } catch (error) {
+    console.warn('[update] expo-updates unavailable, using APP_VERSION:', error)
+    return APP_VERSION
+  }
+}
+
 export const checkForUpdateAction = action(async ctx => {
   // Web is a PWA and updates itself via the service worker — the native
   // APK-download dialog is meaningless there.
@@ -67,8 +90,10 @@ export const checkForUpdateAction = action(async ctx => {
   const release = await fetchLatestRelease()
   if (!release) return
 
-  const isUpdateAvailable = compareVersions(release.version, APP_VERSION) === 1
-  if (!isUpdateAvailable) return
+  // The running code may be an OTA bundle newer than the version baked into the
+  // APK, so the release is compared against what actually runs right now.
+  const runningVersion = await readRunningAppVersion()
+  if (!isReleaseNewerThanRunning(release.version, runningVersion)) return
 
   await ctx.schedule(() => {
     latestVersionAtom(ctx, release.version)

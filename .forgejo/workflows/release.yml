@@ -967,6 +967,43 @@ jobs:
 
           summary_row "- Codeberg prune: kept newest $KEPT zips, pruned $PRUNED"
 
+      - name: Publish OTA update to xprem
+        env:
+          # Inlined into the exported JS bundle (see src/shared/config/config.ts,
+          # src/pages/share/lib/constants.ts) — the OTA bundle must target the same
+          # prod hosts as the APK it is delivered to.
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Same Metro memory caps as the APK build — the 4 GB host is shared.
+          NODE_OPTIONS: --max-old-space-size=1536
+          CI_METRO_MAX_WORKERS: '2'
+          XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
+          if [ -z "${XPREM_EOO_TOKEN:-}" ]; then
+            echo "::warning::XPREM_EOO_TOKEN is not configured — skipping OTA publish"
+            summary_row "- OTA (xprem): ⏭️ skipped (XPREM_EOO_TOKEN not set)"
+            exit 0
+          fi
+
+          # Silent JS/assets update for already-installed APKs (expo-updates, Expo
+          # Updates protocol v1 against our own xprem server). Native changes still
+          # ship through the APK above — OTA is an addition, not a replacement.
+          # Keep the eoas CLI version in sync with the xprem server version.
+          # eoas refuses to publish from a dirty git tree; the checkout here is
+          # clean, and EAS_NO_VCS=1 is the escape hatch if that check ever trips.
+          # Any failure is non-fatal: the APK release is the primary channel.
+          if yarn install --frozen-lockfile && \
+             EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes eoas@3.2.6 publish \
+               --branch production --platform android --nonInteractive; then
+            echo "Published OTA update to branch production (android)"
+            summary_row "- OTA (xprem): ✅ branch \`production\` (android)"
+          else
+            echo "::warning::OTA publish failed — continuing, the APK release is already published"
+            summary_row "- OTA (xprem): ⚠️ failed (see log)"
+          fi
+
       - name: Cleanup workspace
         if: always()
         run: |

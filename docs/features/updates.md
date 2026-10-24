@@ -1,7 +1,73 @@
 # Проверка обновлений
 
-**Слой:** `shared/model/update`, `shared/model/updateInstall`, `shared/lib/version-check`, `shared/lib/update-service`, `widgets/update-status`, `features/app-update`, `features/update-notification`, `features/web-update`
+**Слой:** `shared/model/update`, `shared/model/updateInstall`, `shared/model/updateOtaGate`, `shared/lib/version-check`, `shared/lib/update-service`, `widgets/update-status`, `features/app-update`, `features/update-notification`, `features/web-update`
 **Статус:** готов
+
+## OTA-обновления (expo-updates, self-hosted xprem)
+
+Приложение обновляется по **двум независимым каналам**:
+
+| Канал                                                          | Что доставляет                                           | Как применяется                                                                                       |
+| -------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| OTA: `expo-updates` ← собственный сервер xprem (`https://ota.slovo-propovedi.ru`, протокол Expo Updates v1) | Только JS-бандл и ассеты                                 | Тихо, в фоне; скачанный бандл применяется при **следующем холодном старте**. Без диалогов и без разрешений ОС |
+| APK: Forgejo Release + in-app установка (`modules/apk-installer`) | Нативный код, SDK, конфиг-плагины, разрешения, иконки/сплэш | Диалог «Доступно обновление» (см. «Самообновление (in-app)»)                                          |
+
+**EAS и EAS Updates (облако Expo) по-прежнему не используются** — сервер обновлений собственный (xprem на своём VPS). `expo-updates` работает напрямую с ним по открытому протоколу, поэтому конфиг живёт в `ota.config.ts` (`runtimeVersion`, блок `updates`), который `app.config.ts` подмешивает в общий конфиг, — а не в EAS-профилях.
+
+### runtimeVersion — фиксированный литерал
+
+`ota.config.ts` задаёт `runtimeVersion` **строковым литералом** (не `pkg.version`): литерал гейтит доставку — манифест с другим `runtimeVersion` устройству не предлагается.
+
+- **Меняется только вместе с нативным кодом:** апгрейд Expo SDK / React Native, добавление-обновление нативной зависимости, изменение конфиг-плагинов (`plugins/*.ts`), разрешений, иконок/сплэша. Тогда же выпускается новый APK.
+- **Не меняется для JS-only правок** (экраны, логика, стили, тексты): такой бандл уходит по OTA и совместим с уже установленными сборками.
+- Забыть поднять литерал при нативной правке = отдать несовместимый JS на старую нативку, поэтому bump — часть чек-листа релиза с нативными изменениями.
+
+### Поведение проверки на устройстве
+
+Блок `updates` в `ota.config.ts`:
+
+- `checkAutomatically: 'ON_LOAD'` — манифест проверяется при каждом холодном старте (на Android транслируется в `ALWAYS`);
+- `fallbackToCacheTimeout: 0` — старт **никогда не ждёт** загрузку: скачивание идёт в фоне, а найденный бандл применяется при следующем запуске (никаких «обновитесь сейчас»);
+- `requestHeaders` — идентификация приложения/канала на сервере (см. ниже).
+
+Встроенный бандл (`Updates.isEmbeddedLaunch === true`) остаётся рабочим всегда: если сервер недоступен, приложение просто запускается на том, что есть. На web OTA не работает вовсе — PWA обновляется через Service Worker (`expo-updates` импортируется лениво и в web-сборке не вычисляется, см. «OTA-aware гейт»).
+
+### Публикация (release.yml → eoas)
+
+`.forgejo/workflows/release.yml`, job `android`, шаг **«Publish OTA update to xprem»** — после загрузки APK и зеркалирования релиза:
+
+- без секрета `XPREM_EOO_TOKEN` шаг пропускается (`::warning::`, `exit 0`) — пайплайн остаётся зелёным без настройки;
+- иначе: `yarn install --frozen-lockfile`, затем `eoas publish --branch production --platform android --nonInteractive` (CLI `eoas` из npm, версия держится **синхронно с версией сервера xprem**; токен — в `EOO_TOKEN`);
+- любая ошибка публикации — `::warning::`, джоба продолжается: APK-релиз — основной канал, OTA — дополнение. `EAS_NO_VCS=1` — аварийный выход, если проверка чистоты git-дерева в CI начнёт срабатывать;
+- бандл экспортируется с теми же `EXPO_PUBLIC_*` переменными, что и APK, иначе OTA-бандл указывал бы на неверные хосты.
+
+Сервер сверяет `runtimeVersion` манифеста с запрошенным устройством и публикует манифест с `extra.expoClient.version` (версия из `app.config.ts`/`package.json` на момент публикации) — именно её читает клиентский гейт.
+
+### Bootstrap: app id, заголовки и подпись обновлений
+
+В `ota.config.ts` (импортируется в `app.config.ts` как `OTA_CONFIG`) вынесены константы OTA:
+
+- `XPREM_CHANNEL_NAME = 'production'`, `XPREM_BRANCH_NAME = 'production'` — канал/ветка xprem, совпадают с `--branch production` в CI;
+- `XPREM_APP_ID` — идентификатор приложения из дашборда xprem; **сейчас плейсхолдер** `CHANGE-ME-xprem-app-id` (заполняется при bootstrap сервера, см. плейбук `configuring-playbook-xprem.md`);
+- `CODE_SIGNING_CERT_PATH = './certs/xprem-certificate.pem'` — код-подпись включается **автоматически**: если файл сертификата есть, в блок `updates` добавляются `codeSigningCertificate` и `codeSigningMetadata` (`rsa-v1_5-sha256`, `keyid: main`), иначе блок не эмитится и обновления принимаются без подписи. После появления сертификата нужен новый prebuild (meta-data попадает в манифест) и новое APK.
+
+Заголовки запросов (`updates.requestHeaders`) уходят с каждым запросом манифеста/ассетов: `expo-app-id`, `expo-channel-name`, `xprem-branch`.
+
+Включение пакета — нативная правка: `android/` перегенерируется (`expo prebuild --platform android --clean`), потому что meta-data `expo.modules.updates.*` (url, runtime version, request headers, код-подпись) в закоммиченном манифесте появляется только после prebuild, и выпускается новый APK. Без prebuild локальные сборки запускаются без OTA (meta-data нет), OTA-бандлы им не доставляются.
+
+### OTA-aware гейт диалога APK
+
+`src/shared/model/updateOtaGate.ts` (внутренний модуль слайса, из барреля не экспортируется):
+
+- `getRunningManifestVersion(manifest)` → `string | null` — `extra.expoClient.version` запущенного манифеста; отсутствие `extra`, `expoClient` или нестроковое значение трактуются как «версии нет»;
+- `resolveEffectiveAppVersion({ appVersion, isEmbeddedLaunch, manifestVersion })` → `string` — при встроенном запуске версия из APK, при OTA-запуске версия из манифеста с фолбэком на версию APK;
+- `isReleaseNewerThanRunning(releaseVersion, runningVersion)` → `boolean` — тот же `compareVersions`, но относительно **фактически запущенного** кода.
+
+`checkForUpdateAction` (`src/shared/model/update.ts`) сравнивает релиз с эффективной версией, поэтому после тихого OTA диалог и push-уведомление не появляются, если исправление уже приехало бандлом. `expo-updates` импортируется **динамически внутри нативной ветки** (после ранних выходов для web/офлайна) — web-сборка модуль не загружает; ошибка импорта (Expo Go, web) откатывает гейт к `APP_VERSION`.
+
+### F-Droid
+
+Сборки F-Droid подписываются ключом F-Droid и поставляются своим клиентом — OTA-канал для них неприменим. Публикация F-Droid пока в планах; когда канал появится, OTA в таких сборках должен быть **выключен** (проверка подписи в рантайме либо отдельная build-time ветка) — запись в [`debt.md`](../debt.md).
 
 ## Проверка версии
 
@@ -10,7 +76,7 @@
 - выходит, если `Platform.OS === 'web'` — веб-версия обновляется сама через Service Worker; применение новой версии — через модалку подтверждения (features/web-update, см. [web.md](./web.md) → PWA), диалог «скачать APK» там не имеет смысла;
 - выходит, если `!ctx.get(isOnlineAtom)`;
 - получает последний релиз через `fetchLatestRelease()`; если нет — выходит;
-- сравнивает `compareVersions(release.version, APP_VERSION)`; если релиз новее — планирует уведомление и открывает диалог обновления.
+- сравнивает `compareVersions(release.version, <эффективная версия>)` через `isReleaseNewerThanRunning` — эффективная версия учитывает запущенный OTA-бандл (см. «OTA-aware гейт диалога APK»); если релиз новее — планирует уведомление и открывает диалог обновления.
 
 `src/shared/lib/version-check/`:
 
