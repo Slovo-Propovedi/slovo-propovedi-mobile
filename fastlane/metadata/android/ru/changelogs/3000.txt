@@ -1,0 +1,9 @@
+Stage untracked files before release-mode detection
+Bump-version manages RUNTIME_VERSION automatically
+Anchor APK zip matching against web export asset
+Detect native releases by content, not version churn
+Suppress APK update prompt when OTA is available
+Correct OTA URL shape and unbreak publish git-tree check
+Add silent self-hosted OTA updates via expo-updates
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

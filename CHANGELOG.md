@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.0] - 2026-10-25
+
+### Added
+
+- Bump-version manages RUNTIME_VERSION automatically
+- Suppress APK update prompt when OTA is available
+- Add silent self-hosted OTA updates via expo-updates
+
+### Changed
+
+- Source OTA config from environment variables
+
+### Fixed
+
+- Stage untracked files before release-mode detection
+- Anchor APK zip matching against web export asset
+- Detect native releases by content, not version churn
+- Correct OTA URL shape and unbreak publish git-tree check
+- Skip app.config.ts evaluation in expo-router knip plugin
+- Wait for the Codeberg git mirror before release creation
+
 ## [0.29.1] - 2026-10-24
 
 ### Added
@@ -1431,6 +1452,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.30.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.30.0
 [0.29.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.29.1
 [0.29.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.29.0
 [0.28.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.28.1
