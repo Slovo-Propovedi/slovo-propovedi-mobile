@@ -1,7 +1,7 @@
 ---
 description: Knowledge architect for external research and documentation
 mode: subagent
-model: opencode-go/glm-5.3-flash
+model: zai-coding-plan/glm-5.3-flash
 permissions:
   - action: edit
     resource: '*'
