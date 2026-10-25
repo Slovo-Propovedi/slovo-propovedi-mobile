@@ -63,7 +63,6 @@ export const CardOverlay = ({
             </View>
           ) : (
             <SliderItemText
-              isBold
               isOnArtwork
               maxLines={1}
               title={title}

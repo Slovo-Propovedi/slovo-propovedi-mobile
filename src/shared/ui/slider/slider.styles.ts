@@ -9,7 +9,7 @@ export const createSliderStyles = (theme: ThemeColors) =>
     slider: { maxWidth: '100%' },
     title: {
       color: theme.text,
-      fontWeight: 'bold',
+      fontWeight: 'normal',
       paddingBottom: INDENTS.middle,
       paddingLeft: SLIDER_REST_INSET,
     },

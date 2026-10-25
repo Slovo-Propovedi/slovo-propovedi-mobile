@@ -19,7 +19,6 @@ import { getTitleTextShadow } from './titleTextShadow'
 export const SliderItemText = ({
   backgroundStyle = SliderItemTextBackgroundStyle.Transparent,
   borderRadius,
-  isBold = false,
   isOnArtwork = false,
   maxLines = 1,
   style,
@@ -32,7 +31,6 @@ export const SliderItemText = ({
 }: {
   backgroundStyle?: SliderItemTextBackgroundStyle
   borderRadius?: boolean
-  isBold?: boolean
   isOnArtwork?: boolean
   maxLines?: number
   style?: StyleProp<ViewStyle>
@@ -73,7 +71,7 @@ export const SliderItemText = ({
           { color: textColor },
           { textAlign: titleTextAlign },
           isOnArtwork && !isOnPlate && getTitleTextShadow(textColor),
-          isBold && styles.titleBold,
+          styles.titleBold,
           titleStyle,
         ]}
       >

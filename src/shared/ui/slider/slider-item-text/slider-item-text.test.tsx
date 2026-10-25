@@ -69,16 +69,10 @@ describe('<SliderItemText/>', () => {
     expect(subTitle).toHaveTextContent(propsStub.subTitle, { exact: false })
   })
 
-  test('makes the title bold when isBold is set', async () => {
-    await renderWithProviders(<SliderItemText isBold title={propsStub.title} />)
-
-    expect(screen.getByText(propsStub.title)).toHaveStyle({ fontWeight: 'bold' })
-  })
-
-  test('keeps the title regular by default', async () => {
+  test('makes the card title bold', async () => {
     await renderWithProviders(<SliderItemText title={propsStub.title} />)
 
-    expect(screen.getByText(propsStub.title)).not.toHaveStyle({ fontWeight: 'bold' })
+    expect(screen.getByText(propsStub.title)).toHaveStyle({ fontWeight: 'bold' })
   })
 
   test('adds a white halo to the title drawn on artwork with dark text', async () => {

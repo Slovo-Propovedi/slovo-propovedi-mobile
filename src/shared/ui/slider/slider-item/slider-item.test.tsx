@@ -170,7 +170,7 @@ describe('<SliderItem/>', () => {
     expect(StyleSheet.flatten(title.props.style)).toEqual(
       expect.objectContaining({ fontSize: FONT_SIZES.md }),
     )
-    expect(StyleSheet.flatten(title.props.style)).not.toEqual(
+    expect(StyleSheet.flatten(title.props.style)).toEqual(
       expect.objectContaining({ fontWeight: 'bold' }),
     )
   })
@@ -267,7 +267,7 @@ describe('<SliderItem/>', () => {
     expect(readBottomStackStyle(propsStub.title)).toEqual(
       expect.objectContaining({ backgroundColor: BOTTOM_TITLE_PLATE_BACKGROUND }),
     )
-    expect(readCardTitleTextStyle(propsStub.title)).not.toEqual(
+    expect(readCardTitleTextStyle(propsStub.title)).toEqual(
       expect.objectContaining({ fontWeight: 'bold' }),
     )
   })
