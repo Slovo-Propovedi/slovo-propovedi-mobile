@@ -1,0 +1,628 @@
+name: Purge outdated OTA storage (xprem)
+
+# Manual, destructive cleanup of the self-hosted xprem server
+# (https://ota.slovo-propovedi.ru): everything published BEFORE the latest
+# native release is dead weight for installed builds.
+#
+# Why a whole-branch purge: xprem v3.2.6 has no retention policy and no
+# per-update / per-runtimeVersion delete (upstream issues #284 and #263), and
+# `eoas` has no delete command. The only granularity is the branch, so this run
+# deletes the branch and immediately RE-PUBLISHES the current JS bundle: the
+# outdated data is gone, the current bundle stays. xprem dedups asset uploads
+# through its `blobs` ledger, so the re-publish only uploads what the server no
+# longer has.
+#
+# When to run: right after a NATIVE release (a new APK / new runtimeVersion),
+# and only once `du -sh /slovo/xprem/data` on the VPS shows real growth. The
+# runbook is docs/configuring-playbook-xprem.md in the playbook repo.
+#
+# Run: Forgejo → Actions → «Purge outdated OTA storage (xprem)» → Run workflow.
+#   confirm — must be exactly `purge`; anything else exits without touching the
+#             server (a guard, not a typo trap);
+#   deep    — boolean, default false. ALSO wipes the content-addressed `cas/`
+#             pool and the `blobs` ledger over SSH (unsupported by xprem;
+#             requires the VPS SSH secrets used by the web deploy).
+#
+# Hard gate: the run is only meaningful right after a native release, when HEAD
+# is js-only over the new runtimeVersion. `scripts/ci/detect-native-changes.sh`
+# (shared with release.yml / ota-publish.yml) must report `native=false` and no
+# RUNTIME_VERSION drift since the latest tag, otherwise the run fails before
+# login. No tags at all also fails: nothing can be "outdated" relative to
+# nothing.
+#
+# Failure semantics mirror ota-publish.yml: server-side failures are
+# `::warning::` + exit 0, so a red run never signals repo-level breakage. The
+# only hard failures are the verification gate above. The summary accumulates
+# rows in step order (scripts/ci/step-summary.sh) and the always() footer turns
+# them into one verdict: 🎉 purged + re-published, ⚠️ warnings, ❌ blocked.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "purge" to confirm deleting the xprem branch and re-publishing the current bundle'
+        required: true
+        default: ''
+        type: string
+      deep:
+        description: 'Also wipe the CAS blob pool on the VPS (unsupported by xprem; requires the VPS SSH secrets)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  purge:
+    runs-on: ubuntu-24.04
+
+    # Same group as release.yml / ota-publish.yml: the re-publish runs an
+    # `expo export` (memory-heavy on the 4 GB host) and must never overlap a
+    # publish — a concurrent publish would race the branch delete.
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history + tags: the js-only check diffs HEAD against the latest
+          # release tag and reads RUNTIME_VERSION at both refs.
+          fetch-depth: 0
+          fetch-tags: true
+
+      # The purge must target a js-only HEAD over the latest release tag: that
+      # is exactly the state right after a native release, when everything the
+      # old runtimeVersion published is dead weight. A native diff means the
+      # change belongs in a full release; a RUNTIME_VERSION drift means the
+      # baseline is ambiguous. Both block the run before any server call.
+      #
+      # Also writes the run header: every later step appends its own row in
+      # step order, so the summary accumulates into one readable report.
+      - name: Verify the ref is js-only
+        id: verify
+        run: |
+          set -e
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          SHORT_SHA="${GITHUB_SHA:-unknown}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          {
+            echo "## Purge outdated OTA storage — \`${{ github.ref_name }}\`"
+            echo ''
+            echo "- Commit: \`$SHORT_SHA\` · $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo ''
+          } | scripts/ci/step-summary.sh || true
+
+          # Latest tag by creator date is the last released APK's baseline.
+          PREV_TAG=$(git tag --sort=-creatordate | sed -n '1p' || true)
+          if [ -z "$PREV_TAG" ]; then
+            echo "::error::no release tags — nothing can be outdated relative to nothing; cut a native release first"
+            echo "result=blocked" >> "$GITHUB_OUTPUT"
+            summary_row "- Verification: ❌ blocked (no release tags)"
+            exit 1
+          fi
+
+          DETECT=$(scripts/ci/detect-native-changes.sh "$PREV_TAG" HEAD)
+          NATIVE=$(printf '%s\n' "$DETECT" | sed -n 's/^native=//p')
+          RV_PREV=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_prev=//p')
+          RV_NOW=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_now=//p')
+
+          if [ "$NATIVE" = "true" ]; then
+            echo "::error::Native paths changed since $PREV_TAG — this tool only purges after a native release, when HEAD is js-only over the new runtime. Cut a full release instead."
+            echo "result=blocked" >> "$GITHUB_OUTPUT"
+            summary_row "- Verification: ❌ blocked (native paths changed since $PREV_TAG)"
+            exit 1
+          fi
+
+          if [ -n "$RV_PREV" ] && [ -n "$RV_NOW" ] && [ "$RV_PREV" != "$RV_NOW" ]; then
+            echo "::error::RUNTIME_VERSION at HEAD ($RV_NOW) differs from the latest release tag ($RV_PREV) — the purge baseline is ambiguous. Cut a full release instead."
+            echo "result=blocked" >> "$GITHUB_OUTPUT"
+            summary_row "- Verification: ❌ blocked (RUNTIME_VERSION drift $RV_PREV → $RV_NOW)"
+            exit 1
+          fi
+
+          echo "::notice::verified js-only vs $PREV_TAG (runtimeVersion $RV_NOW)"
+          echo "result=verified" >> "$GITHUB_OUTPUT"
+          summary_row "- Verification: ✅ js-only verified (base \`$PREV_TAG\`, runtimeVersion \`$RV_NOW\`)"
+
+      # All-or-nothing gate before the destructive part. Missing configuration
+      # is a warning, not an error — an unconfigured fork stays green. A missing
+      # `XPREM_EOO_TOKEN` is fatal for the run's purpose too: the branch would
+      # be purged and left EMPTY without the immediate re-publish.
+      - name: Guard confirmation and required config
+        id: guard
+        env:
+          CONFIRM_INPUT: ${{ inputs.confirm }}
+          DEEP_INPUT: ${{ inputs.deep }}
+          XPREM_ADMIN_EMAIL: ${{ secrets.XPREM_ADMIN_EMAIL }}
+          XPREM_ADMIN_PASSWORD: ${{ secrets.XPREM_ADMIN_PASSWORD }}
+          XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          printf '%s\n' '### Purge (xprem)' | scripts/ci/step-summary.sh || true
+
+          # The input is compared through the environment, never interpolated
+          # into the script: it is user-supplied text.
+          if [ "$CONFIRM_INPUT" != 'purge' ]; then
+            echo "::warning::confirmation missing — set the 'confirm' input to exactly 'purge' to run this destructive cleanup"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            summary_row "- Confirmation: ⏭️ skipped (input \`confirm\` is not \`purge\`)"
+            exit 0
+          fi
+
+          DEEP=false
+          case "$DEEP_INPUT" in
+            true|True|TRUE) DEEP=true ;;
+          esac
+          echo "deep=$DEEP" >> "$GITHUB_OUTPUT"
+
+          missing=0
+          missing_list=""
+          for v in XPREM_ADMIN_EMAIL XPREM_ADMIN_PASSWORD XPREM_EOO_TOKEN \
+                   EXPO_PUBLIC_OTA_URL EXPO_PUBLIC_XPREM_APP_ID \
+                   EXPO_PUBLIC_XPREM_CHANNEL_NAME EXPO_PUBLIC_XPREM_BRANCH_NAME; do
+            if [ -z "${!v:-}" ]; then
+              echo "::warning::$v is not configured"
+              missing=1
+              missing_list="$missing_list \`$v\`"
+            fi
+          done
+
+          if [ "$DEEP" = 'true' ]; then
+            for v in VPS_HOST VPS_SSH_PRIVATE_KEY; do
+              if [ -z "${!v:-}" ]; then
+                echo "::warning::$v is not configured — deep mode needs the VPS SSH secrets"
+                missing=1
+                missing_list="$missing_list \`$v\`"
+              fi
+            done
+          fi
+
+          if [ "$missing" -eq 1 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            summary_row "- Config: ⏭️ skipped (missing$missing_list)"
+            exit 0
+          fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "Purging xprem branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (deep=$DEEP)"
+          summary_row "- Config: ✅ ready (branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\`, deep: \`$DEEP\`)"
+
+      # Dashboard session JWT: the publish API key (EOO_TOKEN) is refused with
+      # 403 on the delete routes. Login is form-encoded (a JSON body answers
+      # `400 Email is empty`); the token field is read with a fallback chain so
+      # a renamed field does not break the run. The token is masked and stored
+      # in $GITHUB_ENV, never echoed or written to the summary.
+      - name: Log in to the xprem dashboard
+        id: login
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          XPREM_ADMIN_EMAIL: ${{ secrets.XPREM_ADMIN_EMAIL }}
+          XPREM_ADMIN_PASSWORD: ${{ secrets.XPREM_ADMIN_PASSWORD }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          BASE="${OTA_URL%/}"
+          STATUS=$(curl -sS -o /tmp/xprem-login.json -w '%{http_code}' -X POST "$BASE/auth/login" \
+            -H 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode "email=$XPREM_ADMIN_EMAIL" \
+            --data-urlencode "password=$XPREM_ADMIN_PASSWORD" || true)
+
+          # The response body may carry the session token: never print it.
+          if [ "$STATUS" != '200' ]; then
+            echo "::warning::xprem dashboard login failed (HTTP $STATUS) — check XPREM_ADMIN_EMAIL / XPREM_ADMIN_PASSWORD"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            summary_row "- Login: ⚠️ failed (HTTP $STATUS)"
+            exit 0
+          fi
+
+          JWT=$(jq -r '.token // .accessToken // .access_token // empty' /tmp/xprem-login.json)
+          rm -f /tmp/xprem-login.json
+          if [ -z "$JWT" ]; then
+            echo "::warning::xprem login returned no session token — the dashboard response shape changed"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            summary_row "- Login: ⚠️ failed (no token in response)"
+            exit 0
+          fi
+
+          echo "::add-mask::$JWT"
+          {
+            echo "XPREM_JWT=$JWT"
+            echo "XPREM_BASE=$BASE"
+          } >> "$GITHUB_ENV"
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+          summary_row "- Login: ✅ dashboard session acquired"
+
+      # The "what will be purged" report. Enumeration is informational: a
+      # failure here is a warning and the purge continues (the delete itself is
+      # the source of truth). A 404 on runtimeVersions simply means the branch
+      # does not exist yet — nothing to purge.
+      - name: Enumerate branches and runtime versions
+        id: enumerate
+        if: steps.login.outputs.ok == 'true'
+        env:
+          APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          BRANCH: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          APP_ENC=$(jq -rn --arg v "$APP_ID" '$v|@uri')
+          BRANCH_ENC=$(jq -rn --arg v "$BRANCH" '$v|@uri')
+          API="$XPREM_BASE/api/apps/$APP_ENC"
+
+          BRANCH_STATUS=$(curl -sS -o /tmp/xprem-branches.json -w '%{http_code}' \
+            -H "Authorization: Bearer $XPREM_JWT" "$API/branches" || true)
+          if [ "$BRANCH_STATUS" = '200' ]; then
+            BRANCH_LIST=$(jq -r '[.[].branchName] | join(", ")' /tmp/xprem-branches.json)
+            summary_row "- Branches: $BRANCH_LIST"
+          else
+            echo "::warning::could not list xprem branches (HTTP $BRANCH_STATUS)"
+            summary_row "- Branches: ⚠️ could not list (HTTP $BRANCH_STATUS)"
+          fi
+
+          RV_STATUS=$(curl -sS -o /tmp/xprem-runtime-versions.json -w '%{http_code}' \
+            -H "Authorization: Bearer $XPREM_JWT" "$API/branch/$BRANCH_ENC/runtimeVersions" || true)
+
+          COUNT=0
+          if [ "$RV_STATUS" = '200' ]; then
+            COUNT=$(jq 'if type == "array" then length else 0 end' /tmp/xprem-runtime-versions.json)
+            {
+              echo ''
+              echo 'Runtime versions currently on the branch (everything below is purged):'
+              echo ''
+              echo '| runtimeVersion | updates |'
+              echo '| --- | --- |'
+              jq -r '.[] | "| `\(.runtimeVersion)` | \(.numberOfUpdates) |"' /tmp/xprem-runtime-versions.json
+              echo ''
+            } | scripts/ci/step-summary.sh || true
+          elif [ "$RV_STATUS" = '404' ]; then
+            summary_row "- Runtime versions: ⏭️ none (branch \`$BRANCH\` does not exist)"
+          else
+            echo "::warning::could not enumerate runtime versions for branch $BRANCH (HTTP $RV_STATUS)"
+            summary_row "- Runtime versions: ⚠️ could not enumerate (HTTP $RV_STATUS)"
+          fi
+
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+      # Channel first: a channel mapped to the branch makes the branch delete
+      # answer 409, as does an active rollout. 404 on either means it was
+      # already absent and the run continues. The channel shares the branch
+      # name (`production`): the client asks for
+      # EXPO_PUBLIC_XPREM_CHANNEL_NAME, which equals
+      # EXPO_PUBLIC_XPREM_BRANCH_NAME in this deployment.
+      - name: Delete the channel and the branch
+        id: delete
+        if: steps.login.outputs.ok == 'true'
+        env:
+          APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          BRANCH: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          APP_ENC=$(jq -rn --arg v "$APP_ID" '$v|@uri')
+          BRANCH_ENC=$(jq -rn --arg v "$BRANCH" '$v|@uri')
+          API="$XPREM_BASE/api/apps/$APP_ENC"
+
+          CH_STATUS=$(curl -sS -o /tmp/xprem-del-channel.json -w '%{http_code}' -X DELETE \
+            -H "Authorization: Bearer $XPREM_JWT" "$API/channels/$BRANCH_ENC" || true)
+          case "$CH_STATUS" in
+            204)
+              summary_row "- Channel \`$BRANCH\`: ✅ deleted"
+              ;;
+            404)
+              summary_row "- Channel \`$BRANCH\`: ⏭️ already absent"
+              ;;
+            *)
+              echo "::warning::could not delete channel $BRANCH (HTTP $CH_STATUS) — skipping the purge"
+              summary_row "- Channel \`$BRANCH\`: ⚠️ delete failed (HTTP $CH_STATUS) — purge aborted"
+              echo "result=warning" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+
+          BR_STATUS=$(curl -sS -o /tmp/xprem-del-branch.json -w '%{http_code}' -X DELETE \
+            -H "Authorization: Bearer $XPREM_JWT" "$API/branches/$BRANCH_ENC" || true)
+          case "$BR_STATUS" in
+            204)
+              summary_row "- Branch \`$BRANCH\`: ✅ deleted (per-update metadata + bsdiff freed)"
+              ;;
+            404)
+              summary_row "- Branch \`$BRANCH\`: ⏭️ already absent"
+              ;;
+            409)
+              REASON=$(jq -r '.error // .message // "conflict"' /tmp/xprem-del-branch.json 2>/dev/null || true)
+              echo "::warning::branch delete refused with 409 ($REASON) — a channel is still mapped or a rollout is active; skipping the purge"
+              summary_row "- Branch \`$BRANCH\`: ⚠️ refused (409: $REASON) — purge aborted"
+              echo "result=warning" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+            *)
+              echo "::warning::could not delete branch $BRANCH (HTTP $BR_STATUS) — skipping the purge"
+              summary_row "- Branch \`$BRANCH\`: ⚠️ delete failed (HTTP $BR_STATUS) — purge aborted"
+              echo "result=warning" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+
+          echo "result=deleted" >> "$GITHUB_OUTPUT"
+
+      # Recreate the branch and immediately map a channel onto it. Endpoints
+      # verified against xprem v3.2.6 (apps/dashboard/src/lib/api.ts +
+      # internal/handlers/dashboard/channels_handler.go):
+      #   POST /api/apps/{APP_ID}/branches          {"branchName"}            → {branchId}
+      #   POST /api/apps/{APP_ID}/channels          {"channelName","branchName"} → {channelId}
+      # The second call is exactly what the dashboard does when a channel is
+      # created with a branch selected; it creates and maps in one step, so no
+      # separate updateChannelBranchMapping call is needed.
+      - name: Recreate the branch and the channel
+        id: recreate
+        if: steps.delete.outputs.result == 'deleted'
+        env:
+          APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          BRANCH: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          APP_ENC=$(jq -rn --arg v "$APP_ID" '$v|@uri')
+          BRANCH_ENC=$(jq -rn --arg v "$BRANCH" '$v|@uri')
+          API="$XPREM_BASE/api/apps/$APP_ENC"
+
+          BR_STATUS=$(curl -sS -o /tmp/xprem-create-branch.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $XPREM_JWT" -H 'Content-Type: application/json' \
+            --data "$(jq -cn --arg b "$BRANCH" '{branchName: $b}')" \
+            "$API/branches" || true)
+          if [ "$BR_STATUS" != '200' ] && [ "$BR_STATUS" != '409' ]; then
+            echo "::warning::could not recreate branch $BRANCH (HTTP $BR_STATUS) — the branch is now missing; run ota-publish.yml to restore delivery"
+            summary_row "- Branch \`$BRANCH\`: ⚠️ recreate failed (HTTP $BR_STATUS) — re-publish skipped"
+            echo "result=warning" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$BR_STATUS" = '409' ]; then
+            # The delete answered 404 (branch was already absent) but the name
+            # is taken — the branch exists, which is all the re-publish needs.
+            summary_row "- Branch \`$BRANCH\`: ♻️ already present"
+          else
+            summary_row "- Branch \`$BRANCH\`: ✅ recreated"
+          fi
+
+          CH_STATUS=$(curl -sS -o /tmp/xprem-create-channel.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $XPREM_JWT" -H 'Content-Type: application/json' \
+            --data "$(jq -cn --arg c "$BRANCH" --arg b "$BRANCH" '{channelName: $c, branchName: $b}')" \
+            "$API/channels" || true)
+          case "$CH_STATUS" in
+            200)
+              summary_row "- Channel \`$BRANCH\`: ✅ recreated and mapped to branch \`$BRANCH\`"
+              echo "channel=ok" >> "$GITHUB_OUTPUT"
+              ;;
+            409)
+              echo "::warning::channel $BRANCH already exists (409) — verify in the dashboard that it maps to branch $BRANCH"
+              summary_row "- Channel \`$BRANCH\`: ⚠️ already exists (409) — mapping not re-applied, verify manually"
+              echo "channel=warning" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::warning::could not recreate channel $BRANCH (HTTP $CH_STATUS) — recreate it in the dashboard; devices on the channel get no manifest until then"
+              summary_row "- Channel \`$BRANCH\`: ⚠️ recreate failed (HTTP $CH_STATUS) — recreate it manually in the dashboard"
+              echo "channel=warning" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+          echo "result=recreated" >> "$GITHUB_OUTPUT"
+
+      - name: Setup SSH (deep mode)
+        if: steps.recreate.outputs.result == 'recreated' && steps.guard.outputs.deep == 'true'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # Deep reclaim, opt-in and unsupported upstream. One SSH session does
+      # BOTH operations: the playbook's documented CAS wipe stops the unit for
+      # the duration, removes `{APP_ID}/cas`, and clears the `blobs` ledger.
+      # `blobs` is the publish-dedup ledger, so files without rows (or rows
+      # without files) break later publishes — hence one unit, never half.
+      # psql runs INSIDE the postgres container as its own superuser
+      # ($POSTGRES_USER) over container-local trust: no password is needed or
+      # passed. `xprem` is the managed database name from the playbook.
+      #
+      # A failure here does not abort the run: the re-publish below re-uploads
+      # the current bundle's assets, which heals the ledger. If the files were
+      # removed but the SQL failed, that re-upload is what restores
+      # consistency — so the warning is loud, never silent.
+      - name: Wipe the CAS pool and the blobs ledger (deep)
+        id: deep
+        if: steps.recreate.outputs.result == 'recreated' && steps.guard.outputs.deep == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_USER: ${{ secrets.VPS_SSH_USER }}
+          APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          SSH_TARGET="${VPS_SSH_USER:-root}@$VPS_HOST"
+
+          if ssh "$SSH_TARGET" bash -s -- "$APP_ID" <<'REMOTE'
+          set -euo pipefail
+          APP_ID=$1
+          case "$APP_ID" in
+            ''|*[!A-Za-z0-9_-]*) echo "invalid app id" >&2; exit 2 ;;
+          esac
+
+          systemctl stop slovo-xprem.service
+          trap 'systemctl start slovo-xprem.service || true' EXIT
+
+          rm -rf "/slovo/xprem/data/$APP_ID/cas"
+          printf "DELETE FROM blobs WHERE app_id = '%s';\n" "$APP_ID" \
+            | docker exec -i slovo-postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d xprem'
+          systemctl start slovo-xprem.service
+          trap - EXIT
+          REMOTE
+          then
+            echo "Wiped cas/ and the blobs ledger for $APP_ID"
+            echo "result=ok" >> "$GITHUB_OUTPUT"
+            summary_row "- CAS pool (deep): ✅ \`cas/\` wiped + \`blobs\` ledger cleared, service restarted"
+          else
+            echo "::warning::deep wipe failed — cas/ and the blobs ledger may be out of sync; the re-publish below re-uploads the current assets to heal the ledger, but verify the VPS manually"
+            echo "result=failed" >> "$GITHUB_OUTPUT"
+            summary_row "- CAS pool (deep): ⚠️ failed — \`cas/\` and \`blobs\` may be out of sync (re-publish heals the ledger; verify on the VPS)"
+          fi
+
+      # Same steps and env as the ota-publish publish step: `eoas publish` runs
+      # `expo export`, which evaluates app.config.ts, so all EXPO_PUBLIC_* must
+      # be present or the bundle ships with `updates.enabled: false`.
+      - name: Setup Node.js
+        if: steps.recreate.outputs.result == 'recreated'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        if: steps.recreate.outputs.result == 'recreated'
+        run: corepack enable
+
+      - name: Get yarn cache directory
+        id: yarn-cache-dir
+        if: steps.recreate.outputs.result == 'recreated'
+        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache yarn dependencies
+        if: steps.recreate.outputs.result == 'recreated'
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        if: steps.recreate.outputs.result == 'recreated'
+        run: yarn install --frozen-lockfile
+
+      - name: Re-publish the current bundle
+        id: publish
+        if: steps.recreate.outputs.result == 'recreated'
+        env:
+          # Inlined into the exported JS bundle — the OTA bundle must target the
+          # same prod hosts as the APK it is delivered to.
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # xprem deployment values (Forgejo org/repo vars).
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+          # Same Metro memory caps as the APK build — the 4 GB host is shared.
+          NODE_OPTIONS: --max-old-space-size=1536
+          CI_METRO_MAX_WORKERS: '2'
+          XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
+          # eoas aborts a non-interactive publish from a dirty tracked tree.
+          EAS_NO_VCS: '1'
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          # Non-fatal, like ota-publish: a failed publish is a warning, not
+          # repo-level breakage. But here it means the branch is EMPTY, so the
+          # wording points at the recovery path. Re-running is safe — xprem
+          # dedups identical content.
+          EOAS_VERSION="$(cat .eoas-version)"
+          if EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes "eoas@${EOAS_VERSION}" publish \
+               --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive; then
+            echo "Re-published the current bundle to branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
+            echo "result=published" >> "$GITHUB_OUTPUT"
+            summary_row "- Re-publish: ✅ current bundle published to branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\`"
+          else
+            echo "::warning::re-publish failed — the branch is EMPTY; run ota-publish.yml (or this workflow again) to restore OTA delivery"
+            echo "result=failed" >> "$GITHUB_OUTPUT"
+            summary_row "- Re-publish: ⚠️ failed — branch is empty, run ota-publish.yml"
+          fi
+
+      # Footer: always runs, so the summary ends with a verdict even when a step
+      # above failed and skipped the rest. Everything is read from the outputs
+      # the steps wrote — an empty output means "did not run", never success.
+      - name: Run summary
+        if: always()
+        env:
+          VERIFY_RESULT: ${{ steps.verify.outputs.result }}
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+          GUARD_READY: ${{ steps.guard.outputs.ready }}
+          GUARD_OUTCOME: ${{ steps.guard.outcome }}
+          DEEP_REQUESTED: ${{ steps.guard.outputs.deep }}
+          LOGIN_OK: ${{ steps.login.outputs.ok }}
+          RUNTIME_COUNT: ${{ steps.enumerate.outputs.count }}
+          DELETE_RESULT: ${{ steps.delete.outputs.result }}
+          RECREATE_RESULT: ${{ steps.recreate.outputs.result }}
+          CHANNEL_RESULT: ${{ steps.recreate.outputs.channel }}
+          DEEP_RESULT: ${{ steps.deep.outputs.result }}
+          PUBLISH_RESULT: ${{ steps.publish.outputs.result }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          case "$VERIFY_RESULT" in
+            verified) VERIFY='✅ js-only verified' ;;
+            blocked) VERIFY='❌ blocked (not js-only)' ;;
+            *) VERIFY='⚠️ not reported' ;;
+          esac
+
+          case "$CHANNEL_RESULT" in
+            ok) CHANNEL='✅ mapped' ;;
+            warning) CHANNEL='⚠️ needs manual recreate' ;;
+            *) CHANNEL='⏭️ skipped' ;;
+          esac
+
+          case "$DEEP_RESULT" in
+            ok) DEEP='✅ wiped' ;;
+            failed) DEEP='⚠️ failed' ;;
+            *) if [ "$DEEP_REQUESTED" = 'true' ]; then DEEP='⚠️ not reported'; else DEEP='⏭️ skipped'; fi ;;
+          esac
+
+          case "$PUBLISH_RESULT" in
+            published) PUBLISH='✅ re-published' ;;
+            failed) PUBLISH='⚠️ failed (branch empty)' ;;
+            *) PUBLISH='⏭️ skipped' ;;
+          esac
+
+          if [ "$VERIFY_RESULT" = 'blocked' ] || [ "$VERIFY_OUTCOME" = 'failure' ]; then
+            VERDICT='❌ blocked — verification refused this run (see the row above)'
+          elif [ "$GUARD_OUTCOME" = 'failure' ]; then
+            VERDICT='❌ failed — the confirmation/config guard broke (see log)'
+          elif [ "$GUARD_READY" != 'true' ]; then
+            VERDICT='⚠️ nothing purged — confirmation or required config missing (see the rows above)'
+          elif [ "$LOGIN_OK" != 'true' ]; then
+            VERDICT='⚠️ nothing purged — the dashboard login failed (see the row above)'
+          elif [ "$DELETE_RESULT" != 'deleted' ]; then
+            VERDICT='⚠️ nothing purged — the delete step did not complete (see the rows above)'
+          elif [ "$RECREATE_RESULT" != 'recreated' ]; then
+            VERDICT='⚠️ branch deleted but not recreated — run ota-publish.yml to restore delivery'
+          elif [ "$PUBLISH_RESULT" = 'published' ] && [ "$DEEP_RESULT" != 'failed' ] && [ "$CHANNEL_RESULT" = 'ok' ]; then
+            VERDICT="🎉 purged ${RUNTIME_COUNT:-?} outdated runtime version(s), current bundle re-published"
+          else
+            VERDICT="⚠️ finished with warnings — channel: $CHANNEL · deep: $DEEP · re-publish: $PUBLISH"
+          fi
+
+          {
+            echo ''
+            echo '---'
+            echo ''
+            echo "**Result:** $VERDICT"
+          } | scripts/ci/step-summary.sh || true
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          rm -rf node_modules .yarn/cache .expo jest-cache dist 2>/dev/null || true
+          rm -f /tmp/xprem-*.json 2>/dev/null || true
+          rm -f ~/.ssh/id_ed25519 2>/dev/null || true
+          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
+          find . -name '.cache' -type d -delete 2>/dev/null || true
