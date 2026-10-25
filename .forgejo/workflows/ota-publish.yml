@@ -58,6 +58,68 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Full history + tags: the js-only check diffs HEAD against the latest
+          # release tag and reads RUNTIME_VERSION at both refs.
+          fetch-depth: 0
+          fetch-tags: true
+
+      # The selected ref must be JS-only: an OTA bundle can only reach APKs
+      # that already carry its runtimeVersion. Native paths since the latest
+      # release tag mean the change belongs in a full release (new APK); a
+      # RUNTIME_VERSION bump on a JS-only diff targets a runtime no released
+      # APK has. Runs before any install/publish, so a wrong ref fails fast.
+      #
+      # Also writes the run header: every later step appends its own row in
+      # step order (see scripts/ci/step-summary.sh), so the summary accumulates
+      # into one readable report. A step skipped by `if:` appends nothing — the
+      # rows only ever describe what actually ran.
+      - name: Verify the ref is JS-only
+        id: verify
+        run: |
+          set -e
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          SHORT_SHA="${GITHUB_SHA:-unknown}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          {
+            echo "## Manual OTA publish — \`${{ github.ref_name }}\`"
+            echo ''
+            echo "- Commit: \`$SHORT_SHA\` · $(date -u '+%Y-%m-%d %H:%M UTC') · platform: android"
+            echo ''
+          } | scripts/ci/step-summary.sh || true
+
+          # Latest tag by creator date is the last released APK's baseline.
+          PREV_TAG=$(git tag --sort=-creatordate | sed -n '1p' || true)
+          if [ -z "$PREV_TAG" ]; then
+            echo "::warning::no tags yet — skipping js-only verification"
+            echo "result=skipped" >> "$GITHUB_OUTPUT"
+            summary_row "- Verification: ⏭️ skipped (no tags)"
+            exit 0
+          fi
+
+          DETECT=$(scripts/ci/detect-native-changes.sh "$PREV_TAG" HEAD)
+          NATIVE=$(printf '%s\n' "$DETECT" | sed -n 's/^native=//p')
+          RV_PREV=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_prev=//p')
+          RV_NOW=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_now=//p')
+
+          if [ "$NATIVE" = "true" ]; then
+            echo "::error::Native paths changed since $PREV_TAG — cut a full release (yarn bump-version + tag) instead of an OTA publish"
+            echo "result=blocked" >> "$GITHUB_OUTPUT"
+            summary_row "- Verification: ❌ blocked (native paths changed since $PREV_TAG)"
+            exit 1
+          fi
+
+          if [ -n "$RV_PREV" ] && [ -n "$RV_NOW" ] && [ "$RV_PREV" != "$RV_NOW" ]; then
+            echo "::error::RUNTIME_VERSION at HEAD differs from the latest release tag — this OTA bundle would target a runtime no released APK has. Cut a full release instead."
+            echo "result=blocked" >> "$GITHUB_OUTPUT"
+            summary_row "- Verification: ❌ blocked (RUNTIME_VERSION drift)"
+            exit 1
+          fi
+
+          echo "::notice::verified js-only vs $PREV_TAG"
+          echo "result=verified" >> "$GITHUB_OUTPUT"
+          summary_row "- Verification: ✅ js-only verified (base $PREV_TAG)"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -84,10 +146,8 @@ jobs:
       # deliver nothing, so a publish is pointless. Missing config is a warning,
       # not an error — an unconfigured fork stays green.
       #
-      # Also writes the run header: every later step appends its own row in step
-      # order (see scripts/ci/step-summary.sh), so the summary accumulates into
-      # one readable report. A step skipped by `if:` appends nothing — the rows
-      # only ever describe what actually ran.
+      # Opens the OTA section under the run header written by the verification
+      # step above.
       - name: Guard required OTA config
         id: guard
         env:
@@ -101,15 +161,7 @@ jobs:
           # $GITHUB_STEP_SUMMARY is unset or unwritable (older/exotic runners).
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
 
-          SHORT_SHA="${GITHUB_SHA:-unknown}"
-          SHORT_SHA="${SHORT_SHA:0:7}"
-          {
-            echo "## Manual OTA publish — \`${{ github.ref_name }}\`"
-            echo ''
-            echo "- Commit: \`$SHORT_SHA\` · $(date -u '+%Y-%m-%d %H:%M UTC') · platform: android"
-            echo ''
-            echo '### OTA (xprem)'
-          } | scripts/ci/step-summary.sh || true
+          printf '%s\n' '### OTA (xprem)' | scripts/ci/step-summary.sh || true
 
           missing=0
           missing_list=""
@@ -305,6 +357,8 @@ jobs:
       - name: Run summary
         if: always()
         env:
+          VERIFY_RESULT: ${{ steps.verify.outputs.result }}
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
           GUARD_READY: ${{ steps.guard.outputs.ready }}
           GUARD_OUTCOME: ${{ steps.guard.outcome }}
           OTA_RESULT: ${{ steps.ota.outputs.result }}
@@ -338,7 +392,16 @@ jobs:
             *) WEB='⏭️ skipped' ;;
           esac
 
-          if [ "$GUARD_OUTCOME" = 'failure' ]; then
+          case "$VERIFY_RESULT" in
+            verified) VERIFY='✅ js-only verified' ;;
+            blocked) VERIFY='❌ blocked (not js-only)' ;;
+            skipped) VERIFY='⏭️ skipped (no tags)' ;;
+            *) VERIFY='⚠️ not reported' ;;
+          esac
+
+          if [ "$VERIFY_RESULT" = 'blocked' ] || [ "$VERIFY_OUTCOME" = 'failure' ]; then
+            VERDICT='❌ failed — verification blocked this publish (see the row above)'
+          elif [ "$GUARD_OUTCOME" = 'failure' ]; then
             VERDICT='❌ failed — the OTA config guard broke (see log)'
           elif [ "$WEB_VARS_OUTCOME" = 'failure' ] || [ "$WEB_EXPORT_OUTCOME" = 'failure' ] \
              || [ "$DEPLOY_OUTCOME" = 'failure' ]; then
@@ -348,7 +411,7 @@ jobs:
           elif [ "$OTA" = '✅ published' ] && [ "$WEB" = '✅ deployed' ]; then
             VERDICT='🎉 done: web + OTA published'
           else
-            VERDICT="⚠️ finished with warnings — OTA: $OTA · web: $WEB"
+            VERDICT="⚠️ finished with warnings — verification: $VERIFY · OTA: $OTA · web: $WEB"
           fi
 
           {
