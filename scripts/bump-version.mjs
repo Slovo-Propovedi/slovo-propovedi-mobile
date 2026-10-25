@@ -29,6 +29,14 @@ if (!/^\d+\.\d+\.\d+$/.test(versionArg) && !['patch', 'minor', 'major'].includes
   exitError(`Invalid argument: "${arg}". Use X.Y.Z, patch, minor, or major.`)
 }
 
+// --- Stage everything before detection ---
+// Worktree-mode detection diffs the last release tag against the working tree.
+// Unstaged untracked files are invisible to `git diff <ref>`, so a brand-new
+// native file (e.g. plugins/*.ts) would be misread as a js-only release. Staging
+// first makes those files part of the diff that detection sees.
+log('→ Staging all changes...', YELLOW)
+execSync('git add -A', { cwd: process.cwd() })
+
 // --- Determine release mode (native vs js-only) ---
 // The newest tag is the last release: this bump's tag does not exist yet.
 // No tags at all means a bootstrap release — treat it as native, matching the
@@ -59,7 +67,7 @@ const detectNativeChanges = prevRef => {
 }
 
 // Worktree mode: the pending diff (committed + staged + unstaged) against the
-// last release, which is exactly what `git add -A` will sweep into the bump.
+// last release, which is exactly what the preceding `git add -A` made visible.
 const isNativeRelease = lastTag ? detectNativeChanges(lastTag) : true
 
 log(`→ Release mode: ${isNativeRelease ? 'native' : 'js-only'}`, YELLOW)
@@ -133,7 +141,8 @@ log('✓ Updated fdroid/metadata/ru.slovopropovedi.yml', GREEN)
 // 5. ota.config.ts — RUNTIME_VERSION (OTA delivery gate)
 // Convention: a native release ships app X.Y.Z with runtime X.Y.Z; a js-only
 // release keeps the runtime gate of the last APK so its bundle stays
-// compatible. This edit lands in the bump commit via the `git add -A` below.
+// compatible. This edit lands in the bump commit via the second `git add -A`
+// below.
 const otaConfigPath = 'ota.config.ts'
 const runtimeVersionPattern = /^const RUNTIME_VERSION = '([^']+)'/m
 let otaConfig = readFileSync(otaConfigPath, 'utf-8')
@@ -163,8 +172,11 @@ try {
   exitError(`Changelog update failed: ${error.message}`)
 }
 
-// --- Git operations ---
-log('\n→ Staging all changes...', YELLOW)
+// --- Stage edits produced after detection ---
+// The first `git add -A` only made untracked files visible to detection; the
+// RUNTIME_VERSION rewrite and changelog edits above happened after it, so this
+// second pass is what puts them into the bump commit.
+log('\n→ Staging version bump changes...', YELLOW)
 execSync('git add -A', { cwd: process.cwd() })
 
 log('→ Committing...', YELLOW)
