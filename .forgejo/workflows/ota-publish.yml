@@ -34,6 +34,12 @@ name: Publish OTA update (manual)
 # `::warning::` + exit 0, so a red run never signals repo-level breakage. A
 # manual run is watched by a human anyway — the eoas error stays visible in the
 # log above the warning.
+#
+# Summary: every step appends its row to $GITHUB_STEP_SUMMARY (see
+# scripts/ci/step-summary.sh) — header, OTA config/publish, web export/deploy —
+# and the always() footer turns those rows into one verdict: 🎉 fully published,
+# ⚠️ skipped/non-fatal parts, ❌ the web path broke. A step skipped by `if:`
+# appends nothing; the footer reports it as skipped rather than green.
 
 on:
   workflow_dispatch:
@@ -77,6 +83,11 @@ jobs:
       # vars the exported bundle would carry `updates.enabled: false` and
       # deliver nothing, so a publish is pointless. Missing config is a warning,
       # not an error — an unconfigured fork stays green.
+      #
+      # Also writes the run header: every later step appends its own row in step
+      # order (see scripts/ci/step-summary.sh), so the summary accumulates into
+      # one readable report. A step skipped by `if:` appends nothing — the rows
+      # only ever describe what actually ran.
       - name: Guard required OTA config
         id: guard
         env:
@@ -86,12 +97,19 @@ jobs:
           EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
           EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
         run: |
-          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
+          # The summary is cosmetic: `|| true` keeps the workflow green when
+          # $GITHUB_STEP_SUMMARY is unset or unwritable (older/exotic runners).
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
 
+          SHORT_SHA="${GITHUB_SHA:-unknown}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
           {
-            echo "## Manual OTA publish — ${{ github.ref_name }}"
+            echo "## Manual OTA publish — \`${{ github.ref_name }}\`"
             echo ''
-          } | scripts/ci/step-summary.sh
+            echo "- Commit: \`$SHORT_SHA\` · $(date -u '+%Y-%m-%d %H:%M UTC') · platform: android"
+            echo ''
+            echo '### OTA (xprem)'
+          } | scripts/ci/step-summary.sh || true
 
           missing=0
           missing_list=""
@@ -105,13 +123,13 @@ jobs:
           done
           if [ "$missing" -eq 1 ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            summary_row "- OTA (xprem): ⏭️ skipped (missing$missing_list)"
+            summary_row "- Config: ⏭️ skipped (missing$missing_list)"
             exit 0
           fi
 
           echo "ready=true" >> "$GITHUB_OUTPUT"
           echo "Publishing to xprem branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
-          summary_row "- OTA config: ✅ · branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\`"
+          summary_row "- Config: ✅ ready (branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\`)"
 
       # Needed by both paths: the OTA publish (gated separately by `ready`)
       # and the web export below.
@@ -119,6 +137,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Publish OTA update to xprem
+        id: ota
         if: steps.guard.outputs.ready == 'true'
         env:
           # Inlined into the exported JS bundle (see src/shared/config/config.ts,
@@ -143,7 +162,7 @@ jobs:
           # robust against future build steps (same as release.yml).
           EAS_NO_VCS: '1'
         run: |
-          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
 
           # Non-fatal on purpose: same semantics as the release.yml `ota` job, so
           # a broken publish never reads as repo-level breakage. The eoas output
@@ -154,16 +173,19 @@ jobs:
           if EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes "eoas@${EOAS_VERSION}" publish \
                --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive; then
             echo "Published OTA update to branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
-            summary_row "- OTA (xprem): ✅ branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\` (android)"
+            echo "result=published" >> "$GITHUB_OUTPUT"
+            summary_row "- Publish: ✅ published to xprem (branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\`)"
           else
             # A re-run is safe: xprem dedupes identical content.
             echo "::warning::OTA publish failed — see the eoas output above; fix and re-run"
-            summary_row "- OTA (xprem): ⚠️ failed (see log)"
+            echo "result=failed" >> "$GITHUB_OUTPUT"
+            summary_row "- Publish: ⚠️ failed (see log)"
           fi
 
       # Web deploy — same steps as the release.yml `web` job, minus the
       # release-asset upload (a manual run creates no Forgejo release).
       - name: Validate required web vars
+        id: webvars
         env:
           BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
@@ -172,9 +194,9 @@ jobs:
           set -e
 
           {
-            echo "## Manual web deploy — ${{ github.ref_name }}"
             echo ''
-          } | scripts/ci/step-summary.sh
+            echo '### Web'
+          } | scripts/ci/step-summary.sh || true
 
           missing=0
           missing_list=""
@@ -186,13 +208,16 @@ jobs:
             fi
           done
           if [ "$missing" -eq 1 ]; then
-            printf '%s\n' "- Required vars: ❌ missing$missing_list" | scripts/ci/step-summary.sh
+            echo "vars=missing" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Required vars: ❌ missing$missing_list" | scripts/ci/step-summary.sh || true
           else
-            printf '%s\n' "- Required vars: ✅" | scripts/ci/step-summary.sh
+            echo "vars=ok" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Required vars: ✅" | scripts/ci/step-summary.sh || true
           fi
           exit $missing
 
       - name: Export web
+        id: webexport
         env:
           # Same Metro memory caps as the APK build — the 4 GB host is shared.
           NODE_OPTIONS: --max-old-space-size=1536
@@ -204,8 +229,16 @@ jobs:
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
         run: |
           start=$EPOCHSECONDS
-          yarn web:build
-          printf '%s\n' "- Web export: ✅ ($((EPOCHSECONDS-start))s)" | scripts/ci/step-summary.sh
+          if yarn web:build; then
+            echo "result=exported" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Export: ✅ ($((EPOCHSECONDS-start))s)" | scripts/ci/step-summary.sh || true
+          else
+            # The export is fatal (unlike OTA): without dist/ there is nothing
+            # to deploy, so the run must go red — but the row still explains it.
+            echo "result=failed" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Export: ⚠️ failed (see log)" | scripts/ci/step-summary.sh || true
+            exit 1
+          fi
 
       - name: Check deploy config
         id: deploycfg
@@ -217,7 +250,7 @@ jobs:
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::VPS_HOST secret or WEB_HOSTNAME variable not set — skipping VPS deploy"
-            printf '%s\n' "- VPS deploy: ⏭️ skipped (VPS_HOST secret or WEB_HOSTNAME variable not set)" | scripts/ci/step-summary.sh
+            printf '%s\n' "- Deploy: ⏭️ skipped (VPS_HOST secret or WEB_HOSTNAME variable not set)" | scripts/ci/step-summary.sh || true
             echo "deploy=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -233,6 +266,7 @@ jobs:
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Deploy to VPS
+        id: deploy
         if: steps.deploycfg.outputs.deploy == 'true'
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -246,16 +280,83 @@ jobs:
           SRC=/slovo/web/container-src
 
           # Ship only what the image needs: the export + the nginx bits.
-          tar czf - dist Dockerfile nginx.conf .dockerignore \
-            | ssh "$SSH_TARGET" "rm -rf $SRC && mkdir -p $SRC && tar xzf - -C $SRC"
-          scp scripts/vps-deploy-web.sh "$SSH_TARGET:/tmp/vps-deploy-web.sh"
-          ssh "$SSH_TARGET" \
-            "chmod +x /tmp/vps-deploy-web.sh && \
-             DEPLOY_TAG='$DEPLOY_TAG' \
-             WEB_HOSTNAME='$WEB_HOSTNAME' \
-             ACME_EMAIL='$ACME_EMAIL' \
-             bash /tmp/vps-deploy-web.sh"
-          printf '%s\n' "- VPS deploy: ✅ https://$WEB_HOSTNAME ($DEPLOY_TAG)" | scripts/ci/step-summary.sh
+          if tar czf - dist Dockerfile nginx.conf .dockerignore \
+               | ssh "$SSH_TARGET" "rm -rf $SRC && mkdir -p $SRC && tar xzf - -C $SRC" \
+             && scp scripts/vps-deploy-web.sh "$SSH_TARGET:/tmp/vps-deploy-web.sh" \
+             && ssh "$SSH_TARGET" \
+                  "chmod +x /tmp/vps-deploy-web.sh && \
+                   DEPLOY_TAG='$DEPLOY_TAG' \
+                   WEB_HOSTNAME='$WEB_HOSTNAME' \
+                   ACME_EMAIL='$ACME_EMAIL' \
+                   bash /tmp/vps-deploy-web.sh"; then
+            echo "result=deployed" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Deploy: ✅ https://$WEB_HOSTNAME ($DEPLOY_TAG)" | scripts/ci/step-summary.sh || true
+          else
+            # The deploy is fatal, unlike OTA — the run goes red either way; the
+            # row only makes the summary self-explanatory.
+            echo "result=failed" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Deploy: ⚠️ failed (see log)" | scripts/ci/step-summary.sh || true
+            exit 1
+          fi
+
+      # Footer: always runs, so the summary ends with a verdict even when a step
+      # above failed and skipped the rest. Everything is read from the outputs
+      # the steps wrote — an empty output means "did not run", never success.
+      - name: Run summary
+        if: always()
+        env:
+          GUARD_READY: ${{ steps.guard.outputs.ready }}
+          GUARD_OUTCOME: ${{ steps.guard.outcome }}
+          OTA_RESULT: ${{ steps.ota.outputs.result }}
+          WEB_EXPORT: ${{ steps.webexport.outputs.result }}
+          DEPLOY_ENABLED: ${{ steps.deploycfg.outputs.deploy }}
+          DEPLOY_RESULT: ${{ steps.deploy.outputs.result }}
+          WEB_VARS_OUTCOME: ${{ steps.webvars.outcome }}
+          WEB_EXPORT_OUTCOME: ${{ steps.webexport.outcome }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          case "$OTA_RESULT" in
+            published) OTA='✅ published' ;;
+            failed) OTA='⚠️ failed' ;;
+            # guard.ready=false is a deliberate skip; ready=true with no result
+            # means the step never reported (a failed earlier step) — not a pass.
+            *) if [ "$GUARD_READY" = 'true' ]; then OTA='⚠️ not reported'; else OTA='⏭️ skipped'; fi ;;
+          esac
+
+          case "$WEB_EXPORT" in
+            exported)
+              case "$DEPLOY_ENABLED:$DEPLOY_RESULT" in
+                true:deployed) WEB='✅ deployed' ;;
+                true:*) WEB='⚠️ export ok, deploy not reported' ;;
+                false:*) WEB='✅ exported, deploy ⏭️ skipped' ;;
+                *) WEB='⚠️ export ok, deploy state unknown' ;;
+              esac
+              ;;
+            failed) WEB='⚠️ export failed' ;;
+            *) WEB='⏭️ skipped' ;;
+          esac
+
+          if [ "$GUARD_OUTCOME" = 'failure' ]; then
+            VERDICT='❌ failed — the OTA config guard broke (see log)'
+          elif [ "$WEB_VARS_OUTCOME" = 'failure' ] || [ "$WEB_EXPORT_OUTCOME" = 'failure' ] \
+             || [ "$DEPLOY_OUTCOME" = 'failure' ]; then
+            VERDICT='❌ failed — the web path broke (see the rows above)'
+          elif [ "$GUARD_READY" = 'true' ] && [ -z "$OTA_RESULT" ]; then
+            VERDICT='❌ failed — OTA publish never ran (see log)'
+          elif [ "$OTA" = '✅ published' ] && [ "$WEB" = '✅ deployed' ]; then
+            VERDICT='🎉 done: web + OTA published'
+          else
+            VERDICT="⚠️ finished with warnings — OTA: $OTA · web: $WEB"
+          fi
+
+          {
+            echo ''
+            echo '---'
+            echo ''
+            echo "**Result:** $VERDICT"
+          } | scripts/ci/step-summary.sh || true
 
       - name: Cleanup workspace
         if: always()
