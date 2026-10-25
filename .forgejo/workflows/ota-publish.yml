@@ -1,0 +1,158 @@
+name: Publish OTA update (manual)
+
+# Ad-hoc OTA publish WITHOUT cutting a version or a tag — the `ota` job from
+# release.yml behind a manual trigger.
+#
+# When to use it:
+#   - a hotfix must reach installed builds now, but a full release is not
+#     warranted yet (js-only change: screens, logic, styles, texts);
+#   - the OTA step of a normal release failed and the bundle needs a re-publish.
+# Do NOT use it for changes under android/, ios/, plugins/, modules/, or for
+# yarn.lock / app.config.ts / ota.config.ts: such a bundle belongs to a NEW
+# runtimeVersion and release.yml ships it inside a new APK, not over the air
+# (see the RUNTIME_VERSION guard in release.yml).
+#
+# Normal releases publish OTA automatically: release.yml runs the `ota` job on
+# every `v*` tag in JS-only mode, so this workflow is an out-of-band tool only.
+#
+# Run: Forgejo → Actions → «Publish OTA update (manual)» → Run workflow →
+# pick the branch. Platform is always android; the xprem branch and channel are
+# taken from the org/repo vars, never from the run.
+#
+# xprem dedupes identical content, so an accidental double publish of the same
+# commit is harmless — the second run uploads nothing new.
+#
+# Failure semantics match the release.yml `ota` job: a failed publish is
+# `::warning::` + exit 0, so a red run never signals repo-level breakage. A
+# manual run is watched by a human anyway — the eoas error stays visible in the
+# log above the warning.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ota:
+    runs-on: ubuntu-24.04
+
+    # Same group as release.yml / ci.yml: the export is memory-heavy and the
+    # runner host is 4 GB, so manual publishes queue instead of overlapping a
+    # build (see release.yml for the OOM context).
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Get yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      # Same all-or-nothing gate as the release.yml `ota` job: without the four
+      # vars the exported bundle would carry `updates.enabled: false` and
+      # deliver nothing, so a publish is pointless. Missing config is a warning,
+      # not an error — an unconfigured fork stays green.
+      - name: Guard required OTA config
+        id: guard
+        env:
+          XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
+
+          {
+            echo "## Manual OTA publish — ${{ github.ref_name }}"
+            echo ''
+          } | scripts/ci/step-summary.sh
+
+          missing=0
+          missing_list=""
+          for v in XPREM_EOO_TOKEN EXPO_PUBLIC_OTA_URL EXPO_PUBLIC_XPREM_APP_ID \
+                   EXPO_PUBLIC_XPREM_CHANNEL_NAME EXPO_PUBLIC_XPREM_BRANCH_NAME; do
+            if [ -z "${!v:-}" ]; then
+              echo "::warning::$v is not configured"
+              missing=1
+              missing_list="$missing_list \`$v\`"
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            summary_row "- OTA (xprem): ⏭️ skipped (missing$missing_list)"
+            exit 0
+          fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "Publishing to xprem branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
+          summary_row "- OTA config: ✅ · branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\`"
+
+      - name: Install dependencies
+        if: steps.guard.outputs.ready == 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Publish OTA update to xprem
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          # Inlined into the exported JS bundle (see src/shared/config/config.ts,
+          # src/pages/share/lib/constants.ts) — the OTA bundle must target the
+          # same prod hosts as the APK it is delivered to.
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # xprem deployment values (Forgejo org/repo vars) — `eoas publish`
+          # runs `expo export`, which evaluates app.config.ts; the guard above
+          # already ensured they are all set.
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+          # Same Metro memory caps as the APK build — the 4 GB host is shared.
+          NODE_OPTIONS: --max-old-space-size=1536
+          CI_METRO_MAX_WORKERS: '2'
+          XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
+          # eoas aborts a non-interactive publish from a dirty tracked tree.
+          # This job does not modify sources, but the flag keeps the publish
+          # robust against future build steps (same as release.yml).
+          EAS_NO_VCS: '1'
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
+
+          # Non-fatal on purpose: same semantics as the release.yml `ota` job, so
+          # a broken publish never reads as repo-level breakage. The eoas output
+          # above the warning is the actual error report for this manual run.
+          # Keep the eoas CLI version in sync with the xprem server version.
+          if EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes eoas@3.2.6 publish \
+               --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive; then
+            echo "Published OTA update to branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
+            summary_row "- OTA (xprem): ✅ branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\` (android)"
+          else
+            # A re-run is safe: xprem dedupes identical content.
+            echo "::warning::OTA publish failed — see the eoas output above; fix and re-run"
+            summary_row "- OTA (xprem): ⚠️ failed (see log)"
+          fi
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          rm -rf node_modules .yarn/cache .expo jest-cache dist 2>/dev/null || true
+          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
+          find . -name '.cache' -type d -delete 2>/dev/null || true
