@@ -9,6 +9,16 @@
     "enabled": true,
     "schedule": ["before 8am on the first day of the month"]
   },
+  "customManagers": [
+    {
+      "description": "eoas CLI pin shared by release.yml and ota-publish.yml — single source in .eoas-version, keep it in sync with the xprem server version.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.eoas-version$/"],
+      "matchStrings": ["(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "datasourceTemplate": "npm",
+      "depNameTemplate": "eoas"
+    }
+  ],
   "packageRules": [
     {
       "description": "Major updates wait for a tick in the Dependency Dashboard.",

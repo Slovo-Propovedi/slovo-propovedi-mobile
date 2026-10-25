@@ -210,6 +210,7 @@
 ## Версионирование и релизы
 
 - Версия управляется скриптом `node scripts/bump-version.mjs` (`yarn bump-version`). Также есть `version-major` / `version-minor` / `version-patch` (`yarn version --*`).
+- `bump-version` сам определяет режим релиза — диффит рабочее дерево против последнего тега тем же `scripts/ci/detect-native-changes.sh`, что и CI, — и управляет `RUNTIME_VERSION` в `ota.config.ts`: при нативных изменениях ставит его равным новой версии приложения (конвенция: приложение X.Y.Z поставляется с runtime X.Y.Z), при js-only оставляет прежним. Ручной бамп литерала не нужен; CI-guard'ы в `release.yml` остаются страховкой для тегов, поставленных в обход скрипта.
 - Версия приложения читается в рантайме из `expoConfig.version` (`src/shared/config/version.ts`), используется в UI («О приложении») и для проверки обновлений.
 - `android.versionCode` и `ios.buildNumber` (= `String(versionCode)`) выводятся из `pkg.version` в `app.config.ts`; `android.versionCode` проверяется в CI после prebuild.
 - Сборки нативных билдов: `build:android`, `build:ios`, `build:all` (EAS).

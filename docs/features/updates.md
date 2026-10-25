@@ -1,7 +1,125 @@
 # Проверка обновлений
 
-**Слой:** `shared/model/update`, `shared/model/updateInstall`, `shared/lib/version-check`, `shared/lib/update-service`, `widgets/update-status`, `features/app-update`, `features/update-notification`, `features/web-update`
+**Слой:** `shared/model/update`, `shared/model/updateInstall`, `shared/model/updateOtaGate`, `shared/lib/version-check`, `shared/lib/update-service`, `widgets/update-status`, `features/app-update`, `features/update-notification`, `features/web-update`
 **Статус:** готов
+
+## OTA-обновления (expo-updates, self-hosted xprem)
+
+Приложение обновляется по **двум независимым каналам**:
+
+| Канал                                                                                                       | Что доставляет                                              | Как применяется                                                                                               |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| OTA: `expo-updates` ← собственный сервер xprem (`https://ota.slovo-propovedi.ru`, протокол Expo Updates v1) | Только JS-бандл и ассеты                                    | Тихо, в фоне; скачанный бандл применяется при **следующем холодном старте**. Без диалогов и без разрешений ОС |
+| APK: Forgejo Release + in-app установка (`modules/apk-installer`)                                           | Нативный код, SDK, конфиг-плагины, разрешения, иконки/сплэш | Диалог «Доступно обновление» (см. «Самообновление (in-app)»)                                                  |
+
+**EAS и EAS Updates (облако Expo) по-прежнему не используются** — сервер обновлений собственный (xprem на своём VPS). `expo-updates` работает напрямую с ним по открытому протоколу, поэтому конфиг живёт в `ota.config.ts` (`runtimeVersion`, блок `updates`), который `app.config.ts` подмешивает в общий конфиг, — а не в EAS-профилях.
+
+### runtimeVersion — фиксированный литерал
+
+`ota.config.ts` задаёт `runtimeVersion` **строковым литералом** (не `pkg.version`): литерал гейтит доставку — манифест с другим `runtimeVersion` устройству не предлагается.
+
+- **Меняется только вместе с нативным кодом:** апгрейд Expo SDK / React Native, добавление-обновление нативной зависимости, изменение конфиг-плагинов (`plugins/*.ts`), разрешений, иконок/сплэша. Тогда же выпускается новый APK.
+- **Не меняется для JS-only правок** (экраны, логика, стили, тексты): такой бандл уходит по OTA и совместим с уже установленными сборками.
+- **Подъём литерала автоматический — его делает `bump-version`.** `node scripts/bump-version.mjs` (см. [`conventions.md`](../conventions.md) → «Версионирование и релизы») до коммита диффит рабочее дерево против последнего тега тем же `scripts/ci/detect-native-changes.sh`, что и CI: нативные изменения → `RUNTIME_VERSION` становится равным новой версии приложения (конвенция: приложение X.Y.Z поставляется с runtime X.Y.Z), js-only → литерал остаётся прежним. Правка попадает в тот же bump-коммит через `git add -A`, ручной бамп не нужен.
+- **CI-guard'ы — страховка для ручного тегирования.** Job `changes` в `.forgejo/workflows/release.yml` диффит тег против предыдущего: если затронуты нативные пути (`android/`, `ios/`, `plugins/`, `modules/`, `package.json`, `yarn.lock`, `app.config.ts`, `ota.config.ts`), а `RUNTIME_VERSION` не изменился — job падает с `::error::Native paths changed but RUNTIME_VERSION (ota.config.ts) was not bumped — use yarn bump-version, it manages RUNTIME_VERSION automatically`. От `changes` зависят **все** job'ы (`create-release`, `web`, `android`, `ota`), поэтому красный guard блокирует весь релиз: тег, поставленный в обход скрипта, не проскочит молча.
+- `ota.config.ts` в списке нативных путей намеренно: его блок `updates.*` и сам `RUNTIME_VERSION` запекаются в бинарник.
+
+### Поведение проверки на устройстве
+
+Блок `updates` в `ota.config.ts`:
+
+- `checkAutomatically: 'ON_LOAD'` — манифест проверяется при каждом холодном старте (на Android транслируется в `ALWAYS`);
+- `fallbackToCacheTimeout: 0` — старт **никогда не ждёт** загрузку: скачивание идёт в фоне, а найденный бандл применяется при следующем запуске (никаких «обновитесь сейчас»);
+- `requestHeaders` — идентификация приложения/канала на сервере (см. ниже).
+
+Встроенный бандл (`Updates.isEmbeddedLaunch === true`) остаётся рабочим всегда: если сервер недоступен, приложение просто запускается на том, что есть. На web OTA не работает вовсе — PWA обновляется через Service Worker (`expo-updates` импортируется лениво и в web-сборке не вычисляется, см. «OTA-aware гейт»).
+
+### Релизные режимы (release.yml)
+
+`.forgejo/workflows/release.yml` определяет режим в job `changes` (полная история: `fetch-depth: 0` + теги) по диффу `PREV..$GITHUB_REF_NAME`, где `PREV` — предыдущий тег по `creatordate`. Если предыдущего тега нет — режим `native` (сборка APK, самый безопасный дефолт). Тот же детект выполняет `bump-version` локально (worktree-режим скрипта), поэтому режим, выбранный при бампе, совпадает с режимом пайплайна.
+
+| Режим     | Когда                                                                                                                                                 | Что делает пайплайн                                                                                                                              |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `native`  | дифф затронул `android/`, `ios/`, `plugins/`, `modules/`, `package.json`, `yarn.lock`, `app.config.ts` или `ota.config.ts` (или предыдущего тега нет) | job `android`: keystore-гейт, prebuild с четырьмя `EXPO_PUBLIC_*`, gradle APK, ZIP + `SHA256SUMS.txt` в Forgejo-релиз, зеркала GitHub и Codeberg |
+| `js-only` | нативных путей в диффе нет                                                                                                                            | job `ota`: публикация бандла в xprem; **Forgejo-релиз не создаётся вообще** (тег есть, релиз-объекта нет)                                        |
+| `web`     | всегда, независимо от режима                                                                                                                          | job `web`: экспорт PWA и деплой на VPS; web-zip в релиз — только в `native` (в `js-only` релиза нет)                                             |
+
+**Forgejo-релиз создаётся только в `native`** (job `create-release`, он же гейт по CI и версиям). Смысл релиза — «на лендинге появился новый APK»: новые пользователи всегда скачивают последний APK и на первом запуске молча догоняют актуальный JS-бандл по OTA. В `js-only` релиз-объект не нужен: тег остаётся в git (его создаёт `bump-version`), а обновление уже установленных сборок приезжает по OTA.
+
+**Зеркала GitHub и Codeberg — только в `native`**: они зеркалируют APK-ассеты (в `js-only` релиза нет, зеркалировать нечего; клиентская цепочка источников останавливается на Forgejo — см. «Проверка версии»).
+
+**Web релизится всегда**: job `web` зависит только от `changes` и не имеет условия по режиму, поэтому PWA выходит на каждом теге. Web-zip прикрепляется к релизу только в `native`; в `js-only` деплой на VPS выполняется без сборки zip.
+
+### Публикация OTA (job `ota` → eoas)
+
+Job `ota` запускается только в `js-only` режиме (`if: needs.changes.outputs.native == 'false'`):
+
+- шаг требует **все** четыре OTA-переменные (см. «Окружение OTA») и секрет `XPREM_EOO_TOKEN`; если хотя бы одна из них пуста, шаг печатает `::warning::` с именами отсутствующих и выходит с `exit 0` — пайплайн остаётся зелёным без настройки. Причина строгого гейта: `eoas publish` выполняет `expo export`, который вычисляет `app.config.ts`; без переменных экспортированный бандл получил бы `updates.enabled: false` и ничего бы не доставил;
+- иначе: `yarn install --frozen-lockfile`, затем `eoas publish --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive` (CLI `eoas` из npm, версия держится **синхронно с версией сервера xprem**; токен — в `EOO_TOKEN`). Пин версии — единый файл `.eoas-version` в корне репозитория, его читают оба workflow'а, а Renovate поднимает его автоматически (custom manager с datasource `npm`). Ветка берётся из `EXPO_PUBLIC_XPREM_BRANCH_NAME` — та же переменная, что встроена в APK заголовком `xprem-branch`, поэтому публикация и клиент не расходятся;
+- `yarn install` выполняется внутри самого шага: job `ota` не наследует установку из `android` (джобы не делят шаги);
+- любая ошибка публикации — `::warning::`, джоба продолжается. В `js-only` режиме провал означает, что релиз не доставлен ничем (релиз-объекта нет, OTA — единственный канал) — строка `⚠️ failed` в summary требует ручного разбора и перезапуска. `EAS_NO_VCS=1` задан постоянно: `eoas` в неинтерактивном режиме иначе отказывается публиковать из грязного дерева;
+- бандл экспортируется с теми же `EXPO_PUBLIC_*` переменными, что и APK, иначе OTA-бандл указывал бы на неверные хосты.
+
+**Ручная публикация без релиза.** Отдельный workflow `.forgejo/workflows/ota-publish.yml` («Publish OTA update (manual)») — хотфикс без тега: публикует бандл в xprem **и** деплоит новую web-версию на VPS, но не создаёт Forgejo-релиз и не собирает APK. Forgejo → Actions → Run workflow → выбрать ветку. Порядок шагов: сначала OTA (хотфикс доходит до установленных сборок), затем web-деплой; провал OTA — `::warning::` и не блокирует деплой. Каждый шаг дописывает свою строку в job summary (конфиг OTA, публикация, web export/deploy), финальный вердикт — `🎉` при полном успехе, `⚠️` при пропусках или некритичном провале OTA, `❌` при провале web-пути или блокировке проверки js-only; отсутствие строки означает, что шаг не запускался. Обычные js-only релизы делают то же автоматически через `release.yml`.
+
+Перед публикацией ручной прогон сам проверяет, что выбранная ветка действительно js-only: если с последнего тега изменились нативные пути или `RUNTIME_VERSION` разошёлся с тегом, workflow падает с требованием полноценного релиза (`yarn bump-version` + тег), а не OTA. Логика детекции единая — `scripts/ci/detect-native-changes.sh`, её используют и `release.yml`, и `ota-publish.yml`, поэтому автоматическая и ручная проверки не расходятся.
+
+**Ручная очистка OTA-хранилища.** Отдельный workflow `.forgejo/workflows/xprem-cleanup.yml` («Purge outdated OTA storage (xprem)») — ручной (`workflow_dispatch`) purge устаревших данных на xprem. Запускать сразу после **нативного** релиза (всё, что опубликовано под прежним `runtimeVersion`, — мёртвый груз для установленных сборок) и только когда `du -sh /slovo/xprem/data` на VPS показывает реальный рост: у xprem v3.2.6 нет retention-политики и удаления по update/`runtimeVersion` (upstream #284/#263), единственная гранулярность — ветка. Поэтому workflow удаляет канал и ветку `EXPO_PUBLIC_XPREM_BRANCH_NAME`, сразу пересоздаёт их и **перепубликовывает текущий бандл** (`eoas publish`): устаревшее удалено, актуальное осталось. Ассеты, которые сервер ещё хранит, повторно не заливаются — xprem дедуплицирует их по ledger `blobs`.
+
+Входы: `confirm` — строка, должна быть ровно `purge`, иначе прогон завершается предупреждением и ничего не трогает; `deep` (boolean, по умолчанию `false`) — дополнительно стереть content-addressed пул `cas/` и ledger `blobs` на VPS по SSH (операция, не поддерживаемая xprem; требует секретов `VPS_HOST`, `VPS_SSH_PRIVATE_KEY` и опционально `VPS_SSH_USER`). Перед удалением workflow жёстко проверяет, что HEAD js-only относительно последнего тега и `RUNTIME_VERSION` не разошёлся (тот же `scripts/ci/detect-native-changes.sh`); без тегов прогон тоже блокируется. Новые секреты Forgejo (`Settings → Actions → Secrets`): `XPREM_ADMIN_EMAIL` и `XPREM_ADMIN_PASSWORD` — учётка дашборда xprem (publish-ключ `XPREM_EOO_TOKEN` на delete-роутах получает `403`). Недостающая конфигурация — `::warning::` и `exit 0`, пайплайн остаётся зелёным; серверные ошибки тоже не роняют прогон, а собираются в summary с вердиктом `🎉` / `⚠️` / `❌`. Подробный runbook — `configuring-playbook-xprem.md` в репозитории плейбука.
+
+Сервер сверяет `runtimeVersion` манифеста с запрошенным устройством и публикует манифест с `extra.expoClient.version` (версия из `app.config.ts`/`package.json` на момент публикации) — именно её читает клиентский гейт.
+
+### Окружение OTA: четыре переменные, all-or-nothing
+
+`ota.config.ts` (импортируется в `app.config.ts` как `OTA_CONFIG`) читает **только** переменные окружения — конкретных URL, app id, канала и ветки в коде нет:
+
+| Переменная                       | Значение                                                            |
+| -------------------------------- | ------------------------------------------------------------------- |
+| `EXPO_PUBLIC_OTA_URL`            | базовый URL xprem-сервера; `/manifest` добавляет сам `expo-updates` |
+| `EXPO_PUBLIC_XPREM_APP_ID`       | идентификатор приложения из дашборда xprem                          |
+| `EXPO_PUBLIC_XPREM_CHANNEL_NAME` | канал xprem, из которого клиент запрашивает манифесты               |
+| `EXPO_PUBLIC_XPREM_BRANCH_NAME`  | ветка xprem, в которую публикует `eoas publish` в CI                |
+
+**Контракт all-or-nothing.** Если все четыре непустые — в конфиг попадает полный блок `updates` (url, `requestHeaders`, `checkAutomatically: 'ON_LOAD'`, `fallbackToCacheTimeout: 0`, а при наличии сертификата — код-подпись). Если хотя бы одна пуста — `updates: { enabled: false }`, то есть OTA для этой сборки **полностью выключен**. Это намеренно: сборка без deployment-окружения (F-Droid buildbot в будущем, произвольная локальная сборка) не должна тянуть бандлы из чужого канала поставки — свойство, которое делает такие сборки безопасными по умолчанию (см. «F-Droid»).
+
+Где живут значения:
+
+- **CI** — Forgejo org/repo `vars` с теми же именами; job `android` прокидывает их в prebuild и сборку APK, job `ota` — в `eoas publish` (`.forgejo/workflows/release.yml`). Это не секреты (URL, app id, канал, ветка); при желании их можно перенести в `secrets.` без изменения кода.
+- **Локально** — `.env` (скопировать `.env.example`); без него локальная сборка получит `updates.enabled: false`.
+
+`runtimeVersion` при этом остаётся **литералом** в `ota.config.ts`: это версионирование (гейт совместимости), а не deployment-конфиг, поэтому он сознательно не вынесен в env (см. «runtimeVersion — фиксированный литерал»).
+
+Заголовки запросов (`updates.requestHeaders`) уходят с каждым запросом манифеста/ассетов: `expo-app-id`, `expo-channel-name`, `xprem-branch` — все три значения берутся из соответствующих `EXPO_PUBLIC_XPREM_*`.
+
+Включение пакета — нативная правка: `android/` перегенерируется (`expo prebuild --platform android --clean`), потому что meta-data `expo.modules.updates.*` (url, runtime version, request headers, код-подпись) в закоммиченном манифесте появляется только после prebuild с заданными переменными, и выпускается новый APK. Без prebuild локальные сборки запускаются без OTA (meta-data нет), OTA-бандлы им не доставляются.
+
+### Bootstrap: переменные, сертификат, токен
+
+Порядок включения OTA:
+
+1. Задать в Forgejo org/repo `vars` четыре переменные: `EXPO_PUBLIC_OTA_URL`, `EXPO_PUBLIC_XPREM_APP_ID` (значение из дашборда xprem), `EXPO_PUBLIC_XPREM_CHANNEL_NAME`, `EXPO_PUBLIC_XPREM_BRANCH_NAME`.
+2. Положить `certs/xprem-certificate.pem` — код-подпись включается **автоматически**: если файл сертификата есть, в блок `updates` добавляются `codeSigningCertificate` и `codeSigningMetadata` (`rsa-v1_5-sha256`, `keyid: main`), иначе блок не эмитится и обновления принимаются без подписи. После появления сертификата нужен новый prebuild (meta-data попадает в манифест) и новое APK.
+3. Создать секрет `XPREM_EOO_TOKEN` для публикации.
+
+Плейбук сервера — `configuring-playbook-xprem.md`.
+
+### OTA-aware гейт диалога APK
+
+`src/shared/model/updateOtaGate.ts` (внутренний модуль слайса, из барреля не экспортируется):
+
+- `getRunningManifestVersion(manifest)` → `string | null` — `extra.expoClient.version` запущенного манифеста; отсутствие `extra`, `expoClient` или нестроковое значение трактуются как «версии нет»;
+- `resolveEffectiveAppVersion({ appVersion, isEmbeddedLaunch, manifestVersion })` → `string` — при встроенном запуске версия из APK, при OTA-запуске версия из манифеста с фолбэком на версию APK;
+- `isReleaseNewerThanRunning(releaseVersion, runningVersion)` → `boolean` — тот же `compareVersions`, но относительно **фактически запущенного** кода;
+- `decideUpdatePrompt({ releaseIsNewer, otaAvailable })` → `boolean` — показывать ли диалог APK.
+
+**Правило подавления диалога:** APK-диалог показывается, только если для текущего runtimeVersion **нет** OTA-пути. Когда релиз новее, `checkForUpdateAction` дополнительно спрашивает `Updates.checkForUpdateAsync()` (тот же лениво импортированный `expo-updates`, внутри своего `try/catch`): `isAvailable === true` → пропускаются **и диалог, и push-уведомление** — бандл применится молча на следующем холодном старте, после чего запущенная версия совпадёт с релизом и гейт замолчит. Любое исключение из `checkForUpdateAsync` трактуется как `otaAvailable = false` (fail open — диалог остаётся безопасным фолбэком). Запрос выполняется только на редком пути «релиз новее»; собственный запрос манифеста от `checkForUpdateAsync` приемлем — `expo-updates` и так проверяет манифест при загрузке.
+
+`checkForUpdateAction` (`src/shared/model/update.ts`) сравнивает релиз с эффективной версией, поэтому после тихого OTA диалог и push-уведомление не появляются, если исправление уже приехало бандлом. Чтение состояния `expo-updates` вынесено во внутренний `src/shared/model/updateOtaStatus.ts`; модуль импортируется **динамически внутри нативной ветки** (после ранних выходов для web/офлайна) — web-сборка его не загружает; ошибка импорта (Expo Go, web) откатывает гейт к `APP_VERSION`.
+
+### F-Droid
+
+Сборки F-Droid подписываются ключом F-Droid и поставляются своим клиентом — OTA-канал для них неприменим. Публикация F-Droid пока в планах; когда канал появится, такие сборки должны собираться **без** четырёх `EXPO_PUBLIC_*` OTA-переменных — тогда all-or-nothing конфиг автоматически даёт `updates: { enabled: false }`, и сборка не тянет бандлы из чужого канала. Проверить это на реальном buildbot — запись в [`debt.md`](../debt.md).
 
 ## Проверка версии
 
@@ -10,11 +128,13 @@
 - выходит, если `Platform.OS === 'web'` — веб-версия обновляется сама через Service Worker; применение новой версии — через модалку подтверждения (features/web-update, см. [web.md](./web.md) → PWA), диалог «скачать APK» там не имеет смысла;
 - выходит, если `!ctx.get(isOnlineAtom)`;
 - получает последний релиз через `fetchLatestRelease()`; если нет — выходит;
-- сравнивает `compareVersions(release.version, APP_VERSION)`; если релиз новее — планирует уведомление и открывает диалог обновления.
+- сравнивает `compareVersions(release.version, <эффективная версия>)` через `isReleaseNewerThanRunning` — эффективная версия учитывает запущенный OTA-бандл (см. «OTA-aware гейт диалога APK»);
+- если релиз новее — спрашивает OTA (`checkForUpdateAsync`): при `isAvailable === true` выходит без уведомления и диалога (бандл приедет сам), иначе планирует уведомление и открывает диалог обновления.
 
 `src/shared/lib/version-check/`:
 
-- `fetchLatestRelease.ts` — цепочка источников **Forgejo → Codeberg → GitHub**: `git.lightnode.ru/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest`, при провале — `codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest`, при провале — `api.github.com/repos/Slovo-Propovedi/...`. Отбрасывает prerelease и теги с дефисом; извлекает `.zip`-ассет и ассет `SHA256SUMS.txt` (точное имя, регистронезависимо).
+- `fetchLatestRelease.ts` — цепочка источников **Forgejo → Codeberg → GitHub**: `git.lightnode.ru/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest`, при провале — `codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest`, при провале — `api.github.com/repos/Slovo-Propovedi/...`. Отбрасывает prerelease и теги с дефисом; извлекает APK-ассет `slovo-propovedi-v<версия>.zip` и ассет `SHA256SUMS.txt` (точное имя, регистронезависимо).
+- `isApkZipAssetName.ts` — якорный matcher имени APK-ассета (`^slovo-propovedi-v[0-9][^/]*\.zip$`), отсекает веб-экспорт `slovo-propovedi-web-v<версия>.zip` (как в landing-скрипте).
 - `compareVersions.ts` — сем-вер сравнение (`a`/`b` → `-1 | 0 | 1`).
 - `types.ts` — `LatestReleaseInfo` (`version`, `htmlUrl`, `zipDownloadUrl`, `sha256SumsDownloadUrl`, `body`, ...).
 
@@ -27,7 +147,7 @@
 - отклоняет `prerelease === true`;
 - отклоняет теги, содержащие `-` (например, `v0.4.0-rc1`);
 - `version` берётся из `tag_name` с отрезанной ведущей `v`;
-- `zipDownloadUrl` — первый ассет с расширением `.zip` (может быть `null`). Релизный пайплайн (`.forgejo/workflows/release.yml`) загружает единственный ассет `slovo-propovedi-v<версия>.zip`, внутри которого лежит APK `Slovo.Propovedi v<версия>.apk`.
+- `zipDownloadUrl` — URL APK-ассета, имя которого матчится якорным regex `^slovo-propovedi-v[0-9][^/]*\.zip$` (может быть `null`). В native-режиме релизный пайплайн (`.forgejo/workflows/release.yml`) загружает единственный такой ассет `slovo-propovedi-v<версия>.zip`, внутри которого лежит APK `Slovo.Propovedi v<версия>.apk`. В js-only режиме релиза нет вообще, поэтому `releases/latest` продолжает отдавать предыдущий native-релиз: клиент не видит более новой версии и обновляется по OTA. Если релиз всё же ответил без APK-ассета (старые записи, ручные релизы), `zipDownloadUrl` остаётся `null` — клиент это допускает. Веб-экспорт `slovo-propovedi-web-v<версия>.zip` не матчится ни при каких условиях.
 - `sha256SumsDownloadUrl` — URL ассета `SHA256SUMS.txt` (точное имя, регистронезависимо; может быть `null`/отсутствовать у старых релизов). Используется для проверки целостности скачанного ZIP.
 - Сетевые ошибки логируются (`console.warn`) и не прерывают `checkForUpdateAction`.
 
@@ -112,13 +232,13 @@ API base: `https://codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mob
 
 `src/widgets/update-status/ui/UpdateDialog.tsx` — модальный диалог самообновления (RN `Modal`, fade). Состояния определяются `updateState` из хука `useUpdateInstall` (`features/app-update`):
 
-| Состояние     | Заголовок              | Содержимое                                                                                        |
-| ------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
-| `idle`        | «Доступно обновление»  | версия из `latestVersionAtom`, кнопки «Обновить» / «Не обновлять», ссылка «Все версии обновлений» |
-| `downloading` | «Обновление»           | прогресс-бар + «Загрузка... N%»                                                                   |
-| `extracting`  | «Обновление»           | «Распаковка...»                                                                                   |
-| `installing`  | «Обновление»           | «Запуск установки...»                                                                             |
-| `permission`  | «Требуется разрешение» | объяснение + кнопки «Открыть настройки» / «Не сейчас»                                             |
+| Состояние     | Заголовок              | Содержимое                                                                                                              |
+| ------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `idle`        | «Доступно обновление»  | версия из `latestVersionAtom`, кнопки «Обновить» / «Не обновлять», ссылка «Все версии обновлений»                       |
+| `downloading` | «Обновление»           | прогресс-бар + «Загрузка... N%»                                                                                         |
+| `extracting`  | «Обновление»           | «Распаковка...»                                                                                                         |
+| `installing`  | «Обновление»           | «Запуск установки...»                                                                                                   |
+| `permission`  | «Требуется разрешение» | объяснение + кнопки «Открыть настройки» / «Не сейчас»                                                                   |
 | `error`       | «Ошибка обновления»    | текст ошибки, кнопки «Повторить» / «Открыть в браузере» / «Закрыть» (порядок и акцент зависят от `updateErrorKindAtom`) |
 
 - «Обновить» → `startUpdate()`; во время загрузки закрытие диалога заблокировано (`onRequestClose` — no-op).
@@ -220,15 +340,15 @@ API base: `https://codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mob
 
 `src/shared/lib/update-service/updateService.ts`:
 
-| Функция                                                                | Назначение                                                                                                                                                                                                                                                                                                                                                     |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Функция                                                                            | Назначение                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `downloadUpdateZip(url, onProgress?, timeoutMs = DOWNLOAD_TIMEOUT_MS, integrity?)` | Скачивание ZIP через `File.createDownloadTask` (expo-file-system) в `<cache>/updates/slovo-propovedi-update.zip`; прогресс в процентах через колбэк. Guard: URL только `https://` и хост из allowlist (`git.lightnode.ru`, `github.com`, `objects.githubusercontent.com`). Перед скачиванием обязателен `SHA256SUMS.txt` (URL передаётся в `integrity.sha256SumsDownloadUrl`); после скачивания digest ZIP сверяется с sums-файлом. Отсутствие sums, битый/несовпадающий digest — ошибка до распаковки (см. «Целостность обновления (SHA-256)»). Таймаут-семантика: бюджет `DOWNLOAD_TIMEOUT_MS` = 10 минут; по истечении `AbortController` отменяет нативную закачку; частичный файл удаляется при любой ошибке скачивания. |
-| `extractApkFromZip(zipPath)`                                           | Поиск первого `.apk` внутри архива (`listContents`) с проверкой пути на traversal (`..`/абсолютный путь → ошибка), селективная распаковка (`unzip`, `react-native-zip-archive`) и переименование в `update.apk` — оригинальное имя `Slovo.Propovedi v<версия>.apk` содержит пробелы и небезопасно для shell.                                                                                                                 |
-| `installApk(apkPath)`                                                  | Если доступен локальный модуль `apk-installer` — установка через `PackageInstaller` (сессия, стриминг APK, commit; результат приходит broadcast'ом). Иначе — фолбэк `IntentLauncher.startActivityAsync(VIEW_ACTION, ...)` (Expo Go / экзотика).                                                                                                                |
-| `canRequestPackageInstalls()`                                          | Обёртка над нативным `canRequestPackageInstalls()`; при недоступности модуля возвращает `true` (фолбэк-установщик сам решает).                                                                                                                                                                                                                                 |
-| `openInstallPermissionSettings()`                                      | Открывает системный экран «Разрешить установку из этого источника» (`Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES`).                                                                                                                                                                                                                                             |
-| `apkFileExists(apkPath)`                                               | Проверка существования APK на диске (`new File(path).exists`, `updateFiles.ts`) — используется при возобновлении после разрешения.                                                                                                                                                                                                                              |
-| `cleanupUpdateFiles()`                                                 | Удаление каталога `<cache>/updates` (вызывается в начале потока обновления); ошибки логируются, не бросаются. На не-Android — no-op.                                                                                                                                                                                                                           |
+| `extractApkFromZip(zipPath)`                                                       | Поиск первого `.apk` внутри архива (`listContents`) с проверкой пути на traversal (`..`/абсолютный путь → ошибка), селективная распаковка (`unzip`, `react-native-zip-archive`) и переименование в `update.apk` — оригинальное имя `Slovo.Propovedi v<версия>.apk` содержит пробелы и небезопасно для shell.                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `installApk(apkPath)`                                                              | Если доступен локальный модуль `apk-installer` — установка через `PackageInstaller` (сессия, стриминг APK, commit; результат приходит broadcast'ом). Иначе — фолбэк `IntentLauncher.startActivityAsync(VIEW_ACTION, ...)` (Expo Go / экзотика).                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `canRequestPackageInstalls()`                                                      | Обёртка над нативным `canRequestPackageInstalls()`; при недоступности модуля возвращает `true` (фолбэк-установщик сам решает).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `openInstallPermissionSettings()`                                                  | Открывает системный экран «Разрешить установку из этого источника» (`Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `apkFileExists(apkPath)`                                                           | Проверка существования APK на диске (`new File(path).exists`, `updateFiles.ts`) — используется при возобновлении после разрешения.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `cleanupUpdateFiles()`                                                             | Удаление каталога `<cache>/updates` (вызывается в начале потока обновления); ошибки логируются, не бросаются. На не-Android — no-op.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 Все функции установки бросают ошибку при вызове не на Android (`assertAndroid`) — Fail Fast.
 

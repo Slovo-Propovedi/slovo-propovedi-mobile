@@ -1,13 +1,13 @@
 import { type ConfigPlugin, withAndroidManifest } from '@expo/config-plugins'
 
-// expo-notifications injects com.google.firebase.messaging.* meta-data for FCM, and
-// Expo's unversioned expo-updates plugin injects expo.modules.updates.* even though
-// expo-updates is not installed (and never is — updates ship through the self-hosted
-// APK installer). Both sets are unused, so they are stripped here. This mod is
-// registered first in app.config.ts so it runs last (Expo executes manifest mods in
-// reverse registration order), i.e. after every plugin that could add them.
-// Idempotent: no-op when the entries are absent.
-const REMOVED_META_DATA_PREFIXES = ['com.google.firebase.messaging.', 'expo.modules.updates.']
+// expo-notifications injects com.google.firebase.messaging.* meta-data for FCM,
+// which is unused, so it is stripped here. expo.modules.updates.* is deliberately
+// NOT stripped: expo-updates is installed and its adjudication meta-data (update
+// url, runtime version, request headers, code-signing setup) is what makes
+// self-hosted OTA work. This mod is registered first in app.config.ts so it runs
+// last (Expo executes manifest mods in reverse registration order), i.e. after
+// every plugin that could add them. Idempotent: no-op when the entries are absent.
+const REMOVED_META_DATA_PREFIXES = ['com.google.firebase.messaging.']
 
 const isRemovedMetaData = (entry: { $: { 'android:name': string } }): boolean =>
   REMOVED_META_DATA_PREFIXES.some(prefix => entry.$['android:name'].startsWith(prefix))

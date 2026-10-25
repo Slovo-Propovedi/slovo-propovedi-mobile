@@ -5,19 +5,135 @@ on:
     tags:
       - 'v*'
 
-# Three jobs:
-#   create-release  — gate on CI, verify versions, cut the Forgejo Release
-#   web             — needs: create-release — export + deploy the web PWA + attach zip
-#   android         — needs: create-release — build APK + attach zip + mirror to GitHub and Codeberg
-# `web` and `android` depend only on `create-release`, never on each other, so
-# they run in whichever order the runner picks them up. Both are memory-heavy,
-# so they share the `memory-heavy-jobs` concurrency group (also on ci.yml's
-# `checks`) and queue on the 4 GB host instead of overlapping.
-# create-release stays OUT of that group: it waits for `CI / checks`, which is
-# in the group — sharing it would deadlock.
+# Two release modes, decided by the `changes` job from the diff against the
+# previous tag:
+#   native   — a native path changed (or no previous tag): any file under
+#              android/, ios/, plugins/, modules/, or a change to yarn.lock,
+#              app.config.ts, ota.config.ts. Version metadata ALONE does not
+#              count — scripts/bump-version.mjs rewrites package.json, gradle
+#              versionName/versionCode and the pbxproj MARKETING_VERSION/
+#              CURRENT_PROJECT_VERSION on every release, so those files are
+#              judged by content (see the `changes` job). Native builds the APK
+#              (ZIP + SHA256SUMS), mirrors it to GitHub and Codeberg, and
+#              attaches it to the Forgejo release.
+#   JS-only  — only JS/TS/assets changed: deploy the web PWA and publish the
+#              bundle to xprem (OTA). NO Forgejo release is created — the git
+#              tag exists, but there is no release object.
+#
+# A Forgejo release therefore always means "a new APK is available on the
+# landing". New users download the latest APK and silently catch up to the
+# newest JS bundle via OTA on first launch, so a JS-only tag has nothing to
+# publish for them.
+#
+# The web PWA is deployed on every tag, independent of native/JS-only. The web
+# zip is attached to the release only in native mode (there is no release to
+# attach it to otherwise).
+#
+# `changes` also guards RUNTIME_VERSION: a native diff without a bumped literal
+# in ota.config.ts fails the pipeline (an OTA bundle built for an old runtime
+# must never reach a new native build). Every job needs `changes`, so a failed
+# guard blocks the whole release.
+#
+# Jobs:
+#   changes         — detect native-vs-JS mode + RUNTIME_VERSION guard (light)
+#   create-release  — needs: changes, native only — gate on CI, verify versions,
+#                     cut the Forgejo Release (`android` attaches assets)
+#   web             — needs: changes — export + deploy the web PWA; attach the
+#                     web zip to the release in native mode only
+#   android         — needs: [changes, create-release], native only — build APK +
+#                     attach zip + mirror to GitHub and Codeberg
+#   ota             — needs: changes, JS-only — publish the OTA bundle to xprem
+# `web`, `android` and `ota` never depend on each other, so they run in
+# whichever order the runner picks them up. The memory-heavy ones share the
+# `memory-heavy-jobs` concurrency group (also on ci.yml's `checks`) and queue on
+# the 4 GB host instead of overlapping. create-release stays OUT of that group:
+# it waits for `CI / checks`, which is in the group — sharing it would deadlock.
 
 jobs:
+  changes:
+    runs-on: ubuntu-24.04
+
+    outputs:
+      native: ${{ steps.detect.outputs.native }}
+      rv_now: ${{ steps.detect.outputs.rv_now }}
+      rv_prev: ${{ steps.detect.outputs.rv_prev }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history + tags: the previous tag is the diff base, and
+          # RUNTIME_VERSION is read from two different commits.
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Detect release mode
+        id: detect
+        run: |
+          set -e
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
+
+          {
+            echo "## Release ${{ github.ref_name }} — changes"
+            echo ''
+          } | scripts/ci/step-summary.sh
+
+          # Previous tag by creator date, excluding the tag being released.
+          # `|| true`: grep exits 1 when nothing is left (first ever tag).
+          PREV=$(git tag --sort=-creatordate | grep -v -x "${{ github.ref_name }}" | sed -n '1p' || true)
+
+          # Native-vs-JS detection lives in scripts/ci/detect-native-changes.sh
+          # — one implementation shared with ota-publish.yml. An empty PREV
+          # means "no diff base": the script reports native, the safest default
+          # (a JS-only publish would reach no installed build anyway).
+          DETECT=$(scripts/ci/detect-native-changes.sh "$PREV" "${{ github.ref_name }}")
+          NATIVE=$(printf '%s\n' "$DETECT" | sed -n 's/^native=//p')
+          RV_NOW=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_now=//p')
+          RV_PREV=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_prev=//p')
+
+          if [ -n "$PREV" ]; then
+            echo "Previous tag: $PREV"
+          else
+            echo "No previous tag found — treating this release as native"
+          fi
+
+          echo "RUNTIME_VERSION: current='$RV_NOW' previous='$RV_PREV'"
+          echo "native=$NATIVE" >> "$GITHUB_OUTPUT"
+          echo "rv_now=$RV_NOW" >> "$GITHUB_OUTPUT"
+          echo "rv_prev=$RV_PREV" >> "$GITHUB_OUTPUT"
+          if [ "$NATIVE" = "true" ]; then
+            MODE=native
+          else
+            MODE=js-only
+          fi
+          summary_row "- Mode: \`$MODE\` · RUNTIME_VERSION \`$RV_PREV\` → \`$RV_NOW\`"
+
+      - name: Guard RUNTIME_VERSION bump for native changes
+        # Native paths changed but the runtime gate did not move: the APK would
+        # carry a new native build under the old runtimeVersion, so a JS bundle
+        # published later could land on an incompatible binary. Fail the release.
+        if: steps.detect.outputs.native == 'true' && steps.detect.outputs.rv_now == steps.detect.outputs.rv_prev
+        run: |
+          echo "::error::Native paths changed but RUNTIME_VERSION (ota.config.ts) was not bumped — use yarn bump-version, it manages RUNTIME_VERSION automatically"
+          printf '%s\n' "- RUNTIME_VERSION guard: ❌ native diff without a bump — release blocked" | scripts/ci/step-summary.sh
+          exit 1
+
+      - name: Guard RUNTIME_VERSION drift without native changes
+        # Mirror image of the guard above: a bumped runtime gate on a JS-only
+        # diff means no released APK carries the new runtimeVersion, so an OTA
+        # bundle for it would never reach an installed build. Both-empty
+        # (pre-OTA history) and first-release cases stay permissive.
+        if: steps.detect.outputs.native == 'false' && steps.detect.outputs.rv_now != steps.detect.outputs.rv_prev && steps.detect.outputs.rv_now != '' && steps.detect.outputs.rv_prev != ''
+        run: |
+          echo "::error::RUNTIME_VERSION changed but native code did not — an OTA for this runtime would never reach any APK. Revert the RUNTIME_VERSION bump, or ship a native release (yarn bump-version manages RUNTIME_VERSION automatically)."
+          printf '%s\n' "- RUNTIME_VERSION guard: ❌ runtime bump without a native diff — release blocked" | scripts/ci/step-summary.sh
+          exit 1
+
   create-release:
+    # Native mode only: a JS-only tag is a git tag with no release object, so
+    # the landing keeps pointing at the latest APK release.
+    needs: changes
+    if: needs.changes.outputs.native == 'true'
     runs-on: ubuntu-24.04
 
     outputs:
@@ -143,6 +259,15 @@ jobs:
             -H "Content-Type: application/json" \
             --data @release.json)
 
+          # Forgejo answers 409 (body: "release already exists") when the tag
+          # already has a release — a full pipeline re-run must not die here.
+          # Same tolerance as the GitHub mirror's duplicate-asset handling.
+          if [ "$HTTP_CODE" = "409" ] || { [ "$HTTP_CODE" -ge 400 ] && grep -qi 'already exists' release-response.json; }; then
+            echo "::warning::Forgejo Release ${{ github.ref_name }} already exists — continuing"
+            summary_row "- Forgejo release: [${{ github.ref_name }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}) ♻️ already exists"
+            exit 0
+          fi
+
           if [ "$HTTP_CODE" -ge 400 ]; then
             echo "::error::Failed to create Forgejo Release (HTTP $HTTP_CODE)"
             cat release-response.json
@@ -156,7 +281,9 @@ jobs:
         run: rm -f release-body.md release.json release-response.json
 
   web:
-    needs: create-release
+    # Deploy runs on every tag, including JS-only (no release exists there).
+    # The release-asset steps below are gated on native mode separately.
+    needs: changes
     runs-on: ubuntu-24.04
 
     concurrency:
@@ -237,35 +364,6 @@ jobs:
           yarn web:build
           printf '%s\n' "- Web export: ✅ ($((EPOCHSECONDS-start))s)" | scripts/ci/step-summary.sh
 
-      - name: Zip web build
-        run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
-          (cd dist && zip -qr "../slovo-propovedi-web-v${VERSION}.zip" .)
-          {
-            echo "- Artifact: \`slovo-propovedi-web-v${VERSION}.zip\` ($(du -h "slovo-propovedi-web-v${VERSION}.zip" | cut -f1))"
-          } | scripts/ci/step-summary.sh
-
-      - name: Upload web zip to the Forgejo Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
-          VERSION="${{ needs.create-release.outputs.version }}"
-          TAG="${{ github.ref_name }}"
-          RELEASE_ID=$(curl -s \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG" | jq -r .id)
-          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
-            echo "::error::Could not resolve Forgejo release id for $TAG"
-            exit 1
-          fi
-          curl -s -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-web-v${VERSION}.zip" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/zip" \
-            --data-binary @slovo-propovedi-web-v${VERSION}.zip
-          summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
-
       - name: Check deploy config
         id: deploycfg
         env:
@@ -275,7 +373,7 @@ jobs:
           if [ -n "$VPS_HOST" ] && [ -n "$WEB_HOSTNAME" ]; then
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::VPS_HOST secret or WEB_HOSTNAME variable not set — skipping VPS deploy (the web zip is still attached to the release)"
+            echo "::warning::VPS_HOST secret or WEB_HOSTNAME variable not set — skipping VPS deploy"
             printf '%s\n' "- VPS deploy: ⏭️ skipped (VPS_HOST secret or WEB_HOSTNAME variable not set)" | scripts/ci/step-summary.sh
             echo "deploy=false" >> "$GITHUB_OUTPUT"
           fi
@@ -315,6 +413,56 @@ jobs:
              bash /tmp/vps-deploy-web.sh"
           printf '%s\n' "- VPS deploy: ✅ https://$WEB_HOSTNAME (tag $DEPLOY_TAG)" | scripts/ci/step-summary.sh
 
+      # Native mode only, and deliberately after the deploy: a JS-only tag has
+      # no Forgejo release to attach to, and the deploy must not depend on
+      # release creation (create-release runs in parallel in native mode).
+      - name: Zip web build
+        if: needs.changes.outputs.native == 'true'
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          (cd dist && zip -qr "../slovo-propovedi-web-v${VERSION}.zip" .)
+          {
+            echo "- Artifact: \`slovo-propovedi-web-v${VERSION}.zip\` ($(du -h "slovo-propovedi-web-v${VERSION}.zip" | cut -f1))"
+          } | scripts/ci/step-summary.sh
+
+      - name: Upload web zip to the Forgejo Release
+        if: needs.changes.outputs.native == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          TAG="${{ github.ref_name }}"
+
+          # create-release runs in parallel (it waits for CI first), so the
+          # release object may not exist yet — poll for it. Same 10-minute
+          # budget as create-release's CI wait.
+          RELEASE_ID=""
+          for attempt in $(seq 1 40); do
+            RELEASE_ID=$(curl -s \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG" | jq -r .id)
+            if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "null" ]; then
+              break
+            fi
+            echo "Waiting for Forgejo release $TAG (attempt $attempt/40)..."
+            if [ "$attempt" -lt 40 ]; then
+              sleep 15
+            fi
+          done
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "::error::Could not resolve Forgejo release id for $TAG"
+            exit 1
+          fi
+          curl -s -X POST \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-web-v${VERSION}.zip" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/zip" \
+            --data-binary @slovo-propovedi-web-v${VERSION}.zip
+          summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
+
       - name: Cleanup workspace
         if: always()
         run: |
@@ -322,7 +470,10 @@ jobs:
           find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
 
   android:
-    needs: create-release
+    # Native mode only: JS-only releases keep the previous APK (same runtime)
+    # and go out through the `ota` job instead.
+    needs: [changes, create-release]
+    if: needs.changes.outputs.native == 'true'
     runs-on: ubuntu-24.04
 
     concurrency:
@@ -427,10 +578,19 @@ jobs:
       - name: Prebuild native code
         # app.config.ts validates these (zod, no defaults) while generating the
         # manifest — a missing var must fail the prebuild, not emit a bad host.
+        # The four OTA vars are different: ota.config.ts is all-or-nothing, so if
+        # any is missing the generated manifest simply gets `updates.enabled: false`
+        # (the APK ships with self-update off — safe, no guard needed).
         env:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # OTA deployment values (Forgejo org/repo vars) — embedded as
+          # expo.modules.updates.* meta-data in the generated AndroidManifest.
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
         run: |
           start=$EPOCHSECONDS
           npx expo prebuild --platform android --clean
@@ -552,6 +712,13 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Same all-or-nothing OTA values as the prebuild step: app.config is
+          # re-evaluated by expo export:embed, and a missing value just turns
+          # updates off in this build (no guard needed).
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
         run: |
           cd android
           free -h
@@ -971,5 +1138,110 @@ jobs:
         if: always()
         run: |
           rm -rf node_modules .yarn/cache .expo jest-cache dist android/app/build 2>/dev/null || true
+          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
+          find . -name '.cache' -type d -delete 2>/dev/null || true
+
+  ota:
+    # JS-only mode: no native diff since the previous tag, so the installed APK
+    # (same runtimeVersion) stays valid and the release is delivered through
+    # expo-updates. Native releases ship a new APK and a new runtimeVersion,
+    # which OTA could not deliver to already-installed builds.
+    # No create-release dependency: a JS-only tag creates no release object.
+    needs: changes
+    if: needs.changes.outputs.native == 'false'
+    runs-on: ubuntu-24.04
+
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Get yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Publish OTA update to xprem
+        env:
+          # Inlined into the exported JS bundle (see src/shared/config/config.ts,
+          # src/pages/share/lib/constants.ts) — the OTA bundle must target the same
+          # prod hosts as the APK it is delivered to.
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # xprem deployment values (Forgejo org/repo vars): `eoas publish` runs
+          # `expo export`, which evaluates app.config.ts — without these the
+          # exported bundle would carry `updates.enabled: false` and deliver
+          # nothing. These are not secrets; move them to `secrets.` only if the
+          # project decides to restrict who can read them.
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+          # Same Metro memory caps as the APK build — the 4 GB host is shared.
+          NODE_OPTIONS: --max-old-space-size=1536
+          CI_METRO_MAX_WORKERS: '2'
+          XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
+          # Belt-and-suspenders: eoas aborts a non-interactive publish from a
+          # dirty tracked tree. This job does not modify sources, but the flag
+          # keeps the publish robust against future build steps.
+          EAS_NO_VCS: '1'
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
+          missing=0
+          missing_list=""
+          for v in XPREM_EOO_TOKEN EXPO_PUBLIC_OTA_URL EXPO_PUBLIC_XPREM_APP_ID EXPO_PUBLIC_XPREM_CHANNEL_NAME EXPO_PUBLIC_XPREM_BRANCH_NAME; do
+            if [ -z "${!v:-}" ]; then
+              echo "::warning::$v is not configured"
+              missing=1
+              missing_list="$missing_list \`$v\`"
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            printf '%s\n' "- OTA (xprem): ⏭️ skipped (missing$missing_list)" | scripts/ci/step-summary.sh
+            exit 0
+          fi
+
+          # JS-only release: the APK (and its runtimeVersion) is unchanged, so
+          # the whole release is delivered silently through expo-updates
+          # (protocol v1 against our own xprem server); installed builds pick
+          # the bundle up on the next cold start. The eoas CLI version lives in
+          # .eoas-version (single source, bumped by Renovate) and must stay in
+          # sync with the xprem server version. Any failure is non-fatal
+          # (`::warning::`): this tag has no release object, so the OTA bundle
+          # is its only delivery path — fix and re-run.
+          EOAS_VERSION="$(cat .eoas-version)"
+          if yarn install --frozen-lockfile && \
+             EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes "eoas@${EOAS_VERSION}" publish \
+               --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive; then
+            echo "Published OTA update to branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
+            summary_row "- OTA (xprem): ✅ branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\` (android)"
+          else
+            echo "::warning::OTA publish failed — continuing, re-run this workflow to retry (no release was created)"
+            summary_row "- OTA (xprem): ⚠️ failed (see log)"
+          fi
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          rm -rf node_modules .yarn/cache .expo jest-cache dist 2>/dev/null || true
           find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
           find . -name '.cache' -type d -delete 2>/dev/null || true

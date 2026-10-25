@@ -1,0 +1,429 @@
+name: Publish OTA update (manual)
+
+# Ad-hoc OTA publish + web deploy WITHOUT cutting a version or a tag — the
+# `ota` and `web` jobs from release.yml behind a manual trigger.
+#
+# When to use it:
+#   - a hotfix must reach installed builds now, but a full release is not
+#     warranted yet (js-only change: screens, logic, styles, texts);
+#   - the OTA or web step of a normal release failed and needs a re-run.
+# Do NOT use it for changes under android/, ios/, plugins/, modules/, or for
+# yarn.lock / app.config.ts / ota.config.ts: such a bundle belongs to a NEW
+# runtimeVersion and release.yml ships it inside a new APK, not over the air
+# (see the RUNTIME_VERSION guard in release.yml).
+#
+# A manual run = hotfix: a new web version + a new OTA bundle. It creates NO
+# Forgejo release and builds NO APK — a Forgejo release always means a new APK
+# (see release.yml), and a hotfix has none.
+#
+# Normal releases do this automatically: release.yml runs `web` on every `v*`
+# tag and `ota` in JS-only mode, so this workflow is an out-of-band tool only.
+#
+# Run: Forgejo → Actions → «Publish OTA update (manual)» → Run workflow →
+# pick the branch. Platform is always android; the xprem branch and channel are
+# taken from the org/repo vars, never from the run.
+#
+# xprem dedupes identical content, so an accidental double publish of the same
+# commit is harmless — the second run uploads nothing new.
+#
+# Order: OTA publish first (the hotfix reaches installed builds), then the web
+# deploy. The OTA step is non-fatal by design, so a failed publish does not
+# block the web deploy; a failed web deploy fails the run.
+#
+# Failure semantics match the release.yml `ota` job: a failed publish is
+# `::warning::` + exit 0, so a red run never signals repo-level breakage. A
+# manual run is watched by a human anyway — the eoas error stays visible in the
+# log above the warning.
+#
+# Summary: every step appends its row to $GITHUB_STEP_SUMMARY (see
+# scripts/ci/step-summary.sh) — header, OTA config/publish, web export/deploy —
+# and the always() footer turns those rows into one verdict: 🎉 fully published,
+# ⚠️ skipped/non-fatal parts, ❌ the web path broke. A step skipped by `if:`
+# appends nothing; the footer reports it as skipped rather than green.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ota:
+    runs-on: ubuntu-24.04
+
+    # Same group as release.yml / ci.yml: the export is memory-heavy and the
+    # runner host is 4 GB, so manual publishes queue instead of overlapping a
+    # build (see release.yml for the OOM context).
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history + tags: the js-only check diffs HEAD against the latest
+          # release tag and reads RUNTIME_VERSION at both refs.
+          fetch-depth: 0
+          fetch-tags: true
+
+      # The selected ref must be JS-only: an OTA bundle can only reach APKs
+      # that already carry its runtimeVersion. Native paths since the latest
+      # release tag mean the change belongs in a full release (new APK); a
+      # RUNTIME_VERSION bump on a JS-only diff targets a runtime no released
+      # APK has. Runs before any install/publish, so a wrong ref fails fast.
+      #
+      # Also writes the run header: every later step appends its own row in
+      # step order (see scripts/ci/step-summary.sh), so the summary accumulates
+      # into one readable report. A step skipped by `if:` appends nothing — the
+      # rows only ever describe what actually ran.
+      - name: Verify the ref is JS-only
+        id: verify
+        run: |
+          set -e
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          SHORT_SHA="${GITHUB_SHA:-unknown}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          {
+            echo "## Manual OTA publish — \`${{ github.ref_name }}\`"
+            echo ''
+            echo "- Commit: \`$SHORT_SHA\` · $(date -u '+%Y-%m-%d %H:%M UTC') · platform: android"
+            echo ''
+          } | scripts/ci/step-summary.sh || true
+
+          # Latest tag by creator date is the last released APK's baseline.
+          PREV_TAG=$(git tag --sort=-creatordate | sed -n '1p' || true)
+          if [ -z "$PREV_TAG" ]; then
+            echo "::warning::no tags yet — skipping js-only verification"
+            echo "result=skipped" >> "$GITHUB_OUTPUT"
+            summary_row "- Verification: ⏭️ skipped (no tags)"
+            exit 0
+          fi
+
+          DETECT=$(scripts/ci/detect-native-changes.sh "$PREV_TAG" HEAD)
+          NATIVE=$(printf '%s\n' "$DETECT" | sed -n 's/^native=//p')
+          RV_PREV=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_prev=//p')
+          RV_NOW=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_now=//p')
+
+          if [ "$NATIVE" = "true" ]; then
+            echo "::error::Native paths changed since $PREV_TAG — cut a full release (yarn bump-version + tag; bump-version manages RUNTIME_VERSION automatically) instead of an OTA publish"
+            echo "result=blocked" >> "$GITHUB_OUTPUT"
+            summary_row "- Verification: ❌ blocked (native paths changed since $PREV_TAG)"
+            exit 1
+          fi
+
+          if [ -n "$RV_PREV" ] && [ -n "$RV_NOW" ] && [ "$RV_PREV" != "$RV_NOW" ]; then
+            echo "::error::RUNTIME_VERSION at HEAD differs from the latest release tag — this OTA bundle would target a runtime no released APK has. Cut a full release instead (yarn bump-version manages RUNTIME_VERSION automatically)."
+            echo "result=blocked" >> "$GITHUB_OUTPUT"
+            summary_row "- Verification: ❌ blocked (RUNTIME_VERSION drift)"
+            exit 1
+          fi
+
+          echo "::notice::verified js-only vs $PREV_TAG"
+          echo "result=verified" >> "$GITHUB_OUTPUT"
+          summary_row "- Verification: ✅ js-only verified (base $PREV_TAG)"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Get yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      # Same all-or-nothing gate as the release.yml `ota` job: without the four
+      # vars the exported bundle would carry `updates.enabled: false` and
+      # deliver nothing, so a publish is pointless. Missing config is a warning,
+      # not an error — an unconfigured fork stays green.
+      #
+      # Opens the OTA section under the run header written by the verification
+      # step above.
+      - name: Guard required OTA config
+        id: guard
+        env:
+          XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+        run: |
+          # The summary is cosmetic: `|| true` keeps the workflow green when
+          # $GITHUB_STEP_SUMMARY is unset or unwritable (older/exotic runners).
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          printf '%s\n' '### OTA (xprem)' | scripts/ci/step-summary.sh || true
+
+          missing=0
+          missing_list=""
+          for v in XPREM_EOO_TOKEN EXPO_PUBLIC_OTA_URL EXPO_PUBLIC_XPREM_APP_ID \
+                   EXPO_PUBLIC_XPREM_CHANNEL_NAME EXPO_PUBLIC_XPREM_BRANCH_NAME; do
+            if [ -z "${!v:-}" ]; then
+              echo "::warning::$v is not configured"
+              missing=1
+              missing_list="$missing_list \`$v\`"
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            summary_row "- Config: ⏭️ skipped (missing$missing_list)"
+            exit 0
+          fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "Publishing to xprem branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
+          summary_row "- Config: ✅ ready (branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\`)"
+
+      # Needed by both paths: the OTA publish (gated separately by `ready`)
+      # and the web export below.
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Publish OTA update to xprem
+        id: ota
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          # Inlined into the exported JS bundle (see src/shared/config/config.ts,
+          # src/pages/share/lib/constants.ts) — the OTA bundle must target the
+          # same prod hosts as the APK it is delivered to.
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # xprem deployment values (Forgejo org/repo vars) — `eoas publish`
+          # runs `expo export`, which evaluates app.config.ts; the guard above
+          # already ensured they are all set.
+          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+          # Same Metro memory caps as the APK build — the 4 GB host is shared.
+          NODE_OPTIONS: --max-old-space-size=1536
+          CI_METRO_MAX_WORKERS: '2'
+          XPREM_EOO_TOKEN: ${{ secrets.XPREM_EOO_TOKEN }}
+          # eoas aborts a non-interactive publish from a dirty tracked tree.
+          # This job does not modify sources, but the flag keeps the publish
+          # robust against future build steps (same as release.yml).
+          EAS_NO_VCS: '1'
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          # Non-fatal on purpose: same semantics as the release.yml `ota` job, so
+          # a broken publish never reads as repo-level breakage. The eoas output
+          # above the warning is the actual error report for this manual run.
+          # The eoas CLI version lives in .eoas-version (single source, bumped
+          # by Renovate) and must stay in sync with the xprem server version.
+          EOAS_VERSION="$(cat .eoas-version)"
+          if EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes "eoas@${EOAS_VERSION}" publish \
+               --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive; then
+            echo "Published OTA update to branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
+            echo "result=published" >> "$GITHUB_OUTPUT"
+            summary_row "- Publish: ✅ published to xprem (branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\`)"
+          else
+            # A re-run is safe: xprem dedupes identical content.
+            echo "::warning::OTA publish failed — see the eoas output above; fix and re-run"
+            echo "result=failed" >> "$GITHUB_OUTPUT"
+            summary_row "- Publish: ⚠️ failed (see log)"
+          fi
+
+      # Web deploy — same steps as the release.yml `web` job, minus the
+      # release-asset upload (a manual run creates no Forgejo release).
+      - name: Validate required web vars
+        id: webvars
+        env:
+          BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+        run: |
+          set -e
+
+          {
+            echo ''
+            echo '### Web'
+          } | scripts/ci/step-summary.sh || true
+
+          missing=0
+          missing_list=""
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
+              missing=1
+              missing_list="$missing_list \`$v\`"
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "vars=missing" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Required vars: ❌ missing$missing_list" | scripts/ci/step-summary.sh || true
+          else
+            echo "vars=ok" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Required vars: ✅" | scripts/ci/step-summary.sh || true
+          fi
+          exit $missing
+
+      - name: Export web
+        id: webexport
+        env:
+          # Same Metro memory caps as the APK build — the 4 GB host is shared.
+          NODE_OPTIONS: --max-old-space-size=1536
+          CI_METRO_MAX_WORKERS: '2'
+          # Inlined into the web bundle by Metro at export time (see
+          # src/shared/config/config.ts, src/pages/share/lib/constants.ts).
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+        run: |
+          start=$EPOCHSECONDS
+          if yarn web:build; then
+            echo "result=exported" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Export: ✅ ($((EPOCHSECONDS-start))s)" | scripts/ci/step-summary.sh || true
+          else
+            # The export is fatal (unlike OTA): without dist/ there is nothing
+            # to deploy, so the run must go red — but the row still explains it.
+            echo "result=failed" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Export: ⚠️ failed (see log)" | scripts/ci/step-summary.sh || true
+            exit 1
+          fi
+
+      - name: Check deploy config
+        id: deploycfg
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+        run: |
+          if [ -n "$VPS_HOST" ] && [ -n "$WEB_HOSTNAME" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::VPS_HOST secret or WEB_HOSTNAME variable not set — skipping VPS deploy"
+            printf '%s\n' "- Deploy: ⏭️ skipped (VPS_HOST secret or WEB_HOSTNAME variable not set)" | scripts/ci/step-summary.sh || true
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup SSH
+        if: steps.deploycfg.outputs.deploy == 'true'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy to VPS
+        id: deploy
+        if: steps.deploycfg.outputs.deploy == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_USER: ${{ secrets.VPS_SSH_USER }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+          # A manual run has no tag: the branch name is the deployment label.
+          DEPLOY_TAG: ${{ github.ref_name }}
+        run: |
+          SSH_TARGET="${VPS_SSH_USER:-root}@$VPS_HOST"
+          SRC=/slovo/web/container-src
+
+          # Ship only what the image needs: the export + the nginx bits.
+          if tar czf - dist Dockerfile nginx.conf .dockerignore \
+               | ssh "$SSH_TARGET" "rm -rf $SRC && mkdir -p $SRC && tar xzf - -C $SRC" \
+             && scp scripts/vps-deploy-web.sh "$SSH_TARGET:/tmp/vps-deploy-web.sh" \
+             && ssh "$SSH_TARGET" \
+                  "chmod +x /tmp/vps-deploy-web.sh && \
+                   DEPLOY_TAG='$DEPLOY_TAG' \
+                   WEB_HOSTNAME='$WEB_HOSTNAME' \
+                   ACME_EMAIL='$ACME_EMAIL' \
+                   bash /tmp/vps-deploy-web.sh"; then
+            echo "result=deployed" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Deploy: ✅ https://$WEB_HOSTNAME ($DEPLOY_TAG)" | scripts/ci/step-summary.sh || true
+          else
+            # The deploy is fatal, unlike OTA — the run goes red either way; the
+            # row only makes the summary self-explanatory.
+            echo "result=failed" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "- Deploy: ⚠️ failed (see log)" | scripts/ci/step-summary.sh || true
+            exit 1
+          fi
+
+      # Footer: always runs, so the summary ends with a verdict even when a step
+      # above failed and skipped the rest. Everything is read from the outputs
+      # the steps wrote — an empty output means "did not run", never success.
+      - name: Run summary
+        if: always()
+        env:
+          VERIFY_RESULT: ${{ steps.verify.outputs.result }}
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+          GUARD_READY: ${{ steps.guard.outputs.ready }}
+          GUARD_OUTCOME: ${{ steps.guard.outcome }}
+          OTA_RESULT: ${{ steps.ota.outputs.result }}
+          WEB_EXPORT: ${{ steps.webexport.outputs.result }}
+          DEPLOY_ENABLED: ${{ steps.deploycfg.outputs.deploy }}
+          DEPLOY_RESULT: ${{ steps.deploy.outputs.result }}
+          WEB_VARS_OUTCOME: ${{ steps.webvars.outcome }}
+          WEB_EXPORT_OUTCOME: ${{ steps.webexport.outcome }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        run: |
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          case "$OTA_RESULT" in
+            published) OTA='✅ published' ;;
+            failed) OTA='⚠️ failed' ;;
+            # guard.ready=false is a deliberate skip; ready=true with no result
+            # means the step never reported (a failed earlier step) — not a pass.
+            *) if [ "$GUARD_READY" = 'true' ]; then OTA='⚠️ not reported'; else OTA='⏭️ skipped'; fi ;;
+          esac
+
+          case "$WEB_EXPORT" in
+            exported)
+              case "$DEPLOY_ENABLED:$DEPLOY_RESULT" in
+                true:deployed) WEB='✅ deployed' ;;
+                true:*) WEB='⚠️ export ok, deploy not reported' ;;
+                false:*) WEB='✅ exported, deploy ⏭️ skipped' ;;
+                *) WEB='⚠️ export ok, deploy state unknown' ;;
+              esac
+              ;;
+            failed) WEB='⚠️ export failed' ;;
+            *) WEB='⏭️ skipped' ;;
+          esac
+
+          case "$VERIFY_RESULT" in
+            verified) VERIFY='✅ js-only verified' ;;
+            blocked) VERIFY='❌ blocked (not js-only)' ;;
+            skipped) VERIFY='⏭️ skipped (no tags)' ;;
+            *) VERIFY='⚠️ not reported' ;;
+          esac
+
+          if [ "$VERIFY_RESULT" = 'blocked' ] || [ "$VERIFY_OUTCOME" = 'failure' ]; then
+            VERDICT='❌ failed — verification blocked this publish (see the row above)'
+          elif [ "$GUARD_OUTCOME" = 'failure' ]; then
+            VERDICT='❌ failed — the OTA config guard broke (see log)'
+          elif [ "$WEB_VARS_OUTCOME" = 'failure' ] || [ "$WEB_EXPORT_OUTCOME" = 'failure' ] \
+             || [ "$DEPLOY_OUTCOME" = 'failure' ]; then
+            VERDICT='❌ failed — the web path broke (see the rows above)'
+          elif [ "$GUARD_READY" = 'true' ] && [ -z "$OTA_RESULT" ]; then
+            VERDICT='❌ failed — OTA publish never ran (see log)'
+          elif [ "$OTA" = '✅ published' ] && [ "$WEB" = '✅ deployed' ]; then
+            VERDICT='🎉 done: web + OTA published'
+          else
+            VERDICT="⚠️ finished with warnings — verification: $VERIFY · OTA: $OTA · web: $WEB"
+          fi
+
+          {
+            echo ''
+            echo '---'
+            echo ''
+            echo "**Result:** $VERDICT"
+          } | scripts/ci/step-summary.sh || true
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          rm -rf node_modules .yarn/cache .expo jest-cache dist 2>/dev/null || true
+          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
+          find . -name '.cache' -type d -delete 2>/dev/null || true

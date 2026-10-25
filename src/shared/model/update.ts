@@ -1,13 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, atom } from '@reatom/framework'
 import { Platform } from 'react-native'
-import { APP_VERSION } from '../config/version'
 import { requestPermissions, scheduleNotification } from '../lib/notifications/notificationsHelpers'
-import { compareVersions } from '../lib/version-check/compareVersions'
 import { fetchLatestRelease } from '../lib/version-check/fetchLatestRelease'
 import { type LatestReleaseInfo } from '../lib/version-check/types'
 import { isOnlineAtom } from './network'
 import { updateDialogVisibleAtom } from './updateInstall'
+import { decideUpdatePrompt, isReleaseNewerThanRunning } from './updateOtaGate'
+import { isOtaUpdateAvailable, readRunningAppVersion } from './updateOtaStatus'
 
 const LAST_UPDATE_NOTIFIED_KEY = 'last-update-notified-version'
 const UPDATE_NOTIFICATION_ID = 'app-update-notification'
@@ -67,8 +67,16 @@ export const checkForUpdateAction = action(async ctx => {
   const release = await fetchLatestRelease()
   if (!release) return
 
-  const isUpdateAvailable = compareVersions(release.version, APP_VERSION) === 1
-  if (!isUpdateAvailable) return
+  // The running code may be an OTA bundle newer than the version baked into the
+  // APK, so the release is compared against what actually runs right now.
+  const runningVersion = await readRunningAppVersion()
+  const releaseIsNewer = isReleaseNewerThanRunning(release.version, runningVersion)
+
+  // A newer release that is also available over OTA needs no prompt: the bundle
+  // applies on the next cold start, after which the running version matches the
+  // release. Both the dialog and the push notification are skipped.
+  const otaAvailable = releaseIsNewer ? await isOtaUpdateAvailable() : false
+  if (!decideUpdatePrompt({ otaAvailable, releaseIsNewer })) return
 
   await ctx.schedule(() => {
     latestVersionAtom(ctx, release.version)

@@ -1,5 +1,6 @@
 import { type ConfigContext, type ExpoConfig } from 'expo/config'
 import { type ConfigPlugin } from 'expo/config-plugins'
+import { OTA_CONFIG } from './ota.config.ts'
 import pkg from './package.json'
 import { withAndroidBuildMaintenance } from './plugins/withAndroidBuildMaintenance.ts'
 import { withAndroidFlavors } from './plugins/withAndroidFlavors.ts'
@@ -18,8 +19,7 @@ type AppPlugin = ConfigPlugin | NonNullable<ExpoConfig['plugins']>[number]
 
 const appName = 'Слово.Проповеди'
 
-// Mirrors scripts/bump-version.mjs and CI's EXPECTED_CODE math (major*10000+minor*100+patch);
-// feeds both android.versionCode and ios.buildNumber.
+// Mirrors scripts/bump-version.mjs and CI's EXPECTED_CODE math; feeds versionCode/buildNumber.
 const [major, minor, patch] = pkg.version.split('.').map(Number)
 const versionCode = major * 10000 + minor * 100 + patch
 
@@ -29,7 +29,6 @@ const appId = 'ru.slovopropovedi'
 // prebuild rather than emit an unverifiable App Links host). Relative import (the
 // Expo config evaluator resolves neither tsconfig path aliases nor extensionless
 // specifiers, hence the explicit .ts — same as the ./plugins/*.ts imports below).
-// CI prebuild injects the env (see .forgejo/workflows/release.yml).
 const webHostname = ENV.webHostname
 const splashImageProps = {
   image: './assets/splash.png',
@@ -114,10 +113,10 @@ export default ({ config }: ConfigContext): AppConfig => ({
     withDebugKeystore,
     withReleaseSigning,
   ],
+  ...OTA_CONFIG,
   slug: 'slovo-propovedi-mobile',
   userInterfaceStyle: 'automatic',
-  // Version comes from package.json (single source of truth); scripts/bump-version.mjs
-  // bumps only package.json — app.json is gone.
+  // Version comes from package.json (single source of truth); app.json is gone.
   version: pkg.version,
   web: {
     bundler: 'metro',
