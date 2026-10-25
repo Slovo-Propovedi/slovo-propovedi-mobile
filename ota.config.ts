@@ -21,8 +21,9 @@ interface OtaEnv {
 }
 
 const readOtaEnv = (): null | OtaEnv => {
-  // Base URL of the xprem server: expo-updates appends `/manifest` itself, so a
-  // `/manifest` or `/api` suffix here would break the device protocol.
+  // FULL manifest URL of the xprem server, including `/manifest`: expo-updates
+  // requests this value verbatim and appends nothing. A bare host makes the app
+  // fetch `/`, where the server answers 404.
   const url = process.env.EXPO_PUBLIC_OTA_URL?.trim()
   const appId = process.env.EXPO_PUBLIC_XPREM_APP_ID?.trim()
   const channelName = process.env.EXPO_PUBLIC_XPREM_CHANNEL_NAME?.trim()
