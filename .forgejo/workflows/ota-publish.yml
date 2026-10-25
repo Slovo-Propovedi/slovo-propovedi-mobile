@@ -1,19 +1,23 @@
 name: Publish OTA update (manual)
 
-# Ad-hoc OTA publish WITHOUT cutting a version or a tag — the `ota` job from
-# release.yml behind a manual trigger.
+# Ad-hoc OTA publish + web deploy WITHOUT cutting a version or a tag — the
+# `ota` and `web` jobs from release.yml behind a manual trigger.
 #
 # When to use it:
 #   - a hotfix must reach installed builds now, but a full release is not
 #     warranted yet (js-only change: screens, logic, styles, texts);
-#   - the OTA step of a normal release failed and the bundle needs a re-publish.
+#   - the OTA or web step of a normal release failed and needs a re-run.
 # Do NOT use it for changes under android/, ios/, plugins/, modules/, or for
 # yarn.lock / app.config.ts / ota.config.ts: such a bundle belongs to a NEW
 # runtimeVersion and release.yml ships it inside a new APK, not over the air
 # (see the RUNTIME_VERSION guard in release.yml).
 #
-# Normal releases publish OTA automatically: release.yml runs the `ota` job on
-# every `v*` tag in JS-only mode, so this workflow is an out-of-band tool only.
+# A manual run = hotfix: a new web version + a new OTA bundle. It creates NO
+# Forgejo release and builds NO APK — a Forgejo release always means a new APK
+# (see release.yml), and a hotfix has none.
+#
+# Normal releases do this automatically: release.yml runs `web` on every `v*`
+# tag and `ota` in JS-only mode, so this workflow is an out-of-band tool only.
 #
 # Run: Forgejo → Actions → «Publish OTA update (manual)» → Run workflow →
 # pick the branch. Platform is always android; the xprem branch and channel are
@@ -21,6 +25,10 @@ name: Publish OTA update (manual)
 #
 # xprem dedupes identical content, so an accidental double publish of the same
 # commit is harmless — the second run uploads nothing new.
+#
+# Order: OTA publish first (the hotfix reaches installed builds), then the web
+# deploy. The OTA step is non-fatal by design, so a failed publish does not
+# block the web deploy; a failed web deploy fails the run.
 #
 # Failure semantics match the release.yml `ota` job: a failed publish is
 # `::warning::` + exit 0, so a red run never signals repo-level breakage. A
@@ -105,8 +113,9 @@ jobs:
           echo "Publishing to xprem branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
           summary_row "- OTA config: ✅ · branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\`"
 
+      # Needed by both paths: the OTA publish (gated separately by `ready`)
+      # and the web export below.
       - name: Install dependencies
-        if: steps.guard.outputs.ready == 'true'
         run: yarn install --frozen-lockfile
 
       - name: Publish OTA update to xprem
@@ -139,8 +148,10 @@ jobs:
           # Non-fatal on purpose: same semantics as the release.yml `ota` job, so
           # a broken publish never reads as repo-level breakage. The eoas output
           # above the warning is the actual error report for this manual run.
-          # Keep the eoas CLI version in sync with the xprem server version.
-          if EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes eoas@3.2.6 publish \
+          # The eoas CLI version lives in .eoas-version (single source, bumped
+          # by Renovate) and must stay in sync with the xprem server version.
+          EOAS_VERSION="$(cat .eoas-version)"
+          if EOO_TOKEN="$XPREM_EOO_TOKEN" npx --yes "eoas@${EOAS_VERSION}" publish \
                --branch "$EXPO_PUBLIC_XPREM_BRANCH_NAME" --platform android --nonInteractive; then
             echo "Published OTA update to branch $EXPO_PUBLIC_XPREM_BRANCH_NAME (android)"
             summary_row "- OTA (xprem): ✅ branch \`$EXPO_PUBLIC_XPREM_BRANCH_NAME\` (android)"
@@ -149,6 +160,102 @@ jobs:
             echo "::warning::OTA publish failed — see the eoas output above; fix and re-run"
             summary_row "- OTA (xprem): ⚠️ failed (see log)"
           fi
+
+      # Web deploy — same steps as the release.yml `web` job, minus the
+      # release-asset upload (a manual run creates no Forgejo release).
+      - name: Validate required web vars
+        env:
+          BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+        run: |
+          set -e
+
+          {
+            echo "## Manual web deploy — ${{ github.ref_name }}"
+            echo ''
+          } | scripts/ci/step-summary.sh
+
+          missing=0
+          missing_list=""
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
+              missing=1
+              missing_list="$missing_list \`$v\`"
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            printf '%s\n' "- Required vars: ❌ missing$missing_list" | scripts/ci/step-summary.sh
+          else
+            printf '%s\n' "- Required vars: ✅" | scripts/ci/step-summary.sh
+          fi
+          exit $missing
+
+      - name: Export web
+        env:
+          # Same Metro memory caps as the APK build — the 4 GB host is shared.
+          NODE_OPTIONS: --max-old-space-size=1536
+          CI_METRO_MAX_WORKERS: '2'
+          # Inlined into the web bundle by Metro at export time (see
+          # src/shared/config/config.ts, src/pages/share/lib/constants.ts).
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+        run: |
+          start=$EPOCHSECONDS
+          yarn web:build
+          printf '%s\n' "- Web export: ✅ ($((EPOCHSECONDS-start))s)" | scripts/ci/step-summary.sh
+
+      - name: Check deploy config
+        id: deploycfg
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+        run: |
+          if [ -n "$VPS_HOST" ] && [ -n "$WEB_HOSTNAME" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::VPS_HOST secret or WEB_HOSTNAME variable not set — skipping VPS deploy"
+            printf '%s\n' "- VPS deploy: ⏭️ skipped (VPS_HOST secret or WEB_HOSTNAME variable not set)" | scripts/ci/step-summary.sh
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup SSH
+        if: steps.deploycfg.outputs.deploy == 'true'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy to VPS
+        if: steps.deploycfg.outputs.deploy == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_USER: ${{ secrets.VPS_SSH_USER }}
+          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+          # A manual run has no tag: the branch name is the deployment label.
+          DEPLOY_TAG: ${{ github.ref_name }}
+        run: |
+          SSH_TARGET="${VPS_SSH_USER:-root}@$VPS_HOST"
+          SRC=/slovo/web/container-src
+
+          # Ship only what the image needs: the export + the nginx bits.
+          tar czf - dist Dockerfile nginx.conf .dockerignore \
+            | ssh "$SSH_TARGET" "rm -rf $SRC && mkdir -p $SRC && tar xzf - -C $SRC"
+          scp scripts/vps-deploy-web.sh "$SSH_TARGET:/tmp/vps-deploy-web.sh"
+          ssh "$SSH_TARGET" \
+            "chmod +x /tmp/vps-deploy-web.sh && \
+             DEPLOY_TAG='$DEPLOY_TAG' \
+             WEB_HOSTNAME='$WEB_HOSTNAME' \
+             ACME_EMAIL='$ACME_EMAIL' \
+             bash /tmp/vps-deploy-web.sh"
+          printf '%s\n' "- VPS deploy: ✅ https://$WEB_HOSTNAME ($DEPLOY_TAG)" | scripts/ci/step-summary.sh
 
       - name: Cleanup workspace
         if: always()
