@@ -37,17 +37,24 @@ on:
 # Jobs:
 #   changes         — detect native-vs-JS mode + RUNTIME_VERSION guard (light)
 #   create-release  — needs: changes, native only — gate on CI, verify versions,
-#                     cut the Forgejo Release (`android` attaches assets)
+#                     cut the Forgejo Release (`publish-release` attaches assets)
 #   web             — needs: changes — export + deploy the web PWA; attach the
 #                     web zip to the release in native mode only
-#   android         — needs: [changes, create-release], native only — build APK +
-#                     attach zip + mirror to GitHub and Codeberg
+#   android         — needs: [changes, create-release], native only — build the
+#                     APK, zip it with SHA256SUMS.txt and upload both as the
+#                     `release-assets` artifact (30-day retention)
+#   publish-release — needs: [create-release, android], native only — download
+#                     `release-assets`, attach them to the Forgejo release and
+#                     mirror that release to GitHub and Codeberg. Re-running
+#                     this job alone re-publishes WITHOUT rebuilding the APK.
 #   ota             — needs: changes, JS-only — publish the OTA bundle to xprem
 # `web`, `android` and `ota` never depend on each other, so they run in
-# whichever order the runner picks them up. The memory-heavy ones share the
-# `memory-heavy-jobs` concurrency group (also on ci.yml's `checks`) and queue on
-# the 4 GB host instead of overlapping. create-release stays OUT of that group:
-# it waits for `CI / checks`, which is in the group — sharing it would deadlock.
+# whichever order the runner picks them up; `publish-release` follows `android`.
+# The memory-heavy ones share the `memory-heavy-jobs` concurrency group (also on
+# ci.yml's `checks`) and queue on the 4 GB host instead of overlapping.
+# create-release stays OUT of that group: it waits for `CI / checks`, which is
+# in the group — sharing it would deadlock. publish-release stays out too: it is
+# a light network job (no build), so it needs no memory slot.
 
 jobs:
   changes:
@@ -484,10 +491,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Full history + all tags: the Codeberg mirror step pushes
-          # refs/remotes/origin/main and every local tag to Codeberg itself
-          # (the scheduled git mirror lags behind the tag push), so a shallow
-          # single-ref clone is not enough.
+          # Full history + all tags: release builds are cut from a complete
+          # clone — the tag is the trigger and version tooling expects the full
+          # tag set. Publishing (which also pushes refs to Codeberg) lives in
+          # `publish-release`.
           fetch-depth: 0
           fetch-tags: true
 
@@ -756,8 +763,59 @@ jobs:
             echo "- Checksums: \`SHA256SUMS.txt\` ($(cat SHA256SUMS.txt))"
           } | scripts/ci/step-summary.sh
 
+      - name: Upload release artifacts
+        # Publishing lives in the separate `publish-release` job, which consumes
+        # this artifact. A failed upload/mirror can therefore be re-run on its
+        # own without rebuilding the APK; 30 days is the practical re-run window.
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            slovo-propovedi-v${{ needs.create-release.outputs.version }}.zip
+            SHA256SUMS.txt
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Summarize release artifacts
+        run: |
+          printf '%s\n' "- Release artifacts: ✅ \`release-assets\` (zip + SHA256SUMS.txt, retained 30 days)" | scripts/ci/step-summary.sh
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          rm -rf node_modules .yarn/cache .expo jest-cache dist android/app/build 2>/dev/null || true
+          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
+          find . -name '.cache' -type d -delete 2>/dev/null || true
+
+  publish-release:
+    # Native mode only: both dependencies are native-gated, so a JS-only tag
+    # skips this job too. Split out of the build job so a failed attach/mirror
+    # can be re-run (re-run failed jobs) from the retained `release-assets`
+    # artifact — no APK rebuild.
+    needs: [create-release, android]
+    runs-on: ubuntu-24.04
+
+    # Deliberately NOT in the `memory-heavy-jobs` concurrency group: this job
+    # only downloads an artifact and calls HTTP APIs (no Gradle/Metro), so it
+    # must not queue behind the 4 GB build host.
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history + all tags: the Codeberg mirror step pushes
+          # refs/remotes/origin/main and every local tag to Codeberg itself
+          # (the scheduled git mirror lags behind the tag push), so a shallow
+          # single-ref clone is not enough.
+          fetch-depth: 0
+          fetch-tags: true
+
       - name: Extract changelog section
         run: |
+          {
+            echo "## Release ${{ github.ref_name }} — publish-release"
+            echo ''
+          } | scripts/ci/step-summary.sh
+
           VERSION="${{ needs.create-release.outputs.version }}"
           awk -v target="## [$VERSION]" '
             index($0, target) == 1 { found = 1; next }
@@ -765,6 +823,12 @@ jobs:
             found && $0 ~ /^\[.*\]: / { exit }
             found { print }
           ' CHANGELOG.md > release-body.md
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+          path: release-assets
 
       - name: Upload APK to the Forgejo Release
         env:
@@ -784,12 +848,12 @@ jobs:
             "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-v${VERSION}.zip" \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/zip" \
-            --data-binary @slovo-propovedi-v${VERSION}.zip
+            --data-binary @release-assets/slovo-propovedi-v${VERSION}.zip
           curl -s -X POST \
             "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=SHA256SUMS.txt" \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: text/plain" \
-            --data-binary @SHA256SUMS.txt
+            --data-binary @release-assets/SHA256SUMS.txt
           summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
 
       - name: Mirror release to GitHub
@@ -808,6 +872,7 @@ jobs:
           TAG="${{ github.ref_name }}"
           VERSION="${{ needs.create-release.outputs.version }}"
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
+          ZIP_PATH="release-assets/$ZIP_FILE"
           API_BASE="https://api.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile"
           UPLOAD_BASE="https://uploads.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile"
           AUTH_HEADER="Authorization: Bearer ${MIRROR_GITHUB_TOKEN}"
@@ -859,7 +924,7 @@ jobs:
           UPLOAD_STATUS=$(curl -s -o /tmp/gh-upload.json -w "%{http_code}" -X POST \
             -H "$AUTH_HEADER" -H "$ACCEPT_HEADER" -H "$API_VERSION_HEADER" \
             -H "Content-Type: application/zip" \
-            --data-binary @"$ZIP_FILE" \
+            --data-binary @"$ZIP_PATH" \
             "$UPLOAD_BASE/releases/$RELEASE_ID/assets?name=$ZIP_FILE" || true)
 
           if [ "$UPLOAD_STATUS" = "201" ]; then
@@ -877,7 +942,7 @@ jobs:
           SUMS_UPLOAD_STATUS=$(curl -s -o /tmp/gh-sums-upload.json -w "%{http_code}" -X POST \
             -H "$AUTH_HEADER" -H "$ACCEPT_HEADER" -H "$API_VERSION_HEADER" \
             -H "Content-Type: text/plain" \
-            --data-binary @SHA256SUMS.txt \
+            --data-binary @release-assets/SHA256SUMS.txt \
             "$UPLOAD_BASE/releases/$RELEASE_ID/assets?name=SHA256SUMS.txt" || true)
 
           if [ "$SUMS_UPLOAD_STATUS" = "201" ] || [ "$SUMS_UPLOAD_STATUS" = "422" ]; then
@@ -903,6 +968,7 @@ jobs:
           TAG="${{ github.ref_name }}"
           VERSION="${{ needs.create-release.outputs.version }}"
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
+          ZIP_PATH="release-assets/$ZIP_FILE"
           API_BASE="https://codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
@@ -989,7 +1055,7 @@ jobs:
             # Raw body upload: the ?name= query param is mandatory in this mode.
             UPLOAD_STATUS=$(curl -s -o /tmp/cb-upload.json -w "%{http_code}" -X POST \
               -H "$AUTH_HEADER" -H "Content-Type: application/zip" \
-              --data-binary @"$ZIP_FILE" \
+              --data-binary @"$ZIP_PATH" \
               "$API_BASE/releases/$RELEASE_ID/assets?name=$ZIP_FILE" || true)
 
             if [ "$UPLOAD_STATUS" = "201" ]; then
@@ -1004,7 +1070,7 @@ jobs:
           if [ "$UPLOAD_SUMS" = "true" ]; then
             SUMS_UPLOAD_STATUS=$(curl -s -o /tmp/cb-sums-upload.json -w "%{http_code}" -X POST \
               -H "$AUTH_HEADER" -H "Content-Type: text/plain" \
-              --data-binary @SHA256SUMS.txt \
+              --data-binary @release-assets/SHA256SUMS.txt \
               "$API_BASE/releases/$RELEASE_ID/assets?name=SHA256SUMS.txt" || true)
 
             if [ "$SUMS_UPLOAD_STATUS" = "201" ]; then
@@ -1124,13 +1190,6 @@ jobs:
           done < /tmp/cb-releases-sorted.jsonl
 
           summary_row "- Codeberg prune: kept newest $KEPT zips, pruned $PRUNED"
-
-      - name: Cleanup workspace
-        if: always()
-        run: |
-          rm -rf node_modules .yarn/cache .expo jest-cache dist android/app/build 2>/dev/null || true
-          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
-          find . -name '.cache' -type d -delete 2>/dev/null || true
 
   ota:
     # JS-only mode: no native diff since the previous tag, so the installed APK
