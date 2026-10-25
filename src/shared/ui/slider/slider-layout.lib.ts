@@ -1,5 +1,5 @@
 import { SCREEN_WIDTH } from '../../config/screen-dimensions'
-import { INDENTS } from '../theme/themed'
+import { FONT_SIZES, INDENTS } from '../theme/themed'
 import { SliderItemSize } from './slider-item/slider-item.types'
 
 interface SliderCardLayout {
@@ -17,6 +17,11 @@ interface SliderSizeContract {
 }
 
 const SLIDER_GAP = INDENTS.middle
+
+// Vertical gap between stacked sliders — one line of the section title
+// (`titleFontSize` defaults to `FONT_SIZES.h2`). Deliberately independent of the
+// card size so the rhythm between sections is the same for every slider.
+export const SLIDER_STACK_GAP = FONT_SIZES.h2
 
 // Fixed left peek of a cut card: 12 dp ≈ 2 mm physical on a phone.
 export const SLIDER_PEEK = 12

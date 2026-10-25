@@ -12,7 +12,8 @@ import {
   WhereIsSlideTitleLocated,
 } from './slider-item/slider-item.types'
 import { SLIDER_REST_INSET } from './slider-layout.lib'
-import { getItemsByRows, getMarginBottom } from './slider-skeleton.lib'
+import { getItemsByRows } from './slider-skeleton.lib'
+import { createSliderStyles } from './slider.styles'
 
 export const SliderSkeleton = ({
   borderRadius = true,
@@ -35,11 +36,11 @@ export const SliderSkeleton = ({
 }) => {
   const { currentTheme } = useTheme()
   const { pulseStyle } = useSkeletonPulse()
-  const marginBottom = getMarginBottom(itemsSize, titleFontSize)
+  const sliderStyles = createSliderStyles(currentTheme)
   const itemsByRows = getItemsByRows(itemsCount, itemsRows)
 
   return (
-    <View style={[styles.slider, { marginTop: titleFontSize / 2 }, { marginBottom }, style]}>
+    <View style={[styles.slider, sliderStyles.stackSpacing, style]}>
       <View testID='title' style={styles.title}>
         <Animated.View
           style={[

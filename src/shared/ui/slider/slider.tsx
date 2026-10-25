@@ -15,7 +15,6 @@ import {
   type SliderItemTextBackgroundStyle,
 } from './slider-item-text/slider-item-text.types'
 import { SliderSkeleton } from './slider-skeleton'
-import { getMarginBottom } from './slider-skeleton.lib'
 import { SliderTitle } from './slider-title'
 import { createSliderStyles as styles } from './slider.styles'
 
@@ -63,11 +62,10 @@ export const Slider = <D extends object>({
 
   if (!items?.length) return null
 
-  const marginBottom = getMarginBottom(itemsSize, titleFontSize)
   const titleElement = <SliderTitle title={title} onPress={onPressTitle} fontSize={titleFontSize} />
 
   return (
-    <View style={[sliderStyles.slider, { marginTop: titleFontSize / 2 }, { marginBottom }, style]}>
+    <View style={[sliderStyles.slider, sliderStyles.stackSpacing, style]}>
       {renderTitleWrapper === undefined ? titleElement : renderTitleWrapper(titleElement)}
       <View ref={wrapperRef} style={sliderStyles.flexFill}>
         <SliderFlatList
