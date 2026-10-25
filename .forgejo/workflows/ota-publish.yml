@@ -104,14 +104,14 @@ jobs:
           RV_NOW=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_now=//p')
 
           if [ "$NATIVE" = "true" ]; then
-            echo "::error::Native paths changed since $PREV_TAG — cut a full release (yarn bump-version + tag) instead of an OTA publish"
+            echo "::error::Native paths changed since $PREV_TAG — cut a full release (yarn bump-version + tag; bump-version manages RUNTIME_VERSION automatically) instead of an OTA publish"
             echo "result=blocked" >> "$GITHUB_OUTPUT"
             summary_row "- Verification: ❌ blocked (native paths changed since $PREV_TAG)"
             exit 1
           fi
 
           if [ -n "$RV_PREV" ] && [ -n "$RV_NOW" ] && [ "$RV_PREV" != "$RV_NOW" ]; then
-            echo "::error::RUNTIME_VERSION at HEAD differs from the latest release tag — this OTA bundle would target a runtime no released APK has. Cut a full release instead."
+            echo "::error::RUNTIME_VERSION at HEAD differs from the latest release tag — this OTA bundle would target a runtime no released APK has. Cut a full release instead (yarn bump-version manages RUNTIME_VERSION automatically)."
             echo "result=blocked" >> "$GITHUB_OUTPUT"
             summary_row "- Verification: ❌ blocked (RUNTIME_VERSION drift)"
             exit 1

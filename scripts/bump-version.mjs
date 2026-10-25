@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { readFileSync, writeFileSync } from 'node:fs'
-import { execSync } from 'node:child_process'
+import { execFileSync, execSync } from 'node:child_process'
 import { updateChangelogFiles } from './generate-changelog.mjs'
 
 const GREEN = '\x1b[32m'
@@ -28,6 +28,41 @@ const versionArg = arg.startsWith('v') ? arg.slice(1) : arg
 if (!/^\d+\.\d+\.\d+$/.test(versionArg) && !['patch', 'minor', 'major'].includes(versionArg)) {
   exitError(`Invalid argument: "${arg}". Use X.Y.Z, patch, minor, or major.`)
 }
+
+// --- Determine release mode (native vs js-only) ---
+// The newest tag is the last release: this bump's tag does not exist yet.
+// No tags at all means a bootstrap release — treat it as native, matching the
+// CI default in scripts/ci/detect-native-changes.sh.
+const lastTag = execSync("git tag --sort=-creatordate | sed -n '1p'", {
+  encoding: 'utf-8',
+}).trim()
+
+const detectNativeChanges = prevRef => {
+  let output
+
+  try {
+    output = execFileSync('bash', ['scripts/ci/detect-native-changes.sh', prevRef], {
+      encoding: 'utf-8',
+    })
+  } catch (error) {
+    exitError(`Native-change detection failed: ${error.stderr || error.message}`)
+  }
+
+  const nativeLine = output.split('\n').find(line => line.startsWith('native='))
+  const native = nativeLine?.slice('native='.length)
+
+  if (native !== 'true' && native !== 'false') {
+    exitError(`Unexpected detect-native-changes.sh output: "${output.trim()}"`)
+  }
+
+  return native === 'true'
+}
+
+// Worktree mode: the pending diff (committed + staged + unstaged) against the
+// last release, which is exactly what `git add -A` will sweep into the bump.
+const isNativeRelease = lastTag ? detectNativeChanges(lastTag) : true
+
+log(`→ Release mode: ${isNativeRelease ? 'native' : 'js-only'}`, YELLOW)
 
 // --- Read current version from package.json ---
 const pkgPath = 'package.json'
@@ -94,6 +129,29 @@ fdroid = fdroid.replace(/versionCode: \d+/, `versionCode: ${newVersionCode}`)
 fdroid = fdroid.replace(/commit: v\d+\.\d+\.\d+/, `commit: v${newVersion}`)
 writeFileSync(fdroidPath, fdroid)
 log('✓ Updated fdroid/metadata/ru.slovopropovedi.yml', GREEN)
+
+// 5. ota.config.ts — RUNTIME_VERSION (OTA delivery gate)
+// Convention: a native release ships app X.Y.Z with runtime X.Y.Z; a js-only
+// release keeps the runtime gate of the last APK so its bundle stays
+// compatible. This edit lands in the bump commit via the `git add -A` below.
+const otaConfigPath = 'ota.config.ts'
+const runtimeVersionPattern = /^const RUNTIME_VERSION = '([^']+)'/m
+let otaConfig = readFileSync(otaConfigPath, 'utf-8')
+const runtimeVersionMatch = otaConfig.match(runtimeVersionPattern)
+
+if (!runtimeVersionMatch) {
+  exitError(`Could not find "const RUNTIME_VERSION = '<version>'" in ${otaConfigPath}`)
+}
+
+const currentRuntimeVersion = runtimeVersionMatch[1]
+
+if (isNativeRelease) {
+  otaConfig = otaConfig.replace(runtimeVersionPattern, `const RUNTIME_VERSION = '${newVersion}'`)
+  writeFileSync(otaConfigPath, otaConfig)
+  log(`→ RUNTIME_VERSION: ${currentRuntimeVersion} → ${newVersion}`, YELLOW)
+} else {
+  log(`→ RUNTIME_VERSION untouched (${currentRuntimeVersion})`, YELLOW)
+}
 
 // --- Generate changelog ---
 log('\n→ Updating changelog...', YELLOW)

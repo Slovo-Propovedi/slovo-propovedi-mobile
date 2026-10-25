@@ -114,7 +114,7 @@ jobs:
         # published later could land on an incompatible binary. Fail the release.
         if: steps.detect.outputs.native == 'true' && steps.detect.outputs.rv_now == steps.detect.outputs.rv_prev
         run: |
-          echo "::error::Native paths changed but RUNTIME_VERSION (ota.config.ts) was not bumped — bump it in the same PR"
+          echo "::error::Native paths changed but RUNTIME_VERSION (ota.config.ts) was not bumped — use yarn bump-version, it manages RUNTIME_VERSION automatically"
           printf '%s\n' "- RUNTIME_VERSION guard: ❌ native diff without a bump — release blocked" | scripts/ci/step-summary.sh
           exit 1
 
@@ -125,7 +125,7 @@ jobs:
         # (pre-OTA history) and first-release cases stay permissive.
         if: steps.detect.outputs.native == 'false' && steps.detect.outputs.rv_now != steps.detect.outputs.rv_prev && steps.detect.outputs.rv_now != '' && steps.detect.outputs.rv_prev != ''
         run: |
-          echo "::error::RUNTIME_VERSION changed but native code did not — an OTA for this runtime would never reach any APK. Revert the RUNTIME_VERSION bump, or ship a native release."
+          echo "::error::RUNTIME_VERSION changed but native code did not — an OTA for this runtime would never reach any APK. Revert the RUNTIME_VERSION bump, or ship a native release (yarn bump-version manages RUNTIME_VERSION automatically)."
           printf '%s\n' "- RUNTIME_VERSION guard: ❌ runtime bump without a native diff — release blocked" | scripts/ci/step-summary.sh
           exit 1
 
