@@ -82,69 +82,19 @@ jobs:
           # `|| true`: grep exits 1 when nothing is left (first ever tag).
           PREV=$(git tag --sort=-creatordate | grep -v -x "${{ github.ref_name }}" | sed -n '1p' || true)
 
-          if [ -z "$PREV" ]; then
-            # No diff base: build the APK — the safest default (a JS-only
-            # publish would reach no installed build anyway).
-            echo "No previous tag found — treating this release as native"
-            NATIVE=true
-          else
-            echo "Previous tag: $PREV"
-            # scripts/bump-version.mjs rewrites version metadata on EVERY
-            # release: package.json `version`, android/app/build.gradle
-            # `versionName`/`versionCode` and the ios *.pbxproj
-            # `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`. A name-only check
-            # over those paths would flag every release as native and starve the
-            # OTA path, so they are judged by CONTENT instead:
-            #   - package.json is dropped entirely: a dependency change always
-            #     moves yarn.lock, and a version-only bump is not native;
-            #   - build.gradle / *.pbxproj are excluded from the name-only list
-            #     and inspected below — only added/removed lines beyond version
-            #     metadata count.
-            # Any other file under android/, ios/, plugins/, modules/ still
-            # counts by name alone (new native module, manifest, plugin, ...).
-            NAME_CHANGED=$(git diff --name-only "$PREV..${{ github.ref_name }}" -- \
-              android ios plugins modules yarn.lock app.config.ts ota.config.ts \
-              ':(exclude)android/app/build.gradle' \
-              ':(exclude,glob)ios/**/*.pbxproj' || true)
+          # Native-vs-JS detection lives in scripts/ci/detect-native-changes.sh
+          # — one implementation shared with ota-publish.yml. An empty PREV
+          # means "no diff base": the script reports native, the safest default
+          # (a JS-only publish would reach no installed build anyway).
+          DETECT=$(scripts/ci/detect-native-changes.sh "$PREV" "${{ github.ref_name }}")
+          NATIVE=$(printf '%s\n' "$DETECT" | sed -n 's/^native=//p')
+          RV_NOW=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_now=//p')
+          RV_PREV=$(printf '%s\n' "$DETECT" | sed -n 's/^rv_prev=//p')
 
-            # Drop diff headers/hunks (---/+++/@@/index) and +/- lines that are
-            # pure version metadata; whatever is left is real native churn. The
-            # trailing `|| true` keeps `set -e` happy when the diff is empty.
-            CONTENT_CHANGED=$(git diff "$PREV..${{ github.ref_name }}" -- \
-                android/app/build.gradle ':(glob)ios/**/*.pbxproj' \
-              | grep -E '^[+-]' \
-              | grep -Ev '^(\+\+\+|---)' \
-              | grep -Ev '^[+-].*(versionName|versionCode|MARKETING_VERSION|CURRENT_PROJECT_VERSION)' \
-              || true)
-
-            if [ -n "$NAME_CHANGED" ] || [ -n "$CONTENT_CHANGED" ]; then
-              NATIVE=true
-              echo "Native changes since $PREV:"
-              if [ -n "$NAME_CHANGED" ]; then
-                printf '%s\n' "$NAME_CHANGED"
-              fi
-              if [ -n "$CONTENT_CHANGED" ]; then
-                echo "Non-version edits in build.gradle / *.pbxproj:"
-                printf '%s\n' "$CONTENT_CHANGED"
-              fi
-            else
-              NATIVE=false
-              echo "Only JS/TS/assets and version metadata changed since $PREV — JS-only release"
-            fi
-          fi
-
-          # RUNTIME_VERSION is a hardcoded literal in ota.config.ts. Read it at
-          # both refs; a missing file (pre-OTA history) yields an empty string.
-          read_runtime_version() {
-            git show "$1:ota.config.ts" 2>/dev/null \
-              | grep -E '^const RUNTIME_VERSION' \
-              | sed -E "s/^const RUNTIME_VERSION = '([^']+)'.*/\1/" || true
-          }
-          RV_NOW=$(read_runtime_version "${{ github.ref_name }}")
           if [ -n "$PREV" ]; then
-            RV_PREV=$(read_runtime_version "$PREV")
+            echo "Previous tag: $PREV"
           else
-            RV_PREV=""
+            echo "No previous tag found — treating this release as native"
           fi
 
           echo "RUNTIME_VERSION: current='$RV_NOW' previous='$RV_PREV'"
@@ -166,6 +116,17 @@ jobs:
         run: |
           echo "::error::Native paths changed but RUNTIME_VERSION (ota.config.ts) was not bumped — bump it in the same PR"
           printf '%s\n' "- RUNTIME_VERSION guard: ❌ native diff without a bump — release blocked" | scripts/ci/step-summary.sh
+          exit 1
+
+      - name: Guard RUNTIME_VERSION drift without native changes
+        # Mirror image of the guard above: a bumped runtime gate on a JS-only
+        # diff means no released APK carries the new runtimeVersion, so an OTA
+        # bundle for it would never reach an installed build. Both-empty
+        # (pre-OTA history) and first-release cases stay permissive.
+        if: steps.detect.outputs.native == 'false' && steps.detect.outputs.rv_now != steps.detect.outputs.rv_prev && steps.detect.outputs.rv_now != '' && steps.detect.outputs.rv_prev != ''
+        run: |
+          echo "::error::RUNTIME_VERSION changed but native code did not — an OTA for this runtime would never reach any APK. Revert the RUNTIME_VERSION bump, or ship a native release."
+          printf '%s\n' "- RUNTIME_VERSION guard: ❌ runtime bump without a native diff — release blocked" | scripts/ci/step-summary.sh
           exit 1
 
   create-release:
