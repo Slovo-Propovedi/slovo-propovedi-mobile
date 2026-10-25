@@ -20,7 +20,8 @@
 
 - **Меняется только вместе с нативным кодом:** апгрейд Expo SDK / React Native, добавление-обновление нативной зависимости, изменение конфиг-плагинов (`plugins/*.ts`), разрешений, иконок/сплэша. Тогда же выпускается новый APK.
 - **Не меняется для JS-only правок** (экраны, логика, стили, тексты): такой бандл уходит по OTA и совместим с уже установленными сборками.
-- **Подъём при нативной правке проверяет CI, а не память.** Job `changes` в `.forgejo/workflows/release.yml` диффит тег против предыдущего: если затронуты нативные пути (`android/`, `ios/`, `plugins/`, `modules/`, `package.json`, `yarn.lock`, `app.config.ts`, `ota.config.ts`), а `RUNTIME_VERSION` не изменился — job падает с `::error::Native paths changed but RUNTIME_VERSION (ota.config.ts) was not bumped — bump it in the same PR`. От `changes` зависят **все** job'ы (`create-release`, `web`, `android`, `ota`), поэтому красный guard блокирует весь релиз: забыть поднять литерал теперь нельзя — это красный пайплайн, а не тихая несовместимость.
+- **Подъём литерала автоматический — его делает `bump-version`.** `node scripts/bump-version.mjs` (см. [`conventions.md`](../conventions.md) → «Версионирование и релизы») до коммита диффит рабочее дерево против последнего тега тем же `scripts/ci/detect-native-changes.sh`, что и CI: нативные изменения → `RUNTIME_VERSION` становится равным новой версии приложения (конвенция: приложение X.Y.Z поставляется с runtime X.Y.Z), js-only → литерал остаётся прежним. Правка попадает в тот же bump-коммит через `git add -A`, ручной бамп не нужен.
+- **CI-guard'ы — страховка для ручного тегирования.** Job `changes` в `.forgejo/workflows/release.yml` диффит тег против предыдущего: если затронуты нативные пути (`android/`, `ios/`, `plugins/`, `modules/`, `package.json`, `yarn.lock`, `app.config.ts`, `ota.config.ts`), а `RUNTIME_VERSION` не изменился — job падает с `::error::Native paths changed but RUNTIME_VERSION (ota.config.ts) was not bumped — use yarn bump-version, it manages RUNTIME_VERSION automatically`. От `changes` зависят **все** job'ы (`create-release`, `web`, `android`, `ota`), поэтому красный guard блокирует весь релиз: тег, поставленный в обход скрипта, не проскочит молча.
 - `ota.config.ts` в списке нативных путей намеренно: его блок `updates.*` и сам `RUNTIME_VERSION` запекаются в бинарник.
 
 ### Поведение проверки на устройстве
@@ -35,7 +36,7 @@
 
 ### Релизные режимы (release.yml)
 
-`.forgejo/workflows/release.yml` определяет режим в job `changes` (полная история: `fetch-depth: 0` + теги) по диффу `PREV..$GITHUB_REF_NAME`, где `PREV` — предыдущий тег по `creatordate`. Если предыдущего тега нет — режим `native` (сборка APK, самый безопасный дефолт).
+`.forgejo/workflows/release.yml` определяет режим в job `changes` (полная история: `fetch-depth: 0` + теги) по диффу `PREV..$GITHUB_REF_NAME`, где `PREV` — предыдущий тег по `creatordate`. Если предыдущего тега нет — режим `native` (сборка APK, самый безопасный дефолт). Тот же детект выполняет `bump-version` локально (worktree-режим скрипта), поэтому режим, выбранный при бампе, совпадает с режимом пайплайна.
 
 | Режим     | Когда                                                                                                                                                 | Что делает пайплайн                                                                                                                              |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
