@@ -1,0 +1,4 @@
+Ota url must be the full manifest path
+Adjust slider typography (regular headers, bold card titles)
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

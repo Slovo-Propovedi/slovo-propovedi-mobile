@@ -31,9 +31,9 @@ Description: |-
 Repo: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile.git
 RepoType: git
 Builds:
-  - versionName: '0.30.0'
-    versionCode: 3000
-    commit: v0.30.0
+  - versionName: '0.31.0'
+    versionCode: 3100
+    commit: v0.31.0
     output: android/app/build/outputs/apk/prod/release/app-prod-release.apk
     prebuild: |
       # Strip FCM (Firebase Cloud Messaging) from expo-notifications.
@@ -74,8 +74,8 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: '0.30.0'
-CurrentVersionCode: 3000
+CurrentVersion: '0.31.0'
+CurrentVersionCode: 3100
 
 MaintainerNotes: |
   ## F-Droid Build Recipe for Slovo Propovedi
