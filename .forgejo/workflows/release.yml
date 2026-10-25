@@ -483,6 +483,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Full history + all tags: the Codeberg mirror step pushes
+          # refs/remotes/origin/main and every local tag to Codeberg itself
+          # (the scheduled git mirror lags behind the tag push), so a shallow
+          # single-ref clone is not enough.
+          fetch-depth: 0
+          fetch-tags: true
 
       # Same fail-fast gate as the `web` job — see the comment there.
       - name: Validate required vars
@@ -885,8 +892,6 @@ jobs:
           # Codeberg runs Forgejo, so auth uses the `token` scheme - NOT the
           # `Bearer` scheme the GitHub step needs.
           MIRROR_CODEBERG_TOKEN: ${{ secrets.MIRROR_CODEBERG_TOKEN }}
-          # Used only to trigger the local push-mirror sync below.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
           if [ -z "${MIRROR_CODEBERG_TOKEN:-}" ]; then
@@ -901,16 +906,17 @@ jobs:
           API_BASE="https://codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
-          # The repo is git-mirrored to Codeberg, but the mirror can lag behind
-          # the tag push: at release time the tag (and often its commit) may not
-          # exist there yet. Sequence in the 404 branch (release not created yet):
-          #   1. best-effort POST push_mirrors-sync - ask Forgejo to sync now;
-          #   2. poll GET /tags/{tag} for up to ~5 min;
-          #   3. create the release WITHOUT target_commitish - the tag exists by
-          #      then, so Forgejo attaches the release to it instead of trying to
-          #      create the tag at a commit Codeberg has not received yet.
-          # If the tag never arrives the step degrades to a warning - the
-          # Forgejo release (source of truth) is already out.
+          # The scheduled git mirror to Codeberg lags behind the tag push (at
+          # release time the tag - and often its commit - may not exist there
+          # yet), so this step pushes the refs itself instead of waiting for the
+          # mirror. Sequence in the 404 branch (release not created yet):
+          #   1. push main + all tags to Codeberg (force - mirror semantics:
+          #      the Codeberg repo is a read-only public mirror);
+          #   2. create the release WITHOUT target_commitish - the tag exists by
+          #      then, so Forgejo attaches the release to it;
+          #   3. upload the assets (unchanged).
+          # If the push fails the step degrades to a warning - the Forgejo
+          # release (source of truth) is already out.
           RELEASE_STATUS=$(curl -s -o /tmp/cb-release.json -w "%{http_code}" \
             -H "$AUTH_HEADER" \
             "$API_BASE/releases/tags/$TAG" || true)
@@ -939,37 +945,22 @@ jobs:
             echo "Codeberg release for $TAG already exists (id: $RELEASE_ID)"
             summary_row "- Codeberg mirror: ✅ release already exists"
           elif [ "$RELEASE_STATUS" = "404" ]; then
-            # ~5 min tag budget: the android job holds a runner slot while this
-            # step waits, so the poll is bounded.
-            TAG_POLL_ATTEMPTS=10
-            TAG_POLL_INTERVAL=30
+            # Push the refs ourselves: the git mirror is scheduled and lags, so
+            # waiting for it timed out repeatedly. No credentials in the remote
+            # URL - the token is served by the inline credential helper below,
+            # so it never reaches git's echoed URLs or the logs.
+            git remote remove codeberg 2>/dev/null || true
+            git remote add codeberg "https://codeberg.org/Slovo_Propovedi/slovo-propovedi-mobile.git"
 
-            # Best-effort: syncs ALL push mirrors of this repo now, so Codeberg
-            # receives the tag without waiting for the scheduled mirror run.
-            # A no-op/404 when push mirrors are not configured - ignored.
-            curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
-              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/push_mirrors-sync" || true
-
-            TAG_FOUND=false
-            for attempt in $(seq 1 "$TAG_POLL_ATTEMPTS"); do
-              TAG_STATUS=$(curl -s -o /tmp/cb-tag.json -w "%{http_code}" \
-                -H "$AUTH_HEADER" \
-                "$API_BASE/tags/$TAG" || true)
-              if [ "$TAG_STATUS" = "200" ]; then
-                TAG_FOUND=true
-                break
-              fi
-              echo "Waiting for tag $TAG on Codeberg (attempt $attempt/$TAG_POLL_ATTEMPTS, status $TAG_STATUS)..."
-              if [ "$attempt" -lt "$TAG_POLL_ATTEMPTS" ]; then
-                sleep "$TAG_POLL_INTERVAL"
-              fi
-            done
-
-            if [ "$TAG_FOUND" != "true" ]; then
-              echo "::warning::Codeberg mirror failed: tag $TAG not found on Codeberg after ~5 min — check the Codeberg git mirror (push mirror on Forgejo or pull mirror on Codeberg) and re-run this step after it syncs"
-              summary_row "- Codeberg mirror: ⚠️ failed (tag not mirrored)"
+            # Force is intentional: Codeberg is a read-only public mirror, so
+            # its main and tags must follow Forgejo exactly. The helper only
+            # answers the credential request of this single codeberg push.
+            if ! git -c credential.helper='!f() { test "$1" = get && printf "username=mirror\npassword=%s\n" "$MIRROR_CODEBERG_TOKEN"; }; f' push codeberg "+refs/remotes/origin/main:refs/heads/main" "+refs/tags/*:refs/tags/*"; then
+              echo "::warning::Codeberg mirror failed: git push to Codeberg failed — check that MIRROR_CODEBERG_TOKEN may write to the repo, that the Codeberg repo exists, and whether its history diverged from Forgejo"
+              summary_row "- Codeberg mirror: ⚠️ failed (git push)"
               exit 0
             fi
+            summary_row "- Codeberg mirror: ✅ git refs pushed (main + tags)"
 
             jq -n \
               --arg tag "$TAG" \
