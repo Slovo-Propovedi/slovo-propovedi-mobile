@@ -169,6 +169,7 @@ See [`docs/BUILD-LOCAL.md`](docs/BUILD-LOCAL.md) → «Prebuild и config-пла
    - Тур всегда стартует с карточки-описания (первый шаг — обычная карточка без route/tapTargetId); переходы (возврат на экран с таб-баром, мигание таба) — entry-транзишны после неё и не считаются шагами.
    - Шаги-визуализации (tapActionId, мигание таба) не считаются шагами тура: прикрепляются как переходы (exit — к предыдущей карточке, entry — к следующей), не учитываются в «Шаг N из M»; «Назад» всегда возвращается к карточке.
    - Если тур стартует на экране из его `screens` — подводка (интро-карточка и таб-переходы) пропускается: первый показанный шаг — первая карточка этого экрана, счётчик «Шаг 1 из N»; интро-текст в данных остаётся для стартов с чужих экранов.
+   - **«Что нового» обновляется с каждой заметной пользователю фичей.** Замени шаги сценария `whatsNew` (`src/features/onboarding/lib/scenarioData/whatsNew.ts`) новинками релиза — старые шаги удаляются, а не копятся — и в том же коммите подними `WHATS_NEW_VERSION` (там же) до версии релиза, где выйдет фича (строгий семвер `X.Y.Z`, всегда больше прежнего). Тур показывается автоматически один раз на каждое значение `WHATS_NEW_VERSION`: подъём версии заново покажет его всем, кто уже видел прежнее содержимое; без подъёма новые шаги автоматически не увидит никто. Несколько фич одного релиза — одно «Что нового»: если `WHATS_NEW_VERSION` уже равна версии будущего релиза, просто дополни шаги. Подробнее — [`docs/features/onboarding.md`](docs/features/onboarding.md) → «Версионирование «Что нового»».
 
 7. **Версии пакетов в доках.** По возможности не указывать версии пакетов вовсе; где версия необходима — минимальный порог («v12.4+», «SDK 58+»). Era-маркеры («SDK 58», «RN 0.88») — только там, где текст привязан к поведению конкретной эпохи. Исторические версии в past-tense и литеральные имена патчей — исключения. Точная текущая версия пакета в доке — ошибка ревью. Источник истины — `package.json` и `yarn.lock`; подробнее — в [`docs/conventions.md`](docs/conventions.md) → «Ведение документации docs/».
 
@@ -358,10 +359,11 @@ export const MyComponent = () => {
 **Mandatory `yarn check:unused`.** Alongside `yarn lint` and `yarn check:types`, every code change MUST run `yarn check:unused` (knip) and keep it at **zero findings**. Treat any finding as a review error: delete the export (or the whole file when nothing is left to export), or justify it via `ignore` in `knip.config.ts` with a comment. See «Export on demand» above.
 
 **Lint-fix escalation** (strictly in this order):
-   - `yarn lint:fix` — auto-fix everything ESLint can
-   - `yarn prettier:write` — formatting pass
-   - Whatever still remains — manual fixes by the coding agent (following the decomposition rules above: extract components/helpers, do NOT squeeze lines or remove blank lines)
-   - After all steps, run `yarn lint` to verify zero errors remain, then `yarn check:types` to ensure no type errors were introduced
+
+- `yarn lint:fix` — auto-fix everything ESLint can
+- `yarn prettier:write` — formatting pass
+- Whatever still remains — manual fixes by the coding agent (following the decomposition rules above: extract components/helpers, do NOT squeeze lines or remove blank lines)
+- After all steps, run `yarn lint` to verify zero errors remain, then `yarn check:types` to ensure no type errors were introduced
 
 ### Types
 

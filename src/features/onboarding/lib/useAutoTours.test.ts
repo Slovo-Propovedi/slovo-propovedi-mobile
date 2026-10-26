@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { act, waitFor } from '@testing-library/react-native'
-import { APP_VERSION } from 'shared/config'
 import { renderHookWithProviders } from 'shared/mocks'
 import { toursDisabledAtom } from 'shared/model'
 import { onboardingTourAtom, startOnboardingTour } from '../model/tour'
+import { WHATS_NEW_VERSION } from './scenarioData/whatsNew'
 import { useAutoTours } from './useAutoTours'
 
 const mockPathname = jest.fn(() => '/listen')
@@ -19,7 +19,8 @@ jest.mock('../model/tour', () => {
 
 const DELAY_MS = 10
 const SEEN_KEY = 'tours_seen_version'
-const DIFFERENT_VERSION = 'not-the-current-version'
+const OLDER_VERSION = '0.0.1'
+const NEWER_VERSION = '999.0.0'
 
 const mockStartTour = jest.mocked(startOnboardingTour)
 const mockGetItem = jest.mocked(AsyncStorage.getItem)
@@ -67,7 +68,7 @@ describe('useAutoTours', () => {
       }),
     )
 
-    expect(mockSetItem).toHaveBeenCalledWith(SEEN_KEY, APP_VERSION)
+    expect(mockSetItem).toHaveBeenCalledWith(SEEN_KEY, WHATS_NEW_VERSION)
     expect(mockSetItem.mock.invocationCallOrder[0]).toBeLessThan(
       mockStartTour.mock.invocationCallOrder[0],
     )
@@ -76,8 +77,8 @@ describe('useAutoTours', () => {
     expect(mockStartTour).toHaveBeenCalledWith(expect.anything(), 'welcome', '/listen')
   })
 
-  test('does nothing when the seen version matches the current one', async () => {
-    mockGetItem.mockResolvedValue(APP_VERSION)
+  test('does nothing when the current whats-new content was already seen', async () => {
+    mockGetItem.mockResolvedValue(WHATS_NEW_VERSION)
 
     const { ctx } = await renderAutoTours()
     await flushDelay()
@@ -87,8 +88,19 @@ describe('useAutoTours', () => {
     expect(ctx.get(onboardingTourAtom)).toBeNull()
   })
 
-  test('starts whatsNew when the seen version differs from the current one', async () => {
-    mockGetItem.mockResolvedValue(DIFFERENT_VERSION)
+  test('does nothing after an app update without new whats-new content', async () => {
+    mockGetItem.mockResolvedValue(NEWER_VERSION)
+
+    const { ctx } = await renderAutoTours()
+    await flushDelay()
+
+    expect(mockSetItem).not.toHaveBeenCalled()
+    expect(mockStartTour).not.toHaveBeenCalled()
+    expect(ctx.get(onboardingTourAtom)).toBeNull()
+  })
+
+  test('starts whatsNew once when the seen content is older than the current one', async () => {
+    mockGetItem.mockResolvedValue(OLDER_VERSION)
 
     const { ctx } = await renderAutoTours()
 
@@ -100,7 +112,7 @@ describe('useAutoTours', () => {
       }),
     )
 
-    expect(mockSetItem).toHaveBeenCalledWith(SEEN_KEY, APP_VERSION)
+    expect(mockSetItem).toHaveBeenCalledWith(SEEN_KEY, WHATS_NEW_VERSION)
     expect(mockSetItem.mock.invocationCallOrder[0]).toBeLessThan(
       mockStartTour.mock.invocationCallOrder[0],
     )
@@ -113,7 +125,7 @@ describe('useAutoTours', () => {
 
     await renderAutoTours(ctx)
 
-    await waitFor(() => expect(mockSetItem).toHaveBeenCalledWith(SEEN_KEY, APP_VERSION))
+    await waitFor(() => expect(mockSetItem).toHaveBeenCalledWith(SEEN_KEY, WHATS_NEW_VERSION))
     expect(mockStartTour).not.toHaveBeenCalled()
     expect(ctx.get(onboardingTourAtom)).toEqual({
       deckIndex: 0,

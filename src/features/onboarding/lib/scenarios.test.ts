@@ -46,8 +46,8 @@ describe('onboarding scenario data', () => {
     expect(expandStep.tapActionId).toBe('expand-player')
   })
 
-  test('whats-new is a release scenario pinned to a version', () => {
-    expect(scenariosById.whatsNew.sinceVersion).toBeTruthy()
+  test('whats-new is a release scenario pinned to a semver content version', () => {
+    expect(scenariosById.whatsNew.sinceVersion).toMatch(/^\d+\.\d+\.\d+$/)
   })
 
   test('whats-new spotlights the help button in its first step', () => {
