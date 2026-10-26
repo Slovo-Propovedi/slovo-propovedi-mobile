@@ -2,14 +2,14 @@
 # Single source of native-vs-JS detection for the release workflows.
 #
 # Usage:
-#   scripts/ci/detect-native-changes.sh <PREV_REF> <CUR_REF>   # two-ref (CI)
+#   scripts/ci/detect-native-changes.sh <PREV_REF> <CUR_REF>   # two-ref
 #   scripts/ci/detect-native-changes.sh <PREV_REF>             # worktree
 #
-# Two-ref mode diffs PREV_REF..CUR_REF (CI, where the released commit is a tag).
+# Two-ref mode diffs PREV_REF..CUR_REF (CI, where the released commit is a tag;
+# `scripts/bump-version.mjs` with CUR_REF=HEAD — only committed work ships).
 # Worktree mode diffs PREV_REF against the working tree and reads RUNTIME_VERSION
-# from ota.config.ts on disk: `git diff PREV_REF -- ...` covers committed, staged
-# and unstaged changes — exactly what `scripts/bump-version.mjs` sweeps with
-# `git add -A` before committing.
+# from ota.config.ts on disk (committed + staged + unstaged); no caller uses it
+# right now — kept for ad-hoc local checks.
 #
 # Prints three machine-readable lines on stdout (diagnostics go to stderr):
 #   native=true|false      — did a native path change between the refs?
@@ -22,8 +22,8 @@
 #
 # Called by .forgejo/workflows/release.yml (`changes` job),
 # .forgejo/workflows/ota-publish.yml (manual js-only verification) and
-# scripts/bump-version.mjs (worktree mode: decide native vs js-only before the
-# bump commit is created).
+# scripts/bump-version.mjs (two-ref mode against HEAD: decide native vs js-only
+# before the bump commit is created).
 #
 # Why content-aware: scripts/bump-version.mjs rewrites version metadata on
 # EVERY release — package.json `version`, android/app/build.gradle

@@ -10,7 +10,7 @@ const YELLOW = '\x1b[33m'
 const RESET = '\x1b[0m'
 
 const log = (message, color = '') => console.log(`${color}${message}${RESET}`)
-const exitError = (message) => {
+const exitError = message => {
   log(message, RED)
   process.exit(1)
 }
@@ -29,13 +29,50 @@ if (!/^\d+\.\d+\.\d+$/.test(versionArg) && !['patch', 'minor', 'major'].includes
   exitError(`Invalid argument: "${arg}". Use X.Y.Z, patch, minor, or major.`)
 }
 
-// --- Stage everything before detection ---
-// Worktree-mode detection diffs the last release tag against the working tree.
-// Unstaged untracked files are invisible to `git diff <ref>`, so a brand-new
-// native file (e.g. plugins/*.ts) would be misread as a js-only release. Staging
-// first makes those files part of the diff that detection sees.
-log('→ Staging all changes...', YELLOW)
-execSync('git add -A', { cwd: process.cwd() })
+// --- Files this script rewrites — the ONLY paths the bump commit may contain ---
+// Anything else in the working tree (local tool configs like .opencode/, WIP
+// edits) stays out of the release commit and its tag.
+const PKG_PATH = 'package.json'
+const GRADLE_PATH = 'android/app/build.gradle'
+const PBXPROJ_PATH = 'ios/SlovoPropovedi.xcodeproj/project.pbxproj'
+const FDROID_PATH = 'fdroid/metadata/ru.slovopropovedi.yml'
+const OTA_CONFIG_PATH = 'ota.config.ts'
+const CHANGELOG_PATH = 'CHANGELOG.md'
+const fastlaneChangelogPaths = versionCode => [
+  `fastlane/metadata/android/en-US/changelogs/${versionCode}.txt`,
+  `fastlane/metadata/android/ru/changelogs/${versionCode}.txt`,
+]
+
+const git = args => execFileSync('git', args, { cwd: process.cwd(), encoding: 'utf-8' })
+
+// A pre-existing edit in a file the script rewrites would silently ride along
+// in the bump commit — refuse instead of guessing whether it belongs there.
+const dirtyOwnFiles = git([
+  'status',
+  '--porcelain',
+  '--',
+  PKG_PATH,
+  GRADLE_PATH,
+  PBXPROJ_PATH,
+  FDROID_PATH,
+  OTA_CONFIG_PATH,
+  CHANGELOG_PATH,
+  'fastlane/metadata/android/en-US/changelogs',
+  'fastlane/metadata/android/ru/changelogs',
+]).trim()
+
+if (dirtyOwnFiles) {
+  exitError(
+    `Uncommitted changes in files bump-version rewrites — commit or discard them first:\n${dirtyOwnFiles}`,
+  )
+}
+
+const otherChanges = git(['status', '--porcelain']).trim()
+
+if (otherChanges) {
+  log('→ Uncommitted changes left out of the bump commit:', YELLOW)
+  log(otherChanges, YELLOW)
+}
 
 // --- Determine release mode (native vs js-only) ---
 // The newest tag is the last release: this bump's tag does not exist yet.
@@ -49,7 +86,7 @@ const detectNativeChanges = prevRef => {
   let output
 
   try {
-    output = execFileSync('bash', ['scripts/ci/detect-native-changes.sh', prevRef], {
+    output = execFileSync('bash', ['scripts/ci/detect-native-changes.sh', prevRef, 'HEAD'], {
       encoding: 'utf-8',
     })
   } catch (error) {
@@ -66,15 +103,15 @@ const detectNativeChanges = prevRef => {
   return native === 'true'
 }
 
-// Worktree mode: the pending diff (committed + staged + unstaged) against the
-// last release, which is exactly what the preceding `git add -A` made visible.
+// Two-ref mode (last release..HEAD): only committed work ships in this release,
+// so uncommitted files must not flip the mode either. CI later diffs the tag,
+// which adds nothing native on top of HEAD (version metadata only).
 const isNativeRelease = lastTag ? detectNativeChanges(lastTag) : true
 
 log(`→ Release mode: ${isNativeRelease ? 'native' : 'js-only'}`, YELLOW)
 
 // --- Read current version from package.json ---
-const pkgPath = 'package.json'
-const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+const pkg = JSON.parse(readFileSync(PKG_PATH, 'utf-8'))
 const currentVersion = pkg.version
 
 // --- Calculate new version ---
@@ -97,66 +134,64 @@ const [newMajor, newMinor, newPatch] = newVersion.split('.').map(Number)
 const newVersionCode = newMajor * 10000 + newMinor * 100 + newPatch
 
 // --- Read build.gradle for updates ---
-const gradlePath = 'android/app/build.gradle'
 let gradleContent
 
 try {
-  gradleContent = readFileSync(gradlePath, 'utf-8')
+  gradleContent = readFileSync(GRADLE_PATH, 'utf-8')
 } catch {
-  exitError(`File not found: ${gradlePath}`)
+  exitError(`File not found: ${GRADLE_PATH}`)
 }
 
 // --- Update all 4 files ---
 
 // 1. package.json
 pkg.version = newVersion
-writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
+writeFileSync(PKG_PATH, `${JSON.stringify(pkg, null, 2)}\n`)
 log('✓ Updated package.json', GREEN)
 
 // 2. android/app/build.gradle
 gradleContent = gradleContent.replace(/versionName "\d+\.\d+\.\d+"/, `versionName "${newVersion}"`)
 gradleContent = gradleContent.replace(/versionCode \d+/, `versionCode ${newVersionCode}`)
-writeFileSync(gradlePath, gradleContent)
+writeFileSync(GRADLE_PATH, gradleContent)
 log('✓ Updated android/app/build.gradle', GREEN)
 
 // 3. ios/SlovoPropovedi.xcodeproj/project.pbxproj
-const pbxprojPath = 'ios/SlovoPropovedi.xcodeproj/project.pbxproj'
-let pbxproj = readFileSync(pbxprojPath, 'utf-8')
+let pbxproj = readFileSync(PBXPROJ_PATH, 'utf-8')
 pbxproj = pbxproj.replace(/MARKETING_VERSION = [^;]+/g, `MARKETING_VERSION = ${newVersion}`)
-pbxproj = pbxproj.replace(/CURRENT_PROJECT_VERSION = \d+/g, `CURRENT_PROJECT_VERSION = ${newVersionCode}`)
-writeFileSync(pbxprojPath, pbxproj)
+pbxproj = pbxproj.replace(
+  /CURRENT_PROJECT_VERSION = \d+/g,
+  `CURRENT_PROJECT_VERSION = ${newVersionCode}`,
+)
+writeFileSync(PBXPROJ_PATH, pbxproj)
 log('✓ Updated ios/SlovoPropovedi.xcodeproj/project.pbxproj', GREEN)
 
 // 4. fdroid/metadata/ru.slovopropovedi.yml
-const fdroidPath = 'fdroid/metadata/ru.slovopropovedi.yml'
-let fdroid = readFileSync(fdroidPath, 'utf-8')
+let fdroid = readFileSync(FDROID_PATH, 'utf-8')
 fdroid = fdroid.replace(/CurrentVersion: '\d+\.\d+\.\d+'/, `CurrentVersion: '${newVersion}'`)
 fdroid = fdroid.replace(/CurrentVersionCode: \d+/, `CurrentVersionCode: ${newVersionCode}`)
 fdroid = fdroid.replace(/versionName: '\d+\.\d+\.\d+'/, `versionName: '${newVersion}'`)
 fdroid = fdroid.replace(/versionCode: \d+/, `versionCode: ${newVersionCode}`)
 fdroid = fdroid.replace(/commit: v\d+\.\d+\.\d+/, `commit: v${newVersion}`)
-writeFileSync(fdroidPath, fdroid)
+writeFileSync(FDROID_PATH, fdroid)
 log('✓ Updated fdroid/metadata/ru.slovopropovedi.yml', GREEN)
 
 // 5. ota.config.ts — RUNTIME_VERSION (OTA delivery gate)
 // Convention: a native release ships app X.Y.Z with runtime X.Y.Z; a js-only
 // release keeps the runtime gate of the last APK so its bundle stays
-// compatible. This edit lands in the bump commit via the second `git add -A`
-// below.
-const otaConfigPath = 'ota.config.ts'
+// compatible. ota.config.ts is committed only when it was rewritten.
 const runtimeVersionPattern = /^const RUNTIME_VERSION = '([^']+)'/m
-let otaConfig = readFileSync(otaConfigPath, 'utf-8')
+let otaConfig = readFileSync(OTA_CONFIG_PATH, 'utf-8')
 const runtimeVersionMatch = otaConfig.match(runtimeVersionPattern)
 
 if (!runtimeVersionMatch) {
-  exitError(`Could not find "const RUNTIME_VERSION = '<version>'" in ${otaConfigPath}`)
+  exitError(`Could not find "const RUNTIME_VERSION = '<version>'" in ${OTA_CONFIG_PATH}`)
 }
 
 const currentRuntimeVersion = runtimeVersionMatch[1]
 
 if (isNativeRelease) {
   otaConfig = otaConfig.replace(runtimeVersionPattern, `const RUNTIME_VERSION = '${newVersion}'`)
-  writeFileSync(otaConfigPath, otaConfig)
+  writeFileSync(OTA_CONFIG_PATH, otaConfig)
   log(`→ RUNTIME_VERSION: ${currentRuntimeVersion} → ${newVersion}`, YELLOW)
 } else {
   log(`→ RUNTIME_VERSION untouched (${currentRuntimeVersion})`, YELLOW)
@@ -166,21 +201,36 @@ if (isNativeRelease) {
 log('\n→ Updating changelog...', YELLOW)
 
 try {
-  updateChangelogFiles(currentVersion, newVersion, newVersionCode, new Date().toISOString().slice(0, 10))
+  updateChangelogFiles(
+    currentVersion,
+    newVersion,
+    newVersionCode,
+    new Date().toISOString().slice(0, 10),
+  )
   log('✓ Updated CHANGELOG.md and fastlane changelogs', GREEN)
 } catch (error) {
   exitError(`Changelog update failed: ${error.message}`)
 }
 
-// --- Stage edits produced after detection ---
-// The first `git add -A` only made untracked files visible to detection; the
-// RUNTIME_VERSION rewrite and changelog edits above happened after it, so this
-// second pass is what puts them into the bump commit.
+// --- Commit only the files rewritten above ---
+// `git add` is needed for the new (untracked) fastlane files; `git commit --
+// <paths>` then records exactly these paths, even if the index holds other
+// staged changes.
+const bumpPaths = [
+  PKG_PATH,
+  GRADLE_PATH,
+  PBXPROJ_PATH,
+  FDROID_PATH,
+  ...(isNativeRelease ? [OTA_CONFIG_PATH] : []),
+  CHANGELOG_PATH,
+  ...fastlaneChangelogPaths(newVersionCode),
+]
+
 log('\n→ Staging version bump changes...', YELLOW)
-execSync('git add -A', { cwd: process.cwd() })
+git(['add', '--', ...bumpPaths])
 
 log('→ Committing...', YELLOW)
-execSync(`git commit -s -m "chore: bump version to ${newVersion}"`, { cwd: process.cwd() })
+git(['commit', '-s', '-m', `chore: bump version to ${newVersion}`, '--', ...bumpPaths])
 
 log('→ Tagging...', YELLOW)
 execSync(`git tag -a v${newVersion} -m "v${newVersion}"`, { cwd: process.cwd() })
@@ -191,7 +241,9 @@ execSync(`git tag -a v${newVersion} -m "v${newVersion}"`, { cwd: process.cwd() }
 try {
   execSync(`git rev-parse --verify -q v${newVersion}`, { cwd: process.cwd() })
 } catch {
-  exitError(`Tag v${newVersion} was not created despite 'git tag' reporting success. Run 'git tag -a v${newVersion} -m "v${newVersion}"' manually and verify with 'git tag -l'.`)
+  exitError(
+    `Tag v${newVersion} was not created despite 'git tag' reporting success. Run 'git tag -a v${newVersion} -m "v${newVersion}"' manually and verify with 'git tag -l'.`,
+  )
 }
 
 // --- Summary ---
