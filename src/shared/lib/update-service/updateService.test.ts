@@ -193,10 +193,10 @@ describe('downloadUpdateZip', () => {
     expect(onProgress).toHaveBeenCalledWith(50)
   })
 
-  test('rejects a download host outside the allowlist', async () => {
+  test('rejects a download URL outside the allowlist', async () => {
     await expect(
       downloadUpdateZip('https://evil.example/update.zip', undefined, undefined, INTEGRITY),
-    ).rejects.toThrow('Update download host is not allowed: evil.example')
+    ).rejects.toThrow('Update download URL is not allowed')
 
     expect(mockFetch).not.toHaveBeenCalled()
     expect(mockedCreateDownloadTask).not.toHaveBeenCalled()
