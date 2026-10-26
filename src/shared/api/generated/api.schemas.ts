@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.23.0
+ * OpenAPI spec version: 0.23.1
  */
 export interface HealthResponse {
   status: string
@@ -292,7 +292,11 @@ export interface StatusSectionsResponse {
 }
 
 export interface CreatePlaylistDto {
-  /** @maxLength 2048 */
+  /**
+   * Пустая строка или http(s)-ссылка на обложку — прочие схемы (`javascript:`, `data:`) отклоняются.
+   * @maxLength 2048
+   * @pattern ^(https?://.*)?$
+   */
   artwork: string
   /**
    * @maxLength 10000
@@ -313,7 +317,11 @@ export interface AllPlaylistsResponse {
 }
 
 export interface UpdatePlaylistDto {
-  /** @maxLength 2048 */
+  /**
+   * Пустая строка или http(s)-ссылка на обложку — прочие схемы (`javascript:`, `data:`) отклоняются.
+   * @maxLength 2048
+   * @pattern ^(https?://.*)?$
+   */
   artwork: string
   /**
    * @maxLength 10000
@@ -350,7 +358,11 @@ export interface ReorderPlaylistsDto {
 export interface CreateSermonDto {
   /** @maxLength 200 */
   artist: string
-  /** @maxLength 2048 */
+  /**
+   * Пустая строка или http(s)-ссылка на обложку — прочие схемы (`javascript:`, `data:`) отклоняются.
+   * @maxLength 2048
+   * @pattern ^(https?://.*)?$
+   */
   artwork: string
   /**
    * @maxLength 2048
@@ -382,8 +394,10 @@ export interface CreateSermonDto {
   /** Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20). */
   verse?: number | number[] | (number | number[])[] | null
   /**
+   * Только http(s)-ссылки — схемы `javascript:`/`data:` отклоняются (защита от XSS).
    * @maxLength 2048
    * @nullable
+   * @pattern ^https?://.+$
    */
   youtubeUrl: string | null
 }
@@ -407,7 +421,11 @@ export interface SermonDistinctValuesResponse {
 export interface UpdateSermonDto {
   /** @maxLength 200 */
   artist: string
-  /** @maxLength 2048 */
+  /**
+   * Пустая строка или http(s)-ссылка на обложку — прочие схемы (`javascript:`, `data:`) отклоняются.
+   * @maxLength 2048
+   * @pattern ^(https?://.*)?$
+   */
   artwork: string
   /**
    * @maxLength 2048
@@ -439,8 +457,10 @@ export interface UpdateSermonDto {
   /** Стих или стихи проповеди. Массив из двух целых чисел трактуется как диапазон от–до; массив, содержащий кортежи или смесь целых и кортежей, трактуется как список разрозненных отрезков (например [9,18] — диапазон, [[9,18],20] — отрезок 9–18 и стих 20). */
   verse?: number | number[] | (number | number[])[] | null
   /**
+   * Только http(s)-ссылки — схемы `javascript:`/`data:` отклоняются (защита от XSS).
    * @maxLength 2048
    * @nullable
+   * @pattern ^https?://.+$
    */
   youtubeUrl: string | null
 }

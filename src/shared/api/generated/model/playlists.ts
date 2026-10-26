@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.23.0
+ * OpenAPI spec version: 0.23.1
  */
 import * as zod from 'zod'
 
@@ -18,6 +18,7 @@ export const playlistControllerCreateBodyDescriptionMax = 10000
 
 export const playlistControllerCreateBodyArtworkMax = 2048
 
+export const playlistControllerCreateBodyArtworkRegExp = new RegExp('^(https?://.*)?$')
 export const playlistControllerCreateBodySermonsIdsMax = 1000
 
 export const playlistControllerCreateBodySectionsIdsMax = 1000
@@ -25,7 +26,13 @@ export const playlistControllerCreateBodySectionsIdsMax = 1000
 export const PlaylistControllerCreateBody = zod.object({
   title: zod.string().max(playlistControllerCreateBodyTitleMax),
   description: zod.string().max(playlistControllerCreateBodyDescriptionMax).nullable(),
-  artwork: zod.string().max(playlistControllerCreateBodyArtworkMax),
+  artwork: zod
+    .string()
+    .max(playlistControllerCreateBodyArtworkMax)
+    .regex(playlistControllerCreateBodyArtworkRegExp)
+    .describe(
+      'Пустая строка или http(s)-ссылка на обложку — прочие схемы (`javascript:`, `data:`) отклоняются.',
+    ),
   sermonsIds: zod.array(zod.string()).max(playlistControllerCreateBodySermonsIdsMax).optional(),
   sectionsIds: zod.array(zod.string()).max(playlistControllerCreateBodySectionsIdsMax).optional(),
 })
@@ -657,6 +664,7 @@ export const playlistControllerUpdateBodyDescriptionMax = 10000
 
 export const playlistControllerUpdateBodyArtworkMax = 2048
 
+export const playlistControllerUpdateBodyArtworkRegExp = new RegExp('^(https?://.*)?$')
 export const playlistControllerUpdateBodySermonsIdsMax = 1000
 
 export const playlistControllerUpdateBodySectionsIdsMax = 1000
@@ -664,7 +672,13 @@ export const playlistControllerUpdateBodySectionsIdsMax = 1000
 export const PlaylistControllerUpdateBody = zod.object({
   title: zod.string().max(playlistControllerUpdateBodyTitleMax),
   description: zod.string().max(playlistControllerUpdateBodyDescriptionMax).nullable(),
-  artwork: zod.string().max(playlistControllerUpdateBodyArtworkMax),
+  artwork: zod
+    .string()
+    .max(playlistControllerUpdateBodyArtworkMax)
+    .regex(playlistControllerUpdateBodyArtworkRegExp)
+    .describe(
+      'Пустая строка или http(s)-ссылка на обложку — прочие схемы (`javascript:`, `data:`) отклоняются.',
+    ),
   sermonsIds: zod.array(zod.string()).max(playlistControllerUpdateBodySermonsIdsMax),
   sectionsIds: zod.array(zod.string()).max(playlistControllerUpdateBodySectionsIdsMax).optional(),
 })
