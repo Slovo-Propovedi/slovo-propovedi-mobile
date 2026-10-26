@@ -513,11 +513,13 @@ jobs:
           fetch-tags: true
 
       # Same fail-fast gate as the `web` job — see the comment there.
+      # APK_SIGNER_SHA256 is checked here too, before the long native build.
       - name: Validate required vars
         env:
           BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          APK_SIGNER_SHA256: ${{ vars.APK_SIGNER_SHA256 }}
         run: |
           set -e
 
@@ -528,13 +530,21 @@ jobs:
 
           missing=0
           missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME; do
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME APK_SIGNER_SHA256; do
             if [ -z "${!v}" ]; then
               echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
               missing=1
               missing_list="$missing_list \`$v\`"
             fi
           done
+          # Pinned release certificate(s): 64-hex SHA-256 as printed by
+          # `apksigner verify --print-certs`, comma-separated during a key
+          # rotation. Public value (shared with the landing APK refresh).
+          if [ -n "$APK_SIGNER_SHA256" ] && ! printf '%s' "$APK_SIGNER_SHA256" | grep -Eq '^[0-9A-Fa-f]{64}(,[0-9A-Fa-f]{64})*$'; then
+            echo "::error::APK_SIGNER_SHA256 must be one or more comma-separated 64-hex SHA-256 digests"
+            missing=1
+            missing_list="$missing_list \`APK_SIGNER_SHA256\` (format)"
+          fi
           if [ "$missing" -eq 1 ]; then
             printf '%s\n' "- Required vars: ❌ missing$missing_list" | scripts/ci/step-summary.sh
           else
@@ -759,6 +769,47 @@ jobs:
           nice -n 19 ionice -c 3 ./gradlew assembleProdRelease --no-daemon -Dorg.gradle.parallel=false --init-script ../scripts/gradle/disable-lint-vital.gradle
           df -h /
           printf '%s\n' "- APK build (arm64-v8a): ✅ ($((EPOCHSECONDS-start))s)" | ../scripts/ci/step-summary.sh
+
+      - name: Verify APK signing certificate
+        # "Restore release keystore" only proves A keystore is configured. This
+        # proves the APK is signed with THE release key before anything is
+        # zipped or published: a wrong keystore in the secret would otherwise
+        # ship a release that in-app updates reject (signature mismatch) and the
+        # landing APK refresh refuses to serve. Same pinned value and the same
+        # rule as the landing refresh: exactly one signer, and it must be one of
+        # the APK_SIGNER_SHA256 digests.
+        env:
+          APK_SIGNER_SHA256: ${{ vars.APK_SIGNER_SHA256 }}
+        run: |
+          set -euo pipefail
+          APK_PATH=$(find android/app/build/outputs/apk/prod/release -name "*.apk" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "::error::No release APK found to verify"
+            exit 1
+          fi
+          # build-tools (with apksigner) are fetched by the Gradle build itself.
+          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -name apksigner -type f 2>/dev/null | sort -V | tail -1)
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::apksigner not found under $ANDROID_SDK_ROOT/build-tools"
+            exit 1
+          fi
+          PINNED=$(printf '%s' "$APK_SIGNER_SHA256" | tr -d '[:space:]' | tr 'A-F' 'a-f')
+          if ! OUTPUT=$("$APKSIGNER" verify --print-certs "$APK_PATH" 2>/dev/null); then
+            echo "::error::apksigner could not verify $APK_PATH"
+            printf '%s\n' "- APK signer: ❌ signature does not verify — release aborted" | scripts/ci/step-summary.sh
+            exit 1
+          fi
+          DIGESTS=$(printf '%s\n' "$OUTPUT" \
+            | sed -n 's/.*[Ss]igner.*certificate SHA-256 digest: *\([0-9A-Fa-f]\{64\}\).*/\1/p' \
+            | tr 'A-F' 'a-f' | sort -u)
+          if printf '%s' "$DIGESTS" | grep -Eqx '[0-9a-f]{64}' && case ",$PINNED," in *",$DIGESTS,"*) true ;; *) false ;; esac; then
+            echo "APK signed with the pinned release certificate: $DIGESTS"
+            printf '%s\n' "- APK signer: ✅ pinned release certificate (\`${DIGESTS:0:16}…\`)" | scripts/ci/step-summary.sh
+          else
+            echo "::error::APK is not signed with the pinned release certificate (got: ${DIGESTS:-none}) — check the ANDROID_KEYSTORE_* secrets"
+            printf '%s\n' "- APK signer: ❌ unexpected certificate (\`${DIGESTS:-none}\`) — release aborted" | scripts/ci/step-summary.sh
+            exit 1
+          fi
 
       - name: Rename and zip APK
         run: |
