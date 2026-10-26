@@ -1,0 +1,9 @@
+Pin artifact actions to v3 — v4 unsupported on Forgejo
+Bump zod and follow-redirects to patched versions
+Stop executing YouTube player JS in the InnerTube import
+Drop unsafe-inline/eval from script-src and add HSTS
+Restrict update downloads to our repository release URLs
+Reset admin session when the API server URL changes
+Stabilize admin header options identity to stop setOptions loop
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

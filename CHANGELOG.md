@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.1] - 2026-10-26
+
+### Added
+
+- Uniform slider spacing based on title height
+- Split APK publishing into a separate job
+
+### Fixed
+
+- Pin artifact actions to v3 — v4 unsupported on Forgejo
+- Bump zod and follow-redirects to patched versions
+- Stop executing YouTube player JS in the InnerTube import
+- Drop unsafe-inline/eval from script-src and add HSTS
+- Restrict update downloads to our repository release URLs
+- Reset admin session when the API server URL changes
+- Stabilize admin header options identity to stop setOptions loop
+- Return agents model in opencode config
+- Push git refs to Codeberg directly
+
 ## [0.31.0] - 2026-10-25
 
 ### Added
@@ -1462,6 +1481,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.31.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.31.1
 [0.31.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.31.0
 [0.30.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.30.0
 [0.29.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.29.1

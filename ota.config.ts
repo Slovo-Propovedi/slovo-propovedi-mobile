@@ -55,7 +55,7 @@ const readCodeSigning = (): CodeSigningConfig | null => {
 // whenever native code, the Expo SDK or config plugins change, so a JS-only update
 // never lands on an incompatible native build. Versioning, not deployment config —
 // it is deliberately not env-driven.
-const RUNTIME_VERSION = '0.31.0'
+const RUNTIME_VERSION = '0.31.1'
 
 const buildUpdates = (env: null | OtaEnv): UpdatesConfig => {
   if (!env) return { enabled: false }
