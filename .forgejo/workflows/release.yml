@@ -389,12 +389,26 @@ jobs:
         if: steps.deploycfg.outputs.deploy == 'true'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
         run: |
+          # The VPS host key is pinned from the org secret VPS_SSH_KNOWN_HOSTS
+          # (`ssh-keyscan <VPS_HOST>` output, captured once and verified against
+          # the server). A per-run ssh-keyscan on a fresh runner would trust
+          # whatever key answers, i.e. offer no MITM protection.
+          if [ -z "$VPS_SSH_KNOWN_HOSTS" ]; then
+            echo "::error::VPS_SSH_KNOWN_HOSTS is not set — add the pinned VPS host key as a Forgejo org secret."
+            exit 1
+          fi
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "$VPS_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          # Applies to every ssh/scp call in this job: an unknown or changed
+          # host key aborts instead of being accepted.
+          printf 'StrictHostKeyChecking yes\n' > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       - name: Deploy to VPS
         if: steps.deploycfg.outputs.deploy == 'true'

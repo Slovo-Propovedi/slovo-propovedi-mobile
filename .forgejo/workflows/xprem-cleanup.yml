@@ -143,6 +143,7 @@ jobs:
           EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
 
@@ -176,7 +177,7 @@ jobs:
           done
 
           if [ "$DEEP" = 'true' ]; then
-            for v in VPS_HOST VPS_SSH_PRIVATE_KEY; do
+            for v in VPS_HOST VPS_SSH_PRIVATE_KEY VPS_SSH_KNOWN_HOSTS; do
               if [ -z "${!v:-}" ]; then
                 echo "::warning::$v is not configured — deep mode needs the VPS SSH secrets"
                 missing=1
@@ -420,12 +421,26 @@ jobs:
         if: steps.recreate.outputs.result == 'recreated' && steps.guard.outputs.deep == 'true'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
         run: |
+          # The VPS host key is pinned from the org secret VPS_SSH_KNOWN_HOSTS
+          # (`ssh-keyscan <VPS_HOST>` output, captured once and verified against
+          # the server). A per-run ssh-keyscan on a fresh runner would trust
+          # whatever key answers, i.e. offer no MITM protection.
+          if [ -z "$VPS_SSH_KNOWN_HOSTS" ]; then
+            echo "::error::VPS_SSH_KNOWN_HOSTS is not set — add the pinned VPS host key as a Forgejo org secret."
+            exit 1
+          fi
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "$VPS_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          # Applies to every ssh/scp call in this job: an unknown or changed
+          # host key aborts instead of being accepted.
+          printf 'StrictHostKeyChecking yes\n' > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       # Deep reclaim, opt-in and unsupported upstream. One SSH session does
       # BOTH operations: the playbook's documented CAS wipe stops the unit for
@@ -623,6 +638,6 @@ jobs:
         run: |
           rm -rf node_modules .yarn/cache .expo jest-cache dist 2>/dev/null || true
           rm -f /tmp/xprem-*.json 2>/dev/null || true
-          rm -f ~/.ssh/id_ed25519 2>/dev/null || true
+          rm -f ~/.ssh/id_ed25519 ~/.ssh/known_hosts ~/.ssh/config 2>/dev/null || true
           find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
           find . -name '.cache' -type d -delete 2>/dev/null || true
