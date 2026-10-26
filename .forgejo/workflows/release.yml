@@ -767,7 +767,7 @@ jobs:
         # Publishing lives in the separate `publish-release` job, which consumes
         # this artifact. A failed upload/mirror can therefore be re-run on its
         # own without rebuilding the APK; 30 days is the practical re-run window.
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf # v3
         with:
           name: release-assets
           path: |
@@ -825,7 +825,7 @@ jobs:
           ' CHANGELOG.md > release-body.md
 
       - name: Download release artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@a9bc5e6ef2cb54c177f32aa5726adaa15e7e2d59 # v3
         with:
           name: release-assets
           path: release-assets

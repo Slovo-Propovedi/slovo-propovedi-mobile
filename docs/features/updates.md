@@ -50,6 +50,8 @@
 
 **Публикация отделена от сборки.** Job `android` только собирает APK и складывает ZIP + `SHA256SUMS.txt` в артефакт `release-assets` (retention 30 дней); job `publish-release` (`needs: [create-release, android]`) скачивает артефакт, прикладывает ассеты к Forgejo-релизу и зеркалирует релиз в GitHub и Codeberg. Упавшую публикацию или зеркало можно перезапустить (re-run failed jobs) без пересборки APK, пока артефакт не истёк.
 
+**Артефактная передача держится на v3 artifact-actions.** `actions/upload-artifact` и `actions/download-artifact` в `release.yml` остаются на мажоре v3: v4+ перешли на GitHub Results API, которого нет в Forgejo, и падают с `GHESNotSupportedError`. Симптом — релиз публикуется без приложенного APK (zip и `SHA256SUMS.txt` не доезжают до `publish-release`). Поднимать эти action'ы выше v3 нельзя, пока Forgejo не реализует Results API.
+
 **Web релизится всегда**: job `web` зависит только от `changes` и не имеет условия по режиму, поэтому PWA выходит на каждом теге. Web-zip прикрепляется к релизу только в `native`; в `js-only` деплой на VPS выполняется без сборки zip.
 
 ### Публикация OTA (job `ota` → eoas)
