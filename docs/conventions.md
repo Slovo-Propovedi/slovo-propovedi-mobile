@@ -215,6 +215,10 @@
 - `android.versionCode` и `ios.buildNumber` (= `String(versionCode)`) выводятся из `pkg.version` в `app.config.ts`; `android.versionCode` проверяется в CI после prebuild.
 - Сборки нативных билдов: `build:android`, `build:ios`, `build:all` (EAS).
 
+## CI: закрепление actions по SHA
+
+`uses:` в `.forgejo/workflows/*.yml` указывают **полный SHA коммита** с комментарием-тегом (`actions/checkout@<40 hex> # v4`), а не плавающий тег. Тег в чужом репозитории можно переставить на другой коммит (атака на `tj-actions/changed-files`, 2025), а release-джобы держат `ANDROID_KEYSTORE_*` и токены публикации. Раннер резолвит `uses:` через зеркало `data.forgejo.org` — SHA там совпадают с GitHub (`git ls-remote https://data.forgejo.org/actions/<name> refs/tags/<tag>`). Обновляет SHA Renovate (пресет `helpers:pinGitHubActionDigests` в `renovate.json`); новый `uses:` добавляй сразу с SHA.
+
 ## Связанные документы
 
 - [`README.md`](./README.md) — правила работы с документацией.
