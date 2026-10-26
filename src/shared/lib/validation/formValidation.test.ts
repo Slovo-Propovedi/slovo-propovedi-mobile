@@ -1,4 +1,5 @@
 import {
+  artworkUrlError,
   fileUrlError,
   maxItemsError,
   maxLengthError,
@@ -50,6 +51,27 @@ describe('urlError', () => {
   test('rejects a relative or malformed link', () => {
     expect(urlError('not-a-url', 'YouTube')).toBe('YouTube: укажите корректную ссылку.')
   })
+
+  test.each(['javascript:alert(1)', 'data:text/html,<script>1</script>'])(
+    'rejects a non-http(s) scheme %p',
+    value => {
+      expect(urlError(value, 'YouTube')).toBe('YouTube: укажите корректную ссылку.')
+    },
+  )
+})
+
+describe('artworkUrlError', () => {
+  test('accepts an empty value and an http(s) link', () => {
+    expect(artworkUrlError('', 'Обложка')).toBe('')
+    expect(artworkUrlError('https://cdn.example/files/cover.png', 'Обложка')).toBe('')
+  })
+
+  test.each(['javascript:alert(1)', 'data:image/svg+xml,<svg/>', 'cover.png'])(
+    'rejects %p',
+    value => {
+      expect(artworkUrlError(value, 'Обложка')).toBe('Обложка: укажите корректную ссылку.')
+    },
+  )
 })
 
 describe('fileUrlError', () => {

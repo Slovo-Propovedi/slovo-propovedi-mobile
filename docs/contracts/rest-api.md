@@ -130,11 +130,15 @@ generated/
 | `book`                                                                    | `maxLength: 100`           |
 | `artwork`, `audioUrl`, `textFileUrl`, `youtubeUrl`, URL Invidious-инстанса | `maxLength: 2048`          |
 | `audioUrl`, `textFileUrl`                                                 | `pattern: ^https?://[^/]+/files/.+$` (URL обязан указывать на `/files/`) |
+| `youtubeUrl`                                                              | `pattern: ^https?://.+$` — только http(s), `javascript:`/`data:` отклоняются |
+| `artwork` проповеди/плейлиста                                             | `pattern: ^(https?://.*)?$` — пустая строка или http(s)-ссылка |
 | Массивы связей и reorder (`playlistsIds`, `sermonsIds`, `sectionsIds`, `ids`, `playlistIds`, `sermonIds`) | `maxItems: 1000` |
 | `page` (пагинация)                                                        | `max: 100000`; `limit` — `max: 100` |
 | `search` (`GET /sermons`, `GET /playlists`)                               | `maxLength: 200`           |
 | `itemsRows` (раздел)                                                      | целое `0..100` (было просто `number`) |
 | Фича-флаг: `key` / `title`                                                | `maxLength: 100` / 200     |
+
+Паттерны `youtubeUrl`/`artwork` закрывают stored XSS через ссылки: клиент зеркалит их в `urlError`/`artworkUrlError` (`src/shared/lib/validation/formValidation.ts`, паттерны — `YOUTUBE_URL_PATTERN`/`ARTWORK_URL_PATTERN` из `inputLimits.ts`, взяты из сгенерированных констант).
 
 Rate limiting аутентификации — в разделе «Аутентификация» выше (`login` 10/мин, `refresh` 30/мин, `429` при превышении). На клиенте `429` показывается как «Слишком много попыток. Попробуйте через минуту» (`getErrorMessage`), а `429` от `refresh` не завершает сессию (токены сохраняются).
 

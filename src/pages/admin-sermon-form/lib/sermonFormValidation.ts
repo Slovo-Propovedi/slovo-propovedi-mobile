@@ -1,4 +1,5 @@
 import {
+  artworkUrlError,
   fileUrlError,
   maxItemsError,
   maxLengthError,
@@ -18,6 +19,7 @@ export const sermonValidationError = (values: SermonFormValues): string =>
   maxLengthError(values.book, INPUT_LIMITS.sermon.book, 'Книга') ||
   maxLengthError(values.description, INPUT_LIMITS.sermon.description, 'Описание') ||
   maxLengthError(values.artwork, INPUT_LIMITS.sermon.artwork, 'Обложка') ||
+  artworkUrlError(values.artwork, 'Обложка') ||
   maxLengthError(values.youtubeUrl, INPUT_LIMITS.sermon.youtubeUrl, 'YouTube') ||
   urlError(values.youtubeUrl, 'YouTube') ||
   maxLengthError(values.audioUrl, INPUT_LIMITS.sermon.audioUrl, 'Аудио') ||

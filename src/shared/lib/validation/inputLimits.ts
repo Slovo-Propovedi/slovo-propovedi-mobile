@@ -25,6 +25,7 @@ import {
 import {
   sermonControllerCreateBodyArtistMax,
   sermonControllerCreateBodyArtworkMax,
+  sermonControllerCreateBodyArtworkRegExp,
   sermonControllerCreateBodyAudioUrlMax,
   sermonControllerCreateBodyAudioUrlRegExp,
   sermonControllerCreateBodyBookMax,
@@ -33,6 +34,7 @@ import {
   sermonControllerCreateBodyTextFileUrlMax,
   sermonControllerCreateBodyTitleMax,
   sermonControllerCreateBodyYoutubeUrlMax,
+  sermonControllerCreateBodyYoutubeUrlRegExp,
   sermonControllerFindAllQuerySearchMax,
 } from '../../api/generated/model/sermons'
 import {
@@ -89,3 +91,9 @@ export const INPUT_LIMITS = {
 // Ссылка на файл в хранилище (MinIO): `audioUrl` и `textFileUrl` в спецификации
 // используют один и тот же паттерн.
 export const FILE_URL_PATTERN = sermonControllerCreateBodyAudioUrlRegExp
+
+// Только http(s): сервер по спецификации отклоняет `javascript:`/`data:`
+// в `youtubeUrl`, а `artwork` — пустая строка или http(s)-ссылка. Паттерн
+// обложки у проповеди и плейлиста один и тот же.
+export const YOUTUBE_URL_PATTERN = sermonControllerCreateBodyYoutubeUrlRegExp
+export const ARTWORK_URL_PATTERN = sermonControllerCreateBodyArtworkRegExp

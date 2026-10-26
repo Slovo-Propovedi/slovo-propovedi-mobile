@@ -1,5 +1,10 @@
 import z from 'zod'
-import { FILE_URL_PATTERN, INPUT_LIMITS } from './inputLimits'
+import {
+  ARTWORK_URL_PATTERN,
+  FILE_URL_PATTERN,
+  INPUT_LIMITS,
+  YOUTUBE_URL_PATTERN,
+} from './inputLimits'
 
 const URL_MESSAGE = 'укажите корректную ссылку.'
 const FILE_URL_MESSAGE = 'ссылка должна указывать на файл в хранилище (…/files/…).'
@@ -41,14 +46,28 @@ export const passwordError = (value: string): string => {
 }
 
 /**
- * Проверка абсолютного URL для `youtubeUrl`; '' — пустое поле допустимо (null).
+ * Проверка http(s)-ссылки для `youtubeUrl`; '' — пустое поле допустимо (null).
+ * `z.url()` сам по себе пропускает `javascript:`/`data:`, поэтому дополнительно
+ * применяется паттерн спецификации `^https?://.+$`.
  * @param value - Значение поля.
  * @param label - Русская подпись поля для сообщения.
  */
-export const urlError = (value: string, label: string): string =>
-  value.trim() === '' || absoluteUrl.safeParse(value.trim()).success
+export const urlError = (value: string, label: string): string => {
+  const trimmed = value.trim()
+  if (trimmed === '') return ''
+
+  return absoluteUrl.safeParse(trimmed).success && YOUTUBE_URL_PATTERN.test(trimmed)
     ? ''
     : `${label}: ${URL_MESSAGE}`
+}
+
+/**
+ * Проверка ссылки на обложку (`^(https?://.*)?$`): пустая строка или http(s).
+ * @param value - Значение поля.
+ * @param label - Русская подпись поля для сообщения.
+ */
+export const artworkUrlError = (value: string, label: string): string =>
+  ARTWORK_URL_PATTERN.test(value.trim()) ? '' : `${label}: ${URL_MESSAGE}`
 
 /**
  * Проверка ссылки на файл в хранилище (`^https?://[^/]+/files/.+$`).
