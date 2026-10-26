@@ -13,10 +13,12 @@ const EDIT_LABEL = 'Редактировать'
  * «Редактировать» и, если передан `onDelete`, «Удалить». Back-стрелку и рамку
  * задаёт layout-стек раздела, поэтому здесь только заголовок и `headerRight`.
  *
- * Свежие `onEdit`/`onDelete` держим в ref (синхронизация в эффекте, не во время
- * рендера): кнопки всегда вызывают актуальные обработчики, но идентичность
- * `headerRight` не меняется каждый рендер — иначе expo-router ушёл бы в
- * «Maximum update depth exceeded».
+ * Свежие `onDelete` держим в ref (синхронизация в эффекте, не во время рендера):
+ * кнопки всегда вызывают актуальный обработчик, а сам callback не попадает в
+ * зависимости `useMemo`. Наличие обработчика отслеживает стабильный boolean
+ * `hasDelete` — только он и участвует в идентичности `headerRight`. Иначе
+ * expo-router переустанавливал бы options каждый рендер (callers передают свежую
+ * inline-стрелку) и уходил в «Maximum update depth exceeded».
  * @param options - Параметры шапки детали.
  * @param options.editRoute - Куда перейти по иконке «Редактировать».
  * @param options.onDelete - Открыть подтверждение удаления (скрыто, если не передан).
@@ -42,6 +44,7 @@ export const useAdminDetailHeader = ({
 
   const handleEdit = useCallback(() => router.push(editRouteRef.current), [])
   const handleDelete = useCallback(() => onDeleteRef.current?.(), [])
+  const hasDelete = onDelete !== undefined
 
   const headerRight = useMemo(
     () => () => (
@@ -51,7 +54,7 @@ export const useAdminDetailHeader = ({
           accessibilityLabel={EDIT_LABEL}
           Icon={<Ionicons size={24} name='create-outline' color={currentTheme.primary} />}
         />
-        {onDelete ? (
+        {hasDelete ? (
           <IconButton
             onPress={handleDelete}
             accessibilityLabel={DELETE_LABEL}
@@ -60,7 +63,7 @@ export const useAdminDetailHeader = ({
         ) : null}
       </View>
     ),
-    [currentTheme.primary, handleDelete, handleEdit, onDelete],
+    [currentTheme.primary, handleDelete, handleEdit, hasDelete],
   )
 
   return useMemo(() => ({ headerRight, title }), [headerRight, title])

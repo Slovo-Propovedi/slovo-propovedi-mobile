@@ -15,9 +15,11 @@ const EDIT_LABEL = 'Редактировать'
  * Экран задаёт их сам через `Stack.Screen`, поэтому шапка не зависит от мержа
  * опций с layout-стеком.
  *
- * Свежие обработчики держим в ref (синхронизация в эффекте, не во время рендера):
- * кнопки всегда вызывают актуальный обработчик, но идентичность `headerRight`
- * не меняется от каждого нажатия клавиши — иначе expo-router переустанавливал бы
+ * Свежие обработчики и `editRoute` держим в ref (синхронизация в эффекте, не во
+ * время рендера): кнопки всегда вызывают актуальный обработчик, а сами callbacks
+ * не попадают в зависимости `useMemo`. Наличие `onSave` отслеживает стабильный
+ * boolean `hasSave` — только он и участвует в переключении «Сохранить/Изменить».
+ * Иначе callers передают свежую inline-стрелку, expo-router переустанавливал бы
  * options каждый рендер и уходил в «Maximum update depth exceeded».
  * @param options - Параметры шапки формы.
  * @param options.editRoute - Куда перейти по иконке «Редактировать» (для деталей).
@@ -46,10 +48,12 @@ export const useAdminFormHeader = ({
   title: string
 }) => {
   const { currentTheme } = useTheme()
+  const editRouteRef = useRef(editRoute)
   const onSaveRef = useRef(onSave)
   const onEditRef = useRef(onEdit)
 
   useEffect(() => {
+    editRouteRef.current = editRoute
     onSaveRef.current = onSave
     onEditRef.current = onEdit
   })
@@ -60,8 +64,10 @@ export const useAdminFormHeader = ({
       onEditRef.current()
       return
     }
-    if (editRoute) router.push(editRoute)
-  }, [editRoute])
+    const route = editRouteRef.current
+    if (route) router.push(route)
+  }, [])
+  const hasSave = onSave !== undefined
 
   const renderBack = useCallback(
     (props: { tintColor?: ColorValue }) => (
@@ -82,11 +88,11 @@ export const useAdminFormHeader = ({
   )
 
   const headerRight = useMemo(() => {
-    if (onSave)
+    if (hasSave)
       return () => <SaveButton isDirty={isDirty} onPress={handleSave} isSubmitting={isSubmitting} />
 
     return renderEdit
-  }, [handleSave, isDirty, isSubmitting, onSave, renderEdit])
+  }, [handleSave, hasSave, isDirty, isSubmitting, renderEdit])
 
   return useMemo(
     () => ({ headerLeft: renderBack, headerRight, title }),
