@@ -22,6 +22,10 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     marginTop: INDENTS.low,
   },
+  hintText: {
+    fontSize: FONT_SIZES.sm,
+    marginTop: INDENTS.low,
+  },
   input: {
     borderRadius: 8,
     borderWidth: 1,

@@ -269,6 +269,7 @@ describe('<BackupSection>', () => {
     await waitFor(() => {
       expect(getByText(NEW_SERVER_URL)).toBeTruthy()
     })
+    expect(getByText(/Вход администратора будет сброшен/)).toBeTruthy()
     expect(mockApplyImport).not.toHaveBeenCalled()
 
     await fireEvent.press(getByRole('button', { name: 'Применить' }))

@@ -1,11 +1,13 @@
 jest.mock('shared/api/axiosInstance', () => ({
   axiosInstance: { defaults: { baseURL: 'https://api.slovo-propovedi.ru' } },
 }))
+jest.mock('./serverUrlSession', () => ({ resetSessionForServerChange: jest.fn() }))
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx, type Ctx } from '@reatom/framework'
 import { DEFAULT_API_URL } from '../config/api-url'
 import { SERVER_URL } from '../config/server-storage-keys'
+import { resetSessionForServerChange } from './serverUrlSession'
 import {
   hapticsEnabledAtom,
   loadHapticsEnabled,
@@ -38,6 +40,7 @@ describe('settings model', () => {
 
   afterEach(() => {
     jest.restoreAllMocks()
+    jest.mocked(resetSessionForServerChange).mockClear()
   })
 
   describe('serverUrl', () => {
@@ -53,6 +56,21 @@ describe('settings model', () => {
       expect(ctx.get(serverUrlAtom)).toBe(newUrl)
       expect(AsyncStorage.setItem).toHaveBeenCalledWith(SERVER_URL, newUrl)
       expect(mockedAxiosInstance.defaults.baseURL).toBe(newUrl)
+    })
+
+    test('setServerUrlAction resets the session before switching to another server', async () => {
+      await setServerUrlAction(ctx, 'https://custom.example.com')
+
+      expect(resetSessionForServerChange).toHaveBeenCalledTimes(1)
+      expect(jest.mocked(resetSessionForServerChange).mock.invocationCallOrder[0]).toBeLessThan(
+        jest.mocked(AsyncStorage.setItem).mock.invocationCallOrder.at(-1) ?? 0,
+      )
+    })
+
+    test('setServerUrlAction keeps the session when the URL is unchanged', async () => {
+      await setServerUrlAction(ctx, DEFAULT_API_URL)
+
+      expect(resetSessionForServerChange).not.toHaveBeenCalled()
     })
   })
 

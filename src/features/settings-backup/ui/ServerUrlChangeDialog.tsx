@@ -3,6 +3,9 @@ import { Modal } from 'shared/ui/modal'
 import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 
+const SESSION_RESET_NOTICE =
+  'Вход администратора будет сброшен: токены не передаются на другой сервер.'
+
 export const ServerUrlChangeDialog = ({
   newUrl,
   onCancel,
@@ -24,6 +27,9 @@ export const ServerUrlChangeDialog = ({
           Импорт изменит адрес сервера API на:
         </Text>
         <Text style={[styles.url, { color: currentTheme.text }]}>{newUrl}</Text>
+        <Text style={[styles.message, { color: currentTheme.textMuted }]}>
+          {SESSION_RESET_NOTICE}
+        </Text>
         <TouchableItem
           onPress={onConfirm}
           style={[styles.choice, { backgroundColor: currentTheme.primary }]}

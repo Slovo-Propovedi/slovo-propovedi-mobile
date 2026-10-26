@@ -8,6 +8,7 @@ import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './ServerUrlSettings.styles'
 
 const INVALID_PROTOCOL_MESSAGE = 'Адрес сервера должен начинаться с https://'
+const SESSION_RESET_HINT = 'При смене адреса вход администратора сбрасывается.'
 
 // Только https: на этот адрес уходят токены администратора, plain http отдал бы
 // их в открытом виде.
@@ -72,6 +73,7 @@ export const ServerUrlForm = () => {
           {validationError}
         </Text>
       ) : null}
+      <Text style={[styles.hintText, { color: currentTheme.textMuted }]}>{SESSION_RESET_HINT}</Text>
       <View style={styles.buttons}>
         <TouchableItem
           onPress={handleSave}

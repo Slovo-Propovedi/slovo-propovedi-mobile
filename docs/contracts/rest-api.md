@@ -6,7 +6,7 @@
 
 - По умолчанию: `https://api.slovo-propovedi.ru` — константа `DEFAULT_API_URL` в `src/shared/config/api-url.ts`.
 - `axiosInstance` создаётся с этим base URL в `src/shared/api/axiosInstance.ts` (`axios.create({ baseURL: DEFAULT_API_URL })`).
-- **Можно менять в Настройках**: атом `serverUrlAtom` (`src/shared/model/settings.ts`). Экшены `setServerUrlAction` / `initServerUrlAction` синхронизируют `axiosInstance.defaults.baseURL` с выбранным URL и персистят его в AsyncStorage (ключ `SERVER_URL`, см. [storage.md](./storage.md)). Допустим только `https://`: на этот адрес уходят токены администратора; при старте сохранённое значение без `https://` игнорируется (остаётся `DEFAULT_API_URL`).
+- **Можно менять в Настройках**: атом `serverUrlAtom` (`src/shared/model/settings.ts`). Экшены `setServerUrlAction` / `initServerUrlAction` синхронизируют `axiosInstance.defaults.baseURL` с выбранным URL и персистят его в AsyncStorage (ключ `SERVER_URL`, см. [storage.md](./storage.md)). Допустим только `https://`: на этот адрес уходят токены администратора; при старте сохранённое значение без `https://` игнорируется (остаётся `DEFAULT_API_URL`). Токены привязаны к серверу, который их выдал: `setServerUrlAction` при смене адреса (значение отличается от `serverUrlAtom`) сначала вызывает `resetSessionForServerChange` (`src/shared/model/serverUrlSession.ts`) — чистит access/refresh-токены и кешированный профиль, а если сессия была, поднимает `markSessionExpired` (entities/auth сбрасывает состояние, админка уводит на `/admin/login`). Иначе интерцептор отправил бы `Authorization: Bearer …` и refresh-токен на новый хост.
 
 ## Аутентификация — Bearer JWT
 

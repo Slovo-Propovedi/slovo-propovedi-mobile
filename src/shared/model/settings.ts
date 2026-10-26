@@ -3,6 +3,7 @@ import { action, atom } from '@reatom/framework'
 import { axiosInstance } from '../api/axiosInstance'
 import { DEFAULT_API_URL } from '../config/api-url'
 import { SERVER_URL } from '../config/server-storage-keys'
+import { resetSessionForServerChange } from './serverUrlSession'
 
 const HAPTICS_ENABLED_KEY = 'haptics_enabled'
 const TOURS_DISABLED_KEY = 'tours_disabled'
@@ -79,6 +80,8 @@ const syncAxiosBaseUrl = (url: string) => {
 }
 
 export const setServerUrlAction = action(async (ctx, url: string) => {
+  if (url !== ctx.get(serverUrlAtom)) await resetSessionForServerChange(ctx)
+
   await AsyncStorage.setItem(SERVER_URL, url)
   await ctx.schedule(() => {
     syncAxiosBaseUrl(url)
