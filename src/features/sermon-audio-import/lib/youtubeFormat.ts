@@ -24,8 +24,8 @@ const PREFERRED_ITAG = 140
 const PREFERRED_MIME_TYPE = 'mp4'
 
 // youtubei.js бросает InnertubeError с текстом «Request to … failed with status
-// code 403» — статус достаём из сообщения, чтобы отличить блокировку клиента от
-// сетевого сбоя.
+// code 403» — статус достаём из сообщения, чтобы в ошибке импорта отличить
+// блокировку клиента от сетевого сбоя.
 const HTTP_STATUS_PATTERN = /status code (\d{3})/
 
 /**
@@ -40,14 +40,6 @@ export const readYoutubeHttpStatus = (error: unknown): number | undefined => {
 
   return match ? Number(match[1]) : undefined
 }
-
-/**
- * Признак блокировки клиента InnerTube: 403 значит, что смена клиента может
- * помочь (PO-токен/политика), в отличие от сетевого сбоя.
- * @param error - Ошибка клиента InnerTube.
- */
-export const isYoutubeForbiddenError = (error: unknown): boolean =>
-  readYoutubeHttpStatus(error) === 403
 
 /**
  * Код ошибки импорта для статуса проигрываемости видео.

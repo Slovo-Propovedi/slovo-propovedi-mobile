@@ -2,8 +2,8 @@
 import { type Innertube } from 'youtubei.js'
 import { type ResolvedAudio } from '../importTypes'
 import { ImportSourceError } from '../sourceErrors'
-import { resolveYoutubeAudioWithFallback } from '../youtubeClients'
-import { installYoutubeShims } from '../youtubeShims'
+import { resolveYoutubeAudioFromInnertube } from '../youtubeClients'
+import { installCryptoShims } from '../youtubeShims'
 
 // UA скопирован из youtubei.js Constants.CLIENTS.ANDROID_VR (v18.1.0): клиент
 // обязан представляться тем же приложением, что и в client-контексте, иначе
@@ -11,7 +11,7 @@ import { installYoutubeShims } from '../youtubeShims'
 const ANDROID_VR_USER_AGENT =
   'com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip'
 
-// Сессия Innertube тяжёлая (сеть + расшифровка плеера), поэтому одна на процесс.
+// Сессия Innertube тяжёлая (сеть), поэтому одна на процесс.
 let innertubePromise: null | Promise<Innertube> = null
 
 /**
@@ -22,14 +22,14 @@ const createInnertube = async (): Promise<Innertube> => {
   const { Innertube, Log } = await import('youtubei.js')
   if (!__DEV__) Log.setLevel(Log.Level.NONE)
 
-  // Шимы обязаны идти после загрузки библиотеки: её RN-платформа перезаписывает
-  // `eval` при инициализации.
-  await installYoutubeShims()
+  installCryptoShims()
 
+  // Плеер YouTube не загружается: ANDROID_VR отдаёт прямые ссылки, а расшифровка
+  // шифрованных потребовала бы исполнять JS с youtube.com внутри приложения.
   return Innertube.create({
     enable_session_cache: false,
     lang: 'en',
-    retrieve_player: true,
+    retrieve_player: false,
     user_agent: ANDROID_VR_USER_AGENT,
   })
 }
@@ -49,13 +49,12 @@ const getInnertube = async (): Promise<Innertube> => {
 const resolveFromYoutube = async (videoId: string): Promise<ResolvedAudio> => {
   const innertube = await getInnertube()
 
-  return resolveYoutubeAudioWithFallback(innertube, videoId)
+  return resolveYoutubeAudioFromInnertube(innertube, videoId)
 }
 
 /**
- * Достаёт метаданные и расшифрованную ссылку на аудиодорожку напрямую из
- * InnerTube. Ловит и оборачивает в `ImportSourceError` любые сбои клиента
- * (сеть, сессия, расшифровка) — наружу уходят только коды из `ImportErrorCode`.
+ * Достаёт метаданные и прямую ссылку на аудиодорожку напрямую из InnerTube.
+ * Ловит и оборачивает в `ImportSourceError` любые сбои клиента (сеть, сессия) — наружу уходят только коды из `ImportErrorCode`.
  * @param videoId - ID видео YouTube.
  */
 export const resolveYoutubeAudio = async (videoId: string): Promise<ResolvedAudio> => {

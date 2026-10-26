@@ -1,4 +1,4 @@
-import { installCryptoShims, installYoutubeShims } from './youtubeShims'
+import { installCryptoShims } from './youtubeShims'
 
 const mockGetRandomValues = jest.fn((array: Uint8Array) => array)
 const mockRandomUUID = jest.fn(() => 'mock-uuid')
@@ -8,19 +8,12 @@ jest.mock('expo-crypto', () => ({
   randomUUID: () => mockRandomUUID(),
 }))
 
-// installYoutubeShims динамически импортирует платформу youtubei.js, а в Jest
-// нативный import() без --experimental-vm-modules не исполняется. Поэтому
-// покрываем чистую крипто-часть; полный шим проверяется вручную на устройстве.
 const originalCrypto = globalThis.crypto
 
-describe('youtubeShims', () => {
+describe('installCryptoShims', () => {
   afterEach(() => {
     Object.defineProperty(globalThis, 'crypto', { configurable: true, value: originalCrypto })
     jest.clearAllMocks()
-  })
-
-  test('exposes installYoutubeShims without loading the library', () => {
-    expect(installYoutubeShims).toBeInstanceOf(Function)
   })
 
   test('installs getRandomValues and randomUUID on a host without them', () => {

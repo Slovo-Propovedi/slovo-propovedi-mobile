@@ -1,26 +1,47 @@
 import { type Innertube } from 'youtubei.js'
 import { type ResolvedAudio } from './importTypes'
 import { ImportSourceError } from './sourceErrors'
-import {
-  assertVideoIsDownloadable,
-  isYoutubeForbiddenError,
-  pickAudioFormat,
-  readYoutubeHttpStatus,
-} from './youtubeFormat'
+import { assertVideoIsDownloadable, pickAudioFormat, readYoutubeHttpStatus } from './youtubeFormat'
 
-// ANDROID_VR — единственный клиент, который в 2026-м отдаёт потоки без
-// PO-токена; WEB_EMBEDDED — запасной (PO-токен не нужен, но работает только для
-// видео, разрешённых к встраиванию). WEB/ANDROID/IOS требуют подписи и упираются
-// в LOGIN_REQUIRED.
-const CLIENT_FALLBACK_CHAIN = ['ANDROID_VR', 'WEB_EMBEDDED'] as const
-type InnertubeClient = (typeof CLIENT_FALLBACK_CHAIN)[number]
+// ANDROID_VR — единственный клиент, который в 2026-м отдаёт потоки без PO-токена
+// и без шифрования ссылок: ни подпись, ни параметр `n` расшифровывать не нужно,
+// поэтому плеерный JS YouTube не загружается и не исполняется. Клиенты с
+// шифрованными ссылками (WEB_EMBEDDED и др.) требуют исполнять код с youtube.com
+// внутри приложения — от них отказались намеренно (см. docs/features/admin.md).
+const INNERTUBE_CLIENT = 'ANDROID_VR'
 
-const resolveWithClient = async (
+// В детали ошибки важен и клиент, и статус («ANDROID_VR: 403»): без них
+// непонятно, упёрлись ли в блокировку YouTube или в сеть.
+const describeClientFailure = (error: unknown): string => {
+  const status = readYoutubeHttpStatus(error)
+  const reason =
+    status !== undefined ? String(status) : error instanceof Error ? error.message : String(error)
+
+  return `${INNERTUBE_CLIENT}: ${reason}`
+}
+
+const fetchVideoInfo = async (innertube: Innertube, videoId: string) => {
+  try {
+    return await innertube.getBasicInfo(videoId, { client: INNERTUBE_CLIENT })
+  } catch (error) {
+    throw new ImportSourceError('service-unavailable', new Error(describeClientFailure(error)))
+  }
+}
+
+/**
+ * Достаёт метаданные и прямую ссылку на аудиодорожку через клиент ANDROID_VR.
+ * Ссылка берётся как есть (`decipher()` без плеера): если YouTube прислал
+ * шифрованный формат, импорт падает с «Сервис недоступен», а не исполняет JS
+ * плеера. Ошибки самого видео (эфир, нет аудио, требуется вход) пробрасываются
+ * своими кодами.
+ * @param innertube - Готовая сессия InnerTube (создана без плеера).
+ * @param videoId - ID видео YouTube.
+ */
+export const resolveYoutubeAudioFromInnertube = async (
   innertube: Innertube,
   videoId: string,
-  client: InnertubeClient,
 ): Promise<ResolvedAudio> => {
-  const info = await innertube.getBasicInfo(videoId, { client })
+  const info = await fetchVideoInfo(innertube, videoId)
 
   assertVideoIsDownloadable({
     isLive: Boolean(info.basic_info.is_live),
@@ -31,49 +52,17 @@ const resolveWithClient = async (
   const format = pickAudioFormat(info.streaming_data?.adaptive_formats ?? [])
   if (!format) throw new ImportSourceError('no-audio')
 
+  const audioUrl = await format.decipher()
+  if (!audioUrl)
+    throw new ImportSourceError(
+      'service-unavailable',
+      new Error(`${INNERTUBE_CLIENT}: ciphered stream URL`),
+    )
+
   return {
-    audioUrl: await format.decipher(innertube.session.player),
+    audioUrl,
     description: info.basic_info.short_description ?? null,
     title: info.basic_info.title ?? '',
     videoId,
   }
-}
-
-// В детали ошибки важен и клиент, и статус («ANDROID_VR: 403»): без них
-// непонятно, упёрлись ли в блокировку YouTube или в сеть.
-const describeClientFailure = (error: unknown): string => {
-  const status = readYoutubeHttpStatus(error)
-  if (status !== undefined) return String(status)
-
-  return error instanceof Error ? error.message : String(error)
-}
-
-/**
- * Прогоняет клиентов InnerTube по цепочке фолбэка: при 403 пробует следующий
- * (WEB_EMBEDDED), иначе сразу отдаёт сбой. Ошибки самого видео (эфир, нет аудио,
- * требуется вход) не зависят от клиента и пробрасываются без повторов.
- * @param innertube - Готовая сессия InnerTube.
- * @param videoId - ID видео YouTube.
- */
-export const resolveYoutubeAudioWithFallback = async (
-  innertube: Innertube,
-  videoId: string,
-): Promise<ResolvedAudio> => {
-  const failures: string[] = []
-
-  for (const client of CLIENT_FALLBACK_CHAIN)
-    try {
-      return await resolveWithClient(innertube, videoId, client)
-    } catch (error) {
-      // Ошибки самого видео (эфир, нет аудио, требуется вход) не зависят от
-      // клиента — смена клиента их не исправит.
-      if (error instanceof ImportSourceError) throw error
-
-      failures.push(`${client}: ${describeClientFailure(error)}`)
-      // Фолбэк оправдан только при 403 (клиент заблокирован): сетевые сбои и
-      // ошибки расшифровки сменой клиента не лечатся.
-      if (!isYoutubeForbiddenError(error)) break
-    }
-
-  throw new ImportSourceError('service-unavailable', new Error(failures.join('; ')))
 }
