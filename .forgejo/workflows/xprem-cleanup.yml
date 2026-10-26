@@ -533,6 +533,13 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Repository coordinates (org vars) — release sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # xprem deployment values (Forgejo org/repo vars).
           EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
           EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}

@@ -1,13 +1,14 @@
+import { RELEASE_DOWNLOAD_URL_PREFIXES } from '../../config/repository'
+
 // Обновления качаются только из релизов нашего репозитория на трёх зеркалах.
 // Проверка — по строковому префиксу, а не через `new URL(...).hostname`: URL-полифил
 // React Native разбирает адрес регуляркой, и для `https://evil.example/@github.com/…`
 // возвращает hostname `github.com`. Префикс со слешем после хоста однозначно
 // фиксирует хост (userinfo/порт в него не вклиниваются) и путь до репозитория.
-export const ALLOWED_UPDATE_URL_PREFIXES = [
-  'https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/download/',
-  'https://codeberg.org/Slovo_Propovedi/slovo-propovedi-mobile/releases/download/',
-  'https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/releases/download/',
-] as const
+// Префиксы собираются из координат репозитория (EXPO_PUBLIC_*, строгая zod-
+// проверка в env.ts: хост — голый https-origin, организация и имя — slug), так
+// что значение переменной не может расширить префикс за пределы репозитория.
+export const ALLOWED_UPDATE_URL_PREFIXES = RELEASE_DOWNLOAD_URL_PREFIXES
 
 // Сегменты `..` (в т.ч. percent-encoded) и обратный слеш могли бы увести путь
 // за пределы релизов репозитория после нормализации на стороне загрузчика.

@@ -198,6 +198,13 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Repository coordinates (org vars) — release sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # xprem deployment values (Forgejo org/repo vars) — `eoas publish`
           # runs `expo export`, which evaluates app.config.ts; the guard above
           # already ensured they are all set.
@@ -242,6 +249,12 @@ jobs:
           BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           set -e
 
@@ -252,7 +265,7 @@ jobs:
 
           missing=0
           missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME; do
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME REPOSITORY_URL REPOSITORY_ORG MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME; do
             if [ -z "${!v}" ]; then
               echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
               missing=1
@@ -279,6 +292,13 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Repository coordinates (org vars) — release sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           start=$EPOCHSECONDS
           if yarn web:build; then
@@ -338,23 +358,26 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_SSH_USER: ${{ secrets.VPS_SSH_USER }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+          # Shared infra names (org vars mirroring the playbook).
+          TRAEFIK_NETWORK: ${{ vars.TRAEFIK_NETWORK }}
+          TRAEFIK_SERVICE: ${{ vars.TRAEFIK_SERVICE }}
+          BUILDX_BUILDER: ${{ vars.BUILDX_BUILDER }}
           # A manual run has no tag: the branch name is the deployment label.
           DEPLOY_TAG: ${{ github.ref_name }}
         run: |
           SSH_TARGET="${VPS_SSH_USER:-root}@$VPS_HOST"
           SRC=/slovo/web/container-src
+          # Every value is shell-quoted for the remote shell (printf %q): a quote
+          # in a ref name or variable can never break out of its argument.
+          REMOTE_ENV="$(printf 'DEPLOY_TAG=%q WEB_HOSTNAME=%q TRAEFIK_NETWORK=%q TRAEFIK_SERVICE=%q BUILDX_BUILDER=%q' \
+            "$DEPLOY_TAG" "$WEB_HOSTNAME" "$TRAEFIK_NETWORK" "$TRAEFIK_SERVICE" "$BUILDX_BUILDER")"
 
           # Ship only what the image needs: the export + the nginx bits.
           if tar czf - dist Dockerfile nginx.conf .dockerignore \
                | ssh "$SSH_TARGET" "rm -rf $SRC && mkdir -p $SRC && tar xzf - -C $SRC" \
              && scp scripts/vps-deploy-web.sh "$SSH_TARGET:/tmp/vps-deploy-web.sh" \
              && ssh "$SSH_TARGET" \
-                  "chmod +x /tmp/vps-deploy-web.sh && \
-                   DEPLOY_TAG='$DEPLOY_TAG' \
-                   WEB_HOSTNAME='$WEB_HOSTNAME' \
-                   ACME_EMAIL='$ACME_EMAIL' \
-                   bash /tmp/vps-deploy-web.sh"; then
+                  "chmod +x /tmp/vps-deploy-web.sh && $REMOTE_ENV bash /tmp/vps-deploy-web.sh"; then
             echo "result=deployed" >> "$GITHUB_OUTPUT"
             printf '%s\n' "- Deploy: ✅ https://$WEB_HOSTNAME ($DEPLOY_TAG)" | scripts/ci/step-summary.sh || true
           else

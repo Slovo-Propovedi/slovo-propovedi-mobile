@@ -309,6 +309,12 @@ jobs:
           BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           set -e
 
@@ -319,7 +325,7 @@ jobs:
 
           missing=0
           missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME; do
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME REPOSITORY_URL REPOSITORY_ORG MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME; do
             if [ -z "${!v}" ]; then
               echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
               missing=1
@@ -366,6 +372,13 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Repository coordinates (org vars) — release sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           start=$EPOCHSECONDS
           yarn web:build
@@ -416,22 +429,25 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_SSH_USER: ${{ secrets.VPS_SSH_USER }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+          # Shared infra names (org vars mirroring the playbook).
+          TRAEFIK_NETWORK: ${{ vars.TRAEFIK_NETWORK }}
+          TRAEFIK_SERVICE: ${{ vars.TRAEFIK_SERVICE }}
+          BUILDX_BUILDER: ${{ vars.BUILDX_BUILDER }}
           DEPLOY_TAG: ${{ github.ref_name }}
         run: |
           SSH_TARGET="${VPS_SSH_USER:-root}@$VPS_HOST"
           SRC=/slovo/web/container-src
+          # Every value is shell-quoted for the remote shell (printf %q): a quote
+          # in a ref name or variable can never break out of its argument.
+          REMOTE_ENV="$(printf 'DEPLOY_TAG=%q WEB_HOSTNAME=%q TRAEFIK_NETWORK=%q TRAEFIK_SERVICE=%q BUILDX_BUILDER=%q' \
+            "$DEPLOY_TAG" "$WEB_HOSTNAME" "$TRAEFIK_NETWORK" "$TRAEFIK_SERVICE" "$BUILDX_BUILDER")"
 
           # Ship only what the image needs: the export + the nginx bits.
           tar czf - dist Dockerfile nginx.conf .dockerignore \
             | ssh "$SSH_TARGET" "rm -rf $SRC && mkdir -p $SRC && tar xzf - -C $SRC"
           scp scripts/vps-deploy-web.sh "$SSH_TARGET:/tmp/vps-deploy-web.sh"
           ssh "$SSH_TARGET" \
-            "chmod +x /tmp/vps-deploy-web.sh && \
-             DEPLOY_TAG='$DEPLOY_TAG' \
-             WEB_HOSTNAME='$WEB_HOSTNAME' \
-             ACME_EMAIL='$ACME_EMAIL' \
-             bash /tmp/vps-deploy-web.sh"
+            "chmod +x /tmp/vps-deploy-web.sh && $REMOTE_ENV bash /tmp/vps-deploy-web.sh"
           printf '%s\n' "- VPS deploy: ✅ https://$WEB_HOSTNAME (tag $DEPLOY_TAG)" | scripts/ci/step-summary.sh
 
       # Native mode only, and deliberately after the deploy: a JS-only tag has
@@ -519,6 +535,12 @@ jobs:
           BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           APK_SIGNER_SHA256: ${{ vars.APK_SIGNER_SHA256 }}
         run: |
           set -e
@@ -530,7 +552,7 @@ jobs:
 
           missing=0
           missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME APK_SIGNER_SHA256; do
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME REPOSITORY_URL REPOSITORY_ORG MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME APK_SIGNER_SHA256; do
             if [ -z "${!v}" ]; then
               echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
               missing=1
@@ -623,6 +645,13 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Repository coordinates (org vars) — release sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # OTA deployment values (Forgejo org/repo vars) — embedded as
           # expo.modules.updates.* meta-data in the generated AndroidManifest.
           EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
@@ -750,6 +779,13 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Repository coordinates (org vars) — release sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # Same all-or-nothing OTA values as the prebuild step: app.config is
           # re-evaluated by expo export:embed, and a missing value just turns
           # updates off in this build (no guard needed).
@@ -926,6 +962,9 @@ jobs:
           # Forgejo reserves GITHUB_-prefixed names for its own env vars/secrets,
           # so both the secret and the env var use the MIRROR_GITHUB_TOKEN name.
           MIRROR_GITHUB_TOKEN: ${{ secrets.MIRROR_GITHUB_TOKEN }}
+          # Mirror coordinates — org variables shared with the landing.
+          MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
           if [ -z "${MIRROR_GITHUB_TOKEN:-}" ]; then
@@ -938,8 +977,13 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
           ZIP_PATH="release-assets/$ZIP_FILE"
-          API_BASE="https://api.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile"
-          UPLOAD_BASE="https://uploads.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile"
+          if [ -z "${MIRROR_GITHUB_ORG:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
+            echo "::warning::MIRROR_GITHUB_ORG / MOBILE_REPOSITORY_NAME org variables are not set - skipping GitHub mirror"
+            summary_row "- GitHub mirror: ⚠️ skipped (MIRROR_GITHUB_ORG / MOBILE_REPOSITORY_NAME not set)"
+            exit 0
+          fi
+          API_BASE="https://api.github.com/repos/$MIRROR_GITHUB_ORG/$MOBILE_REPOSITORY_NAME"
+          UPLOAD_BASE="https://uploads.github.com/repos/$MIRROR_GITHUB_ORG/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: Bearer ${MIRROR_GITHUB_TOKEN}"
           ACCEPT_HEADER="Accept: application/vnd.github+json"
           API_VERSION_HEADER="X-GitHub-Api-Version: 2022-11-28"
@@ -1022,6 +1066,10 @@ jobs:
           # Codeberg runs Forgejo, so auth uses the `token` scheme - NOT the
           # `Bearer` scheme the GitHub step needs.
           MIRROR_CODEBERG_TOKEN: ${{ secrets.MIRROR_CODEBERG_TOKEN }}
+          # Mirror coordinates — org variables shared with the landing.
+          MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
           if [ -z "${MIRROR_CODEBERG_TOKEN:-}" ]; then
@@ -1034,7 +1082,13 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
           ZIP_PATH="release-assets/$ZIP_FILE"
-          API_BASE="https://codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile"
+          if [ -z "${MIRROR_CODEBERG_URL:-}" ] || [ -z "${MIRROR_CODEBERG_ORG:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
+            echo "::warning::MIRROR_CODEBERG_URL / MIRROR_CODEBERG_ORG / MOBILE_REPOSITORY_NAME org variables are not set - skipping"
+            summary_row "- Codeberg: ⚠️ skipped (MIRROR_CODEBERG_* / MOBILE_REPOSITORY_NAME not set)"
+            exit 0
+          fi
+          MIRROR_CODEBERG_URL="${MIRROR_CODEBERG_URL%/}"
+          API_BASE="$MIRROR_CODEBERG_URL/api/v1/repos/$MIRROR_CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
           # The scheduled git mirror to Codeberg lags behind the tag push (at
@@ -1081,7 +1135,7 @@ jobs:
             # URL - the token is served by the inline credential helper below,
             # so it never reaches git's echoed URLs or the logs.
             git remote remove codeberg 2>/dev/null || true
-            git remote add codeberg "https://codeberg.org/Slovo_Propovedi/slovo-propovedi-mobile.git"
+            git remote add codeberg "$MIRROR_CODEBERG_URL/$MIRROR_CODEBERG_ORG/$MOBILE_REPOSITORY_NAME.git"
 
             # Force is intentional: Codeberg is a read-only public mirror, so
             # its main and tags must follow Forgejo exactly. The helper only
@@ -1150,6 +1204,10 @@ jobs:
       - name: Prune old Codeberg release assets
         env:
           MIRROR_CODEBERG_TOKEN: ${{ secrets.MIRROR_CODEBERG_TOKEN }}
+          # Mirror coordinates — org variables shared with the landing.
+          MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # Retention window: keep this many newest release zips. 10 zips of
           # 60-100MB stay well under Codeberg's ~1.5 GiB attachment soft quota.
           # Empty (variable not set) falls back to 10 in the script below.
@@ -1172,7 +1230,13 @@ jobs:
           esac
 
           TAG="${{ github.ref_name }}"
-          API_BASE="https://codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile"
+          if [ -z "${MIRROR_CODEBERG_URL:-}" ] || [ -z "${MIRROR_CODEBERG_ORG:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
+            echo "::warning::MIRROR_CODEBERG_URL / MIRROR_CODEBERG_ORG / MOBILE_REPOSITORY_NAME org variables are not set - skipping"
+            summary_row "- Codeberg: ⚠️ skipped (MIRROR_CODEBERG_* / MOBILE_REPOSITORY_NAME not set)"
+            exit 0
+          fi
+          MIRROR_CODEBERG_URL="${MIRROR_CODEBERG_URL%/}"
+          API_BASE="$MIRROR_CODEBERG_URL/api/v1/repos/$MIRROR_CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
           # One page of 50 is far above the keep window; anything older was
@@ -1302,6 +1366,13 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          # Repository coordinates (org vars) — release sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
+          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # xprem deployment values (Forgejo org/repo vars): `eoas publish` runs
           # `expo export`, which evaluates app.config.ts — without these the
           # exported bundle would carry `updates.enabled: false` and deliver
