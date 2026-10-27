@@ -1,6 +1,6 @@
 # AsyncStorage — ключи и форматы
 
-Локальное хранилище приложения — `@react-native-async-storage/async-storage` (key/value, строки). Хранит: JWT-токены (на native — в защищённом `expo-secure-store`), кэш секций, состояние плеера, реестр офлайн-проповедей, настройки сервера и темы, флаг кеширования проповедей, версию последнего уведомления об обновлении.
+Локальное хранилище приложения — `@react-native-async-storage/async-storage` (key/value, строки). На web пакет подменяется адаптером над IndexedDB (база `slovo_storage`; ключи и форматы те же, данные из `localStorage` переносятся автоматически) — см. [web.md](../features/web.md#хранилище-на-web-indexeddb-вместо-localstorage). Хранит: JWT-токены (на native — в защищённом `expo-secure-store`), кэш секций, состояние плеера, реестр офлайн-проповедей, настройки сервера и темы, флаг кеширования проповедей, версию последнего уведомления об обновлении.
 
 Константы ключей лежат в `src/shared/config/` (`player-storage-keys.ts`, `cache-storage-keys.ts`, `server-storage-keys.ts`) и реэкспортируются через `src/shared/config/index.ts`. Ключи, принадлежащие сущностям, объявлены внутри самих сущностей: `OFFLINE_SERMONS_REGISTRY`/`_SEEDED` — `src/entities/offline-cache/lib/storageKeys.ts`, `CACHED_SECTIONS` — `src/entities/section/lib/sections-cache/cacheKey.ts`, `CACHED_FEATURE_FLAGS` — `src/entities/feature-flags/lib/flagsCache/cacheKey.ts`, `MY_PLAYLISTS` — `src/entities/playlist/model.ts`. Ключи токенов объявлены прямо в `src/shared/api/axiosInstance.ts`.
 

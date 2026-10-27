@@ -7,11 +7,11 @@
 
 ## Команды
 
-| Команда | Что делает |
-| --- | --- |
-| `yarn web` | Dev-сервер только для web: `EXPO_NO_METRO_LAZY=1 expo start --web` (про флаг — ниже) |
-| `yarn web:build` | `expo export -p web` → `dist/` + инъекция precache-манифеста в `dist/sw.js` (`scripts/inject-sw-precache.mjs`) |
-| `yarn web:preview` | `yarn web:build` + локальный статик-сервер с SPA-фолбэком (`serve -s dist -l 4173`) |
+| Команда            | Что делает                                                                                                     |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `yarn web`         | Dev-сервер только для web: `EXPO_NO_METRO_LAZY=1 expo start --web` (про флаг — ниже)                           |
+| `yarn web:build`   | `expo export -p web` → `dist/` + инъекция precache-манифеста в `dist/sw.js` (`scripts/inject-sw-precache.mjs`) |
+| `yarn web:preview` | `yarn web:build` + локальный статик-сервер с SPA-фолбэком (`serve -s dist -l 4173`)                            |
 
 **Тестировать PWA/Service Worker** нужно из прод-сборки и **не по localhost** (SW на localhost не регистрируется намеренно — см. ниже): `yarn web:preview`, затем открыть по LAN-адресу машины (`http://<ip>:4173`).
 
@@ -77,20 +77,30 @@ Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="web
 - Подтверждение обновления в одном табе активирует нового SW сразу (`clients.claim`) — другие табы в этот момент попадают в окно смешанных версий (старая страница + новый SW); воспроизведение аудио не страдает (бакет `audio-cache-v1` не трогается).
 - Решение (2026-09-05): применение обновления статики — только через модалку подтверждения `features/web-update` (WebUpdateModal): новый SW ждёт в `waiting`, пользователь подтверждает → `SKIP_WAITING` → активация → перезагрузка страницы. APK-диалог по-прежнему выключен (guard `checkForUpdateAction` по `Platform.OS === 'web'`, см. [updates.md](./updates.md)); тост из `registration.waiting` не используется (модалка вместо него). Если активация после `SKIP_WAITING` никогда не завершится (редкий отказ `waitUntil` в `activate`), срабатывает 15-секундный safety-timeout в `applyWebUpdate` — принудительная перезагрузка без ожидания `controllerchange`, чтобы кнопки модалки не остались навсегда disabled.
 
+## Хранилище на web (IndexedDB вместо localStorage)
+
+Штатный web-вариант `@react-native-async-storage/async-storage` пишет в `localStorage`: синхронно в UI-потоке (большие JSON — кэш секций, история, поиск — давали подтормаживания) и с лимитом ~5 МБ на всё приложение. Поэтому на web Metro подменяет пакет адаптером `src/shared/lib/web-storage/webAsyncStorage.ts` (`resolver.resolveRequest` в `metro.config.js`, только `platform === 'web'`; натив и jest получают настоящий пакет). Все импорты `AsyncStorage` в коде остаются как есть.
+
+- **Хранение:** IndexedDB-база `slovo_storage`, стор `kv` (ключ → строка), без шифрования — там нет секретов (токены и персональные данные идут через зашифрованные хранилища, см. [native-modules.md](../contracts/native-modules.md) и «Кэш сессии админки» в [storage.md](../contracts/storage.md)).
+- **Скорость:** `createMirroredStorage` читает всю базу одной транзакцией при первом обращении и держит копию в памяти — дальше чтения мгновенные; запись сразу обновляет копию и резолвится после коммита транзакции. Соединение с базой открыто всё время жизни страницы.
+- **Миграция:** при первом открытии ключи из `localStorage`, которых ещё нет в IndexedDB, копируются туда, после чего `localStorage` очищается (других пользователей `localStorage` в приложении нет). Идемпотентно.
+- **Фолбэк:** если IndexedDB недоступен или не открылся/не прочитался — прежний формат в `localStorage`.
+- **Ограничения:** `mergeItem`/`multiMerge` не реализованы (в приложении не используются) и отклоняют вызов. Копии в памяти у разных вкладок не синхронизируются: изменение в одной вкладке другая увидит после перезагрузки (запись по отдельным ключам, чужие ключи не затираются).
+
 ## Офлайн-кеш аудио на web
 
 Нативный `AudioCacheService` (expo-file-system) на web не работает — Metro резолвит `./AudioCacheService` → `AudioCacheService.web.ts`. Реализация — поверх **Cache Storage API**, тот же бакет `audio-cache-v1`, что читает Service Worker.
 
-| Файл | Роль |
-| --- | --- |
-| `entities/offline-cache/lib/AudioCacheService.web.ts` | Тот же публичный API, что у нативного (`isCached` / `cacheAudio` / `clearCache` / `removeFromCache` / `getCacheInfo` / `getCachedUri`). Дедуп параллельных загрузок — общий `inflightCache`. `getCachedUri` → `null` (воспроизведением занимается SW прозрачно). Скачивание делегируется `downloadAndStoreAudio` из `webCacheApi.ts` |
-| `entities/offline-cache/lib/webCacheApi.ts` | Низкоуровневые операции Cache Storage + feature-detect `isCacheStorageAvailable()` + `hasCompleteAudio` + `downloadAndStoreAudio` (skip-cached → дроп stale → fetch → put → commit) |
-| `entities/offline-cache/lib/openAudioCache.ts` | Recovery-хелпер открытия бакета (при сбое `caches.open` → `caches.delete` → reopen) + первоисточник `AUDIO_CACHE_NAME` |
-| `entities/offline-cache/lib/webCacheManifest.ts` | Commit-манифест `__manifest__`: `commitAudioUrl`/`uncommitAudioUrl`/`ensureManifest` (сериализованный read-modify-write) |
-| `entities/offline-cache/lib/webDownloadJournal.ts` | AsyncStorage-журнал активных загрузок (`audio-cache/active-downloads`, web-only): записи `{ url, sessionId, lastSeenAt }` + heartbeat (10с) для multi-tab-безопасной очистки орфанов |
-| `entities/offline-cache/lib/cleanupOrphans.web.ts` | Стартовый sweep орфанов (незакоммиченных записей после аварийного завершения) по журналу, без перечисления бакета |
-| `entities/offline-cache/lib/webAudioDownload.ts` | `fetchAudioForCache`: сначала CORS-запрос (реальный прогресс 0..1 по `Content-Length`), при отказе — opaque `no-cors` (прогресс скачет 0→1, размер неизвестен) |
-| `entities/offline-cache/lib/getAudioCacheDirectory.ts` | Кидает явную ошибку при `Platform.OS === 'web'` — страховка на случай устаревшего кеша Metro (иначе загадочный `this.validatePath`) |
+| Файл                                                   | Роль                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `entities/offline-cache/lib/AudioCacheService.web.ts`  | Тот же публичный API, что у нативного (`isCached` / `cacheAudio` / `clearCache` / `removeFromCache` / `getCacheInfo` / `getCachedUri`). Дедуп параллельных загрузок — общий `inflightCache`. `getCachedUri` → `null` (воспроизведением занимается SW прозрачно). Скачивание делегируется `downloadAndStoreAudio` из `webCacheApi.ts` |
+| `entities/offline-cache/lib/webCacheApi.ts`            | Низкоуровневые операции Cache Storage + feature-detect `isCacheStorageAvailable()` + `hasCompleteAudio` + `downloadAndStoreAudio` (skip-cached → дроп stale → fetch → put → commit)                                                                                                                                                  |
+| `entities/offline-cache/lib/openAudioCache.ts`         | Recovery-хелпер открытия бакета (при сбое `caches.open` → `caches.delete` → reopen) + первоисточник `AUDIO_CACHE_NAME`                                                                                                                                                                                                               |
+| `entities/offline-cache/lib/webCacheManifest.ts`       | Commit-манифест `__manifest__`: `commitAudioUrl`/`uncommitAudioUrl`/`ensureManifest` (сериализованный read-modify-write)                                                                                                                                                                                                             |
+| `entities/offline-cache/lib/webDownloadJournal.ts`     | AsyncStorage-журнал активных загрузок (`audio-cache/active-downloads`, web-only): записи `{ url, sessionId, lastSeenAt }` + heartbeat (10с) для multi-tab-безопасной очистки орфанов                                                                                                                                                 |
+| `entities/offline-cache/lib/cleanupOrphans.web.ts`     | Стартовый sweep орфанов (незакоммиченных записей после аварийного завершения) по журналу, без перечисления бакета                                                                                                                                                                                                                    |
+| `entities/offline-cache/lib/webAudioDownload.ts`       | `fetchAudioForCache`: сначала CORS-запрос (реальный прогресс 0..1 по `Content-Length`), при отказе — opaque `no-cors` (прогресс скачет 0→1, размер неизвестен)                                                                                                                                                                       |
+| `entities/offline-cache/lib/getAudioCacheDirectory.ts` | Кидает явную ошибку при `Platform.OS === 'web'` — страховка на случай устаревшего кеша Metro (иначе загадочный `this.validatePath`)                                                                                                                                                                                                  |
 
 `BackgroundCachingService` платформенно-нейтрален и переиспользуется как есть.
 
@@ -195,7 +205,6 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 - **`PullToRefresh`** (`shared/ui/refresh-control/PullToRefresh.tsx`, платформенная пара `PullToRefresh.native.tsx` — пасsthrough с нативным `RefreshControl` внутри скролла). Обёртка вокруг скролла (Listen + 6 админ-экранов). На web слушает DOM-события `touchstart`/`touchmove`/`touchend`/`touchcancel` на обёртке и перетаскивает контент вниз только когда ближайший вертикальный скролл-контейнер (`overflow-y: auto/scroll` + переполнение) стоит на самом верху. Сопротивление `0.4` действует между 0 и порогом `64px` видимого протяга (≈160px пальцем); дальше видимый сдвиг **зажимается** на `64px` (`computeDisplayedPull`) — контент не растягивается бесконечно. Спиннер (`ActivityIndicator`, подсвечивается `currentTheme.primary`) сидит в верхнем слоте высотой `40px` и **центрируется** в освободившемся зазоре: `translateY = max(0, (translate − 40) / 2)` (`computeSpinnerTranslate`), так что при отдыхе контента на `64px` спиннер стоит по центру. Отпускание анимирует контент назад за 200 мс; при активном обновлении контент покоится на `64px`, а не на высоте слота.
 - **Дебаунс** — не чаще одного раза в `REFRESH_MIN_INTERVAL_MS` (2000 мс, `pull-to-refresh.lib.ts`; та же константа переиспользуется хуком `usePullToRefresh` на экране «Слушать»). Во время активного `refreshing` повторный протяг игнорируется.
 - **Мышь:** жест только тач-событиями; drag мышью refresh не запускает (эмуляция тача в DevTools работает). Скролл не ломается: при `scrollTop > 0` события проходят мимо, `preventDefault` не вызывается.
-
 
 ## Виброотклик на web (Vibration API)
 
