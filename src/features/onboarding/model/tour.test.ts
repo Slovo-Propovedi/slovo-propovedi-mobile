@@ -16,6 +16,7 @@ import {
 } from './tour'
 
 const RECT = { height: 4, width: 3, x: 1, y: 2 }
+const PLAYLIST_ADD = 'playlist-add'
 const PLAYLIST_MENU = 'playlist-menu'
 const PLAYLIST_MENU_DECK = buildTourDeck(scenariosById[PLAYLIST_MENU].steps)
 
@@ -67,20 +68,20 @@ describe('onboarding tour model', () => {
   test('prev from a card after an action card lands on the previous card', () => {
     const ctx = createCtx()
     // playlist-add deck: 0 — intro, 1 — menu-add card (its action exit), 2 — favorites…
-    onboardingTourAtom(ctx, { deckIndex: 1, scenarioId: 'playlist-add', skippedDeckIndexes: [] })
+    onboardingTourAtom(ctx, { deckIndex: 1, scenarioId: PLAYLIST_ADD, skippedDeckIndexes: [] })
 
     goToPrevOnboardingStep(ctx)
 
     expect(ctx.get(onboardingTourAtom)).toEqual({
       deckIndex: 0,
-      scenarioId: 'playlist-add',
+      scenarioId: PLAYLIST_ADD,
       skippedDeckIndexes: [],
     })
   })
 
   test('next starts a card exit transition before moving the deck', () => {
     const ctx = createCtx()
-    startOnboardingTour(ctx, 'playlist-add', '/')
+    startOnboardingTour(ctx, PLAYLIST_ADD, '/')
 
     goToNextOnboardingStep(ctx)
 
@@ -88,7 +89,7 @@ describe('onboarding tour model', () => {
     expect(ctx.get(onboardingExitStepIndexAtom)).toBe(0)
     expect(ctx.get(onboardingTourAtom)).toEqual({
       deckIndex: 0,
-      scenarioId: 'playlist-add',
+      scenarioId: PLAYLIST_ADD,
       skippedDeckIndexes: [],
     })
 
@@ -97,7 +98,7 @@ describe('onboarding tour model', () => {
     expect(ctx.get(onboardingExitStepIndexAtom)).toBeNull()
     expect(ctx.get(onboardingTourAtom)).toEqual({
       deckIndex: 1,
-      scenarioId: 'playlist-add',
+      scenarioId: PLAYLIST_ADD,
       skippedDeckIndexes: [],
     })
   })
@@ -122,7 +123,7 @@ describe('onboarding tour model', () => {
 
   test('prev leaves the exit transition and never replays it', () => {
     const ctx = createCtx()
-    startOnboardingTour(ctx, 'playlist-add', '/')
+    startOnboardingTour(ctx, PLAYLIST_ADD, '/')
     goToNextOnboardingStep(ctx)
     goToNextOnboardingStep(ctx)
 
@@ -137,7 +138,7 @@ describe('onboarding tour model', () => {
 
   test('records the last step direction for the tap flow', () => {
     const ctx = createCtx()
-    startOnboardingTour(ctx, 'playlist-add', '/')
+    startOnboardingTour(ctx, PLAYLIST_ADD, '/')
     expect(ctx.get(onboardingStepDirectionAtom)).toBe('forward')
 
     goToNextOnboardingStep(ctx)
@@ -230,23 +231,23 @@ describe('onboarding tour model skip flow', () => {
     })
   })
 
-  test('skip forward rests on the last visible card when nothing follows', () => {
+  test('skip forward past the last visible card ends the tour', () => {
     const ctx = createCtx()
     onboardingTourAtom(ctx, {
       deckIndex: 7,
       scenarioId: PLAYLIST_MENU,
       skippedDeckIndexes: [8, 9],
     })
+    onboardingEntryStepIndexAtom(ctx, 0)
+    onboardingExitStepIndexAtom(ctx, 0)
 
     skipOnboardingStep(ctx, 'next')
 
     // The trailing entries are already gone: the current card is the deck's last
-    // visible one, so it stays put and the tour keeps running.
-    expect(ctx.get(onboardingTourAtom)).toEqual({
-      deckIndex: 7,
-      scenarioId: PLAYLIST_MENU,
-      skippedDeckIndexes: [8, 9],
-    })
+    // visible one, so the skip runs off the deck boundary and closes the tour.
+    expect(ctx.get(onboardingTourAtom)).toBeNull()
+    expect(ctx.get(onboardingEntryStepIndexAtom)).toBeNull()
+    expect(ctx.get(onboardingExitStepIndexAtom)).toBeNull()
     const progress = resolveDeckProgress(PLAYLIST_MENU_DECK, [8, 9], 7)
     expect(progress.isLastVisible).toBe(true)
     expect(progress.displayTotal).toBe(PLAYLIST_MENU_DECK.length - 2)
