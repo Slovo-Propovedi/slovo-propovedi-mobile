@@ -1396,6 +1396,30 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
+      # The eoas CLI is fetched by `npx --yes eoas@<.eoas-version>`; keep npx's
+      # package cache so a publish does not download it again.
+      - name: Cache eoas CLI
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.npm/_npx
+          key: ${{ runner.os }}-npx-eoas-${{ hashFiles('.eoas-version') }}
+
+      # Metro's transform cache (os.tmpdir()/metro-cache) makes the bundle export
+      # incremental. It is content-addressed, so restoring an older snapshot is
+      # safe — stale entries are simply never hit; each run saves a new one.
+      - name: Locate Metro cache
+        id: metro-cache-dir
+        run: echo "dir=$(node -p "require('path').join(require('os').tmpdir(), 'metro-cache')")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Metro transforms
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.metro-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-metro-${{ hashFiles('yarn.lock', 'babel.config.js', 'metro.config.js') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-metro-${{ hashFiles('yarn.lock', 'babel.config.js', 'metro.config.js') }}-
+            ${{ runner.os }}-metro-
+
       - name: Publish OTA update to xprem
         env:
           # Inlined into the exported JS bundle (see src/shared/config/config.ts,
