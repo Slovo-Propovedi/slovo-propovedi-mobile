@@ -39,12 +39,12 @@ describe('<CoverImage>', () => {
     expect(image.props.priority).toBe('high')
   })
 
-  test('sets loading=lazy and priority=normal by default on native', async () => {
+  test('sets loading=lazy and priority=low by default on native', async () => {
     await renderWithProviders(<CoverImage uri={URI_STUB} testID='cover' />)
 
     const image = screen.getByTestId('cover')
     expect(image.props.loading).toBe('lazy')
-    expect(image.props.priority).toBe('normal')
+    expect(image.props.priority).toBe('low')
   })
 
   test('sets loading=eager by default on web', async () => {
