@@ -294,13 +294,21 @@ jobs:
         if: ${{ !cancelled() }}
         # The key is a digest of the installed package directories: it changes
         # only when the build installed something new.
+        # Only existing directories go to `find`: a missing one (ndk/cmake are
+        # installed by gradle only when needed) makes it exit 1, and steps run
+        # with `pipefail`. No SDK at all (setup failed early) → no key, no save.
         run: |
-          cd /opt/android-sdk
-          digest=$(find build-tools platforms ndk cmake cmdline-tools -mindepth 1 -maxdepth 1 2>/dev/null | sort | sha256sum | cut -c1-16)
+          cd /opt/android-sdk 2>/dev/null || exit 0
+          dirs=()
+          for dir in build-tools platforms ndk cmake cmdline-tools; do
+            [ -d "$dir" ] && dirs+=("$dir")
+          done
+          [ ${#dirs[@]} -gt 0 ] || exit 0
+          digest=$(find "${dirs[@]}" -mindepth 1 -maxdepth 1 | sort | sha256sum | cut -c1-16)
           echo "key=${{ runner.os }}-android-sdk-v2-$digest" >> "$GITHUB_OUTPUT"
 
       - name: Save Android SDK cache
-        if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
+        if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
         continue-on-error: true
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
