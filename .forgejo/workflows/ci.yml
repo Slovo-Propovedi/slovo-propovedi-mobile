@@ -234,11 +234,12 @@ jobs:
           # step timeout) instead of by Gradle during configuration, where the
           # download has no timeout — a slow mirror hung the job for 20+ min.
           # A cache restored from a snapshot already has them (no-op).
-          # build-tools 37 + platform 37: Expo defaults (buildTools/compileSdk);
+          # build-tools 37 + platform 37: Expo defaults (buildTools/compileSdk; the
+          # repository names API 37 "android-37.0", there is no "android-37");
           # build-tools 36: AGP 9 default for libraries without a pinned version.
           # Update on an Expo/RN/AGP upgrade (a "Preparing \"Install …\"" line
           # in the gradle log means one is missing; the cache picks it up anyway).
-          ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37
+          ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37.0
         run: |
           mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
           # Skip download/unzip/mv when the SDK was restored from cache; `mv`
