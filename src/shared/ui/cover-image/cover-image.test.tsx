@@ -1,10 +1,13 @@
-import { screen } from '@testing-library/react-native'
+import { act, screen } from '@testing-library/react-native'
 import { Platform, View } from 'react-native'
 import { APP_ICON_URI as IMAGE_PLACEHOLDER } from '../../lib/app-icon'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { CoverImage } from './cover-image'
 
 const URI_STUB = 'https://example.com/image.jpg'
+const STORED_URI = 'https://minio.example.com/files/7e050797-10c8-4849-9dfb-103eac0472eb.jpg'
+const PREVIEW_URI =
+  'https://minio.example.com/files/thumbs/7e050797-10c8-4849-9dfb-103eac0472eb.webp'
 
 describe('<CoverImage>', () => {
   test('renders and forwards source uri', async () => {
@@ -91,5 +94,25 @@ describe('<CoverImage>', () => {
     await renderWithProviders(<CoverImage uri={URI_STUB} testID='my-cover' />)
 
     expect(screen.getByTestId('my-cover')).toBeTruthy()
+  })
+
+  test('shows the card-size preview of a stored cover', async () => {
+    await renderWithProviders(<CoverImage testID='cover' uri={STORED_URI} />)
+
+    expect(screen.getByTestId('cover').props.source).toEqual({ uri: PREVIEW_URI })
+  })
+
+  test('keeps the original for eager (player) covers', async () => {
+    await renderWithProviders(<CoverImage eager testID='cover' uri={STORED_URI} />)
+
+    expect(screen.getByTestId('cover').props.source).toEqual({ uri: STORED_URI })
+  })
+
+  test('falls back to the original when the preview fails to load', async () => {
+    await renderWithProviders(<CoverImage testID='cover' uri={STORED_URI} />)
+
+    await act(async () => screen.getByTestId('cover').props.onError())
+
+    expect(screen.getByTestId('cover').props.source).toEqual({ uri: STORED_URI })
   })
 })
