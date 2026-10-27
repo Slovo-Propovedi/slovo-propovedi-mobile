@@ -215,13 +215,25 @@ jobs:
         with:
           path: /opt/android-sdk
           # Version-pinned static key: the SDK content is fixed by the pinned
-          # commandlinetools version in "Setup Android SDK". Bump this key
-          # whenever the commandlinetools version (11076708) in that URL changes.
-          key: ${{ runner.os }}-android-sdk-11076708
+          # commandlinetools version and the ANDROID_SDK_PACKAGES list in
+          # "Setup Android SDK". A cache hit is never re-saved, so anything the
+          # build installs later is lost — bump this key whenever either changes.
+          key: ${{ runner.os }}-android-sdk-11076708-bt36-bt37-p37
 
       - name: Setup Android SDK
+        # A stalled dl.google.com download must fail the job, not hang it.
+        timeout-minutes: 15
         env:
           ANDROID_SDK_ROOT: /opt/android-sdk
+          # Packages the native unit tests need, installed up front so they land
+          # in the SDK cache. Without them Gradle downloads Build-Tools during
+          # configuration on every run (the cache is saved once and never
+          # updated), with no timeout — a slow mirror hung the job for 20+ min.
+          # build-tools 37 + platform 37: Expo defaults (buildTools/compileSdk);
+          # build-tools 36: AGP 9 default for libraries without a pinned version.
+          # Update together with the cache key on an Expo/RN/AGP upgrade (a
+          # "Preparing \"Install …\"" line in the gradle log means one is missing).
+          ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37
         run: |
           mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
           # Skip download/unzip/mv when the SDK was restored from cache; `mv`
@@ -243,7 +255,8 @@ jobs:
           # so that expected SIGPIPE (141) would otherwise fail this step
           # even though sdkmanager itself succeeds.
           yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platform-tools" > /dev/null
+          # shellcheck disable=SC2086 # word splitting of the package list is intended
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" $ANDROID_SDK_PACKAGES > /dev/null
 
       - name: Run all tests (jest)
         id: jest
@@ -256,6 +269,7 @@ jobs:
 
       - name: Run native unit tests
         id: native-tests
+        timeout-minutes: 30
         env:
           GRADLE_OPTS: >-
             -Dorg.gradle.internal.http.connectionTimeout=120000

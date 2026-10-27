@@ -73,6 +73,8 @@ stack: CodedError ← applyMetadata ← anonymous (setInterval retry callback)
 
 Тесты лежат рядом: `modules/<module>/android/src/test/java/...`. Запуск — `yarn test:native` (gradle-проекты `:apk-installer` и `:audio-effects`, задача `testDebugUnitTest` для обоих); `yarn testFinal:all` выполняет их после `yarn testFinal` (только jest). JS-границы модулей покрыты обычными jest-тестами (`modules/apk-installer/index.test.ts`, `modules/audio-effects/platform.native.test.ts`, `.../native/audioEffectsCapabilities.test.ts`).
 
+**CI (job `checks`, `.forgejo/workflows/ci.yml`).** Перед gradle шаг «Setup Android SDK» явно ставит пакеты из `ANDROID_SDK_PACKAGES` (`build-tools;36.0.0` — дефолт AGP для библиотек без своей версии, `build-tools;37.0.0` + `platforms;android-37` — дефолты Expo), и они попадают в кэш SDK (ключ `…-android-sdk-11076708-bt36-bt37-p37`). Кэш при попадании в ключ не пересохраняется, поэтому всё, что gradle докачивает сам, терялось и скачивалось заново на каждом прогоне — без таймаута, и медленное зеркало вешало job на 20+ минут. При апгрейде Expo/RN/AGP обновите список **и** ключ вместе; признак нехватки — строка `Preparing "Install …"` в логе gradle. Шаги ограничены `timeout-minutes` (SDK — 15, нативные тесты — 30).
+
 ## Связанные документы
 
 - [../features/player.md](../features/player.md) — плеер; **Баг 3** — crash loop и применённый фикс
