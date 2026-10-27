@@ -19,7 +19,9 @@
 
 Кастомная HTML-оболочка — `public/index.html` (Expo при `output: single` берёт её вместо встроенного шаблона; плейсхолдеры `%WEB_TITLE%` / `%LANG_ISO_CODE%` и `<div id="root">` обязательны, скрипт бандла Expo дописывает перед `</body>`).
 
-- `public/manifest.webmanifest` — имя, иконки, `display: standalone`, `theme_color`/`background_color` `#f16031`.
+- `public/manifest.webmanifest` — имя, иконки, `display: standalone`, `theme_color`/`background_color` `#f16031`, `description`, `categories`, `keywords`.
+- **Поиск установленного PWA по латинице.** `name` — «Слово.Проповеди (Slovo Propovedi)»: Chromium на Linux пишет его в `Name=` своего `.desktop`-ярлыка (ключевых слов туда не кладёт), а Windows — в имя ярлыка «Пуска», поэтому приложение находится и по «slovo». `short_name` («Слово.Проповеди») — подпись под иконкой на телефоне, остаётся короткой. Нестандартное поле `keywords` (slovo, propovedi, проповеди, …) и `categories` (education, books, music, lifestyle) подхватывает PWAsForFirefox (`Keywords=`/`Categories=` ярлыка). Смена `name` у уже установленного приложения применяется при обновлении манифеста (Chromium может спросить подтверждение).
+- **Метатеги** в `public/index.html`: `description`, `keywords`, `application-name` и Open Graph (`og:title`/`og:description`/`og:site_name`/`og:locale`/`og:type`, `og:image` — `/icons/icon-512.png`) для поисковиков и превью ссылок в мессенджерах. `web.description` в `app.config.ts` при кастомной оболочке не используется.
 - `public/icons/*` — сгенерированы из `assets/icon.png` и `assets/adaptive-icon.png` (ImageMagick): `icon-192`, `icon-512`, `icon-maskable-512`, `apple-touch-icon` (180), `public/favicon.png` (48).
 - `public/splash.png` — копия `assets/splash.png` (307×307): картинка стартового сплэша, пока грузится JS-бандл (см. «Стартовый сплэш» ниже).
 - `app.config.ts` → `web`: `lang: "ru"`, `name`, `shortName`, `description` (Expo подставляет `lang`/`description` в шаблон).
