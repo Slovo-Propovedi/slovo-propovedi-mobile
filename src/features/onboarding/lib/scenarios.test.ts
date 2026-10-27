@@ -50,11 +50,13 @@ describe('onboarding scenario data', () => {
     expect(scenariosById.whatsNew.sinceVersion).toMatch(/^\d+\.\d+\.\d+$/)
   })
 
-  test('whats-new spotlights the help button in its first step', () => {
-    const whatsNew = scenariosById.whatsNew
+  test('whats-new opens with a plain card and skips the desktop-only refresh button on touch', () => {
+    const [intro, refresh] = scenariosById.whatsNew.steps
 
-    expect(whatsNew.steps[0].targetId).toBe('app.help-button')
-    expect(whatsNew.steps[0].title).toBe('Обзоры в приложении')
+    expect(intro.targetId).toBeUndefined()
+    expect(intro.route).toBeUndefined()
+    expect(refresh.targetId).toBe('listen.refresh-button')
+    expect(refresh.skipIfMissing).toBe(true)
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -92,12 +94,10 @@ describe('onboarding scenario data', () => {
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
   })
 
-  test('whatsNew folds its tab and settings-item lead-up into the settings card', () => {
+  test('whatsNew shows both steps as cards', () => {
     const whatsNewDeck = buildTourDeck(scenariosById.whatsNew.steps)
 
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 3])
-    expect(whatsNewDeck[1].entryStepIndexes).toEqual([1, 2])
-    expect(whatsNewDeck[1].exitStepIndexes).toEqual([])
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1])
   })
 
   test('each scenario wires the tab or row it taps when navigating', () => {

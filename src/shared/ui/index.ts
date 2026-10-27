@@ -17,6 +17,7 @@ export { AVATAR_CONTENT_SIZE_RATIO, PlaylistLetterAvatar } from './PlaylistLette
 export { REFRESH_MIN_INTERVAL_MS } from './refresh-control/pull-to-refresh.lib'
 export { PullToRefresh } from './refresh-control/PullToRefresh'
 export { createRefreshControl } from './refresh-control/refresh-control'
+export { RefreshButton } from './refresh-control/RefreshButton'
 export { Slider } from './slider/slider'
 export { SliderItemTextBackgroundStyle } from './slider/slider-item-text/slider-item-text.types'
 export {

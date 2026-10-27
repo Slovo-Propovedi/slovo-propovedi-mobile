@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRouter } from 'expo-router'
 import { Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
+import { RefreshButton } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
@@ -20,6 +21,7 @@ export const AdminHomeHeader = ({ user }: { user: APITypes.UserResponse | null }
           <Text style={[styles.headerUser, { color: currentTheme.textMuted }]}>{user.name}</Text>
         ) : null}
       </View>
+      <RefreshButton />
       <IconButton
         accessibilityLabel='Вернуться в приложение'
         onPress={() => {
