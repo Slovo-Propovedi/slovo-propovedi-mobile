@@ -225,8 +225,9 @@ jobs:
             ${{ runner.os }}-android-sdk-v2-
 
       - name: Setup Android SDK
-        # A stalled dl.google.com download must fail the job, not hang it.
-        timeout-minutes: 15
+        # A stalled dl.google.com download must fail the job, not hang it. A cold
+        # run (no cache snapshot yet) downloads ~350 MB at ~0.5 MB/s, ~13 min.
+        timeout-minutes: 30
         env:
           ANDROID_SDK_ROOT: /opt/android-sdk
           # Packages the native unit tests need, installed up front (with the
@@ -260,7 +261,8 @@ jobs:
           # even though sdkmanager itself succeeds.
           yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           # shellcheck disable=SC2086 # word splitting of the package list is intended
-          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" $ANDROID_SDK_PACKAGES > /dev/null
+          # Output kept (no-op when restored) so a slow cold download is visible.
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" $ANDROID_SDK_PACKAGES
 
       - name: Run all tests (jest)
         id: jest

@@ -615,8 +615,9 @@ jobs:
             ${{ runner.os }}-android-sdk-v2-
 
       - name: Setup Android SDK
-        # A stalled dl.google.com download must fail the job, not hang it.
-        timeout-minutes: 15
+        # A stalled dl.google.com download must fail the job, not hang it. A cold
+        # run (no cache snapshot yet) downloads ~350 MB at ~0.5 MB/s, ~13 min.
+        timeout-minutes: 30
         env:
           ANDROID_SDK_ROOT: /opt/android-sdk
         run: |
