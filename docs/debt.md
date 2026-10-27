@@ -99,6 +99,7 @@
 ## OTA-обновления (expo-updates, xprem)
 
 - [ ] **OTA не проверен на F-Droid сборках.** `.forgejo/workflows/release.yml` (шаг «Publish OTA update to xprem»), `ota.config.ts` (`updates`, `runtimeVersion`), `src/shared/model/updateOtaGate.ts` — канал F-Droid пока в планах. Механизм отключения уже есть: all-or-nothing контракт даёт `updates: { enabled: false }`, если сборка выполнена без четырёх `EXPO_PUBLIC_*` OTA-переменных. Вернуться, когда появится F-Droid buildbot: убедиться, что он не прокидывает эти переменные, и что собранный APK действительно не ходит за манифестами.
+- [ ] Хук-уровень тест для тихого авто-применения OTA (контракт one-shot «метка при срабатывании», отсечение ROLLBACK через UpdateInfoType.NEW, перевзвод 5-секундной задержки при паузе/возобновлении) — src/features/app-update/lib/useOtaAutoApply/index.native.ts — при следующей правке OTA-автоприменения; решение-гейт уже покрыто в src/shared/model/updateOtaAutoApply.test.ts
 
 ## Navigation
 

@@ -7,6 +7,7 @@ import { useHardwareBackCascade } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
+import { useOtaAutoApply } from 'features/app-update'
 import { useOfflineRegistrySync } from 'features/offline-sermons'
 import {
   HelpHeaderButton,
@@ -51,6 +52,7 @@ const RootLayout = () => {
   const checkForUpdate = useAction(checkForUpdateAction)
   useUpdateNotificationResponse()
   usePlaybackProgressSaver()
+  useOtaAutoApply()
   useFeatureFlagsRefetchOnForeground()
   useOfflineRegistrySync()
   useColdStartLinkRecovery()
