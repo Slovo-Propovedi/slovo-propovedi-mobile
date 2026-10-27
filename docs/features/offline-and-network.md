@@ -59,7 +59,7 @@ isInternetReachable ?? isConnected
 4. при сетевой ошибке: если кэш был — он остаётся на экране; если кэша не было — прежнее поведение (пустой список, `dataSource = 'unknown'`, `isLoadingSectionsAtom = false`).
 5. **latest-wins guard**: module-scoped счётчик `requestId` — медленный устаревший ответ не перезапишет более свежий (гонка mount-эффекта и `useOfflineRetry`); проверка после каждого `await`.
 
-При старте приложения `hydrateCachedSections` (`src/entities/section/lib/hydrateCachedSections.ts`, вызывается в `app/_layout.tsx` рядом с `loadHistoryAction`) читает кэш и коммитит его в атомы, если он непустой — таб «Слушать» не мигает скелетоном на тёплом старте. Коммит атомарен (read+write в одном `ctx.schedule`) и не затирает более свежий источник.
+При старте приложения `hydrateCachedSections` (`src/entities/section/lib/hydrateCachedSections.ts`, вызывается в `app/_layout.tsx` рядом с `loadHistoryAction`) читает кэш и коммитит его в атомы, если он непустой — таб «Слушать» не мигает скелетоном на тёплом старте. Коммит атомарен (read+write в одном `ctx.schedule`) и не затирает более свежий источник. Гидратация не заменяет сетевой запрос: при монтировании `DynamicSectionsSlider` ревалидирует секции всегда, когда источник не `'network'` (включая `'cache'`).
 
 Тем же приёмом стартует кэш фича-флагов: `hydrateCachedFeatureFlags` (`src/entities/feature-flags/lib/hydrateCachedFlags.ts`) читает `cachedFeatureFlags` и коммитит карту в `featureFlagsAtom` до сетевого рефетча — гейтед-табы не мигают закрытыми на тёплом старте (см. [feature-flags.md](./feature-flags.md) → «Офлайн-режим и кеш»).
 
