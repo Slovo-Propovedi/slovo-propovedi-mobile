@@ -1,8 +1,12 @@
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useRef, useState } from 'react'
 import { reportError } from '../../model/error-dialog'
+import { fetchFirstPage, type FirstPageCache } from './fetchFirstPage'
+import { usePaginatedLoadMore } from './usePaginatedLoadMore'
 
 interface PaginatedListOptions<T> {
+  /** Optional first-page cache: shown instantly, then revalidated. */
+  cache?: FirstPageCache<T>
   /** Message shown in the global error dialog when a page request fails. */
   errorMessage: string
   /** Loads one page (1-based); a page shorter than `pageSize` ends the list. */
@@ -35,21 +39,27 @@ interface PaginatedListState<T> {
 // `refresh` — ручной pull-to-refresh: тот же перезагруз первой страницы, но
 // `isRefreshing` питает спиннер `RefreshControl` (фокус обновляет молча).
 export const usePaginatedList = <T>({
+  cache,
   errorMessage,
   fetchPage,
   pageSize,
 }: PaginatedListOptions<T>): PaginatedListState<T> => {
-  const [items, setItems] = useState<T[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [isError, setIsError] = useState(false)
-  const [hasMore, setHasMore] = useState(false)
-  const [loadMoreFailed, setLoadMoreFailed] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const generationRef = useRef(0)
   const hasLoadedRef = useRef(false)
   const isRefreshingRef = useRef(false)
+
+  const { applyFirstPage, setLoadMoreFailed, ...pageState } = usePaginatedLoadMore({
+    errorMessage,
+    fetchPage,
+    generationRef,
+    isLoading,
+    isReloadingRef: isRefreshingRef,
+    pageSize,
+  })
 
   const loadFirstPage = useCallback(async () => {
     const showSkeleton = !hasLoadedRef.current
@@ -67,10 +77,18 @@ export const usePaginatedList = <T>({
     }
 
     try {
-      const page = await fetchPage(1)
+      const page = await fetchFirstPage({
+        cache,
+        fetchPage,
+        isInitial: showSkeleton,
+        onCached: cachedPage => {
+          if (generationRef.current !== generation) return
+          applyFirstPage(cachedPage)
+          setIsLoading(false)
+        },
+      })
       if (generationRef.current !== generation) return
-      setItems(page)
-      setHasMore(page.length === pageSize)
+      applyFirstPage(page)
       hasLoadedRef.current = true
     } catch (error) {
       if (generationRef.current !== generation) return
@@ -82,7 +100,7 @@ export const usePaginatedList = <T>({
         if (showSkeleton) setIsLoading(false)
       }
     }
-  }, [errorMessage, fetchPage, pageSize])
+  }, [applyFirstPage, cache, errorMessage, fetchPage, setLoadMoreFailed])
 
   useFocusEffect(
     useCallback(() => {
@@ -90,41 +108,10 @@ export const usePaginatedList = <T>({
     }, [loadFirstPage]),
   )
 
-  const loadMore = useCallback(async () => {
-    if (isLoading || isLoadingMore || isRefreshingRef.current || !hasMore) return
-
-    const generation = generationRef.current
-    setIsLoadingMore(true)
-    setLoadMoreFailed(false)
-    try {
-      const nextPage = Math.floor(items.length / pageSize) + 1
-      const page = await fetchPage(nextPage)
-      if (generationRef.current !== generation) return
-      setItems(current => [...current, ...page])
-      setHasMore(page.length === pageSize)
-    } catch (error) {
-      if (generationRef.current !== generation) return
-      setLoadMoreFailed(true)
-      reportError(error, errorMessage)
-    } finally {
-      setIsLoadingMore(false)
-    }
-  }, [errorMessage, fetchPage, hasMore, isLoading, isLoadingMore, items.length, pageSize])
-
   const refresh = useCallback(() => {
     setIsRefreshing(true)
     return loadFirstPage().finally(() => setIsRefreshing(false))
   }, [loadFirstPage])
 
-  return {
-    hasMore,
-    isError,
-    isLoading,
-    isLoadingMore,
-    isRefreshing,
-    items,
-    loadMore,
-    loadMoreFailed,
-    refresh,
-  }
+  return { ...pageState, isError, isLoading, isRefreshing, refresh }
 }

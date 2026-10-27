@@ -1,11 +1,13 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { authUserAtom, signOut } from 'entities/auth'
 import { type APITypes, usersApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
+import { useCacheFirstEntity } from 'shared/lib/session-cache'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
+import { userDetailCache } from './userDetailCache'
 
 export interface AdminUserDetailState {
   changePassword: (password: string) => Promise<boolean>
@@ -36,34 +38,19 @@ export const useAdminUserDetail = (id: string): AdminUserDetailState => {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const isOwnAccount = currentUser?.id === id
 
-  const fetchUser = useCallback(() => usersApi.getUsers().usersControllerFindOne(id), [id])
+  const fetchUser = useCallback(
+    () => userDetailCache.fetchThrough(id, () => usersApi.getUsers().usersControllerFindOne(id)),
+    [id],
+  )
 
-  useEffect(() => {
-    let isActive = true
-
-    const load = async () => {
-      if (!id) {
-        if (isActive) setIsNotFound(true)
-        return
-      }
-
-      try {
-        const entity = await fetchUser()
-        if (isActive) setUser(entity)
-      } catch (error) {
-        if (isActive) {
-          setIsNotFound(true)
-          reportError(error, LOAD_ERROR_MESSAGE)
-        }
-      }
-    }
-
-    void load()
-
-    return () => {
-      isActive = false
-    }
-  }, [fetchUser, id])
+  useCacheFirstEntity({
+    cache: userDetailCache,
+    errorMessage: LOAD_ERROR_MESSAGE,
+    fetcher: fetchUser,
+    id,
+    onLoaded: setUser,
+    onNotFound: () => setIsNotFound(true),
+  })
 
   useSilentRefetchOnFocus(
     useCallback(async () => {

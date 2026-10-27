@@ -3,9 +3,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { type APITypes, sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
+import { loadCacheFirst } from 'shared/lib/session-cache'
 import { hasOrderChanged } from 'shared/lib/utils/hasOrderChanged'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
+import { sectionsListCache } from './sectionsListCache'
 
 export interface AdminSectionsState {
   isLoading: boolean
@@ -31,10 +33,12 @@ export const useAdminSections = (): AdminSectionsState => {
 
   const fetchSections = useCallback(
     () =>
-      sectionsApi
-        .getSections()
-        .sectionControllerFindAll()
-        .then(response => response.sections),
+      sectionsListCache.fetchThrough('', () =>
+        sectionsApi
+          .getSections()
+          .sectionControllerFindAll()
+          .then(response => response.sections),
+      ),
     [],
   )
 
@@ -42,7 +46,16 @@ export const useAdminSections = (): AdminSectionsState => {
     let isActive = true
     const generation = ++generationRef.current
 
-    fetchSections()
+    loadCacheFirst({
+      cache: sectionsListCache,
+      cacheKey: '',
+      fetcher: fetchSections,
+      onCached: cached => {
+        if (!isActive || generationRef.current !== generation) return
+        setSections(cached)
+        setIsLoading(false)
+      },
+    })
       .then(nextSections => {
         if (isActive && generationRef.current === generation) setSections(nextSections)
       })

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { clearSessionCache } from '../lib/session-cache/clearSessionCache'
 import { type UserResponse } from './generated/api.schemas'
 import {
   LEGACY_ACCESS_TOKEN_KEY,
@@ -38,6 +39,7 @@ export const secureTokenStorage = {
   },
 
   clearTokens: async () => {
+    await clearSessionCache()
     await AsyncStorage.multiRemove([
       SECURE_ACCESS_TOKEN_KEY,
       SECURE_REFRESH_TOKEN_KEY,
