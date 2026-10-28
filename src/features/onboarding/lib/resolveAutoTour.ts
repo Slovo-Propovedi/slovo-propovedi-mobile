@@ -2,13 +2,17 @@ import { compareVersions } from 'shared/lib/version-check'
 
 export type AutoTourDecision = 'welcome' | 'whatsNew' | null
 
-// `seenVersion` — the «Что нового» content version already shown (legacy installs
-// stored the app version there, which is never older than the content they saw).
+// `seenVersion` — the app version whose «Что нового» content was already shown.
+// `hasWhatsNewSteps` — a release without user-visible novelties ships an empty
+// scenario, which stays silent instead of starting a tour with no cards.
 export const resolveAutoTour = (
   seenVersion: null | string,
-  whatsNewVersion: string,
+  appVersion: string,
+  hasWhatsNewSteps: boolean,
 ): AutoTourDecision => {
   if (seenVersion === null) return 'welcome'
 
-  return compareVersions(seenVersion, whatsNewVersion) < 0 ? 'whatsNew' : null
+  if (!hasWhatsNewSteps) return null
+
+  return compareVersions(seenVersion, appVersion) < 0 ? 'whatsNew' : null
 }

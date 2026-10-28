@@ -9,7 +9,7 @@ import {
   removeHistoryEntryAction,
 } from 'entities/listening-history'
 import { usePlayNewSermon } from 'entities/player'
-import { FAVORITES_PLAYLIST, myPlaylistsAtom, type PlaylistData } from 'entities/playlist'
+import { FAVORITES_PLAYLIST, myPlaylistsAtom } from 'entities/playlist'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
@@ -28,8 +28,6 @@ jest.mock('entities/offline-cache', () => ({
     visualState: 'cloud',
   })),
 }))
-
-const mockResolveEntryPlaylist = jest.fn()
 
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
@@ -71,7 +69,6 @@ jest.mock('entities/listening-history', () => {
   return {
     ...actual,
     clearHistoryAction: jest.fn(),
-    resolveEntryPlaylist: (...args: unknown[]) => mockResolveEntryPlaylist(...args),
   }
 })
 
@@ -115,6 +112,7 @@ jest.mock('entities/track-list', () => {
 
   return {
     createTracksListStyles: () => StyleSheet.create({ container: {}, divider: {} }),
+    TRACK_LIST_ITEM_SIZES: { albumArtSize: 48 },
     TracksListItem,
     TracksListSkeleton,
   }
@@ -154,9 +152,6 @@ const seedHistory = (entries: ListeningHistoryEntry[] = []) => {
 describe('<HistoryScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockResolveEntryPlaylist.mockImplementation((entry: ListeningHistoryEntry) =>
-      Promise.resolve(entry.playlist),
-    )
     // In Jest, host-component measureInWindow never fires its callback, so the
     // header menu would never open. Mock the measurement with fixed geometry.
     mockMeasureInWindow({ height: 44, width: 44, x: 300, y: 100 })
@@ -192,50 +187,57 @@ describe('<HistoryScreen>', () => {
     expect(queryByText('История пуста')).toBeNull()
   })
 
-  test('row press calls playNewSermon with resolved playlist', async () => {
+  test('row press opens the chooser with the entry playlist and no offline option', async () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
 
     const ctx = seedHistory([mockEntry])
 
-    const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
+    const { getByText, queryByText } = await renderWithProviders(<HistoryScreen />, { ctx })
 
     await act(async () => {
       fireEvent.press(getByText('Play'))
     })
 
-    expect(mockResolveEntryPlaylist).toHaveBeenCalledWith(mockEntry)
+    expect(getByText('Где воспроизвести проповедь?')).toBeTruthy()
+    expect(getByText('Плейлист, в котором было прослушано')).toBeTruthy()
+    expect(queryByText('Все офлайн-проповеди')).toBeNull()
+    expect(playNewSermonMock).not.toHaveBeenCalled()
+
+    fireEvent.press(getByText(mockEntry.playlist.title))
+
     expect(playNewSermonMock).toHaveBeenCalledWith({
       playlist: mockEntry.playlist,
       sermon: mockSermon,
     })
   })
 
-  test('row press passes resolved playlist (different from snapshot) to playNewSermon', async () => {
+  test('row press with a synthetic origin and no alternatives plays the entry playlist directly', async () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
 
-    const resolvedPlaylist: PlaylistData = {
-      artwork: 'resolved.jpg',
-      description: 'Full playlist',
-      id: 'playlist-1',
-      sermons: [mockSermon, { artist: 'B', artwork: 'b.jpg', id: 'sermon-2', title: 'Sermon 2' }],
-      title: 'Full Playlist',
+    const syntheticEntry: ListeningHistoryEntry = {
+      ...mockEntry,
+      playlist: {
+        artwork: null,
+        id: MOCK_SERMON_ID,
+        sermons: [mockSermon],
+        title: MOCK_SERMON_TITLE,
+      },
     }
-    mockResolveEntryPlaylist.mockResolvedValue(resolvedPlaylist)
+    const ctx = seedHistory([syntheticEntry])
 
-    const ctx = seedHistory([mockEntry])
-
-    const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
+    const { getByText, queryByText } = await renderWithProviders(<HistoryScreen />, { ctx })
 
     await act(async () => {
       fireEvent.press(getByText('Play'))
     })
 
     expect(playNewSermonMock).toHaveBeenCalledWith({
-      playlist: resolvedPlaylist,
+      playlist: syntheticEntry.playlist,
       sermon: mockSermon,
     })
+    expect(queryByText('Где воспроизвести проповедь?')).toBeNull()
   })
 
   test('remove menu action calls removeHistoryEntryAction with sermon id', async () => {

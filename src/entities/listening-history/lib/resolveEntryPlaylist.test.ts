@@ -2,20 +2,10 @@ import { type Ctx } from '@reatom/framework'
 import { type PlaylistData } from 'entities/playlist/@x/listening-history'
 import { type getCachedSections, type SectionData } from 'entities/section/@x/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type ListeningHistoryEntry } from '../model/types'
-import { resolveEntryPlaylist } from './resolveEntryPlaylist'
+import { resolvePlaylistBySermon } from './resolveEntryPlaylist'
 
 const SERMON_ID = 'sermon-1'
 const PLAYLIST_ID = 'playlist-1'
-
-const mockGetEntrySermon = jest.fn(
-  (entry: { playlist: { sermons: unknown[] }; sermon?: unknown }) =>
-    entry.sermon ?? entry.playlist.sermons[0],
-)
-
-jest.mock('./getEntrySermon', () => ({
-  getEntrySermon: (...args: Parameters<typeof mockGetEntrySermon>) => mockGetEntrySermon(...args),
-}))
 
 jest.mock('entities/section/@x/listening-history', () => {
   const { atom } = jest.requireActual('@reatom/framework')
@@ -61,88 +51,71 @@ const makeSection = (playlists?: PlaylistData[]): SectionData => ({
 
 const snapshotPlaylist = makePlaylist(PLAYLIST_ID, [makeSermon(SERMON_ID)])
 
-const entry: ListeningHistoryEntry = {
-  durationMs: 120000,
-  lastPlayedAt: Date.now(),
-  playlist: snapshotPlaylist,
-  positionMs: 30000,
-  sermon: makeSermon(SERMON_ID),
-}
-
 const seedAtom = (sections: SectionData[], targetCtx: Ctx = ctx) => {
   dynamicSectionsAtom(targetCtx, sections)
 }
 
-describe('resolveEntryPlaylist', () => {
+describe('resolvePlaylistBySermon', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     seedAtom([])
     getCachedSectionsMock.mockResolvedValue(undefined)
   })
 
-  test('found in live atom → returned, cache NOT read', async () => {
+  test('null sermon id → fallback playlist, cache NOT read', async () => {
+    const result = await resolvePlaylistBySermon(PLAYLIST_ID, null, snapshotPlaylist)
+
+    expect(result).toBe(snapshotPlaylist)
+    expect(getCachedSectionsMock).not.toHaveBeenCalled()
+  })
+
+  test('live section holds the playlist with the sermon → full playlist', async () => {
     const fullPlaylist = makePlaylist(PLAYLIST_ID, [makeSermon(SERMON_ID), makeSermon('sermon-2')])
     seedAtom([makeSection([fullPlaylist])])
 
-    const result = await resolveEntryPlaylist(entry)
+    const result = await resolvePlaylistBySermon(PLAYLIST_ID, SERMON_ID, snapshotPlaylist)
 
     expect(result).toBe(fullPlaylist)
     expect(getCachedSectionsMock).not.toHaveBeenCalled()
   })
 
-  test('not in atom, in cache → cached returned', async () => {
-    const fullPlaylist = makePlaylist(PLAYLIST_ID, [makeSermon(SERMON_ID), makeSermon('sermon-3')])
-    getCachedSectionsMock.mockResolvedValue([makeSection([fullPlaylist])])
-
-    const result = await resolveEntryPlaylist(entry)
-
-    expect(result).toBe(fullPlaylist)
-  })
-
-  test('playlist id matches but sermon NOT in sermons → snapshot fallback', async () => {
+  test('playlist id matches but sermon NOT in sermons → fallback playlist', async () => {
     const wrongSermonPlaylist = makePlaylist(PLAYLIST_ID, [makeSermon('other')])
     seedAtom([makeSection([wrongSermonPlaylist])])
     getCachedSectionsMock.mockResolvedValue([makeSection([wrongSermonPlaylist])])
 
-    const result = await resolveEntryPlaylist(entry)
+    const result = await resolvePlaylistBySermon(PLAYLIST_ID, SERMON_ID, snapshotPlaylist)
 
     expect(result).toBe(snapshotPlaylist)
   })
 
-  test('empty atom + undefined cache → snapshot', async () => {
-    seedAtom([])
-    getCachedSectionsMock.mockResolvedValue(undefined)
+  test('not in atom, in cache → cached playlist returned', async () => {
+    const cachedPlaylist = makePlaylist(PLAYLIST_ID, [
+      makeSermon(SERMON_ID),
+      makeSermon('sermon-3'),
+    ])
+    getCachedSectionsMock.mockResolvedValue([makeSection([cachedPlaylist])])
 
-    const result = await resolveEntryPlaylist(entry)
+    const result = await resolvePlaylistBySermon(PLAYLIST_ID, SERMON_ID, snapshotPlaylist)
 
-    expect(result).toBe(snapshotPlaylist)
+    expect(result).toBe(cachedPlaylist)
   })
 
   test('sections without playlists handled', async () => {
     seedAtom([makeSection(undefined)])
     getCachedSectionsMock.mockResolvedValue([makeSection(undefined)])
 
-    const result = await resolveEntryPlaylist(entry)
+    const result = await resolvePlaylistBySermon(PLAYLIST_ID, SERMON_ID, snapshotPlaylist)
 
     expect(result).toBe(snapshotPlaylist)
   })
 
-  test('empty cache array → snapshot', async () => {
-    seedAtom([])
-    getCachedSectionsMock.mockResolvedValue([])
-
-    const result = await resolveEntryPlaylist(entry)
-
-    expect(result).toBe(snapshotPlaylist)
-  })
-
-  test('live atom miss, cache hit with multiple sections → correct playlist', async () => {
-    seedAtom([])
+  test('cache hit with multiple sections → correct playlist', async () => {
     const target = makePlaylist(PLAYLIST_ID, [makeSermon(SERMON_ID)])
     const other = makePlaylist('playlist-2', [makeSermon('sermon-99')])
     getCachedSectionsMock.mockResolvedValue([makeSection([other]), makeSection([target])])
 
-    const result = await resolveEntryPlaylist(entry)
+    const result = await resolvePlaylistBySermon(PLAYLIST_ID, SERMON_ID, snapshotPlaylist)
 
     expect(result).toBe(target)
   })

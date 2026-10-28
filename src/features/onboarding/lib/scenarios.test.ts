@@ -1,5 +1,7 @@
+import { APP_VERSION } from 'shared/config'
 import { resolveStepRoute } from './resolveStepRoute'
 import { resolveTourStart } from './resolveTourStart'
+import * as whatsNewScenarioData from './scenarioData/whatsNew'
 import { scenarios, scenariosById } from './scenarios'
 import { buildTourDeck, resolveDeckProgress } from './tourDeck'
 
@@ -46,17 +48,22 @@ describe('onboarding scenario data', () => {
     expect(expandStep.tapActionId).toBe('expand-player')
   })
 
-  test('whats-new is a release scenario pinned to a semver content version', () => {
-    expect(scenariosById.whatsNew.sinceVersion).toMatch(/^\d+\.\d+\.\d+$/)
+  test('whats-new scenario data exports no manual content version', () => {
+    expect(Object.keys(whatsNewScenarioData)).toEqual(['whatsNewScenario'])
   })
 
-  test('whats-new opens with a plain card and skips the desktop-only refresh button on touch', () => {
-    const [intro, refresh] = scenariosById.whatsNew.steps
+  test('whats-new is a release scenario pinned to the running app version', () => {
+    expect(scenariosById.whatsNew.sinceVersion).toBe(APP_VERSION)
+  })
+
+  test('whats-new opens with a plain card and spotlights the offline rows next', () => {
+    const [intro, rows] = scenariosById.whatsNew.steps
 
     expect(intro.targetId).toBeUndefined()
     expect(intro.route).toBeUndefined()
-    expect(refresh.targetId).toBe('listen.refresh-button')
-    expect(refresh.skipIfMissing).toBe(true)
+    expect(intro.tapTargetId).toBeUndefined()
+    expect(rows.route).toBe('/offline')
+    expect(rows.targetId).toBe('offline.rows')
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {

@@ -102,4 +102,19 @@ describe('loadHistoryAction', () => {
     expect(ctx.get(historyAtom)).toHaveLength(1)
     expect(getEntrySermon(ctx.get(historyAtom)[0])?.id).toBe('sermon-1')
   })
+
+  test('keeps a fresher in-memory entry over the older disk snapshot', async () => {
+    const lastPlayedAt = 1_000
+    const stale = makeEntry('sermon-1', { durationMs: 0, lastPlayedAt, positionMs: 0 })
+    const fresh = makeEntry('sermon-1', { durationMs: 60_000, lastPlayedAt, positionMs: 60_000 })
+    await AsyncStorage.setItem(LISTENING_HISTORY, JSON.stringify([stale]))
+
+    const ctx = createCtx()
+    historyAtom(ctx, [fresh])
+    await loadHistoryAction(ctx)
+
+    const entry = ctx.get(historyAtom)[0]
+    expect(entry.durationMs).toBe(60_000)
+    expect(entry.positionMs).toBe(60_000)
+  })
 })

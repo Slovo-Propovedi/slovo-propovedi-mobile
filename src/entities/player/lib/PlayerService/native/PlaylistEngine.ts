@@ -64,6 +64,8 @@ class PlaylistEngine {
 
   public getLoop = (): AudioPlaylistLoopMode => this.state.loop
 
+  public getAutoAdvanceCount = (): null | number => this.state.autoAdvanceCount
+
   public getCurrentSourceUri = (): null | string => this.state.currentSourceUri
 
   public getSnapshot = (index: number): null | TrackSnapshot =>

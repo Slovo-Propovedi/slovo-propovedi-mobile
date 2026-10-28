@@ -25,7 +25,10 @@ jest.mock('entities/listening-history/@x/player', () => ({
   recordSermonSwitchAction: (...args: unknown[]) => mockRecordSermonSwitch(...args),
 }))
 
-jest.mock('../../../../model', () => ({ setCurrentAudioAction: jest.fn() }))
+jest.mock('../../../../model', () => ({
+  currentPlaylistAtom: '@@TEST_CURRENT_PLAYLIST_ATOM',
+  setCurrentAudioAction: jest.fn(),
+}))
 jest.mock('../../../playbackProgress', () => ({
   savePlaybackProgress: (...args: unknown[]) => mockSavePlaybackProgress(...args),
 }))
@@ -94,6 +97,8 @@ const setTracks = (tracks: AudioPlayerData[]): void => {
 
 const setStatus = (durationMs: number): void => {
   mockedEngine.getStatus.mockReturnValue({
+    autoAdvanceCount: null,
+    didJustFinish: false,
     durationMs,
     isBuffering: false,
     isLoaded: true,
@@ -183,6 +188,22 @@ describe('TrackAutoAdvanceService.handleTrackChanged', () => {
     expect(mockSetMetadata).not.toHaveBeenCalled()
     expect(mockStartBackgroundCaching).not.toHaveBeenCalled()
   })
+
+  test('manual hop switches the current audio without any history write', async () => {
+    await seedStorage(audio)
+
+    await trackAutoAdvanceService.handleManualTrackChanged(1)
+
+    expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
+    expect(mockMarkHistoryCompleted).not.toHaveBeenCalled()
+    expect(mockSetMetadata).toHaveBeenCalledWith(mockPlaylist, {
+      albumTitle: playlist.title,
+      artist: secondAudio.artist,
+      artworkUrl: playlist.artwork,
+      title: secondAudio.title,
+    })
+    expect(mockStartBackgroundCaching).toHaveBeenCalledWith(secondAudio.audioUrl)
+  })
 })
 
 describe('TrackAutoAdvanceService.handleQueueEnd', () => {
@@ -201,7 +222,13 @@ describe('TrackAutoAdvanceService.handleQueueEnd', () => {
     await trackAutoAdvanceService.handleQueueEnd()
 
     expect(mockMarkHistoryCompleted).toHaveBeenCalledTimes(1)
-    expect(mockMarkHistoryCompleted).toHaveBeenCalledWith(expect.anything(), secondAudio.id, 100000)
+    expect(mockMarkHistoryCompleted).toHaveBeenCalledWith(
+      expect.anything(),
+      secondAudio.id,
+      100000,
+      secondAudio,
+      undefined,
+    )
     expect(mockedEngine.pause).toHaveBeenCalledTimes(1)
   })
 

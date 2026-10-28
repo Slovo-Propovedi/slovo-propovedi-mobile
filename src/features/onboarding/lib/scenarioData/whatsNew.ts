@@ -1,28 +1,23 @@
+import { APP_VERSION } from 'shared/config'
 import { type OnboardingScenario } from '../scenarios'
 
-// Content version of «Что нового»: the app release that ships the current steps.
-// Bump it (to the upcoming release version) every time the steps are replaced with
-// new features — the tour then auto-plays once more for everyone who saw an older one.
-export const WHATS_NEW_VERSION = '0.32.0'
-
+// The running bundle's version is the content version of «Что нового»: every release
+// replaces these steps, and a release without user-visible novelties ships none.
 export const whatsNewScenario: OnboardingScenario = {
   description: 'Новинки этого релиза',
   icon: 'gift-outline',
   id: 'whatsNew',
-  sinceVersion: WHATS_NEW_VERSION,
+  sinceVersion: APP_VERSION,
   steps: [
     {
-      text: 'Главная сразу после открытия подтягивает свежие проповеди с сервера, а пока их нет — показывает сохранённые.',
-      title: 'Всегда свежие данные',
+      text: 'Тап по офлайн-проповеди или записи истории теперь спрашивает, где её слушать: включить весь список подряд или плейлист, в котором она есть; если вариантов нет, воспроизведение продолжается сразу. А в меню экрана офлайна появилась команда «Воспроизвести все».',
+      title: 'Где включить офлайн-проповедь',
     },
     {
-      // Desktop web only: on touch devices the button (and its target) is not
-      // rendered, so the step is skipped.
-      route: '/listen',
-      skipIfMissing: true,
-      targetId: 'listen.refresh-button',
-      text: 'На компьютере обновить страницу можно этой кнопкой — так же, как свайпом вниз на телефоне.',
-      title: 'Кнопка «Обновить»',
+      route: '/offline',
+      targetId: 'offline.rows',
+      text: 'Нажмите на любую загруженную проповедь — откроется выбор «Все офлайн-проповеди» или её плейлист, и очередь воспроизведения не собьётся.',
+      title: 'Выбор перед воспроизведением',
     },
   ],
   title: 'Что нового',
