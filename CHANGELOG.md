@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.0] - 2026-10-28
+
+### Added
+
+- Show refresh card only on desktop web
+- Restore data-refresh step and listen-tab entry in tour
+- Blink header back button leaving offline in tour
+- Visualize screen transitions in whats-new tour
+- Refresh whats-new tour for the release
+- Gate whats-new tour on content fingerprint
+- Label offline list and origin playlist in chooser
+- Highlight origin playlist in playback chooser
+- Playback chooser on sermon tap
+- Playback chooser dialog and play-all menu action
+- Silently apply downloaded OTA bundle when player is idle
+- Show the backend's WebP previews in cards and lists
+- Add PWA search keywords, categories and page metadata
+- Add a header refresh button for desktop
+- Store AsyncStorage data in IndexedDB instead of localStorage
+- Cache admin screens with stale-while-revalidate
+- Show «What's new» once per content version
+
+### Changed
+
+- Derive whats-new version from the app version
+- Take repository and infra names from org variables
+
+### Fixed
+
+- Update packages and retarget expo-font patch to 58.0.10
+- Restore played chain reconcile across repeat wrap
+- Reconcile progress and repair completion after background playback
+- End tour when a skipped boundary card has no neighbor
+- Drop the Latin suffix from the PWA name
+- Load covers in batches of 5, only near the viewport on web
+- Revalidate cached sections on mount
+- Reject non-http(s) media links in forms and on open
+- Regenerate client from the published spec
+- Commit only rewritten files in bump-version
+
 ## [0.31.1] - 2026-10-26
 
 ### Added
@@ -1481,6 +1521,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.32.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.32.0
 [0.31.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.31.1
 [0.31.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.31.0
 [0.30.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.30.0
