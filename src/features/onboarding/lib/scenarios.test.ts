@@ -50,13 +50,14 @@ describe('onboarding scenario data', () => {
     expect(scenariosById.whatsNew.sinceVersion).toMatch(/^\d+\.\d+\.\d+$/)
   })
 
-  test('whats-new opens with a plain card and skips the desktop-only refresh button on touch', () => {
-    const [intro, refresh] = scenariosById.whatsNew.steps
+  test('whats-new opens with a plain card and spotlights the offline rows next', () => {
+    const [intro, rows] = scenariosById.whatsNew.steps
 
     expect(intro.targetId).toBeUndefined()
     expect(intro.route).toBeUndefined()
-    expect(refresh.targetId).toBe('listen.refresh-button')
-    expect(refresh.skipIfMissing).toBe(true)
+    expect(intro.tapTargetId).toBeUndefined()
+    expect(rows.route).toBe('/offline')
+    expect(rows.targetId).toBe('offline.rows')
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {

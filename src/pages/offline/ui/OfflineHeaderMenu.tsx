@@ -9,6 +9,7 @@ import { ErrorDialog, useErrorDialog } from 'shared/ui/error-dialog'
 import { IconButton } from 'shared/ui/icon-button'
 import { type AnchorRect, MenuDropdown } from 'shared/ui/menu'
 import { useTheme } from 'shared/ui/theme'
+import { buildOfflineHeaderMenuItems } from '../lib/buildOfflineHeaderMenuItems'
 
 const ICON_SIZE = 24
 const BUTTON_SIZE = 44
@@ -20,7 +21,15 @@ const CLEAR_CONFIRM_TEXT = 'Очистить'
 const CLEAR_FAILED_MESSAGE = 'Не удалось очистить офлайн. Попробуйте снова.'
 const CLEAR_ERROR_MESSAGE = 'Ошибка при очистке офлайна'
 
-export const OfflineHeaderMenu = ({ onboardingTargetId }: { onboardingTargetId?: string }) => {
+export const OfflineHeaderMenu = ({
+  isPlayAllDisabled,
+  onboardingTargetId,
+  onPlayAll,
+}: {
+  isPlayAllDisabled: boolean
+  onboardingTargetId?: string
+  onPlayAll: () => void
+}) => {
   const { currentTheme } = useTheme()
   const [menuVisible, setMenuVisible] = useState(false)
   const [dialogVisible, setDialogVisible] = useState(false)
@@ -81,14 +90,12 @@ export const OfflineHeaderMenu = ({ onboardingTargetId }: { onboardingTargetId?:
         anchorRef={buttonRef}
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
-        items={[
-          {
-            disabled: isClearCacheBusy,
-            icon: 'cloud-offline-outline',
-            onPress: handleClearOption,
-            text: 'Очистить офлайн',
-          },
-        ]}
+        items={buildOfflineHeaderMenuItems({
+          isClearCacheBusy,
+          isPlayAllDisabled,
+          onClear: handleClearOption,
+          onPlayAll,
+        })}
       />
 
       <ConfirmDialog

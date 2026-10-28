@@ -82,6 +82,7 @@ jest.mock('entities/track-list', () => {
 
   return {
     createTracksListStyles: () => StyleSheet.create({ container: {}, divider: {} }),
+    TRACK_LIST_ITEM_SIZES: { albumArtSize: 48 },
     TracksListItem,
     TracksListSkeleton,
   }
@@ -181,7 +182,7 @@ describe('<OfflineScreen>', () => {
     expect(checkboxes[1]).not.toBeChecked()
   })
 
-  test('row press calls playNewSermon with item playlist and sermon', async () => {
+  test('row press opens the playback chooser instead of playing immediately', async () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
 
@@ -191,8 +192,25 @@ describe('<OfflineScreen>', () => {
       fireEvent.press(getByText('Play'))
     })
 
+    expect(getByText('Все офлайн-проповеди')).toBeTruthy()
+    expect(playNewSermonMock).not.toHaveBeenCalled()
+  })
+
+  test('the offline option plays the all-offline playlist', async () => {
+    const playNewSermonMock = jest.fn()
+    jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
+
+    const { getByText } = await renderWithProviders(<OfflineScreen />)
+
+    await act(async () => {
+      fireEvent.press(getByText('Play'))
+    })
+    await act(async () => {
+      fireEvent.press(getByText('Все офлайн-проповеди'))
+    })
+
     expect(playNewSermonMock).toHaveBeenCalledWith({
-      playlist: mockItem.playlist,
+      playlist: expect.objectContaining({ id: 'offline-list', sermons: [mockSermon] }),
       sermon: mockItem.sermon,
     })
   })
