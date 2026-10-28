@@ -302,3 +302,42 @@ describe('useStepNavigation skipIfMissing cards', () => {
     unregisterTourAction('hidden-action')
   })
 })
+
+describe('useStepNavigation desktop-web-only cards', () => {
+  // whatsNew deck index 2 is the «Кнопка «Обновить»» card: its target renders only on
+  // desktop web, so every other platform drops the card from the deck.
+  const WHATS_NEW = scenariosById.whatsNew
+  const REFRESH_DECK_INDEX = 2
+
+  test('drops the refresh card when its target is absent', async () => {
+    const { ctx } = await renderNavigation(WHATS_NEW, REFRESH_DECK_INDEX, {
+      'listen.sections': { 'instance-1': TARGET_RECT },
+    })
+
+    await waitFor(
+      () =>
+        expect(ctx.get(onboardingTourAtom)).toEqual({
+          deckIndex: REFRESH_DECK_INDEX + 1,
+          scenarioId: 'whatsNew',
+          skippedDeckIndexes: [REFRESH_DECK_INDEX],
+        }),
+      { timeout: 300 },
+    )
+  })
+
+  test('keeps the refresh card while its target is registered', async () => {
+    const { ctx } = await renderNavigation(WHATS_NEW, REFRESH_DECK_INDEX, {
+      'listen.refresh-button': { 'instance-1': TARGET_RECT },
+    })
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 800))
+    })
+
+    expect(ctx.get(onboardingTourAtom)).toEqual({
+      deckIndex: REFRESH_DECK_INDEX,
+      scenarioId: 'whatsNew',
+      skippedDeckIndexes: [],
+    })
+  })
+})

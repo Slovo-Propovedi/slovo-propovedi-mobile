@@ -136,6 +136,22 @@ describe('onboarding scenario data', () => {
     expect(whatsNew.steps[8]).toEqual({ route: '/history', tapTargetId: 'more.history-item' })
   })
 
+  test('whatsNew drops the desktop-only refresh card without losing its listen lead-up', () => {
+    const whatsNew = scenariosById.whatsNew
+    const deck = buildTourDeck(whatsNew.steps)
+    const refreshDeckIndex = 2
+
+    // The refresh card owns no entry transitions: the tab.listen lead-up belongs to
+    // the preceding «Всегда свежие данные» card, so dropping the refresh card never
+    // navigates to /listen for nothing.
+    expect(deck[refreshDeckIndex].entryStepIndexes).toEqual([])
+    expect(deck[refreshDeckIndex - 1].entryStepIndexes).toEqual([1])
+
+    // Off desktop web the card is dropped, so the counter loses exactly one card.
+    expect(resolveDeckProgress(deck, [], refreshDeckIndex).displayTotal).toBe(5)
+    expect(resolveDeckProgress(deck, [refreshDeckIndex], refreshDeckIndex + 1).displayTotal).toBe(4)
+  })
+
   test('each scenario wires the tab or row it taps when navigating', () => {
     expect(scenariosById.listen.steps[0].tapTargetId).toBe('tab.listen')
     expect(scenariosById.playlists.steps[1].tapTargetId).toBe('listen.my-playlists-title')

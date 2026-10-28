@@ -1,5 +1,6 @@
 import { screen, userEvent } from '@testing-library/react-native'
 import { type ComponentType } from 'react'
+import { Platform } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { RefreshContext } from './refreshContext'
 
@@ -9,6 +10,7 @@ const { RefreshButton } = jest.requireActual<{ RefreshButton: ComponentType }>(
 )
 
 const LABEL = 'Обновить'
+const ORIGINAL_PLATFORM = Platform.OS
 
 const mockMatchMedia = (matches: boolean) => {
   window.matchMedia = jest.fn().mockReturnValue({
@@ -26,6 +28,14 @@ const renderButton = (context: { onRefresh: () => void; refreshing: boolean } | 
   )
 
 describe('<RefreshButton> (web)', () => {
+  beforeEach(() => {
+    Platform.OS = 'web'
+  })
+
+  afterEach(() => {
+    Platform.OS = ORIGINAL_PLATFORM
+  })
+
   test('reloads the screen on click with a mouse', async () => {
     mockMatchMedia(true)
     const onRefresh = jest.fn()
@@ -38,6 +48,14 @@ describe('<RefreshButton> (web)', () => {
 
   test('is hidden on touch devices (phones, tablets)', async () => {
     mockMatchMedia(false)
+    await renderButton({ onRefresh: jest.fn(), refreshing: false })
+
+    expect(screen.queryByRole('button', { name: LABEL })).toBeNull()
+  })
+
+  test('is hidden off the web platform even when matchMedia reports a mouse', async () => {
+    Platform.OS = 'ios'
+    mockMatchMedia(true)
     await renderButton({ onRefresh: jest.fn(), refreshing: false })
 
     expect(screen.queryByRole('button', { name: LABEL })).toBeNull()
