@@ -51,14 +51,19 @@ describe('onboarding scenario data', () => {
     expect(Object.keys(whatsNewScenarioData)).toEqual(['whatsNewScenario'])
   })
 
-  test('whats-new opens with a plain card and spotlights the offline rows next', () => {
-    const [intro, rows] = scenariosById.whatsNew.steps
+  test('whats-new opens with a plain card and then spotlights the offline and history rows', () => {
+    const whatsNew = scenariosById.whatsNew
+
+    expect(whatsNew.steps).toHaveLength(3)
+    const [intro, offlineRows, historyRows] = whatsNew.steps
 
     expect(intro.targetId).toBeUndefined()
     expect(intro.route).toBeUndefined()
     expect(intro.tapTargetId).toBeUndefined()
-    expect(rows.route).toBe('/offline')
-    expect(rows.targetId).toBe('offline.rows')
+    expect(offlineRows.route).toBe('/offline')
+    expect(offlineRows.targetId).toBe('offline.rows')
+    expect(historyRows.route).toBe('/history')
+    expect(historyRows.targetId).toBe('history.rows')
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -96,10 +101,10 @@ describe('onboarding scenario data', () => {
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
   })
 
-  test('whatsNew shows both steps as cards', () => {
+  test('whatsNew shows all three steps as cards', () => {
     const whatsNewDeck = buildTourDeck(scenariosById.whatsNew.steps)
 
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1])
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1, 2])
   })
 
   test('each scenario wires the tab or row it taps when navigating', () => {
