@@ -54,8 +54,10 @@ describe('onboarding scenario data', () => {
   test('whats-new opens with a plain card and then spotlights the offline and history rows', () => {
     const whatsNew = scenariosById.whatsNew
 
-    expect(whatsNew.steps).toHaveLength(3)
-    const [intro, offlineRows, historyRows] = whatsNew.steps
+    expect(whatsNew.steps).toHaveLength(7)
+    const intro = whatsNew.steps[0]
+    const offlineRows = whatsNew.steps[3]
+    const historyRows = whatsNew.steps[6]
 
     expect(intro.targetId).toBeUndefined()
     expect(intro.route).toBeUndefined()
@@ -101,10 +103,22 @@ describe('onboarding scenario data', () => {
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
   })
 
-  test('whatsNew shows all three steps as cards', () => {
-    const whatsNewDeck = buildTourDeck(scenariosById.whatsNew.steps)
+  test('whatsNew keeps three cards and visualizes the screen transitions between them', () => {
+    const whatsNew = scenariosById.whatsNew
+    const whatsNewDeck = buildTourDeck(whatsNew.steps)
 
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1, 2])
+    expect(whatsNewDeck).toHaveLength(3)
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 3, 6])
+    // Intro → offline: the «Ещё» tab blink (history/backup pattern) and the «Офлайн»
+    // item blink (the offline scenario's own lead-up) navigate into the offline card.
+    expect(whatsNewDeck[1].entryStepIndexes).toEqual([1, 2])
+    expect(whatsNew.steps[1]).toEqual({ route: '/more', tapTargetId: 'tab.more' })
+    expect(whatsNew.steps[2]).toEqual({ route: '/offline', tapTargetId: 'more.offline-item' })
+    // Offline → history: the same tab leaves the nested screen, then the history item
+    // blink (the history scenario's lead-up) navigates into the history card.
+    expect(whatsNewDeck[2].entryStepIndexes).toEqual([4, 5])
+    expect(whatsNew.steps[4]).toEqual({ route: '/more', tapTargetId: 'tab.more' })
+    expect(whatsNew.steps[5]).toEqual({ route: '/history', tapTargetId: 'more.history-item' })
   })
 
   test('each scenario wires the tab or row it taps when navigating', () => {
