@@ -38,11 +38,15 @@ export const onboardingEntryStepIndexAtom = atom<null | number>(
 
 export const startOnboardingTour = action(
   (ctx, scenarioId: OnboardingScenarioId, pathname: string) => {
+    const deck = resolveTourDeck(scenarioId)
+    // A release without user-visible novelties ships an empty whats-new scenario:
+    // it never starts a tour, so no phantom state is left behind.
+    if (deck.length === 0) return
+
     onboardingTargetRectsAtom(ctx, {})
     onboardingStepDirectionAtom(ctx, 'forward')
     onboardingExitStepIndexAtom(ctx, null)
 
-    const deck = resolveTourDeck(scenarioId)
     const { deckIndex, skippedDeckIndexes } = resolveTourStart(
       scenariosById[scenarioId],
       deck,

@@ -1,15 +1,13 @@
+import { APP_VERSION } from 'shared/config'
 import { type OnboardingScenario } from '../scenarios'
 
-// Content version of «Что нового»: the app release that ships the current steps.
-// Bump it (to the upcoming release version) every time the steps are replaced with
-// new features — the tour then auto-plays once more for everyone who saw an older one.
-export const WHATS_NEW_VERSION = '0.32.1'
-
+// The running bundle's version is the content version of «Что нового»: every release
+// replaces these steps, and a release without user-visible novelties ships none.
 export const whatsNewScenario: OnboardingScenario = {
   description: 'Новинки этого релиза',
   icon: 'gift-outline',
   id: 'whatsNew',
-  sinceVersion: WHATS_NEW_VERSION,
+  sinceVersion: APP_VERSION,
   steps: [
     {
       text: 'Тап по офлайн-проповеди или записи истории теперь спрашивает, где её слушать: включить весь список подряд или плейлист, в котором она есть; если вариантов нет, воспроизведение продолжается сразу. А в меню экрана офлайна появилась команда «Воспроизвести все».',

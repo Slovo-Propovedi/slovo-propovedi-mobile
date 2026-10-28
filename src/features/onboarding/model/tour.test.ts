@@ -37,6 +37,20 @@ describe('onboarding tour model', () => {
     expect(ctx.get(onboardingTargetRectsAtom)).toEqual({})
   })
 
+  test('does not start a scenario with no steps', () => {
+    const ctx = createCtx()
+    const originalScenario = scenariosById.listen
+
+    scenariosById.listen = { ...originalScenario, steps: [] }
+    try {
+      startOnboardingTour(ctx, 'listen', '/')
+
+      expect(ctx.get(onboardingTourAtom)).toBeNull()
+    } finally {
+      scenariosById.listen = originalScenario
+    }
+  })
+
   test('next advances the deck and clamps at the last card', () => {
     const ctx = createCtx()
     startOnboardingTour(ctx, 'listen', '/')
