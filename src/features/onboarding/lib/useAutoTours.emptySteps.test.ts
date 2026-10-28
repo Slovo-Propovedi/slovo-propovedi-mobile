@@ -9,8 +9,6 @@ const mockPathname = jest.fn(() => '/listen')
 
 jest.mock('expo-router', () => ({ usePathname: () => mockPathname() }))
 
-jest.mock('shared/config', () => ({ APP_VERSION: '1.2.0' }))
-
 // A release without user-visible novelties ships an empty whats-new scenario.
 jest.mock('./scenarios', () => ({ scenariosById: { whatsNew: { steps: [] } } }))
 
@@ -32,8 +30,8 @@ describe('useAutoTours with an empty whats-new scenario', () => {
     await AsyncStorage.clear()
   })
 
-  test('stays silent when a newer release ships no whats-new steps', async () => {
-    mockGetItem.mockResolvedValue('1.1.0')
+  test('stays silent when a release ships no whats-new steps', async () => {
+    mockGetItem.mockResolvedValue('0.32.0')
     const ctx = createCtx()
 
     await renderHookWithProviders(() => useAutoTours({ delayMs: DELAY_MS }), { ctx })

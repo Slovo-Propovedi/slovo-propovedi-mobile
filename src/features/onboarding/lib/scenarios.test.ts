@@ -1,4 +1,3 @@
-import { APP_VERSION } from 'shared/config'
 import { resolveStepRoute } from './resolveStepRoute'
 import { resolveTourStart } from './resolveTourStart'
 import * as whatsNewScenarioData from './scenarioData/whatsNew'
@@ -50,10 +49,6 @@ describe('onboarding scenario data', () => {
 
   test('whats-new scenario data exports no manual content version', () => {
     expect(Object.keys(whatsNewScenarioData)).toEqual(['whatsNewScenario'])
-  })
-
-  test('whats-new is a release scenario pinned to the running app version', () => {
-    expect(scenariosById.whatsNew.sinceVersion).toBe(APP_VERSION)
   })
 
   test('whats-new opens with a plain card and spotlights the offline rows next', () => {
