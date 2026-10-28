@@ -97,6 +97,8 @@ const setTracks = (tracks: AudioPlayerData[]): void => {
 
 const setStatus = (durationMs: number): void => {
   mockedEngine.getStatus.mockReturnValue({
+    autoAdvanceCount: null,
+    didJustFinish: false,
     durationMs,
     isBuffering: false,
     isLoaded: true,
@@ -185,6 +187,22 @@ describe('TrackAutoAdvanceService.handleTrackChanged', () => {
     expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
     expect(mockSetMetadata).not.toHaveBeenCalled()
     expect(mockStartBackgroundCaching).not.toHaveBeenCalled()
+  })
+
+  test('manual hop switches the current audio without any history write', async () => {
+    await seedStorage(audio)
+
+    await trackAutoAdvanceService.handleManualTrackChanged(1)
+
+    expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
+    expect(mockMarkHistoryCompleted).not.toHaveBeenCalled()
+    expect(mockSetMetadata).toHaveBeenCalledWith(mockPlaylist, {
+      albumTitle: playlist.title,
+      artist: secondAudio.artist,
+      artworkUrl: playlist.artwork,
+      title: secondAudio.title,
+    })
+    expect(mockStartBackgroundCaching).toHaveBeenCalledWith(secondAudio.audioUrl)
   })
 })
 

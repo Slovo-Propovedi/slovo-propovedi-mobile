@@ -6,6 +6,8 @@ export interface PlaylistEngineCallbacks {
 }
 
 export interface PlaylistEngineStatus {
+  autoAdvanceCount: null | number
+  didJustFinish: boolean
   durationMs: number
   isBuffering: boolean
   isLoaded: boolean
