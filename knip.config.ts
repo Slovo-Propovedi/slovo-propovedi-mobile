@@ -11,6 +11,9 @@ const config: KnipConfig = {
     // shared/ui list-item surface (ListItemSize, TouchableListItem,
     // OnPressTouchableListItem) alive instead of reading as unused.
     'src/pages/books-list/**/*.{ts,tsx}',
+    // Web AsyncStorage replacement: wired by metro.config.js (resolveRequest
+    // alias on web), never imported directly.
+    'src/shared/lib/web-storage/webAsyncStorage.ts',
   ],
 
   expo: {

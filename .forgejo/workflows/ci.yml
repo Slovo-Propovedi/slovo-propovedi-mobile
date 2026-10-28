@@ -210,18 +210,36 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Android SDK
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - name: Restore Android SDK cache
+        id: sdk-cache
+        # Self-updating cache: restore the newest snapshot by prefix; "Save
+        # Android SDK cache" stores a new one whenever the installed packages
+        # changed (Gradle fetches NDK/CMake/build-tools on its own). A plain
+        # actions/cache with a static key is saved once and never updated, so
+        # everything installed later was re-downloaded on every run.
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: /opt/android-sdk
-          # Version-pinned static key: the SDK content is fixed by the pinned
-          # commandlinetools version in "Setup Android SDK". Bump this key
-          # whenever the commandlinetools version (11076708) in that URL changes.
-          key: ${{ runner.os }}-android-sdk-11076708
+          key: ${{ runner.os }}-android-sdk-v2-
+          restore-keys: |
+            ${{ runner.os }}-android-sdk-v2-
 
       - name: Setup Android SDK
+        # A stalled dl.google.com download must fail the job, not hang it. A cold
+        # run (no cache snapshot yet) downloads ~350 MB at ~0.5 MB/s, ~13 min.
+        timeout-minutes: 30
         env:
           ANDROID_SDK_ROOT: /opt/android-sdk
+          # Packages the native unit tests need, installed up front (with the
+          # step timeout) instead of by Gradle during configuration, where the
+          # download has no timeout — a slow mirror hung the job for 20+ min.
+          # A cache restored from a snapshot already has them (no-op).
+          # build-tools 37 + platform 37: Expo defaults (buildTools/compileSdk; the
+          # repository names API 37 "android-37.0", there is no "android-37");
+          # build-tools 36: AGP 9 default for libraries without a pinned version.
+          # Update on an Expo/RN/AGP upgrade (a "Preparing \"Install …\"" line
+          # in the gradle log means one is missing; the cache picks it up anyway).
+          ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37.0
         run: |
           mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
           # Skip download/unzip/mv when the SDK was restored from cache; `mv`
@@ -243,7 +261,9 @@ jobs:
           # so that expected SIGPIPE (141) would otherwise fail this step
           # even though sdkmanager itself succeeds.
           yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platform-tools" > /dev/null
+          # shellcheck disable=SC2086 # word splitting of the package list is intended
+          # Output kept (no-op when restored) so a slow cold download is visible.
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" $ANDROID_SDK_PACKAGES
 
       - name: Run all tests (jest)
         id: jest
@@ -256,6 +276,7 @@ jobs:
 
       - name: Run native unit tests
         id: native-tests
+        timeout-minutes: 30
         env:
           GRADLE_OPTS: >-
             -Dorg.gradle.internal.http.connectionTimeout=120000
@@ -268,6 +289,32 @@ jobs:
 
       # Forgejo (>= v17.0 + runner >= 13.2) renders this Markdown above the job
       # logs; on older runners the file write is silently discarded.
+      - name: Compute Android SDK cache key
+        id: sdk-cache-key
+        if: ${{ !cancelled() }}
+        # The key is a digest of the installed package directories: it changes
+        # only when the build installed something new.
+        # Only existing directories go to `find`: a missing one (ndk/cmake are
+        # installed by gradle only when needed) makes it exit 1, and steps run
+        # with `pipefail`. No SDK at all (setup failed early) → no key, no save.
+        run: |
+          cd /opt/android-sdk 2>/dev/null || exit 0
+          dirs=()
+          for dir in build-tools platforms ndk cmake cmdline-tools; do
+            [ -d "$dir" ] && dirs+=("$dir")
+          done
+          [ ${#dirs[@]} -gt 0 ] || exit 0
+          digest=$(find "${dirs[@]}" -mindepth 1 -maxdepth 1 | sort | sha256sum | cut -c1-16)
+          echo "key=${{ runner.os }}-android-sdk-v2-$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Save Android SDK cache
+        if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: /opt/android-sdk
+          key: ${{ steps.sdk-cache-key.outputs.key }}
+
       - name: Job summary
         if: always()
         run: |

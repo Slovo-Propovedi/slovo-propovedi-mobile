@@ -22,14 +22,18 @@ export const DynamicSectionsSlider = ({ onboardingTargetId }: { onboardingTarget
   const [dataSource] = useAtom(sectionDataSourceAtom)
   const fetchSections = useAction(fetchAllSections)
 
-  // `'unknown'` means sections were never fetched (neither cache nor network).
-  // On a remount — the sliders unmount while the search is active — the already
-  // loaded sections must not trigger another network revalidation. Pull-to-refresh
-  // calls the action directly, so it still forces a reload.
+  // Revalidate unless sections already came from the network. Startup hydration
+  // (`hydrateCachedSections`) usually commits the cache before this mounts, so
+  // `'cache'` must still trigger a request — otherwise a reload shows stale data
+  // until the 30s retry. A remount after a network load (the sliders unmount
+  // while the search is active) is skipped; pull-to-refresh calls the action
+  // directly. The boolean dep keeps the `unknown → cache` hydration flip from
+  // firing a second request.
+  const hasNetworkData = dataSource === 'network'
   useEffect(() => {
-    if (dataSource !== 'unknown') return
+    if (hasNetworkData) return
     void fetchSections()
-  }, [dataSource, fetchSections])
+  }, [hasNetworkData, fetchSections])
 
   useOfflineRetry({
     fetchFn: fetchSections,

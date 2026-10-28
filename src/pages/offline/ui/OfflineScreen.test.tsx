@@ -82,6 +82,7 @@ jest.mock('entities/track-list', () => {
 
   return {
     createTracksListStyles: () => StyleSheet.create({ container: {}, divider: {} }),
+    TRACK_LIST_ITEM_SIZES: { albumArtSize: 48 },
     TracksListItem,
     TracksListSkeleton,
   }
@@ -90,6 +91,9 @@ jest.mock('entities/track-list', () => {
 const CACHING_OFF_HINT_TEXT = 'Включите тумблер в шапке экрана'
 const CACHING_OFF_TEXT = 'Сохранение в офлайн отключено'
 const NO_SERMONS_TEXT = 'Нет офлайн-проповедей'
+const OFFLINE_OPTION_TEXT = 'Все офлайн-проповеди'
+const OFFLINE_LIST_LABEL = 'Плейлист всех скачанных проповедей'
+const OFFLINE_ORIGIN_LABEL = 'Плейлист, из которого добавлено в офлайн'
 
 const mockSermon = {
   artist: 'Test Artist',
@@ -181,7 +185,7 @@ describe('<OfflineScreen>', () => {
     expect(checkboxes[1]).not.toBeChecked()
   })
 
-  test('row press calls playNewSermon with item playlist and sermon', async () => {
+  test('row press opens the playback chooser instead of playing immediately', async () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
 
@@ -191,8 +195,27 @@ describe('<OfflineScreen>', () => {
       fireEvent.press(getByText('Play'))
     })
 
+    expect(getByText(OFFLINE_OPTION_TEXT)).toBeTruthy()
+    expect(getByText(OFFLINE_LIST_LABEL)).toBeTruthy()
+    expect(getByText(OFFLINE_ORIGIN_LABEL)).toBeTruthy()
+    expect(playNewSermonMock).not.toHaveBeenCalled()
+  })
+
+  test('the offline option plays the all-offline playlist', async () => {
+    const playNewSermonMock = jest.fn()
+    jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
+
+    const { getByText } = await renderWithProviders(<OfflineScreen />)
+
+    await act(async () => {
+      fireEvent.press(getByText('Play'))
+    })
+    await act(async () => {
+      fireEvent.press(getByText(OFFLINE_OPTION_TEXT))
+    })
+
     expect(playNewSermonMock).toHaveBeenCalledWith({
-      playlist: mockItem.playlist,
+      playlist: expect.objectContaining({ id: 'offline-list', sermons: [mockSermon] }),
       sermon: mockItem.sermon,
     })
   })

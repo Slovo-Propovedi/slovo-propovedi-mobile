@@ -145,6 +145,18 @@ describe('<DynamicSectionsSlider>', () => {
     expect(mockFetchAllSections).toHaveBeenCalledTimes(1)
   })
 
+  test('revalidates on mount when only cached sections are shown', async () => {
+    const ctx = createCtx()
+    dynamicSectionsAtom(ctx, [makeSection('a')])
+    isLoadingSectionsAtom(ctx, false)
+    sectionDataSourceAtom(ctx, 'cache')
+
+    const { getByText } = await renderWithProviders(<DynamicSectionsSlider />, { ctx })
+
+    expect(getByText('Section 0')).toBeTruthy()
+    expect(mockFetchAllSections).toHaveBeenCalledTimes(1)
+  })
+
   test('does not refetch on remount once sections are already loaded', async () => {
     const ctx = createCtx()
     dynamicSectionsAtom(ctx, [makeSection('a')])

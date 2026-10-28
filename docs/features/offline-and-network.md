@@ -59,7 +59,7 @@ isInternetReachable ?? isConnected
 4. при сетевой ошибке: если кэш был — он остаётся на экране; если кэша не было — прежнее поведение (пустой список, `dataSource = 'unknown'`, `isLoadingSectionsAtom = false`).
 5. **latest-wins guard**: module-scoped счётчик `requestId` — медленный устаревший ответ не перезапишет более свежий (гонка mount-эффекта и `useOfflineRetry`); проверка после каждого `await`.
 
-При старте приложения `hydrateCachedSections` (`src/entities/section/lib/hydrateCachedSections.ts`, вызывается в `app/_layout.tsx` рядом с `loadHistoryAction`) читает кэш и коммитит его в атомы, если он непустой — таб «Слушать» не мигает скелетоном на тёплом старте. Коммит атомарен (read+write в одном `ctx.schedule`) и не затирает более свежий источник.
+При старте приложения `hydrateCachedSections` (`src/entities/section/lib/hydrateCachedSections.ts`, вызывается в `app/_layout.tsx` рядом с `loadHistoryAction`) читает кэш и коммитит его в атомы, если он непустой — таб «Слушать» не мигает скелетоном на тёплом старте. Коммит атомарен (read+write в одном `ctx.schedule`) и не затирает более свежий источник. Гидратация не заменяет сетевой запрос: при монтировании `DynamicSectionsSlider` ревалидирует секции всегда, когда источник не `'network'` (включая `'cache'`).
 
 Тем же приёмом стартует кэш фича-флагов: `hydrateCachedFeatureFlags` (`src/entities/feature-flags/lib/hydrateCachedFlags.ts`) читает `cachedFeatureFlags` и коммитит карту в `featureFlagsAtom` до сетевого рефетча — гейтед-табы не мигают закрытыми на тёплом старте (см. [feature-flags.md](./feature-flags.md) → «Офлайн-режим и кеш»).
 
@@ -106,7 +106,7 @@ isInternetReachable ?? isConnected
 
 ## Кэш аудио
 
-Офлайн-прослушивание обеспечивает кэш аудио — [audio-cache.md](./audio-cache.md). При старте трека `AudioLoader` сначала берёт закэшированный файл, иначе стартует фоновое кэширование.
+Офлайн-прослушивание обеспечивает кэш аудио — [audio-cache.md](./audio-cache.md). При старте трека `AudioLoader` сначала берёт закэшированный файл, иначе стартует фоновое кэширование. С экрана «Офлайн» воспроизведение стартует через выбор контекста (плейлист или вся скачанная коллекция) — `features/playback-choice`, см. [playback-choice.md](./playback-choice.md); кандидаты собираются локально, сеть для выбора не нужна.
 
 На web отдельного «частичного файла» нет: его эквивалент — **незакоммиченный** entry в Cache Storage (скачивание, прерванное cancel/kill до коммита в манифест). `deletePartialFile` (`src/entities/offline-cache/lib/partialFile.web.ts`) удаляет только заведомо частичные записи: он пропускает закоммиченный (финальный) кэш **и** запись, чей `cache.put` завершился в этой сессии, даже если коммит в манифест упал (`wasDownloadCompleted`, `webCacheApi.ts`) — это полные данные, их не трогаем, остальное согласует orphan-sweep. Нативный `deletePartialFile` удаляет `.cache.mp3`. Вызов общий (`cacheAudioWithProgress.ts`), без `Platform`-гейта. Web-плеер понижает `AbortError` из `audio.play()` (отменённый сменой источника) до `console.warn` без диалога — `src/entities/player/lib/PlayerService/web/audioHandlers.ts`.
 

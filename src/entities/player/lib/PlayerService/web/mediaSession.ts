@@ -1,7 +1,7 @@
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { isOnlineAtom } from 'shared/model/network'
-import { currentAudioAtom } from '../../../model'
+import { currentAudioAtom, currentPlaylistAtom } from '../../../model'
 import { guardOfflinePlayback } from '../../playOfflineGuard'
 import { type LockScreenMetadata } from '../types'
 import { type GetAudio, type MediaSessionPlayer, registerSeekHandlers } from './mediaSessionSeek'
@@ -11,6 +11,7 @@ import { updatePlaybackState, updatePositionState } from './mediaSessionState'
 export interface WebMediaSession {
   clear: () => void
   reassert: () => void
+  reassertMetadata: () => void
   setMetadata: (metadata: LockScreenMetadata) => void
   updatePlaybackState: () => void
   updatePositionState: () => void
@@ -19,6 +20,7 @@ export interface WebMediaSession {
 const NOOP_MEDIA_SESSION: WebMediaSession = {
   clear: () => {},
   reassert: () => {},
+  reassertMetadata: () => {},
   setMetadata: () => {},
   updatePlaybackState: () => {},
   updatePositionState: () => {},
@@ -101,9 +103,24 @@ export const createWebMediaSession = (
     }
   }
 
+  /** Re-applies current-track metadata after a background period (page visible again). */
+  const reassertMetadata = (): void => {
+    if (ns.playbackState !== 'playing') return
+    const audio = ctx.get(currentAudioAtom)
+    if (!audio) return
+
+    setMetadata({
+      albumTitle: ctx.get(currentPlaylistAtom)?.title,
+      artist: audio.artist,
+      artworkUrl: audio.artwork,
+      title: audio.title,
+    })
+  }
+
   return {
     clear,
     reassert,
+    reassertMetadata,
     setMetadata,
     updatePlaybackState: () => updatePlaybackState(getAudio()),
     updatePositionState: () => updatePositionState(getAudio()),

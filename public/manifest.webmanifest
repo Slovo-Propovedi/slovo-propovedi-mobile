@@ -1,7 +1,24 @@
 {
   "name": "Слово.Проповеди",
   "short_name": "Слово.Проповеди",
-  "description": "Аудио проповеди: слушайте онлайн и офлайн",
+  "description": "Проповеди в аудио: слушайте онлайн и офлайн, подборки, плейлисты и поиск по проповедям и проповедникам",
+  "categories": [
+    "education",
+    "books",
+    "music",
+    "lifestyle"
+  ],
+  "keywords": [
+    "slovo",
+    "propovedi",
+    "slovo propovedi",
+    "слово",
+    "проповеди",
+    "проповедь",
+    "аудио",
+    "sermons",
+    "audio"
+  ],
   "lang": "ru",
   "dir": "ltr",
   "id": "/",
@@ -9,7 +26,9 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "launch_handler": { "client_mode": "navigate-existing" },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "background_color": "#f16031",
   "theme_color": "#f16031",
   "icons": [

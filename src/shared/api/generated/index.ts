@@ -17,5 +17,13 @@ export * as sectionsMocks from './sections/sections.faker'
 export * as sermonsMocks from './sermons/sermons.faker'
 export * as usersMocks from './users/users.faker'
 
+// Zod-схемы ответов — для валидации кеша на границе чтения
+export * as featureFlagsSchemas from './model/feature-flags'
+export * as filesSchemas from './model/files'
+export * as playlistsSchemas from './model/playlists'
+export * as sectionsSchemas from './model/sections'
+export * as sermonsSchemas from './model/sermons'
+export * as usersSchemas from './model/users'
+
 // Реэкспортируем все типы
 export * as APITypes from './api.schemas'

@@ -1,13 +1,16 @@
+import { useMemo } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { SPINNER_SLOT_HEIGHT } from './pull-to-refresh.lib'
 import { type PullToRefreshProps } from './pull-to-refresh.types'
+import { RefreshContext } from './refreshContext'
 import { usePullToRefreshGesture } from './usePullToRefreshGesture'
 
 /**
  * Web pull-to-refresh wrapper: react-native's `RefreshControl` is a no-op here,
  * so this adds a touch-driven gesture around any scrollable child. The content
- * slides down while pulling and a spinner appears in the freed top slot.
+ * slides down while pulling and a spinner appears in the freed top slot. The
+ * handler is also shared via `RefreshContext` for the desktop `RefreshButton`.
  * @param root0 - Component props.
  * @param root0.children - Scrollable content wrapped by the gesture.
  * @param root0.onRefresh - Reload callback fired when a pull passes the threshold.
@@ -19,16 +22,19 @@ export const PullToRefresh = ({ children, onRefresh, refreshing }: PullToRefresh
     onRefresh,
     refreshing,
   })
+  const refreshContext = useMemo(() => ({ onRefresh, refreshing }), [onRefresh, refreshing])
 
   return (
-    <View ref={wrapperRef} style={styles.wrapper}>
-      <View ref={spinnerRef} pointerEvents='none' style={styles.spinnerSlot}>
-        <ActivityIndicator color={isArmed ? currentTheme.primary : currentTheme.textMuted} />
+    <RefreshContext.Provider value={refreshContext}>
+      <View ref={wrapperRef} style={styles.wrapper}>
+        <View ref={spinnerRef} pointerEvents='none' style={styles.spinnerSlot}>
+          <ActivityIndicator color={isArmed ? currentTheme.primary : currentTheme.textMuted} />
+        </View>
+        <View ref={contentRef} style={styles.content}>
+          {children}
+        </View>
       </View>
-      <View ref={contentRef} style={styles.content}>
-        {children}
-      </View>
-    </View>
+    </RefreshContext.Provider>
   )
 }
 

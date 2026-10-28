@@ -15,12 +15,12 @@ export const cancelScheduledHistoryFlush = (): void => {
   }
 }
 
-export const flushProgress = (positionMs: number): void => {
+export const flushProgress = (positionMs: number, durationMsOverride?: number): void => {
   cancelScheduledHistoryFlush()
   const audio = ctx.get(currentAudioAtom)
   if (!audio) return
   const playlist = ctx.get(currentPlaylistAtom)
-  const durationMs = ctx.get(durationAtom)
+  const durationMs = durationMsOverride ?? ctx.get(durationAtom)
   void savePlaybackProgress(ctx, { durationMs, positionMs, sermonId: audio.id })
   void flushHistoryProgressAction(ctx, {
     durationMs,

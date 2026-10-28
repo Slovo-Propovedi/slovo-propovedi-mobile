@@ -19,6 +19,7 @@ export const releasePlaylist = (state: PlaylistEngineState): AudioPlaylist | nul
   state.sources = []
   state.snapshots.clear()
   state.currentSourceUri = null
+  state.autoAdvanceCount = null
   return playlist
 }
 

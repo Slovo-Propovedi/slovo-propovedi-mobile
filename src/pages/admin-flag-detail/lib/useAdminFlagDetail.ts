@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { type APITypes, featureFlagsApi } from 'shared/api'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
+import { useCacheFirstEntity } from 'shared/lib/session-cache'
 import { reportError } from 'shared/model/error-dialog'
+import { flagDetailCache } from './flagDetailCache'
 import { resolveOverrideAction } from './overrideAction'
 import { useFlagOverrideMutations } from './useFlagOverrideMutations'
 import { type FlagOverridesState, useFlagOverrides } from './useFlagOverrides'
@@ -32,41 +34,27 @@ export const useAdminFlagDetail = (id: string): AdminFlagDetailState => {
   const refetchOverrides = overridesState.refetch
   const { clearOverride, setOverride } = useFlagOverrideMutations(id, refetchOverrides)
 
-  const fetchFlag = useCallback(async () => {
-    const response = await featureFlagsApi.getFeatureFlags().featureFlagsControllerFindAll()
+  const fetchFlag = useCallback(
+    () =>
+      flagDetailCache.fetchThrough(id, async () => {
+        const response = await featureFlagsApi.getFeatureFlags().featureFlagsControllerFindAll()
 
-    return response.flags.find(item => item.id === id) ?? null
-  }, [id])
+        return response.flags.find(item => item.id === id) ?? null
+      }),
+    [id],
+  )
 
-  useEffect(() => {
-    let isActive = true
-
-    const load = async () => {
-      if (!id) {
-        if (isActive) setIsNotFound(true)
-        return
-      }
-
-      try {
-        const entity = await fetchFlag()
-        if (!isActive) return
-
-        if (entity) setFlag(entity)
-        else setIsNotFound(true)
-      } catch (error) {
-        if (isActive) {
-          setIsNotFound(true)
-          reportError(error, LOAD_ERROR_MESSAGE)
-        }
-      }
-    }
-
-    void load()
-
-    return () => {
-      isActive = false
-    }
-  }, [fetchFlag, id])
+  useCacheFirstEntity({
+    cache: flagDetailCache,
+    errorMessage: LOAD_ERROR_MESSAGE,
+    fetcher: fetchFlag,
+    id,
+    onLoaded: entity => {
+      if (entity) setFlag(entity)
+      else setIsNotFound(true)
+    },
+    onNotFound: () => setIsNotFound(true),
+  })
 
   useSilentRefetchOnFocus(
     useCallback(async () => {

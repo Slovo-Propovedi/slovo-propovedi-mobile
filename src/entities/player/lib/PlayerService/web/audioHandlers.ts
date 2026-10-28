@@ -27,7 +27,7 @@ interface WebAudioHandlerDeps {
   isCurrentAudio: (audio: HTMLAudioElement) => boolean
   mediaSession: WebMediaSession
   noteLivePosition: (ms: number) => void
-  onTrackEnd: (() => void) | undefined
+  onTrackEnd?: (() => void) | undefined
   restoreInterruptedPosition: (audio: HTMLAudioElement) => boolean
   startStatusTracker: () => void
   state: WebPlayerState

@@ -35,20 +35,14 @@ export const PlayerControls = ({
   style?: StyleProp<ViewStyle>
   variant?: PlayerControlsVariant
 }) => {
-  const {
-    getStatus,
-    play,
-    reassertLockScreenMetadata,
-    replaceAudio,
-    seekTo,
-    setLockScreenMetadata,
-  } = usePlayer()
+  const { getStatus, play, reconcileOnForeground, replaceAudio, seekTo, setLockScreenMetadata } =
+    usePlayer()
 
   const { isBuffering, isPlaying } = usePlayerState()
 
   const { togglePlay } = useGuardedTogglePlay()
 
-  useAppStatePlayback({ currentAudio, currentPlaylist, getStatus, reassertLockScreenMetadata })
+  useAppStatePlayback({ getStatus, isPlaying, reconcileOnForeground })
 
   const { hasValidPlaylist, index } = usePlayerTrackState({
     currentAudio,

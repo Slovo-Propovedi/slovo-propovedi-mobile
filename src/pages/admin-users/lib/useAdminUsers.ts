@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { type APITypes, usersApi } from 'shared/api'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { usePaginatedList } from 'shared/lib/hooks/usePaginatedList'
+import { usersPageCache } from './usersPageCache'
 
 export interface AdminUsersState {
   hasMore: boolean
@@ -20,6 +21,7 @@ export interface AdminUsersState {
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить пользователей'
+const USERS_CACHE = { key: '', store: usersPageCache }
 
 const matchesSearch = (user: APITypes.UserResponse, term: string) =>
   user.name.toLowerCase().includes(term) ||
@@ -61,7 +63,12 @@ export const useAdminUsers = (): AdminUsersState => {
     loadMore,
     loadMoreFailed,
     refresh,
-  } = usePaginatedList({ errorMessage: LOAD_ERROR_MESSAGE, fetchPage, pageSize: PAGE_SIZE })
+  } = usePaginatedList({
+    cache: USERS_CACHE,
+    errorMessage: LOAD_ERROR_MESSAGE,
+    fetchPage,
+    pageSize: PAGE_SIZE,
+  })
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase()

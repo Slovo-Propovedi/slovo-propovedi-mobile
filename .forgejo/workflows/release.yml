@@ -600,15 +600,36 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Restore Android SDK cache
+        id: sdk-cache
+        # Self-updating cache: restore the newest snapshot by prefix; "Save
+        # Android SDK cache" stores a new one whenever the installed packages
+        # changed (Gradle fetches NDK/CMake/build-tools on its own). A plain
+        # actions/cache with a static key is saved once and never updated, so
+        # everything installed later was re-downloaded on every run.
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: /opt/android-sdk
+          key: ${{ runner.os }}-android-sdk-v2-
+          restore-keys: |
+            ${{ runner.os }}-android-sdk-v2-
+
       - name: Setup Android SDK
+        # A stalled dl.google.com download must fail the job, not hang it. A cold
+        # run (no cache snapshot yet) downloads ~350 MB at ~0.5 MB/s, ~13 min.
+        timeout-minutes: 30
         env:
           ANDROID_SDK_ROOT: /opt/android-sdk
         run: |
           mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-          curl -sSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
-          mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
-          rm cmdline-tools.zip
+          # Skip download/unzip/mv when the SDK was restored from cache; `mv`
+          # would otherwise fail because cmdline-tools/latest already exists.
+          [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest" ] || (
+            curl -sSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
+            mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+            rm cmdline-tools.zip
+          )
 
           echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
           echo "$ANDROID_SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
@@ -805,6 +826,32 @@ jobs:
           nice -n 19 ionice -c 3 ./gradlew assembleProdRelease --no-daemon -Dorg.gradle.parallel=false --init-script ../scripts/gradle/disable-lint-vital.gradle
           df -h /
           printf '%s\n' "- APK build (arm64-v8a): ✅ ($((EPOCHSECONDS-start))s)" | ../scripts/ci/step-summary.sh
+
+      - name: Compute Android SDK cache key
+        id: sdk-cache-key
+        if: ${{ !cancelled() }}
+        # The key is a digest of the installed package directories: it changes
+        # only when the build installed something new.
+        # Only existing directories go to `find`: a missing one (ndk/cmake are
+        # installed by gradle only when needed) makes it exit 1, and steps run
+        # with `pipefail`. No SDK at all (setup failed early) → no key, no save.
+        run: |
+          cd /opt/android-sdk 2>/dev/null || exit 0
+          dirs=()
+          for dir in build-tools platforms ndk cmake cmdline-tools; do
+            [ -d "$dir" ] && dirs+=("$dir")
+          done
+          [ ${#dirs[@]} -gt 0 ] || exit 0
+          digest=$(find "${dirs[@]}" -mindepth 1 -maxdepth 1 | sort | sha256sum | cut -c1-16)
+          echo "key=${{ runner.os }}-android-sdk-v2-$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Save Android SDK cache
+        if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: /opt/android-sdk
+          key: ${{ steps.sdk-cache-key.outputs.key }}
 
       - name: Verify APK signing certificate
         # "Restore release keystore" only proves A keystore is configured. This
@@ -1357,6 +1404,30 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
+
+      # The eoas CLI is fetched by `npx --yes eoas@<.eoas-version>`; keep npx's
+      # package cache so a publish does not download it again.
+      - name: Cache eoas CLI
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.npm/_npx
+          key: ${{ runner.os }}-npx-eoas-${{ hashFiles('.eoas-version') }}
+
+      # Metro's transform cache (os.tmpdir()/metro-cache) makes the bundle export
+      # incremental. It is content-addressed, so restoring an older snapshot is
+      # safe — stale entries are simply never hit; each run saves a new one.
+      - name: Locate Metro cache
+        id: metro-cache-dir
+        run: echo "dir=$(node -p "require('path').join(require('os').tmpdir(), 'metro-cache')")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Metro transforms
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.metro-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-metro-${{ hashFiles('yarn.lock', 'babel.config.js', 'metro.config.js') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-metro-${{ hashFiles('yarn.lock', 'babel.config.js', 'metro.config.js') }}-
+            ${{ runner.os }}-metro-
 
       - name: Publish OTA update to xprem
         env:

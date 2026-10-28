@@ -1,4 +1,5 @@
 import { Text, View } from 'react-native'
+import { RefreshButton } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
@@ -21,6 +22,7 @@ export const AdminSectionsHeader = ({
           {count > 0 ? 'Слайдеры главной страницы сайта' : 'Разделов пока нет'}
         </Text>
       </View>
+      <RefreshButton />
       <TouchableItem
         onPress={onCreate}
         style={[styles.createButton, { backgroundColor: currentTheme.primary }]}

@@ -1,5 +1,7 @@
+import { APP_VERSION } from 'shared/config'
 import { resolveStepRoute } from './resolveStepRoute'
 import { resolveTourStart } from './resolveTourStart'
+import * as whatsNewScenarioData from './scenarioData/whatsNew'
 import { scenarios, scenariosById } from './scenarios'
 import { buildTourDeck, resolveDeckProgress } from './tourDeck'
 
@@ -46,15 +48,22 @@ describe('onboarding scenario data', () => {
     expect(expandStep.tapActionId).toBe('expand-player')
   })
 
-  test('whats-new is a release scenario pinned to a semver content version', () => {
-    expect(scenariosById.whatsNew.sinceVersion).toMatch(/^\d+\.\d+\.\d+$/)
+  test('whats-new scenario data exports no manual content version', () => {
+    expect(Object.keys(whatsNewScenarioData)).toEqual(['whatsNewScenario'])
   })
 
-  test('whats-new spotlights the help button in its first step', () => {
-    const whatsNew = scenariosById.whatsNew
+  test('whats-new is a release scenario pinned to the running app version', () => {
+    expect(scenariosById.whatsNew.sinceVersion).toBe(APP_VERSION)
+  })
 
-    expect(whatsNew.steps[0].targetId).toBe('app.help-button')
-    expect(whatsNew.steps[0].title).toBe('Обзоры в приложении')
+  test('whats-new opens with a plain card and spotlights the offline rows next', () => {
+    const [intro, rows] = scenariosById.whatsNew.steps
+
+    expect(intro.targetId).toBeUndefined()
+    expect(intro.route).toBeUndefined()
+    expect(intro.tapTargetId).toBeUndefined()
+    expect(rows.route).toBe('/offline')
+    expect(rows.targetId).toBe('offline.rows')
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -92,12 +101,10 @@ describe('onboarding scenario data', () => {
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
   })
 
-  test('whatsNew folds its tab and settings-item lead-up into the settings card', () => {
+  test('whatsNew shows both steps as cards', () => {
     const whatsNewDeck = buildTourDeck(scenariosById.whatsNew.steps)
 
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 3])
-    expect(whatsNewDeck[1].entryStepIndexes).toEqual([1, 2])
-    expect(whatsNewDeck[1].exitStepIndexes).toEqual([])
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1])
   })
 
   test('each scenario wires the tab or row it taps when navigating', () => {

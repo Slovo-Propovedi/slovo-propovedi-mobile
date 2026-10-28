@@ -1,11 +1,13 @@
 import { useAction } from '@reatom/npm-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { type APITypes, sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
+import { useCacheFirstEntity } from 'shared/lib/session-cache'
 import { hasOrderChanged } from 'shared/lib/utils/hasOrderChanged'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
+import { sectionDetailCache } from './sectionDetailCache'
 
 export interface AdminSectionDetailState {
   isDeleting: boolean
@@ -33,38 +35,24 @@ export const useAdminSectionDetail = (id: string): AdminSectionDetailState => {
   const [isReordering, setIsReordering] = useState(false)
 
   const fetchSection = useCallback(
-    () => sectionsApi.getSections().sectionControllerFindOne(id),
+    () =>
+      sectionDetailCache.fetchThrough(id, () =>
+        sectionsApi.getSections().sectionControllerFindOne(id),
+      ),
     [id],
   )
 
-  useEffect(() => {
-    let isActive = true
-
-    const load = async () => {
-      if (!id) {
-        if (isActive) setIsNotFound(true)
-        return
-      }
-
-      try {
-        const entity = await fetchSection()
-        if (!isActive) return
-        setSection(entity)
-        setPlaylists(entity.playlists)
-      } catch (error) {
-        if (isActive) {
-          setIsNotFound(true)
-          reportError(error, LOAD_ERROR_MESSAGE)
-        }
-      }
-    }
-
-    void load()
-
-    return () => {
-      isActive = false
-    }
-  }, [fetchSection, id])
+  useCacheFirstEntity({
+    cache: sectionDetailCache,
+    errorMessage: LOAD_ERROR_MESSAGE,
+    fetcher: fetchSection,
+    id,
+    onLoaded: entity => {
+      setSection(entity)
+      setPlaylists(entity.playlists)
+    },
+    onNotFound: () => setIsNotFound(true),
+  })
 
   useSilentRefetchOnFocus(
     useCallback(async () => {
