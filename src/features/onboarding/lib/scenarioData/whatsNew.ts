@@ -1,5 +1,6 @@
 import { type OnboardingScenario } from '../scenarios'
 
+const LISTEN_TAB_TARGET_ID = 'tab.listen'
 const MORE_TAB_TARGET_ID = 'tab.more'
 const OFFLINE_ITEM_TARGET_ID = 'more.offline-item'
 const HISTORY_ITEM_TARGET_ID = 'more.history-item'
@@ -10,7 +11,7 @@ const HEADER_BACK_TARGET_ID = 'header.back'
 // The steps themselves are the content version of «Что нового»: the auto-show gate
 // compares their fingerprint, and a release without user-visible novelties ships none.
 // Screen changes are entry transitions (blink + navigation) attached to the next card,
-// so they never count as steps — the deck stays three cards.
+// so they never count as steps — the deck stays five cards.
 export const whatsNewScenario: OnboardingScenario = {
   description: 'Новинки этого релиза',
   icon: 'gift-outline',
@@ -19,6 +20,22 @@ export const whatsNewScenario: OnboardingScenario = {
     {
       text: 'Тап по проповеди теперь спрашивает, где её слушать, офлайн-коллекцию можно включить одной командой, а прогресс прослушивания сохраняется, даже если проповедь закончилась в фоне.',
       title: 'Что нового',
+    },
+    // Lead-up into the listen screen: when the tour starts elsewhere, the «Слушать»
+    // tab blinks and navigates there before the data-refresh cards.
+    { route: '/listen', tapTargetId: LISTEN_TAB_TARGET_ID },
+    {
+      text: 'Главная сразу после открытия подтягивает свежие проповеди с сервера, а пока их нет — показывает сохранённые.',
+      title: 'Всегда свежие данные',
+    },
+    {
+      // Desktop web only: on touch devices the button (and its target) is not
+      // rendered, so the step is skipped.
+      route: '/listen',
+      skipIfMissing: true,
+      targetId: 'listen.refresh-button',
+      text: 'На компьютере обновить страницу можно этой кнопкой — так же, как свайпом вниз на телефоне.',
+      title: 'Кнопка «Обновить»',
     },
     // Lead-up into the offline screen: the «Ещё» tab, then the «Офлайн» item.
     { route: '/more', tapTargetId: MORE_TAB_TARGET_ID },
