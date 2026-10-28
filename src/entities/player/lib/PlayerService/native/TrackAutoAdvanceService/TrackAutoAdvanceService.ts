@@ -9,7 +9,7 @@ import {
 import { CURRENT_AUDIO, CURRENT_PLAYLIST } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
-import { setCurrentAudioAction } from '../../../../model'
+import { currentPlaylistAtom, setCurrentAudioAction } from '../../../../model'
 import { savePlaybackProgress } from '../../../playbackProgress'
 import { startBackgroundCaching } from '../../BackgroundCachingService'
 import { lockScreenControls } from '../LockScreenControls'
@@ -98,7 +98,13 @@ class TrackAutoAdvanceService {
 
       this.completedQueueEndIndex = lastIndex
       const snapshot = playlistEngine.getSnapshot(lastIndex)
-      await markHistoryCompletedAction(ctx, lastTrack.id, toMs(snapshot?.duration))
+      await markHistoryCompletedAction(
+        ctx,
+        lastTrack.id,
+        toMs(snapshot?.duration),
+        lastTrack,
+        ctx.get(currentPlaylistAtom) ?? undefined,
+      )
       playlistEngine.pause()
     } catch (error) {
       console.error('[TrackAutoAdvanceService] handleQueueEnd failed:', error)

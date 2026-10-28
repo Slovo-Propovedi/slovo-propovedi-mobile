@@ -25,7 +25,10 @@ jest.mock('entities/listening-history/@x/player', () => ({
   recordSermonSwitchAction: (...args: unknown[]) => mockRecordSermonSwitch(...args),
 }))
 
-jest.mock('../../../../model', () => ({ setCurrentAudioAction: jest.fn() }))
+jest.mock('../../../../model', () => ({
+  currentPlaylistAtom: '@@TEST_CURRENT_PLAYLIST_ATOM',
+  setCurrentAudioAction: jest.fn(),
+}))
 jest.mock('../../../playbackProgress', () => ({
   savePlaybackProgress: (...args: unknown[]) => mockSavePlaybackProgress(...args),
 }))
@@ -201,7 +204,13 @@ describe('TrackAutoAdvanceService.handleQueueEnd', () => {
     await trackAutoAdvanceService.handleQueueEnd()
 
     expect(mockMarkHistoryCompleted).toHaveBeenCalledTimes(1)
-    expect(mockMarkHistoryCompleted).toHaveBeenCalledWith(expect.anything(), secondAudio.id, 100000)
+    expect(mockMarkHistoryCompleted).toHaveBeenCalledWith(
+      expect.anything(),
+      secondAudio.id,
+      100000,
+      secondAudio,
+      undefined,
+    )
     expect(mockedEngine.pause).toHaveBeenCalledTimes(1)
   })
 
