@@ -1,7 +1,6 @@
 import { FlatList, StyleSheet, Text, View } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
 import { Modal } from 'shared/ui/modal'
-import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { PlaybackChoiceRow } from './PlaybackChoiceRow'
 
@@ -18,11 +17,13 @@ const isOriginCandidate = (playlistId: string, originPlaylistId: null | string |
  * following rows are the real playlists holding the sermon. Backdrop closes
  * without starting anything.
  *
- * When `originPlaylistId` is provided, that candidate is highlighted and shows
- * `originLabel` as a caption; an origin missing from the candidates (for
- * example a synthetic single-sermon snapshot) simply stays unhighlighted.
+ * Special rows are highlighted and captioned independently: the candidate with
+ * `originPlaylistId` shows `originLabel`, and the offline collection shows
+ * `offlineLabel`. An origin missing from the candidates (for example a
+ * synthetic single-sermon snapshot) simply stays unhighlighted.
  * @param root0 - Dialog props.
  * @param root0.candidates - Real playlists containing the sermon.
+ * @param root0.offlineLabel - Caption for the highlighted offline collection row.
  * @param root0.offlinePlaylist - Optional pseudo-playlist of all offline sermons.
  * @param root0.onClose - Dismiss without playing.
  * @param root0.onSelect - Play in the chosen playlist.
@@ -32,6 +33,7 @@ const isOriginCandidate = (playlistId: string, originPlaylistId: null | string |
  */
 export const PlaybackChoiceDialog = ({
   candidates,
+  offlineLabel,
   offlinePlaylist,
   onClose,
   onSelect,
@@ -40,6 +42,7 @@ export const PlaybackChoiceDialog = ({
   visible,
 }: {
   candidates: PlaylistData[]
+  offlineLabel?: string
   offlinePlaylist?: PlaylistData
   onClose: () => void
   onSelect: (playlist: PlaylistData) => void
@@ -57,23 +60,28 @@ export const PlaybackChoiceDialog = ({
           data={candidates}
           style={styles.list}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <PlaybackChoiceRow
-              playlist={item}
-              originLabel={originLabel}
-              onSelect={() => onSelect(item)}
-              isOrigin={isOriginCandidate(item.id, originPlaylistId)}
-            />
-          )}
           ListHeaderComponent={
             offlinePlaylist ? (
-              <PressableButton style={styles.row} onPress={() => onSelect(offlinePlaylist)}>
-                <Text style={[styles.rowTitle, { color: currentTheme.text }]}>
-                  {OFFLINE_OPTION_TEXT}
-                </Text>
-              </PressableButton>
+              <PlaybackChoiceRow
+                caption={offlineLabel}
+                highlighted={offlineLabel !== undefined}
+                onSelect={() => onSelect(offlinePlaylist)}
+                playlist={{ ...offlinePlaylist, title: OFFLINE_OPTION_TEXT }}
+              />
             ) : undefined
           }
+          renderItem={({ item }) => {
+            const isOrigin = isOriginCandidate(item.id, originPlaylistId)
+
+            return (
+              <PlaybackChoiceRow
+                playlist={item}
+                highlighted={isOrigin}
+                onSelect={() => onSelect(item)}
+                caption={isOrigin ? originLabel : undefined}
+              />
+            )
+          }}
         />
       </View>
     </Modal>
@@ -88,17 +96,6 @@ const styles = StyleSheet.create({
   },
   list: {
     maxHeight: MAX_LIST_HEIGHT,
-  },
-  row: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    paddingVertical: INDENTS.middle,
-  },
-  rowTitle: {
-    flex: 1,
-    fontSize: FONT_SIZES.md,
-    fontWeight: '600',
   },
   title: {
     fontSize: FONT_SIZES.lg,

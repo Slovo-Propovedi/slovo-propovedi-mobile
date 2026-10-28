@@ -14,6 +14,7 @@ interface PlaybackChoiceOptions {
     originPlaylist: null | PlaylistData,
   ) => PlaylistData | Promise<PlaylistData | undefined> | undefined
   getOfflinePlaylist?: () => PlaylistData | undefined
+  offlineLabel?: string
   originLabel?: string
 }
 
@@ -32,24 +33,25 @@ interface PlaybackChoiceState {
  *
  * `getFallbackPlaylist` is required: zero candidates play it directly; it may
  * resolve asynchronously (history resolves the full playlist from sections).
- * `getOfflinePlaylist` is optional: when provided it becomes the first dialog
- * row ("all offline sermons") and is played when selected.
- * `originLabel` is optional: when provided, the candidate matching the
- * `openChoice` origin is highlighted and captioned with this text (history
- * marks "the playlist it was listened in"; offline passes nothing).
+ * `getOfflinePlaylist` adds the first dialog row ("all offline sermons").
+ * `offlineLabel` highlights that row with a caption; `originLabel` highlights
+ * the matching `openChoice` origin candidate with a caption (history marks
+ * "listened in", offline marks "downloaded from"). The captions are independent.
  *
- * Both option callbacks must be stable (`useCallback` at the call site) because
+ * Both callbacks must be stable (`useCallback` at the call site) because
  * `openChoice` is passed to memoized rows.
  * @param root0 - Hook options.
  * @param root0.errorMessage - Message reported when playback fails.
  * @param root0.getFallbackPlaylist - Playlist played when no candidates exist.
  * @param root0.getOfflinePlaylist - Optional offline collection for the first row.
+ * @param root0.offlineLabel - Caption for the highlighted offline collection row.
  * @param root0.originLabel - Caption for the highlighted origin candidate.
  */
 export const usePlaybackChoice = ({
   errorMessage,
   getFallbackPlaylist,
   getOfflinePlaylist,
+  offlineLabel,
   originLabel,
 }: PlaybackChoiceOptions) => {
   const ctx = useCtx()
@@ -117,6 +119,7 @@ export const usePlaybackChoice = ({
       onClose={close}
       onSelect={select}
       originLabel={originLabel}
+      offlineLabel={offlineLabel}
       candidates={state.candidates}
       offlinePlaylist={state.offlinePlaylist}
       originPlaylistId={state.originPlaylistId}

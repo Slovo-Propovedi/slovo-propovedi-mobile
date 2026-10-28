@@ -91,6 +91,9 @@ jest.mock('entities/track-list', () => {
 const CACHING_OFF_HINT_TEXT = 'Включите тумблер в шапке экрана'
 const CACHING_OFF_TEXT = 'Сохранение в офлайн отключено'
 const NO_SERMONS_TEXT = 'Нет офлайн-проповедей'
+const OFFLINE_OPTION_TEXT = 'Все офлайн-проповеди'
+const OFFLINE_LIST_LABEL = 'Плейлист всех скачанных проповедей'
+const OFFLINE_ORIGIN_LABEL = 'Плейлист, из которого добавлено в офлайн'
 
 const mockSermon = {
   artist: 'Test Artist',
@@ -192,7 +195,9 @@ describe('<OfflineScreen>', () => {
       fireEvent.press(getByText('Play'))
     })
 
-    expect(getByText('Все офлайн-проповеди')).toBeTruthy()
+    expect(getByText(OFFLINE_OPTION_TEXT)).toBeTruthy()
+    expect(getByText(OFFLINE_LIST_LABEL)).toBeTruthy()
+    expect(getByText(OFFLINE_ORIGIN_LABEL)).toBeTruthy()
     expect(playNewSermonMock).not.toHaveBeenCalled()
   })
 
@@ -206,7 +211,7 @@ describe('<OfflineScreen>', () => {
       fireEvent.press(getByText('Play'))
     })
     await act(async () => {
-      fireEvent.press(getByText('Все офлайн-проповеди'))
+      fireEvent.press(getByText(OFFLINE_OPTION_TEXT))
     })
 
     expect(playNewSermonMock).toHaveBeenCalledWith({

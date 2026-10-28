@@ -5,29 +5,30 @@ import { CoverImage } from 'shared/ui/cover-image'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme, withAlpha } from 'shared/ui/theme'
 
-const ORIGIN_TINT_OPACITY = 0.08
-const ORIGIN_BORDER_OPACITY = 0.5
+const HIGHLIGHT_TINT_OPACITY = 0.08
+const HIGHLIGHT_BORDER_OPACITY = 0.5
 
 interface PlaybackChoiceRowProps {
-  isOrigin: boolean
+  caption?: string
+  highlighted?: boolean
   onSelect: () => void
-  originLabel?: string
   playlist: PlaylistData
 }
 
 /**
- * One playlist candidate of the chooser. The playlist the sermon was played
- * from is tinted with the primary color and carries a secondary caption line.
+ * One row of the chooser. A special row (the playback origin or the offline
+ * collection) is tinted with the primary color and may carry a secondary
+ * caption line.
  * @param root0 - Row props.
- * @param root0.isOrigin - Whether this candidate is the playback origin.
+ * @param root0.caption - Secondary line shown under the playlist title.
+ * @param root0.highlighted - Whether the row is tinted as a special one.
  * @param root0.onSelect - Play in this playlist.
- * @param root0.originLabel - Caption shown on the origin row.
- * @param root0.playlist - Candidate playlist.
+ * @param root0.playlist - Playlist shown by the row.
  */
 export const PlaybackChoiceRow = ({
-  isOrigin,
+  caption,
+  highlighted,
   onSelect,
-  originLabel,
   playlist,
 }: PlaybackChoiceRowProps) => {
   const { currentTheme } = useTheme()
@@ -37,9 +38,9 @@ export const PlaybackChoiceRow = ({
       onPress={onSelect}
       style={[
         styles.row,
-        isOrigin && {
-          backgroundColor: withAlpha(currentTheme.primary, ORIGIN_TINT_OPACITY),
-          borderColor: withAlpha(currentTheme.primary, ORIGIN_BORDER_OPACITY),
+        highlighted && {
+          backgroundColor: withAlpha(currentTheme.primary, HIGHLIGHT_TINT_OPACITY),
+          borderColor: withAlpha(currentTheme.primary, HIGHLIGHT_BORDER_OPACITY),
           borderRadius: RADIUSES.low,
           borderWidth: 1,
           paddingHorizontal: INDENTS.low,
@@ -51,9 +52,9 @@ export const PlaybackChoiceRow = ({
         <Text numberOfLines={1} style={[styles.rowTitle, { color: currentTheme.text }]}>
           {playlist.title}
         </Text>
-        {isOrigin && originLabel ? (
-          <Text numberOfLines={1} style={[styles.originLabel, { color: currentTheme.textMuted }]}>
-            {originLabel}
+        {caption ? (
+          <Text numberOfLines={1} style={[styles.caption, { color: currentTheme.textMuted }]}>
+            {caption}
           </Text>
         ) : null}
       </View>
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
     height: TRACK_LIST_ITEM_SIZES.albumArtSize,
     width: TRACK_LIST_ITEM_SIZES.albumArtSize,
   },
-  originLabel: {
+  caption: {
     fontSize: FONT_SIZES.sm,
   },
   row: {

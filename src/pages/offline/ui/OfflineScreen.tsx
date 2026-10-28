@@ -19,12 +19,13 @@ import { OfflineRow } from './OfflineRow'
 import { OfflineSeparator } from './OfflineSeparator'
 import { SermonCachingHeaderSwitch } from './SermonCachingHeaderSwitch'
 
-// Cap the rows mounted on first paint and per batch: every mounted row runs its
-// own cache/history subscriptions and a native file-system check, so a large
-// default window (21 viewports) makes the list land in one expensive wave.
+// Cap rows mounted on first paint and per batch: each row runs its own
+// subscriptions and a native file check, so a large window lands in one wave.
 const INITIAL_ROWS_TO_RENDER = 8
 const ROWS_PER_BATCH = 8
 const LIST_WINDOW_SIZE = 7
+const OFFLINE_LIST_LABEL = 'Плейлист всех скачанных проповедей'
+const OFFLINE_ORIGIN_LABEL = 'Плейлист, из которого добавлено в офлайн'
 
 const styles = StyleSheet.create({
   headerActions: {
@@ -56,6 +57,8 @@ export const OfflineScreen = () => {
     errorMessage: OFFLINE_PLAYBACK_ERROR_MESSAGE,
     getFallbackPlaylist: getOfflinePlaylist,
     getOfflinePlaylist,
+    offlineLabel: OFFLINE_LIST_LABEL,
+    originLabel: OFFLINE_ORIGIN_LABEL,
   })
   const tourScrollableRef = useTourScrollable()
 
