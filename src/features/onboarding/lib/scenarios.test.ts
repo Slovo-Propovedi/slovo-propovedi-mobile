@@ -114,10 +114,11 @@ describe('onboarding scenario data', () => {
     expect(whatsNewDeck[1].entryStepIndexes).toEqual([1, 2])
     expect(whatsNew.steps[1]).toEqual({ route: '/more', tapTargetId: 'tab.more' })
     expect(whatsNew.steps[2]).toEqual({ route: '/offline', tapTargetId: 'more.offline-item' })
-    // Offline → history: the same tab leaves the nested screen, then the history item
-    // blink (the history scenario's lead-up) navigates into the history card.
+    // Offline → history: the back arrow leaves the nested screen (no tab bar there),
+    // then the history item blink (the history scenario's lead-up) navigates into the
+    // history card.
     expect(whatsNewDeck[2].entryStepIndexes).toEqual([4, 5])
-    expect(whatsNew.steps[4]).toEqual({ route: '/more', tapTargetId: 'tab.more' })
+    expect(whatsNew.steps[4]).toEqual({ route: '/more', tapTargetId: 'header.back' })
     expect(whatsNew.steps[5]).toEqual({ route: '/history', tapTargetId: 'more.history-item' })
   })
 

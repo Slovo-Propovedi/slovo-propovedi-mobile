@@ -12,6 +12,7 @@ import { useOfflineRegistrySync } from 'features/offline-sermons'
 import {
   HelpHeaderButton,
   OnboardingHelpRow,
+  OnboardingTarget,
   OnboardingTourOverlay,
   useAutoTours,
 } from 'features/onboarding'
@@ -33,8 +34,12 @@ subscribeToNetwork()
 // on every change (see expo-router Screen.js). A fresh inline function each
 // render makes those options "change" → setState → re-render → setState loop
 // ("Maximum update depth exceeded"). Module-level refs stay identical.
+const HEADER_BACK_TARGET_ID = 'header.back'
+
 const renderHeaderBack = (props: { tintColor?: ColorValue }) => (
-  <HeaderBackButton tintColor={props.tintColor} />
+  <OnboardingTarget id={HEADER_BACK_TARGET_ID}>
+    <HeaderBackButton tintColor={props.tintColor} />
+  </OnboardingTarget>
 )
 
 const renderHelp = (props: { tintColor?: ColorValue }) => (
