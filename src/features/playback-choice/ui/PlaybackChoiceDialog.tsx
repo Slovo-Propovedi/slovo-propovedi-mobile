@@ -1,25 +1,33 @@
 import { FlatList, StyleSheet, Text, View } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
-import { TRACK_LIST_ITEM_SIZES } from 'entities/track-list'
-import { CoverImage } from 'shared/ui/cover-image'
 import { Modal } from 'shared/ui/modal'
 import { PressableButton } from 'shared/ui/pressable-button'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
+import { PlaybackChoiceRow } from './PlaybackChoiceRow'
 
 const TITLE = 'Где воспроизвести проповедь?'
 const OFFLINE_OPTION_TEXT = 'Все офлайн-проповеди'
 const MAX_LIST_HEIGHT = 360
+
+const isOriginCandidate = (playlistId: string, originPlaylistId: null | string | undefined) =>
+  originPlaylistId != null && playlistId === originPlaylistId
 
 /**
  * Chooser shown when a sermon belongs to several playlists. When an offline
  * collection is provided, the first row plays the whole offline set; the
  * following rows are the real playlists holding the sermon. Backdrop closes
  * without starting anything.
+ *
+ * When `originPlaylistId` is provided, that candidate is highlighted and shows
+ * `originLabel` as a caption; an origin missing from the candidates (for
+ * example a synthetic single-sermon snapshot) simply stays unhighlighted.
  * @param root0 - Dialog props.
  * @param root0.candidates - Real playlists containing the sermon.
  * @param root0.offlinePlaylist - Optional pseudo-playlist of all offline sermons.
  * @param root0.onClose - Dismiss without playing.
  * @param root0.onSelect - Play in the chosen playlist.
+ * @param root0.originLabel - Caption for the playback-origin candidate.
+ * @param root0.originPlaylistId - Id of the playback-origin candidate, if shown.
  * @param root0.visible - Whether the chooser is shown.
  */
 export const PlaybackChoiceDialog = ({
@@ -27,12 +35,16 @@ export const PlaybackChoiceDialog = ({
   offlinePlaylist,
   onClose,
   onSelect,
+  originLabel,
+  originPlaylistId,
   visible,
 }: {
   candidates: PlaylistData[]
   offlinePlaylist?: PlaylistData
   onClose: () => void
   onSelect: (playlist: PlaylistData) => void
+  originLabel?: string
+  originPlaylistId?: null | string
   visible: boolean
 }) => {
   const { currentTheme } = useTheme()
@@ -45,6 +57,14 @@ export const PlaybackChoiceDialog = ({
           data={candidates}
           style={styles.list}
           keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <PlaybackChoiceRow
+              playlist={item}
+              originLabel={originLabel}
+              onSelect={() => onSelect(item)}
+              isOrigin={isOriginCandidate(item.id, originPlaylistId)}
+            />
+          )}
           ListHeaderComponent={
             offlinePlaylist ? (
               <PressableButton style={styles.row} onPress={() => onSelect(offlinePlaylist)}>
@@ -54,14 +74,6 @@ export const PlaybackChoiceDialog = ({
               </PressableButton>
             ) : undefined
           }
-          renderItem={({ item }) => (
-            <PressableButton style={styles.row} onPress={() => onSelect(item)}>
-              <CoverImage uri={item.artwork} style={styles.artwork} />
-              <Text numberOfLines={1} style={[styles.rowTitle, { color: currentTheme.text }]}>
-                {item.title}
-              </Text>
-            </PressableButton>
-          )}
         />
       </View>
     </Modal>
@@ -69,11 +81,6 @@ export const PlaybackChoiceDialog = ({
 }
 
 const styles = StyleSheet.create({
-  artwork: {
-    borderRadius: RADIUSES.low,
-    height: TRACK_LIST_ITEM_SIZES.albumArtSize,
-    width: TRACK_LIST_ITEM_SIZES.albumArtSize,
-  },
   container: {
     minWidth: '100%',
     paddingHorizontal: INDENTS.high,

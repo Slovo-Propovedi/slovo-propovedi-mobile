@@ -21,6 +21,7 @@ import { HistoryRow } from './HistoryRow'
 import { HistorySeparator } from './HistorySeparator'
 
 const PLAYBACK_ERROR_MESSAGE = 'Не удалось воспроизвести проповедь из истории'
+const PLAYBACK_ORIGIN_LABEL = 'Плейлист, в котором было прослушано'
 
 const styles = StyleSheet.create({
   skeletonList: {
@@ -44,6 +45,7 @@ export const HistoryScreen = () => {
   const { dialog, openChoice } = usePlaybackChoice({
     errorMessage: PLAYBACK_ERROR_MESSAGE,
     getFallbackPlaylist: resolveEntryFallbackPlaylist,
+    originLabel: PLAYBACK_ORIGIN_LABEL,
   })
   const tourScrollableRef = useTourScrollable()
 

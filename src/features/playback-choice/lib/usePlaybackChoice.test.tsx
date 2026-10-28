@@ -14,6 +14,7 @@ jest.mock('entities/player', () => ({
 const OFFLINE_OPTION_TEXT = 'Все офлайн-проповеди'
 const DIALOG_TITLE = 'Где воспроизвести проповедь?'
 const ERROR_MESSAGE = 'Не удалось воспроизвести проповедь'
+const ORIGIN_LABEL = 'Плейлист, в котором было прослушано'
 
 const sermon: AudioPlayerData = {
   artist: 'Автор',
@@ -62,7 +63,11 @@ type FallbackPlaylist = (
   originPlaylist: null | PlaylistData,
 ) => PlaylistData | Promise<PlaylistData | undefined> | undefined
 
-const renderProbe = async (offline?: PlaylistData, fallback?: FallbackPlaylist) => {
+const renderProbe = async (
+  offline?: PlaylistData,
+  fallback?: FallbackPlaylist,
+  originLabel?: string,
+) => {
   const ctx = createCtx()
   const result: { current: null | ReturnType<typeof usePlaybackChoice> } = { current: null }
   const Probe = () => {
@@ -71,6 +76,7 @@ const renderProbe = async (offline?: PlaylistData, fallback?: FallbackPlaylist) 
       getFallbackPlaylist:
         fallback ?? ((_sermon, originPlaylist) => offline ?? originPlaylist ?? undefined),
       getOfflinePlaylist: offline ? () => offline : undefined,
+      originLabel,
     })
     result.current = value
     return value.dialog
@@ -196,6 +202,44 @@ describe('usePlaybackChoice', () => {
     expect(queryByText(OFFLINE_OPTION_TEXT)).toBeNull()
     expect(getAllByRole('button')[0]).toHaveTextContent(realPlaylist.title)
     expect(mockPlayNewSermon).not.toHaveBeenCalled()
+  })
+
+  test('history mode: captions and highlights the origin playlist', async () => {
+    const { getByText, result } = await renderProbe(undefined, undefined, ORIGIN_LABEL)
+
+    await act(async () => {
+      result.current?.openChoice(sermon, realPlaylist)
+    })
+
+    expect(getByText(realPlaylist.title)).toBeTruthy()
+    expect(getByText(ORIGIN_LABEL)).toBeTruthy()
+  })
+
+  test('offline mode: no origin caption without originLabel', async () => {
+    const { queryByText, result } = await renderProbe(offlinePlaylist)
+
+    await act(async () => {
+      result.current?.openChoice(sermon, realPlaylist)
+    })
+
+    expect(queryByText(ORIGIN_LABEL)).toBeNull()
+    expect(queryByText(OFFLINE_OPTION_TEXT)).toBeTruthy()
+  })
+
+  test('history mode: synthetic origin excluded from candidates shows no caption', async () => {
+    const otherOrigin: PlaylistData = {
+      ...realPlaylist,
+      id: 'playlist-2',
+      title: 'Другой плейлист',
+    }
+    const { getByText, queryByText, result } = await renderProbe(undefined, undefined, ORIGIN_LABEL)
+
+    await act(async () => {
+      result.current?.openChoice({ ...sermon, playlists: [otherOrigin] }, syntheticPlaylist)
+    })
+
+    expect(getByText(otherOrigin.title)).toBeTruthy()
+    expect(queryByText(ORIGIN_LABEL)).toBeNull()
   })
 
   test('history mode: selecting a playlist plays the sermon there', async () => {

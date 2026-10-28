@@ -200,6 +200,7 @@ describe('<HistoryScreen>', () => {
     })
 
     expect(getByText('Где воспроизвести проповедь?')).toBeTruthy()
+    expect(getByText('Плейлист, в котором было прослушано')).toBeTruthy()
     expect(queryByText('Все офлайн-проповеди')).toBeNull()
     expect(playNewSermonMock).not.toHaveBeenCalled()
 

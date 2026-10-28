@@ -14,11 +14,13 @@ interface PlaybackChoiceOptions {
     originPlaylist: null | PlaylistData,
   ) => PlaylistData | Promise<PlaylistData | undefined> | undefined
   getOfflinePlaylist?: () => PlaylistData | undefined
+  originLabel?: string
 }
 
 interface PlaybackChoiceState {
   candidates: PlaylistData[]
   offlinePlaylist?: PlaylistData
+  originPlaylistId: null | string
   sermon: AudioPlayerData
 }
 
@@ -32,6 +34,9 @@ interface PlaybackChoiceState {
  * resolve asynchronously (history resolves the full playlist from sections).
  * `getOfflinePlaylist` is optional: when provided it becomes the first dialog
  * row ("all offline sermons") and is played when selected.
+ * `originLabel` is optional: when provided, the candidate matching the
+ * `openChoice` origin is highlighted and captioned with this text (history
+ * marks "the playlist it was listened in"; offline passes nothing).
  *
  * Both option callbacks must be stable (`useCallback` at the call site) because
  * `openChoice` is passed to memoized rows.
@@ -39,11 +44,13 @@ interface PlaybackChoiceState {
  * @param root0.errorMessage - Message reported when playback fails.
  * @param root0.getFallbackPlaylist - Playlist played when no candidates exist.
  * @param root0.getOfflinePlaylist - Optional offline collection for the first row.
+ * @param root0.originLabel - Caption for the highlighted origin candidate.
  */
 export const usePlaybackChoice = ({
   errorMessage,
   getFallbackPlaylist,
   getOfflinePlaylist,
+  originLabel,
 }: PlaybackChoiceOptions) => {
   const ctx = useCtx()
   const playNewSermon = usePlayNewSermon()
@@ -82,9 +89,15 @@ export const usePlaybackChoice = ({
         return
       }
 
-      setState({ candidates, offlinePlaylist: getOfflinePlaylist?.(), sermon })
+      const originPlaylistId = originLabel && originPlaylist ? originPlaylist.id : null
+      setState({
+        candidates,
+        offlinePlaylist: getOfflinePlaylist?.(),
+        originPlaylistId,
+        sermon,
+      })
     },
-    [ctx, getOfflinePlaylist, startFallback],
+    [ctx, getOfflinePlaylist, originLabel, startFallback],
   )
 
   const select = useCallback(
@@ -103,8 +116,10 @@ export const usePlaybackChoice = ({
       visible
       onClose={close}
       onSelect={select}
+      originLabel={originLabel}
       candidates={state.candidates}
       offlinePlaylist={state.offlinePlaylist}
+      originPlaylistId={state.originPlaylistId}
     />
   ) : null
 
