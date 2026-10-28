@@ -1,17 +1,26 @@
 import { useAtom } from '@reatom/npm-react'
 import { useNavigation } from 'expo-router'
-import { useLayoutEffect } from 'react'
+import { useCallback, useLayoutEffect } from 'react'
 import { FlatList, StyleSheet, Text, View } from 'react-native'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { OnboardingHelpRow, OnboardingTarget, useTourScrollable } from 'features/onboarding'
-import { getEntrySermon, historyAtom, isHistoryLoadedAtom } from 'entities/listening-history'
+import { usePlaybackChoice } from 'features/playback-choice'
+import {
+  getEntrySermon,
+  historyAtom,
+  isHistoryLoadedAtom,
+  type ListeningHistoryEntry,
+} from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
 import { createTracksListStyles, TracksListSkeleton } from 'entities/track-list'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { resolveEntryFallbackPlaylist } from '../lib/resolveEntryFallbackPlaylist'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
 import { HistoryRow } from './HistoryRow'
 import { HistorySeparator } from './HistorySeparator'
+
+const PLAYBACK_ERROR_MESSAGE = 'Не удалось воспроизвести проповедь из истории'
 
 const styles = StyleSheet.create({
   skeletonList: {
@@ -32,7 +41,20 @@ export const HistoryScreen = () => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const tracksListStyles = createTracksListStyles(currentTheme)
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
+  const { dialog, openChoice } = usePlaybackChoice({
+    errorMessage: PLAYBACK_ERROR_MESSAGE,
+    getFallbackPlaylist: resolveEntryFallbackPlaylist,
+  })
   const tourScrollableRef = useTourScrollable()
+
+  const handlePress = useCallback(
+    (entry: ListeningHistoryEntry) => {
+      const sermon = getEntrySermon(entry)
+      if (!sermon) return
+      openChoice(sermon, entry.playlist)
+    },
+    [openChoice],
+  )
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -89,6 +111,7 @@ export const HistoryScreen = () => {
             return (
               <HistoryRow
                 entry={item}
+                onPress={handlePress}
                 isPlaying={isCurrentAudio}
                 onAddToPlaylist={openAddToPlaylist}
                 isAudioPlaying={isCurrentAudio && isPlaying}
@@ -97,6 +120,7 @@ export const HistoryScreen = () => {
           }}
         />
       </OnboardingTarget>
+      {dialog}
       {modal}
     </View>
   )
