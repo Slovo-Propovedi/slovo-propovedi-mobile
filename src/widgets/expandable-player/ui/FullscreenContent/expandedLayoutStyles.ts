@@ -10,10 +10,6 @@ export const expandedLayoutStyles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
   },
 
-  backgroundImage: {
-    ...StyleSheet.absoluteFill,
-  },
-
   // Dim layer between the blurred cover background and the artwork square; keeps
   // header/controls readable while the hue still follows the artwork.
   backgroundScrim: {
