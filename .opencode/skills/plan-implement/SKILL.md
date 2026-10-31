@@ -14,6 +14,8 @@ A plan is written for an engineer who has not seen this conversation. Plan first
 
 Note for orchestrated OpenCode sessions: the plan DOCUMENT format is owned by the `plan-protocol` skill / `plan_save`. This skill owns the DISCIPLINE — task sizing, verification per task, execution loop. When both apply: plan-protocol for the file, plan-implement for behavior.
 
+**Mandatory:** before calling `plan_save`, LOAD the `plan-protocol` skill and follow its format exactly — YAML frontmatter (`status`, `phase`, `updated`), `## Phase N: NAME [STATUS]` sections with tasks numbered `N.M`, exactly one `← CURRENT` task, `ref:delegation-id` citations for research-based decisions. Saving a plan without that format fails `plan_save` validation (`[frontmatter]: expected object, received null`, `phases: Plan must have at least one phase`). `plan_save` takes the full markdown as its `content` argument — pass no other keys.
+
 ## Phase 1 — Write the plan
 
 Header: **Goal** (one sentence), **Approach** (2–3 sentences), **Spec** (link if it comes from `/speckit.*`), **Global constraints** (exact values, one line each).
