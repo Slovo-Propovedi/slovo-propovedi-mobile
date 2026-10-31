@@ -6,7 +6,7 @@
     },
     {
       "name": "app",
-      "path": "src/app"
+      "path": "app"
     },
     {
       "name": "pages",
@@ -44,25 +44,17 @@
     "recommendations": [
       "dbaeumer.vscode-eslint",
       "esbenp.prettier-vscode",
-      "wmaurer.change-case",
       "streetsidesoftware.code-spell-checker",
       "streetsidesoftware.code-spell-checker-russian",
       "dsznajder.es7-react-js-snippets",
       "expo.vscode-expo-tools",
-      "mhutchie.git-graph",
-      "wix.vscode-import-cost",
-      "xabikos.JavaScriptSnippets",
       "ms-vscode.vscode-typescript-next",
       "ms-vsliveshare.vsliveshare",
       "DavidAnson.vscode-markdownlint",
       "quicktype.quicktype",
-      "christian-kohler.path-intellisense",
-      "yoavbls.pretty-ts-errors",
-      "Gruntfuggly.todo-tree",
       "BriteSnow.vscode-toggle-quotes",
-      "pflannery.vscode-versionlens",
-      "unifiedjs.vscode-mdx",
-      "SonarSource.sonarlint-vscode"
+      "sst-dev.opencode",
+      "orta.vscode-jest"
     ]
   }
 }
