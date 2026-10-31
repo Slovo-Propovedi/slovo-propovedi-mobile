@@ -56,7 +56,7 @@ Every non-trivial task runs through a workflow BEFORE implementation. Workflow s
 
 | Situation | Workflow | How |
 |-----------|----------|-----|
-| New feature, API contract change, cross-cutting change, vague requirements | Spec-Driven Development | `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement` (`/speckit.constitution` once per repo; `/speckit.analyze` / `/speckit.checklist` when useful) |
+| New feature, API contract change, cross-cutting change, vague requirements | Spec-Driven Development | `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.taskstoissues` (mirror tasks to the Forgejo board; needs `FORGEJO_TOKEN`) → `/speckit.implement` (`/speckit.constitution` once per repo; `/speckit.analyze` / `/speckit.checklist` when useful) |
 | Clear requirements, multi-step change (no spec needed) | Plan → implement | `plan-implement` skill |
 | Any bug, red test, unexpected behavior | Debug first | `systematic-debugging` skill |
 | Any code/behavior change (inside any workflow) | Test-Driven Development | `tdd` skill (verification-first Mode B when no test runner) |

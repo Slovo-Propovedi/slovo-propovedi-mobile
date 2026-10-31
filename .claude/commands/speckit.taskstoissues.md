@@ -61,7 +61,13 @@ Parse the URL into `INSTANCE`, `OWNER`, `REPO`: strip a trailing `.git`; support
 > [!CAUTION]
 > ONLY CREATE ISSUES IN THE `OWNER/REPO` ON THE `INSTANCE` DERIVED FROM THE REMOTE URL
 
-1. **Token check**: the Forgejo API token must be available in the `FORGEJO_TOKEN` environment variable (Forgejo → Settings → Applications → access token with issue write scope). If `FORGEJO_TOKEN` is unset or empty, STOP and tell the user to export it. Every API call below sends the header `Authorization: token $FORGEJO_TOKEN`.
+1. **Token check**: the Forgejo API token must be available in the `FORGEJO_TOKEN` environment variable. Every API call below sends the header `Authorization: token $FORGEJO_TOKEN`.
+   If `FORGEJO_TOKEN` is unset or empty, STOP and print this setup guide verbatim before doing anything else:
+   - **Create the token**: Forgejo web UI → Settings → Applications → Access Tokens → generate a token with the `write:issue` scope (read is included automatically).
+   - **Export it** (pick one): one-off — `export FORGEJO_TOKEN="<token>"` in the terminal BEFORE starting the agent session; permanent — add the same line to `~/.bashrc` / `~/.zshrc`; per-project — `.envrc` via direnv (must be gitignored).
+   - **Verify**: `curl -s -H "Authorization: token $FORGEJO_TOKEN" "$INSTANCE/api/v1/user"` returns your profile.
+   - **Restart** the agent session after exporting so the new process picks up the variable.
+   Never commit the token anywhere — it is a password.
 
 1. **Fetch existing issues for deduplication**: Before creating anything, build the set of task IDs you are about to process from `tasks.md` (each is a `T` followed by **at least** three digits, e.g. `T001` — `/speckit.converge` assigns new IDs with `T{M+1:03d}`, which is a floor rather than a cap, so once a file has more than 999 tasks the IDs are four digits or longer). Then list existing issues:
 
@@ -85,6 +91,13 @@ curl -sf -X POST -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: appl
 
 > [!CAUTION]
 > UNDER NO CIRCUMSTANCES EVER CREATE ISSUES IN REPOSITORIES THAT DO NOT MATCH THE REMOTE URL
+
+## Completion Report
+
+Report to the user:
+- each created issue as `Txxx — <title> — <issue URL>`
+- skipped task IDs with the reason (already had an issue)
+- a note that the tasks are now on the Forgejo board, ready to be assigned
 
 ## Post-Execution Checks
 
