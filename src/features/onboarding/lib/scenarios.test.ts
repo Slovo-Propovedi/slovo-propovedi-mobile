@@ -55,8 +55,10 @@ describe('onboarding scenario data', () => {
 
     expect(whatsNew.steps[0].targetId).toBeUndefined()
     expect(whatsNew.steps[0].title).toBe('Новые ряды плеера')
-    expect(whatsNew.steps[1].targetId).toBe('app.help-button')
-    expect(whatsNew.steps[1].title).toBe('Сценарии плеера')
+    expect(whatsNew.steps[1].targetId).toBeUndefined()
+    expect(whatsNew.steps[1].title).toBe('Квадратная обложка и цвет')
+    expect(whatsNew.steps[2].targetId).toBe('app.help-button')
+    expect(whatsNew.steps[2].title).toBe('Сценарии плеера')
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -97,9 +99,11 @@ describe('onboarding scenario data', () => {
   test('whatsNew has no entry transitions', () => {
     const whatsNewDeck = buildTourDeck(scenariosById.whatsNew.steps)
 
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1])
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1, 2])
     expect(whatsNewDeck[1].entryStepIndexes).toEqual([])
     expect(whatsNewDeck[1].exitStepIndexes).toEqual([])
+    expect(whatsNewDeck[2].entryStepIndexes).toEqual([])
+    expect(whatsNewDeck[2].exitStepIndexes).toEqual([])
   })
 
   test('each scenario wires the tab or row it taps when navigating', () => {
