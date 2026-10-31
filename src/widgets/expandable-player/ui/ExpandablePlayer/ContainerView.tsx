@@ -3,16 +3,12 @@ import { type LayoutChangeEvent, type StyleProp, View, type ViewStyle } from 're
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { type AudioPlayerData } from 'entities/sermon'
-import { CoverImage } from 'shared/ui'
+import { useArtworkDominantColor } from 'shared/lib/useArtworkDominantColor'
 import { type ThemeColors } from 'shared/ui/theme'
 import { useFullscreenContentMount } from '../../model/useFullscreenContentMount'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
 import { type createStyles } from './styles'
-
-// Blurred cover layer paints the page background in tones of the artwork
-// (no color-extraction dependency).
-const BACKGROUND_ARTWORK_BLUR = 30
 
 /** Consumer style must not carry geometry keys — enforced by compiler (Issue #63 invariant). */
 export type NonGeometricStyle = Omit<ViewStyle, 'bottom' | 'height' | 'left' | 'top' | 'width'>
@@ -55,6 +51,7 @@ export const ContainerView = ({
   // FullscreenContent stays mounted through the collapse animation so the exit
   // fade is visible, then unmounts to stop its per-tick re-render storm (Issue #100).
   const isFullscreenContentMounted = useFullscreenContentMount(expanded)
+  const artworkBackgroundColor = useArtworkDominantColor(audio.artwork, currentTheme.surface)
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -83,14 +80,14 @@ export const ContainerView = ({
           style,
         ]}
       >
-        <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
-          <CoverImage
-            eager
-            transition={0}
-            uri={audio.artwork}
-            blur={BACKGROUND_ARTWORK_BLUR}
-            style={styles.backgroundImage}
-          />
+        <Animated.View
+          style={[
+            styles.backgroundContainer,
+            backgroundImageStyle,
+            // Solid artwork-derived background; fades in over the surface via this layer.
+            { backgroundColor: artworkBackgroundColor },
+          ]}
+        >
           <View pointerEvents='none' style={styles.backgroundScrim} />
         </Animated.View>
         <Animated.View style={[miniOverlay, miniOverlayStyle, { pointerEvents: 'none' }]} />

@@ -86,6 +86,7 @@
     "react-native": "0.88.0",
     "react-native-draggable-flatlist": "^4.0.3",
     "react-native-gesture-handler": "~3.3.0",
+    "react-native-image-colors": "^2.6.1",
     "react-native-pager-view": "9.0.7",
     "react-native-qrcode-svg": "^6.3.27",
     "react-native-reanimated": "4.7.1",
