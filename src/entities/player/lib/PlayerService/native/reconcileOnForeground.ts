@@ -1,6 +1,12 @@
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
-import { currentAudioAtom, currentPlaylistAtom } from '../../../model'
+import {
+  currentAudioAtom,
+  currentPlaylistAtom,
+  setDurationAction,
+  setIsPlayingAction,
+  setPositionAction,
+} from '../../../model'
 import { flushProgress } from '../progressFlusher'
 import { lockScreenControls } from './LockScreenControls'
 import { playlistEngine } from './PlaylistEngine'
@@ -55,6 +61,10 @@ const reassertLockScreenMetadata = (): void => {
 export const reconcileOnForeground = async (): Promise<void> => {
   try {
     const engine = readEngineState()
+    // Native truth for every decision branch: a resume initiated by the headset
+    // (AVRCP) is handled natively and never reaches the JS status stream, so the
+    // playing atom can stay stale until the next foreground return.
+    void setIsPlayingAction(ctx, playlistEngine.getStatus().isPlaying)
     // Baseline JS last observed; the native counter lives in the engine summary.
     // A late trackChanged handled before this point bumps both, undercounting
     // the delta — the engine then equals the current track → `flush-current`.
@@ -73,7 +83,11 @@ export const reconcileOnForeground = async (): Promise<void> => {
     else if (decision.type === 'advance-manual') await applyAdvanceManualDecision(decision.switchTo)
     else if (decision.type === 'idle-complete')
       await applyIdleCompleteDecision(engine.currentIndex, jsIndex, engine.durationMs)
-    else if (decision.type === 'flush-current') flushProgress(engine.positionMs, engine.durationMs)
+    else if (decision.type === 'flush-current') {
+      flushProgress(engine.positionMs, engine.durationMs)
+      void setPositionAction(ctx, engine.positionMs)
+      if (!playlistEngine.isCurrentSourcePartial()) void setDurationAction(ctx, engine.durationMs)
+    }
     // `fallback` deliberately skips the flush: the engine track cannot be matched
     // to the JS one, so its position/duration must not be attributed to it.
 

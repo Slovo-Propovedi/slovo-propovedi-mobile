@@ -495,7 +495,9 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 
 ### Возврат в foreground (native reconcile)
 
-Пока JS заморожен, движок продолжает играть, а `trackChanged`, `didJustFinish` и прогресс до JS не доходят. При переходе `background|inactive → active` `useAppStatePlayback` (`src/entities/player/ui/PlayerControls/useAppStatePlayback.ts`) вызывает `playerService.reconcileOnForeground`, если JS считал плеер играющим или движок всё ещё играет; в остальных случаях reconcile не запускается.
+Пока JS заморожен, движок продолжает играть, а `trackChanged`, `didJustFinish` и прогресс до JS не доходят. При переходе `background|inactive → active` хук `useForegroundPlaybackReconcile` (`src/entities/player/ui/useForegroundPlaybackReconcile.ts`), смонтированный в корневом layout (`app/_RootLayout.tsx`) на всё время жизни процесса, вызывает `playerService.reconcileOnForeground`, если JS считал плеер играющим или движок всё ещё играет; в остальных случаях reconcile не запускается. Reconcile больше не привязан к монтированию полноэкранного плеера: он выполняется при каждом возврате в foreground, даже если открыт только мини-плеер.
+
+Каждое решение сначала зеркалит нативную правду `isPlaying` в `isPlayingAtom` — headset/AVRCP-резюм обрабатывается нативно и до JS-потока статусов не доходит, поэтому атом мог оставаться устаревшим. В ветке `flush-current` в `positionAtom`/`durationAtom` также зеркалятся позиция и длительность движка (длительность — кроме случая частичного источника).
 
 Решение считает чистая функция `decideForegroundReconcile` (`src/entities/player/lib/PlayerService/native/reconcileDecision.ts`), применяет `reconcileOnForeground` (`src/entities/player/lib/PlayerService/native/reconcileOnForeground.ts`):
 
@@ -507,7 +509,7 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 
 **Нативная пересборка.** `autoAdvanceCount` появляется только в APK/IPA, собранном из пропатченного исходника (`patches/expo-audio+58.0.10.patch` при `buildFromSource`). OTA/JS-обновление поверх старого нативного бинаря счётчика не даёт: JS видит `autoAdvanceCount === null` и деградирует к легаси-поведению (линейный forward, `fallback` на wrap и ручных скачках), пока не установлена новая нативная сборка.
 
-После обработки, если движок играет, метаданные lock screen активируются заново (`reassertLockScreenMetadata` — полный путь `setActiveForLockScreen(true)`); это заменяет прежний reassert из `useAppStatePlayback`. Семантика истории — [listening-history.md](./listening-history.md) → «Возврат в foreground (native reconcile)».
+После обработки, если движок играет, метаданные lock screen активируются заново (`reassertLockScreenMetadata` — полный путь `setActiveForLockScreen(true)`); это заменяет прежний reassert, выполнявшийся только из смонтированного полноэкранного плеера. Семантика истории — [listening-history.md](./listening-history.md) → «Возврат в foreground (native reconcile)».
 
 ### Resume-позиция (все пути)
 
@@ -615,7 +617,7 @@ const newAudio: AudioPlayerData = { ...newTrack, artwork: playlist.artwork }
 
 В нативной очереди класс проблемы снят иначе: при авто-переходе сессия уже активна и играет, а координатор обновляет метаданные in-place (`updateLockScreenMetadata`) на каждый `trackChanged`. Ручной путь (`executeTrackSwitch`) по-прежнему сохраняет порядок «переключить → play → метаданные».
 
-Остаточный риск: если сборка очереди не удалась (`loadQueue` вернул `null` — 30с таймаут загрузки или ошибка `createAudioPlaylist`), воспроизведение не стартует, а уведомление может показать прежние метаданные до следующего успешного `setLockScreenMetadata`. Возврат в foreground триггерит `reassertLockScreenMetadata` (`useAppStatePlayback`), который принудительно проходит полный путь активации и перепривязывает сервис. Отслеживается в `docs/debt.md`.
+Остаточный риск: если сборка очереди не удалась (`loadQueue` вернул `null` — 30с таймаут загрузки или ошибка `createAudioPlaylist`), воспроизведение не стартует, а уведомление может показать прежние метаданные до следующего успешного `setLockScreenMetadata`. Возврат в foreground триггерит `reassertLockScreenMetadata` (`useForegroundPlaybackReconcile`), который принудительно проходит полный путь активации и перепривязывает сервис. Отслеживается в `docs/debt.md`.
 
 ### Баг 3: Crash loop при перезапуске (ИСПРАВЛЕНО)
 

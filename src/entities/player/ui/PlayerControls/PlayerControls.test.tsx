@@ -11,20 +11,12 @@ const PREV_LABEL = 'Предыдущая проповедь'
 
 jest.mock('../../lib/PlayerService', () => ({
   playerService: {
-    getState: jest.fn(() => ({
-      duration: 0,
-      isBuffering: false,
-      isPlaying: false,
-      position: 0,
-    })),
-    loadAudio: jest.fn(),
-    onTrackEnd: undefined,
     pause: jest.fn(),
     play: jest.fn(),
+    replaceAudio: jest.fn(),
+    resumeAfterPause: jest.fn(),
     seekTo: jest.fn(),
-    stop: jest.fn(),
-    subscribe: jest.fn(() => jest.fn()),
-    unload: jest.fn(),
+    setLockScreenMetadata: jest.fn(),
   },
 }))
 

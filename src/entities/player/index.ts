@@ -61,3 +61,4 @@ export { PlayerControlButtonType } from './ui/control-button/control-button.type
 export { PlayerProgressBar } from './ui/PlayerProgressBar/PlayerProgressBar'
 export { PlayerRepeatToggle } from './ui/PlayerRepeatToggle'
 export { SermonPlayerControls } from './ui/SermonPlayerControls'
+export { useForegroundPlaybackReconcile } from './ui/useForegroundPlaybackReconcile'

@@ -19,7 +19,7 @@ import {
 import { useUpdateNotificationResponse } from 'features/update-notification'
 import { WebUpdateModal } from 'features/web-update'
 import { useFeatureFlagsRefetchOnForeground } from 'entities/feature-flags'
-import { usePlaybackProgressSaver } from 'entities/player'
+import { useForegroundPlaybackReconcile, usePlaybackProgressSaver } from 'entities/player'
 import { subscribeToNetwork } from 'shared/lib/network'
 import { checkForUpdateAction } from 'shared/model'
 import { SUB_SCREENS, useColdStartLinkRecovery } from 'shared/routing'
@@ -57,6 +57,7 @@ const RootLayout = () => {
   const checkForUpdate = useAction(checkForUpdateAction)
   useUpdateNotificationResponse()
   usePlaybackProgressSaver()
+  useForegroundPlaybackReconcile()
   useOtaAutoApply()
   useFeatureFlagsRefetchOnForeground()
   useOfflineRegistrySync()

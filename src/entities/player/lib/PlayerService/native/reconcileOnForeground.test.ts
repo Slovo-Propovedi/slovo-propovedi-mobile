@@ -4,6 +4,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
+  setDurationAction,
   setIsPlayingAction,
   setPositionAction,
 } from '../../../model'
@@ -30,6 +31,7 @@ jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 jest.mock('../../../model', () => ({
   currentAudioAtom: 'currentAudioAtom',
   currentPlaylistAtom: 'currentPlaylistAtom',
+  setDurationAction: jest.fn(),
   setIsPlayingAction: jest.fn(),
   setPositionAction: jest.fn(),
 }))
@@ -46,6 +48,7 @@ jest.mock('./PlaylistEngine', () => ({
     getStatus: jest.fn(),
     getTrackAt: jest.fn(),
     getTrackCount: jest.fn(),
+    isCurrentSourcePartial: jest.fn(),
     isLoaded: jest.fn(),
   },
 }))
@@ -102,6 +105,7 @@ const setupEngine = ({
   jest.mocked(playlistEngine.getTrackAt).mockImplementation(index => tracks[index] ?? null)
   jest.mocked(playlistEngine.getTrackCount).mockReturnValue(tracks.length)
   jest.mocked(playlistEngine.getAutoAdvanceCount).mockReturnValue(jsKnownAutoAdvanceCount)
+  jest.mocked(playlistEngine.isCurrentSourcePartial).mockReturnValue(false)
   jest.mocked(playlistEngine.isLoaded).mockReturnValue(nativeIsLoaded)
 }
 
@@ -120,6 +124,24 @@ describe('reconcileOnForeground — same track', () => {
     await reconcileOnForeground()
 
     expect(flushProgress).toHaveBeenCalledWith(42_000, 120_000)
+  })
+
+  test('mirrors the native playing state and progress into the atoms', async () => {
+    setupEngine()
+
+    await reconcileOnForeground()
+
+    expect(setIsPlayingAction).toHaveBeenCalledWith(expect.anything(), true)
+    expect(setPositionAction).toHaveBeenCalledWith(expect.anything(), 42_000)
+    expect(setDurationAction).toHaveBeenCalledWith(expect.anything(), 120_000)
+  })
+
+  test('mirrors a paused native engine into the playing atom', async () => {
+    setupEngine({ isPlaying: false })
+
+    await reconcileOnForeground()
+
+    expect(setIsPlayingAction).toHaveBeenCalledWith(expect.anything(), false)
   })
 
   test('skips the flush when the engine track cannot be matched to the JS queue', async () => {
