@@ -60,6 +60,9 @@ Every non-trivial task runs through a workflow BEFORE implementation. Workflow s
 | Clear requirements, multi-step change (no spec needed) | Plan → implement | `plan-implement` skill |
 | Any bug, red test, unexpected behavior | Debug first | `systematic-debugging` skill |
 | Any code/behavior change (inside any workflow) | Test-Driven Development | `tdd` skill (verification-first Mode B when no test runner) |
+| Pure refactor (no behavior change) | TDD, suite stays green | `tdd` skill — add a characterization test first if coverage is missing |
+| Docs-only change | Verification-first | `tdd` skill Mode B (lint/build/link check as the failing check) |
+| Generated code (`api:generate`, prebuild, dependency bumps) | Exempt from the Iron Law | Run the generator, review the diff, run the full verification suite |
 | Always, on every task | Minimal diff | `ponytail` skill |
 | Before claiming ANY task done | Done-gate | `verification-before-completion` skill |
 
@@ -69,10 +72,12 @@ Rules:
 2. No production code without a failing check first (`tdd` Iron Law).
 3. Specs, plans and task lists are repo artifacts: spec-kit features live under `specs/<NNN-slug>/`; commit them together with the implementation.
 4. Opt-out only when the user explicitly says so ("skip workflow", "just do it") — and name the skip in the completion report.
-5. Verification commands for this repo: `yarn check:types`, `yarn lint`, `yarn check:unused`, `yarn check:fsd`, `yarn test` (single terminating run: `yarn test --watch=false`; full suite `yarn testFinal` — orchestrator-only, see "Centralized verification").
+5. Verification commands for this repo: `yarn check:types`, `yarn lint`, `yarn check:unused`, `yarn check:fsd`, `yarn test` (single terminating run: `yarn test --watch=false`; full suite `yarn testFinal` — orchestrator-only, see "Centralized verification"), `bash .opencode/tools/check-skills-sync.sh`.
 6. A shortcut with a known limit gets a `shortcut: <what was skipped>, <when to revisit>` comment AND a `docs/debt.md` entry (see Documentation rules above).
 
 The `specify` CLI is NOT required at runtime — it is a scaffolder used only to (re)generate `.specify/` templates and the speckit commands. Contributors need only OpenCode/Claude Code + bash.
+
+**Template maintenance (maintainer-only):** refreshing the spec-kit scaffolding (`.specify/` + `speckit.*` commands) to a new spec-kit release is a periodic task for the designated template maintainer — never a routine contributor or agent task. The canonical copy of the workflow skills, speckit commands and this scaffolding lives in **slovo-propovedi-mobile**: make changes there first, verify with `bash .opencode/tools/check-skills-sync.sh`, then propagate copies to the other repos and re-run the check in each. When editing a workflow skill, edit the mobile copy first and re-propagate.
 
 ## Project Architecture
 
