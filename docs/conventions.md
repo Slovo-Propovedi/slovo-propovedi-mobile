@@ -97,6 +97,10 @@
 
 **Контроль.** Проверяется при code review глазами: пустой набор потребителей типа (grep по имени) означает, что тип должен быть инлайновым.
 
+### Обязательные воркфлоу: SDD, plan-implement, TDD
+
+Любая нетривиальная задача прогоняется через воркфлоу ДО реализации: новая фича / изменение API-контракта / расплывчатые требования — спек-воркфлоу spec-kit (`/speckit.specify` → `clarify` → `plan` → `tasks` → `implement`, разово `/speckit.constitution`); понятная многошаговая задача — скилл `plan-implement`; баг — `systematic-debugging`; любое изменение кода — `tdd` (в репо без тест-раннера — verification-first); всегда — `ponytail` (минимальный дифф) и `verification-before-completion` перед «готово». Полные правила — AGENTS.md → «Mandatory Workflows». Скиллы лежат в `.opencode/skills/` и `.claude/skills/` (копии байт-в-байт), команды spec-kit — в `.opencode/commands/` (зеркало в `.claude/commands/`). CLI `specify` нужен только для scaffolding/обновления шаблонов — в рантайме агентам и контрибьюторам он не требуется.
+
 ## Семантика записи в API (админка)
 
 Единая семантика тела запроса для всех админских форм (комментарии — прямо в коде форм; портировано из репозитория `slovo-propovedi-admin`):
@@ -205,6 +209,7 @@
 - [ ] `docs/` обновлены в том же PR (затронутые `screens/`, `features/`, `contracts/`, `architecture.md` при необходимости);
 - [ ] срезанные углы записаны в `docs/debt.md`;
 - [ ] новые зависимости — только через `docs/decisions.md` (Approved stack);
+- [ ] Задача прошла через воркфлоу (speckit / plan-implement / systematic-debugging) с tdd и финальной проверкой verification-before-completion;
 - [ ] коммиты — conventional commits, заголовок ≤ 100 символов.
 
 ## Версионирование и релизы

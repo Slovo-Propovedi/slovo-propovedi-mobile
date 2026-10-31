@@ -19,8 +19,11 @@
 - `agents/` — определения агентов (`build`, `coder`, `researcher`, `reviewer`,
   `scribe`) со своими permissions во frontmatter
 - `skills/` — скиллы (`code-philosophy`, `code-review`, `frontend-philosophy`,
-  `plan-protocol`, `plan-review`)
-- `tools/` — инструменты (`philosophy.md`)
+  `plan-protocol`, `plan-review`, `tdd`, `plan-implement`, `ponytail`,
+  `systematic-debugging`, `verification-before-completion`)
+- `commands/` — команды, включая спек-воркфлоу spec-kit (`speckit.*.md`);
+  зеркало — `.claude/commands/`
+- `tools/` — инструменты (`philosophy.md`, `workflows.md`)
 - `plugins/` — плагины `profile` + портированные V2-плагины `kdco.*`
   (`worktree`, `workspace`, `background-agents`, `notify`)
 - `lib/` — общие модули плагинов

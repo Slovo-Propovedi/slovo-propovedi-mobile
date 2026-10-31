@@ -68,5 +68,5 @@
     "exa": { "type": "remote", "url": "https://mcp.exa.ai/mcp", "enabled": true },
     "gh_grep": { "type": "remote", "url": "https://mcp.grep.app", "enabled": true },
   },
-  "instructions": ["./tools/philosophy.md"],
+  "instructions": ["./tools/philosophy.md", "./tools/workflows.md"],
 }

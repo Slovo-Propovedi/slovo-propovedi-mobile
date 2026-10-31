@@ -50,6 +50,30 @@ npm run build:all            # Build all platforms
 
 **Centralized verification:** agents working on delegated tasks must NOT run project-wide checks on their own (`yarn lint`, `yarn lint:fix`, `yarn check:types`, `yarn check:unused`, full `yarn test`, `yarn testFinal*`, `yarn test:native`, gradle builds). When several agents work in parallel, concurrent full runs overload the machine. The orchestrator runs the whole verification suite ONCE after all delegated tasks are complete (via a single dedicated task) and routes any failures back to the responsible agent. Delegated tasks implement code and may run only narrowly scoped checks (e.g. a single targeted test file via `yarn test --watch=false <path>` when the task is test-focused).
 
+## Mandatory Workflows: SDD, Plan-Implement, TDD
+
+Every non-trivial task runs through a workflow BEFORE implementation. Workflow skills live in `.opencode/skills/<name>/SKILL.md` with a byte-identical mirror in `.claude/skills/` (keep both copies in sync). Spec-driven commands live in `.opencode/commands/speckit.*.md` (mirrored in `.claude/commands/`).
+
+| Situation | Workflow | How |
+|-----------|----------|-----|
+| New feature, API contract change, cross-cutting change, vague requirements | Spec-Driven Development | `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement` (`/speckit.constitution` once per repo; `/speckit.analyze` / `/speckit.checklist` when useful) |
+| Clear requirements, multi-step change (no spec needed) | Plan → implement | `plan-implement` skill |
+| Any bug, red test, unexpected behavior | Debug first | `systematic-debugging` skill |
+| Any code/behavior change (inside any workflow) | Test-Driven Development | `tdd` skill (verification-first Mode B when no test runner) |
+| Always, on every task | Minimal diff | `ponytail` skill |
+| Before claiming ANY task done | Done-gate | `verification-before-completion` skill |
+
+Rules:
+
+1. Load the workflow skill via the `skill` tool BEFORE writing code and announce it ("Using <skill> to <purpose>"). Spec-level features start with the `/speckit.*` commands instead.
+2. No production code without a failing check first (`tdd` Iron Law).
+3. Specs, plans and task lists are repo artifacts: spec-kit features live under `specs/<NNN-slug>/`; commit them together with the implementation.
+4. Opt-out only when the user explicitly says so ("skip workflow", "just do it") — and name the skip in the completion report.
+5. Verification commands for this repo: `yarn check:types`, `yarn lint`, `yarn check:unused`, `yarn check:fsd`, `yarn test` (single terminating run: `yarn test --watch=false`; full suite `yarn testFinal` — orchestrator-only, see "Centralized verification").
+6. A shortcut with a known limit gets a `shortcut: <what was skipped>, <when to revisit>` comment AND a `docs/debt.md` entry (see Documentation rules above).
+
+The `specify` CLI is NOT required at runtime — it is a scaffolder used only to (re)generate `.specify/` templates and the speckit commands. Contributors need only OpenCode/Claude Code + bash.
+
 ## Project Architecture
 
 This project follows Feature-Sliced Design (FSD) architecture with Expo Router for navigation.
