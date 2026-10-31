@@ -11,7 +11,7 @@ const HEADER_BACK_TARGET_ID = 'header.back'
 // The steps themselves are the content version of «Что нового»: the auto-show gate
 // compares their fingerprint, and a release without user-visible novelties ships none.
 // Screen changes are entry transitions (blink + navigation) attached to the next card,
-// so they never count as steps — the deck stays five cards.
+// so they never count as steps — the deck stays six cards.
 export const whatsNewScenario: OnboardingScenario = {
   description: 'Новинки этого релиза',
   icon: 'gift-outline',
@@ -53,8 +53,12 @@ export const whatsNewScenario: OnboardingScenario = {
     {
       route: '/history',
       targetId: 'history.rows',
-      text: 'Нажмите на запись — приложение предложит плейлисты, в которых есть эта проповедь. Плейлист, в котором она прослушивалась, отмечен подписью «Плейлист, в котором было прослушано».',
+      text: 'Нажмите на запись: если плейлистов с этой проповедь несколько, приложение предложит выбор (прослушанный плейлист отмечен подписью «Плейлист, в котором было прослушано»), а если плейлист один — сразу начнёт воспроизведение.',
       title: 'Продолжить из истории',
+    },
+    {
+      text: 'При возврате в приложение плеер и уведомление всегда показывают актуальное состояние — даже если проповедь переключилась в фоне или включилась с наушников.',
+      title: 'Актуальное состояние плеера',
     },
   ],
   title: 'Что нового',

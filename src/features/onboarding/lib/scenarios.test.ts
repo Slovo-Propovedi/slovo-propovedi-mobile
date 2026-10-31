@@ -54,12 +54,13 @@ describe('onboarding scenario data', () => {
   test('whats-new opens with a plain card and then spotlights the refresh button, offline and history rows', () => {
     const whatsNew = scenariosById.whatsNew
 
-    expect(whatsNew.steps).toHaveLength(10)
+    expect(whatsNew.steps).toHaveLength(11)
     const intro = whatsNew.steps[0]
     const freshData = whatsNew.steps[2]
     const refreshButton = whatsNew.steps[3]
     const offlineRows = whatsNew.steps[6]
     const historyRows = whatsNew.steps[9]
+    const playerState = whatsNew.steps[10]
 
     expect(intro.targetId).toBeUndefined()
     expect(intro.route).toBeUndefined()
@@ -75,6 +76,11 @@ describe('onboarding scenario data', () => {
     expect(offlineRows.targetId).toBe('offline.rows')
     expect(historyRows.route).toBe('/history')
     expect(historyRows.targetId).toBe('history.rows')
+    // The closing card is a plain text card: it spotlights nothing and opens nothing.
+    expect(playerState.title).toBe('Актуальное состояние плеера')
+    expect(playerState.route).toBeUndefined()
+    expect(playerState.targetId).toBeUndefined()
+    expect(playerState.tapTargetId).toBeUndefined()
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -112,12 +118,12 @@ describe('onboarding scenario data', () => {
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
   })
 
-  test('whatsNew keeps five cards and visualizes the screen transitions between them', () => {
+  test('whatsNew keeps six cards and visualizes the screen transitions between them', () => {
     const whatsNew = scenariosById.whatsNew
     const whatsNewDeck = buildTourDeck(whatsNew.steps)
 
-    expect(whatsNewDeck).toHaveLength(5)
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 2, 3, 6, 9])
+    expect(whatsNewDeck).toHaveLength(6)
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 2, 3, 6, 9, 10])
     // Intro → listen: the «Слушать» tab blink navigates into the data-refresh cards;
     // a start already on the listen screen skips it (the card route matches).
     expect(whatsNewDeck[1].entryStepIndexes).toEqual([1])
@@ -148,8 +154,8 @@ describe('onboarding scenario data', () => {
     expect(deck[refreshDeckIndex - 1].entryStepIndexes).toEqual([1])
 
     // Off desktop web the card is dropped, so the counter loses exactly one card.
-    expect(resolveDeckProgress(deck, [], refreshDeckIndex).displayTotal).toBe(5)
-    expect(resolveDeckProgress(deck, [refreshDeckIndex], refreshDeckIndex + 1).displayTotal).toBe(4)
+    expect(resolveDeckProgress(deck, [], refreshDeckIndex).displayTotal).toBe(6)
+    expect(resolveDeckProgress(deck, [refreshDeckIndex], refreshDeckIndex + 1).displayTotal).toBe(5)
   })
 
   test('each scenario wires the tab or row it taps when navigating', () => {
