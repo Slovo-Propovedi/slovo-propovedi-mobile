@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar'
-import { type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native'
+import { type LayoutChangeEvent, type StyleProp, View, type ViewStyle } from 'react-native'
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { type AudioPlayerData } from 'entities/sermon'
@@ -9,6 +9,10 @@ import { useFullscreenContentMount } from '../../model/useFullscreenContentMount
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
 import { type createStyles } from './styles'
+
+// Blurred cover layer paints the page background in tones of the artwork
+// (no color-extraction dependency).
+const BACKGROUND_ARTWORK_BLUR = 30
 
 /** Consumer style must not carry geometry keys — enforced by compiler (Issue #63 invariant). */
 export type NonGeometricStyle = Omit<ViewStyle, 'bottom' | 'height' | 'left' | 'top' | 'width'>
@@ -80,7 +84,14 @@ export const ContainerView = ({
         ]}
       >
         <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
-          <CoverImage eager transition={0} uri={audio.artwork} style={styles.backgroundImage} />
+          <CoverImage
+            eager
+            transition={0}
+            uri={audio.artwork}
+            blur={BACKGROUND_ARTWORK_BLUR}
+            style={styles.backgroundImage}
+          />
+          <View pointerEvents='none' style={styles.backgroundScrim} />
         </Animated.View>
         <Animated.View style={[miniOverlay, miniOverlayStyle, { pointerEvents: 'none' }]} />
         {expanded && <StatusBar style='light' />}

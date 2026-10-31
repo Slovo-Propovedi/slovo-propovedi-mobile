@@ -21,6 +21,7 @@ const getLoadingMode = (eager: boolean): 'eager' | 'lazy' =>
 // forwards them to the native image view on Android. Overlays are therefore rendered
 // as siblings above an absolutely-positioned image inside a clipping container.
 export const CoverImage = ({
+  blur,
   children,
   eager = false,
   imageStyle,
@@ -29,6 +30,8 @@ export const CoverImage = ({
   transition = 200,
   uri,
 }: {
+  // Forward to expo-image blur (used by fullscreen player for artwork-tone background).
+  blur?: number
   children?: ReactNode
   eager?: boolean
   imageStyle?: StyleProp<ImageStyle>
@@ -42,6 +45,7 @@ export const CoverImage = ({
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.skeleton }, style]}>
       <Image
+        blur={blur}
         testID={testID}
         contentFit='cover'
         transition={transition}

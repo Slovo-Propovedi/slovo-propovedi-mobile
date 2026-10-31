@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { type AudioPlayerData } from 'entities/sermon'
 import { hapticLight } from 'shared/lib/haptics'
+import { CoverImage } from 'shared/ui'
 import { type createStyles } from '../ExpandablePlayer/styles'
 import { DetailsOverlay } from './DetailsOverlay'
 import { type SeekDirection } from './keyboardTargetGuards'
@@ -72,6 +73,9 @@ export const PlayerMiddleArea = ({
           void onTogglePlay()
         }}
       />
+      <View pointerEvents='none' style={styles.fullscreenArtworkWrapper}>
+        <CoverImage eager transition={0} uri={audio.artwork} style={styles.fullscreenArtwork} />
+      </View>
       <PlayerEdgeSeekZones tapSeek={tapSeek} stopSeek={stopSeek} startSeek={startSeek} />
     </View>
   )
