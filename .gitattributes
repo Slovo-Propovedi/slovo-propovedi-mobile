@@ -3,3 +3,4 @@
 .opencode/commands/** text eol=lf
 .claude/commands/** text eol=lf
 .specify/** text eol=lf
+.opencode/tools/** text eol=lf
