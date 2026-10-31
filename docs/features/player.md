@@ -292,6 +292,12 @@ Upstream-причины:
   | `useListReveal.ts`                                            | Порог `y > 0` (был `y > 100`); `IMMEDIATE_REVEAL_MAX_OFFSET_PX = 240`                                                   |
   | `model/useFullscreenPanGesture.ts`                            | `.enabled(!showPlaylist)` — пан-жест плеера выключен пока шторка открыта (позже расширен до `!showPlaylist && !showDetails && !showSoundSettings` — см. «Настройки звука») |
 
+### Визуал полноэкранного плеера: квадратная обложка и цветной фон
+
+В развёрнутом виде обложка проповеди показывается по центру средней области **квадратом**: `aspectRatio: 1`, `width: '80%'`, на широких экранах — не шире 480 px, скругление `RADIUSES.slider`, вписывание `cover`. Геометрия повторяет квадратные карточки слайдера «На неделю» на экране «Слушать» и живёт в `expandedLayoutStyles` (`fullscreenArtwork`/`fullscreenArtworkWrapper`, `ui/FullscreenContent/expandedLayoutStyles.ts`). Рендерит квадрат `PlayerMiddleArea` внутри обёртки с `pointerEvents='none'`, поэтому тап по центру (play/pause) и краевые зоны seek продолжают работать поверх обложки.
+
+Фон страницы — **сплошной цвет**, выведенный из доминирующего цвета обложки, поверх него лежит затемняющая плёнка `rgba(0, 0, 0, 0.3)` (`backgroundScrim`) для читаемости шапки и контролов. Цвет считает хук `useArtworkDominantColor` (`src/shared/lib/useArtworkDominantColor.ts`): URI проверяется на протокол (`hasUriProtocol`), `getColors(uri, { cache: true, key: uri, fallback })` возвращает готовую строку `#RRGGBB` (android/web — `dominant`, iOS — `primary`), а при любой ошибке срабатывает fail-soft фолбэк на `currentTheme.surface` с репортом через `reportError`. На web извлечение читает пиксели через canvas (`crossOrigin=anonymous`), поэтому без CORS-заголовков у CDN обложек цвет не извлекается — остаётся фолбэк (см. [images.md](./images.md) → «Фон полноэкранного плеера из обложки»). Прежний вариант с размытой копией обложки на фоне удалён.
+
 ### Архитектура рендера ExpandablePlayer (Issue #100)
 
 До Issue #100 `ContainerView` рендерил `<FullscreenContent />` **безусловно**: при свёрнутом плеере невидимое полноэкранное поддерево оставалось смонтированным и ре-рендерилось на каждый тик `positionAtom` (~1–2 раза/сек) и на каждый тик `downloadProgressAtom` — корневая причина статтера при скролле Home во время фоновой закачки. Фикс — три уровня:
