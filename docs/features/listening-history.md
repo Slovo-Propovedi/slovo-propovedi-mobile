@@ -280,7 +280,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 ### Возврат в foreground (native reconcile)
 
-При возврате приложения в foreground `useAppStatePlayback` вызывает `playerService.reconcileOnForeground` (нативная реализация — `src/entities/player/lib/PlayerService/native/reconcileOnForeground.ts`, решение — чистый `reconcileDecision.ts`), если JS считал плеер играющим или движок всё ещё играет. Решение:
+При возврате приложения в foreground `useForegroundPlaybackReconcile` (смонтирован в корне приложения — `app/_RootLayout.tsx`, поэтому reconcile идёт при каждом возврате в foreground независимо от того, какой UI плеера смонтирован) вызывает `playerService.reconcileOnForeground` (нативная реализация — `src/entities/player/lib/PlayerService/native/reconcileOnForeground.ts`, решение — чистый `reconcileDecision.ts`), если JS считал плеер играющим или движок всё ещё играет. Решение:
 
 | Решение          | Условие                                                                                                                                                      | Действие                                                                                                                                                |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -292,7 +292,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 Патченный движок (`patches/expo-audio+58.0.10.patch`) считает только трек-эндные переходы: ExoPlayer `MEDIA_ITEM_TRANSITION_REASON_AUTO`, на iOS — auto-advance и явный wrap `skipTo(0)`; ручные `next()`/`previous()`/`seekTo` счётчик не двигают. На бинаре без патча `autoAdvanceCount` отсутствует: JS деградирует к прежней линейной эвристике `jsIndex..engineIndex-1`, а repeat-wrap/ручной скачок остаются `fallback` до установки новой нативной сборки.
 
-После обработки сервис заново выставляет lock-screen метаданные (полный путь активации), если движок играет — это заменяет прежний reassert из `useAppStatePlayback`.
+После обработки сервис заново выставляет lock-screen метаданные (полный путь активации), если движок играет — это заменяет прежний reassert из `useForegroundPlaybackReconcile`.
 
 Авто-повтор трека (loop `'single'`) не порождает `trackChanged`, поэтому история при повторах не обновляется — прежнее поведение «каждый повтор отмечал завершение» отменено.
 

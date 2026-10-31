@@ -118,7 +118,7 @@
 
 `reconnectRecovery` (`src/entities/player/lib/reconnectRecovery.ts`) расширяет восстановление устаревшего источника на случай незакэшированного/мёртвого стрима: при возврате сети (false→true по `isOnlineAtom`) `recoverStreamAfterReconnect` на нативе перепривязывает текущий элемент очереди через `replaceAudio` на сохранённой позиции (или собирает очередь заново через `loadAudio`, если она никогда не загружалась), на web — создаёт новый `HTMLAudioElement` на сохранённой позиции. Подробнее — [audio-cache.md](./audio-cache.md) → «Возобновление после восстановления сети (Issue #109)».
 
-Нативное лечение подменяет источник в существующей очереди (или пересобирает её в ветке `loadAudio`), поэтому после успешного `replaceAudio`/`loadAudio` повторно выставляет метаданные lock screen (`reassertLockScreenMetadata`) — зеркало foreground-реассерции (`useAppStatePlayback`). Без этого медиа-уведомление показывает иконку приложения вместо обложки плейлиста.
+Нативное лечение подменяет источник в существующей очереди (или пересобирает её в ветке `loadAudio`), поэтому после успешного `replaceAudio`/`loadAudio` повторно выставляет метаданные lock screen (`reassertLockScreenMetadata`) — зеркало foreground-реассерции (`useForegroundPlaybackReconcile`). Без этого медиа-уведомление показывает иконку приложения вместо обложки плейлиста.
 
 **Авто-resume после офлайн-зависания (Issue #109 follow-up):** лечение резюмирует не только когда трек «завис» во время воспроизведения (`isPlaying && isBuffering`), но и когда выставлен `isStalledOfflineAtom` (`shouldResume = isPlaying || stalledOffline`) — в ветке, где очередь уже загружена (путь через `replaceAudio`); в ветке «никогда не загружалась» (зависание сразу после офлайн-старта) авто-resume по флагу stall не работает, возобновление следует только за `isPlaying`. Флаг выставляется на нативе в `createAudioInterruptionHandler` при прерывании с `isBuffering` (буферизационный столл сам по себе — признак голодания стрима; NetInfo-флип может отставать от underrun'а), на web — в `onError`, когда `isBuffering` (событие `waiting` приходит до сетевой ошибки; онлайн-сигнал так же может отставать от underrun'а, как и на нативе); сбрасывается при сборке/пересборке очереди (`loadAudio`/`replaceAudio` — нативный chokepoint) и на web-событии `playing`. Нативный heal флаг **не** сбрасывает сам — `loadQueue`/`replaceQueueTrack` делают это на входе; web-heal сбрасывает сразу после чтения (chokepoint'а нет). Принятый trade-off: пауза **во время** офлайн-зависания тоже приведёт к авто-resume; пауза до зависания — нет. Подробнее — [audio-cache.md](./audio-cache.md) → «Авто-resume после восстановления сети».
 
@@ -220,13 +220,14 @@ Upstream-причины:
 - ~~`useQueueManagement.ts`~~ — **удалено 2026-09-10**: мёртвый хук локальной очереди (`playPlaylist`, `playTrack`, `shufflePlaylist`, `addToQueue`, `playNext`, `playPrevious`) — потребителей не было.
 - `useSeekControls.ts` — долгое удержание ±10с с ускорением (5с→30с, тик 200мс).
 - `usePlayerState.ts` — группированный доступ к состоянию (`currentAudio`, `duration`, `isBuffering`, `isPlaying`, `position`, `volume`).
+- `useForegroundPlaybackReconcile.ts` — foreground-reconcile на всё время жизни процесса (монтируется в `app/_RootLayout.tsx`): при возврате в foreground вызывает `reconcileOnForeground`, если JS считал плеер играющим или движок всё ещё играет.
 
 ## UI
 
 Компоненты управления — `src/entities/player/ui/`:
 
 - `SermonPlayerControls.tsx` — связывает `PlayerControls` с атомами (используется как `PlayerControlsSection` во fullscreen).
-- `PlayerControls/` — `PlayerControls.tsx` (рендерит `DefaultControls`/`FullscreenControls` в зависимости от варианта), подhookи `usePlayerToggleTrack`, `usePlayerTrackState`, `useAppStatePlayback`, `usePlayerControlSizes`.
+- `PlayerControls/` — `PlayerControls.tsx` (рендерит `DefaultControls`/`FullscreenControls` в зависимости от варианта), подhookи `usePlayerToggleTrack`, `usePlayerTrackState`, `usePlayerControlSizes`.
 - `PlayerProgressBar/`, `PlayerRepeatToggle.tsx` (цикл off → track → queue), `FullscreenControls.tsx`. (`PlayerVolumeBar.tsx` — **удалено 2026-09-10**: мёртвый компонент, не рендерился нигде.)
 
 Виджет `widgets/expandable-player` — мини-плеер ↔ полноэкранный:
@@ -495,7 +496,7 @@ Artwork резолвится с фолбэком: `artworkUrl = [metadata.artwor
 
 ### Возврат в foreground (native reconcile)
 
-Пока JS заморожен, движок продолжает играть, а `trackChanged`, `didJustFinish` и прогресс до JS не доходят. При переходе `background|inactive → active` хук `useForegroundPlaybackReconcile` (`src/entities/player/ui/useForegroundPlaybackReconcile.ts`), смонтированный в корневом layout (`app/_RootLayout.tsx`) на всё время жизни процесса, вызывает `playerService.reconcileOnForeground`, если JS считал плеер играющим или движок всё ещё играет; в остальных случаях reconcile не запускается. Reconcile больше не привязан к монтированию полноэкранного плеера: он выполняется при каждом возврате в foreground, даже если открыт только мини-плеер.
+Пока JS заморожен, движок продолжает играть, а `trackChanged`, `didJustFinish` и прогресс до JS не доходят. При переходе `background|inactive → active` хук `useForegroundPlaybackReconcile` (`src/entities/player/lib/useForegroundPlaybackReconcile.ts`), смонтированный в корневом layout (`app/_RootLayout.tsx`) на всё время жизни процесса, вызывает `playerService.reconcileOnForeground`, если JS считал плеер играющим или движок всё ещё играет; в остальных случаях reconcile не запускается. Reconcile больше не привязан к монтированию полноэкранного плеера: он выполняется при каждом возврате в foreground, даже если открыт только мини-плеер.
 
 Каждое решение сначала зеркалит нативную правду `isPlaying` в `isPlayingAtom` — headset/AVRCP-резюм обрабатывается нативно и до JS-потока статусов не доходит, поэтому атом мог оставаться устаревшим. В ветке `flush-current` в `positionAtom`/`durationAtom` также зеркалятся позиция и длительность движка (длительность — кроме случая частичного источника).
 

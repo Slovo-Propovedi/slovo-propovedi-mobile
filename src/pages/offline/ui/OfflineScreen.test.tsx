@@ -203,7 +203,7 @@ describe('<OfflineScreen>', () => {
 
     // The list row subtitle repeats the playlist title; the chooser row is last.
     const playlistRows = getAllByText(mockItem.playlist.title)
-    expect(playlistRows.length).toBeGreaterThan(1)
+    expect(playlistRows.length).toBe(2)
 
     fireEvent.press(playlistRows[playlistRows.length - 1])
 

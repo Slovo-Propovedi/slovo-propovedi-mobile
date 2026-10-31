@@ -9,6 +9,7 @@ export interface ForegroundEngineSummary {
   durationMs: number
   engineTrackIds: string[]
   isLoaded: boolean
+  isPlaying: boolean
   loop: AudioPlaylistLoopMode
   positionMs: number
   trackCount: number

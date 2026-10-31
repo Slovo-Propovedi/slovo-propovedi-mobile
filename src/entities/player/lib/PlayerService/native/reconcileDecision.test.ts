@@ -16,6 +16,7 @@ const makeEngine = (overrides: Partial<ForegroundEngineSummary> = {}): Foregroun
   durationMs: 120_000,
   engineTrackIds: QUEUE_IDS,
   isLoaded: true,
+  isPlaying: true,
   loop: 'none',
   positionMs: 30_000,
   trackCount: QUEUE_IDS.length,

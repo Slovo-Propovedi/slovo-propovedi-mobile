@@ -8,7 +8,7 @@ import { useForegroundPlaybackReconcile } from './useForegroundPlaybackReconcile
 const mockGetStatus = jest.fn()
 const mockReconcileOnForeground = jest.fn()
 
-jest.mock('../lib/usePlayer', () => ({
+jest.mock('./usePlayer', () => ({
   usePlayer: () => ({
     getStatus: mockGetStatus,
     reconcileOnForeground: mockReconcileOnForeground,
@@ -20,14 +20,16 @@ const NATIVE_PAUSED = { duration: 120_000, isPlaying: false, position: 42_000 }
 
 describe('useForegroundPlaybackReconcile', () => {
   let appStateHandler: (state: AppStateStatus) => void
+  let mockRemoveSubscription: jest.Mock
 
   beforeEach(() => {
     jest.clearAllMocks()
     AppState.currentState = 'background'
     isPlayingAtom(ctx, false)
+    mockRemoveSubscription = jest.fn()
     jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
       appStateHandler = handler as (state: AppStateStatus) => void
-      return { remove: jest.fn() }
+      return { remove: mockRemoveSubscription }
     })
   })
 
@@ -71,5 +73,26 @@ describe('useForegroundPlaybackReconcile', () => {
     })
 
     expect(mockReconcileOnForeground).not.toHaveBeenCalled()
+  })
+
+  test('reconciles only once for repeated active events without a background transition', async () => {
+    mockGetStatus.mockReturnValue(NATIVE_PLAYING)
+
+    await renderHookWithProviders(() => useForegroundPlaybackReconcile())
+
+    await act(async () => {
+      appStateHandler('active')
+      appStateHandler('active')
+    })
+
+    expect(mockReconcileOnForeground).toHaveBeenCalledTimes(1)
+  })
+
+  test('removes the AppState subscription on unmount', async () => {
+    const { unmount } = await renderHookWithProviders(() => useForegroundPlaybackReconcile())
+
+    await unmount()
+
+    expect(mockRemoveSubscription).toHaveBeenCalledTimes(1)
   })
 })

@@ -35,6 +35,7 @@ const readEngineState = (): ForegroundEngineSummary => {
       (_, index) => playlistEngine.getTrackAt(index)?.id ?? '',
     ),
     isLoaded: status.isLoaded,
+    isPlaying: status.isPlaying,
     loop: playlistEngine.getLoop(),
     positionMs: status.positionMs,
     trackCount,
@@ -64,7 +65,7 @@ export const reconcileOnForeground = async (): Promise<void> => {
     // Native truth for every decision branch: a resume initiated by the headset
     // (AVRCP) is handled natively and never reaches the JS status stream, so the
     // playing atom can stay stale until the next foreground return.
-    void setIsPlayingAction(ctx, playlistEngine.getStatus().isPlaying)
+    void setIsPlayingAction(ctx, engine.isPlaying)
     // Baseline JS last observed; the native counter lives in the engine summary.
     // A late trackChanged handled before this point bumps both, undercounting
     // the delta — the engine then equals the current track → `flush-current`.

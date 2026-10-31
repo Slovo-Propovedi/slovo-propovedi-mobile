@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { AppState, type AppStateStatus } from 'react-native'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { usePlayer } from '../lib/usePlayer'
 import { isPlayingAtom } from '../model'
+import { usePlayer } from './usePlayer'
 
 /**
  * Reconciles native playback with JS state whenever the app returns to the
