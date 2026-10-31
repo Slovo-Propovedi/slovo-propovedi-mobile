@@ -185,20 +185,32 @@ describe('<OfflineScreen>', () => {
     expect(checkboxes[1]).not.toBeChecked()
   })
 
-  test('row press opens the playback chooser instead of playing immediately', async () => {
+  test('one real candidate still opens the chooser with the offline option', async () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
 
-    const { getByText } = await renderWithProviders(<OfflineScreen />)
+    const { getAllByText, getByText } = await renderWithProviders(<OfflineScreen />)
 
     await act(async () => {
       fireEvent.press(getByText('Play'))
     })
 
+    expect(getByText('Где воспроизвести проповедь?')).toBeTruthy()
     expect(getByText(OFFLINE_OPTION_TEXT)).toBeTruthy()
     expect(getByText(OFFLINE_LIST_LABEL)).toBeTruthy()
     expect(getByText(OFFLINE_ORIGIN_LABEL)).toBeTruthy()
     expect(playNewSermonMock).not.toHaveBeenCalled()
+
+    // The list row subtitle repeats the playlist title; the chooser row is last.
+    const playlistRows = getAllByText(mockItem.playlist.title)
+    expect(playlistRows.length).toBeGreaterThan(1)
+
+    fireEvent.press(playlistRows[playlistRows.length - 1])
+
+    expect(playNewSermonMock).toHaveBeenCalledWith({
+      playlist: mockItem.playlist,
+      sermon: mockItem.sermon,
+    })
   })
 
   test('the offline option plays the all-offline playlist', async () => {

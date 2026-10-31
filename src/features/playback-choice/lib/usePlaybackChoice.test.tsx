@@ -17,6 +17,8 @@ const ERROR_MESSAGE = 'Не удалось воспроизвести пропо
 const ORIGIN_LABEL = 'Плейлист, в котором было прослушано'
 const OFFLINE_LIST_LABEL = 'Плейлист всех скачанных проповедей'
 const OFFLINE_ORIGIN_LABEL = 'Плейлист, из которого добавлено в офлайн'
+const LOCAL_B_ID = 'local-b'
+const LOCAL_B_TITLE = 'Локальный B'
 
 const sermon: AudioPlayerData = {
   artist: 'Автор',
@@ -124,7 +126,7 @@ describe('usePlaybackChoice', () => {
     const { ctx, getByText, queryByText, result } = await renderProbe()
     myPlaylistsAtom(ctx, [
       localPlaylist(realPlaylist.id, 'Дубль исходного', [sermon]),
-      localPlaylist('local-b', 'Локальный B', [sermon]),
+      localPlaylist(LOCAL_B_ID, LOCAL_B_TITLE, [sermon]),
       localPlaylist('local-c', 'Локальный C', []),
     ])
 
@@ -132,7 +134,7 @@ describe('usePlaybackChoice', () => {
       result.current?.openChoice(sermon, realPlaylist)
     })
 
-    expect(getByText('Локальный B')).toBeTruthy()
+    expect(getByText(LOCAL_B_TITLE)).toBeTruthy()
     expect(queryByText('Дубль исходного')).toBeNull()
     expect(queryByText('Локальный C')).toBeNull()
   })
@@ -154,7 +156,8 @@ describe('usePlaybackChoice', () => {
       ...sermon,
       playlists: [fullMembership, lightMembership],
     }
-    const { getByText, queryByText, result } = await renderProbe()
+    const { ctx, getByText, queryByText, result } = await renderProbe()
+    myPlaylistsAtom(ctx, [localPlaylist('local-d', 'Локальный D', [membershipSermon])])
 
     await act(async () => {
       result.current?.openChoice(membershipSermon, syntheticPlaylist)
@@ -162,6 +165,30 @@ describe('usePlaybackChoice', () => {
 
     expect(getByText('Полный участник')).toBeTruthy()
     expect(queryByText('Лёгкий участник')).toBeNull()
+  })
+
+  test('single candidate plays directly without the chooser', async () => {
+    const localA = localPlaylist('local-a', 'Локальный A', [sermon])
+    const { ctx, queryByText, result } = await renderProbe()
+    myPlaylistsAtom(ctx, [localA])
+
+    await act(async () => {
+      result.current?.openChoice(sermon, syntheticPlaylist)
+    })
+
+    await waitFor(() =>
+      expect(mockPlayNewSermon).toHaveBeenCalledWith({
+        playlist: {
+          artwork: null,
+          description: '',
+          id: localA.id,
+          sermons: localA.sermons,
+          title: localA.title,
+        },
+        sermon,
+      }),
+    )
+    expect(queryByText(DIALOG_TITLE)).toBeNull()
   })
 
   test('selecting a playlist starts playback there and closes the chooser', async () => {
@@ -196,7 +223,8 @@ describe('usePlaybackChoice', () => {
   })
 
   test('history mode: chooser lists the origin playlist without the offline option', async () => {
-    const { getAllByRole, getByText, queryByText, result } = await renderProbe()
+    const { ctx, getAllByRole, getByText, queryByText, result } = await renderProbe()
+    myPlaylistsAtom(ctx, [localPlaylist(LOCAL_B_ID, LOCAL_B_TITLE, [sermon])])
 
     await act(async () => {
       result.current?.openChoice(sermon, realPlaylist)
@@ -209,7 +237,8 @@ describe('usePlaybackChoice', () => {
   })
 
   test('history mode: captions and highlights the origin playlist', async () => {
-    const { getByText, result } = await renderProbe(undefined, undefined, ORIGIN_LABEL)
+    const { ctx, getByText, result } = await renderProbe(undefined, undefined, ORIGIN_LABEL)
+    myPlaylistsAtom(ctx, [localPlaylist(LOCAL_B_ID, LOCAL_B_TITLE, [sermon])])
 
     await act(async () => {
       result.current?.openChoice(sermon, realPlaylist)
@@ -277,7 +306,12 @@ describe('usePlaybackChoice', () => {
       id: 'playlist-2',
       title: 'Другой плейлист',
     }
-    const { getByText, queryByText, result } = await renderProbe(undefined, undefined, ORIGIN_LABEL)
+    const { ctx, getByText, queryByText, result } = await renderProbe(
+      undefined,
+      undefined,
+      ORIGIN_LABEL,
+    )
+    myPlaylistsAtom(ctx, [localPlaylist(LOCAL_B_ID, LOCAL_B_TITLE, [sermon])])
 
     await act(async () => {
       result.current?.openChoice({ ...sermon, playlists: [otherOrigin] }, syntheticPlaylist)
@@ -288,7 +322,8 @@ describe('usePlaybackChoice', () => {
   })
 
   test('history mode: selecting a playlist plays the sermon there', async () => {
-    const { getByText, result } = await renderProbe()
+    const { ctx, getByText, result } = await renderProbe()
+    myPlaylistsAtom(ctx, [localPlaylist(LOCAL_B_ID, LOCAL_B_TITLE, [sermon])])
 
     await act(async () => {
       result.current?.openChoice(sermon, realPlaylist)

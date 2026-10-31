@@ -26,20 +26,14 @@ interface PlaybackChoiceState {
 }
 
 /**
- * Owns the "where to play" chooser for a screen. A tap with real playlists
- * opens a dialog (optionally the offline collection first, then those
- * playlists); with no real playlists it starts the fallback playlist directly.
- * State lives on the screen so one dialog is mounted for the whole list.
+ * Owns the "where to play" chooser: zero candidates start the fallback playlist,
+ * a single candidate with no offline collection starts it, and the dialog opens
+ * only for 2+ options. State lives on the screen, so one dialog is mounted.
  *
- * `getFallbackPlaylist` is required: zero candidates play it directly; it may
- * resolve asynchronously (history resolves the full playlist from sections).
- * `getOfflinePlaylist` adds the first dialog row ("all offline sermons").
- * `offlineLabel` highlights that row with a caption; `originLabel` highlights
- * the matching `openChoice` origin candidate with a caption (history marks
- * "listened in", offline marks "downloaded from"). The captions are independent.
- *
- * Both callbacks must be stable (`useCallback` at the call site) because
- * `openChoice` is passed to memoized rows.
+ * `getFallbackPlaylist` is required and may resolve asynchronously (history
+ * resolves the full playlist from sections). `getOfflinePlaylist` adds the first
+ * dialog row; `offlineLabel`/`originLabel` caption the offline row and origin
+ * candidate. Callbacks must be stable (`useCallback` at the call site).
  * @param root0 - Hook options.
  * @param root0.errorMessage - Message reported when playback fails.
  * @param root0.getFallbackPlaylist - Playlist played when no candidates exist.
@@ -91,15 +85,21 @@ export const usePlaybackChoice = ({
         return
       }
 
+      const offlinePlaylist = getOfflinePlaylist?.()
+      if (candidates.length === 1 && !offlinePlaylist) {
+        void play(candidates[0], sermon)
+        return
+      }
+
       const originPlaylistId = originLabel && originPlaylist ? originPlaylist.id : null
       setState({
         candidates,
-        offlinePlaylist: getOfflinePlaylist?.(),
+        offlinePlaylist,
         originPlaylistId,
         sermon,
       })
     },
-    [ctx, getOfflinePlaylist, originLabel, startFallback],
+    [ctx, getOfflinePlaylist, originLabel, play, startFallback],
   )
 
   const select = useCallback(

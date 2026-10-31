@@ -120,6 +120,7 @@ jest.mock('entities/track-list', () => {
 
 const MOCK_SERMON_ID = 'sermon-1'
 const MOCK_SERMON_TITLE = 'Проповедь о вере'
+const DIALOG_TITLE = 'Где воспроизвести проповедь?'
 
 const mockSermon = {
   artist: 'Test Artist',
@@ -187,7 +188,7 @@ describe('<HistoryScreen>', () => {
     expect(queryByText('История пуста')).toBeNull()
   })
 
-  test('row press opens the chooser with the entry playlist and no offline option', async () => {
+  test('row press with a single candidate plays directly without the chooser', async () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
 
@@ -199,15 +200,45 @@ describe('<HistoryScreen>', () => {
       fireEvent.press(getByText('Play'))
     })
 
-    expect(getByText('Где воспроизвести проповедь?')).toBeTruthy()
-    expect(getByText('Плейлист, в котором было прослушано')).toBeTruthy()
-    expect(queryByText('Все офлайн-проповеди')).toBeNull()
-    expect(playNewSermonMock).not.toHaveBeenCalled()
-
-    fireEvent.press(getByText(mockEntry.playlist.title))
-
     expect(playNewSermonMock).toHaveBeenCalledWith({
       playlist: mockEntry.playlist,
+      sermon: mockSermon,
+    })
+    expect(queryByText(DIALOG_TITLE)).toBeNull()
+  })
+
+  test('row press with several candidates opens the chooser', async () => {
+    const playNewSermonMock = jest.fn()
+    jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
+
+    const favoritesWithSermon = {
+      ...FAVORITES_PLAYLIST,
+      sermonIds: [MOCK_SERMON_ID],
+      sermons: [mockSermon],
+    }
+    const ctx = seedHistory([mockEntry])
+    myPlaylistsAtom(ctx, [favoritesWithSermon])
+
+    const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
+
+    await act(async () => {
+      fireEvent.press(getByText('Play'))
+    })
+
+    expect(getByText(DIALOG_TITLE)).toBeTruthy()
+    expect(getByText('Плейлист, в котором было прослушано')).toBeTruthy()
+    expect(playNewSermonMock).not.toHaveBeenCalled()
+
+    fireEvent.press(getByText(favoritesWithSermon.title))
+
+    expect(playNewSermonMock).toHaveBeenCalledWith({
+      playlist: {
+        artwork: null,
+        description: '',
+        id: favoritesWithSermon.id,
+        sermons: [mockSermon],
+        title: favoritesWithSermon.title,
+      },
       sermon: mockSermon,
     })
   })
@@ -237,7 +268,7 @@ describe('<HistoryScreen>', () => {
       playlist: syntheticEntry.playlist,
       sermon: mockSermon,
     })
-    expect(queryByText('Где воспроизвести проповедь?')).toBeNull()
+    expect(queryByText(DIALOG_TITLE)).toBeNull()
   })
 
   test('remove menu action calls removeHistoryEntryAction with sermon id', async () => {
