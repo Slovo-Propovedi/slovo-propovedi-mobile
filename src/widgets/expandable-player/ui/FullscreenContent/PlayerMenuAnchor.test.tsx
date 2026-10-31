@@ -20,9 +20,6 @@ const mockTogglePlaylistSermon = jest.fn()
 const mockPlayNewSermon = jest.fn()
 const mockResetPlaybackAction = jest.fn()
 const mockFlushHistoryProgress = jest.fn()
-const mockToggleFavorite = jest.fn()
-const mockOnAddToPlaylist = jest.fn()
-const mockUseFavoriteSermon = jest.fn()
 
 jest.mock('entities/player', () => {
   const { atom } = jest.requireActual('@reatom/framework')
@@ -44,7 +41,6 @@ jest.mock('entities/playlist', () => {
   return {
     myPlaylistsAtom: atom([], 'testMyPlaylistsAtom'),
     togglePlaylistSermon: (...args: unknown[]) => mockTogglePlaylistSermon(...args),
-    useFavoriteSermon: () => mockUseFavoriteSermon(),
   }
 })
 
@@ -74,9 +70,6 @@ jest.mock('../PlayerMenu/PlayerMenu', () => {
 })
 
 const MENU_BUTTON_LABEL = 'Меню плеера'
-const ADD_TO_FAVORITES_LABEL = 'Добавить в избранное'
-const REMOVE_FROM_FAVORITES_LABEL = 'Убрать из избранного'
-const ADD_TO_PLAYLIST_BUTTON_LABEL = 'Добавить в плейлист'
 const REMOVE_MENU_TEXT = 'Удалить из текущего плейлиста'
 const REMOVE_DIALOG_TITLE = 'Удалить из плейлиста?'
 const REMOVE_DIALOG_MESSAGE =
@@ -125,8 +118,6 @@ const Harness = () => {
       onShowDetails={jest.fn()}
       onToggleCache={jest.fn()}
       onOpenSoundSettings={jest.fn()}
-      onOpenMenu={() => setShowMenu(true)}
-      onAddToPlaylist={mockOnAddToPlaylist}
     />
   )
 }
@@ -161,7 +152,6 @@ const renderAnchor = async ({
 describe('<PlayerMenuAnchor>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockUseFavoriteSermon.mockReturnValue({ isFavorite: false, toggleFavorite: mockToggleFavorite })
   })
 
   test('hides the remove item when the current playlist is not local', async () => {
@@ -282,7 +272,6 @@ describe('<PlayerMenuAnchor>', () => {
         showMenu={false}
         audio={MOCK_AUDIO}
         visualState='cloud'
-        onOpenMenu={jest.fn()}
         setShowMenu={jest.fn()}
         onShowDetails={jest.fn()}
         onToggleCache={jest.fn()}
@@ -295,30 +284,6 @@ describe('<PlayerMenuAnchor>', () => {
     await waitFor(() =>
       expect(Object.values(ctx.get(onboardingTargetRectsAtom)[TARGET_ID] ?? {})).toEqual([RECT]),
     )
-  })
-
-  test('toggles favorites from the heart button', async () => {
-    const { getByLabelText } = await renderAnchor()
-
-    fireEvent.press(getByLabelText(ADD_TO_FAVORITES_LABEL))
-
-    expect(mockToggleFavorite).toHaveBeenCalledTimes(1)
-  })
-
-  test('shows the remove label when the sermon is already a favorite', async () => {
-    mockUseFavoriteSermon.mockReturnValue({ isFavorite: true, toggleFavorite: mockToggleFavorite })
-
-    const { getByLabelText } = await renderAnchor()
-
-    expect(getByLabelText(REMOVE_FROM_FAVORITES_LABEL)).toBeTruthy()
-  })
-
-  test('adds the current sermon to a playlist from the plus button', async () => {
-    const { getByLabelText } = await renderAnchor()
-
-    fireEvent.press(getByLabelText(ADD_TO_PLAYLIST_BUTTON_LABEL))
-
-    expect(mockOnAddToPlaylist).toHaveBeenCalledWith(MOCK_AUDIO)
   })
 })
 

@@ -3,6 +3,12 @@ import { APP_MAX_CONTENT_WIDTH } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 
 export const expandedControlsStyles = StyleSheet.create({
+  actionsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
   closeButton: {
     alignItems: 'center',
     height: 48,
@@ -34,7 +40,8 @@ export const expandedControlsStyles = StyleSheet.create({
   controlsRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    marginBottom: INDENTS.low,
   },
 
   helpButton: {
@@ -53,8 +60,9 @@ export const expandedControlsStyles = StyleSheet.create({
 
   menuContainer: {
     alignItems: 'center',
-    // [♥][＋][⋮] — один ряд (RN по умолчанию сложил бы кнопки в колонку).
-    // right-край кластера совпадает с ⋮, поэтому якорь поповера не смещается.
+    // Якорь оборачивает только ⋮: right-край совпадает с кнопкой, поэтому
+    // menuWrapper right: 0 даёт точное выравнивание, а поповер открывается
+    // ВВЕРХ (bottom: '100%') от второго ряда контролов.
     flexDirection: 'row',
     position: 'relative',
   },

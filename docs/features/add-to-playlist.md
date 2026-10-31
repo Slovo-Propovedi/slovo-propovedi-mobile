@@ -220,11 +220,11 @@
   `buildHistoryMenuActions`. Кросс-фичевого импорта нет.
 - **Полноэкранный плеер и шторка очереди** (`widgets/expandable-player`):
   `ExpandablePlayer` владеет хуком (одна модалка). В полноэкранном плеере модалку
-  открывает кнопка **＋** в кластере `PlayerMenuAnchor` → `PlayerMenuButtons`
-  (колбэк идёт `ContainerView` → `FullscreenContent` → `PlayerControlsSection` →
-  `PlayerMenuAnchor`); пункта «Добавить в плейлист» в поповер-меню `PlayerMenu`
+  открывает кнопка **＋** в кластере над заголовком трека (`PlayerFavoriteButtons`;
+  колбэк идёт `ContainerView` → `FullscreenContent` → `PlayerControlsSection` →
+  `PlayerFavoriteButtons`); пункта «Добавить в плейлист» в поповер-меню `PlayerMenu`
   больше нет, а текущая проповедь передаётся кнопке явно (`audio` из
-  `PlayerMenuAnchor`), т.к. это не строка списка. В шторке очереди колбэк
+  `PlayerFavoriteButtons`), т.к. это не строка списка. В шторке очереди колбэк
   по-прежнему идёт через меню строк (`FullscreenSheets` → `PlaylistBottomSheet` →
   … → `useSheetMenuActions` → `buildHistoryMenuActions`).
 - **Офлайн** (`pages/offline`): `OfflineScreen` владеет хуком, `OfflineRow`

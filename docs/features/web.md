@@ -167,7 +167,7 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 - таб-бар (`widgets/tab-bar/ui/styles.ts` → `floatingIsland`, `maxWidth: CONTENT_COLUMN_WIDTH`);
 - свёрнутый мини-плеер (`ExpandablePlayer/miniStyles.ts`, принимает `screenWidth`, `getColumnSideInset(..., CONTENT_COLUMN_WIDTH)`);
 - свёрнутая геометрия `ContainerView` — только эндпоинт `progress→0` в `getRestingContainerStyle.ts` и ворклете `useExpandAnimation.ts` (полноэкранный вид `progress→1` не тронут);
-- в полноэкранном плеере — ряд с тремя точками (`expandedLayoutStyles.trackInfoRow`) и блок кнопок (`expandedControlsStyles.controlsArea`) — это web-only часть (`APP_MAX_CONTENT_WIDTH`). Прогресс-бар и `HeaderOverlay` остаются на всю ширину.
+- в полноэкранном плеере — шапка трека (`expandedLayoutStyles.trackInfoRow`, только кластер [♥][＋]) и оба ряда контролов (`expandedControlsStyles.controlsArea`, включая ⋮) — это web-only часть (`APP_MAX_CONTENT_WIDTH`). Прогресс-бар и `HeaderOverlay` остаются на всю ширину.
 
 На телефонах (ширина < 600 px) числовая колонка шире экрана, поэтому все три инсета сводятся к `INDENTS.low` — рендер не меняется.
 

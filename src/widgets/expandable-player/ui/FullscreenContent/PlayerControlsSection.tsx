@@ -11,8 +11,9 @@ import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { type createStyles } from '../ExpandablePlayer/styles'
 import { BoundaryHint } from './BoundaryHint'
 import { FullscreenDownloadProgressBar } from './FullscreenDownloadProgressBar'
+import { PlayerActionsRow } from './PlayerActionsRow'
 import { PlayerControlsRow } from './PlayerControlsRow'
-import { PlayerMenuAnchor } from './PlayerMenuAnchor'
+import { PlayerFavoriteButtons } from './PlayerFavoriteButtons'
 
 export const PlayerControlsSection = ({
   audio,
@@ -72,20 +73,7 @@ export const PlayerControlsSection = ({
           />
           <Text style={styles.artistName}>{subtitle}</Text>
         </View>
-        <PlayerMenuAnchor
-          audio={audio}
-          styles={styles}
-          isCached={isCached}
-          showMenu={showMenu}
-          setShowMenu={setShowMenu}
-          visualState={visualState}
-          onShowDetails={onShowDetails}
-          onToggleCache={onToggleCache}
-          onAddToPlaylist={onAddToPlaylist}
-          onOpenMenu={() => setShowMenu(true)}
-          onOpenSoundSettings={onOpenSoundSettings}
-          onboardingTargetId='player-fullscreen.menu'
-        />
+        <PlayerFavoriteButtons audio={audio} styles={styles} onAddToPlaylist={onAddToPlaylist} />
       </View>
       <View style={styles.progressRow}>
         <Text style={styles.timeText}>
@@ -105,11 +93,18 @@ export const PlayerControlsSection = ({
       </View>
       <View style={styles.controlsArea}>
         <BoundaryHint styles={styles} />
-        <PlayerControlsRow
+        <PlayerControlsRow styles={styles} stopSeek={stopSeek} startSeek={startSeek} />
+        <PlayerActionsRow
+          audio={audio}
           styles={styles}
-          stopSeek={stopSeek}
-          startSeek={startSeek}
+          isCached={isCached}
+          showMenu={showMenu}
+          visualState={visualState}
+          setShowMenu={setShowMenu}
+          onShowDetails={onShowDetails}
+          onToggleCache={onToggleCache}
           onOpenPlaylist={onOpenPlaylist}
+          onOpenSoundSettings={onOpenSoundSettings}
         />
       </View>
     </View>

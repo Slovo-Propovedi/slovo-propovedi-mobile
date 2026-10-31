@@ -50,11 +50,13 @@ describe('onboarding scenario data', () => {
     expect(scenariosById.whatsNew.sinceVersion).toMatch(/^\d+\.\d+\.\d+$/)
   })
 
-  test('whats-new spotlights the help button in its first step', () => {
+  test('whats-new opens with an intro card and then spotlights the help button', () => {
     const whatsNew = scenariosById.whatsNew
 
-    expect(whatsNew.steps[0].targetId).toBe('app.help-button')
-    expect(whatsNew.steps[0].title).toBe('Обзоры в приложении')
+    expect(whatsNew.steps[0].targetId).toBeUndefined()
+    expect(whatsNew.steps[0].title).toBe('Новые ряды плеера')
+    expect(whatsNew.steps[1].targetId).toBe('app.help-button')
+    expect(whatsNew.steps[1].title).toBe('Сценарии плеера')
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -92,11 +94,11 @@ describe('onboarding scenario data', () => {
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
   })
 
-  test('whatsNew folds its tab and settings-item lead-up into the settings card', () => {
+  test('whatsNew has no entry transitions', () => {
     const whatsNewDeck = buildTourDeck(scenariosById.whatsNew.steps)
 
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 3])
-    expect(whatsNewDeck[1].entryStepIndexes).toEqual([1, 2])
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1])
+    expect(whatsNewDeck[1].entryStepIndexes).toEqual([])
     expect(whatsNewDeck[1].exitStepIndexes).toEqual([])
   })
 

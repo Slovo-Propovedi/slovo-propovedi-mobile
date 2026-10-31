@@ -1,16 +1,18 @@
+import { Entypo } from '@expo/vector-icons'
 import { useCtx } from '@reatom/npm-react'
 import { useState } from 'react'
 import { View } from 'react-native'
 import { useContinuePlayback } from 'features/continue-playback'
+import { OnboardingTarget } from 'features/onboarding'
 import { type TrackCacheVisualState } from 'entities/offline-cache'
 import { currentPlaylistAtom, resetPlaybackAction } from 'entities/player'
-import { myPlaylistsAtom, togglePlaylistSermon, useFavoriteSermon } from 'entities/playlist'
+import { myPlaylistsAtom, togglePlaylistSermon } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
+import { IconButton } from 'shared/ui/icon-button'
 import { COLORS } from 'shared/ui/theme'
 import { type createStyles } from '../ExpandablePlayer/styles'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
-import { PlayerMenuButtons } from './PlayerMenuButtons'
 
 interface MenuMembership {
   canRemove: boolean
@@ -24,14 +26,15 @@ const REMOVE_MESSAGE =
   'Проповедь будет удалена из текущего плейлиста. Выберите, где продолжить прослушивание.'
 const REMOVE_CONFIRM_TEXT = 'Удалить'
 const CANCEL_TEXT = 'Отмена'
+const MENU_LABEL = 'Меню плеера'
 
-// The ⋮ anchor with the popover menu mounted right under it.
+// The ⋮ anchor of the player menu in the second controls row, with the popover
+// menu mounted right under the trigger. Dialogs live here too, so they outlive
+// the menu unmount.
 export const PlayerMenuAnchor = ({
   audio,
   isCached,
-  onAddToPlaylist,
   onboardingTargetId,
-  onOpenMenu,
   onOpenSoundSettings,
   onShowDetails,
   onToggleCache,
@@ -42,9 +45,7 @@ export const PlayerMenuAnchor = ({
 }: {
   audio: AudioPlayerData
   isCached?: boolean
-  onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onboardingTargetId?: string
-  onOpenMenu: () => void
   onOpenSoundSettings: () => void
   onShowDetails: () => void
   onToggleCache: () => void
@@ -55,7 +56,6 @@ export const PlayerMenuAnchor = ({
 }) => {
   const ctx = useCtx()
   const { dialog, offer } = useContinuePlayback()
-  const { isFavorite, toggleFavorite } = useFavoriteSermon(audio)
   const [membership, setMembership] = useState<MenuMembership>(EMPTY_MEMBERSHIP)
   const [isRemoveDialogOpen, setRemoveDialogOpen] = useState(false)
 
@@ -69,7 +69,7 @@ export const PlayerMenuAnchor = ({
       playlist !== null && playlist.sermons.some(sermon => sermon.id === audio.id)
 
     setMembership({ canRemove: isLocalPlaylist && containsAudio, playlistId: playlist?.id ?? null })
-    onOpenMenu()
+    setShowMenu(true)
   }
 
   // Диалог живёт в якоре, а не в меню: при закрытии меню его поддерево
@@ -85,15 +85,14 @@ export const PlayerMenuAnchor = ({
 
   return (
     <View style={styles.menuContainer}>
-      <PlayerMenuButtons
-        audio={audio}
-        styles={styles}
-        isFavorite={isFavorite}
-        onOpenMenu={handleOpenMenu}
-        onToggleFavorite={toggleFavorite}
-        onAddToPlaylist={onAddToPlaylist}
-        onboardingTargetId={onboardingTargetId}
-      />
+      <OnboardingTarget id={onboardingTargetId}>
+        <IconButton
+          onPress={handleOpenMenu}
+          style={styles.menuButton}
+          accessibilityLabel={MENU_LABEL}
+          Icon={<Entypo style={styles.menuIcon} name='dots-three-vertical' />}
+        />
+      </OnboardingTarget>
       {showMenu && (
         <PlayerMenu
           isCached={isCached}
