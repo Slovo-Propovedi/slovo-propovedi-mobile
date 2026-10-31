@@ -1,6 +1,7 @@
 import { act } from '@testing-library/react-native'
 import { AppState, type AppStateStatus } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
+import { getColors, type ImageColorsResult } from 'react-native-image-colors'
 import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { LightTheme } from 'shared/ui/theme'
@@ -25,6 +26,17 @@ jest.mock('expo-status-bar', () => ({
 
 const FULLSCREEN_TEST_ID = 'fullscreen-content'
 const AUDIO_URL = 'https://example.com/audio.mp3'
+
+const WEB_COLORS: ImageColorsResult = {
+  darkMuted: '#112233',
+  darkVibrant: '#112233',
+  dominant: '#112233',
+  lightMuted: '#112233',
+  lightVibrant: '#112233',
+  muted: '#112233',
+  platform: 'web',
+  vibrant: '#112233',
+}
 
 const AUDIO: AudioPlayerData = {
   artist: 'Автор',
@@ -53,6 +65,7 @@ const baseProps = {
 const mockListeners: Array<(state: AppStateStatus) => void> = []
 
 beforeEach(() => {
+  jest.mocked(getColors).mockResolvedValue(WEB_COLORS)
   mockListeners.length = 0
   jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, listener) => {
     mockListeners.push(listener)

@@ -7,6 +7,8 @@ import { PlayerMiddleArea } from './PlayerMiddleArea'
 
 jest.mock('shared/lib/haptics', () => ({ hapticLight: jest.fn() }))
 
+jest.mock('shared/ui', () => ({ CoverImage: () => null }))
+
 jest.mock('./PlayerEdgeSeekZones', () => ({ PlayerEdgeSeekZones: () => null }))
 
 jest.mock('./DetailsOverlay', () => ({ DetailsOverlay: () => null }))
