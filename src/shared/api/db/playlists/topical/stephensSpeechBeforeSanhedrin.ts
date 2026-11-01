@@ -1,8 +1,8 @@
+import { DEFAULT_API_URL } from '../../../../config/api-url'
 import { type FetchedPlaylist } from '../../../../model/fetched/fetched-data'
 import { DEFAULT_ARTIST } from '../../constants'
 
-const artwork =
-  'https://slovo-istini.com/image/cache/image/pages/1221/image-19-08-23-02-50_700x1000.png'
+const artwork = `${DEFAULT_API_URL}/image/cache/image/pages/1221/image-19-08-23-02-50_700x1000.png`
 export const stephensSpeechBeforeSanhedrin: FetchedPlaylist = {
   artwork,
   id: 'stephensSpeechBeforeSanhedrin',
@@ -10,7 +10,7 @@ export const stephensSpeechBeforeSanhedrin: FetchedPlaylist = {
     {
       artist: DEFAULT_ARTIST,
       artwork,
-      audioUrl: 'https://slovo-istini.com/image/pages/1221/bezgranichnyy_bog._deyaniya_7_1-8.mp3',
+      audioUrl: `${DEFAULT_API_URL}/image/pages/1221/bezgranichnyy_bog._deyaniya_7_1-8.mp3`,
       chapter: 7,
       id: '1212',
       title: 'Безграничный Бог. Деяния',
@@ -20,8 +20,7 @@ export const stephensSpeechBeforeSanhedrin: FetchedPlaylist = {
     {
       artist: DEFAULT_ARTIST,
       artwork,
-      audioUrl:
-        'https://slovo-istini.com/image/pages/1221/maloizvestnyy_priznak_poslannika_boga._deyaniya_7__9-16.mp3',
+      audioUrl: `${DEFAULT_API_URL}/image/pages/1221/maloizvestnyy_priznak_poslannika_boga._deyaniya_7__9-16.mp3`,
       chapter: 7,
       id: '1313',
       title: 'Малоизвестный признак посланника Бога. Деяния',

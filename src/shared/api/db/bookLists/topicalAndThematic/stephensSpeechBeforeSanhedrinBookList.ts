@@ -1,8 +1,8 @@
+import { DEFAULT_API_URL } from '../../../../config/api-url'
 import { type SermonShape } from '../../../../model/domain/common'
 import { DEFAULT_ARTIST } from '../../constants'
 
-const artwork =
-  'https://slovo-istini.com/image/cache/image/pages/1221/image-19-08-23-02-50_700x1000.png'
+const artwork = `${DEFAULT_API_URL}/image/cache/image/pages/1221/image-19-08-23-02-50_700x1000.png`
 
 export const stephensSpeechBeforeSanhedrinBookList: SermonShape[] = [
   {

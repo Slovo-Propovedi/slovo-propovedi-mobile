@@ -1,8 +1,8 @@
+import { DEFAULT_API_URL } from '../../../../config/api-url'
 import { type FetchedPlaylist } from '../../../../model/fetched/fetched-data'
 import { DEFAULT_ARTIST } from '../../constants'
 
-const artwork =
-  'https://slovo-istini.com/image/cache/image/pages/1161/whatsapp_image_2022-12-12_at_22.34.13_701x1000.jpeg'
+const artwork = `${DEFAULT_API_URL}/image/cache/image/pages/1161/whatsapp_image_2022-12-12_at_22.34.13_701x1000.jpeg`
 
 export const isThereAnUnforgivableSinPlaylist: FetchedPlaylist = {
   artwork,
@@ -13,8 +13,7 @@ export const isThereAnUnforgivableSinPlaylist: FetchedPlaylist = {
     {
       artist: DEFAULT_ARTIST,
       artwork,
-      audioUrl:
-        'https://slovo-istini.com/image/pages/1161/sushchestvuet_li_neprostitelnyy_greh.mp3',
+      audioUrl: `${DEFAULT_API_URL}/image/pages/1161/sushchestvuet_li_neprostitelnyy_greh.mp3`,
       id: '11111',
       title: 'Существует ли непростительный грех?',
       youtubeUrl: 'https://youtu.be/piFqGlbNJSI',
