@@ -50,10 +50,12 @@ export const HistoryScreen = () => {
   const tourScrollableRef = useTourScrollable()
 
   const handlePress = useCallback(
-    (entry: ListeningHistoryEntry) => {
+    async (entry: ListeningHistoryEntry) => {
       const sermon = getEntrySermon(entry)
       if (!sermon) return
-      openChoice(sermon, entry.playlist)
+      // Resolve the full playlist first: the single-candidate path plays the entry snapshot.
+      const resolved = await resolveEntryFallbackPlaylist(sermon, entry.playlist)
+      openChoice(sermon, resolved ?? entry.playlist)
     },
     [openChoice],
   )
@@ -68,9 +70,7 @@ export const HistoryScreen = () => {
         </OnboardingHelpRow>
       ),
     })
-    return () => {
-      navigation.setOptions({ headerRight: undefined })
-    }
+    return () => navigation.setOptions({ headerRight: undefined })
   }, [navigation])
 
   if (!isHistoryLoaded && entries.length === 0)

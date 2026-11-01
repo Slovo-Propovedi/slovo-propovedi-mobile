@@ -12,6 +12,7 @@ import { usePlayNewSermon } from 'entities/player'
 import { FAVORITES_PLAYLIST, myPlaylistsAtom } from 'entities/playlist'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { resolveEntryFallbackPlaylist } from '../lib/resolveEntryFallbackPlaylist'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
 import { HistoryScreen } from './HistoryScreen'
 
@@ -39,6 +40,10 @@ jest.mock('@expo/vector-icons', () => {
 
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ setOptions: jest.fn() }),
+}))
+
+jest.mock('../lib/resolveEntryFallbackPlaylist', () => ({
+  resolveEntryFallbackPlaylist: jest.fn(),
 }))
 
 jest.mock('entities/section/@x/listening-history', () => {
@@ -156,6 +161,11 @@ describe('<HistoryScreen>', () => {
     // In Jest, host-component measureInWindow never fires its callback, so the
     // header menu would never open. Mock the measurement with fixed geometry.
     mockMeasureInWindow({ height: 44, width: 44, x: 300, y: 100 })
+    // Keep the real resolver's "entry snapshot is the last resort" contract so
+    // the chooser tests below see the entry playlist unless a test overrides it.
+    jest
+      .mocked(resolveEntryFallbackPlaylist)
+      .mockImplementation(async (_sermon, originPlaylist) => originPlaylist ?? undefined)
   })
 
   afterEach(() => {
@@ -205,6 +215,30 @@ describe('<HistoryScreen>', () => {
       sermon: mockSermon,
     })
     expect(queryByText(DIALOG_TITLE)).toBeNull()
+  })
+
+  test('row press resolves the full playlist before the single-candidate path', async () => {
+    const playNewSermonMock = jest.fn()
+    jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
+    const fullPlaylist = {
+      ...mockEntry.playlist,
+      sermons: [mockSermon, { ...mockSermon, id: 'sermon-2' }],
+    }
+    jest.mocked(resolveEntryFallbackPlaylist).mockResolvedValue(fullPlaylist)
+
+    const ctx = seedHistory([mockEntry])
+
+    const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
+
+    await act(async () => {
+      fireEvent.press(getByText('Play'))
+    })
+
+    expect(resolveEntryFallbackPlaylist).toHaveBeenCalledWith(mockSermon, mockEntry.playlist)
+    expect(playNewSermonMock).toHaveBeenCalledWith({
+      playlist: fullPlaylist,
+      sermon: mockSermon,
+    })
   })
 
   test('row press with several candidates opens the chooser', async () => {
