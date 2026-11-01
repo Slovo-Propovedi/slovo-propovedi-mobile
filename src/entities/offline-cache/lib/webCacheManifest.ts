@@ -7,10 +7,13 @@
  * "cached ⇔ fully downloaded", a URL counts as cached only once it is listed in
  * a small same-origin JSON manifest inside the bucket. The service worker gates
  * offline serving on the same manifest, and the manifest entry itself is
- * excluded from cache summaries.
+ * excluded from cache summaries. The manifest key is origin-rooted: a relative
+ * key resolves against `document.baseURI` (the current route) on the page but
+ * against the script root in the SW.
  */
 
 const AUDIO_MANIFEST_KEY = '__manifest__'
+const manifestCacheKey = (): string => new URL(AUDIO_MANIFEST_KEY, globalThis.location.origin).href
 
 interface Manifest {
   urls: string[]
@@ -20,9 +23,8 @@ interface Manifest {
 const canonicalUrl = (audioUrl: string): string => new URL(audioUrl).href
 
 /**
- * Whether a cache key (as returned by `cache.keys()`, i.e. An absolute URL)
- * refers to the manifest entry. The manifest is stored via `cache.put` with the
- * reserved same-origin key, which the browser resolves to an absolute URL.
+ * Whether an absolute cache key (as returned by `cache.keys()`) is the manifest
+ * entry. Path-suffix matching also covers legacy per-route keys (`/listen/...`).
  * @param url - Absolute cache key URL.
  */
 export const isManifestUrl = (url: string): boolean => {
@@ -35,17 +37,16 @@ export const isManifestUrl = (url: string): boolean => {
 
 const writeManifest = async (cache: Cache, urls: Set<string>): Promise<void> => {
   const manifest: Manifest = { urls: [...urls], version: 1 }
-  await cache.put(AUDIO_MANIFEST_KEY, new Response(JSON.stringify(manifest)))
+  await cache.put(manifestCacheKey(), new Response(JSON.stringify(manifest)))
 }
 
 /**
- * Read the committed URL set from the manifest. Returns null when the manifest
- * entry is missing (distinct from empty). A corrupt/unparseable manifest is
- * treated as an empty set (logged) so callers fall back to re-downloading.
+ * Read the committed URL set; null means the entry is missing (distinct from
+ * empty). A corrupt manifest counts as an empty set (logged), so callers retry.
  * @param cache - The audio cache bucket.
  */
 export const readCommittedUrls = async (cache: Cache): Promise<null | Set<string>> => {
-  const entry = await cache.match(AUDIO_MANIFEST_KEY, { ignoreVary: true })
+  const entry = await cache.match(manifestCacheKey(), { ignoreVary: true })
   if (!entry) return null
   try {
     const manifest = await entry.json()
@@ -60,10 +61,8 @@ export const readCommittedUrls = async (cache: Cache): Promise<null | Set<string
 let ensureInflight: null | Promise<Set<string>> = null
 
 /**
- * Return the committed URL set, building the manifest once from the bucket's
- * existing entries on first use (legacy migration). Commit-path only — never
- * called from read/delete/cleanup paths. Concurrent calls share a single build
- * via a module-level in-flight promise; `cache.keys()` failures propagate.
+ * Return the committed URL set, building the manifest from the bucket's entries
+ * on first use (legacy migration). Commit-path only, one in-flight build.
  * @param cache - The audio cache bucket.
  */
 const ensureManifest = (cache: Cache): Promise<Set<string>> => {
@@ -96,8 +95,8 @@ const enqueueManifestWrite = (write: () => Promise<void>): Promise<void> => {
 }
 
 /**
- * Serialized read-modify-write that adds a canonical URL to the manifest.
- * Committing happens only after a full download has been `put` into the bucket.
+ * Serialized read-modify-write that adds a canonical URL to the manifest once
+ * its bytes are fully `put` into the bucket.
  * @param cache - The audio cache bucket.
  * @param audioUrl - Canonical URL of the track.
  */
@@ -111,8 +110,8 @@ export const commitAudioUrl = async (cache: Cache, audioUrl: string): Promise<vo
 }
 
 /**
- * Serialized read-modify-write that removes a canonical URL from the manifest,
- * used when an entry is deleted so a re-download is not skipped.
+ * Serialized read-modify-write that removes a canonical URL from the manifest
+ * after its entry is deleted, so a re-download is not skipped.
  * @param cache - The audio cache bucket.
  * @param audioUrl - Canonical URL of the track.
  */
