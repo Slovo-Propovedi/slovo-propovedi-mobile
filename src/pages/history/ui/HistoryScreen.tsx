@@ -53,8 +53,9 @@ export const HistoryScreen = () => {
     async (entry: ListeningHistoryEntry) => {
       const sermon = getEntrySermon(entry)
       if (!sermon) return
-      // Resolve the full playlist first: the single-candidate path plays the entry snapshot.
-      const resolved = await resolveEntryFallbackPlaylist(sermon, entry.playlist)
+      // Resolve the playlist first; a rejected resolve (storage read) degrades to the snapshot.
+      const playlistLookup = resolveEntryFallbackPlaylist(sermon, entry.playlist)
+      const resolved = await playlistLookup.catch(() => undefined)
       openChoice(sermon, resolved ?? entry.playlist)
     },
     [openChoice],

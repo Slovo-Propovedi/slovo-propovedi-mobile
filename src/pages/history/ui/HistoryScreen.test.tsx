@@ -241,6 +241,25 @@ describe('<HistoryScreen>', () => {
     })
   })
 
+  test('row press degrades to the entry snapshot when the resolve rejects', async () => {
+    const playNewSermonMock = jest.fn()
+    jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
+    jest.mocked(resolveEntryFallbackPlaylist).mockRejectedValue(new Error('storage read failed'))
+
+    const ctx = seedHistory([mockEntry])
+
+    const { getByText } = await renderWithProviders(<HistoryScreen />, { ctx })
+
+    await act(async () => {
+      fireEvent.press(getByText('Play'))
+    })
+
+    expect(playNewSermonMock).toHaveBeenCalledWith({
+      playlist: mockEntry.playlist,
+      sermon: mockSermon,
+    })
+  })
+
   test('row press with several candidates opens the chooser', async () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
