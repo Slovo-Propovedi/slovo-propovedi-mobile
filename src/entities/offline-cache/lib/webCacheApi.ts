@@ -100,8 +100,11 @@ export const downloadAndStoreAudio = async (
       // A commit failure only means a re-download next session — never fail the download.
       const cache = await openAudioCache()
       await commitAudioUrl(cache, audioUrl)
-      // A completed download also proves we are online: verify one legacy entry.
-      void migrateAudioManifest(cache).catch(() => {})
+      // A completed download also proves we are online: fire-and-forget a
+      // migration slice that verifies pending entries within its budget.
+      void migrateAudioManifest(cache).catch(error =>
+        console.error('[audio-cache] manifest migration slice failed:', error),
+      )
     } catch (error) {
       console.error('[audio-cache] Failed to commit audio url:', error)
     }

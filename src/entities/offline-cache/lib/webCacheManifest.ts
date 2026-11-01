@@ -12,10 +12,8 @@
  * `webCacheManifestStore.ts`.
  */
 
-import { type ManifestState, readManifestEntry } from './webCacheManifestRead'
+import { AUDIO_MANIFEST_KEY, type ManifestState, readManifestEntry } from './webCacheManifestRead'
 import { enqueueManifestWrite, writeManifestNow } from './webCacheManifestStore'
-
-const AUDIO_MANIFEST_KEY = '__manifest__'
 
 const canonicalUrl = (audioUrl: string): string => new URL(audioUrl).href
 

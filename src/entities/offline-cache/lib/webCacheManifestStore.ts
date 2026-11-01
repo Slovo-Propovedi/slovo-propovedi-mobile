@@ -5,7 +5,7 @@
  * have none) and a lost commit only forces a re-download.
  */
 
-import { manifestCacheKey } from './webCacheManifestRead'
+import { manifestCacheKey, type ManifestState, readManifestState } from './webCacheManifestRead'
 
 const MANIFEST_VERSION = 2
 const MANIFEST_WRITE_LOCK = 'audio-manifest'
@@ -17,14 +17,8 @@ interface Manifest {
 }
 
 const withManifestWriteLock = async <T>(write: () => Promise<T>): Promise<T> => {
-  const locks = (
-    globalThis as {
-      navigator?: {
-        locks?: { request: (name: string, callback: () => Promise<T>) => Promise<T> }
-      }
-    }
-  ).navigator?.locks
-  if (!locks?.request) return write()
+  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
+  if (!locks) return write()
   return locks.request(MANIFEST_WRITE_LOCK, write)
 }
 
@@ -72,4 +66,21 @@ export const writeManifestState = async (
   unverified: string[],
 ): Promise<void> => {
   await enqueueManifestWrite(() => writeManifestNow(cache, urls, unverified))
+}
+
+/**
+ * Read-modify-write the manifest inside the serialized, cross-tab-locked write
+ * path. The merge sees a fresh read, so a commit that landed since the caller's
+ * own read survives instead of being overwritten by a stale snapshot.
+ * @param cache - The audio cache bucket.
+ * @param merge - Builds the next state from the current manifest state.
+ */
+export const updateManifestState = async (
+  cache: Cache,
+  merge: (state: ManifestState) => ManifestState,
+): Promise<void> => {
+  await enqueueManifestWrite(async () => {
+    const next = merge(await readManifestState(cache))
+    await writeManifestNow(cache, next.urls, next.unverified)
+  })
 }

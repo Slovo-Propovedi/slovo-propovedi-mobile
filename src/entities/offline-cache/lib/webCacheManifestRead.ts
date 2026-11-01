@@ -5,7 +5,7 @@
  * verifies their body length.
  */
 
-const AUDIO_MANIFEST_KEY = '__manifest__'
+export const AUDIO_MANIFEST_KEY = '__manifest__'
 
 export const manifestCacheKey = (): string =>
   new URL(AUDIO_MANIFEST_KEY, globalThis.location.origin).href

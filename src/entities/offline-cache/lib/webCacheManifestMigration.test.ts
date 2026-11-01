@@ -1,13 +1,15 @@
-import { commitAudioUrl, readCommittedUrls } from './webCacheManifest'
+import { commitAudioUrl, readCommittedUrls, uncommitAudioUrl } from './webCacheManifest'
 import { migrateAudioManifest, resumeAudioManifestMigration } from './webCacheManifestMigration'
 import { readManifestState } from './webCacheManifestRead'
 import { writeManifestState } from './webCacheManifestStore'
 
 const AUDIO_URL = 'https://cdn.example.com/sermon-1.mp3'
 const OTHER_URL = 'https://cdn.example.com/sermon-2.mp3'
+const THIRD_URL = 'https://cdn.example.com/sermon-3.mp3'
 const ORIGIN_URL = 'https://cache.test'
 const MANIFEST_URL = ORIGIN_URL + '/__manifest__'
 const CACHE_NAME = 'audio-cache-v1'
+const AUDIO_CONTENT_TYPE = 'audio/mpeg'
 
 class FakeCache {
   private readonly store = new Map<string, Response>()
@@ -46,13 +48,19 @@ const keyOf = (request: Request | string): string => {
 
 const completeResponse = (bytes: number): Response =>
   new Response(new Blob([new Uint8Array(bytes).fill(1)]), {
-    headers: { 'Content-Length': String(bytes), 'Content-Type': 'audio/mpeg' },
+    headers: { 'Content-Length': String(bytes), 'Content-Type': AUDIO_CONTENT_TYPE },
     status: 200,
   })
 
-const truncatedResponse = (bodyBytes: number, declaredBytes: number): Response =>
+const sizedResponse = (bodyBytes: number, declaredBytes: number): Response =>
   new Response(new Blob([new Uint8Array(bodyBytes).fill(1)]), {
-    headers: { 'Content-Length': String(declaredBytes), 'Content-Type': 'audio/mpeg' },
+    headers: { 'Content-Length': String(declaredBytes), 'Content-Type': AUDIO_CONTENT_TYPE },
+    status: 200,
+  })
+
+const responseWithoutLength = (bodyBytes: number): Response =>
+  new Response(new Blob([new Uint8Array(bodyBytes).fill(1)]), {
+    headers: { 'Content-Type': AUDIO_CONTENT_TYPE },
     status: 200,
   })
 
@@ -111,7 +119,29 @@ describe('migrateAudioManifest', () => {
 
   test('deletes and does not commit a truncated entry', async () => {
     await writeManifestState(bucket(), new Set(), [AUDIO_URL])
-    await bucket().put(AUDIO_URL, truncatedResponse(100, 200))
+    await bucket().put(AUDIO_URL, sizedResponse(100, 200))
+
+    await expect(migrateAudioManifest(bucket())).resolves.toBe(true)
+
+    expect(await readCommittedUrls(bucket())).toEqual(new Set())
+    expect(bucket().delete).toHaveBeenCalledWith(AUDIO_URL, { ignoreVary: true })
+    await expect(bucket().match(AUDIO_URL)).resolves.toBeUndefined()
+  })
+
+  test('deletes and does not commit a body longer than its declared length', async () => {
+    await writeManifestState(bucket(), new Set(), [AUDIO_URL])
+    await bucket().put(AUDIO_URL, sizedResponse(200, 100))
+
+    await expect(migrateAudioManifest(bucket())).resolves.toBe(true)
+
+    expect(await readCommittedUrls(bucket())).toEqual(new Set())
+    expect(bucket().delete).toHaveBeenCalledWith(AUDIO_URL, { ignoreVary: true })
+    await expect(bucket().match(AUDIO_URL)).resolves.toBeUndefined()
+  })
+
+  test('deletes and does not commit a bodied entry without Content-Length', async () => {
+    await writeManifestState(bucket(), new Set(), [AUDIO_URL])
+    await bucket().put(AUDIO_URL, responseWithoutLength(128))
 
     await expect(migrateAudioManifest(bucket())).resolves.toBe(true)
 
@@ -184,6 +214,59 @@ describe('migrateAudioManifest', () => {
     const state = await readManifestState(bucket())
     expect(state.urls).toEqual(new Set([AUDIO_URL]))
     expect(state.unverified).toEqual([])
+  })
+
+  test('uncommitAudioUrl removes the url from unverified too', async () => {
+    await writeManifestState(bucket(), new Set(), [AUDIO_URL])
+
+    await uncommitAudioUrl(bucket(), AUDIO_URL)
+
+    const state = await readManifestState(bucket())
+    expect(state.urls).toEqual(new Set())
+    expect(state.unverified).toEqual([])
+  })
+
+  test('merges a commit that lands while another entry is being verified', async () => {
+    await writeManifestState(bucket(), new Set(), [AUDIO_URL, OTHER_URL])
+    await bucket().put(AUDIO_URL, completeResponse(64))
+    await bucket().put(OTHER_URL, completeResponse(64))
+    const cache = bucket()
+    const realMatch = cache.match.getMockImplementation()
+    if (!realMatch) throw new Error('FakeCache.match lost its implementation')
+    let interleaved = false
+    // commit THIRD_URL after this pass decided its state but before it persists A
+    cache.match.mockImplementation(async request => {
+      if (!interleaved && keyOf(request) === AUDIO_URL) {
+        interleaved = true
+        await commitAudioUrl(cache, THIRD_URL)
+      }
+      return realMatch(request)
+    })
+    let ticks = 0
+    const now = (): number => (ticks += 1000)
+
+    await expect(migrateAudioManifest(cache, 1000, now)).resolves.toBe(false)
+
+    const interrupted = await readManifestState(cache)
+    expect(interrupted.urls).toEqual(new Set([AUDIO_URL, THIRD_URL]))
+    expect(interrupted.unverified).toEqual([OTHER_URL])
+
+    await expect(migrateAudioManifest(cache, 1000, now)).resolves.toBe(true)
+
+    const finished = await readManifestState(cache)
+    expect(finished.urls).toEqual(new Set([AUDIO_URL, OTHER_URL, THIRD_URL]))
+    expect(finished.unverified).toEqual([])
+  })
+
+  test('shares one in-flight pass between concurrent callers', async () => {
+    await writeManifestState(bucket(), new Set(), [AUDIO_URL])
+    await bucket().put(AUDIO_URL, completeResponse(64))
+
+    const first = migrateAudioManifest(bucket())
+    const second = migrateAudioManifest(bucket())
+
+    expect(second).toBe(first)
+    await expect(first).resolves.toBe(true)
   })
 })
 

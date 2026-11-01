@@ -10,13 +10,16 @@
  * manifest: unverifiable bytes can never be proven complete, and deleting
  * self-heals through a normal re-download on demand.
  *
- * Progress is persisted after every entry, so a budget-exhausted pass resumes
- * where it stopped on the next startup or after a commit.
+ * Progress is persisted after every entry through `updateManifestState`, whose
+ * merge reads the manifest again under the write lock: a commit from another
+ * slice or tab that landed since this pass read the state is unioned in, not
+ * overwritten. A budget-exhausted pass resumes where it stopped on the next
+ * startup or after a commit, and concurrent callers share one in-flight pass.
  */
 
 import { isCacheStorageAvailable, openAudioCache } from './openAudioCache'
-import { type ManifestState, readManifestState } from './webCacheManifestRead'
-import { writeManifestState } from './webCacheManifestStore'
+import { readManifestState } from './webCacheManifestRead'
+import { updateManifestState } from './webCacheManifestStore'
 
 const MANIFEST_MIGRATION_BUDGET_MS = 3000
 
@@ -30,7 +33,8 @@ const countStreamedBytes = async (response: Response, limit: number): Promise<nu
       if (done) return count
       count += value?.length ?? 0
       if (count > limit) {
-        await reader.cancel()
+        // Best-effort abort of a lying body; awaiting cancel can stall the pass.
+        void reader.cancel().catch(() => undefined)
         return count
       }
     }
@@ -45,39 +49,69 @@ const isEntryComplete = async (response: Response): Promise<boolean> => {
   return (await countStreamedBytes(response, contentLength)) === contentLength
 }
 
-const persist = (cache: Cache, urls: Set<string>, unverified: string[]): Promise<ManifestState> =>
-  writeManifestState(cache, urls, unverified).then(() => ({ unverified, urls }))
+type EntryOutcome = 'dropped' | 'verified'
 
-const verifyEntry = async (cache: Cache, state: ManifestState): Promise<ManifestState> => {
-  const [nextUrl, ...rest] = state.unverified
-  const response = await cache.match(nextUrl, { ignoreVary: true })
-  if (!response) return persist(cache, state.urls, rest)
-  if (!(await isEntryComplete(response))) {
-    await cache.delete(nextUrl, { ignoreVary: true })
-    return persist(cache, state.urls, rest)
-  }
-  return persist(cache, new Set([...state.urls, nextUrl]), rest)
+const verifyEntry = async (cache: Cache, url: string): Promise<EntryOutcome> => {
+  const response = await cache.match(url, { ignoreVary: true })
+  if (!response) return 'dropped'
+  if (await isEntryComplete(response)) return 'verified'
+  await cache.delete(url, { ignoreVary: true })
+  return 'dropped'
 }
+
+const persistProgress = async (
+  cache: Cache,
+  verified: Set<string>,
+  processed: Set<string>,
+): Promise<void> => {
+  // Another tab's commit of the same URL is fresh bytes, so the union wins.
+  await updateManifestState(cache, state => ({
+    unverified: state.unverified.filter(url => !processed.has(url)),
+    urls: new Set([...state.urls, ...verified]),
+  }))
+}
+
+const runMigration = async (
+  cache: Cache,
+  budgetMs: number,
+  now: () => number,
+): Promise<boolean> => {
+  const startedAt = now()
+  const verified = new Set<string>()
+  const processed = new Set<string>()
+  let state = await readManifestState(cache)
+  while (state.unverified.length > 0) {
+    const [nextUrl] = state.unverified
+    processed.add(nextUrl)
+    if ((await verifyEntry(cache, nextUrl)) === 'verified') verified.add(nextUrl)
+    await persistProgress(cache, verified, processed)
+    const outOfBudget = now() - startedAt >= budgetMs
+    state = await readManifestState(cache)
+    if (outOfBudget) break
+  }
+  return state.unverified.length === 0
+}
+
+let migrationInflight: null | Promise<boolean> = null
 
 /**
  * Verify unverified manifest entries within a time budget. Returns true when
- * the list is exhausted (migration complete).
+ * the list is exhausted (migration complete). Concurrent callers share one
+ * pass, so the startup slice and a post-download slice never overlap.
  * @param cache - The audio cache bucket.
  * @param budgetMs - Wall-clock budget for this pass.
  * @param now - Clock, injectable for tests.
  */
-export const migrateAudioManifest = async (
+export const migrateAudioManifest = (
   cache: Cache,
   budgetMs: number = MANIFEST_MIGRATION_BUDGET_MS,
   now: () => number = Date.now,
 ): Promise<boolean> => {
-  const startedAt = now()
-  let state = await readManifestState(cache)
-  while (state.unverified.length > 0) {
-    state = await verifyEntry(cache, state)
-    if (now() - startedAt >= budgetMs) break
-  }
-  return state.unverified.length === 0
+  if (migrationInflight) return migrationInflight
+  migrationInflight = runMigration(cache, budgetMs, now).finally(() => {
+    migrationInflight = null
+  })
+  return migrationInflight
 }
 
 /**
