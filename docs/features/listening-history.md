@@ -80,7 +80,9 @@ export type { ListeningHistory, ListeningHistoryEntry }
 
 ### Тап по записи истории (usePlaybackChoice)
 
-Экран истории не держит собственный press-хук: тап по строке открывает выбор контекста через `features/playback-choice` (см. [playback-choice.md](./playback-choice.md)). При нуле кандидатов `usePlaybackChoice` асинхронно резолвит фолбэк: `resolveEntryFallbackPlaylist` (`src/pages/history/lib/`) вызывает `resolvePlaylistBySermon(entry.playlist.id, sermon.id, entry.playlist)` — live `dynamicSectionsAtom` → sections-cache → снапшот записи, поэтому полный плейлист даёт полную очередь с авто-переходом, а снапшот остаётся последним резервом. Ошибки запуска и резолва ловятся в `usePlaybackChoice` → `reportError(error, errorMessage)`.
+Экран истории не держит собственный press-хук: тап по строке открывает выбор контекста через `features/playback-choice` (см. [playback-choice.md](./playback-choice.md)). `handlePress` (`src/pages/history/ui/HistoryScreen.tsx`) **сначала** резолвит полный плейлист записи — `resolveEntryFallbackPlaylist` (`src/pages/history/lib/`) вызывает `resolvePlaylistBySermon(entry.playlist.id, sermon.id, entry.playlist)`: live `dynamicSectionsAtom` → sections-cache → снапшот записи — и только затем вызывает `openChoice(sermon, resolved ?? entry.playlist)`.
+
+Зачем резолв до выбора, а не только в фолбэке: в диалог уходит `originPlaylist`, и при **ровно одном** кандидате играет он сразу. Раньше туда попадал однотрековый снапшот записи (`buildContextPlaylist`), поэтому мгновенный путь запускал «кастомную» очередь из одного трека: она заканчивалась после этой проповеди, `handleQueueEnd` помечал запись завершённой, и следующий тап начинал воспроизведение с 0:00. С разрешённым полным плейлистом очередь доигрывает дальше, а resume/завершение считаются по правилам плейлиста; снапшот остаётся последним резервом, если плейлист не нашёлся. Ошибки запуска и резолва ловятся в `usePlaybackChoice` → `reportError(error, errorMessage)`.
 
 ### @x cross-import (entities/player)
 

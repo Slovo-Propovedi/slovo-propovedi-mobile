@@ -160,7 +160,7 @@
 
 **Почему:** нативная `SafeAreaView` (Fabric) проставляет свой padding на кадр позже, чем применяется `style`-padding. На холодном старте, пока реальные инсеты ещё не пришли, это даёт видимый «прыжок» первых кадров — контент стартует edge-to-edge под системным статус-баром и лишь затем сдвигается вниз. `paddingTop` из `useSafeAreaInsets` попадает в тот же рендер, что и остальной стиль, поэтому экран рисуется в финальной позиции сразу.
 
-Экран должен быть обёрнут **одним** `SafeAreaProvider`: его держит сам `expo-router` (`ExpoRoot`), поэтому отдельная root-обёртка в `app/_layout.tsx` не нужна — лишний вложенный провайдер с `initialWindowMetrics` мог отдать нулевые инсеты на dev-client cold start и давал тот же «прыжок».
+Экран должен быть обёрнут **одним** `SafeAreaProvider`: его держит сам `expo-router` (`ExpoRoot`), поэтому отдельная root-обёртка в `app/_layout.tsx` не нужна — лишний вложенный провайдер с `initialWindowMetrics` мог отдать нулевые инсеты на dev-client cold start и давал тот же «прыжок». **Исключение — web:** expo-router 58 монтирует там `WebSafeAreaProvider` с замороженными нулями, поэтому `app/_layout.tsx` на web дополнительно монтирует `SafeAreaProvider` библиотеки (`SafeAreaBoundary`) — иначе инсеты нулевые во всём приложении (см. [features/web.md](./features/web.md) → «Safe area на web»).
 
 ## Barrel-файлы
 
