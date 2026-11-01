@@ -89,7 +89,9 @@ export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) 
       void setIsStalledOfflineAction(ctx, false)
       // WebKit can drop the loadedmetadata seek for streamed sources: re-assert
       // the stored position once on the first playing edge — one-shot so later
-      // user seeks are never fought.
+      // user seeks are never fought. Exception: a user seek landing before this
+      // first playing edge (initial buffering window) can be overridden once —
+      // bounded and rare.
       if (deps.initialPositionMs > 0 && !initialSeekReasserted) {
         initialSeekReasserted = true
         const positionMs = deps.audio.currentTime * 1000

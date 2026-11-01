@@ -1,6 +1,6 @@
 import { type AudioPlaylist } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { setIsSeekingAction, setSeekTargetAction } from '../../../model'
+import { setIsSeekingAction, setPositionAction, setSeekTargetAction } from '../../../model'
 import { startBackgroundCaching } from '../BackgroundCachingService'
 import { audioEffectsAttach } from './audioEffectsAttach'
 import { playbackController } from './PlaybackController'
@@ -78,6 +78,8 @@ export const replaceQueueTrack = async (
   seekGuard.arm()
   void setIsSeekingAction(ctx, true)
   void setSeekTargetAction(ctx, positionMs)
+  // Show the target right away: the guard holds stale status positions until the seek lands.
+  void setPositionAction(ctx, positionMs)
   await playlistEngine.seekTo(positionMs / 1000)
   startBackgroundCaching(audioUrl)
   return playlist

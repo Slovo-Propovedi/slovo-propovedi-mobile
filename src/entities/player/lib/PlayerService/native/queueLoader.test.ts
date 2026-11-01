@@ -1,5 +1,5 @@
 import { type AudioPlaylist } from 'expo-audio'
-import { setSeekTargetAction } from '../../../model'
+import { setPositionAction, setSeekTargetAction } from '../../../model'
 import { playlistEngine } from './PlaylistEngine'
 import { replaceQueueTrack } from './queueLoader'
 import { findQueueIndex } from './queueSwitch'
@@ -20,6 +20,7 @@ jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
 jest.mock('../../../model', () => ({
   currentAudioAtom: jest.fn(),
   setIsSeekingAction: jest.fn(),
+  setPositionAction: jest.fn(),
   setSeekTargetAction: jest.fn(),
 }))
 
@@ -118,7 +119,9 @@ describe('replaceQueueTrack queue skip settling', () => {
 
     expect(seekGuard.arm).toHaveBeenCalled()
     expect(setSeekTargetAction).toHaveBeenCalledWith(expect.anything(), RESUME_MS)
+    expect(setPositionAction).toHaveBeenCalledWith(expect.anything(), RESUME_MS)
     expect(callOrder(jest.mocked(seekGuard.arm))).toBeLessThan(callOrder(mockSeekTo))
     expect(callOrder(jest.mocked(setSeekTargetAction))).toBeLessThan(callOrder(mockSeekTo))
+    expect(callOrder(jest.mocked(setPositionAction))).toBeLessThan(callOrder(mockSeekTo))
   })
 })
