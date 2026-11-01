@@ -361,7 +361,7 @@ describe('AudioCacheService.web', () => {
     await bucket().put(AUDIO_URL, corsResponse(1024))
     await bucket().put(
       MANIFEST_URL,
-      new Response(JSON.stringify({ urls: [AUDIO_URL], version: 1 })),
+      new Response(JSON.stringify({ unverified: [], urls: [AUDIO_URL], version: 2 })),
     )
     bucket().put.mockClear()
     const progress: number[] = []
@@ -379,7 +379,7 @@ describe('AudioCacheService.web', () => {
     await bucket().put(AUDIO_URL, corsResponse(1024))
     await bucket().put(
       MANIFEST_URL,
-      new Response(JSON.stringify({ urls: [AUDIO_URL], version: 1 })),
+      new Response(JSON.stringify({ unverified: [], urls: [AUDIO_URL], version: 2 })),
     )
     const fetchSpy = mockFetchOk(1024)
 
@@ -453,7 +453,7 @@ describe('AudioCacheService.web', () => {
     await cacheStorage.open('audio-cache-v1')
     await bucket().put(
       MANIFEST_URL,
-      new Response(JSON.stringify({ urls: [AUDIO_URL], version: 1 })),
+      new Response(JSON.stringify({ unverified: [], urls: [AUDIO_URL], version: 2 })),
     )
     documentBase = 'https://cache.test/listen/playlist'
 

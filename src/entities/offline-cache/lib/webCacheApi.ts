@@ -5,7 +5,7 @@
  */
 
 import { CacheCancelledError } from './CacheCancelledError'
-import { AUDIO_CACHE_NAME, openAudioCache } from './openAudioCache'
+import { AUDIO_CACHE_NAME, isCacheStorageAvailable, openAudioCache } from './openAudioCache'
 import { fetchAudioForCache } from './webAudioDownload'
 import {
   commitAudioUrl,
@@ -13,15 +13,13 @@ import {
   readCommittedUrls,
   uncommitAudioUrl,
 } from './webCacheManifest'
+import { migrateAudioManifest } from './webCacheManifestMigration'
 import { rememberCompletedDownload } from './webCompletedDownloads'
 import {
   addActiveDownloadWithHeartbeat,
   clearActiveDownloads,
   removeActiveDownload,
 } from './webDownloadJournal'
-
-export const isCacheStorageAvailable = (): boolean =>
-  typeof caches !== 'undefined' && typeof caches.open === 'function'
 
 /**
  * Whether a track is fully downloaded: its entry exists in the bucket AND its
@@ -100,7 +98,10 @@ export const downloadAndStoreAudio = async (
     rememberCompletedDownload(audioUrl)
     try {
       // A commit failure only means a re-download next session — never fail the download.
-      await commitAudioUrl(await openAudioCache(), audioUrl)
+      const cache = await openAudioCache()
+      await commitAudioUrl(cache, audioUrl)
+      // A completed download also proves we are online: verify one legacy entry.
+      void migrateAudioManifest(cache).catch(() => {})
     } catch (error) {
       console.error('[audio-cache] Failed to commit audio url:', error)
     }

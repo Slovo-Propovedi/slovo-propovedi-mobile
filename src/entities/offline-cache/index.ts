@@ -43,6 +43,7 @@ export {
 } from './lib/sermonCachingSetting'
 export { OFFLINE_SERMONS_REGISTRY, OFFLINE_SERMONS_REGISTRY_SEEDED } from './lib/storageKeys'
 export { useIsCached } from './lib/useIsCached'
+export { resumeAudioManifestMigration } from './lib/webCacheManifestMigration'
 export {
   cachedUrlsAtom,
   cacheUpdateTriggerAtom,

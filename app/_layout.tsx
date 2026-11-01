@@ -12,6 +12,7 @@ import {
   hydrateOfflineRegistry,
   loadSermonCachingEnabled,
   reEnqueuePartialDownloads,
+  resumeAudioManifestMigration,
 } from 'entities/offline-cache'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
 import { hydrateCachedSections } from 'entities/section'
@@ -68,21 +69,24 @@ const RootLayoutWithProvider = () => (
   </reatomContext.Provider>
 )
 
-// Purge orphaned legacy .mp3.part files, hydrate the offline registry, restore
-// the player, then re-enqueue stale .cache.mp3 partials. Sweeping after restore
-// keeps the current track's partial alive for an offline resolve; a same-URL
-// enqueue joins the existing queue entry. The caching setting loads INSIDE the
-// chain and BEFORE the player restore: both downstream steps enqueue downloads
-// through the queue gate (restore → resolvePlaybackUrl → startBackgroundCaching →
-// enqueueCache, then reEnqueuePartialDownloads), and the gate reads the atom —
-// with the default `true` still in place a cold start would start a download on
-// every launch despite the setting being off.
+// Purge orphaned legacy .mp3.part files, verify legacy web-cache entries,
+// hydrate the offline registry, restore the player, then re-enqueue stale
+// .cache.mp3 partials. Sweeping after restore keeps the current track's partial
+// alive for an offline resolve; a same-URL enqueue joins the existing queue
+// entry. The caching setting loads INSIDE the chain and BEFORE the player
+// restore: both downstream steps enqueue downloads through the queue gate
+// (restore → resolvePlaybackUrl → startBackgroundCaching → enqueueCache, then
+// reEnqueuePartialDownloads), and the gate reads the atom — with the default
+// `true` still in place a cold start would start a download on every launch
+// despite the setting being off.
 // Each step is isolated: a failure in offline-registry hydration or in loading
 // the caching setting must not abort the chain before the player restore runs
 // (otherwise cold start silently leaves currentAudio empty). The terminal
 // catch reports any rejection that still escapes.
 void cleanupOrphanedDownloads()
   .catch(error => console.error('[audio-cache] orphan cleanup failed:', error))
+  .then(() => resumeAudioManifestMigration())
+  .catch(error => console.error('[audio-cache] manifest migration failed:', error))
   .then(() => hydrateOfflineRegistry(ctx))
   .catch(error => console.error('[startup] offline registry hydration failed:', error))
   .then(() => loadSermonCachingEnabled(ctx))
