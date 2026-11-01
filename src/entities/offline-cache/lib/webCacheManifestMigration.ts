@@ -18,7 +18,7 @@ import { isCacheStorageAvailable, openAudioCache } from './openAudioCache'
 import { type ManifestState, readManifestState } from './webCacheManifestRead'
 import { writeManifestState } from './webCacheManifestStore'
 
-export const MANIFEST_MIGRATION_BUDGET_MS = 3000
+const MANIFEST_MIGRATION_BUDGET_MS = 3000
 
 const countStreamedBytes = async (response: Response, limit: number): Promise<null | number> => {
   if (!response.body) return null
