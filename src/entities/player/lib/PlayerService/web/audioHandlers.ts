@@ -8,6 +8,8 @@ import { type WebMediaSession } from './mediaSession'
 import { markInterruptedWhilePlaying, markUserPause } from './pauseIntent'
 import { type WebPlayerState } from './playerState'
 
+const RESUME_SEEK_REASSERT_TOLERANCE_MS = 1000
+
 export const reportPlayError = (error: unknown) => {
   // A play() aborted by a superseding load/seek is benign (mirrors
   // interruptionAutoResume): warn only, never surface a dialog.
@@ -36,6 +38,7 @@ interface WebAudioHandlerDeps {
 
 export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) => {
   let initialPositionApplied = false
+  let initialSeekReasserted = false
 
   return attachWebAudioEvents(deps.audio, {
     onDuration: (durationMs: number) => writeWebDuration(deps.state, durationMs),
@@ -48,6 +51,7 @@ export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) 
       // remember it so the reconnect heal can auto-resume (Issue #109). The
       // online signal may lag the underrun, so buffering is the discriminator.
       if (deps.state.getState().isBuffering) void setIsStalledOfflineAction(ctx, true)
+      deps.state.setIsBuffering(false)
     },
     onLoaded: () => {
       deps.state.setIsBuffering(false)
@@ -83,6 +87,17 @@ export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) 
     onPlaying: () => {
       deps.state.setIsBuffering(false)
       void setIsStalledOfflineAction(ctx, false)
+      // WebKit can drop the loadedmetadata seek for streamed sources: re-assert
+      // the stored position once on the first playing edge — one-shot so later
+      // user seeks are never fought.
+      if (deps.initialPositionMs > 0 && !initialSeekReasserted) {
+        initialSeekReasserted = true
+        const positionMs = deps.audio.currentTime * 1000
+        if (Math.abs(positionMs - deps.initialPositionMs) > RESUME_SEEK_REASSERT_TOLERANCE_MS) {
+          deps.audio.currentTime = deps.initialPositionMs / 1000
+          deps.state.setPosition(deps.initialPositionMs)
+        }
+      }
     },
     onPosition: (positionMs: number) => {
       deps.noteLivePosition(positionMs)
