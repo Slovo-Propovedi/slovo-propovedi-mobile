@@ -1108,6 +1108,7 @@ jobs:
           fetch-tags: true
 
       - name: Extract changelog section
+        id: changelog
         run: |
           {
             echo "## Release ${{ github.ref_name }} — publish-release"
@@ -1527,6 +1528,7 @@ jobs:
       - name: Job summary
         if: always()
         env:
+          CHANGELOG_OUTCOME: ${{ steps.changelog.outcome }}
           DOWNLOAD_ARTIFACTS_OUTCOME: ${{ steps.download-artifacts.outcome }}
           UPLOAD_APK_OUTCOME: ${{ steps.upload-apk.outcome }}
           MIRROR_GITHUB_OUTCOME: ${{ steps.mirror-github.outcome }}
@@ -1549,6 +1551,7 @@ jobs:
             echo ''
             echo '| Step | Status |'
             echo '| --- | --- |'
+            summary_row changelog "$CHANGELOG_OUTCOME"
             summary_row download-artifacts "$DOWNLOAD_ARTIFACTS_OUTCOME"
             summary_row upload-apk "$UPLOAD_APK_OUTCOME"
             summary_row mirror-github "$MIRROR_GITHUB_OUTCOME"
