@@ -15,7 +15,7 @@ import sharp from 'sharp'
 const ASSETS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../assets')
 const SOURCE = join(ASSETS_DIR, 'splash.png')
 const OUTPUT = join(ASSETS_DIR, 'dark-splash-icon.png')
-const PREVIEW = process.env.SPLASH_ACCENT_PREVIEW ?? '/tmp/opencode/splash-accent-preview.png'
+const PREVIEW = process.env.DARK_SPLASH_ICON_PREVIEW ?? '/tmp/opencode/dark-splash-icon-preview.png'
 const ACCENT = { b: 49, g: 96, r: 241 } // #f16031
 const MARK = { b: 71, g: 71, r: 71 } // #474747
 

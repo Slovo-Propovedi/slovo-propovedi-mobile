@@ -35,7 +35,7 @@ const splashImageProps = {
   imageWidth: 152,
   resizeMode: 'contain',
 } as const
-const darkSplashImageProps = { ...splashImageProps, image: './assets/dark-splash-icon.png' } as const
+const darkImageProps = { ...splashImageProps, image: './assets/dark-splash-icon.png' } as const
 
 export default ({ config }: ConfigContext): AppConfig => ({
   ...config,
@@ -104,7 +104,7 @@ export default ({ config }: ConfigContext): AppConfig => ({
       'expo-splash-screen',
       {
         backgroundColor: '#f16031',
-        dark: { backgroundColor: '#000000', ...darkSplashImageProps },
+        dark: { backgroundColor: '#000000', ...darkImageProps },
         ...splashImageProps,
       },
     ],
