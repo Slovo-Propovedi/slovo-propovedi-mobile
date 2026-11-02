@@ -1,7 +1,7 @@
 # Android App Links (глубокие ссылки)
 
 **Слой:** `app.config.ts` (`android.intentFilters`), `android/` (prebuild), `public/.well-known/assetlinks.json`, `nginx.conf`, `src/pages/playlist` (сетевой резолв по id)
-**Статус:** заявлены 2 маршрута (`/listen`, `/listen/playlist`), локально проверены (`yarn web:build` + preview); прод-деплой `assetlinks.json` не выполнен — ручной шаг
+**Статус:** заявлены 2 маршрута (`/listen`, `/listen/playlist`), локально проверены (`yarn web:build` + preview); прод-деплой `assetlinks.json` выполнен, прод отдаёт его с `200` + `application/json` (проверено 2026-11-02)
 
 ## Обзор
 
@@ -139,7 +139,7 @@ location ^~ /.well-known/ {
 
 Локальная проверка деплоя: `yarn web:build` → `dist/.well-known/assetlinks.json` существует → `yarn web:preview` отдаёт его с `200` + `application/json`.
 
-**Прод-деплой выполнен (2026-11-02)** — `scripts/vps-deploy-web.sh` запускается на VPS из Forgejo release-воркфлоу (общий флоу деплоя веб-приложения — [web.md](./web.md) → «Деплой»). Проверка `/.well-known/` на проде вручную пока не отмечена — выполнить:
+**Прод-деплой выполнен (2026-11-02)** — `scripts/vps-deploy-web.sh` запускается на VPS из Forgejo release-воркфлоу (общий флоу деплоя веб-приложения — [web.md](./web.md) → «Деплой»). **Проверка `/.well-known/` на проде пройдена (2026-11-02):** `assetlinks.json` отдаётся с `HTTP/2 200`, `content-type: application/json` (864 байта, `last-modified: 2026-11-01`, стандартные security-заголовки nginx: CSP, HSTS, `x-content-type-options`), без редиректа. Воспроизвести:
 
 ```bash
 curl -sI https://app.slovo-propovedi.ru/.well-known/assetlinks.json   # 200, application/json, без редиректа
