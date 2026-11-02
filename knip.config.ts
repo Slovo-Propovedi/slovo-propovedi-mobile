@@ -7,6 +7,8 @@ const config: KnipConfig = {
     'scripts/analyze-icon.mjs',
     'scripts/create-fallback-artwork.mjs',
     'scripts/create-notification-icon.mjs',
+    // Generates assets/reload-screen-icon.png for the themed OTA reload screen.
+    'scripts/create-reload-screen-icon.mjs',
     // Read tab WIP — kept as an entry, not an ignore: its imports keep the
     // shared/ui list-item surface (ListItemSize, TouchableListItem,
     // OnPressTouchableListItem) alive instead of reading as unused.

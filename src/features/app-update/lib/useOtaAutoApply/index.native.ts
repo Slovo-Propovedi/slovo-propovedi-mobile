@@ -8,6 +8,8 @@ import {
   updateDialogVisibleAtom,
   updateStateAtom,
 } from 'shared/model'
+import { useTheme } from 'shared/ui/theme'
+import reloadScreenIcon from '../../../../../assets/reload-screen-icon.png'
 
 // Grace period so a brief pause (a track change, a phone call) does not reload the app.
 const OTA_AUTO_APPLY_DELAY_MS = 5000
@@ -19,7 +21,9 @@ export const useOtaAutoApply = (): void => {
   const [isPlaying] = useAtom(isPlayingAtom)
   const [updateState] = useAtom(updateStateAtom)
   const [updateDialogVisible] = useAtom(updateDialogVisibleAtom)
+  const { currentTheme } = useTheme()
   const appliedUpdateIdRef = useRef<null | string>(null)
+  const reloadBackgroundColor = String(currentTheme.background)
 
   useEffect(() => {
     const pendingUpdateId =
@@ -38,7 +42,15 @@ export const useOtaAutoApply = (): void => {
     const timer = setTimeout(() => {
       // Mark at fire time: a cancelled timer may still be re-armed later.
       appliedUpdateIdRef.current = pendingUpdateId
-      void reloadAsync().catch((error: unknown) => {
+      void reloadAsync({
+        reloadScreenOptions: {
+          backgroundColor: reloadBackgroundColor,
+          fade: true,
+          image: reloadScreenIcon,
+          imageResizeMode: 'contain',
+          spinner: { enabled: false },
+        },
+      }).catch((error: unknown) => {
         console.warn('[update] ota auto-apply reload failed:', error)
       })
     }, OTA_AUTO_APPLY_DELAY_MS)
@@ -50,6 +62,7 @@ export const useOtaAutoApply = (): void => {
     isPlaying,
     isRestarting,
     isUpdatePending,
+    reloadBackgroundColor,
     updateDialogVisible,
     updateState,
   ])

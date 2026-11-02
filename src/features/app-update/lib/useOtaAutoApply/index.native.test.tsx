@@ -89,6 +89,22 @@ describe('useOtaAutoApply', () => {
     expect(mockReloadAsync).toHaveBeenCalledTimes(1)
   })
 
+  test('passes themed reload screen options when applying', async () => {
+    await mount()
+    await advance(5000)
+    expect(mockReloadAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reloadScreenOptions: expect.objectContaining({
+          backgroundColor: expect.stringMatching(/^#/),
+          fade: true,
+          image: expect.anything(),
+          imageResizeMode: 'contain',
+          spinner: { enabled: false },
+        }),
+      }),
+    )
+  })
+
   test('applies a pending bundle only once per session', async () => {
     const { rerender } = await mount()
     await advance(5000)
