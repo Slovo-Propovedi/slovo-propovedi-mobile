@@ -10,27 +10,34 @@ import {
   updateStateAtom,
 } from 'shared/model'
 import { useTheme } from 'shared/ui/theme'
-import reloadScreenIcon from '../../../../../assets/reload-screen-icon.png'
+import splashAccentIcon from '../../../../../assets/splash-accent.png'
+import splashImage from '../../../../../assets/splash.png'
 
 // Grace period so a brief pause (a track change, a phone call) does not reload the app.
 const OTA_AUTO_APPLY_DELAY_MS = 5000
 
-const reloadScreenAsset = Asset.fromModule(reloadScreenIcon)
+const splashImageAsset = Asset.fromModule(splashImage)
+const splashAccentAsset = Asset.fromModule(splashAccentIcon)
 
 // The native reload screen decodes a `file://` source with BitmapFactory.decodeFile,
-// which cannot read an APK-internal resource — the icon has to be a real local file.
-const resolveReloadScreenImage = async (): Promise<string | undefined> => {
+// which cannot read an APK-internal resource — the image has to be a real local file.
+const resolveReloadScreenImage = async (asset: Asset): Promise<string | undefined> => {
   try {
-    await reloadScreenAsset.downloadAsync()
-    return reloadScreenAsset.localUri ?? reloadScreenAsset.uri
+    await asset.downloadAsync()
+    return asset.localUri ?? asset.uri
   } catch (error) {
-    console.warn('[update] ota reload screen icon unavailable:', error)
+    console.warn('[update] ota reload screen image unavailable:', error)
     return undefined
   }
 }
 
-const applyReload = async (backgroundColor: string): Promise<void> => {
-  const image = await resolveReloadScreenImage()
+const applyReload = async (backgroundColor: string, isLight: boolean): Promise<void> => {
+  // Warm both splash images so either theme is ready by the time the screen paints.
+  const [splashImageUri, accentImageUri] = await Promise.all([
+    resolveReloadScreenImage(splashImageAsset),
+    resolveReloadScreenImage(splashAccentAsset),
+  ])
+  const image = isLight ? splashImageUri : accentImageUri
 
   await reloadAsync({
     reloadScreenOptions: {
@@ -52,9 +59,10 @@ export const useOtaAutoApply = (): void => {
   const [isPlaying] = useAtom(isPlayingAtom)
   const [updateState] = useAtom(updateStateAtom)
   const [updateDialogVisible] = useAtom(updateDialogVisibleAtom)
-  const { currentTheme } = useTheme()
+  const { currentTheme, isLight } = useTheme()
   const appliedUpdateIdRef = useRef<null | string>(null)
-  const reloadBackgroundColor = String(currentTheme.background)
+  // Mirror the cold-start splash per theme: orange canvas in light, accent mark on black in dark.
+  const reloadBackgroundColor = String(isLight ? currentTheme.primary : currentTheme.background)
 
   useEffect(() => {
     const pendingUpdateId =
@@ -73,13 +81,14 @@ export const useOtaAutoApply = (): void => {
     const timer = setTimeout(() => {
       // Mark at fire time: a cancelled timer may still be re-armed later.
       appliedUpdateIdRef.current = pendingUpdateId
-      void applyReload(reloadBackgroundColor)
+      void applyReload(reloadBackgroundColor, isLight)
     }, OTA_AUTO_APPLY_DELAY_MS)
 
     return () => clearTimeout(timer)
   }, [
     downloadedUpdate,
     isDownloading,
+    isLight,
     isPlaying,
     isRestarting,
     isUpdatePending,

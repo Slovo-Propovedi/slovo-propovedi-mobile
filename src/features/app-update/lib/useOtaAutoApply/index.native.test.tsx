@@ -10,6 +10,7 @@ import {
 import { isPlayingAtom } from 'entities/player'
 import { renderHookWithProviders } from 'shared/mocks'
 import { updateDialogVisibleAtom, updateStateAtom } from 'shared/model'
+import { DarkTheme, LightTheme, themeModeAtom } from 'shared/ui/theme'
 import { useOtaAutoApply } from './index.native'
 
 // entities/player pulls native expo-audio, which throws at import in Jest.
@@ -30,21 +31,38 @@ interface ReloadScreenAssetMock {
   uri: string
 }
 
-jest.mock('expo-asset', () => {
-  const mockReloadScreenAsset = {
-    downloadAsync: jest.fn(),
-    downloaded: false,
-    localUri: 'file:///data/user/0/icon.png',
-    uri: 'https://mock/icon.png',
-  }
-  mockReloadScreenAsset.downloadAsync.mockResolvedValue(mockReloadScreenAsset)
+// jest-expo maps every image to the same module id (1), so give the two splash
+// images explicit ids to keep the Asset.fromModule mapping readable and distinct.
+jest.mock('../../../../../assets/splash.png', () => 101)
+jest.mock('../../../../../assets/splash-accent.png', () => 202)
 
-  return { Asset: { fromModule: () => mockReloadScreenAsset }, mockReloadScreenAsset }
+jest.mock('expo-asset', () => {
+  const createAssetMock = (localUri: string): ReloadScreenAssetMock => {
+    const asset = {
+      downloadAsync: jest.fn(),
+      downloaded: false,
+      localUri,
+      uri: `https://mock/${localUri.split('/').pop()}`,
+    }
+    asset.downloadAsync.mockResolvedValue(asset)
+    return asset
+  }
+
+  const fallbackAsset = createAssetMock('file:///mock-asset')
+  const splashAsset = createAssetMock('file:///data/user/0/splash.png')
+  const accentAsset = createAssetMock('file:///data/user/0/splash-accent.png')
+  const assetsByModule = new Map([
+    [101, splashAsset],
+    [202, accentAsset],
+  ])
+  const fromModule = jest.fn((module: number) => assetsByModule.get(module) ?? fallbackAsset)
+
+  return { Asset: { fromModule }, mockReloadScreenAssets: { accentAsset, splashAsset } }
 })
 
-const mockReloadScreenAsset = jest.requireMock<{ mockReloadScreenAsset: ReloadScreenAssetMock }>(
-  'expo-asset',
-).mockReloadScreenAsset
+const { accentAsset, splashAsset } = jest.requireMock<{
+  mockReloadScreenAssets: { accentAsset: ReloadScreenAssetMock; splashAsset: ReloadScreenAssetMock }
+}>('expo-asset').mockReloadScreenAssets
 
 jest.useFakeTimers()
 
@@ -112,15 +130,15 @@ describe('useOtaAutoApply', () => {
     expect(mockReloadAsync).toHaveBeenCalledTimes(1)
   })
 
-  test('passes themed reload screen options when applying', async () => {
+  test('mirrors the light splash on the reload screen', async () => {
     await mount()
     await advance(5000)
     expect(mockReloadAsync).toHaveBeenCalledWith(
       expect.objectContaining({
         reloadScreenOptions: expect.objectContaining({
-          backgroundColor: expect.stringMatching(/^#/),
+          backgroundColor: LightTheme.primary,
           fade: true,
-          image: 'file:///data/user/0/icon.png',
+          image: splashAsset.localUri,
           imageResizeMode: 'contain',
           spinner: { enabled: false },
         }),
@@ -128,9 +146,25 @@ describe('useOtaAutoApply', () => {
     )
   })
 
+  test('mirrors the dark splash on the reload screen', async () => {
+    const { ctx } = await mount()
+    await act(async () => {
+      themeModeAtom(ctx, 'dark')
+    })
+    await advance(5000)
+    expect(mockReloadAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reloadScreenOptions: expect.objectContaining({
+          backgroundColor: DarkTheme.background,
+          image: accentAsset.localUri,
+        }),
+      }),
+    )
+  })
+
   test('still reloads without an icon when the asset cannot be downloaded', async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {})
-    mockReloadScreenAsset.downloadAsync.mockRejectedValueOnce(new Error('asset download failed'))
+    splashAsset.downloadAsync.mockRejectedValueOnce(new Error('asset download failed'))
     await mount()
     await advance(5000)
 

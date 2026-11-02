@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-// Generates the OTA reload-screen logo from the flat splash art: keeps the
+// Generates the splash accent mark from the flat splash art: keeps the
 // dark #474747 mark, re-colors it with the brand accent (#f16031) and makes
-// everything else transparent, so expo-updates can draw it over the themed
-// background. The output is committed — regenerate when assets/splash.png changes.
-// Every run also writes a white-background QA preview to /tmp (not committed).
+// everything else transparent, so it reads on the black dark-theme background
+// (cold-start splash and OTA reload screen). The output is committed —
+// regenerate when assets/splash.png changes. Every run also writes a
+// white-background QA preview to /tmp (not committed).
 
 import { mkdir } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
@@ -13,8 +14,8 @@ import sharp from 'sharp'
 
 const ASSETS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../assets')
 const SOURCE = join(ASSETS_DIR, 'splash.png')
-const OUTPUT = join(ASSETS_DIR, 'reload-screen-icon.png')
-const PREVIEW = process.env.RELOAD_ICON_PREVIEW ?? '/tmp/opencode/reload-screen-icon-preview.png'
+const OUTPUT = join(ASSETS_DIR, 'splash-accent.png')
+const PREVIEW = process.env.SPLASH_ACCENT_PREVIEW ?? '/tmp/opencode/splash-accent-preview.png'
 const ACCENT = { b: 49, g: 96, r: 241 } // #f16031
 const MARK = { b: 71, g: 71, r: 71 } // #474747
 
@@ -58,14 +59,12 @@ const countOpaquePixels = async () => {
 const verifyOutput = async () => {
   const { height, width } = await sharp(OUTPUT).metadata()
   if (!width || !height) {
-    throw new Error(`reload-screen-icon.png has no dimensions (width: ${width}, height: ${height})`)
+    throw new Error(`splash-accent.png has no dimensions (width: ${width}, height: ${height})`)
   }
 
   const opaquePixels = await countOpaquePixels()
   if (opaquePixels === 0) {
-    throw new Error(
-      'reload-screen-icon.png is fully transparent — the accent mark was not extracted',
-    )
+    throw new Error('splash-accent.png is fully transparent — the accent mark was not extracted')
   }
 
   return { height, opaquePixels, width }
@@ -94,6 +93,6 @@ const main = async () => {
 }
 
 main().catch(error => {
-  console.error(`create-reload-screen-icon failed: ${error.message}`)
+  console.error(`create-splash-accent failed: ${error.message}`)
   process.exit(1)
 })
