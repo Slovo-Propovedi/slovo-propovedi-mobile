@@ -16,7 +16,7 @@ export { packSermonIds } from './lib/sermonIdPacking'
 export { useCreateLocalPlaylist } from './lib/useCreateLocalPlaylist'
 export { useFavoriteSermon } from './lib/useFavoriteSermon'
 export { useIsLocalPlaylist } from './lib/useIsLocalPlaylist'
-export { togglePlaylistSermon } from './localPlaylistMembership'
+export { PLAYLIST_SERMON_LIMIT_MESSAGE, togglePlaylistSermon } from './localPlaylistMembership'
 export {
   FAVORITES_PLAYLIST,
   type LocalPlaylistData,

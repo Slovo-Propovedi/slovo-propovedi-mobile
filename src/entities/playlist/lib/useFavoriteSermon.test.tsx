@@ -1,9 +1,15 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { currentAudioAtom, currentPlaylistAtom } from 'entities/player/@x/playlist'
+import { PLAYLIST_SERMON_LIMIT_MESSAGE } from 'entities/playlist'
 import { type SermonData, toAudioPlayerData } from 'entities/sermon'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
-import { FAVORITES_PLAYLIST, type LocalPlaylistData } from '../localPlaylists'
+import { toastAtom } from 'shared/model'
+import {
+  FAVORITES_PLAYLIST,
+  type LocalPlaylistData,
+  MAX_CUSTOM_PLAYLIST_SERMONS,
+} from '../localPlaylists'
 import { myPlaylistsAtom } from '../model'
 import { useFavoriteSermon } from './useFavoriteSermon'
 
@@ -69,6 +75,24 @@ describe('useFavoriteSermon', () => {
 
     const favorites = ctx.get(myPlaylistsAtom).find(playlist => playlist.id === 'favorites')
     expect(favorites?.sermonIds).toContain(SERMON.id)
+    expect(ctx.get(toastAtom)).toBeNull()
+  })
+
+  test('shows a limit toast and leaves favorites untouched at the limit', async () => {
+    const fullFavorites = Array.from({ length: MAX_CUSTOM_PLAYLIST_SERMONS }, (_, index) => ({
+      ...SERMON,
+      id: `favorite-${index}`,
+    }))
+    const { ctx, result } = await renderFavoriteHook(SERMON, [favoritesWith(fullFavorites)])
+
+    await act(async () => {
+      result.current.toggleFavorite()
+    })
+
+    expect(ctx.get(toastAtom)).toBe(PLAYLIST_SERMON_LIMIT_MESSAGE)
+    const favorites = ctx.get(myPlaylistsAtom).find(playlist => playlist.id === 'favorites')
+    expect(favorites?.sermonIds).toHaveLength(MAX_CUSTOM_PLAYLIST_SERMONS)
+    expect(favorites?.sermonIds).not.toContain(SERMON.id)
   })
 
   test('removes the sermon from favorites on toggle', async () => {

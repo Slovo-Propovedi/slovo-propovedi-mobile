@@ -1,7 +1,7 @@
-import { useAtom, useCtx } from '@reatom/npm-react'
+import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { useCallback, useMemo } from 'react'
-import { type SermonShape } from 'shared/model'
-import { togglePlaylistSermon } from '../localPlaylistMembership'
+import { type SermonShape, showToast } from 'shared/model'
+import { PLAYLIST_SERMON_LIMIT_MESSAGE, togglePlaylistSermon } from '../localPlaylistMembership'
 import { FAVORITES_PLAYLIST } from '../localPlaylists'
 import { myPlaylistsAtom } from '../model'
 
@@ -25,6 +25,7 @@ export const useFavoriteSermon = (
 ): { isFavorite: boolean; toggleFavorite: () => void } => {
   const ctx = useCtx()
   const [playlists] = useAtom(myPlaylistsAtom)
+  const showToastAction = useAction(showToast)
 
   const isFavorite = useMemo(
     () =>
@@ -38,10 +39,13 @@ export const useFavoriteSermon = (
 
   const toggleFavorite = useCallback(() => {
     if (sermon === null) return
+
     void togglePlaylistSermon(ctx, FAVORITES_PLAYLIST.id, sermon, !isFavorite, {
       suppressPlayerReset: true,
+    }).then(outcome => {
+      if (outcome === 'limit-reached') showToastAction(PLAYLIST_SERMON_LIMIT_MESSAGE)
     })
-  }, [ctx, isFavorite, sermon])
+  }, [ctx, isFavorite, sermon, showToastAction])
 
   return { isFavorite, toggleFavorite }
 }
