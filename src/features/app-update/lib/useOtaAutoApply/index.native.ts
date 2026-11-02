@@ -10,14 +10,14 @@ import {
   updateStateAtom,
 } from 'shared/model'
 import { useTheme } from 'shared/ui/theme'
-import splashAccentIcon from '../../../../../assets/splash-accent.png'
+import darkSplashIcon from '../../../../../assets/dark-splash-icon.png'
 import splashImage from '../../../../../assets/splash.png'
 
 // Grace period so a brief pause (a track change, a phone call) does not reload the app.
 const OTA_AUTO_APPLY_DELAY_MS = 5000
 
 const splashImageAsset = Asset.fromModule(splashImage)
-const splashAccentAsset = Asset.fromModule(splashAccentIcon)
+const darkSplashIconAsset = Asset.fromModule(darkSplashIcon)
 
 // The native reload screen decodes a `file://` source with BitmapFactory.decodeFile,
 // which cannot read an APK-internal resource — the image has to be a real local file.
@@ -33,11 +33,11 @@ const resolveReloadScreenImage = async (asset: Asset): Promise<string | undefine
 
 const applyReload = async (backgroundColor: string, isLight: boolean): Promise<void> => {
   // Warm both splash images so either theme is ready by the time the screen paints.
-  const [splashImageUri, accentImageUri] = await Promise.all([
+  const [splashImageUri, darkSplashImageUri] = await Promise.all([
     resolveReloadScreenImage(splashImageAsset),
-    resolveReloadScreenImage(splashAccentAsset),
+    resolveReloadScreenImage(darkSplashIconAsset),
   ])
-  const image = isLight ? splashImageUri : accentImageUri
+  const image = isLight ? splashImageUri : darkSplashImageUri
 
   await reloadAsync({
     reloadScreenOptions: {

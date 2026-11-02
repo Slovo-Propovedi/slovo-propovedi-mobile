@@ -14,7 +14,7 @@ import sharp from 'sharp'
 
 const ASSETS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../assets')
 const SOURCE = join(ASSETS_DIR, 'splash.png')
-const OUTPUT = join(ASSETS_DIR, 'splash-accent.png')
+const OUTPUT = join(ASSETS_DIR, 'dark-splash-icon.png')
 const PREVIEW = process.env.SPLASH_ACCENT_PREVIEW ?? '/tmp/opencode/splash-accent-preview.png'
 const ACCENT = { b: 49, g: 96, r: 241 } // #f16031
 const MARK = { b: 71, g: 71, r: 71 } // #474747
@@ -59,12 +59,12 @@ const countOpaquePixels = async () => {
 const verifyOutput = async () => {
   const { height, width } = await sharp(OUTPUT).metadata()
   if (!width || !height) {
-    throw new Error(`splash-accent.png has no dimensions (width: ${width}, height: ${height})`)
+    throw new Error(`dark-splash-icon.png has no dimensions (width: ${width}, height: ${height})`)
   }
 
   const opaquePixels = await countOpaquePixels()
   if (opaquePixels === 0) {
-    throw new Error('splash-accent.png is fully transparent — the accent mark was not extracted')
+    throw new Error('dark-splash-icon.png is fully transparent — the mark was not extracted')
   }
 
   return { height, opaquePixels, width }
@@ -93,6 +93,6 @@ const main = async () => {
 }
 
 main().catch(error => {
-  console.error(`create-splash-accent failed: ${error.message}`)
+  console.error(`create-dark-splash-icon failed: ${error.message}`)
   process.exit(1)
 })

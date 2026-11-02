@@ -34,7 +34,7 @@ interface ReloadScreenAssetMock {
 // jest-expo maps every image to the same module id (1), so give the two splash
 // images explicit ids to keep the Asset.fromModule mapping readable and distinct.
 jest.mock('../../../../../assets/splash.png', () => 101)
-jest.mock('../../../../../assets/splash-accent.png', () => 202)
+jest.mock('../../../../../assets/dark-splash-icon.png', () => 202)
 
 jest.mock('expo-asset', () => {
   const createAssetMock = (localUri: string): ReloadScreenAssetMock => {
@@ -50,18 +50,21 @@ jest.mock('expo-asset', () => {
 
   const fallbackAsset = createAssetMock('file:///mock-asset')
   const splashAsset = createAssetMock('file:///data/user/0/splash.png')
-  const accentAsset = createAssetMock('file:///data/user/0/splash-accent.png')
+  const darkSplashAsset = createAssetMock('file:///data/user/0/dark-splash-icon.png')
   const assetsByModule = new Map([
     [101, splashAsset],
-    [202, accentAsset],
+    [202, darkSplashAsset],
   ])
   const fromModule = jest.fn((module: number) => assetsByModule.get(module) ?? fallbackAsset)
 
-  return { Asset: { fromModule }, mockReloadScreenAssets: { accentAsset, splashAsset } }
+  return { Asset: { fromModule }, mockReloadScreenAssets: { darkSplashAsset, splashAsset } }
 })
 
-const { accentAsset, splashAsset } = jest.requireMock<{
-  mockReloadScreenAssets: { accentAsset: ReloadScreenAssetMock; splashAsset: ReloadScreenAssetMock }
+const { darkSplashAsset, splashAsset } = jest.requireMock<{
+  mockReloadScreenAssets: {
+    darkSplashAsset: ReloadScreenAssetMock
+    splashAsset: ReloadScreenAssetMock
+  }
 }>('expo-asset').mockReloadScreenAssets
 
 jest.useFakeTimers()
@@ -156,7 +159,7 @@ describe('useOtaAutoApply', () => {
       expect.objectContaining({
         reloadScreenOptions: expect.objectContaining({
           backgroundColor: DarkTheme.background,
-          image: accentAsset.localUri,
+          image: darkSplashAsset.localUri,
         }),
       }),
     )

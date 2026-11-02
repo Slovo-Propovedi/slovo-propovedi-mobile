@@ -35,7 +35,7 @@ const splashImageProps = {
   imageWidth: 152,
   resizeMode: 'contain',
 } as const
-const darkSplashImageProps = { ...splashImageProps, image: './assets/splash-accent.png' } as const
+const darkSplashImageProps = { ...splashImageProps, image: './assets/dark-splash-icon.png' } as const
 
 export default ({ config }: ConfigContext): AppConfig => ({
   ...config,
