@@ -79,7 +79,7 @@ describe('<AdminSermonsScreen>', () => {
     const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
 
     expect(await findByText('Сила веры')).toBeTruthy()
-    expect(await findByText('Иоанн · Иоанна 3:16')).toBeTruthy()
+    expect(await findByText('Иоанн · Иоанна 3:16 · 1 января 2024')).toBeTruthy()
     expect(await findByText('аудио')).toBeTruthy()
   })
 

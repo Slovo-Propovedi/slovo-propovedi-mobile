@@ -1,11 +1,23 @@
 import { ListItemBase } from 'entities/list-item'
 import { sermonSubtitle } from 'entities/sermon'
 import { type APITypes } from 'shared/api'
+import { formatRelativeDate } from 'shared/lib/format'
 import { AdminSermonRowSkeleton } from 'shared/ui'
 import { SermonBadges } from './SermonBadges'
 
+// Дополняет подпись датой создания; некорректная дата оставляет подпись как есть.
+const withCreatedDate = (subtitle: string, createdAt: string): string => {
+  const timestamp = Date.parse(createdAt)
+
+  if (Number.isNaN(timestamp)) return subtitle
+
+  const date = formatRelativeDate(timestamp)
+
+  return subtitle ? `${subtitle} · ${date}` : date
+}
+
 // Карточка проповеди в списке админки: обложка, название, подпись
-// (проповедник · ссылка на Писание) и бейджи наличия медиа.
+// (проповедник · ссылка на Писание · дата создания) и бейджи наличия медиа.
 export const AdminSermonRow = ({
   item,
   onPress,
@@ -19,7 +31,7 @@ export const AdminSermonRow = ({
     variant='surface'
     title={item.title}
     artwork={item.artwork}
-    subtitle={sermonSubtitle(item)}
+    subtitle={withCreatedDate(sermonSubtitle(item), item.createdAt)}
     badges={
       <SermonBadges
         hasAudio={Boolean(item.audioUrl)}

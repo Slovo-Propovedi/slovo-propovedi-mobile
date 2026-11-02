@@ -72,7 +72,7 @@ describe('<AdminPlaylistsScreen>', () => {
     const { findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
 
     expect(await findByText('Первый')).toBeTruthy()
-    expect(await findByText('0 проповедей · 0 разделов')).toBeTruthy()
+    expect(await findByText('0 проповедей · 0 разделов · 1 января 2024')).toBeTruthy()
   })
 
   test('navigates to the detail screen on row press', async () => {
