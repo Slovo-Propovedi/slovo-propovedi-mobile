@@ -119,6 +119,10 @@ const advance = async (ms: number): Promise<void> => {
 }
 
 describe('useOtaAutoApply', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   test('does not reload before the 5s delay', async () => {
     await mount()
     await advance(4999)
@@ -174,7 +178,6 @@ describe('useOtaAutoApply', () => {
     expect(mockReloadAsync).toHaveBeenCalledTimes(1)
     const reloadOptions = mockReloadAsync.mock.calls[0]?.[0]
     expect(reloadOptions?.reloadScreenOptions?.image).toBeUndefined()
-    jest.restoreAllMocks()
   })
 
   test('applies a pending bundle only once per session', async () => {

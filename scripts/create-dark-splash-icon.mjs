@@ -33,6 +33,9 @@ const accentizeSplash = async () => {
   // The splash is a flat background with the mark on top, so the corner pixel is the background.
   const background = { b: data[2], g: data[1], r: data[0] }
   const markDistance = distance(background, MARK)
+  if (markDistance === 0) {
+    throw new Error('splash mark color matches background — nothing to accentize')
+  }
   const output = Buffer.alloc(data.length)
 
   for (let i = 0; i < data.length; i += 4) {

@@ -19,12 +19,13 @@ const OTA_AUTO_APPLY_DELAY_MS = 5000
 const splashImageAsset = Asset.fromModule(splashImage)
 const darkSplashIconAsset = Asset.fromModule(darkSplashIcon)
 
-// The native reload screen decodes a `file://` source with BitmapFactory.decodeFile,
-// which cannot read an APK-internal resource — the image has to be a real local file.
+// The native reload screen reads only a real local file (BitmapFactory.decodeFile):
+// a bundler/http URI or an APK resource cannot be painted. Anything but `localUri`
+// is dropped so the screen degrades to the themed background and spinner.
 const resolveReloadScreenImage = async (asset: Asset): Promise<string | undefined> => {
   try {
     await asset.downloadAsync()
-    return asset.localUri ?? asset.uri
+    return asset.localUri ?? undefined
   } catch (error) {
     console.warn('[update] ota reload screen image unavailable:', error)
     return undefined
@@ -32,7 +33,8 @@ const resolveReloadScreenImage = async (asset: Asset): Promise<string | undefine
 }
 
 const applyReload = async (backgroundColor: string, isLight: boolean): Promise<void> => {
-  // Warm both splash images so either theme is ready by the time the screen paints.
+  // Pre-cache both splash images once, so a later theme flip applies without a
+  // re-download; each apply uses exactly one.
   const [splashImageUri, darkSplashImageUri] = await Promise.all([
     resolveReloadScreenImage(splashImageAsset),
     resolveReloadScreenImage(darkSplashIconAsset),
