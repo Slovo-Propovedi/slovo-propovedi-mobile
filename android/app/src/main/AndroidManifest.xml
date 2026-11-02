@@ -20,11 +20,15 @@
   <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false" android:fullBackupContent="@xml/backup_rules" android:dataExtractionRules="@xml/data_extraction_rules">
     <meta-data android:name="expo.modules.notifications.default_notification_color" android:resource="@color/notification_icon_color"/>
     <meta-data android:name="expo.modules.notifications.default_notification_icon" android:resource="@drawable/notification_icon"/>
-    <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
+    <meta-data android:name="expo.modules.updates.CODE_SIGNING_CERTIFICATE" android:value="-----BEGIN CERTIFICATE-----&#xA;MIIC7jCCAdagAwIBAgIIVNvLyOmaITwwDQYJKoZIhvcNAQELBQAwITEfMB0GA1UE&#xA;AxMWc2xvdm8tcHJvcG92ZWRpLW1vYmlsZTAeFw0yNjEwMjQxOTMzMzNaFw0zNjEw&#xA;MjQxOTMzMzNaMCExHzAdBgNVBAMTFnNsb3ZvLXByb3BvdmVkaS1tb2JpbGUwggEi&#xA;MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDCk5viKoXmHRYKV33r8vV5ayg2&#xA;eN6r/DqxSMZKw5HSpCCluisTq8Bio7X8HdC0IC0bYby7BjBF3DHpzC3vv9qO2OCO&#xA;aVAYcumPrbH6+dQNJm3P1GlIBLCVOE/4b+fJAV469Im2/QQtRDiy0gkeP41dFbw8&#xA;n4OgKDRW+szd79WTmH0YAuauFWPrmjRqYFK1ZjnNrksT+ap+C85JK9JDFtnfI1vL&#xA;D/3yBfT4Y2g+uMvTNj5qbiXEg4PsGOpxuhKX+MhuQq8dU09KrjCcTGaHc56x0ljH&#xA;3XUItxDwEhsCASb3shXpVNedNM9Z1br/VcVIXiwm0yf9TF8fhJuLl0McCsn/AgMB&#xA;AAGjKjAoMA4GA1UdDwEB/wQEAwIHgDAWBgNVHSUBAf8EDDAKBggrBgEFBQcDAzAN&#xA;BgkqhkiG9w0BAQsFAAOCAQEACpY0/Wzq1mlrQHkLQ1i0AouEsFR7fZsmZs5AtNSc&#xA;YQ+NYtm3NbiKHZ5HzOMqcqmXxu0vJ1UWtcJjWHMo8lwNjUybEAKnMemg39qsgr5r&#xA;cajc5vcXNYQ8XzTPmrDhvOHd3WB4ASQBL8h/iimBTjKanLykVnuLxokdBtDhk8zQ&#xA;PUUVH/uFmV9O/VjZBNGHcgZvt5nnMuRiX0tGtBiStRAVRc2srDV0/zzUpzcZWhw4&#xA;1BivwcF3tG9/l8FuUmLE/2qKnBH+NZmBvIDDOBLLlXBduUosOMnEhMe8FPhvePfs&#xA;aXP9BQQ574uKJpUqRC0AVTxVdoX4QXAYqvvu0uLPDXRaJw==&#xA;-----END CERTIFICATE-----&#xA;"/>
+    <meta-data android:name="expo.modules.updates.CODE_SIGNING_METADATA" android:value="{&quot;alg&quot;:&quot;rsa-v1_5-sha256&quot;,&quot;keyid&quot;:&quot;main&quot;}"/>
+    <meta-data android:name="expo.modules.updates.ENABLED" android:value="true"/>
     <meta-data android:name="expo.modules.updates.ENABLE_BSDIFF_PATCH_SUPPORT" android:value="true"/>
     <meta-data android:name="expo.modules.updates.EXPO_RUNTIME_VERSION" android:value="@string/expo_runtime_version"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
+    <meta-data android:name="expo.modules.updates.EXPO_UPDATE_URL" android:value="https://ota.example.com/manifest"/>
+    <meta-data android:name="expo.modules.updates.UPDATES_CONFIGURATION_REQUEST_HEADERS_KEY" android:value="{&quot;expo-app-id&quot;:&quot;143a6bf8-9232-4f36-bdce-de67f9c66f9b&quot;,&quot;expo-channel-name&quot;:&quot;production&quot;,&quot;xprem-branch&quot;:&quot;production&quot;}"/>
     <service android:name="expo.modules.audio.service.AudioControlsService" android:exported="false" android:foregroundServiceType="mediaPlayback">
       <intent-filter>
         <action android:name="androidx.media3.session.MediaSessionService"/>
