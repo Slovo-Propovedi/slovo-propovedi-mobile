@@ -63,7 +63,7 @@ describe('<AdminSermonsScreen>', () => {
           audioUrl: 'audio.mp3',
           book: 'Иоанна',
           chapter: 3,
-          createdAt: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T12:00:00',
           description: 'Описание',
           id: 's1',
           playlists: [],

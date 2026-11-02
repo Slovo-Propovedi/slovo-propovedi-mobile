@@ -1,10 +1,10 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { currentAudioAtom, currentPlaylistAtom } from 'entities/player/@x/playlist'
-import { PLAYLIST_SERMON_LIMIT_MESSAGE } from 'entities/playlist'
 import { type SermonData, toAudioPlayerData } from 'entities/sermon'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { toastAtom } from 'shared/model'
+import { PLAYLIST_SERMON_LIMIT_MESSAGE } from '../localPlaylistMembership'
 import {
   FAVORITES_PLAYLIST,
   type LocalPlaylistData,
