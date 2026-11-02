@@ -4,7 +4,9 @@
 // dark #474747 mark, re-colors it with the brand accent (#f16031) and makes
 // everything else transparent, so expo-updates can draw it over the themed
 // background. The output is committed — regenerate when assets/splash.png changes.
+// Every run also writes a white-background QA preview to /tmp (not committed).
 
+import { mkdir } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
@@ -12,15 +14,20 @@ import sharp from 'sharp'
 const ASSETS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../assets')
 const SOURCE = join(ASSETS_DIR, 'splash.png')
 const OUTPUT = join(ASSETS_DIR, 'reload-screen-icon.png')
+const PREVIEW = process.env.RELOAD_ICON_PREVIEW ?? '/tmp/opencode/reload-screen-icon-preview.png'
 const ACCENT = { b: 49, g: 96, r: 241 } // #f16031
 const MARK = { b: 71, g: 71, r: 71 } // #474747
 
-const distance = (pixel, other) => Math.hypot(pixel.r - other.r, pixel.g - other.g, pixel.b - other.b)
+const distance = (pixel, other) =>
+  Math.hypot(pixel.r - other.r, pixel.g - other.g, pixel.b - other.b)
 
-const clampAlpha = (value) => Math.min(1, Math.max(0, value))
+const clampAlpha = value => Math.min(1, Math.max(0, value))
 
-const main = async () => {
-  const { data, info } = await sharp(SOURCE).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+const accentizeSplash = async () => {
+  const { data, info } = await sharp(SOURCE)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
 
   // The splash is a flat background with the mark on top, so the corner pixel is the background.
   const background = { b: data[2], g: data[1], r: data[0] }
@@ -36,22 +43,57 @@ const main = async () => {
     output[i + 3] = Math.round(alpha * 255)
   }
 
-  await sharp(output, { raw: { channels: 4, height: info.height, width: info.width } })
+  return { output, size: { height: info.height, width: info.width } }
+}
+
+const countOpaquePixels = async () => {
+  const { data } = await sharp(OUTPUT).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+  let opaquePixels = 0
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] === 255) opaquePixels++
+  }
+  return opaquePixels
+}
+
+const verifyOutput = async () => {
+  const { height, width } = await sharp(OUTPUT).metadata()
+  if (!width || !height) {
+    throw new Error(`reload-screen-icon.png has no dimensions (width: ${width}, height: ${height})`)
+  }
+
+  const opaquePixels = await countOpaquePixels()
+  if (opaquePixels === 0) {
+    throw new Error(
+      'reload-screen-icon.png is fully transparent — the accent mark was not extracted',
+    )
+  }
+
+  return { height, opaquePixels, width }
+}
+
+const writePreview = async () => {
+  await mkdir(dirname(PREVIEW), { recursive: true })
+  await sharp(OUTPUT).flatten({ background: '#ffffff' }).toFile(PREVIEW)
+}
+
+const main = async () => {
+  const { output, size } = await accentizeSplash()
+
+  await sharp(output, { raw: { channels: 4, height: size.height, width: size.width } })
     .png()
     .toFile(OUTPUT)
 
-  const { isOpaque } = await sharp(OUTPUT).stats()
-  let opaquePixels = 0
-  for (let i = 3; i < output.length; i += 4) {
-    if (output[i] === 255) opaquePixels++
-  }
+  const { height, opaquePixels, width } = await verifyOutput()
+  const opaqueShare = ((opaquePixels / (width * height)) * 100).toFixed(1)
 
-  const totalPixels = info.width * info.height
-  console.log(`Saved ${OUTPUT}: ${info.width}x${info.height}, isOpaque: ${isOpaque}`)
-  console.log(`Opaque pixels: ${opaquePixels} (${((opaquePixels / totalPixels) * 100).toFixed(1)}%)`)
+  await writePreview()
+
+  console.log(`Saved ${OUTPUT}: ${width}x${height}`)
+  console.log(`Opaque pixels: ${opaquePixels} (${opaqueShare}%)`)
+  console.log(`Preview: ${PREVIEW}`)
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
+main().catch(error => {
+  console.error(`create-reload-screen-icon failed: ${error.message}`)
+  process.exit(1)
 })

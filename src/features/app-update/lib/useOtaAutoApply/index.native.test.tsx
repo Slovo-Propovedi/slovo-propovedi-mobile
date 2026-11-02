@@ -23,6 +23,29 @@ jest.mock('expo-updates', () => ({
   useUpdates: () => mockUpdates,
 }))
 
+interface ReloadScreenAssetMock {
+  downloadAsync: jest.Mock
+  downloaded: boolean
+  localUri: string
+  uri: string
+}
+
+jest.mock('expo-asset', () => {
+  const mockReloadScreenAsset = {
+    downloadAsync: jest.fn(),
+    downloaded: false,
+    localUri: 'file:///data/user/0/icon.png',
+    uri: 'https://mock/icon.png',
+  }
+  mockReloadScreenAsset.downloadAsync.mockResolvedValue(mockReloadScreenAsset)
+
+  return { Asset: { fromModule: () => mockReloadScreenAsset }, mockReloadScreenAsset }
+})
+
+const mockReloadScreenAsset = jest.requireMock<{ mockReloadScreenAsset: ReloadScreenAssetMock }>(
+  'expo-asset',
+).mockReloadScreenAsset
+
 jest.useFakeTimers()
 
 const mockReloadAsync = jest.mocked(reloadAsync)
@@ -97,12 +120,24 @@ describe('useOtaAutoApply', () => {
         reloadScreenOptions: expect.objectContaining({
           backgroundColor: expect.stringMatching(/^#/),
           fade: true,
-          image: expect.anything(),
+          image: 'file:///data/user/0/icon.png',
           imageResizeMode: 'contain',
           spinner: { enabled: false },
         }),
       }),
     )
+  })
+
+  test('still reloads without an icon when the asset cannot be downloaded', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    mockReloadScreenAsset.downloadAsync.mockRejectedValueOnce(new Error('asset download failed'))
+    await mount()
+    await advance(5000)
+
+    expect(mockReloadAsync).toHaveBeenCalledTimes(1)
+    const reloadOptions = mockReloadAsync.mock.calls[0]?.[0]
+    expect(reloadOptions?.reloadScreenOptions?.image).toBeUndefined()
+    jest.restoreAllMocks()
   })
 
   test('applies a pending bundle only once per session', async () => {
