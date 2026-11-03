@@ -116,6 +116,7 @@ jobs:
           summary_row "- Mode: \`$MODE\` · RUNTIME_VERSION \`$RV_PREV\` → \`$RV_NOW\`"
 
       - name: Guard RUNTIME_VERSION bump for native changes
+        id: guard-native-version
         # Native paths changed but the runtime gate did not move: the APK would
         # carry a new native build under the old runtimeVersion, so a JS bundle
         # published later could land on an incompatible binary. Fail the release.
@@ -126,6 +127,7 @@ jobs:
           exit 1
 
       - name: Guard RUNTIME_VERSION drift without native changes
+        id: guard-runtime-drift
         # Mirror image of the guard above: a bumped runtime gate on a JS-only
         # diff means no released APK carries the new runtimeVersion, so an OTA
         # bundle for it would never reach an installed build. Both-empty
@@ -135,6 +137,36 @@ jobs:
           echo "::error::RUNTIME_VERSION changed but native code did not — an OTA for this runtime would never reach any APK. Revert the RUNTIME_VERSION bump, or ship a native release (yarn bump-version manages RUNTIME_VERSION automatically)."
           printf '%s\n' "- RUNTIME_VERSION guard: ❌ runtime bump without a native diff — release blocked" | scripts/ci/step-summary.sh
           exit 1
+
+      # Footer: always runs, so the summary gets a verdict table even when a
+      # step above failed. An empty outcome means the step never ran, not a pass.
+      - name: Job summary
+        if: always()
+        env:
+          DETECT_OUTCOME: ${{ steps.detect.outcome }}
+          GUARD_NATIVE_VERSION_OUTCOME: ${{ steps.guard-native-version.outcome }}
+          GUARD_RUNTIME_DRIFT_OUTCOME: ${{ steps.guard-runtime-drift.outcome }}
+        run: |
+          [ -f scripts/ci/step-summary.sh ] || exit 0
+          status_emoji() {
+            case "$1" in
+              success) printf '✅' ;;
+              failure) printf '❌' ;;
+              cancelled) printf '🟨' ;;
+              *) printf '⏭️' ;;
+            esac
+          }
+          summary_row() { printf '| %s | %s |\n' "$1" "$(status_emoji "$2")"; }
+          {
+            echo ''
+            echo '---'
+            echo ''
+            echo '| Step | Status |'
+            echo '| --- | --- |'
+            summary_row detect "$DETECT_OUTCOME"
+            summary_row guard-native-version "$GUARD_NATIVE_VERSION_OUTCOME"
+            summary_row guard-runtime-drift "$GUARD_RUNTIME_DRIFT_OUTCOME"
+          } | scripts/ci/step-summary.sh || true
 
   create-release:
     # Native mode only: a JS-only tag is a git tag with no release object, so
@@ -151,6 +183,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Wait for CI to pass on this commit
+        id: wait-ci
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -225,6 +258,7 @@ jobs:
           } | scripts/ci/step-summary.sh
 
       - name: Extract changelog section
+        id: changelog
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           awk -v target="## [$VERSION]" '
@@ -250,6 +284,7 @@ jobs:
           } | scripts/ci/step-summary.sh
 
       - name: Create Forgejo Release
+        id: create-release-api
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -282,6 +317,38 @@ jobs:
           fi
           echo "Created Forgejo Release ${{ github.ref_name }} (HTTP $HTTP_CODE)"
           summary_row "- Forgejo release: [${{ github.ref_name }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}) ✅"
+
+      # Footer: always runs, so the summary gets a verdict table even when a
+      # step above failed. An empty outcome means the step never ran, not a pass.
+      - name: Job summary
+        if: always()
+        env:
+          WAIT_CI_OUTCOME: ${{ steps.wait-ci.outcome }}
+          VERSION_OUTCOME: ${{ steps.version.outcome }}
+          CHANGELOG_OUTCOME: ${{ steps.changelog.outcome }}
+          CREATE_RELEASE_API_OUTCOME: ${{ steps.create-release-api.outcome }}
+        run: |
+          [ -f scripts/ci/step-summary.sh ] || exit 0
+          status_emoji() {
+            case "$1" in
+              success) printf '✅' ;;
+              failure) printf '❌' ;;
+              cancelled) printf '🟨' ;;
+              *) printf '⏭️' ;;
+            esac
+          }
+          summary_row() { printf '| %s | %s |\n' "$1" "$(status_emoji "$2")"; }
+          {
+            echo ''
+            echo '---'
+            echo ''
+            echo '| Step | Status |'
+            echo '| --- | --- |'
+            summary_row wait-ci "$WAIT_CI_OUTCOME"
+            summary_row version "$VERSION_OUTCOME"
+            summary_row changelog "$CHANGELOG_OUTCOME"
+            summary_row create-release-api "$CREATE_RELEASE_API_OUTCOME"
+          } | scripts/ci/step-summary.sh || true
 
       - name: Cleanup
         if: always()
@@ -363,6 +430,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Export web
+        id: web-export
         env:
           # Same Metro memory caps as the APK build — the 4 GB host is shared.
           NODE_OPTIONS: --max-old-space-size=1536
@@ -399,6 +467,7 @@ jobs:
           fi
 
       - name: Setup SSH
+        id: ssh-setup
         if: steps.deploycfg.outputs.deploy == 'true'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
@@ -424,6 +493,7 @@ jobs:
           chmod 600 ~/.ssh/config
 
       - name: Deploy to VPS
+        id: deploy-vps
         if: steps.deploycfg.outputs.deploy == 'true'
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -454,6 +524,7 @@ jobs:
       # no Forgejo release to attach to, and the deploy must not depend on
       # release creation (create-release runs in parallel in native mode).
       - name: Zip web build
+        id: zip-web
         if: needs.changes.outputs.native == 'true'
         run: |
           VERSION="${{ github.ref_name }}"
@@ -464,6 +535,7 @@ jobs:
           } | scripts/ci/step-summary.sh
 
       - name: Upload web zip to the Forgejo Release
+        id: upload-web
         if: needs.changes.outputs.native == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -499,6 +571,42 @@ jobs:
             -H "Content-Type: application/zip" \
             --data-binary @slovo-propovedi-web-v${VERSION}.zip
           summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
+
+      # Footer: always runs, so the summary gets a verdict table even when a
+      # step above failed. An empty outcome means the step never ran, not a pass.
+      - name: Job summary
+        if: always()
+        env:
+          WEB_EXPORT_OUTCOME: ${{ steps.web-export.outcome }}
+          DEPLOYCFG_OUTCOME: ${{ steps.deploycfg.outcome }}
+          SSH_SETUP_OUTCOME: ${{ steps.ssh-setup.outcome }}
+          DEPLOY_VPS_OUTCOME: ${{ steps.deploy-vps.outcome }}
+          ZIP_WEB_OUTCOME: ${{ steps.zip-web.outcome }}
+          UPLOAD_WEB_OUTCOME: ${{ steps.upload-web.outcome }}
+        run: |
+          [ -f scripts/ci/step-summary.sh ] || exit 0
+          status_emoji() {
+            case "$1" in
+              success) printf '✅' ;;
+              failure) printf '❌' ;;
+              cancelled) printf '🟨' ;;
+              *) printf '⏭️' ;;
+            esac
+          }
+          summary_row() { printf '| %s | %s |\n' "$1" "$(status_emoji "$2")"; }
+          {
+            echo ''
+            echo '---'
+            echo ''
+            echo '| Step | Status |'
+            echo '| --- | --- |'
+            summary_row web-export "$WEB_EXPORT_OUTCOME"
+            summary_row deploycfg "$DEPLOYCFG_OUTCOME"
+            summary_row ssh-setup "$SSH_SETUP_OUTCOME"
+            summary_row deploy-vps "$DEPLOY_VPS_OUTCOME"
+            summary_row zip-web "$ZIP_WEB_OUTCOME"
+            summary_row upload-web "$UPLOAD_WEB_OUTCOME"
+          } | scripts/ci/step-summary.sh || true
 
       - name: Cleanup workspace
         if: always()
@@ -657,6 +765,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Prebuild native code
+        id: prebuild
         # app.config.ts validates these (zod, no defaults) while generating the
         # manifest — a missing var must fail the prebuild, not emit a bad host.
         # The four OTA vars are different: ota.config.ts is all-or-nothing, so if
@@ -685,6 +794,7 @@ jobs:
           printf '%s\n' "- Expo prebuild: ✅ ($((EPOCHSECONDS-start))s)" | scripts/ci/step-summary.sh
 
       - name: Verify prebuild versionCode
+        id: verify-versioncode
         run: |
           # expo prebuild regenerates android/app/build.gradle from app.config.ts
           # (AndroidConfig.Version.withVersion defaults versionCode to 1 when
@@ -774,6 +884,7 @@ jobs:
           cat /sys/fs/cgroup/memory.max 2>/dev/null || true
 
       - name: Build APK
+        id: build-apk
         env:
           # Memory budget on the memory-limited CI container (memcg; the limit
           # is managed in the act-runner config — see docs/decisions.md):
@@ -854,6 +965,7 @@ jobs:
           key: ${{ steps.sdk-cache-key.outputs.key }}
 
       - name: Verify APK signing certificate
+        id: verify-signing
         # "Restore release keystore" only proves A keystore is configured. This
         # proves the APK is signed with THE release key before anything is
         # zipped or published: a wrong keystore in the secret would otherwise
@@ -895,6 +1007,7 @@ jobs:
           fi
 
       - name: Rename and zip APK
+        id: zip-apk
         run: |
           APK_PATH=$(find android/app/build/outputs/apk/prod/release -name "*.apk" | head -1)
           APK_DIR=$(dirname "$APK_PATH")
@@ -912,10 +1025,11 @@ jobs:
           } | scripts/ci/step-summary.sh
 
       - name: Upload release artifacts
+        id: upload-artifacts
         # Publishing lives in the separate `publish-release` job, which consumes
         # this artifact. A failed upload/mirror can therefore be re-run on its
         # own without rebuilding the APK; 30 days is the practical re-run window.
-        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf # v3
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
         with:
           name: release-assets
           path: |
@@ -927,6 +1041,42 @@ jobs:
       - name: Summarize release artifacts
         run: |
           printf '%s\n' "- Release artifacts: ✅ \`release-assets\` (zip + SHA256SUMS.txt, retained 30 days)" | scripts/ci/step-summary.sh
+
+      # Footer: always runs, so the summary gets a verdict table even when a
+      # step above failed. An empty outcome means the step never ran, not a pass.
+      - name: Job summary
+        if: always()
+        env:
+          PREBUILD_OUTCOME: ${{ steps.prebuild.outcome }}
+          VERIFY_VERSIONCODE_OUTCOME: ${{ steps.verify-versioncode.outcome }}
+          BUILD_APK_OUTCOME: ${{ steps.build-apk.outcome }}
+          VERIFY_SIGNING_OUTCOME: ${{ steps.verify-signing.outcome }}
+          ZIP_APK_OUTCOME: ${{ steps.zip-apk.outcome }}
+          UPLOAD_ARTIFACTS_OUTCOME: ${{ steps.upload-artifacts.outcome }}
+        run: |
+          [ -f scripts/ci/step-summary.sh ] || exit 0
+          status_emoji() {
+            case "$1" in
+              success) printf '✅' ;;
+              failure) printf '❌' ;;
+              cancelled) printf '🟨' ;;
+              *) printf '⏭️' ;;
+            esac
+          }
+          summary_row() { printf '| %s | %s |\n' "$1" "$(status_emoji "$2")"; }
+          {
+            echo ''
+            echo '---'
+            echo ''
+            echo '| Step | Status |'
+            echo '| --- | --- |'
+            summary_row prebuild "$PREBUILD_OUTCOME"
+            summary_row verify-versioncode "$VERIFY_VERSIONCODE_OUTCOME"
+            summary_row build-apk "$BUILD_APK_OUTCOME"
+            summary_row verify-signing "$VERIFY_SIGNING_OUTCOME"
+            summary_row zip-apk "$ZIP_APK_OUTCOME"
+            summary_row upload-artifacts "$UPLOAD_ARTIFACTS_OUTCOME"
+          } | scripts/ci/step-summary.sh || true
 
       - name: Cleanup workspace
         if: always()
@@ -958,6 +1108,7 @@ jobs:
           fetch-tags: true
 
       - name: Extract changelog section
+        id: changelog
         run: |
           {
             echo "## Release ${{ github.ref_name }} — publish-release"
@@ -973,12 +1124,14 @@ jobs:
           ' CHANGELOG.md > release-body.md
 
       - name: Download release artifacts
+        id: download-artifacts
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           name: release-assets
           path: release-assets
 
       - name: Upload APK to the Forgejo Release
+        id: upload-apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -1005,6 +1158,7 @@ jobs:
           summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
 
       - name: Mirror release to GitHub
+        id: mirror-github
         env:
           # Forgejo reserves GITHUB_-prefixed names for its own env vars/secrets,
           # so both the secret and the env var use the MIRROR_GITHUB_TOKEN name.
@@ -1109,6 +1263,7 @@ jobs:
           fi
 
       - name: Mirror release to Codeberg
+        id: mirror-codeberg
         env:
           # Codeberg runs Forgejo, so auth uses the `token` scheme - NOT the
           # `Bearer` scheme the GitHub step needs.
@@ -1249,6 +1404,7 @@ jobs:
           fi
 
       - name: Prune old Codeberg release assets
+        id: prune-codeberg
         env:
           MIRROR_CODEBERG_TOKEN: ${{ secrets.MIRROR_CODEBERG_TOKEN }}
           # Mirror coordinates — org variables shared with the landing.
@@ -1367,6 +1523,42 @@ jobs:
 
           summary_row "- Codeberg prune: kept newest $KEPT zips, pruned $PRUNED"
 
+      # Footer: always runs, so the summary gets a verdict table even when a
+      # step above failed. An empty outcome means the step never ran, not a pass.
+      - name: Job summary
+        if: always()
+        env:
+          CHANGELOG_OUTCOME: ${{ steps.changelog.outcome }}
+          DOWNLOAD_ARTIFACTS_OUTCOME: ${{ steps.download-artifacts.outcome }}
+          UPLOAD_APK_OUTCOME: ${{ steps.upload-apk.outcome }}
+          MIRROR_GITHUB_OUTCOME: ${{ steps.mirror-github.outcome }}
+          MIRROR_CODEBERG_OUTCOME: ${{ steps.mirror-codeberg.outcome }}
+          PRUNE_CODEBERG_OUTCOME: ${{ steps.prune-codeberg.outcome }}
+        run: |
+          [ -f scripts/ci/step-summary.sh ] || exit 0
+          status_emoji() {
+            case "$1" in
+              success) printf '✅' ;;
+              failure) printf '❌' ;;
+              cancelled) printf '🟨' ;;
+              *) printf '⏭️' ;;
+            esac
+          }
+          summary_row() { printf '| %s | %s |\n' "$1" "$(status_emoji "$2")"; }
+          {
+            echo ''
+            echo '---'
+            echo ''
+            echo '| Step | Status |'
+            echo '| --- | --- |'
+            summary_row changelog "$CHANGELOG_OUTCOME"
+            summary_row download-artifacts "$DOWNLOAD_ARTIFACTS_OUTCOME"
+            summary_row upload-apk "$UPLOAD_APK_OUTCOME"
+            summary_row mirror-github "$MIRROR_GITHUB_OUTCOME"
+            summary_row mirror-codeberg "$MIRROR_CODEBERG_OUTCOME"
+            summary_row prune-codeberg "$PRUNE_CODEBERG_OUTCOME"
+          } | scripts/ci/step-summary.sh || true
+
   ota:
     # JS-only mode: no native diff since the previous tag, so the installed APK
     # (same runtimeVersion) stays valid and the release is delivered through
@@ -1430,6 +1622,7 @@ jobs:
             ${{ runner.os }}-metro-
 
       - name: Publish OTA update to xprem
+        id: publish-ota
         env:
           # Inlined into the exported JS bundle (see src/shared/config/config.ts,
           # src/pages/share/lib/constants.ts) — the OTA bundle must target the same
@@ -1495,6 +1688,32 @@ jobs:
             echo "::warning::OTA publish failed — continuing, re-run this workflow to retry (no release was created)"
             summary_row "- OTA (xprem): ⚠️ failed (see log)"
           fi
+
+      # Footer: always runs, so the summary gets a verdict table even when a
+      # step above failed. An empty outcome means the step never ran, not a pass.
+      # This job writes no header anywhere else, so the footer emits one.
+      - name: Job summary
+        if: always()
+        env:
+          PUBLISH_OTA_OUTCOME: ${{ steps.publish-ota.outcome }}
+        run: |
+          [ -f scripts/ci/step-summary.sh ] || exit 0
+          status_emoji() {
+            case "$1" in
+              success) printf '✅' ;;
+              failure) printf '❌' ;;
+              cancelled) printf '🟨' ;;
+              *) printf '⏭️' ;;
+            esac
+          }
+          summary_row() { printf '| %s | %s |\n' "$1" "$(status_emoji "$2")"; }
+          {
+            echo "## Release ${{ github.ref_name }} — ota"
+            echo ''
+            echo '| Step | Status |'
+            echo '| --- | --- |'
+            summary_row publish-ota "$PUBLISH_OTA_OUTCOME"
+          } | scripts/ci/step-summary.sh || true
 
       - name: Cleanup workspace
         if: always()

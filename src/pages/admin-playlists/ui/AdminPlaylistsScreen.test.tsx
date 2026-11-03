@@ -58,7 +58,7 @@ describe('<AdminPlaylistsScreen>', () => {
       playlists: [
         {
           artwork: 'cover',
-          createdAt: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T12:00:00',
           description: 'Описание',
           id: 'p1',
           sections: [],
@@ -72,7 +72,7 @@ describe('<AdminPlaylistsScreen>', () => {
     const { findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
 
     expect(await findByText('Первый')).toBeTruthy()
-    expect(await findByText('0 проповедей · 0 разделов')).toBeTruthy()
+    expect(await findByText('0 проповедей · 0 разделов · 1 января 2024')).toBeTruthy()
   })
 
   test('navigates to the detail screen on row press', async () => {

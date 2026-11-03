@@ -7,6 +7,8 @@ const config: KnipConfig = {
     'scripts/analyze-icon.mjs',
     'scripts/create-fallback-artwork.mjs',
     'scripts/create-notification-icon.mjs',
+    // Generates assets/dark-splash-icon.png for the dark-theme splash and OTA reload screen.
+    'scripts/create-dark-splash-icon.mjs',
     // Read tab WIP — kept as an entry, not an ignore: its imports keep the
     // shared/ui list-item surface (ListItemSize, TouchableListItem,
     // OnPressTouchableListItem) alive instead of reading as unused.

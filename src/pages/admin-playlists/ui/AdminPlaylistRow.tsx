@@ -1,5 +1,6 @@
 import { ListItemBase } from 'entities/list-item'
 import { type APITypes } from 'shared/api'
+import { formatRelativeDate } from 'shared/lib/format'
 import { AdminPlaylistRowSkeleton } from 'shared/ui'
 
 const pluralize = (count: number, forms: [string, string, string]) => {
@@ -17,7 +18,19 @@ const metaLabel = (sermons: number, sections: number) =>
     `${sections} ${pluralize(sections, ['раздел', 'раздела', 'разделов'])}`,
   ].join(' · ')
 
-// Карточка плейлиста в списке админки: обложка, название и счётчики связей.
+// Дополняет подпись датой создания; некорректная дата оставляет подпись как есть.
+const withCreatedDate = (subtitle: string, createdAt: string): string => {
+  const timestamp = Date.parse(createdAt)
+
+  if (Number.isNaN(timestamp)) return subtitle
+
+  const date = formatRelativeDate(timestamp)
+
+  return subtitle ? `${subtitle} · ${date}` : date
+}
+
+// Карточка плейлиста в списке админки: обложка, название, счётчики связей
+// и дата создания.
 export const AdminPlaylistRow = ({
   item,
   onPress,
@@ -31,7 +44,7 @@ export const AdminPlaylistRow = ({
     variant='surface'
     title={item.title}
     artwork={item.artwork}
-    subtitle={metaLabel(item.sermons.length, item.sections.length)}
+    subtitle={withCreatedDate(metaLabel(item.sermons.length, item.sections.length), item.createdAt)}
   />
 )
 

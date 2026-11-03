@@ -14,9 +14,11 @@ import { myPlaylistsAtom } from './model'
 /** Итог переключения принадлежности проповеди локальному плейлисту. */
 type TogglePlaylistSermonOutcome = 'added' | 'limit-reached' | 'noop' | 'removed'
 
-// `sermonIds` is the authoritative membership list and is updated directly: an
-// imported playlist carries ids without snapshots, so re-deriving the ids from
-// `sermons` would silently drop every member that has no snapshot yet.
+/** Сообщение тоста о достигнутом лимите проповедей в плейлисте. */
+export const PLAYLIST_SERMON_LIMIT_MESSAGE = `В плейлисте максимум ${MAX_CUSTOM_PLAYLIST_SERMONS} проповедей`
+
+// `sermonIds` is the authoritative membership list, updated directly: an imported
+// playlist carries ids without snapshots, so re-deriving from `sermons` would drop those.
 const addSermonSnapshot = (playlist: LocalPlaylistData, sermon: SermonShape): LocalPlaylistData => {
   const sermonIds = playlist.sermonIds.includes(sermon.id)
     ? playlist.sermonIds
@@ -40,7 +42,6 @@ const removeSermonSnapshot = (
 
 /**
  * Переключение принадлежности проповеди локальному плейлисту.
- *
  * Обновляет `myPlaylistsAtom` (добавляет/удаляет id в `sermonIds` и снапшот
  * проповеди в `sermons`, «Избранные» включены) и персистит результат тем же
  * путём, что и reorder. Снапшот проходит санитизацию (`toPersistedLocalSermon`),
