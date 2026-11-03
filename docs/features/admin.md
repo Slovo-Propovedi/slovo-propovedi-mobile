@@ -101,7 +101,7 @@
 
 - `entities/sermon/lib/scriptureNotation.ts` — типы (`Chapter`/`Verse`), `isVerseRangeTuple`, `parseChapter`, `parseVerseInput`. `parseVerseInput` разбирает свободный текст «16, 16–18, 9–18, 20»; два разрозненных одиночных стиха оборачиваются в `[n, n]`, чтобы не читаться на проводе как диапазон.
 - `entities/sermon/lib/scriptureSerialization.ts` — `serializeVerseInput` (обратное направление, зеркалит нормализацию отображения).
-- `entities/sermon/lib/sermonSubtitle.ts` — подпись «проповедник · ссылка на Писание» для строк списка/деталей (переиспользуется в списках админки и пикерах).
+- `entities/sermon/lib/sermonSubtitle.ts` — подпись «проповедник · ссылка на Писание» для строк списка/деталей (переиспользуется в списках админки и пикерах); строки списка проповедей дописывают к ней относительную дату создания (`formatRelativeDate` из `shared/lib/format` по полю `createdAt`), а строки плейлистов — дату к счётчикам «N проповедей · M разделов».
 
 Смена поля «Глава (по)» переключает режим стихов формы (`applyChapterEndChange` в `pages/admin-sermon-form/lib/sermonFormState.ts`): непустое «до» входит в режим диапазона и переносит введённое в пару «от/до», очистка — выходит обратно в свободный текст.
 

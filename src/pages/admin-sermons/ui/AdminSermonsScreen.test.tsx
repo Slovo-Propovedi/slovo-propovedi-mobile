@@ -63,7 +63,7 @@ describe('<AdminSermonsScreen>', () => {
           audioUrl: 'audio.mp3',
           book: 'Иоанна',
           chapter: 3,
-          createdAt: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T12:00:00',
           description: 'Описание',
           id: 's1',
           playlists: [],
@@ -79,7 +79,7 @@ describe('<AdminSermonsScreen>', () => {
     const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
 
     expect(await findByText('Сила веры')).toBeTruthy()
-    expect(await findByText('Иоанн · Иоанна 3:16')).toBeTruthy()
+    expect(await findByText('Иоанн · Иоанна 3:16 · 1 января 2024')).toBeTruthy()
     expect(await findByText('аудио')).toBeTruthy()
   })
 
