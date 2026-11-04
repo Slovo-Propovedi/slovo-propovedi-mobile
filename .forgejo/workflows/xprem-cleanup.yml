@@ -538,8 +538,7 @@ jobs:
           EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
           EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # xprem deployment values (Forgejo org/repo vars).
           EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}

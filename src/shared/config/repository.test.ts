@@ -29,8 +29,9 @@ describe('repository config', () => {
   test.each([
     ['EXPO_PUBLIC_REPOSITORY_URL', 'https://git.lightnode.ru/evil'],
     ['EXPO_PUBLIC_REPOSITORY_URL', 'http://git.lightnode.ru'],
-    ['EXPO_PUBLIC_MIRROR_CODEBERG_URL', 'javascript:alert(1)'],
-    ['EXPO_PUBLIC_MIRROR_GITHUB_ORG', 'Slovo-Propovedi/evil'],
+    ['EXPO_PUBLIC_MIRROR_CODEBERG_URL', 'https://codeberg.org/Slovo_Propovedi/extra'],
+    ['EXPO_PUBLIC_MIRROR_CODEBERG_URL', 'http://codeberg.org/Slovo_Propovedi'],
+    ['EXPO_PUBLIC_MIRROR_GITHUB_URL', 'https://github.com'],
     ['EXPO_PUBLIC_MOBILE_REPOSITORY_NAME', ''],
   ])('rejects %s=%p at load time', (name, value) => {
     const original = process.env[name]

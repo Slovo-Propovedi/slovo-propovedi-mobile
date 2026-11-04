@@ -10,16 +10,32 @@ const forgejoRepoUrl = (origin: string, org: string) => `${origin}/${org}/${repo
 const forgejoLatestReleaseApi = (origin: string, org: string) =>
   `${origin}/api/v1/repos/${org}/${repoName}/releases/latest`
 
+// A mirror URL carries its owner as the single path segment: origin and owner
+// are parsed out of the ONE variable at the boundary, so a host or owner
+// rename stays a Forgejo org-variable change. Guards here keep a hand-edited
+// (schema-bypassing) value from shipping a prefix-widening URL.
+const parseMirrorUrl = (url: string) => {
+  const parsed = new URL(url)
+  const owner = parsed.pathname.replace(/^\/+/, '').replace(/\/+$/, '')
+  if (!owner) throw new Error(`Invalid mirror URL (no owner path): ${url}`)
+  return { origin: parsed.origin, owner }
+}
+
+// GitHub's API/hosts are fixed (api.github.com) — only the owner comes from
+// the mirror URL.
+const codebergMirror = parseMirrorUrl(ENV.mirrorCodebergUrl)
+const githubMirror = parseMirrorUrl(ENV.mirrorGithubUrl)
+
 export const PROJECT_REPOSITORY_URL = forgejoRepoUrl(ENV.repositoryUrl, ENV.repositoryOwner)
 
-const CODEBERG_REPOSITORY_URL = forgejoRepoUrl(ENV.mirrorCodebergUrl, ENV.mirrorCodebergOrg)
-const GITHUB_REPOSITORY_URL = `https://github.com/${ENV.mirrorGithubOrg}/${repoName}`
+const CODEBERG_REPOSITORY_URL = `${codebergMirror.origin}/${codebergMirror.owner}/${repoName}`
+const GITHUB_REPOSITORY_URL = `${githubMirror.origin}/${githubMirror.owner}/${repoName}`
 
 // Latest-release API endpoints, tried in this order by fetchLatestRelease.
 export const LATEST_RELEASE_API_URLS = {
-  codeberg: forgejoLatestReleaseApi(ENV.mirrorCodebergUrl, ENV.mirrorCodebergOrg),
+  codeberg: forgejoLatestReleaseApi(codebergMirror.origin, codebergMirror.owner),
   forgejo: forgejoLatestReleaseApi(ENV.repositoryUrl, ENV.repositoryOwner),
-  github: `https://api.github.com/repos/${ENV.mirrorGithubOrg}/${repoName}/releases/latest`,
+  github: `https://api.github.com/repos/${githubMirror.owner}/${repoName}/releases/latest`,
 } as const
 
 // Release-asset download prefixes of the three hosts — the update allowlist.

@@ -227,8 +227,7 @@ jobs:
           EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
           EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # xprem deployment values (Forgejo org/repo vars) — `eoas publish`
           # runs `expo export`, which evaluates app.config.ts; the guard above
@@ -275,8 +274,7 @@ jobs:
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
           MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # Registry push token — publishes push the images to the registry
           # the same way, so the push token is required; validate it here.
@@ -291,7 +289,7 @@ jobs:
 
           missing=0
           missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME PACKAGE_REGISTRY_TOKEN; do
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME MIRROR_CODEBERG_URL MIRROR_GITHUB_URL MOBILE_REPOSITORY_NAME PACKAGE_REGISTRY_TOKEN; do
             if [ -z "${!v}" ]; then
               echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
               missing=1
@@ -323,8 +321,7 @@ jobs:
           EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
           EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           start=$EPOCHSECONDS

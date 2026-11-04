@@ -377,8 +377,7 @@ jobs:
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
           MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # Registry push token — releases always push the images to the
           # registry, so the push token is required; validate it here.
@@ -393,7 +392,7 @@ jobs:
 
           missing=0
           missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME PACKAGE_REGISTRY_TOKEN; do
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME MIRROR_CODEBERG_URL MIRROR_GITHUB_URL MOBILE_REPOSITORY_NAME PACKAGE_REGISTRY_TOKEN; do
             if [ -z "${!v}" ]; then
               echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
               missing=1
@@ -446,8 +445,7 @@ jobs:
           EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
           EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           start=$EPOCHSECONDS
@@ -724,8 +722,7 @@ jobs:
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
           MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           APK_SIGNER_SHA256: ${{ vars.APK_SIGNER_SHA256 }}
         run: |
@@ -738,7 +735,7 @@ jobs:
 
           missing=0
           missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME APK_SIGNER_SHA256; do
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME MIRROR_CODEBERG_URL MIRROR_GITHUB_URL MOBILE_REPOSITORY_NAME APK_SIGNER_SHA256; do
             if [ -z "${!v}" ]; then
               echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
               missing=1
@@ -858,8 +855,7 @@ jobs:
           EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
           EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # OTA deployment values (Forgejo org/repo vars) — embedded as
           # expo.modules.updates.* meta-data in the generated AndroidManifest.
@@ -995,8 +991,7 @@ jobs:
           EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
           EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # Same all-or-nothing OTA values as the prebuild step: app.config is
           # re-evaluated by expo export:embed, and a missing value just turns
@@ -1244,7 +1239,7 @@ jobs:
           # so both the secret and the env var use the MIRROR_GITHUB_TOKEN name.
           MIRROR_GITHUB_TOKEN: ${{ secrets.MIRROR_GITHUB_TOKEN }}
           # Mirror coordinates — org variables shared with the landing.
-          MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
@@ -1258,13 +1253,18 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
           ZIP_PATH="release-assets/$ZIP_FILE"
-          if [ -z "${MIRROR_GITHUB_ORG:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
-            echo "::warning::MIRROR_GITHUB_ORG / MOBILE_REPOSITORY_NAME org variables are not set - skipping GitHub mirror"
-            summary_row "- GitHub mirror: ⚠️ skipped (MIRROR_GITHUB_ORG / MOBILE_REPOSITORY_NAME not set)"
+          if [ -z "${MIRROR_GITHUB_URL:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
+            echo "::warning::MIRROR_GITHUB_URL / MOBILE_REPOSITORY_NAME org variables are not set - skipping GitHub mirror"
+            summary_row "- GitHub mirror: ⚠️ skipped (MIRROR_GITHUB_URL / MOBILE_REPOSITORY_NAME not set)"
             exit 0
           fi
-          API_BASE="https://api.github.com/repos/$MIRROR_GITHUB_ORG/$MOBILE_REPOSITORY_NAME"
-          UPLOAD_BASE="https://uploads.github.com/repos/$MIRROR_GITHUB_ORG/$MOBILE_REPOSITORY_NAME"
+          # The URL carries the owner as its only path segment (hosts and the
+          # api.github.com base are fixed), so a host or owner rename is a
+          # variable change, not a workflow change.
+          GITHUB_OWNER="${MIRROR_GITHUB_URL%/}"
+          GITHUB_OWNER="${GITHUB_OWNER##*/}"
+          API_BASE="https://api.github.com/repos/$GITHUB_OWNER/$MOBILE_REPOSITORY_NAME"
+          UPLOAD_BASE="https://uploads.github.com/repos/$GITHUB_OWNER/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: Bearer ${MIRROR_GITHUB_TOKEN}"
           ACCEPT_HEADER="Accept: application/vnd.github+json"
           API_VERSION_HEADER="X-GitHub-Api-Version: 2022-11-28"
@@ -1350,7 +1350,6 @@ jobs:
           MIRROR_CODEBERG_TOKEN: ${{ secrets.MIRROR_CODEBERG_TOKEN }}
           # Mirror coordinates — org variables shared with the landing.
           MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
           MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
@@ -1364,13 +1363,18 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
           ZIP_PATH="release-assets/$ZIP_FILE"
-          if [ -z "${MIRROR_CODEBERG_URL:-}" ] || [ -z "${MIRROR_CODEBERG_ORG:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
-            echo "::warning::MIRROR_CODEBERG_URL / MIRROR_CODEBERG_ORG / MOBILE_REPOSITORY_NAME org variables are not set - skipping"
+          if [ -z "${MIRROR_CODEBERG_URL:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
+            echo "::warning::MIRROR_CODEBERG_URL / MOBILE_REPOSITORY_NAME org variables are not set - skipping"
             summary_row "- Codeberg: ⚠️ skipped (MIRROR_CODEBERG_* / MOBILE_REPOSITORY_NAME not set)"
             exit 0
           fi
-          MIRROR_CODEBERG_URL="${MIRROR_CODEBERG_URL%/}"
-          API_BASE="$MIRROR_CODEBERG_URL/api/v1/repos/$MIRROR_CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
+          # The URL carries the owner as its only path segment; Forgejo's API
+          # lives OUTSIDE the owner path, so derive origin and owner from the
+          # single URL — a host or owner rename is a variable change.
+          CODEBERG_ORIGIN="${CODEBERG_ORIGIN%/*}"
+          CODEBERG_ORG="${MIRROR_CODEBERG_URL%/}"
+          CODEBERG_ORG="${CODEBERG_ORG##*/}"
+          API_BASE="$CODEBERG_ORIGIN/api/v1/repos/$CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
           # The scheduled git mirror to Codeberg lags behind the tag push (at
@@ -1417,7 +1421,7 @@ jobs:
             # URL - the token is served by the inline credential helper below,
             # so it never reaches git's echoed URLs or the logs.
             git remote remove codeberg 2>/dev/null || true
-            git remote add codeberg "$MIRROR_CODEBERG_URL/$MIRROR_CODEBERG_ORG/$MOBILE_REPOSITORY_NAME.git"
+            git remote add codeberg "$CODEBERG_ORIGIN/$CODEBERG_ORG/$MOBILE_REPOSITORY_NAME.git"
 
             # Force is intentional: Codeberg is a read-only public mirror, so
             # its main and tags must follow Forgejo exactly. The helper only
@@ -1489,7 +1493,6 @@ jobs:
           MIRROR_CODEBERG_TOKEN: ${{ secrets.MIRROR_CODEBERG_TOKEN }}
           # Mirror coordinates — org variables shared with the landing.
           MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
           MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # Retention window: keep this many newest release zips. 10 zips of
           # 60-100MB stay well under Codeberg's ~1.5 GiB attachment soft quota.
@@ -1513,13 +1516,18 @@ jobs:
           esac
 
           TAG="${{ github.ref_name }}"
-          if [ -z "${MIRROR_CODEBERG_URL:-}" ] || [ -z "${MIRROR_CODEBERG_ORG:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
-            echo "::warning::MIRROR_CODEBERG_URL / MIRROR_CODEBERG_ORG / MOBILE_REPOSITORY_NAME org variables are not set - skipping"
+          if [ -z "${MIRROR_CODEBERG_URL:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
+            echo "::warning::MIRROR_CODEBERG_URL / MOBILE_REPOSITORY_NAME org variables are not set - skipping"
             summary_row "- Codeberg: ⚠️ skipped (MIRROR_CODEBERG_* / MOBILE_REPOSITORY_NAME not set)"
             exit 0
           fi
-          MIRROR_CODEBERG_URL="${MIRROR_CODEBERG_URL%/}"
-          API_BASE="$MIRROR_CODEBERG_URL/api/v1/repos/$MIRROR_CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
+          # The URL carries the owner as its only path segment; Forgejo's API
+          # lives OUTSIDE the owner path, so derive origin and owner from the
+          # single URL — a host or owner rename is a variable change.
+          CODEBERG_ORIGIN="${CODEBERG_ORIGIN%/*}"
+          CODEBERG_ORG="${MIRROR_CODEBERG_URL%/}"
+          CODEBERG_ORG="${CODEBERG_ORG##*/}"
+          API_BASE="$CODEBERG_ORIGIN/api/v1/repos/$CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
           # One page of 50 is far above the keep window; anything older was
@@ -1715,8 +1723,7 @@ jobs:
           EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
           EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
-          EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
+          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
           # xprem deployment values (Forgejo org/repo vars): `eoas publish` runs
           # `expo export`, which evaluates app.config.ts — without these the
