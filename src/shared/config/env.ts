@@ -8,8 +8,9 @@ const hostnameSchema = z
   .string()
   .regex(/^[a-z0-9.-]+$/i, 'must be a bare hostname: no protocol, path, or trailing slash')
 
-// Mobile repository coordinates (same values as the Forgejo org variables
-// REPOSITORY_URL, REPOSITORY_ORG, MIRROR_CODEBERG_URL, MIRROR_CODEBERG_ORG,
+// Mobile repository coordinates. In CI, _URL and _OWNER are derived from the
+// runner context (github.server_url / github.repository_owner) and the mirrors
+// from Forgejo org variables (MIRROR_CODEBERG_URL, MIRROR_CODEBERG_ORG,
 // MIRROR_GITHUB_ORG, MOBILE_REPOSITORY_NAME). They define where updates come
 // from AND the update-download allowlist, so the shape is strict: hosts are
 // bare https origins, names plain slugs — nothing that could widen a prefix.
@@ -30,7 +31,7 @@ const envSchema = z.object({
   mirrorCodebergUrl: originSchema,
   mirrorGithubOrg: slugSchema,
   mobileRepositoryName: slugSchema,
-  repositoryOrg: slugSchema,
+  repositoryOwner: slugSchema,
   repositoryUrl: originSchema,
   webHostname: hostnameSchema,
 })
@@ -42,7 +43,7 @@ const parsedEnv = envSchema.safeParse({
   mirrorCodebergUrl: process.env.EXPO_PUBLIC_MIRROR_CODEBERG_URL,
   mirrorGithubOrg: process.env.EXPO_PUBLIC_MIRROR_GITHUB_ORG,
   mobileRepositoryName: process.env.EXPO_PUBLIC_MOBILE_REPOSITORY_NAME,
-  repositoryOrg: process.env.EXPO_PUBLIC_REPOSITORY_ORG,
+  repositoryOwner: process.env.EXPO_PUBLIC_REPOSITORY_OWNER,
   repositoryUrl: process.env.EXPO_PUBLIC_REPOSITORY_URL,
   webHostname: process.env.EXPO_PUBLIC_WEB_HOSTNAME,
 })

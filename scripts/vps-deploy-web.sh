@@ -5,11 +5,18 @@ set -euo pipefail
 # VPS deployment — Слово.Проповеди web (PWA)
 # =============================================================================
 # Runs ON the VPS as root, over SSH from the Forgejo `release` workflow
-# (`web` job). Mirrors slovo-propovedi-docs/scripts/vps-deploy.sh: builds a
-# tiny nginx image from the transferred `dist/` and runs it behind the shared
+# (`web` job). Mirrors slovo-propovedi-docs/scripts/vps-deploy.sh: pulls the
+# web image from the Forgejo container registry and runs it behind the shared
 # Traefik reverse proxy, routed by Host label.
 #
-# Usage:  DEPLOY_TAG=v1.2.3 WEB_HOSTNAME=app.example.com bash vps-deploy-web.sh
+# Usage:  DEPLOY_TAG=v1.2.3 IMAGE_REF=git.lightnode.ru/slovo_propovedi/slovo-propovedi-mobile/web \
+#         WEB_HOSTNAME=app.example.com bash vps-deploy-web.sh
+#
+# The release workflow builds the image (the dist/ export shipped by buildx as
+# the build context) with the shared `slovo-constrained` buildx builder ON this
+# host and pushes it to the Forgejo container registry; this script only pulls
+# the published tag. No source tree is shipped to the VPS. The registry is
+# public (public org), so the pull is anonymous.
 #
 # Usage also requires TRAEFIK_NETWORK, TRAEFIK_SERVICE and BUILDX_BUILDER —
 # Forgejo org variables that mirror the slovo-propovedi playbook's names.
@@ -24,8 +31,11 @@ set -euo pipefail
 DEPLOY_TAG="${DEPLOY_TAG:?ERROR: DEPLOY_TAG is required (e.g. v1.2.3)}"
 WEB_HOSTNAME="${WEB_HOSTNAME:?ERROR: WEB_HOSTNAME is required (e.g. app.example.com)}"
 BASE_PATH="${BASE_PATH:-/slovo/web}"
-SRC_PATH="${SRC_PATH:-/slovo/web/container-src}"
-IMAGE_NAME="${IMAGE_NAME:-slovo-web:latest}"
+# Full registry image ref (no tag) — passed by the release workflow. Required,
+# no default: a renamed registry/org must fail loudly instead of pulling
+# or creating a container from a stale local image.
+IMAGE_REF="${IMAGE_REF:?ERROR: IMAGE_REF is required (full registry image ref, passed by the release workflow)}"
+IMAGE="$IMAGE_REF:$DEPLOY_TAG"
 CONTAINER_NAME="${CONTAINER_NAME:-slovo-web}"
 CONTAINER_PORT="${CONTAINER_PORT:-8080}"
 CONTAINER_NETWORK="${CONTAINER_NETWORK:-slovo-web}"
@@ -78,17 +88,9 @@ systemctl is-active --quiet "$TRAEFIK_SERVICE" 2>/dev/null \
 echo "  Traefik: OK ($TRAEFIK_SERVICE active)"
 
 echo ">> Ensuring paths exist..."
-mkdir -p "$BASE_PATH" "$SRC_PATH"
-chown slovo:slovo "$BASE_PATH" "$SRC_PATH"
-chmod 0750 "$BASE_PATH" "$SRC_PATH"
-
-echo ">> Verifying transferred build at $SRC_PATH..."
-if [ ! -f "$SRC_PATH/Dockerfile" ] || [ ! -f "$SRC_PATH/dist/index.html" ]; then
-  echo "ERROR: expected $SRC_PATH/Dockerfile and $SRC_PATH/dist/index.html."
-  echo "       The workflow transfers dist/ + Dockerfile + nginx.conf first."
-  exit 1
-fi
-chown -R slovo:slovo "$SRC_PATH"
+mkdir -p "$BASE_PATH"
+chown slovo:slovo "$BASE_PATH"
+chmod 0750 "$BASE_PATH"
 
 echo ">> Writing Traefik labels..."
 {
@@ -109,12 +111,15 @@ echo ">> Ensuring Docker network '$CONTAINER_NETWORK'..."
 docker network inspect "$CONTAINER_NETWORK" >/dev/null 2>&1 \
   || docker network create "$CONTAINER_NETWORK"
 
-echo ">> Building image (nginx + static dist)..."
-docker buildx build \
-  --builder="$BUILDER_NAME" \
-  --load \
-  --tag="$IMAGE_NAME" \
-  "$SRC_PATH"
+echo ">> Pulling image $IMAGE..."
+# The image was built and pushed by the release workflow through the shared
+# `slovo-constrained` builder. The org is public, so the pull is anonymous —
+# no registry credentials are stored on the VPS. The version tag stays in the
+# registry, keeping old releases redeployable for rollback.
+if ! docker pull "$IMAGE"; then
+  echo "ERROR: docker pull failed for $IMAGE (built and pushed by the release workflow?)"
+  exit 1
+fi
 
 echo ">> Writing systemd unit..."
 cat > "/etc/systemd/system/$CONTAINER_NAME.service" <<EOF
@@ -142,7 +147,7 @@ ExecStartPre=/usr/bin/env docker create \\
     --network=$CONTAINER_NETWORK \\
     --label-file=$BASE_PATH/labels \\
     --memory=$MEMORY_LIMIT \\
-    $IMAGE_NAME
+    $IMAGE
 ExecStartPre=/usr/bin/env docker network connect $TRAEFIK_NETWORK $CONTAINER_NAME
 ExecStart=/usr/bin/env docker start --attach $CONTAINER_NAME
 ExecStop=-/usr/bin/env docker stop -t $STOP_GRACE $CONTAINER_NAME
@@ -166,6 +171,16 @@ else
   echo "ERROR: $CONTAINER_NAME.service failed to start"
   systemctl status "$CONTAINER_NAME.service" --no-pager -l || true
   exit 1
+fi
+
+# --- Post-deploy cleanup (non-fatal, best effort) ---
+# Runs only after the new service is confirmed active. Prunes dangling images
+# only (no --all) — old release tags stay on disk and in the registry on
+# purpose, they are the rollback path. Strictly non-fatal — with `set -e` a
+# cleanup failure must never fail a successful deployment.
+echo ">> Pruning dangling Docker images..."
+if ! docker image prune --force; then
+  echo "WARN: docker image prune failed — skipping dangling image cleanup" >&2
 fi
 
 rm -f /tmp/vps-deploy-web.sh

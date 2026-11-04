@@ -10,7 +10,7 @@ const forgejoRepoUrl = (origin: string, org: string) => `${origin}/${org}/${repo
 const forgejoLatestReleaseApi = (origin: string, org: string) =>
   `${origin}/api/v1/repos/${org}/${repoName}/releases/latest`
 
-export const PROJECT_REPOSITORY_URL = forgejoRepoUrl(ENV.repositoryUrl, ENV.repositoryOrg)
+export const PROJECT_REPOSITORY_URL = forgejoRepoUrl(ENV.repositoryUrl, ENV.repositoryOwner)
 
 const CODEBERG_REPOSITORY_URL = forgejoRepoUrl(ENV.mirrorCodebergUrl, ENV.mirrorCodebergOrg)
 const GITHUB_REPOSITORY_URL = `https://github.com/${ENV.mirrorGithubOrg}/${repoName}`
@@ -18,7 +18,7 @@ const GITHUB_REPOSITORY_URL = `https://github.com/${ENV.mirrorGithubOrg}/${repoN
 // Latest-release API endpoints, tried in this order by fetchLatestRelease.
 export const LATEST_RELEASE_API_URLS = {
   codeberg: forgejoLatestReleaseApi(ENV.mirrorCodebergUrl, ENV.mirrorCodebergOrg),
-  forgejo: forgejoLatestReleaseApi(ENV.repositoryUrl, ENV.repositoryOrg),
+  forgejo: forgejoLatestReleaseApi(ENV.repositoryUrl, ENV.repositoryOwner),
   github: `https://api.github.com/repos/${ENV.mirrorGithubOrg}/${repoName}/releases/latest`,
 } as const
 

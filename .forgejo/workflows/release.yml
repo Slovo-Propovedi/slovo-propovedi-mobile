@@ -376,12 +376,13 @@ jobs:
           BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
-          REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
           MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
           MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
           MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
           MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
+          # Registry push token — releases always push the images to the
+          # registry, so the push token is required; validate it here.
+          PACKAGE_REGISTRY_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
         run: |
           set -e
 
@@ -392,7 +393,7 @@ jobs:
 
           missing=0
           missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME REPOSITORY_URL REPOSITORY_ORG MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME; do
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME PACKAGE_REGISTRY_TOKEN; do
             if [ -z "${!v}" ]; then
               echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
               missing=1
@@ -440,9 +441,10 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          # Repository coordinates (org vars) — release sources, update allowlist.
-          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
-          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          # Repository coordinates (derived from the runner context) — release
+          # sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
+          EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
           EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
           EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
@@ -492,6 +494,83 @@ jobs:
           printf 'StrictHostKeyChecking yes\n' > ~/.ssh/config
           chmod 600 ~/.ssh/config
 
+      - name: Build and push web image to the registry
+        if: steps.deploycfg.outputs.deploy == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_USER: ${{ secrets.VPS_SSH_USER }}
+          PACKAGE_REGISTRY_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
+          REPOSITORY_URL: ${{ github.server_url }}
+          BUILDX_BUILDER: ${{ vars.BUILDX_BUILDER }}
+          DEPLOY_TAG: ${{ github.ref_name }}
+          REGISTRY_USER: ${{ github.repository_owner }}
+        run: |
+          set -e
+          # Docker CLI + buildx are not part of the runner image: install
+          # pinned static builds into the job (no daemon — the CLI talks to the
+          # VPS daemon over SSH via DOCKER_HOST).
+          DOCKER_CLI_VERSION=27.5.1
+          BUILDX_VERSION=0.20.1
+          mkdir -p "$HOME/.docker-cli"
+          curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_CLI_VERSION}.tgz" \
+            | tar xz -C "$HOME/.docker-cli" --strip-components=1 docker/docker
+          curl -fsSL -o "$HOME/.docker-cli/docker-buildx" \
+            "https://github.com/docker/buildx/releases/download/v${BUILDX_VERSION}/buildx-v${BUILDX_VERSION}.linux-amd64"
+          chmod +x "$HOME/.docker-cli/docker-buildx"
+          export PATH="$HOME/.docker-cli:$PATH"
+
+          REGISTRY_HOST="${REPOSITORY_URL#https://}"
+          # Image names must be lowercase: owner/repo come from the runner's
+          # GITHUB_REPOSITORY env lowercased whole (${var,,}), so no org is
+          # hardcoded and the ref always matches this repo's Packages tab
+          # auto-link (Forgejo matches owner/repo case-insensitively).
+          REGISTRY_IMAGE="${REPOSITORY_URL#*://}/${GITHUB_REPOSITORY,,}"
+          IMAGE_REF="${REGISTRY_IMAGE}/web"
+          echo "IMAGE_REF=$IMAGE_REF" >> "$GITHUB_ENV"
+
+          # Login writes only to this job's docker config; buildx forwards the
+          # credentials to the remote builder for the push. Never printed.
+          printf '%s' "$PACKAGE_REGISTRY_TOKEN" \
+            | docker login "$REGISTRY_HOST" --username "$REGISTRY_USER" --password-stdin
+
+          export DOCKER_HOST="ssh://$VPS_SSH_USER@$VPS_HOST"
+          # Builder records live in THIS client's local store (~/.docker/buildx),
+          # not on the daemon: a fresh job has no record of the host's
+          # pre-provisioned $BUILDX_BUILDER (playbook role `slovo-buildx`), so
+          # `--builder` would fail with "no builder found" even though its
+          # buildkit container runs on the VPS. Adopt the builder idempotently
+          # while the job's local record is missing (buildx 0.20 semantics,
+          # verified against the release source):
+          #   - container already present on the daemon -> `create` just saves
+          #     the local record and `--bootstrap` only probes the RUNNING
+          #     container (start on a running container is a no-op, nothing is
+          #     restarted) — its layer cache stays intact;
+          #   - container absent (first release / host rebuilt) -> recreated
+          #     with the EXACT `slovo-buildx` role parameters, so a CI-created
+          #     builder matches the playbook one;
+          #   - parallel jobs racing the same first create -> buildx treats a
+          #     container-name conflict ("already in use") as adopt-and-wait,
+          #     so the loser ends up on the winner's container.
+          if ! docker buildx inspect "$BUILDX_BUILDER" >/dev/null 2>&1; then
+            docker buildx create \
+              --name "$BUILDX_BUILDER" \
+              --driver docker-container \
+              --driver-opt "memory=1g" \
+              --driver-opt "cpu-quota=80000" \
+              --bootstrap >/dev/null
+          fi
+          # Single-platform linux/amd64 like the former on-VPS build — the 4 GB
+          # host gets no multi-arch builds. The dist/ export produced above is
+          # shipped by buildx as the build context, so no tar over SSH.
+          docker buildx build \
+            --builder "$BUILDX_BUILDER" \
+            --platform linux/amd64 \
+            --push \
+            --tag "$IMAGE_REF:$DEPLOY_TAG" \
+            --tag "$IMAGE_REF:latest" \
+            --build-arg OCI_IMAGE_SOURCE="${REPOSITORY_URL}/${GITHUB_REPOSITORY}" \
+            .
+
       - name: Deploy to VPS
         id: deploy-vps
         if: steps.deploycfg.outputs.deploy == 'true'
@@ -506,15 +585,16 @@ jobs:
           DEPLOY_TAG: ${{ github.ref_name }}
         run: |
           SSH_TARGET="${VPS_SSH_USER:-root}@$VPS_HOST"
-          SRC=/slovo/web/container-src
+          if [ -z "${IMAGE_REF:-}" ]; then
+            echo "::error::IMAGE_REF is not set — the registry build step must export it"
+            exit 1
+          fi
           # Every value is shell-quoted for the remote shell (printf %q): a quote
           # in a ref name or variable can never break out of its argument.
-          REMOTE_ENV="$(printf 'DEPLOY_TAG=%q WEB_HOSTNAME=%q TRAEFIK_NETWORK=%q TRAEFIK_SERVICE=%q BUILDX_BUILDER=%q' \
-            "$DEPLOY_TAG" "$WEB_HOSTNAME" "$TRAEFIK_NETWORK" "$TRAEFIK_SERVICE" "$BUILDX_BUILDER")"
-
-          # Ship only what the image needs: the export + the nginx bits.
-          tar czf - dist Dockerfile nginx.conf .dockerignore \
-            | ssh "$SSH_TARGET" "rm -rf $SRC && mkdir -p $SRC && tar xzf - -C $SRC"
+          REMOTE_ENV="$(printf 'DEPLOY_TAG=%q IMAGE_REF=%q WEB_HOSTNAME=%q TRAEFIK_NETWORK=%q TRAEFIK_SERVICE=%q BUILDX_BUILDER=%q' \
+            "$DEPLOY_TAG" "$IMAGE_REF" "$WEB_HOSTNAME" "$TRAEFIK_NETWORK" "$TRAEFIK_SERVICE" "$BUILDX_BUILDER")"
+          # The image was built and pushed in the previous step; the deploy only
+          # pulls it — nothing but the script itself crosses the SSH session.
           scp scripts/vps-deploy-web.sh "$SSH_TARGET:/tmp/vps-deploy-web.sh"
           ssh "$SSH_TARGET" \
             "chmod +x /tmp/vps-deploy-web.sh && $REMOTE_ENV bash /tmp/vps-deploy-web.sh"
@@ -643,8 +723,6 @@ jobs:
           BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
-          REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
           MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
           MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
           MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
@@ -660,7 +738,7 @@ jobs:
 
           missing=0
           missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME REPOSITORY_URL REPOSITORY_ORG MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME APK_SIGNER_SHA256; do
+          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME MIRROR_CODEBERG_URL MIRROR_CODEBERG_ORG MIRROR_GITHUB_ORG MOBILE_REPOSITORY_NAME APK_SIGNER_SHA256; do
             if [ -z "${!v}" ]; then
               echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
               missing=1
@@ -775,9 +853,10 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          # Repository coordinates (org vars) — release sources, update allowlist.
-          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
-          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          # Repository coordinates (derived from the runner context) — release
+          # sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
+          EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
           EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
           EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
@@ -911,9 +990,10 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          # Repository coordinates (org vars) — release sources, update allowlist.
-          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
-          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          # Repository coordinates (derived from the runner context) — release
+          # sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
+          EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
           EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
           EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
@@ -1630,9 +1710,10 @@ jobs:
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          # Repository coordinates (org vars) — release sources, update allowlist.
-          EXPO_PUBLIC_REPOSITORY_URL: ${{ vars.REPOSITORY_URL }}
-          EXPO_PUBLIC_REPOSITORY_ORG: ${{ vars.REPOSITORY_ORG }}
+          # Repository coordinates (derived from the runner context) — release
+          # sources, update allowlist.
+          EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
+          EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
           EXPO_PUBLIC_MIRROR_CODEBERG_ORG: ${{ vars.MIRROR_CODEBERG_ORG }}
           EXPO_PUBLIC_MIRROR_GITHUB_ORG: ${{ vars.MIRROR_GITHUB_ORG }}
