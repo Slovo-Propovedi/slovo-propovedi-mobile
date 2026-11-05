@@ -1,10 +1,10 @@
-import { type APITypes } from 'shared/api'
-import { sectionsSchemas } from 'shared/api/generated'
+import z from 'zod'
 import { createSessionCache } from 'shared/lib/session-cache'
+import { type AdminSectionListItem, sectionListItemSchema } from './sectionListItem'
 
 /** Admin sections list. */
-export const sectionsListCache = createSessionCache<APITypes.SectionEntity[]>({
+export const sectionsListCache = createSessionCache<AdminSectionListItem[]>({
   maxEntries: 1,
   name: 'adminSections',
-  schema: sectionsSchemas.SectionControllerFindAll200Response.shape.sections,
+  schema: z.array(sectionListItemSchema),
 })

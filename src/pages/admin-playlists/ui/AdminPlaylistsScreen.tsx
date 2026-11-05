@@ -2,11 +2,11 @@ import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { FlatList, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { type APITypes } from 'shared/api'
 import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
+import { type AdminPlaylistsListItem } from '../lib/playlistListItem'
 import { useAdminPlaylists } from '../lib/useAdminPlaylists'
 import { AdminPlaylistRow } from './AdminPlaylistRow'
 import { AdminPlaylistsHeader } from './AdminPlaylistsHeader'
@@ -46,7 +46,7 @@ export const AdminPlaylistsScreen = () => {
     sort,
   } = useAdminPlaylists()
 
-  const openPlaylist = (playlist: APITypes.PlaylistEntity) => {
+  const openPlaylist = (playlist: AdminPlaylistsListItem) => {
     router.push({ params: { id: playlist.id }, pathname: '/admin/playlists/[id]' })
   }
 

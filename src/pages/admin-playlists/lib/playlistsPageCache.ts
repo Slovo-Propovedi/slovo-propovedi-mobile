@@ -1,10 +1,10 @@
-import { type APITypes } from 'shared/api'
-import { playlistsSchemas } from 'shared/api/generated'
+import z from 'zod'
 import { createSessionCache } from 'shared/lib/session-cache'
+import { type AdminPlaylistsListItem, playlistListItemSchema } from './playlistListItem'
 
 /** First page of the admin playlists list per search/sort combination. */
-export const playlistsPageCache = createSessionCache<APITypes.PlaylistEntity[]>({
+export const playlistsPageCache = createSessionCache<AdminPlaylistsListItem[]>({
   maxEntries: 10,
   name: 'adminPlaylistsPage',
-  schema: playlistsSchemas.PlaylistControllerFindAll200Response.shape.playlists,
+  schema: z.array(playlistListItemSchema),
 })

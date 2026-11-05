@@ -3,6 +3,7 @@ import { type APITypes } from 'shared/api'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { usePaginatedList } from 'shared/lib/hooks/usePaginatedList'
 import { fetchPlaylistsPage, PLAYLISTS_PAGE_SIZE } from './fetchPlaylistsPage'
+import { type AdminPlaylistsListItem } from './playlistListItem'
 import { playlistsPageCache } from './playlistsPageCache'
 
 export interface AdminPlaylistsState {
@@ -17,7 +18,7 @@ export interface AdminPlaylistsState {
   onSearchChange: (search: string) => void
   onSortChange: (sort: APITypes.PlaylistControllerFindAllSort) => void
   order: APITypes.PlaylistControllerFindAllOrder
-  playlists: APITypes.PlaylistEntity[]
+  playlists: AdminPlaylistsListItem[]
   refresh: () => Promise<void>
   search: string
   sort: APITypes.PlaylistControllerFindAllSort

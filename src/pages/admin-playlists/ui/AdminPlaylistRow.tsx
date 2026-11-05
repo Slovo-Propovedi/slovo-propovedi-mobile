@@ -1,7 +1,7 @@
 import { ListItemBase } from 'entities/list-item'
-import { type APITypes } from 'shared/api'
 import { formatRelativeDate } from 'shared/lib/format'
 import { AdminPlaylistRowSkeleton } from 'shared/ui'
+import { type AdminPlaylistsListItem } from '../lib/playlistListItem'
 
 const pluralize = (count: number, forms: [string, string, string]) => {
   const mod10 = count % 10
@@ -35,7 +35,7 @@ export const AdminPlaylistRow = ({
   item,
   onPress,
 }: {
-  item: APITypes.PlaylistEntity
+  item: AdminPlaylistsListItem
   onPress: () => void
 }) => (
   <ListItemBase
@@ -44,7 +44,7 @@ export const AdminPlaylistRow = ({
     variant='surface'
     title={item.title}
     artwork={item.artwork}
-    subtitle={withCreatedDate(metaLabel(item.sermons.length, item.sections.length), item.createdAt)}
+    subtitle={withCreatedDate(metaLabel(item.sermonsCount, item.sectionsCount), item.createdAt)}
   />
 )
 

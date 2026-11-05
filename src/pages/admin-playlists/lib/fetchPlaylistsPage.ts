@@ -1,4 +1,5 @@
 import { type APITypes, playlistsApi } from 'shared/api'
+import { type AdminPlaylistsListItem, toPlaylistListItem } from './playlistListItem'
 
 export const PLAYLISTS_PAGE_SIZE = 20
 
@@ -16,11 +17,14 @@ export const fetchPlaylistsPage = async (
   sort: APITypes.PlaylistControllerFindAllSort,
   order: APITypes.PlaylistControllerFindAllOrder,
   page: number,
-): Promise<APITypes.AllPlaylistsResponse> =>
-  playlistsApi.getPlaylists().playlistControllerFindAll({
+): Promise<{ count: number; playlists: AdminPlaylistsListItem[] }> => {
+  const response = await playlistsApi.getPlaylists().playlistControllerFindAll({
     limit: PLAYLISTS_PAGE_SIZE,
     order,
     page,
     search: query.trim() || undefined,
     sort,
   })
+
+  return { count: response.count, playlists: response.playlists.map(toPlaylistListItem) }
+}
