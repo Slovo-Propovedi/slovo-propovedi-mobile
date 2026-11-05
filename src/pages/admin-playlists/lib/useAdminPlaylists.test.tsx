@@ -2,6 +2,7 @@ import { act } from '@testing-library/react-native'
 import { playlistsMocks } from 'shared/api/generated'
 import { renderHookWithProviders } from 'shared/mocks'
 import { PLAYLISTS_PAGE_SIZE } from './fetchPlaylistsPage'
+import { toPlaylistListItem } from './playlistListItem'
 import { useAdminPlaylists } from './useAdminPlaylists'
 
 const mockFindAll = jest.fn()
@@ -68,6 +69,9 @@ describe('useAdminPlaylists', () => {
     await act(async () => {})
 
     expect(result.current.playlists[0]?.artwork).toBe('cover-old')
+    expect(Object.keys(result.current.playlists[0] ?? {}).sort()).toEqual(
+      Object.keys(toPlaylistListItem(buildResponse('').playlists[0])).sort(),
+    )
 
     await act(async () => {
       mockFocusCallback()

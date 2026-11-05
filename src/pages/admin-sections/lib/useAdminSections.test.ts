@@ -1,6 +1,7 @@
 import { act } from '@testing-library/react-native'
 import { sectionsMocks } from 'shared/api/generated'
 import { renderHookWithProviders } from 'shared/mocks'
+import { toSectionListItem } from './sectionListItem'
 import { useAdminSections } from './useAdminSections'
 
 const mockFindAll = jest.fn()
@@ -51,6 +52,9 @@ describe('useAdminSections', () => {
 
     expect(result.current.isLoading).toBe(false)
     expect(result.current.sections.map(section => section.title)).toEqual(['Первый', 'Второй'])
+    expect(Object.keys(result.current.sections[0] ?? {}).sort()).toEqual(
+      Object.keys(toSectionListItem(createSectionsResponse().sections[0])).sort(),
+    )
   })
 
   test('refetches the sections when the screen regains focus', async () => {
