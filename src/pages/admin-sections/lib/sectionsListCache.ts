@@ -5,6 +5,6 @@ import { type AdminSectionListItem, sectionListItemSchema } from './sectionListI
 /** Admin sections list. */
 export const sectionsListCache = createSessionCache<AdminSectionListItem[]>({
   maxEntries: 1,
-  name: 'adminSections',
+  name: 'adminSectionsListV2',
   schema: z.array(sectionListItemSchema),
 })
