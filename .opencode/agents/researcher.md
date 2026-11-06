@@ -314,14 +314,14 @@ OpenCode supports per-agent tool configuration using wildcard patterns. Tools ca
   // Disable MCP tools globally
   "tools": {
     "context7*": false,
-    "exa*": false
+    "gh_grep*": false
   },
   // Enable only for specific agent
   "agent": {
     "researcher": {
       "tools": {
         "context7*": true,
-        "exa*": true
+        "gh_grep*": true
       }
     }
   }
