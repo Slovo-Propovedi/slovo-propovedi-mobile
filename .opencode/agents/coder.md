@@ -9,9 +9,6 @@ permissions:
   - action: context7_*
     resource: '*'
     effect: deny
-  - action: exa_*
-    resource: '*'
-    effect: deny
   - action: gh_grep_*
     resource: '*'
     effect: deny

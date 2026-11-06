@@ -18,9 +18,6 @@ permissions:
   - action: todoread
     resource: '*'
     effect: deny
-  - action: kagi_*
-    resource: '*'
-    effect: deny
   - action: shell
     resource: '*'
     effect: deny
@@ -133,9 +130,6 @@ permissions:
     resource: 'tr *'
     effect: allow
   - action: context7_*
-    resource: '*'
-    effect: allow
-  - action: exa_*
     resource: '*'
     effect: allow
   - action: gh_grep_*
