@@ -1,4 +1,17 @@
-import { type TextStyle } from 'react-native'
+import { type TextStyle, type ViewStyle } from 'react-native'
+
+// Width of the alpha ramp at the trailing clip edge of a fading row.
+export const EDGE_FADE_WIDTH = 28
+
+// Test hook: rendered only while the trailing edge actually fades.
+export const EDGE_FADE_GRADIENT_TEST_ID = 'marquee-edge-fade-gradient'
+
+// Web mask: the text is a child of the masked container, so the fade stays
+// pinned to the clip edge while the row scrolls underneath. RNW prefixes
+// `maskImage` for WebKit automatically.
+export const WEB_EDGE_FADE_STYLE: { maskImage: string } & ViewStyle = {
+  maskImage: `linear-gradient(to right, #000 0, #000 calc(100% - ${EDGE_FADE_WIDTH}px), transparent 100%)`,
+}
 
 type WebTextStyle = {
   whiteSpace?: 'normal' | 'nowrap' | 'pre-line' | 'pre-wrap' | 'pre'

@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react-native'
 import { type SharedValue } from 'react-native-reanimated'
+import { type MarqueeCycle } from './marquee-cycle'
 import { useMarqueeAnimation } from './useMarqueeAnimation'
 
 interface FrameRegistration {
@@ -34,6 +35,15 @@ const driveFrame = (delta: null | number) => {
 const fillPause = () => {
   for (let i = 0; i < 20; i++) driveFrame(100)
 }
+
+const createCycle = (): MarqueeCycle => ({
+  scrollElapsed: { value: 0 } as SharedValue<number>,
+  scrollMs: { value: 0 } as SharedValue<number>,
+  startToken: { value: 0 } as SharedValue<number>,
+})
+
+const readTransform = (animatedStyle: unknown) =>
+  (animatedStyle as { transform: Array<{ translateX: number }> }).transform[0].translateX
 
 describe('useMarqueeAnimation', () => {
   test('starts the frame-clock loop without a drag when autoStart is set', async () => {
@@ -276,5 +286,164 @@ describe('useMarqueeAnimation', () => {
 
     const animatedStyle = result.current.animatedStyle as { width?: '100%' | number }
     expect(animatedStyle.width).toBe(252) // 250 + STATIC_WIDTH_SAFETY_PX
+  })
+
+  test('publishes its scroll phase and a cycle-start token for followers', async () => {
+    // The leading row owns the cycle; followers (the mini-player subtitle) read
+    // the published phase. `startToken` increments exactly once per scroll
+    // phase start, so a consumer can observe "the title restarted".
+    const containerWidth = { value: 200 } as SharedValue<number>
+    const textWidth = { value: 250 } as SharedValue<number>
+    const needsMarquee = { value: true } as SharedValue<boolean>
+    const cycle = createCycle()
+    const { result } = await renderHook(() =>
+      useMarqueeAnimation(
+        containerWidth,
+        textWidth,
+        needsMarquee,
+        'text',
+        false,
+        false,
+        true,
+        true,
+        cycle,
+      ),
+    )
+
+    result.current.startIdleMarquee()
+    fillPause()
+    expect(cycle.scrollElapsed.value).toBe(0)
+    expect(cycle.scrollMs.value).toBe(0)
+    expect(cycle.startToken.value).toBe(0)
+
+    driveFrame(100)
+    // (textWidth 250 + REPEAT_SPACER 50) * 18 ms/px
+    expect(cycle.scrollMs.value).toBe(5400)
+    expect(cycle.scrollElapsed.value).toBe(100)
+    expect(cycle.startToken.value).toBe(1)
+
+    driveFrame(100)
+    expect(cycle.scrollElapsed.value).toBe(200)
+    expect(cycle.startToken.value).toBe(1)
+  })
+
+  test('resets the published phase at the cycle boundary and emits the next start', async () => {
+    const containerWidth = { value: 200 } as SharedValue<number>
+    const textWidth = { value: 250 } as SharedValue<number>
+    const needsMarquee = { value: true } as SharedValue<boolean>
+    const cycle = createCycle()
+    const { result } = await renderHook(() =>
+      useMarqueeAnimation(
+        containerWidth,
+        textWidth,
+        needsMarquee,
+        'text',
+        false,
+        false,
+        true,
+        true,
+        cycle,
+      ),
+    )
+
+    result.current.startIdleMarquee()
+    fillPause()
+    // 54 frames of 100ms cover the 5400ms scroll phase (250 + 50 px at 18 ms/px)
+    for (let i = 0; i < 54; i++) driveFrame(100)
+
+    expect(cycle.scrollElapsed.value).toBe(0)
+    expect(cycle.startToken.value).toBe(1)
+
+    fillPause()
+    driveFrame(100)
+    expect(cycle.startToken.value).toBe(2)
+  })
+
+  test('clears the published phase when the row stops overflowing', async () => {
+    const containerWidth = { value: 200 } as SharedValue<number>
+    const textWidth = { value: 250 } as SharedValue<number>
+    const needsMarquee = { value: true } as SharedValue<boolean>
+    const cycle = createCycle()
+    const { rerender, result } = await renderHook(
+      ({ needsRepeat }: { needsRepeat: boolean }) =>
+        useMarqueeAnimation(
+          containerWidth,
+          textWidth,
+          needsMarquee,
+          'text',
+          false,
+          false,
+          true,
+          needsRepeat,
+          cycle,
+        ),
+      { initialProps: { needsRepeat: true } },
+    )
+
+    fillPause()
+    driveFrame(100)
+    expect(cycle.scrollElapsed.value).toBe(100)
+
+    needsMarquee.value = false
+    await rerender({ needsRepeat: false })
+
+    expect(cycle.scrollElapsed.value).toBe(0)
+    expect(cycle.scrollMs.value).toBe(0)
+    expect(result.current.translateX.value).toBe(0)
+  })
+
+  test('a follower maps the leader cycle onto its own loop instead of running its clock', async () => {
+    // One pass per title cycle: the follower offset is the leader's progress
+    // (scrollElapsed / scrollMs) applied to the follower's own loop distance.
+    const containerWidth = { value: 200 } as SharedValue<number>
+    const textWidth = { value: 250 } as SharedValue<number>
+    const needsMarquee = { value: true } as SharedValue<boolean>
+    const cycle = createCycle()
+    cycle.scrollMs.value = 1000
+    cycle.scrollElapsed.value = 500
+
+    const { result } = await renderHook(() =>
+      useMarqueeAnimation(
+        containerWidth,
+        textWidth,
+        needsMarquee,
+        'text',
+        false,
+        false,
+        false,
+        true,
+        undefined,
+        cycle,
+      ),
+    )
+
+    // loopDistance = 250 + 50; half of the cycle → half of the loop
+    expect(readTransform(result.current.animatedStyle)).toBe(-150)
+    // The follower never activates its own frame clock.
+    expect(latestFrameCallback().setActive).toHaveBeenLastCalledWith(false)
+  })
+
+  test('a follower rests when the leader cycle is inactive', async () => {
+    const containerWidth = { value: 200 } as SharedValue<number>
+    const textWidth = { value: 250 } as SharedValue<number>
+    const needsMarquee = { value: true } as SharedValue<boolean>
+    const cycle = createCycle()
+
+    const { result } = await renderHook(() =>
+      useMarqueeAnimation(
+        containerWidth,
+        textWidth,
+        needsMarquee,
+        'text',
+        false,
+        false,
+        false,
+        true,
+        undefined,
+        cycle,
+      ),
+    )
+
+    expect(readTransform(result.current.animatedStyle)).toBe(0)
   })
 })

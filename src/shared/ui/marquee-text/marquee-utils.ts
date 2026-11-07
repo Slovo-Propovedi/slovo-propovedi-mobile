@@ -34,6 +34,25 @@ export const shouldMarquee = (maxOffset: number): boolean => {
   return maxOffset > MARQUEE_EPSILON_PX
 }
 
+// Followers (the mini-player subtitle) do not own a clock: their offset is a
+// pure function of the leader's (title's) scroll phase, so both lines start
+// together, both rest during the leader's pause, and a follower pass always
+// ends exactly at the leader's cycle boundary. One pass per leader cycle,
+// time-normalized to the leader's duration, so the follower never overruns it.
+export const getSyncedOffset = (
+  scrollElapsed: number,
+  scrollMs: number,
+  overflowing: boolean,
+  loopDistance: number,
+): number => {
+  'worklet'
+  if (!overflowing || scrollMs <= 0) return 0
+
+  const progress = Math.min(1, Math.max(0, scrollElapsed / scrollMs))
+
+  return -progress * loopDistance || 0
+}
+
 // A click that follows a marquee pan drag must be swallowed on web: the
 // browser still dispatches `click` on the gesture view after the drag, and it
 // would bubble to the parent pressable and navigate. Native RNGH cancels the

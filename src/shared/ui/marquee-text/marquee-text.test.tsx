@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native'
 import { Platform, StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { EDGE_FADE_GRADIENT_TEST_ID } from './marquee-styles'
 import { MarqueeText } from './marquee-text'
 import * as marqueeAnimation from './useMarqueeAnimation'
 
@@ -307,6 +308,27 @@ describe('<MarqueeText />', () => {
     const visible = screen.getAllByText(propsStub.text)[0]
     expect(visible.props.numberOfLines).toBe(1)
     expect(visible.props.ellipsizeMode).toBe('clip')
+  })
+
+  test('renders the trailing-edge fade only while the text overflows', async () => {
+    await renderWithProviders(<MarqueeText fadeEdge testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(300)
+    await fireTextLayout(propsStub.text, 100)
+    expect(screen.queryByTestId(EDGE_FADE_GRADIENT_TEST_ID)).toBeNull()
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 400)
+    expect(screen.getByTestId(EDGE_FADE_GRADIENT_TEST_ID)).toBeTruthy()
+  })
+
+  test('skips the edge-fade container when the consumer does not opt in', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 300)
+
+    expect(screen.queryByTestId(EDGE_FADE_GRADIENT_TEST_ID)).toBeNull()
   })
 
   test('stops the loop and returns to static when the container grows to fit', async () => {

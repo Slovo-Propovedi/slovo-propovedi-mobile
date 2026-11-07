@@ -1,19 +1,12 @@
 import { forwardRef } from 'react'
-import {
-  ActivityIndicator,
-  Platform,
-  Text,
-  View,
-  type ViewInstance,
-  type ViewStyle,
-} from 'react-native'
+import { ActivityIndicator, Platform, View, type ViewInstance, type ViewStyle } from 'react-native'
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { OnboardingTarget } from 'features/onboarding'
 import { PlayerControlButton, PlayerControlButtonType } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
-import { CoverImage, GlassSurface, MovingText } from 'shared/ui'
+import { CoverImage, GlassSurface, MovingText, useMarqueeCycle } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { type ThemeColors } from 'shared/ui/theme'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
@@ -66,6 +59,9 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
     ref,
   ) => {
     const subtitle = getPlayerSubtitle(audio, playlist)
+    // The title owns the marquee cycle; the subtitle only follows it, so both
+    // lines restart together and neither overruns the other's rhythm.
+    const marqueeCycle = useMarqueeCycle()
 
     return (
       <GestureDetector gesture={miniPan}>
@@ -85,10 +81,19 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
           <GlassSurface isLight={isLight} radius={MINI_PILL_RADIUS} />
           <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
           <View style={miniStyles.miniTextContainer}>
-            <MovingText autoStart text={audio.title || ''} style={miniStyles.miniTrackTitle} />
-            <Text numberOfLines={1} style={miniStyles.miniPlaylistName}>
-              {subtitle}
-            </Text>
+            <MovingText
+              fadeEdge
+              autoStart
+              text={audio.title || ''}
+              publishCycle={marqueeCycle}
+              style={miniStyles.miniTrackTitle}
+            />
+            <MovingText
+              fadeEdge
+              text={subtitle}
+              followCycle={marqueeCycle}
+              style={miniStyles.miniPlaylistName}
+            />
           </View>
           <View style={miniStyles.miniControls}>
             {showSpinner ? (

@@ -6,13 +6,8 @@ import {
   useFrameCallback,
   useSharedValue,
 } from 'react-native-reanimated'
-import {
-  MARQUEE_MS_PER_PX,
-  MARQUEE_MS_PER_PX_NARROW,
-  MARQUEE_PAUSE,
-  NARROW_WIDTH_THRESHOLD,
-  REPEAT_SPACER,
-} from './marquee-utils'
+import { type MarqueeCycle, publishMarqueePhase, resetMarqueeCycle } from './marquee-cycle'
+import { getMarqueeFrameStep } from './marquee-frame-step'
 
 // Upper bound on a single frame delta: a resumed/backgrounded app reports a
 // multi-second `timeSincePreviousFrame` that would otherwise teleport the row.
@@ -24,6 +19,8 @@ interface MarqueeFrameClockParams {
   marqueeArmed: SharedValue<boolean>
   needsMarquee: SharedValue<boolean>
   needsRepeat: boolean
+  /** Publishes this row's scroll phase for synced followers (mini-player subtitle). */
+  publishCycle?: MarqueeCycle
   startX: SharedValue<number>
   text: string
   textWidth: SharedValue<number>
@@ -42,6 +39,7 @@ export const useMarqueeFrameClock = ({
   marqueeArmed,
   needsMarquee,
   needsRepeat,
+  publishCycle,
   startX,
   text,
   textWidth,
@@ -53,44 +51,34 @@ export const useMarqueeFrameClock = ({
   // active, but this freezes the phase during scrubs and while the gate is off.
   const clockPaused = useSharedValue(!autoStart)
 
-  // Empty deps: the worklet reads only shared values and module constants, so a
-  // stable identity stops `useFrameCallback`'s [callback, autostart] effect from
-  // re-registering the native frame callback on each render (audio ticks ~2/s).
-  const handleFrame = useCallback((frameInfo: FrameInfo) => {
-    'worklet'
-    if (!needsMarquee.value || !marqueeArmed.value || clockPaused.value) return
+  // `publishCycle` is stable for the component lifetime (a `useMarqueeCycle`
+  // holder), so the worklet keeps its identity across re-renders — the frame
+  // callback is not re-registered on audio-position ticks (~2/s).
+  const handleFrame = useCallback(
+    (frameInfo: FrameInfo) => {
+      'worklet'
+      if (!needsMarquee.value || !marqueeArmed.value || clockPaused.value) return
 
-    const delta = Math.min(frameInfo.timeSincePreviousFrame ?? 0, MAX_FRAME_DELTA_MS)
-    const loopDistance = textWidth.value + REPEAT_SPACER
-    const msPerPx =
-      containerWidth.value < NARROW_WIDTH_THRESHOLD ? MARQUEE_MS_PER_PX_NARROW : MARQUEE_MS_PER_PX
-    const scrollMs = loopDistance * msPerPx
+      const step = getMarqueeFrameStep({
+        containerWidth: containerWidth.value,
+        cycleElapsed: cycleElapsed.value,
+        delta: Math.min(frameInfo.timeSincePreviousFrame ?? 0, MAX_FRAME_DELTA_MS),
+        textWidth: textWidth.value,
+      })
 
-    if (scrollMs <= 0) {
-      translateX.value = 0
-      return
-    }
+      if (!step) {
+        translateX.value = 0
+        return
+      }
 
-    const elapsed = cycleElapsed.value + delta
+      translateX.value = step.translateX
+      cycleElapsed.value = step.cycleElapsed
 
-    if (elapsed <= MARQUEE_PAUSE) {
-      cycleElapsed.value = elapsed
-      translateX.value = 0
-      return
-    }
-
-    const scrolled = Math.min(elapsed - MARQUEE_PAUSE, scrollMs)
-    translateX.value = -(scrolled / scrollMs) * loopDistance
-    cycleElapsed.value = elapsed
-
-    // Cycle end: jump-cut to the pause state (rather than easing back) so the
-    // duplicate copy lands exactly where the loop restarts, with no reverse
-    // motion; the next cycle begins with its own MARQUEE_PAUSE.
-    if (scrolled >= scrollMs) {
-      cycleElapsed.value = 0
-      translateX.value = 0
-    }
-  }, [])
+      // The pause → scroll transition is the cycle start followers subscribe to.
+      publishMarqueePhase(publishCycle, step.scrollElapsed, step.scrollMs, step.started)
+    },
+    [publishCycle],
+  )
 
   const frameCallback = useFrameCallback(handleFrame, false)
 
@@ -99,8 +87,11 @@ export const useMarqueeFrameClock = ({
   // on the UI thread instead, avoiding a worklet -> JS hop per gesture.
   useEffect(() => {
     frameCallback.setActive(needsRepeat)
+    // A row that stops overflowing publishes no phase: followers return to rest
+    // instead of freezing mid-pass at the leader's last offset.
+    if (!needsRepeat) resetMarqueeCycle(publishCycle)
     return () => frameCallback.setActive(false)
-  }, [frameCallback, needsRepeat])
+  }, [frameCallback, needsRepeat, publishCycle])
 
   useEffect(() => {
     translateX.value = 0
@@ -108,7 +99,8 @@ export const useMarqueeFrameClock = ({
     marqueeArmed.value = autoStart
     cycleElapsed.value = 0
     clockPaused.value = !autoStart
-  }, [text, autoStart])
+    resetMarqueeCycle(publishCycle)
+  }, [text, autoStart, publishCycle])
 
   // Stable identity (reads shared values only): lets `marquee-text.tsx`
   // memoize the pan gesture once per instance instead of rebuilding it.
@@ -119,12 +111,13 @@ export const useMarqueeFrameClock = ({
       // any offset left over from a previous cycle or a scrub.
       clockPaused.value = true
       translateX.value = 0
+      resetMarqueeCycle(publishCycle)
       return
     }
     cycleElapsed.value = 0
     translateX.value = 0
     clockPaused.value = false
-  }, [])
+  }, [publishCycle])
 
   return { clockPaused, frameCallback, startIdleMarquee }
 }

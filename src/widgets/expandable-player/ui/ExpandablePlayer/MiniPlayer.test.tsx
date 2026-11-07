@@ -17,6 +17,29 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn() }),
 }))
 
+// The mini player wires the title/subtitle marquee contract through MovingText;
+// capturing its props is the cheapest honest check of that wiring (MarqueeText
+// itself is covered by its own suite).
+jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
+  const { Text } = jest.requireActual('react-native')
+  const capturedMovingTextProps: Record<string, unknown>[] = []
+
+  return {
+    ...actual,
+    __capturedMovingTextProps: capturedMovingTextProps,
+    MovingText: (props: Record<string, unknown>) => {
+      capturedMovingTextProps.push(props)
+
+      return <Text>{String(props.text)}</Text>
+    },
+  }
+})
+
+const capturedMovingTextProps = (
+  jest.requireMock('shared/ui') as { __capturedMovingTextProps: Record<string, unknown>[] }
+).__capturedMovingTextProps
+
 jest.mock('expo-blur', () => {
   const { View } = jest.requireActual('react-native')
   return { BlurView: (props: Record<string, unknown>) => <View {...props} /> }
@@ -111,6 +134,7 @@ const renderMiniPlayer = (overrides: Partial<MiniPlayerProps> = {}) =>
 describe('<MiniPlayer>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    capturedMovingTextProps.length = 0
   })
 
   test('renders the pill as frosted glass over the page', async () => {
@@ -175,6 +199,19 @@ describe('<MiniPlayer>', () => {
     const { getByText } = await renderMiniPlayer()
 
     expect(getByText(REFERENCE_TEXT)).toBeTruthy()
+  })
+
+  test('fades both lines and slaves the subtitle marquee to the title cycle', async () => {
+    await renderMiniPlayer()
+
+    const titleRow = capturedMovingTextProps.find(props => props.text === AUDIO.title)
+    const subtitleRow = capturedMovingTextProps.find(props => props.text === REFERENCE_TEXT)
+
+    expect(titleRow).toMatchObject({ autoStart: true, fadeEdge: true })
+    expect(titleRow?.publishCycle).toBeDefined()
+    expect(subtitleRow).toMatchObject({ fadeEdge: true })
+    expect(subtitleRow?.autoStart).toBeUndefined()
+    expect(subtitleRow?.followCycle).toBe(titleRow?.publishCycle)
   })
 
   test('falls back to the playlist title, then the app name, when no reference', async () => {

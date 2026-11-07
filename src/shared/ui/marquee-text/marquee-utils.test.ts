@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   clampMarqueeOffset,
+  getSyncedOffset,
   isRealDrag,
   MARQUEE_EPSILON_PX,
   shouldMarquee,
@@ -71,6 +72,37 @@ describe('shouldMarquee', () => {
   })
 })
 
+describe('getSyncedOffset', () => {
+  const LOOP_DISTANCE = 400
+
+  test('stays at rest while the leader has no active cycle', () => {
+    expect(getSyncedOffset(0, 0, true, LOOP_DISTANCE)).toBe(0)
+    expect(getSyncedOffset(500, 0, true, LOOP_DISTANCE)).toBe(0)
+  })
+
+  test('stays at rest when the follower text fits its box', () => {
+    expect(getSyncedOffset(500, 1000, false, LOOP_DISTANCE)).toBe(0)
+  })
+
+  test('maps one leader cycle onto one full follower pass', () => {
+    // The subtitle restarts only with the title: its offset is a pure function
+    // of the leader's scroll phase, so both start at 0 together and finish
+    // exactly at the leader's cycle boundary.
+    expect(getSyncedOffset(0, 1000, true, LOOP_DISTANCE)).toBe(0)
+    expect(getSyncedOffset(250, 1000, true, LOOP_DISTANCE)).toBe(-100)
+    expect(getSyncedOffset(500, 1000, true, LOOP_DISTANCE)).toBe(-200)
+    expect(getSyncedOffset(1000, 1000, true, LOOP_DISTANCE)).toBe(-400)
+  })
+
+  test('clamps overshoot past the leader cycle boundary', () => {
+    expect(getSyncedOffset(1400, 1000, true, LOOP_DISTANCE)).toBe(-400)
+  })
+
+  test('clamps a negative elapsed phase to rest (defensive)', () => {
+    expect(getSyncedOffset(-100, 1000, true, LOOP_DISTANCE)).toBe(0)
+  })
+})
+
 describe('shouldSwallowClick', () => {
   test('swallows the click that follows a pan drag', () => {
     expect(shouldSwallowClick(true)).toBe(true)
@@ -119,5 +151,6 @@ describe('worklet directives', () => {
     expect(source).toMatch(/export const clampMarqueeOffset[\s\S]*?'worklet'/)
     expect(source).toMatch(/export const shouldMarquee[\s\S]*?'worklet'/)
     expect(source).toMatch(/export const isRealDrag[\s\S]*?'worklet'/)
+    expect(source).toMatch(/export const getSyncedOffset[\s\S]*?'worklet'/)
   })
 })
