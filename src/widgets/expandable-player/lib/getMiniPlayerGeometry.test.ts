@@ -1,8 +1,12 @@
 import {
   BAR_BOTTOM_INSET_MIN,
+  BAR_CIRCLE_SIZE_EXPANDED,
   BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
+  BAR_SIDE_INSET,
+  CONTENT_COLUMN_WIDTH,
+  getColumnSideInset,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
@@ -59,6 +63,28 @@ describe('getMiniPlayerGeometry', () => {
       expect(bottom).toBe(islandBottomFromScreenBottom(paddingBottom))
     },
   )
+
+  test('settled geometry: the vertical gap equals the horizontal island gap', () => {
+    const paddingBottom = BAR_BOTTOM_INSET_MIN
+    const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
+    const { bottom, left, width } = geometryAt(tabBarHeight)
+
+    // Independent model of the expanded islands row: the tab island and the
+    // search circle split the row's inner width with one outer gap between them.
+    const rowLeft = getColumnSideInset(SCREEN_WIDTH, 0, CONTENT_COLUMN_WIDTH)
+    const rowContentWidth = Math.min(SCREEN_WIDTH, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
+    const islandWidth = rowContentWidth - BAR_CIRCLE_SIZE_EXPANDED - BAR_OUTER_GAP
+    const horizontalGap = rowContentWidth - (islandWidth + BAR_CIRCLE_SIZE_EXPANDED)
+    const verticalGap = bottom - islandTopFromScreenBottom(paddingBottom)
+
+    expect(verticalGap).toBe(horizontalGap)
+    expect(verticalGap).toBe(BAR_OUTER_GAP)
+
+    // The pill spans exactly the row's inner edges, so its left/right insets
+    // match the island's and the search circle's.
+    expect(left).toBe(rowLeft + BAR_SIDE_INSET)
+    expect(width).toBe(rowContentWidth)
+  })
 
   test('interpolates the bottom between the two resting forms', () => {
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN

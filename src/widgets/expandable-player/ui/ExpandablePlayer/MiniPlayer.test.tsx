@@ -11,7 +11,7 @@ import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
 import { DarkTheme, LightTheme } from 'shared/ui/theme'
 import { MiniPlayer } from './MiniPlayer'
-import { createMiniStyles } from './miniStyles'
+import { createMiniStyles, MINI_PLAY_BOX_SIZE, MINI_PLAY_HIT_SLOP } from './miniStyles'
 
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn() }),
@@ -276,6 +276,18 @@ describe('<MiniPlayer>', () => {
     await fireEvent.press(getByRole('button', { name: PLAY_LABEL }))
 
     expect(mockOnPlayPause).toHaveBeenCalledTimes(1)
+  })
+
+  test('keeps the transport control inside the same visual box as the artwork', async () => {
+    const { getByRole } = await renderMiniPlayer()
+
+    const playButton = getByRole('button', { name: PLAY_LABEL })
+
+    expect(StyleSheet.flatten(playButton.props.style)).toMatchObject({
+      height: MINI_PLAY_BOX_SIZE,
+      width: MINI_PLAY_BOX_SIZE,
+    })
+    expect(playButton.props.hitSlop).toBe(MINI_PLAY_HIT_SLOP)
   })
 
   test('shows the play icon when paused and the pause icon when playing', async () => {

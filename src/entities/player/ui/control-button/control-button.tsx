@@ -2,6 +2,7 @@ import { Entypo } from '@expo/vector-icons'
 import {
   type GestureResponderEvent,
   type OpaqueColorValue,
+  type PressableProps,
   type StyleProp,
   StyleSheet,
   type ViewStyle,
@@ -21,6 +22,7 @@ const getControlLabel = (type: PlayerControlButtonType): string =>
 
 export const PlayerControlButton = ({
   color,
+  hitSlop,
   isDisabled,
   onLongPress,
   onPress,
@@ -30,6 +32,7 @@ export const PlayerControlButton = ({
   type,
 }: {
   color?: OpaqueColorValue | string
+  hitSlop?: PressableProps['hitSlop']
   isDisabled?: boolean | null
   onLongPress?: (event: GestureResponderEvent) => void
   onPress?: (event: GestureResponderEvent) => void
@@ -40,6 +43,7 @@ export const PlayerControlButton = ({
 }) => (
   <IconButton
     style={style}
+    hitSlop={hitSlop}
     onPress={onPress}
     onPressOut={onPressOut}
     onLongPress={onLongPress}

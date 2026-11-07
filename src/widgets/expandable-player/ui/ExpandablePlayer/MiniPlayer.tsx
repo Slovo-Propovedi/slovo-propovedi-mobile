@@ -11,7 +11,7 @@ import { PressableButton } from 'shared/ui/pressable-button'
 import { type ThemeColors } from 'shared/ui/theme'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
-import { type createMiniStyles, MINI_PILL_RADIUS } from './miniStyles'
+import { type createMiniStyles, MINI_PILL_RADIUS, MINI_PLAY_HIT_SLOP } from './miniStyles'
 
 const AnimatedPressable = Animated.createAnimatedComponent(PressableButton)
 
@@ -104,6 +104,8 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
                   size={36}
                   onPress={onPlayPause}
                   color={currentTheme.text}
+                  hitSlop={MINI_PLAY_HIT_SLOP}
+                  style={miniStyles.miniPlayButton}
                   type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
                 />
               </OnboardingTarget>

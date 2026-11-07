@@ -15,7 +15,7 @@ export const BAR_EXPANDED_ISLAND_TOP_MARGIN =
   (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2
 export const BAR_CIRCLE_SIZE = 64 as const
 export const BAR_CIRCLE_SIZE_EXPANDED = 76 as const
-export const BAR_OUTER_GAP = 8 as const
+export const BAR_OUTER_GAP = 6 as const
 // Generous side margins of the floating chrome (tab bar and resting mini player).
 export const BAR_SIDE_INSET = INDENTS.medium
 // Small bottom clearance below the islands: gesture-nav/web/desktop sit low,
