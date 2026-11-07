@@ -3,8 +3,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { closeSearch, isSearchOpenAtom, SearchBar } from 'features/sermon-search'
+import { createGlassStyles, GlassSurface } from 'shared/ui'
 import { BAR_MORPH_DURATION_MS, isBarCollapsedAtom, tabBarHeightAtom } from 'shared/ui/layout'
-import { useTheme } from 'shared/ui/theme'
+import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 
@@ -18,7 +19,7 @@ import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 // pill yields a circle + gap of room to it (both animate with the same morph
 // duration, so the row reads as [pill][✕] the whole way).
 export const SearchIsland = () => {
-  const { currentTheme } = useTheme()
+  const { isLight } = useTheme()
   const { width: screenWidth } = useWindowDimensions()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
@@ -77,8 +78,9 @@ export const SearchIsland = () => {
         accessibilityElementsHidden={!isSearchOpen}
         pointerEvents={isSearchOpen ? 'auto' : 'none'}
         importantForAccessibility={isSearchOpen ? 'yes' : 'no-hide-descendants'}
-        style={[styles.island, { backgroundColor: currentTheme.surface }, islandStyle]}
+        style={[styles.island, createGlassStyles(isLight, RADIUSES.round).container, islandStyle]}
       >
+        <GlassSurface isLight={isLight} radius={RADIUSES.round} />
         <SearchBar onFocusChange={handleFocusChange} />
       </Animated.View>
       <SearchIslandCloseSlot

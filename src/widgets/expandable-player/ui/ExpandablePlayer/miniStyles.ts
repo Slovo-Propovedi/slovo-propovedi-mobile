@@ -1,10 +1,13 @@
 import { StyleSheet } from 'react-native'
+import { createGlassStyles } from 'shared/ui'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES, type ThemeColors } from 'shared/ui/theme'
 
-const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
+export const MINI_PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
 
-export const createMiniStyles = (theme: ThemeColors) =>
-  StyleSheet.create({
+export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
+  const glass = createGlassStyles(isLight, MINI_PILL_RADIUS)
+
+  return StyleSheet.create({
     downloadFill: {
       height: '100%',
     },
@@ -19,9 +22,9 @@ export const createMiniStyles = (theme: ThemeColors) =>
     // Geometry (bottom/left/width/radius) is committed by the bar-morph styles in
     // MiniPlayer: animated during the morph, React-resting for the current state.
     miniContainer: {
+      ...glass.container,
       alignItems: 'center',
-      backgroundColor: theme.surface,
-      borderRadius: PILL_RADIUS,
+      borderRadius: MINI_PILL_RADIUS,
       flexDirection: 'row',
       height: PLAYER_SIZES.miniPlayerHeight,
       overflow: 'hidden',
@@ -42,7 +45,7 @@ export const createMiniStyles = (theme: ThemeColors) =>
     miniOverlay: {
       ...StyleSheet.absoluteFill,
       backgroundColor: theme.surface,
-      borderRadius: PILL_RADIUS,
+      borderRadius: MINI_PILL_RADIUS,
     },
     miniPlaylistName: {
       color: theme.textMuted,
@@ -61,3 +64,4 @@ export const createMiniStyles = (theme: ThemeColors) =>
       fontSize: FONT_SIZES.base,
     },
   })
+}

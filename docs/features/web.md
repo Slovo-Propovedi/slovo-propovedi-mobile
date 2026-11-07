@@ -206,6 +206,10 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 
 `PlayerMenu` (полноэкранный плеер) и `SearchSuggestions` (поиск) — **не** Modal: абсолютное позиционирование относительно `position: relative`-контейнера (`expandedControlsStyles.menuContainer`, `SearchBar`), без измерения — скролл им не страшен, изменений не требуют.
 
+## Стекло и backdrop-filter
+
+Общий стеклянный рецепт нижних островов (`src/shared/ui/glass/`, см. [theme.md](./theme.md#стеклянные-нижние-острова-frosted-glass)) на web работает без отдельных пропов: `BlurView` из `expo-blur` на web сам рендерит `backdrop-filter: saturate(180%) blur(intensity × 0.2px)` (и `-webkit-` вариант), а `experimentalBlurMethod`/`blurMethod` — Android-only и на web не нужны. Браузеры без `backdrop-filter` показывают только полупрозрачную заливку и рамку — контент под островом остаётся виден, просто без размытия.
+
 ## Скроллбары
 
 - `PlayerMenu.styles.ts` → `menuWrapper` использует `overflow: 'hidden'` (не `'scroll'` — на web `'scroll'` даёт постоянные пустые скроллбары по обеим осям).

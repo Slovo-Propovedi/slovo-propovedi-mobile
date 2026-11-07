@@ -2,19 +2,9 @@ import { BAR_SIDE_INSET, CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
 import { MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
 import { CAPSULE_HORIZONTAL_OVERHANG } from '../lib/getIslandStyle'
 
-export const ISLAND_BACKGROUND_LIGHT = 'rgba(230, 230, 230, 0.9)'
-export const ISLAND_BACKGROUND_DARK = 'rgba(0, 0, 0, 0.85)'
-
 const TAB_LABEL_BOTTOM = 4
 
 export const styles = {
-  blurFill: {
-    bottom: 0,
-    left: 0,
-    position: 'absolute' as const,
-    right: 0,
-    top: 0,
-  },
   // Background layer of the active tab highlight; its opacity follows the morph
   // so the collapsed circle never shows the capsule. Overhanging the slot keeps
   // the active label away from the rounded capsule ends.

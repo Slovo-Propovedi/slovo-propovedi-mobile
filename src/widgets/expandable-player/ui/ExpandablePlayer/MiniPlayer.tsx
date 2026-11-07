@@ -13,12 +13,12 @@ import { OnboardingTarget } from 'features/onboarding'
 import { PlayerControlButton, PlayerControlButtonType } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
-import { CoverImage, MovingText } from 'shared/ui'
+import { CoverImage, GlassSurface, MovingText } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { type ThemeColors } from 'shared/ui/theme'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
-import { type createMiniStyles } from './miniStyles'
+import { type createMiniStyles, MINI_PILL_RADIUS } from './miniStyles'
 
 const AnimatedPressable = Animated.createAnimatedComponent(PressableButton)
 
@@ -31,6 +31,9 @@ const ROW_ACCESSIBILITY_ROLE = Platform.OS === 'web' ? 'link' : 'button'
 interface MiniPlayerProps {
   audio: AudioPlayerData
   currentTheme: ThemeColors
+  // Theme flag for the shared glass layers; the pill must frost exactly like the
+  // tab island and the search surfaces.
+  isLight: boolean
   miniBarRestingStyle: ViewStyle
   miniBarStyle: AnimatedStyle<ViewStyle>
   miniPan: GestureType
@@ -48,6 +51,7 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
     {
       audio,
       currentTheme,
+      isLight,
       miniBarRestingStyle,
       miniBarStyle,
       miniPan,
@@ -76,9 +80,9 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
             // last keeps the shadow tree on the current bar state's geometry (#63).
             miniBarStyle,
             miniBarRestingStyle,
-            { backgroundColor: currentTheme.surface },
           ]}
         >
+          <GlassSurface isLight={isLight} radius={MINI_PILL_RADIUS} />
           <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
           <View style={miniStyles.miniTextContainer}>
             <MovingText autoStart text={audio.title || ''} style={miniStyles.miniTrackTitle} />

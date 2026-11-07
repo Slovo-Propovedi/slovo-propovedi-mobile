@@ -1,19 +1,26 @@
 import { createCtx } from '@reatom/framework'
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ComponentProps } from 'react'
+import { StyleSheet } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
 import { onboardingTargetRectsAtom, onboardingTourAtom } from 'features/onboarding'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { LightTheme } from 'shared/ui/theme'
+import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
+import { DarkTheme, LightTheme } from 'shared/ui/theme'
 import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
 
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn() }),
 }))
+
+jest.mock('expo-blur', () => {
+  const { View } = jest.requireActual('react-native')
+  return { BlurView: (props: Record<string, unknown>) => <View {...props} /> }
+})
 
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
@@ -85,11 +92,12 @@ const mockOnPress = jest.fn()
 const baseProps: MiniPlayerProps = {
   audio: AUDIO,
   currentTheme: LightTheme,
+  isLight: true,
   miniBarRestingStyle: {},
   miniBarStyle: {},
   miniPan: {} as GestureType,
   miniStyle: {},
-  miniStyles: createMiniStyles(LightTheme),
+  miniStyles: createMiniStyles(LightTheme, true),
   onPlayPause: mockOnPlayPause,
   onPress: mockOnPress,
   playing: false,
@@ -103,6 +111,55 @@ const renderMiniPlayer = (overrides: Partial<MiniPlayerProps> = {}) =>
 describe('<MiniPlayer>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+  })
+
+  test('renders the pill as frosted glass over the page', async () => {
+    await renderMiniPlayer()
+
+    const blurs = screen.root?.queryAll(
+      instance => instance.props.intensity === GLASS.blur.intensity,
+    )
+
+    expect(blurs).toHaveLength(1)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
+      backgroundColor: getGlassFill(true),
+    })
+    expect(
+      screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.borderColor === getGlassBorder(true) && flat?.borderWidth === 1
+      }),
+    ).toHaveLength(1)
+    expect(
+      screen.root?.queryAll(
+        instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
+      ),
+    ).toHaveLength(1)
+  })
+
+  test('uses the dark glass recipe in the dark theme', async () => {
+    await renderMiniPlayer({
+      currentTheme: DarkTheme,
+      isLight: false,
+      miniStyles: createMiniStyles(DarkTheme, false),
+    })
+
+    const blurs = screen.root?.queryAll(
+      instance => instance.props.intensity === GLASS.blur.intensity,
+    )
+
+    expect(blurs).toHaveLength(1)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
+      backgroundColor: getGlassFill(false),
+    })
+    expect(
+      screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.borderColor === getGlassBorder(false) && flat?.borderWidth === 1
+      }),
+    ).toHaveLength(1)
   })
 
   test('renders the track title and artwork', async () => {

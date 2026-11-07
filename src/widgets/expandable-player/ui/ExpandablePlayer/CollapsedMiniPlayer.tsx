@@ -6,7 +6,7 @@ import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { type ThemeColors } from 'shared/ui/theme'
 import { MiniPlayer } from './MiniPlayer'
-import { type createMiniStyles } from './miniStyles'
+import { createMiniStyles } from './miniStyles'
 
 /**
  * The collapsed mini-player layer, split out of ExpandablePlayer so the
@@ -15,11 +15,11 @@ import { type createMiniStyles } from './miniStyles'
  * @param root0.audio - Current track audio.
  * @param root0.currentTheme - Active theme colors.
  * @param root0.isBuffering - Whether playback is buffering (shows the spinner).
+ * @param root0.isLight - Active theme flag for the shared glass layers.
  * @param root0.miniBarRestingStyle - React-committed resting pill geometry for the current bar state.
  * @param root0.miniBarStyle - Animated pill geometry during the bar morph.
  * @param root0.miniPan - Pan gesture that expands the player.
  * @param root0.miniStyle - Animated opacity style.
- * @param root0.miniStyles - Precomputed mini-player styles.
  * @param root0.onPlayPause - Play/pause toggle handler.
  * @param root0.onPress - Tap handler that expands the player.
  * @param root0.playing - Whether playback is active.
@@ -29,11 +29,11 @@ export const CollapsedMiniPlayer = ({
   audio,
   currentTheme,
   isBuffering,
+  isLight,
   miniBarRestingStyle,
   miniBarStyle,
   miniPan,
   miniStyle,
-  miniStyles,
   onPlayPause,
   onPress,
   playing,
@@ -42,17 +42,18 @@ export const CollapsedMiniPlayer = ({
   audio: AudioPlayerData
   currentTheme: ThemeColors
   isBuffering: boolean
+  isLight: boolean
   miniBarRestingStyle: ViewStyle
   miniBarStyle: AnimatedStyle<ViewStyle>
   miniPan: GestureType
   miniStyle: AnimatedStyle<ViewStyle>
-  miniStyles: ReturnType<typeof createMiniStyles>
   onPlayPause: () => Promise<void>
   onPress: () => void
   playing: boolean
   playlist: null | PlaylistData
 }) => {
   const miniTargetRef = useOnboardingTargetRef('player.mini')
+  const miniStyles = createMiniStyles(currentTheme, isLight)
 
   return (
     <MiniPlayer
@@ -60,6 +61,7 @@ export const CollapsedMiniPlayer = ({
       playing={playing}
       miniPan={miniPan}
       onPress={onPress}
+      isLight={isLight}
       ref={miniTargetRef}
       playlist={playlist}
       miniStyle={miniStyle}

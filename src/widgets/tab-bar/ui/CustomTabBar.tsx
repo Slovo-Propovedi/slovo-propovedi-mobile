@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useAction } from '@reatom/npm-react'
-import { BlurView } from 'expo-blur'
 import { type Tabs } from 'expo-router'
 import { useState } from 'react'
 import { useWindowDimensions, View } from 'react-native'
@@ -8,11 +7,12 @@ import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingTarget } from 'features/onboarding'
 import { useIsSearchOpen, useOpenSearch } from 'features/sermon-search'
+import { createGlassStyles, GlassSurface } from 'shared/ui'
 import { BAR_ROW_MIN_HEIGHT, setTabBarHeight } from 'shared/ui/layout'
-import { useTheme } from 'shared/ui/theme'
+import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { CircleButton } from './CircleButton'
-import { ISLAND_BACKGROUND_DARK, ISLAND_BACKGROUND_LIGHT, styles } from './styles'
+import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabSlot } from './TabSlot'
 import { useTabPress } from './useTabPress'
@@ -57,6 +57,7 @@ export const CustomTabBar = ({
     windowWidth,
   })
   const bottomPadding = Math.max(bottom, MIN_TAB_BAR_BOTTOM_PADDING)
+  const glass = createGlassStyles(isLight, RADIUSES.round)
 
   return (
     <View pointerEvents='box-none' style={styles.floatingContainer}>
@@ -77,15 +78,11 @@ export const CustomTabBar = ({
           setMeasuredTabBarHeight(height)
         }}
       >
-        <Animated.View style={[styles.floatingIsland, islandStyle]}>
-          <BlurView
-            intensity={70}
+        <Animated.View style={[styles.floatingIsland, glass.container, islandStyle]}>
+          <GlassSurface
+            isLight={isLight}
+            radius={RADIUSES.round}
             key={isLight ? 'light' : 'dark'}
-            tint={isLight ? 'light' : 'dark'}
-            style={[
-              styles.blurFill,
-              { backgroundColor: isLight ? ISLAND_BACKGROUND_LIGHT : ISLAND_BACKGROUND_DARK },
-            ]}
           />
           <Animated.View style={[styles.islandContent, contentStyle]}>
             {visibleRoutes.map(route => {

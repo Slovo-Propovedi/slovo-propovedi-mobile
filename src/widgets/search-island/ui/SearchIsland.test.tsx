@@ -1,16 +1,18 @@
 import { createCtx } from '@reatom/framework'
-import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { isSearchOpenAtom } from 'features/sermon-search'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
+import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
 import {
   BAR_CIRCLE_SIZE,
   BAR_OUTER_GAP,
   isBarCollapsedAtom,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
+import { themeModeAtom } from 'shared/ui/theme'
 import { SearchIsland } from './SearchIsland'
 
 // Jest hoists mock factories above imports, so the factory may only reference
@@ -34,6 +36,11 @@ jest.mock('shared/api', () => ({
     }),
   },
 }))
+
+jest.mock('expo-blur', () => {
+  const { View } = jest.requireActual('react-native')
+  return { BlurView: (props: Record<string, unknown>) => <View {...props} /> }
+})
 
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
 const CLOSE_LABEL = 'Закрыть поиск'
@@ -81,6 +88,69 @@ describe('<SearchIsland>', () => {
     expect(pill.props.pointerEvents).toBe('auto')
   })
 
+  test('renders the search pill as frosted glass over the page', async () => {
+    const ctx = createCtx()
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    await renderWithProviders(<SearchIsland />, { ctx })
+
+    const blurs = screen.root?.queryAll(
+      instance => instance.props.intensity === GLASS.blur.intensity,
+    )
+
+    // The pill and the always-mounted ✕ slot (hidden until focus) both use the
+    // shared glass recipe.
+    expect(blurs).toHaveLength(2)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
+      backgroundColor: getGlassFill(true),
+    })
+    expect(
+      screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.borderColor === getGlassBorder(true) && flat?.borderWidth === 1
+      }),
+    ).toHaveLength(2)
+    expect(
+      screen.root?.queryAll(
+        instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
+      ),
+    ).toHaveLength(2)
+  })
+
+  test('uses the dark glass recipe in the dark theme', async () => {
+    const ctx = createCtx()
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    await renderWithProviders(<SearchIsland />, { ctx })
+    // The provider restores the persisted mode on mount, so switch to dark after
+    // the first render to exercise the theme-following glass factory.
+    await act(async () => {
+      themeModeAtom(ctx, 'dark')
+    })
+
+    const blurs = screen.root?.queryAll(
+      instance => instance.props.intensity === GLASS.blur.intensity,
+    )
+
+    expect(blurs).toHaveLength(2)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
+      backgroundColor: getGlassFill(false),
+    })
+    expect(
+      screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.borderColor === getGlassBorder(false) && flat?.borderWidth === 1
+      }),
+    ).toHaveLength(2)
+    expect(
+      screen.root?.queryAll(
+        instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
+      ),
+    ).toHaveLength(2)
+  })
+
   test('stays mounted but non-interactive while search is closed', async () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
@@ -108,6 +178,15 @@ describe('<SearchIsland>', () => {
       fireEvent(input, 'focus')
     })
     expect(queryByLabelText(CLOSE_LABEL)).toBeTruthy()
+    // The pill and the ✕ circle are both glass surfaces on the same row.
+    expect(
+      screen.root?.queryAll(instance => instance.props.intensity === GLASS.blur.intensity),
+    ).toHaveLength(2)
+    expect(
+      screen.root?.queryAll(
+        instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
+      ),
+    ).toHaveLength(2)
 
     await act(async () => {
       fireEvent(input, 'blur')

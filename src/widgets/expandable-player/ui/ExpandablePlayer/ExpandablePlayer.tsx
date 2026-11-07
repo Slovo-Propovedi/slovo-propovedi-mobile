@@ -10,7 +10,6 @@ import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
 import { CollapsedMiniPlayer } from './CollapsedMiniPlayer'
 import { ContainerView, type NonGeometricStyle } from './ContainerView'
-import { createMiniStyles } from './miniStyles'
 import { PlayerBackdrop } from './PlayerBackdrop'
 import { createStyles } from './styles'
 import { useExpandablePlayerGesture } from './useExpandablePlayerGesture'
@@ -29,6 +28,7 @@ export const ExpandablePlayer = ({
     expanded,
     isBarCollapsed,
     isBuffering,
+    isLight,
     isTabBarMeasured,
     playing,
     playlist,
@@ -57,7 +57,6 @@ export const ExpandablePlayer = ({
     screenHeight,
     screenWidth,
   } = useExpandAnimation(expanded, tabBarHeight, isBarCollapsed)
-  const miniStyles = createMiniStyles(currentTheme)
 
   const gesture = useExpandablePlayerGesture({
     close,
@@ -94,9 +93,9 @@ export const ExpandablePlayer = ({
         <CollapsedMiniPlayer
           audio={audio}
           playing={playing}
+          isLight={isLight}
           playlist={playlist}
           miniStyle={miniStyle}
-          miniStyles={miniStyles}
           onPlayPause={togglePlay}
           miniPan={gesture.miniPan}
           isBuffering={isBuffering}
@@ -110,6 +109,7 @@ export const ExpandablePlayer = ({
         audio={audio}
         style={style}
         styles={styles}
+        isLight={isLight}
         expanded={expanded}
         fullStyle={fullStyle}
         currentTheme={currentTheme}
@@ -118,7 +118,6 @@ export const ExpandablePlayer = ({
         onLayout={guardedContainerLayout}
         miniOverlayStyle={miniOverlayStyle}
         onAddToPlaylist={openAddToPlaylist}
-        miniOverlay={miniStyles.miniOverlay}
         backgroundImageStyle={backgroundImageStyle}
         restingContainerStyle={restingContainerStyle}
         playlistMenuComponent={playlistMenuComponent}

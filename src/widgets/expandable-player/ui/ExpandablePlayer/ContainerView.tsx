@@ -8,6 +8,7 @@ import { type ThemeColors } from 'shared/ui/theme'
 import { useFullscreenContentMount } from '../../model/useFullscreenContentMount'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
+import { createMiniStyles } from './miniStyles'
 import { type createStyles } from './styles'
 
 /** Consumer style must not carry geometry keys — enforced by compiler (Issue #63 invariant). */
@@ -21,7 +22,7 @@ export const ContainerView = ({
   currentTheme,
   expanded,
   fullStyle,
-  miniOverlay,
+  isLight,
   miniOverlayStyle,
   onAddToPlaylist,
   onLayout,
@@ -38,7 +39,7 @@ export const ContainerView = ({
   currentTheme: ThemeColors
   expanded: boolean
   fullStyle: AnimatedStyle<ViewStyle>
-  miniOverlay: ViewStyle
+  isLight: boolean
   miniOverlayStyle: AnimatedStyle<ViewStyle>
   onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onLayout: (event: LayoutChangeEvent) => void
@@ -50,6 +51,7 @@ export const ContainerView = ({
 }) => {
   // FullscreenContent stays mounted through the collapse animation so the exit
   // fade is visible, then unmounts to stop its per-tick re-render storm (Issue #100).
+  const miniOverlay = createMiniStyles(currentTheme, isLight).miniOverlay
   const isFullscreenContentMounted = useFullscreenContentMount(expanded)
 
   return (

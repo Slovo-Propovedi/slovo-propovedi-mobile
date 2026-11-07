@@ -17,6 +17,7 @@ jest.mock('../FullscreenContent/FullscreenContent', () => {
 
 jest.mock('shared/ui', () => ({
   CoverImage: () => null,
+  createGlassStyles: jest.requireActual('shared/ui/glass/glass').createGlassStyles,
 }))
 
 jest.mock('expo-status-bar', () => ({
@@ -42,7 +43,7 @@ const baseProps = {
   currentTheme: LightTheme,
   expanded: false,
   fullStyle: {},
-  miniOverlay: {},
+  isLight: true,
   miniOverlayStyle: {},
   onLayout: jest.fn(),
   panGesture: {} as GestureType,

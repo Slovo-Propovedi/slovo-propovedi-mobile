@@ -64,6 +64,17 @@ const styles = StyleSheet.create({
 
 Тип `ThemeColors` (базовый набор слотов темы) — `src/shared/ui/theme/types.ts`.
 
+## Стеклянные нижние острова (frosted glass)
+
+Единый рецепт стекла для четырёх плавающих поверхностей — острова табов, круга поиска, пилюли мини-плеера и пилюли поиска с её кругом «✕» — живёт в `src/shared/ui/glass/`:
+
+- `glass.ts` — константы `GLASS` (интенсивность блюра, альфы заливки/рамки, параметры тени) и чистые геттеры `getGlassFill`/`getGlassBorder`/`getGlassTint`; фабрика `createGlassStyles(isLight, radius)` собирает слои (`blur`, `fill`, `rim`, `container`-тень) на каждый рендер. Модульного `StyleSheet.create` с цветами темы нет — это то же правило про мутируемые слоты, что и выше.
+- `GlassSurface.tsx` — общий компонент фона: `BlurView` под полупрозрачной заливкой и 1px белая рамка. Сам клипует слои по радиусу, поэтому хост не обязан ставить `overflow: 'hidden'` (важно для пилюли поиска — иначе обрезался бы выпадающий список подсказок).
+
+Значения рецепта: `intensity = 60`; заливка light `rgba(255, 255, 255, 0.45)`, dark `rgba(0, 0, 0, 0.35)`; рамка 1px `rgba(255, 255, 255, 0.25)` / `0.12`; тень `0px 5px 14px rgba(0, 0, 0, 0.25)` (на острове табов остаётся и прежний `elevation: 12` контейнера — он отвечает за слоистость). Радиус передаётся поверхности отдельно: круглые острова — `RADIUSES.round`, пилюля мини-плеера — `PLAYER_SIZES.miniPlayerHeight / 2`; сами слои стекла одинаковые.
+
+Платформы: на iOS работает нативный `BlurView` с `tint` light/dark; на web `expo-blur` сам применяет `backdrop-filter` (см. [web.md](./web.md#стекло-и-backdrop-filter)); на Android без `BlurTargetView` вокруг контента под островом остаётся только полупрозрачный tint — реальный blur на Android 12+ ждёт выноса нижнего хрома из навигатора (см. [`../debt.md`](../debt.md)).
+
 ## Разрешение текущей темы
 
 Функция `resolveTheme(mode, systemTheme, dynamicEnabled)` (`src/shared/ui/theme/model.ts`):

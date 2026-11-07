@@ -17,7 +17,7 @@ import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
  * keeps a flat body within the file line budget.
  */
 export const useExpandablePlayerState = () => {
-  const { currentTheme } = useTheme()
+  const { currentTheme, isLight } = useTheme()
   const [measuredTabBarHeight] = useAtom(tabBarHeightAtom)
   // A non-focused root-stack screen renders the tabs with `display: none` on web
   // (and may detach them natively), so the tab row's onLayout reports a 0 height
@@ -50,6 +50,7 @@ export const useExpandablePlayerState = () => {
     // so the mini player rests detached above it instead of collapsing into it.
     isBarCollapsed: isBarCollapsed && !isSearchOpen,
     isBuffering,
+    isLight,
     isTabBarMeasured,
     playing,
     playlist,
