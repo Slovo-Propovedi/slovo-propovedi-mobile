@@ -1,6 +1,7 @@
 import {
   getCapsuleOpacity,
   getCircleButtonStyle,
+  getIslandContentPadding,
   getIslandStyle,
   getTabIconOffset,
   getTabItemHeight,
@@ -38,10 +39,12 @@ describe('getIslandStyle', () => {
 describe('getTabSlotStyle', () => {
   test('expanded tabs share the full width and stay opaque', () => {
     expect(getTabSlotStyle(0, { ...TAB_LAYOUT, isActive: false })).toEqual({
+      minWidth: 48,
       opacity: 1,
       width: EXPANDED_TAB_WIDTH,
     })
     expect(getTabSlotStyle(0, { ...TAB_LAYOUT, isActive: true })).toEqual({
+      minWidth: 48,
       opacity: 1,
       width: EXPANDED_TAB_WIDTH,
     })
@@ -49,10 +52,12 @@ describe('getTabSlotStyle', () => {
 
   test('collapsed active tab fills the circle, hidden tabs fade out to zero width', () => {
     expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: true })).toEqual({
+      minWidth: 0,
       opacity: 1,
       width: 64,
     })
     expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: false })).toEqual({
+      minWidth: 0,
       opacity: 0,
       width: 0,
     })
@@ -60,9 +65,32 @@ describe('getTabSlotStyle', () => {
 
   test('hidden tab opacity crossfades with progress', () => {
     expect(getTabSlotStyle(0.5, { ...TAB_LAYOUT, isActive: false })).toEqual({
+      minWidth: 24,
       opacity: 0.5,
       width: EXPANDED_TAB_WIDTH / 2,
     })
+  })
+
+  test('every expanded slot keeps at least the 48dp touch target', () => {
+    expect(getTabSlotStyle(0, { ...TAB_LAYOUT, isActive: false }).minWidth).toBe(48)
+  })
+})
+
+describe('getIslandContentPadding', () => {
+  test('expanded island insets its slots from the rounded edges', () => {
+    expect(getIslandContentPadding(0)).toBe(16)
+  })
+
+  test('collapsed circle drops the inset so the active slot fills the circle', () => {
+    // The island shrinks to the 64dp circle and the active slot to the same
+    // width; any leftover padding would push the icon off-centre and clip it.
+    expect(getIslandContentPadding(1)).toBe(0)
+  })
+
+  test('inset fades with the morph and clamps out-of-range progress', () => {
+    expect(getIslandContentPadding(0.5)).toBe(8)
+    expect(getIslandContentPadding(-1)).toBe(16)
+    expect(getIslandContentPadding(2)).toBe(0)
   })
 })
 

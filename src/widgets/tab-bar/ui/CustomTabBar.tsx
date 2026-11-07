@@ -50,7 +50,7 @@ export const CustomTabBar = ({
   const [rowWidth, setRowWidth] = useState(0)
   const visibleRoutes = state.routes.filter(route => !HIDDEN_TAB_ROUTE_NAMES.has(route.name))
   const activeRouteKey = state.routes[state.index]?.key
-  const { expandedTabWidth, islandStyle, progress } = useTabIslandMorph({
+  const { contentStyle, expandedTabWidth, islandStyle, progress } = useTabIslandMorph({
     hideSearch,
     routeCount: visibleRoutes.length,
     rowWidth,
@@ -87,7 +87,7 @@ export const CustomTabBar = ({
               { backgroundColor: isLight ? ISLAND_BACKGROUND_LIGHT : ISLAND_BACKGROUND_DARK },
             ]}
           />
-          <View style={styles.islandContent}>
+          <Animated.View style={[styles.islandContent, contentStyle]}>
             {visibleRoutes.map(route => {
               const isActive = route.key === activeRouteKey
 
@@ -111,7 +111,7 @@ export const CustomTabBar = ({
                 </TabSlot>
               )
             })}
-          </View>
+          </Animated.View>
         </Animated.View>
         {!hideSearch && !isSearchOpen && (
           <OnboardingTarget id={SEARCH_TARGET_ID}>

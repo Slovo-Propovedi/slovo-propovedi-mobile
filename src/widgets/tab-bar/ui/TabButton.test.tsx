@@ -129,6 +129,22 @@ describe('<TabButton>', () => {
     expect(findCapsule()).toHaveStyle({ backgroundColor: CAPSULE_COLOR, opacity: 1 })
   })
 
+  test('active capsule overhangs its slot so the label is not flush with the edges', async () => {
+    // The reference capsule is wider than one tab slot (143dp over a 132dp
+    // pitch), so it bleeds into the inter-item gap instead of hugging the label.
+    await renderTabButton('listen', true, progressValue(0))
+
+    expect(findCapsule()).toHaveStyle({ left: -12, right: -12 })
+  })
+
+  test('tab items keep a 12dp gap between neighbours', () => {
+    expect(styles.tabItem).toMatchObject({ marginHorizontal: 6 })
+  })
+
+  test('keeps the pressable tab at the 48dp minimum touch target', () => {
+    expect(styles.tabButton).toMatchObject({ minHeight: 48 })
+  })
+
   test('collapsed active tab hides the capsule highlight inside the circle', async () => {
     await renderTabButton('listen', true, progressValue(1))
 

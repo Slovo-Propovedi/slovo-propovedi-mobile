@@ -144,6 +144,18 @@ describe('<CustomTabBar>', () => {
     expect(styles.floatingIsland).not.toHaveProperty('height')
   })
 
+  test('insets the island content so the tabs clear the rounded edges', async () => {
+    await renderTabBar()
+
+    const content = screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return flat?.flexDirection === 'row' && flat?.paddingHorizontal === 16
+    })[0]
+
+    expect(content).toBeTruthy()
+  })
+
   test('renders the bar labels without the study tab', async () => {
     const { getByText, queryByText } = await renderTabBar()
 
