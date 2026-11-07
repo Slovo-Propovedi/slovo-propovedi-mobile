@@ -114,7 +114,8 @@ jest.mock('./DynamicSectionsSlider', () => {
 })
 
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
-const CLEAR_LABEL = 'Очистить поиск'
+const CLEAR_LABEL = 'Очистить'
+const CLOSE_SEARCH_LABEL = 'Закрыть поиск'
 const SERMON_TITLE = 'Проповедь о вере'
 const SECTIONS_MOCK = 'SECTIONS_MOCK'
 const MY_PLAYLISTS_TITLE = 'Мои плейлисты'
@@ -268,30 +269,35 @@ describe('<ListenScreen>', () => {
     expect(getAllByText(SERMON_TITLE)[0]).toBeTruthy()
   })
 
-  test('clears the query via ✕ and returns sections while the search stays open and pinned', async () => {
+  test('clears the query via the inline ⊗ chip and returns sections while the search stays open', async () => {
     const ctx = createCtx()
     isSearchOpenAtom(ctx, true)
-    searchQueryAtom(ctx, 'вера')
-    searchResultsAtom(ctx, sermons)
-    isSearchingAtom(ctx, false)
     const { getByLabelText, getByPlaceholderText, getByText, queryByText } =
       await renderWithProviders(<ListenScreen />, { ctx })
 
-    fireEvent.press(getByLabelText(CLEAR_LABEL))
+    await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'вера')
+    expect(queryByText(SECTIONS_MOCK)).toBeNull()
+
+    await fireEvent.press(getByLabelText(CLEAR_LABEL))
 
     await waitFor(() => expect(ctx.get(searchQueryAtom)).toBe(''))
     expect(ctx.get(searchResultsAtom)).toEqual([])
     expect(ctx.get(isSearchingAtom)).toBe(false)
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
     const bar = getByPlaceholderText(SEARCH_PLACEHOLDER)
     expect(hasScrollAncestor(bar)).toBe(false)
     expect(getByText(SECTIONS_MOCK)).toBeTruthy()
     expect(queryByText(SERMON_TITLE)).toBeNull()
   })
 
-  test('closes the search via ✕ when the field is empty and unmounts the island', async () => {
-    const { ctx, getByLabelText, queryByPlaceholderText } = await renderWithOpenSearch()
+  test('closes the search via the external ✕ when the field is empty and hides the island', async () => {
+    const { ctx, getByLabelText, getByPlaceholderText, queryByPlaceholderText } =
+      await renderWithOpenSearch()
 
-    fireEvent.press(getByLabelText(CLEAR_LABEL))
+    await act(async () => {
+      fireEvent(getByPlaceholderText(SEARCH_PLACEHOLDER), 'focus')
+    })
+    await fireEvent.press(getByLabelText(CLOSE_SEARCH_LABEL))
 
     await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
     expect(queryByPlaceholderText(SEARCH_PLACEHOLDER)).toBeNull()
