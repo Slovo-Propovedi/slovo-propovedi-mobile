@@ -23,6 +23,9 @@ const MIN_TAB_BAR_BOTTOM_PADDING = 30
 const SEARCH_ICON_SIZE = 24
 const SEARCH_LABEL = 'Поиск'
 const SEARCH_TARGET_ID = 'listen.search-toggle'
+// «Учиться» keeps its /study route (deep links, direct navigation) but has no
+// button in the bar anymore.
+const HIDDEN_TAB_ROUTE_NAMES = new Set(['study'])
 
 interface CustomTabBarProps extends TabBarProps {
   hideFloatingPlayer?: boolean
@@ -47,9 +50,11 @@ export const CustomTabBar = ({
   const isSearchOpen = useIsSearchOpen()
   const { width: windowWidth } = useWindowDimensions()
   const [rowWidth, setRowWidth] = useState(0)
+  const visibleRoutes = state.routes.filter(route => !HIDDEN_TAB_ROUTE_NAMES.has(route.name))
+  const activeRouteKey = state.routes[state.index]?.key
   const { expandedTabWidth, islandStyle, progress } = useTabIslandMorph({
     hideSearch,
-    routeCount: state.routes.length,
+    routeCount: visibleRoutes.length,
     rowWidth,
     windowWidth,
   })
@@ -79,8 +84,8 @@ export const CustomTabBar = ({
             ]}
           />
           <View style={styles.islandContent}>
-            {state.routes.map((route, index: number) => {
-              const isActive = index === state.index
+            {visibleRoutes.map(route => {
+              const isActive = route.key === activeRouteKey
 
               return (
                 <TabSlot

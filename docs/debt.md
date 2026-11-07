@@ -40,11 +40,11 @@
 
 ## Study tab
 
-- [ ] **Таб «Учиться» — заглушка, гейтится фича-флагом `study`.** `src/pages/study/` — два пустых маршрута-сцены (Богословие, Душепопечение) через `react-native-tab-view`; при выключенном/незагруженном флаге `CustomTabBar` блокирует переход, `StudyScreen` рендерит `null`. Заполнить контентом и включить флаг `study` при разработке раздела (см. [features/feature-flags.md](./features/feature-flags.md)).
+- [ ] **Экран «Учиться» — заглушка, гейтится фича-флагом `study`.** `src/pages/study/` — два пустых маршрута-сцены (Богословие, Душепопечение) через `react-native-tab-view`. Кнопки «Учиться» в `CustomTabBar` больше нет: маршрут скрыт из бара и доступен только прямым переходом; при выключенном/незагруженном флаге `StudyScreen` рендерит `null`. Заполнить контентом и включить флаг `study` при разработке раздела (см. [features/feature-flags.md](./features/feature-flags.md)).
 
 ## Tab bar
 
-- [ ] **Табы «Читать» и «Учиться» гейтятся фича-флагами `read`/`study`** — `src/widgets/tab-bar/ui/useTabPress.ts` — при выключенном/незагруженном флаге показывается диалог «Скоро будет доступно»; открывать по мере готовности разделов (см. Read tab / Study tab, [features/feature-flags.md](./features/feature-flags.md)).
+- [ ] **Таб «Читать» гейтится фича-флагом `read`** — `src/widgets/tab-bar/ui/useTabPress.ts` — при выключенном/незагруженном флаге показывается диалог «Скоро будет доступно»; открывать по мере готовности раздела (см. Read tab, [features/feature-flags.md](./features/feature-flags.md)).
 - [ ] **Поле поиска в нижней строке не поднимается над клавиатурой на iOS** — `src/widgets/search-island/`, `src/pages/listen/ui/ListenScreen.tsx` — `KeyboardAvoidingView`/`keyboardVerticalOffset` не подключены, поэтому на iOS клавиатура может перекрыть пилюлю (Android adjustResize поднимает строку сам). Вернуться при первой iOS-сборке или жалобе на ввод поиска; учесть, что таб-бар рисуется вне экрана (`app/(tabs)/_layout.tsx`) и вместе с полем должен подниматься согласованно.
 
 ## Local DB → API migration

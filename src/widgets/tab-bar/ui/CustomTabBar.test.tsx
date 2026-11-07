@@ -79,12 +79,12 @@ describe('<CustomTabBar>', () => {
     expect(styles.floatingIsland.maxWidth).toBe(600)
   })
 
-  test('renders all 4 tab labels', async () => {
-    const { getByText } = await renderTabBar()
+  test('renders the bar labels without the study tab', async () => {
+    const { getByText, queryByText } = await renderTabBar()
 
     expect(getByText('Слушать')).toBeTruthy()
     expect(getByText('Читать')).toBeTruthy()
-    expect(getByText('Учиться')).toBeTruthy()
+    expect(queryByText('Учиться')).toBeNull()
     expect(getByText('Ещё')).toBeTruthy()
   })
 
@@ -132,15 +132,6 @@ describe('<CustomTabBar>', () => {
     const { getByText } = await renderTabBar(0)
 
     await fireEvent.press(getByText('Читать'))
-
-    expect(mockedShowInfo).toHaveBeenCalledWith(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
-    expect(mockNavigate).not.toHaveBeenCalled()
-  })
-
-  test('tapping study (disabled) tab shows info dialog and does not navigate', async () => {
-    const { getByText } = await renderTabBar(0)
-
-    await fireEvent.press(getByText('Учиться'))
 
     expect(mockedShowInfo).toHaveBeenCalledWith(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
     expect(mockNavigate).not.toHaveBeenCalled()

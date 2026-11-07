@@ -22,15 +22,12 @@ export const UNAVAILABLE_TAB_TITLE = 'Скоро будет доступно'
 export const UNAVAILABLE_TAB_MESSAGE = 'Этот раздел будет реализован в будущих обновлениях'
 
 export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
-  // Табы «Читать» и «Учиться» открываются по фича-флагу. Пока флаги не
-  // загружены, доступ закрыт (useFeatureFlag → false), то есть поведение
-  // сохраняется прежним.
+  // Таб «Читать» открывается по фича-флагу. Пока флаги не загружены, доступ
+  // закрыт (useFeatureFlag → false), то есть поведение сохраняется прежним.
   const isReadEnabled = useFeatureFlag('read')
-  const isStudyEnabled = useFeatureFlag('study')
 
   const isTabAvailable = (routeName: string) => {
     if (routeName === 'read') return isReadEnabled
-    if (routeName === 'study') return isStudyEnabled
 
     return true
   }

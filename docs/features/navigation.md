@@ -1,7 +1,7 @@
 # Навигация (Expo Router)
 
 **Стек:** `expo-router`, настройка — `app/`
-**Статус:** готов (табы «Читать»/«Учиться» заблокированы)
+**Статус:** готов (таб «Читать» заблокирован, «Учиться» скрыт из бара)
 
 ## Точка входа
 
@@ -56,9 +56,9 @@
 
 `app/(tabs)/_layout.tsx` — `Tabs` с кастомной панелью:
 
-- 4 таба: `listen` «Слушать», `read` «Читать», `study` «Учиться», `more` «Ещё» (`title` в `_layout.tsx`; в `CustomTabBar` ROUTES — «Учиться»).
+- 3 кнопки таба: `listen` «Слушать», `read` «Читать», `more` «Ещё» (`title` в `_layout.tsx`). Маршрут `study` остаётся в навигаторе (`app/(tabs)/study.tsx` → `StudyScreen`) для прямых ссылок, но `CustomTabBar` его не рендерит (`HIDDEN_TAB_ROUTE_NAMES`).
 - `tabBar` → `CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`) + `ExpandablePlayer` рендерится поверх на всех табах.
-- **ВАЖНО:** «Читать» и «Учиться» гейтятся фича-флагами `read`/`study` — при выключенном/незагруженном флаге `CustomTabBar` показывает глобальный информационный диалог через `showInfo` («Скоро будет доступно», `useTabPress` → `shared/model/info-dialog`) и не навигирует (`isDisabled={!isTabAvailable(route.name)}`). Реальные экраны табов (`app/(tabs)/read.tsx`, `study.tsx`) рендерят `ReadScreen`/`StudyScreen`; они дополнительно проверяют флаг через `useFeatureFlag` и при `false` рендерят `null` (см. [feature-flags.md](./feature-flags.md)).
+- **ВАЖНО:** таб «Читать» гейтится фича-флагом `read` — при выключенном/незагруженном флаге `CustomTabBar` показывает глобальный информационный диалог через `showInfo` («Скоро будет доступно», `useTabPress` → `shared/model/info-dialog`) и не навигирует (`isDisabled={!isTabAvailable(route.name)}`). `ReadScreen` дополнительно проверяет флаг через `useFeatureFlag` и при `false` рендерит `null`. Экран «Учиться» (`StudyScreen`) по-прежнему гейтится флагом `study` и рендерит `null` без доступа, но кнопки в баре у него больше нет (см. [feature-flags.md](./feature-flags.md)).
 
 ## Стек раздела «Слушать»
 

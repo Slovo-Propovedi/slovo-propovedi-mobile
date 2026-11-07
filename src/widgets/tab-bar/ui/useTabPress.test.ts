@@ -37,17 +37,6 @@ describe('useTabPress', () => {
     expect(navigateToTab).not.toHaveBeenCalled()
   })
 
-  test('shows info dialog for study tab and does not navigate', async () => {
-    const emitter = createEmitter()
-    const navigateToTab = createNavigateToTab()
-    const { result } = await renderHookWithProviders(() => useTabPress({ emitter, navigateToTab }))
-
-    result.current.handleTabPress({ key: 'study', name: 'study' }, false)
-
-    expect(mockedShowInfo).toHaveBeenCalledWith(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
-    expect(navigateToTab).not.toHaveBeenCalled()
-  })
-
   test('navigates to read tab when its feature flag is enabled', async () => {
     mockedUseFeatureFlag.mockImplementation(key => key === 'read')
     const emitter = createEmitter()
@@ -60,26 +49,13 @@ describe('useTabPress', () => {
     expect(navigateToTab).toHaveBeenCalledWith('read')
   })
 
-  test('navigates to study tab when its feature flag is enabled', async () => {
-    mockedUseFeatureFlag.mockImplementation(key => key === 'study')
-    const emitter = createEmitter()
-    const navigateToTab = createNavigateToTab()
-    const { result } = await renderHookWithProviders(() => useTabPress({ emitter, navigateToTab }))
-
-    result.current.handleTabPress({ key: 'study', name: 'study' }, false)
-
-    expect(mockedShowInfo).not.toHaveBeenCalled()
-    expect(navigateToTab).toHaveBeenCalledWith('study')
-  })
-
-  test('reports read/study availability from feature flags', async () => {
+  test('reports read availability from the feature flag', async () => {
     mockedUseFeatureFlag.mockImplementation(key => key === 'read')
     const emitter = createEmitter()
     const navigateToTab = createNavigateToTab()
     const { result } = await renderHookWithProviders(() => useTabPress({ emitter, navigateToTab }))
 
     expect(result.current.isTabAvailable('read')).toBe(true)
-    expect(result.current.isTabAvailable('study')).toBe(false)
     expect(result.current.isTabAvailable('listen')).toBe(true)
   })
 

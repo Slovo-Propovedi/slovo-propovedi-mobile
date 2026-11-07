@@ -140,7 +140,7 @@ TTF ~1.3 МБ) утекало как unhandled promise rejection, которое
 а здесь пользователю просто сообщают факт. Call sites:
 
 - `guardOfflinePlayback` (`src/entities/player/lib/playOfflineGuard.ts`) — офлайн-воспроизведение незакешированной проповеди;
-- `useTabPress` (`src/widgets/tab-bar/ui/useTabPress.ts`) — тап по заблокированному табу («Читать»/«Учиться»).
+- `useTabPress` (`src/widgets/tab-bar/ui/useTabPress.ts`) — тап по заблокированному табу («Читать»).
 
 ## Связанные документы
 
