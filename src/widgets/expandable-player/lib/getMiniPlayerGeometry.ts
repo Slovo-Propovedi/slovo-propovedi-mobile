@@ -28,7 +28,9 @@ interface MiniPlayerGeometryInput {
 /**
  * Resting geometry of the mini-player pill at a given bar-morph progress.
  *
- * Expanded (0): a detached full-width pill BAR_OUTER_GAP above the tab row.
+ * Expanded (0): a detached pill above the tab row, spanning the row's inner
+ * content edges (column width minus the side insets), so its left/right edges
+ * line up with the tab island and the search circle.
  * Collapsed (1): a narrower pill inside the row, right of the active-tab circle
  * and left of the search circle, bottom-aligned with the islands.
  *
@@ -48,18 +50,18 @@ export const getMiniPlayerGeometry = ({
 }: MiniPlayerGeometryInput): MiniPlayerGeometry => {
   'worklet'
   const progress = Math.min(Math.max(barProgress, 0), 1)
-  const sideInset = getColumnSideInset(screenWidth, BAR_SIDE_INSET, CONTENT_COLUMN_WIDTH)
   // The islands row is capped to the content column and padded by BAR_SIDE_INSET;
   // the collapsed pill must line up with the row's inner edges on every width.
   const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
+  const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
   // The row is BAR_ROW_MIN_HEIGHT tall plus the bottom safe-area padding; islands
   // are centered in that row, so their bottom sits (row - island) / 2 above the
   // row's bottom edge.
   const expandedBottom = tabBarHeight + BAR_OUTER_GAP
   const collapsedBottom = tabBarHeight - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
-  const expandedLeft = sideInset
+  const expandedLeft = rowLeft + BAR_SIDE_INSET
   const collapsedLeft = rowLeft + BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
-  const expandedWidth = screenWidth - sideInset * 2
+  const expandedWidth = rowContentWidth
   const collapsedWidth = screenWidth - collapsedLeft * 2
   const bottom = expandedBottom + (collapsedBottom - expandedBottom) * progress
   const left = expandedLeft + (collapsedLeft - expandedLeft) * progress

@@ -5,6 +5,7 @@ import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
 import {
   BAR_ROW_MIN_HEIGHT,
+  BAR_SIDE_INSET,
   isTabBarMeasuredAtom,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
@@ -130,6 +131,17 @@ describe('<CustomTabBar>', () => {
     // Literal 600 (not the constant) guards against regressing to the web-only cap,
     // which is `undefined` under the native jest environment.
     expect(styles.floatingIsland.maxWidth).toBe(600)
+  })
+
+  test('insets the islands row so its content shares the mini-pill extent', async () => {
+    await renderTabBar()
+
+    // The expanded mini pill is sized to this exact content box (column minus the
+    // side insets) so the tab island and search circle edges line up with it.
+    expect(styles.islandsRow).toMatchObject({
+      maxWidth: 600,
+      paddingHorizontal: BAR_SIDE_INSET,
+    })
   })
 
   test('renders the expanded island at the expanded height', async () => {

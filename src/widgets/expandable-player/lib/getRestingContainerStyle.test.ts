@@ -32,7 +32,8 @@ describe('getRestingContainerStyle', () => {
     })
   })
 
-  test('expanded bar: centers the pill in the content column on large screens', () => {
+  test('expanded bar: centers the pill on the islands row content in the column', () => {
+    const columnInset = (800 - CONTENT_COLUMN_WIDTH) / 2
     const style = getRestingContainerStyle({
       barCollapsed: false,
       expanded: false,
@@ -47,11 +48,30 @@ describe('getRestingContainerStyle', () => {
       borderTopLeftRadius: PILL_RADIUS,
       borderTopRightRadius: PILL_RADIUS,
       bottom: EXPANDED_BOTTOM,
-      left: (800 - CONTENT_COLUMN_WIDTH) / 2,
+      left: columnInset + BAR_SIDE_INSET,
       top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
-      width: CONTENT_COLUMN_WIDTH,
+      width: CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET * 2,
     })
   })
+
+  test.each([400, 800])(
+    'expanded bar: pill edges equal the islands row content at %ipx',
+    screenWidth => {
+      const rowLeft = Math.max(0, (screenWidth - CONTENT_COLUMN_WIDTH) / 2)
+      const rowContentLeft = rowLeft + BAR_SIDE_INSET
+      const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
+      const style = getRestingContainerStyle({
+        barCollapsed: false,
+        expanded: false,
+        fullScreenHeight: 800,
+        screenWidth,
+        tabBarHeight: 98,
+      })
+
+      expect(style.left).toBe(rowContentLeft)
+      expect(style.width).toBe(rowContentWidth)
+    },
+  )
 
   test('collapsed bar: sits in the row between the tab circle and the search circle', () => {
     const style = getRestingContainerStyle({ ...common, barCollapsed: true, expanded: false })
