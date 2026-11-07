@@ -112,7 +112,7 @@ export const ListenScreen = () => {
           </Animated.ScrollView>
         </PullToRefresh>
       )}
-      {isSearchOpen && <SearchIsland />}
+      <SearchIsland />
       {modal}
       {sermonPlaybackModal}
     </SafeAreaView>

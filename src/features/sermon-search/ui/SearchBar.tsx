@@ -1,10 +1,13 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Keyboard, Platform, TextInput, View } from 'react-native'
 import { useEscapeKey } from 'shared/lib/escape-key'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
 import { useTheme } from 'shared/ui/theme'
+import { useDistinctValuesOnOpen } from '../lib/useDistinctValuesOnOpen'
+import { useExternalInputRequest } from '../lib/useExternalInputRequest'
+import { useResetInputOnClose } from '../lib/useResetInputOnClose'
 import { useSearchAutofocus } from '../lib/useSearchAutofocus'
 import {
   closeSearch,
@@ -13,7 +16,6 @@ import {
   searchInputRequestAtom,
   searchQueryAtom,
 } from '../model'
-import { fetchDistinctValues } from '../model-distinctValues'
 import { styles } from './SearchBar.styles'
 import { SearchBarClearButton } from './SearchBarClearButton'
 import { SearchSuggestions } from './SearchSuggestions'
@@ -32,27 +34,25 @@ export const SearchBar = () => {
   const [isFocused, setIsFocused] = useState(false)
   const [hasSelectedSuggestion, setHasSelectedSuggestion] = useState(false)
   const [inputRequest] = useAtom(searchInputRequestAtom)
-  // Nonce of the last external request already mirrored, seeded from the current
-  // one so a stale request is not replayed when the bar mounts.
-  const handledRequestNonceRef = useRef(inputRequest?.nonce ?? 0)
-  const inputRef = useSearchAutofocus()
+  const inputRef = useSearchAutofocus(isSearchOpen)
   const closeSearchAction = useAction(closeSearch)
   const resetSearchResultsAction = useAction(resetSearchResults)
-  const fetchDistinctValuesAction = useAction(fetchDistinctValues)
+  useDistinctValuesOnOpen(isSearchOpen)
 
-  useEffect(() => void fetchDistinctValuesAction(), [fetchDistinctValuesAction])
-
-  // Mirror an external typing request (onboarding tour) into the visible input —
-  // the same path a manual keystroke takes; the action already set the query atom.
-  useEffect(() => {
-    if (inputRequest === null || inputRequest.nonce === handledRequestNonceRef.current) return
-
-    handledRequestNonceRef.current = inputRequest.nonce
-    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- external typing signal must land in the visible input
-    setInputValue(inputRequest.text)
-    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- a fresh query hides the suggestion list
+  // Closing clears the local field too: a reopen must start with an empty input
+  // even though the bar stays mounted for the island's exit animation.
+  useResetInputOnClose(isSearchOpen, () => {
+    setInputValue('')
     setHasSelectedSuggestion(false)
-  }, [inputRequest])
+  })
+
+  useExternalInputRequest({
+    inputRequest,
+    onApply: text => {
+      setInputValue(text)
+      setHasSelectedSuggestion(false)
+    },
+  })
 
   const handleChangeText = (text: string) => {
     setInputValue(text)

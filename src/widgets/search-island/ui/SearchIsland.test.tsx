@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
+import { isSearchOpenAtom } from 'features/sermon-search'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { isBarCollapsedAtom, TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
@@ -58,6 +59,7 @@ describe('<SearchIsland>', () => {
   test('renders the search field pill outside any scroll container', async () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
     const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchIsland />, {
       ctx,
     })
@@ -70,6 +72,19 @@ describe('<SearchIsland>', () => {
       borderRadius: TAB_BAR_ISLAND_HEIGHT / 2,
       position: 'absolute',
     })
+    expect(pill.props.pointerEvents).toBe('auto')
     expect(getByLabelText(CLEAR_LABEL)).toBeTruthy()
+  })
+
+  test('stays mounted but non-interactive while search is closed', async () => {
+    const ctx = createCtx()
+    isBarCollapsedAtom(ctx, true)
+    const { getByPlaceholderText } = await renderWithProviders(<SearchIsland />, { ctx })
+
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
+    const pill = findAncestorWithHeight(input, TAB_BAR_ISLAND_HEIGHT)
+
+    expect(pill.props.pointerEvents).toBe('none')
+    expect(StyleSheet.flatten(pill.props.style)).toMatchObject({ opacity: 0 })
   })
 })

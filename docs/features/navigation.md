@@ -39,10 +39,12 @@
 
 1. открыт оверлей «Подробнее» (`showDetailsAtom`) → закрыть;
 2. открыто меню плеера (`showMenuAtom`) → закрыть;
-3. открыта плейлист-шторка (`showPlaylistAtom`) → закрыть;
-4. развёрнут плеер (`isPlayerExpandedAtom`) → `closePlayerSheetAction`;
-5. есть история (`router.canGoBack()`) → `router.back()`;
-6. иначе — ничего (возврат `false`).
+3. открыты настройки звука (`showSoundSettingsAtom`) → закрыть;
+4. открыта плейлист-шторка (`showPlaylistAtom`) → закрыть;
+5. развёрнут плеер (`isPlayerExpandedAtom`) → `closePlayerSheetAction`;
+6. открыт поиск (`isSearchOpenAtom`) → `closeSearch` (поле поиска живёт только на «Слушать»);
+7. есть история (`router.canGoBack()`) → `router.back()`;
+8. иначе — ничего (возврат `false`).
 
 В `_RootLayout.tsx` также: подписка `subscribeToNetwork()` (модульный вызов), `checkForUpdateAction` через `setTimeout(0)` в `useEffect` (вместо `InteractionManager.runAfterInteractions`), персист позиции каждые 5с, `useUpdateNotificationResponse()`.
 
@@ -144,7 +146,7 @@
 
 Скролл-драйвер подключён к основным скроллам «Слушать» (`ListenScreen`, `Animated.ScrollView` секций) и списку результатов поиска (`SearchGroupedResults`), помимо истории, офлайна, результатов поиска и плейлистов. Пока открыт поиск или развёрнут плеер (`isPlayerExpandedAtom`), драйвер приостанавливается (`isSuspended`) и не перебивает состояние, которым владеет другой экран. Работает одинаково на нативе и web: `onScroll` читает `event.contentOffset.y`, который react-native-web поставляет так же.
 
-Пока поиск открыт, круглая кнопка поиска скрывается, а её место (середина+правый край строки) занимает поле поиска — виджет `src/widgets/search-island/` (`SearchIsland`, монтируется из `ListenScreen`). Низ строки превращается в единую полосу `[круг активного таба][поле поиска]`: пилюля абсолютно позиционирована по геометрии строки (`BAR_SIDE_INSET`, `BAR_CIRCLE_SIZE`, `BAR_OUTER_GAP`, `TAB_BAR_ISLAND_HEIGHT`, кап `CONTENT_COLUMN_WIDTH`, `getSearchIslandGeometry`) и выезжает из-за острова с той же длительностью `BAR_MORPH_DURATION_MS`, что и морф острова. Строка таб-бара и её контейнер помечены `pointerEvents='box-none'`, чтобы пустая область строки не перехватывала тапы по полю поиска.
+Пока поиск открыт, круглая кнопка поиска скрывается, а её место (середина+правый край строки) занимает поле поиска — виджет `src/widgets/search-island/` (`SearchIsland`, всегда смонтирован из `ListenScreen`). Низ строки превращается в единую полосу `[круг активного таба][поле поиска]`: пилюля абсолютно позиционирована по геометрии строки (`BAR_SIDE_INSET`, `BAR_CIRCLE_SIZE`, `BAR_OUTER_GAP`, `TAB_BAR_ISLAND_HEIGHT`, кап `CONTENT_COLUMN_WIDTH`, `getSearchIslandGeometry`) и выезжает из-за острова с той же длительностью `BAR_MORPH_DURATION_MS`, что и морф острова. Закрытие поиска проигрывает обратный морф (opacity/геометрия 1→0 за `BAR_MORPH_DURATION_MS`), поэтому пилюля не исчезает скачком; в закрытом состоянии она остаётся смонтированной, но с `pointerEvents='none'`, скрыта от скринридеров и не забирает фокус. Переход на другой таб и аппаратная кнопка «Назад» закрывают поиск. Строка таб-бара и её контейнер помечены `pointerEvents='box-none'`, чтобы пустая область строки не перехватывала тапы по полю поиска.
 
 Строка табов имеет фиксированную высоту `BAR_ROW_MIN_HEIGHT` плюс нижний отступ `Math.max(insets.bottom, 30)`, высота острова всегда `TAB_BAR_ISLAND_HEIGHT` — поэтому измеренная высота таб-бара не скачет между состояниями. На админских табах (`app/admin/(tabs)/_layout.tsx`) кнопка поиска скрыта пропом `hideSearch`.
 

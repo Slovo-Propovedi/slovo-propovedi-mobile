@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
-import { act } from '@testing-library/react-native'
+import { act, waitFor } from '@testing-library/react-native'
+import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
@@ -9,6 +10,11 @@ import { UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE, useTabPress } from './u
 jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
 
 jest.mock('entities/feature-flags', () => ({ useFeatureFlag: jest.fn() }))
+
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: jest.fn(),
+  setAudioModeAsync: jest.fn(),
+}))
 
 const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 const mockedUseFeatureFlag = useFeatureFlag as jest.MockedFunction<typeof useFeatureFlag>
@@ -108,5 +114,27 @@ describe('useTabPress', () => {
 
     expect(ctx.get(isBarCollapsedAtom)).toBe(false)
     expect(navigateToTab).not.toHaveBeenCalled()
+  })
+
+  test('closes an open search when navigating to another tab', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'more', name: 'more' }, false)
+    })
+
+    expect(navigateToTab).toHaveBeenCalledWith('more')
+    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+    expect(ctx.get(searchQueryAtom)).toBe('')
   })
 })

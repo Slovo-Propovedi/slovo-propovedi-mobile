@@ -28,7 +28,6 @@ const SEARCH_TARGET_ID = 'listen.search-toggle'
 const HIDDEN_TAB_ROUTE_NAMES = new Set(['study'])
 
 interface CustomTabBarProps extends TabBarProps {
-  hideFloatingPlayer?: boolean
   /** Admin tab layouts have no global search. */
   hideSearch?: boolean
 }
@@ -37,7 +36,6 @@ type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tab
 
 export const CustomTabBar = ({
   emitter,
-  hideFloatingPlayer: _,
   hideSearch = false,
   navigateToTab,
   state,

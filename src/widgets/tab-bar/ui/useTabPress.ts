@@ -1,5 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type Tabs } from 'expo-router'
+import { closeSearch, isSearchOpenAtom } from 'features/sermon-search'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { showInfo } from 'shared/model/info-dialog'
 import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
@@ -28,7 +29,9 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
   // закрыт (useFeatureFlag → false), то есть поведение сохраняется прежним.
   const isReadEnabled = useFeatureFlag('read')
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
+  const [isSearchOpen] = useAtom(isSearchOpenAtom)
   const applyBarCollapsed = useAction(setBarCollapsed)
+  const closeSearchAction = useAction(closeSearch)
 
   const isTabAvailable = (routeName: string) => {
     if (routeName === 'read') return isReadEnabled
@@ -55,7 +58,12 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
       type: 'tabPress',
     })
 
-    if (!isActive && !event.defaultPrevented) navigateToTab(route.key)
+    if (!isActive && !event.defaultPrevented) {
+      // The search field only exists on the listen screen: leaving the tab
+      // closes it instead of leaking the open state to the next screen.
+      if (isSearchOpen) void closeSearchAction()
+      navigateToTab(route.key)
+    }
   }
 
   return { handleTabPress, isTabAvailable }

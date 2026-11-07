@@ -139,8 +139,9 @@ describe('<SearchBar>', () => {
     expect(ctx.get(searchQueryAtom)).toBe('')
   })
 
-  test('focuses the input on mount so the keyboard appears', async () => {
+  test('focuses the input when search opens so the keyboard appears', async () => {
     const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
     const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
     focusMock.mockClear()
 
@@ -148,6 +149,17 @@ describe('<SearchBar>', () => {
     await flushAnimationFrame()
 
     expect(focusMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not steal focus while search is closed', async () => {
+    const ctx = createCtx()
+    const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
+    focusMock.mockClear()
+
+    await renderWithProviders(<SearchBar />, { ctx })
+    await flushAnimationFrame()
+
+    expect(focusMock).not.toHaveBeenCalled()
   })
 
   test('stretches across the header so the input fills the row', async () => {

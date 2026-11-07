@@ -20,10 +20,15 @@ const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 const mockOpenSearch = jest.fn()
 let mockIsSearchOpen = false
 
-jest.mock('features/sermon-search', () => ({
-  useIsSearchOpen: () => mockIsSearchOpen,
-  useOpenSearch: () => mockOpenSearch,
-}))
+jest.mock('features/sermon-search', () => {
+  const { action, atom } = jest.requireActual('@reatom/framework')
+  return {
+    closeSearch: action(() => {}, 'mockCloseSearch'),
+    isSearchOpenAtom: atom(false, 'mockIsSearchOpenAtom'),
+    useIsSearchOpen: () => mockIsSearchOpen,
+    useOpenSearch: () => mockOpenSearch,
+  }
+})
 
 const mockNavigate = jest.fn()
 
@@ -58,7 +63,6 @@ const renderTabBar = async (activeIndex = 0, { hideSearch }: { hideSearch?: bool
       descriptors={{}}
       emitter={emitter}
       hideSearch={hideSearch}
-      hideFloatingPlayer={false}
       navigateToTab={mockNavigate}
       insets={{ bottom: 0, left: 0, right: 0, top: 0 }}
     />,
