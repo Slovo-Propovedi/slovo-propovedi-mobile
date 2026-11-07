@@ -1,7 +1,12 @@
+import { useAction, useAtom } from '@reatom/npm-react'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { type LayoutChangeEvent } from 'react-native'
 import { type SharedValue, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
+import { isSearchOpenAtom } from 'features/sermon-search/@x/suspension'
+import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
+import { nextBarCollapsedState, setBarCollapsed } from 'shared/ui/layout'
 
 const ESTIMATED_HEADER_HEIGHT = 100
 // Estimated measured container height of the h1 title; only used until the first onTitleLayout measurement.
@@ -26,6 +31,14 @@ export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
   const titleAppearThreshold = useSharedValue(TITLE_TOP_GAP + ESTIMATED_TITLE_HEIGHT / 2)
   const headerHeight = useHeaderHeight() || ESTIMATED_HEADER_HEIGHT
   const [titleHeight, setTitleHeight] = useState(ESTIMATED_TITLE_HEIGHT)
+  // Bottom-bar collapse shares this scroll handler: one worklet for the header
+  // animation and the bar threshold crossing, never a second scroll handler.
+  const applyBarCollapsed = useAction(setBarCollapsed)
+  const [isSearchOpen] = useAtom(isSearchOpenAtom)
+  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
+  const isSuspended = isSearchOpen || isPlayerExpanded
+  const isSuspendedSv = useSharedValue(isSuspended)
+  const wasBarCollapsedSv = useSharedValue(false)
 
   const onTitleLayout = useCallback((event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout
@@ -46,9 +59,21 @@ export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
     darkenStart.value = Math.max(0, threshold - DARKEN_START_OFFSET)
   }, [titleHeight, titleAppearThreshold, darkenStart])
 
+  useEffect(() => {
+    isSuspendedSv.value = isSuspended
+  }, [isSuspended, isSuspendedSv])
+
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
       scrollY.value = event.contentOffset.y
+
+      if (isSuspendedSv.value) return
+
+      const nextCollapsed = nextBarCollapsedState(event.contentOffset.y, wasBarCollapsedSv.value)
+      if (nextCollapsed === null) return
+
+      wasBarCollapsedSv.value = nextCollapsed
+      scheduleOnRN(applyBarCollapsed, nextCollapsed)
     },
   })
 

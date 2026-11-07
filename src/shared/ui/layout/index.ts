@@ -10,6 +10,8 @@ export {
   EXPAND_TOP_THRESHOLD,
   TAB_BAR_ISLAND_HEIGHT,
 } from './bottomBarLayout'
+export { nextBarCollapsedState } from './lib/barCollapseScroll'
+export { useBarCollapseOnScroll } from './lib/useBarCollapseOnScroll'
 export {
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,

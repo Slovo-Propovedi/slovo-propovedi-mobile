@@ -26,6 +26,8 @@ jest.mock('react-native-reanimated', () => {
       // The hook's isExpanded starts as `true` via useState; collapse/expand
       // are tested directly via their exposed functions.
     },
+    useAnimatedScrollHandler: handler =>
+      typeof handler === 'function' ? handler : handler.onScroll,
     useAnimatedProps: fn => (typeof fn === 'function' ? fn() : {}),
     useAnimatedStyle: fn => (typeof fn === 'function' ? fn() : {}),
     useDerivedValue: fn => ({ value: typeof fn === 'function' ? fn() : undefined }),

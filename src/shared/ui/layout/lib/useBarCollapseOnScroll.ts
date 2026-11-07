@@ -2,8 +2,8 @@ import { useAction } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { COLLAPSE_SCROLL_THRESHOLD, EXPAND_TOP_THRESHOLD } from '../bottomBarLayout'
 import { setBarCollapsed } from '../model'
+import { nextBarCollapsedState } from './barCollapseScroll'
 
 // Drives the floating bottom bar's collapsed state from a scroll offset.
 //
@@ -23,17 +23,13 @@ export const useBarCollapseOnScroll = ({ isSuspended = false }: { isSuspended?: 
   const onScroll = useAnimatedScrollHandler(event => {
     if (isSuspendedSv.value) return
 
-    const offsetY = event.contentOffset.y
-    let shouldCollapse = wasCollapsedSv.value
-    if (offsetY > COLLAPSE_SCROLL_THRESHOLD) shouldCollapse = true
-    else if (offsetY <= EXPAND_TOP_THRESHOLD) shouldCollapse = false
-
     // Quantization: only a threshold crossing writes to the atom, so the
     // hysteresis band never re-schedules React work per scroll frame.
-    if (shouldCollapse === wasCollapsedSv.value) return
+    const nextCollapsed = nextBarCollapsedState(event.contentOffset.y, wasCollapsedSv.value)
+    if (nextCollapsed === null) return
 
-    wasCollapsedSv.value = shouldCollapse
-    scheduleOnRN(applyCollapsed, shouldCollapse)
+    wasCollapsedSv.value = nextCollapsed
+    scheduleOnRN(applyCollapsed, nextCollapsed)
   })
 
   return { onScroll }
