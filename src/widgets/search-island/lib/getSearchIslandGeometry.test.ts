@@ -1,4 +1,5 @@
 import {
+  BAR_BOTTOM_INSET_MIN,
   BAR_CIRCLE_SIZE,
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
@@ -8,7 +9,7 @@ import {
 } from 'shared/ui/layout'
 import { getSearchIslandGeometry } from './getSearchIslandGeometry'
 
-const TAB_BAR_HEIGHT = BAR_ROW_MIN_HEIGHT + 30
+const TAB_BAR_HEIGHT = BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN
 
 describe('getSearchIslandGeometry', () => {
   test('rests flush with the row inner edges once the bar is collapsed', () => {

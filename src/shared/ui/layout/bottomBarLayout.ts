@@ -16,8 +16,11 @@ export const BAR_EXPANDED_ISLAND_TOP_MARGIN =
 export const BAR_CIRCLE_SIZE = 64 as const
 export const BAR_CIRCLE_SIZE_EXPANDED = 76 as const
 export const BAR_OUTER_GAP = 12 as const
-// Matches the floating chrome inset (tab bar and resting mini player).
-export const BAR_SIDE_INSET = INDENTS.middle
+// Generous side margins of the floating chrome (tab bar and resting mini player).
+export const BAR_SIDE_INSET = INDENTS.medium
+// Small bottom clearance below the islands: gesture-nav/web/desktop sit low,
+// while a real system inset (3-button navigation) still lifts the row.
+export const BAR_BOTTOM_INSET_MIN = 12 as const
 // Scroll offset past which the bar collapses to a single row.
 export const COLLAPSE_SCROLL_THRESHOLD = 80 as const
 // Scroll offset at or above which the collapsed bar expands back.

@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingTarget } from 'features/onboarding'
 import { useIsSearchOpen, useOpenSearch } from 'features/sermon-search'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
-import { BAR_ROW_MIN_HEIGHT, setTabBarHeight } from 'shared/ui/layout'
+import { BAR_BOTTOM_INSET_MIN, BAR_ROW_MIN_HEIGHT, setTabBarHeight } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { CircleButton } from './CircleButton'
@@ -17,9 +17,8 @@ import { TabButton } from './TabButton'
 import { TabSlot } from './TabSlot'
 import { useTabPress } from './useTabPress'
 
-// Минимальный отступ снизу — зона жестов; на 3-кнопочной навигации берётся высота навбара
-// из safe-area insets (Issue #56)
-const MIN_TAB_BAR_BOTTOM_PADDING = 30
+// На 3-кнопочной навигации берётся высота навбара из safe-area insets (Issue #56);
+// без неё острова сидят низко с небольшим нижним зазором.
 const SEARCH_ICON_SIZE = 24
 const SEARCH_LABEL = 'Поиск'
 const SEARCH_TARGET_ID = 'listen.search-toggle'
@@ -56,7 +55,7 @@ export const CustomTabBar = ({
     rowWidth,
     windowWidth,
   })
-  const bottomPadding = Math.max(bottom, MIN_TAB_BAR_BOTTOM_PADDING)
+  const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
   const glass = createGlassStyles(isLight, RADIUSES.round)
 
   return (

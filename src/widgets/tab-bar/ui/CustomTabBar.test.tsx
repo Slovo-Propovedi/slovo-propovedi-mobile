@@ -5,8 +5,8 @@ import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
 import {
+  BAR_BOTTOM_INSET_MIN,
   BAR_ROW_MIN_HEIGHT,
-  BAR_SIDE_INSET,
   isTabBarMeasuredAtom,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
@@ -25,6 +25,17 @@ jest.mock('expo-blur', () => {
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn(() => jest.fn()) }),
 }))
+
+let mockBottomInset = 0
+
+jest.mock('react-native-safe-area-context', () => {
+  const actual = jest.requireActual('react-native-safe-area-context')
+
+  return {
+    ...actual,
+    useSafeAreaInsets: () => ({ bottom: mockBottomInset, left: 0, right: 0, top: 0 }),
+  }
+})
 
 jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
 const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
@@ -91,6 +102,7 @@ const renderTabBar = async (
 describe('<CustomTabBar>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockBottomInset = 0
     mockIsSearchOpen = false
   })
 
@@ -98,7 +110,15 @@ describe('<CustomTabBar>', () => {
     screen.root?.queryAll(
       instance =>
         typeof instance.props.onLayout === 'function' &&
-        StyleSheet.flatten(instance.props.style)?.height === BAR_ROW_MIN_HEIGHT + 30,
+        StyleSheet.flatten(instance.props.style)?.height ===
+          BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN,
+    )[0]
+
+  const findIslandsRowAtHeight = (rowHeight: number) =>
+    screen.root?.queryAll(
+      instance =>
+        typeof instance.props.onLayout === 'function' &&
+        StyleSheet.flatten(instance.props.style)?.height === rowHeight,
     )[0]
 
   const fireLayout = async (height: number, width: number) => {
@@ -149,10 +169,25 @@ describe('<CustomTabBar>', () => {
 
     // The expanded mini pill is sized to this exact content box (column minus the
     // side insets) so the tab island and search circle edges line up with it.
+    // Literal 16 (not the constant) guards the generous side margins.
     expect(styles.islandsRow).toMatchObject({
       maxWidth: 600,
-      paddingHorizontal: BAR_SIDE_INSET,
+      paddingHorizontal: 16,
     })
+  })
+
+  test('floors the bottom inset at 12 so the islands sit low without a system inset', async () => {
+    await renderTabBar()
+
+    // Literal 12 (not the constant) guards the small bottom gap.
+    expect(findIslandsRowAtHeight(BAR_ROW_MIN_HEIGHT + 12)).toBeDefined()
+  })
+
+  test('keeps the 3-button navigation inset above the bottom floor', async () => {
+    mockBottomInset = 48
+    await renderTabBar()
+
+    expect(findIslandsRowAtHeight(BAR_ROW_MIN_HEIGHT + 48)).toBeDefined()
   })
 
   test('renders the expanded island at the expanded height', async () => {
