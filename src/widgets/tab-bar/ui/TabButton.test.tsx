@@ -69,7 +69,7 @@ describe('<TabButton>', () => {
   test('expanded item grows taller to leave a gap between icon and label', async () => {
     await renderTabButton('listen', true, progressValue(0))
 
-    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 68 })
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 64 })
   })
 
   test('leaves the item height to the morph instead of a static fallback', () => {
@@ -130,15 +130,15 @@ describe('<TabButton>', () => {
   })
 
   test('active capsule overhangs its slot so the label is not flush with the edges', async () => {
-    // The reference capsule is wider than one tab slot (143dp over a 132dp
-    // pitch), so it bleeds into the inter-item gap instead of hugging the label.
+    // The reference capsule is wider than one tab slot, so it bleeds into the
+    // inter-item gap instead of hugging the label.
     await renderTabButton('listen', true, progressValue(0))
 
-    expect(findCapsule()).toHaveStyle({ left: -12, right: -12 })
+    expect(findCapsule()).toHaveStyle({ left: -10, right: -10 })
   })
 
-  test('tab items keep a 12dp gap between neighbours', () => {
-    expect(styles.tabItem).toMatchObject({ marginHorizontal: 6 })
+  test('tab items keep a 10dp gap between neighbours', () => {
+    expect(styles.tabItem).toMatchObject({ marginHorizontal: 5 })
   })
 
   test('keeps the pressable tab at the 48dp minimum touch target', () => {

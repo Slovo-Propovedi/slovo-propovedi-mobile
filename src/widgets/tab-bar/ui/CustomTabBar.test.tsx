@@ -150,7 +150,7 @@ describe('<CustomTabBar>', () => {
     const content = screen.root?.queryAll(instance => {
       const flat = StyleSheet.flatten(instance.props.style)
 
-      return flat?.flexDirection === 'row' && flat?.paddingHorizontal === 16
+      return flat?.flexDirection === 'row' && flat?.paddingHorizontal === 12
     })[0]
 
     expect(content).toBeTruthy()

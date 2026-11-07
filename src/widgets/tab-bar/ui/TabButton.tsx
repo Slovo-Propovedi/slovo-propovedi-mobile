@@ -6,7 +6,12 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useTheme, withAlpha } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
-import { getCapsuleOpacity, getTabIconOffset, getTabItemHeight } from '../lib/getIslandStyle'
+import {
+  getCapsuleOpacity,
+  getTabIconOffset,
+  getTabItemHeight,
+  getTabItemVerticalMargin,
+} from '../lib/getIslandStyle'
 import { styles } from './styles'
 import { TabIcon } from './TabIcon'
 import { getTabLabel } from './tabLabels'
@@ -36,6 +41,7 @@ export const TabButton = ({
   const labelStyle = useAnimatedStyle(() => ({ opacity: 1 - labelProgress.value }))
   const itemStyle = useAnimatedStyle(() => ({
     height: getTabItemHeight(labelProgress.value),
+    marginVertical: getTabItemVerticalMargin(labelProgress.value),
   }))
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: getTabIconOffset(labelProgress.value) }],

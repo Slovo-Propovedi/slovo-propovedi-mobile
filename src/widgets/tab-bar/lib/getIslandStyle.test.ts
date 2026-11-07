@@ -5,6 +5,8 @@ import {
   getIslandStyle,
   getTabIconOffset,
   getTabItemHeight,
+  getTabItemHorizontalMargin,
+  getTabItemVerticalMargin,
   getTabSlotStyle,
 } from './getIslandStyle'
 
@@ -78,7 +80,7 @@ describe('getTabSlotStyle', () => {
 
 describe('getIslandContentPadding', () => {
   test('expanded island insets its slots from the rounded edges', () => {
-    expect(getIslandContentPadding(0)).toBe(16)
+    expect(getIslandContentPadding(0)).toBe(12)
   })
 
   test('collapsed circle drops the inset so the active slot fills the circle', () => {
@@ -88,8 +90,8 @@ describe('getIslandContentPadding', () => {
   })
 
   test('inset fades with the morph and clamps out-of-range progress', () => {
-    expect(getIslandContentPadding(0.5)).toBe(8)
-    expect(getIslandContentPadding(-1)).toBe(16)
+    expect(getIslandContentPadding(0.5)).toBe(6)
+    expect(getIslandContentPadding(-1)).toBe(12)
     expect(getIslandContentPadding(2)).toBe(0)
   })
 })
@@ -115,7 +117,7 @@ describe('getTabIconOffset', () => {
 
 describe('getTabItemHeight', () => {
   test('expanded item grows with the island so the label keeps a gap below the icon', () => {
-    expect(getTabItemHeight(0)).toBe(68)
+    expect(getTabItemHeight(0)).toBe(64)
   })
 
   test('collapsed item stays the circle item height', () => {
@@ -123,9 +125,43 @@ describe('getTabItemHeight', () => {
   })
 
   test('height interpolates with the morph and clamps out-of-range progress', () => {
-    expect(getTabItemHeight(0.5)).toBe(62)
-    expect(getTabItemHeight(-1)).toBe(68)
+    expect(getTabItemHeight(0.5)).toBe(60)
+    expect(getTabItemHeight(-1)).toBe(64)
     expect(getTabItemHeight(2)).toBe(56)
+  })
+})
+
+describe('getTabItemVerticalMargin', () => {
+  test('expanded item keeps more breathing room around the capsule', () => {
+    expect(getTabItemVerticalMargin(0)).toBe(6)
+  })
+
+  test('collapsed item keeps its original 4dp margin', () => {
+    expect(getTabItemVerticalMargin(1)).toBe(4)
+  })
+
+  test('margin eases with the morph and clamps out-of-range progress', () => {
+    expect(getTabItemVerticalMargin(0.5)).toBe(5)
+    expect(getTabItemVerticalMargin(-1)).toBe(6)
+    expect(getTabItemVerticalMargin(2)).toBe(4)
+  })
+})
+
+describe('getTabItemHorizontalMargin', () => {
+  test('expanded items split the 10dp gap between neighbours', () => {
+    expect(getTabItemHorizontalMargin(0)).toBe(5)
+  })
+
+  test('collapsed active item drops the gap so its icon centres in the circle', () => {
+    // The island padding is 0 at progress 1, so any leftover margin would
+    // offset the item inside the 64dp circle.
+    expect(getTabItemHorizontalMargin(1)).toBe(0)
+  })
+
+  test('margin eases with the morph and clamps out-of-range progress', () => {
+    expect(getTabItemHorizontalMargin(0.5)).toBe(2.5)
+    expect(getTabItemHorizontalMargin(-1)).toBe(5)
+    expect(getTabItemHorizontalMargin(2)).toBe(0)
   })
 })
 

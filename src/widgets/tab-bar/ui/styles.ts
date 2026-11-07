@@ -1,10 +1,6 @@
 import { BAR_SIDE_INSET, CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
 import { MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
-import {
-  CAPSULE_HORIZONTAL_OVERHANG,
-  TAB_ITEM_GAP,
-  TAB_ITEM_VERTICAL_MARGIN,
-} from '../lib/getIslandStyle'
+import { CAPSULE_HORIZONTAL_OVERHANG, TAB_ITEM_GAP } from '../lib/getIslandStyle'
 
 export const ISLAND_BACKGROUND_LIGHT = 'rgba(230, 230, 230, 0.9)'
 export const ISLAND_BACKGROUND_DARK = 'rgba(0, 0, 0, 0.85)'
@@ -92,7 +88,6 @@ export const styles = {
     // to its content, squeezing the icon and label.
     justifyContent: 'center' as const,
     marginHorizontal: TAB_ITEM_GAP / 2,
-    marginVertical: TAB_ITEM_VERTICAL_MARGIN,
     paddingVertical: 4,
   },
   // Absolute so the label never takes part in the slot's layout: the icon is

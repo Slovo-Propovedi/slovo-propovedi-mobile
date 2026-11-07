@@ -23,20 +23,18 @@ interface TabSlotLayout {
 // above the slot centre. Collapsed, the label leaves the layout entirely and the
 // icon must land exactly in the circle centre.
 const TAB_ICON_EXPANDED_OFFSET = -8
-// Space the island keeps between its edge and every tab item; the item grows
-// with the island so the label keeps the same bottom inset in both states.
+// Space the collapsed island keeps between its edge and the tab item. The
+// expanded bar uses a slightly larger margin (getTabItemVerticalMargin) so the
+// capsule has the same breathing room vertically as horizontally.
 export const TAB_ITEM_VERTICAL_MARGIN = 4
-// Horizontal inset between the island's rounded edge and the tab row. The
-// reference frames inset the first slot by 12dp at the 76dp island height; the
-// extra 4dp compensates for the narrower phone slots so the first/last labels
-// still clear the rounded edge once the 12dp inter-item gap is carved out.
-export const ISLAND_CONTENT_PADDING_HORIZONTAL = 16
+const TAB_ITEM_VERTICAL_MARGIN_EXPANDED = 6
+// Horizontal inset between the island's rounded edge and the tab row.
+export const ISLAND_CONTENT_PADDING_HORIZONTAL = 12
 // Gap between neighbouring tabs, split into equal margins on both items.
-export const TAB_ITEM_GAP = 12
-// The active capsule is wider than its slot (the reference capsule is 143dp
-// over a 132dp pitch), so it bleeds into the gap instead of hugging the label.
-// On a phone-width slot this leaves the ~14-18dp label padding of the frames.
-export const CAPSULE_HORIZONTAL_OVERHANG = 12
+export const TAB_ITEM_GAP = 10
+// The active capsule is wider than its slot (the reference capsule is wider
+// than one tab pitch), so it bleeds into the gap instead of hugging the label.
+export const CAPSULE_HORIZONTAL_OVERHANG = 10
 
 const clampProgress = (progress: number) => Math.min(Math.max(progress, 0), 1)
 
@@ -80,6 +78,19 @@ export const getTabSlotStyle = (progress: number, layout: TabSlotLayout) => {
 export const getIslandContentPadding = (progress: number) =>
   ISLAND_CONTENT_PADDING_HORIZONTAL * (1 - clampProgress(progress))
 
+// Half of the inter-tab gap on each side of an item. It fades out with the morph
+// so the collapsed active item fills the circle instead of being pushed
+// off-centre by a leftover expanded-state margin.
+export const getTabItemHorizontalMargin = (progress: number) =>
+  (TAB_ITEM_GAP / 2) * (1 - clampProgress(progress))
+
+// Vertical margin around a tab item: the expanded bar gives the capsule more
+// breathing room, while the collapsed circle keeps the compact 4dp margin so
+// the item height stays 56 and the icon stays centred.
+export const getTabItemVerticalMargin = (progress: number) =>
+  TAB_ITEM_VERTICAL_MARGIN +
+  (TAB_ITEM_VERTICAL_MARGIN_EXPANDED - TAB_ITEM_VERTICAL_MARGIN) * (1 - clampProgress(progress))
+
 // Vertical shift of the icon during the morph: lifted in the expanded bar to
 // leave room for the label, exactly centred (0) inside the collapsed circle.
 export const getTabIconOffset = (progress: number) => {
@@ -92,8 +103,11 @@ export const getTabIconOffset = (progress: number) => {
 
 // The item fills the island minus its vertical margins, so the taller expanded
 // island gives the icon and label a clean vertical gap.
-export const getTabItemHeight = (progress: number) =>
-  getIslandHeight(clampProgress(progress)) - TAB_ITEM_VERTICAL_MARGIN * 2
+export const getTabItemHeight = (progress: number) => {
+  const clamped = clampProgress(progress)
+
+  return getIslandHeight(clamped) - getTabItemVerticalMargin(clamped) * 2
+}
 
 // The primary capsule belongs to the expanded bar only: the collapsed circle
 // shows just the active icon, without the pill highlight behind it.
