@@ -1,6 +1,5 @@
 import { StyleSheet, View } from 'react-native'
 import { HelpHeaderButton, OnboardingTarget } from 'features/onboarding'
-import { SearchToggleButton } from 'features/sermon-search'
 import { useHasFinePointer } from 'shared/lib/hooks/useHasFinePointer'
 import { RefreshButton } from 'shared/ui'
 import { INDENTS } from 'shared/ui/theme'
@@ -13,7 +12,6 @@ export const ListenTopRow = ({ showAdminButton }: { showAdminButton: boolean }) 
 
   return (
     <View style={styles.topRow}>
-      <SearchToggleButton />
       <View style={styles.topRowRight}>
         {hasFinePointer && (
           <OnboardingTarget id='listen.refresh-button'>

@@ -1,25 +1,24 @@
 import { StyleSheet } from 'react-native'
 import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
-import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
 
 export const styles = StyleSheet.create({
   clearButton: {
     alignItems: 'center',
-    // The container is shorter than the 48pt touch target; centering keeps the
-    // icon on the input's vertical axis instead of pushing it down.
     alignSelf: 'center',
     justifyContent: 'center',
-    paddingHorizontal: INDENTS.medium,
+    paddingHorizontal: INDENTS.low,
   },
   clearIcon: {
     fontSize: FONT_SIZES.lg,
   },
+  // Fills the bottom-bar pill; the widget owns background, height and radius.
   container: {
-    borderRadius: RADIUSES.middle,
+    alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    height: SEARCH_HEADER_HEIGHT - 2 * INDENTS.low,
-    marginHorizontal: INDENTS.medium,
+    height: '100%',
+    paddingLeft: INDENTS.medium,
+    paddingRight: INDENTS.low,
   },
   input: {
     borderRadius: RADIUSES.middle,
@@ -27,8 +26,12 @@ export const styles = StyleSheet.create({
     flex: 1,
     fontSize: FONT_SIZES.md,
     lineHeight: FONT_SIZES.md + INDENTS.lowest,
-    paddingHorizontal: INDENTS.medium,
+    marginLeft: INDENTS.low,
+    paddingHorizontal: INDENTS.low,
     paddingVertical: 0,
     textAlignVertical: 'center',
+  },
+  searchIcon: {
+    marginRight: INDENTS.lowest,
   },
 })

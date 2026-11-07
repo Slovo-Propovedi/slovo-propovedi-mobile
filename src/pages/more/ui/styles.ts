@@ -1,10 +1,10 @@
 import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET } from 'shared/ui/theme'
 
-// Listen's top row (SearchToggleButton: 24pt icon + INDENTS.medium padding) is
-// effectively 56pt tall and centers its content at ≈28pt below the top inset.
-// Padding this header by half the difference puts title and shield on that line.
-const LISTEN_TOP_ROW_HEIGHT = 56
+// Listen's top row (icon buttons with a 48pt minimum touch target) is 48pt
+// tall and centers its content at ≈24pt below the top inset. Padding this
+// header by half the difference puts title and shield on that line.
+const LISTEN_TOP_ROW_HEIGHT = MIN_TOUCH_TARGET
 const HEADER_TOP_OFFSET = (LISTEN_TOP_ROW_HEIGHT - MIN_TOUCH_TARGET) / 2
 
 export const styles = StyleSheet.create({

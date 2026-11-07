@@ -1,8 +1,10 @@
 import { act, fireEvent } from '@testing-library/react-native'
+import { isSearchOpenAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { isTabBarMeasuredAtom } from 'shared/ui/layout'
+import { isBarCollapsedAtom, isTabBarMeasuredAtom } from 'shared/ui/layout'
+import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { ExpandablePlayer } from './ExpandablePlayer'
 
 jest.mock('expo-router', () => ({
@@ -49,7 +51,7 @@ jest.mock('../../model/useContainerGeometryGuard', () => ({
 }))
 
 jest.mock('../../model/useExpandAnimation', () => ({
-  useExpandAnimation: () => ({
+  useExpandAnimation: jest.fn(() => ({
     backdropStyle: {},
     backgroundImageStyle: {},
     collapsedRestingContainerStyle: { top: 0 },
@@ -64,8 +66,12 @@ jest.mock('../../model/useExpandAnimation', () => ({
     restingContainerStyle: {},
     screenHeight: 800,
     screenWidth: 400,
-  }),
+  })),
 }))
+
+const mockedUseExpandAnimation = useExpandAnimation as jest.MockedFunction<
+  typeof useExpandAnimation
+>
 
 jest.mock('./useExpandablePlayerGesture', () => ({
   useExpandablePlayerGesture: () => ({
@@ -119,5 +125,14 @@ describe('<ExpandablePlayer>', () => {
     })
 
     expect(mockTogglePlay).toHaveBeenCalledTimes(1)
+  })
+
+  test('rests the mini player above the row while search is open, even if the bar was collapsed', async () => {
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    await renderWithProviders(<ExpandablePlayer />, { ctx })
+
+    // Third argument is the bar-collapse state the mini pill geometry follows.
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 0, false)
   })
 })

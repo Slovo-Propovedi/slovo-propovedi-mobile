@@ -2,6 +2,7 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import { ScrollView } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SearchIsland } from 'widgets/search-island'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useTourActionRegistrar, useTourScrollable } from 'features/onboarding'
 import {
@@ -21,7 +22,6 @@ import { usePullToRefresh } from '../lib/usePullToRefresh'
 import { useSearchTourActions } from '../lib/useSearchTourActions'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 import { styles } from './ListenScreen.styles'
-import { ListenSearchHeader } from './ListenSearchHeader'
 import { ListenTopRow } from './ListenTopRow'
 import { MyPlaylistsSlider } from './MyPlaylistsSlider'
 import {
@@ -75,7 +75,6 @@ export const ListenScreen = () => {
         { backgroundColor: currentTheme.background, paddingTop: insets.top },
       ]}
     >
-      {isSearchOpen && <ListenSearchHeader />}
       {isSearchOpen && isSearchActive ? (
         <SearchGroupedResults
           onShowAllGroup={onShowAllGroup}
@@ -109,6 +108,7 @@ export const ListenScreen = () => {
           </ScrollView>
         </PullToRefresh>
       )}
+      {isSearchOpen && <SearchIsland />}
       {modal}
       {sermonPlaybackModal}
     </SafeAreaView>

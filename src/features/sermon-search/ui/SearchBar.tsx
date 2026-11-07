@@ -1,10 +1,10 @@
+import { Ionicons } from '@expo/vector-icons'
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { useEffect, useRef, useState } from 'react'
-import { Keyboard, Platform, Text, TextInput, View } from 'react-native'
+import { Keyboard, Platform, TextInput, View } from 'react-native'
 import { useEscapeKey } from 'shared/lib/escape-key'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
-import { IconButton } from 'shared/ui/icon-button'
-import { INDENTS, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { useSearchAutofocus } from '../lib/useSearchAutofocus'
 import {
   closeSearch,
@@ -15,11 +15,11 @@ import {
 } from '../model'
 import { fetchDistinctValues } from '../model-distinctValues'
 import { styles } from './SearchBar.styles'
+import { SearchBarClearButton } from './SearchBarClearButton'
 import { SearchSuggestions } from './SearchSuggestions'
 
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
-const CLEAR_LABEL = 'Очистить поиск'
-const CLEAR_SYMBOL = '✕'
+const SEARCH_ICON_SIZE = 20
 
 export const SearchBar = () => {
   const { currentTheme } = useTheme()
@@ -87,7 +87,13 @@ export const SearchBar = () => {
   })
 
   return (
-    <View style={[styles.container, { backgroundColor: currentTheme.surface }]}>
+    <View style={styles.container}>
+      <Ionicons
+        name='search'
+        size={SEARCH_ICON_SIZE}
+        style={styles.searchIcon}
+        color={currentTheme.textMuted}
+      />
       <TextInput
         ref={inputRef}
         value={inputValue}
@@ -109,15 +115,7 @@ export const SearchBar = () => {
           },
         ]}
       />
-      <IconButton
-        hitSlop={INDENTS.low}
-        onPress={handleClear}
-        style={styles.clearButton}
-        accessibilityLabel={CLEAR_LABEL}
-        Icon={
-          <Text style={[styles.clearIcon, { color: currentTheme.textMuted }]}>{CLEAR_SYMBOL}</Text>
-        }
-      />
+      <SearchBarClearButton onPress={handleClear} />
       {!hasSelectedSuggestion && (
         <SearchSuggestions
           query={inputValue}

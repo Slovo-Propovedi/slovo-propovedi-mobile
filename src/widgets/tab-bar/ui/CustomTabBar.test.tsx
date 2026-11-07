@@ -113,6 +113,13 @@ describe('<CustomTabBar>', () => {
     expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
   })
 
+  test('hides the search button while the search field is open', async () => {
+    mockIsSearchOpen = true
+    const { queryByRole } = await renderTabBar()
+
+    expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
+  })
+
   test('pressing the search button opens search', async () => {
     const { getByRole } = await renderTabBar()
 

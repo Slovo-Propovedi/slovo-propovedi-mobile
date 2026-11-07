@@ -2,7 +2,6 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { StyleSheet, TextInput } from 'react-native'
 import { type TestInstance } from 'test-renderer'
-import { SEARCH_HEADER_HEIGHT } from 'features/sermon-search'
 import {
   isSearchingAtom,
   isSearchOpenAtom,
@@ -13,6 +12,7 @@ import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { type SermonData } from 'entities/sermon'
 import { authMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
+import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
 import { ListenScreen } from './ListenScreen'
 
 const mockPush = jest.fn()
@@ -113,7 +113,6 @@ jest.mock('./DynamicSectionsSlider', () => {
   }
 })
 
-const SEARCH_TOGGLE_LABEL = 'Поиск'
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
 const CLEAR_LABEL = 'Очистить поиск'
 const SERMON_TITLE = 'Проповедь о вере'
@@ -195,14 +194,10 @@ describe('<ListenScreen>', () => {
     mockedRestoreSession.mockResolvedValue(null)
   })
 
-  test('shows sections and the magnifier inside the scroll content by default, without the search bar', async () => {
-    const { getByLabelText, getByText, queryByPlaceholderText } = await renderWithProviders(
-      <ListenScreen />,
-      {},
-    )
+  test('shows sections by default, without the search field', async () => {
+    const { getByText, queryByPlaceholderText } = await renderWithProviders(<ListenScreen />, {})
 
     expect(getByText(SECTIONS_MOCK)).toBeTruthy()
-    expect(hasScrollAncestor(getByLabelText(SEARCH_TOGGLE_LABEL))).toBe(true)
     expect(queryByPlaceholderText(SEARCH_PLACEHOLDER)).toBeNull()
   })
 
@@ -245,21 +240,17 @@ describe('<ListenScreen>', () => {
     expect(mockFetchAllSections).toHaveBeenCalledTimes(1)
   })
 
-  test('opens search via the magnifier, pinning the bar above the scroll content', async () => {
-    const { ctx, getByLabelText, getByPlaceholderText, getByText, queryByLabelText } =
-      await renderWithProviders(<ListenScreen />, {})
+  test('shows the search field island outside the scroll content while search is open', async () => {
+    const { ctx, getByPlaceholderText, getByText } = await renderWithOpenSearch()
 
-    fireEvent.press(getByLabelText(SEARCH_TOGGLE_LABEL))
-
-    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(true))
-    const bar = getByPlaceholderText(SEARCH_PLACEHOLDER)
-    expect(hasScrollAncestor(bar)).toBe(false)
-    expect(findAncestorWithHeight(bar, SEARCH_HEADER_HEIGHT)).toBeTruthy()
-    expect(queryByLabelText(SEARCH_TOGGLE_LABEL)).toBeNull()
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    const field = getByPlaceholderText(SEARCH_PLACEHOLDER)
+    expect(hasScrollAncestor(field)).toBe(false)
+    expect(findAncestorWithHeight(field, TAB_BAR_ISLAND_HEIGHT)).toBeTruthy()
     expect(getByText(SECTIONS_MOCK)).toBeTruthy()
   })
 
-  test('hides sections and shows search results while the query is active, with the bar still pinned', async () => {
+  test('hides sections and shows search results while the query is active, with the field still in the island', async () => {
     const ctx = createCtx()
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, 'вера')
@@ -270,7 +261,9 @@ describe('<ListenScreen>', () => {
       { ctx },
     )
 
-    expect(hasScrollAncestor(getByPlaceholderText(SEARCH_PLACEHOLDER))).toBe(false)
+    const field = getByPlaceholderText(SEARCH_PLACEHOLDER)
+    expect(hasScrollAncestor(field)).toBe(false)
+    expect(findAncestorWithHeight(field, TAB_BAR_ISLAND_HEIGHT)).toBeTruthy()
     expect(queryByText(SECTIONS_MOCK)).toBeNull()
     expect(getAllByText(SERMON_TITLE)[0]).toBeTruthy()
   })
@@ -295,14 +288,13 @@ describe('<ListenScreen>', () => {
     expect(queryByText(SERMON_TITLE)).toBeNull()
   })
 
-  test('closes the search via ✕ when the field is empty and returns the magnifier', async () => {
+  test('closes the search via ✕ when the field is empty and unmounts the island', async () => {
     const { ctx, getByLabelText, queryByPlaceholderText } = await renderWithOpenSearch()
 
     fireEvent.press(getByLabelText(CLEAR_LABEL))
 
     await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
     expect(queryByPlaceholderText(SEARCH_PLACEHOLDER)).toBeNull()
-    expect(getByLabelText(SEARCH_TOGGLE_LABEL)).toBeTruthy()
   })
 
   test('keeps the search bar mounted across the sections ↔ results transition', async () => {

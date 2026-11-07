@@ -7,7 +7,7 @@ import { useWindowDimensions, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingTarget } from 'features/onboarding'
-import { useOpenSearch } from 'features/sermon-search'
+import { useIsSearchOpen, useOpenSearch } from 'features/sermon-search'
 import { BAR_ROW_MIN_HEIGHT, setTabBarHeight } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
@@ -44,6 +44,7 @@ export const CustomTabBar = ({
   const { currentTheme, isLight } = useTheme()
   const { handleTabPress, isTabAvailable } = useTabPress({ emitter, navigateToTab })
   const openSearch = useOpenSearch()
+  const isSearchOpen = useIsSearchOpen()
   const { width: windowWidth } = useWindowDimensions()
   const [rowWidth, setRowWidth] = useState(0)
   const { expandedTabWidth, islandStyle, progress } = useTabIslandMorph({
@@ -55,8 +56,9 @@ export const CustomTabBar = ({
   const bottomPadding = Math.max(bottom, MIN_TAB_BAR_BOTTOM_PADDING)
 
   return (
-    <View style={styles.floatingContainer}>
+    <View pointerEvents='box-none' style={styles.floatingContainer}>
       <View
+        pointerEvents='box-none'
         style={[
           styles.islandsRow,
           { height: BAR_ROW_MIN_HEIGHT + bottomPadding, paddingBottom: bottomPadding },
@@ -102,7 +104,7 @@ export const CustomTabBar = ({
             })}
           </View>
         </Animated.View>
-        {!hideSearch && (
+        {!hideSearch && !isSearchOpen && (
           <OnboardingTarget id={SEARCH_TARGET_ID}>
             <CircleButton onPress={openSearch} accessibilityLabel={SEARCH_LABEL}>
               <Ionicons name='search' size={SEARCH_ICON_SIZE} color={currentTheme.text} />
