@@ -162,6 +162,19 @@ describe('<MiniPlayer>', () => {
     ).toHaveLength(1)
   })
 
+  test('does not paint a solid background over the pill glass', async () => {
+    // The pill itself must stay background-free; any opaque fill here (or in the
+    // layers below it) hides the BlurView backdrop and the pill reads as solid.
+    await renderMiniPlayer()
+
+    const pill = screen.root?.queryAll(
+      instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
+    )?.[0]
+
+    expect(pill).toBeTruthy()
+    expect(StyleSheet.flatten(pill?.props.style)?.backgroundColor).toBeUndefined()
+  })
+
   test('uses the dark glass recipe in the dark theme', async () => {
     await renderMiniPlayer({
       currentTheme: DarkTheme,

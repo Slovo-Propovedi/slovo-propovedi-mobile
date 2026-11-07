@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { Dimensions, useWindowDimensions } from 'react-native'
 import { type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
+import { getContainerOpacity } from '../lib/getContainerOpacity'
 import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 import { useAppStateSnap } from './useAppStateSnap'
@@ -76,7 +77,11 @@ export const useExpandAnimation = (
       tabBarHeight: tabBarHeightShared.value,
     })
 
-    return { ...style, top: style.top + reapply }
+    // At rest the container is invisible: its solid `surface` would sit exactly
+    // under the translucent mini pill and make the glass read as opaque (the
+    // pill's BlurView would only see a solid rectangle). Any animation frame
+    // keeps it visible for the morph.
+    return { ...style, opacity: getContainerOpacity(progress.value), top: style.top + reapply }
   })
   const miniBarStyle = useAnimatedStyle(() =>
     getMiniBarStyle({

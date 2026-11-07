@@ -228,6 +228,7 @@ describe('useExpandAnimation first committed frame', () => {
     const containerStyle = result.containerStyle as unknown as {
       bottom: number
       left: number
+      opacity: number
       top: number
       width: number
     }
@@ -238,7 +239,45 @@ describe('useExpandAnimation first committed frame', () => {
       left: BAR_SIDE_INSET,
       width: 400 - BAR_SIDE_INSET * 2,
     })
+    // Regression: the collapsed container is a solid `surface` rectangle sitting
+    // exactly under the translucent mini pill, so the pill's BlurView only saw a
+    // solid layer and the "glass" looked opaque. At rest the container must be
+    // fully transparent; the mini player is the only paint over the page.
+    expect(containerStyle.opacity).toBe(0)
     expect(containerStyle.top).toBeCloseTo(restingTop, 1)
+  })
+})
+
+describe('useExpandAnimation container visibility', () => {
+  const renderContainerOpacity = async (expanded: boolean) => {
+    const captured: { current: null | ReturnType<typeof useExpandAnimation> } = { current: null }
+
+    const Harness = ({
+      onResult,
+    }: {
+      onResult: (result: ReturnType<typeof useExpandAnimation>) => void
+    }) => {
+      const result = useExpandAnimation(expanded, TAB_BAR_HEIGHT, false)
+      onResult(result)
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    await renderWithProviders(
+      <Harness
+        onResult={result => {
+          captured.current = result
+        }}
+      />,
+    )
+
+    const result = captured.current
+    if (!result) throw new Error('useExpandAnimation did not render')
+
+    return (result.containerStyle as unknown as { opacity: number }).opacity
+  }
+
+  test('keeps the collapsed container transparent so the pill glass shows the page', async () => {
+    expect(await renderContainerOpacity(false)).toBe(0)
   })
 })
 
