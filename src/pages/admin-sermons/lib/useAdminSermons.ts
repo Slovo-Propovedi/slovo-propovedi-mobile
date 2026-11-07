@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { type APITypes } from 'shared/api'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { usePaginatedList } from 'shared/lib/hooks/usePaginatedList'
 import { fetchSermonsPage, SERMONS_PAGE_SIZE } from './fetchSermonsPage'
+import { sermonsPageCache } from './sermonsPageCache'
 
 export interface AdminSermonsState {
   hasMore: boolean
@@ -47,6 +48,11 @@ export const useAdminSermons = (): AdminSermonsState => {
     [order, query, sort],
   )
 
+  const cache = useMemo(
+    () => ({ key: `${query.trim()}|${sort}|${order}`, store: sermonsPageCache }),
+    [order, query, sort],
+  )
+
   const {
     hasMore,
     isError,
@@ -58,6 +64,7 @@ export const useAdminSermons = (): AdminSermonsState => {
     loadMoreFailed,
     refresh,
   } = usePaginatedList({
+    cache,
     errorMessage: LOAD_ERROR_MESSAGE,
     fetchPage,
     pageSize: SERMONS_PAGE_SIZE,

@@ -1,0 +1,130 @@
+import { useCtx } from '@reatom/npm-react'
+import { useCallback, useState } from 'react'
+import { usePlayNewSermon } from 'entities/player'
+import { myPlaylistsAtom, type PlaylistData } from 'entities/playlist'
+import { type AudioPlayerData } from 'entities/sermon'
+import { reportError } from 'shared/model/error-dialog'
+import { PlaybackChoiceDialog } from '../ui/PlaybackChoiceDialog'
+import { collectPlaybackCandidates } from './collectPlaybackCandidates'
+
+interface PlaybackChoiceOptions {
+  errorMessage: string
+  getFallbackPlaylist: (
+    sermon: AudioPlayerData,
+    originPlaylist: null | PlaylistData,
+  ) => PlaylistData | Promise<PlaylistData | undefined> | undefined
+  getOfflinePlaylist?: () => PlaylistData | undefined
+  offlineLabel?: string
+  originLabel?: string
+}
+
+interface PlaybackChoiceState {
+  candidates: PlaylistData[]
+  offlinePlaylist?: PlaylistData
+  originPlaylistId: null | string
+  sermon: AudioPlayerData
+}
+
+/**
+ * Owns the "where to play" chooser: zero candidates start the fallback playlist,
+ * a single candidate with no offline collection starts it, and the dialog opens
+ * only for 2+ options. State lives on the screen, so one dialog is mounted.
+ *
+ * `getFallbackPlaylist` is required and may resolve asynchronously (history
+ * resolves the full playlist from sections). `getOfflinePlaylist` adds the first
+ * dialog row; `offlineLabel`/`originLabel` caption the offline row and origin
+ * candidate. Callbacks must be stable (`useCallback` at the call site).
+ * @param root0 - Hook options.
+ * @param root0.errorMessage - Message reported when playback fails.
+ * @param root0.getFallbackPlaylist - Playlist played when no candidates exist.
+ * @param root0.getOfflinePlaylist - Optional offline collection for the first row.
+ * @param root0.offlineLabel - Caption for the highlighted offline collection row.
+ * @param root0.originLabel - Caption for the highlighted origin candidate.
+ */
+export const usePlaybackChoice = ({
+  errorMessage,
+  getFallbackPlaylist,
+  getOfflinePlaylist,
+  offlineLabel,
+  originLabel,
+}: PlaybackChoiceOptions) => {
+  const ctx = useCtx()
+  const playNewSermon = usePlayNewSermon()
+  const [state, setState] = useState<null | PlaybackChoiceState>(null)
+
+  const play = useCallback(
+    async (playlist: PlaylistData, sermon: AudioPlayerData) => {
+      try {
+        await playNewSermon({ playlist, sermon })
+      } catch (error) {
+        reportError(error, errorMessage)
+      }
+    },
+    [errorMessage, playNewSermon],
+  )
+
+  const startFallback = useCallback(
+    async (sermon: AudioPlayerData, originPlaylist: null | PlaylistData) => {
+      try {
+        const fallback = await getFallbackPlaylist(sermon, originPlaylist)
+        if (!fallback) return
+        await play(fallback, sermon)
+      } catch (error) {
+        reportError(error, errorMessage)
+      }
+    },
+    [errorMessage, getFallbackPlaylist, play],
+  )
+
+  const openChoice = useCallback(
+    (sermon: AudioPlayerData, originPlaylist: null | PlaylistData = null) => {
+      const candidates = collectPlaybackCandidates(ctx.get(myPlaylistsAtom), sermon, originPlaylist)
+
+      if (candidates.length === 0) {
+        void startFallback(sermon, originPlaylist)
+        return
+      }
+
+      const offlinePlaylist = getOfflinePlaylist?.()
+      if (candidates.length === 1 && !offlinePlaylist) {
+        void play(candidates[0], sermon)
+        return
+      }
+
+      const originPlaylistId = originLabel && originPlaylist ? originPlaylist.id : null
+      setState({
+        candidates,
+        offlinePlaylist,
+        originPlaylistId,
+        sermon,
+      })
+    },
+    [ctx, getOfflinePlaylist, originLabel, play, startFallback],
+  )
+
+  const select = useCallback(
+    (playlist: PlaylistData) => {
+      if (!state) return
+      setState(null)
+      void play(playlist, state.sermon)
+    },
+    [play, state],
+  )
+
+  const close = useCallback(() => setState(null), [])
+
+  const dialog = state ? (
+    <PlaybackChoiceDialog
+      visible
+      onClose={close}
+      onSelect={select}
+      originLabel={originLabel}
+      offlineLabel={offlineLabel}
+      candidates={state.candidates}
+      offlinePlaylist={state.offlinePlaylist}
+      originPlaylistId={state.originPlaylistId}
+    />
+  ) : null
+
+  return { dialog, openChoice }
+}

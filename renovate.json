@@ -4,7 +4,7 @@
   "schedule": ["before 8am on monday"],
   "labels": ["dependencies"],
   "prConcurrentLimit": 10,
-  "commitBody": "Signed-off-by: Renovate Bot <renovate@slovo-propovedi.ru>",
+  "commitBody": "Signed-off-by: {{{gitAuthor}}}",
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": ["before 8am on the first day of the month"]

@@ -1,19 +1,22 @@
 import { useAction } from '@reatom/npm-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { type APITypes, sectionsApi } from 'shared/api'
+import { sectionsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
+import { loadCacheFirst } from 'shared/lib/session-cache'
 import { hasOrderChanged } from 'shared/lib/utils/hasOrderChanged'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
+import { type AdminSectionListItem, toSectionListItem } from './sectionListItem'
+import { sectionsListCache } from './sectionsListCache'
 
 export interface AdminSectionsState {
   isLoading: boolean
   isRefreshing: boolean
   isReordering: boolean
   reload: () => Promise<void>
-  reorder: (nextOrder: APITypes.SectionEntity[]) => Promise<void>
-  sections: APITypes.SectionEntity[]
+  reorder: (nextOrder: AdminSectionListItem[]) => Promise<void>
+  sections: AdminSectionListItem[]
 }
 
 const REORDER_SUCCESS_MESSAGE = 'Порядок разделов сохранён'
@@ -22,7 +25,7 @@ const LOAD_ERROR_MESSAGE = 'Не удалось загрузить раздел�
 /** Список разделов админки: загрузка и оптимистичный reorder с откатом. */
 export const useAdminSections = (): AdminSectionsState => {
   const showToastAction = useAction(showToast)
-  const [sections, setSections] = useState<APITypes.SectionEntity[]>([])
+  const [sections, setSections] = useState<AdminSectionListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isReordering, setIsReordering] = useState(false)
@@ -31,10 +34,12 @@ export const useAdminSections = (): AdminSectionsState => {
 
   const fetchSections = useCallback(
     () =>
-      sectionsApi
-        .getSections()
-        .sectionControllerFindAll()
-        .then(response => response.sections),
+      sectionsListCache.fetchThrough('', () =>
+        sectionsApi
+          .getSections()
+          .sectionControllerFindAll()
+          .then(response => response.sections.map(toSectionListItem)),
+      ),
     [],
   )
 
@@ -42,7 +47,16 @@ export const useAdminSections = (): AdminSectionsState => {
     let isActive = true
     const generation = ++generationRef.current
 
-    fetchSections()
+    loadCacheFirst({
+      cache: sectionsListCache,
+      cacheKey: '',
+      fetcher: fetchSections,
+      onCached: cached => {
+        if (!isActive || generationRef.current !== generation) return
+        setSections(cached)
+        setIsLoading(false)
+      },
+    })
       .then(nextSections => {
         if (isActive && generationRef.current === generation) setSections(nextSections)
       })
@@ -84,7 +98,7 @@ export const useAdminSections = (): AdminSectionsState => {
   }, [fetchSections])
 
   const reorder = useCallback(
-    async (nextOrder: APITypes.SectionEntity[]) => {
+    async (nextOrder: AdminSectionListItem[]) => {
       const previousOrder = sections
       setSections(nextOrder)
 

@@ -1,11 +1,13 @@
 import { useAction } from '@reatom/npm-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { type APITypes, playlistsApi } from 'shared/api'
 import { getErrorMessage } from 'shared/lib/error-utils'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
+import { useCacheFirstEntity } from 'shared/lib/session-cache'
 import { hasOrderChanged } from 'shared/lib/utils/hasOrderChanged'
 import { showToast } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
+import { playlistDetailCache } from './playlistDetailCache'
 
 export interface AdminPlaylistDetailState {
   isDeleting: boolean
@@ -34,7 +36,10 @@ export const useAdminPlaylistDetail = (id: string): AdminPlaylistDetailState => 
   const [isReordering, setIsReordering] = useState(false)
 
   const fetchPlaylist = useCallback(
-    () => playlistsApi.getPlaylists().playlistControllerFindOne(id),
+    () =>
+      playlistDetailCache.fetchThrough(id, () =>
+        playlistsApi.getPlaylists().playlistControllerFindOne(id),
+      ),
     [id],
   )
 
@@ -52,34 +57,17 @@ export const useAdminPlaylistDetail = (id: string): AdminPlaylistDetailState => 
     }
   }, [fetchPlaylist, id])
 
-  useEffect(() => {
-    let isActive = true
-
-    const load = async () => {
-      if (!id) {
-        if (isActive) setIsNotFound(true)
-        return
-      }
-
-      try {
-        const entity = await fetchPlaylist()
-        if (!isActive) return
-        setPlaylist(entity)
-        setSermons(entity.sermons)
-      } catch (error) {
-        if (isActive) {
-          setIsNotFound(true)
-          reportError(error, LOAD_ERROR_MESSAGE)
-        }
-      }
-    }
-
-    void load()
-
-    return () => {
-      isActive = false
-    }
-  }, [fetchPlaylist, id])
+  useCacheFirstEntity({
+    cache: playlistDetailCache,
+    errorMessage: LOAD_ERROR_MESSAGE,
+    fetcher: fetchPlaylist,
+    id,
+    onLoaded: entity => {
+      setPlaylist(entity)
+      setSermons(entity.sermons)
+    },
+    onNotFound: () => setIsNotFound(true),
+  })
 
   useSilentRefetchOnFocus(refresh)
 

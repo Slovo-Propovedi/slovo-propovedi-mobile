@@ -25,8 +25,26 @@ jest.mock('entities/offline-cache', () => {
 const mockedClearAudioCacheAction = jest.mocked(clearAudioCacheAction)
 
 const HEADER_MENU_LABEL = 'Меню офлайн-библиотеки'
+const PLAY_ALL_ITEM_TEXT = 'Воспроизвести все'
 const CLEAR_ITEM_TEXT = 'Очистить офлайн'
 const CONFIRM_TEXT = 'Очистить'
+
+const renderMenu = async ({
+  ctx,
+  isPlayAllDisabled = false,
+  onPlayAll = jest.fn(),
+}: {
+  ctx?: ReturnType<typeof createCtx>
+  isPlayAllDisabled?: boolean
+  onPlayAll?: () => void
+} = {}) => {
+  const utils = await renderWithProviders(
+    <OfflineHeaderMenu onPlayAll={onPlayAll} isPlayAllDisabled={isPlayAllDisabled} />,
+    { ctx },
+  )
+
+  return { ...utils, onPlayAll }
+}
 
 const measureMenu = async (container: TestInstance) => {
   const layoutView = container.queryAll(node => node.props.onLayout !== undefined, {
@@ -53,7 +71,7 @@ describe('<OfflineHeaderMenu>', () => {
   })
 
   test('opens the menu on button press', async () => {
-    const { getByRole, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
+    const { getByRole, getByText } = await renderMenu()
 
     await act(async () => {
       fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
@@ -62,8 +80,35 @@ describe('<OfflineHeaderMenu>', () => {
     expect(getByText(CLEAR_ITEM_TEXT)).toBeTruthy()
   })
 
+  test('plays the whole offline collection from the menu', async () => {
+    const { container, getByRole, getByText, onPlayAll } = await renderMenu()
+
+    await act(async () => {
+      fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
+    })
+    const playAllItem = await waitFor(() => getByText(PLAY_ALL_ITEM_TEXT))
+    await measureMenu(container)
+
+    fireEvent.press(playAllItem)
+
+    expect(onPlayAll).toHaveBeenCalledTimes(1)
+  })
+
+  test('disables play-all on an empty offline list', async () => {
+    const { getByRole } = await renderMenu({ isPlayAllDisabled: true })
+
+    await act(async () => {
+      fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
+    })
+
+    const playAllItem = await waitFor(() =>
+      getByRole('button', { name: new RegExp(PLAY_ALL_ITEM_TEXT) }),
+    )
+    expect(playAllItem).toBeDisabled()
+  })
+
   test('clear flow: select clear, confirm, clearAudioCacheAction called', async () => {
-    const { container, getByRole, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
+    const { container, getByRole, getByText } = await renderMenu()
 
     await act(async () => {
       fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
@@ -83,7 +128,7 @@ describe('<OfflineHeaderMenu>', () => {
     const ctx = createCtx()
     cacheQueueAtom(ctx, { 'http://example.com/1.mp3': { enqueuedAt: 0, source: 'manual' } })
 
-    const { getByRole } = await renderWithProviders(<OfflineHeaderMenu />, { ctx })
+    const { getByRole } = await renderMenu({ ctx })
 
     await act(async () => {
       fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
@@ -99,7 +144,7 @@ describe('<OfflineHeaderMenu>', () => {
     const ctx = createCtx()
     activeCacheUrlAtom(ctx, 'http://example.com/1.mp3')
 
-    const { getByRole } = await renderWithProviders(<OfflineHeaderMenu />, { ctx })
+    const { getByRole } = await renderMenu({ ctx })
 
     await act(async () => {
       fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
@@ -116,7 +161,7 @@ describe('<OfflineHeaderMenu>', () => {
     cacheQueueAtom(ctx, {})
     activeCacheUrlAtom(ctx, null)
 
-    const { getByRole } = await renderWithProviders(<OfflineHeaderMenu />, { ctx })
+    const { getByRole } = await renderMenu({ ctx })
 
     await act(async () => {
       fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
@@ -131,7 +176,7 @@ describe('<OfflineHeaderMenu>', () => {
   test('shows an error dialog when clearing fails', async () => {
     mockedClearAudioCacheAction.mockResolvedValue({ error: new Error('boom'), success: false })
 
-    const { container, getByRole, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
+    const { container, getByRole, getByText } = await renderMenu()
 
     await act(async () => {
       fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
@@ -151,7 +196,7 @@ describe('<OfflineHeaderMenu>', () => {
   test('shows an error dialog when clearing throws', async () => {
     mockedClearAudioCacheAction.mockRejectedValue(new Error('boom'))
 
-    const { container, getByRole, getByText } = await renderWithProviders(<OfflineHeaderMenu />)
+    const { container, getByRole, getByText } = await renderMenu()
 
     await act(async () => {
       fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))

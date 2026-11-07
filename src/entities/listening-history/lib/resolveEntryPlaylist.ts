@@ -5,35 +5,38 @@ import {
   type SectionData,
 } from 'entities/section/@x/listening-history'
 import { ctx } from 'shared/lib/reatom-ctx'
-import { type ListeningHistoryEntry } from '../model/types'
-import { getEntrySermon } from './getEntrySermon'
+
+const findPlaylistBySermon = (
+  sections: SectionData[],
+  playlistId: string,
+  sermonId: string,
+): PlaylistData | undefined =>
+  sections
+    .flatMap(section => section.playlists ?? [])
+    .find(p => p.id === playlistId && p.sermons.some(s => s.id === sermonId))
 
 /**
- * Find the full playlist containing the sermon from a history entry.
+ * Find the full playlist `playlistId` when it contains `sermonId`.
  * Searches the live `dynamicSectionsAtom` first, then the sections cache,
- * and falls back to the snapshot playlist stored in the entry itself.
- * @param entry - A history entry whose `playlist.id` identifies the original playlist
- *   and whose sermon id matches one of the playlist's sermons.
+ * and falls back to `fallbackPlaylist`.
+ * @param playlistId - Id of the playlist to resolve.
+ * @param sermonId - Sermon that must be present in the playlist; `null` skips the search.
+ * @param fallbackPlaylist - Returned when no section has the playlist with the sermon.
  * @returns The full `PlaylistData` (with the complete sermons array for queue + auto-advance)
- *   or the original snapshot playlist as a fallback.
+ *   or `fallbackPlaylist`.
  */
-export const resolveEntryPlaylist = async (entry: ListeningHistoryEntry): Promise<PlaylistData> => {
-  const sermonId = getEntrySermon(entry)?.id
-  if (!sermonId) return entry.playlist
+export const resolvePlaylistBySermon = async (
+  playlistId: string,
+  sermonId: null | string,
+  fallbackPlaylist: PlaylistData,
+): Promise<PlaylistData> => {
+  if (!sermonId) return fallbackPlaylist
 
-  const playlistId = entry.playlist.id
-
-  const findPlaylist = (sections: SectionData[]): PlaylistData | undefined =>
-    sections
-      .flatMap(section => section.playlists ?? [])
-      .find(p => p.id === playlistId && p.sermons.some(s => s.id === sermonId))
-
-  const live = findPlaylist(ctx.get(dynamicSectionsAtom))
+  const live = findPlaylistBySermon(ctx.get(dynamicSectionsAtom), playlistId, sermonId)
   if (live) return live
 
   const cached = await getCachedSections()
-  const fromCache = cached ? findPlaylist(cached) : undefined
-  if (fromCache) return fromCache
+  const fromCache = cached ? findPlaylistBySermon(cached, playlistId, sermonId) : undefined
 
-  return entry.playlist
+  return fromCache ?? fallbackPlaylist
 }

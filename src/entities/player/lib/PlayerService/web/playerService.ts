@@ -37,6 +37,8 @@ export class WebPlayerService {
   public recoverStreamAfterReconnect = (audioUrl: string): Promise<void> =>
     this.audioInstance ? heal(this, audioUrl) : Promise.resolve()
 
+  public reconcileOnForeground = async (): Promise<void> => this.mediaSession.reassertMetadata()
+
   public setLockScreenMetadata = (metadata: LockScreenMetadata): void =>
     this.mediaSession.setMetadata(metadata)
 
@@ -76,7 +78,6 @@ export class WebPlayerService {
       isCurrentAudio: current => current === this.audioInstance,
       mediaSession: this.mediaSession,
       noteLivePosition: this.resume.noteLivePosition,
-      onTrackEnd: this.onTrackEnd,
       restoreInterruptedPosition: this.resume.maybeRestore,
       startStatusTracker: this.statusTracker.start,
       state: this.state,
@@ -99,7 +100,6 @@ export class WebPlayerService {
 
   private audioInstance: HTMLAudioElement | null = null
   private detachAudioEvents: (() => void) | null = null
-  private onTrackEnd: (() => void) | undefined = undefined
   private playbackRate: PlaybackRate = 1
   private volumeControl = createVolumeControl(() => this.audioInstance)
   private pubsub = createPubSub()

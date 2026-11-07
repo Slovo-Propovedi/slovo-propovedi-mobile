@@ -75,9 +75,9 @@
 
 ## Файлы-ориентиры
 
-- `src/entities/player/lib/PlayerService/index.native.ts`, `native/PlaylistEngine.ts`, `native/queueLoader.ts`, `native/queueContext.ts`, `native/LockScreenControls.ts`, `native/playlistStatusHandler.ts`, `native/TrackAutoAdvanceService/`
+- `src/entities/player/lib/PlayerService/index.native.ts`, `native/PlaylistEngine.ts`, `native/queueLoader.ts`, `native/queueContext.ts`, `native/LockScreenControls.ts`, `native/playlistStatusHandler.ts`, `native/reconcileOnForeground.ts`, `native/reconcileDecision.ts`, `native/TrackAutoAdvanceService/`
 - `src/entities/player/model.ts`, `lib/usePlayer.ts`, `lib/usePlayerState.ts`
-- `src/entities/player/ui/PlayerControls/usePlayerToggleTrack.ts`, `useAppStatePlayback.ts`
+- `src/entities/player/ui/PlayerControls/usePlayerToggleTrack.ts`, `src/entities/player/lib/useForegroundPlaybackReconcile.ts`
 - `app.config.ts`, `plugins/withAndroidFlavors.ts`, `plugins/gradleSnippets.ts`
 - `modules/audio-effects/*`, `modules/apk-installer/*` — шаблон нового нативного модуля
 - `docs/features/player.md`, `docs/contracts/native-modules.md`, `docs/features/deep-links.md`

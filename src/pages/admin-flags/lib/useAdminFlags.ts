@@ -1,7 +1,9 @@
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useRef, useState } from 'react'
 import { type APITypes, featureFlagsApi } from 'shared/api'
+import { loadCacheFirst } from 'shared/lib/session-cache'
 import { reportError } from 'shared/model/error-dialog'
+import { flagsCache } from './flagsCache'
 
 interface AdminFlagsState {
   flags: APITypes.FeatureFlag[]
@@ -14,10 +16,12 @@ interface AdminFlagsState {
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить фича-флаги'
 
 const fetchFlags = () =>
-  featureFlagsApi
-    .getFeatureFlags()
-    .featureFlagsControllerFindAll()
-    .then(response => response.flags)
+  flagsCache.fetchThrough('', () =>
+    featureFlagsApi
+      .getFeatureFlags()
+      .featureFlagsControllerFindAll()
+      .then(response => response.flags),
+  )
 
 /**
  * Список фича-флагов админки (`GET /feature-flags`). Флагов мало, поэтому без
@@ -35,7 +39,17 @@ export const useAdminFlags = (): AdminFlagsState => {
     const showSkeleton = !hasLoadedRef.current
 
     try {
-      const next = await fetchFlags()
+      const next = showSkeleton
+        ? await loadCacheFirst({
+            cache: flagsCache,
+            cacheKey: '',
+            fetcher: fetchFlags,
+            onCached: cached => {
+              setFlags(cached)
+              setIsLoading(false)
+            },
+          })
+        : await fetchFlags()
       setFlags(next)
       setIsError(false)
       hasLoadedRef.current = true

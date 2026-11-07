@@ -2,7 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent } from '@testing-library/react-native'
 import { type OfflineSermonItem } from 'features/offline-sermons'
 import { useHistoryProgress } from 'entities/listening-history'
-import { currentAudioAtom, usePlayNewSermon } from 'entities/player'
+import { currentAudioAtom } from 'entities/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { OfflineRow } from './OfflineRow'
 
@@ -30,24 +30,18 @@ interface CapturedTrackItemProps {
   title: string
 }
 
-const mockPlayNewSermon = jest.fn()
 const mockTrackItemProps: CapturedTrackItemProps[] = []
-const mockReportError = jest.fn()
+const mockOnPress = jest.fn()
 
 jest.mock('entities/player', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
     currentAudioAtom: atom(null, 'testCurrentAudioAtom'),
-    usePlayNewSermon: jest.fn(() => jest.fn()),
   }
 })
 
 jest.mock('entities/listening-history', () => ({
   useHistoryProgress: jest.fn(() => undefined),
-}))
-
-jest.mock('shared/model/error-dialog', () => ({
-  reportError: (...args: unknown[]) => mockReportError(...args),
 }))
 
 jest.mock('entities/track-list', () => {
@@ -82,12 +76,13 @@ describe('<OfflineRow>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockTrackItemProps.length = 0
-    jest.mocked(usePlayNewSermon).mockReturnValue(mockPlayNewSermon)
     jest.mocked(useHistoryProgress).mockReturnValue(undefined)
   })
 
   test('maps sermon and playlist data to TracksListItem', async () => {
-    await renderWithProviders(<OfflineRow item={mockItem} isPlaying={false} />)
+    await renderWithProviders(
+      <OfflineRow item={mockItem} isPlaying={false} onPress={mockOnPress} />,
+    )
 
     expect(mockTrackItemProps[0]).toMatchObject({
       artwork: mockSermon.artwork,
@@ -100,7 +95,9 @@ describe('<OfflineRow>', () => {
   test('forwards history progress to TracksListItem', async () => {
     jest.mocked(useHistoryProgress).mockReturnValue(0.5)
 
-    await renderWithProviders(<OfflineRow item={mockItem} isPlaying={false} />)
+    await renderWithProviders(
+      <OfflineRow item={mockItem} isPlaying={false} onPress={mockOnPress} />,
+    )
 
     expect(useHistoryProgress).toHaveBeenCalledWith(mockSermon.id)
     expect(mockTrackItemProps[0].progress).toBe(0.5)
@@ -116,46 +113,34 @@ describe('<OfflineRow>', () => {
       title: mockSermon.title,
     })
 
-    await renderWithProviders(<OfflineRow item={mockItem} isPlaying={true} />, { ctx })
+    await renderWithProviders(
+      <OfflineRow item={mockItem} isPlaying={true} onPress={mockOnPress} />,
+      { ctx },
+    )
 
     expect(mockTrackItemProps[0].isPlaying).toBe(true)
     expect(mockTrackItemProps[0].isAudioPlaying).toBe(true)
   })
 
-  test('row press plays the sermon with its playlist', async () => {
+  test('row press forwards the item to the injected onPress', async () => {
     const { getByTestId } = await renderWithProviders(
-      <OfflineRow item={mockItem} isPlaying={false} />,
+      <OfflineRow item={mockItem} isPlaying={false} onPress={mockOnPress} />,
     )
 
     await act(async () => {
       fireEvent.press(getByTestId('tracks-list-item'))
     })
 
-    expect(mockPlayNewSermon).toHaveBeenCalledWith({
-      playlist: mockItem.playlist,
-      sermon: mockItem.sermon,
-    })
-  })
-
-  test('reports a playback error', async () => {
-    mockPlayNewSermon.mockRejectedValueOnce(new Error('boom'))
-
-    const { getByTestId } = await renderWithProviders(
-      <OfflineRow item={mockItem} isPlaying={false} />,
-    )
-
-    await act(async () => {
-      fireEvent.press(getByTestId('tracks-list-item'))
-    })
-
-    expect(mockReportError).toHaveBeenCalled()
+    expect(mockOnPress).toHaveBeenCalledWith(mockItem)
   })
 
   test('does not re-render when the parent passes identical props', async () => {
-    const { rerender } = await renderWithProviders(<OfflineRow item={mockItem} isPlaying={false} />)
+    const { rerender } = await renderWithProviders(
+      <OfflineRow item={mockItem} isPlaying={false} onPress={mockOnPress} />,
+    )
     const rendersAfterMount = mockTrackItemProps.length
 
-    await rerender(<OfflineRow item={mockItem} isPlaying={false} />)
+    await rerender(<OfflineRow item={mockItem} isPlaying={false} onPress={mockOnPress} />)
 
     expect(mockTrackItemProps).toHaveLength(rendersAfterMount)
   })

@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, View } from 'react-native'
+import { RefreshButton } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
@@ -26,6 +27,7 @@ export const AdminMediaHeader = ({
             плейлистах.
           </Text>
         </View>
+        <RefreshButton />
         <IconButton
           onPress={onUpload}
           disabled={isUploading}

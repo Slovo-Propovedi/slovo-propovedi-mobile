@@ -1,7 +1,9 @@
 import { reatomContext } from '@reatom/npm-react'
 import { type SuspenseFallbackProps } from 'expo-router'
-import { ActivityIndicator, View } from 'react-native'
+import { type ReactNode } from 'react'
+import { ActivityIndicator, Platform, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context'
 import { watchSessionExpiry } from 'entities/auth'
 import { fetchMyFeatureFlags, hydrateCachedFeatureFlags } from 'entities/feature-flags'
 import { loadHistoryAction } from 'entities/listening-history'
@@ -10,6 +12,7 @@ import {
   hydrateOfflineRegistry,
   loadSermonCachingEnabled,
   reEnqueuePartialDownloads,
+  resumeAudioManifestMigration,
 } from 'entities/offline-cache'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
 import { hydrateCachedSections } from 'entities/section'
@@ -34,34 +37,56 @@ export function SuspenseFallback(_props: SuspenseFallbackProps) {
   )
 }
 
+// expo-router 58 mounts a frozen-zero WebSafeAreaProvider on web, so useSafeAreaInsets()
+// returns zeros there and every header, overlay and bottom padding sits under the iOS
+// status bar / home indicator in the PWA. On web we mount the library's own provider
+// above the router instead: it measures env(safe-area-inset-*) through a probe and feeds
+// all consumers (react-navigation headers included, since its SafeAreaProviderCompat
+// skips wrapping once a parent insets context exists). Expo's SSR-hydration caution
+// about a second web provider does not apply here — the web build is a client-only SPA,
+// not a streamed server render. Native keeps expo-router's provider untouched.
+// `initialWindowMetrics` is null on web, which is exactly the provider's default; the
+// probe fills in the measured insets right after mount.
+const SafeAreaBoundary = ({ children }: { children: ReactNode }) =>
+  Platform.OS === 'web' ? (
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>{children}</SafeAreaProvider>
+  ) : (
+    <>{children}</>
+  )
+
 const RootLayoutWithProvider = () => (
   <reatomContext.Provider value={ctx}>
     <ThemeProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ErrorBoundary>
           <GlobalErrorHandler />
-          <RootLayout />
+          <SafeAreaBoundary>
+            <RootLayout />
+          </SafeAreaBoundary>
         </ErrorBoundary>
       </GestureHandlerRootView>
     </ThemeProvider>
   </reatomContext.Provider>
 )
 
-// Purge orphaned legacy .mp3.part files, hydrate the offline registry, restore
-// the player, then re-enqueue stale .cache.mp3 partials. Sweeping after restore
-// keeps the current track's partial alive for an offline resolve; a same-URL
-// enqueue joins the existing queue entry. The caching setting loads INSIDE the
-// chain and BEFORE the player restore: both downstream steps enqueue downloads
-// through the queue gate (restore → resolvePlaybackUrl → startBackgroundCaching →
-// enqueueCache, then reEnqueuePartialDownloads), and the gate reads the atom —
-// with the default `true` still in place a cold start would start a download on
-// every launch despite the setting being off.
+// Purge orphaned legacy .mp3.part files, verify legacy web-cache entries,
+// hydrate the offline registry, restore the player, then re-enqueue stale
+// .cache.mp3 partials. Sweeping after restore keeps the current track's partial
+// alive for an offline resolve; a same-URL enqueue joins the existing queue
+// entry. The caching setting loads INSIDE the chain and BEFORE the player
+// restore: both downstream steps enqueue downloads through the queue gate
+// (restore → resolvePlaybackUrl → startBackgroundCaching → enqueueCache, then
+// reEnqueuePartialDownloads), and the gate reads the atom — with the default
+// `true` still in place a cold start would start a download on every launch
+// despite the setting being off.
 // Each step is isolated: a failure in offline-registry hydration or in loading
 // the caching setting must not abort the chain before the player restore runs
 // (otherwise cold start silently leaves currentAudio empty). The terminal
 // catch reports any rejection that still escapes.
 void cleanupOrphanedDownloads()
   .catch(error => console.error('[audio-cache] orphan cleanup failed:', error))
+  .then(() => resumeAudioManifestMigration())
+  .catch(error => console.error('[audio-cache] manifest migration failed:', error))
   .then(() => hydrateOfflineRegistry(ctx))
   .catch(error => console.error('[startup] offline registry hydration failed:', error))
   .then(() => loadSermonCachingEnabled(ctx))

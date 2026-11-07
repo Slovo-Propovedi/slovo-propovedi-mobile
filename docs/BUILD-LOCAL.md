@@ -94,9 +94,23 @@ repository secrets:
 | `ANDROID_KEY_ALIAS`             | Key alias (`RELEASE_KEY_ALIAS`)                    |
 | `ANDROID_KEY_PASSWORD`          | Key password (`RELEASE_KEY_PASSWORD`)              |
 
-If `ANDROID_KEYSTORE_BASE64` is absent the restore step warns and skips;
-the build then produces a debug-signed release instead of failing. No
-secret value is ever echoed.
+If `ANDROID_KEYSTORE_BASE64` is absent the restore step fails the release
+(a debug-signed release is never published). No secret value is ever echoed.
+
+After the build, the **Verify APK signing certificate** step checks that the
+APK is signed with THE release key, not just with some keystore: `apksigner
+verify --print-certs` must report exactly one signer whose certificate
+SHA-256 is listed in the org **variable** `APK_SIGNER_SHA256` (64 hex, as
+apksigner prints it). Otherwise the release stops before anything is zipped
+or published — a wrong keystore in the secrets would ship an APK that in-app
+updates reject and the landing refuses to serve. The same variable is used by
+the landing APK refresh. It is public (the digest is in every signed APK and in
+`public/.well-known/assetlinks.json`), hence a variable, not a secret;
+"Validate required vars" checks its format before the native build.
+
+| Variable            | Content                                                                 |
+| ------------------- | ----------------------------------------------------------------------- |
+| `APK_SIGNER_SHA256` | Release certificate SHA-256, e.g. `43f8df039d37ade81a17b7ae8edf8e431c7fd87ba160fd8c09c6281a54706d9b`; comma-separated `old,new` during a key rotation |
 
 > **⚠️ One-time migration:** switching an existing installation from the
 > debug signature to a real release signature makes Android reject an

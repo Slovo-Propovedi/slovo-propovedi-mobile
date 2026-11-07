@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react-native'
-import { useEntryPlayback } from 'features/entry-playback'
 import { type ListeningHistoryEntry } from 'entities/listening-history'
 import { HistoryRow } from './HistoryRow'
 
@@ -21,14 +20,10 @@ interface CapturedTrackItemProps {
   onPress: () => void
 }
 
-const mockPlayEntry = jest.fn()
+const mockOnPress = jest.fn()
 const mockTrackItemProps: CapturedTrackItemProps[] = []
 
-jest.mock('features/entry-playback', () => ({
-  useEntryPlayback: jest.fn(() => jest.fn()),
-}))
-
-// The listening-history barrel reaches shared/api through resolveEntryPlaylist;
+// The listening-history barrel reaches shared/api through resolvePlaylistBySermon;
 // stub the cross-import so the generated faker ESM never loads in Jest.
 jest.mock('entities/section/@x/listening-history', () => {
   const { atom } = jest.requireActual('@reatom/framework')
@@ -74,22 +69,46 @@ describe('<HistoryRow>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockTrackItemProps.length = 0
-    jest.mocked(useEntryPlayback).mockReturnValue(mockPlayEntry)
   })
 
   test('keeps onPress and menuActions identity across rerenders without a sermon snapshot', async () => {
     const { rerender } = await render(
-      <HistoryRow isPlaying={false} isAudioPlaying={false} entry={entryWithoutSermonSnapshot} />,
+      <HistoryRow
+        isPlaying={false}
+        onPress={mockOnPress}
+        isAudioPlaying={false}
+        entry={entryWithoutSermonSnapshot}
+      />,
     )
 
     // Toggle isPlaying to defeat memo(HistoryRow) and force a real re-render.
     await rerender(
-      <HistoryRow isPlaying={true} isAudioPlaying={false} entry={entryWithoutSermonSnapshot} />,
+      <HistoryRow
+        isPlaying={true}
+        onPress={mockOnPress}
+        isAudioPlaying={false}
+        entry={entryWithoutSermonSnapshot}
+      />,
     )
 
     expect(mockTrackItemProps).toHaveLength(2)
     const [firstRender, secondRender] = mockTrackItemProps
     expect(secondRender.onPress).toBe(firstRender.onPress)
     expect(secondRender.menuActions).toBe(firstRender.menuActions)
+  })
+
+  test('row press forwards the entry to the injected onPress', async () => {
+    await render(
+      <HistoryRow
+        isPlaying={false}
+        onPress={mockOnPress}
+        isAudioPlaying={false}
+        entry={entryWithoutSermonSnapshot}
+      />,
+    )
+
+    mockTrackItemProps[0].onPress()
+
+    expect(mockOnPress).toHaveBeenCalledWith(entryWithoutSermonSnapshot)
   })
 })

@@ -54,8 +54,8 @@
 
 | Обёртка | Файл | Что делает |
 | --- | --- | --- |
-| `HistoryRow` | `src/pages/history/ui/HistoryRow.tsx` | `getEntrySermon` → данные; `cacheState` через `useTrackItemCache`; прогресс из entry (`positionMs/durationMs`); меню `buildHistoryMenuActions`; сабтайтл `formatRelativeDate`; воспроизведение `useEntryPlayback`. |
-| `OfflineRow` | `src/pages/offline/ui/OfflineRow.tsx` | `OfflineSermonItem` → данные; `cacheState` через `useTrackItemCache`; `isPlaying` по `currentAudioAtom`; прогресс `useHistoryProgress(sermon.id)`; воспроизведение `usePlayNewSermon`. |
+| `HistoryRow` | `src/pages/history/ui/HistoryRow.tsx` | `getEntrySermon` → данные; `cacheState` через `useTrackItemCache`; прогресс из entry (`positionMs/durationMs`); меню `buildHistoryMenuActions`; сабтайтл `formatRelativeDate`; press делегируется на экран (`onPress(entry)` → `usePlaybackChoice`). |
+| `OfflineRow` | `src/pages/offline/ui/OfflineRow.tsx` | `OfflineSermonItem` → данные; `cacheState` через `useTrackItemCache`; `isPlaying` по `currentAudioAtom`; прогресс `useHistoryProgress(sermon.id)`; press делегируется на экран (`onPress(item)` → `usePlaybackChoice`). |
 | `PlaylistTrackItem` | `src/pages/playlist/ui/PlaylistTrackItem.tsx` | Проброс из `PlaylistScreen`; `cacheState` через `useTrackItemCache` (внешний `cacheTrigger` — от батч-скачивания плейлиста); `isPlaying` по `currentAudioId`; прогресс из `progressMap`. |
 | `PlaylistSheetRow` | `src/widgets/expandable-player/ui/PlaylistBottomSheet/PlaylistSheetRow.tsx` | Проброс из `usePlaylistSheetList`; `cacheState` через `useTrackItemCache`; прогресс `useHistoryProgress(id)`; меню `useSheetMenuActions`. |
 | `SermonSearchRow` | `src/features/sermon-search/ui/SermonSearchRow.tsx` | `SermonData` → данные; `cacheState` через `useTrackItemCache`; сабтайтл `artist • книга глава:стихи`; меню `buildHistoryMenuActions`. |

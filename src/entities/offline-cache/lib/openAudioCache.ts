@@ -7,6 +7,9 @@
 // Keep in sync with AUDIO_CACHE in public/sw.js
 export const AUDIO_CACHE_NAME = 'audio-cache-v1'
 
+export const isCacheStorageAvailable = (): boolean =>
+  typeof caches !== 'undefined' && typeof caches.open === 'function'
+
 /**
  * Open the audio cache bucket, repairing a corrupt Cache Storage on the fly.
  * A killed process can leave the bucket half-written (WebKit bugs 260962 /

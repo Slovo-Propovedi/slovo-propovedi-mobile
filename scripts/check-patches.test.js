@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from '@jest/globals'
 import {
   collectExpoAudioProblems,
@@ -6,8 +8,28 @@ import {
   verifyPatch,
 } from './check-patches.mjs'
 
-const MATCHING_PATCH = 'expo-font+58.0.9.patch'
-const MISMATCHED_PATCH = 'expo-font+0.0.0.patch'
+// The fixtures follow the installed package instead of pinning a literal:
+// patch-package renames "<package>+<version>.patch" on every dependency bump,
+// so a hard-coded version goes stale the moment node_modules moves on.
+const PROBED_PACKAGE = 'expo-font'
+const NODE_MODULES_DIR = join(__dirname, '..', 'node_modules')
+
+const readInstalledVersion = packageName =>
+  JSON.parse(readFileSync(join(NODE_MODULES_DIR, packageName, 'package.json'), 'utf-8')).version
+
+const nextPatchVersion = version => {
+  const bumped = version.replace(/(\d+)$/, patch => String(Number(patch) + 1))
+
+  if (bumped === version) throw new Error(`Cannot bump "${version}"`)
+
+  return bumped
+}
+
+const INSTALLED_VERSION = readInstalledVersion(PROBED_PACKAGE)
+const MISMATCHED_VERSION = nextPatchVersion(INSTALLED_VERSION)
+const MATCHING_PATCH = `${PROBED_PACKAGE}+${INSTALLED_VERSION}.patch`
+const MISMATCHED_PATCH = `${PROBED_PACKAGE}+${MISMATCHED_VERSION}.patch`
+// The version is inert here: the package is absent, so verifyPatch never compares it.
 const MISSING_PACKAGE_PATCH = 'missing-package+1.0.0.patch'
 const PATCH_MARKER = 'PATCH(patch-package)'
 const PACKAGE_JSON_WITH_SOURCE_BUILD = {
@@ -60,8 +82,8 @@ const PATCHED_SEEK_INTERVAL_SOURCE = `
 describe('parsePatchFileName', () => {
   test('splits an unscoped package name and version', () => {
     expect(parsePatchFileName(MATCHING_PATCH)).toEqual({
-      packageName: 'expo-font',
-      version: '58.0.9',
+      packageName: PROBED_PACKAGE,
+      version: INSTALLED_VERSION,
     })
   })
 
@@ -86,7 +108,7 @@ describe('verifyPatch', () => {
     const errors = verifyPatch(MISMATCHED_PATCH)
 
     expect(errors).toHaveLength(1)
-    expect(errors[0]).toContain('targets 0.0.0')
+    expect(errors[0]).toContain(`targets ${MISMATCHED_VERSION}`)
     expect(errors[0]).toContain('is installed')
   })
 

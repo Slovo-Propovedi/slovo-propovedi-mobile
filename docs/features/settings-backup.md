@@ -48,10 +48,10 @@
       "themeMode": "dark",
       "dynamicColors": true,
       "hapticsEnabled": true,
-      "serverUrl": "https://api.slovo-istini.com",
+      "serverUrl": "https://api.slovo-propovedi.ru",
       "sermonCachingEnabled": false,
       "toursDisabled": false,
-      "toursSeenVersion": "1.2.0"
+      "toursSeenVersion": "9f43c2a1"
     },
     "player": {
       "playbackRate": 1,

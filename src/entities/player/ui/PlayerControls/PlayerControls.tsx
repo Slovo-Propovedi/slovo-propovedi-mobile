@@ -7,7 +7,6 @@ import { usePlayerState } from '../../lib/usePlayerState'
 import { FullscreenControls } from '../FullscreenControls'
 import { DefaultControls } from './DefaultControls'
 import { type ControlsNames, PlayerControlsSize } from './PlayerControls.types'
-import { useAppStatePlayback } from './useAppStatePlayback'
 import { usePlayerControlSizes } from './usePlayerControlSizes'
 import { usePlayerToggleTrack } from './usePlayerToggleTrack'
 import { usePlayerTrackState } from './usePlayerTrackState'
@@ -35,20 +34,11 @@ export const PlayerControls = ({
   style?: StyleProp<ViewStyle>
   variant?: PlayerControlsVariant
 }) => {
-  const {
-    getStatus,
-    play,
-    reassertLockScreenMetadata,
-    replaceAudio,
-    seekTo,
-    setLockScreenMetadata,
-  } = usePlayer()
+  const { play, replaceAudio, seekTo, setLockScreenMetadata } = usePlayer()
 
   const { isBuffering, isPlaying } = usePlayerState()
 
   const { togglePlay } = useGuardedTogglePlay()
-
-  useAppStatePlayback({ currentAudio, currentPlaylist, getStatus, reassertLockScreenMetadata })
 
   const { hasValidPlaylist, index } = usePlayerTrackState({
     currentAudio,

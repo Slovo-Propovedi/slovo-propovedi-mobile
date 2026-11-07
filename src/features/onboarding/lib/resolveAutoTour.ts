@@ -1,14 +1,21 @@
-import { compareVersions } from 'shared/lib/version-check'
-
 export type AutoTourDecision = 'welcome' | 'whatsNew' | null
 
-// `seenVersion` — the «Что нового» content version already shown (legacy installs
-// stored the app version there, which is never older than the content they saw).
+// `seen` — the content fingerprint of the «Что нового» steps already shown.
+// `contentFingerprint` — fingerprint of the steps this bundle ships. The app
+// version plays no role: a release that only bumps the version keeps the same
+// content and therefore stays silent, while changed content shows once.
+// `hasWhatsNewSteps` — a release without user-visible novelties ships an empty
+// scenario, which stays silent instead of starting a tour with no cards.
 export const resolveAutoTour = (
-  seenVersion: null | string,
-  whatsNewVersion: string,
+  seen: null | string,
+  contentFingerprint: string,
+  hasWhatsNewSteps: boolean,
 ): AutoTourDecision => {
-  if (seenVersion === null) return 'welcome'
+  if (seen === null) return 'welcome'
 
-  return compareVersions(seenVersion, whatsNewVersion) < 0 ? 'whatsNew' : null
+  if (!hasWhatsNewSteps) return null
+
+  if (seen === contentFingerprint) return null
+
+  return 'whatsNew'
 }

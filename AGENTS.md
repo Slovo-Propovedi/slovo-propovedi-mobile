@@ -50,6 +50,35 @@ npm run build:all            # Build all platforms
 
 **Centralized verification:** agents working on delegated tasks must NOT run project-wide checks on their own (`yarn lint`, `yarn lint:fix`, `yarn check:types`, `yarn check:unused`, full `yarn test`, `yarn testFinal*`, `yarn test:native`, gradle builds). When several agents work in parallel, concurrent full runs overload the machine. The orchestrator runs the whole verification suite ONCE after all delegated tasks are complete (via a single dedicated task) and routes any failures back to the responsible agent. Delegated tasks implement code and may run only narrowly scoped checks (e.g. a single targeted test file via `yarn test --watch=false <path>` when the task is test-focused).
 
+## Mandatory Workflows: SDD, Plan-Implement, TDD
+
+Every non-trivial task runs through a workflow BEFORE implementation. Workflow skills live in `.opencode/skills/<name>/SKILL.md` with a byte-identical mirror in `.claude/skills/` (keep both copies in sync). Spec-driven commands live in `.opencode/commands/speckit.*.md` (mirrored in `.claude/commands/`).
+
+| Situation | Workflow | How |
+|-----------|----------|-----|
+| New feature, API contract change, cross-cutting change, vague requirements | Spec-Driven Development | `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.taskstoissues` (mirror tasks to the Forgejo board; needs `FORGEJO_TOKEN`) → `/speckit.implement` (`/speckit.constitution` once per repo; `/speckit.analyze` / `/speckit.checklist` when useful) |
+| Clear requirements, multi-step change (no spec needed) | Plan → implement | `plan-implement` skill |
+| Any bug, red test, unexpected behavior | Debug first | `systematic-debugging` skill |
+| Any code/behavior change (inside any workflow) | Test-Driven Development | `tdd` skill (verification-first Mode B when no test runner) |
+| Pure refactor (no behavior change) | TDD, suite stays green | `tdd` skill — add a characterization test first if coverage is missing |
+| Docs-only change | Verification-first | `tdd` skill Mode B (lint/build/link check as the failing check) |
+| Generated code (`api:generate`, prebuild, dependency bumps) | Exempt from the Iron Law | Run the generator, review the diff, run the full verification suite |
+| Always, on every task | Minimal diff | `ponytail` skill |
+| Before claiming ANY task done | Done-gate | `verification-before-completion` skill |
+
+Rules:
+
+1. Load the workflow skill via the `skill` tool BEFORE writing code and announce it ("Using <skill> to <purpose>"). Spec-level features start with the `/speckit.*` commands instead.
+2. No production code without a failing check first (`tdd` Iron Law).
+3. Specs, plans and task lists are repo artifacts: spec-kit features live under `specs/<NNN-slug>/`; commit them together with the implementation.
+4. Opt-out only when the user explicitly says so ("skip workflow", "just do it") — and name the skip in the completion report.
+5. Verification commands for this repo: `yarn check:types`, `yarn lint`, `yarn check:unused`, `yarn check:fsd`, `yarn test` (single terminating run: `yarn test --watch=false`; full suite `yarn testFinal` — orchestrator-only, see "Centralized verification"), `bash .opencode/tools/check-skills-sync.sh`.
+6. A shortcut with a known limit gets a `shortcut: <what was skipped>, <when to revisit>` comment AND a `docs/debt.md` entry (see Documentation rules above).
+
+The `specify` CLI is NOT required at runtime — it is a scaffolder used only to (re)generate `.specify/` templates and the speckit commands. Contributors need only OpenCode/Claude Code + bash.
+
+**Template maintenance (maintainer-only):** refreshing the spec-kit scaffolding (`.specify/` + `speckit.*` commands) to a new spec-kit release is a periodic task for the designated template maintainer — never a routine contributor or agent task. The canonical copy of the workflow skills, speckit commands and this scaffolding lives in **slovo-propovedi-mobile**: make changes there first, verify with `bash .opencode/tools/check-skills-sync.sh`, then propagate copies to the other repos and re-run the check in each. When editing a workflow skill, edit the mobile copy first and re-propagate.
+
 ## Project Architecture
 
 This project follows Feature-Sliced Design (FSD) architecture with Expo Router for navigation.
@@ -165,11 +194,11 @@ See [`docs/BUILD-LOCAL.md`](docs/BUILD-LOCAL.md) → «Prebuild и config-пла
 
 5. **Если в `docs/` нет нужной информации** — добавь её, исследовав код, чтобы следующий агент не делал это повторно. Это цель документации.
 
-6. **При добавлении новой фичи или изменении поведения** обнови онбординг в том же PR/коммите: добавь сценарий в `src/features/onboarding/lib/scenarioData/` или обнови шаги/цели (`targetId`) существующих сценариев, если затронутые экраны/элементы уже покрыты. Если новая фича заметна пользователю (новый экран, новый блок, новое действие) — у неё должен быть сценарий или шаг онбординга; автопоказ новинок к релизу добавляется через сценарий с `sinceVersion` (см. [`docs/features/onboarding.md`](docs/features/onboarding.md)).
+6. **При добавлении новой фичи или изменении поведения** обнови онбординг в том же PR/коммите: добавь сценарий в `src/features/onboarding/lib/scenarioData/` или обнови шаги/цели (`targetId`) существующих сценариев, если затронутые экраны/элементы уже покрыты. Если новая фича заметна пользователю (новый экран, новый блок, новое действие) — у неё должен быть сценарий или шаг онбординга; автопоказ новинок к релизу — сценарий `whatsNew` под контентным гейтом (см. [`docs/features/onboarding.md`](docs/features/onboarding.md)).
    - Тур всегда стартует с карточки-описания (первый шаг — обычная карточка без route/tapTargetId); переходы (возврат на экран с таб-баром, мигание таба) — entry-транзишны после неё и не считаются шагами.
    - Шаги-визуализации (tapActionId, мигание таба) не считаются шагами тура: прикрепляются как переходы (exit — к предыдущей карточке, entry — к следующей), не учитываются в «Шаг N из M»; «Назад» всегда возвращается к карточке.
    - Если тур стартует на экране из его `screens` — подводка (интро-карточка и таб-переходы) пропускается: первый показанный шаг — первая карточка этого экрана, счётчик «Шаг 1 из N»; интро-текст в данных остаётся для стартов с чужих экранов.
-   - **«Что нового» обновляется с каждой заметной пользователю фичей.** Замени шаги сценария `whatsNew` (`src/features/onboarding/lib/scenarioData/whatsNew.ts`) новинками релиза — старые шаги удаляются, а не копятся — и в том же коммите подними `WHATS_NEW_VERSION` (там же) до версии релиза, где выйдет фича (строгий семвер `X.Y.Z`, всегда больше прежнего). Тур показывается автоматически один раз на каждое значение `WHATS_NEW_VERSION`: подъём версии заново покажет его всем, кто уже видел прежнее содержимое; без подъёма новые шаги автоматически не увидит никто. Несколько фич одного релиза — одно «Что нового»: если `WHATS_NEW_VERSION` уже равна версии будущего релиза, просто дополни шаги. Подробнее — [`docs/features/onboarding.md`](docs/features/onboarding.md) → «Версионирование «Что нового»».
+   - **«Что нового» обновляется с каждой заметной пользователю фичей; версия приложения в гейте не участвует.** Замени шаги сценария `whatsNew` (`src/features/onboarding/lib/scenarioData/whatsNew.ts`) новинками релиза — старые шаги удаляются, а не копятся. Гейт автопоказа — **контентный отпечаток** шагов: FNV-1a 32-бит от их стабильной JSON-сериализации (`src/features/onboarding/lib/contentFingerprint.ts`), который сравнивается с сохранённым в `tours_seen_version`. Тур показывается, только если отпечаток текущих шагов отличается от сохранённого: релиз, поднявший лишь версию (хотфикс/OTA без видимых новинок), тур не перепоказывает, а изменённый контент показывается один раз всем. Руками ничего поднимать не нужно: отдельной константы версии содержимого нет, и AI-агенты её не трогают. Релиз без заметных пользователю новинок оставляет `steps` пустым — пустой сценарий не автопоказывается («тихий» релиз). Несколько фич одного релиза — одно «Что нового»: просто дополни шаги. Подробнее — [`docs/features/onboarding.md`](docs/features/onboarding.md) → «Контентный гейт «Что нового»».
 
 7. **Версии пакетов в доках.** По возможности не указывать версии пакетов вовсе; где версия необходима — минимальный порог («v12.4+», «SDK 58+»). Era-маркеры («SDK 58», «RN 0.88») — только там, где текст привязан к поведению конкретной эпохи. Исторические версии в past-tense и литеральные имена патчей — исключения. Точная текущая версия пакета в доке — ошибка ревью. Источник истины — `package.json` и `yarn.lock`; подробнее — в [`docs/conventions.md`](docs/conventions.md) → «Ведение документации docs/».
 

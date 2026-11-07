@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SecureStore from 'expo-secure-store'
+import { clearSessionCache } from '../lib/session-cache/clearSessionCache'
 import { type UserResponse } from './generated/api.schemas'
 import {
   LEGACY_ACCESS_TOKEN_KEY,
@@ -50,6 +51,7 @@ export const secureTokenStorage = {
 
   clearTokens: async () => {
     await Promise.all([
+      clearSessionCache(),
       SecureStore.deleteItemAsync(SECURE_ACCESS_TOKEN_KEY, SECURE_STORE_OPTIONS),
       SecureStore.deleteItemAsync(SECURE_REFRESH_TOKEN_KEY, SECURE_STORE_OPTIONS),
       AsyncStorage.multiRemove([LEGACY_ACCESS_TOKEN_KEY, LEGACY_REFRESH_TOKEN_KEY]),

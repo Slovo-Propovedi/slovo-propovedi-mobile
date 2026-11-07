@@ -65,6 +65,7 @@ export const buildQueue = async (
       state.snapshots,
       source => (state.currentSourceUri = source),
       state.sources,
+      count => (state.autoAdvanceCount = count),
     )
   } catch (error) {
     console.error('[PlaylistEngine] attachPlaylistListeners failed:', error)

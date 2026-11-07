@@ -1,6 +1,6 @@
 import { ListItemBase } from 'entities/list-item'
-import { type APITypes } from 'shared/api'
 import { AdminSectionRowSkeleton } from 'shared/ui'
+import { type AdminSectionListItem } from '../lib/sectionListItem'
 import { AdminSectionBadges } from './AdminSectionBadges'
 
 const DRAG_LABEL = 'Переместить раздел'
@@ -24,7 +24,7 @@ export const AdminSectionRow = ({
 }: {
   drag: () => void
   isActive: boolean
-  item: APITypes.SectionEntity
+  item: AdminSectionListItem
   onPress: () => void
 }) => (
   <ListItemBase
@@ -35,7 +35,7 @@ export const AdminSectionRow = ({
     title={item.title}
     isActive={isActive}
     dragLabel={DRAG_LABEL}
-    subtitle={item.description ?? playlistCountLabel(item.playlists.length)}
+    subtitle={item.description ?? playlistCountLabel(item.playlistsCount)}
     badges={<AdminSectionBadges itemsSize={item.itemsSize} transform={item.transform} />}
   />
 )

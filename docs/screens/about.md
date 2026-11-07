@@ -21,7 +21,7 @@
 
 ## Откуда данные
 
-- Константы из `src/shared/config`: `APP_NAME`, `APP_VERSION`, `COPYRIGHT_HOLDER`, `COPYRIGHT_YEAR`, `LICENSE_NAME`, `LICENSE_URL`, `PROJECT_URL`.
+- Константы из `src/shared/config`: `APP_NAME`, `APP_VERSION`, `COPYRIGHT_HOLDER`, `COPYRIGHT_YEAR`, `LICENSE_NAME`, `LICENSE_URL`, `PROJECT_URL`. `LICENSE_URL` и `PROJECT_URL` собираются из `PROJECT_REPOSITORY_URL` (`src/shared/config/repository.ts`, переменные `EXPO_PUBLIC_REPOSITORY_URL`/`_ORG`/`_MOBILE_REPOSITORY_NAME`).
   - `PROJECT_URL = https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/`
   - `LICENSE_NAME = GPL-3.0-or-later`, `COPYRIGHT_HOLDER = Slovo.Propovedi`, `COPYRIGHT_YEAR = 2026`.
 

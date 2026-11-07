@@ -19,8 +19,10 @@ interface SkipMissingStepInput {
 
 // Drops a card whose target never registers, in the direction the user arrived:
 // forward for «Далее», backward for «Назад». The entry leaves the deck for good (its
-// exit visualizations with it); the tour never ends from a skip. Returns whether the
-// card is currently being skipped — the overlay stays hidden meanwhile.
+// exit visualizations with it) and the tour moves to the nearest surviving neighbor;
+// a boundary skip — no survivor in the skip direction — ends the tour via
+// `endOnboardingTour`. Returns whether the card is currently being skipped — the
+// overlay stays hidden meanwhile.
 export const useSkipMissingStep = ({
   deckIndex,
   hasOtherRegisteredRect,

@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, View } from 'react-native'
+import { RefreshButton } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
@@ -19,6 +20,7 @@ export const AdminFlagsHeader = ({ onCreate }: { onCreate: () => void }) => {
             Управление фича-флагами приложения.
           </Text>
         </View>
+        <RefreshButton />
         <IconButton
           onPress={onCreate}
           accessibilityLabel={CREATE_LABEL}

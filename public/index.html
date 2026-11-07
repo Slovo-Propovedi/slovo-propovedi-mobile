@@ -8,6 +8,26 @@
       content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
     />
     <title>%WEB_TITLE%</title>
+    <meta
+      name="description"
+      content="Проповеди в аудио: слушайте онлайн и офлайн, подборки, плейлисты и поиск по проповедям и проповедникам."
+    />
+    <meta
+      name="keywords"
+      content="Слово.Проповеди, Slovo Propovedi, slovo, propovedi, проповеди, проповедь, аудио проповеди, слушать проповеди, sermons"
+    />
+    <meta name="application-name" content="Слово.Проповеди" />
+
+    <!-- Link previews (messengers, social networks) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Слово.Проповеди" />
+    <meta property="og:title" content="Слово.Проповеди — аудиопроповеди онлайн и офлайн" />
+    <meta
+      property="og:description"
+      content="Слушайте проповеди онлайн и офлайн: подборки, плейлисты и поиск по проповедям и проповедникам."
+    />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:image" content="/icons/icon-512.png" />
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -52,9 +72,11 @@
       html.has-splash #root {
         visibility: hidden;
       }
-      /* Web startup splash: mirrors the native splash (image centered on the
-         brand accent) while the JS bundle loads. It is a sibling of #root so
-         React never touches it; ThemeProvider removes it once the app boots. */
+      /* Web startup splash: mirrors the native scheme-aware splash — a contour
+         mark on a themed background (light: dark contour on brand #f16031; dark:
+         accent contour on #000000). <picture> picks the file statically via
+         prefers-color-scheme. It is a sibling of #root so React never touches
+         it; ThemeProvider removes it once the app boots. */
       #sp-splash {
         position: fixed;
         inset: 0;
@@ -65,7 +87,7 @@
         opacity: 1;
         transition: opacity 300ms ease;
       }
-      /* Explicit fixed box (source is a square 307×307 PNG scaled to 152×152).
+      /* Explicit fixed box (sources are square 307×307 PNGs scaled to 152×152).
          Never derive the size from layout: keep the splash pixel-identical
          through mount, regardless of viewport/scrollbar changes. */
       #sp-splash img {
@@ -121,7 +143,10 @@
     <div id="root"></div>
     <!-- Startup splash (native-like): removed by ThemeProvider once the app boots. -->
     <div id="sp-splash">
-      <img src="/splash.png" alt="" />
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="/dark-splash-icon.png" />
+        <img src="/light-splash-icon.png" alt="" />
+      </picture>
     </div>
 
     <script src="/register-sw.js" defer></script>

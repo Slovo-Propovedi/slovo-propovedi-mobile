@@ -35,8 +35,10 @@
 #     yarn.lock, and a version-only bump is not native;
 #   - build.gradle / *.pbxproj are excluded from the name-only list and
 #     inspected below — only added/removed lines beyond version metadata count.
-# Any other file under android/, ios/, plugins/, modules/ counts by name alone
-# (new native module, manifest, plugin, ...).
+# Any other file under android/, ios/, plugins/, modules/, patches/ counts by
+# name alone (new native module, manifest, plugin, ...). patches/ holds native
+# Kotlin/Swift that patch-package applies into node_modules at build time and
+# compiles into the APK, so a patch edit needs a new APK, not a JS-only OTA.
 
 set -euo pipefail
 
@@ -96,7 +98,7 @@ if [ -z "$PREV_REF" ]; then
 fi
 
 NAME_CHANGED=$(git diff --name-only "$DIFF_BASE" -- \
-  android ios plugins modules yarn.lock app.config.ts ota.config.ts \
+  android ios plugins modules patches yarn.lock app.config.ts ota.config.ts \
   ':(exclude)android/app/build.gradle' \
   ':(exclude,glob)ios/**/*.pbxproj' || true)
 

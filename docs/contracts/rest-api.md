@@ -159,7 +159,7 @@ Rate limiting аутентификации — в разделе «Аутент�
 Влияние на клиент:
 
 - фабрики `<area>Mocks` генерируют `createdAt` автоматически, поэтому тестовые серверные ответы обязаны приходить из них: ручные литералы DTO без поля больше не проходят `check:types` (правило — [AGENTS.md](../../AGENTS.md) → «Testing Guidelines»);
-- доменные мапперы (`mapSermonEntityToSermonData`, `mapPlaylistEntityToPlaylistData`, `mapPlaylistSermonToSermonShape`, `mapSectionPlaylistToPlaylistData`) поле пока **не пробрасывают** — доменные `SermonData`/`PlaylistData` не менялись, «дата добавления» в UI не показывается (см. [../debt.md](../debt.md)).
+- доменные мапперы (`mapSermonEntityToSermonData`, `mapPlaylistEntityToPlaylistData`, `mapPlaylistSermonToSermonShape`, `mapSectionPlaylistToPlaylistData`) поле пока **не пробрасывают** — доменные `SermonData`/`PlaylistData` не менялись; админ-списки показывают дату напрямую из `SermonEntity`/`PlaylistEntity` (`createdAt` → `formatRelativeDate` в подписи строки), в остальном UI она не используется.
 
 ## Мёртвый код
 

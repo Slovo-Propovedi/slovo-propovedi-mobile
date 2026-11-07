@@ -1,7 +1,7 @@
 # Android App Links (глубокие ссылки)
 
 **Слой:** `app.config.ts` (`android.intentFilters`), `android/` (prebuild), `public/.well-known/assetlinks.json`, `nginx.conf`, `src/pages/playlist` (сетевой резолв по id)
-**Статус:** заявлены 2 маршрута (`/listen`, `/listen/playlist`), локально проверены (`yarn web:build` + preview); прод-деплой `assetlinks.json` не выполнен — ручной шаг
+**Статус:** заявлены 2 маршрута (`/listen`, `/listen/playlist`), локально проверены (`yarn web:build` + preview); прод-деплой `assetlinks.json` выполнен, прод отдаёт его с `200` + `application/json` (проверено 2026-11-02)
 
 ## Обзор
 
@@ -119,7 +119,7 @@ intentFilters: [
 - **release** — `43:F8:DF:03:9D:37:AD:E8:1A:17:B7:AE:8E:DF:8E:43:1C:7F:D8:7B:A1:60:FD:8C:09:C6:28:1A:54:70:6D:9B` — SHA256 release-ключа (сгенерирован 2026-10-05, alias `slovo-propovedi`; см. [../BUILD-LOCAL.md](../BUILD-LOCAL.md) → «Signing for Production»);
 - лежит в `public/`, поэтому `yarn web:build` (`expo export -p web`) копирует его в `dist/.well-known/assetlinks.json` автоматически.
 
-**Правило обновления при смене ключа подписи:** при генерации нового ключа — **добавить** его SHA256 **вторым (следующим) элементом** массива `sha256_cert_fingerprints` (Android допускает несколько отпечатков) и передеплоить веб. Не заменять — иначе установленные ранее сборки перестанут верифицироваться. Debug-отпечаток удалять только после того, как сборки на нём окончательно выйдут из обращения.
+**Правило обновления при смене ключа подписи:** при генерации нового ключа — **добавить** его SHA256 **вторым (следующим) элементом** массива `sha256_cert_fingerprints` (Android допускает несколько отпечатков) и передеплоить веб. Не заменять — иначе установленные ранее сборки перестанут верифицироваться. Одновременно добавить новый отпечаток в переменную организации `APK_SIGNER_SHA256` (через запятую, 64 hex без двоеточий): по ней release-workflow проверяет подпись собранного APK, а landing — подпись публикуемого APK (см. [../BUILD-LOCAL.md](../BUILD-LOCAL.md) → «CI secrets»). Debug-отпечаток удалять только после того, как сборки на нём окончательно выйдут из обращения.
 
 ## nginx: `/.well-known/`
 
@@ -139,7 +139,7 @@ location ^~ /.well-known/ {
 
 Локальная проверка деплоя: `yarn web:build` → `dist/.well-known/assetlinks.json` существует → `yarn web:preview` отдаёт его с `200` + `application/json`.
 
-**Прод-деплой не выполнен** — `scripts/vps-deploy-web.sh` запускается на VPS из Forgejo release-воркфлоу (общий флоу деплоя веб-приложения — [web.md](./web.md) → «Деплой»). После деплоя вручную проверить:
+**Прод-деплой выполнен (2026-11-02)** — `scripts/vps-deploy-web.sh` запускается на VPS из Forgejo release-воркфлоу (общий флоу деплоя веб-приложения — [web.md](./web.md) → «Деплой»). **Проверка `/.well-known/` на проде пройдена (2026-11-02):** `assetlinks.json` отдаётся с `HTTP/2 200`, `content-type: application/json` (864 байта, `last-modified: 2026-11-01`, стандартные security-заголовки nginx: CSP, HSTS, `x-content-type-options`), без редиректа. Воспроизвести:
 
 ```bash
 curl -sI https://app.slovo-propovedi.ru/.well-known/assetlinks.json   # 200, application/json, без редиректа

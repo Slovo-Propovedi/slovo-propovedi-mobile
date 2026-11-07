@@ -82,6 +82,7 @@ jest.mock('entities/track-list', () => {
 
   return {
     createTracksListStyles: () => StyleSheet.create({ container: {}, divider: {} }),
+    TRACK_LIST_ITEM_SIZES: { albumArtSize: 48 },
     TracksListItem,
     TracksListSkeleton,
   }
@@ -90,6 +91,9 @@ jest.mock('entities/track-list', () => {
 const CACHING_OFF_HINT_TEXT = 'Включите тумблер в шапке экрана'
 const CACHING_OFF_TEXT = 'Сохранение в офлайн отключено'
 const NO_SERMONS_TEXT = 'Нет офлайн-проповедей'
+const OFFLINE_OPTION_TEXT = 'Все офлайн-проповеди'
+const OFFLINE_LIST_LABEL = 'Плейлист всех скачанных проповедей'
+const OFFLINE_ORIGIN_LABEL = 'Плейлист, из которого добавлено в офлайн'
 
 const mockSermon = {
   artist: 'Test Artist',
@@ -181,7 +185,35 @@ describe('<OfflineScreen>', () => {
     expect(checkboxes[1]).not.toBeChecked()
   })
 
-  test('row press calls playNewSermon with item playlist and sermon', async () => {
+  test('one real candidate still opens the chooser with the offline option', async () => {
+    const playNewSermonMock = jest.fn()
+    jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
+
+    const { getAllByText, getByText } = await renderWithProviders(<OfflineScreen />)
+
+    await act(async () => {
+      fireEvent.press(getByText('Play'))
+    })
+
+    expect(getByText('Где воспроизвести проповедь?')).toBeTruthy()
+    expect(getByText(OFFLINE_OPTION_TEXT)).toBeTruthy()
+    expect(getByText(OFFLINE_LIST_LABEL)).toBeTruthy()
+    expect(getByText(OFFLINE_ORIGIN_LABEL)).toBeTruthy()
+    expect(playNewSermonMock).not.toHaveBeenCalled()
+
+    // The list row subtitle repeats the playlist title; the chooser row is last.
+    const playlistRows = getAllByText(mockItem.playlist.title)
+    expect(playlistRows.length).toBe(2)
+
+    fireEvent.press(playlistRows[playlistRows.length - 1])
+
+    expect(playNewSermonMock).toHaveBeenCalledWith({
+      playlist: mockItem.playlist,
+      sermon: mockItem.sermon,
+    })
+  })
+
+  test('the offline option plays the all-offline playlist', async () => {
     const playNewSermonMock = jest.fn()
     jest.mocked(usePlayNewSermon).mockReturnValue(playNewSermonMock)
 
@@ -190,9 +222,12 @@ describe('<OfflineScreen>', () => {
     await act(async () => {
       fireEvent.press(getByText('Play'))
     })
+    await act(async () => {
+      fireEvent.press(getByText(OFFLINE_OPTION_TEXT))
+    })
 
     expect(playNewSermonMock).toHaveBeenCalledWith({
-      playlist: mockItem.playlist,
+      playlist: expect.objectContaining({ id: 'offline-list', sermons: [mockSermon] }),
       sermon: mockItem.sermon,
     })
   })

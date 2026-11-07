@@ -36,15 +36,18 @@ const sw = /** @type {SW & typeof globalThis} */ (
 
 /**
  * @type {string} Cache bucket for downloaded sermon audio.
- * Keep in sync with AUDIO_CACHE_NAME in src/shared/lib/audio-cache/openAudioCache.ts.
+ * Keep in sync with AUDIO_CACHE_NAME in src/entities/offline-cache/lib/openAudioCache.ts.
  */
 const AUDIO_CACHE = 'audio-cache-v1'
 
 /**
- * Reserved same-origin key inside the audio bucket holding the commit manifest.
- * Keep in sync with AUDIO_MANIFEST_KEY in src/shared/lib/audio-cache/webCacheManifest.ts.
+ * @type {string} Absolute origin-root key inside the audio bucket holding the
+ * commit manifest. Absolute on purpose: a relative key would resolve against
+ * the current page route on the page side, so both sides pin the origin root.
+ * Keep in sync with AUDIO_MANIFEST_KEY in
+ * src/entities/offline-cache/lib/webCacheManifest.ts.
  */
-const AUDIO_MANIFEST = '__manifest__'
+const AUDIO_MANIFEST = sw.location.origin + '/__manifest__'
 
 /** Build version, injected by scripts/inject-sw-precache.mjs at build time. */
 const BUILD_VERSION = '__SW_BUILD_VERSION__'
@@ -153,6 +156,19 @@ async function serveWithRange(request, cached) {
 }
 
 /**
+ * Pass a media request through to the network, but fail fast when the device
+ * is offline: a hanging fetch inside respondWith keeps WebKit's media loader
+ * buffering forever instead of erroring.
+ * @param {Request} request
+ * @returns {Promise<Response>}
+ */
+function fetchOrOfflineError(request) {
+  if (sw.navigator.onLine === false)
+    return Promise.resolve(new Response(null, { status: 504, statusText: 'Offline' }))
+  return fetch(request)
+}
+
+/**
  * Serve a cached audio response if present, otherwise stream from the network.
  * @param {Request} request
  * @param {URL} url
@@ -162,7 +178,7 @@ async function serveWithRange(request, cached) {
 async function serveCachedOrFetch(request, url, cache) {
   const cached = await cache.match(url.href, { ignoreVary: true })
   if (cached) return serveWithRange(request, cached)
-  return await fetch(request)
+  return fetchOrOfflineError(request)
 }
 
 /**
@@ -175,7 +191,16 @@ async function serveCachedOrFetch(request, url, cache) {
  * @returns {Promise<Response>}
  */
 async function audioStrategy(request, url) {
-  const cache = await caches.open(AUDIO_CACHE)
+  /** @type {Cache} */
+  let cache
+  try {
+    cache = await caches.open(AUDIO_CACHE)
+  } catch (error) {
+    // Cache Storage may be unavailable (private mode, evicted quota) — a
+    // rejected respondWith kills the sound entirely, so stream instead.
+    console.error('[sw] Opening the audio cache failed:', error)
+    return fetchOrOfflineError(request)
+  }
   const manifestEntry = await cache.match(AUDIO_MANIFEST, { ignoreVary: true })
   // Legacy fallback: no manifest yet (migration not run) — trust existing entries.
   if (!manifestEntry) return serveCachedOrFetch(request, url, cache)
@@ -188,7 +213,7 @@ async function audioStrategy(request, url) {
       if (!manifest || !Array.isArray(manifest.urls))
         return serveCachedOrFetch(request, url, cache)
       var committed = manifest.urls.indexOf(url.href) !== -1
-      if (!committed) return fetch(request)
+      if (!committed) return fetchOrOfflineError(request)
       return serveCachedOrFetch(request, url, cache)
     },
     // Unparseable manifest — fall back to the legacy path.

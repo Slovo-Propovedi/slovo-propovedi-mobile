@@ -15,6 +15,54 @@ index 6c81fce..c6fa935 100644
        }.set { playlist, mode: LoopMode ->
          runOnMain {
            playlist.loopMode = mode
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
+index bf3f9c5..3bb7f26 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
+@@ -39,6 +39,9 @@ class AudioPlaylist(
+   private var sources: MutableList<AudioSource> = initialSources.toMutableList()
+   private var currentRate = 1f
+   private var previousMediaItemIndex = 0
++  // PATCH(patch-package): cumulative AUTO transitions only - manual next/prev/skip
++  // arrive with reason SEEK and must stay distinguishable from track-end advances.
++  private var autoAdvanceCount = 0
+ 
+   override var isActiveForLockScreen = false
+   override var metadata: Metadata? = null
+@@ -100,6 +103,11 @@ class AudioPlaylist(
+   override fun onMediaItemChanged(mediaItem: MediaItem?, reason: Int) {
+     val currentIndex = ref.currentMediaItemIndex
+     if (currentIndex != previousMediaItemIndex) {
++      // PATCH(patch-package): count only track-end auto-advances so JS can
++      // restore the played chain after a frozen process (repeat wrap included).
++      if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
++        autoAdvanceCount += 1
++      }
+       emitTrackChanged(previousMediaItemIndex, currentIndex)
+       previousMediaItemIndex = currentIndex
+     }
+@@ -232,7 +240,10 @@ class AudioPlaylist(
+       "muted" to isMuted,
+       "volume" to ref.volume,
+       "loop" to loopMode.value,
+-      "didJustFinish" to false
++      // PATCH(patch-package): report the real ENDED state; the probe in
++      // playlistEngineStatus.ts relies on didJustFinish + isLoaded at queue end.
++      "didJustFinish" to (ref.playbackState == Player.STATE_ENDED),
++      "autoAdvanceCount" to autoAdvanceCount
+     )
+   }
+ 
+@@ -241,7 +252,8 @@ class AudioPlaylist(
+       TRACK_CHANGED,
+       mapOf(
+         "previousIndex" to previousIndex,
+-        "currentIndex" to currentIndex
++        "currentIndex" to currentIndex,
++        "autoAdvanceCount" to autoAdvanceCount
+       )
+     )
+     sendStatusUpdate()
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
 index 2280c80..d32facf 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
@@ -29,3 +77,115 @@ index 2280c80..d32facf 100644
 +  val resolved = seconds?.takeIf { it.isFinite() && it > 0.0 } ?: DEFAULT_SEEK_INTERVAL_SECONDS
    return (resolved * 1000).toLong().coerceAtLeast(MIN_SEEK_INTERVAL_MS)
  }
+diff --git a/node_modules/expo-audio/build/Audio.types.d.ts b/node_modules/expo-audio/build/Audio.types.d.ts
+index 332b0c2..b657232 100644
+--- a/node_modules/expo-audio/build/Audio.types.d.ts
++++ b/node_modules/expo-audio/build/Audio.types.d.ts
+@@ -739,4 +739,9 @@ export type AudioPlaylistStatus = {
+     loop: AudioPlaylistLoopMode;
+     /** Whether the current track just finished playing. */
+     didJustFinish: boolean;
++    /**
++     * Cumulative count of track-end auto-advances on this playlist instance.
++     * PATCH(patch-package): absent on binaries built without the patch.
++     */
++    autoAdvanceCount?: number;
+ };
+diff --git a/node_modules/expo-audio/build/AudioModule.types.d.ts b/node_modules/expo-audio/build/AudioModule.types.d.ts
+index 0d63c9b..8bcb380 100644
+--- a/node_modules/expo-audio/build/AudioModule.types.d.ts
++++ b/node_modules/expo-audio/build/AudioModule.types.d.ts
+@@ -318,6 +318,8 @@ export type AudioPlaylistEvents = {
+     trackChanged(data: {
+         previousIndex: number;
+         currentIndex: number;
++        /** PATCH(patch-package): cumulative automatic (track-end) advances. */
++        autoAdvanceCount?: number;
+     }): void;
+ };
+ export declare class AudioPlaylist extends SharedObject<AudioPlaylistEvents> {
+diff --git a/node_modules/expo-audio/ios/AudioPlaylist.swift b/node_modules/expo-audio/ios/AudioPlaylist.swift
+index 38e158f..d82cf56 100644
+--- a/node_modules/expo-audio/ios/AudioPlaylist.swift
++++ b/node_modules/expo-audio/ios/AudioPlaylist.swift
+@@ -22,6 +22,9 @@ public class AudioPlaylist: SharedRef<AVQueuePlayer>, Playable, LockScreenPlayab
+ 
+   private var playerItems: [AVPlayerItem?] = []
+   private var previousTrackIndex = 0
++  // PATCH(patch-package): cumulative auto-advance counter (track end / wrap
++  // only); manual next/previous/seekTo paths never touch it.
++  private var autoAdvanceCount = 0
+ 
+   var currentTrackIndex: Int {
+     guard let current = ref.currentItem,
+@@ -282,7 +285,8 @@ public class AudioPlaylist: SharedRef<AVQueuePlayer>, Playable, LockScreenPlayab
+       "muted": ref.isMuted,
+       "volume": ref.volume,
+       "loop": loopMode.rawValue,
+-      "didJustFinish": false
++      "didJustFinish": false,
++      "autoAdvanceCount": autoAdvanceCount
+     ]
+   }
+ 
+@@ -303,7 +307,8 @@ public class AudioPlaylist: SharedRef<AVQueuePlayer>, Playable, LockScreenPlayab
+   private func emitTrackChanged(previousIndex: Int, currentIndex: Int) {
+     self.emit(event: PlaylistConstants.trackChanged, payload: [
+       "previousIndex": previousIndex,
+-      "currentIndex": currentIndex
++      "currentIndex": currentIndex,
++      "autoAdvanceCount": autoAdvanceCount
+     ])
+     updateStatus(with: [:])
+   }
+@@ -371,6 +376,9 @@ public class AudioPlaylist: SharedRef<AVQueuePlayer>, Playable, LockScreenPlayab
+         self.play(at: self.currentRate)
+ 
+       case .all:
++        // PATCH(patch-package): every .all end advances to another item
++        // (AVQueuePlayer auto-advance, or the explicit wrap below).
++        self.autoAdvanceCount += 1
+         if isLastTrack {
+           self.skipTo(index: 0)
+           self.play(at: self.currentRate)
+@@ -382,6 +390,8 @@ public class AudioPlaylist: SharedRef<AVQueuePlayer>, Playable, LockScreenPlayab
+             "playing": false,
+             "didJustFinish": true
+           ])
++        } else {
++          self.autoAdvanceCount += 1
+         }
+       }
+     }
+diff --git a/node_modules/expo-audio/src/Audio.types.ts b/node_modules/expo-audio/src/Audio.types.ts
+index fe5f5c3..016d211 100644
+--- a/node_modules/expo-audio/src/Audio.types.ts
++++ b/node_modules/expo-audio/src/Audio.types.ts
+@@ -791,4 +791,9 @@ export type AudioPlaylistStatus = {
+   loop: AudioPlaylistLoopMode;
+   /** Whether the current track just finished playing. */
+   didJustFinish: boolean;
++  /**
++   * Cumulative count of track-end auto-advances on this playlist instance.
++   * PATCH(patch-package): absent on binaries built without the patch.
++   */
++  autoAdvanceCount?: number;
+ };
+diff --git a/node_modules/expo-audio/src/AudioModule.types.ts b/node_modules/expo-audio/src/AudioModule.types.ts
+index 3194a8e..ba467a6 100644
+--- a/node_modules/expo-audio/src/AudioModule.types.ts
++++ b/node_modules/expo-audio/src/AudioModule.types.ts
+@@ -391,7 +391,12 @@ export type AudioPlaylistEvents = {
+   /** Fired when the playlist's status changes (play/pause/seek/load/track change). */
+   playlistStatusUpdate(status: AudioPlaylistStatus): void;
+   /** Fired when the current track changes (next/previous/skip). */
+-  trackChanged(data: { previousIndex: number; currentIndex: number }): void;
++  trackChanged(data: {
++    previousIndex: number;
++    currentIndex: number;
++    /** PATCH(patch-package): cumulative automatic (track-end) advances. */
++    autoAdvanceCount?: number;
++  }): void;
+ };
+ 
+ export declare class AudioPlaylist extends SharedObject<AudioPlaylistEvents> {

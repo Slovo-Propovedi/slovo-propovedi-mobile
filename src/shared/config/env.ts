@@ -8,15 +8,52 @@ const hostnameSchema = z
   .string()
   .regex(/^[a-z0-9.-]+$/i, 'must be a bare hostname: no protocol, path, or trailing slash')
 
+// Mobile repository coordinates. In CI, _URL and _OWNER are derived from the
+// runner context (github.server_url / github.repository_owner) and the mirrors
+// from Forgejo org variables (MIRROR_CODEBERG_URL, MIRROR_GITHUB_URL,
+// MOBILE_REPOSITORY_NAME). They define where updates come from AND the
+// update-download allowlist, so the shape is strict: the primary is a bare
+// https origin plus a plain slug owner; each mirror travels as ONE https URL
+// whose only path segment is the owner (different owner spellings per host
+// are natural) — nothing that could widen a prefix.
+const originSchema = z
+  .string()
+  .regex(
+    /^https:\/\/[a-z0-9.-]+(:[0-9]+)?$/i,
+    'must be a bare https origin: no path or trailing slash',
+  )
+const slugSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/, 'must be a plain org/repository slug')
+// A mirror URL carries the owner as its single path segment
+// (no trailing slash, no deeper path) — different owner spellings per host
+// are natural.
+const mirrorUrlSchema = z
+  .string()
+  .regex(
+    /^https:\/\/[a-z0-9.-]+(:[0-9]+)?\/[A-Za-z0-9][A-Za-z0-9._-]*$/i,
+    'must be an https URL with the owner as its only path segment: no trailing slash, no deeper path',
+  )
+
 const envSchema = z.object({
   backendApiHostname: hostnameSchema,
   landingHostname: hostnameSchema,
+  mirrorCodebergUrl: mirrorUrlSchema,
+  mirrorGithubUrl: mirrorUrlSchema,
+  mobileRepositoryName: slugSchema,
+  repositoryOwner: slugSchema,
+  repositoryUrl: originSchema,
   webHostname: hostnameSchema,
 })
 
 const parsedEnv = envSchema.safeParse({
   backendApiHostname: process.env.EXPO_PUBLIC_BACKEND_API_HOSTNAME,
   landingHostname: process.env.EXPO_PUBLIC_LANDING_HOSTNAME,
+  mirrorCodebergUrl: process.env.EXPO_PUBLIC_MIRROR_CODEBERG_URL,
+  mirrorGithubUrl: process.env.EXPO_PUBLIC_MIRROR_GITHUB_URL,
+  mobileRepositoryName: process.env.EXPO_PUBLIC_MOBILE_REPOSITORY_NAME,
+  repositoryOwner: process.env.EXPO_PUBLIC_REPOSITORY_OWNER,
+  repositoryUrl: process.env.EXPO_PUBLIC_REPOSITORY_URL,
   webHostname: process.env.EXPO_PUBLIC_WEB_HOSTNAME,
 })
 

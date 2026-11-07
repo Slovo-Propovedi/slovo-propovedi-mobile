@@ -1,5 +1,13 @@
+import { ctx } from 'shared/lib/reatom-ctx'
+import { currentAudioAtom, currentPlaylistAtom } from '../../../model'
 import { type LockScreenMetadata } from '../types'
 import { createWebMediaSession } from './mediaSession'
+
+jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
+jest.mock('../../../model', () => ({
+  currentAudioAtom: 'audio-marker',
+  currentPlaylistAtom: 'playlist-marker',
+}))
 
 interface AudioElementLike {
   currentTime: number
@@ -291,6 +299,66 @@ describe('createWebMediaSession', () => {
     expect(() => controller.setMetadata(METADATA)).not.toThrow()
     expect(() => controller.updatePositionState()).not.toThrow()
     expect(() => controller.reassert()).not.toThrow()
+    expect(() => controller.reassertMetadata()).not.toThrow()
     expect(player.seekTo).not.toHaveBeenCalled()
+  })
+})
+
+describe('createWebMediaSession reassertMetadata', () => {
+  const CURRENT_AUDIO = {
+    artist: METADATA.artist,
+    artwork: METADATA.artworkUrl,
+    id: 'sermon-1',
+    title: METADATA.title,
+  }
+  const CURRENT_PLAYLIST = { title: METADATA.albumTitle }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    global.MediaMetadata = jest.fn().mockImplementation((init: MediaMetadataInit) => init)
+    ;(ctx.get as jest.Mock).mockImplementation(atom => {
+      if (atom === currentAudioAtom) return CURRENT_AUDIO
+      if (atom === currentPlaylistAtom) return CURRENT_PLAYLIST
+      return undefined
+    })
+  })
+
+  test('re-applies the current track metadata while the media session is playing', () => {
+    const mock = makeMediaSessionMock()
+    const { controller } = makeController(makeAudio({ paused: false }))
+    controller.setMetadata(METADATA)
+    mock.metadata = null
+
+    controller.reassertMetadata()
+
+    expect(mock.metadata).toEqual({
+      album: METADATA.albumTitle,
+      artist: METADATA.artist,
+      artwork: [{ src: METADATA.artworkUrl }],
+      title: METADATA.title,
+    })
+  })
+
+  test('does nothing while playback is paused', () => {
+    const mock = makeMediaSessionMock()
+    const { controller } = makeController(makeAudio({ paused: true }))
+    controller.setMetadata(METADATA)
+    mock.metadata = null
+
+    controller.reassertMetadata()
+
+    expect(mock.metadata).toBeNull()
+  })
+
+  test('does nothing without a current track', () => {
+    ;(ctx.get as jest.Mock).mockReturnValue(undefined)
+    const mock = makeMediaSessionMock()
+    const { controller } = makeController(makeAudio({ paused: false }))
+    controller.setMetadata(METADATA)
+    mock.metadata = null
+
+    controller.reassertMetadata()
+
+    expect(mock.metadata).toBeNull()
   })
 })

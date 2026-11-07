@@ -3,10 +3,10 @@ import { useRouter } from 'expo-router'
 import { View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { type APITypes } from 'shared/api'
 import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
+import { type AdminSectionListItem } from '../lib/sectionListItem'
 import { useAdminSections } from '../lib/useAdminSections'
 import { AdminSectionRow } from './AdminSectionRow'
 import { AdminSectionsHeader } from './AdminSectionsHeader'
@@ -30,11 +30,11 @@ export const AdminSectionsScreen = () => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { isLoading, isRefreshing, isReordering, reload, reorder, sections } = useAdminSections()
 
-  const openSection = (section: APITypes.SectionEntity) => {
+  const openSection = (section: AdminSectionListItem) => {
     router.push({ params: { id: section.id }, pathname: '/admin/sections/[id]' })
   }
 
-  const renderItem = ({ drag, isActive, item }: RenderItemParams<APITypes.SectionEntity>) => (
+  const renderItem = ({ drag, isActive, item }: RenderItemParams<AdminSectionListItem>) => (
     <AdminSectionRow
       item={item}
       drag={drag}

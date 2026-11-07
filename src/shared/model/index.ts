@@ -41,3 +41,4 @@ export {
   resumeUpdateAfterPermissionAction,
   startUpdateAction,
 } from './updateInstallFlow'
+export { decideOtaAutoApply } from './updateOtaAutoApply'

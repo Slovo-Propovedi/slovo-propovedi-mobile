@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, TextInput, View } from 'react-native'
 import { type APITypes } from 'shared/api'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
-import { AdminSelect, type AdminSelectOption } from 'shared/ui'
+import { AdminSelect, type AdminSelectOption, RefreshButton } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
@@ -47,6 +47,7 @@ export const AdminSermonsHeader = ({
             {`Всего: ${count}`}
           </Text>
         </View>
+        <RefreshButton />
         <TouchableItem
           onPress={onCreate}
           style={[styles.createButton, { backgroundColor: currentTheme.primary }]}

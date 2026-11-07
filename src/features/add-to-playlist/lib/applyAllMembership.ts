@@ -1,12 +1,10 @@
 import { type Ctx } from '@reatom/framework'
 import {
   type LocalPlaylistData,
-  MAX_CUSTOM_PLAYLIST_SERMONS,
+  PLAYLIST_SERMON_LIMIT_MESSAGE,
   togglePlaylistSermon,
 } from 'entities/playlist'
 import { type SermonShape, showToast } from 'shared/model'
-
-const LIMIT_TOAST = `В плейлисте максимум ${MAX_CUSTOM_PLAYLIST_SERMONS} проповедей`
 
 const addMissingSermons = async (
   ctx: Ctx,
@@ -18,7 +16,7 @@ const addMissingSermons = async (
     if (existingIds.has(sermon.id)) continue
     const outcome = await togglePlaylistSermon(ctx, target.id, sermon, true)
     if (outcome !== 'limit-reached') continue
-    showToast(ctx, LIMIT_TOAST)
+    showToast(ctx, PLAYLIST_SERMON_LIMIT_MESSAGE)
     return
   }
 }

@@ -1,6 +1,5 @@
 import { memo, useCallback, useMemo } from 'react'
 import { StyleSheet } from 'react-native'
-import { useEntryPlayback } from 'features/entry-playback'
 import {
   buildHistoryMenuActions,
   getEntrySermon,
@@ -13,8 +12,6 @@ import { TracksListItem } from 'entities/track-list'
 import { formatRelativeDate } from 'shared/lib/format'
 import { INDENTS } from 'shared/ui/theme'
 
-const PLAYBACK_ERROR_MESSAGE = 'Не удалось воспроизвести проповедь из истории'
-
 const styles = StyleSheet.create({
   row: { marginHorizontal: INDENTS.medium },
 })
@@ -25,13 +22,14 @@ export const HistoryRow = memo(
     isAudioPlaying,
     isPlaying,
     onAddToPlaylist,
+    onPress,
   }: {
     entry: ListeningHistoryEntry
     isAudioPlaying: boolean
     isPlaying: boolean
     onAddToPlaylist?: (sermon: SermonData) => void
+    onPress: (entry: ListeningHistoryEntry) => void
   }) => {
-    const playEntry = useEntryPlayback(PLAYBACK_ERROR_MESSAGE)
     const sermon = getEntrySermon(entry)
     const cacheState = useTrackItemCache(sermon?.audioUrl)
     const completed = isEntryCompleted(entry)
@@ -42,7 +40,7 @@ export const HistoryRow = memo(
         ? Math.min(entry.positionMs / entry.durationMs, 1)
         : undefined
 
-    const handlePress = useCallback(() => playEntry(entry), [entry, playEntry])
+    const handlePress = useCallback(() => onPress(entry), [entry, onPress])
 
     const menuActions = useMemo(() => {
       // Derive the sermon inside the memo: getEntrySermon builds a fresh object

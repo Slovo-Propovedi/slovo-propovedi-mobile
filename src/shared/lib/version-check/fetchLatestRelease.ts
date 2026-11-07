@@ -1,15 +1,16 @@
 /* eslint-disable camelcase -- GitHub/Forgejo release API fields are snake_case */
 import axios from 'axios'
 import z from 'zod'
+import { LATEST_RELEASE_API_URLS } from '../../config/repository'
 import { isApkZipAssetName } from './isApkZipAssetName'
 import { type LatestReleaseInfo } from './types'
 
-const FORGEJO_API_URL =
-  'https://git.lightnode.ru/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest'
-const CODEBERG_API_URL =
-  'https://codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest'
-const GITHUB_API_URL =
-  'https://api.github.com/repos/Slovo-Propovedi/slovo-propovedi-mobile/releases/latest'
+// Built from the repository coordinates (EXPO_PUBLIC_*, validated in env.ts).
+const {
+  codeberg: CODEBERG_API_URL,
+  forgejo: FORGEJO_API_URL,
+  github: GITHUB_API_URL,
+} = LATEST_RELEASE_API_URLS
 const REQUEST_TIMEOUT = 10000
 const CHECKSUM_ASSET_NAME = 'SHA256SUMS.txt'
 

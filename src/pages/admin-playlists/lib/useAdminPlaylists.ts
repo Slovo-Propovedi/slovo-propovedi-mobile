@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { type APITypes } from 'shared/api'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
 import { usePaginatedList } from 'shared/lib/hooks/usePaginatedList'
 import { fetchPlaylistsPage, PLAYLISTS_PAGE_SIZE } from './fetchPlaylistsPage'
+import { type AdminPlaylistsListItem } from './playlistListItem'
+import { playlistsPageCache } from './playlistsPageCache'
 
 export interface AdminPlaylistsState {
   hasMore: boolean
@@ -16,7 +18,7 @@ export interface AdminPlaylistsState {
   onSearchChange: (search: string) => void
   onSortChange: (sort: APITypes.PlaylistControllerFindAllSort) => void
   order: APITypes.PlaylistControllerFindAllOrder
-  playlists: APITypes.PlaylistEntity[]
+  playlists: AdminPlaylistsListItem[]
   refresh: () => Promise<void>
   search: string
   sort: APITypes.PlaylistControllerFindAllSort
@@ -48,6 +50,11 @@ export const useAdminPlaylists = (): AdminPlaylistsState => {
     [order, query, sort],
   )
 
+  const cache = useMemo(
+    () => ({ key: `${query.trim()}|${sort}|${order}`, store: playlistsPageCache }),
+    [order, query, sort],
+  )
+
   const {
     hasMore,
     isError,
@@ -59,6 +66,7 @@ export const useAdminPlaylists = (): AdminPlaylistsState => {
     loadMoreFailed,
     refresh,
   } = usePaginatedList({
+    cache,
     errorMessage: LOAD_ERROR_MESSAGE,
     fetchPage,
     pageSize: PLAYLISTS_PAGE_SIZE,

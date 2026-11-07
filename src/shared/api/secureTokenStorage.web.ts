@@ -1,3 +1,4 @@
+import { clearSessionCache } from '../lib/session-cache/clearSessionCache'
 import { type UserResponse } from './generated/api.schemas'
 import {
   parseCachedUser,
@@ -25,6 +26,7 @@ export const secureTokenStorage = {
 
   clearTokens: async () => {
     await Promise.all([
+      clearSessionCache(),
       removeEncryptedValue(SECURE_ACCESS_TOKEN_KEY),
       removeEncryptedValue(SECURE_REFRESH_TOKEN_KEY),
     ])

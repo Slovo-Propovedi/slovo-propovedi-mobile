@@ -18,9 +18,6 @@ permissions:
   - action: todoread
     resource: '*'
     effect: deny
-  - action: kagi_*
-    resource: '*'
-    effect: deny
   - action: shell
     resource: '*'
     effect: deny
@@ -133,9 +130,6 @@ permissions:
     resource: 'tr *'
     effect: allow
   - action: context7_*
-    resource: '*'
-    effect: allow
-  - action: exa_*
     resource: '*'
     effect: allow
   - action: gh_grep_*
@@ -320,14 +314,14 @@ OpenCode supports per-agent tool configuration using wildcard patterns. Tools ca
   // Disable MCP tools globally
   "tools": {
     "context7*": false,
-    "exa*": false
+    "gh_grep*": false
   },
   // Enable only for specific agent
   "agent": {
     "researcher": {
       "tools": {
         "context7*": true,
-        "exa*": true
+        "gh_grep*": true
       }
     }
   }

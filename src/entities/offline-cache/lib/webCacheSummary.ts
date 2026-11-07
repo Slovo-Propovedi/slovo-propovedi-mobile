@@ -4,8 +4,7 @@
  * call `cache.keys()`.
  */
 
-import { openAudioCache } from './openAudioCache'
-import { isCacheStorageAvailable } from './webCacheApi'
+import { isCacheStorageAvailable, openAudioCache } from './openAudioCache'
 import { isManifestUrl } from './webCacheManifest'
 
 export interface AudioCacheSummary {

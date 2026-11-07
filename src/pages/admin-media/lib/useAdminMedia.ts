@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { type APITypes, filesApi, type PickedUploadAsset } from 'shared/api'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
+import { loadCacheFirst } from 'shared/lib/session-cache'
 import { reportError } from 'shared/model/error-dialog'
+import { mediaFilesCache } from './mediaFilesCache'
 import { useAdminMediaMutations } from './useAdminMediaMutations'
 
 export interface AdminMediaState {
@@ -19,6 +21,14 @@ export interface AdminMediaState {
 }
 
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить файлы'
+
+const fetchFiles = () =>
+  mediaFilesCache.fetchThrough('', () =>
+    filesApi
+      .getFiles()
+      .getFiles()
+      .then(response => response.files),
+  )
 
 /**
  * Каталог медиа-библиотеки (`GET /files`): загрузка изображения с прогрессом и
@@ -39,8 +49,17 @@ export const useAdminMedia = (): AdminMediaState => {
       setIsLoading(true)
       setIsError(false)
       try {
-        const response = await filesApi.getFiles().getFiles()
-        if (isActive) setFiles(response.files)
+        const nextFiles = await loadCacheFirst({
+          cache: mediaFilesCache,
+          cacheKey: '',
+          fetcher: fetchFiles,
+          onCached: cached => {
+            if (!isActive) return
+            setFiles(cached)
+            setIsLoading(false)
+          },
+        })
+        if (isActive) setFiles(nextFiles)
       } catch (error) {
         if (isActive) {
           setIsError(true)
@@ -72,8 +91,7 @@ export const useAdminMedia = (): AdminMediaState => {
 
   const reloadQuietly = useCallback(async () => {
     try {
-      const response = await filesApi.getFiles().getFiles()
-      setFiles(response.files)
+      setFiles(await fetchFiles())
     } catch (error) {
       reportError(error, LOAD_ERROR_MESSAGE)
     }

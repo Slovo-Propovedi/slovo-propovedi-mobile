@@ -7,10 +7,16 @@ const config: KnipConfig = {
     'scripts/analyze-icon.mjs',
     'scripts/create-fallback-artwork.mjs',
     'scripts/create-notification-icon.mjs',
+    // Generates both assets/*-splash-icon.png contour variants (dark-theme
+    // splash + OTA reload screen) and their public/ copies for the web splash.
+    'scripts/create-dark-splash-icon.mjs',
     // Read tab WIP — kept as an entry, not an ignore: its imports keep the
     // shared/ui list-item surface (ListItemSize, TouchableListItem,
     // OnPressTouchableListItem) alive instead of reading as unused.
     'src/pages/books-list/**/*.{ts,tsx}',
+    // Web AsyncStorage replacement: wired by metro.config.js (resolveRequest
+    // alias on web), never imported directly.
+    'src/shared/lib/web-storage/webAsyncStorage.ts',
   ],
 
   expo: {

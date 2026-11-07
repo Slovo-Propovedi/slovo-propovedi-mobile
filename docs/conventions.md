@@ -97,6 +97,10 @@
 
 **Контроль.** Проверяется при code review глазами: пустой набор потребителей типа (grep по имени) означает, что тип должен быть инлайновым.
 
+### Обязательные воркфлоу: SDD, plan-implement, TDD
+
+Любая нетривиальная задача прогоняется через воркфлоу ДО реализации: новая фича / изменение API-контракта / расплывчатые требования — спек-воркфлоу spec-kit (`/speckit.specify` → `clarify` → `plan` → `tasks` → `implement`, разово `/speckit.constitution`); понятная многошаговая задача — скилл `plan-implement`; баг — `systematic-debugging`; любое изменение кода — `tdd` (в репо без тест-раннера — verification-first); всегда — `ponytail` (минимальный дифф) и `verification-before-completion` перед «готово». Полные правила — AGENTS.md → «Mandatory Workflows». Скиллы лежат в `.opencode/skills/` и `.claude/skills/` (копии байт-в-байт), команды spec-kit — в `.opencode/commands/` (зеркало в `.claude/commands/`). CLI `specify` нужен только для scaffolding/обновления шаблонов — в рантайме агентам и контрибьюторам он не требуется. Обновление скаффолдинга spec-kit (.specify/ + команды speckit.*) — периодическая задача мейнтейнера шаблонов (выход новой версии specify): изменения вносятся сначала в каноническом репо (slovo-propovedi-mobile), проверяются скриптом .opencode/tools/check-skills-sync.sh и копируются в остальные репозитории; контрибьюторам и агентам CLI не нужен. Задачи спеки после /speckit.tasks зеркалим на доску Forgejo командой /speckit.taskstoissues — идемпотентно (дедуп по T-ID, повторный запуск создаёт только новые). Для неё нужен токен FORGEJO_TOKEN со скоупом write:issue (Forgejo → Settings → Applications): export FORGEJO_TOKEN="<token>" до старта сессии агента (постоянно — в ~/.bashrc/~/.zshrc, по-проектно — gitignored .envrc через direnv); проверка — curl -s -H "Authorization: token $FORGEJO_TOKEN" $INSTANCE/api/v1/user. Токен — пароль: нигде не коммитить.
+
 ## Семантика записи в API (админка)
 
 Единая семантика тела запроса для всех админских форм (комментарии — прямо в коде форм; портировано из репозитория `slovo-propovedi-admin`):
@@ -156,7 +160,7 @@
 
 **Почему:** нативная `SafeAreaView` (Fabric) проставляет свой padding на кадр позже, чем применяется `style`-padding. На холодном старте, пока реальные инсеты ещё не пришли, это даёт видимый «прыжок» первых кадров — контент стартует edge-to-edge под системным статус-баром и лишь затем сдвигается вниз. `paddingTop` из `useSafeAreaInsets` попадает в тот же рендер, что и остальной стиль, поэтому экран рисуется в финальной позиции сразу.
 
-Экран должен быть обёрнут **одним** `SafeAreaProvider`: его держит сам `expo-router` (`ExpoRoot`), поэтому отдельная root-обёртка в `app/_layout.tsx` не нужна — лишний вложенный провайдер с `initialWindowMetrics` мог отдать нулевые инсеты на dev-client cold start и давал тот же «прыжок».
+Экран должен быть обёрнут **одним** `SafeAreaProvider`: его держит сам `expo-router` (`ExpoRoot`), поэтому отдельная root-обёртка в `app/_layout.tsx` не нужна — лишний вложенный провайдер с `initialWindowMetrics` мог отдать нулевые инсеты на dev-client cold start и давал тот же «прыжок». **Исключение — web:** expo-router 58 монтирует там `WebSafeAreaProvider` с замороженными нулями, поэтому `app/_layout.tsx` на web дополнительно монтирует `SafeAreaProvider` библиотеки (`SafeAreaBoundary`) — иначе инсеты нулевые во всём приложении (см. [features/web.md](./features/web.md) → «Safe area на web»).
 
 ## Barrel-файлы
 
@@ -205,6 +209,7 @@
 - [ ] `docs/` обновлены в том же PR (затронутые `screens/`, `features/`, `contracts/`, `architecture.md` при необходимости);
 - [ ] срезанные углы записаны в `docs/debt.md`;
 - [ ] новые зависимости — только через `docs/decisions.md` (Approved stack);
+- [ ] Задача прошла через воркфлоу (speckit / plan-implement / systematic-debugging) с tdd и финальной проверкой verification-before-completion;
 - [ ] коммиты — conventional commits, заголовок ≤ 100 символов.
 
 ## Версионирование и релизы

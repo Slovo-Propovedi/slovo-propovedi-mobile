@@ -14,6 +14,7 @@ import { playlistEngine } from './native/PlaylistEngine'
 import { wirePlaylistStatus } from './native/playlistStatusHandler'
 import { loadQueue, replaceQueueTrack } from './native/queueLoader'
 import { createQueueSourceSwap } from './native/queueSourceSwap'
+import { reconcileOnForeground } from './native/reconcileOnForeground'
 import { recoverStreamAfterReconnect as healStreamAfterReconnect } from './native/reconnectHeal'
 import { resumeWithSourceSwap } from './native/resumeWithSourceSwap'
 import { type LockScreenMetadata } from './types'
@@ -62,15 +63,15 @@ export class PlayerService {
     await playbackController.pause(playlistEngine.getPlaylist())
   }
 
-  public play = async (): Promise<void> => {
-    await playbackController.play(playlistEngine.getPlaylist())
-  }
+  public play = (): Promise<void> => playbackController.play(playlistEngine.getPlaylist())
 
   public resumeAfterPause = async (audioUrl: string): Promise<void> =>
     resumeWithSourceSwap(this.sourceSwap, audioUrl)
 
   public recoverStreamAfterReconnect = (audioUrl: string): Promise<void> =>
     healStreamAfterReconnect(this, audioUrl)
+
+  public reconcileOnForeground = (): Promise<void> => reconcileOnForeground()
 
   public seekTo = async (newPositionMs: number): Promise<void> => {
     await playbackController.seekTo(playlistEngine.getPlaylist(), newPositionMs, this.sourceSwap)

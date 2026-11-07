@@ -11,6 +11,7 @@ export const usePlayer = () =>
       pause: playerService.pause,
       play: playerService.play,
       reassertLockScreenMetadata: playerService.reassertLockScreenMetadata,
+      reconcileOnForeground: playerService.reconcileOnForeground,
       replaceAudio: playerService.replaceAudio,
       resumeAfterPause: playerService.resumeAfterPause,
       seekTo: playerService.seekTo,

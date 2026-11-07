@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { type APITypes, sermonsApi } from 'shared/api'
 import { useSilentRefetchOnFocus } from 'shared/lib/hooks/useSilentRefetchOnFocus'
+import { useCacheFirstEntity } from 'shared/lib/session-cache'
 import { reportError } from 'shared/model/error-dialog'
+import { sermonDetailCache } from './sermonDetailCache'
 
 export interface AdminSermonDetailState {
   isDeleting: boolean
@@ -22,34 +24,20 @@ export const useAdminSermonDetail = (id: string): AdminSermonDetailState => {
   const [isNotFound, setIsNotFound] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const fetchSermon = useCallback(() => sermonsApi.getSermons().sermonControllerFindOne(id), [id])
+  const fetchSermon = useCallback(
+    () =>
+      sermonDetailCache.fetchThrough(id, () => sermonsApi.getSermons().sermonControllerFindOne(id)),
+    [id],
+  )
 
-  useEffect(() => {
-    let isActive = true
-
-    const load = async () => {
-      if (!id) {
-        if (isActive) setIsNotFound(true)
-        return
-      }
-
-      try {
-        const entity = await fetchSermon()
-        if (isActive) setSermon(entity)
-      } catch (error) {
-        if (isActive) {
-          setIsNotFound(true)
-          reportError(error, LOAD_ERROR_MESSAGE)
-        }
-      }
-    }
-
-    void load()
-
-    return () => {
-      isActive = false
-    }
-  }, [fetchSermon, id])
+  useCacheFirstEntity({
+    cache: sermonDetailCache,
+    errorMessage: LOAD_ERROR_MESSAGE,
+    fetcher: fetchSermon,
+    id,
+    onLoaded: setSermon,
+    onNotFound: () => setIsNotFound(true),
+  })
 
   useSilentRefetchOnFocus(
     useCallback(async () => {

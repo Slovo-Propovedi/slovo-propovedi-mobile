@@ -7,7 +7,7 @@ import {
 } from './AudioCacheService.web'
 import { CacheCancelledError } from './CacheCancelledError'
 import { inflightCache } from './inflightCache'
-import { commitAudioUrl } from './webCacheManifest'
+import { commitAudioUrl, readCommittedUrls } from './webCacheManifest'
 import * as webDownloadJournal from './webDownloadJournal'
 
 const AUDIO_URL = 'https://cdn.example.com/sermon-1.mp3'
@@ -45,17 +45,23 @@ class FakeCacheStorage {
   public delete = jest.fn(async (name: string) => this.buckets.delete(name))
 }
 
+const ORIGIN_URL = 'https://cache.test'
+const MANIFEST_URL = ORIGIN_URL + '/__manifest__'
+// Simulates `document.baseURI`: a nested SPA route resolves a relative key
+// under that route, not under the origin root.
+let documentBase = ORIGIN_URL
+
 const keyOf = (request: Request | string): string => {
   const url = typeof request === 'string' ? request : request.url
-  // The real Cache API resolves relative keys (e.g. the `__manifest__` entry)
-  // against the document base URL; mirror that so `keys()` yields valid URLs.
-  return new URL(url, 'https://cache.test').href
+  // The real Cache API resolves relative keys against the document base URL;
+  // mirror that so `keys()` yields valid URLs.
+  return new URL(url, documentBase).href
 }
 
 const bucket = (): FakeCache => cacheStorage.buckets.get('audio-cache-v1') as FakeCache
 
 const readManifest = async (): Promise<string[]> => {
-  const entry = await bucket().match('__manifest__')
+  const entry = await bucket().match(MANIFEST_URL)
   if (!entry) return []
   const manifest = JSON.parse(await entry.text())
   return Array.isArray(manifest.urls) ? manifest.urls : []
@@ -97,12 +103,20 @@ beforeEach(() => {
   _resetInflightCacheForTesting()
   cacheStorage = new FakeCacheStorage()
   ;(globalThis as { caches: unknown }).caches = cacheStorage
+  // The jest env has no browser `location`; the web cache resolves its manifest
+  // key against the page origin, so provide the global it reads.
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: { origin: ORIGIN_URL },
+  })
+  documentBase = ORIGIN_URL
   jest.restoreAllMocks()
   return AsyncStorage.clear()
 })
 
 afterEach(() => {
   delete (globalThis as { caches?: unknown }).caches
+  Reflect.deleteProperty(globalThis, 'location')
   if (unhandledRejectionSpy) {
     process.off('unhandledRejection', unhandledRejectionSpy)
     unhandledRejectionSpy = null
@@ -346,8 +360,8 @@ describe('AudioCacheService.web', () => {
     await cacheStorage.open('audio-cache-v1')
     await bucket().put(AUDIO_URL, corsResponse(1024))
     await bucket().put(
-      '__manifest__',
-      new Response(JSON.stringify({ urls: [AUDIO_URL], version: 1 })),
+      MANIFEST_URL,
+      new Response(JSON.stringify({ unverified: [], urls: [AUDIO_URL], version: 2 })),
     )
     bucket().put.mockClear()
     const progress: number[] = []
@@ -364,8 +378,8 @@ describe('AudioCacheService.web', () => {
     await cacheStorage.open('audio-cache-v1')
     await bucket().put(AUDIO_URL, corsResponse(1024))
     await bucket().put(
-      '__manifest__',
-      new Response(JSON.stringify({ urls: [AUDIO_URL], version: 1 })),
+      MANIFEST_URL,
+      new Response(JSON.stringify({ unverified: [], urls: [AUDIO_URL], version: 2 })),
     )
     const fetchSpy = mockFetchOk(1024)
 
@@ -409,7 +423,7 @@ describe('AudioCacheService.web', () => {
     mockFetchOk(1024)
     await cacheStorage.open('audio-cache-v1')
     await bucket().put(AUDIO_URL, corsResponse(1024))
-    await bucket().put('__manifest__', new Response(JSON.stringify({ urls: [], version: 1 })))
+    await bucket().put(MANIFEST_URL, new Response(JSON.stringify({ urls: [], version: 1 })))
     bucket().delete.mockClear()
     bucket().put.mockClear()
 
@@ -420,6 +434,33 @@ describe('AudioCacheService.web', () => {
     expect(result).toBe(AUDIO_URL)
     const manifest = await readManifest()
     expect(manifest).toContain(AUDIO_URL)
+  })
+
+  test('writes the manifest at the origin-root key from a nested route', async () => {
+    mockFetchOk(1024)
+    documentBase = 'https://cache.test/listen/playlist'
+    const progress: number[] = []
+
+    await cacheAudio(AUDIO_URL, p => progress.push(p))
+
+    expect(progress.at(-1)).toBe(1)
+    expect(bucket().put).toHaveBeenCalledWith(MANIFEST_URL, expect.any(Response))
+    // A relative key would have landed under the current route instead.
+    await expect(bucket().match('/listen/__manifest__')).resolves.toBeUndefined()
+  })
+
+  test('reads the committed manifest from any route', async () => {
+    await cacheStorage.open('audio-cache-v1')
+    await bucket().put(
+      MANIFEST_URL,
+      new Response(JSON.stringify({ unverified: [], urls: [AUDIO_URL], version: 2 })),
+    )
+    documentBase = 'https://cache.test/listen/playlist'
+
+    const committed = await readCommittedUrls(bucket())
+
+    expect(committed).not.toBeNull()
+    expect([...(committed ?? [])]).toEqual([AUDIO_URL])
   })
 
   test('legacy migration builds the manifest on first commit', async () => {

@@ -1,0 +1,10 @@
+Show refresh card only on desktop web
+Restore data-refresh step and listen-tab entry in tour
+Blink header back button leaving offline in tour
+Visualize screen transitions in whats-new tour
+Refresh whats-new tour for the release
+Gate whats-new tour on content fingerprint
+Label offline list and origin playlist in chooser
+Highlight origin playlist in playback chooser
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
