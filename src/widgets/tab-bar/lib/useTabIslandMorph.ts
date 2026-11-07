@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
-import { useIsSearchOpen } from 'features/sermon-search'
+import { useIsSearchFieldVisible } from 'features/sermon-search'
 import {
   BAR_CIRCLE_SIZE,
   BAR_CIRCLE_SIZE_EXPANDED,
@@ -24,9 +24,9 @@ interface TabIslandMorphInput {
   windowWidth: number
 }
 
-// Drives the island's width/height morph (expanded ⇄ circle). Opening search
-// forces the collapsed shape even when the scroll driver has not collapsed the
-// bar yet.
+// Drives the island's width/height morph (expanded ⇄ circle). A visible search
+// field forces the collapsed shape even when the scroll driver has not collapsed
+// the bar yet, because the row reads [active circle][field].
 export const useTabIslandMorph = ({
   hideSearch,
   routeCount,
@@ -34,8 +34,8 @@ export const useTabIslandMorph = ({
   windowWidth,
 }: TabIslandMorphInput) => {
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
-  const isSearchOpen = useIsSearchOpen()
-  const isCollapsed = isBarCollapsed || isSearchOpen
+  const isSearchFieldVisible = useIsSearchFieldVisible()
+  const isCollapsed = isBarCollapsed || isSearchFieldVisible
   const progress = useSharedValue(isCollapsed ? 1 : 0)
 
   useEffect(() => {

@@ -6,7 +6,7 @@ import { useWindowDimensions, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingTarget } from 'features/onboarding'
-import { useIsSearchOpen, useOpenSearch } from 'features/sermon-search'
+import { useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
 import { BAR_BOTTOM_INSET_MIN, BAR_ROW_MIN_HEIGHT, setTabBarHeight } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
@@ -44,7 +44,7 @@ export const CustomTabBar = ({
   const { currentTheme, isLight } = useTheme()
   const { handleTabPress, isTabAvailable } = useTabPress({ emitter, navigateToTab })
   const openSearch = useOpenSearch()
-  const isSearchOpen = useIsSearchOpen()
+  const isSearchFieldVisible = useIsSearchFieldVisible()
   const { width: windowWidth } = useWindowDimensions()
   const [rowWidth, setRowWidth] = useState(0)
   const visibleRoutes = state.routes.filter(route => !HIDDEN_TAB_ROUTE_NAMES.has(route.name))
@@ -109,7 +109,7 @@ export const CustomTabBar = ({
             })}
           </Animated.View>
         </Animated.View>
-        {!hideSearch && !isSearchOpen && (
+        {!hideSearch && !isSearchFieldVisible && (
           <OnboardingTarget id={SEARCH_TARGET_ID}>
             <CircleButton
               progress={progress}

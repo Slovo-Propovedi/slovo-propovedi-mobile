@@ -2,7 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
-import { isSearchOpenAtom } from 'features/sermon-search'
+import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
@@ -10,6 +10,7 @@ import {
   BAR_CIRCLE_SIZE,
   BAR_OUTER_GAP,
   isBarCollapsedAtom,
+  setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
 import { themeModeAtom } from 'shared/ui/theme'
@@ -73,6 +74,7 @@ describe('<SearchIsland>', () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
     const { getByPlaceholderText } = await renderWithProviders(<SearchIsland />, {
       ctx,
     })
@@ -92,6 +94,7 @@ describe('<SearchIsland>', () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
     await renderWithProviders(<SearchIsland />, { ctx })
 
     const blurs = screen.root?.queryAll(
@@ -122,6 +125,7 @@ describe('<SearchIsland>', () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
     await renderWithProviders(<SearchIsland />, { ctx })
     // The provider restores the persisted mode on mount, so switch to dark after
     // the first render to exercise the theme-following glass factory.
@@ -151,6 +155,30 @@ describe('<SearchIsland>', () => {
     ).toHaveLength(2)
   })
 
+  test('collapses the pill with the bar on an empty query and reveals it when the bar expands', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    const { getByPlaceholderText } = await renderWithProviders(<SearchIsland />, { ctx })
+    const findPill = () =>
+      findAncestorWithHeight(
+        getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true }),
+        TAB_BAR_ISLAND_HEIGHT,
+      )
+
+    expect(findPill().props.pointerEvents).toBe('auto')
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    expect(findPill().props.pointerEvents).toBe('none')
+    expect(ctx.get(searchQueryAtom)).toBe('')
+
+    await act(async () => {
+      setBarCollapsed(ctx, false)
+    })
+    expect(findPill().props.pointerEvents).toBe('auto')
+  })
+
   test('stays mounted but non-interactive while search is closed', async () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
@@ -167,6 +195,7 @@ describe('<SearchIsland>', () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
     const { getByPlaceholderText, queryByLabelText } = await renderWithProviders(<SearchIsland />, {
       ctx,
     })
@@ -198,6 +227,7 @@ describe('<SearchIsland>', () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
     const { getByPlaceholderText } = await renderWithProviders(<SearchIsland />, { ctx })
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
 
@@ -220,6 +250,7 @@ describe('<SearchIsland>', () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
     const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchIsland />, {
       ctx,
     })

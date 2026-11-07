@@ -41,14 +41,13 @@ jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
 const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 
 const mockOpenSearch = jest.fn()
-let mockIsSearchOpen = false
+let mockIsSearchFieldVisible = false
 
 jest.mock('features/sermon-search', () => {
-  const { action, atom } = jest.requireActual('@reatom/framework')
+  const { action } = jest.requireActual('@reatom/framework')
   return {
     closeSearch: action(() => {}, 'mockCloseSearch'),
-    isSearchOpenAtom: atom(false, 'mockIsSearchOpenAtom'),
-    useIsSearchOpen: () => mockIsSearchOpen,
+    useIsSearchFieldVisible: () => mockIsSearchFieldVisible,
     useOpenSearch: () => mockOpenSearch,
   }
 })
@@ -103,7 +102,7 @@ describe('<CustomTabBar>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockBottomInset = 0
-    mockIsSearchOpen = false
+    mockIsSearchFieldVisible = false
   })
 
   const findIslandsRow = () =>
@@ -317,11 +316,18 @@ describe('<CustomTabBar>', () => {
     expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
   })
 
-  test('hides the search button while the search field is open', async () => {
-    mockIsSearchOpen = true
+  test('hides the search button while the search field is visible', async () => {
+    mockIsSearchFieldVisible = true
     const { queryByRole } = await renderTabBar()
 
     expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
+  })
+
+  test('shows the search button again when a collapsed bar hides the field', async () => {
+    mockIsSearchFieldVisible = false
+    const { getByRole } = await renderTabBar(0, { isCollapsed: true })
+
+    expect(getByRole('button', { name: 'Поиск' })).toBeTruthy()
   })
 
   test('pressing the search button opens search', async () => {

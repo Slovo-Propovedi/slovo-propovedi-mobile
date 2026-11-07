@@ -1,6 +1,7 @@
 import { action, atom } from '@reatom/framework'
 import { myPlaylistsAtom, type PlaylistData } from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
+import { setBarCollapsed } from 'shared/ui/layout'
 import { collectMatchingPreachers } from './lib/composeSearchResults'
 import { mergePlaylistMatches, selectLocalPlaylistMatches } from './lib/localPlaylistSearch'
 import {
@@ -17,6 +18,7 @@ export const searchPlaylistsAtom = atom<PlaylistData[]>([], 'searchPlaylistsAtom
 export const searchPreachersAtom = atom<string[]>([], 'searchPreachersAtom')
 export const isSearchingAtom = atom(false, 'isSearchingAtom')
 export const isSearchOpenAtom = atom(false, 'isSearchOpenAtom')
+
 // Last query a fetch was started for; lets `useDebouncedSearch` skip a duplicate
 // debounced fetch when the query was already fetched (e.g. web deep-link seed).
 export const lastFetchedQueryAtom = atom('', 'lastFetchedQueryAtom')
@@ -40,6 +42,8 @@ const isCurrentRequest = (requestId: number): boolean => requestId === latestReq
 
 export const openSearch = action(async ctx => {
   await ctx.schedule(() => {
+    // Opening search must reveal the field; a collapsed bar would hide it again.
+    setBarCollapsed(ctx, false)
     isSearchOpenAtom(ctx, true)
   })
 }, 'openSearch')

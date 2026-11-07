@@ -2,6 +2,7 @@ import { type SuspenseFallbackProps, Tabs } from 'expo-router'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { PlaylistSheetMenu } from 'pages/playlist'
 import { ExpandablePlayer } from 'widgets/expandable-player'
+import { SearchIsland } from 'widgets/search-island'
 import { CustomTabBar } from 'widgets/tab-bar'
 import { COLORS, INDENTS, useTheme } from 'shared/ui/theme'
 
@@ -30,6 +31,9 @@ const Layout = () => {
         <Tabs.Screen name='study' options={{ title: 'Учиться' }} />
         <Tabs.Screen name='more' options={{ title: 'Ещё' }} />
       </Tabs>
+      {/* Mounted once for every tab screen (including the listen stack's
+          playlist screens) so the open search field follows the user. */}
+      <SearchIsland />
       <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
     </View>
   )

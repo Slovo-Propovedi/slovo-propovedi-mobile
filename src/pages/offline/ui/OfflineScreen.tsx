@@ -7,7 +7,7 @@ import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { type OfflineSermonItem, useOfflineSermons } from 'features/offline-sermons'
 import { OnboardingTarget, useTourScrollable } from 'features/onboarding'
 import { usePlaybackChoice } from 'features/playback-choice'
-import { isSearchOpenAtom } from 'features/sermon-search/@x/suspension'
+import { useIsSearchBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { isPlayingAtom } from 'entities/player'
 import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
@@ -46,8 +46,10 @@ export const OfflineScreen = () => {
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const [isCachingEnabled] = useAtom(sermonCachingEnabledAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const [isSearchOpen] = useAtom(isSearchOpenAtom)
-  const { onScroll } = useBarCollapseOnScroll({ isSuspended: isSearchOpen || isPlayerExpanded })
+  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
+  const { onScroll } = useBarCollapseOnScroll({
+    isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
+  })
   const tracksListStyles = createTracksListStyles(currentTheme)
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
   const getOfflinePlaylist = useCallback(() => buildOfflinePlaylist(items), [items])

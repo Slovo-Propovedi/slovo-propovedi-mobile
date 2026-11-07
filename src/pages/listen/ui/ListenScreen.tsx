@@ -2,12 +2,12 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import Animated from 'react-native-reanimated'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { SearchIsland } from 'widgets/search-island'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useTourActionRegistrar, useTourScrollable } from 'features/onboarding'
 import {
   SearchGroupedResults,
   useIsSearchActive,
+  useIsSearchBarCollapseSuspended,
   useOpenSearch,
   useSearchUrlSync,
   useSermonPlayback,
@@ -40,10 +40,13 @@ export const ListenScreen = () => {
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const isSearchActive = useIsSearchActive()
+  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
   const openSearch = useOpenSearch()
   useSearchUrlSync()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const { onScroll } = useBarCollapseOnScroll({ isSuspended: isSearchOpen || isPlayerExpanded })
+  const { onScroll } = useBarCollapseOnScroll({
+    isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
+  })
   const [authStatus] = useAtom(authStatusAtom)
   const [authUser] = useAtom(authUserAtom)
   const restore = useAction(restoreSession)
@@ -112,7 +115,6 @@ export const ListenScreen = () => {
           </Animated.ScrollView>
         </PullToRefresh>
       )}
-      <SearchIsland />
       {modal}
       {sermonPlaybackModal}
     </SafeAreaView>

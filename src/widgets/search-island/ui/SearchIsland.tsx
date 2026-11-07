@@ -2,18 +2,18 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
-import { closeSearch, isSearchOpenAtom, SearchBar } from 'features/sermon-search'
+import { closeSearch, SearchBar, useIsSearchFieldVisible } from 'features/sermon-search'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
 import { BAR_MORPH_DURATION_MS, isBarCollapsedAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 
-// The search field that replaces the right search circle while search is open.
-// The island stays mounted for the whole listen flow: opening morphs it out of
-// the bar (the pill's open-progress follows the same timing as the island
-// morph), closing fades it back while the bar expands, and only then is it
-// non-interactive. A closed island never takes focus.
+// The search field that replaces the right search circle while the field is
+// visible. The island stays mounted for the whole tab shell: opening morphs it
+// out of the bar (the pill's open-progress follows the same timing as the island
+// morph), a collapse with an empty query fades it back into the circle, and
+// while hidden it stays non-interactive. A hidden island never takes focus.
 //
 // While the input is focused, a separate ✕ circle appears to the right and the
 // pill yields a circle + gap of room to it (both animate with the same morph
@@ -23,28 +23,25 @@ export const SearchIsland = () => {
   const { width: screenWidth } = useWindowDimensions()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
-  const [isSearchOpen] = useAtom(isSearchOpenAtom)
+  const isSearchFieldVisible = useIsSearchFieldVisible()
   const [isFocused, setIsFocused] = useState(false)
   const closeSearchAction = useAction(closeSearch)
-  // Opening search forces the collapsed pill shape, so a surface mounted with
-  // search already open starts at the collapsed geometry instead of morphing in.
-  const progress = useSharedValue(isBarCollapsed || isSearchOpen ? 1 : 0)
-  const openProgress = useSharedValue(isSearchOpen ? 1 : 0)
+  // A visible field always sits in the collapsed row, so the pill geometry
+  // follows the collapsed bar even before the scroll driver writes the atom.
+  const progress = useSharedValue(isBarCollapsed || isSearchFieldVisible ? 1 : 0)
+  const openProgress = useSharedValue(isSearchFieldVisible ? 1 : 0)
   // Seeded from the focus state so a bar re-rendered while already focused
   // starts with the close slot reserved instead of snapping on the next frame.
   const closeProgress = useSharedValue(isFocused ? 1 : 0)
 
   useEffect(() => {
-    if (isSearchOpen) {
-      progress.value = isBarCollapsed ? 1 : 0
-      progress.value = withTiming(1, { duration: BAR_MORPH_DURATION_MS })
-      openProgress.value = withTiming(1, { duration: BAR_MORPH_DURATION_MS })
-      return
-    }
-
-    progress.value = withTiming(isBarCollapsed ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
-    openProgress.value = withTiming(0, { duration: BAR_MORPH_DURATION_MS })
-  }, [isBarCollapsed, isSearchOpen, openProgress, progress])
+    progress.value = withTiming(isBarCollapsed || isSearchFieldVisible ? 1 : 0, {
+      duration: BAR_MORPH_DURATION_MS,
+    })
+    openProgress.value = withTiming(isSearchFieldVisible ? 1 : 0, {
+      duration: BAR_MORPH_DURATION_MS,
+    })
+  }, [isBarCollapsed, isSearchFieldVisible, openProgress, progress])
 
   useEffect(() => {
     closeProgress.value = withTiming(isFocused ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
@@ -70,14 +67,14 @@ export const SearchIsland = () => {
     return { ...geometry, borderRadius: radius, opacity: openProgress.value }
   })
 
-  const isCloseVisible = isSearchOpen && isFocused
+  const isCloseVisible = isSearchFieldVisible && isFocused
 
   return (
     <>
       <Animated.View
-        accessibilityElementsHidden={!isSearchOpen}
-        pointerEvents={isSearchOpen ? 'auto' : 'none'}
-        importantForAccessibility={isSearchOpen ? 'yes' : 'no-hide-descendants'}
+        accessibilityElementsHidden={!isSearchFieldVisible}
+        pointerEvents={isSearchFieldVisible ? 'auto' : 'none'}
+        importantForAccessibility={isSearchFieldVisible ? 'yes' : 'no-hide-descendants'}
         style={[styles.island, createGlassStyles(isLight, RADIUSES.round).container, islandStyle]}
       >
         <GlassSurface isLight={isLight} radius={RADIUSES.round} />

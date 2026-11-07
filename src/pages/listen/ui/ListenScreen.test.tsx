@@ -2,6 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
+import { SearchIsland } from 'widgets/search-island'
 import {
   isSearchingAtom,
   isSearchOpenAtom,
@@ -122,6 +123,15 @@ const MY_PLAYLISTS_TITLE = 'Мои плейлисты'
 const ADMIN_BUTTON_LABEL = 'Админка'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
+// The search island is mounted once in the tabs layout, so the screen test
+// composes the same pair the app renders.
+const ListenScreenWithSearch = () => (
+  <>
+    <ListenScreen />
+    <SearchIsland />
+  </>
+)
+
 // A pinned element (the search bar) must not have any scroll container between
 // itself and the screen root; a scrolling element (the magnifier) must have one.
 const hasScrollAncestor = (element: TestInstance): boolean => {
@@ -180,7 +190,7 @@ const renderWithOpenSearch = async (query = '') => {
   isSearchOpenAtom(ctx, true)
   searchQueryAtom(ctx, query)
 
-  return renderWithProviders(<ListenScreen />, { ctx })
+  return renderWithProviders(<ListenScreenWithSearch />, { ctx })
 }
 
 const setAuthenticatedUser = (ctx: ReturnType<typeof createCtx>, role: 'admin' | 'moderator') => {
@@ -196,20 +206,23 @@ describe('<ListenScreen>', () => {
   })
 
   test('shows sections by default, without the search field', async () => {
-    const { getByText, queryByPlaceholderText } = await renderWithProviders(<ListenScreen />, {})
+    const { getByText, queryByPlaceholderText } = await renderWithProviders(
+      <ListenScreenWithSearch />,
+      {},
+    )
 
     expect(getByText(SECTIONS_MOCK)).toBeTruthy()
     expect(queryByPlaceholderText(SEARCH_PLACEHOLDER)).toBeNull()
   })
 
   test('renders the my-playlists section title', async () => {
-    const { getByLabelText } = await renderWithProviders(<ListenScreen />, {})
+    const { getByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, {})
 
     expect(getByLabelText(MY_PLAYLISTS_TITLE)).toBeTruthy()
   })
 
   test('reloads sections, playlists and settings when pulled to refresh', async () => {
-    const { getByText } = await renderWithProviders(<ListenScreen />, {})
+    const { getByText } = await renderWithProviders(<ListenScreenWithSearch />, {})
     const refreshControl = findRefreshControl(getByText(SECTIONS_MOCK))
 
     mockFetchAllSections.mockClear()
@@ -226,7 +239,7 @@ describe('<ListenScreen>', () => {
   })
 
   test('ignores a second pull-to-refresh within the minimum interval', async () => {
-    const { getByText } = await renderWithProviders(<ListenScreen />, {})
+    const { getByText } = await renderWithProviders(<ListenScreenWithSearch />, {})
     const refreshControl = findRefreshControl(getByText(SECTIONS_MOCK))
 
     mockFetchAllSections.mockClear()
@@ -258,7 +271,7 @@ describe('<ListenScreen>', () => {
     searchResultsAtom(ctx, sermons)
     isSearchingAtom(ctx, false)
     const { getAllByText, getByPlaceholderText, queryByText } = await renderWithProviders(
-      <ListenScreen />,
+      <ListenScreenWithSearch />,
       { ctx },
     )
 
@@ -273,7 +286,7 @@ describe('<ListenScreen>', () => {
     const ctx = createCtx()
     isSearchOpenAtom(ctx, true)
     const { getByLabelText, getByPlaceholderText, getByText, queryByText } =
-      await renderWithProviders(<ListenScreen />, { ctx })
+      await renderWithProviders(<ListenScreenWithSearch />, { ctx })
 
     await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'вера')
     expect(queryByText(SECTIONS_MOCK)).toBeNull()
@@ -306,7 +319,7 @@ describe('<ListenScreen>', () => {
   test('keeps the search bar mounted across the sections ↔ results transition', async () => {
     const ctx = createCtx()
     isSearchOpenAtom(ctx, true)
-    const { getByPlaceholderText } = await renderWithProviders(<ListenScreen />, { ctx })
+    const { getByPlaceholderText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
 
     await fireEvent.changeText(input, 'ве')
@@ -329,7 +342,7 @@ describe('<ListenScreen>', () => {
     isSearchingAtom(ctx, false)
 
     const { getByPlaceholderText, getByText, queryByText } = await renderWithProviders(
-      <ListenScreen />,
+      <ListenScreenWithSearch />,
       { ctx },
     )
 
@@ -346,7 +359,7 @@ describe('<ListenScreen>', () => {
     isSearchingAtom(ctx, false)
 
     const { getAllByText, getByPlaceholderText, queryByText } = await renderWithProviders(
-      <ListenScreen />,
+      <ListenScreenWithSearch />,
       { ctx },
     )
 
@@ -363,7 +376,7 @@ describe('<ListenScreen>', () => {
     isSearchingAtom(ctx, false)
 
     const { getByPlaceholderText, getByText, queryByText } = await renderWithProviders(
-      <ListenScreen />,
+      <ListenScreenWithSearch />,
       { ctx },
     )
 
@@ -380,7 +393,7 @@ describe('<ListenScreen>', () => {
     isSearchingAtom(ctx, false)
 
     const { getAllByText, getByPlaceholderText, getByText, queryByText } =
-      await renderWithProviders(<ListenScreen />, { ctx })
+      await renderWithProviders(<ListenScreenWithSearch />, { ctx })
 
     expect(getAllByText(SERMON_TITLE)[0]).toBeTruthy()
 
@@ -395,7 +408,7 @@ describe('<ListenScreen>', () => {
     const ctx = createCtx()
     authStatusAtom(ctx, 'unauthenticated')
 
-    const { queryByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+    const { queryByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
 
     expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
   })
@@ -405,7 +418,7 @@ describe('<ListenScreen>', () => {
     authUserAtom(ctx, authMocks.getAuthControllerGetProfileResponseMock({ role: 'user' }))
     authStatusAtom(ctx, 'authenticated')
 
-    const { queryByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+    const { queryByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
 
     expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
   })
@@ -414,7 +427,7 @@ describe('<ListenScreen>', () => {
     const ctx = createCtx()
     setAuthenticatedUser(ctx, 'admin')
 
-    const { getByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+    const { getByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
 
     await fireEvent.press(getByLabelText(ADMIN_BUTTON_LABEL))
     expect(mockPush).toHaveBeenCalledWith('/admin')
@@ -424,7 +437,7 @@ describe('<ListenScreen>', () => {
     const ctx = createCtx()
     setAuthenticatedUser(ctx, 'moderator')
 
-    const { getByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+    const { getByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
 
     expect(getByLabelText(ADMIN_BUTTON_LABEL)).toBeTruthy()
     // The shield is an in-flow sibling of the magnifier inside the scroll
@@ -440,7 +453,7 @@ describe('<ListenScreen>', () => {
     searchResultsAtom(ctx, sermons)
     isSearchingAtom(ctx, false)
 
-    const { queryByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+    const { queryByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
 
     expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
   })
@@ -450,7 +463,7 @@ describe('<ListenScreen>', () => {
     setAuthenticatedUser(ctx, 'admin')
     isSearchOpenAtom(ctx, true)
 
-    const { queryByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
+    const { queryByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
 
     expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
   })

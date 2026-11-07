@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { type ListRenderItem, StyleSheet } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { isSearchOpenAtom } from 'features/sermon-search/@x/suspension'
+import { useIsSearchBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
@@ -21,8 +21,10 @@ export const ResultsList = <T,>({
 }) => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
-  const [isSearchOpen] = useAtom(isSearchOpenAtom)
-  const { onScroll } = useBarCollapseOnScroll({ isSuspended: isSearchOpen || isPlayerExpanded })
+  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
+  const { onScroll } = useBarCollapseOnScroll({
+    isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
+  })
 
   return (
     <Animated.FlatList

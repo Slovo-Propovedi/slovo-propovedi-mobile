@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { type LayoutChangeEvent } from 'react-native'
 import { type SharedValue, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { isSearchOpenAtom } from 'features/sermon-search/@x/suspension'
+import { useIsSearchBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { nextBarCollapsedState, setBarCollapsed } from 'shared/ui/layout'
 
@@ -34,9 +34,9 @@ export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
   // Bottom-bar collapse shares this scroll handler: one worklet for the header
   // animation and the bar threshold crossing, never a second scroll handler.
   const applyBarCollapsed = useAction(setBarCollapsed)
-  const [isSearchOpen] = useAtom(isSearchOpenAtom)
+  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
-  const isSuspended = isSearchOpen || isPlayerExpanded
+  const isSuspended = isSearchBarCollapseSuspended || isPlayerExpanded
   const isSuspendedSv = useSharedValue(isSuspended)
   const wasBarCollapsedSv = useSharedValue(false)
 

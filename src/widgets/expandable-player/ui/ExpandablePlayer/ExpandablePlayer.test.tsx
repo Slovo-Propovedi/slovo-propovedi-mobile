@@ -1,5 +1,5 @@
 import { act, fireEvent } from '@testing-library/react-native'
-import { isSearchOpenAtom } from 'features/sermon-search/model'
+import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -127,9 +127,21 @@ describe('<ExpandablePlayer>', () => {
     expect(mockTogglePlay).toHaveBeenCalledTimes(1)
   })
 
-  test('rests the mini player above the row while search is open, even if the bar was collapsed', async () => {
+  test('moves the mini player into the collapsed line while search is open with an empty query', async () => {
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
+    tabBarHeightAtom(ctx, 98)
+    await renderWithProviders(<ExpandablePlayer />, { ctx })
+
+    // The empty-query search field collapses with the bar, so the row returns
+    // to the compact [active circle][player][search circle] arrangement.
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98, true)
+  })
+
+  test('rests the mini player above the row while an active query pins the field', async () => {
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
     tabBarHeightAtom(ctx, 98)
     await renderWithProviders(<ExpandablePlayer />, { ctx })
 
