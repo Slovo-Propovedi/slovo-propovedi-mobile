@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs'
 import { render, screen } from '@testing-library/react-native'
 import { StyleSheet, Text } from 'react-native'
 import { EDGE_FADE_WIDTH } from '../marquee-styles'
@@ -35,5 +36,18 @@ describe('<EdgeFadeContainer /> (web)', () => {
     await renderContainer(true)
 
     expect(screen.getByText(CHILD_TEXT)).toBeTruthy()
+  })
+
+  test('keeps the Metro fallback named index.tsx', () => {
+    // Regression (web: mini-player text completely invisible). Metro resolves a
+    // directory by iterating `sourceExts` in order — `ts` comes BEFORE `tsx`, so
+    // a fallback `index.ts` was picked on web before `index.web.tsx` was ever
+    // considered. The native MaskedView fallback then rendered its mask element
+    // instead of the text (MaskedView.web.js does not mask). The fallback must
+    // stay `.tsx` so the web implementation wins.
+    const entries = readdirSync(__dirname)
+
+    expect(entries).toContain('index.tsx')
+    expect(entries).not.toContain('index.ts')
   })
 })
