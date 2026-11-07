@@ -1,6 +1,6 @@
 import { type PropsWithChildren } from 'react'
 import { renderWithProviders } from 'shared/mocks'
-import Layout from './_layout'
+import Layout from '../../../app/(tabs)/_layout'
 
 jest.mock('expo-router', () => {
   const Screen = () => null
