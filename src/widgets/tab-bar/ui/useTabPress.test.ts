@@ -1,6 +1,9 @@
+import { createCtx } from '@reatom/framework'
+import { act } from '@testing-library/react-native'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
+import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
 import { UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE, useTabPress } from './useTabPress'
 
 jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
@@ -68,5 +71,42 @@ describe('useTabPress', () => {
 
     expect(mockedShowInfo).not.toHaveBeenCalled()
     expect(navigateToTab).toHaveBeenCalledWith('listen')
+  })
+
+  test('expands the collapsed bar on an active-tab press instead of navigating', async () => {
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+    })
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(navigateToTab).not.toHaveBeenCalled()
+  })
+
+  test('keeps the expanded bar expanded on an active-tab press', async () => {
+    const ctx = createCtx()
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(navigateToTab).not.toHaveBeenCalled()
   })
 })

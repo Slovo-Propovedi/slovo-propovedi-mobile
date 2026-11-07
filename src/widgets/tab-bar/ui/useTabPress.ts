@@ -1,6 +1,8 @@
+import { useAction, useAtom } from '@reatom/npm-react'
 import { type Tabs } from 'expo-router'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { showInfo } from 'shared/model/info-dialog'
+import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
 
 type NavigateToTab = TabBarProps['navigateToTab']
 
@@ -25,6 +27,8 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
   // Таб «Читать» открывается по фича-флагу. Пока флаги не загружены, доступ
   // закрыт (useFeatureFlag → false), то есть поведение сохраняется прежним.
   const isReadEnabled = useFeatureFlag('read')
+  const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
+  const applyBarCollapsed = useAction(setBarCollapsed)
 
   const isTabAvailable = (routeName: string) => {
     if (routeName === 'read') return isReadEnabled
@@ -35,6 +39,13 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
   const handleTabPress = (route: TabRoute, isActive: boolean) => {
     if (!isTabAvailable(route.name)) {
       showInfo(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
+      return
+    }
+
+    // Collapsed, the island shows only the active tab's circle: pressing it
+    // expands the bar instead of the fully silent no-op it is when expanded.
+    if (isActive && isBarCollapsed) {
+      applyBarCollapsed(false)
       return
     }
 
