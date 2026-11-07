@@ -8,8 +8,6 @@ export const BAR_CIRCLE_SIZE = 56 as const
 export const BAR_OUTER_GAP = 10 as const
 // Matches the existing floating chrome inset (tab bar and resting mini player).
 export const BAR_SIDE_INSET = INDENTS.low
-// Gesture zone below the islands; on 3-button navigation the safe-area inset wins.
-export const BAR_BOTTOM_INSET_MIN = 30 as const
 // Scroll offset past which the bar collapses to a single row.
 export const COLLAPSE_SCROLL_THRESHOLD = 80 as const
 // Scroll offset at or above which the collapsed bar expands back.
