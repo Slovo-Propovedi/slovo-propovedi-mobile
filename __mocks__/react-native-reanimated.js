@@ -1,5 +1,5 @@
 jest.mock('react-native-reanimated', () => {
-  const { FlatList, View } = require('react-native')
+  const { FlatList, ScrollView, View } = require('react-native')
 
   // Registrations are exposed so tests can drive frames through the callback
   // returned by the hook (mirrors the real FrameCallbackRegistry).
@@ -8,7 +8,7 @@ jest.mock('react-native-reanimated', () => {
   return {
     __esModule: true,
     __frameCallbacks: frameCallbacks,
-    default: { FlatList, View, createAnimatedComponent: Component => Component },
+    default: { FlatList, ScrollView, View, createAnimatedComponent: Component => Component },
     cancelAnimation: () => {},
     createAnimatedComponent: Component => Component,
     Easing: {

@@ -1,6 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
-import { ScrollView } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SearchIsland } from 'widgets/search-island'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
@@ -8,14 +8,15 @@ import { useTourActionRegistrar, useTourScrollable } from 'features/onboarding'
 import {
   SearchGroupedResults,
   useIsSearchActive,
-  useIsSearchOpen,
   useOpenSearch,
   useSearchUrlSync,
   useSermonPlayback,
 } from 'features/sermon-search'
+import { isSearchOpenAtom } from 'features/sermon-search/@x/suspension'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
+import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { createRefreshControl, PullToRefresh } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useListenSearchNavigation } from '../lib/useListenSearchNavigation'
 import { usePullToRefresh } from '../lib/usePullToRefresh'
@@ -36,11 +37,13 @@ const CLOSE_SERMON_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
 export const ListenScreen = () => {
   const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
-  const isSearchOpen = useIsSearchOpen()
+  const [isSearchOpen] = useAtom(isSearchOpenAtom)
+  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const isSearchActive = useIsSearchActive()
   const openSearch = useOpenSearch()
   useSearchUrlSync()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { onScroll } = useBarCollapseOnScroll({ isSuspended: isSearchOpen || isPlayerExpanded })
   const [authStatus] = useAtom(authStatusAtom)
   const [authUser] = useAtom(authUserAtom)
   const restore = useAction(restoreSession)
@@ -88,7 +91,8 @@ export const ListenScreen = () => {
         />
       ) : (
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
-          <ScrollView
+          <Animated.ScrollView
+            onScroll={onScroll}
             ref={tourScrollableRef}
             scrollEventThrottle={16}
             keyboardDismissMode='on-drag'
@@ -105,7 +109,7 @@ export const ListenScreen = () => {
               onboardingTargetId='listen.my-playlists'
               titleOnboardingTargetId='listen.my-playlists-title'
             />
-          </ScrollView>
+          </Animated.ScrollView>
         </PullToRefresh>
       )}
       {isSearchOpen && <SearchIsland />}
