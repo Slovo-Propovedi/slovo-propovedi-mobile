@@ -2,7 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { renderHookWithProviders } from '../../../mocks'
 import { COLLAPSE_SCROLL_THRESHOLD, EXPAND_TOP_THRESHOLD } from '../bottomBarLayout'
-import { isBarCollapsedAtom } from '../model'
+import { isBarCollapsedAtom, setBarCollapsed } from '../model'
 import { useBarCollapseOnScroll } from './useBarCollapseOnScroll'
 
 // Reanimated's setup mock has no useAnimatedScrollHandler; the driver test needs
@@ -16,7 +16,16 @@ jest.mock('react-native-reanimated', () => {
     createAnimatedComponent,
     default: { createAnimatedComponent, FlatList, View },
     useAnimatedScrollHandler: (handler: unknown) => handler,
-    useSharedValue: (init: unknown) => ({ value: init }),
+    useSharedValue: (init: unknown) => {
+      const sharedValue = {
+        set(value: unknown) {
+          sharedValue.value = value
+        },
+        value: init,
+      }
+
+      return sharedValue
+    },
   }
 })
 
@@ -87,6 +96,41 @@ describe('useBarCollapseOnScroll', () => {
     scrollTo(COLLAPSE_SCROLL_THRESHOLD + 100)
 
     expect(ctx.get(isBarCollapsedAtom)).toBe(true)
+  })
+
+  test('re-collapses after an external expand (tap) and a new downward crossing', async () => {
+    const { ctx, scrollTo } = await renderDriver()
+
+    scrollTo(COLLAPSE_SCROLL_THRESHOLD + 1)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(true)
+
+    // Tapping the collapsed circle expands the bar without any scroll event;
+    // the driver's snapshot must follow the atom instead of staying stale.
+    setBarCollapsed(ctx, false)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+
+    scrollTo(COLLAPSE_SCROLL_THRESHOLD + 1)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(true)
+  })
+
+  test('external expand keeps the driver in sync without duplicate flips', async () => {
+    const { ctx, scrollTo } = await renderDriver()
+    let changeCount = 0
+    ctx.subscribe(isBarCollapsedAtom, () => {
+      changeCount += 1
+    })
+
+    scrollTo(COLLAPSE_SCROLL_THRESHOLD + 1)
+    setBarCollapsed(ctx, false)
+    // Already expanded at this offset: neither crossing may flip the atom again.
+    scrollTo(EXPAND_TOP_THRESHOLD)
+    scrollTo(EXPAND_TOP_THRESHOLD + 1)
+
+    // 1 initial subscription call + collapse + external expand
+    expect(changeCount).toBe(3)
   })
 
   test('ignores scroll while suspended', async () => {

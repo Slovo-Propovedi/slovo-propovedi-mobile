@@ -1,8 +1,8 @@
-import { useAction } from '@reatom/npm-react'
+import { useAction, useCtx } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { setBarCollapsed } from '../model'
+import { isBarCollapsedAtom, setBarCollapsed } from '../model'
 import { nextBarCollapsedState } from './barCollapseScroll'
 
 // Drives the floating bottom bar's collapsed state from a scroll offset.
@@ -13,12 +13,25 @@ import { nextBarCollapsedState } from './barCollapseScroll'
 // scroll worklet only ever reads UI-thread data.
 export const useBarCollapseOnScroll = ({ isSuspended = false }: { isSuspended?: boolean } = {}) => {
   const applyCollapsed = useAction(setBarCollapsed)
+  const ctx = useCtx()
   const isSuspendedSv = useSharedValue(isSuspended)
   const wasCollapsedSv = useSharedValue(false)
 
   useEffect(() => {
     isSuspendedSv.value = isSuspended
   }, [isSuspended, isSuspendedSv])
+
+  // Mirror external atom changes (e.g. tapping the collapsed circle to expand)
+  // into the worklet's snapshot. Without this the snapshot stays stale and the
+  // next downward crossing looks like "already collapsed", so the bar never
+  // re-collapses until a top-threshold crossing resets it.
+  useEffect(
+    () =>
+      ctx.subscribe(isBarCollapsedAtom, isCollapsed => {
+        wasCollapsedSv.set(isCollapsed)
+      }),
+    [ctx, wasCollapsedSv],
+  )
 
   const onScroll = useAnimatedScrollHandler(event => {
     if (isSuspendedSv.value) return
@@ -28,7 +41,7 @@ export const useBarCollapseOnScroll = ({ isSuspended = false }: { isSuspended?: 
     const nextCollapsed = nextBarCollapsedState(event.contentOffset.y, wasCollapsedSv.value)
     if (nextCollapsed === null) return
 
-    wasCollapsedSv.value = nextCollapsed
+    wasCollapsedSv.set(nextCollapsed)
     scheduleOnRN(applyCollapsed, nextCollapsed)
   })
 

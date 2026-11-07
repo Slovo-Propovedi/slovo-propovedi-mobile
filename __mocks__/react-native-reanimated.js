@@ -43,7 +43,17 @@ jest.mock('react-native-reanimated', () => {
       frameCallbacks.push(frameCallback)
       return frameCallback
     },
-    useSharedValue: init => ({ value: init }),
+    useSharedValue: init => {
+      const sharedValue = {
+        get: () => sharedValue.value,
+        set: value => {
+          sharedValue.value = value
+        },
+        value: init,
+      }
+
+      return sharedValue
+    },
     withDelay: (_delay, value) => value,
     withRepeat: value => value,
     withSequence: (...values) => values[values.length - 1],
