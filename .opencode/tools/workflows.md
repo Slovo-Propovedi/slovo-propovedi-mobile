@@ -20,3 +20,10 @@ No production code without a failing check first. Details: AGENTS.md → "Mandat
 Calling `tools.delegate` for a write-capable agent fails hard: `Delegation failed: Agent "coder" is write-capable and requires the native task tool`. This session hit exactly that — routing `coder` through `delegate` returned the error instead of launching; the correct call is the native `task` tool (or another native subagent call) for `coder`.
 
 When background work is needed, prefer `background: true` on the native `task` tool; never poll for completion — rely on task notifications.
+
+### Session call discipline
+
+- Make the tool call the FIRST act of a turn; put explanations after the call — long prose before a call risks the turn being cut mid-generation and nothing launching.
+- One tool call per turn is safest for large payloads (plans, big prompts); split oversized payloads into smaller calls.
+- Launch subagents via background:true and rely on task notifications; never poll lists.
+- When a call silently produces nothing (turn died), first re-run a tiny `execute` ping, then re-issue the real call in a fresh turn instead of assuming the model/harness died.
