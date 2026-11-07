@@ -1,5 +1,6 @@
 import {
   BAR_BOTTOM_INSET_MIN,
+  BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT,
@@ -29,13 +30,13 @@ const islandBottomFromScreenBottom = (paddingBottom: number) =>
   paddingBottom + (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT) / 2
 
 describe('getMiniPlayerGeometry', () => {
-  test('measured 96dp row with 12dp bottom padding: pill rests 12dp above the 92dp island top', () => {
+  test('measured 96dp row with 12dp bottom padding: pill rests one outer gap above the 92dp island top', () => {
     const paddingBottom = BAR_BOTTOM_INSET_MIN
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
     const { bottom } = geometryAt(tabBarHeight)
 
     expect(islandTopFromScreenBottom(paddingBottom)).toBe(92)
-    expect(bottom).toBe(104)
+    expect(bottom).toBe(tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_OUTER_GAP)
     expect(bottom - islandTopFromScreenBottom(paddingBottom)).toBe(BAR_OUTER_GAP)
   })
 
