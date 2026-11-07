@@ -6,6 +6,7 @@ import {
   CONTENT_COLUMN_WIDTH,
   getColumnSideInset,
   TAB_BAR_ISLAND_HEIGHT,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 
 interface SearchIslandGeometry {
@@ -50,14 +51,19 @@ export const getSearchIslandGeometry = ({
   const rowInnerLeft = rowLeft + BAR_SIDE_INSET
   const collapsedLeft = rowInnerLeft + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
   const left = rowInnerLeft + (collapsedLeft - rowInnerLeft) * progress
+  // The pill follows the island height through the morph; both stay round and
+  // centered on the same row axis.
+  const height =
+    TAB_BAR_ISLAND_HEIGHT +
+    (TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) * (1 - progress)
 
   return {
     // The row is BAR_ROW_MIN_HEIGHT tall plus the bottom safe-area padding and
     // islands are centered in it, so the pill sits on the same axis.
-    bottom: tabBarHeight - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2,
-    height: TAB_BAR_ISLAND_HEIGHT,
+    bottom: tabBarHeight - (BAR_ROW_MIN_HEIGHT + height) / 2,
+    height,
     left,
-    radius: TAB_BAR_ISLAND_HEIGHT / 2,
+    radius: height / 2,
     right: rowInnerLeft,
   }
 }

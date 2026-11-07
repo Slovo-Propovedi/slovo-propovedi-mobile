@@ -109,7 +109,11 @@ export const CustomTabBar = ({
         </Animated.View>
         {!hideSearch && !isSearchOpen && (
           <OnboardingTarget id={SEARCH_TARGET_ID}>
-            <CircleButton onPress={openSearch} accessibilityLabel={SEARCH_LABEL}>
+            <CircleButton
+              progress={progress}
+              onPress={openSearch}
+              accessibilityLabel={SEARCH_LABEL}
+            >
               <Ionicons name='search' size={SEARCH_ICON_SIZE} color={currentTheme.text} />
             </CircleButton>
           </OnboardingTarget>

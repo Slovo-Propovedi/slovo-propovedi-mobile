@@ -4,6 +4,7 @@ import {
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET,
   TAB_BAR_ISLAND_HEIGHT,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 import { getSearchIslandGeometry } from './getSearchIslandGeometry'
 
@@ -26,7 +27,7 @@ describe('getSearchIslandGeometry', () => {
     })
   })
 
-  test('spans the whole row before the island collapses', () => {
+  test('spans the whole row and grows with the expanded island before the morph', () => {
     const geometry = getSearchIslandGeometry({
       barProgress: 0,
       screenWidth: 400,
@@ -35,6 +36,11 @@ describe('getSearchIslandGeometry', () => {
 
     expect(geometry.left).toBe(BAR_SIDE_INSET)
     expect(geometry.right).toBe(BAR_SIDE_INSET)
+    expect(geometry.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
+    expect(geometry.radius).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED / 2)
+    expect(geometry.bottom).toBe(
+      TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2,
+    )
   })
 
   test('interpolates the left edge with the morph progress', () => {

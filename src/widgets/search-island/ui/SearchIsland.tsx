@@ -18,7 +18,9 @@ export const SearchIsland = () => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
-  const progress = useSharedValue(isBarCollapsed ? 1 : 0)
+  // Opening search forces the collapsed pill shape, so a surface mounted with
+  // search already open starts at the collapsed geometry instead of morphing in.
+  const progress = useSharedValue(isBarCollapsed || isSearchOpen ? 1 : 0)
   const openProgress = useSharedValue(isSearchOpen ? 1 : 0)
 
   useEffect(() => {
