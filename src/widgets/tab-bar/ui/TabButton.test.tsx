@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native'
 import { type SharedValue } from 'react-native-reanimated'
 import { hapticLight } from 'shared/lib/haptics'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { styles } from './styles'
 import { TabButton } from './TabButton'
 
 jest.mock('shared/lib/haptics', () => ({ hapticLight: jest.fn() }))
@@ -69,6 +70,13 @@ describe('<TabButton>', () => {
     await renderTabButton('listen', true, progressValue(0))
 
     expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 68 })
+  })
+
+  test('leaves the item height to the morph instead of a static fallback', () => {
+    // A static height in the item's style array shadows the animated one on
+    // device, so the expanded item stayed 56 tall and the icon+label looked
+    // cramped inside the 76 island.
+    expect(styles.tabItem).not.toHaveProperty('height')
   })
 
   test('draws the bar icon at the enlarged size', async () => {

@@ -2,6 +2,8 @@ import { fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
+import { TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
+import { RADIUSES } from 'shared/ui/theme'
 import { CustomTabBar } from './CustomTabBar'
 import { styles } from './styles'
 import { UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE } from './useTabPress'
@@ -82,6 +84,27 @@ describe('<CustomTabBar>', () => {
     // Literal 600 (not the constant) guards against regressing to the web-only cap,
     // which is `undefined` under the native jest environment.
     expect(styles.floatingIsland.maxWidth).toBe(600)
+  })
+
+  test('renders the expanded island at the expanded height', async () => {
+    await renderTabBar()
+
+    const island = screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return flat?.borderRadius === RADIUSES.round && flat?.maxWidth === 600
+    })[0]
+
+    expect(StyleSheet.flatten(island?.props.style)).toMatchObject({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    })
+  })
+
+  test('leaves the island height to the animated morph instead of a static fallback', () => {
+    // A static height in the island's style array shadows the animated one on
+    // device: the expanded island stays pinned to the collapsed 64 and renders
+    // visibly shorter than the 76 search circle next to it.
+    expect(styles.floatingIsland).not.toHaveProperty('height')
   })
 
   test('renders the bar labels without the study tab', async () => {

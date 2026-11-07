@@ -1,12 +1,10 @@
-import { BAR_SIDE_INSET, CONTENT_COLUMN_WIDTH, TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
+import { BAR_SIDE_INSET, CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
 import { RADIUSES } from 'shared/ui/theme'
 import { TAB_ITEM_VERTICAL_MARGIN } from '../lib/getIslandStyle'
 
 export const ISLAND_BACKGROUND_LIGHT = 'rgba(230, 230, 230, 0.9)'
 export const ISLAND_BACKGROUND_DARK = 'rgba(0, 0, 0, 0.85)'
 
-// The animated item height (getTabItemHeight) overrides this collapsed fallback.
-const TAB_ITEM_HEIGHT = TAB_BAR_ISLAND_HEIGHT - TAB_ITEM_VERTICAL_MARGIN * 2
 const TAB_LABEL_BOTTOM = 4
 
 export const styles = {
@@ -52,8 +50,10 @@ export const styles = {
   },
   floatingIsland: {
     borderRadius: RADIUSES.round,
+    // No static height: the animated morph style (getIslandStyle) owns it. A
+    // static height in the same style array shadows the animated property on
+    // device/web, pinning the expanded island to the collapsed 64.
     // Floating chrome stays a centered 600px column on wide screens (tablets, desktop-web).
-    height: TAB_BAR_ISLAND_HEIGHT,
     maxWidth: CONTENT_COLUMN_WIDTH,
     overflow: 'hidden' as const,
   },
@@ -79,8 +79,9 @@ export const styles = {
   tabItem: {
     alignItems: 'center' as const,
     borderRadius: RADIUSES.round,
-    flex: 1,
-    height: TAB_ITEM_HEIGHT,
+    // No static height and no flex: the animated height (getTabItemHeight) owns
+    // the item size. `flex: 1` would zero the flex basis and collapse the item
+    // to its content, squeezing the icon and label.
     justifyContent: 'center' as const,
     margin: TAB_ITEM_VERTICAL_MARGIN,
     paddingHorizontal: 2,
