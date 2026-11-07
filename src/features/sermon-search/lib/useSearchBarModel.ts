@@ -8,6 +8,7 @@ import {
   searchInputRequestAtom,
   searchQueryAtom,
 } from '../model'
+import { isSearchFieldVisibleAtom } from '../model-searchField'
 import { useDistinctValuesOnOpen } from './useDistinctValuesOnOpen'
 import { useExternalInputRequest } from './useExternalInputRequest'
 import { useResetInputOnClose } from './useResetInputOnClose'
@@ -25,13 +26,18 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   const ctx = useCtx()
   const [, setQuery] = useAtom(searchQueryAtom)
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
+  // The pill is hidden while the collapsed bar keeps an empty query. A hidden
+  // field must release focus: a lingering keyboard covers the collapsed row and
+  // the first tap on the search circle is spent on the focus handoff instead of
+  // reopening the search.
+  const [isSearchFieldVisible] = useAtom(isSearchFieldVisibleAtom)
   // Local state drives the input so async re-renders (spinner flips, results
   // landing) can never push a stale query back. Seeded from the atom at mount.
   const [inputValue, setInputValue] = useState(() => ctx.get(searchQueryAtom))
   const [isFocused, setIsFocused] = useState(false)
   const [hasSelectedSuggestion, setHasSelectedSuggestion] = useState(false)
   const [inputRequest] = useAtom(searchInputRequestAtom)
-  const inputRef = useSearchInputFocus(isSearchOpen)
+  const inputRef = useSearchInputFocus(isSearchFieldVisible)
   const closeSearchAction = useAction(closeSearch)
   const resetSearchResultsAction = useAction(resetSearchResults)
   useDistinctValuesOnOpen(isSearchOpen)

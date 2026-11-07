@@ -97,4 +97,15 @@ describe('openSearch', () => {
     expect(ctx.get(isSearchOpenAtom)).toBe(true)
     expect(ctx.get(isSearchFieldVisibleAtom)).toBe(true)
   })
+
+  test('expands a collapsed bar on the first call even when search is already open', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    isBarCollapsedAtom(ctx, true)
+
+    await openSearch(ctx)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(ctx.get(isSearchFieldVisibleAtom)).toBe(true)
+  })
 })

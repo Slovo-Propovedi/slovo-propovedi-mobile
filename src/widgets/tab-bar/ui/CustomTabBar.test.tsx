@@ -7,6 +7,7 @@ import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
 import {
   BAR_BOTTOM_INSET_MIN,
   BAR_ROW_MIN_HEIGHT,
+  isBarCollapsedAtom,
   isTabBarMeasuredAtom,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
@@ -353,6 +354,26 @@ describe('<CustomTabBar>', () => {
     await fireEvent.press(getByText('Ещё'))
 
     expect(mockNavigate).toHaveBeenCalledWith('more')
+  })
+
+  test('keeps hidden tab buttons non-interactive inside the collapsed circle', async () => {
+    const { getByText } = await renderTabBar(0, { isCollapsed: true })
+
+    // Zero-width slots still render their pressable children (overflow), so
+    // without a pointer-events gate the invisible «Ещё» button steals taps on
+    // the circle's right edge.
+    await fireEvent.press(getByText('Ещё'))
+
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
+
+  test('expands the collapsed bar when the active tab circle is pressed', async () => {
+    const { ctx, getByText } = await renderTabBar(0, { isCollapsed: true })
+
+    await fireEvent.press(getByText('Слушать'))
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 
   test('does not show info dialog when tapping an active allowed tab', async () => {

@@ -47,8 +47,11 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
 
     // Collapsed, the island shows only the active tab's circle: pressing it
     // expands the bar instead of the fully silent no-op it is when expanded.
+    // An open search session is dismissed in the same gesture — the collapsed
+    // circle owns the tap and the row returns to the plain expanded bar.
     if (isActive && isBarCollapsed) {
       applyBarCollapsed(false)
+      if (isSearchOpen) void closeSearchAction()
       return
     }
 

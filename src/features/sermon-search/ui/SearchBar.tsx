@@ -61,10 +61,7 @@ export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boole
         style={[
           styles.input,
           Platform.OS === 'web' && styles.webInputOutline,
-          {
-            borderColor: isFocused ? currentTheme.primary : 'transparent',
-            color: currentTheme.text,
-          },
+          { color: currentTheme.text },
         ]}
       />
       {isQueryEmpty && (

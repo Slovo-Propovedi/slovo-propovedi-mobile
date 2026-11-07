@@ -7,6 +7,7 @@ import { sermonsMocks } from 'shared/api/generated'
 import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
 import { renderWithProviders } from 'shared/mocks'
 import { showInfo } from 'shared/model/info-dialog'
+import { setBarCollapsed } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 import {
   isSearchingAtom,
@@ -222,6 +223,21 @@ describe('<SearchBar>', () => {
     }
   })
 
+  test('draws no accent ring around the focused field', async () => {
+    const ctx = createCtx()
+    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+
+    const style = StyleSheet.flatten(input.props.style)
+
+    expect(style.borderColor).not.toBe('#f16031')
+    expect(style.borderWidth ?? 0).toBe(0)
+  })
+
   test('stretches across the header so the input fills the row', async () => {
     const ctx = createCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
@@ -435,6 +451,27 @@ describe('<SearchBar>', () => {
       hideCall?.[1]()
     })
 
+    expect(blurMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('blurs the field when the collapsed bar hides it while search stays open', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    const blurMock = (TextInput as unknown as { prototype: { blur: jest.Mock } }).prototype.blur
+    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+    blurMock.mockClear()
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+
+    // A hidden field must release focus: otherwise the keyboard stays up over
+    // the collapsed row and its first tap is consumed by the focus handoff.
     expect(blurMock).toHaveBeenCalledTimes(1)
   })
 })

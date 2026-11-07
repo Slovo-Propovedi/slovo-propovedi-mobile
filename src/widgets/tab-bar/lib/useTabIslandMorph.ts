@@ -68,6 +68,9 @@ export const useTabIslandMorph = ({
     // never overflows the rounded edges.
     expandedTabWidth:
       (expandedIslandWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) / Math.max(routeCount, 1),
+    // Target shape of the morph: hidden slots must stop receiving touches as
+    // soon as the island is collapsing, not when their width animation lands.
+    isCollapsed,
     islandStyle,
     progress,
   }

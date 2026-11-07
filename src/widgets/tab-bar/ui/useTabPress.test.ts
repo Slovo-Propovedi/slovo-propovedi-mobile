@@ -99,6 +99,28 @@ describe('useTabPress', () => {
     expect(navigateToTab).not.toHaveBeenCalled()
   })
 
+  test('expands the collapsed bar and closes an open search on an active-tab press', async () => {
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+    })
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+    expect(navigateToTab).not.toHaveBeenCalled()
+  })
+
   test('keeps the expanded bar expanded on an active-tab press', async () => {
     const ctx = createCtx()
     const emitter = createEmitter()

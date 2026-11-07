@@ -49,7 +49,7 @@ export const CustomTabBar = ({
   const [rowWidth, setRowWidth] = useState(0)
   const visibleRoutes = state.routes.filter(route => !HIDDEN_TAB_ROUTE_NAMES.has(route.name))
   const activeRouteKey = state.routes[state.index]?.key
-  const { contentStyle, expandedTabWidth, islandStyle, progress } = useTabIslandMorph({
+  const { contentStyle, expandedTabWidth, isCollapsed, islandStyle, progress } = useTabIslandMorph({
     hideSearch,
     routeCount: visibleRoutes.length,
     rowWidth,
@@ -92,6 +92,7 @@ export const CustomTabBar = ({
                   key={route.key}
                   isActive={isActive}
                   progress={progress}
+                  isCollapsed={isCollapsed}
                   expandedWidth={expandedTabWidth}
                 >
                   <OnboardingTarget id={`tab.${route.name}`} style={styles.tabButton}>

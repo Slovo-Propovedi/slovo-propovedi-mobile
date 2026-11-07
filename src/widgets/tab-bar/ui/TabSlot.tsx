@@ -9,10 +9,12 @@ export const TabSlot = ({
   children,
   expandedWidth,
   isActive,
+  isCollapsed,
   progress,
 }: PropsWithChildren<{
   expandedWidth: number
   isActive: boolean
+  isCollapsed: boolean
   progress: SharedValue<number>
 }>) => {
   const animatedStyle = useAnimatedStyle(() =>
@@ -23,5 +25,15 @@ export const TabSlot = ({
     }),
   )
 
-  return <Animated.View style={animatedStyle}>{children}</Animated.View>
+  // Collapsed, an inactive slot is zero-width but its pressable children still
+  // overflow the island's edge (labels keep their intrinsic width), so they used
+  // to swallow taps on the right half of the active circle. A zero-width slot
+  // must not be a touch target; the active slot owns the whole circle instead.
+  const pointerEvents = isActive || !isCollapsed ? 'auto' : 'none'
+
+  return (
+    <Animated.View style={animatedStyle} pointerEvents={pointerEvents}>
+      {children}
+    </Animated.View>
+  )
 }

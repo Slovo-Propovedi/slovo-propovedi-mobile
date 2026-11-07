@@ -98,20 +98,34 @@ describe('useBarCollapseOnScroll', () => {
     expect(ctx.get(isBarCollapsedAtom)).toBe(true)
   })
 
-  test('re-collapses after an external expand (tap) and a new downward crossing', async () => {
+  test('does not re-collapse on a layout scroll event at the unchanged offset after an external expand', async () => {
     const { ctx, scrollTo } = await renderDriver()
 
     scrollTo(COLLAPSE_SCROLL_THRESHOLD + 1)
 
     expect(ctx.get(isBarCollapsedAtom)).toBe(true)
 
-    // Tapping the collapsed circle expands the bar without any scroll event;
-    // the driver's snapshot must follow the atom instead of staying stale.
+    // Tapping the collapsed circle (or the search circle) expands the bar
+    // without any scroll gesture. The tap itself can cause a layout/keyboard
+    // change that replays onScroll at the SAME offset; that is not a scroll and
+    // must not undo the expand before the user sees it.
     setBarCollapsed(ctx, false)
 
+    scrollTo(COLLAPSE_SCROLL_THRESHOLD + 1)
+
     expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+  })
+
+  test('re-collapses after an external expand once the user scrolls again', async () => {
+    const { ctx, scrollTo } = await renderDriver()
 
     scrollTo(COLLAPSE_SCROLL_THRESHOLD + 1)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(true)
+
+    setBarCollapsed(ctx, false)
+
+    scrollTo(COLLAPSE_SCROLL_THRESHOLD + 40)
 
     expect(ctx.get(isBarCollapsedAtom)).toBe(true)
   })
