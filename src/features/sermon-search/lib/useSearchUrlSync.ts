@@ -18,8 +18,13 @@ const URL_SYNC_DEBOUNCE_MS = 400
  * Web-only: keeps `?search=<query>` on `/listen` in sync with the search state.
  * A deep-linked `?search=` (>= MIN_QUERY_LENGTH) seeds the search mode and
  * fetches results; afterwards the query is mirrored back into the URL with a
- * debounced `router.replace`, and stripped when the search is cleared. Native is
- * a no-op. A ref guard prevents the seed and the URL write from looping.
+ * debounced `router.setParams`, and stripped when the search is cleared. Native
+ * is a no-op. A ref guard prevents the seed and the URL write from looping.
+ *
+ * `setParams` (not `replace`): the listen stack's REPLACE mints a new route key,
+ * which remounts ListenScreen and destroys the focused TextInput mid-typing.
+ * Updating the current route's params keeps the screen (and the caret) alive;
+ * expo-router still projects the new params into the browser URL.
  */
 export const useSearchUrlSync = () => {
   const router = useRouter()
@@ -62,9 +67,9 @@ export const useSearchUrlSync = () => {
 
     const timer = setTimeout(() => {
       lastSyncedRef.current = next
-      router.replace(
-        next ? { params: { search: next }, pathname: '/listen' } : { pathname: '/listen' },
-      )
+      // Params update in place; `replace` would re-key the listen stack route
+      // and remount the screen, blurring the field the user is typing into.
+      router.setParams({ search: next || undefined })
     }, URL_SYNC_DEBOUNCE_MS)
 
     return () => clearTimeout(timer)

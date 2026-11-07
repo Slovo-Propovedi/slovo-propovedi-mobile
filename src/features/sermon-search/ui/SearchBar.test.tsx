@@ -90,6 +90,22 @@ describe('<SearchBar>', () => {
     expect(ctx.get(searchQueryAtom)).toBe('вера')
   })
 
+  test('keeps the same input field across debounced query and result atom updates', async () => {
+    const ctx = createCtx()
+    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await act(async () => {
+      searchQueryAtom(ctx, 'вера')
+      isSearchingAtom(ctx, true)
+      searchResultsAtom(ctx, [sermon])
+      isSearchingAtom(ctx, false)
+    })
+
+    // A remount would replace the host node and drop the caret/focus on web.
+    expect(getByPlaceholderText(SEARCH_PLACEHOLDER)).toBe(input)
+  })
+
   test('keeps the latest typed text when the query atom lags behind an async render', async () => {
     const ctx = createCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
