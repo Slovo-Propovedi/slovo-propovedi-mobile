@@ -1,36 +1,43 @@
 import { useEffect } from 'react'
 import { useSharedValue } from 'react-native-reanimated'
 
+interface GeometrySharedValuesInput {
+  fullScreenHeight: number
+  screenWidth: number
+  tabBarHeight: number
+}
+
 /**
  * Mirrors of layout geometry as shared values that may change after mount (e.g.
  * Late tabBarHeight measurement, safe-area insets on Android). Writing to
  * `.value` is the reliable cross-thread channel; worklet closure updates alone
  * can be dropped during busy startup windows (Issue #63).
- * @param miniBottom - Bottom offset for the mini player (tabBarHeight minus overlap).
- * @param screenWidth - Current window width from useWindowDimensions.
- * @param fullScreenHeight - Full device screen height from Dimensions.get('screen').
+ * @param input - Current layout geometry.
+ * @param input.fullScreenHeight - Full device screen height.
+ * @param input.screenWidth - Current window width.
+ * @param input.tabBarHeight - Measured height of the floating tab row.
  */
-export const useGeometrySharedValues = (
-  miniBottom: number,
-  screenWidth: number,
-  fullScreenHeight: number,
-) => {
-  const miniBottomShared = useSharedValue(miniBottom)
+export const useGeometrySharedValues = ({
+  fullScreenHeight,
+  screenWidth,
+  tabBarHeight,
+}: GeometrySharedValuesInput) => {
+  const tabBarHeightShared = useSharedValue(tabBarHeight)
   const screenWidthShared = useSharedValue(screenWidth)
   const fullScreenHeightShared = useSharedValue(fullScreenHeight)
 
   useEffect(() => {
-    miniBottomShared.value = miniBottom
+    tabBarHeightShared.value = tabBarHeight
     screenWidthShared.value = screenWidth
     fullScreenHeightShared.value = fullScreenHeight
   }, [
     fullScreenHeight,
     fullScreenHeightShared,
-    miniBottom,
-    miniBottomShared,
     screenWidth,
     screenWidthShared,
+    tabBarHeight,
+    tabBarHeightShared,
   ])
 
-  return { fullScreenHeightShared, miniBottomShared, screenWidthShared }
+  return { fullScreenHeightShared, screenWidthShared, tabBarHeightShared }
 }

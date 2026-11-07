@@ -31,6 +31,8 @@ const ROW_ACCESSIBILITY_ROLE = Platform.OS === 'web' ? 'link' : 'button'
 interface MiniPlayerProps {
   audio: AudioPlayerData
   currentTheme: ThemeColors
+  miniBarRestingStyle: ViewStyle
+  miniBarStyle: AnimatedStyle<ViewStyle>
   miniPan: GestureType
   miniStyle: AnimatedStyle<ViewStyle>
   miniStyles: ReturnType<typeof createMiniStyles>
@@ -46,6 +48,8 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
     {
       audio,
       currentTheme,
+      miniBarRestingStyle,
+      miniBarStyle,
       miniPan,
       miniStyle,
       miniStyles,
@@ -65,7 +69,15 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
           ref={ref}
           onPress={onPress}
           accessibilityRole={ROW_ACCESSIBILITY_ROLE}
-          style={[miniStyles.miniContainer, miniStyle, { backgroundColor: currentTheme.surface }]}
+          style={[
+            miniStyles.miniContainer,
+            miniStyle,
+            // Animated geometry wins at the native level; the React resting style
+            // last keeps the shadow tree on the current bar state's geometry (#63).
+            miniBarStyle,
+            miniBarRestingStyle,
+            { backgroundColor: currentTheme.surface },
+          ]}
         >
           <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
           <View style={miniStyles.miniTextContainer}>

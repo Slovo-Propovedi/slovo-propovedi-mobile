@@ -29,6 +29,7 @@ jest.mock('shared/ui/layout', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
     CONTENT_COLUMN_WIDTH: 600,
+    isBarCollapsedAtom: atom(false, 'mockIsBarCollapsedAtom'),
     isTabBarMeasuredAtom: atom(true, 'mockIsTabBarMeasuredAtom'),
     tabBarHeightAtom: atom(0, 'mockTabBarHeightAtom'),
   }
@@ -55,6 +56,8 @@ jest.mock('../../model/useExpandAnimation', () => ({
     containerStyle: {},
     forceGeometryReapply: jest.fn(),
     fullStyle: {},
+    miniBarRestingStyle: {},
+    miniBarStyle: {},
     miniOverlayStyle: {},
     miniStyle: {},
     progress: { value: 0 },

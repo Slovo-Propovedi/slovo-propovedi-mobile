@@ -2,8 +2,22 @@ import { act } from '@testing-library/react-native'
 import { AppState, type AppStateStatus, Text } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
+import {
+  BAR_CIRCLE_SIZE,
+  BAR_OUTER_GAP,
+  BAR_ROW_MIN_HEIGHT,
+  BAR_SIDE_INSET,
+  TAB_BAR_ISLAND_HEIGHT,
+} from 'shared/ui/layout'
+import { PLAYER_SIZES } from 'shared/ui/theme'
+import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
 import { useExpandAnimation } from './useExpandAnimation'
+
+const TAB_BAR_HEIGHT = 98
+const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
+const EXPANDED_BOTTOM = TAB_BAR_HEIGHT + BAR_OUTER_GAP
+const COLLAPSED_BOTTOM = TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
+const COLLAPSED_LEFT = BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
 const mockedWithTiming = withTiming as jest.Mock
 
@@ -44,13 +58,13 @@ const emitState = (state: AppStateStatus) => {
 // Capture progress shared value from the hook via a component that also
 // renders it as text so we can re-render and re-read after state changes
 const CollapsedHarness = ({ onProgress }: { onProgress: (p: { value: number }) => void }) => {
-  const { progress } = useExpandAnimation(false, 56)
+  const { progress } = useExpandAnimation(false, TAB_BAR_HEIGHT, false)
   onProgress(progress)
   return <Text testID='harness'>{String(progress.value)}</Text>
 }
 
 const ExpandedHarness = ({ onProgress }: { onProgress: (p: { value: number }) => void }) => {
-  const { progress } = useExpandAnimation(true, 56)
+  const { progress } = useExpandAnimation(true, TAB_BAR_HEIGHT, false)
   onProgress(progress)
   return <Text testID='harness'>{String(progress.value)}</Text>
 }
@@ -114,7 +128,7 @@ describe('useExpandAnimation foreground snap', () => {
 })
 
 describe('useExpandAnimation restingContainerStyle', () => {
-  test('returns collapsed geometry when expanded is false', async () => {
+  const renderResting = async (barCollapsed: boolean) => {
     let capturedResult: null | ReturnType<typeof useExpandAnimation> = null
 
     const Harness = ({
@@ -122,7 +136,7 @@ describe('useExpandAnimation restingContainerStyle', () => {
     }: {
       onResult: (r: ReturnType<typeof useExpandAnimation>) => void
     }) => {
-      const result = useExpandAnimation(false, 56)
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT, barCollapsed)
       onResult(result)
       return <Text testID='harness'>{String(result.progress.value)}</Text>
     }
@@ -135,18 +149,121 @@ describe('useExpandAnimation restingContainerStyle', () => {
       />,
     )
 
-    expect(capturedResult).not.toBeNull()
-    expect(capturedResult).toMatchObject({
+    return capturedResult
+  }
+
+  test('returns the detached pill geometry when the bar is expanded', async () => {
+    const result = await renderResting(false)
+
+    expect(result).not.toBeNull()
+    expect(result).toMatchObject({
       restingContainerStyle: {
-        borderBottomLeftRadius: RADIUSES.middle,
-        borderBottomRightRadius: RADIUSES.middle,
-        borderTopLeftRadius: RADIUSES.middle,
-        borderTopRightRadius: RADIUSES.middle,
-        bottom: 52,
-        left: INDENTS.low,
-        top: 800 - 52 - PLAYER_SIZES.miniPlayerHeight,
-        width: 400 - INDENTS.low * 2,
+        borderBottomLeftRadius: PILL_RADIUS,
+        borderBottomRightRadius: PILL_RADIUS,
+        borderTopLeftRadius: PILL_RADIUS,
+        borderTopRightRadius: PILL_RADIUS,
+        bottom: EXPANDED_BOTTOM,
+        left: BAR_SIDE_INSET,
+        top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+        width: 400 - BAR_SIDE_INSET * 2,
       },
     })
+  })
+
+  test('restates the collapsed pill geometry when the bar is collapsed', async () => {
+    const result = await renderResting(true)
+
+    expect(result).not.toBeNull()
+    expect(result).toMatchObject({
+      miniBarRestingStyle: {
+        borderRadius: PILL_RADIUS,
+        bottom: COLLAPSED_BOTTOM,
+        left: COLLAPSED_LEFT,
+        width: 400 - COLLAPSED_LEFT * 2,
+      },
+      restingContainerStyle: {
+        borderBottomLeftRadius: PILL_RADIUS,
+        borderBottomRightRadius: PILL_RADIUS,
+        borderTopLeftRadius: PILL_RADIUS,
+        borderTopRightRadius: PILL_RADIUS,
+        bottom: COLLAPSED_BOTTOM,
+        left: COLLAPSED_LEFT,
+        top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+        width: 400 - COLLAPSED_LEFT * 2,
+      },
+    })
+  })
+})
+
+describe('getContainerGeometryStyle (expand interpolation)', () => {
+  const geometry = (barProgress: number, progress: number) =>
+    getContainerGeometryStyle({
+      barProgress,
+      fullScreenHeight: 800,
+      progress,
+      screenWidth: 400,
+      tabBarHeight: TAB_BAR_HEIGHT,
+    })
+
+  test('starts from the expanded resting pill', () => {
+    expect(geometry(0, 0)).toEqual({
+      borderBottomLeftRadius: PILL_RADIUS,
+      borderBottomRightRadius: PILL_RADIUS,
+      borderTopLeftRadius: PILL_RADIUS,
+      borderTopRightRadius: PILL_RADIUS,
+      bottom: EXPANDED_BOTTOM,
+      left: BAR_SIDE_INSET,
+      top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      width: 400 - BAR_SIDE_INSET * 2,
+    })
+  })
+
+  test('starts from the collapsed resting pill', () => {
+    expect(geometry(1, 0)).toEqual({
+      borderBottomLeftRadius: PILL_RADIUS,
+      borderBottomRightRadius: PILL_RADIUS,
+      borderTopLeftRadius: PILL_RADIUS,
+      borderTopRightRadius: PILL_RADIUS,
+      bottom: COLLAPSED_BOTTOM,
+      left: COLLAPSED_LEFT,
+      top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      width: 400 - COLLAPSED_LEFT * 2,
+    })
+  })
+
+  test('interpolates upward from the collapsed pill when expanding', () => {
+    const style = geometry(1, 0.5)
+
+    expect(style.bottom).toBe(COLLAPSED_BOTTOM / 2)
+    expect(style.left).toBe(COLLAPSED_LEFT / 2)
+    expect(style.top).toBe((800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight) / 2)
+    expect(style.width).toBe(400 - COLLAPSED_LEFT)
+    expect(style.borderTopLeftRadius).toBe(PILL_RADIUS / 2)
+  })
+
+  test('interpolates upward from the expanded pill when expanding', () => {
+    const style = geometry(0, 0.5)
+
+    expect(style.bottom).toBe(EXPANDED_BOTTOM / 2)
+    expect(style.left).toBe(BAR_SIDE_INSET / 2)
+    expect(style.top).toBe((800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight) / 2)
+    expect(style.width).toBe(400 - BAR_SIDE_INSET)
+    expect(style.borderTopLeftRadius).toBe(PILL_RADIUS / 2)
+  })
+
+  test('reaches fullscreen regardless of the resting bar state', () => {
+    const expected = {
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      bottom: 0,
+      left: 0,
+      top: 0,
+      width: 400,
+    }
+
+    expect(geometry(0, 1)).toEqual(expected)
+    expect(geometry(1, 1)).toEqual(expected)
   })
 })

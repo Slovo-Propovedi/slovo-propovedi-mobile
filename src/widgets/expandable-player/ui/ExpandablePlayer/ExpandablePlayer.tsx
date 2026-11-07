@@ -1,6 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type StyleProp, View } from 'react-native'
-import Animated from 'react-native-reanimated'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { closePlayerSheetAction, openPlayerSheetAction } from 'entities/player'
 import { useExpandPlayerTourAction } from '../../lib/useExpandPlayerTourAction'
@@ -12,6 +11,7 @@ import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomShee
 import { CollapsedMiniPlayer } from './CollapsedMiniPlayer'
 import { ContainerView, type NonGeometricStyle } from './ContainerView'
 import { createMiniStyles } from './miniStyles'
+import { PlayerBackdrop } from './PlayerBackdrop'
 import { createStyles } from './styles'
 import { useExpandablePlayerGesture } from './useExpandablePlayerGesture'
 import { useExpandablePlayerState } from './useExpandablePlayerState'
@@ -27,6 +27,7 @@ export const ExpandablePlayer = ({
     audio,
     currentTheme,
     expanded,
+    isBarCollapsed,
     isBuffering,
     isTabBarMeasured,
     playing,
@@ -47,14 +48,16 @@ export const ExpandablePlayer = ({
     containerStyle,
     forceGeometryReapply,
     fullStyle,
+    miniBarRestingStyle,
+    miniBarStyle,
     miniOverlayStyle,
     miniStyle,
     progress,
     restingContainerStyle,
     screenHeight,
     screenWidth,
-  } = useExpandAnimation(expanded, tabBarHeight)
-  const miniStyles = createMiniStyles(currentTheme, tabBarHeight, screenWidth)
+  } = useExpandAnimation(expanded, tabBarHeight, isBarCollapsed)
+  const miniStyles = createMiniStyles(currentTheme)
 
   const gesture = useExpandablePlayerGesture({
     close,
@@ -81,16 +84,11 @@ export const ExpandablePlayer = ({
 
   return (
     <View key={recoveryKey} style={styles.recoveryOverlay}>
-      <Animated.View
-        style={[
-          styles.backdrop,
-          backdropStyle,
-          {
-            height: Math.floor(screenHeight),
-            pointerEvents: 'none',
-            width: Math.floor(screenWidth),
-          },
-        ]}
+      <PlayerBackdrop
+        style={styles.backdrop}
+        screenWidth={screenWidth}
+        screenHeight={screenHeight}
+        backdropStyle={backdropStyle}
       />
       {!expanded && (
         <CollapsedMiniPlayer
@@ -102,8 +100,10 @@ export const ExpandablePlayer = ({
           onPlayPause={togglePlay}
           miniPan={gesture.miniPan}
           isBuffering={isBuffering}
+          miniBarStyle={miniBarStyle}
           currentTheme={currentTheme}
           onPress={gesture.handleMiniTap}
+          miniBarRestingStyle={miniBarRestingStyle}
         />
       )}
       <ContainerView

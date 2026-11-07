@@ -15,8 +15,10 @@ import { type createMiniStyles } from './miniStyles'
  * @param root0.audio - Current track audio.
  * @param root0.currentTheme - Active theme colors.
  * @param root0.isBuffering - Whether playback is buffering (shows the spinner).
+ * @param root0.miniBarRestingStyle - React-committed resting pill geometry for the current bar state.
+ * @param root0.miniBarStyle - Animated pill geometry during the bar morph.
  * @param root0.miniPan - Pan gesture that expands the player.
- * @param root0.miniStyle - Animated resting container style.
+ * @param root0.miniStyle - Animated opacity style.
  * @param root0.miniStyles - Precomputed mini-player styles.
  * @param root0.onPlayPause - Play/pause toggle handler.
  * @param root0.onPress - Tap handler that expands the player.
@@ -27,6 +29,8 @@ export const CollapsedMiniPlayer = ({
   audio,
   currentTheme,
   isBuffering,
+  miniBarRestingStyle,
+  miniBarStyle,
   miniPan,
   miniStyle,
   miniStyles,
@@ -38,6 +42,8 @@ export const CollapsedMiniPlayer = ({
   audio: AudioPlayerData
   currentTheme: ThemeColors
   isBuffering: boolean
+  miniBarRestingStyle: ViewStyle
+  miniBarStyle: AnimatedStyle<ViewStyle>
   miniPan: GestureType
   miniStyle: AnimatedStyle<ViewStyle>
   miniStyles: ReturnType<typeof createMiniStyles>
@@ -60,7 +66,9 @@ export const CollapsedMiniPlayer = ({
       miniStyles={miniStyles}
       onPlayPause={onPlayPause}
       showSpinner={isBuffering}
+      miniBarStyle={miniBarStyle}
       currentTheme={currentTheme}
+      miniBarRestingStyle={miniBarRestingStyle}
     />
   )
 }

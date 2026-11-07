@@ -1,42 +1,97 @@
-import { CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
+import {
+  BAR_CIRCLE_SIZE,
+  BAR_OUTER_GAP,
+  BAR_ROW_MIN_HEIGHT,
+  BAR_SIDE_INSET,
+  CONTENT_COLUMN_WIDTH,
+  TAB_BAR_ISLAND_HEIGHT,
+} from 'shared/ui/layout'
+import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getRestingContainerStyle } from './getRestingContainerStyle'
 
-describe('getRestingContainerStyle', () => {
-  const common = { fullScreenHeight: 800, miniBottom: 52, screenWidth: 400 }
+const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
+const EXPANDED_BOTTOM = 98 + BAR_OUTER_GAP
+const COLLAPSED_BOTTOM = 98 - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
+const COLLAPSED_SIDE_INSET = BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
-  test('collapsed: returns mini-player geometry', () => {
+describe('getRestingContainerStyle', () => {
+  const common = { barCollapsed: false, fullScreenHeight: 800, screenWidth: 400, tabBarHeight: 98 }
+
+  test('expanded bar: returns the detached pill above the tab row', () => {
     const style = getRestingContainerStyle({ expanded: false, ...common })
 
     expect(style).toEqual({
-      borderBottomLeftRadius: RADIUSES.middle,
-      borderBottomRightRadius: RADIUSES.middle,
-      borderTopLeftRadius: RADIUSES.middle,
-      borderTopRightRadius: RADIUSES.middle,
-      bottom: 52,
-      left: INDENTS.low,
-      top: 800 - 52 - PLAYER_SIZES.miniPlayerHeight,
-      width: 400 - INDENTS.low * 2,
+      borderBottomLeftRadius: PILL_RADIUS,
+      borderBottomRightRadius: PILL_RADIUS,
+      borderTopLeftRadius: PILL_RADIUS,
+      borderTopRightRadius: PILL_RADIUS,
+      bottom: EXPANDED_BOTTOM,
+      left: BAR_SIDE_INSET,
+      top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      width: 400 - BAR_SIDE_INSET * 2,
     })
   })
 
-  test('collapsed: centers the bar in the content column on large screens', () => {
-    const style = getRestingContainerStyle({ expanded: false, ...common, screenWidth: 800 })
+  test('expanded bar: centers the pill in the content column on large screens', () => {
+    const style = getRestingContainerStyle({
+      barCollapsed: false,
+      expanded: false,
+      fullScreenHeight: 800,
+      screenWidth: 800,
+      tabBarHeight: 98,
+    })
 
     expect(style).toEqual({
-      borderBottomLeftRadius: RADIUSES.middle,
-      borderBottomRightRadius: RADIUSES.middle,
-      borderTopLeftRadius: RADIUSES.middle,
-      borderTopRightRadius: RADIUSES.middle,
-      bottom: 52,
+      borderBottomLeftRadius: PILL_RADIUS,
+      borderBottomRightRadius: PILL_RADIUS,
+      borderTopLeftRadius: PILL_RADIUS,
+      borderTopRightRadius: PILL_RADIUS,
+      bottom: EXPANDED_BOTTOM,
       left: (800 - CONTENT_COLUMN_WIDTH) / 2,
-      top: 800 - 52 - PLAYER_SIZES.miniPlayerHeight,
+      top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
       width: CONTENT_COLUMN_WIDTH,
     })
   })
 
-  test('expanded: returns fullscreen geometry with zero radii', () => {
-    const style = getRestingContainerStyle({ expanded: true, ...common })
+  test('collapsed bar: sits in the row between the tab circle and the search circle', () => {
+    const style = getRestingContainerStyle({ ...common, barCollapsed: true, expanded: false })
+
+    expect(style).toEqual({
+      borderBottomLeftRadius: PILL_RADIUS,
+      borderBottomRightRadius: PILL_RADIUS,
+      borderTopLeftRadius: PILL_RADIUS,
+      borderTopRightRadius: PILL_RADIUS,
+      bottom: COLLAPSED_BOTTOM,
+      left: COLLAPSED_SIDE_INSET,
+      top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      width: 400 - COLLAPSED_SIDE_INSET * 2,
+    })
+  })
+
+  test('collapsed bar: keeps the pill inside the centered column on large screens', () => {
+    const columnInset = (800 - CONTENT_COLUMN_WIDTH) / 2
+    const style = getRestingContainerStyle({
+      barCollapsed: true,
+      expanded: false,
+      fullScreenHeight: 800,
+      screenWidth: 800,
+      tabBarHeight: 98,
+    })
+
+    expect(style).toEqual({
+      borderBottomLeftRadius: PILL_RADIUS,
+      borderBottomRightRadius: PILL_RADIUS,
+      borderTopLeftRadius: PILL_RADIUS,
+      borderTopRightRadius: PILL_RADIUS,
+      bottom: COLLAPSED_BOTTOM,
+      left: columnInset + COLLAPSED_SIDE_INSET,
+      top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      width: 800 - (columnInset + COLLAPSED_SIDE_INSET) * 2,
+    })
+  })
+
+  test('expanded player: returns fullscreen geometry with zero radii regardless of the bar', () => {
+    const style = getRestingContainerStyle({ ...common, barCollapsed: true, expanded: true })
 
     expect(style).toEqual({
       borderBottomLeftRadius: 0,

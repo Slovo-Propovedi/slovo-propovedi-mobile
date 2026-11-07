@@ -188,8 +188,8 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 На широких экранах — десктоп-web и планшеты — в центрированную колонку 600 px убираются:
 
 - таб-бар (`widgets/tab-bar/ui/styles.ts` → `floatingIsland`, `maxWidth: CONTENT_COLUMN_WIDTH`);
-- свёрнутый мини-плеер (`ExpandablePlayer/miniStyles.ts`, принимает `screenWidth`, `getColumnSideInset(..., CONTENT_COLUMN_WIDTH)`);
-- свёрнутая геометрия `ContainerView` — только эндпоинт `progress→0` в `getRestingContainerStyle.ts` и ворклете `useExpandAnimation.ts` (полноэкранный вид `progress→1` не тронут);
+- мини-плеер в обеих resting-формах (`ExpandablePlayer/getMiniPlayerGeometry.ts` — `getColumnSideInset(..., CONTENT_COLUMN_WIDTH)`; развёрнутая пилюля — по инсету колонки, свёрнутая — плюс `BAR_SIDE_INSET` и круг таба внутри колонки);
+- resting- и переходная геометрия `ContainerView` (`getRestingContainerStyle.ts`, `getContainerGeometryStyle.ts`) — начало разворота берётся из текущей формы пилюли; полноэкранный вид `progress→1` не тронут;
 - в полноэкранном плеере — ряд с тремя точками (`expandedLayoutStyles.trackInfoRow`) и блок кнопок (`expandedControlsStyles.controlsArea`) — это web-only часть (`APP_MAX_CONTENT_WIDTH`). Прогресс-бар и `HeaderOverlay` остаются на всю ширину.
 
 На телефонах (ширина < 600 px) числовая колонка шире экрана, поэтому все три инсета сводятся к `INDENTS.low` — рендер не меняется.

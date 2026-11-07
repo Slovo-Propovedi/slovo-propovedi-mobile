@@ -85,9 +85,11 @@ const mockOnPress = jest.fn()
 const baseProps: MiniPlayerProps = {
   audio: AUDIO,
   currentTheme: LightTheme,
+  miniBarRestingStyle: {},
+  miniBarStyle: {},
   miniPan: {} as GestureType,
   miniStyle: {},
-  miniStyles: createMiniStyles(LightTheme, 0, 400),
+  miniStyles: createMiniStyles(LightTheme),
   onPlayPause: mockOnPlayPause,
   onPress: mockOnPress,
   playing: false,

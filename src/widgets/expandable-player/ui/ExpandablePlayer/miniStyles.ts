@@ -1,13 +1,10 @@
 import { StyleSheet } from 'react-native'
-import { CONTENT_COLUMN_WIDTH, getColumnSideInset } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS, PLAYER_SIZES, RADIUSES, type ThemeColors } from 'shared/ui/theme'
-import { getMiniPlayerBottom } from '../../lib/getMiniPlayerBottom'
 
-export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number, screenWidth: number) => {
-  // The collapsed bar stays inside the centered content column on every platform.
-  const sideInset = getColumnSideInset(screenWidth, INDENTS.low, CONTENT_COLUMN_WIDTH)
+const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
 
-  return StyleSheet.create({
+export const createMiniStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
     downloadFill: {
       height: '100%',
     },
@@ -19,18 +16,17 @@ export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number, scree
       position: 'absolute',
       right: 0,
     },
+    // Geometry (bottom/left/width/radius) is committed by the bar-morph styles in
+    // MiniPlayer: animated during the morph, React-resting for the current state.
     miniContainer: {
       alignItems: 'center',
       backgroundColor: theme.surface,
-      borderRadius: RADIUSES.middle,
-      bottom: getMiniPlayerBottom(tabBarHeight),
+      borderRadius: PILL_RADIUS,
       flexDirection: 'row',
       height: PLAYER_SIZES.miniPlayerHeight,
-      left: sideInset,
       overflow: 'hidden',
       paddingHorizontal: INDENTS.low,
       position: 'absolute',
-      right: sideInset,
       zIndex: 300,
     },
     miniControls: {
@@ -46,7 +42,7 @@ export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number, scree
     miniOverlay: {
       ...StyleSheet.absoluteFill,
       backgroundColor: theme.surface,
-      borderRadius: RADIUSES.middle,
+      borderRadius: PILL_RADIUS,
     },
     miniPlaylistName: {
       color: theme.textMuted,
@@ -65,4 +61,3 @@ export const createMiniStyles = (theme: ThemeColors, tabBarHeight: number, scree
       fontSize: FONT_SIZES.base,
     },
   })
-}

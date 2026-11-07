@@ -7,7 +7,7 @@ import {
   isPlayingAtom,
   useGuardedTogglePlay,
 } from 'entities/player'
-import { isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
+import { isBarCollapsedAtom, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 
 /**
@@ -19,6 +19,7 @@ export const useExpandablePlayerState = () => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const [audio] = useAtom(currentAudioAtom)
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
+  const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
   const [playing] = useAtom(isPlayingAtom)
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
@@ -29,6 +30,7 @@ export const useExpandablePlayerState = () => {
     audio,
     currentTheme,
     expanded,
+    isBarCollapsed,
     isBuffering,
     isTabBarMeasured,
     playing,
