@@ -1,7 +1,7 @@
 import { Platform } from 'react-native'
 
 /** Minimal Web Speech API surface the search bar relies on. */
-export interface WebSpeechRecognition {
+interface WebSpeechRecognition {
   abort: () => void
   continuous: boolean
   interimResults: boolean
