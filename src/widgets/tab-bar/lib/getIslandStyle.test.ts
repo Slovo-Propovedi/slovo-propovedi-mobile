@@ -1,25 +1,37 @@
-import { getIslandStyle, getTabIconOffset, getTabSlotStyle } from './getIslandStyle'
+import {
+  getCapsuleOpacity,
+  getCircleButtonStyle,
+  getIslandStyle,
+  getTabIconOffset,
+  getTabItemHeight,
+  getTabSlotStyle,
+} from './getIslandStyle'
 
-const LAYOUT = { collapsedWidth: 64, expandedWidth: 584 }
+const LAYOUT = {
+  collapsedHeight: 64,
+  collapsedWidth: 64,
+  expandedHeight: 76,
+  expandedWidth: 584,
+}
 const EXPANDED_TAB_WIDTH = 146
 const TAB_LAYOUT = { collapsedWidth: 64, expandedWidth: EXPANDED_TAB_WIDTH }
 
 describe('getIslandStyle', () => {
-  test('the expanded island spans the full row width', () => {
-    expect(getIslandStyle(0, LAYOUT)).toEqual({ width: 584 })
+  test('the expanded island spans the full row width and grows taller', () => {
+    expect(getIslandStyle(0, LAYOUT)).toEqual({ height: 76, width: 584 })
   })
 
-  test('the collapsed island shrinks to the circle size', () => {
-    expect(getIslandStyle(1, LAYOUT)).toEqual({ width: 64 })
+  test('the collapsed island shrinks to the circle size and height', () => {
+    expect(getIslandStyle(1, LAYOUT)).toEqual({ height: 64, width: 64 })
   })
 
-  test('the width interpolates linearly between both states', () => {
-    expect(getIslandStyle(0.5, LAYOUT)).toEqual({ width: 324 })
+  test('width and height interpolate linearly between both states', () => {
+    expect(getIslandStyle(0.5, LAYOUT)).toEqual({ height: 70, width: 324 })
   })
 
   test('progress outside 0..1 is clamped', () => {
-    expect(getIslandStyle(-1, LAYOUT)).toEqual({ width: 584 })
-    expect(getIslandStyle(2, LAYOUT)).toEqual({ width: 64 })
+    expect(getIslandStyle(-1, LAYOUT)).toEqual({ height: 76, width: 584 })
+    expect(getIslandStyle(2, LAYOUT)).toEqual({ height: 64, width: 64 })
   })
 })
 
@@ -70,5 +82,54 @@ describe('getTabIconOffset', () => {
 
   test('the offset eases linearly with the morph', () => {
     expect(getTabIconOffset(0.5)).toBe(-4)
+  })
+})
+
+describe('getTabItemHeight', () => {
+  test('expanded item grows with the island so the label keeps a gap below the icon', () => {
+    expect(getTabItemHeight(0)).toBe(68)
+  })
+
+  test('collapsed item stays the circle item height', () => {
+    expect(getTabItemHeight(1)).toBe(56)
+  })
+
+  test('height interpolates with the morph and clamps out-of-range progress', () => {
+    expect(getTabItemHeight(0.5)).toBe(62)
+    expect(getTabItemHeight(-1)).toBe(68)
+    expect(getTabItemHeight(2)).toBe(56)
+  })
+})
+
+describe('getCapsuleOpacity', () => {
+  test('expanded active tab shows the capsule highlight', () => {
+    expect(getCapsuleOpacity(0, true)).toBe(1)
+  })
+
+  test('collapsed active tab hides the capsule highlight inside the circle', () => {
+    expect(getCapsuleOpacity(1, true)).toBe(0)
+  })
+
+  test('inactive tabs never show the capsule', () => {
+    expect(getCapsuleOpacity(0, false)).toBe(0)
+    expect(getCapsuleOpacity(1, false)).toBe(0)
+  })
+
+  test('opacity crossfades with progress', () => {
+    expect(getCapsuleOpacity(0.5, true)).toBe(0.5)
+  })
+})
+
+describe('getCircleButtonStyle', () => {
+  test('expanded search circle grows to the expanded size and stays round', () => {
+    expect(getCircleButtonStyle(0)).toEqual({ borderRadius: 38, height: 76, width: 76 })
+  })
+
+  test('collapsed search circle shrinks to the collapsed size and stays round', () => {
+    expect(getCircleButtonStyle(1)).toEqual({ borderRadius: 32, height: 64, width: 64 })
+  })
+
+  test('diameter and radius interpolate together through the morph', () => {
+    expect(getCircleButtonStyle(0.5)).toEqual({ borderRadius: 35, height: 70, width: 70 })
   })
 })

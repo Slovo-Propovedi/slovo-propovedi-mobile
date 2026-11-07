@@ -4,11 +4,14 @@ import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reani
 import { useIsSearchOpen } from 'features/sermon-search'
 import {
   BAR_CIRCLE_SIZE,
+  BAR_CIRCLE_SIZE_EXPANDED,
   BAR_MORPH_DURATION_MS,
   BAR_OUTER_GAP,
   BAR_SIDE_INSET,
   CONTENT_COLUMN_WIDTH,
   isBarCollapsedAtom,
+  TAB_BAR_ISLAND_HEIGHT,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 import { getIslandStyle } from './getIslandStyle'
 
@@ -20,8 +23,9 @@ interface TabIslandMorphInput {
   windowWidth: number
 }
 
-// Drives the island's width morph (expanded ⇄ circle). Opening search forces the
-// collapsed shape even when the scroll driver has not collapsed the bar yet.
+// Drives the island's width/height morph (expanded ⇄ circle). Opening search
+// forces the collapsed shape even when the scroll driver has not collapsed the
+// bar yet.
 export const useTabIslandMorph = ({
   hideSearch,
   routeCount,
@@ -40,13 +44,15 @@ export const useTabIslandMorph = ({
   const rowContentWidth =
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
   const expandedIslandWidth = Math.max(
-    BAR_CIRCLE_SIZE,
-    hideSearch ? rowContentWidth : rowContentWidth - BAR_CIRCLE_SIZE - BAR_OUTER_GAP,
+    BAR_CIRCLE_SIZE_EXPANDED,
+    hideSearch ? rowContentWidth : rowContentWidth - BAR_CIRCLE_SIZE_EXPANDED - BAR_OUTER_GAP,
   )
 
   const islandStyle = useAnimatedStyle(() =>
     getIslandStyle(progress.value, {
+      collapsedHeight: TAB_BAR_ISLAND_HEIGHT,
       collapsedWidth: BAR_CIRCLE_SIZE,
+      expandedHeight: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
       expandedWidth: expandedIslandWidth,
     }),
   )

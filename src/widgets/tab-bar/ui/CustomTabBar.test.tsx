@@ -1,4 +1,5 @@
-import { fireEvent } from '@testing-library/react-native'
+import { fireEvent, screen } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
 import { CustomTabBar } from './CustomTabBar'
@@ -95,14 +96,14 @@ describe('<CustomTabBar>', () => {
   test('marks the active tab with a capsule and primary tint', async () => {
     const { getByText } = await renderTabBar(0)
 
+    const capsules = screen.root?.queryAll(
+      instance =>
+        StyleSheet.flatten(instance.props.style)?.backgroundColor === 'rgba(241, 96, 49, 0.18)',
+    )
+
     expect(getByText('Слушать')).toHaveStyle({ color: '#f16031' })
-    expect(getByText('Слушать').parent).toHaveStyle({
-      backgroundColor: 'rgba(241, 96, 49, 0.18)',
-    })
+    expect(capsules).toHaveLength(1)
     expect(getByText('Ещё')).not.toHaveStyle({ color: '#f16031' })
-    expect(getByText('Ещё').parent).not.toHaveStyle({
-      backgroundColor: 'rgba(241, 96, 49, 0.18)',
-    })
   })
 
   test('renders the circular search button to the right of the island', async () => {

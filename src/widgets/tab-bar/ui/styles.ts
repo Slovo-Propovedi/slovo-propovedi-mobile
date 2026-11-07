@@ -1,18 +1,12 @@
-import {
-  BAR_CIRCLE_SIZE,
-  BAR_SIDE_INSET,
-  CONTENT_COLUMN_WIDTH,
-  TAB_BAR_ISLAND_HEIGHT,
-} from 'shared/ui/layout'
+import { BAR_SIDE_INSET, CONTENT_COLUMN_WIDTH, TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
 import { RADIUSES } from 'shared/ui/theme'
+import { TAB_ITEM_VERTICAL_MARGIN } from '../lib/getIslandStyle'
 
 export const ISLAND_BACKGROUND_LIGHT = 'rgba(230, 230, 230, 0.9)'
 export const ISLAND_BACKGROUND_DARK = 'rgba(0, 0, 0, 0.85)'
 
-const TAB_ITEM_MARGIN = 4
-// The label is absolutely positioned, so the item needs an explicit height to
-// keep the active capsule a full circle when the island is collapsed.
-const TAB_ITEM_HEIGHT = TAB_BAR_ISLAND_HEIGHT - TAB_ITEM_MARGIN * 2
+// The animated item height (getTabItemHeight) overrides this collapsed fallback.
+const TAB_ITEM_HEIGHT = TAB_BAR_ISLAND_HEIGHT - TAB_ITEM_VERTICAL_MARGIN * 2
 const TAB_LABEL_BOTTOM = 4
 
 export const styles = {
@@ -23,12 +17,26 @@ export const styles = {
     right: 0,
     top: 0,
   },
+  // Background layer of the active tab highlight; its opacity follows the morph
+  // so the collapsed circle never shows the capsule.
+  capsule: {
+    borderRadius: RADIUSES.round,
+    bottom: 0,
+    left: 0,
+    position: 'absolute' as const,
+    right: 0,
+    top: 0,
+  },
   circleButton: {
     alignItems: 'center' as const,
-    borderRadius: RADIUSES.round,
-    height: BAR_CIRCLE_SIZE,
     justifyContent: 'center' as const,
-    width: BAR_CIRCLE_SIZE,
+  },
+  circleButtonFill: {
+    alignItems: 'center' as const,
+    borderRadius: RADIUSES.round,
+    flex: 1,
+    justifyContent: 'center' as const,
+    width: '100%' as const,
   },
   disabledTabButton: {
     opacity: 0.5,
@@ -74,7 +82,7 @@ export const styles = {
     flex: 1,
     height: TAB_ITEM_HEIGHT,
     justifyContent: 'center' as const,
-    margin: TAB_ITEM_MARGIN,
+    margin: TAB_ITEM_VERTICAL_MARGIN,
     paddingHorizontal: 2,
     paddingVertical: 4,
   },

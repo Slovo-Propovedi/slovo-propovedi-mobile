@@ -1,5 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
+import { type SharedValue } from 'react-native-reanimated'
 import { hapticLight } from 'shared/lib/haptics'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { TabButton } from './TabButton'
@@ -7,12 +8,29 @@ import { TabButton } from './TabButton'
 jest.mock('shared/lib/haptics', () => ({ hapticLight: jest.fn() }))
 
 const mockedHapticLight = hapticLight as jest.MockedFunction<typeof hapticLight>
-
 const noop = () => {}
+const CAPSULE_COLOR = 'rgba(241, 96, 49, 0.18)'
 
-const renderTabButton = async (routeName: string, isActive = false) =>
+const progressValue = (value: number) => ({ value }) as unknown as SharedValue<number>
+
+const findCapsule = () =>
+  screen.root?.queryAll(
+    instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === CAPSULE_COLOR,
+  )[0]
+
+const renderTabButton = async (
+  routeName: string,
+  isActive = false,
+  collapseProgress = progressValue(0),
+) =>
   await renderWithProviders(
-    <TabButton onPress={noop} isActive={isActive} routeKey={routeName} routeName={routeName} />,
+    <TabButton
+      onPress={noop}
+      isActive={isActive}
+      routeKey={routeName}
+      routeName={routeName}
+      collapseProgress={collapseProgress}
+    />,
   )
 
 describe('<TabButton>', () => {
@@ -35,7 +53,7 @@ describe('<TabButton>', () => {
   })
 
   test('takes the label out of layout so the icon centers in the collapsed circle', async () => {
-    await renderTabButton('listen', true)
+    await renderTabButton('listen', true, progressValue(1))
 
     const label = screen.getByText('Слушать')
 
@@ -45,6 +63,12 @@ describe('<TabButton>', () => {
       height: 56,
       justifyContent: 'center',
     })
+  })
+
+  test('expanded item grows taller to leave a gap between icon and label', async () => {
+    await renderTabButton('listen', true, progressValue(0))
+
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 68 })
   })
 
   test('draws the bar icon at the enlarged size', async () => {
@@ -91,19 +115,21 @@ describe('<TabButton>', () => {
     expect(screen.getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
   })
 
-  test('active tab renders a primary-tinted capsule behind the item', async () => {
-    await renderTabButton('listen', true)
+  test('active tab renders a primary-tinted capsule behind the item when expanded', async () => {
+    await renderTabButton('listen', true, progressValue(0))
 
-    expect(screen.getByText('Слушать').parent).toHaveStyle({
-      backgroundColor: 'rgba(241, 96, 49, 0.18)',
-    })
+    expect(findCapsule()).toHaveStyle({ backgroundColor: CAPSULE_COLOR, opacity: 1 })
+  })
+
+  test('collapsed active tab hides the capsule highlight inside the circle', async () => {
+    await renderTabButton('listen', true, progressValue(1))
+
+    expect(findCapsule()).toHaveStyle({ backgroundColor: CAPSULE_COLOR, opacity: 0 })
   })
 
   test('inactive tab renders no capsule background', async () => {
     await renderTabButton('listen', false)
 
-    expect(screen.getByText('Слушать').parent).not.toHaveStyle({
-      backgroundColor: 'rgba(241, 96, 49, 0.18)',
-    })
+    expect(findCapsule()).toBeUndefined()
   })
 })

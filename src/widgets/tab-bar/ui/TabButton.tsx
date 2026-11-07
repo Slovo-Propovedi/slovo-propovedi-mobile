@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native'
+import { Text } from 'react-native'
 import Animated, {
   type SharedValue,
   useAnimatedStyle,
@@ -6,7 +6,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useTheme, withAlpha } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
-import { getTabIconOffset } from '../lib/getIslandStyle'
+import { getCapsuleOpacity, getTabIconOffset, getTabItemHeight } from '../lib/getIslandStyle'
 import { styles } from './styles'
 import { TabIcon } from './TabIcon'
 import { getTabLabel } from './tabLabels'
@@ -34,13 +34,16 @@ export const TabButton = ({
   const fallbackProgress = useSharedValue(0)
   const labelProgress = collapseProgress ?? fallbackProgress
   const labelStyle = useAnimatedStyle(() => ({ opacity: 1 - labelProgress.value }))
+  const itemStyle = useAnimatedStyle(() => ({
+    height: getTabItemHeight(labelProgress.value),
+  }))
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: getTabIconOffset(labelProgress.value) }],
   }))
+  const capsuleStyle = useAnimatedStyle(() => ({
+    opacity: getCapsuleOpacity(labelProgress.value, isActive),
+  }))
   const color = isActive ? currentTheme.primary : currentTheme.textMuted
-  const capsuleColor = isActive
-    ? withAlpha(currentTheme.primary, ACTIVE_CAPSULE_ALPHA)
-    : 'transparent'
 
   return (
     <TouchableButton
@@ -50,7 +53,17 @@ export const TabButton = ({
       activeOpacity={isActive ? 1 : undefined}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
     >
-      <View style={[styles.tabItem, { backgroundColor: capsuleColor }]}>
+      <Animated.View style={[styles.tabItem, itemStyle]}>
+        {isActive && (
+          <Animated.View
+            pointerEvents='none'
+            style={[
+              styles.capsule,
+              { backgroundColor: withAlpha(currentTheme.primary, ACTIVE_CAPSULE_ALPHA) },
+              capsuleStyle,
+            ]}
+          />
+        )}
         <Animated.View style={iconStyle}>
           <TabIcon color={color} isActive={isActive} routeName={routeName} />
         </Animated.View>
@@ -61,7 +74,7 @@ export const TabButton = ({
         >
           {getTabLabel(routeName)}
         </AnimatedText>
-      </View>
+      </Animated.View>
     </TouchableButton>
   )
 }
