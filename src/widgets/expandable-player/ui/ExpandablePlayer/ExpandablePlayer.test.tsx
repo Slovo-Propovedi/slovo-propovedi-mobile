@@ -3,7 +3,7 @@ import { isSearchOpenAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { isBarCollapsedAtom, isTabBarMeasuredAtom } from 'shared/ui/layout'
+import { isBarCollapsedAtom, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { ExpandablePlayer } from './ExpandablePlayer'
 
@@ -130,9 +130,33 @@ describe('<ExpandablePlayer>', () => {
   test('rests the mini player above the row while search is open, even if the bar was collapsed', async () => {
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
+    tabBarHeightAtom(ctx, 98)
     await renderWithProviders(<ExpandablePlayer />, { ctx })
 
     // Third argument is the bar-collapse state the mini pill geometry follows.
-    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 0, false)
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98, false)
+  })
+
+  test('keeps the last real tab bar height when a hidden screen reports zero', async () => {
+    isBarCollapsedAtom(ctx, false)
+    isSearchOpenAtom(ctx, false)
+    tabBarHeightAtom(ctx, 114)
+    await renderWithProviders(<ExpandablePlayer />, { ctx })
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 114, false)
+
+    // A non-focused root-stack screen renders the tabs as `display: none` on
+    // web, so the tab row reports a 0 height while hidden. Adopting it would
+    // commit the pill at the very bottom of the screen, and the first frame
+    // after navigating back would show that stale position (Issue #132).
+    await act(async () => {
+      tabBarHeightAtom(ctx, 0)
+    })
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 114, false)
+
+    // A real re-measurement still wins.
+    await act(async () => {
+      tabBarHeightAtom(ctx, 130)
+    })
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 130, false)
   })
 })

@@ -348,6 +348,10 @@ Upstream-причины:
 
 **Флип порядка стилей** (`ui/ExpandablePlayer/ContainerView.tsx`): `restingContainerStyle` после `containerStyle` — на уровне теневого дерева «последний побеждает», shadow всегда несёт корректную resting-геометрию, и любой релэйаут перезаписывает кадр правильными значениями.
 
+### Нулевая высота скрытого таб-бара (Issue #132)
+
+Когда поверх табов открыт root-stack экран (`/settings`, `/history`, `/offline`, …), неактивный экран табов на web рендерится с `display: none` (vendored `NativeStackView`), поэтому строка островов через `onLayout` отдаёт `height = 0` и `setTabBarHeight(0)` отравляет `tabBarHeightAtom`. Нулевая высота — не измерение: `useExpandablePlayerState` запоминает последнюю положительную высоту и не пропускает 0 в `useExpandAnimation`. Иначе скрытый мини-плеер пересчитал бы resting-низ как `0 + BAR_OUTER_GAP ≈ 12` и первый кадр после возврата показывал бы пилюлю у самого нижнего края экрана, пока таб-бар не переизмерится (на полной перезагрузке скрытой фазы нет — поэтому там позиция сразу верная). Publisher-side фикс — игнорировать `height <= 0` в `CustomTabBar.onLayout` — зафиксирован в [debt.md](../debt.md); защита в `useExpandablePlayerState` остаётся дешёвой страховкой на границе данных.
+
 ## Управление
 
 - **Play/Pause** — `PlayerControls` → `usePlayer().play/pause` (с защитой от AppState-ошибок `activity is no longer available`).

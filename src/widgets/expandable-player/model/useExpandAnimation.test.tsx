@@ -195,6 +195,52 @@ describe('useExpandAnimation restingContainerStyle', () => {
   })
 })
 
+describe('useExpandAnimation first committed frame', () => {
+  test('starts the pill and container at the resting geometry', async () => {
+    const captured: { current: null | ReturnType<typeof useExpandAnimation> } = {
+      current: null,
+    }
+
+    const Harness = ({
+      onResult,
+    }: {
+      onResult: (result: ReturnType<typeof useExpandAnimation>) => void
+    }) => {
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT, false)
+      onResult(result)
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    await renderWithProviders(
+      <Harness
+        onResult={result => {
+          captured.current = result
+        }}
+      />,
+    )
+    const result = captured.current
+    if (!result) throw new Error('useExpandAnimation did not render')
+
+    // No frame may paint the pill anywhere but its resting spot: the animated
+    // layer's very first values must already agree with the React resting layer.
+    const restingTop = 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight
+    const containerStyle = result.containerStyle as unknown as {
+      bottom: number
+      left: number
+      top: number
+      width: number
+    }
+
+    expect(result.miniBarStyle).toEqual(result.miniBarRestingStyle)
+    expect(containerStyle).toMatchObject({
+      bottom: EXPANDED_BOTTOM,
+      left: BAR_SIDE_INSET,
+      width: 400 - BAR_SIDE_INSET * 2,
+    })
+    expect(containerStyle.top).toBeCloseTo(restingTop, 1)
+  })
+})
+
 describe('getContainerGeometryStyle (expand interpolation)', () => {
   const geometry = (barProgress: number, progress: number) =>
     getContainerGeometryStyle({

@@ -44,6 +44,7 @@
 
 ## Tab bar
 
+- [ ] **`CustomTabBar.onLayout` публикует нулевую высоту, когда экран табов скрыт.** `src/widgets/tab-bar/ui/CustomTabBar.tsx` — неактивный root-stack экран рендерит табы с `display: none` (vendored `NativeStackView` на web), строка островов измеряется как 0×0 → `setTabBarHeight(0)` пишет 0 в `tabBarHeightAtom`. Мини-плеер защищён (`useExpandablePlayerState` держит последнюю положительную высоту, Issue #132), но остальные потребители (нижние отступы списков, `SearchIsland`) на кадр получают 0. Вернуться, когда файл освободит агент, правящий `widgets/tab-bar`: игнорировать `height <= 0` перед `setTabBarHeight`.
 - [ ] **Таб «Читать» гейтится фича-флагом `read`** — `src/widgets/tab-bar/ui/useTabPress.ts` — при выключенном/незагруженном флаге показывается диалог «Скоро будет доступно»; открывать по мере готовности раздела (см. Read tab, [features/feature-flags.md](./features/feature-flags.md)).
 - [ ] **Поле поиска в нижней строке не поднимается над клавиатурой на iOS** — `src/widgets/search-island/`, `src/pages/listen/ui/ListenScreen.tsx` — `KeyboardAvoidingView`/`keyboardVerticalOffset` не подключены, поэтому на iOS клавиатура может перекрыть пилюлю (Android adjustResize поднимает строку сам). Вернуться при первой iOS-сборке или жалобе на ввод поиска; учесть, что таб-бар рисуется вне экрана (`app/(tabs)/_layout.tsx`) и вместе с полем должен подниматься согласованно.
 
