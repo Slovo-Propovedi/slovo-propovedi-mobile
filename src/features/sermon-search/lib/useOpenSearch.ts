@@ -1,6 +1,6 @@
 import { useAction } from '@reatom/npm-react'
 import { useCallback } from 'react'
-import { openSearch } from '../model'
+import { openSearch } from '../model-session'
 
 // The search toggle's press handler: opens the search overlay. Shared so the
 // onboarding tour performs the same action instead of duplicating the open logic.

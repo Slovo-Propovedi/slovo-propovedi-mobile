@@ -1,7 +1,8 @@
 import { createCtx } from '@reatom/framework'
 import { isBarCollapsedAtom } from 'shared/ui/layout'
-import { isSearchOpenAtom, openSearch, searchQueryAtom } from './model'
+import { isSearchOpenAtom, searchQueryAtom } from './model'
 import { isSearchBarCollapseSuspendedAtom, isSearchFieldVisibleAtom } from './model-searchField'
+import { closeSearchAndExpand, openSearch } from './model-session'
 
 const renderVisibility = ({
   isCollapsed,
@@ -83,6 +84,69 @@ describe('search bar collapse suspension', () => {
     const ctx = renderVisibility({ isCollapsed: false, isOpen: true, query: '  ' })
 
     expect(ctx.get(isSearchBarCollapseSuspendedAtom)).toBe(false)
+  })
+})
+
+// The mini player rests detached above the row unless the collapsed line owns
+// it: collapsed and no visible field. Mirrors useExpandablePlayerState.
+const isMiniDetached = (ctx: ReturnType<typeof createCtx>) =>
+  !ctx.get(isBarCollapsedAtom) || ctx.get(isSearchFieldVisibleAtom)
+
+describe('single-tap search circle transitions', () => {
+  test('an expanded closed bar opens the [circle][field] strip atomically', async () => {
+    const ctx = createCtx()
+    const fieldVisibility: boolean[] = []
+    ctx.subscribe(isSearchFieldVisibleAtom, isVisible => fieldVisibility.push(isVisible))
+
+    await openSearch(ctx)
+
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(ctx.get(isSearchFieldVisibleAtom)).toBe(true)
+    expect(isMiniDetached(ctx)).toBe(true)
+    // One flip: the field appears once and never drops back to the circle.
+    expect(fieldVisibility).toEqual([false, true])
+  })
+
+  test('opening search lands in the final state synchronously, without a deferred tap', () => {
+    const ctx = createCtx()
+
+    void openSearch(ctx)
+
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(ctx.get(isSearchFieldVisibleAtom)).toBe(true)
+  })
+
+  test('a collapsed bar with search open closes search and expands atomically', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    isBarCollapsedAtom(ctx, true)
+    searchQueryAtom(ctx, '')
+    const fieldVisibility: boolean[] = []
+    ctx.subscribe(isSearchFieldVisibleAtom, isVisible => fieldVisibility.push(isVisible))
+
+    await closeSearchAndExpand(ctx)
+
+    expect(ctx.get(isSearchOpenAtom)).toBe(false)
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(ctx.get(isSearchFieldVisibleAtom)).toBe(false)
+    expect(isMiniDetached(ctx)).toBe(true)
+    // No intermediate: expanding first would pop the empty field up for a frame.
+    expect(fieldVisibility).toEqual([false])
+  })
+
+  test('closing search and expanding lands in the final state synchronously', () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    isBarCollapsedAtom(ctx, true)
+    searchQueryAtom(ctx, '')
+
+    void closeSearchAndExpand(ctx)
+
+    expect(ctx.get(isSearchOpenAtom)).toBe(false)
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(ctx.get(isSearchFieldVisibleAtom)).toBe(false)
   })
 })
 

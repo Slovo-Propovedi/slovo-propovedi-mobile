@@ -44,12 +44,14 @@ const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 
 const mockOpenSearch = jest.fn()
 const mockCloseSearch = jest.fn()
+const mockCloseSearchAndExpand = jest.fn()
 let mockIsSearchFieldVisible = false
 
 jest.mock('features/sermon-search', () => {
   const { action, atom } = jest.requireActual('@reatom/framework')
   return {
     closeSearch: action(() => mockCloseSearch(), 'mockCloseSearch'),
+    closeSearchAndExpand: action(() => mockCloseSearchAndExpand(), 'mockCloseSearchAndExpand'),
     isSearchOpenAtom: atom(false, 'mockIsSearchOpenAtom'),
     useIsSearchFieldVisible: () => mockIsSearchFieldVisible,
     useOpenSearch: () => mockOpenSearch,
@@ -388,7 +390,7 @@ describe('<CustomTabBar>', () => {
 
     await fireEvent.press(getByText('Слушать'))
 
-    expect(mockCloseSearch).toHaveBeenCalledTimes(1)
+    expect(mockCloseSearchAndExpand).toHaveBeenCalledTimes(1)
     expect(ctx.get(isBarCollapsedAtom)).toBe(false)
     expect(mockNavigate).not.toHaveBeenCalled()
   })

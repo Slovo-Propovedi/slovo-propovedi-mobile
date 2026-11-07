@@ -2,13 +2,8 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useRef } from 'react'
 import { Platform } from 'react-native'
-import {
-  fetchSearchResults,
-  isSearchOpenAtom,
-  MIN_QUERY_LENGTH,
-  openSearch,
-  searchQueryAtom,
-} from '../model'
+import { fetchSearchResults, isSearchOpenAtom, MIN_QUERY_LENGTH, searchQueryAtom } from '../model'
+import { openSearch } from '../model-session'
 
 // Mirrors the search debounce in `useDebouncedSearch`, so the URL updates on the
 // same cadence as the results. Uses `replace` (never `push`) — no history spam.

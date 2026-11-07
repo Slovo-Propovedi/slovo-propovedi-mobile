@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, waitFor } from '@testing-library/react-native'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
+import { isSearchFieldVisibleAtom } from 'features/sermon-search/model-searchField'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
@@ -119,6 +120,32 @@ describe('useTabPress', () => {
     expect(ctx.get(isBarCollapsedAtom)).toBe(false)
     await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
     expect(navigateToTab).not.toHaveBeenCalled()
+  })
+
+  test('closes an open search and expands the collapsed bar without flashing the field', async () => {
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    const fieldVisibility: boolean[] = []
+    ctx.subscribe(isSearchFieldVisibleAtom, isVisible => fieldVisibility.push(isVisible))
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+    })
+
+    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    // Expanding first would make the empty field visible for a frame before the
+    // close landed; one atomic flip never exposes it.
+    expect(fieldVisibility).toEqual([false])
   })
 
   test('expands a bar forced into the collapsed shape by the visible search field', async () => {

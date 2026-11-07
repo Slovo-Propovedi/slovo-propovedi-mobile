@@ -2,13 +2,13 @@ import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { useState } from 'react'
 import { Keyboard } from 'react-native'
 import {
-  closeSearch,
   isSearchOpenAtom,
   resetSearchResults,
   searchInputRequestAtom,
   searchQueryAtom,
 } from '../model'
 import { isSearchFieldVisibleAtom } from '../model-searchField'
+import { closeSearch } from '../model-session'
 import { useDistinctValuesOnOpen } from './useDistinctValuesOnOpen'
 import { useExternalInputRequest } from './useExternalInputRequest'
 import { useResetInputOnClose } from './useResetInputOnClose'

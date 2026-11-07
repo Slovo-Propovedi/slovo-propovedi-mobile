@@ -1,6 +1,11 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type Tabs } from 'expo-router'
-import { closeSearch, isSearchOpenAtom, useIsSearchFieldVisible } from 'features/sermon-search'
+import {
+  closeSearch,
+  closeSearchAndExpand,
+  isSearchOpenAtom,
+  useIsSearchFieldVisible,
+} from 'features/sermon-search'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { showInfo } from 'shared/model/info-dialog'
 import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
@@ -37,6 +42,7 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
   const isBarVisuallyCollapsed = isBarCollapsed || isSearchFieldVisible
   const applyBarCollapsed = useAction(setBarCollapsed)
   const closeSearchAction = useAction(closeSearch)
+  const closeSearchAndExpandAction = useAction(closeSearchAndExpand)
 
   const isTabAvailable = (routeName: string) => {
     if (routeName === 'read') return isReadEnabled
@@ -52,11 +58,11 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
 
     // Collapsed, the island shows only the active tab's circle: pressing it
     // expands the bar instead of the fully silent no-op it is when expanded.
-    // An open search session is dismissed in the same gesture — the collapsed
-    // circle owns the tap and the row returns to the plain expanded bar.
+    // An open search session is dismissed in the same gesture — one atomic
+    // action so the empty field never flashes over the expanding bar.
     if (isActive && isBarVisuallyCollapsed) {
-      applyBarCollapsed(false)
-      if (isSearchOpen) void closeSearchAction()
+      if (isSearchOpen) void closeSearchAndExpandAction()
+      else applyBarCollapsed(false)
       return
     }
 

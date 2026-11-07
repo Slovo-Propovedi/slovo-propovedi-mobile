@@ -1,7 +1,6 @@
 import { action, atom } from '@reatom/framework'
 import { myPlaylistsAtom, type PlaylistData } from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
-import { setBarCollapsed } from 'shared/ui/layout'
 import { collectMatchingPreachers } from './lib/composeSearchResults'
 import { mergePlaylistMatches, selectLocalPlaylistMatches } from './lib/localPlaylistSearch'
 import {
@@ -34,19 +33,11 @@ export const searchInputRequestAtom = atom<{ nonce: number; text: string } | nul
 
 let latestRequestId = 0
 
-const cancelInFlightFetches = (): void => {
+export const cancelInFlightFetches = (): void => {
   latestRequestId += 1
 }
 
 const isCurrentRequest = (requestId: number): boolean => requestId === latestRequestId
-
-export const openSearch = action(async ctx => {
-  await ctx.schedule(() => {
-    // Opening search must reveal the field; a collapsed bar would hide it again.
-    setBarCollapsed(ctx, false)
-    isSearchOpenAtom(ctx, true)
-  })
-}, 'openSearch')
 
 export const resetSearchResults = action(async ctx => {
   cancelInFlightFetches()
@@ -69,19 +60,6 @@ export const typeSearchInput = action((ctx, text: string) => {
   searchQueryAtom(ctx, text)
   searchInputRequestAtom(ctx, { nonce: (previous?.nonce ?? 0) + 1, text })
 }, 'typeSearchInput')
-
-export const closeSearch = action(async ctx => {
-  cancelInFlightFetches()
-  await ctx.schedule(() => {
-    searchQueryAtom(ctx, '')
-    searchResultsAtom(ctx, [])
-    searchPlaylistsAtom(ctx, [])
-    searchPreachersAtom(ctx, [])
-    isSearchingAtom(ctx, false)
-    isSearchOpenAtom(ctx, false)
-    lastFetchedQueryAtom(ctx, '')
-  })
-}, 'closeSearch')
 
 export const fetchSearchResults = action(async (ctx, rawQuery: string) => {
   const query = rawQuery.trim()
