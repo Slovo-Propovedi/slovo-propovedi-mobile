@@ -137,8 +137,25 @@ describe('<TabButton>', () => {
     expect(findCapsule()).toHaveStyle({ left: -10, right: -10 })
   })
 
-  test('tab items keep a 10dp gap between neighbours', () => {
-    expect(styles.tabItem).toMatchObject({ marginHorizontal: 5 })
+  test('expanded items split the 10dp neighbour gap on both sides', async () => {
+    await renderTabButton('listen', true, progressValue(0))
+
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ marginHorizontal: 5 })
+  })
+
+  test('collapsed active item drops the horizontal gap so the icon centres in the circle', async () => {
+    // Island padding is 0 at progress 1; a leftover 6dp item margin would push
+    // the icon right of the 64dp circle centre.
+    await renderTabButton('listen', true, progressValue(1))
+
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ marginHorizontal: 0 })
+  })
+
+  test('the item margins live in the morph, not a static style', () => {
+    // A static margin in the same style array would shadow the animated one and
+    // keep the collapsed item off-centre.
+    expect(styles.tabItem).not.toHaveProperty('marginHorizontal')
+    expect(styles.tabItem).not.toHaveProperty('marginVertical')
   })
 
   test('keeps the pressable tab at the 48dp minimum touch target', () => {

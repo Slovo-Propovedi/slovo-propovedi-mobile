@@ -10,6 +10,7 @@ import {
   getCapsuleOpacity,
   getTabIconOffset,
   getTabItemHeight,
+  getTabItemHorizontalMargin,
   getTabItemVerticalMargin,
 } from '../lib/getIslandStyle'
 import { styles } from './styles'
@@ -41,6 +42,7 @@ export const TabButton = ({
   const labelStyle = useAnimatedStyle(() => ({ opacity: 1 - labelProgress.value }))
   const itemStyle = useAnimatedStyle(() => ({
     height: getTabItemHeight(labelProgress.value),
+    marginHorizontal: getTabItemHorizontalMargin(labelProgress.value),
     marginVertical: getTabItemVerticalMargin(labelProgress.value),
   }))
   const iconStyle = useAnimatedStyle(() => ({

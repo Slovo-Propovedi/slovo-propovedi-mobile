@@ -1,6 +1,6 @@
 import { BAR_SIDE_INSET, CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
 import { MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
-import { CAPSULE_HORIZONTAL_OVERHANG, TAB_ITEM_GAP } from '../lib/getIslandStyle'
+import { CAPSULE_HORIZONTAL_OVERHANG } from '../lib/getIslandStyle'
 
 export const ISLAND_BACKGROUND_LIGHT = 'rgba(230, 230, 230, 0.9)'
 export const ISLAND_BACKGROUND_DARK = 'rgba(0, 0, 0, 0.85)'
@@ -86,8 +86,9 @@ export const styles = {
     // No static height and no flex: the animated height (getTabItemHeight) owns
     // the item size. `flex: 1` would zero the flex basis and collapse the item
     // to its content, squeezing the icon and label.
+    // Margins also live in the animated style: they fade out with the morph so
+    // the collapsed active item fills the circle and centres its icon.
     justifyContent: 'center' as const,
-    marginHorizontal: TAB_ITEM_GAP / 2,
     paddingVertical: 4,
   },
   // Absolute so the label never takes part in the slot's layout: the icon is

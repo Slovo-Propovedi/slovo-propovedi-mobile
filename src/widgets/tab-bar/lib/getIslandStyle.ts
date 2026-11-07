@@ -26,12 +26,12 @@ const TAB_ICON_EXPANDED_OFFSET = -8
 // Space the collapsed island keeps between its edge and the tab item. The
 // expanded bar uses a slightly larger margin (getTabItemVerticalMargin) so the
 // capsule has the same breathing room vertically as horizontally.
-export const TAB_ITEM_VERTICAL_MARGIN = 4
+const TAB_ITEM_VERTICAL_MARGIN = 4
 const TAB_ITEM_VERTICAL_MARGIN_EXPANDED = 6
 // Horizontal inset between the island's rounded edge and the tab row.
 export const ISLAND_CONTENT_PADDING_HORIZONTAL = 12
 // Gap between neighbouring tabs, split into equal margins on both items.
-export const TAB_ITEM_GAP = 10
+const TAB_ITEM_GAP = 10
 // The active capsule is wider than its slot (the reference capsule is wider
 // than one tab pitch), so it bleeds into the gap instead of hugging the label.
 export const CAPSULE_HORIZONTAL_OVERHANG = 10
