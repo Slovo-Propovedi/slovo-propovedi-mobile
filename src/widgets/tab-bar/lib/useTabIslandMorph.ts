@@ -13,11 +13,8 @@ import {
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
-import {
-  getIslandContentPadding,
-  getIslandStyle,
-  ISLAND_CONTENT_PADDING_HORIZONTAL,
-} from './getIslandStyle'
+import { getIslandContentStyle } from './getBarMorphStyles'
+import { getIslandStyle, ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 
 interface TabIslandMorphInput {
   hideSearch: boolean
@@ -63,9 +60,7 @@ export const useTabIslandMorph = ({
 
   // The island's inner row is padded only while expanded; the collapsed active
   // slot must fill the whole circle, so the padding fades out with the morph.
-  const contentStyle = useAnimatedStyle(() => ({
-    paddingHorizontal: getIslandContentPadding(progress.value),
-  }))
+  const contentStyle = useAnimatedStyle(() => getIslandContentStyle(progress.value))
 
   return {
     contentStyle,

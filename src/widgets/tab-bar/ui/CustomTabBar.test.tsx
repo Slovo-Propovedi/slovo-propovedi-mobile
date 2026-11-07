@@ -1,3 +1,4 @@
+import { createCtx } from '@reatom/framework'
 import { fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -5,6 +6,7 @@ import { showInfo } from 'shared/model/info-dialog'
 import {
   BAR_ROW_MIN_HEIGHT,
   isTabBarMeasuredAtom,
+  setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
   tabBarHeightAtom,
 } from 'shared/ui/layout'
@@ -61,9 +63,15 @@ const createMockEmitter = () =>
     emit: jest.fn(() => ({ defaultPrevented: false })),
   }) as unknown as Parameters<typeof CustomTabBar>[0]['emitter']
 
-const renderTabBar = async (activeIndex = 0, { hideSearch }: { hideSearch?: boolean } = {}) => {
+const renderTabBar = async (
+  activeIndex = 0,
+  { hideSearch, isCollapsed = false }: { hideSearch?: boolean; isCollapsed?: boolean } = {},
+) => {
   const state = createMockState(activeIndex)
   const emitter = createMockEmitter()
+  const ctx = createCtx()
+
+  if (isCollapsed) setBarCollapsed(ctx, true)
 
   return renderWithProviders(
     <CustomTabBar
@@ -74,6 +82,7 @@ const renderTabBar = async (activeIndex = 0, { hideSearch }: { hideSearch?: bool
       navigateToTab={mockNavigate}
       insets={{ bottom: 0, left: 0, right: 0, top: 0 }}
     />,
+    { ctx },
   )
 }
 
@@ -144,16 +153,33 @@ describe('<CustomTabBar>', () => {
     expect(styles.floatingIsland).not.toHaveProperty('height')
   })
 
+  const findIslandContent = () =>
+    screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return flat?.flexDirection === 'row' && flat?.height === '100%'
+    })[0]
+
   test('insets the island content so the tabs clear the rounded edges', async () => {
     await renderTabBar()
 
-    const content = screen.root?.queryAll(instance => {
-      const flat = StyleSheet.flatten(instance.props.style)
+    expect(StyleSheet.flatten(findIslandContent()?.props.style)).toMatchObject({
+      paddingLeft: 12,
+      paddingRight: 12,
+    })
+  })
 
-      return flat?.flexDirection === 'row' && flat?.paddingHorizontal === 12
-    })[0]
+  test('collapsed circle drops the content padding so the active slot fills it', async () => {
+    // A `paddingHorizontal` animated style never reaches the web DOM: Reanimated
+    // updates styles through createReactDOMStyle, skipping the react-native-web
+    // preprocess step that expands shortforms. The 12dp inset then freezes and
+    // pushes the 64dp active slot past the circle's right edge.
+    await renderTabBar(0, { isCollapsed: true })
 
-    expect(content).toBeTruthy()
+    expect(StyleSheet.flatten(findIslandContent()?.props.style)).toMatchObject({
+      paddingLeft: 0,
+      paddingRight: 0,
+    })
   })
 
   test('renders the bar labels without the study tab', async () => {

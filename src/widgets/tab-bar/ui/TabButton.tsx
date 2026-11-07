@@ -6,13 +6,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useTheme, withAlpha } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
-import {
-  getCapsuleOpacity,
-  getTabIconOffset,
-  getTabItemHeight,
-  getTabItemHorizontalMargin,
-  getTabItemVerticalMargin,
-} from '../lib/getIslandStyle'
+import { getTabItemStyle } from '../lib/getBarMorphStyles'
+import { getCapsuleOpacity, getTabIconOffset } from '../lib/getIslandStyle'
 import { styles } from './styles'
 import { TabIcon } from './TabIcon'
 import { getTabLabel } from './tabLabels'
@@ -40,11 +35,7 @@ export const TabButton = ({
   const fallbackProgress = useSharedValue(0)
   const labelProgress = collapseProgress ?? fallbackProgress
   const labelStyle = useAnimatedStyle(() => ({ opacity: 1 - labelProgress.value }))
-  const itemStyle = useAnimatedStyle(() => ({
-    height: getTabItemHeight(labelProgress.value),
-    marginHorizontal: getTabItemHorizontalMargin(labelProgress.value),
-    marginVertical: getTabItemVerticalMargin(labelProgress.value),
-  }))
+  const itemStyle = useAnimatedStyle(() => getTabItemStyle(labelProgress.value))
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: getTabIconOffset(labelProgress.value) }],
   }))

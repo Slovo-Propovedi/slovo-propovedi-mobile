@@ -140,15 +140,37 @@ describe('<TabButton>', () => {
   test('expanded items split the 10dp neighbour gap on both sides', async () => {
     await renderTabButton('listen', true, progressValue(0))
 
-    expect(screen.getByText('Слушать').parent).toHaveStyle({ marginHorizontal: 5 })
+    expect(screen.getByText('Слушать').parent).toHaveStyle({
+      marginBottom: 6,
+      marginLeft: 5,
+      marginRight: 5,
+      marginTop: 6,
+    })
   })
 
-  test('collapsed active item drops the horizontal gap so the icon centres in the circle', async () => {
-    // Island padding is 0 at progress 1; a leftover 6dp item margin would push
-    // the icon right of the 64dp circle centre.
+  test('collapsed active item drops every horizontal margin so the icon centres in the circle', async () => {
+    // Island padding is 0 at progress 1; a leftover margin would push the icon
+    // right of the 64dp circle centre.
     await renderTabButton('listen', true, progressValue(1))
 
-    expect(screen.getByText('Слушать').parent).toHaveStyle({ marginHorizontal: 0 })
+    expect(screen.getByText('Слушать').parent).toHaveStyle({
+      marginBottom: 4,
+      marginLeft: 0,
+      marginRight: 0,
+      marginTop: 4,
+    })
+  })
+
+  test('animates longhand margins so the morph reaches the web DOM', async () => {
+    // react-native-web expands `marginHorizontal`/`marginVertical` only in its
+    // preprocess step, which Reanimated's web DOM updater skips — a shortform in
+    // an animated style stays frozen at its mount value on web.
+    await renderTabButton('listen', true, progressValue(1))
+
+    const itemStyle = StyleSheet.flatten(screen.getByText('Слушать').parent?.props.style)
+
+    expect(itemStyle).not.toHaveProperty('marginHorizontal')
+    expect(itemStyle).not.toHaveProperty('marginVertical')
   })
 
   test('the item margins live in the morph, not a static style', () => {
