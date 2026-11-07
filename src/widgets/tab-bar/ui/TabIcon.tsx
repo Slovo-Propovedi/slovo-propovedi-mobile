@@ -8,7 +8,7 @@ type IoniconsName = keyof typeof Ionicons.glyphMap
 
 type MciName = keyof typeof MaterialCommunityIcons.glyphMap
 
-const ICON_SIZE = 22
+const ICON_SIZE = 28
 
 const IONICONS_ICONS: Record<string, IconSet<IoniconsName>> = {
   book: { active: 'book', inactive: 'book-outline' },

@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { hapticLight } from 'shared/lib/haptics'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { TabButton } from './TabButton'
@@ -31,6 +32,29 @@ describe('<TabButton>', () => {
 
     expect(label.props.numberOfLines).toBe(1)
     expect(label.props.maxFontSizeMultiplier).toBe(1.2)
+  })
+
+  test('takes the label out of layout so the icon centers in the collapsed circle', async () => {
+    await renderTabButton('listen', true)
+
+    const label = screen.getByText('Слушать')
+
+    expect(label).toHaveStyle({ position: 'absolute' })
+    expect(label.parent).toHaveStyle({
+      alignItems: 'center',
+      height: 48,
+      justifyContent: 'center',
+    })
+  })
+
+  test('draws the bar icon at the enlarged size', async () => {
+    await renderTabButton('listen')
+
+    const iconGlyphs = screen.root?.queryAll(
+      instance => StyleSheet.flatten(instance.props.style)?.fontSize === 28,
+    )
+
+    expect(iconGlyphs).toHaveLength(1)
   })
 
   test('renders as a button role so web renders a real <button>', async () => {

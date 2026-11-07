@@ -1,4 +1,4 @@
-import { getIslandStyle, getTabSlotStyle } from './getIslandStyle'
+import { getIslandStyle, getTabIconOffset, getTabSlotStyle } from './getIslandStyle'
 
 const LAYOUT = { collapsedWidth: 56, expandedWidth: 584 }
 const EXPANDED_TAB_WIDTH = 146
@@ -51,5 +51,24 @@ describe('getTabSlotStyle', () => {
       opacity: 0.5,
       width: EXPANDED_TAB_WIDTH / 2,
     })
+  })
+})
+
+describe('getTabIconOffset', () => {
+  test('collapsed island centers the icon with no offset', () => {
+    expect(getTabIconOffset(1)).toBe(0)
+  })
+
+  test('expanded island lifts the icon to make room for the label', () => {
+    expect(getTabIconOffset(0)).toBe(-8)
+  })
+
+  test('progress outside 0..1 is clamped in both morph directions', () => {
+    expect(getTabIconOffset(-1)).toBe(-8)
+    expect(getTabIconOffset(2)).toBe(0)
+  })
+
+  test('the offset eases linearly with the morph', () => {
+    expect(getTabIconOffset(0.5)).toBe(-4)
   })
 })

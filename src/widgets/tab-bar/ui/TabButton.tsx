@@ -6,6 +6,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useTheme, withAlpha } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
+import { getTabIconOffset } from '../lib/getIslandStyle'
 import { styles } from './styles'
 import { TabIcon } from './TabIcon'
 import { getTabLabel } from './tabLabels'
@@ -33,6 +34,9 @@ export const TabButton = ({
   const fallbackProgress = useSharedValue(0)
   const labelProgress = collapseProgress ?? fallbackProgress
   const labelStyle = useAnimatedStyle(() => ({ opacity: 1 - labelProgress.value }))
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: getTabIconOffset(labelProgress.value) }],
+  }))
   const color = isActive ? currentTheme.primary : currentTheme.textMuted
   const capsuleColor = isActive
     ? withAlpha(currentTheme.primary, ACTIVE_CAPSULE_ALPHA)
@@ -47,7 +51,9 @@ export const TabButton = ({
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
     >
       <View style={[styles.tabItem, { backgroundColor: capsuleColor }]}>
-        <TabIcon color={color} isActive={isActive} routeName={routeName} />
+        <Animated.View style={iconStyle}>
+          <TabIcon color={color} isActive={isActive} routeName={routeName} />
+        </Animated.View>
         <AnimatedText
           numberOfLines={1}
           maxFontSizeMultiplier={1.2}

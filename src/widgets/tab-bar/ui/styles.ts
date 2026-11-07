@@ -9,6 +9,12 @@ import { RADIUSES } from 'shared/ui/theme'
 export const ISLAND_BACKGROUND_LIGHT = 'rgba(230, 230, 230, 0.9)'
 export const ISLAND_BACKGROUND_DARK = 'rgba(0, 0, 0, 0.85)'
 
+const TAB_ITEM_MARGIN = 4
+// The label is absolutely positioned, so the item needs an explicit height to
+// keep the active capsule a full circle when the island is collapsed.
+const TAB_ITEM_HEIGHT = TAB_BAR_ISLAND_HEIGHT - TAB_ITEM_MARGIN * 2
+const TAB_LABEL_BOTTOM = 4
+
 export const styles = {
   blurFill: {
     bottom: 0,
@@ -66,14 +72,21 @@ export const styles = {
     alignItems: 'center' as const,
     borderRadius: RADIUSES.round,
     flex: 1,
+    height: TAB_ITEM_HEIGHT,
     justifyContent: 'center' as const,
-    margin: 4,
+    margin: TAB_ITEM_MARGIN,
     paddingHorizontal: 2,
     paddingVertical: 4,
   },
+  // Absolute so the label never takes part in the slot's layout: the icon is
+  // the only centred child and stays in the circle centre through the morph.
   tabText: {
+    bottom: TAB_LABEL_BOTTOM,
     fontSize: 12,
     fontWeight: '500' as const,
-    marginTop: 2,
+    left: 0,
+    position: 'absolute' as const,
+    right: 0,
+    textAlign: 'center' as const,
   },
 }
