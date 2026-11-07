@@ -1,8 +1,8 @@
 import { getIslandStyle, getTabIconOffset, getTabSlotStyle } from './getIslandStyle'
 
-const LAYOUT = { collapsedWidth: 56, expandedWidth: 584 }
+const LAYOUT = { collapsedWidth: 64, expandedWidth: 584 }
 const EXPANDED_TAB_WIDTH = 146
-const TAB_LAYOUT = { collapsedWidth: 56, expandedWidth: EXPANDED_TAB_WIDTH }
+const TAB_LAYOUT = { collapsedWidth: 64, expandedWidth: EXPANDED_TAB_WIDTH }
 
 describe('getIslandStyle', () => {
   test('the expanded island spans the full row width', () => {
@@ -10,16 +10,16 @@ describe('getIslandStyle', () => {
   })
 
   test('the collapsed island shrinks to the circle size', () => {
-    expect(getIslandStyle(1, LAYOUT)).toEqual({ width: 56 })
+    expect(getIslandStyle(1, LAYOUT)).toEqual({ width: 64 })
   })
 
   test('the width interpolates linearly between both states', () => {
-    expect(getIslandStyle(0.5, LAYOUT)).toEqual({ width: 320 })
+    expect(getIslandStyle(0.5, LAYOUT)).toEqual({ width: 324 })
   })
 
   test('progress outside 0..1 is clamped', () => {
     expect(getIslandStyle(-1, LAYOUT)).toEqual({ width: 584 })
-    expect(getIslandStyle(2, LAYOUT)).toEqual({ width: 56 })
+    expect(getIslandStyle(2, LAYOUT)).toEqual({ width: 64 })
   })
 })
 
@@ -38,7 +38,7 @@ describe('getTabSlotStyle', () => {
   test('collapsed active tab fills the circle, hidden tabs fade out to zero width', () => {
     expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: true })).toEqual({
       opacity: 1,
-      width: 56,
+      width: 64,
     })
     expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: false })).toEqual({
       opacity: 0,

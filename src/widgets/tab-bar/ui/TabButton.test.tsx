@@ -42,7 +42,7 @@ describe('<TabButton>', () => {
     expect(label).toHaveStyle({ position: 'absolute' })
     expect(label.parent).toHaveStyle({
       alignItems: 'center',
-      height: 48,
+      height: 56,
       justifyContent: 'center',
     })
   })
