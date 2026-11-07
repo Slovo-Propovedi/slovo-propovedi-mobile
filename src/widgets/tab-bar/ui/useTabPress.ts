@@ -1,6 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type Tabs } from 'expo-router'
-import { closeSearch, isSearchOpenAtom } from 'features/sermon-search'
+import { closeSearch, isSearchOpenAtom, useIsSearchFieldVisible } from 'features/sermon-search'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { showInfo } from 'shared/model/info-dialog'
 import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
@@ -30,6 +30,11 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
   const isReadEnabled = useFeatureFlag('read')
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
+  // A visible search field forces the island into the collapsed circle shape
+  // even when the scroll driver has not written the collapsed atom (a live
+  // query suspends that driver), so the circle must own the same tap.
+  const isSearchFieldVisible = useIsSearchFieldVisible()
+  const isBarVisuallyCollapsed = isBarCollapsed || isSearchFieldVisible
   const applyBarCollapsed = useAction(setBarCollapsed)
   const closeSearchAction = useAction(closeSearch)
 
@@ -49,7 +54,7 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
     // expands the bar instead of the fully silent no-op it is when expanded.
     // An open search session is dismissed in the same gesture — the collapsed
     // circle owns the tap and the row returns to the plain expanded bar.
-    if (isActive && isBarCollapsed) {
+    if (isActive && isBarVisuallyCollapsed) {
       applyBarCollapsed(false)
       if (isSearchOpen) void closeSearchAction()
       return

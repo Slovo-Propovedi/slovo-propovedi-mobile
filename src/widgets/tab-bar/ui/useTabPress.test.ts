@@ -121,6 +121,32 @@ describe('useTabPress', () => {
     expect(navigateToTab).not.toHaveBeenCalled()
   })
 
+  test('expands a bar forced into the collapsed shape by the visible search field', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    // A live search keeps the scroll driver suspended, so the atom stays
+    // expanded while the field forces only the visual circle shape.
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+    })
+
+    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(navigateToTab).not.toHaveBeenCalled()
+  })
+
   test('keeps the expanded bar expanded on an active-tab press', async () => {
     const ctx = createCtx()
     const emitter = createEmitter()

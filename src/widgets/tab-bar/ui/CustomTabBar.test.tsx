@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
+import { isSearchOpenAtom } from 'features/sermon-search'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
@@ -42,12 +43,14 @@ jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
 const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 
 const mockOpenSearch = jest.fn()
+const mockCloseSearch = jest.fn()
 let mockIsSearchFieldVisible = false
 
 jest.mock('features/sermon-search', () => {
-  const { action } = jest.requireActual('@reatom/framework')
+  const { action, atom } = jest.requireActual('@reatom/framework')
   return {
-    closeSearch: action(() => {}, 'mockCloseSearch'),
+    closeSearch: action(() => mockCloseSearch(), 'mockCloseSearch'),
+    isSearchOpenAtom: atom(false, 'mockIsSearchOpenAtom'),
     useIsSearchFieldVisible: () => mockIsSearchFieldVisible,
     useOpenSearch: () => mockOpenSearch,
   }
@@ -372,6 +375,20 @@ describe('<CustomTabBar>', () => {
 
     await fireEvent.press(getByText('Слушать'))
 
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
+
+  test('closes the search from the active circle while the visible field forced the collapsed shape', async () => {
+    mockIsSearchFieldVisible = true
+    const { ctx, getByText } = await renderTabBar(0)
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+
+    await fireEvent.press(getByText('Слушать'))
+
+    expect(mockCloseSearch).toHaveBeenCalledTimes(1)
     expect(ctx.get(isBarCollapsedAtom)).toBe(false)
     expect(mockNavigate).not.toHaveBeenCalled()
   })
