@@ -10,7 +10,7 @@ import { SearchBarMicButton } from './SearchBarMicButton'
 import { SearchSuggestions } from './SearchSuggestions'
 
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
-const SEARCH_ICON_SIZE = 26
+const SEARCH_ICON_SIZE = 24
 
 export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boolean) => void }) => {
   const { currentTheme } = useTheme()

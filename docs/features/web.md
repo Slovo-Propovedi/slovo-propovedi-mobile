@@ -62,6 +62,15 @@
 
 Expo предупреждает не монтировать второй провайдер на web: обновление измерений может прервать SSR-гидрацию/стриминг. К этому приложению предостережение не относится — web-сборка клиентская (SPA-режим `single`, серверного рендера нет). Нативная ветка не тронута: `SafeAreaBoundary` на нативе — passthrough, провайдер остаётся за expo-router.
 
+### Подавление мобильного фокус-кольца и tap-highlight
+
+react-native-web рендерит `TextInput`/`Pressable` как настоящие DOM-поля и кнопки. На мобильном Chrome/Android UA рисует собственное акцентное кольцо вокруг сфокусированного поля поиска, а JS-стиль `SearchBar.styles.ts` → `webInputOutline` (`outlineWidth: 0`, `outlineColor: 'transparent'`) не всегда его перекрывает: UA-правило `:focus-visible` приходит позже/оказывается сильнее inline-стиля. Поэтому в `public/index.html` есть отдельный `<style id="sp-native-controls">`:
+
+- `input[aria-label="Поиск проповедей"]` в `:focus`/`:focus-visible` получает `outline: none !important` и `box-shadow: none !important` — перебивает UA-кольцо; селектор ограничен полем поиска по его accessible name, поэтому фокус-обводка полей админки не затрагивается;
+- `input`, `button`, `[role='button']` получают `-webkit-tap-highlight-color: transparent` — убирает серую/синюю вспышку по тапу на Android (у пилюли и её кнопок).
+
+Правила живут только в web-оболочке; нативные сборки её не загружают и не затронуты. JS-стиль `webInputOutline` остаётся вторым рубежом (и покрыт `SearchBar.test.tsx`), CSS — обязательный слой для мобильного Chrome (проверяется `SearchBar.webStyles.test.ts`).
+
 ### Service Worker (`public/sw.js`)
 
 Plain ES2018, без бандлера. `// @ts-check` + `/// <reference lib="webworker" />` — файл исключён из `tsconfig.json`, проверяется только редактором.

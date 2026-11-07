@@ -4,7 +4,7 @@ import { INDENTS, useTheme } from 'shared/ui/theme'
 import { styles } from './SearchBar.styles'
 
 const MIC_LABEL = 'Голосовой ввод'
-const MIC_ICON_SIZE = 24
+const MIC_ICON_SIZE = 22
 
 /**
  * The pill's voice-search affordance: idle mic outline, filled mic while the

@@ -7,6 +7,7 @@ import { sermonsMocks } from 'shared/api/generated'
 import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
 import { renderWithProviders } from 'shared/mocks'
 import { showInfo } from 'shared/model/info-dialog'
+import { INDENTS } from 'shared/ui/theme'
 import {
   isSearchingAtom,
   isSearchOpenAtom,
@@ -210,6 +211,31 @@ describe('<SearchBar>', () => {
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
 
     expect(getByPlaceholderText(SEARCH_PLACEHOLDER).parent).toHaveStyle({ flex: 1 })
+  })
+
+  test('lets the input shrink inside the pill instead of keeping its intrinsic web width', async () => {
+    const ctx = createCtx()
+    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+    const inputStyle = StyleSheet.flatten(getByPlaceholderText(SEARCH_PLACEHOLDER).props.style)
+
+    // react-native-web makes flex items `min-width: auto`, so an input with a
+    // default DOM width pushes the mic past the pill's right edge on narrow
+    // phones. `minWidth: 0` lets the flex row actually shrink the field.
+    expect(inputStyle).toMatchObject({ flex: 1, minWidth: 0 })
+  })
+
+  test('keeps the mic compact so the 48dp minimum width cannot overflow the pill', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      const { getByLabelText } = await renderWithProviders(<SearchBar />)
+      const micStyle = StyleSheet.flatten(getByLabelText(MIC_LABEL).props.style)
+
+      // The 48dp target comes from padding + hitSlop, not from a min-width
+      // that would reserve a whole touch target inside a narrow pill.
+      expect(micStyle).toMatchObject({ minWidth: 0, paddingHorizontal: INDENTS.low })
+    } finally {
+      restorePlatform.restore()
+    }
   })
 
   test('clears the query via the clear button, resets results and keeps the search open', async () => {
