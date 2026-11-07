@@ -67,10 +67,19 @@ describe('<TabButton>', () => {
     expect(screen.getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
   })
 
-  test('active tab has no background fill on the label', async () => {
+  test('active tab renders a primary-tinted capsule behind the item', async () => {
     await renderTabButton('listen', true)
 
-    const label = screen.getByText('Слушать')
-    expect(label).not.toHaveStyle({ backgroundColor: '#f16031' })
+    expect(screen.getByText('Слушать').parent).toHaveStyle({
+      backgroundColor: 'rgba(241, 96, 49, 0.18)',
+    })
+  })
+
+  test('inactive tab renders no capsule background', async () => {
+    await renderTabButton('listen', false)
+
+    expect(screen.getByText('Слушать').parent).not.toHaveStyle({
+      backgroundColor: 'rgba(241, 96, 49, 0.18)',
+    })
   })
 })

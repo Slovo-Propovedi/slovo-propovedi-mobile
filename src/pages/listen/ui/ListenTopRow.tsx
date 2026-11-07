@@ -13,9 +13,7 @@ export const ListenTopRow = ({ showAdminButton }: { showAdminButton: boolean }) 
 
   return (
     <View style={styles.topRow}>
-      <OnboardingTarget id='listen.search-toggle'>
-        <SearchToggleButton />
-      </OnboardingTarget>
+      <SearchToggleButton />
       <View style={styles.topRowRight}>
         {hasFinePointer && (
           <OnboardingTarget id='listen.refresh-button'>

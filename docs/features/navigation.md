@@ -136,7 +136,13 @@
 
 ## Кастомный таб-бар
 
-`CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`) — плавающий остров с `BlurView`. Активный таб не имеет фона/пилюли/индикатора: активное состояние выражается только цветом иконки и подписи (`currentTheme.primary`), неактивные — приглушённым `currentTheme.textMuted`. Скрывает плавающий плеер при развороте (`hideFloatingPlayer`). Остров ограничен `maxWidth: CONTENT_COLUMN_WIDTH` (600 px из `shared/ui/layout`): на планшетах и десктоп-web таб-бар остаётся центрированной колонкой, на телефонах колонка шире экрана и ширина не меняется.
+`CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`) — плавающая нижняя строка в стиле Apple Music: остров табов с `BlurView` слева и отдельная круглая кнопка поиска (`CircleButton`, Ionicons `search`, `accessibilityLabel='Поиск'`) справа. Остров ограничен `maxWidth: CONTENT_COLUMN_WIDTH` (600 px из `shared/ui/layout`): на планшетах и десктоп-web строка остаётся центрированной колонкой, на телефонах колонка шире экрана и ширина не меняется.
+
+Активный таб подсвечен капсулой: `TabButton` рисует под иконкой/подписью фон `withAlpha(currentTheme.primary, 0.18)` со скруглением `RADIUSES.round`; цвет иконки и подписи — `currentTheme.primary`, неактивные — `currentTheme.textMuted`.
+
+Свёртывание (см. `isBarCollapsedAtom`, драйвер `useBarCollapseOnScroll`): остров плавно (300 мс, `BAR_MORPH_DURATION_MS`) сжимается из полной ширины строки в круг `BAR_CIRCLE_SIZE`, оставляя только активный таб — иконку без подписи. Неактивные табы не размонтируются, а плавно уходят по ширине и прозрачности (`getTabSlotStyle`), чтобы не было мигания при морфе. Пока открыт поиск (`isSearchOpenAtom`), остров принудительно показан в свёрнутом виде даже без скролла. Геометрия морфа вынесена в чистые хелперы `src/widgets/tab-bar/lib/getIslandStyle.ts` и хук `useTabIslandMorph`.
+
+Строка табов имеет фиксированную высоту `BAR_ROW_MIN_HEIGHT` плюс нижний отступ `Math.max(insets.bottom, 30)`, высота острова всегда `TAB_BAR_ISLAND_HEIGHT` — поэтому измеренная высота таб-бара не скачет между состояниями. На админских табах (`app/admin/(tabs)/_layout.tsx`) кнопка поиска скрыта пропом `hideSearch`.
 
 Подписи табов не переносятся и почти не масштабируются шрифтом: в `TabButton.tsx` у текста заданы `numberOfLines={1}` и `maxFontSizeMultiplier={1.2}` (фикс «сломанного» таб-бара на узких экранах / крупном системном шрифте, Issue #53).
 
@@ -144,11 +150,11 @@
 
 На web кнопки табов (`TabButton`) и вложенный таб-бар (`shared/lib/tab-bar/renderTabBar.tsx`) рендерятся как настоящие `<button>` — у них задан `accessibilityRole='button'` (иначе RNW отдаёт `<div tabindex="0">`, который не получает Vimium-хинты). Подробнее — [web.md](./web.md#настоящие-button-для-vimium-хинтов).
 
-Нижний внутренний отступ таб-бара задаётся динамически: `Math.max(insets.bottom, MIN_TAB_BAR_BOTTOM_PADDING = 30)` через `useSafeAreaInsets` (`react-native-safe-area-context`; приложение рендерится edge-to-edge). На навигации жестами остаётся 30 (как и раньше), на 3-кнопочной навигации контент приподнимается над системными кнопками (Issue #56). Так как высота острова измеряется через `onLayout` (см. ниже), при росте таб-бара мини-плеер и экраны адаптируются автоматически — через `tabBarHeightAtom`.
+Нижний внутренний отступ таб-бара задаётся динамически: `Math.max(insets.bottom, MIN_TAB_BAR_BOTTOM_PADDING = 30)` через `useSafeAreaInsets` (`react-native-safe-area-context`; приложение рендерится edge-to-edge). На навигации жестами остаётся 30 (как и раньше), на 3-кнопочной навигации контент приподнимается над системными кнопками (Issue #56). Так как высота строки таб-бара измеряется через `onLayout` (см. ниже) и фиксирована между развёрнутым/свёрнутым состояниями, при росте таб-бара мини-плеер и экраны адаптируются автоматически — через `tabBarHeightAtom`.
 
 Тот же принцип применён к нижнему отступу контролов полноэкранного плеера: `Math.max(bottomInset, 30)` через `getFullscreenPlayerBottomPadding` (`widgets/expandable-player/lib/getFullscreenPlayerBottomPadding.ts`) — формула повторяет таб-бар, поэтому контролы встают на одном уровне с кнопками таб-бара и на жестовой навигации, и на 3-кнопочной (Issue #105).
 
-Высота острова измеряется через `onLayout` на `BlurView` и записывается в `tabBarHeightAtom` (`src/shared/ui/layout`, экшен `setTabBarHeight`) — это единственный источник правды о высоте таб-бара. Начальное значение атома — приближение `PLAYER_SIZES.tabBarHeight` из темы, только до первого измерения. Потребители высоты (мини-плеер, нижние отступы экранов) читают атом, константу напрямую больше не используют — см. [player.md](./player.md) и [state.md](./state.md).
+Высота строки таб-бара (`BAR_ROW_MIN_HEIGHT` + `Math.max(insets.bottom, 30)`) измеряется через `onLayout` на строке островов и записывается в `tabBarHeightAtom` (`src/shared/ui/layout`, экшен `setTabBarHeight`) — это единственный источник правды о высоте таб-бара. Высота строки не зависит от морфа острова (высота острова всегда `TAB_BAR_ISLAND_HEIGHT`), поэтому измерение не скачет между свёрнутым и развёрнутым состояниями. Начальное значение атома — приближение `PLAYER_SIZES.tabBarHeight` из темы, только до первого измерения. Потребители высоты (мини-плеер, нижние отступы экранов) читают атом, константу напрямую больше не используют — см. [player.md](./player.md) и [state.md](./state.md).
 
 ## Связанные документы
 

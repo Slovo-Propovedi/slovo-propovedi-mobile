@@ -1,17 +1,28 @@
 import { Text, View } from 'react-native'
-import { useTheme } from 'shared/ui/theme'
+import Animated, {
+  type SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated'
+import { useTheme, withAlpha } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
 import { styles } from './styles'
 import { TabIcon } from './TabIcon'
 import { getTabLabel } from './tabLabels'
 
+const ACTIVE_CAPSULE_ALPHA = 0.18
+const AnimatedText = Animated.createAnimatedComponent(Text)
+
 export const TabButton = ({
+  collapseProgress,
   isActive,
   isDisabled,
   onPress,
   routeKey,
   routeName,
 }: {
+  // Shared 0..1 bar-morph progress: labels fade out as the island becomes a circle.
+  collapseProgress?: SharedValue<number>
   isActive: boolean
   isDisabled?: boolean
   onPress: () => void
@@ -19,7 +30,13 @@ export const TabButton = ({
   routeName: string
 }) => {
   const { currentTheme } = useTheme()
+  const fallbackProgress = useSharedValue(0)
+  const labelProgress = collapseProgress ?? fallbackProgress
+  const labelStyle = useAnimatedStyle(() => ({ opacity: 1 - labelProgress.value }))
   const color = isActive ? currentTheme.primary : currentTheme.textMuted
+  const capsuleColor = isActive
+    ? withAlpha(currentTheme.primary, ACTIVE_CAPSULE_ALPHA)
+    : 'transparent'
 
   return (
     <TouchableButton
@@ -29,11 +46,15 @@ export const TabButton = ({
       activeOpacity={isActive ? 1 : undefined}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
     >
-      <View style={styles.tabItem}>
+      <View style={[styles.tabItem, { backgroundColor: capsuleColor }]}>
         <TabIcon color={color} isActive={isActive} routeName={routeName} />
-        <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={[styles.tabText, { color }]}>
+        <AnimatedText
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.2}
+          style={[styles.tabText, { color }, labelStyle]}
+        >
           {getTabLabel(routeName)}
-        </Text>
+        </AnimatedText>
       </View>
     </TouchableButton>
   )

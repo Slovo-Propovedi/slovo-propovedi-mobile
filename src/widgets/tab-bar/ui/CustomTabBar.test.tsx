@@ -17,6 +17,14 @@ jest.mock('expo-router', () => ({
 jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
 const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 
+const mockOpenSearch = jest.fn()
+let mockIsSearchOpen = false
+
+jest.mock('features/sermon-search', () => ({
+  useIsSearchOpen: () => mockIsSearchOpen,
+  useOpenSearch: () => mockOpenSearch,
+}))
+
 const mockNavigate = jest.fn()
 
 const createMockState = (activeIndex: number) => ({
@@ -40,7 +48,7 @@ const createMockEmitter = () =>
     emit: jest.fn(() => ({ defaultPrevented: false })),
   }) as unknown as Parameters<typeof CustomTabBar>[0]['emitter']
 
-const renderTabBar = async (activeIndex = 0) => {
+const renderTabBar = async (activeIndex = 0, { hideSearch }: { hideSearch?: boolean } = {}) => {
   const state = createMockState(activeIndex)
   const emitter = createMockEmitter()
 
@@ -49,6 +57,7 @@ const renderTabBar = async (activeIndex = 0) => {
       state={state}
       descriptors={{}}
       emitter={emitter}
+      hideSearch={hideSearch}
       hideFloatingPlayer={false}
       navigateToTab={mockNavigate}
       insets={{ bottom: 0, left: 0, right: 0, top: 0 }}
@@ -59,6 +68,7 @@ const renderTabBar = async (activeIndex = 0) => {
 describe('<CustomTabBar>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockIsSearchOpen = false
   })
 
   test('caps the floating island to the 600px content column', async () => {
@@ -78,11 +88,37 @@ describe('<CustomTabBar>', () => {
     expect(getByText('Ещё')).toBeTruthy()
   })
 
-  test('uses the tint (not a background fill) to mark the active tab', async () => {
+  test('marks the active tab with a capsule and primary tint', async () => {
     const { getByText } = await renderTabBar(0)
 
     expect(getByText('Слушать')).toHaveStyle({ color: '#f16031' })
+    expect(getByText('Слушать').parent).toHaveStyle({
+      backgroundColor: 'rgba(241, 96, 49, 0.18)',
+    })
     expect(getByText('Ещё')).not.toHaveStyle({ color: '#f16031' })
+    expect(getByText('Ещё').parent).not.toHaveStyle({
+      backgroundColor: 'rgba(241, 96, 49, 0.18)',
+    })
+  })
+
+  test('renders the circular search button to the right of the island', async () => {
+    const { getByRole } = await renderTabBar()
+
+    expect(getByRole('button', { name: 'Поиск' })).toBeTruthy()
+  })
+
+  test('hides the search button on the admin tab layout', async () => {
+    const { queryByRole } = await renderTabBar(0, { hideSearch: true })
+
+    expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
+  })
+
+  test('pressing the search button opens search', async () => {
+    const { getByRole } = await renderTabBar()
+
+    await fireEvent.press(getByRole('button', { name: 'Поиск' }))
+
+    expect(mockOpenSearch).toHaveBeenCalledTimes(1)
   })
 
   test('tapping a disabled tab shows info dialog and does not navigate', async () => {

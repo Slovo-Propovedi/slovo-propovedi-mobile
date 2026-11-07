@@ -11,7 +11,10 @@ const AdminTabsLayout = () => {
 
   return (
     <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
-      <Tabs screenOptions={{ headerShown: false }} tabBar={props => <CustomTabBar {...props} />}>
+      <Tabs
+        screenOptions={{ headerShown: false }}
+        tabBar={props => <CustomTabBar {...props} hideSearch />}
+      >
         <Tabs.Screen name='index' options={{ title: 'Главная' }} />
         <Tabs.Screen name='sections' options={{ title: 'Разделы' }} />
         <Tabs.Screen name='playlists' options={{ title: 'Плейлисты' }} />
