@@ -1,10 +1,12 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import * as IntentLauncher from 'expo-intent-launcher'
 import { Keyboard, Platform, TextInput } from 'react-native'
 import { type SermonData } from 'entities/sermon'
 import { sermonsMocks } from 'shared/api/generated'
 import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
 import { renderWithProviders } from 'shared/mocks'
+import { showInfo } from 'shared/model/info-dialog'
 import {
   isSearchingAtom,
   isSearchOpenAtom,
@@ -32,8 +34,20 @@ jest.mock('shared/api', () => ({
   },
 }))
 
+jest.mock('expo-intent-launcher', () => ({
+  ResultCode: { Success: 0 },
+  startActivityAsync: jest.fn(),
+}))
+
+jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
+
 const CLEAR_LABEL = 'Очистить'
 const MIC_LABEL = 'Голосовой ввод'
+const VOICE_UNAVAILABLE_MESSAGE = 'Голосовой ввод недоступен на этом устройстве'
+const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
+const mockedStartActivityAsync = IntentLauncher.startActivityAsync as jest.MockedFunction<
+  typeof IntentLauncher.startActivityAsync
+>
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
 const IVAN_ZLATOUST = 'Иван Златоуст'
 const DISTINCT_VALUES = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock({
@@ -352,6 +366,75 @@ describe('<SearchBar>', () => {
     })
 
     expect(blurMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('<SearchBar> voice input availability', () => {
+  beforeEach(() => {
+    mockedShowInfo.mockClear()
+    mockedStartActivityAsync.mockClear()
+  })
+
+  test('renders the mic while the query is empty on web without the Speech Recognition API', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      Reflect.deleteProperty(global, 'SpeechRecognition')
+      Reflect.deleteProperty(global, 'webkitSpeechRecognition')
+      const { getByLabelText } = await renderWithProviders(<SearchBar />)
+
+      expect(getByLabelText(MIC_LABEL)).toBeTruthy()
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('shows the info dialog instead of starting recognition when voice input is unsupported', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      const { getByLabelText } = await renderWithProviders(<SearchBar />)
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+
+      expect(mockedShowInfo).toHaveBeenCalledWith(VOICE_UNAVAILABLE_MESSAGE)
+      expect(mockedStartActivityAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('starts Web Speech recognition when the browser supports it', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const start = jest.fn()
+      class FakeRecognition {
+        public abort = jest.fn()
+        public continuous = false
+        public interimResults = false
+        public lang = ''
+        public maxAlternatives = 1
+        public onend: (() => void) | null = null
+        public onerror: ((event: { error?: string }) => void) | null = null
+        public onresult: ((event: { results: unknown }) => void) | null = null
+        public start = start
+        public stop = jest.fn()
+      }
+      Reflect.set(dom.window, 'SpeechRecognition', FakeRecognition)
+
+      const { getByLabelText } = await renderWithProviders(<SearchBar />)
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+
+      expect(start).toHaveBeenCalledTimes(1)
+      expect(mockedShowInfo).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
   })
 })
 

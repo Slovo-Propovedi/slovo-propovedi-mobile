@@ -141,7 +141,7 @@
 
 ## Поиск
 
-- [ ] **Голосовой ввод на iOS не реализован.** `src/features/sermon-search/lib/useVoiceInput.ts`, `src/features/sermon-search/lib/webSpeechRecognition.ts` — микрофон скрыт на iOS (`isVoiceInputAvailable` возвращает true только для web/android). Вернуться при появлении iOS-сборок: нужен нативный speech-модуль или `SFSpeechRecognizer` через config-плагин (prebuild) плюс разрешения `NSSpeechRecognitionUsageDescription`/`NSMicrophoneUsageDescription`. Web уже работает через Web Speech API, Android — через системный `RECOGNIZE_SPEECH` intent (`expo-intent-launcher`).
+- [ ] **Голосовой ввод на iOS не реализован.** `src/features/sermon-search/lib/useVoiceInput.ts`, `src/features/sermon-search/lib/webSpeechRecognition.ts` — микрофон теперь виден на iOS всегда (при пустом запросе), но нажатие показывает информационный диалог «Голосовой ввод недоступен на этом устройстве»: `isVoiceInputAvailable` возвращает true только для web/android. Вернуться при появлении iOS-сборок: нужен нативный speech-модуль или `SFSpeechRecognizer` через config-плагин (prebuild) плюс разрешения `NSSpeechRecognitionUsageDescription`/`NSMicrophoneUsageDescription`. Web уже работает через Web Speech API, Android — через системный `RECOGNIZE_SPEECH` intent (`expo-intent-launcher`).
 
 ## Резервная копия
 

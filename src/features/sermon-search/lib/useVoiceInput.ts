@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Platform } from 'react-native'
 import { z } from 'zod'
 import { reportError } from 'shared/model/error-dialog'
+import { showInfo } from 'shared/model/info-dialog'
 import { getWebSpeechRecognitionCtor, isVoiceInputAvailable } from './webSpeechRecognition'
 
 const SPEECH_LANGUAGE = 'ru-RU'
@@ -11,13 +12,13 @@ const ANDROID_PROMPT = 'android.speech.extra.PROMPT'
 const ANDROID_RESULTS = 'android.speech.extra.RESULTS'
 const VOICE_PROMPT = 'Произнесите поисковый запрос'
 const VOICE_ERROR = 'Не удалось запустить голосовой ввод'
+const VOICE_UNAVAILABLE = 'Голосовой ввод недоступен на этом устройстве'
 
 const androidSpeechResultSchema = z
   .object({ [ANDROID_RESULTS]: z.array(z.string()).optional() })
   .passthrough()
 
 interface VoiceInput {
-  isAvailable: boolean
   isListening: boolean
   startListening: () => void
 }
@@ -25,11 +26,11 @@ interface VoiceInput {
 /**
  * Voice search with a zero-dependency platform split.
  * Web uses the Web Speech API; Android launches the system RECOGNIZE_SPEECH intent through expo-intent-launcher, which returns the activity extras.
- * IOS has no implementation yet, so the mic reports itself unavailable.
+ * IOS has no implementation yet: pressing the always-visible mic reports the feature as unavailable.
  * Every failure is soft: the recognizer reports through `reportError` and never throws into the UI.
  * @param root0 - Hook options.
  * @param root0.onTranscript - Receives the recognized text (already trimmed).
- * @returns Availability, listening state and the start trigger.
+ * @returns Listening state and the start trigger.
  */
 export const useVoiceInput = ({
   onTranscript,
@@ -95,6 +96,11 @@ export const useVoiceInput = ({
   const startListening = useCallback(() => {
     if (isListening) return
 
+    if (!isVoiceInputAvailable()) {
+      showInfo(VOICE_UNAVAILABLE)
+      return
+    }
+
     if (Platform.OS === 'web') {
       startWeb()
       return
@@ -104,7 +110,6 @@ export const useVoiceInput = ({
   }, [isListening, startAndroid, startWeb])
 
   return {
-    isAvailable: isVoiceInputAvailable(),
     isListening,
     startListening,
   }

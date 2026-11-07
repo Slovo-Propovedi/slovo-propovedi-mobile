@@ -8,8 +8,9 @@ const MIC_ICON_SIZE = 24
 
 /**
  * The pill's voice-search affordance: idle mic outline, filled mic while the
- * recognizer is listening. Rendered only when the query is empty and the
- * platform recognizer is available.
+ * recognizer is listening. Always rendered while the query is empty; on a
+ * platform without a recognizer (iOS, browser without Web Speech) the press
+ * handler reports the feature as unavailable instead of starting recognition.
  * @param root0 - Component props.
  * @param root0.isListening - Whether voice recognition is currently active.
  * @param root0.onPress - Starts voice recognition.

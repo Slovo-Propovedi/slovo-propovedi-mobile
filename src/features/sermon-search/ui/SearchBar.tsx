@@ -66,7 +66,7 @@ export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boole
           },
         ]}
       />
-      {isQueryEmpty && voiceInput.isAvailable && (
+      {isQueryEmpty && (
         <SearchBarMicButton
           onPress={voiceInput.startListening}
           isListening={voiceInput.isListening}
