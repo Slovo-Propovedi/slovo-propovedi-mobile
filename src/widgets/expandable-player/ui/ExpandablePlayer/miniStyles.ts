@@ -16,7 +16,7 @@ export const MINI_CONTENT_SIDE_INSET = INDENTS.low
 export const MINI_ARTWORK_SIZE = 40
 // The transport occupies the same visual box as the artwork, so both sit at the
 // same edge inset; hitSlop restores the ≥48dp touch target the icon needs.
-export const MINI_PLAY_BOX_SIZE = MINI_ARTWORK_SIZE
+const MINI_PLAY_BOX_SIZE = MINI_ARTWORK_SIZE
 export const MINI_PLAY_HIT_SLOP = (MIN_TOUCH_TARGET - MINI_PLAY_BOX_SIZE) / 2
 
 export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {

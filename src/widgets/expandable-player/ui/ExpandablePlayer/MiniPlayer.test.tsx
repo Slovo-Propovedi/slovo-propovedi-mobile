@@ -11,7 +11,7 @@ import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
 import { DarkTheme, LightTheme } from 'shared/ui/theme'
 import { MiniPlayer } from './MiniPlayer'
-import { createMiniStyles, MINI_PLAY_BOX_SIZE, MINI_PLAY_HIT_SLOP } from './miniStyles'
+import { createMiniStyles, MINI_ARTWORK_SIZE, MINI_PLAY_HIT_SLOP } from './miniStyles'
 
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn() }),
@@ -284,8 +284,8 @@ describe('<MiniPlayer>', () => {
     const playButton = getByRole('button', { name: PLAY_LABEL })
 
     expect(StyleSheet.flatten(playButton.props.style)).toMatchObject({
-      height: MINI_PLAY_BOX_SIZE,
-      width: MINI_PLAY_BOX_SIZE,
+      height: MINI_ARTWORK_SIZE,
+      width: MINI_ARTWORK_SIZE,
     })
     expect(playButton.props.hitSlop).toBe(MINI_PLAY_HIT_SLOP)
   })
