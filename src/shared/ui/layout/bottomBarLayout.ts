@@ -7,6 +7,12 @@ export const BAR_ROW_MIN_HEIGHT = 84 as const
 // The island height, the tab circle and the search circle all morph between them.
 export const TAB_BAR_ISLAND_HEIGHT = 64 as const
 export const TAB_BAR_ISLAND_HEIGHT_EXPANDED = 76 as const
+// Islands are centered in the row's fixed BAR_ROW_MIN_HEIGHT content box, so the
+// expanded island's top edge sits this far below the row's top edge. The row's
+// measured height already includes the bottom safe-area padding, which keeps the
+// offset valid for any inset.
+export const BAR_EXPANDED_ISLAND_TOP_MARGIN =
+  (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2
 export const BAR_CIRCLE_SIZE = 64 as const
 export const BAR_CIRCLE_SIZE_EXPANDED = 76 as const
 export const BAR_OUTER_GAP = 12 as const

@@ -1,5 +1,6 @@
 import {
   BAR_CIRCLE_SIZE,
+  BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET,
@@ -54,10 +55,13 @@ export const getMiniPlayerGeometry = ({
   // the collapsed pill must line up with the row's inner edges on every width.
   const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
   const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
-  // The row is BAR_ROW_MIN_HEIGHT tall plus the bottom safe-area padding; islands
-  // are centered in that row, so their bottom sits (row - island) / 2 above the
-  // row's bottom edge.
-  const expandedBottom = tabBarHeight + BAR_OUTER_GAP
+  // The measured row height includes the bottom safe-area padding and its fixed
+  // BAR_ROW_MIN_HEIGHT content box, with the islands centered in that box. The
+  // expanded pill therefore rests one outer gap above the expanded island's top
+  // edge — the same visible gap as between the island and the search circle.
+  const expandedBottom = tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_OUTER_GAP
+  // Islands are centered in the content box, so the collapsed island's bottom
+  // sits (row content - island) / 2 above the content box's bottom edge.
   const collapsedBottom = tabBarHeight - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
   const expandedLeft = rowLeft + BAR_SIDE_INSET
   const collapsedLeft = rowLeft + BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP

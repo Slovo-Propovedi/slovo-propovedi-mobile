@@ -4,6 +4,7 @@ import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import {
   BAR_CIRCLE_SIZE,
+  BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET,
@@ -15,7 +16,7 @@ import { useExpandAnimation } from './useExpandAnimation'
 
 const TAB_BAR_HEIGHT = 98
 const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
-const EXPANDED_BOTTOM = TAB_BAR_HEIGHT + BAR_OUTER_GAP
+const EXPANDED_BOTTOM = TAB_BAR_HEIGHT - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_OUTER_GAP
 const COLLAPSED_BOTTOM = TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
 const COLLAPSED_LEFT = BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
