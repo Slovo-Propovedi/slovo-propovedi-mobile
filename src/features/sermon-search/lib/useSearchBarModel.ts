@@ -11,7 +11,7 @@ import {
 import { useDistinctValuesOnOpen } from './useDistinctValuesOnOpen'
 import { useExternalInputRequest } from './useExternalInputRequest'
 import { useResetInputOnClose } from './useResetInputOnClose'
-import { useSearchAutofocus } from './useSearchAutofocus'
+import { useSearchInputFocus } from './useSearchInputFocus'
 import { useVoiceInput } from './useVoiceInput'
 
 /**
@@ -31,7 +31,7 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   const [isFocused, setIsFocused] = useState(false)
   const [hasSelectedSuggestion, setHasSelectedSuggestion] = useState(false)
   const [inputRequest] = useAtom(searchInputRequestAtom)
-  const inputRef = useSearchAutofocus(isSearchOpen)
+  const inputRef = useSearchInputFocus(isSearchOpen)
   const closeSearchAction = useAction(closeSearch)
   const resetSearchResultsAction = useAction(resetSearchResults)
   useDistinctValuesOnOpen(isSearchOpen)

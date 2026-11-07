@@ -1,6 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
-import { StyleSheet, TextInput } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import {
   isSearchingAtom,
@@ -306,22 +306,19 @@ describe('<ListenScreen>', () => {
   test('keeps the search bar mounted across the sections ↔ results transition', async () => {
     const ctx = createCtx()
     isSearchOpenAtom(ctx, true)
-    const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
-    focusMock.mockClear()
-
     const { getByPlaceholderText } = await renderWithProviders(<ListenScreen />, { ctx })
-    await flushAnimationFrame()
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
 
-    await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'ве')
+    await fireEvent.changeText(input, 'ве')
     await flushAnimationFrame()
-    expect(getByPlaceholderText(SEARCH_PLACEHOLDER).props.value).toBe('ве')
+    expect(getByPlaceholderText(SEARCH_PLACEHOLDER)).toBe(input)
 
-    await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'в')
+    await fireEvent.changeText(input, 'в')
     await flushAnimationFrame()
+    // The host instance identity survives the transition: the bar re-rendered
+    // in place instead of remounting (a fresh host would yield a new instance).
+    expect(getByPlaceholderText(SEARCH_PLACEHOLDER)).toBe(input)
     expect(getByPlaceholderText(SEARCH_PLACEHOLDER).props.value).toBe('в')
-
-    // A remount would re-run the rAF autofocus; one call proves the bar stayed put.
-    expect(focusMock).toHaveBeenCalledTimes(1)
   })
 
   test('keeps sections mode for a single-character query below MIN_QUERY_LENGTH', async () => {

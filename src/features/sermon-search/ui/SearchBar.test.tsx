@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import * as IntentLauncher from 'expo-intent-launcher'
-import { Keyboard, Platform, TextInput } from 'react-native'
+import { Keyboard, Platform, StyleSheet, TextInput } from 'react-native'
 import { type SermonData } from 'entities/sermon'
 import { sermonsMocks } from 'shared/api/generated'
 import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
@@ -154,7 +154,7 @@ describe('<SearchBar>', () => {
     expect(ctx.get(searchQueryAtom)).toBe('')
   })
 
-  test('focuses the input when search opens so the keyboard appears', async () => {
+  test('does not focus the input on mount so the keyboard waits for a tap', async () => {
     const ctx = createCtx()
     isSearchOpenAtom(ctx, true)
     const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
@@ -163,7 +163,7 @@ describe('<SearchBar>', () => {
     await renderWithProviders(<SearchBar />, { ctx })
     await flushAnimationFrame()
 
-    expect(focusMock).toHaveBeenCalledTimes(1)
+    expect(focusMock).not.toHaveBeenCalled()
   })
 
   test('does not steal focus while search is closed', async () => {
@@ -175,6 +175,34 @@ describe('<SearchBar>', () => {
     await flushAnimationFrame()
 
     expect(focusMock).not.toHaveBeenCalled()
+  })
+
+  test('clearing the query keeps the input focused for continued typing', async () => {
+    const ctx = createCtx()
+    const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
+    const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
+      ctx,
+    })
+
+    await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'вера')
+    focusMock.mockClear()
+
+    await fireEvent.press(getByLabelText(CLEAR_LABEL))
+
+    expect(focusMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('suppresses the browser focus outline on web', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const { getByPlaceholderText } = await renderWithProviders(<SearchBar />)
+      const style = StyleSheet.flatten(getByPlaceholderText(SEARCH_PLACEHOLDER).props.style)
+
+      expect(style.outlineWidth).toBe(0)
+      expect(style.outlineColor).toBe('transparent')
+    } finally {
+      restorePlatform.restore()
+    }
   })
 
   test('stretches across the header so the input fills the row', async () => {
@@ -354,13 +382,13 @@ describe('<SearchBar>', () => {
     blurMock.mockClear()
 
     await renderWithProviders(<SearchBar />, { ctx })
-    await flushAnimationFrame()
 
     const hideCall = addListenerSpy.mock.calls.find(
       ([eventName]) => eventName === 'keyboardDidHide',
     )
     expect(hideCall).toBeDefined()
 
+    blurMock.mockClear()
     await act(async () => {
       hideCall?.[1]()
     })

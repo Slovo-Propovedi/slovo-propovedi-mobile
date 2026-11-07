@@ -60,6 +60,7 @@ export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boole
         placeholderTextColor={currentTheme.textMuted}
         style={[
           styles.input,
+          Platform.OS === 'web' && styles.webInputOutline,
           {
             borderColor: isFocused ? currentTheme.primary : 'transparent',
             color: currentTheme.text,

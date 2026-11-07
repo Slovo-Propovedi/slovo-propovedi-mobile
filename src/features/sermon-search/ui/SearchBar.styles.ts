@@ -37,4 +37,11 @@ export const styles = StyleSheet.create({
   searchIcon: {
     marginRight: INDENTS.lowest,
   },
+  // Web only: react-native-web renders the input as a DOM field, whose default
+  // focus ring would double the pill's own accent frame. StyleSheet has no
+  // platform branch, so `SearchBar` applies this only when `Platform.OS` is web.
+  webInputOutline: {
+    outlineColor: 'transparent',
+    outlineWidth: 0,
+  },
 })
