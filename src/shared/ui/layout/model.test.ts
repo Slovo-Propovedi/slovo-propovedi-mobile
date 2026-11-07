@@ -1,6 +1,12 @@
 import { createCtx } from '@reatom/framework'
 import { PLAYER_SIZES } from '../theme/themed'
-import { isTabBarMeasuredAtom, setTabBarHeight, tabBarHeightAtom } from './model'
+import {
+  isBarCollapsedAtom,
+  isTabBarMeasuredAtom,
+  setBarCollapsed,
+  setTabBarHeight,
+  tabBarHeightAtom,
+} from './model'
 
 describe('tabBarHeight model', () => {
   test('atom starts with the fallback approximation', () => {
@@ -26,6 +32,40 @@ describe('tabBarHeight model', () => {
 
     setTabBarHeight(ctx, 120)
     setTabBarHeight(ctx, 120)
+
+    // 1 initial subscription call + 1 real change; duplicate write is skipped
+    expect(changeCount).toBe(2)
+  })
+})
+
+describe('isBarCollapsedAtom', () => {
+  test('starts expanded', () => {
+    const ctx = createCtx()
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+  })
+
+  test('setBarCollapsed flips the atom', () => {
+    const ctx = createCtx()
+
+    setBarCollapsed(ctx, true)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(true)
+
+    setBarCollapsed(ctx, false)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+  })
+
+  test('setting the same value does not notify subscribers again', () => {
+    const ctx = createCtx()
+    let changeCount = 0
+    ctx.subscribe(isBarCollapsedAtom, () => {
+      changeCount += 1
+    })
+
+    setBarCollapsed(ctx, true)
+    setBarCollapsed(ctx, true)
 
     // 1 initial subscription call + 1 real change; duplicate write is skipped
     expect(changeCount).toBe(2)

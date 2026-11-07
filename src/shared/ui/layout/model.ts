@@ -15,3 +15,12 @@ export const setTabBarHeight = action((ctx, height: number) => {
 
   tabBarHeightAtom(ctx, height)
 }, 'setTabBarHeight')
+
+/** True while the floating bottom bar (mini player above the tab bar) is collapsed to one line. */
+export const isBarCollapsedAtom = atom<boolean>(false, 'isBarCollapsedAtom')
+
+export const setBarCollapsed = action((ctx, isCollapsed: boolean) => {
+  if (ctx.get(isBarCollapsedAtom) === isCollapsed) return
+
+  isBarCollapsedAtom(ctx, isCollapsed)
+}, 'setBarCollapsed')
