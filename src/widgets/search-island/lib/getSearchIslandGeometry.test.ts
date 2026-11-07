@@ -20,6 +20,7 @@ describe('getSearchIslandGeometry', () => {
 
     expect(geometry).toEqual({
       bottom: TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2,
+      closeRight: BAR_SIDE_INSET,
       height: TAB_BAR_ISLAND_HEIGHT,
       left: BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP,
       radius: TAB_BAR_ISLAND_HEIGHT / 2,
@@ -79,5 +80,46 @@ describe('getSearchIslandGeometry', () => {
     // (800 - 600) / 2 = 100px centered column inset
     expect(geometry.left).toBe(100 + BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
     expect(geometry.right).toBe(100 + BAR_SIDE_INSET)
+  })
+
+  test('reserves a full close-circle slot on the right while the external ✕ is visible', () => {
+    const geometry = getSearchIslandGeometry({
+      barProgress: 1,
+      closeProgress: 1,
+      screenWidth: 400,
+      tabBarHeight: TAB_BAR_HEIGHT,
+    })
+
+    expect(geometry.closeRight).toBe(BAR_SIDE_INSET)
+    expect(geometry.right).toBe(BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
+  })
+
+  test('animates the reserved close slot with closeProgress', () => {
+    const halfway = getSearchIslandGeometry({
+      barProgress: 1,
+      closeProgress: 0.5,
+      screenWidth: 400,
+      tabBarHeight: TAB_BAR_HEIGHT,
+    })
+
+    expect(halfway.right).toBe(BAR_SIDE_INSET + (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) / 2)
+  })
+
+  test('clamps closeProgress outside the 0..1 range', () => {
+    const below = getSearchIslandGeometry({
+      barProgress: 1,
+      closeProgress: -1,
+      screenWidth: 400,
+      tabBarHeight: TAB_BAR_HEIGHT,
+    })
+    const above = getSearchIslandGeometry({
+      barProgress: 1,
+      closeProgress: 2,
+      screenWidth: 400,
+      tabBarHeight: TAB_BAR_HEIGHT,
+    })
+
+    expect(below.right).toBe(BAR_SIDE_INSET)
+    expect(above.right).toBe(BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
   })
 })

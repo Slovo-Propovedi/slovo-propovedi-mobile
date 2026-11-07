@@ -1,10 +1,16 @@
 import { createCtx } from '@reatom/framework'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { isSearchOpenAtom } from 'features/sermon-search'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { isBarCollapsedAtom, TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
+import {
+  BAR_CIRCLE_SIZE,
+  BAR_OUTER_GAP,
+  isBarCollapsedAtom,
+  TAB_BAR_ISLAND_HEIGHT,
+} from 'shared/ui/layout'
 import { SearchIsland } from './SearchIsland'
 
 // Jest hoists mock factories above imports, so the factory may only reference
@@ -30,7 +36,7 @@ jest.mock('shared/api', () => ({
 }))
 
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
-const CLEAR_LABEL = 'Очистить поиск'
+const CLOSE_LABEL = 'Закрыть поиск'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
 const hasScrollAncestor = (element: TestInstance): boolean => {
@@ -60,7 +66,7 @@ describe('<SearchIsland>', () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
-    const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchIsland />, {
+    const { getByPlaceholderText } = await renderWithProviders(<SearchIsland />, {
       ctx,
     })
 
@@ -73,7 +79,6 @@ describe('<SearchIsland>', () => {
       position: 'absolute',
     })
     expect(pill.props.pointerEvents).toBe('auto')
-    expect(getByLabelText(CLEAR_LABEL)).toBeTruthy()
   })
 
   test('stays mounted but non-interactive while search is closed', async () => {
@@ -86,5 +91,65 @@ describe('<SearchIsland>', () => {
 
     expect(pill.props.pointerEvents).toBe('none')
     expect(StyleSheet.flatten(pill.props.style)).toMatchObject({ opacity: 0 })
+  })
+
+  test('renders the external close circle only while the input is focused', async () => {
+    const ctx = createCtx()
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    const { getByPlaceholderText, queryByLabelText } = await renderWithProviders(<SearchIsland />, {
+      ctx,
+    })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    expect(queryByLabelText(CLOSE_LABEL)).toBeNull()
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+    expect(queryByLabelText(CLOSE_LABEL)).toBeTruthy()
+
+    await act(async () => {
+      fireEvent(input, 'blur')
+    })
+    expect(queryByLabelText(CLOSE_LABEL)).toBeNull()
+  })
+
+  test('shrinks the pill leftwards to reserve the close-circle slot while focused', async () => {
+    const ctx = createCtx()
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    const { getByPlaceholderText } = await renderWithProviders(<SearchIsland />, { ctx })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    const before = StyleSheet.flatten(
+      findAncestorWithHeight(input, TAB_BAR_ISLAND_HEIGHT).props.style,
+    )
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+
+    const after = StyleSheet.flatten(
+      findAncestorWithHeight(input, TAB_BAR_ISLAND_HEIGHT).props.style,
+    )
+
+    expect(after.right - before.right).toBe(BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
+  })
+
+  test('closes the search from the external close circle', async () => {
+    const ctx = createCtx()
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchIsland />, {
+      ctx,
+    })
+
+    await act(async () => {
+      fireEvent(getByPlaceholderText(SEARCH_PLACEHOLDER), 'focus')
+    })
+    await fireEvent.press(getByLabelText(CLOSE_LABEL))
+
+    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
   })
 })
