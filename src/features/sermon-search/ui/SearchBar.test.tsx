@@ -32,7 +32,8 @@ jest.mock('shared/api', () => ({
   },
 }))
 
-const CLEAR_LABEL = 'Очистить поиск'
+const CLEAR_LABEL = 'Очистить'
+const MIC_LABEL = 'Голосовой ввод'
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
 const IVAN_ZLATOUST = 'Иван Златоуст'
 const DISTINCT_VALUES = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock({
@@ -185,22 +186,51 @@ describe('<SearchBar>', () => {
     expect(ctx.get(isSearchOpenAtom)).toBe(true)
   })
 
-  test('closes the search when the clear button is pressed with an empty query', async () => {
+  test('hides the inline clear chip while the query is empty', async () => {
     const ctx = createCtx()
-    isSearchOpenAtom(ctx, true)
-    const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
+    const { queryByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
 
-    await fireEvent.press(getByLabelText(CLEAR_LABEL))
-
-    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
-    expect(ctx.get(searchQueryAtom)).toBe('')
+    expect(queryByLabelText(CLEAR_LABEL)).toBeNull()
   })
 
-  test('shows the clear button even with an empty query so the search can be closed', async () => {
-    const ctx = createCtx()
-    const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
+  test('shows the mic while the query is empty and swaps it for the clear chip once text is typed', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      const ctx = createCtx()
+      const { getByLabelText, getByPlaceholderText, queryByLabelText } = await renderWithProviders(
+        <SearchBar />,
+        { ctx },
+      )
 
-    expect(getByLabelText(CLEAR_LABEL)).toBeTruthy()
+      expect(getByLabelText(MIC_LABEL)).toBeTruthy()
+
+      await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'вера')
+
+      expect(queryByLabelText(MIC_LABEL)).toBeNull()
+      expect(getByLabelText(CLEAR_LABEL)).toBeTruthy()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('reports focus changes so the island can show its external close circle', async () => {
+    const ctx = createCtx()
+    const onFocusChange = jest.fn()
+    const { getByPlaceholderText } = await renderWithProviders(
+      <SearchBar onFocusChange={onFocusChange} />,
+      { ctx },
+    )
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+    expect(onFocusChange).toHaveBeenLastCalledWith(true)
+
+    await act(async () => {
+      fireEvent(input, 'blur')
+    })
+    expect(onFocusChange).toHaveBeenLastCalledWith(false)
   })
 
   test('Escape on web clears the query and keeps the search open when the query is non-empty', async () => {

@@ -1,15 +1,15 @@
-import { Text } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { IconButton } from 'shared/ui/icon-button'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { styles } from './SearchBar.styles'
 
-const CLEAR_LABEL = 'Очистить поиск'
-const CLEAR_SYMBOL = '✕'
+const CLEAR_LABEL = 'Очистить'
+const CLEAR_ICON_SIZE = 18
 
 /**
- * The ✕ chip: clears a non-empty query, or closes search when already empty.
+ * The inline ⊗ chip: resets a non-empty query without closing the search.
  * @param root0 - Component props.
- * @param root0.onPress - Clear/close handler owned by the search bar.
+ * @param root0.onPress - Query-clearing handler owned by the search bar.
  */
 export const SearchBarClearButton = ({ onPress }: { onPress: () => void }) => {
   const { currentTheme } = useTheme()
@@ -20,9 +20,7 @@ export const SearchBarClearButton = ({ onPress }: { onPress: () => void }) => {
       hitSlop={INDENTS.low}
       style={styles.clearButton}
       accessibilityLabel={CLEAR_LABEL}
-      Icon={
-        <Text style={[styles.clearIcon, { color: currentTheme.textMuted }]}>{CLEAR_SYMBOL}</Text>
-      }
+      Icon={<Ionicons name='close-circle' size={CLEAR_ICON_SIZE} color={currentTheme.textMuted} />}
     />
   )
 }

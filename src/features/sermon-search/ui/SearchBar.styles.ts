@@ -8,9 +8,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: INDENTS.low,
   },
-  clearIcon: {
-    fontSize: FONT_SIZES.lg,
-  },
   // Fills the bottom-bar pill; the widget owns background, height and radius.
   container: {
     alignItems: 'center',
@@ -30,6 +27,12 @@ export const styles = StyleSheet.create({
     paddingHorizontal: INDENTS.low,
     paddingVertical: 0,
     textAlignVertical: 'center',
+  },
+  micButton: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: INDENTS.low,
   },
   searchIcon: {
     marginRight: INDENTS.lowest,
