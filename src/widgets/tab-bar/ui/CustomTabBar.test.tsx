@@ -2,7 +2,12 @@ import { fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
-import { TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
+import {
+  BAR_ROW_MIN_HEIGHT,
+  isTabBarMeasuredAtom,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  tabBarHeightAtom,
+} from 'shared/ui/layout'
 import { RADIUSES } from 'shared/ui/theme'
 import { CustomTabBar } from './CustomTabBar'
 import { styles } from './styles'
@@ -76,6 +81,38 @@ describe('<CustomTabBar>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockIsSearchOpen = false
+  })
+
+  const findIslandsRow = () =>
+    screen.root?.queryAll(
+      instance =>
+        typeof instance.props.onLayout === 'function' &&
+        StyleSheet.flatten(instance.props.style)?.height === BAR_ROW_MIN_HEIGHT + 30,
+    )[0]
+
+  const fireLayout = async (height: number, width: number) => {
+    const row = findIslandsRow()
+
+    if (!row) throw new Error('islands row not found')
+
+    await fireEvent(row, 'layout', { nativeEvent: { layout: { height, width, x: 0, y: 0 } } })
+  }
+
+  test('ignores a zero-height layout report', async () => {
+    const { ctx } = await renderTabBar()
+
+    await fireLayout(0, 0)
+
+    expect(ctx.get(isTabBarMeasuredAtom)).toBe(false)
+  })
+
+  test('publishes a positive measured height', async () => {
+    const { ctx } = await renderTabBar()
+
+    await fireLayout(140, 320)
+
+    expect(ctx.get(isTabBarMeasuredAtom)).toBe(true)
+    expect(ctx.get(tabBarHeightAtom)).toBe(140)
   })
 
   test('caps the floating island to the 600px content column', async () => {

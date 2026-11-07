@@ -67,8 +67,14 @@ export const CustomTabBar = ({
           { height: BAR_ROW_MIN_HEIGHT + bottomPadding, paddingBottom: bottomPadding },
         ]}
         onLayout={event => {
-          setRowWidth(event.nativeEvent.layout.width)
-          setMeasuredTabBarHeight(event.nativeEvent.layout.height)
+          const { height, width } = event.nativeEvent.layout
+
+          // A hidden tab screen (display: none) reports 0×0; publishing that
+          // zero would collapse every consumer of tabBarHeightAtom for a frame.
+          if (height <= 0) return
+
+          setRowWidth(width)
+          setMeasuredTabBarHeight(height)
         }}
       >
         <Animated.View style={[styles.floatingIsland, islandStyle]}>
