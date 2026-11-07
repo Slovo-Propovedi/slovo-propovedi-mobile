@@ -9,6 +9,16 @@ import { type ViewStyle } from 'react-native'
  * {@link createGlassStyles}.
  */
 export const GLASS = {
+  android: {
+    // Android cannot blur the content behind the bottom chrome (real backdrop
+    // blur needs a BlurTargetView restructure, see docs/debt.md), so the surface
+    // gains depth from a brighter top edge and a slightly denser fill.
+    fillAlphaBoost: 0.06,
+    sheen: {
+      colors: ['rgba(255, 255, 255, 0.10)', 'rgba(255, 255, 255, 0)'],
+      heightPercent: '40%',
+    },
+  },
   blur: {
     // Android 12+ backdrop blur needs a BlurTargetView wrapping the content
     // behind the surface. The bottom chrome renders inside the tab navigator
@@ -25,12 +35,33 @@ export const GLASS = {
     offsetY: 5,
     radius: 14,
   },
+  web: {
+    // expo-blur web caps at `saturate(180%) blur(intensity × 0.2px)` (12px at
+    // the shared intensity). A stronger explicit filter reads refractive instead
+    // of flat; the GlassSurface bypasses BlurView on web to use it.
+    backdropFilter: 'blur(18px) saturate(200%)',
+  },
 } as const
 
 const rgba = (channels: string, alpha: number) => `rgba(${channels}, ${alpha})`
 
-export const getGlassFill = (isLight: boolean) =>
-  isLight ? rgba('255, 255, 255', GLASS.fillAlpha.light) : rgba('0, 0, 0', GLASS.fillAlpha.dark)
+export const getGlassFill = (isLight: boolean, alphaBoost = 0) =>
+  isLight
+    ? rgba('255, 255, 255', GLASS.fillAlpha.light + alphaBoost)
+    : rgba('0, 0, 0', GLASS.fillAlpha.dark + alphaBoost)
+
+/**
+ * Web-only backdrop style. `backdropFilter` is valid in react-native-web's
+ * style compiler (it emits the vendor-prefixed CSS) but is missing from React
+ * Native's own `ViewStyle`, hence the small typed extension instead of a cast.
+ */
+export interface WebGlassStyle extends ViewStyle {
+  backdropFilter: string
+}
+
+export const getWebGlassStyle = (): WebGlassStyle => ({
+  backdropFilter: GLASS.web.backdropFilter,
+})
 
 export const getGlassBorder = (isLight: boolean) =>
   rgba(GLASS.border.color, isLight ? GLASS.border.alpha.light : GLASS.border.alpha.dark)

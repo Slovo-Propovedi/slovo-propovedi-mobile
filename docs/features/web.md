@@ -217,7 +217,7 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 
 ## Стекло и backdrop-filter
 
-Общий стеклянный рецепт нижних островов (`src/shared/ui/glass/`, см. [theme.md](./theme.md#стеклянные-нижние-острова-frosted-glass)) на web работает без отдельных пропов: `BlurView` из `expo-blur` на web сам рендерит `backdrop-filter: saturate(180%) blur(intensity × 0.2px)` (и `-webkit-` вариант), а `experimentalBlurMethod`/`blurMethod` — Android-only и на web не нужны. Браузеры без `backdrop-filter` показывают только полупрозрачную заливку и рамку — контент под островом остаётся виден, просто без размытия.
+Общий стеклянный рецепт нижних островов (`src/shared/ui/glass/`, см. [theme.md](./theme.md#стеклянные-нижние-острова-frosted-glass)) на web **не использует `BlurView`**: `expo-blur` на web жёстко ограничивает фильтр формулой `saturate(180%) blur(intensity × 0.2px)` (12px при общей интенсивности 60) и читается плоско. Поэтому `GlassSurface` на web рендерит обычный `View` со стилем из `getWebGlassStyle()` — `backdrop-filter: blur(18px) saturate(200%)` (плюс `-webkit-` префикс, его добавляет react-native-web). Стиль описан интерфейсом `WebGlassStyle extends ViewStyle` с полем `backdropFilter`: RNW компилирует ключ в CSS, но в типах RN `ViewStyle` его нет, поэтому обходимся без `as`. Пропы `experimentalBlurMethod`/`blurMethod` — Android-only и на web не нужны. Браузеры без `backdrop-filter` показывают только полупрозрачную заливку и рамку — контент под островом остаётся виден, просто без размытия.
 
 ## Скроллбары
 

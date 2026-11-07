@@ -1,6 +1,7 @@
 import { BlurView } from 'expo-blur'
-import { StyleSheet, View } from 'react-native'
-import { createGlassStyles } from './glass'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Platform, StyleSheet, View } from 'react-native'
+import { createGlassStyles, getGlassFill, getWebGlassStyle, GLASS } from './glass'
 
 /**
  * Frosted-glass background for the floating bottom islands: a backdrop blur
@@ -9,23 +10,48 @@ import { createGlassStyles } from './glass'
  * treatment stay identical. The surface clips itself, so a host that must keep
  * overflowing children (for example the search dropdown) does not need
  * `overflow: 'hidden'`.
+ *
+ * Platform treatment:
+ * - iOS: native `BlurView` (tint light/dark), already refractive.
+ * - Web: `BlurView`'s web output caps the backdrop at 12px, so a plain View
+ *   carries an explicit stronger `backdrop-filter` instead.
+ * - Android: real backdrop blur is impossible here (see docs/debt.md); the
+ *   surface gains depth from a top-edge sheen plus a slightly denser fill.
  * @param root0 - Glass surface props.
  * @param root0.isLight - Active theme; selects the fill, rim and blur tint.
  * @param root0.radius - Corner radius of the hairline rim; matches the host shape.
  */
 export const GlassSurface = ({ isLight, radius }: { isLight: boolean; radius: number }) => {
   const glass = createGlassStyles(isLight, radius)
+  const isWeb = Platform.OS === 'web'
+  const isAndroid = Platform.OS === 'android'
 
   return (
     <View
       pointerEvents='none'
       style={[StyleSheet.absoluteFill, styles.clip, { borderRadius: radius }]}
     >
-      <BlurView
-        tint={glass.blur.tint}
-        intensity={glass.blur.intensity}
-        style={[StyleSheet.absoluteFill, glass.fill]}
-      />
+      {isWeb ? (
+        <View style={[StyleSheet.absoluteFill, getWebGlassStyle(), glass.fill]} />
+      ) : (
+        <BlurView
+          tint={glass.blur.tint}
+          intensity={glass.blur.intensity}
+          style={[
+            StyleSheet.absoluteFill,
+            isAndroid
+              ? { backgroundColor: getGlassFill(isLight, GLASS.android.fillAlphaBoost) }
+              : glass.fill,
+          ]}
+        />
+      )}
+      {isAndroid && (
+        <LinearGradient
+          pointerEvents='none'
+          colors={GLASS.android.sheen.colors}
+          style={[styles.sheen, { height: GLASS.android.sheen.heightPercent }]}
+        />
+      )}
       <View style={[StyleSheet.absoluteFill, glass.rim]} />
     </View>
   )
@@ -34,5 +60,11 @@ export const GlassSurface = ({ isLight, radius }: { isLight: boolean; radius: nu
 const styles = StyleSheet.create({
   clip: {
     overflow: 'hidden',
+  },
+  sheen: {
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 })
