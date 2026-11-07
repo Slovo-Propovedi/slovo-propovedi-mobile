@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
   topRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingRight: INDENTS.low,
   },
   topRowRight: {
