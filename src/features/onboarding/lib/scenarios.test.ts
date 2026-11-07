@@ -51,36 +51,25 @@ describe('onboarding scenario data', () => {
     expect(Object.keys(whatsNewScenarioData)).toEqual(['whatsNewScenario'])
   })
 
-  test('whats-new opens with a plain card and then spotlights the refresh button, offline and history rows', () => {
+  test('whats-new opens with a plain card and then walks the floating bottom bar', () => {
     const whatsNew = scenariosById.whatsNew
 
-    expect(whatsNew.steps).toHaveLength(11)
-    const intro = whatsNew.steps[0]
-    const freshData = whatsNew.steps[2]
-    const refreshButton = whatsNew.steps[3]
-    const offlineRows = whatsNew.steps[6]
-    const historyRows = whatsNew.steps[9]
-    const playerState = whatsNew.steps[10]
+    expect(whatsNew.steps).toHaveLength(5)
+    const [intro, playerIslands, collapse, expand, searchEntry] = whatsNew.steps
 
     expect(intro.targetId).toBeUndefined()
     expect(intro.route).toBeUndefined()
     expect(intro.tapTargetId).toBeUndefined()
-    // Data refresh is part of the unreleased cycle: the plain «Всегда свежие данные»
-    // card followed by the desktop refresh-button spotlight on the listen screen.
-    expect(freshData.title).toBe('Всегда свежие данные')
-    expect(freshData.targetId).toBeUndefined()
-    expect(refreshButton.route).toBe('/listen')
-    expect(refreshButton.targetId).toBe('listen.refresh-button')
-    expect(refreshButton.skipIfMissing).toBe(true)
-    expect(offlineRows.route).toBe('/offline')
-    expect(offlineRows.targetId).toBe('offline.rows')
-    expect(historyRows.route).toBe('/history')
-    expect(historyRows.targetId).toBe('history.rows')
-    // The closing card is a plain text card: it spotlights nothing and opens nothing.
-    expect(playerState.title).toBe('Актуальное состояние плеера')
-    expect(playerState.route).toBeUndefined()
-    expect(playerState.targetId).toBeUndefined()
-    expect(playerState.tapTargetId).toBeUndefined()
+    // The mini-player pill exists only with a loaded track, so the card degrades to a
+    // centred text card instead of being dropped: it is a spotlight, not skipIfMissing.
+    expect(playerIslands.title).toBe('Островки плеера и вкладок')
+    expect(playerIslands.route).toBe('/listen')
+    expect(playerIslands.targetId).toBe('player.mini')
+    // Collapsing is a scroll behaviour with no element to spotlight.
+    expect(collapse.title).toBe('Сворачивается при прокрутке')
+    expect(collapse.targetId).toBeUndefined()
+    expect(expand.targetId).toBe('tab.listen')
+    expect(searchEntry.targetId).toBe('listen.search-toggle')
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -118,44 +107,14 @@ describe('onboarding scenario data', () => {
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
   })
 
-  test('whatsNew keeps six cards and visualizes the screen transitions between them', () => {
+  test('whatsNew is five plain cards with no transitions between them', () => {
     const whatsNew = scenariosById.whatsNew
     const whatsNewDeck = buildTourDeck(whatsNew.steps)
 
-    expect(whatsNewDeck).toHaveLength(6)
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 2, 3, 6, 9, 10])
-    // Intro → listen: the «Слушать» tab blink navigates into the data-refresh cards;
-    // a start already on the listen screen skips it (the card route matches).
-    expect(whatsNewDeck[1].entryStepIndexes).toEqual([1])
-    expect(whatsNew.steps[1]).toEqual({ route: '/listen', tapTargetId: 'tab.listen' })
-    expect(whatsNewDeck[2].entryStepIndexes).toEqual([])
-    // Refresh → offline: the «Ещё» tab blink (history/backup pattern) and the «Офлайн»
-    // item blink (the offline scenario's own lead-up) navigate into the offline card.
-    expect(whatsNewDeck[3].entryStepIndexes).toEqual([4, 5])
-    expect(whatsNew.steps[4]).toEqual({ route: '/more', tapTargetId: 'tab.more' })
-    expect(whatsNew.steps[5]).toEqual({ route: '/offline', tapTargetId: 'more.offline-item' })
-    // Offline → history: the back arrow leaves the nested screen (no tab bar there),
-    // then the history item blink (the history scenario's lead-up) navigates into the
-    // history card.
-    expect(whatsNewDeck[4].entryStepIndexes).toEqual([7, 8])
-    expect(whatsNew.steps[7]).toEqual({ route: '/more', tapTargetId: 'header.back' })
-    expect(whatsNew.steps[8]).toEqual({ route: '/history', tapTargetId: 'more.history-item' })
-  })
-
-  test('whatsNew drops the desktop-only refresh card without losing its listen lead-up', () => {
-    const whatsNew = scenariosById.whatsNew
-    const deck = buildTourDeck(whatsNew.steps)
-    const refreshDeckIndex = 2
-
-    // The refresh card owns no entry transitions: the tab.listen lead-up belongs to
-    // the preceding «Всегда свежие данные» card, so dropping the refresh card never
-    // navigates to /listen for nothing.
-    expect(deck[refreshDeckIndex].entryStepIndexes).toEqual([])
-    expect(deck[refreshDeckIndex - 1].entryStepIndexes).toEqual([1])
-
-    // Off desktop web the card is dropped, so the counter loses exactly one card.
-    expect(resolveDeckProgress(deck, [], refreshDeckIndex).displayTotal).toBe(6)
-    expect(resolveDeckProgress(deck, [refreshDeckIndex], refreshDeckIndex + 1).displayTotal).toBe(5)
+    expect(whatsNewDeck).toHaveLength(5)
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1, 2, 3, 4])
+    expect(whatsNewDeck.every(entry => entry.entryStepIndexes.length === 0)).toBe(true)
+    expect(whatsNewDeck.every(entry => entry.exitStepIndexes.length === 0)).toBe(true)
   })
 
   test('each scenario wires the tab or row it taps when navigating', () => {
