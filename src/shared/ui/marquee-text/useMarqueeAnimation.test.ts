@@ -37,6 +37,7 @@ const fillPause = () => {
 }
 
 const createCycle = (): MarqueeCycle => ({
+  msPerPx: { value: 0 } as SharedValue<number>,
   scrollElapsed: { value: 0 } as SharedValue<number>,
   scrollMs: { value: 0 } as SharedValue<number>,
   startToken: { value: 0 } as SharedValue<number>,
@@ -314,11 +315,13 @@ describe('useMarqueeAnimation', () => {
     fillPause()
     expect(cycle.scrollElapsed.value).toBe(0)
     expect(cycle.scrollMs.value).toBe(0)
+    expect(cycle.msPerPx.value).toBe(0)
     expect(cycle.startToken.value).toBe(0)
 
     driveFrame(100)
     // (textWidth 250 + REPEAT_SPACER 50) * 18 ms/px
     expect(cycle.scrollMs.value).toBe(5400)
+    expect(cycle.msPerPx.value).toBe(18)
     expect(cycle.scrollElapsed.value).toBe(100)
     expect(cycle.startToken.value).toBe(1)
 
@@ -392,22 +395,40 @@ describe('useMarqueeAnimation', () => {
     expect(result.current.translateX.value).toBe(0)
   })
 
-  test('a follower maps the leader cycle onto its own loop instead of running its clock', async () => {
-    // One pass per title cycle: the follower offset is the leader's progress
-    // (scrollElapsed / scrollMs) applied to the follower's own loop distance.
-    const containerWidth = { value: 200 } as SharedValue<number>
-    const textWidth = { value: 250 } as SharedValue<number>
-    const needsMarquee = { value: true } as SharedValue<boolean>
+  test('title and subtitle advance at the same px/ms speed', async () => {
+    // Both lines share the speed constant published by the title: after the
+    // same elapsed time they have travelled the same number of pixels,
+    // regardless of their different content widths.
     const cycle = createCycle()
-    cycle.scrollMs.value = 1000
-    cycle.scrollElapsed.value = 500
+    const needsMarquee = { value: true } as SharedValue<boolean>
 
-    const { result } = await renderHook(() =>
+    const leader = await renderHook(() =>
       useMarqueeAnimation(
-        containerWidth,
-        textWidth,
+        { value: 200 } as SharedValue<number>,
+        { value: 250 } as SharedValue<number>,
         needsMarquee,
-        'text',
+        'title',
+        false,
+        false,
+        true,
+        true,
+        cycle,
+      ),
+    )
+
+    leader.result.current.startIdleMarquee()
+    fillPause()
+    for (let i = 0; i < 9; i++) driveFrame(100)
+
+    expect(cycle.msPerPx.value).toBe(18)
+    expect(leader.result.current.translateX.value).toBe(-50)
+
+    const follower = await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 400 } as SharedValue<number>,
+        needsMarquee,
+        'subtitle',
         false,
         false,
         false,
@@ -417,10 +438,122 @@ describe('useMarqueeAnimation', () => {
       ),
     )
 
-    // loopDistance = 250 + 50; half of the cycle → half of the loop
+    // 900ms at 18 ms/px = 50px for both lines (the follower loop is long
+    // enough not to clamp yet).
+    expect(readTransform(follower.result.current.animatedStyle)).toBe(-50)
+  })
+
+  test('a short subtitle holds at its loop end until the title cycle ends', async () => {
+    // The subtitle is shorter than the title: it finishes its own pass at the
+    // shared speed, then waits at the loop end while the title keeps scrolling.
+    const cycle = createCycle()
+    cycle.msPerPx.value = 18
+
+    const { rerender, result } = await renderHook((_props: object) =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 100 } as SharedValue<number>,
+        { value: true } as SharedValue<boolean>,
+        'subtitle',
+        false,
+        false,
+        false,
+        true,
+        undefined,
+        cycle,
+      ),
+    )
+
+    // Own loop = 100 + 50 = 150px → 2700ms at the shared speed.
+    cycle.scrollElapsed.value = 900
+    await rerender({})
+    expect(readTransform(result.current.animatedStyle)).toBe(-50)
+
+    cycle.scrollElapsed.value = 2700
+    await rerender({})
     expect(readTransform(result.current.animatedStyle)).toBe(-150)
-    // The follower never activates its own frame clock.
-    expect(latestFrameCallback().setActive).toHaveBeenLastCalledWith(false)
+
+    cycle.scrollElapsed.value = 4000
+    await rerender({})
+    expect(readTransform(result.current.animatedStyle)).toBe(-150)
+
+    // The title restart publishes elapsed = 0: both lines start together.
+    cycle.scrollElapsed.value = 0
+    cycle.msPerPx.value = 0
+    await rerender({})
+    expect(readTransform(result.current.animatedStyle)).toBe(0)
+  })
+
+  test('both lines restart together at the title cycle boundary', async () => {
+    const cycle = createCycle()
+    const needsMarquee = { value: true } as SharedValue<boolean>
+
+    const leader = await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 250 } as SharedValue<number>,
+        needsMarquee,
+        'title',
+        false,
+        false,
+        true,
+        true,
+        cycle,
+      ),
+    )
+
+    leader.result.current.startIdleMarquee()
+    fillPause()
+    // 54 frames of 100ms cover the whole 5400ms title scroll phase.
+    for (let i = 0; i < 54; i++) driveFrame(100)
+
+    const follower = await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 400 } as SharedValue<number>,
+        needsMarquee,
+        'subtitle',
+        false,
+        false,
+        false,
+        true,
+        undefined,
+        cycle,
+      ),
+    )
+
+    expect(leader.result.current.translateX.value).toBe(0)
+    expect(readTransform(follower.result.current.animatedStyle)).toBe(0)
+  })
+
+  test('a long subtitle still snaps at the title cycle boundary', async () => {
+    // A subtitle longer than the title never reaches its own loop end before
+    // the title restarts; the reset is a snap, exactly as before.
+    const cycle = createCycle()
+    cycle.msPerPx.value = 18
+
+    const { rerender, result } = await renderHook((_props: object) =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 500 } as SharedValue<number>,
+        { value: true } as SharedValue<boolean>,
+        'subtitle',
+        false,
+        false,
+        false,
+        true,
+        undefined,
+        cycle,
+      ),
+    )
+
+    cycle.scrollElapsed.value = 5300
+    await rerender({})
+    expect(readTransform(result.current.animatedStyle)).toBeCloseTo(-5300 / 18, 5)
+
+    cycle.scrollElapsed.value = 0
+    await rerender({})
+    expect(readTransform(result.current.animatedStyle)).toBe(0)
   })
 
   test('a follower rests when the leader cycle is inactive', async () => {

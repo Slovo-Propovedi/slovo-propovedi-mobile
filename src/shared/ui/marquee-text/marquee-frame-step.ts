@@ -8,6 +8,8 @@ import {
 
 interface MarqueeFrameStep {
   cycleElapsed: number
+  /** Speed of the scrolling phase; 0 during the pause. */
+  msPerPx: number
   /** Milliseconds into the scroll phase; 0 during the pause. */
   scrollElapsed: number
   /** Scroll-phase duration; 0 during the pause. */
@@ -45,7 +47,14 @@ export const getMarqueeFrameStep = ({
   const elapsed = cycleElapsed + delta
 
   if (elapsed <= MARQUEE_PAUSE)
-    return { cycleElapsed: elapsed, scrollElapsed: 0, scrollMs: 0, started: false, translateX: 0 }
+    return {
+      cycleElapsed: elapsed,
+      msPerPx: 0,
+      scrollElapsed: 0,
+      scrollMs: 0,
+      started: false,
+      translateX: 0,
+    }
 
   const scrolled = Math.min(elapsed - MARQUEE_PAUSE, scrollMs)
   const started = cycleElapsed <= MARQUEE_PAUSE
@@ -54,10 +63,11 @@ export const getMarqueeFrameStep = ({
   // duplicate copy lands exactly where the loop restarts, with no reverse
   // motion; the next cycle begins with its own MARQUEE_PAUSE.
   if (scrolled >= scrollMs)
-    return { cycleElapsed: 0, scrollElapsed: 0, scrollMs: 0, started, translateX: 0 }
+    return { cycleElapsed: 0, msPerPx: 0, scrollElapsed: 0, scrollMs: 0, started, translateX: 0 }
 
   return {
     cycleElapsed: elapsed,
+    msPerPx,
     scrollElapsed: scrolled,
     scrollMs,
     started,

@@ -57,12 +57,13 @@ export const useMarqueeAnimation = (
         ? textWidth.value + STATIC_WIDTH_SAFETY_PX
         : undefined
 
-    // Followers ride the leader's published phase: one pass per leader cycle,
-    // restarting exactly when the leader restarts (and resting in its pause).
+    // Followers ride the leader's published phase at the same px/ms speed: a
+    // shorter line finishes its pass early and holds while the title continues,
+    // then both restart together when the title's cycle boundary resets it.
     const syncedOffset = followCycle
       ? getSyncedOffset(
           followCycle.scrollElapsed.value,
-          followCycle.scrollMs.value,
+          followCycle.msPerPx.value,
           needsMarquee.value,
           textWidth.value + REPEAT_SPACER,
         )

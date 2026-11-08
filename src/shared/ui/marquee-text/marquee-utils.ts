@@ -35,22 +35,24 @@ export const shouldMarquee = (maxOffset: number): boolean => {
 }
 
 // Followers (the mini-player subtitle) do not own a clock: their offset is a
-// pure function of the leader's (title's) scroll phase, so both lines start
-// together, both rest during the leader's pause, and a follower pass always
-// ends exactly at the leader's cycle boundary. One pass per leader cycle,
-// time-normalized to the leader's duration, so the follower never overruns it.
+// pure function of the leader's (title's) scroll phase. Both lines advance at
+// the leader's constant px/ms speed, so a shorter follower reaches its own loop
+// end early and holds there (faded at the clip edge) until the title's cycle
+// resets; the next cycle then restarts both together. A follower longer than
+// the title never reaches its loop end and snaps at the cycle boundary, exactly
+// as before.
 export const getSyncedOffset = (
   scrollElapsed: number,
-  scrollMs: number,
+  msPerPx: number,
   overflowing: boolean,
   loopDistance: number,
 ): number => {
   'worklet'
-  if (!overflowing || scrollMs <= 0) return 0
+  if (!overflowing || msPerPx <= 0) return 0
 
-  const progress = Math.min(1, Math.max(0, scrollElapsed / scrollMs))
+  const travelled = Math.max(0, scrollElapsed) / msPerPx
 
-  return -progress * loopDistance || 0
+  return -Math.min(travelled, loopDistance) || 0
 }
 
 // A click that follows a marquee pan drag must be swallowed on web: the

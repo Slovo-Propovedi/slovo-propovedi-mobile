@@ -75,7 +75,13 @@ export const useMarqueeFrameClock = ({
       cycleElapsed.value = step.cycleElapsed
 
       // The pause → scroll transition is the cycle start followers subscribe to.
-      publishMarqueePhase(publishCycle, step.scrollElapsed, step.scrollMs, step.started)
+      publishMarqueePhase(
+        publishCycle,
+        step.scrollElapsed,
+        step.scrollMs,
+        step.msPerPx,
+        step.started,
+      )
     },
     [publishCycle],
   )
