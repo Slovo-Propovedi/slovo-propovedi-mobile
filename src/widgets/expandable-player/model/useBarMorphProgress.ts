@@ -17,23 +17,20 @@ import { isMiniPillCollapsedAtom } from '../model/barMorph'
  * before Reanimated asserts the start-of-morph animated value — then the pill
  * snaps back and visibly morphs again (the one-frame search-open flash).
  *
- * `isSettled` is false from the flip until a timing actually completes. A
- * geometry guard must not judge live layout mid-morph: every frame is between
- * the two resting positions by design. An interrupted morph never reports a
- * settle, so the flag stays false until a later animation lands.
- * @returns The morph progress, the bar state it settled into, and whether the
- * morph is currently settled.
+ * A new flip immediately commits `settledCollapsed` to the START state of the
+ * new animation (`!isTarget`), so an interrupted morph can never leave the flag
+ * lagging behind: even if a completion callback is lost or delivered late, the
+ * committed resting geometry matches where the new animation starts.
+ * @returns The morph progress and the bar state it settled into.
  */
 export const useBarMorphProgress = () => {
   const [isCollapsed] = useAtom(isMiniPillCollapsedAtom)
   const [settledCollapsed, setSettledCollapsed] = useState(isCollapsed)
-  const [isSettled, setIsSettled] = useState(true)
-  const handleStart = useCallback(() => {
-    setIsSettled(false)
+  const handleStart = useCallback((isTarget: boolean) => {
+    setSettledCollapsed(!isTarget)
   }, [])
   const handleSettled = useCallback((isTarget: boolean) => {
     setSettledCollapsed(isTarget)
-    setIsSettled(true)
   }, [])
   const progress = useAtomMorphProgress(
     isMiniPillCollapsedAtom,
@@ -42,5 +39,5 @@ export const useBarMorphProgress = () => {
     handleStart,
   )
 
-  return { isSettled, progress, settledCollapsed }
+  return { progress, settledCollapsed }
 }

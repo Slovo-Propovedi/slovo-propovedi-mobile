@@ -11,11 +11,30 @@ interface UseRestingStylesInput {
   tabBarHeight: number
 }
 
+const getMiniRestingTop = ({
+  barCollapsed,
+  fullScreenHeight,
+  screenWidth,
+  tabBarHeight,
+}: Omit<UseRestingStylesInput, 'expanded'>) =>
+  getRestingContainerStyle({
+    barCollapsed,
+    expanded: false,
+    fullScreenHeight,
+    screenWidth,
+    tabBarHeight,
+  }).top
+
 /**
  * React-committed (shadow-tree) resting geometry for the container and the mini
  * pill. Restated for the SETTLED bar state so the #63 defenses never restore a
  * stale expanded-bar position while the bar is collapsed — and never paint the
  * destination geometry a frame before the morph lands there.
+ *
+ * `barExpandedTop` / `barCollapsedTop` are both mini resting tops regardless of
+ * the settled state: the geometry guard derives its expectation from the live
+ * morph progress (0 → expanded top, 1 → collapsed top), never from a separately
+ * tracked settle flag.
  * @param input - Player state and screen geometry.
  * @param input.barCollapsed - Bar state whose morph has already completed.
  * @param input.expanded - Whether the player is expanded to fullscreen.
@@ -41,18 +60,25 @@ export const useRestingStyles = ({
       }),
     [barCollapsed, expanded, fullScreenHeight, screenWidth, tabBarHeight],
   )
-  // Always mini (never fullscreen) resting geometry — the heal-loop expectation,
-  // restated for whichever bar state the pill currently rests in.
-  const collapsedRestingContainerStyle = useMemo(
+  const barExpandedTop = useMemo(
     () =>
-      getRestingContainerStyle({
-        barCollapsed,
-        expanded: false,
+      getMiniRestingTop({
+        barCollapsed: false,
         fullScreenHeight,
         screenWidth,
         tabBarHeight,
       }),
-    [barCollapsed, fullScreenHeight, screenWidth, tabBarHeight],
+    [fullScreenHeight, screenWidth, tabBarHeight],
+  )
+  const barCollapsedTop = useMemo(
+    () =>
+      getMiniRestingTop({
+        barCollapsed: true,
+        fullScreenHeight,
+        screenWidth,
+        tabBarHeight,
+      }),
+    [fullScreenHeight, screenWidth, tabBarHeight],
   )
   const miniBarRestingStyle = useMemo(
     () =>
@@ -65,5 +91,5 @@ export const useRestingStyles = ({
     [barCollapsed, fullScreenHeight, screenWidth, tabBarHeight],
   )
 
-  return { collapsedRestingContainerStyle, miniBarRestingStyle, restingContainerStyle }
+  return { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle }
 }

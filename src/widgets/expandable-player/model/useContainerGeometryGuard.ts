@@ -1,14 +1,18 @@
 import { useEffect, useRef } from 'react'
 import { type LayoutChangeEvent } from 'react-native'
+import { type SharedValue } from 'react-native-reanimated'
 
 interface UseContainerGeometryGuardInput {
-  /** Resting top the container should match (always collapsed geometry). */
-  expectedTop: number
+  /** Resting top of the mini pill while the bar is collapsed into one row (progress 1). */
+  barCollapsedTop: number
+  /** Resting top of the detached mini pill while the bar is expanded (progress 0). */
+  barExpandedTop: number
   /**
-   * True once the bar morph has landed. While a morph is running the live top
-   * is deliberately between the two resting positions, so it must not be judged.
+   * Live bar morph progress (0 = detached pill, 1 = collapsed bottom row).
+   * The guard derives its expectation from this value AT REST, so it can never
+   * lag behind the geometry the pill actually settled into.
    */
-  isSettled: boolean
+  barProgress: SharedValue<number>
   /** Optional chained layout handler from the consumer. */
   onLayout?: (event: LayoutChangeEvent) => void
   /** Callback when mismatch detected (consumer forces animated-layer re-application). */
@@ -17,7 +21,18 @@ interface UseContainerGeometryGuardInput {
 
 const HEAL_TOLERANCE_DP = 1
 const MAX_HEALS = 5
+const REST_EPSILON = 0.01
 const VERIFY_WINDOW_MS = 15_000
+
+const resolveRestingTop = (
+  barProgress: number,
+  barExpandedTop: number,
+  barCollapsedTop: number,
+): null | number => {
+  if (Math.abs(barProgress) <= REST_EPSILON) return barExpandedTop
+  if (Math.abs(barProgress - 1) <= REST_EPSILON) return barCollapsedTop
+  return null
+}
 
 /**
  * Layer 5 closed-feedback loop for Issue #63.
@@ -26,16 +41,14 @@ const VERIFY_WINDOW_MS = 15_000
  * cached first-generation animated props on the container's native view ~3–5s
  * after the correct geometry is committed. The container gets pushed to a stale
  * y position (lower than resting by ~20dp), overlapping tab bar icons.
- * Guard expectation is ALWAYS pinned to the settled resting top — the #63
- * signature only exists in the mini state.
  *
- * The guard only judges SETTLED bar states (`isSettled`). While the bar morphs,
- * the container is moving between the detached and the collapsed resting tops
- * by design; a live onLayout mid-morph would look like drift on every frame and
- * used to trigger a heal + warning dozens of times per session. Mid-morph
- * violations are ignored, not queued.
- *
- * The 15s verification window counts from the first guarded onLayout (container
+ * The expectation is derived from the bar morph progress shared value AT REST:
+ * 0 → detached-pill top, 1 → collapsed-row top. A separately tracked "settled"
+ * boolean could desync from the live animation (a completion callback delivered
+ * after a newer flip), which made the guard "heal" an actually-correct layout
+ * toward the wrong resting top. Between the two rest points the guard evaluates
+ * nothing: the container is moving by design, so mid-morph violations are
+ * ignored, not queued. The 15s verification window counts from the first guarded onLayout (container
  * attach), not from hook mount. This covers late attach scenarios (for example,
  * a fresh install where the user plays at t=40s) and eliminates the
  * onLayout-before-effect race.
@@ -44,14 +57,16 @@ const VERIFY_WINDOW_MS = 15_000
  * at most once per session: it is a prod signal of recurrence, not a per-frame
  * log.
  * @param root0 - Guard configuration.
- * @param root0.expectedTop - Resting top the container should match (settled geometry).
- * @param root0.isSettled - Whether the bar morph has landed.
+ * @param root0.barCollapsedTop - Resting top when the bar is collapsed to one row.
+ * @param root0.barExpandedTop - Resting top when the bar is expanded (detached pill).
+ * @param root0.barProgress - Live bar morph progress shared value.
  * @param root0.onLayout - Optional chained layout handler from the consumer.
  * @param root0.onMismatch - Callback when mismatch detected.
  */
 export const useContainerGeometryGuard = ({
-  expectedTop,
-  isSettled,
+  barCollapsedTop,
+  barExpandedTop,
+  barProgress,
   onLayout,
   onMismatch,
 }: UseContainerGeometryGuardInput) => {
@@ -71,7 +86,9 @@ export const useContainerGeometryGuard = ({
 
     // Mid-morph the container is between the two resting positions by design,
     // so every frame would look like a mismatch.
-    if (!isSettled) return
+    const expectedTop = resolveRestingTop(barProgress.value, barExpandedTop, barCollapsedTop)
+
+    if (expectedTop === null) return
 
     // Cold-start-only: skip after verification window expires.
     if (Date.now() - attachedAtRef.current > VERIFY_WINDOW_MS) return
@@ -99,13 +116,13 @@ export const useContainerGeometryGuard = ({
   }
 
   useEffect(() => {
-    // Reset heals and attach stamp when expected top changes (e.g. two-phase
+    // Reset heals and attach stamp when the resting tops change (e.g. two-phase
     // tab bar measurement) — fresh budget for new geometry. The warning flag
     // is session-wide and intentionally survives the reset.
     healsRef.current = 0
     hasAttachedRef.current = false
     attachedAtRef.current = 0
-  }, [expectedTop])
+  }, [barCollapsedTop, barExpandedTop])
 
   return { onLayout: handleLayout }
 }

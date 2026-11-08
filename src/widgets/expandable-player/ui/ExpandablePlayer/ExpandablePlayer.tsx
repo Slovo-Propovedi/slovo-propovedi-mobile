@@ -41,11 +41,11 @@ export const ExpandablePlayer = ({
   const {
     backdropStyle,
     backgroundImageStyle,
-    collapsedRestingContainerStyle,
+    barCollapsedTop,
+    barExpandedTop,
     containerStyle,
     forceGeometryReapply,
     fullStyle,
-    isBarMorphSettled,
     miniBarRestingStyle,
     miniBarStyle,
     miniOverlayStyle,
@@ -71,8 +71,9 @@ export const ExpandablePlayer = ({
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
 
   const { onLayout: guardedContainerLayout } = useContainerGeometryGuard({
-    expectedTop: collapsedRestingContainerStyle.top,
-    isSettled: isBarMorphSettled,
+    barCollapsedTop,
+    barExpandedTop,
+    barProgress: progress,
     onMismatch: forceGeometryReapply,
   })
 

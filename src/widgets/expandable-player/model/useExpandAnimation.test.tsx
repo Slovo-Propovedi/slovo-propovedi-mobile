@@ -163,6 +163,8 @@ describe('useExpandAnimation restingContainerStyle', () => {
 
     expect(result).not.toBeNull()
     expect(result).toMatchObject({
+      barCollapsedTop: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      barExpandedTop: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
       restingContainerStyle: {
         borderBottomLeftRadius: PILL_RADIUS,
         borderBottomRightRadius: PILL_RADIUS,
@@ -259,7 +261,6 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     // back to the collapsed line and morphs again (the search-open flash).
     expect(flipRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
     expect(flipRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
-    expect(flipRender.collapsedRestingContainerStyle).toMatchObject(COLLAPSED_RESTING)
 
     await act(async () => {
       completions[0](true)
@@ -268,7 +269,6 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     const settledRender = renders[renders.length - 1]
     expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
     expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
-    expect(settledRender.collapsedRestingContainerStyle).toMatchObject(EXPANDED_RESTING)
   })
 
   test('keeps the detached resting geometry until the collapse morph settles', async () => {
@@ -276,7 +276,6 @@ describe('useExpandAnimation bar-morph resting commit', () => {
 
     expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
     expect(flipRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
-    expect(flipRender.collapsedRestingContainerStyle).toMatchObject(EXPANDED_RESTING)
 
     await act(async () => {
       completions[0](true)
@@ -285,7 +284,6 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     const settledRender = renders[renders.length - 1]
     expect(settledRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
     expect(settledRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
-    expect(settledRender.collapsedRestingContainerStyle).toMatchObject(COLLAPSED_RESTING)
   })
 })
 

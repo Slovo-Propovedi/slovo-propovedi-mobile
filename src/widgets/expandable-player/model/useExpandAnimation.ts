@@ -15,13 +15,14 @@ import { useRestingStyles } from './useRestingStyles'
 interface UseExpandAnimationResult {
   backdropStyle: ReturnType<typeof useAnimatedStyle>
   backgroundImageStyle: ReturnType<typeof useAnimatedStyle>
-  collapsedRestingContainerStyle: ReturnType<typeof getRestingContainerStyle>
+  /** Resting mini top while the bar is collapsed to one row (morph progress 1). */
+  barCollapsedTop: number
+  /** Resting mini top while the bar is expanded / detached (morph progress 0). */
+  barExpandedTop: number
   containerStyle: ReturnType<typeof useAnimatedStyle>
   /** Stable reference — forces containerStyle worklet to re-run on the UI thread. */
   forceGeometryReapply: () => void
   fullStyle: ReturnType<typeof useAnimatedStyle>
-  /** Whether the bar morph has landed (geometry guard only judges settled layout). */
-  isBarMorphSettled: boolean
   miniBarRestingStyle: ReturnType<typeof getMiniBarStyle>
   miniBarStyle: ReturnType<typeof useAnimatedStyle>
   miniOverlayStyle: ReturnType<typeof useAnimatedStyle>
@@ -52,7 +53,7 @@ export const useExpandAnimation = (
   const { fullScreenHeightShared, screenWidthShared, tabBarHeightShared } = useGeometrySharedValues(
     { fullScreenHeight, screenWidth, tabBarHeight },
   )
-  const { collapsedRestingContainerStyle, miniBarRestingStyle, restingContainerStyle } =
+  const { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle } =
     useRestingStyles({
       barCollapsed: barMorph.settledCollapsed,
       expanded,
@@ -112,11 +113,11 @@ export const useExpandAnimation = (
   return {
     backdropStyle,
     backgroundImageStyle,
-    collapsedRestingContainerStyle,
+    barCollapsedTop,
+    barExpandedTop,
     containerStyle,
     forceGeometryReapply,
     fullStyle,
-    isBarMorphSettled: barMorph.isSettled,
     miniBarRestingStyle,
     miniBarStyle,
     miniOverlayStyle,

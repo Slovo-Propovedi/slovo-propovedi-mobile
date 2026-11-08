@@ -23,7 +23,7 @@ type SettleHandler = (isTarget: boolean) => void
  * @param onSettled - Runs on the JS thread when the animation completes; an
  * interrupted animation reports nothing so the replacement owns the commit.
  * @param onStart - Runs on the JS thread on every real flip, before the timing
- * starts (used to mark consumers as "morphing" until settle).
+ * starts (used to commit the start state of the new animation).
  */
 export const useAtomMorphProgress = (
   targetAtom: Atom<boolean>,

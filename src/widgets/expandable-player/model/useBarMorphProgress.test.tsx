@@ -26,7 +26,6 @@ describe('useBarMorphProgress', () => {
 
     expect(result.current.progress.value).toBe(1)
     expect(result.current.settledCollapsed).toBe(true)
-    expect(result.current.isSettled).toBe(true)
     expect(mockedWithTiming).not.toHaveBeenCalled()
   })
 
@@ -81,35 +80,49 @@ describe('useBarMorphProgress', () => {
     // Committing the destination state at the flip paints the pill there for a
     // frame, before the animated layer asserts the start-of-morph value.
     expect(result.current.settledCollapsed).toBe(false)
-    expect(result.current.isSettled).toBe(false)
 
     await act(async () => {
       completions[0](true)
     })
 
     expect(result.current.settledCollapsed).toBe(true)
-    expect(result.current.isSettled).toBe(true)
   })
 
-  test('keeps the settled bar state when the morph is interrupted', async () => {
+  test('commits the start state of a new flip that interrupts an in-flight morph', async () => {
     const completions: Array<(finished: boolean) => void> = []
     mockedWithTiming.mockImplementation((toValue, _config, callback) => {
       if (typeof callback === 'function') completions.push(callback)
       return toValue
     })
 
-    const { ctx, result } = await renderHookWithProviders(() => useBarMorphProgress())
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+    const { result } = await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
 
+    // Morph 1→0 (collapse → detached) starts; its start state is collapsed.
+    await act(async () => {
+      setBarCollapsed(ctx, false)
+    })
+    expect(result.current.settledCollapsed).toBe(true)
+
+    // Flip back to collapsed before morph 1 lands: the new animation starts
+    // from the detached state, so the flag must commit that start immediately
+    // instead of lagging behind with the previous settled value.
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
+    expect(result.current.settledCollapsed).toBe(false)
+
+    // The interrupted animation reports no settle; the replacement owns the
+    // commit.
     await act(async () => {
       completions[0](false)
     })
-
     expect(result.current.settledCollapsed).toBe(false)
-    // An interrupted morph never reports a settle, so the guard must keep
-    // ignoring live layout until a later animation actually lands.
-    expect(result.current.isSettled).toBe(false)
+
+    await act(async () => {
+      completions[1](true)
+    })
+    expect(result.current.settledCollapsed).toBe(true)
   })
 })

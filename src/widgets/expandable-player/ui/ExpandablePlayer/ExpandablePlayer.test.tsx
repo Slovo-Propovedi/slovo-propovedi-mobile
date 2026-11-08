@@ -57,7 +57,8 @@ jest.mock('../../model/useExpandAnimation', () => ({
   useExpandAnimation: jest.fn(() => ({
     backdropStyle: {},
     backgroundImageStyle: {},
-    collapsedRestingContainerStyle: { top: 0 },
+    barCollapsedTop: 755.27,
+    barExpandedTop: 679.45,
     containerStyle: {},
     forceGeometryReapply: jest.fn(),
     fullStyle: {},
