@@ -27,3 +27,4 @@ When background work is needed, prefer `background: true` on the native `task` t
 - One tool call per turn is safest for large payloads (plans, big prompts); split oversized payloads into smaller calls.
 - Launch subagents via background:true and rely on task notifications; never poll lists.
 - When a call silently produces nothing (turn died), first re-run a tiny `execute` ping, then re-issue the real call in a fresh turn instead of assuming the model/harness died.
+- Agents committing code MUST use `git commit -s` (DCO) — never bypass hooks with `--no-verify` without adding the sign-off manually.
