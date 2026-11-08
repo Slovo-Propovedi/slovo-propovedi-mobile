@@ -1,5 +1,5 @@
 import { BAR_CIRCLE_SIZE_EXPANDED } from 'shared/ui/layout'
-import { LightTheme, MIN_TOUCH_TARGET } from 'shared/ui/theme'
+import { INDENTS, LightTheme, MIN_TOUCH_TARGET } from 'shared/ui/theme'
 import {
   createMiniStyles,
   MINI_ARTWORK_SIZE,
@@ -21,16 +21,18 @@ describe('mini player horizontal alignment', () => {
     expect(styles.miniContainer.paddingRight).toBe(MINI_EXPANDED_TRANSPORT_RIGHT_INSET)
   })
 
-  test('expanded bar: the artwork keeps the compact left inset', () => {
-    expect(MINI_CONTENT_SIDE_INSET).toBe(8)
+  test('expanded bar: the artwork keeps the relaxed left inset', () => {
+    expect(INDENTS.medium).toBe(16)
+    expect(MINI_CONTENT_SIDE_INSET).toBe(16)
     expect(styles.miniContainer.paddingLeft).toBe(MINI_CONTENT_SIDE_INSET)
   })
 
   test('collapsed bar: the right gap mirrors the artwork gap', () => {
     // The collapsed pill sits inside the row away from the search circle, so
-    // both visible edges keep the same compact inset — the pill reads symmetric.
+    // both visible edges keep the same relaxed inset — the pill reads symmetric
+    // with generous air before the artwork and after the transport.
     expect(styles.miniContainerCollapsed.paddingRight).toBe(styles.miniContainer.paddingLeft)
-    expect(styles.miniContainerCollapsed.paddingRight).toBe(8)
+    expect(styles.miniContainerCollapsed.paddingRight).toBe(16)
   })
 
   test('the transport box matches the artwork box, so both float at the same edge inset', () => {

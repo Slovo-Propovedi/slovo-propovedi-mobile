@@ -12,8 +12,9 @@ import {
 
 export const MINI_PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
 // Compact inset of the artwork (and of the transport in the collapsed bar): equal
-// on both sides is what makes the collapsed pill read symmetric.
-export const MINI_CONTENT_SIDE_INSET = INDENTS.low
+// on both sides is what makes the collapsed pill read symmetric. Apple Music
+// keeps generous air before the artwork and after the transport.
+export const MINI_CONTENT_SIDE_INSET = INDENTS.medium
 export const MINI_ARTWORK_SIZE = 40
 // The transport occupies the same visual box as the artwork; hitSlop restores the
 // ≥48dp touch target the icon needs.
