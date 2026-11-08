@@ -150,7 +150,8 @@
   "expo": {
     "autolinking": {
       "buildFromSource": [
-        "expo-audio"
+        "expo-audio",
+        "expo-intent-launcher"
       ]
     }
   },

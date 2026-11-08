@@ -1,22 +1,17 @@
 import { useCallback, useState } from 'react'
 import { Platform } from 'react-native'
-import { z } from 'zod'
 import { reportError } from 'shared/model/error-dialog'
 import { showInfo } from 'shared/model/info-dialog'
+import { extractSpeechTranscript } from './speechResult'
 import { getWebSpeechRecognitionCtor, isVoiceInputAvailable } from './webSpeechRecognition'
 
 const SPEECH_LANGUAGE = 'ru-RU'
 const ANDROID_RECOGNIZE_SPEECH = 'android.speech.action.RECOGNIZE_SPEECH'
 const ANDROID_LANGUAGE_MODEL = 'android.speech.extra.LANGUAGE_MODEL'
 const ANDROID_PROMPT = 'android.speech.extra.PROMPT'
-const ANDROID_RESULTS = 'android.speech.extra.RESULTS'
 const VOICE_PROMPT = 'Произнесите поисковый запрос'
 const VOICE_ERROR = 'Не удалось запустить голосовой ввод'
 const VOICE_UNAVAILABLE = 'Голосовой ввод недоступен на этом устройстве'
-
-const androidSpeechResultSchema = z
-  .object({ [ANDROID_RESULTS]: z.array(z.string()).optional() })
-  .passthrough()
 
 interface VoiceInput {
   isListening: boolean
@@ -83,8 +78,9 @@ export const useVoiceInput = ({
       })
       if (result.resultCode !== IntentLauncher.ResultCode.Success) return
 
-      const parsed = androidSpeechResultSchema.safeParse(result.extra)
-      const transcript = parsed.success ? parsed.data[ANDROID_RESULTS]?.[0]?.trim() : ''
+      // Extras come from a foreign activity: every shape must degrade to "no
+      // transcript" instead of throwing back into the UI.
+      const transcript = extractSpeechTranscript(result)
       if (transcript) onTranscript(transcript)
     } catch (error) {
       reportError(error, VOICE_ERROR)
