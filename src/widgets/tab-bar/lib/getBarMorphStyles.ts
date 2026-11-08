@@ -15,12 +15,14 @@ import {
 // inset and 5dp item gap on the collapsed 64dp circle and pushed the active
 // icon against its right edge.
 export const getIslandContentStyle = (progress: number) => {
+  'worklet'
   const padding = getIslandContentPadding(progress)
 
   return { paddingLeft: padding, paddingRight: padding }
 }
 
 export const getTabItemStyle = (progress: number) => {
+  'worklet'
   const horizontal = getTabItemHorizontalMargin(progress)
   const vertical = getTabItemVerticalMargin(progress)
 

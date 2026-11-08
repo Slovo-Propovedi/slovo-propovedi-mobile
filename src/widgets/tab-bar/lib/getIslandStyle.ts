@@ -1,10 +1,6 @@
-import {
-  BAR_CIRCLE_SIZE,
-  BAR_CIRCLE_SIZE_EXPANDED,
-  TAB_BAR_ISLAND_HEIGHT,
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-} from 'shared/ui/layout'
+import { BAR_CIRCLE_SIZE, BAR_CIRCLE_SIZE_EXPANDED } from 'shared/ui/layout'
 import { MIN_TOUCH_TARGET } from 'shared/ui/theme'
+import { clampProgress, getIslandHeight, interpolateSize } from './getIslandMath'
 
 interface IslandLayout {
   collapsedHeight: number
@@ -36,18 +32,10 @@ const TAB_ITEM_GAP = 10
 // than one tab pitch), so it bleeds into the gap instead of hugging the label.
 export const CAPSULE_HORIZONTAL_OVERHANG = 10
 
-const clampProgress = (progress: number) => Math.min(Math.max(progress, 0), 1)
-
-// 0 = expanded, 1 = collapsed.
-const interpolateSize = (expanded: number, collapsed: number, progress: number) =>
-  collapsed + (expanded - collapsed) * (1 - progress)
-
-const getIslandHeight = (progress: number) =>
-  interpolateSize(TAB_BAR_ISLAND_HEIGHT_EXPANDED, TAB_BAR_ISLAND_HEIGHT, progress)
-
 // Width and height of the tab island: full row width and the expanded height
 // when open, a circle when collapsed.
 export const getIslandStyle = (progress: number, layout: IslandLayout) => {
+  'worklet'
   const clamped = clampProgress(progress)
 
   return {
@@ -60,6 +48,7 @@ export const getIslandStyle = (progress: number, layout: IslandLayout) => {
 // the rest shrink to zero width while crossfading out, so the island's inner row
 // always sums to the animated island width.
 export const getTabSlotStyle = (progress: number, layout: TabSlotLayout) => {
+  'worklet'
   const clamped = clampProgress(progress)
 
   return {
@@ -75,25 +64,34 @@ export const getTabSlotStyle = (progress: number, layout: TabSlotLayout) => {
 
 // Horizontal padding of the island's inner row: full inset when expanded, none
 // when collapsed, because the active slot then fills the whole 64dp circle.
-export const getIslandContentPadding = (progress: number) =>
-  ISLAND_CONTENT_PADDING_HORIZONTAL * (1 - clampProgress(progress))
+export const getIslandContentPadding = (progress: number) => {
+  'worklet'
+  return ISLAND_CONTENT_PADDING_HORIZONTAL * (1 - clampProgress(progress))
+}
 
 // Half of the inter-tab gap on each side of an item. It fades out with the morph
 // so the collapsed active item fills the circle instead of being pushed
 // off-centre by a leftover expanded-state margin.
-export const getTabItemHorizontalMargin = (progress: number) =>
-  (TAB_ITEM_GAP / 2) * (1 - clampProgress(progress))
+export const getTabItemHorizontalMargin = (progress: number) => {
+  'worklet'
+  return (TAB_ITEM_GAP / 2) * (1 - clampProgress(progress))
+}
 
 // Vertical margin around a tab item: the expanded bar gives the capsule more
 // breathing room, while the collapsed circle keeps the compact 4dp margin so
 // the item height stays 56 and the icon stays centred.
-export const getTabItemVerticalMargin = (progress: number) =>
-  TAB_ITEM_VERTICAL_MARGIN +
-  (TAB_ITEM_VERTICAL_MARGIN_EXPANDED - TAB_ITEM_VERTICAL_MARGIN) * (1 - clampProgress(progress))
+export const getTabItemVerticalMargin = (progress: number) => {
+  'worklet'
+  return (
+    TAB_ITEM_VERTICAL_MARGIN +
+    (TAB_ITEM_VERTICAL_MARGIN_EXPANDED - TAB_ITEM_VERTICAL_MARGIN) * (1 - clampProgress(progress))
+  )
+}
 
 // Vertical shift of the icon during the morph: lifted in the expanded bar to
 // leave room for the label, exactly centred (0) inside the collapsed circle.
 export const getTabIconOffset = (progress: number) => {
+  'worklet'
   const clamped = clampProgress(progress)
 
   if (clamped === 1) return 0
@@ -104,6 +102,7 @@ export const getTabIconOffset = (progress: number) => {
 // The item fills the island minus its vertical margins, so the taller expanded
 // island gives the icon and label a clean vertical gap.
 export const getTabItemHeight = (progress: number) => {
+  'worklet'
   const clamped = clampProgress(progress)
 
   return getIslandHeight(clamped) - getTabItemVerticalMargin(clamped) * 2
@@ -111,12 +110,15 @@ export const getTabItemHeight = (progress: number) => {
 
 // The primary capsule belongs to the expanded bar only: the collapsed circle
 // shows just the active icon, without the pill highlight behind it.
-export const getCapsuleOpacity = (progress: number, isActive: boolean) =>
-  isActive ? 1 - clampProgress(progress) : 0
+export const getCapsuleOpacity = (progress: number, isActive: boolean) => {
+  'worklet'
+  return isActive ? 1 - clampProgress(progress) : 0
+}
 
 // The circular search chip grows and shrinks with the island, staying perfectly
 // round at every point of the morph.
 export const getCircleButtonStyle = (progress: number) => {
+  'worklet'
   const diameter = interpolateSize(
     BAR_CIRCLE_SIZE_EXPANDED,
     BAR_CIRCLE_SIZE,
