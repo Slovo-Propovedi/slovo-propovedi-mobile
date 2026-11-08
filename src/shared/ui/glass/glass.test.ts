@@ -4,12 +4,13 @@ import {
   getGlassFill,
   getGlassTint,
   getWebGlassStyle,
+  getWebRefractionStyle,
   GLASS,
 } from './glass'
 
 describe('glass recipe', () => {
-  test('keeps the blur strong enough to frost arbitrary content behind it', () => {
-    expect(GLASS.blur.intensity).toBe(60)
+  test('keeps a moderate native blur so the backdrop stays readable', () => {
+    expect(GLASS.blur.intensity).toBe(40)
     expect(GLASS.blur.androidMethod).toBe('dimezisBlurViewSdk31Plus')
   })
 
@@ -30,12 +31,22 @@ describe('glass recipe', () => {
     expect(GLASS.shadow.boxShadow).toBe('0px 5px 14px rgba(0, 0, 0, 0.25)')
   })
 
-  test('web: replaces the weak expo-blur output with a stronger backdrop filter', () => {
-    // expo-blur web caps at `saturate(180%) blur(intensity * 0.2px)`, which reads
-    // flat next to the Apple Music glass. The web layer bypasses it with an
-    // explicit, stronger filter shared by every surface.
-    expect(GLASS.web.backdropFilter).toBe('blur(18px) saturate(200%)')
-    expect(getWebGlassStyle()).toEqual({ backdropFilter: 'blur(18px) saturate(200%)' })
+  test('web: uses a moderate blur that keeps the background readable like Apple Music', () => {
+    // expo-blur web caps the backdrop at `saturate(180%) blur(intensity * 0.2px)`
+    // and cannot express brightness, so the web layer bypasses it with an
+    // explicit filter shared by every surface.
+    expect(GLASS.web.backdropFilter).toBe('blur(6px) saturate(180%) brightness(1.1)')
+    expect(getWebGlassStyle()).toEqual({
+      backdropFilter: 'blur(6px) saturate(180%) brightness(1.1)',
+    })
+  })
+
+  test('web: adds an SVG refraction as a progressive enhancement', () => {
+    // The refraction layer carries ONLY the filter reference: it sits under the
+    // base-blur layer, so engines that drop `url()` in `backdrop-filter` still
+    // show the blur instead of losing the whole glass effect.
+    expect(GLASS.web.refractionFilter).toBe('url(#sp-glass-refraction)')
+    expect(getWebRefractionStyle()).toEqual({ backdropFilter: 'url(#sp-glass-refraction)' })
   })
 
   test('android: adds a top-edge sheen and a stronger fill instead of a blur', () => {

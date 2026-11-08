@@ -31,19 +31,26 @@ describe('<GlassSurface>', () => {
     })
   })
 
-  test('web bypasses BlurView for an explicit, stronger backdrop filter', async () => {
+  test('web layers an SVG refraction under the readable base blur', async () => {
     setPlatform('web')
     await render(<GlassSurface isLight radius={28} />)
 
     expect(findBlur()).toHaveLength(0)
 
-    const webLayers = screen.root?.queryAll(
-      instance =>
-        StyleSheet.flatten(instance.props.style)?.backdropFilter === GLASS.web.backdropFilter,
-    )
+    const layersWithFilter = (filter: string) =>
+      screen.root?.queryAll(
+        instance => StyleSheet.flatten(instance.props.style)?.backdropFilter === filter,
+      ) ?? []
 
-    expect(webLayers).toHaveLength(1)
-    expect(StyleSheet.flatten(webLayers?.[0]?.props.style)).toMatchObject({
+    const refractionLayers = layersWithFilter(GLASS.web.refractionFilter)
+    const baseLayers = layersWithFilter(GLASS.web.backdropFilter)
+
+    expect(refractionLayers).toHaveLength(1)
+    expect(baseLayers).toHaveLength(1)
+    // The base layer owns the fill: the refraction layer must stay fill-free so
+    // it cannot cover the blurred backdrop underneath it.
+    expect(StyleSheet.flatten(refractionLayers[0]?.props.style)?.backgroundColor).toBeUndefined()
+    expect(StyleSheet.flatten(baseLayers[0]?.props.style)).toMatchObject({
       backgroundColor: getGlassFill(true),
     })
   })

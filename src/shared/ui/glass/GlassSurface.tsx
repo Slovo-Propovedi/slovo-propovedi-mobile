@@ -1,7 +1,13 @@
 import { BlurView } from 'expo-blur'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Platform, StyleSheet, View } from 'react-native'
-import { createGlassStyles, getGlassFill, getWebGlassStyle, GLASS } from './glass'
+import {
+  createGlassStyles,
+  getGlassFill,
+  getWebGlassStyle,
+  getWebRefractionStyle,
+  GLASS,
+} from './glass'
 
 /**
  * Frosted-glass background for the floating bottom islands: a backdrop blur
@@ -13,8 +19,10 @@ import { createGlassStyles, getGlassFill, getWebGlassStyle, GLASS } from './glas
  *
  * Platform treatment:
  * - iOS: native `BlurView` (tint light/dark), already refractive.
- * - Web: `BlurView`'s web output caps the backdrop at 12px, so a plain View
- *   carries an explicit stronger `backdrop-filter` instead.
+ * - Web: bypasses `BlurView` for a moderate `backdrop-filter` the background
+ *   stays readable through. An SVG refraction sits in its own layer beneath
+ *   the blur as progressive enhancement: engines without `url()` support in
+ *   `backdrop-filter` drop only that layer and keep the plain blur.
  * - Android: real backdrop blur is impossible here (see docs/debt.md); the
  *   surface gains depth from a top-edge sheen plus a slightly denser fill.
  * @param root0 - Glass surface props.
@@ -32,7 +40,10 @@ export const GlassSurface = ({ isLight, radius }: { isLight: boolean; radius: nu
       style={[StyleSheet.absoluteFill, styles.clip, { borderRadius: radius }]}
     >
       {isWeb ? (
-        <View style={[StyleSheet.absoluteFill, getWebGlassStyle(), glass.fill]} />
+        <>
+          <View style={[StyleSheet.absoluteFill, getWebRefractionStyle()]} />
+          <View style={[StyleSheet.absoluteFill, getWebGlassStyle(), glass.fill]} />
+        </>
       ) : (
         <BlurView
           tint={glass.blur.tint}

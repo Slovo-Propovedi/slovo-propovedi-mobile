@@ -25,7 +25,9 @@ export const GLASS = {
     // (inside any candidate target), so the method is recorded here for the
     // shared recipe but only passed once the chrome moves outside the target.
     androidMethod: 'dimezisBlurViewSdk31Plus' satisfies BlurMethod,
-    intensity: 60,
+    // Apple Music blurs only moderately: the content behind the islands stays
+    // readable instead of melting into a flat frosted slab.
+    intensity: 40,
   },
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
   fillAlpha: { dark: 0.35, light: 0.45 },
@@ -36,10 +38,15 @@ export const GLASS = {
     radius: 14,
   },
   web: {
-    // expo-blur web caps at `saturate(180%) blur(intensity × 0.2px)` (12px at
-    // the shared intensity). A stronger explicit filter reads refractive instead
-    // of flat; the GlassSurface bypasses BlurView on web to use it.
-    backdropFilter: 'blur(18px) saturate(200%)',
+    // expo-blur web cannot express brightness and caps the blur low, so
+    // GlassSurface bypasses BlurView with this explicit filter. A moderate 6px
+    // blur keeps the background readable (Apple Music reference) instead of
+    // turning it into mush; the brightness lift restores the glass sheen.
+    backdropFilter: 'blur(6px) saturate(180%) brightness(1.1)',
+    // Progressive-enhancement refraction: the SVG filter is declared once in
+    // public/index.html. It lives in its OWN layer under the base blur, so an
+    // engine that drops `url()` from `backdrop-filter` still shows the blur.
+    refractionFilter: 'url(#sp-glass-refraction)',
   },
 } as const
 
@@ -61,6 +68,15 @@ export interface WebGlassStyle extends ViewStyle {
 
 export const getWebGlassStyle = (): WebGlassStyle => ({
   backdropFilter: GLASS.web.backdropFilter,
+})
+
+/**
+ * Fill-free layer that distorts the backdrop like real glass. Rendered under
+ * {@link getWebGlassStyle} so the base blur survives on engines without SVG
+ * filters in `backdrop-filter`.
+ */
+export const getWebRefractionStyle = (): WebGlassStyle => ({
+  backdropFilter: GLASS.web.refractionFilter,
 })
 
 export const getGlassBorder = (isLight: boolean) =>
