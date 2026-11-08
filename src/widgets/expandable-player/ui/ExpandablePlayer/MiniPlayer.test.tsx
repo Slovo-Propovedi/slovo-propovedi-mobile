@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ComponentProps } from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, type TextStyle } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
 import { onboardingTargetRectsAtom, onboardingTourAtom } from 'features/onboarding'
 import { type PlaylistData } from 'entities/playlist'
@@ -212,6 +212,21 @@ describe('<MiniPlayer>', () => {
     const { getByText } = await renderMiniPlayer()
 
     expect(getByText(REFERENCE_TEXT)).toBeTruthy()
+  })
+
+  test('gives the title and subtitle one font size, with weight only on the title', async () => {
+    await renderMiniPlayer()
+
+    const titleStyle = StyleSheet.flatten(
+      capturedMovingTextProps.find(props => props.text === AUDIO.title)?.style as TextStyle,
+    )
+    const subtitleStyle = StyleSheet.flatten(
+      capturedMovingTextProps.find(props => props.text === REFERENCE_TEXT)?.style as TextStyle,
+    )
+
+    expect(titleStyle?.fontSize).toBe(subtitleStyle?.fontSize)
+    expect(titleStyle?.fontWeight).toBe('600')
+    expect(subtitleStyle?.fontWeight).toBe('400')
   })
 
   test('fades both lines and slaves the subtitle marquee to the title cycle', async () => {

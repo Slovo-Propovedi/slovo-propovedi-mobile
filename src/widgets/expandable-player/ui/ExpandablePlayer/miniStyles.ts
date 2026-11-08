@@ -71,9 +71,12 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
       minWidth: MINI_PLAY_BOX_SIZE,
       width: MINI_PLAY_BOX_SIZE,
     },
+    // Apple Music pill: the subtitle matches the title's size and only drops in
+    // weight (regular against semi-bold), so both lines read as one block.
     miniPlaylistName: {
       color: theme.textMuted,
-      fontSize: FONT_SIZES.sm,
+      fontSize: FONT_SIZES.base,
+      fontWeight: '400',
       marginTop: 2,
     },
     miniTextContainer: {
@@ -86,6 +89,7 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
     miniTrackTitle: {
       color: theme.text,
       fontSize: FONT_SIZES.base,
+      fontWeight: '600',
     },
   })
 }
