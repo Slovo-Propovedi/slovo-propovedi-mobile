@@ -4,12 +4,8 @@ import { useState } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
-import {
-  useIsSearchFieldVisible,
-  useOpenSearch,
-  useSettledSearchFieldVisible,
-} from 'features/sermon-search'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
 import {
   BAR_BOTTOM_INSET_MIN,
@@ -20,7 +16,6 @@ import {
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { styles } from './styles'
-import { TabBarSearchButton } from './TabBarSearchButton'
 import { TabButton } from './TabButton'
 import { TabSlot } from './TabSlot'
 import { useTabPress } from './useTabPress'
@@ -44,12 +39,8 @@ export const CustomTabBar = ({
 }: CustomTabBarProps) => {
   const setMeasuredTabBarHeight = useAction(setTabBarHeight)
   const { bottom } = useSafeAreaInsets()
-  const { currentTheme, isLight } = useTheme()
+  const { isLight } = useTheme()
   const { handleTabPress, isTabAvailable } = useTabPress({ emitter, navigateToTab })
-  const openSearch = useOpenSearch()
-  const isSearchFieldVisible = useIsSearchFieldVisible()
-  // The circle only paints its shadow once the pill's close morph has settled.
-  const isSearchFieldSettledVisible = useSettledSearchFieldVisible()
   const { width: windowWidth } = useWindowDimensions()
   const [rowWidth, setRowWidth] = useState(0)
   const visibleRoutes = state.routes.filter(route => !HIDDEN_TAB_ROUTE_NAMES.has(route.name))
@@ -116,15 +107,8 @@ export const CustomTabBar = ({
             })}
           </Animated.View>
         </Animated.View>
-        {!hideSearch && !isSearchFieldVisible && (
-          <TabBarSearchButton
-            progress={progress}
-            onPress={openSearch}
-            color={currentTheme.text}
-            hasShadow={!isSearchFieldSettledVisible}
-          />
-        )}
       </View>
+      {!hideSearch && <SearchIslandMorph />}
     </Animated.View>
   )
 }

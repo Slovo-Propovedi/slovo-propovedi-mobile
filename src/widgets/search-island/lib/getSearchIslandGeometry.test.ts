@@ -120,6 +120,27 @@ describe('getSearchIslandGeometry', () => {
     expect(halfway.width).toBe(PHONE_ROW_WIDTH - (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * 1.5)
   })
 
+  test('centers the always-mounted magnifier in the collapsed circle', () => {
+    const expandedBar = geometry({ barProgress: 0, openProgress: 0 })
+    const collapsedBar = geometry({ barProgress: 1, openProgress: 0 })
+
+    // The closed shape is the search circle: its diameter changes with the bar
+    // morph, and the icon must sit in its centre in both resting sizes.
+    expect(expandedBar.iconSize).toBe(28)
+    expect(expandedBar.iconInset).toBe((TAB_BAR_ISLAND_HEIGHT_EXPANDED - 28) / 2)
+    expect(collapsedBar.iconSize).toBe(28)
+    expect(collapsedBar.iconInset).toBe((TAB_BAR_ISLAND_HEIGHT - 28) / 2)
+  })
+
+  test('shrinks the magnifier into the pill left inset as the field opens', () => {
+    const half = geometry({ barProgress: 1, openProgress: 0.5 })
+    const pill = geometry({ barProgress: 1, openProgress: 1 })
+
+    expect(half.iconSize).toBe(26)
+    expect(pill.iconSize).toBe(24)
+    expect(pill.iconInset).toBe(8)
+  })
+
   test('centers the capped column on wide screens', () => {
     const collapsed = geometry({ openProgress: 0, screenWidth: 800 })
     const open = geometry({ openProgress: 1, screenWidth: 800 })

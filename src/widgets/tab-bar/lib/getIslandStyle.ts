@@ -1,4 +1,3 @@
-import { BAR_CIRCLE_SIZE, BAR_CIRCLE_SIZE_EXPANDED } from 'shared/ui/layout'
 import { MIN_TOUCH_TARGET } from 'shared/ui/theme'
 import { clampProgress, getIslandHeight, interpolateSize } from './getIslandMath'
 
@@ -113,17 +112,4 @@ export const getTabItemHeight = (progress: number) => {
 export const getCapsuleOpacity = (progress: number, isActive: boolean) => {
   'worklet'
   return isActive ? 1 - clampProgress(progress) : 0
-}
-
-// The circular search chip grows and shrinks with the island, staying perfectly
-// round at every point of the morph.
-export const getCircleButtonStyle = (progress: number) => {
-  'worklet'
-  const diameter = interpolateSize(
-    BAR_CIRCLE_SIZE_EXPANDED,
-    BAR_CIRCLE_SIZE,
-    clampProgress(progress),
-  )
-
-  return { borderRadius: diameter / 2, height: diameter, width: diameter }
 }

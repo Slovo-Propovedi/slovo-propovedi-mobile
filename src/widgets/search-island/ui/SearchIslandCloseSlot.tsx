@@ -1,5 +1,5 @@
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
-import { createGlassStyles, GlassSurface } from 'shared/ui'
+import { GlassSurface } from 'shared/ui'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseButton } from './SearchIslandCloseButton'
@@ -17,7 +17,9 @@ interface SearchIslandCloseSlotProps {
 /**
  * The circular ✕ that appears beside the pill while the input is focused.
  * Its opacity and scale follow the shared close progress, so appearance and
- * disappearance use the same morph duration as the pill's width.
+ * disappearance use the same morph duration as the pill's width. It is content
+ * of the same morph component, never a second shadow carrier: the search frame
+ * owns the row's only boxShadow.
  * @param root0 - Component props.
  * @param root0.closeProgress - 0 = hidden, 1 = fully shown.
  * @param root0.isVisible - Gates pointer events and accessibility only.
@@ -59,10 +61,10 @@ export const SearchIslandCloseSlot = ({
 
   return (
     <Animated.View
+      style={[styles.closeCircle, style]}
       accessibilityElementsHidden={!isVisible}
       pointerEvents={isVisible ? 'auto' : 'none'}
       importantForAccessibility={isVisible ? 'yes' : 'no-hide-descendants'}
-      style={[styles.closeCircle, createGlassStyles(isLight, RADIUSES.round).container, style]}
     >
       <GlassSurface isLight={isLight} radius={RADIUSES.round} />
       <SearchIslandCloseButton onPress={onPress} />

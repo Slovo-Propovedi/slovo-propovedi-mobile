@@ -12,7 +12,6 @@ const WORKLET_HELPERS: Array<[string, string[]]> = [
     'getIslandStyle.ts',
     [
       'getCapsuleOpacity',
-      'getCircleButtonStyle',
       'getIslandContentPadding',
       'getIslandStyle',
       'getTabIconOffset',

@@ -1,6 +1,5 @@
 import {
   getCapsuleOpacity,
-  getCircleButtonStyle,
   getIslandContentPadding,
   getIslandStyle,
   getTabIconOffset,
@@ -181,19 +180,5 @@ describe('getCapsuleOpacity', () => {
 
   test('opacity crossfades with progress', () => {
     expect(getCapsuleOpacity(0.5, true)).toBe(0.5)
-  })
-})
-
-describe('getCircleButtonStyle', () => {
-  test('expanded search circle grows to the expanded size and stays round', () => {
-    expect(getCircleButtonStyle(0)).toEqual({ borderRadius: 38, height: 76, width: 76 })
-  })
-
-  test('collapsed search circle shrinks to the collapsed size and stays round', () => {
-    expect(getCircleButtonStyle(1)).toEqual({ borderRadius: 32, height: 64, width: 64 })
-  })
-
-  test('diameter and radius interpolate together through the morph', () => {
-    expect(getCircleButtonStyle(0.5)).toEqual({ borderRadius: 35, height: 70, width: 70 })
   })
 })

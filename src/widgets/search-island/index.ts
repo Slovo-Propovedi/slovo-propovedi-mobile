@@ -1,1 +1,1 @@
-export { SearchIsland } from './ui/SearchIsland'
+export { SearchIslandMorph } from './ui/SearchIslandMorph'

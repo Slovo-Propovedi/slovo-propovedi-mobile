@@ -8,12 +8,22 @@ import {
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
+import { INDENTS } from 'shared/ui/theme'
+
+// The magnifier is the one always-mounted piece of the morph: it is centred in
+// the closed circle and shrinks into the pill's left inset as the field opens.
+const ICON_SIZE_CIRCLE = 28
+const ICON_SIZE_PILL = 24
 
 interface SearchIslandGeometry {
   bottom: number
   /** Right inset of the external close circle, aligned with the search circle. */
   closeRight: number
   height: number
+  /** Distance from the container's left edge to the always-mounted magnifier. */
+  iconInset: number
+  /** Diameter of the magnifier, interpolated between circle and pill. */
+  iconSize: number
   left: number
   radius: number
   width: number
@@ -43,7 +53,11 @@ interface SearchIslandGeometryInput {
  * `barProgress` only owns vertical geometry (height/radius/bottom), so the pill
  * keeps matching the island height through the morph.
  *
- * Worklet-safe: called from the pill's Reanimated animated style.
+ * The always-mounted magnifier is anchored to the frame's left edge at
+ * `iconInset`; its `iconSize` shrinks from the circle size to the pill size, so
+ * it travels with the animated edge instead of crossfading.
+ *
+ * Worklet-safe: called from the morph's Reanimated animated styles.
  * @param input - Screen geometry, open progress and bar morph progress.
  * @param input.barProgress - 0 = island expanded, 1 = island collapsed.
  * @param input.closeProgress - 0..1 presence of the external close circle.
@@ -85,6 +99,14 @@ export const getSearchIslandGeometry = ({
   const closeSlot = (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * close * open
   const openWidth = rowInnerWidth - BAR_CIRCLE_SIZE - BAR_OUTER_GAP - closeSlot
   const width = height + (openWidth - height) * open
+  // The icon is the first child of the morphing frame, so its inset defines how
+  // far it travels with the moving left edge. Closed it is centred in the
+  // circle (whose diameter follows the bar morph); open it keeps the pill's
+  // compact 8dp inset. Interpolating both keeps the glyph centred at every
+  // resting size instead of drifting off-centre when the bar is expanded.
+  const iconSize = ICON_SIZE_PILL + (ICON_SIZE_CIRCLE - ICON_SIZE_PILL) * (1 - open)
+  const circleIconInset = (height - iconSize) / 2
+  const iconInset = INDENTS.low + (circleIconInset - INDENTS.low) * (1 - open)
 
   return {
     // The row is BAR_ROW_MIN_HEIGHT tall plus the bottom safe-area padding and
@@ -92,6 +114,8 @@ export const getSearchIslandGeometry = ({
     bottom: tabBarHeight - (BAR_ROW_MIN_HEIGHT + height) / 2,
     closeRight: rowInnerLeft,
     height,
+    iconInset,
+    iconSize,
     left,
     radius: height / 2,
     width,

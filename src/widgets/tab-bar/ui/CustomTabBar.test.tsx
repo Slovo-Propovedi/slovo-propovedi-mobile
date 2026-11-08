@@ -48,7 +48,6 @@ const mockOpenSearch = jest.fn()
 const mockCloseSearch = jest.fn()
 const mockCloseSearchAndExpand = jest.fn()
 let mockIsSearchFieldVisible = false
-let mockSettledSearchFieldVisible = false
 
 jest.mock('features/sermon-search', () => {
   const { action, atom } = jest.requireActual('@reatom/framework')
@@ -56,9 +55,9 @@ jest.mock('features/sermon-search', () => {
     closeSearch: action(() => mockCloseSearch(), 'mockCloseSearch'),
     closeSearchAndExpand: action(() => mockCloseSearchAndExpand(), 'mockCloseSearchAndExpand'),
     isSearchOpenAtom: atom(false, 'mockIsSearchOpenAtom'),
+    SearchBar: () => null,
     useIsSearchFieldVisible: () => mockIsSearchFieldVisible,
     useOpenSearch: () => mockOpenSearch,
-    useSettledSearchFieldVisible: () => mockSettledSearchFieldVisible,
   }
 })
 
@@ -113,7 +112,6 @@ describe('<CustomTabBar>', () => {
     jest.clearAllMocks()
     mockBottomInset = 0
     mockIsSearchFieldVisible = false
-    mockSettledSearchFieldVisible = false
   })
 
   const findIslandsRow = () =>
@@ -228,17 +226,18 @@ describe('<CustomTabBar>', () => {
     expect(styles.floatingIsland).not.toHaveProperty('height')
   })
 
-  test('frosts the tab island and the search circle over the page', async () => {
+  test('frosts the tab island, the search morph and its hidden close circle', async () => {
     await renderTabBar()
 
     const blurs = findGlassBlurs()
 
-    expect(blurs).toHaveLength(2)
+    // Island + morph container + the always-mounted public ✕ slot.
+    expect(blurs).toHaveLength(3)
     expect(blurs.every(blur => blur.props.tint === 'light')).toBe(true)
     expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
       backgroundColor: getGlassFill(true),
     })
-    expect(findHairlineBorders(getGlassBorder(true))).toHaveLength(2)
+    expect(findHairlineBorders(getGlassBorder(true))).toHaveLength(3)
   })
 
   test('floats the glass island on the shared subtle shadow', async () => {
@@ -263,12 +262,12 @@ describe('<CustomTabBar>', () => {
 
     const blurs = findGlassBlurs()
 
-    expect(blurs).toHaveLength(2)
+    expect(blurs).toHaveLength(3)
     expect(blurs.every(blur => blur.props.tint === 'dark')).toBe(true)
     expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
       backgroundColor: getGlassFill(false),
     })
-    expect(findHairlineBorders(getGlassBorder(false))).toHaveLength(2)
+    expect(findHairlineBorders(getGlassBorder(false))).toHaveLength(3)
   })
 
   const findIslandContent = () =>
@@ -334,32 +333,31 @@ describe('<CustomTabBar>', () => {
     expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
   })
 
-  test('hides the search button while the search field is visible', async () => {
+  test('keeps the search morph mounted while the search field is visible', async () => {
     mockIsSearchFieldVisible = true
-    const { queryByRole } = await renderTabBar()
-
-    expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
-  })
-
-  test('keeps the shrinking search pill as the single shadow carrier during the close morph', async () => {
-    // The field flips hidden at the start of the close morph, so the circle is
-    // back on screen next to the still-shrinking pill. Giving it a shadow then
-    // paints two overlapping shadows for 300 ms.
-    mockIsSearchFieldVisible = false
-    mockSettledSearchFieldVisible = true
     await renderTabBar()
 
-    expect(StyleSheet.flatten(findSearchCircle()?.props.style)?.boxShadow).toBeUndefined()
+    // The circle is the same always-mounted morph container, not a handoff
+    // button: it leaves the accessibility tree but is never unmounted.
+    expect(
+      screen.root?.queryAll(instance => instance.props.accessibilityLabel === 'Поиск'),
+    ).toHaveLength(1)
   })
 
-  test('paints the circle shadow once the search is closed and settled', async () => {
-    mockIsSearchFieldVisible = false
-    mockSettledSearchFieldVisible = false
+  test('paints the search morph shadow while the search field is visible', async () => {
+    mockIsSearchFieldVisible = true
     await renderTabBar()
 
     expect(StyleSheet.flatten(findSearchCircle()?.props.style)?.boxShadow).toBe(
       GLASS.shadow.boxShadow,
     )
+  })
+
+  test('hides the search button from assistive tech while the search field is visible', async () => {
+    mockIsSearchFieldVisible = true
+    const { queryByRole } = await renderTabBar()
+
+    expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
   })
 
   test('shows the search button again when a collapsed bar hides the field', async () => {

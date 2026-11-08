@@ -3,7 +3,7 @@ import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { type ReactNode } from 'react'
 import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
-import { SearchIsland } from 'widgets/search-island'
+import { SearchIslandMorph } from 'widgets/search-island'
 import {
   isSearchingAtom,
   isSearchOpenAtom,
@@ -139,12 +139,12 @@ const MY_PLAYLISTS_TITLE = 'Мои плейлисты'
 const ADMIN_BUTTON_LABEL = 'Админка'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
-// The search island is mounted once in the tabs layout, so the screen test
-// composes the same pair the app renders.
+// The search morph is mounted once in the tab bar, so the screen test composes
+// the same pair the app renders.
 const ListenScreenWithSearch = () => (
   <>
     <ListenScreen />
-    <SearchIsland />
+    <SearchIslandMorph />
   </>
 )
 

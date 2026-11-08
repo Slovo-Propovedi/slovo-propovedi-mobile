@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons'
 import { Platform, TextInput, View } from 'react-native'
 import { useEscapeKey } from 'shared/lib/escape-key'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
@@ -10,8 +9,9 @@ import { SearchBarMicButton } from './SearchBarMicButton'
 import { SearchSuggestions } from './SearchSuggestions'
 
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
-const SEARCH_ICON_SIZE = 24
 
+// The magnifier lives in the morphing search frame as its always-mounted first
+// child; this component is only the field's content row.
 export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boolean) => void }) => {
   const { currentTheme } = useTheme()
   const {
@@ -39,12 +39,6 @@ export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boole
 
   return (
     <View style={styles.container}>
-      <Ionicons
-        name='search'
-        size={SEARCH_ICON_SIZE}
-        style={styles.searchIcon}
-        color={currentTheme.textMuted}
-      />
       <TextInput
         ref={inputRef}
         value={inputValue}

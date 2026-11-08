@@ -23,7 +23,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     height: '100%',
-    paddingLeft: INDENTS.low,
+    // The morph frame owns the left icon and its inset; the input follows it.
     paddingRight: INDENTS.low,
   },
   input: {
@@ -49,9 +49,6 @@ export const styles = StyleSheet.create({
     // IconButton's minHeight and the hitSlop passed by the caller.
     minWidth: 0,
     paddingHorizontal: INDENTS.low,
-  },
-  searchIcon: {
-    marginRight: INDENTS.lowest,
   },
   // Web only: react-native-web renders the input as a DOM field, whose default
   // focus ring the design does not use (focus is shown by the caret alone).
