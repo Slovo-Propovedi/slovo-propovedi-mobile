@@ -89,7 +89,7 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
     // only in weight (regular against semi-bold), so both lines read as one block.
     miniPlaylistName: {
       color: theme.text,
-      fontSize: FONT_SIZES.base,
+      fontSize: FONT_SIZES.md,
       fontWeight: '400',
       marginTop: 2,
     },
@@ -102,7 +102,7 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
     },
     miniTrackTitle: {
       color: theme.text,
-      fontSize: FONT_SIZES.base,
+      fontSize: FONT_SIZES.md,
       fontWeight: '600',
     },
   })

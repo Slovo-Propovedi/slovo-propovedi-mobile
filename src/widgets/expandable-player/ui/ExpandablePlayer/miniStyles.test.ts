@@ -1,5 +1,5 @@
 import { BAR_CIRCLE_SIZE_EXPANDED } from 'shared/ui/layout'
-import { INDENTS, LightTheme, MIN_TOUCH_TARGET } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, LightTheme, MIN_TOUCH_TARGET, PLAYER_SIZES } from 'shared/ui/theme'
 import {
   createMiniStyles,
   MINI_ARTWORK_SIZE,
@@ -50,5 +50,23 @@ describe('mini player horizontal alignment', () => {
     // box shrink to the artwork size without shrinking the touch target.
     expect(styles.miniPlayButton.minHeight).toBe(MINI_ARTWORK_SIZE)
     expect(styles.miniPlayButton.minWidth).toBe(MINI_ARTWORK_SIZE)
+  })
+})
+
+describe('mini player typography', () => {
+  test('both lines step up one theme size above body text', () => {
+    // The pill matches Apple Music's mini player, whose two lines are noticeably
+    // larger than body copy at the same device: one step on the theme scale.
+    expect(styles.miniTrackTitle.fontSize).toBe(FONT_SIZES.md)
+    expect(styles.miniPlaylistName.fontSize).toBe(FONT_SIZES.md)
+    expect(FONT_SIZES.md).toBeGreaterThan(FONT_SIZES.base)
+  })
+
+  test('two lines at the new size still fit the pill height', () => {
+    // Two lines at React Native's default 1.2 line box plus the subtitle gap stay
+    // inside the 60dp pill, so the taller type needs no layout compensation.
+    const textBlock = 2 * FONT_SIZES.md * 1.2 + styles.miniPlaylistName.marginTop
+
+    expect(textBlock).toBeLessThanOrEqual(PLAYER_SIZES.miniPlayerHeight)
   })
 })
