@@ -5,6 +5,127 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.0] - 2026-11-08
+
+### Added
+
+- Single morphing search component (circle⇄pill)
+- Lift bottom islands above keyboard
+- Blur backdrop on nested tab and admin screens
+- Real dimezis blur on android 12+ glass surfaces
+- Larger mini player typography
+- Equal-speed marquee with title-gated subtitle
+- Edge-weighted glass refraction on web
+- Mini player title/subtitle typography
+- Glass refraction depth
+- Search collapses on scroll when query empty and stays visible on all tab screens
+- Wider side insets and lower bottom inset for bottom islands
+- Fading text edges and subtitle marquee synced to title
+- No autofocus for search field
+- Frosted glass styling for bottom islands
+- External close circle for search pill
+- Search pill mic and clear states
+- Animate island and search circle growth between bar states
+- Retune bottom bar dimensions to reference frames
+- Tapping collapsed active tab expands the bar
+- Listen screens drive bottom-bar collapse on scroll
+- Align listen top row to the right
+- Remove study tab from tab bar
+- Whatsnew scenario for floating bottom bar
+- Search field island in the bottom bar
+- Bottom-bar collapse scroll wiring across list screens
+- Mini player morphs into collapsed bottom line
+- Floating islands tab bar + search circle button
+- Shared bottom-bar collapse state and scroll driver
+- Scheme-aware contour splash icons
+- Show creation date in admin sermon and playlist rows
+- Mirror splash styling in OTA reload screen per theme
+- Themed accent reload screen for OTA auto-apply
+- Play single candidate directly without dialog
+
+### Changed
+
+- Start bottom bar morph from atom change to remove android delay
+- Align pan drag distance with real resting bottom
+- Cache narrow list projections to cut first-mount parse freeze
+- Rename accent splash asset to dark-splash-icon
+- Build seed media URLs from the env-configured API host
+
+### Fixed
+
+- Regenerate API client with orval 8.47
+- No stale resting geometry frames during player morph on native
+- Web pointer events swallowed above mini player
+- Web voice input end-to-end (fake-recognizer verified)
+- Voice input result handling (crash on recognized text)
+- Render magnifier at target size (android clipping)
+- Larger magnifier icon in circle state
+- Web UI unresponsive under collapsed mini-player (box-none in animated style)
+- Single shadow carrier between search pill and circle
+- Geometry heal expectation derives from live morph progress
+- Geometry heal only at settled bar state, warn once
+- Search pill morphs like the tab island
+- Glyph-level text edge fade on android (no overlay rectangle)
+- Worklet directives for bottom bar morph helpers (device red screen)
+- More air in collapsed mini player
+- Mini player right padding and monochrome text
+- Moderate web glass blur with readability
+- Keep listen top row visible while search is open
+- No intermediate flash when mini pill morphs on search expand
+- First tap lands after search interaction
+- OpenSearch lands in field-visible state in one tap from collapsed bar
+- Single-tap search open/close transitions without intermediate states
+- Expand bar on active-circle tap while search field is visible
+- Drop duplicate mini player size export
+- Repair collapsed bottom-bar interaction matrix
+- Unify island gaps and mini player paddings
+- Remove jest expect leak from app bundle
+- Keep search input focus while typing
+- Tighter outer gap between islands
+- Search pill fits content on mobile web
+- Mini pill uses glass fill as final background layer
+- Mini player text always visible
+- Search mic button always visible
+- Mini-to-island vertical gap equals outer gap
+- Mini player width matches bottom islands row
+- Collapse active tab slot width so icon centers
+- Resync scroll driver after external bar expand
+- Center collapsed active tab icon
+- Balance expanded bar paddings
+- Tab island internal paddings match reference
+- Ignore zero-height layout reports in tab bar measurement
+- Mini player first-frame resting position after tab navigation
+- Tab island renders full expanded height
+- Drop unused exported speech type
+- Hide tab capsule in the collapsed circle and gap expanded labels
+- Search closes on back press and tab switch
+- Center icon in collapsed tab circle and enlarge bar icons
+- Drop unused layout exports
+- Remove dead exa/kagi MCP references
+- Rename projection caches to drop legacy multi-MB records
+- Toast when the favorites heart hits the playlist limit
+- Only pass local file URIs to the OTA reload screen
+- Align dark-splash-icon naming and formatting
+- Resolve OTA reload icon to a local file for release
+- Update actions/upload-artifact digest to ff15f03
+- Update actions/download-artifact digest to 9bc31d5
+- Drop stale check:unused env debt entry
+- Merge manifest state on migration persist to stop lost commits
+- Keep migration budget constant module-private
+- Verify legacy cache entries and lock manifest writes across tabs
+- Optimistic seek position and honest re-assert comment
+- Degrade to snapshot playlist when resolve fails
+- Origin-root manifest key and offline fail-fast in SW
+- Resolve full playlist on tap and settle queue skip before seek
+- Mount safe-area provider on web for real insets
+- Clear buffering on media error and re-assert resume seek
+- Apply review fixes to reconcile hook and docs
+- Reconcile native playback state on foreground
+- Update vscode workspace settings
+- Gitattributes eol for opencode tools
+- Forgejo taskstoissues, skills sync guard, maintenance docs
+- Add spec-kit scaffolding (templates, scripts, speckit commands)
+
 ## [0.32.0] - 2026-10-28
 
 ### Added
@@ -1521,6 +1642,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.33.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.33.0
 [0.32.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.32.0
 [0.31.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.31.1
 [0.31.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.31.0
