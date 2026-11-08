@@ -5,7 +5,11 @@ import { useWindowDimensions, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingTarget } from 'features/onboarding'
-import { useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
+import {
+  useIsSearchFieldVisible,
+  useOpenSearch,
+  useSettledSearchFieldVisible,
+} from 'features/sermon-search'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
 import {
   BAR_BOTTOM_INSET_MIN,
@@ -44,6 +48,8 @@ export const CustomTabBar = ({
   const { handleTabPress, isTabAvailable } = useTabPress({ emitter, navigateToTab })
   const openSearch = useOpenSearch()
   const isSearchFieldVisible = useIsSearchFieldVisible()
+  // The circle only paints its shadow once the pill's close morph has settled.
+  const isSearchFieldSettledVisible = useSettledSearchFieldVisible()
   const { width: windowWidth } = useWindowDimensions()
   const [rowWidth, setRowWidth] = useState(0)
   const visibleRoutes = state.routes.filter(route => !HIDDEN_TAB_ROUTE_NAMES.has(route.name))
@@ -111,7 +117,12 @@ export const CustomTabBar = ({
           </Animated.View>
         </Animated.View>
         {!hideSearch && !isSearchFieldVisible && (
-          <TabBarSearchButton progress={progress} onPress={openSearch} color={currentTheme.text} />
+          <TabBarSearchButton
+            progress={progress}
+            onPress={openSearch}
+            color={currentTheme.text}
+            hasShadow={!isSearchFieldSettledVisible}
+          />
         )}
       </View>
     </Animated.View>

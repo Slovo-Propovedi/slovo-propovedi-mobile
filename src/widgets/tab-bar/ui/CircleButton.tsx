@@ -11,10 +11,13 @@ import { styles } from './styles'
 export const CircleButton = ({
   accessibilityLabel,
   children,
+  hasShadow,
   onPress,
   progress,
 }: PropsWithChildren<{
   accessibilityLabel: string
+  /** Off while the search pill still owns the row's single shadow. */
+  hasShadow: boolean
   onPress: () => void
   progress: SharedValue<number>
 }>) => {
@@ -23,7 +26,7 @@ export const CircleButton = ({
   const animatedStyle = useAnimatedStyle(() => getCircleButtonStyle(progress.value))
 
   return (
-    <Animated.View style={[styles.circleButton, glass.container, animatedStyle]}>
+    <Animated.View style={[styles.circleButton, hasShadow && glass.container, animatedStyle]}>
       <TouchableButton
         onPress={onPress}
         activeOpacity={0.7}

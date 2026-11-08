@@ -7,6 +7,7 @@ import { showInfo } from 'shared/model/info-dialog'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
 import {
   BAR_BOTTOM_INSET_MIN,
+  BAR_CIRCLE_SIZE_EXPANDED,
   BAR_ROW_MIN_HEIGHT,
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,
@@ -47,6 +48,7 @@ const mockOpenSearch = jest.fn()
 const mockCloseSearch = jest.fn()
 const mockCloseSearchAndExpand = jest.fn()
 let mockIsSearchFieldVisible = false
+let mockSettledSearchFieldVisible = false
 
 jest.mock('features/sermon-search', () => {
   const { action, atom } = jest.requireActual('@reatom/framework')
@@ -56,6 +58,7 @@ jest.mock('features/sermon-search', () => {
     isSearchOpenAtom: atom(false, 'mockIsSearchOpenAtom'),
     useIsSearchFieldVisible: () => mockIsSearchFieldVisible,
     useOpenSearch: () => mockOpenSearch,
+    useSettledSearchFieldVisible: () => mockSettledSearchFieldVisible,
   }
 })
 
@@ -110,6 +113,7 @@ describe('<CustomTabBar>', () => {
     jest.clearAllMocks()
     mockBottomInset = 0
     mockIsSearchFieldVisible = false
+    mockSettledSearchFieldVisible = false
   })
 
   const findIslandsRow = () =>
@@ -144,6 +148,13 @@ describe('<CustomTabBar>', () => {
 
       return flat?.borderColor === color && flat?.borderWidth === 1
     }) ?? []
+
+  const findSearchCircle = () =>
+    screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return flat?.height === BAR_CIRCLE_SIZE_EXPANDED && flat?.width === BAR_CIRCLE_SIZE_EXPANDED
+    })[0]
 
   test('ignores a zero-height layout report', async () => {
     const { ctx } = await renderTabBar()
@@ -328,6 +339,27 @@ describe('<CustomTabBar>', () => {
     const { queryByRole } = await renderTabBar()
 
     expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
+  })
+
+  test('keeps the shrinking search pill as the single shadow carrier during the close morph', async () => {
+    // The field flips hidden at the start of the close morph, so the circle is
+    // back on screen next to the still-shrinking pill. Giving it a shadow then
+    // paints two overlapping shadows for 300 ms.
+    mockIsSearchFieldVisible = false
+    mockSettledSearchFieldVisible = true
+    await renderTabBar()
+
+    expect(StyleSheet.flatten(findSearchCircle()?.props.style)?.boxShadow).toBeUndefined()
+  })
+
+  test('paints the circle shadow once the search is closed and settled', async () => {
+    mockIsSearchFieldVisible = false
+    mockSettledSearchFieldVisible = false
+    await renderTabBar()
+
+    expect(StyleSheet.flatten(findSearchCircle()?.props.style)?.boxShadow).toBe(
+      GLASS.shadow.boxShadow,
+    )
   })
 
   test('shows the search button again when a collapsed bar hides the field', async () => {
