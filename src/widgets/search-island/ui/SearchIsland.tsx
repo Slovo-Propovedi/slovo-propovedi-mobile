@@ -10,13 +10,15 @@ import { createGlassStyles, GlassSurface } from 'shared/ui'
 import { BAR_MORPH_DURATION_MS, tabBarHeightAtom, useKeyboardLiftStyle } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
+import { getSearchIslandOpacity } from '../lib/getSearchIslandOpacity'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 
 // The search field that replaces the right search circle while the field is
-// visible. The island stays mounted for the whole tab shell: opening morphs it
-// out of the bar (the pill's open-progress follows the same timing as the island
-// morph), a collapse with an empty query fades it back into the circle, and
-// while hidden it stays non-interactive. A hidden island never takes focus.
+// visible. The island stays mounted for the whole tab shell: opening grows it
+// out of the search chip into its row slot and collapsing shrinks it back onto
+// the chip, both driven by one progress using the island's morph duration. The
+// pill frame never fades — geometry makes it disappear — and while hidden it
+// stays non-interactive. A hidden island never takes focus.
 //
 // While the input is focused, a separate ✕ circle appears to the right and the
 // pill yields a circle + gap of room to it (both animate with the same morph
@@ -31,6 +33,8 @@ export const SearchIsland = () => {
   // Both morphs start in their atom subscriptions (before this component
   // renders), so the pill and the tab island stay in sync frame by frame.
   const progress = useAtomMorphProgress(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
+  // The pill's own geometry progress: 0 = collapsed onto the search chip,
+  // 1 = full row slot. Same duration and same visibility flip as the island.
   const openProgress = useAtomMorphProgress(isSearchFieldVisibleAtom, BAR_MORPH_DURATION_MS)
   // Seeded from the focus state so a bar re-rendered while already focused
   // starts with the close slot reserved instead of snapping on the next frame.
@@ -55,11 +59,16 @@ export const SearchIsland = () => {
     const { radius, ...geometry } = getSearchIslandGeometry({
       barProgress: progress.value,
       closeProgress: closeProgress.value,
+      openProgress: openProgress.value,
       screenWidth,
       tabBarHeight,
     })
 
-    return { ...geometry, borderRadius: radius, opacity: openProgress.value }
+    return {
+      ...geometry,
+      borderRadius: radius,
+      opacity: getSearchIslandOpacity(openProgress.value, isSearchFieldVisible),
+    }
   })
 
   const isCloseVisible = isSearchFieldVisible && isFocused

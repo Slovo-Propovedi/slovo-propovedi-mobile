@@ -41,6 +41,7 @@ export const SearchIslandCloseSlot = ({
   const style = useAnimatedStyle(() => {
     const { bottom, closeRight, height } = getSearchIslandGeometry({
       barProgress: progress.value,
+      openProgress: openProgress.value,
       screenWidth,
       tabBarHeight,
     })

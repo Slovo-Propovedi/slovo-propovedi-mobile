@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
-import { StyleSheet } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
 import { sermonsMocks } from 'shared/api/generated'
@@ -8,7 +9,11 @@ import { renderWithProviders } from 'shared/mocks'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
 import {
   BAR_CIRCLE_SIZE,
+  BAR_MORPH_DURATION_MS,
   BAR_OUTER_GAP,
+  BAR_SIDE_INSET,
+  CONTENT_COLUMN_WIDTH,
+  getColumnSideInset,
   isBarCollapsedAtom,
   keyboardBottomInsetSv,
   setBarCollapsed,
@@ -180,6 +185,55 @@ describe('<SearchIsland>', () => {
     expect(findPill().props.pointerEvents).toBe('auto')
   })
 
+  test('grows out of the search circle and shrinks back onto it', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    const { getByPlaceholderText } = await renderWithProviders(<SearchIsland />, { ctx })
+    const screenWidth = Dimensions.get('window').width
+    const rowInner = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH) + BAR_SIDE_INSET
+    const rowInnerWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
+    const findPill = () =>
+      StyleSheet.flatten(
+        findAncestorWithHeight(
+          getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true }),
+          TAB_BAR_ISLAND_HEIGHT,
+        ).props.style,
+      )
+
+    // Open: the pill fills the slot right of the collapsed active-tab circle.
+    const open = findPill()
+    expect(open.left).toBe(rowInner + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
+    expect(open.width).toBe(rowInnerWidth - BAR_CIRCLE_SIZE - BAR_OUTER_GAP)
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+
+    // Closed: the pill coincides with the search chip, fully opaque until the
+    // settle frame (geometry does the disappearing, not a fade).
+    const closed = findPill()
+    expect(closed.left).toBe(screenWidth - rowInner - BAR_CIRCLE_SIZE)
+    expect(closed.width).toBe(BAR_CIRCLE_SIZE)
+    expect(closed.opacity).toBe(0)
+  })
+
+  test('drives the pill morph with the island duration constant', async () => {
+    const mockedWithTiming = withTiming as jest.Mock
+    const ctx = createCtx()
+    await renderWithProviders(<SearchIsland />, { ctx })
+
+    mockedWithTiming.mockClear()
+
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+
+    const durations = mockedWithTiming.mock.calls.map(([, config]) => config)
+
+    expect(durations.length).toBeGreaterThan(0)
+    expect(durations).toEqual(durations.map(() => ({ duration: BAR_MORPH_DURATION_MS })))
+  })
+
   test('stays mounted but non-interactive while search is closed', async () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
@@ -260,7 +314,8 @@ describe('<SearchIsland>', () => {
       findAncestorWithHeight(input, TAB_BAR_ISLAND_HEIGHT).props.style,
     )
 
-    expect(after.right - before.right).toBe(BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
+    expect(before.left).toBe(after.left)
+    expect(before.width - after.width).toBe(BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
   })
 
   test('closes the search from the external close circle', async () => {
