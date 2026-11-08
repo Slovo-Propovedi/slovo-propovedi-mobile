@@ -1,1 +1,0 @@
-export const SEARCH_HEADER_HEIGHT = 56

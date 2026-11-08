@@ -2,7 +2,7 @@ import { Gesture } from 'react-native-gesture-handler'
 import { type SharedValue, withTiming } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { SCREEN_HEIGHT } from 'shared/config'
-import { getMiniPlayerBottom } from '../lib/getMiniPlayerBottom'
+import { getExpandedRestingBottom } from '../lib/getExpandedRestingBottom'
 import { COLLAPSE_DURATION_MS, EXPAND_DURATION_MS } from './expandDurations'
 
 // Velocity threshold for fast swipe detection
@@ -30,8 +30,9 @@ interface UseMiniPanGestureParams {
  * @param params.tabBarHeight - Measured tab bar height.
  */
 export const useMiniPanGesture = ({ onOpen, progress, tabBarHeight }: UseMiniPanGestureParams) => {
-  // Distance needed to fully expand (same as usePanGesture)
-  const dragDistance = SCREEN_HEIGHT - getMiniPlayerBottom(tabBarHeight)
+  // Distance from the screen bottom to the expanded pill's real resting edge, so
+  // a full swipe-up lands exactly on the expanded bar state.
+  const dragDistance = SCREEN_HEIGHT - getExpandedRestingBottom(tabBarHeight)
 
   return Gesture.Pan()
     .activeOffsetY(-10) // Only activate when swiping UP 10px (negative Y)

@@ -1,17 +1,17 @@
 import { useAtom } from '@reatom/npm-react'
 import { ScrollView, StyleSheet, Text } from 'react-native'
+import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
-import { SEARCH_HEADER_HEIGHT } from '../lib/constants'
 import { getSuggestions, type Suggestion } from '../lib/suggestions'
 import { distinctValuesAtom } from '../model-distinctValues'
 
 const MAX_SUGGESTIONS = 8
 const ARTIST_LABEL = 'проповедник'
 const BOOK_LABEL = 'книга'
-// The bar is centered in the header with an INDENTS.low offset on each side,
-// so the dropdown starts right below the header when offset by the same amount.
-const SUGGESTIONS_TOP = SEARCH_HEADER_HEIGHT - INDENTS.low
+// The field pill lives in the bottom bar, so the dropdown opens UPWARD: its
+// bottom edge sits one gap above the pill's top edge.
+const SUGGESTIONS_BOTTOM = TAB_BAR_ISLAND_HEIGHT + INDENTS.low
 
 export const SearchSuggestions = ({
   isFocused,
@@ -85,13 +85,13 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     borderRadius: RADIUSES.middle,
+    bottom: SUGGESTIONS_BOTTOM,
     boxShadow: '0px 4px 8px rgba(0,0,0,0.3)',
     elevation: 8,
     left: 0,
     maxHeight: 240,
     position: 'absolute',
     right: 0,
-    top: SUGGESTIONS_TOP,
     zIndex: 1,
   },
   row: {

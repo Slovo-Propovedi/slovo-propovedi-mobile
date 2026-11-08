@@ -1,5 +1,6 @@
 import { type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
-import { REPEAT_SPACER } from './marquee-utils'
+import { type MarqueeCycle } from './marquee-cycle'
+import { getSyncedOffset, REPEAT_SPACER } from './marquee-utils'
 import { useMarqueeFrameClock } from './useMarqueeFrameClock'
 
 // Absorbs Yoga pixel-grid rounding when sizing a static centered row.
@@ -14,6 +15,8 @@ export const useMarqueeAnimation = (
   centerWhenStatic: boolean,
   autoStart: boolean,
   needsRepeat: boolean,
+  publishCycle?: MarqueeCycle,
+  followCycle?: MarqueeCycle,
 ) => {
   const translateX = useSharedValue(0)
   const startX = useSharedValue(0)
@@ -26,7 +29,10 @@ export const useMarqueeAnimation = (
     containerWidth,
     marqueeArmed,
     needsMarquee,
-    needsRepeat,
+    // A follower derives its offset from the leader's phase — it never runs a
+    // clock of its own.
+    needsRepeat: followCycle ? false : needsRepeat,
+    publishCycle,
     startX,
     text,
     textWidth,
@@ -51,9 +57,21 @@ export const useMarqueeAnimation = (
         ? textWidth.value + STATIC_WIDTH_SAFETY_PX
         : undefined
 
+    // Followers ride the leader's published phase at the same px/ms speed: a
+    // shorter line finishes its pass early and holds while the title continues,
+    // then both restart together when the title's cycle boundary resets it.
+    const syncedOffset = followCycle
+      ? getSyncedOffset(
+          followCycle.scrollElapsed.value,
+          followCycle.msPerPx.value,
+          needsMarquee.value,
+          textWidth.value + REPEAT_SPACER,
+        )
+      : null
+
     return {
       justifyContent: !needsMarquee.value && centerWhenStatic ? 'center' : 'flex-start',
-      transform: [{ translateX: translateX.value }],
+      transform: [{ translateX: syncedOffset ?? translateX.value }],
       width: needsMarquee.value || !centerWhenStatic ? marqueeWidth : staticWidth,
     }
   })

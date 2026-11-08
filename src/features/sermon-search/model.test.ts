@@ -37,11 +37,9 @@ import {
 import { mapAllSermonsResponse } from 'entities/sermon'
 import { playlistsMocks, sermonsMocks } from 'shared/api/generated'
 import {
-  closeSearch,
   fetchSearchResults,
   isSearchingAtom,
   isSearchOpenAtom,
-  openSearch,
   resetSearchResults,
   searchInputRequestAtom,
   searchPlaylistsAtom,
@@ -50,6 +48,7 @@ import {
   searchResultsAtom,
   typeSearchInput,
 } from './model'
+import { closeSearch, openSearch } from './model-session'
 
 type PlaylistEntity = ReturnType<typeof playlistsMocks.getPlaylistControllerCreateResponseMock>
 type SermonEntity = ReturnType<typeof sermonsMocks.getSermonControllerFindOneResponseMock>

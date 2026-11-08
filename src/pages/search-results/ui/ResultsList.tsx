@@ -1,7 +1,10 @@
 import { useAtom } from '@reatom/npm-react'
-import { FlatList, type ListRenderItem, StyleSheet } from 'react-native'
+import { type ListRenderItem, StyleSheet } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useIsSearchBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
+import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { EmptyState } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 import { ResultsListSeparator } from './ResultsListSeparator'
 
@@ -17,11 +20,18 @@ export const ResultsList = <T,>({
   renderItem: ListRenderItem<T>
 }) => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
+  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
+  const { onScroll } = useBarCollapseOnScroll({
+    isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
+  })
 
   return (
-    <FlatList
+    <Animated.FlatList
       data={data}
+      onScroll={onScroll}
       renderItem={renderItem}
+      scrollEventThrottle={16}
       keyExtractor={keyExtractor}
       keyboardDismissMode='on-drag'
       keyboardShouldPersistTaps='handled'

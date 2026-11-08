@@ -1,6 +1,7 @@
 import { router } from 'expo-router'
 import { useEffect } from 'react'
 import { BackHandler } from 'react-native'
+import { closeSearch, isSearchOpenAtom } from 'features/sermon-search'
 import { closePlayerSheetAction, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { showDetailsAtom } from '../model/showDetailsAtom'
@@ -9,7 +10,7 @@ import { showPlaylistAtom } from '../model/showPlaylistAtom'
 import { showSoundSettingsAtom } from '../model/showSoundSettingsAtom'
 
 // Hardware-back cascade, topmost layer first: details → menu → sound
-// settings → playlist → expanded player → router history.
+// settings → playlist → expanded player → search → router history.
 export const useHardwareBackCascade = () => {
   useEffect(() => {
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -18,6 +19,7 @@ export const useHardwareBackCascade = () => {
       const currentShowSoundSettings = ctx.get(showSoundSettingsAtom)
       const currentShowPlaylist = ctx.get(showPlaylistAtom)
       const currentIsPlayerExpanded = ctx.get(isPlayerExpandedAtom)
+      const currentIsSearchOpen = ctx.get(isSearchOpenAtom)
       const canGoBack = router.canGoBack()
 
       if (currentShowDetails) {
@@ -51,6 +53,13 @@ export const useHardwareBackCascade = () => {
       if (currentIsPlayerExpanded) {
         void ctx.schedule(() => {
           void closePlayerSheetAction(ctx)
+        })
+        return true
+      }
+
+      if (currentIsSearchOpen) {
+        void ctx.schedule(() => {
+          void closeSearch(ctx)
         })
         return true
       }

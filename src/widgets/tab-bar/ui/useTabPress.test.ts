@@ -1,11 +1,21 @@
+import { createCtx } from '@reatom/framework'
+import { act, waitFor } from '@testing-library/react-native'
+import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
+import { isSearchFieldVisibleAtom } from 'features/sermon-search/model-searchField'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
+import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
 import { UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE, useTabPress } from './useTabPress'
 
 jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
 
 jest.mock('entities/feature-flags', () => ({ useFeatureFlag: jest.fn() }))
+
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: jest.fn(),
+  setAudioModeAsync: jest.fn(),
+}))
 
 const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 const mockedUseFeatureFlag = useFeatureFlag as jest.MockedFunction<typeof useFeatureFlag>
@@ -37,17 +47,6 @@ describe('useTabPress', () => {
     expect(navigateToTab).not.toHaveBeenCalled()
   })
 
-  test('shows info dialog for study tab and does not navigate', async () => {
-    const emitter = createEmitter()
-    const navigateToTab = createNavigateToTab()
-    const { result } = await renderHookWithProviders(() => useTabPress({ emitter, navigateToTab }))
-
-    result.current.handleTabPress({ key: 'study', name: 'study' }, false)
-
-    expect(mockedShowInfo).toHaveBeenCalledWith(UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE)
-    expect(navigateToTab).not.toHaveBeenCalled()
-  })
-
   test('navigates to read tab when its feature flag is enabled', async () => {
     mockedUseFeatureFlag.mockImplementation(key => key === 'read')
     const emitter = createEmitter()
@@ -60,26 +59,13 @@ describe('useTabPress', () => {
     expect(navigateToTab).toHaveBeenCalledWith('read')
   })
 
-  test('navigates to study tab when its feature flag is enabled', async () => {
-    mockedUseFeatureFlag.mockImplementation(key => key === 'study')
-    const emitter = createEmitter()
-    const navigateToTab = createNavigateToTab()
-    const { result } = await renderHookWithProviders(() => useTabPress({ emitter, navigateToTab }))
-
-    result.current.handleTabPress({ key: 'study', name: 'study' }, false)
-
-    expect(mockedShowInfo).not.toHaveBeenCalled()
-    expect(navigateToTab).toHaveBeenCalledWith('study')
-  })
-
-  test('reports read/study availability from feature flags', async () => {
+  test('reports read availability from the feature flag', async () => {
     mockedUseFeatureFlag.mockImplementation(key => key === 'read')
     const emitter = createEmitter()
     const navigateToTab = createNavigateToTab()
     const { result } = await renderHookWithProviders(() => useTabPress({ emitter, navigateToTab }))
 
     expect(result.current.isTabAvailable('read')).toBe(true)
-    expect(result.current.isTabAvailable('study')).toBe(false)
     expect(result.current.isTabAvailable('listen')).toBe(true)
   })
 
@@ -92,5 +78,138 @@ describe('useTabPress', () => {
 
     expect(mockedShowInfo).not.toHaveBeenCalled()
     expect(navigateToTab).toHaveBeenCalledWith('listen')
+  })
+
+  test('expands the collapsed bar on an active-tab press instead of navigating', async () => {
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+    })
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(navigateToTab).not.toHaveBeenCalled()
+  })
+
+  test('expands the collapsed bar and closes an open search on an active-tab press', async () => {
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+    })
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+    expect(navigateToTab).not.toHaveBeenCalled()
+  })
+
+  test('closes an open search and expands the collapsed bar without flashing the field', async () => {
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    const fieldVisibility: boolean[] = []
+    ctx.subscribe(isSearchFieldVisibleAtom, isVisible => fieldVisibility.push(isVisible))
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+    })
+
+    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    // Expanding first would make the empty field visible for a frame before the
+    // close landed; one atomic flip never exposes it.
+    expect(fieldVisibility).toEqual([false])
+  })
+
+  test('expands a bar forced into the collapsed shape by the visible search field', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    // A live search keeps the scroll driver suspended, so the atom stays
+    // expanded while the field forces only the visual circle shape.
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+    })
+
+    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(navigateToTab).not.toHaveBeenCalled()
+  })
+
+  test('keeps the expanded bar expanded on an active-tab press', async () => {
+    const ctx = createCtx()
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    result.current.handleTabPress({ key: 'listen', name: 'listen' }, true)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(navigateToTab).not.toHaveBeenCalled()
+  })
+
+  test('closes an open search when navigating to another tab', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const { result } = await renderHookWithProviders(
+      () => useTabPress({ emitter, navigateToTab }),
+      {
+        ctx,
+      },
+    )
+
+    await act(async () => {
+      result.current.handleTabPress({ key: 'more', name: 'more' }, false)
+    })
+
+    expect(navigateToTab).toHaveBeenCalledWith('more')
+    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+    expect(ctx.get(searchQueryAtom)).toBe('')
   })
 })

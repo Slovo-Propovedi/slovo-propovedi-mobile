@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
+import { type ReactNode } from 'react'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { authMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
@@ -8,6 +9,21 @@ import { MoreScreen } from './MoreScreen'
 const ADMIN_PANEL_LABEL = 'В админ панель'
 
 const mockPush = jest.fn()
+
+jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
+  const { Text } = jest.requireActual('react-native')
+
+  return {
+    ...actual,
+    BlurBackdrop: ({ children, routeKey }: { children: ReactNode; routeKey: string }) => (
+      <>
+        <Text>{`BLUR_TARGET:${routeKey}`}</Text>
+        {children}
+      </>
+    ),
+  }
+})
 
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: () => () => {} }),
@@ -64,6 +80,12 @@ describe('<MoreScreen>', () => {
     expect(getByText('TestApp')).toBeTruthy()
     expect(getByText('v1.0.0')).toBeTruthy()
     expect(getByText('Приложение для прослушивания и чтения проповедей')).toBeTruthy()
+  })
+
+  test('exposes the page content as the /more blur backdrop', async () => {
+    const { getByText } = await renderWithProviders(<MoreScreen />)
+
+    expect(getByText('BLUR_TARGET:/more')).toBeTruthy()
   })
 
   test('does not render the admin panel button when unauthenticated', async () => {

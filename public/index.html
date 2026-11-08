@@ -134,9 +134,56 @@
         background-color: var(--sp-scrollbar-thumb-hover);
       }
     </style>
+
+    <style id="sp-native-controls">
+      /*
+       * react-native-web renders TextInput/Pressable as real DOM controls.
+       * Mobile Chrome (Android) paints its own accent focus ring on the focused
+       * search input and a tap highlight on controls; RNW inline styles lose to
+       * the UA `:focus-visible` rule, so this shell-level rule is the layer that
+       * actually suppresses them. Scoped to the search field's accessible name
+       * so admin form inputs keep their visible focus ring. Native platforms
+       * never load this shell.
+       */
+      input[aria-label="Поиск проповедей"]:focus,
+      input[aria-label="Поиск проповедей"]:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+      }
+      input,
+      button,
+      [role='button'] {
+        -webkit-tap-highlight-color: transparent;
+      }
+    </style>
   </head>
 
   <body>
+    <!-- Progressive-enhancement refraction for the web glass islands. The id is
+         referenced by GLASS.web.refractionFilter in src/shared/ui/glass/glass.ts;
+         keep the two in sync. The displacement is deliberately strong: the
+         GlassSurface edge ring masks it to the outer 10px, so only the rim bends
+         while the island's center stays clean. -->
+    <svg width="0" height="0" aria-hidden="true" focusable="false" style="position: absolute">
+      <defs>
+        <filter id="sp-glass-refraction" x="0" y="0" width="100%" height="100%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.01 0.014"
+            numOctaves="2"
+            seed="7"
+            result="noise"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="noise"
+            scale="28"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </defs>
+    </svg>
     <!-- Use static rendering with Expo Router to support running without JavaScript. -->
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <!-- The root element for your Expo app. -->

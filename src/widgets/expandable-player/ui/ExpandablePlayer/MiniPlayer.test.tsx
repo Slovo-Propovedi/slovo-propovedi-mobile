@@ -1,19 +1,55 @@
 import { createCtx } from '@reatom/framework'
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ComponentProps } from 'react'
+import { StyleSheet, type TextStyle } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
 import { onboardingTargetRectsAtom, onboardingTourAtom } from 'features/onboarding'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { LightTheme } from 'shared/ui/theme'
+import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
+import { DarkTheme, FONT_SIZES, LightTheme } from 'shared/ui/theme'
 import { MiniPlayer } from './MiniPlayer'
-import { createMiniStyles } from './miniStyles'
+import {
+  createMiniStyles,
+  MINI_ARTWORK_SIZE,
+  MINI_CONTENT_SIDE_INSET,
+  MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
+  MINI_PLAY_HIT_SLOP,
+} from './miniStyles'
 
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn() }),
 }))
+
+// The mini player wires the title/subtitle marquee contract through MovingText;
+// capturing its props is the cheapest honest check of that wiring (MarqueeText
+// itself is covered by its own suite).
+jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
+  const { Text } = jest.requireActual('react-native')
+  const capturedMovingTextProps: Record<string, unknown>[] = []
+
+  return {
+    ...actual,
+    __capturedMovingTextProps: capturedMovingTextProps,
+    MovingText: (props: Record<string, unknown>) => {
+      capturedMovingTextProps.push(props)
+
+      return <Text>{String(props.text)}</Text>
+    },
+  }
+})
+
+const capturedMovingTextProps = (
+  jest.requireMock('shared/ui') as { __capturedMovingTextProps: Record<string, unknown>[] }
+).__capturedMovingTextProps
+
+jest.mock('expo-blur', () => {
+  const { View } = jest.requireActual('react-native')
+  return { BlurView: (props: Record<string, unknown>) => <View {...props} /> }
+})
 
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native')
@@ -70,6 +106,8 @@ const AUDIO: AudioPlayerData = {
   title: 'Первая проповедь',
   verse: 5,
 }
+// The row is exposed by its accessible name, which includes the track title.
+const TITLE_NAME_PATTERN = new RegExp(AUDIO.title)
 
 const PLAYLIST: PlaylistData = {
   artwork: null,
@@ -84,10 +122,14 @@ const mockOnPress = jest.fn()
 
 const baseProps: MiniPlayerProps = {
   audio: AUDIO,
+  barCollapsed: false,
   currentTheme: LightTheme,
+  isLight: true,
+  miniBarRestingStyle: {},
+  miniBarStyle: {},
   miniPan: {} as GestureType,
   miniStyle: {},
-  miniStyles: createMiniStyles(LightTheme, 0, 400),
+  miniStyles: createMiniStyles(LightTheme, true),
   onPlayPause: mockOnPlayPause,
   onPress: mockOnPress,
   playing: false,
@@ -101,6 +143,69 @@ const renderMiniPlayer = (overrides: Partial<MiniPlayerProps> = {}) =>
 describe('<MiniPlayer>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    capturedMovingTextProps.length = 0
+  })
+
+  test('renders the pill as frosted glass over the page', async () => {
+    await renderMiniPlayer()
+
+    const blurs = screen.root?.queryAll(
+      instance => instance.props.intensity === GLASS.blur.intensity,
+    )
+
+    expect(blurs).toHaveLength(1)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
+      backgroundColor: getGlassFill(true),
+    })
+    expect(
+      screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.borderColor === getGlassBorder(true) && flat?.borderWidth === 1
+      }),
+    ).toHaveLength(1)
+    expect(
+      screen.root?.queryAll(
+        instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
+      ),
+    ).toHaveLength(1)
+  })
+
+  test('does not paint a solid background over the pill glass', async () => {
+    // The pill itself must stay background-free; any opaque fill here (or in the
+    // layers below it) hides the BlurView backdrop and the pill reads as solid.
+    await renderMiniPlayer()
+
+    const pill = screen.root?.queryAll(
+      instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
+    )?.[0]
+
+    expect(pill).toBeTruthy()
+    expect(StyleSheet.flatten(pill?.props.style)?.backgroundColor).toBeUndefined()
+  })
+
+  test('uses the dark glass recipe in the dark theme', async () => {
+    await renderMiniPlayer({
+      currentTheme: DarkTheme,
+      isLight: false,
+      miniStyles: createMiniStyles(DarkTheme, false),
+    })
+
+    const blurs = screen.root?.queryAll(
+      instance => instance.props.intensity === GLASS.blur.intensity,
+    )
+
+    expect(blurs).toHaveLength(1)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
+      backgroundColor: getGlassFill(false),
+    })
+    expect(
+      screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.borderColor === getGlassBorder(false) && flat?.borderWidth === 1
+      }),
+    ).toHaveLength(1)
   })
 
   test('renders the track title and artwork', async () => {
@@ -116,6 +221,41 @@ describe('<MiniPlayer>', () => {
     const { getByText } = await renderMiniPlayer()
 
     expect(getByText(REFERENCE_TEXT)).toBeTruthy()
+  })
+
+  test('gives the title and subtitle one font size and color, with weight only on the title', async () => {
+    await renderMiniPlayer()
+
+    const titleStyle = StyleSheet.flatten(
+      capturedMovingTextProps.find(props => props.text === AUDIO.title)?.style as TextStyle,
+    )
+    const subtitleStyle = StyleSheet.flatten(
+      capturedMovingTextProps.find(props => props.text === REFERENCE_TEXT)?.style as TextStyle,
+    )
+
+    expect(titleStyle?.fontSize).toBe(subtitleStyle?.fontSize)
+    // One step above body text on the theme scale: at arm's length on a phone the
+    // 14dp pill read smaller than Apple Music's mini text (≈17dp).
+    expect(titleStyle?.fontSize).toBe(FONT_SIZES.md)
+    // Apple Music reads the two lines as one block: only the weight separates
+    // them, so the subtitle must not drop to the muted color.
+    expect(subtitleStyle?.color).toBe(titleStyle?.color)
+    expect(titleStyle?.color).toBe(LightTheme.text)
+    expect(titleStyle?.fontWeight).toBe('600')
+    expect(subtitleStyle?.fontWeight).toBe('400')
+  })
+
+  test('fades both lines and slaves the subtitle marquee to the title cycle', async () => {
+    await renderMiniPlayer()
+
+    const titleRow = capturedMovingTextProps.find(props => props.text === AUDIO.title)
+    const subtitleRow = capturedMovingTextProps.find(props => props.text === REFERENCE_TEXT)
+
+    expect(titleRow).toMatchObject({ autoStart: true, fadeEdge: true })
+    expect(titleRow?.publishCycle).toBeDefined()
+    expect(subtitleRow).toMatchObject({ fadeEdge: true })
+    expect(subtitleRow?.autoStart).toBeUndefined()
+    expect(subtitleRow?.followCycle).toBe(titleRow?.publishCycle)
   })
 
   test('falls back to the playlist title, then the app name, when no reference', async () => {
@@ -148,7 +288,7 @@ describe('<MiniPlayer>', () => {
   test('pressing the mini player calls the expand callback', async () => {
     const { getByRole } = await renderMiniPlayer()
 
-    await fireEvent.press(getByRole('button', { name: new RegExp(AUDIO.title) }))
+    await fireEvent.press(getByRole('button', { name: TITLE_NAME_PATTERN }))
 
     expect(mockOnPress).toHaveBeenCalledTimes(1)
   })
@@ -158,7 +298,7 @@ describe('<MiniPlayer>', () => {
 
     // The row keeps the button role on native (web switches to link so the inner
     // play/pause button is not nested inside another <button>).
-    expect(getByRole('button', { name: new RegExp(AUDIO.title) })).toBeTruthy()
+    expect(getByRole('button', { name: TITLE_NAME_PATTERN })).toBeTruthy()
   })
 
   test('pressing the play/pause button calls onPlayPause', async () => {
@@ -167,6 +307,43 @@ describe('<MiniPlayer>', () => {
     await fireEvent.press(getByRole('button', { name: PLAY_LABEL }))
 
     expect(mockOnPlayPause).toHaveBeenCalledTimes(1)
+  })
+
+  test('keeps the transport control inside the same visual box as the artwork', async () => {
+    const { getByRole } = await renderMiniPlayer()
+
+    const playButton = getByRole('button', { name: PLAY_LABEL })
+
+    expect(StyleSheet.flatten(playButton.props.style)).toMatchObject({
+      height: MINI_ARTWORK_SIZE,
+      width: MINI_ARTWORK_SIZE,
+    })
+    expect(playButton.props.hitSlop).toBe(MINI_PLAY_HIT_SLOP)
+  })
+
+  test('expanded bar: the transport sits on the search circle axis', async () => {
+    const { getByRole } = await renderMiniPlayer({ barCollapsed: false })
+
+    const row = getByRole('button', { name: TITLE_NAME_PATTERN })
+
+    // The pill spans the row content, so its right edge coincides with the
+    // search circle's right edge: a 18dp right inset centres the 40dp transport
+    // box on the 76dp circle's axis (38 − 20).
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({
+      paddingLeft: MINI_CONTENT_SIDE_INSET,
+      paddingRight: MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
+    })
+  })
+
+  test('collapsed bar: the right gap mirrors the artwork gap', async () => {
+    const { getByRole } = await renderMiniPlayer({ barCollapsed: true })
+
+    const row = getByRole('button', { name: TITLE_NAME_PATTERN })
+
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({
+      paddingLeft: MINI_CONTENT_SIDE_INSET,
+      paddingRight: MINI_CONTENT_SIDE_INSET,
+    })
   })
 
   test('shows the play icon when paused and the pause icon when playing', async () => {

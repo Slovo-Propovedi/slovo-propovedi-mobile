@@ -1,10 +1,14 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
-import { Keyboard, Platform, TextInput } from 'react-native'
+import * as IntentLauncher from 'expo-intent-launcher'
+import { Keyboard, Platform, StyleSheet, TextInput } from 'react-native'
 import { type SermonData } from 'entities/sermon'
 import { sermonsMocks } from 'shared/api/generated'
 import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
 import { renderWithProviders } from 'shared/mocks'
+import { showInfo } from 'shared/model/info-dialog'
+import { setBarCollapsed } from 'shared/ui/layout'
+import { INDENTS } from 'shared/ui/theme'
 import {
   isSearchingAtom,
   isSearchOpenAtom,
@@ -13,6 +17,7 @@ import {
   typeSearchInput,
 } from '../model'
 import { distinctValuesAtom } from '../model-distinctValues'
+import { closeSearch } from '../model-session'
 import { SearchBar } from './SearchBar'
 
 // Jest hoists mock factories above imports, so the factory may only reference
@@ -32,7 +37,20 @@ jest.mock('shared/api', () => ({
   },
 }))
 
-const CLEAR_LABEL = 'Очистить поиск'
+jest.mock('expo-intent-launcher', () => ({
+  ResultCode: { Success: 0 },
+  startActivityAsync: jest.fn(),
+}))
+
+jest.mock('shared/model/info-dialog', () => ({ showInfo: jest.fn() }))
+
+const CLEAR_LABEL = 'Очистить'
+const MIC_LABEL = 'Голосовой ввод'
+const VOICE_UNAVAILABLE_MESSAGE = 'Голосовой ввод недоступен на этом устройстве'
+const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
+const mockedStartActivityAsync = IntentLauncher.startActivityAsync as jest.MockedFunction<
+  typeof IntentLauncher.startActivityAsync
+>
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
 const IVAN_ZLATOUST = 'Иван Златоуст'
 const DISTINCT_VALUES = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock({
@@ -72,6 +90,22 @@ describe('<SearchBar>', () => {
     await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'вера')
 
     expect(ctx.get(searchQueryAtom)).toBe('вера')
+  })
+
+  test('keeps the same input field across debounced query and result atom updates', async () => {
+    const ctx = createCtx()
+    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await act(async () => {
+      searchQueryAtom(ctx, 'вера')
+      isSearchingAtom(ctx, true)
+      searchResultsAtom(ctx, [sermon])
+      isSearchingAtom(ctx, false)
+    })
+
+    // A remount would replace the host node and drop the caret/focus on web.
+    expect(getByPlaceholderText(SEARCH_PLACEHOLDER)).toBe(input)
   })
 
   test('keeps the latest typed text when the query atom lags behind an async render', async () => {
@@ -139,7 +173,19 @@ describe('<SearchBar>', () => {
     expect(ctx.get(searchQueryAtom)).toBe('')
   })
 
-  test('focuses the input on mount so the keyboard appears', async () => {
+  test('does not focus the input on mount so the keyboard waits for a tap', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
+    focusMock.mockClear()
+
+    await renderWithProviders(<SearchBar />, { ctx })
+    await flushAnimationFrame()
+
+    expect(focusMock).not.toHaveBeenCalled()
+  })
+
+  test('does not steal focus while search is closed', async () => {
     const ctx = createCtx()
     const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
     focusMock.mockClear()
@@ -147,7 +193,50 @@ describe('<SearchBar>', () => {
     await renderWithProviders(<SearchBar />, { ctx })
     await flushAnimationFrame()
 
+    expect(focusMock).not.toHaveBeenCalled()
+  })
+
+  test('clearing the query keeps the input focused for continued typing', async () => {
+    const ctx = createCtx()
+    const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
+    const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
+      ctx,
+    })
+
+    await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'вера')
+    focusMock.mockClear()
+
+    await fireEvent.press(getByLabelText(CLEAR_LABEL))
+
     expect(focusMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('suppresses the browser focus outline on web', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const { getByPlaceholderText } = await renderWithProviders(<SearchBar />)
+      const style = StyleSheet.flatten(getByPlaceholderText(SEARCH_PLACEHOLDER).props.style)
+
+      expect(style.outlineWidth).toBe(0)
+      expect(style.outlineColor).toBe('transparent')
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('draws no accent ring around the focused field', async () => {
+    const ctx = createCtx()
+    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+
+    const style = StyleSheet.flatten(input.props.style)
+
+    expect(style.borderColor).not.toBe('#f16031')
+    expect(style.borderWidth ?? 0).toBe(0)
   })
 
   test('stretches across the header so the input fills the row', async () => {
@@ -155,6 +244,31 @@ describe('<SearchBar>', () => {
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
 
     expect(getByPlaceholderText(SEARCH_PLACEHOLDER).parent).toHaveStyle({ flex: 1 })
+  })
+
+  test('lets the input shrink inside the pill instead of keeping its intrinsic web width', async () => {
+    const ctx = createCtx()
+    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+    const inputStyle = StyleSheet.flatten(getByPlaceholderText(SEARCH_PLACEHOLDER).props.style)
+
+    // react-native-web makes flex items `min-width: auto`, so an input with a
+    // default DOM width pushes the mic past the pill's right edge on narrow
+    // phones. `minWidth: 0` lets the flex row actually shrink the field.
+    expect(inputStyle).toMatchObject({ flex: 1, minWidth: 0 })
+  })
+
+  test('keeps the mic compact so the 48dp minimum width cannot overflow the pill', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      const { getByLabelText } = await renderWithProviders(<SearchBar />)
+      const micStyle = StyleSheet.flatten(getByLabelText(MIC_LABEL).props.style)
+
+      // The 48dp target comes from padding + hitSlop, not from a min-width
+      // that would reserve a whole touch target inside a narrow pill.
+      expect(micStyle).toMatchObject({ minWidth: 0, paddingHorizontal: INDENTS.low })
+    } finally {
+      restorePlatform.restore()
+    }
   })
 
   test('clears the query via the clear button, resets results and keeps the search open', async () => {
@@ -173,22 +287,51 @@ describe('<SearchBar>', () => {
     expect(ctx.get(isSearchOpenAtom)).toBe(true)
   })
 
-  test('closes the search when the clear button is pressed with an empty query', async () => {
+  test('hides the inline clear chip while the query is empty', async () => {
     const ctx = createCtx()
-    isSearchOpenAtom(ctx, true)
-    const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
+    const { queryByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
 
-    await fireEvent.press(getByLabelText(CLEAR_LABEL))
-
-    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
-    expect(ctx.get(searchQueryAtom)).toBe('')
+    expect(queryByLabelText(CLEAR_LABEL)).toBeNull()
   })
 
-  test('shows the clear button even with an empty query so the search can be closed', async () => {
-    const ctx = createCtx()
-    const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
+  test('shows the mic while the query is empty and swaps it for the clear chip once text is typed', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      const ctx = createCtx()
+      const { getByLabelText, getByPlaceholderText, queryByLabelText } = await renderWithProviders(
+        <SearchBar />,
+        { ctx },
+      )
 
-    expect(getByLabelText(CLEAR_LABEL)).toBeTruthy()
+      expect(getByLabelText(MIC_LABEL)).toBeTruthy()
+
+      await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'вера')
+
+      expect(queryByLabelText(MIC_LABEL)).toBeNull()
+      expect(getByLabelText(CLEAR_LABEL)).toBeTruthy()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('reports focus changes so the island can show its external close circle', async () => {
+    const ctx = createCtx()
+    const onFocusChange = jest.fn()
+    const { getByPlaceholderText } = await renderWithProviders(
+      <SearchBar onFocusChange={onFocusChange} />,
+      { ctx },
+    )
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+    expect(onFocusChange).toHaveBeenLastCalledWith(true)
+
+    await act(async () => {
+      fireEvent(input, 'blur')
+    })
+    expect(onFocusChange).toHaveBeenLastCalledWith(false)
   })
 
   test('Escape on web clears the query and keeps the search open when the query is non-empty', async () => {
@@ -298,18 +441,189 @@ describe('<SearchBar>', () => {
     blurMock.mockClear()
 
     await renderWithProviders(<SearchBar />, { ctx })
-    await flushAnimationFrame()
 
     const hideCall = addListenerSpy.mock.calls.find(
       ([eventName]) => eventName === 'keyboardDidHide',
     )
     expect(hideCall).toBeDefined()
 
+    blurMock.mockClear()
     await act(async () => {
       hideCall?.[1]()
     })
 
     expect(blurMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('blurs the field when the collapsed bar hides it while search stays open', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    const blurMock = (TextInput as unknown as { prototype: { blur: jest.Mock } }).prototype.blur
+    const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+    blurMock.mockClear()
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+
+    // A hidden field must release focus: otherwise the keyboard stays up over
+    // the collapsed row and its first tap is consumed by the focus handoff.
+    expect(blurMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+const RECOGNIZED_PHRASE = 'привет мир'
+
+const speechInstances: WebSpeechRecognitionStub[] = []
+
+const buildFinalSpeechResult = () => ({
+  resultIndex: 0,
+  results: [Object.assign([{ transcript: RECOGNIZED_PHRASE }], { isFinal: true })],
+})
+
+class WebSpeechRecognitionStub {
+  public constructor() {
+    speechInstances.push(this)
+  }
+
+  public abort = jest.fn()
+  public continuous = true
+  public interimResults = true
+  public lang = ''
+  public maxAlternatives = 3
+  public onend: (() => void) | null = null
+  public onerror: ((event: { error?: string }) => void) | null = null
+  public onresult: ((event: unknown) => void) | null = null
+  public start = jest.fn()
+  public stop = jest.fn()
+}
+
+describe('<SearchBar> voice input availability', () => {
+  beforeEach(() => {
+    mockedShowInfo.mockClear()
+    mockedStartActivityAsync.mockClear()
+    speechInstances.length = 0
+  })
+
+  test('renders the mic while the query is empty on web without the Speech Recognition API', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      Reflect.deleteProperty(global, 'SpeechRecognition')
+      Reflect.deleteProperty(global, 'webkitSpeechRecognition')
+      const { getByLabelText } = await renderWithProviders(<SearchBar />)
+
+      expect(getByLabelText(MIC_LABEL)).toBeTruthy()
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('shows the info dialog instead of starting recognition when voice input is unsupported', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      const { getByLabelText } = await renderWithProviders(<SearchBar />)
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+
+      expect(mockedShowInfo).toHaveBeenCalledWith(VOICE_UNAVAILABLE_MESSAGE)
+      expect(mockedStartActivityAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('starts Web Speech recognition when the browser supports it', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
+
+      const { getByLabelText } = await renderWithProviders(<SearchBar />)
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+
+      expect(speechInstances).toHaveLength(1)
+      expect(speechInstances[0]?.start).toHaveBeenCalledTimes(1)
+      expect(mockedShowInfo).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('writes the recognized phrase into the query through the local input path', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
+        ctx,
+      })
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+      await act(async () => {
+        speechInstances[0]?.onresult?.(buildFinalSpeechResult())
+      })
+
+      expect(getByPlaceholderText(SEARCH_PLACEHOLDER).props.value).toBe(RECOGNIZED_PHRASE)
+      expect(ctx.get(searchQueryAtom)).toBe(RECOGNIZED_PHRASE)
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('aborts the live recognizer when the search closes', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+      await act(async () => {
+        await closeSearch(ctx)
+      })
+
+      expect(speechInstances[0]?.abort).toHaveBeenCalledTimes(1)
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('aborts the live recognizer when the field blurs', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
+        ctx,
+      })
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+      await fireEvent(getByPlaceholderText(SEARCH_PLACEHOLDER), 'blur')
+
+      expect(speechInstances[0]?.abort).toHaveBeenCalledTimes(1)
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
   })
 })
 

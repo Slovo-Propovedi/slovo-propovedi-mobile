@@ -20,6 +20,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { initServerUrlAction, loadHapticsEnabled, loadToursDisabled } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
+import { useKeyboardBottomInsetSync } from 'shared/ui/layout'
 import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
 import RootLayout from './_RootLayout'
 
@@ -54,20 +55,24 @@ const SafeAreaBoundary = ({ children }: { children: ReactNode }) =>
     <>{children}</>
   )
 
-const RootLayoutWithProvider = () => (
-  <reatomContext.Provider value={ctx}>
-    <ThemeProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ErrorBoundary>
-          <GlobalErrorHandler />
-          <SafeAreaBoundary>
-            <RootLayout />
-          </SafeAreaBoundary>
-        </ErrorBoundary>
-      </GestureHandlerRootView>
-    </ThemeProvider>
-  </reatomContext.Provider>
-)
+const RootLayoutWithProvider = () => {
+  useKeyboardBottomInsetSync()
+
+  return (
+    <reatomContext.Provider value={ctx}>
+      <ThemeProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <ErrorBoundary>
+            <GlobalErrorHandler />
+            <SafeAreaBoundary>
+              <RootLayout />
+            </SafeAreaBoundary>
+          </ErrorBoundary>
+        </GestureHandlerRootView>
+      </ThemeProvider>
+    </reatomContext.Provider>
+  )
+}
 
 // Purge orphaned legacy .mp3.part files, verify legacy web-cache entries,
 // hydrate the offline registry, restore the player, then re-enqueue stale

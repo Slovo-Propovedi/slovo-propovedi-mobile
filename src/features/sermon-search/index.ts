@@ -1,5 +1,4 @@
 export { collectMatchingPreachers } from './lib/composeSearchResults'
-export { SEARCH_HEADER_HEIGHT } from './lib/constants'
 export { mergePlaylistMatches, selectLocalPlaylistMatches } from './lib/localPlaylistSearch'
 export {
   fetchPlaylistTitleMatches,
@@ -8,13 +7,14 @@ export {
   persistSermonSearchResults,
 } from './lib/searchSources'
 export { useIsSearchActive } from './lib/useIsSearchActive'
-export { useIsSearchOpen } from './lib/useIsSearchOpen'
+export { useIsSearchBarCollapseSuspended } from './lib/useIsSearchBarCollapseSuspended'
+export { useIsSearchFieldVisible } from './lib/useIsSearchFieldVisible'
 export { useOpenSearch } from './lib/useOpenSearch'
 export { useSearchUrlSync } from './lib/useSearchUrlSync'
 export { useSermonPlayback } from './lib/useSermonPlayback'
-export { searchQueryAtom, searchResultsAtom, typeSearchInput } from './model'
+export { isSearchOpenAtom, searchQueryAtom, searchResultsAtom, typeSearchInput } from './model'
+export { closeSearch, closeSearchAndExpand } from './model-session'
 export { SearchBar } from './ui/SearchBar'
 export { SearchGroupedResults } from './ui/SearchGroupedResults'
 export { SearchPlaylistRow } from './ui/SearchPlaylistRow'
 export { SearchPreacherRow } from './ui/SearchPreacherRow'
-export { SearchToggleButton } from './ui/SearchToggleButton'

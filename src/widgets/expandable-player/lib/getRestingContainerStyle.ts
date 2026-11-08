@@ -1,11 +1,12 @@
-import { CONTENT_COLUMN_WIDTH, getColumnSideInset } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
+import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 
 interface RestingContainerStyleInput {
+  /** Whether the bottom bar is collapsed into a single row. */
+  barCollapsed: boolean
   expanded: boolean
   fullScreenHeight: number
-  miniBottom: number
   screenWidth: number
+  tabBarHeight: number
 }
 
 /**
@@ -13,18 +14,21 @@ interface RestingContainerStyleInput {
  * state. Committed through the React shadow tree, which never drops updates —
  * unlike Reanimated JS-triggered commits during the busy startup window
  * (Issue #63). The animated containerStyle overrides these values during
- * transitions; at rest both layers agree.
+ * transitions; at rest both layers agree, in BOTH bar states (the mini pill is
+ * restated for the collapsed bottom line too).
  * @param root0 - Input geometry parameters.
+ * @param root0.barCollapsed - Whether the bottom bar is collapsed to one row.
  * @param root0.expanded - Whether the player is expanded to fullscreen.
  * @param root0.fullScreenHeight - Full device screen height.
- * @param root0.miniBottom - Bottom offset for the mini player.
  * @param root0.screenWidth - Current window width.
+ * @param root0.tabBarHeight - Measured height of the floating tab row.
  */
 export const getRestingContainerStyle = ({
+  barCollapsed,
   expanded,
   fullScreenHeight,
-  miniBottom,
   screenWidth,
+  tabBarHeight,
 }: RestingContainerStyleInput) => {
   if (expanded)
     return {
@@ -38,18 +42,21 @@ export const getRestingContainerStyle = ({
       width: screenWidth,
     }
 
-  // Center the collapsed bar in the content column so it lines up with the mini
-  // player; on phones the column is wider than the screen, so this is INDENTS.low.
-  const sideInset = getColumnSideInset(screenWidth, INDENTS.low, CONTENT_COLUMN_WIDTH)
+  const geometry = getMiniPlayerGeometry({
+    barProgress: barCollapsed ? 1 : 0,
+    fullScreenHeight,
+    screenWidth,
+    tabBarHeight,
+  })
 
   return {
-    borderBottomLeftRadius: RADIUSES.middle,
-    borderBottomRightRadius: RADIUSES.middle,
-    borderTopLeftRadius: RADIUSES.middle,
-    borderTopRightRadius: RADIUSES.middle,
-    bottom: miniBottom,
-    left: sideInset,
-    top: fullScreenHeight - miniBottom - PLAYER_SIZES.miniPlayerHeight,
-    width: screenWidth - sideInset * 2,
+    borderBottomLeftRadius: geometry.radius,
+    borderBottomRightRadius: geometry.radius,
+    borderTopLeftRadius: geometry.radius,
+    borderTopRightRadius: geometry.radius,
+    bottom: geometry.bottom,
+    left: geometry.left,
+    top: geometry.top,
+    width: geometry.width,
   }
 }

@@ -7,6 +7,7 @@ import { PlaylistList, type PlaylistListItemData } from 'widgets/playlist-list'
 import { type PlaylistData } from 'entities/playlist'
 import { dynamicSectionsAtom, type SectionData } from 'entities/section'
 import { useNavigationGuard } from 'shared/routing'
+import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { resolveSectionFromCache } from '../lib/resolveSectionFromCache'
 
@@ -58,26 +59,34 @@ export const PlaylistListScreen = () => {
 
   if (!sectionId || (!section && cacheResolved))
     return (
-      <View style={[styles.centered, bgColor]}>
-        <StatusBar style={statusBarStyle} />
-        <Text style={[styles.emptyText, { color: currentTheme.textMuted }]}>Секция не найдена</Text>
-      </View>
+      <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.playlistList}>
+        <View style={[styles.centered, bgColor]}>
+          <StatusBar style={statusBarStyle} />
+          <Text style={[styles.emptyText, { color: currentTheme.textMuted }]}>
+            Секция не найдена
+          </Text>
+        </View>
+      </BlurBackdrop>
     )
 
   if (!section)
     return (
-      <View style={[styles.centered, bgColor]}>
-        <StatusBar style={statusBarStyle} />
-        <ActivityIndicator size='large' color={currentTheme.primary} />
-      </View>
+      <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.playlistList}>
+        <View style={[styles.centered, bgColor]}>
+          <StatusBar style={statusBarStyle} />
+          <ActivityIndicator size='large' color={currentTheme.primary} />
+        </View>
+      </BlurBackdrop>
     )
 
   return (
-    <PlaylistList
-      title={section.title ?? ''}
-      onPressPlaylist={handlePlaylistPress}
-      playlists={(section.playlists ?? []).map(toPlaylistListItem)}
-    />
+    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.playlistList}>
+      <PlaylistList
+        title={section.title ?? ''}
+        onPressPlaylist={handlePlaylistPress}
+        playlists={(section.playlists ?? []).map(toPlaylistListItem)}
+      />
+    </BlurBackdrop>
   )
 }
 

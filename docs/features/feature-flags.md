@@ -5,7 +5,7 @@
 
 ## Что делает
 
-Клиентская проверка фича-флагов. Табы «Читать» и «Учиться» открываются только если соответствующий флаг (`read` / `study`) включён. Для аутентифицированного пользователя сервер отдаёт его эффективные флаги (глобальное состояние + пер-пользовательские исключения), для анонима — глобальное состояние (аутентификация опциональна, `GET /feature-flags/me` никогда не возвращает 401).
+Клиентская проверка фича-флагов. Таб «Читать» открывается только если флаг `read` включён; экран «Учиться» (кнопки в баре у него нет) дополнительно гейтится флагом `study` на случай прямого перехода. Для аутентифицированного пользователя сервер отдаёт его эффективные флаги (глобальное состояние + пер-пользовательские исключения), для анонима — глобальное состояние (аутентификация опциональна, `GET /feature-flags/me` никогда не возвращает 401).
 
 ## Срез `entities/feature-flags`
 
@@ -86,14 +86,14 @@ return flags?.[key] ?? false
 Гейтинг реализован в двух местах:
 
 1. **`src/widgets/tab-bar/ui/useTabPress.ts`** — видимая блокировка таба:
-   - `useTabPress` вызывает `useFeatureFlag('read')` и `useFeatureFlag('study')` и строит `isTabAvailable(routeName)`.
+   - `useTabPress` вызывает `useFeatureFlag('read')` и строит `isTabAvailable(routeName)`.
    - `handleTabPress` для недоступного таба показывает прежний диалог «Скоро будет доступно» (`showInfo`) и **не** навигирует; для доступного — обычная навигация.
    - `CustomTabBar` использует `isTabAvailable` для `isDisabled` кнопки таба.
 2. **Экраны** — защитный guard на случай прямого перехода:
    - `ReadScreen` (`src/pages/read/ui/ReadScreen.tsx`) — `useFeatureFlag('read')`, при `false` рендерит `null`.
-   - `StudyScreen` (`src/pages/study/ui.tsx`) — `useFeatureFlag('study')`, при `false` рендерит `null`.
+   - `StudyScreen` (`src/pages/study/ui.tsx`) — `useFeatureFlag('study')`, при `false` рендерит `null`. Кнопки «Учиться» в баре нет (`CustomTabBar` скрывает маршрут `study`), поэтому экран доступен только прямым переходом/ссылкой.
 
-Пока флаги не загружены, поведение табов идентично прежнему (оба заблокированы). Когда `read`/`study` включён — таб открывается и рендерит существующий экран (`ReadScreen`/`StudyScreen`), который пока остаётся заглушкой/каркасом (см. [screens/read.md](../screens/read.md), [screens/study.md](../screens/study.md)).
+Пока флаги не загружены, поведение табов идентично прежнему (заблокированы). Когда `read` включён — таб открывается и рендерит существующий экран (`ReadScreen`), который пока остаётся заглушкой/каркасом (см. [screens/read.md](../screens/read.md)); `StudyScreen` открывается по прямой ссылке при включённом `study` (см. [screens/study.md](../screens/study.md)).
 
 ## Админ-UI управления флагами
 
@@ -117,7 +117,7 @@ return flags?.[key] ?? false
 - `src/entities/auth/lib/signIn.test.ts` — рефетч флагов после успешного входа и его отсутствие при отказе в доступе/ошибке запроса.
 - `src/entities/auth/lib/signOut.test.ts` — рефетч флагов после выхода, в том числе когда серверная ревокация падает.
 - `src/entities/auth/lib/restoreSession.test.ts` — рефетч флагов после проверки профиля с токеном (успех и транзиентный сбой) и его отсутствие без токенов.
-- `src/widgets/tab-bar/ui/useTabPress.test.ts` — таб открывается по флагу, заблокирован без флага.
+- `src/widgets/tab-bar/ui/useTabPress.test.ts` — таб «Читать» открывается по флагу, заблокирован без флага.
 - `src/pages/read/ui/ReadScreen.test.tsx`, `src/pages/study/ui.test.tsx` — экран рендерит контент при включённом флаге и ничего при выключенном.
 - `src/pages/admin-flags/lib/useAdminFlags.test.tsx`, `ui/AdminFlagsScreen.test.tsx` — список: загрузка, фокус-обновление, навигация, пустое состояние.
 - `src/pages/admin-flag-form/lib/useFlagFormController.test.tsx`, `ui/AdminFlagCreateScreen.test.tsx` — create/update, двухшаговое включение, валидация ключа.

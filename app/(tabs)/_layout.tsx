@@ -1,10 +1,9 @@
-import { useAtom } from '@reatom/npm-react'
 import { type SuspenseFallbackProps, Tabs } from 'expo-router'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { PlaylistSheetMenu } from 'pages/playlist'
 import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
-import { isPlayerExpandedAtom } from 'entities/player'
+import { BlurTargetProvider } from 'shared/ui'
 import { COLORS, INDENTS, useTheme } from 'shared/ui/theme'
 
 /**
@@ -23,21 +22,21 @@ export function SuspenseFallback(_props: SuspenseFallbackProps) {
 
 const Layout = () => {
   const { currentTheme } = useTheme()
-  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
 
   return (
-    <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
-      <Tabs
-        screenOptions={{ headerShown: false }}
-        tabBar={props => <CustomTabBar {...props} hideFloatingPlayer={isPlayerExpanded} />}
-      >
-        <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
-        <Tabs.Screen name='read' options={{ title: 'Читать' }} />
-        <Tabs.Screen name='study' options={{ title: 'Учиться' }} />
-        <Tabs.Screen name='more' options={{ title: 'Ещё' }} />
-      </Tabs>
-      <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
-    </View>
+    <BlurTargetProvider>
+      <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
+        <Tabs screenOptions={{ headerShown: false }} tabBar={props => <CustomTabBar {...props} />}>
+          <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
+          <Tabs.Screen name='read' options={{ title: 'Читать' }} />
+          <Tabs.Screen name='study' options={{ title: 'Учиться' }} />
+          <Tabs.Screen name='more' options={{ title: 'Ещё' }} />
+        </Tabs>
+        {/* CustomTabBar renders on every tab screen (including the listen
+            stack's playlist screens) and owns the search morph. */}
+        <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
+      </View>
+    </BlurTargetProvider>
   )
 }
 export default Layout

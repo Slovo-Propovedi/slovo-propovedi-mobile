@@ -8,11 +8,18 @@ import { type SharedValue } from 'react-native-reanimated'
  * mid-animation values that can desync after a long background (Issue #61).
  * @param expanded - Whether the player is currently in expanded (fullscreen) state.
  * @param progress - Shared value tracking expand/collapse animation progress (0 = mini, 1 = full).
+ * @param onSnap - Optional settle notification: the snap leaves progress at rest.
  */
-export const useAppStateSnap = (expanded: boolean, progress: SharedValue<number>) => {
+export const useAppStateSnap = (
+  expanded: boolean,
+  progress: SharedValue<number>,
+  onSnap?: () => void,
+) => {
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active') progress.value = expanded ? 1 : 0
+      if (nextAppState !== 'active') return
+      progress.value = expanded ? 1 : 0
+      onSnap?.()
     }
 
     const subscription = AppState.addEventListener('change', handleAppStateChange)
@@ -20,5 +27,5 @@ export const useAppStateSnap = (expanded: boolean, progress: SharedValue<number>
     return () => {
       subscription.remove()
     }
-  }, [expanded, progress])
+  }, [expanded, onSnap, progress])
 }

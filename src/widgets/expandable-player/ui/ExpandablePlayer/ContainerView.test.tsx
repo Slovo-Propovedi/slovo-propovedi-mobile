@@ -1,8 +1,9 @@
-import { act } from '@testing-library/react-native'
-import { AppState, type AppStateStatus } from 'react-native'
+import { act, screen } from '@testing-library/react-native'
+import { AppState, type AppStateStatus, StyleSheet } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
 import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { keyboardBottomInsetSv } from 'shared/ui/layout'
 import { LightTheme } from 'shared/ui/theme'
 import { COLLAPSE_DURATION_MS } from '../../model/expandDurations'
 import { ContainerView } from './ContainerView'
@@ -17,6 +18,7 @@ jest.mock('../FullscreenContent/FullscreenContent', () => {
 
 jest.mock('shared/ui', () => ({
   CoverImage: () => null,
+  createGlassStyles: jest.requireActual('shared/ui/glass/glass').createGlassStyles,
 }))
 
 jest.mock('expo-status-bar', () => ({
@@ -42,7 +44,7 @@ const baseProps = {
   currentTheme: LightTheme,
   expanded: false,
   fullStyle: {},
-  miniOverlay: {},
+  isLight: true,
   miniOverlayStyle: {},
   onLayout: jest.fn(),
   panGesture: {} as GestureType,
@@ -73,6 +75,23 @@ afterEach(() => {
 const emitState = (state: AppStateStatus) => {
   for (const listener of mockListeners) listener(state)
 }
+
+const findContainerNode = () =>
+  screen.root?.queryAll(instance => StyleSheet.flatten(instance.props.style)?.zIndex === 200)[0]
+
+describe('<ContainerView> pointer events', () => {
+  test('lets touches through the collapsed container so the mini pill receives them', async () => {
+    await renderWithProviders(<ContainerView {...baseProps} expanded={false} />)
+
+    expect(findContainerNode()?.props.pointerEvents).toBe('none')
+  })
+
+  test('captures touches once the container is expanded to fullscreen', async () => {
+    await renderWithProviders(<ContainerView {...baseProps} expanded />)
+
+    expect(findContainerNode()?.props.pointerEvents).toBe('auto')
+  })
+})
 
 describe('<ContainerView> fullscreen gating', () => {
   test('keeps FullscreenContent mounted during the collapse window, then unmounts', async () => {
@@ -147,5 +166,29 @@ describe('<ContainerView> fullscreen gating', () => {
       <ContainerView {...baseProps} expanded={false} />,
     )
     expect(queryByTestId(FULLSCREEN_TEST_ID)).toBeNull()
+  })
+
+  test('follows the keyboard while collapsed and stays put at fullscreen', async () => {
+    keyboardBottomInsetSv.value = 200
+
+    try {
+      const { rerender } = await renderWithProviders(
+        <ContainerView {...baseProps} expanded={false} />,
+      )
+      const findLift = () =>
+        screen.root?.queryAll(instance => {
+          const transform = StyleSheet.flatten(instance.props.style)?.transform
+
+          return Array.isArray(transform) && transform.some(entry => 'translateY' in entry)
+        })[0]
+
+      expect(StyleSheet.flatten(findLift()?.props.style)?.transform).toEqual([{ translateY: -200 }])
+
+      await rerender(<ContainerView {...baseProps} expanded />)
+
+      expect(StyleSheet.flatten(findLift()?.props.style)?.transform).toEqual([{ translateY: 0 }])
+    } finally {
+      keyboardBottomInsetSv.value = 0
+    }
   })
 })

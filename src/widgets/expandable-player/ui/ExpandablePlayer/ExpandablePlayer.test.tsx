@@ -1,8 +1,11 @@
 import { act, fireEvent } from '@testing-library/react-native'
+import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { isTabBarMeasuredAtom } from 'shared/ui/layout'
+import { isBarCollapsedAtom, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
+import { isMiniPillCollapsedAtom } from '../../model/barMorph'
+import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { ExpandablePlayer } from './ExpandablePlayer'
 
 jest.mock('expo-router', () => ({
@@ -29,8 +32,11 @@ jest.mock('shared/ui/layout', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
     CONTENT_COLUMN_WIDTH: 600,
+    isBarCollapsedAtom: atom(false, 'mockIsBarCollapsedAtom'),
     isTabBarMeasuredAtom: atom(true, 'mockIsTabBarMeasuredAtom'),
+    keyboardBottomInsetSv: { value: 0 },
     tabBarHeightAtom: atom(0, 'mockTabBarHeightAtom'),
+    useKeyboardLiftStyle: () => ({}),
   }
 })
 
@@ -48,21 +54,28 @@ jest.mock('../../model/useContainerGeometryGuard', () => ({
 }))
 
 jest.mock('../../model/useExpandAnimation', () => ({
-  useExpandAnimation: () => ({
+  useExpandAnimation: jest.fn(() => ({
     backdropStyle: {},
     backgroundImageStyle: {},
-    collapsedRestingContainerStyle: { top: 0 },
+    barCollapsedTop: 755.27,
+    barExpandedTop: 679.45,
     containerStyle: {},
     forceGeometryReapply: jest.fn(),
     fullStyle: {},
+    miniBarRestingStyle: {},
+    miniBarStyle: {},
     miniOverlayStyle: {},
     miniStyle: {},
     progress: { value: 0 },
     restingContainerStyle: {},
     screenHeight: 800,
     screenWidth: 400,
-  }),
+  })),
 }))
+
+const mockedUseExpandAnimation = useExpandAnimation as jest.MockedFunction<
+  typeof useExpandAnimation
+>
 
 jest.mock('./useExpandablePlayerGesture', () => ({
   useExpandablePlayerGesture: () => ({
@@ -116,5 +129,52 @@ describe('<ExpandablePlayer>', () => {
     })
 
     expect(mockTogglePlay).toHaveBeenCalledTimes(1)
+  })
+
+  test('moves the mini player into the collapsed line while search is open with an empty query', async () => {
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    tabBarHeightAtom(ctx, 98)
+    await renderWithProviders(<ExpandablePlayer />, { ctx })
+
+    // The empty-query search field collapses with the bar, so the row returns
+    // to the compact [active circle][player][search circle] arrangement.
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98)
+    expect(ctx.get(isMiniPillCollapsedAtom)).toBe(true)
+  })
+
+  test('rests the mini player above the row while an active query pins the field', async () => {
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
+    tabBarHeightAtom(ctx, 98)
+    await renderWithProviders(<ExpandablePlayer />, { ctx })
+
+    // The pill's collapse target keeps it detached: the field pins the row.
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98)
+    expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
+  })
+
+  test('keeps the last real tab bar height when a hidden screen reports zero', async () => {
+    isBarCollapsedAtom(ctx, false)
+    isSearchOpenAtom(ctx, false)
+    tabBarHeightAtom(ctx, 114)
+    await renderWithProviders(<ExpandablePlayer />, { ctx })
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 114)
+
+    // A non-focused root-stack screen renders the tabs as `display: none` on
+    // web, so the tab row reports a 0 height while hidden. Adopting it would
+    // commit the pill at the very bottom of the screen, and the first frame
+    // after navigating back would show that stale position (Issue #132).
+    await act(async () => {
+      tabBarHeightAtom(ctx, 0)
+    })
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 114)
+
+    // A real re-measurement still wins.
+    await act(async () => {
+      tabBarHeightAtom(ctx, 130)
+    })
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 130)
   })
 })

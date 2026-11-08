@@ -1,9 +1,26 @@
+import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { AppState, type AppStateStatus, Text } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
+import {
+  BAR_CIRCLE_SIZE,
+  BAR_EXPANDED_ISLAND_TOP_MARGIN,
+  BAR_OUTER_GAP,
+  BAR_ROW_MIN_HEIGHT,
+  BAR_SIDE_INSET,
+  setBarCollapsed,
+  TAB_BAR_ISLAND_HEIGHT,
+} from 'shared/ui/layout'
+import { PLAYER_SIZES } from 'shared/ui/theme'
+import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
 import { useExpandAnimation } from './useExpandAnimation'
+
+const TAB_BAR_HEIGHT = 98
+const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
+const EXPANDED_BOTTOM = TAB_BAR_HEIGHT - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_OUTER_GAP
+const COLLAPSED_BOTTOM = TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
+const COLLAPSED_LEFT = BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
 const mockedWithTiming = withTiming as jest.Mock
 
@@ -44,13 +61,13 @@ const emitState = (state: AppStateStatus) => {
 // Capture progress shared value from the hook via a component that also
 // renders it as text so we can re-render and re-read after state changes
 const CollapsedHarness = ({ onProgress }: { onProgress: (p: { value: number }) => void }) => {
-  const { progress } = useExpandAnimation(false, 56)
+  const { progress } = useExpandAnimation(false, TAB_BAR_HEIGHT)
   onProgress(progress)
   return <Text testID='harness'>{String(progress.value)}</Text>
 }
 
 const ExpandedHarness = ({ onProgress }: { onProgress: (p: { value: number }) => void }) => {
-  const { progress } = useExpandAnimation(true, 56)
+  const { progress } = useExpandAnimation(true, TAB_BAR_HEIGHT)
   onProgress(progress)
   return <Text testID='harness'>{String(progress.value)}</Text>
 }
@@ -114,15 +131,17 @@ describe('useExpandAnimation foreground snap', () => {
 })
 
 describe('useExpandAnimation restingContainerStyle', () => {
-  test('returns collapsed geometry when expanded is false', async () => {
+  const renderResting = async (barCollapsed: boolean) => {
     let capturedResult: null | ReturnType<typeof useExpandAnimation> = null
+    const ctx = createCtx()
+    setBarCollapsed(ctx, barCollapsed)
 
     const Harness = ({
       onResult,
     }: {
       onResult: (r: ReturnType<typeof useExpandAnimation>) => void
     }) => {
-      const result = useExpandAnimation(false, 56)
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT)
       onResult(result)
       return <Text testID='harness'>{String(result.progress.value)}</Text>
     }
@@ -133,20 +152,376 @@ describe('useExpandAnimation restingContainerStyle', () => {
           capturedResult = r
         }}
       />,
+      { ctx },
     )
 
-    expect(capturedResult).not.toBeNull()
-    expect(capturedResult).toMatchObject({
+    return capturedResult
+  }
+
+  test('returns the detached pill geometry when the bar is expanded', async () => {
+    const result = await renderResting(false)
+
+    expect(result).not.toBeNull()
+    expect(result).toMatchObject({
+      barCollapsedTop: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      barExpandedTop: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
       restingContainerStyle: {
-        borderBottomLeftRadius: RADIUSES.middle,
-        borderBottomRightRadius: RADIUSES.middle,
-        borderTopLeftRadius: RADIUSES.middle,
-        borderTopRightRadius: RADIUSES.middle,
-        bottom: 52,
-        left: INDENTS.low,
-        top: 800 - 52 - PLAYER_SIZES.miniPlayerHeight,
-        width: 400 - INDENTS.low * 2,
+        borderBottomLeftRadius: PILL_RADIUS,
+        borderBottomRightRadius: PILL_RADIUS,
+        borderTopLeftRadius: PILL_RADIUS,
+        borderTopRightRadius: PILL_RADIUS,
+        bottom: EXPANDED_BOTTOM,
+        left: BAR_SIDE_INSET,
+        top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+        width: 400 - BAR_SIDE_INSET * 2,
       },
     })
+  })
+
+  test('restates the collapsed pill geometry when the bar is collapsed', async () => {
+    const result = await renderResting(true)
+
+    expect(result).not.toBeNull()
+    expect(result).toMatchObject({
+      miniBarRestingStyle: {
+        borderRadius: PILL_RADIUS,
+        bottom: COLLAPSED_BOTTOM,
+        left: COLLAPSED_LEFT,
+        width: 400 - COLLAPSED_LEFT * 2,
+      },
+      restingContainerStyle: {
+        borderBottomLeftRadius: PILL_RADIUS,
+        borderBottomRightRadius: PILL_RADIUS,
+        borderTopLeftRadius: PILL_RADIUS,
+        borderTopRightRadius: PILL_RADIUS,
+        bottom: COLLAPSED_BOTTOM,
+        left: COLLAPSED_LEFT,
+        top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+        width: 400 - COLLAPSED_LEFT * 2,
+      },
+    })
+  })
+})
+
+describe('useExpandAnimation bar-morph resting commit', () => {
+  const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
+    toValue: number,
+    config: unknown,
+    callback?: (finished: boolean) => void,
+  ) => number
+
+  afterEach(() => {
+    mockedWithTiming.mockImplementation(defaultWithTimingImpl)
+  })
+
+  const COLLAPSED_RESTING = {
+    bottom: COLLAPSED_BOTTOM,
+    left: COLLAPSED_LEFT,
+    width: 400 - COLLAPSED_LEFT * 2,
+  }
+  const EXPANDED_RESTING = {
+    bottom: EXPANDED_BOTTOM,
+    left: BAR_SIDE_INSET,
+    width: 400 - BAR_SIDE_INSET * 2,
+  }
+
+  const renderBarFlip = async (initialBarCollapsed: boolean) => {
+    const completions: Array<(finished: boolean) => void> = []
+    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
+      if (typeof callback === 'function') completions.push(callback)
+      return toValue
+    })
+
+    const renders: Array<ReturnType<typeof useExpandAnimation>> = []
+    const ctx = createCtx()
+    setBarCollapsed(ctx, initialBarCollapsed)
+
+    const Harness = () => {
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT)
+      renders.push(result)
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    const { rerender } = await renderWithProviders(<Harness />, { ctx })
+    const flipRenderIndex = renders.length
+    await act(async () => {
+      setBarCollapsed(ctx, !initialBarCollapsed)
+    })
+    await rerender(<Harness />)
+
+    return { completions, flipRender: renders[flipRenderIndex], renders }
+  }
+
+  test('keeps the start resting geometry while the bar morph is in flight', async () => {
+    const { completions, flipRender, renders } = await renderBarFlip(true)
+
+    // Mid-morph the resting style is only a fallback for the frame before the
+    // animated layer asserts: it must carry the START geometry, never the
+    // destination (that paints the pill at the target a frame early).
+    expect(flipRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
+    expect(flipRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
+
+    await act(async () => {
+      completions[0](true)
+    })
+
+    const settledRender = renders[renders.length - 1]
+    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+  })
+
+  test('commits the destination resting geometry when the bar morph settles', async () => {
+    const { completions, renders } = await renderBarFlip(false)
+
+    await act(async () => {
+      completions[0](true)
+    })
+
+    const settledRender = renders[renders.length - 1]
+    expect(settledRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
+    expect(settledRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
+  })
+})
+
+describe('useExpandAnimation expand-morph resting commit', () => {
+  const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
+    toValue: number,
+    config: unknown,
+    callback?: (finished: boolean) => void,
+  ) => number
+
+  afterEach(() => {
+    mockedWithTiming.mockImplementation(defaultWithTimingImpl)
+  })
+
+  const EXPANDED_RESTING = {
+    bottom: EXPANDED_BOTTOM,
+    left: BAR_SIDE_INSET,
+    width: 400 - BAR_SIDE_INSET * 2,
+  }
+  const FULLSCREEN_RESTING = {
+    bottom: 0,
+    left: 0,
+    top: 0,
+    width: 400,
+  }
+
+  const renderExpandFlip = async (initialExpanded: boolean) => {
+    const completions: Array<(finished: boolean) => void> = []
+    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
+      if (typeof callback === 'function') completions.push(callback)
+      return toValue
+    })
+
+    const renders: Array<ReturnType<typeof useExpandAnimation>> = []
+    const Harness = ({ expanded }: { expanded: boolean }) => {
+      const result = useExpandAnimation(expanded, TAB_BAR_HEIGHT)
+      renders.push(result)
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    const { rerender } = await renderWithProviders(<Harness expanded={initialExpanded} />)
+    const flipRenderIndex = renders.length
+    await act(async () => {
+      await rerender(<Harness expanded={!initialExpanded} />)
+    })
+
+    return { completions, flipRender: renders[flipRenderIndex], renders }
+  }
+
+  test('keeps the mini resting geometry while the expand morph is in flight', async () => {
+    const { completions, flipRender, renders } = await renderExpandFlip(false)
+
+    // Committing the fullscreen geometry on the expand flip made the container
+    // jump to full size in one frame on native; the resting style must still
+    // carry the START geometry the animated layer is morphing away from.
+    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(flipRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+    // The geometry guard still needs both settled mini tops during the morph.
+    expect(flipRender.barCollapsedTop).toEqual(expect.any(Number))
+    expect(flipRender.barExpandedTop).toEqual(expect.any(Number))
+
+    await act(async () => {
+      completions[0](true)
+    })
+
+    const settledRender = renders[renders.length - 1]
+    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.restingContainerStyle).toMatchObject(FULLSCREEN_RESTING)
+  })
+
+  test('keeps the fullscreen resting geometry while the collapse morph is in flight', async () => {
+    const { completions, flipRender, renders } = await renderExpandFlip(true)
+
+    // The start geometry is the fullscreen sheet: itself correct for the frames
+    // before the animated layer asserts, so no frame paints the destination.
+    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(flipRender.restingContainerStyle).toMatchObject(FULLSCREEN_RESTING)
+
+    await act(async () => {
+      completions[0](true)
+    })
+
+    const settledRender = renders[renders.length - 1]
+    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+  })
+})
+
+describe('useExpandAnimation first committed frame', () => {
+  test('starts the pill and container at the resting geometry', async () => {
+    const captured: { current: null | ReturnType<typeof useExpandAnimation> } = {
+      current: null,
+    }
+
+    const Harness = ({
+      onResult,
+    }: {
+      onResult: (result: ReturnType<typeof useExpandAnimation>) => void
+    }) => {
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT)
+      onResult(result)
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    await renderWithProviders(
+      <Harness
+        onResult={result => {
+          captured.current = result
+        }}
+      />,
+    )
+    const result = captured.current
+    if (!result) throw new Error('useExpandAnimation did not render')
+
+    // No frame may paint the pill anywhere but its resting spot: the animated
+    // layer's very first values must already agree with the React resting layer.
+    const restingTop = 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight
+    const containerStyle = result.containerStyle as unknown as {
+      bottom: number
+      left: number
+      opacity: number
+      top: number
+      width: number
+    }
+
+    expect(result.miniBarStyle).toEqual(result.miniBarRestingStyle)
+    expect(containerStyle).toMatchObject({
+      bottom: EXPANDED_BOTTOM,
+      left: BAR_SIDE_INSET,
+      width: 400 - BAR_SIDE_INSET * 2,
+    })
+    // Regression: the collapsed container is a solid `surface` rectangle sitting
+    // exactly under the translucent mini pill, so the pill's BlurView only saw a
+    // solid layer and the "glass" looked opaque. At rest the container must be
+    // fully transparent; the mini player is the only paint over the page.
+    expect(containerStyle.opacity).toBe(0)
+    expect(containerStyle.top).toBeCloseTo(restingTop, 1)
+  })
+})
+
+describe('useExpandAnimation container visibility', () => {
+  const renderContainerOpacity = async (expanded: boolean) => {
+    const captured: { current: null | ReturnType<typeof useExpandAnimation> } = { current: null }
+
+    const Harness = ({
+      onResult,
+    }: {
+      onResult: (result: ReturnType<typeof useExpandAnimation>) => void
+    }) => {
+      const result = useExpandAnimation(expanded, TAB_BAR_HEIGHT)
+      onResult(result)
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    await renderWithProviders(
+      <Harness
+        onResult={result => {
+          captured.current = result
+        }}
+      />,
+    )
+
+    const result = captured.current
+    if (!result) throw new Error('useExpandAnimation did not render')
+
+    return (result.containerStyle as unknown as { opacity: number }).opacity
+  }
+
+  test('keeps the collapsed container transparent so the pill glass shows the page', async () => {
+    expect(await renderContainerOpacity(false)).toBe(0)
+  })
+})
+
+describe('getContainerGeometryStyle (expand interpolation)', () => {
+  const geometry = (barProgress: number, progress: number) =>
+    getContainerGeometryStyle({
+      barProgress,
+      fullScreenHeight: 800,
+      progress,
+      screenWidth: 400,
+      tabBarHeight: TAB_BAR_HEIGHT,
+    })
+
+  test('starts from the expanded resting pill', () => {
+    expect(geometry(0, 0)).toEqual({
+      borderBottomLeftRadius: PILL_RADIUS,
+      borderBottomRightRadius: PILL_RADIUS,
+      borderTopLeftRadius: PILL_RADIUS,
+      borderTopRightRadius: PILL_RADIUS,
+      bottom: EXPANDED_BOTTOM,
+      left: BAR_SIDE_INSET,
+      top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      width: 400 - BAR_SIDE_INSET * 2,
+    })
+  })
+
+  test('starts from the collapsed resting pill', () => {
+    expect(geometry(1, 0)).toEqual({
+      borderBottomLeftRadius: PILL_RADIUS,
+      borderBottomRightRadius: PILL_RADIUS,
+      borderTopLeftRadius: PILL_RADIUS,
+      borderTopRightRadius: PILL_RADIUS,
+      bottom: COLLAPSED_BOTTOM,
+      left: COLLAPSED_LEFT,
+      top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      width: 400 - COLLAPSED_LEFT * 2,
+    })
+  })
+
+  test('interpolates upward from the collapsed pill when expanding', () => {
+    const style = geometry(1, 0.5)
+
+    expect(style.bottom).toBe(COLLAPSED_BOTTOM / 2)
+    expect(style.left).toBe(COLLAPSED_LEFT / 2)
+    expect(style.top).toBe((800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight) / 2)
+    expect(style.width).toBe(400 - COLLAPSED_LEFT)
+    expect(style.borderTopLeftRadius).toBe(PILL_RADIUS / 2)
+  })
+
+  test('interpolates upward from the expanded pill when expanding', () => {
+    const style = geometry(0, 0.5)
+
+    expect(style.bottom).toBe(EXPANDED_BOTTOM / 2)
+    expect(style.left).toBe(BAR_SIDE_INSET / 2)
+    expect(style.top).toBe((800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight) / 2)
+    expect(style.width).toBe(400 - BAR_SIDE_INSET)
+    expect(style.borderTopLeftRadius).toBe(PILL_RADIUS / 2)
+  })
+
+  test('reaches fullscreen regardless of the resting bar state', () => {
+    const expected = {
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      bottom: 0,
+      left: 0,
+      top: 0,
+      width: 400,
+    }
+
+    expect(geometry(0, 1)).toEqual(expected)
+    expect(geometry(1, 1)).toEqual(expected)
   })
 })

@@ -1,8 +1,9 @@
 import { useAtom } from '@reatom/npm-react'
-import { MIN_QUERY_LENGTH, searchQueryAtom } from '../model'
+import { searchQueryAtom } from '../model'
+import { isSearchQueryActive } from '../model-searchField'
 
 export const useIsSearchActive = () => {
   const [query] = useAtom(searchQueryAtom)
 
-  return query.trim().length >= MIN_QUERY_LENGTH
+  return isSearchQueryActive(query)
 }

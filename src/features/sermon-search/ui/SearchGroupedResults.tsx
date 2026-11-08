@@ -1,12 +1,9 @@
 import { useAtom } from '@reatom/npm-react'
 import { type ReactElement, type ReactNode, useCallback } from 'react'
-import { ScrollView } from 'react-native'
 import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-history'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { EmptyState } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
-import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { useDebouncedSearch } from '../lib/useDebouncedSearch'
 import { useSermonPlayback } from '../lib/useSermonPlayback'
 import {
@@ -17,11 +14,11 @@ import {
   searchQueryAtom,
   searchResultsAtom,
 } from '../model'
-import { styles } from './SearchGroupedResults.styles'
 import { SearchGroupedResultsSkeleton } from './SearchGroupedResultsSkeleton'
 import { SearchGroupSkeleton } from './SearchGroupSkeleton'
 import { SearchPlaylistGroup } from './SearchPlaylistGroup'
 import { SearchPreacherGroup } from './SearchPreacherGroup'
+import { SearchResultsScroll } from './SearchResultsScroll'
 import { SearchSermonGroup } from './SearchSermonGroup'
 
 const NO_RESULTS_MESSAGE = 'Ничего не найдено'
@@ -50,13 +47,11 @@ export const SearchGroupedResults = ({
 }) => {
   useDebouncedSearch()
 
-  const { currentTheme } = useTheme()
   const [query] = useAtom(searchQueryAtom)
   const [sermons] = useAtom(searchResultsAtom)
   const [playlists] = useAtom(searchPlaylistsAtom)
   const [preachers] = useAtom(searchPreachersAtom)
   const [isSearching] = useAtom(isSearchingAtom)
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { modal, onSermonPress } = useSermonPlayback({ pickerWrapper })
   const progressMap = useHistoryProgressMap()
   const historySermonIds = useHistorySermonIds()
@@ -78,15 +73,7 @@ export const SearchGroupedResults = ({
 
   return (
     <>
-      <ScrollView
-        keyboardDismissMode='on-drag'
-        keyboardShouldPersistTaps='handled'
-        style={[styles.scroll, { backgroundColor: currentTheme.background }]}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
-        ]}
-      >
+      <SearchResultsScroll>
         {isSearching ? (
           <SearchGroupedResults.Skeleton />
         ) : isEmpty ? (
@@ -116,7 +103,7 @@ export const SearchGroupedResults = ({
             />
           </>
         )}
-      </ScrollView>
+      </SearchResultsScroll>
       {modal}
     </>
   )

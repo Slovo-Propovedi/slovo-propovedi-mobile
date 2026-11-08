@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   clampMarqueeOffset,
+  getSyncedOffset,
   isRealDrag,
   MARQUEE_EPSILON_PX,
   shouldMarquee,
@@ -71,6 +72,41 @@ describe('shouldMarquee', () => {
   })
 })
 
+describe('getSyncedOffset', () => {
+  const LOOP_DISTANCE = 400
+  const MS_PER_PX = 10
+
+  test('stays at rest while the leader has no active cycle', () => {
+    expect(getSyncedOffset(0, 0, true, LOOP_DISTANCE)).toBe(0)
+    expect(getSyncedOffset(500, 0, true, LOOP_DISTANCE)).toBe(0)
+  })
+
+  test('stays at rest when the follower text fits its box', () => {
+    expect(getSyncedOffset(500, MS_PER_PX, false, LOOP_DISTANCE)).toBe(0)
+  })
+
+  test('advances at the leader px/ms speed, not the leader progress ratio', () => {
+    // 10 ms per px means 50px after 500ms regardless of how long the leader's
+    // own pass is — title and subtitle scroll at the same visual speed.
+    expect(getSyncedOffset(0, MS_PER_PX, true, LOOP_DISTANCE)).toBe(0)
+    expect(getSyncedOffset(500, MS_PER_PX, true, LOOP_DISTANCE)).toBe(-50)
+    expect(getSyncedOffset(1500, MS_PER_PX, true, LOOP_DISTANCE)).toBe(-150)
+  })
+
+  test('holds at its own loop end until the leader cycle resets it', () => {
+    // The follower is shorter than the leader: it finishes its pass early and
+    // waits (the title keeps moving) instead of slowing down to fit the cycle.
+    expect(getSyncedOffset(5000, MS_PER_PX, true, LOOP_DISTANCE)).toBe(-400)
+    expect(getSyncedOffset(9000, MS_PER_PX, true, LOOP_DISTANCE)).toBe(-400)
+    // The leader restart publishes elapsed = 0: both lines start together again.
+    expect(getSyncedOffset(0, MS_PER_PX, true, LOOP_DISTANCE)).toBe(0)
+  })
+
+  test('clamps a negative elapsed phase to rest (defensive)', () => {
+    expect(getSyncedOffset(-100, MS_PER_PX, true, LOOP_DISTANCE)).toBe(0)
+  })
+})
+
 describe('shouldSwallowClick', () => {
   test('swallows the click that follows a pan drag', () => {
     expect(shouldSwallowClick(true)).toBe(true)
@@ -119,5 +155,6 @@ describe('worklet directives', () => {
     expect(source).toMatch(/export const clampMarqueeOffset[\s\S]*?'worklet'/)
     expect(source).toMatch(/export const shouldMarquee[\s\S]*?'worklet'/)
     expect(source).toMatch(/export const isRealDrag[\s\S]*?'worklet'/)
+    expect(source).toMatch(/export const getSyncedOffset[\s\S]*?'worklet'/)
   })
 })

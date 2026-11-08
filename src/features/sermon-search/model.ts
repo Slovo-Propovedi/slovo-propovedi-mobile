@@ -17,6 +17,7 @@ export const searchPlaylistsAtom = atom<PlaylistData[]>([], 'searchPlaylistsAtom
 export const searchPreachersAtom = atom<string[]>([], 'searchPreachersAtom')
 export const isSearchingAtom = atom(false, 'isSearchingAtom')
 export const isSearchOpenAtom = atom(false, 'isSearchOpenAtom')
+
 // Last query a fetch was started for; lets `useDebouncedSearch` skip a duplicate
 // debounced fetch when the query was already fetched (e.g. web deep-link seed).
 export const lastFetchedQueryAtom = atom('', 'lastFetchedQueryAtom')
@@ -32,17 +33,11 @@ export const searchInputRequestAtom = atom<{ nonce: number; text: string } | nul
 
 let latestRequestId = 0
 
-const cancelInFlightFetches = (): void => {
+export const cancelInFlightFetches = (): void => {
   latestRequestId += 1
 }
 
 const isCurrentRequest = (requestId: number): boolean => requestId === latestRequestId
-
-export const openSearch = action(async ctx => {
-  await ctx.schedule(() => {
-    isSearchOpenAtom(ctx, true)
-  })
-}, 'openSearch')
 
 export const resetSearchResults = action(async ctx => {
   cancelInFlightFetches()
@@ -65,19 +60,6 @@ export const typeSearchInput = action((ctx, text: string) => {
   searchQueryAtom(ctx, text)
   searchInputRequestAtom(ctx, { nonce: (previous?.nonce ?? 0) + 1, text })
 }, 'typeSearchInput')
-
-export const closeSearch = action(async ctx => {
-  cancelInFlightFetches()
-  await ctx.schedule(() => {
-    searchQueryAtom(ctx, '')
-    searchResultsAtom(ctx, [])
-    searchPlaylistsAtom(ctx, [])
-    searchPreachersAtom(ctx, [])
-    isSearchingAtom(ctx, false)
-    isSearchOpenAtom(ctx, false)
-    lastFetchedQueryAtom(ctx, '')
-  })
-}, 'closeSearch')
 
 export const fetchSearchResults = action(async (ctx, rawQuery: string) => {
   const query = rawQuery.trim()

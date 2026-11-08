@@ -1,9 +1,13 @@
 import { act } from '@testing-library/react-native'
 import { type LayoutChangeEvent } from 'react-native'
+import { type SharedValue } from 'react-native-reanimated'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { useContainerGeometryGuard } from './useContainerGeometryGuard'
 
-const EXPECTED_TOP = 737.52
+const EXPANDED_BAR_TOP = 679.45
+const COLLAPSED_BAR_TOP = 755.27
+
+const makeProgress = (value: number) => ({ value }) as unknown as SharedValue<number>
 
 const makeEvent = (y: number): LayoutChangeEvent =>
   ({
@@ -24,16 +28,22 @@ describe('useContainerGeometryGuard', () => {
     jest.restoreAllMocks()
   })
 
-  test('no mismatch when layout matches expected', async () => {
+  test('no mismatch when layout matches the expanded-bar resting top', async () => {
     const onLayout = jest.fn()
     const onMismatch = jest.fn()
 
     const { result } = await renderHookWithProviders(() =>
-      useContainerGeometryGuard({ expectedTop: EXPECTED_TOP, onLayout, onMismatch }),
+      useContainerGeometryGuard({
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: makeProgress(0),
+        onLayout,
+        onMismatch,
+      }),
     )
 
     await act(async () => {
-      result.current.onLayout(makeEvent(737.52))
+      result.current.onLayout(makeEvent(EXPANDED_BAR_TOP))
     })
 
     expect(onMismatch).not.toHaveBeenCalled()
@@ -41,25 +51,52 @@ describe('useContainerGeometryGuard', () => {
     expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
-  test('heals when container is lower than expected', async () => {
+  test('expects the collapsed resting top when progress is at collapsed rest', async () => {
     const onMismatch = jest.fn()
 
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
-        expectedTop: EXPECTED_TOP,
-        onLayout: jest.fn(),
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: makeProgress(1),
+        onMismatch,
+      }),
+    )
+
+    // The reported bug signature: the live pill settled at the collapsed top
+    // while the expectation still claimed the detached (expanded-bar) top.
+    await act(async () => {
+      result.current.onLayout(makeEvent(COLLAPSED_BAR_TOP))
+    })
+
+    expect(onMismatch).not.toHaveBeenCalled()
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
+  })
+
+  test('heals a container lower than the collapsed resting top', async () => {
+    const onMismatch = jest.fn()
+
+    const { result } = await renderHookWithProviders(() =>
+      useContainerGeometryGuard({
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: makeProgress(1),
         onMismatch,
       }),
     )
 
     await act(async () => {
-      result.current.onLayout(makeEvent(757.33))
+      result.current.onLayout(makeEvent(COLLAPSED_BAR_TOP + 24))
     })
 
     expect(onMismatch).toHaveBeenCalledTimes(1)
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'playerGeometryHeal',
-      expect.objectContaining({ attempt: 1, expectedTop: EXPECTED_TOP, y: 757.33 }),
+      expect.objectContaining({
+        attempt: 1,
+        expectedTop: COLLAPSED_BAR_TOP,
+        y: COLLAPSED_BAR_TOP + 24,
+      }),
     )
   })
 
@@ -68,38 +105,95 @@ describe('useContainerGeometryGuard', () => {
 
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
-        expectedTop: EXPECTED_TOP,
-        onLayout: jest.fn(),
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: makeProgress(1),
         onMismatch,
       }),
     )
 
     await act(async () => {
-      result.current.onLayout(makeEvent(700))
+      result.current.onLayout(makeEvent(COLLAPSED_BAR_TOP - 30))
     })
 
     expect(onMismatch).not.toHaveBeenCalled()
     expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
-  test('stops after MAX_HEALS mismatches', async () => {
+  test('ignores violations while the bar morph is mid-progress', async () => {
+    const onLayout = jest.fn()
     const onMismatch = jest.fn()
 
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
-        expectedTop: EXPECTED_TOP,
-        onLayout: jest.fn(),
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: makeProgress(0.5),
+        onLayout,
+        onMismatch,
+      }),
+    )
+
+    for (const y of [700, 780, COLLAPSED_BAR_TOP + 24])
+      await act(async () => {
+        result.current.onLayout(makeEvent(y))
+      })
+
+    // Mid-morph every frame is between the two resting positions: never heal,
+    // never queue a heal for later, never warn.
+    expect(onMismatch).not.toHaveBeenCalled()
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
+    // The chained consumer layout handler still runs.
+    expect(onLayout).toHaveBeenCalledTimes(3)
+  })
+
+  test('judges again once the morph reaches rest', async () => {
+    const onMismatch = jest.fn()
+    const progress = makeProgress(0.5)
+
+    const { result } = await renderHookWithProviders(() =>
+      useContainerGeometryGuard({
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: progress,
+        onMismatch,
+      }),
+    )
+
+    await act(async () => {
+      result.current.onLayout(makeEvent(EXPANDED_BAR_TOP + 24))
+    })
+    expect(onMismatch).not.toHaveBeenCalled()
+
+    progress.value = 0
+
+    await act(async () => {
+      result.current.onLayout(makeEvent(EXPANDED_BAR_TOP + 24))
+    })
+
+    expect(onMismatch).toHaveBeenCalledTimes(1)
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
+  })
+
+  test('stops after MAX_HEALS mismatches and warns only once', async () => {
+    const onMismatch = jest.fn()
+
+    const { result } = await renderHookWithProviders(() =>
+      useContainerGeometryGuard({
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: makeProgress(0),
         onMismatch,
       }),
     )
 
     for (let i = 0; i < 7; i++)
       await act(async () => {
-        result.current.onLayout(makeEvent(757.33))
+        result.current.onLayout(makeEvent(EXPANDED_BAR_TOP + 24))
       })
 
     expect(onMismatch).toHaveBeenCalledTimes(5)
-    expect(consoleWarnSpy).toHaveBeenCalledTimes(5)
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
   })
 
   test('window expiry — mismatch no longer heals after 15s', async () => {
@@ -107,15 +201,16 @@ describe('useContainerGeometryGuard', () => {
 
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
-        expectedTop: EXPECTED_TOP,
-        onLayout: jest.fn(),
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: makeProgress(0),
         onMismatch,
       }),
     )
 
     // First onLayout stamps attachedAtRef = 0 (Date.now mock).
     await act(async () => {
-      result.current.onLayout(makeEvent(757.33))
+      result.current.onLayout(makeEvent(EXPANDED_BAR_TOP + 24))
     })
     expect(onMismatch).toHaveBeenCalledTimes(1)
 
@@ -123,7 +218,7 @@ describe('useContainerGeometryGuard', () => {
     ;(Date.now as jest.Mock).mockReturnValue(16_000)
 
     await act(async () => {
-      result.current.onLayout(makeEvent(757.33))
+      result.current.onLayout(makeEvent(EXPANDED_BAR_TOP + 24))
     })
 
     // Should not heal again — window expired.
@@ -131,45 +226,52 @@ describe('useContainerGeometryGuard', () => {
     expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
   })
 
-  test('heal budget resets when expectedTop changes', async () => {
+  test('heal budget resets when resting tops change, the warn does not repeat', async () => {
     const onMismatch = jest.fn()
 
     const { rerender, result } = await renderHookWithProviders(
-      (props: { expectedTop: number }) =>
+      (props: { barCollapsedTop: number }) =>
         useContainerGeometryGuard({
-          expectedTop: props.expectedTop,
-          onLayout: jest.fn(),
+          barCollapsedTop: props.barCollapsedTop,
+          barExpandedTop: EXPANDED_BAR_TOP,
+          barProgress: makeProgress(1),
           onMismatch,
         }),
-      { initialProps: { expectedTop: EXPECTED_TOP } },
+      { initialProps: { barCollapsedTop: COLLAPSED_BAR_TOP } },
     )
 
-    // Exhaust heal budget with original expectedTop.
+    // Exhaust heal budget with original collapsed top.
     for (let i = 0; i < 5; i++)
       await act(async () => {
-        result.current.onLayout(makeEvent(757.33))
+        result.current.onLayout(makeEvent(COLLAPSED_BAR_TOP + 24))
       })
     expect(onMismatch).toHaveBeenCalledTimes(5)
 
     // 6th heal — budget exhausted, no more heals.
     await act(async () => {
-      result.current.onLayout(makeEvent(757.33))
+      result.current.onLayout(makeEvent(COLLAPSED_BAR_TOP + 24))
     })
     expect(onMismatch).toHaveBeenCalledTimes(5)
 
-    // Re-render with new expectedTop — budget resets.
+    // Re-render with a new resting top — budget resets.
     const NEW_TOP = 800
     await act(async () => {
-      rerender({ expectedTop: NEW_TOP })
+      rerender({ barCollapsedTop: NEW_TOP })
     })
 
     await act(async () => {
-      result.current.onLayout(makeEvent(820))
+      result.current.onLayout(makeEvent(NEW_TOP + 20))
     })
     expect(onMismatch).toHaveBeenCalledTimes(6)
-    expect(consoleWarnSpy).toHaveBeenLastCalledWith(
+    // One warning per session is enough to flag the recurrence in prod logs.
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
       'playerGeometryHeal',
-      expect.objectContaining({ attempt: 1, expectedTop: NEW_TOP, y: 820 }),
+      expect.objectContaining({
+        attempt: 1,
+        expectedTop: COLLAPSED_BAR_TOP,
+        y: COLLAPSED_BAR_TOP + 24,
+      }),
     )
   })
 
@@ -178,14 +280,15 @@ describe('useContainerGeometryGuard', () => {
 
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
-        expectedTop: EXPECTED_TOP,
-        onLayout: jest.fn(),
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: makeProgress(0),
         onMismatch,
       }),
     )
 
     await act(async () => {
-      result.current.onLayout(makeEvent(EXPECTED_TOP + 1))
+      result.current.onLayout(makeEvent(EXPANDED_BAR_TOP + 1))
     })
 
     // Strictly-greater: y - expectedTop = 1 is NOT > 1.
@@ -199,14 +302,16 @@ describe('useContainerGeometryGuard', () => {
 
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
-        expectedTop: EXPECTED_TOP,
+        barCollapsedTop: COLLAPSED_BAR_TOP,
+        barExpandedTop: EXPANDED_BAR_TOP,
+        barProgress: makeProgress(0),
         onLayout,
         onMismatch,
       }),
     )
 
     await act(async () => {
-      result.current.onLayout(makeEvent(757.33))
+      result.current.onLayout(makeEvent(EXPANDED_BAR_TOP + 24))
     })
 
     expect(onLayout).toHaveBeenCalledTimes(1)
