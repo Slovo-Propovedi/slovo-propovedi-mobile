@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
+import { type ReactNode } from 'react'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { type BookData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
@@ -61,9 +62,17 @@ jest.mock('../model-topicalAndThematic', () => {
 })
 
 jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
   const { Pressable, Text, View } = jest.requireActual('react-native')
 
   return {
+    ...actual,
+    BlurBackdrop: ({ children, routeKey }: { children: ReactNode; routeKey: string }) => (
+      <>
+        <Text>{`BLUR_TARGET:${routeKey}`}</Text>
+        {children}
+      </>
+    ),
     Slider: ({
       items,
       onPressItem,
@@ -137,6 +146,12 @@ describe('<ReadScreen>', () => {
     expect(getByText(NOTES_TITLE)).toBeTruthy()
     expect(getByText(VERSE_TITLE)).toBeTruthy()
     expect(getByText(TOPICAL_TITLE)).toBeTruthy()
+  })
+
+  test('exposes the page content as the /read blur backdrop', async () => {
+    const { getByText } = await renderWithProviders(<ReadScreen />)
+
+    expect(getByText('BLUR_TARGET:/read')).toBeTruthy()
   })
 
   test('fetches books for every slider on mount', async () => {

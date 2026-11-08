@@ -1,4 +1,5 @@
 import { act, fireEvent } from '@testing-library/react-native'
+import { type ReactNode } from 'react'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { renderWithProviders } from 'shared/mocks'
 import { StudyScreen } from './ui'
@@ -7,6 +8,21 @@ jest.mock('expo-router', () => ({
   ...jest.requireActual('expo-router'),
   useNavigation: () => ({ addListener: jest.fn() }),
 }))
+
+jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
+  const { Text } = jest.requireActual('react-native')
+
+  return {
+    ...actual,
+    BlurBackdrop: ({ children, routeKey }: { children: ReactNode; routeKey: string }) => (
+      <>
+        <Text>{`BLUR_TARGET:${routeKey}`}</Text>
+        {children}
+      </>
+    ),
+  }
+})
 
 jest.mock('entities/feature-flags', () => ({ useFeatureFlag: jest.fn() }))
 
@@ -54,6 +70,13 @@ describe('<StudyScreen>', () => {
 
     expect(getByText('Богословие')).toBeTruthy()
     expect(getByText('Душепопечение')).toBeTruthy()
+  })
+
+  test('exposes the page content as the /study blur backdrop', async () => {
+    const { getByText } = await renderWithProviders(<StudyScreen />)
+    await flushTimers()
+
+    expect(getByText('BLUR_TARGET:/study')).toBeTruthy()
   })
 
   test('renders the first scene by default', async () => {

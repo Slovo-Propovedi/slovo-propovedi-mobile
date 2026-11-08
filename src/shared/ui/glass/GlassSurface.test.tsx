@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react-native'
-import { Platform, StyleSheet } from 'react-native'
+import { type ComponentRef, createRef, type RefObject } from 'react'
+import { Platform, StyleSheet, type View } from 'react-native'
 import { getGlassFill, GLASS } from './glass'
 import { GlassSurface } from './GlassSurface'
 
@@ -9,9 +10,13 @@ jest.mock('expo-linear-gradient', () => {
   return { LinearGradient: (props: Record<string, unknown>) => <View {...props} /> }
 })
 
-const setPlatform = (os: 'android' | 'ios' | 'web') => {
+const setPlatform = (os: 'android' | 'ios' | 'web', version?: number) => {
   Object.defineProperty(Platform, 'OS', { configurable: true, value: os })
+  Object.defineProperty(Platform, 'Version', { configurable: true, value: version })
 }
+
+const createBlurTarget = () =>
+  createRef<ComponentRef<typeof View>>() as RefObject<ComponentRef<typeof View> | null>
 
 const findBlur = () =>
   screen.root?.queryAll(instance => instance.props.intensity === GLASS.blur.intensity)
@@ -87,5 +92,37 @@ describe('<GlassSurface>', () => {
     expect(StyleSheet.flatten(sheen?.[0]?.props.style)).toMatchObject({
       height: GLASS.android.sheen.heightPercent,
     })
+  })
+
+  test('android 12+ blurs the registered page backdrop with dimezis', async () => {
+    setPlatform('android', 35)
+    const blurTarget = createBlurTarget()
+
+    await render(<GlassSurface isLight radius={28} blurTarget={blurTarget} />)
+
+    const blurs = findBlur()
+
+    expect(blurs?.[0]?.props.blurMethod).toBe(GLASS.blur.androidMethod)
+    expect(blurs?.[0]?.props.blurTarget).toBe(blurTarget)
+  })
+
+  test('android 12+ keeps the tint while no page target is registered yet', async () => {
+    setPlatform('android', 35)
+
+    await render(<GlassSurface isLight radius={28} />)
+
+    const blurs = findBlur()
+
+    expect(blurs?.[0]?.props.blurMethod).toBeUndefined()
+    expect(blurs?.[0]?.props.blurTarget).toBeUndefined()
+  })
+
+  test('android below 12 never requests the dimezis blur even with a target', async () => {
+    setPlatform('android', 30)
+
+    await render(<GlassSurface isLight radius={28} blurTarget={createBlurTarget()} />)
+
+    expect(findBlur()?.[0]?.props.blurMethod).toBeUndefined()
+    expect(findBlur()?.[0]?.props.blurTarget).toBeUndefined()
   })
 })

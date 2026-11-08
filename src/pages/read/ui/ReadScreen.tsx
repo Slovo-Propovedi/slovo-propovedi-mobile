@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { HelpHeaderButton, useTourScrollable } from 'features/onboarding'
 import { useFeatureFlag } from 'entities/feature-flags'
+import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { NotesForPreachersBooksSlider } from './NotesForPreachersBooksSlider'
 import { TopicalAndThematicBooksSlider } from './TopicalAndThematicBooksSlider'
@@ -17,19 +18,21 @@ export const ReadScreen = () => {
   if (!hasReadAccess) return null
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
-      <View style={styles.topRow}>
-        <HelpHeaderButton />
-      </View>
-      <ScrollView
-        ref={tourScrollableRef}
-        style={[styles.content, { backgroundColor: currentTheme.background }]}
-      >
-        <NotesForPreachersBooksSlider onboardingTargetId='read.notes' />
-        <VerseByVerseBooksSlider onboardingTargetId='read.verse-by-verse' />
-        <TopicalAndThematicBooksSlider onboardingTargetId='read.topical' />
-      </ScrollView>
-    </SafeAreaView>
+    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.read}>
+      <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
+        <View style={styles.topRow}>
+          <HelpHeaderButton />
+        </View>
+        <ScrollView
+          ref={tourScrollableRef}
+          style={[styles.content, { backgroundColor: currentTheme.background }]}
+        >
+          <NotesForPreachersBooksSlider onboardingTargetId='read.notes' />
+          <VerseByVerseBooksSlider onboardingTargetId='read.verse-by-verse' />
+          <TopicalAndThematicBooksSlider onboardingTargetId='read.topical' />
+        </ScrollView>
+      </SafeAreaView>
+    </BlurBackdrop>
   )
 }
 

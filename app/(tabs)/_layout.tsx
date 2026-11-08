@@ -4,6 +4,7 @@ import { PlaylistSheetMenu } from 'pages/playlist'
 import { ExpandablePlayer } from 'widgets/expandable-player'
 import { SearchIsland } from 'widgets/search-island'
 import { CustomTabBar } from 'widgets/tab-bar'
+import { BlurTargetProvider } from 'shared/ui'
 import { COLORS, INDENTS, useTheme } from 'shared/ui/theme'
 
 /**
@@ -24,18 +25,20 @@ const Layout = () => {
   const { currentTheme } = useTheme()
 
   return (
-    <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
-      <Tabs screenOptions={{ headerShown: false }} tabBar={props => <CustomTabBar {...props} />}>
-        <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
-        <Tabs.Screen name='read' options={{ title: 'Читать' }} />
-        <Tabs.Screen name='study' options={{ title: 'Учиться' }} />
-        <Tabs.Screen name='more' options={{ title: 'Ещё' }} />
-      </Tabs>
-      {/* Mounted once for every tab screen (including the listen stack's
-          playlist screens) so the open search field follows the user. */}
-      <SearchIsland />
-      <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
-    </View>
+    <BlurTargetProvider>
+      <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
+        <Tabs screenOptions={{ headerShown: false }} tabBar={props => <CustomTabBar {...props} />}>
+          <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
+          <Tabs.Screen name='read' options={{ title: 'Читать' }} />
+          <Tabs.Screen name='study' options={{ title: 'Учиться' }} />
+          <Tabs.Screen name='more' options={{ title: 'Ещё' }} />
+        </Tabs>
+        {/* Mounted once for every tab screen (including the listen stack's
+            playlist screens) so the open search field follows the user. */}
+        <SearchIsland />
+        <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
+      </View>
+    </BlurTargetProvider>
   )
 }
 export default Layout

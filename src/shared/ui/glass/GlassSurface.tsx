@@ -1,6 +1,9 @@
 import { BlurView } from 'expo-blur'
 import { LinearGradient } from 'expo-linear-gradient'
+import { type ComponentRef, type RefObject } from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
+import { useGlassBlurTarget } from './blurTargetContext'
+import { supportsAndroidBackdropBlur } from './blurTargets'
 import {
   createGlassStyles,
   getGlassFill,
@@ -25,16 +28,32 @@ import {
  *   clean. The two layers are independent progressive enhancements: an engine
  *   without `url()` keeps the plain blur, and one without mask support falls
  *   back to the previous full-surface refraction.
- * - Android: real backdrop blur is impossible here (see docs/debt.md); the
- *   surface gains depth from a top-edge sheen plus a slightly denser fill.
+ * - Android 12+: real dimezis backdrop blur of the page target published by
+ *   `BlurTargetProvider`; without a target (page not laid out, or Android
+ *   11 and below) the surface keeps the tint plus the top-edge sheen.
  * @param root0 - Glass surface props.
+ * @param root0.blurTarget - Explicit backdrop override; defaults to the provider's target.
  * @param root0.isLight - Active theme; selects the fill, rim and blur tint.
  * @param root0.radius - Corner radius of the hairline rim; matches the host shape.
  */
-export const GlassSurface = ({ isLight, radius }: { isLight: boolean; radius: number }) => {
+export const GlassSurface = ({
+  blurTarget,
+  isLight,
+  radius,
+}: {
+  blurTarget?: null | RefObject<ComponentRef<typeof View> | null>
+  isLight: boolean
+  radius: number
+}) => {
   const glass = createGlassStyles(isLight, radius)
   const isWeb = Platform.OS === 'web'
   const isAndroid = Platform.OS === 'android'
+  const contextTarget = useGlassBlurTarget()
+  const target = blurTarget ?? contextTarget
+  // Never ask expo-blur for a native blur without a target: the native view
+  // would silently fall back and log a warning on every mount.
+  const realBlurTarget =
+    isAndroid && supportsAndroidBackdropBlur() && target !== null ? target : null
 
   return (
     <View
@@ -50,6 +69,8 @@ export const GlassSurface = ({ isLight, radius }: { isLight: boolean; radius: nu
         <BlurView
           tint={glass.blur.tint}
           intensity={glass.blur.intensity}
+          blurTarget={realBlurTarget ?? undefined}
+          blurMethod={realBlurTarget ? GLASS.blur.androidMethod : undefined}
           style={[
             StyleSheet.absoluteFill,
             isAndroid

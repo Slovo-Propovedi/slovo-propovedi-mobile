@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { type ReactNode } from 'react'
 import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { SearchIsland } from 'widgets/search-island'
@@ -17,6 +18,21 @@ import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
 import { ListenScreen } from './ListenScreen'
 
 const mockPush = jest.fn()
+
+jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
+  const { Text } = jest.requireActual('react-native')
+
+  return {
+    ...actual,
+    BlurBackdrop: ({ children, routeKey }: { children: ReactNode; routeKey: string }) => (
+      <>
+        <Text>{`BLUR_TARGET:${routeKey}`}</Text>
+        {children}
+      </>
+    ),
+  }
+})
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
@@ -213,6 +229,12 @@ describe('<ListenScreen>', () => {
 
     expect(getByText(SECTIONS_MOCK)).toBeTruthy()
     expect(queryByPlaceholderText(SEARCH_PLACEHOLDER)).toBeNull()
+  })
+
+  test('exposes the page content as the /listen blur backdrop', async () => {
+    const { getByText } = await renderWithProviders(<ListenScreen />, {})
+
+    expect(getByText('BLUR_TARGET:/listen')).toBeTruthy()
   })
 
   test('renders the my-playlists section title', async () => {

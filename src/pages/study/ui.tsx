@@ -5,6 +5,7 @@ import { TabView } from 'react-native-tab-view'
 import { HelpHeaderButton, OnboardingTarget } from 'features/onboarding'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { getRenderTabBar } from 'shared/lib/tab-bar'
+import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { renderScene } from './scene'
 
@@ -27,21 +28,23 @@ export const StudyScreen = () => {
   })
 
   return (
-    <SafeAreaView style={{ backgroundColor: currentTheme.background, flex: 1 }}>
-      <View style={styles.topRow}>
-        <HelpHeaderButton />
-      </View>
-      <View style={{ backgroundColor: currentTheme.background, flex: 1, paddingBottom: 100 }}>
-        <OnboardingTarget id='study.tabs' style={{ flex: 1 }}>
-          <TabView
-            onIndexChange={setIndex}
-            renderScene={renderScene}
-            renderTabBar={renderTabBar}
-            navigationState={{ index, routes }}
-          />
-        </OnboardingTarget>
-      </View>
-    </SafeAreaView>
+    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.study}>
+      <SafeAreaView style={{ backgroundColor: currentTheme.background, flex: 1 }}>
+        <View style={styles.topRow}>
+          <HelpHeaderButton />
+        </View>
+        <View style={{ backgroundColor: currentTheme.background, flex: 1, paddingBottom: 100 }}>
+          <OnboardingTarget id='study.tabs' style={{ flex: 1 }}>
+            <TabView
+              onIndexChange={setIndex}
+              renderScene={renderScene}
+              renderTabBar={renderTabBar}
+              navigationState={{ index, routes }}
+            />
+          </OnboardingTarget>
+        </View>
+      </SafeAreaView>
+    </BlurBackdrop>
   )
 }
 
