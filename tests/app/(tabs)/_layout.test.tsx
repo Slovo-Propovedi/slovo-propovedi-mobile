@@ -6,10 +6,7 @@ jest.mock('expo-router', () => {
   const { Text } = jest.requireActual('react-native')
 
   const Screen = ({ name }: { name: string }) => <Text>{name}</Text>
-  const Tabs = ({
-    children,
-    tabBar,
-  }: PropsWithChildren<{ tabBar?: () => ReactNode }>) => (
+  const Tabs = ({ children, tabBar }: PropsWithChildren<{ tabBar?: () => ReactNode }>) => (
     <>
       {children}
       {tabBar?.()}
