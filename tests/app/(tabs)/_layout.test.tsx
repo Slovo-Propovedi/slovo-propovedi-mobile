@@ -1,29 +1,48 @@
-import { type PropsWithChildren } from 'react'
+import { type PropsWithChildren, type ReactNode } from 'react'
 import { renderWithProviders } from 'shared/mocks'
 import Layout from '../../../app/(tabs)/_layout'
 
 jest.mock('expo-router', () => {
-  const Screen = () => null
+  const { Text } = jest.requireActual('react-native')
+
+  const Screen = ({ name }: { name: string }) => <Text>{name}</Text>
+  const Tabs = ({
+    children,
+    tabBar,
+  }: PropsWithChildren<{ tabBar?: () => ReactNode }>) => (
+    <>
+      {children}
+      {tabBar?.()}
+    </>
+  )
 
   return {
-    Tabs: Object.assign(({ children }: PropsWithChildren) => children, { Screen }),
+    Tabs: Object.assign(Tabs, { Screen }),
+    usePathname: jest.fn(() => '/listen'),
   }
 })
 
 jest.mock('pages/playlist', () => ({ PlaylistSheetMenu: () => null }))
-jest.mock('widgets/expandable-player', () => ({ ExpandablePlayer: () => null }))
-jest.mock('widgets/tab-bar', () => ({ CustomTabBar: () => null }))
-jest.mock('widgets/search-island', () => {
+jest.mock('widgets/expandable-player', () => {
   const { Text } = jest.requireActual('react-native')
 
-  return { SearchIsland: () => <Text>SEARCH_ISLAND</Text> }
+  return { ExpandablePlayer: () => <Text>PLAYER</Text> }
+})
+jest.mock('widgets/tab-bar', () => {
+  const { Text } = jest.requireActual('react-native')
+
+  return { CustomTabBar: () => <Text>TAB_BAR</Text> }
 })
 
 describe('(tabs) layout', () => {
-  test('mounts the global search island once for every tab screen', async () => {
+  test('declares the four tab screens and mounts the floating chrome once', async () => {
     const { getAllByText, getByText } = await renderWithProviders(<Layout />)
 
-    expect(getByText('SEARCH_ISLAND')).toBeTruthy()
-    expect(getAllByText('SEARCH_ISLAND')).toHaveLength(1)
+    expect(getByText('listen')).toBeTruthy()
+    expect(getByText('read')).toBeTruthy()
+    expect(getByText('study')).toBeTruthy()
+    expect(getByText('more')).toBeTruthy()
+    expect(getAllByText('TAB_BAR')).toHaveLength(1)
+    expect(getAllByText('PLAYER')).toHaveLength(1)
   })
 })
