@@ -10,6 +10,7 @@ import { useHistoryProgressMap } from 'entities/listening-history'
 import { type PlaylistData } from 'entities/playlist'
 import { useNavigationGuard } from 'shared/routing'
 import { useHeaderTitle } from 'shared/routing/useHeaderTitle'
+import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
 import { parseSearchResultsParams } from '../lib/parseSearchResultsParams'
 import { buildSearchResultsTitle } from '../lib/searchResultsTitle'
 import { useSearchResults } from '../lib/useSearchResults'
@@ -62,11 +63,16 @@ export const SearchResultsScreen = () => {
 
   if (!parsedType) return null
 
-  if (isLoading) return <SearchGroupedResults.GroupSkeleton />
+  if (isLoading)
+    return (
+      <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.searchResults}>
+        <SearchGroupedResults.GroupSkeleton />
+      </BlurBackdrop>
+    )
 
   if (parsedType === 'sermons')
     return (
-      <>
+      <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.searchResults}>
         <ResultsList
           data={sermons}
           keyExtractor={sermon => sermon.id}
@@ -79,25 +85,29 @@ export const SearchResultsScreen = () => {
           )}
         />
         {modal}
-      </>
+      </BlurBackdrop>
     )
 
   if (parsedType === 'playlists')
     return (
-      <ResultsList
-        data={playlists}
-        keyExtractor={playlist => playlist.id}
-        renderItem={({ item }) => (
-          <SearchPlaylistRow playlist={item} onPress={handlePlaylistPress} />
-        )}
-      />
+      <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.searchResults}>
+        <ResultsList
+          data={playlists}
+          keyExtractor={playlist => playlist.id}
+          renderItem={({ item }) => (
+            <SearchPlaylistRow playlist={item} onPress={handlePlaylistPress} />
+          )}
+        />
+      </BlurBackdrop>
     )
 
   return (
-    <ResultsList
-      data={preachers}
-      keyExtractor={artist => artist}
-      renderItem={({ item }) => <SearchPreacherRow artist={item} onPress={handlePreacherPress} />}
-    />
+    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.searchResults}>
+      <ResultsList
+        data={preachers}
+        keyExtractor={artist => artist}
+        renderItem={({ item }) => <SearchPreacherRow artist={item} onPress={handlePreacherPress} />}
+      />
+    </BlurBackdrop>
   )
 }

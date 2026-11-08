@@ -3,7 +3,13 @@ import { useRouter } from 'expo-router'
 import { View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
+import {
+  BLUR_TARGET_ROUTES,
+  BlurBackdrop,
+  createRefreshControl,
+  EmptyState,
+  PullToRefresh,
+} from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { type AdminSectionListItem } from '../lib/sectionListItem'
@@ -44,42 +50,44 @@ export const AdminSectionsScreen = () => {
   )
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: currentTheme.background, paddingTop: insets.top },
-      ]}
-    >
-      <PullToRefresh onRefresh={reload} refreshing={isRefreshing}>
-        <DraggableFlatList
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-          data={isLoading ? [] : sections}
-          containerStyle={styles.listContainer}
-          onDragEnd={({ data }) => void reorder(data)}
-          refreshControl={createRefreshControl(isRefreshing, reload, currentTheme.primary)}
-          ListEmptyComponent={
-            isLoading ? <SectionSkeletonList /> : <EmptyState message='Разделов пока нет' />
-          }
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: tabBarHeight + INDENTS.low },
-          ]}
-          ListHeaderComponent={
-            <AdminSectionsHeader
-              count={sections.length}
-              onCreate={() => router.push(CREATE_ROUTE)}
-            />
-          }
-          ListFooterComponent={
-            isReordering ? (
-              <View style={styles.reordering}>
-                <AdminSectionRow.Skeleton />
-              </View>
-            ) : undefined
-          }
-        />
-      </PullToRefresh>
-    </View>
+    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.adminSections}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+        ]}
+      >
+        <PullToRefresh onRefresh={reload} refreshing={isRefreshing}>
+          <DraggableFlatList
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+            data={isLoading ? [] : sections}
+            containerStyle={styles.listContainer}
+            onDragEnd={({ data }) => void reorder(data)}
+            refreshControl={createRefreshControl(isRefreshing, reload, currentTheme.primary)}
+            ListEmptyComponent={
+              isLoading ? <SectionSkeletonList /> : <EmptyState message='Разделов пока нет' />
+            }
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: tabBarHeight + INDENTS.low },
+            ]}
+            ListHeaderComponent={
+              <AdminSectionsHeader
+                count={sections.length}
+                onCreate={() => router.push(CREATE_ROUTE)}
+              />
+            }
+            ListFooterComponent={
+              isReordering ? (
+                <View style={styles.reordering}>
+                  <AdminSectionRow.Skeleton />
+                </View>
+              ) : undefined
+            }
+          />
+        </PullToRefresh>
+      </View>
+    </BlurBackdrop>
   )
 }

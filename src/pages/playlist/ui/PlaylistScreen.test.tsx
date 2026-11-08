@@ -134,8 +134,9 @@ jest.mock('../lib/PlaylistOfflineService', () => ({
 }))
 
 jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
   const { View } = jest.requireActual('react-native')
-  return { CoverImage: () => <View /> }
+  return { ...actual, CoverImage: () => <View /> }
 })
 
 jest.mock('shared/ui/menu', () => {
@@ -249,6 +250,7 @@ jest.mock('react-native-reanimated', () => {
       sin: () => 'sin',
     },
     interpolate: (p: number) => p,
+    makeMutable: <T,>(init: T) => ({ value: init }),
     ReduceMotion: { Always: 'always', Never: 'never', System: 'system' },
     useAnimatedProps: (fn: unknown) => (typeof fn === 'function' ? fn() : {}),
     useAnimatedReaction: () => {},

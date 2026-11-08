@@ -3,7 +3,13 @@ import { useRouter } from 'expo-router'
 import { FlatList, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRequireAdminRole } from 'entities/auth'
-import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
+import {
+  BLUR_TARGET_ROUTES,
+  BlurBackdrop,
+  createRefreshControl,
+  EmptyState,
+  PullToRefresh,
+} from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminFlags } from '../lib/useAdminFlags'
@@ -39,38 +45,42 @@ export const AdminFlagsScreen = () => {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: currentTheme.background, paddingTop: insets.top },
-      ]}
-    >
-      <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
-        <FlatList
-          data={isLoading ? [] : flags}
-          keyExtractor={item => item.id}
-          refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
-          renderItem={({ item }) => <AdminFlagRow item={item} onPress={() => openFlag(item.id)} />}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: tabBarHeight + INDENTS.low },
-          ]}
-          ListHeaderComponent={
-            <View style={styles.header}>
-              <AdminFlagsHeader onCreate={() => router.push(CREATE_ROUTE)} />
-            </View>
-          }
-          ListEmptyComponent={
-            isLoading ? (
-              <FlagSkeletonList />
-            ) : isError ? (
-              <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
-            ) : (
-              <EmptyState message={EMPTY_MESSAGE} />
-            )
-          }
-        />
-      </PullToRefresh>
-    </View>
+    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.adminFlags}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+        ]}
+      >
+        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+          <FlatList
+            data={isLoading ? [] : flags}
+            keyExtractor={item => item.id}
+            refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+            renderItem={({ item }) => (
+              <AdminFlagRow item={item} onPress={() => openFlag(item.id)} />
+            )}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: tabBarHeight + INDENTS.low },
+            ]}
+            ListHeaderComponent={
+              <View style={styles.header}>
+                <AdminFlagsHeader onCreate={() => router.push(CREATE_ROUTE)} />
+              </View>
+            }
+            ListEmptyComponent={
+              isLoading ? (
+                <FlagSkeletonList />
+              ) : isError ? (
+                <Text style={[styles.error, { color: currentTheme.textMuted }]}>{LOAD_ERROR}</Text>
+              ) : (
+                <EmptyState message={EMPTY_MESSAGE} />
+              )
+            }
+          />
+        </PullToRefresh>
+      </View>
+    </BlurBackdrop>
   )
 }
