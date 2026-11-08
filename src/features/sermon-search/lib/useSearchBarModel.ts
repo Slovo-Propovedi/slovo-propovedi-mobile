@@ -58,6 +58,7 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   // Closing clears the local field too: a reopen must start with an empty input
   // even though the bar stays mounted for the island's exit animation.
   useResetInputOnClose(isSearchOpen, () => {
+    voiceInput.stopListening()
     setInputValue('')
     setHasSelectedSuggestion(false)
   })
@@ -77,6 +78,8 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   }
 
   const handleClearQuery = () => {
+    // The mic may still be live behind an empty-then-cleared field.
+    voiceInput.stopListening()
     setInputValue('')
     setHasSelectedSuggestion(false)
     void resetSearchResultsAction()
@@ -94,12 +97,16 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
       return
     }
 
+    voiceInput.stopListening()
     inputRef.current?.blur()
     Keyboard.dismiss()
     void closeSearchAction()
   }
 
   const handleFocusChange = (focused: boolean) => {
+    // Blurring the field (tap outside, tab switch, keyboard dismissal) ends the
+    // voice session instead of leaving the browser microphone open.
+    if (!focused) voiceInput.stopListening()
     setIsFocused(focused)
     onFocusChange?.(focused)
   }

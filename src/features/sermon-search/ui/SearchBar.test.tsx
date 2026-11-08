@@ -17,6 +17,7 @@ import {
   typeSearchInput,
 } from '../model'
 import { distinctValuesAtom } from '../model-distinctValues'
+import { closeSearch } from '../model-session'
 import { SearchBar } from './SearchBar'
 
 // Jest hoists mock factories above imports, so the factory may only reference
@@ -476,10 +477,37 @@ describe('<SearchBar>', () => {
   })
 })
 
+const RECOGNIZED_PHRASE = 'привет мир'
+
+const speechInstances: WebSpeechRecognitionStub[] = []
+
+const buildFinalSpeechResult = () => ({
+  resultIndex: 0,
+  results: [Object.assign([{ transcript: RECOGNIZED_PHRASE }], { isFinal: true })],
+})
+
+class WebSpeechRecognitionStub {
+  public constructor() {
+    speechInstances.push(this)
+  }
+
+  public abort = jest.fn()
+  public continuous = true
+  public interimResults = true
+  public lang = ''
+  public maxAlternatives = 3
+  public onend: (() => void) | null = null
+  public onerror: ((event: { error?: string }) => void) | null = null
+  public onresult: ((event: unknown) => void) | null = null
+  public start = jest.fn()
+  public stop = jest.fn()
+}
+
 describe('<SearchBar> voice input availability', () => {
   beforeEach(() => {
     mockedShowInfo.mockClear()
     mockedStartActivityAsync.mockClear()
+    speechInstances.length = 0
   })
 
   test('renders the mic while the query is empty on web without the Speech Recognition API', async () => {
@@ -517,27 +545,81 @@ describe('<SearchBar> voice input availability', () => {
     const dom = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const start = jest.fn()
-      class FakeRecognition {
-        public abort = jest.fn()
-        public continuous = false
-        public interimResults = false
-        public lang = ''
-        public maxAlternatives = 1
-        public onend: (() => void) | null = null
-        public onerror: ((event: { error?: string }) => void) | null = null
-        public onresult: ((event: { results: unknown }) => void) | null = null
-        public start = start
-        public stop = jest.fn()
-      }
-      Reflect.set(dom.window, 'SpeechRecognition', FakeRecognition)
+      Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
 
       const { getByLabelText } = await renderWithProviders(<SearchBar />)
 
       await fireEvent.press(getByLabelText(MIC_LABEL))
 
-      expect(start).toHaveBeenCalledTimes(1)
+      expect(speechInstances).toHaveLength(1)
+      expect(speechInstances[0]?.start).toHaveBeenCalledTimes(1)
       expect(mockedShowInfo).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('writes the recognized phrase into the query through the local input path', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
+        ctx,
+      })
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+      await act(async () => {
+        speechInstances[0]?.onresult?.(buildFinalSpeechResult())
+      })
+
+      expect(getByPlaceholderText(SEARCH_PLACEHOLDER).props.value).toBe(RECOGNIZED_PHRASE)
+      expect(ctx.get(searchQueryAtom)).toBe(RECOGNIZED_PHRASE)
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('aborts the live recognizer when the search closes', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+      await act(async () => {
+        await closeSearch(ctx)
+      })
+
+      expect(speechInstances[0]?.abort).toHaveBeenCalledTimes(1)
+    } finally {
+      restorePlatform.restore()
+      dom.restore()
+    }
+  })
+
+  test('aborts the live recognizer when the field blurs', async () => {
+    const dom = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
+      const ctx = createCtx()
+      isSearchOpenAtom(ctx, true)
+      const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
+        ctx,
+      })
+
+      await fireEvent.press(getByLabelText(MIC_LABEL))
+      await fireEvent(getByPlaceholderText(SEARCH_PLACEHOLDER), 'blur')
+
+      expect(speechInstances[0]?.abort).toHaveBeenCalledTimes(1)
     } finally {
       restorePlatform.restore()
       dom.restore()
