@@ -71,7 +71,6 @@ export const ListenScreen = () => {
   }, [authStatus, restore])
 
   const canOpenAdminPanel = authStatus === 'authenticated' && canAccessAdmin(authUser)
-  const showAdminButton = canOpenAdminPanel && !isSearchOpen
 
   return (
     <SafeAreaView
@@ -107,7 +106,7 @@ export const ListenScreen = () => {
               { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
             ]}
           >
-            {!isSearchOpen && <ListenTopRow showAdminButton={showAdminButton} />}
+            <ListenTopRow showAdminButton={canOpenAdminPanel} />
             <DynamicSectionsSlider onboardingTargetId='listen.sections' />
             <MyPlaylistsSlider
               onboardingTargetId='listen.my-playlists'

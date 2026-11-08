@@ -445,26 +445,15 @@ describe('<ListenScreen>', () => {
     expect(hasScrollAncestor(getByLabelText(ADMIN_BUTTON_LABEL))).toBe(true)
   })
 
-  test('hides the admin button while search is open and active', async () => {
-    const ctx = createCtx()
-    setAuthenticatedUser(ctx, 'admin')
-    isSearchOpenAtom(ctx, true)
-    searchQueryAtom(ctx, 'вера')
-    searchResultsAtom(ctx, sermons)
-    isSearchingAtom(ctx, false)
-
-    const { queryByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
-
-    expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
-  })
-
-  test('hides the admin button while search is open but not active', async () => {
+  test('keeps the top row admin button while search is open with an empty query', async () => {
     const ctx = createCtx()
     setAuthenticatedUser(ctx, 'admin')
     isSearchOpenAtom(ctx, true)
 
-    const { queryByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
+    const { getByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, { ctx })
 
-    expect(queryByLabelText(ADMIN_BUTTON_LABEL)).toBeNull()
+    // Search lives in the bottom island now, so the top row is not replaced by it.
+    expect(getByLabelText(ADMIN_BUTTON_LABEL)).toBeTruthy()
+    expect(hasScrollAncestor(getByLabelText(ADMIN_BUTTON_LABEL))).toBe(true)
   })
 })
