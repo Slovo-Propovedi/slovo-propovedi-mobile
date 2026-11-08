@@ -31,7 +31,7 @@ describe('<GlassSurface>', () => {
     })
   })
 
-  test('web layers an SVG refraction under the readable base blur', async () => {
+  test('web layers a masked edge-refraction ring over the readable base blur', async () => {
     setPlatform('web')
     await render(<GlassSurface isLight radius={28} />)
 
@@ -42,17 +42,30 @@ describe('<GlassSurface>', () => {
         instance => StyleSheet.flatten(instance.props.style)?.backdropFilter === filter,
       ) ?? []
 
-    const refractionLayers = layersWithFilter(GLASS.web.refractionFilter)
     const baseLayers = layersWithFilter(GLASS.web.backdropFilter)
+    const refractionLayers = layersWithFilter(GLASS.web.refractionFilter)
 
-    expect(refractionLayers).toHaveLength(1)
     expect(baseLayers).toHaveLength(1)
-    // The base layer owns the fill: the refraction layer must stay fill-free so
-    // it cannot cover the blurred backdrop underneath it.
-    expect(StyleSheet.flatten(refractionLayers[0]?.props.style)?.backgroundColor).toBeUndefined()
+    expect(refractionLayers).toHaveLength(1)
+
+    // The base layer owns the fill and the shallow blur; the refraction ring is
+    // above it so the displacement bends the already-blurred backdrop. The pair
+    // stays split, keeping the plain-blur fallback when `url()` is unsupported.
     expect(StyleSheet.flatten(baseLayers[0]?.props.style)).toMatchObject({
       backgroundColor: getGlassFill(true),
     })
+    expect(StyleSheet.flatten(refractionLayers[0]?.props.style)).toMatchObject({
+      maskComposite: 'add',
+      maskImage: expect.stringContaining('transparent 10px'),
+    })
+    expect(StyleSheet.flatten(refractionLayers[0]?.props.style).backgroundColor).toBeUndefined()
+
+    const orderedFilters =
+      screen.root
+        ?.queryAll(instance => StyleSheet.flatten(instance.props.style)?.backdropFilter)
+        .map(instance => StyleSheet.flatten(instance.props.style).backdropFilter) ?? []
+
+    expect(orderedFilters).toEqual([GLASS.web.backdropFilter, GLASS.web.refractionFilter])
   })
 
   test('android substitutes depth cues for the impossible backdrop blur', async () => {

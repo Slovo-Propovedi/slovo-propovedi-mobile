@@ -31,22 +31,35 @@ describe('glass recipe', () => {
     expect(GLASS.shadow.boxShadow).toBe('0px 5px 14px rgba(0, 0, 0, 0.25)')
   })
 
-  test('web: uses a moderate blur that keeps the background readable like Apple Music', () => {
+  test('web: keeps the base blur shallow so the glass center stays readable', () => {
     // expo-blur web caps the backdrop at `saturate(180%) blur(intensity * 0.2px)`
     // and cannot express brightness, so the web layer bypasses it with an
-    // explicit filter shared by every surface.
-    expect(GLASS.web.backdropFilter).toBe('blur(6px) saturate(180%) brightness(1.1)')
+    // explicit filter shared by every surface. 4px blurs mildly without turning
+    // the center into mush; the edge ring carries the refraction instead.
+    expect(GLASS.web.backdropFilter).toBe('blur(4px) saturate(180%) brightness(1.1)')
     expect(getWebGlassStyle()).toEqual({
-      backdropFilter: 'blur(6px) saturate(180%) brightness(1.1)',
+      backdropFilter: 'blur(4px) saturate(180%) brightness(1.1)',
     })
   })
 
-  test('web: adds an SVG refraction as a progressive enhancement', () => {
-    // The refraction layer carries ONLY the filter reference: it sits under the
-    // base-blur layer, so engines that drop `url()` in `backdrop-filter` still
-    // show the blur instead of losing the whole glass effect.
+  test('web: confines the strong refraction to an edge ring mask', () => {
+    // The SVG filter is declared once in public/index.html with the stronger
+    // displacement scale. The CSS mask keeps it outside the center: four edge
+    // ramps (10px) are additive, so the middle of the island stays clean while
+    // the perimeter bends the backdrop like thick glass.
+    expect(GLASS.web.edgeRingWidth).toBe(10)
     expect(GLASS.web.refractionFilter).toBe('url(#sp-glass-refraction)')
-    expect(getWebRefractionStyle()).toEqual({ backdropFilter: 'url(#sp-glass-refraction)' })
+
+    const style = getWebRefractionStyle()
+
+    expect(style.backdropFilter).toBe('url(#sp-glass-refraction)')
+    expect(style.maskImage).toContain('linear-gradient(to right, #000 0, transparent 10px)')
+    expect(style.maskImage).toContain('linear-gradient(to left, #000 0, transparent 10px)')
+    expect(style.maskImage).toContain('linear-gradient(to bottom, #000 0, transparent 10px)')
+    expect(style.maskImage).toContain('linear-gradient(to top, #000 0, transparent 10px)')
+    expect(style.WebkitMaskImage).toBe(style.maskImage)
+    expect(style.maskComposite).toBe('add')
+    expect(style.WebkitMaskComposite).toBe('source-over')
   })
 
   test('android: adds a top-edge sheen and a stronger fill instead of a blur', () => {

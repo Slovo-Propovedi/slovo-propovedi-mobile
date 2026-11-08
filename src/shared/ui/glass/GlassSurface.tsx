@@ -19,10 +19,12 @@ import {
  *
  * Platform treatment:
  * - iOS: native `BlurView` (tint light/dark), already refractive.
- * - Web: bypasses `BlurView` for a moderate `backdrop-filter` the background
- *   stays readable through. An SVG refraction sits in its own layer beneath
- *   the blur as progressive enhancement: engines without `url()` support in
- *   `backdrop-filter` drop only that layer and keep the plain blur.
+ * - Web: bypasses `BlurView` for a shallow `backdrop-filter` that keeps the
+ *   background readable. A masked edge ring above it carries the strong SVG
+ *   displacement, so only the rim bends like thick glass while the center stays
+ *   clean. The two layers are independent progressive enhancements: an engine
+ *   without `url()` keeps the plain blur, and one without mask support falls
+ *   back to the previous full-surface refraction.
  * - Android: real backdrop blur is impossible here (see docs/debt.md); the
  *   surface gains depth from a top-edge sheen plus a slightly denser fill.
  * @param root0 - Glass surface props.
@@ -41,8 +43,8 @@ export const GlassSurface = ({ isLight, radius }: { isLight: boolean; radius: nu
     >
       {isWeb ? (
         <>
-          <View style={[StyleSheet.absoluteFill, getWebRefractionStyle()]} />
           <View style={[StyleSheet.absoluteFill, getWebGlassStyle(), glass.fill]} />
+          <View style={[StyleSheet.absoluteFill, getWebRefractionStyle()]} />
         </>
       ) : (
         <BlurView
