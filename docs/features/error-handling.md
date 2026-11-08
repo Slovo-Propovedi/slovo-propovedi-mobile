@@ -60,23 +60,23 @@
 импортируют `reportError` напрямую из `shared/model/error-dialog` (deep import) — осознанно,
 чтобы избежать barrel-циклов с `shared/model`:
 
-| Место                                                               | Сообщение                                                      |
-| ------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `entities/auth/lib/restoreSession.ts`                               | Не удалось проверить сессию администратора — только для неожиданных HTTP-ошибок (5xx и т. п.) |
-| `entities/listening-history/lib/loadHistory.ts`                     | Не удалось загрузить историю прослушивания                     |
-| `entities/listening-history/lib/historyStorage.ts`                  | Не удалось сохранить историю прослушивания                     |
-| `entities/player/lib/PlayerService/native/PlaybackController.ts`           | Ошибка при перемотке аудио                                     |
-| `entities/player/lib/initializePlayer.ts`                           | Ошибка при восстановлении плеера                               |
-| `entities/player/lib/PlayerService/native/AudioLoader.ts` (load)           | Ошибка при загрузке аудио                                      |
-| `entities/player/lib/PlayerService/native/AudioLoader.ts` (cache)          | Ошибка при проверке кэша аудио                                 |
-| `entities/player/lib/PlayerService/native/TrackAutoAdvanceService`         | Ошибка при автоматическом переходе / завершении записи истории |
-| `entities/player/lib/PlayerService/native/TrackAutoAdvanceService` (parse) | Не удалось прочитать данные проповеди/плейлиста из хранилища   |
-| `entities/player/lib/PlayerService/index.web.ts`                    | Ошибка при воспроизведении аудио                               |
-| `entities/player/lib/PlayerService/BackgroundCachingService`        | Ошибка при фоновом кэшировании аудио                           |
-| `entities/player/lib/PlayerService/native/LockScreenControls.ts`           | Не удалось обновить данные плеера на экране блокировки         |
-| `entities/player/ui/PlayerControls/PlayerControls.tsx`              | Ошибка при переключении воспроизведения                        |
-| `features/sermon-audio-import/lib/useAudioImport.ts`                | Сбой импорта аудио — только `upload-failed`/неожиданные (остальные коды — toast) |
-| `pages/admin-invidious/lib/useInvidiousInstancesAdmin.ts`           | Не удалось загрузить источники импорта / Не удалось сохранить источники импорта |
+| Место                                                                      | Сообщение                                                                                     |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `entities/auth/lib/restoreSession.ts`                                      | Не удалось проверить сессию администратора — только для неожиданных HTTP-ошибок (5xx и т. п.) |
+| `entities/listening-history/lib/loadHistory.ts`                            | Не удалось загрузить историю прослушивания                                                    |
+| `entities/listening-history/lib/historyStorage.ts`                         | Не удалось сохранить историю прослушивания                                                    |
+| `entities/player/lib/PlayerService/native/PlaybackController.ts`           | Ошибка при перемотке аудио                                                                    |
+| `entities/player/lib/initializePlayer.ts`                                  | Ошибка при восстановлении плеера                                                              |
+| `entities/player/lib/PlayerService/native/AudioLoader.ts` (load)           | Ошибка при загрузке аудио                                                                     |
+| `entities/player/lib/PlayerService/native/AudioLoader.ts` (cache)          | Ошибка при проверке кэша аудио                                                                |
+| `entities/player/lib/PlayerService/native/TrackAutoAdvanceService`         | Ошибка при автоматическом переходе / завершении записи истории                                |
+| `entities/player/lib/PlayerService/native/TrackAutoAdvanceService` (parse) | Не удалось прочитать данные проповеди/плейлиста из хранилища                                  |
+| `entities/player/lib/PlayerService/index.web.ts`                           | Ошибка при воспроизведении аудио                                                              |
+| `entities/player/lib/PlayerService/BackgroundCachingService`               | Ошибка при фоновом кэшировании аудио                                                          |
+| `entities/player/lib/PlayerService/native/LockScreenControls.ts`           | Не удалось обновить данные плеера на экране блокировки                                        |
+| `entities/player/ui/PlayerControls/PlayerControls.tsx`                     | Ошибка при переключении воспроизведения                                                       |
+| `features/sermon-audio-import/lib/useAudioImport.ts`                       | Сбой импорта аудио — только `upload-failed`/неожиданные (остальные коды — toast)              |
+| `pages/admin-invidious/lib/useInvidiousInstancesAdmin.ts`                  | Не удалось загрузить источники импорта / Не удалось сохранить источники импорта               |
 
 `entities/auth/lib/restoreSession.ts` — особый случай. Проверка профиля при восстановлении
 сессии различает **сетевой сбой** и HTTP-ошибку через `getHttpStatus` (см. `shared/lib/error-utils`):
@@ -105,7 +105,8 @@ TTF ~1.3 МБ) утекало как unhandled promise rejection, которое
 `GlobalErrorHandler`. Шрифт при этом всё равно загружался через `@font-face` CSS,
 поэтому модалка была шумом. Исправлено патчем expo-font (глотает async-отклонение);
 патч пересоздан против 58.0.9 после переписывания апстримом `FontLoader.web.js`
-и перецелен на 58.0.10 без изменения содержимого (исходники идентичны) —
+и перецелен на 58.0.10 без изменения содержимого (исходники идентичны), затем
+перецелен на 58.0.11 (применение к 58.0.11 прошло без конфликтов) —
 тот же `.catch(() => {})`, та же мотивация. См.
 [`decisions.md`](../decisions.md) → «Патч expo-font». Фильтрация в `GlobalErrorHandler`
 сознательно не добавлялась.
