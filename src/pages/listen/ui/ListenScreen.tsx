@@ -44,7 +44,7 @@ export const ListenScreen = () => {
   const openSearch = useOpenSearch()
   useSearchUrlSync()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const { onScroll } = useBarCollapseOnScroll({
+  const { onContentSizeChange, onScroll } = useBarCollapseOnScroll({
     isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
   })
   const [authStatus] = useAtom(authStatusAtom)
@@ -100,6 +100,7 @@ export const ListenScreen = () => {
             scrollEventThrottle={16}
             keyboardDismissMode='on-drag'
             keyboardShouldPersistTaps='handled'
+            onContentSizeChange={onContentSizeChange}
             style={[styles.scroll, { backgroundColor: currentTheme.background }]}
             refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
             contentContainerStyle={[

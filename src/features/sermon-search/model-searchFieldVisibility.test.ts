@@ -151,6 +151,22 @@ describe('single-tap search circle transitions', () => {
 })
 
 describe('openSearch', () => {
+  test('opening search from a collapsed bar never exposes an open+collapsed frame', async () => {
+    const ctx = createCtx()
+    isBarCollapsedAtom(ctx, true)
+    const fieldVisibility: boolean[] = []
+    ctx.subscribe(isSearchFieldVisibleAtom, isVisible => fieldVisibility.push(isVisible))
+
+    await openSearch(ctx)
+
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    // The field appears once. A frame where search is open but the bar is still
+    // collapsed would read as `visible: false` after the open write and hide
+    // the pill again — that is exactly the "first tap does nothing" report.
+    expect(fieldVisibility).toEqual([false, true])
+  })
+
   test('expands a collapsed bar so the search field becomes visible', async () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
