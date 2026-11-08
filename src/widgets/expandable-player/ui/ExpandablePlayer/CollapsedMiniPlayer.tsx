@@ -62,7 +62,7 @@ export const CollapsedMiniPlayer = ({
   const keyboardLiftStyle = useKeyboardLiftStyle()
 
   return (
-    <Animated.View style={[miniLayerStyle, keyboardLiftStyle]}>
+    <Animated.View pointerEvents='box-none' style={[miniLayerStyle, keyboardLiftStyle]}>
       <MiniPlayer
         audio={audio}
         playing={playing}

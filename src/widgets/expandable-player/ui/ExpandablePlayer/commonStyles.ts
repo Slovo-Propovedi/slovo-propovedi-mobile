@@ -32,11 +32,14 @@ export const createCommonStyles = (theme: ThemeColors) =>
 // Full-screen pass-through layer that carries the keyboard lift of the mini pill.
 // The pill's absolute geometry keeps resolving against the same full-window box;
 // the transform only shifts the rendered layer.
+// `box-none` must be a PROP on the Animated.View, never a style key: Reanimated
+// applies animated styles inline on web, and the browser drops the invalid CSS
+// value `pointer-events: box-none`, leaving the overlay pointer-events:auto and
+// swallowing every touch on the page (Issue: web UI unresponsive).
 export const miniLayerStyle = StyleSheet.create({
   layer: {
     bottom: 0,
     left: 0,
-    pointerEvents: 'box-none',
     position: 'absolute',
     right: 0,
     top: 0,
