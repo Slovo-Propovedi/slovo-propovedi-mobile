@@ -43,8 +43,8 @@ jest.mock('expo-router', () => ({
 const SEARCH_PLACEHOLDER = 'Поиск проповедей'
 const SEARCH_LABEL = 'Поиск'
 const CLOSE_LABEL = 'Закрыть поиск'
-const CIRCLE_ICON_SIZE = 28
-const PILL_ICON_SIZE = 24
+const CIRCLE_ICON_SIZE = 32
+const PILL_ICON_SIZE = 22
 
 const findShadows = () =>
   screen.root?.queryAll(

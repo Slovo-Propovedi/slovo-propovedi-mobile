@@ -12,8 +12,8 @@ import { INDENTS } from 'shared/ui/theme'
 
 // The magnifier is the one always-mounted piece of the morph: it is centred in
 // the closed circle and shrinks into the pill's left inset as the field opens.
-const ICON_SIZE_CIRCLE = 28
-const ICON_SIZE_PILL = 24
+const ICON_SIZE_CIRCLE = 32
+const ICON_SIZE_PILL = 22
 
 interface SearchIslandGeometry {
   bottom: number

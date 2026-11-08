@@ -126,18 +126,18 @@ describe('getSearchIslandGeometry', () => {
 
     // The closed shape is the search circle: its diameter changes with the bar
     // morph, and the icon must sit in its centre in both resting sizes.
-    expect(expandedBar.iconSize).toBe(28)
-    expect(expandedBar.iconInset).toBe((TAB_BAR_ISLAND_HEIGHT_EXPANDED - 28) / 2)
-    expect(collapsedBar.iconSize).toBe(28)
-    expect(collapsedBar.iconInset).toBe((TAB_BAR_ISLAND_HEIGHT - 28) / 2)
+    expect(expandedBar.iconSize).toBe(32)
+    expect(expandedBar.iconInset).toBe((TAB_BAR_ISLAND_HEIGHT_EXPANDED - 32) / 2)
+    expect(collapsedBar.iconSize).toBe(32)
+    expect(collapsedBar.iconInset).toBe((TAB_BAR_ISLAND_HEIGHT - 32) / 2)
   })
 
   test('shrinks the magnifier into the pill left inset as the field opens', () => {
     const half = geometry({ barProgress: 1, openProgress: 0.5 })
     const pill = geometry({ barProgress: 1, openProgress: 1 })
 
-    expect(half.iconSize).toBe(26)
-    expect(pill.iconSize).toBe(24)
+    expect(half.iconSize).toBe(27)
+    expect(pill.iconSize).toBe(22)
     expect(pill.iconInset).toBe(8)
   })
 

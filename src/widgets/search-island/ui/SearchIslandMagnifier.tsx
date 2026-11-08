@@ -8,7 +8,9 @@ import { styles } from './SearchIslandMorph.styles'
 // from the circle size to the pill size while its left inset travels with the
 // animating container edge, so the icon is the continuous visual anchor between
 // the two states instead of a crossfade.
-const ICON_BASE_SIZE = 28
+// The rendered glyph matches the largest box (the collapsed circle), so the
+// morph only ever scales it down — never up, which would blur the raster icon.
+const ICON_BASE_SIZE = 32
 
 interface SearchIslandMagnifierProps {
   barProgress: SharedValue<number>
