@@ -81,14 +81,12 @@ export const ContainerView = ({
           // React-committed resting geometry; any Yoga relayout re-writes CORRECT
           // values instead of stale attach-era ones. This is the Issue #63
           // root-cause neutralization (Layer 6). Also doubles as the fallback if
-          // the animated layer never attaches.
+          // the animated layer never attaches. During a morph the hook feeds the
+          // SETTLED (start) state here — never the destination a frame early.
           //
           // Consumer `style` must NOT carry geometry keys (top/bottom/left/width/height):
           // enforced by NonGeometricStyle type (Issue #63 invariant).
           //
-          // If a Yoga relayout fires mid-animation, the visible frame may snap to resting
-          // geometry for at most one frame until the next animation frame re-applies animated
-          // values — self-healing by design.
           containerStyle,
           restingContainerStyle,
           { backgroundColor: currentTheme.surface },

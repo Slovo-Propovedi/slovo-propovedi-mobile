@@ -53,17 +53,17 @@ export const useExpandAnimation = (
   const { fullScreenHeightShared, screenWidthShared, tabBarHeightShared } = useGeometrySharedValues(
     { fullScreenHeight, screenWidth, tabBarHeight },
   )
+  const { settledExpanded, settleOnSnap } = useProgressAnimation(expanded, progress)
+  useAppStateSnap(expanded, progress, settleOnSnap)
+  // Resting geometry follows the SETTLED expand state (like `settledCollapsed`).
   const { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle } =
     useRestingStyles({
       barCollapsed: barMorph.settledCollapsed,
-      expanded,
+      expanded: settledExpanded,
       fullScreenHeight,
       screenWidth,
       tabBarHeight,
     })
-  useProgressAnimation(expanded, progress)
-
-  useAppStateSnap(expanded, progress)
 
   const containerStyle = useAnimatedStyle(() => {
     // Register dependency: any write to geometryReapplyTick re-runs this worklet,

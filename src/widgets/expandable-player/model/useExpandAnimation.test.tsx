@@ -252,13 +252,12 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     return { completions, flipRender: renders[flipRenderIndex], renders }
   }
 
-  test('keeps the collapsed resting geometry until the expand morph settles', async () => {
+  test('keeps the start resting geometry while the bar morph is in flight', async () => {
     const { completions, flipRender, renders } = await renderBarFlip(true)
 
-    // The flip render must not commit the destination geometry: the animated
-    // layer still holds the collapsed value for a frame, so committing the
-    // detached geometry here paints the pill at its destination, then snaps it
-    // back to the collapsed line and morphs again (the search-open flash).
+    // Mid-morph the resting style is only a fallback for the frame before the
+    // animated layer asserts: it must carry the START geometry, never the
+    // destination (that paints the pill at the target a frame early).
     expect(flipRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
     expect(flipRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
 
@@ -271,11 +270,8 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
   })
 
-  test('keeps the detached resting geometry until the collapse morph settles', async () => {
-    const { completions, flipRender, renders } = await renderBarFlip(false)
-
-    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
-    expect(flipRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+  test('commits the destination resting geometry when the bar morph settles', async () => {
+    const { completions, renders } = await renderBarFlip(false)
 
     await act(async () => {
       completions[0](true)
@@ -284,6 +280,91 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     const settledRender = renders[renders.length - 1]
     expect(settledRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
     expect(settledRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
+  })
+})
+
+describe('useExpandAnimation expand-morph resting commit', () => {
+  const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
+    toValue: number,
+    config: unknown,
+    callback?: (finished: boolean) => void,
+  ) => number
+
+  afterEach(() => {
+    mockedWithTiming.mockImplementation(defaultWithTimingImpl)
+  })
+
+  const EXPANDED_RESTING = {
+    bottom: EXPANDED_BOTTOM,
+    left: BAR_SIDE_INSET,
+    width: 400 - BAR_SIDE_INSET * 2,
+  }
+  const FULLSCREEN_RESTING = {
+    bottom: 0,
+    left: 0,
+    top: 0,
+    width: 400,
+  }
+
+  const renderExpandFlip = async (initialExpanded: boolean) => {
+    const completions: Array<(finished: boolean) => void> = []
+    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
+      if (typeof callback === 'function') completions.push(callback)
+      return toValue
+    })
+
+    const renders: Array<ReturnType<typeof useExpandAnimation>> = []
+    const Harness = ({ expanded }: { expanded: boolean }) => {
+      const result = useExpandAnimation(expanded, TAB_BAR_HEIGHT)
+      renders.push(result)
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    const { rerender } = await renderWithProviders(<Harness expanded={initialExpanded} />)
+    const flipRenderIndex = renders.length
+    await act(async () => {
+      await rerender(<Harness expanded={!initialExpanded} />)
+    })
+
+    return { completions, flipRender: renders[flipRenderIndex], renders }
+  }
+
+  test('keeps the mini resting geometry while the expand morph is in flight', async () => {
+    const { completions, flipRender, renders } = await renderExpandFlip(false)
+
+    // Committing the fullscreen geometry on the expand flip made the container
+    // jump to full size in one frame on native; the resting style must still
+    // carry the START geometry the animated layer is morphing away from.
+    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(flipRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+    // The geometry guard still needs both settled mini tops during the morph.
+    expect(flipRender.barCollapsedTop).toEqual(expect.any(Number))
+    expect(flipRender.barExpandedTop).toEqual(expect.any(Number))
+
+    await act(async () => {
+      completions[0](true)
+    })
+
+    const settledRender = renders[renders.length - 1]
+    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.restingContainerStyle).toMatchObject(FULLSCREEN_RESTING)
+  })
+
+  test('keeps the fullscreen resting geometry while the collapse morph is in flight', async () => {
+    const { completions, flipRender, renders } = await renderExpandFlip(true)
+
+    // The start geometry is the fullscreen sheet: itself correct for the frames
+    // before the animated layer asserts, so no frame paints the destination.
+    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(flipRender.restingContainerStyle).toMatchObject(FULLSCREEN_RESTING)
+
+    await act(async () => {
+      completions[0](true)
+    })
+
+    const settledRender = renders[renders.length - 1]
+    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
   })
 })
 
