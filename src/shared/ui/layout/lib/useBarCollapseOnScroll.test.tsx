@@ -29,8 +29,11 @@ jest.mock('react-native-reanimated', () => {
   }
 })
 
-const scrollEventAt = (y: number) =>
-  ({ contentOffset: { y } }) as unknown as NativeSyntheticEvent<NativeScrollEvent>
+const scrollEventAt = (y: number, contentHeight?: number) =>
+  ({
+    contentOffset: { y },
+    ...(contentHeight === undefined ? {} : { contentSize: { height: contentHeight, width: 0 } }),
+  }) as unknown as NativeSyntheticEvent<NativeScrollEvent>
 
 const renderDriver = async (isSuspended = false) => {
   const ctx = createCtx()
@@ -41,7 +44,8 @@ const renderDriver = async (isSuspended = false) => {
   return {
     ctx,
     notifyContentSize: (height: number) => result.current.onContentSizeChange(0, height),
-    scrollTo: (y: number) => result.current.onScroll(scrollEventAt(y)),
+    scrollTo: (y: number, contentHeight?: number) =>
+      result.current.onScroll(scrollEventAt(y, contentHeight)),
   }
 }
 
@@ -176,6 +180,55 @@ describe('useBarCollapseOnScroll', () => {
     // layout change and must not swallow the user's first scroll.
     notifyContentSize(2649)
     scrollTo(600)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(true)
+  })
+
+  test('re-baselines when the anchoring scroll carries the shrunk content before onContentSizeChange', async () => {
+    // Browser event order on web: the anchoring scroll is dispatched in the
+    // render step, while react-native-web's onContentSizeChange is an onLayout
+    // callback that only lands on the next React commit. The driver therefore
+    // sees the shifted offset FIRST, already paired with the new contentSize —
+    // that changed size is the proof it was layout anchoring, not a gesture.
+    const { ctx, scrollTo } = await renderDriver()
+
+    scrollTo(600, 2649)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(true)
+
+    // Tapping the search circle opens the field and unmounts the top row above
+    // the viewport: content 2649 → 2601, offset 600 → 552.
+    setBarCollapsed(ctx, false)
+
+    scrollTo(552, 2601)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+  })
+
+  test('re-baselines on the anchoring scroll when closing search remounts a row', async () => {
+    // Same race in the opposite direction: closing the search session remounts
+    // the top row, so the content grows and the offset shifts down. The active
+    // tab circle must expand the bar on the first tap, not after a re-collapse.
+    const { ctx, notifyContentSize, scrollTo } = await renderDriver()
+
+    scrollTo(600, 2649)
+    notifyContentSize(2649)
+    setBarCollapsed(ctx, false)
+
+    scrollTo(648, 2697)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+  })
+
+  test('collapses on the next gesture scroll after a layout-induced shift', async () => {
+    const { ctx, scrollTo } = await renderDriver()
+
+    scrollTo(600, 2649)
+    setBarCollapsed(ctx, false)
+    scrollTo(552, 2601)
+
+    // The user scrolls down again with the layout settled: same size, real gesture.
+    scrollTo(700, 2601)
 
     expect(ctx.get(isBarCollapsedAtom)).toBe(true)
   })

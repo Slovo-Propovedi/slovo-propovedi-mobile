@@ -191,6 +191,22 @@ describe('<SearchIsland>', () => {
     expect(StyleSheet.flatten(pill.props.style)).toMatchObject({ opacity: 0 })
   })
 
+  test('keeps the always-mounted close circle non-interactive while hidden', async () => {
+    const ctx = createCtx()
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'ве')
+    const { getByLabelText } = await renderWithProviders(<SearchIsland />, { ctx })
+
+    // The ✕ slot is always mounted for the morph; while blur hides it every
+    // layer must be pointer-events-none, otherwise the invisible circle over the
+    // search chip swallows the first tap.
+    const closeButton = getByLabelText(CLOSE_LABEL, { includeHiddenElements: true })
+    const closeCircle = findAncestorWithHeight(closeButton, TAB_BAR_ISLAND_HEIGHT)
+
+    expect(closeCircle.props.pointerEvents).toBe('none')
+  })
+
   test('renders the external close circle only while the input is focused', async () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)

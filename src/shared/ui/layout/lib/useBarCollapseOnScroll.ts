@@ -5,6 +5,10 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { isBarCollapsedAtom, setBarCollapsed } from '../model'
 import { nextBarCollapsedState } from './barCollapseScroll'
 
+// A content-size delta below one pixel is layout rounding, not a row mounting
+// or unmounting above the viewport.
+const CONTENT_HEIGHT_EPSILON = 1
+
 // Drives the floating bottom bar's collapsed state from a scroll offset.
 //
 // `isSuspended` pauses tracking while another surface owns the screen (search
@@ -26,13 +30,17 @@ export const useBarCollapseOnScroll = ({ isSuspended = false }: { isSuspended?: 
   // (tapping the collapsed circle); treating that replay as a fresh downward
   // crossing collapsed the bar before the user saw the expand.
   const lastOffsetSv = useSharedValue<null | number>(null)
+  // Content height the driver last saw, from either the content's onLayout or a
+  // scroll event. It is the baseline every later event is compared against.
   const contentHeightSv = useSharedValue<null | number>(null)
   // A content-size change (a row mounts/unmounts above the viewport) makes the
   // browser keep the visible content in place by shifting the scroll offset.
-  // That offset shift arrives as a regular onScroll, so the first event after a
-  // content change must only re-baseline the driver instead of crossing a
-  // threshold — otherwise opening search while scrolled down re-collapses the
-  // bar before the field is painted.
+  // That offset shift arrives as a regular onScroll, so the next event must only
+  // re-baseline the driver instead of crossing a threshold — otherwise opening
+  // search while scrolled down re-collapses the bar before the field is painted.
+  // Armed by onContentSizeChange AND by a scroll event whose contentSize differs
+  // from the baseline: react-native-web delivers the anchoring scroll first and
+  // its onLayout callback only on the next commit, so the callback alone raced.
   const isLayoutShiftPendingSv = useSharedValue(false)
 
   useEffect(() => {
@@ -58,13 +66,36 @@ export const useBarCollapseOnScroll = ({ isSuspended = false }: { isSuspended?: 
     // measurement is not a layout change; arming here would swallow the first
     // real scroll gesture.
     if (lastOffsetSv.value === null) return
-    if (previousHeight === null || previousHeight === contentHeight) return
+    if (previousHeight === null) return
+    if (Math.abs(previousHeight - contentHeight) < CONTENT_HEIGHT_EPSILON) return
 
     isLayoutShiftPendingSv.value = true
   }
 
   const onScroll = useAnimatedScrollHandler(event => {
     const offset = event.contentOffset.y
+    const eventContentHeight = event.contentSize?.height
+
+    // The event already carries the new content size when the browser shifted
+    // the offset through scroll anchoring: that delta is the proof this offset
+    // moved because content above the viewport changed, not because of a
+    // gesture — re-baseline immediately instead of waiting for onSizeChange.
+    if (eventContentHeight != null && eventContentHeight > 0) {
+      const knownContentHeight = contentHeightSv.value
+      contentHeightSv.value = eventContentHeight
+
+      const isLayoutShifted =
+        knownContentHeight !== null &&
+        Math.abs(eventContentHeight - knownContentHeight) >= CONTENT_HEIGHT_EPSILON
+
+      if (isLayoutShifted) {
+        isLayoutShiftPendingSv.value = false
+        lastOffsetSv.value = offset
+
+        return
+      }
+    }
+
     // Only a changed offset is a scroll gesture; a replayed event at the same
     // offset must not flip the bar after an explicit expand.
     if (offset === lastOffsetSv.value) return
@@ -74,6 +105,7 @@ export const useBarCollapseOnScroll = ({ isSuspended = false }: { isSuspended?: 
     // user scrolled: adopt the new baseline and wait for the next gesture.
     if (isLayoutShiftPendingSv.value) {
       isLayoutShiftPendingSv.value = false
+
       return
     }
 
