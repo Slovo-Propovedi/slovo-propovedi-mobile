@@ -23,6 +23,8 @@ const ROW_ACCESSIBILITY_ROLE = Platform.OS === 'web' ? 'link' : 'button'
 
 interface MiniPlayerProps {
   audio: AudioPlayerData
+  /** Bar state the pill rests in: collapsed mirrors the artwork inset on both sides. */
+  barCollapsed: boolean
   currentTheme: ThemeColors
   // Theme flag for the shared glass layers; the pill must frost exactly like the
   // tab island and the search surfaces.
@@ -43,6 +45,7 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
   (
     {
       audio,
+      barCollapsed,
       currentTheme,
       isLight,
       miniBarRestingStyle,
@@ -71,6 +74,7 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
           accessibilityRole={ROW_ACCESSIBILITY_ROLE}
           style={[
             miniStyles.miniContainer,
+            barCollapsed && miniStyles.miniContainerCollapsed,
             miniStyle,
             // Animated geometry wins at the native level; the React resting style
             // last keeps the shadow tree on the settled bar state's geometry (#63).

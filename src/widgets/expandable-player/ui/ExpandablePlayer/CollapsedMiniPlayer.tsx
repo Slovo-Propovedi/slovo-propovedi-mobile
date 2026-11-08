@@ -13,6 +13,7 @@ import { createMiniStyles } from './miniStyles'
  * container file stays within the line budget.
  * @param root0 - Mini-player inputs forwarded to MiniPlayer.
  * @param root0.audio - Current track audio.
+ * @param root0.barCollapsed - Whether the bar (and pill) rests in the collapsed row.
  * @param root0.currentTheme - Active theme colors.
  * @param root0.isBuffering - Whether playback is buffering (shows the spinner).
  * @param root0.isLight - Active theme flag for the shared glass layers.
@@ -27,6 +28,7 @@ import { createMiniStyles } from './miniStyles'
  */
 export const CollapsedMiniPlayer = ({
   audio,
+  barCollapsed,
   currentTheme,
   isBuffering,
   isLight,
@@ -40,6 +42,7 @@ export const CollapsedMiniPlayer = ({
   playlist,
 }: {
   audio: AudioPlayerData
+  barCollapsed: boolean
   currentTheme: ThemeColors
   isBuffering: boolean
   isLight: boolean
@@ -68,6 +71,7 @@ export const CollapsedMiniPlayer = ({
       miniStyles={miniStyles}
       onPlayPause={onPlayPause}
       showSpinner={isBuffering}
+      barCollapsed={barCollapsed}
       miniBarStyle={miniBarStyle}
       currentTheme={currentTheme}
       miniBarRestingStyle={miniBarRestingStyle}

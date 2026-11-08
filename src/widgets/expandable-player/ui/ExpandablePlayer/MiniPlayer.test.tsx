@@ -11,7 +11,13 @@ import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
 import { DarkTheme, LightTheme } from 'shared/ui/theme'
 import { MiniPlayer } from './MiniPlayer'
-import { createMiniStyles, MINI_ARTWORK_SIZE, MINI_PLAY_HIT_SLOP } from './miniStyles'
+import {
+  createMiniStyles,
+  MINI_ARTWORK_SIZE,
+  MINI_CONTENT_SIDE_INSET,
+  MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
+  MINI_PLAY_HIT_SLOP,
+} from './miniStyles'
 
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn() }),
@@ -100,6 +106,8 @@ const AUDIO: AudioPlayerData = {
   title: 'Первая проповедь',
   verse: 5,
 }
+// The row is exposed by its accessible name, which includes the track title.
+const TITLE_NAME_PATTERN = new RegExp(AUDIO.title)
 
 const PLAYLIST: PlaylistData = {
   artwork: null,
@@ -114,6 +122,7 @@ const mockOnPress = jest.fn()
 
 const baseProps: MiniPlayerProps = {
   audio: AUDIO,
+  barCollapsed: false,
   currentTheme: LightTheme,
   isLight: true,
   miniBarRestingStyle: {},
@@ -214,7 +223,7 @@ describe('<MiniPlayer>', () => {
     expect(getByText(REFERENCE_TEXT)).toBeTruthy()
   })
 
-  test('gives the title and subtitle one font size, with weight only on the title', async () => {
+  test('gives the title and subtitle one font size and color, with weight only on the title', async () => {
     await renderMiniPlayer()
 
     const titleStyle = StyleSheet.flatten(
@@ -225,6 +234,10 @@ describe('<MiniPlayer>', () => {
     )
 
     expect(titleStyle?.fontSize).toBe(subtitleStyle?.fontSize)
+    // Apple Music reads the two lines as one block: only the weight separates
+    // them, so the subtitle must not drop to the muted color.
+    expect(subtitleStyle?.color).toBe(titleStyle?.color)
+    expect(titleStyle?.color).toBe(LightTheme.text)
     expect(titleStyle?.fontWeight).toBe('600')
     expect(subtitleStyle?.fontWeight).toBe('400')
   })
@@ -272,7 +285,7 @@ describe('<MiniPlayer>', () => {
   test('pressing the mini player calls the expand callback', async () => {
     const { getByRole } = await renderMiniPlayer()
 
-    await fireEvent.press(getByRole('button', { name: new RegExp(AUDIO.title) }))
+    await fireEvent.press(getByRole('button', { name: TITLE_NAME_PATTERN }))
 
     expect(mockOnPress).toHaveBeenCalledTimes(1)
   })
@@ -282,7 +295,7 @@ describe('<MiniPlayer>', () => {
 
     // The row keeps the button role on native (web switches to link so the inner
     // play/pause button is not nested inside another <button>).
-    expect(getByRole('button', { name: new RegExp(AUDIO.title) })).toBeTruthy()
+    expect(getByRole('button', { name: TITLE_NAME_PATTERN })).toBeTruthy()
   })
 
   test('pressing the play/pause button calls onPlayPause', async () => {
@@ -303,6 +316,31 @@ describe('<MiniPlayer>', () => {
       width: MINI_ARTWORK_SIZE,
     })
     expect(playButton.props.hitSlop).toBe(MINI_PLAY_HIT_SLOP)
+  })
+
+  test('expanded bar: the transport sits on the search circle axis', async () => {
+    const { getByRole } = await renderMiniPlayer({ barCollapsed: false })
+
+    const row = getByRole('button', { name: TITLE_NAME_PATTERN })
+
+    // The pill spans the row content, so its right edge coincides with the
+    // search circle's right edge: a 18dp right inset centres the 40dp transport
+    // box on the 76dp circle's axis (38 − 20).
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({
+      paddingLeft: MINI_CONTENT_SIDE_INSET,
+      paddingRight: MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
+    })
+  })
+
+  test('collapsed bar: the right gap mirrors the artwork gap', async () => {
+    const { getByRole } = await renderMiniPlayer({ barCollapsed: true })
+
+    const row = getByRole('button', { name: TITLE_NAME_PATTERN })
+
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({
+      paddingLeft: MINI_CONTENT_SIDE_INSET,
+      paddingRight: MINI_CONTENT_SIDE_INSET,
+    })
   })
 
   test('shows the play icon when paused and the pause icon when playing', async () => {

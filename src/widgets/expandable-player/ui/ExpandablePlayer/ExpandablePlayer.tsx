@@ -101,6 +101,7 @@ export const ExpandablePlayer = ({
           isBuffering={isBuffering}
           miniBarStyle={miniBarStyle}
           currentTheme={currentTheme}
+          barCollapsed={isBarCollapsed}
           onPress={gesture.handleMiniTap}
           miniBarRestingStyle={miniBarRestingStyle}
         />

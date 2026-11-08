@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native'
 import { createGlassStyles } from 'shared/ui'
+import { BAR_CIRCLE_SIZE_EXPANDED } from 'shared/ui/layout'
 import {
   FONT_SIZES,
   INDENTS,
@@ -10,14 +11,20 @@ import {
 } from 'shared/ui/theme'
 
 export const MINI_PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
-// One inset shared by the artwork's left edge and the transport's right edge:
-// equal on both sides is what makes the pill read symmetric.
+// Compact inset of the artwork (and of the transport in the collapsed bar): equal
+// on both sides is what makes the collapsed pill read symmetric.
 export const MINI_CONTENT_SIDE_INSET = INDENTS.low
 export const MINI_ARTWORK_SIZE = 40
-// The transport occupies the same visual box as the artwork, so both sit at the
-// same edge inset; hitSlop restores the ≥48dp touch target the icon needs.
+// The transport occupies the same visual box as the artwork; hitSlop restores the
+// ≥48dp touch target the icon needs.
 const MINI_PLAY_BOX_SIZE = MINI_ARTWORK_SIZE
 export const MINI_PLAY_HIT_SLOP = (MIN_TOUCH_TARGET - MINI_PLAY_BOX_SIZE) / 2
+// The expanded pill spans the row content, so its right edge coincides with the
+// search circle's right edge. Centring the transport glyph on that circle's axis
+// means insetting it by the circle's half-width minus the transport's half-width:
+// 76 / 2 − 40 / 2 = 18dp.
+export const MINI_EXPANDED_TRANSPORT_RIGHT_INSET =
+  BAR_CIRCLE_SIZE_EXPANDED / 2 - MINI_PLAY_BOX_SIZE / 2
 
 export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
   const glass = createGlassStyles(isLight, MINI_PILL_RADIUS)
@@ -43,9 +50,15 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
       flexDirection: 'row',
       height: PLAYER_SIZES.miniPlayerHeight,
       overflow: 'hidden',
-      paddingHorizontal: MINI_CONTENT_SIDE_INSET,
+      paddingLeft: MINI_CONTENT_SIDE_INSET,
+      paddingRight: MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
       position: 'absolute',
       zIndex: 300,
+    },
+    // The collapsed pill rests inside the row, away from the search circle, so
+    // the generous expanded right inset collapses back to the artwork's inset.
+    miniContainerCollapsed: {
+      paddingRight: MINI_CONTENT_SIDE_INSET,
     },
     miniControls: {
       alignItems: 'center',
@@ -71,10 +84,10 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
       minWidth: MINI_PLAY_BOX_SIZE,
       width: MINI_PLAY_BOX_SIZE,
     },
-    // Apple Music pill: the subtitle matches the title's size and only drops in
-    // weight (regular against semi-bold), so both lines read as one block.
+    // Apple Music pill: the subtitle matches the title's size and color, dropping
+    // only in weight (regular against semi-bold), so both lines read as one block.
     miniPlaylistName: {
-      color: theme.textMuted,
+      color: theme.text,
       fontSize: FONT_SIZES.base,
       fontWeight: '400',
       marginTop: 2,
