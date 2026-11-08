@@ -1,42 +1,31 @@
-import { useEffect, useRef, useState } from 'react'
-import { useSharedValue, withTiming } from 'react-native-reanimated'
-import { scheduleOnRN } from 'react-native-worklets'
+import { useAtom } from '@reatom/npm-react'
+import { useState } from 'react'
+import { useAtomMorphProgress } from 'shared/lib/hooks/useAtomMorphProgress'
 import { BAR_MORPH_DURATION_MS } from 'shared/ui/layout'
+import { isMiniPillCollapsedAtom } from '../model/barMorph'
 
 /**
  * Shared 0→1 progress of the bottom-bar morph (0 = detached mini pill above the
- * row, 1 = pill inside the collapsed bottom line). Animates with the same
- * duration as the tab-bar island morph so both move in sync. The first render
- * assigns directly so a surface mounted already collapsed never animates in.
+ * row, 1 = pill inside the collapsed bottom line). The animation is owned by
+ * the atom subscription in {@link useAtomMorphProgress}, so it starts in the
+ * same tick as the bar state change instead of waiting for this component's
+ * render/commit (Android: ~130 ms, a visible freeze before the morph).
  *
  * `settledCollapsed` lags the bar state until the morph lands: it is the state
  * the React shadow tree may commit resting geometry for. Committing the target
  * geometry on the flip itself paints the pill at its destination for a frame —
  * before Reanimated asserts the start-of-morph animated value — then the pill
  * snaps back and visibly morphs again (the one-frame search-open flash).
- * @param isCollapsed - Whether the bottom bar is currently collapsed.
+ * @returns The morph progress and the bar state it has settled into.
  */
-export const useBarMorphProgress = (isCollapsed: boolean) => {
-  const progress = useSharedValue(isCollapsed ? 1 : 0)
+export const useBarMorphProgress = () => {
+  const [isCollapsed] = useAtom(isMiniPillCollapsedAtom)
   const [settledCollapsed, setSettledCollapsed] = useState(isCollapsed)
-  const isFirstRunRef = useRef(true)
-
-  useEffect(() => {
-    if (isFirstRunRef.current) {
-      isFirstRunRef.current = false
-      progress.value = isCollapsed ? 1 : 0
-      return
-    }
-    progress.value = withTiming(
-      isCollapsed ? 1 : 0,
-      { duration: BAR_MORPH_DURATION_MS },
-      finished => {
-        // An interrupted morph reports `finished: false` — the replacement
-        // animation owns the commit, so a stale target never reaches the shadow tree.
-        if (finished) scheduleOnRN(setSettledCollapsed, isCollapsed)
-      },
-    )
-  }, [isCollapsed, progress])
+  const progress = useAtomMorphProgress(
+    isMiniPillCollapsedAtom,
+    BAR_MORPH_DURATION_MS,
+    setSettledCollapsed,
+  )
 
   return { progress, settledCollapsed }
 }

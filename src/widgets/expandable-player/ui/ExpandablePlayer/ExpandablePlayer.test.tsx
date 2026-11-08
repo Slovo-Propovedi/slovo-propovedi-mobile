@@ -4,6 +4,7 @@ import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isBarCollapsedAtom, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
+import { isMiniPillCollapsedAtom } from '../../model/barMorph'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { ExpandablePlayer } from './ExpandablePlayer'
 
@@ -135,7 +136,8 @@ describe('<ExpandablePlayer>', () => {
 
     // The empty-query search field collapses with the bar, so the row returns
     // to the compact [active circle][player][search circle] arrangement.
-    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98, true)
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98)
+    expect(ctx.get(isMiniPillCollapsedAtom)).toBe(true)
   })
 
   test('rests the mini player above the row while an active query pins the field', async () => {
@@ -145,8 +147,9 @@ describe('<ExpandablePlayer>', () => {
     tabBarHeightAtom(ctx, 98)
     await renderWithProviders(<ExpandablePlayer />, { ctx })
 
-    // Third argument is the bar-collapse state the mini pill geometry follows.
-    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98, false)
+    // The pill's collapse target keeps it detached: the field pins the row.
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98)
+    expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
   })
 
   test('keeps the last real tab bar height when a hidden screen reports zero', async () => {
@@ -154,7 +157,7 @@ describe('<ExpandablePlayer>', () => {
     isSearchOpenAtom(ctx, false)
     tabBarHeightAtom(ctx, 114)
     await renderWithProviders(<ExpandablePlayer />, { ctx })
-    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 114, false)
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 114)
 
     // A non-focused root-stack screen renders the tabs as `display: none` on
     // web, so the tab row reports a 0 height while hidden. Adopting it would
@@ -163,12 +166,12 @@ describe('<ExpandablePlayer>', () => {
     await act(async () => {
       tabBarHeightAtom(ctx, 0)
     })
-    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 114, false)
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 114)
 
     // A real re-measurement still wins.
     await act(async () => {
       tabBarHeightAtom(ctx, 130)
     })
-    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 130, false)
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 130)
   })
 })

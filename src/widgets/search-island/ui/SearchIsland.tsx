@@ -2,9 +2,12 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import { isTabIslandCollapsedAtom } from 'widgets/tab-bar/@x/morph'
 import { closeSearch, SearchBar, useIsSearchFieldVisible } from 'features/sermon-search'
+import { isSearchFieldVisibleAtom } from 'features/sermon-search/@x/barMorph'
+import { useAtomMorphProgress } from 'shared/lib/hooks/useAtomMorphProgress'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
-import { BAR_MORPH_DURATION_MS, isBarCollapsedAtom, tabBarHeightAtom } from 'shared/ui/layout'
+import { BAR_MORPH_DURATION_MS, tabBarHeightAtom } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
@@ -22,26 +25,16 @@ export const SearchIsland = () => {
   const { isLight } = useTheme()
   const { width: screenWidth } = useWindowDimensions()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
   const isSearchFieldVisible = useIsSearchFieldVisible()
   const [isFocused, setIsFocused] = useState(false)
   const closeSearchAction = useAction(closeSearch)
-  // A visible field always sits in the collapsed row, so the pill geometry
-  // follows the collapsed bar even before the scroll driver writes the atom.
-  const progress = useSharedValue(isBarCollapsed || isSearchFieldVisible ? 1 : 0)
-  const openProgress = useSharedValue(isSearchFieldVisible ? 1 : 0)
+  // Both morphs start in their atom subscriptions (before this component
+  // renders), so the pill and the tab island stay in sync frame by frame.
+  const progress = useAtomMorphProgress(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
+  const openProgress = useAtomMorphProgress(isSearchFieldVisibleAtom, BAR_MORPH_DURATION_MS)
   // Seeded from the focus state so a bar re-rendered while already focused
   // starts with the close slot reserved instead of snapping on the next frame.
   const closeProgress = useSharedValue(isFocused ? 1 : 0)
-
-  useEffect(() => {
-    progress.value = withTiming(isBarCollapsed || isSearchFieldVisible ? 1 : 0, {
-      duration: BAR_MORPH_DURATION_MS,
-    })
-    openProgress.value = withTiming(isSearchFieldVisible ? 1 : 0, {
-      duration: BAR_MORPH_DURATION_MS,
-    })
-  }, [isBarCollapsed, isSearchFieldVisible, openProgress, progress])
 
   useEffect(() => {
     closeProgress.value = withTiming(isFocused ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })

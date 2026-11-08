@@ -33,13 +33,13 @@ interface UseExpandAnimationResult {
 export const useExpandAnimation = (
   expanded: boolean,
   tabBarHeight: number,
-  isBarCollapsed: boolean,
 ): UseExpandAnimationResult => {
   const progress = useSharedValue(0)
-  // UI-thread mirror of the bar-collapse atom; the tab bar animates the same
-  // duration, so the mini pill and the islands morph in sync. Resting geometry
-  // follows the SETTLED state only — see `useBarMorphProgress`.
-  const { progress: barProgress, settledCollapsed } = useBarMorphProgress(isBarCollapsed)
+  // UI-thread mirror of the bar-collapse state; the tab bar animates the same
+  // duration, so the mini pill and the islands morph in sync. The animation
+  // starts from the atom subscription (see `useBarMorphProgress`), not from
+  // this render. Resting geometry follows the SETTLED state only.
+  const { progress: barProgress, settledCollapsed } = useBarMorphProgress()
   const geometryReapplyTick = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
   // On web `Dimensions.get('screen')` is the physical `window.screen.height`,

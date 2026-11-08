@@ -1,3 +1,4 @@
+import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { AppState, type AppStateStatus, Text } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
@@ -8,6 +9,7 @@ import {
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET,
+  setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
@@ -59,13 +61,13 @@ const emitState = (state: AppStateStatus) => {
 // Capture progress shared value from the hook via a component that also
 // renders it as text so we can re-render and re-read after state changes
 const CollapsedHarness = ({ onProgress }: { onProgress: (p: { value: number }) => void }) => {
-  const { progress } = useExpandAnimation(false, TAB_BAR_HEIGHT, false)
+  const { progress } = useExpandAnimation(false, TAB_BAR_HEIGHT)
   onProgress(progress)
   return <Text testID='harness'>{String(progress.value)}</Text>
 }
 
 const ExpandedHarness = ({ onProgress }: { onProgress: (p: { value: number }) => void }) => {
-  const { progress } = useExpandAnimation(true, TAB_BAR_HEIGHT, false)
+  const { progress } = useExpandAnimation(true, TAB_BAR_HEIGHT)
   onProgress(progress)
   return <Text testID='harness'>{String(progress.value)}</Text>
 }
@@ -131,13 +133,15 @@ describe('useExpandAnimation foreground snap', () => {
 describe('useExpandAnimation restingContainerStyle', () => {
   const renderResting = async (barCollapsed: boolean) => {
     let capturedResult: null | ReturnType<typeof useExpandAnimation> = null
+    const ctx = createCtx()
+    setBarCollapsed(ctx, barCollapsed)
 
     const Harness = ({
       onResult,
     }: {
       onResult: (r: ReturnType<typeof useExpandAnimation>) => void
     }) => {
-      const result = useExpandAnimation(false, TAB_BAR_HEIGHT, barCollapsed)
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT)
       onResult(result)
       return <Text testID='harness'>{String(result.progress.value)}</Text>
     }
@@ -148,6 +152,7 @@ describe('useExpandAnimation restingContainerStyle', () => {
           capturedResult = r
         }}
       />,
+      { ctx },
     )
 
     return capturedResult
@@ -226,16 +231,21 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     })
 
     const renders: Array<ReturnType<typeof useExpandAnimation>> = []
+    const ctx = createCtx()
+    setBarCollapsed(ctx, initialBarCollapsed)
 
-    const Harness = ({ barCollapsed }: { barCollapsed: boolean }) => {
-      const result = useExpandAnimation(false, TAB_BAR_HEIGHT, barCollapsed)
+    const Harness = () => {
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT)
       renders.push(result)
       return <Text testID='harness'>{String(result.progress.value)}</Text>
     }
 
-    const { rerender } = await renderWithProviders(<Harness barCollapsed={initialBarCollapsed} />)
+    const { rerender } = await renderWithProviders(<Harness />, { ctx })
     const flipRenderIndex = renders.length
-    await rerender(<Harness barCollapsed={!initialBarCollapsed} />)
+    await act(async () => {
+      setBarCollapsed(ctx, !initialBarCollapsed)
+    })
+    await rerender(<Harness />)
 
     return { completions, flipRender: renders[flipRenderIndex], renders }
   }
@@ -290,7 +300,7 @@ describe('useExpandAnimation first committed frame', () => {
     }: {
       onResult: (result: ReturnType<typeof useExpandAnimation>) => void
     }) => {
-      const result = useExpandAnimation(false, TAB_BAR_HEIGHT, false)
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT)
       onResult(result)
       return <Text testID='harness'>{String(result.progress.value)}</Text>
     }
@@ -340,7 +350,7 @@ describe('useExpandAnimation container visibility', () => {
     }: {
       onResult: (result: ReturnType<typeof useExpandAnimation>) => void
     }) => {
-      const result = useExpandAnimation(expanded, TAB_BAR_HEIGHT, false)
+      const result = useExpandAnimation(expanded, TAB_BAR_HEIGHT)
       onResult(result)
       return <Text testID='harness'>{String(result.progress.value)}</Text>
     }

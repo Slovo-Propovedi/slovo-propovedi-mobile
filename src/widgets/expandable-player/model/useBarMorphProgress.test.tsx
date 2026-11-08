@@ -1,7 +1,9 @@
+import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { withTiming } from 'react-native-reanimated'
+import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/@x/barMorph'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
-import { BAR_MORPH_DURATION_MS } from 'shared/ui/layout'
+import { BAR_MORPH_DURATION_MS, setBarCollapsed } from 'shared/ui/layout'
 import { useBarMorphProgress } from './useBarMorphProgress'
 
 const mockedWithTiming = withTiming as jest.Mock
@@ -17,31 +19,49 @@ describe('useBarMorphProgress', () => {
   })
 
   test('assigns the initial value without animating', async () => {
-    const { result } = await renderHookWithProviders(() => useBarMorphProgress(true))
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+
+    const { result } = await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
 
     expect(result.current.progress.value).toBe(1)
     expect(result.current.settledCollapsed).toBe(true)
     expect(mockedWithTiming).not.toHaveBeenCalled()
   })
 
-  test('animates with the same duration as the tab-bar morph', async () => {
-    const { rerender, result } = await renderHookWithProviders(
-      ({ isCollapsed }: { isCollapsed: boolean }) => useBarMorphProgress(isCollapsed),
-      { initialProps: { isCollapsed: false } },
-    )
+  test('starts the morph when the bar atom collapses', async () => {
+    const { ctx, result } = await renderHookWithProviders(() => useBarMorphProgress())
 
     mockedWithTiming.mockClear()
 
     await act(async () => {
-      rerender({ isCollapsed: true })
+      setBarCollapsed(ctx, true)
     })
 
+    // The animation starts from the atom subscription, not from a render
+    // effect: on Android the commit round trip delayed the visible morph.
     expect(mockedWithTiming).toHaveBeenCalledWith(
       1,
       { duration: BAR_MORPH_DURATION_MS },
       expect.any(Function),
     )
     expect(result.current.progress.value).toBe(1)
+  })
+
+  test('stays expanded when a collapsed bar still shows the search field', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'проповедь')
+
+    const { ctx: hookCtx, result } = await renderHookWithProviders(() => useBarMorphProgress(), {
+      ctx,
+    })
+
+    await act(async () => {
+      setBarCollapsed(hookCtx, true)
+    })
+
+    expect(result.current.progress.value).toBe(0)
   })
 
   test('keeps the settled bar state until the morph completes', async () => {
@@ -51,13 +71,10 @@ describe('useBarMorphProgress', () => {
       return toValue
     })
 
-    const { rerender, result } = await renderHookWithProviders(
-      ({ isCollapsed }: { isCollapsed: boolean }) => useBarMorphProgress(isCollapsed),
-      { initialProps: { isCollapsed: false } },
-    )
+    const { ctx, result } = await renderHookWithProviders(() => useBarMorphProgress())
 
     await act(async () => {
-      rerender({ isCollapsed: true })
+      setBarCollapsed(ctx, true)
     })
 
     // Committing the destination state at the flip paints the pill there for a
@@ -78,13 +95,10 @@ describe('useBarMorphProgress', () => {
       return toValue
     })
 
-    const { rerender, result } = await renderHookWithProviders(
-      ({ isCollapsed }: { isCollapsed: boolean }) => useBarMorphProgress(isCollapsed),
-      { initialProps: { isCollapsed: false } },
-    )
+    const { ctx, result } = await renderHookWithProviders(() => useBarMorphProgress())
 
     await act(async () => {
-      rerender({ isCollapsed: true })
+      setBarCollapsed(ctx, true)
     })
     await act(async () => {
       completions[0](false)

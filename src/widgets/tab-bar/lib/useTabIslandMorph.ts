@@ -1,7 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
-import { useEffect } from 'react'
-import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
-import { useIsSearchFieldVisible } from 'features/sermon-search'
+import { useAnimatedStyle } from 'react-native-reanimated'
+import { useAtomMorphProgress } from 'shared/lib/hooks/useAtomMorphProgress'
 import {
   BAR_CIRCLE_SIZE,
   BAR_CIRCLE_SIZE_EXPANDED,
@@ -9,10 +8,10 @@ import {
   BAR_OUTER_GAP,
   BAR_SIDE_INSET,
   CONTENT_COLUMN_WIDTH,
-  isBarCollapsedAtom,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
+import { isTabIslandCollapsedAtom } from '../model/barMorph'
 import { getIslandContentStyle } from './getBarMorphStyles'
 import { getIslandStyle, ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 
@@ -24,23 +23,19 @@ interface TabIslandMorphInput {
   windowWidth: number
 }
 
-// Drives the island's width/height morph (expanded ⇄ circle). A visible search
-// field forces the collapsed shape even when the scroll driver has not collapsed
-// the bar yet, because the row reads [active circle][field].
+// Drives the island's width/height morph (expanded ⇄ circle). The atom also
+// covers a visible search field, which forces the collapsed shape even when the
+// scroll driver has not collapsed the bar yet, because the row reads
+// [active circle][field]. The progress starts in the atom subscription so the
+// morph does not wait for this component's render/commit (Android: ~130 ms).
 export const useTabIslandMorph = ({
   hideSearch,
   routeCount,
   rowWidth,
   windowWidth,
 }: TabIslandMorphInput) => {
-  const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
-  const isSearchFieldVisible = useIsSearchFieldVisible()
-  const isCollapsed = isBarCollapsed || isSearchFieldVisible
-  const progress = useSharedValue(isCollapsed ? 1 : 0)
-
-  useEffect(() => {
-    progress.value = withTiming(isCollapsed ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
-  }, [isCollapsed, progress])
+  const [isCollapsed] = useAtom(isTabIslandCollapsedAtom)
+  const progress = useAtomMorphProgress(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
 
   const rowContentWidth =
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2

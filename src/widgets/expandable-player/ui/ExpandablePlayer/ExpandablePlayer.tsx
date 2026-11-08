@@ -56,7 +56,7 @@ export const ExpandablePlayer = ({
     restingContainerStyle,
     screenHeight,
     screenWidth,
-  } = useExpandAnimation(expanded, tabBarHeight, isBarCollapsed)
+  } = useExpandAnimation(expanded, tabBarHeight)
 
   const gesture = useExpandablePlayerGesture({
     close,
