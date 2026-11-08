@@ -10,6 +10,7 @@ import {
   BAR_CIRCLE_SIZE,
   BAR_OUTER_GAP,
   isBarCollapsedAtom,
+  keyboardBottomInsetSv,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
@@ -277,5 +278,29 @@ describe('<SearchIsland>', () => {
     await fireEvent.press(getByLabelText(CLOSE_LABEL))
 
     await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+  })
+
+  test('lifts the pill and its close circle above the keyboard', async () => {
+    keyboardBottomInsetSv.value = 260
+
+    try {
+      const ctx = createCtx()
+      isBarCollapsedAtom(ctx, true)
+      isSearchOpenAtom(ctx, true)
+      searchQueryAtom(ctx, 'ве')
+      await renderWithProviders(<SearchIsland />, { ctx })
+
+      const liftLayer = screen.root?.queryAll(instance => {
+        const transform = StyleSheet.flatten(instance.props.style)?.transform
+
+        return Array.isArray(transform) && transform.some(entry => 'translateY' in entry)
+      })[0]
+
+      expect(StyleSheet.flatten(liftLayer?.props.style)).toMatchObject({
+        transform: [{ translateY: -260 }],
+      })
+    } finally {
+      keyboardBottomInsetSv.value = 0
+    }
   })
 })

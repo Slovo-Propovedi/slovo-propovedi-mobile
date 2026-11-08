@@ -1,8 +1,9 @@
-import { act } from '@testing-library/react-native'
-import { AppState, type AppStateStatus } from 'react-native'
+import { act, screen } from '@testing-library/react-native'
+import { AppState, type AppStateStatus, StyleSheet } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
 import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { keyboardBottomInsetSv } from 'shared/ui/layout'
 import { LightTheme } from 'shared/ui/theme'
 import { COLLAPSE_DURATION_MS } from '../../model/expandDurations'
 import { ContainerView } from './ContainerView'
@@ -148,5 +149,29 @@ describe('<ContainerView> fullscreen gating', () => {
       <ContainerView {...baseProps} expanded={false} />,
     )
     expect(queryByTestId(FULLSCREEN_TEST_ID)).toBeNull()
+  })
+
+  test('follows the keyboard while collapsed and stays put at fullscreen', async () => {
+    keyboardBottomInsetSv.value = 200
+
+    try {
+      const { rerender } = await renderWithProviders(
+        <ContainerView {...baseProps} expanded={false} />,
+      )
+      const findLift = () =>
+        screen.root?.queryAll(instance => {
+          const transform = StyleSheet.flatten(instance.props.style)?.transform
+
+          return Array.isArray(transform) && transform.some(entry => 'translateY' in entry)
+        })[0]
+
+      expect(StyleSheet.flatten(findLift()?.props.style)?.transform).toEqual([{ translateY: -200 }])
+
+      await rerender(<ContainerView {...baseProps} expanded />)
+
+      expect(StyleSheet.flatten(findLift()?.props.style)?.transform).toEqual([{ translateY: 0 }])
+    } finally {
+      keyboardBottomInsetSv.value = 0
+    }
   })
 })

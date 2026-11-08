@@ -28,3 +28,17 @@ export const createCommonStyles = (theme: ThemeColors) =>
       pointerEvents: 'box-none',
     },
   })
+
+// Full-screen pass-through layer that carries the keyboard lift of the mini pill.
+// The pill's absolute geometry keeps resolving against the same full-window box;
+// the transform only shifts the rendered layer.
+export const miniLayerStyle = StyleSheet.create({
+  layer: {
+    bottom: 0,
+    left: 0,
+    pointerEvents: 'box-none',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+}).layer

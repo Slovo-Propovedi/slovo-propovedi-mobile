@@ -1,10 +1,12 @@
 import { type ViewStyle } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
-import { type AnimatedStyle } from 'react-native-reanimated'
+import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { useOnboardingTargetRef } from 'features/onboarding'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
+import { useKeyboardLiftStyle } from 'shared/ui/layout'
 import { type ThemeColors } from 'shared/ui/theme'
+import { miniLayerStyle } from './commonStyles'
 import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
 
@@ -57,24 +59,27 @@ export const CollapsedMiniPlayer = ({
 }) => {
   const miniTargetRef = useOnboardingTargetRef('player.mini')
   const miniStyles = createMiniStyles(currentTheme, isLight)
+  const keyboardLiftStyle = useKeyboardLiftStyle()
 
   return (
-    <MiniPlayer
-      audio={audio}
-      playing={playing}
-      miniPan={miniPan}
-      onPress={onPress}
-      isLight={isLight}
-      ref={miniTargetRef}
-      playlist={playlist}
-      miniStyle={miniStyle}
-      miniStyles={miniStyles}
-      onPlayPause={onPlayPause}
-      showSpinner={isBuffering}
-      barCollapsed={barCollapsed}
-      miniBarStyle={miniBarStyle}
-      currentTheme={currentTheme}
-      miniBarRestingStyle={miniBarRestingStyle}
-    />
+    <Animated.View style={[miniLayerStyle, keyboardLiftStyle]}>
+      <MiniPlayer
+        audio={audio}
+        playing={playing}
+        miniPan={miniPan}
+        onPress={onPress}
+        isLight={isLight}
+        ref={miniTargetRef}
+        playlist={playlist}
+        miniStyle={miniStyle}
+        miniStyles={miniStyles}
+        onPlayPause={onPlayPause}
+        showSpinner={isBuffering}
+        barCollapsed={barCollapsed}
+        miniBarStyle={miniBarStyle}
+        currentTheme={currentTheme}
+        miniBarRestingStyle={miniBarRestingStyle}
+      />
+    </Animated.View>
   )
 }

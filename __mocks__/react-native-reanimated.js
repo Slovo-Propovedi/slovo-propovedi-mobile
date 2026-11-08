@@ -5,6 +5,18 @@ jest.mock('react-native-reanimated', () => {
   // returned by the hook (mirrors the real FrameCallbackRegistry).
   const frameCallbacks = []
 
+  const createMutable = init => {
+    const mutable = {
+      get: () => mutable.value,
+      set: value => {
+        mutable.value = value
+      },
+      value: init,
+    }
+
+    return mutable
+  }
+
   return {
     __esModule: true,
     __frameCallbacks: frameCallbacks,
@@ -43,17 +55,8 @@ jest.mock('react-native-reanimated', () => {
       frameCallbacks.push(frameCallback)
       return frameCallback
     },
-    useSharedValue: init => {
-      const sharedValue = {
-        get: () => sharedValue.value,
-        set: value => {
-          sharedValue.value = value
-        },
-        value: init,
-      }
-
-      return sharedValue
-    },
+    useSharedValue: createMutable,
+    makeMutable: createMutable,
     withDelay: (_delay, value) => value,
     withRepeat: value => value,
     withSequence: (...values) => values[values.length - 1],

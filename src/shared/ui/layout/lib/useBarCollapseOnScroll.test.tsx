@@ -10,22 +10,24 @@ import { useBarCollapseOnScroll } from './useBarCollapseOnScroll'
 jest.mock('react-native-reanimated', () => {
   const { FlatList, View } = jest.requireActual('react-native')
   const createAnimatedComponent = (Component: unknown) => Component
+  const createSharedValue = (init: unknown) => {
+    const sharedValue = {
+      set(value: unknown) {
+        sharedValue.value = value
+      },
+      value: init,
+    }
+
+    return sharedValue
+  }
 
   return {
     __esModule: true,
     createAnimatedComponent,
     default: { createAnimatedComponent, FlatList, View },
+    makeMutable: createSharedValue,
     useAnimatedScrollHandler: (handler: unknown) => handler,
-    useSharedValue: (init: unknown) => {
-      const sharedValue = {
-        set(value: unknown) {
-          sharedValue.value = value
-        },
-        value: init,
-      }
-
-      return sharedValue
-    },
+    useSharedValue: createSharedValue,
   }
 })
 

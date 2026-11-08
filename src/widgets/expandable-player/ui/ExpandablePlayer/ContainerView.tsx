@@ -1,9 +1,10 @@
 import { StatusBar } from 'expo-status-bar'
 import { type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native'
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
-import Animated, { type AnimatedStyle } from 'react-native-reanimated'
+import Animated, { type AnimatedStyle, useAnimatedStyle } from 'react-native-reanimated'
 import { type AudioPlayerData } from 'entities/sermon'
 import { CoverImage } from 'shared/ui'
+import { keyboardBottomInsetSv } from 'shared/ui/layout'
 import { type ThemeColors } from 'shared/ui/theme'
 import { useFullscreenContentMount } from '../../model/useFullscreenContentMount'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
@@ -53,6 +54,12 @@ export const ContainerView = ({
   // fade is visible, then unmounts to stop its per-tick re-render storm (Issue #100).
   const miniOverlay = createMiniStyles(currentTheme, isLight).miniOverlay
   const isFullscreenContentMounted = useFullscreenContentMount(expanded)
+  // The collapsed container doubles as the mini overlay under the pill, so it
+  // follows the keyboard with the rest of the bottom chrome. At fullscreen the
+  // shift is zero: the keyboard is irrelevant for the full-window sheet.
+  const keyboardLiftStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: expanded ? 0 : -keyboardBottomInsetSv.value }],
+  }))
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -79,6 +86,7 @@ export const ContainerView = ({
           restingContainerStyle,
           { backgroundColor: currentTheme.surface },
           style,
+          keyboardLiftStyle,
         ]}
       >
         <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>

@@ -12,6 +12,11 @@ export {
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from './bottomBarLayout'
 export { nextBarCollapsedState } from './lib/barCollapseScroll'
+export {
+  keyboardBottomInsetSv,
+  useKeyboardBottomInsetSync,
+  useKeyboardLiftStyle,
+} from './lib/keyboardInset'
 export { useBarCollapseOnScroll } from './lib/useBarCollapseOnScroll'
 export {
   isBarCollapsedAtom,

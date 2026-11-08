@@ -7,7 +7,7 @@ import { closeSearch, SearchBar, useIsSearchFieldVisible } from 'features/sermon
 import { isSearchFieldVisibleAtom } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorphProgress } from 'shared/lib/hooks/useAtomMorphProgress'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
-import { BAR_MORPH_DURATION_MS, tabBarHeightAtom } from 'shared/ui/layout'
+import { BAR_MORPH_DURATION_MS, tabBarHeightAtom, useKeyboardLiftStyle } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
@@ -49,6 +49,8 @@ export const SearchIsland = () => {
     void closeSearchAction()
   }, [closeSearchAction])
 
+  const keyboardLiftStyle = useKeyboardLiftStyle()
+
   const islandStyle = useAnimatedStyle(() => {
     const { radius, ...geometry } = getSearchIslandGeometry({
       barProgress: progress.value,
@@ -63,7 +65,7 @@ export const SearchIsland = () => {
   const isCloseVisible = isSearchFieldVisible && isFocused
 
   return (
-    <>
+    <Animated.View pointerEvents='box-none' style={[styles.liftLayer, keyboardLiftStyle]}>
       <Animated.View
         accessibilityElementsHidden={!isSearchFieldVisible}
         pointerEvents={isSearchFieldVisible ? 'auto' : 'none'}
@@ -82,7 +84,7 @@ export const SearchIsland = () => {
         tabBarHeight={tabBarHeight}
         closeProgress={closeProgress}
       />
-    </>
+    </Animated.View>
   )
 }
 
@@ -90,6 +92,16 @@ const styles = {
   // zIndex keeps the pill and its upward dropdown above the results scroll.
   island: {
     position: 'absolute' as const,
+    zIndex: 20,
+  },
+  // Full-screen touch pass-through layer that carries the keyboard lift for the
+  // pill and its close circle; the children keep their row geometry inside it.
+  liftLayer: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute' as const,
+    right: 0,
+    top: 0,
     zIndex: 20,
   },
 }

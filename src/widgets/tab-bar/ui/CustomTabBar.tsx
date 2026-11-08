@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons'
 import { useAction } from '@reatom/npm-react'
 import { type Tabs } from 'expo-router'
 import { useState } from 'react'
@@ -8,22 +7,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingTarget } from 'features/onboarding'
 import { useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
-import { BAR_BOTTOM_INSET_MIN, BAR_ROW_MIN_HEIGHT, setTabBarHeight } from 'shared/ui/layout'
+import {
+  BAR_BOTTOM_INSET_MIN,
+  BAR_ROW_MIN_HEIGHT,
+  setTabBarHeight,
+  useKeyboardLiftStyle,
+} from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
-import { CircleButton } from './CircleButton'
 import { styles } from './styles'
+import { TabBarSearchButton } from './TabBarSearchButton'
 import { TabButton } from './TabButton'
 import { TabSlot } from './TabSlot'
 import { useTabPress } from './useTabPress'
 
 // На 3-кнопочной навигации берётся высота навбара из safe-area insets (Issue #56);
 // без неё острова сидят низко с небольшим нижним зазором.
-const SEARCH_ICON_SIZE = 24
-const SEARCH_LABEL = 'Поиск'
-const SEARCH_TARGET_ID = 'listen.search-toggle'
-// «Учиться» keeps its /study route (deep links, direct navigation) but has no
-// button in the bar anymore.
 const HIDDEN_TAB_ROUTE_NAMES = new Set(['study'])
 
 interface CustomTabBarProps extends TabBarProps {
@@ -57,9 +56,10 @@ export const CustomTabBar = ({
   })
   const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
   const glass = createGlassStyles(isLight, RADIUSES.round)
+  const keyboardLiftStyle = useKeyboardLiftStyle()
 
   return (
-    <View pointerEvents='box-none' style={styles.floatingContainer}>
+    <Animated.View pointerEvents='box-none' style={[styles.floatingContainer, keyboardLiftStyle]}>
       <View
         pointerEvents='box-none'
         style={[
@@ -111,17 +111,9 @@ export const CustomTabBar = ({
           </Animated.View>
         </Animated.View>
         {!hideSearch && !isSearchFieldVisible && (
-          <OnboardingTarget id={SEARCH_TARGET_ID}>
-            <CircleButton
-              progress={progress}
-              onPress={openSearch}
-              accessibilityLabel={SEARCH_LABEL}
-            >
-              <Ionicons name='search' size={SEARCH_ICON_SIZE} color={currentTheme.text} />
-            </CircleButton>
-          </OnboardingTarget>
+          <TabBarSearchButton progress={progress} onPress={openSearch} color={currentTheme.text} />
         )}
       </View>
-    </View>
+    </Animated.View>
   )
 }

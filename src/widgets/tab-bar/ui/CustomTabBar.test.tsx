@@ -10,6 +10,7 @@ import {
   BAR_ROW_MIN_HEIGHT,
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,
+  keyboardBottomInsetSv,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
   tabBarHeightAtom,
@@ -411,5 +412,25 @@ describe('<CustomTabBar>', () => {
     // Disabled tabs should have a TouchableButton ancestor with disabledTabButton style
     const touchable = readButton.parent?.parent
     expect(touchable).toHaveStyle({ opacity: 0.5 })
+  })
+
+  test('lifts the whole floating chrome by the keyboard height', async () => {
+    keyboardBottomInsetSv.value = 280
+
+    try {
+      await renderTabBar()
+
+      const container = screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.position === 'absolute' && flat?.zIndex === 10
+      })[0]
+
+      expect(StyleSheet.flatten(container?.props.style)).toMatchObject({
+        transform: [{ translateY: -280 }],
+      })
+    } finally {
+      keyboardBottomInsetSv.value = 0
+    }
   })
 })
