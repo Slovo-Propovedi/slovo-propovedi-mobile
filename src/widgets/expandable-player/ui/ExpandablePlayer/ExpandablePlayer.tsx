@@ -1,7 +1,6 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAtom } from '@reatom/npm-react'
 import { type StyleProp, View } from 'react-native'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
-import { closePlayerSheetAction, openPlayerSheetAction } from 'entities/player'
 import { useExpandPlayerTourAction } from '../../lib/useExpandPlayerTourAction'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { useBackgroundRecovery } from '../../model/useBackgroundRecovery'
@@ -38,8 +37,6 @@ export const ExpandablePlayer = ({
 
   const [showMenu] = useAtom(showMenuAtom)
   const styles = createStyles(currentTheme)
-  const open = useAction(openPlayerSheetAction)
-  const close = useAction(closePlayerSheetAction)
 
   const {
     backdropStyle,
@@ -48,6 +45,7 @@ export const ExpandablePlayer = ({
     containerStyle,
     forceGeometryReapply,
     fullStyle,
+    isBarMorphSettled,
     miniBarRestingStyle,
     miniBarStyle,
     miniOverlayStyle,
@@ -59,10 +57,8 @@ export const ExpandablePlayer = ({
   } = useExpandAnimation(expanded, tabBarHeight)
 
   const gesture = useExpandablePlayerGesture({
-    close,
     disabled: showMenu,
     expanded,
-    open,
     progress,
     screenHeight,
     tabBarHeight,
@@ -76,6 +72,7 @@ export const ExpandablePlayer = ({
 
   const { onLayout: guardedContainerLayout } = useContainerGeometryGuard({
     expectedTop: collapsedRestingContainerStyle.top,
+    isSettled: isBarMorphSettled,
     onMismatch: forceGeometryReapply,
   })
 

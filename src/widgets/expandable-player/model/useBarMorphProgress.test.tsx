@@ -26,6 +26,7 @@ describe('useBarMorphProgress', () => {
 
     expect(result.current.progress.value).toBe(1)
     expect(result.current.settledCollapsed).toBe(true)
+    expect(result.current.isSettled).toBe(true)
     expect(mockedWithTiming).not.toHaveBeenCalled()
   })
 
@@ -80,12 +81,14 @@ describe('useBarMorphProgress', () => {
     // Committing the destination state at the flip paints the pill there for a
     // frame, before the animated layer asserts the start-of-morph value.
     expect(result.current.settledCollapsed).toBe(false)
+    expect(result.current.isSettled).toBe(false)
 
     await act(async () => {
       completions[0](true)
     })
 
     expect(result.current.settledCollapsed).toBe(true)
+    expect(result.current.isSettled).toBe(true)
   })
 
   test('keeps the settled bar state when the morph is interrupted', async () => {
@@ -105,5 +108,8 @@ describe('useBarMorphProgress', () => {
     })
 
     expect(result.current.settledCollapsed).toBe(false)
+    // An interrupted morph never reports a settle, so the guard must keep
+    // ignoring live layout until a later animation actually lands.
+    expect(result.current.isSettled).toBe(false)
   })
 })

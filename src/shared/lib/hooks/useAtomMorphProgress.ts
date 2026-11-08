@@ -22,11 +22,14 @@ type SettleHandler = (isTarget: boolean) => void
  * @param durationMs - Morph duration, shared by every surface of one bar morph.
  * @param onSettled - Runs on the JS thread when the animation completes; an
  * interrupted animation reports nothing so the replacement owns the commit.
+ * @param onStart - Runs on the JS thread on every real flip, before the timing
+ * starts (used to mark consumers as "morphing" until settle).
  */
 export const useAtomMorphProgress = (
   targetAtom: Atom<boolean>,
   durationMs: number,
   onSettled?: SettleHandler,
+  onStart?: SettleHandler,
 ): SharedValue<number> => {
   const ctx = useCtx()
   const progress = useSharedValue(ctx.get(targetAtom) ? 1 : 0)
@@ -43,11 +46,12 @@ export const useAtomMorphProgress = (
       }
 
       lastTarget = isTarget
+      onStart?.(isTarget)
       progress.value = withTiming(isTarget ? 1 : 0, { duration: durationMs }, finished => {
         if (finished && onSettled) scheduleOnRN(onSettled, isTarget)
       })
     })
-  }, [ctx, durationMs, onSettled, progress, targetAtom])
+  }, [ctx, durationMs, onSettled, onStart, progress, targetAtom])
 
   return progress
 }

@@ -1,5 +1,5 @@
 import { useAtom } from '@reatom/npm-react'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useAtomMorphProgress } from 'shared/lib/hooks/useAtomMorphProgress'
 import { BAR_MORPH_DURATION_MS } from 'shared/ui/layout'
 import { isMiniPillCollapsedAtom } from '../model/barMorph'
@@ -16,16 +16,31 @@ import { isMiniPillCollapsedAtom } from '../model/barMorph'
  * geometry on the flip itself paints the pill at its destination for a frame —
  * before Reanimated asserts the start-of-morph animated value — then the pill
  * snaps back and visibly morphs again (the one-frame search-open flash).
- * @returns The morph progress and the bar state it has settled into.
+ *
+ * `isSettled` is false from the flip until a timing actually completes. A
+ * geometry guard must not judge live layout mid-morph: every frame is between
+ * the two resting positions by design. An interrupted morph never reports a
+ * settle, so the flag stays false until a later animation lands.
+ * @returns The morph progress, the bar state it settled into, and whether the
+ * morph is currently settled.
  */
 export const useBarMorphProgress = () => {
   const [isCollapsed] = useAtom(isMiniPillCollapsedAtom)
   const [settledCollapsed, setSettledCollapsed] = useState(isCollapsed)
+  const [isSettled, setIsSettled] = useState(true)
+  const handleStart = useCallback(() => {
+    setIsSettled(false)
+  }, [])
+  const handleSettled = useCallback((isTarget: boolean) => {
+    setSettledCollapsed(isTarget)
+    setIsSettled(true)
+  }, [])
   const progress = useAtomMorphProgress(
     isMiniPillCollapsedAtom,
     BAR_MORPH_DURATION_MS,
-    setSettledCollapsed,
+    handleSettled,
+    handleStart,
   )
 
-  return { progress, settledCollapsed }
+  return { isSettled, progress, settledCollapsed }
 }

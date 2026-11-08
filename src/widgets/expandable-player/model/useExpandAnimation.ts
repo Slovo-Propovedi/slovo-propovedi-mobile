@@ -20,6 +20,8 @@ interface UseExpandAnimationResult {
   /** Stable reference — forces containerStyle worklet to re-run on the UI thread. */
   forceGeometryReapply: () => void
   fullStyle: ReturnType<typeof useAnimatedStyle>
+  /** Whether the bar morph has landed (geometry guard only judges settled layout). */
+  isBarMorphSettled: boolean
   miniBarRestingStyle: ReturnType<typeof getMiniBarStyle>
   miniBarStyle: ReturnType<typeof useAnimatedStyle>
   miniOverlayStyle: ReturnType<typeof useAnimatedStyle>
@@ -39,7 +41,7 @@ export const useExpandAnimation = (
   // duration, so the mini pill and the islands morph in sync. The animation
   // starts from the atom subscription (see `useBarMorphProgress`), not from
   // this render. Resting geometry follows the SETTLED state only.
-  const { progress: barProgress, settledCollapsed } = useBarMorphProgress()
+  const barMorph = useBarMorphProgress()
   const geometryReapplyTick = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
   // On web `Dimensions.get('screen')` is the physical `window.screen.height`,
@@ -52,7 +54,7 @@ export const useExpandAnimation = (
   )
   const { collapsedRestingContainerStyle, miniBarRestingStyle, restingContainerStyle } =
     useRestingStyles({
-      barCollapsed: settledCollapsed,
+      barCollapsed: barMorph.settledCollapsed,
       expanded,
       fullScreenHeight,
       screenWidth,
@@ -71,7 +73,7 @@ export const useExpandAnimation = (
     // Interpolates from the CURRENT mini geometry (expanded or collapsed pill),
     // so expanding out of the collapsed bottom line stays continuous.
     const style = getContainerGeometryStyle({
-      barProgress: barProgress.value,
+      barProgress: barMorph.progress.value,
       fullScreenHeight: fullScreenHeightShared.value,
       progress: progress.value,
       screenWidth: screenWidthShared.value,
@@ -86,7 +88,7 @@ export const useExpandAnimation = (
   })
   const miniBarStyle = useAnimatedStyle(() =>
     getMiniBarStyle({
-      barProgress: barProgress.value,
+      barProgress: barMorph.progress.value,
       fullScreenHeight: fullScreenHeightShared.value,
       screenWidth: screenWidthShared.value,
       tabBarHeight: tabBarHeightShared.value,
@@ -114,6 +116,7 @@ export const useExpandAnimation = (
     containerStyle,
     forceGeometryReapply,
     fullStyle,
+    isBarMorphSettled: barMorph.isSettled,
     miniBarRestingStyle,
     miniBarStyle,
     miniOverlayStyle,

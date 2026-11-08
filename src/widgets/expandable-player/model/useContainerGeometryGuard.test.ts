@@ -29,7 +29,12 @@ describe('useContainerGeometryGuard', () => {
     const onMismatch = jest.fn()
 
     const { result } = await renderHookWithProviders(() =>
-      useContainerGeometryGuard({ expectedTop: EXPECTED_TOP, onLayout, onMismatch }),
+      useContainerGeometryGuard({
+        expectedTop: EXPECTED_TOP,
+        isSettled: true,
+        onLayout,
+        onMismatch,
+      }),
     )
 
     await act(async () => {
@@ -47,6 +52,7 @@ describe('useContainerGeometryGuard', () => {
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
         expectedTop: EXPECTED_TOP,
+        isSettled: true,
         onLayout: jest.fn(),
         onMismatch,
       }),
@@ -69,6 +75,7 @@ describe('useContainerGeometryGuard', () => {
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
         expectedTop: EXPECTED_TOP,
+        isSettled: true,
         onLayout: jest.fn(),
         onMismatch,
       }),
@@ -82,12 +89,70 @@ describe('useContainerGeometryGuard', () => {
     expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
-  test('stops after MAX_HEALS mismatches', async () => {
+  test('ignores violations while the bar morph is unsettled', async () => {
+    const onLayout = jest.fn()
     const onMismatch = jest.fn()
 
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
         expectedTop: EXPECTED_TOP,
+        isSettled: false,
+        onLayout,
+        onMismatch,
+      }),
+    )
+
+    for (const y of [740, 757.33, 780])
+      await act(async () => {
+        result.current.onLayout(makeEvent(y))
+      })
+
+    // Mid-morph every frame is between the two resting positions: never heal,
+    // never queue a heal for later, never warn.
+    expect(onMismatch).not.toHaveBeenCalled()
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
+    // The chained consumer layout handler still runs.
+    expect(onLayout).toHaveBeenCalledTimes(3)
+  })
+
+  test('heals a wrong settled y after the morph lands', async () => {
+    const onMismatch = jest.fn()
+
+    const { rerender, result } = await renderHookWithProviders(
+      (props: { isSettled: boolean }) =>
+        useContainerGeometryGuard({
+          expectedTop: EXPECTED_TOP,
+          isSettled: props.isSettled,
+          onLayout: jest.fn(),
+          onMismatch,
+        }),
+      { initialProps: { isSettled: false } },
+    )
+
+    await act(async () => {
+      result.current.onLayout(makeEvent(757.33))
+    })
+    expect(onMismatch).not.toHaveBeenCalled()
+
+    await act(async () => {
+      rerender({ isSettled: true })
+    })
+
+    await act(async () => {
+      result.current.onLayout(makeEvent(757.33))
+    })
+
+    expect(onMismatch).toHaveBeenCalledTimes(1)
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
+  })
+
+  test('stops after MAX_HEALS mismatches and warns only once', async () => {
+    const onMismatch = jest.fn()
+
+    const { result } = await renderHookWithProviders(() =>
+      useContainerGeometryGuard({
+        expectedTop: EXPECTED_TOP,
+        isSettled: true,
         onLayout: jest.fn(),
         onMismatch,
       }),
@@ -99,7 +164,7 @@ describe('useContainerGeometryGuard', () => {
       })
 
     expect(onMismatch).toHaveBeenCalledTimes(5)
-    expect(consoleWarnSpy).toHaveBeenCalledTimes(5)
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
   })
 
   test('window expiry — mismatch no longer heals after 15s', async () => {
@@ -108,6 +173,7 @@ describe('useContainerGeometryGuard', () => {
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
         expectedTop: EXPECTED_TOP,
+        isSettled: true,
         onLayout: jest.fn(),
         onMismatch,
       }),
@@ -131,13 +197,14 @@ describe('useContainerGeometryGuard', () => {
     expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
   })
 
-  test('heal budget resets when expectedTop changes', async () => {
+  test('heal budget resets when expectedTop changes, the warn does not repeat', async () => {
     const onMismatch = jest.fn()
 
     const { rerender, result } = await renderHookWithProviders(
       (props: { expectedTop: number }) =>
         useContainerGeometryGuard({
           expectedTop: props.expectedTop,
+          isSettled: true,
           onLayout: jest.fn(),
           onMismatch,
         }),
@@ -167,9 +234,11 @@ describe('useContainerGeometryGuard', () => {
       result.current.onLayout(makeEvent(820))
     })
     expect(onMismatch).toHaveBeenCalledTimes(6)
-    expect(consoleWarnSpy).toHaveBeenLastCalledWith(
+    // One warning per session is enough to flag the recurrence in prod logs.
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
       'playerGeometryHeal',
-      expect.objectContaining({ attempt: 1, expectedTop: NEW_TOP, y: 820 }),
+      expect.objectContaining({ attempt: 1, expectedTop: EXPECTED_TOP, y: 757.33 }),
     )
   })
 
@@ -179,6 +248,7 @@ describe('useContainerGeometryGuard', () => {
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
         expectedTop: EXPECTED_TOP,
+        isSettled: true,
         onLayout: jest.fn(),
         onMismatch,
       }),
@@ -200,6 +270,7 @@ describe('useContainerGeometryGuard', () => {
     const { result } = await renderHookWithProviders(() =>
       useContainerGeometryGuard({
         expectedTop: EXPECTED_TOP,
+        isSettled: true,
         onLayout,
         onMismatch,
       }),
