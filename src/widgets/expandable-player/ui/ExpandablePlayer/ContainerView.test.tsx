@@ -76,6 +76,23 @@ const emitState = (state: AppStateStatus) => {
   for (const listener of mockListeners) listener(state)
 }
 
+const findContainerNode = () =>
+  screen.root?.queryAll(instance => StyleSheet.flatten(instance.props.style)?.zIndex === 200)[0]
+
+describe('<ContainerView> pointer events', () => {
+  test('lets touches through the collapsed container so the mini pill receives them', async () => {
+    await renderWithProviders(<ContainerView {...baseProps} expanded={false} />)
+
+    expect(findContainerNode()?.props.pointerEvents).toBe('none')
+  })
+
+  test('captures touches once the container is expanded to fullscreen', async () => {
+    await renderWithProviders(<ContainerView {...baseProps} expanded />)
+
+    expect(findContainerNode()?.props.pointerEvents).toBe('auto')
+  })
+})
+
 describe('<ContainerView> fullscreen gating', () => {
   test('keeps FullscreenContent mounted during the collapse window, then unmounts', async () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] })

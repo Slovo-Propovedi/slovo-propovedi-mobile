@@ -65,6 +65,13 @@ export const ContainerView = ({
     <GestureDetector gesture={panGesture}>
       <Animated.View
         onLayout={onLayout}
+        // Fullscreen-only layer: at rest the container is invisible yet still
+        // sits above the mini pill in the web paint order (the pill's parent
+        // layer carries a transform, which makes its zIndex local to that
+        // stacking context). Without this gate the container swallows every
+        // tap/swipe aimed at the pill on web. Must be the PROP, not a style
+        // key — see docs/features/web.md «pointerEvents на web».
+        pointerEvents={expanded ? 'auto' : 'none'}
         style={[
           styles.container,
           // containerStyle (animated) wins at the NATIVE level for live animation
