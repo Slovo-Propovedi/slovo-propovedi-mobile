@@ -14,6 +14,22 @@ import { SearchIslandMorph } from './SearchIslandMorph'
 const mockCreateDistinctValuesResponse =
   sermonsMocks.getSermonControllerGetDistinctValuesResponseMock
 
+// The magnifier is a vector-font glyph: its `size` prop is the contract under
+// test, and host elements only expose the rendered Text, not the icon props.
+const mockIoniconsSpy = jest.fn()
+
+jest.mock('@expo/vector-icons', () => {
+  const { Text } = jest.requireActual('react-native')
+
+  return {
+    Ionicons: (props: { name: string }) => {
+      mockIoniconsSpy(props)
+
+      return <Text>{props.name}</Text>
+    },
+  }
+})
+
 jest.mock('expo-audio', () => ({
   createAudioPlayer: jest.fn(),
   setAudioModeAsync: jest.fn(),
@@ -45,6 +61,7 @@ const SEARCH_LABEL = 'Поиск'
 const CLOSE_LABEL = 'Закрыть поиск'
 const CIRCLE_ICON_SIZE = 32
 const PILL_ICON_SIZE = 22
+const MAGNIFIER_GLYPH = 'search'
 
 const findShadows = () =>
   screen.root?.queryAll(
@@ -66,6 +83,27 @@ const findIcon = (size: number) =>
     return flat?.height === size && flat?.width === size
   })[0]
 
+const findMagnifierBox = (size: number) => {
+  const box = findIcon(size)
+
+  if (!box) throw new Error('Magnifier box not found')
+
+  return box
+}
+
+// Last size the magnifier asked Ionicons to render at during the latest render.
+const lastMagnifierGlyphSize = () => {
+  const sizes = mockIoniconsSpy.mock.calls
+    .map(([props]) => props as { name: string; size: number })
+    .filter(props => props.name === MAGNIFIER_GLYPH)
+    .map(props => props.size)
+
+  return sizes[sizes.length - 1]
+}
+
+const magnifierTransform = (size: number) =>
+  StyleSheet.flatten(findMagnifierBox(size).props.style).transform
+
 const findContentWrapper = (input: TestInstance): TestInstance => {
   let current: null | TestInstance = input
 
@@ -85,6 +123,10 @@ const renderMorph = async () => {
 }
 
 describe('<SearchIslandMorph>', () => {
+  beforeEach(() => {
+    mockIoniconsSpy.mockClear()
+  })
+
   test('renders exactly one shadow-carrying container in both states', async () => {
     const { ctx } = await renderMorph()
 
@@ -127,11 +169,13 @@ describe('<SearchIslandMorph>', () => {
     expect(StyleSheet.flatten(findContentWrapper(input).props.style).opacity).toBe(1)
   })
 
-  test('anchors the magnifier on the left and interpolates its size', async () => {
+  test('renders the magnifier glyph at its animated size instead of scaling it', async () => {
     const { ctx } = await renderMorph()
 
-    // Closed: the icon is centred in the expanded search circle.
-    expect(findIcon(CIRCLE_ICON_SIZE)).toBeDefined()
+    // Closed: a full-size glyph centred in the expanded search circle.
+    expect(findMagnifierBox(CIRCLE_ICON_SIZE)).toBeDefined()
+    expect(magnifierTransform(CIRCLE_ICON_SIZE)).toBeUndefined()
+    expect(lastMagnifierGlyphSize()).toBe(CIRCLE_ICON_SIZE)
     expect(StyleSheet.flatten(findMorphContainer().props.style).paddingLeft).toBe(
       (TAB_BAR_ISLAND_HEIGHT_EXPANDED - CIRCLE_ICON_SIZE) / 2,
     )
@@ -140,8 +184,11 @@ describe('<SearchIslandMorph>', () => {
       isSearchOpenAtom(ctx, true)
     })
 
-    // Open: the same icon shrinks into the pill's left inset.
-    expect(findIcon(PILL_ICON_SIZE)).toBeDefined()
+    // Open: the same glyph is re-rendered at the pill's compact size. Scaling a
+    // fixed 32px node down inside the 22px slot is what Android clipped.
+    expect(findMagnifierBox(PILL_ICON_SIZE)).toBeDefined()
+    expect(magnifierTransform(PILL_ICON_SIZE)).toBeUndefined()
+    expect(lastMagnifierGlyphSize()).toBe(PILL_ICON_SIZE)
     expect(StyleSheet.flatten(findMorphContainer().props.style).paddingLeft).toBe(8)
   })
 
