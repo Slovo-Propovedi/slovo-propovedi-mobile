@@ -37,8 +37,9 @@ export const useExpandAnimation = (
 ): UseExpandAnimationResult => {
   const progress = useSharedValue(0)
   // UI-thread mirror of the bar-collapse atom; the tab bar animates the same
-  // duration, so the mini pill and the islands morph in sync.
-  const barProgress = useBarMorphProgress(isBarCollapsed)
+  // duration, so the mini pill and the islands morph in sync. Resting geometry
+  // follows the SETTLED state only — see `useBarMorphProgress`.
+  const { progress: barProgress, settledCollapsed } = useBarMorphProgress(isBarCollapsed)
   const geometryReapplyTick = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
   // On web `Dimensions.get('screen')` is the physical `window.screen.height`,
@@ -51,7 +52,7 @@ export const useExpandAnimation = (
   )
   const { collapsedRestingContainerStyle, miniBarRestingStyle, restingContainerStyle } =
     useRestingStyles({
-      barCollapsed: isBarCollapsed,
+      barCollapsed: settledCollapsed,
       expanded,
       fullScreenHeight,
       screenWidth,

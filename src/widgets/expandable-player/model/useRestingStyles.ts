@@ -3,7 +3,7 @@ import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 
 interface UseRestingStylesInput {
-  /** Whether the bottom bar is collapsed into a single row. */
+  /** Bar state the morph has settled into (see `useBarMorphProgress.settledCollapsed`). */
   barCollapsed: boolean
   expanded: boolean
   fullScreenHeight: number
@@ -13,10 +13,11 @@ interface UseRestingStylesInput {
 
 /**
  * React-committed (shadow-tree) resting geometry for the container and the mini
- * pill. Restated for the current bar state so the #63 defenses never restore a
- * stale expanded-bar position while the bar is collapsed.
+ * pill. Restated for the SETTLED bar state so the #63 defenses never restore a
+ * stale expanded-bar position while the bar is collapsed — and never paint the
+ * destination geometry a frame before the morph lands there.
  * @param input - Player state and screen geometry.
- * @param input.barCollapsed - Whether the bottom bar is collapsed to one row.
+ * @param input.barCollapsed - Bar state whose morph has already completed.
  * @param input.expanded - Whether the player is expanded to fullscreen.
  * @param input.fullScreenHeight - Full device screen height.
  * @param input.screenWidth - Current window width.

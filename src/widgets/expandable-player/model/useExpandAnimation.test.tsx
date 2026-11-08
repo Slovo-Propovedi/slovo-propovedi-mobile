@@ -196,6 +196,89 @@ describe('useExpandAnimation restingContainerStyle', () => {
   })
 })
 
+describe('useExpandAnimation bar-morph resting commit', () => {
+  const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
+    toValue: number,
+    config: unknown,
+    callback?: (finished: boolean) => void,
+  ) => number
+
+  afterEach(() => {
+    mockedWithTiming.mockImplementation(defaultWithTimingImpl)
+  })
+
+  const COLLAPSED_RESTING = {
+    bottom: COLLAPSED_BOTTOM,
+    left: COLLAPSED_LEFT,
+    width: 400 - COLLAPSED_LEFT * 2,
+  }
+  const EXPANDED_RESTING = {
+    bottom: EXPANDED_BOTTOM,
+    left: BAR_SIDE_INSET,
+    width: 400 - BAR_SIDE_INSET * 2,
+  }
+
+  const renderBarFlip = async (initialBarCollapsed: boolean) => {
+    const completions: Array<(finished: boolean) => void> = []
+    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
+      if (typeof callback === 'function') completions.push(callback)
+      return toValue
+    })
+
+    const renders: Array<ReturnType<typeof useExpandAnimation>> = []
+
+    const Harness = ({ barCollapsed }: { barCollapsed: boolean }) => {
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT, barCollapsed)
+      renders.push(result)
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    const { rerender } = await renderWithProviders(<Harness barCollapsed={initialBarCollapsed} />)
+    const flipRenderIndex = renders.length
+    await rerender(<Harness barCollapsed={!initialBarCollapsed} />)
+
+    return { completions, flipRender: renders[flipRenderIndex], renders }
+  }
+
+  test('keeps the collapsed resting geometry until the expand morph settles', async () => {
+    const { completions, flipRender, renders } = await renderBarFlip(true)
+
+    // The flip render must not commit the destination geometry: the animated
+    // layer still holds the collapsed value for a frame, so committing the
+    // detached geometry here paints the pill at its destination, then snaps it
+    // back to the collapsed line and morphs again (the search-open flash).
+    expect(flipRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
+    expect(flipRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
+    expect(flipRender.collapsedRestingContainerStyle).toMatchObject(COLLAPSED_RESTING)
+
+    await act(async () => {
+      completions[0](true)
+    })
+
+    const settledRender = renders[renders.length - 1]
+    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.collapsedRestingContainerStyle).toMatchObject(EXPANDED_RESTING)
+  })
+
+  test('keeps the detached resting geometry until the collapse morph settles', async () => {
+    const { completions, flipRender, renders } = await renderBarFlip(false)
+
+    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(flipRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+    expect(flipRender.collapsedRestingContainerStyle).toMatchObject(EXPANDED_RESTING)
+
+    await act(async () => {
+      completions[0](true)
+    })
+
+    const settledRender = renders[renders.length - 1]
+    expect(settledRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
+    expect(settledRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
+    expect(settledRender.collapsedRestingContainerStyle).toMatchObject(COLLAPSED_RESTING)
+  })
+})
+
 describe('useExpandAnimation first committed frame', () => {
   test('starts the pill and container at the resting geometry', async () => {
     const captured: { current: null | ReturnType<typeof useExpandAnimation> } = {
