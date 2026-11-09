@@ -54,55 +54,10 @@ export const GLASS = {
 
 const rgba = (channels: string, alpha: number) => `rgba(${channels}, ${alpha})`
 
-/** Four additive edge ramps: alpha 1 at every border, 0 at `edgeRingWidth` inside. */
-const getWebEdgeRingMask = () =>
-  [
-    `linear-gradient(to right, #000 0, transparent ${GLASS.web.edgeRingWidth}px)`,
-    `linear-gradient(to left, #000 0, transparent ${GLASS.web.edgeRingWidth}px)`,
-    `linear-gradient(to bottom, #000 0, transparent ${GLASS.web.edgeRingWidth}px)`,
-    `linear-gradient(to top, #000 0, transparent ${GLASS.web.edgeRingWidth}px)`,
-  ].join(', ')
-
 export const getGlassFill = (isLight: boolean, alphaBoost = 0) =>
   isLight
     ? rgba('255, 255, 255', GLASS.fillAlpha.light + alphaBoost)
     : rgba('0, 0, 0', GLASS.fillAlpha.dark + alphaBoost)
-
-/**
- * Web-only backdrop style. `backdropFilter` is valid in react-native-web's
- * style compiler (it emits the vendor-prefixed CSS) but missing from RN's own
- * `ViewStyle`, hence the typed extension instead of a cast. The mask fields are
- * web-only CSS too, kept optional so the base layer stays a plain blur.
- */
-export interface WebGlassStyle extends ViewStyle {
-  backdropFilter: string
-  maskComposite?: string
-  maskImage?: string
-  WebkitMaskComposite?: string
-  WebkitMaskImage?: string
-}
-
-export const getWebGlassStyle = (): WebGlassStyle => ({
-  backdropFilter: GLASS.web.backdropFilter,
-})
-
-/**
- * Edge ring that distorts the backdrop like thick glass. The stronger SVG
- * displacement is masked to the outer `edgeRingWidth` so the center stays
- * clean. It renders ABOVE the base blur: the displacement then bends the
- * already-blurred backdrop instead of being smeared away underneath it.
- */
-export const getWebRefractionStyle = (): WebGlassStyle => {
-  const edgeRingMask = getWebEdgeRingMask()
-
-  return {
-    backdropFilter: GLASS.web.refractionFilter,
-    maskComposite: 'add',
-    maskImage: edgeRingMask,
-    WebkitMaskComposite: 'source-over',
-    WebkitMaskImage: edgeRingMask,
-  }
-}
 
 export const getGlassBorder = (isLight: boolean) =>
   rgba(GLASS.border.color, isLight ? GLASS.border.alpha.light : GLASS.border.alpha.dark)
@@ -120,6 +75,8 @@ export const createGlassStyles = (isLight: boolean, radius: number) => ({
   blur: { intensity: GLASS.blur.intensity, tint: getGlassTint(isLight) },
   container: { boxShadow: GLASS.shadow.boxShadow } satisfies ViewStyle,
   containerDegraded: { boxShadow: GLASS.shadow.degraded } satisfies ViewStyle,
+  // Shadowless host: island surfaces rely on the shared `BarBackdropShade` gradient.
+  containerPlain: {} satisfies ViewStyle,
   fill: { backgroundColor: getGlassFill(isLight) },
   rim: {
     borderColor: getGlassBorder(isLight),

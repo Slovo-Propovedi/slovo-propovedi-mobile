@@ -1,7 +1,7 @@
 import { type SuspenseFallbackProps, Tabs } from 'expo-router'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { PlaylistSheetMenu } from 'pages/playlist'
-import { ExpandablePlayer } from 'widgets/expandable-player'
+import { BarBackdropShade, ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
 import { BlurTargetProvider } from 'shared/ui'
 import { COLORS, INDENTS, useTheme } from 'shared/ui/theme'
@@ -26,6 +26,10 @@ const Layout = () => {
   return (
     <BlurTargetProvider>
       <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
+        {/* One subtle gradient shade for the whole bar complex. Rendered before
+            the tabs so it sits below the islands in document order; the explicit
+            zIndex keeps it above the opaque page background. */}
+        <BarBackdropShade />
         <Tabs screenOptions={{ headerShown: false }} tabBar={props => <CustomTabBar {...props} />}>
           <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
           <Tabs.Screen name='read' options={{ title: 'Читать' }} />

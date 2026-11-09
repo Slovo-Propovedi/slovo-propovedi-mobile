@@ -164,24 +164,23 @@ describe('<MiniPlayer>', () => {
         return flat?.borderColor === getGlassBorder(true) && flat?.borderWidth === 1
       }),
     ).toHaveLength(1)
+    // The pill itself carries no shadow: the shared `BarBackdropShade` gradient
+    // sits behind the whole bar complex.
     expect(
       screen.root?.queryAll(
-        instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
+        instance => StyleSheet.flatten(instance.props.style)?.boxShadow !== undefined,
       ),
-    ).toHaveLength(1)
+    ).toHaveLength(0)
   })
 
   test('does not paint a solid background over the pill glass', async () => {
     // The pill itself must stay background-free; any opaque fill here (or in the
     // layers below it) hides the BlurView backdrop and the pill reads as solid.
-    await renderMiniPlayer()
+    const { getByRole } = await renderMiniPlayer()
 
-    const pill = screen.root?.queryAll(
-      instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
-    )?.[0]
+    const pill = getByRole('button', { name: TITLE_NAME_PATTERN })
 
-    expect(pill).toBeTruthy()
-    expect(StyleSheet.flatten(pill?.props.style)?.backgroundColor).toBeUndefined()
+    expect(StyleSheet.flatten(pill.props.style)?.backgroundColor).toBeUndefined()
   })
 
   test('uses the dark glass recipe in the dark theme', async () => {

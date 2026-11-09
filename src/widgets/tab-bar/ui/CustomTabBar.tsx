@@ -75,13 +75,7 @@ export const CustomTabBar = ({
           setMeasuredTabBarHeight(height)
         }}
       >
-        <Animated.View
-          style={[
-            styles.floatingIsland,
-            isMorphing ? glass.containerDegraded : glass.container,
-            islandStyle,
-          ]}
-        >
+        <Animated.View style={[styles.floatingIsland, glass.containerPlain, islandStyle]}>
           <GlassSurface
             isLight={isLight}
             degraded={isMorphing}
