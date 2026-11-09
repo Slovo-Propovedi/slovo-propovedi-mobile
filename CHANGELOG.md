@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.1] - 2026-11-09
+
+### Added
+
+- Gray backdrop shade in dark theme
+- White backdrop shade in dark theme
+- Milkier glass fill
+- Soften the backdrop shade
+- Shape the shade after the reference
+- Deepen the backdrop shade
+- Make the backdrop shade perceptible
+- Classic backdrop-filter glassmorphism
+- Subtle full-width gradient shade behind the bar
+- Haptic feedback when expanding the collapsed bar island
+
+### Changed
+
+- Degrade blur and shadow to static fallback during bar morph
+- Voice-input review follow-ups
+
+### Fixed
+
+- Lock the shade to the pill morph driver
+- Order islands row above the shade on web
+- Render shade inside tab bar layer above screens
+- Shade stacking on native + review cleanups
+- Hide stale duplicate copy via UI-thread opacity
+- Always start expanded on app launch
+- Size OTA reload splash icon like the native splash (152dp)
+- Allow microphone in Permissions-Policy for voice search
+- Align mini player pill height with bar circles
+- Stop muting web mic before first recognition attempt
+- Fix stale glass comments and drop unused getGlassTint re-export
+- Scheme-aware contour marks on the OTA reload screen
+- Treat unsupported speech recognition as unavailable
+- Strip /manifest suffix when deriving xprem base in cleanup workflow
+- Reset bar shape when playback resets
+- Keep bar shape while no sermon is active
+- Paint browser chrome with theme background via theme-color
+- Tint inactive tabs with theme text color
+
 ## [0.33.0] - 2026-11-08
 
 ### Added
@@ -1642,6 +1683,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.33.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.33.1
 [0.33.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.33.0
 [0.32.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.32.0
 [0.31.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.31.1
