@@ -42,7 +42,11 @@ export const TabButton = ({
   const capsuleStyle = useAnimatedStyle(() => ({
     opacity: getCapsuleOpacity(labelProgress.value, isActive),
   }))
-  const color = isActive ? currentTheme.primary : currentTheme.textMuted
+  const color = isDisabled
+    ? currentTheme.textMuted
+    : isActive
+      ? currentTheme.primary
+      : currentTheme.text
 
   return (
     <TouchableButton

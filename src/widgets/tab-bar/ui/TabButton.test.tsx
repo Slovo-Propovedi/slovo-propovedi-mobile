@@ -8,6 +8,15 @@ import { TabButton } from './TabButton'
 
 jest.mock('shared/lib/haptics', () => ({ hapticLight: jest.fn() }))
 
+jest.mock('shared/ui/theme', () => {
+  const actual = jest.requireActual('shared/ui/theme')
+
+  return {
+    ...actual,
+    useTheme: () => ({ currentTheme: actual.LightTheme, isLight: true, themeMode: 'light' }),
+  }
+})
+
 const mockedHapticLight = hapticLight as jest.MockedFunction<typeof hapticLight>
 const noop = () => {}
 const CAPSULE_COLOR = 'rgba(241, 96, 49, 0.18)'
@@ -18,6 +27,13 @@ const findCapsule = () =>
   screen.root?.queryAll(
     instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === CAPSULE_COLOR,
   )[0]
+
+const findIconGlyphs = (color: string) =>
+  screen.root?.queryAll(instance => {
+    const style = StyleSheet.flatten(instance.props.style)
+
+    return style?.color === color && style?.fontSize === 28
+  })
 
 const renderTabButton = async (
   routeName: string,
@@ -117,10 +133,20 @@ describe('<TabButton>', () => {
     expect(screen.getByText('Слушать')).toHaveStyle({ color: '#f16031' })
   })
 
-  test('inactive tab tints the label with the muted text color', async () => {
+  test('inactive tab tints the label with the theme text color', async () => {
     await renderTabButton('listen', false)
 
-    expect(screen.getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
+    expect(screen.getByText('Слушать')).toHaveStyle({ color: '#000' })
+    expect(findIconGlyphs('#000')).toHaveLength(1)
+  })
+
+  test('disabled tab tints the label with the muted text color', async () => {
+    await renderWithProviders(
+      <TabButton isDisabled onPress={noop} isActive={false} routeKey='listen' routeName='listen' />,
+    )
+
+    expect(screen.getByText('Слушать')).toHaveStyle({ color: '#666' })
+    expect(findIconGlyphs('#666')).toHaveLength(1)
   })
 
   test('active tab renders a primary-tinted capsule behind the item when expanded', async () => {
