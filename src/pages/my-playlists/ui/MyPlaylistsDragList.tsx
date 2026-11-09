@@ -51,6 +51,9 @@ export const MyPlaylistsDragList = ({
   // as the animated lists, so the atom is written once per threshold crossing.
   const handleScrollOffsetChange = useCallback(
     (offsetY: number) => {
+      // Deliberately not useIsBarCollapseSuspended: this guard reads the raw
+      // isSearchOpenAtom (query-unqualified), and search cannot be open on this
+      // tab, so the shared hook is unnecessary here.
       if (isSearchOpen || isPlayerExpanded || currentAudio === null) return
 
       const nextCollapsed = nextBarCollapsedState(offsetY, wasBarCollapsedRef.current)

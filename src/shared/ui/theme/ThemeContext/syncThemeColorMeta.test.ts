@@ -45,4 +45,15 @@ describe('syncThemeColorMeta', () => {
       restore()
     }
   })
+
+  test('does nothing when document is entirely undefined', () => {
+    const descriptor = Object.getOwnPropertyDescriptor(global, 'document')
+    Reflect.deleteProperty(global, 'document')
+
+    try {
+      expect(() => syncThemeColorMeta('#000')).not.toThrow()
+    } finally {
+      if (descriptor) Object.defineProperty(global, 'document', descriptor)
+    }
+  })
 })
