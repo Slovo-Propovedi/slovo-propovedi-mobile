@@ -201,6 +201,10 @@ jobs:
       # `400 Email is empty`); the token field is read with a fallback chain so
       # a renamed field does not break the run. The token is masked and stored
       # in $GITHUB_ENV, never echoed or written to the summary.
+      # EXPO_PUBLIC_OTA_URL is the full manifest path (`<BASE_URL>/manifest`,
+      # per the ota.config.ts contract) while the dashboard API (`/auth/login`,
+      # `/api/apps/...`) lives at the server root, so the `/manifest` suffix is
+      # stripped here; an absent suffix is a no-op.
       - name: Log in to the xprem dashboard
         id: login
         if: steps.guard.outputs.ready == 'true'
@@ -212,6 +216,7 @@ jobs:
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
 
           BASE="${OTA_URL%/}"
+          BASE="${BASE%/manifest}"
           STATUS=$(curl -sS -o /tmp/xprem-login.json -w '%{http_code}' -X POST "$BASE/auth/login" \
             -H 'Content-Type: application/x-www-form-urlencoded' \
             --data-urlencode "email=$XPREM_ADMIN_EMAIL" \
