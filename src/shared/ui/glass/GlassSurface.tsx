@@ -5,7 +5,7 @@ import { Platform, StyleSheet, View } from 'react-native'
 import { useGlassBlurTarget } from './blurTargetContext'
 import { supportsAndroidBackdropBlur } from './blurTargets'
 import { createGlassStyles, getGlassFill, GLASS } from './glass'
-import { getWebGlassStyle, getWebRefractionStyle } from './webGlass'
+import { getWebGlassStyle } from './webGlass'
 
 /**
  * Frosted-glass background for the floating bottom islands: a backdrop blur
@@ -17,12 +17,10 @@ import { getWebGlassStyle, getWebRefractionStyle } from './webGlass'
  *
  * Platform treatment:
  * - iOS: native `BlurView` (tint light/dark), already refractive.
- * - Web: bypasses `BlurView` for a shallow `backdrop-filter` that keeps the
- *   background readable. A masked edge ring above it carries the strong SVG
- *   displacement, so only the rim bends like thick glass while the center stays
- *   clean. The two layers are independent progressive enhancements: an engine
- *   without `url()` keeps the plain blur, and one without mask support falls
- *   back to the previous full-surface refraction.
+ * - Web: bypasses `BlurView` for classic glassmorphism — one translucent sheet
+ *   that blurs and saturates the backdrop through `backdrop-filter` (emitted in
+ *   both standard and `-webkit-` forms for Safari), framed by a 1px translucent
+ *   rim. No shadow, no refraction mask.
  * - Android 12+: real dimezis backdrop blur of the page target published by
  *   `BlurTargetProvider`; without a target (page not laid out, or Android
  *   11 and below) the surface keeps the tint plus the top-edge sheen.
@@ -77,10 +75,7 @@ export const GlassSurface = ({
       style={[StyleSheet.absoluteFill, styles.clip, { borderRadius: radius }]}
     >
       {isWeb ? (
-        <>
-          <View style={[StyleSheet.absoluteFill, getWebGlassStyle(), glass.fill]} />
-          <View style={[StyleSheet.absoluteFill, getWebRefractionStyle()]} />
-        </>
+        <View style={[StyleSheet.absoluteFill, getWebGlassStyle(isLight, radius)]} />
       ) : (
         <BlurView
           tint={glass.blur.tint}
@@ -97,7 +92,8 @@ export const GlassSurface = ({
           style={[styles.sheen, { height: GLASS.android.sheen.heightPercent }]}
         />
       )}
-      <View style={[StyleSheet.absoluteFill, glass.rim]} />
+      {/* Web carries its rim on the glass sheet itself. */}
+      {!isWeb && <View style={[StyleSheet.absoluteFill, glass.rim]} />}
     </View>
   )
 }

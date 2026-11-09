@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react-native'
 import { type ComponentRef, createRef, type RefObject } from 'react'
 import { Platform, StyleSheet, type View } from 'react-native'
-import { getGlassBorder, getGlassFill, GLASS } from './glass'
+import { getGlassBorder, getGlassFill, getWebGlassFill, GLASS } from './glass'
 import { GlassSurface } from './GlassSurface'
 
 jest.mock('expo-linear-gradient', () => {
@@ -36,41 +36,29 @@ describe('<GlassSurface>', () => {
     })
   })
 
-  test('web layers a masked edge-refraction ring over the readable base blur', async () => {
+  test('web renders one classic glassmorphism sheet above the backdrop', async () => {
     setPlatform('web')
     await render(<GlassSurface isLight radius={28} />)
 
     expect(findBlur()).toHaveLength(0)
 
-    const layersWithFilter = (filter: string) =>
+    const glassLayers =
       screen.root?.queryAll(
-        instance => StyleSheet.flatten(instance.props.style)?.backdropFilter === filter,
+        instance => StyleSheet.flatten(instance.props.style)?.backdropFilter != null,
       ) ?? []
 
-    const baseLayers = layersWithFilter(GLASS.web.backdropFilter)
-    const refractionLayers = layersWithFilter(GLASS.web.refractionFilter)
+    expect(glassLayers).toHaveLength(1)
 
-    expect(baseLayers).toHaveLength(1)
-    expect(refractionLayers).toHaveLength(1)
-
-    // The base layer owns the fill and the shallow blur; the refraction ring is
-    // above it so the displacement bends the already-blurred backdrop. The pair
-    // stays split, keeping the plain-blur fallback when `url()` is unsupported.
-    expect(StyleSheet.flatten(baseLayers[0]?.props.style)).toMatchObject({
-      backgroundColor: getGlassFill(true),
+    // One translucent sheet: blur + saturate (standard and Safari-prefixed),
+    // theme tint and a 1px rim. No refraction mask, no shadow.
+    expect(StyleSheet.flatten(glassLayers[0]?.props.style)).toMatchObject({
+      backdropFilter: GLASS.web.backdropFilter,
+      backgroundColor: getWebGlassFill(true),
+      borderColor: 'rgba(255, 255, 255, 0.45)',
+      borderRadius: 28,
+      borderWidth: 1,
+      WebkitBackdropFilter: GLASS.web.backdropFilter,
     })
-    expect(StyleSheet.flatten(refractionLayers[0]?.props.style)).toMatchObject({
-      maskComposite: 'add',
-      maskImage: expect.stringContaining('transparent 10px'),
-    })
-    expect(StyleSheet.flatten(refractionLayers[0]?.props.style).backgroundColor).toBeUndefined()
-
-    const orderedFilters =
-      screen.root
-        ?.queryAll(instance => StyleSheet.flatten(instance.props.style)?.backdropFilter)
-        .map(instance => StyleSheet.flatten(instance.props.style).backdropFilter) ?? []
-
-    expect(orderedFilters).toEqual([GLASS.web.backdropFilter, GLASS.web.refractionFilter])
   })
 
   test('android substitutes depth cues for the impossible backdrop blur', async () => {
