@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { StyleSheet, useWindowDimensions } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
-import { isTabBarMeasuredAtom, tabBarHeightAtom, useKeyboardLiftStyle } from 'shared/ui/layout'
+import { isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getMiniPlayerGeometry } from '../lib/getMiniPlayerGeometry'
 import { useBarMorphProgress } from '../model/useBarMorphProgress'
@@ -19,10 +19,10 @@ const SHADE_LOCATIONS = [0.4, 1] as const
 
 /**
  * Single very subtle vertical gradient from the screen bottom up to the mini
- * player top, rendered before the islands so it sits behind them. Hidden in the
- * same conditions as the collapsed mini player: no audio, or fullscreen
- * expansion once its morph has settled. It follows the keyboard lift exactly
- * like the pill.
+ * player top, rendered as the first child of the tab bar's floating container so
+ * it sits above the screens and behind the islands. Hidden in the same
+ * conditions as the collapsed mini player: no audio, or fullscreen expansion
+ * once its morph has settled. The container owns the keyboard lift.
  */
 export const BarBackdropShade = () => {
   const [audio] = useAtom(currentAudioAtom)
@@ -36,7 +36,6 @@ export const BarBackdropShade = () => {
   const expandProgress = useSharedValue(expanded ? 1 : 0)
   const { settledExpanded } = useProgressAnimation(expanded, expandProgress)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
-  const keyboardLiftStyle = useKeyboardLiftStyle()
 
   const shadeStyle = useAnimatedStyle(() => {
     const { bottom } = getMiniPlayerGeometry({
@@ -53,7 +52,7 @@ export const BarBackdropShade = () => {
 
   return (
     <Animated.View pointerEvents='none' style={styles.layer}>
-      <Animated.View style={[styles.shade, keyboardLiftStyle, shadeStyle]}>
+      <Animated.View style={[styles.shade, shadeStyle]}>
         <LinearGradient
           pointerEvents='none'
           colors={SHADE_COLORS}
@@ -66,12 +65,10 @@ export const BarBackdropShade = () => {
 }
 
 const styles = StyleSheet.create({
-  // No zIndex: sibling document order owns the stacking. The shade renders
-  // before <Tabs> and <ExpandablePlayer>, so on native both paint above it; on
-  // web the islands' nested z-index (10/300) reaches the root context and wins
-  // over this positioned z-auto layer. A top-level zIndex here would sort above
-  // the whole <Tabs> subtree on native, because nested z-index cannot compete
-  // across subtrees.
+  // No zIndex: the tab-bar layer already paints above the screens, and document
+  // order inside floatingContainer keeps this shade behind the islands row and
+  // the search morph. Anchored to the container's bottom, so the taller inner
+  // shade overflows upward out of the container box.
   layer: {
     bottom: 0,
     left: 0,

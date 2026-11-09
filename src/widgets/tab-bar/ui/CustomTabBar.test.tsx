@@ -30,6 +30,16 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn(() => jest.fn()) }),
 }))
 
+jest.mock('widgets/expandable-player/@x/barShade', () => {
+  const { View } = jest.requireActual('react-native')
+
+  return {
+    BarBackdropShade: () => (
+      <View style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />
+    ),
+  }
+})
+
 let mockBottomInset = 0
 
 jest.mock('react-native-safe-area-context', () => {
@@ -153,6 +163,47 @@ describe('<CustomTabBar>', () => {
 
       return flat?.height === BAR_CIRCLE_SIZE_EXPANDED && flat?.width === BAR_CIRCLE_SIZE_EXPANDED
     })[0]
+
+  const findFloatingContainer = () =>
+    screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return (
+        flat?.position === 'absolute' &&
+        flat?.zIndex === 10 &&
+        flat?.bottom === 0 &&
+        flat?.left === 0 &&
+        flat?.right === 0
+      )
+    })[0]
+
+  test('renders the backdrop shade as the floating container first child', async () => {
+    await renderTabBar()
+
+    const container = findFloatingContainer()
+    const firstChild = container?.children[0]
+
+    if (!firstChild || typeof firstChild === 'string') throw new Error('first child not found')
+
+    // The mock renders a host View wrapped in a composite: when the composite
+    // carries no style, the rendered host sits below it.
+    const shadeNode = StyleSheet.flatten(firstChild.props.style)
+      ? firstChild
+      : firstChild.children[0]
+
+    if (!shadeNode || typeof shadeNode === 'string') throw new Error('shade node not found')
+
+    // The shade must be the first child: the tab-bar layer sits above the
+    // opaque screens, and document order keeps the islands above the shade.
+    expect(StyleSheet.flatten(shadeNode.props.style)).toMatchObject({
+      bottom: 0,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+    })
+    expect(container?.children[1]).toBeTruthy()
+  })
 
   test('ignores a zero-height layout report', async () => {
     const { ctx } = await renderTabBar()

@@ -1,7 +1,7 @@
 import { type SuspenseFallbackProps, Tabs } from 'expo-router'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { PlaylistSheetMenu } from 'pages/playlist'
-import { BarBackdropShade, ExpandablePlayer } from 'widgets/expandable-player'
+import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
 import { BlurTargetProvider } from 'shared/ui'
 import { COLORS, INDENTS, useTheme } from 'shared/ui/theme'
@@ -26,13 +26,6 @@ const Layout = () => {
   return (
     <BlurTargetProvider>
       <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
-        {/* One subtle gradient shade for the whole bar complex. Rendered before
-            the tabs, so sibling document order paints the screen content and
-            the islands above it on native; on web those islands carry nested
-            z-index 10/300, which reaches the root context and stays above this
-            z-auto layer. No zIndex here: a top-level one would sort above the
-            whole <Tabs> subtree on native. */}
-        <BarBackdropShade />
         <Tabs screenOptions={{ headerShown: false }} tabBar={props => <CustomTabBar {...props} />}>
           <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
           <Tabs.Screen name='read' options={{ title: 'Читать' }} />

@@ -125,26 +125,26 @@ describe('<BarBackdropShade>', () => {
     expect(gradient?.props.locations).toEqual(SHADE_LOCATIONS)
   })
 
-  test('lets sibling document order stack the layer: no zIndex, never intercepts touches', async () => {
+  test('lets document order inside the tab bar own stacking: no zIndex, never intercepts touches', async () => {
     await renderShade()
 
     const layer = findLayer()
 
     expect(layer?.props.pointerEvents).toBe('none')
-    // A top-level zIndex would sort above the whole <Tabs> subtree on native,
-    // painting the shade over the islands; document order must own stacking.
+    // The tab-bar layer already paints above the screens; a zIndex here would
+    // sort the shade above its sibling islands instead of behind them.
     expect(StyleSheet.flatten(layer?.props.style)?.zIndex).toBeUndefined()
   })
 
-  test('follows the keyboard lift exactly like the pill', async () => {
+  test('leaves the keyboard lift to the tab-bar container', async () => {
     const { rerender } = await renderShade()
 
     keyboardBottomInsetSv.value = KEYBOARD_INSET
     await rerender(<BarBackdropShade />)
 
-    expect(StyleSheet.flatten(findShade()?.props.style)?.transform).toEqual([
-      { translateY: -KEYBOARD_INSET },
-    ])
+    // The floating container already lifts; lifting here too would double-shift
+    // the shade away from the pill.
+    expect(StyleSheet.flatten(findShade()?.props.style)?.transform).toBeUndefined()
   })
 
   test('tracks the collapsed pill geometry', async () => {

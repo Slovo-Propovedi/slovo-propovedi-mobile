@@ -23,7 +23,7 @@ jest.mock('pages/playlist', () => ({ PlaylistSheetMenu: () => null }))
 jest.mock('widgets/expandable-player', () => {
   const { Text } = jest.requireActual('react-native')
 
-  return { BarBackdropShade: () => null, ExpandablePlayer: () => <Text>PLAYER</Text> }
+  return { ExpandablePlayer: () => <Text>PLAYER</Text> }
 })
 jest.mock('widgets/tab-bar', () => {
   const { Text } = jest.requireActual('react-native')
