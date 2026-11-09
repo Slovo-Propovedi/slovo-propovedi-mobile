@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { action, type Ctx } from '@reatom/framework'
 import { removeHistoryEntryAction } from 'entities/listening-history/@x/player'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION } from 'shared/config'
+import { setBarCollapsed } from 'shared/ui/layout'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
@@ -19,7 +20,11 @@ import { isPlayerExpandedAtom } from './playerSheet'
  * полноэкранный плеер скрываются, очередь пустеет) и удаляет запись загруженной
  * проповеди из истории прослушивания. Сброс также сворачивает полноэкранный
  * плеер (`isPlayerExpandedAtom`), иначе развёрнутое состояние переживёт сброс и
- * следующий запуск откроет плеер сразу на полный экран. Карточка «Продолжить»
+ * следующий запуск откроет плеер сразу на полный экран. По той же причине сброс
+ * разворачивает нижнюю строку (`setBarCollapsed(false)`): после обнуления
+ * `currentAudioAtom` мини-плеер исчезает, и свёрнутая строка оставила бы мёртвый
+ * зазор, который нечем развернуть — скролл-драйвер приостановлен без активной
+ * проповеди. Карточка «Продолжить»
  * на экране «Слушать» исчезает и больше не предлагает удалённую проповедь;
  * флеш-воссоздание невозможно: снятие `currentAudioAtom` останавливает 10с-флаш
  * прогресса (гейт на audio), а удалённая запись защищена тамбстоуном от
@@ -38,6 +43,7 @@ export const resetPlayerState = async (ctx: Ctx): Promise<void> => {
     durationAtom(ctx, 0)
     isBufferingAtom(ctx, false)
     isPlayerExpandedAtom(ctx, false)
+    setBarCollapsed(ctx, false)
   })
   if (removedSermonId) void removeHistoryEntryAction(ctx, removedSermonId)
 }

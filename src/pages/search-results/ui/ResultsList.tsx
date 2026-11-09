@@ -1,8 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { type ListRenderItem, StyleSheet } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { useIsSearchBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
-import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
+import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
@@ -20,10 +19,9 @@ export const ResultsList = <T,>({
   renderItem: ListRenderItem<T>
 }) => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
-  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
+  const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const { onScroll } = useBarCollapseOnScroll({
-    isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
+    isSuspended: isBarCollapseSuspended,
   })
 
   return (

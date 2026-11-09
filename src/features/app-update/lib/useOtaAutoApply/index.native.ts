@@ -11,12 +11,12 @@ import {
 } from 'shared/model'
 import { useTheme } from 'shared/ui/theme'
 import darkSplashIcon from '../../../../../assets/dark-splash-icon.png'
-import splashImage from '../../../../../assets/splash.png'
+import lightSplashIcon from '../../../../../assets/light-splash-icon.png'
 
 // Grace period so a brief pause (a track change, a phone call) does not reload the app.
 const OTA_AUTO_APPLY_DELAY_MS = 5000
 
-const splashImageAsset = Asset.fromModule(splashImage)
+const lightSplashIconAsset = Asset.fromModule(lightSplashIcon)
 const darkSplashIconAsset = Asset.fromModule(darkSplashIcon)
 
 // The native reload screen reads only a real local file (BitmapFactory.decodeFile):
@@ -33,13 +33,13 @@ const resolveReloadScreenImage = async (asset: Asset): Promise<string | undefine
 }
 
 const applyReload = async (backgroundColor: string, isLight: boolean): Promise<void> => {
-  // Pre-cache both splash images once, so a later theme flip applies without a
-  // re-download; each apply uses exactly one.
-  const [splashImageUri, darkSplashImageUri] = await Promise.all([
-    resolveReloadScreenImage(splashImageAsset),
+  // Pre-cache both contour-mark images once, so a later theme flip applies
+  // without a re-download; each apply uses exactly one.
+  const [lightSplashIconUri, darkSplashIconUri] = await Promise.all([
+    resolveReloadScreenImage(lightSplashIconAsset),
     resolveReloadScreenImage(darkSplashIconAsset),
   ])
-  const image = isLight ? splashImageUri : darkSplashImageUri
+  const image = isLight ? lightSplashIconUri : darkSplashIconUri
 
   await reloadAsync({
     reloadScreenOptions: {
@@ -63,7 +63,8 @@ export const useOtaAutoApply = (): void => {
   const [updateDialogVisible] = useAtom(updateDialogVisibleAtom)
   const { currentTheme, isLight } = useTheme()
   const appliedUpdateIdRef = useRef<null | string>(null)
-  // Mirror the cold-start splash per theme: orange canvas in light, accent mark on black in dark.
+  // Mirror the web splash pair on the reload canvas: the scheme's contour mark
+  // on the cold-start background (orange in light, black in dark).
   const reloadBackgroundColor = String(isLight ? currentTheme.primary : currentTheme.background)
 
   useEffect(() => {
