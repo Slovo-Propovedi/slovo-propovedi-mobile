@@ -28,7 +28,9 @@ export const GLASS = {
     intensity: 40,
   },
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
-  fillAlpha: { dark: 0.35, light: 0.45 },
+  // Milkier fill (Apple Music reference): the backdrop still reads through the
+  // blur, but noticeably less than in the earlier, thinner recipe.
+  fillAlpha: { dark: 0.5, light: 0.65 },
   web: {
     // Classic glassmorphism: `backdrop-filter: blur(12px) saturate(140%)`.
     // GlassSurface bypasses BlurView on web and emits both this property and its
@@ -39,7 +41,7 @@ export const GLASS = {
     borderAlpha: { dark: 0.15, light: 0.45 },
     // Translucent tint: light glass whitens the backdrop slightly, dark glass
     // darkens it so white text keeps its contrast.
-    tintAlpha: { dark: 0.3, light: 0.18 },
+    tintAlpha: { dark: 0.45, light: 0.3 },
   },
 } as const
 
