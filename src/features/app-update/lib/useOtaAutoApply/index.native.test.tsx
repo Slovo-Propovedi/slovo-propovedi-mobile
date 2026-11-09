@@ -145,7 +145,7 @@ describe('useOtaAutoApply', () => {
         reloadScreenOptions: expect.objectContaining({
           backgroundColor: LightTheme.primary,
           fade: true,
-          image: lightSplashAsset.localUri,
+          image: { height: 152, url: lightSplashAsset.localUri, width: 152 },
           imageResizeMode: 'contain',
           spinner: { enabled: false },
         }),
@@ -163,7 +163,7 @@ describe('useOtaAutoApply', () => {
       expect.objectContaining({
         reloadScreenOptions: expect.objectContaining({
           backgroundColor: DarkTheme.background,
-          image: darkSplashAsset.localUri,
+          image: { height: 152, url: darkSplashAsset.localUri, width: 152 },
         }),
       }),
     )

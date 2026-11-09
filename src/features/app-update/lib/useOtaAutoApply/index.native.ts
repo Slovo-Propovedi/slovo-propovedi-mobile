@@ -16,6 +16,12 @@ import lightSplashIcon from '../../../../../assets/light-splash-icon.png'
 // Grace period so a brief pause (a track change, a phone call) does not reload the app.
 const OTA_AUTO_APPLY_DELAY_MS = 5000
 
+// Native splash parity: expo-splash-screen draws the icon at 152dp (app.config.ts
+// `splashImageProps.imageWidth`). expo-updates only auto-fills dimensions for a numeric
+// `require()` source; a plain URI string leaves them undefined and the native view falls
+// back to MATCH_PARENT, painting the icon screen-wide. State the size explicitly.
+const OTA_RELOAD_ICON_SIZE_DP = 152
+
 const lightSplashIconAsset = Asset.fromModule(lightSplashIcon)
 const darkSplashIconAsset = Asset.fromModule(darkSplashIcon)
 
@@ -32,6 +38,11 @@ const resolveReloadScreenImage = async (asset: Asset): Promise<string | undefine
   }
 }
 
+// A URI string carries no dimensions, so wrap it into the object source expo-updates
+// forwards as-is to the native reload screen (there width/height are applied in dp).
+const sizeReloadScreenImage = (uri: string | undefined) =>
+  uri ? { height: OTA_RELOAD_ICON_SIZE_DP, url: uri, width: OTA_RELOAD_ICON_SIZE_DP } : undefined
+
 const applyReload = async (backgroundColor: string, isLight: boolean): Promise<void> => {
   // Pre-cache both contour-mark images once, so a later theme flip applies
   // without a re-download; each apply uses exactly one.
@@ -39,7 +50,7 @@ const applyReload = async (backgroundColor: string, isLight: boolean): Promise<v
     resolveReloadScreenImage(lightSplashIconAsset),
     resolveReloadScreenImage(darkSplashIconAsset),
   ])
-  const image = isLight ? lightSplashIconUri : darkSplashIconUri
+  const image = sizeReloadScreenImage(isLight ? lightSplashIconUri : darkSplashIconUri)
 
   await reloadAsync({
     reloadScreenOptions: {
