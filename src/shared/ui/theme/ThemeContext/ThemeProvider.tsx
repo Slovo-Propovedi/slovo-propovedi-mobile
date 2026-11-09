@@ -14,6 +14,7 @@ import {
   themeModeAtom,
   updateThemeBasedOnMode,
 } from '../model'
+import { syncThemeColorMeta } from './syncThemeColorMeta'
 import { ThemeContext } from './themeContext'
 
 const SPLASH_FADE_MS = 300
@@ -98,6 +99,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const background = String(currentTheme.background)
     root.backgroundColor = background
     if (document.body) document.body.style.backgroundColor = background
+    // Keep the browser chrome (status/nav bars, PWA title bar) on the active
+    // theme instead of the static accent from public/index.html.
+    syncThemeColorMeta(background)
     dismissWebSplash()
   }, [currentTheme])
 

@@ -1,11 +1,10 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAction } from '@reatom/npm-react'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { type LayoutChangeEvent } from 'react-native'
 import { type SharedValue, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { useIsSearchBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
-import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
+import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { nextBarCollapsedState, setBarCollapsed } from 'shared/ui/layout'
 
 const ESTIMATED_HEADER_HEIGHT = 100
@@ -34,9 +33,7 @@ export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
   // Bottom-bar collapse shares this scroll handler: one worklet for the header
   // animation and the bar threshold crossing, never a second scroll handler.
   const applyBarCollapsed = useAction(setBarCollapsed)
-  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
-  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
-  const isSuspended = isSearchBarCollapseSuspended || isPlayerExpanded
+  const isSuspended = useIsBarCollapseSuspended()
   const isSuspendedSv = useSharedValue(isSuspended)
   const wasBarCollapsedSv = useSharedValue(false)
 

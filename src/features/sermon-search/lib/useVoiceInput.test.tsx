@@ -210,7 +210,7 @@ describe('useVoiceInput (web)', () => {
     }
   })
 
-  test('clears the listening state as soon as an error arrives, without waiting for onend', async () => {
+  test('treats a recognizer that cannot run here as unavailable, not as an error', async () => {
     const { restoreWindow, result } = await renderWebVoiceInput()
 
     try {
@@ -223,8 +223,56 @@ describe('useVoiceInput (web)', () => {
         recognition.onerror?.({ error: 'not-allowed' })
       })
 
-      expect(mockedReportError).toHaveBeenCalledWith('not-allowed', 'Не удалось распознать речь')
+      expect(mockedShowInfo).toHaveBeenCalledWith(VOICE_UNAVAILABLE)
+      expect(mockedReportError).not.toHaveBeenCalled()
       expect(result.current.isListening).toBe(false)
+      expect(result.current.isUnavailable).toBe(true)
+    } finally {
+      restoreWindow()
+    }
+  })
+
+  test('second press after refusal does not start recognition and explains itself again', async () => {
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      await act(async () => {
+        result.current.startListening()
+      })
+      const recognition = latestRecognition()
+
+      await act(async () => {
+        recognition.onerror?.({ error: 'not-allowed' })
+      })
+      expect(mockedShowInfo).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        result.current.startListening()
+      })
+
+      expect(fakeRecognitionInstances).toHaveLength(1)
+      expect(mockedShowInfo).toHaveBeenCalledTimes(2)
+    } finally {
+      restoreWindow()
+    }
+  })
+
+  test('keeps a real network failure on the error path and stays available', async () => {
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      await act(async () => {
+        result.current.startListening()
+      })
+      const recognition = latestRecognition()
+
+      await act(async () => {
+        recognition.onerror?.({ error: 'network' })
+      })
+
+      expect(mockedReportError).toHaveBeenCalledWith('network', 'Не удалось распознать речь')
+      expect(mockedShowInfo).not.toHaveBeenCalled()
+      expect(result.current.isUnavailable).toBe(false)
     } finally {
       restoreWindow()
     }
@@ -329,12 +377,24 @@ describe('useVoiceInput (web)', () => {
     const { restoreWindow, result } = await renderWebVoiceInput({ withApi: false })
 
     try {
+      expect(result.current.isUnavailable).toBe(true)
+
       await act(async () => {
         result.current.startListening()
       })
 
       expect(mockedShowInfo).toHaveBeenCalledWith(VOICE_UNAVAILABLE)
       expect(fakeRecognitionInstances).toHaveLength(0)
+    } finally {
+      restoreWindow()
+    }
+  })
+
+  test('starts as available on web when the browser exposes a recognizer', async () => {
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      expect(result.current.isUnavailable).toBe(false)
     } finally {
       restoreWindow()
     }
@@ -354,6 +414,20 @@ describe('useVoiceInput (web)', () => {
     } finally {
       startFailure = null
       restoreWindow()
+    }
+  })
+})
+
+describe('useVoiceInput (unsupported platform)', () => {
+  test('starts as unavailable on iOS, where no recognizer is wired', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+
+    try {
+      const { result } = await renderHook(() => useVoiceInput({ onTranscript: jest.fn() }))
+
+      expect(result.current.isUnavailable).toBe(true)
+    } finally {
+      restorePlatform.restore()
     }
   })
 })

@@ -109,6 +109,8 @@ const styles = StyleSheet.create({
 
 `ThemeProvider` (эффект только при `Platform.OS === 'web'`) прокидывает цвета активной темы в CSS-переменные `--sp-scrollbar-thumb` (`currentTheme.textMuted`) и `--sp-scrollbar-thumb-hover` (`currentTheme.text`) на `document.documentElement`. Там же он красит фон `documentElement` и `body` в `currentTheme.background` — перекрывая статичный бренд-фолбэк `#f16031` из `public/index.html`, чтобы тёмная тема не мигала светлым в зоне overscroll. Сами правила `::-webkit-scrollbar*` / `scrollbar-width` / `scrollbar-color` и сброс `html`/`body` (`overflow: hidden`, `overscroll-behavior: none`) — в `public/index.html` (фолбэк — нейтральный серый / бренд-цвет). Переключение светлая/тёмная перекрашивает скроллбары и фон автоматически. Подробнее — [web.md](./web.md#скроллбары).
 
+Тот же эффект синхронизирует `<meta name="theme-color">` с `currentTheme.background` (хелпер `syncThemeColorMeta`): статус-бар/тулбар Chrome на Android следуют теме, а не статичному бренд-акценту. До загрузки JS в `public/index.html` стоят два scheme-scoped значения (`#ffffff` / `#000000`) — правильный цвет уже на первом кадре. Подробнее — [web.md](./web.md#цвет-системных-панелей-браузера-theme-color).
+
 ## Настройки
 
 Компоненты — `src/pages/settings/ui/`:

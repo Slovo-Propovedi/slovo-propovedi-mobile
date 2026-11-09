@@ -10,9 +10,8 @@ import { type ViewStyle } from 'react-native'
  */
 export const GLASS = {
   android: {
-    // Android cannot blur the content behind the bottom chrome (real backdrop
-    // blur needs a BlurTargetView restructure, see docs/debt.md), so the surface
-    // gains depth from a brighter top edge and a slightly denser fill.
+    // Android 11 and below cannot blur (no BlurTarget), so the surface gains
+    // depth from a brighter top edge and a slightly denser fill instead.
     fillAlphaBoost: 0.06,
     sheen: {
       colors: ['rgba(255, 255, 255, 0.10)', 'rgba(255, 255, 255, 0)'],
@@ -20,10 +19,8 @@ export const GLASS = {
     },
   },
   blur: {
-    // Android 12+ backdrop blur needs a BlurTargetView wrapping the content
-    // behind the surface. The bottom chrome renders inside the tab navigator
-    // (inside any candidate target), so the method is recorded here for the
-    // shared recipe but only passed once the chrome moves outside the target.
+    // Passed to BlurView whenever the page publishes a target via
+    // BlurTargetProvider (Android 12+ only; gated by supportsAndroidBackdropBlur).
     androidMethod: 'dimezisBlurViewSdk31Plus' satisfies BlurMethod,
     // Apple Music blurs only moderately: the content behind the islands stays
     // readable instead of melting into a flat frosted slab.

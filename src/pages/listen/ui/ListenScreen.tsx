@@ -7,14 +7,12 @@ import { useTourActionRegistrar, useTourScrollable } from 'features/onboarding'
 import {
   SearchGroupedResults,
   useIsSearchActive,
-  useIsSearchBarCollapseSuspended,
   useOpenSearch,
   useSearchUrlSync,
   useSermonPlayback,
 } from 'features/sermon-search'
-import { isSearchOpenAtom } from 'features/sermon-search/@x/suspension'
+import { isSearchOpenAtom, useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
-import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, createRefreshControl, PullToRefresh } from 'shared/ui'
 import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
@@ -38,14 +36,13 @@ export const ListenScreen = () => {
   const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
-  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const isSearchActive = useIsSearchActive()
-  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
+  const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const openSearch = useOpenSearch()
   useSearchUrlSync()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { onContentSizeChange, onScroll } = useBarCollapseOnScroll({
-    isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
+    isSuspended: isBarCollapseSuspended,
   })
   const [authStatus] = useAtom(authStatusAtom)
   const [authUser] = useAtom(authUserAtom)
