@@ -1,5 +1,5 @@
 import { createGlassStyles, getGlassBorder, getGlassFill, getGlassTint, GLASS } from './glass'
-import { getWebGlassStyle, getWebRefractionStyle } from './webGlass'
+import { getWebGlassStyle } from './webGlass'
 
 describe('glass recipe', () => {
   test('keeps a moderate native blur so the backdrop stays readable', () => {
@@ -27,35 +27,28 @@ describe('glass recipe', () => {
     expect(styles.containerPlain).toEqual({})
   })
 
-  test('web: keeps the base blur shallow so the glass center stays readable', () => {
-    // expo-blur web caps the backdrop at `saturate(180%) blur(intensity * 0.2px)`
-    // and cannot express brightness, so the web layer bypasses it with an
-    // explicit filter shared by every surface. 4px blurs mildly without turning
-    // the center into mush; the edge ring carries the refraction instead.
-    expect(GLASS.web.backdropFilter).toBe('blur(4px) saturate(180%) brightness(1.1)')
-    expect(getWebGlassStyle()).toEqual({
-      backdropFilter: 'blur(4px) saturate(180%) brightness(1.1)',
+  test('web: classic glassmorphism blurs and saturates the backdrop', () => {
+    // Classic recipe: `backdrop-filter: blur(12px) saturate(140%)`. The filter is
+    // emitted twice — Safari still honours only the `-webkit-` prefixed form.
+    expect(GLASS.web.backdropFilter).toBe('blur(12px) saturate(140%)')
+
+    expect(getWebGlassStyle(true, 16)).toEqual({
+      backdropFilter: 'blur(12px) saturate(140%)',
+      backgroundColor: 'rgba(255, 255, 255, 0.18)',
+      borderColor: 'rgba(255, 255, 255, 0.45)',
+      borderRadius: 16,
+      borderWidth: 1,
+      WebkitBackdropFilter: 'blur(12px) saturate(140%)',
     })
   })
 
-  test('web: confines the strong refraction to an edge ring mask', () => {
-    // The SVG filter is declared once in public/index.html with the stronger
-    // displacement scale. The CSS mask keeps it outside the center: four edge
-    // ramps (10px) are additive, so the middle of the island stays clean while
-    // the perimeter bends the backdrop like thick glass.
-    expect(GLASS.web.edgeRingWidth).toBe(10)
-    expect(GLASS.web.refractionFilter).toBe('url(#sp-glass-refraction)')
-
-    const style = getWebRefractionStyle()
-
-    expect(style.backdropFilter).toBe('url(#sp-glass-refraction)')
-    expect(style.maskImage).toContain('linear-gradient(to right, #000 0, transparent 10px)')
-    expect(style.maskImage).toContain('linear-gradient(to left, #000 0, transparent 10px)')
-    expect(style.maskImage).toContain('linear-gradient(to bottom, #000 0, transparent 10px)')
-    expect(style.maskImage).toContain('linear-gradient(to top, #000 0, transparent 10px)')
-    expect(style.WebkitMaskImage).toBe(style.maskImage)
-    expect(style.maskComposite).toBe('add')
-    expect(style.WebkitMaskComposite).toBe('source-over')
+  test('web: dark theme uses a denser tint and a subtler rim', () => {
+    expect(getWebGlassStyle(false, 28)).toMatchObject({
+      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+      borderColor: 'rgba(255, 255, 255, 0.15)',
+      borderRadius: 28,
+      borderWidth: 1,
+    })
   })
 
   test('android: adds a top-edge sheen and a stronger fill instead of a blur', () => {

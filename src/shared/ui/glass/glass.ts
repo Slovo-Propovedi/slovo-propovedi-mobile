@@ -30,18 +30,16 @@ export const GLASS = {
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
   fillAlpha: { dark: 0.35, light: 0.45 },
   web: {
-    // expo-blur web cannot express brightness and caps the blur low, so
-    // GlassSurface bypasses BlurView with this explicit filter. A shallow 4px
-    // blur keeps the background readable (Apple Music reference); the edge ring
-    // carries the refraction so the center does not melt into mush.
-    backdropFilter: 'blur(4px) saturate(180%) brightness(1.1)',
-    // Outer ring (px) that carries the strong displacement. It is deliberately
-    // narrow: thick glass bends the backdrop at its rim, not across its face.
-    edgeRingWidth: 10,
-    // Progressive-enhancement refraction: the SVG filter is declared once in
-    // public/index.html. It curves the backdrop at the rim only (edge-ring mask),
-    // and an engine without `url()` support keeps the base blur.
-    refractionFilter: 'url(#sp-glass-refraction)',
+    // Classic glassmorphism: `backdrop-filter: blur(12px) saturate(140%)`.
+    // GlassSurface bypasses BlurView on web and emits both this property and its
+    // `-webkit-` twin, because Safari still honours only the prefixed form.
+    backdropFilter: 'blur(12px) saturate(140%)',
+    // Thin translucent rim: brighter in light theme so the sheet keeps an edge
+    // on a bright backdrop, subtler in dark theme where contrast is plentiful.
+    borderAlpha: { dark: 0.15, light: 0.45 },
+    // Translucent tint: light glass whitens the backdrop slightly, dark glass
+    // darkens it so white text keeps its contrast.
+    tintAlpha: { dark: 0.3, light: 0.18 },
   },
 } as const
 
@@ -54,6 +52,14 @@ export const getGlassFill = (isLight: boolean, alphaBoost = 0) =>
 
 export const getGlassBorder = (isLight: boolean) =>
   rgba(GLASS.border.color, isLight ? GLASS.border.alpha.light : GLASS.border.alpha.dark)
+
+export const getWebGlassFill = (isLight: boolean) =>
+  isLight
+    ? rgba(GLASS.border.color, GLASS.web.tintAlpha.light)
+    : rgba('0, 0, 0', GLASS.web.tintAlpha.dark)
+
+export const getWebGlassBorder = (isLight: boolean) =>
+  rgba(GLASS.border.color, isLight ? GLASS.web.borderAlpha.light : GLASS.web.borderAlpha.dark)
 
 export const getGlassTint = (isLight: boolean): BlurTint => (isLight ? 'light' : 'dark')
 
