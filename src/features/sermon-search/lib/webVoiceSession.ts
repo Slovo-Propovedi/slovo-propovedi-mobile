@@ -6,6 +6,9 @@ import {
 
 const SPEECH_LANGUAGE = 'ru-RU'
 
+/** Soft failure shown when a recognition attempt cannot be started at all. */
+export const VOICE_ERROR = 'Не удалось запустить голосовой ввод'
+
 export interface WebVoiceSession {
   abort: () => void
 }
@@ -26,6 +29,8 @@ const isNormalOutcome = (error: string) => error === 'aborted' || error === 'no-
 // constructor but refuse every session with `not-allowed`; `service-not-allowed`
 // is the same refusal, while `not-found`/`audio-capture`/`language-not-supported`
 // report a missing recognizer, missing microphone or unsupported language.
+// `not-found` is not part of the standard W3C `SpeechRecognitionErrorCode` set:
+// it stays here as defensive coverage for browsers that report it.
 const UNAVAILABLE_ERRORS = [
   'not-allowed',
   'service-not-allowed',

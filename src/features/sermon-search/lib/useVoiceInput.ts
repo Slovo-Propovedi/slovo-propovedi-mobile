@@ -5,8 +5,8 @@ import { showInfo } from 'shared/model/info-dialog'
 import { recognizeAndroidSpeech } from './androidVoiceInput'
 import { useWebVoiceSession } from './useWebVoiceSession'
 import { getWebVoicePermissionState, isVoiceInputAvailable } from './webSpeechRecognition'
+import { VOICE_ERROR } from './webVoiceSession'
 
-const VOICE_ERROR = 'Не удалось запустить голосовой ввод'
 const VOICE_UNAVAILABLE = 'Голосовой ввод недоступен на этом устройстве'
 
 interface VoiceInput {
