@@ -4,7 +4,7 @@ import { reportError } from 'shared/model/error-dialog'
 import { showInfo } from 'shared/model/info-dialog'
 import { recognizeAndroidSpeech } from './androidVoiceInput'
 import { useWebVoiceSession } from './useWebVoiceSession'
-import { getWebVoicePermissionState, isVoiceInputAvailable } from './webSpeechRecognition'
+import { isVoiceInputAvailable } from './webSpeechRecognition'
 import { VOICE_ERROR } from './webVoiceSession'
 
 const VOICE_UNAVAILABLE = 'Голосовой ввод недоступен на этом устройстве'
@@ -23,10 +23,10 @@ interface VoiceInput {
  * IOS has no implementation yet: pressing the always-visible mic reports the feature as unavailable.
  * The web recognizer is owned by this hook: starting again replaces the live
  * session, and `stopListening` aborts it on blur, clear, close and unmount.
- * `isUnavailable` starts true where no recognizer exists and flips on when the
- * recognizer itself reports it cannot run (browser without a speech backend) or
- * when the microphone permission is already denied; the mic stays tappable and
- * explains itself through the info dialog.
+ * `isUnavailable` starts true where no recognizer exists and flips on only when
+ * the recognizer itself refuses at runtime, after a real attempt (browser
+ * without a speech backend, or a denied/missing speech service); the mic stays
+ * tappable and explains itself through the info dialog.
  * Every failure is soft: the recognizer reports through `reportError` and never throws into the UI.
  * @param root0 - Hook options.
  * @param root0.onTranscript - Receives the recognized text (already trimmed).
@@ -86,17 +86,6 @@ export const useVoiceInput = ({
   // The bar stays mounted for the island's exit animation, so an in-flight
   // recognizer must be torn down explicitly when the tree unmounts.
   useEffect(() => stopWeb, [stopWeb])
-
-  // An already-denied permission cannot be retried by pressing the mic, so the
-  // icon starts muted. The probe never rejects; a failure just keeps the mic
-  // on its optimistic default.
-  useEffect(() => {
-    if (Platform.OS !== 'web') return
-
-    void getWebVoicePermissionState().then(state => {
-      if (state === 'denied') setIsUnavailable(true)
-    })
-  }, [])
 
   return {
     isListening,
