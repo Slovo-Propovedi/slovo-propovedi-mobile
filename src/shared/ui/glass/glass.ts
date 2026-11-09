@@ -31,6 +31,8 @@ export const GLASS = {
   shadow: {
     boxShadow: '0px 5px 14px rgba(0, 0, 0, 0.25)',
     color: 'rgba(0, 0, 0, 0.25)',
+    // Dropped from the wrapper while a morph resizes the surface.
+    degraded: 'none',
     offsetY: 5,
     radius: 14,
   },
@@ -117,6 +119,7 @@ export const getGlassTint = (isLight: boolean): BlurTint => (isLight ? 'light' :
 export const createGlassStyles = (isLight: boolean, radius: number) => ({
   blur: { intensity: GLASS.blur.intensity, tint: getGlassTint(isLight) },
   container: { boxShadow: GLASS.shadow.boxShadow } satisfies ViewStyle,
+  containerDegraded: { boxShadow: GLASS.shadow.degraded } satisfies ViewStyle,
   fill: { backgroundColor: getGlassFill(isLight) },
   rim: {
     borderColor: getGlassBorder(isLight),

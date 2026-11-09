@@ -61,6 +61,8 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
     miniContainerCollapsed: {
       paddingRight: MINI_CONTENT_SIDE_INSET,
     },
+    // No shadow while a morph resizes the pill (see `GlassSurface` degraded).
+    miniContainerDegraded: glass.containerDegraded,
     miniControls: {
       alignItems: 'center',
       flexDirection: 'row',

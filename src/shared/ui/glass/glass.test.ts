@@ -29,6 +29,8 @@ describe('glass recipe', () => {
 
   test('floats each island on one subtle shadow', () => {
     expect(GLASS.shadow.boxShadow).toBe('0px 5px 14px rgba(0, 0, 0, 0.25)')
+    // While a morph owns the surface the wrapper drops the shadow entirely.
+    expect(GLASS.shadow.degraded).toBe('none')
   })
 
   test('web: keeps the base blur shallow so the glass center stays readable', () => {
@@ -81,6 +83,7 @@ describe('glass recipe', () => {
     expect(createGlassStyles(true, 38)).toEqual({
       blur: { intensity: GLASS.blur.intensity, tint: 'light' },
       container: { boxShadow: GLASS.shadow.boxShadow },
+      containerDegraded: { boxShadow: GLASS.shadow.degraded },
       fill: { backgroundColor: 'rgba(255, 255, 255, 0.45)' },
       rim: { borderColor: 'rgba(255, 255, 255, 0.25)', borderRadius: 38, borderWidth: 1 },
     })

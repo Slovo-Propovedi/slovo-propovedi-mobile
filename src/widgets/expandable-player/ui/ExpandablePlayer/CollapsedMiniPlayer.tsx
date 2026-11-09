@@ -17,6 +17,7 @@ import { createMiniStyles } from './miniStyles'
  * @param root0.audio - Current track audio.
  * @param root0.barCollapsed - Whether the bar (and pill) rests in the collapsed row.
  * @param root0.currentTheme - Active theme colors.
+ * @param root0.degraded - Whether a morph owns the pill, so its glass drops blur and shadow.
  * @param root0.isBuffering - Whether playback is buffering (shows the spinner).
  * @param root0.isLight - Active theme flag for the shared glass layers.
  * @param root0.miniBarRestingStyle - React-committed resting pill geometry for the current bar state.
@@ -32,6 +33,7 @@ export const CollapsedMiniPlayer = ({
   audio,
   barCollapsed,
   currentTheme,
+  degraded,
   isBuffering,
   isLight,
   miniBarRestingStyle,
@@ -46,6 +48,7 @@ export const CollapsedMiniPlayer = ({
   audio: AudioPlayerData
   barCollapsed: boolean
   currentTheme: ThemeColors
+  degraded: boolean
   isBuffering: boolean
   isLight: boolean
   miniBarRestingStyle: ViewStyle
@@ -71,6 +74,7 @@ export const CollapsedMiniPlayer = ({
         isLight={isLight}
         ref={miniTargetRef}
         playlist={playlist}
+        degraded={degraded}
         miniStyle={miniStyle}
         miniStyles={miniStyles}
         onPlayPause={onPlayPause}

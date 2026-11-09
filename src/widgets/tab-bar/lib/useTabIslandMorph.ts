@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { useAnimatedStyle } from 'react-native-reanimated'
-import { useAtomMorphProgress } from 'shared/lib/hooks/useAtomMorphProgress'
+import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
 import {
   BAR_CIRCLE_SIZE,
   BAR_CIRCLE_SIZE_EXPANDED,
@@ -35,7 +35,7 @@ export const useTabIslandMorph = ({
   windowWidth,
 }: TabIslandMorphInput) => {
   const [isCollapsed] = useAtom(isTabIslandCollapsedAtom)
-  const progress = useAtomMorphProgress(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
+  const { isMorphing, progress } = useAtomMorph(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
 
   const rowContentWidth =
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
@@ -67,6 +67,9 @@ export const useTabIslandMorph = ({
     // soon as the island is collapsing, not when their width animation lands.
     isCollapsed,
     islandStyle,
+    // True only while the island itself is resizing; the glass layers degrade
+    // for that window (see `GlassSurface`).
+    isMorphing,
     progress,
   }
 }

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react-native'
 import { type ComponentRef, createRef, type RefObject } from 'react'
 import { Platform, StyleSheet, type View } from 'react-native'
-import { getGlassFill, GLASS } from './glass'
+import { getGlassBorder, getGlassFill, GLASS } from './glass'
 import { GlassSurface } from './GlassSurface'
 
 jest.mock('expo-linear-gradient', () => {
@@ -124,5 +124,45 @@ describe('<GlassSurface>', () => {
 
     expect(findBlur()?.[0]?.props.blurMethod).toBeUndefined()
     expect(findBlur()?.[0]?.props.blurTarget).toBeUndefined()
+  })
+
+  test('degraded swaps the native blur for the plain tint', async () => {
+    setPlatform('android', 35)
+
+    await render(<GlassSurface isLight degraded radius={28} blurTarget={createBlurTarget()} />)
+
+    // No native blur is mounted while a morph owns the surface.
+    expect(findBlur()).toHaveLength(0)
+
+    const fills =
+      screen.root?.queryAll(
+        instance =>
+          StyleSheet.flatten(instance.props.style)?.backgroundColor ===
+          getGlassFill(true, GLASS.android.fillAlphaBoost),
+      ) ?? []
+
+    expect(fills).toHaveLength(1)
+    // The hairline rim still frames the degrade fallback.
+    expect(
+      screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.borderColor === getGlassBorder(true) && flat?.borderWidth === 1
+      }),
+    ).toHaveLength(1)
+  })
+
+  test('web keeps its cheap backdrop blur even when degraded', async () => {
+    setPlatform('web')
+
+    await render(<GlassSurface isLight degraded radius={28} />)
+
+    expect(findBlur()).toHaveLength(0)
+    expect(
+      screen.root?.queryAll(
+        instance =>
+          StyleSheet.flatten(instance.props.style)?.backdropFilter === GLASS.web.backdropFilter,
+      ),
+    ).toHaveLength(1)
   })
 })
