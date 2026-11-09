@@ -4,13 +4,8 @@ import { type ComponentRef, type RefObject } from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
 import { useGlassBlurTarget } from './blurTargetContext'
 import { supportsAndroidBackdropBlur } from './blurTargets'
-import {
-  createGlassStyles,
-  getGlassFill,
-  getWebGlassStyle,
-  getWebRefractionStyle,
-  GLASS,
-} from './glass'
+import { createGlassStyles, getGlassFill, GLASS } from './glass'
+import { getWebGlassStyle, getWebRefractionStyle } from './webGlass'
 
 /**
  * Frosted-glass background for the floating bottom islands: a backdrop blur

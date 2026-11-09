@@ -44,8 +44,8 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
     },
     // Geometry (bottom/left/width/radius) is committed by the bar-morph styles in
     // MiniPlayer: animated during the morph, React-resting for the current state.
+    // No own shadow: the shared `BarBackdropShade` gradient sits behind the pill.
     miniContainer: {
-      ...glass.container,
       alignItems: 'center',
       borderRadius: MINI_PILL_RADIUS,
       flexDirection: 'row',

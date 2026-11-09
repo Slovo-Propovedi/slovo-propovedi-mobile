@@ -240,7 +240,7 @@ describe('<CustomTabBar>', () => {
     expect(findHairlineBorders(getGlassBorder(true))).toHaveLength(3)
   })
 
-  test('floats the glass island on the shared subtle shadow', async () => {
+  test('renders the glass island without its own shadow', async () => {
     await renderTabBar()
 
     const island = screen.root?.queryAll(instance => {
@@ -249,9 +249,9 @@ describe('<CustomTabBar>', () => {
       return flat?.borderRadius === RADIUSES.round && flat?.maxWidth === 600
     })[0]
 
-    expect(StyleSheet.flatten(island?.props.style)).toMatchObject({
-      boxShadow: GLASS.shadow.boxShadow,
-    })
+    // The shared `BarBackdropShade` gradient sits behind the bar; the island
+    // host itself must stay shadowless.
+    expect(StyleSheet.flatten(island?.props.style)).not.toHaveProperty('boxShadow')
   })
 
   test('uses the dark glass recipe in the dark theme', async () => {
@@ -344,13 +344,11 @@ describe('<CustomTabBar>', () => {
     ).toHaveLength(1)
   })
 
-  test('paints the search morph shadow while the search field is visible', async () => {
+  test('does not paint its own search-morph shadow', async () => {
     mockIsSearchFieldVisible = true
     await renderTabBar()
 
-    expect(StyleSheet.flatten(findSearchCircle()?.props.style)?.boxShadow).toBe(
-      GLASS.shadow.boxShadow,
-    )
+    expect(StyleSheet.flatten(findSearchCircle()?.props.style)?.boxShadow).toBeUndefined()
   })
 
   test('hides the search button from assistive tech while the search field is visible', async () => {

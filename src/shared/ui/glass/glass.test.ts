@@ -1,12 +1,5 @@
-import {
-  createGlassStyles,
-  getGlassBorder,
-  getGlassFill,
-  getGlassTint,
-  getWebGlassStyle,
-  getWebRefractionStyle,
-  GLASS,
-} from './glass'
+import { createGlassStyles, getGlassBorder, getGlassFill, getGlassTint, GLASS } from './glass'
+import { getWebGlassStyle, getWebRefractionStyle } from './webGlass'
 
 describe('glass recipe', () => {
   test('keeps a moderate native blur so the backdrop stays readable', () => {
@@ -27,9 +20,11 @@ describe('glass recipe', () => {
     expect(getGlassBorder(false)).toBe('rgba(255, 255, 255, 0.12)')
   })
 
-  test('floats each island on one subtle shadow', () => {
+  test('keeps the shadow recipe for surfaces outside the bar complex', () => {
+    // The bottom islands use the shadowless `containerPlain`: one gradient shade,
+    // not a box shadow, carries their depth.
     expect(GLASS.shadow.boxShadow).toBe('0px 5px 14px rgba(0, 0, 0, 0.25)')
-    // While a morph owns the surface the wrapper drops the shadow entirely.
+    // While a morph owns a surface the wrapper drops the shadow entirely.
     expect(GLASS.shadow.degraded).toBe('none')
   })
 
@@ -84,11 +79,13 @@ describe('glass recipe', () => {
       blur: { intensity: GLASS.blur.intensity, tint: 'light' },
       container: { boxShadow: GLASS.shadow.boxShadow },
       containerDegraded: { boxShadow: GLASS.shadow.degraded },
+      containerPlain: {},
       fill: { backgroundColor: 'rgba(255, 255, 255, 0.45)' },
       rim: { borderColor: 'rgba(255, 255, 255, 0.25)', borderRadius: 38, borderWidth: 1 },
     })
     expect(createGlassStyles(false, 9999)).toMatchObject({
       blur: { intensity: GLASS.blur.intensity, tint: 'dark' },
+      containerPlain: {},
       fill: { backgroundColor: 'rgba(0, 0, 0, 0.35)' },
       rim: { borderColor: 'rgba(255, 255, 255, 0.12)', borderRadius: 9999, borderWidth: 1 },
     })

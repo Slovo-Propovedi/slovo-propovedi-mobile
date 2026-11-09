@@ -18,8 +18,8 @@ import { styles } from './SearchIslandMorph.styles'
 // One glass frame for the whole search affordance. Closed it is the search
 // circle; opened it morphs into the pill. The frame is mounted for the whole
 // tab shell (CustomTabBar renders on every tab screen, including the nested
-// playlist routes), so the two states are the same node: geometry animates,
-// content crossfades, and the single boxShadow never changes owner.
+// playlist routes), so the two states are the same node: geometry animates and
+// content crossfades. The shared `BarBackdropShade` gradient sits behind it.
 export const SearchIslandMorph = () => {
   const { isLight } = useTheme()
   const { width: screenWidth } = useWindowDimensions()
@@ -63,11 +63,7 @@ export const SearchIslandMorph = () => {
     <>
       <Animated.View
         pointerEvents='auto'
-        style={[
-          styles.container,
-          isBarMorphing ? glass.containerDegraded : glass.container,
-          frameStyle,
-        ]}
+        style={[styles.container, glass.containerPlain, frameStyle]}
       >
         <GlassSurface isLight={isLight} radius={RADIUSES.round} degraded={isBarMorphing} />
         <SearchIslandMagnifier

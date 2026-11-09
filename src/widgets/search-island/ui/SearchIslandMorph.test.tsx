@@ -68,8 +68,14 @@ const findShadows = () =>
     instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
   ) ?? []
 
+// The morph frame is the only absolutely positioned row in the component; it no
+// longer carries a shadow, so it is identified by its shape, not by boxShadow.
 const findMorphContainer = (): TestInstance => {
-  const container = findShadows()[0]
+  const container = screen.root?.queryAll(instance => {
+    const flat = StyleSheet.flatten(instance.props.style)
+
+    return flat?.position === 'absolute' && flat?.flexDirection === 'row'
+  })[0]
 
   if (!container) throw new Error('Morph container not found')
 
@@ -127,16 +133,18 @@ describe('<SearchIslandMorph>', () => {
     mockIoniconsSpy.mockClear()
   })
 
-  test('renders exactly one shadow-carrying container in both states', async () => {
+  test('renders no shadow-carrying container in either state', async () => {
     const { ctx } = await renderMorph()
 
-    expect(findShadows()).toHaveLength(1)
+    // The shared `BarBackdropShade` gradient sits behind the bar; the search
+    // frame and its close circle must stay shadowless.
+    expect(findShadows()).toHaveLength(0)
 
     await act(async () => {
       isSearchOpenAtom(ctx, true)
     })
 
-    expect(findShadows()).toHaveLength(1)
+    expect(findShadows()).toHaveLength(0)
   })
 
   test('keeps the same container mounted while the circle morphs into the pill and back', async () => {
@@ -249,7 +257,7 @@ describe('<SearchIslandMorph>', () => {
       fireEvent(getByPlaceholderText(SEARCH_PLACEHOLDER), 'focus')
     })
 
-    expect(findShadows()).toHaveLength(1)
+    expect(findShadows()).toHaveLength(0)
   })
 
   test('closes the search from the external close circle', async () => {
