@@ -9,7 +9,7 @@ import {
   MINI_PLAY_HIT_SLOP,
 } from './miniStyles'
 
-const styles = createMiniStyles(LightTheme, true)
+const styles = createMiniStyles(LightTheme)
 
 describe('mini player horizontal alignment', () => {
   test('expanded bar: the transport glyph shares the search circle axis', () => {

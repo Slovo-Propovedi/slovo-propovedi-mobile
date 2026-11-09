@@ -20,12 +20,11 @@ describe('glass recipe', () => {
     expect(getGlassBorder(false)).toBe('rgba(255, 255, 255, 0.12)')
   })
 
-  test('keeps the shadow recipe for surfaces outside the bar complex', () => {
-    // The bottom islands use the shadowless `containerPlain`: one gradient shade,
-    // not a box shadow, carries their depth.
-    expect(GLASS.shadow.boxShadow).toBe('0px 5px 14px rgba(0, 0, 0, 0.25)')
-    // While a morph owns a surface the wrapper drops the shadow entirely.
-    expect(GLASS.shadow.degraded).toBe('none')
+  test('every island host is shadowless', () => {
+    // The shared `BarBackdropShade` gradient, not a box shadow, carries depth.
+    const styles = createGlassStyles(true, 38)
+
+    expect(styles.containerPlain).toEqual({})
   })
 
   test('web: keeps the base blur shallow so the glass center stays readable', () => {
@@ -77,8 +76,6 @@ describe('glass recipe', () => {
   test('builds every layer from the shared recipe for the requested theme and radius', () => {
     expect(createGlassStyles(true, 38)).toEqual({
       blur: { intensity: GLASS.blur.intensity, tint: 'light' },
-      container: { boxShadow: GLASS.shadow.boxShadow },
-      containerDegraded: { boxShadow: GLASS.shadow.degraded },
       containerPlain: {},
       fill: { backgroundColor: 'rgba(255, 255, 255, 0.45)' },
       rim: { borderColor: 'rgba(255, 255, 255, 0.25)', borderRadius: 38, borderWidth: 1 },

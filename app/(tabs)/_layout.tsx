@@ -27,8 +27,11 @@ const Layout = () => {
     <BlurTargetProvider>
       <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
         {/* One subtle gradient shade for the whole bar complex. Rendered before
-            the tabs so it sits below the islands in document order; the explicit
-            zIndex keeps it above the opaque page background. */}
+            the tabs, so sibling document order paints the screen content and
+            the islands above it on native; on web those islands carry nested
+            z-index 10/300, which reaches the root context and stays above this
+            z-auto layer. No zIndex here: a top-level one would sort above the
+            whole <Tabs> subtree on native. */}
         <BarBackdropShade />
         <Tabs screenOptions={{ headerShown: false }} tabBar={props => <CustomTabBar {...props} />}>
           <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />

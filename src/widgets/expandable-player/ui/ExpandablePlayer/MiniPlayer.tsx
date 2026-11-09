@@ -78,7 +78,6 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
           style={[
             miniStyles.miniContainer,
             barCollapsed && miniStyles.miniContainerCollapsed,
-            degraded && miniStyles.miniContainerDegraded,
             miniStyle,
             // Animated geometry wins at the native level; the React resting style
             // last keeps the shadow tree on the settled bar state's geometry (#63).

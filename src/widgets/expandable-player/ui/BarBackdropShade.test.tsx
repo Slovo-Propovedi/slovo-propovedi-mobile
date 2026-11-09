@@ -4,7 +4,16 @@ import { StyleSheet } from 'react-native'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { keyboardBottomInsetSv, setBarCollapsed, setTabBarHeight } from 'shared/ui/layout'
+import {
+  BAR_EXPANDED_ISLAND_TOP_MARGIN,
+  BAR_OUTER_GAP,
+  BAR_ROW_MIN_HEIGHT,
+  keyboardBottomInsetSv,
+  setBarCollapsed,
+  setTabBarHeight,
+  TAB_BAR_ISLAND_HEIGHT,
+} from 'shared/ui/layout'
+import { PLAYER_SIZES } from 'shared/ui/theme'
 import { BarBackdropShade } from './BarBackdropShade'
 
 jest.mock('expo-linear-gradient', () => {
@@ -18,13 +27,20 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   default: () => ({ fontScale: 1, height: 800, width: 400 }),
 }))
 
+// Fixture row height: BAR_ROW_MIN_HEIGHT content box plus the device safe-area
+// padding CustomTabBar adds (mirrors a phone with a 14dp bottom inset).
 const TAB_BAR_HEIGHT = 98
-// Detached pill: bottom = 98 − 4 + 6 = 100; shade = bottom + pill height.
-const EXPANDED_HEIGHT = 164
-// Collapsed row: bottom = 98 − (84 + 64) / 2 = 24; shade = 24 + 64.
-const COLLAPSED_HEIGHT = 88
+// Detached pill sits one outer gap above the expanded island's top edge
+// (getMiniPlayerGeometry), and the shade reaches the pill's top.
+const EXPANDED_HEIGHT =
+  TAB_BAR_HEIGHT - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_OUTER_GAP + PLAYER_SIZES.miniPlayerHeight
+// Collapsed row: islands are centered in BAR_ROW_MIN_HEIGHT, so the pill's
+// bottom sits half the leftover height above the content box's bottom edge.
+const COLLAPSED_HEIGHT =
+  TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2 + PLAYER_SIZES.miniPlayerHeight
 const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.10)']
 const SHADE_LOCATIONS = [0.4, 1]
+const KEYBOARD_INSET = 320
 
 const AUDIO: AudioPlayerData = {
   artist: 'Author',
@@ -53,6 +69,23 @@ const findGradient = () =>
       Array.isArray(instance.props.colors) &&
       instance.props.colors.join('|') === SHADE_COLORS.join('|'),
   )[0]
+
+// The pass-through full-screen layer: absolute inset 0, no height, no gradient.
+const findLayer = () =>
+  screen.root?.queryAll(instance => {
+    const flat = StyleSheet.flatten(instance.props.style)
+
+    return (
+      instance.props.pointerEvents === 'none' &&
+      !Array.isArray(instance.props.colors) &&
+      flat?.position === 'absolute' &&
+      flat?.top === 0 &&
+      flat?.bottom === 0 &&
+      flat?.left === 0 &&
+      flat?.right === 0 &&
+      typeof flat?.height !== 'number'
+    )
+  })[0]
 
 const renderShade = async ({
   audio = AUDIO,
@@ -90,6 +123,28 @@ describe('<BarBackdropShade>', () => {
     })
     expect(gradient?.props.colors).toEqual(SHADE_COLORS)
     expect(gradient?.props.locations).toEqual(SHADE_LOCATIONS)
+  })
+
+  test('lets sibling document order stack the layer: no zIndex, never intercepts touches', async () => {
+    await renderShade()
+
+    const layer = findLayer()
+
+    expect(layer?.props.pointerEvents).toBe('none')
+    // A top-level zIndex would sort above the whole <Tabs> subtree on native,
+    // painting the shade over the islands; document order must own stacking.
+    expect(StyleSheet.flatten(layer?.props.style)?.zIndex).toBeUndefined()
+  })
+
+  test('follows the keyboard lift exactly like the pill', async () => {
+    const { rerender } = await renderShade()
+
+    keyboardBottomInsetSv.value = KEYBOARD_INSET
+    await rerender(<BarBackdropShade />)
+
+    expect(StyleSheet.flatten(findShade()?.props.style)?.transform).toEqual([
+      { translateY: -KEYBOARD_INSET },
+    ])
   })
 
   test('tracks the collapsed pill geometry', async () => {

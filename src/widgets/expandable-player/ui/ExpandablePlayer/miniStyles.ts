@@ -1,5 +1,4 @@
 import { StyleSheet } from 'react-native'
-import { createGlassStyles } from 'shared/ui'
 import { BAR_CIRCLE_SIZE_EXPANDED } from 'shared/ui/layout'
 import {
   FONT_SIZES,
@@ -27,10 +26,8 @@ export const MINI_PLAY_HIT_SLOP = (MIN_TOUCH_TARGET - MINI_PLAY_BOX_SIZE) / 2
 export const MINI_EXPANDED_TRANSPORT_RIGHT_INSET =
   BAR_CIRCLE_SIZE_EXPANDED / 2 - MINI_PLAY_BOX_SIZE / 2
 
-export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
-  const glass = createGlassStyles(isLight, MINI_PILL_RADIUS)
-
-  return StyleSheet.create({
+export const createMiniStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
     downloadFill: {
       height: '100%',
     },
@@ -61,8 +58,6 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
     miniContainerCollapsed: {
       paddingRight: MINI_CONTENT_SIDE_INSET,
     },
-    // No shadow while a morph resizes the pill (see `GlassSurface` degraded).
-    miniContainerDegraded: glass.containerDegraded,
     miniControls: {
       alignItems: 'center',
       flexDirection: 'row',
@@ -108,4 +103,3 @@ export const createMiniStyles = (theme: ThemeColors, isLight: boolean) => {
       fontWeight: '600',
     },
   })
-}
