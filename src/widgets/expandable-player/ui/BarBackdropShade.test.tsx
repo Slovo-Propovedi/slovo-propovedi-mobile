@@ -31,16 +31,32 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 // Fixture row height: BAR_ROW_MIN_HEIGHT content box plus the device safe-area
 // padding CustomTabBar adds (mirrors a phone with a 14dp bottom inset).
 const TAB_BAR_HEIGHT = 98
+const SHADE_TOP_OVERSCAN_PX = 10
 // Detached pill sits one outer gap above the expanded island's top edge
-// (getMiniPlayerGeometry), and the shade reaches the pill's top.
+// (getMiniPlayerGeometry), and the shade reaches the pill's top plus the
+// overscan.
 const EXPANDED_HEIGHT =
-  TAB_BAR_HEIGHT - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_OUTER_GAP + PLAYER_SIZES.miniPlayerHeight
+  TAB_BAR_HEIGHT -
+  BAR_EXPANDED_ISLAND_TOP_MARGIN +
+  BAR_OUTER_GAP +
+  PLAYER_SIZES.miniPlayerHeight +
+  SHADE_TOP_OVERSCAN_PX
 // Collapsed row: islands are centered in BAR_ROW_MIN_HEIGHT, so the pill's
 // bottom sits half the leftover height above the content box's bottom edge.
 const COLLAPSED_HEIGHT =
-  TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2 + PLAYER_SIZES.miniPlayerHeight
-const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.30)']
-const SHADE_LOCATIONS = [0, 1]
+  TAB_BAR_HEIGHT -
+  (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2 +
+  PLAYER_SIZES.miniPlayerHeight +
+  SHADE_TOP_OVERSCAN_PX
+const SHADE_OPAQUE = 'rgba(0, 0, 0, 0.30)'
+const SHADE_COLORS = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE, SHADE_OPAQUE]
+// The ramp ends on the pill's vertical middle: the overscan plus the pill's
+// upper half as a fraction of the resting shade height.
+const SHADE_LOCATIONS = [
+  0,
+  (SHADE_TOP_OVERSCAN_PX + PLAYER_SIZES.miniPlayerHeight / 2) / EXPANDED_HEIGHT,
+  1,
+]
 const KEYBOARD_INSET = 320
 
 // Mirrors the shared reanimated mock: timings complete synchronously. Tests
