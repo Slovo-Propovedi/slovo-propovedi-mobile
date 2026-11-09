@@ -5,6 +5,7 @@ import {
   MINI_ARTWORK_SIZE,
   MINI_CONTENT_SIDE_INSET,
   MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
+  MINI_PILL_RADIUS,
   MINI_PLAY_HIT_SLOP,
 } from './miniStyles'
 
@@ -59,6 +60,13 @@ describe('mini player vertical alignment', () => {
     // the search circle, so its height must match theirs.
     expect(PLAYER_SIZES.miniPlayerHeight).toBe(TAB_BAR_ISLAND_HEIGHT)
     expect(PLAYER_SIZES.miniPlayerHeight).toBe(BAR_CIRCLE_SIZE)
+    expect(styles.miniContainer.height).toBe(PLAYER_SIZES.miniPlayerHeight)
+  })
+
+  test('the pill radius is half the shared height, so the pill stays fully round', () => {
+    // Radius and height come from one constant: changing the height keeps the
+    // ends round instead of leaving square shoulders.
+    expect(MINI_PILL_RADIUS).toBe(PLAYER_SIZES.miniPlayerHeight / 2)
   })
 })
 
