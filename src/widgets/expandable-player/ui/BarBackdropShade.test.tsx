@@ -50,8 +50,8 @@ const COLLAPSED_HEIGHT =
   SHADE_TOP_OVERSCAN_PX
 const LIGHT_SHADE_OPAQUE = 'rgba(0, 0, 0, 0.18)'
 const LIGHT_SHADE_COLORS = ['rgba(0, 0, 0, 0)', LIGHT_SHADE_OPAQUE, LIGHT_SHADE_OPAQUE]
-const DARK_SHADE_OPAQUE = 'rgba(255, 255, 255, 0.18)'
-const DARK_SHADE_COLORS = ['rgba(255, 255, 255, 0)', DARK_SHADE_OPAQUE, DARK_SHADE_OPAQUE]
+const DARK_SHADE_OPAQUE = 'rgba(128, 128, 128, 0.36)'
+const DARK_SHADE_COLORS = ['rgba(128, 128, 128, 0)', DARK_SHADE_OPAQUE, DARK_SHADE_OPAQUE]
 // The ramp ends on the pill's vertical middle: the overscan plus the pill's
 // upper half as a fraction of the resting shade height.
 const SHADE_LOCATIONS = [
@@ -167,7 +167,7 @@ describe('<BarBackdropShade>', () => {
     expect(gradient?.props.locations).toEqual(SHADE_LOCATIONS)
   })
 
-  test('swaps to a same-shape white gradient in the dark theme', async () => {
+  test('swaps to a same-shape gray gradient in the dark theme', async () => {
     await renderShade({ isDark: true })
     const gradient = findGradient(DARK_SHADE_COLORS)
 
