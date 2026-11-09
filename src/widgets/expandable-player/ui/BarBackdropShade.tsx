@@ -13,10 +13,23 @@ import { useProgressAnimation } from '../model/useProgressAnimation'
 // shade is edge to edge (no side insets, no radius) and anchors to the very
 // screen bottom (the Android navbar is transparent, so the safe-area inset is
 // deliberately ignored). Its top edge tracks the CURRENT mini-player top as the
-// bar morphs.
-const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.30)'] as const
-// Full-height ramp: transparent at the pill top, deepening all the way down.
-const SHADE_LOCATIONS = [0, 1] as const
+// bar morphs, ending a few pixels above it so the ramp never lands a hard edge
+// on the pill's glass rim.
+const SHADE_TOP_OVERSCAN_PX = 10
+const SHADE_OPAQUE = 'rgba(0, 0, 0, 0.30)'
+// Full opacity from the screen bottom up to the pill's vertical middle; only
+// the overscan above the pill top is a ramp.
+const SHADE_COLORS = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE, SHADE_OPAQUE] as const
+
+const getShadeHeight = (bottom: number) => {
+  'worklet'
+  return bottom + PLAYER_SIZES.miniPlayerHeight + SHADE_TOP_OVERSCAN_PX
+}
+
+// Fraction of the resting shade taken by the overscan plus the pill's upper
+// half, i.e. the line where the ramp reaches full opacity.
+const getPillMiddleLocation = (shadeHeight: number) =>
+  (SHADE_TOP_OVERSCAN_PX + PLAYER_SIZES.miniPlayerHeight / 2) / shadeHeight
 
 /**
  * Single very subtle vertical gradient from the screen bottom up to the mini
@@ -30,7 +43,7 @@ export const BarBackdropShade = () => {
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const { progress } = useBarMorphProgress()
+  const { progress, settledCollapsed } = useBarMorphProgress()
   // The shade has no expand animation of its own: this shared value only drives
   // the pill's settle timing, so the shade stays behind the pill for the whole
   // expand morph instead of popping out on its first frame.
@@ -46,10 +59,21 @@ export const BarBackdropShade = () => {
       tabBarHeight,
     })
 
-    return { height: bottom + PLAYER_SIZES.miniPlayerHeight }
+    return { height: getShadeHeight(bottom) }
   })
 
   if (!audio || (expanded && settledExpanded) || !isTabBarMeasured) return null
+
+  // Gradient stops cannot animate with the shade, so they follow the geometry
+  // the bar settles into: the fade completes on the pill midline in both rest
+  // states.
+  const restingBottom = getMiniPlayerGeometry({
+    barProgress: settledCollapsed ? 1 : 0,
+    fullScreenHeight: screenHeight,
+    screenWidth,
+    tabBarHeight,
+  }).bottom
+  const shadeLocations = [0, getPillMiddleLocation(getShadeHeight(restingBottom)), 1] as const
 
   return (
     <Animated.View pointerEvents='none' style={styles.layer}>
@@ -57,7 +81,7 @@ export const BarBackdropShade = () => {
         <LinearGradient
           pointerEvents='none'
           colors={SHADE_COLORS}
-          locations={SHADE_LOCATIONS}
+          locations={shadeLocations}
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
