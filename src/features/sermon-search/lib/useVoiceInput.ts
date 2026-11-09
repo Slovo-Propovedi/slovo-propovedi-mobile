@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Platform } from 'react-native'
 import { reportError } from 'shared/model/error-dialog'
 import { showInfo } from 'shared/model/info-dialog'
 import { recognizeAndroidSpeech } from './androidVoiceInput'
-import { isVoiceInputAvailable } from './webSpeechRecognition'
-import { startWebVoiceSession, type WebVoiceSession } from './webVoiceSession'
+import { useWebVoiceSession } from './useWebVoiceSession'
+import { getWebVoicePermissionState, isVoiceInputAvailable } from './webSpeechRecognition'
 
 const VOICE_ERROR = 'Не удалось запустить голосовой ввод'
 const VOICE_UNAVAILABLE = 'Голосовой ввод недоступен на этом устройстве'
-const VOICE_RECOGNIZE_ERROR = 'Не удалось распознать речь'
 
 interface VoiceInput {
   isListening: boolean
+  /** True when this device cannot run speech recognition at all. */
+  isUnavailable: boolean
   startListening: () => void
   stopListening: () => void
 }
@@ -22,10 +23,14 @@ interface VoiceInput {
  * IOS has no implementation yet: pressing the always-visible mic reports the feature as unavailable.
  * The web recognizer is owned by this hook: starting again replaces the live
  * session, and `stopListening` aborts it on blur, clear, close and unmount.
+ * `isUnavailable` starts true where no recognizer exists and flips on when the
+ * recognizer itself reports it cannot run (browser without a speech backend) or
+ * when the microphone permission is already denied; the mic stays tappable and
+ * explains itself through the info dialog.
  * Every failure is soft: the recognizer reports through `reportError` and never throws into the UI.
  * @param root0 - Hook options.
  * @param root0.onTranscript - Receives the recognized text (already trimmed).
- * @returns Listening state, the start trigger and the abort trigger.
+ * @returns Listening state, availability, the start trigger and the abort trigger.
  */
 export const useVoiceInput = ({
   onTranscript,
@@ -33,52 +38,17 @@ export const useVoiceInput = ({
   onTranscript: (text: string) => void
 }): VoiceInput => {
   const [isListening, setIsListening] = useState(false)
-  const webSessionRef = useRef<null | WebVoiceSession>(null)
-
-  const stopWeb = useCallback(() => {
-    const session = webSessionRef.current
-    if (session === null) return
-
-    webSessionRef.current = null
-    setIsListening(false)
-    session.abort()
-  }, [])
-
-  const startWeb = useCallback(() => {
-    // A previous session may still be live if its `onend` never arrived.
-    stopWeb()
-
-    try {
-      const session = startWebVoiceSession({
-        onEnd: () => {
-          webSessionRef.current = null
-          setIsListening(false)
-        },
-        onError: error => {
-          webSessionRef.current = null
-          setIsListening(false)
-          reportError(error, VOICE_RECOGNIZE_ERROR)
-        },
-        onResult: transcript => {
-          // The mic returns to its idle icon immediately; the session reference
-          // stays until `onend` so the abort path still has a live handle.
-          setIsListening(false)
-          onTranscript(transcript)
-        },
-      })
-
-      if (session === null) {
-        showInfo(VOICE_UNAVAILABLE)
-        return
-      }
-
-      webSessionRef.current = session
-      setIsListening(true)
-    } catch (error) {
-      setIsListening(false)
-      reportError(error, VOICE_ERROR)
-    }
-  }, [onTranscript, stopWeb])
+  // Platforms without a recognizer (iOS, browsers without the constructor)
+  // still render the mic, but it starts in the unavailable state.
+  const [isUnavailable, setIsUnavailable] = useState(!isVoiceInputAvailable())
+  const { start: startWeb, stop: stopWeb } = useWebVoiceSession({
+    onListeningChange: setIsListening,
+    onTranscript,
+    onUnavailable: () => {
+      setIsUnavailable(true)
+      showInfo(VOICE_UNAVAILABLE)
+    },
+  })
 
   const startAndroid = useCallback(async () => {
     setIsListening(true)
@@ -100,25 +70,37 @@ export const useVoiceInput = ({
   const startListening = useCallback(() => {
     if (isListening) return
 
-    if (!isVoiceInputAvailable()) {
+    if (isUnavailable || !isVoiceInputAvailable()) {
       showInfo(VOICE_UNAVAILABLE)
       return
     }
 
     if (Platform.OS === 'web') {
-      startWeb()
+      if (startWeb() === 'unavailable') showInfo(VOICE_UNAVAILABLE)
       return
     }
 
     void startAndroid()
-  }, [isListening, startAndroid, startWeb])
+  }, [isListening, isUnavailable, startAndroid, startWeb])
 
   // The bar stays mounted for the island's exit animation, so an in-flight
   // recognizer must be torn down explicitly when the tree unmounts.
   useEffect(() => stopWeb, [stopWeb])
 
+  // An already-denied permission cannot be retried by pressing the mic, so the
+  // icon starts muted. The probe never rejects; a failure just keeps the mic
+  // on its optimistic default.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return
+
+    void getWebVoicePermissionState().then(state => {
+      if (state === 'denied') setIsUnavailable(true)
+    })
+  }, [])
+
   return {
     isListening,
+    isUnavailable,
     startListening,
     stopListening,
   }
