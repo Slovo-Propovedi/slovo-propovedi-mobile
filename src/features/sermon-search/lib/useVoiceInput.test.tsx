@@ -62,6 +62,21 @@ const installWindow = (recognition?: unknown) => {
   }
 }
 
+const installNavigatorPermissions = (permissions?: unknown) => {
+  const previousNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
+
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    value: permissions === undefined ? {} : { permissions },
+    writable: true,
+  })
+
+  return () => {
+    if (previousNavigator) Object.defineProperty(globalThis, 'navigator', previousNavigator)
+    else Reflect.deleteProperty(globalThis, 'navigator')
+  }
+}
+
 const renderWebVoiceInput = async (options: { withApi?: boolean } = {}) => {
   const restoreWindow = installWindow(options.withApi === false ? undefined : FakeRecognition)
   const onTranscript = jest.fn()
@@ -210,7 +225,7 @@ describe('useVoiceInput (web)', () => {
     }
   })
 
-  test('clears the listening state as soon as an error arrives, without waiting for onend', async () => {
+  test('treats a recognizer that cannot run here as unavailable, not as an error', async () => {
     const { restoreWindow, result } = await renderWebVoiceInput()
 
     try {
@@ -223,9 +238,77 @@ describe('useVoiceInput (web)', () => {
         recognition.onerror?.({ error: 'not-allowed' })
       })
 
-      expect(mockedReportError).toHaveBeenCalledWith('not-allowed', 'Не удалось распознать речь')
+      expect(mockedShowInfo).toHaveBeenCalledWith(VOICE_UNAVAILABLE)
+      expect(mockedReportError).not.toHaveBeenCalled()
       expect(result.current.isListening).toBe(false)
+      expect(result.current.isUnavailable).toBe(true)
     } finally {
+      restoreWindow()
+    }
+  })
+
+  test('keeps a real network failure on the error path and stays available', async () => {
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      await act(async () => {
+        result.current.startListening()
+      })
+      const recognition = latestRecognition()
+
+      await act(async () => {
+        recognition.onerror?.({ error: 'network' })
+      })
+
+      expect(mockedReportError).toHaveBeenCalledWith('network', 'Не удалось распознать речь')
+      expect(mockedShowInfo).not.toHaveBeenCalled()
+      expect(result.current.isUnavailable).toBe(false)
+    } finally {
+      restoreWindow()
+    }
+  })
+
+  test('turns unavailable when the browser reports a denied microphone permission', async () => {
+    const query = jest.fn().mockResolvedValue({ state: 'denied' })
+    const restoreNavigator = installNavigatorPermissions({ query })
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      await act(async () => {})
+
+      expect(query).toHaveBeenCalledWith({ name: 'microphone' })
+      expect(result.current.isUnavailable).toBe(true)
+    } finally {
+      restoreNavigator()
+      restoreWindow()
+    }
+  })
+
+  test('stays available when the permission API is unsupported', async () => {
+    const restoreNavigator = installNavigatorPermissions()
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      await act(async () => {})
+
+      expect(result.current.isUnavailable).toBe(false)
+    } finally {
+      restoreNavigator()
+      restoreWindow()
+    }
+  })
+
+  test('stays available when the permission probe returns an unknown state', async () => {
+    const query = jest.fn().mockResolvedValue({ state: 'mystery' })
+    const restoreNavigator = installNavigatorPermissions({ query })
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      await act(async () => {})
+
+      expect(result.current.isUnavailable).toBe(false)
+    } finally {
+      restoreNavigator()
       restoreWindow()
     }
   })
@@ -329,6 +412,8 @@ describe('useVoiceInput (web)', () => {
     const { restoreWindow, result } = await renderWebVoiceInput({ withApi: false })
 
     try {
+      expect(result.current.isUnavailable).toBe(true)
+
       await act(async () => {
         result.current.startListening()
       })
@@ -354,6 +439,20 @@ describe('useVoiceInput (web)', () => {
     } finally {
       startFailure = null
       restoreWindow()
+    }
+  })
+})
+
+describe('useVoiceInput (unsupported platform)', () => {
+  test('starts as unavailable on iOS, where no recognizer is wired', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+
+    try {
+      const { result } = await renderHook(() => useVoiceInput({ onTranscript: jest.fn() }))
+
+      expect(result.current.isUnavailable).toBe(true)
+    } finally {
+      restorePlatform.restore()
     }
   })
 })

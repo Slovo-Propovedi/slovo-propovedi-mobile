@@ -65,6 +65,30 @@ export const isVoiceInputAvailable = (platform = Platform.OS): boolean => {
   return platform === 'android'
 }
 
+/** The three states the Permissions API reports for microphone access. */
+type WebVoicePermissionState = 'denied' | 'granted' | 'prompt'
+
+/**
+ * Probes the browser's microphone permission state on web. A recognised state
+ * lets the mic start disabled when permission was already denied; an unsupported
+ * or failing Permissions API degrades to null so the mic keeps retrying.
+ * @returns The permission state, or null when it cannot be determined.
+ */
+export const getWebVoicePermissionState = async (): Promise<null | WebVoicePermissionState> => {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined') return null
+
+  try {
+    const status = await navigator.permissions?.query({ name: 'microphone' })
+    const state = status?.state
+
+    if (state === 'denied' || state === 'granted' || state === 'prompt') return state
+
+    return null
+  } catch {
+    return null
+  }
+}
+
 /**
  * Reads the recognized phrase out of a Web Speech result event. Only final
  * results are taken: interim text is not written into the query, because the

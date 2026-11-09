@@ -8,21 +8,30 @@ const MIC_ICON_SIZE = 22
 
 /**
  * The pill's voice-search affordance: idle mic outline, filled mic while the
- * recognizer is listening. Always rendered while the query is empty; on a
- * platform without a recognizer (iOS, browser without Web Speech) the press
- * handler reports the feature as unavailable instead of starting recognition.
+ * recognizer is listening. Always rendered while the query is empty. When
+ * speech recognition cannot run (iOS, browser without a backend, denied
+ * permission) the mic is tinted as disabled but stays tappable: the press
+ * handler shows an info dialog explaining why instead of starting recognition.
  * @param root0 - Component props.
  * @param root0.isListening - Whether voice recognition is currently active.
- * @param root0.onPress - Starts voice recognition.
+ * @param root0.isUnavailable - Whether speech recognition cannot run here.
+ * @param root0.onPress - Starts voice recognition or explains its unavailability.
  */
 export const SearchBarMicButton = ({
   isListening,
+  isUnavailable = false,
   onPress,
 }: {
   isListening: boolean
+  isUnavailable?: boolean
   onPress: () => void
 }) => {
   const { currentTheme } = useTheme()
+  const iconColor = isListening
+    ? currentTheme.primary
+    : isUnavailable
+      ? currentTheme.textMuted
+      : currentTheme.text
 
   return (
     <IconButton
@@ -32,9 +41,9 @@ export const SearchBarMicButton = ({
       accessibilityLabel={MIC_LABEL}
       Icon={
         <Ionicons
+          color={iconColor}
           size={MIC_ICON_SIZE}
           name={isListening ? 'mic' : 'mic-outline'}
-          color={isListening ? currentTheme.primary : currentTheme.text}
         />
       }
     />

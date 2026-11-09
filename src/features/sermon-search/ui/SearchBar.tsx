@@ -62,6 +62,7 @@ export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boole
         <SearchBarMicButton
           onPress={voiceInput.startListening}
           isListening={voiceInput.isListening}
+          isUnavailable={voiceInput.isUnavailable}
         />
       )}
       {!isQueryEmpty && <SearchBarClearButton onPress={handleClearQuery} />}
