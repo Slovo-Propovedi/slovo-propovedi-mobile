@@ -26,6 +26,7 @@ import { SUB_SCREENS, useColdStartLinkRecovery } from 'shared/routing'
 import { Toast } from 'shared/ui'
 import { GlobalConfirmDialog } from 'shared/ui/confirm-dialog'
 import { GlobalErrorDialog } from 'shared/ui/error-dialog'
+import { useExpandBarOnLaunch } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 // Module-level: subscribes once for the app lifetime
 subscribeToNetwork()
@@ -55,6 +56,7 @@ const renderSettingsHelpRow = (props: { tintColor?: ColorValue }) => (
 const RootLayout = () => {
   const { currentTheme } = useTheme()
   const checkForUpdate = useAction(checkForUpdateAction)
+  useExpandBarOnLaunch()
   useUpdateNotificationResponse()
   usePlaybackProgressSaver()
   useForegroundPlaybackReconcile()

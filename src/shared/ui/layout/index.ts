@@ -18,6 +18,7 @@ export {
   useKeyboardLiftStyle,
 } from './lib/keyboardInset'
 export { useBarCollapseOnScroll } from './lib/useBarCollapseOnScroll'
+export { useExpandBarOnLaunch } from './lib/useExpandBarOnLaunch'
 export {
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,
