@@ -1,15 +1,19 @@
-import { useAtom } from '@reatom/npm-react'
-import { useCallback, useState } from 'react'
-import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
-import { BAR_MORPH_DURATION_MS } from 'shared/ui/layout'
-import { isMiniPillCollapsedAtom } from '../model/barMorph'
+import { useAtom, useCtx } from '@reatom/npm-react'
+import { useCallback, useEffect, useState } from 'react'
+import { isMiniPillCollapsedAtom } from './barMorph'
+import {
+  barMorphProgressSv,
+  ensureBarMorphDriver,
+  registerBarMorphSettleListener,
+  registerBarMorphStartListener,
+} from './barMorphDriver'
 
 /**
  * Shared 0→1 progress of the bottom-bar morph (0 = detached mini pill above the
- * row, 1 = pill inside the collapsed bottom line). The animation is owned by
- * the atom subscription in {@link useAtomMorph}, so it starts in the
- * same tick as the bar state change instead of waiting for this component's
- * render/commit (Android: ~130 ms, a visible freeze before the morph).
+ * row, 1 = pill inside the collapsed bottom line). The animation is owned by the
+ * module-level driver ({@link ensureBarMorphDriver}), so every hook instance —
+ * pill, backdrop shade, any other surface — reads the same shared value and one
+ * `withTiming`, instead of each starting its own timing that drifts.
  *
  * `settledCollapsed` lags the bar state until the morph lands: it is the state
  * the React shadow tree may commit resting geometry for. Committing the target
@@ -21,23 +25,32 @@ import { isMiniPillCollapsedAtom } from '../model/barMorph'
  * new animation (`!isTarget`), so an interrupted morph can never leave the flag
  * lagging behind: even if a completion callback is lost or delivered late, the
  * committed resting geometry matches where the new animation starts.
- * @returns The morph progress, whether the morph is in flight, and the bar state it settled into.
  */
 export const useBarMorphProgress = () => {
+  const ctx = useCtx()
   const [isCollapsed] = useAtom(isMiniPillCollapsedAtom)
+  const [isMorphing, setIsMorphing] = useState(false)
   const [settledCollapsed, setSettledCollapsed] = useState(isCollapsed)
   const handleStart = useCallback((isTarget: boolean) => {
+    setIsMorphing(true)
     setSettledCollapsed(!isTarget)
   }, [])
   const handleSettled = useCallback((isTarget: boolean) => {
+    setIsMorphing(false)
     setSettledCollapsed(isTarget)
   }, [])
-  const { isMorphing, progress } = useAtomMorph(
-    isMiniPillCollapsedAtom,
-    BAR_MORPH_DURATION_MS,
-    handleSettled,
-    handleStart,
-  )
 
-  return { isMorphing, progress, settledCollapsed }
+  useEffect(() => {
+    const detachStart = registerBarMorphStartListener(handleStart)
+    const detachSettle = registerBarMorphSettleListener(handleSettled)
+
+    ensureBarMorphDriver(ctx)
+
+    return () => {
+      detachStart()
+      detachSettle()
+    }
+  }, [ctx, handleStart, handleSettled])
+
+  return { isMorphing, progress: barMorphProgressSv, settledCollapsed }
 }

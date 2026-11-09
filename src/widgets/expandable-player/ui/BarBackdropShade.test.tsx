@@ -15,6 +15,7 @@ import {
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES, themeModeAtom } from 'shared/ui/theme'
+import { resetBarMorphDriver } from '../model/barMorphDriver'
 import { BarBackdropShade } from './BarBackdropShade'
 
 jest.mock('expo-linear-gradient', () => {
@@ -49,16 +50,12 @@ const COLLAPSED_HEIGHT =
   PLAYER_SIZES.miniPlayerHeight +
   SHADE_TOP_OVERSCAN_PX
 const LIGHT_SHADE_OPAQUE = 'rgba(0, 0, 0, 0.18)'
-const LIGHT_SHADE_COLORS = ['rgba(0, 0, 0, 0)', LIGHT_SHADE_OPAQUE, LIGHT_SHADE_OPAQUE]
+const LIGHT_SHADE_COLORS = ['rgba(0, 0, 0, 0)', LIGHT_SHADE_OPAQUE]
 const DARK_SHADE_OPAQUE = 'rgba(128, 128, 128, 0.36)'
-const DARK_SHADE_COLORS = ['rgba(128, 128, 128, 0)', DARK_SHADE_OPAQUE, DARK_SHADE_OPAQUE]
-// The ramp ends on the pill's vertical middle: the overscan plus the pill's
-// upper half as a fraction of the resting shade height.
-const SHADE_LOCATIONS = [
-  0,
-  (SHADE_TOP_OVERSCAN_PX + PLAYER_SIZES.miniPlayerHeight / 2) / EXPANDED_HEIGHT,
-  1,
-]
+const DARK_SHADE_COLORS = ['rgba(128, 128, 128, 0)', DARK_SHADE_OPAQUE]
+// Fixed-height ramp cap: the overscan plus the pill's upper half, top to bottom.
+const CAP_HEIGHT = SHADE_TOP_OVERSCAN_PX + PLAYER_SIZES.miniPlayerHeight / 2
+const CAP_LOCATIONS = [0, 1]
 const KEYBOARD_INSET = 320
 
 // Mirrors the shared reanimated mock: timings complete synchronously. Tests
@@ -99,6 +96,12 @@ const findGradient = (colors = LIGHT_SHADE_COLORS) =>
   screen.root?.queryAll(
     instance =>
       Array.isArray(instance.props.colors) && instance.props.colors.join('|') === colors.join('|'),
+  )[0]
+
+// The solid block below the fixed ramp cap.
+const findFill = (color = LIGHT_SHADE_OPAQUE) =>
+  screen.root?.queryAll(
+    instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === color,
   )[0]
 
 // The pass-through full-screen layer: absolute inset 0, no height, no gradient.
@@ -146,6 +149,7 @@ const renderShade = async ({
 
 describe('<BarBackdropShade>', () => {
   beforeEach(() => {
+    resetBarMorphDriver()
     keyboardBottomInsetSv.value = 0
   })
 
@@ -156,6 +160,7 @@ describe('<BarBackdropShade>', () => {
   test('paints one subtle gradient from the screen bottom to the detached pill top', async () => {
     await renderShade()
     const gradient = findGradient()
+    const fill = findFill()
 
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       bottom: 0,
@@ -164,16 +169,25 @@ describe('<BarBackdropShade>', () => {
       right: 0,
     })
     expect(gradient?.props.colors).toEqual(LIGHT_SHADE_COLORS)
-    expect(gradient?.props.locations).toEqual(SHADE_LOCATIONS)
+    expect(gradient?.props.locations).toEqual(CAP_LOCATIONS)
+    expect(StyleSheet.flatten(gradient?.props.style)).toMatchObject({ height: CAP_HEIGHT })
+    expect(StyleSheet.flatten(fill?.props.style)).toMatchObject({
+      backgroundColor: LIGHT_SHADE_OPAQUE,
+      flex: 1,
+    })
   })
 
   test('swaps to a same-shape gray gradient in the dark theme', async () => {
     await renderShade({ isDark: true })
     const gradient = findGradient(DARK_SHADE_COLORS)
+    const fill = findFill(DARK_SHADE_OPAQUE)
 
     expect(gradient?.props.colors).toEqual(DARK_SHADE_COLORS)
-    expect(gradient?.props.locations).toEqual(SHADE_LOCATIONS)
+    expect(gradient?.props.locations).toEqual(CAP_LOCATIONS)
+    expect(StyleSheet.flatten(gradient?.props.style)).toMatchObject({ height: CAP_HEIGHT })
+    expect(fill).toBeDefined()
     expect(findGradient()).toBeUndefined()
+    expect(findFill()).toBeUndefined()
   })
 
   test('lets document order inside the tab bar own stacking: no zIndex, never intercepts touches', async () => {
@@ -209,6 +223,12 @@ describe('<BarBackdropShade>', () => {
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: COLLAPSED_HEIGHT,
     })
+    // The ramp cap keeps its fixed size while the shade height animates, so the
+    // gradient stops never detach from the pill midline.
+    expect(StyleSheet.flatten(findGradient()?.props.style)).toMatchObject({
+      height: CAP_HEIGHT,
+    })
+    expect(findGradient()?.props.locations).toEqual(CAP_LOCATIONS)
   })
 
   test('renders nothing while no audio is active', async () => {
