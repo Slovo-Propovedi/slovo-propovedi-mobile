@@ -1,8 +1,14 @@
 import MaskedView from '@react-native-masked-view/masked-view'
 import { LinearGradient } from 'expo-linear-gradient'
 import { StyleSheet, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { EDGE_FADE_GRADIENT_TEST_ID, EDGE_FADE_WIDTH } from '../marquee-styles'
 import { type EdgeFadeContainerProps } from './types'
+
+// `onLayout` is a worklet on native: Reanimated dispatches it on the UI thread
+// only for animated components, so the measured container itself is animated.
+// The mask stays a plain MaskedView child: its Reanimated overload does not
+// accept the library's component type, and the outer view carries the style.
 
 // Mask alpha decides visibility: opaque black keeps the row visible, transparent
 // hides it. The stops therefore differ in ALPHA only — opaque RGB keeps Android's
@@ -28,9 +34,9 @@ export const EdgeFadeContainer = ({
 }: EdgeFadeContainerProps) => {
   if (!enabled)
     return (
-      <View style={style} testID={testID} onLayout={onLayout}>
+      <Animated.View style={style} testID={testID} onLayout={onLayout}>
         {children}
-      </View>
+      </Animated.View>
     )
 
   // The ramp sits at the container's trailing edge as part of the mask, so it
@@ -52,9 +58,9 @@ export const EdgeFadeContainer = ({
   )
 
   return (
-    <MaskedView style={style} testID={testID} onLayout={onLayout} maskElement={maskElement}>
-      {children}
-    </MaskedView>
+    <Animated.View style={style} testID={testID} onLayout={onLayout}>
+      <MaskedView maskElement={maskElement}>{children}</MaskedView>
+    </Animated.View>
   )
 }
 
