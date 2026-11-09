@@ -46,6 +46,7 @@
 
 - [ ] **`useExpandablePlayerState` держит последнюю положительную высоту таб-бара — осознанная защита в глубину.** `src/widgets/expandable-player/ui/ExpandablePlayer/useExpandablePlayerState.ts` — publisher-side guard уже стоит: `CustomTabBar.onLayout` игнорирует `height <= 0` (неактивный root-stack экран на web рендерит табы с `display: none`, строка островов измеряется как 0×0), поэтому `tabBarHeightAtom` больше не получает 0. Retention в мини-плеере оставлен как второй рубеж на границе данных. Вернуться, если появится потребитель, которому нужно отличать «ещё не измерено» от «скрыто»: тогда убрать retention и опираться на `isTabBarMeasuredAtom`.
 - [ ] **Таб «Читать» гейтится фича-флагом `read`** — `src/widgets/tab-bar/ui/useTabPress.ts` — при выключенном/незагруженном флаге показывается диалог «Скоро будет доступно»; открывать по мере готовности раздела (см. Read tab, [features/feature-flags.md](./features/feature-flags.md)).
+- [ ] **Таб-исленд и поиск морфятся каждый своим `withTiming`** (`useTabIslandMorph` / `SearchIslandMorph`) — возможен микродрейф между островами; пилюля и подложка уже на общем `barMorphDriver` (`barMorphProgressSv`) — при появлении видимого рассинхрона перевести острова на тот же драйвер. — `src/widgets/tab-bar/lib/useTabIslandMorph.ts`, `src/widgets/search-island/ui/SearchIslandMorph.tsx` — вернуться, когда рассинхрон островов станет заметен пользователям/QA (сейчас длительность и старт совпадают, расходятся только независимые тайминги).
 
 ## Local DB → API migration
 
