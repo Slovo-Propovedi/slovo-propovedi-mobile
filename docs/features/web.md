@@ -19,13 +19,19 @@
 
 Кастомная HTML-оболочка — `public/index.html` (Expo при `output: single` берёт её вместо встроенного шаблона; плейсхолдеры `%WEB_TITLE%` / `%LANG_ISO_CODE%` и `<div id="root">` обязательны, скрипт бандла Expo дописывает перед `</body>`).
 
-- `public/manifest.webmanifest` — имя, иконки, `display: standalone`, `theme_color`/`background_color` `#f16031`, `description`, `categories`, `keywords`.
+- `public/manifest.webmanifest` — имя, иконки, `display: standalone`, `theme_color`/`background_color` `#f16031` (статичные: в браузере системные панели следуют теме через `meta theme-color`, но установленное PWA по-прежнему красит хром ОС из манифеста — см. ниже и [debt.md](../debt.md) → Web / PWA), `description`, `categories`, `keywords`.
 - **Поиск установленного PWA по латинице.** `name`/`short_name` — «Слово.Проповеди» (без латинского варианта в имени — продуктовое решение). Нестандартное поле `keywords` (slovo, propovedi, проповеди, …) и `categories` (education, books, music, lifestyle) подхватывает PWAsForFirefox (`Keywords=`/`Categories=` ярлыка) — там приложение находится и по «slovo». Chromium на Linux пишет в `.desktop`-ярлык только `Name=` (ключевых слов не кладёт), Windows — имя ярлыка, поэтому там поиск идёт только по «Слово.Проповеди».
 - **Метатеги** в `public/index.html`: `description`, `keywords`, `application-name` и Open Graph (`og:title`/`og:description`/`og:site_name`/`og:locale`/`og:type`, `og:image` — `/icons/icon-512.png`) для поисковиков и превью ссылок в мессенджерах. `web.description` в `app.config.ts` при кастомной оболочке не используется.
 - `public/icons/*` — сгенерированы из `assets/icon.png` и `assets/adaptive-icon.png` (ImageMagick): `icon-192`, `icon-512`, `icon-maskable-512`, `apple-touch-icon` (180), `public/favicon.png` (48).
 - `public/dark-splash-icon.png` и `public/light-splash-icon.png` — контурные варианты стартового сплэша (прозрачный фон), генерируются `scripts/create-dark-splash-icon.mjs` из `assets/splash.png` (не ручные копии; см. «Стартовый сплэш» ниже).
 - `app.config.ts` → `web`: `lang: "ru"`, `name`, `shortName`, `description` (Expo подставляет `lang`/`description` в шаблон).
 - Регистрация Service Worker — внешний скрипт `public/register-sw.js`, подключённый из `public/index.html` (`<script src="/register-sw.js" defer>`; не инлайн — чтобы CSP обходилась без `'unsafe-inline'` в `script-src`): регистрирует `/sw.js` **только не на localhost**; на localhost, наоборот, снимает возможно оставшийся с прод-прогона SW (`getRegistrations().then(unregister)`), чтобы не мешать Metro/HMR.
+
+### Цвет системных панелей браузера (theme-color)
+
+`public/index.html` отдаёт два scheme-scoped метатега `<meta name="theme-color">`: `#ffffff` для `prefers-color-scheme: light` и `#000000` для `dark`. Это **pre-hydration дефолты** — до загрузки JS адресная строка/статус-бар Chrome на Android уже окрашены в правильную схему, а не в статичный бренд-акцент. После монтирования `ThemeProvider` (web-only эффект) вызывает `syncThemeColorMeta(background)` (`src/shared/ui/theme/ThemeContext/syncThemeColorMeta.ts`): хелпер находит **все** `meta[name="theme-color"]` и переписывает их `content` в `currentTheme.background`, поэтому панели следуют активной теме — в том числе ручному переключению light/dark, а не только системной схеме. Хелпер молча выходит, если DOM-запроса нет (в тестах с частичным `document`-стабом).
+
+**Ограничение платформы:** браузеры не умеют делать системные панели прозрачными (в отличие от edge-to-edge на нативе) — `theme-color` и `background_color` манифеста обязаны быть полностью непрозрачными (MDN). Поэтому выбран непрозрачный фон темы, а не прозрачность. У установленного PWA часть хрома (переключатель задач, рамка окна) берётся из `public/manifest.webmanifest` с его статичным `#f16031` — см. [debt.md](../debt.md) → Web / PWA.
 
 ### Сброс `html`/`body` в HTML-оболочке
 

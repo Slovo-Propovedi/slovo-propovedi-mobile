@@ -4,6 +4,7 @@ import { historyAtom, type ListeningHistory } from 'entities/listening-history/@
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST, CURRENT_SOUND_POSITION } from 'shared/config'
+import { isBarCollapsedAtom } from 'shared/ui/layout'
 import { currentAudioAtom, currentPlaylistAtom } from './model'
 import { isPlayerExpandedAtom } from './playerSheet'
 import { resetPlayerState } from './resetPlayback'
@@ -76,5 +77,16 @@ describe('resetPlayerState', () => {
     await resetPlayerState(ctx)
 
     expect(ctx.get(isPlayerExpandedAtom)).toBe(false)
+  })
+
+  test('expands the bottom bar on reset', async () => {
+    const ctx = createCtx()
+    isBarCollapsedAtom(ctx, true)
+    currentAudioAtom(ctx, makeSermon(SERMON_ID))
+    historyAtom(ctx, [makeEntry(SERMON_ID)])
+
+    await resetPlayerState(ctx)
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
   })
 })

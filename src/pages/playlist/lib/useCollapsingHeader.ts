@@ -1,4 +1,4 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAction } from '@reatom/npm-react'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useEffect } from 'react'
 import { Dimensions } from 'react-native'
@@ -10,8 +10,7 @@ import {
   useSharedValue,
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { useIsSearchBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
-import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
+import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { nextBarCollapsedState, setBarCollapsed } from 'shared/ui/layout'
 
 const { height: windowHeight } = Dimensions.get('window')
@@ -36,9 +35,7 @@ export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
   // The same scroll handler also drives the floating bottom bar, so the list
   // keeps a single worklet instead of stacking a second scroll handler.
   const applyBarCollapsed = useAction(setBarCollapsed)
-  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
-  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
-  const isSuspended = isSearchBarCollapseSuspended || isPlayerExpanded
+  const isSuspended = useIsBarCollapseSuspended()
   const isSuspendedSv = useSharedValue(isSuspended)
   const wasBarCollapsedSv = useSharedValue(false)
 

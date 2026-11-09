@@ -28,7 +28,7 @@ export const PLAYER_SIZES = {
   albumArtLarge: '45%',
   albumArtMini: 40,
   controlButtonSize: FONT_SIZES.xxl,
-  miniPlayerHeight: 60,
+  miniPlayerHeight: 64,
   progressThumbSize: 12,
   // Approximation used only until the real height is measured (see shared/ui/layout)
   tabBarHeight: 78,

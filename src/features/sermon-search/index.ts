@@ -7,7 +7,6 @@ export {
   persistSermonSearchResults,
 } from './lib/searchSources'
 export { useIsSearchActive } from './lib/useIsSearchActive'
-export { useIsSearchBarCollapseSuspended } from './lib/useIsSearchBarCollapseSuspended'
 export { useIsSearchFieldVisible } from './lib/useIsSearchFieldVisible'
 export { useOpenSearch } from './lib/useOpenSearch'
 export { useSearchUrlSync } from './lib/useSearchUrlSync'

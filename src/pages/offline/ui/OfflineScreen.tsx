@@ -7,10 +7,9 @@ import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { type OfflineSermonItem, useOfflineSermons } from 'features/offline-sermons'
 import { OnboardingTarget, useTourScrollable } from 'features/onboarding'
 import { usePlaybackChoice } from 'features/playback-choice'
-import { useIsSearchBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
+import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { isPlayingAtom } from 'entities/player'
-import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { createTracksListStyles, TracksListSkeleton } from 'entities/track-list'
 import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
@@ -43,12 +42,11 @@ export const OfflineScreen = () => {
   const navigation = useNavigation()
   const { isLoading, items } = useOfflineSermons()
   const [isPlaying] = useAtom(isPlayingAtom)
-  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const [isCachingEnabled] = useAtom(sermonCachingEnabledAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
+  const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const { onScroll } = useBarCollapseOnScroll({
-    isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
+    isSuspended: isBarCollapseSuspended,
   })
   const tracksListStyles = createTracksListStyles(currentTheme)
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
