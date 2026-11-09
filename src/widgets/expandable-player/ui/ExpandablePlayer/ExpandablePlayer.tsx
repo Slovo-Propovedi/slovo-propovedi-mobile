@@ -110,7 +110,6 @@ export const ExpandablePlayer = ({
         audio={audio}
         style={style}
         styles={styles}
-        isLight={isLight}
         expanded={expanded}
         fullStyle={fullStyle}
         currentTheme={currentTheme}

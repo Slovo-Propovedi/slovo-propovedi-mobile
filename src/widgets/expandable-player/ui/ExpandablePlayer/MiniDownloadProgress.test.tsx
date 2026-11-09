@@ -27,7 +27,7 @@ const OTHER_URL = 'https://example.com/other.mp3'
 
 const renderLeaf = (ctx: ReturnType<typeof createCtx>) =>
   renderWithProviders(
-    <MiniDownloadProgress audioUrl={AUDIO_URL} miniStyles={createMiniStyles(LightTheme, true)} />,
+    <MiniDownloadProgress audioUrl={AUDIO_URL} miniStyles={createMiniStyles(LightTheme)} />,
     { ctx },
   )
 

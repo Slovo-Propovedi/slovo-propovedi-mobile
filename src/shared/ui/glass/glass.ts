@@ -6,7 +6,8 @@ import { type ViewStyle } from 'react-native'
  * bottom island (tab island, search circle, mini-player pill, search pill and
  * its close circle). Changing a value here changes all four surfaces at once;
  * only the corner radius stays per-surface and is passed to
- * {@link createGlassStyles}.
+ * {@link createGlassStyles}. Surfaces carry no shadow of their own: depth comes
+ * from the shared `BarBackdropShade` gradient.
  */
 export const GLASS = {
   android: {
@@ -28,14 +29,6 @@ export const GLASS = {
   },
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
   fillAlpha: { dark: 0.35, light: 0.45 },
-  shadow: {
-    boxShadow: '0px 5px 14px rgba(0, 0, 0, 0.25)',
-    color: 'rgba(0, 0, 0, 0.25)',
-    // Dropped from the wrapper while a morph resizes the surface.
-    degraded: 'none',
-    offsetY: 5,
-    radius: 14,
-  },
   web: {
     // expo-blur web cannot express brightness and caps the blur low, so
     // GlassSurface bypasses BlurView with this explicit filter. A shallow 4px
@@ -73,9 +66,7 @@ export const getGlassTint = (isLight: boolean): BlurTint => (isLight ? 'light' :
  */
 export const createGlassStyles = (isLight: boolean, radius: number) => ({
   blur: { intensity: GLASS.blur.intensity, tint: getGlassTint(isLight) },
-  container: { boxShadow: GLASS.shadow.boxShadow } satisfies ViewStyle,
-  containerDegraded: { boxShadow: GLASS.shadow.degraded } satisfies ViewStyle,
-  // Shadowless host: island surfaces rely on the shared `BarBackdropShade` gradient.
+  // Shadowless host: the islands rely on the shared `BarBackdropShade` gradient.
   containerPlain: {} satisfies ViewStyle,
   fill: { backgroundColor: getGlassFill(isLight) },
   rim: {

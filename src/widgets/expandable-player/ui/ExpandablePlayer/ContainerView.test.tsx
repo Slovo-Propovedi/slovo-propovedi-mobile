@@ -44,7 +44,6 @@ const baseProps = {
   currentTheme: LightTheme,
   expanded: false,
   fullStyle: {},
-  isLight: true,
   miniOverlayStyle: {},
   onLayout: jest.fn(),
   panGesture: {} as GestureType,

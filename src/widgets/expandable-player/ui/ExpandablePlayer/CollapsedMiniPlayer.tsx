@@ -61,7 +61,7 @@ export const CollapsedMiniPlayer = ({
   playlist: null | PlaylistData
 }) => {
   const miniTargetRef = useOnboardingTargetRef('player.mini')
-  const miniStyles = createMiniStyles(currentTheme, isLight)
+  const miniStyles = createMiniStyles(currentTheme)
   const keyboardLiftStyle = useKeyboardLiftStyle()
 
   return (

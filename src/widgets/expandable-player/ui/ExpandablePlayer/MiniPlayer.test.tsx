@@ -129,7 +129,7 @@ const baseProps: MiniPlayerProps = {
   miniBarStyle: {},
   miniPan: {} as GestureType,
   miniStyle: {},
-  miniStyles: createMiniStyles(LightTheme, true),
+  miniStyles: createMiniStyles(LightTheme),
   onPlayPause: mockOnPlayPause,
   onPress: mockOnPress,
   playing: false,
@@ -187,7 +187,7 @@ describe('<MiniPlayer>', () => {
     await renderMiniPlayer({
       currentTheme: DarkTheme,
       isLight: false,
-      miniStyles: createMiniStyles(DarkTheme, false),
+      miniStyles: createMiniStyles(DarkTheme),
     })
 
     const blurs = screen.root?.queryAll(

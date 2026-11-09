@@ -23,7 +23,6 @@ export const ContainerView = ({
   currentTheme,
   expanded,
   fullStyle,
-  isLight,
   miniOverlayStyle,
   onAddToPlaylist,
   onLayout,
@@ -40,7 +39,6 @@ export const ContainerView = ({
   currentTheme: ThemeColors
   expanded: boolean
   fullStyle: AnimatedStyle<ViewStyle>
-  isLight: boolean
   miniOverlayStyle: AnimatedStyle<ViewStyle>
   onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onLayout: (event: LayoutChangeEvent) => void
@@ -52,7 +50,7 @@ export const ContainerView = ({
 }) => {
   // FullscreenContent stays mounted through the collapse animation so the exit
   // fade is visible, then unmounts to stop its per-tick re-render storm (Issue #100).
-  const miniOverlay = createMiniStyles(currentTheme, isLight).miniOverlay
+  const miniOverlay = createMiniStyles(currentTheme).miniOverlay
   const isFullscreenContentMounted = useFullscreenContentMount(expanded)
   // The collapsed container doubles as the mini overlay under the pill, so it
   // follows the keyboard with the rest of the bottom chrome. At fullscreen the

@@ -5,7 +5,6 @@ import { type TestInstance } from 'test-renderer'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { GLASS } from 'shared/ui'
 import { TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { SearchIslandMorph } from './SearchIslandMorph'
 
@@ -65,7 +64,7 @@ const MAGNIFIER_GLYPH = 'search'
 
 const findShadows = () =>
   screen.root?.queryAll(
-    instance => StyleSheet.flatten(instance.props.style)?.boxShadow === GLASS.shadow.boxShadow,
+    instance => StyleSheet.flatten(instance.props.style)?.boxShadow !== undefined,
   ) ?? []
 
 // The morph frame is the only absolutely positioned row in the component; it no
