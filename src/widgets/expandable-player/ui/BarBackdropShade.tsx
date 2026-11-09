@@ -18,12 +18,14 @@ import { useProgressAnimation } from '../model/useProgressAnimation'
 const SHADE_TOP_OVERSCAN_PX = 10
 // Full opacity from the screen bottom up to the pill's vertical middle; only
 // the overscan above the pill top is a ramp. The shape is identical in both
-// themes, but the ramp is white in the dark one: black-on-black would vanish,
-// while the luminous white stop reads as a faint depth cue.
+// themes, but the ramp is gray in the dark one: black-on-black would vanish,
+// while the mid-gray stop reads as a faint depth cue rather than a white glow.
+// The gray alpha is doubled versus the light stop (128/255 is roughly half the
+// luminance of white), so both themes keep the same perceived density.
 const SHADE_OPAQUE_LIGHT = 'rgba(0, 0, 0, 0.18)'
-const SHADE_OPAQUE_DARK = 'rgba(255, 255, 255, 0.18)'
+const SHADE_OPAQUE_DARK = 'rgba(128, 128, 128, 0.36)'
 const SHADE_COLORS_LIGHT = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE_LIGHT, SHADE_OPAQUE_LIGHT] as const
-const SHADE_COLORS_DARK = ['rgba(255, 255, 255, 0)', SHADE_OPAQUE_DARK, SHADE_OPAQUE_DARK] as const
+const SHADE_COLORS_DARK = ['rgba(128, 128, 128, 0)', SHADE_OPAQUE_DARK, SHADE_OPAQUE_DARK] as const
 
 const getShadeColors = (isLight: boolean) => (isLight ? SHADE_COLORS_LIGHT : SHADE_COLORS_DARK)
 
