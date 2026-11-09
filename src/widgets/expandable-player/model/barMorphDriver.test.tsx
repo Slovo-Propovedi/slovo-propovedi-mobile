@@ -66,20 +66,75 @@ describe('barMorphDriver', () => {
     expect(second.result.current.progress).toBe(barMorphProgressSv)
   })
 
-  test('dispatches start before the timing and settle when it lands', async () => {
+  test('notifies start listeners before the timing is started, then settles', async () => {
     const ctx = createCtx()
     ensureBarMorphDriver(ctx)
     const events: string[] = []
     registerBarMorphStartListener(() => events.push('start'))
     registerBarMorphSettleListener(() => events.push('settle'))
+    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
+      // The factory call is the exact instant the animation starts: a listener
+      // notified any later would leave a surface reading a target it was not
+      // told about while the timing is already in flight.
+      events.push('timing')
+      if (typeof callback === 'function') callback(true)
+
+      return toValue
+    })
 
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
 
-    expect(events).toEqual(['start', 'settle'])
+    expect(events).toEqual(['start', 'timing', 'settle'])
     expect(mockedWithTiming).toHaveBeenCalledTimes(1)
+    expect(mockedWithTiming).toHaveBeenCalledWith(
+      1,
+      { duration: BAR_MORPH_DURATION_MS },
+      expect.any(Function),
+    )
     expect(barMorphProgressSv.value).toBe(1)
+  })
+
+  test('a remount cannot lose a mid-flight morph', async () => {
+    const completions = captureCompletions()
+    const ctx = createCtx()
+    const firstMount = await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
+
+    // Morph 1 starts while the first mount owns the listeners; hold its landing.
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    expect(completions).toHaveLength(1)
+
+    // Unmounting detaches the hook's listeners only: the driver subscription,
+    // and with it the morph, must survive.
+    await firstMount.unmount()
+
+    await act(async () => {
+      setBarCollapsed(ctx, false)
+    })
+    expect(completions).toHaveLength(2)
+
+    // A surface registering after the flip resumes a morph it never saw start:
+    // the settle dispatch reads the live listener set, not a snapshot.
+    const lateSettle = jest.fn()
+    registerBarMorphSettleListener(lateSettle)
+    const secondMount = await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
+
+    // The interrupted morph reports nothing...
+    await act(async () => {
+      completions[0](false)
+    })
+    expect(lateSettle).not.toHaveBeenCalled()
+
+    // ...the in-flight one lands with the target the driver flipped to.
+    await act(async () => {
+      completions[1](true)
+    })
+    expect(lateSettle).toHaveBeenCalledWith(false)
+    expect(barMorphProgressSv.value).toBe(0)
+    expect(secondMount.result.current.progress).toBe(barMorphProgressSv)
   })
 
   test('reports no settle for an animation that was interrupted', async () => {
