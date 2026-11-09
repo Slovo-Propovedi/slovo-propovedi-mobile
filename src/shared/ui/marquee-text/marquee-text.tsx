@@ -96,6 +96,7 @@ export const MarqueeText = memo(function MarqueeTextComponent({
       alignSelf={alignSelf}
       textStyle={textStyle}
       needsRepeat={needsRepeat}
+      needsMarquee={needsMarquee}
       animatedStyle={animatedStyle}
     />
   )

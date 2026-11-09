@@ -13,8 +13,12 @@ const propsStub = {
   text: 'Hello World',
 }
 
+// The native container receives a Reanimated worklet event (nativeEvent fields
+// flattened); the web fallback receives the plain RN event. Both shapes are
+// provided so the same helper drives either branch.
 const fireContainerLayout = async (width: number) => {
   await fireEvent(screen.getByTestId(TEST_ID), 'layout', {
+    layout: { width },
     nativeEvent: { layout: { width } },
   })
 }
@@ -218,6 +222,28 @@ describe('<MarqueeText />', () => {
     await fireContainerLayout(400)
     await fireTextLayout(propsStub.text, 300)
     expect(screen.getAllByText(propsStub.text)).toHaveLength(2)
+  })
+
+  test('hides the stale duplicate copy while the JS state still says it repeats', async () => {
+    // Reported bug: the pill width animates on the UI thread, but the duplicate
+    // was mounted by delayed JS state and could be dragged into the wider clip
+    // box. Visibility is gated by the UI-thread `needsMarquee` flag, so a
+    // still-mounted copy is invisible the moment the text fits. Re-rendering
+    // keeps `needsRepeat` (JS state) while the measurements are re-evaluated.
+    const { rerender } = await renderWithProviders(
+      <MarqueeText testID={TEST_ID} text={propsStub.text} />,
+    )
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 300)
+    const overflowingCopies = screen.getAllByText(propsStub.text)
+    expect(overflowingCopies).toHaveLength(3)
+
+    await rerender(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    const staleCopies = screen.getAllByText(propsStub.text)
+    expect(staleCopies).toHaveLength(3)
+    expect(StyleSheet.flatten(staleCopies[1].parent?.props.style)?.opacity).toBe(0)
   })
 
   test('measures text width via onLayout on web', async () => {

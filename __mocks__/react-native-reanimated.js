@@ -43,6 +43,7 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedProps: fn => (typeof fn === 'function' ? fn() : {}),
     useAnimatedStyle: fn => (typeof fn === 'function' ? fn() : {}),
     useDerivedValue: fn => ({ value: typeof fn === 'function' ? fn() : undefined }),
+    useEvent: handler => handler,
     useFrameCallback: (callback, autostart = true) => {
       const frameCallback = {
         callback,
