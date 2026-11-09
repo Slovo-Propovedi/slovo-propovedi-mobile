@@ -9,13 +9,14 @@ import { getMiniPlayerGeometry } from '../lib/getMiniPlayerGeometry'
 import { useBarMorphProgress } from '../model/useBarMorphProgress'
 import { useProgressAnimation } from '../model/useProgressAnimation'
 
-// One whisper-quiet depth cue behind the whole bottom-bar complex. The shade is
-// edge to edge (no side insets, no radius) and anchors to the very screen bottom
-// (the Android navbar is transparent, so the safe-area inset is deliberately
-// ignored). Its top edge tracks the CURRENT mini-player top as the bar morphs.
-const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.10)'] as const
-// Keep the upper 40% fully transparent: depth, never a grey wall.
-const SHADE_LOCATIONS = [0.4, 1] as const
+// One subtle but perceptible depth cue behind the whole bottom-bar complex. The
+// shade is edge to edge (no side insets, no radius) and anchors to the very
+// screen bottom (the Android navbar is transparent, so the safe-area inset is
+// deliberately ignored). Its top edge tracks the CURRENT mini-player top as the
+// bar morphs.
+const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.16)'] as const
+// Full-height ramp: transparent at the pill top, deepening all the way down.
+const SHADE_LOCATIONS = [0, 1] as const
 
 /**
  * Single very subtle vertical gradient from the screen bottom up to the mini
