@@ -43,7 +43,8 @@ declare global {
 /**
  * Resolves the browser's speech-recognition constructor. Browsers disagree on
  * the prefix (`SpeechRecognition` / `webkitSpeechRecognition`), so both are
- * probed; a missing API means the mic stays hidden.
+ * probed; a missing API means the mic renders as unavailable (muted, explains
+ * itself on press).
  * @returns The constructor, or null when the browser has no support.
  */
 export const getWebSpeechRecognitionCtor = (): null | WebSpeechRecognitionCtor => {
