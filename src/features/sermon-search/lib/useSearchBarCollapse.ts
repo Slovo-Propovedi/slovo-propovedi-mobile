@@ -1,15 +1,10 @@
-import { useAtom } from '@reatom/npm-react'
-import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { useBarCollapseOnScroll } from 'shared/ui/layout'
-import { useIsSearchBarCollapseSuspended } from './useIsSearchBarCollapseSuspended'
+import { useIsBarCollapseSuspended } from './useIsBarCollapseSuspended'
 
-// Results scrolling collapses the floating bottom bar, unless the expanded
-// player owns that state or an active query pins the search field in place.
+// Results scrolling collapses the floating bottom bar only while the mini
+// player is on screen; the expanded player or an active query pauses the driver.
 export const useSearchBarCollapse = () => {
-  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
-  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
+  const isSuspended = useIsBarCollapseSuspended()
 
-  return useBarCollapseOnScroll({
-    isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
-  })
+  return useBarCollapseOnScroll({ isSuspended })
 }
