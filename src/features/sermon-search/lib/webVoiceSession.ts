@@ -6,6 +6,9 @@ import {
 
 const SPEECH_LANGUAGE = 'ru-RU'
 
+/** Soft failure shown when a recognition attempt cannot be started at all. */
+export const VOICE_ERROR = 'Не удалось запустить голосовой ввод'
+
 export interface WebVoiceSession {
   abort: () => void
 }
@@ -20,6 +23,32 @@ interface WebVoiceSessionHandlers {
 }
 
 const isNormalOutcome = (error: string) => error === 'aborted' || error === 'no-speech'
+
+// These errors mean the recognizer cannot run on this device at all, not that
+// one attempt failed: Chromium forks without a speech service still expose the
+// constructor but refuse every session with `not-allowed`; `service-not-allowed`
+// is the same refusal, while `not-found`/`audio-capture`/`language-not-supported`
+// report a missing recognizer, missing microphone or unsupported language.
+// `not-found` is not part of the standard W3C `SpeechRecognitionErrorCode` set:
+// it stays here as defensive coverage for browsers that report it.
+const UNAVAILABLE_ERRORS = [
+  'not-allowed',
+  'service-not-allowed',
+  'not-found',
+  'audio-capture',
+  'language-not-supported',
+] as const
+
+/**
+ * Whether a Web Speech error means speech recognition is unavailable on this
+ * device, rather than a real failure of a single recognition attempt.
+ * `aborted`/`no-speech` are normal outcomes; `network` and unknown errors stay
+ * on the regular error path.
+ * @param error - The `SpeechRecognitionErrorEvent.error` value.
+ * @returns True when the mic should switch to the unavailable state.
+ */
+export const isWebVoiceUnavailableError = (error: string): boolean =>
+  UNAVAILABLE_ERRORS.some(unavailableError => unavailableError === error)
 
 /**
  * Starts one Web Speech recognition session. The session owns its recognition

@@ -6,7 +6,7 @@ import Animated from 'react-native-reanimated'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { OnboardingHelpRow, OnboardingTarget, useTourScrollable } from 'features/onboarding'
 import { usePlaybackChoice } from 'features/playback-choice'
-import { useIsSearchBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
+import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import {
   getEntrySermon,
   historyAtom,
@@ -14,7 +14,6 @@ import {
   type ListeningHistoryEntry,
 } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
-import { isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { createTracksListStyles, TracksListSkeleton } from 'entities/track-list'
 import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
@@ -43,11 +42,10 @@ export const HistoryScreen = () => {
   const [isHistoryLoaded] = useAtom(isHistoryLoadedAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
-  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
+  const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const { onScroll } = useBarCollapseOnScroll({
-    isSuspended: isPlayerExpanded || isSearchBarCollapseSuspended,
+    isSuspended: isBarCollapseSuspended,
   })
   const tracksListStyles = createTracksListStyles(currentTheme)
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
