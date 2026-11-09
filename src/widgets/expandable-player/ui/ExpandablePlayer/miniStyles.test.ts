@@ -1,4 +1,4 @@
-import { BAR_CIRCLE_SIZE_EXPANDED } from 'shared/ui/layout'
+import { BAR_CIRCLE_SIZE, BAR_CIRCLE_SIZE_EXPANDED, TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
 import { FONT_SIZES, INDENTS, LightTheme, MIN_TOUCH_TARGET, PLAYER_SIZES } from 'shared/ui/theme'
 import {
   createMiniStyles,
@@ -53,6 +53,15 @@ describe('mini player horizontal alignment', () => {
   })
 })
 
+describe('mini player vertical alignment', () => {
+  test('collapsed pill is exactly as tall as the tab circle and the search circle', () => {
+    // The collapsed row is one height: the pill sits between the tab circle and
+    // the search circle, so its height must match theirs.
+    expect(PLAYER_SIZES.miniPlayerHeight).toBe(TAB_BAR_ISLAND_HEIGHT)
+    expect(PLAYER_SIZES.miniPlayerHeight).toBe(BAR_CIRCLE_SIZE)
+  })
+})
+
 describe('mini player typography', () => {
   test('both lines step up one theme size above body text', () => {
     // The pill matches Apple Music's mini player, whose two lines are noticeably
@@ -64,7 +73,7 @@ describe('mini player typography', () => {
 
   test('two lines at the new size still fit the pill height', () => {
     // Two lines at React Native's default 1.2 line box plus the subtitle gap stay
-    // inside the 60dp pill, so the taller type needs no layout compensation.
+    // inside the pill, so the taller type needs no layout compensation.
     const textBlock = 2 * FONT_SIZES.md * 1.2 + styles.miniPlaylistName.marginTop
 
     expect(textBlock).toBeLessThanOrEqual(PLAYER_SIZES.miniPlayerHeight)
