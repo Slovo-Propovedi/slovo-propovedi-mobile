@@ -232,6 +232,31 @@ describe('useVoiceInput (web)', () => {
     }
   })
 
+  test('second press after refusal does not start recognition and explains itself again', async () => {
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      await act(async () => {
+        result.current.startListening()
+      })
+      const recognition = latestRecognition()
+
+      await act(async () => {
+        recognition.onerror?.({ error: 'not-allowed' })
+      })
+      expect(mockedShowInfo).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        result.current.startListening()
+      })
+
+      expect(fakeRecognitionInstances).toHaveLength(1)
+      expect(mockedShowInfo).toHaveBeenCalledTimes(2)
+    } finally {
+      restoreWindow()
+    }
+  })
+
   test('keeps a real network failure on the error path and stays available', async () => {
     const { restoreWindow, result } = await renderWebVoiceInput()
 
@@ -360,6 +385,16 @@ describe('useVoiceInput (web)', () => {
 
       expect(mockedShowInfo).toHaveBeenCalledWith(VOICE_UNAVAILABLE)
       expect(fakeRecognitionInstances).toHaveLength(0)
+    } finally {
+      restoreWindow()
+    }
+  })
+
+  test('starts as available on web when the browser exposes a recognizer', async () => {
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      expect(result.current.isUnavailable).toBe(false)
     } finally {
       restoreWindow()
     }
