@@ -23,6 +23,7 @@ interface UseExpandAnimationResult {
   /** Stable reference — forces containerStyle worklet to re-run on the UI thread. */
   forceGeometryReapply: () => void
   fullStyle: ReturnType<typeof useAnimatedStyle>
+  isMorphing: boolean
   miniBarRestingStyle: ReturnType<typeof getMiniBarStyle>
   miniBarStyle: ReturnType<typeof useAnimatedStyle>
   miniOverlayStyle: ReturnType<typeof useAnimatedStyle>
@@ -38,17 +39,13 @@ export const useExpandAnimation = (
   tabBarHeight: number,
 ): UseExpandAnimationResult => {
   const progress = useSharedValue(0)
-  // UI-thread mirror of the bar-collapse state; the tab bar animates the same
-  // duration, so the mini pill and the islands morph in sync. The animation
-  // starts from the atom subscription (see `useBarMorphProgress`), not from
-  // this render. Resting geometry follows the SETTLED state only.
+  // UI-thread mirror of the bar collapse (see `useBarMorphProgress`).
   const barMorph = useBarMorphProgress()
   const geometryReapplyTick = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
   // On web `Dimensions.get('screen')` is the physical `window.screen.height`,
   // larger than the viewport; absolute player geometry would overshoot and spawn
-  // a document-level vertical scrollbar. Clamp to the viewport height. On native
-  // window == screen (edge-to-edge); native keyboard-resize transiently shrinks it, clamp self-heals.
+  // a document-level scrollbar. Clamp to the viewport (native window == screen).
   const fullScreenHeight = Math.min(Dimensions.get('screen').height, screenHeight)
   const { fullScreenHeightShared, screenWidthShared, tabBarHeightShared } = useGeometrySharedValues(
     { fullScreenHeight, screenWidth, tabBarHeight },
@@ -118,6 +115,9 @@ export const useExpandAnimation = (
     containerStyle,
     forceGeometryReapply,
     fullStyle,
+    // The pill participates in both morphs: the bar collapse/expand geometry and
+    // the expand/collapse sheet (visible again while the sheet collapses).
+    isMorphing: barMorph.isMorphing || expanded !== settledExpanded,
     miniBarRestingStyle,
     miniBarStyle,
     miniOverlayStyle,

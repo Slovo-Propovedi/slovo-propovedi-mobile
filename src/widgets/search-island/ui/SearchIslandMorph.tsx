@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { isTabIslandCollapsedAtom } from 'widgets/tab-bar/@x/morph'
 import { closeSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { isSearchFieldVisibleAtom } from 'features/sermon-search/@x/barMorph'
-import { useAtomMorphProgress } from 'shared/lib/hooks/useAtomMorphProgress'
+import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
 import { BAR_MORPH_DURATION_MS, tabBarHeightAtom } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
@@ -30,9 +30,13 @@ export const SearchIslandMorph = () => {
   const [isFocused, setIsFocused] = useState(false)
   // Both morphs subscribe to their atom, so they start in the same tick as the
   // tab island instead of waiting for a React commit.
-  const barProgress = useAtomMorphProgress(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
-  const openProgress = useAtomMorphProgress(isSearchFieldVisibleAtom, BAR_MORPH_DURATION_MS)
+  const { isMorphing: isBarMorphing, progress: barProgress } = useAtomMorph(
+    isTabIslandCollapsedAtom,
+    BAR_MORPH_DURATION_MS,
+  )
+  const { progress: openProgress } = useAtomMorph(isSearchFieldVisibleAtom, BAR_MORPH_DURATION_MS)
   const closeProgress = useSharedValue(isFocused ? 1 : 0)
+  const glass = createGlassStyles(isLight, RADIUSES.round)
 
   useEffect(() => {
     closeProgress.value = withTiming(isFocused ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
@@ -59,9 +63,13 @@ export const SearchIslandMorph = () => {
     <>
       <Animated.View
         pointerEvents='auto'
-        style={[styles.container, createGlassStyles(isLight, RADIUSES.round).container, frameStyle]}
+        style={[
+          styles.container,
+          isBarMorphing ? glass.containerDegraded : glass.container,
+          frameStyle,
+        ]}
       >
-        <GlassSurface isLight={isLight} radius={RADIUSES.round} />
+        <GlassSurface isLight={isLight} radius={RADIUSES.round} degraded={isBarMorphing} />
         <SearchIslandMagnifier
           barProgress={barProgress}
           screenWidth={screenWidth}
@@ -77,6 +85,7 @@ export const SearchIslandMorph = () => {
       </Animated.View>
       <SearchIslandCloseSlot
         progress={barProgress}
+        degraded={isBarMorphing}
         screenWidth={screenWidth}
         onPress={handleCloseSearch}
         openProgress={openProgress}

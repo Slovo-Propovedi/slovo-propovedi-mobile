@@ -31,17 +31,24 @@ import {
  * - Android 12+: real dimezis backdrop blur of the page target published by
  *   `BlurTargetProvider`; without a target (page not laid out, or Android
  *   11 and below) the surface keeps the tint plus the top-edge sheen.
+ * `degraded` swaps the live blur for the plain tint while a morph resizes this
+ * surface: on Android 12+ the dimezis backdrop is re-captured and re-blurred
+ * whenever the bounds change, which dominated the morph frame budget on
+ * mid-range devices. Web keeps its cheap CSS blur regardless.
  * @param root0 - Glass surface props.
  * @param root0.blurTarget - Explicit backdrop override; defaults to the provider's target.
+ * @param root0.degraded - Render only the tint (no native blur) while a morph owns the surface.
  * @param root0.isLight - Active theme; selects the fill, rim and blur tint.
  * @param root0.radius - Corner radius of the hairline rim; matches the host shape.
  */
 export const GlassSurface = ({
   blurTarget,
+  degraded = false,
   isLight,
   radius,
 }: {
   blurTarget?: null | RefObject<ComponentRef<typeof View> | null>
+  degraded?: boolean
   isLight: boolean
   radius: number
 }) => {
@@ -54,6 +61,20 @@ export const GlassSurface = ({
   // would silently fall back and log a warning on every mount.
   const realBlurTarget =
     isAndroid && supportsAndroidBackdropBlur() && target !== null ? target : null
+  const tint = isAndroid
+    ? { backgroundColor: getGlassFill(isLight, GLASS.android.fillAlphaBoost) }
+    : glass.fill
+
+  if (degraded && !isWeb)
+    return (
+      <View
+        pointerEvents='none'
+        style={[StyleSheet.absoluteFill, styles.clip, { borderRadius: radius }]}
+      >
+        <View style={[StyleSheet.absoluteFill, tint]} />
+        <View style={[StyleSheet.absoluteFill, glass.rim]} />
+      </View>
+    )
 
   return (
     <View
@@ -69,14 +90,9 @@ export const GlassSurface = ({
         <BlurView
           tint={glass.blur.tint}
           intensity={glass.blur.intensity}
+          style={[StyleSheet.absoluteFill, tint]}
           blurTarget={realBlurTarget ?? undefined}
           blurMethod={realBlurTarget ? GLASS.blur.androidMethod : undefined}
-          style={[
-            StyleSheet.absoluteFill,
-            isAndroid
-              ? { backgroundColor: getGlassFill(isLight, GLASS.android.fillAlphaBoost) }
-              : glass.fill,
-          ]}
         />
       )}
       {isAndroid && (
