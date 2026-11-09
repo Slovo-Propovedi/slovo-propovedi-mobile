@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { BarBackdropShade } from 'widgets/expandable-player/@x/barShade'
 import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
 import { createGlassStyles, GlassSurface } from 'shared/ui'
@@ -58,6 +59,9 @@ export const CustomTabBar = ({
 
   return (
     <Animated.View pointerEvents='box-none' style={[styles.floatingContainer, keyboardLiftStyle]}>
+      {/* First child: the tab-bar layer paints above the screens, and document
+          order inside the container keeps the shade behind the islands. */}
+      <BarBackdropShade />
       <View
         pointerEvents='box-none'
         style={[
