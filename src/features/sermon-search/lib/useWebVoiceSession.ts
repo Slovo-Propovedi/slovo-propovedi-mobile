@@ -3,10 +3,10 @@ import { reportError } from 'shared/model/error-dialog'
 import {
   isWebVoiceUnavailableError,
   startWebVoiceSession,
+  VOICE_ERROR,
   type WebVoiceSession,
 } from './webVoiceSession'
 
-const VOICE_ERROR = 'Не удалось запустить голосовой ввод'
 const VOICE_RECOGNIZE_ERROR = 'Не удалось распознать речь'
 
 interface WebVoiceSessionOptions {

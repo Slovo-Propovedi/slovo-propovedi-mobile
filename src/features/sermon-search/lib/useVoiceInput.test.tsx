@@ -313,6 +313,22 @@ describe('useVoiceInput (web)', () => {
     }
   })
 
+  test('stays available when the permission probe rejects', async () => {
+    const query = jest.fn().mockRejectedValue(new Error('SecurityError'))
+    const restoreNavigator = installNavigatorPermissions({ query })
+    const { restoreWindow, result } = await renderWebVoiceInput()
+
+    try {
+      await act(async () => {})
+
+      expect(query).toHaveBeenCalledWith({ name: 'microphone' })
+      expect(result.current.isUnavailable).toBe(false)
+    } finally {
+      restoreNavigator()
+      restoreWindow()
+    }
+  })
+
   test('treats aborted and no-speech as normal outcomes', async () => {
     const { restoreWindow, result } = await renderWebVoiceInput()
 
