@@ -226,7 +226,7 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 Общий стеклянный рецепт нижних островов (`src/shared/ui/glass/`, см. [theme.md](./theme.md#стеклянные-нижние-острова-frosted-glass)) на web **не использует `BlurView`**: вместо него `GlassSurface` рендерит один слой классического глассморфизма через `getWebGlassStyle(isLight, radius)` (`glass/webGlass.ts`):
 
 1. **Фильтр** — `backdrop-filter: blur(12px) saturate(140%)`. В react-native-web стиль содержит оба ключа: `backdropFilter` и `WebkitBackdropFilter`. Safari по-прежнему понимает только префиксную форму, поэтому без второго ключа размытие в нём не работает.
-2. **Оттенок** — полупрозрачная заливка по теме: light `rgba(255, 255, 255, 0.18)`, dark `rgba(0, 0, 0, 0.3)`.
+2. **Оттенок** — полупрозрачная заливка по теме: light `rgba(255, 255, 255, 0.3)`, dark `rgba(0, 0, 0, 0.45)`.
 3. **Рамка** — 1px `rgba(255, 255, 255, 0.45)` в светлой теме и `0.15` в тёмной; радиус приходит из хоста.
 
 Тени нет: глубину даёт общая подложка `BarBackdropShade`. Прежняя SVG-рефракция (`feTurbulence` + `feDisplacementMap` в `public/index.html`) удалена вместе с маскированным кольцом.
