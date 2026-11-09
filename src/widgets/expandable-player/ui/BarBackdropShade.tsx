@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
-import { StyleSheet, useWindowDimensions } from 'react-native'
+import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
@@ -24,27 +24,33 @@ const SHADE_TOP_OVERSCAN_PX = 10
 // luminance of white), so both themes keep the same perceived density.
 const SHADE_OPAQUE_LIGHT = 'rgba(0, 0, 0, 0.18)'
 const SHADE_OPAQUE_DARK = 'rgba(128, 128, 128, 0.36)'
-const SHADE_COLORS_LIGHT = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE_LIGHT, SHADE_OPAQUE_LIGHT] as const
-const SHADE_COLORS_DARK = ['rgba(128, 128, 128, 0)', SHADE_OPAQUE_DARK, SHADE_OPAQUE_DARK] as const
+const SHADE_COLORS_LIGHT = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE_LIGHT] as const
+const SHADE_COLORS_DARK = ['rgba(128, 128, 128, 0)', SHADE_OPAQUE_DARK] as const
+const SHADE_CAP_LOCATIONS = [0, 1] as const
 
 const getShadeColors = (isLight: boolean) => (isLight ? SHADE_COLORS_LIGHT : SHADE_COLORS_DARK)
+const getShadeFill = (isLight: boolean) => (isLight ? SHADE_OPAQUE_LIGHT : SHADE_OPAQUE_DARK)
 
 const getShadeHeight = (bottom: number) => {
   'worklet'
   return bottom + PLAYER_SIZES.miniPlayerHeight + SHADE_TOP_OVERSCAN_PX
 }
 
-// Fraction of the resting shade taken by the overscan plus the pill's upper
-// half, i.e. the line where the ramp reaches full opacity.
-const getPillMiddleLocation = (shadeHeight: number) =>
-  (SHADE_TOP_OVERSCAN_PX + PLAYER_SIZES.miniPlayerHeight / 2) / shadeHeight
+/**
+ * Fixed-height ramp zone from the shade top down to the pill's vertical middle:
+ * the overscan plus the pill's upper half. The gradient itself never changes
+ * size, so `locations={[0, 1]}` stay exact on every frame of the morph instead
+ * of holding stale fractions of an animating height.
+ */
+const SHADE_CAP_HEIGHT_PX = SHADE_TOP_OVERSCAN_PX + PLAYER_SIZES.miniPlayerHeight / 2
 
 /**
  * Single very subtle vertical gradient from the screen bottom up to the mini
  * player top, rendered as the first child of the tab bar's floating container so
- * it sits above the screens and behind the islands. Hidden in the same
- * conditions as the collapsed mini player: no audio, or fullscreen expansion
- * once its morph has settled. The container owns the keyboard lift.
+ * it sits above the screens and behind the islands. Below the fixed cap the rest
+ * of the shade is one solid opaque block. Hidden in the same conditions as the
+ * collapsed mini player: no audio, or fullscreen expansion once its morph has
+ * settled. The container owns the keyboard lift.
  */
 export const BarBackdropShade = () => {
   const { isLight } = useTheme()
@@ -52,7 +58,7 @@ export const BarBackdropShade = () => {
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const { progress, settledCollapsed } = useBarMorphProgress()
+  const { progress } = useBarMorphProgress()
   // The shade has no expand animation of its own: this shared value only drives
   // the pill's settle timing, so the shade stays behind the pill for the whole
   // expand morph instead of popping out on its first frame.
@@ -73,32 +79,28 @@ export const BarBackdropShade = () => {
 
   if (!audio || (expanded && settledExpanded) || !isTabBarMeasured) return null
 
-  // Gradient stops cannot animate with the shade, so they follow the geometry
-  // the bar settles into: the fade completes on the pill midline in both rest
-  // states.
-  const restingBottom = getMiniPlayerGeometry({
-    barProgress: settledCollapsed ? 1 : 0,
-    fullScreenHeight: screenHeight,
-    screenWidth,
-    tabBarHeight,
-  }).bottom
-  const shadeLocations = [0, getPillMiddleLocation(getShadeHeight(restingBottom)), 1] as const
-
   return (
     <Animated.View pointerEvents='none' style={styles.layer}>
       <Animated.View style={[styles.shade, shadeStyle]}>
         <LinearGradient
+          style={styles.cap}
           pointerEvents='none'
-          locations={shadeLocations}
-          style={StyleSheet.absoluteFill}
+          locations={SHADE_CAP_LOCATIONS}
           colors={getShadeColors(isLight)}
         />
+        <View style={[styles.fill, { backgroundColor: getShadeFill(isLight) }]} />
       </Animated.View>
     </Animated.View>
   )
 }
 
 const styles = StyleSheet.create({
+  cap: {
+    height: SHADE_CAP_HEIGHT_PX,
+  },
+  fill: {
+    flex: 1,
+  },
   // No zIndex: the tab-bar layer already paints above the screens. The islands
   // row is positioned with zIndex 1, so on web it beats this z-auto positioned
   // layer in the CSS step-8 paint order; on native the higher zIndex sorts it

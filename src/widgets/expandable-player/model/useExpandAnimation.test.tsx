@@ -14,6 +14,7 @@ import {
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
+import { resetBarMorphDriver } from './barMorphDriver'
 import { useExpandAnimation } from './useExpandAnimation'
 
 const TAB_BAR_HEIGHT = 98
@@ -41,6 +42,8 @@ jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
 const mockListeners: Array<(state: AppStateStatus) => void> = []
 
 beforeEach(() => {
+  resetBarMorphDriver()
+  mockedWithTiming.mockClear()
   mockListeners.length = 0
   jest
     .spyOn(AppState, 'addEventListener')

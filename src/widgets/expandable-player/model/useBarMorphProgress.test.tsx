@@ -4,6 +4,7 @@ import { withTiming } from 'react-native-reanimated'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/@x/barMorph'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { BAR_MORPH_DURATION_MS, setBarCollapsed } from 'shared/ui/layout'
+import { resetBarMorphDriver } from './barMorphDriver'
 import { useBarMorphProgress } from './useBarMorphProgress'
 
 const mockedWithTiming = withTiming as jest.Mock
@@ -14,6 +15,11 @@ const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
 ) => number
 
 describe('useBarMorphProgress', () => {
+  beforeEach(() => {
+    resetBarMorphDriver()
+    mockedWithTiming.mockClear()
+  })
+
   afterEach(() => {
     mockedWithTiming.mockImplementation(defaultWithTimingImpl)
   })
