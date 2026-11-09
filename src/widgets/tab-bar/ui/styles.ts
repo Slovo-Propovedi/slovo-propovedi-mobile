@@ -56,13 +56,20 @@ export const styles = {
   },
   // Fixed-height row keeps the measured tab-bar height stable across the morph;
   // only the island inside it changes width.
+  // Positioned with zIndex 1 so the row paints above the z-auto shade on web:
+  // there the positioned shade would otherwise win the CSS step-8 paint order
+  // over this static row (document order only ranks positioned siblings), and
+  // the shade would composite over the island glass. SearchIslandMorph (zIndex
+  // 20) and the pill's later subtree (zIndex 300) stay above.
   islandsRow: {
     alignItems: 'center' as const,
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
     maxWidth: CONTENT_COLUMN_WIDTH,
     paddingHorizontal: BAR_SIDE_INSET,
+    position: 'relative' as const,
     width: '100%' as const,
+    zIndex: 1,
   },
   tabButton: {
     flex: 1,

@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -41,6 +42,19 @@ const COLLAPSED_HEIGHT =
 const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.10)']
 const SHADE_LOCATIONS = [0.4, 1]
 const KEYBOARD_INSET = 320
+
+// Mirrors the shared reanimated mock: timings complete synchronously. Tests
+// that need a mid-morph window override it and restore this afterwards.
+const mockedWithTiming = withTiming as jest.Mock
+const completeTimingImmediately = (
+  toValue: number,
+  _config: unknown,
+  callback?: (finished: boolean) => void,
+) => {
+  if (typeof callback === 'function') callback(true)
+
+  return toValue
+}
 
 const AUDIO: AudioPlayerData = {
   artist: 'Author',
@@ -111,6 +125,10 @@ describe('<BarBackdropShade>', () => {
     keyboardBottomInsetSv.value = 0
   })
 
+  afterEach(() => {
+    mockedWithTiming.mockImplementation(completeTimingImmediately)
+  })
+
   test('paints one subtle gradient from the screen bottom to the detached pill top', async () => {
     await renderShade()
     const gradient = findGradient()
@@ -169,6 +187,32 @@ describe('<BarBackdropShade>', () => {
 
   test('renders nothing while the player is expanded to fullscreen', async () => {
     await renderShade({ expanded: true })
+
+    expect(findShade()).toBeUndefined()
+  })
+
+  test('keeps the shade visible mid-morph and drops it on settle', async () => {
+    const completions: Array<(finished: boolean) => void> = []
+    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
+      if (typeof callback === 'function') completions.push(callback)
+
+      return toValue
+    })
+    const { ctx } = await renderShade()
+
+    expect(findShade()).toBeDefined()
+
+    await act(async () => {
+      isPlayerExpandedAtom(ctx, true)
+    })
+
+    // Expanded, but the timing has not landed: unmounting here would pop the
+    // shade out from behind the pill on the morph's first frame.
+    expect(findShade()).toBeDefined()
+
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
 
     expect(findShade()).toBeUndefined()
   })

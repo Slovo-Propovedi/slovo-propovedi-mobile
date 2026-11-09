@@ -65,10 +65,11 @@ export const BarBackdropShade = () => {
 }
 
 const styles = StyleSheet.create({
-  // No zIndex: the tab-bar layer already paints above the screens, and document
-  // order inside floatingContainer keeps this shade behind the islands row and
-  // the search morph. Anchored to the container's bottom, so the taller inner
-  // shade overflows upward out of the container box.
+  // No zIndex: the tab-bar layer already paints above the screens. The islands
+  // row is positioned with zIndex 1, so on web it beats this z-auto positioned
+  // layer in the CSS step-8 paint order; on native the higher zIndex sorts it
+  // above the shade too. Anchored to the container's bottom, so the taller
+  // inner shade overflows upward out of the container box.
   layer: {
     bottom: 0,
     left: 0,
