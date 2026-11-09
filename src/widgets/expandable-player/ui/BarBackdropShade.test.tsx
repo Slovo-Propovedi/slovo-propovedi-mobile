@@ -14,7 +14,7 @@ import {
   setTabBarHeight,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
-import { PLAYER_SIZES } from 'shared/ui/theme'
+import { PLAYER_SIZES, themeModeAtom } from 'shared/ui/theme'
 import { BarBackdropShade } from './BarBackdropShade'
 
 jest.mock('expo-linear-gradient', () => {
@@ -48,8 +48,10 @@ const COLLAPSED_HEIGHT =
   (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2 +
   PLAYER_SIZES.miniPlayerHeight +
   SHADE_TOP_OVERSCAN_PX
-const SHADE_OPAQUE = 'rgba(0, 0, 0, 0.18)'
-const SHADE_COLORS = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE, SHADE_OPAQUE]
+const LIGHT_SHADE_OPAQUE = 'rgba(0, 0, 0, 0.18)'
+const LIGHT_SHADE_COLORS = ['rgba(0, 0, 0, 0)', LIGHT_SHADE_OPAQUE, LIGHT_SHADE_OPAQUE]
+const DARK_SHADE_OPAQUE = 'rgba(255, 255, 255, 0.18)'
+const DARK_SHADE_COLORS = ['rgba(255, 255, 255, 0)', DARK_SHADE_OPAQUE, DARK_SHADE_OPAQUE]
 // The ramp ends on the pill's vertical middle: the overscan plus the pill's
 // upper half as a fraction of the resting shade height.
 const SHADE_LOCATIONS = [
@@ -93,11 +95,10 @@ const findShade = () =>
     )
   })[0]
 
-const findGradient = () =>
+const findGradient = (colors = LIGHT_SHADE_COLORS) =>
   screen.root?.queryAll(
     instance =>
-      Array.isArray(instance.props.colors) &&
-      instance.props.colors.join('|') === SHADE_COLORS.join('|'),
+      Array.isArray(instance.props.colors) && instance.props.colors.join('|') === colors.join('|'),
   )[0]
 
 // The pass-through full-screen layer: absolute inset 0, no height, no gradient.
@@ -120,10 +121,12 @@ const findLayer = () =>
 const renderShade = async ({
   audio = AUDIO,
   expanded = false,
+  isDark = false,
   measured = true,
 }: {
   audio?: AudioPlayerData | null
   expanded?: boolean
+  isDark?: boolean
   measured?: boolean
 } = {}) => {
   const ctx = createCtx()
@@ -132,6 +135,11 @@ const renderShade = async ({
   if (measured) setTabBarHeight(ctx, TAB_BAR_HEIGHT)
 
   const result = await renderWithProviders(<BarBackdropShade />, { ctx })
+
+  if (isDark)
+    await act(async () => {
+      themeModeAtom(ctx, 'dark')
+    })
 
   return { ...result, ctx }
 }
@@ -155,8 +163,17 @@ describe('<BarBackdropShade>', () => {
       left: 0,
       right: 0,
     })
-    expect(gradient?.props.colors).toEqual(SHADE_COLORS)
+    expect(gradient?.props.colors).toEqual(LIGHT_SHADE_COLORS)
     expect(gradient?.props.locations).toEqual(SHADE_LOCATIONS)
+  })
+
+  test('swaps to a same-shape white gradient in the dark theme', async () => {
+    await renderShade({ isDark: true })
+    const gradient = findGradient(DARK_SHADE_COLORS)
+
+    expect(gradient?.props.colors).toEqual(DARK_SHADE_COLORS)
+    expect(gradient?.props.locations).toEqual(SHADE_LOCATIONS)
+    expect(findGradient()).toBeUndefined()
   })
 
   test('lets document order inside the tab bar own stacking: no zIndex, never intercepts touches', async () => {

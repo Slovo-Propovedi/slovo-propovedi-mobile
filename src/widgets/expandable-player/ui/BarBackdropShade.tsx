@@ -4,7 +4,7 @@ import { StyleSheet, useWindowDimensions } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
-import { PLAYER_SIZES } from 'shared/ui/theme'
+import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { getMiniPlayerGeometry } from '../lib/getMiniPlayerGeometry'
 import { useBarMorphProgress } from '../model/useBarMorphProgress'
 import { useProgressAnimation } from '../model/useProgressAnimation'
@@ -16,10 +16,16 @@ import { useProgressAnimation } from '../model/useProgressAnimation'
 // bar morphs, ending a few pixels above it so the ramp never lands a hard edge
 // on the pill's glass rim.
 const SHADE_TOP_OVERSCAN_PX = 10
-const SHADE_OPAQUE = 'rgba(0, 0, 0, 0.18)'
 // Full opacity from the screen bottom up to the pill's vertical middle; only
-// the overscan above the pill top is a ramp.
-const SHADE_COLORS = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE, SHADE_OPAQUE] as const
+// the overscan above the pill top is a ramp. The shape is identical in both
+// themes, but the ramp is white in the dark one: black-on-black would vanish,
+// while the luminous white stop reads as a faint depth cue.
+const SHADE_OPAQUE_LIGHT = 'rgba(0, 0, 0, 0.18)'
+const SHADE_OPAQUE_DARK = 'rgba(255, 255, 255, 0.18)'
+const SHADE_COLORS_LIGHT = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE_LIGHT, SHADE_OPAQUE_LIGHT] as const
+const SHADE_COLORS_DARK = ['rgba(255, 255, 255, 0)', SHADE_OPAQUE_DARK, SHADE_OPAQUE_DARK] as const
+
+const getShadeColors = (isLight: boolean) => (isLight ? SHADE_COLORS_LIGHT : SHADE_COLORS_DARK)
 
 const getShadeHeight = (bottom: number) => {
   'worklet'
@@ -39,6 +45,7 @@ const getPillMiddleLocation = (shadeHeight: number) =>
  * once its morph has settled. The container owns the keyboard lift.
  */
 export const BarBackdropShade = () => {
+  const { isLight } = useTheme()
   const [audio] = useAtom(currentAudioAtom)
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
@@ -80,9 +87,9 @@ export const BarBackdropShade = () => {
       <Animated.View style={[styles.shade, shadeStyle]}>
         <LinearGradient
           pointerEvents='none'
-          colors={SHADE_COLORS}
           locations={shadeLocations}
           style={StyleSheet.absoluteFill}
+          colors={getShadeColors(isLight)}
         />
       </Animated.View>
     </Animated.View>
