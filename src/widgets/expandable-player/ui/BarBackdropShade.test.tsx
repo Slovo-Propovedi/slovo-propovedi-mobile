@@ -39,7 +39,7 @@ const EXPANDED_HEIGHT =
 // bottom sits half the leftover height above the content box's bottom edge.
 const COLLAPSED_HEIGHT =
   TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2 + PLAYER_SIZES.miniPlayerHeight
-const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.16)']
+const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.30)']
 const SHADE_LOCATIONS = [0, 1]
 const KEYBOARD_INSET = 320
 

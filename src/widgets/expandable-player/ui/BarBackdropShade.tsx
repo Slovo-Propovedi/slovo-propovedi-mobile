@@ -14,7 +14,7 @@ import { useProgressAnimation } from '../model/useProgressAnimation'
 // screen bottom (the Android navbar is transparent, so the safe-area inset is
 // deliberately ignored). Its top edge tracks the CURRENT mini-player top as the
 // bar morphs.
-const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.16)'] as const
+const SHADE_COLORS = ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.30)'] as const
 // Full-height ramp: transparent at the pill top, deepening all the way down.
 const SHADE_LOCATIONS = [0, 1] as const
 
