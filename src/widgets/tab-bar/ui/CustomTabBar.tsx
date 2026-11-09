@@ -98,6 +98,7 @@ export const CustomTabBar = ({
                       routeKey={route.key}
                       routeName={route.name}
                       collapseProgress={progress}
+                      isBarVisuallyCollapsed={isCollapsed}
                       isDisabled={!isTabAvailable(route.name)}
                       onPress={() => handleTabPress(route, isActive)}
                     />
