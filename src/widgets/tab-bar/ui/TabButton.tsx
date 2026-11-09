@@ -18,6 +18,7 @@ const AnimatedText = Animated.createAnimatedComponent(Text)
 export const TabButton = ({
   collapseProgress,
   isActive,
+  isBarVisuallyCollapsed = false,
   isDisabled,
   onPress,
   routeKey,
@@ -26,6 +27,9 @@ export const TabButton = ({
   // Shared 0..1 bar-morph progress: labels fade out as the island becomes a circle.
   collapseProgress?: SharedValue<number>
   isActive: boolean
+  // Collapsed island: the active-tab circle expands the bar on tap, so that tap
+  // keeps its press haptic like the search circle instead of being silent.
+  isBarVisuallyCollapsed?: boolean
   isDisabled?: boolean
   onPress: () => void
   routeKey: string
@@ -52,8 +56,8 @@ export const TabButton = ({
     <TouchableButton
       key={routeKey}
       onPress={onPress}
-      hapticDisabled={isActive}
       activeOpacity={isActive ? 1 : undefined}
+      hapticDisabled={isActive && !isBarVisuallyCollapsed}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
     >
       <Animated.View style={[styles.tabItem, itemStyle]}>

@@ -39,6 +39,7 @@ const renderTabButton = async (
   routeName: string,
   isActive = false,
   collapseProgress = progressValue(0),
+  isBarVisuallyCollapsed = false,
 ) =>
   await renderWithProviders(
     <TabButton
@@ -47,6 +48,7 @@ const renderTabButton = async (
       routeKey={routeName}
       routeName={routeName}
       collapseProgress={collapseProgress}
+      isBarVisuallyCollapsed={isBarVisuallyCollapsed}
     />,
   )
 
@@ -119,12 +121,20 @@ describe('<TabButton>', () => {
     expect(mockedHapticLight).toHaveBeenCalledTimes(1)
   })
 
-  test('active tab does not trigger haptic on press', async () => {
+  test('active tab does not trigger haptic on press in the expanded bar', async () => {
     await renderTabButton('listen', true)
 
     await fireEvent(screen.getByRole('button', { name: /Слушать/ }), 'press')
 
     expect(mockedHapticLight).not.toHaveBeenCalled()
+  })
+
+  test('collapsed active tab triggers haptic on press to confirm the expand tap', async () => {
+    await renderTabButton('listen', true, progressValue(1), true)
+
+    await fireEvent(screen.getByRole('button', { name: /Слушать/ }), 'press')
+
+    expect(mockedHapticLight).toHaveBeenCalledTimes(1)
   })
 
   test('active tab tints the label with the theme primary color', async () => {
