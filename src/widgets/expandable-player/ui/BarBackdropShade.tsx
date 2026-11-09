@@ -16,7 +16,7 @@ import { useProgressAnimation } from '../model/useProgressAnimation'
 // bar morphs, ending a few pixels above it so the ramp never lands a hard edge
 // on the pill's glass rim.
 const SHADE_TOP_OVERSCAN_PX = 10
-const SHADE_OPAQUE = 'rgba(0, 0, 0, 0.30)'
+const SHADE_OPAQUE = 'rgba(0, 0, 0, 0.18)'
 // Full opacity from the screen bottom up to the pill's vertical middle; only
 // the overscan above the pill top is a ramp.
 const SHADE_COLORS = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE, SHADE_OPAQUE] as const

@@ -48,7 +48,7 @@ const COLLAPSED_HEIGHT =
   (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2 +
   PLAYER_SIZES.miniPlayerHeight +
   SHADE_TOP_OVERSCAN_PX
-const SHADE_OPAQUE = 'rgba(0, 0, 0, 0.30)'
+const SHADE_OPAQUE = 'rgba(0, 0, 0, 0.18)'
 const SHADE_COLORS = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE, SHADE_OPAQUE]
 // The ramp ends on the pill's vertical middle: the overscan plus the pill's
 // upper half as a fraction of the resting shade height.
