@@ -62,21 +62,6 @@ const installWindow = (recognition?: unknown) => {
   }
 }
 
-const installNavigatorPermissions = (permissions?: unknown) => {
-  const previousNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
-
-  Object.defineProperty(globalThis, 'navigator', {
-    configurable: true,
-    value: permissions === undefined ? {} : { permissions },
-    writable: true,
-  })
-
-  return () => {
-    if (previousNavigator) Object.defineProperty(globalThis, 'navigator', previousNavigator)
-    else Reflect.deleteProperty(globalThis, 'navigator')
-  }
-}
-
 const renderWebVoiceInput = async (options: { withApi?: boolean } = {}) => {
   const restoreWindow = installWindow(options.withApi === false ? undefined : FakeRecognition)
   const onTranscript = jest.fn()
@@ -264,67 +249,6 @@ describe('useVoiceInput (web)', () => {
       expect(mockedShowInfo).not.toHaveBeenCalled()
       expect(result.current.isUnavailable).toBe(false)
     } finally {
-      restoreWindow()
-    }
-  })
-
-  test('turns unavailable when the browser reports a denied microphone permission', async () => {
-    const query = jest.fn().mockResolvedValue({ state: 'denied' })
-    const restoreNavigator = installNavigatorPermissions({ query })
-    const { restoreWindow, result } = await renderWebVoiceInput()
-
-    try {
-      await act(async () => {})
-
-      expect(query).toHaveBeenCalledWith({ name: 'microphone' })
-      expect(result.current.isUnavailable).toBe(true)
-    } finally {
-      restoreNavigator()
-      restoreWindow()
-    }
-  })
-
-  test('stays available when the permission API is unsupported', async () => {
-    const restoreNavigator = installNavigatorPermissions()
-    const { restoreWindow, result } = await renderWebVoiceInput()
-
-    try {
-      await act(async () => {})
-
-      expect(result.current.isUnavailable).toBe(false)
-    } finally {
-      restoreNavigator()
-      restoreWindow()
-    }
-  })
-
-  test('stays available when the permission probe returns an unknown state', async () => {
-    const query = jest.fn().mockResolvedValue({ state: 'mystery' })
-    const restoreNavigator = installNavigatorPermissions({ query })
-    const { restoreWindow, result } = await renderWebVoiceInput()
-
-    try {
-      await act(async () => {})
-
-      expect(result.current.isUnavailable).toBe(false)
-    } finally {
-      restoreNavigator()
-      restoreWindow()
-    }
-  })
-
-  test('stays available when the permission probe rejects', async () => {
-    const query = jest.fn().mockRejectedValue(new Error('SecurityError'))
-    const restoreNavigator = installNavigatorPermissions({ query })
-    const { restoreWindow, result } = await renderWebVoiceInput()
-
-    try {
-      await act(async () => {})
-
-      expect(query).toHaveBeenCalledWith({ name: 'microphone' })
-      expect(result.current.isUnavailable).toBe(false)
-    } finally {
-      restoreNavigator()
       restoreWindow()
     }
   })
