@@ -7,7 +7,7 @@ import { getWebGlassBorder, getWebGlassFill, GLASS } from './glass'
  * hence the typed extension instead of a cast. `WebkitBackdropFilter` is the
  * Safari twin: WebKit still honours only the prefixed property.
  */
-export interface WebGlassStyle extends ViewStyle {
+interface WebGlassStyle extends ViewStyle {
   backdropFilter: string
   WebkitBackdropFilter: string
 }
