@@ -181,6 +181,7 @@ describe('<MarqueeText />', () => {
     await fireTextLayout(propsStub.text, 300)
 
     expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
+    expect(screen.getByTestId(EDGE_FADE_GRADIENT_TEST_ID)).toBeTruthy()
   })
 
   test('keeps working when both container paths report', async () => {
