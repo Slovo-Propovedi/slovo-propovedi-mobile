@@ -14,6 +14,7 @@ import {
 import { isTabIslandCollapsedAtom } from '../model/barMorph'
 import { getIslandContentStyle } from './getBarMorphStyles'
 import { getIslandStyle, ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
+import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 interface TabIslandMorphInput {
   hideSearch: boolean
@@ -57,6 +58,15 @@ export const useTabIslandMorph = ({
   // slot must fill the whole circle, so the padding fades out with the morph.
   const contentStyle = useAnimatedStyle(() => getIslandContentStyle(progress.value))
 
+  // Plain restatement of the settled geometry, applied after the animated
+  // styles: the glass theme remount re-commits shadow-tree props from the first
+  // render, so without it the island reverts to its launch shape (Issue #63).
+  const { content: restingContentStyle, island: restingIslandStyle } = getTabIslandRestingStyles({
+    collapsedWidth: BAR_CIRCLE_SIZE,
+    expandedWidth: expandedIslandWidth,
+    isCollapsed,
+  })
+
   return {
     contentStyle,
     // The slots own the island width minus its horizontal padding, so the row
@@ -68,5 +78,7 @@ export const useTabIslandMorph = ({
     isCollapsed,
     islandStyle,
     progress,
+    restingContentStyle,
+    restingIslandStyle,
   }
 }

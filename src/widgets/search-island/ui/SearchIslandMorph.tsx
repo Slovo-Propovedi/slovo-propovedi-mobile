@@ -24,6 +24,7 @@ export const SearchIslandMorph = () => {
   const { isLight } = useTheme()
   const { width: screenWidth } = useWindowDimensions()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const [isTabCollapsed] = useAtom(isTabIslandCollapsedAtom)
   const isSearchFieldVisible = useIsSearchFieldVisible()
   const openSearch = useOpenSearch()
   const closeSearchAction = useAction(closeSearch)
@@ -55,13 +56,46 @@ export const SearchIslandMorph = () => {
     return { ...geometry, borderRadius: radius, paddingLeft: iconInset }
   })
 
+  // Plain restatement of the settled frame, applied after the animated style:
+  // the glass theme remount re-commits first-render shadow-tree values, so the
+  // pill must not fall back to its launch geometry (Issue #63).
+  const settledOpenProgress = isSearchFieldVisible ? 1 : 0
+  const settledCloseProgress = isFocused ? 1 : 0
+  const {
+    closeRight: restingCloseRight,
+    iconInset: restingIconInset,
+    iconSize: restingIconSize,
+    radius: restingRadius,
+    ...restingGeometry
+  } = getSearchIslandGeometry({
+    barProgress: isTabCollapsed ? 1 : 0,
+    closeProgress: settledCloseProgress,
+    openProgress: settledOpenProgress,
+    screenWidth,
+    tabBarHeight,
+  })
+  const restingFrameStyle = {
+    ...restingGeometry,
+    borderRadius: restingRadius,
+    paddingLeft: restingIconInset,
+  }
+  const closeSlotRestingStyle = {
+    borderRadius: restingGeometry.height / 2,
+    bottom: restingGeometry.bottom,
+    height: restingGeometry.height,
+    opacity: settledOpenProgress * settledCloseProgress,
+    right: restingCloseRight,
+    transform: [{ scale: 0.8 + 0.2 * settledCloseProgress }],
+    width: restingGeometry.height,
+  }
+
   return (
     <>
       <GlassIsland
         isLight={isLight}
         pointerEvents='auto'
-        animatedStyle={frameStyle}
         hostStyle={styles.container}
+        animatedStyle={[frameStyle, restingFrameStyle]}
       >
         <SearchIslandMagnifier
           barProgress={barProgress}
@@ -83,6 +117,7 @@ export const SearchIslandMorph = () => {
         openProgress={openProgress}
         tabBarHeight={tabBarHeight}
         closeProgress={closeProgress}
+        restingStyle={closeSlotRestingStyle}
         isVisible={isSearchFieldVisible && isFocused}
       />
     </>
