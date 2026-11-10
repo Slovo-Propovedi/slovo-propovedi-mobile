@@ -1,11 +1,17 @@
 import { BAR_CIRCLE_SIZE, BAR_CIRCLE_SIZE_EXPANDED, TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
-import { FONT_SIZES, INDENTS, LightTheme, MIN_TOUCH_TARGET, PLAYER_SIZES } from 'shared/ui/theme'
+import {
+  FONT_SIZES,
+  INDENTS,
+  LightTheme,
+  MIN_TOUCH_TARGET,
+  PLAYER_SIZES,
+  RADIUSES,
+} from 'shared/ui/theme'
 import {
   createMiniStyles,
   MINI_ARTWORK_SIZE,
   MINI_CONTENT_SIDE_INSET,
   MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
-  MINI_PILL_RADIUS,
   MINI_PLAY_HIT_SLOP,
 } from './miniStyles'
 
@@ -63,10 +69,12 @@ describe('mini player vertical alignment', () => {
     expect(styles.miniContainer.height).toBe(PLAYER_SIZES.miniPlayerHeight)
   })
 
-  test('the pill radius is half the shared height, so the pill stays fully round', () => {
-    // Radius and height come from one constant: changing the height keeps the
-    // ends round instead of leaving square shoulders.
-    expect(MINI_PILL_RADIUS).toBe(PLAYER_SIZES.miniPlayerHeight / 2)
+  test('the pill host and its overlay use the shared full-round radius', () => {
+    // The platform clamps a full-round radius to min(w, h) / 2, so both the
+    // pill host and the overlay stay strict half-cylinders at any height
+    // without a per-surface radius constant.
+    expect(styles.miniContainer.borderRadius).toBe(RADIUSES.round)
+    expect(styles.miniOverlay.borderRadius).toBe(RADIUSES.round)
   })
 })
 

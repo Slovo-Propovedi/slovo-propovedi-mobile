@@ -27,7 +27,7 @@ const findBlurs = () =>
 
 const renderIsland = async (onPress?: () => void) =>
   render(
-    <GlassIsland isLight radius={28} onPress={onPress} hostStyle={{ marginTop: HOST_MARGIN }}>
+    <GlassIsland isLight onPress={onPress} hostStyle={{ marginTop: HOST_MARGIN }}>
       <Text>island content</Text>
     </GlassIsland>,
   )
@@ -42,12 +42,7 @@ describe('<GlassIsland>', () => {
 
   test('composes host, shared slot and animated styles on the host', async () => {
     await render(
-      <GlassIsland
-        isLight
-        radius={28}
-        animatedStyle={{ opacity: 0.5 }}
-        hostStyle={{ marginTop: HOST_MARGIN }}
-      >
+      <GlassIsland isLight animatedStyle={{ opacity: 0.5 }} hostStyle={{ marginTop: HOST_MARGIN }}>
         <Text>island content</Text>
       </GlassIsland>,
     )

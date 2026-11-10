@@ -9,7 +9,6 @@ import {
   type ThemeColors,
 } from 'shared/ui/theme'
 
-export const MINI_PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
 // Compact inset of the artwork (and of the transport in the collapsed bar): equal
 // on both sides is what makes the collapsed pill read symmetric. Apple Music
 // keeps generous air before the artwork and after the transport.
@@ -44,7 +43,7 @@ export const createMiniStyles = (theme: ThemeColors) =>
     // No own shadow: the shared `BarBackdropShade` gradient sits behind the pill.
     miniContainer: {
       alignItems: 'center',
-      borderRadius: MINI_PILL_RADIUS,
+      borderRadius: RADIUSES.round,
       flexDirection: 'row',
       height: PLAYER_SIZES.miniPlayerHeight,
       overflow: 'hidden',
@@ -74,7 +73,7 @@ export const createMiniStyles = (theme: ThemeColors) =>
     miniOverlay: {
       ...StyleSheet.absoluteFill,
       backgroundColor: theme.surface,
-      borderRadius: MINI_PILL_RADIUS,
+      borderRadius: RADIUSES.round,
     },
     miniPlayButton: {
       height: MINI_PLAY_BOX_SIZE,

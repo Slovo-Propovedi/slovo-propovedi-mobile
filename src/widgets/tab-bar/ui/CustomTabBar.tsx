@@ -14,7 +14,7 @@ import {
   setTabBarHeight,
   useKeyboardLiftStyle,
 } from 'shared/ui/layout'
-import { RADIUSES, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
@@ -79,7 +79,6 @@ export const CustomTabBar = ({
       >
         <GlassIsland
           isLight={isLight}
-          radius={RADIUSES.round}
           animatedStyle={islandStyle}
           hostStyle={styles.floatingIsland}
         >

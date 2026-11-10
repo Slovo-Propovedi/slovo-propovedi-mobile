@@ -2,6 +2,7 @@ import { forwardRef, type ReactNode } from 'react'
 import { type StyleProp, type ViewInstance, type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { PressableButton, type PressableButtonProps } from '../pressable-button/PressableButton'
+import { RADIUSES } from '../theme/themed'
 import { createGlassStyles } from './glass'
 import { GlassSurface } from './GlassSurface'
 
@@ -12,6 +13,9 @@ const AnimatedPressable = Animated.createAnimatedComponent(PressableButton)
  * `GlassSurface`, one content slot. Using it guarantees all islands share the
  * literal same glass structure — only the per-surface geometry and content
  * differ.
+ *
+ * Скругление всегда равно половине высоты элемента: платформа клампит
+ * full-round до min(w,h)/2, отдельные константы радиуса не нужны.
  */
 export const GlassIsland = forwardRef<
   ViewInstance,
@@ -27,7 +31,6 @@ export const GlassIsland = forwardRef<
     isLight: boolean
     onPress?: () => void
     pointerEvents?: 'auto' | 'box-none' | 'box-only' | 'none'
-    radius: number
   }
 >((props, ref) => {
   const {
@@ -40,8 +43,8 @@ export const GlassIsland = forwardRef<
     isLight,
     onPress,
     pointerEvents,
-    radius,
   } = props
+  const radius = RADIUSES.round
   const hostStyles = [hostStyle, createGlassStyles(isLight, radius).containerPlain, animatedStyle]
   const glass = <GlassSurface radius={radius} isLight={isLight} key={isLight ? 'light' : 'dark'} />
   const pointerProps = pointerEvents === undefined ? {} : { pointerEvents }
