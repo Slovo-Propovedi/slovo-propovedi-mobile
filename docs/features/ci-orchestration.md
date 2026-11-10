@@ -142,12 +142,12 @@ GitHub не получает keystore. Его сборка идёт с `signing:
 
 Композитные actions читают конфигурацию из обычного окружения: `secrets` им недоступны, а `vars` не попадают в env сами по себе — значения передаёт вызывающий workflow через `env:` шага. Поэтому на каждой стороне свой набор.
 
-На GitHub (репозиторий-зеркало) секретов **нет**. Нужны repository/org variables, потому что сборка выполняется там:
+На GitHub (репозиторий-зеркало) секретов **нет**. Нужны 10 repository/org variables, потому что сборка выполняется там:
 
-- хост-переменные: `BACKEND_API_HOSTNAME`, `LANDING_HOSTNAME`, `WEB_HOSTNAME`, `MIRROR_CODEBERG_URL`, `MIRROR_GITHUB_URL`, `MOBILE_REPOSITORY_NAME`;
-- `EXPO_PUBLIC_*` (включая mirror-дубликаты) и OTA-переменные (`EXPO_PUBLIC_OTA_URL`, `EXPO_PUBLIC_XPREM_APP_ID`, `EXPO_PUBLIC_XPREM_CHANNEL_NAME`, `EXPO_PUBLIC_XPREM_BRANCH_NAME`).
+- plain-переменные (их же валидирует `actions/release-android`): `BACKEND_API_HOSTNAME`, `LANDING_HOSTNAME`, `WEB_HOSTNAME`, `MIRROR_CODEBERG_URL`, `MIRROR_GITHUB_URL`, `MOBILE_REPOSITORY_NAME`;
+- OTA/xprem (своих plain-аналогов нет): `EXPO_PUBLIC_OTA_URL`, `EXPO_PUBLIC_XPREM_APP_ID`, `EXPO_PUBLIC_XPREM_CHANNEL_NAME`, `EXPO_PUBLIC_XPREM_BRANCH_NAME`.
 
-Все они публичны по природе — вшиваются в клиентский бандл и манифест; секретов среди них нет. `EXPO_PUBLIC_REPOSITORY_URL`/`_OWNER` не дублируются: actions берут их из `github.server_url`/`github.repository_owner`. Остальные значения прокидываются из `vars` в workflow-level `env:` `.github/workflows/release.yml` — composite-шаги наследуют его и читают только обычное окружение.
+`EXPO_PUBLIC_*` host/mirror/repo имена отдельными переменными не дублируются: `.github/workflows/release.yml` выводит их из plain-переменных workflow-level `env:`-блоком (`EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}` и т.д.) — та же схема, что была в prebuild-шаге старого Forgejo `release.yml`. `EXPO_PUBLIC_REPOSITORY_URL`/`_OWNER` тоже не дублируются: actions берут их из `github.server_url`/`github.repository_owner`. Composite-шаги наследуют этот `env:` и читают только обычное окружение; значения публичны по природе — вшиваются в клиентский бандл и манифест.
 
 В Forgejo:
 
@@ -196,7 +196,7 @@ scripts/ci/setup-github-mirror.sh
 ## Как проверить живьём
 
 1. **Зеркало:** запустить `scripts/ci/setup-github-mirror.sh` с `FORGEJO_TOKEN`/`GITHUB_MIRROR_TOKEN`; повторный запуск должен напечатать «already configured».
-2. **GitHub-variables:** завести хост/mirror/`EXPO_PUBLIC_*`/OTA-переменные в GitHub-репозитории и убедиться, что `.github/workflows/release.yml` прокидывает их в `env:` composite-шагов.
+2. **GitHub-variables:** завести 10 переменных — 6 plain (`BACKEND_API_HOSTNAME`, `LANDING_HOSTNAME`, `WEB_HOSTNAME`, `MIRROR_CODEBERG_URL`, `MIRROR_GITHUB_URL`, `MOBILE_REPOSITORY_NAME`) и 4 OTA/xprem (`EXPO_PUBLIC_OTA_URL`, `EXPO_PUBLIC_XPREM_APP_ID`, `EXPO_PUBLIC_XPREM_CHANNEL_NAME`, `EXPO_PUBLIC_XPREM_BRANCH_NAME`); `EXPO_PUBLIC_*` host/mirror workflow выводит из plain-переменных сам.
 3. **Токен dispatch:** org-level секрет `CI_GITHUB_TOKEN` в Forgejo (classic PAT: `repo` + `workflow`).
 4. **CI:** push в `main` → `dco` → `remote` → `gate`; в Forgejo появился статус `CI / checks` со ссылкой на GitHub-run; job summary показывает таблицу remote/local/verdict.
 5. **Релиз:** prerelease-тег `v*` → `changes` → `build-remote` → `android-package`/`web-package`; проверить артефакты `release-assets` (zip + `SHA256SUMS.txt`); `publish-release` — на реальном теге (он создаёт релиз).
