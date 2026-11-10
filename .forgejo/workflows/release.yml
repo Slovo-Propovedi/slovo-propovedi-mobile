@@ -199,7 +199,13 @@ jobs:
 
           # Runner capacity is 2, so this job holding a runner slot while
           # polling no longer starves the CI workflow of a runner to run on.
-          for i in $(seq 1 40); do
+          # 60 x 15s = 15 min: CI / checks is posted by ci.yml's gate job only
+          # after the GitHub-hosted run finished, and the GitHub queue can add
+          # several minutes on top of the run itself. Only the manual
+          # "CI / checks" entry matches (the automatic contexts are
+          # CI / dco, CI / remote, CI / local, CI / gate; Forgejo may append the
+          # event, e.g. "CI / checks (push)", hence the prefix match).
+          for i in $(seq 1 60); do
             # Forgejo appends the triggering event to the context, e.g.
             # "CI / checks (push)", so match by prefix rather than equality.
             STATE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$URL" | jq -r '.statuses[] | select(.context | startswith("CI / checks")) | .status' | head -1)
@@ -209,7 +215,7 @@ jobs:
               failure|error) echo "::error::CI did not pass for ${{ github.sha }} (status: $STATE). Refusing to release."; summary_row "- CI status on \`${{ github.sha }}\`: ❌ $STATE — refusing to release"; exit 1 ;;
             esac
 
-            echo "Waiting for CI status on ${{ github.sha }} (attempt $i/40)..."
+            echo "Waiting for CI status on ${{ github.sha }} (attempt $i/60)..."
             sleep 15
           done
 
@@ -624,8 +630,9 @@ jobs:
           TAG="${{ github.ref_name }}"
 
           # create-release runs in parallel (it waits for CI first), so the
-          # release object may not exist yet — poll for it. Same 10-minute
-          # budget as create-release's CI wait.
+          # release object may not exist yet — poll for it. Its own window is
+          # shorter than create-release's CI wait, which may include a
+          # GitHub-hosted runner queue.
           RELEASE_ID=""
           for attempt in $(seq 1 40); do
             RELEASE_ID=$(curl -s \
