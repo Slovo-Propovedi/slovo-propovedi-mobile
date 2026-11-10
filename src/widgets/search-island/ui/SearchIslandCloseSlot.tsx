@@ -1,3 +1,4 @@
+import { type ViewStyle } from 'react-native'
 import { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import { GlassIsland } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
@@ -10,6 +11,8 @@ interface SearchIslandCloseSlotProps {
   onPress: () => void
   openProgress: SharedValue<number>
   progress: SharedValue<number>
+  /** Settled-state restatement applied after the animated style (theme remount). */
+  restingStyle: ViewStyle
   screenWidth: number
   tabBarHeight: number
 }
@@ -26,6 +29,7 @@ interface SearchIslandCloseSlotProps {
  * @param root0.onPress - Closes the search session.
  * @param root0.openProgress - The island's open/close progress.
  * @param root0.progress - The bar collapse progress.
+ * @param root0.restingStyle - Settled-state restatement applied after the animated style.
  * @param root0.screenWidth - Current viewport width.
  * @param root0.tabBarHeight - Measured height of the floating tab row.
  */
@@ -35,6 +39,7 @@ export const SearchIslandCloseSlot = ({
   onPress,
   openProgress,
   progress,
+  restingStyle,
   screenWidth,
   tabBarHeight,
 }: SearchIslandCloseSlotProps) => {
@@ -62,8 +67,8 @@ export const SearchIslandCloseSlot = ({
   return (
     <GlassIsland
       isLight={isLight}
-      animatedStyle={style}
       hostStyle={styles.closeCircle}
+      animatedStyle={[style, restingStyle]}
       accessibilityElementsHidden={!isVisible}
       pointerEvents={isVisible ? 'auto' : 'none'}
       importantForAccessibility={isVisible ? 'yes' : 'no-hide-descendants'}
