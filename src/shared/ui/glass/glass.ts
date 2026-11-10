@@ -33,13 +33,6 @@ export const GLASS = {
   // Clear glass: the blurred backdrop smears read through the fill, which is
   // the perceived refraction. A milky slab would hide them.
   fillAlpha: { dark: 0.36, light: 0.5 },
-  // Translucent theme-color wash over the pill's live blur: the wash now
-  // dominates the frost (strong theme color, backdrop only whispers through) to
-  // match the islands' look, since the pill floats over arbitrary content while
-  // the circles mostly sit over clean background areas.
-  pill: {
-    washAlpha: { dark: 0.72, light: 0.68 },
-  },
   web: {
     // Classic glassmorphism: `backdrop-filter: blur(12px) saturate(140%)`.
     // GlassSurface bypasses BlurView on web and emits both this property and its
@@ -74,24 +67,6 @@ export const getWebGlassBorder = (isLight: boolean) =>
   rgba(GLASS.border.color, isLight ? GLASS.web.borderAlpha.light : GLASS.web.borderAlpha.dark)
 
 export const getGlassTint = (isLight: boolean): BlurTint => (isLight ? 'light' : 'dark')
-
-/**
- * Combines a theme background with an alpha into one #RRGGBBAA color.
- * @param background - Theme background, #RGB or #RRGGBB.
- * @param alpha - Wash opacity, 0–1.
- */
-export const getWashColor = (background: string, alpha: number): string => {
-  // Static themes use shorthand (#fff/#000); expand so the result stays 8 digits.
-  const rgb =
-    background.length === 4
-      ? `#${background[1]}${background[1]}${background[2]}${background[2]}${background[3]}${background[3]}`
-      : background
-  const alphaHex = Math.round(alpha * 255)
-    .toString(16)
-    .padStart(2, '0')
-
-  return `${rgb}${alphaHex}`
-}
 
 /**
  * Builds the per-render glass layers for one island. A factory (not a

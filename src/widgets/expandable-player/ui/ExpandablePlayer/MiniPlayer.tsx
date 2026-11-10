@@ -1,19 +1,16 @@
 import { forwardRef } from 'react'
 import { ActivityIndicator, Platform, View, type ViewInstance, type ViewStyle } from 'react-native'
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
-import Animated, { type AnimatedStyle } from 'react-native-reanimated'
+import { type AnimatedStyle } from 'react-native-reanimated'
 import { OnboardingTarget } from 'features/onboarding'
 import { PlayerControlButton, PlayerControlButtonType } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
-import { CoverImage, GLASS, GlassSurface, MovingText, useMarqueeCycle } from 'shared/ui'
-import { PressableButton } from 'shared/ui/pressable-button'
+import { CoverImage, GlassIsland, MovingText, useMarqueeCycle } from 'shared/ui'
 import { type ThemeColors } from 'shared/ui/theme'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
 import { type createMiniStyles, MINI_PILL_RADIUS, MINI_PLAY_HIT_SLOP } from './miniStyles'
-
-const AnimatedPressable = Animated.createAnimatedComponent(PressableButton)
 
 // Web: the row renders as <div role="link" tabindex=0> (RNW maps 'link' to the
 // role attribute, no <a> tag) so the inner play/pause <button> is not nested
@@ -67,13 +64,14 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
 
     return (
       <GestureDetector gesture={miniPan}>
-        <AnimatedPressable
+        <GlassIsland
           ref={ref}
           onPress={onPress}
+          isLight={isLight}
+          radius={MINI_PILL_RADIUS}
           accessibilityRole={ROW_ACCESSIBILITY_ROLE}
-          style={[
-            miniStyles.miniContainer,
-            barCollapsed && miniStyles.miniContainerCollapsed,
+          hostStyle={[miniStyles.miniContainer, barCollapsed && miniStyles.miniContainerCollapsed]}
+          animatedStyle={[
             miniStyle,
             // Animated geometry wins at the native level; the React resting style
             // last keeps the shadow tree on the settled bar state's geometry (#63).
@@ -81,12 +79,6 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
             miniBarRestingStyle,
           ]}
         >
-          {/* Pill floats over content; the wash keeps its color as intense as the circles. */}
-          <GlassSurface
-            isLight={isLight}
-            radius={MINI_PILL_RADIUS}
-            washAlpha={GLASS.pill.washAlpha[isLight ? 'light' : 'dark']}
-          />
           <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
           <View style={miniStyles.miniTextContainer}>
             <MovingText
@@ -120,7 +112,7 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
             )}
           </View>
           <MiniDownloadProgress miniStyles={miniStyles} audioUrl={audio.audioUrl} />
-        </AnimatedPressable>
+        </GlassIsland>
       </GestureDetector>
     )
   },
