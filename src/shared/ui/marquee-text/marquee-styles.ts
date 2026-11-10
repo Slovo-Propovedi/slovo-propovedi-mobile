@@ -31,6 +31,10 @@ export const WEB_MEASURER_STYLE: WebTextStyle = {
 export const NATIVE_MEASURER_STYLE: TextStyle = {
   left: 0,
   opacity: 0,
+  // Never claim touches: once de-hidden to the 0.02 ghost on retries it sits
+  // topmost over the gesture row, and UIKit hit-tests alpha > 0.01. Web sets
+  // the same via WEB_MEASURER_STYLE.
+  pointerEvents: 'none',
   position: 'absolute',
   top: 0,
   // Generous cap: the measurer must never clip the text it measures. 2000 was

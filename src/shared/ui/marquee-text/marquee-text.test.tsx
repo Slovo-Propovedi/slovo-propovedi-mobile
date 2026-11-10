@@ -7,6 +7,7 @@ import { MarqueeText } from './marquee-text'
 import * as marqueeAnimation from './useMarqueeAnimation'
 
 const TEST_ID = 'marquee-text'
+const FLEX_START = 'flex-start'
 
 const propsStub = {
   testID: TEST_ID,
@@ -142,7 +143,7 @@ describe('<MarqueeText />', () => {
     await fireContainerLayout(100)
     await fireTextLayout(longText, 300)
     expect(StyleSheet.flatten(screen.getAllByText(longText)[0].parent?.props.style).alignSelf).toBe(
-      'flex-start',
+      FLEX_START,
     )
   })
 
@@ -154,7 +155,7 @@ describe('<MarqueeText />', () => {
 
     const animatedView = screen.getAllByText(propsStub.text)[0].parent
     const style = StyleSheet.flatten(animatedView?.props.style)
-    expect(style.alignSelf).toBe('flex-start')
+    expect(style.alignSelf).toBe(FLEX_START)
   })
 
   test('renders a duplicate copy when the text overflows the container', async () => {
@@ -389,7 +390,7 @@ describe('<MarqueeText />', () => {
     expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
     expect(
       StyleSheet.flatten(screen.getAllByText(propsStub.text)[0].parent?.props.style).alignSelf,
-    ).toBe('flex-start')
+    ).toBe(FLEX_START)
 
     await fireContainerLayout(260)
     expect(screen.getAllByText(propsStub.text)).toHaveLength(2)
@@ -476,5 +477,39 @@ describe('<MarqueeText />', () => {
 
     expect(getMeasurerOpacity(propsStub.text)).toBe(0.02)
     expect(warnSpy).not.toHaveBeenCalled()
+  })
+
+  test('latches a fitting width and never retries', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(300)
+    await fireTextLayout(propsStub.text, 100)
+    await act(async () => {
+      jest.advanceTimersByTime(6000)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0)
+  })
+
+  test('never retries on web', async () => {
+    jest.replaceProperty(Platform, 'OS', 'web')
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    await renderWithProviders(<MarqueeText fadeEdge testID={TEST_ID} text={propsStub.text} />)
+
+    await act(async () => {
+      jest.advanceTimersByTime(6000)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0)
+  })
+
+  test('keeps the native measurer out of touch hit-testing', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    const texts = screen.getAllByText(propsStub.text)
+    const style = StyleSheet.flatten(texts[texts.length - 1].props.style)
+
+    expect(style?.pointerEvents).toBe('none')
   })
 })
