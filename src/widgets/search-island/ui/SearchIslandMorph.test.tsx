@@ -1,12 +1,30 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
+import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { SearchIslandMorph } from './SearchIslandMorph'
+
+const mockedWithTiming = withTiming as jest.Mock
+const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
+  toValue: number,
+  config: unknown,
+  callback?: (finished: boolean) => void,
+) => number
+
+const captureCompletions = () => {
+  const completions: Array<(finished: boolean) => void> = []
+  mockedWithTiming.mockImplementation((toValue, _config, callback) => {
+    if (typeof callback === 'function') completions.push(callback)
+    return toValue
+  })
+
+  return completions
+}
 
 // Jest hoists mock factories above imports, so the factory may only reference
 // `mock`-prefixed bindings. This alias keeps the namespace import intact.
@@ -130,6 +148,10 @@ const renderMorph = async () => {
 describe('<SearchIslandMorph>', () => {
   beforeEach(() => {
     mockIoniconsSpy.mockClear()
+  })
+
+  afterEach(() => {
+    mockedWithTiming.mockImplementation(defaultWithTimingImpl)
   })
 
   test('renders no shadow-carrying container in either state', async () => {
@@ -271,5 +293,116 @@ describe('<SearchIslandMorph>', () => {
     await fireEvent.press(getByLabelText(CLOSE_LABEL))
 
     await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+  })
+
+  test('keeps the committed resting frame at the START geometry until the search morph settles', async () => {
+    const completions = captureCompletions()
+    const { ctx } = await renderMorph()
+
+    // Mount-time animations (close progress seed) are not part of the flip.
+    completions.length = 0
+    const closedFrame = StyleSheet.flatten(findMorphContainer().props.style)
+
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+
+    // Committing the destination on the flip paints the pill there for a frame,
+    // before Reanimated asserts the start-of-morph value (Issue #63).
+    expect(StyleSheet.flatten(findMorphContainer().props.style)).toMatchObject({
+      height: closedFrame.height,
+      left: closedFrame.left,
+      width: closedFrame.width,
+    })
+
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+
+    const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
+
+    expect(settledFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT)
+    expect(settledFrame.width).toBeGreaterThan(closedFrame.width)
+  })
+
+  test('keeps the pill frame of a close-into-circle flip until the morph settles', async () => {
+    const completions = captureCompletions()
+    const { ctx } = await renderMorph()
+
+    completions.length = 0
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+
+    const openedFrame = StyleSheet.flatten(findMorphContainer().props.style)
+
+    expect(openedFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT)
+
+    completions.length = 0
+    await act(async () => {
+      isSearchOpenAtom(ctx, false)
+    })
+
+    expect(StyleSheet.flatten(findMorphContainer().props.style)).toMatchObject({
+      height: openedFrame.height,
+      left: openedFrame.left,
+      width: openedFrame.width,
+    })
+
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+
+    const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
+
+    expect(settledFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
+    expect(settledFrame.width).toBeLessThan(openedFrame.width)
+  })
+
+  test('keeps the close slot frame of a blur-mid-fade until the fade settles', async () => {
+    const completions = captureCompletions()
+    const { ctx, getByLabelText, getByPlaceholderText } = await renderMorph()
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
+    const closeSlotOpacity = () =>
+      StyleSheet.flatten(
+        findContentWrapper(getByLabelText(CLOSE_LABEL, { includeHiddenElements: true })).props.style,
+      ).opacity
+
+    completions.length = 0
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+
+    completions.length = 0
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+
+    // The close fade starts hidden; the show target must not be committed early.
+    expect(closeSlotOpacity()).toBe(0)
+
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+    expect(closeSlotOpacity()).toBe(1)
+
+    completions.length = 0
+    await act(async () => {
+      fireEvent(input, 'blur')
+    })
+
+    // An interrupted fade starts from the shown frame, not from its target.
+    expect(closeSlotOpacity()).toBe(1)
+
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+    expect(closeSlotOpacity()).toBe(0)
   })
 })
