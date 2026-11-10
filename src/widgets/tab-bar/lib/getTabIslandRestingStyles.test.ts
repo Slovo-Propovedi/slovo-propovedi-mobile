@@ -8,11 +8,11 @@ import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 const EXPANDED_WIDTH = 584
 
-const getStyles = (isCollapsed: boolean) =>
+const getStyles = (settledIsCollapsed: boolean) =>
   getTabIslandRestingStyles({
     collapsedWidth: BAR_CIRCLE_SIZE,
     expandedWidth: EXPANDED_WIDTH,
-    isCollapsed,
+    settledIsCollapsed,
   })
 
 describe('getTabIslandRestingStyles', () => {

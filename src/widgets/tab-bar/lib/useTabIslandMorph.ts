@@ -36,7 +36,10 @@ export const useTabIslandMorph = ({
   windowWidth,
 }: TabIslandMorphInput) => {
   const [isCollapsed] = useAtom(isTabIslandCollapsedAtom)
-  const progress = useAtomMorph(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
+  const { progress, settled: settledCollapsed } = useAtomMorph(
+    isTabIslandCollapsedAtom,
+    BAR_MORPH_DURATION_MS,
+  )
 
   const rowContentWidth =
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
@@ -61,10 +64,14 @@ export const useTabIslandMorph = ({
   // Plain restatement of the settled geometry, applied after the animated
   // styles: the glass theme remount re-commits shadow-tree props from the first
   // render, so without it the island reverts to its launch shape (Issue #63).
+  // The resting layer carries the START geometry mid-morph (`settledCollapsed`
+  // lags the atom until the morph lands) — recomputing it from the live atom
+  // would paint the destination a frame early. Pointer gating still uses the
+  // live `isCollapsed`.
   const { content: restingContentStyle, island: restingIslandStyle } = getTabIslandRestingStyles({
     collapsedWidth: BAR_CIRCLE_SIZE,
     expandedWidth: expandedIslandWidth,
-    isCollapsed,
+    settledIsCollapsed: settledCollapsed,
   })
 
   return {
