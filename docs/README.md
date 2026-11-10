@@ -51,6 +51,7 @@
 | [`features/error-handling.md`](./features/error-handling.md)           | Глобальный диалог ошибок, reportError, ErrorBoundary, информационный диалог |
 | [`features/onboarding.md`](./features/onboarding.md)                   | Онбординг: кнопка «?», сценарии и спотлайт-тур                              |
 | [`features/updates.md`](./features/updates.md)                         | Проверка обновлений и уведомления                                           |
+| [`features/ci-orchestration.md`](./features/ci-orchestration.md)       | CI: Forgejo оркестрирует, GitHub-hosted исполняет                           |
 | [`features/settings-backup.md`](./features/settings-backup.md)         | Резервная копия: экспорт/импорт настроек и локальных данных                 |
 | [`features/book-reader.md`](./features/book-reader.md)                 | Чтение FB2-книг (в разработке)                                              |
 | [`screens/listen.md`](./screens/listen.md)                             | Таб «Слушать» и его экраны                                                  |
