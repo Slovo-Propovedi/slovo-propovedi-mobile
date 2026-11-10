@@ -2,9 +2,17 @@ name: CI
 
 # NOTE: Forgejo Actions provides the `github.*` context for GitHub Actions
 # compatibility. `workflow_run` is not supported by Forgejo Actions
-# (https://codeberg.org/forgejo/forgejo/issues/6494), so dco -> checks
-# ordering is enforced with `needs:` inside this single workflow instead
-# of chaining across separate workflow files.
+# (https://codeberg.org/forgejo/forgejo/issues/6494), so job ordering is
+# enforced with `needs:` inside this single workflow instead of chaining
+# across separate workflow files.
+#
+# Heavy checks run on GitHub-hosted runners via scripts/ci/github-dispatch.sh
+# (`remote`). When the dispatch cannot start a run (queue/infra timeout, exit
+# 42) the `local` job runs the same ./actions/checks composite on the Forgejo
+# runner. `gate` then posts the final `CI / checks` commit status — the
+# automatic job contexts are `CI / dco`, `CI / remote`, `CI / local` and
+# `CI / gate`; release.yml's create-release waits for the manual `CI / checks`
+# entry. A real remote failure (exit 1) is NOT retried locally: it fails `gate`.
 
 on:
   push:
@@ -128,13 +136,67 @@ jobs:
 
           echo "DCO check passed: all commits are properly signed off."
 
-  checks:
+  remote:
     needs: dco
+    # Tags point at commits already checked when they were pushed to main (same
+    # guard as the dco job); some Forgejo versions dispatch this workflow for
+    # tag pushes despite the `branches: [main]` filter.
+    if: github.ref_type != 'tag'
+    runs-on: ubuntu-24.04
+
+    outputs:
+      fallback: ${{ steps.dispatch.outputs.fallback }}
+      run_url: ${{ steps.dispatch.outputs.run_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Dispatch checks to GitHub-hosted runners
+        id: dispatch
+        env:
+          # Fine-grained PAT with Actions RW; may be switched to
+          # MIRROR_GITHUB_TOKEN if its scopes suffice — see
+          # docs/features/ci-orchestration.md.
+          GH_TOKEN: ${{ secrets.GITHUB_CI_TOKEN }}
+          # GitHub org has hyphens, Forgejo org has underscores.
+          GH_REPO: Slovo-Propovedi/slovo-propovedi-mobile
+          WORKFLOW: ci.yml
+          REF: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          set +e
+          OUTPUT=$(bash scripts/ci/github-dispatch.sh)
+          STATUS=$?
+          set -e
+
+          # Printed by the dispatcher on the 0/1/42 paths (see its header).
+          RUN_URL=$(printf '%s\n' "$OUTPUT" | sed -n 's/^GH_RUN_URL=//p' | tail -1)
+
+          case "$STATUS" in
+            0)
+              echo "fallback=false" >> "$GITHUB_OUTPUT"
+              ;;
+            42)
+              echo "fallback=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::GitHub-hosted checks unavailable (queue/infra) — using the local fallback"
+              ;;
+            *)
+              echo "::error::GitHub-hosted checks failed (dispatch exit $STATUS)"
+              exit "$STATUS"
+              ;;
+          esac
+
+          echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+
+  local:
+    needs: [dco, remote]
+    if: always() && needs.remote.outputs.fallback == 'true'
     runs-on: ubuntu-24.04
 
     # Both runner slots share one 4 GB host; heavy jobs must not overlap with
-    # the release build. Same group as the `release` job in release.yml —
-    # see its comment for the OOM (exit 137) context.
+    # the release build. Same group as the heavy `release.yml` jobs — see its
+    # comment for the OOM (exit 137) context.
     concurrency:
       group: memory-heavy-jobs
       cancel-in-progress: false
@@ -143,206 +205,63 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - name: Run repository checks (local fallback)
+        uses: ./actions/checks
         with:
-          node-version: 24
+          profile: constrained
 
-      - name: Enable Corepack
-        run: corepack enable
+  gate:
+    needs: [remote, local]
+    # Tag pushes are already checked when they reached main (same guard as dco);
+    # a status posted here would otherwise fail a release tag's CI lookup.
+    if: always() && github.ref_type != 'tag'
+    runs-on: ubuntu-24.04
 
-      - name: Get yarn cache directory
-        id: yarn-cache-dir
-        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Cache yarn dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ${{ steps.yarn-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Check patch-package patches
-        id: patches
-        run: |
-          start=$EPOCHSECONDS
-          yarn check:patches
-          echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
-
-      - name: "Check types (tsc: app + service worker)"
-        id: types
-        run: |
-          start=$EPOCHSECONDS
-          yarn check:types
-          echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
-
-      - name: Check FSD architecture (steiger)
-        id: fsd
-        run: |
-          start=$EPOCHSECONDS
-          yarn check:fsd
-          echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
-
-      - name: Lint (ESLint)
-        id: lint
-        run: |
-          start=$EPOCHSECONDS
-          yarn lint
-          echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Gradle dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Setup Java JDK
-        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Restore Android SDK cache
-        id: sdk-cache
-        # Self-updating cache: restore the newest snapshot by prefix; "Save
-        # Android SDK cache" stores a new one whenever the installed packages
-        # changed (Gradle fetches NDK/CMake/build-tools on its own). A plain
-        # actions/cache with a static key is saved once and never updated, so
-        # everything installed later was re-downloaded on every run.
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: /opt/android-sdk
-          key: ${{ runner.os }}-android-sdk-v2-
-          restore-keys: |
-            ${{ runner.os }}-android-sdk-v2-
-
-      - name: Setup Android SDK
-        # A stalled dl.google.com download must fail the job, not hang it. A cold
-        # run (no cache snapshot yet) downloads ~350 MB at ~0.5 MB/s, ~13 min.
-        timeout-minutes: 30
+      - name: Post CI verdict
         env:
-          ANDROID_SDK_ROOT: /opt/android-sdk
-          # Packages the native unit tests need, installed up front (with the
-          # step timeout) instead of by Gradle during configuration, where the
-          # download has no timeout — a slow mirror hung the job for 20+ min.
-          # A cache restored from a snapshot already has them (no-op).
-          # build-tools 37 + platform 37: Expo defaults (buildTools/compileSdk; the
-          # repository names API 37 "android-37.0", there is no "android-37");
-          # build-tools 36: AGP 9 default for libraries without a pinned version.
-          # Update on an Expo/RN/AGP upgrade (a "Preparing \"Install …\"" line
-          # in the gradle log means one is missing; the cache picks it up anyway).
-          ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37.0
+          # Automatic Forgejo Actions token; if the status POST 403s, replace
+          # with a repo secret holding a token with repo-write.
+          FORGEJO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REMOTE_RESULT: ${{ needs.remote.result }}
+          LOCAL_RESULT: ${{ needs.local.result }}
+          RUN_URL: ${{ needs.remote.outputs.run_url }}
         run: |
-          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-          # Skip download/unzip/mv when the SDK was restored from cache; `mv`
-          # would otherwise fail because cmdline-tools/latest already exists.
-          [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest" ] || (
-            curl -sSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-            unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
-            mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
-            rm cmdline-tools.zip
-          )
-
-          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
-          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
-
-          # `yes` never exits on its own — it gets SIGPIPE once sdkmanager
-          # stops reading, and Actions runs steps with `bash -o pipefail`,
-          # so that expected SIGPIPE (141) would otherwise fail this step
-          # even though sdkmanager itself succeeds.
-          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          # shellcheck disable=SC2086 # word splitting of the package list is intended
-          # Output kept (no-op when restored) so a slow cold download is visible.
-          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" $ANDROID_SDK_PACKAGES
-
-      - name: Run all tests (jest)
-        id: jest
-        # --maxWorkers=2 caps peak memory: heavy jest-expo + RN UI test suites
-        # were triggering OOM (SIGKILL) when many workers ran in parallel.
-        run: |
-          start=$EPOCHSECONDS
-          yarn testFinal --maxWorkers=2
-          echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
-
-      - name: Run native unit tests
-        id: native-tests
-        timeout-minutes: 30
-        env:
-          GRADLE_OPTS: >-
-            -Dorg.gradle.internal.http.connectionTimeout=120000
-            -Dorg.gradle.internal.http.socketTimeout=300000
-        run: |
-          start=$EPOCHSECONDS
-          cd android
-          ./gradlew :apk-installer:testDebugUnitTest :audio-effects:testDebugUnitTest --continue
-          echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
-
-      # Forgejo (>= v17.0 + runner >= 13.2) renders this Markdown above the job
-      # logs; on older runners the file write is silently discarded.
-      - name: Compute Android SDK cache key
-        id: sdk-cache-key
-        if: ${{ !cancelled() }}
-        # The key is a digest of the installed package directories: it changes
-        # only when the build installed something new.
-        # Only existing directories go to `find`: a missing one (ndk/cmake are
-        # installed by gradle only when needed) makes it exit 1, and steps run
-        # with `pipefail`. No SDK at all (setup failed early) → no key, no save.
-        run: |
-          cd /opt/android-sdk 2>/dev/null || exit 0
-          dirs=()
-          for dir in build-tools platforms ndk cmake cmdline-tools; do
-            [ -d "$dir" ] && dirs+=("$dir")
-          done
-          [ ${#dirs[@]} -gt 0 ] || exit 0
-          digest=$(find "${dirs[@]}" -mindepth 1 -maxdepth 1 | sort | sha256sum | cut -c1-16)
-          echo "key=${{ runner.os }}-android-sdk-v2-$digest" >> "$GITHUB_OUTPUT"
-
-      - name: Save Android SDK cache
-        if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
-        continue-on-error: true
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: /opt/android-sdk
-          key: ${{ steps.sdk-cache-key.outputs.key }}
-
-      - name: Job summary
-        if: always()
-        run: |
-          [ -f scripts/ci/step-summary.sh ] || exit 0
           status_emoji() {
             case "$1" in
-              success) echo '✅' ;;
-              failure) echo '❌' ;;
-              *) echo '⏭️' ;;
+              success) printf '✅' ;;
+              failure) printf '❌' ;;
+              cancelled) printf '🟨' ;;
+              *) printf '⏭️' ;;
             esac
           }
-          {
-            echo '## Checks'
-            echo ''
-            echo '| Check | Status | Duration |'
-            echo '|---|---|---|'
-            echo "| check:patches | $(status_emoji '${{ steps.patches.outcome }}') | ${{ steps.patches.outputs.duration || '—' }} |"
-            echo "| check:types | $(status_emoji '${{ steps.types.outcome }}') | ${{ steps.types.outputs.duration || '—' }} |"
-            echo "| check:fsd | $(status_emoji '${{ steps.fsd.outcome }}') | ${{ steps.fsd.outputs.duration || '—' }} |"
-            echo "| lint | $(status_emoji '${{ steps.lint.outcome }}') | ${{ steps.lint.outputs.duration || '—' }} |"
-            echo "| jest tests | $(status_emoji '${{ steps.jest.outcome }}') | ${{ steps.jest.outputs.duration || '—' }} |"
-            echo "| native tests (gradle) | $(status_emoji '${{ steps.native-tests.outcome }}') | ${{ steps.native-tests.outputs.duration || '—' }} |"
-          } | scripts/ci/step-summary.sh
 
-      # Clean up large directories to reduce runner storage usage
-      - name: Cleanup workspace
-        if: always()
-        run: |
-          rm -rf node_modules .yarn/cache .expo jest-cache dist 2>/dev/null || true
-          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
-          find . -name '.cache' -type d -delete 2>/dev/null || true
+          # A local pass is enough on its own; a remote pass is enough only when
+          # the local fallback was not needed (skipped).
+          if [ "$LOCAL_RESULT" = "success" ]; then
+            VERDICT=success
+          elif [ "$LOCAL_RESULT" = "skipped" ] && [ "$REMOTE_RESULT" = "success" ]; then
+            VERDICT=success
+          else
+            VERDICT=failure
+          fi
+
+          bash scripts/ci/forgejo-set-status.sh \
+            "${{ github.sha }}" "$VERDICT" "CI / checks" "$RUN_URL" \
+            "Heavy checks on GitHub-hosted runners (fallback: local)"
+
+          {
+            echo '## CI'
+            echo ''
+            echo '| Stage | Result |'
+            echo '|---|---|'
+            echo "| remote (GitHub-hosted) | $(status_emoji "$REMOTE_RESULT") $REMOTE_RESULT |"
+            echo "| local (Forgejo fallback) | $(status_emoji "$LOCAL_RESULT") $LOCAL_RESULT |"
+            echo "| verdict | $(status_emoji "$VERDICT") $VERDICT |"
+            if [ -n "$RUN_URL" ]; then
+              echo "| GitHub run | [$RUN_URL]($RUN_URL) |"
+            fi
+          } | scripts/ci/step-summary.sh

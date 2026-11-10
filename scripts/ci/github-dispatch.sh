@@ -38,6 +38,10 @@
 #       the run was cancelled; the caller should fall back to the local runner
 #
 # Requires: bash, curl, jq (the Forgejo runner provides jq).
+#
+# Stdout contract: once the run is known, a single line `GH_RUN_URL=<url>` is
+# printed (before polling), so callers that capture stdout can report the run
+# URL on the 0/1/42 exit paths. All human-readable progress goes to stderr.
 
 set -euo pipefail
 
@@ -329,6 +333,9 @@ wait_for_mirror
 
 RUN_ID=$(dispatch_workflow)
 RUN_URL="https://github.com/$GH_REPO/actions/runs/$RUN_ID"
+# Machine-readable line for callers capturing stdout; emitted before the poll
+# so it is available on every subsequent exit path (0, 1 and 42).
+printf 'GH_RUN_URL=%s\n' "$RUN_URL"
 log "dispatched $WORKFLOW on $REF (run $RUN_ID): $RUN_URL"
 
 poll_run
