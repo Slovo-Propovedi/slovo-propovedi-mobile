@@ -38,10 +38,12 @@ on:
 #   changes         — detect native-vs-JS mode + RUNTIME_VERSION guard (light)
 #   create-release  — needs: changes, native only — gate on CI, verify versions,
 #                     cut the Forgejo Release (`publish-release` attaches assets)
-#   build-remote    — needs: changes — dispatch the build to GitHub-hosted
-#                     runners (`.github/workflows/release.yml`) and download its
-#                     artifacts as `unsigned-apk/` + `web-dist/`; sets
-#                     fallback=true when GitHub cannot run it (queue/infra)
+#   build-remote    — needs: [changes, create-release] — strict sequence: the
+#                     GitHub build starts only after the CI gate (native) or
+#                     immediately on js-only (create-release skipped); dispatches
+#                     `.github/workflows/release.yml` and downloads its artifacts
+#                     as `unsigned-apk/` + `web-dist/`; sets fallback=true when
+#                     GitHub cannot run it (queue/infra)
 #   android-package — needs: [changes, build-remote], native only — sign the
 #                     remote unsigned APK (or build locally on fallback), zip it
 #                     with SHA256SUMS.txt into the `release-assets` artifact
@@ -371,7 +373,12 @@ jobs:
     # Light dispatcher: hands the whole build to GitHub-hosted runners. It is
     # deliberately NOT in the memory-heavy-jobs group — the heavy local
     # fallbacks (android-package / web-package) hold the group instead.
-    needs: changes
+    #
+    # Strict sequence: native tags wait for the CI gate (create-release polls
+    # `CI / checks`); js-only tags SKIP create-release, so build-remote must
+    # proceed when it was skipped (js-only was never CI-gated, same as before).
+    needs: [changes, create-release]
+    if: "!cancelled() && needs.changes.result == 'success' && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')"
     runs-on: ubuntu-24.04
 
     outputs:
