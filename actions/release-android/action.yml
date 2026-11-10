@@ -129,20 +129,6 @@ runs:
         ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37.0
       run: bash scripts/ci/setup-android-sdk.sh
 
-    - name: Compute Android SDK cache key
-      id: sdk-cache-key
-      if: ${{ !cancelled() }}
-      shell: bash
-      run: bash scripts/ci/android-sdk-cache-key.sh
-
-    - name: Save Android SDK cache
-      if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
-      continue-on-error: true
-      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-      with:
-        path: /opt/android-sdk
-        key: ${{ steps.sdk-cache-key.outputs.key }}
-
     - name: Cache Gradle dependencies
       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
@@ -334,6 +320,22 @@ runs:
         mkdir -p unsigned-apk
         cp "$APK_PATH" unsigned-apk/
         printf '%s\n' "- Unsigned APK: ✅ \`$(basename "$APK_PATH")\` → \`unsigned-apk/\`" | scripts/ci/step-summary.sh
+
+    # Snapshot key is computed after the build so NDK/CMake installed by Gradle
+    # during assembleProdRelease are part of the cache (release.yml semantics).
+    - name: Compute Android SDK cache key
+      id: sdk-cache-key
+      if: ${{ !cancelled() }}
+      shell: bash
+      run: bash scripts/ci/android-sdk-cache-key.sh
+
+    - name: Save Android SDK cache
+      if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
+      continue-on-error: true
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: /opt/android-sdk
+        key: ${{ steps.sdk-cache-key.outputs.key }}
 
     - name: Job summary
       if: always()
