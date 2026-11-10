@@ -105,8 +105,8 @@ export const SearchIslandMorph = () => {
         <SearchIslandContent
           onOpenSearch={openSearch}
           openProgress={openProgress}
-          onFocusChange={handleCloseFocusChange}
           isVisible={isSearchFieldVisible}
+          onFocusChange={handleCloseFocusChange}
         />
       </GlassIsland>
       <SearchIslandCloseSlot
