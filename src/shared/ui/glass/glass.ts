@@ -33,10 +33,12 @@ export const GLASS = {
   // Clear glass: the blurred backdrop smears read through the fill, which is
   // the perceived refraction. A milky slab would hide them.
   fillAlpha: { dark: 0.36, light: 0.5 },
-  // Translucent theme-color wash over the pill's live blur: normalizes the frost
-  // toward the theme background without killing the see-through blur.
+  // Translucent theme-color wash over the pill's live blur: the wash now
+  // dominates the frost (strong theme color, backdrop only whispers through) to
+  // match the islands' look, since the pill floats over arbitrary content while
+  // the circles mostly sit over clean background areas.
   pill: {
-    washAlpha: { dark: 0.4, light: 0.35 },
+    washAlpha: { dark: 0.72, light: 0.68 },
   },
   web: {
     // Classic glassmorphism: `backdrop-filter: blur(12px) saturate(140%)`.
