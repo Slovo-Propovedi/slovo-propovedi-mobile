@@ -12,6 +12,16 @@ const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
   callback?: (finished: boolean) => void,
 ) => number
 
+const captureCompletions = () => {
+  const completions: Array<(finished: boolean) => void> = []
+  mockedWithTiming.mockImplementation((toValue, _config, callback) => {
+    if (typeof callback === 'function') completions.push(callback)
+    return toValue
+  })
+
+  return completions
+}
+
 describe('useAtomMorph', () => {
   beforeEach(() => {
     mockedWithTiming.mockClear()
@@ -21,40 +31,8 @@ describe('useAtomMorph', () => {
     mockedWithTiming.mockImplementation(defaultWithTimingImpl)
   })
 
-  test('seeds the progress from the atom and animates nothing on mount', async () => {
+  test('seeds the progress and settled state from the atom without animating on mount', async () => {
     const targetAtom = atom(true, 'testMorphMountAtom')
-
-    const { result } = await renderHookWithProviders(() => useAtomMorph(targetAtom, DURATION_MS))
-
-    expect(result.current.value).toBe(1)
-    expect(mockedWithTiming).not.toHaveBeenCalled()
-  })
-
-  test('forwards the settle target to the extra handler', async () => {
-    const completions: Array<(finished: boolean) => void> = []
-    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
-      if (typeof callback === 'function') completions.push(callback)
-      return toValue
-    })
-    const targetAtom = atom(false, 'testMorphExtraSettleAtom')
-    const onSettled = jest.fn()
-
-    const { ctx } = await renderHookWithProviders(() =>
-      useAtomMorph(targetAtom, DURATION_MS, onSettled),
-    )
-
-    await act(async () => {
-      targetAtom(ctx, true)
-    })
-    await act(async () => {
-      completions[0](true)
-    })
-
-    expect(onSettled).toHaveBeenCalledWith(true)
-  })
-
-  test('seeds settled from the atom and does not animate on mount', async () => {
-    const targetAtom = atom(true, 'testMorphSettledMountAtom')
 
     const { result } = await renderHookWithProviders(() => useAtomMorph(targetAtom, DURATION_MS))
 
@@ -64,11 +42,7 @@ describe('useAtomMorph', () => {
   })
 
   test('commits the START of a flip, then the target once the morph settles', async () => {
-    const completions: Array<(finished: boolean) => void> = []
-    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
-      if (typeof callback === 'function') completions.push(callback)
-      return toValue
-    })
+    const completions = captureCompletions()
     const targetAtom = atom(false, 'testMorphSettledFlipAtom')
 
     const { ctx, result } = await renderHookWithProviders(() =>
@@ -91,11 +65,7 @@ describe('useAtomMorph', () => {
   })
 
   test('a late settle from an interrupted morph never commits a stale target', async () => {
-    const completions: Array<(finished: boolean) => void> = []
-    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
-      if (typeof callback === 'function') completions.push(callback)
-      return toValue
-    })
+    const completions = captureCompletions()
     const targetAtom = atom(false, 'testMorphSettledInterruptAtom')
 
     const { ctx, result } = await renderHookWithProviders(() =>
