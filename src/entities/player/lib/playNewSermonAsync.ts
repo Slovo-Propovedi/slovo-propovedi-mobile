@@ -44,11 +44,12 @@ export const playNewSermonAsync = async (
     const currentDuration = ctx.get(durationAtom)
     const history = ctx.get(historyAtom)
 
-    // Artwork rule: the sermon's own artwork wins, the playlist's is the fallback.
+    // Artwork (and its blurhash) rule: the sermon's own value wins, the playlist's is the fallback.
     const newAudio: AudioPlayerData = {
       ...other,
       artist,
       artwork: artwork ?? playlist.artwork,
+      artworkBlurhash: other.artworkBlurhash ?? playlist.artworkBlurhash,
       audioUrl,
       id: sermonId,
       title,
@@ -59,7 +60,12 @@ export const playNewSermonAsync = async (
     // History snapshots keep the sermon's OWN artwork, never the resolved
     // playlist fallback: a later playlist-context play must re-resolve the
     // cover instead of inheriting this playlist's artwork as the sermon's own.
-    const historyAudio: AudioPlayerData = { ...newAudio, artwork: nullIfEmpty(artwork) }
+    // The blurhash keeps the sermon's own value for the same reason.
+    const historyAudio: AudioPlayerData = {
+      ...newAudio,
+      artwork: nullIfEmpty(artwork),
+      artworkBlurhash: nullIfEmpty(other.artworkBlurhash),
+    }
 
     await deps.setCurrentAudio(newAudio)
     await deps.setCurrentPlaylist(playlist)

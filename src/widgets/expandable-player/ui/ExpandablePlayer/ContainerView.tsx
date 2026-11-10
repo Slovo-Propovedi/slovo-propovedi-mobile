@@ -3,11 +3,11 @@ import { type LayoutChangeEvent, type StyleProp, View, type ViewStyle } from 're
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { type AudioPlayerData } from 'entities/sermon'
-import { useArtworkDominantColor } from 'shared/lib/useArtworkDominantColor'
 import { type ThemeColors } from 'shared/ui/theme'
 import { useFullscreenContentMount } from '../../model/useFullscreenContentMount'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
+import { BlurhashBackground } from './BlurhashBackground'
 import { type createStyles } from './styles'
 
 /** Consumer style must not carry geometry keys — enforced by compiler (Issue #63 invariant). */
@@ -51,7 +51,6 @@ export const ContainerView = ({
   // FullscreenContent stays mounted through the collapse animation so the exit
   // fade is visible, then unmounts to stop its per-tick re-render storm (Issue #100).
   const isFullscreenContentMounted = useFullscreenContentMount(expanded)
-  const artworkBackgroundColor = useArtworkDominantColor(audio.artwork, currentTheme.surface)
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -80,14 +79,12 @@ export const ContainerView = ({
           style,
         ]}
       >
-        <Animated.View
-          style={[
-            styles.backgroundContainer,
-            backgroundImageStyle,
-            // Solid artwork-derived background; fades in over the surface via this layer.
-            { backgroundColor: artworkBackgroundColor },
-          ]}
-        >
+        <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
+          {/* Blurhash artwork layer (theme surface when no hash); fades in over the surface. */}
+          <BlurhashBackground
+            blurhash={audio.artworkBlurhash}
+            fallbackColor={currentTheme.surface}
+          />
           <View pointerEvents='none' style={styles.backgroundScrim} />
         </Animated.View>
         <Animated.View style={[miniOverlay, miniOverlayStyle, { pointerEvents: 'none' }]} />

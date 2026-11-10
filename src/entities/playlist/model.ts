@@ -9,7 +9,6 @@ import { persistMyPlaylists } from './localPlaylistStorage'
 
 /**
  * Минимальная структурная проверка вложенной проповеди (SermonShape).
- *
  * Проверяет только обязательные поля (id/title/artist/artwork), достаточные,
  * чтобы отсеять мусор в `sermons` плейлиста. Полная zod-валидация живёт в
  * entities/sermon и применяется на верхнеуровневых границах; здесь её не
@@ -40,6 +39,7 @@ const isSermonShape = (value: unknown): value is SermonShape =>
  */
 export const playlistDataSchema = z.object({
   artwork: z.string().nullable(),
+  artworkBlurhash: z.string().nullish(),
   description: z.string().optional(),
   id: z.string(),
   sections: z.lazy((): z.ZodType<SectionShape[]> => z.array(sectionSchema)).optional(),

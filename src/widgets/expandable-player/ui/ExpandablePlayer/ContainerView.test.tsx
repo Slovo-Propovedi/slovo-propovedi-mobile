@@ -1,11 +1,11 @@
 import { act } from '@testing-library/react-native'
 import { AppState, type AppStateStatus } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
-import { getColors, type ImageColorsResult } from 'react-native-image-colors'
 import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { LightTheme } from 'shared/ui/theme'
 import { COLLAPSE_DURATION_MS } from '../../model/expandDurations'
+import { BlurhashBackground } from './BlurhashBackground'
 import { ContainerView } from './ContainerView'
 import { createStyles } from './styles'
 
@@ -15,6 +15,10 @@ jest.mock('../FullscreenContent/FullscreenContent', () => {
     FullscreenContent: () => <Text testID='fullscreen-content'>fullscreen</Text>,
   }
 })
+
+jest.mock('./BlurhashBackground', () => ({
+  BlurhashBackground: jest.fn(() => null),
+}))
 
 jest.mock('shared/ui', () => ({
   CoverImage: () => null,
@@ -27,20 +31,10 @@ jest.mock('expo-status-bar', () => ({
 const FULLSCREEN_TEST_ID = 'fullscreen-content'
 const AUDIO_URL = 'https://example.com/audio.mp3'
 
-const WEB_COLORS: ImageColorsResult = {
-  darkMuted: '#112233',
-  darkVibrant: '#112233',
-  dominant: '#112233',
-  lightMuted: '#112233',
-  lightVibrant: '#112233',
-  muted: '#112233',
-  platform: 'web',
-  vibrant: '#112233',
-}
-
 const AUDIO: AudioPlayerData = {
   artist: 'Автор',
   artwork: null,
+  artworkBlurhash: 'LKO2?wKcjK',
   audioUrl: AUDIO_URL,
   id: 'sermon-1',
   title: 'Тестовая проповедь',
@@ -65,7 +59,7 @@ const baseProps = {
 const mockListeners: Array<(state: AppStateStatus) => void> = []
 
 beforeEach(() => {
-  jest.mocked(getColors).mockResolvedValue(WEB_COLORS)
+  jest.mocked(BlurhashBackground).mockClear()
   mockListeners.length = 0
   jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, listener) => {
     mockListeners.push(listener)
@@ -160,5 +154,13 @@ describe('<ContainerView> fullscreen gating', () => {
       <ContainerView {...baseProps} expanded={false} />,
     )
     expect(queryByTestId(FULLSCREEN_TEST_ID)).toBeNull()
+  })
+
+  test('feeds the audio blurhash into the background layer', async () => {
+    await renderWithProviders(<ContainerView {...baseProps} expanded />)
+
+    expect(jest.mocked(BlurhashBackground).mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({ blurhash: AUDIO.artworkBlurhash }),
+    )
   })
 })

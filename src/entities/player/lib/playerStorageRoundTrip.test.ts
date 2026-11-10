@@ -45,6 +45,8 @@ const BASE_PLAYLIST: PlaylistData = {
 
 const getBaseSermon = (): PlaylistData['sermons'][number] => ({ ...BASE_PLAYLIST.sermons[0] })
 
+const BLURHASH = 'LKO2?wKcjK'
+
 const readRaw = async (key: string): Promise<Record<string, unknown>> => {
   const stored = await AsyncStorage.getItem(key)
 
@@ -94,6 +96,24 @@ describe('player storage round-trip (save ↔ restore)', () => {
 
   test('keeps null artwork as an honest null', async () => {
     expect((await writeThenRestoreAudio({ ...BASE_AUDIO, artwork: null }))?.artwork).toBeNull()
+  })
+
+  test('round-trips artworkBlurhash through storage', async () => {
+    const restored = await writeThenRestoreAudio({
+      ...BASE_AUDIO,
+      artworkBlurhash: BLURHASH,
+    })
+
+    expect(restored?.artworkBlurhash).toBe(BLURHASH)
+  })
+
+  test('parses a legacy stored audio that has no artworkBlurhash key', async () => {
+    await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(BASE_AUDIO))
+
+    const restored = parseStoredAudio(await AsyncStorage.getItem(CURRENT_AUDIO))
+
+    expect(restored).not.toBeUndefined()
+    expect(restored?.artworkBlurhash ?? null).toBeNull()
   })
 
   test('normalizes missing artwork to null so the required key survives JSON', async () => {
@@ -155,6 +175,15 @@ describe('player storage round-trip (save ↔ restore)', () => {
     expect(
       (await writeThenRestorePlaylist({ ...BASE_PLAYLIST, artwork: null }))?.artwork,
     ).toBeNull()
+  })
+
+  test('round-trips playlist artworkBlurhash through storage', async () => {
+    const restored = await writeThenRestorePlaylist({
+      ...BASE_PLAYLIST,
+      artworkBlurhash: BLURHASH,
+    })
+
+    expect(restored?.artworkBlurhash).toBe(BLURHASH)
   })
 
   test('normalizes missing playlist artwork to null so the required key survives JSON', async () => {

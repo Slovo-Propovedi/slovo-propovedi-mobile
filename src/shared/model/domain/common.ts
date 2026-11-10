@@ -18,6 +18,7 @@
  */
 export interface PlaylistShape {
   artwork: null | string
+  artworkBlurhash?: null | string | undefined
   description?: string | undefined
   id: string
   sections?: SectionShape[] | undefined
@@ -50,6 +51,7 @@ export interface SectionShape {
 export interface SermonShape {
   artist: string
   artwork: null | string
+  artworkBlurhash?: null | string | undefined
   audioUrl?: null | string | undefined
   book?: null | string | undefined
   chapter?: null | number | number[] | undefined

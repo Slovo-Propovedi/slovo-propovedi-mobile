@@ -10,6 +10,7 @@ import { type SermonData } from '../../model/sermon'
 export const mapSermonEntityToSermonData = (apiSermon: APITypes.SermonEntity): SermonData => ({
   artist: apiSermon.artist,
   artwork: nullIfEmpty(apiSermon.artwork),
+  artworkBlurhash: nullIfEmpty(apiSermon.artworkBlurhash),
   audioUrl: apiSermon.audioUrl ?? null,
   book: apiSermon.book,
   chapter: apiSermon.chapter,

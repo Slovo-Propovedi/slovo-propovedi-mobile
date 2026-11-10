@@ -14,4 +14,24 @@ describe('mapSermonEntityToSermonData', () => {
 
     expect(mapSermonEntityToSermonData(entity).artwork).toBe(artwork)
   })
+
+  test('projects a non-empty artworkBlurhash', () => {
+    const entity = sermonsMocks.getSermonControllerFindOneResponseMock({
+      artworkBlurhash: 'LKO2?wKcjK',
+    })
+
+    expect(mapSermonEntityToSermonData(entity).artworkBlurhash).toBe('LKO2?wKcjK')
+  })
+
+  test('normalizes empty-string artworkBlurhash to null', () => {
+    const entity = sermonsMocks.getSermonControllerFindOneResponseMock({ artworkBlurhash: '' })
+
+    expect(mapSermonEntityToSermonData(entity).artworkBlurhash).toBeNull()
+  })
+
+  test('normalizes an absent artworkBlurhash to null', () => {
+    const entity = sermonsMocks.getSermonControllerFindOneResponseMock({ artworkBlurhash: null })
+
+    expect(mapSermonEntityToSermonData(entity).artworkBlurhash).toBeNull()
+  })
 })

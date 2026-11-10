@@ -17,6 +17,7 @@ export const mapSectionPlaylistToPlaylistData = (
   apiPlaylist: APITypes.SectionPlaylist,
 ): PlaylistData => ({
   artwork: nullIfEmpty(apiPlaylist.artwork),
+  artworkBlurhash: nullIfEmpty(apiPlaylist.artworkBlurhash),
   description: apiPlaylist.description ?? undefined,
   id: apiPlaylist.id,
   sections: apiPlaylist.sections.map(mapSectionRefToSectionData),

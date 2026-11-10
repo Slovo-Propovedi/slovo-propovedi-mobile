@@ -10,6 +10,7 @@ export const sermonSchema = z.object({
   artist: z.string(),
   // API может вернуть null (несмотря на OpenAPI-спеку) — оставляем null как есть
   artwork: z.string().nullable(),
+  artworkBlurhash: z.string().nullish(),
   audioUrl: z.string().nullable().optional(),
   book: z.string().nullish(),
   chapter: z.union([z.number(), z.array(z.number())]).nullish(),

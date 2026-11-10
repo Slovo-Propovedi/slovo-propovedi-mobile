@@ -43,10 +43,18 @@ export const executeTrackSwitch = async ({
     return
   }
 
-  const newAudio: AudioPlayerData = { ...baseAudio, artwork: playlist.artwork }
+  const newAudio: AudioPlayerData = {
+    ...baseAudio,
+    artwork: playlist.artwork,
+    artworkBlurhash: baseAudio.artworkBlurhash ?? playlist.artworkBlurhash,
+  }
   // History keeps the sermon's own artwork so a later playlist switch re-resolves
   // the cover instead of treating this playlist's artwork as the sermon's own.
-  const historyAudio: AudioPlayerData = { ...newAudio, artwork: baseAudio.artwork }
+  const historyAudio: AudioPlayerData = {
+    ...newAudio,
+    artwork: baseAudio.artwork,
+    artworkBlurhash: baseAudio.artworkBlurhash,
+  }
 
   const oldAudio = ctx.get(currentAudioAtom)
   const oldPositionMs = ctx.get(positionAtom)

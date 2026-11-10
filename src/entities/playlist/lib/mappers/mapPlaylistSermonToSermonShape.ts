@@ -15,6 +15,7 @@ export const mapPlaylistSermonToSermonShape = (
 ): SermonShape => ({
   artist: apiSermon.artist,
   artwork: nullIfEmpty(apiSermon.artwork),
+  artworkBlurhash: nullIfEmpty(apiSermon.artworkBlurhash),
   audioUrl: apiSermon.audioUrl ?? null,
   book: apiSermon.book,
   chapter: apiSermon.chapter,
