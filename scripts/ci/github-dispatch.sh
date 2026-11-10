@@ -30,13 +30,14 @@
 #
 # Exit codes:
 #   0   run succeeded (and every requested artifact was downloaded)
-#   1   the run completed without success, or a requested artifact was
-#       missing/empty — a real build failure, do NOT re-run locally
+#   1   the run completed without success, or a requested artifact was not
+#       produced / downloaded empty — a real build failure, do NOT re-run locally
 #   2   usage/environment error (missing env, bad SHA/REF/ARTIFACTS format,
 #       missing jq)
 #   3   the commit never reached the mirror, or the run never appeared
-#   42  infra/queue failure (dispatch rejected, queue timeout, run timeout) —
-#       the run was cancelled; the caller should fall back to the local runner
+#   42  infra failure (dispatch rejected, queue/run timeout, artifact
+#       transport/extraction error) — the caller should fall back to the local
+#       runner; a run we cancelled first is cancelled before exiting
 #
 # Requires: bash, curl, jq, unzip (the Forgejo runner provides them).
 #
@@ -227,8 +228,8 @@ download_artifacts() {
     "$GH_API_BASE/repos/$GH_REPO/actions/runs/$RUN_ID/artifacts" \
     "$WORK_DIR/artifacts.json")
   if [ "$code" != "200" ]; then
-    log "error: could not list artifacts for run $RUN_ID (HTTP ${code:-none})"
-    exit 1
+    log "error: could not list artifacts for run $RUN_ID (HTTP ${code:-none}) — treating as infra"
+    exit 42
   fi
 
   IFS=',' read -r -a pairs <<< "$ARTIFACTS"
@@ -251,17 +252,23 @@ download_artifacts() {
     # GitHub artifact "downloads" are zip archives; the caller expects the
     # artifact contents in <outdir> (APK files, dist/ trees), so extract them.
     archive="$WORK_DIR/$name.zip"
-    curl -q -sSL -o "$archive" \
+    # `-f` turns an HTTP error (expired signed URL, 403, …) into a curl failure
+    # instead of saving the error body as if it were the archive.
+    if ! curl -q -sSLf -o "$archive" \
       -H "Authorization: Bearer $GH_TOKEN" \
       -H 'Accept: application/vnd.github+json' \
-      "$url"
+      "$url"; then
+      log "error: artifact '$name' download failed (transport/HTTP error) — treating as infra"
+      exit 42
+    fi
     if [ ! -s "$archive" ]; then
+      # A successful run that produced an empty archive is a real anomaly.
       log "error: artifact '$name' downloaded empty"
       exit 1
     fi
     if ! unzip -q -o "$archive" -d "$outdir"; then
-      log "error: artifact '$name' is not a valid zip archive"
-      exit 1
+      log "error: artifact '$name' is not a valid zip archive (truncated/corrupt download) — treating as infra"
+      exit 42
     fi
     log "downloaded artifact '$name' -> $outdir ($(wc -c < "$archive") bytes)"
   done
