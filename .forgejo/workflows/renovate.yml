@@ -21,9 +21,10 @@ name: Renovate
 # github.com rate limits when Renovate fetches release notes. It is passed as
 # the GITHUB_COM_TOKEN env var — Forgejo forbids secret names starting GITHUB_.
 
+# Scheduled execution moved to .github/workflows/renovate.yml (GitHub-hosted).
+# This file is kept for manual emergency runs via the Forgejo UI/API.
+
 on:
-  schedule:
-    - cron: "0 6 * * *"
   workflow_dispatch:
 
 jobs:

@@ -83,9 +83,9 @@ the two canonical debug keys re-included). Keep it out of the repository.
 
 #### CI secrets (Forgejo)
 
-`release.yml` restores the keystore right after `expo prebuild --clean`
-and exports the `RELEASE_*` variables for the build step. Configure these
-repository secrets:
+`actions/release-android` (the local fallback build called from `release.yml`)
+restores the keystore right after `expo prebuild --clean` and exports the
+`RELEASE_*` variables for the build step. Configure these repository secrets:
 
 | Secret                          | Content                                            |
 | ------------------------------- | -------------------------------------------------- |
@@ -292,10 +292,10 @@ Gradle не видит node, добавить `NODE_BINARY=/usr/bin/node` (пу�
 > `org.gradle.jvmargs`, иначе локальное значение молча перекроет
 > плагиновое.
 
-CI: в `release.yml` шаг «Configure Gradle for CI» выполняется ПОСЛЕ
-prebuild и перекрывает `jvmargs` значениями под 4 ГБ раннер; Android-релиз
-собирается задачей `assembleProdRelease` из
-`android/app/build/outputs/apk/prod/release/`.
+CI: в `actions/release-android` (локальный fallback, вызывается из `release.yml`)
+шаг «Configure Gradle for CI» выполняется ПОСЛЕ prebuild и перекрывает
+`jvmargs` значениями под 4 ГБ раннер; Android-релиз собирается задачей
+`assembleProdRelease` из `android/app/build/outputs/apk/prod/release/`.
 
 ## Troubleshooting
 
