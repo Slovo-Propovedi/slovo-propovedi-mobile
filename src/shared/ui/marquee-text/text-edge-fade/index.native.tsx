@@ -2,7 +2,11 @@ import MaskedView from '@react-native-masked-view/masked-view'
 import { LinearGradient } from 'expo-linear-gradient'
 import { StyleSheet, View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { EDGE_FADE_GRADIENT_TEST_ID, EDGE_FADE_WIDTH } from '../marquee-styles'
+import {
+  CONTAINER_FALLBACK_TEST_ID,
+  EDGE_FADE_GRADIENT_TEST_ID,
+  EDGE_FADE_WIDTH,
+} from '../marquee-styles'
 import { type EdgeFadeContainerProps } from './types'
 
 // `onLayout` is a worklet on native: Reanimated dispatches it on the UI thread
@@ -28,6 +32,7 @@ export const EdgeFadeContainer = ({
   children,
   enabled,
   fading,
+  fallbackOnLayout,
   onLayout,
   style,
   testID,
@@ -36,6 +41,14 @@ export const EdgeFadeContainer = ({
     return (
       <Animated.View style={style} testID={testID} onLayout={onLayout}>
         {children}
+        {/* Plain non-animated pipeline fallback: the Reanimated worklet onLayout
+            never dispatches on some OEM builds (Xiaomi/Android 15 confirmed). */}
+        <View
+          pointerEvents='none'
+          onLayout={fallbackOnLayout}
+          style={styles.fallbackProbe}
+          testID={CONTAINER_FALLBACK_TEST_ID}
+        />
       </Animated.View>
     )
 
@@ -60,11 +73,24 @@ export const EdgeFadeContainer = ({
   return (
     <Animated.View style={style} testID={testID} onLayout={onLayout}>
       <MaskedView maskElement={maskElement}>{children}</MaskedView>
+      {/* Same plain fallback as the non-fading branch above. */}
+      <View
+        pointerEvents='none'
+        onLayout={fallbackOnLayout}
+        style={styles.fallbackProbe}
+        testID={CONTAINER_FALLBACK_TEST_ID}
+      />
     </Animated.View>
   )
 }
 
 const styles = StyleSheet.create({
+  fallbackProbe: {
+    ...StyleSheet.absoluteFill,
+    // opacity 0 also removes it from iOS hit-testing, so pointerEvents alone
+    // cannot be the only guard.
+    opacity: 0,
+  },
   full: {
     ...StyleSheet.absoluteFill,
     backgroundColor: '#000',
