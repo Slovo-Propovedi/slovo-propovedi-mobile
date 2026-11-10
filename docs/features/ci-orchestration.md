@@ -153,10 +153,12 @@ GitHub не получает keystore. Его сборка идёт с `signing:
 
 | Имя | Тип | Назначение |
 | --- | --- | --- |
-| `GITHUB_CI_TOKEN` | secret | fine-grained PAT: Actions RW (dispatch/poll/artifacts) + Contents RW (видимость SHA в зеркале). Возможная замена на `MIRROR_GITHUB_TOKEN` — решается на живой проверке. |
+| `CI_GITHUB_TOKEN` | secret | PAT для dispatch и чтения run/артефактов (статусы не пишутся); classic-скоупов `repo` + `workflow` достаточно. Возможная замена на `MIRROR_GITHUB_TOKEN` — решается на живой проверке. |
 | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | secrets | release-keystore; используются только в `android-package` на Forgejo |
 | `APK_SIGNER_SHA256` | variable | пиннинг сертификата, жёсткий гейт `sign-android` |
 | хост/mirror-переменные и `PACKAGE_REGISTRY_TOKEN`, `VPS_*`, `XPREM_EOO_TOKEN` | как раньше | деплой web/OTA/публикация (см. [`updates.md`](./updates.md), [`web.md`](./web.md)) |
+
+Имя dispatch-секрета выбрано не случайно: Forgejo резервирует префиксы `GITHUB_`, `GITEA_` и `FORGEJO_` за автоматическими токенами, поэтому секрет с префиксом `GITHUB_` создать нельзя. Используется `CI_GITHUB_TOKEN` — org-level секрет (при распространении паттерна общий для всех репозиториев организации). Подходит classic PAT со скоупами `repo` + `workflow`: их хватает на dispatch, чтение run/артефактов, работу без записи статусов и push `.github/workflows` при зеркалировании.
 
 Для одноразовой настройки зеркала нужны `FORGEJO_TOKEN` (repo admin) и `GITHUB_MIRROR_TOKEN` (Contents write на GitHub-репозиторий) — их читает только `scripts/ci/setup-github-mirror.sh`, в workflow они не попадают.
 
@@ -195,7 +197,7 @@ scripts/ci/setup-github-mirror.sh
 
 1. **Зеркало:** запустить `scripts/ci/setup-github-mirror.sh` с `FORGEJO_TOKEN`/`GITHUB_MIRROR_TOKEN`; повторный запуск должен напечатать «already configured».
 2. **GitHub-variables:** завести хост/mirror/`EXPO_PUBLIC_*`/OTA-переменные в GitHub-репозитории и убедиться, что `.github/workflows/release.yml` прокидывает их в `env:` composite-шагов.
-3. **Токен dispatch:** секрет `GITHUB_CI_TOKEN` в Forgejo с Actions RW + Contents RW.
+3. **Токен dispatch:** org-level секрет `CI_GITHUB_TOKEN` в Forgejo (classic PAT: `repo` + `workflow`).
 4. **CI:** push в `main` → `dco` → `remote` → `gate`; в Forgejo появился статус `CI / checks` со ссылкой на GitHub-run; job summary показывает таблицу remote/local/verdict.
 5. **Релиз:** prerelease-тег `v*` → `changes` → `build-remote` → `android-package`/`web-package`; проверить артефакты `release-assets` (zip + `SHA256SUMS.txt`); `publish-release` — на реальном теге (он создаёт релиз).
 6. **Fallback:** временно выставить `QUEUE_TIMEOUT_MIN=0` в dispatch-шаге (или использовать заведомо невалидный `GH_TOKEN`) — должен отработать `local`/локальная сборка, а gate — success.
