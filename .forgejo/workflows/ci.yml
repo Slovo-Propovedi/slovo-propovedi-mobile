@@ -257,9 +257,24 @@ jobs:
             VERDICT=failure
           fi
 
+          if [ "$LOCAL_RESULT" = "success" ]; then
+            DESCRIPTION="Local fallback (GitHub unavailable): checks passed"
+          elif [ "$REMOTE_RESULT" = "success" ] && [ "$LOCAL_RESULT" = "skipped" ]; then
+            DESCRIPTION="GitHub-hosted checks passed"
+          elif [ "$REMOTE_RESULT" = "skipped" ] && [ "$LOCAL_RESULT" = "skipped" ]; then
+            DESCRIPTION="Blocked by DCO check"
+          else
+            DESCRIPTION="CI failed (remote: $REMOTE_RESULT, local: $LOCAL_RESULT)"
+          fi
+
+          # The dispatcher only emits a GitHub run URL on the 0/1/42 paths; point
+          # the status at this workflow run otherwise.
+          if [ -z "$RUN_URL" ]; then
+            RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+
           bash scripts/ci/forgejo-set-status.sh \
-            "${{ github.sha }}" "$VERDICT" "CI / checks" "$RUN_URL" \
-            "Heavy checks on GitHub-hosted runners (fallback: local)"
+            "${{ github.sha }}" "$VERDICT" "CI / checks" "$RUN_URL" "$DESCRIPTION"
 
           {
             echo '## CI'
