@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
-import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import { useAnimatedStyle } from 'react-native-reanimated'
 import { isTabIslandCollapsedAtom } from 'widgets/tab-bar/@x/morph'
 import { closeSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { isSearchFieldVisibleAtom } from 'features/sermon-search/@x/barMorph'
@@ -10,6 +10,7 @@ import { GlassIsland } from 'shared/ui'
 import { BAR_MORPH_DURATION_MS, tabBarHeightAtom } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
+import { useSearchFocusMorph } from '../lib/useSearchFocusMorph'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 import { SearchIslandContent } from './SearchIslandContent'
 import { SearchIslandMagnifier } from './SearchIslandMagnifier'
@@ -24,20 +25,21 @@ export const SearchIslandMorph = () => {
   const { isLight } = useTheme()
   const { width: screenWidth } = useWindowDimensions()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const [isTabCollapsed] = useAtom(isTabIslandCollapsedAtom)
   const isSearchFieldVisible = useIsSearchFieldVisible()
   const openSearch = useOpenSearch()
   const closeSearchAction = useAction(closeSearch)
-  const [isFocused, setIsFocused] = useState(false)
+  const { closeProgress, handleCloseFocusChange, isFocused, settledClose } = useSearchFocusMorph()
   // Both morphs subscribe to their atom, so they start in the same tick as the
-  // tab island instead of waiting for a React commit.
-  const barProgress = useAtomMorph(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
-  const openProgress = useAtomMorph(isSearchFieldVisibleAtom, BAR_MORPH_DURATION_MS)
-  const closeProgress = useSharedValue(isFocused ? 1 : 0)
-
-  useEffect(() => {
-    closeProgress.value = withTiming(isFocused ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
-  }, [closeProgress, isFocused])
+  // tab island instead of waiting for a React commit. Their SETTLED flags feed
+  // the resting layer; the live progress drives the animated layer.
+  const { progress: barProgress, settled: settledTabCollapsed } = useAtomMorph(
+    isTabIslandCollapsedAtom,
+    BAR_MORPH_DURATION_MS,
+  )
+  const { progress: openProgress, settled: settledOpen } = useAtomMorph(
+    isSearchFieldVisibleAtom,
+    BAR_MORPH_DURATION_MS,
+  )
 
   const handleCloseSearch = useCallback(() => {
     Keyboard.dismiss()
@@ -58,12 +60,14 @@ export const SearchIslandMorph = () => {
 
   // Plain restatement of the settled frame, applied after the animated style:
   // the glass theme remount re-commits first-render shadow-tree values, so the
-  // pill must not fall back to its launch geometry (Issue #63).
+  // pill must not fall back to its launch geometry (Issue #63). The settled flags
+  // lag their morphs, so mid-morph this layer carries the START frame instead of
+  // painting the destination a frame early.
   const { closeSlotRestingStyle, restingFrameStyle } = useMemo(() => {
-    const settledOpenProgress = isSearchFieldVisible ? 1 : 0
-    const settledCloseProgress = isFocused ? 1 : 0
+    const settledOpenProgress = settledOpen ? 1 : 0
+    const settledCloseProgress = settledClose ? 1 : 0
     const { closeRight, iconInset, iconSize, radius, ...geometry } = getSearchIslandGeometry({
-      barProgress: isTabCollapsed ? 1 : 0,
+      barProgress: settledTabCollapsed ? 1 : 0,
       closeProgress: settledCloseProgress,
       openProgress: settledOpenProgress,
       screenWidth,
@@ -82,7 +86,7 @@ export const SearchIslandMorph = () => {
       },
       restingFrameStyle: { ...geometry, borderRadius: radius, paddingLeft: iconInset },
     }
-  }, [isFocused, isSearchFieldVisible, isTabCollapsed, screenWidth, tabBarHeight])
+  }, [settledClose, settledOpen, settledTabCollapsed, screenWidth, tabBarHeight])
 
   return (
     <>
@@ -101,7 +105,7 @@ export const SearchIslandMorph = () => {
         <SearchIslandContent
           onOpenSearch={openSearch}
           openProgress={openProgress}
-          onFocusChange={setIsFocused}
+          onFocusChange={handleCloseFocusChange}
           isVisible={isSearchFieldVisible}
         />
       </GlassIsland>
