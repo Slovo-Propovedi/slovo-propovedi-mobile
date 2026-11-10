@@ -10,10 +10,9 @@ import {
 import { scheduleOnRN } from 'react-native-worklets'
 import { shouldMarquee } from './marquee-utils'
 
-// Some OEM Android builds (reported on Xiaomi/Android 15) drop the hidden
-// measurer's `onTextLayout`: the Text mounts but never reports a width, so
-// `textWidth` stays 0 and the title never marquees. Remount the measurer with a
-// growing delay and a barely-visible opacity until a layout pass lands.
+// If a device never reports the hidden measurer's `onTextLayout`, `textWidth`
+// stays 0 and the title never marquees. Remount the measurer with a growing
+// delay and a barely-visible opacity until a layout pass lands.
 const MEASURER_RETRY_MAX_ATTEMPTS = 5
 const MEASURER_RETRY_BASE_MS = 400
 
@@ -52,13 +51,20 @@ export const useMarqueeMeasurement = (text: string) => {
     [applyNeedsRepeat, containerWidth, textWidth],
   )
 
+  // Plain-JS fallback for the same box: some OEM builds (Xiaomi/Android 15
+  // confirmed) never dispatch the Reanimated worklet onLayout above, so a plain
+  // View probe measures the container through the standard RN pipeline. Both
+  // paths may report; they set the same shared value.
+  const handleContainerFallbackLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      containerWidth.value = event.nativeEvent.layout.width
+      applyNeedsRepeat(containerWidth.value, textWidth.value)
+    },
+    [applyNeedsRepeat, containerWidth, textWidth],
+  )
+
   // Web has no worklets: the plain handler runs on the JS thread synchronously.
-  const handleContainerLayout = isWeb
-    ? (event: LayoutChangeEvent) => {
-        containerWidth.value = event.nativeEvent.layout.width
-        applyNeedsRepeat(containerWidth.value, textWidth.value)
-      }
-    : handleWorkletLayout
+  const handleContainerLayout = isWeb ? handleContainerFallbackLayout : handleWorkletLayout
 
   // A new title starts a fresh measurement episode: one busted title must not
   // disable marquee for every later one.
@@ -97,6 +103,7 @@ export const useMarqueeMeasurement = (text: string) => {
   return {
     applyTextWidth,
     containerWidth,
+    handleContainerFallbackLayout,
     handleContainerLayout,
     maxOffset,
     measurerAttempt,

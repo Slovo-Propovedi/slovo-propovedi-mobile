@@ -1,4 +1,9 @@
-import { type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import {
+  type SharedValue,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated'
 import { type MarqueeCycle } from './marquee-cycle'
 import { getSyncedOffset, REPEAT_SPACER } from './marquee-utils'
 import { useMarqueeFrameClock } from './useMarqueeFrameClock'
@@ -38,6 +43,16 @@ export const useMarqueeAnimation = (
     textWidth,
     translateX,
   })
+
+  // A geometry change (pill resize, new text measurement) restarts the idle
+  // loop so the row re-derives its offset from fresh widths.
+  useAnimatedReaction(
+    () => ({ container: containerWidth.value, text: textWidth.value }),
+    (current, previous) => {
+      if (current.container !== previous?.container || current.text !== previous?.text)
+        startIdleMarquee()
+    },
+  )
 
   const animatedStyle = useAnimatedStyle(() => {
     // The visible Text keeps numberOfLines={1} on native, so ANY width smaller

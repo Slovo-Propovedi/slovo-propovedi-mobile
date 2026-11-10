@@ -9,6 +9,11 @@ export interface EdgeFadeContainerProps {
   enabled: boolean
   /** Whether the text currently overflows and the trailing edge must fade. */
   fading: boolean
+  /**
+   * Plain-JS container measurement, used where the Reanimated worklet onLayout
+   * never dispatches (see text-edge-fade/index.native).
+   */
+  fallbackOnLayout?: (event: LayoutChangeEvent) => void
   onLayout?: (event: LayoutChangeEvent) => void
   style?: StyleProp<ViewStyle>
   testID?: string

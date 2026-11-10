@@ -6,6 +6,9 @@ export const EDGE_FADE_WIDTH = 28
 // Test hook: rendered only while the trailing edge actually fades.
 export const EDGE_FADE_GRADIENT_TEST_ID = 'marquee-edge-fade-gradient'
 
+// Test hook: the plain-View container probe (see text-edge-fade/index.native).
+export const CONTAINER_FALLBACK_TEST_ID = 'marquee-container-fallback'
+
 // Web mask: the text is a child of the masked container, so the fade stays
 // pinned to the clip edge while the row scrolls underneath. RNW prefixes
 // `maskImage` for WebKit automatically.

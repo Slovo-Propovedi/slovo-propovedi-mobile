@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
-import { useAnimatedReaction, useSharedValue } from 'react-native-reanimated'
+import { useSharedValue } from 'react-native-reanimated'
 import { type MarqueeCycle } from './marquee-cycle'
 import { MarqueeMeasurerSlot } from './marquee-measurer-slot'
 import { MarqueeTextRow } from './marquee-text-row'
@@ -45,6 +45,7 @@ export const MarqueeText = memo(function MarqueeTextComponent({
   const {
     applyTextWidth,
     containerWidth,
+    handleContainerFallbackLayout,
     handleContainerLayout,
     maxOffset,
     measurerAttempt,
@@ -66,14 +67,6 @@ export const MarqueeText = memo(function MarqueeTextComponent({
       publishCycle,
       followCycle,
     )
-
-  useAnimatedReaction(
-    () => ({ container: containerWidth.value, text: textWidth.value }),
-    (current, previous) => {
-      if (current.container !== previous?.container || current.text !== previous?.text)
-        startIdleMarquee()
-    },
-  )
 
   const pan = useMarqueeGesture({
     clockPaused,
@@ -110,6 +103,7 @@ export const MarqueeText = memo(function MarqueeTextComponent({
       containerRef={containerRef}
       fading={fadeEdge && needsRepeat}
       onLayout={handleContainerLayout}
+      fallbackOnLayout={handleContainerFallbackLayout}
       style={[{ alignSelf: 'stretch', overflow: 'hidden' }, style]}
     >
       {/* A follower only displays; scrubbing its leader-owned phase would desync. */}

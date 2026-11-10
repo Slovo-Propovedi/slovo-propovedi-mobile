@@ -2,7 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Platform, StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
-import { EDGE_FADE_GRADIENT_TEST_ID } from './marquee-styles'
+import { CONTAINER_FALLBACK_TEST_ID, EDGE_FADE_GRADIENT_TEST_ID } from './marquee-styles'
 import { MarqueeText } from './marquee-text'
 import * as marqueeAnimation from './useMarqueeAnimation'
 
@@ -165,6 +165,45 @@ describe('<MarqueeText />', () => {
     await fireTextLayout(propsStub.text, 300)
 
     expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
+  })
+
+  test('measures the container via the plain fallback when the worklet path is silent', async () => {
+    // Some OEM builds never dispatch the Reanimated worklet onLayout (Xiaomi /
+    // Android 15 confirmed). The plain View probe still reports, so the
+    // duplicate copy and the frame clock must arm from it alone.
+    await renderWithProviders(
+      <MarqueeText fadeEdge autoStart testID={TEST_ID} text={propsStub.text} />,
+    )
+
+    await fireEvent(screen.getByTestId(CONTAINER_FALLBACK_TEST_ID), 'layout', {
+      nativeEvent: { layout: { width: 100 } },
+    })
+    await fireTextLayout(propsStub.text, 300)
+
+    expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
+  })
+
+  test('keeps working when both container paths report', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(100)
+    await fireEvent(screen.getByTestId(CONTAINER_FALLBACK_TEST_ID), 'layout', {
+      nativeEvent: { layout: { width: 100 } },
+    })
+    await fireTextLayout(propsStub.text, 300)
+
+    expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
+  })
+
+  test('resets to static when the fallback reports a fitting width', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireEvent(screen.getByTestId(CONTAINER_FALLBACK_TEST_ID), 'layout', {
+      nativeEvent: { layout: { width: 400 } },
+    })
+    await fireTextLayout(propsStub.text, 300)
+
+    expect(screen.getAllByText(propsStub.text)).toHaveLength(2)
   })
 
   test('renders a duplicate copy for a short overflowing title (geometric eligibility)', async () => {
