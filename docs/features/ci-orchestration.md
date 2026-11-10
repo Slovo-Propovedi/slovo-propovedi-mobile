@@ -113,7 +113,7 @@ changes --> create-release (только native)
    +--> ota (только js-only, остаётся на Forgejo)
 ```
 
-- `build-remote` — лёгкий диспетчер: `DISPATCH_INPUTS={"mode":...}`, `ARTIFACTS` по режиму (`unsigned-apk` + `web-dist` для native, только `web-dist` для js-only), выход 0/42 как в CI. Скачанные каталоги он перекладывает в Forgejo-артефакты (v3) с теми же именами; при `fallback=true` ничего не загружает — локальные job'ы создадут файлы сами. В группе `memory-heavy-jobs` не состоит. На стороне GitHub job `android` включается только при `mode=native`, а job `web` выполняется всегда — поэтому js-only тег всё равно получает `web-dist`.
+- `build-remote` — лёгкий диспетчер: `DISPATCH_INPUTS={"mode":...}`, `ARTIFACTS` по режиму (`unsigned-apk` + `web-dist` для native, только `web-dist` для js-only), выход 0/42 как в CI. Скачанные каталоги он перекладывает в Forgejo-артефакты (v3 — ограничение Forgejo-раннера) с теми же именами; при `fallback=true` ничего не загружает — локальные job'ы создадут файлы сами. В группе `memory-heavy-jobs` не состоит. На стороне GitHub job `android` включается только при `mode=native`, а job `web` выполняется всегда — поэтому js-only тег всё равно получает `web-dist`.
 - `android-package` (native) — либо скачивает `unsigned-apk` и подписывает его, либо при fallback собирает и подписывает локально; результат — артефакт `release-assets`.
 - `web-package` — берёт `web-dist` из GitHub (или локальный экспорт при fallback), затем выполняет прежние шаги деплоя: сборка web-образа, деплой на VPS, zip и прикрепление к релизу в native-режиме.
 - `publish-release` — `needs: [create-release, android-package]`; скачивает `release-assets` и публикует в Forgejo, GitHub и Codeberg (без изменений).
@@ -218,7 +218,7 @@ scripts/ci/setup-github-mirror.sh
 - **`curl -q` в скриптах.** Нейтрализует пользовательский `~/.curlrc` (например, `--continue-at -` ломает POST); на раннере поведение не меняется.
 - **`pull_request`-события не покрыты пилотом.** Диспетчер получает `github.ref_name`/`github.sha` в расчёте на push/тег; семантика PR-событий (merge-commit vs head, ref-нейминг) не адаптирована — CI на PR остаётся локальным/непроверенным.
 - **Таймауты — на вызывающей стороне.** Composite-шаги не поддерживают `timeout-minutes`; лимиты живут в `.github/workflows/*` и в dispatch-конфиге.
-- **Артефакт-actions зажаты на v3** на обеих сторонах (Forgejo не реализует GitHub Results API) — подробности и симптом в [`updates.md`](./updates.md) и [`debt.md`](../debt.md).
+- **Артефакт-actions: GitHub — v4, Forgejo — v3.** На GitHub-hosted workflow'ах `upload-artifact` теперь v4 (v3 полностью отключён на GitHub-hosted раннерах); на Forgejo-стороне загрузка/скачивание остаются v3 — раннер Forgejo не умеет GitHub Results API. REST-скачивание артефактов диспетчером (`GET .../runs/{id}/artifacts` + `archive_download_url`) версионно-агностично: v4 сменил внутреннее хранение, а не API.
 - **GitHub-workflow'ы — только `workflow_dispatch`.** Никаких `push`/`pull_request` триггеров: зеркало не должно запускать сборки само по себе.
 
 ## Распространение на остальные репозитории
