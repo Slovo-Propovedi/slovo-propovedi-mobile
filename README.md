@@ -1,7 +1,6 @@
 <div align="center">
 
 [![CI](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/actions/workflows/ci.yml/badge.svg)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/actions?workflow=ci.yml)
-[![Release](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/actions/workflows/release.yml/badge.svg)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest)
 
 </div>
 
@@ -11,7 +10,7 @@
 
 <div align="center">
 
-[![Релиз](https://img.shields.io/badge/release-latest-orange?style=flat-square)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Web/PWA](https://img.shields.io/badge/platform-Web%2FPWA-5A0FC8?style=flat-square&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) [![Лицензия](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
+[![Релиз](https://img.shields.io/github/v/release/Slovo-Propovedi/slovo-propovedi-mobile?label=release&style=flat-square)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Web/PWA](https://img.shields.io/badge/platform-Web%2FPWA-5A0FC8?style=flat-square&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) [![Лицензия](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
 
 </div>
 
