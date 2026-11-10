@@ -13,8 +13,10 @@ Scenarios:
 """
 
 import argparse
+import io
 import json
 import time
+import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 SCENARIOS = ("success", "failure", "stuck")
@@ -37,6 +39,14 @@ def run_state():
     if elapsed < 0.6:
         return "in_progress", None
     return "completed", "success"
+
+
+def artifact_zip():
+    """A real zip archive, as GitHub artifact downloads are."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("app-prod-release-unsigned.apk", "tiny apk payload\n")
+    return buffer.getvalue()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -103,7 +113,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(302, None, {"Location": f"/artifact-content/{name}"})
             return
         if path.startswith("/artifact-content/"):
-            self.send_bytes(200, b"tiny artifact payload\n", "application/zip")
+            self.send_bytes(200, artifact_zip(), "application/zip")
             return
 
         self.send_json(404, {"message": f"no mock route for {path}"})

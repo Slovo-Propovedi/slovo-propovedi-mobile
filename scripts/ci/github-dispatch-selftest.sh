@@ -102,7 +102,7 @@ status=0
 run_dispatch "$WORK_DIR/success" 1 "unsigned-apk=unsigned-apk" || status=$?
 stop_mock
 check_exit "(a) successful run with artifact" 0 "$status"
-check_file "(a) downloaded artifact" "$WORK_DIR/success/unsigned-apk/unsigned-apk.zip"
+check_file "(a) extracted artifact" "$WORK_DIR/success/unsigned-apk/app-prod-release-unsigned.apk"
 
 # --- (b) completed run with failure ------------------------------------------
 start_mock failure "$WORK_DIR/cancel-b.log"
