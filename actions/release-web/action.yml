@@ -1,0 +1,71 @@
+# Composite action: export the web PWA build into dist/.
+#
+# Shared by the GitHub-hosted release workflow and the Forgejo fallback path.
+# The caller owns `actions/checkout`, `timeout-minutes` (composite steps do not
+# support them), artifact upload and workspace cleanup.
+#
+# inputs.profile:
+#   constrained — memory-limited runner: caps the Node heap and Metro workers.
+#   hosted      — GitHub-hosted runner: no memory caps.
+#
+# Env supplied by the caller (step-level `env:` on the `uses:` step): the
+# EXPO_PUBLIC_* host/mirror values inlined into the bundle by Metro at export
+# time. EXPO_PUBLIC_REPOSITORY_URL / _OWNER are derived from the runner context
+# below.
+#
+# Output: dist/ (the exported web build).
+
+name: Export web build
+description: Install dependencies and export the web PWA into dist/.
+
+inputs:
+  profile:
+    description: '"constrained" (memory-limited runner) or "hosted".'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version: 24
+
+    - name: Enable Corepack
+      shell: bash
+      run: corepack enable
+
+    - name: Get yarn cache directory
+      id: yarn-cache-dir
+      shell: bash
+      run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache yarn dependencies
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: ${{ steps.yarn-cache-dir.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Install dependencies
+      shell: bash
+      run: yarn install --frozen-lockfile
+
+    - name: Export web
+      id: web-export
+      shell: bash
+      env:
+        # Repository coordinates (derived from the runner context) — release
+        # sources, update allowlist.
+        EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
+        EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      run: |
+        if [ "${{ inputs.profile }}" = "constrained" ]; then
+          # Same Metro memory caps as the APK build — the 4 GB host is shared.
+          export NODE_OPTIONS=--max-old-space-size=1536
+          export CI_METRO_MAX_WORKERS=2
+        fi
+        start=$EPOCHSECONDS
+        yarn web:build
+        printf '%s\n' "- Web export: ✅ ($((EPOCHSECONDS-start))s)" | scripts/ci/step-summary.sh
