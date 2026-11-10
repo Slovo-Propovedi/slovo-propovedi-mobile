@@ -11,7 +11,7 @@
 
 <div align="center">
 
-[![Release](https://img.shields.io/badge/release-latest-orange?style=flat-square)](releases/latest) [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](releases/latest) [![Web/PWA](https://img.shields.io/badge/platform-Web%2FPWA-5A0FC8?style=flat-square&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
+[![Release](https://img.shields.io/badge/release-latest-orange?style=flat-square)](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/releases) [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/releases) [![Web/PWA](https://img.shields.io/badge/platform-Web%2FPWA-5A0FC8?style=flat-square&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
 
 </div>
 
@@ -98,7 +98,7 @@
 | --- | --- |
 | **F-Droid** | _Link will be added once published_ |
 | **Web (PWA)** | [![Open](https://img.shields.io/badge/PWA-app.slovo--propovedi.ru-5A0FC8?style=for-the-badge&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) |
-| **Direct APK** | [![Download APK](https://img.shields.io/badge/APK-latest%20release-orange?style=for-the-badge&logo=android&logoColor=white)](releases/latest) |
+| **Direct APK** | [![Download APK](https://img.shields.io/badge/APK-latest%20release-orange?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/releases) |
 
 ## 📋 System Requirements
 
