@@ -1,21 +1,17 @@
 import { LightTheme } from 'shared/ui/theme'
 import { createCommonStyles, miniLayerStyle } from './commonStyles'
 
-describe('mini pill layer draw order', () => {
-  test('sits above the elevated tab-bar container on Android', () => {
-    // The native draw-order contract itself is not jest-testable: the style
-    // value IS the contract. The tab-bar container carries elevation 12, so its
-    // first child (BarBackdropShade) would composite over the pill's frost
-    // without a higher layer here.
-    expect(miniLayerStyle.elevation).toBe(13)
+describe('player layers draw order', () => {
+  test('mini pill layer carries no elevation', () => {
+    // The tab-bar backdrop is flat (its elevation lives on the islands row), so
+    // the pill needs no elevation of its own: the document order already paints
+    // the player subtree after the tab bar.
+    expect(miniLayerStyle).not.toHaveProperty('elevation')
   })
-})
 
-describe('player subtree draw order', () => {
-  test('lifts the whole subtree above the elevated tab-bar container on Android', () => {
-    // Android elevation reorders within sibling groups, so the pill layer's own
-    // elevation cannot beat the tab-bar's elevated container. The subtree root
-    // must carry the higher elevation instead.
-    expect(createCommonStyles(LightTheme).recoveryOverlay.elevation).toBe(13)
+  test('recovery overlay carries no elevation', () => {
+    // An elevated wrapper would re-project the player subtree and race the
+    // islands row; the flat shade makes that race impossible.
+    expect(createCommonStyles(LightTheme).recoveryOverlay).not.toHaveProperty('elevation')
   })
 })
