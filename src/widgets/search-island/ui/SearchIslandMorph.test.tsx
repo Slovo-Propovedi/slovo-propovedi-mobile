@@ -368,7 +368,8 @@ describe('<SearchIslandMorph>', () => {
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
     const closeSlotOpacity = () =>
       StyleSheet.flatten(
-        findContentWrapper(getByLabelText(CLOSE_LABEL, { includeHiddenElements: true })).props.style,
+        findContentWrapper(getByLabelText(CLOSE_LABEL, { includeHiddenElements: true })).props
+          .style,
       ).opacity
 
     completions.length = 0
