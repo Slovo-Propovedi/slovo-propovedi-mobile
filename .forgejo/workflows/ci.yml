@@ -155,10 +155,10 @@ jobs:
       - name: Dispatch checks to GitHub-hosted runners
         id: dispatch
         env:
-          # Fine-grained PAT with Actions RW; may be switched to
+          # Classic PAT (repo + workflow scopes); may be switched to
           # MIRROR_GITHUB_TOKEN if its scopes suffice — see
           # docs/features/ci-orchestration.md.
-          GH_TOKEN: ${{ secrets.GITHUB_CI_TOKEN }}
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           # GitHub org has hyphens, Forgejo org has underscores.
           GH_REPO: Slovo-Propovedi/slovo-propovedi-mobile
           WORKFLOW: ci.yml
@@ -168,7 +168,7 @@ jobs:
           # An unconfigured secret must not redden main: degrade to the local
           # fallback instead of failing the dispatch.
           if [ -z "${GH_TOKEN:-}" ]; then
-            echo "::warning::GITHUB_CI_TOKEN is not configured — skipping GitHub dispatch, running locally"
+            echo "::warning::CI_GITHUB_TOKEN is not configured — skipping GitHub dispatch, running locally"
             echo "fallback=true" >> "$GITHUB_OUTPUT"
             echo "run_url=" >> "$GITHUB_OUTPUT"
             exit 0
