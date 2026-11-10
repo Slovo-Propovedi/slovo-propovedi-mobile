@@ -6,6 +6,8 @@
 #   (a) success + artifact download           -> 0
 #   (b) completed run with failure            -> 1
 #   (c) run stuck queued past the timeout     -> 42 and a cancel POST is sent
+#   (d) workflow_dispatch inputs forwarded
+#   (e) artifact download failure             -> 42 (infra, caller may fall back)
 #
 # Usage: bash scripts/ci/github-dispatch-selftest.sh
 
@@ -35,12 +37,16 @@ stop_mock() {
   fi
 }
 
-start_mock() { # <scenario> <cancel_log> [dispatch_log] -> sets PORT
-  local scenario=$1 cancel_log=$2 dispatch_log=${3:-} port_file
+start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] -> sets PORT
+  local scenario=$1 cancel_log=$2 dispatch_log=${3:-} artifact_error=${4:-} port_file
+  local extra=()
   port_file="$WORK_DIR/port"
   rm -f "$port_file"
+  if [ -n "$artifact_error" ]; then
+    extra+=(--artifact-error)
+  fi
   python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" \
-    --cancel-log "$cancel_log" --dispatch-log "$dispatch_log" &
+    --cancel-log "$cancel_log" --dispatch-log "$dispatch_log" "${extra[@]}" &
   MOCK_PID=$!
   for _ in $(seq 1 100); do
     if [ -s "$port_file" ]; then
@@ -136,6 +142,13 @@ else
   printf 'FAIL (d) dispatch body did not carry the inputs field\n'
   FAILURES=$((FAILURES + 1))
 fi
+
+# --- (e) artifact transfer failure is infra, not a failed run -----------------
+start_mock success "$WORK_DIR/cancel-e.log" "" "artifact-error"
+status=0
+run_dispatch "$WORK_DIR/artifact-error" 1 "unsigned-apk=unsigned-apk" || status=$?
+stop_mock
+check_exit "(e) artifact download failure -> infra" 42 "$status"
 
 # --- dry-run touches no network ----------------------------------------------
 status=0

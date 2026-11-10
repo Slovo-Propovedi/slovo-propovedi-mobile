@@ -109,6 +109,9 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(200, {"workflow_runs": [self.run_payload()]})
             return
         if path.startswith("/artifacts/"):
+            if STATE["artifact_error"]:
+                self.send_json(403, {"message": "artifact download forbidden"})
+                return
             name = path[len("/artifacts/"):]
             self.send_json(302, None, {"Location": f"/artifact-content/{name}"})
             return
@@ -147,11 +150,17 @@ def main():
     parser.add_argument("--port-file", required=True)
     parser.add_argument("--cancel-log", default="/dev/null")
     parser.add_argument("--dispatch-log", default="")
+    parser.add_argument(
+        "--artifact-error",
+        action="store_true",
+        help="return 403 for artifact downloads (transport-failure scenario)",
+    )
     args = parser.parse_args()
 
     STATE["scenario"] = args.scenario
     STATE["cancel_log"] = args.cancel_log
     STATE["dispatch_log"] = args.dispatch_log
+    STATE["artifact_error"] = args.artifact_error
     STATE["dispatch_time"] = time.monotonic()
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
