@@ -34,11 +34,12 @@
 #       produced / downloaded empty — a real build failure, do NOT re-run locally
 #   2   usage/environment error (missing env, bad SHA/REF/ARTIFACTS format,
 #       missing jq)
-#   3   the commit never reached the mirror, or the run never appeared
-#   42  infra failure (dispatch rejected, queue/run timeout, GitHub API
-#       unreachable for RUN_TIMEOUT_MIN, artifact transport/extraction error) —
-#       the caller should fall back to the local runner; timeout paths cancel the
-#       run first, the unreachable path cannot (the API is down)
+#   3   the dispatched run never appeared on GitHub (run-discovery path only)
+#   42  infra failure (token rejected by GitHub, mirror-wait timeout, dispatch
+#       rejected, queue/run timeout, GitHub API unreachable for RUN_TIMEOUT_MIN,
+#       artifact transport/extraction error) — the caller should fall back to the
+#       local runner; timeout paths cancel the run first, the unreachable path
+#       cannot (the API is down)
 #   43  the run was cancelled externally (e.g. superseded by a newer push) —
 #       neutral: no fallback, no failure; the newer run reports the result
 #
@@ -155,9 +156,15 @@ wait_for_mirror() {
       log "commit $SHA is visible on $GH_REPO"
       return 0
     fi
+    # 401/403 = bad or missing CI_GITHUB_TOKEN. Retrying cannot help and a red
+    # branch would blame the commit — fall back to the local runner at once.
+    if [ "$code" = "401" ] || [ "$code" = "403" ]; then
+      log "error: GitHub rejected our token (HTTP $code) — check the CI_GITHUB_TOKEN secret"
+      exit 42
+    fi
     if [ "$SECONDS" -ge "$deadline" ]; then
-      log "error: commit $SHA did not reach $GH_REPO within ${MIRROR_WAIT_MIN}m (last HTTP ${code:-none})"
-      exit 3
+      log "error: commit $SHA did not reach $GH_REPO within ${MIRROR_WAIT_MIN}m (last HTTP ${code:-none}) — check the Forgejo push-mirror settings (enable sync-on-commit / press Sync now); falling back locally"
+      exit 42
     fi
     log "waiting for commit $SHA on $GH_REPO (HTTP ${code:-none}); retrying in ${POLL_INTERVAL_SECONDS}s"
     sleep "$POLL_INTERVAL_SECONDS"

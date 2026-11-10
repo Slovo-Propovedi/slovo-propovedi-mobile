@@ -11,6 +11,7 @@
 #   (f) run cancelled externally              -> 43 (superseded; no cancel, no logs)
 #   (g) dispatch POST 503 once                -> 0 (retried)
 #   (h) API unreachable during poll           -> 42 (bounded by RUN_TIMEOUT_MIN)
+#   (i) mirror rejects the token (401)        -> 42 (fallback, no dispatch POST)
 #
 # Usage: bash scripts/ci/github-dispatch-selftest.sh
 
@@ -40,9 +41,9 @@ stop_mock() {
   fi
 }
 
-start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] [dispatch_503_once] [run_503] -> sets PORT
+start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] [dispatch_503_once] [run_503] [mirror_401] -> sets PORT
   local scenario=$1 cancel_log=$2 dispatch_log=${3:-} artifact_error=${4:-} request_log=${5:-}
-  local dispatch_503_once=${6:-} run_503=${7:-} port_file
+  local dispatch_503_once=${6:-} run_503=${7:-} mirror_401=${8:-} port_file
   local extra=()
   port_file="$WORK_DIR/port"
   rm -f "$port_file"
@@ -57,6 +58,9 @@ start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [reques
   fi
   if [ -n "$run_503" ]; then
     extra+=(--run-503)
+  fi
+  if [ -n "$mirror_401" ]; then
+    extra+=(--mirror-401)
   fi
   python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" \
     --cancel-log "$cancel_log" --dispatch-log "$dispatch_log" "${extra[@]}" &
@@ -200,6 +204,19 @@ if [ -s "$WORK_DIR/cancel-h.log" ]; then
   FAILURES=$((FAILURES + 1))
 else
   printf 'ok   (h) no cancel POST sent\n'
+fi
+
+# --- (i) mirror rejects the token: immediate fallback, no dispatch -----------
+start_mock success "$WORK_DIR/cancel-i.log" "$WORK_DIR/dispatch-i.log" "" "" "" "" "mirror-401"
+status=0
+run_dispatch "$WORK_DIR/mirror-401" 1 "" || status=$?
+stop_mock
+check_exit "(i) mirror 401 -> fallback" 42 "$status"
+if [ -s "$WORK_DIR/dispatch-i.log" ]; then
+  printf 'FAIL (i) dispatcher attempted a dispatch POST despite the auth error\n'
+  FAILURES=$((FAILURES + 1))
+else
+  printf 'ok   (i) no dispatch POST attempted\n'
 fi
 
 # --- dry-run touches no network ----------------------------------------------

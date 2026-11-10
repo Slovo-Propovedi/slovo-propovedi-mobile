@@ -91,6 +91,9 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
 
         if path.startswith(f"{REPO}/commits/"):
+            if STATE["mirror_401"]:
+                self.send_json(401, {"message": "Bad credentials"})
+                return
             self.send_json(200, {"sha": path.rsplit("/", 1)[-1]})
             return
         if path == f"{REPO}/actions/runs/{RUN_ID}":
@@ -175,6 +178,11 @@ def main():
         help="return 503 for the run poll endpoint (API-unreachable scenario)",
     )
     parser.add_argument(
+        "--mirror-401",
+        action="store_true",
+        help="return 401 for the commits endpoint (bad-token scenario)",
+    )
+    parser.add_argument(
         "--artifact-error",
         action="store_true",
         help="return 403 for artifact downloads (transport-failure scenario)",
@@ -188,6 +196,7 @@ def main():
     STATE["dispatch_503_once"] = args.dispatch_503_once
     STATE["dispatch_count"] = 0
     STATE["run_503"] = args.run_503
+    STATE["mirror_401"] = args.mirror_401
     STATE["artifact_error"] = args.artifact_error
     STATE["dispatch_time"] = time.monotonic()
 
