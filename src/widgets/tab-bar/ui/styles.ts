@@ -33,7 +33,6 @@ export const styles = {
   floatingContainer: {
     alignItems: 'center' as const,
     bottom: 0,
-    elevation: 12,
     left: 0,
     position: 'absolute' as const,
     right: 0,
@@ -63,6 +62,9 @@ export const styles = {
   // 20) and the pill's later subtree (zIndex 300) stay above.
   islandsRow: {
     alignItems: 'center' as const,
+    // Поднятый ряд рисует острова над контентом экранов; сама подложка
+    // (первый ребёнок контейнера) остаётся плоской и не композитится над пилюлей.
+    elevation: 12,
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
     maxWidth: CONTENT_COLUMN_WIDTH,

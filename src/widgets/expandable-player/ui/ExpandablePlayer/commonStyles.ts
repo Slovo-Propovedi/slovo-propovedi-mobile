@@ -23,12 +23,11 @@ export const createCommonStyles = (theme: ThemeColors) =>
     // classes; inline style.pointerEvents:'box-none' would emit the invalid CSS value
     // `pointer-events: box-none`, the browser drops it, the wrapper becomes
     // pointer-events:auto and swallows every touch on the page below the player.
-    // Android elevation reorders among sibling groups: the tab-bar's elevated container
-    // (12) painted its BarBackdropShade over this subtree's frost (verified with an
-    // opaque-red probe). Lifting this subtree root above it fixes the pill in both themes.
+    // No elevation: the tab-bar backdrop is flat (its elevation moved to the islands
+    // row), so the draw order is the document one — screens -> tab bar (shade +
+    // islands) -> player (pill).
     recoveryOverlay: {
       ...StyleSheet.absoluteFill,
-      elevation: 13,
       pointerEvents: 'box-none',
     },
   })
@@ -41,17 +40,13 @@ export const createCommonStyles = (theme: ThemeColors) =>
 // value `pointer-events: box-none`, leaving the overlay pointer-events:auto and
 // swallowing every touch on the page (Issue: web UI unresponsive).
 //
-// `elevation: 13`: keeps the pill above the player's other Android layers. It
-// cannot lift the pill above the tab bar from inside this subtree — Android
-// reorders elevation among sibling groups, not descendants — so the subtree
-// root (recoveryOverlay) carries the elevation that beats the tab-bar's
-// floatingContainer (12) and its BarBackdropShade. iOS/web are unaffected
-// (elevation is Android-only), and with no background there is no outline:
-// only the draw order changes, no shadow.
+// `elevation` is intentionally absent: the tab-bar backdrop is flat (the
+// elevation moved to the islands row), so the draw order is the document one —
+// screens -> tab bar (shade + islands) -> player (pill). An elevation here only
+// raced the tab-bar container's old projection and is no longer needed.
 export const miniLayerStyle = StyleSheet.create({
   layer: {
     bottom: 0,
-    elevation: 13,
     left: 0,
     position: 'absolute',
     right: 0,
