@@ -101,6 +101,8 @@ runs:
     - name: Sign APK
       id: sign
       shell: bash
+      # The input APK may already be debug-signed (AGP fallback on the GitHub
+      # build); apksigner sign replaces existing signatures.
       run: |
         set -euo pipefail
         APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -name apksigner -type f 2>/dev/null | sort -V | tail -1)

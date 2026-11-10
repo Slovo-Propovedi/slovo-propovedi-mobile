@@ -132,7 +132,7 @@ changes --> create-release (только native)
 
 ## Неподписанный APK и подпись
 
-GitHub не получает keystore. Его сборка идёт с `signing: none`: `scripts/gradle/disable-release-signing.gradle` обнуляет `buildTypes.release.signingConfig` (без него `android/app/build.gradle` откатился бы к debug-ключу), поэтому на выходе получается `app-prod-release-unsigned.apk` и артефакт `unsigned-apk`.
+GitHub не получает keystore. Его сборка идёт с `signing: none`: без `RELEASE_STORE_FILE` AGP подписывает release-APK debug-ключом (fallback в `android/app/build.gradle`), поэтому промежуточный APK может быть debug-signed и называться `app-prod-release.apk`. Артефакт всё равно называется `unsigned-apk` (контракт с Forgejo не меняется); гарантия подписи — не промежуточный файл, а гейт `APK_SIGNER_SHA256` после `zipalign + apksigner sign` на Forgejo, который заменяет существующие подписи.
 
 Подпись выполняет Forgejo в `android-package` → `actions/sign-android`:
 

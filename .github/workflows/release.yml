@@ -65,12 +65,27 @@ jobs:
           signing: none
           version: ${{ steps.version.outputs.version }}
 
-      - name: Assert APK is unsigned
+      - name: Verify collected APK
         run: |
-          test -n "$(find unsigned-apk -name '*-unsigned.apk' -print -quit)" || {
-            echo "::error::Expected *-unsigned.apk in unsigned-apk/ — the disable-release-signing init script did not take effect (AGP may have debug-signed the APK)"
+          set -euo pipefail
+          mapfile -t APKS < <(find unsigned-apk -name '*.apk' -print)
+          if [ "${#APKS[@]}" -eq 0 ]; then
+            echo "::error::No APK found in unsigned-apk/"
             exit 1
-          }
+          fi
+          if [ "${#APKS[@]}" -gt 1 ]; then
+            echo "::error::Expected exactly one APK in unsigned-apk/, found ${#APKS[@]}: ${APKS[*]}"
+            exit 1
+          fi
+          APK="${APKS[0]}"
+          echo "collected APK: $APK ($(stat -c %s "$APK") bytes)"
+          if [[ "$(basename "$APK")" != *-unsigned.apk ]]; then
+            echo "::warning::APK is debug-signed (AGP fallback without RELEASE_STORE_FILE) — expected on GitHub-hosted builds; it is re-signed with the release key on the Forgejo side (zipalign + apksigner, cert gate APK_SIGNER_SHA256)"
+          fi
+          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -name apksigner -type f 2>/dev/null | sort -V | tail -1)
+          if [ -n "$APKSIGNER" ]; then
+            "$APKSIGNER" verify --print-certs "$APK" | head -8 || true
+          fi
 
       - name: Upload unsigned APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

@@ -10,8 +10,11 @@
 #   signing   "env" — sign with the release keystore (RELEASE_* env), verify the
 #             APK certificate against APK_SIGNER_SHA256 and produce
 #             release-assets/ (zip + SHA256SUMS.txt);
-#             "none" — build an unsigned APK (disable-release-signing.gradle)
-#             and copy it into unsigned-apk/ for a later signing job.
+#             "none" — build an APK and copy it into unsigned-apk/ for a later
+#             re-signing job. It may be debug-signed (AGP falls back to the
+#             debug keystore when RELEASE_STORE_FILE is unset); the Forgejo
+#             sign-android cert gate (APK_SIGNER_SHA256) is the signing
+#             guarantee, and apksigner sign replaces existing signatures.
 #   version   release version without the leading "v" (e.g. 0.33.1).
 #
 # Env supplied by the caller (step-level `env:` on the `uses:` step):
@@ -241,14 +244,11 @@ runs:
         cd android
         free -h
         # The config plugin already disables lintVital* tasks; the init script is
-        # belt-and-suspenders. `none` builds unsigned: the release signingConfig
-        # is cleared so the output is app-prod-release-unsigned.apk.
-        init_scripts=(--init-script ../scripts/gradle/disable-lint-vital.gradle)
-        if [ "${{ inputs.signing }}" = "none" ]; then
-          init_scripts+=(--init-script ../scripts/gradle/disable-release-signing.gradle)
-        fi
+        # belt-and-suspenders. signing=none builds without RELEASE_STORE_FILE:
+        # AGP falls back to the debug keystore, so the collected APK is
+        # debug-signed and re-signed on the Forgejo side.
         start=$EPOCHSECONDS
-        nice -n 19 ionice -c 3 ./gradlew assembleProdRelease --no-daemon -Dorg.gradle.parallel=false "${init_scripts[@]}"
+        nice -n 19 ionice -c 3 ./gradlew assembleProdRelease --no-daemon -Dorg.gradle.parallel=false --init-script ../scripts/gradle/disable-lint-vital.gradle
         df -h /
         printf '%s\n' "- APK build (arm64-v8a): ✅ ($((EPOCHSECONDS-start))s)" | ../scripts/ci/step-summary.sh
 
@@ -309,19 +309,19 @@ runs:
           echo "- Checksums: \`SHA256SUMS.txt\` ($(cat "release-assets/SHA256SUMS.txt"))"
         } | scripts/ci/step-summary.sh
 
-    - name: Collect unsigned APK
+    - name: Collect APK for re-signing
       id: collect-unsigned
       if: ${{ inputs.signing == 'none' }}
       shell: bash
       run: |
         APK_PATH=$(find android/app/build/outputs -name "*.apk" -print -quit)
         if [ -z "$APK_PATH" ]; then
-          echo "::error::No unsigned APK found"
+          echo "::error::No APK found"
           exit 1
         fi
         mkdir -p unsigned-apk
         cp "$APK_PATH" unsigned-apk/
-        printf '%s\n' "- Unsigned APK: ✅ \`$(basename "$APK_PATH")\` → \`unsigned-apk/\`" | scripts/ci/step-summary.sh
+        printf '%s\n' "- Collected APK: ✅ \`$(basename "$APK_PATH")\` → \`unsigned-apk/\`" | scripts/ci/step-summary.sh
 
     # Snapshot key is computed after the build so NDK/CMake installed by Gradle
     # during assembleProdRelease are part of the cache (release.yml semantics).
