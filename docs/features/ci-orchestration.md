@@ -51,15 +51,17 @@ Forgejo: статус CI / checks, подпись, публикация <-- ар
 | `2` | ошибка использования/окружения (нет env, битый SHA/REF/ARTIFACTS, нет jq/unzip) | провалить job |
 | `3` | коммит не дошёл до зеркала или run не появился | провалить job (это не инфраструктурный fallback) |
 | `42` | инфраструктура: dispatch отвергнут, queue-timeout или run-timeout; run отменён через `cancel` | запустить локальный fallback |
+| `43` | run отменён извне (например, GitHub-concurrency при быстром втором push) | нейтрально: не fallback и не failure — результат даст более новый run |
 
 Детали поведения:
 
 - Перед отменой по таймауту диспетчер делает `POST .../actions/runs/<id>/cancel` — «зависший» run не продолжит жечь минуты после fallback.
 - Артефакты GitHub отдаются zip-архивами; диспетчер проверяет непустоту и распаковывает их в целевой каталог (`unzip`). Поэтому `ARTIFACTS="unsigned-apk=unsigned-apk"` даёт в `unsigned-apk/` сам APK, а не вложенный zip.
-- В stdout печатается одна машинная строка `GH_RUN_URL=<url>` (до поллинга), поэтому вызывающий шаг может приложить ссылку к статусу на путях `0/1/42`. Весь человекочитаемый прогресс идёт в stderr.
+- В stdout печатается одна машинная строка `GH_RUN_URL=<url>` (до поллинга), поэтому вызывающий шаг может приложить ссылку к статусу на путях `0/1/42/43`. Весь человекочитаемый прогресс идёт в stderr.
 - `REF`/`SHA` намеренно разные: dispatch принимает ветку/тег, а ожидание в зеркале и корреляция run — по коммиту.
+- Внешняя отмена (`conclusion: cancelled`, например GitHub отменил старый run из-за `concurrency: cancel-in-progress` при быстром втором push) — это `exit 43`: диспетчер не шлёт cancel (run уже отменён) и не печатает логи job'ов; вызывающий помечает старый коммит `warning` («superseded»), а не красным.
 
-Самопроверка: `scripts/ci/github-dispatch-selftest.sh` поднимает локальный мок `scripts/ci/mock-github-api.py` на `GH_API_BASE` и проверяет успех с артефактом, реальный провал, queue-timeout с cancel, передачу `DISPATCH_INPUTS` и dry-run. Сеть не нужна.
+Самопроверка: `scripts/ci/github-dispatch-selftest.sh` поднимает локальный мок `scripts/ci/mock-github-api.py` на `GH_API_BASE` и проверяет успех с артефактом, реальный провал, queue-timeout с cancel, передачу `DISPATCH_INPUTS`, сбой скачивания артефакта (42), внешнюю отмену (43) и dry-run. Сеть не нужна.
 
 ## Контракт статусов
 
@@ -71,7 +73,7 @@ Forgejo: статус CI / checks, подпись, публикация <-- ар
 - переименование `gate` или смена контекста ручного статуса требует правки ожидания в `create-release`;
 - статус можно ставить повторно (re-run), свежая запись перекрывает старую.
 
-Вердикт `gate`: `success`, если локальный fallback отработал успешно **или** локальный не запускался (skipped), а remote завершился успешно; иначе `failure`. Реальный провал remote (`exit 1`) локально не повторяется — gate падает.
+Вердикт `gate`: `success`, если локальный fallback отработал успешно **или** локальный не запускался (skipped), а remote завершился успешно; иначе `failure`. Реальный провал remote (`exit 1`) локально не повторяется — gate падает. Отдельный случай — superseded (`exit 43`): если GitHub отменил run извне (быстрый повторный push), gate ставит статус `warning` с описанием «Superseded by a newer push — checks re-run on the newer commit» и не краснит старый коммит; сам job при этом остаётся зелёным.
 
 ## CI-поток (`.forgejo/workflows/ci.yml`)
 
@@ -86,9 +88,9 @@ dco --> remote --(exit 42, fallback=true)--> local
 ```
 
 - `dco` — проверка `Signed-off-by`, без изменений.
-- `remote` — checkout + `scripts/ci/github-dispatch.sh`; выход 0 → `fallback=false`, 42 → `fallback=true` + warning и `run_url`; прочие коды проваливают job. В группе `memory-heavy-jobs` **не состоит** — это лёгкий сетевой job.
+- `remote` — checkout + `scripts/ci/github-dispatch.sh`; выход 0 → `fallback=false`, 42 → `fallback=true` + warning и `run_url`, 43 → `superseded=true` (нейтрально, без fallback); прочие коды проваливают job. В группе `memory-heavy-jobs` **не состоит** — это лёгкий сетевой job.
 - `local` — `needs: [dco, remote]`, `if: always() && needs.remote.outputs.fallback == 'true'`; запускает `./actions/checks` с `profile: constrained`; держит `memory-heavy-jobs`, чтобы не пересечься с релизной сборкой на общем хосте.
-- `gate` — `always()`, ставит статус и пишет таблицу в job summary (remote/local/verdict/ссылка на run). На тегах пропускается, чтобы не поставить ложный `failure` на коммит тега.
+- `gate` — `always()`, ставит статус и пишет таблицу в job summary (remote/local/verdict/ссылка на run); для superseded-рана ставит `warning`, а не `failure`. На тегах пропускается, чтобы не поставить ложный статус на коммит тега.
 
 Логика проверок живёт в `actions/checks` (patch-package, `check:types`, `check:fsd`, lint, jest, нативные unit-тесты Gradle). `profile: constrained` включает `--maxWorkers=2` для jest; `profile: hosted` оставляет дефолт. Composite-шаги не поддерживают `timeout-minutes` — лимиты задаёт вызывающий workflow (`.github/workflows/ci.yml` — 90 минут).
 

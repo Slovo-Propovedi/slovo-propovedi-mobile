@@ -146,6 +146,7 @@ jobs:
 
     outputs:
       fallback: ${{ steps.dispatch.outputs.fallback }}
+      superseded: ${{ steps.dispatch.outputs.superseded }}
       run_url: ${{ steps.dispatch.outputs.run_url }}
 
     steps:
@@ -178,7 +179,7 @@ jobs:
           STATUS=$?
           set -e
 
-          # Printed by the dispatcher on the 0/1/42 paths (see its header).
+          # Printed by the dispatcher on the 0/1/42/43 paths (see its header).
           RUN_URL=$(printf '%s\n' "$OUTPUT" | sed -n 's/^GH_RUN_URL=//p' | tail -1)
 
           case "$STATUS" in
@@ -188,6 +189,11 @@ jobs:
             42)
               echo "fallback=true" >> "$GITHUB_OUTPUT"
               echo "::warning::GitHub-hosted checks unavailable (queue/infra) — using the local fallback"
+              ;;
+            43)
+              echo "fallback=false" >> "$GITHUB_OUTPUT"
+              echo "superseded=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::GitHub run was cancelled externally (superseded by a newer push) — reporting warning, not failure"
               ;;
             *)
               echo "::error::GitHub-hosted checks failed (dispatch exit $STATUS)"
@@ -236,6 +242,7 @@ jobs:
           FORGEJO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REMOTE_RESULT: ${{ needs.remote.result }}
           LOCAL_RESULT: ${{ needs.local.result }}
+          SUPERSEDED: ${{ needs.remote.outputs.superseded }}
           RUN_URL: ${{ needs.remote.outputs.run_url }}
         run: |
           status_emoji() {
@@ -243,32 +250,33 @@ jobs:
               success) printf '✅' ;;
               failure) printf '❌' ;;
               cancelled) printf '🟨' ;;
+              warning) printf '⚠️' ;;
               *) printf '⏭️' ;;
             esac
           }
 
-          # A local pass is enough on its own; a remote pass is enough only when
-          # the local fallback was not needed (skipped).
-          if [ "$LOCAL_RESULT" = "success" ]; then
+          # A superseded run must never redden the old commit: the newer push
+          # re-runs the checks and reports their result. A local pass always
+          # wins (it can only run when the remote dispatch did not start one).
+          if [ "${SUPERSEDED:-}" = "true" ] && [ "$LOCAL_RESULT" != "success" ]; then
+            VERDICT=warning
+            DESCRIPTION="Superseded by a newer push — checks re-run on the newer commit"
+          elif [ "$LOCAL_RESULT" = "success" ]; then
             VERDICT=success
+            DESCRIPTION="Local fallback (GitHub unavailable): checks passed"
           elif [ "$LOCAL_RESULT" = "skipped" ] && [ "$REMOTE_RESULT" = "success" ]; then
             VERDICT=success
-          else
-            VERDICT=failure
-          fi
-
-          if [ "$LOCAL_RESULT" = "success" ]; then
-            DESCRIPTION="Local fallback (GitHub unavailable): checks passed"
-          elif [ "$REMOTE_RESULT" = "success" ] && [ "$LOCAL_RESULT" = "skipped" ]; then
             DESCRIPTION="GitHub-hosted checks passed"
           elif [ "$REMOTE_RESULT" = "skipped" ] && [ "$LOCAL_RESULT" = "skipped" ]; then
+            VERDICT=failure
             DESCRIPTION="Blocked by DCO check"
           else
+            VERDICT=failure
             DESCRIPTION="CI failed (remote: $REMOTE_RESULT, local: $LOCAL_RESULT)"
           fi
 
-          # The dispatcher only emits a GitHub run URL on the 0/1/42 paths; point
-          # the status at this workflow run otherwise.
+          # The dispatcher only emits a GitHub run URL on the 0/1/42/43 paths;
+          # point the status at this workflow run otherwise.
           if [ -z "$RUN_URL" ]; then
             RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           fi
@@ -286,5 +294,9 @@ jobs:
             echo "| verdict | $(status_emoji "$VERDICT") $VERDICT |"
             if [ -n "$RUN_URL" ]; then
               echo "| GitHub run | [$RUN_URL]($RUN_URL) |"
+            fi
+            if [ "${SUPERSEDED:-}" = "true" ]; then
+              echo ''
+              echo 'Superseded by a newer push — checks re-run on the newer commit.'
             fi
           } | scripts/ci/step-summary.sh

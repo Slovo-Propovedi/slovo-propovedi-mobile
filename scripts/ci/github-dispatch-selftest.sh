@@ -8,6 +8,7 @@
 #   (c) run stuck queued past the timeout     -> 42 and a cancel POST is sent
 #   (d) workflow_dispatch inputs forwarded
 #   (e) artifact download failure             -> 42 (infra, caller may fall back)
+#   (f) run cancelled externally              -> 43 (superseded; no cancel, no logs)
 #
 # Usage: bash scripts/ci/github-dispatch-selftest.sh
 
@@ -37,13 +38,16 @@ stop_mock() {
   fi
 }
 
-start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] -> sets PORT
-  local scenario=$1 cancel_log=$2 dispatch_log=${3:-} artifact_error=${4:-} port_file
+start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] -> sets PORT
+  local scenario=$1 cancel_log=$2 dispatch_log=${3:-} artifact_error=${4:-} request_log=${5:-} port_file
   local extra=()
   port_file="$WORK_DIR/port"
   rm -f "$port_file"
   if [ -n "$artifact_error" ]; then
     extra+=(--artifact-error)
+  fi
+  if [ -n "$request_log" ]; then
+    extra+=(--request-log "$request_log")
   fi
   python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" \
     --cancel-log "$cancel_log" --dispatch-log "$dispatch_log" "${extra[@]}" &
@@ -149,6 +153,25 @@ status=0
 run_dispatch "$WORK_DIR/artifact-error" 1 "unsigned-apk=unsigned-apk" || status=$?
 stop_mock
 check_exit "(e) artifact download failure -> infra" 42 "$status"
+
+# --- (f) externally cancelled run -> superseded, not a failure ----------------
+start_mock cancelled "$WORK_DIR/cancel-f.log" "" "" "$WORK_DIR/requests-f.log"
+status=0
+run_dispatch "$WORK_DIR/cancelled" 1 "" || status=$?
+stop_mock
+check_exit "(f) externally cancelled run -> superseded" 43 "$status"
+if [ -s "$WORK_DIR/cancel-f.log" ]; then
+  printf 'FAIL (f) dispatcher sent a cancel POST for an already-cancelled run\n'
+  FAILURES=$((FAILURES + 1))
+else
+  printf 'ok   (f) no cancel POST sent\n'
+fi
+if [ -s "$WORK_DIR/requests-f.log" ] && grep -q "/actions/jobs/" "$WORK_DIR/requests-f.log"; then
+  printf 'FAIL (f) failed-job logs were fetched for a cancelled run\n'
+  FAILURES=$((FAILURES + 1))
+else
+  printf 'ok   (f) no failed-job log fetch\n'
+fi
 
 # --- dry-run touches no network ----------------------------------------------
 status=0

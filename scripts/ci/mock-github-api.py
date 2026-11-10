@@ -6,10 +6,11 @@ ephemeral port on 127.0.0.1 and writes it to --port-file so the caller can
 build GH_API_BASE.
 
 Scenarios:
-  success  run goes queued -> in_progress -> completed(success) in <1s, serves
-           one artifact through a redirect
-  failure  run is completed(failure) from the first poll, serves a job log
-  stuck    run stays queued forever (drives the queue timeout / cancel path)
+  success    run goes queued -> in_progress -> completed(success) in <1s, serves
+             one artifact through a redirect
+  failure    run is completed(failure) from the first poll, serves a job log
+  stuck      run stays queued forever (drives the queue timeout / cancel path)
+  cancelled  run is completed(cancelled) from the first poll (external cancel)
 """
 
 import argparse
@@ -19,7 +20,7 @@ import time
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-SCENARIOS = ("success", "failure", "stuck")
+SCENARIOS = ("success", "failure", "stuck", "cancelled")
 RUN_ID = 123
 REPO = "/repos/owner/repo"
 WORKFLOW = "/actions/workflows/ci.yml"
@@ -33,6 +34,8 @@ def run_state():
         return "queued", None
     if scenario == "failure":
         return "completed", "failure"
+    if scenario == "cancelled":
+        return "completed", "cancelled"
     elapsed = time.monotonic() - STATE["dispatch_time"]
     if elapsed < 0.3:
         return "queued", None
@@ -82,6 +85,9 @@ class Handler(BaseHTTPRequestHandler):
         }
 
     def do_GET(self):
+        if STATE["request_log"]:
+            with open(STATE["request_log"], "a", encoding="utf-8") as handle:
+                handle.write(f"GET {self.path}\n")
         path = self.path.split("?", 1)[0]
 
         if path.startswith(f"{REPO}/commits/"):
@@ -150,6 +156,7 @@ def main():
     parser.add_argument("--port-file", required=True)
     parser.add_argument("--cancel-log", default="/dev/null")
     parser.add_argument("--dispatch-log", default="")
+    parser.add_argument("--request-log", default="")
     parser.add_argument(
         "--artifact-error",
         action="store_true",
@@ -160,6 +167,7 @@ def main():
     STATE["scenario"] = args.scenario
     STATE["cancel_log"] = args.cancel_log
     STATE["dispatch_log"] = args.dispatch_log
+    STATE["request_log"] = args.request_log
     STATE["artifact_error"] = args.artifact_error
     STATE["dispatch_time"] = time.monotonic()
 

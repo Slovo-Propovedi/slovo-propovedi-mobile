@@ -38,12 +38,14 @@
 #   42  infra failure (dispatch rejected, queue/run timeout, artifact
 #       transport/extraction error) — the caller should fall back to the local
 #       runner; a run we cancelled first is cancelled before exiting
+#   43  the run was cancelled externally (e.g. superseded by a newer push) —
+#       neutral: no fallback, no failure; the newer run reports the result
 #
 # Requires: bash, curl, jq, unzip (the Forgejo runner provides them).
 #
 # Stdout contract: once the run is known, a single line `GH_RUN_URL=<url>` is
 # printed (before polling), so callers that capture stdout can report the run
-# URL on the 0/1/42 exit paths. All human-readable progress goes to stderr.
+# URL on the 0/1/42/43 exit paths. All human-readable progress goes to stderr.
 
 set -euo pipefail
 
@@ -334,6 +336,12 @@ poll_run() {
             download_artifacts
             log "run $RUN_ID succeeded: $RUN_URL"
             exit 0
+          fi
+          # A run cancelled by GitHub concurrency (rapid pushes) is not a test
+          # failure: the newer run reports the result. Do not fetch logs.
+          if [ "$conclusion" = "cancelled" ]; then
+            log "run $RUN_ID was cancelled externally (superseded by a newer push): $RUN_URL"
+            exit 43
           fi
           print_failure_logs
           log "error: run $RUN_ID concluded '${conclusion:-unknown}': $RUN_URL"
