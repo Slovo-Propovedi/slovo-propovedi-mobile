@@ -406,4 +406,41 @@ describe('<SearchIslandMorph>', () => {
     })
     expect(closeSlotOpacity()).toBe(0)
   })
+
+  test('ignores a re-delivered focus event while the close fade is in flight', async () => {
+    const completions = captureCompletions()
+    const { ctx, getByLabelText, getByPlaceholderText } = await renderMorph()
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
+    const closeSlotOpacity = () =>
+      StyleSheet.flatten(
+        findContentWrapper(getByLabelText(CLOSE_LABEL, { includeHiddenElements: true })).props
+          .style,
+      ).opacity
+
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+    // Settle the open morph first; its completion would otherwise pollute the
+    // focus-fade capture below.
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+
+    completions.length = 0
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+
+    // The fade is running to the shown frame; a redundant focus event (same
+    // value) must not commit the target as the new resting state.
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+    expect(closeSlotOpacity()).toBe(0)
+
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+    expect(closeSlotOpacity()).toBe(1)
+  })
 })

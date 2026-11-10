@@ -21,6 +21,11 @@ export const useSearchFocusMorph = () => {
 
   const handleCloseFocusChange = useCallback(
     (nextIsFocused: boolean) => {
+      // A redundant focus event must not interrupt a settle that is in flight:
+      // committing the START value now would desync `settledClose` until the
+      // completion of the running fade corrects it on the next flip.
+      if (nextIsFocused === isFocused) return
+
       setSettledClose(isFocused)
       setIsFocused(nextIsFocused)
     },
