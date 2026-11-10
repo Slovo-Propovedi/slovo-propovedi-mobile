@@ -23,12 +23,16 @@ export const createCommonStyles = (theme: ThemeColors) =>
     // classes; inline style.pointerEvents:'box-none' would emit the invalid CSS value
     // `pointer-events: box-none`, the browser drops it, the wrapper becomes
     // pointer-events:auto and swallows every touch on the page below the player.
-    // No elevation: the tab-bar backdrop is flat (its elevation moved to the islands
-    // row), so the draw order is the document one — screens -> tab bar (shade +
-    // islands) -> player (pill).
+    // Android draw order: the tab-bar subtree (zIndex 10 + elevation 12, shade inside)
+    // empirically paints above this subtree, dimming the pill's frost in both themes.
+    // zIndex reorders this root among the layout's children (the Tabs subtree is its
+    // sibling), putting the player chrome above the bar chrome. Elevation could not do
+    // this - Android reorders elevation only within sibling groups (opaque-red probe,
+    // 2026-11-10).
     recoveryOverlay: {
       ...StyleSheet.absoluteFill,
       pointerEvents: 'box-none',
+      zIndex: 20,
     },
   })
 
