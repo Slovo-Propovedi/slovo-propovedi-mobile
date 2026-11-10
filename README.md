@@ -1,10 +1,17 @@
+<div align="center">
+
+[![CI](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/actions/workflows/ci.yml/badge.svg)](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/actions/workflows/ci.yml)
+[![Release](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/actions/workflows/release.yml/badge.svg)](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/actions/workflows/release.yml)
+
+</div>
+
 <p align="center"><img src="assets/icon.png" width="120" alt="Слово.Проповеди" /></p>
 
 <h1 align="center">Слово.Проповеди</h1>
 
 <div align="center">
 
-[![Релиз](https://img.shields.io/badge/release-latest-orange?style=flat-square)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Web/PWA](https://img.shields.io/badge/platform-Web%2FPWA-5A0FC8?style=flat-square&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) [![Лицензия](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
+[![Релиз](https://img.shields.io/badge/release-latest-orange?style=flat-square)](releases/latest) [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](releases/latest) [![Web/PWA](https://img.shields.io/badge/platform-Web%2FPWA-5A0FC8?style=flat-square&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) [![Лицензия](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
 
 </div>
 
@@ -91,7 +98,7 @@
 | --- | --- |
 | **F-Droid** | _Ссылка будет добавлена после публикации_ |
 | **Веб-версия (PWA)** | [![Открыть](https://img.shields.io/badge/PWA-app.slovo--propovedi.ru-5A0FC8?style=for-the-badge&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) |
-| **Прямая загрузка APK** | [![Скачать APK](https://img.shields.io/badge/APK-последний%20релиз-orange?style=for-the-badge&logo=android&logoColor=white)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) |
+| **Прямая загрузка APK** | [![Скачать APK](https://img.shields.io/badge/APK-последний%20релиз-orange?style=for-the-badge&logo=android&logoColor=white)](releases/latest) |
 
 ## 📋 Системные требования
 
