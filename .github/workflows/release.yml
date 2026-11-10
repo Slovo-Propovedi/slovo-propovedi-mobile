@@ -15,7 +15,12 @@ on:
 permissions:
   contents: read
 
-# GitHub org/repo vars mirror the Forgejo ones — keep in sync (see docs/debt.md)
+# GitHub vars required (org or repo level): BACKEND_API_HOSTNAME, LANDING_HOSTNAME,
+# WEB_HOSTNAME, MIRROR_CODEBERG_URL, MIRROR_GITHUB_URL, MOBILE_REPOSITORY_NAME,
+# EXPO_PUBLIC_OTA_URL, EXPO_PUBLIC_XPREM_APP_ID, EXPO_PUBLIC_XPREM_CHANNEL_NAME,
+# EXPO_PUBLIC_XPREM_BRANCH_NAME (10 total). Keep them in sync with the Forgejo org
+# vars (see docs/debt.md). The EXPO_PUBLIC_* host/mirror entries below are derived
+# from the plain names — the same mapping as the old Forgejo release.yml prebuild.
 env:
   BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
   LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
