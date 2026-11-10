@@ -161,6 +161,12 @@ Rate limiting аутентификации — в разделе «Аутент�
 - фабрики `<area>Mocks` генерируют `createdAt` автоматически, поэтому тестовые серверные ответы обязаны приходить из них: ручные литералы DTO без поля больше не проходят `check:types` (правило — [AGENTS.md](../../AGENTS.md) → «Testing Guidelines»);
 - доменные мапперы (`mapSermonEntityToSermonData`, `mapPlaylistEntityToPlaylistData`, `mapPlaylistSermonToSermonShape`, `mapSectionPlaylistToPlaylistData`) поле пока **не пробрасывают** — доменные `SermonData`/`PlaylistData` не менялись; админ-списки показывают дату напрямую из `SermonEntity`/`PlaylistEntity` (`createdAt` → `formatRelativeDate` в подписи строки), в остальном UI она не используется.
 
+## BlurHash обложек: `artworkBlurhash` (контракт v0.23.5)
+
+В четырёх response-схемах появилось необязательное nullable-поле `artworkBlurhash?: string | null` (`src/shared/api/generated/api.schemas.ts`): `SermonEntity` и `PlaylistEntity` — у верхнеуровневых сущностей, `PlaylistSermon` — у проповеди внутри плейлиста и в ответе `GET /sermons`, `SectionPlaylist` — у плейлиста внутри раздела.
+
+Хэш считается на бэкенде при загрузке обложки; для записей, загруженных раньше, его дозаполняет фоновая задача, поэтому до её завершения в catalog-ответах приходит `null`. `null` и отсутствие поля для клиента равнозначны — фон полноэкранного плеера откатывается на `currentTheme.surface`. Перед передачей в `expo-image` строка валидируется `isValidBlurhash` (base83 charset + минимальная длина). Плеер получает значение через доменный `AudioPlayerData.artworkBlurhash`; при выборе проповеди её хэш приоритетнее хэша плейлиста. Подробности — [features/player.md](../features/player.md) → «Визуал полноэкранного плеера: квадратная обложка и blurhash-фон».
+
 ## Мёртвый код
 
 Помимо неиспользуемых обёрток (см. таблицу выше), в `src/shared/api/` есть мёртвый код, не задействованный в рантайме:

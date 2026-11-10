@@ -42,9 +42,9 @@
 
 ## Фон полноэкранного плеера из обложки
 
-`CoverImage` не получил нового публичного API для фона: развёрнутый плеер рисует **не изображение**, а сплошной цвет, выведенный из доминирующего цвета обложки (`useArtworkDominantColor`, `src/shared/lib/useArtworkDominantColor.ts`), поверх — затемняющая плёнка `rgba(0, 0, 0, 0.3)`. Сама обложка в полноэкранном плеере — квадрат (`fullscreenArtwork` в `expandedLayoutStyles`). Геометрия и поведение — в [player.md](./player.md) → «Визуал полноэкранного плеера: квадратная обложка и цветной фон».
+`CoverImage` публичного API не менял: фон — отдельный компонент `BlurhashBackground` в виджете `expandable-player` (`ui/ExpandablePlayer/BlurhashBackground.tsx`). Он рендерит BlurHash обложки из поля `artworkBlurhash` через `expo-image` (`source={{ blurhash, width: 32, height: 32 }}`, `contentFit: 'cover'`), а не извлекает цвет из картинки. Сама обложка в полноэкранном плеере — квадрат (`fullscreenArtwork` в `expandedLayoutStyles`). Геометрия и поведение — в [player.md](./player.md) → «Визуал полноэкранного плеера: квадратная обложка и blurhash-фон».
 
-Извлечение цвета — fail-soft: URI без протокола не скачивается (`hasUriProtocol`), а ошибка (на web — отсутствие CORS-заголовков у CDN обложек, из-за чего canvas не может прочитать пиксели; на нативе — недоступная картинка) уходит в `reportError`, фон остаётся `currentTheme.surface`. Неудачи не кешируются, поэтому временный сбой CORS/сети лечится сам при следующем монтировании или смене трека.
+Рендер fail-soft: `artworkBlurhash` — недоверенное значение с сервера, поэтому перед передачей в нативный декодер его проверяет `isValidBlurhash` (base83 charset + минимальная длина); при `null` или невалидном значении источник не задаётся, и виден `currentTheme.surface`. Хэш считается на бэкенде при загрузке обложки, поэтому на клиенте нет ни скачивания оригинала, ни canvas/CORS-зависимости — историческое ограничение удалённого `react-native-image-colors`.
 
 ## Кэширование
 
@@ -110,6 +110,6 @@ setupFiles: [
 ## Связанные документы
 
 - [audio-cache.md](./audio-cache.md) — аудио-кэш, физически отделённый от кэша изображений
-- [player.md](./player.md) — визуал полноэкранного плеера (квадратная обложка и цветной фон из обложки)
+- [player.md](./player.md) — визуал полноэкранного плеера (квадратная обложка и blurhash-фон)
 - [screens/listen.md](../screens/listen.md) — главный экран с обложками
 - [screens/playlist-list.md](../screens/playlist-list.md) — список плейлистов с обложками

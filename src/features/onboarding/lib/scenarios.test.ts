@@ -83,7 +83,7 @@ describe('onboarding scenario data', () => {
     expect(playerRows.title).toBe('Новые ряды плеера')
     expect(playerRows.targetId).toBeUndefined()
     expect(playerRows.route).toBeUndefined()
-    expect(squareArtwork.title).toBe('Квадратная обложка и цвет')
+    expect(squareArtwork.title).toBe('Квадратная обложка и blurhash-фон')
     expect(squareArtwork.targetId).toBeUndefined()
     expect(squareArtwork.route).toBeUndefined()
     expect(playerHelp.title).toBe('Сценарии плеера')
