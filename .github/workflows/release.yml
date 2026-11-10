@@ -57,6 +57,13 @@ jobs:
           signing: none
           version: ${{ steps.version.outputs.version }}
 
+      - name: Assert APK is unsigned
+        run: |
+          test -n "$(find unsigned-apk -name '*-unsigned.apk' -print -quit)" || {
+            echo "::error::Expected *-unsigned.apk in unsigned-apk/ — the disable-release-signing init script did not take effect (AGP may have debug-signed the APK)"
+            exit 1
+          }
+
       - name: Upload unsigned APK
         uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
         with:
