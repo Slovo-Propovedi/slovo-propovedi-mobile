@@ -1,0 +1,97 @@
+name: Renovate
+
+# Runs on GitHub-hosted runners to keep the yarn.lock artifacts update (heavy)
+# off the Forgejo host. Requires GitHub org secrets RENOVATE_TOKEN (Forgejo bot
+# PAT), RENOVATE_GITHUB_COM_TOKEN and org var RENOVATE_GIT_AUTHOR. The Forgejo
+# schedule is disabled; .forgejo/workflows/renovate.yml keeps manual dispatch only.
+#
+# Opens PRs on the Forgejo instance (platform=forgejo): bumps npm deps, the
+# Dockerfile base image and the Forgejo Actions in .forgejo/workflows. Config
+# lives in ../../renovate.json — the Expo SDK and React Native core are held for
+# a manual `expo install --fix` upgrade, not auto-bumped.
+#
+# Renovate runs straight from npm (`npx renovate`) — same as the Forgejo
+# workflow, so behaviour and config stay identical across executors.
+#
+# DCO: ci.yml requires a Signed-off-by trailer whose email matches the commit
+# author on every PR commit. Both come from the org variable RENOVATE_GIT_AUTHOR:
+# it sets the author, and `commitBody` in renovate.json templates the trailer
+# from it (`Signed-off-by: {{{gitAuthor}}}`), so they always match and no email
+# is hardcoded.
+#
+# Required secrets/vars (org level, mirrored from Forgejo):
+#   RENOVATE_TOKEN            Forgejo bot PAT: write:repository, write:issue,
+#                             read:user, read:organization
+#   RENOVATE_GITHUB_COM_TOKEN optional github.com read-only PAT to avoid
+#                             github.com rate limits when fetching release notes
+#                             (name kept for parity with the Forgejo secret)
+#   RENOVATE_GIT_AUTHOR       org var, e.g. "Renovate Bot <renovate@example.com>"
+
+on:
+  # Runs at 06:00 UTC.
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A long overlapping run must not start a second copy.
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Run Renovate
+        id: renovate
+        run: |
+          start=$EPOCHSECONDS
+          npx --yes renovate
+          echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
+        env:
+          RENOVATE_PLATFORM: forgejo
+          # Forgejo instance origin; github.server_url on GitHub is github.com
+          # and must NOT be used.
+          RENOVATE_ENDPOINT: https://git.lightnode.ru/api/v1
+          RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+          RENOVATE_AUTODISCOVER: "false"
+          # Forgejo repo (underscore org); github.repository here is the
+          # hyphenated GitHub mirror name and must not be passed to the
+          # forgejo platform.
+          RENOVATE_REPOSITORIES: Slovo_Propovedi/slovo-propovedi-mobile
+          RENOVATE_ONBOARDING: "false"
+          # Org variable (e.g. "Renovate Bot <renovate@example.com>"); also the
+          # source of the Signed-off-by trailer (renovate.json `commitBody`).
+          RENOVATE_GIT_AUTHOR: ${{ vars.RENOVATE_GIT_AUTHOR }}
+          GITHUB_COM_TOKEN: ${{ secrets.RENOVATE_GITHUB_COM_TOKEN }}
+          LOG_LEVEL: info
+
+      - name: Job summary
+        if: always()
+        run: |
+          [ -f scripts/ci/step-summary.sh ] || exit 0
+          case "${{ steps.renovate.outcome }}" in
+            success) STATUS='✅ success' ;;
+            failure) STATUS='❌ failure' ;;
+            *) STATUS='⏭️ skipped' ;;
+          esac
+          {
+            echo '## Renovate'
+            echo ''
+            echo "- Repository: \`Slovo_Propovedi/slovo-propovedi-mobile\` (Forgejo)"
+            echo "- Event: \`${{ github.event_name }}\`"
+            echo "- Result: $STATUS (${{ steps.renovate.outputs.duration || '—' }})"
+          } | scripts/ci/step-summary.sh
