@@ -20,7 +20,8 @@
 #   RUN_TIMEOUT_MIN     minutes a run may take in total before cancellation (90)
 #   ARTIFACTS           comma-separated "name=outdir" pairs downloaded on
 #                       success, e.g. "unsigned-apk=unsigned-apk,web-dist=web-dist"
-#                       The archive is saved as <outdir>/<name>.zip.
+#                       GitHub serves artifacts as zip archives; each is
+#                       extracted into <outdir> (unzip required).
 #   DISPATCH_INPUTS     raw JSON object merged into the dispatch body as
 #                       "inputs", e.g. '{"mode":"native"}' (workflow_dispatch
 #                       inputs); validated as a JSON object before dispatch
@@ -37,7 +38,7 @@
 #   42  infra/queue failure (dispatch rejected, queue timeout, run timeout) —
 #       the run was cancelled; the caller should fall back to the local runner
 #
-# Requires: bash, curl, jq (the Forgejo runner provides jq).
+# Requires: bash, curl, jq, unzip (the Forgejo runner provides them).
 #
 # Stdout contract: once the run is known, a single line `GH_RUN_URL=<url>` is
 # printed (before polling), so callers that capture stdout can report the run
@@ -115,6 +116,10 @@ if [ -n "${DISPATCH_INPUTS:-}" ]; then
   if ! printf '%s' "$DISPATCH_INPUTS" | jq -e 'type == "object"' >/dev/null 2>&1; then
     usage_error "DISPATCH_INPUTS must be a JSON object (got '$DISPATCH_INPUTS')"
   fi
+fi
+
+if [ -n "${ARTIFACTS:-}" ]; then
+  command -v unzip >/dev/null 2>&1 || usage_error "unzip is required for ARTIFACTS downloads"
 fi
 
 WORK_DIR=$(mktemp -d)
@@ -216,7 +221,7 @@ cancel_run() {
 download_artifacts() {
   [ -n "${ARTIFACTS:-}" ] || return 0
 
-  local code url target name outdir pair
+  local code url archive name outdir pair
   local -a pairs
   code=$(api_request GET \
     "$GH_API_BASE/repos/$GH_REPO/actions/runs/$RUN_ID/artifacts" \
@@ -243,16 +248,22 @@ download_artifacts() {
     fi
 
     mkdir -p "$outdir"
-    target="$outdir/$name.zip"
-    curl -q -sSL -o "$target" \
+    # GitHub artifact "downloads" are zip archives; the caller expects the
+    # artifact contents in <outdir> (APK files, dist/ trees), so extract them.
+    archive="$WORK_DIR/$name.zip"
+    curl -q -sSL -o "$archive" \
       -H "Authorization: Bearer $GH_TOKEN" \
       -H 'Accept: application/vnd.github+json' \
       "$url"
-    if [ ! -s "$target" ]; then
-      log "error: artifact '$name' downloaded empty into $target"
+    if [ ! -s "$archive" ]; then
+      log "error: artifact '$name' downloaded empty"
       exit 1
     fi
-    log "downloaded artifact '$name' -> $target ($(wc -c < "$target") bytes)"
+    if ! unzip -q -o "$archive" -d "$outdir"; then
+      log "error: artifact '$name' is not a valid zip archive"
+      exit 1
+    fi
+    log "downloaded artifact '$name' -> $outdir ($(wc -c < "$archive") bytes)"
   done
 }
 
