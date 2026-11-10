@@ -396,6 +396,14 @@ jobs:
           SHA: ${{ github.sha }}
           NATIVE: ${{ needs.changes.outputs.native }}
         run: |
+          # An unconfigured secret must not fail the release dispatch: signal the
+          # local fallback instead (uploads below are skipped when fallback=true).
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::GITHUB_CI_TOKEN is not configured — skipping GitHub dispatch, running locally"
+            echo "fallback=true" >> "$GITHUB_OUTPUT"
+            echo "run_url=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           set +e
           if [ "$NATIVE" = "true" ]; then
             export DISPATCH_INPUTS='{"mode":"native"}'
