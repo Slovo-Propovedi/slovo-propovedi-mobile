@@ -2,10 +2,9 @@ import { BlurView } from 'expo-blur'
 import { LinearGradient } from 'expo-linear-gradient'
 import { type ComponentRef, type RefObject } from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
-import { useTheme } from '../theme/ThemeContext/useTheme'
 import { useGlassBlurTarget } from './blurTargetContext'
 import { supportsAndroidBackdropBlur } from './blurTargets'
-import { createGlassStyles, getGlassFill, getWashColor, GLASS } from './glass'
+import { createGlassStyles, getGlassFill, GLASS } from './glass'
 import { getWebGlassStyle } from './webGlass'
 
 /**
@@ -33,21 +32,17 @@ import { getWebGlassStyle } from './webGlass'
  * @param root0.blurTarget - Explicit backdrop override; defaults to the provider's target.
  * @param root0.isLight - Active theme; selects the fill, rim and blur tint.
  * @param root0.radius - Corner radius of the hairline rim; matches the host shape.
- * @param root0.washAlpha - Translucent theme-color wash over the blur; omitted = no layer.
  */
 export const GlassSurface = ({
   blurTarget,
   isLight,
   radius,
-  washAlpha,
 }: {
   blurTarget?: null | RefObject<ComponentRef<typeof View> | null>
   isLight: boolean
   radius: number
-  washAlpha?: number
 }) => {
   const glass = createGlassStyles(isLight, radius)
-  const { currentTheme } = useTheme()
   const isWeb = Platform.OS === 'web'
   const isAndroid = Platform.OS === 'android'
   const contextTarget = useGlassBlurTarget()
@@ -74,14 +69,6 @@ export const GlassSurface = ({
           style={[StyleSheet.absoluteFill, tint]}
           blurTarget={realBlurTarget ?? undefined}
           blurMethod={realBlurTarget ? GLASS.blur.androidMethod : undefined}
-        />
-      )}
-      {washAlpha === undefined ? null : (
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: getWashColor(currentTheme.background, washAlpha) },
-          ]}
         />
       )}
       <LinearGradient

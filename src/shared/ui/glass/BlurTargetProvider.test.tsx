@@ -16,12 +16,6 @@ jest.mock('expo-linear-gradient', () => {
   return { LinearGradient: (props: Record<string, unknown>) => <MockView {...props} /> }
 })
 
-jest.mock('../theme/ThemeContext/useTheme', () => {
-  const { LightTheme } = jest.requireActual('../theme/constants')
-
-  return { useTheme: () => ({ currentTheme: LightTheme, isLight: true, themeMode: 'light' }) }
-})
-
 const createTargetRef = (): BlurTargetRef => createRef<ComponentRef<typeof View>>()
 
 const setPlatform = (os: 'android' | 'ios', version?: number) => {

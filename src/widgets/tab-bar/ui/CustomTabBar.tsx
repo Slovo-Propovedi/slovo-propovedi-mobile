@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BarBackdropShade } from 'widgets/expandable-player/@x/barShade'
 import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
-import { createGlassStyles, GlassSurface } from 'shared/ui'
+import { GlassIsland } from 'shared/ui'
 import {
   BAR_BOTTOM_INSET_MIN,
   BAR_ROW_MIN_HEIGHT,
@@ -53,7 +53,6 @@ export const CustomTabBar = ({
     windowWidth,
   })
   const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
-  const glass = createGlassStyles(isLight, RADIUSES.round)
   const keyboardLiftStyle = useKeyboardLiftStyle()
 
   return (
@@ -78,12 +77,12 @@ export const CustomTabBar = ({
           setMeasuredTabBarHeight(height)
         }}
       >
-        <Animated.View style={[styles.floatingIsland, glass.containerPlain, islandStyle]}>
-          <GlassSurface
-            isLight={isLight}
-            radius={RADIUSES.round}
-            key={isLight ? 'light' : 'dark'}
-          />
+        <GlassIsland
+          isLight={isLight}
+          radius={RADIUSES.round}
+          animatedStyle={islandStyle}
+          hostStyle={styles.floatingIsland}
+        >
           <Animated.View style={[styles.islandContent, contentStyle]}>
             {visibleRoutes.map(route => {
               const isActive = route.key === activeRouteKey
@@ -111,7 +110,7 @@ export const CustomTabBar = ({
               )
             })}
           </Animated.View>
-        </Animated.View>
+        </GlassIsland>
       </View>
       {!hideSearch && <SearchIslandMorph />}
     </Animated.View>

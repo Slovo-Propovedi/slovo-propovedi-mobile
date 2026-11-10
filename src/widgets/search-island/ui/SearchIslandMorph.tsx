@@ -1,12 +1,12 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { isTabIslandCollapsedAtom } from 'widgets/tab-bar/@x/morph'
 import { closeSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { isSearchFieldVisibleAtom } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
-import { createGlassStyles, GlassSurface } from 'shared/ui'
+import { GlassIsland } from 'shared/ui'
 import { BAR_MORPH_DURATION_MS, tabBarHeightAtom } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
@@ -33,7 +33,6 @@ export const SearchIslandMorph = () => {
   const barProgress = useAtomMorph(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
   const openProgress = useAtomMorph(isSearchFieldVisibleAtom, BAR_MORPH_DURATION_MS)
   const closeProgress = useSharedValue(isFocused ? 1 : 0)
-  const glass = createGlassStyles(isLight, RADIUSES.round)
 
   useEffect(() => {
     closeProgress.value = withTiming(isFocused ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
@@ -58,11 +57,13 @@ export const SearchIslandMorph = () => {
 
   return (
     <>
-      <Animated.View
+      <GlassIsland
+        isLight={isLight}
         pointerEvents='auto'
-        style={[styles.container, glass.containerPlain, frameStyle]}
+        radius={RADIUSES.round}
+        animatedStyle={frameStyle}
+        hostStyle={styles.container}
       >
-        <GlassSurface isLight={isLight} radius={RADIUSES.round} />
         <SearchIslandMagnifier
           barProgress={barProgress}
           screenWidth={screenWidth}
@@ -75,7 +76,7 @@ export const SearchIslandMorph = () => {
           onFocusChange={setIsFocused}
           isVisible={isSearchFieldVisible}
         />
-      </Animated.View>
+      </GlassIsland>
       <SearchIslandCloseSlot
         progress={barProgress}
         screenWidth={screenWidth}
