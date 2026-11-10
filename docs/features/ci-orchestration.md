@@ -190,8 +190,9 @@ scripts/ci/setup-github-mirror.sh
 
 - job `ota` в `release.yml` — `expo export` + публикация в xprem с `XPREM_EOO_TOKEN`; перенос потребовал бы OTA-секрета на GitHub ради одного шага;
 - `.forgejo/workflows/ota-publish.yml` — ручной хотфикс без тега (secret-bound + web-деплой);
-- `.forgejo/workflows/xprem-cleanup.yml` — обслуживание OTA-сервера по расписанию;
-- `.forgejo/workflows/renovate.yml` — расписание + токены Renovate.
+- `.forgejo/workflows/xprem-cleanup.yml` — обслуживание OTA-сервера по расписанию.
+
+Отдельно на GitHub-hosted выполняется **Renovate** (`.github/workflows/renovate.yml`): платформа остаётся `forgejo` (endpoint `https://git.lightnode.ru/api/v1`), но тяжёлое обновление `yarn.lock` больше не грузит 4-ГБ хост. Нужны org secrets `RENOVATE_TOKEN` (Forgejo bot PAT) и `RENOVATE_GITHUB_COM_TOKEN` плюс org var `RENOVATE_GIT_AUTHOR` — значения дублируются с Forgejo. `.forgejo/workflows/renovate.yml` оставлен только для ручных аварийных запусков (расписание оттуда убрано).
 
 ## Как проверить живьём
 
