@@ -2,9 +2,13 @@
 
 buildscript {
   repositories {
-    // withMavenCentralMirror: Aliyun proxies google()/mavenCentral(), fast from RU
-    maven { url 'https://maven.aliyun.com/repository/google' }
-    maven { url 'https://maven.aliyun.com/repository/central' }
+    // withMavenCentralMirror: Aliyun proxies google()/mavenCentral(), fast from RU.
+    // MAVEN_ALIYUN_MIRROR=false disables it (GitHub-hosted runners: Aliyun 502s
+    // from US IPs; google()/mavenCentral() serve everything directly).
+    if (System.getenv('MAVEN_ALIYUN_MIRROR') != 'false') {
+      maven { url 'https://maven.aliyun.com/repository/google' }
+      maven { url 'https://maven.aliyun.com/repository/central' }
+    }
     google()
     mavenCentral()
   }
@@ -18,9 +22,13 @@ buildscript {
 
 allprojects {
   repositories {
-    // withMavenCentralMirror: Aliyun proxies google()/mavenCentral(), fast from RU
-    maven { url 'https://maven.aliyun.com/repository/google' }
-    maven { url 'https://maven.aliyun.com/repository/central' }
+    // withMavenCentralMirror: Aliyun proxies google()/mavenCentral(), fast from RU.
+    // MAVEN_ALIYUN_MIRROR=false disables it (GitHub-hosted runners: Aliyun 502s
+    // from US IPs; google()/mavenCentral() serve everything directly).
+    if (System.getenv('MAVEN_ALIYUN_MIRROR') != 'false') {
+      maven { url 'https://maven.aliyun.com/repository/google' }
+      maven { url 'https://maven.aliyun.com/repository/central' }
+    }
     google()
     mavenCentral()
     maven { url 'https://www.jitpack.io' }

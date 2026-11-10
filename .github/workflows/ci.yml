@@ -13,6 +13,11 @@ on:
 permissions:
   contents: read
 
+# Aliyun maven mirror 502s from GitHub-hosted US IPs; google()/mavenCentral() are
+# reachable directly there (see plugins/mavenMirrorSnippets.ts).
+env:
+  MAVEN_ALIYUN_MIRROR: 'false'
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
