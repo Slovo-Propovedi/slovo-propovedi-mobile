@@ -94,6 +94,9 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(200, {"sha": path.rsplit("/", 1)[-1]})
             return
         if path == f"{REPO}/actions/runs/{RUN_ID}":
+            if STATE["run_503"]:
+                self.send_json(503, {"message": "service unavailable"})
+                return
             self.send_json(200, self.run_payload())
             return
         if path == f"{REPO}/actions/runs/{RUN_ID}/artifacts":
@@ -167,6 +170,11 @@ def main():
         help="fail the first dispatch POST with 503 (retry scenario)",
     )
     parser.add_argument(
+        "--run-503",
+        action="store_true",
+        help="return 503 for the run poll endpoint (API-unreachable scenario)",
+    )
+    parser.add_argument(
         "--artifact-error",
         action="store_true",
         help="return 403 for artifact downloads (transport-failure scenario)",
@@ -179,6 +187,7 @@ def main():
     STATE["request_log"] = args.request_log
     STATE["dispatch_503_once"] = args.dispatch_503_once
     STATE["dispatch_count"] = 0
+    STATE["run_503"] = args.run_503
     STATE["artifact_error"] = args.artifact_error
     STATE["dispatch_time"] = time.monotonic()
 

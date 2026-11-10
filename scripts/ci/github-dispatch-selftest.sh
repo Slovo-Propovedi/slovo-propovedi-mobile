@@ -10,6 +10,7 @@
 #   (e) artifact download failure             -> 42 (infra, caller may fall back)
 #   (f) run cancelled externally              -> 43 (superseded; no cancel, no logs)
 #   (g) dispatch POST 503 once                -> 0 (retried)
+#   (h) API unreachable during poll           -> 42 (bounded by RUN_TIMEOUT_MIN)
 #
 # Usage: bash scripts/ci/github-dispatch-selftest.sh
 
@@ -39,9 +40,9 @@ stop_mock() {
   fi
 }
 
-start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] [dispatch_503_once] -> sets PORT
+start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] [dispatch_503_once] [run_503] -> sets PORT
   local scenario=$1 cancel_log=$2 dispatch_log=${3:-} artifact_error=${4:-} request_log=${5:-}
-  local dispatch_503_once=${6:-} port_file
+  local dispatch_503_once=${6:-} run_503=${7:-} port_file
   local extra=()
   port_file="$WORK_DIR/port"
   rm -f "$port_file"
@@ -53,6 +54,9 @@ start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [reques
   fi
   if [ -n "$dispatch_503_once" ]; then
     extra+=(--dispatch-503-once)
+  fi
+  if [ -n "$run_503" ]; then
+    extra+=(--run-503)
   fi
   python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" \
     --cancel-log "$cancel_log" --dispatch-log "$dispatch_log" "${extra[@]}" &
@@ -184,6 +188,19 @@ status=0
 run_dispatch "$WORK_DIR/retry" 1 "" || status=$?
 stop_mock
 check_exit "(g) dispatch retried after 503" 0 "$status"
+
+# --- (h) poll budget bounds a fully unreachable API --------------------------
+start_mock success "$WORK_DIR/cancel-h.log" "" "" "" "" "run-503"
+status=0
+run_dispatch "$WORK_DIR/unreachable" 1 "" RUN_TIMEOUT_MIN=0 || status=$?
+stop_mock
+check_exit "(h) API unreachable during poll -> bounded 42" 42 "$status"
+if [ -s "$WORK_DIR/cancel-h.log" ]; then
+  printf 'FAIL (h) cancel POST sent while the API was unreachable\n'
+  FAILURES=$((FAILURES + 1))
+else
+  printf 'ok   (h) no cancel POST sent\n'
+fi
 
 # --- dry-run touches no network ----------------------------------------------
 status=0

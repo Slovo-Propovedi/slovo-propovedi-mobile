@@ -35,9 +35,10 @@
 #   2   usage/environment error (missing env, bad SHA/REF/ARTIFACTS format,
 #       missing jq)
 #   3   the commit never reached the mirror, or the run never appeared
-#   42  infra failure (dispatch rejected, queue/run timeout, artifact
-#       transport/extraction error) — the caller should fall back to the local
-#       runner; a run we cancelled first is cancelled before exiting
+#   42  infra failure (dispatch rejected, queue/run timeout, GitHub API
+#       unreachable for RUN_TIMEOUT_MIN, artifact transport/extraction error) —
+#       the caller should fall back to the local runner; timeout paths cancel the
+#       run first, the unreachable path cannot (the API is down)
 #   43  the run was cancelled externally (e.g. superseded by a newer push) —
 #       neutral: no fallback, no failure; the newer run reports the result
 #
@@ -317,6 +318,7 @@ print_failure_logs() {
 
 poll_run() {
   local start=$SECONDS
+  local deadline=$((start + RUN_TIMEOUT_MIN * 60))
   local queue_started=""
   local code status conclusion html_url
 
@@ -327,6 +329,14 @@ poll_run() {
 
     if [ "$code" != "200" ]; then
       log "warning: run $RUN_ID poll returned HTTP ${code:-none}"
+      # A fully unreachable API never reaches the 200-path timeouts below, so
+      # the same total budget bounds it. Right now the API is down, so a cancel
+      # would fail too — do not send it. The GitHub run (if any) keeps going;
+      # its result is ignored once we fall back locally.
+      if [ "$SECONDS" -ge "$deadline" ]; then
+        log "error: GitHub API unreachable for ${RUN_TIMEOUT_MIN}m — giving up; the GitHub run (if any) is NOT cancelled and its result will be ignored; falling back locally"
+        exit 42
+      fi
     else
       status=$(jq -r '.status // empty' "$WORK_DIR/run.json")
       conclusion=$(jq -r '.conclusion // empty' "$WORK_DIR/run.json")
