@@ -9,6 +9,7 @@
 #   (d) workflow_dispatch inputs forwarded
 #   (e) artifact download failure             -> 42 (infra, caller may fall back)
 #   (f) run cancelled externally              -> 43 (superseded; no cancel, no logs)
+#   (g) dispatch POST 503 once                -> 0 (retried)
 #
 # Usage: bash scripts/ci/github-dispatch-selftest.sh
 
@@ -38,8 +39,9 @@ stop_mock() {
   fi
 }
 
-start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] -> sets PORT
-  local scenario=$1 cancel_log=$2 dispatch_log=${3:-} artifact_error=${4:-} request_log=${5:-} port_file
+start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] [dispatch_503_once] -> sets PORT
+  local scenario=$1 cancel_log=$2 dispatch_log=${3:-} artifact_error=${4:-} request_log=${5:-}
+  local dispatch_503_once=${6:-} port_file
   local extra=()
   port_file="$WORK_DIR/port"
   rm -f "$port_file"
@@ -48,6 +50,9 @@ start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [reques
   fi
   if [ -n "$request_log" ]; then
     extra+=(--request-log "$request_log")
+  fi
+  if [ -n "$dispatch_503_once" ]; then
+    extra+=(--dispatch-503-once)
   fi
   python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" \
     --cancel-log "$cancel_log" --dispatch-log "$dispatch_log" "${extra[@]}" &
@@ -172,6 +177,13 @@ if [ -s "$WORK_DIR/requests-f.log" ] && grep -q "/actions/jobs/" "$WORK_DIR/requ
 else
   printf 'ok   (f) no failed-job log fetch\n'
 fi
+
+# --- (g) dispatch POST is retried on transport errors ------------------------
+start_mock success "$WORK_DIR/cancel-g.log" "" "" "" "dispatch-503-once"
+status=0
+run_dispatch "$WORK_DIR/retry" 1 "" || status=$?
+stop_mock
+check_exit "(g) dispatch retried after 503" 0 "$status"
 
 # --- dry-run touches no network ----------------------------------------------
 status=0

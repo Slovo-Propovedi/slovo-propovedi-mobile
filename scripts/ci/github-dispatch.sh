@@ -41,6 +41,9 @@
 #   43  the run was cancelled externally (e.g. superseded by a newer push) —
 #       neutral: no fallback, no failure; the newer run reports the result
 #
+# The dispatch POST is retried up to 3 attempts (5s apart) on transport-level
+# failures — HTTP 000 (DNS/connect) and 5xx; 4xx (auth/validation) is not retried.
+#
 # Requires: bash, curl, jq, unzip (the Forgejo runner provides them).
 #
 # Stdout contract: once the run is known, a single line `GH_RUN_URL=<url>` is
@@ -184,21 +187,38 @@ discover_run_id() {
 dispatch_workflow() {
   local body_file="$WORK_DIR/dispatch-body.json"
   local response_file="$WORK_DIR/dispatch-response.json"
-  local code run_id
+  local code run_id attempt
   if [ -n "${DISPATCH_INPUTS:-}" ]; then
     jq -n --arg ref "$REF" --argjson inputs "$DISPATCH_INPUTS" \
       '{ref: $ref, return_run_details: true, inputs: $inputs}' > "$body_file"
   else
     jq -n --arg ref "$REF" '{ref: $ref, return_run_details: true}' > "$body_file"
   fi
-  code=$(api_request POST \
-    "$GH_API_BASE/repos/$GH_REPO/actions/workflows/$WORKFLOW/dispatches" \
-    "$response_file" -H 'Content-Type: application/json' --data @"$body_file")
+  code=""
+  for attempt in 1 2 3; do
+    code=$(api_request POST \
+      "$GH_API_BASE/repos/$GH_REPO/actions/workflows/$WORKFLOW/dispatches" \
+      "$response_file" -H 'Content-Type: application/json' --data @"$body_file")
 
-  if [ "${code:0:1}" != "2" ]; then
+    if [ "${code:0:1}" = "2" ]; then
+      break
+    fi
+
+    # Retry transport-level failures only: 000 = DNS/connect (curl could not
+    # reach the API); 5xx = GitHub-side transient. 4xx is auth/validation.
+    case "${code:-000}" in
+      000 | 5??)
+        if [ "$attempt" -lt 3 ]; then
+          log "warning: workflow dispatch attempt $attempt/3 failed (HTTP ${code:-000}) — retrying in 5s"
+          sleep 5
+          continue
+        fi
+        ;;
+    esac
+
     log "error: workflow dispatch failed (HTTP ${code:-none}): $(cat "$response_file" 2>/dev/null || true)"
     exit 42
-  fi
+  done
 
   run_id=$(jq -r '.workflow_run_id // empty' "$response_file" 2>/dev/null || true)
   if [ -n "$run_id" ] && [ "$run_id" != "null" ]; then

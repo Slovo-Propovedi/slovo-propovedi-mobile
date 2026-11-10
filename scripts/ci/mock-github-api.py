@@ -136,6 +136,10 @@ class Handler(BaseHTTPRequestHandler):
             if STATE["dispatch_log"]:
                 with open(STATE["dispatch_log"], "w", encoding="utf-8") as handle:
                     handle.write(body.decode("utf-8"))
+            STATE["dispatch_count"] += 1
+            if STATE["dispatch_503_once"] and STATE["dispatch_count"] == 1:
+                self.send_json(503, {"message": "service unavailable"})
+                return
             # 200 (not the literal 204 from the spec): a dispatch response must
             # carry {"workflow_run_id": ...}, and HTTP 204 may not have a body.
             STATE["dispatch_time"] = time.monotonic()
@@ -158,6 +162,11 @@ def main():
     parser.add_argument("--dispatch-log", default="")
     parser.add_argument("--request-log", default="")
     parser.add_argument(
+        "--dispatch-503-once",
+        action="store_true",
+        help="fail the first dispatch POST with 503 (retry scenario)",
+    )
+    parser.add_argument(
         "--artifact-error",
         action="store_true",
         help="return 403 for artifact downloads (transport-failure scenario)",
@@ -168,6 +177,8 @@ def main():
     STATE["cancel_log"] = args.cancel_log
     STATE["dispatch_log"] = args.dispatch_log
     STATE["request_log"] = args.request_log
+    STATE["dispatch_503_once"] = args.dispatch_503_once
+    STATE["dispatch_count"] = 0
     STATE["artifact_error"] = args.artifact_error
     STATE["dispatch_time"] = time.monotonic()
 

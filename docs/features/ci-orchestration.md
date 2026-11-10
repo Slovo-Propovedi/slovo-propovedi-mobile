@@ -56,12 +56,13 @@ Forgejo: статус CI / checks, подпись, публикация <-- ар
 Детали поведения:
 
 - Перед отменой по таймауту диспетчер делает `POST .../actions/runs/<id>/cancel` — «зависший» run не продолжит жечь минуты после fallback.
+- Dispatch POST ретраится до 3 попыток с паузой 5 с на транспортных ошибках (HTTP `000` — DNS/connect — и `5xx`); `4xx` (auth/validation) не ретраится и сразу даёт `42` (fallback).
 - Артефакты GitHub отдаются zip-архивами; диспетчер проверяет непустоту и распаковывает их в целевой каталог (`unzip`). Поэтому `ARTIFACTS="unsigned-apk=unsigned-apk"` даёт в `unsigned-apk/` сам APK, а не вложенный zip.
 - В stdout печатается одна машинная строка `GH_RUN_URL=<url>` (до поллинга), поэтому вызывающий шаг может приложить ссылку к статусу на путях `0/1/42/43`. Весь человекочитаемый прогресс идёт в stderr.
 - `REF`/`SHA` намеренно разные: dispatch принимает ветку/тег, а ожидание в зеркале и корреляция run — по коммиту.
 - Внешняя отмена (`conclusion: cancelled`, например GitHub отменил старый run из-за `concurrency: cancel-in-progress` при быстром втором push) — это `exit 43`: диспетчер не шлёт cancel (run уже отменён) и не печатает логи job'ов; вызывающий помечает старый коммит `warning` («superseded»), а не красным.
 
-Самопроверка: `scripts/ci/github-dispatch-selftest.sh` поднимает локальный мок `scripts/ci/mock-github-api.py` на `GH_API_BASE` и проверяет успех с артефактом, реальный провал, queue-timeout с cancel, передачу `DISPATCH_INPUTS`, сбой скачивания артефакта (42), внешнюю отмену (43) и dry-run. Сеть не нужна.
+Самопроверка: `scripts/ci/github-dispatch-selftest.sh` поднимает локальный мок `scripts/ci/mock-github-api.py` на `GH_API_BASE` и проверяет успех с артефактом, реальный провал, queue-timeout с cancel, передачу `DISPATCH_INPUTS`, сбой скачивания артефакта (42), внешнюю отмену (43), ретрай dispatch после 503 и dry-run. Сеть не нужна.
 
 ## Контракт статусов
 
