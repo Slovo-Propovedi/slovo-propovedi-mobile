@@ -673,6 +673,14 @@ jobs:
         uses: ./actions/release-web
         with:
           profile: constrained
+        env:
+          # Inlined into the web bundle by Metro; the composite reads env only.
+          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
+          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
 
       - name: Check deploy config
         id: deploycfg
