@@ -1,5 +1,5 @@
 import { Image } from 'expo-image'
-import { StyleSheet, type ViewStyle } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { isValidBlurhash } from './isValidBlurhash'
 
 // Fullscreen background layer: a blurhash image when the sermon/playlist has
@@ -9,16 +9,14 @@ import { isValidBlurhash } from './isValidBlurhash'
 export const BlurhashBackground = ({
   blurhash,
   fallbackColor,
-  style,
 }: {
   blurhash: null | string | undefined
   fallbackColor: string
-  style?: ViewStyle
 }) => (
   <Image
     transition={0}
     contentFit='cover'
-    style={[styles.fill, { backgroundColor: fallbackColor }, style]}
+    style={[styles.fill, { backgroundColor: fallbackColor }]}
     source={isValidBlurhash(blurhash) ? { blurhash, height: 32, width: 32 } : null}
   />
 )
