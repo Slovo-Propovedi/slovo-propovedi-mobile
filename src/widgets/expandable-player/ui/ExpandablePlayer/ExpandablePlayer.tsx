@@ -46,7 +46,6 @@ export const ExpandablePlayer = ({
     containerStyle,
     forceGeometryReapply,
     fullStyle,
-    isMorphing,
     miniBarRestingStyle,
     miniBarStyle,
     miniOverlayStyle,
@@ -95,7 +94,6 @@ export const ExpandablePlayer = ({
           isLight={isLight}
           playlist={playlist}
           miniStyle={miniStyle}
-          degraded={isMorphing}
           onPlayPause={togglePlay}
           miniPan={gesture.miniPan}
           isBuffering={isBuffering}

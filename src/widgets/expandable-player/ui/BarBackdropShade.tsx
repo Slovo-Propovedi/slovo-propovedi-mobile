@@ -2,9 +2,11 @@ import { useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
-import { isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
+import { BAR_BOTTOM_INSET_MIN, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { getBarShadeHeight, SHADE_TOP_OVERSCAN_PX } from '../lib/getBarShadeHeight'
 import { getMiniPlayerGeometry } from '../lib/getMiniPlayerGeometry'
 import { useBarMorphProgress } from '../model/useBarMorphProgress'
 import { useProgressAnimation } from '../model/useProgressAnimation'
@@ -12,12 +14,12 @@ import { useProgressAnimation } from '../model/useProgressAnimation'
 // One subtle but perceptible depth cue behind the whole bottom-bar complex. The
 // shade is edge to edge (no side insets, no radius) and anchors to the very
 // screen bottom (the Android navbar is transparent, so the safe-area inset is
-// deliberately ignored). Its top edge tracks the CURRENT mini-player top as the
-// bar morphs, ending a few pixels above it so the ramp never lands a hard edge
-// on the pill's glass rim.
-const SHADE_TOP_OVERSCAN_PX = 10
-// Full opacity from the screen bottom up to the pill's vertical middle; only
-// the overscan above the pill top is a ramp. The shape is identical in both
+// deliberately ignored). Its top edge tracks the current chrome top as the bar
+// morphs — the mini-pill top when a pill is visible, the islands row top
+// otherwise — ending a few pixels above it so the ramp never lands a hard edge
+// on the glass rim.
+// Full opacity from the screen bottom up to the chrome's vertical middle; only
+// the overscan above the chrome top is a ramp. The shape is identical in both
 // themes, but the ramp is gray in the dark one: black-on-black would vanish,
 // while the mid-gray stop reads as a faint depth cue rather than a white glow.
 // The gray alpha is doubled versus the light stop (128/255 is roughly half the
@@ -37,23 +39,24 @@ const getShadeHeight = (bottom: number) => {
 }
 
 /**
- * Fixed-height ramp zone from the shade top down to the pill's vertical middle:
- * the overscan plus the pill's upper half. The gradient itself never changes
- * size, so `locations={[0, 1]}` stay exact on every frame of the morph instead
- * of holding stale fractions of an animating height.
+ * Ramp zone: the shade top down to the pill's vertical middle (overscan plus the
+ * pill's upper half), so `locations={[0, 1]}` stay exact on every morph frame.
  */
 const SHADE_CAP_HEIGHT_PX = SHADE_TOP_OVERSCAN_PX + PLAYER_SIZES.miniPlayerHeight / 2
 
 /**
- * Single very subtle vertical gradient from the screen bottom up to the mini
- * player top, rendered as the first child of the tab bar's floating container so
- * it sits above the screens and behind the islands. Below the fixed cap the rest
- * of the shade is one solid opaque block. Hidden in the same conditions as the
- * collapsed mini player: no audio, or fullscreen expansion once its morph has
- * settled. The container owns the keyboard lift.
+ * Single very subtle vertical gradient from the screen bottom up to the visible
+ * bottom chrome, rendered as the first child of the tab bar's floating container
+ * so it sits above the screens and behind the islands. Below the fixed cap the
+ * rest of the shade is one solid opaque block. With a mini pill it anchors to
+ * the pill top; without one it anchors to the islands row top and follows the
+ * bar collapse morph. Hidden only on fullscreen expansion once its morph has
+ * settled, or before the tab bar has been measured. The container owns the
+ * keyboard lift.
  */
 export const BarBackdropShade = () => {
   const { isLight } = useTheme()
+  const { bottom } = useSafeAreaInsets()
   const [audio] = useAtom(currentAudioAtom)
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
@@ -65,19 +68,24 @@ export const BarBackdropShade = () => {
   const expandProgress = useSharedValue(expanded ? 1 : 0)
   const { settledExpanded } = useProgressAnimation(expanded, expandProgress)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
+  const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
+  // A boolean keeps the worklet closure free of the whole audio object.
+  const hasAudio = audio !== null
 
   const shadeStyle = useAnimatedStyle(() => {
-    const { bottom } = getMiniPlayerGeometry({
+    if (!hasAudio) return { height: getBarShadeHeight(progress.value, bottomPadding) }
+
+    const { bottom: pillBottom } = getMiniPlayerGeometry({
       barProgress: progress.value,
       fullScreenHeight: screenHeight,
       screenWidth,
       tabBarHeight,
     })
 
-    return { height: getShadeHeight(bottom) }
+    return { height: getShadeHeight(pillBottom) }
   })
 
-  if (!audio || (expanded && settledExpanded) || !isTabBarMeasured) return null
+  if ((expanded && settledExpanded) || !isTabBarMeasured) return null
 
   return (
     <Animated.View pointerEvents='none' style={styles.layer}>

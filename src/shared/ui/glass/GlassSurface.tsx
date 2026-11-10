@@ -11,37 +11,34 @@ import { getWebGlassStyle } from './webGlass'
  * Frosted-glass background for the floating bottom islands: a backdrop blur
  * under a translucent tinted fill, framed by a 1px hairline rim. Every surface
  * renders this same component, so blur intensity, fill, rim and radius
- * treatment stay identical. The surface clips itself, so a host that must keep
- * overflowing children (for example the search dropdown) does not need
- * `overflow: 'hidden'`.
+ * treatment stay identical. It clips its own layers, so a host with overflowing
+ * children (the search dropdown) needs no `overflow: 'hidden'`.
+ *
+ * The live layers render on every platform and keep rendering through morphs —
+ * there is no static fallback: a blurred backdrop that stops being blurred and
+ * turns into a solid page-coloured slab reads as a hole in the UI.
  *
  * Platform treatment:
- * - iOS: native `BlurView` (tint light/dark), already refractive.
+ * - iOS: native `BlurView` (tint light/dark), already refractive, under the
+ *   shared top-edge sheen.
  * - Web: bypasses `BlurView` for classic glassmorphism — one translucent sheet
- *   that blurs and saturates the backdrop through `backdrop-filter` (emitted in
- *   both standard and `-webkit-` forms for Safari), framed by a 1px translucent
- *   rim. No shadow, no refraction mask.
+ *   that blurs and saturates the backdrop through `backdrop-filter` (standard
+ *   and `-webkit-` forms for Safari), framed by a 1px translucent rim. No
+ *   shadow, no refraction mask. Web is the reference: live blur always.
  * - Android 12+: real dimezis backdrop blur of the page target published by
  *   `BlurTargetProvider`; without a target (page not laid out, or Android
  *   11 and below) the surface keeps the tint plus the top-edge sheen.
- * `degraded` swaps the live blur for the plain tint while a morph resizes this
- * surface: on Android 12+ the dimezis backdrop is re-captured and re-blurred
- * whenever the bounds change, which dominated the morph frame budget on
- * mid-range devices. Web keeps its cheap CSS blur regardless.
  * @param root0 - Glass surface props.
  * @param root0.blurTarget - Explicit backdrop override; defaults to the provider's target.
- * @param root0.degraded - Render only the tint (no native blur) while a morph owns the surface.
  * @param root0.isLight - Active theme; selects the fill, rim and blur tint.
  * @param root0.radius - Corner radius of the hairline rim; matches the host shape.
  */
 export const GlassSurface = ({
   blurTarget,
-  degraded = false,
   isLight,
   radius,
 }: {
   blurTarget?: null | RefObject<ComponentRef<typeof View> | null>
-  degraded?: boolean
   isLight: boolean
   radius: number
 }) => {
@@ -57,17 +54,6 @@ export const GlassSurface = ({
   const tint = isAndroid
     ? { backgroundColor: getGlassFill(isLight, GLASS.android.fillAlphaBoost) }
     : glass.fill
-
-  if (degraded && !isWeb)
-    return (
-      <View
-        pointerEvents='none'
-        style={[StyleSheet.absoluteFill, styles.clip, { borderRadius: radius }]}
-      >
-        <View style={[StyleSheet.absoluteFill, tint]} />
-        <View style={[StyleSheet.absoluteFill, glass.rim]} />
-      </View>
-    )
 
   return (
     <View
@@ -85,13 +71,11 @@ export const GlassSurface = ({
           blurMethod={realBlurTarget ? GLASS.blur.androidMethod : undefined}
         />
       )}
-      {isAndroid && (
-        <LinearGradient
-          pointerEvents='none'
-          colors={GLASS.android.sheen.colors}
-          style={[styles.sheen, { height: GLASS.android.sheen.heightPercent }]}
-        />
-      )}
+      <LinearGradient
+        pointerEvents='none'
+        colors={GLASS.android.sheen.colors}
+        style={[styles.sheen, { height: GLASS.android.sheen.heightPercent }]}
+      />
       {/* Web carries its rim on the glass sheet itself. */}
       {!isWeb && <View style={[StyleSheet.absoluteFill, glass.rim]} />}
     </View>

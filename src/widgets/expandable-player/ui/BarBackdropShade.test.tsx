@@ -13,6 +13,7 @@ import {
   setBarCollapsed,
   setTabBarHeight,
   TAB_BAR_ISLAND_HEIGHT,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES, themeModeAtom } from 'shared/ui/theme'
 import { resetBarMorphDriver } from '../model/barMorphDriver'
@@ -28,6 +29,16 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
   default: () => ({ fontScale: 1, height: 800, width: 400 }),
 }))
+
+// The row's bottom padding is the same device inset the fixture height encodes.
+jest.mock('react-native-safe-area-context', () => {
+  const actual = jest.requireActual('react-native-safe-area-context')
+
+  return {
+    ...actual,
+    useSafeAreaInsets: () => ({ bottom: 14, left: 0, right: 0, top: 0 }),
+  }
+})
 
 // Fixture row height: BAR_ROW_MIN_HEIGHT content box plus the device safe-area
 // padding CustomTabBar adds (mirrors a phone with a 14dp bottom inset).
@@ -49,6 +60,13 @@ const COLLAPSED_HEIGHT =
   (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2 +
   PLAYER_SIZES.miniPlayerHeight +
   SHADE_TOP_OVERSCAN_PX
+// No pill: the shade anchors to the islands row top instead. The row is
+// BAR_ROW_MIN_HEIGHT plus the bottom padding, and the island is centered in it,
+// so its top gap grows as the island shrinks from the expanded 76 to 64.
+const NO_PILL_EXPANDED_HEIGHT =
+  TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2 + SHADE_TOP_OVERSCAN_PX
+const NO_PILL_COLLAPSED_HEIGHT =
+  TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT) / 2 + SHADE_TOP_OVERSCAN_PX
 const LIGHT_SHADE_OPAQUE = 'rgba(0, 0, 0, 0.18)'
 const LIGHT_SHADE_COLORS = ['rgba(0, 0, 0, 0)', LIGHT_SHADE_OPAQUE]
 const DARK_SHADE_OPAQUE = 'rgba(128, 128, 128, 0.36)'
@@ -231,15 +249,42 @@ describe('<BarBackdropShade>', () => {
     expect(findGradient()?.props.locations).toEqual(CAP_LOCATIONS)
   })
 
-  test('renders nothing while no audio is active', async () => {
+  test('anchors to the islands row top while no pill is active', async () => {
     await renderShade({ audio: null })
 
-    expect(findShade()).toBeUndefined()
-    expect(findGradient()).toBeUndefined()
+    // The shade accompanies the visible bottom chrome even without a pill: it
+    // reaches the islands row top plus the same overscan ramp.
+    expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
+      bottom: 0,
+      height: NO_PILL_EXPANDED_HEIGHT,
+      left: 0,
+      right: 0,
+    })
+    expect(findGradient()).toBeDefined()
+    expect(findFill()).toBeDefined()
+  })
+
+  test('follows the bar collapse morph while no pill is active', async () => {
+    const { ctx, rerender } = await renderShade({ audio: null })
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await rerender(<BarBackdropShade />)
+
+    expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
+      height: NO_PILL_COLLAPSED_HEIGHT,
+    })
   })
 
   test('renders nothing while the player is expanded to fullscreen', async () => {
     await renderShade({ expanded: true })
+
+    expect(findShade()).toBeUndefined()
+  })
+
+  test('renders nothing while expanded to fullscreen with no audio', async () => {
+    await renderShade({ audio: null, expanded: true })
 
     expect(findShade()).toBeUndefined()
   })

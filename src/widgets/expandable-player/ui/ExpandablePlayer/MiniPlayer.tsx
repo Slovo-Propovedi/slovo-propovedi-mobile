@@ -26,10 +26,7 @@ interface MiniPlayerProps {
   /** Bar state the pill rests in: collapsed mirrors the artwork inset on both sides. */
   barCollapsed: boolean
   currentTheme: ThemeColors
-  /** A morph is resizing the pill: swap live glass for the static tint. */
-  degraded?: boolean
-  // Theme flag for the shared glass layers; the pill must frost exactly like the
-  // tab island and the search surfaces.
+  // Theme flag for the shared glass layers; the pill frosts like the tab island.
   isLight: boolean
   miniBarRestingStyle: ViewStyle
   miniBarStyle: AnimatedStyle<ViewStyle>
@@ -49,7 +46,6 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
       audio,
       barCollapsed,
       currentTheme,
-      degraded = false,
       isLight,
       miniBarRestingStyle,
       miniBarStyle,
@@ -85,7 +81,7 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
             miniBarRestingStyle,
           ]}
         >
-          <GlassSurface isLight={isLight} degraded={degraded} radius={MINI_PILL_RADIUS} />
+          <GlassSurface isLight={isLight} radius={MINI_PILL_RADIUS} />
           <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
           <View style={miniStyles.miniTextContainer}>
             <MovingText

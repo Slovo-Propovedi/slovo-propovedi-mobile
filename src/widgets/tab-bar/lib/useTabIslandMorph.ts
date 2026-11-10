@@ -35,7 +35,7 @@ export const useTabIslandMorph = ({
   windowWidth,
 }: TabIslandMorphInput) => {
   const [isCollapsed] = useAtom(isTabIslandCollapsedAtom)
-  const { isMorphing, progress } = useAtomMorph(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
+  const progress = useAtomMorph(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
 
   const rowContentWidth =
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
@@ -67,9 +67,6 @@ export const useTabIslandMorph = ({
     // soon as the island is collapsing, not when their width animation lands.
     isCollapsed,
     islandStyle,
-    // True only while the island itself is resizing; the glass layers degrade
-    // for that window (see `GlassSurface`).
-    isMorphing,
     progress,
   }
 }

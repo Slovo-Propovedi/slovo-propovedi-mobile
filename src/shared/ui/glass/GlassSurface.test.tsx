@@ -21,6 +21,16 @@ const createBlurTarget = () =>
 const findBlur = () =>
   screen.root?.queryAll(instance => instance.props.intensity === GLASS.blur.intensity)
 
+const findSheen = () =>
+  screen.root?.queryAll(instance => instance.props.colors === GLASS.android.sheen.colors)
+
+const findRim = () =>
+  screen.root?.queryAll(instance => {
+    const flat = StyleSheet.flatten(instance.props.style)
+
+    return flat?.borderColor === getGlassBorder(true) && flat?.borderWidth === 1
+  }) ?? []
+
 afterEach(() => setPlatform('ios'))
 
 describe('<GlassSurface>', () => {
@@ -34,6 +44,20 @@ describe('<GlassSurface>', () => {
     expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
       backgroundColor: getGlassFill(true),
     })
+  })
+
+  test('iOS renders the top-edge sheen as the light-refraction cue', async () => {
+    setPlatform('ios')
+    await render(<GlassSurface isLight radius={28} />)
+
+    expect(findSheen()).toHaveLength(1)
+  })
+
+  test('web renders the top-edge sheen above its glass sheet', async () => {
+    setPlatform('web')
+    await render(<GlassSurface isLight radius={28} />)
+
+    expect(findSheen()).toHaveLength(1)
   })
 
   test('web renders one classic glassmorphism sheet above the backdrop', async () => {
@@ -72,14 +96,19 @@ describe('<GlassSurface>', () => {
       backgroundColor: getGlassFill(true, GLASS.android.fillAlphaBoost),
     })
 
-    const sheen = screen.root?.queryAll(
-      instance => instance.props.colors === GLASS.android.sheen.colors,
-    )
+    const sheen = findSheen()
 
     expect(sheen).toHaveLength(1)
     expect(StyleSheet.flatten(sheen?.[0]?.props.style)).toMatchObject({
       height: GLASS.android.sheen.heightPercent,
     })
+  })
+
+  test('frames every native surface with the hairline rim', async () => {
+    setPlatform('android')
+    await render(<GlassSurface isLight radius={28} />)
+
+    expect(findRim()).toHaveLength(1)
   })
 
   test('android 12+ blurs the registered page backdrop with dimezis', async () => {
@@ -112,45 +141,5 @@ describe('<GlassSurface>', () => {
 
     expect(findBlur()?.[0]?.props.blurMethod).toBeUndefined()
     expect(findBlur()?.[0]?.props.blurTarget).toBeUndefined()
-  })
-
-  test('degraded swaps the native blur for the plain tint', async () => {
-    setPlatform('android', 35)
-
-    await render(<GlassSurface isLight degraded radius={28} blurTarget={createBlurTarget()} />)
-
-    // No native blur is mounted while a morph owns the surface.
-    expect(findBlur()).toHaveLength(0)
-
-    const fills =
-      screen.root?.queryAll(
-        instance =>
-          StyleSheet.flatten(instance.props.style)?.backgroundColor ===
-          getGlassFill(true, GLASS.android.fillAlphaBoost),
-      ) ?? []
-
-    expect(fills).toHaveLength(1)
-    // The hairline rim still frames the degrade fallback.
-    expect(
-      screen.root?.queryAll(instance => {
-        const flat = StyleSheet.flatten(instance.props.style)
-
-        return flat?.borderColor === getGlassBorder(true) && flat?.borderWidth === 1
-      }),
-    ).toHaveLength(1)
-  })
-
-  test('web keeps its cheap backdrop blur even when degraded', async () => {
-    setPlatform('web')
-
-    await render(<GlassSurface isLight degraded radius={28} />)
-
-    expect(findBlur()).toHaveLength(0)
-    expect(
-      screen.root?.queryAll(
-        instance =>
-          StyleSheet.flatten(instance.props.style)?.backdropFilter === GLASS.web.backdropFilter,
-      ),
-    ).toHaveLength(1)
   })
 })

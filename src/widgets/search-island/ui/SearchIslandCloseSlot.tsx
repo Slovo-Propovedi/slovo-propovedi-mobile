@@ -6,8 +6,6 @@ import { SearchIslandCloseButton } from './SearchIslandCloseButton'
 
 interface SearchIslandCloseSlotProps {
   closeProgress: SharedValue<number>
-  /** A bar morph is resizing the circle: drop live glass for the static tint. */
-  degraded: boolean
   isVisible: boolean
   onPress: () => void
   openProgress: SharedValue<number>
@@ -24,7 +22,6 @@ interface SearchIslandCloseSlotProps {
  * owns the row's only boxShadow.
  * @param root0 - Component props.
  * @param root0.closeProgress - 0 = hidden, 1 = fully shown.
- * @param root0.degraded - Renders the static glass tint while the bar morphs.
  * @param root0.isVisible - Gates pointer events and accessibility only.
  * @param root0.onPress - Closes the search session.
  * @param root0.openProgress - The island's open/close progress.
@@ -34,7 +31,6 @@ interface SearchIslandCloseSlotProps {
  */
 export const SearchIslandCloseSlot = ({
   closeProgress,
-  degraded,
   isVisible,
   onPress,
   openProgress,
@@ -70,7 +66,7 @@ export const SearchIslandCloseSlot = ({
       pointerEvents={isVisible ? 'auto' : 'none'}
       importantForAccessibility={isVisible ? 'yes' : 'no-hide-descendants'}
     >
-      <GlassSurface isLight={isLight} degraded={degraded} radius={RADIUSES.round} />
+      <GlassSurface isLight={isLight} radius={RADIUSES.round} />
       <SearchIslandCloseButton onPress={onPress} />
     </Animated.View>
   )
