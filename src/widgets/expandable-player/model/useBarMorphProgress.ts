@@ -29,14 +29,11 @@ import {
 export const useBarMorphProgress = () => {
   const ctx = useCtx()
   const [isCollapsed] = useAtom(isMiniPillCollapsedAtom)
-  const [isMorphing, setIsMorphing] = useState(false)
   const [settledCollapsed, setSettledCollapsed] = useState(isCollapsed)
   const handleStart = useCallback((isTarget: boolean) => {
-    setIsMorphing(true)
     setSettledCollapsed(!isTarget)
   }, [])
   const handleSettled = useCallback((isTarget: boolean) => {
-    setIsMorphing(false)
     setSettledCollapsed(isTarget)
   }, [])
 
@@ -52,5 +49,5 @@ export const useBarMorphProgress = () => {
     }
   }, [ctx, handleStart, handleSettled])
 
-  return { isMorphing, progress: barMorphProgressSv, settledCollapsed }
+  return { progress: barMorphProgressSv, settledCollapsed }
 }

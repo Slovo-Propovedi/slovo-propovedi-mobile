@@ -23,7 +23,6 @@ interface UseExpandAnimationResult {
   /** Stable reference — forces containerStyle worklet to re-run on the UI thread. */
   forceGeometryReapply: () => void
   fullStyle: ReturnType<typeof useAnimatedStyle>
-  isMorphing: boolean
   miniBarRestingStyle: ReturnType<typeof getMiniBarStyle>
   miniBarStyle: ReturnType<typeof useAnimatedStyle>
   miniOverlayStyle: ReturnType<typeof useAnimatedStyle>
@@ -115,9 +114,6 @@ export const useExpandAnimation = (
     containerStyle,
     forceGeometryReapply,
     fullStyle,
-    // The pill participates in both morphs: the bar collapse/expand geometry and
-    // the expand/collapse sheet (visible again while the sheet collapses).
-    isMorphing: barMorph.isMorphing || expanded !== settledExpanded,
     miniBarRestingStyle,
     miniBarStyle,
     miniOverlayStyle,

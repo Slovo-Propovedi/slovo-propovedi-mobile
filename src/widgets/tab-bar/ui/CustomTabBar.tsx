@@ -46,13 +46,12 @@ export const CustomTabBar = ({
   const [rowWidth, setRowWidth] = useState(0)
   const visibleRoutes = state.routes.filter(route => !HIDDEN_TAB_ROUTE_NAMES.has(route.name))
   const activeRouteKey = state.routes[state.index]?.key
-  const { contentStyle, expandedTabWidth, isCollapsed, islandStyle, isMorphing, progress } =
-    useTabIslandMorph({
-      hideSearch,
-      routeCount: visibleRoutes.length,
-      rowWidth,
-      windowWidth,
-    })
+  const { contentStyle, expandedTabWidth, isCollapsed, islandStyle, progress } = useTabIslandMorph({
+    hideSearch,
+    routeCount: visibleRoutes.length,
+    rowWidth,
+    windowWidth,
+  })
   const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
   const glass = createGlassStyles(isLight, RADIUSES.round)
   const keyboardLiftStyle = useKeyboardLiftStyle()
@@ -82,7 +81,6 @@ export const CustomTabBar = ({
         <Animated.View style={[styles.floatingIsland, glass.containerPlain, islandStyle]}>
           <GlassSurface
             isLight={isLight}
-            degraded={isMorphing}
             radius={RADIUSES.round}
             key={isLight ? 'light' : 'dark'}
           />

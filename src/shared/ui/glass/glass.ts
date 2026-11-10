@@ -15,7 +15,9 @@ export const GLASS = {
     // depth from a brighter top edge and a slightly denser fill instead.
     fillAlphaBoost: 0.06,
     sheen: {
-      colors: ['rgba(255, 255, 255, 0.10)', 'rgba(255, 255, 255, 0)'],
+      // The top-edge highlight is the light-refraction cue: a bright hairline
+      // fade reads as a curved, lit rim on every platform.
+      colors: ['rgba(255, 255, 255, 0.14)', 'rgba(255, 255, 255, 0)'],
       heightPercent: '40%',
     },
   },
@@ -28,9 +30,9 @@ export const GLASS = {
     intensity: 40,
   },
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
-  // Milkier fill (Apple Music reference): the backdrop still reads through the
-  // blur, but noticeably less than in the earlier, thinner recipe.
-  fillAlpha: { dark: 0.5, light: 0.65 },
+  // Clear glass: the blurred backdrop smears read through the fill, which is
+  // the perceived refraction. A milky slab would hide them.
+  fillAlpha: { dark: 0.36, light: 0.5 },
   web: {
     // Classic glassmorphism: `backdrop-filter: blur(12px) saturate(140%)`.
     // GlassSurface bypasses BlurView on web and emits both this property and its
@@ -40,8 +42,9 @@ export const GLASS = {
     // on a bright backdrop, subtler in dark theme where contrast is plentiful.
     borderAlpha: { dark: 0.15, light: 0.45 },
     // Translucent tint: light glass whitens the backdrop slightly, dark glass
-    // darkens it so white text keeps its contrast.
-    tintAlpha: { dark: 0.45, light: 0.3 },
+    // darkens it so white text keeps its contrast. Thinner than the native fill:
+    // the backdrop-filter blur already carries the refraction.
+    tintAlpha: { dark: 0.3, light: 0.2 },
   },
 } as const
 

@@ -30,11 +30,8 @@ export const SearchIslandMorph = () => {
   const [isFocused, setIsFocused] = useState(false)
   // Both morphs subscribe to their atom, so they start in the same tick as the
   // tab island instead of waiting for a React commit.
-  const { isMorphing: isBarMorphing, progress: barProgress } = useAtomMorph(
-    isTabIslandCollapsedAtom,
-    BAR_MORPH_DURATION_MS,
-  )
-  const { progress: openProgress } = useAtomMorph(isSearchFieldVisibleAtom, BAR_MORPH_DURATION_MS)
+  const barProgress = useAtomMorph(isTabIslandCollapsedAtom, BAR_MORPH_DURATION_MS)
+  const openProgress = useAtomMorph(isSearchFieldVisibleAtom, BAR_MORPH_DURATION_MS)
   const closeProgress = useSharedValue(isFocused ? 1 : 0)
   const glass = createGlassStyles(isLight, RADIUSES.round)
 
@@ -65,7 +62,7 @@ export const SearchIslandMorph = () => {
         pointerEvents='auto'
         style={[styles.container, glass.containerPlain, frameStyle]}
       >
-        <GlassSurface isLight={isLight} radius={RADIUSES.round} degraded={isBarMorphing} />
+        <GlassSurface isLight={isLight} radius={RADIUSES.round} />
         <SearchIslandMagnifier
           barProgress={barProgress}
           screenWidth={screenWidth}
@@ -81,7 +78,6 @@ export const SearchIslandMorph = () => {
       </Animated.View>
       <SearchIslandCloseSlot
         progress={barProgress}
-        degraded={isBarMorphing}
         screenWidth={screenWidth}
         onPress={handleCloseSearch}
         openProgress={openProgress}

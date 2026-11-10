@@ -8,11 +8,11 @@ describe('glass recipe', () => {
   })
 
   test('uses a translucent light fill so the blurred backdrop shows through', () => {
-    expect(getGlassFill(true)).toBe('rgba(255, 255, 255, 0.65)')
+    expect(getGlassFill(true)).toBe('rgba(255, 255, 255, 0.5)')
   })
 
   test('uses a translucent dark fill so the blurred backdrop shows through', () => {
-    expect(getGlassFill(false)).toBe('rgba(0, 0, 0, 0.5)')
+    expect(getGlassFill(false)).toBe('rgba(0, 0, 0, 0.36)')
   })
 
   test('draws a white hairline rim in both themes', () => {
@@ -34,7 +34,7 @@ describe('glass recipe', () => {
 
     expect(getWebGlassStyle(true, 16)).toEqual({
       backdropFilter: 'blur(12px) saturate(140%)',
-      backgroundColor: 'rgba(255, 255, 255, 0.3)',
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
       borderColor: 'rgba(255, 255, 255, 0.45)',
       borderRadius: 16,
       borderWidth: 1,
@@ -44,7 +44,7 @@ describe('glass recipe', () => {
 
   test('web: dark theme uses a denser tint and a subtler rim', () => {
     expect(getWebGlassStyle(false, 28)).toMatchObject({
-      backgroundColor: 'rgba(0, 0, 0, 0.45)',
+      backgroundColor: 'rgba(0, 0, 0, 0.3)',
       borderColor: 'rgba(255, 255, 255, 0.15)',
       borderRadius: 28,
       borderWidth: 1,
@@ -53,12 +53,12 @@ describe('glass recipe', () => {
 
   test('android: adds a top-edge sheen and a stronger fill instead of a blur', () => {
     expect(GLASS.android.sheen.colors).toEqual([
-      'rgba(255, 255, 255, 0.10)',
+      'rgba(255, 255, 255, 0.14)',
       'rgba(255, 255, 255, 0)',
     ])
     expect(GLASS.android.sheen.heightPercent).toBe('40%')
-    expect(getGlassFill(true, GLASS.android.fillAlphaBoost)).toBe('rgba(255, 255, 255, 0.71)')
-    expect(getGlassFill(false, GLASS.android.fillAlphaBoost)).toBe('rgba(0, 0, 0, 0.56)')
+    expect(getGlassFill(true, GLASS.android.fillAlphaBoost)).toBe('rgba(255, 255, 255, 0.56)')
+    expect(getGlassFill(false, GLASS.android.fillAlphaBoost)).toBe('rgba(0, 0, 0, 0.42)')
   })
 
   test('picks the blur tint that matches the theme', () => {
@@ -70,13 +70,13 @@ describe('glass recipe', () => {
     expect(createGlassStyles(true, 38)).toEqual({
       blur: { intensity: GLASS.blur.intensity, tint: 'light' },
       containerPlain: {},
-      fill: { backgroundColor: 'rgba(255, 255, 255, 0.65)' },
+      fill: { backgroundColor: 'rgba(255, 255, 255, 0.5)' },
       rim: { borderColor: 'rgba(255, 255, 255, 0.25)', borderRadius: 38, borderWidth: 1 },
     })
     expect(createGlassStyles(false, 9999)).toMatchObject({
       blur: { intensity: GLASS.blur.intensity, tint: 'dark' },
       containerPlain: {},
-      fill: { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+      fill: { backgroundColor: 'rgba(0, 0, 0, 0.36)' },
       rim: { borderColor: 'rgba(255, 255, 255, 0.12)', borderRadius: 9999, borderWidth: 1 },
     })
   })

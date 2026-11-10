@@ -226,12 +226,13 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 Общий стеклянный рецепт нижних островов (`src/shared/ui/glass/`, см. [theme.md](./theme.md#стеклянные-нижние-острова-frosted-glass)) на web **не использует `BlurView`**: вместо него `GlassSurface` рендерит один слой классического глассморфизма через `getWebGlassStyle(isLight, radius)` (`glass/webGlass.ts`):
 
 1. **Фильтр** — `backdrop-filter: blur(12px) saturate(140%)`. В react-native-web стиль содержит оба ключа: `backdropFilter` и `WebkitBackdropFilter`. Safari по-прежнему понимает только префиксную форму, поэтому без второго ключа размытие в нём не работает.
-2. **Оттенок** — полупрозрачная заливка по теме: light `rgba(255, 255, 255, 0.3)`, dark `rgba(0, 0, 0, 0.45)`.
+2. **Оттенок** — полупрозрачная заливка по теме: light `rgba(255, 255, 255, 0.2)`, dark `rgba(0, 0, 0, 0.3)`.
 3. **Рамка** — 1px `rgba(255, 255, 255, 0.45)` в светлой теме и `0.15` в тёмной; радиус приходит из хоста.
+4. **Верхняя кромка** — общая sheen-полоса `rgba(255, 255, 255, 0.14) → 0` (`GLASS.android.sheen`) поверх листа: световая кромка, читаемая как рефракция.
 
 Тени нет: глубину даёт общая подложка `BarBackdropShade`. Прежняя SVG-рефракция (`feTurbulence` + `feDisplacementMap` в `public/index.html`) удалена вместе с маскированным кольцом.
 
-Стиль описан интерфейсом `WebGlassStyle extends ViewStyle` с полями `backdropFilter`/`WebkitBackdropFilter`: RNW компилирует эти ключи в CSS, но в типах RN `ViewStyle` их нет, поэтому обходимся без `as`. Пропы `experimentalBlurMethod`/`blurMethod` — Android-only и на web не нужны. Браузеры без `backdrop-filter` показывают только полупрозрачную заливку и рамку — контент под островом остаётся виден, просто без размытия.
+Стиль описан интерфейсом `WebGlassStyle extends ViewStyle` с полями `backdropFilter`/`WebkitBackdropFilter`: RNW компилирует эти ключи в CSS, но в типах RN `ViewStyle` их нет, поэтому обходимся без `as`. Пропы `experimentalBlurMethod`/`blurMethod` — Android-only и на web не нужны. Браузеры без `backdrop-filter` показывают только полупрозрачную заливку, рамку и верхнюю sheen-кромку — контент под островом остаётся виден, просто без размытия.
 
 ## Скроллбары
 
