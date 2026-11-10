@@ -35,11 +35,12 @@ stop_mock() {
   fi
 }
 
-start_mock() { # <scenario> <cancel_log> -> sets PORT
-  local scenario=$1 cancel_log=$2 port_file
+start_mock() { # <scenario> <cancel_log> [dispatch_log] -> sets PORT
+  local scenario=$1 cancel_log=$2 dispatch_log=${3:-} port_file
   port_file="$WORK_DIR/port"
   rm -f "$port_file"
-  python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" --cancel-log "$cancel_log" &
+  python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" \
+    --cancel-log "$cancel_log" --dispatch-log "$dispatch_log" &
   MOCK_PID=$!
   for _ in $(seq 1 100); do
     if [ -s "$port_file" ]; then
@@ -119,6 +120,20 @@ check_exit "(c) queue timeout" 42 "$status"
 check_file "(c) cancel POST recorded by the mock" "$WORK_DIR/cancel-c.log"
 if [ -s "$WORK_DIR/cancel-c.log" ] && ! grep -q "/actions/runs/123/cancel" "$WORK_DIR/cancel-c.log"; then
   printf 'FAIL (c) cancel log does not contain the cancel endpoint\n'
+  FAILURES=$((FAILURES + 1))
+fi
+
+# --- (d) workflow_dispatch inputs are forwarded to the API -------------------
+start_mock failure "$WORK_DIR/cancel-d.log" "$WORK_DIR/dispatch-d.log"
+status=0
+run_dispatch "$WORK_DIR/inputs" 1 "" "DISPATCH_INPUTS={\"mode\":\"native\"}" || status=$?
+stop_mock
+check_exit "(d) dispatch with inputs" 1 "$status"
+if [ -s "$WORK_DIR/dispatch-d.log" ] \
+  && jq -e '.ref == "main" and .inputs.mode == "native"' "$WORK_DIR/dispatch-d.log" >/dev/null 2>&1; then
+  printf 'ok   (d) dispatch body carried ref + inputs.mode=native\n'
+else
+  printf 'FAIL (d) dispatch body did not carry the inputs field\n'
   FAILURES=$((FAILURES + 1))
 fi
 
