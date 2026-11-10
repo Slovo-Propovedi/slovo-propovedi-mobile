@@ -3,7 +3,7 @@ import { Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-
 import { GestureDetector } from 'react-native-gesture-handler'
 import { useAnimatedReaction, useSharedValue } from 'react-native-reanimated'
 import { type MarqueeCycle } from './marquee-cycle'
-import { MarqueeMeasurer } from './marquee-measurer'
+import { MarqueeMeasurerSlot } from './marquee-measurer-slot'
 import { MarqueeTextRow } from './marquee-text-row'
 import { MarqueeTextSkeleton } from './skeleton'
 import { EdgeFadeContainer } from './text-edge-fade'
@@ -43,15 +43,15 @@ export const MarqueeText = memo(function MarqueeTextComponent({
   const didDrag = useSharedValue(false)
   const containerRef = useMarqueeContainerRef(didDrag)
   const {
+    applyTextWidth,
     containerWidth,
     handleContainerLayout,
-    handleMeasurerLayout,
-    handleTextLayout,
     maxOffset,
+    measurerAttempt,
     needsMarquee,
     needsRepeat,
     textWidth,
-  } = useMarqueeMeasurement()
+  } = useMarqueeMeasurement(text)
 
   const { animatedStyle, clockPaused, marqueeArmed, startIdleMarquee, startX, translateX } =
     useMarqueeAnimation(
@@ -114,12 +114,12 @@ export const MarqueeText = memo(function MarqueeTextComponent({
     >
       {/* A follower only displays; scrubbing its leader-owned phase would desync. */}
       {followCycle ? row : <GestureDetector gesture={pan}>{row}</GestureDetector>}
-      <MarqueeMeasurer
+      <MarqueeMeasurerSlot
         text={text}
         isWeb={isWeb}
         textStyle={textStyle}
-        onLayout={handleMeasurerLayout}
-        onTextLayout={handleTextLayout}
+        attempt={measurerAttempt}
+        onTextWidth={applyTextWidth}
       />
     </EdgeFadeContainer>
   )

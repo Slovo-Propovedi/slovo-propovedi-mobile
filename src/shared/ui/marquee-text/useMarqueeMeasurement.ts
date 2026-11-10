@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/immutability -- Reanimated shared values are intentionally mutated in layout handlers and worklets */
-import { useCallback, useState } from 'react'
-import { type LayoutChangeEvent, Platform, type TextLayoutEvent } from 'react-native'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { type LayoutChangeEvent, Platform } from 'react-native'
 import {
   type ReanimatedEvent,
   useDerivedValue,
@@ -10,9 +10,20 @@ import {
 import { scheduleOnRN } from 'react-native-worklets'
 import { shouldMarquee } from './marquee-utils'
 
-export const useMarqueeMeasurement = () => {
+// Some OEM Android builds (reported on Xiaomi/Android 15) drop the hidden
+// measurer's `onTextLayout`: the Text mounts but never reports a width, so
+// `textWidth` stays 0 and the title never marquees. Remount the measurer with a
+// growing delay and a barely-visible opacity until a layout pass lands.
+const MEASURER_RETRY_MAX_ATTEMPTS = 5
+const MEASURER_RETRY_BASE_MS = 400
+
+export const useMarqueeMeasurement = (text: string) => {
   const isWeb = Platform.OS === 'web'
   const [needsRepeat, setNeedsRepeat] = useState(false)
+  // The attempt is tied to its text so a new title derives attempt 0 without
+  // resetting state from an effect.
+  const [attemptState, setAttemptState] = useState({ count: 0, text })
+  const measuredRef = useRef(false)
 
   const containerWidth = useSharedValue(0)
   const textWidth = useSharedValue(0)
@@ -32,10 +43,14 @@ export const useMarqueeMeasurement = () => {
     scheduleOnRN(applyNeedsRepeat, containerWidth.value, textWidth.value)
   })
 
-  const applyTextWidth = (width: number) => {
-    textWidth.value = width
-    applyNeedsRepeat(containerWidth.value, width)
-  }
+  const applyTextWidth = useCallback(
+    (width: number) => {
+      textWidth.value = width
+      if (width > 0) measuredRef.current = true
+      applyNeedsRepeat(containerWidth.value, width)
+    },
+    [applyNeedsRepeat, containerWidth, textWidth],
+  )
 
   // Web has no worklets: the plain handler runs on the JS thread synchronously.
   const handleContainerLayout = isWeb
@@ -45,21 +60,46 @@ export const useMarqueeMeasurement = () => {
       }
     : handleWorkletLayout
 
-  const handleTextLayout = (event: TextLayoutEvent) => {
-    const lines = event.nativeEvent.lines
-    applyTextWidth(lines.length > 0 ? lines[0].width : 0)
-  }
+  // A new title starts a fresh measurement episode: one busted title must not
+  // disable marquee for every later one.
+  useEffect(() => {
+    measuredRef.current = false
+  }, [text])
 
-  const handleMeasurerLayout = (event: LayoutChangeEvent) => {
-    applyTextWidth(event.nativeEvent.layout.width)
-  }
+  const measurerAttempt = attemptState.text === text ? attemptState.count : 0
+
+  // Native-only self-heal: remount the measurer until a width lands. A landed
+  // width stops the loop; the pending timer is cleared on re-run/unmount.
+  useEffect(() => {
+    if (isWeb || !text) return
+    if (measuredRef.current) return
+
+    if (measurerAttempt >= MEASURER_RETRY_MAX_ATTEMPTS) {
+      console.warn(
+        `MarqueeText: text width measurement failed after ${MEASURER_RETRY_MAX_ATTEMPTS} attempts`,
+      )
+      return
+    }
+
+    const timer = setTimeout(
+      () => {
+        if (measuredRef.current) return
+        setAttemptState(current =>
+          current.text === text ? { count: current.count + 1, text } : { count: 1, text },
+        )
+      },
+      MEASURER_RETRY_BASE_MS * (measurerAttempt + 1),
+    )
+
+    return () => clearTimeout(timer)
+  }, [isWeb, measurerAttempt, text])
 
   return {
+    applyTextWidth,
     containerWidth,
     handleContainerLayout,
-    handleMeasurerLayout,
-    handleTextLayout,
     maxOffset,
+    measurerAttempt,
     needsMarquee,
     needsRepeat,
     textWidth,

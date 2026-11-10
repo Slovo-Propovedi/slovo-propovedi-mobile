@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Platform, StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
@@ -38,8 +38,26 @@ const fireMeasurerLayout = async (text: string, width: number) => {
   })
 }
 
+// The hidden measurer is the last Text node with the same content.
+const getMeasurerOpacity = (text: string) => {
+  const texts = screen.getAllByText(text)
+
+  return StyleSheet.flatten(texts[texts.length - 1].props.style)?.opacity
+}
+
+// Matches the hook's 400 * (attempt + 1) backoff: 400/800/1200/1600/2000.
+const RETRY_STEPS_MS = [400, 800, 1200, 1600, 2000]
+
+const advanceRetryCycle = async () => {
+  for (const delay of RETRY_STEPS_MS)
+    await act(async () => {
+      jest.advanceTimersByTime(delay)
+    })
+}
+
 describe('<MarqueeText />', () => {
   afterEach(() => {
+    jest.useRealTimers()
     jest.restoreAllMocks()
   })
   test('returns null when text is empty', async () => {
@@ -378,5 +396,85 @@ describe('<MarqueeText />', () => {
     expect(
       StyleSheet.flatten(screen.getAllByText(propsStub.text)[0].parent?.props.style).alignSelf,
     ).toBe('center')
+  })
+
+  test('keeps the measurer fully transparent before any retry', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0)
+  })
+
+  test('remounts and de-hides the measurer when the width never lands', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await act(async () => {
+      jest.advanceTimersByTime(400)
+    })
+    await act(async () => {
+      jest.advanceTimersByTime(1600)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0.02)
+  })
+
+  test('stops retrying once a measurement lands', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 300)
+    await act(async () => {
+      jest.advanceTimersByTime(6000)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0)
+  })
+
+  test('warns once when the width never lands', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await advanceRetryCycle()
+
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+  })
+
+  test('re-arms the retry episode when the text changes', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const { rerender } = await renderWithProviders(
+      <MarqueeText testID={TEST_ID} text='First title' />,
+    )
+
+    await advanceRetryCycle()
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+
+    await rerender(<MarqueeText testID={TEST_ID} text='Second title' />)
+    expect(getMeasurerOpacity('Second title')).toBe(0)
+
+    await advanceRetryCycle()
+    expect(warnSpy).toHaveBeenCalledTimes(2)
+  })
+
+  test('stops pending retries when the width lands mid-cycle', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await act(async () => {
+      jest.advanceTimersByTime(400)
+    })
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0.02)
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 300)
+    await act(async () => {
+      jest.advanceTimersByTime(10000)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0.02)
+    expect(warnSpy).not.toHaveBeenCalled()
   })
 })
