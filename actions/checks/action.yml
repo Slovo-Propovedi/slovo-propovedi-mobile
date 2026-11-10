@@ -117,20 +117,6 @@ runs:
         ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37.0
       run: bash scripts/ci/setup-android-sdk.sh
 
-    - name: Compute Android SDK cache key
-      id: sdk-cache-key
-      if: ${{ !cancelled() }}
-      shell: bash
-      run: bash scripts/ci/android-sdk-cache-key.sh
-
-    - name: Save Android SDK cache
-      if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
-      continue-on-error: true
-      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-      with:
-        path: /opt/android-sdk
-        key: ${{ steps.sdk-cache-key.outputs.key }}
-
     - name: Run all tests (jest)
       id: jest
       shell: bash
@@ -157,6 +143,22 @@ runs:
         cd android
         ./gradlew :apk-installer:testDebugUnitTest :audio-effects:testDebugUnitTest --continue
         echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
+
+    # Snapshot key is computed after the build so NDK/CMake installed by
+    # Gradle during the native tests are part of the cache (ci.yml semantics).
+    - name: Compute Android SDK cache key
+      id: sdk-cache-key
+      if: ${{ !cancelled() }}
+      shell: bash
+      run: bash scripts/ci/android-sdk-cache-key.sh
+
+    - name: Save Android SDK cache
+      if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
+      continue-on-error: true
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: /opt/android-sdk
+        key: ${{ steps.sdk-cache-key.outputs.key }}
 
     - name: Job summary
       if: always()
