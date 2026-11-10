@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
 import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { isTabIslandCollapsedAtom } from 'widgets/tab-bar/@x/morph'
@@ -59,35 +59,30 @@ export const SearchIslandMorph = () => {
   // Plain restatement of the settled frame, applied after the animated style:
   // the glass theme remount re-commits first-render shadow-tree values, so the
   // pill must not fall back to its launch geometry (Issue #63).
-  const settledOpenProgress = isSearchFieldVisible ? 1 : 0
-  const settledCloseProgress = isFocused ? 1 : 0
-  const {
-    closeRight: restingCloseRight,
-    iconInset: restingIconInset,
-    iconSize: restingIconSize,
-    radius: restingRadius,
-    ...restingGeometry
-  } = getSearchIslandGeometry({
-    barProgress: isTabCollapsed ? 1 : 0,
-    closeProgress: settledCloseProgress,
-    openProgress: settledOpenProgress,
-    screenWidth,
-    tabBarHeight,
-  })
-  const restingFrameStyle = {
-    ...restingGeometry,
-    borderRadius: restingRadius,
-    paddingLeft: restingIconInset,
-  }
-  const closeSlotRestingStyle = {
-    borderRadius: restingGeometry.height / 2,
-    bottom: restingGeometry.bottom,
-    height: restingGeometry.height,
-    opacity: settledOpenProgress * settledCloseProgress,
-    right: restingCloseRight,
-    transform: [{ scale: 0.8 + 0.2 * settledCloseProgress }],
-    width: restingGeometry.height,
-  }
+  const { closeSlotRestingStyle, restingFrameStyle } = useMemo(() => {
+    const settledOpenProgress = isSearchFieldVisible ? 1 : 0
+    const settledCloseProgress = isFocused ? 1 : 0
+    const { closeRight, iconInset, iconSize, radius, ...geometry } = getSearchIslandGeometry({
+      barProgress: isTabCollapsed ? 1 : 0,
+      closeProgress: settledCloseProgress,
+      openProgress: settledOpenProgress,
+      screenWidth,
+      tabBarHeight,
+    })
+
+    return {
+      closeSlotRestingStyle: {
+        borderRadius: geometry.height / 2,
+        bottom: geometry.bottom,
+        height: geometry.height,
+        opacity: settledOpenProgress * settledCloseProgress,
+        right: closeRight,
+        transform: [{ scale: 0.8 + 0.2 * settledCloseProgress }],
+        width: geometry.height,
+      },
+      restingFrameStyle: { ...geometry, borderRadius: radius, paddingLeft: iconInset },
+    }
+  }, [isFocused, isSearchFieldVisible, isTabCollapsed, screenWidth, tabBarHeight])
 
   return (
     <>
