@@ -8,7 +8,7 @@ import { isSearchFieldVisibleAtom } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
 import { GlassIsland } from 'shared/ui'
 import { BAR_MORPH_DURATION_MS, tabBarHeightAtom } from 'shared/ui/layout'
-import { RADIUSES, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 import { SearchIslandContent } from './SearchIslandContent'
@@ -60,7 +60,6 @@ export const SearchIslandMorph = () => {
       <GlassIsland
         isLight={isLight}
         pointerEvents='auto'
-        radius={RADIUSES.round}
         animatedStyle={frameStyle}
         hostStyle={styles.container}
       >

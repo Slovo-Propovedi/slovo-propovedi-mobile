@@ -10,7 +10,7 @@ import { CoverImage, GlassIsland, MovingText, useMarqueeCycle } from 'shared/ui'
 import { type ThemeColors } from 'shared/ui/theme'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
-import { type createMiniStyles, MINI_PILL_RADIUS, MINI_PLAY_HIT_SLOP } from './miniStyles'
+import { type createMiniStyles, MINI_PLAY_HIT_SLOP } from './miniStyles'
 
 // Web: the row renders as <div role="link" tabindex=0> (RNW maps 'link' to the
 // role attribute, no <a> tag) so the inner play/pause <button> is not nested
@@ -68,7 +68,6 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
           ref={ref}
           onPress={onPress}
           isLight={isLight}
-          radius={MINI_PILL_RADIUS}
           accessibilityRole={ROW_ACCESSIBILITY_ROLE}
           hostStyle={[miniStyles.miniContainer, barCollapsed && miniStyles.miniContainerCollapsed]}
           animatedStyle={[

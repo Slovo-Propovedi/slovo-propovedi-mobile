@@ -1,6 +1,6 @@
 import { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import { GlassIsland } from 'shared/ui'
-import { RADIUSES, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseButton } from './SearchIslandCloseButton'
 
@@ -63,7 +63,6 @@ export const SearchIslandCloseSlot = ({
     <GlassIsland
       isLight={isLight}
       animatedStyle={style}
-      radius={RADIUSES.round}
       hostStyle={styles.closeCircle}
       accessibilityElementsHidden={!isVisible}
       pointerEvents={isVisible ? 'auto' : 'none'}
