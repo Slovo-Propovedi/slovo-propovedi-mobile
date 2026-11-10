@@ -1,13 +1,22 @@
 import { render, screen } from '@testing-library/react-native'
 import { type ComponentRef, createRef, type RefObject } from 'react'
 import { Platform, StyleSheet, type View } from 'react-native'
-import { getGlassBorder, getGlassFill, getWebGlassFill, GLASS } from './glass'
+import { LightTheme } from '../theme/constants'
+import { getGlassBorder, getGlassFill, getWashColor, getWebGlassFill, GLASS } from './glass'
 import { GlassSurface } from './GlassSurface'
 
 jest.mock('expo-linear-gradient', () => {
   const { View } = jest.requireActual('react-native')
 
   return { LinearGradient: (props: Record<string, unknown>) => <View {...props} /> }
+})
+
+jest.mock('../theme/ThemeContext/useTheme', () => {
+  const { LightTheme: MockLightTheme } = jest.requireActual('../theme/constants')
+
+  return {
+    useTheme: () => ({ currentTheme: MockLightTheme, isLight: true, themeMode: 'light' }),
+  }
 })
 
 const setPlatform = (os: 'android' | 'ios' | 'web', version?: number) => {
@@ -30,6 +39,13 @@ const findRim = () =>
 
     return flat?.borderColor === getGlassBorder(true) && flat?.borderWidth === 1
   }) ?? []
+
+const WASH_ALPHA = 0.35
+
+const findWashLayer = (color: string) =>
+  screen.root?.queryAll(
+    instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === color,
+  ) ?? []
 
 afterEach(() => setPlatform('ios'))
 
@@ -141,5 +157,33 @@ describe('<GlassSurface>', () => {
 
     expect(findBlur()?.[0]?.props.blurMethod).toBeUndefined()
     expect(findBlur()?.[0]?.props.blurTarget).toBeUndefined()
+  })
+
+  test('renders a translucent theme wash over the blur when washAlpha is given', async () => {
+    setPlatform('ios')
+    const washColor = getWashColor(LightTheme.background, WASH_ALPHA)
+
+    await render(<GlassSurface isLight radius={28} washAlpha={WASH_ALPHA} />)
+
+    const washes = findWashLayer(washColor)
+
+    expect(washes).toHaveLength(1)
+    expect(StyleSheet.flatten(washes[0]?.props.style)).toMatchObject({
+      backgroundColor: washColor,
+      bottom: 0,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+    })
+  })
+
+  test('omits the wash layer when washAlpha is not given', async () => {
+    setPlatform('ios')
+    const washColor = getWashColor(LightTheme.background, WASH_ALPHA)
+
+    await render(<GlassSurface isLight radius={28} />)
+
+    expect(findWashLayer(washColor)).toHaveLength(0)
   })
 })

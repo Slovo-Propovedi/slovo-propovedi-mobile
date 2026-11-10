@@ -6,7 +6,7 @@ import { OnboardingTarget } from 'features/onboarding'
 import { PlayerControlButton, PlayerControlButtonType } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
-import { CoverImage, GlassSurface, MovingText, useMarqueeCycle } from 'shared/ui'
+import { CoverImage, GLASS, GlassSurface, MovingText, useMarqueeCycle } from 'shared/ui'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { type ThemeColors } from 'shared/ui/theme'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
@@ -81,7 +81,12 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
             miniBarRestingStyle,
           ]}
         >
-          <GlassSurface isLight={isLight} radius={MINI_PILL_RADIUS} />
+          {/* Pill floats over content; the wash keeps its color as intense as the circles. */}
+          <GlassSurface
+            isLight={isLight}
+            radius={MINI_PILL_RADIUS}
+            washAlpha={GLASS.pill.washAlpha[isLight ? 'light' : 'dark']}
+          />
           <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
           <View style={miniStyles.miniTextContainer}>
             <MovingText
