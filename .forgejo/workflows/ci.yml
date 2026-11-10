@@ -165,6 +165,14 @@ jobs:
           REF: ${{ github.ref_name }}
           SHA: ${{ github.sha }}
         run: |
+          # An unconfigured secret must not redden main: degrade to the local
+          # fallback instead of failing the dispatch.
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::GITHUB_CI_TOKEN is not configured — skipping GitHub dispatch, running locally"
+            echo "fallback=true" >> "$GITHUB_OUTPUT"
+            echo "run_url=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           set +e
           OUTPUT=$(bash scripts/ci/github-dispatch.sh)
           STATUS=$?
