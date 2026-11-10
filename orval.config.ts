@@ -32,22 +32,27 @@ const loadDotEnv = () => {
   }
 }
 
-if (!process.env.DOCS_HOSTNAME) loadDotEnv()
+// Mirrors the backend's orval.config.mjs local-spec override: OPENAPI_SPEC_PATH
+// points codegen at a local checkout of slovo-propovedi-docs (used while a spec
+// change is not published yet) and makes DOCS_HOSTNAME optional.
+const localSpecPath = process.env.OPENAPI_SPEC_PATH
+
+if (!process.env.DOCS_HOSTNAME && !localSpecPath) loadDotEnv()
 
 const docsHostname = process.env.DOCS_HOSTNAME
 
-if (!docsHostname) {
+if (!localSpecPath && !docsHostname) {
   throw new Error(
-    'DOCS_HOSTNAME is not set. Add it to .env (see .env.example) or export DOCS_HOSTNAME=<bare hostname> and re-run.',
+    'DOCS_HOSTNAME is not set. Add it to .env (see .env.example) or export DOCS_HOSTNAME=<bare hostname> and re-run. Alternatively, set OPENAPI_SPEC_PATH to a local openAPI.yaml.',
   )
 }
 
-const OPENAPI_SPEC_URL = `https://${docsHostname}/openAPI.yaml`
+const specInput = localSpecPath ?? `https://${docsHostname}/openAPI.yaml`
 
 export default defineConfig({
   // Output 1: Axios API функции с mutator и MSW моками
   main: {
-    input: OPENAPI_SPEC_URL,
+    input: specInput,
     output: {
       mode: OutputMode.TAGS_SPLIT,
       client: 'axios',
@@ -70,7 +75,7 @@ export default defineConfig({
   },
   // Output 2: Zod схемы отдельно (без mutator)
   schemas: {
-    input: OPENAPI_SPEC_URL,
+    input: specInput,
     output: {
       mode: OutputMode.TAGS,
       propertySortOrder: PropertySortOrder.ALPHABETICAL,

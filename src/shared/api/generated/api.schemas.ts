@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.23.1
+ * OpenAPI spec version: 0.23.5
  */
 export interface HealthResponse {
   status: string
@@ -149,6 +149,11 @@ export type PlaylistSermonPlaylistsItem = {
 export interface PlaylistSermon {
   artist: string
   artwork: string
+  /**
+   * BlurHash обложки — заглушка от бэкенда; null, если хэш ещё не посчитан.
+   * @nullable
+   */
+  artworkBlurhash?: string | null
   /** @nullable */
   audioUrl: string | null
   /** @nullable */
@@ -169,6 +174,11 @@ export interface PlaylistSermon {
 
 export interface SectionPlaylist {
   artwork: string
+  /**
+   * BlurHash обложки — заглушка от бэкенда; null, если хэш ещё не посчитан.
+   * @nullable
+   */
+  artworkBlurhash?: string | null
   description: string
   id: string
   position: number
@@ -196,6 +206,11 @@ export interface SectionEntity {
 
 export interface PlaylistEntity {
   artwork: string
+  /**
+   * BlurHash обложки — заглушка от бэкенда; null, если хэш ещё не посчитан.
+   * @nullable
+   */
+  artworkBlurhash?: string | null
   /** Дата добавления плейлиста */
   createdAt: string
   description: string
@@ -208,6 +223,11 @@ export interface PlaylistEntity {
 export interface SermonEntity {
   artist: string
   artwork: string
+  /**
+   * BlurHash обложки — заглушка от бэкенда; null, если хэш ещё не посчитан.
+   * @nullable
+   */
+  artworkBlurhash?: string | null
   /** @nullable */
   audioUrl: string | null
   /** @nullable */

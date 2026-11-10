@@ -5,7 +5,7 @@
  * REST API сервиса «Слово.Проповеди».
  * Позволяет управлять проповедями, плейлистами, разделами, загружать файлы и работать с пользователями.
  *
- * OpenAPI spec version: 0.23.1
+ * OpenAPI spec version: 0.23.5
  */
 import { faker } from '@faker-js/faker'
 
@@ -26,6 +26,10 @@ export const getSectionControllerCreateResponseMock = (
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
     () => ({
       artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      artworkBlurhash: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       position: faker.number.int(),
@@ -39,6 +43,10 @@ export const getSectionControllerCreateResponseMock = (
         () => ({
           artist: faker.string.alpha({ length: { min: 10, max: 20 } }),
           artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          artworkBlurhash: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           audioUrl: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
@@ -115,6 +123,10 @@ export const getSectionControllerCreateResponseMock200 = (
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
     () => ({
       artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      artworkBlurhash: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       position: faker.number.int(),
@@ -128,6 +140,10 @@ export const getSectionControllerCreateResponseMock200 = (
         () => ({
           artist: faker.string.alpha({ length: { min: 10, max: 20 } }),
           artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          artworkBlurhash: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           audioUrl: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
@@ -207,6 +223,10 @@ export const getSectionControllerFindAllResponseMock = (
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
         () => ({
           artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          artworkBlurhash: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           description: faker.string.alpha({ length: { min: 10, max: 20 } }),
           id: faker.string.alpha({ length: { min: 10, max: 20 } }),
           position: faker.number.int(),
@@ -223,6 +243,10 @@ export const getSectionControllerFindAllResponseMock = (
           ).map(() => ({
             artist: faker.string.alpha({ length: { min: 10, max: 20 } }),
             artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            artworkBlurhash: faker.helpers.arrayElement([
+              faker.string.alpha({ length: { min: 10, max: 20 } }),
+              null,
+            ]),
             audioUrl: faker.helpers.arrayElement([
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
@@ -309,6 +333,10 @@ export const getSectionControllerFindAllResponseMock200 = (
       playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
         () => ({
           artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          artworkBlurhash: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           description: faker.string.alpha({ length: { min: 10, max: 20 } }),
           id: faker.string.alpha({ length: { min: 10, max: 20 } }),
           position: faker.number.int(),
@@ -325,6 +353,10 @@ export const getSectionControllerFindAllResponseMock200 = (
           ).map(() => ({
             artist: faker.string.alpha({ length: { min: 10, max: 20 } }),
             artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            artworkBlurhash: faker.helpers.arrayElement([
+              faker.string.alpha({ length: { min: 10, max: 20 } }),
+              null,
+            ]),
             audioUrl: faker.helpers.arrayElement([
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               null,
@@ -422,6 +454,10 @@ export const getSectionControllerFindOneResponseMock = (
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
     () => ({
       artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      artworkBlurhash: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       position: faker.number.int(),
@@ -435,6 +471,10 @@ export const getSectionControllerFindOneResponseMock = (
         () => ({
           artist: faker.string.alpha({ length: { min: 10, max: 20 } }),
           artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          artworkBlurhash: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           audioUrl: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
@@ -511,6 +551,10 @@ export const getSectionControllerFindOneResponseMock200 = (
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
     () => ({
       artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      artworkBlurhash: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       position: faker.number.int(),
@@ -524,6 +568,10 @@ export const getSectionControllerFindOneResponseMock200 = (
         () => ({
           artist: faker.string.alpha({ length: { min: 10, max: 20 } }),
           artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          artworkBlurhash: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           audioUrl: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
@@ -600,6 +648,10 @@ export const getSectionControllerUpdateResponseMock = (
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
     () => ({
       artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      artworkBlurhash: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       position: faker.number.int(),
@@ -613,6 +665,10 @@ export const getSectionControllerUpdateResponseMock = (
         () => ({
           artist: faker.string.alpha({ length: { min: 10, max: 20 } }),
           artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          artworkBlurhash: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           audioUrl: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
@@ -689,6 +745,10 @@ export const getSectionControllerUpdateResponseMock200 = (
   playlists: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
     () => ({
       artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      artworkBlurhash: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
       description: faker.string.alpha({ length: { min: 10, max: 20 } }),
       id: faker.string.alpha({ length: { min: 10, max: 20 } }),
       position: faker.number.int(),
@@ -702,6 +762,10 @@ export const getSectionControllerUpdateResponseMock200 = (
         () => ({
           artist: faker.string.alpha({ length: { min: 10, max: 20 } }),
           artwork: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          artworkBlurhash: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           audioUrl: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
