@@ -1,6 +1,6 @@
 <div align="center">
 
-[![CI](https://github.com/Slovo-Propovedi/slovo-propovedi-mobile/actions/workflows/ci.yml/badge.svg)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/actions?workflow=ci.yml)
+[![CI](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/badges/workflows/ci.yml/badge.svg?branch=main)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/actions?workflow=ci.yml)
 
 </div>
 
