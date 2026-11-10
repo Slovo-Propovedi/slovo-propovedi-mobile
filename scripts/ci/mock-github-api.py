@@ -111,10 +111,12 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = self.path.split("?", 1)[0]
         length = int(self.headers.get("Content-Length") or 0)
-        if length:
-            self.rfile.read(length)
+        body = self.rfile.read(length) if length else b""
 
         if path == f"{REPO}{WORKFLOW}/dispatches":
+            if STATE["dispatch_log"]:
+                with open(STATE["dispatch_log"], "w", encoding="utf-8") as handle:
+                    handle.write(body.decode("utf-8"))
             # 200 (not the literal 204 from the spec): a dispatch response must
             # carry {"workflow_run_id": ...}, and HTTP 204 may not have a body.
             STATE["dispatch_time"] = time.monotonic()
@@ -134,10 +136,12 @@ def main():
     parser.add_argument("--scenario", choices=SCENARIOS, default="success")
     parser.add_argument("--port-file", required=True)
     parser.add_argument("--cancel-log", default="/dev/null")
+    parser.add_argument("--dispatch-log", default="")
     args = parser.parse_args()
 
     STATE["scenario"] = args.scenario
     STATE["cancel_log"] = args.cancel_log
+    STATE["dispatch_log"] = args.dispatch_log
     STATE["dispatch_time"] = time.monotonic()
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)

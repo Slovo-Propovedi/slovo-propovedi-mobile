@@ -21,6 +21,9 @@
 #   ARTIFACTS           comma-separated "name=outdir" pairs downloaded on
 #                       success, e.g. "unsigned-apk=unsigned-apk,web-dist=web-dist"
 #                       The archive is saved as <outdir>/<name>.zip.
+#   DISPATCH_INPUTS     raw JSON object merged into the dispatch body as
+#                       "inputs", e.g. '{"mode":"native"}' (workflow_dispatch
+#                       inputs); validated as a JSON object before dispatch
 #   GH_API_BASE         API base URL (default https://api.github.com)
 #   GH_DISPATCH_DRY_RUN=1  log the planned calls, touch no network, exit 0
 #
@@ -88,7 +91,11 @@ if [ "${GH_DISPATCH_DRY_RUN:-}" = "1" ]; then
   log "[dry-run] repo=$GH_REPO workflow=$WORKFLOW ref=$REF sha=$SHA"
   log "[dry-run] GET  $GH_API_BASE/repos/$GH_REPO/commits/$SHA (poll ${POLL_INTERVAL_SECONDS}s, ${MIRROR_WAIT_MIN}m budget)"
   log "[dry-run] POST $GH_API_BASE/repos/$GH_REPO/actions/workflows/$WORKFLOW/dispatches"
-  log "[dry-run]      body={\"ref\":\"$REF\",\"return_run_details\":true}"
+  if [ -n "${DISPATCH_INPUTS:-}" ]; then
+    log "[dry-run]      body={\"ref\":\"$REF\",\"return_run_details\":true,\"inputs\":$DISPATCH_INPUTS}"
+  else
+    log "[dry-run]      body={\"ref\":\"$REF\",\"return_run_details\":true}"
+  fi
   log "[dry-run] GET  $GH_API_BASE/repos/$GH_REPO/actions/runs/<run_id> (poll ${POLL_INTERVAL_SECONDS}s)"
   log "[dry-run]      queue timeout ${QUEUE_TIMEOUT_MIN}m, run timeout ${RUN_TIMEOUT_MIN}m"
   if [ -n "${ARTIFACTS:-}" ]; then
@@ -99,6 +106,12 @@ if [ "${GH_DISPATCH_DRY_RUN:-}" = "1" ]; then
 fi
 
 command -v jq >/dev/null 2>&1 || usage_error "jq is required"
+
+if [ -n "${DISPATCH_INPUTS:-}" ]; then
+  if ! printf '%s' "$DISPATCH_INPUTS" | jq -e 'type == "object"' >/dev/null 2>&1; then
+    usage_error "DISPATCH_INPUTS must be a JSON object (got '$DISPATCH_INPUTS')"
+  fi
+fi
 
 WORK_DIR=$(mktemp -d)
 trap 'rm -rf "$WORK_DIR"' EXIT
@@ -160,7 +173,12 @@ dispatch_workflow() {
   local body_file="$WORK_DIR/dispatch-body.json"
   local response_file="$WORK_DIR/dispatch-response.json"
   local code run_id
-  jq -n --arg ref "$REF" '{ref: $ref, return_run_details: true}' > "$body_file"
+  if [ -n "${DISPATCH_INPUTS:-}" ]; then
+    jq -n --arg ref "$REF" --argjson inputs "$DISPATCH_INPUTS" \
+      '{ref: $ref, return_run_details: true, inputs: $inputs}' > "$body_file"
+  else
+    jq -n --arg ref "$REF" '{ref: $ref, return_run_details: true}' > "$body_file"
+  fi
   code=$(api_request POST \
     "$GH_API_BASE/repos/$GH_REPO/actions/workflows/$WORKFLOW/dispatches" \
     "$response_file" -H 'Content-Type: application/json' --data @"$body_file")
