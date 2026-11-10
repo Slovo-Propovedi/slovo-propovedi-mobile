@@ -3,15 +3,20 @@ import { createCommonStyles, miniLayerStyle } from './commonStyles'
 
 describe('player layers draw order', () => {
   test('mini pill layer carries no elevation', () => {
-    // The tab-bar backdrop is flat (its elevation lives on the islands row), so
-    // the pill needs no elevation of its own: the document order already paints
-    // the player subtree after the tab bar.
+    // Android reorders elevation only within sibling groups, so an elevated pill
+    // could never lift the player subtree above the tab-bar subtree anyway.
     expect(miniLayerStyle).not.toHaveProperty('elevation')
   })
 
+  test('recovery overlay draws above the tab-bar chrome via zIndex', () => {
+    // The player subtree root is a sibling of the Tabs subtree, so only its own
+    // zIndex can reorder it above the bar chrome (zIndex 10).
+    expect(createCommonStyles(LightTheme).recoveryOverlay).toHaveProperty('zIndex', 20)
+  })
+
   test('recovery overlay carries no elevation', () => {
-    // An elevated wrapper would re-project the player subtree and race the
-    // islands row; the flat shade makes that race impossible.
+    // Elevation here cannot reorder against the Tabs subtree (different sibling
+    // group) and re-projects the player subtree; keep it off.
     expect(createCommonStyles(LightTheme).recoveryOverlay).not.toHaveProperty('elevation')
   })
 })
