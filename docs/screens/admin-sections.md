@@ -11,6 +11,8 @@
 
 Раздел — это слайдер с плейлистами на главной странице сайта. Экраны портированы из Svelte-админки (`slovo-propovedi-admin`). Доменные детали (enums, reorder, зависимость drag) — в [`../features/admin.md`](../features/admin.md).
 
+**Ограничение платформы:** переупорядочивание работает на `react-native-draggable-flatlist` 4.0.3, а приложение несёт патч `patches/react-native-draggable-flatlist+4.0.3.patch` (замена `InteractionManager`, удалённого из ядра RN 0.88, на `requestAnimationFrame`) — см. [`../debt.md`](../debt.md).
+
 ## Список
 
 **Файлы:** `src/pages/admin-sections/ui/AdminSectionsScreen.tsx`, `AdminSectionsHeader.tsx`, `AdminSectionRow.tsx`, `AdminSectionBadges.tsx`, `lib/useAdminSections.ts`

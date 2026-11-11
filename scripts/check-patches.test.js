@@ -104,6 +104,13 @@ describe('verifyPatch', () => {
     expect(verifyPatch(MATCHING_PATCH)).toEqual([])
   })
 
+  test('accepts the installed react-native-draggable-flatlist patch', () => {
+    const packageName = 'react-native-draggable-flatlist'
+    const version = readInstalledVersion(packageName)
+
+    expect(verifyPatch(`${packageName}+${version}.patch`)).toEqual([])
+  })
+
   test('reports a version mismatch', () => {
     const errors = verifyPatch(MISMATCHED_PATCH)
 

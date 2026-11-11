@@ -32,6 +32,14 @@ const PATCH_PROBES = {
     files: [EXPO_INTENT_LAUNCHER_MODULE_PATH],
     requiresSourceBuild: true,
   },
+  'react-native-draggable-flatlist': {
+    files: [
+      'node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx',
+      'node_modules/react-native-draggable-flatlist/lib/module/components/DraggableFlatList.js',
+      'node_modules/react-native-draggable-flatlist/lib/commonjs/components/DraggableFlatList.js',
+    ],
+    fixSignature: 'requestAnimationFrame(',
+  },
   'react-native-gesture-handler': {
     files: [
       'node_modules/react-native-gesture-handler/src/web/tools/PointerEventManager.ts',

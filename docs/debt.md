@@ -72,6 +72,10 @@
 - [ ] **Kotlin-каталог RN 0.88 декларирует 2.2.0, а KGP в сборке — 2.2.10 (не-фатальный warning ExpoRootProject).** `node_modules/react-native/gradle/libs.versions.toml` (upstream) — сборка использует версию плагина, warning косметический. Вернуться при апгрейде RN; руками не чиним — `android/` генерат (`expo prebuild`), правка upstream-файла в `node_modules` бессмысленна.
 - [ ] **Удаление `react-native-tab-view` и `react-native-pager-view` не проверено нативной сборкой.** `package.json`, `yarn.lock`, автолинковка `android/` — оба пакета убраны из зависимостей, статических ссылок в закоммиченном `android/` нет (Expo автолинкует по `node_modules`), но gradle-сборка после удаления не запускалась. Вернуться до следующего релиза: прогнать локальную сборку `yarn build-local-debug:android` и убедиться, что автолинковка и `expo prebuild` проходят без этих пакетов.
 
+## Патчи зависимостей
+
+- [ ] **Удалить `patches/react-native-draggable-flatlist+4.0.3.patch`, когда апстрим выпустит релиз с PR #628.** `InteractionManager` удалён из ядра RN 0.87+ (в release-сборке экспортируется `undefined`, dev-getter бросает); rdf 4.0.3 вызывает его в рендере при изменении пропа `data` → render-phase TypeError → корневой ErrorBoundary → зависший UI на админском «Разделы» (а также в детали раздела, детали плейлиста, форме редактирования плейлиста и «Моих плейлистах»). — `patches/`, `node_modules/react-native-draggable-flatlist` (`src/` + `lib/module` + `lib/commonjs`, `components/DraggableFlatList.*`) — вернуться, когда rdf опубликует версию >4.0.3 с PR #628 (https://github.com/computerjazz/react-native-draggable-flatlist/pull/628).
+
 ## Build flavors
 
 - [ ] **Отдельные dev-иконки не созданы.** Оба flavor используют общие `mipmap-*` из `src/main/res`; различаются только именем приложения. При желании добавить dev-иконку с бейджем — положить `src/dev/res/mipmap-*/ic_launcher.png` (и `ic_launcher_round`). — `android/app/src/dev/res/` — когда потребуется визуальное различие иконок на рабочем столе.
