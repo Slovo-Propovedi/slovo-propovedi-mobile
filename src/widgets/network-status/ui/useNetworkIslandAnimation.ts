@@ -49,7 +49,6 @@ export const useNetworkIslandAnimation = (isOnline: boolean) => {
     isExpandedValue => {
       scheduleOnRN(setIsExpanded, isExpandedValue)
     },
-    [],
   )
 
   const containerStyle = useAnimatedStyle(() => {
