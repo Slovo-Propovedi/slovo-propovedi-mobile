@@ -112,6 +112,7 @@ describe('useStepNavigation entry transitions', () => {
   })
 
   afterEach(async () => {
+    jest.clearAllTimers()
     scenariosById[ENTRY_SCENARIO_ID] = originalScenario
     await act(async () => {
       mockPathnameStore.set('/listen')
@@ -240,6 +241,7 @@ describe('useStepNavigation pure-navigation return entry', () => {
   })
 
   afterEach(async () => {
+    jest.clearAllTimers()
     scenariosById.share = originalScenario
     await act(async () => {
       mockPathnameStore.set('/listen')
