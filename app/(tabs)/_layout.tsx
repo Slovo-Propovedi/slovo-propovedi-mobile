@@ -26,7 +26,10 @@ const Layout = () => {
   return (
     <BlurTargetProvider>
       <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
-        <Tabs screenOptions={{ headerShown: false }} tabBar={props => <CustomTabBar {...props} />}>
+        <Tabs
+          screenOptions={{ headerShown: false }}
+          tabBar={props => <CustomTabBar {...props} hasMiniPlayer />}
+        >
           <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
           <Tabs.Screen name='read' options={{ title: 'Читать' }} />
           <Tabs.Screen name='study' options={{ title: 'Учиться' }} />

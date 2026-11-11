@@ -141,11 +141,13 @@ const findLayer = () =>
 const renderShade = async ({
   audio = AUDIO,
   expanded = false,
+  hasMiniPlayer = true,
   isDark = false,
   measured = true,
 }: {
   audio?: AudioPlayerData | null
   expanded?: boolean
+  hasMiniPlayer?: boolean
   isDark?: boolean
   measured?: boolean
 } = {}) => {
@@ -154,7 +156,9 @@ const renderShade = async ({
   isPlayerExpandedAtom(ctx, expanded)
   if (measured) setTabBarHeight(ctx, TAB_BAR_HEIGHT)
 
-  const result = await renderWithProviders(<BarBackdropShade />, { ctx })
+  const result = await renderWithProviders(<BarBackdropShade hasMiniPlayer={hasMiniPlayer} />, {
+    ctx,
+  })
 
   if (isDark)
     await act(async () => {
@@ -221,7 +225,7 @@ describe('<BarBackdropShade>', () => {
     const { rerender } = await renderShade()
 
     keyboardBottomInsetSv.value = KEYBOARD_INSET
-    await rerender(<BarBackdropShade />)
+    await rerender(<BarBackdropShade hasMiniPlayer />)
 
     // The floating container already lifts; lifting here too would double-shift
     // the shade away from the pill.
@@ -234,7 +238,7 @@ describe('<BarBackdropShade>', () => {
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
-    await rerender(<BarBackdropShade />)
+    await rerender(<BarBackdropShade hasMiniPlayer />)
 
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: COLLAPSED_HEIGHT,
@@ -259,13 +263,33 @@ describe('<BarBackdropShade>', () => {
     expect(findGradient()?.props.locations).toEqual(NO_PILL_EXPANDED_LOCATIONS)
   })
 
+  test('anchors to the islands row top when audio exists but no mini player mounts', async () => {
+    await renderShade({ hasMiniPlayer: false })
+
+    // The admin zone has no mini-player pill: anchoring to its phantom position
+    // would stretch the shade far above the tab bar.
+    expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
+      height: NO_PILL_EXPANDED_HEIGHT,
+    })
+    expect(findGradient()?.props.locations).toEqual(NO_PILL_EXPANDED_LOCATIONS)
+  })
+
+  test('ignores fullscreen expansion outside the player zone', async () => {
+    await renderShade({ expanded: true, hasMiniPlayer: false })
+
+    // A stale expanded flag from the player zone must not hide the admin shade.
+    expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
+      height: NO_PILL_EXPANDED_HEIGHT,
+    })
+  })
+
   test('follows the bar collapse morph while no pill is active', async () => {
     const { ctx, rerender } = await renderShade({ audio: null })
 
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
-    await rerender(<BarBackdropShade />)
+    await rerender(<BarBackdropShade hasMiniPlayer />)
 
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: NO_PILL_COLLAPSED_HEIGHT,
@@ -279,10 +303,14 @@ describe('<BarBackdropShade>', () => {
     expect(findShade()).toBeUndefined()
   })
 
-  test('renders nothing while expanded to fullscreen with no audio', async () => {
+  test('keeps shading the bar when expanded with no audio', async () => {
     await renderShade({ audio: null, expanded: true })
 
-    expect(findShade()).toBeUndefined()
+    // Without audio there is no fullscreen player to hide behind, so the stale
+    // expanded flag must not unmount the shade.
+    expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
+      height: NO_PILL_EXPANDED_HEIGHT,
+    })
   })
 
   test('keeps the shade visible mid-morph and drops it on settle', async () => {

@@ -30,13 +30,17 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn(() => jest.fn()) }),
 }))
 
+const mockShadeProps: Array<{ hasMiniPlayer?: boolean }> = []
+
 jest.mock('widgets/expandable-player/@x/barShade', () => {
   const { View } = jest.requireActual('react-native')
 
   return {
-    BarBackdropShade: () => (
-      <View style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />
-    ),
+    BarBackdropShade: (props: { hasMiniPlayer?: boolean }) => {
+      mockShadeProps.push(props)
+
+      return <View style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />
+    },
   }
 })
 
@@ -96,7 +100,11 @@ const createMockEmitter = () =>
 
 const renderTabBar = async (
   activeIndex = 0,
-  { hideSearch, isCollapsed = false }: { hideSearch?: boolean; isCollapsed?: boolean } = {},
+  {
+    hasMiniPlayer,
+    hideSearch,
+    isCollapsed = false,
+  }: { hasMiniPlayer?: boolean; hideSearch?: boolean; isCollapsed?: boolean } = {},
 ) => {
   const state = createMockState(activeIndex)
   const emitter = createMockEmitter()
@@ -111,6 +119,7 @@ const renderTabBar = async (
       emitter={emitter}
       hideSearch={hideSearch}
       navigateToTab={mockNavigate}
+      hasMiniPlayer={hasMiniPlayer}
       insets={{ bottom: 0, left: 0, right: 0, top: 0 }}
     />,
     { ctx },
@@ -122,6 +131,7 @@ describe('<CustomTabBar>', () => {
     jest.clearAllMocks()
     mockBottomInset = 0
     mockIsSearchFieldVisible = false
+    mockShadeProps.length = 0
   })
 
   const findIslandsRow = () =>
@@ -203,6 +213,19 @@ describe('<CustomTabBar>', () => {
       top: 0,
     })
     expect(container?.children[1]).toBeTruthy()
+  })
+
+  test('passes the mini-player mount flag to the shade', async () => {
+    await renderTabBar()
+
+    // Only the user zone mounts the mini-player pill; the admin zone must tell
+    // the shade to anchor to the islands row instead.
+    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: false })
+
+    mockShadeProps.length = 0
+    await renderTabBar(0, { hasMiniPlayer: true })
+
+    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: true })
   })
 
   test('ignores a zero-height layout report', async () => {

@@ -34,15 +34,15 @@ const SHADE_COLORS_DARK = ['rgba(128, 128, 128, 0)', SHADE_OPAQUE_DARK, SHADE_OP
 const getShadeColors = (isLight: boolean) => (isLight ? SHADE_COLORS_LIGHT : SHADE_COLORS_DARK)
 
 /**
- * Single very subtle vertical gradient from the screen bottom up to the visible
- * bottom chrome, rendered as the first child of the tab bar's floating container
- * so it sits above the screens and behind the islands. With a mini pill it
- * anchors to the pill top; without one it anchors to the islands row top and
- * follows the bar collapse morph. Hidden only on fullscreen expansion once its
- * morph has settled, or before the tab bar has been measured. The container owns
- * the keyboard lift.
+ * Vertical gradient behind the bottom chrome, rendered as the first child of the
+ * tab bar's floating container. Pill-anchored geometry applies only when the mini
+ * player mounts in this zone (`hasMiniPlayer`); otherwise the shade anchors to the
+ * islands row top regardless of playback. Hidden only on settled fullscreen
+ * expansion in the player zone, or before the tab bar has been measured.
+ * @param root0 - Component props.
+ * @param root0.hasMiniPlayer - Whether this zone mounts the mini-player pill.
  */
-export const BarBackdropShade = () => {
+export const BarBackdropShade = ({ hasMiniPlayer }: { hasMiniPlayer: boolean }) => {
   const { isLight } = useTheme()
   const { bottom } = useSafeAreaInsets()
   const [audio] = useAtom(currentAudioAtom)
@@ -59,9 +59,11 @@ export const BarBackdropShade = () => {
   const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
   // A boolean keeps the worklet closure free of the whole audio object.
   const hasAudio = !!audio
+  // Pill geometry is only real in zones that mount the mini player.
+  const hasPill = hasAudio && hasMiniPlayer
 
   const shadeStyle = useAnimatedStyle(() => {
-    if (!hasAudio) return { height: getBarShadeHeight(progress.value, bottomPadding) }
+    if (!hasPill) return { height: getBarShadeHeight(progress.value, bottomPadding) }
 
     const { bottom: pillBottom } = getMiniPlayerGeometry({
       barProgress: progress.value,
@@ -77,7 +79,7 @@ export const BarBackdropShade = () => {
   // only on state commits), never per animation frame. During the 300 ms morph
   // the ramp endpoint drifts at most a few pixels. The expand morph only gates
   // unmount through `settledExpanded` — it does not change the shade geometry.
-  const settledShadeHeight = hasAudio
+  const settledShadeHeight = hasPill
     ? getShadeHeight(
         getMiniPlayerGeometry({
           barProgress: settledCollapsed ? 1 : 0,
@@ -88,7 +90,7 @@ export const BarBackdropShade = () => {
       )
     : getBarShadeHeight(settledCollapsed ? 1 : 0, bottomPadding)
 
-  if ((expanded && settledExpanded) || !isTabBarMeasured) return null
+  if ((hasPill && expanded && settledExpanded) || !isTabBarMeasured) return null
 
   return (
     <Animated.View pointerEvents='none' style={styles.layer}>

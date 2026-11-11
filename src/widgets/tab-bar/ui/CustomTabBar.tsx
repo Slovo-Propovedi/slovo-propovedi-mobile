@@ -26,6 +26,8 @@ import { useTabPress } from './useTabPress'
 const HIDDEN_TAB_ROUTE_NAMES = new Set(['study'])
 
 interface CustomTabBarProps extends TabBarProps {
+  /** Whether this zone mounts the mini-player pill (user tabs layout passes it; admin does not). */
+  hasMiniPlayer?: boolean
   /** Admin tab layouts have no global search. */
   hideSearch?: boolean
 }
@@ -34,6 +36,7 @@ type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tab
 
 export const CustomTabBar = ({
   emitter,
+  hasMiniPlayer = false,
   hideSearch = false,
   navigateToTab,
   state,
@@ -67,7 +70,7 @@ export const CustomTabBar = ({
     <Animated.View pointerEvents='box-none' style={[styles.floatingContainer, keyboardLiftStyle]}>
       {/* First child: the tab-bar layer paints above the screens. It carries no
           zIndex, so the positioned zIndex-1 islands row paints above it on web. */}
-      <BarBackdropShade />
+      <BarBackdropShade hasMiniPlayer={hasMiniPlayer} />
       <View
         pointerEvents='box-none'
         style={[
