@@ -882,12 +882,12 @@ jobs:
           TAG="${{ github.ref_name }}"
 
           # create-release runs in parallel (it waits for CI first), so the
-          # release object may not exist yet — poll for it. Its own window is
-          # shorter than create-release's CI wait, which may include a
+          # release object may not exist yet — poll for it. The window matches
+          # create-release's CI wait (60 × 15 s = 15 min), which may include a
           # GitHub-hosted runner queue.
           RELEASE_JSON=/tmp/fo-release-web.json
           RELEASE_ID=""
-          for attempt in $(seq 1 40); do
+          for attempt in $(seq 1 60); do
             curl -s \
               -H "Authorization: token $GITHUB_TOKEN" \
               -o "$RELEASE_JSON" \
@@ -896,8 +896,8 @@ jobs:
             if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "null" ]; then
               break
             fi
-            echo "Waiting for Forgejo release $TAG (attempt $attempt/40)..."
-            if [ "$attempt" -lt 40 ]; then
+            echo "Waiting for Forgejo release $TAG (attempt $attempt/60)..."
+            if [ "$attempt" -lt 60 ]; then
               sleep 15
             fi
           done
