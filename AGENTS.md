@@ -48,7 +48,9 @@ npm run build:all            # Build all platforms
 
 **Running tests (agents):** run tests only via `yarn test` (add `--watch=false` for a single terminating run). Never call `yarn jest <paths>` or `yarn testFinal` directly — the dedicated script carries test optimizations, and raw full jest runs overload the machine and can hang it.
 
-**Centralized verification:** agents working on delegated tasks must NOT run project-wide checks on their own (`yarn lint`, `yarn lint:fix`, `yarn check:types`, `yarn check:unused`, full `yarn test`, `yarn testFinal*`, `yarn test:native`, gradle builds). When several agents work in parallel, concurrent full runs overload the machine. The orchestrator runs the whole verification suite ONCE after all delegated tasks are complete (via a single dedicated task) and routes any failures back to the responsible agent. Delegated tasks implement code and may run only narrowly scoped checks (e.g. a single targeted test file via `yarn test --watch=false <path>` when the task is test-focused).
+**Centralized verification:** full runs are NEVER part of an implementation task and NEVER run in parallel with each other. Agents working on delegated tasks must NOT run project-wide checks on their own (`yarn lint`, `yarn lint:fix`, `yarn check:types`, `yarn check:unused`, full `yarn test`, `yarn testFinal*`, `yarn test:native`, gradle builds). During implementation an agent runs only targeted, file-scoped checks: a single test file (`yarn test --watch=false <single test path>`) or lint limited to the files it edited.
+
+The full verification pass runs ONCE as a SEPARATE dedicated task, AFTER all implementation tasks are finished: the orchestrator delegates it as a single task and routes any failures back to the responsible agent. Full runs are never executed concurrently — two concurrent full runs hang the machine (laptop freeze). This holds in single-agent and multi-agent sessions alike.
 
 ## Mandatory Workflows: SDD, Plan-Implement, TDD
 
