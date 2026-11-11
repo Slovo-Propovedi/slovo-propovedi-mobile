@@ -23,6 +23,7 @@ import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
 import { useKeyboardBottomInsetSync } from 'shared/ui/layout'
 import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
 import RootLayout from './_RootLayout'
+import { NavThemeProvider } from './NavThemeProvider'
 
 /**
  * Fallback component shown while the root layout's route content is loading via Suspense.
@@ -63,10 +64,12 @@ const RootLayoutWithProvider = () => {
       <ThemeProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <ErrorBoundary>
-            <GlobalErrorHandler />
-            <SafeAreaBoundary>
-              <RootLayout />
-            </SafeAreaBoundary>
+            <NavThemeProvider>
+              <GlobalErrorHandler />
+              <SafeAreaBoundary>
+                <RootLayout />
+              </SafeAreaBoundary>
+            </NavThemeProvider>
           </ErrorBoundary>
         </GestureHandlerRootView>
       </ThemeProvider>
