@@ -18,7 +18,7 @@
 - Футер с кнопкой «Сохранить» (спиннер во время сохранения, disabled пока список не изменён или идёт сохранение).
 - `ConfirmDialog` «Удалить инстанс?» перед удалением (удаление применяется к списку в памяти и уходит на сервер при сохранении).
 
-Экран доступен только роли admin: `useRequireAdminRole()` (не-admin редиректит на `/admin`), а вход на экран — пункт «Источники импорта» в `AdminQuickActions` на главной админки, показанный только при `isAdminUser(user)`. Экран объявлен вне таб-группы в стеке `/admin` (`useInvidiousScreens` в `app/admin/_layout.tsx`), «Назад» — `HeaderBackButton` с фолбэком `/admin`.
+Экран доступен только роли admin: `useRequireAdminRole()` (не-admin редиректит на `/admin`), а вход на экран — строка «Источники импорта» в блоке «Дополнительно» (`AdminMoreActions`) на главной админки, показанная только при `isAdminUser(user)`. Экран объявлен вне таб-группы в стеке `/admin` (`useInvidiousScreens` в `app/admin/_layout.tsx`), «Назад» — `HeaderBackButton` с фолбэком `/admin`.
 
 ## Откуда данные
 
@@ -45,5 +45,5 @@
 
 - [../features/admin.md](../features/admin.md) — интерфейс администратора, раздел «Источники импорта»
 - [../contracts/rest-api.md](../contracts/rest-api.md) — карта `/invidious-instances`-эндпоинтов
-- [admin-home.md](./admin-home.md) — быстрое действие «Источники импорта»
+- [admin-home.md](./admin-home.md) — строка «Источники импорта» в блоке «Дополнительно»
 - [README.md](./README.md) — индекс screens

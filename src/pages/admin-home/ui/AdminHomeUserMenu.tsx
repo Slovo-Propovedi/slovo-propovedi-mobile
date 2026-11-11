@@ -21,9 +21,12 @@ export const AdminHomeUserMenu = ({ user }: { user: APITypes.UserResponse | null
   const [menuAnchor, setMenuAnchor] = useState<AnchorRect | null>(null)
   const buttonRef = useRef<ViewInstance>(null)
 
+  // Navigate first: signOut flips the auth atoms, and the admin layout guard would
+  // race a <Redirect href='/admin/login'> against the replace. /listen is public and
+  // safe to land on while the tokens clear.
   const handleSignOut = async () => {
-    await signOutAction()
     router.replace('/listen')
+    await signOutAction()
   }
 
   const items: MenuItem[] = [

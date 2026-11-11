@@ -36,12 +36,7 @@ export const AdminFlagsScreen = () => {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: currentTheme.background, paddingTop: insets.top },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
           data={isLoading ? [] : flags}

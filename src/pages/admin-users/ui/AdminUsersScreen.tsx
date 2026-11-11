@@ -52,12 +52,7 @@ export const AdminUsersScreen = () => {
   const emptyMessage = search.trim() !== '' ? NOT_FOUND_MESSAGE : EMPTY_MESSAGE
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: currentTheme.background, paddingTop: insets.top },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
           onEndReachedThreshold={0.5}

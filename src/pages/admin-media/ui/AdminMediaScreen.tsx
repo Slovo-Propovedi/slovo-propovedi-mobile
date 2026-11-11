@@ -60,7 +60,7 @@ export const AdminMediaScreen = () => {
     if (deleteTarget) await remove(deleteTarget)
   }
 
-  const containerStyle = { backgroundColor: currentTheme.background, paddingTop: insets.top }
+  const containerStyle = { backgroundColor: currentTheme.background }
 
   return (
     <View style={[styles.container, containerStyle]}>
