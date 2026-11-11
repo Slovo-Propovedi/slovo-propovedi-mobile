@@ -389,19 +389,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Sync push mirrors
-        continue-on-error: true
-        shell: bash
-        env:
-          FORGEJO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          code=$(curl -q -sS -o /dev/null -w '%{http_code}' -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/push_mirrors-sync" \
-            -H "Authorization: token $FORGEJO_TOKEN")
-          if [ "$code" != "200" ] && [ "$code" != "204" ]; then
-            echo "::warning::push_mirrors-sync returned HTTP $code — mirror may lag; dispatch will wait up to the mirror-wait budget"
-          fi
-
       - name: Dispatch build to GitHub-hosted runners
         id: dispatch
         env:
