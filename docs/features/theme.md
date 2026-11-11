@@ -101,6 +101,22 @@ const styles = StyleSheet.create({
 
 Та же логика дублируется в `getTheme(mode, systemTheme)` (`constants.ts`, без учёта динамики). `updateThemeBasedOnMode` пересчитывает `currentThemeAtom` из текущих атомов без побочных эффектов.
 
+### Навигационная тема react-navigation (форк expo-router)
+
+Expo Router (эпоха SDK 58+) несёт собственный форк react-navigation (`node_modules/expo-router/build/react-navigation/`) со своим `ThemeContext`. `ThemeProvider` из `@react-navigation/native` на форк не влияет — это другой экземпляр контекста. Правильная точка — сабпас-экспорт `expo-router/react-navigation`, который реэкспортирует `ThemeProvider`, `DarkTheme` и `DefaultTheme` форка.
+
+Без навигационной темы форк рисует светлый `DefaultTheme` (фон `rgb(242, 242, 242)`) в двух местах: элемент `Background` из `elements/Screen.js`, которым обёрнут **каждый** экран — и стековые, и таб-сцены, — и `nativeContainerStyle` нативного стека на iOS. На переходах назад (pop) пересобирающийся или анимирующийся экран на 1–2 кадра показывает этот светлый слой под собой, и полупрозрачное стекло нижних островов (таб-бар, поиск, мини-плеер) читает его как белую вспышку в тёмной теме. То же при выходе из админки — pop корневого стека к табам.
+
+**Мост к теме приложения.** Чистая фабрика `buildNavigationTheme(isLight, currentTheme)` — `src/shared/ui/theme/navigationTheme.ts`; `NavThemeProvider` — `src/shared/ui/theme/NavThemeProvider.tsx`, монтируется в `app/_layout.tsx` внутри `ThemeProvider`. Слот-маппинг:
+
+- `primary`, `background`, `card`, `text` — одноимённые слоты `ThemeColors`;
+- `border` → `textMuted`, `notification` → `primary`;
+- `fonts` наследуется от базовой темы форка.
+
+Слоты `border` и `notification` в приложении не видны: хром собственный, у экранов явные `headerStyle`/`contentStyle`, поэтому заливка служебных рамок и бейджей нигде не проявляется.
+
+**Android-блюр вспышку не даёт.** В `RenderNodeBlurController` (dimezis, Android 12+) кадры, когда у blur-target ещё нет записанного `RenderNode`, закрашиваются `frameClearDrawable` — это `decorView.background`. Фон окна следует night mode приложения (`Appearance.setColorScheme`), поэтому при тёмной теме приложения эта вспышка тёмная и не видна.
+
 ## Синхронизация `Appearance`
 
 `setThemeMode` и `loadThemeMode` вызывают `Appearance.setColorScheme?.(...)` (`'system'` → `'unspecified'`), чтобы системный статус-бар и нативные элементы соответствовали выбранному режиму. При `setSystemTheme` (смена системной темы) `currentThemeAtom` пересчитывается, а `Appearance` не трогается. Опциональный вызов (`?.`) — на `react-native-web` метода `setColorScheme` нет.
