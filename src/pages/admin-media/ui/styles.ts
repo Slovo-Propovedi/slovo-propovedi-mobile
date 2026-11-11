@@ -22,13 +22,6 @@ export const styles = StyleSheet.create({
   gridImage: { borderRadius: RADIUSES.low },
   gridRow: { gap: INDENTS.low },
   header: { paddingBottom: INDENTS.medium },
-  headerRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    marginBottom: INDENTS.medium,
-  },
-  headerText: { flex: 1 },
   listContent: { padding: INDENTS.medium },
   mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: INDENTS.low },
   orphanBadge: {

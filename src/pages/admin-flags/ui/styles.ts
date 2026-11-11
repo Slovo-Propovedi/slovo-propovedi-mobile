@@ -21,15 +21,6 @@ export const styles = StyleSheet.create({
   header: {
     paddingBottom: INDENTS.medium,
   },
-  headerRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    marginBottom: INDENTS.medium,
-  },
-  headerText: {
-    flex: 1,
-  },
   listContent: {
     padding: INDENTS.medium,
   },

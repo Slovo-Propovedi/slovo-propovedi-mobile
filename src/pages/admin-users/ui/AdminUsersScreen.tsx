@@ -1,6 +1,7 @@
-import { useRouter } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import { FlatList, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useAdminListHeaderActions } from 'widgets/admin-list-header'
 import { useRequireAdminRole } from 'entities/auth'
 import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { INDENTS, useTheme } from 'shared/ui/theme'
@@ -49,10 +50,19 @@ export const AdminUsersScreen = () => {
     router.push({ params: { id }, pathname: '/admin/users/[id]' })
   }
 
+  const headerOptions = useAdminListHeaderActions({
+    icon: 'person-add-outline',
+    isRefreshing,
+    label: 'Создать пользователя',
+    onAction: () => router.push(CREATE_ROUTE),
+    onRefresh: refresh,
+  })
+
   const emptyMessage = search.trim() !== '' ? NOT_FOUND_MESSAGE : EMPTY_MESSAGE
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+      <Stack.Screen options={headerOptions} />
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
           onEndReachedThreshold={0.5}
@@ -90,7 +100,7 @@ export const AdminUsersScreen = () => {
           }
           ListHeaderComponent={
             <View style={styles.header}>
-              <AdminUsersHeader onCreate={() => router.push(CREATE_ROUTE)} />
+              <AdminUsersHeader />
               <TextInput
                 value={search}
                 onChangeText={onSearchChange}

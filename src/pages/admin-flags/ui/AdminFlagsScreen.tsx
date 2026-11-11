@@ -1,6 +1,7 @@
-import { useRouter } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import { FlatList, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useAdminListHeaderActions } from 'widgets/admin-list-header'
 import { useRequireAdminRole } from 'entities/auth'
 import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
 import { INDENTS, useTheme } from 'shared/ui/theme'
@@ -31,12 +32,21 @@ export const AdminFlagsScreen = () => {
   const { currentTheme } = useTheme()
   const { flags, isError, isLoading, isRefreshing, refresh } = useAdminFlags()
 
+  const headerOptions = useAdminListHeaderActions({
+    icon: 'add-outline',
+    isRefreshing,
+    label: 'Создать флаг',
+    onAction: () => router.push(CREATE_ROUTE),
+    onRefresh: refresh,
+  })
+
   const openFlag = (id: string) => {
     router.push({ params: { id }, pathname: '/admin/flags/[id]' })
   }
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+      <Stack.Screen options={headerOptions} />
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
           data={isLoading ? [] : flags}
@@ -49,7 +59,7 @@ export const AdminFlagsScreen = () => {
           ]}
           ListHeaderComponent={
             <View style={styles.header}>
-              <AdminFlagsHeader onCreate={() => router.push(CREATE_ROUTE)} />
+              <AdminFlagsHeader />
             </View>
           }
           ListEmptyComponent={

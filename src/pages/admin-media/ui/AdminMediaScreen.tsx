@@ -1,7 +1,9 @@
 import { useAction } from '@reatom/npm-react'
+import { Stack } from 'expo-router'
 import { useState } from 'react'
 import { FlatList, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useAdminListHeaderActions } from 'widgets/admin-list-header'
 import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { predictDropKinds, useFileDrop } from 'shared/lib/file-drop'
@@ -48,6 +50,14 @@ export const AdminMediaScreen = () => {
   const { draggedItems, isDragActive } = useFileDrop(handleFiles)
 
   const { numColumns, tileSize } = measureMediaGrid(SCREEN_WIDTH)
+  const headerOptions = useAdminListHeaderActions({
+    icon: 'cloud-upload-outline',
+    isActionDisabled: isUploading,
+    isRefreshing,
+    label: 'Загрузить файл',
+    onAction: () => void pickImage(),
+    onRefresh: refresh,
+  })
   const dropEntries = [
     {
       active: predictDropKinds(draggedItems).has('image'),
@@ -64,6 +74,7 @@ export const AdminMediaScreen = () => {
 
   return (
     <View style={[styles.container, containerStyle]}>
+      <Stack.Screen options={headerOptions} />
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
           data={files}
@@ -72,17 +83,13 @@ export const AdminMediaScreen = () => {
           columnWrapperStyle={styles.gridRow}
           keyExtractor={item => item.fileName}
           refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+          ListHeaderComponent={
+            <AdminMediaListHeader progress={progress} isUploading={isUploading} />
+          }
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: insets.bottom + INDENTS.low },
           ]}
-          ListHeaderComponent={
-            <AdminMediaListHeader
-              progress={progress}
-              isUploading={isUploading}
-              onUpload={() => void pickImage()}
-            />
-          }
           ListEmptyComponent={
             <MediaGridEmpty
               isError={isError}

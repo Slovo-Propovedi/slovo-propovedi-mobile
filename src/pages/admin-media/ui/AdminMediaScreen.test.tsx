@@ -34,15 +34,29 @@ jest.mock('expo-document-picker', () => ({
 }))
 
 // The media catalog refetches silently on focus; keep the hook inert in tests
-// (no navigation container is mounted).
-jest.mock('expo-router', () => ({
-  useFocusEffect: (callback: () => () => void | void) => {
-    const { useEffect } = jest.requireActual('react') as {
-      useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
-    }
-    useEffect(callback, [callback])
-  },
-}))
+// (no navigation container is mounted). `Stack.Screen` renders `headerRight` so
+// the native-header actions stay queryable.
+jest.mock('expo-router', () => {
+  const React = jest.requireActual('react') as {
+    createElement: (type: unknown, props: unknown, ...children: unknown[]) => unknown
+    Fragment: unknown
+  }
+
+  return {
+    Stack: {
+      Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+        options?.headerRight
+          ? React.createElement(React.Fragment, null, options.headerRight())
+          : null,
+    },
+    useFocusEffect: (callback: () => () => void | void) => {
+      const { useEffect } = jest.requireActual('react') as {
+        useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
+      }
+      useEffect(callback, [callback])
+    },
+  }
+})
 
 const catalogResponse = (
   files: ReturnType<typeof filesMocks.getGetFilesResponseMock>['files'],

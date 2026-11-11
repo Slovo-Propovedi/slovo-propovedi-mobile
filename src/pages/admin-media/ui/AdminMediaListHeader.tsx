@@ -4,23 +4,21 @@ import { AdminMediaHeader } from './AdminMediaHeader'
 import { OrphansSection } from './OrphansSection'
 import { styles } from './styles'
 
-// Шапка списка медиа-библиотеки: заголовок с загрузкой, полоса прогресса и
-// блок осиротевших файлов. Подсказку drag & drop показывает полноэкранный
-// оверлей (`DropOverlay`), поэтому отдельной строки здесь нет.
+// Шапка списка медиа-библиотеки: заголовок, полоса прогресса и блок осиротевших
+// файлов. Подсказку drag & drop показывает полноэкранный оверлей (`DropOverlay`),
+// поэтому отдельной строки здесь нет.
 export const AdminMediaListHeader = ({
   isUploading,
-  onUpload,
   progress,
 }: {
   isUploading: boolean
-  onUpload: () => void
   progress: number
 }) => {
   const { currentTheme } = useTheme()
 
   return (
     <View>
-      <AdminMediaHeader onUpload={onUpload} isUploading={isUploading} />
+      <AdminMediaHeader />
       {isUploading ? (
         <View style={[styles.progressTrack, { backgroundColor: currentTheme.surface }]}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
