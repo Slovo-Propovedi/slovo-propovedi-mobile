@@ -183,9 +183,14 @@ jobs:
           DISPATCH_PID=$!
 
           write_run_summary() {
+            # Forgejo masks org-variable values (e.g. MOBILE_REPOSITORY_NAME)
+            # inside URLs, which breaks the markdown href; percent-encoded
+            # dashes decode to the same URL but no longer contain the masked
+            # literal. The link text stays the raw run id.
+            local summary_url="${RUN_URL//-/%2D}"
             {
               echo '## CI dispatched to GitHub-hosted runners'
-              echo "- Run: [${RUN_URL##*/}](${RUN_URL}) — статус и логи в GitHub Actions"
+              echo "- Run: [${RUN_URL##*/}](${summary_url}) — статус и логи в GitHub Actions"
             } | scripts/ci/step-summary.sh || true
           }
 
@@ -312,7 +317,10 @@ jobs:
           fi
 
           # The dispatcher only emits a GitHub run URL on the 0/1/42/43 paths;
-          # point the status at this workflow run otherwise.
+          # point the status at this workflow run otherwise. Keep the raw
+          # dispatch URL separately: its absence means the remote never ran, and
+          # the summary row must not pretend the Forgejo URL is a GitHub run.
+          GH_RUN_URL="${RUN_URL:-}"
           if [ -z "$RUN_URL" ]; then
             RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           fi
@@ -328,8 +336,10 @@ jobs:
             echo "| remote (GitHub-hosted) | $(status_emoji "$REMOTE_RESULT") $REMOTE_RESULT |"
             echo "| local (Forgejo fallback) | $(status_emoji "$LOCAL_RESULT") $LOCAL_RESULT |"
             echo "| verdict | $(status_emoji "$VERDICT") $VERDICT |"
-            if [ -n "$RUN_URL" ]; then
-              echo "| GitHub run | [$RUN_URL]($RUN_URL) |"
+            if [ -n "$GH_RUN_URL" ]; then
+              echo "| GitHub run | [${GH_RUN_URL##*/}](${GH_RUN_URL//-/%2D}) |"
+            else
+              echo '| GitHub run | — |'
             fi
             if [ "${SUPERSEDED:-}" = "true" ]; then
               echo ''
