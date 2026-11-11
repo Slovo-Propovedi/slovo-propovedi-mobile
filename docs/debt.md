@@ -38,10 +38,6 @@
 - [ ] **Таб «Читать» гейтится фича-флагом `read`** — `src/widgets/tab-bar/ui/useTabPress.ts`, `src/pages/read/ui/ReadScreen.tsx` — при выключенном/незагруженном флаге `CustomTabBar` показывает диалог «Скоро будет доступно», а `ReadScreen` рендерит `null`. Включить флаг `read` для пользователя при готовности FB2-ридера (см. [features/feature-flags.md](./features/feature-flags.md)).
 - [ ] Перевести читалку на книги в формате Markdown (рендер проще, вес меньше; удалить FB2-путь и зависимость xml-js) — src/pages/book-reader/ — при реработке читалки (решение продукта, 2026-10-23)
 
-## Study tab
-
-- [ ] **Экран «Учиться» — заглушка, гейтится фича-флагом `study`.** `src/pages/study/` — два пустых маршрута-сцены (Богословие, Душепопечение) через `react-native-tab-view`. Кнопки «Учиться» в `CustomTabBar` больше нет: маршрут скрыт из бара и доступен только прямым переходом; при выключенном/незагруженном флаге `StudyScreen` рендерит `null`. Заполнить контентом и включить флаг `study` при разработке раздела (см. [features/feature-flags.md](./features/feature-flags.md)).
-
 ## Tab bar
 
 - [ ] **`useExpandablePlayerState` держит последнюю положительную высоту таб-бара — осознанная защита в глубину.** `src/widgets/expandable-player/ui/ExpandablePlayer/useExpandablePlayerState.ts` — publisher-side guard уже стоит: `CustomTabBar.onLayout` игнорирует `height <= 0` (неактивный root-stack экран на web рендерит табы с `display: none`, строка островов измеряется как 0×0), поэтому `tabBarHeightAtom` больше не получает 0. Retention в мини-плеере оставлен как второй рубеж на границе данных. Вернуться, если появится потребитель, которому нужно отличать «ещё не измерено» от «скрыто»: тогда убрать retention и опираться на `isTabBarMeasuredAtom`.
@@ -74,6 +70,7 @@
 ## Native build (Gradle)
 
 - [ ] **Kotlin-каталог RN 0.88 декларирует 2.2.0, а KGP в сборке — 2.2.10 (не-фатальный warning ExpoRootProject).** `node_modules/react-native/gradle/libs.versions.toml` (upstream) — сборка использует версию плагина, warning косметический. Вернуться при апгрейде RN; руками не чиним — `android/` генерат (`expo prebuild`), правка upstream-файла в `node_modules` бессмысленна.
+- [ ] **Удаление `react-native-tab-view` и `react-native-pager-view` не проверено нативной сборкой.** `package.json`, `yarn.lock`, автолинковка `android/` — оба пакета убраны из зависимостей, статических ссылок в закоммиченном `android/` нет (Expo автолинкует по `node_modules`), но gradle-сборка после удаления не запускалась. Вернуться до следующего релиза: прогнать локальную сборку `yarn build-local-debug:android` и убедиться, что автолинковка и `expo prebuild` проходят без этих пакетов.
 
 ## Build flavors
 

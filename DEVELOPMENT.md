@@ -17,7 +17,6 @@ This document is for developers and contributors. For user-facing information (d
 - **UI Components**: `@gorhom/bottom-sheet`
 - **Animations**: `react-native-reanimated`
 - **Gestures**: `react-native-gesture-handler`
-- **Tab View**: `react-native-tab-view`
 - **Notifications**: `expo-notifications`
 - **Book Parsing**: `xml-js` (FB2 format)
 - **Lang**: `typescript`
