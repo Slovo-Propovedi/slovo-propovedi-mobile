@@ -21,9 +21,11 @@ import { TabButton } from './TabButton'
 import { TabSlot } from './TabSlot'
 import { useTabPress } from './useTabPress'
 
-// На 3-кнопочной навигации берётся высота навбара из safe-area insets (Issue #56);
-// без неё острова сидят низко с небольшим нижним зазором.
-const HIDDEN_TAB_ROUTE_NAMES = new Set(['study'])
+// Route names any tab layout keeps out of the bar: `study` in the user zone,
+// `media`/`flags`/`users` in the admin zone. Kept in sync with the `href: null`
+// screens in `app/admin/(tabs)/_layout.tsx` — the bar filter is the only hide
+// mechanism for `study`, which has no `href: null`.
+const HIDDEN_TAB_ROUTE_NAMES = new Set(['flags', 'media', 'study', 'users'])
 
 interface CustomTabBarProps extends TabBarProps {
   /** Whether this zone mounts the mini-player pill (user tabs layout passes it; admin does not). */

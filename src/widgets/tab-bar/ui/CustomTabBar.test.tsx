@@ -93,6 +93,21 @@ const createMockState = (activeIndex: number) => ({
   type: 'tab' as const,
 })
 
+const createAdminMockState = () => {
+  const routeNames = ['index', 'sections', 'playlists', 'sermons', 'media', 'flags', 'users']
+
+  return {
+    history: [{ key: 'index', type: 'route' as const }],
+    index: 0,
+    key: 'admin-tab-root',
+    preloadedRouteKeys: [] as string[],
+    routeNames,
+    routes: routeNames.map(name => ({ key: name, name, path: `/${name}` })),
+    stale: false as const,
+    type: 'tab' as const,
+  }
+}
+
 const createMockEmitter = () =>
   ({
     emit: jest.fn(() => ({ defaultPrevented: false })),
@@ -380,6 +395,26 @@ describe('<CustomTabBar>', () => {
     expect(getByText('Читать')).toBeTruthy()
     expect(queryByText('Учиться')).toBeNull()
     expect(getByText('Ещё')).toBeTruthy()
+  })
+
+  test('renders no tab slots for the hidden admin routes', async () => {
+    const { getByText, queryByText } = await renderWithProviders(
+      <CustomTabBar
+        hideSearch
+        descriptors={{}}
+        navigateToTab={mockNavigate}
+        emitter={createMockEmitter()}
+        state={createAdminMockState()}
+        insets={{ bottom: 0, left: 0, right: 0, top: 0 }}
+      />,
+      { ctx: createCtx() },
+    )
+
+    expect(getByText('Главная')).toBeTruthy()
+    expect(getByText('Проповеди')).toBeTruthy()
+    expect(queryByText('Медиа')).toBeNull()
+    expect(queryByText('Флаги')).toBeNull()
+    expect(queryByText('Пользователи')).toBeNull()
   })
 
   test('marks the active tab with a capsule and primary tint', async () => {
