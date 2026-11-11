@@ -8,7 +8,6 @@ const STATIC_COLORS = {
   disabled: '#d3d3d3',
   error: '#ff3b30',
   gray: '#808080',
-  onPrimary: '#fff',
   primary: '#f16031',
   // Полупрозрачный слой буфера/загрузки поверх трека плеера.
   progressBuffered: 'rgba(255,255,255,0.35)',
@@ -22,6 +21,7 @@ interface MutableColorSlots {
   icon: string
   maximumTrackTintColor: string
   minimumTrackTintColor: string
+  onPrimary: string
   primary: string
   skeleton: string
   surface: string

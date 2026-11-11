@@ -60,7 +60,9 @@ export const OrphansSection = () => {
             onPress={() => setIsConfirmOpen(true)}
             style={[styles.primaryButton, { backgroundColor: currentTheme.primary }]}
           >
-            <Text style={styles.primaryButtonText}>{cleanupLabel(state.orphanCount)}</Text>
+            <Text style={[styles.primaryButtonText, { color: currentTheme.onPrimary }]}>
+              {cleanupLabel(state.orphanCount)}
+            </Text>
           </TouchableItem>
         ) : null}
       </View>

@@ -224,7 +224,12 @@ describe('<AdminSermonsScreen>', () => {
   test('keeps the create button label white in the light theme', async () => {
     mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
 
-    const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
+    const { ctx, findByText } = await renderWithProviders(<AdminSermonsScreen />)
+    await findByText(CREATE_BUTTON_LABEL)
+
+    await act(async () => {
+      themeModeAtom(ctx, 'light')
+    })
 
     const label = await findByText(CREATE_BUTTON_LABEL)
 

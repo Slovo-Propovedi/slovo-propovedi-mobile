@@ -37,7 +37,9 @@ export const AutosyncConflictDialog = ({
             onPress={onImportMerge}
             style={[styles.choice, { backgroundColor: currentTheme.primary }]}
           >
-            <Text style={styles.primaryText}>Импортировать (объединить)</Text>
+            <Text style={[styles.primaryText, { color: currentTheme.onPrimary }]}>
+              Импортировать (объединить)
+            </Text>
           </TouchableItem>
         )}
         {canImport && (
@@ -53,7 +55,9 @@ export const AutosyncConflictDialog = ({
         >
           <Text
             style={
-              canImport ? [styles.choiceText, { color: currentTheme.text }] : styles.primaryText
+              canImport
+                ? [styles.choiceText, { color: currentTheme.text }]
+                : [styles.primaryText, { color: currentTheme.onPrimary }]
             }
           >
             Перезаписать бэкап

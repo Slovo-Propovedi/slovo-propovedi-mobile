@@ -4,7 +4,7 @@ import { type APITypes } from 'shared/api'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
 import { AdminSelect, type AdminSelectOption, RefreshButton } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
 
@@ -36,7 +36,7 @@ export const AdminSermonsHeader = ({
   search: string
   sort: APITypes.SermonControllerFindAllSort
 }) => {
-  const { currentTheme, isLight } = useTheme()
+  const { currentTheme } = useTheme()
 
   return (
     <View style={styles.header}>
@@ -52,7 +52,7 @@ export const AdminSermonsHeader = ({
           onPress={onCreate}
           style={[styles.createButton, { backgroundColor: currentTheme.primary }]}
         >
-          <Text style={[styles.createButtonText, { color: isLight ? COLORS.white : COLORS.black }]}>
+          <Text style={[styles.createButtonText, { color: currentTheme.onPrimary }]}>
             Загрузить проповедь
           </Text>
         </TouchableItem>

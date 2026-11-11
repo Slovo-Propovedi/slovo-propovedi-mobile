@@ -122,7 +122,12 @@ describe('<AdminSectionsScreen>', () => {
   })
 
   test('keeps the create button label white in the light theme', async () => {
-    const { findByText } = await renderWithProviders(<AdminSectionsScreen />)
+    const { ctx, findByText } = await renderWithProviders(<AdminSectionsScreen />)
+    await findByText(CREATE_BUTTON_LABEL)
+
+    await act(async () => {
+      themeModeAtom(ctx, 'light')
+    })
 
     const label = await findByText(CREATE_BUTTON_LABEL)
 

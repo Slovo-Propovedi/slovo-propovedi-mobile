@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native'
 import { RefreshButton } from 'shared/ui'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
 
@@ -12,7 +12,7 @@ export const AdminSectionsHeader = ({
   count: number
   onCreate: () => void
 }) => {
-  const { currentTheme, isLight } = useTheme()
+  const { currentTheme } = useTheme()
 
   return (
     <View style={styles.header}>
@@ -27,7 +27,7 @@ export const AdminSectionsHeader = ({
         onPress={onCreate}
         style={[styles.createButton, { backgroundColor: currentTheme.primary }]}
       >
-        <Text style={[styles.createButtonText, { color: isLight ? COLORS.white : COLORS.black }]}>
+        <Text style={[styles.createButtonText, { color: currentTheme.onPrimary }]}>
           Создать раздел
         </Text>
       </TouchableItem>

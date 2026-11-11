@@ -29,7 +29,7 @@ export const BackupImportModeDialog = ({
           onPress={onMerge}
           style={[styles.choice, { backgroundColor: currentTheme.primary }]}
         >
-          <Text style={styles.primaryText}>Объединить</Text>
+          <Text style={[styles.primaryText, { color: currentTheme.onPrimary }]}>Объединить</Text>
         </TouchableItem>
         <TouchableItem onPress={onReplace} style={styles.choice}>
           <Text style={[styles.choiceText, { color: currentTheme.text }]}>Заменить</Text>

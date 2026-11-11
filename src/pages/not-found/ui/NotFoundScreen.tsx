@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { PressableButton } from 'shared/ui/pressable-button'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 
 const TITLE = 'Страница не найдена'
 const HOME_BUTTON_TITLE = 'На главный экран'
@@ -38,7 +38,9 @@ export const NotFoundScreen = () => {
           accessibilityLabel={HOME_BUTTON_TITLE}
           style={[styles.button, { backgroundColor: currentTheme.primary }]}
         >
-          <Text style={styles.buttonTitle}>{HOME_BUTTON_TITLE}</Text>
+          <Text style={[styles.buttonTitle, { color: currentTheme.onPrimary }]}>
+            {HOME_BUTTON_TITLE}
+          </Text>
         </PressableButton>
       </View>
     </SafeAreaView>
@@ -53,7 +55,6 @@ const styles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   buttonTitle: {
-    color: COLORS.onPrimary,
     fontSize: FONT_SIZES.md,
     fontWeight: 'bold',
   },

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { Modal } from 'shared/ui/modal'
-import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 
 const SESSION_RESET_NOTICE =
@@ -34,7 +34,7 @@ export const ServerUrlChangeDialog = ({
           onPress={onConfirm}
           style={[styles.choice, { backgroundColor: currentTheme.primary }]}
         >
-          <Text style={styles.primaryText}>Применить</Text>
+          <Text style={[styles.primaryText, { color: currentTheme.onPrimary }]}>Применить</Text>
         </TouchableItem>
         <TouchableItem onPress={onCancel} style={styles.choice}>
           <Text style={[styles.choiceText, { color: currentTheme.text }]}>Отмена</Text>
@@ -64,7 +64,6 @@ const styles = StyleSheet.create({
     marginBottom: INDENTS.low,
   },
   primaryText: {
-    color: COLORS.onPrimary,
     fontSize: FONT_SIZES.base,
     fontWeight: 'bold',
   },

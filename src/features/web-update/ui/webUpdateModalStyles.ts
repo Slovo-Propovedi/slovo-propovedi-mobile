@@ -36,7 +36,6 @@ export const webUpdateModalStyles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   primaryButtonText: {
-    color: COLORS.onPrimary,
     fontSize: FONT_SIZES.base,
     fontWeight: 'bold',
     textAlign: 'center',

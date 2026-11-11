@@ -64,7 +64,7 @@ export const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET,
     paddingHorizontal: INDENTS.medium,
   },
-  primaryButtonText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '600' },
+  primaryButtonText: { fontSize: FONT_SIZES.base, fontWeight: '600' },
   progressFill: { backgroundColor: COLORS.primary, height: '100%' },
   progressTrack: {
     borderRadius: RADIUSES.low,
@@ -94,7 +94,7 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     top: INDENTS.low,
   },
-  tileBadgeText: { color: COLORS.white, fontSize: FONT_SIZES.xs, fontWeight: '700' },
+  tileBadgeText: { fontSize: FONT_SIZES.xs, fontWeight: '700' },
   tileBody: { padding: INDENTS.low },
   tileDelete: {
     alignItems: 'center',

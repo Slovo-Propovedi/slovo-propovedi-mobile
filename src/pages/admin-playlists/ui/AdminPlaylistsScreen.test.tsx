@@ -171,7 +171,12 @@ describe('<AdminPlaylistsScreen>', () => {
   test('keeps the create button label white in the light theme', async () => {
     mockFindAll.mockResolvedValue({ count: 0, playlists: [] })
 
-    const { findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
+    const { ctx, findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
+    await findByText(CREATE_BUTTON_LABEL)
+
+    await act(async () => {
+      themeModeAtom(ctx, 'light')
+    })
 
     const label = await findByText(CREATE_BUTTON_LABEL)
 

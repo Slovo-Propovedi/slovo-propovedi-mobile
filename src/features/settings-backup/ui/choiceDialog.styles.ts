@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS } from 'shared/ui/theme'
 
 // Общие стили диалогов выбора действия резервной копии (режим импорта и
 // конфликт автосинхронизации).
@@ -23,7 +23,6 @@ export const choiceDialogStyles = StyleSheet.create({
     marginBottom: INDENTS.low,
   },
   primaryText: {
-    color: COLORS.onPrimary,
     fontSize: FONT_SIZES.base,
     fontWeight: 'bold',
   },

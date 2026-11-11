@@ -25,6 +25,7 @@ const mockTheme = {
   background: '#fff',
   card: '#f5f5f5',
   icon: '#000',
+  onPrimary: '#fff',
   placeholder: '#aaa',
   primary: '#f16031',
   skeleton: '#e0e0e0',

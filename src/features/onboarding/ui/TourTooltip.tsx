@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { StyleSheet, Text, View } from 'react-native'
 import { IconButton } from 'shared/ui/icon-button'
 import { PressableButton } from 'shared/ui/pressable-button/PressableButton'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { type OnboardingStep } from '../lib/scenarios'
 import { useStepText } from '../lib/useStepText'
 import { resolveWaitHint } from '../lib/waitHint'
@@ -60,7 +60,9 @@ export const TourTooltip = ({
             onPress={onNext}
             style={[styles.primaryButton, { backgroundColor: currentTheme.primary }]}
           >
-            <Text style={styles.primaryText}>{isLastVisible ? 'Готово' : 'Далее'}</Text>
+            <Text style={[styles.primaryText, { color: currentTheme.onPrimary }]}>
+              {isLastVisible ? 'Готово' : 'Далее'}
+            </Text>
           </PressableButton>
         )}
       </View>
@@ -101,7 +103,6 @@ const styles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   primaryText: {
-    color: COLORS.onPrimary,
     fontSize: FONT_SIZES.base,
     fontWeight: 'bold',
   },

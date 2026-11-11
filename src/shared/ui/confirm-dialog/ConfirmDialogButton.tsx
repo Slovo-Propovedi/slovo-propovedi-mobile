@@ -26,7 +26,9 @@ export const ConfirmDialogButton = ({
     ? [styles.confirmButton, { backgroundColor: color ?? currentTheme.primary }]
     : styles.cancelButton
 
-  const textStyle = isConfirm ? styles.confirmButtonText : styles.cancelButtonText
+  const textStyle = isConfirm
+    ? [styles.confirmButtonText, { color: currentTheme.onPrimary }]
+    : styles.cancelButtonText
 
   return (
     <PressableButton onPress={onPress} style={buttonStyle}>
@@ -66,7 +68,6 @@ const styles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   confirmButtonText: {
-    color: COLORS.onPrimary,
     fontSize: FONT_SIZES.base,
     fontWeight: 'bold',
     textAlign: 'center',
