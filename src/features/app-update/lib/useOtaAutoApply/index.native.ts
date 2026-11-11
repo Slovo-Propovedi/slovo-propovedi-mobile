@@ -52,13 +52,6 @@ const applyReload = async (backgroundColor: string, isLight: boolean): Promise<v
   ])
   const image = sizeReloadScreenImage(isLight ? lightSplashIconUri : darkSplashIconUri)
 
-  console.warn('[update] ota reload screen config:', {
-    chosenUri: image?.url ?? 'none',
-    darkUri: darkSplashIconUri ?? 'none',
-    isLight,
-    lightUri: lightSplashIconUri ?? 'none',
-  })
-
   await reloadAsync({
     reloadScreenOptions: {
       backgroundColor,
