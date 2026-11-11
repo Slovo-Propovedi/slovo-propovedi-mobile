@@ -15,3 +15,12 @@ export const showToast = action((ctx, message: string) => {
     toastAtom(ctx, null)
   }, TOAST_DURATION_MS)
 }, 'showToast')
+
+// Test-support: a pending toast timer outlives the test that showed it and
+// keeps the jest worker alive, so the global afterEach hook clears it.
+export const clearToastTimerForTests = () => {
+  if (toastResetTimeoutId !== null) {
+    clearTimeout(toastResetTimeoutId)
+    toastResetTimeoutId = null
+  }
+}

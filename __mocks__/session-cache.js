@@ -18,6 +18,9 @@ const settleWithin = async (promise, hops) => {
 }
 
 afterEach(async () => {
+  // A pending toast reset timer would outlive the test and keep the worker alive.
+  require('../src/shared/model/toast').clearToastTimerForTests()
+
   const { clearSessionCache } = require('../src/shared/lib/session-cache/clearSessionCache')
 
   // clearSessionCache reports a failed wipe with console.error. Tests that call
