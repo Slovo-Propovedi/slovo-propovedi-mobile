@@ -26,8 +26,10 @@ const config: Config = {
   // different tests. 15s keeps real hangs failing fast while removing the
   // flake; full CI run (~190s) has headroom for it.
   testTimeout: 15000,
-  // Runs inside the test framework (needs `afterEach`).
-  setupFilesAfterEnv: ['./__mocks__/session-cache.js'],
+  // Runs inside the test framework (needs `afterEach`). The console guard is
+  // first so the session-cache wipe runs inside its recording window and a
+  // genuinely failing wipe still fails the test loudly.
+  setupFilesAfterEnv: ['./__mocks__/console-guard.js', './__mocks__/session-cache.js'],
   setupFiles: [
     // Must stay first: src/shared/config/env.ts validates EXPO_PUBLIC_* at module
     // load, and jest does not load .env.
