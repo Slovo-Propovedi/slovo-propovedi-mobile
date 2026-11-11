@@ -60,7 +60,6 @@ describe('<TabButton>', () => {
   test.each([
     ['listen', 'Слушать'],
     ['read', 'Читать'],
-    ['study', 'Учиться'],
     ['more', 'Ещё'],
   ])('renders single-line label for %s', async (routeName, displayName) => {
     await renderTabButton(routeName)

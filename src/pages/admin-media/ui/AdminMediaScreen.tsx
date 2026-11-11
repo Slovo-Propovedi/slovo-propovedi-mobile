@@ -1,4 +1,4 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAction } from '@reatom/npm-react'
 import { useState } from 'react'
 import { FlatList, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -6,14 +6,7 @@ import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { predictDropKinds, useFileDrop } from 'shared/lib/file-drop'
 import { showToast } from 'shared/model'
-import {
-  BLUR_TARGET_ROUTES,
-  BlurBackdrop,
-  createRefreshControl,
-  DropOverlay,
-  PullToRefresh,
-} from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { createRefreshControl, DropOverlay, PullToRefresh } from 'shared/ui'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { measureMediaGrid } from '../lib/mediaGrid'
 import { useAdminMedia } from '../lib/useAdminMedia'
@@ -32,7 +25,6 @@ export const AdminMediaScreen = () => {
   const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const showToastAction = useAction(showToast)
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const {
     files,
     isDeleting,
@@ -71,55 +63,53 @@ export const AdminMediaScreen = () => {
   const containerStyle = { backgroundColor: currentTheme.background, paddingTop: insets.top }
 
   return (
-    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.adminMedia}>
-      <View style={[styles.container, containerStyle]}>
-        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
-          <FlatList
-            data={files}
-            numColumns={numColumns}
-            key={`media-grid-${numColumns}`}
-            columnWrapperStyle={styles.gridRow}
-            keyExtractor={item => item.fileName}
-            refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
-            contentContainerStyle={[
-              styles.listContent,
-              { paddingBottom: tabBarHeight + INDENTS.low },
-            ]}
-            ListHeaderComponent={
-              <AdminMediaListHeader
-                progress={progress}
-                isUploading={isUploading}
-                onUpload={() => void pickImage()}
-              />
-            }
-            ListEmptyComponent={
-              <MediaGridEmpty
-                isError={isError}
-                tileSize={tileSize}
-                isLoading={isLoading}
-                numColumns={numColumns}
-              />
-            }
-            renderItem={({ item }) => (
-              <MediaTile
-                file={item}
-                size={tileSize}
-                onPress={() => setViewerTarget(item)}
-                onDelete={() => setDeleteTarget(item)}
-              />
-            )}
-          />
-        </PullToRefresh>
-        <AdminMediaOverlays
-          isDeleting={isDeleting}
-          deleteTarget={deleteTarget}
-          viewerTarget={viewerTarget}
-          onCloseViewer={() => setViewerTarget(null)}
-          onConfirmDelete={() => void handleDelete()}
-          onCancelDelete={() => setDeleteTarget(null)}
+    <View style={[styles.container, containerStyle]}>
+      <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+        <FlatList
+          data={files}
+          numColumns={numColumns}
+          key={`media-grid-${numColumns}`}
+          columnWrapperStyle={styles.gridRow}
+          keyExtractor={item => item.fileName}
+          refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: insets.bottom + INDENTS.low },
+          ]}
+          ListHeaderComponent={
+            <AdminMediaListHeader
+              progress={progress}
+              isUploading={isUploading}
+              onUpload={() => void pickImage()}
+            />
+          }
+          ListEmptyComponent={
+            <MediaGridEmpty
+              isError={isError}
+              tileSize={tileSize}
+              isLoading={isLoading}
+              numColumns={numColumns}
+            />
+          }
+          renderItem={({ item }) => (
+            <MediaTile
+              file={item}
+              size={tileSize}
+              onPress={() => setViewerTarget(item)}
+              onDelete={() => setDeleteTarget(item)}
+            />
+          )}
         />
-        <DropOverlay entries={dropEntries} visible={isDragActive} />
-      </View>
-    </BlurBackdrop>
+      </PullToRefresh>
+      <AdminMediaOverlays
+        isDeleting={isDeleting}
+        deleteTarget={deleteTarget}
+        viewerTarget={viewerTarget}
+        onCloseViewer={() => setViewerTarget(null)}
+        onConfirmDelete={() => void handleDelete()}
+        onCancelDelete={() => setDeleteTarget(null)}
+      />
+      <DropOverlay entries={dropEntries} visible={isDragActive} />
+    </View>
   )
 }

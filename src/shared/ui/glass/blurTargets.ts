@@ -13,13 +13,10 @@ export const ANDROID_BLUR_MIN_SDK = 31
 
 /** Route keys of the pages that expose their content as a blur target. */
 export const BLUR_TARGET_ROUTES = {
-  adminFlags: '/admin/flags',
   adminHome: '/admin',
-  adminMedia: '/admin/media',
   adminPlaylists: '/admin/playlists',
   adminSections: '/admin/sections',
   adminSermons: '/admin/sermons',
-  adminUsers: '/admin/users',
   listen: '/listen',
   more: '/more',
   myPlaylists: '/listen/my-playlists',
@@ -28,7 +25,6 @@ export const BLUR_TARGET_ROUTES = {
   playlistList: '/listen/playlist-list',
   read: '/read',
   searchResults: '/listen/search-results',
-  study: '/study',
 } as const
 
 const targets = new Map<string, BlurTargetRef>()

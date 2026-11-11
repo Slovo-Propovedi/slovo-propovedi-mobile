@@ -21,15 +21,12 @@ const setPlatform = (os: 'android' | 'ios', version?: number) => {
 afterEach(() => setPlatform('ios', undefined))
 
 describe('BLUR_TARGET_ROUTES', () => {
-  test('covers tab roots plus nested listen-stack and admin tab routes', () => {
+  test('covers tab roots plus nested listen-stack and admin routes', () => {
     expect(BLUR_TARGET_ROUTES).toMatchObject({
-      adminFlags: '/admin/flags',
       adminHome: '/admin',
-      adminMedia: '/admin/media',
       adminPlaylists: '/admin/playlists',
       adminSections: '/admin/sections',
       adminSermons: '/admin/sermons',
-      adminUsers: '/admin/users',
       listen: '/listen',
       more: '/more',
       myPlaylists: '/listen/my-playlists',
@@ -38,7 +35,6 @@ describe('BLUR_TARGET_ROUTES', () => {
       playlistList: '/listen/playlist-list',
       read: '/read',
       searchResults: '/listen/search-results',
-      study: '/study',
     })
   })
 })

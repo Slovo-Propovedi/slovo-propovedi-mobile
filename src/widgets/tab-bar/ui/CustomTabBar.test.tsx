@@ -82,31 +82,15 @@ const createMockState = (activeIndex: number) => ({
   index: activeIndex,
   key: 'tab-root',
   preloadedRouteKeys: [] as string[],
-  routeNames: ['listen', 'read', 'study', 'more'],
+  routeNames: ['listen', 'read', 'more'],
   routes: [
     { key: 'listen', name: 'listen', path: '/listen' },
     { key: 'read', name: 'read', path: '/read' },
-    { key: 'study', name: 'study', path: '/study' },
     { key: 'more', name: 'more', path: '/more' },
   ],
   stale: false as const,
   type: 'tab' as const,
 })
-
-const createAdminMockState = () => {
-  const routeNames = ['index', 'sections', 'playlists', 'sermons', 'media', 'flags', 'users']
-
-  return {
-    history: [{ key: 'index', type: 'route' as const }],
-    index: 0,
-    key: 'admin-tab-root',
-    preloadedRouteKeys: [] as string[],
-    routeNames,
-    routes: routeNames.map(name => ({ key: name, name, path: `/${name}` })),
-    stale: false as const,
-    type: 'tab' as const,
-  }
-}
 
 const createMockEmitter = () =>
   ({
@@ -388,33 +372,31 @@ describe('<CustomTabBar>', () => {
     })
   })
 
-  test('renders the bar labels without the study tab', async () => {
-    const { getByText, queryByText } = await renderTabBar()
+  test('renders a slot for every route in the navigator state', async () => {
+    const routeNames = ['listen', 'read', 'more', 'history', 'share']
+    const state = {
+      ...createMockState(0),
+      routeNames,
+      routes: routeNames.map(name => ({ key: name, name, path: `/${name}` })),
+    }
 
-    expect(getByText('Слушать')).toBeTruthy()
-    expect(getByText('Читать')).toBeTruthy()
-    expect(queryByText('Учиться')).toBeNull()
-    expect(getByText('Ещё')).toBeTruthy()
-  })
-
-  test('renders no tab slots for the hidden admin routes', async () => {
-    const { getByText, queryByText } = await renderWithProviders(
+    const { getByText } = await renderWithProviders(
       <CustomTabBar
-        hideSearch
+        state={state}
         descriptors={{}}
         navigateToTab={mockNavigate}
         emitter={createMockEmitter()}
-        state={createAdminMockState()}
         insets={{ bottom: 0, left: 0, right: 0, top: 0 }}
       />,
       { ctx: createCtx() },
     )
 
-    expect(getByText('Главная')).toBeTruthy()
-    expect(getByText('Проповеди')).toBeTruthy()
-    expect(queryByText('Медиа')).toBeNull()
-    expect(queryByText('Флаги')).toBeNull()
-    expect(queryByText('Пользователи')).toBeNull()
+    // The bar no longer filters any route: each navigator route gets a slot.
+    expect(getByText('Слушать')).toBeTruthy()
+    expect(getByText('Читать')).toBeTruthy()
+    expect(getByText('Ещё')).toBeTruthy()
+    expect(getByText('history')).toBeTruthy()
+    expect(getByText('share')).toBeTruthy()
   })
 
   test('marks the active tab with a capsule and primary tint', async () => {
@@ -534,7 +516,7 @@ describe('<CustomTabBar>', () => {
   })
 
   test('does not show info dialog when tapping an active allowed tab', async () => {
-    const { getByText } = await renderTabBar(3)
+    const { getByText } = await renderTabBar(2)
 
     await fireEvent.press(getByText('Ещё'))
 
