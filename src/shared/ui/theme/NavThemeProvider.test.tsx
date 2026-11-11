@@ -54,7 +54,7 @@ const renderBridge = async (mode: 'dark' | 'light') => {
 
   await act(async () => {})
 
-  return view
+  return { ...view, ctx }
 }
 
 describe('<NavThemeProvider>', () => {
@@ -76,6 +76,22 @@ describe('<NavThemeProvider>', () => {
   test('feeds the app light background into the expo-router fork theme context', async () => {
     const { getByText } = await renderBridge('light')
 
+    expect(getByText(LightTheme.background)).toBeTruthy()
+  })
+
+  test('propagates a runtime theme switch into the expo-router fork theme context', async () => {
+    const { ctx, getByText, queryByText } = await renderBridge('dark')
+
+    expect(getByText(DarkTheme.background)).toBeTruthy()
+
+    mockedUseColorScheme.mockReturnValue('light')
+    await act(async () => {
+      themeModeAtom(ctx, 'light')
+      systemThemeAtom(ctx, 'light')
+      currentThemeAtom(ctx, LightTheme)
+    })
+
+    expect(queryByText(DarkTheme.background)).toBeNull()
     expect(getByText(LightTheme.background)).toBeTruthy()
   })
 })
