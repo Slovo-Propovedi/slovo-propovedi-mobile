@@ -1,3 +1,4 @@
+import { Stack } from 'expo-router'
 import { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -11,6 +12,7 @@ import { COLORS, useTheme } from 'shared/ui/theme'
 import { INSTANCE_URL_PREFIX } from '../lib/instanceUrl'
 import { useAddInstance } from '../lib/useAddInstance'
 import { useInvidiousInstancesAdmin } from '../lib/useInvidiousInstancesAdmin'
+import { useInvidiousSaveHeader } from '../lib/useInvidiousSaveHeader'
 import { InvidiousInstanceRow } from './InvidiousInstanceRow'
 import { styles } from './styles'
 
@@ -18,7 +20,6 @@ const TITLE = 'Источники импорта'
 const HINT = 'Invidious-инстансы, которые предлагаются при импорте проповеди.'
 const INPUT_LABEL = 'Новый инстанс'
 const ADD_LABEL = 'Добавить'
-const SAVE_LABEL = 'Сохранить'
 const DELETE_LABEL = 'Удалить'
 const DELETE_TITLE = 'Удалить инстанс?'
 const EMPTY_MESSAGE = 'Источников пока нет'
@@ -35,6 +36,11 @@ export const AdminInvidiousScreen = () => {
     useInvidiousInstancesAdmin()
   const { draft, handleAdd, isValidating, setDraft } = useAddInstance({ addAndSave, instances })
   const [pendingRemoval, setPendingRemoval] = useState<null | string>(null)
+  const headerOptions = useInvidiousSaveHeader({
+    isDirty,
+    isSaving,
+    onSave: () => void save(),
+  })
 
   const handleConfirmRemoval = () => {
     if (pendingRemoval) removeUrl(pendingRemoval)
@@ -46,7 +52,11 @@ export const AdminInvidiousScreen = () => {
       edges={['top']}
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
-      <ScrollView keyboardShouldPersistTaps='handled' contentContainerStyle={styles.content}>
+      <Stack.Screen options={headerOptions} />
+      <ScrollView
+        keyboardShouldPersistTaps='handled'
+        contentContainerStyle={withBottomInset(styles.content, insets.bottom)}
+      >
         <Text style={[styles.title, { color: currentTheme.text }]}>{TITLE}</Text>
         <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{HINT}</Text>
         <View style={styles.addRow}>
@@ -96,24 +106,6 @@ export const AdminInvidiousScreen = () => {
           ))
         )}
       </ScrollView>
-
-      <View style={withBottomInset(styles.footer, insets.bottom)}>
-        <PressableButton
-          onPress={() => void save()}
-          disabled={!isDirty || isSaving}
-          style={[
-            styles.saveButton,
-            { backgroundColor: currentTheme.primary },
-            (!isDirty || isSaving) && styles.buttonDisabled,
-          ]}
-        >
-          {isSaving ? (
-            <ActivityIndicator color={COLORS.white} />
-          ) : (
-            <Text style={styles.saveButtonText}>{SAVE_LABEL}</Text>
-          )}
-        </PressableButton>
-      </View>
 
       <ConfirmDialog
         title={DELETE_TITLE}

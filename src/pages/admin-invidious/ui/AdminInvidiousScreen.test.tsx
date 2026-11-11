@@ -25,6 +25,23 @@ jest.mock('shared/ui/marquee-text/marquee-text', () => {
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
+// Save lives in the native header (headerRight); render it so the test can press it.
+jest.mock('expo-router', () => {
+  const React = jest.requireActual('react') as {
+    createElement: (type: unknown, props: unknown, ...children: unknown[]) => unknown
+    Fragment: unknown
+  }
+
+  return {
+    Stack: {
+      Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+        options?.headerRight
+          ? React.createElement(React.Fragment, null, options.headerRight())
+          : null,
+    },
+  }
+})
+
 const INSTANCE_A = 'https://a.example'
 const INSTANCE_B = 'https://b.example'
 const INSTANCE_C = 'https://c.example'

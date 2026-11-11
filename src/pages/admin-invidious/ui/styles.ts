@@ -33,9 +33,6 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     marginTop: INDENTS.low,
   },
-  footer: {
-    padding: INDENTS.medium,
-  },
   hint: {
     fontSize: FONT_SIZES.sm,
     marginBottom: INDENTS.medium,
@@ -62,17 +59,6 @@ export const styles = StyleSheet.create({
   },
   rowTitle: {
     fontSize: FONT_SIZES.md,
-  },
-  saveButton: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET,
-  },
-  saveButtonText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
   },
   title: {
     fontSize: FONT_SIZES.h2,
