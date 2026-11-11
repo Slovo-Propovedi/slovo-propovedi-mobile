@@ -16,7 +16,7 @@ index 6c81fce..c6fa935 100644
          runOnMain {
            playlist.loopMode = mode
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
-index bf3f9c5..3bb7f26 100644
+index bf3f9c5..a4a5fca 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 @@ -39,6 +39,9 @@ class AudioPlaylist(
@@ -29,7 +29,7 @@ index bf3f9c5..3bb7f26 100644
  
    override var isActiveForLockScreen = false
    override var metadata: Metadata? = null
-@@ -100,6 +103,11 @@ class AudioPlaylist(
+@@ -100,10 +103,22 @@ class AudioPlaylist(
    override fun onMediaItemChanged(mediaItem: MediaItem?, reason: Int) {
      val currentIndex = ref.currentMediaItemIndex
      if (currentIndex != previousMediaItemIndex) {
@@ -41,7 +41,18 @@ index bf3f9c5..3bb7f26 100644
        emitTrackChanged(previousMediaItemIndex, currentIndex)
        previousMediaItemIndex = currentIndex
      }
-@@ -232,7 +240,10 @@ class AudioPlaylist(
+     sendStatusUpdate()
++    // PATCH(patch-package): after a seamless AUTO transition the media session keeps
++    // publishing the previous item's end position, so SystemUI extrapolates the
++    // notification seekbar into the new track (issue #149). A seek re-publishes
++    // PlaybackState; manual next/prev already go through seekTo and are unaffected.
++    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
++      ref.seekTo(ref.currentPosition)
++    }
+   }
+ 
+   override fun onPlayerError(error: PlaybackException) {
+@@ -232,7 +247,10 @@ class AudioPlaylist(
        "muted" to isMuted,
        "volume" to ref.volume,
        "loop" to loopMode.value,
@@ -53,7 +64,7 @@ index bf3f9c5..3bb7f26 100644
      )
    }
  
-@@ -241,7 +252,8 @@ class AudioPlaylist(
+@@ -241,7 +259,8 @@ class AudioPlaylist(
        TRACK_CHANGED,
        mapOf(
          "previousIndex" to previousIndex,
