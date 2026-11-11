@@ -1,7 +1,9 @@
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { playlistsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
+import { themeModeAtom } from 'shared/ui/theme'
 import { AdminPlaylistsScreen } from './AdminPlaylistsScreen'
 
 // MarqueeText renders the title twice (visible + measurer), so a single-Text
@@ -36,6 +38,7 @@ jest.mock('expo-router', () => ({
 }))
 
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+const CREATE_BUTTON_LABEL = 'Создать плейлист'
 
 const findRefreshControl = (element: TestInstance) => {
   let current: null | TestInstance = element
@@ -109,7 +112,7 @@ describe('<AdminPlaylistsScreen>', () => {
 
     const { findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
 
-    fireEvent.press(await findByText('Создать плейлист'))
+    fireEvent.press(await findByText(CREATE_BUTTON_LABEL))
 
     expect(mockPush).toHaveBeenCalledWith('/admin/playlists/create')
   })
@@ -163,5 +166,30 @@ describe('<AdminPlaylistsScreen>', () => {
     })
 
     await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
+  })
+
+  test('keeps the create button label white in the light theme', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, playlists: [] })
+
+    const { findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
+
+    const label = await findByText(CREATE_BUTTON_LABEL)
+
+    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#fff' })
+  })
+
+  test('uses a black create button label in the dark theme', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, playlists: [] })
+
+    const { ctx, findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
+    await findByText(CREATE_BUTTON_LABEL)
+
+    await act(async () => {
+      themeModeAtom(ctx, 'dark')
+    })
+
+    const label = await findByText(CREATE_BUTTON_LABEL)
+
+    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#000' })
   })
 })

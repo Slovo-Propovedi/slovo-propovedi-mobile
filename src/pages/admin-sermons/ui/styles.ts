@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
   badge: {
@@ -40,7 +40,6 @@ export const styles = StyleSheet.create({
     width: 'auto',
   },
   createButtonText: {
-    color: COLORS.white,
     fontSize: FONT_SIZES.base,
     fontWeight: '600',
   },

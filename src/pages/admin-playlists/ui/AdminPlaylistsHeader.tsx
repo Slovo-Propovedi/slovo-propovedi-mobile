@@ -4,7 +4,7 @@ import { type APITypes } from 'shared/api'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
 import { AdminSelect, type AdminSelectOption, RefreshButton } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
-import { useTheme } from 'shared/ui/theme'
+import { COLORS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
 
@@ -34,7 +34,7 @@ export const AdminPlaylistsHeader = ({
   search: string
   sort: APITypes.PlaylistControllerFindAllSort
 }) => {
-  const { currentTheme } = useTheme()
+  const { currentTheme, isLight } = useTheme()
 
   return (
     <View style={styles.header}>
@@ -50,7 +50,9 @@ export const AdminPlaylistsHeader = ({
           onPress={onCreate}
           style={[styles.createButton, { backgroundColor: currentTheme.primary }]}
         >
-          <Text style={styles.createButtonText}>Создать плейлист</Text>
+          <Text style={[styles.createButtonText, { color: isLight ? COLORS.white : COLORS.black }]}>
+            Создать плейлист
+          </Text>
         </TouchableItem>
       </View>
       <TextInput

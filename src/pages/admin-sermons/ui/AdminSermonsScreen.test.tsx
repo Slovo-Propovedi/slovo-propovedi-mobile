@@ -1,6 +1,8 @@
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
+import { themeModeAtom } from 'shared/ui/theme'
 import { AdminSermonsScreen } from './AdminSermonsScreen'
 
 // MarqueeText renders the title twice (visible + measurer), so a single-Text
@@ -37,6 +39,7 @@ jest.mock('expo-router', () => ({
 const PAGE_SIZE = 20
 const LIST_TEST_ID = 'admin-sermons-list'
 const RETRY_LABEL = 'Повторить загрузку'
+const CREATE_BUTTON_LABEL = 'Загрузить проповедь'
 
 // One faker sample is enough per page: generating a fresh DTO per row is slow.
 const buildSermons = (count: number, prefix: string) => {
@@ -126,7 +129,7 @@ describe('<AdminSermonsScreen>', () => {
     const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
 
     await act(async () => {
-      await fireEvent.press(await findByText('Загрузить проповедь'))
+      await fireEvent.press(await findByText(CREATE_BUTTON_LABEL))
     })
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/admin/sermons/create'))
@@ -216,5 +219,30 @@ describe('<AdminSermonsScreen>', () => {
     expect(await findByText('Всего: 21')).toBeTruthy()
 
     unmount()
+  })
+
+  test('keeps the create button label white in the light theme', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
+
+    const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
+
+    const label = await findByText(CREATE_BUTTON_LABEL)
+
+    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#fff' })
+  })
+
+  test('uses a black create button label in the dark theme', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
+
+    const { ctx, findByText } = await renderWithProviders(<AdminSermonsScreen />)
+    await findByText(CREATE_BUTTON_LABEL)
+
+    await act(async () => {
+      themeModeAtom(ctx, 'dark')
+    })
+
+    const label = await findByText(CREATE_BUTTON_LABEL)
+
+    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#000' })
   })
 })

@@ -1,7 +1,9 @@
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { sectionsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
+import { themeModeAtom } from 'shared/ui/theme'
 import { AdminSectionsScreen } from './AdminSectionsScreen'
 
 // MarqueeText renders the title twice (visible + measurer), so a single-Text
@@ -48,6 +50,7 @@ jest.mock('react-native-draggable-flatlist', () => {
 })
 
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+const CREATE_BUTTON_LABEL = 'Создать раздел'
 
 const findRefreshControl = (element: TestInstance) => {
   let current: null | TestInstance = element
@@ -102,7 +105,7 @@ describe('<AdminSectionsScreen>', () => {
   test('navigates to the create screen from the header button', async () => {
     const { findByText } = await renderWithProviders(<AdminSectionsScreen />)
 
-    fireEvent.press(await findByText('Создать раздел'))
+    fireEvent.press(await findByText(CREATE_BUTTON_LABEL))
 
     expect(mockPush).toHaveBeenCalledWith('/admin/sections/create')
   })
@@ -116,5 +119,26 @@ describe('<AdminSectionsScreen>', () => {
     })
 
     await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
+  })
+
+  test('keeps the create button label white in the light theme', async () => {
+    const { findByText } = await renderWithProviders(<AdminSectionsScreen />)
+
+    const label = await findByText(CREATE_BUTTON_LABEL)
+
+    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#fff' })
+  })
+
+  test('uses a black create button label in the dark theme', async () => {
+    const { ctx, findByText } = await renderWithProviders(<AdminSectionsScreen />)
+    await findByText(CREATE_BUTTON_LABEL)
+
+    await act(async () => {
+      themeModeAtom(ctx, 'dark')
+    })
+
+    const label = await findByText(CREATE_BUTTON_LABEL)
+
+    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#000' })
   })
 })

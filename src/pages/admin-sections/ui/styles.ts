@@ -38,7 +38,6 @@ export const styles = StyleSheet.create({
     width: 'auto',
   },
   createButtonText: {
-    color: '#fff',
     fontSize: FONT_SIZES.base,
     fontWeight: '600',
   },
