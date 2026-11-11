@@ -32,12 +32,11 @@ jest.mock('widgets/tab-bar', () => {
 })
 
 describe('(tabs) layout', () => {
-  test('declares the four tab screens and mounts the floating chrome once', async () => {
+  test('declares the three tab screens and mounts the floating chrome once', async () => {
     const { getAllByText, getByText } = await renderWithProviders(<Layout />)
 
     expect(getByText('listen')).toBeTruthy()
     expect(getByText('read')).toBeTruthy()
-    expect(getByText('study')).toBeTruthy()
     expect(getByText('more')).toBeTruthy()
     expect(getAllByText('TAB_BAR')).toHaveLength(1)
     expect(getAllByText('PLAYER')).toHaveLength(1)
