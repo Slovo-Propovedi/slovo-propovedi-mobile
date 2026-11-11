@@ -16,7 +16,7 @@ index 6c81fce..c6fa935 100644
          runOnMain {
            playlist.loopMode = mode
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
-index bf3f9c5..a4a5fca 100644
+index bf3f9c5..056a132 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 @@ -39,6 +39,9 @@ class AudioPlaylist(
@@ -42,12 +42,12 @@ index bf3f9c5..a4a5fca 100644
        previousMediaItemIndex = currentIndex
      }
      sendStatusUpdate()
-+    // PATCH(patch-package): after a seamless AUTO transition the media session keeps
-+    // publishing the previous item's end position, so SystemUI extrapolates the
-+    // notification seekbar into the new track (issue #149). A seek re-publishes
-+    // PlaybackState; manual next/prev already go through seekTo and are unaffected.
++    // PATCH(patch-package): rebuild the lock-screen session after a seamless AUTO
++    // transition so PlaybackState (seekbar position) is re-published from the live
++    // player; without it the notification seekbar continues from the previous
++    // track's end (issue #149). Manual next/prev go through seekTo and are unaffected.
 +    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-+      ref.seekTo(ref.currentPosition)
++      serviceConnection.playbackServiceBinder?.service?.reassertSessionForPlayable(this)
 +    }
    }
  
@@ -75,7 +75,7 @@ index bf3f9c5..a4a5fca 100644
      )
      sendStatusUpdate()
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 53c36f7..23b4202 100644
+index 53c36f7..bb140eb 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -490,7 +490,9 @@ class AudioControlsService : MediaSessionService() {
@@ -89,6 +89,26 @@ index 53c36f7..23b4202 100644
    }
  
    private fun clearSessionInternal() {
+@@ -557,6 +559,19 @@ class AudioControlsService : MediaSessionService() {
+     }
+   }
+ 
++  // PATCH(patch-package): after a seamless AUTO media-item transition the session keeps
++  // publishing the previous item's end PlaybackState, so SystemUI extrapolates the
++  // notification seekbar into the new track (issue #149); metadata/timeline still
++  // refresh, position does not. Rebuilding the session (same path as the foreground
++  // re-assert through setPlayableOptions) is the proven way to re-publish PlaybackState:
++  // it is background-safe here because the service is already a foreground service and
++  // this path posts with startInForeground = false (plain notify, no FGS start).
++  fun reassertSessionForPlayable(playable: LockScreenPlayable) {
++    if (playable == currentPlayable) {
++      setPlayableOptions(playable, currentMetadata, currentOptions)
++    }
++  }
++
+   fun unregisterPlayable() {
+     clearSessionInternal()
+   }
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
 index 2280c80..d32facf 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
