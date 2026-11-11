@@ -21,9 +21,8 @@ import { initServerUrlAction, loadHapticsEnabled, loadToursDisabled } from 'shar
 import { reportError } from 'shared/model/error-dialog'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
 import { useKeyboardBottomInsetSync } from 'shared/ui/layout'
-import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
+import { COLORS, NavThemeProvider, ThemeProvider, useTheme } from 'shared/ui/theme'
 import RootLayout from './_RootLayout'
-import { NavThemeProvider } from './NavThemeProvider'
 
 /**
  * Fallback component shown while the root layout's route content is loading via Suspense.

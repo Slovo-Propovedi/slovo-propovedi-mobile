@@ -5,7 +5,7 @@ export { DarkTheme, LightTheme } from './constants'
 export { isMaterialYouSupported } from './materialYou'
 // Reatom model
 export { dynamicColorsEnabledAtom, setDynamicColors, setThemeMode, themeModeAtom } from './model'
-export { buildNavigationTheme } from './navigationTheme'
+export { NavThemeProvider } from './NavThemeProvider'
 export { resolveColor } from './resolveColor'
 // Re-export Context-related from ThemeContext subfolder
 export { ThemeProvider } from './ThemeContext/ThemeProvider'

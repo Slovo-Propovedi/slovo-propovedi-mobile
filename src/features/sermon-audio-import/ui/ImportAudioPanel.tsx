@@ -1,90 +1,95 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native'
-import { IconButton } from 'shared/ui/icon-button'
+import { useState } from 'react'
+import { Platform, StyleSheet, Text, View } from 'react-native'
+import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
+import { FormField } from 'shared/ui/form'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { getImportPhaseLabel, getImportProgressText } from '../lib/importPhaseLabel'
 import { useImportSettings } from '../lib/importSettings'
 import { type ImportedSermonMetadata } from '../lib/importTypes'
 import { useAudioImport } from '../lib/useAudioImport'
 import { useInvidiousInstances } from '../lib/useInvidiousInstances'
+import { ImportControlsRow } from './ImportControlsRow'
 import { ImportProgressBar } from './ImportProgressBar'
-import { ImportSourceSelect } from './ImportSourceSelect'
 
 const IMPORT_HINT =
   'Скачивает аудиодорожку с YouTube и подставляет её вместе с названием и описанием.'
 
-const IMPORT_LABEL = 'Импортировать'
+const URL_LABEL = 'YouTube (URL)'
+const URL_PLACEHOLDER = 'https://youtube.com/…'
 const SEARCHING_LABEL = 'Поиск видео…'
 
 /**
- * Блок импорта проповеди из YouTube/Invidious: строка «селектор источника +
- * кнопка импорта», необязательное поле своего инстанса и прогресс по фазам.
+ * Блок импорта проповеди из YouTube/Invidious: поле ссылки, строка «селектор
+ * источника + кнопка импорта», необязательное поле своего инстанса и прогресс
+ * по фазам. Ссылка живёт в локальном черновике: по нажатию импорта она
+ * сохраняется в форму (`onImportUrl`) и сразу становится ссылкой импорта.
  * На native доступны оба источника; на web YouTube выключен, а сохранённый
  * выбор «YouTube» разрешается через Invidious.
  * @param props - Пропсы блока импорта.
- * @param props.disabled - Импорт невозможен (например, не заполнен URL).
  * @param props.hasAudio - В форме уже есть аудио: скачивание не запускается.
  * @param props.onAudioImported - Получает URL загруженного аудио для формы.
+ * @param props.onImportUrl - Получает черновик ссылки при нажатии импорта.
  * @param props.onMetadata - Получает название и описание сразу после разбора ссылки.
- * @param props.youtubeUrl - Ссылка или ID видео из поля формы.
+ * @param props.youtubeUrl - Начальное значение поля ссылки (из формы).
  */
 export const ImportAudioPanel = ({
-  disabled,
   hasAudio,
   onAudioImported,
+  onImportUrl,
   onMetadata,
   youtubeUrl,
 }: {
-  disabled: boolean
   hasAudio: boolean
   onAudioImported: (audioUrl: string) => void
+  onImportUrl: (url: string) => void
   onMetadata: (metadata: ImportedSermonMetadata) => void
   youtubeUrl: string
 }) => {
   const { currentTheme } = useTheme()
   const { settings, updateSettings } = useImportSettings()
   const instances = useInvidiousInstances()
+  const [draftUrl, setDraftUrl] = useState(youtubeUrl)
+  const url = draftUrl.trim()
   const { isImporting, progress, startImport } = useAudioImport({
     hasAudio,
     onAudioImported,
     onMetadata,
     settings,
-    url: youtubeUrl,
+    url,
   })
 
-  const selectInvidiousInstance = (url: string) => {
-    if (url.trim() === '') return
-    updateSettings({ invidiousBaseUrl: url, source: 'invidious' })
+  const selectInvidiousInstance = (nextUrl: string) => {
+    if (nextUrl.trim() === '') return
+    updateSettings({ invidiousBaseUrl: nextUrl, source: 'invidious' })
   }
 
-  const isImportDisabled = disabled || isImporting
+  const importFromDraft = () => {
+    if (url === '') return
+    onImportUrl(url)
+    void startImport()
+  }
 
   return (
     <View>
       <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{IMPORT_HINT}</Text>
-      <View style={styles.controlRow}>
-        <ImportSourceSelect
-          instances={instances}
-          source={settings.source}
-          isWeb={Platform.OS === 'web'}
-          onSelectInstance={selectInvidiousInstance}
-          invidiousBaseUrl={settings.invidiousBaseUrl}
-          onSelectYoutube={() => updateSettings({ source: 'youtube' })}
-        />
-        <IconButton
-          disabled={isImportDisabled}
-          accessibilityLabel={IMPORT_LABEL}
-          onPress={() => void startImport()}
-          accessibilityState={{ disabled: isImportDisabled }}
-          Icon={
-            isImporting ? (
-              <ActivityIndicator color={currentTheme.primary} />
-            ) : (
-              <Ionicons size={20} color={currentTheme.primary} name='cloud-download-outline' />
-            )
-          }
-        />
-      </View>
+      <FormField
+        value={draftUrl}
+        label={URL_LABEL}
+        onChangeText={setDraftUrl}
+        placeholder={URL_PLACEHOLDER}
+        maxLength={INPUT_LIMITS.sermon.youtubeUrl}
+      />
+      <ImportControlsRow
+        instances={instances}
+        source={settings.source}
+        isImporting={isImporting}
+        isWeb={Platform.OS === 'web'}
+        onPressImport={importFromDraft}
+        disabled={isImporting || url === ''}
+        onSelectInstance={selectInvidiousInstance}
+        invidiousBaseUrl={settings.invidiousBaseUrl}
+        onSelectYoutube={() => updateSettings({ source: 'youtube' })}
+      />
       {isImporting ? (
         <View style={styles.progress}>
           <Text style={[styles.phase, { color: currentTheme.text }]}>
@@ -103,12 +108,6 @@ export const ImportAudioPanel = ({
 }
 
 const styles = StyleSheet.create({
-  controlRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.low,
-    marginBottom: INDENTS.low,
-  },
   hint: {
     fontSize: FONT_SIZES.sm,
     marginBottom: INDENTS.low,
