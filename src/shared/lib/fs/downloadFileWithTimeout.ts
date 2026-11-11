@@ -65,8 +65,12 @@ export const downloadFileWithTimeout = async (
   externalSignal?.addEventListener('abort', abortFromExternalSignal, { once: true })
 
   let stalled = false
+  let isFinished = false
   let stallTimerId: null | ReturnType<typeof setTimeout> = null
   const rearmStallTimer = () => {
+    // Хвостовой тик прогресса может прийти после завершения загрузки: без этого
+    // гварда он заново заряжал бы stall-таймер, который уже некому снять.
+    if (isFinished) return
     if (stallTimerId !== null) clearTimeout(stallTimerId)
     stallTimerId = setTimeout(() => {
       stalled = true
@@ -95,8 +99,12 @@ export const downloadFileWithTimeout = async (
     if (abortController.signal.aborted) throw createDownloadTimeoutError(timeoutMs)
     throw error
   } finally {
+    isFinished = true
     clearTimeout(timeoutId)
-    if (stallTimerId !== null) clearTimeout(stallTimerId)
+    if (stallTimerId !== null) {
+      clearTimeout(stallTimerId)
+      stallTimerId = null
+    }
     externalSignal?.removeEventListener('abort', abortFromExternalSignal)
   }
 }
