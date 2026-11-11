@@ -9,6 +9,29 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn() }),
 }))
 
+// The real pager issues native commands (`dispatchCommand`) against a host ref
+// that never exists in the test renderer. A class component keeps the ref a real
+// component instance (Animated resolves its host node) while exposing the same
+// imperative API react-native-tab-view's jumpTo/mount paths call.
+jest.mock('react-native-pager-view', () => {
+  const React = jest.requireActual('react')
+  const { View } = jest.requireActual('react-native')
+
+  class MockPagerView extends React.Component<{
+    children?: ReactNode
+    style?: unknown
+  }> {
+    public render() {
+      return React.createElement(View, { style: this.props.style }, this.props.children)
+    }
+
+    public setPage = jest.fn()
+    public setPageWithoutAnimation = jest.fn()
+  }
+
+  return { __esModule: true, default: MockPagerView }
+})
+
 jest.mock('shared/ui', () => {
   const actual = jest.requireActual('shared/ui')
   const { Text } = jest.requireActual('react-native')
