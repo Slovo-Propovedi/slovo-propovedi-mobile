@@ -1,4 +1,5 @@
 import { act } from '@testing-library/react-native'
+import { getSharedTestCtx } from 'shared/mocks'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model'
 import { audioCacheService } from '../lib/AudioCacheService'
@@ -52,7 +53,19 @@ const mockedEnqueueCache = jest.mocked(enqueueCache)
 const mockedCancelCacheDownload = jest.mocked(cancelCacheDownload)
 
 describe('useTrackItemCache', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    const ctx = getSharedTestCtx()
+
+    // The file shares one Reatom context, so atoms written by an earlier test
+    // would otherwise leak into the next one (progress, queue, settings, online).
+    await act(async () => {
+      isOnlineAtom(ctx, true)
+      cacheQueueAtom(ctx, {})
+      playlistDownloadProgressAtom(ctx, {})
+      cacheUpdateTriggerAtom(ctx, 0)
+      sermonCachingEnabledAtom(ctx, true)
+    })
+
     jest.clearAllMocks()
     mockedIsCached.mockResolvedValue(false)
     mockedEnqueueCache.mockResolvedValue('file:///cached.mp3')
