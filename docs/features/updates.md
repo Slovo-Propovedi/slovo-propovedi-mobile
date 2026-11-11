@@ -69,6 +69,8 @@ Android-сервис медиаплеера держит процесс живы
 
 **Публикация отделена от сборки.** Job `build-remote` заранее готовит сборку на GitHub-hosted раннерах (с локальным fallback). Job `android-package` только собирает/подписывает APK и складывает ZIP + `SHA256SUMS.txt` в артефакт `release-assets` (retention 30 дней); job `publish-release` (`needs: [create-release, android-package]`) скачивает артефакт, прикладывает ассеты к Forgejo-релизу и зеркалирует релиз в GitHub и Codeberg. Упавшую публикацию или зеркало можно перезапустить (re-run failed jobs) без пересборки APK, пока артефакт не истёк.
 
+**Повторная публикация идемпотентна.** Forgejo-загрузка пропускает уже прикреплённые ассеты (`::warning::<name> already attached to the release — skipping`), GitHub-шаг трактует 422 как «уже есть», Codeberg-шаг загружает только отсутствующие — re-run `publish-release` / `web-package` не плодит дубликаты zip и `SHA256SUMS.txt`.
+
 **Артефактная передача держится на v3 artifact-actions.** `actions/upload-artifact` и `actions/download-artifact` в `release.yml` остаются на мажоре v3: v4+ перешли на GitHub Results API, которого нет в Forgejo, и падают с `GHESNotSupportedError`. Симптом — job `android-package` краснеет на шаге загрузки, `publish-release` пропускается, и остаётся созданный, но пустой релиз-объект без APK (zip и `SHA256SUMS.txt` до него не доезжают). Поднимать эти action'ы выше v3 нельзя, пока Forgejo не реализует Results API.
 
 **Web релизится всегда**: job `web-package` зависит от `changes` и `build-remote` и не имеет условия по режиму, поэтому PWA выходит на каждом теге. Web-zip прикрепляется к релизу только в `native`; в `js-only` деплой на VPS выполняется без сборки zip.

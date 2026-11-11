@@ -885,11 +885,14 @@ jobs:
           # release object may not exist yet — poll for it. Its own window is
           # shorter than create-release's CI wait, which may include a
           # GitHub-hosted runner queue.
+          RELEASE_JSON=/tmp/fo-release-web.json
           RELEASE_ID=""
           for attempt in $(seq 1 40); do
-            RELEASE_ID=$(curl -s \
+            curl -s \
               -H "Authorization: token $GITHUB_TOKEN" \
-              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG" | jq -r .id)
+              -o "$RELEASE_JSON" \
+              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG"
+            RELEASE_ID=$(jq -r '.id // empty' "$RELEASE_JSON" 2>/dev/null || true)
             if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "null" ]; then
               break
             fi
@@ -902,11 +905,23 @@ jobs:
             echo "::error::Could not resolve Forgejo release id for $TAG"
             exit 1
           fi
-          curl -s -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-web-v${VERSION}.zip" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/zip" \
-            --data-binary @slovo-propovedi-web-v${VERSION}.zip
+
+          # Same-name assets are skipped: Forgejo allows duplicates, a re-run
+          # must not add another copy of the web zip.
+          asset_exists() {
+            jq -e --arg name "$1" '[.assets[]? | select(.name == $name)] | length > 0' "$RELEASE_JSON" >/dev/null
+          }
+
+          WEB_ZIP="slovo-propovedi-web-v${VERSION}.zip"
+          if asset_exists "$WEB_ZIP"; then
+            echo "::warning::$WEB_ZIP already attached to the release — skipping"
+          else
+            curl -s -X POST \
+              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$WEB_ZIP" \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Content-Type: application/zip" \
+              --data-binary @"$WEB_ZIP"
+          fi
           summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
 
       # Footer: always runs, so the summary gets a verdict table even when a
@@ -1006,23 +1021,39 @@ jobs:
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
           VERSION="${{ needs.create-release.outputs.version }}"
           TAG="${{ github.ref_name }}"
-          RELEASE_ID=$(curl -s \
+          RELEASE_JSON=/tmp/fo-release-assets.json
+          curl -s \
             -H "Authorization: token $GITHUB_TOKEN" \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG" | jq -r .id)
+            -o "$RELEASE_JSON" \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG"
+          RELEASE_ID=$(jq -r '.id // empty' "$RELEASE_JSON" 2>/dev/null || true)
           if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
             echo "::error::Could not resolve Forgejo release id for $TAG"
             exit 1
           fi
-          curl -s -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-v${VERSION}.zip" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/zip" \
-            --data-binary @release-assets/slovo-propovedi-v${VERSION}.zip
-          curl -s -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=SHA256SUMS.txt" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: text/plain" \
-            --data-binary @release-assets/SHA256SUMS.txt
+
+          # Forgejo does not dedupe attachment names, so a re-run must skip
+          # assets that are already attached (GitHub handles 422, Codeberg
+          # checks names itself).
+          asset_exists() {
+            jq -e --arg name "$1" '[.assets[]? | select(.name == $name)] | length > 0' "$RELEASE_JSON" >/dev/null
+          }
+
+          upload_asset() { # <name> <path> <content-type>
+            local name=$1 path=$2 content_type=$3
+            if asset_exists "$name"; then
+              echo "::warning::$name already attached to the release — skipping"
+              return 0
+            fi
+            curl -s -X POST \
+              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$name" \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Content-Type: $content_type" \
+              --data-binary @"$path"
+          }
+
+          upload_asset "slovo-propovedi-v${VERSION}.zip" "release-assets/slovo-propovedi-v${VERSION}.zip" "application/zip"
+          upload_asset "SHA256SUMS.txt" "release-assets/SHA256SUMS.txt" "text/plain"
           summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
 
       - name: Mirror release to GitHub
