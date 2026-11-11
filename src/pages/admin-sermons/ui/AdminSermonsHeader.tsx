@@ -50,7 +50,7 @@ export const AdminSermonsHeader = ({
         <IconButton
           onPress={onCreate}
           accessibilityLabel='Загрузить проповедь'
-          Icon={<Ionicons size={24} name='cloud-upload-outline' color={currentTheme.primary} />}
+          Icon={<Ionicons size={24} name='add-outline' color={currentTheme.primary} />}
         />
       </View>
       <TextInput
