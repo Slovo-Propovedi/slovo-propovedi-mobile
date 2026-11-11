@@ -175,12 +175,48 @@ jobs:
             exit 0
           fi
           set +e
-          OUTPUT=$(bash scripts/ci/github-dispatch.sh)
+          # stdout carries only the machine line `GH_RUN_URL=<url>`, printed
+          # before the long poll; stderr stays attached so run progress streams
+          # live into the job log.
+          DISPATCH_OUT=$(mktemp)
+          bash scripts/ci/github-dispatch.sh > "$DISPATCH_OUT" &
+          DISPATCH_PID=$!
+
+          write_run_summary() {
+            {
+              echo '## CI dispatched to GitHub-hosted runners'
+              echo "- Run: [${RUN_URL##*/}](${RUN_URL}) — статус и логи в GitHub Actions"
+            } | scripts/ci/step-summary.sh || true
+          }
+
+          # Publish the run link as soon as the dispatcher discovers the run: the
+          # step returns only after the poll (up to RUN_TIMEOUT_MIN), so writing
+          # the summary at the end would show the link far too late.
+          RUN_URL=""
+          for _ in $(seq 1 150); do
+            RUN_URL=$(sed -n 's/^GH_RUN_URL=//p' "$DISPATCH_OUT" | tail -1)
+            if [ -n "$RUN_URL" ]; then
+              write_run_summary
+              break
+            fi
+            kill -0 "$DISPATCH_PID" 2>/dev/null || break
+            sleep 2
+          done
+
+          wait "$DISPATCH_PID"
           STATUS=$?
-          set -e
+          OUTPUT=$(cat "$DISPATCH_OUT")
+          rm -f "$DISPATCH_OUT"
 
           # Printed by the dispatcher on the 0/1/42/43 paths (see its header).
-          RUN_URL=$(printf '%s\n' "$OUTPUT" | sed -n 's/^GH_RUN_URL=//p' | tail -1)
+          # Covers a run discovered after the early-summary window (slow mirror).
+          if [ -z "$RUN_URL" ]; then
+            RUN_URL=$(printf '%s\n' "$OUTPUT" | sed -n 's/^GH_RUN_URL=//p' | tail -1)
+            if [ -n "$RUN_URL" ]; then
+              write_run_summary
+            fi
+          fi
+          set -e
 
           case "$STATUS" in
             0)
