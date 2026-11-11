@@ -9,7 +9,7 @@ jest.mock('features/sermon-audio-import', () => ({
 }))
 
 const mockedPanel = ImportAudioPanel as jest.MockedFunction<typeof ImportAudioPanel>
-const TITLE_PATTERN = /Импорт аудио/
+const TITLE_PATTERN = /Импорт проповеди/
 
 const VALUES: SermonFormValues = {
   artist: '',
@@ -62,14 +62,15 @@ describe('<ImportAccordionSection>', () => {
 
     const props = mockedPanel.mock.calls[0][0]
     expect(props).toMatchObject({
-      disabled: false,
       hasAudio: true,
       youtubeUrl: values.youtubeUrl,
     })
 
+    props.onImportUrl('https://youtu.be/def')
     props.onMetadata({ description: null, title: 'Проповедь о покаянии' })
     props.onAudioImported('https://cdn.test/b.m4a')
 
+    expect(onChange).toHaveBeenCalledWith('youtubeUrl', 'https://youtu.be/def')
     expect(onChange).toHaveBeenCalledWith('description', '')
     expect(onChange).toHaveBeenCalledWith('title', 'Проповедь о покаянии')
     expect(onChange).toHaveBeenCalledWith('audioUrl', 'https://cdn.test/b.m4a')

@@ -18,6 +18,7 @@ const ALT_LABEL = 'Invidious: invidious.f5.si'
 const CUSTOM_OPTION_LABEL = 'Свой инстанс…'
 const CUSTOM_INPUT_LABEL = 'Свой инстанс'
 const YOUTUBE_LABEL = 'YouTube'
+const URL_LABEL = 'YouTube (URL)'
 const DISABLED_SOURCE_HINT = 'На вебе доступен только источник Invidious'
 const SUCCESS_MESSAGE = 'Импортировано из YouTube'
 const VIDEO_UNAVAILABLE_MESSAGE = 'Видео недоступно'
@@ -53,15 +54,15 @@ const METADATA: ImportedSermonMetadata = {
 const IMPORTED: ImportedSermonData = { ...METADATA, audioUrl: 'https://cdn.test/sermon.m4a' }
 
 const renderImport = async ({
-  disabled = false,
   hasAudio = false,
   onAudioImported = jest.fn(),
+  onImportUrl = jest.fn(),
   onMetadata = jest.fn(),
   url = VIDEO_URL,
 }: {
-  disabled?: boolean
   hasAudio?: boolean
   onAudioImported?: (audioUrl: string) => void
+  onImportUrl?: (url: string) => void
   onMetadata?: (metadata: ImportedSermonMetadata) => void
   url?: string
 } = {}) => {
@@ -70,15 +71,15 @@ const renderImport = async ({
   const view = await renderWithProviders(
     <ImportAudioPanel
       youtubeUrl={url}
-      disabled={disabled}
       hasAudio={hasAudio}
       onMetadata={onMetadata}
+      onImportUrl={onImportUrl}
       onAudioImported={onAudioImported}
     />,
     { ctx },
   )
 
-  return { ...view, ctx, onAudioImported, onMetadata }
+  return { ...view, ctx, onAudioImported, onImportUrl, onMetadata }
 }
 
 const openSourceSelect = async () => {
@@ -188,10 +189,27 @@ describe('<ImportAudioPanel>', () => {
     expect(mockUpdateSettings).not.toHaveBeenCalled()
   })
 
-  test('disables the import when there is no url', async () => {
-    await renderImport({ disabled: true })
+  test('disables the import while the url draft is empty', async () => {
+    await renderImport({ url: '' })
 
     expect(screen.getByRole('button', { name: IMPORT_LABEL })).toBeDisabled()
+  })
+
+  test('saves the pasted url into the form and starts the import with it', async () => {
+    const { onImportUrl } = await renderImport({ url: '' })
+
+    expect(screen.getByRole('button', { name: IMPORT_LABEL })).toBeDisabled()
+
+    await fireEvent.changeText(screen.getByLabelText(URL_LABEL), VIDEO_URL)
+
+    // Черновик уходит в форму только по нажатию импорта, не при вводе.
+    expect(onImportUrl).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: IMPORT_LABEL })).toBeEnabled()
+
+    await pressImport()
+
+    expect(onImportUrl).toHaveBeenCalledWith(VIDEO_URL)
+    expect(mockImportAudio).toHaveBeenCalledWith(expect.objectContaining({ url: VIDEO_URL }))
   })
 
   test('imports the url and reports the metadata and the uploaded audio', async () => {

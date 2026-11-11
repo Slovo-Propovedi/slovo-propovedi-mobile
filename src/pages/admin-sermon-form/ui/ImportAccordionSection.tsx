@@ -3,7 +3,7 @@ import { ImportAudioPanel } from 'features/sermon-audio-import'
 import { CollapsibleSection } from 'shared/ui'
 import { type SermonFormValues } from '../lib/sermonFormInitialValues'
 
-const TITLE = 'Импорт аудио'
+const TITLE = 'Импорт проповеди'
 
 type UpdateField = <K extends keyof SermonFormValues>(key: K, value: SermonFormValues[K]) => void
 
@@ -32,7 +32,7 @@ export const ImportAccordionSection = ({
       <ImportAudioPanel
         youtubeUrl={values.youtubeUrl}
         hasAudio={Boolean(values.audioUrl)}
-        disabled={!values.youtubeUrl.trim()}
+        onImportUrl={url => onChange('youtubeUrl', url)}
         onAudioImported={audioUrl => onChange('audioUrl', audioUrl)}
         onMetadata={({ description, title }) => {
           onChange('description', description ?? '')
