@@ -1,30 +1,26 @@
-import { Platform, StyleSheet, Text, View } from 'react-native'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native'
+import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { getImportPhaseLabel, getImportProgressText } from '../lib/importPhaseLabel'
 import { useImportSettings } from '../lib/importSettings'
-import { type ImportedSermonMetadata, type ImportSource } from '../lib/importTypes'
+import { type ImportedSermonMetadata } from '../lib/importTypes'
 import { useAudioImport } from '../lib/useAudioImport'
 import { useInvidiousInstances } from '../lib/useInvidiousInstances'
-import { ImportButton } from './ImportButton'
-import { ImportInstanceField } from './ImportInstanceField'
 import { ImportProgressBar } from './ImportProgressBar'
-import { ImportSourcePicker } from './ImportSourcePicker'
+import { ImportSourceSelect } from './ImportSourceSelect'
 
 const IMPORT_HINT =
   'Скачивает аудиодорожку с YouTube и подставляет её вместе с названием и описанием.'
 
+const IMPORT_LABEL = 'Импортировать'
 const SEARCHING_LABEL = 'Поиск видео…'
 
-// На web InnerTube недоступен (шимы и `eval` в браузере не поддержаны), поэтому
-// YouTube-чип показан, но выключен, а импорт всегда идёт через Invidious.
-const WEB_DISABLED_SOURCES: readonly ImportSource[] = ['youtube']
-const NO_DISABLED_SOURCES: readonly ImportSource[] = []
-
 /**
- * Блок импорта проповеди из YouTube/Invidious под полем «YouTube (URL)»: выбор
- * источника, адрес инстанса Invidious, кнопка импорта с прогрессом по фазам.
- * На native доступны оба источника; на web — только Invidious (YouTube-чип
- * выключен), сохранённый выбор «YouTube» уходит в Invidious.
+ * Блок импорта проповеди из YouTube/Invidious: строка «селектор источника +
+ * кнопка импорта», необязательное поле своего инстанса и прогресс по фазам.
+ * На native доступны оба источника; на web YouTube выключен, а сохранённый
+ * выбор «YouTube» разрешается через Invidious.
  * @param props - Пропсы блока импорта.
  * @param props.disabled - Импорт невозможен (например, не заполнен URL).
  * @param props.hasAudio - В форме уже есть аудио: скачивание не запускается.
@@ -32,7 +28,7 @@ const NO_DISABLED_SOURCES: readonly ImportSource[] = []
  * @param props.onMetadata - Получает название и описание сразу после разбора ссылки.
  * @param props.youtubeUrl - Ссылка или ID видео из поля формы.
  */
-export const ImportFromYoutube = ({
+export const ImportAudioPanel = ({
   disabled,
   hasAudio,
   onAudioImported,
@@ -47,7 +43,7 @@ export const ImportFromYoutube = ({
 }) => {
   const { currentTheme } = useTheme()
   const { settings, updateSettings } = useImportSettings()
-  const presets = useInvidiousInstances()
+  const instances = useInvidiousInstances()
   const { isImporting, progress, startImport } = useAudioImport({
     hasAudio,
     onAudioImported,
@@ -56,30 +52,39 @@ export const ImportFromYoutube = ({
     url: youtubeUrl,
   })
 
-  const handlePress = () => void startImport()
+  const selectInvidiousInstance = (url: string) => {
+    if (url.trim() === '') return
+    updateSettings({ invidiousBaseUrl: url, source: 'invidious' })
+  }
 
-  // Пока первый отчёт источника не пришёл, фаза неизвестна — показываем поиск
-  // видео, чтобы админ не смотрел на «Скачивание… 0%».
-  const isWeb = Platform.OS === 'web'
-  const effectiveSource = isWeb ? 'invidious' : settings.source
-  const isDisabled = disabled || isImporting
+  const isImportDisabled = disabled || isImporting
 
   return (
     <View>
       <Text style={[styles.hint, { color: currentTheme.textMuted }]}>{IMPORT_HINT}</Text>
-      <ImportSourcePicker
-        source={effectiveSource}
-        onSelect={source => updateSettings({ source })}
-        disabledSources={isWeb ? WEB_DISABLED_SOURCES : NO_DISABLED_SOURCES}
-      />
-      {effectiveSource === 'invidious' ? (
-        <ImportInstanceField
-          presets={presets}
+      <View style={styles.controlRow}>
+        <ImportSourceSelect
+          instances={instances}
+          source={settings.source}
+          isWeb={Platform.OS === 'web'}
+          onSelectInstance={selectInvidiousInstance}
           invidiousBaseUrl={settings.invidiousBaseUrl}
-          onChange={invidiousBaseUrl => updateSettings({ invidiousBaseUrl })}
+          onSelectYoutube={() => updateSettings({ source: 'youtube' })}
         />
-      ) : null}
-      <ImportButton disabled={isDisabled} onPress={handlePress} isImporting={isImporting} />
+        <IconButton
+          disabled={isImportDisabled}
+          accessibilityLabel={IMPORT_LABEL}
+          onPress={() => void startImport()}
+          accessibilityState={{ disabled: isImportDisabled }}
+          Icon={
+            isImporting ? (
+              <ActivityIndicator color={currentTheme.primary} />
+            ) : (
+              <Ionicons size={20} color={currentTheme.primary} name='cloud-download-outline' />
+            )
+          }
+        />
+      </View>
       {isImporting ? (
         <View style={styles.progress}>
           <Text style={[styles.phase, { color: currentTheme.text }]}>
@@ -98,6 +103,12 @@ export const ImportFromYoutube = ({
 }
 
 const styles = StyleSheet.create({
+  controlRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: INDENTS.low,
+    marginBottom: INDENTS.low,
+  },
   hint: {
     fontSize: FONT_SIZES.sm,
     marginBottom: INDENTS.low,
@@ -106,8 +117,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     marginBottom: INDENTS.lowest,
   },
-  // Статус прилипает к группе аплоада малым зазором, а внешний отступ до
-  // следующего поля даёт страница (SermonMediaFields) — под статусом.
+  // Статус прилипает к группе аплоада малым зазором.
   progress: {
     marginTop: INDENTS.lowest,
   },

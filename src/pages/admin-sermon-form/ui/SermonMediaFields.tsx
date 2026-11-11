@@ -1,6 +1,5 @@
 import { Text, View } from 'react-native'
 import { CoverPicker, FileUploadField } from 'widgets/admin-form-pickers'
-import { ImportFromYoutube } from 'features/sermon-audio-import'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
 import { EditableUrlField } from 'shared/ui/form'
 import { useTheme } from 'shared/ui/theme'
@@ -42,18 +41,6 @@ export const SermonMediaFields = ({
         maxLength={INPUT_LIMITS.sermon.youtubeUrl}
         onChangeText={text => onChange('youtubeUrl', text)}
       />
-      <View style={styles.importBlock}>
-        <ImportFromYoutube
-          youtubeUrl={values.youtubeUrl}
-          hasAudio={Boolean(values.audioUrl)}
-          disabled={!values.youtubeUrl.trim()}
-          onAudioImported={audioUrl => onChange('audioUrl', audioUrl)}
-          onMetadata={({ description, title }) => {
-            onChange('description', description ?? '')
-            onChange('title', title)
-          }}
-        />
-      </View>
       <FileUploadField
         kind='audio'
         value={values.audioUrl}

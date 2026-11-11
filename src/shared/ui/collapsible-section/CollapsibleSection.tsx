@@ -1,10 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { type ReactNode } from 'react'
 import { Text, View } from 'react-native'
-import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
+import { useTheme } from '../theme/ThemeContext/useTheme'
+import { TouchableItem } from '../touchable-item'
 import { styles } from './styles'
 
+// Сворачиваемая секция: заголовок-кнопка со стрелкой и тело, видимое только в
+// развёрнутом состоянии. Используется аккордеонами админки и экраном «Поделиться».
 export const CollapsibleSection = ({
   children,
   isExpanded,
@@ -20,7 +22,11 @@ export const CollapsibleSection = ({
 
   return (
     <View style={[styles.section, { backgroundColor: currentTheme.surface }]}>
-      <TouchableItem onPress={onToggle} style={styles.sectionHeader}>
+      <TouchableItem
+        onPress={onToggle}
+        style={styles.sectionHeader}
+        accessibilityState={{ expanded: isExpanded }}
+      >
         <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>{title}</Text>
         <Ionicons
           size={20}

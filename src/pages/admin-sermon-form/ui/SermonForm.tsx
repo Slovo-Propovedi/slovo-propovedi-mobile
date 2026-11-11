@@ -8,6 +8,7 @@ import { useTheme } from 'shared/ui/theme'
 import { type SermonFormValues } from '../lib/sermonFormInitialValues'
 import { useDroppedMediaUpload } from '../lib/useDroppedMediaUpload'
 import { useSermonSuggestions } from '../lib/useSermonSuggestions'
+import { ImportAccordionSection } from './ImportAccordionSection'
 import { SermonFormMainFields } from './SermonFormMainFields'
 import { SermonMediaFields } from './SermonMediaFields'
 import { SermonScriptureFields } from './SermonScriptureFields'
@@ -71,6 +72,7 @@ export const SermonForm = ({
           </View>
         ) : null}
 
+        <ImportAccordionSection values={values} onChange={onChange} />
         <SermonFormMainFields
           books={books}
           values={values}

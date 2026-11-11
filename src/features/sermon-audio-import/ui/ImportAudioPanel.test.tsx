@@ -6,12 +6,17 @@ import { reportError } from 'shared/model/error-dialog'
 import { toastAtom } from 'shared/model/toast'
 import { type ImportedSermonData, type ImportedSermonMetadata } from '../lib/importTypes'
 import { ImportSourceError } from '../lib/sourceErrors'
-import { ImportFromYoutube } from './ImportFromYoutube'
+import { ImportAudioPanel } from './ImportAudioPanel'
 
 const VIDEO_URL = 'https://www.youtube.com/watch?v=lV6YkF7ytxs'
 const IMPORT_LABEL = 'Импортировать'
-const INSTANCE_LABEL = 'Инстанс Invidious'
-const INVIDIOUS_LABEL = 'Invidious'
+const BASE_INSTANCE = 'https://inv.phobos.observer'
+const ALT_INSTANCE = 'https://invidious.f5.si'
+const LOCAL_INSTANCE = 'http://192.168.1.10:8080'
+const TRIGGER_LABEL = 'Invidious: inv.phobos.observer'
+const ALT_LABEL = 'Invidious: invidious.f5.si'
+const CUSTOM_OPTION_LABEL = 'Свой инстанс…'
+const CUSTOM_INPUT_LABEL = 'Свой инстанс'
 const YOUTUBE_LABEL = 'YouTube'
 const DISABLED_SOURCE_HINT = 'На вебе доступен только источник Invidious'
 const SUCCESS_MESSAGE = 'Импортировано из YouTube'
@@ -21,20 +26,21 @@ const PROCESSING_LABEL = 'Обработка на сервере…'
 
 const mockImportAudio = jest.fn()
 const mockUpdateSettings = jest.fn()
-const mockSettings = { invidiousBaseUrl: 'https://inv.phobos.observer', source: 'invidious' }
+const mockSettings = { invidiousBaseUrl: BASE_INSTANCE, source: 'invidious' }
 
 jest.mock('../lib/importAudio', () => ({
   importAudio: (...args: unknown[]) => mockImportAudio(...args),
 }))
 
 jest.mock('../lib/importSettings', () => ({
+  normalizeInvidiousBaseUrl: jest.requireActual('../lib/importSettings').normalizeInvidiousBaseUrl,
   useImportSettings: () => ({ settings: mockSettings, updateSettings: mockUpdateSettings }),
 }))
 
 // Пресеты приходят с бэкенда; в тесте компонента список фиксирован — сам fetch
 // покрыт отдельным тестом useInvidiousInstances.
 jest.mock('../lib/useInvidiousInstances', () => ({
-  useInvidiousInstances: () => ['https://inv.phobos.observer'],
+  useInvidiousInstances: () => [BASE_INSTANCE, ALT_INSTANCE],
 }))
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
@@ -62,7 +68,7 @@ const renderImport = async ({
   const ctx = createCtx()
 
   const view = await renderWithProviders(
-    <ImportFromYoutube
+    <ImportAudioPanel
       youtubeUrl={url}
       disabled={disabled}
       hasAudio={hasAudio}
@@ -75,6 +81,12 @@ const renderImport = async ({
   return { ...view, ctx, onAudioImported, onMetadata }
 }
 
+const openSourceSelect = async () => {
+  await fireEvent.press(screen.getByRole('button', { name: /Invidious: inv\.phobos\.observer/ }))
+}
+
+const pressImport = () => fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+
 // Импорт завершается сбросом прогресса уже после показа toast: ждём его в
 // отдельном act-цикле, иначе обновление состояния прилетает вне act().
 const waitForImportToFinish = () =>
@@ -82,32 +94,98 @@ const waitForImportToFinish = () =>
     expect(screen.getByRole('button', { name: IMPORT_LABEL })).toBeEnabled()
   })
 
-describe('<ImportFromYoutube>', () => {
+describe('<ImportAudioPanel>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockSettings.source = 'invidious'
+    mockSettings.invidiousBaseUrl = BASE_INSTANCE
     mockImportAudio.mockResolvedValue(IMPORTED)
   })
 
-  test('renders the source picker and the import button', async () => {
+  test('renders the source selector and the import button', async () => {
     await renderImport()
 
-    expect(screen.getByRole('button', { name: YOUTUBE_LABEL })).toBeTruthy()
+    expect(screen.getByText(TRIGGER_LABEL)).toBeTruthy()
     expect(screen.getByRole('button', { name: IMPORT_LABEL })).toBeEnabled()
   })
 
-  test('shows the instance field only for the invidious source', async () => {
+  test('reflects the stored youtube source in the selector', async () => {
+    mockSettings.source = 'youtube'
     await renderImport()
 
-    expect(screen.getByLabelText(INSTANCE_LABEL)).toBeTruthy()
+    expect(screen.getByText(YOUTUBE_LABEL)).toBeTruthy()
   })
 
-  test('hides the instance field for the youtube source', async () => {
-    mockSettings.source = 'youtube'
-
+  test('persists the youtube source when selected', async () => {
     await renderImport()
+    await openSourceSelect()
 
-    expect(screen.queryByLabelText(INSTANCE_LABEL)).toBeNull()
+    await fireEvent.press(screen.getByRole('button', { name: YOUTUBE_LABEL }))
+
+    expect(mockUpdateSettings).toHaveBeenCalledWith({ source: 'youtube' })
+  })
+
+  test('persists another saved instance when selected', async () => {
+    await renderImport()
+    await openSourceSelect()
+
+    await fireEvent.press(screen.getByRole('button', { name: ALT_LABEL }))
+
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      invidiousBaseUrl: ALT_INSTANCE,
+      source: 'invidious',
+    })
+  })
+
+  test('reveals the custom instance input without persisting anything yet', async () => {
+    await renderImport()
+    await openSourceSelect()
+
+    await fireEvent.press(screen.getByRole('button', { name: CUSTOM_OPTION_LABEL }))
+
+    expect(mockUpdateSettings).not.toHaveBeenCalled()
+    expect(screen.getByLabelText(CUSTOM_INPUT_LABEL)).toBeTruthy()
+  })
+
+  test('commits a custom instance on blur', async () => {
+    await renderImport()
+    await openSourceSelect()
+    await fireEvent.press(screen.getByRole('button', { name: CUSTOM_OPTION_LABEL }))
+
+    // Элемент перезапрашивается после ввода: fireEvent работает со снимком
+    // дерева, а после changeText хендлер blur уже новый (с черновиком).
+    await fireEvent.changeText(screen.getByLabelText(CUSTOM_INPUT_LABEL), ` ${LOCAL_INSTANCE} `)
+    await fireEvent(screen.getByLabelText(CUSTOM_INPUT_LABEL), 'blur')
+
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      invidiousBaseUrl: LOCAL_INSTANCE,
+      source: 'invidious',
+    })
+  })
+
+  test('adds a scheme to a bare lan host on blur', async () => {
+    await renderImport()
+    await openSourceSelect()
+    await fireEvent.press(screen.getByRole('button', { name: CUSTOM_OPTION_LABEL }))
+
+    await fireEvent.changeText(screen.getByLabelText(CUSTOM_INPUT_LABEL), ' 192.168.1.10:8080 ')
+    await fireEvent(screen.getByLabelText(CUSTOM_INPUT_LABEL), 'blur')
+
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      invidiousBaseUrl: LOCAL_INSTANCE,
+      source: 'invidious',
+    })
+  })
+
+  test('ignores an empty custom instance', async () => {
+    await renderImport()
+    await openSourceSelect()
+    await fireEvent.press(screen.getByRole('button', { name: CUSTOM_OPTION_LABEL }))
+
+    await fireEvent.changeText(screen.getByLabelText(CUSTOM_INPUT_LABEL), '   ')
+    await fireEvent(screen.getByLabelText(CUSTOM_INPUT_LABEL), 'blur')
+
+    expect(mockUpdateSettings).not.toHaveBeenCalled()
   })
 
   test('disables the import when there is no url', async () => {
@@ -126,7 +204,7 @@ describe('<ImportFromYoutube>', () => {
     )
     const { onAudioImported, onMetadata } = await renderImport()
 
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     expect(mockImportAudio).toHaveBeenCalledWith(expect.objectContaining({ url: VIDEO_URL }))
     await waitFor(() => {
@@ -147,7 +225,7 @@ describe('<ImportFromYoutube>', () => {
     )
     const { ctx, onAudioImported, onMetadata } = await renderImport({ hasAudio: true })
 
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     expect(mockImportAudio).toHaveBeenCalledWith(expect.objectContaining({ withAudio: false }))
     await waitFor(() => {
@@ -162,7 +240,7 @@ describe('<ImportFromYoutube>', () => {
   test('shows a success toast after the import', async () => {
     const { ctx } = await renderImport()
 
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     await waitFor(() => {
       expect(ctx.get(toastAtom)).toBe(SUCCESS_MESSAGE)
@@ -175,7 +253,7 @@ describe('<ImportFromYoutube>', () => {
     mockImportAudio.mockRejectedValue(error)
     const { ctx } = await renderImport()
 
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     await waitFor(() => {
       expect(ctx.get(toastAtom)).toBe(VIDEO_UNAVAILABLE_MESSAGE)
@@ -193,7 +271,7 @@ describe('<ImportFromYoutube>', () => {
     )
 
     await renderImport()
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     expect(await screen.findByText('Скачивание… 40%')).toBeTruthy()
     expect(screen.getByRole('button', { name: IMPORT_LABEL })).toBeDisabled()
@@ -208,7 +286,7 @@ describe('<ImportFromYoutube>', () => {
     )
 
     await renderImport()
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     expect(
       await screen.findByRole('progressbar', { name: DOWNLOAD_PHASE_LABEL }),
@@ -224,7 +302,7 @@ describe('<ImportFromYoutube>', () => {
     )
 
     await renderImport()
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     expect(await screen.findByText('Загрузка на сервер… 80%')).toBeTruthy()
   })
@@ -238,7 +316,7 @@ describe('<ImportFromYoutube>', () => {
     )
 
     await renderImport()
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     expect(await screen.findByText(PROCESSING_LABEL)).toBeTruthy()
     expect(screen.queryByText('Загрузка на сервер… 100%')).toBeNull()
@@ -253,19 +331,20 @@ describe('<ImportFromYoutube>', () => {
     mockImportAudio.mockImplementation(() => new Promise<ImportedSermonData>(() => {}))
 
     await renderImport()
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     expect(await screen.findByText('Поиск видео…')).toBeTruthy()
   })
 })
 
-describe('<ImportFromYoutube> on web', () => {
+describe('<ImportAudioPanel> on web', () => {
   let restorePlatform: { restore: () => void }
 
   beforeEach(() => {
     jest.clearAllMocks()
     // Even a stored "youtube" choice must fall back to Invidious on web.
     mockSettings.source = 'youtube'
+    mockSettings.invidiousBaseUrl = BASE_INSTANCE
     mockImportAudio.mockResolvedValue(IMPORTED)
     restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
   })
@@ -277,12 +356,12 @@ describe('<ImportFromYoutube> on web', () => {
   test('disables YouTube but still imports through Invidious', async () => {
     const { onAudioImported } = await renderImport()
 
+    expect(screen.getByText(TRIGGER_LABEL)).toBeTruthy()
+    await openSourceSelect()
     expect(screen.getByRole('button', { name: YOUTUBE_LABEL })).toBeDisabled()
     expect(screen.getByHintText(DISABLED_SOURCE_HINT)).toBeTruthy()
-    expect(screen.getByRole('button', { name: INVIDIOUS_LABEL })).toBeSelected()
-    expect(screen.getByLabelText(INSTANCE_LABEL)).toBeTruthy()
 
-    await fireEvent.press(screen.getByRole('button', { name: IMPORT_LABEL }))
+    await pressImport()
 
     expect(mockImportAudio).toHaveBeenCalledWith(expect.objectContaining({ url: VIDEO_URL }))
     await waitFor(() => {
@@ -290,12 +369,12 @@ describe('<ImportFromYoutube> on web', () => {
     })
   })
 
-  test('does not switch to YouTube when its disabled chip is pressed', async () => {
+  test('does not switch to YouTube when its disabled option is pressed', async () => {
     await renderImport()
+    await openSourceSelect()
 
-    fireEvent.press(screen.getByRole('button', { name: YOUTUBE_LABEL }))
+    await fireEvent.press(screen.getByRole('button', { name: YOUTUBE_LABEL }))
 
     expect(mockUpdateSettings).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: INVIDIOUS_LABEL })).toBeSelected()
   })
 })

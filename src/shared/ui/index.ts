@@ -8,6 +8,7 @@ export {
 } from './admin-skeleton'
 export { AdminContentSkeleton } from './admin-skeleton'
 export { AdminShellSkeleton } from './admin-skeleton'
+export { CollapsibleSection } from './collapsible-section/CollapsibleSection'
 export { CoverImage } from './cover-image/cover-image'
 export { DropOverlay } from './drop-overlay/DropOverlay'
 export { EmptyState } from './empty-state'
