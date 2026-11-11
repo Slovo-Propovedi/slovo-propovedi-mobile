@@ -11,6 +11,9 @@ Scenarios:
   failure    run is completed(failure) from the first poll, serves a job log
   stuck      run stays queued forever (drives the queue timeout / cancel path)
   cancelled  run is completed(cancelled) from the first poll (external cancel)
+  startup_failure
+             run is completed(startup_failure) from the first poll — GitHub
+             never booted the run (zero jobs, no logs)
 """
 
 import argparse
@@ -20,7 +23,7 @@ import time
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-SCENARIOS = ("success", "failure", "stuck", "cancelled")
+SCENARIOS = ("success", "failure", "stuck", "cancelled", "startup_failure")
 RUN_ID = 123
 REPO = "/repos/owner/repo"
 WORKFLOW = "/actions/workflows/ci.yml"
@@ -36,6 +39,8 @@ def run_state():
         return "completed", "failure"
     if scenario == "cancelled":
         return "completed", "cancelled"
+    if scenario == "startup_failure":
+        return "completed", "startup_failure"
     elapsed = time.monotonic() - STATE["dispatch_time"]
     if elapsed < 0.3:
         return "queued", None

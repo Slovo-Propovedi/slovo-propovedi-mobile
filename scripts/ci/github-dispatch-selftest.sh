@@ -12,6 +12,7 @@
 #   (g) dispatch POST 503 once                -> 0 (retried)
 #   (h) API unreachable during poll           -> 42 (bounded by RUN_TIMEOUT_MIN)
 #   (i) mirror rejects the token (401)        -> 42 (fallback, no dispatch POST)
+#   (j) run never booted (startup_failure)    -> 42 (fallback, no job-log fetch)
 #
 # Usage: bash scripts/ci/github-dispatch-selftest.sh
 
@@ -217,6 +218,26 @@ if [ -s "$WORK_DIR/dispatch-i.log" ]; then
   FAILURES=$((FAILURES + 1))
 else
   printf 'ok   (i) no dispatch POST attempted\n'
+fi
+
+# --- (j) run never booted (startup_failure) -> infra fallback, no logs --------
+start_mock startup_failure "$WORK_DIR/cancel-j.log" "" "" "$WORK_DIR/requests-j.log"
+status=0
+run_dispatch "$WORK_DIR/startup-failure" 1 "" || status=$?
+stop_mock
+check_exit "(j) startup_failure -> fallback" 42 "$status"
+if [ -s "$WORK_DIR/requests-j.log" ] \
+  && grep -qE "/actions/runs/123/jobs|/actions/jobs/" "$WORK_DIR/requests-j.log"; then
+  printf 'FAIL (j) job logs were fetched for a run that never booted\n'
+  FAILURES=$((FAILURES + 1))
+else
+  printf 'ok   (j) no job-log fetch\n'
+fi
+if [ -s "$WORK_DIR/cancel-j.log" ]; then
+  printf 'FAIL (j) cancel POST sent for an already-terminal run\n'
+  FAILURES=$((FAILURES + 1))
+else
+  printf 'ok   (j) no cancel POST sent\n'
 fi
 
 # --- dry-run touches no network ----------------------------------------------

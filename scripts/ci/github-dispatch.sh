@@ -37,9 +37,11 @@
 #   3   the dispatched run never appeared on GitHub (run-discovery path only)
 #   42  infra failure (token rejected by GitHub, mirror-wait timeout, dispatch
 #       rejected, queue/run timeout, GitHub API unreachable for RUN_TIMEOUT_MIN,
-#       artifact transport/extraction error) — the caller should fall back to the
-#       local runner; timeout paths cancel the run first, the unreachable path
-#       cannot (the API is down)
+#       artifact transport/extraction error, startup_failure — the run never
+#       booted, e.g. during a GitHub Actions outage) — the caller should fall
+#       back to the local runner; timeout paths cancel the run first, the
+#       unreachable path cannot (the API is down), startup_failure needs no
+#       cancel (the run is already terminal)
 #   43  the run was cancelled externally (e.g. superseded by a newer push) —
 #       neutral: no fallback, no failure; the newer run reports the result
 #
@@ -379,6 +381,13 @@ poll_run() {
           if [ "$conclusion" = "cancelled" ]; then
             log "run $RUN_ID was cancelled externally (superseded by a newer push): $RUN_URL"
             exit 43
+          fi
+          # A run that never booted (zero jobs) is a GitHub platform problem,
+          # not a failed build: fall back locally. There are no job logs to
+          # fetch and the run is already terminal, so no cancel either.
+          if [ "$conclusion" = "startup_failure" ]; then
+            log "error: GitHub failed to start the run (startup_failure) — platform issue; falling back locally"
+            exit 42
           fi
           print_failure_logs
           log "error: run $RUN_ID concluded '${conclusion:-unknown}': $RUN_URL"
