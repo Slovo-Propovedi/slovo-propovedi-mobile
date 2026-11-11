@@ -5,10 +5,6 @@
 Формат записи: `- [ ] <что не доделано> — <где (пути файлов)> — <когда вернуться/контекст>`.
 Закрытая запись **удаляется** из файла в том же PR (не помечается `[x]`): краткое резюме закрытия — в body коммита, знание — в профильном `docs/features|contracts`.
 
-## Testing
-
-- [ ] Session-cache wipe failures are silently swallowed in tests — `__mocks__/session-cache.js` — revisit if cross-test storage leaks appear (was: console.error noise from global afterEach)
-
 ## Auth flow
 
 - [ ] **Отсутствует публичный пользовательский экран логина.** Пользовательской авторизации и личного кабинета в приложении нет — токены обслуживают только админку. Истёкшая админ-сессия теперь централизованно чистится и ведёт на `/admin/login` (`entities/auth`, `shared/model/sessionExpiry.ts`), но публичного входа по-прежнему нет; вернуться при внедрении пользовательской авторизации.
