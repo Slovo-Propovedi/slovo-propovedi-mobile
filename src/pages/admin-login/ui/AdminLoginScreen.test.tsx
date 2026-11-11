@@ -1,5 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { fireEvent, userEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, userEvent, waitFor } from '@testing-library/react-native'
 import { useRouter } from 'expo-router'
 import { TextInput } from 'react-native'
 import { signIn } from 'entities/auth'
@@ -90,7 +90,9 @@ describe('<AdminLoginScreen>', () => {
 
     await user.type(getByPlaceholderText(USERNAME_PLACEHOLDER), USERNAME)
     await user.type(getByPlaceholderText(PASSWORD_PLACEHOLDER), PASSWORD)
-    fireEvent(getByPlaceholderText(PASSWORD_PLACEHOLDER), 'submitEditing')
+    await act(async () => {
+      await fireEvent(getByPlaceholderText(PASSWORD_PLACEHOLDER), 'submitEditing')
+    })
 
     await waitFor(() => {
       expect(mockedSignIn).toHaveBeenCalledWith(expect.anything(), {

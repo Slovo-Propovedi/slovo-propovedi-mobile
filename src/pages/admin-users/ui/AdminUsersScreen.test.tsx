@@ -79,15 +79,22 @@ describe('<AdminUsersScreen>', () => {
   test('filters the loaded page by the debounced search term', async () => {
     mockFindAll.mockResolvedValue(createUsers(2))
 
-    const { findByText, getByPlaceholderText, queryByText } = await renderWithProviders(
+    const { findByText, getByPlaceholderText, queryByText, unmount } = await renderWithProviders(
       <AdminUsersScreen />,
     )
     await findByText('Пользователь 0')
 
-    fireEvent.changeText(getByPlaceholderText('Имя, email или логин…'), 'login1')
+    // The search term is applied by a 300ms debounce: let it fire inside act so
+    // the filtered list update is not reported as an unwrapped state change.
+    await act(async () => {
+      await fireEvent.changeText(getByPlaceholderText('Имя, email или логин…'), 'login1')
+      await new Promise<void>(resolve => setTimeout(resolve, 350))
+    })
 
     await waitFor(() => expect(queryByText('Пользователь 1')).toBeTruthy())
     await waitFor(() => expect(queryByText('Пользователь 0')).toBeNull())
+
+    unmount()
   })
 
   test('navigates to the create screen from the header button', async () => {

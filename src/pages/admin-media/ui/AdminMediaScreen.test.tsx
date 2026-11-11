@@ -95,19 +95,23 @@ describe('<AdminMediaScreen>', () => {
   test('renders image files with size and the used badge', async () => {
     mockGetFiles.mockResolvedValue(catalogResponse([imageFile({ used: true })]))
 
-    const { findByText } = await renderWithProviders(<AdminMediaScreen />)
+    const { findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
 
     expect(await findByText('cover.jpg')).toBeTruthy()
     expect(await findByText('2.0 КБ')).toBeTruthy()
     expect(await findByText('используется')).toBeTruthy()
+
+    unmount()
   })
 
   test('shows the empty state when the catalog is empty', async () => {
     mockGetFiles.mockResolvedValue(catalogResponse([]))
 
-    const { findByText } = await renderWithProviders(<AdminMediaScreen />)
+    const { findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
 
     expect(await findByText('Обложек пока нет')).toBeTruthy()
+
+    unmount()
   })
 
   test('uploads a picked image and refreshes the catalog', async () => {
@@ -117,26 +121,32 @@ describe('<AdminMediaScreen>', () => {
       canceled: false,
     })
 
-    const { findByLabelText } = await renderWithProviders(<AdminMediaScreen />)
-    fireEvent.press(await findByLabelText('Загрузить файл'))
+    const { findByLabelText, unmount } = await renderWithProviders(<AdminMediaScreen />)
+    await act(async () => {
+      await fireEvent.press(await findByLabelText('Загрузить файл'))
+    })
 
     await waitFor(() => expect(mockUpload).toHaveBeenCalledTimes(1))
     expect(mockUpload.mock.calls[0][0]).toMatchObject({ name: 'new.jpg' })
+
+    unmount()
   })
 
   test('renders the media header with the upload action', async () => {
     mockGetFiles.mockResolvedValue(catalogResponse([]))
 
-    const { findByLabelText, findByText } = await renderWithProviders(<AdminMediaScreen />)
+    const { findByLabelText, findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
 
     expect(await findByText('Медиа')).toBeTruthy()
     expect(await findByLabelText('Загрузить файл')).toBeTruthy()
+
+    unmount()
   })
 
   test('reloads the catalog when pulled to refresh', async () => {
     mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
 
-    const { findByText } = await renderWithProviders(<AdminMediaScreen />)
+    const { findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
     const refreshControl = findRefreshControl(await findByText('Медиа'))
 
     await act(async () => {
@@ -144,33 +154,43 @@ describe('<AdminMediaScreen>', () => {
     })
 
     await waitFor(() => expect(mockGetFiles).toHaveBeenCalledTimes(2))
+
+    unmount()
   })
 
   test('keeps the header and skeleton visible while the catalog is loading', async () => {
     mockGetFiles.mockReturnValue(new Promise(() => undefined))
 
-    const { findAllByTestId, findByLabelText, findByText } = await renderWithProviders(
+    const { findAllByTestId, findByLabelText, findByText, unmount } = await renderWithProviders(
       <AdminMediaScreen />,
     )
 
     expect(await findByText('Медиа')).toBeTruthy()
     expect(await findByLabelText('Загрузить файл')).toBeTruthy()
     expect((await findAllByTestId('admin-media-tile-skeleton')).length).toBeGreaterThan(0)
+
+    unmount()
   })
 
   test('deletes a file after confirmation', async () => {
     mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
 
-    const { findByLabelText, findByText, getAllByText } = await renderWithProviders(
+    const { findByLabelText, findByText, getAllByText, unmount } = await renderWithProviders(
       <AdminMediaScreen />,
     )
-    fireEvent.press(await findByLabelText('Удалить cover.jpg'))
+    await act(async () => {
+      await fireEvent.press(await findByLabelText('Удалить cover.jpg'))
+    })
 
     expect(await findByText('Удалить обложку?')).toBeTruthy()
     const confirmButtons = getAllByText('Удалить', { includeHiddenElements: true })
-    fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    await act(async () => {
+      await fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    })
 
     await waitFor(() => expect(mockRemoveFile).toHaveBeenCalledWith('cover.jpg'))
+
+    unmount()
   })
 
   test('scans for orphaned files and shows only audio/text as deletable', async () => {
@@ -189,37 +209,53 @@ describe('<AdminMediaScreen>', () => {
       ],
     })
 
-    const { findByText } = await renderWithProviders(<AdminMediaScreen />)
-    fireEvent.press(await findByText('Найти осиротевшие файлы'))
+    const { findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
+    await act(async () => {
+      await fireEvent.press(await findByText('Найти осиротевшие файлы'))
+    })
 
     expect(await findByText('lost.mp3')).toBeTruthy()
     // Only the audio orphan is deletable, so the cleanup button counts 1.
     expect(await findByText('Удалить (1)')).toBeTruthy()
+
+    unmount()
   })
 
   test('treats an m4a orphan as deletable audio, not an image', async () => {
     mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
     mockGetOrphans.mockResolvedValue({ count: 1, orphaned: [orphanFile('lost.m4a')] })
 
-    const { findByText } = await renderWithProviders(<AdminMediaScreen />)
-    fireEvent.press(await findByText('Найти осиротевшие файлы'))
+    const { findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
+    await act(async () => {
+      await fireEvent.press(await findByText('Найти осиротевшие файлы'))
+    })
 
     expect(await findByText('lost.m4a')).toBeTruthy()
     expect(await findByText('Удалить (1)')).toBeTruthy()
+
+    unmount()
   })
 
   test('deletes a single orphaned audio file after confirmation', async () => {
     mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
     mockGetOrphans.mockResolvedValue({ count: 1, orphaned: [orphanFile('lost.mp3')] })
 
-    const { findByLabelText, findByText } = await renderWithProviders(<AdminMediaScreen />)
-    fireEvent.press(await findByText('Найти осиротевшие файлы'))
-    fireEvent.press(await findByLabelText('Удалить lost.mp3'))
+    const { findByLabelText, findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
+    await act(async () => {
+      await fireEvent.press(await findByText('Найти осиротевшие файлы'))
+    })
+    await act(async () => {
+      await fireEvent.press(await findByLabelText('Удалить lost.mp3'))
+    })
 
     expect(await findByText('Удалить файл?')).toBeTruthy()
-    fireEvent.press(await findByText('Удалить файл'))
+    await act(async () => {
+      await fireEvent.press(await findByText('Удалить файл'))
+    })
 
     await waitFor(() => expect(mockRemoveFile).toHaveBeenCalledWith('lost.mp3'))
+
+    unmount()
   })
 
   test('shows the in-use message when an orphan is still referenced (409)', async () => {
@@ -227,10 +263,16 @@ describe('<AdminMediaScreen>', () => {
     mockGetOrphans.mockResolvedValue({ count: 1, orphaned: [orphanFile('used.mp3')] })
     mockRemoveFile.mockRejectedValue({ response: { status: 409 } })
 
-    const { findByLabelText, findByText } = await renderWithProviders(<AdminMediaScreen />)
-    fireEvent.press(await findByText('Найти осиротевшие файлы'))
-    fireEvent.press(await findByLabelText('Удалить used.mp3'))
-    fireEvent.press(await findByText('Удалить файл'))
+    const { findByLabelText, findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
+    await act(async () => {
+      await fireEvent.press(await findByText('Найти осиротевшие файлы'))
+    })
+    await act(async () => {
+      await fireEvent.press(await findByLabelText('Удалить used.mp3'))
+    })
+    await act(async () => {
+      await fireEvent.press(await findByText('Удалить файл'))
+    })
 
     await waitFor(() =>
       expect(mockShowToast).toHaveBeenCalledWith(
@@ -238,5 +280,7 @@ describe('<AdminMediaScreen>', () => {
         'Файл используется в проповедях',
       ),
     )
+
+    unmount()
   })
 })

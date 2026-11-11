@@ -1,5 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { authUserAtom, ROLE_LABELS } from 'entities/auth'
 import { usersMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
@@ -128,14 +128,18 @@ describe('<AdminUserDetailScreen>', () => {
     mockFindOne.mockResolvedValue(createUser())
 
     const { findByText, getByLabelText } = await renderWithProviders(<AdminUserDetailScreen />)
-    fireEvent.press(await findByText(CHANGE_PASSWORD_LABEL))
+    await act(async () => {
+      await fireEvent.press(await findByText(CHANGE_PASSWORD_LABEL))
+    })
 
     expect(await findByText(PASSWORD_DIALOG_TITLE)).toBeTruthy()
-    fireEvent.changeText(
+    await fireEvent.changeText(
       await getByLabelText(NEW_PASSWORD_LABEL, { includeHiddenElements: true }),
       'secret123',
     )
-    fireEvent.press(await findByText(SAVE_LABEL))
+    await act(async () => {
+      await fireEvent.press(await findByText(SAVE_LABEL))
+    })
 
     await waitFor(() =>
       expect(mockChangePassword).toHaveBeenCalledWith('u1', { password: 'secret123' }),
@@ -153,15 +157,19 @@ describe('<AdminUserDetailScreen>', () => {
     const { findByText, getByLabelText } = await renderWithProviders(<AdminUserDetailScreen />, {
       ctx,
     })
-    fireEvent.press(await findByText(CHANGE_PASSWORD_LABEL))
+    await act(async () => {
+      await fireEvent.press(await findByText(CHANGE_PASSWORD_LABEL))
+    })
     await waitFor(() =>
       expect(getByLabelText(NEW_PASSWORD_LABEL, { includeHiddenElements: true })).toBeTruthy(),
     )
-    fireEvent.changeText(
+    await fireEvent.changeText(
       getByLabelText(NEW_PASSWORD_LABEL, { includeHiddenElements: true }),
       'secret123',
     )
-    fireEvent.press(await findByText(SAVE_LABEL))
+    await act(async () => {
+      await fireEvent.press(await findByText(SAVE_LABEL))
+    })
 
     await waitFor(() => expect(mockSignOut).toHaveBeenCalledTimes(1))
   })
@@ -215,11 +223,15 @@ describe('<AdminUserDetailScreen>', () => {
     const { findByLabelText, findByText, getAllByText } = await renderWithProviders(
       <AdminUserDetailScreen />,
     )
-    fireEvent.press(await findByLabelText('Удалить'))
+    await act(async () => {
+      await fireEvent.press(await findByLabelText('Удалить'))
+    })
 
     expect(await findByText('Удалить пользователя?')).toBeTruthy()
     const confirmButtons = getAllByText('Удалить', { includeHiddenElements: true })
-    fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    await act(async () => {
+      await fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    })
 
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith('u1'))
     await waitFor(() => expect(mockBack).toHaveBeenCalled())

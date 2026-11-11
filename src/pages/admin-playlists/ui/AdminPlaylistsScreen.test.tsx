@@ -134,14 +134,22 @@ describe('<AdminPlaylistsScreen>', () => {
   test('reloads the list sorted by title when picked from the sort select', async () => {
     mockFindAll.mockResolvedValue({ count: 0, playlists: [] })
 
-    const { findAllByText, findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
+    const { findAllByText, findByText, unmount } = await renderWithProviders(
+      <AdminPlaylistsScreen />,
+    )
 
-    fireEvent.press(await findByText('По дате'))
-    fireEvent.press((await findAllByText('По названию'))[0])
+    await act(async () => {
+      await fireEvent.press(await findByText('По дате'))
+    })
+    await act(async () => {
+      await fireEvent.press((await findAllByText('По названию'))[0])
+    })
 
     await waitFor(() =>
       expect(mockFindAll).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'title' })),
     )
+
+    unmount()
   })
 
   test('reloads the first page when pulled to refresh', async () => {

@@ -1,4 +1,4 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { featureFlagsMocks, usersMocks } from 'shared/api/generated'
 import { formatRelativeDate } from 'shared/lib/format'
 import { renderWithProviders } from 'shared/mocks'
@@ -143,7 +143,9 @@ describe('<AdminFlagDetailScreen>', () => {
 
     expect(await findByText('Включён')).toBeTruthy()
 
-    fireEvent.press(await findByText('Включено · исключение'))
+    await act(async () => {
+      await fireEvent.press(await findByText('Включено · исключение'))
+    })
 
     expect(await findByText('Не удалось загрузить исключения')).toBeTruthy()
     expect(await findByText('Включён')).toBeTruthy()
@@ -154,7 +156,9 @@ describe('<AdminFlagDetailScreen>', () => {
 
     const { findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
 
-    fireEvent.press(await findByText('Выключено'))
+    await act(async () => {
+      await fireEvent.press(await findByText('Выключено'))
+    })
 
     await waitFor(() =>
       expect(mockSetOverride).toHaveBeenCalledWith('read', 'u1', { value: 'grant' }),
@@ -164,7 +168,9 @@ describe('<AdminFlagDetailScreen>', () => {
   test('toggles a user off by denying when the flag is globally enabled', async () => {
     const { findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
 
-    fireEvent.press(await findByText('Включено'))
+    await act(async () => {
+      await fireEvent.press(await findByText('Включено'))
+    })
 
     await waitFor(() =>
       expect(mockSetOverride).toHaveBeenCalledWith('read', 'u1', { value: 'deny' }),
@@ -176,7 +182,9 @@ describe('<AdminFlagDetailScreen>', () => {
 
     const { findByText } = await renderWithProviders(<AdminFlagDetailScreen />)
 
-    fireEvent.press(await findByText('Выключено · исключение'))
+    await act(async () => {
+      await fireEvent.press(await findByText('Выключено · исключение'))
+    })
 
     await waitFor(() => expect(mockDeleteOverride).toHaveBeenCalledWith('read', 'u1'))
   })
@@ -185,11 +193,15 @@ describe('<AdminFlagDetailScreen>', () => {
     const { findByLabelText, findByText, getAllByText } = await renderWithProviders(
       <AdminFlagDetailScreen />,
     )
-    fireEvent.press(await findByLabelText('Удалить'))
+    await act(async () => {
+      await fireEvent.press(await findByLabelText('Удалить'))
+    })
 
     expect(await findByText('Удалить флаг?')).toBeTruthy()
     const confirmButtons = getAllByText('Удалить', { includeHiddenElements: true })
-    fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    await act(async () => {
+      await fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    })
 
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith('read'))
     await waitFor(() => expect(mockBack).toHaveBeenCalled())

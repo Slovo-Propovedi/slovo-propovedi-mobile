@@ -1,4 +1,4 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { playlistsMocks, sectionsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { SectionForm } from './SectionForm'
@@ -64,9 +64,11 @@ describe('<SectionForm>', () => {
   test('create submits the built dto', async () => {
     const { getByLabelText, getByRole } = await renderWithProviders(<SectionForm mode='create' />)
 
-    fireEvent.changeText(getByLabelText('Название'), '  Новый раздел  ')
+    await fireEvent.changeText(getByLabelText('Название'), '  Новый раздел  ')
     await waitFor(() => expect(getByLabelText('Название').props.value).toBe('  Новый раздел  '))
-    fireEvent.press(getByRole('button', { name: SAVE_LABEL }))
+    await act(async () => {
+      await fireEvent.press(getByRole('button', { name: SAVE_LABEL }))
+    })
 
     await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1))
     expect(mockCreate).toHaveBeenCalledWith(
@@ -77,9 +79,11 @@ describe('<SectionForm>', () => {
   test('create submits when Enter is pressed in a single-line field', async () => {
     const { getByLabelText } = await renderWithProviders(<SectionForm mode='create' />)
 
-    fireEvent.changeText(getByLabelText('Название'), ENTER_TITLE)
+    await fireEvent.changeText(getByLabelText('Название'), ENTER_TITLE)
     await waitFor(() => expect(getByLabelText('Название').props.value).toBe(ENTER_TITLE))
-    fireEvent(getByLabelText('Название'), 'submitEditing')
+    await act(async () => {
+      await fireEvent(getByLabelText('Название'), 'submitEditing')
+    })
 
     await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1))
     expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ title: ENTER_TITLE }))
@@ -125,10 +129,12 @@ describe('<SectionForm>', () => {
       <SectionForm mode='edit' id='section-1' initial={initial} />,
     )
 
-    fireEvent.changeText(getByLabelText('Название'), 'Раздел обновлён')
+    await fireEvent.changeText(getByLabelText('Название'), 'Раздел обновлён')
     await waitFor(() => expect(getByLabelText('Название').props.value).toBe('Раздел обновлён'))
 
-    fireEvent.press(await waitFor(() => getByRole('button', { name: SAVE_LABEL })))
+    await act(async () => {
+      await fireEvent.press(await waitFor(() => getByRole('button', { name: SAVE_LABEL })))
+    })
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1))
     expect(mockUpdate).toHaveBeenCalledWith(
