@@ -57,6 +57,7 @@ Forgejo: статус CI / checks, подпись, публикация <-- ар
 
 - Перед отменой по таймауту диспетчер делает `POST .../actions/runs/<id>/cancel` — «зависший» run не продолжит жечь минуты после fallback.
 - Зеркало: HTTP `401`/`403` на опросе коммита — сразу `42` с подсказкой проверить `CI_GITHUB_TOKEN` (ретраи бессмысленны, dispatch не выполняется); коммит не доехал за `MIRROR_WAIT_MIN` — `42` с подсказкой про push-mirror (sync-on-commit / «Sync now»). Оба случая ведут в локальный fallback, а не в красный job.
+- Перед dispatch каждый dispatcher-job дергает `POST /repos/{owner}/{repo}/push_mirrors-sync` (best-effort, автоматический Forgejo-токен): отказ API → `::warning::`, интервальное поведение зеркала не меняется, dispatch ждёт в пределах `MIRROR_WAIT_MIN`.
 - Dispatch POST ретраится до 3 попыток с паузой 5 с на транспортных ошибках (HTTP `000` — DNS/connect — и `5xx`); `4xx` (auth/validation) не ретраится и сразу даёт `42` (fallback).
 - Общий бюджет поллинга (`RUN_TIMEOUT_MIN`) включает периоды недоступности API: если api.github.com не отвечает весь бюджет (HTTP `000`), диспетчер выходит с `42` (локальный fallback) **без** отмены GitHub-рана — его результат игнорируется.
 - Артефакты GitHub отдаются zip-архивами; диспетчер проверяет непустоту и распаковывает их в целевой каталог (`unzip`). Поэтому `ARTIFACTS="unsigned-apk=unsigned-apk"` даёт в `unsigned-apk/` сам APK, а не вложенный zip.
