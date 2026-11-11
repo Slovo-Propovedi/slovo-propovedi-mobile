@@ -1,7 +1,8 @@
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, View } from 'react-native'
 import { RefreshButton } from 'shared/ui'
+import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
 
 // Шапка списка разделов: заголовок и кнопка создания.
@@ -23,14 +24,11 @@ export const AdminSectionsHeader = ({
         </Text>
       </View>
       <RefreshButton />
-      <TouchableItem
+      <IconButton
         onPress={onCreate}
-        style={[styles.createButton, { backgroundColor: currentTheme.primary }]}
-      >
-        <Text style={[styles.createButtonText, { color: currentTheme.onPrimary }]}>
-          Создать раздел
-        </Text>
-      </TouchableItem>
+        accessibilityLabel='Создать раздел'
+        Icon={<Ionicons size={24} name='add-outline' color={currentTheme.primary} />}
+      />
     </View>
   )
 }

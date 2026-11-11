@@ -12,6 +12,9 @@ const mockCleanup = jest.fn()
 const mockPickDocument = jest.fn()
 const mockShowToast = jest.fn()
 
+const UPLOAD_LABEL = 'Загрузить файл'
+const SCAN_LABEL = 'Найти осиротевшие файлы'
+
 jest.mock('shared/api', () => ({
   filesApi: {
     getFiles: () => ({
@@ -137,7 +140,7 @@ describe('<AdminMediaScreen>', () => {
 
     const { findByLabelText, unmount } = await renderWithProviders(<AdminMediaScreen />)
     await act(async () => {
-      await fireEvent.press(await findByLabelText('Загрузить файл'))
+      await fireEvent.press(await findByLabelText(UPLOAD_LABEL))
     })
 
     await waitFor(() => expect(mockUpload).toHaveBeenCalledTimes(1))
@@ -152,7 +155,7 @@ describe('<AdminMediaScreen>', () => {
     const { findByLabelText, findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
 
     expect(await findByText('Медиа')).toBeTruthy()
-    expect(await findByLabelText('Загрузить файл')).toBeTruthy()
+    expect(await findByLabelText(UPLOAD_LABEL)).toBeTruthy()
 
     unmount()
   })
@@ -180,7 +183,7 @@ describe('<AdminMediaScreen>', () => {
     )
 
     expect(await findByText('Медиа')).toBeTruthy()
-    expect(await findByLabelText('Загрузить файл')).toBeTruthy()
+    expect(await findByLabelText(UPLOAD_LABEL)).toBeTruthy()
     expect((await findAllByTestId('admin-media-tile-skeleton')).length).toBeGreaterThan(0)
 
     unmount()
@@ -223,9 +226,9 @@ describe('<AdminMediaScreen>', () => {
       ],
     })
 
-    const { findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
+    const { findByLabelText, findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
     await act(async () => {
-      await fireEvent.press(await findByText('Найти осиротевшие файлы'))
+      await fireEvent.press(await findByLabelText(SCAN_LABEL))
     })
 
     expect(await findByText('lost.mp3')).toBeTruthy()
@@ -239,9 +242,9 @@ describe('<AdminMediaScreen>', () => {
     mockGetFiles.mockResolvedValue(catalogResponse([imageFile({})]))
     mockGetOrphans.mockResolvedValue({ count: 1, orphaned: [orphanFile('lost.m4a')] })
 
-    const { findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
+    const { findByLabelText, findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
     await act(async () => {
-      await fireEvent.press(await findByText('Найти осиротевшие файлы'))
+      await fireEvent.press(await findByLabelText(SCAN_LABEL))
     })
 
     expect(await findByText('lost.m4a')).toBeTruthy()
@@ -256,7 +259,7 @@ describe('<AdminMediaScreen>', () => {
 
     const { findByLabelText, findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
     await act(async () => {
-      await fireEvent.press(await findByText('Найти осиротевшие файлы'))
+      await fireEvent.press(await findByLabelText(SCAN_LABEL))
     })
     await act(async () => {
       await fireEvent.press(await findByLabelText('Удалить lost.mp3'))
@@ -279,7 +282,7 @@ describe('<AdminMediaScreen>', () => {
 
     const { findByLabelText, findByText, unmount } = await renderWithProviders(<AdminMediaScreen />)
     await act(async () => {
-      await fireEvent.press(await findByText('Найти осиротевшие файлы'))
+      await fireEvent.press(await findByLabelText(SCAN_LABEL))
     })
     await act(async () => {
       await fireEvent.press(await findByLabelText('Удалить used.mp3'))

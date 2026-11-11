@@ -1,9 +1,7 @@
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
-import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { sectionsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { themeModeAtom } from 'shared/ui/theme'
 import { AdminSectionsScreen } from './AdminSectionsScreen'
 
 // MarqueeText renders the title twice (visible + measurer), so a single-Text
@@ -103,9 +101,9 @@ describe('<AdminSectionsScreen>', () => {
   })
 
   test('navigates to the create screen from the header button', async () => {
-    const { findByText } = await renderWithProviders(<AdminSectionsScreen />)
+    const { findByLabelText } = await renderWithProviders(<AdminSectionsScreen />)
 
-    fireEvent.press(await findByText(CREATE_BUTTON_LABEL))
+    fireEvent.press(await findByLabelText(CREATE_BUTTON_LABEL))
 
     expect(mockPush).toHaveBeenCalledWith('/admin/sections/create')
   })
@@ -121,29 +119,9 @@ describe('<AdminSectionsScreen>', () => {
     await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
   })
 
-  test('keeps the create button label white in the light theme', async () => {
-    const { ctx, findByText } = await renderWithProviders(<AdminSectionsScreen />)
-    await findByText(CREATE_BUTTON_LABEL)
+  test('shows the create icon button in the header', async () => {
+    const { findByRole } = await renderWithProviders(<AdminSectionsScreen />)
 
-    await act(async () => {
-      themeModeAtom(ctx, 'light')
-    })
-
-    const label = await findByText(CREATE_BUTTON_LABEL)
-
-    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#fff' })
-  })
-
-  test('uses a black create button label in the dark theme', async () => {
-    const { ctx, findByText } = await renderWithProviders(<AdminSectionsScreen />)
-    await findByText(CREATE_BUTTON_LABEL)
-
-    await act(async () => {
-      themeModeAtom(ctx, 'dark')
-    })
-
-    const label = await findByText(CREATE_BUTTON_LABEL)
-
-    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#000' })
+    expect(await findByRole('button', { name: CREATE_BUTTON_LABEL })).toBeTruthy()
   })
 })

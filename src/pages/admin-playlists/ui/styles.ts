@@ -15,20 +15,6 @@ export const styles = StyleSheet.create({
     gap: INDENTS.low,
     marginBottom: INDENTS.medium,
   },
-  createButton: {
-    alignSelf: 'flex-start',
-    borderRadius: RADIUSES.low,
-    flexGrow: 0,
-    flexShrink: 0,
-    height: MIN_TOUCH_TARGET,
-    justifyContent: 'center',
-    paddingHorizontal: INDENTS.medium,
-    width: 'auto',
-  },
-  createButtonText: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
-  },
   error: {
     fontSize: FONT_SIZES.sm,
     marginBottom: INDENTS.medium,

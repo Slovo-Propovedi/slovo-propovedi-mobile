@@ -5,7 +5,6 @@ import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
 import { AdminSelect, type AdminSelectOption, RefreshButton } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
 import { styles } from './styles'
 
 const SORT_OPTIONS: AdminSelectOption<APITypes.PlaylistControllerFindAllSort>[] = [
@@ -46,14 +45,11 @@ export const AdminPlaylistsHeader = ({
           </Text>
         </View>
         <RefreshButton />
-        <TouchableItem
+        <IconButton
           onPress={onCreate}
-          style={[styles.createButton, { backgroundColor: currentTheme.primary }]}
-        >
-          <Text style={[styles.createButtonText, { color: currentTheme.onPrimary }]}>
-            Создать плейлист
-          </Text>
-        </TouchableItem>
+          accessibilityLabel='Создать плейлист'
+          Icon={<Ionicons size={24} name='add-outline' color={currentTheme.primary} />}
+        />
       </View>
       <TextInput
         value={search}

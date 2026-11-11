@@ -142,7 +142,7 @@
 
 ### Создание проповеди
 
-Отдельного экрана/таба загрузки нет: проповедь создаётся формой `/admin/sermons/create`. Точки входа — кнопка «Загрузить проповедь» в шапке списка проповедей (`AdminSermonsHeader` → `router.push('/admin/sermons/create')`) и быстрое действие «Загрузить проповедь» на главной админки (`AdminQuickActions`). «Назад» из формы возвращается на предыдущий админ-экран (`router.back()` при наличии истории), а при её отсутствии (web-reload, deep link) — `router.replace('/admin/sermons')` (`fallbackRoute` у `useAdminFormHeader`).
+Отдельного экрана/таба загрузки нет: проповедь создаётся формой `/admin/sermons/create`. Точки входа — иконка «Загрузить проповедь» в шапке списка проповедей (`AdminSermonsHeader` → `router.push('/admin/sermons/create')`) и быстрое действие «Загрузить проповедь» на главной админки (`AdminQuickActions`). «Назад» из формы возвращается на предыдущий админ-экран (`router.back()` при наличии истории), а при её отсутствии (web-reload, deep link) — `router.replace('/admin/sermons')` (`fallbackRoute` у `useAdminFormHeader`).
 
 ## Медиа (media)
 

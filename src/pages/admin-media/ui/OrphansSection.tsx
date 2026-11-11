@@ -1,7 +1,9 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
+import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { useOrphanedFiles } from '../lib/useOrphanedFiles'
@@ -9,12 +11,13 @@ import { OrphansBody } from './OrphansBody'
 import { styles } from './styles'
 
 const SCAN_LABEL = 'Найти осиротевшие файлы'
+const ICON_SIZE = 24
 const CONFIRM_TEXT = 'Удалить'
 const FILE_CONFIRM_TEXT = 'Удалить файл'
 const BUSY_TEXT = 'Удаление…'
 const FILE_CONFIRM_TITLE = 'Удалить файл?'
 const SECTION_HINT =
-  'Файлы в хранилище, не привязанные ни к одной проповеди или обложке. Очистка удаляет только аудио и тексты — изображения убирайте вручную из каталога выше.'
+  'Файлы в хранилище, не привязанные ни к одной проповеди или обложке. Кнопка поиска запускает скан осиротевших файлов — тех, что не используются ни проповедями, ни плейлистами. Очистка удаляет только аудио и тексты — изображения убирайте вручную из каталога выше.'
 
 const cleanupLabel = (count: number) => `Удалить (${count})`
 
@@ -39,22 +42,29 @@ export const OrphansSection = () => {
 
   return (
     <View>
-      <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>Осиротевшие файлы</Text>
+      <View style={styles.sectionHeaderRow}>
+        <Text style={[styles.sectionHeaderTitle, { color: currentTheme.text }]}>
+          Осиротевшие файлы
+        </Text>
+        <IconButton
+          disabled={state.isScanning}
+          accessibilityLabel={SCAN_LABEL}
+          onPress={() => void state.scan()}
+          Icon={
+            state.isScanning ? (
+              <ActivityIndicator color={currentTheme.primary} />
+            ) : (
+              <MaterialCommunityIcons
+                size={ICON_SIZE}
+                color={currentTheme.primary}
+                name='magnify-remove-outline'
+              />
+            )
+          }
+        />
+      </View>
       <Text style={[styles.error, { color: currentTheme.textMuted }]}>{SECTION_HINT}</Text>
       <View style={styles.controls}>
-        <TouchableItem
-          disabled={state.isScanning}
-          onPress={() => void state.scan()}
-          style={[styles.secondaryButton, { borderColor: currentTheme.textMuted }]}
-        >
-          {state.isScanning ? (
-            <ActivityIndicator color={currentTheme.primary} />
-          ) : (
-            <Text style={[styles.primaryButtonText, { color: currentTheme.primary }]}>
-              {SCAN_LABEL}
-            </Text>
-          )}
-        </TouchableItem>
         {state.orphanCount > 0 ? (
           <TouchableItem
             onPress={() => setIsConfirmOpen(true)}

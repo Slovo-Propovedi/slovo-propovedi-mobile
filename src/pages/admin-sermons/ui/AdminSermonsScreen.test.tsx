@@ -1,8 +1,6 @@
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
-import { StyleSheet } from 'react-native'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { themeModeAtom } from 'shared/ui/theme'
 import { AdminSermonsScreen } from './AdminSermonsScreen'
 
 // MarqueeText renders the title twice (visible + measurer), so a single-Text
@@ -126,10 +124,10 @@ describe('<AdminSermonsScreen>', () => {
   test('navigates to the create screen from the header button', async () => {
     mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
 
-    const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
+    const { findByLabelText } = await renderWithProviders(<AdminSermonsScreen />)
 
     await act(async () => {
-      await fireEvent.press(await findByText(CREATE_BUTTON_LABEL))
+      await fireEvent.press(await findByLabelText(CREATE_BUTTON_LABEL))
     })
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/admin/sermons/create'))
@@ -221,33 +219,11 @@ describe('<AdminSermonsScreen>', () => {
     unmount()
   })
 
-  test('keeps the create button label white in the light theme', async () => {
+  test('shows the upload icon button in the header', async () => {
     mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
 
-    const { ctx, findByText } = await renderWithProviders(<AdminSermonsScreen />)
-    await findByText(CREATE_BUTTON_LABEL)
+    const { findByRole } = await renderWithProviders(<AdminSermonsScreen />)
 
-    await act(async () => {
-      themeModeAtom(ctx, 'light')
-    })
-
-    const label = await findByText(CREATE_BUTTON_LABEL)
-
-    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#fff' })
-  })
-
-  test('uses a black create button label in the dark theme', async () => {
-    mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
-
-    const { ctx, findByText } = await renderWithProviders(<AdminSermonsScreen />)
-    await findByText(CREATE_BUTTON_LABEL)
-
-    await act(async () => {
-      themeModeAtom(ctx, 'dark')
-    })
-
-    const label = await findByText(CREATE_BUTTON_LABEL)
-
-    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#000' })
+    expect(await findByRole('button', { name: CREATE_BUTTON_LABEL })).toBeTruthy()
   })
 })

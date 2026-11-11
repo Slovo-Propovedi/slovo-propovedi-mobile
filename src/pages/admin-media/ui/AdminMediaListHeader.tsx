@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { Text, View } from 'react-native'
 import { useTheme } from 'shared/ui/theme'
 import { AdminMediaHeader } from './AdminMediaHeader'
 import { OrphansSection } from './OrphansSection'
@@ -25,6 +25,7 @@ export const AdminMediaListHeader = ({
         </View>
       ) : null}
       <OrphansSection />
+      <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>Обложки</Text>
     </View>
   )
 }

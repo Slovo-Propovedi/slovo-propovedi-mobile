@@ -1,9 +1,7 @@
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
-import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { playlistsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { themeModeAtom } from 'shared/ui/theme'
 import { AdminPlaylistsScreen } from './AdminPlaylistsScreen'
 
 // MarqueeText renders the title twice (visible + measurer), so a single-Text
@@ -110,9 +108,9 @@ describe('<AdminPlaylistsScreen>', () => {
   test('navigates to the create screen from the header button', async () => {
     mockFindAll.mockResolvedValue(playlistsMocks.getPlaylistControllerFindAllResponseMock())
 
-    const { findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
+    const { findByLabelText } = await renderWithProviders(<AdminPlaylistsScreen />)
 
-    fireEvent.press(await findByText(CREATE_BUTTON_LABEL))
+    fireEvent.press(await findByLabelText(CREATE_BUTTON_LABEL))
 
     expect(mockPush).toHaveBeenCalledWith('/admin/playlists/create')
   })
@@ -168,33 +166,11 @@ describe('<AdminPlaylistsScreen>', () => {
     await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
   })
 
-  test('keeps the create button label white in the light theme', async () => {
+  test('shows the create icon button in the header', async () => {
     mockFindAll.mockResolvedValue({ count: 0, playlists: [] })
 
-    const { ctx, findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
-    await findByText(CREATE_BUTTON_LABEL)
+    const { findByRole } = await renderWithProviders(<AdminPlaylistsScreen />)
 
-    await act(async () => {
-      themeModeAtom(ctx, 'light')
-    })
-
-    const label = await findByText(CREATE_BUTTON_LABEL)
-
-    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#fff' })
-  })
-
-  test('uses a black create button label in the dark theme', async () => {
-    mockFindAll.mockResolvedValue({ count: 0, playlists: [] })
-
-    const { ctx, findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
-    await findByText(CREATE_BUTTON_LABEL)
-
-    await act(async () => {
-      themeModeAtom(ctx, 'dark')
-    })
-
-    const label = await findByText(CREATE_BUTTON_LABEL)
-
-    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ color: '#000' })
+    expect(await findByRole('button', { name: CREATE_BUTTON_LABEL })).toBeTruthy()
   })
 })
