@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
-import { ScrollView, Text, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { authUserAtom } from 'entities/auth'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, createRefreshControl, PullToRefresh } from 'shared/ui'
@@ -8,6 +8,7 @@ import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminStats } from '../lib/useAdminStats'
 import { AdminHomeHeader } from './AdminHomeHeader'
+import { AdminMoreActions } from './AdminMoreActions'
 import { AdminQuickActions } from './AdminQuickActions'
 import { AdminStatCard } from './AdminStatCard'
 import { styles } from './styles'
@@ -69,10 +70,8 @@ export const AdminHomeScreen = () => {
               />
             </View>
 
-            <Text style={[styles.sectionTitle, { color: currentTheme.textMuted }]}>
-              Быстрые действия
-            </Text>
             <AdminQuickActions />
+            <AdminMoreActions user={user} />
           </ScrollView>
         </PullToRefresh>
       </View>

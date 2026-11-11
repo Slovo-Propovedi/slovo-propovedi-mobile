@@ -9,7 +9,7 @@
 
 **Статус:** готов
 
-Пользователь — админ-аккаунт системы. Роли (`APITypes.UserRole`): `admin` — полный доступ (включая домен users), `moderator` — контент без users, `user` — в панель не входит. Домен `/users/*` доступен **только роли admin**: таб «Пользователи» скрыт для не-admin (`app/admin/(tabs)/_layout.tsx`), а каждый экран вызывается через `useRequireAdminRole()` (редирект не-admin на `/admin`). Порт Svelte-экранов `Users/UserDetail/UserCreate/UserEdit` + общей `UserForm`.
+Пользователь — админ-аккаунт системы. Роли (`APITypes.UserRole`): `admin` — полный доступ (включая домен users), `moderator` — контент без users, `user` — в панель не входит. Домен `/users/*` доступен **только роли admin**: строка «Пользователи» на главной админки видна только admin, а каждый экран вызывается через `useRequireAdminRole()` (редирект не-admin на `/admin`). Порт Svelte-экранов `Users/UserDetail/UserCreate/UserEdit` + общей `UserForm`.
 
 ## Список
 

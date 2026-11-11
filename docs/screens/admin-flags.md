@@ -9,7 +9,7 @@
 
 **Статус:** готов
 
-Управление фича-флагами приложения (см. [features/feature-flags.md](../features/feature-flags.md)). Доступно **только роли admin** (эндпоинты `/feature-flags` — под админ-токеном): таб «Флаги» скрыт для не-admin (`app/admin/(tabs)/_layout.tsx`), а каждый экран вызывается через `useRequireAdminRole()`. Экраны работают с **generated-типами** (`APITypes.FeatureFlag`) напрямую, как остальная админка.
+Управление фича-флагами приложения (см. [features/feature-flags.md](../features/feature-flags.md)). Доступно **только роли admin** (эндпоинты `/feature-flags` — под админ-токеном): строка «Флаги» на главной админки видна только admin, а каждый экран вызывается через `useRequireAdminRole()`. Экраны работают с **generated-типами** (`APITypes.FeatureFlag`) напрямую, как остальная админка.
 
 ## Список
 

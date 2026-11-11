@@ -1,6 +1,6 @@
 # Интерфейс администратора (admin)
 
-Зона `/admin` — отдельный стек внутри приложения (см. [navigation.md](./navigation.md) и [`../architecture.md`](../architecture.md)). Доступ — после входа в `/admin/login`; аутентификация — `entities/auth` (JWT в `expo-secure-store`). После успешного входа `signIn` сразу рефетчит фича-флаги (см. [feature-flags.md](./feature-flags.md)), поэтому гейтед-табы открываются по персональному срезу без возврата в foreground. Табы: «Главная», «Разделы», «Плейлисты», «Проповеди», «Медиа», «Флаги» (только admin), «Пользователи» (только admin).
+Зона `/admin` — отдельный стек внутри приложения (см. [navigation.md](./navigation.md) и [`../architecture.md`](../architecture.md)). Доступ — после входа в `/admin/login`; аутентификация — `entities/auth` (JWT в `expo-secure-store`). После успешного входа `signIn` сразу рефетчит фича-флаги (см. [feature-flags.md](./feature-flags.md)), поэтому гейтед-табы открываются по персональному срезу без возврата в foreground. Табы: «Главная», «Разделы», «Плейлисты», «Проповеди»; «Медиа», «Флаги» и «Пользователи» скрыты из таб-бара (`href: null`) и открываются строками блока «Дополнительно» на главной.
 
 Экраны админки оперируют **generated-типами** (`APITypes.*` из `shared/api`), а не доменными `SectionData`/`PlaylistData`: CRUD-формы работают с сущностями API напрямую.
 
@@ -164,7 +164,7 @@
 
 ## Пользователи (users)
 
-Домен админ-аккаунтов. Экраны: [screens/admin-users.md](../screens/admin-users.md). Доступен **только роли admin** (таб скрывается для не-admin, экраны защищены `useRequireAdminRole`).
+Домен админ-аккаунтов. Экраны: [screens/admin-users.md](../screens/admin-users.md). Доступен **только роли admin** (строка «Пользователи» на главной видна только admin, экраны защищены `useRequireAdminRole`).
 
 - **Список:** `GET /users?page&limit=20` (`AllUsersResponse { users, count }`, офсетная пагинация; следующая страница — автоматически по `onEndReached`); серверного `search` нет — клиентский фильтр по `name`/`email`/`username` (дебаунс 300мс) по загруженным страницам.
 - **Деталь:** `GET /users/{id}`; удаление `DELETE /users/{id}` (кнопка скрыта для собственного аккаунта, `id === authUser.id`); смена пароля `PATCH /users/{id}/password` (`{ password }`).
@@ -172,7 +172,7 @@
 
 ## Фича-флаги (feature-flags)
 
-Управление фича-флагами приложения. Экраны: [screens/admin-flags.md](../screens/admin-flags.md). Доступно **только роли admin** (эндпоинты `/feature-flags` — под админ-токеном): таб «Флаги» скрыт для не-admin, экраны защищены `useRequireAdminRole`. Клиентский гейтинг табов — в [feature-flags.md](./feature-flags.md).
+Управление фича-флагами приложения. Экраны: [screens/admin-flags.md](../screens/admin-flags.md). Доступно **только роли admin** (эндпоинты `/feature-flags` — под админ-токеном): строка «Флаги» на главной видна только admin, экраны защищены `useRequireAdminRole`. Клиентский гейтинг табов — в [feature-flags.md](./feature-flags.md).
 
 - **Список:** `GET /feature-flags` (только admin) — простой `FlatList` без пагинации/поиска (флагов мало); название, ключ, бейдж глобального состояния.
 - **Форма:** `POST /feature-flags` (тело `{ key, title }`; флаг создаётся выключенным, при включённом тумблере форма досылает `PATCH { enabled: true }`), `PATCH /feature-flags/{id}` (только изменённые title/enabled; ключ неизменяем), `DELETE /feature-flags/{id}`.
@@ -184,7 +184,7 @@
 
 ## Реализованные / нереализованные разделы
 
-Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)), «Проповеди» ([admin-sermons.md](../screens/admin-sermons.md)), «Медиа» ([admin-media.md](../screens/admin-media.md)), «Флаги» ([admin-flags.md](../screens/admin-flags.md)) и «Пользователи» ([admin-users.md](../screens/admin-users.md)) — последние два только для роли admin, Создание проповеди доступно из шапки списка проповедей и быстрых действий главной (см. «Создание проповеди»).
+Готовы: «Главная» ([admin-home.md](../screens/admin-home.md)), «Разделы» ([admin-sections.md](../screens/admin-sections.md)), «Плейлисты» ([admin-playlists.md](../screens/admin-playlists.md)), «Проповеди» ([admin-sermons.md](../screens/admin-sermons.md)), «Медиа» ([admin-media.md](../screens/admin-media.md)), «Флаги» ([admin-flags.md](../screens/admin-flags.md)) и «Пользователи» ([admin-users.md](../screens/admin-users.md)) — «Медиа», «Флаги» и «Пользователи» открываются строками главной админки, последние две доступны только роли admin, Создание проповеди доступно из шапки списка проповедей и быстрых действий главной (см. «Создание проповеди»).
 
 ## Связанные документы
 
