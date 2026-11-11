@@ -2,6 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { withTiming } from 'react-native-reanimated'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/@x/barMorph'
+import { getSharedTestCtx } from 'shared/mocks'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { BAR_MORPH_DURATION_MS, setBarCollapsed } from 'shared/ui/layout'
 import { resetBarMorphDriver } from './barMorphDriver'
@@ -17,6 +18,9 @@ const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
 describe('useBarMorphProgress', () => {
   beforeEach(() => {
     resetBarMorphDriver()
+    // Tests that omit a local ctx share one context, so the collapsed bar a
+    // previous test left behind would make the next setBarCollapsed a no-op.
+    setBarCollapsed(getSharedTestCtx(), false)
     mockedWithTiming.mockClear()
   })
 
