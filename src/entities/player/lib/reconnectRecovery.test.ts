@@ -169,6 +169,7 @@ describe('reconnectRecovery', () => {
     })
 
     test('active at edge + settled-failed afterwards re-enqueues the download', async () => {
+      mockConsole('error')
       activeCacheUrlAtom(ctx, AUDIO.audioUrl)
       currentAudioAtom(ctx, AUDIO)
       isOnlineAtom(ctx, false)
@@ -185,6 +186,7 @@ describe('reconnectRecovery', () => {
     })
 
     test('active at edge + settled and now cached does not re-enqueue', async () => {
+      mockConsole('error')
       jest
         .mocked(audioCacheService.isCached)
         .mockResolvedValueOnce(false)
@@ -204,6 +206,7 @@ describe('reconnectRecovery', () => {
     })
 
     test('track switched during the settle wait does not re-enqueue', async () => {
+      mockConsole('error')
       activeCacheUrlAtom(ctx, AUDIO.audioUrl)
       currentAudioAtom(ctx, AUDIO)
       isOnlineAtom(ctx, false)
@@ -220,6 +223,7 @@ describe('reconnectRecovery', () => {
     })
 
     test('still queued at settle timeout warns and does not re-enqueue', async () => {
+      mockConsole('error')
       const { warn } = mockConsole('warn')
       cacheQueueAtom(ctx, { [AUDIO.audioUrl]: { enqueuedAt: Date.now(), source: 'auto' } })
       currentAudioAtom(ctx, AUDIO)
@@ -239,6 +243,7 @@ describe('reconnectRecovery', () => {
     })
 
     test('isCached rejection during the settle re-check is caught and logged', async () => {
+      mockConsole('error')
       const { warn } = mockConsole('warn')
       jest
         .mocked(audioCacheService.isCached)
