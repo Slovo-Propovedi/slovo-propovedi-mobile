@@ -7,8 +7,7 @@ import { getErrorName } from './errorName'
 import { type WebMediaSession } from './mediaSession'
 import { markInterruptedWhilePlaying, markUserPause } from './pauseIntent'
 import { type WebPlayerState } from './playerState'
-
-const RESUME_SEEK_REASSERT_TOLERANCE_MS = 1000
+import { type ResumeSeekReassert } from './resumeSeekReassert'
 
 export const reportPlayError = (error: unknown) => {
   // A play() aborted by a superseding load/seek is benign (mirrors
@@ -31,6 +30,7 @@ interface WebAudioHandlerDeps {
   noteLivePosition: (ms: number) => void
   onTrackEnd?: (() => void) | undefined
   restoreInterruptedPosition: (audio: HTMLAudioElement) => boolean
+  resumeSeekReassert: ResumeSeekReassert
   startStatusTracker: () => void
   state: WebPlayerState
   stopStatusTracker: () => void
@@ -38,7 +38,6 @@ interface WebAudioHandlerDeps {
 
 export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) => {
   let initialPositionApplied = false
-  let initialSeekReasserted = false
 
   return attachWebAudioEvents(deps.audio, {
     onDuration: (durationMs: number) => writeWebDuration(deps.state, durationMs),
@@ -87,19 +86,7 @@ export const attachWebAudioHandlers = (deps: WebAudioHandlerDeps): (() => void) 
     onPlaying: () => {
       deps.state.setIsBuffering(false)
       void setIsStalledOfflineAction(ctx, false)
-      // WebKit can drop the loadedmetadata seek for streamed sources: re-assert
-      // the stored position once on the first playing edge — one-shot so later
-      // user seeks are never fought. Exception: a user seek landing before this
-      // first playing edge (initial buffering window) can be overridden once —
-      // bounded and rare.
-      if (deps.initialPositionMs > 0 && !initialSeekReasserted) {
-        initialSeekReasserted = true
-        const positionMs = deps.audio.currentTime * 1000
-        if (Math.abs(positionMs - deps.initialPositionMs) > RESUME_SEEK_REASSERT_TOLERANCE_MS) {
-          deps.audio.currentTime = deps.initialPositionMs / 1000
-          deps.state.setPosition(deps.initialPositionMs)
-        }
-      }
+      deps.resumeSeekReassert(deps.audio)
     },
     onPosition: (positionMs: number) => {
       deps.noteLivePosition(positionMs)

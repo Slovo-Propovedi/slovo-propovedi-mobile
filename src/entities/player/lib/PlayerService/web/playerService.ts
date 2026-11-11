@@ -4,14 +4,12 @@ import { type PlaybackRate, setPlaybackRateAction } from '../../../playback-rate
 import { type LockScreenMetadata, type PlaybackStatus } from '../types'
 import { attachWebAudioHandlers } from './audioHandlers'
 import { resetWebDuration } from './durationWriter'
-import { createInterruptionResumeController } from './interruptionResumeController'
-import { createWebMediaSession } from './mediaSession'
+import { createPlayerControllers } from './playerControllers'
 import { createPubSub } from './playerPubSub'
 import { createWebPlayerState } from './playerState'
-import { createStatusTracker } from './playerStatusTracker'
 import { recoverStreamAfterReconnect as heal, resumeWebAfterPause } from './reconnectHeal'
+import { createResumeSeekReassert, type ResumeSeekReassert } from './resumeSeekReassert'
 import { createTrackElement } from './trackElement'
-import { createTransport } from './transport'
 import { createVolumeControl } from './volumeControl'
 
 export class WebPlayerService {
@@ -27,9 +25,9 @@ export class WebPlayerService {
 
   public setVolume = async (volume: number): Promise<void> => this.volumeControl.apply(volume)
 
-  public play = (): Promise<void> => this.transport.play()
+  public play = (): Promise<void> => this.controllers.transport.play()
 
-  public pause = (): Promise<void> => this.transport.pause()
+  public pause = (): Promise<void> => this.controllers.transport.pause()
 
   public resumeAfterPause = (audioUrl: string): Promise<void> =>
     resumeWebAfterPause(this, this.audioInstance, audioUrl)
@@ -37,10 +35,11 @@ export class WebPlayerService {
   public recoverStreamAfterReconnect = (audioUrl: string): Promise<void> =>
     this.audioInstance ? heal(this, audioUrl) : Promise.resolve()
 
-  public reconcileOnForeground = async (): Promise<void> => this.mediaSession.reassertMetadata()
+  public reconcileOnForeground = async (): Promise<void> =>
+    this.controllers.mediaSession.reassertMetadata()
 
   public setLockScreenMetadata = (metadata: LockScreenMetadata): void =>
-    this.mediaSession.setMetadata(metadata)
+    this.controllers.mediaSession.setMetadata(metadata)
 
   public reassertLockScreenMetadata = (metadata: LockScreenMetadata): void =>
     this.setLockScreenMetadata(metadata)
@@ -48,22 +47,28 @@ export class WebPlayerService {
   public setPlaybackRate = async (rate: PlaybackRate): Promise<void> => {
     this.playbackRate = rate
     if (this.audioInstance) this.audioInstance.playbackRate = rate
-    this.mediaSession.updatePositionState()
+    this.controllers.mediaSession.updatePositionState()
     void setPlaybackRateAction(ctx, rate)
   }
 
-  public stop = (): Promise<void> => this.transport.stop()
+  public stop = (): Promise<void> => this.controllers.transport.stop()
 
-  public seekTo = (newPositionMs: number): Promise<void> => this.transport.seekTo(newPositionMs)
+  public seekTo = (newPositionMs: number): Promise<void> =>
+    this.controllers.transport.seekTo(newPositionMs)
 
   public replaceAudio = async (audioUrl: string, initialPositionMs = 0) =>
     this.loadAudio(audioUrl, initialPositionMs)
 
   public loadAudio = async (audioUrl: string, initialPositionMs = 0) => {
     this.state.setIsBuffering(true)
-    this.statusTracker.stop()
+    this.controllers.statusTracker.stop()
     resetWebDuration(this.state)
-    this.resume.reset(initialPositionMs)
+    this.controllers.resume.reset(initialPositionMs)
+    this.resumeReassert = createResumeSeekReassert(
+      initialPositionMs,
+      this.state,
+      this.controllers.mediaSession,
+    )
 
     if (this.audioInstance) {
       this.detachAudioEvents?.()
@@ -73,58 +78,42 @@ export class WebPlayerService {
     this.audioInstance = createTrackElement(audioUrl, this.playbackRate, this.volumeControl.get())
     this.detachAudioEvents = attachWebAudioHandlers({
       audio: this.audioInstance,
-      flushProgressAtCurrentTime: this.resumeController.flushProgressAtCurrentTime,
+      flushProgressAtCurrentTime: this.controllers.resumeController.flushProgressAtCurrentTime,
       initialPositionMs,
       isCurrentAudio: current => current === this.audioInstance,
-      mediaSession: this.mediaSession,
-      noteLivePosition: this.resume.noteLivePosition,
-      restoreInterruptedPosition: this.resume.maybeRestore,
-      startStatusTracker: this.statusTracker.start,
+      mediaSession: this.controllers.mediaSession,
+      noteLivePosition: this.controllers.resume.noteLivePosition,
+      restoreInterruptedPosition: this.controllers.resume.maybeRestore,
+      resumeSeekReassert: this.resumeReassert,
+      startStatusTracker: this.controllers.statusTracker.start,
       state: this.state,
-      stopStatusTracker: this.statusTracker.stop,
+      stopStatusTracker: this.controllers.statusTracker.stop,
     })
     return null
   }
 
   public unload = async () => {
-    this.resumeController.flushProgressAtCurrentTime()
-    this.statusTracker.stop()
+    this.controllers.resumeController.flushProgressAtCurrentTime()
+    this.controllers.statusTracker.stop()
     this.detachAudioEvents?.()
     this.detachAudioEvents = null
     this.audioInstance?.pause()
     this.audioInstance = null
     registerWebAudioElement(null)
-    this.resume.reset(0)
-    this.mediaSession.clear()
+    this.controllers.resume.reset(0)
+    this.controllers.mediaSession.clear()
   }
 
+  private resumeReassert: ResumeSeekReassert = () => {}
   private audioInstance: HTMLAudioElement | null = null
   private detachAudioEvents: (() => void) | null = null
   private playbackRate: PlaybackRate = 1
   private volumeControl = createVolumeControl(() => this.audioInstance)
   private pubsub = createPubSub()
   private state = createWebPlayerState(this.pubsub)
-  private statusTracker = createStatusTracker(() => this.audioInstance, this.state)
-  private mediaSession = createWebMediaSession(
-    {
-      pause: () => this.transport.pause(),
-      play: () => this.transport.play(),
-      seekTo: positionMs => this.transport.seekTo(positionMs),
-    },
-    () => this.audioInstance,
-  )
-  private resumeController = createInterruptionResumeController({
+  private controllers = createPlayerControllers({
     getAudio: () => this.audioInstance,
-    mediaSession: this.mediaSession,
+    getReconcile: () => this.resumeReassert,
     state: this.state,
-  })
-  private resume = this.resumeController.resume
-  private transport = createTransport({
-    flushProgressAtCurrentTime: this.resumeController.flushProgressAtCurrentTime,
-    getAudio: () => this.audioInstance,
-    mediaSession: this.mediaSession,
-    resume: this.resumeController.resume,
-    state: this.state,
-    statusTracker: this.statusTracker,
   })
 }
