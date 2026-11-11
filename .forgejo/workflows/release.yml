@@ -1195,9 +1195,14 @@ jobs:
           # The URL carries the owner as its only path segment; Forgejo's API
           # lives OUTSIDE the owner path, so derive origin and owner from the
           # single URL — a host or owner rename is a variable change.
-          CODEBERG_ORIGIN="${CODEBERG_ORIGIN%/*}"
+          CODEBERG_ORIGIN="${MIRROR_CODEBERG_URL%/*}"
           CODEBERG_ORG="${MIRROR_CODEBERG_URL%/}"
           CODEBERG_ORG="${CODEBERG_ORG##*/}"
+          [ -n "$CODEBERG_ORIGIN" ] || {
+            echo "::warning::CODEBERG_ORIGIN empty — MIRROR_CODEBERG_URL='${MIRROR_CODEBERG_URL:-}'"
+            summary_row "- Codeberg mirror: ⚠️ skipped (cannot derive API origin)"
+            exit 0
+          }
           API_BASE="$CODEBERG_ORIGIN/api/v1/repos/$CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
@@ -1275,7 +1280,7 @@ jobs:
             echo "Created Codeberg release for $TAG (id: $RELEASE_ID)"
             summary_row "- Codeberg mirror: ✅ release created"
           else
-            echo "::warning::Codeberg mirror failed: unexpected status $RELEASE_STATUS for releases/tags/$TAG"
+            echo "::warning::Codeberg mirror failed: unexpected status $RELEASE_STATUS for $API_BASE/releases/tags/$TAG"
             summary_row "- Codeberg mirror: ⚠️ failed (status $RELEASE_STATUS)"
             exit 0
           fi
@@ -1348,9 +1353,14 @@ jobs:
           # The URL carries the owner as its only path segment; Forgejo's API
           # lives OUTSIDE the owner path, so derive origin and owner from the
           # single URL — a host or owner rename is a variable change.
-          CODEBERG_ORIGIN="${CODEBERG_ORIGIN%/*}"
+          CODEBERG_ORIGIN="${MIRROR_CODEBERG_URL%/*}"
           CODEBERG_ORG="${MIRROR_CODEBERG_URL%/}"
           CODEBERG_ORG="${CODEBERG_ORG##*/}"
+          [ -n "$CODEBERG_ORIGIN" ] || {
+            echo "::warning::CODEBERG_ORIGIN empty — MIRROR_CODEBERG_URL='${MIRROR_CODEBERG_URL:-}'"
+            summary_row "- Codeberg prune: ⚠️ skipped (cannot derive API origin)"
+            exit 0
+          }
           API_BASE="$CODEBERG_ORIGIN/api/v1/repos/$CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
@@ -1361,7 +1371,7 @@ jobs:
             "$API_BASE/releases?limit=50" || true)
 
           if [ "$RELEASES_STATUS" != "200" ]; then
-            echo "::warning::Codeberg prune failed: releases list returned status $RELEASES_STATUS"
+            echo "::warning::Codeberg prune failed: releases list returned status $RELEASES_STATUS from $API_BASE/releases?limit=50"
             summary_row "- Codeberg prune: ⚠️ failed (releases status $RELEASES_STATUS)"
             exit 0
           fi
