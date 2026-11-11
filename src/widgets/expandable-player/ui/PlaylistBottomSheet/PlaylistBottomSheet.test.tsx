@@ -192,6 +192,9 @@ describe('<PlaylistBottomSheet>', () => {
   // hanging the next test's act(). Keep setImmediate real.
   beforeEach(() => {
     jest.clearAllMocks()
+    // Fake timers for the whole file: every test either drives the nudge / retry
+    // delays or mounts a component that schedules a reveal ceiling timer.
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
     mockMountIndex = undefined
     mockOnChange = undefined
     mockOnScrollToIndexFailed = undefined
@@ -205,6 +208,7 @@ describe('<PlaylistBottomSheet>', () => {
   })
 
   afterEach(() => {
+    jest.clearAllTimers()
     jest.useRealTimers()
   })
 
@@ -224,8 +228,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -241,8 +243,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -263,8 +263,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(1)
     })
@@ -279,8 +277,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s9'))
 
     const { getByTestId } = await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -295,8 +291,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s1'))
 
     const { getByTestId } = await renderSheet(ctx, makePlaylist([]))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -312,8 +306,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -335,8 +327,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
       mockOnChange?.(1)
@@ -357,8 +347,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -442,8 +430,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -475,8 +461,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -510,8 +494,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -564,8 +546,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -592,8 +572,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -633,8 +611,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     const { unmount } = await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -652,8 +628,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s6'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -668,8 +642,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s6'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -716,8 +688,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s6'))
 
     await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -737,8 +707,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s6'))
 
     const { getByTestId } = await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -753,8 +721,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s6'))
 
     const { getByTestId, queryByTestId } = await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -784,8 +750,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s3'))
 
     const { queryByTestId } = await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -803,8 +767,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     const { getByTestId } = await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -820,8 +782,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     const { getByTestId } = await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
@@ -856,8 +816,6 @@ describe('<PlaylistBottomSheet>', () => {
     currentAudioAtom(ctx, makeAudio('s10'))
 
     const { getByTestId, queryByTestId } = await renderSheet(ctx, makePlaylist(sermons))
-    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
-
     await act(async () => {
       mockOnChange?.(0)
     })
