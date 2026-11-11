@@ -6,6 +6,8 @@ import {
 
 const RESUME_POSITION_MS = 120000
 const RESUME_POSITION_SECONDS = RESUME_POSITION_MS / 1000
+const EARLY_USER_SEEK_SECONDS = 30
+const LATE_USER_SEEK_SECONDS = 150
 
 interface AudioStub {
   currentTime: number

@@ -15,18 +15,19 @@ class LockScreenControls {
 
     this.iconFollowUp.track(player, metadata)
 
-    // Same player (track switch): update metadata in place — keeps the existing
-    // MediaSession/notification alive without a teardown race.
-    // New player (first play / after unload): full activation required.
-    const isSamePlayer = player === this.activePlayer
-    const apply = () => {
-      if (isSamePlayer) this.updateMetadata(player, metadata)
-      else this.activateWhenForeground(player, metadata)
+    // Same player (track switch): apply in place immediately — background auto-advance
+    // freezes JS timers (locked screen), so a deferred update would never land (#149).
+    if (player === this.activePlayer) {
+      this.updateMetadata(player, metadata)
+      return
     }
 
-    if (!isSamePlayer) this.activePlayer = player
-
-    loadedRetryScheduler.schedule(() => player.isLoaded, apply)
+    // New player (first play / after unload): full activation required.
+    this.activePlayer = player
+    loadedRetryScheduler.schedule(
+      () => player.isLoaded,
+      () => this.activateWhenForeground(player, metadata),
+    )
   }
 
   // Foreground re-assertion: ALWAYS takes the full activation path

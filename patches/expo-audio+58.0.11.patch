@@ -63,6 +63,21 @@ index bf3f9c5..3bb7f26 100644
        )
      )
      sendStatusUpdate()
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
+index 53c36f7..23b4202 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
+@@ -490,7 +490,9 @@ class AudioControlsService : MediaSessionService() {
+     }
+     currentMetadata = metadata
+     sessionMetadataPlayer?.updateMetadata(metadata)
+-    updateArtwork(metadata)
++    // PATCH(patch-package): re-post so the notification snapshot (title/artist/progress) reflects the new metadata; a changed artwork URL still posts again once its bitmap loads.
++    updateArtwork(metadata, postUpdate = false)
++    postOrStartForegroundNotification(startInForeground = false)
+   }
+ 
+   private fun clearSessionInternal() {
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
 index 2280c80..d32facf 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
