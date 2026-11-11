@@ -157,12 +157,22 @@ describe('AudioCacheService', () => {
 
       test('does not re-invoke download for duplicate URL', async () => {
         mockFileState.exists = false
-        ;(File.downloadFileAsync as jest.Mock).mockReturnValue(new Promise(() => {}))
+        let resolveDownload!: (value: unknown) => void
+        ;(File.downloadFileAsync as jest.Mock).mockReturnValue(
+          new Promise(r => {
+            resolveDownload = r
+          }),
+        )
 
-        audioCacheService.cacheAudio(EXAMPLE_URL)
+        const first = audioCacheService.cacheAudio(EXAMPLE_URL)
         audioCacheService.cacheAudio(EXAMPLE_URL)
 
         expect(File.downloadFileAsync).toHaveBeenCalledTimes(1)
+
+        // Settle the shared download: a never-resolving promise would leave the
+        // stall-guard interval from runDownloadAttempt alive past the suite.
+        resolveDownload({ uri: 'file://dl.mp3' })
+        await expect(first).resolves.toContain('file://cache/')
       })
 
       test('allows new download after previous completes', async () => {
