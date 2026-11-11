@@ -73,6 +73,23 @@ describe('createResumeSeekReassert', () => {
     expect(state.setPosition).toHaveBeenCalledTimes(1)
   })
 
+  test('overrides a user seek landing before the one-shot is consumed, then stands down', () => {
+    const { mediaSession, reassert, state } = createReassert(RESUME_POSITION_MS)
+    const audio = createAudio(0, PLAYABLE_READY_STATE)
+
+    audio.currentTime = EARLY_USER_SEEK_SECONDS
+    reassertOn(reassert, audio)
+
+    expect(audio.currentTime).toBe(RESUME_POSITION_SECONDS)
+
+    audio.currentTime = LATE_USER_SEEK_SECONDS
+    reassertOn(reassert, audio)
+
+    expect(audio.currentTime).toBe(LATE_USER_SEEK_SECONDS)
+    expect(state.setPosition).toHaveBeenCalledTimes(1)
+    expect(mediaSession.updatePositionState).toHaveBeenCalledTimes(1)
+  })
+
   test('never seeks without a stored resume position', () => {
     const { mediaSession, reassert, state } = createReassert(0)
     const audio = createAudio(5, PLAYABLE_READY_STATE)
