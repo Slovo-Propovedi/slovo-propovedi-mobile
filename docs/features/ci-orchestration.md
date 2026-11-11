@@ -1,6 +1,6 @@
 # CI: Forgejo оркестрирует, GitHub-hosted исполняет
 
-**Статус:** пилот в `slovo-propovedi-mobile`; распространение на остальные репозитории — после живой проверки (см. [`debt.md`](../debt.md) → «CI: Forgejo → GitHub»).
+**Статус:** пилот отработан в `slovo-propovedi-mobile`; паттерн раскатан (2026-11-11) на backend, docs, landing и playbook — см. «Распространение на остальные репозитории».
 
 Forgejo остаётся источником истины: секреты, keystore, релизы, коммит-статусы. GitHub-hosted раннеры выполняют только вычисления (тяжёлые проверки и сборки), а результат возвращается в Forgejo артефактами и статусом `CI / checks`.
 
@@ -57,7 +57,7 @@ Forgejo: статус CI / checks, подпись, публикация <-- ар
 
 - Перед отменой по таймауту диспетчер делает `POST .../actions/runs/<id>/cancel` — «зависший» run не продолжит жечь минуты после fallback.
 - Зеркало: HTTP `401`/`403` на опросе коммита — сразу `42` с подсказкой проверить `CI_GITHUB_TOKEN` (ретраи бессмысленны, dispatch не выполняется); коммит не доехал за `MIRROR_WAIT_MIN` — `42` с подсказкой про push-mirror (sync-on-commit / «Sync now»). Оба случая ведут в локальный fallback, а не в красный job.
-- Перед dispatch каждый dispatcher-job дергает `POST /repos/{owner}/{repo}/push_mirrors-sync` (best-effort, автоматический Forgejo-токен): отказ API → `::warning::`, интервальное поведение зеркала не меняется, dispatch ждёт в пределах `MIRROR_WAIT_MIN`.
+- Перед dispatch каждый dispatcher-job дергает `POST /repos/{owner}/{repo}/push_mirrors-sync` (шаг с `continue-on-error: true`, best-effort, автоматический Forgejo-токен): отказ API → `::warning::`, интервальное поведение зеркала не меняется, dispatch ждёт в пределах `MIRROR_WAIT_MIN`.
 - Dispatch POST ретраится до 3 попыток с паузой 5 с на транспортных ошибках (HTTP `000` — DNS/connect — и `5xx`); `4xx` (auth/validation) не ретраится и сразу даёт `42` (fallback).
 - Общий бюджет поллинга (`RUN_TIMEOUT_MIN`) включает периоды недоступности API: если api.github.com не отвечает весь бюджет (HTTP `000`), диспетчер выходит с `42` (локальный fallback) **без** отмены GitHub-рана — его результат игнорируется.
 - Артефакты GitHub отдаются zip-архивами; диспетчер проверяет непустоту и распаковывает их в целевой каталог (`unzip`). Поэтому `ARTIFACTS="unsigned-apk=unsigned-apk"` даёт в `unsigned-apk/` сам APK, а не вложенный zip.
@@ -71,7 +71,7 @@ Forgejo: статус CI / checks, подпись, публикация <-- ар
 
 Автоматические статусы Forgejo имеют вид `<workflow> / <job>` (`CI / dco`, `CI / remote`, `CI / local`, `CI / gate`); некоторые версии дописывают событие (`CI / dco (push)`). Имена job'ов подобраны так, чтобы ни один автостатус не начинался с `CI / checks`: этот контекст ставит только job `gate` вручную, через `scripts/ci/forgejo-set-status.sh` (state: pending|success|error|failure|warning).
 
-`create-release` в `.forgejo/workflows/release.yml` ждёт успешный статус по префиксу `CI / checks` у коммита тега (первая, то есть самая свежая запись). Следствия:
+`create-release` в `.forgejo/workflows/release.yml` ждёт успешный статус по префиксу `CI / checks` у коммита тега (первая, то есть самая свежая запись). В раскатанных репозиториях контекст свой и совпадает с их поллингом — `CI / check-and-build` (backend), `CI / validate` (docs, landing), `CI / lint` (playbook); см. «Распространение на остальные репозитории». Следствия:
 
 - нельзя добавлять job с именем `checks` — его автостатус `CI / checks (…)` пересечётся с префиксом;
 - переименование `gate` или смена контекста ручного статуса требует правки ожидания в `create-release`;
@@ -217,13 +217,33 @@ scripts/ci/setup-github-mirror.sh
 - **`profile: constrained | hosted`.** Один и тот же composite управляет памятью: `constrained` включает ограничения Gradle/Metro/jest под 4 ГБ хост, `hosted` — дефолты GitHub-раннера.
 - **Maven-зеркало на GitHub-hosted выключено.** Оба `.github/workflows/*` задают `MAVEN_ALIYUN_MIRROR=false`: `maven.aliyun.com` отдаёт 502 с US-IP, а Gradle не переходит к следующему репозиторию на HTTP-ошибке, поэтому на GitHub сборка идёт напрямую через `google()`/`mavenCentral()`; Forgejo-раннер сохраняет Aliyun-first (Maven Central троттлится из РФ).
 - **`curl -q` в скриптах.** Нейтрализует пользовательский `~/.curlrc` (например, `--continue-at -` ломает POST); на раннере поведение не меняется.
-- **`pull_request`-события не покрыты пилотом.** Диспетчер получает `github.ref_name`/`github.sha` в расчёте на push/тег; семантика PR-событий (merge-commit vs head, ref-нейминг) не адаптирована — CI на PR остаётся локальным/непроверенным.
+- **`pull_request`-события не покрыты.** Диспетчер получает `github.ref_name`/`github.sha` в расчёте на push/тег; семантика PR-событий (merge-commit vs head, ref-нейминг) не адаптирована — CI на PR остаётся локальным/непроверенным.
 - **Таймауты — на вызывающей стороне.** Composite-шаги не поддерживают `timeout-minutes`; лимиты живут в `.github/workflows/*` и в dispatch-конфиге.
 - **Артефакт-actions: GitHub — v4, Forgejo — v3.** На GitHub-hosted workflow'ах `upload-artifact` теперь v4 (v3 полностью отключён на GitHub-hosted раннерах); на Forgejo-стороне загрузка/скачивание остаются v3 — раннер Forgejo не умеет GitHub Results API. REST-скачивание артефактов диспетчером (`GET .../runs/{id}/artifacts` + `archive_download_url`) версионно-агностично: v4 сменил внутреннее хранение, а не API.
 - **GitHub-workflow'ы — только `workflow_dispatch`.** Никаких `push`/`pull_request` триггеров: зеркало не должно запускать сборки само по себе.
 
 ## Распространение на остальные репозитории
 
-Скрипты уже параметризованы: `scripts/ci/github-dispatch.sh` принимает `GH_REPO`/`WORKFLOW`, `scripts/ci/setup-github-mirror.sh` — `FORGEJO_REPO`/`GITHUB_REPO`, `scripts/ci/forgejo-set-status.sh` — `FORGEJO_REPO`. Для нового репозитория достаточно скопировать `scripts/ci/`, `actions/` и `.github/workflows/`, завести GitHub-variables и секреты, прогнать setup-скрипт.
+Паттерн раскатан (2026-11-11) на `slovo-propovedi-backend`, `slovo-propovedi-docs`, `slovo-propovedi-landing` и `slovo-propovedi-playbook`. Скрипты параметризованы (`GH_REPO`/`WORKFLOW` у диспетчера, `FORGEJO_REPO`/`GITHUB_REPO` у setup-скрипта), поэтому копии в репозиториях идентичны; отличаются только `actions/checks` и контекст статуса:
 
-Особенности остальных репозиториев: у backend/docs/landing релизы деплойные и завязаны на секреты (VPS, реестр, ключи), поэтому на GitHub-hosted уезжает **только CI**; релизы остаются на Forgejo-раннере. Мобильный — единственный, где hosted-сборка отдаёт неподписанный артефакт обратно. Детали переноса и открытые вопросы — в [`debt.md`](../debt.md) → «CI: Forgejo → GitHub».
+- `scripts/ci/github-dispatch.sh` и `scripts/ci/forgejo-set-status.sh` — построчно одинаковые копии мобильных;
+- `actions/checks` — composite под инструментарий репозитория: npm (`lint` + `test` + `build`) у backend, `validate:openapi` у docs, `validate` у landing, python + ansible (yamllint, ansible-lint, syntax check) у playbook;
+- `.github/workflows/ci.yml` — только `workflow_dispatch`, запускает `./actions/checks`; ни vars, ни secrets ему не нужны: это чистые проверки кода, артефакты обратно не едут (мобильный — единственный, где hosted-сборка отдаёт неподписанный APK);
+- `.forgejo/workflows/ci.yml` — та же цепочка `remote → local → gate`;
+- `gate` ставит собственный контекст, совпадающий с тем, что поллит релизный пайплайн репозитория: `CI / check-and-build` (backend), `CI / validate` (docs, landing), `CI / lint` (playbook) — ни один из них не пересекается с автостатусами `CI / remote|local|gate`.
+
+Renovate переехал на GitHub-hosted во всех репозиториях: endpoint по-прежнему `https://git.lightnode.ru/api/v1`, `RENOVATE_REPOSITORIES` задаётся по репозиторию (в Forgejo — подчёркивания), расписание у playbook недельное (`0 6 * * 1`), у остальных ежедневное. Секреты `RENOVATE_TOKEN`/`RENOVATE_GITHUB_COM_TOKEN` и переменная `RENOVATE_GIT_AUTHOR` — org-level, на уровне репозитория ничего заводить не нужно.
+
+Релизные и деплойные пайплайны backend/docs/landing остаются на Forgejo без изменений: тронуто только окно ожидания статуса в `create-release` (40 → 60 попыток × 15 с). У playbook релизного пайплайна нет. Особенности: у backend/docs/landing релизы деплойные и завязаны на секреты (VPS, реестр, ключи), поэтому на GitHub-hosted уезжает **только CI**. Детали переноса и открытые вопросы — в [`debt.md`](../debt.md) → «CI: Forgejo → GitHub».
+
+Новый репозиторий подключается копированием `scripts/ci/`, `actions/` и `.github/workflows/` плюс настройкой зеркала (`scripts/ci/setup-github-mirror.sh`); dispatch-секрет `CI_GITHUB_TOKEN` org-level, повторно заводить его не нужно.
+
+### Codeberg как вычислительный tier — отклонено
+
+Вариант «диспетчеризовать проверки в Codeberg-hosted раннеры» рассмотрен и отклонён (2026-11-11). Решающие факты:
+
+- **Лейблы и бюджеты.** Codeberg принимает только `codeberg-tiny`/`small`/`medium(-lazy)`; `ubuntu-*` не матчится, а бюджет лимитирован на лейбл (2/5/10 мин) — проверкам мобильного нужно 15–40 мин.
+- **Политика использования.** Usage policy Codeberg запрещает «extensive LLM-driven pipelines»; наш оркестратор построен AI-агентами и диспетчеризует запуски автоматически.
+- **Приоритет каталогов workflow.** Побеждает первый существующий каталог: `.forgejo/workflows` перекрывает `.github/workflows`, поэтому GitHub-исполнители на Codeberg невидимы, а оркестратор там бы исполнялся.
+
+Итог: Codeberg остаётся зеркалом релизов (`publish-release`), не вычислительным tier'ом. Пересматривать — только если Codeberg изменит лейблы, бюджеты или политику.
