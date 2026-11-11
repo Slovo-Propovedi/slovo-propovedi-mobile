@@ -188,6 +188,17 @@
 - Запуск: `yarn test` (watch, changed since main), `yarn testFinal` (все), `yarn testDebug` (локальные изменения), `yarn updateSnapshots`.
 - Что не покрыто — фиксировать в `debt.md` (секция Tests).
 
+### Тестирование: ноль вывода в консоль
+
+- **Политика:** прогон тестов полностью свободен от `console.warn`/`console.error`. Появившееся предупреждение/ошибка — сигнал исправить причину, а не заглушить вывод.
+- **Консольный гард** — `__mocks__/console-guard.js`, подключён в `jest.config.ts` → `setupFilesAfterEnv` первым (до `__mocks__/session-cache.js`). Неожиданный `console.error`/`console.warn` за время теста роняет тест, показывая число вызовов и примеры сообщений. Если метод консоли уже замокан тестом (или через `mockConsole`), гард для него не вмешивается.
+- **Легальное заглушение** — хелпер `mockConsole('error' | 'warn' | 'log')` из `shared/mocks`: восстанавливает консоль в `afterEach` и возвращает шпионы для утверждений. Использовать только в намеренных error-path тестах, где продакшн-код честно логирует ошибку.
+- Гард следит только за `warn`/`error`; шум `console.log` чинится в источнике.
+- **Caveat для AI-агентов:** в агентном окружении (переменные `OPENCODE`/`AGENT`) Jest подменяет репортер на `AgentReporter`, который скрывает ВЕСЬ console-вывод. Проверять шум — только через `env -u OPENCODE -u AGENT yarn jest …` (или `yarn test` / `yarn testFinal` с этим префиксом).
+- **Общий Reatom-контекст:** `renderWithProviders` использует один лениво создаваемый контекст на тест-файл (`getSharedTestCtx()`). Тест, мутирующий атомы, ОБЯЗАН сбрасывать их в `beforeEach` через этот же контекст (паттерны — `src/features/sermon-search/ui/SearchBar.test.tsx`, `src/entities/offline-cache/ui/useTrackItemCache.test.ts`), иначе состояние течёт между тестами. Свой `createCtx()` в тесте создавать нельзя — это возвращает warning «multiple contexts».
+- **Моки хранилищ:** глобальный `afterEach` пересеивает (re-arm) моки AsyncStorage/SecureStore перед очисткой session-cache, поэтому `jest.resetAllMocks()`/`restoreAllMocks()` в тестах безопасны.
+- **Таймеры:** после сьюта не остаётся живых таймеров — fake timers в `beforeEach` файла, `clearAllTimers()`/`useRealTimers()` в `afterEach`; утёкший таймер даёт warning «worker process has failed to exit gracefully».
+
 ## Порядок исправления ошибок линтинга
 
 Исправление линтинговых ошибок — строго по escalations-лестнице:
