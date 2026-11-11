@@ -137,8 +137,9 @@ describe('<SearchBar>', () => {
 
     // Simulate the async race: the atom still holds the old query while a
     // response-driven re-render happens. The visible text must not follow it.
-    searchQueryAtom(ctx, 'ве')
-    await act(async () => {})
+    await act(async () => {
+      searchQueryAtom(ctx, 'ве')
+    })
     expect(input.props.value).toBe('вер')
   })
 

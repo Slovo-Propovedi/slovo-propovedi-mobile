@@ -724,8 +724,12 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
   test('closes the player when the playing sermon has nowhere else to continue', async () => {
     const { ctx, getAllByText, getByText, queryByText } = await renderLocalPlaylist()
     const { currentAudioAtom, currentPlaylistAtom, resetPlaybackAction } = getPlayerMock()
-    currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
-    currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+    await act(async () => {
+      currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
+      currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
+    })
 
     fireEvent.press(getAllByText(REMOVE_MENU_TEXT)[0])
     await waitFor(() => expect(getByText(REMOVE_DIALOG_TITLE)).toBeTruthy())
@@ -753,8 +757,12 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
       getPlayerMock()
     const playNewSermon = jest.fn()
     usePlayNewSermon.mockReturnValue(playNewSermon)
-    currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
-    currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+    await act(async () => {
+      currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
+      currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
+    })
 
     fireEvent.press(getAllByText(REMOVE_MENU_TEXT)[0])
     await confirmRemoval(getByText)
@@ -776,8 +784,12 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
   test('closing the chooser falls back to closing the player', async () => {
     const { ctx, getAllByText, getByText } = await renderLocalPlaylist({ withCandidate: true })
     const { currentAudioAtom, currentPlaylistAtom, resetPlaybackAction } = getPlayerMock()
-    currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
-    currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+    await act(async () => {
+      currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
+      currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
+    })
 
     fireEvent.press(getAllByText(REMOVE_MENU_TEXT)[0])
     await confirmRemoval(getByText)
@@ -794,8 +806,12 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
       withCandidate: true,
     })
     const { currentAudioAtom, currentPlaylistAtom, resetPlaybackAction } = getPlayerMock()
-    currentPlaylistAtom(ctx, { ...PLAYLIST, id: 'another-playlist' })
-    currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+    await act(async () => {
+      currentPlaylistAtom(ctx, { ...PLAYLIST, id: 'another-playlist' })
+      currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
+    })
 
     fireEvent.press(getAllByText(REMOVE_MENU_TEXT)[0])
     await waitFor(() => expect(getByText(REMOVE_DIALOG_TITLE)).toBeTruthy())
@@ -803,6 +819,8 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
 
     await act(async () => {
       fireEvent.press(getByText(CONFIRM_TEXT))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
     })
 
     expect(mockTogglePlaylistSermon).toHaveBeenCalledTimes(1)
