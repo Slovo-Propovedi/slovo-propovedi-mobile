@@ -19,7 +19,7 @@
   - `RefreshButton` (на native рендерит `null`).
 - Три карточки `AdminStatCard`: «Разделы», «Плейлисты», «Проповеди» со счётчиками; каждая ведёт в свой таб (`/admin/sections`, `/admin/playlists`, `/admin/sermons`).
 - Блок «Быстрые действия» (`AdminQuickActions`, заголовок внутри компонента): «Загрузить проповедь» → `/admin/sermons/create`.
-- Блок «Дополнительно» (`AdminMoreActions`, заголовок внутри компонента): «Медиа» → `/admin/media` (виден всем, кто вошёл в админку), «Флаги» → `/admin/flags`, «Источники импорта» → `/admin/invidious`, «Пользователи» → `/admin/users` (последние три — только роль admin по `isAdminUser`). Эти маршруты скрыты из таб-бара (`href: null`) и открываются только строками главной.
+- Блок «Дополнительно» (`AdminMoreActions`, заголовок внутри компонента): «Медиа» → `/admin/media` (виден всем, кто вошёл в админку), «Флаги» → `/admin/flags`, «Источники импорта» → `/admin/invidious`, «Пользователи» → `/admin/users` (последние три — только роль admin по `isAdminUser`). Это стековые экраны с нативной шапкой и кнопкой «Назад» (фолбэк `/admin`), они открываются только строками главной.
 - Скролл (`ScrollView`) резервирует место под плавающим таб-баром: `paddingBottom: tabBarHeight + INDENTS.low` (`tabBarHeightAtom`) — иначе последняя строка уходит под бар и недоступна (на web `body { overflow: hidden }`, документ не скроллится).
 - **Pull-to-refresh:** потягивание вниз перезагружает счётчики (`useAdminStats.reload`, спиннер `isRefreshing`); сбойные поля не затирают прежние значения (`mergeStats`). На web — собственный тач-жест `PullToRefresh` (см. [features/web.md](../features/web.md)).
 

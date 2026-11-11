@@ -134,7 +134,6 @@ app/
     ├── _layout.tsx      # таб-бар + плавающий плеер (ExpandablePlayer)
     ├── listen/          # стек таба «Слушать»: index, playlist, playlist-list, my-playlists
     ├── read.tsx         # реэкспорт pages/read (таб заблокирован)
-    ├── study.tsx        # реэкспорт pages/study (заглушка)
     └── more.tsx         # реэкспорт pages/more
 ```
 
@@ -145,7 +144,7 @@ app/
 Отдельная зона вне публичных табов: `app/admin/` — собственный `Stack` (`app/admin/_layout.tsx`), который при входе однократно вызывает `restoreSession` (`entities/auth`), показывает индикатор загрузки и редиректит неаутентифицированных на `/admin/login` (аутентифицированного на `/admin/login` не уводит — после входа возврат на «Ещё», см. [`features/navigation.md`](./features/navigation.md)).
 
 - `app/admin/login.tsx` → `pages/admin-login` (вход, `signIn`).
-- `app/admin/(tabs)/` → `Tabs` с тем же `CustomTabBar` (`widgets/tab-bar`), что и основные табы: вкладки `index` (Главная), `sections`, `playlists`, `sermons`, `media`, `users`. Таб `users` скрыт (`href: null`) для роли не-`admin`.
+- `app/admin/(tabs)/` → `Tabs` с тем же `CustomTabBar` (`widgets/tab-bar`), что и основные табы: вкладки `index` (Главная), `sections`, `playlists`, `sermons`. Списочные экраны «Медиа», «Флаги» и «Пользователи» — стековые (`app/admin/{media,flags,users}.tsx`), как «Источники импорта»: нативная шапка с кнопкой «Назад» (фолбэк `/admin`), вход — строками «Дополнительно» на главной.
 - `pages/admin-home` — главная админки (счётчики сущностей через generated API, быстрые действия); `pages/admin-invidious` — источники импорта аудио (список Invidious-инстансов, маршрут `app/admin/invidious.tsx`).
 - Слайсы разделов CRUD — у каждого раздела отдельный список, форма (create/edit) и деталь:
   - `pages/admin-sections` / `admin-section-form` / `admin-section-detail`;
@@ -227,7 +226,7 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
 ┌────────────────────────────────────────────────────────────┐
 │ app/  (только expo-router: layout'ы + реэкспорт экранов)     │
 ├────────────────────────────────────────────────────────────┤
-│ pages/    listen  playlist  playlist-list  read  study      │
+│ pages/    listen  playlist  playlist-list  read             │
 │           more  settings  about  book-reader  books-list    │
 │           admin-login  admin-home  admin-sections          │
 │           admin-section-form  admin-section-detail         │

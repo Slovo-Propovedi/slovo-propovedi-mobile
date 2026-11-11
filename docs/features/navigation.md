@@ -1,7 +1,7 @@
 # Навигация (Expo Router)
 
 **Стек:** `expo-router`, настройка — `app/`
-**Статус:** готов (таб «Читать» заблокирован, «Учиться» скрыт из бара)
+**Статус:** готов (таб «Читать» заблокирован)
 
 ## Точка входа
 
@@ -58,9 +58,9 @@
 
 `app/(tabs)/_layout.tsx` — `Tabs` с кастомной панелью:
 
-- 3 кнопки таба: `listen` «Слушать», `read` «Читать», `more` «Ещё» (`title` в `_layout.tsx`). Маршрут `study` остаётся в навигаторе (`app/(tabs)/study.tsx` → `StudyScreen`) для прямых ссылок, но `CustomTabBar` его не рендерит (`HIDDEN_TAB_ROUTE_NAMES`).
+- 3 кнопки таба: `listen` «Слушать», `read` «Читать», `more` «Ещё» (`title` в `_layout.tsx`). Все маршруты навигатора рендерятся в баре: механизм скрытых табов (`HIDDEN_TAB_ROUTE_NAMES`) удалён вместе с единственным скрытым маршрутом.
 - `tabBar` → `CustomTabBar` (`src/widgets/tab-bar/ui/CustomTabBar.tsx`) + `ExpandablePlayer` рендерятся поверх на всех табах. Морфящий поисковый компонент (`SearchIslandMorph`, круг ⇄ пилюля) смонтирован **внутри `CustomTabBar`**, а не отдельным глобальным слоем; `CustomTabBar` есть на каждом таб-экране, поэтому поле поиска доступно и на вложенных экранах стека «Слушать» (`/listen/playlist`, `/listen/playlist-list`, `/listen/search-results` и т.д.); список результатов при этом остаётся только внутри `ListenScreen`.
-- **ВАЖНО:** таб «Читать» гейтится фича-флагом `read` — при выключенном/незагруженном флаге `CustomTabBar` показывает глобальный информационный диалог через `showInfo` («Скоро будет доступно», `useTabPress` → `shared/model/info-dialog`) и не навигирует (`isDisabled={!isTabAvailable(route.name)}`). `ReadScreen` дополнительно проверяет флаг через `useFeatureFlag` и при `false` рендерит `null`. Экран «Учиться» (`StudyScreen`) по-прежнему гейтится флагом `study` и рендерит `null` без доступа, но кнопки в баре у него больше нет (см. [feature-flags.md](./feature-flags.md)).
+- **ВАЖНО:** таб «Читать» гейтится фича-флагом `read` — при выключенном/незагруженном флаге `CustomTabBar` показывает глобальный информационный диалог через `showInfo` («Скоро будет доступно», `useTabPress` → `shared/model/info-dialog`) и не навигирует (`isDisabled={!isTabAvailable(route.name)}`). `ReadScreen` дополнительно проверяет флаг через `useFeatureFlag` и при `false` рендерит `null` (см. [feature-flags.md](./feature-flags.md)).
 
 ## Стек раздела «Слушать»
 
@@ -103,8 +103,8 @@
 
 - `app/admin/_layout.tsx` — `Stack` зоны: при монтировании однократно вызывает `restoreSession` (`entities/auth`) и показывает `ActivityIndicator`, пока сессия не разрешена (`idle`, а на защищённых маршрутах также `loading`); редиректит неаутентифицированных на `/admin/login` (кроме самого login). Аутентифицированного пользователя на `/admin/login` в `/admin` не уводит — после успешного входа возвращаемся на «Ещё». Шапка есть только у `login` (`HeaderBackButton`, фолбэк `/settings`).
 - `app/admin/login.tsx` → `AdminLoginScreen` (`pages/admin-login`).
-- `app/admin/(tabs)/_layout.tsx` — `Tabs` с `headerShown: false` и тем же `CustomTabBar`, что и публичные табы: `index` (Главная), `sections`, `playlists`, `sermons`; маршруты `media`, `flags` и `users` остаются в навигаторе для deep links, но скрыты из бара (`href: null`) и открываются строками главной админки. `CustomTabBar` дополнительно фильтрует эти имена через `HIDDEN_TAB_ROUTE_NAMES`.
-- Файлы табов: `index.tsx` (admin-home), остальные — экраны отдельных слайсов `pages/admin-sections` / `admin-playlists` / `admin-sermons` / `admin-media` / `admin-users`. Отдельного таба «Загрузить» нет: проповедь создаётся через `/admin/sermons/create` из шапки списка проповедей и быстрых действий главной.
+- `app/admin/(tabs)/_layout.tsx` — `Tabs` с `headerShown: false` и тем же `CustomTabBar`, что и публичные табы: `index` (Главная), `sections`, `playlists`, `sermons`. Списочные экраны `media`, `flags` и `users` в таб-группе больше не живут: это стековые экраны `app/admin/{media,flags,users}.tsx`, зарегистрированные в `app/admin/_layout.tsx` так же, как «Источники импорта» (`app/admin/invidious.tsx`) — нативная шапка с заголовком и кнопкой «Назад» (фолбэк `/admin`). Открываются только строками блока «Дополнительно» на «Главной».
+- Файлы табов: `index.tsx` (admin-home), `sections.tsx` / `playlists.tsx` / `sermons.tsx` — экраны слайсов `pages/admin-sections` / `admin-playlists` / `admin-sermons`; стековые списки — `pages/admin-media` / `admin-flags` / `admin-users`. Отдельного таба «Загрузить» нет: проповедь создаётся через `/admin/sermons/create` из шапки списка проповедей и быстрых действий главной.
 
 Вход в зону — из шапки «Настроек» (кебаб-меню `SettingsHeaderMenu` через `headerRight` в `app/_RootLayout.tsx`) и с экрана «Ещё» (компактная иконка-кнопка «В админ панель» → `AdminPanelButton`). В `SettingsHeaderMenu` используется хук `useAdminEntry` (`entities/auth`): при `idle` восстанавливает сессию (`restoreSession`), затем пушит `/admin` (есть права) или `/admin/login`; для аутентифицированных единственный пункт меню — «Выйти из аккаунта админа» (`signOut`). На экране «Ещё» `AdminPanelButton` рендерится только для аутентифицированных `admin`/`moderator` (проверка `canAccessAdmin`; `MoreScreen` при монтировании вызывает `restoreSession`, если статус `idle`) и пушит `/admin`. После успешного входа на `/admin/login` показывается тост «Вход выполнен» и выполняется `router.replace('/more')`.
 

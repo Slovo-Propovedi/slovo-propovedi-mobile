@@ -24,7 +24,6 @@
 | «Мои плейлисты»          | [my-playlists.md](./my-playlists.md)   | готов        |
 | Результаты поиска        | [search-results.md](./search-results.md) | готов      |
 | «Читать» (таб)           | [read.md](./read.md)                   | заблокирован |
-| «Учиться» (таб)          | [study.md](./study.md)                 | заглушка     |
 | «Ещё» (экран)            | [more.md](./more.md)                   | готов        |
 | История прослушивания    | [history.md](./history.md)             | готов        |
 | Офлайн                   | [offline.md](./offline.md)             | готов        |

@@ -2,14 +2,14 @@
 
 **Маршруты:**
 
-- `/admin/flags` — список фича-флагов (таб `app/admin/(tabs)/flags.tsx` → `pages/admin-flags`)
+- `/admin/flags` — список фича-флагов (стековый экран `app/admin/flags.tsx` → `pages/admin-flags`, зарегистрирован в `app/admin/_layout.tsx` с нативной шапкой и кнопкой «Назад», фолбэк `/admin`)
 - `/admin/flags/create` — создание флага (`app/admin/flags/create.tsx` → `pages/admin-flag-form`)
 - `/admin/flags/[id]` — деталь флага (`app/admin/flags/[id].tsx` → `pages/admin-flag-detail`)
 - `/admin/flags/[id]/edit` — редактирование флага (`app/admin/flags/[id]/edit.tsx` → `pages/admin-flag-form`)
 
 **Статус:** готов
 
-Управление фича-флагами приложения (см. [features/feature-flags.md](../features/feature-flags.md)). Доступно **только роли admin** (эндпоинты `/feature-flags` — под админ-токеном): строка «Флаги» на главной админки видна только admin, а каждый экран вызывается через `useRequireAdminRole()`. Экраны работают с **generated-типами** (`APITypes.FeatureFlag`) напрямую, как остальная админка.
+Управление фича-флагами приложения (см. [features/feature-flags.md](../features/feature-flags.md)). Доступно **только роли admin** (эндпоинты `/feature-flags` — под админ-токеном): строка «Флаги» на главной админки видна только admin, а каждый экран вызывается через `useRequireAdminRole()`. Список живёт вне таб-бара (стековый экран с шапкой, как «Источники импорта») и открывается только строкой главной. Экраны работают с **generated-типами** (`APITypes.FeatureFlag`) напрямую, как остальная админка.
 
 ## Список
 
