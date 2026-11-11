@@ -20,5 +20,21 @@ const settleWithin = async (promise, hops) => {
 afterEach(async () => {
   const { clearSessionCache } = require('../src/shared/lib/session-cache/clearSessionCache')
 
-  await settleWithin(clearSessionCache(), MAX_MICROTASK_HOPS)
+  // clearSessionCache reports a failed wipe with console.error. Tests that call
+  // jest.resetAllMocks()/restoreAllMocks() wipe the AsyncStorage mock, so the
+  // wipe fails there — tolerated, because those files reset their own storage.
+  // This global hook is test scaffolding and must never print, so the whole
+  // wipe runs with console.error/console.warn temporarily muted; production
+  // clearSessionCache semantics stay untouched.
+  const originalError = console.error
+  const originalWarn = console.warn
+  console.error = () => {}
+  console.warn = () => {}
+
+  try {
+    await settleWithin(clearSessionCache(), MAX_MICROTASK_HOPS)
+  } finally {
+    console.error = originalError
+    console.warn = originalWarn
+  }
 })
