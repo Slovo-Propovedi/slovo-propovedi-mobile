@@ -1,17 +1,19 @@
-import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import * as IntentLauncher from 'expo-intent-launcher'
 import { Keyboard, Platform, StyleSheet, TextInput } from 'react-native'
 import { type SermonData } from 'entities/sermon'
 import { sermonsMocks } from 'shared/api/generated'
 import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
-import { renderWithProviders } from 'shared/mocks'
+import { getSharedTestCtx, renderWithProviders } from 'shared/mocks'
 import { showInfo } from 'shared/model/info-dialog'
 import { setBarCollapsed } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 import {
   isSearchingAtom,
   isSearchOpenAtom,
+  searchInputRequestAtom,
+  searchPlaylistsAtom,
+  searchPreachersAtom,
   searchQueryAtom,
   searchResultsAtom,
   typeSearchInput,
@@ -74,6 +76,22 @@ const sermon: SermonData = {
 
 let addListenerSpy: jest.SpyInstance
 
+// The file now uses ONE shared context, so every test must start from the same
+// clean search session the per-test contexts used to provide.
+beforeEach(() => {
+  const ctx = getSharedTestCtx()
+
+  searchQueryAtom(ctx, '')
+  searchResultsAtom(ctx, [])
+  searchPlaylistsAtom(ctx, [])
+  searchPreachersAtom(ctx, [])
+  searchInputRequestAtom(ctx, null)
+  isSearchingAtom(ctx, false)
+  isSearchOpenAtom(ctx, false)
+  distinctValuesAtom(ctx, null)
+  setBarCollapsed(ctx, false)
+})
+
 describe('<SearchBar>', () => {
   beforeEach(() => {
     addListenerSpy = jest.spyOn(Keyboard, 'addListener')
@@ -84,7 +102,7 @@ describe('<SearchBar>', () => {
   })
 
   test('renders the input and updates the query while typing', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
 
     await fireEvent.changeText(getByPlaceholderText(SEARCH_PLACEHOLDER), 'вера')
@@ -93,7 +111,7 @@ describe('<SearchBar>', () => {
   })
 
   test('keeps the same input field across debounced query and result atom updates', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
 
@@ -109,7 +127,7 @@ describe('<SearchBar>', () => {
   })
 
   test('keeps the latest typed text when the query atom lags behind an async render', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
 
@@ -125,7 +143,7 @@ describe('<SearchBar>', () => {
   })
 
   test('initializes the input from the saved query when it mounts', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     searchQueryAtom(ctx, 'вера')
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
 
@@ -133,7 +151,7 @@ describe('<SearchBar>', () => {
   })
 
   test('shows externally typed text (onboarding tour) in the visible input', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
 
@@ -149,7 +167,7 @@ describe('<SearchBar>', () => {
   })
 
   test('does not replay an earlier external typing request when it mounts', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     typeSearchInput(ctx, 'лицемерие')
     searchQueryAtom(ctx, '')
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
@@ -158,7 +176,7 @@ describe('<SearchBar>', () => {
   })
 
   test('clearing resets both the visible input and the query atom', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
       ctx,
     })
@@ -174,7 +192,7 @@ describe('<SearchBar>', () => {
   })
 
   test('does not focus the input on mount so the keyboard waits for a tap', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     isSearchOpenAtom(ctx, true)
     const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
     focusMock.mockClear()
@@ -186,7 +204,7 @@ describe('<SearchBar>', () => {
   })
 
   test('does not steal focus while search is closed', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
     focusMock.mockClear()
 
@@ -197,7 +215,7 @@ describe('<SearchBar>', () => {
   })
 
   test('clearing the query keeps the input focused for continued typing', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
     const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
       ctx,
@@ -225,7 +243,7 @@ describe('<SearchBar>', () => {
   })
 
   test('draws no accent ring around the focused field', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
 
@@ -240,14 +258,14 @@ describe('<SearchBar>', () => {
   })
 
   test('stretches across the header so the input fills the row', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
 
     expect(getByPlaceholderText(SEARCH_PLACEHOLDER).parent).toHaveStyle({ flex: 1 })
   })
 
   test('lets the input shrink inside the pill instead of keeping its intrinsic web width', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
     const inputStyle = StyleSheet.flatten(getByPlaceholderText(SEARCH_PLACEHOLDER).props.style)
 
@@ -272,7 +290,7 @@ describe('<SearchBar>', () => {
   })
 
   test('clears the query via the clear button, resets results and keeps the search open', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, 'вера')
     searchResultsAtom(ctx, [sermon])
@@ -288,7 +306,7 @@ describe('<SearchBar>', () => {
   })
 
   test('hides the inline clear chip while the query is empty', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const { queryByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
 
     expect(queryByLabelText(CLEAR_LABEL)).toBeNull()
@@ -297,7 +315,7 @@ describe('<SearchBar>', () => {
   test('shows the mic while the query is empty and swaps it for the clear chip once text is typed', async () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     try {
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       const { getByLabelText, getByPlaceholderText, queryByLabelText } = await renderWithProviders(
         <SearchBar />,
         { ctx },
@@ -315,7 +333,7 @@ describe('<SearchBar>', () => {
   })
 
   test('reports focus changes so the island can show its external close circle', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const onFocusChange = jest.fn()
     const { getByPlaceholderText } = await renderWithProviders(
       <SearchBar onFocusChange={onFocusChange} />,
@@ -338,7 +356,7 @@ describe('<SearchBar>', () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       searchQueryAtom(ctx, 'вера')
       await renderWithProviders(<SearchBar />, { ctx })
@@ -359,7 +377,7 @@ describe('<SearchBar>', () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       await renderWithProviders(<SearchBar />, { ctx })
 
@@ -379,7 +397,7 @@ describe('<SearchBar>', () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       searchQueryAtom(ctx, 'вера')
       await renderWithProviders(<SearchBar />, { ctx })
@@ -399,7 +417,7 @@ describe('<SearchBar>', () => {
   test('Escape on native does not clear or close the search', async () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     try {
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       searchQueryAtom(ctx, 'вера')
       await renderWithProviders(<SearchBar />, { ctx })
@@ -416,7 +434,7 @@ describe('<SearchBar>', () => {
   })
 
   test('shows suggestions again after typing a new query following a selection', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     distinctValuesAtom(ctx, DISTINCT_VALUES)
     const { getByPlaceholderText, getByRole, queryByRole } = await renderWithProviders(
       <SearchBar />,
@@ -436,7 +454,7 @@ describe('<SearchBar>', () => {
   })
 
   test('blurs the input when the keyboard hides', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     const blurMock = (TextInput as unknown as { prototype: { blur: jest.Mock } }).prototype.blur
     blurMock.mockClear()
 
@@ -456,7 +474,7 @@ describe('<SearchBar>', () => {
   })
 
   test('blurs the field when the collapsed bar hides it while search stays open', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
     isSearchOpenAtom(ctx, true)
     const blurMock = (TextInput as unknown as { prototype: { blur: jest.Mock } }).prototype.blur
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
@@ -565,7 +583,7 @@ describe('<SearchBar> voice input availability', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
       Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
         ctx,
@@ -589,7 +607,7 @@ describe('<SearchBar> voice input availability', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
       Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
 
@@ -610,7 +628,7 @@ describe('<SearchBar> voice input availability', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
       Reflect.set(dom.window, 'SpeechRecognition', WebSpeechRecognitionStub)
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       const { getByLabelText, getByPlaceholderText } = await renderWithProviders(<SearchBar />, {
         ctx,
@@ -632,7 +650,7 @@ describe('<SearchBar> web Escape without input focus', () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       searchQueryAtom(ctx, 'вера')
       await renderWithProviders(<SearchBar />, { ctx })
@@ -653,7 +671,7 @@ describe('<SearchBar> web Escape without input focus', () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       await renderWithProviders(<SearchBar />, { ctx })
 
@@ -673,7 +691,7 @@ describe('<SearchBar> web Escape without input focus', () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
-      const ctx = createCtx()
+      const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
       searchQueryAtom(ctx, 'вера')
       await renderWithProviders(<SearchBar />, { ctx })

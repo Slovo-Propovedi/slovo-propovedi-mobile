@@ -22,6 +22,18 @@ interface ProvidersOptions {
   ctx?: ReturnType<typeof createCtx>
 }
 
+// Jest gives every test file its own module registry, so a module-level cache
+// holds exactly one context per file. It is created lazily: Reatom warns when a
+// file creates a second context, and an eager context here would coexist with
+// the one a test file builds itself.
+let sharedTestCtx: ReturnType<typeof createCtx> | undefined
+
+export const getSharedTestCtx = (): ReturnType<typeof createCtx> => {
+  if (!sharedTestCtx) sharedTestCtx = createCtx()
+
+  return sharedTestCtx
+}
+
 const getWrapper = ({
   AdditionalWrapper,
   ctx,
@@ -49,7 +61,7 @@ export const renderWithProviders = async (
   ui: React.ReactElement,
   options?: CustomRenderOptions,
 ): Promise<{ ctx: ReturnType<typeof createCtx> } & RenderResult> => {
-  const { AdditionalWrapper, ctx = createCtx(), ...renderOptions } = options || {}
+  const { AdditionalWrapper, ctx = getSharedTestCtx(), ...renderOptions } = options || {}
 
   const result = await render(ui, {
     wrapper: getWrapper({ AdditionalWrapper, ctx }),
@@ -63,7 +75,7 @@ export const renderHookWithProviders = async <Result, Props>(
   renderCallback: (props: Props) => Result,
   options?: CustomRenderHookOptions<Props>,
 ): Promise<{ ctx: ReturnType<typeof createCtx> } & RenderHookResult<Result, Props>> => {
-  const { AdditionalWrapper, ctx = createCtx(), ...renderHookOptions } = options || {}
+  const { AdditionalWrapper, ctx = getSharedTestCtx(), ...renderHookOptions } = options || {}
 
   const result = await renderHook(renderCallback, {
     wrapper: getWrapper({ AdditionalWrapper, ctx }),
