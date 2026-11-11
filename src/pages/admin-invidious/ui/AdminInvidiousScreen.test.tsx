@@ -5,6 +5,12 @@ import { toastAtom } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { AdminInvidiousScreen } from './AdminInvidiousScreen'
 
+// Every flow renders the full screen and awaits the instance probe; under a
+// loaded CI worker the default 15s test budget can starve even though the
+// bodies finish in milliseconds. Keep the config default, widen it for this
+// render-heavy suite only.
+jest.setTimeout(25000)
+
 // MarqueeText renders the title twice (visible + measurer), so a single-Text
 // stub keeps text queries unambiguous in list-row tests.
 jest.mock('shared/ui/marquee-text/marquee-text', () => {
