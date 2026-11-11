@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { FlatList, Text } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { type APITypes } from 'shared/api'
+import { withBottomInset } from 'shared/lib/utils/withBottomInset'
 import { EmptyState } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
@@ -39,6 +41,7 @@ export const FlagOverridesList = ({
   usersState: OverrideUsersState
 }) => {
   const { currentTheme } = useTheme()
+  const insets = useSafeAreaInsets()
   const {
     isError,
     isLoading,
@@ -64,7 +67,7 @@ export const FlagOverridesList = ({
       data={isLoading ? [] : users}
       keyExtractor={item => item.id}
       onEndReached={() => void loadMore()}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={withBottomInset(styles.content, insets.bottom)}
       ListHeaderComponent={
         <FlagDetailHeader
           flag={flag}

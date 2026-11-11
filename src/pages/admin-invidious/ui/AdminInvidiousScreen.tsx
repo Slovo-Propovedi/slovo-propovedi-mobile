@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRequireAdminRole } from 'entities/auth'
+import { withBottomInset } from 'shared/lib/utils/withBottomInset'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
 import { AdminContentSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
@@ -28,6 +29,7 @@ const LOAD_ERROR_MESSAGE = 'Не удалось загрузить источн�
 // нажатия «Сохранить» (полная замена через PUT).
 export const AdminInvidiousScreen = () => {
   useRequireAdminRole()
+  const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const { addAndSave, instances, isDirty, isLoading, isSaving, loadFailed, removeUrl, save } =
     useInvidiousInstancesAdmin()
@@ -95,7 +97,7 @@ export const AdminInvidiousScreen = () => {
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={withBottomInset(styles.footer, insets.bottom)}>
         <PressableButton
           onPress={() => void save()}
           disabled={!isDirty || isSaving}

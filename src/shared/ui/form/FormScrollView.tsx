@@ -9,6 +9,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { withBottomInset } from '../../lib/utils/withBottomInset'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FormSubmitContext } from './formSubmitContext'
 
@@ -29,7 +30,8 @@ const SCROLL_TEST_ID = 'form-scroll-view'
  * с adjustResize, поэтому контент уже доступен над клавиатурой.
  * @param props - Пропсы скроллящегося тела формы.
  * @param props.children - Содержимое формы (поля, блоки).
- * @param props.contentContainerStyle - Внутренний отступ контейнера ScrollView формы.
+ * @param props.contentContainerStyle - Внутренний отступ контейнера ScrollView формы;
+ * снизу к нему добавляется bottom safe-area inset (прозрачный системный navbar).
  * @param props.onNearEnd - Вызывается при приближении к низу; повторно — только
  * после роста высоты контента (то есть после подгрузки новой порции).
  * @param props.onSubmit - Отправка формы по Enter (hardware-клавиатура/web).
@@ -86,8 +88,8 @@ export const FormScrollView = ({
           onScroll={handleScroll}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps='handled'
-          contentContainerStyle={contentContainerStyle}
           style={{ backgroundColor: currentTheme.background }}
+          contentContainerStyle={withBottomInset(contentContainerStyle, insets.bottom)}
         >
           {children}
         </ScrollView>
