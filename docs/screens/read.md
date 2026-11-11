@@ -15,7 +15,7 @@
 - «Конспекты для проповедников» — `NotesForPreachersBooksSlider` (`src/pages/read/ui/NotesForPreachersBooksSlider.tsx`);
 - «По библии. Стих за стихом» — `VerseByVerseBooksSlider` (`src/pages/read/ui/VerseByVerseBooksSlider.tsx`);
 - «Тематические и доктринальные» — `TopicalAndThematicBooksSlider` (`src/pages/read/ui/TopicalAndThematicBooksSlider.tsx`);
-- Кнопка «?» в верхнем ряду экрана (не в нативной шапке) — онбординг/обзор возможностей (см. [../features/onboarding.md](../features/onboarding.md)).
+- Крупный заголовок «Читать» (`ScreenTitleRow` из `shared/ui`: `FONT_SIZES.h1`, `fontWeight: '700'`) — слева в закреплённом верхнем ряду; кнопка «?» (`HelpHeaderButton`) — справа — онбординг/обзор возможностей (см. [../features/onboarding.md](../features/onboarding.md)). Ряд лежит **вне** `ScrollView` (не скроллится вместе с контентом, в отличие от «Слушать»/«Ещё»); корневой `SafeAreaView` берёт верхний инсет по умолчанию, без повторного `insets.top`.
 
 Планируемые переходы: тап на книгу → `/read/book-reader`; тап на заголовок → `/read/books-list`.
 

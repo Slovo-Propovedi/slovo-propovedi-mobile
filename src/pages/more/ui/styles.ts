@@ -1,11 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET } from 'shared/ui/theme'
-
-// Listen's top row (icon buttons with a 48pt minimum touch target) is 48pt
-// tall and centers its content at ≈24pt below the top inset. Padding this
-// header by half the difference puts title and shield on that line.
-const LISTEN_TOP_ROW_HEIGHT = MIN_TOUCH_TARGET
-const HEADER_TOP_OFFSET = (LISTEN_TOP_ROW_HEIGHT - MIN_TOUCH_TARGET) / 2
+import { COLORS, FONT_SIZES, INDENTS } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
   appDescription: {
@@ -23,28 +17,13 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: INDENTS.low,
-    // The in-flow shield's 48pt touch target keeps the padded content box 48pt
-    // tall; pairing it with paddingTop puts the title and shield centers on the
-    // same ≈28pt line as Listen's 56pt top row.
-    minHeight: MIN_TOUCH_TARGET,
-    // paddingLeft sets the title's inset; the tighter paddingRight is the right
-    // inset for the shield, which is an in-flow row sibling (no absolute slot).
-    paddingLeft: INDENTS.medium,
-    paddingRight: INDENTS.low,
-    paddingTop: HEADER_TOP_OFFSET,
-  },
-  headerActions: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.low,
-  },
+  // The app name/version block sits right under the large title row. Top-row
+  // alignment (48pt min height) is owned by ScreenTitleRow, so this block only
+  // keeps the content inset and a small gap below the title.
   headerTexts: {
-    flex: 1,
     flexDirection: 'column',
+    paddingHorizontal: INDENTS.high,
+    paddingTop: INDENTS.low,
   },
   itemContainer: {
     borderBottomColor: COLORS.disabled,

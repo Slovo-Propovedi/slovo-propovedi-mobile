@@ -237,6 +237,12 @@ describe('<ListenScreen>', () => {
     expect(getByText('BLUR_TARGET:/listen')).toBeTruthy()
   })
 
+  test('renders the large screen title', async () => {
+    const { getByRole } = await renderWithProviders(<ListenScreenWithSearch />, {})
+
+    expect(getByRole('header', { name: 'Слушать' })).toBeTruthy()
+  })
+
   test('renders the my-playlists section title', async () => {
     const { getByLabelText } = await renderWithProviders(<ListenScreenWithSearch />, {})
 

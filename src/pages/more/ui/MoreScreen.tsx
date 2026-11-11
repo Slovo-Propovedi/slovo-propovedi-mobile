@@ -6,7 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { HelpHeaderButton, OnboardingTarget, useTourScrollable } from 'features/onboarding'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { APP_NAME, APP_VERSION } from 'shared/config'
-import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
+import { BLUR_TARGET_ROUTES, BlurBackdrop, ScreenTitleRow } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { AdminPanelButton } from './AdminPanelButton'
 import { MoreMenuSettingsItem } from './MoreMenuSettingsItem'
@@ -39,15 +39,13 @@ export const MoreScreen = () => {
         ]}
       >
         <ScrollView ref={tourScrollableRef}>
-          <View style={styles.header}>
-            <View style={styles.headerTexts}>
-              <Text style={[styles.appName, { color: currentTheme.text }]}>{APP_NAME}</Text>
-              <Text style={styles.appVersion}>v{APP_VERSION}</Text>
-            </View>
-            <View style={styles.headerActions}>
-              {canOpenAdminPanel && <AdminPanelButton />}
-              <HelpHeaderButton />
-            </View>
+          <ScreenTitleRow title='Ещё'>
+            {canOpenAdminPanel && <AdminPanelButton />}
+            <HelpHeaderButton />
+          </ScreenTitleRow>
+          <View style={styles.headerTexts}>
+            <Text style={[styles.appName, { color: currentTheme.text }]}>{APP_NAME}</Text>
+            <Text style={styles.appVersion}>v{APP_VERSION}</Text>
           </View>
           <Text style={[styles.appDescription, { color: currentTheme.textMuted }]}>
             Приложение для прослушивания и чтения проповедей

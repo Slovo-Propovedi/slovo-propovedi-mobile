@@ -82,6 +82,12 @@ describe('<MoreScreen>', () => {
     expect(getByText('Приложение для прослушивания и чтения проповедей')).toBeTruthy()
   })
 
+  test('renders the large screen title', async () => {
+    const { getByRole } = await renderWithProviders(<MoreScreen />)
+
+    expect(getByRole('header', { name: 'Ещё' })).toBeTruthy()
+  })
+
   test('exposes the page content as the /more blur backdrop', async () => {
     const { getByText } = await renderWithProviders(<MoreScreen />)
 

@@ -27,6 +27,7 @@ export { PullToRefresh } from './refresh-control/PullToRefresh'
 export { createRefreshControl } from './refresh-control/refresh-control'
 export { RefreshButton } from './refresh-control/RefreshButton'
 export { RefreshContext } from './refresh-control/refreshContext'
+export { ScreenTitleRow } from './screen-title/ScreenTitleRow'
 export { Slider } from './slider/slider'
 export { SliderItemTextBackgroundStyle } from './slider/slider-item-text/slider-item-text.types'
 export {

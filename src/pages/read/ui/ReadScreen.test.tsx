@@ -148,6 +148,12 @@ describe('<ReadScreen>', () => {
     expect(getByText(TOPICAL_TITLE)).toBeTruthy()
   })
 
+  test('renders the large screen title', async () => {
+    const { getByRole } = await renderWithProviders(<ReadScreen />)
+
+    expect(getByRole('header', { name: 'Читать' })).toBeTruthy()
+  })
+
   test('exposes the page content as the /read blur backdrop', async () => {
     const { getByText } = await renderWithProviders(<ReadScreen />)
 
