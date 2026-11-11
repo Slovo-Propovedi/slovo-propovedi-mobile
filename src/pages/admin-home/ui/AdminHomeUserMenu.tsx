@@ -54,6 +54,7 @@ export const AdminHomeUserMenu = ({ user }: { user: APITypes.UserResponse | null
       )}
       <MenuDropdown
         items={items}
+        placement='below'
         anchor={menuAnchor}
         anchorRef={buttonRef}
         visible={menuVisible}

@@ -1,5 +1,5 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
-import { Platform } from 'react-native'
+import { Dimensions, Platform, StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { createKeyDownEvent } from '../../lib/testing/createKeyEvent'
 import { installFakeDom } from '../../lib/testing/installFakeDom'
@@ -27,7 +27,7 @@ const defaultProps = {
   visible: true,
 }
 
-const renderMenu = async (props?: Partial<typeof defaultProps>) =>
+const renderMenu = async (props?: Partial<React.ComponentProps<typeof MenuDropdown>>) =>
   renderWithProviders(<MenuDropdown {...defaultProps} {...props} />)
 
 const measureMenu = async (container: TestInstance) => {
@@ -39,6 +39,14 @@ const measureMenu = async (container: TestInstance) => {
       nativeEvent: { layout: { height: 100, width: 160, x: 0, y: 0 } },
     })
   })
+}
+
+const getMenuStyle = (container: TestInstance) => {
+  const layoutView = container.queryAll(node => node.props.onLayout !== undefined, {
+    includeSelf: true,
+  })[0]
+
+  return StyleSheet.flatten(layoutView.props.style)
 }
 
 describe('<MenuDropdown>', () => {
@@ -95,6 +103,25 @@ describe('<MenuDropdown>', () => {
     fireEvent.press(screen.getByText('Пункт'))
 
     expect(onPress).not.toHaveBeenCalled()
+  })
+
+  test('placement below opens the menu under the anchor', async () => {
+    jest.spyOn(Dimensions, 'get').mockReturnValue({
+      fontScale: 1,
+      height: 844,
+      scale: 1,
+      width: 390,
+    })
+
+    try {
+      const { container } = await renderMenu({ placement: 'below' })
+
+      await measureMenu(container)
+
+      expect(getMenuStyle(container)).toMatchObject({ right: 46, top: 540 })
+    } finally {
+      jest.restoreAllMocks()
+    }
   })
 })
 
