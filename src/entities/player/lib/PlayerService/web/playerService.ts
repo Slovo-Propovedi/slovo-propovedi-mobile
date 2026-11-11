@@ -8,7 +8,7 @@ import { createPlayerControllers } from './playerControllers'
 import { createPubSub } from './playerPubSub'
 import { createWebPlayerState } from './playerState'
 import { recoverStreamAfterReconnect as heal, resumeWebAfterPause } from './reconnectHeal'
-import { createResumeSeekReassert, type ResumeSeekReassert } from './resumeSeekReassert'
+import { createResumeSeekReassert, type ResumeSeekReassertHandle } from './resumeSeekReassert'
 import { createTrackElement } from './trackElement'
 import { createVolumeControl } from './volumeControl'
 
@@ -84,7 +84,7 @@ export class WebPlayerService {
       mediaSession: this.controllers.mediaSession,
       noteLivePosition: this.controllers.resume.noteLivePosition,
       restoreInterruptedPosition: this.controllers.resume.maybeRestore,
-      resumeSeekReassert: this.resumeReassert,
+      resumeSeekReassert: this.resumeReassert.reassert,
       startStatusTracker: this.controllers.statusTracker.start,
       state: this.state,
       stopStatusTracker: this.controllers.statusTracker.stop,
@@ -101,10 +101,11 @@ export class WebPlayerService {
     this.audioInstance = null
     registerWebAudioElement(null)
     this.controllers.resume.reset(0)
+    this.resumeReassert.reset()
     this.controllers.mediaSession.clear()
   }
 
-  private resumeReassert: ResumeSeekReassert = () => {}
+  private resumeReassert: ResumeSeekReassertHandle = { reassert: () => {}, reset: () => {} }
   private audioInstance: HTMLAudioElement | null = null
   private detachAudioEvents: (() => void) | null = null
   private playbackRate: PlaybackRate = 1
@@ -113,7 +114,8 @@ export class WebPlayerService {
   private state = createWebPlayerState(this.pubsub)
   private controllers = createPlayerControllers({
     getAudio: () => this.audioInstance,
-    getReconcile: () => this.resumeReassert,
+    getReconcile: () => this.resumeReassert.reassert,
+    resetResumeReassert: () => this.resumeReassert.reset(),
     state: this.state,
   })
 }

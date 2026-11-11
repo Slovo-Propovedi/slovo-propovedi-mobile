@@ -10,6 +10,7 @@ interface TransportDeps {
   flushProgressAtCurrentTime: () => void
   getAudio: () => HTMLAudioElement | null
   mediaSession: ReturnType<typeof createWebMediaSession>
+  resetResumeReassert: () => void
   resume: ReturnType<typeof createInterruptionResumeController>['resume']
   state: WebPlayerState
   statusTracker: ReturnType<typeof createStatusTracker>
@@ -64,6 +65,8 @@ export const createTransport = (deps: TransportDeps) => ({
     if (audio) audio.currentTime = 0
 
     deps.resume.reset(0)
+    // Disarms the cold-start resume reassert so replay after stop starts from 0:00.
+    deps.resetResumeReassert()
     deps.statusTracker.stop()
     deps.state.setIsPlaying(false)
   },

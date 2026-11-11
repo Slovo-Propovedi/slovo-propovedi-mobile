@@ -622,4 +622,13 @@ describe('WebPlayerService resume-seek reassert wiring', () => {
     expect(audioStubs[0].element.currentTime).toBe(120)
     expect(audioStubs[1].element.currentTime).toBe(60)
   })
+
+  test('stop() disarms the pending one-shot so replay does not seek back', async () => {
+    await playerService.loadAudio(AUDIO_URL, 120000)
+
+    await playerService.stop()
+    audioStubs[0].fireEvent('playing')
+
+    expect(audioStubs[0].element.currentTime).toBe(0)
+  })
 })

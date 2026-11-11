@@ -8,6 +8,7 @@ import { createTransport } from './transport'
 interface PlayerControllersDeps {
   getAudio: () => HTMLAudioElement | null
   getReconcile: () => ResumeSeekReassert
+  resetResumeReassert: () => void
   state: WebPlayerState
 }
 
@@ -37,6 +38,7 @@ export const createPlayerControllers = (deps: PlayerControllersDeps) => {
     flushProgressAtCurrentTime: resumeController.flushProgressAtCurrentTime,
     getAudio: deps.getAudio,
     mediaSession,
+    resetResumeReassert: deps.resetResumeReassert,
     resume,
     state: deps.state,
     statusTracker,

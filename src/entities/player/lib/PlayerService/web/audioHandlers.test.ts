@@ -2,7 +2,11 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { attachWebAudioHandlers, reportPlayError } from './audioHandlers'
-import { createResumeSeekReassert, type ResumeSeekReassert } from './resumeSeekReassert'
+import {
+  createResumeSeekReassert,
+  PLAYABLE_READY_STATE,
+  type ResumeSeekReassert,
+} from './resumeSeekReassert'
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
@@ -30,6 +34,7 @@ const createElementStub = (): AudioElementStub => {
     },
     currentTime: 0,
     duration: 0,
+    readyState: PLAYABLE_READY_STATE,
     removeEventListener: (type: string, handler: () => void) => {
       listeners.get(type)?.delete(handler)
     },
@@ -143,7 +148,7 @@ describe('attachWebAudioHandlers', () => {
         if (assignments.length > 1) storedTime = value
       },
     })
-    const reassert = createResumeSeekReassert(RESUME_POSITION_MS, state, {
+    const { reassert } = createResumeSeekReassert(RESUME_POSITION_MS, state, {
       updatePositionState: jest.fn(),
     })
     attachWebAudioHandlers(createDeps(element, state, RESUME_POSITION_MS, reassert))
@@ -169,7 +174,7 @@ describe('attachWebAudioHandlers', () => {
         storedTime = value
       },
     })
-    const reassert = createResumeSeekReassert(RESUME_POSITION_MS, state, {
+    const { reassert } = createResumeSeekReassert(RESUME_POSITION_MS, state, {
       updatePositionState: jest.fn(),
     })
     attachWebAudioHandlers(createDeps(element, state, RESUME_POSITION_MS, reassert))

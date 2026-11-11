@@ -29,8 +29,8 @@ const createMediaSession = () => ({ updatePositionState: jest.fn() })
 const createReassert = (initialPositionMs: number) => {
   const state = createState()
   const mediaSession = createMediaSession()
-  const reassert = createResumeSeekReassert(initialPositionMs, state, mediaSession)
-  return { mediaSession, reassert, state }
+  const { reassert, reset } = createResumeSeekReassert(initialPositionMs, state, mediaSession)
+  return { mediaSession, reassert, reset, state }
 }
 
 describe('createResumeSeekReassert', () => {
@@ -118,5 +118,16 @@ describe('createResumeSeekReassert', () => {
 
   test('exposes HAVE_FUTURE_DATA as the playable readyState threshold', () => {
     expect(PLAYABLE_READY_STATE).toBe(3)
+  })
+
+  test('reset() disarms a pending one-shot so the next call does not seek', () => {
+    const { reassert, reset, state } = createReassert(RESUME_POSITION_MS)
+    const audio = createAudio(0, PLAYABLE_READY_STATE)
+
+    reset()
+    reassertOn(reassert, audio)
+
+    expect(audio.currentTime).toBe(0)
+    expect(state.setPosition).not.toHaveBeenCalled()
   })
 })
