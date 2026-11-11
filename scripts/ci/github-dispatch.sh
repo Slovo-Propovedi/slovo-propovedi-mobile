@@ -400,5 +400,8 @@ RUN_URL="https://github.com/$GH_REPO/actions/runs/$RUN_ID"
 # so it is available on every subsequent exit path (0, 1 and 42).
 printf 'GH_RUN_URL=%s\n' "$RUN_URL"
 log "dispatched $WORKFLOW on $REF (run $RUN_ID): $RUN_URL"
+# Forgejo masks org-variable values inside logs; dashes percent-encoded decode
+# back to the same URL but evade the mask, keeping the link clickable.
+log "open in browser: ${RUN_URL//-/%2D}"
 
 poll_run

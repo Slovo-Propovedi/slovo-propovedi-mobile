@@ -160,6 +160,9 @@ jobs:
           # MIRROR_GITHUB_TOKEN if its scopes suffice — see
           # docs/features/ci-orchestration.md.
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          # Automatic Forgejo token: posts the live `pending` CI status as soon
+          # as the GitHub run is discovered (best-effort).
+          FORGEJO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # GitHub org has hyphens, Forgejo org has underscores.
           GH_REPO: Slovo-Propovedi/slovo-propovedi-mobile
           WORKFLOW: ci.yml
@@ -182,7 +185,8 @@ jobs:
           bash scripts/ci/github-dispatch.sh > "$DISPATCH_OUT" &
           DISPATCH_PID=$!
 
-          write_run_summary() {
+          pending_posted=false
+          announce_run() {
             # Forgejo masks org-variable values (e.g. MOBILE_REPOSITORY_NAME)
             # inside URLs, which breaks the markdown href; percent-encoded
             # dashes decode to the same URL but no longer contain the masked
@@ -192,6 +196,16 @@ jobs:
               echo '## CI dispatched to GitHub-hosted runners'
               echo "- Run: [${RUN_URL##*/}](${summary_url}) — статус и логи в GitHub Actions"
             } | scripts/ci/step-summary.sh || true
+            # A job summary is rendered only after the job completes, so the
+            # run is also announced as a pending commit status: it shows up on
+            # the commit page immediately, and the gate overwrites it with the
+            # final verdict later.
+            if [ "$pending_posted" != "true" ]; then
+              pending_posted=true
+              bash scripts/ci/forgejo-set-status.sh "${{ github.sha }}" pending "CI / checks" "$RUN_URL" \
+                "Checks running on GitHub-hosted runners" \
+                || echo "note: pending CI status was not posted (best-effort)"
+            fi
           }
 
           # Publish the run link as soon as the dispatcher discovers the run: the
@@ -201,7 +215,7 @@ jobs:
           for _ in $(seq 1 150); do
             RUN_URL=$(sed -n 's/^GH_RUN_URL=//p' "$DISPATCH_OUT" | tail -1)
             if [ -n "$RUN_URL" ]; then
-              write_run_summary
+              announce_run
               break
             fi
             kill -0 "$DISPATCH_PID" 2>/dev/null || break
@@ -218,7 +232,7 @@ jobs:
           if [ -z "$RUN_URL" ]; then
             RUN_URL=$(printf '%s\n' "$OUTPUT" | sed -n 's/^GH_RUN_URL=//p' | tail -1)
             if [ -n "$RUN_URL" ]; then
-              write_run_summary
+              announce_run
             fi
           fi
           set -e
