@@ -11,6 +11,8 @@
 // the wipe gets a bounded number of microtask hops instead of being awaited
 // unconditionally; the in-memory mocks settle well within it. Microtasks are
 // used because they are immune to jest fake timers.
+import { clearToastTimerForTests } from '../src/shared/model/toast'
+
 const MAX_MICROTASK_HOPS = 100
 
 const settleWithin = async (promise, hops) => {
@@ -24,7 +26,7 @@ const settleWithin = async (promise, hops) => {
 
 afterEach(async () => {
   // A pending toast reset timer would outlive the test and keep the worker alive.
-  require('../src/shared/model/toast').clearToastTimerForTests()
+  clearToastTimerForTests()
 
   // Re-arm both storage backends before the wipe: a test's resetAllMocks()/
   // restoreAllMocks() may have stripped their jest.fn implementations.
