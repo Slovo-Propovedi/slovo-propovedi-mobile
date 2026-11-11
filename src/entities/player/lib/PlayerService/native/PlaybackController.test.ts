@@ -1,5 +1,6 @@
 import { type AudioPlayer } from 'expo-audio'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { mockConsole } from 'shared/mocks'
 import { currentAudioAtom, durationAtom } from '../../../model'
 import { savePlaybackProgress } from '../../playbackProgress'
 import { playbackController } from './PlaybackController'
@@ -107,6 +108,7 @@ describe('PlaybackController stop flush', () => {
   })
 
   test('stop() still flushes the pre-stop position when seekTo(0) rejects', async () => {
+    mockConsole('error')
     ;(ctx.get as jest.Mock).mockImplementation(atom => {
       if (atom === currentAudioAtom) return { id: 'sermon-1' }
       if (atom === durationAtom) return 100000

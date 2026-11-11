@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { LISTENING_HISTORY, LISTENING_PROGRESS_SNAPSHOT } from 'shared/config'
+import { mockConsole } from 'shared/mocks'
 import { reportError } from 'shared/model/error-dialog'
 import { historyAtom, isHistoryLoadedAtom } from '../model/historyAtom'
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'
@@ -69,6 +70,7 @@ describe('loadHistoryAction', () => {
   })
 
   test('marks history as loaded and keeps empty atom when storage read fails', async () => {
+    mockConsole('error')
     jest.spyOn(AsyncStorage, 'getItem').mockRejectedValueOnce(new Error('read failed'))
 
     const ctx = createCtx()

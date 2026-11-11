@@ -4,6 +4,7 @@ import {
   cacheQueueAtom,
 } from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { mockConsole } from 'shared/mocks'
 import { isOnlineAtom } from 'shared/model/network'
 import { currentAudioAtom } from '../model'
 import { playerService } from './PlayerService'
@@ -149,20 +150,13 @@ describe('reconnectRecovery', () => {
     jest
       .mocked(playerService.recoverStreamAfterReconnect)
       .mockRejectedValue(new Error('heal failed'))
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    try {
-      currentAudioAtom(ctx, AUDIO)
-      isOnlineAtom(ctx, false)
-      isOnlineAtom(ctx, true)
-      await flushMicrotasks()
+    const { error } = mockConsole('error')
+    currentAudioAtom(ctx, AUDIO)
+    isOnlineAtom(ctx, false)
+    isOnlineAtom(ctx, true)
+    await flushMicrotasks()
 
-      expect(errorSpy).toHaveBeenCalledWith(
-        '[reconnectRecovery] stream heal failed:',
-        expect.any(Error),
-      )
-    } finally {
-      errorSpy.mockRestore()
-    }
+    expect(error).toHaveBeenCalledWith('[reconnectRecovery] stream heal failed:', expect.any(Error))
   })
 
   describe('settle-then-retry (Issue #109)', () => {
@@ -226,7 +220,7 @@ describe('reconnectRecovery', () => {
     })
 
     test('still queued at settle timeout warns and does not re-enqueue', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      const { warn } = mockConsole('warn')
       cacheQueueAtom(ctx, { [AUDIO.audioUrl]: { enqueuedAt: Date.now(), source: 'auto' } })
       currentAudioAtom(ctx, AUDIO)
       isOnlineAtom(ctx, false)
@@ -236,17 +230,16 @@ describe('reconnectRecovery', () => {
       await jest.advanceTimersByTimeAsync(SETTLE_POLL_TIMEOUT_MS)
       await flushMicrotasks()
 
-      expect(warnSpy).toHaveBeenCalledWith(
+      expect(warn).toHaveBeenCalledWith(
         '[reconnectRecovery] download still active after settle timeout:',
         AUDIO.audioUrl,
       )
       expect(startBackgroundCaching).not.toHaveBeenCalled()
       expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
-      warnSpy.mockRestore()
     })
 
     test('isCached rejection during the settle re-check is caught and logged', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      const { warn } = mockConsole('warn')
       jest
         .mocked(audioCacheService.isCached)
         .mockResolvedValueOnce(false)
@@ -261,13 +254,12 @@ describe('reconnectRecovery', () => {
       await jest.advanceTimersByTimeAsync(SETTLE_POLL_INTERVAL_MS)
       await flushMicrotasks()
 
-      expect(warnSpy).toHaveBeenCalledWith(
+      expect(warn).toHaveBeenCalledWith(
         '[reconnectRecovery] re-enqueue check failed:',
         expect.any(Error),
       )
       expect(startBackgroundCaching).not.toHaveBeenCalled()
       expect(playerService.recoverStreamAfterReconnect).toHaveBeenCalledWith(AUDIO.audioUrl)
-      warnSpy.mockRestore()
     })
   })
 })

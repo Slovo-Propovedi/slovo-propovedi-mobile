@@ -1,6 +1,7 @@
 import { type AudioPlayer } from 'expo-audio'
 import { AppState } from 'react-native'
 import { getLocalAppIconUri } from 'shared/lib/app-icon'
+import { mockConsole } from 'shared/mocks'
 import { reportError } from 'shared/model/error-dialog'
 import { lockScreenControls } from './LockScreenControls'
 
@@ -92,6 +93,7 @@ describe('setMetadata artwork sanitization', () => {
   })
 
   test('does not propagate a native rejection and reports the error', () => {
+    mockConsole('error')
     const { player, setActiveForLockScreen } = createPlayer()
     setActiveForLockScreen.mockImplementation(() => {
       throw new Error(NATIVE_REJECTION_MESSAGE)
@@ -103,6 +105,7 @@ describe('setMetadata artwork sanitization', () => {
 
   test('does not propagate a native rejection from the retry path', () => {
     jest.useFakeTimers()
+    mockConsole('error')
 
     const setActiveForLockScreen = jest.fn(() => {
       throw new Error(NATIVE_REJECTION_MESSAGE)
@@ -128,6 +131,7 @@ describe('setMetadata artwork sanitization', () => {
   })
 
   test('clear() does not propagate a native rejection and reports the error', () => {
+    mockConsole('error')
     const { player, setActiveForLockScreen } = createPlayer()
     setActiveForLockScreen.mockImplementation(() => {
       throw new Error(NATIVE_REJECTION_MESSAGE)

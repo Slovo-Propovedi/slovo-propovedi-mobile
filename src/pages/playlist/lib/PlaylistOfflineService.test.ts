@@ -11,6 +11,7 @@ import {
   removeFromQueueBySource,
 } from 'entities/offline-cache'
 import { waitForOnline } from 'shared/lib/network'
+import { mockConsole } from 'shared/mocks'
 import { isCachingPlaylistAtom } from '../model'
 import { isNetworkError } from './isNetworkError'
 import { playlistOfflineNotifications } from './PlaylistOfflineNotifications'
@@ -183,6 +184,7 @@ describe('playlistOfflineService.addPlaylistToOffline', () => {
   })
 
   test('aborts run when offline before a track and swallows network error', async () => {
+    mockConsole('log')
     const ctx = createCtx()
     mockedWaitForOnline.mockResolvedValue(false)
 

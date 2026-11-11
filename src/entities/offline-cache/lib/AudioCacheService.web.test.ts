@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { mockConsole } from 'shared/mocks'
 import {
   _resetInflightCacheForTesting,
   audioCacheService,
@@ -526,6 +527,7 @@ describe('AudioCacheService.web', () => {
   })
 
   test('recovers cache bucket when open fails once', async () => {
+    mockConsole('error')
     const fetchSpy = mockFetchOk(1024)
     cacheStorage.open.mockRejectedValueOnce(new TypeError('corrupt bucket'))
 
@@ -538,6 +540,7 @@ describe('AudioCacheService.web', () => {
   })
 
   test('rejects cleanly when cache storage is unusable', async () => {
+    mockConsole('error')
     cacheStorage.open.mockRejectedValue(new TypeError('corrupt bucket'))
     unhandledRejectionSpy = jest.fn()
     process.on('unhandledRejection', unhandledRejectionSpy)

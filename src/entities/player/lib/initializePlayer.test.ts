@@ -6,6 +6,7 @@ import {
   CURRENT_SOUND_VOLUME,
   PLAYER_STARTUP_ATTEMPTS,
 } from 'shared/config'
+import { mockConsole } from 'shared/mocks'
 import { initializePlayer } from './initializePlayer'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/native/AudioModeManager'
@@ -77,6 +78,7 @@ describe('startup crash guard', () => {
 
   describe('initializePlayer', () => {
     test('skips restore when counter >= 3 and resets counter', async () => {
+      mockConsole('warn')
       await AsyncStorage.setItem(PLAYER_STARTUP_ATTEMPTS, '3')
       await seedStoredAudio()
 
@@ -115,6 +117,7 @@ describe('startup crash guard', () => {
     })
 
     test('resets counter when stored audio fails zod validation (mismatch is not a crash)', async () => {
+      mockConsole('warn')
       await AsyncStorage.setItem(PLAYER_STARTUP_ATTEMPTS, '1')
       await AsyncStorage.setItem(
         CURRENT_AUDIO,
@@ -128,6 +131,7 @@ describe('startup crash guard', () => {
     })
 
     test('keeps counter incremented when restore throws', async () => {
+      mockConsole('error')
       await AsyncStorage.setItem(PLAYER_STARTUP_ATTEMPTS, '1')
       await seedStoredAudio()
       mockedLoadAudio.mockRejectedValueOnce(new Error('boom'))

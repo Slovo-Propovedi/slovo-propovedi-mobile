@@ -3,6 +3,7 @@ import { createCtx } from '@reatom/framework'
 import { currentAudioAtom, currentPlaylistAtom } from 'entities/player/@x/playlist'
 import { type SermonData, toAudioPlayerData } from 'entities/sermon'
 import { CURRENT_PLAYLIST } from 'shared/config'
+import { mockConsole } from 'shared/mocks'
 import { togglePlaylistSermon } from './localPlaylistMembership'
 import {
   FAVORITES_PLAYLIST,
@@ -222,6 +223,7 @@ describe('togglePlaylistSermon', () => {
   })
 
   test('commits the atom even when persisting fails', async () => {
+    mockConsole('error')
     jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('storage down'))
     const ctx = createCtx()
     myPlaylistsAtom(ctx, [FAVORITES_PLAYLIST, playlist('a')])

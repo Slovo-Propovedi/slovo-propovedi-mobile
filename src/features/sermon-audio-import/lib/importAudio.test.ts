@@ -1,5 +1,6 @@
 import { AxiosError, type AxiosResponse } from 'axios'
 import { Platform } from 'react-native'
+import { mockConsole } from 'shared/mocks'
 import { type ImportSettings } from 'shared/model'
 import { importAudio } from './importAudio'
 import { type ImportPhaseProgress } from './importTypes'
@@ -243,6 +244,7 @@ describe('importAudio', () => {
   })
 
   test('reports an upload failure with a dedicated code', async () => {
+    mockConsole('error')
     const { onPhase } = collectProgress()
     mockUploadSermonFile.mockRejectedValue(new Error('Request failed with status code 413'))
 
@@ -310,6 +312,7 @@ describe('importAudio', () => {
   })
 
   test('deletes the temporary file when the upload fails', async () => {
+    mockConsole('error')
     const { onPhase } = collectProgress()
     mockUploadSermonFile.mockRejectedValue(new Error('nope'))
 

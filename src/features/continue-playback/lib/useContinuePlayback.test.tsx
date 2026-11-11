@@ -4,6 +4,7 @@ import { durationAtom, positionAtom } from 'entities/player'
 import { myPlaylistsAtom, type PlaylistData } from 'entities/playlist'
 import { dynamicSectionsAtom, type SectionData } from 'entities/section'
 import { type AudioPlayerData } from 'entities/sermon'
+import { mockConsole } from 'shared/mocks'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { useContinuePlayback } from './useContinuePlayback'
 
@@ -295,6 +296,7 @@ describe('useContinuePlayback', () => {
   })
 
   test('offer skips when the membership fetch fails', async () => {
+    mockConsole('warn')
     const { result } = await renderProbe()
     const serverSermon: AudioPlayerData = { ...SERMON, id: UUID }
     mockSermonFindOne.mockRejectedValue(new Error('offline'))
