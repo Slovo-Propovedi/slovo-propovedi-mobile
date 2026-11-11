@@ -37,6 +37,9 @@ const defaultProps = {
 
 const mockedSetStringAsync = setStringAsync as jest.MockedFunction<typeof setStringAsync>
 
+// The real setStringAsync resolves; the copy handler chains .catch on its result.
+mockedSetStringAsync.mockResolvedValue(true)
+
 describe('<ErrorModal>', () => {
   beforeEach(() => {
     onCloseMock.mockClear()

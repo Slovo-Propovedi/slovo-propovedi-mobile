@@ -22,7 +22,8 @@ export const ErrorModal = ({
 
     const errorText = `Error: ${error.message}\n\nStack trace:\n${error.stack || 'No stack trace available'}`
 
-    void setStringAsync(errorText)
+    // Clipboard copy is cosmetic: a rejected write is not actionable for the user.
+    void setStringAsync(errorText).catch(() => {})
   }
 
   const icon: ReactNode = (

@@ -16,7 +16,15 @@ export const useErrorCopy = (message: string, detail: string) => {
 
   const handleCopy = async () => {
     const text = `ОШИБКА: ${message}\n\nДЕТАЛИ:\n${detail}`.trim()
-    await setStringAsync(text)
+
+    // Clipboard copy is cosmetic: on a rejected write, stay silent and leave the
+    // button state untouched instead of flashing "copied" it never delivered.
+    try {
+      await setStringAsync(text)
+    } catch {
+      return
+    }
+
     setCopied(true)
     if (resetTimerRef.current !== null) clearTimeout(resetTimerRef.current)
 
