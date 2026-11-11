@@ -1,20 +1,17 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
-  // Строка действий «Выбрать из библиотеки» + «Загрузить …» в одну линию.
-  // Нижний отступ отделяет пару от следующей группы полей — сама строка
-  // остаётся привязанной к URL-полю выше.
-  actionsRow: {
-    flexDirection: 'row',
-    gap: INDENTS.low,
-    marginBottom: INDENTS.medium,
-  },
   coverPreview: {
     borderRadius: RADIUSES.low,
     height: 140,
     marginBottom: INDENTS.medium,
     width: '100%',
+  },
+  // Иконки загрузки/библиотеки внутри строки URL-поля, справа от карандаша.
+  fieldActions: {
+    flexDirection: 'row',
+    gap: INDENTS.lowest,
   },
   gridCell: {
     aspectRatio: 1,
@@ -30,26 +27,18 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     marginTop: INDENTS.low,
   },
-  libraryButton: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    borderWidth: 1,
-    flex: 1,
-    flexDirection: 'row',
-    gap: INDENTS.low,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: INDENTS.high,
-  },
-  libraryButtonLabel: {
-    fontSize: FONT_SIZES.base,
-  },
   libraryHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingLeft: INDENTS.medium,
     paddingRight: INDENTS.low,
+  },
+  libraryItem: {
+    borderRadius: RADIUSES.low,
+    borderWidth: 1,
+    paddingHorizontal: INDENTS.medium,
+    paddingVertical: INDENTS.middle,
   },
   libraryList: {
     flexGrow: 0,
@@ -86,23 +75,5 @@ export const styles = StyleSheet.create({
   state: {
     alignItems: 'center',
     paddingVertical: INDENTS.medium,
-  },
-  uploadButton: {
-    alignItems: 'center',
-    borderRadius: RADIUSES.low,
-    flex: 1,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: INDENTS.high,
-  },
-  uploadButtonContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.low,
-  },
-  uploadButtonText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
   },
 })

@@ -3,8 +3,10 @@ import { useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { CoverImage } from 'shared/ui'
 import { EditableUrlField } from 'shared/ui/form'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { IconButton } from 'shared/ui/icon-button'
+import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
+import { getFileKindLibraryIcon } from '../lib/fileKinds'
 import { useAdminFiles } from '../lib/useAdminFiles'
 import { useFileUpload } from '../lib/useFileUpload'
 import { FileLibraryModal } from './FileLibraryModal'
@@ -13,6 +15,7 @@ import { styles } from './styles'
 const PICK_LABEL = 'Выбрать из библиотеки'
 const UPLOAD_LABEL = 'Загрузить изображение'
 const LIBRARY_TITLE = 'Библиотека изображений'
+const KIND = 'image'
 
 // Выбор обложки: ручной ввод URL, галерея изображений из библиотеки файлов и
 // загрузка нового изображения (multipart с прогрессом).
@@ -25,8 +28,8 @@ export const CoverPicker = ({
 }) => {
   const { currentTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
-  const { files, isError, isLoading } = useAdminFiles('image')
-  const { error, isUploading, pickAndUpload, progress } = useFileUpload('image', onChange)
+  const { files, isError, isLoading } = useAdminFiles(KIND)
+  const { error, isUploading, pickAndUpload, progress } = useFileUpload(KIND, onChange)
 
   const selectFile = (url: string) => {
     onChange(url)
@@ -48,32 +51,35 @@ export const CoverPicker = ({
         label='Обложка (URL)'
         placeholder='https://…'
         onChangeText={onChange}
+        actions={
+          <View style={styles.fieldActions}>
+            <IconButton
+              accessibilityLabel={PICK_LABEL}
+              onPress={() => setIsOpen(true)}
+              Icon={
+                <Ionicons
+                  size={20}
+                  color={currentTheme.primary}
+                  name={getFileKindLibraryIcon(KIND)}
+                />
+              }
+            />
+            <IconButton
+              disabled={isUploading}
+              accessibilityLabel={UPLOAD_LABEL}
+              onPress={() => void pickAndUpload()}
+              accessibilityState={{ disabled: isUploading }}
+              Icon={
+                isUploading ? (
+                  <ActivityIndicator color={currentTheme.primary} />
+                ) : (
+                  <Ionicons size={20} name='cloud-upload-outline' color={currentTheme.primary} />
+                )
+              }
+            />
+          </View>
+        }
       />
-      <View style={styles.actionsRow}>
-        <TouchableItem
-          onPress={() => setIsOpen(true)}
-          style={[styles.libraryButton, { borderColor: currentTheme.textMuted }]}
-        >
-          <Ionicons size={20} name='albums-outline' color={currentTheme.primary} />
-          <Text style={[styles.libraryButtonLabel, { color: currentTheme.primary }]}>
-            {PICK_LABEL}
-          </Text>
-        </TouchableItem>
-        <TouchableItem
-          disabled={isUploading}
-          onPress={() => void pickAndUpload()}
-          style={[styles.uploadButton, { backgroundColor: currentTheme.primary }]}
-        >
-          {isUploading ? (
-            <ActivityIndicator color={COLORS.white} />
-          ) : (
-            <View style={styles.uploadButtonContent}>
-              <Ionicons size={20} color={COLORS.white} name='cloud-upload-outline' />
-              <Text style={styles.uploadButtonText}>{UPLOAD_LABEL}</Text>
-            </View>
-          )}
-        </TouchableItem>
-      </View>
       {isUploading ? (
         <View style={[styles.progressTrack, { backgroundColor: currentTheme.surface }]}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />

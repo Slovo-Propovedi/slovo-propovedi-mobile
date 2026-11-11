@@ -1,4 +1,4 @@
-import { getFileKindConfig, isAllowedExtension } from './fileKinds'
+import { getFileKindConfig, getFileKindLibraryIcon, isAllowedExtension } from './fileKinds'
 
 describe('isAllowedExtension', () => {
   test('accepts mp3 and m4a for the audio kind and rejects other extensions', () => {
@@ -39,5 +39,13 @@ describe('getFileKindConfig', () => {
     expect(getFileKindConfig('image').supportsLibrary).toBe(true)
     expect(getFileKindConfig('audio').supportsLibrary).toBe(false)
     expect(getFileKindConfig('text').supportsLibrary).toBe(false)
+  })
+})
+
+describe('getFileKindLibraryIcon', () => {
+  test('maps every kind to its own library icon', () => {
+    expect(getFileKindLibraryIcon('image')).toBe('image-outline')
+    expect(getFileKindLibraryIcon('audio')).toBe('musical-notes-outline')
+    expect(getFileKindLibraryIcon('text')).toBe('document-text-outline')
   })
 })
