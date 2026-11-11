@@ -75,7 +75,7 @@ index bf3f9c5..056a132 100644
      )
      sendStatusUpdate()
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 53c36f7..bb140eb 100644
+index 53c36f7..2539c6b 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -490,7 +490,9 @@ class AudioControlsService : MediaSessionService() {
@@ -89,7 +89,22 @@ index 53c36f7..bb140eb 100644
    }
  
    private fun clearSessionInternal() {
-@@ -557,6 +559,19 @@ class AudioControlsService : MediaSessionService() {
+@@ -534,8 +536,12 @@ class AudioControlsService : MediaSessionService() {
+       sessionMetadataPlayer = null
+       appContext?.mainQueue?.launch {
+         val context = appContext?.reactContext ?: return@launch
+-        val sessionPlayer = MetadataInjectingPlayer(resolveSessionPlayer(playable, options)).apply {
+-          updateMetadata(metadata)
++        // PATCH(patch-package): read the fields at rebuild time, not the captured
++        // parameters — a JS updateLockScreenMetadata may have landed between the
++        // release and this rebuild, and currentMetadata is then the fresh track
++        // (issue #149 follow-up).
++        val sessionPlayer = MetadataInjectingPlayer(resolveSessionPlayer(playable, currentOptions)).apply {
++          updateMetadata(currentMetadata)
+         }
+         val session = MediaSession.Builder(context, sessionPlayer)
+           .setId("ExpoAudioLockScreenSession_${playable.player.hashCode()}")
+@@ -557,6 +563,19 @@ class AudioControlsService : MediaSessionService() {
      }
    }
  
