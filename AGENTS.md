@@ -104,14 +104,13 @@ app/
 ├── settings.tsx          # → pages/settings (вне таб-группы)
 ├── about.tsx             # → pages/about (вне таб-группы)
 └── (tabs)/
-    ├── _layout.tsx       # 4 таба + CustomTabBar + ExpandablePlayer
+    ├── _layout.tsx       # 3 таба + CustomTabBar + ExpandablePlayer
     ├── listen/           # Стек раздела «Слушать»
     │   ├── _layout.tsx
     │   ├── index.tsx     # → pages/listen (главный экран)
     │   ├── playlist.tsx  # → pages/playlist
     │   └── playlist-list.tsx
     ├── read.tsx          # → pages/read (таб, ЗАБЛОКИРОВАН)
-    ├── study.tsx         # → pages/study (таб, ЗАБЛОКИРОВАН/заглушка)
     └── more.tsx          # → pages/more
 ```
 

@@ -138,7 +138,6 @@ app/
     │   ├── playlist.tsx
     │   └── playlist-list.tsx
     ├── read.tsx             # Read tab (single screen)
-    ├── study.tsx            # Study tab
     └── more.tsx             # More tab
 ```
 

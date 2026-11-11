@@ -1,1 +1,0 @@
-export { StudyScreen } from './ui'

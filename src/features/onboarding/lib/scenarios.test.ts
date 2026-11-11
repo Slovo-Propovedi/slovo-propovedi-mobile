@@ -127,7 +127,6 @@ describe('onboarding scenario data', () => {
     expect(scenariosById.settings.steps[0].tapTargetId).toBe('more.settings-item')
     expect(scenariosById.settings.steps[1].tapTargetId).toBe('more.settings-item')
     expect(scenariosById.read.steps[0].tapTargetId).toBe('tab.read')
-    expect(scenariosById.study.steps[0].tapTargetId).toBeUndefined()
   })
 
   test('settings tour follows the visual order of the settings rows', () => {

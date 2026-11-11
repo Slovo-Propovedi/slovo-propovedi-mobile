@@ -20,14 +20,13 @@ import { readScenario } from './scenarioData/read'
 import { searchScenario } from './scenarioData/search'
 import { settingsScenario } from './scenarioData/settings'
 import { shareScenario } from './scenarioData/share'
-import { studyScenario } from './scenarioData/study'
 import { welcomeScenario } from './scenarioData/welcome'
 import { whatsNewScenario } from './scenarioData/whatsNew'
 import { type OnboardingScenarioId } from './scenarioId'
 
 export interface OnboardingScenario {
   description: string
-  featureFlag?: 'read' | 'study'
+  featureFlag?: 'read'
   // A screen-bound scenario still offered in the «Глобальные» group on the screens it
   // does not name (its lead-up starts on one of its own screens). Without it, a
   // scenario with `screens` is hidden on every foreign screen.
@@ -94,7 +93,6 @@ export const scenarios: OnboardingScenario[] = [
   settingsScenario,
   backupScenario,
   readScenario,
-  studyScenario,
   shareScenario,
   welcomeScenario,
   whatsNewScenario,
@@ -121,7 +119,6 @@ export const scenariosById: Record<OnboardingScenarioId, OnboardingScenario> = {
   search: searchScenario,
   settings: settingsScenario,
   share: shareScenario,
-  study: studyScenario,
   welcome: welcomeScenario,
   whatsNew: whatsNewScenario,
 }
