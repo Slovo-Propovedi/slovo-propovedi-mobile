@@ -20,7 +20,7 @@ describe('useHeaderTitle', () => {
 
     const { result } = await renderHook(() => useHeaderTitle())
 
-    act(() => {
+    await act(async () => {
       result.current('Заголовок')
     })
 
@@ -40,7 +40,7 @@ describe('useHeaderTitle', () => {
 
     await unmount()
 
-    act(() => {
+    await act(async () => {
       setHeaderTitle?.('Заголовок')
     })
 

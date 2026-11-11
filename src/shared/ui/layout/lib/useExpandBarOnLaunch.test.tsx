@@ -22,7 +22,7 @@ describe('useExpandBarOnLaunch', () => {
 
     expect(ctx.get(isBarCollapsedAtom)).toBe(false)
 
-    act(() => {
+    await act(async () => {
       setBarCollapsed(ctx, true)
     })
 

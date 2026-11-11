@@ -12,6 +12,10 @@ jest.mock('shared/api', () => ({
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
+// The 300ms search debounce runs on a timer; `waitFor` advances it inside act, so the
+// debounced `setTerm` update lands within an act scope.
+jest.useFakeTimers()
+
 const deferred = <T,>() => {
   let resolve!: (value: T) => void
   const promise = new Promise<T>(res => {
@@ -52,7 +56,7 @@ describe('useSermonSearch', () => {
       void result.current.loadMore()
     })
 
-    rerender({ search: 'new' })
+    await rerender({ search: 'new' })
 
     await waitFor(() => expect(result.current.sermons.map(sermon => sermon.id)).toContain('fresh'))
 
