@@ -88,8 +88,8 @@ export const RecentSearchesSection = ({
 
 const styles = StyleSheet.create({
   clear: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
+    fontSize: FONT_SIZES.h3,
+    fontWeight: '400',
   },
   content: {
     paddingTop: INDENTS.low,
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   title: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES.h3,
     fontWeight: '700',
   },
 })

@@ -4,6 +4,7 @@ import { type ReactElement } from 'react'
 import { searchHistoryAtom, type SearchHistoryEntry } from 'entities/search-history'
 import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
+import { FONT_SIZES } from 'shared/ui/theme'
 import { RecentSearchesSection } from './RecentSearchesSection'
 
 // The feature barrel re-exports the player-coupled search UI; these rows only
@@ -79,6 +80,21 @@ describe('<RecentSearchesSection>', () => {
     expect(screen.getByText(CLEAR_LABEL)).toBeTruthy()
     expect(screen.getByText('Первая')).toBeTruthy()
     expect(screen.getByText('Вторая')).toBeTruthy()
+  })
+
+  test('renders the header on the next size token above the old one', async () => {
+    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, {
+      ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]),
+    })
+
+    const title = screen.getByText(SECTION_TITLE)
+    const clear = screen.getByText(CLEAR_LABEL)
+
+    expect(title).toHaveStyle({ fontSize: FONT_SIZES.h3, fontWeight: '700' })
+    // The clear action matches the title size but stays regular weight.
+    expect(clear).toHaveStyle({ fontSize: FONT_SIZES.h3, fontWeight: '400' })
+    expect(FONT_SIZES.h3).toBeGreaterThan(FONT_SIZES.lg)
+    expect(FONT_SIZES.h3).toBeLessThan(FONT_SIZES.h1)
   })
 
   test('renders nothing without history', async () => {
