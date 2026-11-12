@@ -7,10 +7,6 @@ export const styles = StyleSheet.create({
     height: 140,
     width: '100%',
   },
-  audioFill: {
-    borderRadius: RADIUSES.low,
-    height: '100%',
-  },
   audioProgress: {
     flex: 1,
   },
@@ -20,16 +16,6 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: INDENTS.medium,
     padding: INDENTS.medium,
-  },
-  audioTime: {
-    fontSize: FONT_SIZES.sm,
-    marginTop: INDENTS.lowest,
-  },
-  audioTrack: {
-    borderRadius: RADIUSES.low,
-    height: 6,
-    overflow: 'hidden',
-    width: '100%',
   },
   card: {
     borderRadius: RADIUSES.middle,

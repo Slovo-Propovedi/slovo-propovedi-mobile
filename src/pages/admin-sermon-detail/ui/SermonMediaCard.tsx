@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useAction } from '@reatom/npm-react'
+import { type AudioPlayer, type AudioStatus } from 'expo-audio'
 import { Linking, Text, View } from 'react-native'
 import { FILE_URL_PATTERN, YOUTUBE_URL_PATTERN } from 'shared/lib/validation/inputLimits'
 import { showToast } from 'shared/model'
@@ -56,10 +57,14 @@ const MediaLink = ({ label, pattern, url }: { label: string; pattern: RegExp; ur
 // Ничего не рендерится, если медиа нет.
 export const SermonMediaCard = ({
   audioUrl,
+  player,
+  status,
   textFileUrl,
   youtubeUrl,
 }: {
   audioUrl: null | string
+  player: AudioPlayer
+  status: AudioStatus
   textFileUrl: null | string
   youtubeUrl: null | string
 }) => {
@@ -70,7 +75,7 @@ export const SermonMediaCard = ({
   return (
     <View style={[styles.card, { backgroundColor: currentTheme.surface }]}>
       <Text style={[styles.cardTitle, { color: currentTheme.text }]}>Медиа</Text>
-      {audioUrl ? <SermonAudioPreview url={audioUrl} /> : null}
+      {audioUrl ? <SermonAudioPreview player={player} status={status} /> : null}
       {youtubeUrl ? (
         <MediaLink url={youtubeUrl} label={YOUTUBE_LABEL} pattern={YOUTUBE_URL_PATTERN} />
       ) : null}

@@ -33,7 +33,7 @@ jest.mock('shared/api', () => ({
 // expo-audio pulls in a native module that throws at import in Jest; stub the
 // hooks the audio preview relies on.
 jest.mock('expo-audio', () => ({
-  useAudioPlayer: () => ({ pause: jest.fn(), play: jest.fn() }),
+  useAudioPlayer: () => ({ pause: jest.fn(), play: jest.fn(), seekTo: jest.fn() }),
   useAudioPlayerStatus: () => ({
     currentTime: 0,
     duration: 0,

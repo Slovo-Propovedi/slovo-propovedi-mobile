@@ -1,27 +1,27 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio'
-import { Text, View } from 'react-native'
-import { millisToMinutesAndSeconds } from 'shared/lib/player'
+import { type AudioPlayer, type AudioStatus } from 'expo-audio'
+import { View } from 'react-native'
+import { PlayerProgressBar } from 'entities/player'
+import { reportError } from 'shared/model/error-dialog'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
 
 const PLAY_LABEL = 'Воспроизвести'
 const PAUSE_LABEL = 'Пауза'
-// Точность полосы прогресса: 0–100.
-const PROGRESS_MAX = 100
+const SEEK_ERROR_MESSAGE = 'Ошибка при перемотке аудио'
 
-// Простое превью аудио проповеди на expo-audio: play/pause и позиция.
-// Полноценный плеер приложения не переиспользуется — он управляется глобальным
-// singleton-состоянием, а здесь нужен лишь локальный предпросмотр без влияния
-// на очередь воспроизведения.
-export const SermonAudioPreview = ({ url }: { url: string }) => {
+// Превью аудио проповеди на expo-audio: play/pause и перематываемая полоса.
+// Экземпляр плеера создаётся экраном и передаётся сюда, чтобы состояние
+// воспроизведения не терялось при перерисовках карточки.
+export const SermonAudioPreview = ({
+  player,
+  status,
+}: {
+  player: AudioPlayer
+  status: AudioStatus
+}) => {
   const { currentTheme } = useTheme()
-  const player = useAudioPlayer(url)
-  const status = useAudioPlayerStatus(player)
-  const durationMillis = status.duration * 1000
-  const elapsedMillis = status.currentTime * 1000
-  const progress = durationMillis > 0 ? (elapsedMillis / durationMillis) * PROGRESS_MAX : 0
 
   const toggle = () => {
     if (status.playing) {
@@ -30,6 +30,13 @@ export const SermonAudioPreview = ({ url }: { url: string }) => {
     }
 
     player.play()
+  }
+
+  const handleSeek = (positionMillis: number) => {
+    void player.seekTo(positionMillis / 1000).catch(error => {
+      console.error('[SermonAudioPreview] seek failed:', error)
+      reportError(error, SEEK_ERROR_MESSAGE)
+    })
   }
 
   return (
@@ -45,19 +52,12 @@ export const SermonAudioPreview = ({ url }: { url: string }) => {
           />
         }
       />
-      <View style={styles.audioProgress}>
-        <View style={[styles.audioTrack, { backgroundColor: currentTheme.surface }]}>
-          <View
-            style={[
-              styles.audioFill,
-              { backgroundColor: currentTheme.primary, width: `${progress}%` },
-            ]}
-          />
-        </View>
-        <Text style={[styles.audioTime, { color: currentTheme.textMuted }]}>
-          {`${millisToMinutesAndSeconds(elapsedMillis)} / ${millisToMinutesAndSeconds(durationMillis)}`}
-        </Text>
-      </View>
+      <PlayerProgressBar
+        onSeek={handleSeek}
+        style={styles.audioProgress}
+        duration={status.duration * 1000}
+        position={status.currentTime * 1000}
+      />
     </View>
   )
 }
