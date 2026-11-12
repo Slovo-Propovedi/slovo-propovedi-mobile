@@ -636,11 +636,12 @@ jobs:
     # Deploy runs on every tag, including JS-only (no release exists there).
     # The release-asset steps below are gated on native mode separately.
     needs: [changes, android-package]
-    # Native tags: web image push / VPS deploy / release zip wait for a
-    # successful android sign, so a failed APK leaves no pushed image (mutable
-    # `latest`), no deploy and no web zip. js-only tags skip android-package
-    # (no native changes), so the condition passes and web ships as before.
-    if: "!cancelled() && needs.changes.result == 'success' && (needs.android-package.result == 'success' || needs.android-package.result == 'skipped')"
+    # Native tags: web image push / VPS deploy / release zip require a REAL
+    # android success. A skipped android-package means the dispatcher hard-failed
+    # (exit 44 moved mirror tag / 1 real failure / 43 superseded) and no APK was
+    # produced, so web must not ship either. js-only tags have no android job at
+    # all (skipped by the native gate), so they ship as before.
+    if: "!cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.native != 'true' || needs.android-package.result == 'success')"
     runs-on: ubuntu-24.04
 
     concurrency:
