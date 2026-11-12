@@ -37,6 +37,7 @@ export {
   WhereIsSlideTitleLocated,
 } from './slider/slider-item/slider-item.types'
 export { getSliderCardLayout, getSliderLayoutViewport } from './slider/slider-layout.lib'
+export { TimecodedText } from './TimecodedText'
 export { Toast } from './toast/Toast'
 export {
   OnPressTouchableListItem,
