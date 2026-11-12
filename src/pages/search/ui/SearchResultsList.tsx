@@ -62,7 +62,6 @@ export const SearchResultsList = ({
       { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
     ],
     ItemSeparatorComponent: SearchRowSeparator,
-    keyboardDismissMode: 'on-drag' as const,
     keyboardShouldPersistTaps: 'handled' as const,
     ListEmptyComponent: groupState.isLoading ? (
       <SearchResultsSkeleton />

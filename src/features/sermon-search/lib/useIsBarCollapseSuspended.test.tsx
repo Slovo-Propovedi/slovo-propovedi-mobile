@@ -51,4 +51,8 @@ describe('useIsBarCollapseSuspended', () => {
   test('stays suspended while an active search pins the field', async () => {
     expect(await renderSuspension({ audio: AUDIO, isSearchOpen: true, query: 'вера' })).toBe(true)
   })
+
+  test('stays suspended while search is open on an empty query', async () => {
+    expect(await renderSuspension({ audio: AUDIO, isSearchOpen: true, query: '' })).toBe(true)
+  })
 })
