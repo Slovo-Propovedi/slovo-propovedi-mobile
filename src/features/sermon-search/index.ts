@@ -12,7 +12,14 @@ export {
   searchQueryAtom,
   typeSearchInput,
 } from './model'
-export { isSearchFieldFocusedAtom, isSearchQueryActive } from './model-searchField'
+export {
+  holdSearchFocus,
+  isSearchFieldFocusedAtom,
+  isSearchFocusActiveAtom,
+  isSearchFocusHeldAtom,
+  isSearchQueryActive,
+  releaseSearchFocusHold,
+} from './model-searchField'
 export { closeSearch, closeSearchAndExpand } from './model-session'
 export { SearchBar } from './ui/SearchBar'
 export { SearchPlaylistRow } from './ui/SearchPlaylistRow'

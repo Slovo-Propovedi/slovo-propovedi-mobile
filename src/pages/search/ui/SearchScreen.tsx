@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Keyboard, Pressable, StyleSheet } from 'react-native'
-import { isSearchFieldFocusedAtom, searchQueryAtom } from 'features/sermon-search'
+import { isSearchFocusActiveAtom, searchQueryAtom } from 'features/sermon-search'
 import { type PlaylistData } from 'entities/playlist'
 import { isSearchHistoryLoadedAtom, loadSearchHistoryAction } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
@@ -36,12 +36,11 @@ export const SearchScreen = ({
   onSermonPress: (sermon: SermonData) => void
 }) => {
   const [query] = useAtom(searchQueryAtom)
-  const [isFocused] = useAtom(isSearchFieldFocusedAtom)
+  const [isFocusActive] = useAtom(isSearchFocusActiveAtom)
   const [isHistoryLoaded] = useAtom(isSearchHistoryLoadedAtom)
   const loadSearchHistory = useAction(loadSearchHistoryAction)
   const [scope, setScope] = useState<SearchScope>('listen')
   const [group, setGroup] = useState<SearchGroup>('sermons')
-  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false)
   const showResults = query.trim().length >= MIN_RESULTS_VIEW_LENGTH
   const paged = usePagedSearch(scope === 'listen' ? query : '')
   const firstSermon = paged.sermons.items[0]
@@ -64,12 +63,9 @@ export const SearchScreen = ({
     setGroup(toSearchGroup(key))
   }, [])
 
-  const handleClearDialogOpenChange = useCallback((open: boolean) => {
-    setIsClearDialogOpen(open)
-  }, [])
-
-  // The open clear dialog owns the focus, so it holds this pose too.
-  if (!isFocused && !isClearDialogOpen && !showResults) return <ScreenTitleRow title='Поиск' />
+  // The focused pose owns every short query; the title only returns when the
+  // field is really empty and focus is gone (no dialog hold either).
+  if (!isFocusActive && query.trim() === '') return <ScreenTitleRow title='Поиск' />
 
   return (
     <Pressable style={styles.container} onPress={Keyboard.dismiss}>
@@ -91,11 +87,7 @@ export const SearchScreen = ({
           />
         )
       ) : (
-        <RecentSearchesSection
-          onPress={handleSermonPress}
-          onAddToPlaylist={onAddToPlaylist}
-          onClearDialogOpenChange={handleClearDialogOpenChange}
-        />
+        <RecentSearchesSection onPress={handleSermonPress} onAddToPlaylist={onAddToPlaylist} />
       )}
     </Pressable>
   )

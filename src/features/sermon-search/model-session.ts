@@ -1,13 +1,14 @@
 import { action, type Ctx } from '@reatom/framework'
 import { setBarCollapsed } from 'shared/ui/layout'
 import { isSearchOpenAtom, searchQueryAtom } from './model'
-import { isSearchFieldFocusedAtom } from './model-searchField'
+import { isSearchFieldFocusedAtom, isSearchFocusHeldAtom } from './model-searchField'
 
 // Every field a closed session owns. Cleared in ONE transaction by the close
 // actions so no subscriber renders a half-closed search.
 const clearSearchSessionState = (ctx: Ctx): void => {
   searchQueryAtom(ctx, '')
   isSearchFieldFocusedAtom(ctx, false)
+  isSearchFocusHeldAtom(ctx, false)
 }
 
 export const openSearch = action(async ctx => {

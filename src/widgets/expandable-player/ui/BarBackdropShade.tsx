@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { StyleSheet, useWindowDimensions } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
+import { isSearchFocusActiveAtom } from 'features/sermon-search/@x/barMorph'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import {
   BAR_BOTTOM_INSET_MIN,
@@ -45,13 +45,13 @@ export const BarBackdropShade = ({ hasMiniPlayer }: { hasMiniPlayer: boolean }) 
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { progress, settledCollapsed } = useBarMorphProgress()
-  const [isFocused] = useAtom(isSearchFieldFocusedAtom)
-  const focusProgress = useSharedValue(isFocused ? 1 : 0)
+  const [isFocusActive] = useAtom(isSearchFocusActiveAtom)
+  const focusProgress = useSharedValue(isFocusActive ? 1 : 0)
   // Starts after the tuck's zIndex commit; the pill uses the same post-commit
   // timing, so the shade and the sliding pill stay in step.
   useEffect(() => {
-    focusProgress.value = withTiming(isFocused ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
-  }, [focusProgress, isFocused])
+    focusProgress.value = withTiming(isFocusActive ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
+  }, [focusProgress, isFocusActive])
   // The shade has no expand animation of its own: this shared value only drives
   // the pill's settle timing, so the shade stays behind the pill for the whole
   // expand morph instead of popping out on its first frame.
@@ -86,7 +86,7 @@ export const BarBackdropShade = ({ hasMiniPlayer }: { hasMiniPlayer: boolean }) 
     ? getPillShadeHeight({
         barProgress: settledBarProgress,
         bottomPadding,
-        focusProgress: isFocused ? 1 : 0,
+        focusProgress: isFocusActive ? 1 : 0,
         fullScreenHeight: screenHeight,
         screenWidth,
         tabBarHeight,

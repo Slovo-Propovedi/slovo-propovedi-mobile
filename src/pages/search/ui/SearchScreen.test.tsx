@@ -3,6 +3,7 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
 import {
+  holdSearchFocus,
   isSearchFieldFocusedAtom,
   searchFocusRequestAtom,
   searchQueryAtom,
@@ -128,6 +129,11 @@ const getTabsProps = (itemKey: string) =>
     .mocked(PillTabs)
     .mock.calls.map(([props]) => props)
     .find(props => props.items.some(item => item.key === itemKey))
+
+// Every scroll surface of the page opts into tap-through; a `keyboardDismissMode`
+// of `on-drag` on any of them would blur the field mid-scroll and collapse the pose.
+const getScrollables = () =>
+  screen.root?.queryAll(instance => instance.props.keyboardShouldPersistTaps === 'handled') ?? []
 
 const renderScreen = async ({
   focused = false,
@@ -325,6 +331,18 @@ describe('<SearchScreen>', () => {
     expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 2)
   })
 
+  test('keeps the focused pose while the focus is held after a blur', async () => {
+    const { ctx } = await renderScreen({ focused: true })
+
+    await act(async () => {
+      holdSearchFocus(ctx)
+      isSearchFieldFocusedAtom(ctx, false)
+    })
+
+    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Слушать' })).toBeTruthy()
+  })
+
   test('holds the focused pose while the clear-history dialog is open', async () => {
     const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
@@ -395,11 +413,39 @@ describe('<SearchScreen>', () => {
     expect(screen.queryByRole('button', { name: 'Проповеди' })).toBeNull()
   })
 
-  test('keeps the search title pose for a two-character query while blurred', async () => {
-    await renderScreen({ query: 'ве' })
+  test('keeps the focused pose for a two-character query while blurred', async () => {
+    await renderScreen({ history: [SERMON], query: 'ве' })
 
-    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Проповеди' })).toBeNull()
+    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Слушать' })).toBeSelected()
+    expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
+    expect(screen.getByText(SERMON.title)).toBeTruthy()
+  })
+
+  test('keeps the keyboard up while the results list scrolls', async () => {
+    await renderScreen({
+      focused: true,
+      paged: createPaged({ sermons: createGroup([SERMON]) }),
+      query: 'вера',
+    })
+
+    const scrollables = getScrollables()
+
+    expect(scrollables.length).toBeGreaterThan(0)
+    scrollables.forEach(scrollable =>
+      expect(scrollable.props.keyboardDismissMode).not.toBe('on-drag'),
+    )
+  })
+
+  test('keeps the keyboard up while the recent searches list scrolls', async () => {
+    await renderScreen({ focused: true, history: [SERMON] })
+
+    const scrollables = getScrollables()
+
+    expect(scrollables.length).toBeGreaterThan(0)
+    scrollables.forEach(scrollable =>
+      expect(scrollable.props.keyboardDismissMode).not.toBe('on-drag'),
+    )
   })
 
   test('shows the empty state from three characters', async () => {

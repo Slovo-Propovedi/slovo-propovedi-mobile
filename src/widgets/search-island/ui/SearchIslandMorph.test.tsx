@@ -4,7 +4,7 @@ import { Dimensions, StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
-import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
+import { holdSearchFocus, isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import {
@@ -248,7 +248,8 @@ describe('<SearchIslandMorph>', () => {
     const frame = StyleSheet.flatten(findMorphContainer().props.style)
     const expected = getSearchIslandGeometry({
       barProgress: 1,
-      closeProgress: 0,
+      // A focused field shows the external ✕, so the pill yields that slot.
+      closeProgress: 1,
       focusProgress: 1,
       openProgress: 1,
       screenWidth: Dimensions.get('window').width,
@@ -257,6 +258,43 @@ describe('<SearchIslandMorph>', () => {
 
     expect(frame.left).toBe(expected.left)
     expect(frame.width).toBe(expected.width)
+  })
+
+  test('freezes the focused frame and the close circle while the focus is held', async () => {
+    const { ctx, getByLabelText } = await renderMorph()
+
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+    const focusedFrame = StyleSheet.flatten(findMorphContainer().props.style)
+    const focused = getSearchIslandGeometry({
+      barProgress: 1,
+      closeProgress: 1,
+      focusProgress: 1,
+      openProgress: 1,
+      screenWidth: Dimensions.get('window').width,
+      tabBarHeight: ctx.get(tabBarHeightAtom),
+    })
+
+    expect(focusedFrame.left).toBe(focused.left)
+    expect(focusedFrame.width).toBe(focused.width)
+
+    await act(async () => {
+      holdSearchFocus(ctx)
+    })
+    // The dialog stole the field's focus; the hold must keep the chrome put.
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, false)
+    })
+
+    expect(StyleSheet.flatten(findMorphContainer().props.style)).toMatchObject({
+      left: focusedFrame.left,
+      width: focusedFrame.width,
+    })
+    expect(getByLabelText(CLOSE_LABEL)).toBeTruthy()
   })
 
   test('keeps the tab-slot frame of a focus flip until the morph settles', async () => {
@@ -288,9 +326,18 @@ describe('<SearchIslandMorph>', () => {
     })
 
     const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
+    const focused = getSearchIslandGeometry({
+      barProgress: 1,
+      closeProgress: 1,
+      focusProgress: 1,
+      openProgress: 1,
+      screenWidth: Dimensions.get('window').width,
+      tabBarHeight: ctx.get(tabBarHeightAtom),
+    })
 
+    expect(settledFrame.left).toBe(focused.left)
+    expect(settledFrame.width).toBe(focused.width)
     expect(settledFrame.left).toBeLessThan(openFrame.left)
-    expect(settledFrame.width).toBeGreaterThan(openFrame.width)
   })
 
   test('keeps the input mounted but pointer-gated while search is closed', async () => {

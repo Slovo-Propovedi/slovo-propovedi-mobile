@@ -1,7 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet, type ViewStyle } from 'react-native'
 import { type TestInstance } from 'test-renderer'
-import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
+import { holdSearchFocus, isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
@@ -242,6 +242,30 @@ describe('<ExpandablePlayer>', () => {
     expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
     expect(tuckTransform()).toEqual([{ translateY: 0 }])
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
+  })
+
+  test('keeps the mini player tucked while the focus is held', async () => {
+    isBarCollapsedAtom(ctx, false)
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, '')
+    isSearchFieldFocusedAtom(ctx, true)
+    tabBarHeightAtom(ctx, 98)
+    const { queryByLabelText } = await renderWithProviders(<ExpandablePlayer />, { ctx })
+
+    await act(async () => {
+      holdSearchFocus(ctx)
+    })
+    // The dialog blurs the field; the held focus keeps the pill tucked.
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, false)
+    })
+
+    const button = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
+
+    expect(findPointerGate(button)?.props.pointerEvents).toBe('none')
+    expect(layerOpacity(button)).toBe(0)
+    expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(true)
+    expect(tuckTransform()).toEqual([{ translateY: MINI_TUCK_DISTANCE }])
   })
 
   test('keeps the last real tab bar height when a hidden screen reports zero', async () => {

@@ -1,7 +1,13 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { Fragment, useCallback, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
-import { requestSearchFocus, SearchResultsRow, SearchRowSeparator } from 'features/sermon-search'
+import {
+  holdSearchFocus,
+  releaseSearchFocusHold,
+  requestSearchFocus,
+  SearchResultsRow,
+  SearchRowSeparator,
+} from 'features/sermon-search'
 import {
   clearSearchHistoryAction,
   removeSearchEntryAction,
@@ -21,12 +27,9 @@ const DIALOG_CONFIRM = 'Очистить'
 
 export const RecentSearchesSection = ({
   onAddToPlaylist,
-  onClearDialogOpenChange,
   onPress,
 }: {
   onAddToPlaylist?: (sermon: AudioPlayerData) => void
-  // Lets the page hold the focused pose while the modal owns the focus.
-  onClearDialogOpenChange?: (open: boolean) => void
   onPress: (sermon: SermonData) => void
 }) => {
   const { currentTheme } = useTheme()
@@ -42,18 +45,20 @@ export const RecentSearchesSection = ({
     [ctx],
   )
 
+  // The dialog steals the field's focus: hold the focused chrome so none of the
+  // islands morph while it is open.
   const handleOpenDialog = useCallback(() => {
     setDialogVisible(true)
-    onClearDialogOpenChange?.(true)
-  }, [onClearDialogOpenChange])
+    holdSearchFocus(ctx)
+  }, [ctx])
 
-  // Cancel, Android back and web Escape all dismiss through this path; the
-  // modal owned the focus, so hand it back to the search field.
+  // Cancel, Android back and web Escape all dismiss through this path; release
+  // the hold and hand the focus back to the search field.
   const closeDialog = useCallback(() => {
     setDialogVisible(false)
-    onClearDialogOpenChange?.(false)
+    releaseSearchFocusHold(ctx)
     requestSearchFocus(ctx)
-  }, [ctx, onClearDialogOpenChange])
+  }, [ctx])
 
   const handleConfirm = useCallback(() => {
     closeDialog()

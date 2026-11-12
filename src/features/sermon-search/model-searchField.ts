@@ -1,4 +1,4 @@
-import { atom } from '@reatom/framework'
+import { action, atom } from '@reatom/framework'
 import { isBarCollapsedAtom } from 'shared/ui/layout'
 import { isSearchOpenAtom, MIN_QUERY_LENGTH, searchQueryAtom } from './model'
 
@@ -22,9 +22,29 @@ export const isSearchFieldVisibleAtom = atom(ctx => {
 // field; the morph reads this flag to retract the active-tab circle.
 export const isSearchFieldFocusedAtom = atom(false, 'isSearchFieldFocusedAtom')
 
-// Search owns the scroll driver only while an active query pins the field: with
-// an empty query the driver must still collapse the whole line.
+// A modal that steals the field's focus (the clear-history confirm) must not
+// morph the chrome: the hold keeps the focused arrangement frozen while the
+// dialog is open, so the islands never collapse or expand behind it.
+export const isSearchFocusHeldAtom = atom(false, 'isSearchFocusHeldAtom')
+
+export const holdSearchFocus = action(ctx => {
+  isSearchFocusHeldAtom(ctx, true)
+}, 'holdSearchFocus')
+
+export const releaseSearchFocusHold = action(ctx => {
+  isSearchFocusHeldAtom(ctx, false)
+}, 'releaseSearchFocusHold')
+
+// Single source the focus-driven chrome reads: real field focus OR a held
+// focus. Blurring under the hold is invisible to every morph consumer.
+export const isSearchFocusActiveAtom = atom(
+  ctx => ctx.spy(isSearchFieldFocusedAtom) || ctx.spy(isSearchFocusHeldAtom),
+  'isSearchFocusActiveAtom',
+)
+
+// While the search page is open it owns the screen: the bottom chrome must
+// never collapse under its lists, whatever the query length is.
 export const isSearchBarCollapseSuspendedAtom = atom(
-  ctx => ctx.spy(isSearchOpenAtom) && isSearchQueryActive(ctx.spy(searchQueryAtom)),
+  ctx => ctx.spy(isSearchOpenAtom),
   'isSearchBarCollapseSuspendedAtom',
 )

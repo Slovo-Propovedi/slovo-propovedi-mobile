@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
+import { isSearchFocusHeldAtom } from 'features/sermon-search'
 import { searchHistoryAtom, type SearchHistoryEntry } from 'entities/search-history'
 import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
@@ -137,60 +138,40 @@ describe('<RecentSearchesSection>', () => {
     expect(onPress).toHaveBeenCalledWith(expect.objectContaining({ id: '1' }))
   })
 
-  test('opens its own dialog and reports the open state', async () => {
-    const onClearDialogOpenChange = jest.fn()
+  test('opens its own dialog and holds the search focus', async () => {
+    const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
 
-    await renderWithProviders(
-      <RecentSearchesSection
-        onPress={jest.fn()}
-        onClearDialogOpenChange={onClearDialogOpenChange}
-      />,
-      { ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]) },
-    )
+    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
 
     expect(screen.getByText(DIALOG_TITLE)).toBeTruthy()
-    expect(onClearDialogOpenChange).toHaveBeenCalledTimes(1)
-    expect(onClearDialogOpenChange).toHaveBeenCalledWith(true)
+    expect(ctx.get(isSearchFocusHeldAtom)).toBe(true)
   })
 
-  test('reports the close and refocuses the field on cancel', async () => {
-    const onClearDialogOpenChange = jest.fn()
+  test('releases the hold and refocuses the field on cancel', async () => {
+    const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
 
-    await renderWithProviders(
-      <RecentSearchesSection
-        onPress={jest.fn()}
-        onClearDialogOpenChange={onClearDialogOpenChange}
-      />,
-      { ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]) },
-    )
+    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
     await fireEvent.press(screen.getByText(CANCEL_LABEL))
 
     expect(screen.queryByText(DIALOG_TITLE)).toBeNull()
-    expect(onClearDialogOpenChange).toHaveBeenLastCalledWith(false)
+    expect(ctx.get(isSearchFocusHeldAtom)).toBe(false)
     expect(mockRequestSearchFocus).toHaveBeenCalledTimes(1)
   })
 
-  test('clears the history, reports the close and refocuses on confirm', async () => {
+  test('clears the history, releases the hold and refocuses on confirm', async () => {
     const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
-    const onClearDialogOpenChange = jest.fn()
 
-    await renderWithProviders(
-      <RecentSearchesSection
-        onPress={jest.fn()}
-        onClearDialogOpenChange={onClearDialogOpenChange}
-      />,
-      { ctx },
-    )
+    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
     await fireEvent.press(screen.getAllByText(CLEAR_LABEL).at(-1) as never)
 
     await waitFor(() => expect(ctx.get(searchHistoryAtom)).toEqual([]))
-    expect(onClearDialogOpenChange).toHaveBeenLastCalledWith(false)
+    expect(ctx.get(isSearchFocusHeldAtom)).toBe(false)
     expect(mockRequestSearchFocus).toHaveBeenCalledTimes(1)
   })
 

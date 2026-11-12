@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { withTiming } from 'react-native-reanimated'
-import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
+import { holdSearchFocus, isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import {
   setBarCollapsed,
@@ -77,6 +77,21 @@ describe('useTabIslandMorph', () => {
       completions.forEach(complete => complete(true))
     })
 
+    expect(result.current.restingIslandStyle.opacity).toBe(0)
+    expect(result.current.restingIslandStyle.width).toBe(0)
+  })
+
+  test('keeps the island hidden while the focus is held', async () => {
+    const { ctx, result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT))
+
+    await act(async () => {
+      holdSearchFocus(ctx)
+    })
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, false)
+    })
+
+    expect(result.current.isFocused).toBe(true)
     expect(result.current.restingIslandStyle.opacity).toBe(0)
     expect(result.current.restingIslandStyle.width).toBe(0)
   })
