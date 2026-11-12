@@ -14,19 +14,10 @@ import {
 } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getBarShadeHeight, getPillShadeHeight, getShadeLocations } from '../lib/getBarShadeHeight'
+import { getShadeColors } from '../lib/getShadeColors'
 import { useBarMorphProgress } from '../model/useBarMorphProgress'
 import { useProgressAnimation } from '../model/useProgressAnimation'
-
-// One subtle depth cue behind the bottom-bar complex: edge to edge, anchored to
-// the screen bottom (the transparent Android navbar means the inset is ignored).
-// Its top tracks the current chrome top with overscan, and one continuous
-// gradient leaves no cap/fill junction; the dark ramp is gray with doubled alpha.
-const SHADE_OPAQUE_LIGHT = 'rgba(0, 0, 0, 0.08)'
-const SHADE_OPAQUE_DARK = 'rgba(128, 128, 128, 0.15)'
-const SHADE_COLORS_LIGHT = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE_LIGHT, SHADE_OPAQUE_LIGHT] as const
-const SHADE_COLORS_DARK = ['rgba(128, 128, 128, 0)', SHADE_OPAQUE_DARK, SHADE_OPAQUE_DARK] as const
-
-const getShadeColors = (isLight: boolean) => (isLight ? SHADE_COLORS_LIGHT : SHADE_COLORS_DARK)
+import { ShadeBlurTarget } from './ShadeBlurTarget'
 
 /**
  * Vertical gradient behind the bottom chrome, rendered as the first child of the
@@ -96,16 +87,18 @@ export const BarBackdropShade = ({ hasMiniPlayer }: { hasMiniPlayer: boolean }) 
   if ((hasPill && expanded && settledExpanded) || !isTabBarMeasured) return null
 
   return (
-    <Animated.View pointerEvents='none' style={styles.layer}>
-      <Animated.View style={[styles.shade, shadeStyle]}>
-        <LinearGradient
-          pointerEvents='none'
-          style={StyleSheet.absoluteFill}
-          colors={getShadeColors(isLight)}
-          locations={getShadeLocations(settledShadeHeight)}
-        />
+    <ShadeBlurTarget>
+      <Animated.View pointerEvents='none' style={styles.layer}>
+        <Animated.View style={[styles.shade, shadeStyle]}>
+          <LinearGradient
+            pointerEvents='none'
+            style={StyleSheet.absoluteFill}
+            colors={getShadeColors(isLight)}
+            locations={getShadeLocations(settledShadeHeight)}
+          />
+        </Animated.View>
       </Animated.View>
-    </Animated.View>
+    </ShadeBlurTarget>
   )
 }
 

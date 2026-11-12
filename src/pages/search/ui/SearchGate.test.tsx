@@ -159,10 +159,10 @@ describe('<SearchGate>', () => {
     })
   })
 
-  test('publishes the current route as the glass blur target while open', async () => {
-    const { getByText } = await renderGate(true)
+  test('does not publish the page as a glass blur target while open', async () => {
+    await renderGate(true)
 
-    expect(getByText('BLUR_TARGET:/more')).toBeTruthy()
+    expect(screen.queryByText('BLUR_TARGET:/more')).toBeNull()
   })
 
   test('hosts the playback picker and add-to-playlist modals', async () => {

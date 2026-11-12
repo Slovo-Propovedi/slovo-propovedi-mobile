@@ -4,7 +4,9 @@ import {
   ANDROID_BLUR_MIN_SDK,
   BLUR_TARGET_ROUTES,
   type BlurTargetRef,
+  BOTTOM_CHROME_SHADE_KEY,
   getBlurTarget,
+  getChromeBlurTarget,
   registerBlurTarget,
   subscribeBlurTargets,
   supportsAndroidBackdropBlur,
@@ -106,6 +108,36 @@ describe('blur target registry', () => {
     expect(getBlurTarget('/listen')).toBe(freshTarget)
 
     unregisterBlurTarget('/listen', freshTarget)
+  })
+})
+
+describe('bottom-chrome shade target', () => {
+  test('wins over the page target while it is registered', () => {
+    const pageTarget = createTargetRef()
+    const shadeTarget = createTargetRef()
+
+    registerBlurTarget('/listen', pageTarget)
+    registerBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
+
+    expect(getChromeBlurTarget('/listen')).toBe(shadeTarget)
+
+    unregisterBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
+
+    expect(getChromeBlurTarget('/listen')).toBe(pageTarget)
+
+    unregisterBlurTarget('/listen', pageTarget)
+  })
+
+  test('falls back to the page target while no shade target is registered', () => {
+    const pageTarget = createTargetRef()
+
+    registerBlurTarget('/more', pageTarget)
+
+    expect(getChromeBlurTarget('/more')).toBe(pageTarget)
+
+    unregisterBlurTarget('/more', pageTarget)
+
+    expect(getChromeBlurTarget('/more')).toBeNull()
   })
 })
 

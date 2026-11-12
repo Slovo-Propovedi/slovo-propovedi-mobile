@@ -3,6 +3,7 @@ import { type ComponentRef, createRef } from 'react'
 import { Platform, Text, type View } from 'react-native'
 import {
   type BlurTargetRef,
+  BOTTOM_CHROME_SHADE_KEY,
   getBlurTarget,
   registerBlurTarget,
   unregisterBlurTarget,
@@ -15,10 +16,11 @@ jest.mock('expo-router', () => ({ usePathname: () => mockUsePathname() }))
 
 const createTargetRef = (): BlurTargetRef => createRef<ComponentRef<typeof View>>()
 
-const Probe = () => {
+const Probe = ({ shadeTarget }: { shadeTarget?: BlurTargetRef }) => {
   const target = useActiveBlurTarget()
+  const value = target === null ? 'NONE' : target === shadeTarget ? 'SHADE' : 'TARGET'
 
-  return <Text>{target ? 'TARGET' : 'NONE'}</Text>
+  return <Text>{value}</Text>
 }
 
 const setPlatform = (os: 'android' | 'ios', version?: number) => {
@@ -30,6 +32,10 @@ afterEach(() => {
   const registered = getBlurTarget('/listen')
 
   if (registered) unregisterBlurTarget('/listen', registered)
+
+  const shade = getBlurTarget(BOTTOM_CHROME_SHADE_KEY)
+
+  if (shade) unregisterBlurTarget(BOTTOM_CHROME_SHADE_KEY, shade)
 
   mockUsePathname.mockReturnValue('/listen')
   setPlatform('ios', undefined)
@@ -48,6 +54,30 @@ describe('useActiveBlurTarget', () => {
 
     await act(async () => unregisterBlurTarget('/listen', target))
     expect(screen.getByText('NONE')).toBeTruthy()
+  })
+
+  test('resolves the shade target over the page target while the search page is open', async () => {
+    setPlatform('android', 35)
+    const pageTarget = createTargetRef()
+    const shadeTarget = createTargetRef()
+
+    await render(<Probe shadeTarget={shadeTarget} />)
+    await act(async () => {
+      registerBlurTarget('/listen', pageTarget)
+      registerBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
+    })
+
+    expect(screen.getByText('SHADE')).toBeTruthy()
+
+    await act(async () => {
+      unregisterBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
+    })
+
+    expect(screen.getByText('TARGET')).toBeTruthy()
+
+    await act(async () => {
+      unregisterBlurTarget('/listen', pageTarget)
+    })
   })
 
   test('ignores targets of other routes', async () => {
