@@ -37,7 +37,7 @@
 
 ### Спец-проверки `expo-audio`
 
-Патч `patches/expo-audio+58.0.11.patch` оборачивает JS-геттер `loop` у `AudioPlaylist` в `runOnMain`, поэтому кроме tri-state гвард проверяет две вещи, без которых патч бесполезен или ложно-зелён:
+Патч `patches/expo-audio+58.0.12.patch` оборачивает JS-геттер `loop` у `AudioPlaylist` в `runOnMain`, поэтому кроме tri-state гвард проверяет две вещи, без которых патч бесполезен или ложно-зелён:
 
 - **`runOnMain` в геттере `Property("loop")`.** В `AudioModule.kt` два свойства `loop`; гвард берёт срез от **первого `Property("loop")` после маркера** до `.set` и требует `runOnMain` внутри. Анкор по маркеру обязателен: без него собственный обёрнутый геттер `AudioPlayer` замаскировал бы регрессию в геттере `AudioPlaylist`.
 - **Инвариант `expo.autolinking.buildFromSource: ["expo-audio"]`** в `package.json`. Если expo-audio собран не из исходников, он шиплится как prebuilt AAR, правка Kotlin в `node_modules` не компилируется — патч инертен. Гвард падает и на этом: «зелёные» маркеры без сборки из исходников — ложная уверенность.
