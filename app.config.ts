@@ -96,6 +96,7 @@ export default ({ config }: ConfigContext): AppConfig => ({
     'expo-asset',
     ['expo-notifications', { color: '#f16031', icon: './assets/notification-icon.png' }],
     'expo-router',
+    'expo-secure-store',
     'expo-sharing',
     'expo-status-bar',
     ['expo-navigation-bar', { enforceContrast: false }],
