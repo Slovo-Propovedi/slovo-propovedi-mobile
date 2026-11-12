@@ -1,7 +1,7 @@
 import z from 'zod'
 import { audioPlayerDataSchema } from 'entities/sermon/@x/search-history'
 
-export const searchHistoryEntrySchema = z.object({
+const searchHistoryEntrySchema = z.object({
   savedAt: z.number(),
   sermon: audioPlayerDataSchema,
 })
