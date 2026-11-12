@@ -2,6 +2,10 @@ import { StyleSheet } from 'react-native'
 import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
+  actionButton: {
+    alignSelf: 'stretch',
+    marginTop: INDENTS.high,
+  },
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -14,10 +18,6 @@ export const styles = StyleSheet.create({
   content: {
     alignItems: 'stretch',
     padding: INDENTS.high,
-  },
-  copyButton: {
-    alignSelf: 'stretch',
-    marginTop: INDENTS.high,
   },
   errorText: {
     fontSize: FONT_SIZES.base,

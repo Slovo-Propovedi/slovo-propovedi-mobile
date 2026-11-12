@@ -46,9 +46,9 @@ export const ShareLinkCard = ({
           {url}
         </Text>
       </PressableButton>
-      <CopyLinkButton url={url} style={styles.copyButton} onboardingTargetId={copyTargetId} />
+      <CopyLinkButton url={url} style={styles.actionButton} onboardingTargetId={copyTargetId} />
       {isShareSupported && (
-        <ShareLinkButton url={url} style={styles.copyButton} onboardingTargetId={sendTargetId} />
+        <ShareLinkButton url={url} style={styles.actionButton} onboardingTargetId={sendTargetId} />
       )}
     </>
   )

@@ -1,7 +1,5 @@
 import { type ShareLinkInput, type ShareResult } from './shareLink'
 
-export { type ShareLinkInput, type ShareResult } from './shareLink'
-
 // Chromium maps both a genuine user dismissal ("Share cancelled") and internal
 // share failures ("Share failed", "Permission denied") to AbortError; WebKit
 // rejects a dismissal with AbortError and a varying or empty message. So every
