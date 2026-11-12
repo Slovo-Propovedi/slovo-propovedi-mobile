@@ -1,0 +1,9 @@
+Ship web on native tags only after android success
+Harden bump atomicity, guard Expo.plist in CI, pin iOS version substitutions
+Gate web publish and deploy on android signing success
+Make commit binding opt-in so CI dispatch keeps its fallback
+Build web dist on the Forgejo runner
+Verify unsigned APK digest before signing
+Bind dispatched GitHub build to the released commit
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

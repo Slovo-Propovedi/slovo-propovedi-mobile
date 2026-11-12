@@ -5,6 +5,127 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.0] - 2026-11-12
+
+### Added
+
+- Build web dist on the Forgejo runner
+- Verify unsigned APK digest before signing
+- Bind dispatched GitHub build to the released commit
+- Keep native runtime versions in sync with app version
+- Add large screen titles to the user tabs
+- Self-contained youtube url in the sermon import accordion
+- Rework sermon import as a top accordion with an instance selector
+- Restructure admin home header and action groups
+- Live pending status and mask-safe run links
+- Render GitHub run link in remote job summary
+- Sync push mirrors before dispatch
+- Build only after the CI gate passes
+- Report superseded runs as warning, not failure
+- Run Renovate on GitHub-hosted runners
+- Add GitHub push-mirror setup script
+- Orchestrate heavy checks on GitHub-hosted runners
+- Add GitHub-hosted release build workflow
+- Add GitHub-hosted CI workflow
+- Support workflow_dispatch inputs in orchestrator
+- Add Android signing composite action
+- Add Forgejo commit-status helper
+- Add GitHub dispatch orchestrator with self-test
+- Strong theme wash so the pill reads like the islands
+- Theme-color wash for the mini pill frost
+
+### Changed
+
+- Mount NavThemeProvider from shared slice instead of app routes
+- Icon library/upload buttons beside the media URL fields
+- Icon actions on admin tab pages and media orphans
+- Move invidious save into the header as an icon button
+- Move list-screen actions into the native header
+- Delete the study tab and its exclusive code
+- Move media, flags and users list screens out of the tab navigator
+- Drop media, flags and users tabs from the admin tab bar
+- Route builds through GitHub with Forgejo fallback
+- Extract web export composite action
+- Extract android build composite action
+- Extract checks composite action
+- Extract Android SDK setup scripts
+- Guard useSearchFocusMorph against redundant focus events
+- Lag search island resting/focus geometry behind the morph
+- Lag tab/search island resting geometry behind the morph
+- Memoize resting styles, drop unused alias
+- Glass island owns the pill radius from element height
+- One GlassIsland frame for every bottom-chrome island
+
+### Fixed
+
+- Ship web on native tags only after android success
+- Harden bump atomicity, guard Expo.plist in CI, pin iOS version substitutions
+- Gate web publish and deploy on android signing success
+- Make commit binding opt-in so CI dispatch keeps its fallback
+- Retarget expo-audio and expo-font patches to 58.0.12
+- Bump expo packages and register expo-secure-store plugin
+- Set up Java before SDK setup in sign-android
+- Set up JDK in sign-android (apksigner needs java)
+- Read current metadata when rebuilding lock-screen session (#149)
+- Rebuild media session after native auto-advance (#149)
+- Re-assert playback position after native auto-advance (#149)
+- Disarm cold-start resume reassert on stop and unload (#150)
+- Refresh media notification metadata on background auto-advance (#149)
+- Restore cold-start resume position and clear stuck buffering on web (#150)
+- Fall back locally on GitHub startup_failure
+- Provide nav theme to expo-router to kill glass islands light flash on back
+- Use a plus icon for the sermons header action
+- Reserve bottom safe area on admin stack screens
+- Drop web-only deps array in useAnimatedReaction
+- Patch draggable-flatlist for RN 0.88 InteractionManager removal
+- Open the profile menu below its anchor
+- Theme the onPrimary token so primary-button labels stay readable in dark
+- Drop double top inset on migrated stack screens and harden sign-out
+- Anchor tab bar shade to the bar without a mini player
+- Use black label on primary create buttons in dark theme
+- Handle clipboard copy rejection in error surfaces
+- Make console guard immune to restoreAllMocks
+- Ignore late download progress ticks after settle
+- Migrate setup-java to v6
+- Migrate setup-java to v5
+- Wire knip jest entries via static import, drop toast file-ignore
+- Add missing key prop in DynamicSectionsSlider children
+- Remove leftover OTA reload debug log
+- Clean up reset timers in useErrorCopy and ServerUrlForm
+- Clear pending toast timer between tests (test-support export)
+- Mask-safe clickable run links in summaries
+- Drop push_mirrors-sync step from build-remote
+- Drop push_mirrors-sync step (needs admin token)
+- Derive Codeberg API origin from mirror URL
+- Align web zip release poll to 60 attempts
+- Skip already-attached assets on re-publish
+- Accept debug-signed APK from GitHub build, re-signed on Forgejo
+- Use upload-artifact v4 on GitHub-hosted workflows
+- Fall back on auth errors and mirror-wait timeout
+- Check versionCode against package.json
+- Bound dispatcher polling when GitHub is unreachable
+- Retry dispatch POST on transport errors
+- Disable Aliyun maven mirror on GitHub-hosted runners
+- Derive EXPO_PUBLIC build vars from plain org vars
+- Precise gate status description and fallback URL
+- Classify artifact transfer failures as infra (exit 42)
+- Degrade to local fallback when dispatch token is unset
+- Pass build vars into local web export fallback
+- Pass GitHub vars into hosted release build env
+- Extract downloaded workflow artifacts
+- Compute SDK cache snapshot after builds
+- Measure marquee container via plain onLayout fallback (OEM worklet dispatch dead)
+- Harden marquee measurer against iOS touch interception
+- Self-heal marquee measurement when onTextLayout never lands (OEM Android)
+- Log the chosen OTA reload screen icon and theme flag
+- Pin bottom-bar islands to settled geometry across glass theme remount
+- Draw the player subtree above the tab-bar chrome
+- Flat backdrop shade under the pill on Android
+- Lift the player subtree above the tab-bar shade
+- Pill layer above the elevated tab-bar shade
+- Single-gradient shade to kill the mid-pill seam
+- Live blur during morphs and always-on backdrop shade
+
 ## [0.33.1] - 2026-11-09
 
 ### Added
@@ -1683,6 +1804,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.34.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.34.0
 [0.33.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.33.1
 [0.33.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.33.0
 [0.32.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.32.0
