@@ -78,6 +78,9 @@ jobs:
           fi
 
           COMMITS=""
+          # DEGRADED marks the force-push fallback that found nothing to check:
+          # the summary must not claim a pass it could not verify.
+          DEGRADED=0
           if [ "$RANGE_OK" -eq 0 ]; then
             echo "::warning::previous tip $BASE_SHA is unreachable after force-push; checking commits from the push event payload instead"
 
@@ -88,10 +91,19 @@ jobs:
             if command -v jq >/dev/null 2>&1 &&
               [ -n "$GITHUB_EVENT_PATH" ] &&
               [ -f "$GITHUB_EVENT_PATH" ]; then
-              # `sort -u` dedupes: a push payload may repeat ids. `|| true`:
-              # jq exits non-zero on a malformed payload and `set -e` would
-              # abort before the fallback warning is printed.
-              EVENT_COMMITS=$(jq -r '.commits[].id // empty' "$GITHUB_EVENT_PATH" | sort -u || true)
+              # `.commits[].id` is the Forgejo/Gitea push-payload field (GitHub
+              # uses `.commits[].sha`). `awk '!seen[$0]++'` dedupes in the
+              # original order: a push payload may repeat ids. `|| true`: jq
+              # exits non-zero on a malformed payload and `set -e` would abort
+              # before the fallback warning is printed.
+              EVENT_COMMITS=$(jq -r '.commits[].id // empty' "$GITHUB_EVENT_PATH" | awk '!seen[$0]++' || true)
+            fi
+
+            # Forgejo/Gitea caps the push payload at roughly 20 commits; a
+            # larger force-push is only partially listed, so coverage degrades.
+            EVENT_COMMIT_COUNT=$(printf '%s\n' "$EVENT_COMMITS" | awk 'NF' | wc -l)
+            if [ "$EVENT_COMMIT_COUNT" -ge 20 ]; then
+              echo "::warning::push event payload may be truncated (cap ~20); only the listed commits are verified — full coverage resumes on the next ordinary push"
             fi
 
             for SHA in $EVENT_COMMITS; do
@@ -107,6 +119,7 @@ jobs:
             done
 
             if [ -z "$COMMITS" ]; then
+              DEGRADED=1
               echo "::warning::push event carried no usable commit list; DCO will be verified on the next ordinary push"
             fi
           else
@@ -165,9 +178,12 @@ jobs:
               COMMIT_OK=0
             fi
 
-            # Check 3: Signed-off-by trailer must be the LAST non-empty line
+            # Check 3: Signed-off-by trailer must be the LAST non-empty line.
+            # Case-sensitive on purpose: keep in sync with the strict
+            # `signed-off-by-last` regex in commitlint.config.ts (server-format
+            # trailers use canonical case).
             LAST_BODY_LINE=$(git show -s --format='%b' "$COMMIT" | sed '/^[[:space:]]*$/d' | tail -n 1)
-            if ! printf '%s\n' "$LAST_BODY_LINE" | grep -qiE '^Signed-off-by: .+ <.+>$'; then
+            if ! printf '%s\n' "$LAST_BODY_LINE" | grep -qE '^Signed-off-by: .+ <.+>$'; then
               echo "::error::commit $SHORT_SHA: Signed-off-by trailer must be the last line of the message"
               echo "  Subject: $SUBJECT"
               echo "  Last body line: ${LAST_BODY_LINE:-<none>}"
@@ -192,6 +208,8 @@ jobs:
               printf '%s' "$BAD_ROWS"
               echo ""
               echo "Fix with \`git commit -s\` / \`git rebase --signoff HEAD~1\` (trailer email must match the commit author)."
+            elif [ "$DEGRADED" -eq 1 ]; then
+              echo "⚠️ 0 commit(s) verified (degraded force-push mode); DCO resumes on the next ordinary push."
             else
               echo "✅ $TOTAL commit(s) checked, all signed off."
             fi
@@ -206,7 +224,11 @@ jobs:
             exit 1
           fi
 
-          echo "DCO check passed: all commits are properly signed off."
+          if [ "$DEGRADED" -eq 1 ]; then
+            echo "DCO check skipped: no commits could be verified after a force-push; it will run on the next ordinary push."
+          else
+            echo "DCO check passed: all commits are properly signed off."
+          fi
 
   remote:
     needs: dco

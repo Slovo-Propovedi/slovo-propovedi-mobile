@@ -2,6 +2,8 @@ import { type Plugin, type Rule, RuleConfigSeverity, type UserConfig } from '@co
 
 // более подробное описание - https://docs.exarh.ru/pages/viewpage.action?pageId=24510769
 
+// Keep the pattern in sync with the dco Check 3 grep in .forgejo/workflows/ci.yml:
+// both are case-sensitive and require the trailer to be the last message line.
 const TRAILER_PATTERN = /^Signed-off-by: .+ <.+>$/
 
 const SIGNED_OFF_BY_LAST_ERROR =
